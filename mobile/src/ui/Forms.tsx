@@ -222,16 +222,18 @@ export function MatchForm({
   event,
   busy,
   available,
+  initialInterests = [],
   onSave,
 }: {
   event?: Event;
   busy: boolean;
   available: boolean;
+  initialInterests?: string[];
   onSave: (body: unknown) => void;
 }) {
   const [activity, setActivity] = useState(event?.title || ""),
     [size, setSize] = useState("4"),
-    [interests, setInterests] = useState(""),
+    [interests, setInterests] = useState(() => initialInterests.join(", ")),
     [consent, setConsent] = useState(false),
     [times, setTimes] = useState(() =>
       initialTimes(event?.startsAt, event?.endsAt),

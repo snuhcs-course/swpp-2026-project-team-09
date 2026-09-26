@@ -29,6 +29,7 @@ import {
 import { Database } from "./database";
 import { EventsService } from "./events";
 import { SocialService } from "./social";
+import { ProfileService } from "./profile";
 import { LocationService } from "./location";
 import { bad, bool, uuid } from "./validation";
 type AuthRequest = Request & { user: ReturnType<typeof userView> };
@@ -94,8 +95,21 @@ export class PublicController {
     private events: EventsService,
     private social: SocialService,
     private location: LocationService,
+    private profile: ProfileService,
     private campus: CampusService,
   ) {}
+  @Get("me/profile") ownProfile(@Req() r: AuthRequest) {
+    return this.profile.profile(r.user.id);
+  }
+  @Patch("me/profile") patchProfile(@Req() r: AuthRequest, @Body() b: any) {
+    return this.profile.patchProfile(r.user.id, b);
+  }
+  @Get("me/timetable") timetable(@Req() r: AuthRequest) {
+    return this.profile.timetable(r.user.id);
+  }
+  @Put("me/timetable") putTimetable(@Req() r: AuthRequest, @Body() b: any) {
+    return this.profile.putTimetable(r.user.id, b);
+  }
   @Get("events") eventsList() {
     return this.events.list();
   }
@@ -248,6 +262,7 @@ export function runtimeControllers(role: string) {
     EventsService,
     SocialService,
     LocationService,
+    ProfileService,
     CampusService,
   ],
 })

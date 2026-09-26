@@ -255,6 +255,53 @@ try {
   socket.on("domain.changed", (hint) => hints.push(hint));
   log("HTTP runtime/role/key boundaries and socket authentication");
 
+
+  await http("public", "/v1/me/profile", { status: 401 });
+  await http("public", "/v1/me/timetable", { status: 401 });
+  await http("admin", "/v1/me/profile", { token: a.token, status: 404 });
+  const initialProfile = await http("public", "/v1/me/profile", { token: a.token });
+  const profile = await http("public", "/v1/me/profile", {
+    token: a.token, method: "PATCH",
+    body: {
+      expectedVersion: initialProfile.version,
+      displayName: "Edited student", department: "Computer Science",
+      admissionYear: 2025, interests: ["AI", "campus"], statusMessage: "Between classes",
+    },
+  });
+  assert.equal(profile.version, initialProfile.version + 1);
+  assert.equal((await http("public", "/v1/auth/me", { token: a.token })).displayName, "Edited student");
+  assert.equal((await http("public", "/v1/me/profile", { token: b.token })).department, null);
+  const profileConflict = await http("public", "/v1/me/profile", {
+    token: a.token, method: "PATCH", status: 409,
+    body: { expectedVersion: initialProfile.version, displayName: "Stale name" },
+  });
+  assert.equal(profileConflict.code, "VERSION_CONFLICT");
+  const initialTimetable = await http("public", "/v1/me/timetable", { token: a.token });
+  const timetableBody = {
+    expectedVersion: initialTimetable.version,
+    semesterStartsOn: "2026-09-01", semesterEndsOn: "2026-12-31",
+    entries: [{ id: randomUUID(), title: "Software development", weekday: 1, startMinute: 600, endMinute: 660, locationName: "301" }],
+  };
+  const timetable = await http("public", "/v1/me/timetable", { token: a.token, method: "PUT", body: timetableBody });
+  assert.equal(timetable.version, initialTimetable.version + 1);
+  assert.equal(timetable.timezone, "Asia/Seoul");
+  assert.equal((await http("public", "/v1/me/timetable", { token: b.token })).entries.length, 0);
+  const timetableConflict = await http("public", "/v1/me/timetable", {
+    token: a.token, method: "PUT", body: timetableBody, status: 409,
+  });
+  assert.equal(timetableConflict.code, "VERSION_CONFLICT");
+  await http("public", "/v1/me/timetable", {
+    token: a.token, method: "PUT", status: 400,
+    body: { ...timetableBody, expectedVersion: timetable.version, semesterStartsOn: "2026-02-30" },
+  });
+  await http("public", "/v1/me/timetable", {
+    token: a.token, method: "PUT", status: 400,
+    body: { ...timetableBody, expectedVersion: timetable.version,
+      entries: [...timetableBody.entries, { ...timetableBody.entries[0], id: randomUUID(), startMinute: 630 }] },
+  });
+  assert.deepEqual((await http("public", "/v1/me/timetable", { token: a.token })).entries, timetable.entries);
+  log("owner-only profiles/timetables, edited identity, stale saves and atomic validation");
+
   const startsAt = new Date(Date.now() + 3600000).toISOString(),
     endsAt = new Date(Date.now() + 7200000).toISOString();
   const event = await http("admin", "/v1/admin/events", {

@@ -36,6 +36,43 @@ expiry. Share verifier config with socket/match. Missing OAuth config returns 50
 Admin auth endpoints may run on main-admin; administrative routes are never mounted
 on main-public. Admin role required in addition to runtime separation.
 
+## Private profile and manual timetable (main-public only)
+
+GET /v1/me/profile -> Profile
+PATCH /v1/me/profile {expectedVersion, ...editableFields} -> Profile
+Profile = {displayName:string,department:string|null,admissionYear:number|null,
+interests:string[],statusMessage:string|null,version:number}
+
+Authenticated owner only; no owner parameter or public profile/timetable listing.
+Initial profile uses the Google display name, null optional fields, [] interests,
+and version 1. PATCH preserves omitted fields; null clears optional fields.
+At least one editable field is required. Trimmed nonempty text limits: displayName
+100, department 100, statusMessage 300, each interest 40; at most 20 unique interests.
+Admission year is an integer 1900–2100. Google relogin updates identity email/avatar
+but preserves the existing display name, including user edits.
+
+GET /v1/me/timetable -> Timetable
+PUT /v1/me/timetable {expectedVersion,timezone?,semesterStartsOn,semesterEndsOn,entries} -> Timetable
+Timetable = {version:number,timezone:'Asia/Seoul',semesterStartsOn:string|null,
+semesterEndsOn:string|null,entries:TimetableEntry[]}
+TimetableEntry = {id:uuid,title:string,weekday:number,startMinute:number,
+endMinute:number,locationName:string|null}
+
+Initial timetable has version 1, null dates and [] entries. PUT replaces the complete
+snapshot atomically. Dates must be real YYYY-MM-DD calendar dates; both are null or
+both form an inclusive range (start <= end), and nonempty entries require dates.
+Timezone defaults to Asia/Seoul and cannot be changed. Maximum 100 entries with
+unique UUID IDs; title max 100, nullable locationName max 200, ISO weekday Mon=1
+through Sun=7, integer minutes 0–1440 with end > start. Same-day overlapping entries
+are rejected; adjacent entries are allowed. Overnight classes need separate entries.
+
+Both writes require integer expectedVersion >= 1 and reject unknown fields,
+including owner IDs. Profile and timetable versions are independent. Successful
+writes increment the relevant version; stale concurrent saves return 409
+{code:'VERSION_CONFLICT',message:string}. Validation returns 400 INVALID_INPUT.
+Private snapshots are stored only in main-owned PostgreSQL and emit no public hints.
+Manual recurring classes only: no OCR, image storage, AI provider, or inferred matching.
+
 ## Events
 
 Event = {id,title,description,startsAt,endsAt,locationName,latitude:number|null,

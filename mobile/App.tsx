@@ -437,7 +437,7 @@ function CampusApp() {
     );
   return (
     <Experience
-      key={user.id}
+      key={`${user.id}:${token}`}
       token={token}
       user={user}
       events={events}
@@ -458,6 +458,14 @@ function CampusApp() {
       onLogout={logout}
       onSharing={toggleSharing}
       onBackground={toggleBackground}
+      onProfileSaved={(profile) => {
+        if (isCurrentSession(token, session.current.token))
+          setUser((current) =>
+            current
+              ? { ...current, displayName: profile.displayName }
+              : current,
+          );
+      }}
       clearMessage={() => setMessage("")}
     />
   );

@@ -42,3 +42,12 @@ CREATE TABLE IF NOT EXISTS outbox (
  delivered_at timestamptz,created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS pending_outbox ON outbox(sequence) WHERE delivered_at IS NULL;
+
+-- Private owner-managed profile and timetable; versions serialize edits per account.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS department text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS admission_year integer CHECK(admission_year BETWEEN 1900 AND 2100);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS interests jsonb NOT NULL DEFAULT '[]';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS status_message text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_version integer NOT NULL DEFAULT 1;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS timetable_version integer NOT NULL DEFAULT 1;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS timetable jsonb NOT NULL DEFAULT '{"timezone":"Asia/Seoul","semesterStartsOn":null,"semesterEndsOn":null,"entries":[]}';

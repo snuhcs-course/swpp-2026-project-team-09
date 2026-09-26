@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ActivityIndicator,
@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import {
   Event,
+  request,
   Friend,
   MATCH,
   MatchRequest,
@@ -33,6 +34,8 @@ import {
   u,
 } from "./Primitives";
 import { MatchForm, PartyForm, QuestForm } from "./Forms";
+import { AccountEditor } from "./Account";
+import type { Profile } from "../account-forms";
 import { Life } from "./Life";
 type SheetState =
   | { kind: "event"; id: string }
@@ -40,7 +43,7 @@ type SheetState =
   | { kind: "partyForm"; eventId?: string }
   | { kind: "questForm"; partyId: string; questId?: string }
   | { kind: "matchForm"; eventId?: string }
-  | { kind: "friends" | "settings" | "matches" }
+  | { kind: "friends" | "settings" | "matches" | "profile" | "timetable" }
   | null;
 type Props = {
   token: string;
@@ -69,6 +72,7 @@ type Props = {
   onSharing: (enabled: boolean) => Promise<void>;
   onBackground: (enabled: boolean) => Promise<void>;
   clearMessage: () => void;
+  onProfileSaved: (profile: Profile) => void;
 };
 const stamp = (value: string) =>
   new Date(value).toLocaleString("ko-KR", {
@@ -90,6 +94,28 @@ export default function Experience(p: Props) {
     [sheet, setSheet] = useState<SheetState>(null),
     [selectedPartyId, setSelectedPartyId] = useState(""),
     [friendEmail, setFriendEmail] = useState("");
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const profileVersion = useRef(0);
+  useEffect(() => {
+    let active = true;
+    void request<Profile>("/me/profile", p.token)
+      .then((value) => {
+        if (active && value.version >= profileVersion.current) {
+          profileVersion.current = value.version;
+          setProfile(value);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [p.token]);
+  const profileSaved = (value: Profile) => {
+    if (value.version < profileVersion.current) return;
+    profileVersion.current = value.version;
+    setProfile(value);
+    p.onProfileSaved(value);
+  };
   const open = (next: SheetState) => {
     p.clearMessage();
     setSheet(next);
@@ -220,7 +246,11 @@ export default function Experience(p: Props) {
                 ? "친구"
                 : sheet?.kind === "matches"
                   ? "내 매칭 신청"
-                  : "내 계정 · 위치 공유";
+                  : sheet?.kind === "profile"
+                    ? "프로필 편집"
+                    : sheet?.kind === "timetable"
+                      ? "내 학기 시간표"
+                      : "내 계정 · 위치 공유";
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.header}>
@@ -787,6 +817,7 @@ export default function Experience(p: Props) {
                 key={sheet.eventId || "standalone-match"}
                 event={event || undefined}
                 busy={p.busy}
+                initialInterests={profile?.interests ?? []}
                 available={!!MATCH}
                 onSave={(body) =>
                   p.run(async () => {
@@ -929,6 +960,14 @@ export default function Experience(p: Props) {
               ))}
             </>
           )}
+          {(sheet.kind === "profile" || sheet.kind === "timetable") && (
+            <AccountEditor
+              key={`${p.token}:${sheet.kind}`}
+              token={p.token}
+              kind={sheet.kind}
+              onProfileSaved={profileSaved}
+            />
+          )}
           {sheet.kind === "settings" && (
             <>
               <View style={[u.row, { justifyContent: "flex-start" }]}>
@@ -938,6 +977,16 @@ export default function Experience(p: Props) {
                   <Text style={u.body}>{p.user.email}</Text>
                 </View>
               </View>
+              <Action
+                secondary
+                label="프로필 편집"
+                onPress={() => open({ kind: "profile" })}
+              />
+              <Action
+                secondary
+                label="내 학기 시간표"
+                onPress={() => open({ kind: "timetable" })}
+              />
               <Card>
                 <View style={u.row}>
                   <View style={{ flex: 1 }}>

@@ -62,7 +62,7 @@ export class AuthService {
     const p = schoolIdentity(payload);
     this.db.requireReady();
     const r = await this.db.pool.query(
-      "INSERT INTO users(id,google_sub,email,display_name,avatar_url) VALUES($1,$2,$3,$4,$5) ON CONFLICT(google_sub) DO UPDATE SET email=excluded.email,display_name=excluded.display_name,avatar_url=excluded.avatar_url RETURNING *",
+      "INSERT INTO users(id,google_sub,email,display_name,avatar_url) VALUES($1,$2,$3,$4,$5) ON CONFLICT(google_sub) DO UPDATE SET email=excluded.email,avatar_url=excluded.avatar_url RETURNING *",
       [
         randomUUID(),
         p.sub,

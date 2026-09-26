@@ -9,6 +9,8 @@ pnpm build
 pnpm start
 pnpm test
 # Against an isolated PostgreSQL/PostGIS database and cache Redis:
+# Build first; HTTP integration loads the emitted production Nest module.
+pnpm build
 RUN_DB_TESTS=1 pnpm test
 ```
 

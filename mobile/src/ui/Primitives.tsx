@@ -104,6 +104,7 @@ export function Field({
   placeholder,
   multiline = false,
   numeric = false,
+  editable = true,
 }: {
   label: string;
   value: string;
@@ -111,12 +112,14 @@ export function Field({
   placeholder?: string;
   multiline?: boolean;
   numeric?: boolean;
+  editable?: boolean;
 }) {
   return (
     <View style={{ gap: 7, flex: 1 }}>
       <Text style={u.label}>{label}</Text>
       <TextInput
         accessibilityLabel={label}
+        editable={editable}
         style={[
           u.input,
           multiline && { minHeight: 86, textAlignVertical: "top" },
