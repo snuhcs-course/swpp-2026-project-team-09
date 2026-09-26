@@ -1,0 +1,45 @@
+generator client {
+ provider = "prisma-client"
+ output = "../src/generated/prisma"
+ moduleFormat = "cjs"
+}
+datasource db {
+ provider = "postgresql"
+}
+model MatchRequest {
+ id String @id @db.Uuid
+ user_id String @db.Uuid
+ status String
+ activity String
+ event_id String? @db.Uuid
+ time_start DateTime @db.Timestamptz(6)
+ time_end DateTime @db.Timestamptz(6)
+ party_size Int
+ interests Json
+ auto_join_consent Boolean
+ consented_at DateTime @default(now()) @db.Timestamptz(6)
+ embedding Json?
+ ai_status String
+ batch_id String? @db.Uuid
+ party_id String? @db.Uuid
+ explanation String?
+ created_at DateTime @default(now()) @db.Timestamptz(6)
+ @@index([user_id, created_at(sort: Desc)], map: "requests_by_user")
+ @@map("match_requests")
+}
+model MatchBatch {
+ id String @id @db.Uuid
+ request_ids String[] @db.Uuid
+ user_ids String[] @db.Uuid
+ title String
+ event_id String? @db.Uuid
+ party_size Int
+ party_id String? @db.Uuid
+ created_at DateTime @default(now()) @db.Timestamptz(6)
+ last_attempt_at DateTime? @db.Timestamptz(6)
+ last_error String?
+ time_start DateTime? @db.Timestamptz(6)
+ time_end DateTime? @db.Timestamptz(6)
+ terminal_at DateTime? @db.Timestamptz(6)
+ @@map("match_batches")
+}

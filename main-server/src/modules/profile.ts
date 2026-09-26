@@ -153,11 +153,9 @@ export class ProfileService {
   constructor(private db: Database) {}
   private async owner(userId: string) {
     this.db.requireReady();
-    const result = await this.db.pool.query("SELECT * FROM users WHERE id=$1", [
-      userId,
-    ]);
-    if (!result.rows[0]) throw new NotFoundException("Account not found");
-    return result.rows[0];
+    const row = await this.db.prisma.user.findUnique({ where: { id: userId } });
+    if (!row) throw new NotFoundException("Account not found");
+    return row;
   }
   async profile(userId: string) {
     return profileView(await this.owner(userId));
@@ -165,37 +163,32 @@ export class ProfileService {
   async patchProfile(userId: string, body: any) {
     const { expectedVersion, patch } = profileInput(body);
     this.db.requireReady();
-    // Column names come only from profileInput, never from requester keys.
-    const columns = Object.keys(patch);
-    const result = await this.db.pool.query(
-      `UPDATE users SET ${columns.map((key, i) => `${key}=$${i + 3}`).join(",")},profile_version=profile_version+1 WHERE id=$1 AND profile_version=$2 RETURNING *`,
-      [
-        userId,
-        expectedVersion,
-        ...columns.map((key) =>
-          key === "interests" ? JSON.stringify(patch[key]) : patch[key],
-        ),
-      ],
-    );
-    if (!result.rows[0]) conflict();
-    return profileView(result.rows[0]);
+    const rows = await this.db.prisma.user.updateManyAndReturn({
+      where: { id: userId, profile_version: expectedVersion },
+      data: { ...patch, profile_version: { increment: 1 } },
+    });
+    if (!rows[0]) conflict();
+    return profileView(rows[0]);
   }
   async timetable(userId: string) {
     const row = await this.owner(userId);
-    return { ...row.timetable, version: row.timetable_version };
+    return {
+      ...(row.timetable as Record<string, any>),
+      version: row.timetable_version,
+    };
   }
   async putTimetable(userId: string, body: any) {
     const { expectedVersion, timetable } = timetableInput(body);
     this.db.requireReady();
-    // One conditional UPDATE atomically replaces the snapshot and advances its version.
-    const result = await this.db.pool.query(
-      "UPDATE users SET timetable=$3,timetable_version=timetable_version+1 WHERE id=$1 AND timetable_version=$2 RETURNING timetable,timetable_version",
-      [userId, expectedVersion, JSON.stringify(timetable)],
-    );
-    if (!result.rows[0]) conflict();
+    // Conditional replacement and version increment remain one database statement.
+    const rows = await this.db.prisma.user.updateManyAndReturn({
+      where: { id: userId, timetable_version: expectedVersion },
+      data: { timetable, timetable_version: { increment: 1 } },
+    });
+    if (!rows[0]) conflict();
     return {
-      ...result.rows[0].timetable,
-      version: result.rows[0].timetable_version,
+      ...(rows[0].timetable as Record<string, any>),
+      version: rows[0].timetable_version,
     };
   }
 }

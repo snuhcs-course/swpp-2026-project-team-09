@@ -13,7 +13,7 @@
 | `worker-server/` | 실제 행사·학식·셔틀 수집 | 내부 3003 |
 | `match-server/` | 동의한 요청의 후보 계산·매칭 | 3004 |
 
-각 프로젝트에서 독립적으로 `pnpm install --frozen-lockfile`을 실행합니다. 루트 package.json이나 workspace는 없습니다. main-public과 main-admin은 같은 소스·이미지·DB를 사용하며 실행 자원과 HTTP 라우트를 분리합니다. PostgreSQL은 서비스별 DB·역할을 나누고, Redis는 캐시와 BullMQ 큐를 별도 컨테이너로 실행합니다.
+각 프로젝트에서 독립적으로 `pnpm install --frozen-lockfile`을 실행합니다. 루트 package.json이나 workspace는 없습니다. main-public과 main-admin은 같은 소스·이미지·DB를 사용하며 실행 자원과 HTTP 라우트를 분리합니다. PostgreSQL은 서비스별 DB·역할을 나누고, main/match는 각각 Prisma 7.10.0 schema와 migration을 소유합니다. Redis는 캐시와 BullMQ 큐를 별도 컨테이너로 실행합니다.
 
 ## 서버 실행
 
@@ -23,6 +23,8 @@ Node.js 22, pnpm 10, Docker 호환 엔진과 Compose가 필요합니다. macOS�
 docker compose --env-file .env.prototype.local -f compose.local.yaml up --build -d
 docker compose --env-file .env.prototype.local -f compose.local.yaml ps
 ```
+
+새 DB에는 시작 시 Prisma migration을 적용합니다. Prisma 도입 이전 DB가 있다면 먼저 백업·스키마 비교 후 명시적으로 baseline을 등록해야 합니다. [main-server 절차](main-server/README.md), [match-server 절차](match-server/README.md)를 따르며 기존 데이터를 reset하지 않습니다. 현재 로컬 DB는 이 검증과 전환을 완료했습니다.
 
 어드민은 <http://localhost:3100>, 메인 API 상태는 <http://localhost:3000/health>입니다. DB와 Redis 포트는 로컬 루프백에만 노출됩니다. 모바일 접속을 위해 public/socket/match 포트는 로컬 네트워크에서 접근할 수 있습니다. 이 Compose는 개발용이며 인터넷 공개 배포용 보안/TLS 설정은 포함하지 않습니다.
 
@@ -46,13 +48,15 @@ docker --context colima compose --env-file .env.prototype.local -f compose.local
 
 - public/admin API, Socket, Worker, Match, Next.js와 DB/Redis 등 Compose 컨테이너 9개가 정상 상태로 실행되었습니다. 최초 관리자 허용 목록은 로컬 설정에 `fyoon46@snu.ac.kr`로 지정했습니다.
 - 서버·모바일 검사와 서버·어드민 빌드, 모바일 타입·번들 검사를 통과했습니다. 이번 모바일 개선에서는 main-server 18개 검사(임시 PostgreSQL/Redis 사용)와 HTTP/Socket 통합 검사를 확인했습니다. 세부 결과는 `.scratch/mobile-experience/`에 기록합니다.
-- Android ARM64 테스트 APK를 에뮬레이터에 설치하고 cold launch를 확인했습니다. 시작 화면 렌더링을 확인했고 해당 프로세스에 AndroidRuntime/ReactNativeJS 오류는 없었습니다. Google 로그인 성공을 뜻하지 않습니다.
+- Android ARM64 테스트 APK를 에뮬레이터에 설치하고 cold launch를 확인했습니다. 시작 화면 렌더링을 확인했고 해당 프로세스에 AndroidRuntime/ReactNativeJS 오류는 없었습니다. 이 최초 cold launch 검사와 아래의 실제 Google 로그인 검증은 별개입니다.
 - 실제 테스트 DB 연결 종료 후 public/admin API의 재연결을 확인했습니다.
 - 행사 수정 → 캐시 무효화 → 소켓 알림 → 최신 조회, 위치 공유 권한, 두 매칭 요청 → 단일 파티 확정과 재시도 중복 방지를 확인했습니다.
 - 실제 학식 조회와 공식 행사 1건 수집에 성공했습니다. 시간·장소가 불명확한 공지 4건은 제외했고, 당시 셔틀 응답에는 차량이 없었습니다.
 - 저장된 셔틀 응답을 동시 조회한 20건에서 캐시 사용 20건·추가 원본 요청 0건을 관찰했습니다. 이는 캐시 재사용 확인이며 처리량 벤치마크가 아닙니다.
 - 사용자의 학교 Google 계정 추가 후 에뮬레이터의 실제 모바일 로그인과 Naver 캠퍼스 지도 타일 표시를 확인했습니다. 이전 계정 미등록 상태의 `INTERNAL_ERROR`는 현재 인증 성공을 막지 않습니다. AI 실제 호출·두 기기 이동·실기기 백그라운드 위치 검증은 남아 있습니다. Colima 명령은 제공하지만 이번 실행 검증은 기존 Docker Desktop에서 했습니다.
 - `610f4c2`에서 프로필·관심사 편집과 비공개 학기 시간표 직접 입력을 추가했습니다. 모바일18 테스트·타입 검사, 서버24 테스트 및 소유자 격리/저장 충돌을 포함한 통합 E2E가 통과했습니다. 시간표를 저장하는 기능과 일정·이동시간을 반영한 추천은 별도이며 후자는 아직 구현 중입니다.
+- main/match의 일반 데이터 처리를 Prisma 7.10.0으로 전환했습니다. Main 27개 회귀 검사, Match 동시성·재시도 5개 검사와 별도 legacy baseline 검사, Prisma 기반 서비스간 E2E, 두 Docker 이미지의 비관리자 기동이 통과했습니다. 실제 DB 12개 업무 테이블의 컬럼·기본값·제약·인덱스를 baseline과 비교한 뒤 이력을 등록했으며, 전후 모든 업무 데이터가 동일함을 확인했습니다.
+- 현재 APK에서 실제 계정으로 프로필 편집과 학기 시간표 화면 표시도 확인했습니다. 사용자의 실제 프로필·시간표에 테스트 데이터를 저장하지 않았습니다.
 - 파티 인원/참여 상태 조회, 공동 퀘스트 수정 충돌 거부·취소 → 소켓 알림 → 구성원 최신 조회를 임시 DB에서 확인했습니다. 소켓 알림 병합의 단위 검사에서는 동시 100개 알림이 조회 1회로 합쳐졌습니다. 실제 서버 처리량 수치는 아닙니다.
 
 서버 4개를 각 디렉터리에서 빌드하고 모바일 의존성을 설치한 뒤, Compose DB/Redis가 실행 중일 때 통합 검사를 재현할 수 있습니다.

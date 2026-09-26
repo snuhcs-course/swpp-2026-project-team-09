@@ -7,19 +7,24 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "prisma generate --config prisma.config.ts && tsc -p tsconfig.json",
     "start": "node dist/main.js",
     "dev": "tsx watch src/main.ts",
-    "test": "tsx --test test/*.test.ts"
+    "test": "tsx --test test/*.test.ts",
+    "db:migrate": "prisma migrate deploy --config prisma.config.ts",
+    "db:generate": "prisma generate --config prisma.config.ts"
   },
   "dependencies": {
     "@nestjs/common": "11.1.17",
     "@nestjs/core": "11.1.17",
     "@nestjs/platform-express": "11.1.17",
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
     "google-auth-library": "11.1.0",
     "ioredis": "5.10.0",
     "jsonwebtoken": "9.0.3",
     "pg": "8.23.0",
+    "prisma": "7.10.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"
   },
@@ -30,5 +35,10 @@
     "@types/pg": "8.18.0",
     "tsx": "4.21.0",
     "typescript": "5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines"
+    ]
   }
 }

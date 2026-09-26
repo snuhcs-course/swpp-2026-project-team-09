@@ -7,26 +7,36 @@
   },
   "packageManager": "pnpm@10.28.0",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "pnpm prisma:generate && tsc -p tsconfig.json",
     "start": "node dist/main.js",
-    "dev": "tsx watch src/main.ts",
-    "test": "tsx --test test/*.test.ts"
+    "dev": "pnpm prisma:generate && tsx watch src/main.ts",
+    "test": "pnpm prisma:generate && tsx --test test/*.test.ts",
+    "prisma:generate": "prisma generate --config prisma.config.ts",
+    "prisma:deploy": "prisma migrate deploy --config prisma.config.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.6",
     "@nestjs/core": "^11.1.6",
     "@nestjs/platform-express": "^11.1.6",
-    "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2",
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
     "ioredis": "^5.7.0",
+    "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3",
-    "jsonwebtoken": "^9.0.2"
+    "prisma": "7.10.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
-    "typescript": "^5.9.2",
-    "tsx": "^4.20.5",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.18.0",
     "@types/pg": "^8.15.5",
-    "@types/jsonwebtoken": "^9.0.10"
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines"
+    ]
   }
 }

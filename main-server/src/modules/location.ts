@@ -22,22 +22,33 @@ export function mayShare(
 export class LocationService {
   constructor(private db: Database) {}
   async related(user: string) {
-    const r = await this.db.pool.query(
-      `SELECT CASE WHEN sender_id=$1 THEN receiver_id ELSE sender_id END AS id FROM friendships WHERE sender_id=$1 OR receiver_id=$1 UNION SELECT b.user_id AS id FROM party_members a JOIN party_members b ON a.party_id=b.party_id WHERE a.user_id=$1`,
-      [user],
-    );
-    return [user, ...r.rows.map((r) => r.id)];
+    const friends = await this.db.prisma.friendship.findMany({
+      where: { OR: [{ sender_id: user }, { receiver_id: user }] },
+    });
+    const members = await this.db.prisma.partyMember.findMany({
+      where: { party: { members: { some: { user_id: user } } } },
+      select: { user_id: true },
+    });
+    return [
+      ...new Set([
+        user,
+        ...friends.map((r) =>
+          r.sender_id === user ? r.receiver_id : r.sender_id,
+        ),
+        ...members.map((r) => r.user_id),
+      ]),
+    ];
   }
   async sharing(user: string, enabled: boolean) {
     bool(enabled);
     this.db.requireReady();
     const recipients = await this.related(user);
     return this.db.tx(async (c) => {
-      await c.query("SELECT id FROM users WHERE id=$1 FOR UPDATE", [user]);
-      await c.query(
-        "UPDATE users SET location_sharing=$2,location_epoch=location_epoch+1 WHERE id=$1",
-        [user, enabled],
-      );
+      await c.$queryRaw`SELECT id FROM users WHERE id=${user}::uuid FOR UPDATE`;
+      await c.user.update({
+        where: { id: user },
+        data: { location_sharing: enabled, location_epoch: { increment: 1 } },
+      });
       if (!enabled) {
         try {
           await this.db.redis.del(`prototype:location:${user}`);
@@ -62,11 +73,10 @@ export class LocationService {
     const recipients = await this.related(user);
     return this.db.tx(async (c) => {
       const r = (
-        await c.query(
-          "SELECT location_sharing,location_epoch FROM users WHERE id=$1 FOR UPDATE",
-          [user],
-        )
-      ).rows[0];
+        await c.$queryRaw<
+          { location_sharing: boolean; location_epoch: number }[]
+        >`SELECT location_sharing,location_epoch FROM users WHERE id=${user}::uuid FOR UPDATE`
+      )[0];
       if (!r?.location_sharing)
         throw new ForbiddenException("Enable location sharing before upload");
       let accepted: unknown;
@@ -104,22 +114,23 @@ export class LocationService {
     this.db.requireReady();
     return this.db.tx(async (c) => {
       // Fresh authoritative consent, never a cached authorization decision.
-      const me = (
-        await c.query("SELECT location_sharing FROM users WHERE id=$1", [user])
-      ).rows[0];
+      const me = await c.user.findUnique({
+        where: { id: user },
+        select: { location_sharing: true },
+      });
       if (!me?.location_sharing) return { items: [] };
-      const friends = (
-        await c.query(
-          "SELECT * FROM friendships WHERE status='accepted' AND (sender_id=$1 OR receiver_id=$1)",
-          [user],
-        )
-      ).rows;
-      const parties = (
-        await c.query(
-          "SELECT b.user_id,a.sharing_enabled AS mine,b.sharing_enabled AS theirs FROM party_members a JOIN party_members b ON a.party_id=b.party_id WHERE a.user_id=$1 AND b.user_id<>$1",
-          [user],
-        )
-      ).rows;
+      const friends = await c.friendship.findMany({
+        where: {
+          status: "accepted",
+          OR: [{ sender_id: user }, { receiver_id: user }],
+        },
+      });
+      const parties = await c.$queryRaw<
+        { user_id: string; mine: boolean; theirs: boolean }[]
+      >`
+        SELECT b.user_id,a.sharing_enabled AS mine,b.sharing_enabled AS theirs
+        FROM party_members a JOIN party_members b ON a.party_id=b.party_id
+        WHERE a.user_id=${user}::uuid AND b.user_id<>${user}::uuid`;
       const ids = [
         ...new Set([
           ...friends.map((r) =>
@@ -129,9 +140,7 @@ export class LocationService {
         ]),
       ];
       if (!ids.length) return { items: [] };
-      const users = (
-        await c.query("SELECT * FROM users WHERE id=ANY($1::uuid[])", [ids])
-      ).rows;
+      const users = await c.user.findMany({ where: { id: { in: ids } } });
       const permitted = users.filter((other) => {
         const f = friends.find(
           (r) => r.sender_id === other.id || r.receiver_id === other.id,

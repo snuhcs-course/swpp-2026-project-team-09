@@ -4,9 +4,9 @@ import {
   NotFoundException,
   ConflictException,
 } from "@nestjs/common";
-import { PoolClient } from "pg";
+import { Prisma } from "../generated/prisma/client";
 import { randomUUID, createHash } from "node:crypto";
-import { Database } from "./database";
+import { Database, Transaction } from "./database";
 import { userView } from "./auth";
 import { bad, bool, capacity, dates, object, text, uuid } from "./validation";
 export function ensureCapacity(current: number, incoming: number, max: number) {
@@ -15,33 +15,35 @@ export function ensureCapacity(current: number, incoming: number, max: number) {
 @Injectable()
 export class SocialService {
   constructor(private db: Database) {}
-  async members(c: PoolClient, id: string) {
+  async members(c: Transaction, id: string) {
     return (
-      await c.query("SELECT user_id FROM party_members WHERE party_id=$1", [id])
-    ).rows.map((r) => r.user_id as string);
+      await c.partyMember.findMany({
+        where: { party_id: id },
+        select: { user_id: true },
+      })
+    ).map((r) => r.user_id);
   }
-  async party(c: PoolClient, id: string, viewer?: string) {
+  async party(c: Transaction, id: string, viewer?: string) {
     const row = (
-      await c.query("SELECT * FROM parties WHERE id=$1 FOR SHARE", [id])
-    ).rows[0];
+      await c.$queryRaw<
+        any[]
+      >`SELECT * FROM parties WHERE id=${id}::uuid FOR SHARE`
+    )[0];
     if (!row) throw new NotFoundException("Party not found");
-    const memberRows = (
-      await c.query(
-        "SELECT user_id,sharing_enabled FROM party_members WHERE party_id=$1",
-        [id],
-      )
-    ).rows;
+    const memberRows = await c.partyMember.findMany({
+      where: { party_id: id },
+    });
     const memberIds = memberRows.map((r) => r.user_id);
     const ownMembership = memberRows.find((r) => r.user_id === viewer);
     const members =
       viewer && !memberIds.includes(viewer)
         ? []
         : (
-            await c.query(
-              "SELECT u.* FROM users u JOIN party_members m ON m.user_id=u.id WHERE m.party_id=$1 ORDER BY u.id",
-              [id],
-            )
-          ).rows.map(userView);
+            await c.user.findMany({
+              where: { memberships: { some: { party_id: id } } },
+              orderBy: { id: "asc" },
+            })
+          ).map(userView);
     return {
       id: row.id,
       title: row.title,
@@ -59,24 +61,23 @@ export class SocialService {
   async listParties(user: string) {
     this.db.requireReady();
     return this.db.tx(async (c) => {
-      const ids = (
-        await c.query(
-          "SELECT id FROM parties ORDER BY created_at DESC LIMIT 100",
-        )
-      ).rows;
+      const ids = await c.party.findMany({
+        select: { id: true },
+        orderBy: { created_at: "desc" },
+        take: 100,
+      });
       const items = [];
       for (const row of ids) items.push(await this.party(c, row.id, user));
       return { items };
     });
   }
-  async validateEvent(c: PoolClient, eventId: string | null) {
+  async validateEvent(c: Transaction, eventId: string | null) {
     if (!eventId) return null;
     const event = (
-      await c.query(
-        "SELECT * FROM events WHERE id=$1 AND status='published' FOR SHARE",
-        [eventId],
-      )
-    ).rows[0];
+      await c.$queryRaw<
+        any[]
+      >`SELECT * FROM events WHERE id=${eventId}::uuid AND status='published' FOR SHARE`
+    )[0];
     if (!event) bad("Published event required");
     return event;
   }
@@ -89,14 +90,10 @@ export class SocialService {
     return this.db.tx(async (c) => {
       await this.validateEvent(c, eventId);
       const id = randomUUID();
-      await c.query(
-        "INSERT INTO parties(id,title,event_id,max_members) VALUES($1,$2,$3,$4)",
-        [id, title, eventId, max],
-      );
-      await c.query(
-        "INSERT INTO party_members(party_id,user_id) VALUES($1,$2)",
-        [id, user],
-      );
+      await c.party.create({
+        data: { id, title, event_id: eventId, max_members: max },
+      });
+      await c.partyMember.create({ data: { party_id: id, user_id: user } });
       await this.db.hint(c, "party.changed", id, [user]);
       return this.party(c, id, user);
     });
@@ -106,17 +103,16 @@ export class SocialService {
     this.db.requireReady();
     return this.db.tx(async (c) => {
       const r = (
-        await c.query("SELECT * FROM parties WHERE id=$1 FOR UPDATE", [id])
-      ).rows[0];
+        await c.$queryRaw<
+          any[]
+        >`SELECT * FROM parties WHERE id=${id}::uuid FOR UPDATE`
+      )[0];
       if (!r) throw new NotFoundException("Party not found");
       const ids = await this.members(c, id);
       if (!ids.includes(user)) {
         await this.validateEvent(c, r.event_id);
         ensureCapacity(ids.length, 1, r.max_members);
-        await c.query(
-          "INSERT INTO party_members(party_id,user_id) VALUES($1,$2)",
-          [id, user],
-        );
+        await c.partyMember.create({ data: { party_id: id, user_id: user } });
         await this.db.hint(c, "party.changed", id, [...ids, user]);
       }
       return this.party(c, id, user);
@@ -126,12 +122,11 @@ export class SocialService {
     uuid(id);
     this.db.requireReady();
     return this.db.tx(async (c) => {
-      await c.query("SELECT id FROM parties WHERE id=$1 FOR UPDATE", [id]);
+      await c.$queryRaw`SELECT id FROM parties WHERE id=${id}::uuid FOR UPDATE`;
       const ids = await this.members(c, id);
-      await c.query(
-        "DELETE FROM party_members WHERE party_id=$1 AND user_id=$2",
-        [id, user],
-      );
+      await c.partyMember.deleteMany({
+        where: { party_id: id, user_id: user },
+      });
       await this.db.hint(c, "party.changed", id, [...ids, user]);
       return { ok: true };
     });
@@ -173,32 +168,24 @@ export class SocialService {
       .digest("hex");
     this.db.requireReady();
     return this.db.tx(async (c) => {
-      await c.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [
-        requestId,
-      ]);
-      const prior = (
-        await c.query("SELECT * FROM match_batches WHERE request_id=$1", [
-          requestId,
-        ])
-      ).rows[0];
+      await c.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${requestId},0))`;
+      const prior = await c.matchBatch.findUnique({
+        where: { request_id: requestId },
+      });
       if (prior) {
         if (prior.fingerprint !== fingerprint)
           throw new ConflictException("Request id already has different input");
         return this.party(c, prior.party_id);
       }
       // Lock users consistently, then consumption check is serial even across different batch IDs.
-      const found = await c.query(
-        "SELECT id FROM users WHERE id=ANY($1::uuid[]) ORDER BY id FOR UPDATE",
-        [users],
-      );
-      if (found.rows.length !== users.length) bad("Unknown matching user");
+      const found = await c.$queryRaw<
+        { id: string }[]
+      >`SELECT id FROM users WHERE id IN (${Prisma.join(users.map((id) => Prisma.sql`${id}::uuid`))}) ORDER BY id FOR UPDATE`;
+      if (found.length !== users.length) bad("Unknown matching user");
       if (
-        (
-          await c.query(
-            "SELECT request_id FROM consumed_match_requests WHERE request_id=ANY($1::uuid[])",
-            [requests],
-          )
-        ).rowCount
+        await c.consumedMatchRequest.count({
+          where: { request_id: { in: requests } },
+        })
       )
         throw new ConflictException("Matching request already consumed");
       const event = await this.validateEvent(c, eventId);
@@ -209,38 +196,36 @@ export class SocialService {
       )
         bad("Event must fit within every matching request time interval");
       const id = randomUUID();
-      await c.query(
-        "INSERT INTO parties(id,title,event_id,max_members) VALUES($1,$2,$3,$4)",
-        [id, title, eventId, max],
-      );
-      for (let i = 0; i < users.length; i++) {
-        await c.query(
-          "INSERT INTO party_members(party_id,user_id) VALUES($1,$2)",
-          [id, users[i]],
-        );
-        await c.query(
-          "INSERT INTO consumed_match_requests(request_id,user_id,party_id) VALUES($1,$2,$3)",
-          [requests[i], users[i], id],
-        );
-      }
-      await c.query(
-        "INSERT INTO match_batches(request_id,party_id,fingerprint) VALUES($1,$2,$3)",
-        [requestId, id, fingerprint],
-      );
+      await c.party.create({
+        data: { id, title, event_id: eventId, max_members: max },
+      });
+      await c.partyMember.createMany({
+        data: users.map((user_id) => ({ party_id: id, user_id })),
+      });
+      await c.consumedMatchRequest.createMany({
+        data: users.map((user_id, i) => ({
+          request_id: requests[i],
+          user_id,
+          party_id: id,
+        })),
+      });
+      await c.matchBatch.create({
+        data: { request_id: requestId, party_id: id, fingerprint },
+      });
       await this.db.hint(c, "party.changed", id, users);
       return this.party(c, id);
     });
   }
   async friends(user: string) {
     this.db.requireReady();
-    const r = await this.db.pool.query(
-      `SELECT f.*,row_to_json(u) AS other FROM friendships f JOIN users u ON u.id=CASE WHEN f.sender_id=$1 THEN f.receiver_id ELSE f.sender_id END WHERE f.sender_id=$1 OR f.receiver_id=$1`,
-      [user],
-    );
+    const rows = await this.db.prisma.friendship.findMany({
+      where: { OR: [{ sender_id: user }, { receiver_id: user }] },
+      include: { sender: true, receiver: true },
+    });
     return {
-      items: r.rows.map((r) => ({
+      items: rows.map((r) => ({
         id: r.id,
-        user: userView(r.other),
+        user: userView(r.sender_id === user ? r.receiver : r.sender),
         status: r.status,
         direction: r.sender_id === user ? "outgoing" : "incoming",
         sharingEnabled:
@@ -252,18 +237,18 @@ export class SocialService {
     const email = text(body?.email, "email", 320).toLowerCase();
     this.db.requireReady();
     return this.db.tx(async (c) => {
-      const other = (
-        await c.query("SELECT id FROM users WHERE email=$1", [email])
-      ).rows[0];
+      const other = await c.user.findUnique({
+        where: { email },
+        select: { id: true },
+      });
       if (!other) throw new NotFoundException("Account not found");
       if (other.id === user) bad("Cannot request yourself");
       const id = randomUUID();
-      const r = await c.query(
-        "INSERT INTO friendships(id,sender_id,receiver_id) VALUES($1,$2,$3) ON CONFLICT DO NOTHING RETURNING id",
-        [id, user, other.id],
-      );
-      if (!r.rowCount)
-        throw new ConflictException("Relationship already exists");
+      const r = await c.friendship.createMany({
+        data: [{ id, sender_id: user, receiver_id: other.id }],
+        skipDuplicates: true,
+      });
+      if (!r.count) throw new ConflictException("Relationship already exists");
       await this.db.hint(c, "friend.changed", id, [user, other.id]);
       return { id, status: "pending" };
     });
@@ -273,22 +258,28 @@ export class SocialService {
     this.db.requireReady();
     return this.db.tx(async (c) => {
       const r = (
-        await c.query("SELECT * FROM friendships WHERE id=$1 FOR UPDATE", [id])
-      ).rows[0];
+        await c.$queryRaw<
+          any[]
+        >`SELECT * FROM friendships WHERE id=${id}::uuid FOR UPDATE`
+      )[0];
       if (!r || ![r.sender_id, r.receiver_id].includes(user))
         throw new NotFoundException("Relationship not found");
       if (enabled === undefined) {
         if (r.receiver_id !== user)
           throw new ForbiddenException("Only recipient can accept");
-        await c.query("UPDATE friendships SET status='accepted' WHERE id=$1", [
-          id,
-        ]);
+        await c.friendship.update({
+          where: { id },
+          data: { status: "accepted" },
+        });
       } else {
         bool(enabled);
-        await c.query(
-          `UPDATE friendships SET ${r.sender_id === user ? "sender_sharing" : "receiver_sharing"}=$2 WHERE id=$1`,
-          [id, enabled],
-        );
+        await c.friendship.update({
+          where: { id },
+          data:
+            r.sender_id === user
+              ? { sender_sharing: enabled }
+              : { receiver_sharing: enabled },
+        });
       }
       await this.db.hint(c, "friend.changed", id, [r.sender_id, r.receiver_id]);
       return { ok: true };
@@ -299,24 +290,23 @@ export class SocialService {
     bool(enabled);
     this.db.requireReady();
     return this.db.tx(async (c) => {
-      await c.query("SELECT id FROM parties WHERE id=$1 FOR UPDATE", [id]);
-      const r = await c.query(
-        "UPDATE party_members SET sharing_enabled=$3 WHERE party_id=$1 AND user_id=$2",
-        [id, user, enabled],
-      );
-      if (!r.rowCount)
-        throw new ForbiddenException("Party membership required");
+      await c.$queryRaw`SELECT id FROM parties WHERE id=${id}::uuid FOR UPDATE`;
+      const r = await c.partyMember.updateMany({
+        where: { party_id: id, user_id: user },
+        data: { sharing_enabled: enabled },
+      });
+      if (!r.count) throw new ForbiddenException("Party membership required");
       await this.db.hint(c, "sharing.changed", id, await this.members(c, id));
       return { ok: true };
     });
   }
   async quests(user: string) {
     this.db.requireReady();
-    const r = await this.db.pool.query(
-      "SELECT q.* FROM quests q JOIN party_members m ON m.party_id=q.party_id WHERE m.user_id=$1 ORDER BY q.starts_at",
-      [user],
-    );
-    return { items: r.rows.map(questView) };
+    const rows = await this.db.prisma.quest.findMany({
+      where: { party: { members: { some: { user_id: user } } } },
+      orderBy: { starts_at: "asc" },
+    });
+    return { items: rows.map(questView) };
   }
   async saveQuest(user: string, body: any, id?: string) {
     this.db.requireReady();
@@ -331,20 +321,25 @@ export class SocialService {
     return this.db.tx(async (c) => {
       // Lock the parent before checking membership, just as join/leave do.
       const reference = id
-        ? (await c.query("SELECT party_id FROM quests WHERE id=$1", [id]))
-            .rows[0]
+        ? await c.quest.findUnique({
+            where: { id },
+            select: { party_id: true },
+          })
         : null;
       if (id && !reference) throw new NotFoundException("Quest not found");
       const partyId = uuid(reference?.party_id ?? input.partyId);
       if (input.partyId !== undefined && input.partyId !== partyId)
         bad("Quest party cannot change");
-      await c.query("SELECT id FROM parties WHERE id=$1 FOR UPDATE", [partyId]);
+      await c.$queryRaw`SELECT id FROM parties WHERE id=${partyId}::uuid FOR UPDATE`;
       const members = await this.members(c, partyId);
       if (!members.includes(user))
         throw new ForbiddenException("Party membership required");
       const old = id
-        ? (await c.query("SELECT * FROM quests WHERE id=$1 FOR UPDATE", [id]))
-            .rows[0]
+        ? (
+            await c.$queryRaw<
+              any[]
+            >`SELECT * FROM quests WHERE id=${id}::uuid FOR UPDATE`
+          )[0]
         : null;
       if (id && !old) throw new NotFoundException("Quest not found");
       if (old && input.expectedVersion !== old.version)
@@ -383,26 +378,23 @@ export class SocialService {
         location = text(b.locationName, "locationName", 300),
         d = dates(b),
         questId = id || randomUUID();
-      const r = await c.query(
-        "INSERT INTO quests(id,party_id,title,starts_at,ends_at,location_name,status) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(id) DO UPDATE SET title=$3,starts_at=$4,ends_at=$5,location_name=$6,status=$7,version=quests.version+1 RETURNING *",
-        [
-          questId,
-          partyId,
-          title,
-          d.startsAt,
-          d.endsAt,
-          location,
-          cancelling ? "cancelled" : "active",
-        ],
-      );
-      await this.db.hint(
-        c,
-        "quest.changed",
-        questId,
-        members,
-        r.rows[0].version,
-      );
-      return questView(r.rows[0]);
+      const data = {
+        title,
+        starts_at: new Date(d.startsAt),
+        ends_at: new Date(d.endsAt),
+        location_name: location,
+        status: cancelling ? "cancelled" : "active",
+      };
+      const row = old
+        ? await c.quest.update({
+            where: { id: questId },
+            data: { ...data, version: { increment: 1 } },
+          })
+        : await c.quest.create({
+            data: { id: questId, party_id: partyId, ...data },
+          });
+      await this.db.hint(c, "quest.changed", questId, members, row.version);
+      return questView(row);
     });
   }
 }

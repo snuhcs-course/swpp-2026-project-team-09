@@ -76,7 +76,7 @@ test(
   async (t) => {
     // Build first: integration verifies the same emitted Nest dependency metadata as production.
     const { NestFactory } = require("@nestjs/core");
-      const {
+    const {
       AppModule,
       Errors,
       runtimeControllers,
@@ -112,10 +112,14 @@ test(
     }
     try {
       for (const id of users)
-        await db.pool.query(
-          "INSERT INTO users(id,google_sub,email,display_name) VALUES($1,$2,$3,$4)",
-          [id, id, `${id}@snu.ac.kr`, "Google name"],
-        );
+        await db.prisma.user.create({
+          data: {
+            id,
+            google_sub: id,
+            email: `${id}@snu.ac.kr`,
+            display_name: "Google name",
+          },
+        });
       await t.test(
         "defaults and ownership are enforced through authenticated routes",
         async () => {
@@ -255,9 +259,7 @@ test(
         },
       );
     } finally {
-      await db.pool.query("DELETE FROM users WHERE id=ANY($1::uuid[])", [
-        users,
-      ]);
+      await db.prisma.user.deleteMany({ where: { id: { in: users } } });
       await app.close();
     }
   },

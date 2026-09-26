@@ -27,10 +27,14 @@ test(
     let eventId: string | undefined;
     try {
       for (const id of users)
-        await db.pool.query(
-          "INSERT INTO users(id,google_sub,email,display_name) VALUES($1::uuid,$1::text,$2,$3)",
-          [id, `${id}@snu.ac.kr`, "Test only"],
-        );
+        await db.prisma.user.create({
+          data: {
+            id,
+            google_sub: id,
+            email: `${id}@snu.ac.kr`,
+            display_name: "Test only",
+          },
+        });
       const event = await events.save({
         title: "DB test event",
         description: "test fixture",
@@ -60,11 +64,10 @@ test(
               /Published event required/,
             );
           }
-          const count = await db.pool.query(
-            "SELECT count(*) FROM party_members WHERE party_id=$1",
-            [linked.id],
-          );
-          assert.equal(Number(count.rows[0].count), 1);
+          const count = await db.prisma.partyMember.count({
+            where: { party_id: linked.id },
+          });
+          assert.equal(count, 1);
         },
       );
       const p = await social.createParty(users[0], {
@@ -105,11 +108,10 @@ test(
               }),
             /Event must fit/,
           );
-          const consumed = await db.pool.query(
-            "SELECT count(*) FROM consumed_match_requests WHERE request_id=ANY($1::uuid[])",
-            [request.requestIds],
-          );
-          assert.equal(Number(consumed.rows[0].count), 0);
+          const consumed = await db.prisma.consumedMatchRequest.count({
+            where: { request_id: { in: request.requestIds } },
+          });
+          assert.equal(consumed, 0);
           await events.save({ status: "draft" }, eventId);
         },
       );
@@ -121,11 +123,10 @@ test(
         /already consumed/,
       );
       const member = (
-        await db.pool.query(
-          "SELECT user_id FROM party_members WHERE party_id=$1 AND user_id<>$2",
-          [p.id, users[0]],
-        )
-      ).rows[0].user_id;
+        await db.prisma.partyMember.findFirstOrThrow({
+          where: { party_id: p.id, user_id: { not: users[0] } },
+        })
+      ).user_id;
       await location.sharing(users[0], true);
       await location.sharing(member, true);
       await location.upload(users[0], {
@@ -138,10 +139,14 @@ test(
       await t.test(
         "delayed offset-formatted location cannot overwrite newer position or publish a hint",
         async () => {
-          const before = await db.pool.query(
-            "SELECT count(*) FROM outbox WHERE envelope->>'type'='location.changed' AND envelope->>'entityId'=$1",
-            [users[0]],
-          );
+          const before = await db.prisma.outbox.count({
+            where: {
+              AND: [
+                { envelope: { path: ["type"], equals: "location.changed" } },
+                { envelope: { path: ["entityId"], equals: users[0] } },
+              ],
+            },
+          });
           const previous = await db.redis.get(`prototype:location:${users[0]}`);
           const old = new Date(Date.now() - 30000);
           const offset = new Date(old.getTime() + 9 * 3600000)
@@ -157,11 +162,15 @@ test(
             await db.redis.get(`prototype:location:${users[0]}`),
             previous,
           );
-          const after = await db.pool.query(
-            "SELECT count(*) FROM outbox WHERE envelope->>'type'='location.changed' AND envelope->>'entityId'=$1",
-            [users[0]],
-          );
-          assert.equal(after.rows[0].count, before.rows[0].count);
+          const after = await db.prisma.outbox.count({
+            where: {
+              AND: [
+                { envelope: { path: ["type"], equals: "location.changed" } },
+                { envelope: { path: ["entityId"], equals: users[0] } },
+              ],
+            },
+          });
+          assert.equal(after, before);
         },
       );
       await social.partySharing(member, p.id, false);
@@ -195,22 +204,15 @@ test(
       assert.equal(await db.redis.get(cache), null);
       await db.redis.del(cache, floor);
     } finally {
-      await db.pool.query(
-        "DELETE FROM consumed_match_requests WHERE user_id=ANY($1::uuid[])",
-        [users],
-      );
-      await db.pool.query(
-        "DELETE FROM match_batches WHERE party_id=ANY($1::uuid[])",
-        [partyIds],
-      );
-      await db.pool.query("DELETE FROM parties WHERE id=ANY($1::uuid[])", [
-        partyIds,
-      ]);
-      await db.pool.query("DELETE FROM users WHERE id=ANY($1::uuid[])", [
-        users,
-      ]);
-      if (eventId)
-        await db.pool.query("DELETE FROM events WHERE id=$1", [eventId]);
+      await db.prisma.consumedMatchRequest.deleteMany({
+        where: { user_id: { in: users } },
+      });
+      await db.prisma.matchBatch.deleteMany({
+        where: { party_id: { in: partyIds } },
+      });
+      await db.prisma.party.deleteMany({ where: { id: { in: partyIds } } });
+      await db.prisma.user.deleteMany({ where: { id: { in: users } } });
+      if (eventId) await db.prisma.event.delete({ where: { id: eventId } });
       await db.redis.del(...users.map((id) => `prototype:location:${id}`));
       await db.onModuleDestroy();
     }

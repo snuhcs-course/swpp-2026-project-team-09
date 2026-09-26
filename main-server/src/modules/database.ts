@@ -4,45 +4,58 @@ import {
   OnModuleInit,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { Pool, PoolClient } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient, Prisma } from "../generated/prisma/client";
 import Redis from "ioredis";
-import { readFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { randomUUID } from "node:crypto";
+export type Transaction = Prisma.TransactionClient;
 
 @Injectable()
 export class Database implements OnModuleInit, OnModuleDestroy {
-  readonly pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    max: 10,
-    connectionTimeoutMillis: 3000,
+  readonly prisma = new PrismaClient({
+    adapter: new PrismaPg({
+      connectionString: process.env.DATABASE_URL,
+      max: 10,
+      connectionTimeoutMillis: 3000,
+    }),
   });
   readonly redis = new Redis(
     process.env.REDIS_CACHE_URL || "redis://localhost:6379",
-    { lazyConnect: true, maxRetriesPerRequest: 1, connectTimeout: 2000 },
+    {
+      lazyConnect: true,
+      maxRetriesPerRequest: 1,
+      connectTimeout: 2000,
+    },
   );
   private timer?: NodeJS.Timeout;
-  private relaying = false;
+  private relayTask?: Promise<void>;
   ready = false;
   constructor() {
-    // pg evicts an idle failed connection and emits an error; handling it keeps
-    // the runtime alive so later requests and outbox ticks can reconnect.
-    this.pool.on("error", () => {
-      console.warn("Idle database connection failed; pool will reconnect");
-    });
     this.redis.on("error", () => {});
   }
   async onModuleInit() {
     if (!process.env.DATABASE_URL) return;
+    // Migrate serializes concurrent public/admin deployments using its advisory lock.
+    // Existing non-Prisma databases must be explicitly verified and baselined first.
     try {
-      await this.tx(async (c) => {
-        await c.query("SELECT pg_advisory_xact_lock(741902)");
-        await c.query(await readFile("migrations/001_initial.sql", "utf8"));
-      });
+      await promisify(execFile)(
+        process.execPath,
+        [
+          require.resolve("prisma/build/index.js"),
+          "migrate",
+          "deploy",
+          "--config",
+          "prisma.config.ts",
+        ],
+        { timeout: 120000 },
+      );
+      await this.prisma.$connect();
       this.ready = true;
     } catch (e) {
       console.error(
-        "Database initialization failed",
-        e instanceof Error ? e.message : "unknown",
+        "Database migration/connection failed; verify migration status and baseline before retrying",
       );
       throw e;
     }
@@ -51,7 +64,9 @@ export class Database implements OnModuleInit, OnModuleDestroy {
   }
   async onModuleDestroy() {
     if (this.timer) clearInterval(this.timer);
-    await this.pool.end();
+    this.ready = false;
+    await this.relayTask;
+    await this.prisma.$disconnect();
     this.redis.disconnect();
   }
   requireReady() {
@@ -61,64 +76,66 @@ export class Database implements OnModuleInit, OnModuleDestroy {
         code: "CONFIGURATION_REQUIRED",
       });
   }
-  async tx<T>(fn: (c: PoolClient) => Promise<T>): Promise<T> {
-    const c = await this.pool.connect();
-    try {
-      await c.query("BEGIN");
-      const result = await fn(c);
-      await c.query("COMMIT");
-      return result;
-    } catch (e) {
-      await c.query("ROLLBACK");
-      throw e;
-    } finally {
-      c.release();
-    }
+  async tx<T>(
+    fn: (c: Transaction) => Promise<T>,
+    isolationLevel?: Prisma.TransactionIsolationLevel,
+  ): Promise<T> {
+    return this.prisma.$transaction(fn, {
+      maxWait: 5000,
+      timeout: 20000,
+      isolationLevel,
+    });
   }
   async hint(
-    c: PoolClient,
+    c: Transaction,
     type: string,
     entityId: string,
     userIds?: string[],
     version?: number,
     eventRevision?: number,
   ) {
-    await c.query(
-      "INSERT INTO outbox(id,envelope,event_revision) VALUES($1,$2,$3)",
-      [
-        randomUUID(),
-        {
+    await c.outbox.create({
+      data: {
+        id: randomUUID(),
+        event_revision: eventRevision ?? null,
+        envelope: {
           id: randomUUID(),
           type,
           entityId,
-          version,
+          ...(version === undefined ? {} : { version }),
           audience: userIds
             ? { kind: "users", userIds: [...new Set(userIds)] }
             : { kind: "public" },
         },
-        eventRevision ?? null,
-      ],
-    );
+      },
+    });
   }
-  async relay() {
-    if (!this.ready || this.relaying) return;
-    this.relaying = true;
+  relay(): Promise<void> {
+    if (!this.ready) return Promise.resolve();
+    if (!this.relayTask)
+      this.relayTask = this.relayOnce().finally(() => {
+        this.relayTask = undefined;
+      });
+    return this.relayTask;
+  }
+  private async relayOnce() {
     try {
       await this.tx(async (c) => {
-        // Cross-runtime single relay preserves revision ordering; a crash can duplicate hints.
-        const lock = await c.query(
-          "SELECT pg_try_advisory_xact_lock(741903) AS locked",
-        );
-        if (!lock.rows[0].locked) return;
-        const rows = await c.query(
-          "SELECT * FROM outbox WHERE delivered_at IS NULL ORDER BY sequence LIMIT 100 FOR UPDATE",
-        );
-        for (const row of rows.rows) {
+        const [lock] = await c.$queryRaw<
+          { locked: boolean }[]
+        >`SELECT pg_try_advisory_xact_lock(741903) AS locked`;
+        if (!lock.locked) return;
+        const rows = await c.outbox.findMany({
+          where: { delivered_at: null },
+          orderBy: { sequence: "asc" },
+          take: 100,
+        });
+        for (const row of rows) {
           await deliverOutbox(this.redis, row);
-          await c.query(
-            "UPDATE outbox SET delivered_at=now() WHERE sequence=$1",
-            [row.sequence],
-          );
+          await c.outbox.update({
+            where: { sequence: row.sequence },
+            data: { delivered_at: new Date() },
+          });
         }
       });
     } catch (e) {
@@ -126,8 +143,6 @@ export class Database implements OnModuleInit, OnModuleDestroy {
         "Outbox relay pending:",
         e instanceof Error ? e.message : "unknown",
       );
-    } finally {
-      this.relaying = false;
     }
   }
 }

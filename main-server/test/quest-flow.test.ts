@@ -26,10 +26,14 @@ test(
     };
     try {
       for (const id of users)
-        await db.pool.query(
-          "INSERT INTO users(id,google_sub,email,display_name) VALUES($1,$2,$3,$4)",
-          [id, `quest-test-${id}`, `${id}@snu.ac.kr`, "Test member"],
-        );
+        await db.prisma.user.create({
+          data: {
+            id,
+            google_sub: `quest-test-${id}`,
+            email: `${id}@snu.ac.kr`,
+            display_name: "Test member",
+          },
+        });
       const party = await social.createParty(users[0], {
         title: "Shared-plan test",
         maxMembers: 2,
@@ -177,12 +181,12 @@ test(
                 (error as any).getResponse().code === "QUEST_CANCELLED",
             );
           }
-          const hints = await db.pool.query(
-            "SELECT envelope FROM outbox WHERE envelope->>'entityId'=$1 ORDER BY sequence",
-            [quest.id],
-          );
-          assert.equal(hints.rows.length, 3);
-          assert.deepEqual(hints.rows.at(-1).envelope.audience, {
+          const hints = await db.prisma.outbox.findMany({
+            where: { envelope: { path: ["entityId"], equals: quest.id } },
+            orderBy: { sequence: "asc" },
+          });
+          assert.equal(hints.length, 3);
+          assert.deepEqual((hints.at(-1)!.envelope as any).audience, {
             kind: "users",
             userIds: [users[0], users[1]],
           });
@@ -195,23 +199,38 @@ test(
             ...plan,
             partyId: party.id,
           });
-          const lock = await db.pool.connect();
+          let release!: () => void, acquired!: (pid: number) => void;
+          const releaseGate = new Promise<void>((resolve) => {
+            release = resolve;
+          });
+          const acquiredGate = new Promise<number>((resolve) => {
+            acquired = resolve;
+          });
+          const held = db.tx(async (lock) => {
+            const [backend] = await lock.$queryRaw<
+              { pid: number }[]
+            >`SELECT pg_backend_pid() AS pid`;
+            await lock.$queryRaw`SELECT id FROM parties WHERE id=${party.id}::uuid FOR UPDATE`;
+            acquired(backend.pid);
+            await releaseGate;
+          });
           let leave: Promise<unknown> | undefined,
             edit: Promise<unknown> | undefined;
           try {
-            await lock.query("BEGIN");
-            const pid = (await lock.query("SELECT pg_backend_pid() AS pid"))
-              .rows[0].pid;
-            await lock.query("SELECT id FROM parties WHERE id=$1 FOR UPDATE", [
-              party.id,
+            const pid = await Promise.race([
+              acquiredGate,
+              held.then(() => {
+                throw Error("Lock transaction exited before acquisition");
+              }),
             ]);
             async function waitForBlocked(count: number) {
               for (let i = 0; i < 100; i++) {
-                const blocked = await db.pool.query(
-                  "WITH RECURSIVE waiting AS (SELECT pid FROM pg_stat_activity WHERE $1=ANY(pg_blocking_pids(pid)) UNION SELECT a.pid FROM pg_stat_activity a JOIN waiting w ON w.pid=ANY(pg_blocking_pids(a.pid))) SELECT count(DISTINCT pid) FROM waiting",
-                  [pid],
-                );
-                if (Number(blocked.rows[0].count) >= count) return;
+                const blocked = await db.prisma.$queryRaw<{ count: bigint }[]>`
+                  WITH RECURSIVE waiting AS (
+                    SELECT pid FROM pg_stat_activity WHERE ${pid}::int=ANY(pg_blocking_pids(pid))
+                    UNION SELECT a.pid FROM pg_stat_activity a JOIN waiting w ON w.pid=ANY(pg_blocking_pids(a.pid))
+                  ) SELECT count(DISTINCT pid) FROM waiting`;
+                if (Number(blocked[0].count) >= count) return;
                 await new Promise((resolve) => setTimeout(resolve, 10));
               }
               throw new Error("Expected party-row lock wait did not occur");
@@ -226,7 +245,8 @@ test(
             // Attach rejection handling before releasing the lock.
             const denied = assert.rejects(() => edit!, status(403));
             await waitForBlocked(2);
-            await lock.query("COMMIT");
+            release();
+            await held;
             await leave;
             await denied;
             const unchanged = (await social.quests(users[0])).items.find(
@@ -249,8 +269,8 @@ test(
               status(403),
             );
           } finally {
-            await lock.query("ROLLBACK");
-            lock.release();
+            release();
+            await held;
             await Promise.allSettled(
               [leave, edit].filter(Boolean) as Promise<unknown>[],
             );
@@ -259,21 +279,23 @@ test(
       );
     } finally {
       const questIds = (
-        await db.pool.query(
-          "DELETE FROM quests WHERE party_id=ANY($1::uuid[]) RETURNING id",
-          [parties],
-        )
-      ).rows.map((r) => r.id);
-      await db.pool.query(
-        "DELETE FROM outbox WHERE envelope->>'entityId'=ANY($1::text[])",
-        [[...parties, ...questIds]],
-      );
-      await db.pool.query("DELETE FROM parties WHERE id=ANY($1::uuid[])", [
-        parties,
-      ]);
-      await db.pool.query("DELETE FROM users WHERE id=ANY($1::uuid[])", [
-        users,
-      ]);
+        await db.prisma.quest.findMany({
+          where: { party_id: { in: parties } },
+          select: { id: true },
+        })
+      ).map((r) => r.id);
+      await db.prisma.quest.deleteMany({
+        where: { party_id: { in: parties } },
+      });
+      await db.prisma.outbox.deleteMany({
+        where: {
+          OR: [...parties, ...questIds].map((id) => ({
+            envelope: { path: ["entityId"], equals: id },
+          })),
+        },
+      });
+      await db.prisma.party.deleteMany({ where: { id: { in: parties } } });
+      await db.prisma.user.deleteMany({ where: { id: { in: users } } });
       await db.onModuleDestroy();
     }
   },

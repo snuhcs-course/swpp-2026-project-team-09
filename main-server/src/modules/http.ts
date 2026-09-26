@@ -64,7 +64,7 @@ export class HealthController {
   @Get("health") async health() {
     this.db.requireReady();
     try {
-      await this.db.pool.query("SELECT 1");
+      await this.db.prisma.$queryRaw`SELECT 1`;
     } catch {
       throw new ServiceUnavailableException("Database unavailable");
     }
@@ -235,9 +235,9 @@ export class InternalController {
   @Get("users/:id") async user(@Param("id") id: string) {
     uuid(id);
     this.db.requireReady();
-    const r = await this.db.pool.query("SELECT * FROM users WHERE id=$1", [id]);
-    if (!r.rows[0]) throw new HttpException("Account not found", 404);
-    return userView(r.rows[0]);
+    const row = await this.db.prisma.user.findUnique({ where: { id } });
+    if (!row) throw new HttpException("Account not found", 404);
+    return userView(row);
   }
 }
 export function runtimeControllers(role: string) {
@@ -278,7 +278,11 @@ export class Errors implements ExceptionFilter {
         .json(typeof body === "string" ? { message: body } : body);
     }
     const code = (e as any)?.code;
-    if (code === "23505")
+    if (
+      code === "23505" ||
+      code === "P2002" ||
+      (code === "P2010" && (e as any)?.meta?.code === "23505")
+    )
       return res.status(409).json({ message: "Conflicting record" });
     console.error(
       "Unhandled request error",

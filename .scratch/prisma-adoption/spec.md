@@ -1,7 +1,7 @@
 # Prisma ORM 적용
 
 Status: ready-for-agent
-State: implementation and migration validation in progress
+State: implemented; integration and existing-data migration verified
 
 2026-09-27 사용자가 Prisma ORM 사용을 명시했다. PostgreSQL/PostGIS, main/match의 데이터 소유권, Redis/큐 및 서비스 분리는 유지한다. Prisma 7.10.0 안정 패키지와 PostgreSQL adapter를 두 서비스에 동일하게 고정한다.
 
@@ -14,4 +14,11 @@ State: implementation and migration validation in progress
 
 ## 완료 증거
 
-아직 진행 중. 패키지 생성·빌드·테스트·빈 DB migration·기존 데이터 baseline·Docker 실행·통합 E2E 결과를 최종 반영한다.
+- main-server: Prisma 7.10.0 CRUD, `prisma/schema.prisma`, `0_init` migration; full 27 regression tests passed. Fresh concurrent startup and explicit legacy baseline also preserve SQL CHECK, functional/partial indexes, PostGIS and owner-managed records.
+- match-server: same pinned Prisma version, `0001_baseline`; five existing rule/concurrency/retry tests passed with PostgreSQL/Redis, additional PostgreSQL baseline test rejects unbaselined legacy schema (P3005), preserves full request/batch fixtures and enforces CHECK/partial uniqueness.
+- Root reviewed lock order, profile/timetable CAS, transactional outbox and immutable match retries. Parameterized raw SQL remains only where needed. No ORM speedup is claimed.
+- Prisma-based cross-service E2E passed: public/admin boundary, socket auth, private profiles/timetables, event cache/outbox/hints, quest conflict/cancel, sharing revocation, two-request single-party matching and DB connection recovery. Isolated resources cleaned.
+- Both Docker images built and started healthy as non-root against fresh disposable DBs. Fixed missing migration-engine packaging by permitting only @prisma/engines build script.
+- Actual local main/match schema matched baseline across 12 application tables: columns, defaults, all constraints and indexes. After final owner-only backups, applied explicit baseline resolve and deploy using each service role. Compared every application row before/after: unchanged. No reset or db push.
+- Final pre-migration backups: `artifacts/db-backups/*-20260927-074846-prisma-final-backup.dump` (Git ignored, mode 600). Earlier main/match backups were restored successfully into disposable DBs.
+- Root integrated worktrees into `codex/prisma-integration`; final delivery is a squash merge to `0.0/Main`, no push. Full MVP remains in progress under the separate completion spec.

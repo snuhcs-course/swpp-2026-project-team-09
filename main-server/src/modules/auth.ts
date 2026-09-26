@@ -61,17 +61,18 @@ export class AuthService {
     }
     const p = schoolIdentity(payload);
     this.db.requireReady();
-    const r = await this.db.pool.query(
-      "INSERT INTO users(id,google_sub,email,display_name,avatar_url) VALUES($1,$2,$3,$4,$5) ON CONFLICT(google_sub) DO UPDATE SET email=excluded.email,avatar_url=excluded.avatar_url RETURNING *",
-      [
-        randomUUID(),
-        p.sub,
-        p.email!.toLowerCase(),
-        p.name || p.email,
-        p.picture || null,
-      ],
-    );
-    const user = userView(r.rows[0]);
+    const row = await this.db.prisma.user.upsert({
+      where: { google_sub: p.sub },
+      create: {
+        id: randomUUID(),
+        google_sub: p.sub,
+        email: p.email!.toLowerCase(),
+        display_name: p.name || p.email!,
+        avatar_url: p.picture || null,
+      },
+      update: { email: p.email!.toLowerCase(), avatar_url: p.picture || null },
+    });
+    const user = userView(row);
     return {
       accessToken: jwt.sign(
         { email: user.email, role: user.role },
@@ -105,11 +106,9 @@ export class AuthService {
       throw new UnauthorizedException("Invalid or expired token");
     }
     this.db.requireReady();
-    const r = await this.db.pool.query("SELECT * FROM users WHERE id=$1", [
-      sub,
-    ]);
-    if (!r.rows[0]) throw new UnauthorizedException("Unknown account");
-    return userView(r.rows[0]);
+    const row = await this.db.prisma.user.findUnique({ where: { id: sub } });
+    if (!row) throw new UnauthorizedException("Unknown account");
+    return userView(row);
   }
 }
 @Injectable()

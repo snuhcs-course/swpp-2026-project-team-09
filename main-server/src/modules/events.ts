@@ -31,18 +31,14 @@ export class EventsService {
       } catch {}
     }
     const snapshot = await this.db.tx(async (c) => {
-      await c.query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
-      const rows = await c.query(
-        `SELECT * FROM events ${admin ? "" : "WHERE status IN ('published','cancelled')"} ORDER BY starts_at LIMIT 500`,
-      );
-      const rev = await c.query(
-        "SELECT revision FROM event_revision WHERE id=1",
-      );
-      return {
-        items: rows.rows.map(eventView),
-        revision: Number(rev.rows[0].revision),
-      };
-    });
+      const rows = await c.event.findMany({
+        where: admin ? {} : { status: { in: ["published", "cancelled"] } },
+        orderBy: { starts_at: "asc" },
+        take: 500,
+      });
+      const rev = await c.eventRevision.findUniqueOrThrow({ where: { id: 1 } });
+      return { items: rows.map(eventView), revision: Number(rev.revision) };
+    }, "RepeatableRead");
     if (!admin) {
       try {
         await this.db.redis.eval(
@@ -62,8 +58,11 @@ export class EventsService {
     if (id) uuid(id);
     return this.db.tx(async (c) => {
       const old = id
-        ? (await c.query("SELECT * FROM events WHERE id=$1 FOR UPDATE", [id]))
-            .rows[0]
+        ? (
+            await c.$queryRaw<
+              any[]
+            >`SELECT * FROM events WHERE id=${id}::uuid FOR UPDATE`
+          )[0]
         : null;
       if (id && !old) throw new NotFoundException("Event not found");
       const input = eventInput({
@@ -71,28 +70,24 @@ export class EventsService {
         ...object(body),
       });
       const eventId = id || randomUUID();
-      const values = [
-        eventId,
-        input.title,
-        input.description,
-        input.startsAt,
-        input.endsAt,
-        input.locationName,
-        input.latitude,
-        input.longitude,
-        input.status,
-        input.sourceUrl,
-      ];
-      const r = await c.query(
-        `INSERT INTO events(id,title,description,starts_at,ends_at,location_name,latitude,longitude,status,source_url) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT(id) DO UPDATE SET title=$2,description=$3,starts_at=$4,ends_at=$5,location_name=$6,latitude=$7,longitude=$8,status=$9,source_url=$10,version=events.version+1,updated_at=now() RETURNING *`,
-        values,
-      );
+      const data = eventData(input);
+      const row = old
+        ? await c.event.update({
+            where: { id: eventId },
+            data: {
+              ...data,
+              version: { increment: 1 },
+              updated_at: new Date(),
+            },
+          })
+        : await c.event.create({ data: { id: eventId, ...data } });
       const rev = Number(
         (
-          await c.query(
-            "UPDATE event_revision SET revision=revision+1 WHERE id=1 RETURNING revision",
-          )
-        ).rows[0].revision,
+          await c.eventRevision.update({
+            where: { id: 1 },
+            data: { revision: { increment: 1 } },
+          })
+        ).revision,
       );
       // Transition back to draft must invalidate existing public snapshots without disclosing draft contents.
       if (input.status !== "draft" || (old?.status !== "draft" && old))
@@ -101,23 +96,12 @@ export class EventsService {
           "event.changed",
           eventId,
           undefined,
-          r.rows[0].version,
+          row.version,
           rev,
         );
       else
-        await c.query(
-          "INSERT INTO outbox(id,envelope,event_revision) VALUES($1,$2,$3)",
-          [
-            randomUUID(),
-            {
-              id: randomUUID(),
-              type: "event.changed",
-              audience: { kind: "users", userIds: [] },
-            },
-            rev,
-          ],
-        );
-      return eventView(r.rows[0]);
+        await this.db.hint(c, "event.changed", eventId, [], row.version, rev);
+      return eventView(row);
     });
   }
   async import(body: any) {
@@ -139,34 +123,39 @@ export class EventsService {
         continue;
       }
       await this.db.tx(async (c) => {
-        const r = await c.query(
-          `INSERT INTO events(id,title,description,starts_at,ends_at,location_name,latitude,longitude,status,source_url,source,external_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,'published',$9,'snu',$10) ON CONFLICT(source,external_id) DO UPDATE SET title=excluded.title,description=excluded.description,starts_at=excluded.starts_at,ends_at=excluded.ends_at,location_name=excluded.location_name,latitude=excluded.latitude,longitude=excluded.longitude,source_url=excluded.source_url,version=events.version+1,updated_at=now() RETURNING *`,
-          [
-            randomUUID(),
-            input.title,
-            input.description,
-            input.startsAt,
-            input.endsAt,
-            input.locationName,
-            input.latitude,
-            input.longitude,
-            input.sourceUrl,
-            externalId,
-          ],
-        );
+        const data = eventData(input);
+        // Preserve source-import behavior: updates keep an administrator's current status.
+        const { status, ...updates } = data;
+        const row = await c.event.upsert({
+          where: {
+            source_external_id: { source: "snu", external_id: externalId },
+          },
+          create: {
+            id: randomUUID(),
+            ...data,
+            source: "snu",
+            external_id: externalId,
+          },
+          update: {
+            ...updates,
+            version: { increment: 1 },
+            updated_at: new Date(),
+          },
+        });
         const rev = Number(
           (
-            await c.query(
-              "UPDATE event_revision SET revision=revision+1 WHERE id=1 RETURNING revision",
-            )
-          ).rows[0].revision,
+            await c.eventRevision.update({
+              where: { id: 1 },
+              data: { revision: { increment: 1 } },
+            })
+          ).revision,
         );
         await this.db.hint(
           c,
           "event.changed",
-          r.rows[0].id,
+          row.id,
           undefined,
-          r.rows[0].version,
+          row.version,
           rev,
         );
       });
@@ -174,4 +163,18 @@ export class EventsService {
     }
     return { imported, skipped: diagnostics.length, diagnostics };
   }
+}
+
+function eventData(input: ReturnType<typeof eventInput>) {
+  return {
+    title: input.title,
+    description: input.description,
+    starts_at: new Date(input.startsAt),
+    ends_at: new Date(input.endsAt),
+    location_name: input.locationName,
+    latitude: input.latitude,
+    longitude: input.longitude,
+    status: input.status,
+    source_url: input.sourceUrl,
+  };
 }

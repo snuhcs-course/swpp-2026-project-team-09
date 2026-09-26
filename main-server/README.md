@@ -1,6 +1,6 @@
 # Main server
 
-Node 22 / NestJS 11, independent pnpm manifest and lockfile. Run from this directory:
+Node 22 / NestJS 11 / Prisma 7.10.0, independent pnpm manifest and lockfile. Run from this directory:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -21,11 +21,48 @@ Google signature/audience/issuer/expiry verification uses Google's auth library;
 verified exact `snu.ac.kr` email plus hosted-domain claim are required. No mock login.
 Missing OAuth/JWT credentials return a configuration-required 503.
 
-`DATABASE_URL` connects only to the main-owned database. Startup creates the schema
-under a PostgreSQL advisory migration lock. Provision PostGIS as database admin first.
+`DATABASE_URL` connects only to the main-owned database. Before readiness, startup
+runs `prisma migrate deploy --config prisma.config.ts`; Prisma's advisory lock
+serializes public/admin startup. The database role must be able to apply migrations;
+provision PostGIS as database admin first if that role cannot create extensions.
 Migration failure fails startup; missing database configuration gives health/API 503.
+The adapter handles idle connection errors. Application persistence uses generated
+Prisma CRUD and bounded interactive transactions (20 seconds); tagged parameterized
+SQL retains required row/advisory locks and the location-consent self-join.
 `REDIS_CACHE_URL` stores event cache and latest location; no position history is kept.
 See `.env.example` and `../docs/prototype-api.md` for configuration and API shapes.
+
+## Prisma schema and migration workflow
+
+`prisma/schema.prisma` owns the generated CommonJS client, built by `pnpm build`.
+Prisma CLI, client, and PostgreSQL adapter are pinned to 7.10.0. The CLI remains a
+production dependency because startup applies migrations. The Docker image installs
+OpenSSL and permits only the Prisma engines postinstall so a non-root runtime does
+not download migration engines. Generated client files are ignored by Git.
+
+Fresh database: set `DATABASE_URL`, then `pnpm db:migrate` (startup also does this).
+Existing pre-Prisma database: back it up and compare its actual schema, constraints,
+indexes, and defaults against `prisma/migrations/0_init/migration.sql`. Only after
+verifying equivalence, baseline it explicitly:
+
+```sh
+pnpm exec prisma migrate resolve --applied 0_init --config prisma.config.ts
+pnpm db:migrate
+```
+
+Do not run baseline resolution on an unknown schema, `migrate reset`, or `db push`
+against existing application data. Startup does not automatically baseline. The old
+`migrations/001_initial.sql` is a frozen pre-Prisma reference used only by migration
+tests; runtime no longer executes it. Future changes belong in Prisma schema plus
+reviewed SQL migrations. Preserve SQL-only CHECK constraints, the functional
+`friend_pair` unique index, the `pending_outbox` partial index, and PostGIS when
+reviewing generated migrations. Public API names and ISO date serialization remain
+unchanged; snake_case model fields map directly to existing database columns.
+
+Full tests require a disposable database/Redis. Migration tests additionally create
+and drop uniquely named temporary databases, so the test role needs CREATE DATABASE.
+They verify concurrent fresh startup, explicit legacy baselining without data loss,
+SQL constraints, duplicate-import behavior, and transaction/outbox rollback.
 
 ## Invariants and prototype limits
 
