@@ -24,6 +24,11 @@ export class Database implements OnModuleInit, OnModuleDestroy {
   private relaying = false;
   ready = false;
   constructor() {
+    // pg evicts an idle failed connection and emits an error; handling it keeps
+    // the runtime alive so later requests and outbox ticks can reconnect.
+    this.pool.on("error", () => {
+      console.warn("Idle database connection failed; pool will reconnect");
+    });
     this.redis.on("error", () => {});
   }
   async onModuleInit() {

@@ -23,3 +23,5 @@ Implement the assigned part of [the contract](../../../docs/prototype-api.md) in
 - Google/provider credentials, real-device background operation and Colima runtime remain unverified.
 - Colima instructions preserve the same Compose topology; no Docker context or engine migration performed.
 - Android debug and standalone ARM64 release-variant APK builds passed; release bundle contains JS. Uses development signing and no provider keys.
+- Android emulator install/cold launch passed; process-specific Android/JS error logs empty.
+- Main checkout runtime handoff exposed missing idle PostgreSQL pool error handling; added recovery; actual connection-termination E2E and complete cross-service regression passed.

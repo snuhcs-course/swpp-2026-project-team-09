@@ -46,6 +46,8 @@ docker --context colima compose --env-file .env.prototype.local -f compose.local
 
 - public/admin API, Socket, Worker, Match, Next.js와 DB/Redis 등 Compose 컨테이너 9개가 정상 상태로 실행되었습니다. 최초 관리자 허용 목록은 로컬 설정에 `fyoon46@snu.ac.kr`로 지정했습니다.
 - 24개 서버·모바일 검사(실제 PostgreSQL/Redis 동시성 검사 포함), 서버·어드민 빌드와 모바일 타입·번들 검사를 통과했습니다. 별도 임시 DB를 쓰는 HTTP/Socket 통합 검사도 통과했습니다.
+- Android ARM64 테스트 APK를 에뮬레이터에 설치하고 cold launch를 확인했습니다. 시작 직후 프로세스의 Android/JavaScript 오류 로그는 없었습니다.
+- 실제 테스트 DB 연결 종료 후 public/admin API의 재연결을 확인했습니다.
 - 행사 수정 → 캐시 무효화 → 소켓 알림 → 최신 조회, 위치 공유 권한, 두 매칭 요청 → 단일 파티 확정과 재시도 중복 방지를 확인했습니다.
 - 실제 학식 조회와 공식 행사 1건 수집에 성공했습니다. 시간·장소가 불명확한 공지 4건은 제외했고, 당시 셔틀 응답에는 차량이 없었습니다.
 - 저장된 셔틀 응답을 동시 조회한 20건에서 캐시 사용 20건·추가 원본 요청 0건을 관찰했습니다. 이는 캐시 재사용 확인이며 처리량 벤치마크가 아닙니다.

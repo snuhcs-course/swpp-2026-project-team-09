@@ -482,6 +482,15 @@ try {
   log(
     `real feed response contracts (meals=${meals.status}, shuttle=${shuttle.status}; unavailable is not fabricated success)`,
   );
+  const fixturePid = (await mainDb.query("SELECT pg_backend_pid() AS pid")).rows[0].pid;
+  await adminDb.query(
+    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname=$1 AND pid<>$2",
+    [dbNames[0], fixturePid],
+  );
+  await healthy("public");
+  await healthy("admin");
+  await http("public", "/v1/events", { token: a.token });
+  log("public/admin runtimes survive lost database connections and reconnect");
   console.log(
     "PASS cross-service smoke complete. Real Google sign-in and physical-device behavior remain unverified.",
   );
