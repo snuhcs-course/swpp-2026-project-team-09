@@ -27,6 +27,7 @@ import {
   Quest,
   Position,
   MatchRequest,
+  Meetup,
 } from "./src/api";
 import {
   setUploadConsent,
@@ -65,7 +66,8 @@ function CampusApp() {
     [friends, setFriends] = useState<Friend[]>([]),
     [quests, setQuests] = useState<Quest[]>([]),
     [positions, setPositions] = useState<Position[]>([]),
-    [matches, setMatches] = useState<MatchRequest[]>([]);
+    [matches, setMatches] = useState<MatchRequest[]>([]),
+    [meetups, setMeetups] = useState<Meetup[]>([]);
   const [sharing, setSharing] = useState(false),
     [background, setBackground] = useState(false),
     [self, setSelf] = useState<Location.LocationObject | null>(null);
@@ -103,6 +105,7 @@ function CampusApp() {
     setFriends([]);
     setQuests([]);
     setMatches([]);
+    setMeetups([]);
     setLoaded(false);
   }
   useEffect(() => {
@@ -122,12 +125,13 @@ function CampusApp() {
     if (!isCurrentSession(token, session.current.token)) return;
     const epoch = ++generation.current;
     setPositions([]);
-    const [e, p, f, q, l] = await Promise.all([
+    const [e, p, f, q, l, plans] = await Promise.all([
       request("/events", token),
       request("/parties", token),
       request("/friends", token),
       request("/quests", token),
       request("/locations", token),
+      request("/meetups", token),
     ]);
     if (
       epoch !== generation.current ||
@@ -138,6 +142,7 @@ function CampusApp() {
     setParties(p.items);
     setFriends(f.items);
     setQuests(q.items);
+    setMeetups(plans.items);
     setLoaded(true);
     if (
       canApplyLocations(
@@ -239,7 +244,9 @@ function CampusApp() {
       if (error instanceof ApiError && error.status === 409) {
         await reload().catch(() => undefined);
         throw new Error(
-          "내용이 변경되었거나 현재 요청을 처리할 수 없습니다. 최신 상태를 확인한 뒤 다시 시도해 주세요.",
+          error.code === "SCHEDULE_CONFLICT"
+            ? "등록된 일정과 겹쳐 이 계획을 확정할 수 없어요. 각자 시간표와 공동 약속을 확인하고 다른 시간으로 제안해 주세요."
+            : "내용이 변경되었거나 현재 요청을 처리할 수 없습니다. 최신 상태를 확인한 뒤 다시 시도해 주세요.",
         );
       }
       throw error;
@@ -257,10 +264,18 @@ function CampusApp() {
         result as Quest,
       ]);
     }
-    await reload().catch(() =>
-      setMessage(
-        "요청은 저장되었습니다. 최신 목록을 불러오지 못했으니 새로고침해 주세요.",
-      ),
+    if (path === "/meetups" || /^\/meetups\/[^/]+\/respond$/.test(path)) {
+      setMeetups((items) => [
+        ...items.filter((item) => item.id !== result.id),
+        result as Meetup,
+      ]);
+    }
+    await reload().catch(
+      () =>
+        isCurrentSession(token, session.current.token) &&
+        setMessage(
+          "요청은 저장되었습니다. 최신 목록을 불러오지 못했으니 새로고침해 주세요.",
+        ),
     );
     return result;
   }
@@ -446,6 +461,7 @@ function CampusApp() {
       quests={quests}
       positions={positions}
       matches={matches}
+      meetups={meetups}
       self={self?.coords ?? null}
       sharing={sharing}
       background={background}

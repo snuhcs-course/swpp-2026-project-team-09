@@ -464,6 +464,82 @@ try {
   assert.equal((await locations(b)).items.length, 0);
   log("member privacy, party OFF, mutual friend sharing, global OFF via HTTP");
 
+  const recipientSocket = await socketConnect(b.token), recipientHints = [];
+  const outsiderSocket = await socketConnect(outsider.token), outsiderHints = [];
+  recipientSocket.on("domain.changed", hint => recipientHints.push(hint));
+  outsiderSocket.on("domain.changed", hint => outsiderHints.push(hint));
+  await http("public", "/v1/meetups", { status: 401 });
+  await http("admin", "/v1/meetups", { token: admin.token, status: 404 });
+  const meetupStart = new Date(Date.now() + 86400000);
+  meetupStart.setUTCHours(12, 0, 0, 0);
+  const meetup = await http("public", "/v1/meetups", {
+    token: a.token, method: "POST", status: 201,
+    body: { friendId: b.id, title: "Private concrete plan", startsAt: meetupStart.toISOString(),
+      endsAt: new Date(+meetupStart + 3600000).toISOString(), locationName: "Campus entrance" },
+  });
+  assert.equal(meetup.status, "pending");
+  assert.ok((await http("public", "/v1/meetups", { token: b.token })).items.some(m => m.id === meetup.id));
+  assert.ok(!(await http("public", "/v1/meetups", { token: outsider.token })).items.some(m => m.id === meetup.id));
+  await http("public", `/v1/meetups/${meetup.id}/respond`, {
+    token: outsider.token, method: "POST", status: 404,
+    body: { action: "accept", expectedVersion: meetup.version },
+  });
+  const acceptedPlans = await Promise.all([1, 2].map(() => http("public", `/v1/meetups/${meetup.id}/respond`, {
+    token: b.token, method: "POST", status: 201,
+    body: { action: "accept", expectedVersion: meetup.version },
+  })));
+  assert.equal(acceptedPlans[0].status, "accepted");
+  assert.equal(acceptedPlans[0].partyId, acceptedPlans[1].partyId);
+  assert.equal(acceptedPlans[0].questId, acceptedPlans[1].questId);
+  const privatePartyId = acceptedPlans[0].partyId;
+  for (const user of [a, b]) {
+    const sharedParty = (await http("public", "/v1/parties", { token: user.token })).items.find(p => p.id === privatePartyId);
+    assert.equal(sharedParty.visibility, "private");
+    assert.equal(sharedParty.memberCount, 2);
+    assert.ok((await http("public", "/v1/quests", { token: user.token })).items.some(q => q.id === acceptedPlans[0].questId));
+  }
+  assert.ok(!(await http("public", "/v1/parties", { token: outsider.token })).items.some(p => p.id === privatePartyId));
+  await http("public", `/v1/parties/${privatePartyId}/join`, { token: outsider.token, method: "POST", status: 404 });
+  await until(() => hints.some(h => h.type === "meetup.changed" && h.entityId === meetup.id && h.version === acceptedPlans[0].version)
+    && recipientHints.some(h => h.type === "meetup.changed" && h.entityId === meetup.id && h.version === acceptedPlans[0].version), "private meetup socket hints");
+  assert.ok(!outsiderHints.some(h => h.entityId === meetup.id));
+  assert.equal((await mainDb.query("SELECT count(*) FROM quests WHERE party_id=$1", [privatePartyId])).rows[0].count, "1");
+  log("concrete friend plan → concurrent acceptance → one private party/quest; both participant hints, outsider denial");
+
+  const overlapProposal = await http("public", "/v1/meetups", {
+    token: a.token, method: "POST", status: 201,
+    body: { friendId: b.id, title: "Competing plan", startsAt: meetupStart.toISOString(),
+      endsAt: new Date(+meetupStart + 1800000).toISOString(), locationName: "Another place" },
+  });
+  const overlapFailure = await http("public", `/v1/meetups/${overlapProposal.id}/respond`, {
+    token: b.token, method: "POST", status: 409,
+    body: { action: "accept", expectedVersion: overlapProposal.version },
+  });
+  assert.equal(overlapFailure.code, "SCHEDULE_CONFLICT");
+  const classStart = new Date(+meetupStart + 2 * 3600000);
+  const seoulDay = new Date(+classStart + 9 * 3600000);
+  const currentBTimetable = await http("public", "/v1/me/timetable", { token: b.token });
+  await http("public", "/v1/me/timetable", {
+    token: b.token, method: "PUT",
+    body: { expectedVersion: currentBTimetable.version,
+      semesterStartsOn: seoulDay.toISOString().slice(0, 10), semesterEndsOn: seoulDay.toISOString().slice(0, 10),
+      entries: [{id: randomUUID(), title: "Private course title must not leak", weekday: seoulDay.getUTCDay() || 7,
+        startMinute: seoulDay.getUTCHours() * 60, endMinute: (seoulDay.getUTCHours() + 1) * 60, locationName: "Private classroom"}] },
+  });
+  const classProposal = await http("public", "/v1/meetups", {
+    token: a.token, method: "POST", status: 201,
+    body: { friendId: b.id, title: "Class conflict probe", startsAt: classStart.toISOString(),
+      endsAt: new Date(+classStart + 1800000).toISOString(), locationName: "Public meeting point" },
+  });
+  const classFailure = await http("public", `/v1/meetups/${classProposal.id}/respond`, {
+    token: b.token, method: "POST", status: 409,
+    body: { action: "accept", expectedVersion: classProposal.version },
+  });
+  assert.equal(classFailure.code, "SCHEDULE_CONFLICT");
+  assert.ok(!JSON.stringify(classFailure).includes("Private course"));
+  assert.equal((await http("public", "/v1/meetups", { token: a.token })).items.find(m => m.id === classProposal.id).status, "pending");
+  log("latest registered classes and accepted plans prevent conflicting confirmation without leaking schedule details");
+
   const request = {
     eventId: event.id,
     activity: "Integration matching",

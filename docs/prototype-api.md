@@ -155,6 +155,30 @@ Persist idempotency requestId and per-request consumption; validate users, event
 capacity and membership transactionally. Main owns final party creation.
 GET /v1/internal/users/:id -> minimal User (authenticated internal call).
 
+## Concrete friend plans (main)
+
+GET /v1/meetups -> {items:Meetup[]} (sender/recipient only).
+POST /v1/meetups {friendId:otherUserId,title,startsAt,endsAt,locationName} -> Meetup.
+POST /v1/meetups/:id/respond {action:'accept'|'decline'|'cancel',expectedVersion} -> Meetup.
+Meetup = {id,sender:User,recipient:User,title,startsAt,endsAt,locationName,
+status:'pending'|'accepted'|'declined'|'cancelled'|'expired',version,
+partyId:string|null,questId:string|null,createdAt}.
+
+This is a complete manual plan proposal, not a generic willingness-to-meet request
+or an AI recommendation. Sender consents to the exact title/time/place at creation;
+recipient explicitly accepts that plan. Accepted friendship required at creation and
+acceptance. New proposals and new/time-changing quests are limited to 31 days per
+interval to bound schedule expansion. Pending plans
+expire at startsAt; only recipient may accept/decline, only sender may cancel.
+Same-outcome authorized response retries return the recorded result; opposing
+transitions/stale versions conflict. Acceptance atomically creates exactly one
+private two-person party and shared quest. Nonmembers cannot discover or join that
+party, and every state change emits only a participant-targeted meetup.changed hint.
+Party DTO includes visibility:'public'|'private'; existing public parties stay public.
+Registered schedule conflicts are rechecked at confirmation without disclosing
+another user's course details. Missing schedules and walking time are not verified
+availability. No push delivery claim is made.
+
 ## Realtime
 
 Socket.IO server, handshake auth {token:accessToken}. Verify JWT, then server joins
@@ -162,7 +186,7 @@ events:public and user:<sub>. Clients cannot join arbitrary rooms.
 Redis envelope on prototype:domain-events:
 {id,type,entityId?,version?,audience:{kind:'public'|'users',userIds?:string[]}}
 Emit domain.changed with {id,type,entityId?,version?}, no recipient list or raw location.
-Never treat public audience as valid for private location/friend/quest/match events.
+Never treat public audience as valid for private location/friend/quest/match/meetup events.
 Client reconnect/domain.changed triggers appropriate authenticated HTTP reload.
 Main relay remains authoritative for main-domain changes.
 

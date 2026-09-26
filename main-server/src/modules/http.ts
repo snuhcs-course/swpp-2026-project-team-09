@@ -28,6 +28,7 @@ import {
 } from "./auth";
 import { Database } from "./database";
 import { EventsService } from "./events";
+import { MeetupsService } from "./meetups";
 import { SocialService } from "./social";
 import { ProfileService } from "./profile";
 import { LocationService } from "./location";
@@ -94,6 +95,7 @@ export class PublicController {
   constructor(
     private events: EventsService,
     private social: SocialService,
+    private meetups: MeetupsService,
     private location: LocationService,
     private profile: ProfileService,
     private campus: CampusService,
@@ -137,6 +139,19 @@ export class PublicController {
     @Body() b: any,
   ) {
     return this.social.partySharing(r.user.id, id, bool(b?.enabled));
+  }
+  @Get("meetups") meetupsList(@Req() r: AuthRequest) {
+    return this.meetups.list(r.user.id);
+  }
+  @Post("meetups") createMeetup(@Req() r: AuthRequest, @Body() b: unknown) {
+    return this.meetups.create(r.user.id, b);
+  }
+  @Post("meetups/:id/respond") respondMeetup(
+    @Req() r: AuthRequest,
+    @Param("id") id: string,
+    @Body() b: unknown,
+  ) {
+    return this.meetups.respond(r.user.id, id, b);
   }
   @Get("friends") friends(@Req() r: AuthRequest) {
     return this.social.friends(r.user.id);
@@ -261,6 +276,7 @@ export function runtimeControllers(role: string) {
     InternalGuard,
     EventsService,
     SocialService,
+    MeetupsService,
     LocationService,
     ProfileService,
     CampusService,

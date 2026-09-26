@@ -10,11 +10,13 @@ import {
   TimeFields,
 } from "../forms";
 import { Action, Card, colors, Field, u } from "./Primitives";
-function TimeEditor({
+export function TimeEditor({
   value,
   onChange,
+  disabled = false,
 }: {
   value: TimeFields;
+  disabled?: boolean;
   onChange: (v: TimeFields) => void;
 }) {
   return (
@@ -24,6 +26,7 @@ function TimeEditor({
         {["오늘", "내일", "모레"].map((label, i) => (
           <Pressable
             key={label}
+            disabled={disabled}
             onPress={() =>
               onChange({
                 ...value,
@@ -45,12 +48,14 @@ function TimeEditor({
       </View>
       <View style={u.row}>
         <Field
+          editable={!disabled}
           label="시작 날짜"
           value={value.startDate}
           onChange={(startDate) => onChange({ ...value, startDate })}
           placeholder="YYYY-MM-DD"
         />
         <Field
+          editable={!disabled}
           label="시작 시간"
           value={value.startTime}
           onChange={(startTime) => onChange({ ...value, startTime })}
@@ -59,12 +64,14 @@ function TimeEditor({
       </View>
       <View style={u.row}>
         <Field
+          editable={!disabled}
           label="종료 날짜"
           value={value.endDate}
           onChange={(endDate) => onChange({ ...value, endDate })}
           placeholder="YYYY-MM-DD"
         />
         <Field
+          editable={!disabled}
           label="종료 시간"
           value={value.endTime}
           onChange={(endTime) => onChange({ ...value, endTime })}

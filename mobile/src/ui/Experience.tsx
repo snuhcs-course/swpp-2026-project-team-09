@@ -17,6 +17,7 @@ import {
   Friend,
   MATCH,
   MatchRequest,
+  Meetup,
   Party,
   Position,
   Quest,
@@ -36,6 +37,8 @@ import {
 import { MatchForm, PartyForm, QuestForm } from "./Forms";
 import { AccountEditor } from "./Account";
 import type { Profile } from "../account-forms";
+import { MeetupForm, MeetupList } from "./Meetups";
+import { canJoinParty, MeetupAction, meetupActions } from "../meetups";
 import { Life } from "./Life";
 type SheetState =
   | { kind: "event"; id: string }
@@ -43,7 +46,16 @@ type SheetState =
   | { kind: "partyForm"; eventId?: string }
   | { kind: "questForm"; partyId: string; questId?: string }
   | { kind: "matchForm"; eventId?: string }
-  | { kind: "friends" | "settings" | "matches" | "profile" | "timetable" }
+  | { kind: "meetupForm"; friendId: string }
+  | {
+      kind:
+        | "friends"
+        | "settings"
+        | "matches"
+        | "profile"
+        | "timetable"
+        | "meetups";
+    }
   | null;
 type Props = {
   token: string;
@@ -54,6 +66,7 @@ type Props = {
   quests: Quest[];
   positions: Position[];
   matches: MatchRequest[];
+  meetups: Meetup[];
   self: { latitude: number; longitude: number } | null;
   sharing: boolean;
   background: boolean;
@@ -94,6 +107,42 @@ export default function Experience(p: Props) {
     [sheet, setSheet] = useState<SheetState>(null),
     [selectedPartyId, setSelectedPartyId] = useState(""),
     [friendEmail, setFriendEmail] = useState("");
+  const [meetupBusy, setMeetupBusy] = useState(false),
+    [meetupMessage, setMeetupMessage] = useState("");
+  const meetupLock = useRef(false),
+    mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  async function changeMeetup(path: string, body: unknown, created = false) {
+    if (meetupLock.current || p.busy) return;
+    meetupLock.current = true;
+    setMeetupBusy(true);
+    setMeetupMessage("");
+    p.clearMessage();
+    try {
+      await p.mutate(path, "POST", body);
+      if (mounted.current && created) setSheet({ kind: "meetups" });
+    } catch (e) {
+      if (mounted.current)
+        setMeetupMessage(
+          e instanceof Error ? e.message : "약속 제안을 처리하지 못했어요.",
+        );
+    } finally {
+      meetupLock.current = false;
+      if (mounted.current) setMeetupBusy(false);
+    }
+  }
+  function respondMeetup(meetup: Meetup, action: MeetupAction) {
+    if (!meetupActions(meetup, p.user.id).includes(action)) return;
+    void changeMeetup(`/meetups/${meetup.id}/respond`, {
+      action,
+      expectedVersion: meetup.version,
+    });
+  }
   const [profile, setProfile] = useState<Profile | null>(null);
   const profileVersion = useRef(0);
   useEffect(() => {
@@ -117,6 +166,8 @@ export default function Experience(p: Props) {
     p.onProfileSaved(value);
   };
   const open = (next: SheetState) => {
+    if (meetupLock.current) return;
+    setMeetupMessage("");
     p.clearMessage();
     setSheet(next);
   };
@@ -168,7 +219,11 @@ export default function Experience(p: Props) {
       <View style={u.row}>
         <View style={{ flex: 1, gap: 5 }}>
           <Text style={u.badge}>
-            {item.isMember ? "참여 중" : "함께할 사람을 찾고 있어요"}
+            {item.visibility === "private"
+              ? "비공개 · 두 사람 약속"
+              : item.isMember
+                ? "참여 중"
+                : "함께할 사람을 찾고 있어요"}
           </Text>
           <Text style={u.title}>{item.title}</Text>
         </View>
@@ -250,7 +305,11 @@ export default function Experience(p: Props) {
                     ? "프로필 편집"
                     : sheet?.kind === "timetable"
                       ? "내 학기 시간표"
-                      : "내 계정 · 위치 공유";
+                      : sheet?.kind === "meetups"
+                        ? "친구와 약속 계획"
+                        : sheet?.kind === "meetupForm"
+                          ? "약속 계획 제안"
+                          : "내 계정 · 위치 공유";
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.header}>
@@ -440,6 +499,24 @@ export default function Experience(p: Props) {
                 <Text style={u.title}>내 매칭 신청</Text>
                 <Text style={u.body}>{p.matches.length}건 ›</Text>
               </Pressable>
+              <Pressable
+                style={styles.slimRow}
+                onPress={() => open({ kind: "meetups" })}
+                accessibilityRole="button"
+              >
+                <Text style={u.title}>친구와 약속 계획</Text>
+                <Text style={u.body}>
+                  {
+                    p.meetups.filter(
+                      (item) =>
+                        item.status === "pending" &&
+                        item.recipient.id === p.user.id &&
+                        Date.parse(item.startsAt) > Date.now(),
+                    ).length
+                  }
+                  건 받은 제안 ›
+                </Text>
+              </Pressable>
               {selected && (
                 <Card
                   style={{ borderColor: colors.teal }}
@@ -475,8 +552,14 @@ export default function Experience(p: Props) {
                 <Text style={u.body}>아직 참여한 파티가 없습니다.</Text>
               )}
               <Text style={u.title}>새로운 파티 둘러보기</Text>
-              {p.parties.filter((item) => !item.isMember).map(partyCard)}
-              {!p.parties.some((item) => !item.isMember) && (
+              {p.parties
+                .filter(
+                  (item) => !item.isMember && item.visibility !== "private",
+                )
+                .map(partyCard)}
+              {!p.parties.some(
+                (item) => !item.isMember && item.visibility !== "private",
+              ) && (
                 <Text style={u.body}>
                   현재 참여할 수 있는 다른 파티가 없습니다.
                 </Text>
@@ -536,9 +619,11 @@ export default function Experience(p: Props) {
       {sheet && (
         <Sheet
           title={heading}
-          onClose={() => setSheet(null)}
-          busy={p.busy}
-          message={p.message}
+          onClose={() => {
+            if (!meetupLock.current) open(null);
+          }}
+          busy={p.busy || meetupBusy}
+          message={meetupMessage || p.message}
         >
           {sheet.kind === "event" &&
             (event ? (
@@ -589,6 +674,9 @@ export default function Experience(p: Props) {
             (party ? (
               <>
                 <Text style={u.heading}>{party.title}</Text>
+                {party.visibility === "private" && (
+                  <Text style={u.badge}>비공개 · 두 사람 약속</Text>
+                )}
                 <Text style={u.body}>
                   {party.memberCount}명 참여 · 최대 {party.maxMembers}명
                 </Text>
@@ -738,6 +826,11 @@ export default function Experience(p: Props) {
                       }
                     />
                   </>
+                ) : party.visibility === "private" ? (
+                  <Text style={u.body}>
+                    이 비공개 파티는 약속 계획을 함께 수락한 두 사람만 참여할 수
+                    있어요.
+                  </Text>
                 ) : (
                   <>
                     <Text style={u.body}>
@@ -749,7 +842,7 @@ export default function Experience(p: Props) {
                           ? "정원이 찼어요"
                           : "이 파티 참여하기"
                       }
-                      disabled={p.busy || party.memberCount >= party.maxMembers}
+                      disabled={p.busy || !canJoinParty(party)}
                       onPress={() => join(party)}
                     />
                   </>
@@ -886,8 +979,47 @@ export default function Experience(p: Props) {
               ))}
             </>
           )}
+          {sheet.kind === "meetups" && (
+            <MeetupList
+              items={p.meetups}
+              userId={p.user.id}
+              parties={p.parties}
+              quests={p.quests}
+              busy={p.busy || meetupBusy}
+              loaded={p.loaded}
+              onRespond={respondMeetup}
+              onOpen={selectedParty}
+              onRefresh={() => p.run(p.onRefresh)}
+              onFriends={() => open({ kind: "friends" })}
+            />
+          )}
+          {sheet.kind === "meetupForm" &&
+            (() => {
+              const friend = p.friends.find(
+                (item) =>
+                  item.user.id === sheet.friendId && item.status === "accepted",
+              );
+              return friend ? (
+                <MeetupForm
+                  key={friend.user.id}
+                  friend={friend.user}
+                  busy={p.busy || meetupBusy}
+                  onSave={(body) => void changeMeetup("/meetups", body, true)}
+                />
+              ) : (
+                <Empty
+                  title="연결된 친구가 필요해요"
+                  detail="친구 관계를 확인한 뒤 다시 제안해 주세요."
+                />
+              );
+            })()}
           {sheet.kind === "friends" && (
             <>
+              <Action
+                secondary
+                label="받고 보낸 약속 계획"
+                onPress={() => open({ kind: "meetups" })}
+              />
               <Card>
                 <Text style={u.title}>친구에게 먼저 인사해요</Text>
                 <Field
@@ -939,6 +1071,16 @@ export default function Experience(p: Props) {
                       }
                     />
                   )}{" "}
+                  {f.status === "accepted" && (
+                    <Action
+                      secondary
+                      label="약속 계획 제안"
+                      disabled={p.busy || meetupBusy}
+                      onPress={() =>
+                        open({ kind: "meetupForm", friendId: f.user.id })
+                      }
+                    />
+                  )}
                   {f.status === "accepted" && (
                     <View style={u.row}>
                       <Text style={u.body}>이 친구와 서로 위치 공유</Text>

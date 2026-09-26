@@ -150,7 +150,7 @@ test(
             >`SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NOT NULL`;
             assert.deepEqual(
               rows.map((r) => r.migration_name),
-              ["0_init"],
+              ["0_init", "202609270001_friend_meetups"],
             );
             await verifySqlInvariants(a);
             await verifyTransactionalWrites(a);
@@ -164,7 +164,8 @@ test(
         async () => {
           const url = await databaseUrl();
           const legacy = new Pool({ connectionString: url });
-          const id = randomUUID();
+          const id = randomUUID(),
+            legacyPartyId = randomUUID();
           const timetable = {
             timezone: "Asia/Seoul",
             semesterStartsOn: "2026-09-01",
@@ -185,6 +186,10 @@ test(
                 "Existing department",
                 JSON.stringify(timetable),
               ],
+            );
+            await legacy.query(
+              "INSERT INTO parties(id,title,max_members) VALUES($1,'Legacy party',2)",
+              [legacyPartyId],
             );
           } finally {
             await legacy.end();
@@ -207,6 +212,14 @@ test(
               "prisma.config.ts",
             ]);
             await db.onModuleInit();
+            assert.equal(
+              (
+                await db.prisma.party.findUniqueOrThrow({
+                  where: { id: legacyPartyId },
+                })
+              ).visibility,
+              "public",
+            );
             const profiles = new ProfileService(db);
             assert.equal(
               (await profiles.profile(id)).displayName,

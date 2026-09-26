@@ -22,6 +22,8 @@ For implementation, use separate Git worktrees for parallel agents. The user req
 
 Completion objective (2026-09-27): deliver the full agreed MVP across event participation, friend meetups, and campus convenience. A runnable APK, admin login, or one implementation iteration is a milestone, not completion. Track remaining implementation, external dependencies, user decisions and end-to-end acceptance in `.scratch/mvp-completion/spec.md`. Anticipate account/configuration requirements together and keep independent implementation moving while credentials are prepared. Proposed features or providers in that document are not approved merely by being listed.
 
+Execution status must be literal: unfinished MVP work is not the same as actively running development. Report whether the coordinating turn or delegated agents are actually working, and never imply that work continues after a final response unless a real authorized background workflow remains active.
+
 Discuss broad project decisions with the user before implementing them. This includes repository/folder structure, application and service boundaries, major technology choices, and substantial scope changes. Present a concrete proposal and its tradeoffs, record the user's decision, then implement within that agreed boundary. A recommendation or silence is not agreement. Routine implementation details within an agreed design do not require repeated approval.
 
 ## Agreed project boundaries

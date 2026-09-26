@@ -3,9 +3,11 @@ export const MATCH = process.env.EXPO_PUBLIC_MATCH_URL || "";
 export const SOCKET = process.env.EXPO_PUBLIC_SOCKET_URL || "";
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  code?: string;
+  constructor(message: string, status: number, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 let unauthorized: ((failedToken: string) => void) | undefined;
@@ -40,6 +42,7 @@ export async function request<T = any>(
       throw new ApiError(
         result.message || `요청 실패 (${response.status})`,
         response.status,
+        typeof result.code === "string" ? result.code : undefined,
       );
     return result;
   } finally {
@@ -65,6 +68,7 @@ export type Event = {
   status: string;
 };
 export type Party = {
+  visibility?: "public" | "private";
   id: string;
   title: string;
   members: User[];
@@ -129,4 +133,19 @@ export type Shuttle = {
   observedAt: null;
   vehicles: { id: string; x: number; y: number; label: string }[];
   stops: { name: string; x: number; y: number }[];
+};
+
+export type Meetup = {
+  id: string;
+  sender: User;
+  recipient: User;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  locationName: string;
+  status: "pending" | "accepted" | "declined" | "cancelled" | "expired";
+  version: number;
+  partyId: string | null;
+  questId: string | null;
+  createdAt: string;
 };

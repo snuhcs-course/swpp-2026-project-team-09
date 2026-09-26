@@ -7,6 +7,10 @@ import {
 import { Prisma } from "../generated/prisma/client";
 import { randomUUID, createHash } from "node:crypto";
 import { Database, Transaction } from "./database";
+import {
+  assertScheduleAvailable,
+  lockScheduleUsers,
+} from "./schedule-conflicts";
 import { userView } from "./auth";
 import { bad, bool, capacity, dates, object, text, uuid } from "./validation";
 export function ensureCapacity(current: number, incoming: number, max: number) {
@@ -35,6 +39,8 @@ export class SocialService {
     });
     const memberIds = memberRows.map((r) => r.user_id);
     const ownMembership = memberRows.find((r) => r.user_id === viewer);
+    if (row.visibility === "private" && viewer && !ownMembership)
+      throw new NotFoundException("Party not found");
     const members =
       viewer && !memberIds.includes(viewer)
         ? []
@@ -49,6 +55,7 @@ export class SocialService {
       title: row.title,
       eventId: row.event_id,
       maxMembers: row.max_members,
+      visibility: row.visibility as "public" | "private",
       memberCount: memberRows.length,
       isMember: Boolean(ownMembership),
       members,
@@ -62,6 +69,12 @@ export class SocialService {
     this.db.requireReady();
     return this.db.tx(async (c) => {
       const ids = await c.party.findMany({
+        where: {
+          OR: [
+            { visibility: "public" },
+            { members: { some: { user_id: user } } },
+          ],
+        },
         select: { id: true },
         orderBy: { created_at: "desc" },
         take: 100,
@@ -110,6 +123,8 @@ export class SocialService {
       if (!r) throw new NotFoundException("Party not found");
       const ids = await this.members(c, id);
       if (!ids.includes(user)) {
+        if (r.visibility === "private")
+          throw new NotFoundException("Party not found");
         await this.validateEvent(c, r.event_id);
         ensureCapacity(ids.length, 1, r.max_members);
         await c.partyMember.create({ data: { party_id: id, user_id: user } });
@@ -122,8 +137,12 @@ export class SocialService {
     uuid(id);
     this.db.requireReady();
     return this.db.tx(async (c) => {
-      await c.$queryRaw`SELECT id FROM parties WHERE id=${id}::uuid FOR UPDATE`;
+      const [party] = await c.$queryRaw<
+        { visibility: string }[]
+      >`SELECT visibility FROM parties WHERE id=${id}::uuid FOR UPDATE`;
       const ids = await this.members(c, id);
+      if (party?.visibility === "private" && !ids.includes(user))
+        throw new NotFoundException("Party not found");
       await c.partyMember.deleteMany({
         where: { party_id: id, user_id: user },
       });
@@ -290,7 +309,14 @@ export class SocialService {
     bool(enabled);
     this.db.requireReady();
     return this.db.tx(async (c) => {
-      await c.$queryRaw`SELECT id FROM parties WHERE id=${id}::uuid FOR UPDATE`;
+      const [party] = await c.$queryRaw<
+        { visibility: string }[]
+      >`SELECT visibility FROM parties WHERE id=${id}::uuid FOR UPDATE`;
+      if (
+        party?.visibility === "private" &&
+        !(await this.members(c, id)).includes(user)
+      )
+        throw new NotFoundException("Party not found");
       const r = await c.partyMember.updateMany({
         where: { party_id: id, user_id: user },
         data: { sharing_enabled: enabled },
@@ -334,6 +360,9 @@ export class SocialService {
       const members = await this.members(c, partyId);
       if (!members.includes(user))
         throw new ForbiddenException("Party membership required");
+      // Membership mutation keeps party-first ordering; schedule edits then serialize
+      // with meetup acceptance and timetable writes on the same sorted user rows.
+      await lockScheduleUsers(c, members);
       const old = id
         ? (
             await c.$queryRaw<
@@ -385,6 +414,18 @@ export class SocialService {
         location_name: location,
         status: cancelling ? "cancelled" : "active",
       };
+      const timeChanged =
+        !old ||
+        old.starts_at.getTime() !== data.starts_at.getTime() ||
+        old.ends_at.getTime() !== data.ends_at.getTime();
+      if (!cancelling && timeChanged)
+        await assertScheduleAvailable(
+          c,
+          members,
+          data.starts_at,
+          data.ends_at,
+          id,
+        );
       const row = old
         ? await c.quest.update({
             where: { id: questId },

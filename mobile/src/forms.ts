@@ -86,3 +86,30 @@ export function matchBody(input: {
     ...(input.eventId ? { eventId: input.eventId } : {}),
   };
 }
+
+export function meetupBody(
+  input: {
+    friendId: string;
+    title: string;
+    locationName: string;
+    times: TimeFields;
+  },
+  now = Date.now(),
+) {
+  if (!input.friendId) throw new Error("약속을 제안할 친구를 선택해 주세요.");
+  const title = input.title.trim(),
+    locationName = input.locationName.trim();
+  if (!title || title.length > 200)
+    throw new Error("약속 이름을 1~200자로 입력해 주세요.");
+  if (!locationName || locationName.length > 300)
+    throw new Error("만날 장소를 1~300자로 입력해 주세요.");
+  const range = timeRange(input.times);
+  if (Date.parse(range.startsAt) <= now)
+    throw new Error("시작 시간은 현재보다 늦어야 해요.");
+  if (
+    Date.parse(range.endsAt) - Date.parse(range.startsAt) >
+    31 * 24 * 60 * 60_000
+  )
+    throw new Error("약속 기간은 최대 31일까지 정할 수 있어요.");
+  return { friendId: input.friendId, title, locationName, ...range };
+}

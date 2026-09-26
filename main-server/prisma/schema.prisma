@@ -29,6 +29,8 @@ model User {
   sent_friendships Friendship[] @relation("sender")
   received_friendships Friendship[] @relation("receiver")
   consumed_requests ConsumedMatchRequest[]
+  sent_meetups Meetup[] @relation("meetup_sender")
+  received_meetups Meetup[] @relation("meetup_recipient")
   @@map("users")
 }
 model Event {
@@ -60,12 +62,14 @@ model Party {
   title String
   event_id String? @db.Uuid
   max_members Int
+  visibility String @default("public")
   created_at DateTime @default(now()) @db.Timestamptz(6)
   event Event? @relation(fields: [event_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   members PartyMember[]
   quests Quest[]
   match_batches MatchBatch[]
   consumed_requests ConsumedMatchRequest[]
+  meetup Meetup?
   @@map("parties")
 }
 model PartyMember {
@@ -98,6 +102,7 @@ model Quest {
   version Int @default(1)
   status String @default("active")
   party Party @relation(fields: [party_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  meetup Meetup?
   @@map("quests")
 }
 model MatchBatch {
@@ -123,4 +128,26 @@ model Outbox {
   delivered_at DateTime? @db.Timestamptz(6)
   created_at DateTime @default(now()) @db.Timestamptz(6)
   @@map("outbox")
+}
+
+model Meetup {
+  id String @id @db.Uuid
+  sender_id String @db.Uuid
+  recipient_id String @db.Uuid
+  title String
+  starts_at DateTime @db.Timestamptz(6)
+  ends_at DateTime @db.Timestamptz(6)
+  location_name String
+  status String @default("pending")
+  version Int @default(1)
+  party_id String? @unique @db.Uuid
+  quest_id String? @unique @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  sender User @relation("meetup_sender", fields: [sender_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  recipient User @relation("meetup_recipient", fields: [recipient_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  party Party? @relation(fields: [party_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  quest Quest? @relation(fields: [quest_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  @@index([sender_id, created_at])
+  @@index([recipient_id, created_at])
+  @@map("meetups")
 }

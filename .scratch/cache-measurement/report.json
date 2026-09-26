@@ -1,0 +1,80 @@
+{
+  "measuredAt": "2026-09-26T23:05:27.313Z",
+  "appCommit": "709aba81e8575c7cb776ab7baf71a941d8bded75",
+  "environment": {
+    "host": "darwin arm64",
+    "node": "v22.23.1",
+    "postgres": "17.5 (Debian 17.5-1.pgdg110+1)",
+    "postgis": "3.5.2",
+    "redis": "8.10.2",
+    "pgImage": "postgis/postgis:17-3.5",
+    "redisImage": "redis:8-alpine"
+  },
+  "fixtureEvents": 20,
+  "concurrency": 1,
+  "cold": {
+    "requests": 50,
+    "counts": {
+      "eventList": 50,
+      "authentication": 50,
+      "eventRevision": 50
+    },
+    "normalized": [
+      {
+        "category": "eventRevision",
+        "calls": 50,
+        "query": "SELECT \"public\".\"event_revision\".\"id\", \"public\".\"event_revision\".\"revision\" FROM \"public\".\"event_revision\" WHERE (\"public\".\"event_revision\".\"id\" = $1 AND $4=$5) LIMIT $2 OFFSET $3"
+      },
+      {
+        "category": "eventList",
+        "calls": 50,
+        "query": "SELECT \"public\".\"events\".\"id\", \"public\".\"events\".\"title\", \"public\".\"events\".\"description\", \"public\".\"events\".\"starts_at\", \"public\".\"events\".\"ends_at\", \"public\".\"events\".\"location_name\", \"public\".\"events\".\"latitude\", \"public\".\"events\".\"longitude\", \"public\".\"events\".\"status\", \"public\".\"events\".\"source_url\", \"public\".\"events\".\"source\", \"public\".\"events\".\"external_id\", \"public\".\"events\".\"version\", \"public\".\"events\".\"updated_at\" FROM \"public\".\"events\" WHERE \"public\".\"events\".\"status\" IN ($1,$2) ORDER BY \"public\".\"events\".\"starts_at\" ASC LIMIT $3 OFFSET $4"
+      },
+      {
+        "category": "authentication",
+        "calls": 50,
+        "query": "SELECT \"public\".\"users\".\"id\", \"public\".\"users\".\"google_sub\", \"public\".\"users\".\"email\", \"public\".\"users\".\"display_name\", \"public\".\"users\".\"avatar_url\", \"public\".\"users\".\"location_sharing\", \"public\".\"users\".\"location_epoch\", \"public\".\"users\".\"department\", \"public\".\"users\".\"admission_year\", \"public\".\"users\".\"interests\", \"public\".\"users\".\"status_message\", \"public\".\"users\".\"profile_version\", \"public\".\"users\".\"timetable_version\", \"public\".\"users\".\"timetable\" FROM \"public\".\"users\" WHERE (\"public\".\"users\".\"id\" = $1 AND $4=$5) LIMIT $2 OFFSET $3"
+      }
+    ],
+    "redis": {
+      "hits": 0,
+      "misses": 100
+    },
+    "latencyMs": {
+      "p50": 8.200875000000451,
+      "p95": 11.26195799999914
+    }
+  },
+  "warm": {
+    "requests": 50,
+    "counts": {
+      "eventList": 0,
+      "authentication": 50,
+      "eventRevision": 0
+    },
+    "normalized": [
+      {
+        "category": "authentication",
+        "calls": 50,
+        "query": "SELECT \"public\".\"users\".\"id\", \"public\".\"users\".\"google_sub\", \"public\".\"users\".\"email\", \"public\".\"users\".\"display_name\", \"public\".\"users\".\"avatar_url\", \"public\".\"users\".\"location_sharing\", \"public\".\"users\".\"location_epoch\", \"public\".\"users\".\"department\", \"public\".\"users\".\"admission_year\", \"public\".\"users\".\"interests\", \"public\".\"users\".\"status_message\", \"public\".\"users\".\"profile_version\", \"public\".\"users\".\"timetable_version\", \"public\".\"users\".\"timetable\" FROM \"public\".\"users\" WHERE (\"public\".\"users\".\"id\" = $1 AND $4=$5) LIMIT $2 OFFSET $3"
+      }
+    ],
+    "redis": {
+      "hits": 50,
+      "misses": 0
+    },
+    "latencyMs": {
+      "p50": 3.753499999998894,
+      "p95": 5.371833000001061
+    }
+  },
+  "eventListSelectReductionPercent": 100,
+  "equivalentResponses": true,
+  "limitations": [
+    "Forced eviction before each cold request is an intentional worst case.",
+    "Single local sequential sample; latency percentiles are descriptive, not production capacity or a general speedup benchmark.",
+    "Authentication still performs one users SELECT per request.",
+    "Synthetic fixtures only; no external feed or real identity integration was exercised.",
+    "Background outbox queries and transaction overhead are excluded; event-list, revision, and auth SELECTs are counted separately."
+  ]
+}
