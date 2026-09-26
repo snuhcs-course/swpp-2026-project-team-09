@@ -1,0 +1,165 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #f2f5ef;
+  color: #20352f;
+  font-family: Arial, "Apple SD Gothic Neo", sans-serif;
+}
+main {
+  max-width: 1240px;
+  margin: auto;
+  padding: 48px 28px;
+}
+header,
+.toolbar,
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+header {
+  padding-bottom: 28px;
+  border-bottom: 1px solid #d7e0d7;
+}
+h1 {
+  font-size: 34px;
+  letter-spacing: -1.5px;
+  margin: 10px 0;
+}
+h2 {
+  font-size: 21px;
+}
+h3 {
+  margin: 12px 0;
+}
+p {
+  line-height: 1.6;
+  color: #65716b;
+}
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #14796d;
+  font-weight: bold;
+}
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+section {
+  background: white;
+  border-radius: 18px;
+  padding: 26px;
+  margin: 18px 0;
+  border: 1px solid #e1e8e0;
+}
+.login {
+  max-width: 630px;
+  margin: 64px auto;
+}
+.configuration {
+  padding: 20px;
+  background: #f8f3e8;
+  border-radius: 12px;
+}
+.notice {
+  min-height: 30px;
+  padding-top: 15px;
+  color: #965124;
+}
+form {
+  display: grid;
+  gap: 16px;
+}
+label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: bold;
+}
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccd7cf;
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+}
+textarea {
+  min-height: 95px;
+  resize: vertical;
+}
+.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+button {
+  padding: 10px 15px;
+  border: 1px solid #cbd8ce;
+  border-radius: 8px;
+  background: white;
+  color: #245747;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.primary {
+  background: #14796d;
+  color: white;
+  border-color: #14796d;
+}
+.actions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+article {
+  padding: 20px 0;
+  border-bottom: 1px solid #e7ece5;
+}
+.badge,
+.count {
+  font-size: 12px;
+  padding: 5px 9px;
+  background: #eef2ed;
+  border-radius: 20px;
+}
+.published {
+  background: #dff2e7;
+  color: #247252;
+}
+.cancelled {
+  background: #f6e6df;
+  color: #914f35;
+}
+pre {
+  background: #f4f6f2;
+  padding: 18px;
+  overflow: auto;
+  line-height: 1.5;
+  font-size: 12px;
+  max-height: 380px;
+}
+@media (max-width: 800px) {
+  main {
+    padding: 25px 16px;
+  }
+  .columns {
+    grid-template-columns: 1fr;
+  }
+  header,
+  .toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

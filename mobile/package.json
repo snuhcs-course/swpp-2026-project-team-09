@@ -1,0 +1,34 @@
+{
+  "name": "campus-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start --dev-client",
+    "android": "expo run:android",
+    "typecheck": "tsc --noEmit",
+    "ios": "expo run:ios",
+    "test": "node --experimental-strip-types --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "expo": "~54.0.0",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "expo-dev-client": "~6.0.0",
+    "expo-location": "~19.0.0",
+    "expo-task-manager": "~14.0.0",
+    "expo-secure-store": "~15.0.0",
+    "expo-constants": "~18.0.0",
+    "react-native-maps": "1.20.1",
+    "@react-native-google-signin/google-signin": "^16.0.0",
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.2",
+    "@types/react": "~19.1.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.28.0"
+}
