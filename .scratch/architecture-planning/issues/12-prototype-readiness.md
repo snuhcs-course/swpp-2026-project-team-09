@@ -1,5 +1,7 @@
 # 첫 프로토타입 계정·개발 환경 준비
 
+> 2026-09-27 현재 준비 목록은 [전체 MVP 완료 기준과 준비 목록](../../mvp-completion/spec.md)을 따른다. 아래는 논의 이력이며 Google 지도 제안·이전 패키지 이름·미구현 당시 환경 상태는 최신 설정이 아니다. 현재 지도는 Naver, Android 패키지는 `kr.ac.campus.prototype`이다.
+
 Type: task
 Labels: wayfinder:task
 Status: ready-for-human
