@@ -60,7 +60,8 @@ Do not claim exactly-once delivery. Reconnect reloads snapshots.
 
 ## Parties, friends, quests and location (main)
 
-Party = {id,title,eventId:string|null,maxMembers:number,members:User[],createdAt}
+Party = {id,title,eventId:string|null,maxMembers:number,members:User[],createdAt,
+sharingEnabled?:boolean} (own stored preference, present only for members).
 GET /v1/parties -> {items:Party[]} (discoverable parties; membership visible to members).
 POST /v1/parties {title,eventId?,maxMembers} -> Party (creator joins).
 POST /v1/parties/:id/join -> Party; DELETE /v1/parties/:id/membership -> {ok:true}.
@@ -91,7 +92,9 @@ location snapshot; hints carry IDs only, never coordinates. Sharing OFF removes
 markers in clients and invalidates both directions of applicable sharing. Main
 auth/relationships are authoritative; socket never exposes arbitrary rooms.
 
-POST /v1/internal/parties/match {requestId,userIds,title,eventId?,maxMembers} -> Party.
+POST /v1/internal/parties/match {requestId,requestIds,userIds,title,eventId?,maxMembers,
+timeStart,timeEnd} -> Party. timeStart/timeEnd are the persisted whole-group overlap.
+The full authoritative event interval must fit; lock event validation against edits.
 Persist idempotency requestId and per-request consumption; validate users, event,
 capacity and membership transactionally. Main owns final party creation.
 GET /v1/internal/users/:id -> minimal User (authenticated internal call).

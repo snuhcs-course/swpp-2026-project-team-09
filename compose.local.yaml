@@ -1,0 +1,142 @@
+name: team09-prototype
+
+x-backend-env: &backend-env
+  NODE_ENV: production
+  JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env.prototype.local}
+  INTERNAL_API_KEY: ${INTERNAL_API_KEY:?set INTERNAL_API_KEY}
+  REDIS_CACHE_URL: redis://redis-cache:6379
+  REDIS_QUEUE_URL: redis://redis-queue:6379
+  GOOGLE_WEB_CLIENT_ID: ${GOOGLE_WEB_CLIENT_ID:-}
+  ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3100,http://127.0.0.1:3100}
+  MAIN_INTERNAL_URL: http://main-public:3000
+  WORKER_URL: http://worker-server:3003
+
+x-backend-health: &backend-health
+  test: [CMD, node, -e, "fetch('http://127.0.0.1:' + process.env.PORT + '/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+  interval: 10s
+  timeout: 5s
+  start_period: 30s
+  retries: 6
+
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    # Official PostGIS image currently publishes amd64; Apple Silicon uses emulation.
+    platform: linux/amd64
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      DB_MAIN_PASSWORD: ${DB_MAIN_PASSWORD:?set DB_MAIN_PASSWORD}
+      DB_MATCH_PASSWORD: ${DB_MATCH_PASSWORD:?set DB_MATCH_PASSWORD}
+    ports: ["127.0.0.1:54329:5432"]
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/10-databases.sh:/docker-entrypoint-initdb.d/10-databases.sh:ro
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  redis-cache:
+    image: redis:8-alpine
+    command: [redis-server, --maxmemory, 192mb, --maxmemory-policy, allkeys-lru]
+    ports: ["127.0.0.1:63791:6379"]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  redis-queue:
+    image: redis:8-alpine
+    command: [redis-server, --appendonly, "yes", --maxmemory, 192mb, --maxmemory-policy, noeviction]
+    ports: ["127.0.0.1:63792:6379"]
+    volumes: ["redis-queue-data:/data"]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  main-public:
+    image: team09-main:local
+    build: ./main-server
+    environment:
+      <<: *backend-env
+      APP_ROLE: public
+      PORT: "3000"
+      DATABASE_URL: postgresql://main_app:${DB_MAIN_PASSWORD}@postgres:5432/main_db
+    ports: ["3000:3000"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis-cache: {condition: service_healthy}
+    healthcheck: *backend-health
+  main-admin:
+    image: team09-main:local
+    build: ./main-server
+    environment:
+      <<: *backend-env
+      APP_ROLE: admin
+      PORT: "3001"
+      DATABASE_URL: postgresql://main_app:${DB_MAIN_PASSWORD}@postgres:5432/main_db
+    ports: ["127.0.0.1:3001:3001"]
+    depends_on:
+      main-public: {condition: service_healthy}
+    healthcheck: *backend-health
+  socket-server:
+    build: ./socket-server
+    environment:
+      <<: *backend-env
+      PORT: "3002"
+    ports: ["3002:3002"]
+    depends_on:
+      redis-cache: {condition: service_healthy}
+    healthcheck: *backend-health
+  worker-server:
+    build: ./worker-server
+    environment:
+      <<: *backend-env
+      PORT: "3003"
+    ports: ["127.0.0.1:3003:3003"]
+    depends_on:
+      main-public: {condition: service_healthy}
+      redis-cache: {condition: service_healthy}
+      redis-queue: {condition: service_healthy}
+    healthcheck: *backend-health
+  match-server:
+    build: ./match-server
+    environment:
+      <<: *backend-env
+      PORT: "3004"
+      DATABASE_URL: postgresql://match_app:${DB_MATCH_PASSWORD}@postgres:5432/match_db
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+    ports: ["3004:3004"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis-cache: {condition: service_healthy}
+      redis-queue: {condition: service_healthy}
+      main-public: {condition: service_healthy}
+    healthcheck: *backend-health
+  admin-frontend:
+    build:
+      context: ./admin-frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${ADMIN_API_URL:-http://localhost:3001}
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_WEB_CLIENT_ID:-}
+    environment:
+      PORT: "3100"
+      HOSTNAME: 0.0.0.0
+    ports: ["127.0.0.1:3100:3100"]
+    depends_on:
+      main-admin: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3100').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 6
+
+volumes:
+  postgres-data:
+  redis-queue-data:

@@ -1,7 +1,7 @@
 # First runnable prototype
 
 Status: ready-for-agent
-State: in-progress
+State: reviewed; provider setup and physical-device validation outstanding
 
 User authorized implementation on 2026-09-27, separate worktrees, GPT-6 Astra medium subagents, coordinator review, and squash merges into 0.0/Main. Initial defaults from the prior proposal are accepted by the instruction to begin. Prior planning remains background; this task executes a working prototype.
 

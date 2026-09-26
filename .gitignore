@@ -20,3 +20,6 @@ coverage/
 .DS_Store
 mobile/android/
 mobile/ios/
+
+# Locally built installable artifacts
+artifacts/

@@ -1,12 +1,12 @@
 # Mobile and admin prototype
 
 Status: ready-for-agent
-State: implemented; awaiting coordinator review
+State: reviewed
 Assignee: clients
 
 ## Scope
 
-Implement the assigned part of [the contract](../../../..//docs/prototype-api.md) in an isolated worktree; coordinate contract changes and report build/tests and limitations. Root reviews before squash integration.
+Implement the assigned part of [the contract](../../../docs/prototype-api.md) in an isolated worktree; coordinate contract changes and report build/tests and limitations. Root reviews before squash integration.
 
 ## Comments
 

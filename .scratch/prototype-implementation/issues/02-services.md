@@ -2,6 +2,7 @@
 
 Status: ready-for-human
 Type: task
+State: reviewed
 
 Implemented in `codex/prototype-services` isolated worktree for lead review before squash merge.
 
@@ -14,7 +15,7 @@ Implemented in `codex/prototype-services` isolated worktree for lead review befo
 - All three TypeScript builds pass.
 - Socket: 2 policy tests pass.
 - Worker: 3 actual-source parser tests pass, including blank meals, real empty shuttle and complete event interval.
-- Match: 4 tests pass, including real PostgreSQL/Redis concurrency, active-request uniqueness, cancellation rejection and immutable retries after a simulated lost main response. Temporary schema and prefixed cache keys were removed.
+- Match: 5 tests pass, including real PostgreSQL/Redis concurrency, active-request uniqueness, cancellation rejection and immutable retries after a simulated lost main response. Temporary schema and prefixed cache keys were removed.
 - All three compiled servers start and return HTTP503 when required config is absent. Worker campus endpoint rejects missing internal key with HTTP401.
 
 ## Comments

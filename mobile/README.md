@@ -35,3 +35,5 @@ Every upload checks persisted consent. OFF clears consent before stopping the ta
 Run `pnpm test` for snapshot authorization/expiry regression checks.
 
 Verified: TypeScript, Expo dependency compatibility, Android prebuild, Android JS bundle export. Google login, map rendering, and location behavior require real credentials and device verification; they are not claimed as exercised without those credentials.
+
+Coordinator verification: native Android debug and standalone ARM64 release-variant APK builds also passed. The latter bundles JS and uses the generated development keystore. Provider keys were absent; it is not a store-ready or authenticated device validation. See the root README for the exact command and package/signature details.

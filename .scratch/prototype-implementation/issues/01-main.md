@@ -2,6 +2,7 @@
 
 Status: ready-for-agent
 Type: task
+State: reviewed
 
 Implement main-owned auth, events, relationships, parties, quests, location consent,
 internal worker/match handoff and transactional outbox within the agreed contract.
