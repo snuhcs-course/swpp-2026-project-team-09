@@ -4,3 +4,19 @@
 *.iml
 out
 gen
+
+# Local credentials; retain empty configuration templates only.
+.env*
+!.env*.example
+
+# Application dependencies and build outputs
+node_modules/
+dist/
+.next/
+.expo/
+coverage/
+*.tsbuildinfo
+*.log
+.DS_Store
+mobile/android/
+mobile/ios/
