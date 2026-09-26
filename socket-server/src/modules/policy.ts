@@ -1,7 +1,7 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PUBLIC = new Set(['event.changed', 'campus.changed']);
-const PRIVATE = new Set(['party.changed', 'friend.changed', 'quest.changed', 'location.changed', 'sharing.changed', 'match.changed', 'meetup.changed']);
+const PRIVATE = new Set(['party.changed', 'friend.changed', 'quest.changed', 'location.changed', 'sharing.changed', 'match.changed', 'meetup.changed', 'private-event.changed']);
 export function authenticate(token: unknown, secret = process.env.JWT_SECRET): string {
   if (!secret || typeof token !== 'string') throw new Error('Authentication required');
   const claims = jwt.verify(token, secret, { algorithms: ['HS256'] }) as JwtPayload;

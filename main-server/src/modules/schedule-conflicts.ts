@@ -38,7 +38,14 @@ export async function assertScheduleAvailable(
       party: { members: { some: { user_id: { in: userIds } } } },
     },
   });
-  if (busy || conflict)
+  const privateConflict = await c.privateEvent.count({
+    where: {
+      owner_id: { in: userIds },
+      starts_at: { lt: endsAt },
+      ends_at: { gt: startsAt },
+    },
+  });
+  if (busy || conflict || privateConflict)
     throw new ConflictException({
       code: "SCHEDULE_CONFLICT",
       message: "The proposed time conflicts with an existing schedule",

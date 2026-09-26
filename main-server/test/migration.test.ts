@@ -150,7 +150,11 @@ test(
             >`SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NOT NULL`;
             assert.deepEqual(
               rows.map((r) => r.migration_name),
-              ["0_init", "202609270001_friend_meetups"],
+              [
+                "0_init",
+                "202609270001_friend_meetups",
+                "202609270002_private_events",
+              ],
             );
             await verifySqlInvariants(a);
             await verifyTransactionalWrites(a);

@@ -93,3 +93,43 @@ export function eventInput(value: any) {
     sourceUrl: b.sourceUrl ?? null,
   };
 }
+
+export function exactTime(value: unknown, name: string) {
+  if (
+    typeof value !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/.test(
+      value,
+    )
+  )
+    bad(`${name} must be an ISO timestamp with timezone`);
+  const [y, m, d, h, minute, second] = value
+    .slice(0, 19)
+    .split(/[-T:]/)
+    .map(Number);
+  const days = [
+    31,
+    y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0) ? 29 : 28,
+    31,
+    30,
+    31,
+    30,
+    31,
+    31,
+    30,
+    31,
+    30,
+    31,
+  ];
+  if (
+    y < 1 ||
+    m < 1 ||
+    m > 12 ||
+    d < 1 ||
+    d > days[m - 1] ||
+    h > 23 ||
+    minute > 59 ||
+    second > 59
+  )
+    bad(`${name} must be a valid calendar timestamp`);
+  return new Date(time(value, name));
+}

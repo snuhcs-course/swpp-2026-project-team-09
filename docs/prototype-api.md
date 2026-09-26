@@ -155,6 +155,29 @@ Persist idempotency requestId and per-request consumption; validate users, event
 capacity and membership transactionally. Main owns final party creation.
 GET /v1/internal/users/:id -> minimal User (authenticated internal call).
 
+## Private personal calendar (main)
+
+GET /v1/private-events -> {items:PrivateEvent[]} (authenticated owner only).
+POST /v1/private-events {title,description,startsAt,endsAt,locationName,latitude?,longitude?} -> PrivateEvent.
+PATCH /v1/private-events/:id {expectedVersion,...editableFields} -> PrivateEvent.
+DELETE /v1/private-events/:id {expectedVersion} -> {ok:true}.
+PrivateEvent = {id,title,description,startsAt,endsAt,locationName,latitude:number|null,
+longitude:number|null,version,createdAt,updatedAt}.
+
+Title is required (max200), description max5000 and locationName max300 may be empty.
+Timestamps must have an explicit timezone and valid calendar date; start precedes end,
+maximum duration31days. Past entries and overlaps with other source schedules are
+allowed. Coordinate changes set both fields together: null/null clears, otherwise
+latitude -90..90 and longitude -180..180. Owner and visibility cannot be submitted.
+Updates/deletes serialize on the owner and enforce version CAS. Other users,
+including administrators, cannot use public APIs to access another owner's rows;
+guessed-ID mutations return404. These routes are absent from the admin runtime.
+Private calendar entries never enter public event/party feeds. The owner-only
+private-event.changed hint has ID/version, no contents. Their occupied intervals
+participate in latest schedule conflict checks for plan acceptance/quest time changes;
+source calendar edits do not silently alter already confirmed shared plans.
+This is manual input; poster extraction and walking-time verification are separate.
+
 ## Concrete friend plans (main)
 
 GET /v1/meetups -> {items:Meetup[]} (sender/recipient only).

@@ -28,6 +28,7 @@ import {
 } from "./auth";
 import { Database } from "./database";
 import { EventsService } from "./events";
+import { PrivateEventsService } from "./private-events";
 import { MeetupsService } from "./meetups";
 import { SocialService } from "./social";
 import { ProfileService } from "./profile";
@@ -96,6 +97,7 @@ export class PublicController {
     private events: EventsService,
     private social: SocialService,
     private meetups: MeetupsService,
+    private privateEvents: PrivateEventsService,
     private location: LocationService,
     private profile: ProfileService,
     private campus: CampusService,
@@ -139,6 +141,29 @@ export class PublicController {
     @Body() b: any,
   ) {
     return this.social.partySharing(r.user.id, id, bool(b?.enabled));
+  }
+  @Get("private-events") privateEventsList(@Req() r: AuthRequest) {
+    return this.privateEvents.list(r.user.id);
+  }
+  @Post("private-events") createPrivateEvent(
+    @Req() r: AuthRequest,
+    @Body() b: unknown,
+  ) {
+    return this.privateEvents.create(r.user.id, b);
+  }
+  @Patch("private-events/:id") updatePrivateEvent(
+    @Req() r: AuthRequest,
+    @Param("id") id: string,
+    @Body() b: unknown,
+  ) {
+    return this.privateEvents.update(r.user.id, id, b);
+  }
+  @Delete("private-events/:id") deletePrivateEvent(
+    @Req() r: AuthRequest,
+    @Param("id") id: string,
+    @Body() b: unknown,
+  ) {
+    return this.privateEvents.remove(r.user.id, id, b);
   }
   @Get("meetups") meetupsList(@Req() r: AuthRequest) {
     return this.meetups.list(r.user.id);
@@ -277,6 +302,7 @@ export function runtimeControllers(role: string) {
     EventsService,
     SocialService,
     MeetupsService,
+    PrivateEventsService,
     LocationService,
     ProfileService,
     CampusService,

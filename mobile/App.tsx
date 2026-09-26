@@ -68,6 +68,7 @@ function CampusApp() {
     [positions, setPositions] = useState<Position[]>([]),
     [matches, setMatches] = useState<MatchRequest[]>([]),
     [meetups, setMeetups] = useState<Meetup[]>([]);
+  const [privateEventRevision, setPrivateEventRevision] = useState(0);
   const [sharing, setSharing] = useState(false),
     [background, setBackground] = useState(false),
     [self, setSelf] = useState<Location.LocationObject | null>(null);
@@ -106,6 +107,7 @@ function CampusApp() {
     setQuests([]);
     setMatches([]);
     setMeetups([]);
+    setPrivateEventRevision(0);
     setLoaded(false);
   }
   useEffect(() => {
@@ -194,8 +196,15 @@ function CampusApp() {
     };
     refresh();
     const socket = SOCKET ? io(SOCKET, { auth: { token } }) : null;
-    socket?.on("connect", refresh);
-    socket?.on("domain.changed", refresh);
+    socket?.on("connect", () => {
+      setPrivateEventRevision((value) => value + 1);
+      refresh();
+    });
+    socket?.on("domain.changed", (hint?: { type?: string }) => {
+      if (hint?.type === "private-event.changed")
+        setPrivateEventRevision((value) => value + 1);
+      else refresh();
+    });
     socket?.on("disconnect", () => {
       generation.current++;
       setPositions([]);
@@ -204,11 +213,17 @@ function CampusApp() {
       generation.current++;
       setPositions([]);
     });
-    const timer = setInterval(refresh, 30000);
+    const timer = setInterval(() => {
+      setPrivateEventRevision((value) => value + 1);
+      refresh();
+    }, 30000);
     const app = AppState.addEventListener("change", (state) => {
       generation.current++;
       setPositions([]);
-      if (state === "active") refresh();
+      if (state === "active") {
+        setPrivateEventRevision((value) => value + 1);
+        refresh();
+      }
     });
     return () => {
       generation.current++;
@@ -462,6 +477,7 @@ function CampusApp() {
       positions={positions}
       matches={matches}
       meetups={meetups}
+      privateEventRevision={privateEventRevision}
       self={self?.coords ?? null}
       sharing={sharing}
       background={background}

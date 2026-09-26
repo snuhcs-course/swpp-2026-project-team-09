@@ -35,6 +35,7 @@ import {
   u,
 } from "./Primitives";
 import { MatchForm, PartyForm, QuestForm } from "./Forms";
+import { PrivateEvents } from "./PrivateEvents";
 import { AccountEditor } from "./Account";
 import type { Profile } from "../account-forms";
 import { MeetupForm, MeetupList } from "./Meetups";
@@ -54,7 +55,8 @@ type SheetState =
         | "matches"
         | "profile"
         | "timetable"
-        | "meetups";
+        | "meetups"
+        | "privateEvents";
     }
   | null;
 type Props = {
@@ -67,6 +69,7 @@ type Props = {
   positions: Position[];
   matches: MatchRequest[];
   meetups: Meetup[];
+  privateEventRevision: number;
   self: { latitude: number; longitude: number } | null;
   sharing: boolean;
   background: boolean;
@@ -107,6 +110,7 @@ export default function Experience(p: Props) {
     [sheet, setSheet] = useState<SheetState>(null),
     [selectedPartyId, setSelectedPartyId] = useState(""),
     [friendEmail, setFriendEmail] = useState("");
+  const [privateBusy, setPrivateBusy] = useState(false);
   const [meetupBusy, setMeetupBusy] = useState(false),
     [meetupMessage, setMeetupMessage] = useState("");
   const meetupLock = useRef(false),
@@ -166,7 +170,7 @@ export default function Experience(p: Props) {
     p.onProfileSaved(value);
   };
   const open = (next: SheetState) => {
-    if (meetupLock.current) return;
+    if (meetupLock.current || privateBusy) return;
     setMeetupMessage("");
     p.clearMessage();
     setSheet(next);
@@ -309,7 +313,9 @@ export default function Experience(p: Props) {
                         ? "친구와 약속 계획"
                         : sheet?.kind === "meetupForm"
                           ? "약속 계획 제안"
-                          : "내 계정 · 위치 공유";
+                          : sheet?.kind === "privateEvents"
+                            ? "내 개인 일정"
+                            : "내 계정 · 위치 공유";
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.header}>
@@ -534,6 +540,11 @@ export default function Experience(p: Props) {
                   />
                 </Card>
               )}
+              <Action
+                secondary
+                label="내 개인 일정 · 나만 보기"
+                onPress={() => open({ kind: "privateEvents" })}
+              />
               <Text style={u.title}>다가오는 공동 약속</Text>
               {upcoming.length ? (
                 upcoming.map((q) => questCard(q))
@@ -620,9 +631,9 @@ export default function Experience(p: Props) {
         <Sheet
           title={heading}
           onClose={() => {
-            if (!meetupLock.current) open(null);
+            if (!meetupLock.current && !privateBusy) open(null);
           }}
-          busy={p.busy || meetupBusy}
+          busy={p.busy || meetupBusy || privateBusy}
           message={meetupMessage || p.message}
         >
           {sheet.kind === "event" &&
@@ -1102,6 +1113,14 @@ export default function Experience(p: Props) {
               ))}
             </>
           )}
+          {sheet.kind === "privateEvents" && (
+            <PrivateEvents
+              key={p.token}
+              token={p.token}
+              revision={p.privateEventRevision}
+              onBusyChange={setPrivateBusy}
+            />
+          )}
           {(sheet.kind === "profile" || sheet.kind === "timetable") && (
             <AccountEditor
               key={`${p.token}:${sheet.kind}`}
@@ -1128,6 +1147,11 @@ export default function Experience(p: Props) {
                 secondary
                 label="내 학기 시간표"
                 onPress={() => open({ kind: "timetable" })}
+              />
+              <Action
+                secondary
+                label="내 개인 일정 · 나만 보기"
+                onPress={() => open({ kind: "privateEvents" })}
               />
               <Card>
                 <View style={u.row}>

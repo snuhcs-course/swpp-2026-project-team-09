@@ -149,3 +149,17 @@ export type Meetup = {
   questId: string | null;
   createdAt: string;
 };
+
+export type PrivateEvent = {
+  id: string;
+  title: string;
+  description: string;
+  startsAt: string;
+  endsAt: string;
+  locationName: string;
+  latitude: number | null;
+  longitude: number | null;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+};

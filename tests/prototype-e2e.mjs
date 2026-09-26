@@ -540,6 +540,37 @@ try {
   assert.equal((await http("public", "/v1/meetups", { token: a.token })).items.find(m => m.id === classProposal.id).status, "pending");
   log("latest registered classes and accepted plans prevent conflicting confirmation without leaking schedule details");
 
+  const privateStart = new Date(+meetupStart + 2 * 86400000), privateEnd = new Date(+privateStart + 3600000);
+  const privateEvent = await http("public", "/v1/private-events", {
+    token: a.token, method: "POST", status: 201,
+    body: { title: "Owner-only private calendar", description: "Personal confidential detail", startsAt: privateStart.toISOString(), endsAt: privateEnd.toISOString(), locationName: "" },
+  });
+  await http("public", "/v1/private-events", { status: 401 });
+  await http("admin", "/v1/private-events", { token: admin.token, status: 404 });
+  assert.ok((await http("public", "/v1/private-events", {token:a.token})).items.some(e=>e.id===privateEvent.id));
+  for (const user of [b, outsider]) {
+    assert.ok(!(await http("public", "/v1/private-events", {token:user.token})).items.some(e=>e.id===privateEvent.id));
+    await http("public", `/v1/private-events/${privateEvent.id}`, {token:user.token,method:"PATCH",status:404,body:{expectedVersion:1,title:"Intrusion"}});
+    await http("public", `/v1/private-events/${privateEvent.id}`, {token:user.token,method:"DELETE",status:404,body:{expectedVersion:1}});
+  }
+  assert.ok(!(await http("public", "/v1/events", {token:a.token})).items.some(e=>e.id===privateEvent.id));
+  const privateEdited = await http("public", `/v1/private-events/${privateEvent.id}`, {token:a.token,method:"PATCH",body:{expectedVersion:1,title:"Owner edited plan"}});
+  assert.equal(privateEdited.version,2);
+  await http("public", `/v1/private-events/${privateEvent.id}`, {token:a.token,method:"PATCH",status:409,body:{expectedVersion:1,title:"Stale plan"}});
+  const privateProposal=await http("public", "/v1/meetups", {token:a.token,method:"POST",status:201,body:{friendId:b.id,title:"Private calendar overlap",startsAt:privateStart.toISOString(),endsAt:privateEnd.toISOString(),locationName:"Meeting point"}});
+  const privateConflict=await http("public", `/v1/meetups/${privateProposal.id}/respond`, {token:b.token,method:"POST",status:409,body:{action:"accept",expectedVersion:1}});
+  assert.equal(privateConflict.code,"SCHEDULE_CONFLICT");
+  assert.ok(!JSON.stringify(privateConflict).includes("Owner edited"));
+  await http("public", `/v1/private-events/${privateEvent.id}`, {token:a.token,method:"DELETE",status:409,body:{expectedVersion:1}});
+  await http("public", `/v1/private-events/${privateEvent.id}`, {token:a.token,method:"DELETE",body:{expectedVersion:2}});
+  assert.ok(!(await http("public", "/v1/private-events", {token:a.token})).items.some(e=>e.id===privateEvent.id));
+  const unblocked=await http("public", `/v1/meetups/${privateProposal.id}/respond`, {token:b.token,method:"POST",status:201,body:{action:"accept",expectedVersion:1}});
+  assert.equal(unblocked.status,"accepted");
+  await until(()=>hints.some(h=>h.type==="private-event.changed"&&h.entityId===privateEvent.id),"owner-only private calendar hint");
+  assert.ok(!recipientHints.some(h=>h.entityId===privateEvent.id));
+  assert.ok(!outsiderHints.some(h=>h.entityId===privateEvent.id));
+  log("private calendar CRUD/CAS → owner-only hints → conflict rejection → removal permits exact pending plan");
+
   const request = {
     eventId: event.id,
     activity: "Integration matching",

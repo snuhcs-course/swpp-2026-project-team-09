@@ -25,6 +25,7 @@ model User {
   profile_version Int @default(1)
   timetable_version Int @default(1)
   timetable Json @default("{\"timezone\":\"Asia/Seoul\",\"semesterStartsOn\":null,\"semesterEndsOn\":null,\"entries\":[]}")
+  private_events PrivateEvent[]
   memberships PartyMember[]
   sent_friendships Friendship[] @relation("sender")
   received_friendships Friendship[] @relation("receiver")
@@ -150,4 +151,22 @@ model Meetup {
   @@index([sender_id, created_at])
   @@index([recipient_id, created_at])
   @@map("meetups")
+}
+
+model PrivateEvent {
+  id String @id @db.Uuid
+  owner_id String @db.Uuid
+  title String
+  description String
+  starts_at DateTime @db.Timestamptz(6)
+  ends_at DateTime @db.Timestamptz(6)
+  location_name String
+  latitude Float?
+  longitude Float?
+  version Int @default(1)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  owner User @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  @@index([owner_id, starts_at])
+  @@map("private_events")
 }
