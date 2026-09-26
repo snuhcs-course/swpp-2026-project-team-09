@@ -325,6 +325,36 @@ try {
     ).members,
     [],
   );
+  const visibleParty = (await http("public", "/v1/parties", { token: outsider.token })).items.find(p => p.id === party.id);
+  assert.equal(visibleParty.memberCount, 2);
+  assert.equal(visibleParty.isMember, false);
+  assert.equal(Object.hasOwn(visibleParty, "sharingEnabled"), false);
+  const quest = await http("public", "/v1/quests", {
+    token: a.token, method: "POST", status: 201,
+    body: { partyId: party.id, title: "Shared integration plan", startsAt, endsAt, locationName: "Test" },
+  });
+  const updatedQuest = await http("public", `/v1/quests/${quest.id}`, {
+    token: b.token, method: "PATCH", body: { expectedVersion: quest.version, title: "Member updated plan" },
+  });
+  const conflict = await http("public", `/v1/quests/${quest.id}`, {
+    token: a.token, method: "PATCH", status: 409,
+    body: { expectedVersion: quest.version, title: "Stale member update" },
+  });
+  assert.equal(conflict.code, "VERSION_CONFLICT");
+  await http("public", `/v1/quests/${quest.id}`, {
+    token: outsider.token, method: "PATCH", status: 403,
+    body: { expectedVersion: updatedQuest.version, title: "Forbidden" },
+  });
+  const cancelledQuest = await http("public", `/v1/quests/${quest.id}`, {
+    token: a.token, method: "PATCH",
+    body: { expectedVersion: updatedQuest.version, status: "cancelled" },
+  });
+  await until(async () => hints.some(h => h.type === "quest.changed" && h.entityId === quest.id && h.version === cancelledQuest.version), "cancelled quest socket hint");
+  const sharedSnapshot = await http("public", "/v1/quests", { token: b.token });
+  assert.equal(sharedSnapshot.items.find(q => q.id === quest.id).status, "cancelled");
+  assert.equal((await http("public", "/v1/quests", { token: outsider.token })).items.length, 0);
+  log("party counts and shared quest edit/conflict/cancel → socket hint → authorized snapshot");
+
   for (const user of [a, b, outsider])
     await http("public", "/v1/me/location-sharing", {
       token: user.token,

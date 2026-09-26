@@ -45,13 +45,14 @@ docker --context colima compose --env-file .env.prototype.local -f compose.local
 ## 현재 검증 상태 (2026-09-27)
 
 - public/admin API, Socket, Worker, Match, Next.js와 DB/Redis 등 Compose 컨테이너 9개가 정상 상태로 실행되었습니다. 최초 관리자 허용 목록은 로컬 설정에 `fyoon46@snu.ac.kr`로 지정했습니다.
-- 24개 서버·모바일 검사(실제 PostgreSQL/Redis 동시성 검사 포함), 서버·어드민 빌드와 모바일 타입·번들 검사를 통과했습니다. 별도 임시 DB를 쓰는 HTTP/Socket 통합 검사도 통과했습니다.
-- Android ARM64 테스트 APK를 에뮬레이터에 설치하고 cold launch를 확인했습니다. 시작 직후 프로세스의 Android/JavaScript 오류 로그는 없었습니다.
+- 서버·모바일 검사와 서버·어드민 빌드, 모바일 타입·번들 검사를 통과했습니다. 이번 모바일 개선에서는 main-server 18개 검사(임시 PostgreSQL/Redis 사용)와 HTTP/Socket 통합 검사를 확인했습니다. 세부 결과는 `.scratch/mobile-experience/`에 기록합니다.
+- Android ARM64 테스트 APK를 에뮬레이터에 설치하고 cold launch를 확인했습니다. 시작 화면 렌더링을 확인했고 해당 프로세스에 AndroidRuntime/ReactNativeJS 오류는 없었습니다. Google 로그인 성공을 뜻하지 않습니다.
 - 실제 테스트 DB 연결 종료 후 public/admin API의 재연결을 확인했습니다.
 - 행사 수정 → 캐시 무효화 → 소켓 알림 → 최신 조회, 위치 공유 권한, 두 매칭 요청 → 단일 파티 확정과 재시도 중복 방지를 확인했습니다.
 - 실제 학식 조회와 공식 행사 1건 수집에 성공했습니다. 시간·장소가 불명확한 공지 4건은 제외했고, 당시 셔틀 응답에는 차량이 없었습니다.
 - 저장된 셔틀 응답을 동시 조회한 20건에서 캐시 사용 20건·추가 원본 요청 0건을 관찰했습니다. 이는 캐시 재사용 확인이며 처리량 벤치마크가 아닙니다.
-- Google OAuth·지도·AI 키가 없어 실제 로그인, 지도 표시, AI 임베딩, 실기기 백그라운드 위치는 아직 검증하지 않았습니다. Colima 명령은 제공하지만 이번 실행 검증은 기존 Docker Desktop에서 했습니다.
+- 사용자가 어드민의 실제 Google 로그인 성공을 확인했고 Android OAuth 클라이언트를 등록했습니다. 모바일 로그인·네이버 지도 표시·AI 임베딩·실기기 백그라운드 위치 검증은 별도로 남아 있습니다. Google 계정이 없는 에뮬레이터에서 네이티브 로그인 호출이 `INTERNAL_ERROR`를 반환했으며, 실제 기기/계정으로 대조가 필요합니다. Colima 명령은 제공하지만 이번 실행 검증은 기존 Docker Desktop에서 했습니다.
+- 파티 인원/참여 상태 조회, 공동 퀘스트 수정 충돌 거부·취소 → 소켓 알림 → 구성원 최신 조회를 임시 DB에서 확인했습니다. 소켓 알림 병합의 단위 검사에서는 동시 100개 알림이 조회 1회로 합쳐졌습니다. 실제 서버 처리량 수치는 아닙니다.
 
 서버 4개를 각 디렉터리에서 빌드하고 모바일 의존성을 설치한 뒤, Compose DB/Redis가 실행 중일 때 통합 검사를 재현할 수 있습니다.
 
@@ -61,22 +62,30 @@ node tests/prototype-e2e.mjs
 
 이 검사는 로컬 설정을 읽고 임시 DB·빈 Redis 테스트 인덱스 14/15·13900~13904 포트를 사용합니다. 기존 데이터가 있는 테스트 인덱스는 거부하고 자신이 만든 리소스만 정리합니다. 테스트 계정은 실제 로그인 우회에 사용되지 않습니다.
 
-첫 구현은 핵심 연결을 검증하는 단계입니다. 시간표/OCR, AI 대화형 명령, 자동 체크인·퀘스트 완료, 개인 비공개 구역, 운영 부하 시험은 후속 범위입니다.
+첫 구현은 핵심 연결을 검증하는 단계이며 전체 MVP 완료가 아닙니다. 시간표/OCR, AI 대화형 명령, 일정·이동시간을 고려한 추천, 개인 행사, 비공개 구역, 운영 부하 시험 등은 개발 목록에 남아 있습니다. 공동 퀘스트는 함께 합의한 활동 계획이며 단계별 완료/체크인을 임의로 추가하지 않습니다.
 
 ## Google·지도·AI 설정
 
 1. Google Cloud 프로젝트에 Web OAuth client를 만들고 `GOOGLE_WEB_CLIENT_ID`에 넣습니다. 어드민 Web client의 허용 JavaScript origin은 `http://localhost:3100`입니다. 서버는 같은 audience의 ID token을 검증합니다.
 2. 학교 계정의 `email_verified`, 정확한 `snu.ac.kr` 도메인과 `hd`를 검증합니다. 학교 Google 계정 확인은 재학 증명이나 학교 SSO 연동과 다릅니다.
 3. 팀원 학교 이메일을 `ADMIN_EMAILS`에 쉼표로 구분해 넣습니다. 비어 있으면 누구에게도 관리자 권한을 주지 않습니다.
-4. Android OAuth client는 앱 package와 실제 APK 서명 SHA-1을 등록합니다. 실제 package와 설정 이름은 `mobile/.env.example`과 `mobile/app.config.ts`를 확인합니다. Android Maps SDK 키에도 같은 package/SHA-1 제한을 설정합니다.
-5. 키를 설정하면 모바일 네이티브 빌드와 Next.js 이미지를 다시 빌드합니다. `NEXT_PUBLIC_*`와 Android 지도 키는 빌드에 반영되며, 서버 비밀 키와 구분합니다.
+4. Android OAuth client는 앱 package와 실제 APK 서명 SHA-1을 등록합니다. 기존 Web client는 유지합니다. 모바일의 `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`에는 같은 Web client ID를 넣으며, Android client는 네이티브 SDK가 package/서명으로 선택합니다.
+5. 지도는 네이버 네이티브 SDK를 사용합니다. Naver Cloud Maps 애플리케이션에서 Dynamic Map 및 Android package `kr.ac.campus.prototype`을 등록하고 Client ID를 `mobile/.env.local`의 `NAVER_MAP_CLIENT_ID`에 넣습니다. Client Secret은 앱에 넣지 않습니다. 모바일 설정 변경 후 네이티브 앱을 다시 빌드합니다. Google Maps 설정은 필요 없습니다. 어드민 Web ID 변경 때만 Next.js 이미지도 다시 빌드합니다.
 6. `OPENAI_API_KEY`가 있으면 매칭 임베딩 경로를 사용할 수 있습니다. 없으면 규칙 기반임을 표시합니다. 호출 비용이 발생할 수 있으며 임베딩을 동행 궁합 확률로 해석하지 않습니다.
 
 초기 학교 로그인과 실기기 지도 검증에는 사용자 소유의 OAuth/Maps 설정이 필요합니다. 개발용 로그인 우회나 가짜 계정을 앱에 넣지 않습니다.
 
 ## Android 개발
 
-`mobile/.env.example`에서 `.env.local`을 만들고 API·Socket·Match URL을 설정합니다. Android 에뮬레이터에서 Mac은 `10.0.2.2`, 실제 기기에서는 같은 Wi-Fi의 Mac IP를 사용합니다. `localhost`는 Android 기기 자신입니다. 로컬 HTTP 허용은 개발 빌드에 한정해야 하며 실제 외부 배포에는 HTTPS/WSS를 사용합니다.
+`mobile/.env.local`이 없을 때만 예시 파일에서 생성합니다. 현재 로컬 테스트는 API·Socket·Match를 `http://127.0.0.1:3000`, `:3002`, `:3004`로 설정하고 USB 디버깅의 `adb reverse`로 Mac에 연결합니다. 에뮬레이터도 같은 방식을 쓸 수 있습니다. `PROTOTYPE_LOCAL_HTTP=true`일 때만 생성하는 Android 네트워크 설정은 루프백/에뮬레이터 주소에만 HTTP를 허용합니다. 일반 LAN 주소는 이 예외에 포함하지 않습니다. 외부 배포와 백그라운드 공유에는 HTTPS/WSS가 필요합니다.
+
+```sh
+adb reverse tcp:3000 tcp:3000
+adb reverse tcp:3002 tcp:3002
+adb reverse tcp:3004 tcp:3004
+```
+
+기기가 여러 개면 각 명령에 `adb -s <기기 ID>`를 사용합니다. 연결을 해제하거나 재부팅한 뒤에는 다시 설정합니다.
 
 ```sh
 cd mobile
@@ -92,11 +101,11 @@ cd android
 NODE_ENV=production ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a
 ```
 
-결과는 `mobile/android/app/build/outputs/apk/release/app-release.apk`입니다. 이번 파일은 루트 `artifacts/prototype-arm64.apk`에도 저장했으며 Git에는 포함하지 않습니다. JavaScript 번들을 내장했고, Expo가 생성한 **개발용 서명**을 사용하므로 스토어 배포용 서명이 아닙니다. OAuth·지도 키 없이 빌드하여 설정 안내/로그인 화면까지만 확인할 수 있습니다. 키와 API 주소를 설정한 뒤 다시 빌드해야 실제 사용 가능합니다.
+결과는 `mobile/android/app/build/outputs/apk/release/app-release.apk`입니다. 이번 파일은 루트 `artifacts/prototype-arm64.apk`에도 저장했으며 Git에는 포함하지 않습니다. JavaScript 번들을 내장했고, Expo가 생성한 **개발용 서명**을 사용하므로 스토어 배포용 서명이 아닙니다. 빌드 시점의 `.env.local` 설정이 반영됩니다. 키가 빠진 기능은 설정 필요 상태로 표시하며, APK 생성 성공만으로 실제 로그인·지도·위치 검증이 완료된 것은 아닙니다.
 
 - Android package: `kr.ac.campus.prototype`
 - 이번 테스트 서명 SHA-1: `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`
-- 다른 키로 서명하면 새 SHA-1을 OAuth/Maps에 등록합니다. 위치 공유는 사용자 스위치와 OS 권한이 모두 필요하며 화면을 끈 실제 Android에서 별도로 확인해야 합니다.
+- 다른 키로 서명하면 새 SHA-1을 Google OAuth에 등록합니다. 네이버 Maps는 등록된 Android package를 확인합니다. 위치 공유는 사용자 스위치와 OS 권한이 모두 필요하며 화면을 끈 실제 Android에서 별도로 확인해야 합니다.
 
 ## 데이터와 공개 범위
 

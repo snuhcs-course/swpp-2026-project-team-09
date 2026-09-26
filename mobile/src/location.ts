@@ -2,6 +2,7 @@ import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
 import * as SecureStore from "expo-secure-store";
 import { API, ApiError, request } from "./api";
+import { isCurrentSession } from "./session";
 export const TOKEN_KEY = "campus-token";
 const CONSENT_KEY = "campus-upload-consent";
 export async function setUploadConsent(enabled: boolean) {
@@ -25,9 +26,16 @@ TaskManager.defineTask<{ locations: Location.LocationObject[] }>(
           error instanceof ApiError &&
           (error.status === 401 || error.status === 403)
         ) {
+          const stillCurrent = async () =>
+            isCurrentSession(
+              token,
+              (await SecureStore.getItemAsync(TOKEN_KEY)) ?? "",
+            );
+          if (!(await stillCurrent())) return;
           await setUploadConsent(false);
+          if (!(await stillCurrent())) return;
           await stopLocation();
-          if (error.status === 401)
+          if (error.status === 401 && (await stillCurrent()))
             await SecureStore.deleteItemAsync(TOKEN_KEY);
         }
       });
@@ -35,6 +43,8 @@ TaskManager.defineTask<{ locations: Location.LocationObject[] }>(
 );
 export async function upload(token: string, position: Location.LocationObject) {
   if ((await SecureStore.getItemAsync(CONSENT_KEY)) !== "yes") return;
+  const currentToken = await SecureStore.getItemAsync(TOKEN_KEY);
+  if (!isCurrentSession(token, currentToken ?? "")) return;
   return request("/me/location", token, "PUT", {
     latitude: position.coords.latitude,
     longitude: position.coords.longitude,

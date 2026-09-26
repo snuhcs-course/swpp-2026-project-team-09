@@ -8,8 +8,10 @@ export class ApiError extends Error {
     this.status = status;
   }
 }
-let unauthorized: (() => void) | undefined;
-export function onUnauthorized(handler: (() => void) | undefined) {
+let unauthorized: ((failedToken: string) => void) | undefined;
+export function onUnauthorized(
+  handler: ((failedToken: string) => void) | undefined,
+) {
   unauthorized = handler;
 }
 export async function request<T = any>(
@@ -32,7 +34,7 @@ export async function request<T = any>(
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-    if (response.status === 401 && token) unauthorized?.();
+    if (response.status === 401 && token) unauthorized?.(token);
     const result = await response.json();
     if (!response.ok)
       throw new ApiError(
@@ -68,6 +70,9 @@ export type Party = {
   members: User[];
   maxMembers: number;
   sharingEnabled?: boolean;
+  eventId: string | null;
+  memberCount: number;
+  isMember: boolean;
 };
 export type Friend = {
   id: string;
@@ -77,6 +82,8 @@ export type Friend = {
   sharingEnabled: boolean;
 };
 export type Quest = {
+  version: number;
+  status: "active" | "cancelled";
   id: string;
   partyId: string;
   title: string;
@@ -89,4 +96,37 @@ export type Position = {
   latitude: number;
   longitude: number;
   observedAt: string;
+};
+
+export type MatchRequest = {
+  id: string;
+  activity: string;
+  status: string;
+  explanation?: string;
+  aiStatus?: string;
+  partyId: string | null;
+  timeStart: string;
+  timeEnd: string;
+};
+export type Meals = {
+  date: string;
+  status: string;
+  message?: string;
+  sourceUrl: string;
+  fetchedAt: string;
+  items: {
+    restaurant: string;
+    breakfast: string;
+    lunch: string;
+    dinner: string;
+  }[];
+};
+export type Shuttle = {
+  status: string;
+  message?: string;
+  sourceUrl: string;
+  fetchedAt: string;
+  observedAt: null;
+  vehicles: { id: string; x: number; y: number; label: string }[];
+  stops: { name: string; x: number; y: number }[];
 };

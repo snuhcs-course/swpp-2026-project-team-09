@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS quests (
  starts_at timestamptz NOT NULL,ends_at timestamptz NOT NULL CHECK(ends_at>starts_at),location_name text NOT NULL,
  version integer NOT NULL DEFAULT 1
 );
+ALTER TABLE quests ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'active' CHECK(status IN ('active','cancelled'));
 CREATE TABLE IF NOT EXISTS match_batches (request_id uuid PRIMARY KEY,party_id uuid NOT NULL REFERENCES parties(id),fingerprint text NOT NULL);
 CREATE TABLE IF NOT EXISTS consumed_match_requests (request_id uuid PRIMARY KEY,user_id uuid NOT NULL REFERENCES users(id),party_id uuid NOT NULL REFERENCES parties(id));
 CREATE TABLE IF NOT EXISTS outbox (

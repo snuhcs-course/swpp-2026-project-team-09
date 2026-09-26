@@ -8,12 +8,14 @@ export default {
     newArchEnabled: true,
     android: {
       package: "kr.ac.campus.prototype",
-      config: {
-        googleMaps: { apiKey: process.env.GOOGLE_MAPS_ANDROID_API_KEY || "" },
-      },
     },
     plugins: [
       "expo-dev-client",
+      // Expo composes mods inside-out: remove legacy keys after the wrapper runs.
+      "./src/map/withNaverMapNative",
+      ["@mj-studio/react-native-naver-map", { client_id: process.env.NAVER_MAP_CLIENT_ID?.trim() || "" }],
+      ["expo-build-properties", { android: { extraMavenRepos: ["https://repository.map.naver.com/archive/maven"] } }],
+      "./plugins/withLocalPrototypeNetwork",
       "expo-secure-store",
       "@react-native-google-signin/google-signin",
       [
@@ -26,6 +28,6 @@ export default {
         },
       ],
     ],
-    extra: { mapsConfigured: Boolean(process.env.GOOGLE_MAPS_ANDROID_API_KEY) },
+    extra: { mapsConfigured: Boolean(process.env.NAVER_MAP_CLIENT_ID?.trim()) },
   },
 };

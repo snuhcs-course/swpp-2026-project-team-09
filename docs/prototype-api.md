@@ -60,13 +60,20 @@ Do not claim exactly-once delivery. Reconnect reloads snapshots.
 
 ## Parties, friends, quests and location (main)
 
-Party = {id,title,eventId:string|null,maxMembers:number,members:User[],createdAt,
+Party = {id,title,eventId:string|null,maxMembers:number,memberCount:number,isMember:boolean,
+members:User[],createdAt,
 sharingEnabled?:boolean} (own stored preference, present only for members).
 GET /v1/parties -> {items:Party[]} (discoverable parties; membership visible to members).
 POST /v1/parties {title,eventId?,maxMembers} -> Party (creator joins).
 POST /v1/parties/:id/join -> Party; DELETE /v1/parties/:id/membership -> {ok:true}.
 Serialize capacity checks, prohibit duplicate membership. Do not return private
-member details to unaffiliated candidates; trim discoverable party member lists.
+member details to unaffiliated candidates: members is [] and sharingEnabled is absent.
+memberCount remains the true count, isMember reflects the authenticated caller, and
+eventId identifies the linked event. Internal calls without a user have isMember=false.
+Linked event must currently be published to create a party or add a new member;
+validation locks the event against concurrent status changes. Existing members can
+reload their party after event cancellation; event cancellation does not implicitly
+cancel independently managed shared quests.
 
 GET /v1/friends -> {items:[{id,user:User,status:'pending'|'accepted',direction:
 'incoming'|'outgoing',sharingEnabled:boolean}]}
@@ -74,10 +81,22 @@ POST /v1/friends {email} -> friend request; POST /v1/friends/:id/accept -> {ok:t
 PATCH /v1/friends/:id/sharing {enabled:boolean} -> {ok:true} (own preference only).
 PATCH /v1/parties/:id/sharing {enabled:boolean} -> {ok:true} (own preference only).
 
-Quest = {id,partyId,title,startsAt,endsAt,locationName,version:number}
+Quest = {id,partyId,title,startsAt,endsAt,locationName,version:number,
+status:'active'|'cancelled'}
 GET /v1/quests -> {items:Quest[]} (only member's quests).
-POST /v1/quests {partyId,title,startsAt,endsAt,locationName} -> Quest.
-PATCH /v1/quests/:id updates these fields; member check required.
+POST /v1/quests {partyId,title,startsAt,endsAt,locationName} -> active Quest.
+PATCH /v1/quests/:id {expectedVersion,title?,startsAt?,endsAt?,locationName?} -> Quest.
+At least one editable field is required. The party cannot change.
+PATCH /v1/quests/:id {expectedVersion,status:'cancelled'} cancels the plan without
+changing its contents; cancellation must not mix in other fields. Cancelled quests
+remain listed but are read-only: later edits, repeated cancellation and restore
+requests return 409. No restore endpoint is provided.
+All reads/writes require current party membership. Writes serialize against join/leave.
+Every PATCH requires positive integer expectedVersion matching the returned version;
+stale edits/cancels return 409 with code VERSION_CONFLICT, missing/invalid version 400.
+A successful edit/cancel increments version and emits a member-only quest.changed hint.
+Existing stored quests migrate to active; old PATCH clients must add expectedVersion
+to avoid silently overwriting concurrent member changes.
 Quest is a shared activity plan; no invented check-in/progress completion.
 
 PATCH /v1/me/location-sharing {enabled:boolean} -> {enabled:boolean}.
@@ -164,7 +183,9 @@ tokens. Admin: Google sign-in, event CRUD/status, integration status/refresh.
 
 Mobile environment: EXPO_PUBLIC_API_URL, EXPO_PUBLIC_SOCKET_URL,
 EXPO_PUBLIC_MATCH_URL, EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID, GOOGLE_MAPS_ANDROID_API_KEY build configuration.
+EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID, NAVER_MAP_CLIENT_ID build configuration.
+PROTOTYPE_LOCAL_HTTP=true enables loopback-only Android HTTP exceptions for USB
+adb reverse/local emulator testing; it does not enable background HTTP uploads.
 Admin environment: NEXT_PUBLIC_API_URL (main-admin), NEXT_PUBLIC_GOOGLE_CLIENT_ID.
 Server environment: PORT, APP_ROLE, DATABASE_URL, REDIS_CACHE_URL, REDIS_QUEUE_URL,
 JWT_SECRET, INTERNAL_API_KEY, GOOGLE_WEB_CLIENT_ID, ADMIN_EMAILS, CORS_ORIGINS,

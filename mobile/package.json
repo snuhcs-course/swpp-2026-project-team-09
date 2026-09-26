@@ -8,24 +8,26 @@
     "android": "expo run:android",
     "typecheck": "tsc --noEmit",
     "ios": "expo run:ios",
-    "test": "node --experimental-strip-types --test test/*.test.mjs"
+    "test": "node --experimental-strip-types --test test/*.test.mjs src/map/*.test.mjs"
   },
   "dependencies": {
+    "@mj-studio/react-native-naver-map": "2.9.0",
+    "@react-native-google-signin/google-signin": "^16.0.0",
     "expo": "~54.0.0",
-    "react": "19.1.0",
-    "react-native": "0.81.5",
+    "expo-build-properties": "~1.0.10",
+    "expo-constants": "~18.0.0",
     "expo-dev-client": "~6.0.0",
     "expo-location": "~19.0.0",
-    "expo-task-manager": "~14.0.0",
     "expo-secure-store": "~15.0.0",
-    "expo-constants": "~18.0.0",
-    "react-native-maps": "1.20.1",
-    "@react-native-google-signin/google-signin": "^16.0.0",
+    "expo-task-manager": "~14.0.0",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-safe-area-context": "~5.6.2",
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
-    "typescript": "~5.9.2",
-    "@types/react": "~19.1.0"
+    "@types/react": "~19.1.0",
+    "typescript": "~5.9.2"
   },
   "engines": {
     "node": ">=22"

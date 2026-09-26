@@ -21,8 +21,9 @@ export class SocialService {
     ).rows.map((r) => r.user_id as string);
   }
   async party(c: PoolClient, id: string, viewer?: string) {
-    const row = (await c.query("SELECT * FROM parties WHERE id=$1", [id]))
-      .rows[0];
+    const row = (
+      await c.query("SELECT * FROM parties WHERE id=$1 FOR SHARE", [id])
+    ).rows[0];
     if (!row) throw new NotFoundException("Party not found");
     const memberRows = (
       await c.query(
@@ -46,6 +47,8 @@ export class SocialService {
       title: row.title,
       eventId: row.event_id,
       maxMembers: row.max_members,
+      memberCount: memberRows.length,
+      isMember: Boolean(ownMembership),
       members,
       ...(ownMembership
         ? { sharingEnabled: ownMembership.sharing_enabled as boolean }
@@ -317,27 +320,80 @@ export class SocialService {
   }
   async saveQuest(user: string, body: any, id?: string) {
     this.db.requireReady();
-    if (id) uuid(id);
+    const input = object(body);
+    if (id) {
+      uuid(id);
+      if (!Number.isInteger(input.expectedVersion) || input.expectedVersion < 1)
+        bad("expectedVersion must be a positive integer");
+    } else if (input.status !== undefined && input.status !== "active") {
+      bad("New quests must be active");
+    }
     return this.db.tx(async (c) => {
+      // Lock the parent before checking membership, just as join/leave do.
+      const reference = id
+        ? (await c.query("SELECT party_id FROM quests WHERE id=$1", [id]))
+            .rows[0]
+        : null;
+      if (id && !reference) throw new NotFoundException("Quest not found");
+      const partyId = uuid(reference?.party_id ?? input.partyId);
+      if (input.partyId !== undefined && input.partyId !== partyId)
+        bad("Quest party cannot change");
+      await c.query("SELECT id FROM parties WHERE id=$1 FOR UPDATE", [partyId]);
+      const members = await this.members(c, partyId);
+      if (!members.includes(user))
+        throw new ForbiddenException("Party membership required");
       const old = id
         ? (await c.query("SELECT * FROM quests WHERE id=$1 FOR UPDATE", [id]))
             .rows[0]
         : null;
       if (id && !old) throw new NotFoundException("Quest not found");
-      const b = { ...(old ? questView(old) : {}), ...object(body) },
-        partyId = uuid(b.partyId);
-      if (old && partyId !== old.party_id) bad("Quest party cannot change");
-      await c.query("SELECT id FROM parties WHERE id=$1 FOR UPDATE", [partyId]);
-      const members = await this.members(c, partyId);
-      if (!members.includes(user))
-        throw new ForbiddenException("Party membership required");
+      if (old && input.expectedVersion !== old.version)
+        throw new ConflictException({
+          message: "Quest changed; reload before saving",
+          code: "VERSION_CONFLICT",
+        });
+      if (old?.status === "cancelled")
+        throw new ConflictException({
+          message: "Cancelled quests are read-only",
+          code: "QUEST_CANCELLED",
+        });
+      if (
+        input.status !== undefined &&
+        !["active", "cancelled"].includes(input.status)
+      )
+        bad("Invalid quest status");
+      const cancelling = Boolean(old && input.status === "cancelled");
+      if (
+        cancelling &&
+        Object.keys(input).some(
+          (key) => !["status", "expectedVersion"].includes(key),
+        )
+      )
+        bad("Cancellation accepts only status and expectedVersion");
+      if (
+        old &&
+        !cancelling &&
+        !["title", "startsAt", "endsAt", "locationName"].some(
+          (key) => key in input,
+        )
+      )
+        bad("At least one editable quest field is required");
+      const b = { ...(old ? questView(old) : {}), ...input };
       const title = text(b.title, "title", 200),
         location = text(b.locationName, "locationName", 300),
         d = dates(b),
         questId = id || randomUUID();
       const r = await c.query(
-        "INSERT INTO quests(id,party_id,title,starts_at,ends_at,location_name) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(id) DO UPDATE SET title=$3,starts_at=$4,ends_at=$5,location_name=$6,version=quests.version+1 RETURNING *",
-        [questId, partyId, title, d.startsAt, d.endsAt, location],
+        "INSERT INTO quests(id,party_id,title,starts_at,ends_at,location_name,status) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(id) DO UPDATE SET title=$3,starts_at=$4,ends_at=$5,location_name=$6,status=$7,version=quests.version+1 RETURNING *",
+        [
+          questId,
+          partyId,
+          title,
+          d.startsAt,
+          d.endsAt,
+          location,
+          cancelling ? "cancelled" : "active",
+        ],
       );
       await this.db.hint(
         c,
@@ -359,5 +415,6 @@ function questView(r: any) {
     endsAt: r.ends_at.toISOString(),
     locationName: r.location_name,
     version: r.version,
+    status: r.status,
   };
 }
