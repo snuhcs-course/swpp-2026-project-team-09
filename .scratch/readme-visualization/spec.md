@@ -43,3 +43,23 @@ Before the user's planned push, explain the current client/server structure and 
 ## Integration
 
 Reviewed integration branch is squash-merged into `0.0/Main`. No push is performed as part of this request.
+
+## Revision: AWS-style architecture graphics
+
+The user requested a more AWS-style visual treatment and explicitly authorized push after the update. Preserve the existing architecture and three demo meanings; this is a visual/documentation revision, not adoption of AWS infrastructure.
+
+- Replace prose-heavy cards with generic resource icons, service boundaries, numbered directional flows, a white background and AWS-inspired category colors.
+- Keep actual project component names and identify the current local Docker Compose arrangement. Do not introduce imaginary AWS services or deployment guarantees.
+- Update all four PNGs and their renderer; retain Korean readability, explicit status labels, collision checks, editable source and original-size image links.
+- Review at full resolution, README width and narrow layout. Confirm document links, deterministic generation and instruction-file parity.
+- Squash into `0.0/Main` and perform a normal push to `origin/0.0/Main`; no force push.
+
+Revision state: completed after visual and factual review.
+
+Revision verification:
+- Four images use original generic resource icons and actual service names, with numbered flows, thin orthogonal connectors and local Compose groups. Repeated icons are documented as different views of the same components.
+- Full-resolution and 900px previews inspected. Renderer assertions now include icon/label collisions, group borders and arrowheads as well as text bounds. All four pass; repeated rendering is byte-identical (1,381,540 PNG bytes total).
+- Final README rendered at 1100px and 390px viewport widths; all four images loaded, fit 900px/350px content widths and produced no horizontal overflow. Full-resolution links remain available for narrow screens.
+- Final factual audit preserves data ownership, HTTP versus Socket.IO, main outbox versus ephemeral delivery, explicit event quest save versus atomic friend plan acceptance, and locally derived class quests.
+- README architecture/demo explanations and setup guide are unchanged below the style introduction. All local links and instruction-file parity pass; no runtime or application changes.
+- The reviewed worktree result is integrated by squash. The user's explicit authorization covers a normal push to `origin/0.0/Main`; remote commit identity is checked after pushing.

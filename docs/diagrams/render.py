@@ -10,10 +10,10 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_FONT = '/System/Library/Fonts/AppleSDGothicNeo.ttc'
-C = dict(bg='#F7F9FC', ink='#172D42', muted='#536578', line='#C7D3DF',
-         blue='#2563A6', blue_bg='#ECF3FC', teal='#087B70', teal_bg='#EAF7F3',
+C = dict(bg='#FFFFFF', ink='#172D42', muted='#536578', line='#C7D3DF',
+         blue='#2563A6', blue_bg='#ECF3FC', teal='#C65B08', teal_bg='#FFF4E8',
          purple='#7451A6', purple_bg='#F2EDF9', amber='#996017', amber_bg='#FFF5E4',
-         slate='#5D6C7B', slate_bg='#EEF2F6', white='#FFFFFF')
+         pink='#BF2876', pink_bg='#FFF0F7', slate='#5D6C7B', slate_bg='#EEF2F6', white='#FFFFFF')
 
 
 def overlaps(a, b):
@@ -25,7 +25,9 @@ class Canvas:
         self.w, self.h, self.s = 1200, height, args.scale
         self.image = Image.new('RGB', (self.w*self.s, self.h*self.s), C['bg'])
         self.draw = ImageDraw.Draw(self.image)
-        self.args, self.texts, self.cards, self.segments = args, [], [], []
+        self.args, self.texts, self.segments = args, [], []
+        self.icons = []
+        self.group_edges = []
         self.fonts = {}
 
     def font(self, size, bold=False):
@@ -86,31 +88,64 @@ class Canvas:
         self.text(title, (48, 42, 1152, 102), size=39, bold=True, line_height=54)
         self.text(subtitle, (48, 109, 1152, 151), size=23, color='muted')
 
-    def legend(self, y=163):
-        specs = [('구현된 흐름', 'teal', 240), ('미검증: 기기·운영', 'amber', 290), ('향후 / 보류', 'slate', 255)]
-        x = 48
-        for label, color, width in specs:
-            self.rect((x, y, x+width, y+44), C[color+'_bg'], C['line'], 10)
-            self.text(label, (x+16, y+10, x+width-16, y+41), size=21, bold=True, color=color, line_height=30)
-            x += width+16
+    def group(self, box, label, color='slate'):
+        self.rect(box, C['white'], C[color], radius=0, width=1)
+        x,y,r,b=box
+        self.group_edges.extend([(x,y,r,y+1),(x,b-1,r,b),(x,y,x+1,b),(r-1,y,r,b)])
+        self.text(label, (box[0]+18, box[1]+16, box[2]-18, box[1]+55), 25, True, color)
 
-    def card(self, x, y, w, h, title, body, color='teal', title_size=29, body_size=23):
-        box = (x, y, x+w, y+h)
-        self.rect(box, C['white'], C['line'], 20)
-        self.rect((x, y, x+7, y+h), C[color], radius=3)
-        self.cards.append(box)
-        after = self.text(title, (x+25, y+23, x+w-25, y+h-22), title_size, True, color)
-        self.text(body, (x+25, after+12, x+w-25, y+h-18), body_size, color='ink')
-        return box
+    def center(self, value, x, y, width, size=23, bold=False, color='ink'):
+        lines = self.wrap(value, width, size, bold)
+        for i, line in enumerate(lines):
+            w = self.font(size, bold).getlength(line)/self.s
+            self.text(line, (math.floor((x-w/2)*self.s)/self.s, y+i*34, x+w/2+2, y+(i+1)*34), size, bold, color, 34)
+        return y+len(lines)*34
 
-    def note(self, y, title, body, color='amber', height=125):
-        self.rect((48, y, 1152, y+height), C[color+'_bg'], C['line'], 18)
-        end = self.text(title, (70, y+18, 1130, y+height-18), size=24, bold=True, color=color)
-        self.text(body, (70, end+10, 1130, y+height-12), size=22, color='ink')
+    def icon(self, x, y, kind, color):
+        # Original generic category glyphs: no vendor logos or AWS service symbols.
+        box=(x-40, y, x+40, y+80)
+        self.rect(box, C[color], radius=0)
+        self.icons.append(box)
+        def line(points):
+            self.draw.line([(round((x-40+a)*self.s), round((y+b)*self.s)) for a,b in points], fill='white', width=2*self.s)
+        def shape(b, ellipse=False):
+            f=self.draw.ellipse if ellipse else self.draw.rectangle
+            f(tuple(round(v*self.s) for v in (x-40+b[0],y+b[1],x-40+b[2],y+b[3])),outline='white',width=2*self.s)
+        if kind=='database':
+            shape((17,17,63,31),True);line([(17,24),(17,57)]);line([(63,24),(63,57)])
+            self.draw.arc(tuple(round(v*self.s) for v in (x-23,y+49,x+23,y+64)),0,180,fill='white',width=2*self.s)
+            self.draw.arc(tuple(round(v*self.s) for v in (x-23,y+32,x+23,y+47)),0,180,fill='white',width=2*self.s)
+        elif kind=='client':
+            shape((20,12,60,65));line([(32,58),(48,58)])
+        elif kind=='queue':
+            for yy in (19,34,49):
+                shape((16,yy,64,yy+11));line([(23,yy+5),(28,yy+5)])
+        elif kind=='source':
+            shape((17,15,63,65));line([(27,28),(53,28)]);line([(27,40),(53,40)]);line([(27,52),(46,52)])
+        elif kind=='integration':
+            for xx,yy in ((13,15),(48,15),(30,49)): shape((xx,yy,xx+19,yy+17))
+            line([(23,32),(23,41),(40,41),(40,49)]);line([(58,32),(58,41),(40,41)])
+        else:
+            shape((20,20,60,60));shape((29,29,51,51))
+            for d in (28,40,52):
+                line([(d,12),(d,20)]);line([(d,60),(d,68)]);line([(12,d),(20,d)]);line([(60,d),(68,d)])
+
+    def resource(self, x, y, title, detail='', kind='compute', color='teal', width=260):
+        self.icon(x,y,kind,color)
+        end=self.center(title,x,y+96,width,24,True,color)
+        if detail: self.center(detail,x,end+6,width,22)
+
+    def step(self, x, y, number, label, width=260):
+        self.text(f'{number}  {label}', (x,y,x+width,y+72),22,True,color='slate',line_height=32)
+
+    def note(self, y, title, body, color='amber', height=112):
+        self.rect((48,y,1152,y+height),C[color+'_bg'],radius=0)
+        self.text(title,(66,y+16,1134,y+52),23,True,color)
+        self.text(body,(66,y+58,1134,y+height-12),22,line_height=32)
 
     def arrow(self, points):
         assert len(points) >= 2
-        self.draw.line([(round(x*self.s), round(y*self.s)) for x, y in points], fill=C['slate'], width=3*self.s, joint='curve')
+        self.draw.line([(round(x*self.s), round(y*self.s)) for x, y in points], fill=C['slate'], width=2*self.s, joint='curve')
         for a, b in zip(points, points[1:]):
             if a[0] != b[0] and a[1] != b[1]:
                 raise AssertionError('Use orthogonal connectors only')
@@ -121,6 +156,7 @@ class Canvas:
         left = (b[0]-10*math.cos(direction)+5*math.sin(direction), b[1]-10*math.sin(direction)-5*math.cos(direction))
         right = (b[0]-10*math.cos(direction)-5*math.sin(direction), b[1]-10*math.sin(direction)+5*math.cos(direction))
         self.draw.polygon([(round(x*self.s), round(y*self.s)) for x, y in [tip, left, right]], fill=C['slate'])
+        self.segments.append((min(p[0] for p in [tip,left,right]),min(p[1] for p in [tip,left,right]),max(p[0] for p in [tip,left,right]),max(p[1] for p in [tip,left,right])))
 
     def footer(self, y):
         self.text('구현 범위 기준 2026-09-27  ·  실제 데이터와 명시적 사용자 동의', (48, y, 1152, y+34), size=21, color='muted')
@@ -132,147 +168,166 @@ class Canvas:
             for b, other in self.texts[i+1:]:
                 if overlaps(a, b):
                     raise AssertionError(f'Text collision: {label!r} with {other!r}')
+            for edge in self.group_edges:
+                assert not overlaps(a,edge), f'Label touches group border: {label}'
             for segment in self.segments:
                 if overlaps(a, segment):
                     raise AssertionError(f'Connector intersects text: {label!r}')
+        for icon in self.icons:
+            assert 0 <= icon[0] < icon[2] <= self.w and 0 <= icon[1] < icon[3] <= self.h, 'Icon outside canvas'
+            assert not any(overlaps(icon, box) for box, _ in self.texts), 'Icon intersects label'
+        for i, icon in enumerate(self.icons):
+            assert not any(overlaps(icon, other) for other in self.icons[i+1:]), 'Icon collision'
         for segment in self.segments:
-            if any(overlaps(segment, box) for box in self.cards):
-                raise AssertionError('Connector crosses a card')
+            if any(overlaps(segment, box) for box in self.icons):
+                raise AssertionError('Connector crosses an icon')
         self.args.output.mkdir(parents=True, exist_ok=True)
         self.image.save(self.args.output / f'{name}.png', optimize=True)
         if self.args.preview_dir:
             self.args.preview_dir.mkdir(parents=True, exist_ok=True)
             self.image.resize((900, round(self.h*900/self.w)), Image.Resampling.LANCZOS).save(self.args.preview_dir / f'{name}.png')
-        print(f'{name}.png: {self.w*self.s}x{self.h*self.s}; {len(self.texts)} text lines, {len(self.segments)} connector segments; bounds/collisions PASS')
+        print(f'{name}.png: {self.w*self.s}x{self.h*self.s}; {len(self.texts)} text lines, {len(self.icons)} icons; connectors including arrowheads; bounds/collisions PASS')
 
 
 def architecture(args):
-    c = Canvas(2120, args)
-    c.heading('서비스 경계와 데이터 소유권', '화살표는 요청·전달 방향입니다. HTTP 응답은 같은 연결로 돌아옵니다.')
-    c.legend()
-    c.text('01  HTTP 업무 API와 소유 DB', (48, 240, 1152, 282), 29, True)
-    c.card(48, 305, 280, 200, '모바일 / 관리자 웹', 'Expo → public\nNext.js → admin\nGoogle 인증', 'blue', 26, 23)
-    c.card(418, 305, 330, 200, 'Main public / admin', '같은 이미지·업무 DB\n실행 풀과 라우트 분리\n행사·관계·파티·일정', 'teal', 26, 23)
-    c.card(838, 305, 314, 200, 'main_db · Prisma', 'Main만 업무 데이터 저장\n퀘스트·시간표·개인 일정\n내구성 있는 outbox', 'purple', 26, 22)
-    c.arrow([(336, 400), (410, 400)])
-    c.arrow([(756, 400), (830, 400)])
-    c.card(48, 615, 280, 175, '모바일', '매칭 요청 HTTP\n현재는 규칙 기반', 'blue', 27, 23)
-    c.card(418, 615, 330, 175, 'Match 서버', '후보 계산·매칭 요청\nMain DB 직접 쓰기 없음', 'teal', 27, 22)
-    c.card(838, 615, 314, 175, 'match_db · Prisma', '매칭 요청 소유\nMain DB와 역할 분리', 'purple', 26, 22)
-    c.arrow([(336, 700), (410, 700)])
-    c.arrow([(756, 700), (830, 700)])
-    c.arrow([(583, 607), (583, 513)])
-    c.text('내부 HTTP\n파티·멤버 생성', (620, 533, 990, 603), 22)
-    c.text('PostgreSQL + PostGIS: 같은 인스턴스, 서로 다른 main / match DB', (48, 818, 1152, 854), 22, color='muted')
-    c.text('02  Worker · 수집과 로컬 이미지 추출', (48, 892, 1152, 936), 29, True)
-    c.card(48, 966, 280, 220, 'Main public', '캠퍼스 조회·사진 추출\n내부 HTTP로 요청\n행사 import도 Main 소유', 'teal', 27, 22)
-    c.card(418, 966, 330, 220, 'Worker 서버', '공식 원천 수집\n이미지 → 편집용 초안\n업무 DB 직접 쓰기 없음', 'teal', 27, 23)
-    c.card(838, 966, 314, 220, '원천 / 로컬 모델', '학교 공식 정보 HTTP\n호스트 Ollama HTTP\nQwen3-VL 2B · Docker 밖', 'blue', 26, 22)
-    c.arrow([(336, 1045), (410, 1045)])
-    c.arrow([(410, 1120), (336, 1120)])
-    c.arrow([(756, 1075), (830, 1075)])
-    c.card(48, 1250, 530, 165, 'Redis queue · BullMQ', 'Worker의 정기 수집 작업\ncache와 별도 컨테이너', 'purple', 27, 23)
-    c.card(622, 1250, 530, 165, 'Redis cache', '행사·학식·셔틀 / 매칭 후보·임베딩\nMain이 저장하는 위치 최신값 TTL', 'purple', 27, 22)
-    c.arrow([(500, 1242), (500, 1194)])
-    c.arrow([(710, 1194), (710, 1242)])
-    c.text('03  실시간 알림 · 본문은 HTTP로 재조회', (48, 1460, 1152, 1505), 29, True)
-    c.card(48, 1540, 350, 190, '변경 알림 생산자', 'Main: DB outbox → relay\nMatch·Worker: 일시적 발행\n좌표·일정 본문 제외', 'teal', 26, 22)
-    c.card(446, 1540, 208, 190, 'Redis', 'cache의\nPub/Sub', 'purple', 27, 23)
-    c.card(702, 1540, 208, 190, 'Socket 서버', '인증된 대상에\nSocket.IO 힌트', 'teal', 25, 22)
-    c.card(958, 1540, 194, 190, '모바일', 'ID·버전 수신\nHTTP 재조회', 'blue', 26, 22)
-    for start, end in [(406, 438), (662, 694), (918, 950)]:
-        c.arrow([(start, 1630), (end, 1630)])
-    c.note(1770, '구현된 기능의 확인 범위', '사진 초안은 원본과 비교·수정한 뒤 사용자가 저장합니다.\n위치는 모바일 HTTP → Main으로 업로드하며, 공개 조건을 통과한 HTTP 조회로만 받습니다.', 'teal', 140)
-    c.note(1930, '미검증 / 향후', '미검증: 실제 두 기기 위치·운영 부하  ·  향후: FCM, 도보 경로, AI 계획 추천', 'amber', 110)
-    c.footer(2080)
+    c=Canvas(2130,args)
+    c.heading('서비스 아키텍처', '현재 배포: 로컬 Docker Compose · 범용 리소스 아이콘으로 표현')
+    c.text('클라이언트', (48,190,310,230),25,True,'blue')
+    c.group((360,175,1152,850),'로컬 Compose · HTTP API와 데이터 소유권')
+    c.resource(165,280,'모바일 / 관리자 브라우저','Expo / Next.js UI','client','blue')
+    c.resource(560,280,'Main public / admin','같은 이미지 · 분리된 실행 풀')
+    c.resource(980,280,'main_db','업무 데이터 · outbox','database','purple')
+    c.arrow([(213,320),(512,320)]);c.step(250,268,'1','HTTP',130)
+    c.arrow([(608,320),(932,320)]);c.step(740,268,'2','Prisma',160)
+    c.resource(165,585,'모바일','동행 요청 · 가입 동의','client','blue')
+    c.resource(560,585,'Match','규칙 기반 후보 계산')
+    c.resource(980,585,'match_db','매칭 요청 소유','database','purple')
+    c.arrow([(213,625),(512,625)]);c.step(250,573,'3','HTTP',130)
+    c.arrow([(608,625),(932,625)]);c.step(740,573,'4','Prisma',160)
+    c.arrow([(560,577),(560,477)]);c.step(605,494,'5','내부 HTTP\n파티·멤버 생성',300)
+    c.text('PostgreSQL + PostGIS · 같은 인스턴스, main / match DB·역할 분리',(390,797,1120,839),22)
+    c.group((48,900,780,1450),'동일 Compose · Worker와 Redis')
+    c.text('외부 원천 / 같은 Mac 호스트',(820,915,1152,956),23,True,'blue')
+    c.resource(210,1000,'Main','생활 조회 · 이미지 요청')
+    c.resource(590,1000,'Worker','수집 · 이미지 초안')
+    c.resource(1000,1000,'공식 원천 / Ollama','학교 정보 / 로컬 Qwen3-VL\nOllama는 Docker 밖','source','blue')
+    c.arrow([(258,1040),(542,1040)]);c.step(305,988,'6','내부 HTTP',220)
+    c.arrow([(638,1040),(952,1040)]);c.step(795,983,'7','HTTP',130)
+    c.arrow([(542,1100),(335,1100),(335,1056),(258,1056)])
+    c.resource(210,1250,'Redis queue','BullMQ 정기 수집','queue','pink')
+    c.resource(590,1230,'Redis cache','Worker 스냅샷\nMain 위치 TTL · Match 후보','database','purple')
+    c.arrow([(258,1290),(375,1290),(375,1210),(560,1210),(560,1190)])
+    c.arrow([(620,1190),(620,1222)])
+    c.text('Worker → Main: 행사 import · Worker / Socket은 업무 DB 직접 쓰기 없음',(48,1475,1152,1515),22)
+    c.group((48,1560,888,1870),'동일 Compose · 변경 알림 경로')
+    c.resource(180,1640,'알림 생산자','Main outbox relay\nMatch·Worker 일시적 발행','integration','pink',width=240)
+    c.resource(465,1640,'Redis cache','Pub/Sub','integration','pink',width=210)
+    c.resource(750,1640,'Socket','인증된 사용자 방','compute','teal',width=210)
+    c.resource(1030,1640,'모바일','ID·버전 힌트\nHTTP 재조회','client','blue',width=230)
+    for a,b in [(228,417),(513,702),(798,982)]: c.arrow([(a,1680),(b,1680)])
+    c.step(910,1582,'8','Socket.IO',240)
+    c.note(1900,'구현 경계','위치 본문은 공개 조건을 통과한 HTTP 조회 · 이미지 초안은 사용자 검토 후 명시적 저장','slate',110)
+    c.text('검증 대기: 실제 두 기기·운영 부하  |  향후: FCM · AI 계획 추천 · 도보 경로',(48,2038,1152,2075),22,color='amber')
+    c.footer(2090)
     c.save('architecture')
 
 
+
+def phase(c, y, label, resources, height=330):
+    """A numbered phase reuses actors to keep independent paths unambiguous."""
+    c.group((48,y,1152,y+height),label)
+    centers=[200,600,1000] if len(resources)==3 else [180,460,740,1020]
+    width=310 if len(resources)==3 else 245
+    for x, item in zip(centers,resources):
+        title,detail,kind,color=item
+        c.resource(x,y+95,title,detail,kind,color,width)
+    for a,b in zip(centers,centers[1:]):
+        c.arrow([(a+48,y+135),(b-48,y+135)])
+
+
+def sync(c,y):
+    phase(c,y,'변경 동기화 · 내구성 있는 DB 기록 → 일시적 전송 → 본문 재조회',[
+        ('Main outbox','업무 변경과 함께 기록','database','purple'),
+        ('Redis cache','relay → Pub/Sub','integration','pink'),
+        ('Socket','Socket.IO · ID/버전','compute','teal'),
+        ('모바일','힌트 수신 → HTTP 조회','client','blue'),
+    ])
+
+
 def demo_event(args):
-    c = Canvas(1590, args)
-    c.heading('행사에서 동행 파티와 공동 계획까지', '매칭 파티 생성과 공동 퀘스트 저장은 서로 다른 사용자 행동입니다.')
-    c.legend()
-    for y, title, body, color in [
-        (240, '1  실제 공개 행사 선택', '공식 공지 수집 또는 관리자가 등록한 행사에서 일시·장소를 확인합니다.', 'blue'),
-        (465, '2  동행 조건 입력 + 자동 가입 동의', '활동·요청 시간대·인원·관심사를 정하고, 매칭된 파티에 가입할 의사를 표시합니다.', 'blue'),
-        (690, '3  매칭 결과 → 파티와 멤버 생성', 'Match: Redis 후보·요청 시간 교집합 → Main: 트랜잭션으로 파티 확정\n규칙 기반 매칭이며 퀘스트는 자동 생성하지 않습니다.', 'teal'),
-    ]:
-        c.card(100, y, 1000, 180, title, body, color)
-    c.arrow([(600, 428), (600, 457)])
-    c.arrow([(600, 653), (600, 682)])
-    c.arrow([(600, 878), (600, 908), (318, 908), (318, 942)])
-    c.arrow([(600, 908), (882, 908), (882, 942)])
-    c.card(48, 950, 540, 260, '4A  공동 계획은 따로 저장', '파티원이 시간·장소를 정해 저장\n최신 시간표·개인 일정·공동 약속의\n충돌을 확인한 뒤 퀘스트 생성\n파티원이 확인·수정할 수 있습니다.', 'teal', 29, 23)
-    c.card(612, 950, 540, 260, '4B  위치는 공개 조건을 확인', '파티별 공유 기본 ON\n전체 공유·OS 권한은 별도입니다.\n관계별 공개 조건이 허용될 때만\nMain HTTP로 최신 위치를 조회합니다.', 'teal', 29, 23)
-    c.note(1240, '공동 변경 동기화', 'Main outbox → Redis Pub/Sub → Socket.IO 변경 힌트 → 모바일 HTTP 재조회', 'teal', 110)
-    c.note(1360, '미검증 / 향후', '실제 두 계정·이동·백그라운드 위치 검증은 남아 있습니다.\nAI 궁합 품질, 도보 이동시간 추천, 출석·완료 인증을 뜻하지 않습니다.', height=140)
-    c.footer(1540)
+    c=Canvas(1650,args)
+    c.heading('행사 동행 · 파티와 공동 계획', '숫자 순서로 읽는 리소스 흐름 · 반복 아이콘은 같은 서비스입니다.')
+    phase(c,190,'1  행사 선택 + 자동 합류 동의 → 규칙 기반 매칭 · HTTP',[
+        ('모바일','실제 행사 · 활동·인원\n요청 시간 · 관심사 입력','client','blue'),
+        ('Match + Redis 후보','신청 시간 교집합\n관심사 유사도 정렬','compute','teal'),
+        ('Main → main_db','트랜잭션: 파티·멤버\n퀘스트 자동 생성 없음','database','purple'),
+    ],350)
+    phase(c,590,'2  파티원의 별도 공동 계획 저장 · HTTP',[
+        ('파티원','시간·장소 입력\n명시적으로 저장','client','blue'),
+        ('Main · 충돌 검사','최신 시간표·개인 일정\n다른 활성 공동 퀘스트','compute','teal'),
+        ('main_db','공유 퀘스트 + outbox\n참여자만 확인·수정','database','purple'),
+    ],350)
+    sync(c,990)
+    c.note(1360,'위치 공유는 별도 조건을 충족할 때만','파티별 기본 ON · 전체 공유와 OS 권한은 별도\n관계별 공개 조건을 통과한 Main HTTP 조회만 허용','slate',148)
+    c.text('검증 대기: 실제 두 기기 합류·위치  |  향후: 행사 후 AI 카페 추천',(48,1545,1152,1585),22,color='amber')
+    c.footer(1610)
     c.save('demo-event')
 
 
 def demo_friends(args):
-    c = Canvas(1660, args)
-    c.heading('친구에게 구체적인 약속 계획 제안', '일반적인 “만나자” 요청이 아니라, 시간과 장소까지 정한 계획에 동의합니다.')
-    c.legend()
-    rows = [
-        ('1  연결된 친구에게 계획 제안', '활동·시작/종료 시간·장소를 직접 정합니다. 보내는 사람은 이 계획에 동의합니다.', 'blue'),
-        ('2  받은 계획을 읽고 응답', '수신자: 이 계획으로 약속 확정 / 거절  ·  발신자: 제안 취소', 'blue'),
-        ('3  수락 순간 Main이 다시 검증', '현재 친구 관계와 등록된 수업·개인 일정·진행 중 공동 약속의 겹침을 확인합니다.\n충돌 시 생성하지 않습니다. 다른 사람의 일정 상세는 공개하지 않습니다.', 'teal'),
-        ('4  비공개 2인 파티 + 퀘스트 생성', '동의와 최신 검증을 통과하면 하나의 트랜잭션으로 파티·멤버·퀘스트·outbox를 저장합니다.', 'teal'),
-        ('5  공동 약속 확인·수정', 'Socket.IO 변경 힌트 → HTTP 재조회로 두 사람의 계획을 갱신합니다.\n위치 공유는 전체·관계별 설정을 따릅니다.', 'teal'),
-    ]
-    for i, (title, body, color) in enumerate(rows):
-        y = 240+i*240
-        c.card(100, y, 1000, 200, title, body, color, 28, 23)
-        if i < len(rows)-1:
-            c.arrow([(600, y+208), (600, y+232)])
-    c.note(1430, '미등록 일정·이동시간은 직접 확인', '시간표가 없다고 “비어 있는 시간”으로 검증한 것은 아닙니다.\n향후: AI 장소·활동 추천과 도보 경로  ·  미검증: 실제 두 계정 앱 시연', height=150)
-    c.footer(1610)
+    c=Canvas(1700,args)
+    c.heading('친구 약속 · 구체적인 계획에 동의', '수락은 정해진 시간·장소의 계획에 대한 동의입니다. AI 추천 흐름이 아닙니다.')
+    phase(c,190,'1  연결된 친구에게 계획 제안 · HTTP',[
+        ('보내는 사람','제목·시작/종료·장소\n이 계획에 동의하고 전송','client','blue'),
+        ('Main · 약속 제안','pending 상태 저장\n아직 파티·퀘스트 없음','compute','teal'),
+        ('받는 사람','정확한 계획 확인\n수락 / 거절','client','blue'),
+    ],350)
+    c.text('HTTP 조회 응답',(745,278,943,313),22,color='slate')
+    phase(c,590,'2  이 계획으로 약속 확정 → Main의 한 트랜잭션',[
+        ('받는 사람','명시적 수락 HTTP\n같은 응답 재시도는 중복 없음','client','blue'),
+        ('Main · 사용자 잠금','현재 친구 관계 재검증\n수업·개인 일정·활성 퀘스트','compute','teal'),
+        ('main_db','비공개 2인 파티\n퀘스트 + outbox 원자적 기록','database','purple'),
+    ],370)
+    sync(c,1010)
+    c.note(1380,'사적 일정은 공개하지 않습니다','충돌 시 생성하지 않고 충돌 상태만 반환 · 상대 일정 상세는 비공개\n시간표 미설정은 검증된 빈 시간이 아님 · 미등록 일정과 이동시간은 직접 확인','slate',148)
+    c.text('검증 대기: 실제 두 계정 앱 수락  |  향후: AI 장소 추천·도보 이동시간',(48,1560,1152,1602),22,color='amber')
+    c.footer(1655)
     c.save('demo-friends')
 
 
 def demo_campus(args):
-    c = Canvas(1700, args)
-    c.heading('실제 캠퍼스 정보와 오늘의 수업 퀘스트', '외부 정보 조회와 나만의 시간표 계산은 서로 독립된 흐름입니다.')
-    c.legend()
-    c.text('생활 정보 · 실제 원천', (48, 237, 588, 282), 30, True, 'blue')
-    c.text('내 수업 · 소유자만 보기', (612, 237, 1152, 282), 30, True, 'teal')
-    left = [
-        ('1  실제 원천', 'SNUCO 학식 · 학교 셔틀\n원천에 없는 값을 만들지 않습니다.', 'blue'),
-        ('2  Worker가 정기 수집', 'BullMQ: 셔틀 60초 · 학식 30분\nRedis cache · 캐시 미스 시 요청 병합', 'purple'),
-        ('3  앱에서 조회 / 다시 조회', '모바일 HTTP → Main → Worker\n사용자가 조회할 때 정보를 받습니다.', 'teal'),
-        ('4  출처와 조회 시각 표시', '학식 공란·휴무·실패를 구분\n셔틀 차량이 없으면 그대로 표시\n셔틀 좌표는 노선도 픽셀, GPS 아님', 'blue'),
-    ]
-    right = [
-        ('1  내 시간표 저장', 'Main DB에 학기·요일·시간 저장\n본인 전용 변경 힌트 → HTTP 재조회', 'purple'),
-        ('2  오늘 수업을 앱에서 계산', 'Asia/Seoul 날짜·요일·학기 범위\n자정·시간 경과에 따라 다시 계산', 'teal'),
-        ('3  수업 퀘스트 카드 표시', '수업 들으러 가기 · 수업명\n시간표에서 계산 · DB 퀘스트 행 없음', 'teal'),
-        ('4  시간표 기준 상태', '예정 / 수업 시간 / 시간 지남\n출석·완료 인증을 뜻하지 않습니다.\n카드를 누르면 내 시간표 편집', 'blue'),
-    ]
-    for x, rows in [(48, left), (612, right)]:
-        for i, (title, body, color) in enumerate(rows):
-            y = 306+i*270
-            c.card(x, y, 540, 230, title, body, color, 28, 23)
-            if i < len(rows)-1:
-                c.arrow([(x+270, y+238), (x+270, y+262)])
-    c.note(1370, '정확한 표시 범위', '학식·셔틀 화면은 자동 실시간 지도 추적이 아닙니다. 실제 운행 차량 대응은 미검증입니다.\n수업은 등록 시간표 기준이며 휴일·일회성 휴강 정보는 포함하지 않습니다.', 'amber', 140)
-    c.note(1530, '향후 / 보류', '향후: 보행 경로·AI 이동시간 추천  ·  보류: 도서관 좌석·예약', 'slate', 110)
-    c.footer(1655)
+    c=Canvas(1770,args)
+    c.heading('캠퍼스 정보 · 내 시간표 수업', '외부 정보 조회와 본인 시간표 계산은 독립된 경로입니다.')
+    phase(c,190,'1  공식 정보 → 서버 정기 수집 → 캐시 스냅샷',[
+        ('공식 제공처','SNUCO 학식 · 학교 셔틀\n실제 원천 정보','source','blue'),
+        ('Worker + BullMQ','셔틀 60초 · 학식 30분\nRedis queue 정기 작업','compute','teal'),
+        ('Redis cache','스냅샷 저장\n캐시 미스 시 요청 병합','database','purple'),
+    ],350)
+    phase(c,590,'2  생활 화면의 조회 / 다시 조회 · HTTP 요청',[
+        ('모바일','사용자가 조회 버튼 선택\n자동 차량 추적 아님','client','blue'),
+        ('Main','Worker 내부 HTTP 호출\n공식 원천·조회 상태 전달','compute','teal'),
+        ('Worker + cache','출처 · fetchedAt\nno_vehicles / unavailable 구분','database','purple'),
+    ],350)
+    phase(c,990,'3  본인 시간표 HTTP → Asia/Seoul 당일 계산 → 내 수업 카드',[
+        ('Main · 내 시간표','소유자 전용 API·변경 힌트\nHTTP로 최신 시간표 조회','database','purple'),
+        ('모바일 · 당일 계산','요일·학기 범위\n자정과 시간 경과에 갱신','client','blue'),
+        ('내 수업 퀘스트','시간표에서 계산\nDB 퀘스트 행·출석 인증 없음','source','blue'),
+    ],350)
+    c.note(1380,'표시 범위를 구분합니다','셔틀 좌표: 노선도 픽셀(GPS 아님) · fetchedAt은 조회 시각 · 운행 차량 대응 검증 대기\n수업 상태: 예정 / 수업 시간 / 시간 지남 · 휴일·일회성 휴강 정보는 미포함','slate',148)
+    c.note(1560,'향후 / 보류','향후: 학습 공간·길찾기  |  보류: 도서관 연동','amber',110)
+    c.footer(1725)
     c.save('demo-campus')
 
-
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--font', default=DEFAULT_FONT, help='Korean-capable TTF/OTF/TTC font path')
-    parser.add_argument('--bold-font', help='Optional separate bold font; default Apple collection uses index6')
-    parser.add_argument('--scale', type=int, default=2)
-    parser.add_argument('--output', type=Path, default=ROOT)
-    parser.add_argument('--preview-dir', type=Path)
-    args = parser.parse_args()
-    if args.scale < 1:
-        parser.error('--scale must be at least1')
-    for renderer in [architecture, demo_event, demo_friends, demo_campus]:
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--font',default=DEFAULT_FONT)
+    parser.add_argument('--bold-font')
+    parser.add_argument('--scale',type=int,default=2)
+    parser.add_argument('--output',type=Path,default=ROOT)
+    parser.add_argument('--preview-dir',type=Path)
+    args=parser.parse_args()
+    if args.scale<1: parser.error('--scale must be positive')
+    for renderer in [architecture,demo_event,demo_friends,demo_campus]:
         renderer(args)
 
-if __name__ == '__main__':
-    main()
+if __name__=='__main__': main()
