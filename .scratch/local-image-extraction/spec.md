@@ -1,7 +1,7 @@
 # Local image extraction
 
 Status: ready-for-agent
-State: API/mobile integrated; native build and isolated E2E passed; device UI verification pending
+State: API/mobile integrated; real-model evaluation and Android document-import UI verified; OCR quality limitations remain
 Updated: 2026-09-27
 
 ## Approved scope
@@ -32,4 +32,5 @@ Controlled fixtures are explicitly synthetic algorithm inputs, never external ca
 - Main and worker Docker image builds passed. Android ARM64 release-variant build passed in2m23s, with existing development signing identity.
 - Full service E2E passed including an opt-in real-model request through authenticated main→worker, unchanged timetable and zero extra quest/private-event writes. Temporary databases/processes/Redis namespaces cleaned.
 - Root reviewed authorization, local-only model/destination, bounded image/response handling, deterministic schedule parser, cancellation/session isolation, source image comparison, timetable version conflicts and imported-coordinate clearing.
-- No database migration or user data modification required by this feature. Native UI check remains before delivery.
+- Android API36 emulator: optional document picker → selected synthetic poster → live local model → editable event draft and original enlargement verified. Default PhotoPicker and its legacy GET_CONTENT route ANRed on this emulator; the optional ACTION_OPEN_DOCUMENT path was added and checked instead. See [Android verification](android-verification.md).
+- Final ARM64 APK build passed in48s, installed with existing app data/signing preserved. No database migration required by this feature; UI evaluation does not save synthetic domain records.

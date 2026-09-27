@@ -4,6 +4,7 @@ import {
   Alert,
   Image,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -11,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import { ApiError, request, API } from "../api";
 import {
@@ -88,7 +90,7 @@ export function ImageImport({
     onBusyChange(false);
     setError("사진 읽기를 취소했어요. 기존 입력은 유지돼요.");
   }
-  async function pick() {
+  async function pick(fromDocuments = false) {
     if (lock.current || disabled || !active.current) return;
     if (!isLocalExtractionApi(API)) {
       setError(
@@ -109,15 +111,29 @@ export function ImageImport({
     setStage("사진 선택 중");
     onBusyChange(true);
     try {
-      const selected = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsMultipleSelection: false,
-        allowsEditing: false,
-        quality: 1,
-        exif: false,
-      });
-      if (!stillCurrent() || selected.canceled) return;
-      const asset = selected.assets[0];
+      let asset: { uri: string; width: number; height: number };
+      if (fromDocuments) {
+        const selected = await DocumentPicker.getDocumentAsync({
+          type: "image/*",
+          multiple: false,
+          copyToCacheDirectory: true,
+        });
+        if (!stillCurrent() || selected.canceled) return;
+        const uri = selected.assets[0].uri;
+        const dimensions = await Image.getSize(uri);
+        if (!stillCurrent()) return;
+        asset = { uri, ...dimensions };
+      } else {
+        const selected = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ["images"],
+          allowsMultipleSelection: false,
+          allowsEditing: false,
+          quality: 1,
+          exif: false,
+        });
+        if (!stillCurrent() || selected.canceled) return;
+        asset = selected.assets[0];
+      }
       setStage("사진 준비 중");
       const context = ImageManipulator.manipulate(asset.uri);
       let rendered: Awaited<ReturnType<typeof context.renderAsync>> | undefined;
@@ -186,6 +202,18 @@ export function ImageImport({
       }
     }
   }
+  function confirmPick(fromDocuments = false) {
+    Alert.alert(
+      "현재 입력을 사진 초안으로 바꿀까요?",
+      kind === "timetable"
+        ? "선택한 사진을 연결된 로컬 서버로 보내 현재 입력한 시간표를 초안으로 바꿔요. 저장 전까지 서버의 시간표는 그대로이며, 저장하면 기존 수업 목록을 대체해요."
+        : "선택한 사진을 연결된 로컬 서버로 보내 현재 입력을 초안으로 바꿔요. 저장 전에는 일정이 변경되지 않으며, 기존 지도 좌표는 가져오지 않아요.",
+      [
+        { text: "취소", style: "cancel" },
+        { text: "사진 선택", onPress: () => void pick(fromDocuments) },
+      ],
+    );
+  }
   return (
     <Card>
       <Text style={u.label}>사진에서 초안 가져오기</Text>
@@ -202,23 +230,23 @@ export function ImageImport({
           <Action secondary small label="사진 읽기 취소" onPress={cancel} />
         </>
       ) : (
-        <Action
-          secondary
-          label="사진 선택해서 초안 만들기"
-          disabled={disabled}
-          onPress={() =>
-            Alert.alert(
-              "현재 입력을 사진 초안으로 바꿀까요?",
-              kind === "timetable"
-                ? "선택한 사진을 연결된 로컬 서버로 보내 현재 입력한 시간표를 초안으로 바꿔요. 저장 전까지 서버의 시간표는 그대로이며, 저장하면 기존 수업 목록을 대체해요."
-                : "선택한 사진을 연결된 로컬 서버로 보내 현재 입력을 초안으로 바꿔요. 저장 전에는 일정이 변경되지 않으며, 기존 지도 좌표는 가져오지 않아요.",
-              [
-                { text: "취소", style: "cancel" },
-                { text: "사진 선택", onPress: () => void pick() },
-              ],
-            )
-          }
-        />
+        <>
+          <Action
+            secondary
+            label="사진 선택해서 초안 만들기"
+            disabled={disabled}
+            onPress={() => confirmPick()}
+          />
+          {Platform.OS === "android" && (
+            <Action
+              secondary
+              small
+              label="파일에서 사진 선택"
+              disabled={disabled}
+              onPress={() => confirmPick(true)}
+            />
+          )}
+        </>
       )}
       {preview && (
         <>

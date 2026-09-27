@@ -35,4 +35,4 @@ No larger model was silently downloaded/selected. A further model evaluation is 
 
 ## Integration
 
-Build/API/Android results are completed in spec.md after integration. Unit tests use controlled fake HTTP responses and are separate from the actual inference measurements above.
+Build/API checks are recorded in [spec.md](spec.md). The [Android document-import flow](android-verification.md) also reached the real local model and populated an editable event draft; its model HTTP call took15.27s. This is separate from the four-input evaluation above and does not measure whole-screen latency. Unit tests use controlled fake HTTP responses and are separate from actual inference measurements.

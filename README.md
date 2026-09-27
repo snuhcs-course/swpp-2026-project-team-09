@@ -49,7 +49,7 @@ docker --context colima compose --env-file .env.prototype.local -f compose.local
 - Compose 컨테이너 9개가 실행 중이며 main-public/main-admin은 같은 Prisma 기반 이미지와 DB를 사용합니다. 별도 main/match 데이터 소유권과 기존 데이터를 보존했습니다.
 - 실제 학교 Google 로그인, Naver 캠퍼스 지도, 프로필·시간표·친구 약속 목록·개인 일정 화면을 에뮬레이터에서 확인했습니다. 실제 두 계정 간 앱 시연과 백그라운드 위치·이동·배터리 검증은 남아 있습니다.
 - 친구에게 구체적인 계획을 제안하고 수락·거절·취소할 수 있습니다. 수락 시 비공개 2인 파티·퀘스트를 한 번만 생성하며 최신 수업·약속·개인 일정 충돌을 재검증합니다. 개인 일정은 소유자만 편집하고, 저장 충돌에서는 작성 내용을 보존합니다.
-- 시간표·개인 일정에서 사진을 선택하면 native Ollama/Qwen3-VL이 초안을 반환합니다. 원본 확대 비교 후 명시적으로 저장하며 원본 이미지는 서버에 보관하지 않습니다. 현재는 로컬 개발 연결만 허용합니다. [실측 결과와 알려진 오독](.scratch/local-image-extraction/evaluation.md), [모델 실행 설정](worker-server/README.md#local-image-extraction).
+- 시간표·개인 일정에서 사진을 선택하면 native Ollama/Qwen3-VL이 초안을 반환합니다. 원본 확대 비교 후 명시적으로 저장하며 원본 이미지는 서버에 보관하지 않습니다. 현재는 로컬 개발 연결만 허용합니다. Android 에뮬레이터의 기본 사진 선택기 멈춤에 대비한 **파일에서 사진 선택** 경로로 실제 추출·편집 가능한 초안·원본 확대를 확인했습니다. [기기 검증](.scratch/local-image-extraction/android-verification.md), [실측 결과와 알려진 오독](.scratch/local-image-extraction/evaluation.md), [모델 실행 설정](worker-server/README.md#local-image-extraction).
 - 등록한 시간표에서 서울 기준 당일 수업을 기본 퀘스트로 계산합니다. 수업마다 DB 퀘스트를 생성하지 않으며 시간표 수정은 본인 전용 소켓 알림으로 갱신합니다. 수업 상태는 시간 기준이고 출석·완료 인증을 의미하지 않습니다.
 - Main51·mobile44·Worker12·Socket5 검사, 서버/모바일 빌드와 서비스간 HTTP/Socket E2E를 통과했습니다. 권한 격리, 동시 수락·저장 충돌, 소유자 전용 알림, 매칭 중복 방지, 캐시 갱신 및 DB 연결 복구를 확인했습니다. 합성 테스트 계정은 임시 DB에만 생성했습니다.
 - 실제 학식 조회와 공식 행사 수집 경로가 연결되었습니다. 불완전한 공지는 제외하고 셔틀의 차량 없는 응답을 그대로 표시합니다. 운행 중 실제 차량/정류장 대응 검증은 남았습니다.
