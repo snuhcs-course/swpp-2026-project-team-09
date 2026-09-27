@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+
+# IDEs and editors
+/.idea
+*.iml
+
+# dotenv environment variable files
+.env*
+!.env*.example
+
+# Local agent worktrees
+.claude/worktrees/
