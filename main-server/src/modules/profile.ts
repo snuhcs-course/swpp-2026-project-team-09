@@ -180,15 +180,25 @@ export class ProfileService {
   async putTimetable(userId: string, body: any) {
     const { expectedVersion, timetable } = timetableInput(body);
     this.db.requireReady();
-    // Conditional replacement and version increment remain one database statement.
-    const rows = await this.db.prisma.user.updateManyAndReturn({
-      where: { id: userId, timetable_version: expectedVersion },
-      data: { timetable, timetable_version: { increment: 1 } },
+    return this.db.tx(async (c) => {
+      // The conditional UPDATE holds the owner row until both snapshot and hint commit,
+      // preserving schedule-write serialization with meetup and quest acceptance.
+      const rows = await c.user.updateManyAndReturn({
+        where: { id: userId, timetable_version: expectedVersion },
+        data: { timetable, timetable_version: { increment: 1 } },
+      });
+      if (!rows[0]) conflict();
+      await this.db.hint(
+        c,
+        "timetable.changed",
+        userId,
+        [userId],
+        rows[0].timetable_version,
+      );
+      return {
+        ...(rows[0].timetable as Record<string, any>),
+        version: rows[0].timetable_version,
+      };
     });
-    if (!rows[0]) conflict();
-    return {
-      ...(rows[0].timetable as Record<string, any>),
-      version: rows[0].timetable_version,
-    };
   }
 }

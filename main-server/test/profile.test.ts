@@ -84,6 +84,7 @@ test(
     } = require("../dist/modules/http");
     const { Database } = require("../dist/modules/database");
     const { AuthService } = require("../dist/modules/auth");
+    const { ProfileService } = require("../dist/modules/profile");
     process.env.JWT_SECRET = "profile-integration-test-only";
     process.env.GOOGLE_WEB_CLIENT_ID = "profile-test-audience";
     const app = await NestFactory.create(AppModule, { logger: false });
@@ -222,6 +223,21 @@ test(
           );
           const saved = results.find((r) => r.status === 200)!.body;
           assert.equal(saved.version, 2);
+          const hintWhere = {
+            AND: [
+              { envelope: { path: ["type"], equals: "timetable.changed" } },
+              { envelope: { path: ["entityId"], equals: users[0] } },
+            ],
+          };
+          const hints = await db.prisma.outbox.findMany({ where: hintWhere });
+          assert.equal(hints.length, 1); // One concurrent winner; stale save emits nothing.
+          assert.deepEqual(hints[0].envelope, {
+            id: hints[0].envelope.id,
+            type: "timetable.changed",
+            entityId: users[0],
+            version: 2,
+            audience: { kind: "users", userIds: [users[0]] },
+          });
           assert.deepEqual(
             (await request(users[0], "/me/timetable")).body,
             saved,
@@ -244,6 +260,7 @@ test(
             (await request(users[1], "/me/timetable")).body.entries.length,
             0,
           );
+          assert.equal(await db.prisma.outbox.count({ where: hintWhere }), 1); // Invalid save emits nothing.
           const empty = await request(users[0], "/me/timetable", "PUT", {
             expectedVersion: 2,
             semesterStartsOn: null,
@@ -252,13 +269,75 @@ test(
           });
           assert.equal(empty.body.version, 3);
           assert.deepEqual(empty.body.entries, []);
+          assert.equal(await db.prisma.outbox.count({ where: hintWhere }), 2);
+          assert.equal(
+            await db.prisma.outbox.count({
+              where: {
+                AND: [
+                  { envelope: { path: ["type"], equals: "timetable.changed" } },
+                  {
+                    envelope: {
+                      path: ["audience", "userIds"],
+                      array_contains: users[1],
+                    },
+                  },
+                ],
+              },
+            }),
+            0,
+          );
           assert.equal(
             (await request(users[0], "/me/profile")).body.version,
             3,
           );
         },
       );
+      await t.test(
+        "timetable and owner hint roll back together when outbox work fails",
+        async () => {
+          const service = app.get(ProfileService);
+          const before = await service.timetable(users[0]);
+          const where = {
+            AND: [
+              { envelope: { path: ["type"], equals: "timetable.changed" } },
+              { envelope: { path: ["entityId"], equals: users[0] } },
+            ],
+          };
+          const beforeHints = await db.prisma.outbox.count({ where });
+          const originalHint = db.hint;
+          db.hint = async (...args: any[]) => {
+            await originalHint.apply(db, args);
+            throw Error("Forced failure after hint insertion");
+          };
+          try {
+            await assert.rejects(
+              () =>
+                service.putTimetable(users[0], {
+                  ...timetable(),
+                  expectedVersion: before.version,
+                }),
+              /Forced failure after hint insertion/,
+            );
+          } finally {
+            db.hint = originalHint;
+          }
+          assert.deepEqual(await service.timetable(users[0]), before);
+          assert.equal(await db.prisma.outbox.count({ where }), beforeHints);
+        },
+      );
     } finally {
+      await db.prisma.outbox.deleteMany({
+        where: {
+          AND: [
+            { envelope: { path: ["type"], equals: "timetable.changed" } },
+            {
+              OR: users.map((id) => ({
+                envelope: { path: ["entityId"], equals: id },
+              })),
+            },
+          ],
+        },
+      });
       await db.prisma.user.deleteMany({ where: { id: { in: users } } });
       await app.close();
     }

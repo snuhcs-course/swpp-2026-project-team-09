@@ -71,6 +71,8 @@ including owner IDs. Profile and timetable versions are independent. Successful
 writes increment the relevant version; stale concurrent saves return 409
 {code:'VERSION_CONFLICT',message:string}. Validation returns 400 INVALID_INPUT.
 Private snapshots are stored only in main-owned PostgreSQL and emit no public hints.
+A timetable save and its owner-only timetable.changed hint commit together; payload
+contains owner entityId and timetable version only. Failed/stale writes emit no hint.
 Manual recurring classes only: no OCR, image storage, AI provider, or inferred matching.
 
 ## Events
@@ -94,6 +96,24 @@ Main changes persist with outbox in the same transaction. Main relay invalidates
 event cache before publishing a hint to Redis channel prototype:domain-events.
 Main-public reads shared cache; use bounded TTL and version-aware invalidation.
 Do not claim exactly-once delivery. Reconnect reloads snapshots.
+
+## Timetable-derived class quests (mobile projection)
+
+Existing GET /v1/me/timetable is the source for the owner's daily class quests. No
+new quest rows, migration, per-day job or AI call are required. The mobile UI expands
+only the current Asia/Seoul calendar date within inclusive semester dates and matches
+weekday1–7. A class occurrence ID uses class:<entryUUID>:<YYYY-MM-DD>; version and
+array order do not form identity. Original course, time and optional location remain
+private. Missing semester, outside term, no classes, load failure and loading are
+distinct states. Current timetable data has no one-off holiday/cancellation exception.
+
+Recompute with time/day changes and on foreground; retrieve newer timetable source
+on owner hint, reconnect and fallback refresh. Successful local saves apply the
+canonical newer version immediately. Source refreshes are coalesced separately from
+other domain hints. Time labels are 예정/수업 시간/시간 지남, never attendance/completion.
+Do not send derived class IDs to /quests mutations. Existing shared Quest data and
+party membership checks remain unchanged. Future completion/exception state, if
+requested, would need persistence even though the base class list is deterministic.
 
 ## Parties, friends, quests and location (main)
 

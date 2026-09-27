@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ActivityIndicator,
+  AppState,
   Alert,
   Pressable,
   RefreshControl,
@@ -37,7 +38,10 @@ import {
 import { MatchForm, PartyForm, QuestForm } from "./Forms";
 import { PrivateEvents } from "./PrivateEvents";
 import { AccountEditor } from "./Account";
-import type { Profile } from "../account-forms";
+import { todayClassQuests, seoulDate } from "../class-quests";
+import type { TimetableSource } from "../use-timetable";
+import { ClassQuestCard, ClassQuestStatus } from "./ClassQuests";
+import type { Profile, Timetable } from "../account-forms";
 import { MeetupForm, MeetupList } from "./Meetups";
 import { canJoinParty, MeetupAction, meetupActions } from "../meetups";
 import { Life } from "./Life";
@@ -70,6 +74,9 @@ type Props = {
   matches: MatchRequest[];
   meetups: Meetup[];
   privateEventRevision: number;
+  timetableSource: TimetableSource;
+  onTimetableRefresh: () => void;
+  onTimetableSaved: (timetable: Timetable) => void;
   self: { latitude: number; longitude: number } | null;
   sharing: boolean;
   background: boolean;
@@ -110,6 +117,30 @@ export default function Experience(p: Props) {
     [sheet, setSheet] = useState<SheetState>(null),
     [selectedPartyId, setSelectedPartyId] = useState(""),
     [friendEmail, setFriendEmail] = useState("");
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const tick = () => setNow(Date.now());
+    const timer = setInterval(tick, 60_000);
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") tick();
+    });
+    return () => {
+      clearInterval(timer);
+      subscription.remove();
+    };
+  }, []);
+  const classDay = p.timetableSource.value
+    ? todayClassQuests(p.timetableSource.value, now)
+    : null;
+  const todayClasses = classDay?.items ?? [];
+  const remainingClasses = todayClasses.filter(
+    (item) => item.status !== "시간 지남",
+  );
+  const previewClasses = (
+    remainingClasses.length ? remainingClasses : todayClasses
+  ).slice(0, 2);
+  const classNotice =
+    !classDay || classDay.kind !== "classes" || !!p.timetableSource.error;
   const [privateBusy, setPrivateBusy] = useState(false);
   const [meetupBusy, setMeetupBusy] = useState(false),
     [meetupMessage, setMeetupMessage] = useState("");
@@ -392,10 +423,8 @@ export default function Experience(p: Props) {
           </View>
           <View style={styles.mapBottom} pointerEvents="box-none">
             <View style={styles.mapTitle}>
-              <Text style={u.title}>
-                {upcoming.length ? "다가오는 약속" : "캠퍼스에서 만나요"}
-              </Text>
-              <Pressable onPress={() => setTab(upcoming.length ? 2 : 1)}>
+              <Text style={u.title}>오늘 수업 · 다가오는 약속</Text>
+              <Pressable onPress={() => setTab(2)}>
                 <Text style={{ color: colors.teal, fontSize: 13 }}>
                   전체 보기 ›
                 </Text>
@@ -410,30 +439,27 @@ export default function Experience(p: Props) {
                 paddingBottom: 5,
               }}
             >
-              {upcoming.length ? (
-                upcoming.slice(0, 5).map((q) => questCard(q, true))
-              ) : visibleEvents.length ? (
-                visibleEvents.slice(0, 5).map((e) => eventCard(e, true))
-              ) : (
-                <Card style={styles.peek}>
-                  <Text style={u.title}>
-                    {p.loaded
-                      ? "아직 예정된 활동이 없어요"
-                      : "활동을 불러오는 중"}
-                  </Text>
-                  <Text style={u.body}>
-                    {p.loaded
-                      ? "파티를 만들고 함께할 약속을 잡아 보세요."
-                      : "서버에서 공개 행사와 약속을 확인합니다."}
-                  </Text>
-                  <Action
-                    label="파티 만들기"
-                    secondary
-                    small
-                    onPress={() => open({ kind: "partyForm" })}
-                  />
-                </Card>
+              {upcoming.slice(0, 1).map((q) => questCard(q, true))}
+              {classNotice && (
+                <ClassQuestStatus
+                  source={p.timetableSource}
+                  day={classDay}
+                  onOpen={() => open({ kind: "timetable" })}
+                  onRefresh={p.onTimetableRefresh}
+                  compact
+                />
               )}
+              {previewClasses.map((item) => (
+                <ClassQuestCard
+                  key={item.id}
+                  item={item}
+                  onOpen={() => open({ kind: "timetable" })}
+                  compact
+                />
+              ))}
+              {upcoming.slice(1, 5).map((q) => questCard(q, true))}
+              {!upcoming.length &&
+                visibleEvents.slice(0, 5).map((e) => eventCard(e, true))}
             </ScrollView>
           </View>
         </View>
@@ -544,6 +570,32 @@ export default function Experience(p: Props) {
                 secondary
                 label="내 개인 일정 · 나만 보기"
                 onPress={() => open({ kind: "privateEvents" })}
+              />
+              <View style={u.row}>
+                <Text style={u.title}>오늘의 수업 퀘스트</Text>
+                <Text style={u.body}>{classDay?.date ?? seoulDate(now)}</Text>
+              </View>
+              <Text style={u.body}>나만 보기 · 한국 시간 · 시간표 기준</Text>
+              {classNotice && (
+                <ClassQuestStatus
+                  source={p.timetableSource}
+                  day={classDay}
+                  onOpen={() => open({ kind: "timetable" })}
+                  onRefresh={p.onTimetableRefresh}
+                />
+              )}
+              {todayClasses.map((item) => (
+                <ClassQuestCard
+                  key={item.id}
+                  item={item}
+                  onOpen={() => open({ kind: "timetable" })}
+                />
+              ))}
+              <Action
+                secondary
+                small
+                label="내 학기 시간표 보기"
+                onPress={() => open({ kind: "timetable" })}
               />
               <Text style={u.title}>다가오는 공동 약속</Text>
               {upcoming.length ? (
@@ -1127,6 +1179,7 @@ export default function Experience(p: Props) {
               token={p.token}
               kind={sheet.kind}
               onProfileSaved={profileSaved}
+              onTimetableSaved={p.onTimetableSaved}
             />
           )}
           {sheet.kind === "settings" && (

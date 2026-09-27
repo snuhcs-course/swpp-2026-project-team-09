@@ -6,6 +6,7 @@ import {
   initialWindowMetrics,
 } from "react-native-safe-area-context";
 import { isCurrentSession } from "./src/session";
+import { useTimetable } from "./src/use-timetable";
 import Experience from "./src/ui/Experience";
 import { Action, Card, colors, u } from "./src/ui/Primitives";
 import { createRefreshQueue } from "./src/refresh-queue";
@@ -76,6 +77,12 @@ function CampusApp() {
     generation = useRef(0),
     sharingOperation = useRef(0),
     session = useRef({ token: "", sharing: false });
+  const {
+    source: timetableSource,
+    refresh: refreshTimetable,
+    applySaved: applyTimetable,
+    clear: clearTimetable,
+  } = useTimetable(token, session);
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
     setMessage("");
@@ -101,6 +108,7 @@ function CampusApp() {
     await stopLocation();
   }
   function clearAccountData() {
+    clearTimetable();
     setEvents([]);
     setParties([]);
     setFriends([]);
@@ -197,11 +205,13 @@ function CampusApp() {
     refresh();
     const socket = SOCKET ? io(SOCKET, { auth: { token } }) : null;
     socket?.on("connect", () => {
+      refreshTimetable();
       setPrivateEventRevision((value) => value + 1);
       refresh();
     });
     socket?.on("domain.changed", (hint?: { type?: string }) => {
-      if (hint?.type === "private-event.changed")
+      if (hint?.type === "timetable.changed") refreshTimetable();
+      else if (hint?.type === "private-event.changed")
         setPrivateEventRevision((value) => value + 1);
       else refresh();
     });
@@ -214,6 +224,7 @@ function CampusApp() {
       setPositions([]);
     });
     const timer = setInterval(() => {
+      refreshTimetable();
       setPrivateEventRevision((value) => value + 1);
       refresh();
     }, 30000);
@@ -221,6 +232,7 @@ function CampusApp() {
       generation.current++;
       setPositions([]);
       if (state === "active") {
+        refreshTimetable();
         setPrivateEventRevision((value) => value + 1);
         refresh();
       }
@@ -232,7 +244,7 @@ function CampusApp() {
       queue.dispose();
       app.remove();
     };
-  }, [token, reload]);
+  }, [token, reload, refreshTimetable]);
   useEffect(() => {
     if (!positions.length) return;
     const expiresAt = Math.min(
@@ -486,7 +498,13 @@ function CampusApp() {
       loaded={loaded}
       run={run}
       mutate={mutate}
-      onRefresh={reload}
+      timetableSource={timetableSource}
+      onTimetableRefresh={refreshTimetable}
+      onTimetableSaved={applyTimetable}
+      onRefresh={async () => {
+        refreshTimetable();
+        await reload();
+      }}
       onLogout={logout}
       onSharing={toggleSharing}
       onBackground={toggleBackground}

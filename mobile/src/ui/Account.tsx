@@ -101,15 +101,17 @@ export function AccountEditor({
   token,
   kind,
   onProfileSaved,
+  onTimetableSaved,
 }: {
   token: string;
   kind: "profile" | "timetable";
   onProfileSaved: (profile: Profile) => void;
+  onTimetableSaved: (timetable: Timetable) => void;
 }) {
   return kind === "profile" ? (
     <ProfileEditor token={token} onSaved={onProfileSaved} />
   ) : (
-    <TimetableEditor token={token} />
+    <TimetableEditor token={token} onSaved={onTimetableSaved} />
   );
 }
 function Feedback({
@@ -262,7 +264,13 @@ function ProfileFields({
     </View>
   );
 }
-function TimetableEditor({ token }: { token: string }) {
+function TimetableEditor({
+  token,
+  onSaved,
+}: {
+  token: string;
+  onSaved: (timetable: Timetable) => void;
+}) {
   const state = useAccountRecord<Timetable>(token, "/me/timetable");
   return (
     <>
@@ -275,7 +283,7 @@ function TimetableEditor({ token }: { token: string }) {
         <TimetableFields
           record={state.record}
           disabled={state.busy || state.conflict}
-          save={(body) => state.save("PUT", body)}
+          save={(body) => state.save("PUT", body, onSaved)}
         />
       )}
     </>

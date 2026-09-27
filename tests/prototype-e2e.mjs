@@ -468,6 +468,25 @@ try {
   const outsiderSocket = await socketConnect(outsider.token), outsiderHints = [];
   recipientSocket.on("domain.changed", hint => recipientHints.push(hint));
   outsiderSocket.on("domain.changed", hint => outsiderHints.push(hint));
+  const beforeClassQuests = (await mainDb.query("SELECT count(*)::int AS n FROM quests")).rows[0].n;
+  const latestTimetable = await http("public", "/v1/me/timetable", { token: a.token });
+  const {version: timetableVersion, ...timetableSource} = latestTimetable;
+  const newerTimetable = await http("public", "/v1/me/timetable", {
+    token: a.token, method: "PUT", body: { ...timetableSource, expectedVersion: timetableVersion },
+  });
+  await until(() => hints.some(h => h.type === "timetable.changed" && h.entityId === a.id && h.version === newerTimetable.version), "owner timetable invalidation hint");
+  const timetableHint = hints.find(h => h.type === "timetable.changed" && h.version === newerTimetable.version);
+  assert.deepEqual(Object.keys(timetableHint).sort(), ["entityId", "id", "type", "version"]);
+  assert.ok(!recipientHints.some(h => h.type === "timetable.changed"));
+  assert.ok(!outsiderHints.some(h => h.type === "timetable.changed"));
+  const timetableOutboxCount = async () => (await mainDb.query("SELECT count(*)::int AS n FROM outbox WHERE envelope->>'type'='timetable.changed'")).rows[0].n;
+  const beforeStaleTimetable = await timetableOutboxCount();
+  await http("public", "/v1/me/timetable", { token: a.token, method: "PUT", status:409, body:{...timetableSource,expectedVersion:timetableVersion} });
+  assert.equal(await timetableOutboxCount(), beforeStaleTimetable);
+  assert.equal((await mainDb.query("SELECT count(*)::int AS n FROM quests")).rows[0].n, beforeClassQuests);
+  assert.deepEqual((await http("public", "/v1/me/timetable", {token:a.token})).entries, timetableSource.entries);
+  log("timetable save → owner-only ID/version hint; stale save produces no signal or duplicated class quest rows");
+
   await http("public", "/v1/meetups", { status: 401 });
   await http("admin", "/v1/meetups", { token: admin.token, status: 404 });
   const meetupStart = new Date(Date.now() + 86400000);
