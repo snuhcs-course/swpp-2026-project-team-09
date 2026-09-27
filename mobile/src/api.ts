@@ -1,3 +1,4 @@
+import { fetch as expoFetch } from "expo/fetch";
 export const API = process.env.EXPO_PUBLIC_API_URL || "";
 export const MATCH = process.env.EXPO_PUBLIC_MATCH_URL || "";
 export const SOCKET = process.env.EXPO_PUBLIC_SOCKET_URL || "";
@@ -22,14 +23,24 @@ export async function request<T = any>(
   method = "GET",
   body?: unknown,
   base = API,
+  options: {
+    timeoutMs?: number;
+    signal?: AbortSignal;
+    redirect?: "error";
+  } = {},
 ): Promise<T> {
   if (!base) throw new Error("서버 주소 설정이 필요합니다. .env를 확인하세요.");
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const abort = () => controller.abort();
+  const timeout = setTimeout(abort, options.timeoutMs ?? 15000);
+  options.signal?.addEventListener("abort", abort);
+  if (options.signal?.aborted) controller.abort();
   try {
-    const response = await fetch(`${base}/v1${path}`, {
+    const fetcher = options.redirect === "error" ? expoFetch : fetch;
+    const response = await fetcher(`${base}/v1${path}`, {
       method,
       signal: controller.signal,
+      redirect: options.redirect,
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -47,6 +58,7 @@ export async function request<T = any>(
     return result;
   } finally {
     clearTimeout(timeout);
+    options.signal?.removeEventListener("abort", abort);
   }
 }
 export type User = {

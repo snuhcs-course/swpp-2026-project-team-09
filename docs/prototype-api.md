@@ -73,7 +73,7 @@ writes increment the relevant version; stale concurrent saves return 409
 Private snapshots are stored only in main-owned PostgreSQL and emit no public hints.
 A timetable save and its owner-only timetable.changed hint commit together; payload
 contains owner entityId and timetable version only. Failed/stale writes emit no hint.
-Manual recurring classes only: no OCR, image storage, AI provider, or inferred matching.
+Recurring classes remain the canonical source. Optional local image extraction now returns a draft for explicit review; it does not save classes or infer matching. Original images are not persisted.
 
 ## Events
 
@@ -196,7 +196,7 @@ Private calendar entries never enter public event/party feeds. The owner-only
 private-event.changed hint has ID/version, no contents. Their occupied intervals
 participate in latest schedule conflict checks for plan acceptance/quest time changes;
 source calendar edits do not silently alter already confirmed shared plans.
-This is manual input; poster extraction and walking-time verification are separate.
+Private events can be entered manually or populated from a reviewed local image-extraction draft. Walking-time verification remains separate.
 
 ## Concrete friend plans (main)
 
@@ -301,3 +301,12 @@ real feed parsing including empty responses, matching no duplicate finalization,
 all builds/types, Compose validation and service health. Test fixtures only in
 test code, never shown as external live data. Do not spend prototype time on
 unnecessary abstractions or elaborate styling. Report missing keys honestly.
+
+
+## Local image-extraction drafts
+
+Authenticated POST `/v1/me/image-extractions` accepts `{kind:"timetable"|"event",mimeType:"image/jpeg"|"image/png",imageBase64:string}`. It proxies to worker's internal-key-protected endpoint and returns `{kind,model,draft,warnings:string[],durationMs}`. Decoded limit2MiB; image dimensions and model outputs are validated; simultaneous local inference returns429, configuration/unavailable503, timeout504 and invalid model draft502. No raw image, job or quest rows are inserted.
+
+Timetable draft: `{semesterStartsOn:string|null,semesterEndsOn:string|null,entries:[{title,weekday,startMinute,endMinute,locationName:string|null}]}`. Event draft: `{title,description,startsAt:string|null,endsAt:string|null,locationName:string|null}`. No IDs, versions or coordinates are model-generated. Unknown dates stay null; the user corrects source values in the existing form and explicitly calls PUT `/me/timetable` or private-event save. A model response is never evidence that event facts are true.
+
+The initial model and API destination are restricted to local development. Cancellation/session changes discard drafts; saving continues to use canonical domain validation and version conflict handling. This initial flow has no durable async job/recovery contract.

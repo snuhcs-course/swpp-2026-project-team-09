@@ -12,6 +12,8 @@ import {
   profileDraft,
   validateTimetable,
 } from "../account-forms";
+import { ImageImport, ExtractionReview } from "./ImageImport";
+import { timetableImageDraft } from "../image-extraction";
 import { Action, Card, Field, colors, u } from "./Primitives";
 
 // A successful write is applied directly; a later refresh cannot make it look failed.
@@ -281,6 +283,7 @@ function TimetableEditor({
       <Feedback state={state} />
       {state.record && (
         <TimetableFields
+          token={token}
           record={state.record}
           disabled={state.busy || state.conflict}
           save={(body) => state.save("PUT", body, onSaved)}
@@ -290,10 +293,12 @@ function TimetableEditor({
   );
 }
 function TimetableFields({
+  token,
   record,
-  disabled,
+  disabled: formDisabled,
   save,
 }: {
+  token: string;
   record: Timetable;
   disabled: boolean;
   save: (body: unknown) => Promise<Timetable | undefined>;
@@ -302,6 +307,10 @@ function TimetableFields({
     [baseVersion, setBaseVersion] = useState(record.version),
     [error, setError] = useState("");
   const [editing, setEditing] = useState<ClassEntry | null>(null);
+  const [importing, setImporting] = useState(false),
+    [review, setReview] = useState<string[] | null>(null),
+    [previewReset, setPreviewReset] = useState(0);
+  const disabled = formDisabled || importing;
   const changed = baseVersion !== record.version;
   async function submit() {
     try {
@@ -317,6 +326,8 @@ function TimetableFields({
       if (saved) {
         setDraft(saved);
         setBaseVersion(saved.version);
+        setReview(null);
+        setPreviewReset((value) => value + 1);
       }
     } catch (e) {
       setError((e as Error).message);
@@ -324,6 +335,21 @@ function TimetableFields({
   }
   return (
     <View style={{ gap: 16 }}>
+      <ImageImport
+        token={token}
+        kind="timetable"
+        disabled={formDisabled || !!editing || changed}
+        resetGeneration={previewReset}
+        onBusyChange={setImporting}
+        onExtracted={(result) => {
+          if (result.kind !== "timetable") return;
+          setDraft(timetableImageDraft(record, result.draft, classId));
+          setEditing(null);
+          setError("");
+          setReview(result.warnings);
+        }}
+      />
+      {review && <ExtractionReview warnings={review} timetable />}
       {changed && (
         <Card>
           <Text style={u.title}>최신 저장본</Text>
@@ -352,6 +378,8 @@ function TimetableFields({
             disabled={disabled}
             onPress={() => {
               setDraft(record);
+              setReview(null);
+              setPreviewReset((value) => value + 1);
               setEditing(null);
               setBaseVersion(record.version);
             }}

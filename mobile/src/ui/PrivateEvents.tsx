@@ -9,6 +9,8 @@ import {
 } from "../private-events";
 import { createRefreshQueue } from "../refresh-queue";
 import { Action, Card, Empty, Field, colors, u } from "./Primitives";
+import { ImageImport, ExtractionReview } from "./ImageImport";
+import { eventImageTimes, eventImageSaveSource } from "../image-extraction";
 import { TimeEditor } from "./Forms";
 const stamp = (value: string) =>
   new Date(value).toLocaleString("ko-KR", {
@@ -194,6 +196,7 @@ export function PrivateEvents({
       />
       {editor ? (
         <PrivateEventForm
+          token={token}
           key={editor.original?.id ?? "new"}
           original={editor.original}
           latest={items.find((item) => item.id === editor.original?.id)}
@@ -284,13 +287,15 @@ function EventDetails({ event }: { event: PrivateEvent }) {
   );
 }
 function PrivateEventForm({
+  token,
   original,
   latest,
-  busy,
+  busy: saving,
   blocked,
   onSave,
   onCancel,
 }: {
+  token: string;
   original: PrivateEvent | null;
   latest: PrivateEvent | undefined;
   busy: boolean;
@@ -309,12 +314,33 @@ function PrivateEventForm({
       initialTimes(original?.startsAt, original?.endsAt),
     ),
     [error, setError] = useState("");
+  const [importing, setImporting] = useState(false),
+    [review, setReview] = useState<string[] | null>(null),
+    [previewReset, setPreviewReset] = useState(0);
+  const busy = saving || importing;
   const changed = privateEventRevisionChanged(baseline, latest);
   return (
     <View style={{ gap: 16 }}>
       <Text style={u.title}>
         {original ? "개인 일정 수정" : "새 개인 일정"}
       </Text>
+      <ImageImport
+        token={token}
+        kind="event"
+        disabled={saving || blocked || changed}
+        resetGeneration={previewReset}
+        onBusyChange={setImporting}
+        onExtracted={(result) => {
+          if (result.kind !== "event") return;
+          setTitle(result.draft.title);
+          setDescription(result.draft.description);
+          setPlace(result.draft.locationName ?? "");
+          setTimes(eventImageTimes(result.draft));
+          setError("");
+          setReview(result.warnings);
+        }}
+      />
+      {review && <ExtractionReview warnings={review} />}
       {changed && (
         <Card>
           <Text style={u.title}>최신 저장본 확인</Text>
@@ -337,6 +363,8 @@ function PrivateEventForm({
                 disabled={busy || blocked}
                 onPress={() => {
                   setBaseline(latest);
+                  setReview(null);
+                  setPreviewReset((value) => value + 1);
                   setTitle(latest.title);
                   setDescription(latest.description);
                   setPlace(latest.locationName);
@@ -373,7 +401,7 @@ function PrivateEventForm({
         multiline
         editable={!busy}
       />
-      {baseline?.latitude != null && (
+      {!review && baseline?.latitude != null && (
         <Text style={u.body}>
           이 일정에 저장된 지도 좌표는 그대로 유지돼요.
         </Text>
@@ -386,7 +414,7 @@ function PrivateEventForm({
           try {
             const body = privateEventBody(
               { title, description, locationName: place, ...timeRange(times) },
-              baseline,
+              review ? eventImageSaveSource(baseline) : baseline,
             );
             setError("");
             onSave(baseline, body);

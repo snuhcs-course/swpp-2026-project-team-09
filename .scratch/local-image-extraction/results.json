@@ -1,0 +1,249 @@
+{
+  "recordedAt": "2026-09-27T01:19:05.480Z",
+  "realModel": true,
+  "results": [
+    {
+      "name": "synthetic-event.png",
+      "sha256": "024141b0252f07eda3adedb31cc60dbcea895d1c72300c8155cdea9c5ac57584",
+      "elapsedMs": 14988,
+      "result": {
+        "kind": "event",
+        "model": "qwen3-vl:2b-instruct-q4_K_M",
+        "draft": {
+          "title": "캠퍼스 독서 모임",
+          "description": "일시: 2026년 10월 6일 18:00 ~ 19:30\n장소: 중앙도서관 세미나실\n함께 책을 읽고 이야기를 나눕니다.",
+          "startsAt": "2026-10-06T18:00:00+09:00",
+          "endsAt": "2026-10-06T19:30:00+09:00",
+          "locationName": "중앙도서관 세미나실"
+        },
+        "warnings": [
+          "이미지 추출 초안입니다. 원본과 비교하고 수정한 뒤 저장하세요."
+        ],
+        "durationMs": 14985
+      },
+      "checks": [
+        {
+          "field": "title",
+          "passed": true,
+          "expected": "캠퍼스 독서 모임",
+          "actual": "캠퍼스 독서 모임"
+        },
+        {
+          "field": "startsAt",
+          "passed": true,
+          "expected": "2026-10-06T18:00:00+09:00",
+          "actual": "2026-10-06T18:00:00+09:00"
+        },
+        {
+          "field": "endsAt",
+          "passed": true,
+          "expected": "2026-10-06T19:30:00+09:00",
+          "actual": "2026-10-06T19:30:00+09:00"
+        },
+        {
+          "field": "locationName",
+          "passed": true,
+          "expected": "중앙도서관 세미나실",
+          "actual": "중앙도서관 세미나실"
+        }
+      ]
+    },
+    {
+      "name": "synthetic-event-unknown-year.png",
+      "sha256": "a5309f06492ee9ba614c3aa38984e2eaedc09a3e606883af3e4717f450a10fd2",
+      "elapsedMs": 11915,
+      "result": {
+        "kind": "event",
+        "model": "qwen3-vl:2b-instruct-q4_K_M",
+        "draft": {
+          "title": "가을 영화 모임",
+          "description": "일시: 10월 6일 오후 6시\n장소: 학생회관 2층\n종료 시간은 미정입니다.",
+          "startsAt": null,
+          "endsAt": null,
+          "locationName": "학생회관 2층"
+        },
+        "warnings": [
+          "행사 날짜 또는 시간이 확인되지 않았습니다. 저장 전에 직접 확인하세요.",
+          "이미지 추출 초안입니다. 원본과 비교하고 수정한 뒤 저장하세요."
+        ],
+        "durationMs": 11915
+      },
+      "checks": [
+        {
+          "field": "title",
+          "passed": true,
+          "expected": "가을 영화 모임",
+          "actual": "가을 영화 모임"
+        },
+        {
+          "field": "startsAt",
+          "passed": true,
+          "expected": null,
+          "actual": null
+        },
+        {
+          "field": "endsAt",
+          "passed": true,
+          "expected": null,
+          "actual": null
+        },
+        {
+          "field": "locationName",
+          "passed": true,
+          "expected": "학생회관 2층",
+          "actual": "학생회관 2층"
+        }
+      ]
+    },
+    {
+      "name": "synthetic-timetable-grid.png",
+      "sha256": "f19419c27b660c88ab24ec6831ff7e672f4041cb4eb22a130c3c83ccc9a4425b",
+      "elapsedMs": 28030,
+      "result": {
+        "kind": "timetable",
+        "model": "qwen3-vl:2b-instruct-q4_K_M",
+        "draft": {
+          "semesterStartsOn": "2026-09-01",
+          "semesterEndsOn": "2026-12-14",
+          "entries": [
+            {
+              "title": "자료구조",
+              "weekday": 1,
+              "startMinute": 540,
+              "endMinute": 600,
+              "locationName": "301동 101호"
+            },
+            {
+              "title": "컴퓨터구조",
+              "weekday": 3,
+              "startMinute": 660,
+              "endMinute": 720,
+              "locationName": "302동 203호"
+            },
+            {
+              "title": "화물과 통계",
+              "weekday": 5,
+              "startMinute": 900,
+              "endMinute": 960,
+              "locationName": "28동 201호"
+            }
+          ]
+        },
+        "warnings": [
+          "이미지 추출 초안입니다. 원본과 비교하고 수정한 뒤 저장하세요."
+        ],
+        "durationMs": 28030
+      },
+      "checks": [
+        {
+          "field": "semesterStartsOn",
+          "passed": true,
+          "expected": "2026-09-01",
+          "actual": "2026-09-01"
+        },
+        {
+          "field": "semesterEndsOn",
+          "passed": true,
+          "expected": "2026-12-14",
+          "actual": "2026-12-14"
+        },
+        {
+          "field": "entries",
+          "passed": false,
+          "expected": [
+            {
+              "title": "자료구조",
+              "weekday": 1,
+              "startMinute": 540,
+              "endMinute": 630,
+              "locationName": "301동 101호"
+            },
+            {
+              "title": "컴퓨터구조",
+              "weekday": 3,
+              "startMinute": 660,
+              "endMinute": 750,
+              "locationName": "302동 203호"
+            },
+            {
+              "title": "확률과 통계",
+              "weekday": 5,
+              "startMinute": 840,
+              "endMinute": 960,
+              "locationName": "28동 201호"
+            }
+          ],
+          "actual": [
+            {
+              "title": "자료구조",
+              "weekday": 1,
+              "startMinute": 540,
+              "endMinute": 600,
+              "locationName": "301동 101호"
+            },
+            {
+              "title": "컴퓨터구조",
+              "weekday": 3,
+              "startMinute": 660,
+              "endMinute": 720,
+              "locationName": "302동 203호"
+            },
+            {
+              "title": "화물과 통계",
+              "weekday": 5,
+              "startMinute": 900,
+              "endMinute": 960,
+              "locationName": "28동 201호"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "official-cine-mobile.jpg",
+      "sha256": "a5c76e1253477c6f837ae0003f586db1311e476ae1eb7be248e63ad45c744b73",
+      "elapsedMs": 27044,
+      "result": {
+        "kind": "event",
+        "model": "qwen3-vl:2b-instruct-q4_K_M",
+        "draft": {
+          "title": "Cine Music Festival",
+          "description": "2026 서울대학교 예술주간; ArtSpace@SNU",
+          "startsAt": "2026-09-29T18:30:00+09:00",
+          "endsAt": "2026-09-29T19:30:00+09:00",
+          "locationName": "중앙도서관 판사 주홍점·홈계수 옥상정원"
+        },
+        "warnings": [
+          "이미지 추출 초안입니다. 원본과 비교하고 수정한 뒤 저장하세요."
+        ],
+        "durationMs": 27041
+      },
+      "checks": [
+        {
+          "field": "title",
+          "passed": true,
+          "expected": "Cine Music Festival",
+          "actual": "Cine Music Festival"
+        },
+        {
+          "field": "startsAt",
+          "passed": true,
+          "expected": "2026-09-29T18:30:00+09:00",
+          "actual": "2026-09-29T18:30:00+09:00"
+        },
+        {
+          "field": "endsAt",
+          "passed": true,
+          "expected": "2026-09-29T19:30:00+09:00",
+          "actual": "2026-09-29T19:30:00+09:00"
+        },
+        {
+          "field": "locationName",
+          "passed": false,
+          "expected": "중앙도서관 판사 주홍점·홍계수 옥상정원",
+          "actual": "중앙도서관 판사 주홍점·홈계수 옥상정원"
+        }
+      ]
+    }
+  ]
+}

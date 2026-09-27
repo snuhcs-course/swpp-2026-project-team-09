@@ -97,7 +97,7 @@ async function until(fn, label, timeout = 35000) {
 async function http(
   service,
   path,
-  { token, body, method = "GET", status = 200, internal = false } = {},
+  { token, body, method = "GET", status = 200, internal = false, timeoutMs = 18000 } = {},
 ) {
   const response = await fetch(bases[service] + path, {
     method,
@@ -107,7 +107,7 @@ async function http(
       ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
     },
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    signal: AbortSignal.timeout(18000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   const json = await response.json();
   assert.equal(
@@ -254,6 +254,30 @@ try {
     hints = [];
   socket.on("domain.changed", (hint) => hints.push(hint));
   log("HTTP runtime/role/key boundaries and socket authentication");
+
+  await http("public", "/v1/me/image-extractions", { method: "POST", body: {}, status: 401 });
+  await http("worker", "/v1/internal/image-extractions", { method: "POST", body: {}, status: 401 });
+  await http("admin", "/v1/me/image-extractions", { method: "POST", body: {}, token: a.token, status: 404 });
+  if (process.env.PROTOTYPE_IMAGE_EVAL_FILE) {
+    assert.ok(process.env.OLLAMA_BASE_URL, "Explicit local model URL required for real-image E2E");
+    const path=process.env.PROTOTYPE_IMAGE_EVAL_FILE;
+    const image=await readFile(path);
+    const before=await http("public", "/v1/me/timetable", {token:a.token});
+    const counts=async()=> (await mainDb.query("SELECT (SELECT count(*)::int FROM quests) AS quests,(SELECT count(*)::int FROM private_events) AS private_events")).rows[0];
+    const previous=await counts();
+    const draft=await http("public", "/v1/me/image-extractions", {
+      token:a.token, method:"POST", status:201, timeoutMs:195000,
+      body:{kind:"event",mimeType:path.endsWith(".png")?"image/png":"image/jpeg",imageBase64:image.toString("base64")},
+    });
+    assert.equal(draft.kind,"event");
+    assert.equal(draft.model,"qwen3-vl:2b-instruct-q4_K_M");
+    assert.equal(typeof draft.draft.title,"string");
+    assert.ok(Array.isArray(draft.warnings));
+    assert.deepEqual(await http("public", "/v1/me/timetable", {token:a.token}),before);
+    assert.deepEqual(await counts(),previous);
+    log("real local image extraction through authenticated main/worker; no timetable/quest/private-event writes");
+  }
+
 
 
   await http("public", "/v1/me/profile", { status: 401 });

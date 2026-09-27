@@ -97,6 +97,9 @@ services:
     environment:
       <<: *backend-env
       PORT: "3003"
+      # Native macOS Ollama uses Metal; keep its listener on host loopback.
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3-vl:2b-instruct-q4_K_M}
     ports: ["127.0.0.1:3003:3003"]
     depends_on:
       main-public: {condition: service_healthy}

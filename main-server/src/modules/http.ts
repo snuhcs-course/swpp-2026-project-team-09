@@ -26,6 +26,7 @@ import {
   InternalGuard,
   userView,
 } from "./auth";
+import { ImageExtractionProxy } from "./image-extractions";
 import { Database } from "./database";
 import { EventsService } from "./events";
 import { PrivateEventsService } from "./private-events";
@@ -101,7 +102,11 @@ export class PublicController {
     private location: LocationService,
     private profile: ProfileService,
     private campus: CampusService,
+    private imageExtractions: ImageExtractionProxy,
   ) {}
+  @Post("me/image-extractions") extractImage(@Body() b: unknown) {
+    return this.imageExtractions.extract(b);
+  }
   @Get("me/profile") ownProfile(@Req() r: AuthRequest) {
     return this.profile.profile(r.user.id);
   }
@@ -306,6 +311,7 @@ export function runtimeControllers(role: string) {
     LocationService,
     ProfileService,
     CampusService,
+    ImageExtractionProxy,
   ],
 })
 export class AppModule {}
@@ -319,6 +325,17 @@ export class Errors implements ExceptionFilter {
         .status(e.getStatus())
         .json(typeof body === "string" ? { message: body } : body);
     }
+    if ((e as any)?.type === "entity.too.large")
+      return res
+        .status(413)
+        .json({
+          code: "REQUEST_TOO_LARGE",
+          message: "JSON request must be at most 3 MiB",
+        });
+    if ((e as any)?.type === "entity.parse.failed")
+      return res
+        .status(400)
+        .json({ code: "INVALID_INPUT", message: "Valid JSON required" });
     const code = (e as any)?.code;
     if (
       code === "23505" ||

@@ -49,3 +49,8 @@ Run `pnpm test` for snapshot authorization/expiry regression checks and `node --
 Naver runtime work is checked separately from the earlier Google-map build. Google login, authenticated Naver tile rendering, marker interaction, and location behavior still require real credentials and device verification; dependency resolution and a successful native build alone do not verify those behaviors.
 
 The earlier prototype passed Android debug and standalone ARM64 release-variant builds using the generated development keystore. Those results precede this Naver SDK migration. See the root README for the coordinator’s current native-build results and package/signature details. No store-ready or physical-device validation is claimed here.
+
+
+## Photo drafts
+
+Timetable and private calendar forms can choose a single image with the native photo picker. The selected image is normalized to JPEG (maximum edge1600px, decoded2MiB) and sent only to the approved local API. No full-gallery/camera/microphone permission is requested. The app shows a draft and the original photo with enlargement; missing dates remain editable and a separate save is required. The local2B model currently misreads some timetable boundaries and characters, so compare every field. Cancelling or changing sessions discards pending results. Photo import preserves timetable version conflicts and removes old event coordinates. This feature needs the native image-picker/manipulator modules and a rebuilt APK; an existing binary without these modules cannot run it.

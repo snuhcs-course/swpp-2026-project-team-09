@@ -17,6 +17,8 @@
     "expo-build-properties": "~1.0.10",
     "expo-constants": "~18.0.0",
     "expo-dev-client": "~6.0.0",
+    "expo-image-manipulator": "~14.0.8",
+    "expo-image-picker": "~17.0.11",
     "expo-location": "~19.0.0",
     "expo-secure-store": "~15.0.0",
     "expo-task-manager": "~14.0.0",

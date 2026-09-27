@@ -8,9 +8,16 @@ export default {
     newArchEnabled: true,
     android: {
       package: "kr.ac.campus.prototype",
+      blockedPermissions: [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+      ],
     },
     plugins: [
       "expo-dev-client",
+      ["expo-image-picker", { photosPermission: false, cameraPermission: false, microphonePermission: false }],
       // Expo composes mods inside-out: remove legacy keys after the wrapper runs.
       "./src/map/withNaverMapNative",
       ["@mj-studio/react-native-naver-map", { client_id: process.env.NAVER_MAP_CLIENT_ID?.trim() || "" }],
