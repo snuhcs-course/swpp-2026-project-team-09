@@ -17,11 +17,11 @@
 
 ## 서버 실행
 
-Node.js 22, pnpm 10, Docker 호환 엔진과 Compose가 필요합니다. macOS에서는 Colima 또는 Docker Desktop을 사용할 수 있습니다. `.env.prototype.example`을 **파일이 없는 경우에만** `.env.prototype.local`로 복사합니다. 다섯 로컬 비밀 값(`POSTGRES_PASSWORD`, `DB_MAIN_PASSWORD`, `DB_MATCH_PASSWORD`, `JWT_SECRET`, `INTERNAL_API_KEY`)은 각각 `openssl rand -hex 32`로 생성합니다. 실제 값은 커밋하거나 채팅에 붙이지 않습니다.
+루트 `docker-compose.yml`을 Compose 기본 탐색으로 사용합니다. 아래 명령은 저장소 루트에서 실행합니다. Node.js 22, pnpm 10, Docker 호환 엔진과 Compose가 필요합니다. macOS에서는 Colima 또는 Docker Desktop을 사용할 수 있습니다. `.env.prototype.example`을 **파일이 없는 경우에만** `.env.prototype.local`로 복사합니다. 다섯 로컬 비밀 값(`POSTGRES_PASSWORD`, `DB_MAIN_PASSWORD`, `DB_MATCH_PASSWORD`, `JWT_SECRET`, `INTERNAL_API_KEY`)은 각각 `openssl rand -hex 32`로 생성합니다. 실제 값은 커밋하거나 채팅에 붙이지 않습니다.
 
 ```sh
-docker compose --env-file .env.prototype.local -f compose.local.yaml up --build -d
-docker compose --env-file .env.prototype.local -f compose.local.yaml ps
+docker compose --env-file .env.prototype.local up --build -d
+docker compose --env-file .env.prototype.local ps
 ```
 
 새 DB에는 시작 시 Prisma migration을 적용합니다. Prisma 도입 이전 DB가 있다면 먼저 백업·스키마 비교 후 명시적으로 baseline을 등록해야 합니다. [main-server 절차](main-server/README.md), [match-server 절차](match-server/README.md)를 따르며 기존 데이터를 reset하지 않습니다. 현재 로컬 DB는 이 검증과 전환을 완료했습니다.
@@ -37,7 +37,7 @@ Colima도 같은 Compose 파일을 사용할 수 있습니다. macOS Apple Silic
 ```sh
 brew install colima docker docker-compose
 colima start --vm-type=vz --vz-rosetta --cpu 4 --memory 8 --disk 40
-docker --context colima compose --env-file .env.prototype.local -f compose.local.yaml up --build -d
+docker --context colima compose --env-file .env.prototype.local up --build -d
 ```
 
 `docker compose` 플러그인을 찾지 못하면 `brew info docker-compose`의 설치 안내를 확인합니다. 이미 Docker Desktop에서 이 프로젝트를 실행했다면 먼저 해당 엔진에서 이 프로젝트만 중지하고 전환합니다. Rosetta/VZ는 지원되는 macOS에서 사용합니다. 이 명령을 문서화한 것과 Colima에서 실제 검증을 완료한 것은 구분합니다.

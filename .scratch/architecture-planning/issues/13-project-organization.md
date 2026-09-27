@@ -84,7 +84,7 @@ Blocked by: none
 ├── docs/
 ├── .scratch/
 ├── .github/workflows/
-└── compose.local.yaml
+└── docker-compose.yml           파일명은 아래 최신 사용자 결정 반영
 ```
 
 패키지 매니저는 현재 pnpm 후보이며 lockfile은 해당 프로젝트 안에 둔다. root package.json·pnpm-workspace.yaml·root lockfile과 admin-backend 디렉터리는 만들지 않는다. 실제 파일이 아직 없으므로 삭제한 제품 파일도 없다. public-api/admin-api 내부 폴더와 배포 파일명은 검토 가능한 제안이며 스캐폴딩하지 않았다.
@@ -107,9 +107,9 @@ migration은 배포별 파드 시작마다 무조건 실행하지 않고 별도 
 
 ## Docker 기반 로컬 실행
 
-Dockerfile은 이미지 빌드, Compose는 로컬 서비스·환경 변수·네트워크·volume·기동 의존성을 정의한다. compose에는 main-public과 main-admin을 같은 main-server 이미지/Dockerfile과 다른 role 설정으로 등록하는 안이다. socket, worker, admin-frontend, DB·브로커도 함께 연결한다.
+Dockerfile은 이미지 빌드, 루트 `docker-compose.yml`은 로컬 서비스·환경 변수·네트워크·volume·기동 의존성을 정의한다. 현재 Compose는 main-public과 main-admin을 같은 main-server 이미지/Dockerfile과 다른 role 설정으로 실행하며 socket, worker, match, admin-frontend, PostgreSQL과 캐시/큐 Redis를 연결한다.
 
-구성 후 사용할 예시는 `docker compose -f compose.local.yaml up --build`다. 아직 compose를 생성하거나 실행하지 않았다. health/readiness와 DB·브로커 재연결을 검증하며, 컨테이너를 시작했다는 이유로 dependency 준비가 끝났다고 판단하지 않는다. Android SDK/에뮬레이터/실기기 작업은 호스트에서 별도로 수행할 수 있다.
+Compose 구성과 기존 Docker Desktop 실행 검증은 완료되었다. 저장소 루트에서 `docker compose --env-file .env.prototype.local up --build -d`로 기본 파일 탐색을 사용한다. 이번 파일명 변경은 구성 내용을 그대로 보존하며 컨테이너 재시작이나 Colima 실행 검증을 수행하지 않는다. health/readiness와 DB·브로커 재연결을 검증하며, 컨테이너를 시작했다는 이유로 dependency 준비가 끝났다고 판단하지 않는다. Android SDK/에뮬레이터/실기기 작업은 호스트에서 별도로 수행할 수 있다.
 
 ## root workspace 없는 계약 공유
 
@@ -139,3 +139,5 @@ Dockerfile은 이미지 빌드, Compose는 로컬 서비스·환경 변수·네�
 - 2026-09-27 최신 사용자 요청: 별도 admin-frontend/admin-backend와 관리 부하 분리를 명시하고 root 편의 package.json을 거절했다. 로컬 Docker Compose와 프로젝트별 manifest/lockfile 안으로 변경했다. 어드민 업무를 main에 유지했던 이전 제안은 현재안에서 철회한다. 공식 행사 데이터 소유권 분리는 질문 중이며 미확정이다.
 
 - 2026-09-27 최신 사용자 답변: “그냥 main-server에 통합하되 어드민 전용 파드를 띄우는 식”. 별도 admin-backend와 공식 행사 데이터 소유권 분리 제안을 대체한다. main 코드/업무 DB는 공유하고 public/admin 실행 pool을 분리한다. root 편의 manifest 제외와 Next.js admin-frontend는 유지한다.
+
+- 2026-09-27 최신 파일명 결정: 사용자가 루트 Compose 파일명을 `docker-compose.yml`로 명시적으로 선택했다. 기존 `compose.local.yaml`을 내용 변경 없이 이름만 바꾸고 README의 일반/Colima 명령에서 `-f`를 제거해 기본 탐색을 사용한다. 환경 파일 `.env.prototype.local`, 서비스·데이터 소유권과 런타임 구성은 유지한다. 위 초기 설계·이전 논의 기록은 당시의 맥락으로 보존한다.
