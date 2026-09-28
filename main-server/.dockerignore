@@ -4,3 +4,5 @@ coverage
 .env
 src/generated
 *.tsbuildinfo
+*.pem
+*.key
