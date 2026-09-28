@@ -1,56 +1,40 @@
-# Welcome to your Expo app 👋
+# mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The SNU Now mobile app, built with Expo SDK 57 and Expo Router. For now it shows a placeholder screen.
 
-## Get started
+## Run it
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+You need Node.js 22.13 or later (24.3 or later on Node.js 24) and pnpm 12.6.0, the version declared in
+`package.json`. In `mobile/`:
 
 ```bash
-npm run reset-project
+pnpm install
+pnpm start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+The development server keeps running in the same terminal. Press `a` there to open the app on a running Android
+emulator or `i` on the iOS simulator. The first time, Expo installs Expo Go on it. On a phone, scan the QR code with
+Expo Go.
 
-### Other setup steps
+Add packages with `pnpm expo install <package>`, not `pnpm add`. It picks the version that matches the Expo SDK.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Checks
 
-## Learn more
+Each command fails when it finds a problem. Run all four before opening a pull request.
 
-To learn more about developing your project with Expo, look at the following resources:
+| Command             | Checks                                       |
+| ------------------- | -------------------------------------------- |
+| `pnpm lint`         | oxlint with type-aware rules                 |
+| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it) |
+| `pnpm typecheck`    | TypeScript in strict mode                    |
+| `pnpm test`         | Jest tests in `__tests__/`                   |
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Folder layout
 
-## Join the community
+```text
+src/app/     screens; every file is a route and _layout.tsx sets the navigation around them
+__tests__/   Jest tests
+assets/      app icons and the splash image
+```
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Keep code that is not a screen, such as components and hooks, in `src/` outside `src/app/`.
