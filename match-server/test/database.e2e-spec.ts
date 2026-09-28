@@ -2,7 +2,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 
-// The tests connect with the server's own settings: the match role and the match database.
+// The tests connect with the server's own role, the match role.
 function connect(databaseUrl: string): PrismaClient {
   return new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
 }
