@@ -38,6 +38,10 @@ The server answers two health checks:
 If a setting in `.env` is missing or invalid, the server stops and names it, for example
 `Config validation error: PORT: Invalid input: expected string, received undefined`.
 
+The server also stops at startup when it cannot reach the database or Redis, and its log names the address it tried,
+for example `Can't reach database server at localhost:5432`. Start them first with `docker compose up -d postgres redis`.
+Once the server is running, a store that goes down makes readiness answer 503 instead.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.

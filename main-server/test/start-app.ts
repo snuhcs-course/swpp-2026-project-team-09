@@ -16,9 +16,15 @@ export async function startApp(
   const { MessagingConfigService } = await import('../src/common/messaging-config.service.js');
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
   const app = moduleRef.createNestApplication<INestApplication<Server>>();
-  // Connected to messaging as main.ts does, so that the tests run the server as it runs.
+  // Started as main.ts starts it, so that the tests run the server as it runs.
   app.connectMicroservice(app.get(MessagingConfigService).createClientOptions());
-  await app.startAllMicroservices();
-  await app.init();
+  try {
+    await app.init();
+    await app.startAllMicroservices();
+  } catch (error) {
+    // Close what already started, such as a messaging connection that would keep retrying.
+    await app.close();
+    throw error;
+  }
   return app;
 }

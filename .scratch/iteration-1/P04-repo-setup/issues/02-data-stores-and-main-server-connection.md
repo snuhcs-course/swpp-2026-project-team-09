@@ -35,9 +35,16 @@ PostGIS is not a trusted extension, so only a superuser can enable it. The main 
 ### What tickets 03–05 follow (2026-09-28)
 
 - `compose.yaml` at the repository root is the one command: `docker compose up --build`. The database image and the script that creates both databases and roles are in `infra/postgres/`. Each server has its own `Dockerfile` in its folder and is added to `compose.yaml` as a service.
-- A server image with a database runs `pnpm db:migrate` and then `pnpm start:prod`. While developing, run `docker compose up -d postgres redis` and `pnpm start:dev` on the laptop.
+- A server image with a database runs `pnpm db:migrate` and then `node dist/main`. While developing, run `docker compose up -d postgres redis` and `pnpm start:dev` on the laptop.
 - Tests start their own containers with Testcontainers. `test/global-setup.ts` builds the database image from `infra/postgres/`, starts Redis, applies the migrations and hands the settings to the tests through `inject('settings')`.
 - Prisma 7.10.0 reads `prisma7.config.ts`, the name `prisma init` gives it. The config loads `.env` itself. The generator states `importFileExtension = "js"`: the Docker image generates Prisma Client before it has `tsconfig.json`, and without that line it generated imports ending in `.ts`, which Node cannot load.
 - `MessagingConfigService` sets `retryAttempts`. Without it Nest stops messaging for good once Redis restarts. Nest's Redis server subscribes only to patterns that have a handler, so a message round trip can be checked once P07 and P08 add handlers.
 - `ConfigService` is received only as a constructor parameter property, which ticket 01's `checkParameterProperties: false` already leaves out of `typescript/prefer-readonly-parameter-types`. The rule then needs no exception for `ConfigService`, which cannot be made readonly. Settings needed outside a constructor come from a service that holds `ConfigService`, as `MessagingConfigService` provides the messaging options to `main.ts`, the messaging client and the readiness check.
 - pnpm 12 runs a dependency's install scripts only when `pnpm-workspace.yaml` allows them. Prisma's are allowed; the native add-ons that testcontainers pulls in are not needed.
+
+### Startup and shutdown (2026-09-29)
+
+- Startup stops when either data store cannot be reached. Nest's Redis server subscribes to its channels only after its first connection succeeds, so a server that started without Redis would stay unsubscribed after Redis came back. The database is checked the same way: `PrismaService` runs `SELECT 1` in `onModuleInit`, because with PrismaPg `$connect()` only creates the connection pool. Once a server runs, readiness reports a store that goes down.
+- `main.ts` calls `app.init()` before `startAllMicroservices()`, as Nest's hybrid application page advises, so that no message arrives before the database has answered.
+- `main.ts` calls `app.enableShutdownHooks()`. Nest 12 drains the HTTP requests in progress when the app closes, but it closes on SIGTERM only with this call. Without it the container ended with exit code 137 and `onModuleDestroy` never ran.
+- The image runs `node dist/main` directly, not through pnpm, and `compose.yaml` sets `init: true` for the server. After its shutdown hooks, Nest raises the signal again to exit, and a process running as PID 1 ignores that signal.

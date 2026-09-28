@@ -1,14 +1,20 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client.js';
 import { Settings } from './settings.js';
 
-// The main database. Inject it wherever a feature reads or writes records. It connects on the first query.
+// The main database. Inject it wherever a feature reads or writes records.
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleDestroy {
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly settings: ConfigService<Settings, true>) {
     super({ adapter: new PrismaPg({ connectionString: settings.get('DATABASE_URL', { infer: true }) }) });
+  }
+
+  // Startup stops when the database cannot be reached, as it does for Redis.
+  // With PrismaPg, $connect() only creates the connection pool, so a query checks that the database answers.
+  async onModuleInit(): Promise<void> {
+    await this.$queryRaw`SELECT 1`;
   }
 
   async onModuleDestroy(): Promise<void> {
