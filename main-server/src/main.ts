@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
-import { MessagingConfigService } from './common/messaging-config.service.js';
+import { messagingOptions } from './common/messaging.js';
 import { Settings } from './common/settings.js';
 
 async function bootstrap(): Promise<void> {
@@ -10,7 +10,7 @@ async function bootstrap(): Promise<void> {
   app.enableShutdownHooks();
   const settings = app.get<ConfigService<Settings, true>>(ConfigService);
   // Receive events and requests from the other servers.
-  app.connectMicroservice(app.get(MessagingConfigService).createClientOptions());
+  app.connectMicroservice(messagingOptions(settings));
   // Initialize first, so that no message arrives before the database has answered.
   await app.init();
   await app.startAllMicroservices();

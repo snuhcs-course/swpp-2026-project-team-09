@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   HealthCheck,
   HealthCheckResult,
@@ -6,8 +7,9 @@ import {
   MicroserviceHealthIndicator,
   PrismaHealthIndicator,
 } from '@nestjs/terminus';
-import { MessagingConfigService } from '../common/messaging-config.service.js';
+import { messagingOptions } from '../common/messaging.js';
 import { PrismaService } from '../common/prisma.service.js';
+import { Settings } from '../common/settings.js';
 
 @Controller('health')
 export class HealthController {
@@ -16,7 +18,7 @@ export class HealthController {
     private readonly databaseHealth: PrismaHealthIndicator,
     private readonly redisHealth: MicroserviceHealthIndicator,
     private readonly prisma: PrismaService,
-    private readonly messagingConfig: MessagingConfigService,
+    private readonly settings: ConfigService<Settings, true>,
   ) {}
 
   @Get('live')
@@ -31,7 +33,7 @@ export class HealthController {
   ready(): Promise<HealthCheckResult> {
     return this.health.check([
       () => this.databaseHealth.pingCheck('database', this.prisma),
-      () => this.redisHealth.pingCheck('redis', this.messagingConfig.createClientOptions()),
+      () => this.redisHealth.pingCheck('redis', messagingOptions(this.settings)),
     ]);
   }
 }
