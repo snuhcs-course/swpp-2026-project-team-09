@@ -14,6 +14,7 @@ Data stores and messaging are not part of this ticket; ticket 02 adds them.
 
 - [ ] `main-server` is its own project at the repository root with its own package manifest, pnpm lockfile, lint, format and test configuration. There is no root package manifest and no configuration shared with another project.
 - [ ] The project uses Node.js 24 LTS, NestJS 12.1.x in standard mode, ES modules and TypeScript 6.0.x in strict mode.
+- [ ] The package manifest declares the exact pnpm version, so that every developer runs the same pnpm, whether it is installed globally or run through corepack without installing it.
 - [ ] oxlint runs with type-aware rules. The categories correctness, suspicious, pedantic and perf are errors. Explicit `any`, missing explicit return types and non-null assertions are errors.
 - [ ] The rule that rewrites imports into type-only imports is off. The categories style and restriction are not enabled as a whole.
 - [ ] If type-aware linting does not run with TypeScript 6, the TypeScript compiler runs in strict mode as a separate check. The outcome is recorded under `## Comments` in this ticket.
