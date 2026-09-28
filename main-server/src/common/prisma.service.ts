@@ -8,7 +8,13 @@ import { Settings } from './settings.js';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly settings: ConfigService<Settings, true>) {
-    super({ adapter: new PrismaPg({ connectionString: settings.get('DATABASE_URL', { infer: true }) }) });
+    super({
+      adapter: new PrismaPg({
+        connectionString: settings.get('DATABASE_URL', { infer: true }),
+        // pg waits for a new connection without limit by default. Prisma 6 gave up after 5 seconds.
+        connectionTimeoutMillis: 5_000,
+      }),
+    });
   }
 
   // Startup stops when the database cannot be reached, as it does for Redis.

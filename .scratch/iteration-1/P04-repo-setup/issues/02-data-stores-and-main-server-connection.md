@@ -45,6 +45,7 @@ PostGIS is not a trusted extension, so only a superuser can enable it. The main 
 ### Startup and shutdown (2026-09-29)
 
 - Startup stops when either data store cannot be reached. Nest's Redis server subscribes to its channels only after its first connection succeeds, so a server that started without Redis would stay unsubscribed after Redis came back. The database is checked the same way: `PrismaService` runs `SELECT 1` in `onModuleInit`, because with PrismaPg `$connect()` only creates the connection pool. Once a server runs, readiness reports a store that goes down.
+- `PrismaPg` gets `connectionTimeoutMillis: 5_000`, as Prisma's v7 connection pool page suggests to keep Prisma 6's timeout. pg waits for a new connection without limit by default, so a database host whose packets are dropped held startup, and every query after it, until the operating system gave up.
 - `main.ts` calls `app.init()` before `startAllMicroservices()`, as Nest's hybrid application page advises, so that no message arrives before the database has answered.
 - `main.ts` calls `app.enableShutdownHooks()`. Nest 12 drains the HTTP requests in progress when the app closes, but it closes on SIGTERM only with this call. Without it the container ended with exit code 137 and `onModuleDestroy` never ran.
 - The image runs `node dist/main` directly, not through pnpm, and `compose.yaml` sets `init: true` for the server. After its shutdown hooks, Nest raises the signal again to exit, and a process running as PID 1 ignores that signal.

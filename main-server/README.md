@@ -39,7 +39,8 @@ If a setting in `.env` is missing or invalid, the server stops and names it, for
 `Config validation error: PORT: Invalid input: expected string, received undefined`.
 
 The server also stops at startup when it cannot reach the database or Redis, and its log names the address it tried,
-for example `Can't reach database server at localhost:5432`. Start them first with `docker compose up -d postgres redis`.
+for example `Can't reach database server at localhost:5432`. It waits at most 5 seconds for the database to answer.
+Start them first with `docker compose up -d postgres redis`.
 Once the server is running, a store that goes down makes readiness answer 503 instead.
 
 ## Checks
