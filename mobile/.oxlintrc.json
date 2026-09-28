@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "pedantic": "error",
+    "perf": "error"
+  },
+  "rules": {
+    "typescript/no-explicit-any": "error",
+    "typescript/explicit-function-return-type": "error",
+    "typescript/no-non-null-assertion": "error",
+    // Only the servers turn this off, because their dependency injection looks classes up at runtime.
+    "typescript/consistent-type-imports": "error"
+  },
+  "env": {
+    "node": true
+  }
+}
