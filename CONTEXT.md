@@ -1,0 +1,104 @@
+# SNU Now
+
+SNU Now is a social map for Seoul National University's Gwanak campus. Its users attend events with companions, meet friends between classes and use campus services.
+
+## Language
+
+### People
+
+**User**:
+A person who signed in with an SNU Google account. User stories name this role "SNU student".
+_Avoid_: Member (a member belongs to a Party)
+
+**Administrator**:
+A team member allowed to confirm, publish and create Global Events.
+_Avoid_: Organizer, manager
+
+**Avatar**:
+The figure that stands for a User on the map and moves as the User moves.
+_Avoid_: Pin, profile marker
+
+**Friend**:
+A User connected to another by an accepted Invite Link. Friendship is mutual.
+_Avoid_: Follower, contact
+
+**Invite Link**:
+A one-time link a User sends so that whoever opens and accepts it becomes their Friend.
+_Avoid_: Friend code, friend request
+
+### Events
+
+**Event**:
+An activity held at a set time and place. Every Event is either a Global Event or a Private Event.
+
+**Global Event**:
+An Event published to every User, such as a departmental notice or an organizer's submission.
+_Avoid_: Official event, public event
+
+**Draft**:
+A Global Event that was collected or entered but is not yet visible to Users. An Administrator publishes it.
+_Avoid_: Pending event, unverified event
+
+**Private Event**:
+An Event a User registers for their own use, visible only on that User's map.
+_Avoid_: Personal event
+
+### Parties
+
+**Party**:
+A group of Users who are together now. It is formed on its own, not under an Event, and a User belongs to at most one Party at a time. A Party can be marked with one Quest when it is created.
+_Avoid_: Group, team
+
+**Leader**:
+The one member of a Party who holds authority over its settings and membership.
+_Avoid_: Owner, host
+
+**Join Policy**:
+The Leader's setting for how Users enter a Party: Open (anyone joins at once), Approval (the Leader accepts each request) or Closed (unlisted, entry by the Leader's invitation only).
+_Avoid_: Visibility, privacy setting
+
+### Quests
+
+**Quest**:
+An activity a User sets out to do, held by one or more Users and made of one or more Sub Quests. A Quest can point at a Global Event.
+_Avoid_: Mission, plan
+
+**Sub Quest**:
+One step of a Quest, such as attending the event or going to a café afterwards. It carries the step's time and place, and Sub Quests are one level deep.
+_Avoid_: Objective, task
+
+**Holder**:
+A User who holds a Quest. Each Holder tracks their own progress through its Sub Quests.
+_Avoid_: Participant, assignee
+
+**Shared Quest**:
+A Quest with two or more Holders, such as matched Users or the two Friends of an accepted Meetup.
+_Avoid_: Common quest
+
+**Class Quest**:
+A Quest for attending one of the User's own classes on a given day, derived from the User's timetable.
+
+**Meetup**:
+A proposal between Friends to meet. Accepting it creates a Shared Quest and does not form a Party.
+_Avoid_: Appointment
+
+**Matching**:
+Grouping Users who want companions for the same Global Event. A finished match gives those Users a Shared Quest; they form a Party themselves when the time comes.
+_Avoid_: Auto-join
+
+### Location
+
+**Location Sharing**:
+Mutual visibility of live location within one relationship, either a friendship or a Party. Each relationship is switched on and off on its own.
+
+**Master Switch**:
+A User's single switch that turns all of their Location Sharing on or off.
+_Avoid_: Global toggle, ghost mode
+
+**Campus Boundary**:
+The outline of the Gwanak campus. A User outside it is hidden from everyone.
+_Avoid_: Geofence
+
+**Private Zone**:
+An area in which a User's location is hidden from everyone else.
+_Avoid_: Hidden area
