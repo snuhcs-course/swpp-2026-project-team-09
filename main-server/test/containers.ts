@@ -29,3 +29,7 @@ export function startRedis(): Promise<StartedTestContainer> {
     .withWaitStrategy(Wait.forLogMessage('Ready to accept connections'))
     .start();
 }
+
+export function redisSettings(redis: Readonly<StartedTestContainer>): { REDIS_HOST: string; REDIS_PORT: string } {
+  return { REDIS_HOST: redis.getHost(), REDIS_PORT: String(redis.getMappedPort(6379)) };
+}

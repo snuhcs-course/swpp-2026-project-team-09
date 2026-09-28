@@ -1,6 +1,8 @@
 import { INestApplication } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { Server } from 'node:http';
+import { messagingOptions } from '../src/common/messaging.js';
 import { Settings } from '../src/common/settings.js';
 
 // AppModule validates the settings when it is imported, so it is imported afresh after the environment is set.
@@ -14,6 +16,9 @@ export async function startApp(
   const { AppModule } = await import('../src/app.module.js');
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
   const app = moduleRef.createNestApplication<INestApplication<Server>>();
+  // Connected to messaging as main.ts does, so that the tests run the server as it runs.
+  app.connectMicroservice(messagingOptions(app.get<ConfigService<Settings, true>>(ConfigService)));
+  await app.startAllMicroservices();
   await app.init();
   return app;
 }

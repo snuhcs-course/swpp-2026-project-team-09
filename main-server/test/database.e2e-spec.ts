@@ -1,27 +1,31 @@
-import { INestApplication } from '@nestjs/common';
-import { Server } from 'node:http';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { inject } from 'vitest';
-import { startApp } from './start-app.js';
+import { PrismaClient } from '../src/generated/prisma/client.js';
+
+// The tests connect with the server's own settings: the main role and the main database.
+function connect(databaseUrl: string): PrismaClient {
+  return new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
+}
 
 describe('Main database', () => {
-  let app: INestApplication<Server>;
-
-  beforeAll(async () => {
-    app = await startApp(inject('settings'));
-  });
-
-  afterAll(async () => {
-    await app.close();
-  });
+  const { DATABASE_URL } = inject('settings');
 
   it('answers a spatial function', async () => {
-    // Imported after startApp, which loads the server's modules afresh, so that it is the class the server uses.
-    const { PrismaService } = await import('../src/common/prisma.service.js');
-    const prisma = app.get(PrismaService);
+    const prisma = connect(DATABASE_URL);
 
     const rows = await prisma.$queryRaw<{ distance: number }[]>`
       SELECT ST_Distance('POINT(0 0)'::geometry, 'POINT(3 4)'::geometry) AS distance`;
+    await prisma.$disconnect();
 
     expect(rows).toEqual([{ distance: 5 }]);
+  });
+
+  it('keeps the main role out of the match database', async () => {
+    const matchUrl = new URL(DATABASE_URL);
+    matchUrl.pathname = '/match';
+    const prisma = connect(matchUrl.toString());
+
+    await expect(prisma.$queryRaw`SELECT 1`).rejects.toThrow('permission denied for database "match"');
+    await prisma.$disconnect();
   });
 });

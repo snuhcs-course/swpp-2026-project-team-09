@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
-import { mainDatabaseUrl, startPostgres, startRedis } from './containers.js';
+import { mainDatabaseUrl, redisSettings, startPostgres, startRedis } from './containers.js';
 import { startApp } from './start-app.js';
 
 describe('Health checks with the database and Redis up', () => {
@@ -41,11 +41,7 @@ describe('Health checks with Redis down', () => {
 
   beforeAll(async () => {
     const redis = await startRedis();
-    app = await startApp({
-      ...inject('settings'),
-      REDIS_HOST: redis.getHost(),
-      REDIS_PORT: String(redis.getMappedPort(6379)),
-    });
+    app = await startApp({ ...inject('settings'), ...redisSettings(redis) });
     await redis.stop();
   });
 

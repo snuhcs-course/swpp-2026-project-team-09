@@ -15,8 +15,8 @@ import { Settings } from '../common/settings.js';
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
-    private readonly database: PrismaHealthIndicator,
-    private readonly microservice: MicroserviceHealthIndicator,
+    private readonly databaseHealth: PrismaHealthIndicator,
+    private readonly redisHealth: MicroserviceHealthIndicator,
     private readonly prisma: PrismaService,
     private readonly settings: ConfigService<Settings, true>,
   ) {}
@@ -32,8 +32,8 @@ export class HealthController {
   @HealthCheck()
   ready(): Promise<HealthCheckResult> {
     return this.health.check([
-      () => this.database.pingCheck('database', this.prisma),
-      () => this.microservice.pingCheck('redis', messagingOptions(this.settings)),
+      () => this.databaseHealth.pingCheck('database', this.prisma),
+      () => this.redisHealth.pingCheck('redis', messagingOptions(this.settings)),
     ]);
   }
 }

@@ -2,7 +2,7 @@
 FROM postgres:18
 
 # PostGIS is marked trusted so that a database owner, not only a superuser, can enable it.
-# Each server's first migration enables it under the server's own role.
+# The main server's first migration enables it under the main role. The match database does not use it.
 RUN apt-get update \
   && apt-get install -y --no-install-recommends "postgresql-$PG_MAJOR-postgis-3" \
   && rm -rf /var/lib/apt/lists/* \
