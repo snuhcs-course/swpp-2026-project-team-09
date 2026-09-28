@@ -3,3 +3,5 @@
 /coverage
 /.env
 *.tsbuildinfo
+# Prisma Client, generated from prisma/schema.prisma by `prisma generate`
+/src/generated

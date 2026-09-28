@@ -1,0 +1,12 @@
+// The main database's schema. Change it, then record the change as a migration (see README.md).
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  // Stated, not inferred from tsconfig.json, so that the Docker image generates the same code before it has tsconfig.json.
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}

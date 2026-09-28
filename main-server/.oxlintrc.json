@@ -15,7 +15,15 @@
     // A Nest module is an empty class carrying the @Module decorator.
     "typescript/no-extraneous-class": ["error", { "allowWithDecorator": true }],
     // Nest injects services through constructor parameters; a Readonly<> type would hide the class from injection.
-    "typescript/prefer-readonly-parameter-types": ["error", { "checkParameterProperties": false }]
+    // ConfigService cannot be made readonly, and Nest's documentation passes it as a plain parameter
+    // (constructors, useFactory), so it is allowed wherever it appears.
+    "typescript/prefer-readonly-parameter-types": [
+      "error",
+      {
+        "checkParameterProperties": false,
+        "allow": [{ "from": "package", "name": "ConfigService", "package": "@nestjs/config" }]
+      }
+    ]
   },
   "env": {
     "node": true

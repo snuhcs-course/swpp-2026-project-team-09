@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { MessagingModule } from './common/messaging.module.js';
+import { PrismaModule } from './common/prisma.module.js';
 import { settingsSchema } from './common/settings.js';
 import { HealthModule } from './health/health.module.js';
 
@@ -11,6 +13,8 @@ import { HealthModule } from './health/health.module.js';
       ignoreEnvFile: true,
       validationSchema: settingsSchema,
     }),
+    PrismaModule,
+    MessagingModule,
     HealthModule,
   ],
 })
