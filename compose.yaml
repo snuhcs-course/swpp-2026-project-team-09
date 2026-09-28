@@ -1,0 +1,49 @@
+# Starts the data stores and the servers on a developer's laptop: `docker compose up --build` in this folder.
+# The passwords are for local development only.
+name: snu-now
+
+services:
+  postgres:
+    build: infra/postgres
+    environment:
+      POSTGRES_PASSWORD: postgres
+      MAIN_DB_PASSWORD: main
+      MATCH_DB_PASSWORD: match
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      # Over TCP, so that the temporary server that creates the databases does not count as ready.
+      test: ['CMD', 'pg_isready', '--host', '127.0.0.1', '--username', 'postgres']
+      interval: 2s
+      retries: 30
+
+  redis:
+    image: redis:8
+    # Never evict records, even when memory runs out.
+    command: ['redis-server', '--maxmemory-policy', 'noeviction']
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 2s
+      retries: 30
+
+  main-server:
+    build: main-server
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://main:main@postgres:5432/main
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

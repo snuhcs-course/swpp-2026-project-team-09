@@ -6,5 +6,8 @@ export default defineConfig({
     root: './',
     include: ['test/**/*.e2e-spec.ts'],
     unstubEnvs: true,
+    globalSetup: ['test/global-setup.ts'],
+    // Some tests start their own containers.
+    hookTimeout: 60_000,
   },
 });
