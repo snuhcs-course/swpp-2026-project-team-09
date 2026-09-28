@@ -24,7 +24,7 @@ Refresh and sign-out are ticket 07. The sign-in screen belongs to P06.
 - [x] Google's token verification sits behind an interface. Tests replace it with a verifier that accepts prepared tokens. Nothing else is replaced.
 - [x] The key pair and the Google client settings are validated at startup and listed in the example settings file without secrets.
 - [x] Tests through the public API cover: sign-in accepted for an SNU account; refused for another domain, an unverified email, a wrong audience and an expired token; a protected route refused without a token.
-- [ ] Manual check by a person: a real SNU account's ID token carries the hosted domain claim, and a Gmail account's does not. The result is recorded under `## Comments` in this ticket.
+- [x] Manual check by a person: a real SNU account's ID token carries the hosted domain claim, and a Gmail account's does not. The result is recorded under `## Comments` in this ticket.
 
 ## Comments
 
@@ -56,3 +56,14 @@ zod 4 runs an object-level `refine` even after a field inside it has failed. The
 ### First DTO and `prefer-readonly-parameter-types` (2026-09-29)
 
 Ticket 01 asked to revisit the rule's options when the first DTO arrived. The DTO is a zod schema given to `@Body({ schema })`, so the pipe reads the schema, not the parameter's type. The parameter is typed `Readonly<SignInDto>` and the options stay as they are. `.oxlintrc.json` is unchanged.
+
+### Manual check with real Google accounts (2026-09-29)
+
+윤유상 got ID tokens from the OAuth 2.0 Playground with the app's web client and the scopes `openid email profile`, and sent each one to the running main server.
+
+- SNU account: the token had `aud` equal to the app's client ID, `hd: 'snu.ac.kr'` and `email_verified: true`. `POST /auth/google` answered 200. The database then held one User, with a UUID v4 id and an `@snu.ac.kr` email, and one refresh token.
+- Gmail account: the token had the same `aud`, no `hd` and `email_verified: true`. `POST /auth/google` answered 403 `Sign in with an SNU Google account (snu.ac.kr).` No User was created.
+
+The Google Cloud project `SNU Now` has audience External and publishing status Testing, with no test users. Google lets any account sign in to a Testing app that requests only name, email address and profile, so the app needs neither test users nor verification. It has two web clients, the app's and the admin site's, and their IDs are in `.env.example`. The admin site's client has no JavaScript origins yet; P12 adds them. The Android client comes with P06.
+
+The first attempt answered 500 with `The table public.users does not exist`: the local database volume had been recreated, and `pnpm start:dev` does not apply migrations. Running `pnpm db:migrate` first, as the README says, fixed it.
