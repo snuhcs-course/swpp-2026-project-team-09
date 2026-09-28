@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ClientsModule } from '@nestjs/microservices';
-import { MESSAGING_CLIENT, messagingOptions } from './common/messaging.js';
+import { ConfigModule } from '@nestjs/config';
+import { MessagingModule } from './common/messaging.module.js';
 import { PrismaModule } from './common/prisma.module.js';
 import { settingsSchema } from './common/settings.js';
 import { HealthModule } from './health/health.module.js';
@@ -15,10 +14,7 @@ import { HealthModule } from './health/health.module.js';
       validationSchema: settingsSchema,
     }),
     PrismaModule,
-    ClientsModule.registerAsync({
-      isGlobal: true,
-      clients: [{ name: MESSAGING_CLIENT, inject: [ConfigService], useFactory: messagingOptions }],
-    }),
+    MessagingModule,
     HealthModule,
   ],
 })
