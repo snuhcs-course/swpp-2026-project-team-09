@@ -29,6 +29,13 @@ The mobile app starts and shows a placeholder screen, so that screen work in P06
 
 TypeScript 6 no longer includes every `@types` package by default, so `tsconfig.json` lists `"types": ["jest"]`, as the main server lists its test types.
 
+### Licence and app identity (2026-09-29)
+
+Both were changed after review.
+
+- `mobile/LICENSE`, Expo's MIT licence for the template files, is deleted. `package.json` declares `"license": "UNLICENSED"`, as main-server does.
+- `app.json` sets `name`, `slug` and `scheme` to `SNU Now`, `snu-now` and `snunow`. The slug is awkward to change once the project is linked to EAS. P06 may register the scheme as the Google sign-in redirect.
+
 ### oxlint settings in the mobile app (2026-09-28)
 
 The settings are copied from the main server with three differences:
