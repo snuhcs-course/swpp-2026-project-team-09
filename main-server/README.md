@@ -15,7 +15,7 @@ cp .env.example .env
 pnpm keys:generate >> .env
 ```
 
-Then fill in `GOOGLE_CLIENT_IDS` in `.env` (see [Sign-in](#sign-in)).
+`.env.example` already holds the team's Google client IDs in `GOOGLE_CLIENT_IDS` (see [Sign-in](#sign-in)).
 
 To run the whole system, in the repository root:
 
@@ -65,8 +65,8 @@ The app signs in with Google and sends the ID token it gets to the main server:
   signed-in User. The refresh token is valid for 30 days, and only its hash is stored.
 
 `GOOGLE_CLIENT_IDS` lists the OAuth client IDs of the app and the admin site, separated by commas. They are not secrets.
-Access tokens are signed with ES256 and `ACCESS_TOKEN_PRIVATE_KEY`. The other servers verify them with
-`ACCESS_TOKEN_PUBLIC_KEY` alone and are never given the private key.
+Access tokens are signed with ES256 and `ACCESS_TOKEN_PRIVATE_KEY`. Another server that checks them is given only
+`ACCESS_TOKEN_PUBLIC_KEY`, never the private key; the socket server is the first, in ticket 11.
 
 ## Checks
 
