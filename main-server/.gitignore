@@ -5,3 +5,6 @@
 *.tsbuildinfo
 # Prisma Client, generated from prisma/schema.prisma by `prisma generate`
 /src/generated
+# Key files. The access token keys are settings in .env; a key written to a file must not be committed either.
+*.pem
+*.key

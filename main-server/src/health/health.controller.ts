@@ -7,10 +7,13 @@ import {
   MicroserviceHealthIndicator,
   PrismaHealthIndicator,
 } from '@nestjs/terminus';
+import { Public } from '../auth/public.decorator.js';
 import { messagingOptions } from '../common/messaging.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { Settings } from '../common/settings.js';
 
+// Open without an access token, so that anyone can tell whether the server is up.
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(
