@@ -1,10 +1,13 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Server } from 'node:http';
+import { Settings } from '../src/common/settings.js';
 
 // AppModule validates the settings when it is imported, so it is imported afresh after the environment is set.
-export async function startApp(env: Readonly<Record<string, string | undefined>>): Promise<INestApplication<Server>> {
-  for (const [name, value] of Object.entries(env)) {
+export async function startApp(
+  settings: Readonly<Partial<Record<keyof Settings, string | undefined>>>,
+): Promise<INestApplication<Server>> {
+  for (const [name, value] of Object.entries(settings)) {
     vi.stubEnv(name, value);
   }
   vi.resetModules();

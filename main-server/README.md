@@ -64,7 +64,7 @@ The steps add a feature named `profile`. Use a short lowercase name, with dashes
 3. Put request and response shapes in `src/profile/dto/` and stored records in `src/profile/entities/`. Everything
    that belongs to the feature stays inside `src/profile/`.
 4. If another feature needs `ProfileService`, add it to `exports` in `ProfileModule` and add `ProfileModule` to the
-   other module's `imports`. Code that belongs to no single feature goes in `src/common/`.
+   other module's `imports`. Code shared by two or more features goes in `src/common/`.
 5. If the feature needs a new setting, add it to the schema in `src/common/settings.ts`, to `.env.example` and to your
    own `.env`. Read it by injecting `ConfigService<Settings, true>` and calling `get('NAME', { infer: true })`.
 6. Write `test/profile.e2e-spec.ts`. Start the server with `startApp` from `test/start-app.ts` and call its routes
