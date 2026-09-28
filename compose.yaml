@@ -73,5 +73,21 @@ services:
       redis:
         condition: service_healthy
 
+  match-server:
+    build: match-server
+    init: true
+    environment:
+      PORT: 3003
+      DATABASE_URL: postgresql://match:match@postgres:5432/match
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - '3003:3003'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres-data:

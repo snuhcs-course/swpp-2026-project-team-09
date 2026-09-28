@@ -1,0 +1,31 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "pedantic": "error",
+    "perf": "error"
+  },
+  "rules": {
+    "typescript/no-explicit-any": "error",
+    "typescript/explicit-function-return-type": "error",
+    "typescript/no-non-null-assertion": "error",
+    // Type-only imports can remove the classes that dependency injection looks up at runtime.
+    "typescript/consistent-type-imports": "off",
+    // A Nest module is an empty class carrying the @Module decorator.
+    "typescript/no-extraneous-class": ["error", { "allowWithDecorator": true }],
+    // Nest injects services through constructor parameters; a Readonly<> type would hide the class from injection.
+    // ConfigService cannot be made readonly, and Nest's documentation passes it as a plain parameter
+    // (constructors, useFactory), so it is allowed wherever it appears.
+    "typescript/prefer-readonly-parameter-types": [
+      "error",
+      {
+        "checkParameterProperties": false,
+        "allow": [{ "from": "package", "name": "ConfigService", "package": "@nestjs/config" }]
+      }
+    ]
+  },
+  "env": {
+    "node": true
+  }
+}
