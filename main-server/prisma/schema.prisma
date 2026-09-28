@@ -17,18 +17,27 @@ model User {
   // Google's subject identifier ("sub"), which stays the same while the email address may change.
   googleSubject String         @unique @map("google_subject")
   email         String
+  // The User's single switch for all of their Location Sharing. Off until the User turns it on; signing out turns it
+  // off.
+  masterSwitch  Boolean        @default(false) @map("master_switch")
   refreshTokens RefreshToken[]
 
   @@map("users")
 }
 
-// A refresh token handed to a User at sign-in. Only its SHA-256 hash is stored.
+// A refresh token handed to a User at sign-in or by a refresh. Only its SHA-256 hash is stored.
 model RefreshToken {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  user      User     @relation(fields: [userId], references: [id])
-  tokenHash String   @unique @map("token_hash")
-  expiresAt DateTime @map("expires_at")
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  user      User      @relation(fields: [userId], references: [id])
+  // A sign-in starts a family, and each refresh hands on the family of the token it replaces.
+  familyId  String    @default(dbgenerated("gen_random_uuid()")) @map("family_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  // Set when a refresh uses the token up or a sign-out revokes it. A revoked token is refused.
+  revokedAt DateTime? @map("revoked_at")
 
+  @@index([userId])
+  @@index([familyId])
   @@map("refresh_tokens")
 }

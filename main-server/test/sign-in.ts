@@ -26,3 +26,12 @@ export async function signIn(
   }
   return tokensSchema.parse(response.body);
 }
+
+// Exchanges a refresh token as the app does and returns the new tokens.
+export async function refresh(app: Readonly<INestApplication<Server>>, refreshToken: string): Promise<Tokens> {
+  const response = await request(app.getHttpServer()).post('/auth/refresh').send({ refreshToken });
+  if (response.status !== 200) {
+    throw new Error(`Refresh answered ${response.status}: ${JSON.stringify(response.body)}`);
+  }
+  return tokensSchema.parse(response.body);
+}
