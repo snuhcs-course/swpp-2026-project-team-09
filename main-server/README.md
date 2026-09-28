@@ -4,7 +4,9 @@ The main SNU Now server. The other servers copy its layout, settings and checks.
 
 ## Run it
 
-You need Node.js 24, pnpm and Docker. pnpm switches itself to the version declared in `package.json`.
+You need Node.js 24 and Docker. With nvm, `nvm install` and `nvm use` read `.nvmrc` at the repository root. The
+commands below use pnpm 12.6.0, the version declared in `package.json`. If `pnpm -v` prints another version, type
+`npx pnpm@12.6.0` wherever this file says `pnpm`: npm fetches it into its cache without a global install.
 
 First create your settings file in `main-server/`. The second command appends a new access token key pair of your own
 to it; `.env` is never committed, so the private key stays on your laptop:
