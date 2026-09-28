@@ -23,9 +23,9 @@ To run the whole system, in the repository root:
 docker compose up --build
 ```
 
-This starts PostgreSQL, Redis and the main server, which takes its settings from `main-server/.env`. The main server
-brings its database up to the current schema before it starts. `docker compose down` removes the containers and keeps
-the database; `docker compose down -v` deletes it too.
+This starts PostgreSQL, Redis and every server. The main server takes its settings from `main-server/.env` and brings
+its database up to the current schema before it starts. `docker compose down` removes the containers and keeps the
+database; `docker compose down -v` deletes it too.
 
 While you work on the main server, start only the data stores in the repository root and run the server yourself in
 `main-server/`:
