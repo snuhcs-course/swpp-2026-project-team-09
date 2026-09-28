@@ -34,8 +34,8 @@ The server answers two health checks:
 If a setting in `.env` is missing or invalid, the server stops and names it, for example
 `Config validation error: PORT: Invalid input: expected string, received undefined`.
 
-The server also stops at startup when it cannot reach Redis. Start it first with `docker compose up -d redis`.
-Once the server is running, Redis going down makes readiness answer 503 instead.
+The server starts even when it cannot reach Redis, because it only sends messages. Until Redis can be reached,
+readiness answers 503.
 
 ## Checks
 
@@ -54,7 +54,7 @@ Each command fails when it finds a problem. Run all four before opening a pull r
 
 ```text
 src/
-├── main.ts                          starts the server and connects it to messaging
+├── main.ts                          starts the server
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup

@@ -27,12 +27,19 @@ The schedules, the collectors and the messages it sends to the main server belon
 
 ### Following the main server (2026-09-29)
 
-- The worker server is a copy of `main-server` with the database removed: no Prisma, no `DATABASE_URL`, and readiness reports Redis only. The lint, format, TypeScript, Nest and Vitest configuration, `test/start-app.ts`, the messaging files and the health module are byte-identical to the main server's.
+- The worker server is a copy of `main-server` with the database removed: no Prisma, no `DATABASE_URL`, and readiness reports Redis only. The lint, format, TypeScript, Nest and Vitest configuration, `src/common/messaging.module.ts` and the health module are byte-identical to the main server's.
 - It listens on port 3002, in compose and in `.env.example`. The main server has 3000 and the socket server 3001; 3003 is left for the match server, in the spec's order.
-- Messaging is set up as in the main server: `main.ts` connects the server to Redis and `MessagingModule` provides the client. P07 only needs the client, because the worker sends requests to the main server and nothing sends to the worker. The listening side was kept so that the pattern stays identical and startup still stops when Redis cannot be reached; Nest's Redis server subscribes to nothing until a handler exists.
 - The lockfile was resolved afresh. The main server's copied lockfile kept `@nestjs/terminus`'s optional peer resolved to `@prisma/client`, which pulled Prisma back in, and pnpm refused Prisma's build scripts. Every direct dependency still resolves to the same version as in the main server.
-- `docker compose up --build` starts the worker server with the rest. It answered both health checks, answered 503 naming Redis while Redis was stopped and recovered after, and stopped on SIGTERM in 0.25 seconds with exit code 143, as the main server does.
+- `docker compose up --build` starts the worker server with the rest. It answered both health checks, answered 503 naming Redis while Redis was stopped and recovered after, and stopped on SIGTERM in about 0.2 seconds with exit code 143, as the main server does.
 - `compose.yaml` gains only the `worker-server` service, after the socket server's. `main-server/README.md` already says that the one command starts every server (ticket 03), so it is unchanged here.
+
+### Messaging sends only (2026-09-29)
+
+The worker server only sends. `MessagingModule` provides the client that P07 uses to send what it collected to the main server as requests. Nothing sends to the worker, so `main.ts` does not connect it to messaging as a receiver. This follows the socket server's rule of keeping only the side a server's role needs (ticket 03). The main server is unchanged: it receives the worker's requests and sends events to the socket server.
+
+- The server starts even when Redis cannot be reached, and readiness answers 503 until it can. The main server's reason for stopping at startup concerns the receiving side, which subscribes to its channels only after its first connection succeeds, so it does not apply here. The startup test for Redis was removed.
+- `test/start-app.ts` starts the app with `init()` alone, as Nest's testing page does. The main server's `try`/`catch` there only closes a receiving connection that would keep retrying.
+- When a message has to reach the worker, add the receiving side as the main server does.
 
 ### The feature module note (2026-09-29)
 
