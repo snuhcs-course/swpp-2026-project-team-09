@@ -47,5 +47,18 @@ services:
       redis:
         condition: service_healthy
 
+  socket-server:
+    build: socket-server
+    init: true
+    environment:
+      PORT: 3001
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - '3001:3001'
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres-data:

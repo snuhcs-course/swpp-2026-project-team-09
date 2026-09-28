@@ -1,0 +1,6 @@
+# pnpm runs a dependency's install scripts only when it is allowed here.
+allowBuilds:
+  # testcontainers pulls these in; the tests talk to Docker without them.
+  cpu-features: false
+  protobufjs: false
+  ssh2: false
