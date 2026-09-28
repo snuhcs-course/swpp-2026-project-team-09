@@ -161,8 +161,8 @@ describe('Sign-in refused for the ID token', () => {
 
 // GET /users/me stands for every route that needs an access token.
 function getMe(accessToken?: string): request.Test {
-  const test = request(app.getHttpServer()).get('/users/me');
-  return accessToken === undefined ? test : test.auth(accessToken, { type: 'bearer' });
+  const get = request(app.getHttpServer()).get('/users/me');
+  return accessToken === undefined ? get : get.auth(accessToken, { type: 'bearer' });
 }
 
 describe('A protected route', () => {

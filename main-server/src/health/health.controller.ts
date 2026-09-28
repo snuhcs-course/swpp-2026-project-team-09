@@ -7,8 +7,8 @@ import {
   MicroserviceHealthIndicator,
   PrismaHealthIndicator,
 } from '@nestjs/terminus';
-import { Public } from '../auth/public.decorator.js';
 import { messagingOptions } from '../common/messaging.js';
+import { Public } from '../common/public.decorator.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { Settings } from '../common/settings.js';
 

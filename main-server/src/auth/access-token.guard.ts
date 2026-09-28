@@ -1,8 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import { SignedInRequest } from './current-user.decorator.js';
-import { IS_PUBLIC } from './public.decorator.js';
+import { SignedInRequest } from '../common/current-user.decorator.js';
+import { IS_PUBLIC } from '../common/public.decorator.js';
 
 // What an access token says: the User's identifier as the subject. Its expiry is the standard `exp` claim.
 export interface AccessTokenPayload {
