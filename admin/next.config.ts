@@ -1,7 +1,8 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Agent instructions live in the repository's root AGENTS.md and CLAUDE.md.
+  agentRules: false,
 };
 
 export default nextConfig;

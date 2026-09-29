@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# admin
 
-## Getting Started
+The SNU Now admin site, built with Next.js 16, the App Router and Tailwind CSS. For now it shows a placeholder page.
 
-First, run the development server:
+## Run it
+
+You need Node.js 24. With nvm, `nvm install` and `nvm use` read `.nvmrc` at the repository root. The commands below
+use pnpm 12.6.0, the version declared in `package.json`. If `pnpm -v` prints another version, type `npx pnpm@12.6.0`
+wherever this file says `pnpm`. In `admin/`:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3100. The servers use ports 3000 to 3003, so the site uses 3100, in `pnpm dev` and `pnpm start`
+alike. Sign-in with Google and the Kakao map accept only registered addresses, so keep the port.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Each command fails when it finds a problem. Run all four before opening a pull request.
 
-## Learn More
+| Command             | Checks                                       |
+| ------------------- | -------------------------------------------- |
+| `pnpm lint`         | oxlint with type-aware rules                 |
+| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it) |
+| `pnpm typecheck`    | TypeScript in strict mode                    |
+| `pnpm test`         | Vitest tests in `__tests__/`                 |
 
-To learn more about Next.js, take a look at the following resources:
+`pnpm lint` and `pnpm typecheck` first run `next typegen`, which writes the route types (`LayoutProps`, `PageProps`)
+into `.next/types/`, so both checks also work on a fresh clone, before `pnpm dev` has run.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Folder layout
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```text
+src/app/     pages; every page.tsx is a route and layout.tsx wraps the pages below it
+__tests__/   Vitest tests, named *.test.tsx
+```
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Tests render a page with React Testing Library in jsdom. `vitest.setup.ts` adds the jest-dom matchers, such as
+`toBeVisible()`.
