@@ -35,6 +35,12 @@ export const settingsSchema = z
       .string()
       .transform((ids) => ids.split(',').map((id) => id.trim()))
       .pipe(z.array(z.string().endsWith('.apps.googleusercontent.com'))),
+    // The email addresses of the Administrators, separated by commas. Only SNU accounts sign in, so an address outside
+    // snu.ac.kr is a mistake. Compared without regard to case, so they are kept in lower case.
+    ADMINISTRATOR_EMAILS: z
+      .string()
+      .transform((emails) => emails.split(',').map((email) => email.trim().toLowerCase()))
+      .pipe(z.array(z.email().endsWith('@snu.ac.kr'))),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),
