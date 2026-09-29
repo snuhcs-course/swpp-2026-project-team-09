@@ -50,17 +50,43 @@ Once the server is running, Redis going down makes readiness answer 503 instead.
 
 ## Socket connection
 
-The app opens a Socket.IO connection on the same port and sends the access token it got from the main server, as
-Socket.IO's documentation shows:
+The app opens a Socket.IO connection on the same port and sends the access token it got from the main server. It gives
+`auth` as a function, which Socket.IO calls on every attempt to connect, reconnections included, so that each attempt
+sends the token the app holds at that moment:
 
 ```ts
-const socket = io('http://localhost:3001', { auth: { token: accessToken } });
+const socket = io('http://localhost:3001', { auth: (cb) => cb({ token: getAccessToken() }) });
 ```
 
 The socket server checks the token itself with `ACCESS_TOKEN_PUBLIC_KEY`, without asking the main server. A valid token
 opens the connection, and the server keeps the User's id on it. A missing, expired or altered token, or one signed
 with another key, is refused before the connection opens: the app gets `connect_error` with the message `Unauthorized`,
 and Socket.IO does not reconnect by itself.
+
+An open connection stays open after its token expires. When it drops, for example when the phone loses its signal,
+Socket.IO reconnects by itself and the token is checked again. With a fixed `auth: { token }`, Socket.IO would send the
+expired token again, and the app would stay disconnected without noticing. So when `connect_error` arrives and
+`socket.active` is false, the app gets new tokens from the main server once and connects again:
+
+```ts
+let retried = false;
+socket.on('connect', () => {
+  retried = false;
+});
+socket.on('connect_error', async () => {
+  // A network failure: Socket.IO tries again by itself.
+  if (socket.active) return;
+  // Refused: get new tokens once, then connect again.
+  if (!retried && (await refreshTokens())) {
+    retried = true;
+    socket.connect();
+  } else {
+    showSignIn();
+  }
+});
+```
+
+`getAccessToken`, `refreshTokens` and `showSignIn` stand for the app's own code.
 
 ## Checks
 
