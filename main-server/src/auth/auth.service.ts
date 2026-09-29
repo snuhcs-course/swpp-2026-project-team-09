@@ -37,7 +37,8 @@ function newRefreshToken(): NewRefreshToken {
   };
 }
 
-// Revokes the matching tokens that are not revoked yet.
+// Revokes the matching tokens that are not revoked yet. Call it after UsersService.lock on the tokens' User, in the
+// same transaction, as refresh and sign-out do; otherwise it misses a token that a refresh is storing at that moment.
 function revokeRefreshTokens(
   tx: Prisma.TransactionClient,
   where: Prisma.RefreshTokenWhereInput,
