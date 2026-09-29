@@ -87,6 +87,8 @@ export class AdminEventsController {
   without a valid access token gets 401.
 - The access token names only the User, so the User's email address is read and compared with the list on every
   request. An address taken off the list is refused as soon as the server restarts, even with a valid access token.
+- The test settings list `admin@snu.ac.kr`, so `signIn(app, { email: 'admin@snu.ac.kr' })` signs in as an
+  Administrator, as `test/administrators.e2e-spec.ts` does.
 
 ## Checks
 

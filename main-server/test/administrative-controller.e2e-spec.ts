@@ -20,27 +20,27 @@ const settings = inject('settings');
 let app: INestApplication<Server>;
 
 beforeAll(async () => {
-  app = await startApp({ ...settings, ADMINISTRATOR_EMAILS: 'admin@snu.ac.kr' }, [AdministrativeController]);
+  app = await startApp(settings, [AdministrativeController]);
 });
 
 afterAll(async () => {
   await app.close();
 });
 
+function getAdministrative(accessToken: string): request.Test {
+  return request(app.getHttpServer()).get('/administrative').auth(accessToken, { type: 'bearer' });
+}
+
 describe('A controller marked administrative', () => {
   it('lets an Administrator through', async () => {
     const { accessToken } = await signIn(app, { email: 'admin@snu.ac.kr' });
 
-    const response = await request(app.getHttpServer()).get('/administrative').auth(accessToken, { type: 'bearer' });
-
-    expect(response.status).toBe(200);
+    expect((await getAdministrative(accessToken)).status).toBe(200);
   });
 
   it('refuses another signed-in User with 403', async () => {
     const { accessToken } = await signIn(app, { email: 'student@snu.ac.kr' });
 
-    const response = await request(app.getHttpServer()).get('/administrative').auth(accessToken, { type: 'bearer' });
-
-    expect(response.status).toBe(403);
+    expect((await getAdministrative(accessToken)).status).toBe(403);
   });
 });

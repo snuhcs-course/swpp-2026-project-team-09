@@ -24,6 +24,7 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     ACCESS_TOKEN_PUBLIC_KEY: accessTokenKeys.publicKey,
     // The app's client and the admin site's client.
     GOOGLE_CLIENT_IDS: 'snu-now-app.apps.googleusercontent.com,snu-now-admin.apps.googleusercontent.com',
+    // signIn(app, { email: 'admin@snu.ac.kr' }) signs in as an Administrator.
     ADMINISTRATOR_EMAILS: 'admin@snu.ac.kr',
   };
   execFileSync('pnpm', ['db:migrate'], {

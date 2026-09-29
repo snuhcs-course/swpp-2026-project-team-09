@@ -34,7 +34,8 @@ services:
     build: main-server
     # A small init process runs as PID 1 and passes SIGTERM on to Node, which is not written to run as PID 1.
     init: true
-    # The access token keys and the Google client IDs come from main-server/.env (see main-server/.env.example).
+    # The access token keys, the Google client IDs and the Administrators' email addresses come from main-server/.env
+    # (see main-server/.env.example).
     # The values under environment take precedence, so that the server reaches the data stores inside Compose.
     env_file:
       - path: main-server/.env
