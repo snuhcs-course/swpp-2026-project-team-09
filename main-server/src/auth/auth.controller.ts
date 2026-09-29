@@ -2,7 +2,7 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
 import { Public } from '../common/public.decorator.js';
 import { AuthService } from './auth.service.js';
-import { RefreshDto, refreshSchema } from './dto/refresh.dto.js';
+import { type RefreshDto, refreshSchema } from './dto/refresh.dto.js';
 import { type SignInDto, signInSchema } from './dto/sign-in.dto.js';
 import { TokensDto } from './dto/tokens.dto.js';
 
@@ -23,7 +23,7 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  refresh(@Body({ schema: refreshSchema }) body: Readonly<RefreshDto>): Promise<TokensDto> {
+  refresh(@Body({ schema: refreshSchema }) body: RefreshDto): Promise<TokensDto> {
     return this.auth.refresh(body.refreshToken);
   }
 

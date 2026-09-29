@@ -39,7 +39,7 @@ function refreshTokenHash(refreshToken: string): string {
 }
 
 // Moves the stored expiry of a refresh token, as if it had been issued at another time.
-async function setExpiry(refreshToken: string, expiresAt: Readonly<Date>): Promise<void> {
+async function setExpiry(refreshToken: string, expiresAt: Date): Promise<void> {
   await prisma.refreshToken.update({ where: { tokenHash: refreshTokenHash(refreshToken) }, data: { expiresAt } });
 }
 
@@ -149,7 +149,7 @@ describe('A refresh token used twice', () => {
 
     const responses = await Promise.all(Array.from({ length: 10 }, () => postRefreshToken(refreshToken)));
 
-    const statuses = responses.map(({ status }: Readonly<{ status: number }>) => status);
+    const statuses = responses.map(({ status }) => status);
     expect(statuses.filter((status) => status === 200)).toHaveLength(1);
     expect(statuses.filter((status) => status === 401)).toHaveLength(9);
     const renewed = tokensSchema.parse(responses[statuses.indexOf(200)]?.body);

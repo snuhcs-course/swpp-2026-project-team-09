@@ -25,7 +25,7 @@ export async function signIn(app: INestApplication<Server>, claims: Partial<Toke
 }
 
 // Exchanges a refresh token as the app does and returns the new tokens.
-export async function refresh(app: Readonly<INestApplication<Server>>, refreshToken: string): Promise<Tokens> {
+export async function refresh(app: INestApplication<Server>, refreshToken: string): Promise<Tokens> {
   const response = await request(app.getHttpServer()).post('/auth/refresh').send({ refreshToken });
   if (response.status !== 200) {
     throw new Error(`Refresh answered ${response.status}: ${JSON.stringify(response.body)}`);
