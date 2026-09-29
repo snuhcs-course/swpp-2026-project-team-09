@@ -37,15 +37,14 @@ export const settingsSchema = z
       .pipe(z.array(z.string().endsWith('.apps.googleusercontent.com'))),
   })
   .refine(
-    (keys: Readonly<Record<'ACCESS_TOKEN_PRIVATE_KEY' | 'ACCESS_TOKEN_PUBLIC_KEY', string>>) =>
-      createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),
+    (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),
     {
       path: ['ACCESS_TOKEN_PUBLIC_KEY'],
       message: 'Does not match ACCESS_TOKEN_PRIVATE_KEY',
       // Only once every setting passed its own check; zod would run it anyway. A key that is not PEM text would make
       // createPublicKey throw, and comparing keys of different types leaves an OpenSSL error behind that fails the
       // next key Node parses.
-      when: ({ issues }: Readonly<{ issues: readonly unknown[] }>) => issues.length === 0,
+      when: ({ issues }) => issues.length === 0,
     },
   );
 

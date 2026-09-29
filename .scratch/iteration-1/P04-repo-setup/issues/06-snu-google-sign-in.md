@@ -53,10 +53,6 @@ When Google's keys cannot be fetched, the real verifier rethrows the `GaxiosErro
 
 zod 4 runs an object-level `refine` even after a field inside it has failed. The check that the two keys form a pair then crashed on a key that was not PEM text, and comparing an RSA key with an EC key through `KeyObject.equals()` left an OpenSSL error (`different key types`) that made the next `createPrivateKey` in the process fail. The pair check therefore runs only when every other setting is valid (`when` in `settings.ts`), and a test covers a key that is not PEM text.
 
-### First DTO and `prefer-readonly-parameter-types` (2026-09-29)
-
-Ticket 01 asked to revisit the rule's options when the first DTO arrived. The DTO is a zod schema given to `@Body({ schema })`, so the pipe reads the schema, not the parameter's type. The parameter is typed `Readonly<SignInDto>` and the options stay as they are. `.oxlintrc.json` is unchanged.
-
 ### Manual check with real Google accounts (2026-09-29)
 
 윤유상 got ID tokens from the OAuth 2.0 Playground with the app's web client and the scopes `openid email profile`, and sent each one to the running main server.

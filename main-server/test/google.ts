@@ -36,10 +36,7 @@ export function googleClientIds(): string[] {
 }
 
 // A Google ID token for a new SNU account, issued to the app. Pass claims to change them.
-export function googleIdToken(
-  claims: Readonly<Partial<TokenPayload>> = {},
-  privateKey = googleKeys.privateKey,
-): string {
+export function googleIdToken(claims: Partial<TokenPayload> = {}, privateKey = googleKeys.privateKey): string {
   const now = Math.floor(Date.now() / 1000);
   const payload: TokenPayload = {
     iss: 'https://accounts.google.com',

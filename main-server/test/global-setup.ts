@@ -13,7 +13,7 @@ declare module 'vitest' {
 }
 
 // Starts PostgreSQL and Redis once for every test file and brings the empty main database up to the current schema.
-export default async function setup({ provide }: Readonly<Pick<TestProject, 'provide'>>): Promise<() => Promise<void>> {
+export default async function setup({ provide }: TestProject): Promise<() => Promise<void>> {
   const [postgres, redis] = await Promise.all([startPostgres(), startRedis()]);
   const accessTokenKeys = es256KeyPair();
   const settings: SettingValues = {

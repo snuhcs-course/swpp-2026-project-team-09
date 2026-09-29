@@ -9,7 +9,7 @@ import { TestGoogleIdTokenVerifier } from './google.js';
 // AppModule validates the settings when it is imported, so it is imported afresh after the environment is set.
 // Google's token verification is the one part replaced: the test verifier accepts ID tokens from test/google.ts.
 export async function startApp(
-  settings: Readonly<Partial<Record<keyof Settings, string | undefined>>>,
+  settings: Partial<Record<keyof Settings, string | undefined>>,
 ): Promise<INestApplication<Server>> {
   for (const [name, value] of Object.entries(settings)) {
     vi.stubEnv(name, value);

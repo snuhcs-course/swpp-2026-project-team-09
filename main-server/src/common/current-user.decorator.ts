@@ -12,6 +12,6 @@ export interface SignedInRequest extends Request {
 
 // The signed-in User, as a handler parameter: `me(@CurrentUser() user: SignedInUser)`.
 export const CurrentUser = createParamDecorator(
-  (_data: unknown, context: Readonly<ExecutionContext>): SignedInUser =>
+  (_data: unknown, context: ExecutionContext): SignedInUser =>
     context.switchToHttp().getRequest<SignedInRequest>().user,
 );
