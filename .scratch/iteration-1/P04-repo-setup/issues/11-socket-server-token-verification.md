@@ -61,3 +61,10 @@ The socket server is the only other server that accepts connections from Users: 
   `io server disconnect`, and refreshing its tokens fails, so it shows sign-in.
 - Disconnecting does not stop a modified client from reconnecting with its access token while the token is still
   valid. Disconnecting each connection when its token expires would limit that to an hour, as for HTTP requests.
+
+### Agent usage (2026-09-29)
+
+- Agent time: about 35 minutes, an estimate. The implementing session was open for about 11 hours and worked about 31 minutes of them; the rest was waiting for answers. Its two review subagents worked about 2 minutes each, at the same time.
+- Tokens, for the implementing session and its two subagents, counted when this section was written:
+  - Input: 34,303,371 in total, of which 33,123,377 were cache reads, 1,179,656 cache writes and 338 uncached.
+  - Output: 141,925.
