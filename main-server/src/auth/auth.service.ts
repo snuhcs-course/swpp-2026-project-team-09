@@ -80,7 +80,9 @@ export class AuthService {
   async refresh(refreshToken: string): Promise<TokensDto> {
     const now = new Date();
     const used = await this.prisma.refreshToken.findUnique({ where: { tokenHash: hashRefreshToken(refreshToken) } });
-    if (used === null || used.expiresAt <= now) {
+    // A revoked token goes on even when it has expired, so that a used token coming back after 30 days still revokes
+    // its family.
+    if (used === null || (used.revokedAt === null && used.expiresAt <= now)) {
       throw new UnauthorizedException(REFRESH_TOKEN_REFUSED);
     }
     const replacement = await this.prisma.$transaction(async (tx) => {

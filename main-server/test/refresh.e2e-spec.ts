@@ -130,6 +130,17 @@ describe('A refresh token used twice', () => {
 
     expect((await postRefreshToken(app, otherPhone.refreshToken)).status).toBe(200);
   });
+
+  it('revokes the tokens that replaced it after it has expired', async () => {
+    const { refreshToken } = await signIn(app);
+    const renewed = await refresh(app, refreshToken);
+    // As if the phone that held it came back after more than 30 days.
+    await setExpiry(refreshToken, new Date(Date.now() - 1000));
+
+    expect((await postRefreshToken(app, refreshToken)).status).toBe(401);
+
+    expect((await postRefreshToken(app, renewed.refreshToken)).status).toBe(401);
+  });
 });
 
 describe('Refreshes at the same moment', () => {

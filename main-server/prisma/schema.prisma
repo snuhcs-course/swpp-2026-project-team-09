@@ -34,7 +34,8 @@ model RefreshToken {
   familyId  String    @default(dbgenerated("gen_random_uuid()")) @map("family_id") @db.Uuid
   tokenHash String    @unique @map("token_hash")
   expiresAt DateTime  @map("expires_at")
-  // Set when a refresh uses the token up or a sign-out revokes it. A revoked token is refused.
+  // Set when a refresh uses the token up, a used token of its family comes back, or a sign-out revokes it. A revoked
+  // token is refused.
   revokedAt DateTime? @map("revoked_at")
 
   @@index([userId])
