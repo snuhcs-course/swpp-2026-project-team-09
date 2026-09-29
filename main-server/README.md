@@ -69,7 +69,8 @@ The app signs in with Google and sends the ID token it gets to the main server:
   with new tokens in the same form. The refresh token is used up: the answer holds a new one, valid for 30 days from
   the refresh. An unknown, expired or revoked refresh token gets 401.
 - Send one refresh at a time. When a used refresh token comes back, even in a second request sent at the same moment,
-  the server takes it for a stolen copy: it revokes the tokens that replaced it, and the app has to sign in again.
+  the server takes it for a stolen copy: it revokes the tokens that replaced it, and the app has to sign in again. A
+  refresh whose answer was lost has the same effect.
 - `POST /auth/sign-out` with the access token answers 204. It revokes every refresh token of the User, on every phone,
   and turns the User's Master Switch off. An access token already issued stays valid until it expires.
 

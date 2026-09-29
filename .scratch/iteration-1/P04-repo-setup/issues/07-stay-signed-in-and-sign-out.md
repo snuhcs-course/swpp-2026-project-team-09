@@ -39,7 +39,11 @@ Agreed with 김태현 before the implementation.
 
 Sign-out locks the User's row too, then revokes the User's tokens and turns the Master Switch off in the same transaction. `UsersService.lock` takes the lock with `SELECT … FOR NO KEY UPDATE`, the lock an `UPDATE` of the row takes, so storing a row that refers to the User, such as a sign-in's refresh token, does not wait for it. A refresh, a family revocation and a sign-out of one User therefore run one after another, and each sees the tokens stored before it. Without the lock, under PostgreSQL's default isolation, a statement sees only the rows committed when it started: a sign-out or a family revocation that ran while a refresh stored its replacement waited for the used token, found it revoked, and missed the replacement. The review of PR #9 found this.
 
-Access tokens are checked with the public key alone, so one issued before a sign-out or a revoked family stays valid until it expires, at most 1 hour later.
+Access tokens are checked with the public key alone, so one issued before a sign-out or a revoked family stays valid until it expires, at most 1 hour later. A socket connection opened before a sign-out stays open, because the socket server checks the token only when a connection opens; ticket 11's Comments record that the P08 ticket adding the User's room disconnects it on sign-out.
+
+### Repeated requests and lost answers (2026-09-29)
+
+Sign-out is safe to repeat by itself: a second call answers 204. Refresh cannot use `@Idempotent()` from ticket 10, because it is `@Public()` and ticket 10 keeps keys apart by the signed-in User. When the answer to a refresh is lost, the app still holds the used token. Its next refresh counts as a second use and revokes the family, so the User signs in again. This is left as is: it needs a lost answer, and accepting the used token again for a short time would weaken reuse detection. The README tells the app.
 
 ### Tests (2026-09-29)
 
