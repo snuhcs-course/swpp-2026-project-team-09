@@ -73,7 +73,7 @@ The session policy follows `.scratch/research/administrator-sessions.md` (OWASP 
 - The race test holds a lock on one Administrator's row in a transaction of its own. It sends the other's removal of that one and waits, with `pg_blocking_pids`, until the request waits for a lock. Then it sends the reverse removal and waits until that one waits or is answered, and releases the lock. It expects one 204, one 409 and one Administrator left.
 - The test files run in parallel on one database, and the first server of the run registers `admin@example.com`. `signInAsAdministrator(app)` returns `{ accessToken }`, as `signIn` returns its tokens. It always signs in with the same Google subject (`ADMINISTRATOR` in `test/google.ts`), because the first sign-in binds it. `registerAdministrator` in `test/sign-in.ts` sends the registration. Tests that sign out or remove use `signInAsNewAdministrator(app)`, so that the initial Administrator keeps working for the other files.
 - `test/idempotency.e2e-spec.ts` covers two Administrators sending one key. `test/auth.e2e-spec.ts` covers the admin site's ID token refused on the app's sign-in and the User's token audience. Its expired and forged tokens carry the User's audience, so that each fails for its own defect. `test/settings.e2e-spec.ts` covers the admin site's client ID set to the app's. `socket-server/test/users.e2e-spec.ts` covers an Administrator's token refused.
-- `pnpm test` passes 108 tests in 9 files in the main server and 19 in 4 in the socket server. Lint, format and typecheck pass in both.
+- `pnpm test` passes 109 tests in 9 files in the main server and 19 in 4 in the socket server. Lint, format and typecheck pass in both.
 
 ### Red before green (2026-09-29)
 
@@ -88,7 +88,7 @@ Each part was broken on its own and the full suite run. Only the matching tests 
 - The verified-email check dropped: the unverified refusal.
 - Initial registration on every start: the restart test, and then the last-Administrator test, which runs after it on the same database and saw three.
 - Registration keeping the case: the case test and the repeat test.
-- Checked on `test/administrators.e2e-spec.ts` alone: a repeat that unbinds the Google account, or ends the tokens, fails the repeat for an Administrator who has signed in. The list without an order fails the fresh server's list and the two last-Administrator tests after it.
+- Checked on `test/administrators.e2e-spec.ts` alone: a repeat that unbinds the Google account, or ends the tokens, fails the repeat for an Administrator who has signed in. The list without an order fails the fresh server's list and the two last-Administrator tests after it. The removal without the UUID check answers 404, not 400, to an id that is not a UUID.
 - The removal as a count, a lookup and a delete without a transaction: the race test got 204 twice and left no Administrator. The locking query without `FOR UPDATE`: the race test. The last-Administrator check dropped: both last-Administrator tests.
 - The controller's marking overriding the handler's: the `@Public()` override test.
 - The idempotency scope without Administrators: the two-Administrators test.

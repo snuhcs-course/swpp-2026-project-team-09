@@ -159,6 +159,12 @@ describe('Removing an Administrator', () => {
 
     expect((await remove(accessToken, randomUUID())).status).toBe(404);
   });
+
+  it('answers 400 for an id that is not a UUID', async () => {
+    const { accessToken } = await signInAsAdministrator(app);
+
+    expect((await remove(accessToken, 'not-a-uuid')).status).toBe(400);
+  });
 });
 
 describe('A server started on a database without Administrators', () => {
