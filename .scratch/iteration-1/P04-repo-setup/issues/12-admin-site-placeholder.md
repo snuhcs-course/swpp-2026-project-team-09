@@ -29,7 +29,7 @@ The admin site starts and shows a placeholder screen, so that screen work in P12
 - TypeScript 6 no longer includes every `@types` package by default, so `tsconfig.json` lists `"types": ["vitest/globals"]` for the test globals. Node's types need no entry: `next-env.d.ts` loads Next's global types, which reference them.
 - `@types/node` follows the main server's `^24.0.0` instead of the template's `^20`, because every project runs on Node.js 24. `package.json` declares `"engines": { "node": "24.x" }`, as the main server does.
 - `create-next-app` writes `AGENTS.md` and `CLAUDE.md`. They are removed so that the agent instructions stay in the root files only. `next dev` writes them again when it detects an AI coding agent, and it detects Claude Code, so `next.config.ts` sets `agentRules: false`. With it, `next dev` run by Claude Code left them absent. This version of `create-next-app` writes no `LICENSE` and no `.claude/`. `package.json` declares `"license": "UNLICENSED"`, as the main server does.
-- The template page is replaced with the placeholder, the heading "SNU Now Admin", and the page title is the same. The images in `public/` and the Geist fonts are deleted, because only the template page used them.
+- The template page is replaced with the placeholder, the heading "SNU Now Admin", and the page title is the same. The template's page description is dropped. The images in `public/` and the Geist fonts are deleted, because only the template page used them.
 - The template's `pnpm-workspace.yaml` is kept as generated.
 
 ### Next.js version (2026-09-29)
@@ -46,7 +46,7 @@ The settings are copied from the main server with the same differences as in the
 - The option for `no-extraneous-class` is left out. It exists for NestJS modules.
 - `env` stays `node: true` as copied. No enabled rule depends on it.
 
-oxlint, oxlint-tsgolint and Prettier use the main server's specifiers and lock the same versions: 1.85.0, 7.0.2003 and 3.9.9. `pnpm add` resolved oxlint 1.86.0, published 2026-09-28, so oxlint was installed once as `1.85.0` and then given back the `^1.58.0` specifier, which keeps the lock.
+oxlint, oxlint-tsgolint and Prettier use the main server's specifiers and lock the same versions: 1.85.0, 7.0.2003 and 3.9.9.
 
 Type-aware linting runs with TypeScript 6 here too, so no separate strict `tsc` run has to stand in for it. A probe with a floating promise and an unsafe return failed `pnpm lint`. `pnpm typecheck` still runs `tsc` in strict mode as its own check.
 
@@ -54,7 +54,7 @@ Type-aware linting runs with TypeScript 6 here too, so no separate strict `tsc` 
 
 ### Tests (2026-09-29)
 
-Decided with the user, for P12 to build on:
+P12 builds on this setup:
 
 - Vitest runs in jsdom, as in the Next.js Vitest guide bundled in `node_modules/next/dist/docs/`.
 - React Testing Library (`@testing-library/react` and `@testing-library/dom`) renders the pages. `@testing-library/jest-dom` adds matchers such as `toBeVisible()` and `toBeDisabled()`; `vitest.setup.ts` loads them.
@@ -77,9 +77,12 @@ The site runs on port 3100, in `pnpm dev` and `pnpm start` alike. `compose.yaml`
 
 ### Agent usage (2026-09-29)
 
-- Agent time: about 25 minutes, an estimate. It all ran in one session in the main checkout.
-  - The session worked about 20 minutes: 19 minutes of wall time up to this section, less about 4 minutes waiting for the answers on the port and the tests, plus about 5 minutes for the commit, the push and the pull request.
-  - Subagents: the Standards and Spec reviews about 2 minutes each, at the same time, added on top.
-- Tokens, for the session and its two review subagents, counted when this section was written:
-  - Input: 15,003,385 in total, of which 14,678,113 were cache reads, 325,040 cache writes and 232 uncached.
-  - Output: 65,898. The subagents' transcripts record only a few output tokens for most of their steps, so their share, 2,090, is a lower bound.
+- Agent time: about 40 minutes, an estimate, over two sessions.
+  - Implementation, in one session in the main checkout: about 25 minutes.
+    - The session worked about 20 minutes: 19 minutes of wall time up to this section, less about 4 minutes waiting for the answers on the port and the tests, plus about 5 minutes for the commit, the push and the pull request.
+    - Subagents: the Standards and Spec reviews about 2 minutes each, at the same time, added on top.
+  - Review and fixes, in one session in a separate worktree: about 15 minutes up to this part, not counting time waiting for answers. Its Standards and Spec review subagents ran within that time. The commit, the push and the pull request update come after.
+- Tokens, each session and its two review subagents, counted when that session wrote its part. The subagents' transcripts record only a few output tokens for most of their steps, so their shares of the output are lower bounds.
+  - Implementation: input 15,003,385, of which 14,678,113 were cache reads, 325,040 cache writes and 232 uncached. Output 65,898, of which the subagents' share is 2,090.
+  - Review and fixes: input 8,868,556, of which 8,594,300 were cache reads, 274,080 cache writes and 176 uncached. Output 43,330, of which the subagents' share is 1,976.
+  - Total: input 23,871,941, of which 23,272,413 were cache reads, 599,120 cache writes and 408 uncached. Output 109,228.
