@@ -37,8 +37,9 @@ does.
 
 - **Store**: the package ships no Redis store; the documentation writes one for the app to add, four Lua scripts that
   Redis runs atomically. It is `src/common/redis-idempotency.store.ts`, as written there apart from the import of
-  `REDIS`, a return type, formatting, a header comment and the lint directive (see Lint below). It registers itself with `IdempotencyStorage` in its constructor and is a
-  provider of `AppModule`. At startup the server logs `IdempotencyStorage: RedisIdempotencyStore`.
+  `REDIS`, a return type, formatting, a header comment and the lint directive (see Lint below). It registers itself
+  with `IdempotencyStorage` in its constructor and is a provider of `AppModule`. At startup the server logs
+  `IdempotencyStorage: RedisIdempotencyStore`.
 - **Redis client**: the documentation's `RedisModule` is `src/common/redis.module.ts`, a global module with an ioredis
   client under `REDIS`, built from `REDIS_HOST` and `REDIS_PORT` and closed with `quit()` in
   `onApplicationShutdown()`. It is a second connection next to messaging's, so no setting was added. A record is a
