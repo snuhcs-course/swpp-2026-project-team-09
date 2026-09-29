@@ -55,6 +55,10 @@ services:
   socket-server:
     build: socket-server
     init: true
+    # The access token public key comes from socket-server/.env (see socket-server/.env.example).
+    env_file:
+      - path: socket-server/.env
+        required: false
     environment:
       PORT: 3001
       REDIS_HOST: redis
