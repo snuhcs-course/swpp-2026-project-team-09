@@ -69,3 +69,11 @@ Red before green. Each change below failed the matching tests and no others:
 `startApp` makes the app listen once, on a free port of `127.0.0.1`. An app that is only initialised does not listen, and supertest then starts the server on a free port for each group of requests and closes it afterwards. With such a server every run warned `MaxListenersExceededWarning`, one of twelve runs of the refresh and sign-out tests failed, "keeps the User's other sign-ins" failed twice in about 110 runs with supertest's `socket hang up`, and a sign-in answered 503 and another 404, each with an empty body, which the server never sends. With `startApp` listening, thirty runs of the auth, refresh and sign-out tests passed without the warning.
 
 One run of the whole suite failed "Health checks with the database down", which starts and stops a PostgreSQL container of its own. It passed alone and in six further runs of the whole suite.
+
+### Agent usage (2026-09-29)
+
+- Agent time: about 1 hour 40 minutes for the review and the fixes, an estimate. The reviewing session, in the worktree `admiring-dhawan-e58033`, was open from 11:39 to about 16:15 and worked about 86 minutes of it; the rest was waiting for answers. Its first two review subagents worked about 2 minutes each, at the same time, and the final review subagent about 8 minutes.
+- Not included: the sessions that implemented the ticket and wrote `a2e269f`, which ran on TaeHyun79's machine. Their time and tokens are to be added here.
+- Tokens, for the reviewing session and its three subagents, counted when this section was written:
+  - Input: 33,692,314 in total, of which 32,548,361 were cache reads, 1,143,609 cache writes and 344 uncached.
+  - Output: 178,793. The subagents' transcripts record only a few output tokens for most of their steps, so their share, 2,385, is a lower bound.
