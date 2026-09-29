@@ -27,7 +27,7 @@ The admin site starts and shows a placeholder screen, so that screen work in P12
 
 - The template ships TypeScript `^5`, which locked 5.9.3. It is replaced with `~6.0.3`, the main server's specifier, which locks 6.0.3. `strict` was already on. `next build` passes with it.
 - TypeScript 6 no longer includes every `@types` package by default, so `tsconfig.json` lists `"types": ["vitest/globals"]` for the test globals. Node's types need no entry: `next-env.d.ts` loads Next's global types, which reference them.
-- `@types/node` follows the main server's `^24.0.0` instead of the template's `^20`, because every project runs on Node.js 24.
+- `@types/node` follows the main server's `^24.0.0` instead of the template's `^20`, because every project runs on Node.js 24. `package.json` declares `"engines": { "node": "24.x" }`, as the main server does.
 - `create-next-app` writes `AGENTS.md` and `CLAUDE.md`. They are removed so that the agent instructions stay in the root files only. `next dev` writes them again when it detects an AI coding agent, and it detects Claude Code, so `next.config.ts` sets `agentRules: false`. With it, `next dev` run by Claude Code left them absent. This version of `create-next-app` writes no `LICENSE` and no `.claude/`. `package.json` declares `"license": "UNLICENSED"`, as the main server does.
 - The template page is replaced with the placeholder, the heading "SNU Now Admin", and the page title is the same. The images in `public/` and the Geist fonts are deleted, because only the template page used them.
 - The template's `pnpm-workspace.yaml` is kept as generated.
