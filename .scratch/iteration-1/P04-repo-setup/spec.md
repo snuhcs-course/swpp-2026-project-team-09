@@ -109,7 +109,7 @@ A repository that holds six independent projects: four servers, the admin site a
 - The client sends a key in the `Idempotency-Key` header. The server runs the handler once for each key and keeps the result for 24 hours.
 - Answers to a repeat: a finished request gets the stored status and body with the header `Idempotent-Replayed: true`; a request that is still running gets 409 with `Retry-After`; the same key with a different body or address gets 422.
 - A response with a server error is not stored, so the same key can be tried again.
-- Keys are scoped to the User. Two Users can send the same key without meeting each other's results.
+- Keys are scoped to the User, or to the Administrator on an administrative route. Two of them can send the same key without meeting each other's results.
 - Redis is configured never to evict records.
 - The module's interceptor runs outside every other global interceptor, as the documentation requires.
 - A handler is marked with the module's decorator. Handlers that create something a User would notice twice require the key and refuse a request without one. Which handlers these are is stated in P06, P08 and P12.

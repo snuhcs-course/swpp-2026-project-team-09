@@ -19,7 +19,7 @@ Which handlers use it is decided in P06, P08 and P12.
 - [x] A repeat while the first request is still running gets 409 with `Retry-After`.
 - [x] The same key with a different body or address gets 422.
 - [x] A response with a server error is not stored, so the same key can be tried again.
-- [x] Keys are scoped to the User. Two Users can send the same key without meeting each other's results.
+- [x] Keys are scoped to the User, or to the Administrator on an administrative route. Two of them can send the same key without meeting each other's results.
 - [x] The module's interceptor runs outside every other global interceptor.
 - [x] A handler is marked with the module's decorator. The decorator can require the key, and a marked handler that requires it refuses a request without one.
 - [x] A short note beside the feature module note explains how to make a handler safe to repeat.
@@ -56,9 +56,10 @@ does.
   stored record's lifetime in Redis, so a changed default would fail it. Stored responses are not encrypted; the spec
   does not ask for it. Turn on `encryption` (see "Encrypt stored receipts" in the documentation) before a handler
   stores personal data, if wanted.
-- **Scope**: `scope: (request) => request.user?.id`. Guards run before interceptors, so `AccessTokenGuard` has set the
-  User. A `@Public()` or administrative route has no User, and its keys would share one namespace without a warning,
-  because a scope is set. The README therefore says to mark only a User's route.
+- **Scope**: `scope: (request) => request.user?.id ?? request.administrator?.id`. Guards run before interceptors, so
+  `AccessTokenGuard` or `AdministratorGuard` has set the caller. A `@Public()` route has neither, and its keys would
+  share one namespace without a warning, because a scope is set. The README therefore says not to mark a `@Public()`
+  route.
 
 ### Where the interceptor runs (2026-09-29)
 

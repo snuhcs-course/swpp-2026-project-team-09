@@ -4,6 +4,7 @@ import { APP_PIPE } from '@nestjs/core';
 import { IdempotencyModule } from '@nestjs/idempotency';
 import { AdministratorsModule } from './administrators/administrators.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { type SignedInAdministrator } from './common/current-administrator.decorator.js';
 import { type SignedInUser } from './common/current-user.decorator.js';
 import { MessagingModule } from './common/messaging.module.js';
 import { PrismaModule } from './common/prisma.module.js';
@@ -28,9 +29,10 @@ import { UsersModule } from './users/users.module.js';
     // interceptor: one registered by a module imported below runs inside it, but an APP_INTERCEPTOR in the providers
     // of this module would run outside it.
     IdempotencyModule.forRoot({
-      // Runs after AccessTokenGuard, so the User is known. Two Users can send the same key without meeting each
-      // other's results.
-      scope: (request: { user?: SignedInUser }) => request.user?.id,
+      // Runs after the guards, so the User or the Administrator is known. Two of them can send the same key without
+      // meeting each other's results.
+      scope: (request: { user?: SignedInUser; administrator?: SignedInAdministrator }) =>
+        request.user?.id ?? request.administrator?.id,
     }),
     HealthModule,
     AuthModule,
