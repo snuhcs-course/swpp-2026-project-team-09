@@ -26,8 +26,9 @@ export const REDIS = 'REDIS';
 export class RedisModule implements OnApplicationShutdown {
   constructor(@Inject(REDIS) private readonly redis: Redis) {}
 
-  // Runs after the requests in progress have finished and stored their results.
-  async onApplicationShutdown(): Promise<void> {
-    await this.redis.quit();
+  // Runs after the requests in progress have finished and stored their results, so no reply is still due. quit() would
+  // wait for Redis to answer, and while Redis cannot be reached it waits behind the commands the client holds for it.
+  onApplicationShutdown(): void {
+    this.redis.disconnect();
   }
 }
