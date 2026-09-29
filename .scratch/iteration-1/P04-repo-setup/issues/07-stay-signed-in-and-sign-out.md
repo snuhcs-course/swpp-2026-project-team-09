@@ -6,7 +6,9 @@ Blocked by: 06 (Sign in with an SNU Google account)
 
 ## What to build
 
-An SNU student stays signed in for weeks: when the access token expires, the app exchanges the refresh token for new tokens without the User doing anything. Signing out ends every session of that User and turns off their Master Switch, so that their location is not shared after they leave.
+An SNU student stays signed in for weeks: when the access token expires, the app exchanges the refresh token for new tokens without the User doing anything. Signing out ends the User's session and turns off their Master Switch, so that their location is not shared after they leave.
+
+A User has one session: the app signed in on one phone. Signing in on another phone ends the previous session within seconds, so the map only ever gets one phone's position for a User. Every access token names its session, so a request or a socket connection from an ended session is refused at once, whether the session ended by a sign-in elsewhere, a sign-out or a used refresh token coming back. The phone whose session was replaced is told why.
 
 Turning the Master Switch on and what it controls belong to P06 and P08.
 
@@ -18,8 +20,23 @@ Turning the Master Switch on and what it controls belong to P06 and P08.
 - [x] The User has a Master Switch, off when the User is created.
 - [x] Signing out turns the Master Switch off.
 - [x] Tests through the public API cover: refresh replaces the token and the old one stops working; sign-out revokes; the stored Master Switch is off after sign-out.
+- [ ] A User has one session. Signing in revokes every refresh token of the User in the same transaction that stores the new one, under the User lock. The Master Switch stays as it is.
+- [ ] Each access token names its session (its refresh token family), and a refresh keeps it.
+- [ ] When a session ends, by a sign-in elsewhere, a sign-out or a used refresh token coming back, a User's route refuses its access tokens with 401 from the next request on. A session replaced by a sign-in elsewhere gets a code that says so; other refusals keep the plain 401.
+- [ ] Within a few seconds of a session ending, the socket server disconnects that session's connections, with the same reason, and refuses a new connection with its access token. It still checks tokens without calling the main server.
+- [ ] Tests through the public API cover: a second sign-in ends the first phone's session (its refresh refused; its access token refused with the code; its socket disconnected with the reason; a new connection refused) while the new phone works; a sign-in and a refresh on the other phone at the same moment leave only the sign-in's session; after a sign-out and after a used token comes back, the ended session's access token is refused at once.
+- [ ] The docs describe one session per User: `CONTEXT.md` (Session, done), the main server and socket server READMEs, the P04 spec, the P06 spec (the app stops background sharing and shows sign-in with the reason), the P08 spec (a replaced session's stored position is cleared), the P17 spec, ticket 11's note on open connections, and this ticket's own Comments.
 
 ## Comments
+
+### One session per User (2026-09-29)
+
+Decided with the PM after `.scratch/research/multi-device-sign-in.md`: location-first apps (Life360, Zenly) allow one signed-in phone and sign the old one out, and even apps with several devices share live location from one.
+
+- One session per User; no second phone or view-only tablet. Administrators sign in apart from Users (ticket 14), so this does not reach the admin site.
+- The Master Switch stays as it is when a session is replaced.
+- The replaced phone gets a code that says a sign-in elsewhere ended its session, on the HTTP 401 and on the socket disconnect, so that the app can say so. Other refusals stay the plain 401.
+- An ended session is recorded in Redis for the access token's lifetime (1 hour), so that the main server's guard and the socket server both check it without a database query. It is recorded before the revocation commits, so that a failure leaves the session refused rather than open. A messaging event tells the socket server to disconnect the session's connections.
 
 ### Decisions (2026-09-29)
 
