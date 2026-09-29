@@ -263,13 +263,12 @@ create(@Body({ schema: createPartySchema }) body: CreatePartyDto, @CurrentUser()
 
 - The app creates a key, such as a UUID, when the User acts, and sends it in the `Idempotency-Key` header with every
   retry of that action. With `required: true`, a request without one gets 400 `IDEMPOTENCY_KEY_REQUIRED`.
-- The handler runs once for each key and each User or Administrator. For 24 hours, a repeat gets the stored status and
-  body with `Idempotent-Replayed: true`. A repeat while the first request is still running gets 409
-  `IDEMPOTENCY_KEY_IN_USE` with `Retry-After`, and the same key with another body or address gets 422
-  `IDEMPOTENCY_KEY_REUSED`.
+- The handler runs once for each key and User. For 24 hours, a repeat gets the stored status and body with
+  `Idempotent-Replayed: true`. A repeat while the first request is still running gets 409 `IDEMPOTENCY_KEY_IN_USE`
+  with `Retry-After`, and the same key with another body or address gets 422 `IDEMPOTENCY_KEY_REUSED`.
 - A server error (5xx) is not stored, so the same key can be tried again. A 4xx answer is stored like a success.
-- Keys are kept apart by the signed-in User or Administrator, so do not mark a `@Public()` route: without one, every
-  caller would share one set of keys.
+- Keys are kept apart by the signed-in User, so mark only a User's route, never a `@Public()` or an administrative
+  one: without a User, every caller would share one set of keys. The admin site does not resend requests on its own.
 - The key removes repeats of one attempt. Keep the feature's own rules, such as one Party for each User: two taps
   send two keys.
 - Register a global interceptor (`APP_INTERCEPTOR`) in the feature's module, which `AppModule` imports after
