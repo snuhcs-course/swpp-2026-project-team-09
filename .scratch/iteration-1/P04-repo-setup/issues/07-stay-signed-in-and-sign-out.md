@@ -32,13 +32,10 @@ Agreed with 김태현 before the implementation.
 - **Simultaneous refreshes with one token**: one succeeds. The others count as a second use and revoke the family, the winner's new token included. The app (P06) therefore sends one refresh at a time, for example by sharing one pending refresh among the requests that got 401. The README says so.
 - **Master Switch**: `users.master_switch BOOLEAN NOT NULL DEFAULT false` (`masterSwitch` in Prisma). Sign-out sets it to false in the same transaction that revokes the tokens. Turning it on, and showing it in `GET /users/me`, belong to P06 and P08.
 - **Indexes**: `refresh_tokens_user_id_idx` for sign-out and `refresh_tokens_family_id_idx` for revoking a family. The foreign key still has no cascade.
-- `.oxlintrc.json` is unchanged.
 
 ### How a refresh stays atomic (2026-09-29)
 
 `AuthService.refresh` reads the token by its hash and refuses it when it is unknown or expired. An interactive transaction (`$transaction(async (tx) => …)`) then revokes it with `updateMany({ where: { id, revokedAt: null } })` and stores a replacement only when that revoked one row. Prisma sends the revocation as a single `UPDATE … WHERE id = $1 AND revoked_at IS NULL` (checked in its query log). Under PostgreSQL's default isolation, a second request that updates the same row waits for the first to commit and checks `revoked_at IS NULL` again, so it matches no row. That request, like a token that was already revoked when it was read, stores nothing and revokes the family.
-
-The first version used a batch transaction, `$transaction([updateMany, create])`, because `prefer-readonly-parameter-types` refused the `tx` parameter. A batch cannot skip the `create`, so it needed a separate path for a token already revoked, and a request that lost a simultaneous refresh stored a replacement that the family revocation then revoked. PR #10 turned the rule off, and the refresh became the interactive transaction above.
 
 Access tokens are checked with the public key alone, so one issued before a sign-out or a revoked family stays valid until it expires, at most 1 hour later.
 
@@ -46,7 +43,7 @@ Access tokens are checked with the public key alone, so one issued before a sign
 
 The tests are in `test/refresh.e2e-spec.ts` and `test/sign-out.e2e-spec.ts`. They did not fit in `test/auth.e2e-spec.ts`: oxlint's `max-lines` (300) and `max-lines-per-function` (50) apply to test files too. `refresh()` sits beside `signIn()` in `test/sign-in.ts`. An expired token and a Master Switch that is on are set in the database, because no route sets them.
 
-The first test of simultaneous refreshes sent two requests and passed even against an implementation that checks `revoked_at` first and then updates without the condition. Timing logs showed why: the pool opens database connections on demand, opening one took longer than a whole refresh, and so the requests reached the database one after another. The test now opens connections with ten simultaneous sign-ins, then sends ten refreshes at once. Against that implementation, 5 to 7 of the ten succeeded in each of 5 runs, and 6 to 7 in each of 3 runs after the change to an interactive transaction; the real implementation passed every run.
+The first test of simultaneous refreshes sent two requests and passed even against an implementation that checks `revoked_at` first and then updates without the condition. Timing logs showed why: the pool opens database connections on demand, opening one took longer than a whole refresh, and so the requests reached the database one after another. The test now opens connections with ten simultaneous sign-ins, then sends ten refreshes at once. Against that implementation, 5 to 7 of the ten succeeded in every run; the real implementation passed every run.
 
 Red before green. Each change below failed the matching tests and no others:
 
@@ -60,4 +57,4 @@ Red before green. Each change below failed the matching tests and no others:
 
 In about 110 runs of the refresh tests, "keeps the User's other sign-ins" failed twice with supertest's `socket hang up`, once against the real implementation and once against one of the changes above. Thirty further runs each of the refresh and the sign-in tests, and fifteen runs of the whole suite, did not reproduce it. The cause is not known.
 
-After the merge of PR #10, one run of the whole suite failed "Health checks with the database down", which starts and stops a PostgreSQL container of its own. It passed alone and in six further runs of the whole suite.
+One run of the whole suite failed "Health checks with the database down", which starts and stops a PostgreSQL container of its own. It passed alone and in six further runs of the whole suite.

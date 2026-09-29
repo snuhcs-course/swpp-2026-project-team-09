@@ -65,9 +65,9 @@ The app signs in with Google and sends the ID token it gets to the main server:
   account gets 403. An invalid or expired ID token, or one issued to a client not in `GOOGLE_CLIENT_IDS`, gets 401.
 - The access token is valid for 1 hour. Send it as `Authorization: Bearer <accessToken>`. `GET /users/me` answers the
   signed-in User. The refresh token is valid for 30 days, and only its hash is stored.
-- Once the access token has expired, `POST /auth/refresh` with `{ "refreshToken": "..." }` answers with new tokens in
-  the same form, without an access token. The refresh token is used up: the answer holds a new one, valid for 30 days
-  from the refresh. An unknown, expired or revoked refresh token gets 401.
+- Once the access token has expired, `POST /auth/refresh` with `{ "refreshToken": "..." }` and no access token answers
+  with new tokens in the same form. The refresh token is used up: the answer holds a new one, valid for 30 days from
+  the refresh. An unknown, expired or revoked refresh token gets 401.
 - Send one refresh at a time. When a used refresh token comes back, even in a second request sent at the same moment,
   the server takes it for a stolen copy: it revokes the tokens that replaced it, and the app has to sign in again.
 - `POST /auth/sign-out` with the access token answers 204. It revokes every refresh token of the User, on every phone,
@@ -186,7 +186,9 @@ The steps add a feature named `profile`. Use a short lowercase name, with dashes
    `get('NAME', { infer: true })`.
 8. Write `test/profile.e2e-spec.ts`. Start the server with `startApp` from `test/start-app.ts` and call its routes
    with `supertest`, as `test/health.e2e-spec.ts` does. `signIn` from `test/sign-in.ts` signs in a new User and
-   returns its tokens.
+   returns its tokens. oxlint's `max-lines` (300) and `max-lines-per-function` (50) apply to tests too: split a long
+   file by route, as `test/refresh.e2e-spec.ts` and `test/sign-out.e2e-spec.ts` split the auth tests, and a long
+   `describe` into several.
 9. Run `pnpm format`, then the four checks.
 
 Import classes with a plain `import { ProfileService } from ...`, never `import type`. Nest looks the class up at
