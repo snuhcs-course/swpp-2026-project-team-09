@@ -85,6 +85,7 @@ export class AdminEventsController {
 
 - An Administrator passes. Another signed-in User gets 403 `Only an Administrator can use this route.`, and a request
   without a valid access token gets 401.
+- Do not combine it with `@Public()`. The access token is then not read, so the route answers 401 to every request.
 - The access token names only the User, so the User's email address is read and compared with the list on every
   request. An address taken off the list is refused as soon as the server restarts, even with a valid access token.
 - The test settings list `admin@snu.ac.kr`, so `signIn(app, { email: 'admin@snu.ac.kr' })` signs in as an

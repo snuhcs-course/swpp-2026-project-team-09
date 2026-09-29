@@ -3,6 +3,7 @@ import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { AdministratorOnly } from '../src/common/administrator-only.decorator.js';
+import { Public } from '../src/common/public.decorator.js';
 import { signIn } from './sign-in.js';
 import { startApp } from './start-app.js';
 
@@ -14,6 +15,13 @@ class AdministrativeRouteController {
   @AdministratorOnly()
   read(): string {
     return 'Only an Administrator reads this.';
+  }
+
+  @Get('public')
+  @Public()
+  @AdministratorOnly()
+  readPublic(): string {
+    return 'Nobody reads this.';
   }
 }
 
@@ -65,7 +73,19 @@ describe('An administrative route', () => {
     expect((await getAdministrativeRoute(app, 'not-an-access-token')).status).toBe(401);
   });
 
-  it('refuses the access token of an Administrator taken off the list', async () => {
+  it('refuses every request with 401 when the route is marked @Public() as well', async () => {
+    const { accessToken } = await signIn(app, { email: 'admin@snu.ac.kr' });
+
+    const response = await request(app.getHttpServer())
+      .get('/administrative-route/public')
+      .auth(accessToken, { type: 'bearer' });
+
+    expect(response.status).toBe(401);
+  });
+});
+
+describe('An Administrator taken off the list', () => {
+  it('is refused, even with an access token issued before', async () => {
     const { accessToken } = await signIn(app, { email: 'admin@snu.ac.kr' });
     expect((await getAdministrativeRoute(app, accessToken)).status).toBe(200);
 

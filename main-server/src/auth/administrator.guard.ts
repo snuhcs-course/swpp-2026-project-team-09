@@ -1,8 +1,8 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { ADMINISTRATOR_ONLY } from '../common/administrator-only.decorator.js';
-import { SignedInRequest } from '../common/current-user.decorator.js';
+import { SignedInUser } from '../common/current-user.decorator.js';
 import { Settings } from '../common/settings.js';
 import { UsersService } from '../users/users.service.js';
 
@@ -26,7 +26,11 @@ export class AdministratorGuard implements CanActivate {
     if (administratorOnly !== true) {
       return true;
     }
-    const { user } = context.switchToHttp().getRequest<SignedInRequest>();
+    const { user } = context.switchToHttp().getRequest<{ user?: SignedInUser }>();
+    // AccessTokenGuard lets a route marked @Public() through without putting a User on the request.
+    if (user === undefined) {
+      throw new UnauthorizedException();
+    }
     const { email } = await this.users.findById(user.id);
     // The list is kept in lower case (see settings.ts).
     if (!this.settings.get('ADMINISTRATOR_EMAILS', { infer: true }).includes(email.toLowerCase())) {
