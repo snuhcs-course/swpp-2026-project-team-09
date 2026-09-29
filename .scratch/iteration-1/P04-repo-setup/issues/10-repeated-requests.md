@@ -66,7 +66,9 @@ registered: those in `AppModule`'s own providers first, then those of the import
 `IdempotencyModule` is imported before the feature modules, and `AppModule` has no `APP_INTERCEPTOR`, so the idempotency
 interceptor runs outside every other global interceptor. There is no other one yet. The module warns at startup when a
 global interceptor runs outside it and refuses to start when that one is `ClassSerializerInterceptor`. `app.module.ts`
-and the README say where to register one.
+and the README say where to register one. A warning does not fail the build, so `test/idempotency.e2e-spec.ts` checks
+that the idempotency interceptor is the first global interceptor. The package does not export `IdempotencyInterceptor`,
+so the test compares the class name.
 
 The interceptor reaches HTTP handlers only. `main.ts` connects the Redis listener without `inheritAppConfig`, so no
 global enhancer applies to message handlers: not `AccessTokenGuard`, not the validation pipe, not this interceptor.

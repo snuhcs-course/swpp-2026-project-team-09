@@ -1,4 +1,5 @@
 import { Body, Controller, INestApplication, InternalServerErrorException, Post } from '@nestjs/common';
+import { ApplicationConfig } from '@nestjs/core';
 import { Idempotent } from '@nestjs/idempotency';
 import { Redis } from 'ioredis';
 import { randomUUID } from 'node:crypto';
@@ -209,5 +210,16 @@ describe('Requiring an Idempotency-Key', () => {
 
     expect([first.status, second.status]).toEqual([201, 201]);
     expect(runs).toBe(2);
+  });
+});
+
+// A global interceptor registered in AppModule's providers would run outside the idempotency interceptor and see every
+// replay (README: "Making a handler safe to repeat"). The module only warns at startup, so this test fails instead.
+describe('The idempotency interceptor', () => {
+  it('runs outside every other global interceptor', () => {
+    // Listed from the outermost. The package does not export IdempotencyInterceptor, so the test compares the name.
+    const [outermost] = app.get(ApplicationConfig).getGlobalInterceptors();
+
+    expect(outermost?.constructor.name).toBe('IdempotencyInterceptor');
   });
 });
