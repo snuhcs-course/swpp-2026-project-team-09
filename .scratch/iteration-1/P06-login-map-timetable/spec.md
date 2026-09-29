@@ -42,6 +42,7 @@ The app opens on a sign-in screen and then on a map of the campus that fills the
 28. As an SNU student, I want every label in Korean, so that I read the app in my language.
 29. As an SNU student, I want to view and edit my name, department, admission year and interest hashtags in that panel, so that Matching and my companions know who I am.
 30. As an SNU student, I want the sources of the map data credited in that panel, so that the project meets their licence.
+31. As an SNU student whose account was signed in on another phone, I want this phone to say so and show the sign-in screen, so that I understand why it stopped.
 
 ## Implementation Decisions
 
@@ -61,6 +62,7 @@ The app opens on a sign-in screen and then on a map of the campus that fills the
 - The app first tries the account sheet and falls back to the sign-in button flow when no account qualifies.
 - Sign-in lives behind one module with two operations, sign in and sign out. The default implementation is the free library that Expo's guide lists for Credential Manager. If it fails verification, the team writes its own native module of the same shape.
 - Tokens are kept in the phone's secure storage. When a request is refused as unauthorised, the app renews the session once and repeats the request; if renewal fails, it shows the sign-in screen.
+- A User has one session (P04). A refusal with the code for a replaced session, from the main server or the socket server, means that the User signed in on another phone: the app does not renew the session, stops sending its position, background sharing included, and shows the sign-in screen with that reason.
 
 ### Location
 

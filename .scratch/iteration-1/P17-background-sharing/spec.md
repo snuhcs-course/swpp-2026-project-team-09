@@ -23,6 +23,7 @@ The app keeps sending the User's position while it is in the background, under a
 9. As an SNU student who closed the app by swiping it away, I want to know that sharing has stopped, so that I am not mistaken about being visible.
 10. As a viewer, I want a companion's Avatar to keep moving while their phone is locked, so that I can find them.
 11. As the project manager, I want a written record of the verification, so that the design page of the Wiki can state what worked and what did not.
+12. As an SNU student, I want background sharing on my old phone to stop when I sign in on another phone, so that my Avatar follows one phone.
 
 ## Implementation Decisions
 
@@ -31,6 +32,7 @@ The app keeps sending the User's position while it is in the background, under a
 - The interval is 30 seconds in the background against 5 seconds while the app is open.
 - The background task reads the Master Switch before every upload and sends nothing when it is off.
 - The background task renews the session by itself when the access token has expired.
+- A User has one session (P04). When the server refuses the task with the code for a session replaced by a sign-in on another phone, the task stops as on sign-out and does not renew the session.
 - The server address must be https. Android blocks plain connections, and the tunnel provides https.
 - When Android ends the task because the User closed the app, nothing restarts it. The next time the app opens, it tells the User that background sharing had stopped.
 - Verification runs on one physical phone with a second account watching on another phone or an emulator.
@@ -44,6 +46,7 @@ The app keeps sending the User's position while it is in the background, under a
 | Turn the Master Switch off from the notification or the app | The Avatar disappears from the watcher's map at once |
 | Leave the phone locked for more than 1 hour, then walk | The Avatar moves; the session was renewed |
 | Close the app by swiping it away | Sharing stops; the app says so when opened again |
+| Sign in with the same account on another phone or an emulator | The first phone stops sharing and shows the sign-in screen with the reason |
 | Refuse the background permission | Sharing works while the app is open only |
 | Walk out of the Campus Boundary | The Avatar disappears; it returns on coming back |
 

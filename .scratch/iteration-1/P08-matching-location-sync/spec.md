@@ -202,6 +202,7 @@ This spec is large because the restart left most domain work without a task of i
 ### Location
 
 - The app uploads positions to the main server. The main server keeps the latest position per User in Redis with an expiry of 10 minutes. No history is stored anywhere.
+- A User has one session (P04). When a sign-in on another phone replaces it, the main server clears the User's stored position, so that the old phone's last position does not linger.
 - An upload is refused when the Master Switch is off, when its time is too old or in the future, or when its accuracy is implausible.
 - The main server checks each position against the Campus Boundary in server code, without a database query. A position outside is discarded and the User is recorded as hidden.
 - Visibility is decided by one module with one question: may this viewer see this subject now? The answer is yes when both Master Switches are on, the subject is inside the Campus Boundary, and at least one relationship between the two, a friendship or a common Party, has the switch on at both ends.
