@@ -13,7 +13,7 @@ The proposal holds, with two additions: a sign-out that the main server enforces
 - **Cookie: `__Host-` name, `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, no `Domain`, no `Max-Age`/`Expires`.** It is set only in Server Actions and never passed to Client Components [N3][N4][O1][X1].
 - **CSRF: every change goes through a Server Action, and no Route Handler changes state.** Server Actions check Origin against Host; Route Handlers have no built-in protection [X2][X5].
 - **Sign-out: revoke on the main server, then delete the cookie.** A per-Administrator "tokens valid after" time, read with the existing registration lookup, meets ASVS 7.4.1 [A7].
-- **No re-authentication before registering an Administrator.** Google documents no way to force a fresh login [G3], so it adds a click but no assurance. ASVS makes this Level 3 [A7 7.5.3]; an audit record is enough.
+- **No re-authentication before registering an Administrator.** Google documents no way to force a fresh login [G3], so it adds a click but no assurance. ASVS makes this Level 3 [A7 7.5.3].
 
 ## 2. Evidence
 
@@ -81,7 +81,6 @@ The proposal holds, with two additions: a sign-out that the main server enforces
 - Each admin request returns 401 if the token is expired, if the Administrator is unregistered, or if the token was issued before that Administrator's last sign-out.
 - After sign-out the old token gets 401, and a token from a new sign-in works.
 - No refresh token is issued.
-- Registering an Administrator records who registered them and when.
 
 **Admin site**
 

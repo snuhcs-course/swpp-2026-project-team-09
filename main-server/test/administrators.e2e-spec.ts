@@ -12,12 +12,10 @@ import { ADMINISTRATOR, administratorIdToken, googleSubject } from './google.js'
 import { registerAdministrator, signInAsAdministrator, signInAsNewAdministrator } from './sign-in.js';
 import { startApp } from './start-app.js';
 
-// An Administrator as the list and the registration answer them, exactly.
 const administratorSchema = z.strictObject({
   id: z.string(),
   email: z.string(),
   signedIn: z.boolean(),
-  registeredBy: z.string().nullable(),
 });
 
 type Administrator = z.infer<typeof administratorSchema>;
@@ -74,13 +72,12 @@ function signInStatus(email: string, target = app): Promise<number> {
     .then((response) => response.status);
 }
 
-// Leaves out the id, which the database generates.
-function withoutId({ email, signedIn, registeredBy }: Administrator): Omit<Administrator, 'id'> {
-  return { email, signedIn, registeredBy };
+function withoutId({ email, signedIn }: Administrator): Omit<Administrator, 'id'> {
+  return { email, signedIn };
 }
 
 describe('The list of Administrators', () => {
-  it('shows each one with the email address, whether they have signed in and who registered them', async () => {
+  it('shows each one with the email address and whether they have signed in', async () => {
     const { accessToken } = await signInAsAdministrator(app);
     const email = `${randomUUID()}@example.com`;
     const registered = administratorSchema.parse((await registerAdministrator(app, accessToken, email)).body);
@@ -90,14 +87,8 @@ describe('The list of Administrators', () => {
     expect(administrators.map((administrator) => withoutId(administrator))).toContainEqual({
       email: ADMINISTRATOR.email,
       signedIn: true,
-      registeredBy: null,
     });
-    expect(administrators).toContainEqual({
-      id: registered.id,
-      email,
-      signedIn: false,
-      registeredBy: ADMINISTRATOR.email,
-    });
+    expect(administrators).toContainEqual({ id: registered.id, email, signedIn: false });
   });
 });
 
@@ -109,21 +100,16 @@ describe('Registering an Administrator', () => {
     const response = await registerAdministrator(app, accessToken, email.toUpperCase());
 
     expect(response.status).toBe(201);
-    expect(withoutId(administratorSchema.parse(response.body))).toEqual({
-      email,
-      signedIn: false,
-      registeredBy: ADMINISTRATOR.email,
-    });
+    expect(withoutId(administratorSchema.parse(response.body))).toEqual({ email, signedIn: false });
     expect(await signInStatus(email)).toBe(200);
   });
 
   it('changes nothing when the address is registered already and answers as the first time', async () => {
     const { accessToken } = await signInAsAdministrator(app);
-    const other = await signInAsNewAdministrator(app);
     const email = `${randomUUID()}@example.com`;
     const first = await registerAdministrator(app, accessToken, email);
 
-    const again = await registerAdministrator(app, other.accessToken, email.toUpperCase());
+    const again = await registerAdministrator(app, accessToken, email.toUpperCase());
 
     expect(again.status).toBe(first.status);
     expect(again.body).toEqual(first.body);
@@ -168,14 +154,14 @@ describe('Removing an Administrator', () => {
 });
 
 describe('A server started on a database without Administrators', () => {
-  it('registers every initial Administrator, as registered by nobody, and creates no User for them', async () => {
+  it('registers every initial Administrator and creates no User for them', async () => {
     const { accessToken } = await signInAsAdministrator(fresh, firstAccount);
 
     const administrators = await list(accessToken, fresh);
 
     expect(administrators.map((administrator) => withoutId(administrator))).toEqual([
-      { email: 'first@example.com', signedIn: true, registeredBy: null },
-      { email: 'second@example.com', signedIn: false, registeredBy: null },
+      { email: 'first@example.com', signedIn: true },
+      { email: 'second@example.com', signedIn: false },
     ]);
     expect(await emptyDatabase.user.count()).toBe(0);
   });

@@ -6,10 +6,8 @@ export interface AdministratorDto {
   email: string;
   // Whether they have signed in yet. The first sign-in binds their Google account.
   signedIn: boolean;
-  // The email address of the Administrator who registered them, or null for an initial Administrator.
-  registeredBy: string | null;
 }
 
-export function toAdministratorDto({ id, email, googleSubject, registeredBy }: Administrator): AdministratorDto {
-  return { id, email, signedIn: googleSubject !== null, registeredBy };
+export function toAdministratorDto({ id, email, googleSubject }: Administrator): AdministratorDto {
+  return { id, email, signedIn: googleSubject !== null };
 }

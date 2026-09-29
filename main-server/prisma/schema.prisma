@@ -41,10 +41,6 @@ model Administrator {
   email            String    @unique
   // Google's subject identifier, bound at the first sign-in. Later sign-ins are recognised by it.
   googleSubject    String?   @unique @map("google_subject")
-  // The email address of the Administrator who registered them, kept after that one is removed. Null for an initial
-  // Administrator, registered by nobody.
-  registeredBy     String?   @map("registered_by")
-  registeredAt     DateTime  @default(now()) @map("registered_at")
   // The last sign-out: access tokens issued before it are refused. Null until the first sign-out.
   tokensValidAfter DateTime? @map("tokens_valid_after")
 

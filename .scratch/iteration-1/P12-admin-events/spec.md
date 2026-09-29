@@ -46,7 +46,7 @@ An admin site where an Administrator reviews each Draft, corrects its time and p
 - A 401 from the main server sends the person to sign-in and then back to the same page. It comes when the token expired, when the Administrator signed out in another browser, or when they were removed.
 - Every page has a sign-out control. It ends every token of that Administrator on the main server, in every browser, and then deletes the cookie.
 - There is no idle timeout. Signing in again takes one click while the person's Google session lasts, so an idle timeout would prove nobody's presence and would not limit a stolen token.
-- An Administrators screen lists the Administrators, with each one's email address, whether they have signed in yet and who registered them. On it an Administrator registers an email address of any Google domain and removes an Administrator, themselves included. The main server keeps the last one.
+- An Administrators screen lists the Administrators, with each one's email address and whether they have signed in yet. On it an Administrator registers an email address of any Google domain and removes an Administrator, themselves included. The main server keeps the last one.
 - Access checks are made where data is read or changed. A check in the request proxy alone is not relied on.
 - The position picker shows a Kakao map through Kakao's JavaScript SDK. This is a web page on a registered domain, which is the use that SDK is meant for.
 

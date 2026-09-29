@@ -97,9 +97,8 @@ Signing in and out:
 Registering and removing:
 
 - When the server starts with no Administrator registered, as on a new database, it registers the addresses in
-  `INITIAL_ADMINISTRATOR_EMAILS`, as registered by nobody. After that it ignores the setting.
-- `GET /admin/administrators` lists the Administrators as `{ id, email, signedIn, registeredBy }`. `registeredBy` is the
-  email address of the Administrator who registered them, or `null` for an initial one.
+  `INITIAL_ADMINISTRATOR_EMAILS`. After that it ignores the setting.
+- `GET /admin/administrators` lists the Administrators as `{ id, email, signedIn }`.
 - `POST /admin/administrators` with `{ "email": "..." }` registers an address of any Google domain and answers 201 with
   the new Administrator. Case is ignored. An address registered already stays as it is, and the answer is the same as
   the first time.
@@ -120,7 +119,7 @@ export class AdminEventsController {
 - Every request reads the Administrator, so a removed Administrator, or a token issued before their last sign-out, gets
   401 at once.
 - A handler reads the signed-in Administrator with `@CurrentAdministrator() administrator: SignedInAdministrator`, as
-  `src/administrators/administrators.controller.ts` does.
+  `src/auth/administrator-auth.controller.ts` does.
 - In a test, `signInAsAdministrator(app)` from `test/sign-in.ts` signs in as `admin@example.com`, the initial
   Administrator of the test settings, and `signInAsNewAdministrator(app)` registers a new one and signs in as them. The
   test files share one database, so sign out or remove only a new one.

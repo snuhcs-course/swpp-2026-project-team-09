@@ -3,8 +3,6 @@ CREATE TABLE "administrators" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "email" TEXT NOT NULL,
     "google_subject" TEXT,
-    "registered_by" TEXT,
-    "registered_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "tokens_valid_after" TIMESTAMP(3),
 
     CONSTRAINT "administrators_pkey" PRIMARY KEY ("id")

@@ -1,7 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { z } from 'zod';
 import { AdministratorOnly } from '../common/administrator-only.decorator.js';
-import { CurrentAdministrator, type SignedInAdministrator } from '../common/current-administrator.decorator.js';
 import { AdministratorsService } from './administrators.service.js';
 import { AdministratorDto, toAdministratorDto } from './dto/administrator.dto.js';
 import { type RegisterAdministratorDto, registerAdministratorSchema } from './dto/register-administrator.dto.js';
@@ -22,9 +21,8 @@ export class AdministratorsController {
   @Post()
   async register(
     @Body({ schema: registerAdministratorSchema }) body: RegisterAdministratorDto,
-    @CurrentAdministrator() registrar: SignedInAdministrator,
   ): Promise<AdministratorDto> {
-    return toAdministratorDto(await this.administrators.register(body.email, registrar.id));
+    return toAdministratorDto(await this.administrators.register(body.email));
   }
 
   // 404 when no Administrator has the id, 409 when they are the last one.

@@ -18,7 +18,7 @@ export class AdministratorsService implements OnApplicationBootstrap {
     if ((await this.prisma.administrator.count()) > 0) {
       return;
     }
-    // Registered by nobody. Two servers starting at the same time both get here, so the second skips the addresses.
+    // Two servers starting at the same time both get here, so the second skips the addresses.
     await this.prisma.administrator.createMany({
       data: this.settings.get('INITIAL_ADMINISTRATOR_EMAILS', { infer: true }).map((email) => ({ email })),
       skipDuplicates: true,
@@ -26,15 +26,14 @@ export class AdministratorsService implements OnApplicationBootstrap {
   }
 
   list(): Promise<Administrator[]> {
-    return this.prisma.administrator.findMany({ orderBy: [{ registeredAt: 'asc' }, { email: 'asc' }] });
+    return this.prisma.administrator.findMany({ orderBy: { email: 'asc' } });
   }
 
-  // Registers an email address as the registrar, or returns the Administrator registered with it already, unchanged.
-  async register(email: string, registrarId: string): Promise<Administrator> {
-    const registrar = await this.prisma.administrator.findUniqueOrThrow({ where: { id: registrarId } });
+  // Registers an email address, or returns the Administrator registered with it already, unchanged.
+  register(email: string): Promise<Administrator> {
     return this.prisma.administrator.upsert({
       where: { email: email.toLowerCase() },
-      create: { email: email.toLowerCase(), registeredBy: registrar.email },
+      create: { email: email.toLowerCase() },
       update: {},
     });
   }
