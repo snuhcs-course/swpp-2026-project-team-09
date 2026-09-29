@@ -36,6 +36,8 @@ services:
     init: true
     # The settings come from main-server/.env (see main-server/.env.example).
     # The values under environment take precedence, so that the server reaches the data stores inside Compose.
+    # INITIAL_ADMINISTRATOR_EMAILS counts only while the database holds no Administrator: a new list takes effect after
+    # `docker compose down -v`. Otherwise Administrators register each other through the administrative routes.
     env_file:
       - path: main-server/.env
         required: false

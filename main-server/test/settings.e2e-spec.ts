@@ -69,37 +69,45 @@ describe('Access token key settings', () => {
 describe('Google client settings', () => {
   const settings = inject('settings');
 
-  it('stops startup and names GOOGLE_CLIENT_IDS when it is missing', async () => {
-    await expect(startApp({ ...settings, GOOGLE_CLIENT_IDS: undefined })).rejects.toThrow('GOOGLE_CLIENT_IDS');
+  it('stops startup and names GOOGLE_APP_CLIENT_ID when it is missing', async () => {
+    await expect(startApp({ ...settings, GOOGLE_APP_CLIENT_ID: undefined })).rejects.toThrow('GOOGLE_APP_CLIENT_ID');
   });
 
-  it('stops startup and names GOOGLE_CLIENT_IDS when it holds something other than client IDs', async () => {
-    await expect(
-      startApp({ ...settings, GOOGLE_CLIENT_IDS: 'snu-now-app.apps.googleusercontent.com,secret' }),
-    ).rejects.toThrow('GOOGLE_CLIENT_IDS');
+  it('stops startup and names GOOGLE_ADMIN_CLIENT_ID when it is missing', async () => {
+    await expect(startApp({ ...settings, GOOGLE_ADMIN_CLIENT_ID: undefined })).rejects.toThrow(
+      'GOOGLE_ADMIN_CLIENT_ID',
+    );
+  });
+
+  it('stops startup and names GOOGLE_ADMIN_CLIENT_ID when it holds something other than a client ID', async () => {
+    await expect(startApp({ ...settings, GOOGLE_ADMIN_CLIENT_ID: 'secret' })).rejects.toThrow('GOOGLE_ADMIN_CLIENT_ID');
+  });
+
+  it("stops startup and names GOOGLE_ADMIN_CLIENT_ID when it is the app's client ID", async () => {
+    await expect(startApp({ ...settings, GOOGLE_ADMIN_CLIENT_ID: settings.GOOGLE_APP_CLIENT_ID })).rejects.toThrow(
+      'GOOGLE_ADMIN_CLIENT_ID',
+    );
   });
 });
 
-describe('Administrator settings', () => {
+describe('Initial Administrator settings', () => {
   const settings = inject('settings');
 
-  it('stops startup and names ADMINISTRATOR_EMAILS when it is missing', async () => {
-    await expect(startApp({ ...settings, ADMINISTRATOR_EMAILS: undefined })).rejects.toThrow('ADMINISTRATOR_EMAILS');
-  });
-
-  it('stops startup and names ADMINISTRATOR_EMAILS when it is empty', async () => {
-    await expect(startApp({ ...settings, ADMINISTRATOR_EMAILS: '' })).rejects.toThrow('ADMINISTRATOR_EMAILS');
-  });
-
-  it('stops startup and names ADMINISTRATOR_EMAILS when it holds something other than email addresses', async () => {
-    await expect(
-      startApp({ ...settings, ADMINISTRATOR_EMAILS: 'admin@snu.ac.kr;second-admin@snu.ac.kr' }),
-    ).rejects.toThrow('ADMINISTRATOR_EMAILS');
-  });
-
-  it('stops startup and names ADMINISTRATOR_EMAILS when it holds an address outside SNU', async () => {
-    await expect(startApp({ ...settings, ADMINISTRATOR_EMAILS: 'admin@snu.ac.kr,admin@gmail.com' })).rejects.toThrow(
-      'ADMINISTRATOR_EMAILS',
+  it('stops startup and names INITIAL_ADMINISTRATOR_EMAILS when it is missing', async () => {
+    await expect(startApp({ ...settings, INITIAL_ADMINISTRATOR_EMAILS: undefined })).rejects.toThrow(
+      'INITIAL_ADMINISTRATOR_EMAILS',
     );
+  });
+
+  it('stops startup and names INITIAL_ADMINISTRATOR_EMAILS when it is empty', async () => {
+    await expect(startApp({ ...settings, INITIAL_ADMINISTRATOR_EMAILS: '' })).rejects.toThrow(
+      'INITIAL_ADMINISTRATOR_EMAILS',
+    );
+  });
+
+  it('stops startup and names INITIAL_ADMINISTRATOR_EMAILS when it holds something other than email addresses', async () => {
+    await expect(
+      startApp({ ...settings, INITIAL_ADMINISTRATOR_EMAILS: 'admin@example.com;second-admin@example.com' }),
+    ).rejects.toThrow('INITIAL_ADMINISTRATOR_EMAILS');
   });
 });

@@ -7,8 +7,10 @@ import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { z } from 'zod';
+import { AdministratorOnly } from '../src/common/administrator-only.decorator.js';
+import { CurrentAdministrator, type SignedInAdministrator } from '../src/common/current-administrator.decorator.js';
 import { CurrentUser, type SignedInUser } from '../src/common/current-user.decorator.js';
-import { signIn } from './sign-in.js';
+import { signIn, signInAsAdministrator, signInAsNewAdministrator } from './sign-in.js';
 import { startApp } from './start-app.js';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -17,7 +19,7 @@ const DAY = 24 * 60 * 60 * 1000;
 // own. A handler counts its runs and answers with the count, so that a test can tell a run from a replay. A test can
 // hold the runs until it lets them finish, or make the next run fail with a server error.
 
-const createdSchema = z.strictObject({ run: z.number(), userId: z.string(), body: z.unknown() });
+const createdSchema = z.strictObject({ run: z.number(), callerId: z.string(), body: z.unknown() });
 
 type Created = z.infer<typeof createdSchema>;
 
@@ -25,7 +27,7 @@ let runs = 0;
 let held: Promise<void> = Promise.resolve();
 let failNextRun = false;
 
-async function create(body: unknown, user: SignedInUser): Promise<Created> {
+async function create(body: unknown, caller: SignedInUser | SignedInAdministrator): Promise<Created> {
   runs += 1;
   const run = runs;
   await held;
@@ -33,7 +35,7 @@ async function create(body: unknown, user: SignedInUser): Promise<Created> {
     failNextRun = false;
     throw new InternalServerErrorException();
   }
-  return { run, userId: user.id, body };
+  return { run, callerId: caller.id, body };
 }
 
 // Holds every run until the returned function is called.
@@ -57,6 +59,16 @@ class RepeatableController {
   @Idempotent({ required: true })
   createRequiredThing(@Body() body: unknown, @CurrentUser() user: SignedInUser): Promise<Created> {
     return create(body, user);
+  }
+
+  @Post('administrative-things/:id')
+  @AdministratorOnly()
+  @Idempotent()
+  createAdministrativeThing(
+    @Body() body: unknown,
+    @CurrentAdministrator() administrator: SignedInAdministrator,
+  ): Promise<Created> {
+    return create(body, administrator);
   }
 }
 
@@ -112,7 +124,7 @@ describe('A request sent twice with the same Idempotency-Key', () => {
 
     expect(fromOther.status).toBe(201);
     expect(fromOther.headers['idempotent-replayed']).toBeUndefined();
-    expect(createdSchema.parse(fromOther.body).userId).not.toBe(createdSchema.parse(fromOne.body).userId);
+    expect(createdSchema.parse(fromOther.body).callerId).not.toBe(createdSchema.parse(fromOne.body).callerId);
     expect(runs).toBe(2);
   });
 
@@ -122,10 +134,26 @@ describe('A request sent twice with the same Idempotency-Key', () => {
 
     const response = await post('/repeatable/things/1', accessToken, key);
 
-    const { userId } = createdSchema.parse(response.body);
-    const lifetime = await redis.pttl(`idem:${userId}:${key}`);
+    const { callerId } = createdSchema.parse(response.body);
+    const lifetime = await redis.pttl(`idem:${callerId}:${key}`);
     expect(lifetime).toBeGreaterThan(DAY - 60_000);
     expect(lifetime).toBeLessThanOrEqual(DAY);
+  });
+});
+
+describe('A request to an administrative route sent twice with the same Idempotency-Key', () => {
+  it('runs the handler for each Administrator that sends the key', async () => {
+    const oneAdministrator = await signInAsAdministrator(app);
+    const otherAdministrator = await signInAsNewAdministrator(app);
+    const key = randomUUID();
+
+    const fromOne = await post('/repeatable/administrative-things/1', oneAdministrator.accessToken, key);
+    const fromOther = await post('/repeatable/administrative-things/1', otherAdministrator.accessToken, key);
+
+    expect(fromOther.status).toBe(201);
+    expect(fromOther.headers['idempotent-replayed']).toBeUndefined();
+    expect(createdSchema.parse(fromOther.body).callerId).not.toBe(createdSchema.parse(fromOne.body).callerId);
+    expect(runs).toBe(2);
   });
 });
 
