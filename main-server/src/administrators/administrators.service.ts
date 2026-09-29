@@ -11,14 +11,11 @@ export class AdministratorsService implements OnApplicationBootstrap {
     private readonly settings: ConfigService<Settings, true>,
   ) {}
 
-  // A fresh database, a new deployment and the tests all start with the initial Administrators from the settings,
-  // without a command run by hand. Once one is registered the list is not read again: Administrators register and
-  // remove each other, and the last one cannot be removed.
   async onApplicationBootstrap(): Promise<void> {
     if ((await this.prisma.administrator.count()) > 0) {
       return;
     }
-    // Two servers starting at the same time both get here, so the second skips the addresses.
+    // Two servers starting together both get here.
     await this.prisma.administrator.createMany({
       data: this.settings.get('INITIAL_ADMINISTRATOR_EMAILS', { infer: true }).map((email) => ({ email })),
       skipDuplicates: true,
@@ -29,7 +26,6 @@ export class AdministratorsService implements OnApplicationBootstrap {
     return this.prisma.administrator.findMany({ orderBy: { email: 'asc' } });
   }
 
-  // Registers an email address, or returns the Administrator registered with it already, unchanged.
   register(email: string): Promise<Administrator> {
     return this.prisma.administrator.upsert({
       where: { email: email.toLowerCase() },
@@ -38,12 +34,10 @@ export class AdministratorsService implements OnApplicationBootstrap {
     });
   }
 
-  // Removes an Administrator, who may be the one asking. The last one stays, so that someone can still sign in.
   async remove(id: string): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      // Locks every Administrator, always in the same order, until the removal commits. Two removals at the same moment
-      // then run one after the other, and the second sees what the first left: it keeps the last Administrator, and
-      // finds no row for one removed already.
+      // Locks every row in a fixed order, so that two removals at the same moment run one after the other and the
+      // second sees what the first left.
       const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM administrators ORDER BY id FOR UPDATE`;
       if (!locked.some((administrator) => administrator.id === id)) {
         throw new NotFoundException('No Administrator has this id.');
@@ -55,8 +49,8 @@ export class AdministratorsService implements OnApplicationBootstrap {
     });
   }
 
-  // The Administrator a Google account signs in as, or null when it is not registered. The first sign-in binds the
-  // account's subject identifier to the registered email address; later sign-ins are recognised by the identifier.
+  // The first sign-in binds the Google account to the registered address. Looking up by the subject again also finds a
+  // row a concurrent first sign-in bound, and misses one bound to another account.
   async findForSignIn(googleSubject: string, email: string): Promise<Administrator | null> {
     const bound = await this.prisma.administrator.findUnique({ where: { googleSubject } });
     if (bound !== null) {
@@ -69,7 +63,6 @@ export class AdministratorsService implements OnApplicationBootstrap {
     return this.prisma.administrator.findUnique({ where: { googleSubject } });
   }
 
-  // Refuses every access token issued to the Administrator until now, in every browser (see AdministratorGuard).
   async endTokens(id: string): Promise<void> {
     await this.prisma.administrator.update({ where: { id }, data: { tokensValidAfter: new Date() } });
   }

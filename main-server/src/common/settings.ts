@@ -32,14 +32,8 @@ export const settingsSchema = z
     REDIS_PORT: port,
     ACCESS_TOKEN_PRIVATE_KEY: es256Key('private'),
     ACCESS_TOKEN_PUBLIC_KEY: es256Key('public'),
-    // The OAuth client IDs of the two Google clients. A User signs in with an ID token issued to the app's client, and
-    // an Administrator with one issued to the admin site's; each is refused on the other's sign-in, so they must
-    // differ (see below).
     GOOGLE_APP_CLIENT_ID: googleClientId,
     GOOGLE_ADMIN_CLIENT_ID: googleClientId,
-    // The email addresses of the initial Administrators, separated by commas, of any Google domain. The server
-    // registers them when it starts while no Administrator is registered. Compared without regard to case, so they
-    // are kept in lower case.
     INITIAL_ADMINISTRATOR_EMAILS: z
       .string()
       .transform((emails) => emails.split(',').map((email) => email.trim().toLowerCase()))

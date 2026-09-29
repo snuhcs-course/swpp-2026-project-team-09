@@ -31,8 +31,7 @@ afterAll(async () => {
   await app.close();
 });
 
-// An access token as the main server signs it for a User: ES256, the User's id as the subject, for the app, valid for 1
-// hour.
+// An access token as the main server signs it: ES256, the User's id as the subject, valid for 1 hour.
 function accessToken(userId: string): string {
   return new JwtService().sign(
     { sub: userId },
@@ -102,7 +101,6 @@ describe('A socket connection', () => {
   });
 
   it("is refused with an Administrator's access token", async () => {
-    // As the main server signs it for an Administrator: for the administrative routes, valid for 8 hours.
     const administratorToken = new JwtService().sign(
       { sub: randomUUID() },
       { privateKey, algorithm: 'ES256', audience: 'snu-now-admin', expiresIn: '8h' },

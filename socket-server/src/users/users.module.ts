@@ -4,8 +4,6 @@ import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { Settings } from '../common/settings.js';
 import { UsersGateway } from './users.gateway.js';
 
-// The audience of a User's access token, as the main server signs it. An Administrator's token has another, so it is
-// refused here.
 const USER_TOKEN_AUDIENCE = 'snu-now-app';
 
 @Module({

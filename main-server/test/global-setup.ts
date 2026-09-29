@@ -23,8 +23,7 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     ACCESS_TOKEN_PUBLIC_KEY: accessTokenKeys.publicKey,
     GOOGLE_APP_CLIENT_ID: 'snu-now-app.apps.googleusercontent.com',
     GOOGLE_ADMIN_CLIENT_ID: 'snu-now-admin.apps.googleusercontent.com',
-    // Registered by the first server of the run, which starts on the empty database. signInAsAdministrator(app) signs
-    // in as this one.
+    // signInAsAdministrator(app) signs in as this one.
     INITIAL_ADMINISTRATOR_EMAILS: 'admin@example.com',
   };
   migrate(settings.DATABASE_URL);

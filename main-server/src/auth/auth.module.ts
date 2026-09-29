@@ -19,8 +19,7 @@ import { GoogleIdTokenVerifier } from './google-id-token.verifier.js';
     UsersModule,
     AdministratorsModule,
     // Access tokens are signed with the main server's private key. The other servers verify them with the public key
-    // alone. Unless a call says otherwise, a token is a User's: for the app and valid for 1 hour. An Administrator's
-    // token has an audience and a lifetime of its own (administrator-auth.service.ts).
+    // alone. The defaults are a User's token; the Administrator's sign-in and guard pass their own audience.
     JwtModule.registerAsync({
       useFactory: (settings: ConfigService<Settings, true>): JwtModuleOptions => ({
         privateKey: settings.get('ACCESS_TOKEN_PRIVATE_KEY', { infer: true }),
@@ -36,8 +35,7 @@ import { GoogleIdTokenVerifier } from './google-id-token.verifier.js';
     AuthService,
     AdministratorAuthService,
     { provide: GoogleIdTokenVerifier, useClass: GoogleAuthLibraryVerifier },
-    // Every route is a User's, public or an Administrator's (src/common/route-access.ts). Each guard checks the
-    // routes of its own kind and lets the others through.
+    // Each guard checks only its own kind of route (src/common/route-access.ts), so their order does not matter.
     { provide: APP_GUARD, useClass: AccessTokenGuard },
     { provide: APP_GUARD, useClass: AdministratorGuard },
   ],

@@ -33,15 +33,14 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-// A team member who signs in to the admin site. An Administrator is not a User, even when the same person also uses the
-// app. Administrators register and remove each other; the settings name only the initial ones.
+// A team member who signs in to the admin site. Not a User, even when the same person also uses the app.
 model Administrator {
   id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  // The address they were registered with, in lower case. It does not follow the Google account's address.
+  // Lower case. Unlike a User's, it does not follow the Google account's address.
   email            String    @unique
-  // Google's subject identifier, bound at the first sign-in. Later sign-ins are recognised by it.
+  // Bound at the first sign-in.
   googleSubject    String?   @unique @map("google_subject")
-  // The last sign-out: access tokens issued before it are refused. Null until the first sign-out.
+  // The last sign-out. Access tokens issued before it are refused.
   tokensValidAfter DateTime? @map("tokens_valid_after")
 
   @@map("administrators")

@@ -28,7 +28,6 @@ interface AccessTokenPayload {
   exp: number;
 }
 
-// Marks a whole controller administrative and opens one of its routes, as a feature may (P12 adds real ones).
 @AdministratorOnly()
 @Controller('administrative-controller')
 class AdministrativeController {
@@ -46,7 +45,6 @@ class AdministrativeController {
 
 const settings = inject('settings');
 let app: INestApplication<Server>;
-// The tests read the stored result with their own connection, under the server's settings.
 let prisma: PrismaClient;
 
 beforeAll(async () => {
@@ -68,7 +66,6 @@ function get(path: string, accessToken?: string): request.Test {
   return accessToken === undefined ? call : call.auth(accessToken, { type: 'bearer' });
 }
 
-// Checks the access token with the public key alone, as another server would.
 function verifyAccessToken(accessToken: string): AccessTokenPayload {
   return new JwtService().verify<AccessTokenPayload>(accessToken, {
     publicKey: settings.ACCESS_TOKEN_PUBLIC_KEY,
@@ -209,8 +206,7 @@ describe('An administrative route', () => {
   });
 });
 
-// A token's issue time has whole seconds, so a token issued in the second of a sign-out is refused as well. A person
-// cannot sign in again that fast; a test waits for the next second.
+// `iat` has whole seconds, so a token issued in the second of a sign-out is refused as well.
 async function nextSecond(): Promise<void> {
   await new Promise((resolve) => {
     setTimeout(resolve, 1000 - (Date.now() % 1000));

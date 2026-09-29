@@ -23,12 +23,11 @@ type Administrator = z.infer<typeof administratorSchema>;
 const settings = inject('settings');
 let app: INestApplication<Server>;
 // A second server, on a database of its own, starts with no Administrator registered. The last two groups of tests
-// run on it, in order. Its first initial Administrator signs in with this Google account.
+// run on it, in order.
 const firstAccount = { sub: googleSubject(), email: 'first@example.com' };
 let postgres: StartedTestContainer;
 let emptySettings: typeof settings;
 let fresh: INestApplication<Server>;
-// The tests read and lock rows of that database with a connection of their own.
 let emptyDatabase: PrismaClient;
 
 beforeAll(async () => {
@@ -64,7 +63,6 @@ function remove(accessToken: string, id: string, target = app): request.Test {
   return request(target.getHttpServer()).delete(`/admin/administrators/${id}`).auth(accessToken, { type: 'bearer' });
 }
 
-// Whether a new Google account with the email address can sign in to the admin site: 200 or 403.
 function signInStatus(email: string, target = app): Promise<number> {
   return request(target.getHttpServer())
     .post('/admin/auth/google')
@@ -177,8 +175,8 @@ describe('A server started on a database without Administrators', () => {
   });
 });
 
-// Holds a lock on an Administrator's row in a transaction of the test's own, as a request that is still running would,
-// until the returned function is called.
+// Holds a lock on an Administrator's row, as a request that is still running would, until the returned function is
+// called.
 async function lockAdministrator(id: string): Promise<() => Promise<void>> {
   let release: (() => void) | undefined;
   const released = new Promise<void>((resolve) => {

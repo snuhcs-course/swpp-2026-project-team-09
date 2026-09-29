@@ -25,14 +25,13 @@ export async function signIn(app: INestApplication<Server>, claims: Partial<Toke
   return tokensSchema.parse(response.body);
 }
 
-// The answer to an Administrator's sign-in, exactly: an access token without a refresh token.
 export const administratorTokensSchema = z.strictObject({
   accessToken: z.string().min(1),
 });
 
 export type AdministratorTokens = z.infer<typeof administratorTokensSchema>;
 
-// Signs in to the admin site as the admin site does, as the initial Administrator unless claims change the account.
+// As the initial Administrator unless claims change the account.
 export async function signInAsAdministrator(
   app: INestApplication<Server>,
   claims: Partial<TokenPayload> = {},
@@ -46,7 +45,6 @@ export async function signInAsAdministrator(
   return administratorTokensSchema.parse(response.body);
 }
 
-// Registers an email address as the Administrator whose access token is given, as the admin site does.
 export function registerAdministrator(app: INestApplication<Server>, accessToken: string, email: string): request.Test {
   return request(app.getHttpServer())
     .post('/admin/administrators')
@@ -57,13 +55,10 @@ export function registerAdministrator(app: INestApplication<Server>, accessToken
 export interface NewAdministrator {
   id: string;
   email: string;
-  // The subject identifier of their Google account.
   sub: string;
   accessToken: string;
 }
 
-// Registers a new Administrator, as the initial one would on the admin site, and signs in as them with a new Google
-// account.
 export async function signInAsNewAdministrator(app: INestApplication<Server>): Promise<NewAdministrator> {
   const email = `${randomUUID()}@example.com`;
   const { accessToken: registrarToken } = await signInAsAdministrator(app);

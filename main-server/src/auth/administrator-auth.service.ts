@@ -16,9 +16,7 @@ export class AdministratorAuthService {
     private readonly settings: ConfigService<Settings, true>,
   ) {}
 
-  // Signs in to the admin site with a Google ID token issued to the admin site's client, from any Google domain.
-  // The access token is valid for 8 hours, a working day, and comes without a refresh token: when it expires, the
-  // admin site sends the person through Sign in with Google again.
+  // Unlike the app's sign-in, any Google domain is accepted: an Administrator's account may be outside SNU.
   async signIn(idToken: string): Promise<AdministratorTokenDto> {
     const claims = await this.googleVerifier.verify(idToken, [
       this.settings.get('GOOGLE_ADMIN_CLIENT_ID', { infer: true }),
@@ -39,7 +37,6 @@ export class AdministratorAuthService {
     };
   }
 
-  // Ends every access token issued to the Administrator so far, in every browser. A new sign-in works afterwards.
   async signOut(administratorId: string): Promise<void> {
     await this.administrators.endTokens(administratorId);
   }

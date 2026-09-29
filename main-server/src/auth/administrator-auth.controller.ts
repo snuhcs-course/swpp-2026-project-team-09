@@ -6,13 +6,10 @@ import { AdministratorAuthService } from './administrator-auth.service.js';
 import { AdministratorTokenDto } from './dto/administrator-token.dto.js';
 import { type SignInDto, signInSchema } from './dto/sign-in.dto.js';
 
-// The admin site's sign-in, apart from the app's.
 @Controller('admin/auth')
 export class AdministratorAuthController {
   constructor(private readonly auth: AdministratorAuthService) {}
 
-  // 401 when the ID token is invalid, expired or issued to another client than the admin site's, 403 when its email
-  // address is not verified or not registered.
   @Public()
   @Post('google')
   @HttpCode(HttpStatus.OK)

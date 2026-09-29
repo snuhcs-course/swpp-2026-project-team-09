@@ -19,7 +19,6 @@ const DAY = 24 * 60 * 60 * 1000;
 // own. A handler counts its runs and answers with the count, so that a test can tell a run from a replay. A test can
 // hold the runs until it lets them finish, or make the next run fail with a server error.
 
-// callerId is the id of the User or the Administrator who sent the request.
 const createdSchema = z.strictObject({ run: z.number(), callerId: z.string(), body: z.unknown() });
 
 type Created = z.infer<typeof createdSchema>;
