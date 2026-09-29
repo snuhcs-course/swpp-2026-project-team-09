@@ -79,3 +79,27 @@ describe('Google client settings', () => {
     ).rejects.toThrow('GOOGLE_CLIENT_IDS');
   });
 });
+
+describe('Administrator settings', () => {
+  const settings = inject('settings');
+
+  it('stops startup and names ADMINISTRATOR_EMAILS when it is missing', async () => {
+    await expect(startApp({ ...settings, ADMINISTRATOR_EMAILS: undefined })).rejects.toThrow('ADMINISTRATOR_EMAILS');
+  });
+
+  it('stops startup and names ADMINISTRATOR_EMAILS when it is empty', async () => {
+    await expect(startApp({ ...settings, ADMINISTRATOR_EMAILS: '' })).rejects.toThrow('ADMINISTRATOR_EMAILS');
+  });
+
+  it('stops startup and names ADMINISTRATOR_EMAILS when it holds something other than email addresses', async () => {
+    await expect(
+      startApp({ ...settings, ADMINISTRATOR_EMAILS: 'admin@snu.ac.kr;second-admin@snu.ac.kr' }),
+    ).rejects.toThrow('ADMINISTRATOR_EMAILS');
+  });
+
+  it('stops startup and names ADMINISTRATOR_EMAILS when it holds an address outside SNU', async () => {
+    await expect(startApp({ ...settings, ADMINISTRATOR_EMAILS: 'admin@snu.ac.kr,admin@gmail.com' })).rejects.toThrow(
+      'ADMINISTRATOR_EMAILS',
+    );
+  });
+});

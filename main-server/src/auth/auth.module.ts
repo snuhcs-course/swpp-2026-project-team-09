@@ -5,6 +5,7 @@ import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { Settings } from '../common/settings.js';
 import { UsersModule } from '../users/users.module.js';
 import { AccessTokenGuard } from './access-token.guard.js';
+import { AdministratorGuard } from './administrator.guard.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { GoogleAuthLibraryVerifier } from './google-auth-library.verifier.js';
@@ -29,7 +30,9 @@ import { GoogleIdTokenVerifier } from './google-id-token.verifier.js';
   providers: [
     AuthService,
     { provide: GoogleIdTokenVerifier, useClass: GoogleAuthLibraryVerifier },
+    // Global guards run in the order they are registered: the User is known before the Administrator check.
     { provide: APP_GUARD, useClass: AccessTokenGuard },
+    { provide: APP_GUARD, useClass: AdministratorGuard },
   ],
 })
 export class AuthModule {}
