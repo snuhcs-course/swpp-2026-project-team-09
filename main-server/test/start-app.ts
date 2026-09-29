@@ -31,7 +31,7 @@ export async function startApp(
     await app.init();
     await app.startAllMicroservices();
     // On a free port, once. A server that does not listen is started and closed by supertest around each group of
-    // requests, on a new port each time, and a request then and again reached something else or hung up.
+    // requests, on a new port each time, and now and then a request reached something else or hung up.
     await app.listen(0, '127.0.0.1');
   } catch (error) {
     // Close what already started, such as a messaging connection that would keep retrying.
