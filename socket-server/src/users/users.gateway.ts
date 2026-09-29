@@ -44,7 +44,8 @@ export class UsersGateway implements OnGatewayInit<UsersServer> {
     });
   }
 
-  // The User a valid access token names. A missing, expired or altered token, or one signed with another key, rejects.
+  // The User a valid access token names. A missing, expired or altered token, one signed with another key, or an
+  // Administrator's token rejects.
   private async verify(token: unknown): Promise<SignedInUser> {
     if (typeof token !== 'string') {
       throw new TypeError('No access token');

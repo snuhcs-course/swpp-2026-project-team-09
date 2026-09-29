@@ -31,9 +31,13 @@ afterAll(async () => {
   await app.close();
 });
 
-// An access token as the main server signs it: ES256, the User's id as the subject, valid for 1 hour.
+// An access token as the main server signs it for a User: ES256, the User's id as the subject, for the app, valid for 1
+// hour.
 function accessToken(userId: string): string {
-  return new JwtService().sign({ sub: userId }, { privateKey, algorithm: 'ES256', expiresIn: '1h' });
+  return new JwtService().sign(
+    { sub: userId },
+    { privateKey, algorithm: 'ES256', audience: 'snu-now-app', expiresIn: '1h' },
+  );
 }
 
 // Opens a Socket.IO connection as the app does. Resolves once the server accepts it, and rejects with the server's
@@ -73,7 +77,7 @@ describe('A socket connection', () => {
   it('is refused with an expired access token', async () => {
     const now = Math.floor(Date.now() / 1000);
     const expired = new JwtService().sign(
-      { sub: randomUUID(), iat: now - 2 * HOUR, exp: now - HOUR },
+      { sub: randomUUID(), aud: 'snu-now-app', iat: now - 2 * HOUR, exp: now - HOUR },
       { privateKey, algorithm: 'ES256' },
     );
 
@@ -91,9 +95,19 @@ describe('A socket connection', () => {
   it('is refused with an access token signed with another key', async () => {
     const forged = new JwtService().sign(
       { sub: randomUUID() },
-      { privateKey: es256KeyPair().privateKey, algorithm: 'ES256', expiresIn: '1h' },
+      { privateKey: es256KeyPair().privateKey, algorithm: 'ES256', audience: 'snu-now-app', expiresIn: '1h' },
     );
 
     await expect(connect({ token: forged })).rejects.toThrow('Unauthorized');
+  });
+
+  it("is refused with an Administrator's access token", async () => {
+    // As the main server signs it for an Administrator: for the administrative routes, valid for 8 hours.
+    const administratorToken = new JwtService().sign(
+      { sub: randomUUID() },
+      { privateKey, algorithm: 'ES256', audience: 'snu-now-admin', expiresIn: '8h' },
+    );
+
+    await expect(connect({ token: administratorToken })).rejects.toThrow('Unauthorized');
   });
 });
