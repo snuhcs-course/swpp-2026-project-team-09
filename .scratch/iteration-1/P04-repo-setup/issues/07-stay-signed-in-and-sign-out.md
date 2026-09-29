@@ -35,7 +35,9 @@ Agreed with 김태현 before the implementation.
 
 ### How a refresh stays atomic (2026-09-29)
 
-`AuthService.refresh` reads the token by its hash and refuses it when it is unknown or expired. An interactive transaction (`$transaction(async (tx) => …)`) then revokes it with `updateMany({ where: { id, revokedAt: null } })` and stores a replacement only when that revoked one row. Prisma sends the revocation as a single `UPDATE … WHERE id = $1 AND revoked_at IS NULL` (checked in its query log). Under PostgreSQL's default isolation, a second request that updates the same row waits for the first to commit and checks `revoked_at IS NULL` again, so it matches no row. That request, like a token that was already revoked when it was read, stores nothing and revokes the family.
+`AuthService.refresh` reads the token by its hash and refuses it when it is unknown or expired. An interactive transaction (`$transaction(async (tx) => …)`) then locks the User's row, revokes the token with `updateMany({ where: { id, revokedAt: null } })` and stores a replacement only when that revoked one row. When it revoked none, the token was used before: the same transaction revokes its family, and the request gets 401.
+
+Sign-out locks the User's row too, then revokes the User's tokens and turns the Master Switch off in the same transaction. `UsersService.lock` takes the lock with `SELECT … FOR NO KEY UPDATE`, the lock an `UPDATE` of the row takes, so storing a row that refers to the User, such as a sign-in's refresh token, does not wait for it. A refresh, a family revocation and a sign-out of one User therefore run one after another, and each sees the tokens stored before it. Without the lock, under PostgreSQL's default isolation, a statement sees only the rows committed when it started: a sign-out or a family revocation that ran while a refresh stored its replacement waited for the used token, found it revoked, and missed the replacement. The review of PR #9 found this.
 
 Access tokens are checked with the public key alone, so one issued before a sign-out or a revoked family stays valid until it expires, at most 1 hour later.
 
@@ -44,6 +46,8 @@ Access tokens are checked with the public key alone, so one issued before a sign
 The tests are in `test/refresh.e2e-spec.ts` and `test/sign-out.e2e-spec.ts`. They did not fit in `test/auth.e2e-spec.ts`: oxlint's `max-lines` (300) and `max-lines-per-function` (50) apply to test files too. `refresh()`, `postRefreshToken()`, `refreshTokenHash()` and `getMe()` sit beside `signIn()` in `test/sign-in.ts`, and a test that needs one User on two phones signs in twice with a subject from `newGoogleSubject()` in `test/google.ts`. An expired token and a Master Switch that is on are set in the database, because no route sets them.
 
 The first test of simultaneous refreshes sent two requests and passed even against an implementation that checks `revoked_at` first and then updates without the condition. Timing logs showed why: the pool opens database connections on demand, opening one took longer than a whole refresh, and so the requests reached the database one after another. The test now opens connections with ten simultaneous sign-ins, then sends ten refreshes at once. Against that implementation, 5 to 7 of the ten succeeded in every run; the real implementation passed every run.
+
+Two tests make requests overlap in the database with `overlap()` in `test/overlap.ts`. The test locks a stored refresh token with its own connection, sends the first request, sends the second once the first waits for that lock, and releases the lock once both wait; `pg_blocking_pids` tells it who waits. One test refreshes on one phone while another phone signs out, the other refreshes while a used token of the same family comes back. Against the implementation without the lock, the replacement kept working in both tests in every run.
 
 Red before green. Each change below failed the matching tests and no others:
 
@@ -54,6 +58,8 @@ Red before green. Each change below failed the matching tests and no others:
 - The new token keeping the old expiry: 30 days from the refresh.
 - Sign-out leaving the Master Switch: the Master Switch after sign-out.
 - Sign-out revoking nothing: every token revoked after sign-out.
+- Sign-out without the lock: the sign-out during a refresh.
+- The refresh without the lock: both overlapping tests.
 
 In about 110 runs of the refresh tests, "keeps the User's other sign-ins" failed twice with supertest's `socket hang up`, once against the real implementation and once against one of the changes above. Thirty further runs each of the refresh and the sign-in tests, and fifteen runs of the whole suite, did not reproduce it. The cause is not known.
 

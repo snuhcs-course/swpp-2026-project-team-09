@@ -6,6 +6,7 @@ import request from 'supertest';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { newGoogleSubject } from './google.js';
+import { overlap } from './overlap.js';
 import { getMe, postRefreshToken, refresh, refreshTokenHash, signIn, tokensSchema } from './sign-in.js';
 import { startApp } from './start-app.js';
 
@@ -129,8 +130,10 @@ describe('A refresh token used twice', () => {
 
     expect((await postRefreshToken(app, otherPhone.refreshToken)).status).toBe(200);
   });
+});
 
-  it('lets one of several refreshes at the same moment succeed and revokes what it got', async () => {
+describe('Refreshes at the same moment', () => {
+  it('with one token let one succeed and revoke what it got', async () => {
     const { refreshToken } = await signIn(app);
     // The server opens database connections as requests need them. Opening one takes longer than a whole refresh, so
     // simultaneous sign-ins open them first; otherwise the refreshes would reach the database one after another.
@@ -142,6 +145,23 @@ describe('A refresh token used twice', () => {
     expect(statuses.filter((status) => status === 200)).toHaveLength(1);
     expect(statuses.filter((status) => status === 401)).toHaveLength(9);
     const renewed = tokensSchema.parse(responses[statuses.indexOf(200)]?.body);
+    expect((await postRefreshToken(app, renewed.refreshToken)).status).toBe(401);
+  });
+
+  it('revoke the token one stores while the other brings back a used token of its family', async () => {
+    const used = (await signIn(app)).refreshToken;
+    const current = (await refresh(app, used)).refreshToken;
+
+    const [refreshed, reused] = await overlap(
+      prisma,
+      current,
+      () => postRefreshToken(app, current),
+      () => postRefreshToken(app, used),
+    );
+
+    expect(refreshed.status).toBe(200);
+    expect(reused.status).toBe(401);
+    const renewed = tokensSchema.parse(refreshed.body);
     expect((await postRefreshToken(app, renewed.refreshToken)).status).toBe(401);
   });
 });

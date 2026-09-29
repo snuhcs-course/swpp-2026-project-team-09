@@ -5,7 +5,8 @@ import request from 'supertest';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { newGoogleSubject } from './google.js';
-import { postRefreshToken, refresh, signIn } from './sign-in.js';
+import { overlap } from './overlap.js';
+import { postRefreshToken, refresh, signIn, tokensSchema } from './sign-in.js';
 import { startApp } from './start-app.js';
 
 const settings = inject('settings');
@@ -63,6 +64,27 @@ describe('Sign-out', () => {
     const response = await postSignOut();
 
     expect(response.status).toBe(401);
+  });
+});
+
+// One phone refreshes while another signs out, and both reach the database at the same moment.
+describe('Sign-out during a refresh', () => {
+  it('revokes the token the refresh stores', async () => {
+    const sub = newGoogleSubject();
+    const firstPhone = await signIn(app, { sub });
+    const secondPhone = await signIn(app, { sub });
+
+    const [refreshed, signedOut] = await overlap(
+      prisma,
+      secondPhone.refreshToken,
+      () => postRefreshToken(app, secondPhone.refreshToken),
+      () => postSignOut(firstPhone.accessToken),
+    );
+
+    expect(refreshed.status).toBe(200);
+    expect(signedOut.status).toBe(204);
+    const renewed = tokensSchema.parse(refreshed.body);
+    expect((await postRefreshToken(app, renewed.refreshToken)).status).toBe(401);
   });
 });
 

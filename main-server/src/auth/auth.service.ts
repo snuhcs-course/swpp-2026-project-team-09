@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { createHash, randomBytes } from 'node:crypto';
 import { PrismaService } from '../common/prisma.service.js';
 import { Settings } from '../common/settings.js';
+import { Prisma } from '../generated/prisma/client.js';
 import { UsersService } from '../users/users.service.js';
 import { AccessTokenPayload } from './access-token.guard.js';
 import { TokensDto } from './dto/tokens.dto.js';
@@ -34,6 +35,15 @@ function newRefreshToken(): NewRefreshToken {
     token,
     stored: { tokenHash: hashRefreshToken(token), expiresAt: new Date(Date.now() + REFRESH_TOKEN_LIFETIME_MS) },
   };
+}
+
+// Revokes the matching tokens that are not revoked yet.
+function revokeRefreshTokens(
+  tx: Prisma.TransactionClient,
+  where: Prisma.RefreshTokenWhereInput,
+  revokedAt: Date,
+): Promise<Prisma.BatchPayload> {
+  return tx.refreshToken.updateMany({ where: { ...where, revokedAt: null }, data: { revokedAt } });
 }
 
 @Injectable()
@@ -73,13 +83,15 @@ export class AuthService {
       throw new UnauthorizedException(REFRESH_TOKEN_REFUSED);
     }
     const replacement = await this.prisma.$transaction(async (tx) => {
-      // Matches only a token that is not revoked yet, and PostgreSQL checks that again after waiting for a concurrent
-      // revocation of the same row. Of two requests with the same token, only one revokes it and stores a replacement.
-      const revoked = await tx.refreshToken.updateMany({
-        where: { id: used.id, revokedAt: null },
-        data: { revokedAt: now },
-      });
+      // A refresh and a sign-out lock the User first, so they run one after another and each sees the tokens the one
+      // before it stored. Otherwise a sign-out or a family revocation would miss a token that a refresh stores.
+      await this.users.lock(used.userId, tx);
+      // Of two requests with the same token, the second finds it revoked.
+      const revoked = await revokeRefreshTokens(tx, { id: used.id }, now);
       if (revoked.count === 0) {
+        // The token was used before. Whoever holds the other copy may have stolen it, so every token of its family is
+        // revoked (RFC 9700, section 4.14.2), the one that replaced it included.
+        await revokeRefreshTokens(tx, { familyId: used.familyId }, now);
         return null;
       }
       const issued = newRefreshToken();
@@ -87,12 +99,6 @@ export class AuthService {
       return issued;
     });
     if (replacement === null) {
-      // The token was used before. Whoever holds the other copy may have stolen it, so every token of its family is
-      // revoked (RFC 9700, section 4.14.2), the one that replaced it included.
-      await this.prisma.refreshToken.updateMany({
-        where: { familyId: used.familyId, revokedAt: null },
-        data: { revokedAt: now },
-      });
       throw new UnauthorizedException(REFRESH_TOKEN_REFUSED);
     }
     return { accessToken: await this.signAccessToken(used.userId), refreshToken: replacement.token };
@@ -101,10 +107,12 @@ export class AuthService {
   // Revokes every refresh token of the User, on every phone, and turns the Master Switch off so that the User's
   // location is not shared after they leave. Access tokens already issued stay valid until they expire.
   async signOut(userId: string): Promise<void> {
-    await this.prisma.$transaction([
-      this.prisma.refreshToken.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } }),
-      this.prisma.user.update({ where: { id: userId }, data: { masterSwitch: false } }),
-    ]);
+    await this.prisma.$transaction(async (tx) => {
+      // As a refresh does, so that a refresh under way on another phone has stored its token before the revocation.
+      await this.users.lock(userId, tx);
+      await revokeRefreshTokens(tx, { userId }, new Date());
+      await this.users.turnOffMasterSwitch(userId, tx);
+    });
   }
 
   private signAccessToken(userId: string): Promise<string> {
