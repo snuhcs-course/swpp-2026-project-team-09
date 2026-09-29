@@ -142,6 +142,6 @@ A repository that holds six independent projects: four servers, the admin site a
 
 - The repository conventions merged earlier (agent documents, code owners, pull request template) were preparatory work for this task.
 - P16 adds a seventh project at the repository root for the tests that run the servers together.
-- The schedule names 김태현 as the worker. 윤유상 builds the main server first as the pattern.
+- The main server is built first, as the pattern for the other servers.
 - To verify early: type-aware linting with TypeScript 6, the database image on Apple Silicon, and that a real SNU account's ID token carries the hosted domain claim while a Gmail account's does not.
 - Backend work that the schedule's frontend tasks assume already exists is assigned as follows: sign-in, account and profile here; timetable and Private Events in P06; administration in P12; everything else in P07 and P08.

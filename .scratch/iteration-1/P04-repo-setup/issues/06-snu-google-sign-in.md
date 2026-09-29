@@ -30,8 +30,6 @@ Refresh and sign-out are ticket 07. The sign-in screen belongs to P06.
 
 ### Decisions tickets 07–11 build on (2026-09-29)
 
-Agreed with 김태현 before the implementation.
-
 - **Access tokens**: ES256 JWTs signed with `@nestjs/jwt` (`JwtModule.registerAsync` in `AuthModule`). The payload is `{ sub: <User id> }` plus `aud` (`snu-now-app`), `iat` and `exp`, valid for 1 hour. Administrator status is not in it (ticket 09).
 - **Keys**: `ACCESS_TOKEN_PRIVATE_KEY` (PKCS#8) and `ACCESS_TOKEN_PUBLIC_KEY` (SPKI) hold PEM text on one line with `\n`. `pnpm keys:generate >> .env` appends a new pair. Startup checks the PEM header, the P-256 curve and that the two form a pair. Ticket 11 gives the socket server `ACCESS_TOKEN_PUBLIC_KEY` only and verifies with `@nestjs/jwt` and `algorithms: ['ES256']`.
 - **Routes**: `POST /auth/google` takes `{ idToken }` and answers 200 `{ accessToken, refreshToken }`. `GET /users/me` answers `{ id, email }`. Ticket 07 adds its routes under `/auth`, and ticket 08 extends `/users/me`.
@@ -55,7 +53,7 @@ zod 4 runs an object-level `refine` even after a field inside it has failed. The
 
 ### Manual check with real Google accounts (2026-09-29)
 
-윤유상 got ID tokens from the OAuth 2.0 Playground with the app's web client and the scopes `openid email profile`, and sent each one to the running main server.
+ID tokens from the OAuth 2.0 Playground, issued to the app's web client with the scopes `openid email profile`, were sent to the running main server.
 
 - SNU account: the token had `aud` equal to the app's client ID, `hd: 'snu.ac.kr'` and `email_verified: true`. `POST /auth/google` answered 200. The database then held one User, with a UUID v4 id and an `@snu.ac.kr` email, and one refresh token.
 - Gmail account: the token had the same `aud`, no `hd` and `email_verified: true`. `POST /auth/google` answered 403 `Sign in with an SNU Google account (snu.ac.kr).` No User was created.

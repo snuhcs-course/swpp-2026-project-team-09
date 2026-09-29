@@ -96,8 +96,8 @@ stored response) and leaving out the store (no record in Redis).
 ### Lint (2026-09-29)
 
 The documentation's store breaks three rules: `no-non-null-assertion` (`response!`), `no-unsafe-type-assertion`
-(`as AcquireReply`) and `no-unsafe-assignment` (`JSON.parse`). 윤유상 chose a file-level `oxlint-disable` for these
-three rules, so that the store stays as the documentation writes it; other rules still apply in that file.
+(`as AcquireReply`) and `no-unsafe-assignment` (`JSON.parse`). A file-level `oxlint-disable` turns off these three
+rules, so that the store stays as the documentation writes it; other rules still apply in that file.
 `.oxlintrc.json` is unchanged.
 
 When Redis cannot be reached, the new client logs `[ioredis] Unhandled error event` on each reconnection attempt,
