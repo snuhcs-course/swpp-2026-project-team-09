@@ -1,11 +1,12 @@
 import { INestApplication } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { createHash, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { refresh, signIn, tokensSchema } from './sign-in.js';
+import { newGoogleSubject } from './google.js';
+import { getMe, postRefreshToken, refresh, refreshTokenHash, signIn, tokensSchema } from './sign-in.js';
 import { startApp } from './start-app.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -25,19 +26,6 @@ afterAll(async () => {
   await app.close();
 });
 
-function postRefreshToken(refreshToken: string): request.Test {
-  return request(app.getHttpServer()).post('/auth/refresh').send({ refreshToken });
-}
-
-function getMe(accessToken: string): request.Test {
-  return request(app.getHttpServer()).get('/users/me').auth(accessToken, { type: 'bearer' });
-}
-
-// What the server stores of a refresh token.
-function refreshTokenHash(refreshToken: string): string {
-  return createHash('sha256').update(refreshToken).digest('hex');
-}
-
 // Moves the stored expiry of a refresh token, as if it had been issued at another time.
 async function setExpiry(refreshToken: string, expiresAt: Date): Promise<void> {
   await prisma.refreshToken.update({ where: { tokenHash: refreshTokenHash(refreshToken) }, data: { expiresAt } });
@@ -49,21 +37,21 @@ describe('Refresh', () => {
   it('exchanges a refresh token for a new access token and a new refresh token of the same User', async () => {
     const signedIn = await signIn(app);
 
-    const response = await postRefreshToken(signedIn.refreshToken);
+    const response = await postRefreshToken(app, signedIn.refreshToken);
 
     expect(response.status).toBe(200);
     const renewed = tokensSchema.parse(response.body);
     expect(renewed.refreshToken).not.toBe(signedIn.refreshToken);
-    const me = await getMe(renewed.accessToken);
+    const me = await getMe(app, renewed.accessToken);
     expect(me.status).toBe(200);
-    expect(me.body).toEqual((await getMe(signedIn.accessToken)).body);
+    expect(me.body).toEqual((await getMe(app, signedIn.accessToken)).body);
   });
 
   it('refuses the refresh token once it has been exchanged', async () => {
     const { refreshToken } = await signIn(app);
     await refresh(app, refreshToken);
 
-    const response = await postRefreshToken(refreshToken);
+    const response = await postRefreshToken(app, refreshToken);
 
     expect(response.status).toBe(401);
     expect(response.body).toMatchObject(refused);
@@ -72,7 +60,7 @@ describe('Refresh', () => {
   it('keeps the User signed in from one refresh to the next', async () => {
     const renewed = await refresh(app, (await signIn(app)).refreshToken);
 
-    expect((await postRefreshToken(renewed.refreshToken)).status).toBe(200);
+    expect((await postRefreshToken(app, renewed.refreshToken)).status).toBe(200);
   });
 
   it('stores the new refresh token hashed and valid for 30 days from the refresh', async () => {
@@ -97,14 +85,14 @@ describe('Refresh refused', () => {
     const { refreshToken } = await signIn(app);
     await setExpiry(refreshToken, new Date(Date.now() - 1000));
 
-    const response = await postRefreshToken(refreshToken);
+    const response = await postRefreshToken(app, refreshToken);
 
     expect(response.status).toBe(401);
     expect(response.body).toMatchObject(refused);
   });
 
   it('refuses an unknown refresh token', async () => {
-    const response = await postRefreshToken(randomBytes(32).toString('base64url'));
+    const response = await postRefreshToken(app, randomBytes(32).toString('base64url'));
 
     expect(response.status).toBe(401);
     expect(response.body).toMatchObject(refused);
@@ -123,22 +111,23 @@ describe('A refresh token used twice', () => {
   it('revokes the tokens that replaced it', async () => {
     const { refreshToken } = await signIn(app);
     const renewed = await refresh(app, refreshToken);
-    await postRefreshToken(refreshToken);
+    await postRefreshToken(app, refreshToken);
 
-    const response = await postRefreshToken(renewed.refreshToken);
+    const response = await postRefreshToken(app, renewed.refreshToken);
 
     expect(response.status).toBe(401);
     expect(response.body).toMatchObject(refused);
   });
 
   it("keeps the User's other sign-ins", async () => {
-    const otherPhone = await signIn(app, { sub: '100000000000000000006' });
-    const { refreshToken } = await signIn(app, { sub: '100000000000000000006' });
+    const sub = newGoogleSubject();
+    const otherPhone = await signIn(app, { sub });
+    const { refreshToken } = await signIn(app, { sub });
     await refresh(app, refreshToken);
 
-    await postRefreshToken(refreshToken);
+    await postRefreshToken(app, refreshToken);
 
-    expect((await postRefreshToken(otherPhone.refreshToken)).status).toBe(200);
+    expect((await postRefreshToken(app, otherPhone.refreshToken)).status).toBe(200);
   });
 
   it('lets one of several refreshes at the same moment succeed and revokes what it got', async () => {
@@ -147,12 +136,12 @@ describe('A refresh token used twice', () => {
     // simultaneous sign-ins open them first; otherwise the refreshes would reach the database one after another.
     await Promise.all(Array.from({ length: 10 }, () => signIn(app)));
 
-    const responses = await Promise.all(Array.from({ length: 10 }, () => postRefreshToken(refreshToken)));
+    const responses = await Promise.all(Array.from({ length: 10 }, () => postRefreshToken(app, refreshToken)));
 
     const statuses = responses.map(({ status }) => status);
     expect(statuses.filter((status) => status === 200)).toHaveLength(1);
     expect(statuses.filter((status) => status === 401)).toHaveLength(9);
     const renewed = tokensSchema.parse(responses[statuses.indexOf(200)]?.body);
-    expect((await postRefreshToken(renewed.refreshToken)).status).toBe(401);
+    expect((await postRefreshToken(app, renewed.refreshToken)).status).toBe(401);
   });
 });

@@ -41,7 +41,7 @@ Access tokens are checked with the public key alone, so one issued before a sign
 
 ### Tests (2026-09-29)
 
-The tests are in `test/refresh.e2e-spec.ts` and `test/sign-out.e2e-spec.ts`. They did not fit in `test/auth.e2e-spec.ts`: oxlint's `max-lines` (300) and `max-lines-per-function` (50) apply to test files too. `refresh()` sits beside `signIn()` in `test/sign-in.ts`. An expired token and a Master Switch that is on are set in the database, because no route sets them.
+The tests are in `test/refresh.e2e-spec.ts` and `test/sign-out.e2e-spec.ts`. They did not fit in `test/auth.e2e-spec.ts`: oxlint's `max-lines` (300) and `max-lines-per-function` (50) apply to test files too. `refresh()`, `postRefreshToken()`, `refreshTokenHash()` and `getMe()` sit beside `signIn()` in `test/sign-in.ts`, and a test that needs one User on two phones signs in twice with a subject from `newGoogleSubject()` in `test/google.ts`. An expired token and a Master Switch that is on are set in the database, because no route sets them.
 
 The first test of simultaneous refreshes sent two requests and passed even against an implementation that checks `revoked_at` first and then updates without the condition. Timing logs showed why: the pool opens database connections on demand, opening one took longer than a whole refresh, and so the requests reached the database one after another. The test now opens connections with ten simultaneous sign-ins, then sends ten refreshes at once. Against that implementation, 5 to 7 of the ten succeeded in every run; the real implementation passed every run.
 

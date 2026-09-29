@@ -35,14 +35,18 @@ export function googleClientIds(): string[] {
   return inject('settings').GOOGLE_CLIENT_IDS.split(',');
 }
 
+// Google's subject identifiers are strings of up to 21 digits. A new one stands for a new Google account.
+export function newGoogleSubject(): string {
+  return String(randomInt(2 ** 47));
+}
+
 // A Google ID token for a new SNU account, issued to the app. Pass claims to change them.
 export function googleIdToken(claims: Partial<TokenPayload> = {}, privateKey = googleKeys.privateKey): string {
   const now = Math.floor(Date.now() / 1000);
   const payload: TokenPayload = {
     iss: 'https://accounts.google.com',
     aud: googleClientIds()[0] ?? '',
-    // Google's subject identifiers are strings of up to 21 digits.
-    sub: String(randomInt(2 ** 47)),
+    sub: newGoogleSubject(),
     email: 'student@snu.ac.kr',
     email_verified: true,
     hd: 'snu.ac.kr',
