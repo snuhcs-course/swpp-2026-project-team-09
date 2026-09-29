@@ -102,10 +102,14 @@ Several first runs also failed one or two unrelated tests: the health hook with 
 
 ### Agent usage (2026-09-29)
 
-- Agent time: about 2 hours 50 minutes, an estimate, summed over the sessions below. Time spent waiting for answers is left out.
+- Agent time: about 3 hours 5 minutes, an estimate, summed over the sessions below. Time spent waiting for answers is left out.
   - The planning session, in the worktree `admiring-dhawan-e58033`, worked about 50 minutes on this ticket: the decision, the ticket, the review and the pull request. That includes about 5 minutes waiting for its two review subagents.
   - Subagents: the session-policy research about 12 minutes, the implementation about 99 minutes (87 for the first pass, 12 for the review fixes), and the Standards and Spec reviews about 4 and 5 minutes, at the same time.
+  - The review-feedback session, in the worktree `ticket-review-feedback-09cfc6`, worked about 15 minutes: dropping who registered an Administrator and when, trimming comments, the tests the review asked for, and its Standards and Spec reviews, about 3 minutes each at the same time.
 - Tokens, for the planning session from the decision on and its four subagents, counted when this section was written:
   - Input: 79,413,099 in total, of which 77,123,515 were cache reads, 2,289,014 cache writes and 570 uncached.
   - Output: 114,278. The subagents' transcripts record only a few output tokens for most of their steps, so their share, 36,731, is a lower bound.
+- Tokens, for the review-feedback session and its two review subagents, counted when this section was written:
+  - Input: 11,620,314 in total, of which 11,219,862 were cache reads, 400,274 cache writes and 178 uncached.
+  - Output: 52,776, of which the subagents' 2,232 is a lower bound for the same reason.
 - Not included: the research on signing in on a second device, which belongs to a later ticket.
