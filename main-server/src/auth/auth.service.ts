@@ -8,6 +8,7 @@ import { Prisma } from '../generated/prisma/client.js';
 import { UsersService } from '../users/users.service.js';
 import { AccessTokenPayload } from './access-token.guard.js';
 import { TokensDto } from './dto/tokens.dto.js';
+import { EndedSessions, SessionEnd } from './ended-sessions.js';
 import { GoogleIdTokenVerifier } from './google-id-token.verifier.js';
 
 // Google sets the hosted domain claim ("hd") only for accounts of a Google Workspace domain. An @snu.ac.kr email
@@ -37,14 +38,20 @@ function newRefreshToken(): NewRefreshToken {
   };
 }
 
-// Revokes the matching tokens that are not revoked yet. Call it after UsersService.lock on the tokens' User, in the
-// same transaction, as refresh and sign-out do; otherwise it misses a token that a refresh is storing at that moment.
-function revokeRefreshTokens(
+// Revokes the matching tokens that are not revoked yet and answers the sessions (families) they belonged to. Call it
+// after UsersService.lock on the tokens' User, in the same transaction, as sign-in, refresh and sign-out do; otherwise
+// it misses a token that a refresh is storing at that moment.
+async function revokeRefreshTokens(
   tx: Prisma.TransactionClient,
   where: Prisma.RefreshTokenWhereInput,
   revokedAt: Date,
-): Promise<Prisma.BatchPayload> {
-  return tx.refreshToken.updateMany({ where: { ...where, revokedAt: null }, data: { revokedAt } });
+): Promise<string[]> {
+  const revoked = await tx.refreshToken.updateManyAndReturn({
+    where: { ...where, revokedAt: null },
+    data: { revokedAt },
+    select: { familyId: true },
+  });
+  return [...new Set(revoked.map(({ familyId }) => familyId))];
 }
 
 @Injectable()
@@ -55,6 +62,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly prisma: PrismaService,
     private readonly settings: ConfigService<Settings, true>,
+    private readonly endedSessions: EndedSessions,
   ) {}
 
   // Signs in with a Google ID token. The first sign-in of a Google account creates its User.
@@ -72,10 +80,16 @@ export class AuthService {
       throw new ForbiddenException("The Google account's email address is not verified.");
     }
     const user = await this.users.findOrCreate(claims.sub, claims.email);
-    // The database gives the token a new family: every sign-in starts one.
     const refreshToken = newRefreshToken();
-    await this.prisma.refreshToken.create({ data: { userId: user.id, ...refreshToken.stored } });
-    return { accessToken: await this.signAccessToken(user.id), refreshToken: refreshToken.token };
+    const { familyId } = await this.prisma.$transaction(async (tx) => {
+      // A User has one session. The lock makes a refresh under way on the other phone store its token before the
+      // revocation, as for a sign-out.
+      await this.users.lock(user.id, tx);
+      await this.endSessions(tx, { userId: user.id }, 'replaced');
+      // The database gives the token a new family: every sign-in starts one.
+      return tx.refreshToken.create({ data: { userId: user.id, ...refreshToken.stored } });
+    });
+    return { accessToken: await this.signAccessToken(user.id, familyId), refreshToken: refreshToken.token };
   }
 
   // Exchanges a refresh token for new tokens. The used token is revoked, and a new one of its family replaces it.
@@ -87,41 +101,52 @@ export class AuthService {
     if (used === null || (used.revokedAt === null && used.expiresAt <= now)) {
       throw new UnauthorizedException(REFRESH_TOKEN_REFUSED);
     }
-    const replacement = await this.prisma.$transaction(async (tx) => {
-      // A refresh and a sign-out lock the User first, so they run one after another and each sees the tokens the one
-      // before it stored. Otherwise a sign-out or a family revocation would miss a token that a refresh stores.
+    const renewed = await this.prisma.$transaction(async (tx) => {
+      // A sign-in, a refresh and a sign-out lock the User first, so they run one after another and each sees the tokens
+      // the one before it stored. Otherwise a revocation would miss a token that a refresh stores.
       await this.users.lock(used.userId, tx);
       // Of two requests with the same token, the second finds it revoked.
       const revoked = await revokeRefreshTokens(tx, { id: used.id }, now);
-      if (revoked.count === 0) {
+      if (revoked.length === 0) {
         // The token was used before. Whoever holds the other copy may have stolen it, so every token of its family is
-        // revoked (RFC 9700, section 4.14.2), the one that replaced it included.
-        await revokeRefreshTokens(tx, { familyId: used.familyId }, now);
+        // revoked (RFC 9700, section 4.14.2), the one that replaced it included, and its session ends.
+        await this.endSessions(tx, { familyId: used.familyId }, 'ended');
         return null;
       }
       const issued = newRefreshToken();
       await tx.refreshToken.create({ data: { userId: used.userId, familyId: used.familyId, ...issued.stored } });
-      return issued;
+      // Signed before the commit, so that an end of the session, which waits for it, is recorded after the access
+      // token was issued and outlasts it.
+      return { accessToken: await this.signAccessToken(used.userId, used.familyId), refreshToken: issued.token };
     });
-    if (replacement === null) {
+    if (renewed === null) {
       throw new UnauthorizedException(REFRESH_TOKEN_REFUSED);
     }
-    return { accessToken: await this.signAccessToken(used.userId), refreshToken: replacement.token };
+    return renewed;
   }
 
-  // Revokes every refresh token of the User, on every phone, and turns the Master Switch off so that the User's
-  // location is not shared after they leave. Access tokens already issued stay valid until they expire.
+  // Turns the Master Switch off so that the User's location is not shared after they leave.
   async signOut(userId: string): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      // As a refresh does, so that a refresh under way on another phone has stored its token before the revocation.
+      // As a refresh does, so that a refresh under way has stored its token before the revocation.
       await this.users.lock(userId, tx);
-      await revokeRefreshTokens(tx, { userId }, new Date());
+      await this.endSessions(tx, { userId }, 'ended');
       await this.users.turnOffMasterSwitch(userId, tx);
     });
   }
 
-  private signAccessToken(userId: string): Promise<string> {
-    const payload: AccessTokenPayload = { sub: userId };
+  // Recorded before the transaction commits, so that a failure leaves the sessions refused rather than open. A session
+  // whose tokens were all revoked before has ended already and keeps the record it got then.
+  private async endSessions(
+    tx: Prisma.TransactionClient,
+    where: Prisma.RefreshTokenWhereInput,
+    end: SessionEnd,
+  ): Promise<void> {
+    await this.endedSessions.record(await revokeRefreshTokens(tx, where, new Date()), end);
+  }
+
+  private signAccessToken(userId: string, sessionId: string): Promise<string> {
+    const payload: AccessTokenPayload = { sub: userId, sid: sessionId };
     return this.jwt.signAsync(payload);
   }
 }

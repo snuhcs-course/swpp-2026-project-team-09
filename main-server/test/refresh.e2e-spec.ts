@@ -120,11 +120,24 @@ describe('A refresh token used twice', () => {
     expect(response.body).toMatchObject(refused);
   });
 
-  it("keeps the User's other sign-ins", async () => {
+  it("refuses the session's access tokens from the next request on", async () => {
+    const signedIn = await signIn(app);
+    const renewed = await refresh(app, signedIn.refreshToken);
+
+    await postRefreshToken(app, signedIn.refreshToken);
+
+    const responses = await Promise.all([signedIn, renewed].map(({ accessToken }) => getMe(app, accessToken)));
+    for (const response of responses) {
+      expect(response.status).toBe(401);
+      expect(response.body).not.toHaveProperty('code');
+    }
+  });
+
+  it('keeps the session of a later sign-in', async () => {
     const sub = googleSubject();
-    const otherPhone = await signIn(app, { sub });
     const { refreshToken } = await signIn(app, { sub });
     await refresh(app, refreshToken);
+    const otherPhone = await signIn(app, { sub });
 
     await postRefreshToken(app, refreshToken);
 

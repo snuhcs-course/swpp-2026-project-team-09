@@ -16,6 +16,7 @@ const DAY = 24 * HOUR;
 
 interface AccessTokenPayload {
   sub: string;
+  sid: string;
   aud: string;
   iat: number;
   exp: number;
@@ -69,12 +70,20 @@ describe('Sign-in with an SNU Google account', () => {
     expect(verifyAccessToken(second.accessToken).sub).toBe(users[0]?.id);
   });
 
-  it('issues an access token for the User and the app, signed with the private key and valid for 1 hour', async () => {
+  it("issues an access token for the User's session, signed with the private key and valid for 1 hour", async () => {
     const { accessToken } = await signIn(app, { sub: '100000000000000000003' });
 
     const payload = verifyAccessToken(accessToken);
     const user = await prisma.user.findUniqueOrThrow({ where: { googleSubject: '100000000000000000003' } });
-    expect(payload).toEqual({ sub: user.id, aud: 'snu-now-app', iat: payload.iat, exp: payload.iat + HOUR });
+    // The session is the family of the refresh token the sign-in stored.
+    const { familyId } = await prisma.refreshToken.findFirstOrThrow({ where: { userId: user.id } });
+    expect(payload).toEqual({
+      sub: user.id,
+      sid: familyId,
+      aud: 'snu-now-app',
+      iat: payload.iat,
+      exp: payload.iat + HOUR,
+    });
   });
 
   it('stores the refresh token hashed and valid for 30 days', async () => {

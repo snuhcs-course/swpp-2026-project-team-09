@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { TokenPayload } from 'google-auth-library';
 import { createHash, randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
@@ -41,6 +42,10 @@ export async function refresh(app: INestApplication<Server>, refreshToken: strin
 // What the server stores of a refresh token.
 export function refreshTokenHash(refreshToken: string): string {
   return createHash('sha256').update(refreshToken).digest('hex');
+}
+
+export function sessionOf(accessToken: string): string {
+  return z.object({ sid: z.string() }).parse(new JwtService().decode(accessToken)).sid;
 }
 
 // GET /users/me stands for every route that needs an access token.

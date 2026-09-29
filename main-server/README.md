@@ -66,22 +66,31 @@ The app signs in with Google and sends the ID token it gets to the main server:
 - Only SNU accounts get in: the token's hosted domain claim must be `snu.ac.kr` and its email address verified. Another
   account gets 403. An invalid or expired ID token, or one issued to another client than the app's
   (`GOOGLE_APP_CLIENT_ID`), the admin site's included, gets 401.
-- The access token is valid for 1 hour, and its audience is `snu-now-app`. Send it as
-  `Authorization: Bearer <accessToken>`. `GET /users/me` answers the signed-in User. The refresh token is valid for 30
-  days, and only its hash is stored.
+- The access token is valid for 1 hour, and its audience is `snu-now-app`. It names the User (`sub`) and the session
+  (`sid`). Send it as `Authorization: Bearer <accessToken>`. `GET /users/me` answers the signed-in User. The refresh
+  token is valid for 30 days, and only its hash is stored.
+- A User has one session: the app signed in on one phone. A sign-in ends the session before it, on whatever phone, and
+  leaves the Master Switch as it is. The ended session's refresh token gets 401, and its access tokens get 401 from
+  the next request on, with `"code": "SESSION_REPLACED"` in the body, so that the app can tell the User that a sign-in
+  on another phone signed them out.
 - Once the access token has expired, `POST /auth/refresh` with `{ "refreshToken": "..." }` and no access token answers
   with new tokens in the same form. The refresh token is used up: the answer holds a new one, valid for 30 days from
   the refresh. An unknown, expired or revoked refresh token gets 401.
 - Send one refresh at a time. When a used refresh token comes back, even in a second request sent at the same moment,
-  the server takes it for a stolen copy: it revokes the tokens that replaced it, and the app has to sign in again. A
-  refresh whose answer was lost has the same effect.
-- `POST /auth/sign-out` with the access token answers 204. It revokes every refresh token of the User, on every phone,
-  and turns the User's Master Switch off. An access token already issued stays valid until it expires.
+  the server takes it for a stolen copy: it revokes the tokens that replaced it and ends the session, and the app has
+  to sign in again. A refresh whose answer was lost has the same effect.
+- `POST /auth/sign-out` with the access token answers 204. It revokes every refresh token of the User and turns the
+  User's Master Switch off.
+- The access tokens of a session that a sign-out or a used refresh token ended get the plain 401 from the next request
+  on, a second sign-out included. The ended sessions are kept in Redis for an hour, as long as an access token lasts, so
+  a User's route answers 503 while Redis cannot be reached; the app tries again later. The socket server reads them
+  too, and disconnects the session's connections within seconds.
 
 `GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID` are the OAuth client IDs of the app and the admin site; startup
 stops when they are the same. They are not secrets. Access tokens are signed with ES256 and
 `ACCESS_TOKEN_PRIVATE_KEY`. Another server that checks them is given only `ACCESS_TOKEN_PUBLIC_KEY`, never the private
-key; the socket server is the first, in ticket 11. It accepts a User's access token only.
+key; the socket server is the first, in ticket 11. It accepts a User's access token only, and refuses one whose session
+has ended.
 
 ## Administrators
 

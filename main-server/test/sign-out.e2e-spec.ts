@@ -6,7 +6,7 @@ import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { googleSubject } from './google.js';
 import { overlap } from './overlap.js';
-import { postRefreshToken, refresh, signIn, tokensSchema } from './sign-in.js';
+import { getMe, postRefreshToken, refresh, signIn, tokensSchema } from './sign-in.js';
 import { startApp } from './start-app.js';
 
 const settings = inject('settings');
@@ -32,15 +32,13 @@ function postSignOut(accessToken?: string): request.Test {
 describe('Sign-out', () => {
   it('revokes every refresh token of the User', async () => {
     const sub = googleSubject();
-    // Signed in on two phones, and the second one has refreshed its tokens since.
-    const firstPhone = await signIn(app, { sub });
-    const secondPhone = await refresh(app, (await signIn(app, { sub })).refreshToken);
+    // Refreshed since the sign-in, so that the session has a used token and the one that replaced it.
+    const { accessToken, refreshToken } = await refresh(app, (await signIn(app, { sub })).refreshToken);
 
-    const response = await postSignOut(firstPhone.accessToken);
+    const response = await postSignOut(accessToken);
 
     expect(response.status).toBe(204);
-    expect((await postRefreshToken(app, firstPhone.refreshToken)).status).toBe(401);
-    expect((await postRefreshToken(app, secondPhone.refreshToken)).status).toBe(401);
+    expect((await postRefreshToken(app, refreshToken)).status).toBe(401);
     const unrevoked = await prisma.refreshToken.count({ where: { user: { googleSubject: sub }, revokedAt: null } });
     expect(unrevoked).toBe(0);
   });
@@ -53,11 +51,15 @@ describe('Sign-out', () => {
     expect((await postRefreshToken(app, other.refreshToken)).status).toBe(200);
   });
 
-  it('answers the same when the User has already signed out', async () => {
+  it("refuses the session's access token from the next request on, a second sign-out included", async () => {
     const { accessToken } = await signIn(app);
+
     await postSignOut(accessToken);
 
-    expect((await postSignOut(accessToken)).status).toBe(204);
+    for (const response of [await getMe(app, accessToken), await postSignOut(accessToken)]) {
+      expect(response.status).toBe(401);
+      expect(response.body).not.toHaveProperty('code');
+    }
   });
 
   it('refuses a request without an access token', async () => {
@@ -67,18 +69,16 @@ describe('Sign-out', () => {
   });
 });
 
-// One phone refreshes while another signs out, and both reach the database at the same moment.
+// The app refreshes its tokens while the User signs out, and both reach the database at the same moment.
 describe('Sign-out during a refresh', () => {
   it('revokes the token the refresh stores', async () => {
-    const sub = googleSubject();
-    const firstPhone = await signIn(app, { sub });
-    const secondPhone = await signIn(app, { sub });
+    const { accessToken, refreshToken } = await signIn(app);
 
     const [refreshed, signedOut] = await overlap(
       prisma,
-      secondPhone.refreshToken,
-      () => postRefreshToken(app, secondPhone.refreshToken),
-      () => postSignOut(firstPhone.accessToken),
+      refreshToken,
+      () => postRefreshToken(app, refreshToken),
+      () => postSignOut(accessToken),
     );
 
     expect(refreshed.status).toBe(200);

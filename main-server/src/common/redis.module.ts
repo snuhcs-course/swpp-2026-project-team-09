@@ -17,6 +17,9 @@ export const REDIS = 'REDIS';
         new Redis({
           host: settings.get('REDIS_HOST', { infer: true }),
           port: settings.get('REDIS_PORT', { infer: true }),
+          // AccessTokenGuard reads Redis on every User's request, so a command fails after 1 second instead of waiting
+          // for the client to reconnect while Redis cannot be reached.
+          commandTimeout: 1000,
         }),
       inject: [ConfigService],
     },
