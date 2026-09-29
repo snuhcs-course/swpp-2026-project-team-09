@@ -62,9 +62,10 @@ const socket = io('http://localhost:3001', { auth: (cb) => cb({ token: getAccess
 ```
 
 The socket server checks the token itself with `ACCESS_TOKEN_PUBLIC_KEY`, without asking the main server. A valid token
-opens the connection, and the server keeps the User's id on it. A missing, expired or altered token, or one signed
-with another key, is refused before the connection opens: the app gets `connect_error` with the message `Unauthorized`,
-and Socket.IO does not reconnect by itself.
+opens the connection, and the server keeps the User's id on it. A missing, expired or altered token, one signed with
+another key, or an Administrator's token (see the [main server](../main-server/README.md#administrators)) is refused
+before the connection opens: the app gets `connect_error` with the message `Unauthorized`, and Socket.IO does not
+reconnect by itself.
 
 An open connection stays open after its token expires. When it drops, for example when the phone loses its signal,
 Socket.IO reconnects by itself and the token is checked again. With a fixed `auth: { token }`, Socket.IO would send the

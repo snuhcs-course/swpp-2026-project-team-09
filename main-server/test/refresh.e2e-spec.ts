@@ -5,7 +5,7 @@ import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { newGoogleSubject } from './google.js';
+import { googleSubject } from './google.js';
 import { overlap } from './overlap.js';
 import { getMe, postRefreshToken, refresh, refreshTokenHash, signIn, tokensSchema } from './sign-in.js';
 import { startApp } from './start-app.js';
@@ -121,7 +121,7 @@ describe('A refresh token used twice', () => {
   });
 
   it("keeps the User's other sign-ins", async () => {
-    const sub = newGoogleSubject();
+    const sub = googleSubject();
     const otherPhone = await signIn(app, { sub });
     const { refreshToken } = await signIn(app, { sub });
     await refresh(app, refreshToken);

@@ -4,7 +4,7 @@ import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { newGoogleSubject } from './google.js';
+import { googleSubject } from './google.js';
 import { overlap } from './overlap.js';
 import { postRefreshToken, refresh, signIn, tokensSchema } from './sign-in.js';
 import { startApp } from './start-app.js';
@@ -31,7 +31,7 @@ function postSignOut(accessToken?: string): request.Test {
 
 describe('Sign-out', () => {
   it('revokes every refresh token of the User', async () => {
-    const sub = newGoogleSubject();
+    const sub = googleSubject();
     // Signed in on two phones, and the second one has refreshed its tokens since.
     const firstPhone = await signIn(app, { sub });
     const secondPhone = await refresh(app, (await signIn(app, { sub })).refreshToken);
@@ -70,7 +70,7 @@ describe('Sign-out', () => {
 // One phone refreshes while another signs out, and both reach the database at the same moment.
 describe('Sign-out during a refresh', () => {
   it('revokes the token the refresh stores', async () => {
-    const sub = newGoogleSubject();
+    const sub = googleSubject();
     const firstPhone = await signIn(app, { sub });
     const secondPhone = await signIn(app, { sub });
 
@@ -90,7 +90,7 @@ describe('Sign-out during a refresh', () => {
 
 describe('Master Switch', () => {
   it('is off when the User is created', async () => {
-    const sub = newGoogleSubject();
+    const sub = googleSubject();
 
     await signIn(app, { sub });
 
@@ -99,7 +99,7 @@ describe('Master Switch', () => {
   });
 
   it('is turned off by sign-out', async () => {
-    const sub = newGoogleSubject();
+    const sub = googleSubject();
     const { accessToken } = await signIn(app, { sub });
     // Turning it on belongs to P06 and P08, so the test turns it on in the database.
     await prisma.user.update({ where: { googleSubject: sub }, data: { masterSwitch: true } });

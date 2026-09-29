@@ -7,11 +7,11 @@ SNU Now is a social map for Seoul National University's Gwanak campus. Its users
 ### People
 
 **User**:
-A person who signed in with an SNU Google account. User stories name this role "SNU student".
+A person who signed in to the app with an SNU Google account. User stories name this role "SNU student".
 _Avoid_: Member (a member belongs to a Party)
 
 **Administrator**:
-A team member allowed to confirm, publish and create Global Events.
+A team member who signs in to the admin site to confirm, publish and create Global Events. An Administrator is not a User, even when the same person also uses the app.
 _Avoid_: Organizer, manager
 
 **Avatar**:

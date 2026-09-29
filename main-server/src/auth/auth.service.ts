@@ -59,7 +59,9 @@ export class AuthService {
 
   // Signs in with a Google ID token. The first sign-in of a Google account creates its User.
   async signIn(idToken: string): Promise<TokensDto> {
-    const claims = await this.googleVerifier.verify(idToken, this.settings.get('GOOGLE_CLIENT_IDS', { infer: true }));
+    const claims = await this.googleVerifier.verify(idToken, [
+      this.settings.get('GOOGLE_APP_CLIENT_ID', { infer: true }),
+    ]);
     if (claims === undefined) {
       throw new UnauthorizedException('The Google ID token is invalid or expired.');
     }

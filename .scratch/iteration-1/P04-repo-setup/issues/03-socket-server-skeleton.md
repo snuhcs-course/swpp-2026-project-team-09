@@ -38,9 +38,9 @@ The socket server joins messaging as a receiver (`connectMicroservice` in `main.
 
 ### Feature module note (2026-09-29)
 
-The health module was created by following the main server's note: `pnpm exec nest g module health` and `pnpm exec nest g controller health --no-spec`. The generator wrote the `.js` import extensions that ES modules need and added the module to `AppModule`, so steps 1 and 2 work as written. The generated module lacked a trailing comma, which step 8's `pnpm format` fixes.
+The health module was created by following the main server's note: `pnpm exec nest g module health` and `pnpm exec nest g controller health --no-spec`. The generator wrote the `.js` import extensions that ES modules need and added the module to `AppModule`, so steps 1 and 2 work as written. The generated module lacked a trailing comma, which step 9's `pnpm format` fixes.
 
-Two steps name things only the main server has: step 4 (the database) and step 6 (the `main-server` service in `compose.yaml`). `socket-server/README.md` carries its own copy of the note, without the database step and without an `entities/` folder, in the same words as the worker server's (ticket 04). Nothing else in the note was unclear, so the main server's note is unchanged.
+Two steps name things only the main server has: step 5 (the database) and step 7 (the `main-server` service in `compose.yaml`). `socket-server/README.md` carries its own copy of the note, without the database step and without an `entities/` folder, in the same words as the worker server's (ticket 04). Nothing else in the note was unclear, so the main server's note is unchanged.
 
 ### Startup and shutdown (2026-09-29)
 

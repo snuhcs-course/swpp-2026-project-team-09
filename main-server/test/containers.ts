@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
 
@@ -20,6 +21,10 @@ export async function startPostgres(): Promise<StartedTestContainer> {
 
 export function mainDatabaseUrl(postgres: StartedTestContainer): string {
   return `postgresql://main:main@${postgres.getHost()}:${postgres.getMappedPort(5432)}/main`;
+}
+
+export function migrate(databaseUrl: string): void {
+  execFileSync('pnpm', ['db:migrate'], { env: { ...process.env, DATABASE_URL: databaseUrl }, stdio: 'inherit' });
 }
 
 export function startRedis(): Promise<StartedTestContainer> {

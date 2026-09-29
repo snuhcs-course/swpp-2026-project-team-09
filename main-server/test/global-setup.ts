@@ -1,7 +1,6 @@
-import { execFileSync } from 'node:child_process';
 import { TestProject } from 'vitest/node';
 import { Settings } from '../src/common/settings.js';
-import { mainDatabaseUrl, redisSettings, startPostgres, startRedis } from './containers.js';
+import { mainDatabaseUrl, migrate, redisSettings, startPostgres, startRedis } from './containers.js';
 import { es256KeyPair } from './keys.js';
 
 type SettingValues = Record<keyof Settings, string>;
@@ -22,15 +21,12 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     ...redisSettings(redis),
     ACCESS_TOKEN_PRIVATE_KEY: accessTokenKeys.privateKey,
     ACCESS_TOKEN_PUBLIC_KEY: accessTokenKeys.publicKey,
-    // The app's client and the admin site's client.
-    GOOGLE_CLIENT_IDS: 'snu-now-app.apps.googleusercontent.com,snu-now-admin.apps.googleusercontent.com',
-    // signIn(app, { email: 'admin@snu.ac.kr' }) signs in as an Administrator.
-    ADMINISTRATOR_EMAILS: 'admin@snu.ac.kr',
+    GOOGLE_APP_CLIENT_ID: 'snu-now-app.apps.googleusercontent.com',
+    GOOGLE_ADMIN_CLIENT_ID: 'snu-now-admin.apps.googleusercontent.com',
+    // signInAsAdministrator(app) signs in as this one.
+    INITIAL_ADMINISTRATOR_EMAILS: 'admin@example.com',
   };
-  execFileSync('pnpm', ['db:migrate'], {
-    env: { ...process.env, DATABASE_URL: settings.DATABASE_URL },
-    stdio: 'inherit',
-  });
+  migrate(settings.DATABASE_URL);
   provide('settings', settings);
 
   return async () => {

@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
-import { mainDatabaseUrl, redisSettings, startPostgres, startRedis } from './containers.js';
+import { mainDatabaseUrl, migrate, redisSettings, startPostgres, startRedis } from './containers.js';
 import { startApp } from './start-app.js';
 
 describe('Health checks with the database and Redis up', () => {
@@ -72,6 +72,8 @@ describe('Health checks with the database down', () => {
 
   beforeAll(async () => {
     const postgres = await startPostgres();
+    // The server registers the initial Administrators when it starts, so the database needs its schema.
+    migrate(mainDatabaseUrl(postgres));
     app = await startApp({ ...inject('settings'), DATABASE_URL: mainDatabaseUrl(postgres) });
     await postgres.stop();
   });

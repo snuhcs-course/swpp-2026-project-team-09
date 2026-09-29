@@ -17,8 +17,9 @@ cp .env.example .env
 pnpm keys:generate >> .env
 ```
 
-`.env.example` already holds the team's Google client IDs in `GOOGLE_CLIENT_IDS` (see [Sign-in](#sign-in)). Replace
-the example address in `ADMINISTRATOR_EMAILS` with your own SNU address (see [Administrators](#administrators)).
+`.env.example` already holds the team's Google client IDs in `GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID` (see
+[Sign-in](#sign-in)). Replace the example address in `INITIAL_ADMINISTRATOR_EMAILS` with your own (see
+[Administrators](#administrators)).
 
 To run the whole system, in the repository root:
 
@@ -63,9 +64,11 @@ The app signs in with Google and sends the ID token it gets to the main server:
 - `POST /auth/google` with `{ "idToken": "..." }` answers `200 { "accessToken": "...", "refreshToken": "..." }`. The
   first sign-in of a Google account creates its User.
 - Only SNU accounts get in: the token's hosted domain claim must be `snu.ac.kr` and its email address verified. Another
-  account gets 403. An invalid or expired ID token, or one issued to a client not in `GOOGLE_CLIENT_IDS`, gets 401.
-- The access token is valid for 1 hour. Send it as `Authorization: Bearer <accessToken>`. `GET /users/me` answers the
-  signed-in User. The refresh token is valid for 30 days, and only its hash is stored.
+  account gets 403. An invalid or expired ID token, or one issued to another client than the app's
+  (`GOOGLE_APP_CLIENT_ID`), the admin site's included, gets 401.
+- The access token is valid for 1 hour, and its audience is `snu-now-app`. Send it as
+  `Authorization: Bearer <accessToken>`. `GET /users/me` answers the signed-in User. The refresh token is valid for 30
+  days, and only its hash is stored.
 - Once the access token has expired, `POST /auth/refresh` with `{ "refreshToken": "..." }` and no access token answers
   with new tokens in the same form. The refresh token is used up: the answer holds a new one, valid for 30 days from
   the refresh. An unknown, expired or revoked refresh token gets 401.
@@ -75,15 +78,44 @@ The app signs in with Google and sends the ID token it gets to the main server:
 - `POST /auth/sign-out` with the access token answers 204. It revokes every refresh token of the User, on every phone,
   and turns the User's Master Switch off. An access token already issued stays valid until it expires.
 
-`GOOGLE_CLIENT_IDS` lists the OAuth client IDs of the app and the admin site, separated by commas. They are not secrets.
-Access tokens are signed with ES256 and `ACCESS_TOKEN_PRIVATE_KEY`. Another server that checks them is given only
-`ACCESS_TOKEN_PUBLIC_KEY`, never the private key; the socket server is the first, in ticket 11.
+`GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID` are the OAuth client IDs of the app and the admin site; startup
+stops when they are the same. They are not secrets. Access tokens are signed with ES256 and
+`ACCESS_TOKEN_PRIVATE_KEY`. Another server that checks them is given only `ACCESS_TOKEN_PUBLIC_KEY`, never the private
+key; the socket server is the first, in ticket 11. It accepts a User's access token only.
 
 ## Administrators
 
-An Administrator is a User whose email address is in `ADMINISTRATOR_EMAILS`, a list separated by commas. Only
-`@snu.ac.kr` addresses are accepted, and case does not matter. Mark a route, or a whole controller, with
-`@AdministratorOnly()` from `src/common/administrator-only.decorator.ts`:
+An Administrator is not a User, even when the same person also uses the app. Administrators sign in to the admin site,
+are kept in their own table and get access tokens of their own. They never appear among Users, and a User's access
+token and an Administrator's are each refused where the other belongs.
+
+Signing in and out:
+
+- `POST /admin/auth/google` with `{ "idToken": "..." }` answers `200 { "accessToken": "..." }`. The ID token must be
+  issued to the admin site's client (`GOOGLE_ADMIN_CLIENT_ID`); one issued to the app's gets 401. Any Google domain is
+  accepted, but the email address must be verified and registered; otherwise 403. Signing in creates no User.
+- The first sign-in binds the Google account to the registered address. After it the Administrator is recognised by the
+  account, and another account with the same address gets 403.
+- The access token has the audience `snu-now-admin`, the Administrator's id and no email address. It is valid for 8
+  hours and comes without a refresh token: when it expires, the admin site sends the person through Sign in with Google
+  again. There is no idle timeout; ticket 14 says why.
+- `POST /admin/auth/sign-out` answers 204 and ends every access token issued to that Administrator so far, in every
+  browser. A new sign-in works afterwards.
+
+Registering and removing:
+
+- When the server starts with no Administrator registered, as on a new database, it registers the addresses in
+  `INITIAL_ADMINISTRATOR_EMAILS`. After that the setting registers nobody, but it must still hold valid addresses.
+- `GET /admin/administrators` lists the Administrators as `{ id, email, signedIn }`, ordered by email address.
+- `POST /admin/administrators` with `{ "email": "..." }` registers an address of any Google domain and answers 201 with
+  the Administrator. Case is ignored. Registering an address that is already registered changes nothing and answers 201
+  with the existing record.
+- `DELETE /admin/administrators/:id` removes an Administrator, the caller included, and answers 204. An unknown id gets
+  404 and an id that is not a UUID 400. Removing the last one gets 409, also when two Administrators remove each other
+  at the same moment.
+
+Mark an administrative route, or a whole controller, with `@AdministratorOnly()` from
+`src/common/administrator-only.decorator.ts`, and put its path under `/admin`:
 
 ```ts
 @AdministratorOnly()
@@ -91,13 +123,15 @@ An Administrator is a User whose email address is in `ADMINISTRATOR_EMAILS`, a l
 export class AdminEventsController {
 ```
 
-- An Administrator passes. Another signed-in User gets 403 `Only an Administrator can use this route.`, and a request
-  without a valid access token gets 401.
-- Do not combine it with `@Public()`. The access token is then not read, so the route answers 401 to every request.
-- The access token names only the User, so the User's email address is read and compared with the list on every
-  request. An address taken off the list is refused as soon as the server restarts, even with a valid access token.
-- The test settings list `admin@snu.ac.kr`, so `signIn(app, { email: 'admin@snu.ac.kr' })` signs in as an
-  Administrator.
+- It needs an Administrator's access token in `Authorization: Bearer <accessToken>`. A request without one, or with a
+  User's access token or a Google ID token, gets 401.
+- Every request reads the Administrator, so a removed Administrator, or a token issued before their last sign-out, gets
+  401 at once.
+- A handler reads the signed-in Administrator with `@CurrentAdministrator() administrator: SignedInAdministrator`, as
+  `src/auth/administrator-auth.controller.ts` does.
+- In a test, `signInAsAdministrator(app)` from `test/sign-in.ts` signs in as `admin@example.com`, the initial
+  Administrator of the test settings, and `signInAsNewAdministrator(app)` registers a new one and signs in as them. The
+  test files share one database, so sign out or remove only a new one.
 
 ## Checks
 
@@ -129,13 +163,16 @@ src/
 │   ├── messaging.ts                 options for NestJS messaging over Redis
 │   ├── redis.module.ts              makes a Redis client available to every feature
 │   ├── redis-idempotency.store.ts   keeps the results of requests safe to repeat in Redis
+│   ├── route-access.ts              who may call a route: anyone, a User or an Administrator
 │   ├── public.decorator.ts          @Public(): opens a route to requests without an access token
-│   ├── administrator-only.decorator.ts  @AdministratorOnly(): restricts a route to Administrators
-│   └── current-user.decorator.ts    @CurrentUser(): the signed-in User in a handler
+│   ├── administrator-only.decorator.ts  @AdministratorOnly(): gives a route to Administrators
+│   ├── current-user.decorator.ts    @CurrentUser(): the signed-in User in a handler
+│   └── current-administrator.decorator.ts  @CurrentAdministrator(): the signed-in Administrator
 ├── generated/                       Prisma Client, generated by `pnpm install` (not committed)
 ├── health/                          a feature: the liveness and readiness checks
-├── auth/                            a feature: sign-in, refresh, sign-out, the access token and Administrator checks
-└── users/                           a feature: the signed-in User
+├── auth/                            a feature: app and admin site sign-in, refresh, sign-out, the access token checks
+├── users/                           a feature: the signed-in User
+└── administrators/                  a feature: the Administrators, who register and remove each other
 scripts/                             commands run by hand, such as `pnpm keys:generate`
 test/                                tests, run against PostgreSQL and Redis in containers
 ```
@@ -184,9 +221,11 @@ The steps add a feature named `profile`. Use a short lowercase name, with dashes
    pnpm exec nest g service profile --no-spec
    ```
 
-3. Every route needs a valid access token; a request without one gets 401. Mark a route, or a whole controller, with
-   `@Public()` to open it, or with `@AdministratorOnly()` to restrict it to [Administrators](#administrators). A
-   handler reads the signed-in User with `@CurrentUser() user: SignedInUser`, as `src/users/users.controller.ts` does.
+3. Every route is exactly one of three kinds. Unmarked, it is a User's: it needs a User's access token, and a request
+   without one gets 401. Mark a route, or a whole controller, with `@Public()` to open it to anyone, or with
+   `@AdministratorOnly()` to give it to [Administrators](#administrators). A marking on a handler replaces its
+   controller's, so mark a handler with one of them at most. A handler reads the signed-in User with
+   `@CurrentUser() user: SignedInUser`, as `src/users/users.controller.ts` does.
 4. Put request and response shapes in `src/profile/dto/`. Describe a request body as a zod schema and give it to the
    decorator, as `src/auth/dto/sign-in.dto.ts` and `AuthController` do: `@Body({ schema: signInSchema })`. A body that
    does not match gets 400 with a message naming the field. A stored record is a model in `prisma/schema.prisma`
@@ -211,9 +250,9 @@ The steps add a feature named `profile`. Use a short lowercase name, with dashes
    `get('NAME', { infer: true })`.
 8. Write `test/profile.e2e-spec.ts`. Start the server with `startApp` from `test/start-app.ts` and call its routes
    with `supertest`, as `test/health.e2e-spec.ts` does. `signIn` from `test/sign-in.ts` signs in a new User and
-   returns its tokens. oxlint's `max-lines` (300) and `max-lines-per-function` (50) apply to tests too: split a long
-   file by route, as `test/refresh.e2e-spec.ts` and `test/sign-out.e2e-spec.ts` split the auth tests, and a long
-   `describe` into several.
+   returns its tokens, and `signInAsAdministrator` signs in an Administrator. oxlint's `max-lines` (300) and
+   `max-lines-per-function` (50) apply to tests too: split a long file by route, as `test/refresh.e2e-spec.ts` and
+   `test/sign-out.e2e-spec.ts` split the auth tests, and a long `describe` into several.
 9. Run `pnpm format`, then the four checks.
 
 Import classes with a plain `import { ProfileService } from ...`, never `import type`. Nest looks the class up at
@@ -234,12 +273,13 @@ create(@Body({ schema: createPartySchema }) body: CreatePartyDto, @CurrentUser()
 
 - The app creates a key, such as a UUID, when the User acts, and sends it in the `Idempotency-Key` header with every
   retry of that action. With `required: true`, a request without one gets 400 `IDEMPOTENCY_KEY_REQUIRED`.
-- The handler runs once for each key and User. For 24 hours, a repeat gets the stored status and body with
-  `Idempotent-Replayed: true`. A repeat while the first request is still running gets 409 `IDEMPOTENCY_KEY_IN_USE`
-  with `Retry-After`, and the same key with another body or address gets 422 `IDEMPOTENCY_KEY_REUSED`.
+- The handler runs once for each key and each User or Administrator. For 24 hours, a repeat gets the stored status and
+  body with `Idempotent-Replayed: true`. A repeat while the first request is still running gets 409
+  `IDEMPOTENCY_KEY_IN_USE` with `Retry-After`, and the same key with another body or address gets 422
+  `IDEMPOTENCY_KEY_REUSED`.
 - A server error (5xx) is not stored, so the same key can be tried again. A 4xx answer is stored like a success.
-- Keys are kept apart by the signed-in User, so do not mark a `@Public()` route: without a User, every caller would
-  share one set of keys.
+- Keys are kept apart by the signed-in User or Administrator, so do not mark a `@Public()` route: without one, every
+  caller would share one set of keys.
 - The key removes repeats of one attempt. Keep the feature's own rules, such as one Party for each User: two taps
   send two keys.
 - Register a global interceptor (`APP_INTERCEPTOR`) in the feature's module, which `AppModule` imports after

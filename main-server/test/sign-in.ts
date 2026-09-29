@@ -1,10 +1,10 @@
 import { INestApplication } from '@nestjs/common';
 import { TokenPayload } from 'google-auth-library';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { z } from 'zod';
-import { googleIdToken } from './google.js';
+import { administratorIdToken, googleIdToken, googleSubject } from './google.js';
 
 // The answer to a sign-in and to a refresh, exactly. Parsing a response body with it checks the body.
 export const tokensSchema = z.strictObject({
@@ -47,4 +47,51 @@ export function refreshTokenHash(refreshToken: string): string {
 export function getMe(app: INestApplication<Server>, accessToken?: string): request.Test {
   const get = request(app.getHttpServer()).get('/users/me');
   return accessToken === undefined ? get : get.auth(accessToken, { type: 'bearer' });
+}
+
+export const administratorTokensSchema = z.strictObject({
+  accessToken: z.string().min(1),
+});
+
+export type AdministratorTokens = z.infer<typeof administratorTokensSchema>;
+
+// As the initial Administrator unless claims change the account.
+export async function signInAsAdministrator(
+  app: INestApplication<Server>,
+  claims: Partial<TokenPayload> = {},
+): Promise<AdministratorTokens> {
+  const response = await request(app.getHttpServer())
+    .post('/admin/auth/google')
+    .send({ idToken: administratorIdToken(claims) });
+  if (response.status !== 200) {
+    throw new Error(`Administrator sign-in answered ${response.status}: ${JSON.stringify(response.body)}`);
+  }
+  return administratorTokensSchema.parse(response.body);
+}
+
+export function registerAdministrator(app: INestApplication<Server>, accessToken: string, email: string): request.Test {
+  return request(app.getHttpServer())
+    .post('/admin/administrators')
+    .auth(accessToken, { type: 'bearer' })
+    .send({ email });
+}
+
+export interface NewAdministrator {
+  id: string;
+  email: string;
+  sub: string;
+  accessToken: string;
+}
+
+export async function signInAsNewAdministrator(app: INestApplication<Server>): Promise<NewAdministrator> {
+  const email = `${randomUUID()}@example.com`;
+  const { accessToken: registrarToken } = await signInAsAdministrator(app);
+  const response = await registerAdministrator(app, registrarToken, email);
+  if (response.status !== 201) {
+    throw new Error(`Registering an Administrator answered ${response.status}: ${JSON.stringify(response.body)}`);
+  }
+  const { id } = z.object({ id: z.string() }).parse(response.body);
+  const sub = googleSubject();
+  const { accessToken } = await signInAsAdministrator(app, { sub, email });
+  return { id, email, sub, accessToken };
 }
