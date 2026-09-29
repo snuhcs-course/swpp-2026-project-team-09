@@ -38,7 +38,7 @@ beforeAll(async () => {
   emptySettings = {
     ...settings,
     DATABASE_URL: databaseUrl,
-    INITIAL_ADMINISTRATOR_EMAILS: 'first@example.com, Second@Example.com',
+    INITIAL_ADMINISTRATOR_EMAILS: 'Second@Example.com, first@example.com',
   };
   fresh = await startApp(emptySettings);
   emptyDatabase = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
@@ -111,6 +111,16 @@ describe('Registering an Administrator', () => {
 
     expect(again.status).toBe(first.status);
     expect(again.body).toEqual(first.body);
+  });
+
+  it('leaves an Administrator who has signed in signed in when their address is registered again', async () => {
+    const { accessToken } = await signInAsAdministrator(app);
+    const registered = await signInAsNewAdministrator(app);
+
+    const again = await registerAdministrator(app, accessToken, registered.email);
+
+    expect(again.body).toEqual({ id: registered.id, email: registered.email, signedIn: true });
+    expect((await getAdministrators(registered.accessToken)).status).toBe(200);
   });
 
   it('refuses a body without an email address and names the field', async () => {

@@ -4,6 +4,7 @@ import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { Settings } from '../common/settings.js';
 import { UsersGateway } from './users.gateway.js';
 
+// The same as the main server's USER_TOKEN_AUDIENCE, so that an Administrator's token is refused.
 const USER_TOKEN_AUDIENCE = 'snu-now-app';
 
 @Module({
