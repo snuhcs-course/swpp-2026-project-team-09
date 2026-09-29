@@ -33,7 +33,7 @@ Sign-in and tokens
 Checks and docs
 
 - [x] Tests through the public API cover: the initial Administrators registered at start and one of them signed in, and no User created; an unregistered account and an unverified email address refused; each client's ID token refused on the other route; each kind of token refused where the other belongs, on the socket server too; register, the new Administrator signs in; register twice; remove, the removed one refused; the last Administrator kept; sign-out, the old token refused and a new sign-in accepted; a token past 8 hours refused.
-- [x] The docs say that an Administrator is not a User and how Administrators are registered: `CONTEXT.md` (done), the P04 spec's Administrator story and bullet, ticket 09's description, the main server README, `.env.example` and `compose.yaml`.
+- [x] The docs say that an Administrator is not a User and how Administrators are registered: `CONTEXT.md`, the P04 spec's Administrator story and bullet, ticket 09's description, the main server README, `.env.example` and `compose.yaml`.
 - [x] The P12 spec's Admin site section states the admin site's side of the session (see Comments), its screen to register and remove Administrators, and its testing decisions without Administrators as Users.
 
 ## Comments
@@ -47,6 +47,7 @@ The session policy follows `.scratch/research/administrator-sessions.md` (OWASP 
 - **Sign-out ends every browser**: a per-Administrator time before which tokens are refused, read with the check every administrative request already makes.
 - **No second sign-in before registering an Administrator**: Google offers no way to force a fresh login, so it would add a click without assurance. ASVS asks for it only at Level 3.
 - **Admin site side (P12)**: one cookie holds the token, named with the `__Host-` prefix, `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, without `Domain` or an expiry, and never passed to Client Components. Every change goes through a Server Action; no Route Handler changes data. A 401 sends the person to sign-in and back to the same page. Every page has a sign-out control. Google's automatic sign-in stays off.
+- **CSRF**: every change goes through a Server Action, whose Origin check stands in for the session identifier that NIST asks for in each POST body. ASVS accepts it (3.5.1); this is the record of that deviation.
 - **Wrong kind of token**: 401 everywhere, because the request proves nobody is signed in as the right kind.
 - **Initial Administrators**: a setting used only while no Administrator is registered, so that a fresh database, a new deployment and the tests all start the same way without a command run by hand. The team's four addresses go in each member's `.env` and in the deployment's settings, not in the repository, which is public; `.env.example` shows an example address.
 
@@ -112,4 +113,4 @@ Several first runs also failed one or two unrelated tests: the health hook with 
 - Tokens, for the review-feedback session and its five review subagents, counted when this section was written:
   - Input: 34,681,635 in total, of which 33,751,720 were cache reads, 929,481 cache writes and 434 uncached.
   - Output: 116,440, of which the subagents' 5,235 is a lower bound for the same reason.
-- Not included: the research on signing in on a second device, which belongs to a later ticket.
+- Not included: the research on signing in on a second device, which is not part of this ticket.

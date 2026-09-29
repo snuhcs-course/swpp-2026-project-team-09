@@ -32,7 +32,7 @@ The socket server is the only other server that accepts connections from Users: 
 
 ### Access token verification (2026-09-29)
 
-- `UsersModule` registers `JwtModule.registerAsync` with `publicKey` alone and `verifyOptions: { algorithms: ['ES256'] }`, as agreed in ticket 06. The tests start no main server, so verification cannot depend on one.
+- `UsersModule` registers `JwtModule.registerAsync` with `publicKey` alone and `verifyOptions: { algorithms: ['ES256'], audience: 'snu-now-app' }`, as ticket 06 sets out. The audience refuses an Administrator's access token (ticket 14). The tests start no main server, so verification cannot depend on one.
 - `ACCESS_TOKEN_PUBLIC_KEY` is checked at startup as the main server checks its keys: the PEM header, that Node can read it, and the P-256 curve. There is no pair check, because the socket server has no private key. Tests cover a missing key, text that is not PEM, a private key and an RSA key.
 - Breaking the code made the matching tests fail: accepting every connection failed all five connection tests; decoding the token without verifying it failed the expired, altered and other-key tests; `ignoreExpiration: true` failed the expired test only. Removing `algorithms: ['ES256']` failed no test: jsonwebtoken 9 already limits a P-256 public key to ES256 and refuses `none`, so no token can show the difference. The option stays, as agreed.
 

@@ -66,7 +66,7 @@ An admin site where an Administrator reviews each Draft, corrects its time and p
 - A good test calls the administrative API as an Administrator, or with a User's access token to see it refused, and checks the response and what Users can then see.
 - API tests run with Vitest against a real database: refusal of a User's access token, each allowed and each forbidden state change, the publishing requirements, the version check, and that a published event appears in the User-facing list while a Draft does not.
 - Admin pages are tested at the page level against a fake API: the Draft list, the edit form's validation messages, the publish button's disabled state and the Administrators screen.
-- The session is tested at the page level as well: the cookie's attributes, the token absent from what reaches the browser, a 401 leading to sign-in and back to the same page, and sign-out.
+- The session is tested at the page level as well: the cookie's attributes, the token absent from what reaches the browser, a 401 leading to sign-in and back to the same page, sign-out, and a Server Action posted from another origin refused.
 - The map picker is checked by hand.
 - Prior art: the API-level tests of P04 and P07.
 

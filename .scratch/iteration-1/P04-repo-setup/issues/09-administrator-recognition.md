@@ -8,7 +8,7 @@ Blocked by: 06 (Sign in with an SNU Google account)
 
 The main server recognises an Administrator, so that an Administrator can manage Global Events without a separate password. A route can be marked as administrative, and only an Administrator's access token passes it. An Administrator is not a User: Administrators have their own records, sign-in and access tokens.
 
-The administrative routes themselves belong to P12.
+The routes that register and remove Administrators belong to ticket 14, and the routes for Global Events to P12.
 
 ## Acceptance criteria
 
@@ -24,7 +24,7 @@ The administrative routes themselves belong to P12.
 - **Marking**: `@AdministratorOnly()` in `src/common/administrator-only.decorator.ts` marks a handler or a whole controller with the same route-access metadata that `@Public()` sets (`src/common/route-access.ts`). `AdministratorGuard` in `src/auth/administrator.guard.ts` reads it. It is a global guard registered in `AuthModule`, so a feature module needs no import for the check, and marking P12's controller once covers every route in it.
 - **Answers**: an Administrator's access token passes. A request without one, or with a User's access token, gets 401 in Nest's default body `{ statusCode, message, error }`.
 - **Checked on every request**: the access token names the Administrator and carries no status. On every administrative request the guard reads the Administrator, so a removed Administrator is refused at once, even with an access token issued before.
-- **What an Administrator may do**: CONTEXT.md defines an Administrator as a team member who confirms, publishes and creates Global Events. It means the team that runs the app, not event organizers among the Users: P12 leaves organizer accounts out of scope. The role grants only what P12's administrative API offers; it gives no access to the servers or the databases themselves.
+- **What an Administrator may do**: CONTEXT.md defines an Administrator as a team member who confirms, publishes and creates Global Events. It means the team that runs the app, not event organizers among the Users: P12 leaves organizer accounts out of scope. The role grants only what the administrative API offers, registering and removing Administrators (ticket 14) and managing Global Events (P12); it gives no access to the servers or the databases themselves.
 
 ### Tests (2026-09-29)
 

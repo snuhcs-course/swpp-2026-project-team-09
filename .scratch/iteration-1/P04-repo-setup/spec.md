@@ -8,7 +8,7 @@ Development restarts on a clean branch. There is no runnable server, no database
 
 ## Solution
 
-A repository that holds six independent projects: four servers, the admin site and the mobile app. The four servers start with one command and report their health. A database and a message channel are available to them. Every project enforces the same strict quality rules through its own configuration. A User can sign in with an SNU Google account, stay signed in, sign out and edit a profile.
+A repository that holds six independent projects: four servers, the admin site and the mobile app. The four servers start with one command and report their health. A database and a message channel are available to them. Every project enforces the same strict quality rules through its own configuration. A User can sign in with an SNU Google account, stay signed in, sign out and edit a profile. An Administrator signs in to the admin site, and Administrators register and remove each other.
 
 ## User Stories
 
@@ -38,6 +38,7 @@ A repository that holds six independent projects: four servers, the admin site a
 24. As an SNU student, I want a request that my phone sent twice to be carried out once, so that nothing I create appears twice.
 25. As an SNU student, I want the repeat of a request to get the answer of the first one, so that the app shows the right result after a lost response.
 26. As a developer, I want to make a handler safe to repeat with one decorator, so that every feature handles repeats the same way.
+27. As an Administrator, I want to register and remove Administrators, so that the team decides who manages Global Events without changing the settings.
 
 ## Implementation Decisions
 
@@ -132,7 +133,7 @@ A repository that holds six independent projects: four servers, the admin site a
 
 ## Out of Scope
 
-- Feature APIs. They belong to P06, P07, P08 and P12.
+- Feature APIs. They belong to P06, P07, P08 and P12. Registering and removing Administrators stays here, with sign-in.
 - A continuous integration workflow. The schedule places it in Iteration 2.
 - Cloud deployment. Iteration 1 runs on a laptop behind an HTTPS tunnel.
 - SNU single sign-on. The proposal allows SNU single sign-on or SNU Google accounts; this iteration uses Google accounts.
@@ -142,6 +143,5 @@ A repository that holds six independent projects: four servers, the admin site a
 
 - The repository conventions merged earlier (agent documents, code owners, pull request template) were preparatory work for this task.
 - P16 adds a seventh project at the repository root for the tests that run the servers together.
-- The main server is built first, as the pattern for the other servers.
 - To verify early: type-aware linting with TypeScript 6, the database image on Apple Silicon, and that a real SNU account's ID token carries the hosted domain claim while a Gmail account's does not.
-- Backend work that the schedule's frontend tasks assume already exists is assigned as follows: sign-in, account and profile here; timetable and Private Events in P06; administration in P12; everything else in P07 and P08.
+- Backend work that the schedule's frontend tasks assume already exists is assigned as follows: sign-in, account and profile here; timetable and Private Events in P06; the administration of Global Events in P12; everything else in P07 and P08.
