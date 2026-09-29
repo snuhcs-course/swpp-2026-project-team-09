@@ -14,7 +14,8 @@ pnpm dev
 ```
 
 Open http://localhost:3100. The servers use ports 3000 to 3003, so the site uses 3100, in `pnpm dev` and `pnpm start`
-alike. Sign-in with Google and the Kakao map accept only registered addresses, so keep the port.
+alike. P12 registers this address for Sign in with Google and the Kakao map, which accept only registered addresses,
+so keep the port.
 
 ## Checks
 
