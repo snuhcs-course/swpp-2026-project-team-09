@@ -9,6 +9,16 @@ You need Node.js 24 and Docker. With nvm, `nvm install` and `nvm use` read `.nvm
 commands below use pnpm 12.6.0, the version declared in `package.json`. If `pnpm -v` prints another version, type
 `npx pnpm@12.6.0` wherever this file says `pnpm`: npm fetches it into its cache without a global install.
 
+First create your settings file in `socket-server/`. The socket server checks access tokens with the main server's
+public key, so create `main-server/.env` first (see the [main server](../main-server/README.md#run-it)). The third
+command copies the key from it:
+
+```bash
+pnpm install
+cp .env.example .env
+grep ACCESS_TOKEN_PUBLIC_KEY ../main-server/.env >> .env
+```
+
 To run the whole system, in the repository root:
 
 ```bash
@@ -23,8 +33,6 @@ docker compose up -d redis
 ```
 
 ```bash
-pnpm install
-cp .env.example .env
 pnpm start:dev
 ```
 
@@ -39,6 +47,20 @@ If a setting in `.env` is missing or invalid, the server stops and names it, for
 
 The server also stops at startup when it cannot reach Redis. Start it first with `docker compose up -d redis`.
 Once the server is running, Redis going down makes readiness answer 503 instead.
+
+## Socket connection
+
+The app opens a Socket.IO connection on the same port and sends the access token it got from the main server, as
+Socket.IO's documentation shows:
+
+```ts
+const socket = io('http://localhost:3001', { auth: { token: accessToken } });
+```
+
+The socket server checks the token itself with `ACCESS_TOKEN_PUBLIC_KEY`, without asking the main server. A valid token
+opens the connection, and the server keeps the User's id on it. A missing, expired or altered token, or one signed
+with another key, is refused before the connection opens: the app gets `connect_error` with the message `Unauthorized`,
+and Socket.IO does not reconnect by itself.
 
 ## Checks
 
@@ -62,7 +84,8 @@ src/
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
 │   └── messaging.ts                 options for NestJS messaging over Redis
-└── health/                          a feature: the liveness and readiness checks
+├── health/                          a feature: the liveness and readiness checks
+└── users/                           a feature: the app's socket connection and the access token check on it
 test/                                tests, run against Redis in a container
 ```
 
@@ -77,7 +100,7 @@ The steps add a feature named `signal`. Use a short lowercase name, with dashes 
    ```
 
 2. Create the controller, which holds the HTTP routes, and the service, which holds the logic. Both are registered in
-   `SignalModule`. `--no-spec` skips unit test files, because this project tests through HTTP (step 6):
+   `SignalModule`. `--no-spec` skips unit test files, because this project tests through the running server (step 6):
 
    ```bash
    pnpm exec nest g controller signal --no-spec
@@ -89,11 +112,12 @@ The steps add a feature named `signal`. Use a short lowercase name, with dashes 
 4. If another feature needs `SignalService`, add it to `exports` in `SignalModule` and add `SignalModule` to the other
    module's `imports`. Code shared by two or more features goes in `src/common/`.
 5. If the feature needs a new setting, add it to the schema in `src/common/settings.ts`, to `.env.example`, to your own
-   `.env`, to the `socket-server` service in `compose.yaml` at the repository root and to the settings in
-   `test/global-setup.ts`. Read it by injecting `ConfigService<Settings, true>` and calling
-   `get('NAME', { infer: true })`.
+   `.env` and to the settings in `test/global-setup.ts`. Compose passes `.env` to the server. Add the setting to the
+   `socket-server` service's `environment` in `compose.yaml` only when it needs another value inside Compose, as the
+   Redis address does. Read it by injecting `ConfigService<Settings, true>` and calling `get('NAME', { infer: true })`.
 6. Write `test/signal.e2e-spec.ts`. Start the server with `startApp` from `test/start-app.ts` and call its routes with
-   `supertest`, as `test/health.e2e-spec.ts` does.
+   `supertest`, as `test/health.e2e-spec.ts` does, or open a socket connection as the app does, as
+   `test/users.e2e-spec.ts` does.
 7. Run `pnpm format`, then the four checks.
 
 Import classes with a plain `import { SignalService } from ...`, never `import type`. Nest looks the class up at
