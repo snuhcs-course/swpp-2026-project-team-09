@@ -97,13 +97,14 @@ Signing in and out:
 Registering and removing:
 
 - When the server starts with no Administrator registered, as on a new database, it registers the addresses in
-  `INITIAL_ADMINISTRATOR_EMAILS`. After that it ignores the setting.
-- `GET /admin/administrators` lists the Administrators as `{ id, email, signedIn }`.
+  `INITIAL_ADMINISTRATOR_EMAILS`. After that the setting registers nobody, but it must still hold valid addresses.
+- `GET /admin/administrators` lists the Administrators as `{ id, email, signedIn }`, ordered by email address.
 - `POST /admin/administrators` with `{ "email": "..." }` registers an address of any Google domain and answers 201 with
-  the new Administrator. Case is ignored. An address registered already stays as it is, and the answer is the same as
-  the first time.
-- `DELETE /admin/administrators/:id` removes an Administrator, the caller included, and answers 204. Removing the last
-  one gets 409, also when two Administrators remove each other at the same moment.
+  the Administrator. Case is ignored. Registering an address that is already registered changes nothing and answers 201
+  with the existing record.
+- `DELETE /admin/administrators/:id` removes an Administrator, the caller included, and answers 204. An unknown id gets
+  404 and an id that is not a UUID 400. Removing the last one gets 409, also when two Administrators remove each other
+  at the same moment.
 
 Mark an administrative route, or a whole controller, with `@AdministratorOnly()` from
 `src/common/administrator-only.decorator.ts`, and put its path under `/admin`:

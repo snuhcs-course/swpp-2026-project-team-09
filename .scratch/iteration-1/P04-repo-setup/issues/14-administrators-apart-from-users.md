@@ -17,7 +17,7 @@ Administrators
 - [x] The main database keeps Administrators in their own table: the email address they were registered with, the Google subject identifier bound at their first sign-in, and the time before which their tokens are no longer valid.
 - [x] A setting lists the initial Administrators' email addresses. While no Administrator is registered, the server registers all of them when it starts. `ADMINISTRATOR_EMAILS` and its `@snu.ac.kr` rule are removed.
 - [x] An Administrator lists the Administrators, with each one's email address and whether they have signed in yet.
-- [x] An Administrator registers an email address of any Google domain. Case is ignored. Registering an address that is already registered changes nothing and answers as the first time did.
+- [x] An Administrator registers an email address of any Google domain. Case is ignored. Registering an address that is already registered changes nothing and answers 201 with the existing record.
 - [x] An Administrator removes another Administrator, or themselves. Removing the last Administrator gets 409.
 
 Sign-in and tokens

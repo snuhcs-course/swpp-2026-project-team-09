@@ -21,7 +21,7 @@ The administrative routes themselves belong to P12.
 
 ### Decisions P12 builds on (2026-09-29)
 
-Agreed with 김태현 before the implementation.
+The marking and what an Administrator may do were agreed with 김태현 before the implementation. The answers and the check on every request follow ticket 14, which keeps Administrators apart from Users.
 
 - **Marking**: `@AdministratorOnly()` in `src/common/administrator-only.decorator.ts` marks a handler or a whole controller with the same route-access metadata that `@Public()` sets (`src/common/route-access.ts`). `AdministratorGuard` in `src/auth/administrator.guard.ts` reads it. It is a global guard registered in `AuthModule`, so a feature module needs no import for the check, and marking P12's controller once covers every route in it.
 - **Answers**: an Administrator's access token passes. A request without one, or with a User's access token, gets 401 in Nest's default body `{ statusCode, message, error }`.
@@ -30,7 +30,7 @@ Agreed with 김태현 before the implementation.
 
 ### Tests (2026-09-29)
 
-`test/administrator-auth.e2e-spec.ts` covers the marking on `GET /admin/administrators` and on a controller that exists only in the test and is marked as a whole: an Administrator passes, and a request without an access token, with a User's access token or with a Google ID token gets 401. A handler marked `@Public()` in the marked controller is open to anyone.
+`test/administrator-auth.e2e-spec.ts` covers the marking. On `GET /admin/administrators`, an Administrator passes, and a request without an access token, with a User's access token or with a Google ID token gets 401. On a controller that exists only in the test and is marked as a whole, an Administrator passes, a User's access token gets 401, and a handler marked `@Public()` is open to anyone.
 
 ### Known limits (2026-09-29)
 
