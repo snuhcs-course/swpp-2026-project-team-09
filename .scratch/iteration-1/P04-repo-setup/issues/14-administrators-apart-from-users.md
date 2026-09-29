@@ -101,14 +101,14 @@ Several first runs also failed one or two unrelated tests: the health hook with 
 
 ### Agent usage (2026-09-29)
 
-- Agent time: about 3 hours 25 minutes, an estimate, summed over the sessions below. Time spent waiting for answers is left out.
+- Agent time: about 3 hours 35 minutes, an estimate, summed over the sessions below. Time spent waiting for answers is left out.
   - The planning session, in the worktree `admiring-dhawan-e58033`, worked about 50 minutes on this ticket: the decision, the ticket, the review and the pull request. That includes about 5 minutes waiting for its two review subagents.
   - Subagents: the session-policy research about 12 minutes, the implementation about 99 minutes (87 for the first pass, 12 for the review fixes), and the Standards and Spec reviews about 4 and 5 minutes, at the same time.
-  - The review-feedback session, in the worktree `ticket-review-feedback-09cfc6`, worked about 35 minutes: the review fixes and the final review before merging. Its five review subagents (Standards and Spec twice, then a sweep of every document) took 3 to 5 minutes each, in parallel with the session.
+  - The review-feedback session, in the worktree `ticket-review-feedback-09cfc6`, worked about 45 minutes: the review fixes and the final review before merging. Its five review subagents (Standards and Spec twice, then a sweep of every document) took 3 to 5 minutes each, in parallel with the session.
 - Tokens, for the planning session from the decision on and its four subagents, counted when this section was written:
   - Input: 79,413,099 in total, of which 77,123,515 were cache reads, 2,289,014 cache writes and 570 uncached.
   - Output: 114,278. The subagents' transcripts record only a few output tokens for most of their steps, so their share, 36,731, is a lower bound.
 - Tokens, for the review-feedback session and its five review subagents, counted when this section was written:
-  - Input: 27,553,107 in total, of which 26,664,358 were cache reads, 888,363 cache writes and 386 uncached.
-  - Output: 90,263, of which the subagents' 5,235 is a lower bound for the same reason.
+  - Input: 34,681,635 in total, of which 33,751,720 were cache reads, 929,481 cache writes and 434 uncached.
+  - Output: 116,440, of which the subagents' 5,235 is a lower bound for the same reason.
 - Not included: the research on signing in on a second device, which belongs to a later ticket.
