@@ -61,6 +61,6 @@ Red before green. Each change below failed the matching tests and no others:
 - Sign-out without the lock: the sign-out during a refresh.
 - The refresh without the lock: both overlapping tests.
 
-In about 110 runs of the refresh tests, "keeps the User's other sign-ins" failed twice with supertest's `socket hang up`, once against the real implementation and once against one of the changes above. Thirty further runs each of the refresh and the sign-in tests, and fifteen runs of the whole suite, did not reproduce it. The cause is not known.
+In about 110 runs of the refresh tests, "keeps the User's other sign-ins" failed twice with supertest's `socket hang up`, and during the review a sign-in answered 503 and another 404, each with an empty body, which the server never sends. The likely cause was the test server: `startApp` did not listen, so supertest started the server on a free port for each group of requests and closed it afterwards, and every run warned `MaxListenersExceededWarning`. `startApp` now listens once on `127.0.0.1`, as `main.ts` listens. Thirty runs of the auth, refresh and sign-out tests then passed, without the warning; before the change, one of twelve runs had failed.
 
 One run of the whole suite failed "Health checks with the database down", which starts and stops a PostgreSQL container of its own. It passed alone and in six further runs of the whole suite.
