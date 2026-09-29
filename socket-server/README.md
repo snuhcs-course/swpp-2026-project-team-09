@@ -77,20 +77,44 @@ let retried = false;
 socket.on('connect', () => {
   retried = false;
 });
-socket.on('connect_error', async () => {
+socket.on('connect_error', async (error) => {
   // A network failure: Socket.IO tries again by itself.
   if (socket.active) return;
-  // Refused: get new tokens once, then connect again.
+  // The server cannot check the session now: try again later.
+  if (error.message === 'Service Unavailable') {
+    setTimeout(() => socket.connect(), 5000);
+    return;
+  }
+  // Refused: get new tokens once, then connect again. The tokens of an ended session cannot be renewed.
   if (!retried && (await refreshTokens())) {
     retried = true;
     socket.connect();
   } else {
-    showSignIn();
+    showSignIn(error.data?.code);
   }
+});
+socket.on('session-ended', ({ code }) => {
+  // Socket.IO disconnects right after and does not reconnect by itself.
+  showSignIn(code);
 });
 ```
 
-`getAccessToken`, `refreshTokens` and `showSignIn` stand for the app's own code.
+`getAccessToken`, `refreshTokens` and `showSignIn` stand for the app's own code. `showSignIn` also stops sharing the
+location, and given `SESSION_REPLACED` it says that a sign-in on another phone signed the User out.
+
+### Sessions
+
+The token names its session, and a User has one (see the [main server](../main-server/README.md#sign-in)). The main
+server keeps the sessions that ended in Redis for an hour, as long as an access token lasts, and the socket server reads
+them there:
+
+- A token whose session has ended is refused with `Unauthorized` too. When a sign-in on another phone ended the
+  session, the error's `data` is `{ code: 'SESSION_REPLACED' }`, the code of the main server's 401.
+- When a session ends, the main server sends the event `session-ended` over messaging. The socket server sends
+  `session-ended` to the session's connections, with `{ code: 'SESSION_REPLACED' }` when a sign-in on another phone
+  ended it and `{}` otherwise, and disconnects them. The app gets `disconnect` with the reason `io server disconnect`.
+- While Redis cannot be reached, an attempt to connect is refused with `Service Unavailable`, because the server
+  cannot tell whether the session has ended.
 
 ## Checks
 
@@ -113,9 +137,11 @@ src/
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
-│   └── messaging.ts                 options for NestJS messaging over Redis
+│   ├── messaging.ts                 options for NestJS messaging over Redis
+│   └── redis.module.ts              makes a Redis client available to every feature
 ├── health/                          a feature: the liveness and readiness checks
-└── users/                           a feature: the app's socket connection and the access token check on it
+└── users/                           a feature: the app's socket connection, the access token check on it and the end of
+                                     a session
 test/                                tests, run against Redis in a container
 ```
 
