@@ -3,6 +3,8 @@ import { z } from 'zod';
 
 const port = z.string().pipe(z.coerce.number<string>().int().min(1).max(65535));
 
+const googleClientId = z.string().endsWith('.apps.googleusercontent.com');
+
 // Access tokens are signed with ES256, whose keys lie on the P-256 curve. The private key is PKCS#8 PEM text and the
 // public key SPKI PEM text, as `pnpm keys:generate` writes them. createPublicKey also accepts a private key, so the
 // PEM header tells the two apart.
@@ -30,17 +32,18 @@ export const settingsSchema = z
     REDIS_PORT: port,
     ACCESS_TOKEN_PRIVATE_KEY: es256Key('private'),
     ACCESS_TOKEN_PUBLIC_KEY: es256Key('public'),
-    // The OAuth client IDs whose Google ID tokens may sign in, separated by commas: the app's and the admin site's.
-    GOOGLE_CLIENT_IDS: z
-      .string()
-      .transform((ids) => ids.split(',').map((id) => id.trim()))
-      .pipe(z.array(z.string().endsWith('.apps.googleusercontent.com'))),
-    // The email addresses of the Administrators, separated by commas. Only SNU accounts sign in, so an address outside
-    // snu.ac.kr is a mistake. Compared without regard to case, so they are kept in lower case.
-    ADMINISTRATOR_EMAILS: z
+    // The OAuth client IDs of the two Google clients. A User signs in with an ID token issued to the app's client, and
+    // an Administrator with one issued to the admin site's; each is refused on the other's sign-in, so they must
+    // differ (see below).
+    GOOGLE_APP_CLIENT_ID: googleClientId,
+    GOOGLE_ADMIN_CLIENT_ID: googleClientId,
+    // The email addresses of the initial Administrators, separated by commas, of any Google domain. The server
+    // registers them when it starts while no Administrator is registered. Compared without regard to case, so they
+    // are kept in lower case.
+    INITIAL_ADMINISTRATOR_EMAILS: z
       .string()
       .transform((emails) => emails.split(',').map((email) => email.trim().toLowerCase()))
-      .pipe(z.array(z.email().endsWith('@snu.ac.kr'))),
+      .pipe(z.array(z.email())),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),
@@ -52,6 +55,11 @@ export const settingsSchema = z
       // next key Node parses.
       when: ({ issues }) => issues.length === 0,
     },
-  );
+  )
+  // With one client ID in both settings, either sign-in would accept the other's ID token.
+  .refine((settings) => settings.GOOGLE_APP_CLIENT_ID !== settings.GOOGLE_ADMIN_CLIENT_ID, {
+    path: ['GOOGLE_ADMIN_CLIENT_ID'],
+    message: 'Must differ from GOOGLE_APP_CLIENT_ID',
+  });
 
 export type Settings = z.infer<typeof settingsSchema>;

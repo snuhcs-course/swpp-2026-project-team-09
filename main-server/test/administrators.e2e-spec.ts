@@ -1,129 +1,270 @@
-/* oxlint-disable max-classes-per-file -- One test controller marks a route, the other a whole controller. */
-import { Controller, Get, INestApplication } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import request from 'supertest';
+import { StartedTestContainer } from 'testcontainers';
 import { inject } from 'vitest';
-import { AdministratorOnly } from '../src/common/administrator-only.decorator.js';
-import { Public } from '../src/common/public.decorator.js';
-import { signIn } from './sign-in.js';
+import { z } from 'zod';
+import { PrismaClient } from '../src/generated/prisma/client.js';
+import { mainDatabaseUrl, migrate, startPostgres } from './containers.js';
+import { ADMINISTRATOR, administratorIdToken, googleSubject } from './google.js';
+import { registerAdministrator, signInAsAdministrator, signInAsNewAdministrator } from './sign-in.js';
 import { startApp } from './start-app.js';
 
-// No feature has an administrative route yet (P12 adds them), so these tests mark routes of their own.
-@Controller('administrative-route')
-class AdministrativeRouteController {
-  @Get()
-  @AdministratorOnly()
-  read(): string {
-    return 'Only an Administrator reads this.';
-  }
+// An Administrator as the list and the registration answer them, exactly.
+const administratorSchema = z.strictObject({
+  id: z.string(),
+  email: z.string(),
+  signedIn: z.boolean(),
+  registeredBy: z.string().nullable(),
+});
 
-  @Get('public')
-  @Public()
-  @AdministratorOnly()
-  readPublic(): string {
-    return 'Nobody reads this.';
-  }
-}
+type Administrator = z.infer<typeof administratorSchema>;
 
-@AdministratorOnly()
-@Controller('administrative-controller')
-class AdministrativeController {
-  @Get()
-  read(): string {
-    return 'Only an Administrator reads this.';
-  }
-}
-
-const controllers = [AdministrativeRouteController, AdministrativeController];
 const settings = inject('settings');
 let app: INestApplication<Server>;
+// A second server, on a database of its own, starts with no Administrator registered. The last two groups of tests
+// run on it, in order. Its first initial Administrator signs in with this Google account.
+const firstAccount = { sub: googleSubject(), email: 'first@example.com' };
+let postgres: StartedTestContainer;
+let emptySettings: typeof settings;
+let fresh: INestApplication<Server>;
+// The tests read and lock rows of that database with a connection of their own.
+let emptyDatabase: PrismaClient;
 
 beforeAll(async () => {
-  app = await startApp(settings, controllers);
+  app = await startApp(settings);
+  postgres = await startPostgres();
+  const databaseUrl = mainDatabaseUrl(postgres);
+  migrate(databaseUrl);
+  emptySettings = {
+    ...settings,
+    DATABASE_URL: databaseUrl,
+    INITIAL_ADMINISTRATOR_EMAILS: 'first@example.com, Second@Example.com',
+  };
+  fresh = await startApp(emptySettings);
+  emptyDatabase = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
 });
 
 afterAll(async () => {
+  await emptyDatabase.$disconnect();
+  await fresh.close();
+  await postgres.stop();
   await app.close();
 });
 
-function get(path: string, accessToken?: string, target = app): request.Test {
-  const call = request(target.getHttpServer()).get(path);
-  return accessToken === undefined ? call : call.auth(accessToken, { type: 'bearer' });
+function getAdministrators(accessToken: string, target = app): request.Test {
+  return request(target.getHttpServer()).get('/admin/administrators').auth(accessToken, { type: 'bearer' });
 }
 
-async function withAdministrators(
-  list: string,
-  run: (target: INestApplication<Server>) => Promise<void>,
-): Promise<void> {
-  const target = await startApp({ ...settings, ADMINISTRATOR_EMAILS: list }, controllers);
-  try {
-    await run(target);
-  } finally {
-    await target.close();
+async function list(accessToken: string, target = app): Promise<Administrator[]> {
+  return z.array(administratorSchema).parse((await getAdministrators(accessToken, target)).body);
+}
+
+function remove(accessToken: string, id: string, target = app): request.Test {
+  return request(target.getHttpServer()).delete(`/admin/administrators/${id}`).auth(accessToken, { type: 'bearer' });
+}
+
+// Whether a new Google account with the email address can sign in to the admin site: 200 or 403.
+function signInStatus(email: string, target = app): Promise<number> {
+  return request(target.getHttpServer())
+    .post('/admin/auth/google')
+    .send({ idToken: administratorIdToken({ sub: googleSubject(), email }) })
+    .then((response) => response.status);
+}
+
+// Leaves out the id, which the database generates.
+function withoutId({ email, signedIn, registeredBy }: Administrator): Omit<Administrator, 'id'> {
+  return { email, signedIn, registeredBy };
+}
+
+describe('The list of Administrators', () => {
+  it('shows each one with the email address, whether they have signed in and who registered them', async () => {
+    const { accessToken } = await signInAsAdministrator(app);
+    const email = `${randomUUID()}@example.com`;
+    const registered = administratorSchema.parse((await registerAdministrator(app, accessToken, email)).body);
+
+    const administrators = await list(accessToken);
+
+    expect(administrators.map((administrator) => withoutId(administrator))).toContainEqual({
+      email: ADMINISTRATOR.email,
+      signedIn: true,
+      registeredBy: null,
+    });
+    expect(administrators).toContainEqual({
+      id: registered.id,
+      email,
+      signedIn: false,
+      registeredBy: ADMINISTRATOR.email,
+    });
+  });
+});
+
+describe('Registering an Administrator', () => {
+  it('lets an address of any Google domain sign in, whatever its case', async () => {
+    const { accessToken } = await signInAsAdministrator(app);
+    const email = `${randomUUID()}@gmail.com`;
+
+    const response = await registerAdministrator(app, accessToken, email.toUpperCase());
+
+    expect(response.status).toBe(201);
+    expect(withoutId(administratorSchema.parse(response.body))).toEqual({
+      email,
+      signedIn: false,
+      registeredBy: ADMINISTRATOR.email,
+    });
+    expect(await signInStatus(email)).toBe(200);
+  });
+
+  it('changes nothing when the address is registered already and answers as the first time', async () => {
+    const { accessToken } = await signInAsAdministrator(app);
+    const other = await signInAsNewAdministrator(app);
+    const email = `${randomUUID()}@example.com`;
+    const first = await registerAdministrator(app, accessToken, email);
+
+    const again = await registerAdministrator(app, other.accessToken, email.toUpperCase());
+
+    expect(again.status).toBe(first.status);
+    expect(again.body).toEqual(first.body);
+  });
+
+  it('refuses a body without an email address and names the field', async () => {
+    const { accessToken } = await signInAsAdministrator(app);
+
+    const response = await registerAdministrator(app, accessToken, 'not an email address');
+
+    expect(response.status).toBe(400);
+    expect(JSON.stringify(response.body)).toContain('email');
+  });
+});
+
+describe('Removing an Administrator', () => {
+  it('refuses the removed Administrator from then on', async () => {
+    const removed = await signInAsNewAdministrator(app);
+    const { accessToken } = await signInAsAdministrator(app);
+
+    const response = await remove(accessToken, removed.id);
+
+    expect(response.status).toBe(204);
+    expect((await getAdministrators(removed.accessToken)).status).toBe(401);
+    expect(await signInStatus(removed.email)).toBe(403);
+  });
+
+  it('lets an Administrator remove themselves', async () => {
+    const leaving = await signInAsNewAdministrator(app);
+
+    const response = await remove(leaving.accessToken, leaving.id);
+
+    expect(response.status).toBe(204);
+    expect((await getAdministrators(leaving.accessToken)).status).toBe(401);
+  });
+
+  it('answers 404 for an Administrator who is not registered', async () => {
+    const { accessToken } = await signInAsAdministrator(app);
+
+    expect((await remove(accessToken, randomUUID())).status).toBe(404);
+  });
+});
+
+describe('A server started on a database without Administrators', () => {
+  it('registers every initial Administrator, as registered by nobody, and creates no User for them', async () => {
+    const { accessToken } = await signInAsAdministrator(fresh, firstAccount);
+
+    const administrators = await list(accessToken, fresh);
+
+    expect(administrators.map((administrator) => withoutId(administrator))).toEqual([
+      { email: 'first@example.com', signedIn: true, registeredBy: null },
+      { email: 'second@example.com', signedIn: false, registeredBy: null },
+    ]);
+    expect(await emptyDatabase.user.count()).toBe(0);
+  });
+
+  it('registers nobody when it starts again with another list', async () => {
+    const restarted = await startApp({ ...emptySettings, INITIAL_ADMINISTRATOR_EMAILS: 'third@example.com' });
+    try {
+      expect(await signInStatus('third@example.com', restarted)).toBe(403);
+      expect(await list((await signInAsAdministrator(restarted, firstAccount)).accessToken, restarted)).toHaveLength(2);
+    } finally {
+      await restarted.close();
+    }
+  });
+});
+
+// Holds a lock on an Administrator's row in a transaction of the test's own, as a request that is still running would,
+// until the returned function is called.
+async function lockAdministrator(id: string): Promise<() => Promise<void>> {
+  let release: (() => void) | undefined;
+  const released = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let locked: (() => void) | undefined;
+  const isLocked = new Promise<void>((resolve) => {
+    locked = resolve;
+  });
+  const transaction = emptyDatabase.$transaction(
+    async (tx) => {
+      await tx.$queryRaw`SELECT id FROM administrators WHERE id = ${id}::uuid FOR UPDATE`;
+      locked?.();
+      await released;
+    },
+    { timeout: 10_000 },
+  );
+  await Promise.race([isLocked, transaction]);
+  return async () => {
+    release?.();
+    await transaction;
+  };
+}
+
+// Waits until `count` requests wait for a lock in the database or have been answered.
+async function waitForRequests(count: number, answered: () => number): Promise<void> {
+  const [row] = await emptyDatabase.$queryRaw<{ waiting: number }[]>`
+    SELECT count(*)::int AS waiting FROM pg_stat_activity WHERE cardinality(pg_blocking_pids(pid)) > 0`;
+  if ((row?.waiting ?? 0) + answered() >= count) {
+    return;
   }
+  await new Promise((resolve) => {
+    setTimeout(resolve, 10);
+  });
+  await waitForRequests(count, answered);
 }
 
-describe('An administrative route', () => {
-  it('lets an Administrator through', async () => {
-    const { accessToken } = await signIn(app, { email: 'admin@snu.ac.kr' });
+describe('The last Administrator', () => {
+  it('cannot be removed', async () => {
+    const { accessToken } = await signInAsAdministrator(fresh, firstAccount);
+    const [self, other] = await list(accessToken, fresh);
+    expect((await remove(accessToken, other?.id ?? '', fresh)).status).toBe(204);
 
-    expect((await get('/administrative-route', accessToken)).status).toBe(200);
+    const response = await remove(accessToken, self?.id ?? '', fresh);
+
+    expect(response.status).toBe(409);
+    expect(response.body).toMatchObject({ message: 'The last Administrator cannot be removed.' });
+    expect(await list(accessToken, fresh)).toHaveLength(1);
   });
 
-  it('refuses another signed-in User with 403 and says so', async () => {
-    const { accessToken } = await signIn(app, { email: 'student@snu.ac.kr' });
+  it('stays when two Administrators remove each other at the same moment', async () => {
+    const { accessToken: firstToken } = await signInAsAdministrator(fresh, firstAccount);
+    const otherAccount = { sub: googleSubject(), email: 'other@example.com' };
+    const other = administratorSchema.parse((await registerAdministrator(fresh, firstToken, otherAccount.email)).body);
+    const { accessToken: otherToken } = await signInAsAdministrator(fresh, otherAccount);
+    const first = (await list(firstToken, fresh)).find(({ email }) => email === firstAccount.email);
+    let answered = 0;
+    const removeAs = (accessToken: string, id: string): Promise<number> =>
+      remove(accessToken, id, fresh).then(({ status }) => {
+        answered += 1;
+        return status;
+      });
 
-    const response = await get('/administrative-route', accessToken);
+    // The other's removal of the first waits for the test's lock; the first's removal of the other starts meanwhile.
+    const release = await lockAdministrator(first?.id ?? '');
+    const removingFirst = removeAs(otherToken, first?.id ?? '');
+    await waitForRequests(1, () => answered);
+    const removingOther = removeAs(firstToken, other.id);
+    await waitForRequests(2, () => answered);
+    await release();
 
-    expect(response.status).toBe(403);
-    expect(response.body).toMatchObject({ message: 'Only an Administrator can use this route.' });
-  });
-
-  it('refuses a request without an access token with 401', async () => {
-    expect((await get('/administrative-route')).status).toBe(401);
-  });
-
-  it('refuses an invalid access token with 401', async () => {
-    expect((await get('/administrative-route', 'not-an-access-token')).status).toBe(401);
-  });
-
-  it('refuses every request with 401 when the route is marked @Public() as well', async () => {
-    const { accessToken } = await signIn(app, { email: 'admin@snu.ac.kr' });
-
-    expect((await get('/administrative-route/public', accessToken)).status).toBe(401);
-  });
-});
-
-describe('A controller marked administrative', () => {
-  it('lets an Administrator through', async () => {
-    const { accessToken } = await signIn(app, { email: 'admin@snu.ac.kr' });
-
-    expect((await get('/administrative-controller', accessToken)).status).toBe(200);
-  });
-
-  it('refuses another signed-in User with 403', async () => {
-    const { accessToken } = await signIn(app, { email: 'student@snu.ac.kr' });
-
-    expect((await get('/administrative-controller', accessToken)).status).toBe(403);
-  });
-});
-
-describe('The Administrator list', () => {
-  it('matches an address whatever its case on either side', async () => {
-    const { accessToken } = await signIn(app, { email: 'SECOND-ADMIN@snu.ac.kr' });
-
-    await withAdministrators('admin@snu.ac.kr, Second-Admin@SNU.ac.kr', async (target) => {
-      expect((await get('/administrative-route', accessToken, target)).status).toBe(200);
-    });
-  });
-
-  it('refuses an Administrator taken off it, even with an access token issued before', async () => {
-    const { accessToken } = await signIn(app, { email: 'admin@snu.ac.kr' });
-    expect((await get('/administrative-route', accessToken)).status).toBe(200);
-
-    // The server restarts without admin@snu.ac.kr on the list, while the access token is still valid.
-    await withAdministrators('second-admin@snu.ac.kr', async (target) => {
-      expect((await get('/administrative-route', accessToken, target)).status).toBe(403);
-    });
+    expect([await removingFirst, await removingOther].toSorted((a, b) => a - b)).toEqual([204, 409]);
+    expect(await emptyDatabase.administrator.count()).toBe(1);
   });
 });

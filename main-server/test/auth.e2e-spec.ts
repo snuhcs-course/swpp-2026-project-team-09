@@ -6,7 +6,7 @@ import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { googleClientIds, googleIdToken } from './google.js';
+import { googleIdToken } from './google.js';
 import { es256KeyPair, rsaKeyPair } from './keys.js';
 import { signIn, tokensSchema } from './sign-in.js';
 import { startApp } from './start-app.js';
@@ -17,6 +17,7 @@ const DAY = 24 * HOUR;
 
 interface AccessTokenPayload {
   sub: string;
+  aud: string;
   iat: number;
   exp: number;
 }
@@ -69,19 +70,12 @@ describe('Sign-in with an SNU Google account', () => {
     expect(verifyAccessToken(second.accessToken).sub).toBe(users[0]?.id);
   });
 
-  it("accepts an ID token issued to the admin site's client", async () => {
-    const response = await postIdToken(googleIdToken({ aud: googleClientIds()[1] }));
-
-    expect(response.status).toBe(200);
-  });
-
-  it('issues an access token for the User, signed with the private key and valid for 1 hour', async () => {
+  it('issues an access token for the User and the app, signed with the private key and valid for 1 hour', async () => {
     const { accessToken } = await signIn(app, { sub: '100000000000000000003' });
 
     const payload = verifyAccessToken(accessToken);
     const user = await prisma.user.findUniqueOrThrow({ where: { googleSubject: '100000000000000000003' } });
-    expect(payload.sub).toBe(user.id);
-    expect(payload.exp - payload.iat).toBe(HOUR);
+    expect(payload).toEqual({ sub: user.id, aud: 'snu-now-app', iat: payload.iat, exp: payload.iat + HOUR });
   });
 
   it('stores the refresh token hashed and valid for 30 days', async () => {
@@ -136,6 +130,13 @@ describe('Sign-in refused for the ID token', () => {
     expect(response.body).toMatchObject(invalid);
   });
 
+  it("refuses an ID token issued to the admin site's client", async () => {
+    const response = await postIdToken(googleIdToken({ aud: settings.GOOGLE_ADMIN_CLIENT_ID }));
+
+    expect(response.status).toBe(401);
+    expect(response.body).toMatchObject(invalid);
+  });
+
   it('refuses an expired ID token', async () => {
     const now = Math.floor(Date.now() / 1000);
     const response = await postIdToken(googleIdToken({ iat: now - 2 * HOUR, exp: now - HOUR }));
@@ -185,7 +186,7 @@ describe('A protected route', () => {
     const { sub } = verifyAccessToken((await signIn(app)).accessToken);
     const now = Math.floor(Date.now() / 1000);
     const expired = new JwtService().sign(
-      { sub, iat: now - 2 * HOUR, exp: now - HOUR },
+      { sub, aud: 'snu-now-app', iat: now - 2 * HOUR, exp: now - HOUR },
       { privateKey: settings.ACCESS_TOKEN_PRIVATE_KEY, algorithm: 'ES256' },
     );
 
@@ -202,7 +203,10 @@ describe('A protected route', () => {
 
   it('refuses an access token signed with another key', async () => {
     const { sub } = verifyAccessToken((await signIn(app)).accessToken);
-    const forged = new JwtService().sign({ sub }, { privateKey: es256KeyPair().privateKey, algorithm: 'ES256' });
+    const forged = new JwtService().sign(
+      { sub, aud: 'snu-now-app' },
+      { privateKey: es256KeyPair().privateKey, algorithm: 'ES256' },
+    );
 
     expect((await getMe(forged)).status).toBe(401);
   });

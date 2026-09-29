@@ -30,9 +30,9 @@ export class TestGoogleIdTokenVerifier implements GoogleIdTokenVerifier {
   }
 }
 
-// The accepted audiences from the settings: the app's client first, then the admin site's.
-export function googleClientIds(): string[] {
-  return inject('settings').GOOGLE_CLIENT_IDS.split(',');
+// A subject identifier for a new Google account. Google's are strings of up to 21 digits.
+export function googleSubject(): string {
+  return String(randomInt(2 ** 47));
 }
 
 // A Google ID token for a new SNU account, issued to the app. Pass claims to change them.
@@ -40,9 +40,8 @@ export function googleIdToken(claims: Partial<TokenPayload> = {}, privateKey = g
   const now = Math.floor(Date.now() / 1000);
   const payload: TokenPayload = {
     iss: 'https://accounts.google.com',
-    aud: googleClientIds()[0] ?? '',
-    // Google's subject identifiers are strings of up to 21 digits.
-    sub: String(randomInt(2 ** 47)),
+    aud: inject('settings').GOOGLE_APP_CLIENT_ID,
+    sub: googleSubject(),
     email: 'student@snu.ac.kr',
     email_verified: true,
     hd: 'snu.ac.kr',
@@ -51,4 +50,14 @@ export function googleIdToken(claims: Partial<TokenPayload> = {}, privateKey = g
     ...claims,
   };
   return new JwtService().sign(payload, { privateKey, algorithm: 'RS256', keyid: KEY_ID });
+}
+
+// The initial Administrator of the test settings and the Google account that signs in as them. The first sign-in of
+// the run binds the account to the Administrator, so every test signs in as them with this account.
+export const ADMINISTRATOR = { email: 'admin@example.com', sub: '200000000000000000001' };
+
+// A Google ID token issued to the admin site, for the initial Administrator unless claims change it. The account has
+// no hosted domain, as a Gmail account has none: an Administrator's account may be outside SNU.
+export function administratorIdToken(claims: Partial<TokenPayload> = {}): string {
+  return googleIdToken({ aud: inject('settings').GOOGLE_ADMIN_CLIENT_ID, hd: undefined, ...ADMINISTRATOR, ...claims });
 }

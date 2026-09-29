@@ -1,38 +1,57 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ADMINISTRATOR_ONLY } from '../common/administrator-only.decorator.js';
-import { SignedInUser } from '../common/current-user.decorator.js';
-import { Settings } from '../common/settings.js';
-import { UsersService } from '../users/users.service.js';
+import { JwtService } from '@nestjs/jwt';
+import { AdministratorsService } from '../administrators/administrators.service.js';
+import { SignedInAdministratorRequest } from '../common/current-administrator.decorator.js';
+import { routeAccess } from '../common/route-access.js';
+import { bearerToken } from './access-token.guard.js';
 
-// The access token names only the User, so the email address is read and compared with the list on every request.
+// An Administrator's access token is for the administrative routes alone. A User's has another audience
+// (access-token.guard.ts), so each is refused where the other belongs.
+export const ADMINISTRATOR_TOKEN_AUDIENCE = 'snu-now-admin';
+
+// What an Administrator's access token says: the Administrator's id as the subject, and when it was issued, in whole
+// seconds, which jsonwebtoken adds when it signs. It holds no email address. Its audience and expiry are the standard
+// `aud` and `exp` claims.
+export interface AdministratorTokenPayload {
+  sub: string;
+  iat: number;
+}
+
+// Registered globally in AuthModule: a route marked @AdministratorOnly() needs an Administrator's access token. Every
+// request reads the Administrator, so a removed Administrator, or a token issued before their last sign-out, gets 401
+// at once. So do a missing, expired or altered token and a User's token.
 @Injectable()
 export class AdministratorGuard implements CanActivate {
   constructor(
+    private readonly jwt: JwtService,
     private readonly reflector: Reflector,
-    private readonly users: UsersService,
-    private readonly settings: ConfigService<Settings, true>,
+    private readonly administrators: AdministratorsService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const administratorOnly = this.reflector.getAllAndOverride<boolean | undefined>(ADMINISTRATOR_ONLY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (administratorOnly !== true) {
+    if (routeAccess(this.reflector, context) !== 'administrator') {
       return true;
     }
-    const { user } = context.switchToHttp().getRequest<{ user?: SignedInUser }>();
-    // AccessTokenGuard lets a route marked @Public() through without putting a User on the request.
-    if (user === undefined) {
+    const request = context.switchToHttp().getRequest<SignedInAdministratorRequest>();
+    const { sub, iat } = await this.verify(bearerToken(request));
+    const administrator = await this.administrators.findById(sub);
+    // `iat` has whole seconds and the sign-out time milliseconds. Every token issued in the second of a sign-out is
+    // refused, the one issued in its very millisecond included.
+    if (administrator === null || iat * 1000 <= (administrator.tokensValidAfter?.getTime() ?? 0)) {
       throw new UnauthorizedException();
     }
-    const { email } = await this.users.findById(user.id);
-    // The list is kept in lower case (see settings.ts).
-    if (!this.settings.get('ADMINISTRATOR_EMAILS', { infer: true }).includes(email.toLowerCase())) {
-      throw new ForbiddenException('Only an Administrator can use this route.');
-    }
+    request.administrator = { id: administrator.id };
     return true;
+  }
+
+  private async verify(token: string): Promise<AdministratorTokenPayload> {
+    try {
+      return await this.jwt.verifyAsync<AdministratorTokenPayload>(token, {
+        audience: ADMINISTRATOR_TOKEN_AUDIENCE,
+      });
+    } catch {
+      throw new UnauthorizedException();
+    }
   }
 }

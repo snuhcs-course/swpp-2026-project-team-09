@@ -1,0 +1,29 @@
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { AdministratorOnly } from '../common/administrator-only.decorator.js';
+import { CurrentAdministrator, type SignedInAdministrator } from '../common/current-administrator.decorator.js';
+import { Public } from '../common/public.decorator.js';
+import { AdministratorAuthService } from './administrator-auth.service.js';
+import { AdministratorTokenDto } from './dto/administrator-token.dto.js';
+import { type SignInDto, signInSchema } from './dto/sign-in.dto.js';
+
+// The admin site's sign-in, apart from the app's.
+@Controller('admin/auth')
+export class AdministratorAuthController {
+  constructor(private readonly auth: AdministratorAuthService) {}
+
+  // 401 when the ID token is invalid, expired or issued to another client than the admin site's, 403 when its email
+  // address is not verified or not registered.
+  @Public()
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  signIn(@Body({ schema: signInSchema }) body: SignInDto): Promise<AdministratorTokenDto> {
+    return this.auth.signIn(body.idToken);
+  }
+
+  @AdministratorOnly()
+  @Post('sign-out')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  signOut(@CurrentAdministrator() administrator: SignedInAdministrator): Promise<void> {
+    return this.auth.signOut(administrator.id);
+  }
+}
