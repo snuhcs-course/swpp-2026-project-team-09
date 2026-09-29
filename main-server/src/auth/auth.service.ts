@@ -72,27 +72,30 @@ export class AuthService {
     if (used === null || used.expiresAt <= now) {
       throw new UnauthorizedException(REFRESH_TOKEN_REFUSED);
     }
-    if (used.revokedAt === null) {
-      const replacement = newRefreshToken();
-      // The revocation matches only a token that is not revoked yet, and PostgreSQL checks that again after waiting
-      // for a concurrent revocation of the same row. Of two requests with the same token, only one revokes it.
-      const [revoked] = await this.prisma.$transaction([
-        this.prisma.refreshToken.updateMany({ where: { id: used.id, revokedAt: null }, data: { revokedAt: now } }),
-        this.prisma.refreshToken.create({
-          data: { userId: used.userId, familyId: used.familyId, ...replacement.stored },
-        }),
-      ]);
-      if (revoked.count === 1) {
-        return { accessToken: await this.signAccessToken(used.userId), refreshToken: replacement.token };
+    const replacement = await this.prisma.$transaction(async (tx) => {
+      // Matches only a token that is not revoked yet, and PostgreSQL checks that again after waiting for a concurrent
+      // revocation of the same row. Of two requests with the same token, only one revokes it and stores a replacement.
+      const revoked = await tx.refreshToken.updateMany({
+        where: { id: used.id, revokedAt: null },
+        data: { revokedAt: now },
+      });
+      if (revoked.count === 0) {
+        return null;
       }
-    }
-    // The token was used before. Whoever holds the other copy may have stolen it, so every token of its family is
-    // revoked (RFC 9700, section 4.14.2), the replacements of both requests included when two arrived at once.
-    await this.prisma.refreshToken.updateMany({
-      where: { familyId: used.familyId, revokedAt: null },
-      data: { revokedAt: now },
+      const issued = newRefreshToken();
+      await tx.refreshToken.create({ data: { userId: used.userId, familyId: used.familyId, ...issued.stored } });
+      return issued;
     });
-    throw new UnauthorizedException(REFRESH_TOKEN_REFUSED);
+    if (replacement === null) {
+      // The token was used before. Whoever holds the other copy may have stolen it, so every token of its family is
+      // revoked (RFC 9700, section 4.14.2), the one that replaced it included.
+      await this.prisma.refreshToken.updateMany({
+        where: { familyId: used.familyId, revokedAt: null },
+        data: { revokedAt: now },
+      });
+      throw new UnauthorizedException(REFRESH_TOKEN_REFUSED);
+    }
+    return { accessToken: await this.signAccessToken(used.userId), refreshToken: replacement.token };
   }
 
   // Revokes every refresh token of the User, on every phone, and turns the Master Switch off so that the User's
