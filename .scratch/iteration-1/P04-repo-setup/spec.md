@@ -75,6 +75,7 @@ A repository that holds six independent projects: four servers, the admin site a
 
 - The linter is oxlint with type-aware rules. The categories correctness, suspicious, pedantic and perf are errors. Rules added on top include a ban on explicit `any`, explicit return types and a ban on non-null assertions.
 - The rule that rewrites imports into type-only imports is off in the servers, because it can break dependency injection.
+- The pedantic rule `prefer-readonly-parameter-types` is off. It requires deeply readonly parameter types, which framework and library classes cannot satisfy.
 - The categories style and restriction are not enabled as a whole, because they contain rules that contradict each other.
 - If type-aware linting does not run with TypeScript 6, the project runs the TypeScript compiler in strict mode as a separate check instead.
 - TypeScript runs in strict mode.

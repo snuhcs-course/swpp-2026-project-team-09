@@ -5,7 +5,7 @@ import { startApp } from './start-app.js';
 
 // Accepts connections and never answers, like a database host that has stopped responding.
 async function startSilentServer(): Promise<Server> {
-  const server = createServer((socket: Readonly<Pick<Socket, 'resume'>>) => {
+  const server = createServer((socket: Socket) => {
     // Reading what arrives lets the socket see the client hang up, so that the server can close.
     socket.resume();
   });
@@ -14,7 +14,7 @@ async function startSilentServer(): Promise<Server> {
   return server;
 }
 
-function portOf(server: Readonly<Server>): number {
+function portOf(server: Server): number {
   const address = server.address();
   if (address === null || typeof address === 'string') {
     throw new Error('The server does not listen on a TCP port');

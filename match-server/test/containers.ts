@@ -18,7 +18,7 @@ export async function startPostgres(): Promise<StartedTestContainer> {
   );
 }
 
-export function matchDatabaseUrl(postgres: Readonly<StartedTestContainer>): string {
+export function matchDatabaseUrl(postgres: StartedTestContainer): string {
   return `postgresql://match:match@${postgres.getHost()}:${postgres.getMappedPort(5432)}/match`;
 }
 
@@ -30,6 +30,6 @@ export function startRedis(): Promise<StartedTestContainer> {
     .start();
 }
 
-export function redisSettings(redis: Readonly<StartedTestContainer>): { REDIS_HOST: string; REDIS_PORT: string } {
+export function redisSettings(redis: StartedTestContainer): { REDIS_HOST: string; REDIS_PORT: string } {
   return { REDIS_HOST: redis.getHost(), REDIS_PORT: String(redis.getMappedPort(6379)) };
 }

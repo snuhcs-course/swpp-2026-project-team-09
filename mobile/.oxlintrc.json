@@ -10,8 +10,8 @@
     "typescript/no-explicit-any": "error",
     "typescript/explicit-function-return-type": "error",
     "typescript/no-non-null-assertion": "error",
-    // Only the servers turn this off, because their dependency injection looks classes up at runtime.
-    "typescript/consistent-type-imports": "error"
+    "typescript/consistent-type-imports": "error",
+    "typescript/prefer-readonly-parameter-types": "off"
   },
   "env": {
     "node": true

@@ -18,7 +18,7 @@ export class AccessTokenGuard implements CanActivate {
     private readonly reflector: Reflector,
   ) {}
 
-  async canActivate(context: Readonly<ExecutionContext>): Promise<boolean> {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean | undefined>(IS_PUBLIC, [
       context.getHandler(),
       context.getClass(),

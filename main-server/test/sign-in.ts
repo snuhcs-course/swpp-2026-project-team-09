@@ -14,10 +14,7 @@ export const tokensSchema = z.strictObject({
 export type Tokens = z.infer<typeof tokensSchema>;
 
 // Signs in as the app does, with a Google ID token for a new SNU account unless claims change it.
-export async function signIn(
-  app: Readonly<INestApplication<Server>>,
-  claims: Readonly<Partial<TokenPayload>> = {},
-): Promise<Tokens> {
+export async function signIn(app: INestApplication<Server>, claims: Partial<TokenPayload> = {}): Promise<Tokens> {
   const response = await request(app.getHttpServer())
     .post('/auth/google')
     .send({ idToken: googleIdToken(claims) });
