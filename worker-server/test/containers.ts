@@ -10,6 +10,6 @@ export function startRedis(): Promise<StartedTestContainer> {
     .start();
 }
 
-export function redisSettings(redis: Readonly<StartedTestContainer>): { REDIS_HOST: string; REDIS_PORT: string } {
+export function redisSettings(redis: StartedTestContainer): { REDIS_HOST: string; REDIS_PORT: string } {
   return { REDIS_HOST: redis.getHost(), REDIS_PORT: String(redis.getMappedPort(6379)) };
 }

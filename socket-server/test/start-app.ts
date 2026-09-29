@@ -7,7 +7,7 @@ import { Settings } from '../src/common/settings.js';
 
 // AppModule validates the settings when it is imported, so it is imported afresh after the environment is set.
 export async function startApp(
-  settings: Readonly<Partial<Record<keyof Settings, string | undefined>>>,
+  settings: Partial<Record<keyof Settings, string | undefined>>,
 ): Promise<INestApplication<Server>> {
   for (const [name, value] of Object.entries(settings)) {
     vi.stubEnv(name, value);

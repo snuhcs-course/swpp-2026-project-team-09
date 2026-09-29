@@ -41,12 +41,10 @@ Both were changed after review.
 The settings are copied from the main server with three differences:
 
 - `typescript/consistent-type-imports` is an error. The spec turns it off only in the servers.
-- The options for `no-extraneous-class` and `prefer-readonly-parameter-types` are left out. They exist for NestJS modules and constructor injection; this project has no classes, so they would change nothing.
+- The option for `no-extraneous-class` is left out. It exists for NestJS modules; this project has no classes, so it would change nothing.
 - `env` stays `node: true` as copied. No enabled rule depends on it.
 
 Type-aware linting runs with TypeScript 6 here too. A probe with a floating promise and an unsafe return failed `pnpm lint`.
-
-`typescript/prefer-readonly-parameter-types` (pedantic) reports component props that are not deeply read-only, for example a `ReactElement` parameter. The placeholder screen has no props. Revisit this rule when the first component with props arrives in P06.
 
 ### Jest renderer (2026-09-28)
 

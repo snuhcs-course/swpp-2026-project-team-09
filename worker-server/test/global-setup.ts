@@ -11,7 +11,7 @@ declare module 'vitest' {
 }
 
 // Starts Redis once for every test file.
-export default async function setup({ provide }: Readonly<Pick<TestProject, 'provide'>>): Promise<() => Promise<void>> {
+export default async function setup({ provide }: TestProject): Promise<() => Promise<void>> {
   const redis = await startRedis();
   const settings: SettingValues = {
     PORT: '3002',
