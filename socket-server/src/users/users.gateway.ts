@@ -28,8 +28,8 @@ export class UsersGateway implements OnGatewayInit<UsersServer> {
 
   constructor(private readonly jwt: JwtService) {}
 
-  // The app sends its access token when it connects, as Socket.IO's documentation shows: `io(url, { auth: { token } })`.
-  // This middleware runs before the connection opens, so a refused app gets `connect_error` and never connects.
+  // The app sends its access token in Socket.IO's `auth` option as `{ token }` (see README.md). This middleware runs
+  // on every attempt to connect, before the connection opens, so a refused app gets `connect_error` and never connects.
   afterInit(server: UsersServer): void {
     server.use((socket, next) => {
       this.verify(socket.handshake.auth.token).then(

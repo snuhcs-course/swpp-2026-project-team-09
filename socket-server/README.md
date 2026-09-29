@@ -19,6 +19,9 @@ cp .env.example .env
 grep ACCESS_TOKEN_PUBLIC_KEY ../main-server/.env >> .env
 ```
 
+When the main server gets a new key pair, replace this line with its new public key. Otherwise the socket server
+refuses every connection with `Unauthorized`.
+
 To run the whole system, in the repository root:
 
 ```bash
