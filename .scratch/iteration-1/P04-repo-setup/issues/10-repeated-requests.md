@@ -73,8 +73,11 @@ so the test compares the class name.
 The interceptor reaches HTTP handlers only. `main.ts` connects the Redis listener without `inheritAppConfig`, so no
 global enhancer applies to message handlers: not `AccessTokenGuard`, not the validation pipe, not this interceptor.
 `@Idempotent()` on a `@MessagePattern()` handler therefore does nothing yet. P08 plans that the main server handles a
-match identifier once; it has to choose between `inheritAppConfig` and `@UseInterceptors(IdempotencyInterceptor)` on
-that handler, with a key from the payload (`keyFrom`) and a `scope` for `rpc`.
+match identifier once. The package does not export `IdempotencyInterceptor`, so `@UseInterceptors()` cannot put it on
+that handler. P08 can connect the listener with `inheritAppConfig`, with a key from the payload (`keyFrom`) and a
+`scope` for `rpc`, or protect the request without the module, for example with a unique match identifier in the
+database. `inheritAppConfig` applies every global enhancer to message handlers: `AccessTokenGuard` reads an HTTP
+header, so it has to let calls that are not HTTP through first.
 
 ### Tests (2026-09-29)
 
