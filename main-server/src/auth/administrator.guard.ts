@@ -6,10 +6,7 @@ import { SignedInUser } from '../common/current-user.decorator.js';
 import { Settings } from '../common/settings.js';
 import { UsersService } from '../users/users.service.js';
 
-// Registered globally in AuthModule after AccessTokenGuard, so a request without a valid access token has already got
-// 401. On a route marked @AdministratorOnly(), only a User whose email address is in ADMINISTRATOR_EMAILS passes, and
-// another User gets 403. The access token names only the User, so the address is read and compared with the list on
-// every request.
+// The access token names only the User, so the email address is read and compared with the list on every request.
 @Injectable()
 export class AdministratorGuard implements CanActivate {
   constructor(
