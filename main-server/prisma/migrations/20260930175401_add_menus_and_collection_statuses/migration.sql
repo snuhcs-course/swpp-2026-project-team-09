@@ -1,4 +1,7 @@
 -- CreateEnum
+CREATE TYPE "menu_line_kind" AS ENUM ('heading', 'item', 'note');
+
+-- CreateEnum
 CREATE TYPE "meal" AS ENUM ('breakfast', 'lunch', 'dinner');
 
 -- CreateEnum
@@ -10,22 +13,22 @@ CREATE TABLE "restaurant_days" (
     "source" "collection_source" NOT NULL,
     "restaurant" TEXT NOT NULL,
     "date" DATE NOT NULL,
-    "operating_hours" TEXT,
     "collected_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "restaurant_days_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "menu_entries" (
+CREATE TABLE "menu_lines" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "restaurant_day_id" UUID NOT NULL,
     "meal" "meal" NOT NULL,
-    "name" TEXT NOT NULL,
-    "price" INTEGER,
     "position" INTEGER NOT NULL,
+    "text" TEXT NOT NULL,
+    "kind" "menu_line_kind",
+    "price" INTEGER,
 
-    CONSTRAINT "menu_entries_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "menu_lines_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -43,10 +46,10 @@ CREATE TABLE "collection_statuses" (
 CREATE UNIQUE INDEX "restaurant_days_date_source_restaurant_key" ON "restaurant_days"("date", "source", "restaurant");
 
 -- CreateIndex
-CREATE INDEX "menu_entries_restaurant_day_id_idx" ON "menu_entries"("restaurant_day_id");
+CREATE INDEX "menu_lines_restaurant_day_id_idx" ON "menu_lines"("restaurant_day_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "collection_statuses_source_key" ON "collection_statuses"("source");
 
 -- AddForeignKey
-ALTER TABLE "menu_entries" ADD CONSTRAINT "menu_entries_restaurant_day_id_fkey" FOREIGN KEY ("restaurant_day_id") REFERENCES "restaurant_days"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "menu_lines" ADD CONSTRAINT "menu_lines_restaurant_day_id_fkey" FOREIGN KEY ("restaurant_day_id") REFERENCES "restaurant_days"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

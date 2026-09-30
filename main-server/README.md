@@ -152,15 +152,16 @@ The worker server collects the menus of the Co-op, dormitory and veterinary coll
   ```json
   [
     {
-      "restaurant": "학생회관식당",
-      "operatingHours": "※ 운영시간 : 11:00~14:30",
+      "restaurant": "두레미담",
       "collectedAt": "2026-09-30T21:00:00.000Z",
       "meals": [
         {
           "meal": "lunch",
-          "entries": [
-            { "name": "제육볶음", "price": 6000 },
-            { "name": "비빔밥", "price": null }
+          "lines": [
+            { "text": "<셀프코너> 7,000원", "kind": "heading", "price": 7000 },
+            { "text": "잡곡밥", "kind": null, "price": null },
+            { "text": "고등어 소금구이  : 14,000원", "kind": "item", "price": 14000 },
+            { "text": "※운영시간 : 11:00~14:00", "kind": "note", "price": null }
           ]
         }
       ]
@@ -168,21 +169,33 @@ The worker server collects the menus of the Co-op, dormitory and veterinary coll
   ]
   ```
 
-- `meals` holds the meals that have entries, in the order breakfast, lunch, dinner, and each meal's entries in the
-  page's order. `price` is in won, and `null` when the page gives none. `operatingHours` is the page's line of text, or
-  `null`. `collectedAt` is when the collection that stored this restaurant's menus for the day read the page.
+- A meal is its cell's lines, in the page's order. `meals` holds the meals that have lines, in the order breakfast,
+  lunch, dinner, and a restaurant listed without any is served with `meals: []`. `collectedAt` is when the
+  collection that stored this restaurant's menus for the day read the page.
+- `text` is the line as the page wrote it, prices and markers such as `(#)` (no meat) included. The worker sets the
+  rest only when it is sure, and leaves it `null` otherwise:
+  - `kind`: `heading` for a corner or section, `item` for a dish or a set, `note` for operating and busy hours, last
+    orders and other notices.
+  - `price`: in won, when the line gives exactly one price. `9,900원 / 12,400원` or a price with a typo stays in
+    `text` alone.
+- The app shows `text`, styled by `kind` when it has one, and uses `price` only to compare. A line nobody could read is
+  still shown. Operating hours and closures, such as `개천절 휴무`, are lines too.
 - A day with nothing stored answers `[]`, so the app can ask for each of the coming days. A `date` that is not a
   calendar day gets 400.
 
 For each day a `menus-collected` message carries, it replaces everything its source had stored for that day: the
-restaurants, their entries and their operating hours. So the same message sent twice leaves one set of records, and a
-menu or a restaurant the page changed, renamed or removed does not linger. The source's other days and the other
-sources' restaurants stay as they are.
+restaurants and their lines. So the same message sent twice leaves one set of records, and a menu or a restaurant the
+page changed, renamed or removed does not linger. The source's other days and the other sources' restaurants stay as
+they are.
 
-- A collector therefore sends every restaurant the page lists for a day. One whose cell is empty or states a closure
-  goes with `entries: []`, and the route answers it with `meals: []`; one left out is gone for that day.
+- A collector therefore sends every restaurant the page lists for a day, one listed with empty cells with
+  `lines: []`; one left out is gone for that day.
 - A restaurant belongs to one source. The same name sent by two sources for one day is served twice.
 - A failed collection changes no menu, so the app keeps getting the last menus collected.
+
+The line model was chosen on 2026-10-01 from the pages as they were then (`.scratch/research/external-sources.md`,
+§4). It is provisional: once the collectors of P07 tickets 07 and 08 run on the real pages, the team looks at what
+they send, and at how much `kind` and `price` they can read, before relying on it.
 
 ## Checks
 
@@ -366,7 +379,7 @@ and the main server checks it, stores it and answers. Every collector follows th
   ```json
   {
     "status": "error",
-    "message": "menus.0.entries.0.meal: Invalid option: expected one of \"breakfast\"|\"lunch\"|\"dinner\"; menus.0: Unrecognized key: \"hours\""
+    "message": "menus.0.lines.0.meal: Invalid option: expected one of \"breakfast\"|\"lunch\"|\"dinner\"; menus.0: Unrecognized key: \"hours\""
   }
   ```
 

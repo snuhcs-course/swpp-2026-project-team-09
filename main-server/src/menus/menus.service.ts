@@ -25,28 +25,21 @@ export class MenusService {
       date: { in: [...new Set(menus.map(({ date }) => date))].map((date) => calendarDay(date)) },
     };
     await this.prisma.$transaction(async (tx) => {
-      await tx.menuEntry.deleteMany({ where: { restaurantDay: sourceDays } });
+      await tx.menuLine.deleteMany({ where: { restaurantDay: sourceDays } });
       await tx.restaurantDay.deleteMany({ where: sourceDays });
       // RETURNING gives the rows in the order they were inserted.
       const days = await tx.restaurantDay.createManyAndReturn({
-        data: menus.map(({ restaurant, date, operatingHours }) => ({
+        data: menus.map(({ restaurant, date }) => ({
           source,
           restaurant,
           date: calendarDay(date),
-          operatingHours,
           collectedAt: collected,
         })),
         select: { id: true },
       });
-      await tx.menuEntry.createMany({
-        data: menus.flatMap(({ entries }, index) =>
-          entries.map(({ meal, name, price }, position) => ({
-            restaurantDayId: days[index].id,
-            meal,
-            name,
-            price,
-            position,
-          })),
+      await tx.menuLine.createMany({
+        data: menus.flatMap(({ lines }, index) =>
+          lines.map((line, position) => ({ ...line, restaurantDayId: days[index].id, position })),
         ),
       });
       await this.collection.recordSuccess(tx, source, collected);
@@ -57,7 +50,7 @@ export class MenusService {
     const days = await this.prisma.restaurantDay.findMany({
       where: { date: calendarDay(date) },
       orderBy: { restaurant: 'asc' },
-      include: { entries: { orderBy: { position: 'asc' } } },
+      include: { lines: { orderBy: { position: 'asc' } } },
     });
     return days.map((day) => toRestaurantMenusDto(day));
   }

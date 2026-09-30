@@ -17,11 +17,22 @@ export function restaurantMenus(date: string, changes: object = {}): object {
   return {
     restaurant: '학생회관식당',
     date,
-    operatingHours: '※ 운영시간 : 11:00~14:30',
-    entries: [{ meal: 'lunch', name: '제육볶음', price: 6000 }],
+    lines: [
+      { meal: 'lunch', text: '제육볶음 : 6,000원', kind: 'item', price: 6000 },
+      { meal: 'lunch', text: '※ 운영시간 : 11:00~14:30', kind: 'note', price: null },
+    ],
     ...changes,
   };
 }
+
+// The lunch of `restaurantMenus()` as the route serves it.
+export const servedLunch = {
+  meal: 'lunch',
+  lines: [
+    { text: '제육볶음 : 6,000원', kind: 'item', price: 6000 },
+    { text: '※ 운영시간 : 11:00~14:30', kind: 'note', price: null },
+  ],
+};
 
 // A menus message from the Co-op collector, with `changes` applied.
 export function menusMessage(menus: object[], changes: object = {}): object {

@@ -1,7 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { daysOf, getMenus, menusMessage, restaurantMenus } from './menus.js';
+import { daysOf, getMenus, menusMessage, restaurantMenus, servedLunch } from './menus.js';
 import { signIn } from './sign-in.js';
 import { refusal, sendAsWorker, startWithWorker, type WorkerHarness } from './worker.js';
 
@@ -28,7 +28,7 @@ describe('A failed collection', () => {
     await sendAsWorker(
       harness.worker,
       'menus-collected',
-      menusMessage([restaurantMenus(date, { restaurant: '아워홈(901동)', operatingHours: null })], {
+      menusMessage([restaurantMenus(date, { restaurant: '아워홈(901동)' })], {
         source: 'dormitory_menus',
       }),
     );
@@ -47,12 +47,7 @@ describe('A failed collection', () => {
       lastFailureReason: 'The page did not answer within 10 seconds',
     });
     expect((await getMenus(harness.app, accessToken, date)).body).toEqual([
-      {
-        restaurant: '아워홈(901동)',
-        operatingHours: null,
-        collectedAt: '2026-10-31T12:00:00.000Z',
-        meals: [{ meal: 'lunch', entries: [{ name: '제육볶음', price: 6000 }] }],
-      },
+      { restaurant: '아워홈(901동)', collectedAt: '2026-10-31T12:00:00.000Z', meals: [servedLunch] },
     ]);
   });
 

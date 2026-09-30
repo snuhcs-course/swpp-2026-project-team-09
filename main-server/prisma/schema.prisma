@@ -78,33 +78,45 @@ model Administrator {
 // One restaurant's menus on one day, as the last collection of its source on that day read them. A later collection
 // replaces every restaurant of the source on that day.
 model RestaurantDay {
-  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  source         CollectionSource
-  restaurant     String
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source      CollectionSource
+  restaurant  String
   // A calendar day in Asia/Seoul.
-  date           DateTime         @db.Date
-  // The original line of text, such as "※ 운영시간 : 11:00~14:30".
-  operatingHours String?          @map("operating_hours")
-  collectedAt    DateTime         @map("collected_at")
-  entries        MenuEntry[]
+  date        DateTime         @db.Date
+  collectedAt DateTime         @map("collected_at")
+  lines       MenuLine[]
 
   @@unique([date, source, restaurant])
   @@map("restaurant_days")
 }
 
-model MenuEntry {
+// One line of a meal's cell, as the page wrote it. The worker sets `kind` and `price` only when it is sure, so a line it
+// cannot read is still shown as text.
+model MenuLine {
   id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   restaurantDayId String        @map("restaurant_day_id") @db.Uuid
   restaurantDay   RestaurantDay @relation(fields: [restaurantDayId], references: [id])
   meal            Meal
-  name            String
-  // In won. Absent when the page gives none.
-  price           Int?
-  // The order in which the page lists the day's entries.
+  // The order in which the page lists the day's lines.
   position        Int
+  text            String
+  kind            MenuLineKind?
+  // In won, when the line gives exactly one price.
+  price           Int?
 
   @@index([restaurantDayId])
-  @@map("menu_entries")
+  @@map("menu_lines")
+}
+
+enum MenuLineKind {
+  // A corner or section, such as "<셀프코너> 7,000원".
+  heading
+  // A dish or a set.
+  item
+  // Operating or busy hours, a notice, such as "※ 운영시간 : 11:00~14:30".
+  note
+
+  @@map("menu_line_kind")
 }
 
 // Declared in the order of the day, which is the order the menus are served in.

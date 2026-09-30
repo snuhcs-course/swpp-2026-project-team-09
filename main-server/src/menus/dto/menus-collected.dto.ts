@@ -1,9 +1,10 @@
 import { z } from 'zod';
-import { CollectionSource, Meal } from '../../generated/prisma/client.js';
+import { CollectionSource, Meal, MenuLineKind } from '../../generated/prisma/client.js';
 
-const menuEntrySchema = z.strictObject({
+const menuLineSchema = z.strictObject({
   meal: z.enum(Meal),
-  name: z.string().min(1),
+  text: z.string().min(1),
+  kind: z.enum(MenuLineKind).nullable(),
   // The column's range, so that a larger price is refused here rather than failing in the database.
   price: z.int32().nonnegative().nullable(),
 });
@@ -11,8 +12,7 @@ const menuEntrySchema = z.strictObject({
 const restaurantMenusSchema = z.strictObject({
   restaurant: z.string().min(1),
   date: z.iso.date(),
-  operatingHours: z.string().min(1).nullable(),
-  entries: z.array(menuEntrySchema),
+  lines: z.array(menuLineSchema),
 });
 
 // The menus one collection read, sent by the worker as `menus-collected`.

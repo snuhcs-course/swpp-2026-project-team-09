@@ -2,7 +2,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { daysOf, getMenus, menusMessage, restaurantMenus } from './menus.js';
+import { daysOf, getMenus, menusMessage, restaurantMenus, servedLunch } from './menus.js';
 import { signIn } from './sign-in.js';
 import { refusal, sendAsWorker, startWithWorker, type WorkerHarness } from './worker.js';
 
@@ -28,23 +28,21 @@ function menusOn(date: string): request.Test {
   return getMenus(harness.app, accessToken, date);
 }
 
-describe('Menus collected by the worker', () => {
-  it('are stored and served by restaurant and meal, with prices, hours and the collection time', async () => {
-    const date = newDay();
+// A cell of several kinds of line, as the Co-op page writes them, across the three meals.
+const selfServiceLines = [
+  { meal: 'lunch', text: '<셀프코너> 7,000원', kind: 'heading', price: 7000 },
+  { meal: 'lunch', text: '잡곡밥', kind: null, price: null },
+  { meal: 'breakfast', text: '토스트 : 3,000원', kind: 'item', price: 3000 },
+  { meal: 'lunch', text: '※운영시간 : 11:00~14:00', kind: 'note', price: null },
+  { meal: 'dinner', text: '한입버거운시그니처버거 : 9,900원 / 12,400원', kind: 'item', price: null },
+];
 
+describe('Menus collected by the worker', () => {
+  it('are stored and served by restaurant and meal, each line as the page wrote it', async () => {
+    const date = newDay();
     const message = menusMessage([
-      restaurantMenus(date, {
-        entries: [
-          { meal: 'lunch', name: '제육볶음', price: 6000 },
-          { meal: 'breakfast', name: '토스트', price: 3000 },
-          { meal: 'lunch', name: '비빔밥', price: null },
-        ],
-      }),
-      restaurantMenus(date, {
-        restaurant: '자하연식당',
-        operatingHours: null,
-        entries: [{ meal: 'dinner', name: '돈까스', price: 5500 }],
-      }),
+      restaurantMenus(date),
+      restaurantMenus(date, { restaurant: '두레미담', lines: selfServiceLines }),
     ]);
 
     await expect(sendAsWorker(harness.worker, 'menus-collected', message)).resolves.toEqual({ status: 'ok' });
@@ -53,42 +51,49 @@ describe('Menus collected by the worker', () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual([
       {
-        restaurant: '자하연식당',
-        operatingHours: null,
-        collectedAt: '2026-10-31T12:00:00.000Z',
-        meals: [{ meal: 'dinner', entries: [{ name: '돈까스', price: 5500 }] }],
-      },
-      {
-        restaurant: '학생회관식당',
-        operatingHours: '※ 운영시간 : 11:00~14:30',
+        restaurant: '두레미담',
         collectedAt: '2026-10-31T12:00:00.000Z',
         meals: [
-          { meal: 'breakfast', entries: [{ name: '토스트', price: 3000 }] },
+          { meal: 'breakfast', lines: [{ text: '토스트 : 3,000원', kind: 'item', price: 3000 }] },
           {
             meal: 'lunch',
-            entries: [
-              { name: '제육볶음', price: 6000 },
-              { name: '비빔밥', price: null },
+            lines: [
+              { text: '<셀프코너> 7,000원', kind: 'heading', price: 7000 },
+              { text: '잡곡밥', kind: null, price: null },
+              { text: '※운영시간 : 11:00~14:00', kind: 'note', price: null },
             ],
+          },
+          {
+            meal: 'dinner',
+            lines: [{ text: '한입버거운시그니처버거 : 9,900원 / 12,400원', kind: 'item', price: null }],
           },
         ],
       },
+      { restaurant: '학생회관식당', collectedAt: '2026-10-31T12:00:00.000Z', meals: [servedLunch] },
     ]);
   });
 });
 
-describe('A restaurant sent without entries, one closed or not posted yet', () => {
-  it('is served without meals', async () => {
+describe('A restaurant closed that day', () => {
+  it("is served with the page's closure line, or without meals when the page gives none", async () => {
     const date = newDay();
+    const closure = { meal: 'lunch', text: '개천절 휴무', kind: null, price: null };
 
-    await sendAsWorker(harness.worker, 'menus-collected', menusMessage([restaurantMenus(date, { entries: [] })]));
+    await sendAsWorker(
+      harness.worker,
+      'menus-collected',
+      menusMessage([
+        restaurantMenus(date, { lines: [closure] }),
+        restaurantMenus(date, { restaurant: '자하연식당', lines: [] }),
+      ]),
+    );
 
     expect((await menusOn(date)).body).toEqual([
+      { restaurant: '자하연식당', collectedAt: '2026-10-31T12:00:00.000Z', meals: [] },
       {
         restaurant: '학생회관식당',
-        operatingHours: '※ 운영시간 : 11:00~14:30',
         collectedAt: '2026-10-31T12:00:00.000Z',
-        meals: [],
+        meals: [{ meal: 'lunch', lines: [{ text: '개천절 휴무', kind: null, price: null }] }],
       },
     ]);
   });
@@ -103,12 +108,7 @@ describe('The same menus message twice', () => {
     await sendAsWorker(harness.worker, 'menus-collected', message);
 
     expect((await menusOn(date)).body).toEqual([
-      {
-        restaurant: '학생회관식당',
-        operatingHours: '※ 운영시간 : 11:00~14:30',
-        collectedAt: '2026-10-31T12:00:00.000Z',
-        meals: [{ meal: 'lunch', entries: [{ name: '제육볶음', price: 6000 }] }],
-      },
+      { restaurant: '학생회관식당', collectedAt: '2026-10-31T12:00:00.000Z', meals: [servedLunch] },
     ]);
   });
 });
@@ -131,28 +131,20 @@ describe("A later collection of a source's day", () => {
       menusMessage([restaurantMenus(date, { restaurant: '수의대식당' })], { source: 'veterinary_menus' }),
     );
 
-    // The page dropped 자하연식당 and changed the other restaurant's menu and hours.
+    // The page dropped 자하연식당 and changed the other restaurant's lines.
+    const changed = { meal: 'lunch', text: '김치찌개 : 5,500원', kind: 'item', price: 5500 };
     await sendAsWorker(
       harness.worker,
       'menus-collected',
-      menusMessage(
-        [restaurantMenus(date, { operatingHours: null, entries: [{ meal: 'lunch', name: '김치찌개', price: 5500 }] })],
-        { collectedAt: '2026-11-01T09:00:00+09:00' },
-      ),
+      menusMessage([restaurantMenus(date, { lines: [changed] })], { collectedAt: '2026-11-01T09:00:00+09:00' }),
     );
 
     expect((await menusOn(date)).body).toEqual([
-      {
-        restaurant: '수의대식당',
-        operatingHours: '※ 운영시간 : 11:00~14:30',
-        collectedAt: '2026-10-31T12:00:00.000Z',
-        meals: [{ meal: 'lunch', entries: [{ name: '제육볶음', price: 6000 }] }],
-      },
+      { restaurant: '수의대식당', collectedAt: '2026-10-31T12:00:00.000Z', meals: [servedLunch] },
       {
         restaurant: '학생회관식당',
-        operatingHours: null,
         collectedAt: '2026-11-01T00:00:00.000Z',
-        meals: [{ meal: 'lunch', entries: [{ name: '김치찌개', price: 5500 }] }],
+        meals: [{ meal: 'lunch', lines: [{ text: '김치찌개 : 5,500원', kind: 'item', price: 5500 }] }],
       },
     ]);
     expect((await menusOn(otherDate)).body).toMatchObject([{ restaurant: '학생회관식당' }]);
@@ -164,22 +156,35 @@ function secondChanged(date: string, changes: object): object {
   return menusMessage([restaurantMenus(date), restaurantMenus(date, { restaurant: '자하연식당', ...changes })]);
 }
 
+// A second restaurant whose one line has `changes`.
+function lineChanged(date: string, changes: object): object {
+  return secondChanged(date, {
+    lines: [{ meal: 'lunch', text: '돈까스 : 5,500원', kind: 'item', price: 5500, ...changes }],
+  });
+}
+
 // The problem, the message and what the answer names.
 const invalidMenus: [string, (date: string) => object, string][] = [
   [
     'a meal that is not breakfast, lunch or dinner',
-    (date: string): object => secondChanged(date, { entries: [{ meal: 'brunch', name: '토스트', price: 3000 }] }),
-    'menus.1.entries.0.meal: ',
+    (date: string): object => lineChanged(date, { meal: 'brunch' }),
+    'menus.1.lines.0.meal: ',
   ],
   [
+    'a kind of line the schema does not know',
+    (date: string): object => lineChanged(date, { kind: 'corner' }),
+    'menus.1.lines.0.kind: ',
+  ],
+  ['a line without text', (date: string): object => lineChanged(date, { text: '' }), 'menus.1.lines.0.text: '],
+  [
     'a price written as text',
-    (date: string): object => secondChanged(date, { entries: [{ meal: 'lunch', name: '돈까스', price: '5,500원' }] }),
-    'menus.1.entries.0.price: ',
+    (date: string): object => lineChanged(date, { price: '5,500원' }),
+    'menus.1.lines.0.price: ',
   ],
   [
     'a price too large to store',
-    (date: string): object => secondChanged(date, { entries: [{ meal: 'lunch', name: '돈까스', price: 2 ** 31 }] }),
-    'menus.1.entries.0.price: ',
+    (date: string): object => lineChanged(date, { price: 2 ** 31 }),
+    'menus.1.lines.0.price: ',
   ],
   [
     'a day that is not a calendar day',
@@ -188,7 +193,7 @@ const invalidMenus: [string, (date: string) => object, string][] = [
   ],
   [
     'a field the schema does not know',
-    (date: string): object => secondChanged(date, { hours: '11:00~14:30' }),
+    (date: string): object => secondChanged(date, { operatingHours: '※ 운영시간 : 11:00~14:30' }),
     'menus.1: ',
   ],
   [
