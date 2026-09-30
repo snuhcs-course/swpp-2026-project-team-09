@@ -31,7 +31,7 @@ A repository that holds six independent projects: four servers, the admin site a
 17. As a person with a Google account outside SNU, I want a clear refusal, so that I understand why I cannot enter.
 18. As an SNU student, I want to stay signed in for weeks, so that I do not sign in every time I open the app.
 19. As an SNU student, I want to sign out, so that nobody else can use my account on this phone.
-20. As an SNU student, I want signing out to turn off my Location Sharing, so that my location is not shared after I leave.
+20. As an SNU student, I want signing out to stop this phone from sharing my location, so that my location is not shared after I leave.
 21. As an SNU student, I want to view and edit my name, department, admission year and interest hashtags, so that others and Matching know who I am.
 22. As an Administrator, I want to sign in to the admin site with my Google account once my address is registered, so that I can manage Global Events without a separate password.
 23. As a server other than the main server, I want to verify a User's token by myself, so that I do not call the main server on every request.
@@ -99,9 +99,9 @@ A repository that holds six independent projects: four servers, the admin site a
 - A User is identified by the Google subject identifier. The first sign-in creates the User.
 - The main server issues an access token valid for 1 hour and a refresh token valid for 30 days. Using a refresh token replaces it. A used refresh token that comes back within 60 seconds is taken for a retry after a lost answer and exchanged again; later, it ends its session. Refresh tokens are stored hashed.
 - Access tokens are signed with a private key held only by the main server. Other servers verify them with the public key.
-- A User has one session: the app signed in on one phone. Signing in ends the previous session and leaves the Master Switch as it is. Every access token names its session.
+- A User has one session: the app signed in on one phone. Signing in ends the previous session. Every access token names its session.
 - Sessions are kept in the main database, and the main server reads the session on every User's request, so an ended session's access tokens are refused from the next request on. A session replaced by a sign-in on another phone is refused with a code that says so. The socket server disconnects an ended session's connections within seconds and closes each connection when its access token expires.
-- Signing out ends the session, revokes its refresh tokens and turns the Master Switch off.
+- Signing out ends the session and revokes its refresh tokens. Sessions leave the Master Switch alone; it belongs to P08.
 - An Administrator is not a User. Administrators are kept in their own table and sign in to the admin site on their own route, with an ID token issued to the admin site's Google client. Any Google domain is accepted, but the email address must be verified and registered. The first sign-in binds the Google account to the address.
 - An Administrator's access token has an audience of its own, the Administrator's id and no email address. It is valid for 8 hours and comes without a refresh token. Each kind of access token is refused where the other belongs, on the socket server too. Every administrative request checks the Administrator, so a removed Administrator or a token issued before their last sign-out is refused.
 - The settings list the initial Administrators, whom the main server registers while no Administrator is registered. Administrators then register and remove each other, and the last one stays.

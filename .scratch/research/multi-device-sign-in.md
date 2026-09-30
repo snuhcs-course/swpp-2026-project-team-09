@@ -29,11 +29,11 @@ Sources accessed 2026-09-29. Only vendor help centres were used. `[X1]`-style li
 
 **Life360.** "Automatically sign you out of any other device", for accurate location and Place Alerts [L1] (updated 2026-01-28). The new-phone article (updated 2026-06-01) still advises logging out of the old phone first. If the new phone shows the old location, it advises changing the password and signing in again [L2].
 
-**Snapchat.** The brief assumes a mobile rule of one device at a time. I could not find it in the current help centre. The Session Management article (updated 2026-06-17) assumes several signed-in devices, and only Snapchat for Web is limited to one computer [S1][S2]. **Unverified.** Snap Map documents who sees you, and that location expires after 24 hours when permission is "only while using" [S3]. It says nothing about which device supplies the location.
+**Snapchat.** A mobile rule of one device at a time is not in the current help centre. The Session Management article (updated 2026-06-17) assumes several signed-in devices, and only Snapchat for Web is limited to one computer [S1][S2]. **Unverified.** Snap Map documents who sees you, and that location expires after 24 hours when permission is "only while using" [S3]. It says nothing about which device supplies the location.
 
 **WhatsApp.** Linked devices log out if the primary phone is unused for more than 14 days [W1]. The companion-phone page says "Live location isn't supported on companion phones." [W2] The pages are ambiguous. The consumer linked-devices page lists only _viewing_ live location as unsupported [W1], while the Business page lists both sharing and viewing [W5]. Re-registering on a new phone logs the old phone out [W3]. The old phone can take the account back, which logs out every other device [W4].
 
-**KakaoTalk.** KakaoTalk runs on one PC or Mac at a time and alongside mobile [K1]. A tablet either joins as a companion ("다른 기기와 함께 사용") or becomes the main device, and then the phone cannot use the account [K2]. KakaoTalk asks for re-authentication when the same number or account is signed in on another device, and chats deleted by re-authentication cannot be restored [K3]. KakaoMap 친구위치 needs "always" location permission on the mobile device [K4] and hides friends who are logged out [K7]. It does not document behaviour across several devices. Kakao pages render client-side. Several article IDs returned by search engines now redirect to the help home, so I cite only pages that loaded today.
+**KakaoTalk.** KakaoTalk runs on one PC or Mac at a time and alongside mobile [K1]. A tablet either joins as a companion ("다른 기기와 함께 사용") or becomes the main device, and then the phone cannot use the account [K2]. KakaoTalk asks for re-authentication when the same number or account is signed in on another device, and chats deleted by re-authentication cannot be restored [K3]. KakaoMap 친구위치 needs "always" location permission on the mobile device [K4] and hides friends who are logged out [K7]. It does not document behaviour across several devices. Kakao pages render client-side. Several article IDs returned by search engines now redirect to the help home, so only pages that loaded on the access date are cited.
 
 **Zenly.** The official help centre is offline; zen.ly shows only "2014-2023" [Z2]. A Wayback copy of Zenly's own article (2022-10-04) says "the same account cannot be simultaneously connected to two devices". It adds that friends see only the connected device, and switching disconnects the other session [Z1].
 
@@ -43,7 +43,7 @@ Sources accessed 2026-09-29. Only vendor help centres were used. `[X1]`-style li
 
 - Pros: exactly one uploader, so "one live position per User" holds by construction. It matches the location-first apps (Life360, Zenly). Signing in on a replacement phone also shuts out a lost phone, which then cannot see Friends' positions either. No device picker is needed.
 - Cons: no second device, not even a tablet for viewing. Signing in on a friend's phone signs you out of your own (recoverable). Without extra work the old phone keeps a valid access token for up to 1 hour, and P17's background task keeps uploading until that token expires.
-- Impact: `POST /auth/google` for the app revokes the other families in the same transaction. To close the one-hour gap, add the family id as an `sid` claim. The upload endpoint checks it against the User's current family in Redis, one GET per upload. The main server also emits a "session replaced" event over the existing Redis channel, and the socket server disconnects that User's sockets with another `sid`. It reads the `sid` from the token, so it still holds no data. The app treats a 401 with a dedicated code as "signed in on another device": it stops the background task (as on sign-out in P17) and shows the sign-in screen with that message. **Admin site:** today it shares `/auth/google`, so a per-User rule would sign an Administrator's phone out. Scope revocation to the app's Google client (ID-token `aud`), or land ticket 14, which gives Administrators their own route and table.
+- Impact: `POST /auth/google` for the app ends the User's other session in the same transaction. To close the one-hour gap, the access token names its session in an `sid` claim, and the main server reads the session on every request (`.scratch/research/session-storage.md`). An event tells the socket server to disconnect the ended session's connections; it reads the `sid` from the token, so it still holds no data. The app treats a 401 with a dedicated code as "signed in on another device": it stops the background task (as on sign-out in P17) and shows the sign-in screen with that message. Administrators sign in on their own route (ticket 14), so this does not reach them.
 
 **(B) Several sessions, one "location device" per User (Find My).**
 
@@ -65,17 +65,9 @@ Choose **(A), scoped to the app client**, because:
 
 1. The product requirement is one live position per User. The benchmarked apps built around the same requirement (Life360, Zenly) enforce it by allowing a single signed-in device [L1][Z1]. Even the messaging apps that allow many devices keep live location on the primary phone [W2].
 2. It protects Friends' privacy when a phone is lost. B and its variants leave a lost phone able to watch Friends.
-3. It fits the current design. Families already exist and sign-out already revokes them. The added pieces are one revocation at sign-in, an `sid` claim and one Redis check per upload.
+3. It fits the design. Refresh tokens already belong to one sign-in, and sign-out already ends them. The added pieces are ending the other session at sign-in and an `sid` claim that the main server checks on every request.
 
-Suggested order: (1) revoke other app families at sign-in; (2) `sid` check on upload plus the socket disconnect event; (3) app handling of the "replaced" 401. The Administrator separation (ticket 14 or an `aud` check) must land together with (1).
-
-**Open questions for the team**
-
-- On takeover, should the Master Switch turn off, as on sign-out, or stay as it was?
-- Should takeover clear the stored position and hidden flag, so the old phone's last point does not linger for up to 10 minutes?
-- Is a view-only tablet a real need for students? If it is, revisit B later.
-- Do we want the device name in the message ("signed in on another device: Galaxy S24")? That needs the app to send a device label at sign-in.
-- Ticket 14 or an `aud` check: which one lands first?
+Suggested order: (1) end the other session at sign-in; (2) the session check on every request, and the socket disconnect event; (3) app handling of the "replaced" 401.
 
 ## 6. Sources (all accessed 2026-09-29)
 

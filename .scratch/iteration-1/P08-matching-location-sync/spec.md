@@ -202,11 +202,11 @@ This spec is large because the restart left most domain work without a task of i
 ### Location
 
 - The app uploads positions to the main server. The main server keeps the latest position per User in Redis with an expiry of 10 minutes. No history is stored anywhere.
-- A User has one session (P04). When a sign-in on another phone replaces it, the main server clears the User's stored position, so that the old phone's last position does not linger.
+- A User has one session (P04). When it ends, by a sign-in on another phone, a sign-out or a used refresh token, the main server clears the User's stored position, so that the phone's last position does not linger.
 - An upload is refused when the Master Switch is off, when its time is too old or in the future, or when its accuracy is implausible.
 - The main server checks each position against the Campus Boundary in server code, without a database query. A position outside is discarded and the User is recorded as hidden.
 - Visibility is decided by one module with one question: may this viewer see this subject now? The answer is yes when both Master Switches are on, the subject is inside the Campus Boundary, and at least one relationship between the two, a friendship or a common Party, has the switch on at both ends.
-- The Master Switch starts off. Switches for a Friend and for the Party start on.
+- The Master Switch is stored on the User and starts off. Signing in and signing out leave it as it is. Switches for a Friend and for the Party start on.
 - Positions are pushed with their coordinates over the socket connection to the viewers who are connected and allowed at that moment. Delivery is lossy on purpose: only the newest position matters.
 - The app fetches the visible positions once when it connects.
 - A hidden User, a User with sharing off and a User who is not a Friend or Party member all look the same to a viewer: no Avatar.
