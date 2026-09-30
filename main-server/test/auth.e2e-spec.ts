@@ -75,11 +75,10 @@ describe('Sign-in with an SNU Google account', () => {
 
     const payload = verifyAccessToken(accessToken);
     const user = await prisma.user.findUniqueOrThrow({ where: { googleSubject: '100000000000000000003' } });
-    // The session is the family of the refresh token the sign-in stored.
-    const { familyId } = await prisma.refreshToken.findFirstOrThrow({ where: { userId: user.id } });
+    const session = await prisma.session.findFirstOrThrow({ where: { userId: user.id } });
     expect(payload).toEqual({
       sub: user.id,
-      sid: familyId,
+      sid: session.id,
       aud: 'snu-now-app',
       iat: payload.iat,
       exp: payload.iat + HOUR,
@@ -90,7 +89,9 @@ describe('Sign-in with an SNU Google account', () => {
     const signedInAt = Date.now();
     const { refreshToken } = await signIn(app, { sub: '100000000000000000004' });
 
-    const stored = await prisma.refreshToken.findMany({ where: { user: { googleSubject: '100000000000000000004' } } });
+    const stored = await prisma.refreshToken.findMany({
+      where: { session: { user: { googleSubject: '100000000000000000004' } } },
+    });
     expect(stored).toHaveLength(1);
     expect(stored[0]?.tokenHash).toBe(refreshTokenHash(refreshToken));
     const lifetime = (stored[0]?.expiresAt.getTime() ?? 0) - signedInAt;

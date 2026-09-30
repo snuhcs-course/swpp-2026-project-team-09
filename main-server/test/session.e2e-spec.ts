@@ -1,22 +1,30 @@
 import { INestApplication } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Redis } from 'ioredis';
+import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
-import request from 'supertest';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { redisSettings, startRedis } from './containers.js';
-import { googleIdToken, googleSubject } from './google.js';
+import { googleSubject } from './google.js';
 import { overlap } from './overlap.js';
-import { getMe, postRefreshToken, refresh, sessionOf, signIn, tokensSchema } from './sign-in.js';
+import {
+  getMe,
+  postRefreshToken,
+  postSignIn,
+  postSignOut,
+  refresh,
+  sessionOf,
+  signIn,
+  tokensSchema,
+  useLongAgo,
+} from './sign-in.js';
 import { startApp } from './start-app.js';
-
-const HOUR = 60 * 60;
 
 const settings = inject('settings');
 let app: INestApplication<Server>;
 let prisma: PrismaClient;
-let redis: Redis;
 // NestJS messaging publishes each event on a Redis channel named after it.
 let messaging: Redis;
 const events: unknown[] = [];
@@ -24,8 +32,7 @@ const events: unknown[] = [];
 beforeAll(async () => {
   app = await startApp(settings);
   prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: settings.DATABASE_URL }) });
-  redis = new Redis({ host: settings.REDIS_HOST, port: Number(settings.REDIS_PORT) });
-  messaging = redis.duplicate();
+  messaging = new Redis({ host: settings.REDIS_HOST, port: Number(settings.REDIS_PORT) });
   messaging.on('message', (_channel: string, message: string) => {
     events.push(JSON.parse(message));
   });
@@ -33,18 +40,14 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await Promise.all([messaging.quit(), redis.quit(), prisma.$disconnect()]);
+  await Promise.all([messaging.quit(), prisma.$disconnect()]);
   await app.close();
 });
 
-async function expectSocketServerTold(sessionId: string, end: string): Promise<void> {
+async function expectSocketServerTold(sessionId: string, reason: string): Promise<void> {
   await vi.waitFor(() => {
-    expect(events).toContainEqual({ pattern: 'session-ended', data: { sessionId, end } });
+    expect(events).toContainEqual({ pattern: 'session-ended', data: { sessionId, reason } });
   });
-  expect(await redis.get(`ended-session:${sessionId}`)).toBe(end);
-  const ttl = await redis.ttl(`ended-session:${sessionId}`);
-  expect(ttl).toBeGreaterThan(HOUR - 60);
-  expect(ttl).toBeLessThanOrEqual(HOUR);
 }
 
 const replaced = { statusCode: 401, code: 'SESSION_REPLACED' };
@@ -115,10 +118,7 @@ describe('A sign-in during a refresh on the other phone', () => {
       prisma,
       firstPhone.refreshToken,
       () => postRefreshToken(app, firstPhone.refreshToken),
-      () =>
-        request(app.getHttpServer())
-          .post('/auth/google')
-          .send({ idToken: googleIdToken({ sub }) }),
+      () => postSignIn(app, { sub }),
     );
 
     expect(refreshed.status).toBe(200);
@@ -129,6 +129,25 @@ describe('A sign-in during a refresh on the other phone', () => {
     const secondPhone = tokensSchema.parse(signedIn.body);
     expect((await getMe(app, secondPhone.accessToken)).status).toBe(200);
     expect((await postRefreshToken(app, secondPhone.refreshToken)).status).toBe(200);
+  });
+});
+
+describe('Sign-ins on two phones at the same moment', () => {
+  it('leave one session, that of the sign-in that comes last', async () => {
+    const sub = googleSubject();
+    const { refreshToken } = await signIn(app, { sub });
+
+    const [first, second] = await overlap(
+      prisma,
+      refreshToken,
+      () => postSignIn(app, { sub }),
+      () => postSignIn(app, { sub }),
+    );
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect((await getMe(app, tokensSchema.parse(first.body).accessToken)).body).toMatchObject(replaced);
+    expect((await getMe(app, tokensSchema.parse(second.body).accessToken)).status).toBe(200);
   });
 });
 
@@ -145,21 +164,40 @@ describe('The socket server', () => {
   it('is told that a sign-out ended the session', async () => {
     const { accessToken } = await signIn(app);
 
-    await request(app.getHttpServer()).post('/auth/sign-out').auth(accessToken, { type: 'bearer' });
+    await postSignOut(app, accessToken);
 
-    await expectSocketServerTold(sessionOf(accessToken), 'ended');
+    await expectSocketServerTold(sessionOf(accessToken), 'signed_out');
+  });
+
+  it('is told that a used refresh token ended the session', async () => {
+    const { accessToken, refreshToken } = await signIn(app);
+    await refresh(app, refreshToken);
+    await useLongAgo(prisma, refreshToken);
+
+    await postRefreshToken(app, refreshToken);
+
+    await expectSocketServerTold(sessionOf(accessToken), 'refresh_token_reused');
+  });
+});
+
+describe('An access token without a session', () => {
+  it('is refused, as one issued before sessions existed', async () => {
+    const withoutSession = new JwtService().sign(
+      { sub: randomUUID() },
+      { privateKey: settings.ACCESS_TOKEN_PRIVATE_KEY, algorithm: 'ES256', audience: 'snu-now-app', expiresIn: '1h' },
+    );
+
+    expect((await getMe(app, withoutSession)).status).toBe(401);
   });
 });
 
 // Starts its own Redis and stops it once the User has signed in, so that the shared Redis stays up.
-describe("A User's route with Redis down", () => {
+describe('Sessions with Redis down', () => {
   let appWithoutRedis: INestApplication<Server>;
-  let accessToken: string;
 
   beforeAll(async () => {
     const ownRedis = await startRedis();
     appWithoutRedis = await startApp({ ...settings, ...redisSettings(ownRedis) });
-    ({ accessToken } = await signIn(appWithoutRedis));
     await ownRedis.stop();
   });
 
@@ -167,9 +205,11 @@ describe("A User's route with Redis down", () => {
     await appWithoutRedis.close();
   });
 
-  it('answers 503, because it cannot tell whether the session has ended', async () => {
-    const response = await getMe(appWithoutRedis, accessToken);
+  it('are kept in the database: a sign-in, its requests and its sign-out work', async () => {
+    const { accessToken } = await signIn(appWithoutRedis);
 
-    expect(response.status).toBe(503);
+    expect((await getMe(appWithoutRedis, accessToken)).status).toBe(200);
+    expect((await postSignOut(appWithoutRedis, accessToken)).status).toBe(204);
+    expect((await getMe(appWithoutRedis, accessToken)).status).toBe(401);
   });
 });

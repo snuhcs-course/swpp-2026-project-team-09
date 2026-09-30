@@ -11,9 +11,9 @@ import { AdministratorAuthService } from './administrator-auth.service.js';
 import { AdministratorGuard } from './administrator.guard.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
-import { ACCESS_TOKEN_LIFETIME_SECONDS, EndedSessions } from './ended-sessions.js';
 import { GoogleAuthLibraryVerifier } from './google-auth-library.verifier.js';
 import { GoogleIdTokenVerifier } from './google-id-token.verifier.js';
+import { SessionsService } from './sessions.service.js';
 
 @Module({
   imports: [
@@ -25,7 +25,7 @@ import { GoogleIdTokenVerifier } from './google-id-token.verifier.js';
       useFactory: (settings: ConfigService<Settings, true>): JwtModuleOptions => ({
         privateKey: settings.get('ACCESS_TOKEN_PRIVATE_KEY', { infer: true }),
         publicKey: settings.get('ACCESS_TOKEN_PUBLIC_KEY', { infer: true }),
-        signOptions: { algorithm: 'ES256', audience: USER_TOKEN_AUDIENCE, expiresIn: ACCESS_TOKEN_LIFETIME_SECONDS },
+        signOptions: { algorithm: 'ES256', audience: USER_TOKEN_AUDIENCE, expiresIn: '1h' },
         verifyOptions: { algorithms: ['ES256'], audience: USER_TOKEN_AUDIENCE },
       }),
       inject: [ConfigService],
@@ -35,7 +35,7 @@ import { GoogleIdTokenVerifier } from './google-id-token.verifier.js';
   providers: [
     AuthService,
     AdministratorAuthService,
-    EndedSessions,
+    SessionsService,
     { provide: GoogleIdTokenVerifier, useClass: GoogleAuthLibraryVerifier },
     // Each guard checks only its own kind of route (src/common/route-access.ts), so their order does not matter.
     { provide: APP_GUARD, useClass: AccessTokenGuard },

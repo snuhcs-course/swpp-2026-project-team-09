@@ -1,13 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ClientProxy, ClientProxyFactory, Transport } from '@nestjs/microservices';
-import { Redis } from 'ioredis';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import { lastValueFrom } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 import { inject } from 'vitest';
-import { redisSettings, startRedis } from './containers.js';
 import { es256KeyPair } from './keys.js';
 import { startApp } from './start-app.js';
 
@@ -19,7 +17,6 @@ let app: INestApplication<Server>;
 let url: string;
 const openSockets: Socket[] = [];
 // The tests end sessions as the main server does.
-let redis: Redis;
 let mainServer: ClientProxy;
 
 beforeAll(async () => {
@@ -27,9 +24,10 @@ beforeAll(async () => {
   // On a free port, so that the tests connect over the network as the app does.
   await app.listen(0);
   url = await app.getUrl();
-  const redisOptions = { host: settings.REDIS_HOST, port: Number(settings.REDIS_PORT) };
-  redis = new Redis(redisOptions);
-  mainServer = ClientProxyFactory.create({ transport: Transport.REDIS, options: redisOptions });
+  mainServer = ClientProxyFactory.create({
+    transport: Transport.REDIS,
+    options: { host: settings.REDIS_HOST, port: Number(settings.REDIS_PORT) },
+  });
   await mainServer.connect();
 });
 
@@ -41,21 +39,20 @@ afterEach(() => {
 
 afterAll(async () => {
   await mainServer.close();
-  await redis.quit();
   await app.close();
 });
 
-// An access token as the main server signs it: ES256, the User's id as the subject, the session, valid for 1 hour.
-function accessToken(userId: string, sessionId = randomUUID()): string {
+// An access token as the main server signs it: ES256, the User's id as the subject, the session, valid for 1 hour
+// unless `expiresIn` (in seconds) says otherwise.
+function accessToken(userId: string, sessionId = randomUUID(), expiresIn = HOUR): string {
   return new JwtService().sign(
     { sub: userId, sid: sessionId },
-    { privateKey, algorithm: 'ES256', audience: 'snu-now-app', expiresIn: '1h' },
+    { privateKey, algorithm: 'ES256', audience: 'snu-now-app', expiresIn },
   );
 }
 
-async function endSession(sessionId: string, end: 'replaced' | 'ended'): Promise<void> {
-  await redis.set(`ended-session:${sessionId}`, end, 'EX', HOUR);
-  await lastValueFrom(mainServer.emit('session-ended', { sessionId, end }), { defaultValue: undefined });
+async function endSession(sessionId: string, reason: 'replaced' | 'signed_out'): Promise<void> {
+  await lastValueFrom(mainServer.emit('session-ended', { sessionId, reason }), { defaultValue: undefined });
 }
 
 function nextEvent(socket: Socket, event: string): Promise<unknown> {
@@ -135,25 +132,14 @@ describe('A socket connection', () => {
   });
 });
 
-describe('A new connection of an ended session', () => {
-  it('is refused with a code that says a sign-in on another phone replaced the session', async () => {
-    const sessionId = randomUUID();
-    await endSession(sessionId, 'replaced');
+describe('A connection with an access token without a session', () => {
+  it('is refused, as one issued before sessions existed', async () => {
+    const withoutSession = new JwtService().sign(
+      { sub: randomUUID() },
+      { privateKey, algorithm: 'ES256', audience: 'snu-now-app', expiresIn: '1h' },
+    );
 
-    const refused = connect({ token: accessToken(randomUUID(), sessionId) });
-
-    await expect(refused).rejects.toThrow('Unauthorized');
-    await expect(refused).rejects.toMatchObject({ data: { code: 'SESSION_REPLACED' } });
-  });
-
-  it('is refused without a code when a sign-out or a used refresh token ended the session', async () => {
-    const sessionId = randomUUID();
-    await endSession(sessionId, 'ended');
-
-    const refused = connect({ token: accessToken(randomUUID(), sessionId) });
-
-    await expect(refused).rejects.toThrow('Unauthorized');
-    await expect(refused).rejects.not.toHaveProperty('data.code');
+    await expect(connect({ token: withoutSession })).rejects.toThrow('Unauthorized');
   });
 });
 
@@ -170,13 +156,13 @@ describe('An open connection whose session ends', () => {
     expect(await disconnected).toBe('io server disconnect');
   });
 
-  it('is told without a code when a sign-out or a used refresh token ended the session', async () => {
+  it('is told without a code when the session ended otherwise', async () => {
     const sessionId = randomUUID();
     const socket = await connect({ token: accessToken(randomUUID(), sessionId) });
     const told = nextEvent(socket, 'session-ended');
     const disconnected = nextEvent(socket, 'disconnect');
 
-    await endSession(sessionId, 'ended');
+    await endSession(sessionId, 'signed_out');
 
     expect(await told).toEqual({});
     expect(await disconnected).toBe('io server disconnect');
@@ -187,31 +173,19 @@ describe('An open connection whose session ends', () => {
     const other = await connect({ token: accessToken(randomUUID()) });
     const disconnected = nextEvent(await connect({ token: accessToken(randomUUID(), sessionId) }), 'disconnect');
 
-    await endSession(sessionId, 'ended');
+    await endSession(sessionId, 'signed_out');
 
     await disconnected;
     expect((await connectionUsers()).has(other.id ?? '')).toBe(true);
   });
 });
 
-// Starts its own Redis and stops it once the server is running, so that the shared Redis stays up.
-describe('A connection with Redis down', () => {
-  let appWithoutRedis: INestApplication<Server>;
-  let urlWithoutRedis: string;
+describe('A connection whose access token expires', () => {
+  it('is disconnected by the server at the expiry, so that the app connects again with a new token', async () => {
+    const socket = await connect({ token: accessToken(randomUUID(), randomUUID(), 2) });
+    const connectedAt = Date.now();
 
-  beforeAll(async () => {
-    const ownRedis = await startRedis();
-    appWithoutRedis = await startApp({ ...settings, ...redisSettings(ownRedis) });
-    await appWithoutRedis.listen(0);
-    urlWithoutRedis = await appWithoutRedis.getUrl();
-    await ownRedis.stop();
-  });
-
-  afterAll(async () => {
-    await appWithoutRedis.close();
-  });
-
-  it('is refused as unavailable, because the server cannot tell whether the session has ended', async () => {
-    await expect(connect({ token: accessToken(randomUUID()) }, urlWithoutRedis)).rejects.toThrow('Service Unavailable');
+    expect(await nextEvent(socket, 'disconnect')).toBe('io server disconnect');
+    expect(Date.now() - connectedAt).toBeGreaterThanOrEqual(900);
   });
 });

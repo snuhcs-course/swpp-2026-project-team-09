@@ -7,7 +7,16 @@ import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { googleSubject } from './google.js';
 import { overlap } from './overlap.js';
-import { getMe, postRefreshToken, refresh, refreshTokenHash, signIn, tokensSchema } from './sign-in.js';
+import {
+  getMe,
+  postRefreshToken,
+  refresh,
+  refreshTokenHash,
+  sessionOf,
+  signIn,
+  tokensSchema,
+  useLongAgo,
+} from './sign-in.js';
 import { startApp } from './start-app.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -46,16 +55,6 @@ describe('Refresh', () => {
     const me = await getMe(app, renewed.accessToken);
     expect(me.status).toBe(200);
     expect(me.body).toEqual((await getMe(app, signedIn.accessToken)).body);
-  });
-
-  it('refuses the refresh token once it has been exchanged', async () => {
-    const { refreshToken } = await signIn(app);
-    await refresh(app, refreshToken);
-
-    const response = await postRefreshToken(app, refreshToken);
-
-    expect(response.status).toBe(401);
-    expect(response.body).toMatchObject(refused);
   });
 
   it('keeps the User signed in from one refresh to the next', async () => {
@@ -107,22 +106,39 @@ describe('Refresh refused', () => {
   });
 });
 
-// Whoever holds the other copy of a used refresh token may have stolen it.
-describe('A refresh token used twice', () => {
-  it('revokes the tokens that replaced it', async () => {
+// The app sends it again when the answer to its refresh was lost.
+describe('A used refresh token within 60 seconds of its use', () => {
+  it('is exchanged again for tokens of the same session', async () => {
+    const signedIn = await signIn(app);
+    await refresh(app, signedIn.refreshToken);
+
+    const response = await postRefreshToken(app, signedIn.refreshToken);
+
+    expect(response.status).toBe(200);
+    const again = tokensSchema.parse(response.body);
+    expect(sessionOf(again.accessToken)).toBe(sessionOf(signedIn.accessToken));
+    expect((await postRefreshToken(app, again.refreshToken)).status).toBe(200);
+  });
+});
+
+// Too late to be a retry: whoever holds the other copy may have stolen it.
+describe('A used refresh token 60 seconds after its use', () => {
+  it('is refused and ends its session, so the token that replaced it is refused too', async () => {
     const { refreshToken } = await signIn(app);
     const renewed = await refresh(app, refreshToken);
-    await postRefreshToken(app, refreshToken);
+    await useLongAgo(prisma, refreshToken);
 
-    const response = await postRefreshToken(app, renewed.refreshToken);
+    const response = await postRefreshToken(app, refreshToken);
 
     expect(response.status).toBe(401);
     expect(response.body).toMatchObject(refused);
+    expect((await postRefreshToken(app, renewed.refreshToken)).status).toBe(401);
   });
 
   it("refuses the session's access tokens from the next request on", async () => {
     const signedIn = await signIn(app);
     const renewed = await refresh(app, signedIn.refreshToken);
+    await useLongAgo(prisma, signedIn.refreshToken);
 
     await postRefreshToken(app, signedIn.refreshToken);
 
@@ -144,10 +160,11 @@ describe('A refresh token used twice', () => {
     expect((await postRefreshToken(app, otherPhone.refreshToken)).status).toBe(200);
   });
 
-  it('revokes the tokens that replaced it after it has expired', async () => {
+  it('ends its session after it has expired', async () => {
     const { refreshToken } = await signIn(app);
     const renewed = await refresh(app, refreshToken);
     // As if the phone that held it came back after more than 30 days.
+    await useLongAgo(prisma, refreshToken);
     await setExpiry(refreshToken, new Date(Date.now() - 1000));
 
     expect((await postRefreshToken(app, refreshToken)).status).toBe(401);
@@ -157,24 +174,24 @@ describe('A refresh token used twice', () => {
 });
 
 describe('Refreshes at the same moment', () => {
-  it('with one token let one succeed and revoke what it got', async () => {
-    const { refreshToken } = await signIn(app);
+  it('with one token all succeed and keep the session', async () => {
+    const { accessToken, refreshToken } = await signIn(app);
     // The server opens database connections as requests need them. Opening one takes longer than a whole refresh, so
     // simultaneous sign-ins open them first; otherwise the refreshes would reach the database one after another.
     await Promise.all(Array.from({ length: 10 }, () => signIn(app)));
 
     const responses = await Promise.all(Array.from({ length: 10 }, () => postRefreshToken(app, refreshToken)));
 
-    const statuses = responses.map(({ status }) => status);
-    expect(statuses.filter((status) => status === 200)).toHaveLength(1);
-    expect(statuses.filter((status) => status === 401)).toHaveLength(9);
-    const renewed = tokensSchema.parse(responses[statuses.indexOf(200)]?.body);
-    expect((await postRefreshToken(app, renewed.refreshToken)).status).toBe(401);
+    for (const response of responses) {
+      expect(response.status).toBe(200);
+      expect(sessionOf(tokensSchema.parse(response.body).accessToken)).toBe(sessionOf(accessToken));
+    }
   });
 
-  it('revoke the token one stores while the other brings back a used token of its family', async () => {
+  it('end the session when one brings back a token used long ago while the other refreshes', async () => {
     const used = (await signIn(app)).refreshToken;
     const current = (await refresh(app, used)).refreshToken;
+    await useLongAgo(prisma, used);
 
     const [refreshed, reused] = await overlap(
       prisma,

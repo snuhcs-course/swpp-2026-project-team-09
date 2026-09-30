@@ -10,6 +10,6 @@ export class UsersController {
   // A connection is checked only when it opens, so the connections already open when a session ends are closed here.
   @EventPattern('session-ended')
   sessionEnded(@Payload() event: SessionEndedEvent): void {
-    this.gateway.endSession(event.sessionId, event.end);
+    this.gateway.endSession(event.sessionId, event.reason);
   }
 }

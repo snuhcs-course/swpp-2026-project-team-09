@@ -74,23 +74,22 @@ The app signs in with Google and sends the ID token it gets to the main server:
   the next request on, with `"code": "SESSION_REPLACED"` in the body, so that the app can tell the User that a sign-in
   on another phone signed them out.
 - Once the access token has expired, `POST /auth/refresh` with `{ "refreshToken": "..." }` and no access token answers
-  with new tokens in the same form. The refresh token is used up: the answer holds a new one, valid for 30 days from
-  the refresh. An unknown, expired or revoked refresh token gets 401.
-- Send one refresh at a time. When a used refresh token comes back, even in a second request sent at the same moment,
-  the server takes it for a stolen copy: it revokes the tokens that replaced it and ends the session, and the app has
-  to sign in again. A refresh whose answer was lost has the same effect.
-- `POST /auth/sign-out` with the access token answers 204. It revokes every refresh token of the User and turns the
-  User's Master Switch off.
-- The access tokens of a session that a sign-out or a used refresh token ended get the plain 401 from the next request
-  on, a second sign-out included. The ended sessions are kept in Redis for an hour, as long as an access token lasts, so
-  a User's route answers 503 while Redis cannot be reached; the app tries again later. The socket server reads them
-  too, and disconnects the session's connections within seconds.
+  with new tokens of the same session, in the same form. The refresh token is used up: the answer holds a new one,
+  valid for 30 days from the refresh. An unknown, expired or revoked refresh token gets 401.
+- A used refresh token that comes back within 60 seconds of its use gets new tokens of the same session, so a refresh
+  whose answer was lost, or two refreshes sent at the same moment, keep the User signed in. Later the server takes it
+  for a stolen copy: it ends the session, and the app has to sign in again.
+- `POST /auth/sign-out` with the access token answers 204. It ends the session, revokes its refresh tokens and turns the
+  User's Master Switch off. The session's access tokens then get the plain 401, a second sign-out included, so the app
+  takes a 401 to sign-out as done.
+- Sessions are kept in the database, and every User's request reads its session, so an access token stops working as
+  soon as its session ends. The main server then tells the socket server, which disconnects the session's connections.
 
 `GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID` are the OAuth client IDs of the app and the admin site; startup
 stops when they are the same. They are not secrets. Access tokens are signed with ES256 and
 `ACCESS_TOKEN_PRIVATE_KEY`. Another server that checks them is given only `ACCESS_TOKEN_PUBLIC_KEY`, never the private
-key; the socket server is the first, in ticket 11. It accepts a User's access token only, and refuses one whose session
-has ended.
+key; the socket server is the first, in ticket 11. It accepts a User's access token only, disconnects the connections
+of a session that ends, and closes each connection when its access token expires.
 
 ## Administrators
 

@@ -30,6 +30,6 @@ export class AuthController {
   @Post('sign-out')
   @HttpCode(HttpStatus.NO_CONTENT)
   signOut(@CurrentUser() user: SignedInUser): Promise<void> {
-    return this.auth.signOut(user.id);
+    return this.auth.signOut(user);
   }
 }

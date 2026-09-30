@@ -1,6 +1,9 @@
-// Sent by the main server once it has recorded the session as ended in Redis. `end` is `replaced` after a sign-in on
-// another phone and `ended` after a sign-out or a used refresh token.
+// How a session ended: a sign-in on another phone replaced it, the User signed out, or a used refresh token came back
+// too late to be a retry.
+export type SessionEndReason = 'replaced' | 'signed_out' | 'refresh_token_reused';
+
+// Sent by the main server once it has ended a session.
 export interface SessionEndedEvent {
   sessionId: string;
-  end: string;
+  reason: SessionEndReason;
 }

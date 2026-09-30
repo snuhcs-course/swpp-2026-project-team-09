@@ -1,9 +1,10 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { Request } from 'express';
 
-// The User an access token names. AccessTokenGuard puts it on the request.
+// The User and the session an access token names. AccessTokenGuard puts them on the request.
 export interface SignedInUser {
   readonly id: string;
+  readonly sessionId: string;
 }
 
 export interface SignedInRequest extends Request {
