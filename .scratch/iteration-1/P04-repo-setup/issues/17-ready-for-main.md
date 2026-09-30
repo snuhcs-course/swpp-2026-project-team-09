@@ -6,7 +6,7 @@ Blocked by: 01–16 (the rest of P04)
 
 ## What to build
 
-P04 goes into `1.0/Main` as one squash commit. Before it does, the whole task is reviewed against `1.0/Main` for what shows only once every ticket is in: docs that a later ticket made stale, migrations that record the tickets' steps instead of the schema, and the cause that ticket 15 removed from the main server's health tests but not from the other servers' tests.
+Before P04 goes into `1.0/Main`, the whole task is reviewed against `1.0/Main` for what shows only once every ticket is in: docs that a later ticket made stale, migrations that record the tickets' steps instead of the schema, and the cause that ticket 15 removed from the main server's health tests but not from the other servers' tests.
 
 ## Acceptance criteria
 
@@ -38,7 +38,7 @@ Left as found:
 - `20260928130509_init` replaces `enable_postgis`, `add_users_and_refresh_tokens`, `add_administrators`, `add_sessions` and `add_profile`. It is the output of `prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script`, with PostGIS enabled first, as ticket 02 decided. The diff's `CREATE SCHEMA IF NOT EXISTS "public"` is left out, because the database has the schema.
 - It keeps the first migration's timestamp, so a migration recorded on top of P04 before this change still sorts after it.
 - Checked on the test database image: a database migrated with the five migrations and one migrated with `init` give the same `pg_dump --schema-only`, apart from the order of the columns, which now follows `schema.prisma`. `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code` finds no difference, and `prisma migrate status` finds the database up to date.
-- A database that applied the five migrations is reset with `docker compose down -v`, then `pnpm db:migrate`. A branch cut from P04 before this change deletes the five folders when it merges `1.0/Main`.
+- A database that applied the five migrations is reset with `docker compose down -v`, then `pnpm db:migrate`.
 
 ### Stores taken away through a proxy (2026-10-01)
 
