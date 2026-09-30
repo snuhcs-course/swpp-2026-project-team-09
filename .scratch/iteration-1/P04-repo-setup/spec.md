@@ -31,7 +31,7 @@ A repository that holds six independent projects: four servers, the admin site a
 17. As a person with a Google account outside SNU, I want a clear refusal, so that I understand why I cannot enter.
 18. As an SNU student, I want to stay signed in for weeks, so that I do not sign in every time I open the app.
 19. As an SNU student, I want to sign out, so that nobody else can use my account on this phone.
-20. As an SNU student, I want signing out to turn off my Location Sharing, so that my location is not shared after I leave.
+20. As an SNU student, I want signing out to stop this phone from sharing my location, so that my location is not shared after I leave.
 21. As an SNU student, I want to view and edit my name, department, admission year and interest hashtags, so that others and Matching know who I am.
 22. As an Administrator, I want to sign in to the admin site with my Google account once my address is registered, so that I can manage Global Events without a separate password.
 23. As a server other than the main server, I want to verify a User's token by myself, so that I do not call the main server on every request.
@@ -39,6 +39,8 @@ A repository that holds six independent projects: four servers, the admin site a
 25. As an SNU student, I want the repeat of a request to get the answer of the first one, so that the app shows the right result after a lost response.
 26. As a developer, I want to make a handler safe to repeat with one decorator, so that every feature handles repeats the same way.
 27. As an Administrator, I want to register and remove Administrators, so that the team decides who manages Global Events without changing the settings.
+28. As an SNU student, I want signing in on a new phone to sign out the old one, so that my location comes from one phone and a lost phone stops seeing my Friends.
+29. As an SNU student whose old phone was signed out, I want to be told that I signed in on another phone, so that I understand why.
 
 ## Implementation Decisions
 
@@ -95,9 +97,11 @@ A repository that holds six independent projects: four servers, the admin site a
 
 - The app obtains a Google ID token and sends it to the main server. The main server verifies the signature, the audience (the app's Google client), the expiry, that the email is verified and that the hosted domain claim equals `snu.ac.kr`. The email address alone is not accepted as proof of the domain.
 - A User is identified by the Google subject identifier. The first sign-in creates the User.
-- The main server issues an access token valid for 1 hour and a refresh token valid for 30 days. Using a refresh token replaces it. Refresh tokens are stored hashed.
+- The main server issues an access token valid for 1 hour and a refresh token valid for 30 days. Using a refresh token replaces it. A used refresh token that comes back within 60 seconds is taken for a retry after a lost answer and exchanged again; later, it ends its session. Refresh tokens are stored hashed.
 - Access tokens are signed with a private key held only by the main server. Other servers verify them with the public key.
-- Signing out revokes the User's refresh tokens and turns the Master Switch off.
+- A User has one session: the app signed in on one phone. Signing in ends the previous session. Every access token names its session.
+- Sessions are kept in the main database, and the main server reads the session on every User's request, so an ended session's access tokens are refused from the next request on. A session replaced by a sign-in on another phone is refused with a code that says so. The socket server disconnects an ended session's connections within seconds and closes each connection when its access token expires.
+- Signing out ends the session and revokes its refresh tokens. Sessions leave the Master Switch alone; it belongs to P08.
 - An Administrator is not a User. Administrators are kept in their own table and sign in to the admin site on their own route, with an ID token issued to the admin site's Google client. Any Google domain is accepted, but the email address must be verified and registered. The first sign-in binds the Google account to the address.
 - An Administrator's access token has an audience of its own, the Administrator's id and no email address. It is valid for 8 hours and comes without a refresh token. Each kind of access token is refused where the other belongs, on the socket server too. Every administrative request checks the Administrator, so a removed Administrator or a token issued before their last sign-out is refused.
 - The settings list the initial Administrators, whom the main server registers while no Administrator is registered. Administrators then register and remove each other, and the last one stays.
@@ -128,7 +132,7 @@ A repository that holds six independent projects: four servers, the admin site a
 - The only replaced part is Google's token verification, swapped at the verifier's interface for one that accepts prepared tokens.
 - The Redis store passes the contract tests that the idempotency module provides, with concurrency on.
 - Repeated requests: the same key twice runs the handler once and returns the same response; two requests with the same key at the same moment; the same key with a different body; the same key from two Users; a key after a server error.
-- Covered behaviour: sign-in accepted for an SNU account; refused for another domain, an unverified email, a wrong audience and an expired token; refresh replaces the token and the old one stops working; sign-out revokes; profile validation; an Administrator's sign-in, sign-out, registration and removal, and each kind of access token refused where the other belongs; startup fails on a missing setting; health checks.
+- Covered behaviour: sign-in accepted for an SNU account; refused for another domain, an unverified email, a wrong audience and an expired token; refresh replaces the token and the old one stops working; sign-out revokes; a second sign-in ends the first phone's session, on the main server and the socket server; profile validation; an Administrator's sign-in, sign-out, registration and removal, and each kind of access token refused where the other belongs; startup fails on a missing setting; health checks.
 - There is no prior art on this branch. The earlier prototype's API-level tests are a reference for style only.
 
 ## Out of Scope

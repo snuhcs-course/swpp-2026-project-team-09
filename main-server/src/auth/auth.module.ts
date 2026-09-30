@@ -13,6 +13,7 @@ import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { GoogleAuthLibraryVerifier } from './google-auth-library.verifier.js';
 import { GoogleIdTokenVerifier } from './google-id-token.verifier.js';
+import { SessionsService } from './sessions.service.js';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { GoogleIdTokenVerifier } from './google-id-token.verifier.js';
   providers: [
     AuthService,
     AdministratorAuthService,
+    SessionsService,
     { provide: GoogleIdTokenVerifier, useClass: GoogleAuthLibraryVerifier },
     // Each guard checks only its own kind of route (src/common/route-access.ts), so their order does not matter.
     { provide: APP_GUARD, useClass: AccessTokenGuard },

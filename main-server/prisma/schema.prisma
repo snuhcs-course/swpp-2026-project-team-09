@@ -5,6 +5,8 @@ generator client {
   output              = "../src/generated/prisma"
   // Stated, not inferred from tsconfig.json, so that the Docker image generates the same code before it has tsconfig.json.
   importFileExtension = "js"
+  // For the one open session per User in Session.
+  previewFeatures     = ["partialIndexes"]
 }
 
 datasource db {
@@ -13,23 +15,50 @@ datasource db {
 
 // A person who signed in with an SNU Google account.
 model User {
-  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   // Google's subject identifier ("sub"), which stays the same while the email address may change.
-  googleSubject String         @unique @map("google_subject")
+  googleSubject String    @unique @map("google_subject")
   email         String
-  refreshTokens RefreshToken[]
+  sessions      Session[]
 
   @@map("users")
 }
 
-// A refresh token handed to a User at sign-in. Only its SHA-256 hash is stored.
-model RefreshToken {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  user      User     @relation(fields: [userId], references: [id])
-  tokenHash String   @unique @map("token_hash")
-  expiresAt DateTime @map("expires_at")
+// The app signed in on one phone. A sign-in ends the User's open session, so a User has at most one.
+model Session {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String            @map("user_id") @db.Uuid
+  user          User              @relation(fields: [userId], references: [id])
+  createdAt     DateTime          @default(now()) @map("created_at")
+  endedAt       DateTime?         @map("ended_at")
+  endReason     SessionEndReason? @map("end_reason")
+  refreshTokens RefreshToken[]
 
+  @@unique([userId], where: { endedAt: null })
+  @@map("sessions")
+}
+
+enum SessionEndReason {
+  // A sign-in on another phone.
+  replaced
+  signed_out
+  // A used refresh token came back too late to be a retry.
+  refresh_token_reused
+
+  @@map("session_end_reason")
+}
+
+// A refresh token handed out at sign-in or by a refresh. Only its SHA-256 hash is stored.
+model RefreshToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId String    @map("session_id") @db.Uuid
+  session   Session   @relation(fields: [sessionId], references: [id])
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  // Set when a refresh uses the token up or its session ends.
+  revokedAt DateTime? @map("revoked_at")
+
+  @@index([sessionId])
   @@map("refresh_tokens")
 }
 

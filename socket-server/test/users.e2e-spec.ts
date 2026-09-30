@@ -1,7 +1,9 @@
 import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ClientProxy, ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
+import { lastValueFrom } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 import { inject } from 'vitest';
 import { es256KeyPair } from './keys.js';
@@ -9,16 +11,24 @@ import { startApp } from './start-app.js';
 
 const HOUR = 60 * 60;
 
+const settings = inject('settings');
 const privateKey = inject('accessTokenPrivateKey');
 let app: INestApplication<Server>;
 let url: string;
 const openSockets: Socket[] = [];
+// The tests end sessions as the main server does.
+let mainServer: ClientProxy;
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'));
+  app = await startApp(settings);
   // On a free port, so that the tests connect over the network as the app does.
   await app.listen(0);
   url = await app.getUrl();
+  mainServer = ClientProxyFactory.create({
+    transport: Transport.REDIS,
+    options: { host: settings.REDIS_HOST, port: Number(settings.REDIS_PORT) },
+  });
+  await mainServer.connect();
 });
 
 afterEach(() => {
@@ -28,21 +38,33 @@ afterEach(() => {
 });
 
 afterAll(async () => {
+  await mainServer.close();
   await app.close();
 });
 
-// An access token as the main server signs it: ES256, the User's id as the subject, valid for 1 hour.
-function accessToken(userId: string): string {
+// An access token as the main server signs it: ES256, the User's id as the subject, the session, valid for 1 hour
+// unless `expiresIn` (in seconds) says otherwise.
+function accessToken(userId: string, sessionId = randomUUID(), expiresIn = HOUR): string {
   return new JwtService().sign(
-    { sub: userId },
-    { privateKey, algorithm: 'ES256', audience: 'snu-now-app', expiresIn: '1h' },
+    { sub: userId, sid: sessionId },
+    { privateKey, algorithm: 'ES256', audience: 'snu-now-app', expiresIn },
   );
+}
+
+async function endSession(sessionId: string, reason: 'replaced' | 'signed_out'): Promise<void> {
+  await lastValueFrom(mainServer.emit('session-ended', { sessionId, reason }), { defaultValue: undefined });
+}
+
+function nextEvent(socket: Socket, event: string): Promise<unknown> {
+  return new Promise((resolve) => {
+    socket.once(event, resolve);
+  });
 }
 
 // Opens a Socket.IO connection as the app does. Resolves once the server accepts it, and rejects with the server's
 // error when it refuses.
-function connect(auth: { token?: string } = {}): Promise<Socket> {
-  const socket = io(url, { auth });
+function connect(auth: { token?: string } = {}, serverUrl = url): Promise<Socket> {
+  const socket = io(serverUrl, { auth });
   openSockets.push(socket);
   return new Promise((resolve, reject) => {
     socket.once('connect', () => {
@@ -107,5 +129,63 @@ describe('A socket connection', () => {
     );
 
     await expect(connect({ token: administratorToken })).rejects.toThrow('Unauthorized');
+  });
+});
+
+describe('A connection with an access token without a session', () => {
+  it('is refused, as one issued before sessions existed', async () => {
+    const withoutSession = new JwtService().sign(
+      { sub: randomUUID() },
+      { privateKey, algorithm: 'ES256', audience: 'snu-now-app', expiresIn: '1h' },
+    );
+
+    await expect(connect({ token: withoutSession })).rejects.toThrow('Unauthorized');
+  });
+});
+
+describe('An open connection whose session ends', () => {
+  it('is told that a sign-in on another phone replaced the session and disconnected', async () => {
+    const sessionId = randomUUID();
+    const socket = await connect({ token: accessToken(randomUUID(), sessionId) });
+    const told = nextEvent(socket, 'session-ended');
+    const disconnected = nextEvent(socket, 'disconnect');
+
+    await endSession(sessionId, 'replaced');
+
+    expect(await told).toEqual({ code: 'SESSION_REPLACED' });
+    expect(await disconnected).toBe('io server disconnect');
+  });
+
+  it('is told without a code when the session ended otherwise', async () => {
+    const sessionId = randomUUID();
+    const socket = await connect({ token: accessToken(randomUUID(), sessionId) });
+    const told = nextEvent(socket, 'session-ended');
+    const disconnected = nextEvent(socket, 'disconnect');
+
+    await endSession(sessionId, 'signed_out');
+
+    expect(await told).toEqual({});
+    expect(await disconnected).toBe('io server disconnect');
+  });
+
+  it('leaves the connections of other sessions open', async () => {
+    const sessionId = randomUUID();
+    const other = await connect({ token: accessToken(randomUUID()) });
+    const disconnected = nextEvent(await connect({ token: accessToken(randomUUID(), sessionId) }), 'disconnect');
+
+    await endSession(sessionId, 'signed_out');
+
+    await disconnected;
+    expect((await connectionUsers()).has(other.id ?? '')).toBe(true);
+  });
+});
+
+describe('A connection whose access token expires', () => {
+  it('is disconnected by the server at the expiry, so that the app connects again with a new token', async () => {
+    const socket = await connect({ token: accessToken(randomUUID(), randomUUID(), 2) });
+    const connectedAt = Date.now();
+
+    expect(await nextEvent(socket, 'disconnect')).toBe('io server disconnect');
+    expect(Date.now() - connectedAt).toBeGreaterThanOrEqual(900);
   });
 });

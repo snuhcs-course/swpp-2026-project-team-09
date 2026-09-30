@@ -67,20 +67,25 @@ another key, or an Administrator's token (see the [main server](../main-server/R
 before the connection opens: the app gets `connect_error` with the message `Unauthorized`, and Socket.IO does not
 reconnect by itself.
 
-An open connection stays open after its token expires. When it drops, for example when the phone loses its signal,
-Socket.IO reconnects by itself and the token is checked again. With a fixed `auth: { token }`, Socket.IO would send the
-expired token again, and the app would stay disconnected without noticing. So when `connect_error` arrives and
-`socket.active` is false, the app gets new tokens from the main server once and connects again:
+The server closes a connection when its access token expires, and the app gets `disconnect` with the reason
+`io server disconnect`, after which Socket.IO does not reconnect by itself. A connection that drops, for example when the
+phone loses its signal, is reconnected by Socket.IO, and the token is checked again. With a fixed `auth: { token }`,
+Socket.IO would send an expired token again, and the app would stay disconnected without noticing. So the app gets new
+tokens from the main server once and connects again, both when the server closes the connection and when
+`connect_error` arrives with `socket.active` false:
 
 ```ts
 let retried = false;
+let ended = false;
 socket.on('connect', () => {
   retried = false;
+  // Also how an app whose session ended while it was offline learns it: the main server answers 401.
+  fetchCurrentState();
 });
 socket.on('connect_error', async () => {
   // A network failure: Socket.IO tries again by itself.
   if (socket.active) return;
-  // Refused: get new tokens once, then connect again.
+  // Refused: get new tokens once, then connect again. The tokens of an ended session cannot be renewed.
   if (!retried && (await refreshTokens())) {
     retried = true;
     socket.connect();
@@ -88,9 +93,40 @@ socket.on('connect_error', async () => {
     showSignIn();
   }
 });
+socket.on('session-ended', ({ code }) => {
+  // The server disconnects right after.
+  ended = true;
+  showSignIn(code);
+});
+socket.on('disconnect', async (reason) => {
+  // The server closed the connection because the access token expired.
+  if (reason !== 'io server disconnect' || ended) return;
+  if (await refreshTokens()) {
+    socket.connect();
+  } else {
+    showSignIn();
+  }
+});
 ```
 
-`getAccessToken`, `refreshTokens` and `showSignIn` stand for the app's own code.
+`getAccessToken`, `refreshTokens`, `fetchCurrentState` and `showSignIn` stand for the app's own code. `fetchCurrentState`
+catches up with what changed while the app was not connected (P08). `showSignIn` also stops sharing the
+location, and given `SESSION_REPLACED` it says that a sign-in on another phone signed the User out.
+
+### Sessions
+
+The token names its session, and a User has one (see the [main server](../main-server/README.md#sign-in)). The socket
+server keeps no record of sessions:
+
+- Each connection joins the room of its session. When a session ends, the main server sends the event `session-ended`
+  over messaging. The socket server sends `session-ended` to the session's connections, with
+  `{ code: 'SESSION_REPLACED' }` when a sign-in on another phone ended it and `{}` otherwise, and disconnects them.
+- If that event is lost, the connections close when their access token expires, at most an hour later, and the app
+  cannot connect again, because an ended session gets no new tokens.
+- A connection with the access token of an ended session is accepted until the token expires, because the server
+  checks only the token. Socket.IO reconnects by itself after a network drop, so a phone that was offline when its
+  session ended connects again; its `fetchCurrentState` then gets 401, and the app shows sign-in and closes the
+  connection.
 
 ## Checks
 
@@ -115,7 +151,8 @@ src/
 │   ├── settings.ts                  settings schema, checked at startup
 │   └── messaging.ts                 options for NestJS messaging over Redis
 ├── health/                          a feature: the liveness and readiness checks
-└── users/                           a feature: the app's socket connection and the access token check on it
+└── users/                           a feature: the app's socket connection, the access token check on it and the end of
+                                     a session
 test/                                tests, run against Redis in a container
 ```
 

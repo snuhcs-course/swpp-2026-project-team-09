@@ -47,20 +47,11 @@ The socket server is the only other server that accepts connections from Users: 
 - `@nestjs/websockets` and `@nestjs/platform-socket.io` (`~12.1.0`) as Nest's documentation installs them, `@nestjs/jwt` (`^12.0.2`) as in the main server, and `socket.io-client` (`^4.8.3`) for the tests.
 - `socket.io` is pinned at 4.8.3, the exact version `@nestjs/platform-socket.io` 12.1 depends on, as Nest's gateway sample pins it. A range resolved 4.8.4 next to it, so the gateway's types and the running server came from two copies.
 
-### Sign-out and open connections (2026-09-29, review)
+### Sign-out and open connections (2026-09-29)
 
-- Ticket 07 says that signing out ends every session of the User, but it does not close a socket connection: the token
-  is checked only when a connection opens, and the access token stays valid for up to an hour after sign-out. Nothing
-  is sent over the connection yet, so nothing can leak now.
-- It matters once P08 pushes positions to the User's room. The room is per User, not per session, so a connection
-  left open on another device, a lost phone for example, would receive Friends' positions again as soon as the User
-  signs in elsewhere and turns the Master Switch back on.
-- When the [P08 spec](../../P08-matching-location-sync/spec.md) is split into tickets, the ticket that adds the User's
-  room adds this acceptance criterion: signing out disconnects the User's connections. The main server sends an event
-  over Redis, and the socket server disconnects the User's room. The app gets `disconnect` with the reason
-  `io server disconnect`, and refreshing its tokens fails, so it shows sign-in.
-- Disconnecting does not stop a modified client from reconnecting with its access token while the token is still
-  valid. Disconnecting each connection when its token expires would limit that to an hour, as for HTTP requests.
+- The token is checked only when a connection opens. Ticket 07 closes the connections of a session that ends, by a
+  sign-in on another phone, a sign-out or a used refresh token: the main server sends an event, and the socket server
+  disconnects the session's connections. Each connection also closes when its access token expires.
 
 ### Agent usage (2026-09-29)
 

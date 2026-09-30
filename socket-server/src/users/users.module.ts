@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { Settings } from '../common/settings.js';
+import { UsersController } from './users.controller.js';
 import { UsersGateway } from './users.gateway.js';
 
 // The same as the main server's USER_TOKEN_AUDIENCE, so that an Administrator's token is refused.
@@ -19,6 +20,7 @@ const USER_TOKEN_AUDIENCE = 'snu-now-app';
       inject: [ConfigService],
     }),
   ],
+  controllers: [UsersController],
   providers: [UsersGateway],
 })
 export class UsersModule {}
