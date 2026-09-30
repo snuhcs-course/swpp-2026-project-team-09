@@ -17,10 +17,22 @@ export const updateProfileSchema = z.object({
     .refine((year) => year <= yearInKorea(), 'Too big: expected this year in Korea or earlier')
     .nullable()
     .optional(),
+  // Kept without the '#' in front, which the app adds when it shows one.
   hashtags: z
-    .array(z.string().trim().min(1).max(30).regex(/^\S*$/u, 'Invalid string: must not contain whitespace'))
+    .array(
+      z
+        .string()
+        .trim()
+        .overwrite((hashtag) => hashtag.replace(/^#+/u, ''))
+        .min(1)
+        .max(30)
+        .regex(/^\S*$/u, 'Invalid string: must not contain whitespace'),
+    )
     .max(20)
-    .refine((hashtags) => new Set(hashtags).size === hashtags.length, 'Invalid input: must not repeat a hashtag')
+    .refine(
+      (hashtags) => new Set(hashtags.map((hashtag) => hashtag.toLowerCase())).size === hashtags.length,
+      'Invalid input: must not repeat a hashtag, whatever its case',
+    )
     .optional(),
 });
 

@@ -36,10 +36,13 @@ describe('Editing the profile with an invalid value', () => {
     ['more than 20 hashtags', { hashtags: Array.from({ length: 21 }, (_, index) => `tag${index}`) }],
     ['a hashtag longer than 30 characters', { hashtags: ['a'.repeat(31)] }],
     ['an empty hashtag', { hashtags: [''] }],
+    ['a hashtag that is only #', { hashtags: ['#'] }],
     ['a hashtag with a space inside', { hashtags: ['board game'] }],
     ['a hashtag with a full-width space inside', { hashtags: ['보드\u3000게임'] }],
     ['the same hashtag twice', { hashtags: ['AI', 'AI'] }],
     ['the same hashtag twice once the spaces around are dropped', { hashtags: ['AI', ' AI '] }],
+    ['the same hashtag twice once # is dropped', { hashtags: ['AI', '#AI'] }],
+    ['the same hashtag twice in another case', { hashtags: ['AI', 'ai'] }],
     ['hashtags that are not a list', { hashtags: null }],
   ])('refuses %s with 400, names the field and changes nothing', async (_case, body) => {
     const { accessToken } = await signIn(app, { name: '홍길동' });
@@ -77,6 +80,16 @@ describe('A hashtag', () => {
     const response = await patchProfile(app, accessToken, { hashtags: ['C++', 'R&B'] });
 
     expect(response.body).toMatchObject({ hashtags: ['C++', 'R&B'] });
+  });
+
+  it('is saved without the # in front, in the case it was sent', async () => {
+    const { accessToken } = await signIn(app);
+
+    const response = await patchProfile(app, accessToken, {
+      hashtags: ['#AI', '##보드게임', 'C#', `#${'a'.repeat(30)}`],
+    });
+
+    expect(response.body).toMatchObject({ hashtags: ['AI', '보드게임', 'C#', 'a'.repeat(30)] });
   });
 });
 

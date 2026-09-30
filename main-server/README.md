@@ -105,7 +105,8 @@ A User reads and edits their own profile. The routes name no User, so they never
   - `name`: 1 to 30 characters.
   - `department`: 1 to 50 characters.
   - `admissionYear`: a whole number from 1946, when SNU was founded, to this year in Korea.
-  - `hashtags`: at most 20, each 1 to 30 characters without whitespace, none twice.
+  - `hashtags`: at most 20. Each is kept without the `#` in front, in the case sent, and then has 1 to 30 characters
+    without whitespace. None may appear twice, whatever the case.
 
 ## Administrators
 

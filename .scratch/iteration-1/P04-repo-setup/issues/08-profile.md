@@ -31,7 +31,7 @@ The profile screen belongs to P06.
   - name: 1 to 30 characters;
   - department: 1 to 50 characters of free text;
   - admission year: a whole number from 1946, when SNU was founded, to the current year in Korea (Asia/Seoul), worked out on each request;
-  - hashtags: at most 20, each 1 to 30 characters without whitespace, none twice. Any other character is allowed, and the comparison is exact, so `AI` and `ai` are two hashtags.
+  - hashtags: at most 20. Each is kept without the `#` in front, which the app adds when it shows one, and in the case sent. It then has 1 to 30 characters without whitespace; any other character is allowed, `C#` included. No hashtag may appear twice, whatever the case, so `AI` with `#ai` is refused.
 - **Refusals**: 400 from the validation pipe, whose messages start with the field's path (`name: ...`, `hashtags.0: ...`). Nothing is saved.
 - **Docs**: the main server README has a Profile section. Its "Adding a feature module" example is now `party`, because a `profile` module and `Profile` model would contradict the profile in `src/users/`.
 
@@ -43,13 +43,13 @@ The upper limit of the admission year is checked on the real clock, with this ye
 
 ### Red before green (2026-09-30)
 
-These failed before their code was written: reading and editing (404), a blank or too long name from Google, the spaces around the department and the hashtags, and the limits of the department, the admission year and the hashtags. The name's limits already held, because the first-name check had brought them in.
+These failed before their code was written: reading and editing (404); a blank or too long name from Google; the spaces around the department and the hashtags; the limits of the department, the admission year and the hashtags; the `#` in front of a hashtag; and a repeat in another case. The name's limits already held, because the first-name check had brought them in.
 
 These passed at once, because the `me` routes, the global guard, Prisma's partial update and the rules already covered them: editing only the fields sent, emptying fields, a later sign-in keeping the name, another User's profile, 401, and a few refusals (a blank or non-text department, an admission year sent as text, a full-width space, a repeat after trimming, hashtags that are not a list). Marking the read route `@Public()` made every read test and all three 401 tests fail.
 
 ### Agent usage (2026-09-30)
 
-- Agent time: about 30 minutes, an estimate, counted as the gaps under 5 minutes between transcript entries of the one session that did the work, up to the writing of this section. Its two review subagents, about 2 and 3 minutes at the same time, ran inside it.
+- Agent time: about 35 minutes, an estimate, for the one session that did the work, counted from its transcript up to the writing of this section. Time spent waiting for answers is left out. Its two review subagents, about 2 and 3 minutes at the same time, ran inside it.
 - Tokens, for the session and its two subagents, counted when this section was written:
-  - Input: 18,500,526 in total, of which 18,088,351 were cache reads, 411,941 cache writes and 234 uncached.
-  - Output: 80,958. The subagents' transcripts record only a few output tokens for most of their steps, so their share, 1,826, is a lower bound.
+  - Input: 23,857,863 in total, of which 23,423,634 were cache reads, 433,957 cache writes and 272 uncached.
+  - Output: 96,319. The subagents' transcripts record only a few output tokens for most of their steps, so their share, 1,826, is a lower bound.
