@@ -66,7 +66,7 @@ export class AuthService {
     if (claims.email_verified !== true || claims.email === undefined) {
       throw new ForbiddenException("The Google account's email address is not verified.");
     }
-    const user = await this.users.findOrCreate(claims.sub, claims.email);
+    const user = await this.users.findOrCreate({ googleSubject: claims.sub, email: claims.email, name: claims.name });
     const refreshToken = newRefreshToken();
     const { sessionId, replacedSessionIds } = await this.prisma.$transaction(async (tx) => {
       await this.users.lock(user.id, tx);
