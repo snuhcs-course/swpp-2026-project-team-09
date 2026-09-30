@@ -49,6 +49,7 @@ An admin site where an Administrator reviews each Draft, corrects its time and p
 - An Administrators screen lists the Administrators, with each one's email address and whether they have signed in yet. On it an Administrator registers an email address of any Google domain and removes an Administrator, themselves included. The main server keeps the last one.
 - Access checks are made where data is read or changed. A check in the request proxy alone is not relied on.
 - The position picker shows a Kakao map through Kakao's JavaScript SDK. This is a web page on a registered domain, which is the use that SDK is meant for.
+- How the Kakao JavaScript key reaches the admin site, its registered domains, and the admin site's Google client are in `.scratch/research/external-sources.md`.
 
 ### Administrative API
 
