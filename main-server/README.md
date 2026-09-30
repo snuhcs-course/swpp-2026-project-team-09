@@ -174,11 +174,15 @@ The worker server collects the menus of the Co-op, dormitory and veterinary coll
 - A day with nothing stored answers `[]`, so the app can ask for each of the coming days. A `date` that is not a
   calendar day gets 400.
 
-Each restaurant and day in a `menus-collected` message replaces what was stored for that restaurant and day, its entries
-and its operating hours. So the same message sent twice leaves one set of records, and a menu the page changed or
-removed does not linger. A restaurant the message leaves out keeps what it had for that day, so a collector sends a
-restaurant whose cell is empty or states a closure with `entries: []`; the route then answers it with `meals: []`. A
-failed collection changes no menu, so the app keeps getting the last menus collected.
+For each day a `menus-collected` message carries, it replaces everything its source had stored for that day: the
+restaurants, their entries and their operating hours. So the same message sent twice leaves one set of records, and a
+menu or a restaurant the page changed, renamed or removed does not linger. The source's other days and the other
+sources' restaurants stay as they are.
+
+- A collector therefore sends every restaurant the page lists for a day. One whose cell is empty or states a closure
+  goes with `entries: []`, and the route answers it with `meals: []`; one left out is gone for that day.
+- A restaurant belongs to one source. The same name sent by two sources for one day is served twice.
+- A failed collection changes no menu, so the app keeps getting the last menus collected.
 
 ## Checks
 
@@ -394,5 +398,5 @@ await harness.close(); // in afterAll
 - `startWithWorker()` starts a Redis of its own for the file. Every test file's server listens on the shared test Redis
   and answers a request, so the answer could come from another file's server, such as the one whose database the
   health tests stop.
-- The database is the shared one, so each test stores data of its own, as each test in `test/menus.e2e-spec.ts` uses
-  its own day.
+- The database is the shared one, so each test stores data of its own. The menus tests take their days from
+  `daysOf()` in `test/menus.ts`, a month for each file and a day for each test.

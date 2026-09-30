@@ -7,6 +7,7 @@ CREATE TYPE "collection_source" AS ENUM ('coop_menus', 'dormitory_menus', 'veter
 -- CreateTable
 CREATE TABLE "restaurant_days" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "source" "collection_source" NOT NULL,
     "restaurant" TEXT NOT NULL,
     "date" DATE NOT NULL,
     "operating_hours" TEXT,
@@ -39,7 +40,7 @@ CREATE TABLE "collection_statuses" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "restaurant_days_date_restaurant_key" ON "restaurant_days"("date", "restaurant");
+CREATE UNIQUE INDEX "restaurant_days_date_source_restaurant_key" ON "restaurant_days"("date", "source", "restaurant");
 
 -- CreateIndex
 CREATE INDEX "menu_entries_restaurant_day_id_idx" ON "menu_entries"("restaurant_day_id");

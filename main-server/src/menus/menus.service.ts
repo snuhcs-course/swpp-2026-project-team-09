@@ -16,24 +16,28 @@ export class MenusService {
     private readonly collection: CollectionService,
   ) {}
 
-  // Replaces each restaurant and day in the message, so a repeat leaves one set of records and a removed menu does not
-  // linger.
+  // Replaces the source's menus on each day the message carries, so a repeat leaves one set of records, and a menu or a
+  // restaurant the page dropped does not linger.
   async store({ source, collectedAt, menus }: MenusCollectedMessage): Promise<void> {
     const collected = new Date(collectedAt);
+    const sourceDays = {
+      source,
+      date: { in: [...new Set(menus.map(({ date }) => date))].map((date) => calendarDay(date)) },
+    };
     await this.prisma.$transaction(async (tx) => {
-      // The transaction's one connection runs them one at a time.
-      const days = await Promise.all(
-        menus.map(({ restaurant, date, operatingHours }) => {
-          const day = { date: calendarDay(date), restaurant };
-          return tx.restaurantDay.upsert({
-            where: { date_restaurant: day },
-            create: { ...day, operatingHours, collectedAt: collected },
-            update: { operatingHours, collectedAt: collected },
-            select: { id: true },
-          });
-        }),
-      );
-      await tx.menuEntry.deleteMany({ where: { restaurantDayId: { in: days.map(({ id }) => id) } } });
+      await tx.menuEntry.deleteMany({ where: { restaurantDay: sourceDays } });
+      await tx.restaurantDay.deleteMany({ where: sourceDays });
+      // RETURNING gives the rows in the order they were inserted.
+      const days = await tx.restaurantDay.createManyAndReturn({
+        data: menus.map(({ restaurant, date, operatingHours }) => ({
+          source,
+          restaurant,
+          date: calendarDay(date),
+          operatingHours,
+          collectedAt: collected,
+        })),
+        select: { id: true },
+      });
       await tx.menuEntry.createMany({
         data: menus.flatMap(({ entries }, index) =>
           entries.map(({ meal, name, price }, position) => ({

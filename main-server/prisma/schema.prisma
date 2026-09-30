@@ -75,19 +75,20 @@ model Administrator {
   @@map("administrators")
 }
 
-// One restaurant's menus on one day, as the last collection of that restaurant and day read them. A later collection
-// replaces its entries.
+// One restaurant's menus on one day, as the last collection of its source on that day read them. A later collection
+// replaces every restaurant of the source on that day.
 model RestaurantDay {
-  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source         CollectionSource
   restaurant     String
   // A calendar day in Asia/Seoul.
-  date           DateTime    @db.Date
+  date           DateTime         @db.Date
   // The original line of text, such as "※ 운영시간 : 11:00~14:30".
-  operatingHours String?     @map("operating_hours")
-  collectedAt    DateTime    @map("collected_at")
+  operatingHours String?          @map("operating_hours")
+  collectedAt    DateTime         @map("collected_at")
   entries        MenuEntry[]
 
-  @@unique([date, restaurant])
+  @@unique([date, source, restaurant])
   @@map("restaurant_days")
 }
 

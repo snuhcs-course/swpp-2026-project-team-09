@@ -2,6 +2,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
+import { daysOf, getMenus, menusMessage, restaurantMenus } from './menus.js';
 import { signIn } from './sign-in.js';
 import { refusal, sendAsWorker, startWithWorker, type WorkerHarness } from './worker.js';
 
@@ -21,32 +22,10 @@ afterAll(async () => {
   await harness.close();
 });
 
-let lastDay = 0;
+const newDay = daysOf('2026-11');
 
-// A day of its own for each test, so that no test sees the menus of another.
-function newDay(): string {
-  lastDay += 1;
-  return `2026-11-${String(lastDay).padStart(2, '0')}`;
-}
-
-// One restaurant's menus on `date`, as a collector reads them, with `changes` applied.
-function restaurantMenus(date: string, changes: object = {}): object {
-  return {
-    restaurant: '학생회관식당',
-    date,
-    operatingHours: '※ 운영시간 : 11:00~14:30',
-    entries: [{ meal: 'lunch', name: '제육볶음', price: 6000 }],
-    ...changes,
-  };
-}
-
-// A menus message from the Co-op collector, with `changes` applied.
-function menusMessage(menus: object[], changes: object = {}): object {
-  return { source: 'coop_menus', collectedAt: '2026-10-31T21:00:00+09:00', menus, ...changes };
-}
-
-function getMenus(date: string): request.Test {
-  return request(harness.app.getHttpServer()).get('/menus').query({ date }).auth(accessToken, { type: 'bearer' });
+function menusOn(date: string): request.Test {
+  return getMenus(harness.app, accessToken, date);
 }
 
 describe('Menus collected by the worker', () => {
@@ -70,7 +49,7 @@ describe('Menus collected by the worker', () => {
 
     await expect(sendAsWorker(harness.worker, 'menus-collected', message)).resolves.toEqual({ status: 'ok' });
 
-    const response = await getMenus(date);
+    const response = await menusOn(date);
     expect(response.status).toBe(200);
     expect(response.body).toEqual([
       {
@@ -98,6 +77,23 @@ describe('Menus collected by the worker', () => {
   });
 });
 
+describe('A restaurant sent without entries, one closed or not posted yet', () => {
+  it('is served without meals', async () => {
+    const date = newDay();
+
+    await sendAsWorker(harness.worker, 'menus-collected', menusMessage([restaurantMenus(date, { entries: [] })]));
+
+    expect((await menusOn(date)).body).toEqual([
+      {
+        restaurant: '학생회관식당',
+        operatingHours: '※ 운영시간 : 11:00~14:30',
+        collectedAt: '2026-10-31T12:00:00.000Z',
+        meals: [],
+      },
+    ]);
+  });
+});
+
 describe('The same menus message twice', () => {
   it('is stored once', async () => {
     const date = newDay();
@@ -106,7 +102,7 @@ describe('The same menus message twice', () => {
     await sendAsWorker(harness.worker, 'menus-collected', message);
     await sendAsWorker(harness.worker, 'menus-collected', message);
 
-    expect((await getMenus(date)).body).toEqual([
+    expect((await menusOn(date)).body).toEqual([
       {
         restaurant: '학생회관식당',
         operatingHours: '※ 운영시간 : 11:00~14:30',
@@ -117,23 +113,25 @@ describe('The same menus message twice', () => {
   });
 });
 
-describe('A later collection of a restaurant and day', () => {
-  it('replaces its menus and hours, and leaves the other restaurants', async () => {
-    const date = newDay();
+describe("A later collection of a source's day", () => {
+  it('replaces every restaurant of that source that day, and leaves its other days and other sources', async () => {
+    const [date, otherDate] = [newDay(), newDay()];
     await sendAsWorker(
       harness.worker,
       'menus-collected',
       menusMessage([
-        restaurantMenus(date, {
-          entries: [
-            { meal: 'lunch', name: '제육볶음', price: 6000 },
-            { meal: 'dinner', name: '비빔밥', price: 5000 },
-          ],
-        }),
+        restaurantMenus(date),
         restaurantMenus(date, { restaurant: '자하연식당' }),
+        restaurantMenus(otherDate),
       ]),
     );
+    await sendAsWorker(
+      harness.worker,
+      'menus-collected',
+      menusMessage([restaurantMenus(date, { restaurant: '수의대식당' })], { source: 'veterinary_menus' }),
+    );
 
+    // The page dropped 자하연식당 and changed the other restaurant's menu and hours.
     await sendAsWorker(
       harness.worker,
       'menus-collected',
@@ -143,9 +141,9 @@ describe('A later collection of a restaurant and day', () => {
       ),
     );
 
-    expect((await getMenus(date)).body).toEqual([
+    expect((await menusOn(date)).body).toEqual([
       {
-        restaurant: '자하연식당',
+        restaurant: '수의대식당',
         operatingHours: '※ 운영시간 : 11:00~14:30',
         collectedAt: '2026-10-31T12:00:00.000Z',
         meals: [{ meal: 'lunch', entries: [{ name: '제육볶음', price: 6000 }] }],
@@ -157,49 +155,7 @@ describe('A later collection of a restaurant and day', () => {
         meals: [{ meal: 'lunch', entries: [{ name: '김치찌개', price: 5500 }] }],
       },
     ]);
-  });
-});
-
-describe('A failed collection', () => {
-  it('is recorded with its time and reason, and the menus stored before are still served', async () => {
-    const date = newDay();
-    await sendAsWorker(
-      harness.worker,
-      'menus-collected',
-      menusMessage([restaurantMenus(date, { restaurant: '수의대식당', operatingHours: null })], {
-        source: 'veterinary_menus',
-      }),
-    );
-
-    await expect(
-      sendAsWorker(harness.worker, 'collection-failed', {
-        source: 'veterinary_menus',
-        failedAt: '2026-11-01T09:00:00+09:00',
-        reason: 'The page did not answer within 10 seconds',
-      }),
-    ).resolves.toEqual({ status: 'ok' });
-
-    expect(await prisma.collectionStatus.findUnique({ where: { source: 'veterinary_menus' } })).toMatchObject({
-      source: 'veterinary_menus',
-      lastSucceededAt: new Date('2026-10-31T12:00:00Z'),
-      lastFailedAt: new Date('2026-11-01T00:00:00Z'),
-      lastFailureReason: 'The page did not answer within 10 seconds',
-    });
-    expect((await getMenus(date)).body).toEqual([
-      {
-        restaurant: '수의대식당',
-        operatingHours: null,
-        collectedAt: '2026-10-31T12:00:00.000Z',
-        meals: [{ meal: 'lunch', entries: [{ name: '제육볶음', price: 6000 }] }],
-      },
-    ]);
-  });
-
-  it('is refused when it does not say what went wrong', async () => {
-    const failure = { source: 'dormitory_menus', failedAt: '2026-11-01T09:00:00+09:00' };
-
-    expect(await refusal(harness.worker, 'collection-failed', failure)).toContain('reason: ');
-    expect(await prisma.collectionStatus.findUnique({ where: { source: 'dormitory_menus' } })).toBeNull();
+    expect((await menusOn(otherDate)).body).toMatchObject([{ restaurant: '학생회관식당' }]);
   });
 });
 
@@ -260,7 +216,7 @@ describe('A menus message that does not match the schema', () => {
       const status = await prisma.collectionStatus.findUnique({ where: { source: 'coop_menus' } });
 
       expect(await refusal(harness.worker, 'menus-collected', message(date))).toContain(named);
-      expect((await getMenus(date)).body).toEqual([]);
+      expect((await menusOn(date)).body).toEqual([]);
       expect(await prisma.collectionStatus.findUnique({ where: { source: 'coop_menus' } })).toEqual(status);
     },
   );
@@ -268,7 +224,7 @@ describe('A menus message that does not match the schema', () => {
 
 describe("A User's menus route", () => {
   it('answers an empty list for a day with nothing stored', async () => {
-    const response = await getMenus(newDay());
+    const response = await menusOn(newDay());
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual([]);
@@ -281,7 +237,7 @@ describe("A User's menus route", () => {
   });
 
   it('refuses a day that is not a calendar day', async () => {
-    const response = await getMenus('2026-11-31');
+    const response = await menusOn('2026-11-31');
 
     expect(response.status).toBe(400);
     expect(response.body).toMatchObject({ message: [expect.stringContaining('Invalid ISO date')] });
