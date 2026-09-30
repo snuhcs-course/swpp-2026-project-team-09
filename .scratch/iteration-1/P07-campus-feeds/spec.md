@@ -78,7 +78,9 @@ The worker server collects events, menus and shuttle positions from their origin
 
 ### Menus
 
-- A menu entry has a restaurant, a date, a meal type, a menu name and an optional price. Operating hours are kept as the original line of text per restaurant.
+- A restaurant's meal on a day is kept as the lines of its cell, in the page's order: each line's text as the page wrote it and, when the worker is sure, the kind of line (a heading, a dish or a note) and one price. Operating hours, busy hours and closures are lines of the meal.
+  - Ticket 01 changed this on 2026-10-01, after checking the pages: they give hours per meal and often per corner, set prices on headings, several prices on one line and notices in the cells. The spec said one menu name and price per entry, with hours per restaurant.
+  - The model is provisional. Once the collectors of tickets 07 and 08 run on the real pages, the team reviews what they send before relying on it.
 - The veterinary college page has no prices and no year in its dates. The year is taken from the collection date.
 
 ### Shuttle

@@ -26,7 +26,7 @@ This ticket sets the conventions every later worker message follows: how a messa
 ### Messages (2026-10-01)
 
 - **Names**: `menus-collected` and `collection-failed`, in kebab case and named after what happened, as `session-ended` is. Both are request-and-response (`@MessagePattern()`), so the worker learns whether a message was stored. Later collectors send `<what>-collected`.
-- **Shape**: the payload names its `source` and the time the collection ran (`collectedAt`, `failedAt`) in ISO 8601 with an offset. `menus` is a list of one restaurant's menus on one day: `{ restaurant, date, operatingHours, entries: [{ meal, name, price }] }`, with `date` as `YYYY-MM-DD`. A missing price or hours is `null`, never left out, so the worker's type states every field.
+- **Shape**: the payload names its `source` and the time the collection ran (`collectedAt`, `failedAt`) in ISO 8601 with an offset. `menus` is a list of one restaurant's menus on one day: `{ restaurant, date, lines: [{ meal, text, kind, price }] }`, with `date` as `YYYY-MM-DD` (see Menu pages and the line model). A `kind` or `price` the worker is not sure of is `null`, never left out, so the worker's type states every field.
 - **Validation**: `@WorkerMessage(schema)` in `src/common/worker-message.ts` puts a `StandardSchemaValidationPipe` on the payload. Ticket P04-10 found that `main.ts` connects messaging without `inheritAppConfig`, so the global pipe never reaches a message handler. Turning `inheritAppConfig` on was not chosen: it would also put `AccessTokenGuard` and the idempotency interceptor in front of every message handler.
   - Schemas are `z.strictObject`, so a misspelt field is refused instead of dropped.
   - A price must fit the `INTEGER` column (`z.int32()`), so a price that is too large is refused with its field named instead of failing in the database.
@@ -35,10 +35,10 @@ This ticket sets the conventions every later worker message follows: how a messa
 
 ### Storage and the route (2026-10-01)
 
-- `restaurant_days` holds one restaurant's day, with its source, unique by day, source and restaurant. It keeps the operating hours line and the time of the collection that stored it. `menu_entries` holds the day's entries with their meal, name and price. Each entry also has a `position` that keeps the page's order.
-- For each day a message carries, it replaces everything its source had stored for that day (see Design review). In one transaction with the collection status, it deletes the source's entries and restaurant days for those days, inserts the message's restaurant days and inserts their entries: four statements, whatever the message's size.
+- `restaurant_days` holds one restaurant's day, with its source, unique by day, source and restaurant, and the time of the collection that stored it. `menu_lines` holds the day's lines with their meal, text, kind and price, and a `position` that keeps the page's order.
+- For each day a message carries, it replaces everything its source had stored for that day (see Design review). In one transaction with the collection status, it deletes the source's lines and restaurant days for those days, inserts the message's restaurant days and inserts their lines: four statements, whatever the message's size.
   - The source's other days and the other sources' restaurants stay.
-  - The README therefore tells collectors to send every restaurant the page lists for a day. One that is closed, or has an empty cell, goes with `entries: []` and is served with `meals: []`. That covers ticket 08's closure and empty cell.
+  - The README therefore tells collectors to send every restaurant the page lists for a day. A closure written in a cell is a line; a restaurant listed with empty cells goes with `lines: []` and is served with `meals: []`. That covers ticket 08's closure and empty cell.
   - The same restaurant name sent by two sources for one day is stored and served twice. Ticket 08 collects the dormitory restaurant once.
 - `collection_statuses` has one row per source, with a UUID `id` as the README asks of every record.
   - The sources are the `CollectionSource` values `coop_menus`, `dormitory_menus` and `veterinary_menus`, one per page, so that a broken Co-op page and a broken dormitory page are noticed apart (ticket 08).
@@ -48,7 +48,7 @@ This ticket sets the conventions every later worker message follows: how a messa
   - `date` is required. There is no default day, because the app asks for each day it shows.
   - The answer is a plain list, so an empty day is `[]`.
   - Restaurants are ordered by name; P15 can arrange them otherwise.
-  - `meals` lists only the meals that have entries, from breakfast to dinner.
+  - `meals` lists only the meals that have lines, from breakfast to dinner.
 - "The time the menus were last collected" is served for each restaurant: the `collectedAt` of the collection that stored that restaurant's day.
   - When one source fails, its restaurants keep their older time while the others show the new one. A single time for the whole answer would make the stale menus look fresh.
   - The source's `lastSucceededAt` is recorded but not served. P12's admin site reads it (story 18).
@@ -56,9 +56,9 @@ This ticket sets the conventions every later worker message follows: how a messa
 ### Tests (2026-10-01)
 
 - `test/menus.e2e-spec.ts` has 15 tests and `test/collection.e2e-spec.ts` 2. Each sends messages over Redis with `startWithWorker()` and `sendAsWorker()` from `test/worker.ts`, and reads what the route serves:
-  - a valid message is stored and served by restaurant and meal, with prices, an entry without a price as `null`, the hours and the collection time;
-  - a restaurant sent without entries is served without meals;
-  - eight messages that do not match the schema are refused, with the problem named, and nothing from them is stored, the collection status included;
+  - a valid message is stored and served by restaurant and meal, each line with its text, kind and price as sent, `null` included, and with the collection time;
+  - a closed restaurant is served with its closure line, and one listed with empty cells without meals;
+  - ten messages that do not match the schema are refused, with the problem named, and nothing from them is stored, the collection status included;
   - the same message twice is stored once;
   - a later collection of a source's day replaces its restaurants: one it changed is replaced, one it dropped is gone, and another source's restaurant that day and the source's other day stay;
   - a failure message records its time and reason, keeps the success time, and the menus stored before are still served;
@@ -67,8 +67,8 @@ This ticket sets the conventions every later worker message follows: how a messa
 - The menus fixtures are in `test/menus.ts`. `daysOf()` gives each file a month and each test a day, because the files share the database and a day's answer holds every restaurant stored for it.
 - Each file starts a Redis container of its own, which takes about a second. Every test file's server subscribes to the same message patterns on the shared test Redis, and Nest's client takes the first answer. The server in `test/health.e2e-spec.ts` whose database is stopped could then answer "Internal server error" first. Two servers storing the same message could also undo a replacement. The database stays the shared one, and each test uses a day of its own.
 - No route serves the collection status yet, so the tests read it with their own database connection, as `test/auth.e2e-spec.ts` reads Users.
-- Checked that the tests can fail. Without the payload's pipe, the invalid cases failed. Without deleting a day's earlier entries, the repeat and the replacement failed. Deleting only the message's restaurants, or every source's, failed the replacement.
-- The whole suite passed: 15 files, 157 tests.
+- Checked that the tests can fail. Without the payload's pipe, the invalid cases failed. Without deleting a day's earlier lines, the repeat and the replacement failed. Deleting only the message's restaurants, or every source's, failed the replacement.
+- The whole suite passed: 15 files, 159 tests.
 
 ### Review (2026-10-01)
 
@@ -87,9 +87,23 @@ A Standards review and a Spec review ran side by side on the first commit. The s
 - **Replacement by source and day.** The ticket says a later collection "replaces that restaurant's entries for that day". Replacing only the restaurants a message carries left a restaurant the page renamed or dropped on the days collected ahead, up to seven, so the app would show the old name beside the new one. The Co-op and dormitory pages list a whole day, so a message now replaces its source's whole day. The ticket's rule still holds within it.
 - **The collection time stays per restaurant.** A single time for the answer would make a failed source's menus look fresh.
 - **No guard on `collectedAt`.** Messages arrive in order while the worker sends one at a time and waits for each answer, and Redis messaging keeps nothing to deliver late. A guard comes with a worker that retries.
-- **A closed restaurant is sent with `entries: []`** and served with `meals: []`, so it does not vanish from the app. Telling closed apart from not posted yet, with a `closed` field, waits for P15's screen.
+- **A closed restaurant does not vanish from the app.** Decided first as `entries: []` served as `meals: []`; with the line model below, a closure the page writes, such as `개천절 휴무`, is served as a line, which also tells a closure apart from a menu not posted yet.
 - Kept as implemented: the validation in `@WorkerMessage`, the one-string refusal, `null` for a missing value, the `CollectionSource` enum, the worker's times in the status, a Redis for each test file, `z.strictObject`, a required `date`, and restaurants identified by name until P15 needs a `restaurants` table.
 - When the worker collects is not set here. The spec says twice a day; nobody has checked when the three pages change or how far ahead they are posted. That is worth observing before ticket 07 fixes the hours.
+
+### Menu pages and the line model (2026-10-01)
+
+김태현 asked whether the schema had been checked against the pages; it had not, it followed the ticket and `.scratch/research/external-sources.md`. The three pages were then fetched for several days, and Siksha's collectors read (both recorded in `.scratch/research/external-sources.md` §4 and §9).
+
+- The pages did not fit the schema: hours per meal and often per corner, not per restaurant; corner headings with a set price and unpriced dishes under them; several prices on one line and typos in prices; busy hours, notices and closures written in the cells; four restaurants repeating one fixed menu in every cell.
+- Siksha parses strictly and drops what does not fit, including hours, notices and closures, keeps no original text, and its version 2 needs a hand-written parser per restaurant.
+- Decided with 김태현:
+  - Parsing stays in the worker, one extractor per page format; the main server takes one common message.
+  - A meal is kept as the lines of its cell, in the page's order: the text always, and a `kind` (`heading`, `item`, `note`) and a `price` only when the worker is sure. A line nobody could read is still served. `menu_lines` replaces `menu_entries`, and `restaurant_days` has no operating hours.
+  - `price` is set only for exactly one price, and there is no second price field, so the two cannot disagree; the original price stays in `text`.
+  - The fixed-menu restaurants are stored as the page shows them: a day's page is 360 to 715 lines.
+- This departs from the criteria's wording: they ask for operating hours per restaurant and day and for entries with a name and a price. Hours are now note lines of each meal, and an entry is a line of kind `item`. The P07 spec's Menus section says the same now.
+- **The model is provisional.** Once the collectors of tickets 07 and 08 run on the real pages, the team reviews what they send, and how many lines get a `kind` and a `price`, before relying on it. The README, the spec and tickets 07 and 08 say so too.
 
 ### Left as is (2026-10-01)
 
@@ -98,9 +112,10 @@ A Standards review and a Spec review ran side by side on the first commit. The s
 
 ### Agent usage (2026-10-01)
 
-- Agent time: about 45 minutes, an estimate, in one session in the main checkout. About 30 minutes waiting for 김태현's answers are left out.
+- Agent time: about 1 hour 30 minutes, an estimate, in one session in the main checkout. About 35 minutes waiting for 김태현's answers are left out.
   - Implementation, from the start to the pull request: about 28 minutes. Its Standards and Spec review subagents worked about 3 and 2 minutes, at the same time, added on top.
-  - The walk-through of the pull request, the design review and the change to replacement by source and day: about 14 minutes up to this section, and the commit, the push and the pull request's update add a few more.
-- Tokens, for the session and its two review subagents, counted when this section was written:
-  - Input: 31,414,932 in total, of which 30,878,730 were cache reads, 535,896 cache writes and 306 uncached.
-  - Output: 178,166. The subagents' transcripts record only a few output tokens for most of their steps, so their share, 1,274, is a lower bound.
+  - The walk-through of the pull request, the design review and the change to replacement by source and day: about 17 minutes.
+  - The code walk-through, the check of the three pages, the reading of Siksha and the change to the line model with its documents: about 36 minutes up to this section. The subagent that read Siksha's repositories worked about 7 minutes, added on top.
+- Tokens, for the session and its three subagents, counted when this section was written:
+  - Input: 61,452,210 in total, of which 60,603,393 were cache reads, 848,309 cache writes and 508 uncached.
+  - Output: 262,535. The subagents' transcripts record only a few output tokens for most of their steps, so their share, 1,945, is a lower bound.

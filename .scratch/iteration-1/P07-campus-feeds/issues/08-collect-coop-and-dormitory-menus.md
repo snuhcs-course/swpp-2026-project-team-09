@@ -19,3 +19,16 @@ The worker collects the SNU Co-op menu page and the dormitory menu page, which s
 - [ ] The Co-op page and the dormitory page are separate sources in the collection status, so that a broken page is noticed on its own.
 - [ ] Runs happen twice a day and follow the failure reporting of ticket 07.
 - [ ] Saved pages are fixtures in the repository: a normal day, a day with a closed restaurant, a cell with a menu without a price, a buffet line and an operating hours line. Tests feed them to the parser and check the entries, the hours and the closure, and one test checks the message sent for a run.
+
+## Comments
+
+### From ticket 01 (2026-10-01)
+
+Ticket 01 changed the menus message after checking these pages (`.scratch/research/external-sources.md` §4.1 and §4.2). A meal is sent as the lines of its cell, in the page's order, `{ meal, text, kind, price }`. `text` is the line as the page wrote it; `kind` (`heading`, `item` or `note`) and `price` are set only when the collector is sure. The main server's README, section Menus, describes it. What this changes in the criteria above:
+
+- Operating hours are given per meal and sometimes per corner, so they are sent as `note` lines of that meal, not as the restaurant's text for the day. Busy hours and other notices are `note` lines too.
+- A closure written in a cell, such as `개천절 휴무`, is sent as a line. A restaurant listed with empty cells is sent with `lines: []`. A message replaces its source's whole day, so every restaurant the page lists for a day is sent.
+- A heading such as `<셀프코너> 7,000원` is a `heading` line with its price, and the dishes under it follow as their own lines. A line with several prices, or with a typo in its price, keeps the price in `text` and has `price: null`.
+- The restaurants whose names start with `* ` repeat one fixed menu in each cell every day. Send them as the page shows them.
+
+The line model is provisional. Once this collector runs on the real pages, review with the team what it sends, and how many lines it could give a `kind` and a `price`, before relying on the model.

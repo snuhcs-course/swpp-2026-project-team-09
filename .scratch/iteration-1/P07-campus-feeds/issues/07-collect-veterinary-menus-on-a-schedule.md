@@ -20,3 +20,11 @@ This ticket sets up what every later collector uses: the schedule, the one place
 - [ ] The saved page is a fixture in the repository with the date it was saved. Tests feed it to the parser and check the entries that come out, including the dinner under the table and the year at the turn of the year.
 - [ ] A test starts a receiver on the test Redis that answers the message as the main server would, runs the collector once, and checks the message it received. Another checks that a fetch failure produces the failure message.
 - [ ] The README of the worker server explains how a collector is put together, the schedule, the fetch boundary, the parser and the sending, how to add a source, and how to save a page for tests. Later tickets follow this note.
+
+## Comments
+
+### From ticket 01 (2026-10-01)
+
+- Ticket 01 changed the menus message: a meal is sent as the lines of its cell, `{ meal, text, kind, price }`, and `kind` and `price` are `null` unless the collector is sure. The main server's README, section Menus, describes it. An entry in the criteria above is a line of kind `item`; the page gives no prices, so its `price` is `null`.
+- The text under the table names one dinner menu without saying for which day (`.scratch/research/external-sources.md` §4.3, checked on 2026-10-01). Decide which days it belongs to, or send it as a `note` line.
+- The line model is provisional. Once this collector runs on the real page, review with the team what it sends before relying on the model.
