@@ -49,7 +49,7 @@ The worker server collects events, menus and shuttle positions from their origin
 | Walking route | Kakao's walking route API | On each request |
 | Buildings, shuttle route line, Campus Boundary | OpenStreetMap | Once, loaded as seed data |
 
-- Each source's address, request and page format, observed behaviour and limits are in `.scratch/research/external-sources.md`.
+- Each source's address, request and page format, observed behaviour and limits, and how the Kakao REST API key reaches the server, are in `.scratch/research/external-sources.md`.
 - All times are in the Asia/Seoul time zone.
 - The source code of Siksha and Haengsha was read to learn which sources exist and how their pages are built. No code, pattern list or keyword list is copied from them, because their repositories carry no licence.
 - The extracurricular programme site is not collected. Its detail pages sit behind a waiting queue and a login.

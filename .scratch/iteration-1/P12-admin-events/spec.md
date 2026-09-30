@@ -41,7 +41,7 @@ An admin site where an Administrator reviews each Draft, corrects its time and p
 - Sign-in uses Google on the web. The main server verifies the ID token exactly as for the app and issues its tokens.
 - Access checks are made where data is read or changed. A check in the request proxy alone is not relied on.
 - The position picker shows a Kakao map through Kakao's JavaScript SDK. This is a web page on a registered domain, which is the use that SDK is meant for.
-- The JavaScript key's registered domains and the admin site's Google client are in `.scratch/research/external-sources.md`.
+- How the Kakao JavaScript key reaches the admin site, its registered domains, and the admin site's Google client are in `.scratch/research/external-sources.md`.
 
 ### Administrative API
 

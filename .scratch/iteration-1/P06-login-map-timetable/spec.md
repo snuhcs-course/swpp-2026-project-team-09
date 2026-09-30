@@ -131,5 +131,5 @@ The app opens on a sign-in screen and then on a map of the campus that fills the
 - The schedule names 안진영 as the worker. The task was written as screen work. The timetable and Private Event APIs were added here because the restart left them without a task.
 - P05 must confirm first: the Kakao key and key hash, that the native module shows the map and moves an Avatar under the New Architecture, and that the sign-in library builds together with the Kakao SDK. If the native map module is blocked, the team lead decides the next step; a web view is not the fallback.
 - Every build signing key needs its own registration: the key hash at Kakao and the SHA-1 fingerprint at Google.
-- The Kakao keys, the Google clients, and how to compute a key hash or a SHA-1 fingerprint are in `.scratch/research/external-sources.md`.
+- How the Kakao native app key reaches the app, the Google clients, and how to compute a key hash or a SHA-1 fingerprint are in `.scratch/research/external-sources.md`.
 - The screen arrangement follows the team's reference: the map in the centre, the Party member list on one side and the Quest list on the other.

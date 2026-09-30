@@ -14,9 +14,9 @@ Everything was checked on 2026-09-30 unless a line says otherwise. `[K1]`-style 
 | Veterinary college menus | P07, P15 | Public HTML | Confirmed |
 | Shuttle stops and vehicles (Busin) | P07, P15 | Public HTML and JSON | Confirmed, vehicles seen in service |
 | OpenStreetMap | P07, P08, P15 | Open data, loaded once as seed data | Confirmed |
-| Kakao Maps SDK for Android | P06 | Native app key and key hash | Kakao app not created yet |
-| Kakao Maps JavaScript SDK | P12 | JavaScript key and domain | Kakao app not created yet |
-| Kakao walking route API | P07 | REST API key | Kakao app not created yet |
+| Kakao Maps SDK for Android | P06 | Native app key and key hash | Key issued; package name and key hash not registered |
+| Kakao Maps JavaScript SDK | P12 | JavaScript key and domain | Key issued; `http://localhost:3100` registered |
+| Kakao walking route API | P07 | REST API key | Key issued; not called yet |
 | Google Sign-In | P04, P06, P12 | OAuth clients | Clients exist; see §8 |
 
 ## 2. Scraped pages in general
@@ -136,22 +136,40 @@ The operator's service. The university's notices reach it through `서울대.inf
   - Apps turned on before that date keep their quota [K3].
 - The app gets a REST API key, a JavaScript key, a native app key and an admin key when it is created, under [앱] > [플랫폼 키] [K1].
 - Kakao Map is turned on under [카카오맵] > [사용 설정] > [상태]. The app then shows a "카카오맵 무료 쿼터" badge when the free quota applies [K2].
-- Keys and secrecy:
-  - Only the REST API key is a secret, and it stays on the server.
-  - The native app key and the JavaScript key ship to users. The registered key hash and domains protect them.
-- Registration record. Fill it in as things are registered. On 2026-09-30 nothing was registered yet, and 김태현 was about to create the app.
+- Registration record. Update it whenever something is registered at Kakao.
 
 | Item | Value |
 |---|---|
-| Owner | |
-| Android package name | Not decided. The prototype used `kr.ac.campus.prototype`. |
-| Key hashes (which keystore) | |
-| JavaScript SDK domains | `http://localhost:3100` to register |
+| Owner | 김태현, since 2026-09-30 |
+| Free quota | Applies. The "카카오맵 무료 쿼터" badge is shown. |
+| Members | The team, invited on 2026-09-30 |
+| Keys | REST API, JavaScript and native app keys issued on 2026-09-30 |
+| Android package name | Not decided. Proposed: `com.bonnieandclaude.snunow`. The prototype used `kr.ac.campus.prototype`. |
+| Key hashes (which keystore) | None yet. They need the package name. |
+| JavaScript SDK domains | `http://localhost:3100`, registered on 2026-09-30 |
 | Allowed IP addresses for the REST API key | None |
+
+- The package name is permanent once the app is on the Play Store. Kakao's key hashes and Google's Android client are both tied to it. `kr.ac.snu.*` is the university's namespace; its official app is `kr.ac.snu.mobile`.
+
+#### 7.1.1 How keys reach the code
+
+A person fills in every key value. When the work in front of an agent needs a key:
+
+1. The agent adds the variable to the project's `.env.example`, with an empty value and a one-line comment saying what it is and where it comes from.
+2. The agent names the variable and the `.env` file, asks the person to fill in the value, and waits.
+3. The agent continues once the person says the value is in place, and refers to the key by its variable name only.
+
+| Key | Variable | File | Secret |
+|---|---|---|---|
+| REST API key | `KAKAO_REST_API_KEY` | `main-server/.env` | Yes. It stays on the server. |
+| JavaScript key | `NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY` | `admin/.env` | No. It ships to the browser; the registered domains protect it. |
+| Native app key | `KAKAO_NATIVE_APP_KEY` | `mobile/.env`, read by the app config at build time | No. It ships in the app; the registered key hash protects it. |
+
+The root `.gitignore` keeps every `.env*` file out of Git except `.env*.example`. The Owner shares the values with the team privately.
 
 ### 7.2 Maps SDK for Android (P06)
 
-- The native app key is registered with the package name and one key hash per signing key [K1].
+- The native app key is `KAKAO_NATIVE_APP_KEY` (§7.1.1). It is registered with the package name and one key hash per signing key [K1].
 - A key hash is the Base64 of the signing certificate's SHA-1 [K11].
   - From a keystore:
 
@@ -180,12 +198,13 @@ The operator's service. The university's notices reach it through `서울대.inf
 
 ### 7.3 Maps JavaScript SDK (P12)
 
-- Register the admin site under [플랫폼 키] > [JavaScript 키] > [JavaScript SDK 도메인], up to 10 entries [K1]. Registering `http` or `https` allows both.
-- The docs' example is `http://localhost:8080` [K6]. My judgement: register the exact origin with its port, `http://localhost:3100`.
+- The JavaScript key is `NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY` (§7.1.1).
+- The admin site is registered under [플랫폼 키] > [JavaScript 키] > [JavaScript SDK 도메인], up to 10 entries [K1]. Registering `http` or `https` allows both.
+- The docs' example is `http://localhost:8080` [K6]. My judgement: register the exact origin with its port. `http://localhost:3100` is registered.
 
 ### 7.4 Walking route API (P07)
 
-- `GET https://dapi.kakao.com/v2/routing/walk` with the header `Authorization: KakaoAK {REST_API_KEY}` [K7].
+- `GET https://dapi.kakao.com/v2/routing/walk` with the header `Authorization: KakaoAK {REST_API_KEY}` [K7]. The key is `KAKAO_REST_API_KEY` (§7.1.1).
 - Required parameters: `start_x`, `start_y`, `end_x`, `end_y`. `x` is the longitude and `y` the latitude, in WGS84 by default.
 - Optional parameters:
   - `via_x` and `via_y`: up to 5 waypoints, comma-separated.
@@ -194,7 +213,7 @@ The operator's service. The university's notices reach it through `서울대.inf
 - `status` is one of `OK`, `SAME_POINT`, `START_LINK_NOT_FOUND`, `END_LINK_NOT_FOUND`, `TOO_MANY_SEARCH_LINK`, `TOO_FAR_AWAY` and `ROUTE_RESULT_NOT_FOUND`. `route` is present only with `OK`. My judgement: the other statuses arrive with HTTP 200.
 - No review, business registration or extra application is needed once Kakao Map is on [K3].
 - The REST API key can be limited to up to 10 IP addresses. A call from any other address gets `-401` `ip mismatched` [K1].
-- Not called yet, for want of a key. A first check once the key exists, from the main gate to the central library (approximate coordinates):
+- Not called yet. A first check, from the main gate to the central library (approximate coordinates):
 
   ```sh
   curl -G "https://dapi.kakao.com/v2/routing/walk" -H "Authorization: KakaoAK $KAKAO_REST_API_KEY" --data-urlencode "start_x=126.9486" --data-urlencode "start_y=37.4664" --data-urlencode "end_x=126.9524" --data-urlencode "end_y=37.4592"
@@ -251,7 +270,7 @@ The operator's service. The university's notices reach it through `서울대.inf
 ## 10. Unverified
 
 - The shuttle: whether regular requests are permitted, and whether coordinates exist. 정보화본부 has not replied yet.
-- Kakao: the app, the keys and the Android package name. The walking route has not been called.
+- Kakao: the Android package name and the key hashes. The walking route has not been called.
 - Google: the project's owner, and an Android client for the Iteration 1 package name.
 - `hd=snu.ac.kr` with the Iteration 1 app on a phone.
 
