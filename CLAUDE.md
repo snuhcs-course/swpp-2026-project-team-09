@@ -12,7 +12,7 @@ Use the five default triage roles as `Status:` values in local issue files. See 
 
 ### Domain docs
 
-Use a single-context layout: root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
+Use a single-context layout: root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.md`.
 
 ## Collaboration
 
