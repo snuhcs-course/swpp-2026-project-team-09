@@ -4,8 +4,8 @@ import request from 'supertest';
 import { inject } from 'vitest';
 import { z } from 'zod';
 import { googleSubject } from './google.js';
-import { getProfile, patchProfile } from './profile.js';
-import { getMe, NEW_PROFILE, signIn, signInAsAdministrator } from './sign-in.js';
+import { getProfile, ONBOARDED_PROFILE, patchProfile, signInOnboarded } from './profile.js';
+import { getMe, signIn, signInAsAdministrator } from './sign-in.js';
 import { startApp } from './start-app.js';
 
 const settings = inject('settings');
@@ -20,8 +20,8 @@ afterAll(async () => {
 });
 
 describe('Reading the profile', () => {
-  it('shows the name and department given at sign-up and nothing else yet', async () => {
-    const { accessToken } = await signIn(app, {}, { name: '홍길동', department: '컴퓨터공학부' });
+  it('shows what onboarding saved and nothing else yet', async () => {
+    const { accessToken } = await signInOnboarded(app, { name: '홍길동', department: '컴퓨터공학부' });
 
     const response = await getProfile(app, accessToken);
 
@@ -43,21 +43,26 @@ describe('Editing the profile', () => {
   });
 
   it('changes only the fields sent', async () => {
-    const { accessToken } = await signIn(app);
+    const { accessToken } = await signInOnboarded(app);
     await patchProfile(app, accessToken, { department: '경영학과', admissionYear: 2023, hashtags: ['러닝'] });
 
     const response = await patchProfile(app, accessToken, { admissionYear: 2022 });
 
-    expect(response.body).toEqual({ ...NEW_PROFILE, department: '경영학과', admissionYear: 2022, hashtags: ['러닝'] });
+    expect(response.body).toEqual({
+      ...ONBOARDED_PROFILE,
+      department: '경영학과',
+      admissionYear: 2022,
+      hashtags: ['러닝'],
+    });
   });
 
   it('empties the admission year with null and the hashtags with an empty list', async () => {
-    const { accessToken } = await signIn(app);
+    const { accessToken } = await signInOnboarded(app);
     await patchProfile(app, accessToken, { admissionYear: 2023, hashtags: ['러닝'] });
 
     const response = await patchProfile(app, accessToken, { admissionYear: null, hashtags: [] });
 
-    expect(response.body).toEqual({ ...NEW_PROFILE, admissionYear: null, hashtags: [] });
+    expect(response.body).toEqual({ ...ONBOARDED_PROFILE, admissionYear: null, hashtags: [] });
   });
 
   it('saves text without the spaces around it', async () => {
@@ -88,7 +93,7 @@ describe('A later sign-in', () => {
 describe("Another User's profile", () => {
   it('stays as it was when a User edits their own', async () => {
     const first = await signIn(app);
-    const second = await signIn(app, {}, { name: '김철수', department: '경영학과' });
+    const second = await signInOnboarded(app, { name: '김철수', department: '경영학과' });
 
     await patchProfile(app, first.accessToken, { name: '길동', department: '경제학부', hashtags: ['러닝'] });
 
@@ -101,7 +106,7 @@ describe("Another User's profile", () => {
   });
 
   it('cannot be reached by its id', async () => {
-    const other = await signIn(app);
+    const other = await signInOnboarded(app);
     const { id } = z.object({ id: z.string() }).parse((await getMe(app, other.accessToken)).body);
     const { accessToken } = await signIn(app);
     const server = app.getHttpServer();
@@ -113,7 +118,7 @@ describe("Another User's profile", () => {
       .send({ name: '김철수' });
 
     expect([read.status, edit.status]).toEqual([404, 404]);
-    expect((await getProfile(app, other.accessToken)).body).toMatchObject(NEW_PROFILE);
+    expect((await getProfile(app, other.accessToken)).body).toMatchObject(ONBOARDED_PROFILE);
   });
 });
 

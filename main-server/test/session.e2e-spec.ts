@@ -17,6 +17,7 @@ import {
   refresh,
   sessionOf,
   signIn,
+  signInResultSchema,
   tokensSchema,
   useLongAgo,
 } from './sign-in.js';
@@ -114,7 +115,7 @@ describe('A sign-in during a refresh on the other phone', () => {
     const renewed = tokensSchema.parse(refreshed.body);
     expect((await postRefreshToken(app, renewed.refreshToken)).status).toBe(401);
     expect((await getMe(app, renewed.accessToken)).body).toMatchObject(replaced);
-    const secondPhone = tokensSchema.parse(signedIn.body);
+    const secondPhone = signInResultSchema.parse(signedIn.body);
     expect((await getMe(app, secondPhone.accessToken)).status).toBe(200);
     expect((await postRefreshToken(app, secondPhone.refreshToken)).status).toBe(200);
   });
@@ -134,8 +135,8 @@ describe('Sign-ins on two phones at the same moment', () => {
 
     expect(first.status).toBe(200);
     expect(second.status).toBe(200);
-    expect((await getMe(app, tokensSchema.parse(first.body).accessToken)).body).toMatchObject(replaced);
-    expect((await getMe(app, tokensSchema.parse(second.body).accessToken)).status).toBe(200);
+    expect((await getMe(app, signInResultSchema.parse(first.body).accessToken)).body).toMatchObject(replaced);
+    expect((await getMe(app, signInResultSchema.parse(second.body).accessToken)).status).toBe(200);
   });
 });
 

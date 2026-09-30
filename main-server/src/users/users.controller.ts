@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Patch } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
+import { type CompleteOnboardingDto, completeOnboardingSchema } from './dto/complete-onboarding.dto.js';
 import { ProfileDto, toProfileDto } from './dto/profile.dto.js';
 import { type UpdateProfileDto, updateProfileSchema } from './dto/update-profile.dto.js';
 import { UserDto } from './dto/user.dto.js';
@@ -18,6 +19,16 @@ export class UsersController {
   @Get('me/profile')
   async profile(@CurrentUser() user: SignedInUser): Promise<ProfileDto> {
     return toProfileDto(await this.users.findById(user.id));
+  }
+
+  // The app sends it again when the answer was lost. A repeat saves the profile again, so it takes no Idempotency-Key.
+  @Post('me/onboarding')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  completeOnboarding(
+    @CurrentUser() user: SignedInUser,
+    @Body({ schema: completeOnboardingSchema }) body: CompleteOnboardingDto,
+  ): Promise<void> {
+    return this.users.completeOnboarding(user.id, body);
   }
 
   @Patch('me/profile')

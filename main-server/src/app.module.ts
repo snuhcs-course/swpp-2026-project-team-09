@@ -12,6 +12,7 @@ import { RedisIdempotencyStore } from './common/redis-idempotency.store.js';
 import { RedisModule } from './common/redis.module.js';
 import { settingsSchema } from './common/settings.js';
 import { HealthModule } from './health/health.module.js';
+import { LobbyModule } from './lobby/lobby.module.js';
 import { UsersModule } from './users/users.module.js';
 
 @Module({
@@ -38,6 +39,7 @@ import { UsersModule } from './users/users.module.js';
     AuthModule,
     UsersModule,
     AdministratorsModule,
+    LobbyModule,
   ],
   providers: [
     // Validates a handler parameter against the schema given in its decorator: @Body({ schema: signInSchema }).

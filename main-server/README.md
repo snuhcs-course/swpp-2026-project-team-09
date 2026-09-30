@@ -61,13 +61,10 @@ Once the server is running, a store that goes down makes readiness answer 503 in
 
 The app signs in with Google and sends the ID token it gets to the main server:
 
-- `POST /auth/google` with `{ "idToken": "..." }` answers `200 { "accessToken": "...", "refreshToken": "..." }` for a
-  Google account that has a User.
-- An account without a User gets 422 with `"code": "PROFILE_REQUIRED"` and stores nothing. The body's `suggestion`
-  holds `{ "name": ..., "department": ... }` read from the Google account's name, which for an SNU account reads
-  `홍길동 / 학생 / 컴퓨터공학부`; each is `null` when it cannot be read. The app's onboarding starts from it and then
-  sends `{ "idToken": "...", "profile": { "name": "...", "department": "..." } }`, which creates the User and answers
-  200 as above. `profile` is checked like the rest of the body, and on an account that has a User it changes nothing.
+- `POST /auth/google` with `{ "idToken": "..." }` answers
+  `200 { "accessToken": "...", "refreshToken": "...", "onboarding": { ... } }`. The first sign-in of a Google account
+  creates its User, with an empty name and department. `onboarding` tells the app where to go next (see
+  [Onboarding and the lobby](#onboarding-and-the-lobby)).
 - Only SNU accounts get in: the token's hosted domain claim must be `snu.ac.kr` and its email address verified. Another
   account gets 403. An invalid or expired ID token, or one issued to another client than the app's
   (`GOOGLE_APP_CLIENT_ID`), the admin site's included, gets 401.
@@ -96,17 +93,37 @@ stops when they are the same. They are not secrets. Access tokens are signed wit
 key; the socket server is the first, in ticket 11. It accepts a User's access token only, disconnects the connections
 of a session that ends, and closes each connection when its access token expires.
 
+## Onboarding and the lobby
+
+A new User's name and department start empty. The app's onboarding screen asks for them, and the app then enters the
+lobby, which gives it what it needs to run:
+
+1. The sign-in's `onboarding` is `{ "completed": true }` once the User has finished onboarding. Until then it is
+   `{ "completed": false, "suggestion": { "name": ..., "department": ... } }`, read from the Google account's name, which
+   for an SNU account reads `홍길동 / 학생 / 컴퓨터공학부`. A part that cannot be read, or that the
+   [profile's limits](#profile) refuse, is `null`. The onboarding screen starts from the suggestion.
+2. `POST /users/me/onboarding` with `{ "name": "...", "department": "...", "admissionYear": ..., "hashtags": [...] }`
+   saves the profile and completes onboarding, and answers 204. The name and the department are required, and the
+   profile's limits apply. The app sends it again when the answer was lost: a repeat saves the profile again.
+3. `POST /lobby`, with no body, answers `200 { "profile": { ... } }`, the profile as `GET /users/me/profile` gives it.
+   Later features add what the app needs when it starts. A User who has not finished onboarding gets
+   `403 { "code": "ONBOARDING_REQUIRED", "onboarding": { ... } }`, the sign-in's `onboarding` with a suggestion from the
+   Google name of the last sign-in, so the app shows onboarding again after it restarts halfway.
+
+A sign-in on another phone during onboarding ends the first phone's session as any sign-in does: its next request, the
+onboarding's included, gets 401 with `"code": "SESSION_REPLACED"`, and the other phone goes through onboarding.
+
 ## Profile
 
 A User reads and edits their own profile. The routes name no User, so they never reach another User's profile.
 
-- `GET /users/me/profile` answers `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...] }`. A new
-  User has the name and department given at [sign-in](#sign-in), no admission year (`null`) and no hashtags (`[]`).
+- `GET /users/me/profile` answers `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...] }`. Before
+  onboarding the name and the department are `""`, the admission year `null` and the hashtags `[]`.
 - `PATCH /users/me/profile` with some of these fields changes only those and answers with the whole profile. `null`
   empties `admissionYear`, and `[]` empties `hashtags`. The name and the department cannot be emptied.
 - A value outside these limits gets 400 with a message that starts with the field, and nothing changes. Spaces around
-  text are dropped first. The limits are set in `src/users/dto/update-profile.dto.ts`, and the sign-in's `profile`
-  follows the same ones.
+  text are dropped first. The limits are set in `src/users/dto/update-profile.dto.ts`, and onboarding follows the same
+  ones.
   - `name`: 1 to 30 characters.
   - `department`: 1 to 50 characters. A double major is written out, such as `컴퓨터공학부, 경제학부`.
   - `admissionYear`: a whole number from 1946, when SNU was founded, to this year in Korea.
@@ -203,7 +220,8 @@ src/
 ├── generated/                       Prisma Client, generated by `pnpm install` (not committed)
 ├── health/                          a feature: the liveness and readiness checks
 ├── auth/                            a feature: app and admin site sign-in, refresh, sign-out, the access token checks
-├── users/                           a feature: the signed-in User and their profile
+├── users/                           a feature: the signed-in User, their profile and onboarding
+├── lobby/                           a feature: what the app needs when it starts
 └── administrators/                  a feature: the Administrators, who register and remove each other
 scripts/                             commands run by hand, such as `pnpm keys:generate`
 test/                                tests, run against PostgreSQL and Redis in containers
@@ -282,7 +300,8 @@ The steps add a feature named `party`. Use a short lowercase name, with dashes b
    `get('NAME', { infer: true })`.
 8. Write `test/party.e2e-spec.ts`. Start the server with `startApp` from `test/start-app.ts` and call its routes
    with `supertest`, as `test/health.e2e-spec.ts` does. `signIn` from `test/sign-in.ts` signs in a new User and
-   returns its tokens, and `signInAsAdministrator` signs in an Administrator. oxlint's `max-lines` (300) and
+   returns its tokens, `signInOnboarded` from `test/profile.ts` also completes onboarding, and
+   `signInAsAdministrator` signs in an Administrator. oxlint's `max-lines` (300) and
    `max-lines-per-function` (50) apply to tests too: split a long file by route, as `test/refresh.e2e-spec.ts` and
    `test/sign-out.e2e-spec.ts` split the auth tests, and a long `describe` into several.
 9. Run `pnpm format`, then the four checks.

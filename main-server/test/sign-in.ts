@@ -16,33 +16,28 @@ export const tokensSchema = z.strictObject({
 
 export type Tokens = z.infer<typeof tokensSchema>;
 
-// The profile the app's onboarding sends with a new account's first sign-in.
-export const NEW_PROFILE = { name: '홍길동', department: '컴퓨터공학부' };
+// The answer to a sign-in, exactly.
+export const signInResultSchema = tokensSchema.extend({
+  onboarding: z.strictObject({
+    completed: z.boolean(),
+    suggestion: z.strictObject({ name: z.string().nullable(), department: z.string().nullable() }).optional(),
+  }),
+});
 
-// `profile: null` signs in as the app does before onboarding.
-export function postSignIn(
-  app: INestApplication<Server>,
-  claims: Partial<TokenPayload> = {},
-  profile: object | null = NEW_PROFILE,
-): request.Test {
-  const idToken = googleIdToken(claims);
+export function postSignIn(app: INestApplication<Server>, claims: Partial<TokenPayload> = {}): request.Test {
   return request(app.getHttpServer())
     .post('/auth/google')
-    .send(profile === null ? { idToken } : { idToken, profile });
+    .send({ idToken: googleIdToken(claims) });
 }
 
-// Signs in as the app does, with a Google ID token for a new SNU account unless claims change it. A new account signs
-// up with the profile given.
-export async function signIn(
-  app: INestApplication<Server>,
-  claims: Partial<TokenPayload> = {},
-  profile: typeof NEW_PROFILE = NEW_PROFILE,
-): Promise<Tokens> {
-  const response = await postSignIn(app, claims, profile);
+// Signs in as the app does, with a Google ID token for a new SNU account unless claims change it.
+export async function signIn(app: INestApplication<Server>, claims: Partial<TokenPayload> = {}): Promise<Tokens> {
+  const response = await postSignIn(app, claims);
   if (response.status !== 200) {
     throw new Error(`Sign-in answered ${response.status}: ${JSON.stringify(response.body)}`);
   }
-  return tokensSchema.parse(response.body);
+  const { accessToken, refreshToken } = signInResultSchema.parse(response.body);
+  return { accessToken, refreshToken };
 }
 
 export function postRefreshToken(app: INestApplication<Server>, refreshToken: string): request.Test {
@@ -71,9 +66,13 @@ export async function useLongAgo(prisma: PrismaClient, refreshToken: string): Pr
   });
 }
 
+// Sends the access token as the app does, or no token at all.
+export function withAccessToken(call: request.Test, accessToken: string | undefined): request.Test {
+  return accessToken === undefined ? call : call.auth(accessToken, { type: 'bearer' });
+}
+
 export function postSignOut(app: INestApplication<Server>, accessToken?: string): request.Test {
-  const post = request(app.getHttpServer()).post('/auth/sign-out');
-  return accessToken === undefined ? post : post.auth(accessToken, { type: 'bearer' });
+  return withAccessToken(request(app.getHttpServer()).post('/auth/sign-out'), accessToken);
 }
 
 export function sessionOf(accessToken: string): string {
@@ -82,8 +81,7 @@ export function sessionOf(accessToken: string): string {
 
 // GET /users/me stands for every route that needs an access token.
 export function getMe(app: INestApplication<Server>, accessToken?: string): request.Test {
-  const get = request(app.getHttpServer()).get('/users/me');
-  return accessToken === undefined ? get : get.auth(accessToken, { type: 'bearer' });
+  return withAccessToken(request(app.getHttpServer()).get('/users/me'), accessToken);
 }
 
 export const administratorTokensSchema = z.strictObject({

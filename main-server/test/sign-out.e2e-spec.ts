@@ -5,7 +5,16 @@ import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { googleSubject } from './google.js';
 import { overlap } from './overlap.js';
-import { getMe, postRefreshToken, postSignIn, postSignOut, refresh, signIn, tokensSchema } from './sign-in.js';
+import {
+  getMe,
+  postRefreshToken,
+  postSignIn,
+  postSignOut,
+  refresh,
+  signIn,
+  signInResultSchema,
+  tokensSchema,
+} from './sign-in.js';
 import { startApp } from './start-app.js';
 
 const settings = inject('settings');
@@ -103,7 +112,7 @@ describe('A sign-out on the replaced phone during a sign-in on the new phone', (
 
     expect(signedIn.status).toBe(200);
     expect(signedOut.status).toBe(204);
-    const newPhone = tokensSchema.parse(signedIn.body);
+    const newPhone = signInResultSchema.parse(signedIn.body);
     expect((await getMe(app, newPhone.accessToken)).status).toBe(200);
     expect((await postRefreshToken(app, newPhone.refreshToken)).status).toBe(200);
   });

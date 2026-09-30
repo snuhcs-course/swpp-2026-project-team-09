@@ -19,11 +19,14 @@ model User {
   // Google's subject identifier ("sub"), which stays the same while the email address may change.
   googleSubject String    @unique @map("google_subject")
   email         String
-  // The profile. A User is created with a name and a department. The limits are in src/users/dto/.
-  name          String
-  department    String
+  // The profile. The name and the department stay empty until onboarding. The limits are in src/users/dto/.
+  name          String    @default("")
+  department    String    @default("")
   admissionYear Int?      @map("admission_year")
   hashtags      String[]  @default([])
+  // The Google account's name at the last sign-in, from which onboarding suggests a name and a department.
+  googleName    String    @default("") @map("google_name")
+  onboardedAt   DateTime? @map("onboarded_at")
   sessions      Session[]
 
   @@map("users")
