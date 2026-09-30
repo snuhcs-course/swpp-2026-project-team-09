@@ -21,8 +21,4 @@ export class UsersService {
   async lock(id: string, tx: Prisma.TransactionClient): Promise<void> {
     await tx.$queryRaw`SELECT 1 FROM users WHERE id = ${id}::uuid FOR NO KEY UPDATE`;
   }
-
-  async turnOffMasterSwitch(id: string, tx: Prisma.TransactionClient): Promise<void> {
-    await tx.user.update({ where: { id }, data: { masterSwitch: false } });
-  }
 }

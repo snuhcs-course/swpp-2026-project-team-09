@@ -90,11 +90,9 @@ describe('Sign-out during a refresh', () => {
 
 // The replaced phone passed the access token check just before the new phone's sign-in ended its session.
 describe('A sign-out on the replaced phone during a sign-in on the new phone', () => {
-  it("leaves the new phone's session and the Master Switch as they are", async () => {
+  it("leaves the new phone's session as it is", async () => {
     const sub = googleSubject();
     const replacedPhone = await signIn(app, { sub });
-    // Turning it on belongs to P06 and P08, so the test turns it on in the database.
-    await prisma.user.update({ where: { googleSubject: sub }, data: { masterSwitch: true } });
 
     const [signedIn, signedOut] = await overlap(
       prisma,
@@ -108,30 +106,5 @@ describe('A sign-out on the replaced phone during a sign-in on the new phone', (
     const newPhone = tokensSchema.parse(signedIn.body);
     expect((await getMe(app, newPhone.accessToken)).status).toBe(200);
     expect((await postRefreshToken(app, newPhone.refreshToken)).status).toBe(200);
-    const user = await prisma.user.findUniqueOrThrow({ where: { googleSubject: sub } });
-    expect(user.masterSwitch).toBe(true);
-  });
-});
-
-describe('Master Switch', () => {
-  it('is off when the User is created', async () => {
-    const sub = googleSubject();
-
-    await signIn(app, { sub });
-
-    const user = await prisma.user.findUniqueOrThrow({ where: { googleSubject: sub } });
-    expect(user.masterSwitch).toBe(false);
-  });
-
-  it('is turned off by sign-out', async () => {
-    const sub = googleSubject();
-    const { accessToken } = await signIn(app, { sub });
-    // Turning it on belongs to P06 and P08, so the test turns it on in the database.
-    await prisma.user.update({ where: { googleSubject: sub }, data: { masterSwitch: true } });
-
-    expect((await postSignOut(app, accessToken)).status).toBe(204);
-
-    const user = await prisma.user.findUniqueOrThrow({ where: { googleSubject: sub } });
-    expect(user.masterSwitch).toBe(false);
   });
 });

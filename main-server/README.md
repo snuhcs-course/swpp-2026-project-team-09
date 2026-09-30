@@ -69,19 +69,19 @@ The app signs in with Google and sends the ID token it gets to the main server:
 - The access token is valid for 1 hour, and its audience is `snu-now-app`. It names the User (`sub`) and the session
   (`sid`). Send it as `Authorization: Bearer <accessToken>`. `GET /users/me` answers the signed-in User. The refresh
   token is valid for 30 days, and only its hash is stored.
-- A User has one session: the app signed in on one phone. A sign-in ends the session before it, on whatever phone, and
-  leaves the Master Switch as it is. The ended session's refresh token gets 401, and its access tokens get 401 from
-  the next request on, with `"code": "SESSION_REPLACED"` in the body, so that the app can tell the User that a sign-in
-  on another phone signed them out.
+- A User has one session: the app signed in on one phone. A sign-in ends the session before it, on whatever phone. The
+  ended session's refresh token gets 401, and its access tokens get 401 from the next request on, with
+  `"code": "SESSION_REPLACED"` in the body, so that the app can tell the User that a sign-in on another phone signed
+  them out.
 - Once the access token has expired, `POST /auth/refresh` with `{ "refreshToken": "..." }` and no access token answers
   with new tokens of the same session, in the same form. The refresh token is used up: the answer holds a new one,
   valid for 30 days from the refresh. An unknown, expired or revoked refresh token gets 401.
 - A used refresh token that comes back within 60 seconds of its use gets new tokens of the same session, so a refresh
   whose answer was lost, or two refreshes sent at the same moment, keep the User signed in. Later the server takes it
   for a stolen copy: it ends the session, and the app has to sign in again.
-- `POST /auth/sign-out` with the access token answers 204. It ends the session, revokes its refresh tokens and turns the
-  User's Master Switch off. The session's access tokens then get the plain 401, a second sign-out included, so the app
-  takes a 401 to sign-out as done.
+- `POST /auth/sign-out` with the access token answers 204. It ends the session and revokes its refresh tokens. The
+  session's access tokens then get the plain 401, a second sign-out included, so the app takes a 401 to sign-out as
+  done.
 - Sessions are kept in the database, and every User's request reads its session, so an access token stops working as
   soon as its session ends. The main server then tells the socket server, which disconnects the session's connections.
 

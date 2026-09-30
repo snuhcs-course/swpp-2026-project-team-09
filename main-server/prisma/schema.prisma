@@ -19,9 +19,6 @@ model User {
   // Google's subject identifier ("sub"), which stays the same while the email address may change.
   googleSubject String    @unique @map("google_subject")
   email         String
-  // The User's single switch for all of their Location Sharing. Off until the User turns it on; signing out turns it
-  // off.
-  masterSwitch  Boolean   @default(false) @map("master_switch")
   sessions      Session[]
 
   @@map("users")

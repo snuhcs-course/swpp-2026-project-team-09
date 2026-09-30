@@ -95,18 +95,6 @@ describe('A sign-in on another phone', () => {
     expect((await getMe(app, secondPhone.accessToken)).status).toBe(200);
     expect((await postRefreshToken(app, secondPhone.refreshToken)).status).toBe(200);
   });
-
-  it('leaves the Master Switch as it is', async () => {
-    const sub = googleSubject();
-    await signIn(app, { sub });
-    // Turning it on belongs to P06 and P08, so the test turns it on in the database.
-    await prisma.user.update({ where: { googleSubject: sub }, data: { masterSwitch: true } });
-
-    await signIn(app, { sub });
-
-    const user = await prisma.user.findUniqueOrThrow({ where: { googleSubject: sub } });
-    expect(user.masterSwitch).toBe(true);
-  });
 });
 
 describe('A sign-in during a refresh on the other phone', () => {

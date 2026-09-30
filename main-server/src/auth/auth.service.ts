@@ -121,16 +121,10 @@ export class AuthService {
     return { accessToken: await this.signAccessToken(session.userId, sessionId), refreshToken: outcome.token };
   }
 
-  // Turns the Master Switch off so that the User's location is not shared after they leave.
   async signOut(user: SignedInUser): Promise<void> {
     const ended = await this.prisma.$transaction(async (tx) => {
       await this.users.lock(user.id, tx);
-      const sessionIds = await this.sessions.end(tx, { id: user.sessionId }, 'signed_out');
-      // Found ended already when a sign-in on another phone came first: that phone's Master Switch stays as it is.
-      if (sessionIds.length > 0) {
-        await this.users.turnOffMasterSwitch(user.id, tx);
-      }
-      return sessionIds;
+      return this.sessions.end(tx, { id: user.sessionId }, 'signed_out');
     });
     this.sessions.announceEnd(ended, 'signed_out');
   }

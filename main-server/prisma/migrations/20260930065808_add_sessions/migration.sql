@@ -12,9 +12,6 @@ ALTER TABLE "refresh_tokens" DROP COLUMN "user_id",
 ADD COLUMN     "revoked_at" TIMESTAMP(3),
 ADD COLUMN     "session_id" UUID NOT NULL;
 
--- AlterTable
-ALTER TABLE "users" ADD COLUMN     "master_switch" BOOLEAN NOT NULL DEFAULT false;
-
 -- CreateTable
 CREATE TABLE "sessions" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
