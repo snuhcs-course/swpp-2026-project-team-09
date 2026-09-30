@@ -121,9 +121,9 @@ Each change below was made alone on the final code. On the main server the auth,
 
 ### Agent usage (2026-09-30)
 
-- Agent time: about 4 hours 10 minutes, an estimate, counted as the gaps under 5 minutes between transcript entries; subagents ran inside it.
-  - The session that moved sessions into the database, added the 60 seconds and the socket expiry, left the Master Switch to P08, and ran the research on session storage and the review: about 2 hours 15 minutes, between 2026-09-29 23:07 and 2026-09-30 16:12. Its seven subagents did the research and the two reviews.
+- Agent time: about 4 hours 30 minutes, an estimate, counted as the gaps under 5 minutes between transcript entries; subagents ran inside it.
+  - The session that moved sessions into the database, added the 60 seconds and the socket expiry, left the Master Switch to P08, rewrote the pull request's description, and ran the research on session storage and the review: about 2 hours 35 minutes, between 2026-09-29 23:07 and 2026-09-30 16:45. Its seven subagents did the research and the two reviews.
   - The session in the worktree `admiring-dhawan-e58033`, after its count above: about 1 hour 54 minutes, for the one-session design with the record in Redis, the research on sockets and the hand-over.
 - Tokens, for both sessions and their subagents, counted when this section was written:
-  - Input: 295,929,589 in total, of which 289,249,390 were cache reads, 6,677,757 cache writes and 2,442 uncached.
-  - Output: 607,988. The subagents' transcripts record only a few output tokens for most of their steps, so their share, 108,326, is a lower bound.
+  - Input: 306,623,216 in total, of which 299,919,590 were cache reads, 6,701,148 cache writes and 2,478 uncached.
+  - Output: 635,489. The subagents' transcripts record only a few output tokens for most of their steps, so their share, 108,326, is a lower bound.
