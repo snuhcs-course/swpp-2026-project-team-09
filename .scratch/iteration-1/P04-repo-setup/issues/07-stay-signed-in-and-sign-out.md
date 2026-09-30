@@ -71,7 +71,7 @@ Sign-out is safe to repeat: a second call changes nothing and gets 401, because 
 - **Event**: once the transaction that ended sessions has committed, `SessionsService.announceEnd` emits `session-ended` with `{ sessionId, reason }` over NestJS messaging. The answer does not wait for it, and a failure is logged: the database already refuses the session.
 - **Socket**: each connection joins the room `session:<sid>`. On the event, `UsersController` receives it with `@EventPattern('session-ended')`, and the gateway sends `session-ended` to the room, `{ code: 'SESSION_REPLACED' }` after a sign-in and `{}` otherwise, then calls `disconnectSockets(true)`. The app gets `disconnect` with `io server disconnect`, and Socket.IO does not reconnect by itself. A timer closes each connection at its token's `exp`; the app then refreshes and connects again, which an ended session cannot do. The socket server makes no call to the main server and keeps no data.
 - **Redis down**: sign-in, the User's requests and sign-out work. The socket server is not told, and the session's connections close when their tokens expire.
-- **Migration**: `add_sessions` creates `sessions` and moves refresh tokens from `user_id` to `session_id` with `revoked_at`. It deletes the refresh tokens stored before, which belong to no session, so their Users sign in again.
+- **Refresh tokens**: each belongs to a session through `session_id`, and `revoked_at` marks it used.
 - **Stored position**: clearing the position of a phone whose session ended belongs to P08.
 
 Known limits:
