@@ -4,8 +4,8 @@ import request from 'supertest';
 import { inject } from 'vitest';
 import { z } from 'zod';
 import { googleSubject } from './google.js';
-import { getProfile, ONBOARDED_PROFILE, patchProfile, signInOnboarded } from './profile.js';
-import { getMe, signIn, signInAsAdministrator } from './sign-in.js';
+import { getProfile, patchProfile } from './profile.js';
+import { getMe, ONBOARDED_PROFILE, signIn, signInAsAdministrator } from './sign-in.js';
 import { startApp } from './start-app.js';
 
 const settings = inject('settings');
@@ -21,7 +21,7 @@ afterAll(async () => {
 
 describe('Reading the profile', () => {
   it('shows what onboarding saved and nothing else yet', async () => {
-    const { accessToken } = await signInOnboarded(app, { name: '홍길동', department: '컴퓨터공학부' });
+    const { accessToken } = await signIn(app, {}, { name: '홍길동', department: '컴퓨터공학부' });
 
     const response = await getProfile(app, accessToken);
 
@@ -43,7 +43,7 @@ describe('Editing the profile', () => {
   });
 
   it('changes only the fields sent', async () => {
-    const { accessToken } = await signInOnboarded(app);
+    const { accessToken } = await signIn(app);
     await patchProfile(app, accessToken, { department: '경영학과', admissionYear: 2023, hashtags: ['러닝'] });
 
     const response = await patchProfile(app, accessToken, { admissionYear: 2022 });
@@ -57,7 +57,7 @@ describe('Editing the profile', () => {
   });
 
   it('empties the admission year with null and the hashtags with an empty list', async () => {
-    const { accessToken } = await signInOnboarded(app);
+    const { accessToken } = await signIn(app);
     await patchProfile(app, accessToken, { admissionYear: 2023, hashtags: ['러닝'] });
 
     const response = await patchProfile(app, accessToken, { admissionYear: null, hashtags: [] });
@@ -93,7 +93,7 @@ describe('A later sign-in', () => {
 describe("Another User's profile", () => {
   it('stays as it was when a User edits their own', async () => {
     const first = await signIn(app);
-    const second = await signInOnboarded(app, { name: '김철수', department: '경영학과' });
+    const second = await signIn(app, {}, { name: '김철수', department: '경영학과' });
 
     await patchProfile(app, first.accessToken, { name: '길동', department: '경제학부', hashtags: ['러닝'] });
 
@@ -106,7 +106,7 @@ describe("Another User's profile", () => {
   });
 
   it('cannot be reached by its id', async () => {
-    const other = await signInOnboarded(app);
+    const other = await signIn(app);
     const { id } = z.object({ id: z.string() }).parse((await getMe(app, other.accessToken)).body);
     const { accessToken } = await signIn(app);
     const server = app.getHttpServer();

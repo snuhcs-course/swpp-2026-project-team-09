@@ -1,4 +1,4 @@
-import { ForbiddenException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service.js';
 import { LobbyDto } from './dto/lobby.dto.js';
 
@@ -6,18 +6,8 @@ import { LobbyDto } from './dto/lobby.dto.js';
 export class LobbyService {
   constructor(private readonly users: UsersService) {}
 
+  // The onboarding check in AccessTokenGuard lets only an onboarded User in.
   async enter(userId: string): Promise<LobbyDto> {
-    const user = await this.users.findById(userId);
-    const onboarding = this.users.onboardingOf(user);
-    if (!onboarding.completed) {
-      throw new ForbiddenException({
-        statusCode: HttpStatus.FORBIDDEN,
-        error: 'Forbidden',
-        code: 'ONBOARDING_REQUIRED',
-        message: 'Complete onboarding first.',
-        onboarding,
-      });
-    }
-    return { profile: this.users.profileOf(user) };
+    return { profile: this.users.profileOf(await this.users.findById(userId)) };
   }
 }

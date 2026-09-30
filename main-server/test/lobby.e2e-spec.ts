@@ -3,8 +3,8 @@ import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { googleSubject } from './google.js';
-import { patchProfile, postOnboarding } from './profile.js';
-import { signIn, withAccessToken } from './sign-in.js';
+import { patchProfile } from './profile.js';
+import { signIn, signInBeforeOnboarding, withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
 
 const settings = inject('settings');
@@ -24,8 +24,7 @@ function postLobby(accessToken?: string): request.Test {
 
 describe('The lobby', () => {
   it('answers an onboarded User with their latest profile', async () => {
-    const { accessToken } = await signIn(app);
-    await postOnboarding(app, accessToken, { name: '김철수', department: '경영학과' });
+    const { accessToken } = await signIn(app, {}, { name: '김철수', department: '경영학과' });
     await patchProfile(app, accessToken, { hashtags: ['AI'] });
 
     const response = await postLobby(accessToken);
@@ -37,7 +36,7 @@ describe('The lobby', () => {
   });
 
   it('sends a User who has not finished onboarding back to it, with the suggestion', async () => {
-    const { accessToken } = await signIn(app, { name: '홍길동 / 학생 / 컴퓨터공학부' });
+    const { accessToken } = await signInBeforeOnboarding(app, { name: '홍길동 / 학생 / 컴퓨터공학부' });
 
     const response = await postLobby(accessToken);
 
@@ -53,8 +52,8 @@ describe('The lobby', () => {
 
   it("suggests from the Google name of the User's last sign-in", async () => {
     const sub = googleSubject();
-    await signIn(app, { sub, name: '홍길동 / 학생 / 컴퓨터공학부' });
-    const { accessToken } = await signIn(app, { sub, name: '홍길동 / 학생 / 경제학부' });
+    await signInBeforeOnboarding(app, { sub, name: '홍길동 / 학생 / 컴퓨터공학부' });
+    const { accessToken } = await signInBeforeOnboarding(app, { sub, name: '홍길동 / 학생 / 경제학부' });
 
     const response = await postLobby(accessToken);
 

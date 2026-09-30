@@ -4,8 +4,8 @@ import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { googleSubject } from './google.js';
-import { getProfile, postOnboarding } from './profile.js';
-import { postSignIn, signIn, signInResultSchema } from './sign-in.js';
+import { getProfile } from './profile.js';
+import { postOnboarding, postSignIn, signInBeforeOnboarding, signInResultSchema } from './sign-in.js';
 import { startApp } from './start-app.js';
 
 const settings = inject('settings');
@@ -48,13 +48,16 @@ describe("A new User's sign-in", () => {
   });
 
   it('creates the User with an empty name and department', async () => {
-    const { accessToken } = await signIn(app, { name: '홍길동 / 학생 / 컴퓨터공학부' });
+    const sub = googleSubject();
 
-    expect((await getProfile(app, accessToken)).body).toEqual({
+    await signInBeforeOnboarding(app, { sub, name: '홍길동 / 학생 / 컴퓨터공학부' });
+
+    expect(await prisma.user.findUniqueOrThrow({ where: { googleSubject: sub } })).toMatchObject({
       name: '',
       department: '',
       admissionYear: null,
       hashtags: [],
+      onboardedAt: null,
     });
   });
 });
@@ -62,7 +65,7 @@ describe("A new User's sign-in", () => {
 describe('Completing onboarding', () => {
   it('saves the profile sent, and a later sign-in says that onboarding is complete', async () => {
     const sub = googleSubject();
-    const { accessToken } = await signIn(app, { sub, name: '홍길동 / 학생 / 컴퓨터공학부' });
+    const { accessToken } = await signInBeforeOnboarding(app, { sub, name: '홍길동 / 학생 / 컴퓨터공학부' });
     const profile = { name: '김철수', department: '경영학과', admissionYear: 2024, hashtags: ['AI'] };
 
     const response = await postOnboarding(app, accessToken, profile);
@@ -73,7 +76,7 @@ describe('Completing onboarding', () => {
   });
 
   it('needs only the name and the department', async () => {
-    const { accessToken } = await signIn(app);
+    const { accessToken } = await signInBeforeOnboarding(app);
 
     const response = await postOnboarding(app, accessToken, { name: '김철수', department: '경영학과' });
 
@@ -88,7 +91,7 @@ describe('Completing onboarding', () => {
 
   it('answers a repeat as the first time, saves it again and keeps the time of the first completion', async () => {
     const sub = googleSubject();
-    const { accessToken } = await signIn(app, { sub });
+    const { accessToken } = await signInBeforeOnboarding(app, { sub });
     await postOnboarding(app, accessToken, { name: '김철수', department: '경영학과' });
     const completedAt = await onboardedAt(sub);
 
@@ -110,18 +113,18 @@ describe('Onboarding with an invalid profile', () => {
     'refuses %s with 400, names the field, saves nothing and leaves onboarding incomplete',
     async (_case, body, field) => {
       const sub = googleSubject();
-      const { accessToken } = await signIn(app, { sub });
+      const { accessToken } = await signInBeforeOnboarding(app, { sub });
 
       const response = await postOnboarding(app, accessToken, body);
 
       expect(response.status).toBe(400);
       expect(JSON.stringify(response.body)).toContain(`"${field}:`);
-      expect((await getProfile(app, accessToken)).body).toMatchObject({
+      expect(await prisma.user.findUniqueOrThrow({ where: { googleSubject: sub } })).toMatchObject({
         name: '',
         department: '',
         admissionYear: null,
+        onboardedAt: null,
       });
-      expect(await onboardedAt(sub)).toBeNull();
     },
   );
 });
@@ -140,8 +143,8 @@ describe('Two first sign-ins of one Google account at the same moment', () => {
 describe('A sign-in on another phone during onboarding', () => {
   it("ends the first phone's onboarding with the code of a replaced session, and the other phone completes it", async () => {
     const sub = googleSubject();
-    const firstPhone = await signIn(app, { sub });
-    const otherPhone = await signIn(app, { sub });
+    const firstPhone = await signInBeforeOnboarding(app, { sub });
+    const otherPhone = await signInBeforeOnboarding(app, { sub });
 
     const first = await postOnboarding(app, firstPhone.accessToken, { name: '김철수', department: '경영학과' });
     const other = await postOnboarding(app, otherPhone.accessToken, { name: '홍길동', department: '컴퓨터공학부' });

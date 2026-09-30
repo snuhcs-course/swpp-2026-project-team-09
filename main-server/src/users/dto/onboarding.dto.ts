@@ -1,3 +1,8 @@
+import { User } from '../../generated/prisma/client.js';
+
+// What the onboarding state is worked out from.
+export type OnboardingSource = Pick<User, 'onboardedAt' | 'googleName'>;
+
 export interface ProfileSuggestionDto {
   name: string | null;
   department: string | null;

@@ -1,19 +1,31 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { Prisma, User } from '../generated/prisma/client.js';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto.js';
-import { OnboardingDto } from './dto/onboarding.dto.js';
+import { OnboardingDto, OnboardingSource } from './dto/onboarding.dto.js';
 import { ProfileDto, toProfileDto } from './dto/profile.dto.js';
 import { departmentSchema, nameSchema, UpdateProfileDto } from './dto/update-profile.dto.js';
 
+// An SNU account's Google name reads "홍길동 / 학생 / 컴퓨터공학부".
+function googleNameParts(googleName: string): string[] {
+  return googleName === '' ? [] : googleName.split('/');
+}
+
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   // A User is identified by the Google subject identifier. The email address and the Google name follow the ones Google
   // sends.
   findOrCreate(account: { googleSubject: string; email: string; googleName: string }): Promise<User> {
     const { googleSubject, email, googleName } = account;
+    // The form is confirmed on an undergraduate's account only, so the log shows the accounts that differ.
+    const parts = googleNameParts(googleName).length;
+    if (parts !== 3) {
+      this.logger.warn(`The Google name of ${email} has ${parts} parts separated by "/", not 3.`);
+    }
     return this.prisma.user.upsert({
       where: { googleSubject },
       create: { googleSubject, email, googleName },
@@ -21,12 +33,12 @@ export class UsersService {
     });
   }
 
-  // An SNU account's Google name reads "홍길동 / 학생 / 컴퓨터공학부". A part the profile would refuse is left out.
-  onboardingOf({ onboardedAt, googleName }: User): OnboardingDto {
+  // A part of the Google name that the profile would refuse is left out of the suggestion.
+  onboardingOf({ onboardedAt, googleName }: OnboardingSource): OnboardingDto {
     if (onboardedAt !== null) {
       return { completed: true };
     }
-    const [name, , department] = googleName.split('/');
+    const [name, , department] = googleNameParts(googleName);
     return {
       completed: false,
       suggestion: {

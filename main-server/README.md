@@ -69,7 +69,7 @@ The app signs in with Google and sends the ID token it gets to the main server:
   account gets 403. An invalid or expired ID token, or one issued to another client than the app's
   (`GOOGLE_APP_CLIENT_ID`), the admin site's included, gets 401.
 - The access token is valid for 1 hour, and its audience is `snu-now-app`. It names the User (`sub`) and the session
-  (`sid`). Send it as `Authorization: Bearer <accessToken>`. `GET /users/me` answers the signed-in User. The refresh
+  (`sid`). Send it as `Authorization: Bearer <accessToken>`. `GET /users/me` answers the signed-in User once they have finished onboarding. The refresh
   token is valid for 30 days, and only its hash is stored.
 - A User has one session: the app signed in on one phone. A sign-in ends the session before it, on whatever phone. The
   ended session's refresh token gets 401, and its access tokens get 401 from the next request on, with
@@ -95,30 +95,37 @@ of a session that ends, and closes each connection when its access token expires
 
 ## Onboarding and the lobby
 
-A new User's name and department start empty. The app's onboarding screen asks for them, and the app then enters the
-lobby, which gives it what it needs to run:
+A new User's name and department start empty, and the app's onboarding screen asks for them. The app enters the
+lobby, which gives it what it needs to run, after a sign-in or a start with stored tokens, and right after onboarding.
 
 1. The sign-in's `onboarding` is `{ "completed": true }` once the User has finished onboarding. Until then it is
    `{ "completed": false, "suggestion": { "name": ..., "department": ... } }`, read from the Google account's name, which
    for an SNU account reads `홍길동 / 학생 / 컴퓨터공학부`. A part that cannot be read, or that the
    [profile's limits](#profile) refuse, is `null`. The onboarding screen starts from the suggestion.
-2. `POST /users/me/onboarding` with `{ "name": "...", "department": "...", "admissionYear": ..., "hashtags": [...] }`
+2. Until then, every User route but two answers
+   `403 { "code": "ONBOARDING_REQUIRED", "message": "Complete onboarding first.", "onboarding": { ... } }`, with the
+   sign-in's `onboarding` read from the Google name of the last sign-in. So an app that restarts halfway gets onboarding
+   back from its first request, the lobby's. `AccessTokenGuard` checks it on every request, in the query that reads the
+   session. The two routes open before onboarding are marked `@AllowBeforeOnboarding()`: `POST /users/me/onboarding`
+   and `POST /auth/sign-out`.
+3. `POST /users/me/onboarding` with `{ "name": "...", "department": "...", "admissionYear": ..., "hashtags": [...] }`
    saves the profile and completes onboarding, and answers 204. The name and the department are required, and the
    profile's limits apply. The app sends it again when the answer was lost: a repeat saves the profile again.
-3. `POST /lobby`, with no body, answers `200 { "profile": { ... } }`, the profile as `GET /users/me/profile` gives it.
-   Later features add what the app needs when it starts. A User who has not finished onboarding gets
-   `403 { "code": "ONBOARDING_REQUIRED", "onboarding": { ... } }`, the sign-in's `onboarding` with a suggestion from the
-   Google name of the last sign-in, so the app shows onboarding again after it restarts halfway.
+4. `POST /lobby`, with no body, answers `200 { "profile": { ... } }`, the profile as `GET /users/me/profile` gives it.
+   Later features add what the app needs when it starts.
 
 A sign-in on another phone during onboarding ends the first phone's session as any sign-in does: its next request, the
 onboarding's included, gets 401 with `"code": "SESSION_REPLACED"`, and the other phone goes through onboarding.
+
+A Google name that is not three parts separated by `/` is logged as a warning with the account's email address. The
+form is confirmed on an undergraduate's account only.
 
 ## Profile
 
 A User reads and edits their own profile. The routes name no User, so they never reach another User's profile.
 
-- `GET /users/me/profile` answers `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...] }`. Before
-  onboarding the name and the department are `""`, the admission year `null` and the hashtags `[]`.
+- `GET /users/me/profile` answers `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...] }`. Like
+  every User route but two, it needs the User to have finished onboarding.
 - `PATCH /users/me/profile` with some of these fields changes only those and answers with the whole profile. `null`
   empties `admissionYear`, and `[]` empties `hashtags`. The name and the department cannot be emptied.
 - A value outside these limits gets 400 with a message that starts with the field, and nothing changes. Spaces around
@@ -214,6 +221,7 @@ src/
 │   ├── redis-idempotency.store.ts   keeps the results of requests safe to repeat in Redis
 │   ├── route-access.ts              who may call a route: anyone, a User or an Administrator
 │   ├── public.decorator.ts          @Public(): opens a route to requests without an access token
+│   ├── allow-before-onboarding.decorator.ts  @AllowBeforeOnboarding(): opens a User's route before onboarding
 │   ├── administrator-only.decorator.ts  @AdministratorOnly(): gives a route to Administrators
 │   ├── current-user.decorator.ts    @CurrentUser(): the signed-in User in a handler
 │   └── current-administrator.decorator.ts  @CurrentAdministrator(): the signed-in Administrator
@@ -274,8 +282,10 @@ The steps add a feature named `party`. Use a short lowercase name, with dashes b
 3. Every route is exactly one of three kinds. Unmarked, it is a User's: it needs a User's access token, and a request
    without one gets 401. Mark a route, or a whole controller, with `@Public()` to open it to anyone, or with
    `@AdministratorOnly()` to give it to [Administrators](#administrators). A marking on a handler replaces its
-   controller's, so mark a handler with one of them at most. A handler reads the signed-in User with
-   `@CurrentUser() user: SignedInUser`, as `src/users/users.controller.ts` does.
+   controller's, so mark a handler with one of them at most. A User's route also needs the User to have finished
+   [onboarding](#onboarding-and-the-lobby); mark it `@AllowBeforeOnboarding()` only when onboarding itself needs it.
+   A handler reads the signed-in User with `@CurrentUser() user: SignedInUser`, as `src/users/users.controller.ts`
+   does.
 4. Put request and response shapes in `src/party/dto/`. Describe a request body as a zod schema and give it to the
    decorator, as `src/auth/dto/sign-in.dto.ts` and `AuthController` do: `@Body({ schema: signInSchema })`. A body that
    does not match gets 400 with a message naming the field. A stored record is a model in `prisma/schema.prisma`
@@ -299,8 +309,8 @@ The steps add a feature named `party`. Use a short lowercase name, with dashes b
    database and Redis addresses do. Read it by injecting `ConfigService<Settings, true>` and calling
    `get('NAME', { infer: true })`.
 8. Write `test/party.e2e-spec.ts`. Start the server with `startApp` from `test/start-app.ts` and call its routes
-   with `supertest`, as `test/health.e2e-spec.ts` does. `signIn` from `test/sign-in.ts` signs in a new User and
-   returns its tokens, `signInOnboarded` from `test/profile.ts` also completes onboarding, and
+   with `supertest`, as `test/health.e2e-spec.ts` does. `signIn` from `test/sign-in.ts` signs in a new User,
+   completes onboarding and returns the tokens, `signInBeforeOnboarding` stops before onboarding, and
    `signInAsAdministrator` signs in an Administrator. oxlint's `max-lines` (300) and
    `max-lines-per-function` (50) apply to tests too: split a long file by route, as `test/refresh.e2e-spec.ts` and
    `test/sign-out.e2e-spec.ts` split the auth tests, and a long `describe` into several.

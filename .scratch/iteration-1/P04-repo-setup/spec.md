@@ -106,7 +106,7 @@ A repository that holds six independent projects: four servers, the admin site a
 - An Administrator's access token has an audience of its own, the Administrator's id and no email address. It is valid for 8 hours and comes without a refresh token. Each kind of access token is refused where the other belongs, on the socket server too. Every administrative request checks the Administrator, so a removed Administrator or a token issued before their last sign-out is refused.
 - The settings list the initial Administrators, whom the main server registers while no Administrator is registered. Administrators then register and remove each other, and the last one stays.
 - The profile holds name, department, admission year and interest hashtags.
-- A new User's name and department start empty. The sign-in tells the app whether the User has finished onboarding and, until then, suggests both from the Google account's name. Onboarding saves them, and only then does the lobby, which gives the app what it needs when it starts, let the User in.
+- A new User's name and department start empty. The sign-in tells the app whether the User has finished onboarding and, until then, suggests both from the Google account's name. Onboarding saves them. Until it is done, every User route but onboarding and sign-out answers 403 with the same suggestion, the lobby included. The lobby gives the app what it needs when it starts.
 
 ### Repeated requests
 

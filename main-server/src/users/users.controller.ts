@@ -1,4 +1,5 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
+import { AllowBeforeOnboarding } from '../common/allow-before-onboarding.decorator.js';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
 import { type CompleteOnboardingDto, completeOnboardingSchema } from './dto/complete-onboarding.dto.js';
 import { ProfileDto, toProfileDto } from './dto/profile.dto.js';
@@ -22,6 +23,7 @@ export class UsersController {
   }
 
   // The app sends it again when the answer was lost. A repeat saves the profile again, so it takes no Idempotency-Key.
+  @AllowBeforeOnboarding()
   @Post('me/onboarding')
   @HttpCode(HttpStatus.NO_CONTENT)
   completeOnboarding(
