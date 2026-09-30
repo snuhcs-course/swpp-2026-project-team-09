@@ -1,5 +1,4 @@
 import { ForbiddenException, HttpStatus, Injectable } from '@nestjs/common';
-import { toProfileDto } from '../users/dto/profile.dto.js';
 import { UsersService } from '../users/users.service.js';
 import { LobbyDto } from './dto/lobby.dto.js';
 
@@ -19,6 +18,6 @@ export class LobbyService {
         onboarding,
       });
     }
-    return { profile: toProfileDto(user) };
+    return { profile: this.users.profileOf(user) };
   }
 }

@@ -3,6 +3,7 @@ import { PrismaService } from '../common/prisma.service.js';
 import { Prisma, User } from '../generated/prisma/client.js';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto.js';
 import { OnboardingDto } from './dto/onboarding.dto.js';
+import { ProfileDto, toProfileDto } from './dto/profile.dto.js';
 import { departmentSchema, nameSchema, UpdateProfileDto } from './dto/update-profile.dto.js';
 
 @Injectable()
@@ -33,6 +34,10 @@ export class UsersService {
         department: departmentSchema.safeParse(department).data ?? null,
       },
     };
+  }
+
+  profileOf(user: User): ProfileDto {
+    return toProfileDto(user);
   }
 
   findById(id: string): Promise<User> {

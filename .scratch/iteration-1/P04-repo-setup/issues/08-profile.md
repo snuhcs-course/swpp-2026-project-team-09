@@ -40,7 +40,7 @@ The profile screen belongs to P06.
 - **Refusals**: 400 from the validation pipe, whose messages start with the field's path (`name: ...`, `hashtags.0: ...`). Nothing is saved.
 - **Before onboarding**: only the lobby refuses a User who has not finished onboarding. What else to refuse is decided when features that show Users to one another arrive (P06, P08).
 - **Another phone during onboarding**: a sign-in there ends the first phone's session as any sign-in does. The first phone's next request, the onboarding's included, gets 401 `SESSION_REPLACED`, and the other phone goes through onboarding. Two first sign-ins at the same moment create one User, because the sign-in's upsert runs as one `INSERT ... ON CONFLICT`.
-- **Docs**: the P04 spec states onboarding and the lobby, and the P06 spec's Sign-in section the app's side. The main server README has an "Onboarding and the lobby" section and a Profile section, and its "Adding a feature module" example is now `party`, because a `profile` module and `Profile` model would contradict the profile in `src/users/`. `.scratch/research/onboarding-user-creation.md` compares creating the User at the first sign-in with creating it after onboarding; most platforms create it at the first sign-in, as here.
+- **Docs**: the P04 spec states onboarding and the lobby, and the P06 spec's Sign-in section the app's side. The main server README has an "Onboarding and the lobby" section and a Profile section, and its "Adding a feature module" example is now `party`, because a `profile` module and `Profile` model would contradict the profile in `src/users/`.
 
 ### Known limits (2026-10-01)
 
@@ -62,7 +62,7 @@ These passed at once, because the session rule, the global guard, Prisma's parti
 
 ### Agent usage (2026-10-01)
 
-- Agent time: about 2 hours 30 minutes, an estimate, for the one session that did the work, counted from its transcript up to the writing of this section. Time spent waiting for answers is left out; time spent waiting for tests and subagents is kept. Its eight subagents ran inside it: three Standards and three Spec reviews of 2 to 4 minutes each, two at a time, the research on creating the User at the first sign-in (about 17 minutes), and a Prisma experiment stopped when it was no longer needed.
+- Agent time: about 2 hours 40 minutes, an estimate, for the one session that did the work, counted from its transcript up to the writing of this section. Time spent waiting for answers is left out; time spent waiting for tests and subagents is kept. Its eight subagents ran inside it: three Standards and three Spec reviews of 2 to 4 minutes each, two at a time, research on how auth platforms create the User around onboarding (about 17 minutes), whose note was not kept, and a Prisma experiment stopped when it was no longer needed.
 - Tokens, for the session and its eight subagents, counted when this section was written:
-  - Input: 110,313,829 in total, of which 108,451,272 were cache reads, 1,861,631 cache writes and 926 uncached.
-  - Output: 327,285. The subagents' transcripts record only a few output tokens for most of their steps, so their share, 7,448, is a lower bound.
+  - Input: 117,258,275 in total, of which 115,379,521 were cache reads, 1,877,806 cache writes and 948 uncached.
+  - Output: 345,384. The subagents' transcripts record only a few output tokens for most of their steps, so their share, 7,448, is a lower bound.
