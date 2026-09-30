@@ -1,0 +1,105 @@
+# Starts the data stores and the servers on a developer's laptop: `docker compose up --build` in this folder.
+# The passwords are for local development only. Only the main and socket servers, which the app on a phone calls, are
+# published to the network. The rest are published on the loopback address alone: Redis has no password.
+name: snu-now
+
+services:
+  postgres:
+    build: infra/postgres
+    environment:
+      POSTGRES_PASSWORD: postgres
+      MAIN_DB_PASSWORD: main
+      MATCH_DB_PASSWORD: match
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      # Over TCP, so that the temporary server that creates the databases does not count as ready.
+      test: ['CMD', 'pg_isready', '--host', '127.0.0.1', '--username', 'postgres']
+      interval: 2s
+      retries: 30
+
+  redis:
+    image: redis:8
+    # Never evict records, even when memory runs out.
+    command: ['redis-server', '--maxmemory-policy', 'noeviction']
+    ports:
+      - '127.0.0.1:6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 2s
+      retries: 30
+
+  main-server:
+    build: main-server
+    # A small init process runs as PID 1 and passes SIGTERM on to Node, which is not written to run as PID 1.
+    init: true
+    # The settings come from main-server/.env (see main-server/.env.example).
+    # The values under environment take precedence, so that the server reaches the data stores inside Compose.
+    # INITIAL_ADMINISTRATOR_EMAILS counts only while the database holds no Administrator: a new list takes effect after
+    # `docker compose down -v`. Otherwise Administrators register each other through the administrative routes.
+    env_file:
+      - path: main-server/.env
+        required: false
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://main:main@postgres:5432/main
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  socket-server:
+    build: socket-server
+    init: true
+    # The access token public key comes from socket-server/.env (see socket-server/.env.example).
+    env_file:
+      - path: socket-server/.env
+        required: false
+    environment:
+      PORT: 3001
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - '3001:3001'
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker-server:
+    build: worker-server
+    init: true
+    environment:
+      PORT: 3002
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - '127.0.0.1:3002:3002'
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  match-server:
+    build: match-server
+    init: true
+    environment:
+      PORT: 3003
+      DATABASE_URL: postgresql://match:match@postgres:5432/match
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - '127.0.0.1:3003:3003'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

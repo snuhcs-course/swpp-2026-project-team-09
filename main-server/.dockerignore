@@ -1,0 +1,8 @@
+node_modules
+dist
+coverage
+.env*
+src/generated
+*.tsbuildinfo
+*.pem
+*.key
