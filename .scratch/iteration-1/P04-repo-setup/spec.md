@@ -72,7 +72,7 @@ A repository that holds six independent projects: four servers, the admin site a
 - The main server is built first. The socket, worker and match servers are set up by following it.
 - Each server validates its settings at startup against a schema and stops with a message naming the faulty setting.
 - Each server exposes liveness and readiness checks.
-- Servers talk to each other through NestJS messaging over Redis: events for signals and positions, request and response where an answer is needed. This task sets up the connection; the messages themselves belong to P07 and P08.
+- Servers talk to each other through NestJS messaging over Redis: events for signals and positions, request and response where an answer is needed. This task sets up the connection and the event that tells the socket server a session has ended; the other messages belong to P07 and P08.
 
 ### Quality rules
 
@@ -100,7 +100,7 @@ A repository that holds six independent projects: four servers, the admin site a
 - The main server issues an access token valid for 1 hour and a refresh token valid for 30 days. Using a refresh token replaces it. A used refresh token that comes back within 60 seconds is taken for a retry after a lost answer and exchanged again; later, it ends its session. Refresh tokens are stored hashed.
 - Access tokens are signed with a private key held only by the main server. Other servers verify them with the public key.
 - A User has one session: the app signed in on one phone. Signing in ends the previous session. Every access token names its session.
-- Sessions are kept in the main database, and the main server reads the session on every User's request, so an ended session's access tokens are refused from the next request on. A session replaced by a sign-in on another phone is refused with a code that says so. The socket server disconnects an ended session's connections within seconds and closes each connection when its access token expires.
+- Sessions are kept in the main database, and the main server reads the session on every User's request, so an ended session's access tokens are refused from the next request on. A session replaced by a sign-in on another phone is refused with a code that says so, on a User's route and on the socket server; a refused refresh keeps its one answer. The socket server disconnects an ended session's connections within seconds and closes each connection when its access token expires.
 - Signing out ends the session and revokes its refresh tokens. Sessions leave the Master Switch alone; it belongs to P08.
 - An Administrator is not a User. Administrators are kept in their own table and sign in to the admin site on their own route, with an ID token issued to the admin site's Google client. Any Google domain is accepted, but the email address must be verified and registered. The first sign-in binds the Google account to the address.
 - An Administrator's access token has an audience of its own, the Administrator's id and no email address. It is valid for 8 hours and comes without a refresh token. Each kind of access token is refused where the other belongs, on the socket server too. Every administrative request checks the Administrator, so a removed Administrator or a token issued before their last sign-out is refused.

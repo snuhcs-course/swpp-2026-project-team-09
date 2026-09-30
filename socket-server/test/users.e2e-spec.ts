@@ -133,7 +133,7 @@ describe('A socket connection', () => {
 });
 
 describe('A connection with an access token without a session', () => {
-  it('is refused, as one issued before sessions existed', async () => {
+  it('is refused', async () => {
     const withoutSession = new JwtService().sign(
       { sub: randomUUID() },
       { privateKey, algorithm: 'ES256', audience: 'snu-now-app', expiresIn: '1h' },

@@ -75,8 +75,8 @@ export class UsersGateway implements OnGatewayInit<UsersServer>, OnGatewayConnec
     this.server.in(sessionRoom(sessionId)).disconnectSockets(true);
   }
 
-  // A missing, expired or altered token, one signed with another key, an Administrator's token, or one issued before
-  // sessions existed rejects.
+  // A missing, expired or altered token, one signed with another key, an Administrator's token, or one without a
+  // session rejects.
   private async verify(token: unknown): Promise<AccessTokenPayload> {
     if (typeof token !== 'string') {
       throw new TypeError('No access token');

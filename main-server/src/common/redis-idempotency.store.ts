@@ -11,9 +11,9 @@ import { REDIS } from './redis.module.js';
 
 // Keeps the records of @nestjs/idempotency in Redis, as its documentation writes the store:
 // https://docs.nestjs.com/reliability/idempotency#store-keys-in-redis-instead
-// Each record is a hash at `idem:<scope>:<key>`, where the scope is the User id (AppModule), and Redis expires it on
-// its own. Each method is one Lua script, which Redis runs atomically, so two requests with the same key never both
-// run the handler.
+// Each record is a hash at `idem:<scope>:<key>`, where the scope is the User's or the Administrator's id (AppModule),
+// and Redis expires it on its own. Each method is one Lua script, which Redis runs atomically, so two requests with the
+// same key never both run the handler.
 
 /** The one ioredis method this store needs. */
 export interface RedisClient {

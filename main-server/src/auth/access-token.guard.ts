@@ -83,7 +83,6 @@ export class AccessTokenGuard implements CanActivate {
     } catch {
       throw new UnauthorizedException();
     }
-    // An access token issued before sessions existed names none.
     if (payload.sub === undefined || payload.sid === undefined) {
       throw new UnauthorizedException();
     }

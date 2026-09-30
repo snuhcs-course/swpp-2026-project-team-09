@@ -4,8 +4,9 @@ The SNU Now mobile app, built with Expo SDK 57 and Expo Router. For now it shows
 
 ## Run it
 
-You need Node.js 22.13 or later (24.3 or later on Node.js 24) and pnpm 12.6.0, the version declared in
-`package.json`. In `mobile/`:
+You need Node.js 24. With nvm, `nvm install` and `nvm use` read `.nvmrc` at the repository root. The commands below
+use pnpm 12.6.0, the version declared in `package.json`. If `pnpm -v` prints another version, type `npx pnpm@12.6.0`
+wherever this file says `pnpm`: npm fetches it into its cache without a global install. In `mobile/`:
 
 ```bash
 pnpm install
