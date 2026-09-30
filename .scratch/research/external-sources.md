@@ -38,6 +38,7 @@ Everything was checked on 2026-09-30 unless a line says otherwise. `[K1]`-style 
   - The body labels the time and place in text, for example `· 일   시: 2026. 10. 13.(화) 19:30 ~ 21:30 (예정)` and `· 장   소: 서울대학교 종합운동장`. The spacing inside the labels varies.
   - The same body can hold other periods, such as `· 신청 기간: 2026. 9. 29.(화) 10:00 ~ 9. 30.(수) 17:00`. Only the `일시` line is the event's time.
   - Not every post uses these labels.
+  - A post can describe several sessions, such as a lecture series. §9 records how Haengsha handles them.
 
 ## 4. Menus
 
@@ -277,6 +278,14 @@ The root `.gitignore` keeps every `.env*` file out of Git except `.env*.example`
 
 - SNUTT's timetable picker (Waffle Studio): P06 has the User enter the timetable instead. Using the picker later needs Waffle Studio to register our origin; the contact is `master@wafflestudio.com`.
 - Siksha and Haengsha (Waffle Studio): read to find the sources above, as P07 records. `wafflestudio/siksha-crawler` has no LICENSE file [W1].
+- Haengsha collects the same events list (§3). This was read in `wafflestudio/hangsha-server` at commit `4a33bf9` of 2026-09-14.
+  - Its rules read one date and time per post [W2].
+  - When a post's date is a range and its body mentions 모집 or 신청, the range is taken as the application period and no session is made [W2].
+  - Posts that mention 비교과 or link to `extra.snu.ac.kr` are skipped as duplicates of the extracurricular site [W2].
+  - With its AI parser switched on, a language model reads the post again. It returns each session on its own and is told never to merge sessions into one period [W3].
+  - When a post has two sessions or more, each session is stored as its own event with its own start, end and place [W4]. The place falls back to the post's.
+  - A later collection finds a stored event again by the source link and the session's start and end [W4].
+  - Haengsha also serves what it collects through a public read API under `https://hangsha-api.wafflestudio.com/api/v1/events`. On 2026-09-27 the team decided to collect directly instead of using it. The decision is recorded in `.scratch/architecture-planning/spec.md` on `0.0/Main`, and the prototype's study of that API is `.scratch/architecture-planning/research/haengsha-integration.md` on the same branch.
 - The extracurricular programme site: out of scope in P07.
 
 ## 10. Unverified
@@ -327,3 +336,6 @@ The root `.gitignore` keeps every `.env*` file out of Git except `.env*.example`
 [G13]: https://docs.expo.dev/guides/google-authentication/
 [E1]: https://github.com/expo/expo/tree/sdk-57/templates/expo-template-bare-minimum/android/app
 [W1]: https://github.com/wafflestudio/siksha-crawler
+[W2]: https://github.com/wafflestudio/hangsha-server/blob/4a33bf96bff8b71f1fb837c779da057e136f7784/hangsha/batch/src/main/kotlin/com/team1/hangsha/batch/crawler/SnuNowCrawler.kt
+[W3]: https://github.com/wafflestudio/hangsha-server/blob/4a33bf96bff8b71f1fb837c779da057e136f7784/hangsha/batch/src/main/kotlin/com/team1/hangsha/batch/ai/EliceEventParserClient.kt
+[W4]: https://github.com/wafflestudio/hangsha-server/blob/4a33bf96bff8b71f1fb837c779da057e136f7784/hangsha/common/src/main/kotlin/com/team1/hangsha/event/service/EventSyncService.kt

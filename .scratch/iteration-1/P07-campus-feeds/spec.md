@@ -66,6 +66,12 @@ The worker server collects events, menus and shuttle positions from their origin
 
 - Events are read by rules only. No language model is used.
 - The parser reads the title, the description, the start and end time, the place text and the source link. When the time or place cannot be read, the Draft is still stored with the original text.
+- A post can describe several sessions, such as a lecture series. As in the Haengsha project, each session becomes its own Draft.
+  - The rules of this iteration read one start and end per post, as Haengsha's rules do. Splitting a post into its sessions comes with AI in a later iteration.
+  - Until then, an Administrator splits such a post by creating the other sessions.
+- A Draft is identified by its post and the start and end of its session as collected. A post whose time could not be read is identified by the post alone.
+  - The collected start and end are kept apart from the Administrator's corrections, so an edited Draft is still found.
+  - A session collected with a new time arrives as a new Draft, and the Administrator discards the old one.
 - A collected event is always a Draft. Only an Administrator publishes.
 - Once an Administrator has edited or published an event, later collections do not change it.
 - This task defines how Global Events are stored and their states: Draft, published, cancelled and discarded. A discarded event stays stored, so that the next collection does not bring it back as a new Draft. The administrative API belongs to P12.
@@ -103,13 +109,13 @@ The worker server collects events, menus and shuttle positions from their origin
 - A good test feeds a saved page to a parser and checks the records that come out, or sends a message to the main server and checks what is stored and served.
 - Parsers are tested with saved pages, including a closed restaurant, a menu without a price, an event with several days and an event whose time cannot be read.
 - The shuttle computation is tested against a real database with PostGIS: a vehicle at a stop, between two stops, and at the point where the loop closes.
-- The main server's handling of worker messages is tested at the message boundary: invalid messages refused, repeated messages stored once, Administrator edits preserved.
+- The main server's handling of worker messages is tested at the message boundary: invalid messages refused, repeated messages stored once, two sessions of one post stored as two Drafts, Administrator edits preserved.
 - The real sites and the Kakao API are never called in tests. They are replaced at the fetch boundary by saved responses.
 - Prior art: the API-level tests of P04.
 
 ## Out of Scope
 
-- Filling with AI what the rules could not read, the way the Haengsha project does: rules first, then AI for the start, the end and the place. It comes in a later iteration, and the Administrator still confirms every event.
+- Filling with AI what the rules could not read, the way the Haengsha project does: rules first, then AI for the start, the end and the place, with each session of a post returned on its own. It comes in a later iteration, and the Administrator still confirms every event.
 - The extracurricular programme site.
 - Library seats and study spaces.
 - Shuttle routes other than 41946.
