@@ -76,7 +76,7 @@ The operator's service. The university's notices reach it through `서울대.inf
   - The number of vehicles in service is in `.driving .num`. The service hours are in the page header.
 - Vehicles: `POST https://web.busin.co.kr/BuslineCircleS.aspx/GetRoute` with `Content-Type: application/json; charset=utf-8` and the body `{"data":",F,41946,snu_1"}`.
   - The answer is `{"d":"row;row;…"}`, and each row is `carid/x/y/count/plates/code`.
-  - `x` and `y` are pixels on the route drawing, not coordinates. `d` is empty when no vehicle runs.
+  - `x` and `y` are pixels on the route drawing, not coordinates. `d` was empty on Sunday 2026-09-27, when no vehicle ran.
 - Stops of route 41946 on the drawing, in loop order:
 
 | Stop | left | top |
@@ -132,8 +132,10 @@ The operator's service. The university's notices reach it through `서울대.inf
 
 - The team uses one Kakao app, with the other members added under [앱] > [멤버] [K1].
   - The operating policy forbids running one service as several apps. A shared package name or domain counts as the same service [K1].
-  - Since 2026-07-21, the free quota applies only to the first app on which the owner's developer account turns Kakao Map on [K2][K3].
-  - Apps turned on before that date keep their quota [K3].
+  - Since 2026-07-21, the free quota applies only to the first app on which the owner's developer account turns Kakao Map on [K2][K3]. Only one of an owner's apps has it [K15][K16].
+  - Apps turned on before that date keep their quota until further notice [K3].
+  - The free quota has no end date, but Kakao may change the criteria [K3][K8]. The change of 2026-07-21 was announced on 2026-06-16.
+  - No source says what happens to the free quota when the app is deleted, when Kakao Map is turned off and on again, or when the Owner changes. Keep the app, its Kakao Map setting and its Owner as they are.
 - The app gets a REST API key, a JavaScript key, a native app key and an admin key when it is created, under [앱] > [플랫폼 키] [K1].
 - Kakao Map is turned on under [카카오맵] > [사용 설정] > [상태]. The app then shows a "카카오맵 무료 쿼터" badge when the free quota applies [K2].
 - Registration record. Update it whenever something is registered at Kakao.
@@ -227,11 +229,21 @@ The root `.gitignore` keeps every `.env*` file out of Git except `.env*.example`
 | Maps JavaScript SDK | 300,000 | 0.1 KRW a call |
 | Walking route | 1,000 | 10 KRW a call |
 
-- All of an app's APIs together also have a monthly quota of 3,000,000 calls [K8]. The docs say the figures may change.
+- Quotas belong to the app, so the three keys share them [K16]. All of an app's APIs together also have a monthly quota of 3,000,000 calls [K8]. The docs say the figures may change.
+- The console shows the usage under [통계] > [쿼터] [K2].
+- What counts as a call:
+  - Maps JavaScript SDK: creating a map object. Loading tiles, panning and zooming do not count [K13].
+  - Maps SDK for Android: not documented. Starting a `MapView` sends one authentication request to `https://dapi.kakao.com/v2/maps/vector/auth` [K14]. My judgement: each map start counts once.
+  - Walking route: each request.
+- For the team's own use, the map quotas are far out of reach. The walking route's 1,000 a day is the tight one.
+  - The app sends its position every 5 seconds (P06). A route requested on every position would use 720 calls an hour on one phone.
+  - Request a route only when the User asks for one.
+- Kakao also limits calls per second and per minute, but does not publish the figures. Kakao staff warned that calls repeated every 600 ms can be treated as abuse [K13].
 - A call beyond the quota gets HTTP 429 [K2]. The error table also lists HTTP 400 with code `-10`, and code `-11` beyond a paid limit [K9]. A second app without the free quota was seen getting `-10` "API limit has been exceeded" [K12]. Treat both as the quota being used up.
-- Paid use needs a 비즈월렛 with a card. VAT of 10% is added [K10].
-  - Kakao Map has no spending limit.
-  - My judgement: with no payment method connected, a call beyond the quota fails and is not billed.
+- Paid use [K10]:
+  - It needs a 비즈월렛 with a card, connected to the app, with paid use turned on. None of this is set up. A call beyond the free quota therefore fails, and nothing is billed.
+  - With paid use on, calls are billed by card around 01:00 on the 1st of each month, with 10% VAT added. A walking route then costs 11 KRW a call.
+  - Kakao Map has no spending limit; only KakaoTalk Share has one. A bug that repeats route requests would turn straight into a bill. My judgement: before turning paid use on, add a daily count on the server that stops route requests.
 - The operating policy allows a cache only to improve the user's experience, and only if it is kept current [K5]. It forbids copying, storing or handing on data from the service without consent.
 
 ## 8. Google Sign-In
@@ -271,6 +283,7 @@ The root `.gitignore` keeps every `.env*` file out of Git except `.env*.example`
 
 - The shuttle: whether regular requests are permitted, and whether coordinates exist. 정보화본부 has not replied yet.
 - Kakao: the Android package name and the key hashes. The walking route has not been called.
+- Kakao: what the Android map SDK counts as a call, and when the daily quota resets.
 - Google: the project's owner, and an Android client for the Iteration 1 package name.
 - `hd=snu.ac.kr` with the Iteration 1 app on a phone.
 
@@ -295,6 +308,10 @@ The root `.gitignore` keeps every `.env*` file out of Git except `.env*.example`
 [K10]: https://developers.kakao.com/docs/ko/app-setting/paid-api
 [K11]: https://developers.kakao.com/docs/ko/android/getting-started
 [K12]: https://devtalk.kakao.com/t/api-code-10-api-limit-has-been-exceeded/151160
+[K13]: https://devtalk.kakao.com/t/web-sdk/150932/2
+[K14]: https://devtalk.kakao.com/t/map/140507
+[K15]: https://devtalk.kakao.com/t/api-150222/150757
+[K16]: https://devtalk.kakao.com/t/topic/150466
 [G1]: https://support.google.com/cloud/answer/15544987
 [G2]: https://developer.android.com/identity/sign-in/credential-manager-siwg-implementation
 [G3]: https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid
