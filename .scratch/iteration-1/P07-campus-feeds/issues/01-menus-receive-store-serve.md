@@ -35,10 +35,11 @@ This ticket sets the conventions every later worker message follows: how a messa
 
 ### Storage and the route (2026-10-01)
 
-- `restaurant_days` holds one restaurant's day, unique by day and restaurant. It keeps the operating hours line and the time of the collection that stored it. `menu_entries` holds the day's entries with their meal, name and price. Each entry also has a `position` that keeps the page's order.
-- A message replaces each restaurant and day it carries, in one transaction with the collection status: it upserts the day, deletes the day's entries and inserts the new ones.
-  - A restaurant the message leaves out keeps its day.
-  - The README therefore tells collectors to send an emptied or closed restaurant with `entries: []`. That covers ticket 08's closure and empty cell.
+- `restaurant_days` holds one restaurant's day, with its source, unique by day, source and restaurant. It keeps the operating hours line and the time of the collection that stored it. `menu_entries` holds the day's entries with their meal, name and price. Each entry also has a `position` that keeps the page's order.
+- For each day a message carries, it replaces everything its source had stored for that day (see Design review). In one transaction with the collection status, it deletes the source's entries and restaurant days for those days, inserts the message's restaurant days and inserts their entries: four statements, whatever the message's size.
+  - The source's other days and the other sources' restaurants stay.
+  - The README therefore tells collectors to send every restaurant the page lists for a day. One that is closed, or has an empty cell, goes with `entries: []` and is served with `meals: []`. That covers ticket 08's closure and empty cell.
+  - The same restaurant name sent by two sources for one day is stored and served twice. Ticket 08 collects the dormitory restaurant once.
 - `collection_statuses` has one row per source, with a UUID `id` as the README asks of every record.
   - The sources are the `CollectionSource` values `coop_menus`, `dormitory_menus` and `veterinary_menus`, one per page, so that a broken Co-op page and a broken dormitory page are noticed apart (ticket 08).
   - The success time is the message's `collectedAt` and the failure time the worker's `failedAt`, not the times the main server received them.
@@ -54,18 +55,20 @@ This ticket sets the conventions every later worker message follows: how a messa
 
 ### Tests (2026-10-01)
 
-- `test/menus.e2e-spec.ts` has 16 tests. Each sends messages over Redis with `startWithWorker()` and `sendAsWorker()` from `test/worker.ts`, and reads what the route serves:
+- `test/menus.e2e-spec.ts` has 15 tests and `test/collection.e2e-spec.ts` 2. Each sends messages over Redis with `startWithWorker()` and `sendAsWorker()` from `test/worker.ts`, and reads what the route serves:
   - a valid message is stored and served by restaurant and meal, with prices, an entry without a price as `null`, the hours and the collection time;
+  - a restaurant sent without entries is served without meals;
   - eight messages that do not match the schema are refused, with the problem named, and nothing from them is stored, the collection status included;
   - the same message twice is stored once;
-  - a later collection replaces one restaurant's entries and hours for the day and leaves another restaurant's;
+  - a later collection of a source's day replaces its restaurants: one it changed is replaced, one it dropped is gone, and another source's restaurant that day and the source's other day stay;
   - a failure message records its time and reason, keeps the success time, and the menus stored before are still served;
-  - a failure message without a reason is refused;
+  - a failure message without a reason is refused and records nothing;
   - an empty day answers `[]`, a request without an access token gets 401, and a date that is not a calendar day gets 400.
-- The file starts a Redis container of its own, which takes about a second. Every test file's server subscribes to the same message patterns on the shared test Redis, and Nest's client takes the first answer. The server in `test/health.e2e-spec.ts` whose database is stopped could then answer "Internal server error" first. Two servers storing the same message could also undo a replacement. The database stays the shared one, and each test uses a day of its own.
+- The menus fixtures are in `test/menus.ts`. `daysOf()` gives each file a month and each test a day, because the files share the database and a day's answer holds every restaurant stored for it.
+- Each file starts a Redis container of its own, which takes about a second. Every test file's server subscribes to the same message patterns on the shared test Redis, and Nest's client takes the first answer. The server in `test/health.e2e-spec.ts` whose database is stopped could then answer "Internal server error" first. Two servers storing the same message could also undo a replacement. The database stays the shared one, and each test uses a day of its own.
 - No route serves the collection status yet, so the tests read it with their own database connection, as `test/auth.e2e-spec.ts` reads Users.
-- Checked that the tests can fail. Without the payload's pipe, the invalid cases failed. Without deleting a day's earlier entries, the repeat and the replacement failed.
-- The whole suite passed: 14 files, 156 tests.
+- Checked that the tests can fail. Without the payload's pipe, the invalid cases failed. Without deleting a day's earlier entries, the repeat and the replacement failed. Deleting only the message's restaurants, or every source's, failed the replacement.
+- The whole suite passed: 15 files, 157 tests.
 
 ### Review (2026-10-01)
 
@@ -77,17 +80,27 @@ A Standards review and a Spec review ran side by side on the first commit. The s
 - the README says how an emptied restaurant is sent, that a new menu source joins the schema's list, and in what order messages are stored;
 - comments that repeated the code or the README were removed.
 
+### Design review (2026-10-01)
+
+김태현 reviewed the design with the agent after the pull request was opened. The decisions:
+
+- **Replacement by source and day.** The ticket says a later collection "replaces that restaurant's entries for that day". Replacing only the restaurants a message carries left a restaurant the page renamed or dropped on the days collected ahead, up to seven, so the app would show the old name beside the new one. The Co-op and dormitory pages list a whole day, so a message now replaces its source's whole day. The ticket's rule still holds within it.
+- **The collection time stays per restaurant.** A single time for the answer would make a failed source's menus look fresh.
+- **No guard on `collectedAt`.** Messages arrive in order while the worker sends one at a time and waits for each answer, and Redis messaging keeps nothing to deliver late. A guard comes with a worker that retries.
+- **A closed restaurant is sent with `entries: []`** and served with `meals: []`, so it does not vanish from the app. Telling closed apart from not posted yet, with a `closed` field, waits for P15's screen.
+- Kept as implemented: the validation in `@WorkerMessage`, the one-string refusal, `null` for a missing value, the `CollectionSource` enum, the worker's times in the status, a Redis for each test file, `z.strictObject`, a required `date`, and restaurants identified by name until P15 needs a `restaurants` table.
+- When the worker collects is not set here. The spec says twice a day; nobody has checked when the three pages change or how far ahead they are posted. That is worth observing before ticket 07 fixes the hours.
+
 ### Left as is (2026-10-01)
 
-- A source's messages are stored in the order they arrive, not by `collectedAt`. An older message arriving after a newer one would replace it and move `lastSucceededAt` back. Both reviews raised it. With one worker, whose runs of a source do not overlap (ticket 07) and which waits for each answer, it does not happen, so no guard was added. The README states the order as a rule for the worker.
-- A restaurant that disappears from a page altogether keeps its stored day, because replacement is per restaurant and day, as the ticket says.
-- The failure tests are in `test/menus.e2e-spec.ts`, not in a `test/collection.e2e-spec.ts` of their own. The ticket frames them as menu tests ("the earlier menus are still served"), and a second file would start a second Redis.
 - Kept after the review: the names `RestaurantDay` (the stored row) beside `RestaurantMenusDto` (its answer), `MealMenusDto`, the module name `collection`, and the explicit list of menu sources in `menusCollectedSchema`, which ticket 02's events source must not join.
 - `CONTEXT.md` has no entries for menu, restaurant, meal or source. They can go to `/domain-modeling` if the team wants them in the glossary.
 
 ### Agent usage (2026-10-01)
 
-- Agent time: about 30 minutes, an estimate. One session in the main checkout worked from the start without waiting for answers. It had worked about 24 minutes when this section was written, and the commit, the push and the pull request add about 4 more. Its Standards and Spec review subagents worked about 3 and 2 minutes, at the same time, added on top.
+- Agent time: about 45 minutes, an estimate, in one session in the main checkout. About 30 minutes waiting for 김태현's answers are left out.
+  - Implementation, from the start to the pull request: about 28 minutes. Its Standards and Spec review subagents worked about 3 and 2 minutes, at the same time, added on top.
+  - The walk-through of the pull request, the design review and the change to replacement by source and day: about 14 minutes up to this section, and the commit, the push and the pull request's update add a few more.
 - Tokens, for the session and its two review subagents, counted when this section was written:
-  - Input: 17,699,069 in total, of which 17,274,415 were cache reads, 424,428 cache writes and 226 uncached.
-  - Output: 109,044. The subagents' transcripts record only a few output tokens for most of their steps, so their share, 1,274, is a lower bound.
+  - Input: 31,414,932 in total, of which 30,878,730 were cache reads, 535,896 cache writes and 306 uncached.
+  - Output: 178,166. The subagents' transcripts record only a few output tokens for most of their steps, so their share, 1,274, is a lower bound.
