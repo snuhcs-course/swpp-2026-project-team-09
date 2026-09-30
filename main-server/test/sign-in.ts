@@ -16,15 +16,29 @@ export const tokensSchema = z.strictObject({
 
 export type Tokens = z.infer<typeof tokensSchema>;
 
-export function postSignIn(app: INestApplication<Server>, claims: Partial<TokenPayload> = {}): request.Test {
+// The profile the app's onboarding sends with a new account's first sign-in.
+export const NEW_PROFILE = { name: '홍길동', department: '컴퓨터공학부' };
+
+// `profile: null` signs in as the app does before onboarding.
+export function postSignIn(
+  app: INestApplication<Server>,
+  claims: Partial<TokenPayload> = {},
+  profile: object | null = NEW_PROFILE,
+): request.Test {
+  const idToken = googleIdToken(claims);
   return request(app.getHttpServer())
     .post('/auth/google')
-    .send({ idToken: googleIdToken(claims) });
+    .send(profile === null ? { idToken } : { idToken, profile });
 }
 
-// Signs in as the app does, with a Google ID token for a new SNU account unless claims change it.
-export async function signIn(app: INestApplication<Server>, claims: Partial<TokenPayload> = {}): Promise<Tokens> {
-  const response = await postSignIn(app, claims);
+// Signs in as the app does, with a Google ID token for a new SNU account unless claims change it. A new account signs
+// up with the profile given.
+export async function signIn(
+  app: INestApplication<Server>,
+  claims: Partial<TokenPayload> = {},
+  profile: typeof NEW_PROFILE = NEW_PROFILE,
+): Promise<Tokens> {
+  const response = await postSignIn(app, claims, profile);
   if (response.status !== 200) {
     throw new Error(`Sign-in answered ${response.status}: ${JSON.stringify(response.body)}`);
   }

@@ -1,8 +1,8 @@
 import { User } from '../../generated/prisma/client.js';
 
 export interface ProfileDto {
-  name: string | null;
-  department: string | null;
+  name: string;
+  department: string;
   admissionYear: number | null;
   hashtags: string[];
 }

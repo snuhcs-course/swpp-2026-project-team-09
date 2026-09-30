@@ -96,7 +96,7 @@ A repository that holds six independent projects: four servers, the admin site a
 ### Sign-in and account
 
 - The app obtains a Google ID token and sends it to the main server. The main server verifies the signature, the audience (the app's Google client), the expiry, that the email is verified and that the hosted domain claim equals `snu.ac.kr`. The email address alone is not accepted as proof of the domain.
-- A User is identified by the Google subject identifier. The first sign-in creates the User.
+- A User is identified by the Google subject identifier. The User is created by the account's first sign-in that carries a name and a department, which the app's onboarding collects; a sign-in without them stores nothing and gets the values read from the Google account's name as a suggestion.
 - The main server issues an access token valid for 1 hour and a refresh token valid for 30 days. Using a refresh token replaces it. A used refresh token that comes back within 60 seconds is taken for a retry after a lost answer and exchanged again; later, it ends its session. Refresh tokens are stored hashed.
 - Access tokens are signed with a private key held only by the main server. Other servers verify them with the public key.
 - A User has one session: the app signed in on one phone. Signing in ends the previous session. Every access token names its session.
@@ -105,7 +105,7 @@ A repository that holds six independent projects: four servers, the admin site a
 - An Administrator is not a User. Administrators are kept in their own table and sign in to the admin site on their own route, with an ID token issued to the admin site's Google client. Any Google domain is accepted, but the email address must be verified and registered. The first sign-in binds the Google account to the address.
 - An Administrator's access token has an audience of its own, the Administrator's id and no email address. It is valid for 8 hours and comes without a refresh token. Each kind of access token is refused where the other belongs, on the socket server too. Every administrative request checks the Administrator, so a removed Administrator or a token issued before their last sign-out is refused.
 - The settings list the initial Administrators, whom the main server registers while no Administrator is registered. Administrators then register and remove each other, and the last one stays.
-- The profile holds name, department, admission year and interest hashtags.
+- The profile holds name, department, admission year and interest hashtags. Every User has a name and a department.
 
 ### Repeated requests
 

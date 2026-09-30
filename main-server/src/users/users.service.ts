@@ -1,21 +1,38 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { Prisma, User } from '../generated/prisma/client.js';
-import { nameSchema, type UpdateProfileDto } from './dto/update-profile.dto.js';
+import { type NewProfileDto, type ProfileSuggestionDto } from './dto/new-profile.dto.js';
+import { departmentSchema, nameSchema, type UpdateProfileDto } from './dto/update-profile.dto.js';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // A User is identified by the Google subject identifier. The email address follows the one Google sends. The
-  // profile's name starts as the Google account's, if the profile accepts it.
-  findOrCreate(account: { googleSubject: string; email: string; name: string | undefined }): Promise<User> {
-    const { googleSubject, email } = account;
+  // A User is identified by the Google subject identifier. The email address follows the one Google sends. A new
+  // account gets a User only with a profile; without one, nothing is stored and the answer is null.
+  async findOrSignUp(account: {
+    googleSubject: string;
+    email: string;
+    profile: NewProfileDto | undefined;
+  }): Promise<User | null> {
+    const { googleSubject, email, profile } = account;
+    if (profile === undefined) {
+      return (await this.prisma.user.updateManyAndReturn({ where: { googleSubject }, data: { email } })).at(0) ?? null;
+    }
     return this.prisma.user.upsert({
       where: { googleSubject },
-      create: { googleSubject, email, name: nameSchema.safeParse(account.name).data ?? null },
+      create: { googleSubject, email, ...profile },
       update: { email },
     });
+  }
+
+  // An SNU account's Google name reads "홍길동 / 학생 / 컴퓨터공학부". A part the profile would refuse is left out.
+  suggestProfile(googleName: string | undefined): ProfileSuggestionDto {
+    const [name, , department] = googleName?.split('/') ?? [];
+    return {
+      name: nameSchema.safeParse(name).data ?? null,
+      department: departmentSchema.safeParse(department).data ?? null,
+    };
   }
 
   findById(id: string): Promise<User> {

@@ -61,8 +61,13 @@ Once the server is running, a store that goes down makes readiness answer 503 in
 
 The app signs in with Google and sends the ID token it gets to the main server:
 
-- `POST /auth/google` with `{ "idToken": "..." }` answers `200 { "accessToken": "...", "refreshToken": "..." }`. The
-  first sign-in of a Google account creates its User.
+- `POST /auth/google` with `{ "idToken": "..." }` answers `200 { "accessToken": "...", "refreshToken": "..." }` for a
+  Google account that has a User.
+- An account without a User gets 422 with `"code": "PROFILE_REQUIRED"` and stores nothing. The body's `suggestion`
+  holds `{ "name": ..., "department": ... }` read from the Google account's name, which for an SNU account reads
+  `홍길동 / 학생 / 컴퓨터공학부`; each is `null` when it cannot be read. The app's onboarding starts from it and then
+  sends `{ "idToken": "...", "profile": { "name": "...", "department": "..." } }`, which creates the User and answers
+  200 as above. `profile` is checked like the rest of the body, and on an account that has a User it changes nothing.
 - Only SNU accounts get in: the token's hosted domain claim must be `snu.ac.kr` and its email address verified. Another
   account gets 403. An invalid or expired ID token, or one issued to another client than the app's
   (`GOOGLE_APP_CLIENT_ID`), the admin site's included, gets 401.
@@ -96,14 +101,14 @@ of a session that ends, and closes each connection when its access token expires
 A User reads and edits their own profile. The routes name no User, so they never reach another User's profile.
 
 - `GET /users/me/profile` answers `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...] }`. A new
-  User's name is their Google account's, or `null` when the account has none that the profile accepts. The other
-  fields start as `null` and `[]`. A later sign-in leaves the name alone.
+  User has the name and department given at [sign-in](#sign-in), no admission year (`null`) and no hashtags (`[]`).
 - `PATCH /users/me/profile` with some of these fields changes only those and answers with the whole profile. `null`
-  empties `department` or `admissionYear`, and `[]` empties `hashtags`. The name cannot be emptied.
+  empties `admissionYear`, and `[]` empties `hashtags`. The name and the department cannot be emptied.
 - A value outside these limits gets 400 with a message that starts with the field, and nothing changes. Spaces around
-  text are dropped first. The limits are set in `src/users/dto/update-profile.dto.ts`.
+  text are dropped first. The limits are set in `src/users/dto/update-profile.dto.ts`, and the sign-in's `profile`
+  follows the same ones.
   - `name`: 1 to 30 characters.
-  - `department`: 1 to 50 characters.
+  - `department`: 1 to 50 characters. A double major is written out, such as `컴퓨터공학부, 경제학부`.
   - `admissionYear`: a whole number from 1946, when SNU was founded, to this year in Korea.
   - `hashtags`: at most 20. Each is kept without the `#` in front, in the case sent, and then has 1 to 30 characters
     without whitespace. None may appear twice, whatever the case.

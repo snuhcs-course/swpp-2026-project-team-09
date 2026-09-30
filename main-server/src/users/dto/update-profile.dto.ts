@@ -6,9 +6,12 @@ function yearInKorea(): number {
 
 export const nameSchema = z.string().trim().min(1).max(30);
 
+// A double major is written out in the one text, such as "컴퓨터공학부, 경제학부".
+export const departmentSchema = z.string().trim().min(1).max(50);
+
 export const updateProfileSchema = z.object({
   name: nameSchema.optional(),
-  department: z.string().trim().min(1).max(50).nullable().optional(),
+  department: departmentSchema.optional(),
   // From 1946, when SNU was founded.
   admissionYear: z
     .number()

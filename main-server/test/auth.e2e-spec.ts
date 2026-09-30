@@ -7,7 +7,7 @@ import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { googleIdToken } from './google.js';
 import { es256KeyPair, rsaKeyPair } from './keys.js';
-import { getMe, refreshTokenHash, signIn, tokensSchema } from './sign-in.js';
+import { getMe, postSignIn, refreshTokenHash, signIn, tokensSchema } from './sign-in.js';
 import { startApp } from './start-app.js';
 
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
@@ -51,7 +51,7 @@ function verifyAccessToken(accessToken: string): AccessTokenPayload {
 
 describe('Sign-in with an SNU Google account', () => {
   it('answers with an access token and a refresh token and creates the User', async () => {
-    const response = await postIdToken(googleIdToken({ sub: '100000000000000000001', email: 'first@snu.ac.kr' }));
+    const response = await postSignIn(app, { sub: '100000000000000000001', email: 'first@snu.ac.kr' });
 
     expect(response.status).toBe(200);
     tokensSchema.parse(response.body);

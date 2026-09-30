@@ -30,6 +30,7 @@ describe('Editing the profile with an invalid value', () => {
     ['a blank department', { department: '   ' }],
     ['a department longer than 50 characters', { department: 'a'.repeat(51) }],
     ['a department that is not text', { department: 5 }],
+    ['no department', { department: null }],
     ['an admission year before 1946, when SNU was founded', { admissionYear: 1945 }],
     ['an admission year that is not a whole number', { admissionYear: 2020.5 }],
     ['an admission year sent as text', { admissionYear: '2020' }],
@@ -45,7 +46,7 @@ describe('Editing the profile with an invalid value', () => {
     ['the same hashtag twice in another case', { hashtags: ['AI', 'ai'] }],
     ['hashtags that are not a list', { hashtags: null }],
   ])('refuses %s with 400, names the field and changes nothing', async (_case, body) => {
-    const { accessToken } = await signIn(app, { name: '홍길동' });
+    const { accessToken } = await signIn(app);
     const before: unknown = (await getProfile(app, accessToken)).body;
 
     const response = await patchProfile(app, accessToken, body);
