@@ -7,6 +7,7 @@ import { PrismaService } from '../common/prisma.service.js';
 import { Settings } from '../common/settings.js';
 import { UsersService } from '../users/users.service.js';
 import { AccessTokenPayload } from './access-token.guard.js';
+import { SignInResultDto } from './dto/sign-in-result.dto.js';
 import { TokensDto } from './dto/tokens.dto.js';
 import { GoogleIdTokenVerifier } from './google-id-token.verifier.js';
 import { SessionsService } from './sessions.service.js';
@@ -53,7 +54,7 @@ export class AuthService {
 
   // Signs in with a Google ID token. The first sign-in of a Google account creates its User. A User has one session,
   // so the sign-in ends the one on the other phone.
-  async signIn(idToken: string): Promise<TokensDto> {
+  async signIn(idToken: string): Promise<SignInResultDto> {
     const claims = await this.googleVerifier.verify(idToken, [
       this.settings.get('GOOGLE_APP_CLIENT_ID', { infer: true }),
     ]);
@@ -66,7 +67,11 @@ export class AuthService {
     if (claims.email_verified !== true || claims.email === undefined) {
       throw new ForbiddenException("The Google account's email address is not verified.");
     }
-    const user = await this.users.findOrCreate(claims.sub, claims.email);
+    const user = await this.users.findOrCreate({
+      googleSubject: claims.sub,
+      email: claims.email,
+      googleName: claims.name ?? '',
+    });
     const refreshToken = newRefreshToken();
     const { sessionId, replacedSessionIds } = await this.prisma.$transaction(async (tx) => {
       await this.users.lock(user.id, tx);
@@ -77,7 +82,11 @@ export class AuthService {
       return { sessionId: id, replacedSessionIds: ended };
     });
     this.sessions.announceEnd(replacedSessionIds, 'replaced');
-    return { accessToken: await this.signAccessToken(user.id, sessionId), refreshToken: refreshToken.token };
+    return {
+      accessToken: await this.signAccessToken(user.id, sessionId),
+      refreshToken: refreshToken.token,
+      onboarding: this.users.onboardingOf(user),
+    };
   }
 
   async refresh(refreshToken: string): Promise<TokensDto> {

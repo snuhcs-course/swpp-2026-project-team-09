@@ -16,19 +16,60 @@ export const tokensSchema = z.strictObject({
 
 export type Tokens = z.infer<typeof tokensSchema>;
 
+// The answer to a sign-in, exactly.
+export const signInResultSchema = tokensSchema.extend({
+  onboarding: z.strictObject({
+    completed: z.boolean(),
+    suggestion: z.strictObject({ name: z.string().nullable(), department: z.string().nullable() }).optional(),
+  }),
+});
+
+export type SignInResult = z.infer<typeof signInResultSchema>;
+
 export function postSignIn(app: INestApplication<Server>, claims: Partial<TokenPayload> = {}): request.Test {
   return request(app.getHttpServer())
     .post('/auth/google')
     .send({ idToken: googleIdToken(claims) });
 }
 
-// Signs in as the app does, with a Google ID token for a new SNU account unless claims change it.
-export async function signIn(app: INestApplication<Server>, claims: Partial<TokenPayload> = {}): Promise<Tokens> {
+// Signs in as the app does, with a Google ID token for a new SNU account unless claims change it, and stops before
+// onboarding.
+export async function signInBeforeOnboarding(
+  app: INestApplication<Server>,
+  claims: Partial<TokenPayload> = {},
+): Promise<SignInResult> {
   const response = await postSignIn(app, claims);
   if (response.status !== 200) {
     throw new Error(`Sign-in answered ${response.status}: ${JSON.stringify(response.body)}`);
   }
-  return tokensSchema.parse(response.body);
+  return signInResultSchema.parse(response.body);
+}
+
+export function postOnboarding(
+  app: INestApplication<Server>,
+  accessToken: string | undefined,
+  body: object,
+): request.Test {
+  return withAccessToken(request(app.getHttpServer()).post('/users/me/onboarding'), accessToken).send(body);
+}
+
+export const ONBOARDED_PROFILE = { name: '홍길동', department: '컴퓨터공학부' };
+
+// Signs in, and completes onboarding with the profile given if the User has not yet, so that every User route lets
+// the User in.
+export async function signIn(
+  app: INestApplication<Server>,
+  claims: Partial<TokenPayload> = {},
+  profile: typeof ONBOARDED_PROFILE = ONBOARDED_PROFILE,
+): Promise<Tokens> {
+  const { accessToken, refreshToken, onboarding } = await signInBeforeOnboarding(app, claims);
+  if (!onboarding.completed) {
+    const response = await postOnboarding(app, accessToken, profile);
+    if (response.status !== 204) {
+      throw new Error(`Onboarding answered ${response.status}: ${JSON.stringify(response.body)}`);
+    }
+  }
+  return { accessToken, refreshToken };
 }
 
 export function postRefreshToken(app: INestApplication<Server>, refreshToken: string): request.Test {
@@ -57,9 +98,13 @@ export async function useLongAgo(prisma: PrismaClient, refreshToken: string): Pr
   });
 }
 
+// Sends the access token as the app does, or no token at all.
+export function withAccessToken(call: request.Test, accessToken: string | undefined): request.Test {
+  return accessToken === undefined ? call : call.auth(accessToken, { type: 'bearer' });
+}
+
 export function postSignOut(app: INestApplication<Server>, accessToken?: string): request.Test {
-  const post = request(app.getHttpServer()).post('/auth/sign-out');
-  return accessToken === undefined ? post : post.auth(accessToken, { type: 'bearer' });
+  return withAccessToken(request(app.getHttpServer()).post('/auth/sign-out'), accessToken);
 }
 
 export function sessionOf(accessToken: string): string {
@@ -68,8 +113,7 @@ export function sessionOf(accessToken: string): string {
 
 // GET /users/me stands for every route that needs an access token.
 export function getMe(app: INestApplication<Server>, accessToken?: string): request.Test {
-  const get = request(app.getHttpServer()).get('/users/me');
-  return accessToken === undefined ? get : get.auth(accessToken, { type: 'bearer' });
+  return withAccessToken(request(app.getHttpServer()).get('/users/me'), accessToken);
 }
 
 export const administratorTokensSchema = z.strictObject({

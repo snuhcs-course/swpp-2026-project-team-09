@@ -106,3 +106,13 @@ _Avoid_: Geofence
 **Private Zone**:
 An area in which a User's location is hidden from everyone else.
 _Avoid_: Hidden area
+
+### The app
+
+**Onboarding**:
+What a new User completes after the first sign-in: confirming a name and a department.
+_Avoid_: Sign-up, registration
+
+**Lobby**:
+What the app fetches to run, such as the User's profile.
+_Avoid_: Home, bootstrap

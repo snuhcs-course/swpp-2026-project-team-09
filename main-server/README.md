@@ -61,13 +61,15 @@ Once the server is running, a store that goes down makes readiness answer 503 in
 
 The app signs in with Google and sends the ID token it gets to the main server:
 
-- `POST /auth/google` with `{ "idToken": "..." }` answers `200 { "accessToken": "...", "refreshToken": "..." }`. The
-  first sign-in of a Google account creates its User.
+- `POST /auth/google` with `{ "idToken": "..." }` answers
+  `200 { "accessToken": "...", "refreshToken": "...", "onboarding": { ... } }`. The first sign-in of a Google account
+  creates its User, with an empty name and department. `onboarding` tells the app where to go next (see
+  [Onboarding and the lobby](#onboarding-and-the-lobby)).
 - Only SNU accounts get in: the token's hosted domain claim must be `snu.ac.kr` and its email address verified. Another
   account gets 403. An invalid or expired ID token, or one issued to another client than the app's
   (`GOOGLE_APP_CLIENT_ID`), the admin site's included, gets 401.
 - The access token is valid for 1 hour, and its audience is `snu-now-app`. It names the User (`sub`) and the session
-  (`sid`). Send it as `Authorization: Bearer <accessToken>`. `GET /users/me` answers the signed-in User. The refresh
+  (`sid`). Send it as `Authorization: Bearer <accessToken>`. `GET /users/me` answers the signed-in User once they have finished onboarding. The refresh
   token is valid for 30 days, and only its hash is stored.
 - A User has one session: the app signed in on one phone. A sign-in ends the session before it, on whatever phone. The
   ended session's refresh token gets 401, and its access tokens get 401 from the next request on, with
@@ -90,6 +92,50 @@ stops when they are the same. They are not secrets. Access tokens are signed wit
 `ACCESS_TOKEN_PRIVATE_KEY`. Another server that checks them is given only `ACCESS_TOKEN_PUBLIC_KEY`, never the private
 key; the socket server is the first, in ticket 11. It accepts a User's access token only, disconnects the connections
 of a session that ends, and closes each connection when its access token expires.
+
+## Onboarding and the lobby
+
+A new User's name and department start empty, and the app's onboarding screen asks for them. The app enters the
+lobby, which gives it what it needs to run, after a sign-in or a start with stored tokens, and right after onboarding.
+
+1. The sign-in's `onboarding` is `{ "completed": true }` once the User has finished onboarding. Until then it is
+   `{ "completed": false, "suggestion": { "name": ..., "department": ... } }`, read from the Google account's name, which
+   for an SNU account reads `홍길동 / 학생 / 컴퓨터공학부`. A part that cannot be read, or that the
+   [profile's limits](#profile) refuse, is `null`. The onboarding screen starts from the suggestion.
+2. Until then, every User route but two answers
+   `403 { "code": "ONBOARDING_REQUIRED", "message": "Complete onboarding first.", "onboarding": { ... } }`, with the
+   sign-in's `onboarding` read from the Google name of the last sign-in. So an app that restarts halfway gets onboarding
+   back from its first request, the lobby's. `AccessTokenGuard` checks it on every request, in the query that reads the
+   session. The two routes open before onboarding are marked `@AllowBeforeOnboarding()`: `POST /users/me/onboarding`
+   and `POST /auth/sign-out`.
+3. `POST /users/me/onboarding` with `{ "name": "...", "department": "...", "admissionYear": ..., "hashtags": [...] }`
+   saves the profile and completes onboarding, and answers 204. The name and the department are required, and the
+   profile's limits apply. The app sends it again when the answer was lost: a repeat saves the profile again.
+4. `POST /lobby`, with no body, answers `200 { "profile": { ... } }`, the profile as `GET /users/me/profile` gives it.
+   Later features add what the app needs when it starts.
+
+A sign-in on another phone during onboarding ends the first phone's session as any sign-in does: its next request, the
+onboarding's included, gets 401 with `"code": "SESSION_REPLACED"`, and the other phone goes through onboarding.
+
+A Google name that is not three parts separated by `/` is logged as a warning with the account's email address. The
+form is confirmed on an undergraduate's account only.
+
+## Profile
+
+A User reads and edits their own profile. The routes name no User, so they never reach another User's profile.
+
+- `GET /users/me/profile` answers `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...] }`. Like
+  every User route but two, it needs the User to have finished onboarding.
+- `PATCH /users/me/profile` with some of these fields changes only those and answers with the whole profile. `null`
+  empties `admissionYear`, and `[]` empties `hashtags`. The name and the department cannot be emptied.
+- A value outside these limits gets 400 with a message that starts with the field, and nothing changes. Spaces around
+  text are dropped first. The limits are set in `src/users/dto/update-profile.dto.ts`, and onboarding follows the same
+  ones.
+  - `name`: 1 to 30 characters.
+  - `department`: 1 to 50 characters. A double major is written out, such as `컴퓨터공학부, 경제학부`.
+  - `admissionYear`: a whole number from 1946, when SNU was founded, to this year in Korea.
+  - `hashtags`: at most 20. Each is kept without the `#` in front, in the case sent, and then has 1 to 30 characters
+    without whitespace. None may appear twice, whatever the case.
 
 ## Administrators
 
@@ -175,13 +221,15 @@ src/
 │   ├── redis-idempotency.store.ts   keeps the results of requests safe to repeat in Redis
 │   ├── route-access.ts              who may call a route: anyone, a User or an Administrator
 │   ├── public.decorator.ts          @Public(): opens a route to requests without an access token
+│   ├── allow-before-onboarding.decorator.ts  @AllowBeforeOnboarding(): opens a User's route before onboarding
 │   ├── administrator-only.decorator.ts  @AdministratorOnly(): gives a route to Administrators
 │   ├── current-user.decorator.ts    @CurrentUser(): the signed-in User in a handler
 │   └── current-administrator.decorator.ts  @CurrentAdministrator(): the signed-in Administrator
 ├── generated/                       Prisma Client, generated by `pnpm install` (not committed)
 ├── health/                          a feature: the liveness and readiness checks
 ├── auth/                            a feature: app and admin site sign-in, refresh, sign-out, the access token checks
-├── users/                           a feature: the signed-in User
+├── users/                           a feature: the signed-in User, their profile and onboarding
+├── lobby/                           a feature: what the app needs when it starts
 └── administrators/                  a feature: the Administrators, who register and remove each other
 scripts/                             commands run by hand, such as `pnpm keys:generate`
 test/                                tests, run against PostgreSQL and Redis in containers
@@ -198,7 +246,7 @@ To change the schema, with the data stores running and `.env` in place:
 2. Record the change as a migration and apply it to your database. Name it after what it does:
 
    ```bash
-   pnpm exec prisma migrate dev --name add-profile
+   pnpm exec prisma migrate dev --name add-parties
    ```
 
 3. Regenerate Prisma Client, so that the code sees the new schema:
@@ -215,34 +263,36 @@ Prisma is pinned at 7.10.0. Ignore the message that suggests updating to Prisma 
 
 ## Adding a feature module
 
-The steps add a feature named `profile`. Use a short lowercase name, with dashes between words (`global-event`).
+The steps add a feature named `party`. Use a short lowercase name, with dashes between words (`global-event`).
 
-1. Create the module. It lands in `src/profile/` and is added to `AppModule`:
+1. Create the module. It lands in `src/party/` and is added to `AppModule`:
 
    ```bash
-   pnpm exec nest g module profile
+   pnpm exec nest g module party
    ```
 
 2. Create the controller, which holds the HTTP routes, and the service, which holds the logic. Both are registered in
-   `ProfileModule`. `--no-spec` skips unit test files, because this project tests through HTTP (step 8):
+   `PartyModule`. `--no-spec` skips unit test files, because this project tests through HTTP (step 8):
 
    ```bash
-   pnpm exec nest g controller profile --no-spec
-   pnpm exec nest g service profile --no-spec
+   pnpm exec nest g controller party --no-spec
+   pnpm exec nest g service party --no-spec
    ```
 
 3. Every route is exactly one of three kinds. Unmarked, it is a User's: it needs a User's access token, and a request
    without one gets 401. Mark a route, or a whole controller, with `@Public()` to open it to anyone, or with
    `@AdministratorOnly()` to give it to [Administrators](#administrators). A marking on a handler replaces its
-   controller's, so mark a handler with one of them at most. A handler reads the signed-in User with
-   `@CurrentUser() user: SignedInUser`, as `src/users/users.controller.ts` does.
-4. Put request and response shapes in `src/profile/dto/`. Describe a request body as a zod schema and give it to the
+   controller's, so mark a handler with one of them at most. A User's route also needs the User to have finished
+   [onboarding](#onboarding-and-the-lobby); mark it `@AllowBeforeOnboarding()` only when onboarding itself needs it.
+   A handler reads the signed-in User with `@CurrentUser() user: SignedInUser`, as `src/users/users.controller.ts`
+   does.
+4. Put request and response shapes in `src/party/dto/`. Describe a request body as a zod schema and give it to the
    decorator, as `src/auth/dto/sign-in.dto.ts` and `AuthController` do: `@Body({ schema: signInSchema })`. A body that
    does not match gets 400 with a message naming the field. A stored record is a model in `prisma/schema.prisma`
    (step 5), and the code uses the type that Prisma Client generates for it:
-   `import { Profile } from '../generated/prisma/client.js'`. That type exists only at compile time, so add a class to
-   `src/profile/entities/` only when a record is needed as a class, for example to put decorators on its fields:
-   `class ProfileEntity implements Profile`. Everything else that belongs to the feature stays inside `src/profile/`.
+   `import { Party } from '../generated/prisma/client.js'`. That type exists only at compile time, so add a class to
+   `src/party/entities/` only when a record is needed as a class, for example to put decorators on its fields:
+   `class PartyEntity implements Party`. Everything else that belongs to the feature stays inside `src/party/`.
 5. If the feature stores records, add its models to `prisma/schema.prisma` and record a migration (see
    [Database](#database)). Read and write them by injecting `PrismaService`. Every record is identified by a UUID v4
    generated by the database:
@@ -251,21 +301,22 @@ The steps add a feature named `profile`. Use a short lowercase name, with dashes
    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
    ```
 
-6. If another feature needs `ProfileService`, add it to `exports` in `ProfileModule` and add `ProfileModule` to the
+6. If another feature needs `PartyService`, add it to `exports` in `PartyModule` and add `PartyModule` to the
    other module's `imports`. Code shared by two or more features goes in `src/common/`.
 7. If the feature needs a new setting, add it to the schema in `src/common/settings.ts`, to `.env.example`, to your own
    `.env` and to the settings in `test/global-setup.ts`. Compose passes `.env` to the server. Add the setting to the
    `main-server` service's `environment` in `compose.yaml` only when it needs another value inside Compose, as the
    database and Redis addresses do. Read it by injecting `ConfigService<Settings, true>` and calling
    `get('NAME', { infer: true })`.
-8. Write `test/profile.e2e-spec.ts`. Start the server with `startApp` from `test/start-app.ts` and call its routes
-   with `supertest`, as `test/health.e2e-spec.ts` does. `signIn` from `test/sign-in.ts` signs in a new User and
-   returns its tokens, and `signInAsAdministrator` signs in an Administrator. oxlint's `max-lines` (300) and
+8. Write `test/party.e2e-spec.ts`. Start the server with `startApp` from `test/start-app.ts` and call its routes
+   with `supertest`, as `test/health.e2e-spec.ts` does. `signIn` from `test/sign-in.ts` signs in a new User,
+   completes onboarding and returns the tokens, `signInBeforeOnboarding` stops before onboarding, and
+   `signInAsAdministrator` signs in an Administrator. oxlint's `max-lines` (300) and
    `max-lines-per-function` (50) apply to tests too: split a long file by route, as `test/refresh.e2e-spec.ts` and
    `test/sign-out.e2e-spec.ts` split the auth tests, and a long `describe` into several.
 9. Run `pnpm format`, then the four checks.
 
-Import classes with a plain `import { ProfileService } from ...`, never `import type`. Nest looks the class up at
+Import classes with a plain `import { PartyService } from ...`, never `import type`. Nest looks the class up at
 runtime to inject it. An interface in a handler's parameters is the exception: TypeScript requires
 `import { CurrentUser, type SignedInUser } from ...`.
 

@@ -1,8 +1,10 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { AllowBeforeOnboarding } from '../common/allow-before-onboarding.decorator.js';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
 import { Public } from '../common/public.decorator.js';
 import { AuthService } from './auth.service.js';
 import { type RefreshDto, refreshSchema } from './dto/refresh.dto.js';
+import { SignInResultDto } from './dto/sign-in-result.dto.js';
 import { type SignInDto, signInSchema } from './dto/sign-in.dto.js';
 import { TokensDto } from './dto/tokens.dto.js';
 
@@ -14,7 +16,7 @@ export class AuthController {
   @Public()
   @Post('google')
   @HttpCode(HttpStatus.OK)
-  signIn(@Body({ schema: signInSchema }) body: SignInDto): Promise<TokensDto> {
+  signIn(@Body({ schema: signInSchema }) body: SignInDto): Promise<SignInResultDto> {
     return this.auth.signIn(body.idToken);
   }
 
@@ -27,6 +29,7 @@ export class AuthController {
     return this.auth.refresh(body.refreshToken);
   }
 
+  @AllowBeforeOnboarding()
   @Post('sign-out')
   @HttpCode(HttpStatus.NO_CONTENT)
   signOut(@CurrentUser() user: SignedInUser): Promise<void> {

@@ -1,9 +1,18 @@
-import { CanActivate, ExecutionContext, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import { allowsBeforeOnboarding } from '../common/allow-before-onboarding.decorator.js';
 import { SignedInRequest } from '../common/current-user.decorator.js';
 import { routeAccess } from '../common/route-access.js';
+import { UsersService } from '../users/users.service.js';
 import { SessionsService } from './sessions.service.js';
 
 export const USER_TOKEN_AUDIENCE = 'snu-now-app';
@@ -24,13 +33,15 @@ export function bearerToken(request: Request): string {
 }
 
 // Registered globally in AuthModule: a route marked neither @Public() nor @AdministratorOnly() needs a User's access
-// token. Every request reads the session, so an access token of a session that has ended is refused at once.
+// token. Every request reads the session, so an access token of a session that has ended is refused at once. A User
+// who has not finished onboarding gets 403 on every such route but those marked @AllowBeforeOnboarding().
 @Injectable()
 export class AccessTokenGuard implements CanActivate {
   constructor(
     private readonly jwt: JwtService,
     private readonly reflector: Reflector,
     private readonly sessions: SessionsService,
+    private readonly users: UsersService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -50,6 +61,15 @@ export class AccessTokenGuard implements CanActivate {
     }
     if (session === null || session.endedAt !== null) {
       throw new UnauthorizedException();
+    }
+    if (session.user.onboardedAt === null && !allowsBeforeOnboarding(this.reflector, context)) {
+      throw new ForbiddenException({
+        statusCode: HttpStatus.FORBIDDEN,
+        error: 'Forbidden',
+        code: 'ONBOARDING_REQUIRED',
+        message: 'Complete onboarding first.',
+        onboarding: this.users.onboardingOf(session.user),
+      });
     }
     request.user = { id: sub, sessionId: sid };
     return true;

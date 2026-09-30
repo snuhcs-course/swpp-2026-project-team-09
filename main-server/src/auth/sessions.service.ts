@@ -3,6 +3,9 @@ import { ClientProxy } from '@nestjs/microservices';
 import { MESSAGING_CLIENT } from '../common/messaging.module.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { Prisma, Session, SessionEndReason } from '../generated/prisma/client.js';
+import { OnboardingSource } from '../users/dto/onboarding.dto.js';
+
+type SessionWithUser = Pick<Session, 'endedAt' | 'endReason'> & { user: OnboardingSource };
 
 // The socket server reads the same event.
 interface SessionEndedEvent {
@@ -19,8 +22,12 @@ export class SessionsService {
     @Inject(MESSAGING_CLIENT) private readonly messaging: ClientProxy,
   ) {}
 
-  find(id: string): Promise<Pick<Session, 'endedAt' | 'endReason'> | null> {
-    return this.prisma.session.findUnique({ where: { id }, select: { endedAt: true, endReason: true } });
+  // With what the onboarding check needs of its User, in the same query.
+  find(id: string): Promise<SessionWithUser | null> {
+    return this.prisma.session.findUnique({
+      where: { id },
+      select: { endedAt: true, endReason: true, user: { select: { onboardedAt: true, googleName: true } } },
+    });
   }
 
   // Call it after UsersService.lock on their User, in the same transaction.
