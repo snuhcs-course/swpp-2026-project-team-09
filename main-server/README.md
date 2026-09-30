@@ -152,7 +152,9 @@ Each command fails when it finds a problem. Run all four before opening a pull r
 | `pnpm typecheck`    | TypeScript in strict mode                    |
 | `pnpm test`         | Vitest tests in `test/`                      |
 
-`pnpm test` needs Docker running. It starts its own PostgreSQL and Redis containers and removes them afterwards.
+`pnpm test` needs Docker running. It starts its own PostgreSQL and Redis containers and removes them afterwards. The
+test files run in parallel, except `test/redis-idempotency-store.e2e-spec.ts`: it waits for Redis to expire records in
+real time, so it runs alone after the others.
 
 ## Folder layout
 
