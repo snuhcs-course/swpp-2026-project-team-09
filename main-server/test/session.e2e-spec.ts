@@ -6,9 +6,9 @@ import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { redisSettings, startRedis } from './containers.js';
 import { googleSubject } from './google.js';
 import { overlap } from './overlap.js';
+import { startProxy } from './proxy.js';
 import {
   getMe,
   postRefreshToken,
@@ -180,14 +180,15 @@ describe('An access token without a session', () => {
   });
 });
 
-// Starts its own Redis and stops it once the User has signed in, so that the shared Redis stays up.
+// Reaches the shared Redis through a proxy and stops the proxy once the server is running, so that Redis stays up for
+// the other test files.
 describe('Sessions with Redis down', () => {
   let appWithoutRedis: INestApplication<Server>;
 
   beforeAll(async () => {
-    const ownRedis = await startRedis();
-    appWithoutRedis = await startApp({ ...settings, ...redisSettings(ownRedis) });
-    await ownRedis.stop();
+    const redis = await startProxy(settings.REDIS_HOST, Number(settings.REDIS_PORT));
+    appWithoutRedis = await startApp({ ...settings, REDIS_HOST: '127.0.0.1', REDIS_PORT: String(redis.port) });
+    await redis.stop();
   });
 
   afterAll(async () => {

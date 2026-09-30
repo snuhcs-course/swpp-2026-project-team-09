@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
-import { matchDatabaseUrl, redisSettings, startPostgres, startRedis } from './containers.js';
+import { startProxy } from './proxy.js';
 import { startApp } from './start-app.js';
 
 describe('Health checks with the database and Redis up', () => {
@@ -34,14 +34,16 @@ describe('Health checks with the database and Redis up', () => {
   });
 });
 
-// The cases below start their own store and stop it once the server is running, so the shared stores stay up.
+// The cases below reach one shared store through a proxy and stop the proxy once the server is running, so that the
+// store stays up for the other test files.
 
 describe('Health checks with Redis down', () => {
   let app: INestApplication<Server>;
 
   beforeAll(async () => {
-    const redis = await startRedis();
-    app = await startApp({ ...inject('settings'), ...redisSettings(redis) });
+    const settings = inject('settings');
+    const redis = await startProxy(settings.REDIS_HOST, Number(settings.REDIS_PORT));
+    app = await startApp({ ...settings, REDIS_HOST: '127.0.0.1', REDIS_PORT: String(redis.port) });
     await redis.stop();
   });
 
@@ -71,9 +73,13 @@ describe('Health checks with the database down', () => {
   let app: INestApplication<Server>;
 
   beforeAll(async () => {
-    const postgres = await startPostgres();
-    app = await startApp({ ...inject('settings'), DATABASE_URL: matchDatabaseUrl(postgres) });
-    await postgres.stop();
+    const settings = inject('settings');
+    const databaseUrl = new URL(settings.DATABASE_URL);
+    const database = await startProxy(databaseUrl.hostname, Number(databaseUrl.port));
+    databaseUrl.hostname = '127.0.0.1';
+    databaseUrl.port = String(database.port);
+    app = await startApp({ ...settings, DATABASE_URL: databaseUrl.toString() });
+    await database.stop();
   });
 
   afterAll(async () => {

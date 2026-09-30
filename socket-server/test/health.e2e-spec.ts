@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
-import { redisSettings, startRedis } from './containers.js';
+import { startProxy } from './proxy.js';
 import { startApp } from './start-app.js';
 
 describe('Health checks with Redis up', () => {
@@ -34,14 +34,16 @@ describe('Health checks with Redis up', () => {
   });
 });
 
-// The tests below start their own Redis and stop it once the server is running, so the shared Redis stays up.
+// The cases below reach one shared store through a proxy and stop the proxy once the server is running, so that the
+// store stays up for the other test files.
 
 describe('Health checks with Redis down', () => {
   let app: INestApplication<Server>;
 
   beforeAll(async () => {
-    const redis = await startRedis();
-    app = await startApp({ ...inject('settings'), ...redisSettings(redis) });
+    const settings = inject('settings');
+    const redis = await startProxy(settings.REDIS_HOST, Number(settings.REDIS_PORT));
+    app = await startApp({ ...settings, REDIS_HOST: '127.0.0.1', REDIS_PORT: String(redis.port) });
     await redis.stop();
   });
 
