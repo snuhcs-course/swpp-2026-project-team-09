@@ -111,10 +111,16 @@ The operator's service. The university's notices reach it through `서울대.inf
   - Semester weekdays: 08:00 to 21:00, every 5 to 7 minutes until 19:00 and every 20 minutes after.
   - Vacations: 08:00 to 18:00.
   - No service at weekends, on public holidays or on the university's anniversary.
-- Permission:
-  - The department in charge of the shuttle is 캠퍼스관리과, (02) 880-5135 [S1].
-  - 정보화본부 was asked by email on 2026-09-30 whether it manages this data, whom to ask otherwise, and whether coordinates with a time of observation exist. No reply yet.
-  - The operator takes inquiries through a passenger form [S3].
+- Permission and contacts:
+  - 정보화본부 was asked by email on 2026-09-30 and answered the same day.
+    - The operator, 동영관광, manages the live positions.
+    - 캠퍼스관리과 holds the contract with the operator, so questions about the data go there.
+    - It suggested the public data portal. data.go.kr has no dataset for the campus shuttle. Searches for 서울대학교 셔틀, 순환셔틀, 셔틀버스 위치 and 관악캠퍼스 found only other institutions' shuttles and the self-driving shuttle that an SNU institute runs in Pangyo [S4].
+  - 캠퍼스관리과 is the department in charge of the shuttle [S1].
+    - Its duty list puts the shuttle's operation and contract under (02) 880-5228 [S5]. Two staff members share that number, and the university's member search does not say which of them handles the shuttle.
+    - (02) 880-5135, the number on the shuttle page, belongs to the head of the drivers' team [S5].
+  - 동영관광's main number is 1588-9718. The privacy policy on its site lists the company's mail addresses [S6]. It also takes passenger inquiries through a form [S3].
+  - On 2026-09-30 김태현 emailed 캠퍼스관리과's shuttle staff and 동영관광. The email asked whether the app may show the positions, how often it may ask, and whether coordinates with a time of observation exist. No reply yet.
 - Unusable: the university's old service at `shuttlebus.snu.ac.kr`. Its TLS certificate expired on 2021-06-26, and its vehicle call returned an empty list during service hours on 2026-09-30.
 
 ## 6. OpenStreetMap
@@ -290,7 +296,8 @@ The root `.gitignore` keeps every `.env*` file out of Git except `.env*.example`
 
 ## 10. Unverified
 
-- The shuttle: whether regular requests are permitted, and whether coordinates exist. 정보화본부 has not replied yet.
+- The shuttle: whether regular requests are permitted, and whether coordinates exist. 캠퍼스관리과 and 동영관광 have not replied yet.
+- The shuttle: mySNU offers a 셔틀버스 service that shows where the shuttle is. Whether it uses a feed other than Busin is unchecked.
 - Kakao: the Android package name and the key hashes. The walking route has not been called.
 - Kakao: what the Android map SDK counts as a call, and when the daily quota resets.
 - Google: the project's owner, and an Android client for the Iteration 1 package name.
@@ -301,6 +308,9 @@ The root `.gitignore` keeps every `.env*` file out of Git except `.env*.example`
 [S1]: https://www.snu.ac.kr/about/gwanak/shuttles/campus_shuttles
 [S2]: https://sites.google.com/dongyeongtour.co.kr/snu/main
 [S3]: https://dycs-widget.web.app/?tenant=snu&type=inquiry
+[S4]: https://www.data.go.kr/tcs/dss/selectDataSetList.do?keyword=%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EA%B5%90%20%EC%85%94%ED%8B%80
+[S5]: https://www.snu.ac.kr/about/overview/organization/facilities_bureau/management
+[S6]: https://docs.google.com/presentation/d/e/2PACX-1vRDryW8Tlal0Gtu572IkeJlJ2CoKHZuKpB8NAT4qHaWs-Usm3QbupQWR0lEPBHTnxt0Q7hWYYTkkJP4/pub
 [O1]: https://wiki.openstreetmap.org/wiki/Overpass_API
 [O2]: https://osmfoundation.org/wiki/Licence/Attribution_Guidelines
 [O3]: https://www.openstreetmap.org/copyright
