@@ -74,3 +74,63 @@ model Administrator {
 
   @@map("administrators")
 }
+
+// One restaurant's menus on one day, as the last collection of that restaurant and day read them. A later collection
+// replaces its entries.
+model RestaurantDay {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  restaurant     String
+  // A calendar day in Asia/Seoul.
+  date           DateTime    @db.Date
+  // The original line of text, such as "※ 운영시간 : 11:00~14:30".
+  operatingHours String?     @map("operating_hours")
+  collectedAt    DateTime    @map("collected_at")
+  entries        MenuEntry[]
+
+  @@unique([date, restaurant])
+  @@map("restaurant_days")
+}
+
+model MenuEntry {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  restaurantDayId String        @map("restaurant_day_id") @db.Uuid
+  restaurantDay   RestaurantDay @relation(fields: [restaurantDayId], references: [id])
+  meal            Meal
+  name            String
+  // In won. Absent when the page gives none.
+  price           Int?
+  // The order in which the page lists the day's entries.
+  position        Int
+
+  @@index([restaurantDayId])
+  @@map("menu_entries")
+}
+
+// Declared in the order of the day, which is the order the menus are served in.
+enum Meal {
+  breakfast
+  lunch
+  dinner
+
+  @@map("meal")
+}
+
+// A page or feed the worker server collects. A new source adds its value with a migration.
+enum CollectionSource {
+  coop_menus
+  dormitory_menus
+  veterinary_menus
+
+  @@map("collection_source")
+}
+
+// When a source was last collected successfully and, apart from it, its last failure.
+model CollectionStatus {
+  source            CollectionSource @id
+  lastSucceededAt   DateTime?        @map("last_succeeded_at")
+  lastFailedAt      DateTime?        @map("last_failed_at")
+  // What went wrong, as the worker described it.
+  lastFailureReason String?          @map("last_failure_reason")
+
+  @@map("collection_statuses")
+}

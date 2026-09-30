@@ -141,6 +141,44 @@ export class AdminEventsController {
   Administrator of the test settings, and `signInAsNewAdministrator(app)` registers a new one and signs in as them. The
   test files share one database, so sign out or remove only a new one.
 
+## Menus
+
+The worker server collects the menus of the Co-op, dormitory and veterinary college pages and sends them as
+`menus-collected` (see [Messages from the worker server](#messages-from-the-worker-server)). The app reads them:
+
+- `GET /menus?date=2026-10-01` with a User's access token answers the menus of that day, a calendar day in
+  Asia/Seoul, as a list of restaurants ordered by name:
+
+  ```json
+  [
+    {
+      "restaurant": "학생회관식당",
+      "operatingHours": "※ 운영시간 : 11:00~14:30",
+      "collectedAt": "2026-09-30T21:00:00.000Z",
+      "meals": [
+        {
+          "meal": "lunch",
+          "entries": [
+            { "name": "제육볶음", "price": 6000 },
+            { "name": "비빔밥", "price": null }
+          ]
+        }
+      ]
+    }
+  ]
+  ```
+
+- `meals` holds the meals that have entries, in the order breakfast, lunch, dinner, and each meal's entries in the
+  page's order. `price` is in won, and `null` when the page gives none. `operatingHours` is the page's line of text, or
+  `null`. `collectedAt` is when the collection that stored this restaurant's menus for the day read the page.
+- A day with nothing stored answers `[]`, so the app can ask for each of the coming days. A `date` that is not a
+  calendar day gets 400.
+
+Each restaurant and day in a `menus-collected` message replaces what was stored for that restaurant and day, its entries
+and its operating hours. So the same message sent twice leaves one set of records, and a menu the page changed or
+removed does not linger. A restaurant the message leaves out keeps what it had for that day. A failed collection
+changes no menu, so the app keeps getting the last menus collected.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
@@ -173,6 +211,7 @@ src/
 │   ├── messaging.ts                 options for NestJS messaging over Redis
 │   ├── redis.module.ts              makes a Redis client available to every feature
 │   ├── redis-idempotency.store.ts   keeps the results of requests safe to repeat in Redis
+│   ├── worker-message.ts            @WorkerMessage(): checks a message from the worker server against its schema
 │   ├── route-access.ts              who may call a route: anyone, a User or an Administrator
 │   ├── public.decorator.ts          @Public(): opens a route to requests without an access token
 │   ├── administrator-only.decorator.ts  @AdministratorOnly(): gives a route to Administrators
@@ -182,7 +221,9 @@ src/
 ├── health/                          a feature: the liveness and readiness checks
 ├── auth/                            a feature: app and admin site sign-in, refresh, sign-out, the access token checks
 ├── users/                           a feature: the signed-in User
-└── administrators/                  a feature: the Administrators, who register and remove each other
+├── administrators/                  a feature: the Administrators, who register and remove each other
+├── collection/                      a feature: each source's collection status, and the worker's failure messages
+└── menus/                           a feature: the menus the worker collects, stored and served by day
 scripts/                             commands run by hand, such as `pnpm keys:generate`
 test/                                tests, run against PostgreSQL and Redis in containers
 ```
@@ -297,3 +338,58 @@ create(@Body({ schema: createPartySchema }) body: CreatePartyDto, @CurrentUser()
 - In a test, send the key with `.set('Idempotency-Key', randomUUID())`, as `test/idempotency.e2e-spec.ts` does.
 
 The results are kept in Redis by `src/common/redis-idempotency.store.ts`.
+
+## Messages from the worker server
+
+The worker server only collects. It sends what it read to the main server over messaging (`src/common/messaging.ts`),
+and the main server checks it, stores it and answers. Every collector follows these rules.
+
+- **Name and shape**: a request-and-response message, handled with `@MessagePattern()` in the feature's controller. It
+  is named in kebab case after what happened: `menus-collected` for what a collection of menus read, and
+  `collection-failed`. The payload is a JSON object. It names its `source`, a value of `CollectionSource` in
+  `prisma/schema.prisma`, and the time the collection ran, in ISO 8601 with an offset (`collectedAt`, `failedAt`). A
+  day is `YYYY-MM-DD`, a calendar day in Asia/Seoul. A field without a value is `null`, not left out.
+- **Validation**: the handler takes the payload with `@WorkerMessage(schema)` from `src/common/worker-message.ts`, and
+  the schema is zod in the feature's `dto/`, such as `src/menus/dto/menus-collected.dto.ts`. Use `z.strictObject`, so
+  that a misspelt field is refused instead of dropped. `main.ts` connects messaging without `inheritAppConfig`, so no
+  global guard, pipe or interceptor reaches a message handler: it needs no access token, and `@WorkerMessage` checks
+  the payload in place of the global pipe.
+- **Answers**: a handled message answers `{ "status": "ok" }` (`HANDLED`). A message that does not match its schema is
+  refused before the handler runs, and nothing from it is stored. The answer names each problem as the HTTP routes do,
+  separated by `; `:
+
+  ```json
+  {
+    "status": "error",
+    "message": "menus.0.entries.0.meal: Invalid option: expected one of \"breakfast\"|\"lunch\"|\"dinner\"; menus.0: Unrecognized key: \"hours\""
+  }
+  ```
+
+  An error inside a handler is logged and answers Nest's `{ "status": "error", "message": "Internal server error" }`.
+  The worker's `send()` fails with the answer in both cases, and the worker takes either as a failed run.
+
+- **Repeats**: the same message sent twice leaves the records one would, because the worker sends again when an answer
+  is lost. Each feature states how, as [Menus](#menus) does.
+- **Collection status**: `collection_statuses` keeps, for each source, when it was last collected successfully
+  (`lastSucceededAt`) and, apart from it, its last failure (`lastFailedAt`, `lastFailureReason`). A handler that stores
+  what a collection read calls `CollectionService.recordSuccess(tx, source, collectedAt)` in the same transaction. A run
+  that fails sends `collection-failed` with `{ "source", "failedAt", "reason" }`, where `reason` says what went wrong.
+  It records the failure and leaves every stored record as it is. A success leaves the last failure in place, so the
+  two times tell whether the source has worked since. A new source adds its value to `CollectionSource` with a
+  migration.
+
+In a test, `startWithWorker()` from `test/worker.ts` starts the server with a client that sends as the worker does, as
+`test/menus.e2e-spec.ts` does:
+
+```ts
+const harness = await startWithWorker();
+await sendAsWorker(harness.worker, 'menus-collected', message); // resolves with the answer
+expect(await refusal(harness.worker, 'menus-collected', invalid)).toContain('menus.0.date: ');
+await harness.close(); // in afterAll
+```
+
+- `startWithWorker()` starts a Redis of its own for the file. Every test file's server listens on the shared test Redis
+  and answers a request, so the answer could come from another file's server, such as the one whose database the
+  health tests stop.
+- The database is the shared one, so each test stores data of its own, as each test in `test/menus.e2e-spec.ts` uses
+  its own day.
