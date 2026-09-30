@@ -6,19 +6,17 @@ import { z } from 'zod';
 class MessageValidationPipe extends StandardSchemaValidationPipe {
   constructor() {
     super();
-    // Named as the HTTP routes name a field, and in one string, as Nest's answer to an error in a handler has it.
-    this.exceptionFactory = (issues): RpcException =>
-      new RpcException({ status: 'error', message: this.formatIssueMessages(issues).join('; ') });
+    // Nest answers a string as `{ status: 'error', message }`, the form of its answer to an error in a handler.
+    this.exceptionFactory = (issues): RpcException => new RpcException(this.formatIssueMessages(issues).join('; '));
   }
 }
 
-// The payload of a message from the worker server, checked against `schema` before the handler runs. A message that
-// does not match is refused with `{ status: 'error', message }`, and the handler does not run.
+// The payload of a message from the worker server. A payload that does not match `schema` is refused with an answer
+// that names each problem, before the handler runs.
 export function WorkerMessage(schema: z.ZodType): ParameterDecorator {
   return Payload({ schema, pipes: [new MessageValidationPipe()] });
 }
 
-// The answer to a worker message that was handled.
 export const HANDLED = { status: 'ok' } as const;
 
 export type Handled = typeof HANDLED;

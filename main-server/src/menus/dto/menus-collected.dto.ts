@@ -4,14 +4,12 @@ import { CollectionSource, Meal } from '../../generated/prisma/client.js';
 const menuEntrySchema = z.strictObject({
   meal: z.enum(Meal),
   name: z.string().min(1),
-  // In won; null when the page gives none.
-  price: z.int().nonnegative().nullable(),
+  // The column's range, so that a larger price is refused here rather than failing in the database.
+  price: z.int32().nonnegative().nullable(),
 });
 
-// One restaurant's menus on one day.
 const restaurantMenusSchema = z.strictObject({
   restaurant: z.string().min(1),
-  // A calendar day in Asia/Seoul.
   date: z.iso.date(),
   operatingHours: z.string().min(1).nullable(),
   entries: z.array(menuEntrySchema),

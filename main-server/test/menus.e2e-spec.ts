@@ -179,7 +179,7 @@ describe('A failed collection', () => {
       }),
     ).resolves.toEqual({ status: 'ok' });
 
-    expect(await prisma.collectionStatus.findUnique({ where: { source: 'veterinary_menus' } })).toEqual({
+    expect(await prisma.collectionStatus.findUnique({ where: { source: 'veterinary_menus' } })).toMatchObject({
       source: 'veterinary_menus',
       lastSucceededAt: new Date('2026-10-31T12:00:00Z'),
       lastFailedAt: new Date('2026-11-01T00:00:00Z'),
@@ -203,40 +203,36 @@ describe('A failed collection', () => {
   });
 });
 
-// Each message holds a valid restaurant before the problem, so that storing nothing is seen. The last element is what
-// the answer names.
+// A valid restaurant, then one with `changes`, so that storing nothing is seen.
+function secondChanged(date: string, changes: object): object {
+  return menusMessage([restaurantMenus(date), restaurantMenus(date, { restaurant: '자하연식당', ...changes })]);
+}
+
+// The problem, the message and what the answer names.
 const invalidMenus: [string, (date: string) => object, string][] = [
   [
     'a meal that is not breakfast, lunch or dinner',
-    (date: string): object =>
-      menusMessage([
-        restaurantMenus(date),
-        restaurantMenus(date, { restaurant: '자하연식당', entries: [{ meal: 'brunch', name: '토스트', price: 3000 }] }),
-      ]),
+    (date: string): object => secondChanged(date, { entries: [{ meal: 'brunch', name: '토스트', price: 3000 }] }),
     'menus.1.entries.0.meal: ',
   ],
   [
     'a price written as text',
-    (date: string): object =>
-      menusMessage([
-        restaurantMenus(date),
-        restaurantMenus(date, {
-          restaurant: '자하연식당',
-          entries: [{ meal: 'lunch', name: '돈까스', price: '5,500원' }],
-        }),
-      ]),
+    (date: string): object => secondChanged(date, { entries: [{ meal: 'lunch', name: '돈까스', price: '5,500원' }] }),
+    'menus.1.entries.0.price: ',
+  ],
+  [
+    'a price too large to store',
+    (date: string): object => secondChanged(date, { entries: [{ meal: 'lunch', name: '돈까스', price: 2 ** 31 }] }),
     'menus.1.entries.0.price: ',
   ],
   [
     'a day that is not a calendar day',
-    (date: string): object =>
-      menusMessage([restaurantMenus(date), restaurantMenus(date, { restaurant: '자하연식당', date: '11. 3(월)' })]),
+    (date: string): object => secondChanged(date, { date: '11. 3(월)' }),
     'menus.1.date: ',
   ],
   [
     'a field the schema does not know',
-    (date: string): object =>
-      menusMessage([restaurantMenus(date), restaurantMenus(date, { restaurant: '자하연식당', hours: '11:00~14:30' })]),
+    (date: string): object => secondChanged(date, { hours: '11:00~14:30' }),
     'menus.1: ',
   ],
   [
@@ -261,9 +257,11 @@ describe('A menus message that does not match the schema', () => {
     'is refused when it has %s, and nothing from it is stored',
     async (_problem, message, named) => {
       const date = newDay();
+      const status = await prisma.collectionStatus.findUnique({ where: { source: 'coop_menus' } });
 
       expect(await refusal(harness.worker, 'menus-collected', message(date))).toContain(named);
       expect((await getMenus(date)).body).toEqual([]);
+      expect(await prisma.collectionStatus.findUnique({ where: { source: 'coop_menus' } })).toEqual(status);
     },
   );
 });

@@ -176,8 +176,9 @@ The worker server collects the menus of the Co-op, dormitory and veterinary coll
 
 Each restaurant and day in a `menus-collected` message replaces what was stored for that restaurant and day, its entries
 and its operating hours. So the same message sent twice leaves one set of records, and a menu the page changed or
-removed does not linger. A restaurant the message leaves out keeps what it had for that day. A failed collection
-changes no menu, so the app keeps getting the last menus collected.
+removed does not linger. A restaurant the message leaves out keeps what it had for that day, so a collector sends a
+restaurant whose cell is empty or states a closure with `entries: []`; the route then answers it with `meals: []`. A
+failed collection changes no menu, so the app keeps getting the last menus collected.
 
 ## Checks
 
@@ -368,15 +369,17 @@ and the main server checks it, stores it and answers. Every collector follows th
   An error inside a handler is logged and answers Nest's `{ "status": "error", "message": "Internal server error" }`.
   The worker's `send()` fails with the answer in both cases, and the worker takes either as a failed run.
 
-- **Repeats**: the same message sent twice leaves the records one would, because the worker sends again when an answer
-  is lost. Each feature states how, as [Menus](#menus) does.
+- **Repeats and order**: the same message sent twice leaves the records one would, so the worker may send a message
+  again when it got no answer. Each feature states how, as [Menus](#menus) does. A source's messages are stored in the
+  order they arrive, not by their times, so the worker sends them one at a time, each after the answer to the one
+  before.
 - **Collection status**: `collection_statuses` keeps, for each source, when it was last collected successfully
   (`lastSucceededAt`) and, apart from it, its last failure (`lastFailedAt`, `lastFailureReason`). A handler that stores
   what a collection read calls `CollectionService.recordSuccess(tx, source, collectedAt)` in the same transaction. A run
   that fails sends `collection-failed` with `{ "source", "failedAt", "reason" }`, where `reason` says what went wrong.
   It records the failure and leaves every stored record as it is. A success leaves the last failure in place, so the
   two times tell whether the source has worked since. A new source adds its value to `CollectionSource` with a
-  migration.
+  migration, and a new menu source also joins the sources `menusCollectedSchema` accepts.
 
 In a test, `startWithWorker()` from `test/worker.ts` starts the server with a client that sends as the worker does, as
 `test/menus.e2e-spec.ts` does:

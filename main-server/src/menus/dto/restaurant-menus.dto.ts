@@ -18,7 +18,7 @@ export interface RestaurantMenusDto {
   meals: MealMenusDto[];
 }
 
-// `entries` in the order the page lists them.
+// Takes the entries ordered by position.
 export function toRestaurantMenusDto(day: RestaurantDay & { entries: MenuEntry[] }): RestaurantMenusDto {
   const meals = Object.values(Meal).flatMap((meal) => {
     const entries = day.entries.filter((entry) => entry.meal === meal).map(({ name, price }) => ({ name, price }));

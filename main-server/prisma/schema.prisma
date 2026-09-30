@@ -124,9 +124,11 @@ enum CollectionSource {
   @@map("collection_source")
 }
 
-// When a source was last collected successfully and, apart from it, its last failure.
+// When a source was last collected successfully and, apart from it, its last failure, so that a failure stays visible
+// after a later success.
 model CollectionStatus {
-  source            CollectionSource @id
+  id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source            CollectionSource @unique
   lastSucceededAt   DateTime?        @map("last_succeeded_at")
   lastFailedAt      DateTime?        @map("last_failed_at")
   // What went wrong, as the worker described it.

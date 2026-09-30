@@ -29,12 +29,13 @@ CREATE TABLE "menu_entries" (
 
 -- CreateTable
 CREATE TABLE "collection_statuses" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "source" "collection_source" NOT NULL,
     "last_succeeded_at" TIMESTAMP(3),
     "last_failed_at" TIMESTAMP(3),
     "last_failure_reason" TEXT,
 
-    CONSTRAINT "collection_statuses_pkey" PRIMARY KEY ("source")
+    CONSTRAINT "collection_statuses_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -42,6 +43,9 @@ CREATE UNIQUE INDEX "restaurant_days_date_restaurant_key" ON "restaurant_days"("
 
 -- CreateIndex
 CREATE INDEX "menu_entries_restaurant_day_id_idx" ON "menu_entries"("restaurant_day_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "collection_statuses_source_key" ON "collection_statuses"("source");
 
 -- AddForeignKey
 ALTER TABLE "menu_entries" ADD CONSTRAINT "menu_entries_restaurant_day_id_fkey" FOREIGN KEY ("restaurant_day_id") REFERENCES "restaurant_days"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

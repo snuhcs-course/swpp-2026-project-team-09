@@ -16,8 +16,8 @@ export class MenusService {
     private readonly collection: CollectionService,
   ) {}
 
-  // Each restaurant and day in the message replaces what was stored for it, so the same message twice leaves one set of
-  // records, and a menu the page changed or removed does not linger.
+  // Replaces each restaurant and day in the message, so a repeat leaves one set of records and a removed menu does not
+  // linger.
   async store({ source, collectedAt, menus }: MenusCollectedMessage): Promise<void> {
     const collected = new Date(collectedAt);
     await this.prisma.$transaction(async (tx) => {

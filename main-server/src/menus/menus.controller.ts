@@ -10,7 +10,6 @@ import { MenusService } from './menus.service.js';
 export class MenusController {
   constructor(private readonly menus: MenusService) {}
 
-  // A day with nothing stored answers an empty list, so the app can ask for each of the coming days.
   @Get()
   find(@Query('date', { schema: z.iso.date() }) date: string): Promise<RestaurantMenusDto[]> {
     return this.menus.findByDate(date);
