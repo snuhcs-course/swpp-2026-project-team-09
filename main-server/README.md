@@ -117,8 +117,8 @@ lobby, which gives it what it needs to run, after a sign-in or a start with stor
 A sign-in on another phone during onboarding ends the first phone's session as any sign-in does: its next request, the
 onboarding's included, gets 401 with `"code": "SESSION_REPLACED"`, and the other phone goes through onboarding.
 
-A Google name that is not three parts separated by `/` is logged as a warning with the account's email address. The
-form is confirmed on an undergraduate's account only.
+A Google name that is not three parts separated by `/` is logged as a warning with the User's id. The form is confirmed
+on an undergraduate's account only.
 
 ## Profile
 

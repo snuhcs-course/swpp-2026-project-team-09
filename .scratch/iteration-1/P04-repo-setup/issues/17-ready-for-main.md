@@ -31,7 +31,7 @@ Left as found:
 
 - `next` stays at 16.3.7. 16.3.8, the security release, was published on 2026-09-30 and is taken after the merge, on a pull request of its own into `1.0/Main`. Ticket 12's criterion stays open until then.
 - Tickets merged before the usage rule have no Agent usage section. Ticket 07 still lacks the usage of the sessions that ran on another machine.
-- Judgement calls not taken up: `AccessTokenGuard` and `SignedInRequest` cover only Users; the Google claim checks of the two sign-ins have the same shape; the worker and match servers get no `.env` through Compose; the warning on an unreadable Google name logs the email address (ticket 08).
+- Judgement calls not taken up: `AccessTokenGuard` and `SignedInRequest` cover only Users; the Google claim checks of the two sign-ins have the same shape; the worker and match servers get no `.env` through Compose.
 
 ### One migration (2026-10-01)
 
