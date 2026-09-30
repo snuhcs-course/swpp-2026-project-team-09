@@ -1,5 +1,6 @@
 # Starts the data stores and the servers on a developer's laptop: `docker compose up --build` in this folder.
-# The passwords are for local development only.
+# The passwords are for local development only. Only the main and socket servers, which the app on a phone calls, are
+# published to the network. The rest are published on the loopback address alone: Redis has no password.
 name: snu-now
 
 services:
@@ -10,7 +11,7 @@ services:
       MAIN_DB_PASSWORD: main
       MATCH_DB_PASSWORD: match
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     volumes:
       - postgres-data:/var/lib/postgresql
     healthcheck:
@@ -24,7 +25,7 @@ services:
     # Never evict records, even when memory runs out.
     command: ['redis-server', '--maxmemory-policy', 'noeviction']
     ports:
-      - '6379:6379'
+      - '127.0.0.1:6379:6379'
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 2s
@@ -79,7 +80,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
     ports:
-      - '3002:3002'
+      - '127.0.0.1:3002:3002'
     depends_on:
       redis:
         condition: service_healthy
@@ -93,7 +94,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
     ports:
-      - '3003:3003'
+      - '127.0.0.1:3003:3003'
     depends_on:
       postgres:
         condition: service_healthy

@@ -19,18 +19,19 @@ export class UsersService {
 
   // A User is identified by the Google subject identifier. The email address and the Google name follow the ones Google
   // sends.
-  findOrCreate(account: { googleSubject: string; email: string; googleName: string }): Promise<User> {
+  async findOrCreate(account: { googleSubject: string; email: string; googleName: string }): Promise<User> {
     const { googleSubject, email, googleName } = account;
-    // The form is confirmed on an undergraduate's account only, so the log shows the accounts that differ.
-    const parts = googleNameParts(googleName).length;
-    if (parts !== 3) {
-      this.logger.warn(`The Google name of ${email} has ${parts} parts separated by "/", not 3.`);
-    }
-    return this.prisma.user.upsert({
+    const user = await this.prisma.user.upsert({
       where: { googleSubject },
       create: { googleSubject, email, googleName },
       update: { email, googleName },
     });
+    // The form is confirmed on an undergraduate's account only, so the log shows the accounts that differ.
+    const parts = googleNameParts(googleName).length;
+    if (parts !== 3) {
+      this.logger.warn(`The Google name of User ${user.id} has ${parts} parts separated by "/", not 3.`);
+    }
+    return user;
   }
 
   // A part of the Google name that the profile would refuse is left out of the suggestion.
