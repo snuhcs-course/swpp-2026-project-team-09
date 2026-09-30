@@ -218,7 +218,7 @@ This spec is large because the restart left most domain work without a task of i
 - For everything except positions, the main server sends a small signal naming what changed, and the app fetches that item again.
 - Signals travel from the main server to the socket server as NestJS events over Redis, and from the socket server to the apps over Socket.IO.
 - The socket server verifies the access token when a connection is opened and places the connection in the User's own room. The main server names the Users each message is for, so the socket server needs no knowledge of Parties or Friends.
-- Delivery is not guaranteed. The app fetches the current state when it connects, when it reconnects and when it returns to the front. There is no periodic polling.
+- Delivery is not guaranteed. The app fetches the current state when it connects, when it reconnects and when it returns to the front. There is no periodic polling. A phone whose session ended while it was offline gets 401 on that fetch and closes its connection (P04).
 - The team accepts that, in the rare case of a lost signal, a list updates late. Stored data is always correct.
 
 ## Testing Decisions

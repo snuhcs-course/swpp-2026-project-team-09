@@ -62,7 +62,7 @@ The app opens on a sign-in screen and then on a map of the campus that fills the
 - The app first tries the account sheet and falls back to the sign-in button flow when no account qualifies.
 - Sign-in lives behind one module with two operations, sign in and sign out. The default implementation is the free library that Expo's guide lists for Credential Manager. If it fails verification, the team writes its own native module of the same shape.
 - Tokens are kept in the phone's secure storage. When a request is refused as unauthorised, the app renews the session once and repeats the request; if renewal fails, it shows the sign-in screen.
-- A User has one session (P04). A refusal with the code for a replaced session, from the main server or the socket server, means that the User signed in on another phone: the app does not renew the session, stops sending its position, background sharing included, and shows the sign-in screen with that reason.
+- A User has one session (P04). The code for a replaced session, on a 401 from the main server or on `session-ended` from the socket server, means that the User signed in on another phone: the app does not renew the session, stops sending its position, background sharing included, and shows the sign-in screen with that reason.
 
 ### Location
 

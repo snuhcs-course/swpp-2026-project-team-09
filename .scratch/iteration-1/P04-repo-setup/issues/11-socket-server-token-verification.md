@@ -50,8 +50,8 @@ The socket server is the only other server that accepts connections from Users: 
 ### Sign-out and open connections (2026-09-29)
 
 - The token is checked only when a connection opens. Ticket 07 closes the connections of a session that ends, by a
-  sign-in on another phone, a sign-out or a used refresh token: the main server records the session in Redis and sends
-  an event, and the socket server disconnects the session's connections and refuses new ones with its access token.
+  sign-in on another phone, a sign-out or a used refresh token: the main server sends an event, and the socket server
+  disconnects the session's connections. Each connection also closes when its access token expires.
 
 ### Agent usage (2026-09-29)
 
