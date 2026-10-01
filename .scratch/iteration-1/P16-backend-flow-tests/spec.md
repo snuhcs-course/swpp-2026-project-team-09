@@ -31,7 +31,7 @@ A set of tests that starts all four servers with their data stores and runs the 
 - Replaced parts, each at its configured boundary: Google's token verification, the pages and endpoints the worker collects from, Kakao's walking route API, and the explanation model.
 - Flow 1, event: two Users sign in; an Administrator publishes a Global Event; both ask for Matching with size 2; both hold the same Shared Quest with an explanation; one creates a Party marked with the Quest; the other joins directly; both turn the Master Switch on and upload positions inside the Campus Boundary; each receives the other's position over the socket; a route to the event's place is returned.
 - Flow 2, Friend: a User creates an Invite Link; a second User accepts; each receives the other's position; one proposes a Meetup; the other accepts; both hold the Shared Quest; the friendship is ended and positions stop.
-- Flow 3, campus services: the worker collects from saved pages; menus are served by the main server; a shuttle vehicle is served at a position on the route line.
+- Flow 3, campus services: the worker collects from saved pages; menus are served by the main server; a shuttle vehicle is served at its stop.
 - Negative cases run inside the flows: a Google account outside SNU is refused; a position outside the Campus Boundary is never delivered; a switch turned off stops delivery; a second Party for the same Quest is refused; the match server's request is repeated after the main server was stopped and started.
 - Tests for one server's rules stay in that server's task. This task does not repeat them.
 

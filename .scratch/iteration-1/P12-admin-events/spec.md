@@ -4,11 +4,11 @@ Status: ready-for-agent
 
 ## Problem Statement
 
-Events collected from the university site have times and places written as free text. Rules read only some of them, and none come with coordinates. If they went straight to Users, the map would show events at wrong times or without a place. Events that organizers send to the team have no way into the system at all.
+Events collected from the university site have times and places written as free text. Rules read only some of them. A collected event whose time and place the rules read is published by the collection (P07); the others wait as Drafts, without a time or a position, and a published one can still be wrong. Events that organizers send to the team have no way into the system at all.
 
 ## Solution
 
-An admin site where an Administrator reviews each Draft, corrects its time and place, sets its position on the map and publishes it. The Administrator can also create a Global Event by hand and cancel a published one.
+An admin site where an Administrator reviews each Draft, corrects its time and place, sets its position on the map and publishes it. The Administrator can also correct or cancel an event that a collection published, create a Global Event by hand and cancel a published one.
 
 ## User Stories
 
@@ -58,9 +58,10 @@ An admin site where an Administrator reviews each Draft, corrects its time and p
 - State changes allowed: Draft to published, Draft to discarded, published to cancelled. A published event can be edited without leaving the published state.
 - Publishing requires a title, a start time and a position.
 - An edit carries the version the Administrator loaded. The main server refuses it when the stored version is newer.
-- Publishing, editing and cancelling send a signal as described in P08, and the attending Sub Quests of affected Quests follow as described there.
+- Publishing, editing and cancelling send a signal as described in P08, and the attending Sub Quests of affected Quests follow as described there. An event that a collection publishes (P07) sends the same signal.
 - Creating a Global Event by hand requires the key described in P04. The admin site makes the key when the Administrator confirms the form and sends the same key on a retry.
-- How Global Events are stored and which states exist is defined in P07.
+- How Global Events are stored, which states exist and when a collection publishes an event is defined in P07.
+- The list of published Global Events that the app reads is built in this task, as a User's route of the main server outside `/admin`.
 
 ## Testing Decisions
 
