@@ -50,6 +50,7 @@ A dining view that shows menus by day, meal and restaurant, and a shuttle view t
 - Vehicles carry no label saying that their position is estimated.
 - Outside weekdays from 08:00 to 21:00 the layer shows the stops and the route with a notice that the shuttle is not in service.
 - The information screen shows the OpenStreetMap attribution with a link to its copyright page.
+- What the shuttle feed reports, its service hours, the menu pages' quirks and OpenStreetMap's attribution rules are in `.scratch/research/external-sources.md`.
 - The arrangement is provisional. P19 adapts it to the wireframes.
 
 ## Testing Decisions
