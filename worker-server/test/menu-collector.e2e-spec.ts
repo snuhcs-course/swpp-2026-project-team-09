@@ -9,20 +9,20 @@ const COOP = 'https://snuco.snu.ac.kr/foodmenu/?date=';
 const DORMITORY = 'https://snudorm.snu.ac.kr/foodmenu/?date=';
 const VETERINARY = 'https://vet.snu.ac.kr/cafe_menu/';
 
-// A saved page of 2026-10-01 as the page of the day after: only the date the page repeats differs.
-function dayAfter(page: string): string {
-  return page.replace('value="2026-10-01"', 'value="2026-10-02"');
-}
+// Thursday 1 October 2026 and the six days after.
+const DAYS = ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04', '2026-10-05', '2026-10-06', '2026-10-07'];
 
-const coopPage = savedPage('coop-menus-2026-10-01');
-const dormitoryPage = savedPage('dormitory-menus-2026-10-01');
+// A saved page of 2026-10-01 as the page of each day: only the date the page repeats differs.
+function dailyPages(address: string, page: string): Record<string, string> {
+  return Object.fromEntries(
+    DAYS.map((day) => [`${address}${day}`, page.replace('value="2026-10-01"', `value="${day}"`)]),
+  );
+}
 
 // What the Sources answer on Thursday 1 October 2026.
 const pages = {
-  [`${COOP}2026-10-01`]: coopPage,
-  [`${COOP}2026-10-02`]: dayAfter(coopPage),
-  [`${DORMITORY}2026-10-01`]: dormitoryPage,
-  [`${DORMITORY}2026-10-02`]: dayAfter(dormitoryPage),
+  ...dailyPages(COOP, savedPage('coop-menus-2026-10-01')),
+  ...dailyPages(DORMITORY, savedPage('dormitory-menus-2026-10-01')),
   [VETERINARY]: savedPage('veterinary-menus-2026-10-01'),
 };
 
@@ -49,8 +49,23 @@ async function collect(
   return { sources, mainServer };
 }
 
+// Runs the command with `names` against `served` and gives its answer with what the worker asked for and sent.
+async function runCommand(
+  names: string[],
+  served: Record<string, string | number> = pages,
+): Promise<{ taken: boolean; sources: Sources; mainServer: MainServerStub }> {
+  const sources = sourcesServing(served);
+  const mainServer = new MainServerStub();
+  const app = await startApp(inject('settings'), { fetchPage: sources.fetch, mainServer });
+  // Imported after startApp, so that it finds the collectors AppModule registers.
+  const { collectSources } = await import('../src/collect-sources.js');
+  const taken = await collectSources(app, names);
+  await app.close();
+  return { taken, sources, mainServer };
+}
+
 describe('A Collection of the menu Sources', () => {
-  it("sends today's and tomorrow's menus of each Source", async () => {
+  it('sends the menus of today and the six days after of each Source', async () => {
     const { mainServer } = await collect(pages);
 
     expect(mainServer.messages.map(({ pattern }) => pattern)).toEqual([
@@ -66,15 +81,27 @@ describe('A Collection of the menu Sources', () => {
           {
             date: '2026-10-01',
             restaurants: [
-              { name: '수의대식당', lines: [{ meal: 'lunch', text: '카레라이스', kind: null, price: null }] },
+              {
+                name: '수의대식당',
+                lines: [{ meal: 'lunch', text: '카레라이스', kind: null, price: null, name: null }],
+              },
             ],
           },
           {
             date: '2026-10-02',
             restaurants: [
-              { name: '수의대식당', lines: [{ meal: 'lunch', text: '소불고기덮밥', kind: null, price: null }] },
+              {
+                name: '수의대식당',
+                lines: [{ meal: 'lunch', text: '소불고기덮밥', kind: null, price: null, name: null }],
+              },
             ],
           },
+          // The table holds this week only.
+          { date: '2026-10-03', restaurants: [] },
+          { date: '2026-10-04', restaurants: [] },
+          { date: '2026-10-05', restaurants: [] },
+          { date: '2026-10-06', restaurants: [] },
+          { date: '2026-10-07', restaurants: [] },
         ],
       },
     ]);
@@ -97,19 +124,11 @@ describe("The Collection of the Co-op's page", () => {
       '301동식당',
     ].map((name) => ({ name }));
     expect(mainServer.from('coop_menus')).toMatchObject([
-      {
-        days: [
-          { date: '2026-10-01', restaurants: coopRestaurants },
-          { date: '2026-10-02', restaurants: coopRestaurants },
-        ],
-      },
+      { days: DAYS.map((date) => ({ date, restaurants: coopRestaurants })) },
     ]);
     expect(mainServer.from('dormitory_menus')).toMatchObject([
       {
-        days: [
-          { date: '2026-10-01', restaurants: [{ name: '아워홈(901동)' }, { name: '생협기숙사(919동)' }] },
-          { date: '2026-10-02', restaurants: [{ name: '아워홈(901동)' }, { name: '생협기숙사(919동)' }] },
-        ],
+        days: DAYS.map((date) => ({ date, restaurants: [{ name: '아워홈(901동)' }, { name: '생협기숙사(919동)' }] })),
       },
     ]);
   });
@@ -120,10 +139,8 @@ describe('The requests of a Collection', () => {
     const { sources } = await collect(pages);
 
     expect(sources.requests.map(({ url }) => url)).toEqual([
-      `${COOP}2026-10-01`,
-      `${COOP}2026-10-02`,
-      `${DORMITORY}2026-10-01`,
-      `${DORMITORY}2026-10-02`,
+      ...DAYS.map((day) => `${COOP}${day}`),
+      ...DAYS.map((day) => `${DORMITORY}${day}`),
       VETERINARY,
     ]);
     expect(sources.mostAtOnce).toBe(1);
@@ -173,6 +190,60 @@ describe('A Collection whose menus the main server refuses', () => {
         reason: 'The main server did not take menus-collected: days.0.date: Invalid ISO date',
       },
     ]);
+  });
+});
+
+describe('The command that runs one Collection', () => {
+  it('collects the Source it names and no other', async () => {
+    const { taken, sources, mainServer } = await runCommand(['dormitory_menus']);
+
+    expect(taken).toBe(true);
+    expect(sources.requests.map(({ url }) => url)).toEqual(DAYS.map((day) => `${DORMITORY}${day}`));
+    expect(mainServer.messages.map(({ pattern, data }) => [pattern, data['source']])).toEqual([
+      ['menus-collected', 'dormitory_menus'],
+    ]);
+  });
+
+  it('collects each Source when it names several', async () => {
+    const { taken, mainServer } = await runCommand(['coop_menus', 'veterinary_menus']);
+
+    expect(taken).toBe(true);
+    expect(mainServer.messages.map(({ data }) => data['source'])).toEqual(['coop_menus', 'veterinary_menus']);
+  });
+
+  it('says that a Collection was not taken, and reports it as failed', async () => {
+    const { taken, mainServer } = await runCommand(['veterinary_menus'], { ...pages, [VETERINARY]: blockPage });
+
+    expect(taken).toBe(false);
+    expect(mainServer.from('veterinary_menus', 'collection-failed')).toHaveLength(1);
+  });
+
+  it.each([[['library_seats']], [['coop_menus', 'library_seats']], [[]]])(
+    'collects nothing when it is given %j',
+    async (names) => {
+      const sources = sourcesServing(pages);
+      const app = await startApp(inject('settings'), { fetchPage: sources.fetch, mainServer: new MainServerStub() });
+      const { collectSources } = await import('../src/collect-sources.js');
+
+      await expect(collectSources(app, names)).rejects.toThrow(
+        'Name one or more of: coop_menus, dormitory_menus, veterinary_menus',
+      );
+      await app.close();
+      expect(sources.requests).toEqual([]);
+    },
+  );
+});
+
+describe('The worker at its start', () => {
+  it('collects nothing', async () => {
+    const sources = sourcesServing(pages);
+    const mainServer = new MainServerStub();
+
+    const app = await startApp(inject('settings'), { fetchPage: sources.fetch, mainServer });
+    await app.close();
+
+    expect(sources.requests).toEqual([]);
+    expect(mainServer.messages).toEqual([]);
   });
 });
 

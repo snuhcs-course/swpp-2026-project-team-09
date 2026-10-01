@@ -4,12 +4,15 @@ import { Cron } from '@nestjs/schedule';
 import { lastValueFrom } from 'rxjs';
 import { MESSAGING_CLIENT } from '../common/messaging.module.js';
 import { PageFetcher } from '../common/page-fetcher.js';
-import { type MenuDay, type MenuSource, type MenusCollectedMessage } from './dto/menus-collected.dto.js';
+import { MENU_SOURCES, type MenuDay, type MenuSource, type MenusCollectedMessage } from './dto/menus-collected.dto.js';
 import { parseMenuPage } from './menu-page.parser.js';
 import { parseVeterinaryMenuPage } from './veterinary-menu-page.parser.js';
 
 // 05:00 and 10:00. Provisional, until someone has observed when the pages change.
 const COLLECTION_TIMES = '0 0 5,10 * * *';
+
+// A Collection covers today and the six days after. Restaurants fill in their later days as they post them.
+const COLLECTED_DAYS = 7;
 
 const HOUR = 60 * 60 * 1000;
 
@@ -29,13 +32,19 @@ export class MenuCollector {
 
   @Cron(COLLECTION_TIMES, { timeZone: 'Asia/Seoul' })
   async collect(): Promise<void> {
+    await Promise.all(MENU_SOURCES.map((source) => this.collectOne(source)));
+  }
+
+  // One Collection of a Source. Gives whether the main server took what was read.
+  collectOne(source: MenuSource): Promise<boolean> {
     const now = new Date();
-    const dates = [seoulDay(now, 0), seoulDay(now, 1)];
-    await Promise.all([
-      this.handOver('coop_menus', now, this.readCoopPages(dates)),
-      this.handOver('dormitory_menus', now, this.readDailyPages('https://snudorm.snu.ac.kr/foodmenu/', dates)),
-      this.handOver('veterinary_menus', now, this.readWeekPage(dates)),
-    ]);
+    const dates = Array.from({ length: COLLECTED_DAYS }, (_, days) => seoulDay(now, days));
+    const read = {
+      coop_menus: (): Promise<MenuDay[]> => this.readCoopPages(dates),
+      dormitory_menus: (): Promise<MenuDay[]> => this.readDailyPages('https://snudorm.snu.ac.kr/foodmenu/', dates),
+      veterinary_menus: (): Promise<MenuDay[]> => this.readWeekPage(dates),
+    };
+    return this.handOver(source, now, read[source]());
   }
 
   // The restaurants whose names start with "* " repeat one fixed menu in every cell, every day. 기숙사식당 is the
@@ -63,14 +72,16 @@ export class MenuCollector {
   }
 
   // Ends one Collection of a Source: what it read goes to the main server, and so does a failure to fetch or read it.
-  private async handOver(source: MenuSource, collectedAt: Date, days: Promise<MenuDay[]>): Promise<void> {
+  private async handOver(source: MenuSource, collectedAt: Date, days: Promise<MenuDay[]>): Promise<boolean> {
     try {
       const message: MenusCollectedMessage = { source, collectedAt: collectedAt.toISOString(), days: await days };
       await this.send('menus-collected', message);
+      return true;
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       this.logger.error(`The Collection of ${source} failed: ${reason}`);
       await this.send('collection-failed', { source, failedAt: collectedAt.toISOString(), reason });
+      return false;
     }
   }
 

@@ -190,7 +190,7 @@ export class AdminEventsController {
 ## Menus
 
 The worker server collects the menus of three Sources, the Co-op's, the dormitory's and the veterinary college's page,
-for today and tomorrow, and sends them as `menus-collected` (see
+for today and the six days after, and sends them as `menus-collected` (see
 [Messages from the worker server](#messages-from-the-worker-server)). The app reads them:
 
 - `GET /menus?date=2026-10-01` with a User's access token answers the menus of that day, a calendar day in
@@ -205,10 +205,10 @@ for today and tomorrow, and sends them as `menus-collected` (see
         {
           "meal": "lunch",
           "lines": [
-            { "text": "<셀프코너> 7,000원", "kind": "heading", "price": 7000 },
-            { "text": "잡곡밥", "kind": null, "price": null },
-            { "text": "고등어 소금구이  : 14,000원", "kind": "dish", "price": 14000 },
-            { "text": "※운영시간 : 11:00~14:00", "kind": "note", "price": null }
+            { "text": "<셀프코너> 7,000원", "kind": "heading", "price": 7000, "name": null },
+            { "text": "잡곡밥", "kind": null, "price": null, "name": null },
+            { "text": "고등어 소금구이  : 14,000원", "kind": "dish", "price": 14000, "name": "고등어 소금구이" },
+            { "text": "※운영시간 : 11:00~14:00", "kind": "note", "price": null, "name": null }
           ]
         }
       ]
@@ -226,8 +226,9 @@ for today and tomorrow, and sends them as `menus-collected` (see
     `개천절 휴무`. There is no operating hours field: hours are note lines of the meal.
   - `price`: in won, when the line gives exactly one price. `9,900원 / 12,400원`, or a price with a typo, stays in
     `text` alone.
-- The app shows `text`, styled by `kind` where there is one, and reads `price` only where it is set. A line the worker
-  could not read is still shown.
+  - `name`: a dish's text without its price, when the line ends with that price.
+- The app shows a line that has a `name` and a `price` as a row with both, and every other line as its `text`, styled
+  by `kind` where there is one. A line the worker could not read is still shown.
 - A day with nothing stored answers `[]`. A `date` that is not a calendar day gets 400.
 
 For each day a `menus-collected` message carries, it replaces everything its Source had stored for that day. So the
@@ -240,9 +241,8 @@ keeps getting the last menus collected.
 - A restaurant is known by its name. The same name sent by two Sources for one day is served twice, so each
   restaurant is collected from one Source.
 
-The model is provisional (ADR 0001): the team reviews what the collectors send, and how many lines get a `kind` and a
-`price`, before relying on it. The worker server's README says how each line is read, and the first run on the real
-pages is recorded in `.scratch/iteration-1/P07-campus-feeds/issues/01-menus-first-collection.md`.
+The worker server's README says how each line is read and how to run a Collection by hand. What the collectors sent
+on the real pages is recorded in `.scratch/iteration-1/P07-campus-feeds/issues/01-menus-first-collection.md`.
 
 ## Checks
 

@@ -7,7 +7,7 @@ const weekPage = savedPage('veterinary-menus-2026-10-01');
 
 // The cafeteria with the one line of a lunch cell. The line says neither what it is nor what it costs.
 function lunchOf(dish: string): RestaurantMenu {
-  return { name: '수의대식당', lines: [{ meal: 'lunch', text: dish, kind: null, price: null }] };
+  return { name: '수의대식당', lines: [{ meal: 'lunch', text: dish, kind: null, price: null, name: null }] };
 }
 
 describe("The veterinary college's week table", () => {

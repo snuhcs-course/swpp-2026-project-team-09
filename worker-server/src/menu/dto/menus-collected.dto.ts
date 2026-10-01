@@ -4,13 +4,15 @@ export type Meal = (typeof MEALS)[number];
 
 export type MenuLineKind = 'heading' | 'dish' | 'note';
 
-// One line of a meal's cell. `kind` and `price` are set only when the parser is sure
+// One line of a meal's cell. `kind`, `price` and `name` are set only when the parser is sure
 // (docs/adr/0001-menus-kept-as-lines.md).
 export interface MenuLine {
   meal: Meal;
   text: string;
   kind: MenuLineKind | null;
   price: number | null;
+  // A dish's text without its price.
+  name: string | null;
 }
 
 export interface RestaurantMenu {
@@ -24,7 +26,9 @@ export interface MenuDay {
   restaurants: RestaurantMenu[];
 }
 
-export type MenuSource = 'coop_menus' | 'dormitory_menus' | 'veterinary_menus';
+export const MENU_SOURCES = ['coop_menus', 'dormitory_menus', 'veterinary_menus'] as const;
+
+export type MenuSource = (typeof MENU_SOURCES)[number];
 
 // What one Collection of a menu Source read, sent to the main server as `menus-collected`.
 export interface MenusCollectedMessage {

@@ -18,6 +18,7 @@
     "start:dev": "nest start --watch --env-file .env",
     "start:debug": "nest start --debug --watch --env-file .env",
     "start:prod": "node --env-file-if-exists=.env dist/main",
+    "collect": "node --env-file-if-exists=.env dist/collect",
     "lint": "oxlint --type-aware",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

@@ -7,6 +7,7 @@ const menuLineSchema = z.strictObject({
   kind: z.enum(MenuLineKind).nullable(),
   // The column's range, so that a larger price is refused here rather than failing in the database.
   price: z.int32().nonnegative().nullable(),
+  name: z.string().min(1).nullable(),
 });
 
 const restaurantSchema = z.strictObject({

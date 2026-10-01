@@ -38,13 +38,14 @@ export class MenusService {
       });
       await tx.menuLine.createMany({
         data: restaurants.flatMap(({ lines }, index) =>
-          lines.map(({ meal, text, kind, price }, position) => ({
+          lines.map(({ meal, text, kind, price, name }, position) => ({
             restaurantDayId: stored[index].id,
             position,
             meal,
             text,
             kind,
             price,
+            name,
           })),
         ),
       });
