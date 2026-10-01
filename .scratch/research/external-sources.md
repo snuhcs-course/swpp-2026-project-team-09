@@ -14,7 +14,7 @@ Everything was checked on 2026-09-30 unless a line says otherwise. `[K1]`-style 
 | Veterinary college menus | P07, P15 | Public HTML | Confirmed |
 | Shuttle stops and vehicles (Busin) | P07, P15 | Public HTML and JSON | Confirmed, vehicles seen in service |
 | OpenStreetMap | P07, P08, P15 | Open data, loaded once as seed data | Confirmed |
-| Kakao Maps SDK for Android | P06 | Native app key and key hash | Key issued; package name and key hash not registered |
+| Kakao Maps SDK for Android | P06 | Native app key and key hash | Key issued; package name and development key hash registered; map shown in a trial build |
 | Kakao Maps JavaScript SDK | P12 | JavaScript key and domain | Key issued; `http://localhost:3100` registered |
 | Kakao walking route API | P07 | REST API key | Key issued; not called yet |
 | Google Sign-In | P04, P06, P12 | OAuth clients | Clients exist; see §8 |
@@ -165,8 +165,8 @@ The operator's service. The university's notices reach it through `서울대.inf
 | Free quota | Applies. The "카카오맵 무료 쿼터" badge is shown. |
 | Members | The team, invited on 2026-09-30 |
 | Keys | REST API, JavaScript and native app keys issued on 2026-09-30 |
-| Android package name | Not decided. Proposed: `com.bonnieandclaude.snunow`. The prototype used `kr.ac.campus.prototype`. |
-| Key hashes (which keystore) | None yet. They need the package name. |
+| Android package name | `com.bonnieandclaude.snunow`, registered on 2026-10-01. The prototype used `kr.ac.campus.prototype`. |
+| Key hashes (which keystore) | `Xo8WBi6jzSxKDVR4drqm84yr9iU=`, the Expo template's debug keystore, registered on 2026-10-01. Development builds only. |
 | JavaScript SDK domains | `http://localhost:3100`, registered on 2026-09-30 |
 | Allowed IP addresses for the REST API key | None |
 
@@ -207,7 +207,7 @@ A build on EAS does not receive `mobile/.env`, because EAS uploads only the file
     ```
 
 - Signing keys, one registration each (P20):
-  - A project made by `expo prebuild` signs debug and release builds with the template's `android/app/debug.keystore` [E1]. Every teammate therefore gets the same hash. The key is public, so it is for development only.
+  - A project made by `expo prebuild` signs debug and release builds with the template's `android/app/debug.keystore` [E1]. The `expo` package ships that file, so every teammate gets the same hash, `Xo8WBi6jzSxKDVR4drqm84yr9iU=` (SHA-1 `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`). The key is public, so it is for development only.
   - EAS builds use the EAS keystore.
   - Builds from the Play Store use Play's app signing key.
 - SDK: `com.kakao.maps.open:android:2.15.2` from `https://devrepo.kakao.com/nexus/repository/kakaomap-releases/` [K4].
@@ -215,9 +215,15 @@ A build on EAS does not receive `mobile/.env`, because EAS uploads only the file
   - Start it with `KakaoMapSdk.init(context, nativeAppKey)` and show the map with `MapView.start()`. Call `MapView.resume()` and `pause()` [K4].
   - My judgement: an x86_64 emulator installs the app's x86_64 libraries, which React Native provides, and the SDK's ARM-only libraries are then missing. Use an arm64 emulator on Apple Silicon, or a phone.
 - Errors [K1][K4]:
-  - A wrong key hash or package name gives `invalid android_key_hash or ios_bundle_id or web_site_url`.
+  - A wrong key hash or package name gives `invalid android_key_hash or ios_bundle_id or web_site_url`. The map's own check answered `MapAuthException(401)` with `android keyhash mismatched! caller=…` while no key hash was registered.
   - `MapAuthException` 429 means the quota is used up or the per-second limit was exceeded.
 - The map's logo stays visible and unchanged. It may be moved with `getLogo().setPosition` [K18].
+- Checked on 2026-10-01 with a trial build, a copy of `mobile/` kept outside the repository:
+  - Expo 57.0.25 and React Native 0.86.3 with the New Architecture on. The map was a local Expo module in `modules/`, a view around the SDK's `MapView`.
+  - Kakao's Maven repository went in through `expo-build-properties` (`android.extraMavenRepos`), with `buildArchs` set to `arm64-v8a`.
+  - A release APK built with JDK 21 and Gradle 9.3.1. The first build took 26 minutes, later ones 4 to 9. JDK 26 was not tried.
+  - On an arm64 emulator with Android 16, the campus map appeared, and a label was added and moved between two points with `Label.moveTo`.
+  - `react-native-nitro-google-signin` 2.3.0 (§8) was built into the same APK and its `configure` ran. A sign-in itself was not tried.
 
 ### 7.3 Maps JavaScript SDK (P12)
 
@@ -275,7 +281,8 @@ A build on EAS does not receive `mobile/.env`, because EAS uploads only the file
   - On 2026-09-30 the project's owner was not confirmed. Two owners or more are safer.
 - The app needs two clients:
   - A Web application client. Its ID is the `serverClientId` of the sign-in request [G2] and the `aud` of the ID token [G8].
-  - An Android client for each signing key, with the package name and the SHA-1 [G6][G12]. The prototype's Android client was made for the prototype's package name.
+  - An Android client for each signing key, with the package name and the SHA-1 [G6][G12]. The prototype's Android client was made for the prototype's package name. The development key's SHA-1 is in §7.2.
+- The free library that Expo's guide lists for Credential Manager is `react-native-nitro-google-signin` [G13]. For Android alone it needs no config plugin; without Firebase files its plugin asks for an iOS URL scheme.
 - The admin site has its own Web application client [G3].
   - Authorized JavaScript origins: both `http://localhost` and `http://localhost:3100`.
   - Wildcards, paths and IP addresses other than localhost's are not allowed, and origins other than localhost need HTTPS. A change takes from 5 minutes to a few hours [G6].
@@ -316,11 +323,10 @@ A build on EAS does not receive `mobile/.env`, because EAS uploads only the file
 
 - The shuttle: whether regular requests are permitted, and whether coordinates exist. 캠퍼스관리과 and 동영관광 have not replied yet.
 - The shuttle: mySNU offers a 셔틀버스 service that shows where the shuttle is. Whether it uses a feed other than Busin is unchecked.
-- Kakao: the Android package name and the key hashes. The walking route has not been called.
+- Kakao: the key hashes of EAS and Play builds. The walking route has not been called.
 - Kakao: what the Android map SDK counts as a call, and when the daily quota resets.
-- Google: the project's owner, and an Android client for the Iteration 1 package name.
-- `hd=snu.ac.kr` with the Iteration 1 app on a phone.
-- P06: whether the native map module shows the map and moves an Avatar under the New Architecture, and whether the sign-in library builds together with the Kakao SDK.
+- Google: the project's owner, and an Android client for `com.bonnieandclaude.snunow`.
+- Google sign-in with the Iteration 1 app on a phone. The `hd` claim itself is confirmed (§8).
 - P08 and P14: whether the tunnel's address can be fixed, for the Invite Link.
 
 ## 11. Sources (accessed 2026-09-30)
