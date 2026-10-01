@@ -1,8 +1,8 @@
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { inject } from 'vitest';
 import { MainServerStub } from './main-server.js';
-import { savedPage } from './pages.js';
-import { type Sites, sitesServing } from './sites.js';
+import { blockPage, savedPage } from './pages.js';
+import { type Sources, sourcesServing } from './sources.js';
 import { startApp } from './start-app.js';
 
 const COOP = 'https://snuco.snu.ac.kr/foodmenu/?date=';
@@ -17,7 +17,7 @@ function dayAfter(page: string): string {
 const coopPage = savedPage('coop-menus-2026-10-01');
 const dormitoryPage = savedPage('dormitory-menus-2026-10-01');
 
-// What the sites answer on Thursday 1 October 2026.
+// What the Sources answer on Thursday 1 October 2026.
 const pages = {
   [`${COOP}2026-10-01`]: coopPage,
   [`${COOP}2026-10-02`]: dayAfter(coopPage),
@@ -35,18 +35,18 @@ afterAll(() => {
   vi.useRealTimers();
 });
 
-// Runs the menu Collections once against `sitePages` and gives what the worker asked the sites and sent.
+// Runs the menu Collections once against `served` and gives what the worker asked for and sent.
 async function collect(
-  sitePages: Record<string, string | number>,
+  served: Record<string, string | number>,
   mainServer = new MainServerStub(),
-): Promise<{ sites: Sites; mainServer: MainServerStub }> {
-  const sites = sitesServing(sitePages);
-  const app = await startApp(inject('settings'), { fetchPage: sites.fetch, mainServer });
+): Promise<{ sources: Sources; mainServer: MainServerStub }> {
+  const sources = sourcesServing(served);
+  const app = await startApp(inject('settings'), { fetchPage: sources.fetch, mainServer });
   // Imported after startApp, so that it is the same class AppModule registers.
   const { MenuCollector } = await import('../src/menu/menu.collector.js');
   await app.get(MenuCollector).collect();
   await app.close();
-  return { sites, mainServer };
+  return { sources, mainServer };
 }
 
 describe('A Collection of the menu Sources', () => {
@@ -66,13 +66,13 @@ describe('A Collection of the menu Sources', () => {
           {
             date: '2026-10-01',
             restaurants: [
-              { name: '수의대식당', lines: [{ meal: 'lunch', text: '카레라이스', kind: 'dish', price: null }] },
+              { name: '수의대식당', lines: [{ meal: 'lunch', text: '카레라이스', kind: null, price: null }] },
             ],
           },
           {
             date: '2026-10-02',
             restaurants: [
-              { name: '수의대식당', lines: [{ meal: 'lunch', text: '소불고기덮밥', kind: 'dish', price: null }] },
+              { name: '수의대식당', lines: [{ meal: 'lunch', text: '소불고기덮밥', kind: null, price: null }] },
             ],
           },
         ],
@@ -117,17 +117,17 @@ describe("The Collection of the Co-op's page", () => {
 
 describe('The requests of a Collection', () => {
   it('ask for one page at a time and name the project', async () => {
-    const { sites } = await collect(pages);
+    const { sources } = await collect(pages);
 
-    expect(sites.requests.map(({ url }) => url)).toEqual([
+    expect(sources.requests.map(({ url }) => url)).toEqual([
       `${COOP}2026-10-01`,
       `${COOP}2026-10-02`,
       `${DORMITORY}2026-10-01`,
       `${DORMITORY}2026-10-02`,
       VETERINARY,
     ]);
-    expect(sites.mostAtOnce).toBe(1);
-    expect(new Set(sites.requests.map(({ userAgent }) => userAgent))).toEqual(
+    expect(sources.mostAtOnce).toBe(1);
+    expect(new Set(sources.requests.map(({ userAgent }) => userAgent))).toEqual(
       new Set(['SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)']),
     );
   });
@@ -150,10 +150,6 @@ describe('A Collection that cannot fetch or read a page', () => {
   });
 
   it('reports the Source as failed when a page is not the one the parser knows', async () => {
-    // What the university's firewall answers a blocked request with, as external-sources.md, 2 describes it.
-    const blockPage =
-      '<html><head><meta http-equiv="refresh" content="0; url=https://snucert.snu.ac.kr/waf/error.html"></head></html>';
-
     const { mainServer } = await collect({ ...pages, [VETERINARY]: blockPage });
 
     expect(mainServer.from('veterinary_menus', 'collection-failed')).toEqual([

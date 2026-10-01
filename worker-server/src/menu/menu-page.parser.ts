@@ -1,8 +1,6 @@
 import { load } from 'cheerio';
-import { type Meal, type RestaurantMenu } from './dto/menus-collected.dto.js';
+import { MEALS, type RestaurantMenu } from './dto/menus-collected.dto.js';
 import { readMenuLines } from './menu-line.js';
-
-const MEALS: Meal[] = ['breakfast', 'lunch', 'dinner'];
 
 // Reads the restaurants of the Co-op's menu page of `date`. The dormitory's page is built the same way.
 export function parseMenuPage(html: string, date: string): RestaurantMenu[] {

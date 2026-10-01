@@ -60,8 +60,8 @@ follows these rules; `src/menu/menu.collector.ts` is the first.
 
 - **Fetching**: every page is fetched with `PageFetcher.fetch(url)` from `src/common/page-fetcher.ts`, never with
   `fetch` itself. It sends a `User-Agent` that names the project, asks for one page at a time whichever collectors are
-  running, and fails when the site answers with another status than 2xx. It sets no timeout of its own: Node's `fetch`
-  gives up on a site that does not answer after 300 seconds.
+  running, and fails when the answer's status is not 2xx. It sets no timeout of its own: Node's `fetch` gives up on a
+  request that gets no answer after 300 seconds.
 - **Parsing**: a parser is a function from a page's text to what the message carries, in the feature's folder, such as
   `src/menu/menu-page.parser.ts`. No page is a versioned interface, and the university's firewall answers a blocked
   request with status 200 and another page. So a parser checks that the page is the one it knows, such as the table
@@ -69,17 +69,18 @@ follows these rules; `src/menu/menu.collector.ts` is the first.
 - **Handing over**: the collector sends what it read as one request-and-response message through the messaging client
   (`MESSAGING_CLIENT`) and waits for the answer. The main server's README sets how a message is named and shaped and
   what it answers: [Messages from the worker server](../main-server/README.md#messages-from-the-worker-server). The
-  message's shape is a type in the feature's `dto/`, kept the same as the main server's schema by hand.
+  shape of what a Collection read is a type in the feature's `dto/`, kept the same as the main server's schema by hand.
 - **Failure**: when a page cannot be fetched or read, or the main server does not take the message, the collector logs
   it and sends `collection-failed` with the Source, the time and the reason, such as
   `https://snudorm.snu.ac.kr/foodmenu/?date=2026-10-02 answered 503` or `The page has no menu table`. The other Sources
   of the run are still collected, and the main server keeps what it stored.
 
-The tests never call the real sites. `startApp` replaces the HTTP call under `PageFetcher` (`FETCH`), and every request
-fails unless the test gives it pages.
+The tests never call a real Source. `startApp` replaces the HTTP call under `PageFetcher` (`FETCH`), and every request
+fails unless the test gives it pages. A parser is tested as a function and a collector by running it once, not through
+HTTP; their files are still named `*.e2e-spec.ts`, the one pattern Vitest runs.
 
-- **Saved pages**: `test/pages/` holds one page from each site as the site served it, named after its Source and the
-  day it was saved. Save a page once, with the project's `User-Agent`. Prettier leaves the folder alone:
+- **Saved pages**: `test/pages/` holds one page of each Source as it was served, named after the Source and the day it
+  was saved. Save a page once, with the project's `User-Agent`. Prettier leaves the folder alone:
 
   ```bash
   curl -A 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)' \
@@ -89,7 +90,7 @@ fails unless the test gives it pages.
 - **A parser** is given a saved page with `savedPage(name)` from `test/pages.ts`, and the test checks what comes out,
   as `test/menu-page-parser.e2e-spec.ts` does. A case the saved page does not show, such as a closure or the turn of
   the year, is an edit of the saved page made in the test, with a comment that says what it changes.
-- **A collector** runs once against `sitesServing(pages)` from `test/sites.ts`, which stands for the sites, and a
+- **A collector** runs once against `sourcesServing(pages)` from `test/sources.ts`, which stands for the Sources, and a
   `MainServerStub` from `test/main-server.ts`, which stands for the main server and keeps the messages the worker
   sends, as `test/menu-collector.e2e-spec.ts` does. The test sets the clock with
   `vi.useFakeTimers({ toFake: ['Date'], now })`.
@@ -122,11 +123,14 @@ Three Sources are collected at 05:00 and 10:00, each for today and tomorrow in A
   | Starts with `※`, or says `휴무`: `※ 운영시간 : 11:00~14:30`, `개천절 휴무`               | `note`    | never         |
   | Only `<…>`, with or without a price: `<주문식 메뉴>`, `<뷔페> 6,500원`                   | `heading` | the set price |
   | A price after a colon: `눈꽃치즈닭갈비 : 6,000원`, `<A코너>제육김치덮밥, 잡채 : 6,000원` | `dish`    | the price     |
-  | Anything else, such as `잡곡밥` under a heading with a set price                         | `null`    | never         |
+  | Anything else                                                                            | `null`    | never         |
 
   The price is set when the line holds exactly one amount of won, written without a typo: `6,000원`, `4,500 원`.
-  `9,900원 / 12,400원` and `8,3000 원` stay in `text` alone. On the veterinary college's page, a line of the lunch
-  column that is not a note is a `dish`.
+  `9,900원 / 12,400원` and `8,3000 원` stay in `text` alone.
+
+- So a line that only names a dish has no `kind`: `잡곡밥` under a heading with a set price, or a lunch of the
+  veterinary college's table. Nor has a sentence between angle brackets, which is a notice:
+  `< 위 메뉴외에도 다양한 메뉴가 준비되어 있습니다>`.
 
 The model is provisional (ADR 0001): the team reviews what the collectors send, and how many lines get a `kind` and a
 `price`, before relying on it. The first run on the real pages is recorded in
@@ -160,13 +164,13 @@ src/
 ├── health/                          a feature: the liveness and readiness checks
 └── menu/                            a feature: the collector of the three menu Sources and its parsers
 test/                                tests, run against Redis in a container
-└── pages/                           pages saved from the sites, which the tests read in place of the sites
+└── pages/                           pages saved from the Sources, which the tests read in place of them
 ```
 
 ## Adding a feature module
 
-The worker's features are collectors, one for each kind of Source. The steps add one named `library`. Use a short
-lowercase name, with dashes between words (`shuttle-stop`).
+Apart from the health checks, the worker's features are collectors, one for each kind of Source. The steps add one
+named `library`. Use a short lowercase name, with dashes between words (`shuttle-stop`).
 
 1. Create the module. It lands in `src/library/` and is added to `AppModule`:
 

@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { z } from 'zod';
-import { HANDLED, type Handled, WorkerMessage } from '../common/worker-message.js';
+import { HANDLED, type Handled, WorkerMessage } from '../common/worker-message.decorator.js';
 import { type MenusCollectedMessage, menusCollectedSchema } from './dto/menus-collected.dto.js';
 import { RestaurantMenusDto } from './dto/restaurant-menus.dto.js';
 import { MenusService } from './menus.service.js';

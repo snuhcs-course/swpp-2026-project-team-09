@@ -16,8 +16,10 @@ function readMenuLine(text: string): Pick<MenuLine, 'kind' | 'price'> {
   if (text.startsWith('※') || text.includes('휴무')) {
     return { kind: 'note', price: null };
   }
-  // A corner or section alone on its line, with or without a set price: "<주문식 메뉴>", "<뷔페> 6,500원".
-  if (new RegExp(`^<[^<>]+>\\s*(?:${AMOUNT})?$`, 'u').test(text)) {
+  // A corner or section alone on its line, with or without a set price: "<주문식 메뉴>", "<뷔페> 6,500원". A sentence
+  // between the brackets is a notice: "< 위 메뉴외에도 다양한 메뉴가 준비되어 있습니다>".
+  const heading = new RegExp(`^<([^<>]+)>\\s*(?:${AMOUNT})?$`, 'u').exec(text);
+  if (heading !== null && !heading[1].trim().endsWith('다')) {
     return { kind: 'heading', price: onePrice(text) };
   }
   // A price after a colon: "눈꽃치즈닭갈비 : 6,000원", "<A코너>제육김치덮밥, 잡채 : 6,000원".

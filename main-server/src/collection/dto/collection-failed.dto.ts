@@ -5,7 +5,6 @@ import { Source } from '../../generated/prisma/client.js';
 export const collectionFailedSchema = z.strictObject({
   source: z.enum(Source),
   failedAt: z.iso.datetime({ offset: true }),
-  // What went wrong, such as a page that did not answer or a layout the parser did not expect.
   reason: z.string().min(1),
 });
 

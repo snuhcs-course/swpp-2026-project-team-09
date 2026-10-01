@@ -3,7 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 // Injection token of the HTTP call under PageFetcher. The tests replace it with saved pages.
 export const FETCH = 'FETCH';
 
-// Names the project to the sites it collects from.
+// Names the project to whoever serves a Source.
 const USER_AGENT = 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)';
 
 // The one place where pages are fetched.

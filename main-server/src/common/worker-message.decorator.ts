@@ -17,7 +17,6 @@ export function WorkerMessage(schema: z.ZodType): ParameterDecorator {
   return Payload({ schema, pipes: [new MessageValidationPipe()] });
 }
 
-// The answer to a message that was handled.
 export const HANDLED = { status: 'ok' } as const;
 
 export type Handled = typeof HANDLED;

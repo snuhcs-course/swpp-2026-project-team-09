@@ -150,7 +150,6 @@ model CollectionStatus {
   source            Source    @unique
   lastSucceededAt   DateTime? @map("last_succeeded_at")
   lastFailedAt      DateTime? @map("last_failed_at")
-  // What went wrong, as the worker described it.
   lastFailureReason String?   @map("last_failure_reason")
 
   @@map("collection_statuses")

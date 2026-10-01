@@ -8,8 +8,7 @@ import { type MenuDay, type MenuSource, type MenusCollectedMessage } from './dto
 import { parseMenuPage } from './menu-page.parser.js';
 import { parseVeterinaryMenuPage } from './veterinary-menu-page.parser.js';
 
-// When the menu Sources are collected: at 05:00 and 10:00. The times are provisional, until someone has observed when
-// the pages change.
+// 05:00 and 10:00. Provisional, until someone has observed when the pages change.
 const COLLECTION_TIMES = '0 0 5,10 * * *';
 
 const HOUR = 60 * 60 * 1000;
@@ -33,16 +32,16 @@ export class MenuCollector {
     const now = new Date();
     const dates = [seoulDay(now, 0), seoulDay(now, 1)];
     await Promise.all([
-      this.handOver('coop_menus', now, this.coopPages(dates)),
-      this.handOver('dormitory_menus', now, this.dailyPages('https://snudorm.snu.ac.kr/foodmenu/', dates)),
-      this.handOver('veterinary_menus', now, this.weekPage(dates)),
+      this.handOver('coop_menus', now, this.readCoopPages(dates)),
+      this.handOver('dormitory_menus', now, this.readDailyPages('https://snudorm.snu.ac.kr/foodmenu/', dates)),
+      this.handOver('veterinary_menus', now, this.readWeekPage(dates)),
     ]);
   }
 
   // The restaurants whose names start with "* " repeat one fixed menu in every cell, every day. 기숙사식당 is the
   // dormitory page's 생협기숙사(919동), and is taken from there.
-  private async coopPages(dates: string[]): Promise<MenuDay[]> {
-    const days = await this.dailyPages('https://snuco.snu.ac.kr/foodmenu/', dates);
+  private async readCoopPages(dates: string[]): Promise<MenuDay[]> {
+    const days = await this.readDailyPages('https://snuco.snu.ac.kr/foodmenu/', dates);
     return days.map(({ date, restaurants }) => ({
       date,
       restaurants: restaurants.filter(({ name }) => !name.startsWith('* ') && name !== '기숙사식당'),
@@ -50,7 +49,7 @@ export class MenuCollector {
   }
 
   // The Co-op's and the dormitory's page take a date.
-  private dailyPages(address: string, dates: string[]): Promise<MenuDay[]> {
+  private readDailyPages(address: string, dates: string[]): Promise<MenuDay[]> {
     return Promise.all(
       dates.map(async (date) => ({
         date,
@@ -59,7 +58,7 @@ export class MenuCollector {
     );
   }
 
-  private async weekPage(dates: string[]): Promise<MenuDay[]> {
+  private async readWeekPage(dates: string[]): Promise<MenuDay[]> {
     return parseVeterinaryMenuPage(await this.pages.fetch('https://vet.snu.ac.kr/cafe_menu/'), dates);
   }
 

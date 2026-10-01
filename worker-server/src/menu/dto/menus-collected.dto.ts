@@ -1,4 +1,6 @@
-export type Meal = 'breakfast' | 'lunch' | 'dinner';
+export const MEALS = ['breakfast', 'lunch', 'dinner'] as const;
+
+export type Meal = (typeof MEALS)[number];
 
 export type MenuLineKind = 'heading' | 'dish' | 'note';
 

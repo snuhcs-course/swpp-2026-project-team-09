@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
-import { HANDLED, type Handled, WorkerMessage } from '../common/worker-message.js';
+import { HANDLED, type Handled, WorkerMessage } from '../common/worker-message.decorator.js';
 import { CollectionService } from './collection.service.js';
 import { type CollectionFailedMessage, collectionFailedSchema } from './dto/collection-failed.dto.js';
 

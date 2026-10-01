@@ -1,6 +1,6 @@
 import { type Meal, type MenuLine, type RestaurantMenu } from '../src/menu/dto/menus-collected.dto.js';
 import { parseMenuPage } from '../src/menu/menu-page.parser.js';
-import { savedPage } from './pages.js';
+import { blockPage, savedPage } from './pages.js';
 
 const coopPage = savedPage('coop-menus-2026-10-01');
 
@@ -60,6 +60,14 @@ describe('A heading in a cell', () => {
       { text: '※운영시간: 11:30~13:30', kind: 'note', price: null },
       { text: '※혼잡시간: 11:50~12:20', kind: 'note', price: null },
     ]);
+  });
+
+  it('is not read from a sentence between angle brackets, which is a notice', () => {
+    expect(mealOn(coopPage, '* 버거운버거', 'lunch')).toContainEqual({
+      text: '< 위 메뉴외에도 다양한 메뉴가 준비되어 있습니다>',
+      kind: null,
+      price: null,
+    });
   });
 
   it('is a dish when the corner, its dishes and the price share one line', () => {
@@ -134,10 +142,6 @@ describe('A menu page that is not the one asked for', () => {
   });
 
   it('is refused when it has no menu table', () => {
-    // What the university's firewall answers a blocked request with, as external-sources.md, 2 describes it.
-    const blockPage =
-      '<html><head><meta http-equiv="refresh" content="0; url=https://snucert.snu.ac.kr/waf/error.html"></head></html>';
-
     expect(() => parseMenuPage(blockPage, '2026-10-01')).toThrow('The page has no menu table');
   });
 });

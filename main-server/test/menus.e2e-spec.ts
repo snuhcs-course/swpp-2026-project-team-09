@@ -161,9 +161,15 @@ describe('A later Collection of a Source', () => {
   });
 });
 
+// A time no stored message of this file carries, so that a success recorded for a refused message would be seen.
+const refusedAt = { collectedAt: '2026-11-30T05:00:00+09:00' };
+
 // A valid restaurant, then one with `changes`, so that storing nothing is seen.
 function secondChanged(date: string, changes: object): object {
-  return menusMessage([{ date, restaurants: [restaurant(), restaurant({ name: '자하연식당 2층', ...changes })] }]);
+  return menusMessage(
+    [{ date, restaurants: [restaurant(), restaurant({ name: '자하연식당 2층', ...changes })] }],
+    refusedAt,
+  );
 }
 
 // A second restaurant whose one line has `changes`.
@@ -193,24 +199,30 @@ const invalidMenus: [string, (date: string) => object, string][] = [
   [
     'a day that is not a calendar day',
     (date: string): object =>
-      menusMessage([
-        { date, restaurants: [restaurant()] },
-        { date: '11. 3(월)', restaurants: [] },
-      ]),
+      menusMessage(
+        [
+          { date, restaurants: [restaurant()] },
+          { date: '11. 3(월)', restaurants: [] },
+        ],
+        refusedAt,
+      ),
     'days.1.date: ',
   ],
   [
     'the same restaurant twice on a day',
-    (date: string): object => menusMessage([{ date, restaurants: [restaurant(), restaurant()] }]),
+    (date: string): object => menusMessage([{ date, restaurants: [restaurant(), restaurant()] }], refusedAt),
     'days.0.restaurants: Each restaurant must appear once',
   ],
   [
     'the same day twice',
     (date: string): object =>
-      menusMessage([
-        { date, restaurants: [restaurant()] },
-        { date, restaurants: [] },
-      ]),
+      menusMessage(
+        [
+          { date, restaurants: [restaurant()] },
+          { date, restaurants: [] },
+        ],
+        refusedAt,
+      ),
     'days: Each day must appear once',
   ],
   [
@@ -220,7 +232,7 @@ const invalidMenus: [string, (date: string) => object, string][] = [
   ],
   [
     'a Source that has no menus',
-    (date: string): object => menusMessage([{ date, restaurants: [restaurant()] }], { source: 'events' }),
+    (date: string): object => menusMessage([{ date, restaurants: [restaurant()] }], { ...refusedAt, source: 'events' }),
     'source: ',
   ],
 ];

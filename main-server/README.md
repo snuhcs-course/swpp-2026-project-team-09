@@ -276,7 +276,7 @@ src/
 │   ├── messaging.ts                 options for NestJS messaging over Redis
 │   ├── redis.module.ts              makes a Redis client available to every feature
 │   ├── redis-idempotency.store.ts   keeps the results of requests safe to repeat in Redis
-│   ├── worker-message.ts            @WorkerMessage(): checks a message from the worker server against its schema
+│   ├── worker-message.decorator.ts  @WorkerMessage(): checks a message from the worker server against its schema
 │   ├── route-access.ts              who may call a route: anyone, a User or an Administrator
 │   ├── public.decorator.ts          @Public(): opens a route to requests without an access token
 │   ├── allow-before-onboarding.decorator.ts  @AllowBeforeOnboarding(): opens a User's route before onboarding
@@ -420,7 +420,8 @@ follows these rules.
   `collection-failed`. The payload is a JSON object. It names its `source`, a value of `Source` in
   `prisma/schema.prisma`, and the time of the Collection in ISO 8601 with an offset (`collectedAt`, `failedAt`). A day
   is `YYYY-MM-DD`, a calendar day in Asia/Seoul. A field without a value is `null`, not left out.
-- **Validation**: the handler takes the payload with `@WorkerMessage(schema)` from `src/common/worker-message.ts`, and
+- **Validation**: the handler takes the payload with `@WorkerMessage(schema)` from `src/common/worker-message.decorator.ts`,
+  and
   the schema is zod in the feature's `dto/`, such as `src/menus/dto/menus-collected.dto.ts`. Use `z.strictObject`, so
   that a misspelt field is refused instead of dropped. `main.ts` connects messaging without `inheritAppConfig`, so no
   global guard, pipe or interceptor reaches a message handler: it needs no access token, and `@WorkerMessage` checks

@@ -7,12 +7,12 @@ import { Settings } from '../src/common/settings.js';
 import { MainServerStub } from './main-server.js';
 
 function refuseEveryRequest(): Promise<Response> {
-  return Promise.reject(new Error('The tests never call the real sites'));
+  return Promise.reject(new Error('The tests never call a real Source'));
 }
 
 // AppModule validates the settings when it is imported, so it is imported afresh after the environment is set.
-// Page requests go to `fetchPage` in place of the real sites; without one, every request fails. `mainServer` takes the
-// worker's messages in place of messaging over Redis.
+// Page requests go to `fetchPage` in place of the real Sources; without one, every request fails. `mainServer` takes
+// the worker's messages in place of messaging over Redis.
 export async function startApp(
   settings: Partial<Record<keyof Settings, string | undefined>>,
   { fetchPage = refuseEveryRequest, mainServer }: { fetchPage?: typeof fetch; mainServer?: MainServerStub } = {},
