@@ -126,6 +126,6 @@ The worker server collects events, menus and shuttle positions from their origin
 ## Further Notes
 
 - The schedule names 윤유상 and 김태현 as workers.
-- Nobody has yet seen the operator's endpoint return a vehicle; every observation so far fell outside service hours. P05 observes it once during service hours before the parser is trusted.
+- P05 observed the operator's endpoint during service hours: every vehicle position fell on a stop, never between two. How a vehicle is shown between stops is open; `.scratch/research/external-sources.md` §5 has the observations.
 - The pages are not versioned interfaces. A change in their layout breaks a parser without notice, and the collection status in story 18 is how the team finds out.
 - Whether the OpenStreetMap roads cover the whole loop needs a look at the map. P20 rides the loop to confirm the line matches the real route.
