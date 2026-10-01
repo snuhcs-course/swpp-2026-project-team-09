@@ -187,6 +187,63 @@ export class AdminEventsController {
   Administrator of the test settings, and `signInAsNewAdministrator(app)` registers a new one and signs in as them. The
   test files share one database, so sign out or remove only a new one.
 
+## Menus
+
+The worker server collects the menus of three Sources, the Co-op's, the dormitory's and the veterinary college's page,
+for today and tomorrow, and sends them as `menus-collected` (see
+[Messages from the worker server](#messages-from-the-worker-server)). The app reads them:
+
+- `GET /menus?date=2026-10-01` with a User's access token answers the menus of that day, a calendar day in
+  Asia/Seoul, as a list of restaurants in the Korean order of their names:
+
+  ```json
+  [
+    {
+      "name": "두레미담",
+      "collectedAt": "2026-09-30T20:00:00.000Z",
+      "meals": [
+        {
+          "meal": "lunch",
+          "lines": [
+            { "text": "<셀프코너> 7,000원", "kind": "heading", "price": 7000 },
+            { "text": "잡곡밥", "kind": null, "price": null },
+            { "text": "고등어 소금구이  : 14,000원", "kind": "dish", "price": 14000 },
+            { "text": "※운영시간 : 11:00~14:00", "kind": "note", "price": null }
+          ]
+        }
+      ]
+    }
+  ]
+  ```
+
+- A meal is the lines of its cell on the page, in the page's order
+  ([ADR 0001](../docs/adr/0001-menus-kept-as-lines.md)). `meals` holds the meals that have lines, in the order
+  breakfast, lunch, dinner, and a restaurant the page lists with empty cells is served with `meals: []`. `collectedAt`
+  is the time of the Collection that stored the restaurant's menus for the day.
+- `text` is the line as the page wrote it, prices and markers such as `(#)` (no meat) included. The worker sets the
+  rest only when it is sure, and leaves it `null` otherwise:
+  - `kind`: `heading` for a corner or section, `dish`, or `note` for hours, notices and closures such as
+    `개천절 휴무`. There is no operating hours field: hours are note lines of the meal.
+  - `price`: in won, when the line gives exactly one price. `9,900원 / 12,400원`, or a price with a typo, stays in
+    `text` alone.
+- The app shows `text`, styled by `kind` where there is one, and reads `price` only where it is set. A line the worker
+  could not read is still shown.
+- A day with nothing stored answers `[]`. A `date` that is not a calendar day gets 400.
+
+For each day a `menus-collected` message carries, it replaces everything its Source had stored for that day. So the
+same message twice leaves one set of records, and a restaurant the page dropped or renamed does not linger. The
+Source's other days and the other Sources' restaurants stay as they are. A failed Collection changes no menu, so the app
+keeps getting the last menus collected.
+
+- A collector therefore sends every restaurant its page lists for a day, one listed with empty cells with `lines: []`,
+  and a day on which the page lists none with `restaurants: []`.
+- A restaurant is known by its name. The same name sent by two Sources for one day is served twice, so each
+  restaurant is collected from one Source.
+
+The model is provisional (ADR 0001): the team reviews what the collectors send, and how many lines get a `kind` and a
+`price`, before relying on it. The worker server's README says how each line is read, and the first run on the real
+pages is recorded in `.scratch/iteration-1/P07-campus-feeds/issues/01-menus-first-collection.md`.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
@@ -219,6 +276,7 @@ src/
 │   ├── messaging.ts                 options for NestJS messaging over Redis
 │   ├── redis.module.ts              makes a Redis client available to every feature
 │   ├── redis-idempotency.store.ts   keeps the results of requests safe to repeat in Redis
+│   ├── worker-message.ts            @WorkerMessage(): checks a message from the worker server against its schema
 │   ├── route-access.ts              who may call a route: anyone, a User or an Administrator
 │   ├── public.decorator.ts          @Public(): opens a route to requests without an access token
 │   ├── allow-before-onboarding.decorator.ts  @AllowBeforeOnboarding(): opens a User's route before onboarding
@@ -230,7 +288,9 @@ src/
 ├── auth/                            a feature: app and admin site sign-in, refresh, sign-out, the access token checks
 ├── users/                           a feature: the signed-in User, their profile and onboarding
 ├── lobby/                           a feature: what the app needs when it starts
-└── administrators/                  a feature: the Administrators, who register and remove each other
+├── administrators/                  a feature: the Administrators, who register and remove each other
+├── collection/                      a feature: each Source's Collection status, and the worker's failure messages
+└── menus/                           a feature: the menus the worker collects, stored and served by day
 scripts/                             commands run by hand, such as `pnpm keys:generate`
 test/                                tests, run against PostgreSQL and Redis in containers
 ```
@@ -348,3 +408,61 @@ create(@Body({ schema: createPartySchema }) body: CreatePartyDto, @CurrentUser()
 - In a test, send the key with `.set('Idempotency-Key', randomUUID())`, as `test/idempotency.e2e-spec.ts` does.
 
 The results are kept in Redis by `src/common/redis-idempotency.store.ts`.
+
+## Messages from the worker server
+
+The worker server only collects. It hands what a Collection read to the main server over messaging
+(`src/common/messaging.ts`), and the main server checks it, stores it and answers. Every message from the worker
+follows these rules.
+
+- **Name and shape**: a request-and-response message, handled with `@MessagePattern()` in the feature's controller. It
+  is named in kebab case after what happened: `menus-collected` for what a Collection of a menu Source read, and
+  `collection-failed`. The payload is a JSON object. It names its `source`, a value of `Source` in
+  `prisma/schema.prisma`, and the time of the Collection in ISO 8601 with an offset (`collectedAt`, `failedAt`). A day
+  is `YYYY-MM-DD`, a calendar day in Asia/Seoul. A field without a value is `null`, not left out.
+- **Validation**: the handler takes the payload with `@WorkerMessage(schema)` from `src/common/worker-message.ts`, and
+  the schema is zod in the feature's `dto/`, such as `src/menus/dto/menus-collected.dto.ts`. Use `z.strictObject`, so
+  that a misspelt field is refused instead of dropped. `main.ts` connects messaging without `inheritAppConfig`, so no
+  global guard, pipe or interceptor reaches a message handler: it needs no access token, and `@WorkerMessage` checks
+  the payload in place of the global pipe.
+- **Answers**: a handled message answers `{ "status": "ok" }` (`HANDLED`). A message that does not match its schema is
+  refused before the handler runs, and nothing from it is stored, the Collection status included. The answer names each
+  problem as the HTTP routes do, separated by `; `:
+
+  ```json
+  {
+    "status": "error",
+    "message": "days.0.restaurants.1.lines.0.kind: Invalid option: expected one of \"heading\"|\"dish\"|\"note\"; days.0.restaurants.1: Unrecognized key: \"hours\""
+  }
+  ```
+
+  An error inside a handler is logged and answers Nest's `{ "status": "error", "message": "Internal server error" }`.
+  The worker's `send()` fails with the answer in both cases, and the worker reports either as a failed Collection.
+
+- **Repeats and order**: the same message sent twice leaves the records one would. Each feature states how, as
+  [Menus](#menus) does. A Source's messages are stored in the order they arrive, not by their times.
+- **Collection status**: `collection_statuses` keeps, for each Source, the time of its last successful Collection
+  (`lastSucceededAt`) and, apart from it, its last failure (`lastFailedAt`, `lastFailureReason`). A handler that stores
+  what a Collection read calls `CollectionService.recordSuccess(tx, source, collectedAt)` in the same transaction. A
+  Collection that fails sends `collection-failed` with `{ "source", "failedAt", "reason" }`, where `reason` says what
+  went wrong. It records the failure and leaves every stored record as it is. A success leaves the last failure in
+  place, so the two times tell whether the Source has worked since. No route serves the status yet; P12 shows it.
+- **A new Source** adds its value to `Source` with a migration. `menusCollectedSchema` lists the Sources that send
+  menus, so a Source of another kind is refused there.
+
+In a test, `startWithWorker()` from `test/worker.ts` starts the server with a client that sends as the worker does, as
+`test/menus.e2e-spec.ts` does:
+
+```ts
+const harness = await startWithWorker();
+await sendAsWorker(harness.worker, 'menus-collected', message); // resolves with the answer
+expect(await refusal(harness.worker, 'menus-collected', invalid)).toContain('days.0.date: ');
+await harness.close(); // in afterAll
+```
+
+- `startWithWorker()` starts a Redis of its own for the file. Every test file's server listens on the shared test Redis,
+  and each of them would store and answer a message.
+- The database is the shared one, so each test stores data of its own. The menus tests take their days from `daysOf()`
+  in `test/menus.ts`, a month for each file and a day for each test. A Source's Collection status is one row, so only
+  one file checks the status of a Source: `test/collection.e2e-spec.ts` the dormitory's, `test/menus.e2e-spec.ts` the
+  Co-op's.
