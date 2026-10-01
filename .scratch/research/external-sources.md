@@ -14,6 +14,7 @@ Everything was checked on 2026-09-30 unless a line says otherwise. `[K1]`-style 
 | Veterinary college menus | P07, P15 | Public HTML | Confirmed |
 | Shuttle stops and vehicles (Busin) | P07, P15 | Public HTML and JSON | Confirmed, vehicles seen in service |
 | OpenStreetMap | P07, P08, P15 | Open data, loaded once as seed data | Confirmed |
+| SNU campus map | P07 | Public JSON behind the map's pages; no terms published | Confirmed on 2026-10-01 |
 | Kakao Maps SDK for Android | P06 | Native app key and key hash | Key issued; package name and development key hash registered; map shown in a trial build |
 | Kakao Maps JavaScript SDK | P12 | JavaScript key and domain | Key issued; `http://localhost:3100` registered |
 | Kakao walking route API | P07 | REST API key | Key issued; not called yet |
@@ -40,6 +41,16 @@ Everything was checked on 2026-09-30 unless a line says otherwise. `[K1]`-style 
   - Title `.board-view .header .title`, the event's date or range `.header .date` such as `2026.10.12. ~ 2026.10.16.`, body `.board-view .content`. The page shows no posting date.
   - An unknown `bbsidx` answers 404.
 - Observed: 12 items on the first page. The detail of `bbsidx=176432` was readable.
+- Checked again on 2026-10-01, for P07: `sc=y&df=…&dt=…` works together with `page=N`; the pager's links drop the filter, so a collector builds each page's address itself. From 2026-10-01 to the end of 2027 the list held 94 posts on 8 pages. October alone gave the same 8 pages, November 2, December 1, and 2027 three posts: posts are published one to three months before the event.
+  - Of 47 of those posts, 22 carried an application or deadline line, in many forms: `신청마감: 2026. 10. 17.(목) 23:59`, `10월 16일(금) 오후 5시까지`, `신청기간: 2026.9.1.부터 정원 마감 시 까지`, `선착순 1,500명 도달 시 신청 마감`. Some had closed before the post was collected: `bbsidx=176432` took applications on 9-29 and 9-30 for an event on 10-13. 38 of the 47 bodies had a time label (`일시`, `일자`, `기간`); none was an image only.
+- Measured on 2026-10-01 on the 48 posts of the list's first four pages, with simple rules, for P07's decision on publishing collected events:
+  - 33 gave a start with a time of day in a time line of the body (`일시`, `일자`, `일정`, `기간`), and 37 a start date there. Every post has a date in its header, but it is often the application period: one hackathon's header gave 10-01 to 10-10 for an event on 10-17.
+  - 30 had a place line (`장소`). They name 18 distinct building numbers, and 17 of them are in the campus map's building list (§6.2), all but 71-1.
+  - Against OpenStreetMap's building names only 2 of the 18 numbers resolved, and 13 posts had both a start time and exactly one building. One of the 13 landed on the wrong building: `중앙도서관 관정관` matched 중앙도서관.
+  - About 10 of the 48 are not events: calls for applicants, contests, recruitment, a course that runs to 2027-08. Most of them have no place line.
+  - The places that matched nothing: 7 online, about 5 on the Yeongeon campus or off campus, and names that several buildings share, such as `인문대학` and `공과대학`.
+  - Also seen: one event posted twice (`bbsidx` 176375 and 176285), a post with the time and the place on one line (`시간 및 장소`), and a programme of six sessions that mixed Zoom and a building.
+  - Which posts are events, and whether a matched building is the right one, were judged by reading, not by a rule.
 - Gotchas:
   - `bbsidx` identifies a post. My judgement: use it as the source key.
   - The body labels the time and place in text, for example `· 일   시: 2026. 10. 13.(화) 19:30 ~ 21:30 (예정)` and `· 장   소: 서울대학교 종합운동장`. The spacing inside the labels varies and includes no-break spaces.
@@ -59,12 +70,24 @@ Everything was checked on 2026-09-30 unless a line says otherwise. `[K1]`-style 
   - A cell is free text. Items are written `메뉴 : 6,000원`, sometimes `:3,000원` or `4,500 원`. Corners are marked like `<A코너>`, and a buffet has one price for the whole line. Hours come as `※ 운영시간 : 11:00~14:30`, sometimes `※운영시간:`, and busy hours as `※ 혼잡시간 : …`.
   - An empty cell does not mean closed. A closed restaurant is usually left out of the table. A closure written in the cell is the exception, such as `추석연휴 휴무` for `기숙사식당` on 2026-09-27, the Sunday after Chuseok.
   - `기숙사식당 (881-9072)` is the same restaurant as `생협기숙사(919동)` on the dormitory page. On 2026-09-30 both cells were identical. Collect it once.
+- Checked again on 2026-10-01, for P07, with the pages of 2026-09-30, 10-01, 10-03, 10-04, 10-07, 10-08 and 10-12:
+  - Operating hours are given per meal cell, not per restaurant: `학생회관식당` had 08:00~10:00, 11:00~14:30 and 17:00~19:00 in its three cells. A cell with corners can give hours per corner: `예술계식당`'s A코너 11:30~14:00 and B코너 11:30~13:00; `301동식당` gives several sections their own hours.
+  - Besides hours, cells carry `※` lines for busy hours, last orders, break times, group bookings and other notices.
+  - Corner and section headings: `<A코너>` before a dish on the same line; `<셀프코너> 7,000원` and `<뷔페> 6,500원`, a set price followed by unpriced dishes; `<주문식 메뉴>`, `<식사>`, `<TAKE-OUT>`; and brand names inside the food court, such as `<서가앤쿡>`.
+  - Prices: one line can give several (`9,900원 / 12,400원`, `5,000원 / (중) : 10,000원`), and some have typos (`8,3000 원`, `5.900원`). Both occur at `버거운버거`.
+  - The page's header says that `(#)` marks a main dish without meat ("NO MEAT") and that non-members pay 1,000원 more at six restaurants; the listed prices are members' prices.
+  - The restaurants listed change from day to day. On 10-03, a public holiday, only `학생회관식당` (its cells saying `개천절 휴무`) and `버거운버거`; on 10-04, a Sunday, only `기숙사식당` and `버거운버거`. A restaurant closed that day is usually left out rather than marked.
+  - Days ahead are filled in as each restaurant posts them: on 10-01, the page for 10-07 listed ten restaurants and the one for 10-12 five, of which only `3식당` had a menu. The page for 10-02 was complete on 10-01.
+  - The four restaurants whose names start with `* ` (`버거운버거`, `공대간이식당`, `75-1동 4층 푸드코트`, `220동식당`) repeat one fixed menu of up to 240 lines in each of their meal cells, every day. The page does not say what `*` means. They made 290 to 575 of a day's 360 to 715 lines.
+  - Some cells hold an unfilled template, such as `: | :` for `자하연식당 2층` on 10-07.
+- Line shapes on 2026-10-01 and 10-02, over the twelve restaurants with daily menus (309 lines): 36% a dish with one price (`눈꽃치즈닭갈비 : 6,000원`); 29% `※` notes; 24% text without a price (`단호박튀김`), mostly under a heading with a set price; 6% a heading alone (`<주문식 메뉴>`); 3% a heading with a set price (`<뷔페> 6,500원`); 2% a corner, its dishes and the price on one line (`<A코너>제육김치덮밥, 잡채, 떡꼬치구이 : 6,000원`). The four fixed-menu restaurants made 1,148 lines those two days, 23% of them with several prices.
 
 ### 4.2 Dormitory (관악학생생활관)
 
 - `GET https://snudorm.snu.ac.kr/foodmenu/?date=YYYY-MM-DD`. The page is built like the Co-op page: the same `table.menu-table`, cell classes and `input[name="date"]`.
 - Observed: two restaurants, `아워홈(901동)` and `생협기숙사(919동)`.
 - Gotcha: `생협기숙사(919동)` repeats the Co-op page's `기숙사식당` (§4.1).
+- Checked again on 2026-10-01 (pages of 10-01, 10-02, 10-03 and 10-08): hours per meal cell as on the Co-op page; `아워홈(901동)`'s breakfast is a set (`세미양식부페 : 5,000원`) followed by one line of its dishes; `생협기숙사(919동)` matched the Co-op's `기숙사식당` on each day both were listed. A day's page is 14 to 15 lines.
 
 ### 4.3 Veterinary college
 
@@ -74,6 +97,13 @@ Everything was checked on 2026-09-30 unless a line says otherwise. `[K1]`-style 
 - Gotchas:
   - No prices and no year. My judgement: in late December a row such as `1. 2(금)` belongs to the next year. The weekday next to each date settles the year.
   - The `석 식` column was empty all week. Dinner is served by reservation, and its menu is in the text under the table: `평일 저녁은 예약제로 운영합니다. 식사시간: 17:30~18:30 저녁메뉴: 제육볶음 …`.
+- Checked again on 2026-10-01: the same week table, one lunch dish a day, no lunch hours and no restaurant name. The text under the table names one dinner menu without saying for which day, and adds a reservation time and telephone number. P07 collects lunch only.
+
+### 4.4 Co-op restaurant information page
+
+- `GET https://snuco.snu.ac.kr/식당안내/` (percent-encoded in links). One `table` without classes, headed `식당 | 위치 | 층별 | 규모 | 대상 | 운영시간(개강 기준)`, with the hours split into `평일 | 토요일 | 휴일`; a closed day says `휴관`. A restaurant with several floors spans rows.
+- Observed on 2026-10-01: 17 restaurants, the four fixed-menu restaurants among them, each with its building as a name and number (`학생회관 (63동)`, `전망대 (75-1동)`) and its floor. Names carry the telephone number as on the menu page. No coordinates. The dormitory's `아워홈(901동)` and the veterinary college cafeteria are not on it.
+- Not collected in Iteration 1 (P07).
 
 ## 5. Shuttle: Busin route page and vehicle positions
 
@@ -113,7 +143,7 @@ The operator's service. The university's notices reach it through `서울대.inf
   - A vehicle moved on by one stop every 45 to 90 seconds.
   - Four vehicles stood at 신소재공동연구소 throughout.
 - Gotchas:
-  - A position tells only which stop a vehicle is at. A fraction of the loop between two stops, as P07 plans, therefore always falls on a stop. The app has to interpolate if a vehicle is to move smoothly.
+  - A position tells only which stop a vehicle is at. The app has to interpolate if a vehicle is to move smoothly.
   - `count` and `plates` describe everything at that position, not one vehicle. The four vehicles at one stop came as four rows with `count` 4 and the same four plates. Tell vehicles apart by `carid`. A plate cannot be matched to a `carid` while vehicles stand together.
   - The answer has no time of observation. Use the time it was received.
   - The page itself asks for positions every 5 seconds.
@@ -134,16 +164,51 @@ The operator's service. The university's notices reach it through `서울대.inf
 - Since March 2025 all 11 campus circular shuttles have shown their current and next stop on a display driven by GPS, a project of a student team of 글로벌사회공헌단 funded by HD Hyundai [S8]. Whether its positions can be shared is worth asking.
 - Unusable: the university's old service at `shuttlebus.snu.ac.kr`. Its TLS certificate expired on 2021-06-26, and its vehicle call returned an empty list during service hours on 2026-09-30.
 
-## 6. OpenStreetMap
+## 6. Map data: OpenStreetMap and the SNU campus map
+
+### 6.1 OpenStreetMap
 
 - Campus Boundary: relation 11917142 [O4]. It is tagged `amenity=university` and `name=서울대학교 관악캠퍼스`, is a multipolygon of four outer ways, and was last edited on 2026-03-15.
 - The campus extent is latitude 37.4470628 to 37.4692598 and longitude 126.9474475 to 126.9612239.
+- Checked on 2026-10-01 with one Overpass query over the campus extent, for P07:
+  - No relation for the campus shuttle. The bus routes in the extent are the city buses 8507, 관악02 and 관악04 (relations 6982099, 7093956 and 7533205). The shuttle's line has to be traced along the roads by hand.
+  - 49 `highway=bus_stop` nodes, all named, but not with the operator's names: `정문` is `서울대정문`, `기숙사삼거리` is `관악사삼거리`, `경영대` is `경영대.행정대학원`, `유전공학연구소` is `유전공학연구소.반도체공동연구소`, `신소재공동연구소` is `신소재`; `38동` had no clear match. The campus map lists the loop's stops with coordinates (§6.2).
+  - 222 `building` ways, 212 with `name`, one with `ref` (`35`, 공과대학). 52 names carry a number, such as `27동`, `25-1동` or `학생회관(63)`. `addr:housenumber` is `1` on all 160 buildings that have it: the street address, not the building number.
+- Checked on 2026-10-01 against the outline, for P07:
+  - The outline's four ways form one ring of 256 points. Of the 212 named buildings in the campus extent, 194 lie inside it and 18 outside.
+  - The ring leaves out a wedge in the north-east. In the wedge: nine buildings named `A` to `I`, the faculty housing; `총장 공관`; and `글로벌학생생활관(915)` to `(917)`.
+  - Outside it in the south, on the hillside: `대기환경관측소`, `전파천문대`, `지진관측소` and `위험물저장고`. `저류조 입구` lies outside at the north-west corner.
+  - A User in any of these places is outside the Campus Boundary.
+  - Inside the outline, 41 of the 194 named buildings carry a number, and 12 names are shared by 51 buildings: `자연과학대학` by 10, `인문대학` and `공과대학` by 7 each.
 - The main Overpass instance, `overpass-api.de`, asks for fewer than 10,000 queries and 1 GB a day, and a hundredth of that for regular automated use [O1]. It wants one query at a time and a User-Agent or Referer that names the project. After a 429 response, wait 30 seconds before trying again. A one-off seed export is far below this.
 - Licence: ODbL [O3].
   - Attribution is to "OpenStreetMap", with a link to `https://www.openstreetmap.org/copyright`; "© OpenStreetMap contributors" is an accepted historical form [O2].
   - The guidelines ask for it to be visible without any interaction, where the data is shown. Shown on a splash screen when the app starts, it need not be shown every time [O2].
   - An info button or menu is named only as where the full licence details go once a visible attribution has collapsed. P15 places the attribution on an information screen only, which does not meet the guidelines. A small attribution in a map corner while OSM-derived layers are shown, or a splash at app start, does.
   - Publishing a database derived from OSM data brings share-alike obligations.
+
+### 6.2 SNU campus map
+
+The university's own map of the Gwanak campus, `https://map.snu.ac.kr` [M1]. `www.snu.ac.kr` has no building list of its own; its campus map link leads here. Checked on 2026-10-01.
+
+- The pages draw on a Kakao map through Kakao's JavaScript SDK. The data they draw on it, the buildings, the shuttle routes with their stops and the amenities, comes from the map's own JSON endpoints. What the Kakao base map itself shows, such as city bus stops and building outlines, is Kakao's.
+- No terms of use and no licence are linked on the web or the mobile main page, `robots.txt` answers 404, and the endpoints are not documented. No login is needed. The page's script sends the header `access_token: 111`; the endpoints answered without it. A button "OpenAPI 신청 안내" is commented out in the page and points at `openapi.snu.ac.kr`, which does not resolve.
+- Buildings: `GET /api/building.action?page=1&rows=1000` [M2], JSON in EUC-KR.
+  - 250 rows. Each has `inst_seq` (the row's identifier, unique), `inst_kor_nm` and `inst_eng_nm` (the names), `vil_dong_nm` (the building number, such as `302` or `25-1`), `bd_no` (a building code, such as `11C0210`, on the numbered rows), and `lat_val` and `lon_val` in WGS84 with five decimals.
+  - 237 rows have a number, all distinct. 215 of them lie inside the Campus Boundary (§6.1) and 22 outside: the faculty housing (`122-1` to `122-7`), `공관`, the dormitory buildings 915 to 917, three observatories, two stores for hazardous materials, two gatehouses, the swimming pool and three bungalows.
+  - 13 rows have no number: three subway stations and the back gate, outside the Boundary; `서울대 정문`, `야구장`, `종합운동장`, `테니스장`, `자하연`, `관악사운동장`, `공대테니스장` and `붉은광장` inside it; and a row named `Test`.
+  - Eight names are wrapped, such as `관악 223동[우석경제관]`.
+  - Coordinates against OpenStreetMap: for the 14 buildings that OpenStreetMap names with the same number, the centre of OpenStreetMap's outline and the map's point lay a median of 5 m apart, 20 m at most.
+  - The list is not complete. OpenStreetMap's `체육문화교육연구동(71-1동)` and `901` are missing; Kakao Map's search finds both, as `서울대학교 관악캠퍼스 체육문화연구동` and `서울대학교 대학원생활관 901동`. OpenStreetMap's `자연과학대학 (502)` is missing too, but Kakao Map's search finds no 502동 on campus, and it stands 44 m from the map's 500동. Some names are older ones, such as `두레문예관`.
+  - Matching the map's names to OpenStreetMap's would give a number to only 66 of OpenStreetMap's 153 unnumbered buildings by an exact name, and 40 of the rest share their name with other buildings. P07 therefore takes the buildings from this list.
+- Shuttle: `GET /api/bus/search.action?search_word=셔틀` lists ten shuttle routes, and `GET /api/bus/suttle/{bus_route_id}.action?sch_bus_deta_cd={bus_route_type}` gives one route's stops in order, each with a name, a latitude and a longitude, and the route's service hours as text [M3].
+  - The campus loop is route `61`, `정문<->순환도로`, of type `1102`. It has 15 stops: 정문, 법대입구, 자연대500동(행정관), 농생대, 공대입구, 신소재연구소, 제2파워플랜트, 302동 공학관, 301동 공학관, 유전공학연구소, 교수회관입구, 기숙사삼거리, 국제대학원, 종합교육연구동, 경영대.
+  - The operator's drawing (§5) has 14 stops in the same direction. In order they pair with the map's, except `제2파워플랜트`, which the operator does not list: `법과대` with `법대입구`, `자연대` with `자연대500동(행정관)`, `38동` with `공대입구`, `신소재공동연구소` with `신소재연구소`, `302동` and `301동` with the two `공학관` stops, `교수회관` with `교수회관입구`, `수의대` with `종합교육연구동`, and the other six by the same name.
+  - Two pairs were checked by distance. Building 38 stands 69 m from `공대입구` and 154 m from the next nearest stop. Building 85, 수의과대학, stands 170 m from `종합교육연구동` and 206 m from `경영대`. My judgement: the pairs hold; a person should look once.
+  - The route's service hours: in the semester 08:00 to 19:00 every 5 minutes and 19:00 to 21:00 every 20; in the seasonal term 08:00 to 18:00 every 6; in vacations 08:00 to 18:00 every 10.
+  - The answer holds no route line and no vehicle positions. `/api/bus/path.action?bus_id=61` answered with a failure.
+- The map has no outline of the campus; its only polygons are car parks.
+- Not used: the amenities and restaurants (`/api/amenities.action`, `/api/getRestaurantBuilInfo.action`), which tie a restaurant to its building.
 
 ## 7. Kakao
 
@@ -274,6 +339,8 @@ A build on EAS does not receive `mobile/.env`, because EAS uploads only the file
   - With paid use on, the month's bill, with 10% VAT added, is paid automatically from the 비즈월렛 and its card around 01:00 on the 1st [K10]. A walking route then costs 11 KRW a call.
   - Kakao Map has no spending limit; only KakaoTalk Share has one. A bug that repeats route requests would turn straight into a bill. My judgement: before turning paid use on, add a daily count on the server that stops route requests.
 - The operating policy allows a cache only to improve the user's experience, and only if it is kept current [K5]. It forbids copying or handing on data from the service without Kakao's prior consent.
+  - Checked again on 2026-10-01: these are articles 20 and 30 of the policy. It has no article on maps or place search in particular, and none on a position that a person picks on a map.
+  - My judgement, by the kind of coordinate. A list kept in our database, such as the buildings or the stops, must not come from Kakao's map or place search. A position that a person sets by pointing on the map (P06, P12) is that person's input. A route is shown and not kept (§7.4).
 
 ## 8. Google Sign-In
 
@@ -308,6 +375,11 @@ A build on EAS does not receive `mobile/.env`, because EAS uploads only the file
 
 - SNUTT's timetable picker (Waffle Studio): P06 has the User enter the timetable instead. Using the picker later needs Waffle Studio to register our origin; the contact is `master@wafflestudio.com`.
 - Siksha and Haengsha (Waffle Studio): read to find the sources above, as P07 records. `wafflestudio/siksha-crawler` has no LICENSE file [W1].
+- How Siksha collects the menus, read on 2026-10-01 for P07. None of these repositories has a licence, so only the approach is recorded.
+  - Production runs `siksha-crawler` [W5] daily at 05:00 KST, for today to six days ahead. It parses every cell by shared line rules, reads a price by keeping the digits of the last price on a line, so `5.900` becomes 5900, and drops `※` lines, hours and closures. After each run it deletes the stored menus from today on that the run did not return.
+  - `siksha_crawler_v2` [W6], so far only against the development server, has one hand-written parser per restaurant and a table of known restaurant names. It keeps only lines of the form `name : price원`, skips `※` lines and the lines under a heading it does not know, and replaces a restaurant's meal of a day as a whole. A meal the page leaves empty sends nothing, so an earlier one stays.
+  - Its server [W7] keeps operating hours per restaurant as data entered by hand, and neither version stores the original text of a cell. An earlier prototype [W8] modelled open, busy, break and last-order times per corner and meal.
+  - Both take `생협기숙사(919동)` from the dormitory page and skip the Co-op's `기숙사식당`.
 - Haengsha collects the same events list (§3). This was read in `wafflestudio/hangsha-server` at commit `4a33bf9` of 2026-09-15 (KST).
   - Its rules read one date and time per post [W2].
   - When a post's date is a range and its body mentions 모집 or 신청, the range is taken as the application period and no session is made [W2].
@@ -325,6 +397,8 @@ A build on EAS does not receive `mobile/.env`, because EAS uploads only the file
 - The shuttle: mySNU offers a 셔틀버스 service that shows where the shuttle is. Whether it uses a feed other than Busin is unchecked.
 - Kakao: the key hashes of EAS and Play builds. The walking route has not been called.
 - Kakao: what the Android map SDK counts as a call, and when the daily quota resets.
+- Naver: what the terms of its search and Maps APIs say on storing results. They were not read; a news report says the search API forbids copying, storing and caching them.
+- The SNU campus map: who maintains its data, how its coordinates were made, and whether the university permits reuse.
 - Google: the project's owner, and an Android client for `com.bonnieandclaude.snunow`.
 - Google sign-in with the Iteration 1 app on a phone. The `hd` claim itself is confirmed (§8).
 - P08 and P14: whether the tunnel's address can be fixed, for the Invite Link.
@@ -339,6 +413,9 @@ A build on EAS does not receive `mobile/.env`, because EAS uploads only the file
 [S6]: https://docs.google.com/presentation/d/e/2PACX-1vRDryW8Tlal0Gtu572IkeJlJ2CoKHZuKpB8NAT4qHaWs-Usm3QbupQWR0lEPBHTnxt0Q7hWYYTkkJP4/pub
 [S7]: https://snuco.snu.ac.kr/%ec%9d%b4%ec%9a%a9%ec%95%bd%ea%b4%80/ (accessed 2026-10-01)
 [S8]: https://dhnews.co.kr/news/view/1065580837520561 (accessed 2026-10-01)
+[M1]: https://map.snu.ac.kr/web/main.action (accessed 2026-10-01)
+[M2]: https://map.snu.ac.kr/api/building.action?page=1&rows=1000 (accessed 2026-10-01)
+[M3]: https://map.snu.ac.kr/web/busStation.action?search_type=s (accessed 2026-10-01)
 [O1]: https://wiki.openstreetmap.org/wiki/Overpass_API
 [O2]: https://osmfoundation.org/wiki/Licence/Attribution_Guidelines
 [O3]: https://www.openstreetmap.org/copyright
@@ -381,5 +458,9 @@ A build on EAS does not receive `mobile/.env`, because EAS uploads only the file
 [W2]: https://github.com/wafflestudio/hangsha-server/blob/4a33bf96bff8b71f1fb837c779da057e136f7784/hangsha/batch/src/main/kotlin/com/team1/hangsha/batch/crawler/SnuNowCrawler.kt
 [W3]: https://github.com/wafflestudio/hangsha-server/blob/4a33bf96bff8b71f1fb837c779da057e136f7784/hangsha/batch/src/main/kotlin/com/team1/hangsha/batch/ai/EliceEventParserClient.kt
 [W4]: https://github.com/wafflestudio/hangsha-server/blob/4a33bf96bff8b71f1fb837c779da057e136f7784/hangsha/common/src/main/kotlin/com/team1/hangsha/event/service/EventSyncService.kt
+[W5]: https://github.com/wafflestudio/siksha-crawler/tree/b4c85880094c8e248303a584d45577bcfdbeb897 (accessed 2026-10-01)
+[W6]: https://github.com/wafflestudio/siksha_crawler_v2/tree/6afcfdb2a8b46aaf43a221a6156a240b59210b1c (accessed 2026-10-01)
+[W7]: https://github.com/wafflestudio/siksha-spring/tree/572f70234072bd1df03e3e106614041b79df7a3f (accessed 2026-10-01)
+[W8]: https://github.com/wafflestudio/siksha-data/tree/dd79194a5c14f7db97f826c3b33aa5abb0bef229 (accessed 2026-10-01)
 [W9]: https://github.com/wafflestudio/hangsha-server/blob/4a33bf96bff8b71f1fb837c779da057e136f7784/hangsha/common/src/main/kotlin/com/team1/hangsha/event/repository/EventRepository.kt (accessed 2026-10-01)
 [W10]: https://github.com/wafflestudio/hangsha-server/blob/4a33bf96bff8b71f1fb837c779da057e136f7784/hangsha/batch/src/main/kotlin/com/team1/hangsha/batch/job/ExtraSnuSyncRunner.kt (accessed 2026-10-01)

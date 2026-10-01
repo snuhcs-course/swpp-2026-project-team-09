@@ -8,7 +8,7 @@ Campus information is scattered. Events are announced on the university site, me
 
 ## Solution
 
-The worker server collects events, menus and shuttle positions from their original sources on a schedule and hands them to the main server. The main server stores them and serves them to the app: collected events as Drafts for the Administrator, menus by restaurant and meal, shuttle stops and vehicles placed on the real route, the building list, and a walking route on request.
+The worker server collects events, menus and shuttle positions from their original sources on a schedule and hands them to the main server. The main server stores them and serves them to the app: menus by restaurant and meal, the shuttle's stops, route line and vehicles, the building list, and a walking route on request. A collected event whose time and place were read is published; the others become Drafts for the Administrator. New vehicle positions are pushed to the app through the socket server.
 
 "Existing" in the task title means data that already exists outside the project. It does not mean calling other apps.
 
@@ -16,25 +16,27 @@ The worker server collects events, menus and shuttle positions from their origin
 
 1. As an SNU student, I want today's menus grouped by restaurant and meal, so that I can choose where to eat.
 2. As an SNU student, I want the price next to each menu, so that I can compare.
-3. As an SNU student, I want a restaurant's operating hours, so that I do not arrive at a closed door.
+3. As an SNU student, I want a meal's operating hours, so that I do not arrive at a closed door.
 4. As an SNU student, I want menus for the coming days, so that I can plan ahead.
 5. As an SNU student, I want to see when the menus were last collected, so that I know how fresh they are.
 6. As an SNU student, I want the last collected menus when a source is unreachable, so that a failure does not leave the screen empty.
 7. As an SNU student, I want the shuttle's stops on the map, so that I know where to wait.
-8. As an SNU student, I want the shuttle vehicles moving along the road, so that I can tell how far the next one is.
+8. As an SNU student, I want each shuttle vehicle shown at the stop the operator reports, as soon as it moves on, so that I can tell how far the next one is.
 9. As an SNU student, I want to be told when the shuttle is not in service, so that I do not wait for nothing.
-10. As an SNU student, I want the list of campus buildings with their numbers and names, so that I can pick a place.
+10. As an SNU student, I want the list of campus buildings and places with their names and building numbers, so that I can pick a place.
 11. As an SNU student, I want a walking route between two points on campus, so that I can find my way.
 12. As an SNU student, I want to be told when no route exists, so that I am not shown a wrong one.
-13. As an Administrator, I want each collected event to arrive as a Draft, so that nothing reaches Users unchecked.
-14. As an Administrator, I want each Draft to carry a link to its source, so that I can check the original.
-15. As an Administrator, I want the original text kept when the time or place could not be read, so that I can fill them in myself.
-16. As an Administrator, I want an event collected twice to stay one Draft, so that the list has no duplicates.
-17. As an Administrator, I want my edits to survive the next collection, so that I do not redo my work.
-18. As an Administrator, I want to see when each source was last collected and whether it failed, so that I notice a broken source.
-19. As a developer, I want each parser tested with saved pages, so that a change in a parser is checked without calling the real site.
-20. As a developer, I want collection to be infrequent and polite, so that the project does not burden the sources.
-21. As a developer, I want the parsers written by the team, so that no code is copied from a project without a licence.
+13. As an SNU student, I want an announced event whose time and place could be read to appear without waiting for anyone, so that I see events as they are announced.
+14. As an Administrator, I want a collected event that could not be read fully to arrive as a Draft, so that nothing incomplete reaches Users.
+15. As an Administrator, I want each collected event to carry a link to its source, so that I can check the original.
+16. As an Administrator, I want the original text kept when the time or place could not be read, so that I can fill them in myself.
+17. As an Administrator, I want an event collected twice to stay one event, so that the list has no duplicates.
+18. As an Administrator, I want my edits to survive the next collection, so that I do not redo my work.
+19. As an Administrator, I want to see when each source was last collected and whether it failed, so that I notice a broken source.
+20. As a developer, I want each parser tested with saved pages, so that a change in a parser is checked without calling the real site.
+21. As a developer, I want collection to be infrequent and polite, so that the project does not burden the sources.
+22. As a developer, I want the parsers written by the team, so that no code is copied from a project without a licence.
+23. As a developer, I want to run one collection by hand, so that a server I have just started holds data without waiting for the next scheduled time.
 
 ## Implementation Decisions
 
@@ -42,60 +44,83 @@ The worker server collects events, menus and shuttle positions from their origin
 
 | Data | Original source | How often |
 |---|---|---|
-| Menus | The SNU Co-op menu page, the dormitory menu page, the veterinary college cafeteria page | Twice a day |
-| Events | The university's official events list and the detail page of each event | Four times a day |
-| Shuttle stops | The operator's route page for the circular route | Once a day |
+| Menus | The SNU Co-op menu page, the dormitory menu page, the veterinary college cafeteria page | Twice a day, at 05:00 and 10:00, for today and the six days after |
+| Events | The university's official events list, filtered to the events from today on, and the detail page of each post not yet stored | Four times a day |
+| Shuttle stops and service hours | The operator's route page for the circular route | Once a day |
 | Shuttle vehicles | The operator's vehicle position endpoint for the circular route 41946 | Every 15 seconds on weekdays between 08:00 and 21:00 |
 | Walking route | Kakao's walking route API | On each request |
-| Buildings, shuttle route line, Campus Boundary | OpenStreetMap | Once, loaded as seed data |
+| Buildings and places, shuttle stop coordinates | The university's campus map | Once, loaded as seed data |
+| Shuttle route line, Campus Boundary | OpenStreetMap | Once, loaded as seed data |
 
 - Each source's address, request and page format, observed behaviour and limits, and how the Kakao REST API key reaches the server, are in `.scratch/research/external-sources.md`.
+- The collection times are provisional. Nobody has observed when the pages change; the team adjusts the times once the collectors run.
 - All times are in the Asia/Seoul time zone.
 - The source code of Siksha and Haengsha was read to learn which sources exist and how their pages are built. No code, pattern list or keyword list is copied from them, because their repositories carry no licence.
 - The extracurricular programme site is not collected. Its detail pages sit behind a waiting queue and a login.
 
 ### Worker and main server
 
-- The worker server only collects. It keeps no data of its own.
-- The worker sends what it collected to the main server as request-and-response messages. The main server validates each message against a schema and stores it.
+- The worker server only collects. It keeps no data of its own. When it needs to know what the main server already holds, such as which event posts are stored, it asks the main server.
+- The worker sends what it collected to the main server as request-and-response messages. The main server validates each message against a schema, refuses one that does not match, and stores the rest.
 - Storing is repeatable: the same event, the same menu or the same stop sent twice results in one record.
 - Schedules run inside the worker with the NestJS schedule module. One worker instance runs.
-- When a collection fails, the stored data stays and the failure is recorded with its time.
+- A developer runs one collection of a source by hand, with a command of the worker server that does what the scheduled run does. Nothing is collected when the worker starts.
+- The worker fetches pages in one place, so that tests replace it with saved pages.
+- A page is read only when it has the structure its parser expects, such as the menu table and the date that was asked for. A page without it is a failed collection, not an empty one: the university's firewall answers a blocked request with status 200 and another page. A table that is there and lists nothing is an empty result.
+- When a collection fails, the stored data stays and the failure is reported to the main server. The main server records, per source, when it was last collected successfully and, apart from it, the last failure with its time and reason, so that a failure stays visible after a later success. P12 shows the record (story 19).
+
+### Menus
+
+- A restaurant's meal on a day is kept as the lines of its cell, in the page's order: each line's text as the page wrote it and, only when the worker is sure, the kind of line (a heading, a dish or a note), one price and, for a dish with a price, the dish's name without the price. Operating hours, busy hours and closures are note lines of the meal; there is no operating hours field per restaurant. The decision is recorded in `docs/adr/0001-menus-kept-as-lines.md`.
+  - The first collection, of the pages of 2026-10-01 and 10-02, read 303 lines of twelve restaurants: 114 dishes with a price, every price read correctly, 84 notes, 26 headings and 79 lines without a kind, 71 of them dishes listed under a heading with a set price.
+- Today and the six days after are collected. The Co-op and dormitory pages take a date; from the veterinary college's week table the rows from today on are sent. A restaurant fills in its later days as it posts them, and the next collection brings them.
+- A later collection replaces everything its source stored for that day, so that a restaurant the page dropped or renamed does not linger. A restaurant the page lists with an empty cell is stored with no lines for that meal; a closure written in the cell, such as `개천절 휴무`, is a note line.
+- The four restaurants whose names start with `* ` (`버거운버거`, `공대간이식당`, `75-1동 4층 푸드코트`, `220동식당`) are not collected. They repeat one fixed menu of up to 240 lines in every meal cell, every day, 80% of the page's lines. The Co-op's restaurant information page (식당안내), with each restaurant's building, floor and hours per weekday, is not collected either.
+- `기숙사식당` on the Co-op page and `생협기숙사(919동)` on the dormitory page are one restaurant. It is taken from the dormitory page; the Co-op page's row is skipped.
+- Restaurant names are stored without the telephone number the Co-op page appends.
+- The veterinary college page has no prices and no year in its dates. The year is taken from the collection date, and the weekday next to each date settles it at the turn of the year. Only lunch is collected; dinner is by reservation and described in text under the table.
+- A User's app gets one day's menus, grouped by restaurant and then by meal, with each line, and the time each restaurant's menus were last collected. A day with nothing stored is an empty list, not an error.
 
 ### Events
 
 - Events are read by rules only. No language model is used.
-- The parser reads the title, the description, the start and end time, the place text and the source link. When the time or place cannot be read, the Draft is still stored with the original text.
-- A post can describe several sessions, such as a lecture series. As in the Haengsha project, each session becomes its own Draft.
-  - The rules of this iteration read one start and end per post, as Haengsha's rules do. Splitting a post into its sessions comes with AI in a later iteration.
-  - Until then, an Administrator splits such a post by creating the other sessions.
-- A Draft is identified by its post and the start and end of its session as collected. A post whose time could not be read is identified by the post alone.
-  - The collected start and end are kept apart from the Administrator's corrections, so an edited Draft is still found.
-  - A session collected with a new time arrives as a new Draft, and the Administrator discards the old one.
-- A collected event is always a Draft. Only an Administrator publishes.
-- Once an Administrator has edited or published an event, later collections do not change it.
-- This task defines how Global Events are stored and their states: Draft, published, cancelled and discarded. A discarded event stays stored, so that the next collection does not bring it back as a new Draft. The administrative API belongs to P12.
-
-### Menus
-
-- A menu entry has a restaurant, a date, a meal type, a menu name and an optional price. Operating hours are kept as the original line of text per restaurant.
-- The veterinary college page has no prices and no year in its dates. The year is taken from the collection date.
+- Each run lists the events from today on, with the list's date filter, page by page. On 2026-10-01 that was 94 posts on 8 pages. Posts appear one to three months before the event, so a window of one month gave the same pages.
+- The worker asks the main server which of the listed posts it already stores, and reads the detail page of the others only. A post is read once: an edit or a deletion at the source after that is not seen. Reading every post again would multiply the requests on the university's site.
+- The parser reads the title, the description (the body as text), the start and end time, the place text and the source link. When the time or place cannot be read, the event is still stored with the original text.
+- Application periods and deadlines stay in the description. About half of the posts sampled on 2026-10-01 had one, written in many forms (`신청마감: 2026. 10. 17.(목) 23:59`, `10월 16일(금) 오후 5시까지`, `인원 마감 시까지`), so no rule reads them in this iteration.
+- A post is one Global Event, identified by its post number (`bbsidx`). The rules read one start and end per post. A post that describes several sessions, such as a lecture series, is split into one event per session by the Administrator, until AI does it in a later iteration.
+- A collected event is published when the rules read both of these, and is a Draft otherwise:
+  - its start, with a time of day, from the time line of the body. The date in the post's header is often the application period, so it does not count;
+  - its place, matched to exactly one entry of the building list by building number or by name. The event's position is that entry's.
+  - A Draft is therefore an event online or off campus, an event whose place matched no entry or several, and a post that is not an event, such as a call for applicants, which mostly names no place. Of 48 posts sampled on 2026-10-01, 33 gave a start time, 30 a place line, and about ten were not events; 17 of the 18 building numbers the posts named are in the building list.
+- Only an Administrator publishes a Draft. An Administrator can also correct or cancel an event that a collection published.
+- Since a post is read once, no later collection touches a stored event, whatever its state. An Administrator's corrections therefore stay.
+- This task defines how Global Events are stored and their states: Draft, published, cancelled and discarded. A stored event's start is optional, because a Draft may have none; publishing needs a title, a start and a position. The position is a latitude and a longitude. A discarded event stays stored, so that the next collection does not bring it back. The administrative API, and the User-facing list of published Global Events, belong to P12; P07 serves no events to Users.
 
 ### Shuttle
 
-- The route line and the stop coordinates come from OpenStreetMap and are stored in the main database as spatial data.
-- The operator reports each vehicle as a position on a drawing, not as coordinates. The main server turns that position into a fraction of the loop between two stops and asks PostGIS for the point at that fraction on the real route line.
-- The spatial queries are written as raw SQL and kept in one module with a small interface. The rest of the code does not contain spatial SQL.
-- Only the latest position of each vehicle is kept.
-- Vehicle positions reach the app the same way User locations do in P08: pushed with their coordinates. The app fetches the current positions once when it opens the map.
+- The stops are the operator's 14, in loop order, under the operator's names. Their coordinates are seed data from the university's campus map, which lists the campus loop with 15 stops under names of its own (`법과대` is `법대입구`, `38동` is `공대입구`, `수의대` is `종합교육연구동`). The map's `제2파워플랜트` is not among the operator's stops and is left out. A person checks the pairs once.
+- The route line is seed data traced along OpenStreetMap's roads through the 14 stops. OpenStreetMap has no relation for the campus shuttle (checked on 2026-10-01: the only bus routes in the campus extent are the city buses 8507, 관악02 and 관악04), and the campus map gives no line. P20 rides the loop to confirm the line.
+- The operator reports each vehicle as a position on a drawing, and every position P05 observed in service fell exactly on a stop. A vehicle is therefore stored as being at a stop, the stop nearest to its position on the drawing, with the time the position was received. Its coordinates are the stop's. No fraction of the loop is computed; the app moves a vehicle between stops (P15).
+- Only the latest position of each vehicle is kept. Vehicles are told apart by the operator's `carid`. A position older than a minute is no longer served, so that the vehicles disappear on their own when the service ends or the worker stops.
+- Each set of positions the main server stores is handed to the socket server, which sends it to every connected app, each vehicle with its stop, the stop's coordinates and the time the position was received. The app drops a vehicle whose position is older than a minute (P15), so that the vehicles disappear from an open map too when no further set arrives. The app fetches the current positions once when it opens the map.
+- The stops are served in loop order with the route line and the service hours as the route page's text, so that the app can say the shuttle is not in service outside them. An empty set of vehicles means the same.
 - Vehicles are shown without any label saying the position is estimated.
-- If the operator provides coordinates later, they replace the computed position.
+- If the operator provides coordinates later, they replace the stop's.
 
 ### Buildings and Campus Boundary
 
-- The building list holds the building number, the name and the coordinates. It is seed data from OpenStreetMap, stored by the main server and served through a list and a search.
-- The Campus Boundary is one polygon from OpenStreetMap, stored by the main server. P08 uses it.
-- Coordinates are never read off Kakao, Naver or Google maps. Their terms forbid storing or tracing their data.
+- The building list holds the campus buildings, each with its number, its name and its coordinates, and the campus places that have no number, such as `종합운동장` and `자하연`. It is seed data from the university's campus map, stored by the main server and served through a list and a search by name or number.
+  - On 2026-10-01 the map listed 237 numbered buildings, 215 of them inside the Campus Boundary, and 8 places without a number inside it. For the 14 buildings that OpenStreetMap names with the same number, the two sources' coordinates lay a median of 5 m apart, 20 m at most.
+  - Two buildings the map does not list, 71-1동 and 901동, are added from OpenStreetMap.
+  - A name the map wraps, such as `관악 223동[우석경제관]`, is stored as `우석경제관`. The other names are stored as the map writes them.
+- Only what lies inside the Campus Boundary is in the list. To cover a building outside it, the Boundary is widened first.
+- Each entry keeps the identifier its source gives it, and loading the seed again updates the entries in place. A timetable or a Meetup that names a building keeps pointing at it.
+- The Campus Boundary is one polygon from OpenStreetMap (relation 11917142). It is a file of the main server, read into memory when the server starts, and is not stored in the database. P08 uses it.
+  - The outline leaves out a wedge in the north-east, with the faculty housing, the president's residence and the dormitory buildings 915 to 917, and four facilities on the hillside in the south. A User there is hidden.
+- The buildings, the stops and the route line are stored in ordinary columns: a latitude and a longitude, and the line as a list of coordinates. No spatial type and no spatial query is used, because nothing asks a spatial question of the database: a vehicle is placed by its position on the drawing, and the Boundary is checked in memory.
+- Each seed file is kept with the query or address it came from and the date, so that the export can be repeated.
+- Coordinates are never read off Kakao, Naver or Google maps. Their terms forbid storing their data. The campus map is drawn on a Kakao map, but the coordinates of its buildings and stops are the university's own.
 - The app shows the OpenStreetMap attribution on an information screen.
 
 ### Walking route
@@ -107,25 +132,35 @@ The worker server collects events, menus and shuttle positions from their origin
 ## Testing Decisions
 
 - A good test feeds a saved page to a parser and checks the records that come out, or sends a message to the main server and checks what is stored and served.
-- Parsers are tested with saved pages, including a closed restaurant, a menu without a price, an event with several days and an event whose time cannot be read.
-- The shuttle computation is tested against a real database with PostGIS: a vehicle at a stop, between two stops, and at the point where the loop closes.
-- The main server's handling of worker messages is tested at the message boundary: invalid messages refused, repeated messages stored once, two sessions of one post stored as two Drafts, Administrator edits preserved.
-- The real sites and the Kakao API are never called in tests. They are replaced at the fetch boundary by saved responses.
+- Parsers are tested with saved pages, including a closed restaurant, a dish without a price under a heading with a set price, a line with several prices, an unfilled cell, a page without the structure the parser expects, an event with several days, an event whose time cannot be read, and an event with an application deadline.
+- The vehicle parser is tested with saved answers: vehicles at stops, several vehicles at one stop, an empty answer, and a position that is not exactly on a stop.
+- The seed is tested against a real database: it loads, it loads again without duplicates, and an entry keeps its identifier when its name changes.
+- The main server's handling of worker messages is tested at the message boundary: invalid messages refused, repeated messages stored once, a later collection replacing a day's menus, a failure recorded with the earlier data still served, a collected event published or kept as a Draft by what was read, a discarded post reported as stored so that it is not collected again, a stored post left as it is.
+- The command that runs one collection is tested with the sources and the main server replaced: it collects the source it names and no other.
+- The push of vehicle positions is tested at the socket server: a positions message from the main server reaches a connected client with the time each position was received.
+- The real sites and the Kakao API are never called in tests. They are replaced at the fetch boundary by saved responses. The saved answer of the walking route API is one a real call returned.
 - Prior art: the API-level tests of P04.
 
 ## Out of Scope
 
-- Filling with AI what the rules could not read, the way the Haengsha project does: rules first, then AI for the start, the end and the place, with each session of a post returned on its own. It comes in a later iteration, and the Administrator still confirms every event.
+- Filling with AI what the rules could not read, the way the Haengsha project does: rules first, then AI for the start, the end and the place, with each session of a post returned on its own. It comes in a later iteration and raises the share of events that are published without a person.
 - The extracurricular programme site.
 - Library seats and study spaces.
 - Shuttle routes other than 41946.
 - Spoken or step-by-step directions. Drawing the walking route on the map is this product's route guidance, and it is part of this iteration.
 - Asking the site operators for permission. The team handles it outside the code.
 - Letting an Administrator start a collection by hand.
+- Collecting when the worker starts. It is designed together with the deployment.
+- The fixed-menu restaurants and the Co-op's restaurant information page.
+- Reading a dish listed under a heading as a dish, operating hours as times, and linking a restaurant to its building.
+- Buildings outside the Campus Boundary.
+- Reading a post again after it was stored, to see edits or deletions at the source.
+- Application periods and deadlines as a field of an event.
+- Placing a vehicle between two stops on the server.
 
 ## Further Notes
 
 - The schedule names 윤유상 and 김태현 as workers.
-- P05 observed the operator's endpoint during service hours: every vehicle position fell on a stop, never between two. How a vehicle is shown between stops is open; `.scratch/research/external-sources.md` §5 has the observations.
-- The pages are not versioned interfaces. A change in their layout breaks a parser without notice, and the collection status in story 18 is how the team finds out.
-- Whether the OpenStreetMap roads cover the whole loop needs a look at the map. P20 rides the loop to confirm the line matches the real route.
+- P05 observed the operator's endpoint during service hours: every vehicle position fell on a stop, never between two. The vehicle model above follows that observation; `.scratch/research/external-sources.md` §5 has the details.
+- The pages are not versioned interfaces. A change in their layout breaks a parser without notice, and the collection status in story 19 is how the team finds out.
+- The campus map publishes no terms of use and no licence. Its data is used on the same footing as the pages the worker collects; `.scratch/research/external-sources.md` §6.2 has what was checked.
