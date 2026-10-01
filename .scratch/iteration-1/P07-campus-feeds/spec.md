@@ -36,7 +36,7 @@ The worker server collects events, menus and shuttle positions from their origin
 20. As a developer, I want each parser tested with saved pages, so that a change in a parser is checked without calling the real site.
 21. As a developer, I want collection to be infrequent and polite, so that the project does not burden the sources.
 22. As a developer, I want the parsers written by the team, so that no code is copied from a project without a licence.
-23. As a developer, I want a server I have just started to hold today's data, so that I do not wait for the next scheduled time.
+23. As a developer, I want to run one collection by hand, so that a server I have just started holds data without waiting for the next scheduled time.
 
 ## Implementation Decisions
 
@@ -60,11 +60,11 @@ The worker server collects events, menus and shuttle positions from their origin
 
 ### Worker and main server
 
-- The worker server only collects. It keeps no data of its own. When it needs to know what the main server already holds, such as which event posts are stored or when a source was last collected, it asks the main server.
+- The worker server only collects. It keeps no data of its own. When it needs to know what the main server already holds, such as which event posts are stored, it asks the main server.
 - The worker sends what it collected to the main server as request-and-response messages. The main server validates each message against a schema, refuses one that does not match, and stores the rest.
 - Storing is repeatable: the same event, the same menu or the same stop sent twice results in one record.
 - Schedules run inside the worker with the NestJS schedule module. One worker instance runs.
-- When the worker starts, it collects once each source that has not been collected successfully today and was not tried in the last hour. A server started in the afternoon therefore holds today's data, and a worker that restarts again and again does not ask the sources again and again. The vehicle positions follow their schedule only. The worker is ready before these collections finish.
+- A developer runs one collection of a source by hand, with a command of the worker server that does what the scheduled run does. Nothing is collected when the worker starts.
 - The worker fetches pages in one place, so that tests replace it with saved pages.
 - A page is read only when it has the structure its parser expects, such as the menu table and the date that was asked for. A page without it is a failed collection, not an empty one: the university's firewall answers a blocked request with status 200 and another page. A table that is there and lists nothing is an empty result.
 - When a collection fails, the stored data stays and the failure is reported to the main server. The main server records, per source, when it was last collected successfully and, apart from it, the last failure with its time and reason, so that a failure stays visible after a later success. P12 shows the record (story 19).
@@ -136,7 +136,7 @@ The worker server collects events, menus and shuttle positions from their origin
 - The vehicle parser is tested with saved answers: vehicles at stops, several vehicles at one stop, an empty answer, and a position that is not exactly on a stop.
 - The seed is tested against a real database: it loads, it loads again without duplicates, and an entry keeps its identifier when its name changes.
 - The main server's handling of worker messages is tested at the message boundary: invalid messages refused, repeated messages stored once, a later collection replacing a day's menus, a failure recorded with the earlier data still served, a collected event published or kept as a Draft by what was read, a discarded post reported as stored so that it is not collected again, a stored post left as it is.
-- The collection at the worker's start is tested with the main server replaced: a source collected today is not fetched, and one never collected is.
+- The command that runs one collection is tested with the sources and the main server replaced: it collects the source it names and no other.
 - The push of vehicle positions is tested at the socket server: a positions message from the main server reaches a connected client with the time each position was received.
 - The real sites and the Kakao API are never called in tests. They are replaced at the fetch boundary by saved responses. The saved answer of the walking route API is one a real call returned.
 - Prior art: the API-level tests of P04.
@@ -150,6 +150,7 @@ The worker server collects events, menus and shuttle positions from their origin
 - Spoken or step-by-step directions. Drawing the walking route on the map is this product's route guidance, and it is part of this iteration.
 - Asking the site operators for permission. The team handles it outside the code.
 - Letting an Administrator start a collection by hand.
+- Collecting when the worker starts. It is designed together with the deployment.
 - The fixed-menu restaurants and the Co-op's restaurant information page.
 - Reading a dish listed under a heading as a dish, operating hours as times, and linking a restaurant to its building.
 - Buildings outside the Campus Boundary.
