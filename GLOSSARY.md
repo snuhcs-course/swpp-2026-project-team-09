@@ -116,3 +116,13 @@ _Avoid_: Sign-up, registration
 **Lobby**:
 What the app fetches to run, such as the User's profile.
 _Avoid_: Home, bootstrap
+
+### Campus services
+
+**Source**:
+A page or feed outside the project that the worker server collects, such as the Co-op menu page or the shuttle operator's vehicle positions.
+_Avoid_: Site, provider
+
+**Collection**:
+One run of the worker server reading a Source and handing what it read to the main server. A Source records its last successful Collection and its last failure.
+_Avoid_: Crawl, scrape, sync

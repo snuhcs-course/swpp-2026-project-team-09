@@ -40,6 +40,8 @@ Everything was checked on 2026-09-30 unless a line says otherwise. `[K1]`-style 
   - Title `.board-view .header .title`, the event's date or range `.header .date` such as `2026.10.12. ~ 2026.10.16.`, body `.board-view .content`. The page shows no posting date.
   - An unknown `bbsidx` answers 404.
 - Observed: 12 items on the first page. The detail of `bbsidx=176432` was readable.
+- Checked again on 2026-10-01, for P07: `sc=y&df=…&dt=…` works together with `page=N`; the pager's links drop the filter, so a collector builds each page's address itself. From 2026-10-01 to the end of 2027 the list held 94 posts on 8 pages. October alone gave the same 8 pages, November 2, December 1, and 2027 three posts: posts are published one to three months before the event.
+  - Of 47 of those posts, 22 carried an application or deadline line, in many forms: `신청마감: 2026. 10. 17.(목) 23:59`, `10월 16일(금) 오후 5시까지`, `신청기간: 2026.9.1.부터 정원 마감 시 까지`, `선착순 1,500명 도달 시 신청 마감`. Some had closed before the post was collected: `bbsidx=176432` took applications on 9-29 and 9-30 for an event on 10-13. 38 of the 47 bodies had a time label (`일시`, `일자`, `기간`); none was an image only.
 - Gotchas:
   - `bbsidx` identifies a post. My judgement: use it as the source key.
   - The body labels the time and place in text, for example `· 일   시: 2026. 10. 13.(화) 19:30 ~ 21:30 (예정)` and `· 장   소: 서울대학교 종합운동장`. The spacing inside the labels varies and includes no-break spaces.
@@ -59,12 +61,24 @@ Everything was checked on 2026-09-30 unless a line says otherwise. `[K1]`-style 
   - A cell is free text. Items are written `메뉴 : 6,000원`, sometimes `:3,000원` or `4,500 원`. Corners are marked like `<A코너>`, and a buffet has one price for the whole line. Hours come as `※ 운영시간 : 11:00~14:30`, sometimes `※운영시간:`, and busy hours as `※ 혼잡시간 : …`.
   - An empty cell does not mean closed. A closed restaurant is usually left out of the table. A closure written in the cell is the exception, such as `추석연휴 휴무` for `기숙사식당` on 2026-09-27, the Sunday after Chuseok.
   - `기숙사식당 (881-9072)` is the same restaurant as `생협기숙사(919동)` on the dormitory page. On 2026-09-30 both cells were identical. Collect it once.
+- Checked again on 2026-10-01, for P07, with the pages of 2026-09-30, 10-01, 10-03, 10-04, 10-07, 10-08 and 10-12:
+  - Operating hours are given per meal cell, not per restaurant: `학생회관식당` had 08:00~10:00, 11:00~14:30 and 17:00~19:00 in its three cells. A cell with corners can give hours per corner: `예술계식당`'s A코너 11:30~14:00 and B코너 11:30~13:00; `301동식당` gives several sections their own hours.
+  - Besides hours, cells carry `※` lines for busy hours, last orders, break times, group bookings and other notices.
+  - Corner and section headings: `<A코너>` before a dish on the same line; `<셀프코너> 7,000원` and `<뷔페> 6,500원`, a set price followed by unpriced dishes; `<주문식 메뉴>`, `<식사>`, `<TAKE-OUT>`; and brand names inside the food court, such as `<서가앤쿡>`.
+  - Prices: one line can give several (`9,900원 / 12,400원`, `5,000원 / (중) : 10,000원`), and some have typos (`8,3000 원`, `5.900원`). Both occur at `버거운버거`.
+  - The page's header says that `(#)` marks a main dish without meat ("NO MEAT") and that non-members pay 1,000원 more at six restaurants; the listed prices are members' prices.
+  - The restaurants listed change from day to day. On 10-03, a public holiday, only `학생회관식당` (its cells saying `개천절 휴무`) and `버거운버거`; on 10-04, a Sunday, only `기숙사식당` and `버거운버거`. A restaurant closed that day is usually left out rather than marked.
+  - Days ahead are filled in as each restaurant posts them: on 10-01, the page for 10-07 listed ten restaurants and the one for 10-12 five, of which only `3식당` had a menu. The page for 10-02 was complete on 10-01.
+  - The four restaurants whose names start with `* ` (`버거운버거`, `공대간이식당`, `75-1동 4층 푸드코트`, `220동식당`) repeat one fixed menu of up to 240 lines in each of their meal cells, every day. The page does not say what `*` means. They made 290 to 575 of a day's 360 to 715 lines.
+  - Some cells hold an unfilled template, such as `: | :` for `자하연식당 2층` on 10-07.
+- Line shapes on 2026-10-01 and 10-02, over the twelve restaurants with daily menus (309 lines): 36% a dish with one price (`눈꽃치즈닭갈비 : 6,000원`); 29% `※` notes; 24% text without a price (`단호박튀김`), mostly under a heading with a set price; 6% a heading alone (`<주문식 메뉴>`); 3% a heading with a set price (`<뷔페> 6,500원`); 2% a corner, its dishes and the price on one line (`<A코너>제육김치덮밥, 잡채, 떡꼬치구이 : 6,000원`). The four fixed-menu restaurants made 1,148 lines those two days, 23% of them with several prices.
 
 ### 4.2 Dormitory (관악학생생활관)
 
 - `GET https://snudorm.snu.ac.kr/foodmenu/?date=YYYY-MM-DD`. The page is built like the Co-op page: the same `table.menu-table`, cell classes and `input[name="date"]`.
 - Observed: two restaurants, `아워홈(901동)` and `생협기숙사(919동)`.
 - Gotcha: `생협기숙사(919동)` repeats the Co-op page's `기숙사식당` (§4.1).
+- Checked again on 2026-10-01 (pages of 10-01, 10-02, 10-03 and 10-08): hours per meal cell as on the Co-op page; `아워홈(901동)`'s breakfast is a set (`세미양식부페 : 5,000원`) followed by one line of its dishes; `생협기숙사(919동)` matched the Co-op's `기숙사식당` on each day both were listed. A day's page is 14 to 15 lines.
 
 ### 4.3 Veterinary college
 
@@ -74,6 +88,13 @@ Everything was checked on 2026-09-30 unless a line says otherwise. `[K1]`-style 
 - Gotchas:
   - No prices and no year. My judgement: in late December a row such as `1. 2(금)` belongs to the next year. The weekday next to each date settles the year.
   - The `석 식` column was empty all week. Dinner is served by reservation, and its menu is in the text under the table: `평일 저녁은 예약제로 운영합니다. 식사시간: 17:30~18:30 저녁메뉴: 제육볶음 …`.
+- Checked again on 2026-10-01: the same week table, one lunch dish a day, no lunch hours and no restaurant name. The text under the table names one dinner menu without saying for which day, and adds a reservation time and telephone number. P07 collects lunch only.
+
+### 4.4 Co-op restaurant information page
+
+- `GET https://snuco.snu.ac.kr/식당안내/` (percent-encoded in links). One `table` without classes, headed `식당 | 위치 | 층별 | 규모 | 대상 | 운영시간(개강 기준)`, with the hours split into `평일 | 토요일 | 휴일`; a closed day says `휴관`. A restaurant with several floors spans rows.
+- Observed on 2026-10-01: 17 restaurants, the four fixed-menu restaurants among them, each with its building as a name and number (`학생회관 (63동)`, `전망대 (75-1동)`) and its floor. Names carry the telephone number as on the menu page. No coordinates. The dormitory's `아워홈(901동)` and the veterinary college cafeteria are not on it.
+- Not collected in Iteration 1 (P07).
 
 ## 5. Shuttle: Busin route page and vehicle positions
 
@@ -138,6 +159,10 @@ The operator's service. The university's notices reach it through `서울대.inf
 
 - Campus Boundary: relation 11917142 [O4]. It is tagged `amenity=university` and `name=서울대학교 관악캠퍼스`, is a multipolygon of four outer ways, and was last edited on 2026-03-15.
 - The campus extent is latitude 37.4470628 to 37.4692598 and longitude 126.9474475 to 126.9612239.
+- Checked on 2026-10-01 with one Overpass query over the campus extent, for P07:
+  - No relation for the campus shuttle. The bus routes in the extent are the city buses 8507, 관악02 and 관악04 (relations 6982099, 7093956 and 7533205). The shuttle's line has to be traced along the roads by hand.
+  - 49 `highway=bus_stop` nodes, all named, but not with the operator's names: `정문` is `서울대정문`, `기숙사삼거리` is `관악사삼거리`, `경영대` is `경영대.행정대학원`, `유전공학연구소` is `유전공학연구소.반도체공동연구소`, `신소재공동연구소` is `신소재`; `38동` had no clear match. The stops of the drawing (§5) have to be matched by hand.
+  - 222 `building` ways, 212 with `name`, one with `ref` (`35`, 공과대학). 52 names carry a number, such as `27동`, `25-1동` or `학생회관(63)`. `addr:housenumber` is `1` on all 160 buildings that have it: the street address, not the building number.
 - The main Overpass instance, `overpass-api.de`, asks for fewer than 10,000 queries and 1 GB a day, and a hundredth of that for regular automated use [O1]. It wants one query at a time and a User-Agent or Referer that names the project. After a 429 response, wait 30 seconds before trying again. A one-off seed export is far below this.
 - Licence: ODbL [O3].
   - Attribution is to "OpenStreetMap", with a link to `https://www.openstreetmap.org/copyright`; "© OpenStreetMap contributors" is an accepted historical form [O2].
@@ -308,6 +333,11 @@ A build on EAS does not receive `mobile/.env`, because EAS uploads only the file
 
 - SNUTT's timetable picker (Waffle Studio): P06 has the User enter the timetable instead. Using the picker later needs Waffle Studio to register our origin; the contact is `master@wafflestudio.com`.
 - Siksha and Haengsha (Waffle Studio): read to find the sources above, as P07 records. `wafflestudio/siksha-crawler` has no LICENSE file [W1].
+- How Siksha collects the menus, read on 2026-10-01 for P07. None of these repositories has a licence, so only the approach is recorded.
+  - Production runs `siksha-crawler` [W5] daily at 05:00 KST, for today to six days ahead. It parses every cell by shared line rules, reads a price by keeping the digits of the last price on a line, so `5.900` becomes 5900, and drops `※` lines, hours and closures. After each run it deletes the stored menus from today on that the run did not return.
+  - `siksha_crawler_v2` [W6], so far only against the development server, has one hand-written parser per restaurant and a table of known restaurant names. It keeps only lines of the form `name : price원`, skips `※` lines and the lines under a heading it does not know, and replaces a restaurant's meal of a day as a whole. A meal the page leaves empty sends nothing, so an earlier one stays.
+  - Its server [W7] keeps operating hours per restaurant as data entered by hand, and neither version stores the original text of a cell. An earlier prototype [W8] modelled open, busy, break and last-order times per corner and meal.
+  - Both take `생협기숙사(919동)` from the dormitory page and skip the Co-op's `기숙사식당`.
 - Haengsha collects the same events list (§3). This was read in `wafflestudio/hangsha-server` at commit `4a33bf9` of 2026-09-15 (KST).
   - Its rules read one date and time per post [W2].
   - When a post's date is a range and its body mentions 모집 or 신청, the range is taken as the application period and no session is made [W2].
@@ -381,5 +411,9 @@ A build on EAS does not receive `mobile/.env`, because EAS uploads only the file
 [W2]: https://github.com/wafflestudio/hangsha-server/blob/4a33bf96bff8b71f1fb837c779da057e136f7784/hangsha/batch/src/main/kotlin/com/team1/hangsha/batch/crawler/SnuNowCrawler.kt
 [W3]: https://github.com/wafflestudio/hangsha-server/blob/4a33bf96bff8b71f1fb837c779da057e136f7784/hangsha/batch/src/main/kotlin/com/team1/hangsha/batch/ai/EliceEventParserClient.kt
 [W4]: https://github.com/wafflestudio/hangsha-server/blob/4a33bf96bff8b71f1fb837c779da057e136f7784/hangsha/common/src/main/kotlin/com/team1/hangsha/event/service/EventSyncService.kt
+[W5]: https://github.com/wafflestudio/siksha-crawler/tree/b4c85880094c8e248303a584d45577bcfdbeb897 (accessed 2026-10-01)
+[W6]: https://github.com/wafflestudio/siksha_crawler_v2/tree/6afcfdb2a8b46aaf43a221a6156a240b59210b1c (accessed 2026-10-01)
+[W7]: https://github.com/wafflestudio/siksha-spring/tree/572f70234072bd1df03e3e106614041b79df7a3f (accessed 2026-10-01)
+[W8]: https://github.com/wafflestudio/siksha-data/tree/dd79194a5c14f7db97f826c3b33aa5abb0bef229 (accessed 2026-10-01)
 [W9]: https://github.com/wafflestudio/hangsha-server/blob/4a33bf96bff8b71f1fb837c779da057e136f7784/hangsha/common/src/main/kotlin/com/team1/hangsha/event/repository/EventRepository.kt (accessed 2026-10-01)
 [W10]: https://github.com/wafflestudio/hangsha-server/blob/4a33bf96bff8b71f1fb837c779da057e136f7784/hangsha/batch/src/main/kotlin/com/team1/hangsha/batch/job/ExtraSnuSyncRunner.kt (accessed 2026-10-01)
