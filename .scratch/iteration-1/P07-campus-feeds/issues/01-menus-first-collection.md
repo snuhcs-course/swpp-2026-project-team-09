@@ -12,9 +12,9 @@ This ticket sets what tickets 02 and 04 follow: how a worker message is named, s
 
 ## Acceptance criteria
 
-- [ ] A restaurant's meal on a day is stored as its lines in the page's order: each line's text and, only when the parser is sure, a kind (heading, dish or note), one price and, for a dish with a price, the dish's name without the price, as ADR 0001 decides. There is no operating hours field: hours, busy hours and closures are note lines of the meal.
-- [ ] The three menu Sources are collected at 05:00 and 10:00 Asia/Seoul, for today and the six days after: the Co-op and dormitory pages by date, and from the veterinary college's week table the lunch rows from today on, with the year taken from the collection date and settled by the weekday at the turn of the year. The times and the number of days are declared in one place, so that they can be changed once the pages' update times are known.
-- [ ] A command of the worker server runs one Collection of the Source it names and exits. It does what the scheduled run does, hands the result to the main server and says whether it was taken; a failure is recorded like any other. Nothing is collected when the worker starts.
+- [x] A restaurant's meal on a day is stored as its lines in the page's order: each line's text and, only when the parser is sure, a kind (heading, dish or note), one price and, for a dish with a price, the dish's name without the price, as ADR 0001 decides. There is no operating hours field: hours, busy hours and closures are note lines of the meal.
+- [x] The three menu Sources are collected at 05:00 and 10:00 Asia/Seoul, for today and the six days after: the Co-op and dormitory pages by date, and from the veterinary college's week table the lunch rows from today on, with the year taken from the collection date and settled by the weekday at the turn of the year. The times and the number of days are declared in one place, so that they can be changed once the pages' update times are known.
+- [x] A command of the worker server runs one Collection of the Source it names and exits. It does what the scheduled run does, hands the result to the main server and says whether it was taken; a failure is recorded like any other. Nothing is collected when the worker starts.
 - [x] A page is read only when it has the structure the parser expects: the menu table and the date that was asked for on the Co-op and dormitory pages, the week table with its headers on the veterinary college's. A page without it, such as the firewall's block page, which arrives with status 200, is a failed Collection. A table that is there and lists no restaurant is an empty day.
 - [x] The Co-op page's `기숙사식당` row is skipped; the dormitory page's `생협기숙사(919동)` is that restaurant. The four restaurants whose names start with `* ` are skipped. Restaurant names are stored without the telephone number the Co-op page appends.
 - [x] The main server validates each worker message against a schema. A message that does not match is refused with an answer naming the problem, and nothing from it is stored.
@@ -22,10 +22,10 @@ This ticket sets what tickets 02 and 04 follow: how a worker message is named, s
 - [x] The main server keeps, per Source, the time of the last successful Collection and, apart from it, the last failure with its time and reason. A success does not clear the last failure. A failure reported by the worker records it and leaves every stored record as it is.
 - [x] A User's route returns one day's menus grouped by restaurant and then by meal, with each line as stored, and the time each restaurant's menus were last collected. A day with nothing stored is an empty list, not an error. The route needs a User's access token. No price is invented: a line without one is served without one.
 - [x] The worker fetches pages in one place, sends a User-Agent that names the project, and asks for one page at a time. The parsers never call the real sites in tests: saved copies of the pages are fed to them.
-- [ ] Parser tests with saved pages cover a dish with one price and its name, a heading with a set price followed by unpriced dishes, a corner with its dishes and price on one line, a `※` hours line, a closure in a cell, a line with several prices (stored with its text and no price), an empty cell, a cell that holds only the unfilled template `: | :` (read as an empty cell), the firewall's block page, a dormitory page, and the veterinary week table at the turn of the year.
+- [x] Parser tests with saved pages cover a dish with one price and its name, a heading with a set price followed by unpriced dishes, a corner with its dishes and price on one line, a `※` hours line, a closure in a cell, a line with several prices (stored with its text and no price), an empty cell, a cell that holds only the unfilled template `: | :` (read as an empty cell), the firewall's block page, a dormitory page, and the veterinary week table at the turn of the year.
 - [x] Message-boundary tests, sending messages as the worker would: a valid message is stored and served; an invalid message is refused and nothing is stored, the Collection status included; the same message twice is stored once; a later Collection replaces its Source's day while another Source's restaurants and the Source's other days stay; a failure is recorded and the earlier menus are still served; an empty day answers an empty list; a request without a User's access token is refused.
-- [ ] A test of the command, with the Sources and the main server replaced: it collects the Source it names and no other, and starting the worker fetches nothing.
-- [ ] The READMEs of the worker and main servers record the worker message conventions (names, shape, validation, the refusal answer, the Collection status, the schedule, the command that runs one Collection and when to use it, the fetch boundary, how a test sends a message) and the menu model.
+- [x] A test of the command, with the Sources and the main server replaced: it collects the Source it names and no other, and starting the worker fetches nothing.
+- [x] The READMEs of the worker and main servers record the worker message conventions (names, shape, validation, the refusal answer, the Collection status, the schedule, the command that runs one Collection and when to use it, the fetch boundary, how a test sends a message) and the menu model.
 - [x] After one real run against the pages, what the collectors sent is recorded under Comments: per Source, how many lines got a kind and a price, and anything the pages did that the parser did not expect.
 
 ## Comments
@@ -35,12 +35,13 @@ This ticket sets what tickets 02 and 04 follow: how a worker message is named, s
 The READMEs hold the full text: the main server's Messages from the worker server and Menus, and the worker server's Collections and Menus.
 
 - **Names**: `menus-collected` and `collection-failed`, in kebab case and named after what happened, as `session-ended` is. Both are request-and-response, so the worker learns whether a message was taken. Later collectors send `<what>-collected`.
-- **Shape**: the payload names its `source` and the time of the Collection (`collectedAt`, `failedAt`) in ISO 8601 with an offset. Menus are `days: [{ date, restaurants: [{ name, lines: [{ meal, text, kind, price }] }] }]`, with `date` as `YYYY-MM-DD`. A `kind` or `price` the worker is not sure of is `null`, never left out.
+- **Shape**: the payload names its `source` and the time of the Collection (`collectedAt`, `failedAt`) in ISO 8601 with an offset. Menus are `days: [{ date, restaurants: [{ name, lines: [{ meal, text, kind, price, name }] }] }]`, with `date` as `YYYY-MM-DD`. A `kind`, `price` or `name` the worker is not sure of is `null`, never left out.
   - A message lists the days it read, each with every restaurant the page lists. A day on which the page lists none is `restaurants: []`, and storing it empties the Source's day. A flat list of restaurants could not say that a day became empty.
 - **Validation**: `@WorkerMessage(schema)` in the main server's `src/common/worker-message.decorator.ts`. `main.ts` connects messaging without `inheritAppConfig`, so the global pipe never reaches a message handler. Schemas are `z.strictObject`; a price must fit the `INTEGER` column; a day or a restaurant listed twice is refused.
 - **The refusal answer**: `{ status: 'error', message }`, each problem as `path: problem`, joined by `; `. It is the form of Nest's answer to an error inside a handler, so the worker reads one form. A handled message answers `{ status: 'ok' }`.
 - **Collection status**: `collection_statuses`, one row per `Source` (`coop_menus`, `dormitory_menus`, `veterinary_menus`), with `lastSucceededAt` and, apart from it, `lastFailedAt` and `lastFailureReason`. The times are the worker's. No route serves it yet, so the tests read it with their own database connection.
-- **Schedule**: `@Cron(COLLECTION_TIMES, { timeZone: 'Asia/Seoul' })` on the collector's method, the times one constant at the top of its file.
+- **Schedule**: `@Cron(COLLECTION_TIMES, { timeZone: 'Asia/Seoul' })` on the collector's method, the times one constant at the top of its file, with the number of days a Collection covers (`COLLECTED_DAYS`) beside it.
+- **By hand**: `pnpm collect <Source> …` runs one Collection of each Source it names and exits (`src/collect.ts`). `collectSources()` in `src/collect-sources.ts` holds the Sources it knows; a new collector adds its Sources there and gives a method that collects one Source and says whether the main server took it, as `MenuCollector.collectOne()` does. The worker collects nothing when it starts.
 - **Fetch boundary**: `PageFetcher.fetch(url)`, one instance for the whole worker: one page at a time whichever collectors run, the project's `User-Agent`, an error for a status outside 2xx. The tests replace the HTTP call under it (`FETCH`), and without pages from the test every request fails.
 - **How a test sends a message**: `startWithWorker()` and `sendAsWorker()` in the main server's `test/worker.ts`, on a Redis of the file's own, because every test file's server listens on the shared one.
 - The worker's end of a Collection, `handOver()` and `send()`, lives in `MenuCollector`. Ticket 02 moves it to `src/common/` when its collector needs it, as the worker's README asks of code two features share.
@@ -118,13 +119,45 @@ What the collectors sent, for the two days together:
   - Input: 70,323,565 in total, of which 69,274,341 were cache reads, 1,048,830 cache writes and 394 uncached.
   - Output: 318,483. The subagents' transcripts record only a few output tokens for most of their steps, so their share, 1,925, is a lower bound.
 
-### After the review of the model (2026-10-02)
+### The additions after the review (2026-10-02)
 
-The spec and this ticket were settled again after the first run. The menu model stays as built: a line is stored with its text, and a kind is read from the line alone. Four things were added to this ticket and are not built yet; their criteria are unchecked.
+The spec and this ticket were settled again after the first run. The menu model stays: a line is stored with its text, and a kind is read from the line alone. Four things were added and are built.
 
-- **The dish's name.** A dish with a price also carries its name without the price, so that the app shows the name and the price as a row (ADR 0001). It joins the message, the stored line and the route's answer.
-- **Seven days.** A Collection covers today and the six days after, instead of today and tomorrow. Restaurants fill in their later days as they post them, and a Collection replaces what its Source stored for a day. The veterinary college's table gives the rows from today on.
-- **A command that runs one Collection.** It replaces the script outside the repository that started the first run. Nothing is collected when the worker starts.
-- **An unfilled cell.** A cell that holds only the template `: | :` is read as an empty cell. The later days' pages show it.
+- **The dish's name.** A dish whose line ends with its one price carries the text before the colon as `name`: `눈꽃치즈닭갈비 : 6,000원` names `눈꽃치즈닭갈비`, and `<A코너>제육김치덮밥, 잡채 : 6,000원` keeps its corner in the name. A dish without a price, or with text after the price, has none. It is in the worker's message, the main server's schema, the `menu_lines.name` column and the route's answer.
+  - The column is in this ticket's one migration, `20261001132241_add_menus_and_collection_statuses`, which was not merged yet. A database that ran the earlier form of it is recreated: `docker compose down -v`, then start again.
+  - A message without `name` is refused, so the two servers are updated together.
+- **Seven days.** `COLLECTED_DAYS` is 7: a Collection reads the Co-op's and the dormitory's page of today and the six days after, 15 requests a run with the week table. The veterinary college's table holds the current week, so its later days are sent without a restaurant.
+- **A command that runs one Collection.** `pnpm collect coop_menus dormitory_menus veterinary_menus`, or `node dist/collect …` in the worker's container. It starts the worker without its HTTP server, runs the Collections one after the other, logs for each whether the main server took it, and exits with status 1 when one was not taken or a name is not a Source. A name that is not a Source collects nothing, whatever else is named.
+- **An unfilled cell.** A line without a letter or a digit is not a line, so a cell that holds only the template `: | :` gives no lines, on one line or broken over several.
 
-The check for a page without its structure was already built: a page without the menu table, of another day, or without the week table is a failed Collection.
+Tests. The worker's were written before the code and seen to fail without it, 24 of them, except "the worker collects nothing at its start", which was already true. The main server's were written before the code too, and run only after it.
+
+- Worker: `test/menu-page-parser.e2e-spec.ts` (15) checks the name on every line it reads, a price followed by text, and the unfilled cell. `test/menu-collector.e2e-spec.ts` (14) checks the seven days of each Source, the 15 requests, and the command: one Source named, several, a Collection that fails, names that are not Sources, and the worker's start.
+- Main server: `test/menus.e2e-spec.ts` (18) stores and serves the name, and refuses a line without one.
+- The whole suites pass: main server 20 files and 231 tests, worker server 5 files and 44 tests. `lint`, `format:check` and `typecheck` pass in both, both images build, and `prisma migrate diff` finds no difference between the migrated database and the schema.
+
+One run on the real pages, at 01:05 KST on 2026-10-02, with the command and a main server from this branch on stores of the run's own:
+
+- 15 requests, one after the other, within ten seconds, each answered 200. Three `menus-collected` messages, each taken; the command exited with status 0.
+
+| Source | Days with a restaurant | Lines | With a kind | Dish | Heading | Note | No kind | With a price | With a name |
+|---|---|---|---|---|---|---|---|---|---|
+| `coop_menus` | 6 of 7 | 532 | 383 (72%) | 177 | 52 | 154 | 149 | 193 (36%) | 177 |
+| `dormitory_menus` | 7 of 7 | 93 | 86 (92%) | 53 | 0 | 33 | 7 | 53 (57%) | 53 |
+| `veterinary_menus` | 1 of 7 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
+| All | | 626 | 469 (75%) | 230 | 52 | 187 | 157 | 246 (39%) | 230 |
+
+- Every dish with a price got its name: 230 of 230. No line got a name without being a dish with a price.
+- The later days were filled in: the Co-op's pages of 10-06, 10-07 and 10-08 each listed eight restaurants with about 127 lines, as many as a day of this week.
+- The holidays came as closures and were read as notes: `개천절 휴무` at 학생회관식당 on 10-03, and `대체공휴일 휴무`, once written `대체공휴일휴무`, at seven restaurants on 10-05. The Co-op's page of Sunday 10-04 listed no restaurant that is collected.
+- The 157 lines without a kind are the dishes under a set-price heading at 두레미담 (73), 302동식당 (48) and 자하연식당 3층 (28), the dishes of the dormitory's breakfast set (7) and the veterinary lunch (1).
+- No cell with only the template was met; that path is covered by the test's edited page alone.
+
+### Agent usage (2026-10-02)
+
+For the additions after the review, in one session in the main checkout. The review of the model and the settling of the documents ran in the same session before it and are not counted here.
+
+- Agent time: about 16 minutes, an estimate, from the request to this section. Nobody was waited for.
+- Tokens, counted when this section was written:
+  - Input: 21,726,254 in total, of which 21,621,253 were cache reads, 104,925 cache writes and 76 uncached.
+  - Output: 52,201.
