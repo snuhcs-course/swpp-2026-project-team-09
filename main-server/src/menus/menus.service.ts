@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { CollectionService } from '../collection/collection.service.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { type MenusCollectedMessage } from './dto/menus-collected.dto.js';
@@ -23,23 +24,22 @@ export class MenusService {
   // restaurant the page dropped or renamed does not linger.
   async store({ source, collectedAt, days }: MenusCollectedMessage): Promise<void> {
     const collected = new Date(collectedAt);
+    // The identifiers are made here, so that each line is given its restaurant's without reading it back.
     const restaurants = days.flatMap((day) =>
-      day.restaurants.map(({ name, lines }) => ({ date: calendarDay(day.date), name, lines })),
+      day.restaurants.map(({ name, lines }) => ({ id: randomUUID(), date: calendarDay(day.date), name, lines })),
     );
     await this.prisma.$transaction(async (tx) => {
       await this.collection.recordSuccess(tx, source, collected);
       await tx.restaurantDay.deleteMany({
         where: { source, date: { in: days.map(({ date }) => calendarDay(date)) } },
       });
-      // RETURNING gives the rows in the order they were inserted.
-      const stored = await tx.restaurantDay.createManyAndReturn({
-        data: restaurants.map(({ date, name }) => ({ source, date, restaurant: name, collectedAt: collected })),
-        select: { id: true },
+      await tx.restaurantDay.createMany({
+        data: restaurants.map(({ id, date, name }) => ({ id, source, date, restaurant: name, collectedAt: collected })),
       });
       await tx.menuLine.createMany({
-        data: restaurants.flatMap(({ lines }, index) =>
+        data: restaurants.flatMap(({ id, lines }) =>
           lines.map(({ meal, text, kind, price, name }, position) => ({
-            restaurantDayId: stored[index].id,
+            restaurantDayId: id,
             position,
             meal,
             text,
