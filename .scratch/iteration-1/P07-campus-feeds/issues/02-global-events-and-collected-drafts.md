@@ -141,3 +141,11 @@ Ticket 03's branch took in `1.0/Main`, which now holds ticket 05, and the Campus
 - The building list that a place is matched against holds 226 entries now, with 정문수위실 (115동). No test of this ticket changed.
 - On this branch: main server 26 files and 306 tests, worker server 8 files and 91 tests; lint, format:check and typecheck pass in both. The numbers in the sections above are those of their time.
 - The agent time of the move is counted under ticket 04.
+
+### On ticket 03's branch with the outlines (2026-10-02)
+
+Ticket 03's branch gained the buildings' outlines and the lookup of the building at a position, and this ticket's commits were moved onto it again.
+
+- One conflict, in `BuildingsModule`: it exports `BuildingsService`, which this ticket reads the list through, and `BuildingLookup`.
+- A building now carries an `outline`. The list that a place is matched against is the same; no test of this ticket changed.
+- On this branch: main server 27 files and 321 tests, worker server 8 files and 91 tests; lint, format:check and typecheck pass in both. The agent time of the move is counted under ticket 04.
