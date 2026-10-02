@@ -133,3 +133,11 @@ Tickets 02 to 05 were built in one orchestrated run: one session placed the agen
   - Input: 137,383,725 in total, of which 135,339,522 were cache reads, 2,043,421 cache writes and 782 uncached.
   - Output: 119,683. The transcripts record only part of the output of most steps, so this is a lower bound.
 - The orchestrating session's share is recorded once for the run, under ticket 04.
+
+### On ticket 03's branch with the margin (2026-10-02)
+
+Ticket 03's branch took in `1.0/Main`, which now holds ticket 05, and the Campus Boundary's 10 m margin. This ticket's commits were moved onto it without a conflict.
+
+- The building list that a place is matched against holds 226 entries now, with 정문수위실 (115동). No test of this ticket changed.
+- On this branch: main server 26 files and 306 tests, worker server 8 files and 91 tests; lint, format:check and typecheck pass in both. The numbers in the sections above are those of their time.
+- The agent time of the move is counted under ticket 04.
