@@ -28,9 +28,9 @@ To run the whole system, in the repository root:
 docker compose up --build
 ```
 
-This starts PostgreSQL, Redis and every server. The main server takes its settings from `main-server/.env` and brings
-its database up to the current schema before it starts. `docker compose down` removes the containers and keeps the
-database; `docker compose down -v` deletes it too.
+This starts PostgreSQL, Redis and every server. The main server takes its settings from `main-server/.env`, brings its
+database up to the current schema and loads the [seed](#seed-data) before it starts. `docker compose down` removes the
+containers and keeps the database; `docker compose down -v` deletes it too.
 
 While you work on the main server, start only the data stores in the repository root and run the server yourself in
 `main-server/`:
@@ -41,6 +41,7 @@ docker compose up -d postgres redis
 
 ```bash
 pnpm db:migrate
+pnpm db:seed
 pnpm start:dev
 ```
 
@@ -310,6 +311,137 @@ Without a stub, every call to Kakao fails. `test/answers/` holds Kakao's answers
 2026-10-02, from the main gate to the central library and from the main gate to itself. What they answered is recorded
 in `.scratch/iteration-1/P07-campus-feeds/issues/05-walking-route-through-kakao.md`.
 
+## Buildings
+
+The campus buildings and places are [seed data](#seed-data), not collected. A User's app lists and searches them, so
+that the User picks a place without typing coordinates:
+
+- `GET /buildings` with a User's access token answers every building and place inside the
+  [Campus Boundary](#campus-boundary):
+
+  ```json
+  [
+    { "id": "4f6c…", "number": "1", "name": "인문관1", "latitude": 37.46027, "longitude": 126.95234 },
+    { "id": "9a01…", "number": null, "name": "자하연", "latitude": 37.4607006780578, "longitude": 126.952103365166 }
+  ]
+  ```
+
+  The numbered buildings come first, by number (`25`, `25-1`, `26`), then the places without one, such as `자하연`, in
+  the Korean order of their names. `id` is the building's own identifier, the same in every database (see
+  [Seed data](#seed-data)). It never changes, so a timetable entry or a Meetup can point at it.
+
+- `GET /buildings/search?q=공학관` answers, in the same order and form, the buildings whose name holds `q`, whatever
+  the case of its Latin letters, and the building whose number is `q`, written with or without `동` (`302`, `302동`).
+  A search that finds nothing answers `[]`, and `q` without text gets 400.
+- A name is the campus map's, except a name the map wraps, such as `관악 223동[우석경제관]`, which is stored as
+  `우석경제관`. Several buildings share a name, such as the seven `(관악사)학부 생활관`.
+
+A building also keeps its outline, OpenStreetMap's drawing of its walls, where OpenStreetMap draws one: 194 of the 218
+numbered buildings have one. The routes above do not serve it. It lets the server say which building a position is in,
+without a database query: a feature injects `BuildingLookup` from `src/buildings/building-lookup.ts`, which
+`BuildingsModule` exports, and asks it for a position.
+
+```ts
+constructor(private readonly buildingLookup: BuildingLookup) {}
+
+const found = this.buildingLookup.at({ latitude, longitude });
+// { building: { id, number: '301', name: '제1공학관', latitude, longitude }, relation: 'inside' }, or null
+```
+
+- The answer is the nearest building or place. A building with an outline is as far as its wall, and at no distance
+  when the outline holds the position; a place, or a building without an outline, is as far as its position.
+- `relation` is `inside` when the building has an outline and its wall is within 5 m, since a phone inside a building is
+  often placed just outside its walls, and `near` up to 20 m. Farther than 20 m from everything, the answer is `null`.
+  A place, or a building without an outline, can only be `near`.
+- Between two buildings the nearer wall wins, and a building whose outline holds the position wins over any wall. Of
+  the buildings that share one outline, such as 국제대학원 and 국제회의동, the one whose position is nearer wins.
+- It does not check the [Campus Boundary](#campus-boundary): a feature that hides a User outside it checks that first.
+- The buildings are read once, when the server starts, after the seed was loaded. No route serves the answer yet: P08
+  calls it when a User's position arrives.
+
+## Campus Boundary
+
+The Campus Boundary is a file of the main server, `seed/campus-boundary.geojson`: OpenStreetMap's relation 11917142
+as one polygon. The server reads it once, when it starts, and never stores it in the database. A feature injects
+`CampusBoundary` from `src/common/campus-boundary.ts`, which `CampusBoundaryModule` gives to every feature, and checks
+a position without a database query:
+
+```ts
+constructor(private readonly campusBoundary: CampusBoundary) {}
+
+if (!this.campusBoundary.contains({ latitude, longitude })) {
+  // Off campus.
+}
+```
+
+A position up to 10 m outside the polygon counts as inside, because a phone reports its position some metres off; the
+file itself is OpenStreetMap's outline, unchanged. Every check goes through `contains()`, so the one rule holds for a
+User's position and for the building list alike.
+
+`outline` holds the polygon's positions. The outline leaves out a wedge in the north-east, with the faculty housing,
+the president's residence and the dormitory buildings 915 to 917, and four facilities on the hillside in the south: a
+position there is outside.
+
+## Seed data
+
+Seed data comes from outside the project once, rather than by Collection: a file in `seed/` that one command loads
+into the database.
+
+| File                                      | What it holds                                                                       | Exported from                                                |
+| ----------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `campus-boundary.geojson`                 | The Campus Boundary, read by the server and not loaded                              | An Overpass query for relation 11917142                      |
+| `campus-map-buildings.json`               | The campus map's 250 rows, as it serves them                                        | `https://map.snu.ac.kr/api/building.action?page=1&rows=1000` |
+| `openstreetmap-buildings.json`            | 71-1동 and 901동, which the campus map does not list, with OpenStreetMap's names    | An Overpass query for the two names                          |
+| `openstreetmap-building-outlines.geojson` | The outline of every building OpenStreetMap draws in the campus extent, 225 of them | An Overpass query for the buildings in the extent            |
+| `building-outline-links.json`             | A person's corrections of which outline a building has, each with its reason        | Written by hand                                              |
+
+- **Origin**: each file keeps the address or Overpass query it came from (`exportedFrom`, `query`) and the day of the
+  export (`exportedOn`), in `properties` in the boundary's GeoJSON file and at the top of the outlines'. All four
+  were exported on 2026-10-02.
+- **Exporting**: `pnpm seed:export campus-map-buildings` repeats the export of the files it names and overwrites them.
+  Each export is one request, sent with the worker's User-Agent, which names the project as OpenStreetMap asks.
+  Overpass asks for one query at a time; when it answers 504, it is busy, so wait some minutes before trying again.
+  - The boundary's four outer ways are joined into one ring. The two OpenStreetMap buildings are placed at the centre
+    of their outline's bounding box, as Overpass gives it, and carry the numbers their names give, from a table in
+    `scripts/export-seed.ts`.
+  - Each outline is one ring under OpenStreetMap's identifier, `way/…`, with its name. A building drawn as a relation
+    of several ways gives one ring of its joined outer ways, under `relation/…`, or, where a part stands apart, a ring
+    for that part under the part's own `way/…`. A courtyard is left out, so that a position in it is in the building.
+- **Loading**: `pnpm db:seed` builds the server and loads the files into the database at `DATABASE_URL`. In Compose
+  the image, built already, runs `node dist/seed` before the server starts.
+  - Loaded are the entries of both building files that lie inside the Campus Boundary, except the map's `Test` row:
+    216 numbered buildings and 8 places of the map, and the 2 from OpenStreetMap. One of the 216, `정문수위실`, stands
+    2 m outside the outline, within the Boundary's 10 m. To list a building farther out, the Boundary is widened first.
+  - Each entry keeps the identifier its origin gives it, the map's `inst_seq` or OpenStreetMap's `way/…`, and its
+    `origin`, `campus_map` or `openstreetmap`: seed data is not collected, so its origin is no Source.
+  - A building's `id` is not generated by the database. It is the UUID v5 of the two, such as `campus_map:188`, under
+    a namespace fixed in `src/buildings/buildings.seed.ts`, so a building has the same `id` in every database, also in
+    one that was emptied and loaded anew. Changing the namespace or the form of that name would change every `id`;
+    `test/seed.e2e-spec.ts` holds two of them.
+  - Loading again updates each entry in place by its `id`, so whatever points at it stays, and running the command
+    twice leaves one set of records. An entry that has left the files stays in the database.
+  - A building takes the outline that holds its position, the larger when two do, so the buildings that OpenStreetMap
+    draws as one share an outline. A building within 10 m of an outline that holds no building takes that outline:
+    the campus map places some buildings just outside their walls. An outline that holds another building is not
+    taken, since the building beside it is a store or a link that OpenStreetMap does not draw. A place has no outline.
+    `building-outline-links.json` then replaces what the positions gave: `{ "number": "43", "outline": null, "why": … }`
+    takes an outline away, and an identifier in `outline` gives that one. Loading again stores each building's outline
+    anew, so a building that lost its outline is stored without one.
+- **Correcting**: change the entry in its file, such as a name in `inst_kor_nm`, and load again. The next export
+  overwrites the correction.
+- **Coordinates** come from the campus map and OpenStreetMap only, never from Kakao, Naver or Google maps, whose terms
+  forbid storing their data. The campus map is drawn on a Kakao map, but its buildings' coordinates are the
+  university's own.
+- **Licences**: OpenStreetMap's data is under the ODbL, and the files made from it carry its notice (`copyright`). The
+  app shows OpenStreetMap's attribution (P15); `.scratch/research/external-sources.md` §6.1 says where the attribution
+  guidelines ask for it. The campus map publishes no terms of use and no licence (§6.2).
+- **In a test**: the global setup loads the seed into the test database, so every test file has the buildings, and
+  `test/buildings.e2e-spec.ts` counts them. A test that changes the seed, or needs other buildings, loads it into a
+  database of its own, with `loadSeed(prisma, directory)` from `src/load-seed.ts`, as `test/seed.e2e-spec.ts` does.
+- **A new seed** adds its export to `scripts/export-seed.ts` when a request gives the file, its model with the
+  identifier its origin gives as a unique key, and its loading to `loadSeed()`. `readSeedFile()` beside
+  `SEED_DIRECTORY` reads a file and checks it against a schema.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
@@ -331,11 +463,18 @@ real time, so it runs alone after the others.
 prisma/
 ├── schema.prisma                    database schema
 └── migrations/                      every schema change, applied in order
+seed/                                the seed files, each with where it came from
 src/
 ├── main.ts                          starts the server and connects it to messaging
+├── seed.ts                          the command that loads the seed files, `pnpm db:seed`
+├── load-seed.ts                     loads every seed file; the command and the tests call it
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
+│   ├── seed-directory.ts            where the seed files are
+│   ├── geometry.ts                  a position, and whether a ring holds it or how far it is from it
+│   ├── campus-boundary.ts           the Campus Boundary, read from its seed file
+│   ├── campus-boundary.module.ts    makes the Campus Boundary available to every feature
 │   ├── prisma.module.ts             makes PrismaService available to every feature
 │   ├── prisma.service.ts            the main database
 │   ├── messaging.module.ts          makes the messaging client available to every feature
@@ -357,8 +496,10 @@ src/
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── collection/                      a feature: each Source's Collection status, and the worker's failure messages
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
-└── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
-scripts/                             commands run by hand, such as `pnpm keys:generate`
+├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
+└── buildings/                       a feature: the campus buildings and places of the seed, listed and searched, and
+                                     the building at a position
+scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
 test/                                tests, run against PostgreSQL and Redis in containers
 ```
 
@@ -427,6 +568,8 @@ The steps add a feature named `party`. Use a short lowercase name, with dashes b
    ```prisma
    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
    ```
+
+   A building is the exception: its `id` is computed when the seed is loaded (see [Seed data](#seed-data)).
 
 6. If another feature needs `PartyService`, add it to `exports` in `PartyModule` and add `PartyModule` to the
    other module's `imports`. Code shared by two or more features goes in `src/common/`.

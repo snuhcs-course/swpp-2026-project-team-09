@@ -1,6 +1,6 @@
 import { TestProject } from 'vitest/node';
 import { Settings } from '../src/common/settings.js';
-import { mainDatabaseUrl, migrate, redisSettings, startPostgres, startRedis } from './containers.js';
+import { mainDatabaseUrl, migrate, redisSettings, seed, startPostgres, startRedis } from './containers.js';
 import { es256KeyPair } from './keys.js';
 
 type SettingValues = Record<keyof Settings, string>;
@@ -11,7 +11,8 @@ declare module 'vitest' {
   }
 }
 
-// Starts PostgreSQL and Redis once for every test file and brings the empty main database up to the current schema.
+// Starts PostgreSQL and Redis once for every test file, brings the empty main database up to the current schema and
+// loads the seed into it.
 export default async function setup({ provide }: TestProject): Promise<() => Promise<void>> {
   const [postgres, redis] = await Promise.all([startPostgres(), startRedis()]);
   const accessTokenKeys = es256KeyPair();
@@ -29,6 +30,7 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     KAKAO_REST_API_KEY: 'test-kakao-rest-api-key',
   };
   migrate(settings.DATABASE_URL);
+  await seed(settings.DATABASE_URL);
   provide('settings', settings);
 
   return async () => {

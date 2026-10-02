@@ -4,7 +4,9 @@ import { APP_PIPE } from '@nestjs/core';
 import { IdempotencyModule } from '@nestjs/idempotency';
 import { AdministratorsModule } from './administrators/administrators.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { BuildingsModule } from './buildings/buildings.module.js';
 import { CollectionModule } from './collection/collection.module.js';
+import { CampusBoundaryModule } from './common/campus-boundary.module.js';
 import { type SignedInAdministrator } from './common/current-administrator.decorator.js';
 import { type SignedInUser } from './common/current-user.decorator.js';
 import { MessagingModule } from './common/messaging.module.js';
@@ -29,6 +31,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     PrismaModule,
     MessagingModule,
     RedisModule,
+    CampusBoundaryModule,
     // Makes a handler marked @Idempotent() safe to repeat. Its interceptor must run outside every other global
     // interceptor: one registered by a module imported below runs inside it, but an APP_INTERCEPTOR in the providers
     // of this module would run outside it.
@@ -46,6 +49,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     CollectionModule,
     MenusModule,
     WalkingRouteModule,
+    BuildingsModule,
   ],
   providers: [
     // Validates a handler parameter against the schema given in its decorator: @Body({ schema: signInSchema }).

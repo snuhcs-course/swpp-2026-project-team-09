@@ -19,6 +19,8 @@
     "start:debug": "nest start --debug --watch --env-file .env",
     "start:prod": "node --env-file-if-exists=.env dist/main",
     "db:migrate": "prisma migrate deploy",
+    "db:seed": "nest build && node --env-file-if-exists=.env dist/seed",
+    "seed:export": "node scripts/export-seed.ts",
     "keys:generate": "node scripts/generate-access-token-keys.ts",
     "lint": "oxlint --type-aware",
     "typecheck": "tsc --noEmit",
@@ -43,6 +45,7 @@
     "ioredis": "^6.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "uuid": "^14.0.2",
     "zod": "^4.6.5"
   },
   "devDependencies": {

@@ -100,7 +100,7 @@ A User's single switch that turns all of their Location Sharing on or off.
 _Avoid_: Global toggle, ghost mode
 
 **Campus Boundary**:
-The outline of the Gwanak campus. A User outside it is hidden from everyone.
+The outline of the Gwanak campus, with 10 m around it for the error of a phone's position. A User outside it is hidden from everyone.
 _Avoid_: Geofence
 
 **Private Zone**:
