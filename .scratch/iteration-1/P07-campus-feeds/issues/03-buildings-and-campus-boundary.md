@@ -143,3 +143,57 @@ One session, in which 김태현 went through this ticket's pull request and aske
 - Tokens, counted when this section was written:
   - Input: 23,744,191 in total, of which 23,576,267 were cache reads, 167,834 cache writes and 90 uncached.
   - Output: 111,966.
+
+### Building outlines and the building at a position (2026-10-02)
+
+Asked for by 김태현 after the review, for a later feature that shows which building a User is in. The decisions were settled with him question by question, and the work was built on this branch at his word rather than as a ticket of its own. The feature itself is not specified yet; this gives it the data and the answer. The README's Buildings and Seed data hold the full text, and the spec's Buildings section the rules.
+
+What was decided, each with what it was weighed against:
+
+- **Scope: the data and a lookup inside the server, no route and nothing shown.** Data alone would have left a column nobody reads, whose shape no test could check. The feature that shows a User's building waits for P08, which handles positions.
+- **The seed keeps every outline OpenStreetMap draws in the campus extent**, 225 of them, with its identifier and name, and the loader decides which building has which. The file is GeoJSON, which GitHub draws on a map.
+- **A building takes the outline that holds its position, or the nearest outline within 10 m when that outline holds no building.** Of the 218 numbered buildings, 183 lie inside an outline. Of the 21 others within 10 m of one, 11 are beside an outline that no building's position is in, and its name is theirs (`903`, `924`, `차량정비고`). The other 10 are beside an outline that holds another building: links between two buildings and stores, which OpenStreetMap does not draw. A plain 10 m would have given them their neighbour's outline.
+  - The buildings that OpenStreetMap draws as one share its outline: six outlines, 13 buildings, such as 국제대학원, 국제대학원2 and 국제회의동. 종합운동장본부석 lies inside two outlines laid over each other and takes the larger.
+  - A place, an entry without a number, has no outline. 24 buildings have none either.
+- **A person's corrections are a file of the seed**, `building-outline-links.json`, not a table in the export script, so that they survive a new export and the seed's tests reach them. A link names a building by its number and gives it an outline or none, with the reason; one that names a building or an outline the seed does not hold stops the loading.
+- **A relation with parts standing apart gives one outline for each part.** 수의대부속 동물병원 is drawn as two rings; 80동 takes the one that holds its position, and the other is held by nobody. A courtyard is left out: a position in it is in the building.
+- **One nullable column, `buildings.outline`, a closed ring as a list of `{ latitude, longitude }`**, rather than a table of outlines: the lookup needs only the outlines of our buildings, and the others stay in the seed file. It joins the ticket's one migration, which is not merged; a database that ran the earlier form is recreated with `docker compose down -v`.
+- **The answer is `{ building, relation: 'inside' | 'near' }` or `null`**, with the building as the list serves it. The server writes no wording: the app chooses between "301동" and "301동 근처" by `relation`. The distance is left out, since nothing shows it.
+- **The nearest wall decides, not the nearest position.** Measured over the campus, the two give a different building for 27% of the positions outdoors, because a large building's position lies far from its walls. A building is as far as its wall and at no distance when its outline holds the position; a place or a building without an outline is as far as its position.
+- **Inside within 5 m of the wall, near up to 20 m, none farther out.** A phone inside a building is often placed just outside it. 10 m was weighed for the first: it calls 46% of the campus inside a building, 5 m 34%. 김태현 chose 20 m for the second so that "near" means near: 30% of the campus is then near a building, and 35%, the roads, squares and woods, has no answer.
+- **Where two buildings are both within 5 m, the nearer wall wins**, so no rule for overlaps is needed: 35 pairs of outlines lie less than 5 m apart, six of them touching, but only 1.7% of the positions within 5 m of a wall are within 5 m of two. At the same distance the earlier building of the list stays; among the buildings of one outline, the one whose position is nearer.
+- **The lookup does not check the Campus Boundary.** P08 checks it first.
+- **The buildings are read into memory when the server starts**, after the seed was loaded, so a position is answered without a query. One answer takes about 50 microseconds, measured over 20,000 positions on the started server.
+- **The Campus Boundary and the outlines share their geometry**, `src/common/geometry.ts`: whether a ring holds a position, and how far a position is from a ring.
+- `outline` and the lookup's answer have no word in `GLOSSARY.md` yet. The name of what a User's friends are shown belongs to the feature.
+
+The requests. Overpass was asked for the outlines more often than once, and three times it answered:
+
+- 20:44, 20:47 and 20:55 KST: 504, the server too busy, no data.
+- 20:59: 200, with `out geom tags`, which gives a relation without its ways. This answer was used to weigh the decisions and was not kept in the seed.
+- 21:50, twice: the export command itself. Overpass answered, and the command stopped at the relation with two rings, which it then learned to read.
+- 21:51: 200, saved, the data as of 2026-10-02T12:49:36Z. The export command wrote the seed file from this saved answer, with `fetch` replaced.
+
+The person's check. 김태현 looked at 26 links on 2026-10-02 and kept all of them: "전부 그대로 이어줘. 나머진 ok". The links file is therefore empty.
+
+- Seven buildings inside an outline whose name shares nothing with theirs: 43동 (`폐기물보관소`), 150동 (`입학본부`), 97동 (`방사선동위원소폐기물보관소`), 111동 (`Caffè Pascucci`), 66동 (`학생군사교육단`), 75동 (`대학신문`) and 139-1동 (`기초과학공동기기원`). His reading is that OpenStreetMap's names are older than the campus map's.
+- The 11 links within 10 m: 143, 311, 49, 15-1 (`우천법학관`), 331, 903, 919 (`919B`), 924, 135, 86 (`관악서울대학교치과병원`) and 506 (`자연과학대학`).
+- The six shared outlines, and the two outlines without a name, of 149동 and 32동.
+- The session had doubted two of them by their names and sizes, 43동 and 506동. They are kept on his word.
+
+Tests, at the two seams agreed with him.
+
+- The seed command, `test/seed.e2e-spec.ts` (11, seven of them new): a building inside an outline, a building just outside an outline that holds none, no outline for a building beside one that holds another, the larger of two outlines, three buildings of one outline, a person's links giving and taking an outline, and a link to an outline the seed does not hold refused.
+- The lookup on the started server, `test/building-lookup.e2e-spec.ts` (8): inside 제1공학관; 3 m, 12 m and 30 m east of its long east wall; a place and a building without an outline; inside one building 5 m from another; between two buildings; and each building of one outline at its own position.
+- Each was written first and seen to fail, in order, except three that the rule before had made true: the larger outline, by the order of the file; the shared outline; and the two positions between buildings. For those the rule was broken by hand and the test seen to fail: taking the smaller outline, taking the first building within 5 m in the order of the list, and letting a wall within 5 m beat the outline that holds the position.
+- The positions and the expected answers were worked out apart from the server's code, with the great-circle distance to an outline sampled every 10 cm.
+- 25 files and 283 tests pass, and lint, format:check and typecheck pass. The migration was checked on a temporary database of the project's PostgreSQL image, `p07-03-outlines-postgres`, since removed: `prisma migrate diff` from the migrated database to the schema finds no difference.
+
+### Agent usage, the outlines and the lookup (2026-10-02)
+
+The same session as the review, on another model than the run.
+
+- Agent time: about 41 minutes, an estimate: the questions that led to the outlines, a map of the outlines for 김태현 to look at, the decisions, and the build. The time he took to read and answer is not counted.
+- Tokens, counted when this section was written:
+  - Input: 67,958,029 in total, of which 67,677,338 were cache reads, 280,515 cache writes and 176 uncached.
+  - Output: 216,531.
