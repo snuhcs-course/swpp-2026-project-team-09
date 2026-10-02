@@ -432,7 +432,8 @@ made from its building layer (건물).
     `공과대학38동글로벌공학교육센터`, as `label`. A courtyard is left out here too.
   - The coordinates are converted from the layer's EPSG:5179 to longitude and latitude, to seven decimals, so the
     server converts nothing. `test/seed-outlines.e2e-spec.ts` holds one point of the file with what PROJ gives for it.
-  - The labels are read as EUC-KR. No file of the layer names the encoding; the attribute table's language byte does.
+  - The labels are read as EUC-KR. No file of the layer names the encoding; the attribute table's language byte says
+    Korean, code page 949, which the `euc-kr` decoder reads.
   - The export refuses a file that is not the layer, which it knows by the name of the `.shp`, `N3A_B0010000_….shp`,
     and a ZIP that arrived cut off. The layer is renewed once a year, and the campus may then be in another of its
     files: a file without a building in the campus extent is refused with the message that the campus is in another

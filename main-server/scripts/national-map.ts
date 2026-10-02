@@ -66,8 +66,8 @@ function outlineOf(geometry: unknown): Coordinates[] {
 // with its label.
 export async function nationalMapBuildings(path: string, campus: Extent): Promise<object[]> {
   const { shp, dbf } = await openLayer(path);
-  // No file of the layer names the attribute table's encoding. The table's language byte says EUC-KR, and every label
-  // of the file reads as EUC-KR.
+  // No file of the layer names the attribute table's encoding. The table's language byte says Korean, code page 949,
+  // which `euc-kr` decodes, and every label of the file reads as such.
   const records = await shapefile.open(shp, dbf, { encoding: 'euc-kr' });
   const features = [];
   // oxlint-disable-next-line no-await-in-loop -- one record at a time, as the file holds them
