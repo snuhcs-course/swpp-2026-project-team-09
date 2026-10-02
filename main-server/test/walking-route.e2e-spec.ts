@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, Logger } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { signIn } from './sign-in.js';
@@ -33,12 +33,12 @@ beforeEach(() => {
 
 // The walk of the real call and Kakao's answers to the two real calls.
 const walk = between(MAIN_GATE, CENTRAL_LIBRARY);
-const route = savedAnswer('kakao-walk-main-gate-to-central-library-2026-10-02');
-const samePoint = savedAnswer('kakao-walk-same-point-2026-10-02');
+const routeAnswer = savedAnswer('kakao-walk-main-gate-to-central-library-2026-10-02');
+const samePointAnswer = savedAnswer('kakao-walk-same-point-2026-10-02');
 
 describe('A walking route between two points', () => {
   it("is Kakao's line from the start to the end, with the distance in metres and the duration in seconds", async () => {
-    kakao.answers(route);
+    kakao.answers(routeAnswer);
 
     const response = await getWalkingRoute(app, accessToken, walk);
 
@@ -50,7 +50,7 @@ describe('A walking route between two points', () => {
   });
 
   it("asks Kakao once, with the longitudes as x, the latitudes as y and the server's key", async () => {
-    kakao.answers(route);
+    kakao.answers(routeAnswer);
 
     await getWalkingRoute(app, accessToken, walk);
 
@@ -65,7 +65,7 @@ describe('A walking route between two points', () => {
 
 describe('A walking route Kakao does not find', () => {
   it('is answered as no route, with the status Kakao gave', async () => {
-    kakao.answers(samePoint);
+    kakao.answers(samePointAnswer);
 
     const response = await getWalkingRoute(app, accessToken, between(MAIN_GATE, MAIN_GATE));
 
@@ -81,7 +81,7 @@ describe('A walking route Kakao does not find', () => {
     'TOO_FAR_AWAY',
     'ROUTE_RESULT_NOT_FOUND',
   ])('is answered as no route when Kakao answers %s', async (status) => {
-    kakao.answers(samePoint.replace('"SAME_POINT"', `"${status}"`));
+    kakao.answers(samePointAnswer.replace('"SAME_POINT"', `"${status}"`));
 
     const response = await getWalkingRoute(app, accessToken, walk);
 
@@ -90,39 +90,62 @@ describe('A walking route Kakao does not find', () => {
   });
 });
 
-const failed = { statusCode: 502, error: 'Bad Gateway', message: "Kakao's walking route API failed" };
+const failed = { statusCode: 502, error: 'Bad Gateway', message: "Kakao's walking route API failed." };
 
-// No real call met these. The errors are shaped after Kakao's documentation (external-sources.md §7.5).
-const notRoutes: [string, number, string][] = [
-  ['the quota is used up', 429, '{"code":-10,"msg":"API limit has been exceeded."}'],
-  ['the key is refused', 401, '{"code":-401,"msg":"ip mismatched"}'],
-  ['a status that is not one of its own', 200, samePoint.replace('"SAME_POINT"', '"NOT_A_STATUS"')],
-  ['a page instead of an answer', 503, '<html><body>Service Unavailable</body></html>'],
+// No real call met these. The errors are shaped after Kakao's documentation (external-sources.md §7.5). The problem,
+// the HTTP status, the answer and what the log says of it.
+const otherAnswers: [string, number, string, string][] = [
+  ['the quota is used up', 429, '{"code":-10,"msg":"API limit has been exceeded."}', 'HTTP 429 {"code":-10}'],
+  ['the key is refused', 401, '{"code":-401,"msg":"ip mismatched"}', 'HTTP 401 {"code":-401}'],
+  [
+    'a status that is not one of its own',
+    200,
+    samePointAnswer.replace('"SAME_POINT"', '"NOT_A_STATUS"'),
+    'HTTP 200 {"status":"NOT_A_STATUS"}',
+  ],
+  [
+    'a route it cannot read',
+    200,
+    routeAnswer.replace('"totalTime":1216', '"totalTime":"1216"'),
+    'HTTP 200 {"status":"OK"}',
+  ],
+  ['a page instead of an answer', 503, '<html><body>Service Unavailable</body></html>', 'HTTP 503 {}'],
 ];
 
 describe('An answer of Kakao that is neither a route nor no route', () => {
-  it.each(notRoutes)('is answered 502 when %s', async (_problem, status, body) => {
-    kakao.answers(body, status);
-
-    const response = await getWalkingRoute(app, accessToken, walk);
-
-    expect(response.status).toBe(502);
-    expect(response.body).toEqual(failed);
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it('is answered 502 when Kakao cannot be reached', async () => {
+  it.each(otherAnswers)(
+    'is answered 502 when %s, and logged without a route or a point',
+    async (_problem, status, body, logged) => {
+      const warn = vi.spyOn(Logger.prototype, 'warn');
+      kakao.answers(body, status);
+
+      const response = await getWalkingRoute(app, accessToken, walk);
+
+      expect(response.status).toBe(502);
+      expect(response.body).toEqual(failed);
+      expect(warn).toHaveBeenCalledWith(`Kakao's walking route API failed: ${logged}`);
+    },
+  );
+
+  it('is answered 502 when Kakao cannot be reached, and logged with the reason', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn');
     kakao.fails(new TypeError('fetch failed'));
 
     const response = await getWalkingRoute(app, accessToken, walk);
 
     expect(response.status).toBe(502);
     expect(response.body).toEqual(failed);
+    expect(warn).toHaveBeenCalledWith("Kakao's walking route API failed: TypeError: fetch failed");
   });
 });
 
 describe('A walking route asked for again', () => {
   it('is asked of Kakao again, since nothing keeps a route', async () => {
-    kakao.answers(route);
+    kakao.answers(routeAnswer);
 
     await getWalkingRoute(app, accessToken, walk);
     await getWalkingRoute(app, accessToken, walk);
@@ -131,7 +154,7 @@ describe('A walking route asked for again', () => {
   });
 
   it('is answered with a header that tells every HTTP cache not to keep it', async () => {
-    kakao.answers(route);
+    kakao.answers(routeAnswer);
 
     const response = await getWalkingRoute(app, accessToken, walk);
 

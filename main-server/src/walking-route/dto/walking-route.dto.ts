@@ -1,14 +1,4 @@
-// Kakao's statuses for a walking route it did not find.
-export const NO_ROUTE_STATUSES = [
-  'SAME_POINT',
-  'START_LINK_NOT_FOUND',
-  'END_LINK_NOT_FOUND',
-  'TOO_MANY_SEARCH_LINK',
-  'TOO_FAR_AWAY',
-  'ROUTE_RESULT_NOT_FOUND',
-] as const;
-
-export type NoRouteStatus = (typeof NO_ROUTE_STATUSES)[number];
+import { KakaoRoute, NoRouteStatus } from './kakao-walk-answer.dto.js';
 
 export interface CoordinatesDto {
   latitude: number;
@@ -23,4 +13,17 @@ export interface RouteDto {
   duration: number;
 }
 
-export type WalkingRouteDto = { status: 'OK'; route: RouteDto } | { status: NoRouteStatus; route: null };
+export type WalkingRouteAnswerDto = { status: 'OK'; route: RouteDto } | { status: NoRouteStatus; route: null };
+
+export function toRouteDto({ legs, properties }: KakaoRoute): RouteDto {
+  const points = legs.flatMap(({ steps }) => steps.flatMap(({ path }) => path.points));
+  // Each step begins at the point where the one before it ended.
+  const line = points.filter(
+    ([x, y], index) => index === 0 || x !== points[index - 1][0] || y !== points[index - 1][1],
+  );
+  return {
+    line: line.map(([longitude, latitude]) => ({ latitude, longitude })),
+    distance: properties.totalDistance,
+    duration: properties.totalTime,
+  };
+}

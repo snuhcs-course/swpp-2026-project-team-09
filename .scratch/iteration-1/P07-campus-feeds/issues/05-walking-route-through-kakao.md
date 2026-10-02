@@ -24,7 +24,7 @@ The API has not been called yet, so the ticket starts with one real call: the an
 
 ### The real calls (2026-10-02)
 
-Made by hand at 15:46 KST, before any code of the route, once each: `curl` with the key from the main checkout's `main-server/.env`, read into a shell variable inside the one command and never printed, and the project's User-Agent (`SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)`). Both asked `GET https://dapi.kakao.com/v2/routing/walk` with `Authorization: KakaoAK` and the four required parameters only, at P05's coordinates (`.scratch/research/external-sources.md` §7.4).
+Made by hand at 15:46 KST, before any code of the route, once each: `curl` with the key from the main checkout's `main-server/.env`, read into a shell variable inside the one command and never printed, and the project's User-Agent (`SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)`). Both asked `GET https://dapi.kakao.com/v2/routing/walk` with `Authorization: KakaoAK` and the four required parameters only, at P05's coordinates (`.scratch/research/external-sources.md` §7.4). The user had placed the value in that file at about 15:45 KST, after the orchestrating session asked for it, so nobody was waited for.
 
 | Call | Query | Answer | Saved as, in `main-server/test/answers/` |
 |---|---|---|---|
@@ -51,11 +51,11 @@ No call was made after the route was built: the ticket asks for none, and the te
 - **A coordinate is read only when written as a decimal number.** `Number('')` is 0, so an empty field would otherwise ask for a walk from the equator. A latitude lies in -90 to 90 and a longitude in -180 to 180, which also catches the two swapped.
 - **The line drops the repeated point where two steps meet** (30 points, not 35): the steps are Kakao's directions, which are out of scope, and the app draws one line.
 - **The answer carries `Cache-Control: no-store`**, so that the app's HTTP client and any cache on the way keep no route either. P06 already says the app never keeps one after the screen is left.
-- **A failure is logged as a warning with Kakao's HTTP status and answer.** Nest logs no HTTP error, and without the line a wrong key or a used-up quota would leave no trace on the server. The key is replaced by its setting's name in the line, in case an error of Kakao's quotes it.
+- **A failure is logged as a warning with Kakao's HTTP status and Kakao's own `status` or error `code`, and nothing else of the answer**, such as `HTTP 429 {"code":-10}`. Nest logs no HTTP error, and without the line a wrong key or a used-up quota would leave no trace on the server. An answer that could not be read may still hold a route, which Kakao forbids keeping, and the points a User asked for; Kakao's error message is left out too, so that nothing it quotes, the key included, reaches the log.
 - **The setting checks only that the key is there.** A check of its form, 32 hexadecimal characters as it has, would rest on nothing Kakao documents.
 - **No timeout of the server's own**, as in ticket 01's worker: Node's `fetch` gives up after 300 seconds without an answer. A User would wait that long only if Kakao hung; a timeout can be added with the app's handling of the 502.
 - **The server's call sends no project User-Agent.** The key names the app to Kakao. The hand calls sent it, as the rule for saved answers asks.
-- **`FETCH` is the main server's fetch boundary**, provided by `WalkingRouteModule`, as `FETCH` is the worker's under `PageFetcher`. `startApp` replaces it in every test file with a call that fails, unless the test gives a `KakaoStub`, so that no test can reach Kakao.
+- **`FETCH_KAKAO` is the main server's fetch boundary**, provided by `WalkingRouteModule`, as `FETCH` is the worker's under `PageFetcher`. `startApp` replaces it in every test file with `refuseKakao`, which fails every call, unless the test gives a `KakaoStub`, so that no test can reach Kakao.
 - Nothing is stored, so the ticket has no migration.
 
 ### Tests (2026-10-02)
@@ -69,6 +69,21 @@ At the seam agreed with the user, a User's route, with Kakao replaced at the fet
 - Each test was written first and seen to fail, except these, which earlier slices had already made true: the 401 (the global guard), a missing latitude and a longitude that is not a number (refused by the first form of the query schema), and the page instead of JSON, added after the 502.
 - The setting's startup check has no test, since the route is the one seam agreed. It was checked by hand with the built server and throwaway settings: without the key it stops with `Config validation error: KAKAO_REST_API_KEY: Invalid input: expected string, received undefined`, and with an empty one with `KAKAO_REST_API_KEY: Too small: expected string to have >=1 characters`.
 - The whole suite passes: 21 files and 252 tests. `lint`, `format:check` and `typecheck` pass.
+
+### Review (2026-10-02)
+
+A Standards review and a Spec review ran side by side on the ticket's commit. The commit after them acts on them.
+
+- Spec: every criterion is built, tested at the agreed seam and in the README; nothing blocks. Two defects were in the failure log, and are fixed test-first:
+  - An answer that failed the schema was logged whole, so an `OK` answer shaped unlike the saved one would have put a route, and the User's start and end in its `landingUrl`, in the server's log.
+  - A body that was not JSON was logged as the `SyntaxError` alone, without Kakao's HTTP status, though the README said the server logs what Kakao answered.
+  - The log now keeps Kakao's HTTP status and Kakao's own `status` or `code`, nothing else (see Decisions), and the README says so. The 502 tests check the line, read through a spy on Nest's `Logger` while the request still goes through the User's route, and a new row, an `OK` answer whose route cannot be read, checks that the line holds no route. Each of the five rows failed before the change; the line for Kakao unreachable was already right.
+- Spec, recorded: the user had placed the key before the calls (see The real calls). `.scratch/research/external-sources.md`, which the README points to, still said that the API had not been called and that `route` comes only with `OK`; §1, §7.4 and §10 now carry what the calls showed, dated.
+- Spec, left as they are, each a recorded decision: the failure log, the only trace of a wrong key or a used-up quota; `Cache-Control: no-store`, which keeps the app's HTTP client from holding a route as P06 forbids; and the line without the points repeated where two steps meet, which leaves the line unchanged. The built route has not called Kakao itself; the ticket asks for no such call, and the tests check that its request is the hand call's.
+- Standards: no breach of the README, `GLOSSARY.md` or ADR 0001. The comments the review named are gone or cut to their why: the count of replaced parts in `test/start-app.ts`, the comment on `KakaoStub.reset()`, the half of `ask()`'s comment that restated it, and the policy said in both the service and the controller, now said once in the controller.
+- Standards, acted on, as the code does elsewhere: Kakao's answer schema moved to `dto/kakao-walk-answer.dto.ts`, and the mapper to `dto/walking-route.dto.ts` as `toRouteDto`, as `toRestaurantMenusDto` sits beside its DTO; the query's schemas are named `…Schema`; the 502's message ends with a full stop. The token is `FETCH_KAKAO`, the answer's type `WalkingRouteAnswerDto`, and the test's answers `routeAnswer`, `samePointAnswer` and `otherAnswers`. One `refuseKakao` replaces the two functions that refused a call, and the test helper uses `CoordinatesDto`.
+- Standards, left: `test/settings.e2e-spec.ts` gets no case for `KAKAO_REST_API_KEY`, because the user agreed the route as the only seam; the startup check was made by hand. `startApp` keeps its third positional parameter: an options object, as the worker's, would change the three test files that pass controllers. The query stays four flat fields: they travel as one object to the one place that splits them, Kakao's URL. The finding on the usage section is the orchestrating session's.
+- The whole suite passes: 21 files and 253 tests. `lint`, `format:check` and `typecheck` pass.
 
 ### Agent usage (2026-10-02)
 

@@ -2,18 +2,14 @@ import { INestApplication } from '@nestjs/common';
 import { readFileSync } from 'node:fs';
 import { Server } from 'node:http';
 import request from 'supertest';
+import { CoordinatesDto } from '../src/walking-route/dto/walking-route.dto.js';
 import { withAccessToken } from './sign-in.js';
-
-export interface Coordinates {
-  latitude: number;
-  longitude: number;
-}
 
 // The two points of the real calls, as `.scratch/research/external-sources.md` §7.4 gives them.
 export const MAIN_GATE = { latitude: 37.4664, longitude: 126.9486 };
 export const CENTRAL_LIBRARY = { latitude: 37.4592, longitude: 126.9524 };
 
-export function between(start: Coordinates, end: Coordinates): Record<string, number> {
+export function between(start: CoordinatesDto, end: CoordinatesDto): Record<string, number> {
   return {
     startLatitude: start.latitude,
     startLongitude: start.longitude,
@@ -67,7 +63,8 @@ export interface KakaoRequest {
   authorization: string | null;
 }
 
-function refuse(): Promise<Response> {
+// Answers in Kakao's place when a test gave no answer, so that no test reaches Kakao.
+export function refuseKakao(): Promise<Response> {
   return Promise.reject(new Error('The test gave Kakao no answer'));
 }
 
@@ -75,12 +72,11 @@ function refuse(): Promise<Response> {
 // request.
 export class KakaoStub {
   requests: KakaoRequest[] = [];
-  private respond: () => Promise<Response> = refuse;
+  private respond: () => Promise<Response> = refuseKakao;
 
-  // Forgets the requests and the answer.
   reset(): void {
     this.requests = [];
-    this.respond = refuse;
+    this.respond = refuseKakao;
   }
 
   answers(body: string, status = 200): void {
