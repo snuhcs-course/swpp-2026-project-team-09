@@ -257,6 +257,7 @@ What was decided for a change to 연속수치지형도, on 2026-10-03:
 - A building is linked to its outlines by the number in the label; without one, by the polygon that holds its point; without that, by a polygon within 10 m that no building has. Tried on the data: 172, 25 and 5 of the 218, so 202 have an outline before the corrections, against 194 from OpenStreetMap today.
 - OpenStreetMap's outlines are used only where the corrections file names one, for three buildings: 버들골 풍산마당 (100동, `way/193893586`) and 데이터사이언스대학원 (43-2동, `way/1485386282`), which 연속수치지형도 does not draw, and 종합운동장본부석 (149동), which it draws only as a wall-less structure. 300동 and 26동 take 연속수치지형도's outlines. The OpenStreetMap seed file then holds only the outlines the corrections name.
 - 화학관연결동 (253동) has no outline: its point lies in an unlabelled polygon that is not wanted.
+- 반도체교육관 (104-1동) keeps its own polygon alone: the layer labels a second polygon `104-1동국제대학원`, which stands at 국제대학원, about 1 km away. The count of 172 above takes a number as found when any polygon labelled with it lies at the building's point, so it did not show this.
 - Left without an outline, about 14: 김철수물리관 (56-1동), 정문수위실, three links between buildings, and stores.
 - Not decided: whether the change is made in the pull request that brought the outlines or as a ticket of its own.
 

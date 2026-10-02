@@ -20,7 +20,7 @@ The layer is downloaded by a person from VWorld, behind a login, and stays outsi
   1. every polygon whose label names the building's number as `<number>동`, the whole number: `1동` is not in `101동`, and `25동` is not in `25-1동`;
   2. without such a label, the polygon that holds the building's position, the larger when two do, also when another building has it;
   3. without that, a polygon within 10 m that no building has, the nearest building first.
-- [x] The corrections file gives a building an outline of either source, or none, each with its reason, and still refuses a building or an outline the seed does not hold. It holds four corrections: 버들골 풍산마당 (100동) and 데이터사이언스대학원 (43-2동) take OpenStreetMap's outlines `way/193893586` and `way/1485386282`; 종합운동장본부석 (149동) takes the OpenStreetMap outline it has today; 화학관연결동 (253동) has none.
+- [x] The corrections file gives a building an outline of either source, or none, each with its reason, and still refuses a building or an outline the seed does not hold. It holds five corrections: 버들골 풍산마당 (100동) and 데이터사이언스대학원 (43-2동) take OpenStreetMap's outlines `way/193893586` and `way/1485386282`; 종합운동장본부석 (149동) takes the OpenStreetMap outline it has today; 화학관연결동 (253동) has none; 반도체교육관 (104-1동) keeps its own polygon alone, since the layer labels a polygon at 국제대학원 as 104-1동 too.
 - [x] The OpenStreetMap outline seed holds only the outlines the corrections name, exported by their identifiers.
 - [x] A building stores its outlines as a list of closed rings in ordinary columns, with one migration from the schema of `1.0/Main`. No spatial type is used.
 - [x] The building at a position: a building is as far as its nearest outline, and at no distance when any of its outlines holds the position. `inside` within 5 m, `near` up to 20 m, the nearer wall between two buildings, and the nearer position among the buildings of one outline stay as they are.
@@ -57,26 +57,26 @@ The main server's README has the full text under Buildings and Seed data.
 
 - The seed holds 356 polygons with 6,029 points; 233 have a label.
 - Before the corrections 202 of the 218 numbered buildings have an outline: 172 by a label, 25 by their position and 5 within 10 m. These are the numbers the decision counted.
-- **After the corrections 204 have an outline**: 172 by a label, 24 by their position, 5 within 10 m (104-2, 128, 207, 251 and 506) and 3 by a correction (100, 43-2 and 149).
+- **After the corrections 204 have an outline**: 171 by a label, 24 by their position, 5 within 10 m (104-2, 128, 207, 251 and 506) and 4 by a correction (100, 43-2, 149 and 104-1).
 - **14 have none**:
   - 김철수물리관 (56-1동) and 정문수위실 (115동);
   - four links between buildings: 인문관연결동 (250동), 화학관연결동 (253동), 물리관연결동 (254동) and 예능관연결동 (255동);
   - eight stores and small buildings: 야외조각실습장2 (52-2동), 영선공장 (68-2동), 폐기물창고 (98-2동), 정구장관리실 (99-1동), 반도체연구소수소창고 (104-3동), 간이식당1 (110동), 양수장 (117동) and 다목적차량보관소 (332동).
-- Ten buildings have several outlines: 16동 five, 42동 three, and 50, 59, 66, 72, 73, 104-1, 105 and 901 two each. The buildings have 218 outlines in all.
-- Eight polygons are the outline of two buildings each: 10 and 252, 52 and 52-1, 59 and 59-1, 105 and 105-1, 105 and 105-2, 140 and 140-1, 901 and 906, and 104-1 and 140-2.
+- Nine buildings have several outlines: 16동 five, 42동 three, and 50, 59, 66, 72, 73, 105 and 901 two each. The buildings have 217 outlines in all.
+- Seven polygons are the outline of two buildings each: 10 and 252, 52 and 52-1, 59 and 59-1, 105 and 105-1, 105 and 105-2, 140 and 140-1, and 901 and 906.
 - No building's position lies in two of the 356 polygons, so "the larger when two do" decides nothing on today's data. Its test adds two polygons to a copy of the seed.
-- **One label of the layer is wrong, and the rule follows it.** The polygon `B0010000000RF2EB9` is labelled `104-1동국제대학원` and stands at 국제대학원, 1,044 m from 반도체교육관 (104-1동). By its label it is the second outline of 104-1동, and by position it is the outline of 국제회의동 (140-2동). The lookup still answers 140-2동 there, because of two buildings that share an outline the nearer position wins, and a test holds that. The corrections file is left at the four the criterion names. A fifth correction, `{ "number": "104-1", "outline": "B0010000000RF2ENL" }`, would leave 104-1동 its own polygon alone; that is a person's decision.
+- **One label of the layer is wrong, and a correction sets it right.** The polygon `B0010000000RF2EB9` is labelled `104-1동국제대학원` and stands at 국제대학원, 1,044 m from 반도체교육관 (104-1동). By its label it would be a second outline of 104-1동; the fifth correction leaves 104-1동 its own polygon, `B0010000000RF2ENL`, alone. By position the polygon is the outline of 국제회의동 (140-2동), which keeps it. The wrong label was found by its distance, after the build, and the correction was added on a person's word.
 - The server's links were compared with a calculation apart from its code, with shapely in EPSG:5186 on the seed files: the same outlines for every one of the 218 buildings.
 - The conversion was compared with PROJ for every point of the seed: the largest difference is 5 × 10⁻⁸ degrees, the rounding to seven decimals.
 
 ### Tests (2026-10-03)
 
-- The seed command, on a database of its own: `test/seed-outlines.e2e-spec.ts` (11).
+- The seed command, on a database of its own: `test/seed-outlines.e2e-spec.ts` (12).
   - A point of 151동미술관 has the longitude and latitude that PROJ gives for the layer's coordinates.
   - By a label: 제1공학관; 사회과학관 with five outlines and 문화관 with two; `1동` not read out of `101동`, nor `25동` out of `25-1동`.
   - Without a label: 우석경제관 by its position, and 59-1동 inside a polygon of 59동; 506동 within 10 m, 250동 not, beside the polygon of 인문관2, and of 104-2동 and 104-3동 the nearer; 물리관연결동, which the layer draws as a wall-less structure, without an outline; a place without one.
   - The larger of two polygons that hold a position.
-  - The corrections: OpenStreetMap's outline for 100동 and none for 253동, against a copy of the seed without corrections; a correction naming an unknown outline or an unknown building refused.
+  - The corrections: OpenStreetMap's outline for 100동 and none for 253동, against a copy of the seed without corrections; 104-1동 with two outlines without the corrections and its own alone with them, written before the fifth correction and seen to fail; a correction naming an unknown outline or an unknown building refused.
 - The building at a position, on the started server: `test/building-lookup.e2e-spec.ts` (9). The cases of ticket 03 against the new outlines: inside 제1공학관; 3 m, 12 m and 30 m west of its longest wall; a place and 김철수물리관, which has no outline; inside 교직원아파트 4.5 m from 가족생활관4; between the two; and 국제대학원, 국제대학원2 and 국제회의동 each at its own position. New: inside each of 문화관's two outlines, and inside the last of 사회과학관's five.
   - The positions and the expected answers were worked out apart from the server's code, with shapely in EPSG:5186 and PROJ, from the seed files.
 - `test/seed.e2e-spec.ts` (5) keeps the tests of the building list.
@@ -98,7 +98,7 @@ The main server's README has the full text under Buildings and Seed data.
 
 ### Checks and the real start (2026-10-03)
 
-- `pnpm lint`, `pnpm format:check` and `pnpm typecheck` pass. `pnpm test`: 26 files and 289 tests pass.
+- `pnpm lint`, `pnpm format:check` and `pnpm typecheck` pass. `pnpm test`: 26 files and 290 tests pass.
 - The migration was made with `prisma migrate dev --create-only` on a temporary database of the project's PostgreSQL image, `p07-06-outlines-postgres`, since removed with its volume. After `pnpm db:migrate`, `prisma migrate diff` from that database to the schema finds no difference. `pnpm db:seed` run twice on it left 226 rows, 204 of the 218 numbered buildings with outlines.
 - One start, `docker compose -p p07-06-outlines-check up --build -d postgres redis main-server` from the repository root, under a project name of its own so that the developer database was not touched:
   - The image built with the new dev dependencies, applied the four migrations, logged `Loaded 226 buildings` and started. Readiness and liveness answered 200, and `GET /buildings` and `GET /buildings/search?q=302` without a token 401.

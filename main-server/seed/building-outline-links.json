@@ -19,6 +19,11 @@
       "number": "253",
       "outline": null,
       "why": "The polygon that holds the position of 화학관연결동 has no label and is not this building."
+    },
+    {
+      "number": "104-1",
+      "outline": "B0010000000RF2ENL",
+      "why": "The national map labels a second polygon, B0010000000RF2EB9 at 국제대학원, as 104-1동. It is not this building's."
     }
   ]
 }

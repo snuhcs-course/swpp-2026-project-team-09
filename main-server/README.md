@@ -462,11 +462,12 @@ made from its building layer (건물).
   - `building-outline-links.json` then replaces what the rules gave a building, with one outline of either file or
     with none: `{ "number": "100", "outline": "way/193893586", "why": … }` gives that outline, and `"outline": null`
     takes the outlines away. A correction that names a building or an outline the seed does not hold stops the
-    loading. The file holds four: OpenStreetMap's outlines for 버들골 풍산마당 (100동) and 데이터사이언스대학원 (43-2동),
+    loading. The file holds five: OpenStreetMap's outlines for 버들골 풍산마당 (100동) and 데이터사이언스대학원 (43-2동),
     which the national map does not draw, and for 종합운동장본부석 (149동), which it draws only as a wall-less
-    structure, and none for 화학관연결동 (253동), whose position lies in a polygon that is not the building.
+    structure; none for 화학관연결동 (253동), whose position lies in a polygon that is not the building; and its own
+    polygon alone for 반도체교육관 (104-1동), since the map also labels a polygon at 국제대학원 as 104-1동.
     OpenStreetMap's outlines are used for nothing else.
-  - 204 of the 218 numbered buildings so have an outline: 172 by a label, 24 by their position, 5 within 10 m and 3 by
+  - 204 of the 218 numbered buildings so have an outline: 171 by a label, 24 by their position, 5 within 10 m and 4 by
     a correction. The 14 without are 김철수물리관 (56-1동), 정문수위실, four links between buildings, and eight stores
     and other small buildings. Loading again stores each building's outlines anew, so a building that lost its outlines
     is stored without any.

@@ -103,8 +103,8 @@ describe('The building at a position between buildings', () => {
     // 국제대학원 and 국제대학원2 share the polygon labelled `140동국제대학원`, each at its own position.
     expect(lookup.at({ latitude: 37.46427, longitude: 126.95487 })).toMatchObject({ building: { number: '140' } });
     expect(lookup.at({ latitude: 37.46406, longitude: 126.9546 })).toMatchObject({ building: { number: '140-1' } });
-    // 국제회의동, at its own position inside the polygon that the national map labels `104-1동국제대학원`. 반도체교육관
-    // (104-1동), 1 km away and earlier in the list, has that polygon too.
+    // 국제회의동, at its own position inside the polygon that the national map labels `104-1동국제대학원`, which a
+    // correction keeps from 반도체교육관 (104-1동), 1 km away.
     expect(lookup.at({ latitude: 37.46448, longitude: 126.95497 })).toMatchObject({ building: { number: '140-2' } });
   });
 });

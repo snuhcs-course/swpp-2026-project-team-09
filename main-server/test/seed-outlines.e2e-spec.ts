@@ -185,6 +185,17 @@ describe('Correcting the outlines', () => {
     expect(await outlinesOfBuilding('253')).toEqual([]);
   });
 
+  it('leaves a building the one outline a correction names, where a label of the national map is wrong', async () => {
+    await writeLinks([]);
+    await loadSeed(prisma, correctedSeed);
+    // The map labels a polygon at 국제대학원 `104-1동국제대학원`, 1 km from 반도체교육관 (104-1동).
+    expect(await outlinesOfBuilding('104-1')).toEqual(await outlines('B0010000000RF2ENL', 'B0010000000RF2EB9'));
+
+    await loadSeed(prisma);
+
+    expect(await outlinesOfBuilding('104-1')).toEqual(await outlines('B0010000000RF2ENL'));
+  });
+
   it('refuses a correction that names an outline or a building that the seed does not hold', async () => {
     await writeLinks([{ number: '43', outline: 'way/1', why: 'A mistyped identifier.' }]);
     await expect(loadSeed(prisma, correctedSeed)).rejects.toThrow('way/1');
