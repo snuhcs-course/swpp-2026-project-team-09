@@ -851,7 +851,8 @@ follows these rules.
   went wrong. It records the failure and leaves every stored record as it is. A success leaves the last failure in
   place, so the two times tell whether the Source has worked since. No route serves the status yet; P12 shows it.
 - **A new Source** adds its value to `Source` with a migration. `menusCollectedSchema` lists the Sources that send
-  menus and `eventsCollectedSchema` the one that sends events, so a Source of another kind is refused there.
+  menus, and `eventsCollectedSchema` and the shuttle's two schemas the one that sends each, so a Source of another
+  kind is refused there.
 
 In a test, `startWithWorker()` from `test/worker.ts` starts the server with a client that sends as the worker does, as
 `test/menus.e2e-spec.ts` does:

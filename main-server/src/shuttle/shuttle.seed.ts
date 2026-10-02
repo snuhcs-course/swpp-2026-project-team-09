@@ -6,7 +6,7 @@ import { PrismaClient } from '../generated/prisma/client.js';
 export const ROUTE_NUMBER = '41946';
 
 // The campus map's stops of its loop as it serves them, with the coordinates as text.
-const campusMapFile = z.object({
+const campusMapFileSchema = z.object({
   suttle_route_path_list: z.array(
     z.object({
       bus_station_code: z.number(),
@@ -19,7 +19,7 @@ const campusMapFile = z.object({
 
 // The operator's stops in loop order, each with its key, its place on the drawing and the campus map's stop it is
 // paired with.
-const stopsFile = z.object({
+const stopsFileSchema = z.object({
   stops: z
     .array(
       z.object({
@@ -35,7 +35,7 @@ const stopsFile = z.object({
 });
 
 // GeoJSON's order: longitude, then latitude.
-const routeFile = z.object({
+const routeFileSchema = z.object({
   geometry: z.object({
     type: z.literal('LineString'),
     coordinates: z.array(z.tuple([z.number(), z.number()])).min(2),
@@ -45,9 +45,9 @@ const routeFile = z.object({
 // Updates each stop in place by its key, whatever else a correction changes, so that it keeps its identifier. A stop
 // that has left the seed is removed, with any vehicle placed at it: nothing that lasts points at a stop.
 export async function loadShuttle(prisma: PrismaClient, directory: string): Promise<number> {
-  const campusMap = await readSeedFile(directory, 'campus-map-shuttle-stops.json', campusMapFile);
-  const { stops } = await readSeedFile(directory, 'shuttle-stops.json', stopsFile);
-  const { geometry } = await readSeedFile(directory, 'shuttle-route.geojson', routeFile);
+  const campusMap = await readSeedFile(directory, 'campus-map-shuttle-stops.json', campusMapFileSchema);
+  const { stops } = await readSeedFile(directory, 'shuttle-stops.json', stopsFileSchema);
+  const { geometry } = await readSeedFile(directory, 'shuttle-route.geojson', routeFileSchema);
   const entries = stops.map(({ key, name, left, top, campusMapStop }, loopOrder) => {
     const paired = campusMap.suttle_route_path_list.find((stop) => stop.bus_station_name === campusMapStop);
     if (paired === undefined) {

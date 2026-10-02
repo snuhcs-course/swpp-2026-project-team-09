@@ -69,9 +69,9 @@ export const invalidMessages: [string, string, object, string][] = [
     'vehicles: Each vehicle must appear once',
   ],
   [
-    'vehicles from another Source',
+    "vehicles under the route page's Source",
     'shuttle-vehicles-collected',
-    vehiclesMessage([], { source: 'coop_menus' }),
+    vehiclesMessage([], { source: 'shuttle_stops' }),
     'source: ',
   ],
   [

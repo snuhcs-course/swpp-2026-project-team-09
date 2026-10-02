@@ -33,9 +33,9 @@ afterAll(async () => {
   await main.$disconnect();
 });
 
-const stopsFile = z.looseObject({ stops: z.array(z.looseObject({ name: z.string() })) });
+const stopsFileSchema = z.looseObject({ stops: z.array(z.looseObject({ name: z.string() })) });
 
-type Stop = z.infer<typeof stopsFile>['stops'][number];
+type Stop = z.infer<typeof stopsFileSchema>['stops'][number];
 
 // A copy of the seed in which a person changed the operator's stops.
 async function seedWithStops(change: (stops: Stop[]) => Stop[]): Promise<string> {
@@ -43,7 +43,7 @@ async function seedWithStops(change: (stops: Stop[]) => Stop[]): Promise<string>
   copies.push(copy);
   await cp(SEED_DIRECTORY, copy, { recursive: true });
   const file = join(copy, 'shuttle-stops.json');
-  const seed = stopsFile.parse(JSON.parse(await readFile(file, 'utf8')));
+  const seed = stopsFileSchema.parse(JSON.parse(await readFile(file, 'utf8')));
   await writeFile(file, JSON.stringify({ ...seed, stops: change(seed.stops) }));
   return copy;
 }

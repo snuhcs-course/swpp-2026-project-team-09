@@ -70,7 +70,7 @@ Each address was asked once, with the project's User-Agent, and none was asked a
 - Worker, the collector with the Sources and the main server replaced: `test/shuttle-collector.e2e-spec.ts` (12). The route page asked for, and its stops and hours sent; the vehicle positions asked for with a POST of the route as JSON, and sent with the time received; an empty answer sent as no vehicles; the block page and a refusal reported as failed Collections; the two schedules; the command; and, with the timers replaced, a Source and a main server that do not answer given up after 10 seconds, with the next page still asked for, and a vehicle run still waiting making the next runs skip. The menu collector's schedule test now finds the menu job among the jobs.
 - Socket server: `test/shuttle.e2e-spec.ts` (1). A set sent as the main server sends it reaches two connected apps, with each vehicle's stop, coordinates and received time.
 - Each test was written first and seen to fail, except the three invalid stops messages, which the schema of the first slice already refused. Four breaks made by hand were each caught: the seed putting P05's places back, the seed removing nothing, vehicles served at any age, and a set replacing only the vehicles it names.
-- The whole suites pass: main server 26 files and 295 tests, worker server 8 files and 67 tests, socket server 5 files and 25 tests. `lint`, `format:check` and `typecheck` pass in the three. `pnpm build` and `node dist/seed`, run twice, logged `Loaded 225 buildings and 14 shuttle stops`. The ticket's one migration, `20261002090315_add_shuttle`, was made again after the review in a temporary container, `p07-04-shuttle-postgres`, since removed with its volume, and `prisma migrate diff` from the migrated database to the schema found no difference.
+- The ticket's commits stand on ticket 02's branch, `1.0/P07-02-global-events-and-collected-drafts` at `eb878295`, which carries ticket 03 and the worker's shared collector code; see "On ticket 02's branch" below. There the whole suites pass: main server 27 files and 312 tests, worker server 11 files and 114 tests, socket server 5 files and 25 tests. `lint`, `format:check` and `typecheck` pass in the three. On a freshly migrated database, `pnpm db:seed` and then `node dist/seed` each logged `Loaded 225 buildings and 14 shuttle stops`. The ticket's one migration, `20261002090315_add_shuttle`, was made again after the review in a temporary container, `p07-04-shuttle-postgres`, since removed with its volume; it comes after ticket 02's `20261002080053_add_global_events`, and `prisma migrate diff` from a freshly migrated database to the schema finds no difference.
 - The Collections were not run on the real Sources: the ticket asks for no real run, and the shuttle does not run from 2026-10-03 to 10-05. P20 rides the loop.
 
 ### The person's check (2026-10-02)
@@ -123,3 +123,16 @@ A Standards review and a Spec review ran side by side on the two commits. A thir
   - A point on the drawing keeps the names its origin gives it: `left` and `top` on the route page, `x` and `y` in the operator's answer, and `drawingLeft` and `drawingTop` in the database, which say whose drawing.
   - The menu parser test's edit without a comment is ticket 01's.
   - The Agent usage section is the coordinating session's.
+
+### On ticket 02's branch (2026-10-02)
+
+Each ticket gets a pull request of its own, so the three commits were moved from the integration branch's `fd6b8ef2` onto ticket 02's branch, `1.0/P07-02-global-events-and-collected-drafts` at `eb878295`, which stands on ticket 03's final branch and carries the worker's shared collector code. Ticket 05 is not under them, and nothing of this ticket uses the walking route.
+
+- The conflicts, and how each was settled:
+  - `Source` keeps `snu_events` and the two shuttle Sources.
+  - `src/buildings/buildings.seed.ts`: the base already reads its files with `readSeedFile()` and names its origins, so the base's version stands.
+  - `src/load-seed.ts`: the base's awaited Campus Boundary, with the shuttle's stops.
+  - Worker: `EventModule` and `ShuttleModule` both; the stub's `answers` and `unanswered` both; the menu schedule test as the base has it, since ticket 02 made the same change.
+  - The READMEs keep both sides: the Events and Shuttle sections, the folder layouts without `walking-route/`, the base's wording on loading the seed and on an entry's origin, with the shuttle's stops, and the rule that the file that checks a Source's status is the only one that sends as that Source.
+- Changed to follow the base: the shuttle seed's zod schemas end in `Schema`, as ticket 03's now do; and the refused vehicles message under a wrong Source names `shuttle_stops`, the shuttle's own, where it named `coop_menus`, by that rule.
+- The numbers above are those on this branch.
