@@ -12,21 +12,102 @@ The layer is downloaded by a person from VWorld, behind a login, and stays outsi
 
 ## Acceptance criteria
 
-- [ ] `pnpm seed:export` has an export that takes the path of the downloaded layer file, the ZIP or its unzipped `.shp`, and writes a seed file of the polygons that reach the campus extent and that the layer classes as buildings (`KIND` `BDK004`). Wall-less structures, temporary buildings and greenhouses are left out. Each polygon keeps the layer's identifier (`UFID`) and its label (`ANNO`), with its coordinates converted from EPSG:5179 to longitude and latitude, so that the server converts nothing.
-- [ ] The seed file keeps the page it was downloaded from, the name of the downloaded file, the day of the export and the notice its licence asks for: the source, 국토지리정보원, under 공공누리 type 1. It is formatted by Prettier like the other seed files. The downloaded file itself is not in the repository.
-- [ ] The export refuses a file that is not this layer, and a file that holds no building in the campus extent, saying that the campus is in another of the layer's files.
-- [ ] The conversion of coordinates is checked against a pair of coordinates known apart from the code.
-- [ ] A building is linked to its outlines in this order, and a place has none:
+- [x] `pnpm seed:export` has an export that takes the path of the downloaded layer file, the ZIP or its unzipped `.shp`, and writes a seed file of the polygons that reach the campus extent and that the layer classes as buildings (`KIND` `BDK004`). Wall-less structures, temporary buildings and greenhouses are left out. Each polygon keeps the layer's identifier (`UFID`) and its label (`ANNO`), with its coordinates converted from EPSG:5179 to longitude and latitude, so that the server converts nothing.
+- [x] The seed file keeps the page it was downloaded from, the name of the downloaded file, the day of the export and the notice its licence asks for: the source, 국토지리정보원, under 공공누리 type 1. It is formatted by Prettier like the other seed files. The downloaded file itself is not in the repository.
+- [x] The export refuses a file that is not this layer, and a file that holds no building in the campus extent, saying that the campus is in another of the layer's files.
+- [x] The conversion of coordinates is checked against a pair of coordinates known apart from the code.
+- [x] A building is linked to its outlines in this order, and a place has none:
   1. every polygon whose label names the building's number as `<number>동`, the whole number: `1동` is not in `101동`, and `25동` is not in `25-1동`;
   2. without such a label, the polygon that holds the building's position, the larger when two do, also when another building has it;
   3. without that, a polygon within 10 m that no building has, the nearest building first.
-- [ ] The corrections file gives a building an outline of either source, or none, each with its reason, and still refuses a building or an outline the seed does not hold. It holds four corrections: 버들골 풍산마당 (100동) and 데이터사이언스대학원 (43-2동) take OpenStreetMap's outlines `way/193893586` and `way/1485386282`; 종합운동장본부석 (149동) takes the OpenStreetMap outline it has today; 화학관연결동 (253동) has none.
-- [ ] The OpenStreetMap outline seed holds only the outlines the corrections name, exported by their identifiers.
-- [ ] A building stores its outlines as a list of closed rings in ordinary columns, with one migration from the schema of `1.0/Main`. No spatial type is used.
-- [ ] The building at a position: a building is as far as its nearest outline, and at no distance when any of its outlines holds the position. `inside` within 5 m, `near` up to 20 m, the nearer wall between two buildings, and the nearer position among the buildings of one outline stay as they are.
-- [ ] Tests of the seed command against the real database: a building linked by its label; a building with several outlines, 사회과학관 (16동) with five and 문화관 (73동) with two; a building without a label linked by its position; one linked within 10 m; a wall-less polygon that is no building's outline; a correction that gives an OpenStreetMap outline and one that takes an outline away; a correction naming an unknown outline refused.
-- [ ] Tests of the building at a position on the started server, with positions and distances worked out apart from the server's code: the cases of ticket 03 against the new outlines, and a position inside the second outline of a building, which is inside that building.
-- [ ] The main server's README says where the layer is downloaded, which of its files holds the campus and how the export tells when it does not, how the export and the corrections work, and both licences. The P07 spec's Buildings section and the P15 spec's information screen name both sources.
-- [ ] The ticket records how many of the numbered buildings have an outline after the change, and which do not.
+- [x] The corrections file gives a building an outline of either source, or none, each with its reason, and still refuses a building or an outline the seed does not hold. It holds four corrections: 버들골 풍산마당 (100동) and 데이터사이언스대학원 (43-2동) take OpenStreetMap's outlines `way/193893586` and `way/1485386282`; 종합운동장본부석 (149동) takes the OpenStreetMap outline it has today; 화학관연결동 (253동) has none.
+- [x] The OpenStreetMap outline seed holds only the outlines the corrections name, exported by their identifiers.
+- [x] A building stores its outlines as a list of closed rings in ordinary columns, with one migration from the schema of `1.0/Main`. No spatial type is used.
+- [x] The building at a position: a building is as far as its nearest outline, and at no distance when any of its outlines holds the position. `inside` within 5 m, `near` up to 20 m, the nearer wall between two buildings, and the nearer position among the buildings of one outline stay as they are.
+- [x] Tests of the seed command against the real database: a building linked by its label; a building with several outlines, 사회과학관 (16동) with five and 문화관 (73동) with two; a building without a label linked by its position; one linked within 10 m; a wall-less polygon that is no building's outline; a correction that gives an OpenStreetMap outline and one that takes an outline away; a correction naming an unknown outline refused.
+- [x] Tests of the building at a position on the started server, with positions and distances worked out apart from the server's code: the cases of ticket 03 against the new outlines, and a position inside the second outline of a building, which is inside that building.
+- [x] The main server's README says where the layer is downloaded, which of its files holds the campus and how the export tells when it does not, how the export and the corrections work, and both licences. The P07 spec's Buildings section and the P15 spec's information screen name both sources.
+- [x] The ticket records how many of the numbered buildings have an outline after the change, and which do not.
 
 ## Comments
+
+### Decisions made while implementing (2026-10-03)
+
+The main server's README has the full text under Buildings and Seed data.
+
+- **The seed file is `seed/national-map-building-outlines.geojson`**, a GeoJSON FeatureCollection as OpenStreetMap's is, so that GitHub draws it. A feature's `id` is the layer's `UFID`, `properties.label` its `ANNO`, or `null` where the layer writes none. The top of the file keeps `exportedFrom`, the download page, `file`, the name of the downloaded file, `exportedOn` and `attribution`.
+  - The notice names 국토지리정보원, the layer, VWorld and 공공누리 type 1. It gives no year: the model wording of 공공누리 names the year the work was made, and neither the download page nor the file states one.
+- **`pnpm seed:export national-map-building-outlines <path>`**: the path follows the name. The other exports take no path, and several names in one command still work.
+- **A polygon reaches the campus extent when one of its points lies in it**, in longitude and latitude. On this file that gives the same 356 polygons as a true intersection with the extent.
+- **A courtyard is left out**, as ticket 03 decided for OpenStreetMap: six of the 356 have inner rings, those of 38동, 39동, 61동, 70동, 71동 and 82동. Every record of the file is one polygon; a record of several would stop the export.
+- **The attribute table is read as EUC-KR.** No `.cpg` names the encoding. The table's language byte is `0x4E`, Korean in code page 949, which the `euc-kr` decoder reads, and every value of the 2.2 million records that is not ASCII decodes as CP949; 84 of them also decode as UTF-8, by chance. An earlier read tried UTF-8 first and CP949 after: it reached the right labels through the second. The labels of the 356 polygons are the same by both reads.
+- **`BDK004` alone is kept**, as the criterion says. The whole file has eight kinds, `BDK001` to `BDK008`; the campus extent has none of `BDK001` to `BDK003`.
+- **Dev dependencies, for the export alone**: `shapefile` reads the `.shp` and the `.dbf`, `proj4` converts the coordinates, and `yauzl` reads the two files out of the ZIP as streams, so nothing is unzipped to disk. `@types/shapefile` and `@types/yauzl` come with them. Nothing was added to what the server needs to run.
+- **The layer is read in `scripts/national-map.ts`**, beside `scripts/export-seed.ts`, which would otherwise pass oxlint's 300 lines. A script imports another by its `.ts` name, as Node runs it, which TypeScript accepts with `rewriteRelativeImportExtensions` in `tsconfig.json`. The build covers `src/` alone and is not changed by it.
+- **The export takes about 80 seconds**: it reads all 2.2 million records in the order of the file, since a ZIP's member cannot be read from the middle.
+- **Within 10 m, the nearest polygon decides**: a building without a label and outside every polygon takes the nearest polygon when it is within 10 m and no building has it. When a building has the nearest polygon, the building beside it gets none, as before. This reading gives the 5 that the decision counted. The other reading, the nearest of the polygons that no building has, gives 7: 인문관연결동 (250동) would take a polygon of 70 m² without a label and 다목적차량보관소 (332동) one of 134 m².
+- **A correction gives one outline, which replaces all that the rules gave**, or none. Its identifier is looked up in both files: a `UFID` of the national map or OpenStreetMap's `way/…`.
+- **The OpenStreetMap export reads the corrections file** and asks Overpass for the outlines it names, by their identifiers. It refuses an answer that lacks one. Relations are still read, though the three outlines are ways.
+- **`buildings.outlines` is a list of rings, not null**, empty for a place or a building without an outline: `JSONB NOT NULL DEFAULT '[]'`. The migration, `20261002192950_several_outlines_per_building`, drops `outline` and adds `outlines`. A database that ran `add_buildings` migrates in place, and the next loading of the seed fills the column: it need not be recreated.
+- **The lookup measures each building to the nearest of its outlines** and remembers which outline that was. Two buildings at the same distance share an outline when that outline is the same ring, and then the nearer position wins, as before.
+- **The outline tests have a file of their own**, `test/seed-outlines.e2e-spec.ts`, since `test/seed.e2e-spec.ts` would pass 300 lines. Both make their database with `createDatabase()` in `test/containers.ts`.
+- `.scratch/research/public-building-outlines.md` is left as the research wrote it.
+
+### The numbers (2026-10-03)
+
+- The seed holds 356 polygons with 6,029 points; 233 have a label.
+- Before the corrections 202 of the 218 numbered buildings have an outline: 172 by a label, 25 by their position and 5 within 10 m. These are the numbers the decision counted.
+- **After the corrections 204 have an outline**: 172 by a label, 24 by their position, 5 within 10 m (104-2, 128, 207, 251 and 506) and 3 by a correction (100, 43-2 and 149).
+- **14 have none**:
+  - 김철수물리관 (56-1동) and 정문수위실 (115동);
+  - four links between buildings: 인문관연결동 (250동), 화학관연결동 (253동), 물리관연결동 (254동) and 예능관연결동 (255동);
+  - eight stores and small buildings: 야외조각실습장2 (52-2동), 영선공장 (68-2동), 폐기물창고 (98-2동), 정구장관리실 (99-1동), 반도체연구소수소창고 (104-3동), 간이식당1 (110동), 양수장 (117동) and 다목적차량보관소 (332동).
+- Ten buildings have several outlines: 16동 five, 42동 three, and 50, 59, 66, 72, 73, 104-1, 105 and 901 two each. The buildings have 218 outlines in all.
+- Eight polygons are the outline of two buildings each: 10 and 252, 52 and 52-1, 59 and 59-1, 105 and 105-1, 105 and 105-2, 140 and 140-1, 901 and 906, and 104-1 and 140-2.
+- No building's position lies in two of the 356 polygons, so "the larger when two do" decides nothing on today's data. Its test adds two polygons to a copy of the seed.
+- **One label of the layer is wrong, and the rule follows it.** The polygon `B0010000000RF2EB9` is labelled `104-1동국제대학원` and stands at 국제대학원, 1,044 m from 반도체교육관 (104-1동). By its label it is the second outline of 104-1동, and by position it is the outline of 국제회의동 (140-2동). The lookup still answers 140-2동 there, because of two buildings that share an outline the nearer position wins, and a test holds that. The corrections file is left at the four the criterion names. A fifth correction, `{ "number": "104-1", "outline": "B0010000000RF2ENL" }`, would leave 104-1동 its own polygon alone; that is a person's decision.
+- The server's links were compared with a calculation apart from its code, with shapely in EPSG:5186 on the seed files: the same outlines for every one of the 218 buildings.
+- The conversion was compared with PROJ for every point of the seed: the largest difference is 5 × 10⁻⁸ degrees, the rounding to seven decimals.
+
+### Tests (2026-10-03)
+
+- The seed command, on a database of its own: `test/seed-outlines.e2e-spec.ts` (11).
+  - A point of 151동미술관 has the longitude and latitude that PROJ gives for the layer's coordinates.
+  - By a label: 제1공학관; 사회과학관 with five outlines and 문화관 with two; `1동` not read out of `101동`, nor `25동` out of `25-1동`.
+  - Without a label: 우석경제관 by its position, and 59-1동 inside a polygon of 59동; 506동 within 10 m, 250동 not, beside the polygon of 인문관2, and of 104-2동 and 104-3동 the nearer; 물리관연결동, which the layer draws as a wall-less structure, without an outline; a place without one.
+  - The larger of two polygons that hold a position.
+  - The corrections: OpenStreetMap's outline for 100동 and none for 253동, against a copy of the seed without corrections; a correction naming an unknown outline or an unknown building refused.
+- The building at a position, on the started server: `test/building-lookup.e2e-spec.ts` (9). The cases of ticket 03 against the new outlines: inside 제1공학관; 3 m, 12 m and 30 m west of its longest wall; a place and 김철수물리관, which has no outline; inside 교직원아파트 4.5 m from 가족생활관4; between the two; and 국제대학원, 국제대학원2 and 국제회의동 each at its own position. New: inside each of 문화관's two outlines, and inside the last of 사회과학관's five.
+  - The positions and the expected answers were worked out apart from the server's code, with shapely in EPSG:5186 and PROJ, from the seed files.
+- `test/seed.e2e-spec.ts` (5) keeps the tests of the building list.
+- Seen to fail first:
+  - The seed tests were written before the loader was changed. Nine of the eleven failed. The other two were true already: the conversion, since the seed had been exported, and the refusal, a rule of ticket 03.
+  - The conversion test was then seen to fail with the seed exported under a scale factor of 1 instead of 0.9996: the point lay 24 m off.
+  - The lookup had to change with the column before its tests could run, so its tests passed when first run. Each rule was then broken by hand and its test seen to fail: only the first outline measured, only the last, a wall within 5 m counted as holding the position, no nearer position among the buildings of one outline, `inside` up to 20 m, `near` up to 40 m, and a building without an outline called inside.
+  - The loader's rules were broken by hand in the same way, each failing its test: a number read as a part of a longer one, only the first labelled polygon, the position before the label, the smaller of two polygons, the first of two, a polygon that a building has taken again, no reach, the farthest building first, the corrections ignored, an unknown outline taking the outline away, and OpenStreetMap's outlines kept from the corrections.
+
+### The exports (2026-10-03)
+
+- The national map, with the committed command, from the downloaded ZIP of file 001: 356 polygons in 83 seconds. The browser had saved the download as `(연속수치지형도)건물_001 (1).zip`, a second download of the file. The export read it through a link with the name VWorld gives the file, `(연속수치지형도)건물_001.zip`, which is the name the seed keeps.
+  - From the unzipped `N3A_B0010000_001.shp` the same features came out; only `file` differed.
+  - Refused: the unzipped file 009, after reading all of it, with `holds no building in the campus extent: the campus is in another of the layer's files`; the `.shp` of GIS건물통합정보 and a ZIP of another dataset, as not the layer; a file that is no ZIP and a ZIP cut off after 120 MB, with yauzl's message that the file is no ZIP or is truncated.
+- OpenStreetMap's three outlines. Overpass was asked three times with the project's User-Agent:
+  - 04:26 KST: the command's own request could not connect, and a request with curl was answered 504 after 10 seconds.
+  - 04:35 KST: 200, the data as of 2026-10-02T19:34:41Z, saved. The committed command wrote the seed file from the saved answer, with `fetch` replaced, and asked with the query that the file keeps.
+  - The three outlines are the same as in the export of 2026-10-02.
+
+### Checks and the real start (2026-10-03)
+
+- `pnpm lint`, `pnpm format:check` and `pnpm typecheck` pass. `pnpm test`: 26 files and 289 tests pass.
+- The migration was made with `prisma migrate dev --create-only` on a temporary database of the project's PostgreSQL image, `p07-06-outlines-postgres`, since removed with its volume. After `pnpm db:migrate`, `prisma migrate diff` from that database to the schema finds no difference. `pnpm db:seed` run twice on it left 226 rows, 204 of the 218 numbered buildings with outlines.
+- One start, `docker compose -p p07-06-outlines-check up --build -d postgres redis main-server` from the repository root, under a project name of its own so that the developer database was not touched:
+  - The image built with the new dev dependencies, applied the four migrations, logged `Loaded 226 buildings` and started. Readiness and liveness answered 200, and `GET /buildings` and `GET /buildings/search?q=302` without a token 401.
+  - The table held 226 rows: 204 numbered buildings with outlines, 218 outlines in all, no place with one; 사회과학관 with five, 문화관 with two, 100동, 43-2동 and 149동 with one, 253동 with none.
+  - A restart of the main server found no pending migration, loaded the seed again, and left 226 rows, 제2공학관 under the id it had.
+  - `docker compose -p p07-06-outlines-check down -v --rmi local` removed the run's containers, volume and images.
+
+### Not verified (2026-10-03)
+
+- Whether the layer's notice needs a year, and which. The notice in the seed file has none.
+- Whether 공공누리 asks for the attribution in the app when the outlines are used only on the server and never drawn. The P15 spec names both sources on the information screen.
+- The links by a label were not looked at one by one against a map. One wrong label was found by its distance, that of 104-1동 above; the other labelled polygons that lie more than 10 m from their building's position are parts of buildings with several outlines, 13 to 49 m away.
