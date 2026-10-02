@@ -1,10 +1,5 @@
 import { load } from 'cheerio';
-
-// The list's date filter, written as the page writes it: 2026.10.02.
-export interface ListFilter {
-  from: string;
-  to: string;
-}
+import { type ListFilter } from './events-list.js';
 
 // Reads the post numbers a page of the events list lists, in its order. A page past the end lists none.
 export function parseEventListPage(html: string, filter: ListFilter): number[] {
@@ -18,5 +13,11 @@ export function parseEventListPage(html: string, filter: ListFilter): number[] {
   if ($('input[name="df"]').val() !== filter.from || $('input[name="dt"]').val() !== filter.to) {
     throw new Error(`The page is not the events list from ${filter.from} to ${filter.to}`);
   }
-  return items.toArray().map((item) => Number(/[?&]bbsidx=(\d+)/u.exec($(item).attr('href') ?? '')?.[1]));
+  return items.toArray().map((item) => {
+    const postNumber = /[?&]bbsidx=(\d+)/u.exec($(item).attr('href') ?? '')?.[1];
+    if (postNumber === undefined) {
+      throw new Error('A post of the events list has no number');
+    }
+    return Number(postNumber);
+  });
 }

@@ -9,7 +9,6 @@ import {
 } from './dto/stored-event-posts.dto.js';
 import { GlobalEventsService } from './global-events.service.js';
 
-// The worker's messages only. P12 adds the Administrator's routes and the User's list.
 @Controller()
 export class GlobalEventsController {
   constructor(private readonly globalEvents: GlobalEventsService) {}

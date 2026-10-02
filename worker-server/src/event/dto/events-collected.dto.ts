@@ -1,6 +1,6 @@
-export const EVENT_SOURCES = ['snu_events'] as const;
+export const EVENT_LIST_SOURCES = ['snu_events'] as const;
 
-export type EventSource = (typeof EVENT_SOURCES)[number];
+export type EventListSource = (typeof EVENT_LIST_SOURCES)[number];
 
 // One post of the events list, as its page was read. A field the rules could not read is null.
 export interface CollectedEvent {
@@ -19,10 +19,10 @@ export interface CollectedEvent {
   place: string | null;
 }
 
-// What one Collection of the events list read, sent to the main server as `events-collected`: the posts it does not
-// store yet.
+// What a Collection of the events list read, sent to the main server as `events-collected`: posts the main server does
+// not store yet.
 export interface EventsCollectedMessage {
-  source: EventSource;
+  source: EventListSource;
   collectedAt: string;
   events: CollectedEvent[];
 }

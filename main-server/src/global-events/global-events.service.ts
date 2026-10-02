@@ -8,29 +8,16 @@ import { buildingOfPlace } from './building-of-place.js';
 import { type CollectedEvent, type EventsCollectedMessage } from './dto/events-collected.dto.js';
 import { type StoredEventPosts } from './dto/stored-event-posts.dto.js';
 
-// A bound is a time with its offset, or a day when no time of day was read.
-function hasTimeOfDay(bound: string | null): boolean {
-  return bound?.includes('T') === true;
-}
-
-// A day is stored at its start in Asia/Seoul.
-function moment(bound: string | null): Date | null {
-  if (bound === null) {
-    return null;
-  }
-  return new Date(hasTimeOfDay(bound) ? bound : `${bound}T00:00:00+09:00`);
-}
-
 // Published when the body's time line gave a time of day and the place names one building; a Draft otherwise. The
 // header's date is often the application period.
 function toGlobalEvent(event: CollectedEvent, buildings: BuildingDto[]): Prisma.GlobalEventCreateManyInput {
   const building = buildingOfPlace(event.place, buildings);
-  const published = event.readFrom === 'body' && hasTimeOfDay(event.start) && building !== null;
+  const published = event.readFrom === 'body' && event.start?.hasTimeOfDay === true && building !== null;
   return {
     title: event.title,
     description: event.description,
-    startsAt: moment(event.start),
-    endsAt: moment(event.end),
+    startsAt: event.start?.at ?? null,
+    endsAt: event.end?.at ?? null,
     place: event.place,
     latitude: building?.latitude ?? null,
     longitude: building?.longitude ?? null,

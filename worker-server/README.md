@@ -189,21 +189,26 @@ A Collection does four things, one page at a time:
    over the next 365 days. The pager's links drop the filter, so the collector builds each page's address. A page whose
    posts were all listed before fails the Collection, since a list that answered every page with an earlier one would
    be read without end.
-2. It asks the main server which of the listed posts it stores, `stored-event-posts`.
+2. It asks the main server which of the listed posts it stores, `stored-event-posts`. The question and its answer are
+   shaped in `src/event/dto/stored-event-posts.dto.ts`.
 3. It reads the page of each post the main server does not store,
-   `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525`, and stops at the first that cannot be fetched or read. So
-   a post is read once, and an edit at the Source after that is not seen.
+   `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525`, one after the other, and stops at the first that cannot be
+   fetched or read: a blocked request is likely followed by more.
 4. It sends what it read, in the list's order. When every post is stored, the message has no event and still records a
-   successful Collection.
+   successful Collection. When a post could not be read, the posts read before it are sent all the same, so that they
+   are stored and never read again, and the Collection then fails.
 
-A page is read only when it has the structure the parser expects. A page of the list shows its posts, or the end of the
-list (`검색된 자료가 없습니다.`), and repeats the filter it was asked for, since an unfiltered list runs to some 600
-pages. A post's page has its title, its body and its address. A page without it, such as the firewall's block page,
-fails the Collection, and the main server keeps what it stored.
+So a post is read once, and an edit at the Source after that is not seen. While one post cannot be read, the posts
+listed after it wait for it, and each Collection fails on it, which the Collection status shows.
+
+A page is read only when it has the structure the parser expects. A page of the list shows its posts, each with its post
+number, or the end of the list (`검색된 자료가 없습니다.`), and repeats the filter it was asked for, since an unfiltered
+list runs to some 600 pages. A post's page has its title and its body, and its canonical link is the address of the post
+asked for. A page without it, such as the firewall's block page, fails the Collection.
 
 From a post's page, `src/event/event-page.parser.ts` reads, by the team's own rules:
 
-- The post number and the address from the page's canonical link, and the title.
+- The title, and the post's address as the post number and the source link.
 - The description: the body as text, one line of the page per line, with no-break spaces as spaces.
 - The time line: the first line of the body labelled `일시`, `일자`, `일정` or `기간` that has a value. A bullet or a
   number may come before the label, and spaces inside it, no-break spaces included, do not count: `· 일   시:`,
@@ -211,8 +216,13 @@ From a post's page, `src/event/event-page.parser.ts` reads, by the team's own ru
   application periods and deadlines stay in the description, unread.
 - The start and the end, from the time line, by `src/event/event-time.ts`:
   - The start is the first day written with its year, as `2026. 10. 13.(화)`, `2026.10.16(금)` or
-    `2026년 10월 7일(수요일)`, with the time after it, as `17:00`, `오후 2시` or `오후 4시 30분`, if one comes before a
-    range mark (`~`, `∼`, `-`, `–`). `3시간` is a length, not a time.
+    `2026년 10월 7일(수요일)`, with the time after it, if one comes before a range mark (`~`, `∼`, `〜`, `～`, `-`,
+    `–`). `3시간` is a length, not a time.
+  - A time is read only when it is clear whether it is before or after noon: on the 24-hour clock, with two digits
+    before a colon or an hour after 12 (`09:30`, `17:00`, `14시`), or with `오전`, `오후`, `저녁`, `AM` or `PM`
+    (`오후 2시`, `저녁 7시 30분`, `5:00 PM`). `2시`, `2:00` or `7시 30분` alone could be either, and 12 with a half of
+    the day is read only as noon, `오후 12시` or `12 PM`. A time that is not clear is not read, and the start is its
+    day.
   - The end follows the range mark: a day, with or without its year, and a time. A day without its year is in the
     start's year, or in the next when it would come before the start. The end takes the start's form, a time when the
     start has one and a day otherwise, and is dropped when it does not come after the start. So

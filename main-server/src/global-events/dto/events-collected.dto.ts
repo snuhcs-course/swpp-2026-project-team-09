@@ -1,8 +1,13 @@
 import { z } from 'zod';
 import { Source } from '../../generated/prisma/client.js';
 
-// A time with its offset, or a day when the rules read no time of day.
-const boundSchema = z.union([z.iso.datetime({ offset: true }), z.iso.date()]).nullable();
+// A time with its offset, or a day when the rules read no time of day, which stands for its start in Asia/Seoul.
+const boundSchema = z
+  .union([
+    z.iso.datetime({ offset: true }).transform((time) => ({ at: new Date(time), hasTimeOfDay: true })),
+    z.iso.date().transform((day) => ({ at: new Date(`${day}T00:00:00+09:00`), hasTimeOfDay: false })),
+  ])
+  .nullable();
 
 const collectedEventSchema = z.strictObject({
   // The post's `bbsidx`. The column's range, so that a larger number is refused here rather than in the database.

@@ -26,4 +26,11 @@ describe('A page of the events list', () => {
   it("is not read when it is the firewall's block page", () => {
     expect(() => parseEventListPage(blockPage, filter)).toThrow('The page has no events list');
   });
+
+  it('is not read when a post it lists has no number', () => {
+    // The link of the first post without its bbsidx.
+    const withoutNumber = firstPage.replace('href="/snunow/events?md=v&bbsidx=176576"', 'href="/snunow/events?md=v"');
+
+    expect(() => parseEventListPage(withoutNumber, filter)).toThrow('A post of the events list has no number');
+  });
 });

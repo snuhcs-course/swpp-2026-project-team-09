@@ -94,8 +94,8 @@ describe('A Collection of the events list', () => {
   });
 });
 
-describe('A Collection of the events list that fails', () => {
-  it('reports a post it cannot read, and reads no further post', async () => {
+describe('A Collection of the events list that cannot read a post', () => {
+  it('reports the post, and reads no further post', async () => {
     const { sources, mainServer } = await collect({ ...pages, [`${POST}176558`]: blockPage });
 
     expect(mainServer.from('snu_events', 'collection-failed')).toEqual([
@@ -105,6 +105,21 @@ describe('A Collection of the events list that fails', () => {
     expect(sources.requests.at(-1)?.url).toBe(`${POST}176558`);
   });
 
+  it('sends the posts read before the one it cannot read, so that they are not read again', async () => {
+    // 176558 is read, then 176525 is blocked.
+    const { mainServer } = await collect({ ...pages, [`${POST}176525`]: blockPage });
+
+    expect(mainServer.messages.map(({ pattern }) => pattern)).toEqual([
+      'stored-event-posts',
+      'events-collected',
+      'collection-failed',
+    ]);
+    expect(mainServer.from('snu_events', 'events-collected')).toMatchObject([{ events: [{ postNumber: 176558 }] }]);
+    expect(mainServer.from('snu_events', 'collection-failed')).toMatchObject([{ reason: 'The page has no post' }]);
+  });
+});
+
+describe('A Collection of the events list that fails before reading a post', () => {
   it('reports a page of the list it cannot read, and asks nothing', async () => {
     const { mainServer } = await collect({ ...pages, [`${LIST}2`]: blockPage });
 

@@ -251,24 +251,35 @@ A collected event is published, with no person involved, when the rules read bot
 - its place names exactly one entry of the [building list](#buildings). Its position is that entry's coordinates.
 
 Any other collected event is stored as a Draft with whatever was read: an event online or off campus, one whose place
-names no entry or several, and a post that is not an event. A Draft whose place names exactly one entry gets that
-entry's position too.
+names no entry or several, and a post that is not an event. A rule that is not sure makes a Draft.
+
+A Draft may already hold a start and a position, so P12's check before an Administrator publishes one cannot rest on
+those fields being filled:
+
+- its start may be the header's date, which is often the application period, and a day read without a time of day is
+  stored at 00:00;
+- its position is set whenever its place named exactly one entry, even when its time was not read.
 
 A place names an entry in one of two ways, in `src/global-events/building-of-place.ts`:
 
 - By building number, as in `302동 105호`, `학생회관(63동)` or `71-1동`, but not a number inside a word, as in the
   address `역삼1동`. A place that writes a number is matched by its numbers alone, because several buildings share a
   name: `(관악사)학부 생활관 919동` is 919동 only.
-- Otherwise by name: the entries whose name the place holds, whatever its spaces and the case of its Latin letters. A
-  name inside a longer one that the place also holds does not count, so `자하연식당 2층` is 자하연식당 and not also
-  자하연. A name without a letter, such as OpenStreetMap's `901`, is matched by number only.
+- Otherwise by name, as a whole word, with or without the name's own spaces and whatever the case of its Latin letters:
+  `국립중앙박물관` does not name 박물관, nor `행정관리팀` 행정관. A name inside a longer one that the place also names
+  does not count, so `유전공학연구소 신관` is 105-2동 and not also 105동. A name without a letter, such as
+  OpenStreetMap's `901`, is matched by number only.
 
-A place that names several entries, such as `행정대학원` (57동 and 57-1동) or `301동 및 302동`, makes a Draft.
+A place that names several entries, such as `행정대학원` (57동 and 57-1동) or `301동 및 302동`, makes a Draft. So does a
+place on another of the university's campuses (`연건`, `시흥`, `평창`, `수원`), whose buildings are not in the list: the
+list is Gwanak's.
 
 No Collection changes a stored event, whatever its state. A post is stored once, by its post number, and a later
 message carrying it again leaves it exactly as it is. So an Administrator's edits stay, and a discarded post does not
 come back. The worker asks which posts are stored before it reads any (`stored-event-posts`), so it reads each post once:
-an edit or a deletion at the Source after that is not seen.
+an edit or a deletion at the Source after that is not seen. A Collection that cannot read a post sends the posts it read
+before it, then reports the failure with the same time, so that the Collection status does not show it as having worked
+since.
 
 What the rules read from a post, and how, is in the worker server's README. In a test, `collectedEvent()`,
 `eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
@@ -614,7 +625,7 @@ Prisma is pinned at 7.10.0. Ignore the message that suggests updating to Prisma 
 
 ## Adding a feature module
 
-The steps add a feature named `party`. Use a short lowercase name, with dashes between words (`global-event`).
+The steps add a feature named `party`. Use a short lowercase name, with dashes between words (`global-events`).
 
 1. Create the module. It lands in `src/party/` and is added to `AppModule`:
 
@@ -708,14 +719,15 @@ follows these rules.
 
 - **Name and shape**: a request-and-response message, handled with `@MessagePattern()` in the feature's controller. It
   is named in kebab case after what happened: `menus-collected` for what a Collection of a menu Source read,
-  `events-collected` for the events list's, and `collection-failed`. The payload is a JSON object. It names its
-  `source`, a value of `Source` in `prisma/schema.prisma`, and the time of the Collection in ISO 8601 with an offset
-  (`collectedAt`, `failedAt`). A day is `YYYY-MM-DD`, a calendar day in Asia/Seoul. A field without a value is `null`,
-  not left out.
+  `events-collected` for the events list's, and `collection-failed`. The payload is a JSON object. A message that
+  reports a Collection names its `source`, a value of `Source` in `prisma/schema.prisma`, and the time of the
+  Collection in ISO 8601 with an offset (`collectedAt`, `failedAt`). A day is `YYYY-MM-DD`, a calendar day in
+  Asia/Seoul. A field without a value is `null`, not left out.
 - **Questions**: a Collection that needs to know what the main server holds asks it, since the worker keeps nothing. A
-  question is named after what it asks for and is answered with that instead of `{ "status": "ok" }`.
-  `stored-event-posts` with `{ "postNumbers": [176558, 176525] }` asks which of these posts are stored, and
-  `{ "postNumbers": [176558] }` answers that 176558 is, in whatever state.
+  question is named after what it asks for, carries only what it asks about, with no `source` and no time, and is
+  answered with what it asks for instead of `{ "status": "ok" }`. `stored-event-posts` with
+  `{ "postNumbers": [176558, 176525] }` asks which of these posts are stored, and `{ "postNumbers": [176558] }`
+  answers that 176558 is, in whatever state.
 - **Validation**: the handler takes the payload with `@WorkerMessage(schema)` from `src/common/worker-message.decorator.ts`,
   and
   the schema is zod in the feature's `dto/`, such as `src/menus/dto/menus-collected.dto.ts`. Use `z.strictObject`, so
@@ -763,5 +775,6 @@ await harness.close(); // in afterAll
 - The database is the shared one, so each test stores data of its own. The menus tests take their days from `daysOf()`
   in `test/menus.ts`, a month for each file and a day for each test, and the events tests their post numbers from
   `postNumbersFrom()` in `test/global-events.ts`, a range for each file. A Source's Collection status is one row, so
-  only one file checks the status of a Source: `test/collection.e2e-spec.ts` the dormitory's, `test/menus.e2e-spec.ts`
-  the Co-op's and `test/collected-events.e2e-spec.ts` the events list's.
+  the file that checks it is the only one that sends as that Source: `test/collection.e2e-spec.ts` the dormitory's,
+  `test/menus.e2e-spec.ts` the Co-op's and `test/global-events.e2e-spec.ts` the events list's.
+  `test/stored-event-posts.e2e-spec.ts` therefore stores its posts with a database connection instead.

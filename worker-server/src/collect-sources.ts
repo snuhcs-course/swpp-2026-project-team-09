@@ -21,7 +21,6 @@ export async function collectSources(app: INestApplicationContext, names: string
   return allTaken;
 }
 
-// Each Source a collector names with @Collects(), with that collector.
 function collectorsBySource(app: INestApplicationContext): Map<string, Collector> {
   const discovery = app.get(DiscoveryService);
   return new Map(

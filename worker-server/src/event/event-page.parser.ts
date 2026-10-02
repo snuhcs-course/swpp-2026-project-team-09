@@ -1,6 +1,7 @@
 import { type CheerioAPI, load } from 'cheerio';
 import { type CollectedEvent } from './dto/events-collected.dto.js';
 import { readEventTime } from './event-time.js';
+import { postAddress } from './events-list.js';
 
 // The labels of the body's time line and place line, without their spaces. A label that only ends with one, such as
 // 신청 기간 or 접수기간, is another line: application periods stay in the description.
@@ -10,7 +11,11 @@ const PLACE_LABELS = new Set(['장소']);
 // Marks a line break of the page in the text, apart from the line breaks of the HTML source.
 const LINE_BREAK = '\u2028';
 
-// The lines of the body as a browser shows them, with no-break spaces as spaces.
+function clean(text: string): string {
+  return text.replaceAll('\u00A0', ' ').trim();
+}
+
+// The lines of the body as a browser shows them.
 function bodyLines($: CheerioAPI): string[] {
   const body = $('.board-view .content').first();
   body.find('br').replaceWith(LINE_BREAK);
@@ -24,7 +29,7 @@ function bodyLines($: CheerioAPI): string[] {
       // As in a browser, a run of the source's white space is one space.
       .replaceAll(/[ \t\r\n]+/gu, ' ')
       .split(LINE_BREAK)
-      .map((line) => line.replaceAll('\u00A0', ' ').trim())
+      .map((line) => clean(line))
       .filter((line) => line !== '')
   );
 }
@@ -35,8 +40,7 @@ function labelled(line: string): { label: string; value: string } | null {
   return match === null ? null : { label: match[1].replaceAll(' ', ''), value: match[2] };
 }
 
-// The value of the first line with one of the labels and a value.
-function valueOf(lines: string[], labels: Set<string>): string | null {
+function firstValue(lines: string[], labels: Set<string>): string | null {
   for (const line of lines) {
     const field = labelled(line);
     if (field !== null && field.value !== '' && labels.has(field.label)) {
@@ -60,24 +64,25 @@ function timeOf(timeLine: string | null, headerDate: string): Pick<CollectedEven
   return { start: null, end: null, readFrom: null };
 }
 
-// Reads a post of the events list from its page.
-export function parseEventPage(html: string): CollectedEvent {
+export function parseEventPage(html: string, postNumber: number): CollectedEvent {
   const $ = load(html);
   const view = $('.board-view');
-  const title = view.find('.header .title').text().replaceAll('\u00A0', ' ').trim();
-  const sourceUrl = $('link[rel="canonical"]').attr('href') ?? '';
-  const postNumber = /[?&]bbsidx=(\d+)/u.exec(sourceUrl)?.[1];
+  const title = clean(view.find('.header .title').text());
   // A blocked request is answered with status 200 and another page, so the content is checked.
-  if (view.find('.content').length === 0 || title === '' || postNumber === undefined) {
+  if (view.find('.content').length === 0 || title === '') {
     throw new Error('The page has no post');
+  }
+  const sourceUrl = postAddress(postNumber);
+  if ($('link[rel="canonical"]').attr('href') !== sourceUrl) {
+    throw new Error(`The page is not post ${postNumber}`);
   }
   const lines = bodyLines($);
   return {
-    postNumber: Number(postNumber),
+    postNumber,
     sourceUrl,
     title,
     description: lines.join('\n'),
-    ...timeOf(valueOf(lines, TIME_LABELS), view.find('.header .date').text()),
-    place: valueOf(lines, PLACE_LABELS),
+    ...timeOf(firstValue(lines, TIME_LABELS), view.find('.header .date').text()),
+    place: firstValue(lines, PLACE_LABELS),
   };
 }

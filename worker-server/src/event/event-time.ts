@@ -16,8 +16,9 @@ interface Bound {
 // range may leave out the year: "~ 10. 16.(금)".
 const DAY = String.raw`(\d{1,2})\s*[.월/]\s*(\d{1,2})\s*[.일]?(?:\s*\([^)]{1,4}\))?`;
 const START_DAY = new RegExp(String.raw`(\d{4})\s*[.년]\s*${DAY}`, 'u');
-// "17:00", "오후 2시", "오후 4시 30분", but not "3시간".
-const TIME = String.raw`(오전|오후)?\s*(\d{1,2})\s*(?::\s*(\d{2})|시(?!간)(?:\s*(\d{1,2})\s*분)?)`;
+// A time and what may say whether it is before or after noon: "17:00", "오후 2시", "저녁 7시 30분", "5:00 PM", but not
+// "3시간".
+const TIME = String.raw`(오전|오후|저녁)?\s*(\d{1,2})\s*(?::\s*(\d{2})|시(?!간)(?:\s*(\d{1,2})\s*분)?)(?:\s*([AaPp])\.?\s*[Mm]\.?(?![A-Za-z]))?`;
 const RANGE = /[~∼〜～\-–]/u;
 // What follows the range mark: a day, with or without the year, and a time, each of them optional.
 const END = new RegExp(String.raw`^\s*(?:(?:(\d{4})\s*[.년]\s*)?${DAY})?\s*(?:${TIME})?`, 'u');
@@ -27,9 +28,29 @@ function asDay(year: number, month: number, day: number): string | null {
   return date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? date.toISOString().slice(0, 10) : null;
 }
 
-function asTime(half: string | undefined, hour: string, minute = '0'): string | null {
-  const hours = Number(hour) + (half === '오후' && Number(hour) < 12 ? 12 : 0);
-  return hours < 24 && Number(minute) < 60 ? `${String(hours).padStart(2, '0')}:${minute.padStart(2, '0')}` : null;
+// The time of day from what TIME captures, or null when it is not clear whether it is before or after noon.
+function asTime([said, hour = '', colonMinutes, minutes, suffix]: (string | undefined)[]): string | null {
+  const half = (said ?? suffix)?.toLowerCase();
+  let hours = Number(hour);
+  if (half === undefined) {
+    // Without it only the 24-hour clock is clear: "14시", "19:30", "09:30", but not "2시" or "2:00".
+    if (hours < 13 && (colonMinutes === undefined || hour.length < 2)) {
+      return null;
+    }
+  } else if (hours === 12) {
+    // Of 12 with a half of the day, only 오후 12시 or 12 PM is surely noon.
+    if (half !== '오후' && half !== 'p') {
+      return null;
+    }
+  } else if (hours < 1 || hours > 12) {
+    return null;
+  } else if (half !== '오전' && half !== 'a') {
+    hours += 12;
+  }
+  const minutesPast = Number(colonMinutes ?? minutes ?? 0);
+  return hours < 24 && minutesPast < 60
+    ? `${String(hours).padStart(2, '0')}:${String(minutesPast).padStart(2, '0')}`
+    : null;
 }
 
 function asText({ day, time }: Bound): string {
@@ -39,8 +60,8 @@ function asText({ day, time }: Bound): string {
 // The end after the range mark, in the start's form: a time when the start has one, a day otherwise. A day without the
 // year is in the start's year, or in the next when it would come before the start.
 function readEnd(text: string, start: Bound): Bound | null {
-  const [, year, month, dayOfMonth, half, hour, minute, minuteOfHour] = END.exec(text) ?? [];
-  const time = hour === undefined ? null : asTime(half, hour, minute ?? minuteOfHour);
+  const [, year, month, dayOfMonth, ...timeGroups] = END.exec(text) ?? [];
+  const time = timeGroups[1] === undefined ? null : asTime(timeGroups);
   let day: string | null = start.day;
   if (month !== undefined) {
     const startYear = Number(start.day.slice(0, 4));
@@ -65,9 +86,8 @@ export function readEventTime(text: string): EventTime | null {
   }
   const rest = text.slice(first.index + first[0].length);
   const range = RANGE.exec(rest);
-  const [, half, hour, minute, minuteOfHour] =
-    new RegExp(TIME, 'u').exec(range === null ? rest : rest.slice(0, range.index)) ?? [];
-  const start = { day, time: hour === undefined ? null : asTime(half, hour, minute ?? minuteOfHour) };
+  const startTime = new RegExp(TIME, 'u').exec(range === null ? rest : rest.slice(0, range.index));
+  const start = { day, time: startTime === null ? null : asTime(startTime.slice(1)) };
   const end = range === null ? null : readEnd(rest.slice(range.index + 1), start);
   return { start: asText(start), end: end === null ? null : asText(end) };
 }
