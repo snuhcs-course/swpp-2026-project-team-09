@@ -51,6 +51,7 @@ The worker server collects events, menus and shuttle positions from their origin
 | Walking route | Kakao's walking route API | On each request |
 | Buildings and places, shuttle stop coordinates | The university's campus map | Once, loaded as seed data |
 | Shuttle route line, Campus Boundary | OpenStreetMap | Once, loaded as seed data |
+| Building outlines | 국토지리정보원's 연속수치지형도 건물 layer, downloaded from VWorld by a person, and OpenStreetMap for three buildings | Once, loaded as seed data |
 
 - Each source's address, request and page format, observed behaviour and limits, and how the Kakao REST API key reaches the server, are in `.scratch/research/external-sources.md`.
 - The collection times are provisional. Nobody has observed when the pages change; the team adjusts the times once the collectors run.
@@ -120,15 +121,17 @@ The worker server collects events, menus and shuttle positions from their origin
 - The Campus Boundary is one polygon from OpenStreetMap (relation 11917142). It is a file of the main server, read into memory when the server starts, and is not stored in the database. P08 uses it.
   - The outline leaves out a wedge in the north-east, with the faculty housing, the president's residence and the dormitory buildings 915 to 917, and four facilities on the hillside in the south. A User there is hidden.
   - A position up to 10 m outside the polygon counts as inside, because a phone reports its position some metres off. The file stays OpenStreetMap's outline. The one check holds for a User's position and for the building list, which so gains `정문수위실`, 2 m outside the outline.
-- A building keeps its outline where OpenStreetMap draws one. The outlines are seed data: every building OpenStreetMap draws in the campus extent, 225 outlines on 2026-10-02.
-  - A building takes the outline that holds its position, or the nearest outline within 10 m when that outline holds no building, since the campus map places some buildings just outside their walls. A person checks the links and corrects them in a file of the seed.
-  - On 2026-10-02, 194 of the 218 numbered buildings had an outline. The others are stores, links between buildings and buildings that OpenStreetMap does not draw.
-- The main server says which building a position is in, without a database query: the nearest building, each as far as its wall, `inside` within 5 m of the wall and `near` up to 20 m. Farther than 20 m from every building and place, the answer is none. A place, or a building without an outline, is as far as its position and can only be near.
+- A building keeps its outlines, the drawings of its walls. They are seed data from 국토지리정보원's 연속수치지형도 건물 layer, the national map, which a person downloads from VWorld after logging in: the polygons in the campus extent that the layer classes as buildings, 356 on 2026-10-03. Wall-less structures, temporary buildings and greenhouses are left out. A building may have several outlines, since the layer draws some buildings in parts.
+  - A building takes every polygon whose label names its number, as `<number>동`. Without such a label it takes the polygon that holds its position, and without that the nearest polygon, when it is within 10 m and no building has it, since the campus map places some buildings just outside their walls. A person checks the links and corrects them in a file of the seed.
+  - OpenStreetMap's outlines are used only where a correction names one, for three buildings: 버들골 풍산마당 (100동) and 데이터사이언스대학원 (43-2동), which the national map does not draw, and 종합운동장본부석 (149동), which it draws only as a wall-less structure. The seed holds those three outlines of OpenStreetMap and no other.
+  - On 2026-10-03, 204 of the 218 numbered buildings had an outline. The others are stores, links between buildings and a few small buildings.
+- The main server says which building a position is in, without a database query: the nearest building, each as far as the wall of its nearest outline, `inside` within 5 m of the wall and `near` up to 20 m. Farther than 20 m from every building and place, the answer is none. A place, or a building without an outline, is as far as its position and can only be near.
   - Nothing shows the answer to Users yet. P08 asks it when a User's position arrives.
-- The buildings, the stops and the route line are stored in ordinary columns: a latitude and a longitude, and the line and a building's outline as lists of coordinates. No spatial type and no spatial query is used, because nothing asks a spatial question of the database: a vehicle is placed by its position on the drawing, and the Boundary and the building at a position are checked in memory.
+- The buildings, the stops and the route line are stored in ordinary columns: a latitude and a longitude, and the line and a building's outlines as lists of coordinates. No spatial type and no spatial query is used, because nothing asks a spatial question of the database: a vehicle is placed by its position on the drawing, and the Boundary and the building at a position are checked in memory.
 - Each seed file is kept with the query or address it came from and the date, so that the export can be repeated.
+- The national map's layer is under 공공누리 type 1, which allows a changed copy with its source shown, and OpenStreetMap's data under the ODbL. Each source has seed files of its own, so that each stays under its own licence (`.scratch/research/public-building-outlines.md` §8).
 - Coordinates are never read off Kakao, Naver or Google maps. Their terms forbid storing their data. The campus map is drawn on a Kakao map, but the coordinates of its buildings and stops are the university's own.
-- The app shows the OpenStreetMap attribution on an information screen.
+- The app shows the attributions of OpenStreetMap and of 국토지리정보원's 연속수치지형도 on an information screen.
 
 ### Walking route
 
@@ -141,8 +144,8 @@ The worker server collects events, menus and shuttle positions from their origin
 - A good test feeds a saved page to a parser and checks the records that come out, or sends a message to the main server and checks what is stored and served.
 - Parsers are tested with saved pages, including a closed restaurant, a dish without a price under a heading with a set price, a line with several prices, an unfilled cell, a page without the structure the parser expects, an event with several days, an event whose time cannot be read, and an event with an application deadline.
 - The vehicle parser is tested with saved answers: vehicles at stops, several vehicles at one stop, an empty answer, and a position that is not exactly on a stop.
-- The seed is tested against a real database: it loads, it loads again without duplicates, and an entry keeps its identifier when its name changes. A building gets the outline the rule gives it, and a person's link replaces it.
-- The building at a position is tested on the started server, with positions whose distances were measured apart from the code: inside a building, 3 m, 12 m and 30 m outside a wall, at a place, between two buildings, and among the buildings of one outline.
+- The seed is tested against a real database: it loads, it loads again without duplicates, and an entry keeps its identifier when its name changes. A building gets the outlines the rules give it, by its label, by its position or within 10 m, several where the national map draws it in parts, and a person's correction replaces them.
+- The building at a position is tested on the started server, with positions whose distances were measured apart from the code: inside a building, 3 m, 12 m and 30 m outside a wall, at a place, between two buildings, among the buildings of one outline, and inside the second outline of a building.
 - The main server's handling of worker messages is tested at the message boundary: invalid messages refused, repeated messages stored once, a later collection replacing a day's menus, a failure recorded with the earlier data still served, a collected event published or kept as a Draft by what was read, a discarded post reported as stored so that it is not collected again, a stored post left as it is.
 - The command that runs one collection is tested with the sources and the main server replaced: it collects the source it names and no other.
 - The push of vehicle positions is tested at the socket server: a positions message from the main server reaches a connected client with the time each position was received.
