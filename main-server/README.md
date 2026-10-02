@@ -19,7 +19,8 @@ pnpm keys:generate >> .env
 
 `.env.example` already holds the team's Google client IDs in `GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID` (see
 [Sign-in](#sign-in)). Replace the example address in `INITIAL_ADMINISTRATOR_EMAILS` with your own (see
-[Administrators](#administrators)).
+[Administrators](#administrators)). Fill in `KAKAO_REST_API_KEY` with the REST API key that the Owner of the team's
+Kakao app shares with you (see [Walking route](#walking-route)); the server does not start without it.
 
 To run the whole system, in the repository root:
 
@@ -246,6 +247,70 @@ keeps getting the last menus collected.
 The worker server's README says how each line is read and how to run a Collection by hand. What the collectors sent
 on the real pages is recorded in `.scratch/iteration-1/P07-campus-feeds/issues/01-menus-first-collection.md`.
 
+## Walking route
+
+The app asks for a walking route between two points and draws its line. The main server asks Kakao's walking route API
+(`.scratch/research/external-sources.md` §7.4) for it:
+
+- `GET /walking-route?startLatitude=37.4664&startLongitude=126.9486&endLatitude=37.4592&endLongitude=126.9524` with a
+  User's access token answers Kakao's walk from the start to the end:
+
+  ```json
+  {
+    "status": "OK",
+    "route": {
+      "line": [
+        { "latitude": 37.46632762, "longitude": 126.94829436 },
+        { "latitude": 37.46608837, "longitude": 126.94838354 }
+      ],
+      "distance": 1105,
+      "duration": 1216
+    }
+  }
+  ```
+
+  `line` holds the points of Kakao's line in order, `distance` is in metres and `duration` in seconds. Kakao begins and
+  ends the line on the path nearest to each point: in the walk above, both ends lie about 30 m from the points asked
+  for.
+
+- When Kakao finds no route, the answer is still 200, with Kakao's status and no route, so that the app says so instead
+  of drawing a wrong line:
+
+  ```json
+  { "status": "SAME_POINT", "route": null }
+  ```
+
+  Kakao's statuses for no route are `SAME_POINT`, `START_LINK_NOT_FOUND`, `END_LINK_NOT_FOUND`,
+  `TOO_MANY_SEARCH_LINK`, `TOO_FAR_AWAY` and `ROUTE_RESULT_NOT_FOUND`.
+
+- Any other answer, such as a quota or key error, or no answer at all, gets 502
+  `{ "statusCode": 502, "error": "Bad Gateway", "message": "Kakao's walking route API failed" }`. The server logs what
+  Kakao answered as a warning.
+- A coordinate that is missing, is not a decimal number, or lies outside -90 to 90 for a latitude or -180 to 180 for a
+  longitude gets 400 with a message that starts with the field, and Kakao is not asked.
+
+A route is never stored or cached, because Kakao's operating policy does not allow it. Every request asks Kakao once,
+and the answer carries `Cache-Control: no-store`, so that no HTTP cache, the app's included, keeps it. Nothing else
+calls Kakao. The team's Kakao app has a free quota of 1,000 routes a day, and a call beyond it fails (§7.5), so the app
+asks for a route when the User does, never on every position.
+
+The REST API key is `KAKAO_REST_API_KEY`, a secret that stays on the main server: it goes to Kakao in the
+`Authorization` header and nowhere else. Should an error of Kakao's quote it, the log shows the setting's name in its
+place. The server stops at startup and names the setting when it is missing or empty.
+
+In a test, give `startApp` a `KakaoStub` from `test/walking-route.ts` in place of the HTTP call to Kakao, and give the
+stub the answer to send back:
+
+```ts
+const kakao = new KakaoStub();
+const app = await startApp(inject('settings'), [], kakao.fetch);
+kakao.answers(savedAnswer('kakao-walk-main-gate-to-central-library-2026-10-02'));
+```
+
+Without a stub, every call to Kakao fails. `test/answers/` holds Kakao's answers to two real calls, each made once on
+2026-10-02, from the main gate to the central library and from the main gate to itself. What they answered is recorded
+in `.scratch/iteration-1/P07-campus-feeds/issues/05-walking-route-through-kakao.md`.
+
 ## Buildings
 
 The campus buildings and places are [seed data](#seed-data), not collected. A User's app lists and searches them, so
@@ -385,6 +450,7 @@ src/
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── collection/                      a feature: each Source's Collection status, and the worker's failure messages
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
+├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 └── buildings/                       a feature: the campus buildings and places of the seed, listed and searched
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
 test/                                tests, run against PostgreSQL and Redis in containers
