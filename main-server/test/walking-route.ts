@@ -72,7 +72,7 @@ export function refuseKakao(): Promise<Response> {
 // request.
 export class KakaoStub {
   requests: KakaoRequest[] = [];
-  private respond: () => Promise<Response> = refuseKakao;
+  private respond: (signal?: AbortSignal | null) => Promise<Response> = refuseKakao;
 
   reset(): void {
     this.requests = [];
@@ -88,11 +88,22 @@ export class KakaoStub {
     this.respond = (): Promise<Response> => Promise.reject(error);
   }
 
+  // Never answers: the call ends when the caller gives it up, as fetch ends it.
+  hangs(): void {
+    this.respond = (signal): Promise<Response> =>
+      new Promise((_resolve, reject) => {
+        signal?.addEventListener('abort', () => {
+          const reason: unknown = signal.reason;
+          reject(reason instanceof Error ? reason : new Error(String(reason)));
+        });
+      });
+  }
+
   // Give it to startApp in place of fetch.
   readonly fetch: typeof fetch = (input, init) => {
     const url = input instanceof Request ? input.url : String(input);
     this.requests.push({ url, authorization: new Headers(init?.headers).get('Authorization') });
-    return this.respond();
+    return this.respond(init?.signal);
   };
 }
 

@@ -10,6 +10,9 @@ export const FETCH_KAKAO = 'FETCH_KAKAO';
 
 const KAKAO_WALK = 'https://dapi.kakao.com/v2/routing/walk';
 
+// Without a limit of its own, fetch waits 300 seconds for an answer, and so does the User.
+const KAKAO_TIMEOUT_MS = 5000;
+
 function walkUrl({ startLatitude, startLongitude, endLatitude, endLongitude }: WalkingRouteQuery): string {
   const query = new URLSearchParams({
     start_x: String(startLongitude),
@@ -43,7 +46,10 @@ export class WalkingRouteService {
   private async ask(query: WalkingRouteQuery): Promise<KakaoWalkAnswer> {
     let failure: string;
     try {
-      const response = await this.fetchKakao(walkUrl(query), { headers: { Authorization: `KakaoAK ${this.key}` } });
+      const response = await this.fetchKakao(walkUrl(query), {
+        headers: { Authorization: `KakaoAK ${this.key}` },
+        signal: AbortSignal.timeout(KAKAO_TIMEOUT_MS),
+      });
       const body: unknown = await response.json().catch(() => null);
       const answer = kakaoWalkAnswerSchema.safeParse(body);
       if (answer.success) {

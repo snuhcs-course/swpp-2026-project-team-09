@@ -281,11 +281,11 @@ The app asks for a walking route between two points and draws its line. The main
   Kakao's statuses for no route are `SAME_POINT`, `START_LINK_NOT_FOUND`, `END_LINK_NOT_FOUND`,
   `TOO_MANY_SEARCH_LINK`, `TOO_FAR_AWAY` and `ROUTE_RESULT_NOT_FOUND`.
 
-- Any other answer, such as a quota or key error, or no answer at all, gets 502
+- Any other answer, such as a quota or key error, or no answer within 5 seconds, gets 502
   `{ "statusCode": 502, "error": "Bad Gateway", "message": "Kakao's walking route API failed." }`. The server logs a
   warning with Kakao's HTTP status and Kakao's own `status` or error `code`, such as
-  `Kakao's walking route API failed: HTTP 429 {"code":-10}`, or why Kakao could not be reached. The log never holds a
-  route or the points asked for.
+  `Kakao's walking route API failed: HTTP 429 {"code":-10}`, or why Kakao gave no answer. The log never holds a route
+  or the points asked for.
 - A coordinate that is missing, is not a decimal number, or lies outside -90 to 90 for a latitude or -180 to 180 for a
   longitude gets 400 with a message that starts with the field, and Kakao is not asked.
 

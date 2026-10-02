@@ -141,6 +141,23 @@ describe('An answer of Kakao that is neither a route nor no route', () => {
     expect(response.body).toEqual(failed);
     expect(warn).toHaveBeenCalledWith("Kakao's walking route API failed: TypeError: fetch failed");
   });
+
+  it('is answered 502 when Kakao has not answered within 5 seconds, and logged with the reason', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn');
+    // The test waits 10 ms in place of the 5 seconds.
+    const timeoutAfter = AbortSignal.timeout.bind(AbortSignal);
+    const timeout = vi.spyOn(AbortSignal, 'timeout').mockImplementation(() => timeoutAfter(10));
+    kakao.hangs();
+
+    const response = await getWalkingRoute(app, accessToken, walk);
+
+    expect(timeout).toHaveBeenCalledWith(5000);
+    expect(response.status).toBe(502);
+    expect(response.body).toEqual(failed);
+    expect(warn).toHaveBeenCalledWith(
+      "Kakao's walking route API failed: TimeoutError: The operation was aborted due to timeout",
+    );
+  });
 });
 
 describe('A walking route asked for again', () => {

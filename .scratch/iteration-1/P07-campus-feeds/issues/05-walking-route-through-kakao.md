@@ -53,7 +53,7 @@ No call was made after the route was built: the ticket asks for none, and the te
 - **The answer carries `Cache-Control: no-store`**, so that the app's HTTP client and any cache on the way keep no route either. P06 already says the app never keeps one after the screen is left.
 - **A failure is logged as a warning with Kakao's HTTP status and Kakao's own `status` or error `code`, and nothing else of the answer**, such as `HTTP 429 {"code":-10}`. Nest logs no HTTP error, and without the line a wrong key or a used-up quota would leave no trace on the server. An answer that could not be read may still hold a route, which Kakao forbids keeping, and the points a User asked for; Kakao's error message is left out too, so that nothing it quotes, the key included, reaches the log.
 - **The setting checks only that the key is there.** A check of its form, 32 hexadecimal characters as it has, would rest on nothing Kakao documents.
-- **No timeout of the server's own**, as in ticket 01's worker: Node's `fetch` gives up after 300 seconds without an answer. A User would wait that long only if Kakao hung; a timeout can be added with the app's handling of the 502.
+- **Kakao has 5 seconds to answer.** By itself Node's `fetch` waits 300 seconds, and the User with it; the real calls answered in 0.25 s and 0.10 s. A call given up is a failure like the others: 502, and a warning that names the timeout.
 - **The server's call sends no project User-Agent.** The key names the app to Kakao. The hand calls sent it, as the rule for saved answers asks.
 - **`FETCH_KAKAO` is the main server's fetch boundary**, provided by `WalkingRouteModule`, as `FETCH` is the worker's under `PageFetcher`. `startApp` replaces it in every test file with `refuseKakao`, which fails every call, unless the test gives a `KakaoStub`, so that no test can reach Kakao.
 - Nothing is stored, so the ticket has no migration.
@@ -85,15 +85,27 @@ A Standards review and a Spec review ran side by side on the ticket's commit. Th
 - Standards, left: `test/settings.e2e-spec.ts` gets no case for `KAKAO_REST_API_KEY`, because the user agreed the route as the only seam; the startup check was made by hand. `startApp` keeps its third positional parameter: an options object, as the worker's, would change the three test files that pass controllers. The query stays four flat fields: they travel as one object to the one place that splits them, Kakao's URL. The finding on the usage section is the orchestrating session's.
 - The whole suite passes: 21 files and 253 tests. `lint`, `format:check` and `typecheck` pass.
 
+### Second review (2026-10-02)
+
+A session with the user read the PR against the ticket. One change came of it, test-first:
+
+- The call to Kakao had no time limit, so a User waited up to 300 seconds when Kakao hung. It now has 5 seconds (see Decisions), and the README says so.
+- The test goes through the User's route with a `KakaoStub` that never answers (`hangs()`), and waits 10 ms in place of the 5 seconds by standing in for `AbortSignal.timeout`. Before the change the request never ended, and the test timed out.
+- The whole suite passes: 21 files and 254 tests. `lint`, `format:check` and `typecheck` pass.
+
 ### Agent usage (2026-10-02)
 
 Tickets 02 to 05 were built in one orchestrated run: one session placed the agents and kept the branches and the PRs, and each ticket had an implementing agent in a worktree of its own.
 
-- Agent time: about 60 minutes, an estimate. Nobody was waited for.
+- Agent time: about 75 minutes, an estimate. Nobody was waited for.
   - The implementing agent worked about 42 minutes: 31 from reading the ticket to its report, and 11 acting on the review.
   - A merging agent worked about 3 minutes. The run first merged its tickets into one branch, before the user asked for a PR for each: it ran the four checks on this ticket merged with the others and searched the branch for the key.
   - The Standards and the Spec reviewer worked about 7 minutes each, at the same time.
+  - The session of the second review worked about 15 minutes: it briefed the PR and added the timeout.
 - Tokens, for the four agents, counted from their transcripts when this section was written:
   - Input: 45,531,236 in total, of which 44,386,045 were cache reads, 1,144,777 cache writes and 414 uncached.
   - Output: 79,973. The transcripts record only part of the output of most steps, so this is a lower bound.
+- Tokens, for the session of the second review, counted from its transcript before its commit:
+  - Input: 2,925,753 in total, of which 2,824,123 were cache reads, 101,582 cache writes and 48 uncached.
+  - Output: 29,104, a lower bound in the same way.
 - The orchestrating session's share is recorded once for the run, under ticket 04.
