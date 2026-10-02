@@ -44,7 +44,8 @@ readiness answers 503.
 ## Collections
 
 A Collection is one run of the worker reading a Source and handing what it read to the main server. Every collector
-follows these rules; `src/menu/menu.collector.ts` is the first.
+follows these rules; `src/menu/menu.collector.ts` is the first. A collector extends `Collector` from
+`src/common/collector.ts`, which holds the worker's end of a Collection.
 
 - **Schedule**: `@Cron()` from `@nestjs/schedule` on the collector's method starts its Collections. The times are one
   constant at the top of the collector's file, a cron expression with seconds, and the time zone is `Asia/Seoul`:
@@ -74,8 +75,18 @@ follows these rules; `src/menu/menu.collector.ts` is the first.
   ```
 
   It needs the main server running, logs for each Source whether the main server took what was read, and exits with
-  status 1 when one was not taken or a name is not a Source. `src/collect-sources.ts` holds the Sources it knows, and
-  `src/collect.ts` starts the worker without its HTTP server to run them.
+  status 1 when one was not taken or a name is not a Source. A collector names the Sources it collects with
+  `@Collects()` from `src/common/collector.ts`, and the command runs each with the collector's `collectOne(source)`,
+  which gives whether the main server took what was read:
+
+  ```ts
+  @Injectable()
+  @Collects(MENU_SOURCES)
+  export class MenuCollector extends Collector {
+  ```
+
+  `src/collect-sources.ts` finds the collector of each Source named, and `src/collect.ts` starts the worker without its
+  HTTP server to run them.
 
 - **Fetching**: every page is fetched with `PageFetcher.fetch(url)` from `src/common/page-fetcher.ts`, never with
   `fetch` itself. It sends a `User-Agent` that names the project, asks for one page at a time whichever collectors are
@@ -85,11 +96,13 @@ follows these rules; `src/menu/menu.collector.ts` is the first.
   `src/menu/menu-page.parser.ts`. No page is a versioned interface, and the university's firewall answers a blocked
   request with status 200 and another page. So a parser checks that the page is the one it knows, such as the table
   being there and the date being the one asked for, and throws an `Error` that says what is wrong.
-- **Handing over**: the collector sends what it read as one request-and-response message through the messaging client
-  (`MESSAGING_CLIENT`) and waits for the answer. The main server's README sets how a message is named and shaped and
-  what it answers: [Messages from the worker server](../main-server/README.md#messages-from-the-worker-server). The
-  shape of what a Collection read is a type in the feature's `dto/`, kept the same as the main server's schema by hand.
-- **Failure**: when a page cannot be fetched or read, or the main server does not take the message, the collector logs
+- **Handing over**: the collector sends what it read as one request-and-response message and waits for the answer,
+  with `handOver(source, collectedAt, pattern, message)` of `Collector`. `send(pattern, message)` sends any other
+  message the same way and gives the main server's answer. Both go through the messaging client (`MESSAGING_CLIENT`).
+  The main server's README sets how a message is named and shaped and what it answers:
+  [Messages from the worker server](../main-server/README.md#messages-from-the-worker-server). The shape of what a
+  Collection read is a type in the feature's `dto/`, kept the same as the main server's schema by hand.
+- **Failure**: when a page cannot be fetched or read, or the main server does not take the message, `handOver()` logs
   it and sends `collection-failed` with the Source, the time and the reason, such as
   `https://snudorm.snu.ac.kr/foodmenu/?date=2026-10-02 answered 503` or `The page has no menu table`. The other Sources
   of the run are still collected, and the main server keeps what it stored.
@@ -178,14 +191,15 @@ Each command fails when it finds a problem. Run all four before opening a pull r
 src/
 ├── main.ts                          starts the server
 ├── collect.ts                       the command that runs one Collection by hand
-├── collect-sources.ts               the Sources the command knows, and running them
+├── collect-sources.ts               finds the collector of each Source the command names, and runs it
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
 │   ├── messaging.module.ts          makes the messaging client available to every feature
 │   ├── messaging.ts                 options for NestJS messaging over Redis
 │   ├── page-fetcher.module.ts       makes the one PageFetcher available to every feature
-│   └── page-fetcher.ts              the one place where pages are fetched
+│   ├── page-fetcher.ts              the one place where pages are fetched
+│   └── collector.ts                 the worker's end of a Collection, which every collector extends
 ├── health/                          a feature: the liveness and readiness checks
 └── menu/                            a feature: the collector of the three menu Sources and its parsers
 test/                                tests, run against Redis in a container
@@ -203,15 +217,15 @@ named `library`. Use a short lowercase name, with dashes between words (`shuttle
    pnpm exec nest g module library
    ```
 
-2. Write the collector in `src/library/library.collector.ts` and add it to the `providers` of `LibraryModule`, as
-   `src/menu/` does. It reads its Source on a schedule and hands what it read to the main server (see
-   [Collections](#collections)). Put a parser for each page format beside it. A feature with HTTP routes has a
+2. Write the collector in `src/library/library.collector.ts`, extending `Collector`, and add it to the `providers` of
+   `LibraryModule`, as `src/menu/` does. It reads its Source on a schedule and hands what it read to the main server
+   (see [Collections](#collections)). Put a parser for each page format beside it. A feature with HTTP routes has a
    controller instead, as `src/health/` does: `pnpm exec nest g controller library --no-spec`.
 3. Put the shape of the message it sends in `src/library/dto/`. There is no `entities/` folder, because the worker
    server stores no records. Everything that belongs to the feature stays inside `src/library/`.
 4. On the main server, add the Source, the message's schema and its handler (see
-   [Messages from the worker server](../main-server/README.md#messages-from-the-worker-server)). Add the Source to
-   `src/collect-sources.ts` too, so that the command can run its Collection.
+   [Messages from the worker server](../main-server/README.md#messages-from-the-worker-server)). Name the Source in the
+   collector's `@Collects()` too, so that the command can run its Collection.
 5. Code shared by two or more features goes in `src/common/`. If another feature needs a provider of this one, add it
    to `exports` in `LibraryModule` and add `LibraryModule` to the other module's `imports`.
 6. If the feature needs a new setting, add it to the schema in `src/common/settings.ts`, to `.env.example`, to your own
