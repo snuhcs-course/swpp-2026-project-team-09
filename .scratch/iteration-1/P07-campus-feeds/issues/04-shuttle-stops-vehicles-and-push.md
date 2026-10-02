@@ -12,10 +12,8 @@ Two steps are a person's: checking the pairs of the operator's stops and the cam
 
 ## Acceptance criteria
 
-- [ ] The stops seed holds the operator's 14 stops in loop order, each with its name as the operator writes it, its position on the operator's drawing as P05 recorded it, and the coordinates of the campus map's stop it is paired with. The campus map lists the loop with 15 stops under names of its own (`.scratch/research/external-sources.md` §6.2); its `제2파워플랜트` is not among the operator's stops and is left out. The agent proposes the 14 pairs from the order of the two lists and the distance to the buildings the names stand for; a person checks them, and the pairs are recorded under Comments (the operator's name, the campus map's name, why).
-  - Waiting for a person: the 14 pairs are proposed (see Comments, "What waits for a person"); the seed is committed and the pairs recorded once a person has checked them.
-- [ ] The route line seed follows OpenStreetMap's roads around the loop through the 14 stops. The agent produces a first line by following the roads between the stops; a person checks it on a map and corrects it before it is committed, and the corrections are recorded under Comments. P20 rides the loop to confirm it. The stops and the line are stored in ordinary columns, a latitude and a longitude and a list of coordinates, and loaded by ticket 03's seed command, each stop keeping its identifier when the seed is loaded again.
-  - Waiting for a person: the first line is drawn for a check on a map (see Comments, "What waits for a person"). The columns and the loading are built and tested.
+- [x] The stops seed holds the operator's 14 stops in loop order, each with its name as the operator writes it, its position on the operator's drawing as P05 recorded it, and the coordinates of the campus map's stop it is paired with. The campus map lists the loop with 15 stops under names of its own (`.scratch/research/external-sources.md` §6.2); its `제2파워플랜트` is not among the operator's stops and is left out. The agent proposes the 14 pairs from the order of the two lists and the distance to the buildings the names stand for; a person checks them, and the pairs are recorded under Comments (the operator's name, the campus map's name, why).
+- [x] The route line seed follows OpenStreetMap's roads around the loop through the 14 stops. The agent produces a first line by following the roads between the stops; a person checks it on a map and corrects it before it is committed, and the corrections are recorded under Comments. P20 rides the loop to confirm it. The stops and the line are stored in ordinary columns, a latitude and a longitude and a list of coordinates, and loaded by ticket 03's seed command, each stop keeping its identifier when the seed is loaded again.
 - [x] Once a day, and when ticket 01's command asks for it, the worker sends the operator's stop list from the route page: the names in loop order, each stop's position on the drawing, and the service hours as the page's text. The main server updates the drawing positions and the hours beside the seeded stops. A name the seed does not know is refused and recorded as a failure, because it means the page changed. A page without the expected structure is a failed Collection, as ticket 01 sets.
 - [x] On weekdays between 08:00 and 21:00 Asia/Seoul, every 15 seconds, the worker sends the operator's vehicles, each with its `carid` and its position on the drawing. Outside those hours it does not ask. An empty answer is sent as no vehicles.
 - [x] The main server stores a vehicle as being at the stop nearest to its drawing position, with the time the position was received, and keeps only the latest position of each vehicle. A position older than a minute is no longer served, so that the vehicles disappear on their own when the service ends or the worker stops.
@@ -75,6 +73,27 @@ Each address was asked once, with the project's User-Agent, and none was asked a
 - The whole suites pass: main server 26 files and 294 tests, worker server 8 files and 66 tests, socket server 5 files and 25 tests. `lint`, `format:check` and `typecheck` pass in the three. `pnpm build` and `node dist/seed`, run twice, logged `Loaded 225 buildings and 14 shuttle stops`. The ticket's one migration, `20261002075332_add_shuttle`, was made in a temporary container, `p07-04-shuttle-postgres`, since removed with its volume, and `prisma migrate diff` from the migrated database to the schema found no difference.
 - The Collections were not run on the real Sources: the ticket asks for no real run, and the shuttle does not run from 2026-10-03 to 10-05. P20 rides the loop.
 
-### What waits for a person (2026-10-02)
+### The person's check (2026-10-02)
 
-The pairs and the line are proposed in two files of the worktree that are not committed, and so are the two seed files made from them, `main-server/seed/shuttle-stops.json` and `main-server/seed/shuttle-route.geojson`, which the tests above used. Once a person has checked them, the corrections are applied, the two seeds committed, and the pairs and the corrections recorded here.
+김태현 checked the 14 pairs and the route line on 2026-10-02 and corrected nothing: "14쌍 다 맞고 노선도 맞아". The pairs came as a table with the distances below, and the line drawn on OpenStreetMap's map in a browser, with the places to look at closely: at 정문 the line goes about 15 m north of the junction to the stop and back; at the southern end it goes round OpenStreetMap's one-way turning loop; from 기숙사삼거리 to 국제대학원 it leaves westwards, then turns north. The bus passes the campus map's 제2파워플랜트 without stopping, so it is left out. `shuttle-stops.json` and `shuttle-route.geojson` are committed as proposed. P20 still rides the loop to confirm the line.
+
+The two proposals are not committed: these comments record the pairs, the seeds hold them and the line, and GitHub draws `shuttle-route.geojson` on a map.
+
+The pairs, in loop order. Each distance is from the campus map's stop to the nearest building that the operator's name stands for, in the campus map's building list.
+
+| # | Operator | Campus map | Why |
+|---|---|---|---|
+| 1 | 정문 | 정문 | Same name, first in both lists; 67 m from the map's 서울대 정문. |
+| 2 | 법과대 | 법대입구 | Second in both lists: the entrance to the law college's buildings, east of the loop, the nearest 197 m away (15-1동). |
+| 3 | 자연대 | 자연대500동(행정관) | Third in both lists; named after 500동 of the College of Natural Sciences, 133 m from 24동. |
+| 4 | 농생대 | 농생대 | Same name, fourth in both lists; 71 m from 201동. |
+| 5 | 38동 | 공대입구 | Fifth in both lists, the entrance to the engineering buildings; 38동 stands 69 m from it, and the next stop 153 m. |
+| 6 | 신소재공동연구소 | 신소재연구소 | Sixth in both lists; the same institute, 131동, 56 m away. |
+| 7 | 302동 | 302동 공학관 | After the map's 제2파워플랜트, which the operator does not list; 49 m from 302동. |
+| 8 | 301동 | 301동 공학관 | 129 m from 301동, which lies 157 m from the map's 302동 공학관. |
+| 9 | 유전공학연구소 | 유전공학연구소 | Same name; 29 m from 105동. |
+| 10 | 교수회관 | 교수회관입구 | The entrance to the faculty club, 65동, 236 m away; no other stop of the map is nearer to it than 401 m. |
+| 11 | 기숙사삼거리 | 기숙사삼거리 | Same name; the three-way junction by the graduate dormitories, 88 m from 903동. |
+| 12 | 국제대학원 | 국제대학원 | Same name; 36 m from 140동. |
+| 13 | 수의대 | 종합교육연구동 | Thirteenth of the operator's 14 and fourteenth of the map's 15. The map names the stop after 220동, but the College of Veterinary Medicine, 85동, is 170 m from it and 206 m from the next stop, 경영대. |
+| 14 | 경영대 | 경영대 | Same name, last in both lists; 40 m from 58동. |

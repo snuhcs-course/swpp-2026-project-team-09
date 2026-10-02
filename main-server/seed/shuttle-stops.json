@@ -1,0 +1,20 @@
+{
+  "exportedFrom": "https://web.busin.co.kr/BuslineCircleS.aspx?cd=snu_1&di=41946&tab=F",
+  "exportedOn": "2026-09-30",
+  "stops": [
+    { "name": "정문", "left": 157, "top": 35, "campusMapStop": "정문" },
+    { "name": "법과대", "left": 195, "top": 86, "campusMapStop": "법대입구" },
+    { "name": "자연대", "left": 195, "top": 136, "campusMapStop": "자연대500동(행정관)" },
+    { "name": "농생대", "left": 195, "top": 188, "campusMapStop": "농생대" },
+    { "name": "38동", "left": 195, "top": 239, "campusMapStop": "공대입구" },
+    { "name": "신소재공동연구소", "left": 195, "top": 289, "campusMapStop": "신소재연구소" },
+    { "name": "302동", "left": 195, "top": 341, "campusMapStop": "302동 공학관" },
+    { "name": "301동", "left": 157, "top": 393, "campusMapStop": "301동 공학관" },
+    { "name": "유전공학연구소", "left": 116, "top": 341, "campusMapStop": "유전공학연구소" },
+    { "name": "교수회관", "left": 116, "top": 289, "campusMapStop": "교수회관입구" },
+    { "name": "기숙사삼거리", "left": 116, "top": 239, "campusMapStop": "기숙사삼거리" },
+    { "name": "국제대학원", "left": 116, "top": 188, "campusMapStop": "국제대학원" },
+    { "name": "수의대", "left": 116, "top": 136, "campusMapStop": "종합교육연구동" },
+    { "name": "경영대", "left": 116, "top": 86, "campusMapStop": "경영대" }
+  ]
+}
