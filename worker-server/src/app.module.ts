@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { DiscoveryModule } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MessagingModule } from './common/messaging.module.js';
 import { PageFetcherModule } from './common/page-fetcher.module.js';
@@ -17,6 +18,8 @@ import { MenuModule } from './menu/menu.module.js';
     }),
     // Runs the methods marked @Cron(), which start the Collections.
     ScheduleModule.forRoot(),
+    // Lets `pnpm collect` find the collector of each Source it names (src/collect-sources.ts).
+    DiscoveryModule,
     MessagingModule,
     PageFetcherModule,
     HealthModule,
