@@ -69,3 +69,15 @@ At the seam agreed with the user, a User's route, with Kakao replaced at the fet
 - Each test was written first and seen to fail, except these, which earlier slices had already made true: the 401 (the global guard), a missing latitude and a longitude that is not a number (refused by the first form of the query schema), and the page instead of JSON, added after the 502.
 - The setting's startup check has no test, since the route is the one seam agreed. It was checked by hand with the built server and throwaway settings: without the key it stops with `Config validation error: KAKAO_REST_API_KEY: Invalid input: expected string, received undefined`, and with an empty one with `KAKAO_REST_API_KEY: Too small: expected string to have >=1 characters`.
 - The whole suite passes: 21 files and 252 tests. `lint`, `format:check` and `typecheck` pass.
+
+### Agent usage (2026-10-02)
+
+Tickets 02 to 05 were built in one orchestrated run: one session placed the agents and managed the merges, and each ticket had an implementing agent in a worktree of its own and a merging agent.
+
+- Agent time: about 34 minutes, an estimate. Nobody was waited for.
+  - The implementing agent worked about 31 minutes, from reading the ticket to its report.
+  - The merging agent worked about 3 minutes: the merge into the integration branch, the four checks on the merged branch and a search of the branch for the key.
+- Tokens, for the two agents, counted from their transcripts after the merge:
+  - Input: 27,676,372 in total, of which 27,267,679 were cache reads, 408,423 cache writes and 270 uncached.
+  - Output: 36,876. The transcripts record only part of the output of most steps, so this is a lower bound.
+- The orchestrating session's share is recorded once, under the ticket of this run that was merged last.
