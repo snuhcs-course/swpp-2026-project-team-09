@@ -120,3 +120,16 @@ A Standards review and a Spec review ran side by side on the feature commit and 
     - `collectOne(source: string)`, narrowed by each collector through TypeScript's method bivariance: the command passes only names a collector declared with `@Collects()`, so a type parameter on `Collector` would check nothing more.
     - `menu-line.ts` keeps its own no-break-space handling: a shared helper for one `replaceAll` would tie the two features together.
     - `buildingOfPlace()` stays in `global-events/`: it is the events' rule for publishing, with whole words and other campuses, not the User's search in `buildings/`, whose rules differ; moving it would also have met ticket 03's renames there.
+
+### Agent usage (2026-10-02)
+
+Tickets 02 to 05 were built in one orchestrated run: one session placed the agents and kept the branches and the PRs, and each ticket had an implementing agent in a worktree of its own.
+
+- Agent time: about 2 hours 9 minutes, an estimate. Nobody was waited for.
+  - The implementing agent worked about 82 minutes: 56 from reading the ticket to its report, and 26 acting on the review and moving the branch onto ticket 03's.
+  - The worker refactor that this ticket's pull request carries took another agent about 16 minutes, and a merging agent about 2 to run the worker's checks on it.
+  - The Standards reviewer worked about 13 minutes and the Spec reviewer about 16, at the same time.
+- Tokens, for the five agents, counted from their transcripts when this section was written:
+  - Input: 137,383,725 in total, of which 135,339,522 were cache reads, 2,043,421 cache writes and 782 uncached.
+  - Output: 119,683. The transcripts record only part of the output of most steps, so this is a lower bound.
+- The orchestrating session's share is recorded once for the run, under ticket 04.
