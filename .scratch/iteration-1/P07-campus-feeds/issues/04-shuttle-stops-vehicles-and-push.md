@@ -136,3 +136,19 @@ Each ticket gets a pull request of its own, so the three commits were moved from
   - The READMEs keep both sides: the Events and Shuttle sections, the folder layouts without `walking-route/`, the base's wording on loading the seed and on an entry's origin, with the shuttle's stops, and the rule that the file that checks a Source's status is the only one that sends as that Source.
 - Changed to follow the base: the shuttle seed's zod schemas end in `Schema`, as ticket 03's now do; and the refused vehicles message under a wrong Source names `shuttle_stops`, the shuttle's own, where it named `coop_menus`, by that rule.
 - The numbers above are those on this branch.
+
+### Agent usage (2026-10-02)
+
+Tickets 02 to 05 were built in one orchestrated run: one session placed the agents and kept the branches and the PRs, and each ticket had an implementing agent in a worktree of its own.
+
+- Agent time for this ticket: about 1 hour 59 minutes, an estimate. The wait for the person's check is not counted.
+  - The implementing agent worked about 84 minutes: 59 from reading the ticket to the two proposals, 3 recording the check, 13 acting on the review and 8 moving the branch onto ticket 02's.
+  - An exploring agent worked about 8 minutes to save the operator's page and answer while the shuttle ran.
+  - The Standards reviewer worked about 11 minutes and the Spec reviewer about 16, at the same time.
+- Tokens, for the four agents, counted from their transcripts when this section was written:
+  - Input: 167,294,244 in total, of which 164,526,039 were cache reads, 2,767,433 cache writes and 772 uncached.
+  - Output: 193,792. The transcripts record only part of the output of most steps, so this is a lower bound.
+- The orchestrating session, recorded here once for tickets 02 to 05: about 36 minutes of work between 15:37 and 18:23 KST, an estimate. The time it waited for its agents and for the user is not counted. It read the spec and the tickets, briefed and messaged the agents, rebuilt the branches for one PR per ticket, ran the reviews, and wrote the usage sections and the PRs.
+  - Input: 31,164,432 in total, of which 30,789,452 were cache reads, 374,714 cache writes and 266 uncached.
+  - Output: 187,422.
+  - Counted when this section was written. Opening this ticket's PR, the final report and removing the worktrees came after.
