@@ -15,11 +15,23 @@ const INSIDE_WITHIN_METRES = 5;
 
 const NEAR_WITHIN_METRES = 20;
 
-function metresTo(building: Position, outline: Position[] | null, position: Position): number {
-  if (outline === null) {
-    return metresBetween(building, position);
+interface Measured {
+  // The outline that decided the distance, or none when the building has no outline.
+  outline: Position[] | null;
+  metres: number;
+}
+
+// A building is as far as the wall of its nearest outline, and at no distance when one of its outlines holds the
+// position. Without an outline it is as far as its own position.
+function measure(building: Position, outlines: Position[][], position: Position): Measured {
+  let nearest: Measured = { outline: null, metres: Number.POSITIVE_INFINITY };
+  for (const outline of outlines) {
+    const metres = encloses(outline, position) ? 0 : metresToRing(outline, position);
+    if (metres < nearest.metres) {
+      nearest = { outline, metres };
+    }
   }
-  return encloses(outline, position) ? 0 : metresToRing(outline, position);
+  return nearest.outline === null ? { outline: null, metres: metresBetween(building, position) } : nearest;
 }
 
 // The buildings that share an outline hold one copy of it, so that at() knows them by it.
@@ -33,12 +45,12 @@ function oneCopy(outlines: Map<string, Position[]>, outline: Position[]): Positi
   return outline;
 }
 
-const outlineSchema = z.array(z.object({ latitude: z.number(), longitude: z.number() })).nullable();
+const outlinesSchema = z.array(z.array(z.object({ latitude: z.number(), longitude: z.number() })));
 
 // Which building a position is in. Inject it wherever a feature turns a User's position into a place.
 @Injectable()
 export class BuildingLookup implements OnModuleInit {
-  private buildings: { building: BuildingDto; outline: Position[] | null }[] = [];
+  private buildings: { building: BuildingDto; outlines: Position[][] }[] = [];
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -46,20 +58,19 @@ export class BuildingLookup implements OnModuleInit {
   // database query.
   async onModuleInit(): Promise<void> {
     const buildings = await this.prisma.building.findMany();
-    const outlines = new Map<string, Position[]>();
-    this.buildings = buildings.toSorted(byNumber).map((building) => {
-      const outline = outlineSchema.parse(building.outline);
-      return { building: toBuildingDto(building), outline: outline === null ? null : oneCopy(outlines, outline) };
-    });
+    const copies = new Map<string, Position[]>();
+    this.buildings = buildings.toSorted(byNumber).map((building) => ({
+      building: toBuildingDto(building),
+      outlines: outlinesSchema.parse(building.outlines).map((outline) => oneCopy(copies, outline)),
+    }));
   }
 
-  // The nearest building, each as far as its wall, or as its position when it has no outline, and at no distance when
-  // its outline holds the position. Within INSIDE_WITHIN_METRES of its wall the position is inside it, and within
-  // NEAR_WITHIN_METRES near it. A place or a building without an outline can only be near.
+  // The nearest building, each as far as measure() says. Within INSIDE_WITHIN_METRES of its wall the position is
+  // inside it, and within NEAR_WITHIN_METRES near it. A place or a building without an outline can only be near.
   at(position: Position): NearestBuilding | null {
-    let nearest: { building: BuildingDto; outline: Position[] | null; metres: number } | null = null;
-    for (const { building, outline } of this.buildings) {
-      const metres = metresTo(building, outline, position);
+    let nearest: (Measured & { building: BuildingDto }) | null = null;
+    for (const { building, outlines } of this.buildings) {
+      const { outline, metres } = measure(building, outlines, position);
       // At the same distance the earlier building of the list stays, except among the buildings of one outline, where
       // the one whose position is nearer wins.
       const nearer =

@@ -1,3 +1,24 @@
 {
-  "links": []
+  "links": [
+    {
+      "number": "100",
+      "outline": "way/193893586",
+      "why": "The national map does not draw 버들골 풍산마당. OpenStreetMap does."
+    },
+    {
+      "number": "43-2",
+      "outline": "way/1485386282",
+      "why": "The national map does not draw 데이터사이언스대학원. OpenStreetMap does."
+    },
+    {
+      "number": "149",
+      "outline": "way/1469808348",
+      "why": "The national map draws 종합운동장본부석 only as a wall-less structure, which the seed leaves out."
+    },
+    {
+      "number": "253",
+      "outline": null,
+      "why": "The polygon that holds the position of 화학관연결동 has no label and is not this building."
+    }
+  ]
 }

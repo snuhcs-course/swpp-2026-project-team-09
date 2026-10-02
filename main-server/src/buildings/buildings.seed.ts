@@ -1,9 +1,10 @@
 import { v5 as uuidv5 } from 'uuid';
 import { z } from 'zod';
 import { CampusBoundary } from '../common/campus-boundary.js';
+import { type Position } from '../common/geometry.js';
 import { readSeedFile } from '../common/seed-directory.js';
-import { BuildingOrigin, Prisma, PrismaClient } from '../generated/prisma/client.js';
-import { type Outline, outlinesOf } from './building-outlines.js';
+import { BuildingOrigin, PrismaClient } from '../generated/prisma/client.js';
+import { type LabelledOutline, type Outline, outlinesOf } from './building-outlines.js';
 
 // The campus map's rows as it serves them, with the coordinates as text.
 const campusMapFileSchema = z.object({
@@ -24,17 +25,22 @@ const openStreetMapFileSchema = z.object({
   ),
 });
 
-// OpenStreetMap's building outlines, each one ring in GeoJSON's order of longitude and latitude.
-const outlinesFileSchema = z.object({
+// One ring in GeoJSON's order of longitude and latitude.
+const polygonSchema = z.object({
+  type: z.literal('Polygon'),
+  coordinates: z.tuple([z.array(z.tuple([z.number(), z.number()])).min(4)]),
+});
+
+// The national map's polygons of the campus's buildings, each with its label.
+const nationalMapFileSchema = z.object({
   features: z.array(
-    z.object({
-      id: z.string(),
-      geometry: z.object({
-        type: z.literal('Polygon'),
-        coordinates: z.tuple([z.array(z.tuple([z.number(), z.number()])).min(4)]),
-      }),
-    }),
+    z.object({ id: z.string(), properties: z.object({ label: z.string().nullable() }), geometry: polygonSchema }),
   ),
+});
+
+// The outlines of OpenStreetMap that the corrections name.
+const openStreetMapOutlinesFileSchema = z.object({
+  features: z.array(z.object({ id: z.string(), geometry: polygonSchema })),
 });
 
 // A person's corrections of which outline a building has, each with its reason.
@@ -53,12 +59,25 @@ function idOf(origin: BuildingOrigin, originId: string): string {
   return uuidv5(`${origin}:${originId}`, ID_NAMESPACE);
 }
 
-async function readOutlines(directory: string): Promise<Outline[]> {
-  const { features } = await readSeedFile(directory, 'openstreetmap-building-outlines.geojson', outlinesFileSchema);
-  return features.map(({ id, geometry }) => ({
-    id,
-    ring: geometry.coordinates[0].map(([longitude, latitude]) => ({ latitude, longitude })),
-  }));
+function ringOf({ coordinates }: z.infer<typeof polygonSchema>): Position[] {
+  return coordinates[0].map(([longitude, latitude]) => ({ latitude, longitude }));
+}
+
+async function readOutlines(directory: string): Promise<{ nationalMap: LabelledOutline[]; openStreetMap: Outline[] }> {
+  const nationalMap = await readSeedFile(directory, 'national-map-building-outlines.geojson', nationalMapFileSchema);
+  const openStreetMap = await readSeedFile(
+    directory,
+    'openstreetmap-building-outlines.geojson',
+    openStreetMapOutlinesFileSchema,
+  );
+  return {
+    nationalMap: nationalMap.features.map(({ id, properties, geometry }) => ({
+      id,
+      label: properties.label,
+      ring: ringOf(geometry),
+    })),
+    openStreetMap: openStreetMap.features.map(({ id, geometry }) => ({ id, ring: ringOf(geometry) })),
+  };
 }
 
 // Updates each entry in place by its id, so that whatever points at a building still does. An entry that has left the
@@ -92,17 +111,18 @@ export async function loadBuildings(
     })),
   ].filter((entry) => boundary.contains(entry));
   const { links } = await readSeedFile(directory, 'building-outline-links.json', linksFileSchema);
-  const outlines = outlinesOf(entries, await readOutlines(directory), links);
+  const { nationalMap, openStreetMap } = await readOutlines(directory);
+  const found = outlinesOf(entries, nationalMap, openStreetMap, links);
   await prisma.$transaction(
     entries.map((entry) => {
       const { origin, originId, ...values } = entry;
       const id = idOf(origin, originId);
-      // A building that lost its outline is stored without one.
-      const outline = outlines.get(entry) ?? Prisma.DbNull;
+      // A building that lost its outlines is stored without any.
+      const outlines = found.get(entry) ?? [];
       return prisma.building.upsert({
         where: { id },
-        create: { id, origin, originId, ...values, outline },
-        update: { ...values, outline },
+        create: { id, origin, originId, ...values, outlines },
+        update: { ...values, outlines },
       });
     }),
   );

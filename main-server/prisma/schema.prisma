@@ -170,9 +170,9 @@ model Building {
   name      String
   latitude  Float
   longitude Float
-  // OpenStreetMap's outline of the building as a closed ring, [{ latitude, longitude }, …]. A place has none, nor has
-  // a building that OpenStreetMap does not draw.
-  outline   Json?
+  // The building's outlines, each a closed ring: [[{ latitude, longitude }, …], …]. They are the national map's
+  // polygons of the building, or the one outline that a correction gives it. A place has none.
+  outlines  Json           @default("[]")
 
   @@unique([origin, originId])
   @@map("buildings")
