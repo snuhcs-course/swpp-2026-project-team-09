@@ -160,23 +160,24 @@ model CollectionStatus {
 // A campus building or place inside the Campus Boundary, loaded from the seed files (README.md: Seed data).
 model Building {
   id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  source    BuildingSource
-  // The identifier the source gives the entry, by which loading the seed again updates it in place.
-  sourceId  String         @map("source_id")
+  origin    BuildingOrigin
+  // The identifier the origin gives the entry, by which loading the seed again updates it in place.
+  originId  String         @map("origin_id")
   // Such as `302` or `25-1`. Places such as 자하연 have none.
   number    String?
   name      String
   latitude  Float
   longitude Float
 
-  @@unique([source, sourceId])
+  @@unique([origin, originId])
   @@map("buildings")
 }
 
-enum BuildingSource {
+// Where a seed entry comes from. Not a Source: seed data is not collected.
+enum BuildingOrigin {
   // The university's campus map, https://map.snu.ac.kr
   campus_map
   openstreetmap
 
-  @@map("building_source")
+  @@map("building_origin")
 }

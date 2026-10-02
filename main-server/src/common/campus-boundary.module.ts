@@ -6,7 +6,9 @@ import { SEED_DIRECTORY } from './seed-directory.js';
 // when the server starts.
 @Global()
 @Module({
-  providers: [{ provide: CampusBoundary, useFactory: (): CampusBoundary => readCampusBoundary(SEED_DIRECTORY) }],
+  providers: [
+    { provide: CampusBoundary, useFactory: (): Promise<CampusBoundary> => readCampusBoundary(SEED_DIRECTORY) },
+  ],
   exports: [CampusBoundary],
 })
 export class CampusBoundaryModule {}

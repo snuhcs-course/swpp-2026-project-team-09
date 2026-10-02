@@ -1,6 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { z } from 'zod';
+import { readSeedFile } from './seed-directory.js';
 
 export interface Position {
   latitude: number;
@@ -8,14 +7,13 @@ export interface Position {
 }
 
 // One ring, without holes, in GeoJSON's order of longitude and latitude.
-const boundaryFile = z.object({
+const boundaryFileSchema = z.object({
   geometry: z.object({
     type: z.literal('Polygon'),
     coordinates: z.tuple([z.array(z.tuple([z.number(), z.number()])).min(4)]),
   }),
 });
 
-// The outline of the Gwanak campus. A position outside it is off campus.
 export class CampusBoundary {
   constructor(readonly outline: readonly Position[]) {}
 
@@ -39,7 +37,7 @@ export class CampusBoundary {
   }
 }
 
-export function readCampusBoundary(directory: string): CampusBoundary {
-  const { geometry } = boundaryFile.parse(JSON.parse(readFileSync(join(directory, 'campus-boundary.geojson'), 'utf8')));
+export async function readCampusBoundary(directory: string): Promise<CampusBoundary> {
+  const { geometry } = await readSeedFile(directory, 'campus-boundary.geojson', boundaryFileSchema);
   return new CampusBoundary(geometry.coordinates[0].map(([longitude, latitude]) => ({ latitude, longitude })));
 }

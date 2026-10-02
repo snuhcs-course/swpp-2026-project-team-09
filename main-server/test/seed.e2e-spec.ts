@@ -1,66 +1,67 @@
 import { randomUUID } from 'node:crypto';
-import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { inject } from 'vitest';
 import { z } from 'zod';
-import { SEED_DIRECTORY } from '../src/common/seed-directory.js';
+import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { loadSeed } from '../src/load-seed.js';
 import { connect, migrate } from './containers.js';
 
 // The other test files read the buildings of the shared database. These tests load the seed into a database of their
 // own, so that a corrected seed loaded here reaches no other test.
-const database = `seed_${randomUUID().replaceAll('-', '')}`;
-let main: PrismaClient;
+const databaseName = `seed_${randomUUID().replaceAll('-', '')}`;
+// Creates and drops this file's database.
+let sharedDatabase: PrismaClient;
 let prisma: PrismaClient;
 
 beforeAll(async () => {
   const { DATABASE_URL } = inject('settings');
-  main = connect(DATABASE_URL);
-  await main.$executeRawUnsafe(`CREATE DATABASE "${database}"`);
+  sharedDatabase = connect(DATABASE_URL);
+  await sharedDatabase.$executeRawUnsafe(`CREATE DATABASE "${databaseName}"`);
   const url = new URL(DATABASE_URL);
-  url.pathname = `/${database}`;
+  url.pathname = `/${databaseName}`;
   migrate(url.toString());
   prisma = connect(url.toString());
 });
 
 afterAll(async () => {
   await prisma.$disconnect();
-  await main.$executeRawUnsafe(`DROP DATABASE "${database}" WITH (FORCE)`);
-  await main.$disconnect();
+  await sharedDatabase.$executeRawUnsafe(`DROP DATABASE "${databaseName}" WITH (FORCE)`);
+  await sharedDatabase.$disconnect();
 });
 
 // A numbered building, a wrapped name, a place without a number, and the two buildings from OpenStreetMap.
 const loadedEntries = [
-  { source: 'campus_map', sourceId: '188', number: '302', name: '제2공학관', latitude: 37.44887, longitude: 126.95265 },
+  { origin: 'campus_map', originId: '188', number: '302', name: '제2공학관', latitude: 37.44887, longitude: 126.95265 },
   {
-    source: 'campus_map',
-    sourceId: '254',
+    origin: 'campus_map',
+    originId: '254',
     number: '223',
     name: '우석경제관',
     latitude: 37.465509,
     longitude: 126.955673,
   },
   {
-    source: 'campus_map',
-    sourceId: '234',
+    origin: 'campus_map',
+    originId: '234',
     number: null,
     name: '종합운동장',
     latitude: 37.464779176159,
     longitude: 126.95009153903,
   },
   {
-    source: 'openstreetmap',
-    sourceId: 'way/456356713',
+    origin: 'openstreetmap',
+    originId: 'way/456356713',
     number: '71-1',
     name: '체육문화교육연구동(71-1동)',
     latitude: 37.4665138,
     longitude: 126.9526562,
   },
   {
-    source: 'openstreetmap',
-    sourceId: 'way/482220682',
+    origin: 'openstreetmap',
+    originId: 'way/482220682',
     number: '901',
     name: '901',
     latitude: 37.4619595,
@@ -82,7 +83,7 @@ describe('Loading the seed', () => {
   it('leaves out an entry outside the Campus Boundary', async () => {
     await loadSeed(prisma);
 
-    const loaded = (await prisma.building.findMany()).map(({ sourceId }) => sourceId);
+    const loaded = (await prisma.building.findMany()).map(({ originId }) => originId);
     // 서울대입구역, and 교수아파트1 and 관악 915동 in the wedge that the outline leaves out in the north-east.
     expect(loaded).not.toContain('239');
     expect(loaded).not.toContain('135');
@@ -102,37 +103,40 @@ describe('Loading the seed again', () => {
 });
 
 describe('Loading a corrected seed', () => {
-  let corrected: string;
+  let correctedSeed: string;
 
   beforeAll(async () => {
-    corrected = await mkdtemp(join(tmpdir(), 'seed-'));
-    await cp(SEED_DIRECTORY, corrected, { recursive: true });
+    correctedSeed = await mkdtemp(join(tmpdir(), 'seed-'));
+    await cp(SEED_DIRECTORY, correctedSeed, { recursive: true });
   });
 
   afterAll(async () => {
-    await rm(corrected, { recursive: true });
+    await rm(correctedSeed, { recursive: true });
   });
 
   it('updates the entry whose name was corrected in place, so that it keeps its identifier', async () => {
     await loadSeed(prisma);
-    const where = { source_sourceId: { source: 'campus_map', sourceId: '84' } } as const;
+    const where = { origin_originId: { origin: 'campus_map', originId: '84' } } as const;
     const building = await prisma.building.findUniqueOrThrow({ where });
+    const count = await prisma.building.count();
     // A person corrects the map's NH농협두레문예관.
-    await correctRow(corrected, 84, { inst_kor_nm: '두레문예관' });
+    await correctRow(correctedSeed, 84, { inst_kor_nm: '두레문예관' });
 
-    await loadSeed(prisma, corrected);
+    await loadSeed(prisma, correctedSeed);
 
     expect(await prisma.building.findUniqueOrThrow({ where })).toEqual({ ...building, name: '두레문예관' });
-    expect(await prisma.building.count()).toBe(225);
+    expect(await prisma.building.count()).toBe(count);
   });
 });
 
 // Changes the row of the campus map's seed file that has `instSeq`.
 async function correctRow(directory: string, instSeq: number, changes: object): Promise<void> {
-  const file = join(directory, 'campus-map-buildings.json');
-  const seed = z
-    .looseObject({ rows: z.array(z.looseObject({ inst_seq: z.number() })) })
-    .parse(JSON.parse(await readFile(file, 'utf8')));
+  const file = 'campus-map-buildings.json';
+  const seed = await readSeedFile(
+    directory,
+    file,
+    z.looseObject({ rows: z.array(z.looseObject({ inst_seq: z.number() })) }),
+  );
   seed.rows = seed.rows.map((row) => (row.inst_seq === instSeq ? { ...row, ...changes } : row));
-  await writeFile(file, JSON.stringify(seed));
+  await writeFile(join(directory, file), JSON.stringify(seed));
 }

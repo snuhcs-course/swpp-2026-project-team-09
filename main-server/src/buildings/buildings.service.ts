@@ -4,15 +4,14 @@ import { Building } from '../generated/prisma/client.js';
 import { BuildingDto, toBuildingDto } from './dto/building.dto.js';
 
 // `25-1` comes after `25` and before `26`, and Korean names in the order a User reads them.
-const order = new Intl.Collator('ko', { numeric: true });
+const koreanOrder = new Intl.Collator('ko', { numeric: true });
 
-// By number, then the places without one by name.
 function byNumber(a: Building, b: Building): number {
   if (a.number !== null && b.number !== null) {
-    return order.compare(a.number, b.number);
+    return koreanOrder.compare(a.number, b.number);
   }
   if (a.number === null && b.number === null) {
-    return order.compare(a.name, b.name);
+    return koreanOrder.compare(a.name, b.name);
   }
   return a.number === null ? 1 : -1;
 }
@@ -26,9 +25,10 @@ export class BuildingsService {
     return buildings.toSorted(byNumber).map((building) => toBuildingDto(building));
   }
 
-  // By a part of the name, whatever the case of its Latin letters, or by the number, written with or without 동.
+  // In memory: the list is a few hundred entries, and `q` is then no LIKE pattern whose `%` and `_` need escaping.
   async search(text: string): Promise<BuildingDto[]> {
     const part = text.toLowerCase();
+    // A User writes building 302 as 302동.
     const number = text.replace(/동$/u, '');
     return (await this.list()).filter(
       (building) => building.name.toLowerCase().includes(part) || building.number === number,

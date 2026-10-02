@@ -40,7 +40,6 @@ docker compose up -d postgres redis
 
 ```bash
 pnpm db:migrate
-pnpm build
 pnpm db:seed
 pnpm start:dev
 ```
@@ -252,7 +251,7 @@ The campus buildings and places are [seed data](#seed-data), not collected. A Us
 that the User picks a place without typing coordinates:
 
 - `GET /buildings` with a User's access token answers every building and place inside the
-  [Campus Boundary](#campus-boundary), 225 of them:
+  [Campus Boundary](#campus-boundary):
 
   ```json
   [
@@ -309,15 +308,15 @@ into the database.
   - The boundary's four outer ways are joined into one ring. The two OpenStreetMap buildings are placed at the centre
     of their outline's bounding box, as Overpass gives it, and carry the numbers their names give, from a table in
     `scripts/export-seed.ts`.
-- **Loading**: `pnpm db:seed` loads the files into the database at `DATABASE_URL`. It runs the built code, so run
-  `pnpm build` first. In Compose the main server runs it before it starts.
+- **Loading**: `pnpm db:seed` builds the server and loads the files into the database at `DATABASE_URL`. In Compose
+  the image, built already, runs `node dist/seed` before the server starts.
   - Loaded are the entries of both building files that lie inside the Campus Boundary, except the map's `Test` row:
     215 numbered buildings and 8 places of the map, and the 2 from OpenStreetMap. To list a building outside the
     Boundary, the Boundary is widened first.
-  - Each entry keeps its source's identifier, the map's `inst_seq` or OpenStreetMap's `way/…`, and the source:
-    `campus_map` or `openstreetmap`. Loading again updates each entry in place by that identifier, so its `id` and
-    whatever points at it stay, and running the command twice leaves one set of records. An entry that has left the
-    files stays in the database.
+  - Each entry keeps the identifier its origin gives it, the map's `inst_seq` or OpenStreetMap's `way/…`, and its
+    `origin`, `campus_map` or `openstreetmap`: seed data is not collected, so its origin is no Source. Loading again
+    updates each entry in place by that identifier, so its `id` and whatever points at it stay, and running the
+    command twice leaves one set of records. An entry that has left the files stays in the database.
 - **Correcting**: change the entry in its file, such as a name in `inst_kor_nm`, and load again. The next export
   overwrites the correction.
 - **Coordinates** come from the campus map and OpenStreetMap only, never from Kakao, Naver or Google maps, whose terms
@@ -326,11 +325,12 @@ into the database.
 - **Licences**: OpenStreetMap's data is under the ODbL, and the two files made from it carry its notice
   (`copyright`). The app shows OpenStreetMap's attribution (P15); `.scratch/research/external-sources.md` §6.1 says
   where the attribution guidelines ask for it. The campus map publishes no terms of use and no licence (§6.2).
-- **In a test**: the global setup loads the seed into the test database, so every test file has the buildings. A test
-  that changes the seed loads it into a database of its own, with `loadSeed(prisma, directory)` from
-  `src/load-seed.ts`, as `test/seed.e2e-spec.ts` does.
-- **A new seed** adds its export to `scripts/export-seed.ts` when a request gives the file, its model with the source's
-  identifier as a unique key, and its loading to `loadSeed()`.
+- **In a test**: the global setup loads the seed into the test database, so every test file has the buildings, and
+  `test/buildings.e2e-spec.ts` counts them. A test that changes the seed, or needs other buildings, loads it into a
+  database of its own, with `loadSeed(prisma, directory)` from `src/load-seed.ts`, as `test/seed.e2e-spec.ts` does.
+- **A new seed** adds its export to `scripts/export-seed.ts` when a request gives the file, its model with the
+  identifier its origin gives as a unique key, and its loading to `loadSeed()`. `readSeedFile()` beside
+  `SEED_DIRECTORY` reads a file and checks it against a schema.
 
 ## Checks
 

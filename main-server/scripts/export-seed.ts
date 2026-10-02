@@ -24,18 +24,20 @@ const MISSING_BUILDINGS_QUERY =
   [...MISSING_BUILDINGS.keys()].map((name) => `nwr["building"]["name"="${name}"];`).join('') +
   ');out tags center;';
 
-const point = z.object({ lat: z.number(), lon: z.number() });
-const copyright = z.object({ copyright: z.string() });
+const pointSchema = z.object({ lat: z.number(), lon: z.number() });
+const copyrightSchema = z.object({ copyright: z.string() });
 
-const boundaryAnswer = z.object({
-  osm3s: copyright,
-  elements: z.tuple([z.object({ members: z.array(z.object({ role: z.string(), geometry: z.array(point) })).min(1) })]),
+const boundaryAnswerSchema = z.object({
+  osm3s: copyrightSchema,
+  elements: z.tuple([
+    z.object({ members: z.array(z.object({ role: z.string(), geometry: z.array(pointSchema) })).min(1) }),
+  ]),
 });
 
-const buildingsAnswer = z.object({
-  osm3s: copyright,
+const buildingsAnswerSchema = z.object({
+  osm3s: copyrightSchema,
   elements: z.array(
-    z.object({ type: z.string(), id: z.number(), tags: z.object({ name: z.string() }), center: point }),
+    z.object({ type: z.string(), id: z.number(), tags: z.object({ name: z.string() }), center: pointSchema }),
   ),
 });
 
@@ -88,7 +90,7 @@ function ring(ways: Coordinates[][]): Coordinates[] {
 }
 
 async function exportCampusBoundary(): Promise<void> {
-  const { osm3s, elements } = boundaryAnswer.parse(await overpass(BOUNDARY_QUERY));
+  const { osm3s, elements } = boundaryAnswerSchema.parse(await overpass(BOUNDARY_QUERY));
   const [{ members }] = elements;
   if (members.some(({ role }) => role !== 'outer')) {
     throw new Error('The relation is more than one outer ring');
@@ -110,7 +112,7 @@ async function exportCampusMapBuildings(): Promise<void> {
 }
 
 async function exportOpenStreetMapBuildings(): Promise<void> {
-  const { osm3s, elements } = buildingsAnswer.parse(await overpass(MISSING_BUILDINGS_QUERY));
+  const { osm3s, elements } = buildingsAnswerSchema.parse(await overpass(MISSING_BUILDINGS_QUERY));
   const buildings = elements.map(({ type, id, tags, center }) => ({
     id: `${type}/${id}`,
     number: MISSING_BUILDINGS.get(tags.name),
