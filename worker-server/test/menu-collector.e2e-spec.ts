@@ -83,7 +83,7 @@ describe('A Collection of the menu Sources', () => {
             restaurants: [
               {
                 name: '수의대식당',
-                lines: [{ meal: 'lunch', text: '카레라이스', kind: null, price: null, name: null }],
+                lines: [{ meal: 'lunch', text: '카레라이스', kind: null, name: null, price: null }],
               },
             ],
           },
@@ -92,7 +92,7 @@ describe('A Collection of the menu Sources', () => {
             restaurants: [
               {
                 name: '수의대식당',
-                lines: [{ meal: 'lunch', text: '소불고기덮밥', kind: null, price: null, name: null }],
+                lines: [{ meal: 'lunch', text: '소불고기덮밥', kind: null, name: null, price: null }],
               },
             ],
           },

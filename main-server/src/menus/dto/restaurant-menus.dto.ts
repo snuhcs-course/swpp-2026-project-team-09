@@ -3,9 +3,9 @@ import { Meal, MenuLine, MenuLineKind, RestaurantDay } from '../../generated/pri
 export interface MenuLineDto {
   text: string;
   kind: MenuLineKind | null;
-  price: number | null;
   // A dish's text without its price, to show beside the price.
   name: string | null;
+  price: number | null;
 }
 
 export interface MealDto {
@@ -26,7 +26,7 @@ export function toRestaurantMenusDto(day: RestaurantDay & { lines: MenuLine[] })
   const meals = Object.values(Meal).flatMap((meal) => {
     const lines = day.lines
       .filter((line) => line.meal === meal)
-      .map(({ text, kind, price, name }) => ({ text, kind, price, name }));
+      .map(({ text, kind, name, price }) => ({ text, kind, name, price }));
     return lines.length === 0 ? [] : [{ meal, lines }];
   });
   return { name: day.restaurant, collectedAt: day.collectedAt, meals };

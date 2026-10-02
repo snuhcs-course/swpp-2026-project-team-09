@@ -139,14 +139,14 @@ restaurant fills in its later days as it posts them, and the next Collection bri
   ([ADR 0001](../docs/adr/0001-menus-kept-as-lines.md)). A line is the text between two line breaks, without the
   spaces around it and with no-break spaces as spaces. A line without a letter or a digit is dropped, so an empty cell
   gives no lines, and neither does a cell that was not filled in and holds only the page's template, `: | :`.
-- `src/menu/menu-line.ts` reads each line by itself, and sets a `kind`, a `price` and a `name` only when it is sure:
+- `src/menu/menu-line.ts` reads each line by itself, and sets a `kind`, a `name` and a `price` only when it is sure:
 
-  | Line                                                                                     | `kind`    | `price`       | `name`                |
-  | ---------------------------------------------------------------------------------------- | --------- | ------------- | --------------------- |
-  | Starts with `※`, or says `휴무`: `※ 운영시간 : 11:00~14:30`, `개천절 휴무`               | `note`    | never         | never                 |
-  | Only `<…>`, with or without a price: `<주문식 메뉴>`, `<뷔페> 6,500원`                   | `heading` | the set price | never                 |
-  | A price after a colon: `눈꽃치즈닭갈비 : 6,000원`, `<A코너>제육김치덮밥, 잡채 : 6,000원` | `dish`    | the price     | the text before `: …` |
-  | Anything else                                                                            | `null`    | never         | never                 |
+  | Line                                                                                     | `kind`    | `name`                | `price`       |
+  | ---------------------------------------------------------------------------------------- | --------- | --------------------- | ------------- |
+  | Starts with `※`, or says `휴무`: `※ 운영시간 : 11:00~14:30`, `개천절 휴무`               | `note`    | never                 | never         |
+  | Only `<…>`, with or without a price: `<주문식 메뉴>`, `<뷔페> 6,500원`                   | `heading` | never                 | the set price |
+  | A price after a colon: `눈꽃치즈닭갈비 : 6,000원`, `<A코너>제육김치덮밥, 잡채 : 6,000원` | `dish`    | the text before `: …` | the price     |
+  | Anything else                                                                            | `null`    | never                 | never         |
 
   The price is set when the line holds exactly one amount of won, written without a typo: `6,000원`, `4,500 원`.
   `9,900원 / 12,400원` and `8,3000 원` stay in `text` alone. The name is set when the price is and the line ends with
@@ -156,7 +156,7 @@ restaurant fills in its later days as it posts them, and the next Collection bri
   veterinary college's table. Nor has a sentence between angle brackets, which is a notice:
   `< 위 메뉴외에도 다양한 메뉴가 준비되어 있습니다>`.
 
-What the collectors sent on the real pages, and how many lines got a `kind`, a `price` and a `name`, is recorded in
+What the collectors sent on the real pages, and how many lines got a `kind`, a `name` and a `price`, is recorded in
 `.scratch/iteration-1/P07-campus-feeds/issues/01-menus-first-collection.md`.
 
 ## Checks

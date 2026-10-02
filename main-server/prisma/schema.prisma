@@ -108,10 +108,10 @@ model MenuLine {
   text            String
   // Set only when the worker is sure.
   kind            MenuLineKind?
-  // In won, when the line gives exactly one price.
-  price           Int?
   // A dish's text without its price, when the line ends with that price.
   name            String?
+  // In won, when the line gives exactly one price.
+  price           Int?
 
   @@unique([restaurantDayId, position])
   @@map("menu_lines")

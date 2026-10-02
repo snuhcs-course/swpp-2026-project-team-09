@@ -4,15 +4,15 @@ export type Meal = (typeof MEALS)[number];
 
 export type MenuLineKind = 'heading' | 'dish' | 'note';
 
-// One line of a meal's cell. `kind`, `price` and `name` are set only when the parser is sure
+// One line of a meal's cell. `kind`, `name` and `price` are set only when the parser is sure
 // (docs/adr/0001-menus-kept-as-lines.md).
 export interface MenuLine {
   meal: Meal;
   text: string;
   kind: MenuLineKind | null;
-  price: number | null;
   // A dish's text without its price.
   name: string | null;
+  price: number | null;
 }
 
 export interface RestaurantMenu {

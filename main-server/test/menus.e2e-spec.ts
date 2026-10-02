@@ -30,11 +30,11 @@ function menusOn(date: string): request.Test {
 
 // A cell of several kinds of line, as the Co-op page writes them, across the three meals.
 const selfServiceLines = [
-  { meal: 'lunch', text: '<셀프코너> 7,000원', kind: 'heading', price: 7000, name: null },
-  { meal: 'lunch', text: '잡곡밥', kind: null, price: null, name: null },
-  { meal: 'breakfast', text: '토스트 : 3,000원', kind: 'dish', price: 3000, name: '토스트' },
-  { meal: 'lunch', text: '※운영시간 : 11:00~14:00', kind: 'note', price: null, name: null },
-  { meal: 'dinner', text: '한입버거운시그니처버거 : 9,900원 / 12,400원', kind: 'dish', price: null, name: null },
+  { meal: 'lunch', text: '<셀프코너> 7,000원', kind: 'heading', name: null, price: 7000 },
+  { meal: 'lunch', text: '잡곡밥', kind: null, name: null, price: null },
+  { meal: 'breakfast', text: '토스트 : 3,000원', kind: 'dish', name: '토스트', price: 3000 },
+  { meal: 'lunch', text: '※운영시간 : 11:00~14:00', kind: 'note', name: null, price: null },
+  { meal: 'dinner', text: '한입버거운시그니처버거 : 9,900원 / 12,400원', kind: 'dish', name: null, price: null },
 ];
 
 describe('Menus collected by the worker', () => {
@@ -53,18 +53,18 @@ describe('Menus collected by the worker', () => {
         name: '두레미담',
         collectedAt: '2026-10-31T12:00:00.000Z',
         meals: [
-          { meal: 'breakfast', lines: [{ text: '토스트 : 3,000원', kind: 'dish', price: 3000, name: '토스트' }] },
+          { meal: 'breakfast', lines: [{ text: '토스트 : 3,000원', kind: 'dish', name: '토스트', price: 3000 }] },
           {
             meal: 'lunch',
             lines: [
-              { text: '<셀프코너> 7,000원', kind: 'heading', price: 7000, name: null },
-              { text: '잡곡밥', kind: null, price: null, name: null },
-              { text: '※운영시간 : 11:00~14:00', kind: 'note', price: null, name: null },
+              { text: '<셀프코너> 7,000원', kind: 'heading', name: null, price: 7000 },
+              { text: '잡곡밥', kind: null, name: null, price: null },
+              { text: '※운영시간 : 11:00~14:00', kind: 'note', name: null, price: null },
             ],
           },
           {
             meal: 'dinner',
-            lines: [{ text: '한입버거운시그니처버거 : 9,900원 / 12,400원', kind: 'dish', price: null, name: null }],
+            lines: [{ text: '한입버거운시그니처버거 : 9,900원 / 12,400원', kind: 'dish', name: null, price: null }],
           },
         ],
       },
@@ -76,7 +76,7 @@ describe('Menus collected by the worker', () => {
 describe('A restaurant the page lists without a menu', () => {
   it('is served without meals when its cells are empty, and with the closure line when a cell has one', async () => {
     const date = newDay();
-    const closure = { meal: 'lunch', text: '개천절 휴무', kind: 'note', price: null, name: null };
+    const closure = { meal: 'lunch', text: '개천절 휴무', kind: 'note', name: null, price: null };
 
     await sendAsWorker(
       harness.worker,
@@ -91,7 +91,7 @@ describe('A restaurant the page lists without a menu', () => {
       {
         name: '학생회관식당',
         collectedAt: '2026-10-31T12:00:00.000Z',
-        meals: [{ meal: 'lunch', lines: [{ text: '개천절 휴무', kind: 'note', price: null, name: null }] }],
+        meals: [{ meal: 'lunch', lines: [{ text: '개천절 휴무', kind: 'note', name: null, price: null }] }],
       },
     ]);
   });
@@ -129,7 +129,7 @@ describe('A later Collection of a Source', () => {
     );
 
     // The page dropped 자하연식당 2층 and changed the other restaurant's lines.
-    const changed = { text: '김치찌개 : 5,500원', kind: 'dish', price: 5500, name: '김치찌개' };
+    const changed = { text: '김치찌개 : 5,500원', kind: 'dish', name: '김치찌개', price: 5500 };
     await sendAsWorker(
       harness.worker,
       'menus-collected',
@@ -175,7 +175,7 @@ function secondChanged(date: string, changes: object): object {
 // A second restaurant whose one line has `changes`.
 function lineChanged(date: string, changes: object): object {
   return secondChanged(date, {
-    lines: [{ meal: 'lunch', text: '돈까스 : 5,500원', kind: 'dish', price: 5500, name: '돈까스', ...changes }],
+    lines: [{ meal: 'lunch', text: '돈까스 : 5,500원', kind: 'dish', name: '돈까스', price: 5500, ...changes }],
   });
 }
 

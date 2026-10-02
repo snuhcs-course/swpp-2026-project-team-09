@@ -17,8 +17,8 @@ export function restaurant(changes: object = {}): object {
   return {
     name: '학생회관식당',
     lines: [
-      { meal: 'lunch', text: '제육볶음 : 6,000원', kind: 'dish', price: 6000, name: '제육볶음' },
-      { meal: 'lunch', text: '※ 운영시간 : 11:00~14:30', kind: 'note', price: null, name: null },
+      { meal: 'lunch', text: '제육볶음 : 6,000원', kind: 'dish', name: '제육볶음', price: 6000 },
+      { meal: 'lunch', text: '※ 운영시간 : 11:00~14:30', kind: 'note', name: null, price: null },
     ],
     ...changes,
   };
@@ -28,8 +28,8 @@ export function restaurant(changes: object = {}): object {
 export const servedLunch = {
   meal: 'lunch',
   lines: [
-    { text: '제육볶음 : 6,000원', kind: 'dish', price: 6000, name: '제육볶음' },
-    { text: '※ 운영시간 : 11:00~14:30', kind: 'note', price: null, name: null },
+    { text: '제육볶음 : 6,000원', kind: 'dish', name: '제육볶음', price: 6000 },
+    { text: '※ 운영시간 : 11:00~14:30', kind: 'note', name: null, price: null },
   ],
 };
 

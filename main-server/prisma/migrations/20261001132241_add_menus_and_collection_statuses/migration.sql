@@ -26,8 +26,8 @@ CREATE TABLE "menu_lines" (
     "position" INTEGER NOT NULL,
     "text" TEXT NOT NULL,
     "kind" "menu_line_kind",
-    "price" INTEGER,
     "name" TEXT,
+    "price" INTEGER,
 
     CONSTRAINT "menu_lines_pkey" PRIMARY KEY ("id")
 );

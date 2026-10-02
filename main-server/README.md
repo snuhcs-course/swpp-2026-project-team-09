@@ -205,10 +205,10 @@ for today and the six days after, and sends them as `menus-collected` (see
         {
           "meal": "lunch",
           "lines": [
-            { "text": "<셀프코너> 7,000원", "kind": "heading", "price": 7000, "name": null },
-            { "text": "잡곡밥", "kind": null, "price": null, "name": null },
-            { "text": "고등어 소금구이  : 14,000원", "kind": "dish", "price": 14000, "name": "고등어 소금구이" },
-            { "text": "※운영시간 : 11:00~14:00", "kind": "note", "price": null, "name": null }
+            { "text": "<셀프코너> 7,000원", "kind": "heading", "name": null, "price": 7000 },
+            { "text": "잡곡밥", "kind": null, "name": null, "price": null },
+            { "text": "고등어 소금구이  : 14,000원", "kind": "dish", "name": "고등어 소금구이", "price": 14000 },
+            { "text": "※운영시간 : 11:00~14:00", "kind": "note", "name": null, "price": null }
           ]
         }
       ]
@@ -224,9 +224,9 @@ for today and the six days after, and sends them as `menus-collected` (see
   rest only when it is sure, and leaves it `null` otherwise:
   - `kind`: `heading` for a corner or section, `dish`, or `note` for hours, notices and closures such as
     `개천절 휴무`. There is no operating hours field: hours are note lines of the meal.
+  - `name`: a dish's text without its price, when the line ends with that price.
   - `price`: in won, when the line gives exactly one price. `9,900원 / 12,400원`, or a price with a typo, stays in
     `text` alone.
-  - `name`: a dish's text without its price, when the line ends with that price.
 - The app shows a line that has a `name` and a `price` as a row with both, and every other line as its `text`, styled
   by `kind` where there is one. A line the worker could not read is still shown.
 - A day with nothing stored answers `[]`. A `date` that is not a calendar day gets 400.

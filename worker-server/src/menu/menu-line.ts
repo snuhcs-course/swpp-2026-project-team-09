@@ -16,23 +16,23 @@ function nameBeforePrice(text: string): string | null {
 }
 
 // What a line is, read from the line alone and only when it is sure.
-function readMenuLine(text: string): Pick<MenuLine, 'kind' | 'price' | 'name'> {
+function readMenuLine(text: string): Pick<MenuLine, 'kind' | 'name' | 'price'> {
   // A notice, or a closure written in the cell: "※ 운영시간 : 11:00~14:30", "개천절 휴무".
   if (text.startsWith('※') || text.includes('휴무')) {
-    return { kind: 'note', price: null, name: null };
+    return { kind: 'note', name: null, price: null };
   }
   // A corner or section alone on its line, with or without a set price: "<주문식 메뉴>", "<뷔페> 6,500원". A sentence
   // between the brackets is a notice: "< 위 메뉴외에도 다양한 메뉴가 준비되어 있습니다>".
   const heading = new RegExp(`^<([^<>]+)>\\s*(?:${AMOUNT})?$`, 'u').exec(text);
   if (heading !== null && !heading[1].trim().endsWith('다')) {
-    return { kind: 'heading', price: onePrice(text), name: null };
+    return { kind: 'heading', name: null, price: onePrice(text) };
   }
   // A price after a colon: "눈꽃치즈닭갈비 : 6,000원", "<A코너>제육김치덮밥, 잡채 : 6,000원".
   if (new RegExp(`:\\s*${AMOUNT}`, 'u').test(text)) {
     const price = onePrice(text);
-    return { kind: 'dish', price, name: price === null ? null : nameBeforePrice(text) };
+    return { kind: 'dish', name: price === null ? null : nameBeforePrice(text), price };
   }
-  return { kind: null, price: null, name: null };
+  return { kind: null, name: null, price: null };
 }
 
 // The lines of a meal's cell, from the cell's text with a line break for each <br> of the page.
@@ -44,8 +44,8 @@ export function readMenuLines(meal: Meal, cellText: string): MenuLine[] {
       // A cell that was not filled in holds only the page's template, ": | :".
       .filter((line) => /[\p{L}\p{N}]/u.test(line))
       .map((text) => {
-        const { kind, price, name } = readMenuLine(text);
-        return { meal, text, kind, price, name };
+        const { kind, name, price } = readMenuLine(text);
+        return { meal, text, kind, name, price };
       })
   );
 }
