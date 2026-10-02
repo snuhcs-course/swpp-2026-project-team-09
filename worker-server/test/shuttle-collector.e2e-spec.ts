@@ -121,7 +121,10 @@ describe('A Collection of the vehicle positions', () => {
   });
 
   it('sends an empty answer as no vehicles', async () => {
-    const { mainServer } = await collect('vehicles', { [VEHICLE_POSITIONS]: '{"d":""}' });
+    // `d` emptied, as the operator answered on Sunday 2026-09-27, when no vehicle ran.
+    const empty = pages[VEHICLE_POSITIONS].replace(/"d":".*"/u, '"d":""');
+
+    const { mainServer } = await collect('vehicles', { [VEHICLE_POSITIONS]: empty });
 
     expect(mainServer.from('shuttle_vehicles', 'shuttle-vehicles-collected')).toMatchObject([{ vehicles: [] }]);
   });
@@ -171,6 +174,29 @@ describe('The schedule of the shuttle Collections', () => {
       new Date('2026-10-05T08:00:00+09:00'),
       new Date('2026-10-05T08:00:15+09:00'),
     ]);
+  });
+});
+
+describe('A vehicle Collection still waiting for an answer', () => {
+  it('makes the next runs skip, so that the requests do not pile up', async () => {
+    // Friday, ten seconds before a run, with the timers replaced too.
+    vi.useFakeTimers({
+      toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
+      now: new Date('2026-10-02T15:39:50+09:00'),
+    });
+    // A main server that is down: a run waits 10 seconds for each of its two messages.
+    const mainServer = new MainServerStub();
+    mainServer.unanswered.add('shuttle-vehicles-collected');
+    mainServer.unanswered.add('collection-failed');
+    const app = await startApp(inject('settings'), { fetchPage: sourcesServing(pages).fetch, mainServer });
+
+    await vi.advanceTimersByTimeAsync(75_000);
+    await app.close();
+
+    // Each run takes 20 seconds, so the runs of 15:40:15 and 15:40:45 are skipped.
+    expect(
+      mainServer.from('shuttle_vehicles', 'shuttle-vehicles-collected').map(({ collectedAt }) => collectedAt),
+    ).toEqual(['2026-10-02T06:40:00.005Z', '2026-10-02T06:40:30.005Z', '2026-10-02T06:41:00.005Z']);
   });
 });
 

@@ -1,5 +1,5 @@
 import { load } from 'cheerio';
-import { type RouteStop } from './dto/shuttle-collected.dto.js';
+import { type RouteStop } from './dto/shuttle-stops-collected.dto.js';
 
 // Reads the stops of the operator's route page in loop order, with their places on the drawing, and the service hours.
 export function parseRoutePage(html: string): { stops: RouteStop[]; serviceHours: string } {
@@ -25,7 +25,7 @@ export function parseRoutePage(html: string): { stops: RouteStop[]; serviceHours
   const serviceHours = $('#header .bottom_box li')
     .text()
     .split('\n')
-    .map((line) => line.replaceAll(' ', ' ').trim())
+    .map((line) => line.replaceAll('\u00A0', ' ').trim())
     .filter((line) => line !== '')
     .join('\n');
   if (serviceHours === '') {

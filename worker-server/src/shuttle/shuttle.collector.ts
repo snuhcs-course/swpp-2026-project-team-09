@@ -2,12 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { Collector, Collects } from '../common/collector.js';
 import { PageFetcher } from '../common/page-fetcher.js';
-import {
-  SHUTTLE_SOURCES,
-  type ShuttleSource,
-  type ShuttleStopsCollectedMessage,
-  type ShuttleVehiclesCollectedMessage,
-} from './dto/shuttle-collected.dto.js';
+import { type ShuttleStopsCollectedMessage } from './dto/shuttle-stops-collected.dto.js';
+import { type ShuttleVehiclesCollectedMessage } from './dto/shuttle-vehicles-collected.dto.js';
 import { parseRoutePage } from './route-page.parser.js';
 import { parseVehiclePositions } from './vehicle-positions.parser.js';
 
@@ -23,6 +19,10 @@ const VEHICLE_POSITIONS = 'https://web.busin.co.kr/BuslineCircleS.aspx/GetRoute'
 // What the route page itself sends for the route's vehicles.
 const VEHICLES_REQUEST = { data: ',F,41946,snu_1' };
 
+export const SHUTTLE_SOURCES = ['shuttle_stops', 'shuttle_vehicles'] as const;
+
+export type ShuttleSource = (typeof SHUTTLE_SOURCES)[number];
+
 @Injectable()
 @Collects(SHUTTLE_SOURCES)
 export class ShuttleCollector extends Collector {
@@ -35,16 +35,22 @@ export class ShuttleCollector extends Collector {
     await this.collectOne('shuttle_stops');
   }
 
-  @Cron(VEHICLES_TIMES, { timeZone: 'Asia/Seoul' })
+  // A run that waits behind other pages, or for a main server that is down, makes the next ones skip, so that the
+  // requests do not pile up and go out together.
+  @Cron(VEHICLES_TIMES, { timeZone: 'Asia/Seoul', waitForCompletion: true })
   async collectVehicles(): Promise<void> {
     await this.collectOne('shuttle_vehicles');
   }
 
   collectOne(source: ShuttleSource): Promise<boolean> {
     const now = new Date();
-    return source === 'shuttle_stops'
-      ? this.handOver(source, now, 'shuttle-stops-collected', this.readRoutePage(now))
-      : this.handOver(source, now, 'shuttle-vehicles-collected', this.readVehiclePositions());
+    const collect = {
+      shuttle_stops: (): Promise<boolean> =>
+        this.handOver(source, now, 'shuttle-stops-collected', this.readRoutePage(now)),
+      shuttle_vehicles: (): Promise<boolean> =>
+        this.handOver(source, now, 'shuttle-vehicles-collected', this.readVehiclePositions()),
+    };
+    return collect[source]();
   }
 
   private async readRoutePage(now: Date): Promise<ShuttleStopsCollectedMessage> {

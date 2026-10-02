@@ -29,8 +29,8 @@ describe("The operator's vehicle positions", () => {
   });
 
   it('give no vehicles in an empty answer', () => {
-    // As the operator answered on Sunday 2026-09-27, when no vehicle ran (external-sources.md, 5).
-    expect(parseVehiclePositions('{"d":""}')).toEqual([]);
+    // `d` emptied, as the operator answered on Sunday 2026-09-27, when no vehicle ran (external-sources.md, 5).
+    expect(parseVehiclePositions(answer.replace(/"d":".*"/u, '"d":""'))).toEqual([]);
   });
 });
 
@@ -40,8 +40,9 @@ describe('An answer that is not the vehicle positions the parser knows', () => {
   });
 
   it('is refused when a row has no vehicle', () => {
-    expect(() => parseVehiclePositions('{"d":"4522/157/40/1/ 71소1241/;4521/195/"}')).toThrow(
-      'The answer has a row without a vehicle: 4521/195/',
-    );
+    // 4521's row cut short after its x.
+    const shortRow = answer.replace('4521/195/294/3/ 71소1258, 71소1246, 71소1244/', '4521/195/');
+
+    expect(() => parseVehiclePositions(shortRow)).toThrow('The answer has a row without a vehicle: 4521/195/');
   });
 });

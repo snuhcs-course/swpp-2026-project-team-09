@@ -7,7 +7,6 @@ import { ShuttleGateway } from './shuttle.gateway.js';
 export class ShuttleController {
   constructor(private readonly gateway: ShuttleGateway) {}
 
-  // The main server sends each set of vehicles it stores.
   @EventPattern('shuttle-vehicles-updated')
   vehiclesUpdated(@Payload() vehicles: ShuttleVehicle[]): void {
     this.gateway.sendVehicles(vehicles);

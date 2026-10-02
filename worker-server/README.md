@@ -47,8 +47,9 @@ A Collection is one run of the worker reading a Source and handing what it read 
 follows these rules; `src/menu/menu.collector.ts` is the first. A collector extends `Collector` from
 `src/common/collector.ts`, which holds the worker's end of a Collection.
 
-- **Schedule**: `@Cron()` from `@nestjs/schedule` on the collector's method starts its Collections. The times are one
-  constant at the top of the collector's file, a cron expression with seconds, and the time zone is `Asia/Seoul`:
+- **Schedule**: `@Cron()` from `@nestjs/schedule` on the collector's method starts its Collections. The times are a
+  constant at the top of the collector's file, one for each schedule, a cron expression with seconds, and the time zone
+  is `Asia/Seoul`:
 
   ```ts
   const COLLECTION_TIMES = '0 0 5,10 * * *';
@@ -269,6 +270,9 @@ Two Sources of the shuttle operator's circular route 41946 (`.scratch/research/e
   the firewall's block page, is a failed Collection.
 - The vehicle positions are not asked for outside those hours, the service hours of the semester, nor at weekends. On a
   holiday or in a vacation the operator answers with no vehicles, which is sent as such.
+- A vehicle run that is still waiting, behind the menu pages of 10:00 or for a main server that is down, makes the next
+  runs skip (`waitForCompletion`), so that the requests do not pile up and go out together. The vehicles served then
+  grow more than a minute old and disappear until a run gets through.
 - The main server places each vehicle at a stop and sends the vehicles on to the apps:
   [Shuttle](../main-server/README.md#shuttle).
 

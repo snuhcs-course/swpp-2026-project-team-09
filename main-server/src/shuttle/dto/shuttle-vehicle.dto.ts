@@ -1,4 +1,4 @@
-import { ShuttleStop } from '../../generated/prisma/client.js';
+import { ShuttleStop, ShuttleVehicle } from '../../generated/prisma/client.js';
 import { ShuttleStopDto, toShuttleStopDto } from './shuttle-route.dto.js';
 
 // A vehicle at the stop the operator reports, as the route serves it and the socket server sends it.
@@ -10,15 +10,10 @@ export interface ShuttleVehicleDto {
   receivedAt: Date;
 }
 
-export interface PlacedVehicle {
-  carId: string;
-  stop: ShuttleStop;
-  receivedAt: Date;
-}
-
-// In loop order of their stops.
-export function toShuttleVehicleDtos(vehicles: PlacedVehicle[]): ShuttleVehicleDto[] {
-  return vehicles
-    .toSorted((a, b) => a.stop.position - b.stop.position || a.carId.localeCompare(b.carId))
-    .map(({ carId, stop, receivedAt }) => ({ carId, stop: toShuttleStopDto(stop), receivedAt }));
+export function toShuttleVehicleDto({
+  carId,
+  stop,
+  receivedAt,
+}: Pick<ShuttleVehicle, 'carId' | 'receivedAt'> & { stop: ShuttleStop }): ShuttleVehicleDto {
+  return { carId, stop: toShuttleStopDto(stop), receivedAt };
 }

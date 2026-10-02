@@ -1,18 +1,28 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { z } from 'zod';
 import { CollectionService } from '../collection/collection.service.js';
 import { MESSAGING_CLIENT } from '../common/messaging.module.js';
 import { PrismaService } from '../common/prisma.service.js';
-import { ShuttleStop, Source } from '../generated/prisma/client.js';
-import { lineSchema, ShuttleRouteDto, toShuttleStopDto } from './dto/shuttle-route.dto.js';
+import { ShuttleStop, ShuttleVehicle, Source } from '../generated/prisma/client.js';
+import { ShuttleRouteDto, toShuttleStopDto } from './dto/shuttle-route.dto.js';
 import { type ShuttleStopsCollectedMessage } from './dto/shuttle-stops-collected.dto.js';
-import { ShuttleVehicleDto, toShuttleVehicleDtos } from './dto/shuttle-vehicle.dto.js';
+import { ShuttleVehicleDto, toShuttleVehicleDto } from './dto/shuttle-vehicle.dto.js';
 import { type ShuttleVehiclesCollectedMessage } from './dto/shuttle-vehicles-collected.dto.js';
 import { ROUTE_NUMBER } from './shuttle.seed.js';
 
 // A position older than this is no longer served, so that the vehicles disappear when the service ends or the worker
 // stops.
 const POSITION_LIFETIME = 60 * 1000;
+
+// The line as the seed stores it.
+const lineSchema = z.array(z.object({ latitude: z.number(), longitude: z.number() }));
+
+type PlacedVehicle = Pick<ShuttleVehicle, 'carId' | 'receivedAt'> & { stop: ShuttleStop };
+
+function inLoopOrder(a: PlacedVehicle, b: PlacedVehicle): number {
+  return a.stop.loopOrder - b.stop.loopOrder || a.carId.localeCompare(b.carId);
+}
 
 // The stop nearest to a position on the drawing. A vehicle at a stop comes 5 px below the stop's top, which never
 // changes the nearest: the stops lie at least 50 px apart.
@@ -37,7 +47,7 @@ export class ShuttleService {
 
   async route(): Promise<ShuttleRouteDto> {
     const route = await this.prisma.shuttleRoute.findUniqueOrThrow({ where: { number: ROUTE_NUMBER } });
-    const stops = await this.prisma.shuttleStop.findMany({ orderBy: { position: 'asc' } });
+    const stops = await this.prisma.shuttleStop.findMany({ orderBy: { loopOrder: 'asc' } });
     return {
       serviceHours: route.serviceHours,
       stops: stops.map((stop) => toShuttleStopDto(stop)),
@@ -50,13 +60,13 @@ export class ShuttleService {
       where: { receivedAt: { gte: new Date(Date.now() - POSITION_LIFETIME) } },
       include: { stop: true },
     });
-    return toShuttleVehicleDtos(vehicles);
+    return vehicles.toSorted(inLoopOrder).map((vehicle) => toShuttleVehicleDto(vehicle));
   }
 
   // The stops of the page must be those of the seed, in its loop order. Any other list means that the page changed,
   // and a person corrects the seed.
   async storeStops({ collectedAt, stops, serviceHours }: ShuttleStopsCollectedMessage): Promise<void> {
-    const seeded = (await this.prisma.shuttleStop.findMany({ orderBy: { position: 'asc' } })).map(({ name }) => name);
+    const seeded = (await this.prisma.shuttleStop.findMany({ orderBy: { loopOrder: 'asc' } })).map(({ name }) => name);
     const names = stops.map(({ name }) => name);
     const unknown = names.filter((name) => !seeded.includes(name));
     if (unknown.length > 0) {
@@ -89,7 +99,8 @@ export class ShuttleService {
         data: placed.map(({ carId, stop }) => ({ carId, stopId: stop.id, receivedAt })),
       });
     });
-    this.messaging.emit('shuttle-vehicles-updated', toShuttleVehicleDtos(placed)).subscribe({
+    const sent = placed.toSorted(inLoopOrder).map((vehicle) => toShuttleVehicleDto(vehicle));
+    this.messaging.emit('shuttle-vehicles-updated', sent).subscribe({
       error: (error: unknown) => {
         this.logger.warn(`The socket server was not given the shuttle's vehicles: ${String(error)}`);
       },

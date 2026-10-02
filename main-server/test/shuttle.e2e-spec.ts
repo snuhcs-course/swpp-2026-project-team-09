@@ -66,8 +66,8 @@ async function sendVehicles(vehicles: object[], changes: object = {}): Promise<v
   ).resolves.toEqual({ status: 'ok' });
 }
 
-// Each vehicle as `[carId, the name of its stop]`.
-async function servedStops(): Promise<string[][]> {
+// Each vehicle served, as its carid and the name of its stop.
+async function carsAtStops(): Promise<string[][]> {
   return (await servedVehicles()).map(({ carId, stop }) => [carId, stop.name]);
 }
 
@@ -171,7 +171,7 @@ describe('Vehicles collected by the worker', () => {
     // 31 px below 38동 and 19 px above 신소재공동연구소.
     await sendVehicles([{ carId: '4524', x: 195, y: 270 }]);
 
-    expect(await servedStops()).toEqual([['4524', '신소재공동연구소']]);
+    expect(await carsAtStops()).toEqual([['4524', '신소재공동연구소']]);
   });
 
   it('are served only to a User', async () => {
@@ -188,14 +188,14 @@ describe('The vehicles served', () => {
 
     await sendVehicles([{ carId: '4522', x: 195, y: 91 }]);
 
-    expect(await servedStops()).toEqual([['4522', '법과대']]);
+    expect(await carsAtStops()).toEqual([['4522', '법과대']]);
   });
 
   it('are no longer served once their positions are more than a minute old', async () => {
     await sendVehicles([{ carId: '4522', x: 157, y: 40 }], {
       collectedAt: new Date(Date.now() - 50_000).toISOString(),
     });
-    expect(await servedStops()).toEqual([['4522', '정문']]);
+    expect(await carsAtStops()).toEqual([['4522', '정문']]);
 
     await sendVehicles([{ carId: '4522', x: 157, y: 40 }], {
       collectedAt: new Date(Date.now() - 61_000).toISOString(),
@@ -241,7 +241,7 @@ describe('The places on the drawing that the route page gives', () => {
 
     await sendVehicles([{ carId: '4522', x: 300, y: 505 }]);
 
-    expect(await servedStops()).toEqual([['4522', '경영대']]);
+    expect(await carsAtStops()).toEqual([['4522', '경영대']]);
   });
 });
 
@@ -255,6 +255,6 @@ describe('An invalid shuttle message', () => {
 
     await refusal(harness.worker, 'shuttle-vehicles-collected', vehiclesMessage([{ carId: '4520', x: '157', y: 40 }]));
 
-    expect(await servedStops()).toEqual([['4522', '정문']]);
+    expect(await carsAtStops()).toEqual([['4522', '정문']]);
   });
 });

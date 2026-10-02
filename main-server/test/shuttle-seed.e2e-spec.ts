@@ -48,15 +48,18 @@ async function seedWithStops(change: (stops: Stop[]) => Stop[]): Promise<string>
   return copy;
 }
 
-function stopsInLoopOrder(): Promise<{ id: string; name: string }[]> {
-  return prisma.shuttleStop.findMany({ orderBy: { position: 'asc' }, select: { id: true, name: true } });
+function stopsInLoopOrder(): Promise<{ id: string; name: string; latitude: number }[]> {
+  return prisma.shuttleStop.findMany({
+    orderBy: { loopOrder: 'asc' },
+    select: { id: true, name: true, latitude: true },
+  });
 }
 
 describe('Loading the shuttle seed', () => {
   it("loads the operator's 14 stops in loop order, each at the coordinates of the campus map's stop it is paired with", async () => {
     await loadSeed(prisma);
 
-    const stops = await prisma.shuttleStop.findMany({ orderBy: { position: 'asc' }, omit: { id: true } });
+    const stops = await prisma.shuttleStop.findMany({ orderBy: { loopOrder: 'asc' }, omit: { id: true } });
     expect(stops.map(({ name }) => name)).toEqual([
       '정문',
       '법과대',
@@ -73,11 +76,11 @@ describe('Loading the shuttle seed', () => {
       '수의대',
       '경영대',
     ]);
-    // The campus map's 공대입구, and the position on the drawing that P05 recorded.
+    // At the campus map's 공대입구, and at the place on the drawing that P05 recorded.
     expect(stops[4]).toEqual({
-      campusMapCode: 601,
+      seedKey: 5,
       name: '38동',
-      position: 4,
+      loopOrder: 4,
       latitude: 37.454964794994,
       longitude: 126.949840936747,
       drawingLeft: 195,
@@ -109,7 +112,7 @@ describe('Loading the shuttle seed again', () => {
     expect(await prisma.shuttleRoute.findMany()).toEqual(routes);
   });
 
-  it('keeps the positions on the drawing that the worker read since', async () => {
+  it('keeps the places on the drawing that the worker read since', async () => {
     await loadSeed(prisma);
     // As a Collection of the route page stores them.
     await prisma.shuttleStop.updateMany({ where: { name: '정문' }, data: { drawingLeft: 160, drawingTop: 30 } });
@@ -134,7 +137,25 @@ describe('Loading a corrected shuttle seed', () => {
 
     await loadSeed(prisma, renamed);
 
-    expect((await stopsInLoopOrder())[1]).toEqual({ id: lawSchool?.id, name: '법학관' });
+    expect((await stopsInLoopOrder())[1]).toMatchObject({ id: lawSchool?.id, name: '법학관' });
+    expect(await prisma.shuttleStop.count()).toBe(14);
+  });
+
+  it('moves a stop paired with another campus map stop to that stop in place, so that it keeps its identifier', async () => {
+    await loadSeed(prisma);
+    const [, , naturalSciences] = await stopsInLoopOrder();
+    // A person finds that the bus stops at another of the campus map's stops.
+    const repaired = await seedWithStops((stops) =>
+      stops.map((stop) => (stop.name === '자연대' ? { ...stop, campusMapStop: '제2파워플랜트' } : stop)),
+    );
+
+    await loadSeed(prisma, repaired);
+
+    expect((await stopsInLoopOrder())[2]).toEqual({
+      id: naturalSciences?.id,
+      name: '자연대',
+      latitude: 37.44990577747926,
+    });
     expect(await prisma.shuttleStop.count()).toBe(14);
   });
 

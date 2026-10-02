@@ -22,9 +22,9 @@ CREATE TABLE "shuttle_routes" (
 -- CreateTable
 CREATE TABLE "shuttle_stops" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "campus_map_code" INTEGER NOT NULL,
+    "seed_key" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
-    "position" INTEGER NOT NULL,
+    "loop_order" INTEGER NOT NULL,
     "latitude" DOUBLE PRECISION NOT NULL,
     "longitude" DOUBLE PRECISION NOT NULL,
     "drawing_left" INTEGER NOT NULL,
@@ -47,7 +47,7 @@ CREATE TABLE "shuttle_vehicles" (
 CREATE UNIQUE INDEX "shuttle_routes_number_key" ON "shuttle_routes"("number");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "shuttle_stops_campus_map_code_key" ON "shuttle_stops"("campus_map_code");
+CREATE UNIQUE INDEX "shuttle_stops_seed_key_key" ON "shuttle_stops"("seed_key");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "shuttle_vehicles_car_id_key" ON "shuttle_vehicles"("car_id");

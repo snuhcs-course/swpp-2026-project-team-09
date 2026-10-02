@@ -48,6 +48,7 @@ describe('A page that is not the route page the parser knows', () => {
   });
 
   it('is refused when it writes no service hours', () => {
+    // Without the header's one li, which holds the service hours.
     const page = routePage.replace(/<li>.*?<\/li>/su, '');
 
     expect(() => parseRoutePage(page)).toThrow('The page has no service hours');

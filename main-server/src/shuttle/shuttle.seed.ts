@@ -17,15 +17,21 @@ const campusMapFile = z.object({
   ),
 });
 
-// The operator's stops in loop order, each with its place on the drawing and the campus map's stop it is paired with.
+// The operator's stops in loop order, each with its key, its place on the drawing and the campus map's stop it is
+// paired with.
 const stopsFile = z.object({
   stops: z
-    .array(z.object({ name: z.string().min(1), left: z.int(), top: z.int(), campusMapStop: z.string() }))
-    .refine((stops) => new Set(stops.map(({ name }) => name)).size === stops.length, 'Each stop must appear once')
-    .refine(
-      (stops) => new Set(stops.map(({ campusMapStop }) => campusMapStop)).size === stops.length,
-      'Each campus map stop must be paired once',
-    ),
+    .array(
+      z.object({
+        key: z.int().positive(),
+        name: z.string().min(1),
+        left: z.int(),
+        top: z.int(),
+        campusMapStop: z.string(),
+      }),
+    )
+    .refine((stops) => new Set(stops.map(({ key }) => key)).size === stops.length, 'Each key must appear once')
+    .refine((stops) => new Set(stops.map(({ name }) => name)).size === stops.length, 'Each stop must appear once'),
 });
 
 // GeoJSON's order: longitude, then latitude.
@@ -36,21 +42,21 @@ const routeFile = z.object({
   }),
 });
 
-// Updates each stop in place by the code of its campus map stop. A stop that has left the seed is removed, with any
-// vehicle placed at it: nothing that lasts points at a stop.
+// Updates each stop in place by its key, whatever else a correction changes, so that it keeps its identifier. A stop
+// that has left the seed is removed, with any vehicle placed at it: nothing that lasts points at a stop.
 export async function loadShuttle(prisma: PrismaClient, directory: string): Promise<number> {
   const campusMap = await readSeedFile(directory, 'campus-map-shuttle-stops.json', campusMapFile);
   const { stops } = await readSeedFile(directory, 'shuttle-stops.json', stopsFile);
   const { geometry } = await readSeedFile(directory, 'shuttle-route.geojson', routeFile);
-  const entries = stops.map(({ name, left, top, campusMapStop }, position) => {
+  const entries = stops.map(({ key, name, left, top, campusMapStop }, loopOrder) => {
     const paired = campusMap.suttle_route_path_list.find((stop) => stop.bus_station_name === campusMapStop);
     if (paired === undefined) {
       throw new Error(`${name} is paired with ${campusMapStop}, which the campus map does not list`);
     }
     return {
-      campusMapCode: paired.bus_station_code,
+      seedKey: key,
       name,
-      position,
+      loopOrder,
       latitude: paired.bus_station_latitude,
       longitude: paired.bus_station_longitude,
       drawingLeft: left,
@@ -59,10 +65,10 @@ export async function loadShuttle(prisma: PrismaClient, directory: string): Prom
   });
   const line = geometry.coordinates.map(([longitude, latitude]) => ({ latitude, longitude }));
   await prisma.$transaction([
-    prisma.shuttleStop.deleteMany({ where: { campusMapCode: { notIn: entries.map((entry) => entry.campusMapCode) } } }),
+    prisma.shuttleStop.deleteMany({ where: { seedKey: { notIn: entries.map((entry) => entry.seedKey) } } }),
     ...entries.map(({ drawingLeft, drawingTop, ...values }) =>
       prisma.shuttleStop.upsert({
-        where: { campusMapCode: values.campusMapCode },
+        where: { seedKey: values.seedKey },
         create: { ...values, drawingLeft, drawingTop },
         // Once a stop is loaded, its place on the drawing is the one the worker last read from the route page.
         update: values,

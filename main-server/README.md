@@ -599,14 +599,17 @@ into the database.
     `building-outline-links.json` then replaces what the positions gave: `{ "number": "43", "outline": null, "why": … }`
     takes an outline away, and an identifier in `outline` gives that one. Loading again stores each building's outline
     anew, so a building that lost its outline is stored without one.
-  - The shuttle's 14 stops, in the order of `shuttle-stops.json`. A stop is updated in place by the code
-    (`bus_station_code`) of the campus map's stop it is paired with, so that a stop renamed in the file keeps its `id`.
-    A stop that has left the file is removed, with any vehicle at it, since nothing that lasts points at a stop. A
-    stop's place on the drawing is the file's only when the stop is first loaded; after that it is the one the route
-    page's Collection last stored. The line replaces the route's line.
+  - The shuttle's 14 stops, in the order of `shuttle-stops.json`. Each stop has a `key` there, a number given once and
+    never reused, since neither the operator, which names its stops only, nor the campus map, whose stop only lends
+    the coordinates, gives one that outlasts a correction. Loading again updates a stop in place by its key, so that it
+    keeps its `id` whatever a correction changes: its name, its pair or its place in the loop. A stop that has left the
+    file is removed, with any vehicle at it, since nothing that lasts points at a stop. A stop's place on the drawing
+    is the file's only when the stop is first loaded; after that it is the one the route page's Collection last
+    stored. The line replaces the route's line.
 - **Correcting**: change the entry in its file, such as a name in `inst_kor_nm`, and load again. The next export
-  overwrites the correction. A shuttle stop's pair is `campusMapStop` in `shuttle-stops.json`; the line is the list of
-  coordinates in `shuttle-route.geojson`, longitude first, which GitHub and geojson.io draw on a map.
+  overwrites the correction. A shuttle stop's pair is `campusMapStop` in `shuttle-stops.json`, and a new stop takes
+  the next unused `key`; the line is the list of coordinates in `shuttle-route.geojson`, longitude first, which GitHub
+  and geojson.io draw on a map.
 - **Coordinates** come from the campus map and OpenStreetMap only, never from Kakao, Naver or Google maps, whose terms
   forbid storing their data. The campus map is drawn on a Kakao map, but its buildings' coordinates are the
   university's own.

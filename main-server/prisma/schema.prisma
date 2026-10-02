@@ -180,7 +180,6 @@ enum Source {
   snu_events
   // The shuttle operator's route page, for the stops and the service hours.
   shuttle_stops
-  // The shuttle operator's vehicle positions.
   shuttle_vehicles
 
   @@map("source")
@@ -241,19 +240,19 @@ model ShuttleRoute {
 
 // One of the operator's stops of the route, at the coordinates of the campus map's stop it is paired with.
 model ShuttleStop {
-  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  // The campus map's code of the paired stop, by which loading the seed again updates the stop in place.
-  campusMapCode Int              @unique @map("campus_map_code")
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // The stop's `key` in seed/shuttle-stops.json, by which loading the seed again updates the stop in place.
+  seedKey     Int              @unique @map("seed_key")
   // As the operator writes it. The worker's messages name the stop by it.
-  name          String
-  // In loop order, from 0 at 정문.
-  position      Int
-  latitude      Float
-  longitude     Float
+  name        String
+  // From 0 at 정문.
+  loopOrder   Int              @map("loop_order")
+  latitude    Float
+  longitude   Float
   // Where the stop is on the operator's drawing of the route, in pixels: `left` and `top` on the route page.
-  drawingLeft   Int              @map("drawing_left")
-  drawingTop    Int              @map("drawing_top")
-  vehicles      ShuttleVehicle[]
+  drawingLeft Int              @map("drawing_left")
+  drawingTop  Int              @map("drawing_top")
+  vehicles    ShuttleVehicle[]
 
   @@map("shuttle_stops")
 }
@@ -265,7 +264,7 @@ model ShuttleVehicle {
   carId      String      @unique @map("car_id")
   stopId     String      @map("stop_id") @db.Uuid
   stop       ShuttleStop @relation(fields: [stopId], references: [id], onDelete: Cascade)
-  // When the worker received the operator's answer, which carries no time of its own.
+  // When the worker received the operator's answer.
   receivedAt DateTime    @map("received_at")
 
   @@map("shuttle_vehicles")

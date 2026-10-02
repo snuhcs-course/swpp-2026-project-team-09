@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { type Vehicle } from './dto/shuttle-collected.dto.js';
+import { type Vehicle } from './dto/shuttle-vehicles-collected.dto.js';
 
 // `{"d":"row;row;…"}`
 const answerSchema = z.object({ d: z.string() });
