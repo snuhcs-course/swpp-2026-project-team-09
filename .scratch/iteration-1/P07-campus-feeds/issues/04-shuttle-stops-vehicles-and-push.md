@@ -161,3 +161,12 @@ Ticket 03's branch took in `1.0/Main`, which now holds ticket 05, and the Campus
 - The seed command now loads 226 buildings and the 14 shuttle stops. No test of this ticket changed, and the schema and the migrations are those checked before.
 - On this branch: main server 28 files and 336 tests, worker server 11 files and 114 tests, socket server 5 files and 25 tests; lint, format:check and typecheck pass in the three. The numbers in the sections above are those of their time.
 - Agent usage of moving tickets 02 and 04, in the session of ticket 03's review: about 5 minutes, an estimate; input 6,048,007 tokens, of which 6,033,328 were cache reads, 14,659 cache writes and 20 uncached, and output 8,668, counted when this section was written.
+
+### On ticket 02's branch with the outlines (2026-10-02)
+
+Ticket 03's branch gained the buildings' outlines and the lookup of the building at a position; ticket 02's branch was moved onto it, and this ticket's commits onto ticket 02's again.
+
+- Conflicts in the main server's README alone, where both tickets describe the seed: the table of seed files, the notes on exporting and on loading, and the folder layout hold the outlines and the shuttle side by side.
+- The seed command loads 226 buildings, 194 of them with an outline, and the 14 shuttle stops. No test of this ticket changed, and its migration is as it was.
+- On this branch: main server 29 files and 351 tests, worker server 11 files and 114 tests, socket server 5 files and 25 tests; lint, format:check and typecheck pass in the three.
+- Agent usage of moving tickets 02 and 04 this time, in the session of ticket 03's review: about 5 minutes, an estimate; input 12,170,219 tokens, of which 12,147,414 were cache reads, 22,779 cache writes and 26 uncached, and output 12,442, counted when this section was written.
