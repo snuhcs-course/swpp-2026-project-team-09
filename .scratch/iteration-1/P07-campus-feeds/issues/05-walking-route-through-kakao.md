@@ -87,12 +87,13 @@ A Standards review and a Spec review ran side by side on the ticket's commit. Th
 
 ### Agent usage (2026-10-02)
 
-Tickets 02 to 05 were built in one orchestrated run: one session placed the agents and managed the merges, and each ticket had an implementing agent in a worktree of its own and a merging agent.
+Tickets 02 to 05 were built in one orchestrated run: one session placed the agents and kept the branches and the PRs, and each ticket had an implementing agent in a worktree of its own.
 
-- Agent time: about 34 minutes, an estimate. Nobody was waited for.
-  - The implementing agent worked about 31 minutes, from reading the ticket to its report.
-  - The merging agent worked about 3 minutes: the merge into the integration branch, the four checks on the merged branch and a search of the branch for the key.
-- Tokens, for the two agents, counted from their transcripts after the merge:
-  - Input: 27,676,372 in total, of which 27,267,679 were cache reads, 408,423 cache writes and 270 uncached.
-  - Output: 36,876. The transcripts record only part of the output of most steps, so this is a lower bound.
-- The orchestrating session's share is recorded once, under the ticket of this run that was merged last.
+- Agent time: about 60 minutes, an estimate. Nobody was waited for.
+  - The implementing agent worked about 42 minutes: 31 from reading the ticket to its report, and 11 acting on the review.
+  - A merging agent worked about 3 minutes. The run first merged its tickets into one branch, before the user asked for a PR for each: it ran the four checks on this ticket merged with the others and searched the branch for the key.
+  - The Standards and the Spec reviewer worked about 7 minutes each, at the same time.
+- Tokens, for the four agents, counted from their transcripts when this section was written:
+  - Input: 45,531,236 in total, of which 44,386,045 were cache reads, 1,144,777 cache writes and 414 uncached.
+  - Output: 79,973. The transcripts record only part of the output of most steps, so this is a lower bound.
+- The orchestrating session's share is recorded once for the run, under ticket 04.
