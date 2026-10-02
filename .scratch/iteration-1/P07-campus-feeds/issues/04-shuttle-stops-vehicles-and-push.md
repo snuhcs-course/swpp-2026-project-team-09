@@ -152,3 +152,12 @@ Tickets 02 to 05 were built in one orchestrated run: one session placed the agen
   - Input: 31,164,432 in total, of which 30,789,452 were cache reads, 374,714 cache writes and 266 uncached.
   - Output: 187,422.
   - Counted when this section was written. Opening this ticket's PR, the final report and removing the worktrees came after.
+
+### On ticket 02's branch with the margin (2026-10-02)
+
+Ticket 03's branch took in `1.0/Main`, which now holds ticket 05, and the Campus Boundary's 10 m margin; ticket 02's branch was moved onto it, and this ticket's commits onto ticket 02's.
+
+- One conflict, in the main server's README: the folder layout lists `walking-route/`, `buildings/` and `shuttle/`. Ticket 05 is under this branch again, through `1.0/Main`; nothing of this ticket uses the walking route.
+- The seed command now loads 226 buildings and the 14 shuttle stops. No test of this ticket changed, and the schema and the migrations are those checked before.
+- On this branch: main server 28 files and 336 tests, worker server 11 files and 114 tests, socket server 5 files and 25 tests; lint, format:check and typecheck pass in the three. The numbers in the sections above are those of their time.
+- Agent usage of moving tickets 02 and 04, in the session of ticket 03's review: about 5 minutes, an estimate; input 6,048,007 tokens, of which 6,033,328 were cache reads, 14,659 cache writes and 20 uncached, and output 8,668, counted when this section was written.
