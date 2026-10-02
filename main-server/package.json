@@ -19,6 +19,8 @@
     "start:debug": "nest start --debug --watch --env-file .env",
     "start:prod": "node --env-file-if-exists=.env dist/main",
     "db:migrate": "prisma migrate deploy",
+    "db:seed": "node --env-file-if-exists=.env dist/seed",
+    "seed:export": "node scripts/export-seed.ts",
     "keys:generate": "node scripts/generate-access-token-keys.ts",
     "lint": "oxlint --type-aware",
     "typecheck": "tsc --noEmit",

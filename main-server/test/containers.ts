@@ -1,6 +1,9 @@
+import { PrismaPg } from '@prisma/adapter-pg';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
+import { PrismaClient } from '../src/generated/prisma/client.js';
+import { loadSeed } from '../src/load-seed.js';
 
 // The same data stores as compose.yaml at the repository root, started fresh for the tests.
 
@@ -25,6 +28,20 @@ export function mainDatabaseUrl(postgres: StartedTestContainer): string {
 
 export function migrate(databaseUrl: string): void {
   execFileSync('pnpm', ['db:migrate'], { env: { ...process.env, DATABASE_URL: databaseUrl }, stdio: 'inherit' });
+}
+
+export function connect(databaseUrl: string): PrismaClient {
+  return new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
+}
+
+// What `pnpm db:seed` does, without building the server first.
+export async function seed(databaseUrl: string): Promise<void> {
+  const prisma = connect(databaseUrl);
+  try {
+    await loadSeed(prisma);
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
 export function startRedis(): Promise<StartedTestContainer> {
