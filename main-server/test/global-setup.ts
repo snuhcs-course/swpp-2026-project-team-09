@@ -25,6 +25,8 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     GOOGLE_ADMIN_CLIENT_ID: 'snu-now-admin.apps.googleusercontent.com',
     // signInAsAdministrator(app) signs in as this one.
     INITIAL_ADMINISTRATOR_EMAILS: 'admin@example.com',
+    // Not a key: the tests never call Kakao.
+    KAKAO_REST_API_KEY: 'test-kakao-rest-api-key',
   };
   migrate(settings.DATABASE_URL);
   provide('settings', settings);
