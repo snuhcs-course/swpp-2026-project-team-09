@@ -268,7 +268,7 @@ that the User picks a place without typing coordinates:
 - `GET /buildings/search?q=공학관` answers, in the same order and form, the buildings whose name holds `q`, whatever
   the case of its Latin letters, and the building whose number is `q`, written with or without `동` (`302`, `302동`).
   A search that finds nothing answers `[]`, and `q` without text gets 400.
-- A name is the campus map's, except the eight the map wraps, such as `관악 223동[우석경제관]`, which are stored as
+- A name is the campus map's, except a name the map wraps, such as `관악 223동[우석경제관]`, which is stored as
   `우석경제관`. Several buildings share a name, such as the seven `(관악사)학부 생활관`.
 
 ## Campus Boundary
