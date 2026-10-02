@@ -8,6 +8,7 @@ import { settingsSchema } from './common/settings.js';
 import { EventModule } from './event/event.module.js';
 import { HealthModule } from './health/health.module.js';
 import { MenuModule } from './menu/menu.module.js';
+import { ShuttleModule } from './shuttle/shuttle.module.js';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { MenuModule } from './menu/menu.module.js';
     HealthModule,
     MenuModule,
     EventModule,
+    ShuttleModule,
   ],
 })
 export class AppModule {}

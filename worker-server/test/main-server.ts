@@ -1,4 +1,4 @@
-import { Observable, of, throwError } from 'rxjs';
+import { NEVER, Observable, of, throwError } from 'rxjs';
 import { z } from 'zod';
 
 const payloadSchema = z.record(z.string(), z.unknown());
@@ -10,10 +10,15 @@ export class MainServerStub {
   readonly refusals = new Map<string, string>();
   // The answer to a message of a pattern, such as a question, in place of { status: 'ok' }.
   readonly answers = new Map<string, unknown>();
+  // The patterns whose messages get no answer, as from a main server that is down.
+  readonly unanswered = new Set<string>();
 
   send(pattern: string, data: unknown): Observable<unknown> {
     // As JSON, which is how a message travels.
     this.messages.push({ pattern, data: payloadSchema.parse(JSON.parse(JSON.stringify(data))) });
+    if (this.unanswered.has(pattern)) {
+      return NEVER;
+    }
     const problem = this.refusals.get(pattern);
     return problem === undefined
       ? of(this.answers.get(pattern) ?? { status: 'ok' })

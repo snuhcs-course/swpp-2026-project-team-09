@@ -479,22 +479,97 @@ User's position and for the building list alike.
 the president's residence and the dormitory buildings 915 to 917, and four facilities on the hillside in the south: a
 position there is outside.
 
+## Shuttle
+
+The circular shuttle, the operator's route 41946, runs anticlockwise around the campus. Its stops and its line are
+[seed data](#seed-data). The worker server collects the operator's route page once a day and its vehicle positions
+every 15 seconds while the shuttle runs (`.scratch/research/external-sources.md` §5), and sends them as
+`shuttle-stops-collected` and `shuttle-vehicles-collected`. The app reads them with a User's access token:
+
+- `GET /shuttle` answers the route:
+
+  ```json
+  {
+    "serviceHours": "· 운행시간 안내(주말,공휴일,개교기념일 미운행)\n-  학기 8:00~21:00 / 계절학기, 방학 8:00~18:00\n※ 학기 8:00~19:00 (5~7분), 19:00~21:00 (20분 간격)\n※ 계절학기 5~7분 간격 / 방학 10분 간격",
+    "stops": [
+      { "id": "1b2c…", "name": "정문", "latitude": 37.4656884925184, "longitude": 126.948449058974 },
+      { "id": "7d8e…", "name": "법과대", "latitude": 37.4627402015981, "longitude": 126.949069941419 }
+    ],
+    "line": [
+      { "latitude": 37.4656903, "longitude": 126.9484557 },
+      { "latitude": 37.4655684, "longitude": 126.9485078 }
+    ]
+  }
+  ```
+
+  `stops` holds the operator's 14 stops in loop order from 정문, under the operator's names, at the coordinates of the
+  campus map's stops they are paired with. `line` runs along OpenStreetMap's roads from 정문 around the loop back to
+  정문. `serviceHours` is the route page's text, a line for each line of the page, as the last Collection read it, and
+  `null` before the first. The app shows it to say that the shuttle is not in service.
+
+- `GET /shuttle/vehicles` answers the vehicles in service, in the loop order of their stops:
+
+  ```json
+  [
+    {
+      "carId": "4522",
+      "stop": { "id": "1b2c…", "name": "정문", "latitude": 37.4656884925184, "longitude": 126.948449058974 },
+      "receivedAt": "2026-10-02T06:40:07.000Z"
+    }
+  ]
+  ```
+
+  `stop` is the stop the operator reports the vehicle at, as `GET /shuttle` gives it. `receivedAt` is when the worker
+  received the operator's answer, which carries no time of its own. A position is served for a minute after it was
+  received, so that the vehicles disappear by themselves when the service ends or the worker stops. Outside service
+  hours, or when the operator reports none, the answer is `[]`. No field says that a position is estimated.
+
+How a vehicle is stored:
+
+- The operator reports a vehicle as a position on its drawing of the route, in pixels, and every position seen in
+  service fell on a stop. The server stores the vehicle at the stop nearest to that position on the drawing. A vehicle
+  at a stop comes 5 px below the stop's `top`, which never changes the nearest: the stops lie at least 50 px apart. No
+  place between two stops is computed; the app moves a vehicle from one stop to the next (P15).
+- The stops' places on the drawing are the route page's: the seed gives those P05 recorded, and each
+  `shuttle-stops-collected` stores the page's.
+- Each `shuttle-vehicles-collected` replaces the vehicles as a whole, as the operator's page redraws them on each
+  answer: a vehicle the operator no longer reports is gone at once, and a set without vehicles empties the list.
+  Vehicles are told apart by the operator's `carid`.
+- Each set stored goes to the socket server as the event `shuttle-vehicles-updated`, in the form `GET /shuttle/vehicles`
+  answers, and the socket server sends it to every connected app (see the
+  [socket server](../socket-server/README.md#shuttle-vehicles)). The event does not wait for an answer: an app that
+  missed one gets the next set 15 seconds later.
+
+The messages, which follow [Messages from the worker server](#messages-from-the-worker-server):
+
+- `shuttle-stops-collected`: `{ "source": "shuttle_stops", "collectedAt", "stops": [{ "name", "left", "top" }],
+"serviceHours" }`, the stops in the page's order with their places on the drawing as the page writes them. The stops
+  must be the seed's, by name and in loop order. A name the seed does not know is refused with
+  `stops: the seed does not know 법학관`, and any other difference with
+  `stops: not the seed's stops in its loop order, 정문, 법과대, …`. Nothing is stored, and the worker reports the refusal
+  as a failed Collection: the page has changed, and a person corrects the seed.
+- `shuttle-vehicles-collected`: `{ "source": "shuttle_vehicles", "collectedAt", "vehicles": [{ "carId", "x", "y" }] }`,
+  where `collectedAt` is when the operator's answer arrived and `x`, `y` the position on the drawing. A `carId` listed
+  twice is refused.
+
 ## Seed data
 
 Seed data comes from outside the project once, rather than by Collection: a file in `seed/` that one command loads
 into the database.
 
-| File                                      | What it holds                                                                       | Exported from                                                |
-| ----------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `campus-boundary.geojson`                 | The Campus Boundary, read by the server and not loaded                              | An Overpass query for relation 11917142                      |
-| `campus-map-buildings.json`               | The campus map's 250 rows, as it serves them                                        | `https://map.snu.ac.kr/api/building.action?page=1&rows=1000` |
-| `openstreetmap-buildings.json`            | 71-1동 and 901동, which the campus map does not list, with OpenStreetMap's names    | An Overpass query for the two names                          |
-| `openstreetmap-building-outlines.geojson` | The outline of every building OpenStreetMap draws in the campus extent, 225 of them | An Overpass query for the buildings in the extent            |
-| `building-outline-links.json`             | A person's corrections of which outline a building has, each with its reason        | Written by hand                                              |
+| File                                      | What it holds                                                                                 | Exported from                                                                          |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `campus-boundary.geojson`                 | The Campus Boundary, read by the server and not loaded                                        | An Overpass query for relation 11917142                                                |
+| `campus-map-buildings.json`               | The campus map's 250 rows, as it serves them                                                  | `https://map.snu.ac.kr/api/building.action?page=1&rows=1000`                           |
+| `openstreetmap-buildings.json`            | 71-1동 and 901동, which the campus map does not list, with OpenStreetMap's names              | An Overpass query for the two names                                                    |
+| `openstreetmap-building-outlines.geojson` | The outline of every building OpenStreetMap draws in the campus extent, 225 of them           | An Overpass query for the buildings in the extent                                      |
+| `building-outline-links.json`             | A person's corrections of which outline a building has, each with its reason                  | Written by hand                                                                        |
+| `campus-map-shuttle-stops.json`           | The campus map's 15 stops of its loop, route 61, as it serves them                            | `https://map.snu.ac.kr/api/bus/suttle/61.action?sch_bus_deta_cd=1102`                  |
+| `shuttle-stops.json`                      | The operator's 14 stops in loop order, their places on the drawing and the pairs, by a person | The operator's route page, as P05 recorded it                                          |
+| `shuttle-route.geojson`                   | The shuttle's line along OpenStreetMap's roads, traced and checked by a person                | An Overpass query for the campus roads, traced through the campus map's stops in order |
 
 - **Origin**: each file keeps the address or Overpass query it came from (`exportedFrom`, `query`) and the day of the
-  export (`exportedOn`), in `properties` in the boundary's GeoJSON file and at the top of the outlines'. All four
-  were exported on 2026-10-02.
+  export (`exportedOn`), in `properties` in the GeoJSON files of one feature and at the top of the outlines' file.
 - **Exporting**: `pnpm seed:export campus-map-buildings` repeats the export of the files it names and overwrites them.
   Each export is one request, sent with the worker's User-Agent, which names the project as OpenStreetMap asks.
   Overpass asks for one query at a time; when it answers 504, it is busy, so wait some minutes before trying again.
@@ -504,6 +579,10 @@ into the database.
   - Each outline is one ring under OpenStreetMap's identifier, `way/…`, with its name. A building drawn as a relation
     of several ways gives one ring of its joined outer ways, under `relation/…`, or, where a part stands apart, a ring
     for that part under the part's own `way/…`. A courtyard is left out, so that a position in it is in the building.
+  - `shuttle-stops.json` and `shuttle-route.geojson` are made by a person and have no export. The stops' names and
+    places on the drawing are the route page's; `campusMapStop` pairs each with a stop of the campus map, which gives
+    the coordinates. The line was traced along the roads the query in its file gave, as the shortest way a vehicle may
+    take from each of the campus map's 15 stops to the next, and a person checked it on a map.
 - **Loading**: `pnpm db:seed` builds the server and loads the files into the database at `DATABASE_URL`. In Compose
   the image, built already, runs `node dist/seed` before the server starts.
   - Loaded are the entries of both building files that lie inside the Campus Boundary, except the map's `Test` row:
@@ -520,17 +599,24 @@ into the database.
     `building-outline-links.json` then replaces what the positions gave: `{ "number": "43", "outline": null, "why": … }`
     takes an outline away, and an identifier in `outline` gives that one. Loading again stores each building's outline
     anew, so a building that lost its outline is stored without one.
+  - The shuttle's 14 stops, in the order of `shuttle-stops.json`. A stop is updated in place by the code
+    (`bus_station_code`) of the campus map's stop it is paired with, so that a stop renamed in the file keeps its `id`.
+    A stop that has left the file is removed, with any vehicle at it, since nothing that lasts points at a stop. A
+    stop's place on the drawing is the file's only when the stop is first loaded; after that it is the one the route
+    page's Collection last stored. The line replaces the route's line.
 - **Correcting**: change the entry in its file, such as a name in `inst_kor_nm`, and load again. The next export
-  overwrites the correction.
+  overwrites the correction. A shuttle stop's pair is `campusMapStop` in `shuttle-stops.json`; the line is the list of
+  coordinates in `shuttle-route.geojson`, longitude first, which GitHub and geojson.io draw on a map.
 - **Coordinates** come from the campus map and OpenStreetMap only, never from Kakao, Naver or Google maps, whose terms
   forbid storing their data. The campus map is drawn on a Kakao map, but its buildings' coordinates are the
   university's own.
 - **Licences**: OpenStreetMap's data is under the ODbL, and the files made from it carry its notice (`copyright`). The
   app shows OpenStreetMap's attribution (P15); `.scratch/research/external-sources.md` §6.1 says where the attribution
   guidelines ask for it. The campus map publishes no terms of use and no licence (§6.2).
-- **In a test**: the global setup loads the seed into the test database, so every test file has the buildings, and
-  `test/buildings.e2e-spec.ts` counts them. A test that changes the seed, or needs other buildings, loads it into a
-  database of its own, with `loadSeed(prisma, directory)` from `src/load-seed.ts`, as `test/seed.e2e-spec.ts` does.
+- **In a test**: the global setup loads the seed into the test database, so every test file has the buildings and the
+  shuttle's stops and line, and `test/buildings.e2e-spec.ts` counts the buildings. A test that changes the seed, or
+  needs other buildings, loads it into a database of its own, with `loadSeed(prisma, directory)` from
+  `src/load-seed.ts`, as `test/seed.e2e-spec.ts` and `test/shuttle-seed.e2e-spec.ts` do.
 - **A new seed** adds its export to `scripts/export-seed.ts` when a request gives the file, its model with the
   identifier its origin gives as a unique key, and its loading to `loadSeed()`. `readSeedFile()` beside
   `SEED_DIRECTORY` reads a file and checks it against a schema.
@@ -564,7 +650,7 @@ src/
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
-│   ├── seed-directory.ts            where the seed files are
+│   ├── seed-directory.ts            where the seed files are, and how one is read
 │   ├── geometry.ts                  a position, and whether a ring holds it or how far it is from it
 │   ├── campus-boundary.ts           the Campus Boundary, read from its seed file
 │   ├── campus-boundary.module.ts    makes the Campus Boundary available to every feature
@@ -591,8 +677,10 @@ src/
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
-└── buildings/                       a feature: the campus buildings and places of the seed, listed and searched, and
-                                     the building at a position
+├── buildings/                       a feature: the campus buildings and places of the seed, listed and searched, and
+│                                    the building at a position
+└── shuttle/                         a feature: the shuttle's stops and line of the seed, the route page's places and
+                                     hours, and the vehicles the worker collects, served and sent to the socket server
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
 test/                                tests, run against PostgreSQL and Redis in containers
 ```
@@ -745,8 +833,10 @@ follows these rules.
   }
   ```
 
-  An error inside a handler is logged and answers Nest's `{ "status": "error", "message": "Internal server error" }`.
-  The worker's `send()` fails with the answer in both cases, and the worker reports either as a failed Collection.
+  A handler refuses a message that matches its schema but not what is stored, such as a shuttle stop the seed does not
+  know, by throwing `RpcException` with the problem before it stores anything; the answer has the same form. Any other
+  error inside a handler is logged and answers Nest's `{ "status": "error", "message": "Internal server error" }`. The
+  worker's `send()` fails with the answer in each case, and the worker reports it as a failed Collection.
 
 - **Repeats and order**: the same message sent twice leaves the records one would. Each feature states how, as
   [Menus](#menus) and [Global Events](#global-events) do. A Source's messages are stored in the order they arrive, not
@@ -776,5 +866,6 @@ await harness.close(); // in afterAll
   in `test/menus.ts`, a month for each file and a day for each test, and the events tests their post numbers from
   `postNumbersFrom()` in `test/global-events.ts`, a range for each file. A Source's Collection status is one row, so
   the file that checks it is the only one that sends as that Source: `test/collection.e2e-spec.ts` the dormitory's,
-  `test/menus.e2e-spec.ts` the Co-op's and `test/global-events.e2e-spec.ts` the events list's.
+  `test/menus.e2e-spec.ts` the Co-op's, `test/global-events.e2e-spec.ts` the events list's and
+  `test/shuttle.e2e-spec.ts` the shuttle's two, whose stops, line and vehicles are one set of records besides.
   `test/stored-event-posts.e2e-spec.ts` therefore stores its posts with a database connection instead.

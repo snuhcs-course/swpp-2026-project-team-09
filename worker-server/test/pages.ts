@@ -6,6 +6,11 @@ export function savedPage(name: string): string {
   return readFileSync(fileURLToPath(new URL(`pages/${name}.html`, import.meta.url)), 'utf8');
 }
 
+// A JSON answer as it was served, saved the same way.
+export function savedAnswer(name: string): string {
+  return readFileSync(fileURLToPath(new URL(`pages/${name}.json`, import.meta.url)), 'utf8');
+}
+
 // What the university's firewall answers a blocked request with, under status 200, as external-sources.md, 2 describes
 // it. None was saved.
 export const blockPage =

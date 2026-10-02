@@ -90,8 +90,9 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
 
 - **Fetching**: every page is fetched with `PageFetcher.fetch(url)` from `src/common/page-fetcher.ts`, never with
   `fetch` itself. It sends a `User-Agent` that names the project, asks for one page at a time whichever collectors are
-  running, and fails when the answer's status is not 2xx. It sets no timeout of its own: Node's `fetch` gives up on a
-  request that gets no answer after 300 seconds.
+  running, and fails when the answer's status is not 2xx or when the page has not come within 10 seconds, so that a
+  Source that does not answer holds up the pages after it for no longer. `fetch(url, body)` asks with a POST of the
+  body as JSON, as the shuttle operator's vehicle positions want.
 - **Parsing**: a parser is a function from a page's text to what the message carries, in the feature's folder, such as
   `src/menu/menu-page.parser.ts`. No page is a versioned interface, and the university's firewall answers a blocked
   request with status 200 and another page. So a parser checks that the page is the one it knows, such as the table
@@ -100,21 +101,24 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
   with `handOver(source, collectedAt, pattern, message)` of `Collector`. `send(pattern, message)` sends any other
   message the same way and gives the main server's answer, such as the answer to a question: the worker keeps nothing,
   so a Collection that needs to know what the main server holds asks it, as the events collector asks which posts are
-  stored. Both go through the messaging client (`MESSAGING_CLIENT`).
+  stored. Both go through the messaging client (`MESSAGING_CLIENT`), and give the answer up after 10 seconds, so that a
+  Collection never waits for a main server that is down.
   The main server's README sets how a message is named and shaped and what it answers:
   [Messages from the worker server](../main-server/README.md#messages-from-the-worker-server). The shape of what a
   Collection read is a type in the feature's `dto/`, kept the same as the main server's schema by hand.
 - **Failure**: when a page cannot be fetched or read, or the main server does not take the message or answer the
   question, `handOver()` logs it and sends `collection-failed` with the Source, the time and the reason, such as
-  `https://snudorm.snu.ac.kr/foodmenu/?date=2026-10-02 answered 503` or `The page has no menu table`. The other Sources
-  of the run are still collected, and the main server keeps what it stored.
+  `https://snudorm.snu.ac.kr/foodmenu/?date=2026-10-02 answered 503`, `The page has no menu table` or
+  `The main server did not take shuttle-vehicles-collected: no answer within 10 seconds`. The other Sources of the run
+  are still collected, and the main server keeps what it stored.
 
 The tests never call a real Source. `startApp` replaces the HTTP call under `PageFetcher` (`FETCH`), and every request
 fails unless the test gives it pages. A parser is tested as a function and a collector by running it once, not through
 HTTP; their files are still named `*.e2e-spec.ts`, the one pattern Vitest runs.
 
 - **Saved pages**: `test/pages/` holds pages of each Source as they were served, named after the Source, the page and
-  the day it was saved. Save a page once, with the project's `User-Agent`. Prettier leaves the folder alone:
+  the day it was saved, and read with `savedPage(name)`, or `savedAnswer(name)` for a JSON answer. Save a page once,
+  with the project's `User-Agent`. Prettier leaves the folder alone:
 
   ```bash
   curl -A 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)' \
@@ -128,7 +132,9 @@ HTTP; their files are still named `*.e2e-spec.ts`, the one pattern Vitest runs.
   `MainServerStub` from `test/main-server.ts`, which stands for the main server and keeps the messages the worker
   sends, as `test/menu-collector.e2e-spec.ts` does. `answers.set(pattern, answer)` gives the stub its answer to a
   question, and `refusals.set(pattern, problem)` makes it refuse a message. The test sets the clock with
-  `vi.useFakeTimers({ toFake: ['Date'], now })`.
+  `vi.useFakeTimers({ toFake: ['Date'], now })`. An address given `null` in place of a page never answers, and so do
+  the patterns in the stub's `unanswered`; a test that waits for the 10 seconds replaces the timers too, as
+  `test/shuttle-collector.e2e-spec.ts` does.
 - **The command** is tested through `collectSources(app, names)`, which `src/collect.ts` calls, in the same file.
 
 ## Menus
@@ -241,6 +247,34 @@ and an application deadline), 176558 (a range of days and several places), 17656
 period as the header's date) and 176549 (lists and a table, and not an event). Cases they do not show, such as a range
 across the new year, are edits of them made in `test/event-page-parser.e2e-spec.ts`.
 
+## Shuttle
+
+Two Sources of the shuttle operator's circular route 41946 (`.scratch/research/external-sources.md` §5), collected by
+`src/shuttle/shuttle.collector.ts`. The times are constants at the top of the file.
+
+| Source             | Request                                                                                      | When                                                 | Sent as                      |
+| ------------------ | -------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------- |
+| `shuttle_stops`    | `GET https://web.busin.co.kr/BuslineCircleS.aspx?cd=snu_1&di=41946&tab=F`, the route page    | Every day at 07:00                                   | `shuttle-stops-collected`    |
+| `shuttle_vehicles` | `POST https://web.busin.co.kr/BuslineCircleS.aspx/GetRoute` with `{"data":",F,41946,snu_1"}` | Every 15 seconds on weekdays, from 08:00 to 20:59:45 | `shuttle-vehicles-collected` |
+
+- The route page: each stop is a `span.route_point` in `#routef`, with its name in `em` and its place on the operator's
+  drawing in its inline style, `top: 35px; left:157px;`. The stops are sent in the page's order, which is the loop
+  order, each with `left` and `top`. The service hours are the header's one `li`, sent as text with a line for each
+  `<br>` and plain spaces for the page's no-break spaces. A page without a stop, with a stop without its name or place,
+  or without the hours is a failed Collection.
+- The vehicle positions: the answer is `{"d":"row;row;…"}`, each row `carid/x/y/count/plates/code`. Each row is sent as
+  `{ carId, x, y }`, the position on the same drawing. The count and the plates describe everything at that position,
+  not one vehicle, and are left out; several vehicles at one stop are several rows. An empty `d` is sent as no
+  vehicles. The answer carries no time, so `collectedAt` is when it arrived. An answer that is not this JSON, such as
+  the firewall's block page, is a failed Collection.
+- The vehicle positions are not asked for outside those hours, the service hours of the semester, nor at weekends. On a
+  holiday or in a vacation the operator answers with no vehicles, which is sent as such.
+- The main server places each vehicle at a stop and sends the vehicles on to the apps:
+  [Shuttle](../main-server/README.md#shuttle).
+
+`test/pages/` holds the route page and the vehicle positions as the operator answered them, each asked for once, at
+15:40 KST on Friday 2026-10-02, when six vehicles ran.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
@@ -272,7 +306,9 @@ src/
 │   └── collector.ts                 the worker's end of a Collection, which every collector extends
 ├── health/                          a feature: the liveness and readiness checks
 ├── menu/                            a feature: the collector of the three menu Sources and its parsers
-└── event/                           a feature: the collector of the events list and its parsers
+├── event/                           a feature: the collector of the events list and its parsers
+└── shuttle/                         a feature: the collector of the shuttle's route page and vehicle positions, and
+                                     their parsers
 test/                                tests, run against Redis in a container
 └── pages/                           pages saved from the Sources, which the tests read in place of them
 ```

@@ -178,6 +178,10 @@ enum Source {
   veterinary_menus
   // The university's events list, https://www.snu.ac.kr/snunow/events
   snu_events
+  // The shuttle operator's route page, for the stops and the service hours.
+  shuttle_stops
+  // The shuttle operator's vehicle positions.
+  shuttle_vehicles
 
   @@map("source")
 }
@@ -220,4 +224,49 @@ enum BuildingOrigin {
   openstreetmap
 
   @@map("building_origin")
+}
+
+// The circular shuttle route 41946, loaded from the seed files (README.md: Shuttle).
+model ShuttleRoute {
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // The operator's number for the route.
+  number       String  @unique
+  // Along OpenStreetMap's roads from 정문 around the loop back to 정문, as [{ latitude, longitude }, …].
+  line         Json
+  // As the route page writes them, from the last Collection of shuttle_stops.
+  serviceHours String? @map("service_hours")
+
+  @@map("shuttle_routes")
+}
+
+// One of the operator's stops of the route, at the coordinates of the campus map's stop it is paired with.
+model ShuttleStop {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // The campus map's code of the paired stop, by which loading the seed again updates the stop in place.
+  campusMapCode Int              @unique @map("campus_map_code")
+  // As the operator writes it. The worker's messages name the stop by it.
+  name          String
+  // In loop order, from 0 at 정문.
+  position      Int
+  latitude      Float
+  longitude     Float
+  // Where the stop is on the operator's drawing of the route, in pixels: `left` and `top` on the route page.
+  drawingLeft   Int              @map("drawing_left")
+  drawingTop    Int              @map("drawing_top")
+  vehicles      ShuttleVehicle[]
+
+  @@map("shuttle_stops")
+}
+
+// A vehicle at a stop, as the last Collection of shuttle_vehicles reported it.
+model ShuttleVehicle {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // The operator's `carid`.
+  carId      String      @unique @map("car_id")
+  stopId     String      @map("stop_id") @db.Uuid
+  stop       ShuttleStop @relation(fields: [stopId], references: [id], onDelete: Cascade)
+  // When the worker received the operator's answer, which carries no time of its own.
+  receivedAt DateTime    @map("received_at")
+
+  @@map("shuttle_vehicles")
 }

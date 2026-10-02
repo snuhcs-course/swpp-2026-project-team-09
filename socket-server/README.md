@@ -128,6 +128,25 @@ server keeps no record of sessions:
   session ended connects again; its `fetchCurrentState` then gets 401, and the app shows sign-in and closes the
   connection.
 
+## Shuttle vehicles
+
+The main server sends each set of shuttle vehicles it stores, every 15 seconds while the shuttle runs, and the socket
+server sends it to every connected app as the event `shuttle-vehicles-updated`, whether or not the app shows the
+shuttle:
+
+```ts
+socket.on('shuttle-vehicles-updated', (vehicles) => {
+  showVehicles(vehicles);
+});
+```
+
+`vehicles` is the list that `GET /shuttle/vehicles` answers (see the
+[main server](../main-server/README.md#shuttle)): each vehicle's `carId`, the `stop` the operator reports it at, with
+the stop's `id`, `name`, `latitude` and `longitude`, and `receivedAt`, when the position was received. The list holds
+every vehicle in service and replaces the one before; `[]` means that none runs. The app fetches `GET /shuttle/vehicles`
+when it opens the map, and drops a vehicle whose `receivedAt` is more than a minute old, so that the vehicles disappear
+from an open map when no further list arrives (P15). `showVehicles` stands for the app's own code.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
@@ -151,8 +170,9 @@ src/
 │   ├── settings.ts                  settings schema, checked at startup
 │   └── messaging.ts                 options for NestJS messaging over Redis
 ├── health/                          a feature: the liveness and readiness checks
-└── users/                           a feature: the app's socket connection, the access token check on it and the end of
-                                     a session
+├── users/                           a feature: the app's socket connection, the access token check on it and the end of
+│                                    a session
+└── shuttle/                         a feature: sends the shuttle's vehicles to every connected app
 test/                                tests, run against Redis in a container
 ```
 

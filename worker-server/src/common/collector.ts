@@ -1,8 +1,11 @@
 import { Inject, Logger } from '@nestjs/common';
 import { DiscoveryService } from '@nestjs/core';
 import { ClientProxy } from '@nestjs/microservices';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, throwError, timeout } from 'rxjs';
 import { MESSAGING_CLIENT } from './messaging.module.js';
+
+// The main server's answer is given up after this, so that a Collection never waits for a main server that is down.
+const ANSWER_TIMEOUT = 10_000;
 
 // Names the Sources a collector collects, which `pnpm collect` runs with its collectOne(): @Collects(MENU_SOURCES).
 export const Collects = DiscoveryService.createDecorator<readonly string[]>();
@@ -36,7 +39,14 @@ export abstract class Collector {
 
   protected async send(pattern: string, message: object): Promise<unknown> {
     try {
-      return await lastValueFrom(this.mainServer.send(pattern, message));
+      return await lastValueFrom(
+        this.mainServer.send(pattern, message).pipe(
+          timeout({
+            first: ANSWER_TIMEOUT,
+            with: () => throwError(() => new Error(`no answer within ${ANSWER_TIMEOUT / 1000} seconds`)),
+          }),
+        ),
+      );
     } catch (answer) {
       // A refusal arrives as the main server's answer, { status: 'error', message }, not as an Error.
       const problem =

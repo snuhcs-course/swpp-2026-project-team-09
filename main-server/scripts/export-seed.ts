@@ -10,6 +10,8 @@ import { z } from 'zod';
 const USER_AGENT = 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)';
 const OVERPASS = 'https://overpass-api.de/api/interpreter';
 const CAMPUS_MAP_BUILDINGS = 'https://map.snu.ac.kr/api/building.action?page=1&rows=1000';
+// The campus map's route 61, the loop that the operator calls route 41946.
+const CAMPUS_MAP_SHUTTLE_STOPS = 'https://map.snu.ac.kr/api/bus/suttle/61.action?sch_bus_deta_cd=1102';
 
 const BOUNDARY_QUERY = '[out:json][timeout:25];relation(11917142);out geom;';
 
@@ -128,12 +130,27 @@ async function exportCampusBoundary(): Promise<void> {
   });
 }
 
+// The map answers in EUC-KR.
+async function campusMap(url: string): Promise<unknown> {
+  const response = await request(url);
+  return JSON.parse(new TextDecoder('euc-kr').decode(await response.arrayBuffer()));
+}
+
 async function exportCampusMapBuildings(): Promise<void> {
-  const response = await request(CAMPUS_MAP_BUILDINGS);
-  // The map answers in EUC-KR.
-  const text = new TextDecoder('euc-kr').decode(await response.arrayBuffer());
-  const { rows } = z.object({ rows: z.array(z.looseObject({})) }).parse(JSON.parse(text));
+  const { rows } = z.object({ rows: z.array(z.looseObject({})) }).parse(await campusMap(CAMPUS_MAP_BUILDINGS));
   await write('campus-map-buildings.json', { exportedFrom: CAMPUS_MAP_BUILDINGS, exportedOn: today(), rows });
+}
+
+async function exportCampusMapShuttleStops(): Promise<void> {
+  const { route, suttle_route_path_list } = z
+    .object({ route: z.looseObject({}), suttle_route_path_list: z.array(z.looseObject({})) })
+    .parse(await campusMap(CAMPUS_MAP_SHUTTLE_STOPS));
+  await write('campus-map-shuttle-stops.json', {
+    exportedFrom: CAMPUS_MAP_SHUTTLE_STOPS,
+    exportedOn: today(),
+    route,
+    suttle_route_path_list,
+  });
 }
 
 async function exportOpenStreetMapBuildings(): Promise<void> {
@@ -207,6 +224,7 @@ async function exportOpenStreetMapBuildingOutlines(): Promise<void> {
 const EXPORTS: Record<string, () => Promise<void>> = {
   'campus-boundary': exportCampusBoundary,
   'campus-map-buildings': exportCampusMapBuildings,
+  'campus-map-shuttle-stops': exportCampusMapShuttleStops,
   'openstreetmap-buildings': exportOpenStreetMapBuildings,
   'openstreetmap-building-outlines': exportOpenStreetMapBuildingOutlines,
 };
