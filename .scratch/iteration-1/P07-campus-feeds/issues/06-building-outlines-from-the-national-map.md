@@ -33,7 +33,7 @@ The layer is downloaded by a person from VWorld, behind a login, and stays outsi
 
 ### Decisions made while implementing (2026-10-03)
 
-The main server's README has the full text under Buildings and Seed data.
+The main server's README says, under Buildings and Seed data, how the outlines are exported, loaded and corrected. The facts of the data are here and in the seed files.
 
 - **The seed file is `seed/national-map-building-outlines.geojson`**, a GeoJSON FeatureCollection as OpenStreetMap's is, so that GitHub draws it. A feature's `id` is the layer's `UFID`, `properties.label` its `ANNO`, or `null` where the layer writes none. The top of the file keeps `exportedFrom`, the download page, `file`, the name of the downloaded file, `exportedOn` and `attribution`.
   - The notice names 국토지리정보원, the layer, VWorld and 공공누리 type 1. It gives no year: the model wording of 공공누리 names the year the work was made, and neither the download page nor the file states one.
