@@ -4,14 +4,17 @@ import { Test } from '@nestjs/testing';
 import { Server } from 'node:http';
 import { messagingOptions } from '../src/common/messaging.js';
 import { Settings } from '../src/common/settings.js';
+import { FETCH_KAKAO } from '../src/walking-route/walking-route.service.js';
 import { TestGoogleIdTokenVerifier } from './google.js';
+import { refuseKakao } from './walking-route.js';
 
 // AppModule validates the settings when it is imported, so it is imported afresh after the environment is set.
-// Google's token verification is the one part replaced: the test verifier accepts ID tokens from test/google.ts.
+// The test verifier accepts ID tokens from test/google.ts, and `fetchKakao` answers in Kakao's place.
 // `controllers` adds controllers that exist only in the tests, such as handlers that no feature has yet.
 export async function startApp(
   settings: Partial<Record<keyof Settings, string | undefined>>,
   controllers: Type[] = [],
+  fetchKakao: typeof fetch = refuseKakao,
 ): Promise<INestApplication<Server>> {
   for (const [name, value] of Object.entries(settings)) {
     vi.stubEnv(name, value);
@@ -23,6 +26,8 @@ export async function startApp(
   const moduleRef = await Test.createTestingModule({ imports: [AppModule], controllers })
     .overrideProvider(GoogleIdTokenVerifier)
     .useClass(TestGoogleIdTokenVerifier)
+    .overrideProvider(FETCH_KAKAO)
+    .useValue(fetchKakao)
     .compile();
   const app = moduleRef.createNestApplication<INestApplication<Server>>();
   // Started as main.ts starts it, so that the tests run the server as it runs.

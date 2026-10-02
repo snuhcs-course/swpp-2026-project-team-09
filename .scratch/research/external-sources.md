@@ -17,7 +17,7 @@ Everything was checked on 2026-09-30 unless a line says otherwise. `[K1]`-style 
 | SNU campus map | P07 | Public JSON behind the map's pages; no terms published | Confirmed on 2026-10-01 |
 | Kakao Maps SDK for Android | P06 | Native app key and key hash | Key issued; package name and development key hash registered; map shown in a trial build |
 | Kakao Maps JavaScript SDK | P12 | JavaScript key and domain | Key issued; `http://localhost:3100` registered |
-| Kakao walking route API | P07 | REST API key | Key issued; not called yet |
+| Kakao walking route API | P07 | REST API key | Key issued; called on 2026-10-02 |
 | Google Sign-In | P04, P06, P12 | OAuth clients | Clients exist; see §8 |
 
 ## 2. Scraped pages in general
@@ -305,11 +305,11 @@ A build on EAS does not receive `mobile/.env`, because EAS uploads only the file
   - `s_name`, `v_name` and `e_name`: names of the start, the waypoints and the end.
   - `route_mode`: `BROAD_FIRST` (the default, wide roads first), `SHORTEST` or `ACCESSIBLE` (편안한 길, comfortable roads).
   - `input_coord` and `output_coord`: the coordinate systems.
-- The answer's `route` holds `totalDistance` (m), `totalTime` (s) and `landingUrl`, and `legs` of `steps`, each with its distance, time, guidance and line as `[x, y]` points.
-- `status` is one of `OK`, `SAME_POINT`, `START_LINK_NOT_FOUND`, `END_LINK_NOT_FOUND`, `TOO_MANY_SEARCH_LINK`, `TOO_FAR_AWAY` and `ROUTE_RESULT_NOT_FOUND`. `route` is present only with `OK`. My judgement: the other statuses arrive with HTTP 200.
+- The answer's `route.properties` holds `totalDistance` (m), `totalTime` (s) and `landingUrl`, a link to the walk on Kakao Map. `route.legs` hold `steps`, each with its line as `[x, y]` points in `path.points` and its distance, time and guidance under `properties`. Each step's line begins at the point where the one before it ended. Seen on 2026-10-02 (P07 ticket 05).
+- `status` is one of `OK`, `SAME_POINT`, `START_LINK_NOT_FOUND`, `END_LINK_NOT_FOUND`, `TOO_MANY_SEARCH_LINK`, `TOO_FAR_AWAY` and `ROUTE_RESULT_NOT_FOUND`. On 2026-10-02 `SAME_POINT` came with HTTP 200 and an empty `route` (no legs, totals of 0, no `landingUrl`), so the status, not `route`, says whether there is a route. My judgement: the other statuses, not met yet, arrive the same way.
 - No review or extra application is needed once Kakao Map is on [K3], and the API lists no other requirement [K7].
 - The REST API key can be limited to up to 10 IP addresses. A call from any other address gets `-401` `ip mismatched` [K1].
-- Not called yet. A first check, from the main gate to the central library (approximate coordinates):
+- Called on 2026-10-02 (P07 ticket 05), once each, from the main gate to the central library (`OK`, 1,105 m and 1,216 s) and from the main gate to itself (`SAME_POINT`), with this command and the project's User-Agent. The coordinates are approximate. The answers are kept in `main-server/test/answers/`:
 
   ```sh
   curl -G "https://dapi.kakao.com/v2/routing/walk" -H "Authorization: KakaoAK $KAKAO_REST_API_KEY" --data-urlencode "start_x=126.9486" --data-urlencode "start_y=37.4664" --data-urlencode "end_x=126.9524" --data-urlencode "end_y=37.4592"
@@ -395,7 +395,7 @@ A build on EAS does not receive `mobile/.env`, because EAS uploads only the file
 
 - The shuttle: whether regular requests are permitted, and whether coordinates exist. 캠퍼스관리과 and 동영관광 have not replied yet.
 - The shuttle: mySNU offers a 셔틀버스 service that shows where the shuttle is. Whether it uses a feed other than Busin is unchecked.
-- Kakao: the key hashes of EAS and Play builds. The walking route has not been called.
+- Kakao: the key hashes of EAS and Play builds, and how the walking route answers its failure statuses other than `SAME_POINT`.
 - Kakao: what the Android map SDK counts as a call, and when the daily quota resets.
 - Naver: what the terms of its search and Maps APIs say on storing results. They were not read; a news report says the search API forbids copying, storing and caching them.
 - The SNU campus map: who maintains its data, how its coordinates were made, and whether the university permits reuse.

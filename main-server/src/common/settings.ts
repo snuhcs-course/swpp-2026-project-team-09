@@ -38,6 +38,7 @@ export const settingsSchema = z
       .string()
       .transform((emails) => emails.split(',').map((email) => email.trim().toLowerCase()))
       .pipe(z.array(z.email())),
+    KAKAO_REST_API_KEY: z.string().min(1),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),
