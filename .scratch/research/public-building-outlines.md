@@ -188,9 +188,8 @@ Run on 2026-10-03 on `AL_D010_11_20260909.zip`, GIS건물통합정보 for Seoul 
 Run on 2026-10-03 on the ten files of [V8], which a person downloaded from VWorld after logging in. The files are kept outside the repository.
 
 - The files hold the layer `N3A_B0010000`: by the layer naming of the description that comes with them, the building layer of the 1:5,000 map. Each file holds 2.2 million records (the tenth 2.5 million), about 220 MB zipped and 1.9 GB unzipped, in EPSG:5179. The records are not grouped by province: file 009 holds the north of the capital region, and the campus's records are in file 001, at record numbers 993,587 to 1,166,167.
-- Five of the ten downloads came cut off when all ten were started at once: the browser showed them as finished, but the ZIPs lack their end. Files 001 and 009 were downloaded again, one at a time, and are whole. What follows is from the whole file 001: 845 records in the campus extent, 834 of them polygons that reach it.
-  - A ZIP's members are stored one after another, so a cut-off file still gives what had arrived. The cut-off file 001 gave the same 845 records with the same shapes.
-  - By the legal-district code (`BJCD`) of every record, read from the attribute tables, which arrived whole: file 001 holds 48,514 buildings of 관악구, file 010 holds 504 and file 009 nine; files 006 and 008 hold none. File 010's 504 are bus shelters, street stalls and subway exits, with a handful on the campus, such as one labelled `제2공학관` and three labelled `서울대학교`. Their shapes are in the part of file 010 that did not arrive.
+- What follows is from file 001: 845 records in the campus extent, 834 of them polygons that reach it.
+  - By the legal-district code (`BJCD`) of every record in the attribute tables: file 001 holds 48,514 buildings of 관악구, file 010 holds 504 and file 009 nine; files 006 and 008 hold none. File 010's 504 are bus shelters, street stalls and subway exits, with a handful on the campus, such as one labelled `제2공학관` and three labelled `서울대학교`. Their shapes were not read.
 
 | In the campus extent | OpenStreetMap | 연속수치지형도 | GIS건물통합정보 |
 |---|---|---|---|

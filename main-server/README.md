@@ -422,7 +422,7 @@ made from its building layer (건물).
   1. Log in at VWorld and open 연속수치지형도 건물 under 공간정보 다운로드,
      `https://www.vworld.kr/dtmk/dtmk_ntads_s002.do?dsId=30162`. The layer comes as ten files,
      `(연속수치지형도)건물_001.zip` to `_010.zip`, of 203 to 241 MB each and not named by region. The campus is in
-     `_001`. Download one file at a time: of ten started together, five arrived cut off.
+     `_001`.
   2. Run `pnpm seed:export national-map-building-outlines <path>` with the path of the ZIP, or of its unzipped
      `N3A_B0010000_001.shp`, which has its `.dbf` beside it. It reads the file's 2.2 million records in about a minute
      and a half. The downloaded file stays outside the repository.
@@ -435,7 +435,7 @@ made from its building layer (건물).
   - The labels are read as EUC-KR. No file of the layer names the encoding; the attribute table's language byte says
     Korean, code page 949, which the `euc-kr` decoder reads.
   - The export refuses a file that is not the layer, which it knows by the name of the `.shp`, `N3A_B0010000_….shp`,
-    and a ZIP that arrived cut off. The layer is renewed once a year, and the campus may then be in another of its
+    and an incomplete ZIP. The layer is renewed once a year, and the campus may then be in another of its
     files: a file without a building in the campus extent is refused with the message that the campus is in another
     of the layer's files.
 - **Loading**: `pnpm db:seed` builds the server and loads the files into the database at `DATABASE_URL`. In Compose

@@ -40,7 +40,7 @@ The main server's README has the full text under Buildings and Seed data.
 - **`pnpm seed:export national-map-building-outlines <path>`**: the path follows the name. The other exports take no path, and several names in one command still work.
 - **A polygon reaches the campus extent when one of its points lies in it**, in longitude and latitude. On this file that gives the same 356 polygons as a true intersection with the extent.
 - **A courtyard is left out**, as ticket 03 decided for OpenStreetMap: six of the 356 have inner rings, those of 38동, 39동, 61동, 70동, 71동 and 82동. Every record of the file is one polygon; a record of several would stop the export.
-- **The attribute table is read as EUC-KR.** No `.cpg` names the encoding. The table's language byte is `0x4E`, Korean in code page 949, which the `euc-kr` decoder reads, and every value of the 2.2 million records that is not ASCII decodes as CP949; 84 of them also decode as UTF-8, by chance. An earlier read tried UTF-8 first and CP949 after: it reached the right labels through the second. The labels of the 356 polygons are the same by both reads.
+- **The attribute table is read as EUC-KR.** No `.cpg` names the encoding. The table's language byte is `0x4E`, Korean in code page 949, which the `euc-kr` decoder reads, and every value of the 2.2 million records that is not ASCII decodes as CP949; 84 of them also decode as UTF-8, by chance. The labels of the 356 polygons are the same by both reads.
 - **`BDK004` alone is kept**, as the criterion says. The whole file has eight kinds, `BDK001` to `BDK008`; the campus extent has none of `BDK001` to `BDK003`.
 - **Dev dependencies, for the export alone**: `shapefile` reads the `.shp` and the `.dbf`, `proj4` converts the coordinates, and `yauzl` reads the two files out of the ZIP as streams, so nothing is unzipped to disk. `@types/shapefile` and `@types/yauzl` come with them. Nothing was added to what the server needs to run.
 - **The layer is read in `scripts/national-map.ts`**, beside `scripts/export-seed.ts`, which would otherwise pass oxlint's 300 lines. A script imports another by its `.ts` name, as Node runs it, which TypeScript accepts with `rewriteRelativeImportExtensions` in `tsconfig.json`. The build covers `src/` alone and is not changed by it.
@@ -51,7 +51,6 @@ The main server's README has the full text under Buildings and Seed data.
 - **`buildings.outlines` is a list of rings, not null**, empty for a place or a building without an outline: `JSONB NOT NULL DEFAULT '[]'`. The migration, `20261002192950_several_outlines_per_building`, drops `outline` and adds `outlines`. A database that ran `add_buildings` migrates in place, and the next loading of the seed fills the column: it need not be recreated.
 - **The lookup measures each building to the nearest of its outlines** and remembers which outline that was. Two buildings at the same distance share an outline when that outline is the same ring, and then the nearer position wins, as before.
 - **The outline tests have a file of their own**, `test/seed-outlines.e2e-spec.ts`, since `test/seed.e2e-spec.ts` would pass 300 lines. Both make their database with `createDatabase()` in `test/containers.ts`.
-- `.scratch/research/public-building-outlines.md` is left as the research wrote it.
 
 ### The numbers (2026-10-03)
 
@@ -88,13 +87,10 @@ The main server's README has the full text under Buildings and Seed data.
 
 ### The exports (2026-10-03)
 
-- The national map, with the committed command, from the downloaded ZIP of file 001: 356 polygons in 83 seconds. The browser had saved the download as `(연속수치지형도)건물_001 (1).zip`, a second download of the file. The export read it through a link with the name VWorld gives the file, `(연속수치지형도)건물_001.zip`, which is the name the seed keeps.
+- The national map, with the committed command, from the downloaded ZIP of file 001, `(연속수치지형도)건물_001.zip`: 356 polygons in 83 seconds.
   - From the unzipped `N3A_B0010000_001.shp` the same features came out; only `file` differed.
-  - Refused: the unzipped file 009, after reading all of it, with `holds no building in the campus extent: the campus is in another of the layer's files`; the `.shp` of GIS건물통합정보 and a ZIP of another dataset, as not the layer; a file that is no ZIP and a ZIP cut off after 120 MB, with yauzl's message that the file is no ZIP or is truncated.
-- OpenStreetMap's three outlines. Overpass was asked three times with the project's User-Agent:
-  - 04:26 KST: the command's own request could not connect, and a request with curl was answered 504 after 10 seconds.
-  - 04:35 KST: 200, the data as of 2026-10-02T19:34:41Z, saved. The committed command wrote the seed file from the saved answer, with `fetch` replaced, and asked with the query that the file keeps.
-  - The three outlines are the same as in the export of 2026-10-02.
+  - Refused: the unzipped file 009, after reading all of it, with `holds no building in the campus extent: the campus is in another of the layer's files`; the `.shp` of GIS건물통합정보 and a ZIP of another dataset, as not the layer; a file that is no ZIP and an incomplete ZIP, with yauzl's message that the file is no ZIP or is truncated.
+- OpenStreetMap's three outlines, the data as of 2026-10-02T19:34:41Z, asked with the query that the file keeps. Overpass was busy at first, so the committed command wrote the seed file from a saved answer, with `fetch` replaced. The three outlines are the same as in the export of 2026-10-02.
 
 ### Checks and the real start (2026-10-03)
 
