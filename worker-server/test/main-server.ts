@@ -8,12 +8,16 @@ export class MainServerStub {
   readonly messages: { pattern: string; data: Record<string, unknown> }[] = [];
   // The problem to answer a message of a pattern with, in place of taking it.
   readonly refusals = new Map<string, string>();
+  // The answer to a message of a pattern, such as a question, in place of { status: 'ok' }.
+  readonly answers = new Map<string, unknown>();
 
   send(pattern: string, data: unknown): Observable<unknown> {
     // As JSON, which is how a message travels.
     this.messages.push({ pattern, data: payloadSchema.parse(JSON.parse(JSON.stringify(data))) });
     const problem = this.refusals.get(pattern);
-    return problem === undefined ? of({ status: 'ok' }) : throwError(() => ({ status: 'error', message: problem }));
+    return problem === undefined
+      ? of(this.answers.get(pattern) ?? { status: 'ok' })
+      : throwError(() => ({ status: 'error', message: problem }));
   }
 
   // The messages of a pattern that name a Source.

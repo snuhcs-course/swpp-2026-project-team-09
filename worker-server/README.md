@@ -98,12 +98,14 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
   being there and the date being the one asked for, and throws an `Error` that says what is wrong.
 - **Handing over**: the collector sends what it read as one request-and-response message and waits for the answer,
   with `handOver(source, collectedAt, pattern, message)` of `Collector`. `send(pattern, message)` sends any other
-  message the same way and gives the main server's answer. Both go through the messaging client (`MESSAGING_CLIENT`).
+  message the same way and gives the main server's answer, such as the answer to a question: the worker keeps nothing,
+  so a Collection that needs to know what the main server holds asks it, as the events collector asks which posts are
+  stored. Both go through the messaging client (`MESSAGING_CLIENT`).
   The main server's README sets how a message is named and shaped and what it answers:
   [Messages from the worker server](../main-server/README.md#messages-from-the-worker-server). The shape of what a
   Collection read is a type in the feature's `dto/`, kept the same as the main server's schema by hand.
-- **Failure**: when a page cannot be fetched or read, or the main server does not take the message, `handOver()` logs
-  it and sends `collection-failed` with the Source, the time and the reason, such as
+- **Failure**: when a page cannot be fetched or read, or the main server does not take the message or answer the
+  question, `handOver()` logs it and sends `collection-failed` with the Source, the time and the reason, such as
   `https://snudorm.snu.ac.kr/foodmenu/?date=2026-10-02 answered 503` or `The page has no menu table`. The other Sources
   of the run are still collected, and the main server keeps what it stored.
 
@@ -111,8 +113,8 @@ The tests never call a real Source. `startApp` replaces the HTTP call under `Pag
 fails unless the test gives it pages. A parser is tested as a function and a collector by running it once, not through
 HTTP; their files are still named `*.e2e-spec.ts`, the one pattern Vitest runs.
 
-- **Saved pages**: `test/pages/` holds one page of each Source as it was served, named after the Source and the day it
-  was saved. Save a page once, with the project's `User-Agent`. Prettier leaves the folder alone:
+- **Saved pages**: `test/pages/` holds pages of each Source as they were served, named after the Source, the page and
+  the day it was saved. Save a page once, with the project's `User-Agent`. Prettier leaves the folder alone:
 
   ```bash
   curl -A 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)' \
@@ -124,7 +126,8 @@ HTTP; their files are still named `*.e2e-spec.ts`, the one pattern Vitest runs.
   the year, is an edit of the saved page made in the test, with a comment that says what it changes.
 - **A collector** runs once against `sourcesServing(pages)` from `test/sources.ts`, which stands for the Sources, and a
   `MainServerStub` from `test/main-server.ts`, which stands for the main server and keeps the messages the worker
-  sends, as `test/menu-collector.e2e-spec.ts` does. The test sets the clock with
+  sends, as `test/menu-collector.e2e-spec.ts` does. `answers.set(pattern, answer)` gives the stub its answer to a
+  question, and `refusals.set(pattern, problem)` makes it refuse a message. The test sets the clock with
   `vi.useFakeTimers({ toFake: ['Date'], now })`.
 - **The command** is tested through `collectSources(app, names)`, which `src/collect.ts` calls, in the same file.
 
@@ -172,6 +175,62 @@ restaurant fills in its later days as it posts them, and the next Collection bri
 What the collectors sent on the real pages, and how many lines got a `kind`, a `name` and a `price`, is recorded in
 `.scratch/iteration-1/P07-campus-feeds/issues/01-menus-first-collection.md`.
 
+## Events
+
+The university's events list, the Source `snu_events`, is collected four times a day, at 00:00, 06:00, 12:00 and 18:00,
+and sent as one `events-collected` message. The times (`COLLECTION_TIMES`) and the days the list's date filter covers
+(`LISTED_DAYS`) are constants at the top of `src/event/event.collector.ts`. The times are provisional. To run one
+Collection by hand, name the Source: `pnpm collect snu_events`.
+
+A Collection does four things, one page at a time:
+
+1. It lists the events from today on, page by page until a page lists no post:
+   `https://www.snu.ac.kr/snunow/events?sc=y&df=2026.10.02&dt=2027.10.02&page=1`, the list's date filter from today
+   over the next 365 days. The pager's links drop the filter, so the collector builds each page's address. A page whose
+   posts were all listed before fails the Collection, since a list that answered every page with an earlier one would
+   be read without end.
+2. It asks the main server which of the listed posts it stores, `stored-event-posts`.
+3. It reads the page of each post the main server does not store,
+   `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525`, and stops at the first that cannot be fetched or read. So
+   a post is read once, and an edit at the Source after that is not seen.
+4. It sends what it read, in the list's order. When every post is stored, the message has no event and still records a
+   successful Collection.
+
+A page is read only when it has the structure the parser expects. A page of the list shows its posts, or the end of the
+list (`검색된 자료가 없습니다.`), and repeats the filter it was asked for, since an unfiltered list runs to some 600
+pages. A post's page has its title, its body and its address. A page without it, such as the firewall's block page,
+fails the Collection, and the main server keeps what it stored.
+
+From a post's page, `src/event/event-page.parser.ts` reads, by the team's own rules:
+
+- The post number and the address from the page's canonical link, and the title.
+- The description: the body as text, one line of the page per line, with no-break spaces as spaces.
+- The time line: the first line of the body labelled `일시`, `일자`, `일정` or `기간` that has a value. A bullet or a
+  number may come before the label, and spaces inside it, no-break spaces included, do not count: `· 일   시:`,
+  `○일 정 :`, `- 일시:`. A label that only ends with one, such as `신청 기간` or `접수기간`, is another line, so
+  application periods and deadlines stay in the description, unread.
+- The start and the end, from the time line, by `src/event/event-time.ts`:
+  - The start is the first day written with its year, as `2026. 10. 13.(화)`, `2026.10.16(금)` or
+    `2026년 10월 7일(수요일)`, with the time after it, as `17:00`, `오후 2시` or `오후 4시 30분`, if one comes before a
+    range mark (`~`, `∼`, `-`, `–`). `3시간` is a length, not a time.
+  - The end follows the range mark: a day, with or without its year, and a time. A day without its year is in the
+    start's year, or in the next when it would come before the start. The end takes the start's form, a time when the
+    start has one and a day otherwise, and is dropped when it does not come after the start. So
+    `1부(18:30~19:30) / 2부(20:00~21:00)` gives the first session.
+  - Without a time line that names a day with its year, the start and the end come from the header's date, such as
+    `2026.10.12. ~ 2026.10.16.`, which is often the application period. `readFrom` says which of the two they came
+    from.
+- The place line: the first line labelled `장소` that has a value, as it is written.
+
+What the rules cannot read is sent as `null`, and the post is still sent with its text. The main server decides from
+what was read whether the event is published: [Global Events](../main-server/README.md#global-events).
+
+`test/pages/` holds the list's first two pages and the page past its end, and six posts, each saved once on 2026-10-02:
+176525 (a time and a place, after an application period with times), 176516 (a time in words), 176561 (two sessions,
+and an application deadline), 176558 (a range of days and several places), 176564 (no time line, and the application
+period as the header's date) and 176549 (lists and a table, and not an event). Cases they do not show, such as a range
+across the new year, are edits of them made in `test/event-page-parser.e2e-spec.ts`.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
@@ -199,9 +258,11 @@ src/
 │   ├── messaging.ts                 options for NestJS messaging over Redis
 │   ├── page-fetcher.module.ts       makes the one PageFetcher available to every feature
 │   ├── page-fetcher.ts              the one place where pages are fetched
+│   ├── seoul-day.ts                 the calendar day in Asia/Seoul
 │   └── collector.ts                 the worker's end of a Collection, which every collector extends
 ├── health/                          a feature: the liveness and readiness checks
-└── menu/                            a feature: the collector of the three menu Sources and its parsers
+├── menu/                            a feature: the collector of the three menu Sources and its parsers
+└── event/                           a feature: the collector of the events list and its parsers
 test/                                tests, run against Redis in a container
 └── pages/                           pages saved from the Sources, which the tests read in place of them
 ```

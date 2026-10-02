@@ -83,6 +83,41 @@ model Administrator {
   @@map("administrators")
 }
 
+// An Event published to every User, collected from the university's events list or created by an Administrator
+// (README.md: Global Events). A Collection never changes one once it is stored.
+model GlobalEvent {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String
+  // The post's body as text, for a collected event.
+  description String
+  // A Draft may have neither. A day read without a time of day is stored at 00:00 Asia/Seoul.
+  startsAt    DateTime?        @map("starts_at")
+  endsAt      DateTime?        @map("ends_at")
+  place       String?
+  // A published event has both.
+  latitude    Float?
+  longitude   Float?
+  state       GlobalEventState @default(draft)
+  // Checked and raised by an Administrator's edit (P12), so that an edit made from an older version is refused.
+  version     Int              @default(1)
+  // The `bbsidx` and address of a collected event's post. An event an Administrator creates has neither.
+  postNumber  Int?             @unique @map("post_number")
+  sourceUrl   String?          @map("source_url")
+
+  @@map("global_events")
+}
+
+enum GlobalEventState {
+  // Not visible to Users. An Administrator publishes it or discards it.
+  draft
+  published
+  cancelled
+  // Kept, so that the next Collection does not bring its post back.
+  discarded
+
+  @@map("global_event_state")
+}
+
 // One restaurant on one day, as the last Collection of its Source read it.
 model RestaurantDay {
   id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -141,6 +176,8 @@ enum Source {
   coop_menus
   dormitory_menus
   veterinary_menus
+  // The university's events list, https://www.snu.ac.kr/snunow/events
+  snu_events
 
   @@map("source")
 }

@@ -255,12 +255,10 @@ describe('The schedule of the menu Collections', () => {
     await app.close();
 
     // The clock stands at 05:00 on 1 October.
-    expect(jobs.map((job) => job.nextDates(3).map((run) => run.toJSDate()))).toEqual([
-      [
-        new Date('2026-10-01T10:00:00+09:00'),
-        new Date('2026-10-02T05:00:00+09:00'),
-        new Date('2026-10-02T10:00:00+09:00'),
-      ],
+    expect(jobs.map((job) => job.nextDates(3).map((run) => run.toJSDate()))).toContainEqual([
+      new Date('2026-10-01T10:00:00+09:00'),
+      new Date('2026-10-02T05:00:00+09:00'),
+      new Date('2026-10-02T10:00:00+09:00'),
     ]);
   });
 });

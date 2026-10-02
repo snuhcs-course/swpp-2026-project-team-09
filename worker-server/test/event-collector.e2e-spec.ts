@@ -1,0 +1,173 @@
+import { SchedulerRegistry } from '@nestjs/schedule';
+import { inject } from 'vitest';
+import { MainServerStub } from './main-server.js';
+import { blockPage, savedPage } from './pages.js';
+import { type Sources, sourcesServing } from './sources.js';
+import { startApp } from './start-app.js';
+
+// The events list from 2 October 2026 to a year later, page by page.
+const LIST = 'https://www.snu.ac.kr/snunow/events?sc=y&df=2026.10.02&dt=2027.10.02&page=';
+const POST = 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=';
+
+const firstPage = [176576, 176564, 176561, 176558, 176549, 176540, 176525, 176522, 176519, 176516, 176510, 176504];
+const secondPage = [176492, 176489, 176486, 176450, 176444, 176432, 176429, 176414, 176402, 176375, 176360, 176354];
+
+// What the Source answers on 2 October 2026: two pages of posts, then the page past the end, as page 9 answered it.
+const pages = {
+  [`${LIST}1`]: savedPage('snu-events-list-page-1-2026-10-02'),
+  [`${LIST}2`]: savedPage('snu-events-list-page-2-2026-10-02'),
+  [`${LIST}3`]: savedPage('snu-events-list-page-9-2026-10-02'),
+  [`${POST}176558`]: savedPage('snu-events-post-176558-2026-10-02'),
+  [`${POST}176525`]: savedPage('snu-events-post-176525-2026-10-02'),
+};
+
+// The main server stores every listed post but 176558 and 176525.
+function mainServerStoring(
+  stored = [...firstPage, ...secondPage].filter((post) => post !== 176558 && post !== 176525),
+): MainServerStub {
+  const mainServer = new MainServerStub();
+  mainServer.answers.set('stored-event-posts', { postNumbers: stored });
+  return mainServer;
+}
+
+beforeAll(() => {
+  // The run of 06:00 on 2 October 2026 in Asia/Seoul. Only the clock is replaced; timers run as they do.
+  vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-10-02T06:00:00+09:00') });
+});
+
+afterAll(() => {
+  vi.useRealTimers();
+});
+
+// Runs the Collection of the events list once against `served` and gives what the worker asked for and sent.
+async function collect(
+  served: Record<string, string | number> = pages,
+  mainServer = mainServerStoring(),
+): Promise<{ sources: Sources; mainServer: MainServerStub }> {
+  const sources = sourcesServing(served);
+  const app = await startApp(inject('settings'), { fetchPage: sources.fetch, mainServer });
+  // Imported after startApp, so that it is the same class AppModule registers.
+  const { EventCollector } = await import('../src/event/event.collector.js');
+  await app.get(EventCollector).collect();
+  await app.close();
+  return { sources, mainServer };
+}
+
+describe('A Collection of the events list', () => {
+  it('lists the posts page by page until the list ends, and asks the main server which it stores', async () => {
+    const { sources, mainServer } = await collect();
+
+    expect(sources.requests.slice(0, 3).map(({ url }) => url)).toEqual([`${LIST}1`, `${LIST}2`, `${LIST}3`]);
+    expect(mainServer.messages[0]).toEqual({
+      pattern: 'stored-event-posts',
+      data: { postNumbers: [...firstPage, ...secondPage] },
+    });
+  });
+
+  it('reads the posts the main server does not store, one page at a time, and sends them', async () => {
+    const { sources, mainServer } = await collect();
+
+    expect(sources.requests.slice(3).map(({ url }) => url)).toEqual([`${POST}176558`, `${POST}176525`]);
+    expect(sources.mostAtOnce).toBe(1);
+    expect(mainServer.from('snu_events', 'events-collected')).toMatchObject([
+      {
+        collectedAt: '2026-10-01T21:00:00.000Z',
+        events: [
+          { postNumber: 176558, start: '2026-10-26', end: '2026-11-27', readFrom: 'body' },
+          {
+            postNumber: 176525,
+            start: '2026-10-13T17:00:00+09:00',
+            place: '뉴미디어통신공동연구소 이충웅홀(132동 103호)',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('sends no event, and reads no post, when the main server stores every post', async () => {
+    const { sources, mainServer } = await collect(pages, mainServerStoring([...firstPage, ...secondPage]));
+
+    expect(sources.requests).toHaveLength(3);
+    expect(mainServer.from('snu_events', 'events-collected')).toEqual([
+      { source: 'snu_events', collectedAt: '2026-10-01T21:00:00.000Z', events: [] },
+    ]);
+  });
+});
+
+describe('A Collection of the events list that fails', () => {
+  it('reports a post it cannot read, and reads no further post', async () => {
+    const { sources, mainServer } = await collect({ ...pages, [`${POST}176558`]: blockPage });
+
+    expect(mainServer.from('snu_events', 'collection-failed')).toEqual([
+      { source: 'snu_events', failedAt: '2026-10-01T21:00:00.000Z', reason: 'The page has no post' },
+    ]);
+    expect(mainServer.from('snu_events', 'events-collected')).toEqual([]);
+    expect(sources.requests.at(-1)?.url).toBe(`${POST}176558`);
+  });
+
+  it('reports a page of the list it cannot read, and asks nothing', async () => {
+    const { mainServer } = await collect({ ...pages, [`${LIST}2`]: blockPage });
+
+    expect(mainServer.messages).toEqual([
+      {
+        pattern: 'collection-failed',
+        data: { source: 'snu_events', failedAt: '2026-10-01T21:00:00.000Z', reason: 'The page has no events list' },
+      },
+    ]);
+  });
+
+  it('reports a list that does not end', async () => {
+    // A list that answers every page past the first with the first.
+    const { sources, mainServer } = await collect({ ...pages, [`${LIST}2`]: pages[`${LIST}1`] });
+
+    expect(mainServer.from('snu_events', 'collection-failed')).toMatchObject([
+      { reason: 'Page 2 of the events list repeats the posts before it' },
+    ]);
+    expect(sources.requests).toHaveLength(2);
+  });
+
+  it('reports a question the main server does not answer, and reads no post', async () => {
+    const mainServer = new MainServerStub();
+    mainServer.refusals.set('stored-event-posts', 'postNumbers.0: Invalid input');
+
+    const { sources } = await collect(pages, mainServer);
+
+    expect(mainServer.from('snu_events', 'collection-failed')).toMatchObject([
+      { reason: 'The main server did not take stored-event-posts: postNumbers.0: Invalid input' },
+    ]);
+    expect(sources.requests).toHaveLength(3);
+  });
+});
+
+describe('The schedule of the Collections of the events list', () => {
+  it('runs them four times a day in Asia/Seoul', async () => {
+    const app = await startApp(inject('settings'));
+
+    const jobs = [...app.get(SchedulerRegistry).getCronJobs().values()];
+    await app.close();
+
+    // The clock stands at 06:00 on 2 October.
+    expect(jobs.map((job) => job.nextDates(4).map((run) => run.toJSDate()))).toContainEqual([
+      new Date('2026-10-02T12:00:00+09:00'),
+      new Date('2026-10-02T18:00:00+09:00'),
+      new Date('2026-10-03T00:00:00+09:00'),
+      new Date('2026-10-03T06:00:00+09:00'),
+    ]);
+  });
+});
+
+describe('The command that runs one Collection', () => {
+  it('collects the events list when it names it, and no other Source', async () => {
+    const sources = sourcesServing(pages);
+    const mainServer = mainServerStoring();
+    const app = await startApp(inject('settings'), { fetchPage: sources.fetch, mainServer });
+    const { collectSources } = await import('../src/collect-sources.js');
+
+    const taken = await collectSources(app, ['snu_events']);
+    await app.close();
+
+    expect(taken).toBe(true);
+    expect(sources.requests.every(({ url }) => url.startsWith('https://www.snu.ac.kr/snunow/events?'))).toBe(true);
+    expect(mainServer.messages.map(({ pattern }) => pattern)).toEqual(['stored-event-posts', 'events-collected']);
+  });
+});

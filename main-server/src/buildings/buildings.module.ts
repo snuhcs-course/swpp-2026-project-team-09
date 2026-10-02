@@ -6,6 +6,6 @@ import { BuildingsService } from './buildings.service.js';
 @Module({
   controllers: [BuildingsController],
   providers: [BuildingsService, BuildingLookup],
-  exports: [BuildingLookup],
+  exports: [BuildingsService, BuildingLookup],
 })
 export class BuildingsModule {}

@@ -5,6 +5,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { MessagingModule } from './common/messaging.module.js';
 import { PageFetcherModule } from './common/page-fetcher.module.js';
 import { settingsSchema } from './common/settings.js';
+import { EventModule } from './event/event.module.js';
 import { HealthModule } from './health/health.module.js';
 import { MenuModule } from './menu/menu.module.js';
 
@@ -24,6 +25,7 @@ import { MenuModule } from './menu/menu.module.js';
     PageFetcherModule,
     HealthModule,
     MenuModule,
+    EventModule,
   ],
 })
 export class AppModule {}
