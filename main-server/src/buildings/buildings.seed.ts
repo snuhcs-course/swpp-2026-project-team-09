@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { CampusBoundary } from '../common/campus-boundary.js';
 import { readSeedFile } from '../common/seed-directory.js';
-import { BuildingOrigin, PrismaClient } from '../generated/prisma/client.js';
+import { BuildingOrigin, Prisma, PrismaClient } from '../generated/prisma/client.js';
+import { type Outline, outlinesOf } from './building-outlines.js';
 
 // The campus map's rows as it serves them, with the coordinates as text.
 const campusMapFileSchema = z.object({
@@ -22,8 +23,34 @@ const openStreetMapFileSchema = z.object({
   ),
 });
 
+// OpenStreetMap's building outlines, each one ring in GeoJSON's order of longitude and latitude.
+const outlinesFileSchema = z.object({
+  features: z.array(
+    z.object({
+      id: z.string(),
+      geometry: z.object({
+        type: z.literal('Polygon'),
+        coordinates: z.tuple([z.array(z.tuple([z.number(), z.number()])).min(4)]),
+      }),
+    }),
+  ),
+});
+
+// A person's corrections of which outline a building has, each with its reason.
+const linksFileSchema = z.object({
+  links: z.array(z.object({ number: z.string().min(1), outline: z.string().nullable(), why: z.string().min(1) })),
+});
+
 // `관악 223동[우석경제관]` is 우석경제관.
 const WRAPPED_NAME = /^관악 \S+동\[(.+)\]$/u;
+
+async function readOutlines(directory: string): Promise<Outline[]> {
+  const { features } = await readSeedFile(directory, 'openstreetmap-building-outlines.geojson', outlinesFileSchema);
+  return features.map(({ id, geometry }) => ({
+    id,
+    ring: geometry.coordinates[0].map(([longitude, latitude]) => ({ latitude, longitude })),
+  }));
+}
 
 // Updates each entry in place by its origin's identifier, so that whatever points at a building still does. An entry
 // that has left the seed files stays.
@@ -55,14 +82,19 @@ export async function loadBuildings(
       longitude,
     })),
   ].filter((entry) => boundary.contains(entry));
+  const { links } = await readSeedFile(directory, 'building-outline-links.json', linksFileSchema);
+  const outlines = outlinesOf(entries, await readOutlines(directory), links);
   await prisma.$transaction(
-    entries.map(({ origin, originId, ...values }) =>
-      prisma.building.upsert({
+    entries.map((entry) => {
+      const { origin, originId, ...values } = entry;
+      // A building that lost its outline is stored without one.
+      const outline = outlines.get(entry) ?? Prisma.DbNull;
+      return prisma.building.upsert({
         where: { origin_originId: { origin, originId } },
-        create: { origin, originId, ...values },
-        update: values,
-      }),
-    ),
+        create: { origin, originId, ...values, outline },
+        update: { ...values, outline },
+      });
+    }),
   );
   return entries.length;
 }

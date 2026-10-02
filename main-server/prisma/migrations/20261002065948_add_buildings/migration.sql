@@ -10,6 +10,7 @@ CREATE TABLE "buildings" (
     "name" TEXT NOT NULL,
     "latitude" DOUBLE PRECISION NOT NULL,
     "longitude" DOUBLE PRECISION NOT NULL,
+    "outline" JSONB,
 
     CONSTRAINT "buildings_pkey" PRIMARY KEY ("id")
 );

@@ -82,7 +82,7 @@ describe('Loading the seed', () => {
   it("loads the campus map's buildings and places inside the Campus Boundary, and OpenStreetMap's two", async () => {
     await loadSeed(prisma);
 
-    const buildings = await prisma.building.findMany({ omit: { id: true } });
+    const buildings = await prisma.building.findMany({ omit: { id: true, outline: true } });
     // 215 numbered buildings and 8 places of the campus map inside the outline, by
     // .scratch/research/external-sources.md §6.2, and the gatehouse within the Boundary's 10 m.
     expect(buildings).toHaveLength(226);
@@ -98,6 +98,72 @@ describe('Loading the seed', () => {
     expect(loaded).not.toContain('239');
     expect(loaded).not.toContain('135');
     expect(loaded).not.toContain('248');
+  });
+});
+
+// OpenStreetMap's outline with this identifier, as a building stores it.
+async function outlineOf(id: string, directory = SEED_DIRECTORY): Promise<{ latitude: number; longitude: number }[]> {
+  const { features } = await readSeedFile(
+    directory,
+    'openstreetmap-building-outlines.geojson',
+    z.object({
+      features: z.array(
+        z.object({
+          id: z.string(),
+          geometry: z.object({ coordinates: z.tuple([z.array(z.tuple([z.number(), z.number()]))]) }),
+        }),
+      ),
+    }),
+  );
+  const outline = features.find((feature) => feature.id === id);
+  if (outline === undefined) {
+    throw new Error(`The seed holds no outline ${id}`);
+  }
+  return outline.geometry.coordinates[0].map(([longitude, latitude]) => ({ latitude, longitude }));
+}
+
+async function outlineOfBuilding(number: string): Promise<unknown> {
+  const { outline } = await prisma.building.findFirstOrThrow({ where: { number } });
+  return outline;
+}
+
+describe('Loading the outlines of the buildings', () => {
+  it('gives a building the outline that holds its position', async () => {
+    await loadSeed(prisma);
+
+    // 제1공학관, whose position the campus map places inside OpenStreetMap's outline of that name.
+    expect(await outlineOfBuilding('301')).toEqual(await outlineOf('way/228476658'));
+  });
+
+  it('gives a building just outside an outline that holds no building that outline', async () => {
+    await loadSeed(prisma);
+
+    // 903동, which the campus map places 2 m outside OpenStreetMap's outline named 903.
+    expect(await outlineOfBuilding('903')).toEqual(await outlineOf('way/482220678'));
+  });
+
+  it('gives no outline to a building beside an outline that holds another building', async () => {
+    await loadSeed(prisma);
+
+    // 약대시약창고, 9 m from the outline that holds 43동. OpenStreetMap draws no outline for the store itself.
+    expect(await outlineOfBuilding('21-1')).toBeNull();
+  });
+
+  it('gives a building inside two outlines the larger one', async () => {
+    await loadSeed(prisma);
+
+    // 종합운동장본부석, drawn as a stand of 471 m² with a part of 233 m² laid over it.
+    expect(await outlineOfBuilding('149')).toEqual(await outlineOf('way/1469808348'));
+  });
+
+  it('gives every building inside one outline that outline', async () => {
+    await loadSeed(prisma);
+
+    // 국제대학원, 국제대학원2 and 국제회의동, which OpenStreetMap draws as one building.
+    const outline = await outlineOf('way/386889980');
+    expect(await outlineOfBuilding('140')).toEqual(outline);
+    expect(await outlineOfBuilding('140-1')).toEqual(outline);
+    expect(await outlineOfBuilding('140-2')).toEqual(outline);
   });
 });
 
@@ -137,7 +203,32 @@ describe('Loading a corrected seed', () => {
     expect(await prisma.building.findUniqueOrThrow({ where })).toEqual({ ...building, name: '두레문예관' });
     expect(await prisma.building.count()).toBe(count);
   });
+
+  it("gives and takes an outline as a person's links say, whatever the positions give", async () => {
+    await loadSeed(prisma);
+    // 43동 lies inside the outline that OpenStreetMap names 폐기물보관소, and 약대시약창고 beside it.
+    expect(await outlineOfBuilding('43')).toEqual(await outlineOf('way/386890918'));
+    await writeLinks(correctedSeed, [
+      { number: '43', outline: null, why: 'The outline is the waste store, not building 43.' },
+      { number: '21-1', outline: 'way/386890918', why: 'The outline is this store.' },
+    ]);
+
+    await loadSeed(prisma, correctedSeed);
+
+    expect(await outlineOfBuilding('43')).toBeNull();
+    expect(await outlineOfBuilding('21-1')).toEqual(await outlineOf('way/386890918'));
+  });
+
+  it('refuses a link to an outline that the seed does not hold', async () => {
+    await writeLinks(correctedSeed, [{ number: '43', outline: 'way/1', why: 'A mistyped identifier.' }]);
+
+    await expect(loadSeed(prisma, correctedSeed)).rejects.toThrow('way/1');
+  });
 });
+
+async function writeLinks(directory: string, links: object[]): Promise<void> {
+  await writeFile(join(directory, 'building-outline-links.json'), JSON.stringify({ links }));
+}
 
 // Changes the row of the campus map's seed file that has `instSeq`.
 async function correctRow(directory: string, instSeq: number, changes: object): Promise<void> {

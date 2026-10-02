@@ -41,6 +41,31 @@ const buildingsAnswerSchema = z.object({
   ),
 });
 
+// Every building outline within the campus extent. A relation is a building drawn as several ways, such as one with a
+// courtyard.
+const OUTLINES_QUERY =
+  '[out:json][timeout:25][bbox:37.4470628,126.9474475,37.4692598,126.9612239];' +
+  '(way["building"];relation["building"];);out geom;';
+
+const outlineTagsSchema = z.object({ name: z.string().optional() });
+
+const outlinesAnswerSchema = z.object({
+  osm3s: copyrightSchema,
+  elements: z.array(
+    z.discriminatedUnion('type', [
+      z.object({ type: z.literal('way'), id: z.number(), tags: outlineTagsSchema, geometry: z.array(pointSchema) }),
+      z.object({
+        type: z.literal('relation'),
+        id: z.number(),
+        tags: outlineTagsSchema,
+        members: z.array(
+          z.object({ type: z.string(), ref: z.number(), role: z.string(), geometry: z.array(pointSchema).optional() }),
+        ),
+      }),
+    ]),
+  ),
+});
+
 type Coordinates = [longitude: number, latitude: number];
 
 async function request(url: string, init: RequestInit = {}): Promise<Response> {
@@ -95,7 +120,7 @@ async function exportCampusBoundary(): Promise<void> {
   if (members.some(({ role }) => role !== 'outer')) {
     throw new Error('The relation is more than one outer ring');
   }
-  const ways = members.map(({ geometry }) => geometry.map(({ lat, lon }): Coordinates => [lon, lat]));
+  const ways = members.map(({ geometry }) => coordinates(geometry));
   await write('campus-boundary.geojson', {
     type: 'Feature',
     properties: { exportedFrom: OVERPASS, query: BOUNDARY_QUERY, exportedOn: today(), copyright: osm3s.copyright },
@@ -136,10 +161,54 @@ async function exportOpenStreetMapBuildings(): Promise<void> {
   });
 }
 
+function coordinates(geometry: z.infer<typeof pointSchema>[]): Coordinates[] {
+  return geometry.map(({ lat, lon }): Coordinates => [lon, lat]);
+}
+
+// Each outline as one ring. A relation's outer way that is a ring by itself, a part of the building standing apart,
+// is an outline of its own under the way's identifier; its other outer ways are joined into one ring. A courtyard, an
+// inner way, is left out, so that a position in it is in the building.
+function outlinesOf(
+  element: z.infer<typeof outlinesAnswerSchema>['elements'][number],
+): { id: string; outline: Coordinates[] }[] {
+  if (element.type === 'way') {
+    return [{ id: `way/${element.id}`, outline: coordinates(element.geometry) }];
+  }
+  const outer = element.members
+    .filter(({ role }) => role === 'outer')
+    .map(({ type, ref, geometry = [] }) => ({ id: `${type}/${ref}`, outline: coordinates(geometry) }));
+  const apart = outer.filter(({ outline }) => same(outline[0], outline.at(-1)));
+  const open = outer.filter(({ outline }) => !same(outline[0], outline.at(-1)));
+  return open.length === 0
+    ? apart
+    : apart.concat({ id: `relation/${element.id}`, outline: ring(open.map(({ outline }) => outline)) });
+}
+
+async function exportOpenStreetMapBuildingOutlines(): Promise<void> {
+  const { osm3s, elements } = outlinesAnswerSchema.parse(await overpass(OUTLINES_QUERY));
+  const features = elements.flatMap((element) =>
+    outlinesOf(element).map(({ id, outline }) => ({
+      type: 'Feature',
+      id,
+      properties: { name: element.tags.name ?? null },
+      geometry: { type: 'Polygon', coordinates: [outline] },
+    })),
+  );
+  await write('openstreetmap-building-outlines.geojson', {
+    type: 'FeatureCollection',
+    exportedFrom: OVERPASS,
+    query: OUTLINES_QUERY,
+    exportedOn: today(),
+    copyright: osm3s.copyright,
+    features,
+  });
+}
+
 const EXPORTS: Record<string, () => Promise<void>> = {
   'campus-boundary': exportCampusBoundary,
   'campus-map-buildings': exportCampusMapBuildings,
   'openstreetmap-buildings': exportOpenStreetMapBuildings,
+  'openstreetmap-building-outlines': exportOpenStreetMapBuildingOutlines,
 };
 
 const names = process.argv.slice(2);

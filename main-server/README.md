@@ -336,6 +336,29 @@ that the User picks a place without typing coordinates:
 - A name is the campus map's, except a name the map wraps, such as `관악 223동[우석경제관]`, which is stored as
   `우석경제관`. Several buildings share a name, such as the seven `(관악사)학부 생활관`.
 
+A building also keeps its outline, OpenStreetMap's drawing of its walls, where OpenStreetMap draws one: 194 of the 218
+numbered buildings have one. The routes above do not serve it. It lets the server say which building a position is in,
+without a database query: a feature injects `BuildingLookup` from `src/buildings/building-lookup.ts`, which
+`BuildingsModule` exports, and asks it for a position.
+
+```ts
+constructor(private readonly buildingLookup: BuildingLookup) {}
+
+const found = this.buildingLookup.at({ latitude, longitude });
+// { building: { id, number: '301', name: '제1공학관', latitude, longitude }, relation: 'inside' }, or null
+```
+
+- The answer is the nearest building or place. A building with an outline is as far as its wall, and at no distance
+  when the outline holds the position; a place, or a building without an outline, is as far as its position.
+- `relation` is `inside` when the building has an outline and its wall is within 5 m, since a phone inside a building is
+  often placed just outside its walls, and `near` up to 20 m. Farther than 20 m from everything, the answer is `null`.
+  A place, or a building without an outline, can only be `near`.
+- Between two buildings the nearer wall wins, and a building whose outline holds the position wins over any wall. Of
+  the buildings that share one outline, such as 국제대학원 and 국제회의동, the one whose position is nearer wins.
+- It does not check the [Campus Boundary](#campus-boundary): a feature that hides a User outside it checks that first.
+- The buildings are read once, when the server starts, after the seed was loaded. No route serves the answer yet: P08
+  calls it when a User's position arrives.
+
 ## Campus Boundary
 
 The Campus Boundary is a file of the main server, `seed/campus-boundary.geojson`: OpenStreetMap's relation 11917142
@@ -364,20 +387,26 @@ position there is outside.
 Seed data comes from outside the project once, rather than by Collection: a file in `seed/` that one command loads
 into the database.
 
-| File                           | What it holds                                                                    | Exported from                                                |
-| ------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `campus-boundary.geojson`      | The Campus Boundary, read by the server and not loaded                           | An Overpass query for relation 11917142                      |
-| `campus-map-buildings.json`    | The campus map's 250 rows, as it serves them                                     | `https://map.snu.ac.kr/api/building.action?page=1&rows=1000` |
-| `openstreetmap-buildings.json` | 71-1동 and 901동, which the campus map does not list, with OpenStreetMap's names | An Overpass query for the two names                          |
+| File                                      | What it holds                                                                       | Exported from                                                |
+| ----------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `campus-boundary.geojson`                 | The Campus Boundary, read by the server and not loaded                              | An Overpass query for relation 11917142                      |
+| `campus-map-buildings.json`               | The campus map's 250 rows, as it serves them                                        | `https://map.snu.ac.kr/api/building.action?page=1&rows=1000` |
+| `openstreetmap-buildings.json`            | 71-1동 and 901동, which the campus map does not list, with OpenStreetMap's names    | An Overpass query for the two names                          |
+| `openstreetmap-building-outlines.geojson` | The outline of every building OpenStreetMap draws in the campus extent, 225 of them | An Overpass query for the buildings in the extent            |
+| `building-outline-links.json`             | A person's corrections of which outline a building has, each with its reason        | Written by hand                                              |
 
 - **Origin**: each file keeps the address or Overpass query it came from (`exportedFrom`, `query`) and the day of the
-  export (`exportedOn`), in `properties` in the GeoJSON file. All three were exported on 2026-10-02.
+  export (`exportedOn`), in `properties` in the boundary's GeoJSON file and at the top of the outlines'. All four
+  were exported on 2026-10-02.
 - **Exporting**: `pnpm seed:export campus-map-buildings` repeats the export of the files it names and overwrites them.
   Each export is one request, sent with the worker's User-Agent, which names the project as OpenStreetMap asks.
   Overpass asks for one query at a time; when it answers 504, it is busy, so wait some minutes before trying again.
   - The boundary's four outer ways are joined into one ring. The two OpenStreetMap buildings are placed at the centre
     of their outline's bounding box, as Overpass gives it, and carry the numbers their names give, from a table in
     `scripts/export-seed.ts`.
+  - Each outline is one ring under OpenStreetMap's identifier, `way/…`, with its name. A building drawn as a relation
+    of several ways gives one ring of its joined outer ways, under `relation/…`, or, where a part stands apart, a ring
+    for that part under the part's own `way/…`. A courtyard is left out, so that a position in it is in the building.
 - **Loading**: `pnpm db:seed` builds the server and loads the files into the database at `DATABASE_URL`. In Compose
   the image, built already, runs `node dist/seed` before the server starts.
   - Loaded are the entries of both building files that lie inside the Campus Boundary, except the map's `Test` row:
@@ -387,14 +416,21 @@ into the database.
     `origin`, `campus_map` or `openstreetmap`: seed data is not collected, so its origin is no Source. Loading again
     updates each entry in place by that identifier, so its `id` and whatever points at it stay, and running the
     command twice leaves one set of records. An entry that has left the files stays in the database.
+  - A building takes the outline that holds its position, the larger when two do, so the buildings that OpenStreetMap
+    draws as one share an outline. A building within 10 m of an outline that holds no building takes that outline:
+    the campus map places some buildings just outside their walls. An outline that holds another building is not
+    taken, since the building beside it is a store or a link that OpenStreetMap does not draw. A place has no outline.
+    `building-outline-links.json` then replaces what the positions gave: `{ "number": "43", "outline": null, "why": … }`
+    takes an outline away, and an identifier in `outline` gives that one. Loading again stores each building's outline
+    anew, so a building that lost its outline is stored without one.
 - **Correcting**: change the entry in its file, such as a name in `inst_kor_nm`, and load again. The next export
   overwrites the correction.
 - **Coordinates** come from the campus map and OpenStreetMap only, never from Kakao, Naver or Google maps, whose terms
   forbid storing their data. The campus map is drawn on a Kakao map, but its buildings' coordinates are the
   university's own.
-- **Licences**: OpenStreetMap's data is under the ODbL, and the two files made from it carry its notice
-  (`copyright`). The app shows OpenStreetMap's attribution (P15); `.scratch/research/external-sources.md` §6.1 says
-  where the attribution guidelines ask for it. The campus map publishes no terms of use and no licence (§6.2).
+- **Licences**: OpenStreetMap's data is under the ODbL, and the files made from it carry its notice (`copyright`). The
+  app shows OpenStreetMap's attribution (P15); `.scratch/research/external-sources.md` §6.1 says where the attribution
+  guidelines ask for it. The campus map publishes no terms of use and no licence (§6.2).
 - **In a test**: the global setup loads the seed into the test database, so every test file has the buildings, and
   `test/buildings.e2e-spec.ts` counts them. A test that changes the seed, or needs other buildings, loads it into a
   database of its own, with `loadSeed(prisma, directory)` from `src/load-seed.ts`, as `test/seed.e2e-spec.ts` does.
@@ -432,6 +468,7 @@ src/
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
 │   ├── seed-directory.ts            where the seed files are
+│   ├── geometry.ts                  a position, and whether a ring holds it or how far it is from it
 │   ├── campus-boundary.ts           the Campus Boundary, read from its seed file
 │   ├── campus-boundary.module.ts    makes the Campus Boundary available to every feature
 │   ├── prisma.module.ts             makes PrismaService available to every feature
@@ -456,7 +493,8 @@ src/
 ├── collection/                      a feature: each Source's Collection status, and the worker's failure messages
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
-└── buildings/                       a feature: the campus buildings and places of the seed, listed and searched
+└── buildings/                       a feature: the campus buildings and places of the seed, listed and searched, and
+                                     the building at a position
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
 test/                                tests, run against PostgreSQL and Redis in containers
 ```

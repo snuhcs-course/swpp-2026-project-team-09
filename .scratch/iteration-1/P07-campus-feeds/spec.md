@@ -118,7 +118,13 @@ The worker server collects events, menus and shuttle positions from their origin
 - Each entry keeps the identifier its source gives it, and loading the seed again updates the entries in place. A timetable or a Meetup that names a building keeps pointing at it.
 - The Campus Boundary is one polygon from OpenStreetMap (relation 11917142). It is a file of the main server, read into memory when the server starts, and is not stored in the database. P08 uses it.
   - The outline leaves out a wedge in the north-east, with the faculty housing, the president's residence and the dormitory buildings 915 to 917, and four facilities on the hillside in the south. A User there is hidden.
-- The buildings, the stops and the route line are stored in ordinary columns: a latitude and a longitude, and the line as a list of coordinates. No spatial type and no spatial query is used, because nothing asks a spatial question of the database: a vehicle is placed by its position on the drawing, and the Boundary is checked in memory.
+  - A position up to 10 m outside the polygon counts as inside, because a phone reports its position some metres off. The file stays OpenStreetMap's outline. The one check holds for a User's position and for the building list, which so gains `정문수위실`, 2 m outside the outline.
+- A building keeps its outline where OpenStreetMap draws one. The outlines are seed data: every building OpenStreetMap draws in the campus extent, 225 outlines on 2026-10-02.
+  - A building takes the outline that holds its position, or the nearest outline within 10 m when that outline holds no building, since the campus map places some buildings just outside their walls. A person checks the links and corrects them in a file of the seed.
+  - On 2026-10-02, 194 of the 218 numbered buildings had an outline. The others are stores, links between buildings and buildings that OpenStreetMap does not draw.
+- The main server says which building a position is in, without a database query: the nearest building, each as far as its wall, `inside` within 5 m of the wall and `near` up to 20 m. Farther than 20 m from every building and place, the answer is none. A place, or a building without an outline, is as far as its position and can only be near.
+  - Nothing shows the answer to Users yet. P08 asks it when a User's position arrives.
+- The buildings, the stops and the route line are stored in ordinary columns: a latitude and a longitude, and the line and a building's outline as lists of coordinates. No spatial type and no spatial query is used, because nothing asks a spatial question of the database: a vehicle is placed by its position on the drawing, and the Boundary and the building at a position are checked in memory.
 - Each seed file is kept with the query or address it came from and the date, so that the export can be repeated.
 - Coordinates are never read off Kakao, Naver or Google maps. Their terms forbid storing their data. The campus map is drawn on a Kakao map, but the coordinates of its buildings and stops are the university's own.
 - The app shows the OpenStreetMap attribution on an information screen.
@@ -134,7 +140,8 @@ The worker server collects events, menus and shuttle positions from their origin
 - A good test feeds a saved page to a parser and checks the records that come out, or sends a message to the main server and checks what is stored and served.
 - Parsers are tested with saved pages, including a closed restaurant, a dish without a price under a heading with a set price, a line with several prices, an unfilled cell, a page without the structure the parser expects, an event with several days, an event whose time cannot be read, and an event with an application deadline.
 - The vehicle parser is tested with saved answers: vehicles at stops, several vehicles at one stop, an empty answer, and a position that is not exactly on a stop.
-- The seed is tested against a real database: it loads, it loads again without duplicates, and an entry keeps its identifier when its name changes.
+- The seed is tested against a real database: it loads, it loads again without duplicates, and an entry keeps its identifier when its name changes. A building gets the outline the rule gives it, and a person's link replaces it.
+- The building at a position is tested on the started server, with positions whose distances were measured apart from the code: inside a building, 3 m, 12 m and 30 m outside a wall, at a place, between two buildings, and among the buildings of one outline.
 - The main server's handling of worker messages is tested at the message boundary: invalid messages refused, repeated messages stored once, a later collection replacing a day's menus, a failure recorded with the earlier data still served, a collected event published or kept as a Draft by what was read, a discarded post reported as stored so that it is not collected again, a stored post left as it is.
 - The command that runs one collection is tested with the sources and the main server replaced: it collects the source it names and no other.
 - The push of vehicle positions is tested at the socket server: a positions message from the main server reaches a connected client with the time each position was received.
@@ -157,6 +164,7 @@ The worker server collects events, menus and shuttle positions from their origin
 - Reading a post again after it was stored, to see edits or deletions at the source.
 - Application periods and deadlines as a field of an event.
 - Placing a vehicle between two stops on the server.
+- Showing others which building a User is in. The main server can say it; what is shown, and to whom, is specified later.
 
 ## Further Notes
 

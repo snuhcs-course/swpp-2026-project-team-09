@@ -6,7 +6,7 @@ import { BuildingDto, toBuildingDto } from './dto/building.dto.js';
 // `25-1` comes after `25` and before `26`, and Korean names in the order a User reads them.
 const koreanOrder = new Intl.Collator('ko', { numeric: true });
 
-function byNumber(a: Building, b: Building): number {
+export function byNumber(a: Building, b: Building): number {
   if (a.number !== null && b.number !== null) {
     return koreanOrder.compare(a.number, b.number);
   }
