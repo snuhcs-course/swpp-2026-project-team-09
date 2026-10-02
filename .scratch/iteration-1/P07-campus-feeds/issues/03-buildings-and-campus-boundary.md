@@ -83,18 +83,6 @@ One run, at 16:20 KST, of `docker compose -p p07-03-seed-check up --build -d pos
 - The routes' answers with a User's token were not looked at, because signing in needs a Google ID token; the tests cover them.
 - `docker compose -p p07-03-seed-check down -v --rmi local` removed the run's containers, volume and images, and the local `.env` was deleted.
 
-### Agent usage (2026-10-02)
-
-Tickets 02 to 05 were built in one orchestrated run: one session placed the agents and managed the merges, and each ticket had an implementing agent in a worktree of its own and a merging agent.
-
-- Agent time: about 47 minutes, an estimate. Nobody was waited for.
-  - The implementing agent worked about 44 minutes, from reading the ticket to its report.
-  - The merging agent worked about 3 minutes: the merge into the integration branch, the four checks on the merged branch, and a look for the one migration and for leftover containers.
-- Tokens, for the two agents, counted from their transcripts after the merge:
-  - Input: 42,082,127 in total, of which 41,468,940 were cache reads, 612,867 cache writes and 320 uncached.
-  - Output: 39,987. The transcripts record only part of the output of most steps, so this is a lower bound.
-- The orchestrating session's share is recorded once, under the ticket of this run that was merged last.
-
 ### Review (2026-10-02)
 
 A Standards review and a Spec review ran side by side on `0d4ea14b`, this ticket's commits alone on `1.0/Main`. The commit that adds this section acts on them.
@@ -122,3 +110,16 @@ A Standards review and a Spec review ran side by side on `0d4ea14b`, this ticket
   - The global `CampusBoundary` provider has no consumer yet: P08 is the one the criterion names.
   - (a)1, the agent usage, is the orchestrating session's.
 - After the changes: 23 files and 244 tests pass, and lint, format:check and typecheck pass.
+
+### Agent usage (2026-10-02)
+
+Tickets 02 to 05 were built in one orchestrated run: one session placed the agents and kept the branches and the PRs, and each ticket had an implementing agent in a worktree of its own.
+
+- Agent time: about 81 minutes, an estimate. Nobody was waited for.
+  - The implementing agent worked about 58 minutes: 44 from reading the ticket to its report, and 14 acting on the review.
+  - A merging agent worked about 3 minutes. The run first merged its tickets into one branch, before the user asked for a PR for each: it ran the four checks on this ticket merged with the others and looked for the one migration and for leftover containers.
+  - The Standards reviewer worked about 11 minutes and the Spec reviewer about 9, at the same time.
+- Tokens, for the four agents, counted from their transcripts when this section was written:
+  - Input: 70,717,335 in total, of which 69,217,540 were cache reads, 1,499,295 cache writes and 500 uncached.
+  - Output: 64,353. The transcripts record only part of the output of most steps, so this is a lower bound.
+- The orchestrating session's share is recorded once for the run, under ticket 04.
