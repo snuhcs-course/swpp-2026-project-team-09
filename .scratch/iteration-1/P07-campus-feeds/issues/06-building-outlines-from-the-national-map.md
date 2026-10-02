@@ -111,3 +111,14 @@ The main server's README has the full text under Buildings and Seed data.
 - Whether the layer's notice needs a year, and which. The notice in the seed file has none.
 - Whether 공공누리 asks for the attribution in the app when the outlines are used only on the server and never drawn. The P15 spec names both sources on the information screen.
 - The links by a label were not looked at one by one against a map. One wrong label was found by its distance, that of 104-1동 above; the other labelled polygons that lie more than 10 m from their building's position are parts of buildings with several outlines, 13 to 49 m away.
+
+### Agent usage (2026-10-03)
+
+One session, the one that reviewed ticket 03's pull request, and two agents it started. Counted from where ticket 03's last usage section ends: the questions about the outlines' source, the research, the comparisons on the map, the person's check, this ticket, and its build.
+
+- Agent time: about 3 hours, an estimate.
+  - The session's own steps took about 112 minutes: the gaps under five minutes between them, which also count short pauses between questions.
+  - The research agent worked about 24 minutes and the implementing agent about 42, each while the session waited.
+- Tokens, the two agents included, counted when this section was written:
+  - Input: 138,096,830 in total, of which 136,978,775 were cache reads, 1,117,279 cache writes and 776 uncached. The two agents took 43,857,872 of it.
+  - Output: 295,382. The agents' transcripts record only part of their output, so this is a lower bound.
