@@ -4,6 +4,7 @@ import { APP_PIPE } from '@nestjs/core';
 import { IdempotencyModule } from '@nestjs/idempotency';
 import { AdministratorsModule } from './administrators/administrators.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { CollectionModule } from './collection/collection.module.js';
 import { type SignedInAdministrator } from './common/current-administrator.decorator.js';
 import { type SignedInUser } from './common/current-user.decorator.js';
 import { MessagingModule } from './common/messaging.module.js';
@@ -13,6 +14,7 @@ import { RedisModule } from './common/redis.module.js';
 import { settingsSchema } from './common/settings.js';
 import { HealthModule } from './health/health.module.js';
 import { LobbyModule } from './lobby/lobby.module.js';
+import { MenusModule } from './menus/menus.module.js';
 import { UsersModule } from './users/users.module.js';
 
 @Module({
@@ -40,6 +42,8 @@ import { UsersModule } from './users/users.module.js';
     UsersModule,
     AdministratorsModule,
     LobbyModule,
+    CollectionModule,
+    MenusModule,
   ],
   providers: [
     // Validates a handler parameter against the schema given in its decorator: @Body({ schema: signInSchema }).

@@ -1,6 +1,8 @@
 # worker-server
 
-The SNU Now worker server. It follows the main server's layout, settings and checks. It keeps no data of its own.
+The SNU Now worker server. It collects the Sources, the pages and feeds outside the project, on a schedule, and hands
+what it reads to the main server. It follows the main server's layout, settings and checks, and keeps no data of its
+own.
 
 ## Run it
 
@@ -39,6 +41,124 @@ If a setting in `.env` is missing or invalid, the server stops and names it, for
 The server starts even when it cannot reach Redis, because it only sends messages. Until Redis can be reached,
 readiness answers 503.
 
+## Collections
+
+A Collection is one run of the worker reading a Source and handing what it read to the main server. Every collector
+follows these rules; `src/menu/menu.collector.ts` is the first.
+
+- **Schedule**: `@Cron()` from `@nestjs/schedule` on the collector's method starts its Collections. The times are one
+  constant at the top of the collector's file, a cron expression with seconds, and the time zone is `Asia/Seoul`:
+
+  ```ts
+  const COLLECTION_TIMES = '0 0 5,10 * * *';
+
+  @Cron(COLLECTION_TIMES, { timeZone: 'Asia/Seoul' })
+  async collect(): Promise<void> {
+  ```
+
+  One worker instance runs, so each Collection runs once. The worker collects nothing when it starts.
+
+- **By hand**: `pnpm collect` runs one Collection of each Source it names, as the schedule would, and exits. Use it
+  after starting the system outside the scheduled times, so that the main server holds data without waiting for the
+  next run:
+
+  ```bash
+  pnpm build
+  pnpm collect coop_menus dormitory_menus veterinary_menus
+  ```
+
+  In Compose the worker is built already:
+
+  ```bash
+  docker compose exec worker-server node dist/collect coop_menus dormitory_menus veterinary_menus
+  ```
+
+  It needs the main server running, logs for each Source whether the main server took what was read, and exits with
+  status 1 when one was not taken or a name is not a Source. `src/collect-sources.ts` holds the Sources it knows, and
+  `src/collect.ts` starts the worker without its HTTP server to run them.
+
+- **Fetching**: every page is fetched with `PageFetcher.fetch(url)` from `src/common/page-fetcher.ts`, never with
+  `fetch` itself. It sends a `User-Agent` that names the project, asks for one page at a time whichever collectors are
+  running, and fails when the answer's status is not 2xx. It sets no timeout of its own: Node's `fetch` gives up on a
+  request that gets no answer after 300 seconds.
+- **Parsing**: a parser is a function from a page's text to what the message carries, in the feature's folder, such as
+  `src/menu/menu-page.parser.ts`. No page is a versioned interface, and the university's firewall answers a blocked
+  request with status 200 and another page. So a parser checks that the page is the one it knows, such as the table
+  being there and the date being the one asked for, and throws an `Error` that says what is wrong.
+- **Handing over**: the collector sends what it read as one request-and-response message through the messaging client
+  (`MESSAGING_CLIENT`) and waits for the answer. The main server's README sets how a message is named and shaped and
+  what it answers: [Messages from the worker server](../main-server/README.md#messages-from-the-worker-server). The
+  shape of what a Collection read is a type in the feature's `dto/`, kept the same as the main server's schema by hand.
+- **Failure**: when a page cannot be fetched or read, or the main server does not take the message, the collector logs
+  it and sends `collection-failed` with the Source, the time and the reason, such as
+  `https://snudorm.snu.ac.kr/foodmenu/?date=2026-10-02 answered 503` or `The page has no menu table`. The other Sources
+  of the run are still collected, and the main server keeps what it stored.
+
+The tests never call a real Source. `startApp` replaces the HTTP call under `PageFetcher` (`FETCH`), and every request
+fails unless the test gives it pages. A parser is tested as a function and a collector by running it once, not through
+HTTP; their files are still named `*.e2e-spec.ts`, the one pattern Vitest runs.
+
+- **Saved pages**: `test/pages/` holds one page of each Source as it was served, named after the Source and the day it
+  was saved. Save a page once, with the project's `User-Agent`. Prettier leaves the folder alone:
+
+  ```bash
+  curl -A 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)' \
+    -o test/pages/coop-menus-2026-10-01.html 'https://snuco.snu.ac.kr/foodmenu/?date=2026-10-01'
+  ```
+
+- **A parser** is given a saved page with `savedPage(name)` from `test/pages.ts`, and the test checks what comes out,
+  as `test/menu-page-parser.e2e-spec.ts` does. A case the saved page does not show, such as a closure or the turn of
+  the year, is an edit of the saved page made in the test, with a comment that says what it changes.
+- **A collector** runs once against `sourcesServing(pages)` from `test/sources.ts`, which stands for the Sources, and a
+  `MainServerStub` from `test/main-server.ts`, which stands for the main server and keeps the messages the worker
+  sends, as `test/menu-collector.e2e-spec.ts` does. The test sets the clock with
+  `vi.useFakeTimers({ toFake: ['Date'], now })`.
+- **The command** is tested through `collectSources(app, names)`, which `src/collect.ts` calls, in the same file.
+
+## Menus
+
+Three Sources are collected at 05:00 and 10:00, each for today and the six days after in Asia/Seoul, and each sent as
+one `menus-collected` message. The times (`COLLECTION_TIMES`) and the number of days (`COLLECTED_DAYS`) are constants
+at the top of `src/menu/menu.collector.ts`. The times are provisional: nobody has observed when the pages change. A
+restaurant fills in its later days as it posts them, and the next Collection brings them.
+
+| Source             | Page                                                  | Read                                   |
+| ------------------ | ----------------------------------------------------- | -------------------------------------- |
+| `coop_menus`       | `https://snuco.snu.ac.kr/foodmenu/?date=YYYY-MM-DD`   | one page for each day                  |
+| `dormitory_menus`  | `https://snudorm.snu.ac.kr/foodmenu/?date=YYYY-MM-DD` | one page for each day, the same format |
+| `veterinary_menus` | `https://vet.snu.ac.kr/cafe_menu/`                    | the table of the current week, once    |
+
+- The Co-op page's restaurants are sent without the telephone number the page appends. The four whose names start with
+  `* ` are left out: they repeat one fixed menu in every cell, every day. Its `기숙사식당` is left out too: it is
+  `생협기숙사(919동)` of the dormitory page, and is taken from there.
+- The veterinary college's table names no restaurant, so its lunches are sent as `수의대식당`. It writes a day as
+  `10. 1(목)`, without a year: a row is a day's when the month, the day and the weekday match, which settles the year
+  at the turn of the year. A day without a row, such as a Saturday or a day of next week, is sent without a restaurant.
+  Only the lunch column is read.
+- A meal is sent as the lines of its cell, in the page's order
+  ([ADR 0001](../docs/adr/0001-menus-kept-as-lines.md)). A line is the text between two line breaks, without the
+  spaces around it and with no-break spaces as spaces. A line without a letter or a digit is dropped, so an empty cell
+  gives no lines, and neither does a cell that was not filled in and holds only the page's template, `: | :`.
+- `src/menu/menu-line.ts` reads each line by itself, and sets a `kind`, a `name` and a `price` only when it is sure:
+
+  | Line                                                                                     | `kind`    | `name`                | `price`       |
+  | ---------------------------------------------------------------------------------------- | --------- | --------------------- | ------------- |
+  | Starts with `※`, or says `휴무`: `※ 운영시간 : 11:00~14:30`, `개천절 휴무`               | `note`    | never                 | never         |
+  | Only `<…>`, with or without a price: `<주문식 메뉴>`, `<뷔페> 6,500원`                   | `heading` | never                 | the set price |
+  | A price after a colon: `눈꽃치즈닭갈비 : 6,000원`, `<A코너>제육김치덮밥, 잡채 : 6,000원` | `dish`    | the text before `: …` | the price     |
+  | Anything else                                                                            | `null`    | never                 | never         |
+
+  The price is set when the line holds exactly one amount of won, written without a typo: `6,000원`, `4,500 원`.
+  `9,900원 / 12,400원` and `8,3000 원` stay in `text` alone. The name is set when the price is and the line ends with
+  it: `눈꽃치즈닭갈비 : 6,000원` names `눈꽃치즈닭갈비`, so that the app shows the name and the price as a row.
+
+- So a line that only names a dish has no `kind`: `잡곡밥` under a heading with a set price, or a lunch of the
+  veterinary college's table. Nor has a sentence between angle brackets, which is a notice:
+  `< 위 메뉴외에도 다양한 메뉴가 준비되어 있습니다>`.
+
+What the collectors sent on the real pages, and how many lines got a `kind`, a `name` and a `price`, is recorded in
+`.scratch/iteration-1/P07-campus-feeds/issues/01-menus-first-collection.md`.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
@@ -57,44 +177,51 @@ Each command fails when it finds a problem. Run all four before opening a pull r
 ```text
 src/
 ├── main.ts                          starts the server
+├── collect.ts                       the command that runs one Collection by hand
+├── collect-sources.ts               the Sources the command knows, and running them
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
 │   ├── messaging.module.ts          makes the messaging client available to every feature
-│   └── messaging.ts                 options for NestJS messaging over Redis
-└── health/                          a feature: the liveness and readiness checks
+│   ├── messaging.ts                 options for NestJS messaging over Redis
+│   ├── page-fetcher.module.ts       makes the one PageFetcher available to every feature
+│   └── page-fetcher.ts              the one place where pages are fetched
+├── health/                          a feature: the liveness and readiness checks
+└── menu/                            a feature: the collector of the three menu Sources and its parsers
 test/                                tests, run against Redis in a container
+└── pages/                           pages saved from the Sources, which the tests read in place of them
 ```
 
 ## Adding a feature module
 
-The steps add a feature named `menu`. Use a short lowercase name, with dashes between words (`shuttle-stop`).
+Apart from the health checks, the worker's features are collectors, one for each kind of Source. The steps add one
+named `library`. Use a short lowercase name, with dashes between words (`shuttle-stop`).
 
-1. Create the module. It lands in `src/menu/` and is added to `AppModule`:
-
-   ```bash
-   pnpm exec nest g module menu
-   ```
-
-2. Create the controller, which holds the HTTP routes, and the service, which holds the logic. Both are registered in
-   `MenuModule`. `--no-spec` skips unit test files, because this project tests through HTTP (step 6):
+1. Create the module. It lands in `src/library/` and is added to `AppModule`:
 
    ```bash
-   pnpm exec nest g controller menu --no-spec
-   pnpm exec nest g service menu --no-spec
+   pnpm exec nest g module library
    ```
 
-3. Put request and response shapes in `src/menu/dto/`. There is no `entities/` folder, because the worker server
-   stores no records. Everything that belongs to the feature stays inside `src/menu/`.
-4. If another feature needs `MenuService`, add it to `exports` in `MenuModule` and add `MenuModule` to the other
-   module's `imports`. Code shared by two or more features goes in `src/common/`.
-5. If the feature needs a new setting, add it to the schema in `src/common/settings.ts`, to `.env.example`, to your own
+2. Write the collector in `src/library/library.collector.ts` and add it to the `providers` of `LibraryModule`, as
+   `src/menu/` does. It reads its Source on a schedule and hands what it read to the main server (see
+   [Collections](#collections)). Put a parser for each page format beside it. A feature with HTTP routes has a
+   controller instead, as `src/health/` does: `pnpm exec nest g controller library --no-spec`.
+3. Put the shape of the message it sends in `src/library/dto/`. There is no `entities/` folder, because the worker
+   server stores no records. Everything that belongs to the feature stays inside `src/library/`.
+4. On the main server, add the Source, the message's schema and its handler (see
+   [Messages from the worker server](../main-server/README.md#messages-from-the-worker-server)). Add the Source to
+   `src/collect-sources.ts` too, so that the command can run its Collection.
+5. Code shared by two or more features goes in `src/common/`. If another feature needs a provider of this one, add it
+   to `exports` in `LibraryModule` and add `LibraryModule` to the other module's `imports`.
+6. If the feature needs a new setting, add it to the schema in `src/common/settings.ts`, to `.env.example`, to your own
    `.env`, to the `worker-server` service in `compose.yaml` at the repository root and to the settings in
    `test/global-setup.ts`. Read it by injecting `ConfigService<Settings, true>` and calling
    `get('NAME', { infer: true })`.
-6. Write `test/menu.e2e-spec.ts`. Start the server with `startApp` from `test/start-app.ts` and call its routes with
+7. Save a page of the Source and write the tests of the parser and of the collector (see
+   [Collections](#collections)). Start the server with `startApp` from `test/start-app.ts`. A route is called with
    `supertest`, as `test/health.e2e-spec.ts` does.
-7. Run `pnpm format`, then the four checks.
+8. Run `pnpm format`, then the four checks.
 
-Import classes with a plain `import { MenuService } from ...`, never `import type`. Nest looks the class up at runtime
+Import classes with a plain `import { PageFetcher } from ...`, never `import type`. Nest looks the class up at runtime
 to inject it.

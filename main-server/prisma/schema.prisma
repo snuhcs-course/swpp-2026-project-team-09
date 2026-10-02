@@ -82,3 +82,77 @@ model Administrator {
 
   @@map("administrators")
 }
+
+// One restaurant on one day, as the last Collection of its Source read it.
+model RestaurantDay {
+  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source      Source
+  // A calendar day in Asia/Seoul.
+  date        DateTime   @db.Date
+  restaurant  String
+  collectedAt DateTime   @map("collected_at")
+  lines       MenuLine[]
+
+  @@unique([date, source, restaurant])
+  @@map("restaurant_days")
+}
+
+// One line of a meal's cell, as the page wrote it (docs/adr/0001-menus-kept-as-lines.md).
+model MenuLine {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  restaurantDayId String        @map("restaurant_day_id") @db.Uuid
+  restaurantDay   RestaurantDay @relation(fields: [restaurantDayId], references: [id], onDelete: Cascade)
+  meal            Meal
+  // The page's order within the restaurant's day.
+  position        Int
+  text            String
+  // Set only when the worker is sure.
+  kind            MenuLineKind?
+  // A dish's text without its price, when the line ends with that price.
+  name            String?
+  // In won, when the line gives exactly one price.
+  price           Int?
+
+  @@unique([restaurantDayId, position])
+  @@map("menu_lines")
+}
+
+enum MenuLineKind {
+  // A corner or section, such as "<셀프코너> 7,000원".
+  heading
+  dish
+  // Hours, a notice or a closure, such as "※ 운영시간 : 11:00~14:30".
+  note
+
+  @@map("menu_line_kind")
+}
+
+// In the order of the day, which is the order the meals are served in.
+enum Meal {
+  breakfast
+  lunch
+  dinner
+
+  @@map("meal")
+}
+
+// A page or feed outside the project that the worker server collects.
+enum Source {
+  coop_menus
+  dormitory_menus
+  veterinary_menus
+
+  @@map("source")
+}
+
+// When a Source was last collected successfully and, apart from it, its last failure, so that a failure stays visible
+// after a later success.
+model CollectionStatus {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source            Source    @unique
+  lastSucceededAt   DateTime? @map("last_succeeded_at")
+  lastFailedAt      DateTime? @map("last_failed_at")
+  lastFailureReason String?   @map("last_failure_reason")
+
+  @@map("collection_statuses")
+}
