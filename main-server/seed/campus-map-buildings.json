@@ -1,0 +1,2506 @@
+{
+  "exportedFrom": "https://map.snu.ac.kr/api/building.action?page=1&rows=1000",
+  "exportedOn": "2026-10-02",
+  "rows": [
+    {
+      "inst_eng_nm": "College of Pharmacy 1",
+      "inst_seq": 24,
+      "inst_kor_nm": "약학관1",
+      "lat_val": "37.45784",
+      "lon_val": "126.95223",
+      "vil_dong_nm": "21",
+      "bd_no": "11C0210",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Reagent Storage",
+      "inst_seq": 25,
+      "inst_kor_nm": "약대시약창고",
+      "lat_val": "37.45741",
+      "lon_val": "126.95174",
+      "vil_dong_nm": "21-1",
+      "bd_no": "11C0211",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Natural Sciences 4",
+      "inst_seq": 26,
+      "inst_kor_nm": "자연과학관4",
+      "lat_val": "37.45792",
+      "lon_val": "126.95096",
+      "vil_dong_nm": "22",
+      "bd_no": "11C0220",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Center for Pharmaceutical Development",
+      "inst_seq": 166,
+      "inst_kor_nm": "약대신약개발연구센터",
+      "lat_val": "37.45828",
+      "lon_val": "126.95308",
+      "vil_dong_nm": "143",
+      "bd_no": "11C1430",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Back Gate Security Office",
+      "inst_seq": 167,
+      "inst_kor_nm": "후문수위실",
+      "lat_val": "37.46466",
+      "lon_val": "126.95774",
+      "vil_dong_nm": "144",
+      "bd_no": "11J1440",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Main Stadium Box Seats",
+      "inst_seq": 168,
+      "inst_kor_nm": "종합운동장본부석",
+      "lat_val": "37.46447",
+      "lon_val": "126.9507",
+      "vil_dong_nm": "149",
+      "bd_no": "11B1490",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Office of Admissions",
+      "inst_seq": 169,
+      "inst_kor_nm": "명예교수연구동",
+      "lat_val": "37.46704",
+      "lon_val": "126.95031",
+      "vil_dong_nm": "150",
+      "bd_no": "11A1500",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Museum of Art",
+      "inst_seq": 170,
+      "inst_kor_nm": "미술관",
+      "lat_val": "37.4665",
+      "lon_val": "126.94969",
+      "vil_dong_nm": "151",
+      "bd_no": "11A1510",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "CJ International Center",
+      "inst_seq": 171,
+      "inst_kor_nm": "CJ인터내셔널센터",
+      "lat_val": "37.46624",
+      "lon_val": "126.95132",
+      "vil_dong_nm": "152",
+      "bd_no": "11A1520",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Lotte International Hall",
+      "inst_seq": 172,
+      "inst_kor_nm": "롯데국제교육관",
+      "lat_val": "37.46657",
+      "lon_val": "126.95119",
+      "vil_dong_nm": "152-1",
+      "bd_no": "11A1521",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Woojeongwon Institute for Global Social Responsibility ",
+      "inst_seq": 173,
+      "inst_kor_nm": "우정원 글로벌사회공헌센터",
+      "lat_val": "37.46642",
+      "lon_val": "126.95217",
+      "vil_dong_nm": "153",
+      "bd_no": "11A1530",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Agricultural and Life Sciences",
+      "inst_seq": 174,
+      "inst_kor_nm": "농업생명과학대학",
+      "lat_val": "37.45769",
+      "lon_val": "126.94868",
+      "vil_dong_nm": "200",
+      "bd_no": "11D2000",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Agricultural and Life Sciences",
+      "inst_seq": 175,
+      "inst_kor_nm": "농업생명과학대학환경관",
+      "lat_val": "37.45687",
+      "lon_val": "126.94852",
+      "vil_dong_nm": "201",
+      "bd_no": "11D2010",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "SPC Research Building",
+      "inst_seq": 176,
+      "inst_kor_nm": "SPC농생명과학 및 기초과학연구동",
+      "lat_val": "37.45834",
+      "lon_val": "126.94836",
+      "vil_dong_nm": "203",
+      "bd_no": "11D2030",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Outdoor Sculpture Studio 1",
+      "inst_seq": 177,
+      "inst_kor_nm": "야외조각실습장1",
+      "lat_val": "37.4640933271623",
+      "lon_val": "126.95294896735",
+      "vil_dong_nm": "207",
+      "bd_no": "11I2070",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Liberal Studies",
+      "inst_seq": 178,
+      "inst_kor_nm": "종합교육연구동",
+      "lat_val": "37.46451",
+      "lon_val": "126.95424",
+      "vil_dong_nm": "220",
+      "bd_no": "11I2200",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Graduate School of Public Health",
+      "inst_seq": 179,
+      "inst_kor_nm": "보건대학원",
+      "lat_val": "37.46489",
+      "lon_val": "126.95469",
+      "vil_dong_nm": "221",
+      "bd_no": "11I2210",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Human Ecology",
+      "inst_seq": 180,
+      "inst_kor_nm": "생활과학대학",
+      "lat_val": "37.46437",
+      "lon_val": "126.95318",
+      "vil_dong_nm": "222",
+      "bd_no": "11I2220",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Connected Passage (1-2)",
+      "inst_seq": 181,
+      "inst_kor_nm": "인문관연결동(1동-2동)",
+      "lat_val": "37.46038",
+      "lon_val": "126.95265",
+      "vil_dong_nm": "250",
+      "bd_no": "11H2500",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Connected Passage (6-7)",
+      "inst_seq": 182,
+      "inst_kor_nm": "사회관연결동(6동-7동)",
+      "lat_val": "37.46059",
+      "lon_val": "126.95462",
+      "vil_dong_nm": "251",
+      "bd_no": "11H2510",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Connected Passage (10-11)",
+      "inst_seq": 183,
+      "inst_kor_nm": "교육관연결동(10동-11동)",
+      "lat_val": "37.4601",
+      "lon_val": "126.95543",
+      "vil_dong_nm": "252",
+      "bd_no": "11H2520",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Connected Passage (22-23)",
+      "inst_seq": 184,
+      "inst_kor_nm": "화학관연결동(22동-23동)",
+      "lat_val": "37.45839",
+      "lon_val": "126.95118",
+      "vil_dong_nm": "253",
+      "bd_no": "11C2530",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Connected Passage (25-27)",
+      "inst_seq": 185,
+      "inst_kor_nm": "물리관연결동(25동-27동)",
+      "lat_val": "37.45844",
+      "lon_val": "126.94999",
+      "vil_dong_nm": "254",
+      "bd_no": "11C2540",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Connected Passage (51-52)",
+      "inst_seq": 186,
+      "inst_kor_nm": "예능관연결동(51동-52동)",
+      "lat_val": "37.46356",
+      "lon_val": "126.9529",
+      "vil_dong_nm": "255",
+      "bd_no": "11I2550",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Engineering Building #301",
+      "inst_seq": 187,
+      "inst_kor_nm": "제1공학관",
+      "lat_val": "37.45016",
+      "lon_val": "126.95259",
+      "vil_dong_nm": "301",
+      "bd_no": "11F3010",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Engineering Building #302",
+      "inst_seq": 188,
+      "inst_kor_nm": "제2공학관",
+      "lat_val": "37.44887",
+      "lon_val": "126.95265",
+      "vil_dong_nm": "302",
+      "bd_no": "11F3020",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Hazardous Materials Storage",
+      "inst_seq": 189,
+      "inst_kor_nm": "공대위험물저장창고",
+      "lat_val": "37.44899",
+      "lon_val": "126.95289",
+      "vil_dong_nm": "302-1",
+      "bd_no": "11F3021",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Engineer House",
+      "inst_seq": 190,
+      "inst_kor_nm": "엔지니어하우스",
+      "lat_val": "37.44862",
+      "lon_val": "126.95102",
+      "vil_dong_nm": "310",
+      "bd_no": "11F3100",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Institute of Chemical Processes",
+      "inst_seq": 191,
+      "inst_kor_nm": "화학공정신기술연구소",
+      "lat_val": "37.44889",
+      "lon_val": "126.95179",
+      "vil_dong_nm": "311",
+      "bd_no": "11F3110",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Institute of Advanced Machinery and Design",
+      "inst_seq": 192,
+      "inst_kor_nm": "정밀기계연구소실험연구동",
+      "lat_val": "37.45091",
+      "lon_val": "126.95188",
+      "vil_dong_nm": "312",
+      "bd_no": "11F3120",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Institute of Advanced Machinery and Design",
+      "inst_seq": 193,
+      "inst_kor_nm": "정밀기계공동연구소",
+      "lat_val": "37.45123",
+      "lon_val": "126.95197",
+      "vil_dong_nm": "313",
+      "bd_no": "11F3130",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Advanced Automotive Research Center",
+      "inst_seq": 194,
+      "inst_kor_nm": "차세대자동차신기술연구소",
+      "lat_val": "37.45178",
+      "lon_val": "126.95243",
+      "vil_dong_nm": "314",
+      "bd_no": "11F3140",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Structure Experiment Building",
+      "inst_seq": 195,
+      "inst_kor_nm": "대형구조실험동",
+      "lat_val": "37.44738",
+      "lon_val": "126.95031",
+      "vil_dong_nm": "316",
+      "bd_no": "11F3160",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Power Plant 2",
+      "inst_seq": 196,
+      "inst_kor_nm": "제2파워플랜트",
+      "lat_val": "37.44985",
+      "lon_val": "126.95026",
+      "vil_dong_nm": "330",
+      "bd_no": "11F3300",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Garage",
+      "inst_seq": 197,
+      "inst_kor_nm": "차량정비고",
+      "lat_val": "37.44937",
+      "lon_val": "126.95014",
+      "vil_dong_nm": "331",
+      "bd_no": "11F3310",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Multiple-use Garage",
+      "inst_seq": 198,
+      "inst_kor_nm": "다목적차량보관소",
+      "lat_val": "37.44964",
+      "lon_val": "126.95006",
+      "vil_dong_nm": "332",
+      "bd_no": "11F3320",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Natural Sciences",
+      "inst_seq": 199,
+      "inst_kor_nm": "대학원연구동(2단계)",
+      "lat_val": "37.4592190840394",
+      "lon_val": "126.948120067187",
+      "vil_dong_nm": "500",
+      "bd_no": "11D5000",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Reagent Storage",
+      "inst_seq": 200,
+      "inst_kor_nm": "자연대 생명과학부 시약보관창고",
+      "lat_val": "37.46009",
+      "lon_val": "126.94822",
+      "vil_dong_nm": "506",
+      "bd_no": "11D5060",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Graduate Housing",
+      "inst_seq": 201,
+      "inst_kor_nm": "(관악사)대학원 생활관",
+      "lat_val": "37.46149",
+      "lon_val": "126.9581",
+      "vil_dong_nm": "900",
+      "bd_no": "11J9000",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Graduate Housing",
+      "inst_seq": 203,
+      "inst_kor_nm": "(관악사)대학원 생활관",
+      "lat_val": "37.46156",
+      "lon_val": "126.95729",
+      "vil_dong_nm": "902",
+      "bd_no": "11J9020",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Graduate Housing",
+      "inst_seq": 204,
+      "inst_kor_nm": "(관악사)대학원 생활관",
+      "lat_val": "37.46107",
+      "lon_val": "126.9576",
+      "vil_dong_nm": "903",
+      "bd_no": "11J9030",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Graduate Housing",
+      "inst_seq": 205,
+      "inst_kor_nm": "(관악사)대학원 생활관",
+      "lat_val": "37.46043",
+      "lon_val": "126.95763",
+      "vil_dong_nm": "904",
+      "bd_no": "11J9040",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Graduate Housing",
+      "inst_seq": 206,
+      "inst_kor_nm": "(관악사)대학원 생활관",
+      "lat_val": "37.46114",
+      "lon_val": "126.95854",
+      "vil_dong_nm": "905",
+      "bd_no": "11J9050",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Graduate Housing",
+      "inst_seq": 207,
+      "inst_kor_nm": "(관악사)대학원 생활관",
+      "lat_val": "37.46248",
+      "lon_val": "126.95835",
+      "vil_dong_nm": "906",
+      "bd_no": "11J9060",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Graduate Housing",
+      "inst_seq": 208,
+      "inst_kor_nm": "(관악사)대학원 생활관",
+      "lat_val": "37.46058",
+      "lon_val": "126.95867",
+      "vil_dong_nm": "918",
+      "bd_no": "11J9180",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Undergraduate Housing",
+      "inst_seq": 209,
+      "inst_kor_nm": "(관악사)학부 생활관",
+      "lat_val": "37.46306",
+      "lon_val": "126.95872",
+      "vil_dong_nm": "919",
+      "bd_no": "11J9190",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Agorium",
+      "inst_seq": 210,
+      "inst_kor_nm": "관악사후생관",
+      "lat_val": "37.46394",
+      "lon_val": "126.95905",
+      "vil_dong_nm": "920",
+      "bd_no": "11J9200",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Undergraduate Housing",
+      "inst_seq": 211,
+      "inst_kor_nm": "(관악사)학부 생활관",
+      "lat_val": "37.46335",
+      "lon_val": "126.95903",
+      "vil_dong_nm": "921",
+      "bd_no": "11J9210",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Undergraduate Housing",
+      "inst_seq": 212,
+      "inst_kor_nm": "(관악사)학부 생활관",
+      "lat_val": "37.463",
+      "lon_val": "126.95925",
+      "vil_dong_nm": "922",
+      "bd_no": "11J9220",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Undergraduate Housing",
+      "inst_seq": 213,
+      "inst_kor_nm": "(관악사)학부 생활관",
+      "lat_val": "37.46341",
+      "lon_val": "126.95955",
+      "vil_dong_nm": "923",
+      "bd_no": "11J9230",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Undergraduate Housing",
+      "inst_seq": 214,
+      "inst_kor_nm": "(관악사)학부 생활관",
+      "lat_val": "37.46362",
+      "lon_val": "126.95946",
+      "vil_dong_nm": "924",
+      "bd_no": "11J9240",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Undergraduate Housing",
+      "inst_seq": 215,
+      "inst_kor_nm": "(관악사)학부 생활관",
+      "lat_val": "37.46409",
+      "lon_val": "126.9586",
+      "vil_dong_nm": "925",
+      "bd_no": "11J9250",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Undergraduate Housing",
+      "inst_seq": 216,
+      "inst_kor_nm": "(관악사)학부 생활관",
+      "lat_val": "37.46429",
+      "lon_val": "126.95899",
+      "vil_dong_nm": "926",
+      "bd_no": "11J9260",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Family Housing",
+      "inst_seq": 217,
+      "inst_kor_nm": "가족생활관1",
+      "lat_val": "37.46711",
+      "lon_val": "126.95866",
+      "vil_dong_nm": "931",
+      "bd_no": "11K9310",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Family Housing",
+      "inst_seq": 218,
+      "inst_kor_nm": "가족생활관2",
+      "lat_val": "37.46684",
+      "lon_val": "126.95862",
+      "vil_dong_nm": "932",
+      "bd_no": "11K9320",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Family Housing",
+      "inst_seq": 219,
+      "inst_kor_nm": "가족생활관3",
+      "lat_val": "37.46679",
+      "lon_val": "126.95911",
+      "vil_dong_nm": "933",
+      "bd_no": "11K9330",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Family Housing",
+      "inst_seq": 220,
+      "inst_kor_nm": "가족생활관4",
+      "lat_val": "37.46676",
+      "lon_val": "126.95942",
+      "vil_dong_nm": "934",
+      "bd_no": "11K9340",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Family Housing",
+      "inst_seq": 221,
+      "inst_kor_nm": "가족생활관5",
+      "lat_val": "37.46735",
+      "lon_val": "126.95966",
+      "vil_dong_nm": "935",
+      "bd_no": "11K9350",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Staff Apartments",
+      "inst_seq": 222,
+      "inst_kor_nm": "교직원아파트",
+      "lat_val": "37.46708",
+      "lon_val": "126.95985",
+      "vil_dong_nm": "936",
+      "bd_no": "11K9360",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Research Center ",
+      "inst_seq": 223,
+      "inst_kor_nm": "연구공원지원시설",
+      "lat_val": "37.46588",
+      "lon_val": "126.95952",
+      "vil_dong_nm": "940",
+      "bd_no": "11K9400",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": " Center for Child Educare Service AND Research",
+      "inst_seq": 224,
+      "inst_kor_nm": "백학어린이집",
+      "lat_val": "37.46626",
+      "lon_val": "126.95826",
+      "vil_dong_nm": "941",
+      "bd_no": "11K9410",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Center for Child Educare Service AND Research",
+      "inst_seq": 225,
+      "inst_kor_nm": "느티나무어린이집",
+      "lat_val": "37.46589",
+      "lon_val": "126.95876",
+      "vil_dong_nm": "941-1",
+      "bd_no": "11K9411",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Biotechnology Research Building",
+      "inst_seq": 101,
+      "inst_kor_nm": "생명공학연구동",
+      "lat_val": "37.46698",
+      "lon_val": "126.95425",
+      "vil_dong_nm": "81",
+      "bd_no": "11A0810",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Graduate School of Environmental Studies",
+      "inst_seq": 102,
+      "inst_kor_nm": "환경대학원",
+      "lat_val": "37.46237",
+      "lon_val": "126.95409",
+      "vil_dong_nm": "82",
+      "bd_no": "11I0820",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Multimedia Lecture Building II",
+      "inst_seq": 103,
+      "inst_kor_nm": "인문사회계멀티미디어강의동",
+      "lat_val": "37.46344",
+      "lon_val": "126.95168",
+      "vil_dong_nm": "83",
+      "bd_no": "11B0830",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Centennial Building, College of Law",
+      "inst_seq": 104,
+      "inst_kor_nm": "근대법학교육100주년기념관",
+      "lat_val": "37.46226",
+      "lon_val": "126.95233",
+      "vil_dong_nm": "84",
+      "bd_no": "11B0840",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Veterinary Medicine",
+      "inst_seq": 105,
+      "inst_kor_nm": "수의과대학",
+      "lat_val": "37.46744",
+      "lon_val": "126.95365",
+      "vil_dong_nm": "85",
+      "bd_no": "11A0850",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Reagent Storage",
+      "inst_seq": 106,
+      "inst_kor_nm": "수의대시약보관창고",
+      "lat_val": "37.46799",
+      "lon_val": "126.95371",
+      "vil_dong_nm": "85-1",
+      "bd_no": "11A0851",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "SNU Dental Hospital in Gwanak",
+      "inst_seq": 107,
+      "inst_kor_nm": "치의학대학원 첨단교육연구복합단지",
+      "lat_val": "37.46899",
+      "lon_val": "126.95304",
+      "vil_dong_nm": "86",
+      "bd_no": "11A0860",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Institute of Environmental Protection and Safety",
+      "inst_seq": 108,
+      "inst_kor_nm": "환경안전원1",
+      "lat_val": "37.46634",
+      "lon_val": "126.95073",
+      "vil_dong_nm": "97",
+      "bd_no": "11A0970",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Institute of Environmental Protection and Safety",
+      "inst_seq": 109,
+      "inst_kor_nm": "환경안전원",
+      "lat_val": "37.46663",
+      "lon_val": "126.95063",
+      "vil_dong_nm": "98",
+      "bd_no": "11A0980",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Waste Storage",
+      "inst_seq": 110,
+      "inst_kor_nm": "폐기물창고",
+      "lat_val": "37.46676",
+      "lon_val": "126.95094",
+      "vil_dong_nm": "98-2",
+      "bd_no": "11A0982",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Tennis Court Maintenance Office",
+      "inst_seq": 111,
+      "inst_kor_nm": "정구장관리실",
+      "lat_val": "37.4556675512249",
+      "lon_val": "126.949761351447",
+      "vil_dong_nm": "99-1",
+      "bd_no": "11D0991",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Poongsan Outdoor Theater",
+      "inst_seq": 112,
+      "inst_kor_nm": "버들골 풍산마당",
+      "lat_val": "37.4584786551623",
+      "lon_val": "126.955227154786",
+      "vil_dong_nm": "100",
+      "bd_no": "11G1000",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Asia Center",
+      "inst_seq": 113,
+      "inst_kor_nm": "아시아연구소",
+      "lat_val": "37.46328",
+      "lon_val": "126.95015",
+      "vil_dong_nm": "101",
+      "bd_no": "11B1010",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Office of Information Systems and Technology",
+      "inst_seq": 114,
+      "inst_kor_nm": "정보화본부",
+      "lat_val": "37.45962",
+      "lon_val": "126.94927",
+      "vil_dong_nm": "102",
+      "bd_no": "11C1020",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Kyujanggak Institute for Korean Studies",
+      "inst_seq": 115,
+      "inst_kor_nm": "규장각한국학연구원",
+      "lat_val": "37.46226",
+      "lon_val": "126.95028",
+      "vil_dong_nm": "103",
+      "bd_no": "11C1030",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Inter-University Semiconductor Research Center",
+      "inst_seq": 116,
+      "inst_kor_nm": "반도체공동연구소",
+      "lat_val": "37.45477",
+      "lon_val": "126.95301",
+      "vil_dong_nm": "104",
+      "bd_no": "11G1040",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Inter-University Semiconductor Research Center",
+      "inst_seq": 117,
+      "inst_kor_nm": "반도체교육관",
+      "lat_val": "37.45509",
+      "lon_val": "126.95345",
+      "vil_dong_nm": "104-1",
+      "bd_no": "11G1041",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Chemical Storage",
+      "inst_seq": 118,
+      "inst_kor_nm": "반도체연구소화공약품창고",
+      "lat_val": "37.45537",
+      "lon_val": "126.95329",
+      "vil_dong_nm": "104-2",
+      "bd_no": "11G1042",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Hydrogen Storage",
+      "inst_seq": 119,
+      "inst_kor_nm": "반도체연구소수소창고",
+      "lat_val": "37.45543",
+      "lon_val": "126.95329",
+      "vil_dong_nm": "104-3",
+      "bd_no": "11G1043",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Institute of Molecular Biology and Genetics",
+      "inst_seq": 120,
+      "inst_kor_nm": "유전공학연구소",
+      "lat_val": "37.45432",
+      "lon_val": "126.95364",
+      "vil_dong_nm": "105",
+      "bd_no": "11G1050",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Business Incubator Center, Institute of Molecular Biology and Genetics",
+      "inst_seq": 121,
+      "inst_kor_nm": "창업보육센터및유전공학연구소",
+      "lat_val": "37.45446",
+      "lon_val": "126.95353",
+      "vil_dong_nm": "105-1",
+      "bd_no": "11G1051",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Institute of Molecular Biology and Genetics",
+      "inst_seq": 122,
+      "inst_kor_nm": "유전공학연구소 신관",
+      "lat_val": "37.4540404461522",
+      "lon_val": "126.95336213875",
+      "vil_dong_nm": "105-2",
+      "bd_no": "11G1052",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Swimming Pool",
+      "inst_seq": 123,
+      "inst_kor_nm": "수영장",
+      "lat_val": "37.45331",
+      "lon_val": "126.95514",
+      "vil_dong_nm": "106",
+      "bd_no": "11G1060",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Bungalow 1",
+      "inst_seq": 124,
+      "inst_kor_nm": "방가로1",
+      "lat_val": "37.45501",
+      "lon_val": "126.95586",
+      "vil_dong_nm": "107-1",
+      "bd_no": "11G1071",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Bungalow 2",
+      "inst_seq": 125,
+      "inst_kor_nm": "방가로2",
+      "lat_val": "37.4547",
+      "lon_val": "126.95598",
+      "vil_dong_nm": "107-2",
+      "bd_no": "11G1072",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Bungalow 3",
+      "inst_seq": 126,
+      "inst_kor_nm": "방가로3",
+      "lat_val": "37.45434",
+      "lon_val": "126.95574",
+      "vil_dong_nm": "107-3",
+      "bd_no": "11G1073",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Jahayeon Cafeteria",
+      "inst_seq": 127,
+      "inst_kor_nm": "자하연식당",
+      "lat_val": "37.46098",
+      "lon_val": "126.95252",
+      "vil_dong_nm": "109",
+      "bd_no": "11H1090",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Pine Tree Restaurant",
+      "inst_seq": 128,
+      "inst_kor_nm": "간이식당1",
+      "lat_val": "37.45738",
+      "lon_val": "126.9551",
+      "vil_dong_nm": "110",
+      "bd_no": "11G1100",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Education Cafeteria",
+      "inst_seq": 129,
+      "inst_kor_nm": "사범대학 간이식당",
+      "lat_val": "37.45922",
+      "lon_val": "126.95518",
+      "vil_dong_nm": "111",
+      "bd_no": "11H1110",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Dongwon Dining Hall",
+      "inst_seq": 130,
+      "inst_kor_nm": "동원생활관",
+      "lat_val": "37.46504",
+      "lon_val": "126.95175",
+      "vil_dong_nm": "113",
+      "bd_no": "11I1130",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Main Gate Security Office",
+      "inst_seq": 131,
+      "inst_kor_nm": "정문수위실",
+      "lat_val": "37.466303292757",
+      "lon_val": "126.948129302133",
+      "vil_dong_nm": "115",
+      "bd_no": "11A1150",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Pumping Station",
+      "inst_seq": 132,
+      "inst_kor_nm": "양수장",
+      "lat_val": "37.46663",
+      "lon_val": "126.95375",
+      "vil_dong_nm": "117",
+      "bd_no": "11A1170",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Outdoor Sculpture Studio 2",
+      "inst_seq": 67,
+      "inst_kor_nm": "야외조각실습장2",
+      "lat_val": "37.46404",
+      "lon_val": "126.95294",
+      "vil_dong_nm": "52-2",
+      "bd_no": "11I0522",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Music 1",
+      "inst_seq": 68,
+      "inst_kor_nm": "예술관(음대)1",
+      "lat_val": "37.46304",
+      "lon_val": "126.95344",
+      "vil_dong_nm": "53",
+      "bd_no": "11I0530",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Music 2",
+      "inst_seq": 69,
+      "inst_kor_nm": "예술관(음대)2",
+      "lat_val": "37.4626",
+      "lon_val": "126.95335",
+      "vil_dong_nm": "54",
+      "bd_no": "11I0540",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Music 3",
+      "inst_seq": 70,
+      "inst_kor_nm": "예술관(음대)3",
+      "lat_val": "37.46248",
+      "lon_val": "126.95287",
+      "vil_dong_nm": "55",
+      "bd_no": "11I0550",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Natural Sciences 10",
+      "inst_seq": 71,
+      "inst_kor_nm": "자연과학관10",
+      "lat_val": "37.4577",
+      "lon_val": "126.9514",
+      "vil_dong_nm": "56",
+      "bd_no": "11C0560",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Graduate School of Public Administration",
+      "inst_seq": 72,
+      "inst_kor_nm": "행정대학원",
+      "lat_val": "37.46559",
+      "lon_val": "126.95314",
+      "vil_dong_nm": "57",
+      "bd_no": "11I0570",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Graduate School of Public Administration",
+      "inst_seq": 73,
+      "inst_kor_nm": "행정대학원",
+      "lat_val": "37.46519",
+      "lon_val": "126.95373",
+      "vil_dong_nm": "57-1",
+      "bd_no": "11I0571",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Business",
+      "inst_seq": 74,
+      "inst_kor_nm": "SK경영관",
+      "lat_val": "37.46568",
+      "lon_val": "126.95203",
+      "vil_dong_nm": "58",
+      "bd_no": "11I0580",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Graduate School of Business",
+      "inst_seq": 75,
+      "inst_kor_nm": "LG경영관(경영연구관및산학협동관)",
+      "lat_val": "37.46496",
+      "lon_val": "126.95295",
+      "vil_dong_nm": "59",
+      "bd_no": "11I0590",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Administration Building",
+      "inst_seq": 76,
+      "inst_kor_nm": "행정관",
+      "lat_val": "37.46002",
+      "lon_val": "126.95129",
+      "vil_dong_nm": "60",
+      "bd_no": "11C0600",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Center for Teaching and Learning / Faculty of Liberal Education",
+      "inst_seq": 77,
+      "inst_kor_nm": "기초교육원",
+      "lat_val": "37.45985",
+      "lon_val": "126.95376",
+      "vil_dong_nm": "61",
+      "bd_no": "11H0610",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "University Library ",
+      "inst_seq": 78,
+      "inst_kor_nm": "중앙도서관 본관",
+      "lat_val": "37.4594",
+      "lon_val": "126.95199",
+      "vil_dong_nm": "62",
+      "bd_no": "11C0620",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Kwanjeong Library",
+      "inst_seq": 79,
+      "inst_kor_nm": "중앙도서관 관정관",
+      "lat_val": "37.45903",
+      "lon_val": "126.95247",
+      "vil_dong_nm": "62-1",
+      "bd_no": "11C0621",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Student Center",
+      "inst_seq": 80,
+      "inst_kor_nm": "학생회관",
+      "lat_val": "37.45932",
+      "lon_val": "126.95058",
+      "vil_dong_nm": "63",
+      "bd_no": "11C0630",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "IBK Communication Center",
+      "inst_seq": 81,
+      "inst_kor_nm": "IBK커뮤니케이션센터",
+      "lat_val": "37.46383",
+      "lon_val": "126.94937",
+      "vil_dong_nm": "64",
+      "bd_no": "11B0640",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Faculty Club",
+      "inst_seq": 82,
+      "inst_kor_nm": "교수회관",
+      "lat_val": "37.45781",
+      "lon_val": "126.95387",
+      "vil_dong_nm": "65",
+      "bd_no": "11G0650",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "ROTC",
+      "inst_seq": 83,
+      "inst_kor_nm": "학군단",
+      "lat_val": "37.4567",
+      "lon_val": "126.95424",
+      "vil_dong_nm": "66",
+      "bd_no": "11G0660",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Dure Cultural Center",
+      "inst_seq": 84,
+      "inst_kor_nm": "NH농협두레문예관",
+      "lat_val": "37.46353",
+      "lon_val": "126.94973",
+      "vil_dong_nm": "67",
+      "bd_no": "11B0670",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Power Plant 1",
+      "inst_seq": 85,
+      "inst_kor_nm": "파워플랜트",
+      "lat_val": "37.46627",
+      "lon_val": "126.95488",
+      "vil_dong_nm": "68",
+      "bd_no": "11A0680",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "KEPCO Shillim Substation",
+      "inst_seq": 86,
+      "inst_kor_nm": "신림변전소",
+      "lat_val": "37.46666",
+      "lon_val": "126.95488",
+      "vil_dong_nm": "68-1",
+      "bd_no": "11A0681",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Youngsun Factory",
+      "inst_seq": 87,
+      "inst_kor_nm": "영선공장",
+      "lat_val": "37.4659",
+      "lon_val": "126.95557",
+      "vil_dong_nm": "68-2",
+      "bd_no": "11A0682",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Institute of Laboratorial Animal Resources",
+      "inst_seq": 88,
+      "inst_kor_nm": "실험동물자원관리원",
+      "lat_val": "37.45728",
+      "lon_val": "126.95278",
+      "vil_dong_nm": "69",
+      "bd_no": "11G0690",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "University Museum",
+      "inst_seq": 89,
+      "inst_kor_nm": "박물관",
+      "lat_val": "37.46454",
+      "lon_val": "126.95235",
+      "vil_dong_nm": "70",
+      "bd_no": "11I0700",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Gymnasium",
+      "inst_seq": 90,
+      "inst_kor_nm": "체육관",
+      "lat_val": "37.4676",
+      "lon_val": "126.95238",
+      "vil_dong_nm": "71",
+      "bd_no": "11A0710",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "POSCO Sports Center",
+      "inst_seq": 91,
+      "inst_kor_nm": "포스코스포츠센터",
+      "lat_val": "37.46828",
+      "lon_val": "126.95165",
+      "vil_dong_nm": "71-2",
+      "bd_no": "11A0712",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Law Library",
+      "inst_seq": 92,
+      "inst_kor_nm": "법학도서관",
+      "lat_val": "37.46182",
+      "lon_val": "126.95189",
+      "vil_dong_nm": "72",
+      "bd_no": "11B0720",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "University Cultural Center",
+      "inst_seq": 93,
+      "inst_kor_nm": "문화관",
+      "lat_val": "37.46159",
+      "lon_val": "126.95104",
+      "vil_dong_nm": "73",
+      "bd_no": "11C0730",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Arts Research Center ",
+      "inst_seq": 94,
+      "inst_kor_nm": "예술복합연구동",
+      "lat_val": "37.46193",
+      "lon_val": "126.95312",
+      "vil_dong_nm": "74",
+      "bd_no": "11I0740",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "University Newspaper",
+      "inst_seq": 95,
+      "inst_kor_nm": "복지관",
+      "lat_val": "37.45609",
+      "lon_val": "126.94909",
+      "vil_dong_nm": "75",
+      "bd_no": "11D0750",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "3rd Cafeteria",
+      "inst_seq": 96,
+      "inst_kor_nm": "제3학생식당",
+      "lat_val": "37.45647",
+      "lon_val": "126.94851",
+      "vil_dong_nm": "75-1",
+      "bd_no": "11D0751",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "4th Cafeteria",
+      "inst_seq": 97,
+      "inst_kor_nm": "제4식당(서당골)",
+      "lat_val": "37.46073",
+      "lon_val": "126.9557",
+      "vil_dong_nm": "76",
+      "bd_no": "11H0760",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Parking Building",
+      "inst_seq": 98,
+      "inst_kor_nm": "주차건물",
+      "lat_val": "37.46102",
+      "lon_val": "126.95591",
+      "vil_dong_nm": "76-1",
+      "bd_no": "11H0761",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "SNU Veterinary Medical Teaching Hospital",
+      "inst_seq": 99,
+      "inst_kor_nm": "수의대부속동물병원",
+      "lat_val": "37.46822",
+      "lon_val": "126.95324",
+      "vil_dong_nm": "80",
+      "bd_no": "11A0800",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Bioengineering Research Building",
+      "inst_seq": 100,
+      "inst_kor_nm": "생물공학연구소",
+      "lat_val": "37.46813",
+      "lon_val": "126.95348",
+      "vil_dong_nm": "80-1",
+      "bd_no": "11A0801",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Pharmacy 2",
+      "inst_seq": 34,
+      "inst_kor_nm": "약학관2",
+      "lat_val": "37.4561",
+      "lon_val": "126.95368",
+      "vil_dong_nm": "29",
+      "bd_no": "11G0290",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Engineering 1",
+      "inst_seq": 35,
+      "inst_kor_nm": "공학관1",
+      "lat_val": "37.45686",
+      "lon_val": "126.95085",
+      "vil_dong_nm": "30",
+      "bd_no": "11E0300",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Hazardous Materials Storage",
+      "inst_seq": 36,
+      "inst_kor_nm": "위험물옥내저장소",
+      "lat_val": "37.45659",
+      "lon_val": "126.95068",
+      "vil_dong_nm": "30-1",
+      "bd_no": "11E0301",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Enginerring Cafeteria",
+      "inst_seq": 37,
+      "inst_kor_nm": "공대간이식당",
+      "lat_val": "37.45727",
+      "lon_val": "126.95079",
+      "vil_dong_nm": "30-2",
+      "bd_no": "11E0302",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Engineering 2",
+      "inst_seq": 38,
+      "inst_kor_nm": "공학관2",
+      "lat_val": "37.45702",
+      "lon_val": "126.95002",
+      "vil_dong_nm": "31",
+      "bd_no": "11E0310",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Accelerator Production Room",
+      "inst_seq": 39,
+      "inst_kor_nm": "가속기제작실",
+      "lat_val": "37.45723",
+      "lon_val": "126.94998",
+      "vil_dong_nm": "31-1",
+      "bd_no": "11E0311",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Engineering 3",
+      "inst_seq": 40,
+      "inst_kor_nm": "공학관3",
+      "lat_val": "37.45648",
+      "lon_val": "126.95009",
+      "vil_dong_nm": "32",
+      "bd_no": "11E0320",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Haedong Student Center",
+      "inst_seq": 41,
+      "inst_kor_nm": "해동학술문화관",
+      "lat_val": "37.45619",
+      "lon_val": "126.94976",
+      "vil_dong_nm": "32-1",
+      "bd_no": "11E0321",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Engineering 4",
+      "inst_seq": 42,
+      "inst_kor_nm": "공학관4",
+      "lat_val": "37.45625",
+      "lon_val": "126.95084",
+      "vil_dong_nm": "33",
+      "bd_no": "11E0330",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Engineering 5",
+      "inst_seq": 43,
+      "inst_kor_nm": "공학관5",
+      "lat_val": "37.45609",
+      "lon_val": "126.95149",
+      "vil_dong_nm": "34",
+      "bd_no": "11E0340",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Engineering 6",
+      "inst_seq": 44,
+      "inst_kor_nm": "공학관6",
+      "lat_val": "37.45665",
+      "lon_val": "126.95211",
+      "vil_dong_nm": "35",
+      "bd_no": "11E0350",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Engineering 7",
+      "inst_seq": 45,
+      "inst_kor_nm": "공학관7",
+      "lat_val": "37.45554",
+      "lon_val": "126.95146",
+      "vil_dong_nm": "36",
+      "bd_no": "11E0360",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Engineering 8",
+      "inst_seq": 46,
+      "inst_kor_nm": "공학관8",
+      "lat_val": "37.45572",
+      "lon_val": "126.95075",
+      "vil_dong_nm": "37",
+      "bd_no": "11E0370",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Global Education Center for Engineers",
+      "inst_seq": 47,
+      "inst_kor_nm": "글로벌공학교육센터",
+      "lat_val": "37.4549",
+      "lon_val": "126.95062",
+      "vil_dong_nm": "38",
+      "bd_no": "11E0380",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Graduate Research Center (Level 1)",
+      "inst_seq": 48,
+      "inst_kor_nm": "대학원연구동(1단계)",
+      "lat_val": "37.45465",
+      "lon_val": "126.95157",
+      "vil_dong_nm": "39",
+      "bd_no": "11E0390",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Wind Tunnel 1",
+      "inst_seq": 49,
+      "inst_kor_nm": "풍동실험동1",
+      "lat_val": "37.45425",
+      "lon_val": "126.95158",
+      "vil_dong_nm": "40",
+      "bd_no": "11E0400",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Ship Structure Research Center",
+      "inst_seq": 50,
+      "inst_kor_nm": "선체구조실험동",
+      "lat_val": "37.45563",
+      "lon_val": "126.95264",
+      "vil_dong_nm": "41",
+      "bd_no": "11G0410",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Towing Tank",
+      "inst_seq": 51,
+      "inst_kor_nm": "선형수조실험동",
+      "lat_val": "37.4553",
+      "lon_val": "126.95254",
+      "vil_dong_nm": "42",
+      "bd_no": "11G0420",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Sloshing Experimental Facility",
+      "inst_seq": 52,
+      "inst_kor_nm": "슬로싱실험동",
+      "lat_val": "37.45495",
+      "lon_val": "126.95232",
+      "vil_dong_nm": "42-1",
+      "bd_no": "11G0421",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Engineering Lecture Building",
+      "inst_seq": 53,
+      "inst_kor_nm": "데이터사이언스대학원 및 공과대학 강의동 1",
+      "lat_val": "37.45722",
+      "lon_val": "126.95173",
+      "vil_dong_nm": "43",
+      "bd_no": "11E0430",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Multimedia Lecture Building I",
+      "inst_seq": 54,
+      "inst_kor_nm": "이공계멀티미디어강의동",
+      "lat_val": "37.45667",
+      "lon_val": "126.95145",
+      "vil_dong_nm": "43-1",
+      "bd_no": "11E0431",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Wind Tunnel 2",
+      "inst_seq": 55,
+      "inst_kor_nm": "풍동실험동2",
+      "lat_val": "37.45478",
+      "lon_val": "126.95209",
+      "vil_dong_nm": "44",
+      "bd_no": "11G0440",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Shinyang Hall I",
+      "inst_seq": 56,
+      "inst_kor_nm": "신양학술정보관",
+      "lat_val": "37.4552",
+      "lon_val": "126.95206",
+      "vil_dong_nm": "44-1",
+      "bd_no": "11G0441",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Optical Astronomical Observatory(new)",
+      "inst_seq": 57,
+      "inst_kor_nm": "천문대(신)",
+      "lat_val": "37.45395",
+      "lon_val": "126.95276",
+      "vil_dong_nm": "45",
+      "bd_no": "11G0450",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Optical Astronomical Observatory",
+      "inst_seq": 58,
+      "inst_kor_nm": "천문관측소",
+      "lat_val": "37.45706",
+      "lon_val": "126.95427",
+      "vil_dong_nm": "46",
+      "bd_no": "11G0460",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Atmosphere Observatory",
+      "inst_seq": 59,
+      "inst_kor_nm": "기상관측소",
+      "lat_val": "37.45285",
+      "lon_val": "126.95018",
+      "vil_dong_nm": "47",
+      "bd_no": "11G0470",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Seismological Observatory",
+      "inst_seq": 60,
+      "inst_kor_nm": "지진관측소",
+      "lat_val": "37.45394",
+      "lon_val": "126.95421",
+      "vil_dong_nm": "48",
+      "bd_no": "11G0480",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Radio Astronomy Observatory",
+      "inst_seq": 61,
+      "inst_kor_nm": "전파천문대",
+      "lat_val": "37.4546",
+      "lon_val": "126.95525",
+      "vil_dong_nm": "48-1",
+      "bd_no": "11G0481",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Design Center AND Concert Hall",
+      "inst_seq": 62,
+      "inst_kor_nm": "예술관연구동",
+      "lat_val": "37.46344",
+      "lon_val": "126.95425",
+      "vil_dong_nm": "49",
+      "bd_no": "11I0490",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Fine Arts 1",
+      "inst_seq": 63,
+      "inst_kor_nm": "예술관(미대)1",
+      "lat_val": "37.46304",
+      "lon_val": "126.95234",
+      "vil_dong_nm": "50",
+      "bd_no": "11I0500",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Fine Arts 2",
+      "inst_seq": 64,
+      "inst_kor_nm": "예술관(미대)2",
+      "lat_val": "37.46354",
+      "lon_val": "126.95268",
+      "vil_dong_nm": "51",
+      "bd_no": "11I0510",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Fine Arts 3",
+      "inst_seq": 65,
+      "inst_kor_nm": "예술관(미대)3",
+      "lat_val": "37.46352",
+      "lon_val": "126.95319",
+      "vil_dong_nm": "52",
+      "bd_no": "11I0520",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Art Studio",
+      "inst_seq": 66,
+      "inst_kor_nm": "미대교양실습동",
+      "lat_val": "37.46394",
+      "lon_val": "126.9534",
+      "vil_dong_nm": "52-1",
+      "bd_no": "11I0521",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Natural Sciences 5",
+      "inst_seq": 27,
+      "inst_kor_nm": "자연과학관5",
+      "lat_val": "37.4586",
+      "lon_val": "126.95105",
+      "vil_dong_nm": "23",
+      "bd_no": "11C0230",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Natural Sciences 6",
+      "inst_seq": 28,
+      "inst_kor_nm": "자연과학관6",
+      "lat_val": "37.45942",
+      "lon_val": "126.94989",
+      "vil_dong_nm": "24",
+      "bd_no": "11C0240",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Natural Sciences 7",
+      "inst_seq": 29,
+      "inst_kor_nm": "자연과학관7",
+      "lat_val": "37.45856",
+      "lon_val": "126.94988",
+      "vil_dong_nm": "25",
+      "bd_no": "11C0250",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Natural Sciences",
+      "inst_seq": 30,
+      "inst_kor_nm": "자연대강의및실험연구동",
+      "lat_val": "37.45897",
+      "lon_val": "126.94941",
+      "vil_dong_nm": "25-1",
+      "bd_no": "11C0251",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Natural Sciences 8",
+      "inst_seq": 31,
+      "inst_kor_nm": "자연과학관8",
+      "lat_val": "37.45881",
+      "lon_val": "126.95036",
+      "vil_dong_nm": "26",
+      "bd_no": "11C0260",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Natural Sciences 9",
+      "inst_seq": 32,
+      "inst_kor_nm": "자연과학관9",
+      "lat_val": "37.45805",
+      "lon_val": "126.95001",
+      "vil_dong_nm": "27",
+      "bd_no": "11C0270",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Natural Sciences Lecture Hall",
+      "inst_seq": 33,
+      "inst_kor_nm": "자연대(대형)",
+      "lat_val": "37.45762",
+      "lon_val": "126.95039",
+      "vil_dong_nm": "28",
+      "bd_no": "11C0280",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Humanities 1",
+      "inst_seq": 1,
+      "inst_kor_nm": "인문관1",
+      "lat_val": "37.46027",
+      "lon_val": "126.95234",
+      "vil_dong_nm": "1",
+      "bd_no": "11H0010",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Humanities 2",
+      "inst_seq": 2,
+      "inst_kor_nm": "인문관2",
+      "lat_val": "37.46038",
+      "lon_val": "126.95295",
+      "vil_dong_nm": "2",
+      "bd_no": "11H0020",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Humanities 3",
+      "inst_seq": 3,
+      "inst_kor_nm": "인문관3",
+      "lat_val": "37.46071",
+      "lon_val": "126.95355",
+      "vil_dong_nm": "3",
+      "bd_no": "11H0030",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Shinyang Hall II ",
+      "inst_seq": 4,
+      "inst_kor_nm": "신양인문학술정보관",
+      "lat_val": "37.46089",
+      "lon_val": "126.95326",
+      "vil_dong_nm": "4",
+      "bd_no": "11H0040",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Humanities 4",
+      "inst_seq": 5,
+      "inst_kor_nm": "인문관4",
+      "lat_val": "37.4606",
+      "lon_val": "126.95393",
+      "vil_dong_nm": "5",
+      "bd_no": "11H0050",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Humanities 5",
+      "inst_seq": 6,
+      "inst_kor_nm": "인문관5",
+      "lat_val": "37.46073",
+      "lon_val": "126.95452",
+      "vil_dong_nm": "6",
+      "bd_no": "11H0060",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Humanities 6",
+      "inst_seq": 7,
+      "inst_kor_nm": "인문관6",
+      "lat_val": "37.46022",
+      "lon_val": "126.95436",
+      "vil_dong_nm": "7",
+      "bd_no": "11H0070",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Doosan Humanities Hall",
+      "inst_seq": 8,
+      "inst_kor_nm": "두산인문관",
+      "lat_val": "37.46016",
+      "lon_val": "126.95398",
+      "vil_dong_nm": "8",
+      "bd_no": "11H0080",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Education 1",
+      "inst_seq": 9,
+      "inst_kor_nm": "사범관1",
+      "lat_val": "37.46017",
+      "lon_val": "126.9548",
+      "vil_dong_nm": "9",
+      "bd_no": "11H0090",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Education 2",
+      "inst_seq": 10,
+      "inst_kor_nm": "사범관2",
+      "lat_val": "37.46031",
+      "lon_val": "126.95536",
+      "vil_dong_nm": "10",
+      "bd_no": "11H0100",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Education Information Hall",
+      "inst_seq": 11,
+      "inst_kor_nm": "사범대교육정보관",
+      "lat_val": "37.45996",
+      "lon_val": "126.95592",
+      "vil_dong_nm": "10-1",
+      "bd_no": "11H0101",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Education 3",
+      "inst_seq": 12,
+      "inst_kor_nm": "사범관3",
+      "lat_val": "37.45979",
+      "lon_val": "126.9552",
+      "vil_dong_nm": "11",
+      "bd_no": "11H0110",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Teacher Training Center",
+      "inst_seq": 13,
+      "inst_kor_nm": "사범교육협력센터",
+      "lat_val": "37.45962",
+      "lon_val": "126.95479",
+      "vil_dong_nm": "12",
+      "bd_no": "11H0120",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Science Education Building",
+      "inst_seq": 14,
+      "inst_kor_nm": "과학교육관",
+      "lat_val": "37.45927",
+      "lon_val": "126.95389",
+      "vil_dong_nm": "13",
+      "bd_no": "11C0130",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Humanities 7",
+      "inst_seq": 15,
+      "inst_kor_nm": "인문관7",
+      "lat_val": "37.46093",
+      "lon_val": "126.95499",
+      "vil_dong_nm": "14",
+      "bd_no": "11H0140",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Law 1",
+      "inst_seq": 16,
+      "inst_kor_nm": "법학관1",
+      "lat_val": "37.46233",
+      "lon_val": "126.95174",
+      "vil_dong_nm": "15",
+      "bd_no": "11B0150",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Law Lecture Hall",
+      "inst_seq": 17,
+      "inst_kor_nm": "법학강의동",
+      "lat_val": "37.46241",
+      "lon_val": "126.95126",
+      "vil_dong_nm": "15-1",
+      "bd_no": "11B0151",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Social Sciences",
+      "inst_seq": 18,
+      "inst_kor_nm": "사회과학관",
+      "lat_val": "37.46353",
+      "lon_val": "126.95092",
+      "vil_dong_nm": "16",
+      "bd_no": "11B0160",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Shinyang Hall III",
+      "inst_seq": 19,
+      "inst_kor_nm": "신양학술정보관Ⅲ",
+      "lat_val": "37.46271",
+      "lon_val": "126.951",
+      "vil_dong_nm": "16-1",
+      "bd_no": "11B0161",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Law 2",
+      "inst_seq": 20,
+      "inst_kor_nm": "법학관2",
+      "lat_val": "37.46284",
+      "lon_val": "126.95187",
+      "vil_dong_nm": "17",
+      "bd_no": "11B0170",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Natural Sciences 1",
+      "inst_seq": 21,
+      "inst_kor_nm": "자연과학관1",
+      "lat_val": "37.45678",
+      "lon_val": "126.95277",
+      "vil_dong_nm": "18",
+      "bd_no": "11G0180",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Natural Sciences 2",
+      "inst_seq": 22,
+      "inst_kor_nm": "자연과학관2",
+      "lat_val": "37.45618",
+      "lon_val": "126.95277",
+      "vil_dong_nm": "19",
+      "bd_no": "11G0190",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Pharmacy 3",
+      "inst_seq": 23,
+      "inst_kor_nm": "약학관3",
+      "lat_val": "37.45869",
+      "lon_val": "126.95289",
+      "vil_dong_nm": "20",
+      "bd_no": "11C0200",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Hazardous Materials Storage",
+      "inst_seq": 133,
+      "inst_kor_nm": "위험물저장고",
+      "lat_val": "37.45376",
+      "lon_val": "126.95388",
+      "vil_dong_nm": "120",
+      "bd_no": "11G1200",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Presidential Residence",
+      "inst_seq": 134,
+      "inst_kor_nm": "공관",
+      "lat_val": "37.46683",
+      "lon_val": "126.95738",
+      "vil_dong_nm": "121",
+      "bd_no": "11K1210",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Faculty Apartment A",
+      "inst_seq": 135,
+      "inst_kor_nm": "교수아파트1",
+      "lat_val": "37.46709",
+      "lon_val": "126.95717",
+      "vil_dong_nm": "122-1",
+      "bd_no": "11K1221",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Faculty Apartment B",
+      "inst_seq": 136,
+      "inst_kor_nm": "교수아파트2",
+      "lat_val": "37.4673",
+      "lon_val": "126.95755",
+      "vil_dong_nm": "122-2",
+      "bd_no": "11K1222",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Faculty Apartment C-D",
+      "inst_seq": 137,
+      "inst_kor_nm": "교수아파트3",
+      "lat_val": "37.46742",
+      "lon_val": "126.95716",
+      "vil_dong_nm": "122-3",
+      "bd_no": "11K1223",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Faculty Apartment E-F",
+      "inst_seq": 138,
+      "inst_kor_nm": "교수아파트4",
+      "lat_val": "37.46796",
+      "lon_val": "126.95721",
+      "vil_dong_nm": "122-4",
+      "bd_no": "11K1224",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Faculty Apartment G",
+      "inst_seq": 139,
+      "inst_kor_nm": "교수아파트5",
+      "lat_val": "37.46819",
+      "lon_val": "126.95697",
+      "vil_dong_nm": "122-5",
+      "bd_no": "11K1225",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Faculty Apartment H",
+      "inst_seq": 140,
+      "inst_kor_nm": "교수아파트6",
+      "lat_val": "37.46846",
+      "lon_val": "126.95742",
+      "vil_dong_nm": "122-6",
+      "bd_no": "11K1226",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Faculty Apartment I",
+      "inst_seq": 141,
+      "inst_kor_nm": "교수아파트7",
+      "lat_val": "37.46857",
+      "lon_val": "126.95705",
+      "vil_dong_nm": "122-7",
+      "bd_no": "11K1227",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Hoam Faculty House",
+      "inst_seq": 142,
+      "inst_kor_nm": "호암교수회관",
+      "lat_val": "37.46792",
+      "lon_val": "126.95896",
+      "vil_dong_nm": "125",
+      "bd_no": "11K1250",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Convention Center",
+      "inst_seq": 143,
+      "inst_kor_nm": "컨벤션센타",
+      "lat_val": "37.46804",
+      "lon_val": "126.95987",
+      "vil_dong_nm": "125-1",
+      "bd_no": "11K1251",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Guest House",
+      "inst_seq": 144,
+      "inst_kor_nm": "게스트하우스",
+      "lat_val": "37.46768",
+      "lon_val": "126.9602",
+      "vil_dong_nm": "125-2",
+      "bd_no": "11K1252",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Guest House east",
+      "inst_seq": 145,
+      "inst_kor_nm": "호암동관",
+      "lat_val": "37.46763",
+      "lon_val": "126.95945",
+      "vil_dong_nm": "126",
+      "bd_no": "11K1260",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Guest House west",
+      "inst_seq": 146,
+      "inst_kor_nm": "호암서관",
+      "lat_val": "37.46735",
+      "lon_val": "126.95891",
+      "vil_dong_nm": "127",
+      "bd_no": "11K1270",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Hoam Faculty House Office",
+      "inst_seq": 147,
+      "inst_kor_nm": "호암교수회관관리실",
+      "lat_val": "37.46768",
+      "lon_val": "126.95831",
+      "vil_dong_nm": "127-1",
+      "bd_no": "11K1271",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Hoam Faculty House Storage",
+      "inst_seq": 148,
+      "inst_kor_nm": "호암창고",
+      "lat_val": "37.46812",
+      "lon_val": "126.95926",
+      "vil_dong_nm": "128",
+      "bd_no": "11K1280",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Sangsan Mathematical Science Building",
+      "inst_seq": 149,
+      "inst_kor_nm": "수리과학연구동",
+      "lat_val": "37.4578",
+      "lon_val": "126.94948",
+      "vil_dong_nm": "129",
+      "bd_no": "11C1290",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Electrical Engineering AND Science Research Institute ",
+      "inst_seq": 150,
+      "inst_kor_nm": "기초전력연구소",
+      "lat_val": "37.45429",
+      "lon_val": "126.95079",
+      "vil_dong_nm": "130",
+      "bd_no": "11E1300",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Research Institute of Advanced Materials",
+      "inst_seq": 151,
+      "inst_kor_nm": "신소재공동연구소",
+      "lat_val": "37.45359",
+      "lon_val": "126.95085",
+      "vil_dong_nm": "131",
+      "bd_no": "11E1310",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Institute of New Media and Communications",
+      "inst_seq": 152,
+      "inst_kor_nm": "뉴미디어통신공동연구소",
+      "lat_val": "37.45487",
+      "lon_val": "126.95407",
+      "vil_dong_nm": "132",
+      "bd_no": "11G1320",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Automation and Systems Research Institute",
+      "inst_seq": 153,
+      "inst_kor_nm": "자동화연구소",
+      "lat_val": "37.45439",
+      "lon_val": "126.95043",
+      "vil_dong_nm": "133",
+      "bd_no": "11E1330",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Research Institute of Energy and Resources",
+      "inst_seq": 154,
+      "inst_kor_nm": "에너지신기술연구동",
+      "lat_val": "37.45439",
+      "lon_val": "126.95227",
+      "vil_dong_nm": "135",
+      "bd_no": "11G1350",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Language Education Institute ",
+      "inst_seq": 155,
+      "inst_kor_nm": "언어교육원",
+      "lat_val": "37.46677",
+      "lon_val": "126.95326",
+      "vil_dong_nm": "137",
+      "bd_no": "11A1370",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "CJ Language Education Institute",
+      "inst_seq": 156,
+      "inst_kor_nm": "CJ어학관",
+      "lat_val": "37.4664",
+      "lon_val": "126.95328",
+      "vil_dong_nm": "137-1",
+      "bd_no": "11A1371",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Daelim International House",
+      "inst_seq": 157,
+      "inst_kor_nm": "대림국제관",
+      "lat_val": "37.46647",
+      "lon_val": "126.95385",
+      "vil_dong_nm": "137-2",
+      "bd_no": "11A1372",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Institute of Computer Technology",
+      "inst_seq": 158,
+      "inst_kor_nm": "컴퓨터연구소",
+      "lat_val": "37.45581",
+      "lon_val": "126.95474",
+      "vil_dong_nm": "138",
+      "bd_no": "11G1380",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "National Center for Inter-University Research Facilities",
+      "inst_seq": 159,
+      "inst_kor_nm": "공동기기원",
+      "lat_val": "37.45551",
+      "lon_val": "126.95427",
+      "vil_dong_nm": "139",
+      "bd_no": "11G1390",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Electrostatic Accelerators Building",
+      "inst_seq": 160,
+      "inst_kor_nm": "정전가속기동",
+      "lat_val": "37.4553",
+      "lon_val": "126.95429",
+      "vil_dong_nm": "139-1",
+      "bd_no": "11G1391",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Graduate School of International Studies",
+      "inst_seq": 161,
+      "inst_kor_nm": "국제대학원",
+      "lat_val": "37.46427",
+      "lon_val": "126.95487",
+      "vil_dong_nm": "140",
+      "bd_no": "11I1400",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Graduate School of International Studies 2",
+      "inst_seq": 162,
+      "inst_kor_nm": "국제대학원2",
+      "lat_val": "37.46406",
+      "lon_val": "126.9546",
+      "vil_dong_nm": "140-1",
+      "bd_no": "11I1401",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "International Conference Hall",
+      "inst_seq": 163,
+      "inst_kor_nm": "국제회의동",
+      "lat_val": "37.46448",
+      "lon_val": "126.95497",
+      "vil_dong_nm": "140-2",
+      "bd_no": "11I1402",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Pharmacy 4",
+      "inst_seq": 164,
+      "inst_kor_nm": "약학관4",
+      "lat_val": "37.4557",
+      "lon_val": "126.95376",
+      "vil_dong_nm": "141",
+      "bd_no": "11G1410",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "College of Pharmacy 5",
+      "inst_seq": 165,
+      "inst_kor_nm": "약학관5",
+      "lat_val": "37.45663",
+      "lon_val": "126.9537",
+      "vil_dong_nm": "142",
+      "bd_no": "11G1420",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Sillim station",
+      "inst_seq": 242,
+      "inst_kor_nm": "신림역",
+      "lat_val": "37.484268929423735",
+      "lon_val": "126.92973237071037",
+      "vil_dong_nm": null,
+      "bd_no": null,
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "LG R AND D Center",
+      "inst_seq": 226,
+      "inst_kor_nm": "LG연구동",
+      "lat_val": "37.46587",
+      "lon_val": "126.96088",
+      "vil_dong_nm": "942",
+      "bd_no": "11K9420",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "SK Telecom R AND D Center",
+      "inst_seq": 227,
+      "inst_kor_nm": "SK텔레콤",
+      "lat_val": "37.46637",
+      "lon_val": "126.96059",
+      "vil_dong_nm": "943",
+      "bd_no": "11K9430",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Coway R AND D Center",
+      "inst_seq": 228,
+      "inst_kor_nm": "웅진R&D센터",
+      "lat_val": "37.46527",
+      "lon_val": "126.96065",
+      "vil_dong_nm": "945",
+      "bd_no": "11K9450",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "BK International House",
+      "inst_seq": 229,
+      "inst_kor_nm": "BK국제관",
+      "lat_val": "37.46531",
+      "lon_val": "126.95841",
+      "vil_dong_nm": "946",
+      "bd_no": "11K9460",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "International Vaccine Institute",
+      "inst_seq": 230,
+      "inst_kor_nm": "국제백신연구소",
+      "lat_val": "37.46478",
+      "lon_val": "126.95992",
+      "vil_dong_nm": "950",
+      "bd_no": "11K9500",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Main Gate",
+      "inst_seq": 231,
+      "inst_kor_nm": "서울대 정문",
+      "lat_val": "37.4662863019456",
+      "lon_val": "126.948422649575",
+      "vil_dong_nm": null,
+      "bd_no": null,
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Back Gate",
+      "inst_seq": 232,
+      "inst_kor_nm": "서울대 후문",
+      "lat_val": "37.464646626923",
+      "lon_val": "126.957936914358",
+      "vil_dong_nm": null,
+      "bd_no": null,
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Baseball Stadium",
+      "inst_seq": 233,
+      "inst_kor_nm": "야구장",
+      "lat_val": "37.4671785022552",
+      "lon_val": "126.951008395282",
+      "vil_dong_nm": null,
+      "bd_no": null,
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Main Stadium",
+      "inst_seq": 234,
+      "inst_kor_nm": "종합운동장",
+      "lat_val": "37.464779176159",
+      "lon_val": "126.95009153903",
+      "vil_dong_nm": null,
+      "bd_no": null,
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Tennis Court",
+      "inst_seq": 235,
+      "inst_kor_nm": "테니스장",
+      "lat_val": "37.4656164774627",
+      "lon_val": "126.954069913006",
+      "vil_dong_nm": null,
+      "bd_no": null,
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Jahayon Pond",
+      "inst_seq": 236,
+      "inst_kor_nm": "자하연",
+      "lat_val": "37.4607006780578",
+      "lon_val": "126.952103365166",
+      "vil_dong_nm": null,
+      "bd_no": null,
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Gwanak Residence Playground ",
+      "inst_seq": 237,
+      "inst_kor_nm": "관악사운동장",
+      "lat_val": "37.4619962370616",
+      "lon_val": "126.959037073547",
+      "vil_dong_nm": null,
+      "bd_no": null,
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Tennis Court",
+      "inst_seq": 238,
+      "inst_kor_nm": "공대테니스장",
+      "lat_val": "37.455807283707784",
+      "lon_val": "126.94993926925866",
+      "vil_dong_nm": null,
+      "bd_no": null,
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Seoul National University station",
+      "inst_seq": 239,
+      "inst_kor_nm": "서울대입구역",
+      "lat_val": "37.481261982398244",
+      "lon_val": "126.95271208134352",
+      "vil_dong_nm": null,
+      "bd_no": null,
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Nakseongdae station",
+      "inst_seq": 240,
+      "inst_kor_nm": "낙성대역",
+      "lat_val": "37.47709864844915",
+      "lon_val": "126.96352842457698",
+      "vil_dong_nm": null,
+      "bd_no": null,
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Test",
+      "inst_seq": 247,
+      "inst_kor_nm": "Test",
+      "lat_val": "37.46572833746625",
+      "lon_val": "126.95412491439424",
+      "vil_dong_nm": null,
+      "bd_no": null,
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": null,
+      "inst_seq": 248,
+      "inst_kor_nm": "관악 915동[외국인학생기숙사]",
+      "lat_val": "37.465012",
+      "lon_val": "126.957503",
+      "vil_dong_nm": "915",
+      "bd_no": "11K9150",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": null,
+      "inst_seq": 249,
+      "inst_kor_nm": "관악 916동[외국인학생기숙사]",
+      "lat_val": "37.4654",
+      "lon_val": "126.957139",
+      "vil_dong_nm": "916",
+      "bd_no": "11K9160",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": null,
+      "inst_seq": 250,
+      "inst_kor_nm": "관악 917동[외국인학생기숙사]",
+      "lat_val": "37.465821",
+      "lon_val": "126.957455",
+      "vil_dong_nm": "917",
+      "bd_no": "11K9170",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": null,
+      "inst_seq": 251,
+      "inst_kor_nm": "관악 59-1동[매니지먼트센터]",
+      "lat_val": "37.464916",
+      "lon_val": "126.952318",
+      "vil_dong_nm": "59-1",
+      "bd_no": "11I0591",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Gwanak 300[Ryu Hoi Jin Library]",
+      "inst_seq": 256,
+      "inst_kor_nm": "관악 300동[유회진 학술정보관]",
+      "lat_val": "37.45095",
+      "lon_val": "126.9527",
+      "vil_dong_nm": "300",
+      "bd_no": "11F3000",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "The Red Square",
+      "inst_seq": 252,
+      "inst_kor_nm": "붉은광장",
+      "lat_val": "37.45587314704376",
+      "lon_val": "126.9512305146599",
+      "vil_dong_nm": null,
+      "bd_no": null,
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Kim Chul-Soo Physics Building",
+      "inst_seq": 259,
+      "inst_kor_nm": "관악 56-1동[김철수물리관]",
+      "lat_val": "37.458209",
+      "lon_val": "126.951594",
+      "vil_dong_nm": "56-1",
+      "bd_no": "11C0561",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "DataScienceGraduate",
+      "inst_seq": 255,
+      "inst_kor_nm": "관악 43-2동[데이터사이언스대학원 및 공과대학 강의동 2]",
+      "lat_val": "37.45701",
+      "lon_val": "126.95126",
+      "vil_dong_nm": "43-2",
+      "bd_no": "11E0432",
+      "dis": "0m"
+    },
+    {
+      "inst_eng_nm": "Gwanak 223[Woosuk Economics]",
+      "inst_seq": 254,
+      "inst_kor_nm": "관악 223동[우석경제관]",
+      "lat_val": "37.465509",
+      "lon_val": "126.955673",
+      "vil_dong_nm": "223",
+      "bd_no": "11A2230",
+      "dis": "0m"
+    }
+  ]
+}

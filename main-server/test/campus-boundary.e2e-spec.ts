@@ -1,0 +1,27 @@
+import { INestApplication } from '@nestjs/common';
+import { Server } from 'node:http';
+import { inject } from 'vitest';
+import { startApp } from './start-app.js';
+
+describe('The Campus Boundary', () => {
+  let app: INestApplication<Server>;
+
+  beforeAll(async () => {
+    app = await startApp(inject('settings'));
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('is read when the server starts and holds a position on campus but not one off it', async () => {
+    // Imported after startApp, so that it is the class the server registered.
+    const { CampusBoundary } = await import('../src/common/campus-boundary.js');
+    const boundary = app.get(CampusBoundary);
+
+    // 중앙도서관 본관, and 교수아파트1 in the wedge that the outline leaves out in the north-east, as the campus map
+    // places them.
+    expect(boundary.contains({ latitude: 37.4594, longitude: 126.95199 })).toBe(true);
+    expect(boundary.contains({ latitude: 37.46709, longitude: 126.95717 })).toBe(false);
+  });
+});

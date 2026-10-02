@@ -15,6 +15,6 @@ COPY . .
 RUN pnpm build
 
 EXPOSE 3000
-# Bring the database up to the current schema, then start the server.
+# Bring the database up to the current schema and load the seed, then start the server.
 # Node runs directly, not through pnpm, so that it receives SIGTERM and shuts down gracefully.
-CMD ["sh", "-c", "pnpm db:migrate && exec node dist/main"]
+CMD ["sh", "-c", "pnpm db:migrate && pnpm db:seed && exec node dist/main"]
