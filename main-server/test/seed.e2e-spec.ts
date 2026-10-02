@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { inject } from 'vitest';
 import { z } from 'zod';
 import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
-import { PrismaClient } from '../src/generated/prisma/client.js';
+import { type BuildingOrigin, PrismaClient } from '../src/generated/prisma/client.js';
 import { loadSeed } from '../src/load-seed.js';
 import { connect, migrate } from './containers.js';
 
@@ -98,6 +98,16 @@ describe('Loading the seed', () => {
     expect(loaded).not.toContain('239');
     expect(loaded).not.toContain('135');
     expect(loaded).not.toContain('248');
+  });
+
+  it('gives a building the id computed from its origin, which is the same in every database', async () => {
+    await loadSeed(prisma);
+
+    const ids = async (origin: BuildingOrigin, originId: string): Promise<string> =>
+      (await prisma.building.findUniqueOrThrow({ where: { origin_originId: { origin, originId } } })).id;
+    // 제2공학관 and 체육문화교육연구동(71-1동). An id that differs here differs for whatever points at a building.
+    expect(await ids('campus_map', '188')).toBe('fba342e9-4edb-560d-9ac4-2a4d2454f9d3');
+    expect(await ids('openstreetmap', 'way/456356713')).toBe('68c63960-d0a5-5959-971f-244e08e7741b');
   });
 });
 

@@ -3,7 +3,7 @@ CREATE TYPE "building_origin" AS ENUM ('campus_map', 'openstreetmap');
 
 -- CreateTable
 CREATE TABLE "buildings" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "id" UUID NOT NULL,
     "origin" "building_origin" NOT NULL,
     "origin_id" TEXT NOT NULL,
     "number" TEXT,
