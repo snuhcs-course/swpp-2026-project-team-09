@@ -47,7 +47,7 @@ describe("A User's list of buildings", () => {
   it('lists each building with its number, name and coordinates, in the order of the numbers', async () => {
     const buildings = await served('/buildings');
 
-    expect(buildings).toHaveLength(225);
+    expect(buildings).toHaveLength(226);
     expect(buildings.slice(0, 3)).toMatchObject([
       { number: '1', name: '인문관1', latitude: 37.46027, longitude: 126.95234 },
       { number: '2', name: '인문관2', latitude: 37.46038, longitude: 126.95295 },

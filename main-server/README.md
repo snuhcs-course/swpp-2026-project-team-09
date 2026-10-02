@@ -351,6 +351,10 @@ if (!this.campusBoundary.contains({ latitude, longitude })) {
 }
 ```
 
+A position up to 10 m outside the polygon counts as inside, because a phone reports its position some metres off; the
+file itself is OpenStreetMap's outline, unchanged. Every check goes through `contains()`, so the one rule holds for a
+User's position and for the building list alike.
+
 `outline` holds the polygon's positions. The outline leaves out a wedge in the north-east, with the faculty housing,
 the president's residence and the dormitory buildings 915 to 917, and four facilities on the hillside in the south: a
 position there is outside.
@@ -377,8 +381,8 @@ into the database.
 - **Loading**: `pnpm db:seed` builds the server and loads the files into the database at `DATABASE_URL`. In Compose
   the image, built already, runs `node dist/seed` before the server starts.
   - Loaded are the entries of both building files that lie inside the Campus Boundary, except the map's `Test` row:
-    215 numbered buildings and 8 places of the map, and the 2 from OpenStreetMap. To list a building outside the
-    Boundary, the Boundary is widened first.
+    216 numbered buildings and 8 places of the map, and the 2 from OpenStreetMap. One of the 216, `정문수위실`, stands
+    2 m outside the outline, within the Boundary's 10 m. To list a building farther out, the Boundary is widened first.
   - Each entry keeps the identifier its origin gives it, the map's `inst_seq` or OpenStreetMap's `way/…`, and its
     `origin`, `campus_map` or `openstreetmap`: seed data is not collected, so its origin is no Source. Loading again
     updates each entry in place by that identifier, so its `id` and whatever points at it stay, and running the

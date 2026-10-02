@@ -32,7 +32,8 @@ afterAll(async () => {
   await sharedDatabase.$disconnect();
 });
 
-// A numbered building, a wrapped name, a place without a number, and the two buildings from OpenStreetMap.
+// A numbered building, a wrapped name, a place without a number, the gatehouse 2 m outside the outline, and the two
+// buildings from OpenStreetMap.
 const loadedEntries = [
   { origin: 'campus_map', originId: '188', number: '302', name: '제2공학관', latitude: 37.44887, longitude: 126.95265 },
   {
@@ -50,6 +51,14 @@ const loadedEntries = [
     name: '종합운동장',
     latitude: 37.464779176159,
     longitude: 126.95009153903,
+  },
+  {
+    origin: 'campus_map',
+    originId: '131',
+    number: '115',
+    name: '정문수위실',
+    latitude: 37.466303292757,
+    longitude: 126.948129302133,
   },
   {
     origin: 'openstreetmap',
@@ -74,8 +83,9 @@ describe('Loading the seed', () => {
     await loadSeed(prisma);
 
     const buildings = await prisma.building.findMany({ omit: { id: true } });
-    // 215 numbered buildings and 8 places of the campus map, by .scratch/research/external-sources.md §6.2.
-    expect(buildings).toHaveLength(225);
+    // 215 numbered buildings and 8 places of the campus map inside the outline, by
+    // .scratch/research/external-sources.md §6.2, and the gatehouse within the Boundary's 10 m.
+    expect(buildings).toHaveLength(226);
     expect(buildings).toEqual(expect.arrayContaining(loadedEntries));
     expect(buildings.map(({ name }) => name)).not.toContain('Test');
   });

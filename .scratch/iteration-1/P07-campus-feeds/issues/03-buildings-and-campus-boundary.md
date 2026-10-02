@@ -123,3 +123,23 @@ Tickets 02 to 05 were built in one orchestrated run: one session placed the agen
   - Input: 70,717,335 in total, of which 69,217,540 were cache reads, 1,499,295 cache writes and 500 uncached.
   - Output: 64,353. The transcripts record only part of the output of most steps, so this is a lower bound.
 - The orchestrating session's share is recorded once for the run, under ticket 04.
+
+### The Boundary's margin (2026-10-02)
+
+Decided by 김태현 while reviewing this ticket's pull request, for P08. A phone reports its position some metres off, and the outline runs close to gates and buildings: 정문수위실 stands 2 m outside it and 수의대시약보관창고 (85-1동) 1 m inside.
+
+- **A position up to 10 m outside the outline counts as inside the Campus Boundary.** `CampusBoundary.contains()` counts crossings as before and, for a position outside, measures the distance to the nearest edge of the outline, with a degree of latitude as 111,195 m and a degree of longitude as that times the cosine of the latitude. The file stays OpenStreetMap's outline, unchanged.
+- **One rule for every check, the building list included.** The alternative was a strict check for the seed and a wider one for Users' positions, which keeps the list at 225 and gives "inside" two meanings. 김태현 chose the single check, knowing that the list changes.
+- **The list holds 226 entries.** 정문수위실 (115동), 1.6 m outside the outline, joins it. The next nearest stay out: 공대위험물저장창고 (302-1동) at 10.3 m, 기상관측소 at 12.6 m and 서울대 후문 at 16.9 m. The faculty housing and 915동 to 917동 lie 34 m and more outside. The outline is about 8.3 km long, so the margin adds about 0.08 km² to its 1.35 km².
+- The glossary's Campus Boundary and the README's Campus Boundary and Seed data say so. P08 needs no rule of its own for a position: it calls `contains()`.
+- Tests, at the seams agreed. Reading the Campus Boundary: a position 5 m outside the outline's longest edge is held and one 15 m outside is not, written first and seen to fail. The two positions were placed at right angles to the edge and checked with the great-circle distance to the outline sampled every 5 cm, a calculation apart from the code's. The seed command and the list then counted 226 where their tests expected 225; they expect 226 now, with 정문수위실 among the loaded entries.
+- `1.0/Main` was merged in first, since ticket 05's pull request (#28) had been merged into it: both sides of `README.md` and `app.module.ts` are kept. On the branch as it stands, 24 files and 268 tests pass, and lint, format:check and typecheck pass. The numbers in the sections above are those of their time.
+
+### Agent usage, the review with 김태현 (2026-10-02)
+
+One session, in which 김태현 went through this ticket's pull request and asked for the margin. It is the session that orchestrated the run, now on another model.
+
+- Agent time: about 19 minutes, an estimate: explaining the seed files, the schema and the Boundary, then the merge of `1.0/Main` and the margin. The time 김태현 took to read and answer is not counted.
+- Tokens, counted when this section was written:
+  - Input: 23,744,191 in total, of which 23,576,267 were cache reads, 167,834 cache writes and 90 uncached.
+  - Output: 111,966.

@@ -24,4 +24,13 @@ describe('The Campus Boundary', () => {
     expect(boundary.contains({ latitude: 37.4594, longitude: 126.95199 })).toBe(true);
     expect(boundary.contains({ latitude: 37.46709, longitude: 126.95717 })).toBe(false);
   });
+
+  it('also holds a position 5 m outside its outline, but not one 15 m outside', async () => {
+    const { CampusBoundary } = await import('../src/common/campus-boundary.js');
+    const boundary = app.get(CampusBoundary);
+
+    // West of the middle of the outline's longest edge, on the campus's west side, at right angles to the edge.
+    expect(boundary.contains({ latitude: 37.4586959, longitude: 126.947596 })).toBe(true);
+    expect(boundary.contains({ latitude: 37.458677, longitude: 126.9474852 })).toBe(false);
+  });
 });
