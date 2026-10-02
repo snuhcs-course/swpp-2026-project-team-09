@@ -1,10 +1,12 @@
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
+import { basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { format, resolveConfig } from 'prettier';
 import { z } from 'zod';
+import { nationalMapBuildings } from './national-map.ts';
 
-// Exports the seed files named, such as `pnpm seed:export campus-boundary`. Each export is one request, and its file
-// keeps the address or query it came from and the day of the export.
+// Exports the seed files named, such as `pnpm seed:export campus-boundary`. Each export is one request, or reads one
+// file that a person downloaded, and its file keeps the address or query it came from and the day of the export.
 
 // The worker server's. OpenStreetMap asks for a User-Agent that names the project.
 const USER_AGENT = 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)';
@@ -18,9 +20,10 @@ const MISSING_BUILDINGS = new Map([
   ['체육문화교육연구동(71-1동)', '71-1'],
   ['901', '901'],
 ]);
-// Within the campus extent.
+// In the order of an Overpass bounding box.
+const CAMPUS_EXTENT = { south: 37.4470628, west: 126.9474475, north: 37.4692598, east: 126.9612239 };
 const MISSING_BUILDINGS_QUERY =
-  '[out:json][timeout:25][bbox:37.4470628,126.9474475,37.4692598,126.9612239];(' +
+  `[out:json][timeout:25][bbox:${Object.values(CAMPUS_EXTENT).join(',')}];(` +
   [...MISSING_BUILDINGS.keys()].map((name) => `nwr["building"]["name"="${name}"];`).join('') +
   ');out tags center;';
 
@@ -41,13 +44,19 @@ const buildingsAnswerSchema = z.object({
   ),
 });
 
-// Every building outline within the campus extent. A relation is a building drawn as several ways, such as one with a
-// courtyard.
-const OUTLINES_QUERY =
-  '[out:json][timeout:25][bbox:37.4470628,126.9474475,37.4692598,126.9612239];' +
-  '(way["building"];relation["building"];);out geom;';
+// `way/193893586`, as a correction names an outline of OpenStreetMap.
+const OPENSTREETMAP_OUTLINE = /^(way|relation)\/(\d+)$/u;
+
+const linksFileSchema = z.object({ links: z.array(z.object({ outline: z.string().nullable() })) });
 
 const outlineTagsSchema = z.object({ name: z.string().optional() });
+
+// 국토지리정보원's 연속수치지형도 건물 layer, which a person downloads from this page of VWorld after logging in.
+const NATIONAL_MAP_PAGE = 'https://www.vworld.kr/dtmk/dtmk_ntads_s002.do?dsId=30162';
+// 공공누리 type 1, the layer's licence, asks that the source is shown.
+const NATIONAL_MAP_ATTRIBUTION =
+  'Source: 국토지리정보원 (National Geographic Information Institute), 연속수치지형도 건물, downloaded from VWorld. ' +
+  'Used under 공공누리 제1유형 (Korea Open Government License type 1, which asks that the source is shown).';
 
 const outlinesAnswerSchema = z.object({
   osm3s: copyrightSchema,
@@ -184,23 +193,48 @@ function outlinesOf(
     : apart.concat({ id: `relation/${element.id}`, outline: ring(open.map(({ outline }) => outline)) });
 }
 
+// The outlines of OpenStreetMap that the corrections name. Every other outline is the national map's.
 async function exportOpenStreetMapBuildingOutlines(): Promise<void> {
-  const { osm3s, elements } = outlinesAnswerSchema.parse(await overpass(OUTLINES_QUERY));
-  const features = elements.flatMap((element) =>
-    outlinesOf(element).map(({ id, outline }) => ({
-      type: 'Feature',
-      id,
-      properties: { name: element.tags.name ?? null },
-      geometry: { type: 'Polygon', coordinates: [outline] },
-    })),
+  const file = fileURLToPath(new URL('../seed/building-outline-links.json', import.meta.url));
+  const { links } = linksFileSchema.parse(JSON.parse(await readFile(file, 'utf8')));
+  const named = links.flatMap(({ outline }) =>
+    outline !== null && OPENSTREETMAP_OUTLINE.test(outline) ? [outline] : [],
   );
+  const elementsNamed = named.map((id) => id.replace(OPENSTREETMAP_OUTLINE, '$1(id:$2);')).join('');
+  const query = `[out:json][timeout:25];(${elementsNamed});out geom;`;
+  const { osm3s, elements } = outlinesAnswerSchema.parse(await overpass(query));
+  const features = elements
+    .flatMap((element) =>
+      outlinesOf(element).map(({ id, outline }) => ({
+        type: 'Feature',
+        id,
+        properties: { name: element.tags.name ?? null },
+        geometry: { type: 'Polygon', coordinates: [outline] },
+      })),
+    )
+    .filter(({ id }) => named.includes(id));
+  const missing = named.filter((id) => !features.some((feature) => feature.id === id));
+  if (missing.length > 0) {
+    throw new Error(`OpenStreetMap answered no outline ${missing.join(', ')}`);
+  }
   await write('openstreetmap-building-outlines.geojson', {
     type: 'FeatureCollection',
     exportedFrom: OVERPASS,
-    query: OUTLINES_QUERY,
+    query,
     exportedOn: today(),
     copyright: osm3s.copyright,
     features,
+  });
+}
+
+async function exportNationalMapBuildingOutlines(path: string): Promise<void> {
+  await write('national-map-building-outlines.geojson', {
+    type: 'FeatureCollection',
+    exportedFrom: NATIONAL_MAP_PAGE,
+    file: basename(path),
+    exportedOn: today(),
+    attribution: NATIONAL_MAP_ATTRIBUTION,
+    features: await nationalMapBuildings(path, CAMPUS_EXTENT),
   });
 }
 
@@ -211,13 +245,39 @@ const EXPORTS: Record<string, () => Promise<void>> = {
   'openstreetmap-building-outlines': exportOpenStreetMapBuildingOutlines,
 };
 
-const names = process.argv.slice(2);
-if (names.length === 0 || names.some((name) => !(name in EXPORTS))) {
-  console.error(`Name one or more of: ${Object.keys(EXPORTS).join(', ')}`);
+// The exports that read a file a person downloaded, whose path follows the name.
+const FILE_EXPORTS: Record<string, (path: string) => Promise<void>> = {
+  'national-map-building-outlines': exportNationalMapBuildingOutlines,
+};
+
+// The exports that the arguments name, or null when an argument names none or a path is missing.
+function exportsNamed(args: string[]): (() => Promise<void>)[] | null {
+  const named: (() => Promise<void>)[] = [];
+  for (let i = 0; i < args.length; i += 1) {
+    const name = args[i] ?? '';
+    const fromRequest = EXPORTS[name];
+    const fromFile = FILE_EXPORTS[name];
+    if (fromRequest !== undefined) {
+      named.push(fromRequest);
+    } else if (fromFile !== undefined && i + 1 < args.length) {
+      i += 1;
+      const path = args[i] ?? '';
+      named.push(() => fromFile(path));
+    } else {
+      return null;
+    }
+  }
+  return named;
+}
+
+const named = exportsNamed(process.argv.slice(2));
+if (named === null || named.length === 0) {
+  const fromFile = Object.keys(FILE_EXPORTS).map((name) => `${name} <path of the downloaded file>`);
+  console.error(`Name one or more of: ${[...Object.keys(EXPORTS), ...fromFile].join(', ')}`);
   process.exitCode = 1;
 } else {
-  for (const name of names) {
-    // oxlint-disable-next-line no-await-in-loop -- one request at a time
-    await EXPORTS[name]?.();
+  for (const run of named) {
+    // oxlint-disable-next-line no-await-in-loop -- one export at a time
+    await run();
   }
 }
