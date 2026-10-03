@@ -143,9 +143,9 @@ One session, the one that reviewed ticket 03's pull request, and two agents it s
   - Input: 138,096,830 in total, of which 136,978,775 were cache reads, 1,117,279 cache writes and 776 uncached. The two agents took 43,857,872 of it.
   - Output: 295,382. The agents' transcripts record only part of their output, so this is a lower bound.
 
-A second session reviewed this ticket's pull request with two review agents, drew the outlines over Kakao's map, and widened the ticket: the wings, the Places, the outlines given by hand, the rule within 10 m and the Places from the layer.
+A second session reviewed this ticket's pull request with two review agents, drew the outlines over Kakao's map, widened the ticket (the wings, the Places, the outlines given by hand, the rule within 10 m and the Places from the layer), put the list's migration in order and took in the review of the pull request.
 
-- Agent time: about 1 hour 35 minutes, an estimate: the gaps under five minutes between the session's steps. The two review agents worked within that time.
+- Agent time: about 1 hour 50 minutes, an estimate: the gaps under five minutes between the session's steps. The two review agents worked within that time.
 - Tokens, the two agents included, counted when this was written:
-  - Input: 83,430,105 in total, of which 82,242,012 were cache reads, 1,187,603 cache writes and 490 uncached. The two agents took 3,023,968 of it.
-  - Output: 391,628. The agents' transcripts record only part of their output, so this is a lower bound.
+  - Input: 110,516,695 in total, of which 109,257,111 were cache reads, 1,259,014 cache writes and 570 uncached. The two agents took 3,023,968 of it.
+  - Output: 451,197. The agents' transcripts record only part of their output, so this is a lower bound.
