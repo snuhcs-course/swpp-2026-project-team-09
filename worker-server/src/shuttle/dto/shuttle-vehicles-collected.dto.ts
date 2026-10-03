@@ -5,7 +5,7 @@ export interface Vehicle {
   y: number;
 }
 
-// What one Collection of the vehicle positions read, sent to the main server as `shuttle-vehicles-collected`.
+// What one Collection of the vehicle positions read, posted to the main server's `/shuttle/vehicles/collected`.
 export interface ShuttleVehiclesCollectedMessage {
   source: 'shuttle_vehicles';
   // When the operator's answer arrived.

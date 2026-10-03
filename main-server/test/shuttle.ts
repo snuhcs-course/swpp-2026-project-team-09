@@ -45,7 +45,7 @@ export function vehiclesMessage(vehicles: object[], changes: object = {}): objec
   return { source: 'shuttle_vehicles', collectedAt: new Date().toISOString(), vehicles, ...changes };
 }
 
-// Each with the pattern it is sent as and the start of the problem the answer names.
+// Each with the path it is posted to and the start of the problem the answer names.
 export const invalidMessages: [string, string, object, string][] = [
   [
     'a vehicle without its carid',

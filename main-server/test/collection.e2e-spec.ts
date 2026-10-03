@@ -96,6 +96,27 @@ describe('A failure message that does not match the schema', () => {
   });
 });
 
+describe('A message larger than 100 kB, the most Express takes unless told otherwise', () => {
+  it('is taken: a week of menus', async () => {
+    const lines = Array.from({ length: 30 }, (_, index) => ({
+      meal: 'lunch',
+      text: `제육볶음 ${index} : 6,000원`,
+      kind: 'dish',
+      name: `제육볶음 ${index}`,
+      price: 6000,
+    }));
+    const restaurants = Array.from({ length: 9 }, (_, index) => restaurant({ name: `식당 ${index}`, lines }));
+    const firstDay = newDay();
+    const days = [firstDay, ...Array.from({ length: 6 }, newDay)].map((date) => ({ date, restaurants }));
+    const message = menusMessage(days, { source: 'dormitory_menus' });
+    expect(Buffer.byteLength(JSON.stringify(message))).toBeGreaterThan(102_400);
+
+    await expect(sendAsWorker(app, '/menus/collected', message)).resolves.toBeUndefined();
+
+    expect((await getMenus(app, accessToken, firstDay)).body).toHaveLength(9);
+  });
+});
+
 describe("A request to a worker's route without the worker's token", () => {
   const failure = {
     source: 'dormitory_menus',
@@ -118,4 +139,15 @@ describe("A request to a worker's route without the worker's token", () => {
     expect(response.status).toBe(401);
     expect(await dormitoryStatus()).toEqual(status);
   });
+
+  // A route left unmarked would take the User, and one marked @Public() anyone: either would answer 400 here.
+  it.each(['/menus/collected', '/shuttle/stops/collected', '/shuttle/vehicles/collected'])(
+    "is refused on %s, with no token and with a User's access token",
+    async (path) => {
+      const withoutToken = await request(app.getHttpServer()).post(path).send({});
+      const asUser = await request(app.getHttpServer()).post(path).auth(accessToken, { type: 'bearer' }).send({});
+
+      expect([withoutToken.status, asUser.status]).toEqual([401, 401]);
+    },
+  );
 });

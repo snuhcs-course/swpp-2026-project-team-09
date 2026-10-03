@@ -1,6 +1,8 @@
 import { INestApplication, Type } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { Server } from 'node:http';
+import { JSON_BODY_LIMIT } from '../src/common/json-body-limit.js';
 import { Settings } from '../src/common/settings.js';
 import { FETCH_KAKAO } from '../src/walking-route/walking-route.service.js';
 import { TestGoogleIdTokenVerifier } from './google.js';
@@ -27,7 +29,9 @@ export async function startApp(
     .overrideProvider(FETCH_KAKAO)
     .useValue(fetchKakao)
     .compile();
-  const app = moduleRef.createNestApplication<INestApplication<Server>>();
+  const app = moduleRef.createNestApplication<NestExpressApplication>();
+  // As src/main.ts does.
+  app.useBodyParser('json', { limit: JSON_BODY_LIMIT });
   try {
     // On a free port, once. A server that does not listen is started and closed by supertest around each group of
     // requests, on a new port each time, and now and then a request reached something else or hung up.

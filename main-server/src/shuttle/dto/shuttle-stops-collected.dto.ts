@@ -8,13 +8,11 @@ const stopSchema = z.strictObject({
   top: z.int32().nonnegative(),
 });
 
-// What one Collection of the operator's route page read, sent by the worker as `shuttle-stops-collected`.
+// What one Collection of the operator's route page read, posted by the worker to `/shuttle/stops/collected`.
 export const shuttleStopsCollectedSchema = z.strictObject({
   source: z.literal(Source.shuttle_stops),
   collectedAt: z.iso.datetime({ offset: true }),
-  // In loop order.
   stops: z.array(stopSchema).min(1),
-  // As the page writes them.
   serviceHours: z.string().min(1),
 });
 

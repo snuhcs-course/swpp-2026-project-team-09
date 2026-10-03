@@ -5,12 +5,10 @@ export interface RouteStop {
   top: number;
 }
 
-// What one Collection of the route page read, sent to the main server as `shuttle-stops-collected`.
+// What one Collection of the route page read, posted to the main server's `/shuttle/stops/collected`.
 export interface ShuttleStopsCollectedMessage {
   source: 'shuttle_stops';
   collectedAt: string;
-  // In loop order.
   stops: RouteStop[];
-  // As the page writes them.
   serviceHours: string;
 }

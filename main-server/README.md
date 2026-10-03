@@ -657,10 +657,11 @@ The steps add a feature named `party`. Use a short lowercase name, with dashes b
    pnpm exec nest g service party --no-spec
    ```
 
-3. Every route is exactly one of three kinds. Unmarked, it is a User's: it needs a User's access token, and a request
-   without one gets 401. Mark a route, or a whole controller, with `@Public()` to open it to anyone, or with
-   `@AdministratorOnly()` to give it to [Administrators](#administrators). A marking on a handler replaces its
-   controller's, so mark a handler with one of them at most. A User's route also needs the User to have finished
+3. Every route is exactly one of four kinds. Unmarked, it is a User's: it needs a User's access token, and a request
+   without one gets 401. Mark a route, or a whole controller, with `@Public()` to open it to anyone, with
+   `@AdministratorOnly()` to give it to [Administrators](#administrators), or with `@WorkerOnly()` to give it to the
+   worker server ([Requests from the worker server](#requests-from-the-worker-server)). A marking on a handler replaces
+   its controller's, so mark a handler with one of them at most. A User's route also needs the User to have finished
    [onboarding](#onboarding-and-the-lobby); mark it `@AllowBeforeOnboarding()` only when onboarding itself needs it.
    A handler reads the signed-in User with `@CurrentUser() user: SignedInUser`, as `src/users/users.controller.ts`
    does.
@@ -747,6 +748,8 @@ so a message is stored once. Every route for the worker follows these rules.
 - **Validation**: the handler takes the body with `@Body({ schema })`, as every route does, and the schema is zod in
   the feature's `dto/`, such as `src/menus/dto/menus-collected.dto.ts`. Use `z.strictObject`, so that a misspelt field
   is refused instead of dropped.
+- **Size**: a body may be up to 1 MB (`src/common/json-body-limit.ts`). Express takes 100 kB unless told otherwise, and
+  a week of the Co-op's menus comes to about that. A larger body is refused with 413.
 - **Answers**: a message that was taken answers 204. One that does not match its schema is refused with 400 before the
   handler runs, and nothing from it is stored, the Collection status included. The answer names each problem:
 

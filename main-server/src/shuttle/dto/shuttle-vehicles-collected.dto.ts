@@ -8,7 +8,8 @@ const vehicleSchema = z.strictObject({
   y: z.number(),
 });
 
-// What one Collection of the operator's vehicle positions read, sent by the worker as `shuttle-vehicles-collected`.
+// What one Collection of the operator's vehicle positions read, posted by the worker to
+// `/shuttle/vehicles/collected`.
 export const shuttleVehiclesCollectedSchema = z.strictObject({
   source: z.literal(Source.shuttle_vehicles),
   // When the worker received the operator's answer.

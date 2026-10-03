@@ -258,8 +258,8 @@ describe('The places on the drawing that the route page gives', () => {
 });
 
 describe('An invalid shuttle message', () => {
-  it.each(invalidMessages)('is refused: %s', async (_, pattern, message, problem) => {
-    expect(await refusal(app, pattern, message)).toContain(problem);
+  it.each(invalidMessages)('is refused: %s', async (_, path, message, problem) => {
+    expect(await refusal(app, path, message)).toContain(problem);
   });
 
   it('leaves the vehicles as they were', async () => {

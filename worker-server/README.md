@@ -270,8 +270,9 @@ named `library`. Use a short lowercase name, with dashes between words (`shuttle
 5. Code shared by two or more features goes in `src/common/`. If another feature needs a provider of this one, add it
    to `exports` in `LibraryModule` and add `LibraryModule` to the other module's `imports`.
 6. If the feature needs a new setting, add it to the schema in `src/common/settings.ts`, to `.env.example`, to your own
-   `.env`, to the `worker-server` service in `compose.yaml` at the repository root and to the settings in
-   `test/global-setup.ts`. Read it by injecting `ConfigService<Settings, true>` and calling
+   `.env` and to the settings in `test/global-setup.ts`. Compose reads `worker-server/.env`; add the setting to the
+   `worker-server` service's `environment` in `compose.yaml` at the repository root only when it needs another value
+   inside Compose, as `MAIN_SERVER_URL` does. Read it by injecting `ConfigService<Settings, true>` and calling
    `get('NAME', { infer: true })`.
 7. Save a page of the Source and write the tests of the parser and of the collector (see
    [Collections](#collections)). Start the server with `startApp` from `test/start-app.ts`. A route is called with
