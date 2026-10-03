@@ -123,7 +123,7 @@ Tickets 02 to 05 were built in one orchestrated run: one session placed the agen
 
 ### Agent usage (2026-10-03)
 
-- One session merged `1.0/Main` into this branch, ran a Standards review and a Spec review side by side, acted on them, moved the vehicles from a table to Redis, set the timeouts to 5 seconds, and took ticket 02's events out of the branch so that this ticket is merged first: about 73 minutes of work, an estimate. The time it waited for the user is not counted.
+- One session merged `1.0/Main` into this branch, ran a Standards review and a Spec review side by side, acted on them, moved the vehicles from a table to Redis, set the timeouts to 5 seconds, took ticket 02's events out of the branch so that this ticket is merged first, gave each collector a `PageFetcher` of its own, and put the service hours into the seed: about 82 minutes of work, an estimate. The time it waited for the user is not counted.
 - Tokens, with the two reviewers, counted from the transcripts when this section was written:
-  - Input: 41,319,231 in total, of which 40,424,361 were cache reads, 894,552 cache writes and 318 uncached.
-  - Output: 248,117.
+  - Input: 52,165,545 in total, of which 51,223,964 were cache reads, 941,223 cache writes and 358 uncached.
+  - Output: 285,929.
