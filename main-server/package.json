@@ -45,6 +45,7 @@
     "ioredis": "^6.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "uuid": "^14.0.2",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -53,15 +54,20 @@
     "@nestjs/testing": "~12.1.0",
     "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
+    "@types/shapefile": "^0.6.4",
     "@types/supertest": "^7.0.0",
+    "@types/yauzl": "^3.4.0",
     "@vitest/coverage-v8": "~4.1.11",
     "oxlint": "^1.58.0",
     "oxlint-tsgolint": "^7.0.2001",
     "prettier": "^3.4.2",
     "prisma": "7.10.0",
+    "proj4": "^2.22.0",
+    "shapefile": "^0.6.6",
     "supertest": "^7.0.0",
     "testcontainers": "^12.1.0",
     "typescript": "~6.0.3",
-    "vitest": "~4.1.11"
+    "vitest": "~4.1.11",
+    "yauzl": "^3.4.0"
   }
 }

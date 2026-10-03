@@ -18,8 +18,8 @@ An admin site where an Administrator reviews each Draft, corrects its time and p
 4. As an Administrator, I want to see which Drafts could not be read fully, so that I know where work is needed.
 5. As an Administrator, I want to open a Draft and see its source link and original text, so that I can check it against the original.
 6. As an Administrator, I want to edit the title, description, start time, end time and place name, so that the event is correct.
-7. As an Administrator, I want to choose the place from the building list, so that the event gets coordinates without typing them.
-8. As an Administrator, I want to set the place by pointing on a map, so that events outside listed buildings can be placed.
+7. As an Administrator, I want to choose the place from the list of Places, so that the event gets coordinates without typing them.
+8. As an Administrator, I want to set the place by pointing on a map, so that events outside the listed Places can be placed.
 9. As an Administrator, I want publishing to be refused until the event has a title, a start time and a position, so that incomplete events never reach Users.
 10. As an Administrator, I want to publish a Draft, so that Users see it on their map.
 11. As an Administrator, I want to create a Global Event by hand, so that organizers' submissions can be entered.
