@@ -192,6 +192,7 @@ Still open:
 
 - [ ] The texts of the three legal documents: 이용약관, 개인정보 처리방침, 위치정보 이용약관
 - [ ] The final friend marker (candidates: 지금, A, B, C, D). Until it is chosen the app uses 지금
+- [ ] The design system's brand book says not to reproduce the university's emblem, and that the name "SNU Now" is set in plain type; the `Login` frame uses the emblem as its button. Settle which holds before the sign-in screen is built (ticket 12)
 - [ ] No frame shows the credit for the map data. The app puts it very small at the bottom left of the map, as the spec says
 - [ ] No frame shows the main screen when the User is off campus. The app shows the whole campus without an Avatar, as the spec says
 - [ ] The route is still one dashed line and a toast. A frame with the distance, the time and a way to end the route would improve it
