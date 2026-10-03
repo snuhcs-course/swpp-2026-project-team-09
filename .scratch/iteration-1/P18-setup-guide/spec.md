@@ -40,7 +40,7 @@ A root README that takes a reader from cloning the repository to a running syste
 - The three demo flows are described as what a User does, not as a list of endpoints.
 - Known limitations include at least: Android only; the map runs on ARM devices only; sharing stops when the app is closed by the User; the shuttle position is computed from the operator's drawing; collected events need an Administrator before they appear; Users are hidden outside the Campus Boundary.
 - Each project keeps a short README of its own for what is specific to it. The root README links to them and does not repeat them.
-- The README credits OpenStreetMap for buildings, the shuttle route and the Campus Boundary.
+- The README credits OpenStreetMap for Places and their outlines, the shuttle route and the Campus Boundary.
 - The Wiki page holds the same content. Publishing to the Wiki is done on the team lead's request.
 
 ## Testing Decisions

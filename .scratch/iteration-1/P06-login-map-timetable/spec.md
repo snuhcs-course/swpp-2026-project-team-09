@@ -26,10 +26,10 @@ The app opens on a sign-in screen and then on a map of the campus that fills the
 12. As an SNU student, I want to tap a Global Event and see its title, time, place and source, so that I can decide whether to go.
 13. As an SNU student, I want my Private Events as markers that only I see, so that my plans stay mine.
 14. As an SNU student, I want to create a Private Event with a title, a start time, an optional end time, a place and a note, so that I can record my own plans.
-15. As an SNU student, I want to choose the place from the building list or by pointing on the map, so that I do not type coordinates.
+15. As an SNU student, I want to choose the place from the list of Places or by pointing on the map, so that I do not type coordinates.
 16. As an SNU student, I want to edit and delete my Private Events, so that they stay correct.
-17. As an SNU student, I want to enter a class with its name, weekday, start and end time, building and room, so that the app knows my week.
-18. As an SNU student, I want to choose the building from a list, so that the class has a place on the map.
+17. As an SNU student, I want to enter a class with its name, weekday, start and end time, Place and room, so that the app knows my week.
+18. As an SNU student, I want to choose the class's Place from a list, so that the class has a place on the map.
 19. As an SNU student, I want to set the first and last day of the semester, so that classes do not appear during vacation.
 20. As an SNU student, I want to edit and delete classes, so that I can follow a changed timetable.
 21. As an SNU student, I want to be warned when two classes overlap, so that I notice a mistake.
@@ -73,11 +73,11 @@ The app opens on a sign-in screen and then on a map of the campus that fills the
 
 ### Timetable and Private Events
 
-- The main server stores one timetable per User: the semester's first and last day and the class entries. An entry has a course name, a weekday, a start time, an end time, a building from the building list and a room text.
+- The main server stores one timetable per User: the semester's first and last day and the class entries. An entry has a course name, a weekday, a start time, an end time, a Place from the list and a room text.
 - Overlapping entries are accepted with a warning.
 - The main server stores Private Events. Only the owner can read or change them.
-- A Private Event's place is a building from the list or a point on the map.
-- The building list comes from P07.
+- A Private Event's place is a Place from the list or a point on the map.
+- The list of Places comes from P07.
 
 ### Route
 
