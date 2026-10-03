@@ -1,7 +1,14 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { inject } from 'vitest';
 import { CollectionStatus, GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
-import { collectedEvent, eventsMessage, invalidEventsMessages, postNumbersFrom } from './global-events.js';
+import {
+  collectedEvent,
+  eventsMessage,
+  invalidEventsMessages,
+  placesNamingAPlace,
+  placesNamingNoPlace,
+  postNumbersFrom,
+} from './global-events.js';
 import { refusal, sendAsWorker, startWithWorker, type WorkerHarness } from './worker.js';
 
 let harness: WorkerHarness;
@@ -116,47 +123,11 @@ describe('A collected event that cannot be published', () => {
 });
 
 describe('The place of a collected event', () => {
-  it.each([
-    // 종합운동장 has no number.
-    ['by name', '서울대학교 종합운동장', { latitude: 37.464779176159, longitude: 126.95009153903 }],
-    // 유전공학연구소 is 105동, and 유전공학연구소 신관 105-2동.
-    [
-      'by the longer of two names',
-      '유전공학연구소 신관 2층',
-      { latitude: 37.4540404461522, longitude: 126.95336213875 },
-    ],
-    // 자하연 is a place of its own, and 자하연식당 is 109동.
-    ['by a whole name, not one inside it', '자하연식당 2층', { latitude: 37.46098, longitude: 126.95252 }],
-    // Seven Places are named (관악사)학부 생활관.
-    [
-      'by its number alone when it writes one',
-      '(관악사)학부 생활관 919동',
-      { latitude: 37.46306, longitude: 126.95872 },
-    ],
-    // OpenStreetMap names 901동 "901".
-    [
-      'by name, not by a name that is a number',
-      '글로벌공학교육센터 901호',
-      { latitude: 37.4549, longitude: 126.95062 },
-    ],
-    // The campus map writes 중앙도서관 관정관, 62-1동.
-    ['by name, whatever its spacing', '중앙도서관관정관 6층', { latitude: 37.45903, longitude: 126.95247 }],
-    // The campus map writes SK경영관, 58동.
-    ['by name, whatever the case', 'sk경영관 B101호', { latitude: 37.46568, longitude: 126.95203 }],
-  ])('names a Place %s', async (_case, place, position) => {
+  it.each(placesNamingAPlace)('names a Place %s', async (_case, place, position) => {
     expect(await collect({ place })).toMatchObject({ state: 'published', ...position });
   });
 
-  it.each([
-    // Not 1동, 인문관1.
-    ['a number that is part of a word, as in an address', '서울특별시 강남구 역삼1동 GS타워'],
-    // Not 박물관, 70동, nor 행정관, 60동.
-    ['a name that ends a word', '국립중앙박물관 대강당'],
-    ['a name that begins a word', '행정관리팀 사무실'],
-    // Not 행정관, 60동, nor 1동.
-    ['a building of another campus by name', '서울대학교 연건캠퍼스 의과대학 행정관'],
-    ['a building of another campus by number', '연건캠퍼스 1동 강의실'],
-  ])('names no Place when it holds %s', async (_case, place) => {
+  it.each(placesNamingNoPlace)('names no Place when it holds %s', async (_case, place) => {
     expect(await collect({ place })).toMatchObject({ state: 'draft', place, ...noPosition });
   });
 });

@@ -79,3 +79,86 @@ export const invalidEventsMessages: [string, (valid: number, other: number) => o
     'source: ',
   ],
 ];
+
+// Each place and the position of the Place it names. A name alone needs the university's name beside it.
+export const placesNamingAPlace: [string, string, { latitude: number; longitude: number }][] = [
+  // 종합운동장 has no number.
+  ['by name', '서울대학교 종합운동장', { latitude: 37.464779176159, longitude: 126.95009153903 }],
+  // 유전공학연구소 is 105동, and 유전공학연구소 신관 105-2동.
+  [
+    'by the longer of two names',
+    '서울대학교 유전공학연구소 신관 2층',
+    { latitude: 37.4540404461522, longitude: 126.95336213875 },
+  ],
+  // 자하연 is a place of its own, and 자하연식당 is 109동.
+  ['by a whole name, not one inside it', '서울대 자하연식당 2층', { latitude: 37.46098, longitude: 126.95252 }],
+  // OpenStreetMap names 901동 "901".
+  [
+    'by name, not by a name that is a number',
+    '서울대학교 글로벌공학교육센터 901호',
+    { latitude: 37.4549, longitude: 126.95062 },
+  ],
+  // The campus map writes 중앙도서관 관정관, 62-1동.
+  ['by name, whatever its spacing', '서울대학교 중앙도서관관정관 6층', { latitude: 37.45903, longitude: 126.95247 }],
+  // The campus map writes SK경영관, 58동.
+  ['by name, whatever the case', 'SNU sk경영관 B101호', { latitude: 37.46568, longitude: 126.95203 }],
+  // 미술관, 151동.
+  [
+    "by name, with the university's name written onto it",
+    '서울대학교미술관 2~3F 전시실',
+    { latitude: 37.4665, longitude: 126.94969 },
+  ],
+  // The campus map writes 버들골 풍산마당, 100동.
+  [
+    'by name, with a dot between its words',
+    '관악캠퍼스 버들골·풍산마당 등',
+    { latitude: 37.4584786551623, longitude: 126.955227154786 },
+  ],
+  // Seven Places are named (관악사)학부 생활관, 919동 among them.
+  [
+    'by its number, beside a name it agrees with',
+    '(관악사)학부 생활관 919동',
+    { latitude: 37.46306, longitude: 126.95872 },
+  ],
+  // 140-2동 is 국제회의동, of the series 국제대학원 (140동) and 국제대학원2 (140-1동).
+  [
+    'by its number, beside the name of its series',
+    '서울대학교 국제대학원(140-2동) 4층 국제회의실',
+    { latitude: 37.46448, longitude: 126.95497 },
+  ],
+  // 규장각한국학연구원, 103동.
+  [
+    'in person, beside an online room',
+    '서울대학교 규장각한국학연구원(103동) 444호 & Zoom 온라인 회의실',
+    { latitude: 37.46226, longitude: 126.95028 },
+  ],
+];
+
+// Each place that names no Place for certain, so that its event waits as a Draft.
+export const placesNamingNoPlace: [string, string][] = [
+  // Not 1동, 인문관1.
+  ['a number that is part of a word, as in an address', '서울대학교 앞 봉천1동 주민센터'],
+  // Not 박물관, 70동, nor 행정관, 60동.
+  ['a name that ends a word', '서울대학교 국립중앙박물관 대강당'],
+  ['a name that begins a word', '서울대학교 행정관리팀 사무실'],
+  // Not 행정관, 60동, nor 1동.
+  ['a building of another campus by name', '서울대학교 연건캠퍼스 의과대학 행정관'],
+  ['a building of another campus by number', '연건캠퍼스 1동 강의실'],
+  // Not 체육관, 71동: another university has one too.
+  ["a name without the university's", '체육관 2층'],
+  // Not 75동: a government complex numbers its buildings too.
+  ["a number without the university's or its building's name", '75동 1층 역사기록관'],
+  ['another university', '연세대학교 학생회관(63동)'],
+  ['an address in another district', '서울 은평구 학생회관(63동)'],
+  ['a station named after the university', '서울대입구역 3번 출구 OO빌딩 2동'],
+  ['a flat', '서울대학교 앞 OO아파트 101동'],
+  ["the university's hospital", '서울대학교병원 체육관'],
+  // 국제대학원 is 140동, and 국제대학원2 140-1동.
+  ['the name of a series of buildings', '서울대학교 국제대학원 국제회의실'],
+  ['a venue the list does not hold beside one it does', '서울대학교 종합운동장, 보조운동장'],
+  ['a number the list does not hold beside one it does', '서울대학교 302동 및 999동'],
+  ['two buildings', '서울대학교 301동 및 302동'],
+  // 학생회관 is 63동.
+  ['a number and the name of another building', '서울대학교 302동 학생회관'],
+  ['a route', '학생회관(63동) 앞 → 관악산 정상'],
+];

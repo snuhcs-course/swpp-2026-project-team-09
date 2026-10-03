@@ -160,3 +160,14 @@ Ticket 03 reached `1.0/Main` squashed, as #29, and ticket 06 after it, as #32, w
 - A place is matched against the list of Places: `building-of-place.ts` is `named-place.ts`, `buildingOfPlace()` is `namedPlace()`, and the main server's README and the tests say Place. The rules are unchanged.
 - Ticket 06's list adds four Places, among them 해동첨단공학관 (303동), so a place that writes `303동` now names one. No test of this ticket changed its expectations.
 - On this branch: main server 29 files and 342 tests, worker server 8 files and 91 tests; lint, format:check and typecheck pass in both.
+
+### The place rule after a real Collection (2026-10-03)
+
+One Collection of the whole list, on 2026-10-03 against the seed's 230 Places, stored 82 posts: 13 published and 69 Drafts. 43 had a place line. The old rule published one at the wrong building (176096, `국제대학원 국제회의실`, at 140동; the room is in 140-2동, as 176087 writes), gave a Draft one venue of five (176558), and missed `서울대학교미술관` (twice), `서울대학교박물관` and `버들골·풍산마당`.
+
+- **A wrong position must not be published; more Drafts are accepted.** A place names a Place only when every venue it writes is that Place.
+- **The university has to be named, by name or by a building's name and number together.** A name alone, or a number alone, is also another university's or a government complex's. Without `서울대`, `관악캠퍼스` or `SNU`, a number counts only beside a name of its building.
+- **A number decides, and a name beside it must agree**, with its building or its series. **A name that another Place's name continues with a number names the series**, so `국제대학원` alone names none.
+- **The place is cut into parts** at the list's and a route's separators, not inside a name. Each part must name the same Place, apart from an online part or one that is only a room or a floor: a hybrid event is published at its room.
+- **Elsewhere names none**: the other campuses and hospitals, the stations named after the university, another university, another district or region, a flat.
+- Over the 43 places, 13 change. Five gain a position or lose a wrong one: 174155, 174821, 175817, 174185, and 176096, now a Draft. Two venues lists become Drafts without a position: 176558, and 174122 (`행정관(60동) 및 주변 오픈스페이스`). Six Drafts lose their position, for a name or a number without the university's: 174149 (`규장각한국학연구원`), 174143, 174152, 174182, 176429, 176504. Of the 13 published, only 176096 changed.
