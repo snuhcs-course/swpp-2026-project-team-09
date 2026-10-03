@@ -115,7 +115,7 @@ The pairs, in loop order. Each was proposed from the order of the two lists and 
 
 ### Agent usage (2026-10-03)
 
-- Agent time: about 2 hours 20 minutes, an estimate: one session, with its four reviewers, two at a time. The time it waited for the user is not counted.
+- Agent time: about 2 hours 32 minutes, an estimate: one session, with its four reviewers, two at a time. The time it waited for the user is not counted.
 - Tokens, counted from the transcripts when this section was written:
-  - Input: 112,639,691, of which 111,058,516 were cache reads, 1,580,565 cache writes and 610 uncached.
-  - Output: 456,891.
+  - Input: 127,077,410, of which 125,475,256 were cache reads, 1,601,502 cache writes and 652 uncached.
+  - Output: 478,890.

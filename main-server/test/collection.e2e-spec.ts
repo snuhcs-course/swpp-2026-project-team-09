@@ -55,14 +55,14 @@ describe('A failed Collection', () => {
       sendAsWorker(app, '/collections/failed', {
         source: 'dormitory_menus',
         failedAt: '2026-11-01T05:00:00+09:00',
-        reason: 'The page did not answer within 10 seconds',
+        reason: 'The page did not answer within 5 seconds',
       }),
     ).resolves.toBeUndefined();
 
     expect(await dormitoryStatus()).toMatchObject({
       lastSucceededAt: new Date('2026-10-31T12:00:00Z'),
       lastFailedAt: new Date('2026-10-31T20:00:00Z'),
-      lastFailureReason: 'The page did not answer within 10 seconds',
+      lastFailureReason: 'The page did not answer within 5 seconds',
     });
     expect((await getMenus(app, accessToken, date)).body).toEqual([
       { name: '아워홈(901동)', collectedAt: '2026-10-31T12:00:00.000Z', meals: [servedLunch] },

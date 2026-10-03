@@ -113,7 +113,7 @@ describe('A stop name that the seed does not know', () => {
     await sendAsWorker(app, '/collections/failed', {
       source: 'shuttle_stops',
       failedAt: '2026-10-03T07:00:00+09:00',
-      reason: `The main server did not take shuttle-stops-collected: ${problem}`,
+      reason: `The main server did not take /shuttle/stops/collected: ${problem}`,
     });
 
     expect(problem).toBe('stops: the seed does not know 법학관');
@@ -121,7 +121,7 @@ describe('A stop name that the seed does not know', () => {
     expect(await prisma.collectionStatus.findUnique({ where: { source: 'shuttle_stops' } })).toMatchObject({
       lastSucceededAt: new Date('2026-10-02T07:00:00+09:00'),
       lastFailedAt: new Date('2026-10-03T07:00:00+09:00'),
-      lastFailureReason: 'The main server did not take shuttle-stops-collected: stops: the seed does not know 법학관',
+      lastFailureReason: 'The main server did not take /shuttle/stops/collected: stops: the seed does not know 법학관',
     });
   });
 });
