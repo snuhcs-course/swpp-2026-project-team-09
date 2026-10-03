@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { Collector, Collects } from '../common/collector.js';
 import { PageFetcher } from '../common/page-fetcher.js';
+import { seoulDay } from '../common/seoul-day.js';
 import { MENU_SOURCES, type MenuDay, type MenuSource, type MenusCollectedMessage } from './dto/menus-collected.dto.js';
 import { parseMenuPage } from './menu-page.parser.js';
 import { parseVeterinaryMenuPage } from './veterinary-menu-page.parser.js';
@@ -11,13 +12,6 @@ const COLLECTION_TIMES = '0 0 5,10 * * *';
 
 // A Collection covers today and the six days after. Restaurants fill in their later days as they post them.
 const COLLECTED_DAYS = 7;
-
-const HOUR = 60 * 60 * 1000;
-
-// The calendar day in Asia/Seoul, which is UTC+9 all year, `days` after `time`.
-function seoulDay(time: Date, days: number): string {
-  return new Date(time.getTime() + (9 + 24 * days) * HOUR).toISOString().slice(0, 10);
-}
 
 @Injectable()
 @Collects(MENU_SOURCES)

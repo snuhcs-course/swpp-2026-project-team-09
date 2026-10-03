@@ -39,19 +39,16 @@ export class MainServer {
   // Sends a message with the worker's token and resolves when the main server took it. Rejects with the problem its
   // answer names, or when it does not answer.
   async send(path: string, message: object): Promise<void> {
-    let response: Response;
+    await this.post(path, message);
+  }
+
+  // Rejects as send() does, and when the answer does not match `schema`.
+  async ask<T>(path: string, question: object, schema: z.ZodType<T>): Promise<T> {
+    const response = await this.post(path, question);
     try {
-      response = await this.request(path, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(message),
-      });
-    } catch (error) {
-      const problem = error instanceof Error ? error.message : String(error);
-      throw new Error(`The main server did not take ${path}: ${problem}`, { cause: error });
-    }
-    if (!response.ok) {
-      throw new Error(`The main server did not take ${path}: ${await problemOf(response)}`);
+      return schema.parse(await response.json());
+    } catch {
+      throw new Error(`The main server's answer to ${path} is not the one asked for`);
     }
   }
 
@@ -62,6 +59,24 @@ export class MainServer {
     } catch {
       return false;
     }
+  }
+
+  private async post(path: string, body: object): Promise<Response> {
+    let response: Response;
+    try {
+      response = await this.request(path, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    } catch (error) {
+      const problem = error instanceof Error ? error.message : String(error);
+      throw new Error(`The main server did not take ${path}: ${problem}`, { cause: error });
+    }
+    if (!response.ok) {
+      throw new Error(`The main server did not take ${path}: ${await problemOf(response)}`);
+    }
+    return response;
   }
 
   private async request(path: string, init: RequestInit): Promise<Response> {

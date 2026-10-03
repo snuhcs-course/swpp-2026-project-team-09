@@ -67,7 +67,7 @@ The worker server collects events, menus and shuttle positions from their origin
 - Schedules run inside the worker with the NestJS schedule module. One worker instance runs.
 - A developer runs one collection of a source by hand, with a command of the worker server that does what the scheduled run does. Nothing is collected when the worker starts.
 - The worker fetches pages in one place, so that tests replace it with saved pages.
-- A page is read only when it has the structure its parser expects, such as the menu table and the date that was asked for. A page without it is a failed collection, not an empty one: the university's firewall answers a blocked request with status 200 and another page. A table that is there and lists nothing is an empty result.
+- A page is read only when it has the structure its parser expects, such as the menu table and the date that was asked for. A page without it is a failed collection, not an empty one: the university's firewall answers a blocked request with status 200 and another page. One exception: an event post's page that is not the post asked for is stored as a Draft with the list's title. Three such pages in a row, or a collection that read no post at all, fail the collection, which then stores none of them (ticket 02). A table that is there and lists nothing is an empty result.
 - When a collection fails, the stored data stays and the failure is reported to the main server. The main server records, per source, when it was last collected successfully and, apart from it, the last failure with its time and reason, so that a failure stays visible after a later success. P12 shows the record (story 19).
 
 ### Menus
@@ -92,7 +92,7 @@ The worker server collects events, menus and shuttle positions from their origin
 - A post is one Global Event, identified by its post number (`bbsidx`). The rules read one start and end per post. A post that describes several sessions, such as a lecture series, is split into one event per session by the Administrator, until AI does it in a later iteration.
 - A collected event is published when the rules read both of these, and is a Draft otherwise:
   - its start, with a time of day, from the time line of the body. The date in the post's header is often the application period, so it does not count;
-  - its place, matched to exactly one Place of the list by number or by name. The event's position is that Place's.
+  - its place, matched to exactly one Place of the list, by number, with the university's name or the building's name beside it, or by name, with the university's name (ticket 02 records the rule). The event's position is that Place's.
   - A Draft is therefore an event online or off campus, an event whose place matched no entry or several, and a post that is not an event, such as a call for applicants, which mostly names no place. Of 48 posts sampled on 2026-10-01, 33 gave a start time, 30 a place line, and about ten were not events; 17 of the 18 building numbers the posts named are in the list of Places.
 - Only an Administrator publishes a Draft. An Administrator can also correct or cancel an event that a collection published.
 - Since a post is read once, no later collection touches a stored event, whatever its state. An Administrator's corrections therefore stay.
@@ -177,5 +177,5 @@ The worker server collects events, menus and shuttle positions from their origin
 
 - The schedule names 윤유상 and 김태현 as workers.
 - P05 observed the operator's endpoint during service hours: every vehicle position fell on a stop, never between two. The vehicle model above follows that observation; `.scratch/research/external-sources.md` §5 has the details.
-- The pages are not versioned interfaces. A change in their layout breaks a parser without notice, and the collection status in story 19 is how the team finds out.
+- The pages are not versioned interfaces. A change in their layout breaks a parser without notice, and the collection status in story 19 is how the team finds out. For event posts it shows there with the first collection that reads none of its new posts.
 - The campus map publishes no terms of use and no licence. Its data is used on the same footing as the pages the worker collects; `.scratch/research/external-sources.md` §6.2 has what was checked.
