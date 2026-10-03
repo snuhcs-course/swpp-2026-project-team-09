@@ -23,8 +23,9 @@ interface Building extends Position {
 // The campus map places some buildings just outside the polygon that the national map draws for them.
 const REACH_IN_METRES = 10;
 
-// The building numbers in a label, each whole: `101동` holds no `1`, and `25-1동` no `25`.
-const NUMBERS_IN_LABEL = /(?<![0-9-])[0-9]+(?:-[0-9]+)?(?=동)/gu;
+// The building numbers in a label, each whole: `101동` holds no `1`, and `25-1동` no `25`. A letter after the number
+// is a wing of the building: `919-A동` holds `919`.
+const NUMBERS_IN_LABEL = /(?<![0-9-])[0-9]+(?:-[0-9]+)?(?=(?:-[A-Z])?동)/gu;
 
 // In square degrees, which compares two outlines of one campus as well as square metres would.
 function areaOf(ring: Position[]): number {

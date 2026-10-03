@@ -100,6 +100,13 @@ describe('Linking a building to the polygons whose label names its number', () =
     expect(await outlinesOfBuilding('1')).toEqual(await outlines('B0010000000RF234R'));
     expect(await outlinesOfBuilding('25')).toEqual(await outlines('B0010000000RETCJ5'));
   });
+
+  it('reads a wing, a letter after the number, as the building', async () => {
+    // (관악사)학부 생활관, three polygons labelled `관악학생생활관919-C동`, `…919-B동` and `…919-A동`.
+    expect(await outlinesOfBuilding('919')).toEqual(
+      await outlines('B0010000000RF245T', 'B0010000000RF241P', 'B0010000000RF23UH'),
+    );
+  });
 });
 
 describe('Linking a building that no label names', () => {

@@ -17,7 +17,7 @@ The layer is downloaded by a person from VWorld, behind a login, and stays outsi
 - [x] The export refuses a file that is not this layer, and a file that holds no building in the campus extent, saying that the campus is in another of the layer's files.
 - [x] The conversion of coordinates is checked against a pair of coordinates known apart from the code.
 - [x] A building is linked to its outlines in this order, and a place has none:
-  1. every polygon whose label names the building's number as `<number>동`, the whole number: `1동` is not in `101동`, and `25동` is not in `25-1동`;
+  1. every polygon whose label names the building's number as `<number>동`, the whole number: `1동` is not in `101동`, and `25동` is not in `25-1동`. A letter after the number is a wing of the building: `919-A동` names 919동;
   2. without such a label, the polygon that holds the building's position, the larger when two do, also when another building has it;
   3. without that, a polygon within 10 m that no building has, the nearest building first.
 - [x] The corrections file gives a building an outline of either source, or none, each with its reason, and still refuses a building or an outline the seed does not hold. It holds five corrections: 버들골 풍산마당 (100동) and 데이터사이언스대학원 (43-2동) take OpenStreetMap's outlines `way/193893586` and `way/1485386282`; 종합운동장본부석 (149동) takes the OpenStreetMap outline it has today; 화학관연결동 (253동) has none; 반도체교육관 (104-1동) keeps its own polygon alone, since the layer labels a polygon at 국제대학원 as 104-1동 too.
@@ -55,13 +55,14 @@ The main server's README says, under Buildings and Seed data, how the outlines a
 ### The numbers (2026-10-03)
 
 - The seed holds 356 polygons with 6,029 points; 233 have a label.
-- Before the corrections 202 of the 218 numbered buildings have an outline: 172 by a label, 25 by their position and 5 within 10 m. These are the numbers the decision counted.
-- **After the corrections 204 have an outline**: 171 by a label, 24 by their position, 5 within 10 m (104-2, 128, 207, 251 and 506) and 4 by a correction (100, 43-2, 149 and 104-1).
+- Before the corrections 202 of the 218 numbered buildings have an outline: 174 by a label, 23 by their position and 5 within 10 m.
+- **After the corrections 204 have an outline**: 173 by a label, 22 by their position, 5 within 10 m (104-2, 128, 207, 251 and 506) and 4 by a correction (100, 43-2, 149 and 104-1).
+- Two labels name a wing: (관악사)학부 생활관 (919동) takes the three polygons labelled `919-A동`, `919-B동` and `919-C동`, and BK국제관 (946동) the one labelled `946-A동`, which holds its position too.
 - **14 have none**:
   - 김철수물리관 (56-1동) and 정문수위실 (115동);
   - four links between buildings: 인문관연결동 (250동), 화학관연결동 (253동), 물리관연결동 (254동) and 예능관연결동 (255동);
   - eight stores and small buildings: 야외조각실습장2 (52-2동), 영선공장 (68-2동), 폐기물창고 (98-2동), 정구장관리실 (99-1동), 반도체연구소수소창고 (104-3동), 간이식당1 (110동), 양수장 (117동) and 다목적차량보관소 (332동).
-- Nine buildings have several outlines: 16동 five, 42동 three, and 50, 59, 66, 72, 73, 105 and 901 two each. The buildings have 217 outlines in all.
+- Ten buildings have several outlines: 16동 five, 42동 and 919동 three, and 50, 59, 66, 72, 73, 105 and 901 two each. The buildings have 219 outlines in all.
 - Seven polygons are the outline of two buildings each: 10 and 252, 52 and 52-1, 59 and 59-1, 105 and 105-1, 105 and 105-2, 140 and 140-1, and 901 and 906.
 - No building's position lies in two of the 356 polygons, so "the larger when two do" decides nothing on today's data. Its test adds two polygons to a copy of the seed.
 - **One label of the layer is wrong, and a correction sets it right.** The polygon `B0010000000RF2EB9` is labelled `104-1동국제대학원` and stands at 국제대학원, 1,044 m from 반도체교육관 (104-1동). By its label it would be a second outline of 104-1동; the fifth correction leaves 104-1동 its own polygon, `B0010000000RF2ENL`, alone. By position the polygon is the outline of 국제회의동 (140-2동), which keeps it. The wrong label was found by its distance, after the build, and the correction was added on a person's word.
@@ -70,9 +71,9 @@ The main server's README says, under Buildings and Seed data, how the outlines a
 
 ### Tests (2026-10-03)
 
-- The seed command, on a database of its own: `test/seed-outlines.e2e-spec.ts` (12).
+- The seed command, on a database of its own: `test/seed-outlines.e2e-spec.ts` (13).
   - A point of 151동미술관 has the longitude and latitude that PROJ gives for the layer's coordinates.
-  - By a label: 제1공학관; 사회과학관 with five outlines and 문화관 with two; `1동` not read out of `101동`, nor `25동` out of `25-1동`.
+  - By a label: 제1공학관; 사회과학관 with five outlines and 문화관 with two; `1동` not read out of `101동`, nor `25동` out of `25-1동`; 919동 with the three polygons of its wings, written before the rule read a wing and seen to fail.
   - Without a label: 우석경제관 by its position, and 59-1동 inside a polygon of 59동; 506동 within 10 m, 250동 not, beside the polygon of 인문관2, and of 104-2동 and 104-3동 the nearer; 물리관연결동, which the layer draws as a wall-less structure, without an outline; a place without one.
   - The larger of two polygons that hold a position.
   - The corrections: OpenStreetMap's outline for 100동 and none for 253동, against a copy of the seed without corrections; 104-1동 with two outlines without the corrections and its own alone with them, written before the fifth correction and seen to fail; a correction naming an unknown outline or an unknown building refused.
@@ -94,7 +95,7 @@ The main server's README says, under Buildings and Seed data, how the outlines a
 
 ### Checks and the real start (2026-10-03)
 
-- `pnpm lint`, `pnpm format:check` and `pnpm typecheck` pass. `pnpm test`: 26 files and 290 tests pass.
+- `pnpm lint`, `pnpm format:check` and `pnpm typecheck` pass. `pnpm test`: 26 files and 291 tests pass.
 - The migration was made with `prisma migrate dev --create-only` on a temporary database of the project's PostgreSQL image, `p07-06-outlines-postgres`, since removed with its volume. After `pnpm db:migrate`, `prisma migrate diff` from that database to the schema finds no difference. `pnpm db:seed` run twice on it left 226 rows, 204 of the 218 numbered buildings with outlines.
 - One start, `docker compose -p p07-06-outlines-check up --build -d postgres redis main-server` from the repository root, under a project name of its own so that the developer database was not touched:
   - The image built with the new dev dependencies, applied the four migrations, logged `Loaded 226 buildings` and started. Readiness and liveness answered 200, and `GET /buildings` and `GET /buildings/search?q=302` without a token 401.
