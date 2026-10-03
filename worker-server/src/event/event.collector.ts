@@ -116,8 +116,9 @@ export class EventCollector extends Collector {
     }
   }
 
-  // The posts, one after the other until a page cannot be fetched or is blocked, since more are likely blocked. A post
-  // whose page is not a post is kept back, and sent as unreadable once a post after it is read or the list ends.
+  // The posts, one after the other until a page cannot be fetched or is blocked, since more are likely blocked, or until
+  // three posts in a row are not posts. A post whose page is not a post is kept back, and sent as unreadable once a post
+  // after it is read or the list ends.
   private async readPosts(posts: ListedPost[]): Promise<{ events: CollectedEvent[]; failure: Error | null }> {
     const events: CollectedEvent[] = [];
     let unreadable: CollectedEvent[] = [];

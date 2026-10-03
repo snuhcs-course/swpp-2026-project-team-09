@@ -74,10 +74,10 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
   docker compose exec worker-server node dist/collect coop_menus dormitory_menus veterinary_menus
   ```
 
-  It needs the main server running, logs for each Source whether the main server took what was read, and exits with
-  status 1 when one was not taken or a name is not a Source. A collector names the Sources it collects with
+  It needs the main server running, logs for each Source whether its Collection succeeded, and exits with
+  status 1 when one failed or a name is not a Source. A collector names the Sources it collects with
   `@Collects()` from `src/common/collector.ts`, and the command runs each with the collector's `collectOne(source)`,
-  which gives whether the main server took what was read:
+  which gives whether the Collection succeeded:
 
   ```ts
   @Injectable()
@@ -107,7 +107,8 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
 - **Failure**: when a page cannot be fetched or read, or the main server does not take the message or answer the
   question, `handOver()` logs it and sends `collection-failed` with the Source, the time and the reason, such as
   `https://snudorm.snu.ac.kr/foodmenu/?date=2026-10-02 answered 503` or `The page has no menu table`. The other Sources
-  of the run are still collected, and the main server keeps what it stored.
+  of the run are still collected, and the main server keeps what it stored. The events collector skips a post's page
+  that is not the post instead, as [Events](#events) says.
 
 The tests never call a real Source. `startApp` replaces the HTTP call under `PageFetcher` (`FETCH`), and every request
 fails unless the test gives it pages. A parser is tested as a function and a collector by running it once, not through
@@ -218,8 +219,8 @@ From a post's page, `src/event/event-page.parser.ts` reads, by the team's own ru
 - The title, and the post's address as the post number and the source link.
 - The description: the body as text, one line of the page per line, with no-break spaces as spaces.
 - A label, of the time line or the place line, is followed by a colon, a `]` or a `|`, as in `- 일시:`, `• 장소]` or
-  `장소 | …`. A label alone on its line, as in `4. 장소`, takes the next line as its value, unless that line has a label
-  of its own.
+  `장소 | …`. A label alone on its line, with no colon, `]` or `|`, as in `4. 장소`, takes the next line as its
+  value, unless that line has a label of its own or is Hangul words alone, such as `- 학생회관`.
 - The time line: the first line of the body labelled `일시`, `일자`, `일정` or `기간` that has a value. A bullet or a
   number may come before the label, and spaces inside it, no-break spaces included, do not count: `· 일   시:`,
   `○일 정 :`, `- 일시:`. A label that only ends with one, such as `신청 기간` or `접수기간`, is another line, so
@@ -231,7 +232,7 @@ From a post's page, `src/event/event-page.parser.ts` reads, by the team's own ru
   - A time is read only when it is clear whether it is before or after noon: on the 24-hour clock, with two digits
     before a colon or an hour after 12 (`09:30`, `17:00`, `14시`), or with `오전`, `오후`, `저녁`, `AM` or `PM`
     (`오후 2시`, `저녁 7시 30분`, `5:00 PM`). `2시`, `2:00` or `7시 30분` alone could be either, and 12 with a half of
-    the day is read only as noon, `오후 12시` or `12 PM`. A time that is not clear is not read, and the start is its
+    the day is read only as noon, `오후 12시` or `12:00 PM`. A time that is not clear is not read, and the start is its
     day.
   - The end follows the range mark: a day, with or without its year, and a time. A day without its year is in the
     start's year, or in the next when it would come before the start. The end takes the start's form, a time when the

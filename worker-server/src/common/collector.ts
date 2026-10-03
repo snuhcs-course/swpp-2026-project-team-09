@@ -13,7 +13,7 @@ export abstract class Collector {
   @Inject(MESSAGING_CLIENT) private readonly mainServer!: ClientProxy;
   private readonly logger = new Logger(this.constructor.name);
 
-  // One Collection of a Source. Gives whether the main server took what was read.
+  // One Collection of a Source. Gives whether it succeeded: one that failed may have handed part of what it read over.
   abstract collectOne(source: string): Promise<boolean>;
 
   // Ends one Collection of a Source: what it read goes to the main server, and so does a failure to fetch or read it.

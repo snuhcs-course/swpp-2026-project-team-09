@@ -216,7 +216,7 @@ describe('A Collection of the events list that fails before reading a post', () 
   });
 
   it('reports a list that does not end', async () => {
-    // A list that answers every page past the first with the first.
+    // Page 2 answers with page 1, as a list that answered every page past the first with the first would.
     const { sources, mainServer } = await collect({ ...pages, [`${LIST}2`]: pages[`${LIST}1`] });
 
     expect(mainServer.from('snu_events', 'collection-failed')).toMatchObject([

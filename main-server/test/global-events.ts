@@ -69,7 +69,7 @@ export const invalidEventsMessages: [string, (valid: number, other: number) => o
     'events: Each post must appear once',
   ],
   [
-    'no word on whether the Collection read every post',
+    'no word on whether the Collection finished',
     (valid) => eventsMessage([collectedEvent(valid)], { ...refusedAt, complete: undefined }),
     'complete: ',
   ],
@@ -95,7 +95,7 @@ export const placesNamingAPlace: [string, string, { latitude: number; longitude:
   // OpenStreetMap names 901동 "901".
   [
     'by name, not by a name that is a number',
-    '서울대학교 글로벌공학교육센터 901호',
+    '서울대학교 글로벌공학교육센터 강의실 901',
     { latitude: 37.4549, longitude: 126.95062 },
   ],
   // The campus map writes 중앙도서관 관정관, 62-1동.

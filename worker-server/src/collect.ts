@@ -4,7 +4,7 @@ import { AppModule } from './app.module.js';
 import { collectSources } from './collect-sources.js';
 
 // The command that runs one Collection by hand: `pnpm collect coop_menus`. It starts the worker without its HTTP
-// server, collects the Sources named and exits, with status 1 when the main server did not take one of them.
+// server, collects the Sources named and exits, with status 1 when one of them failed.
 async function collect(): Promise<void> {
   const app = await NestFactory.createApplicationContext(AppModule);
   try {

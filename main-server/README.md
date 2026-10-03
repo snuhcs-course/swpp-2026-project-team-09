@@ -257,7 +257,8 @@ A collected event is published, with no person involved, when the rules read bot
 - its place names exactly one Place of the [list](#places). Its position is that Place's coordinates.
 
 Any other collected event is stored as a Draft with whatever was read: an event online or off campus, one whose place
-names no Place or several, and a post that is not an event. A rule that is not sure makes a Draft.
+names no Place or several, and a post that is not an event, which mostly writes no such time and place. A rule that
+is not sure makes a Draft.
 
 A Draft may already hold a start and a position, so P12's check before an Administrator publishes one cannot rest on
 those fields being filled:
@@ -273,20 +274,21 @@ account for makes a Draft:
 - A building is written by number, as in `302동 105호`, `학생회관(63동)` or `71-1동`, but not a number inside a word, as
   in the address `역삼1동`. Or by name, as a whole word, with or without the name's own spaces or a `·` between its
   words, and whatever the case of its Latin letters: `국립중앙박물관` does not name 박물관, nor `행정관리팀` 행정관. A
-  name inside a longer one that the place also names does not count, so `유전공학연구소 신관` is 105-2동 and not also
+  name inside a longer one that the place also names does not count, so `서울대 유전공학연구소 신관` is 105-2동 and not also
   105동. A name without a letter, such as OpenStreetMap's `901`, is matched by number only. The university's name
   written onto a name, as in `서울대학교미술관`, is taken apart.
 - Neither a number nor a name alone shows that the place is on this campus: another university has its 체육관, and a
   government complex its 1동. A number counts when the place also writes `서울대`, `관악캠퍼스`, `SNU` or
   `Seoul National University`, or a name of that building beside it, as in `뉴미디어통신공동연구소 이충웅홀(132동 103호)`. A name counts only with the
   university's.
-- A number decides its building, and a name beside it has to be of that building or its series:
-  `(관악사)학부 생활관 919동` is 919동 only, `국제대학원(140-2동)` 140-2동, and `302동 학생회관` names none.
+- A number decides its building, and a name beside it has to agree: one of the Places the name names, its series
+  included, has the same number before the hyphen. `(관악사)학부 생활관 919동` is 919동 only, `국제대학원(140-2동)`
+  140-2동, and `302동 학생회관` names none.
 - A name that another Place's name continues with a number names that whole series: `국제대학원` alone is 140동 or
   국제대학원2, 140-1동, so it names none.
 - The place is cut where it lists several or writes a route, at `,` `，` `、` `/` `&` `·` `ㆍ` `;` `및` `또는` `→` `⇒`
   `->`, but not inside a name, as in `데이터사이언스대학원 및 공과대학 강의동 1`. Every part has to name the same Place, apart from a part that is online
-  (`Zoom`, `온라인`, `비대면` and the like) or only a room or a floor. So `103동 444호 & Zoom` is 103동, while
+  (`Zoom`, `온라인`, `비대면` and the like) or only a room or a floor. So `서울대학교 103동 444호 & Zoom` is 103동, while
   `종합운동장, 보조운동장`, `301동 및 302동` and `302동 및 999동` name none.
 - A place elsewhere names none: on another of the university's campuses or at its hospitals (`연건`, `시흥`, `평창`,
   `수원`, `의과대학`, `간호대학`, `서울대학교병원` and the like), at the stations named after it, at another university,
@@ -294,10 +296,11 @@ account for makes a Draft:
 
 No Collection changes a stored event, whatever its state. A post is stored once, by its post number, and a later
 message carrying it again leaves it exactly as it is. So an Administrator's edits stay, and a discarded post does not
-come back. The worker asks which posts are stored before it reads any (`stored-event-posts`), so it reads each post once:
-an edit or a deletion at the Source after that is not seen. A Collection that stops, blocked or at three posts in a row
-it could not read, sends the posts it read before with `complete: false`, then reports the failure, so that
-`lastSucceededAt` stays the time of the last Collection that read every post.
+come back. The worker asks which posts are stored before it reads any (`stored-event-posts`), so it does not read a
+stored post again: an edit or a deletion at the Source after that is not seen. A Collection that stops, at a page it
+could not fetch, a block page or three posts in a row it could not read, sends the posts it read before, if any, with
+`complete: false`, then reports the failure, so that `lastSucceededAt` stays the time of the last Collection that went
+through the whole list.
 
 What the rules read from a post, and how, is in the worker server's README. In a test, `collectedEvent()`,
 `eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
@@ -800,6 +803,6 @@ await harness.close(); // in afterAll
 - The database is the shared one, so each test stores data of its own. The menus tests take their days from `daysOf()`
   in `test/menus.ts`, a month for each file and a day for each test, and the events tests their post numbers from
   `postNumbersFrom()` in `test/global-events.ts`, a range for each file. A Source's Collection status is one row, so
-  the file that checks it is the only one that sends as that Source: `test/collection.e2e-spec.ts` the dormitory's,
+  the file that checks it is the only one whose messages as that Source are stored: `test/collection.e2e-spec.ts` the dormitory's,
   `test/menus.e2e-spec.ts` the Co-op's and `test/global-events.e2e-spec.ts` the events list's.
   `test/stored-event-posts.e2e-spec.ts` therefore stores its posts with a database connection instead.

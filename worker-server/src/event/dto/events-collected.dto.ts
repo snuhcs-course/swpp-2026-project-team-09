@@ -2,13 +2,14 @@ export const EVENT_LIST_SOURCES = ['snu_events'] as const;
 
 export type EventListSource = (typeof EVENT_LIST_SOURCES)[number];
 
-// One post of the events list, as its page was read. A field the rules could not read is null.
+// One post of the events list, as its page was read, or as the list shows it when its page is not the post. A field
+// the rules could not read is null.
 export interface CollectedEvent {
   // The post's `bbsidx`, which identifies it.
   postNumber: number;
   sourceUrl: string;
   title: string;
-  // The body as text, one line of the page per line.
+  // The body as text, one line of the page per line; empty when the page was not the post.
   description: string;
   // A time with its offset, 2026-10-13T17:00:00+09:00, or a day, 2026-10-13, when no time of day was read.
   start: string | null;

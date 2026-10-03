@@ -6,8 +6,8 @@ import { PlaceDto } from '../places/dto/place.dto.js';
 // A number as a place writes it: "302동 105호", "학생회관(63동)", "71-1동", but not the address "역삼1동".
 const NUMBER = /(?<![\p{L}\p{N}-])(\d+(?:-\d+)?)동/gu;
 
-// What the list of Places, Gwanak's, cannot hold: the university's other campuses and hospitals, the stations named
-// after it, another university, another district or region, and a flat, whose buildings have numbers too.
+// What the list of Places, Gwanak's, cannot hold: the university's other campuses and hospitals, the stations near
+// it, another university, another district or region, and a flat, whose buildings have numbers too.
 const ELSEWHERE = new RegExp(
   [
     String.raw`연건|시흥|평창|수원|보라매|대학로|혜화|서울대\s*입구|낙성대`,
@@ -105,7 +105,7 @@ function nameMentions(text: string, places: PlaceDto[]): NameMention[] {
   return [...bySpan.values()];
 }
 
-// The text cut where it lists several, but not inside a name: 데이터사이언스대학원 및 공과대학 강의동 is one Place.
+// The text cut where it lists several, but not inside a name: 데이터사이언스대학원 및 공과대학 강의동 1 is one Place.
 function parts(text: string, names: Span[]): Span[] {
   const cuts = [...text.matchAll(SEPARATOR)].filter(
     ({ index }) => !names.some(({ start, end }) => start <= index && index < end),
@@ -120,8 +120,9 @@ function parts(text: string, names: Span[]): Span[] {
   return spans;
 }
 
-// The Places a part names, none when it names nowhere to go, or null when it names one the list does not hold or two that
-// disagree. A number decides; a name beside it has to be of that building or its series.
+// The Places a part names, none when it names nowhere to go, or null when it names one the list does not hold, two that
+// disagree, or one that nothing shows is on this campus. A number decides; a name beside it has to agree, by the number
+// before the hyphen of one of the Places it names.
 function partPlaces(
   part: string,
   numbers: string[],

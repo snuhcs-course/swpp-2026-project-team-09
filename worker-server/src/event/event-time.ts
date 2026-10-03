@@ -38,7 +38,7 @@ function asTime([said, hour = '', colonMinutes, minutes, suffix]: (string | unde
       return null;
     }
   } else if (hours === 12) {
-    // Of 12 with a half of the day, only 오후 12시 or 12 PM is surely noon.
+    // Of 12 with a half of the day, only 오후 12시 or 12:00 PM is surely noon.
     if (half !== '오후' && half !== 'p') {
       return null;
     }
