@@ -8,8 +8,6 @@ export class MainServerStub {
   readonly messages: { pattern: string; data: Record<string, unknown> }[] = [];
   // The problem to answer a message of a pattern with, in place of taking it.
   readonly refusals = new Map<string, string>();
-  // The answer to a message of a pattern, such as a question, in place of { status: 'ok' }.
-  readonly answers = new Map<string, unknown>();
   // The patterns whose messages get no answer, as from a main server that is down.
   readonly unanswered = new Set<string>();
 
@@ -20,9 +18,7 @@ export class MainServerStub {
       return NEVER;
     }
     const problem = this.refusals.get(pattern);
-    return problem === undefined
-      ? of(this.answers.get(pattern) ?? { status: 'ok' })
-      : throwError(() => ({ status: 'error', message: problem }));
+    return problem === undefined ? of({ status: 'ok' }) : throwError(() => ({ status: 'error', message: problem }));
   }
 
   // The messages of a pattern that name a Source.

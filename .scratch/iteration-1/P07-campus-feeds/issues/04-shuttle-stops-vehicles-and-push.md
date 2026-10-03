@@ -53,6 +53,7 @@ The READMEs hold the full text: the main server's Shuttle and Seed data, the wor
   - The socket test's set-up repeats that of `users.e2e-spec.ts`: its connection differs, and sharing it means changing that ticket's test.
   - A point on the drawing keeps the names its origin gives it: `left` and `top` on the route page, `x` and `y` in the operator's answer, and `drawingLeft` and `drawingTop` in the database, which say whose drawing.
   - One test of the main server reads `shuttle-vehicles-updated` off Redis, though the spec tests the push at the socket server. It is the one check that the main server sends each set, and `session.e2e-spec.ts` reads `session-ended` the same way.
+- **The collectors' shared code comes with this ticket**, since it is merged before ticket 02, where the code was written: the abstract `Collector` in `src/common/collector.ts` with `handOver()` and `send()`, which `MenuCollector` and `ShuttleCollector` extend, and `@Collects(…)`, by which `pnpm collect` finds the collector of a Source through Nest's `DiscoveryService`. Nothing of the events is in this ticket.
 - `stop`, `vehicle` and `route line` are not in `GLOSSARY.md`, nor are `collector` and `seed data`; they can go to `/domain-modeling`.
 
 ### The seed and the saved answers (2026-10-02)
@@ -97,8 +98,8 @@ The pairs, in loop order. Each was proposed from the order of the two lists and 
 - Worker, the collector with the Sources and the main server replaced: `test/shuttle-collector.e2e-spec.ts` (12). The route page asked for, and its stops and hours sent; the vehicle positions asked for with a POST of the route as JSON, and sent with the time received; an empty answer sent as no vehicles; the block page and a refusal reported as failed Collections; the two schedules; the command; and, with the timers replaced, a Source and a main server that do not answer given up after 5 seconds, with the next page still asked for, and a vehicle run still waiting behind four pages that do not answer making the next run skip. The menu collector's schedule test finds the menu job among the worker's jobs.
 - Socket server: `test/shuttle.e2e-spec.ts` (1). A set sent as the main server sends it reaches two connected apps, with each vehicle's stop, coordinates and received time.
 - Each test was written first and seen to fail, except the three invalid stops messages, which the schema of the first slice already refused. Four breaks made by hand were each caught: the seed putting P05's places back, the seed removing nothing, vehicles served at any age, and a set replacing only the vehicles it names.
-- With `1.0/Main` merged in and ticket 02 under this ticket: main server 31 files and 374 tests, worker server 11 files and 114 tests, socket server 5 files and 25 tests. `lint`, `format:check` and `typecheck` pass in the three. The seed command logs `Loaded 230 places and 14 shuttle stops`.
-- The ticket's one migration, `20261002090315_add_shuttle`, comes after ticket 02's `20261002080053_add_global_events`. From a freshly migrated database, `prisma migrate diff` to the schema finds no difference.
+- On `1.0/Main`: main server 29 files and 336 tests, worker server 8 files and 67 tests, socket server 5 files and 25 tests. `lint`, `format:check` and `typecheck` pass in the three. The seed command logs `Loaded 230 places and 14 shuttle stops`.
+- The ticket's one migration, `20261002090315_add_shuttle`, comes after `1.0/Main`'s latest, `20261002065948_add_places`. From a freshly migrated database, `prisma migrate diff` to the schema finds no difference.
 
 ### Agent usage (2026-10-02)
 
@@ -121,7 +122,7 @@ Tickets 02 to 05 were built in one orchestrated run: one session placed the agen
 
 ### Agent usage (2026-10-03)
 
-- One session merged `1.0/Main` and then ticket 02's branch into this branch, ran a Standards review and a Spec review side by side, acted on them, and moved the vehicles from a table to Redis: about 52 minutes of work, an estimate. The time it waited for the user is not counted.
+- One session merged `1.0/Main` into this branch, ran a Standards review and a Spec review side by side, acted on them, moved the vehicles from a table to Redis, set the timeouts to 5 seconds, and took ticket 02's events out of the branch so that this ticket is merged first: about 73 minutes of work, an estimate. The time it waited for the user is not counted.
 - Tokens, with the two reviewers, counted from the transcripts when this section was written:
-  - Input: 30,621,453 in total, of which 29,796,165 were cache reads, 825,016 cache writes and 272 uncached.
-  - Output: 197,310.
+  - Input: 41,319,231 in total, of which 40,424,361 were cache reads, 894,552 cache writes and 318 uncached.
+  - Output: 248,117.
