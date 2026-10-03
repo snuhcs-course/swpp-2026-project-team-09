@@ -1,4 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises';
+import { setDefaultAutoSelectFamilyAttemptTimeout } from 'node:net';
 import { basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { format, resolveConfig } from 'prettier';
@@ -11,6 +12,9 @@ import { nationalMapOutlines } from './national-map.ts';
 // The worker server's. OpenStreetMap asks for a User-Agent that names the project.
 const USER_AGENT = 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)';
 const OVERPASS = 'https://overpass-api.de/api/interpreter';
+// Node gives each address of a host 250 ms to connect before it tries the next one. Overpass, in Europe, takes about
+// a second from Korea, so that every attempt would time out.
+setDefaultAutoSelectFamilyAttemptTimeout(5000);
 const CAMPUS_MAP_PLACES = 'https://map.snu.ac.kr/api/building.action?page=1&rows=1000';
 
 const BOUNDARY_QUERY = '[out:json][timeout:25];relation(11917142);out geom;';
@@ -47,7 +51,7 @@ const placesAnswerSchema = z.object({
 // `way/193893586`, as `place-outlines.json` names an outline of OpenStreetMap.
 const OPENSTREETMAP_OUTLINE = /^(way|relation)\/(\d+)$/u;
 
-const linksFileSchema = z.object({ links: z.array(z.object({ outline: z.string().nullable() })) });
+const placeOutlinesFileSchema = z.object({ places: z.array(z.object({ outlines: z.array(z.string()) })) });
 
 const outlineTagsSchema = z.object({ name: z.string().optional() });
 
@@ -193,10 +197,8 @@ function outlinesOf(
 // The outlines of OpenStreetMap that `place-outlines.json` names. Every other outline is the national map's.
 async function exportOpenStreetMapOutlines(): Promise<void> {
   const file = fileURLToPath(new URL('../seed/place-outlines.json', import.meta.url));
-  const { links } = linksFileSchema.parse(JSON.parse(await readFile(file, 'utf8')));
-  const named = links.flatMap(({ outline }) =>
-    outline !== null && OPENSTREETMAP_OUTLINE.test(outline) ? [outline] : [],
-  );
+  const { places } = placeOutlinesFileSchema.parse(JSON.parse(await readFile(file, 'utf8')));
+  const named = places.flatMap(({ outlines }) => outlines.filter((id) => OPENSTREETMAP_OUTLINE.test(id)));
   const elementsNamed = named.map((id) => id.replace(OPENSTREETMAP_OUTLINE, '$1(id:$2);')).join('');
   const query = `[out:json][timeout:25];(${elementsNamed});out geom;`;
   const { osm3s, elements } = outlinesAnswerSchema.parse(await overpass(query));

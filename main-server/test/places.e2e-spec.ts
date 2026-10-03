@@ -47,7 +47,7 @@ describe("A User's list of Places", () => {
   it('lists each Place with its number, name and coordinates, in the order of the numbers', async () => {
     const places = await served('/places');
 
-    expect(places).toHaveLength(226);
+    expect(places).toHaveLength(230);
     expect(places.slice(0, 3)).toMatchObject([
       { number: '1', name: '인문관1', latitude: 37.46027, longitude: 126.95234 },
       { number: '2', name: '인문관2', latitude: 37.46038, longitude: 126.95295 },
@@ -60,10 +60,18 @@ describe("A User's list of Places", () => {
   it('ends with the Places that have no number, in the Korean order of their names', async () => {
     const places = await served('/places');
 
-    expect(places.slice(-8)).toMatchObject(
-      ['공대테니스장', '관악사운동장', '붉은광장', '서울대 정문', '야구장', '자하연', '종합운동장', '테니스장'].map(
-        (name) => ({ number: null, name }),
-      ),
+    expect(places.slice(-9)).toMatchObject(
+      [
+        '공대테니스장',
+        '관악사운동장',
+        '배터리공동연구센터',
+        '붉은광장',
+        '서울대 정문',
+        '야구장',
+        '자하연',
+        '종합운동장',
+        '테니스장',
+      ].map((name) => ({ number: null, name })),
     );
   });
 
@@ -89,6 +97,7 @@ describe("A User's search of the Places", () => {
       '37 공학관8',
       '301 제1공학관',
       '302 제2공학관',
+      '303 해동첨단공학관',
     ]);
   });
 

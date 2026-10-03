@@ -25,27 +25,44 @@ const openStreetMapFileSchema = z.object({
   ),
 });
 
+// The Places that the campus map does not list, each by its polygon of the national map and with its reason.
+const nationalMapPlacesFileSchema = z.object({
+  places: z.array(
+    z.object({
+      outline: z.string(),
+      number: z.string().min(1).nullable(),
+      name: z.string().min(1),
+      why: z.string().min(1),
+    }),
+  ),
+});
+
 // One ring in GeoJSON's order of longitude and latitude.
 const polygonSchema = z.object({
   type: z.literal('Polygon'),
   coordinates: z.tuple([z.array(z.tuple([z.number(), z.number()])).min(4)]),
 });
 
-// The national map's polygons of the campus's Places, each with its label.
+// The national map's polygons of the campus, each with its label.
 const nationalMapFileSchema = z.object({
   features: z.array(
     z.object({ id: z.string(), properties: z.object({ label: z.string().nullable() }), geometry: polygonSchema }),
   ),
 });
 
-// The outlines of OpenStreetMap that the corrections name.
+// The outlines of OpenStreetMap that `place-outlines.json` names.
 const openStreetMapOutlinesFileSchema = z.object({
   features: z.array(z.object({ id: z.string(), geometry: polygonSchema })),
 });
 
-// A person's corrections of which outline a Place has, each with its reason.
-const linksFileSchema = z.object({
-  links: z.array(z.object({ number: z.string().min(1), outline: z.string().nullable(), why: z.string().min(1) })),
+// The outlines that a person gives a Place, each entry with its reason and with the Place's number or its name.
+const placeOutlinesFileSchema = z.object({
+  places: z.array(
+    z.union([
+      z.strictObject({ number: z.string().min(1), outlines: z.array(z.string()), why: z.string().min(1) }),
+      z.strictObject({ name: z.string().min(1), outlines: z.array(z.string()), why: z.string().min(1) }),
+    ]),
+  ),
 });
 
 // `관악 223동[우석경제관]` is 우석경제관.
@@ -61,6 +78,16 @@ function idOf(origin: PlaceOrigin, originId: string): string {
 
 function ringOf({ coordinates }: z.infer<typeof polygonSchema>): Position[] {
   return coordinates[0].map(([longitude, latitude]) => ({ latitude, longitude }));
+}
+
+// The middle of the ring's bounding box, which is also what Overpass gives as the position of a Place of OpenStreetMap.
+function middleOf(ring: Position[]): Position {
+  const latitudes = ring.map(({ latitude }) => latitude);
+  const longitudes = ring.map(({ longitude }) => longitude);
+  return {
+    latitude: (Math.min(...latitudes) + Math.max(...latitudes)) / 2,
+    longitude: (Math.min(...longitudes) + Math.max(...longitudes)) / 2,
+  };
 }
 
 async function readOutlines(directory: string): Promise<{ nationalMap: LabelledOutline[]; openStreetMap: Outline[] }> {
@@ -80,12 +107,19 @@ async function readOutlines(directory: string): Promise<{ nationalMap: LabelledO
   };
 }
 
-// Updates each entry in place by its id, so that whatever points at a Place still does. An entry that has left the
-// seed files stays.
-export async function loadPlaces(prisma: PrismaClient, directory: string, boundary: CampusBoundary): Promise<number> {
+interface SeedPlace extends Position {
+  origin: PlaceOrigin;
+  originId: string;
+  number: string | null;
+  name: string;
+}
+
+// The Places of the three origins. One from the national map stands at the middle of its polygon.
+async function readPlaces(directory: string, nationalMap: LabelledOutline[]): Promise<SeedPlace[]> {
   const { rows } = await readSeedFile(directory, 'campus-map-places.json', campusMapFileSchema);
-  const { places } = await readSeedFile(directory, 'openstreetmap-places.json', openStreetMapFileSchema);
-  const entries = [
+  const openStreetMapPlaces = await readSeedFile(directory, 'openstreetmap-places.json', openStreetMapFileSchema);
+  const nationalMapPlaces = await readSeedFile(directory, 'national-map-places.json', nationalMapPlacesFileSchema);
+  return [
     ...rows
       // The map's own test row.
       .filter((row) => row.inst_kor_nm !== 'Test')
@@ -97,7 +131,7 @@ export async function loadPlaces(prisma: PrismaClient, directory: string, bounda
         latitude: row.lat_val,
         longitude: row.lon_val,
       })),
-    ...places.map(({ id, number, name, latitude, longitude }) => ({
+    ...openStreetMapPlaces.places.map(({ id, number, name, latitude, longitude }) => ({
       origin: PlaceOrigin.openstreetmap,
       originId: id,
       number,
@@ -105,10 +139,24 @@ export async function loadPlaces(prisma: PrismaClient, directory: string, bounda
       latitude,
       longitude,
     })),
-  ].filter((entry) => boundary.contains(entry));
-  const { links } = await readSeedFile(directory, 'place-outlines.json', linksFileSchema);
+    ...nationalMapPlaces.places.map(({ outline, number, name }) => {
+      const polygon = nationalMap.find(({ id }) => id === outline);
+      if (polygon === undefined) {
+        throw new Error(`national-map-places.json has the polygon ${outline}, which the seed does not hold`);
+      }
+      const { latitude, longitude } = middleOf(polygon.ring);
+      return { origin: PlaceOrigin.national_map, originId: outline, number, name, latitude, longitude };
+    }),
+  ];
+}
+
+// Updates each entry in place by its id, so that whatever points at a Place still does. An entry that has left the
+// seed files stays.
+export async function loadPlaces(prisma: PrismaClient, directory: string, boundary: CampusBoundary): Promise<number> {
   const { nationalMap, openStreetMap } = await readOutlines(directory);
-  const found = outlinesOf(entries, nationalMap, openStreetMap, links);
+  const entries = (await readPlaces(directory, nationalMap)).filter((entry) => boundary.contains(entry));
+  const given = await readSeedFile(directory, 'place-outlines.json', placeOutlinesFileSchema);
+  const found = outlinesOf(entries, nationalMap, openStreetMap, given.places);
   await prisma.$transaction(
     entries.map((entry) => {
       const { origin, originId, ...values } = entry;

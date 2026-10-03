@@ -52,14 +52,16 @@ async function openLayer(path: string): Promise<{ shp: Openable; dbf: Openable }
   throw new Error(`${basename(path)} is not the national map's building layer, whose files are N3A_B0010000_….shp`);
 }
 
-// The outer ring in longitude and latitude, to seven decimals as OpenStreetMap's. A courtyard, an inner ring, is left
-// out, so that a position in it is in the Place.
+// A point of the layer as longitude and latitude, to seven decimals as OpenStreetMap's.
+export function toLongitudeLatitude(point: [east: number, north: number]): Coordinates {
+  const [longitude, latitude] = FROM_EPSG_5179.forward(point);
+  return [Number(longitude.toFixed(7)), Number(latitude.toFixed(7))];
+}
+
+// The outer ring. A courtyard, an inner ring, is left out, so that a position in it is in the Place.
 function outlineOf(geometry: unknown): Coordinates[] {
   const [outer] = polygonSchema.parse(geometry).coordinates;
-  return outer.map((point): Coordinates => {
-    const [longitude, latitude] = FROM_EPSG_5179.forward(point);
-    return [Number(longitude.toFixed(7)), Number(latitude.toFixed(7))];
-  });
+  return outer.map((point) => toLongitudeLatitude(point));
 }
 
 // The layer's buildings with a point in the campus extent, each as a GeoJSON feature under the layer's identifier,

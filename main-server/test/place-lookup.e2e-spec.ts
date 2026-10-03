@@ -29,8 +29,8 @@ describe('The Place at a position', () => {
     });
   });
 
-  // The next three positions lie west of the middle of 제1공학관's longest wall, at right angles to it. The next
-  // Place is over 60 m away.
+  // The next two positions lie west of the middle of 제1공학관's longest wall, at right angles to it, 3 m and 12 m from
+  // it. The next outline, of 해동첨단공학관, is over 24 m from both.
   it('is still that Place up to 5 m outside its wall, where a phone inside is often placed', () => {
     expect(lookup.at({ latitude: 37.4502069, longitude: 126.9522581 })).toMatchObject({
       place: { number: '301' },
@@ -46,13 +46,14 @@ describe('The Place at a position', () => {
   });
 
   it('is none when every Place is farther than 20 m', () => {
-    expect(lookup.at({ latitude: 37.4502009, longitude: 126.951953 })).toBeNull();
+    // On the slope east of the engineering buildings, 83 m from the nearest outline and from the nearest position.
+    expect(lookup.at({ latitude: 37.453, longitude: 126.956 })).toBeNull();
   });
 
-  it('is a Place or a Place without an outline only nearby, within 20 m of its position', () => {
-    // 자하연, a pond, and 김철수물리관, which neither map draws, each at the position the campus map gives it.
-    expect(lookup.at({ latitude: 37.4607006780578, longitude: 126.952103365166 })).toMatchObject({
-      place: { number: null, name: '자하연' },
+  it('is a Place without an outline only nearby, within 20 m of its position', () => {
+    // 붉은광장, a square, and 김철수물리관, which neither map draws, each at the position the campus map gives it.
+    expect(lookup.at({ latitude: 37.45587314704376, longitude: 126.9512305146599 })).toMatchObject({
+      place: { number: null, name: '붉은광장' },
       relation: 'near',
     });
     expect(lookup.at({ latitude: 37.458209, longitude: 126.951594 })).toMatchObject({
@@ -103,8 +104,30 @@ describe('The Place at a position between Places', () => {
     // 국제대학원 and 국제대학원2 share the polygon labelled `140동국제대학원`, each at its own position.
     expect(lookup.at({ latitude: 37.46427, longitude: 126.95487 })).toMatchObject({ place: { number: '140' } });
     expect(lookup.at({ latitude: 37.46406, longitude: 126.9546 })).toMatchObject({ place: { number: '140-1' } });
-    // 국제회의동, at its own position inside the polygon that the national map labels `104-1동국제대학원`, which a
-    // correction keeps from 반도체교육관 (104-1동), 1 km away.
+    // 국제회의동, at its own position inside the polygon that the national map labels `104-1동국제대학원`, which
+    // `place-outlines.json` keeps from 반도체교육관 (104-1동), 1 km away.
     expect(lookup.at({ latitude: 37.46448, longitude: 126.95497 })).toMatchObject({ place: { number: '140-2' } });
+  });
+
+  it('is a Place without a number as any other, inside its outline', () => {
+    // The middle of the field of 종합운동장, 55 m inside OpenStreetMap's 대운동장, and the middle of courts 7 and 8 of
+    // 테니스장, 43 m from the position the campus map gives the courts.
+    expect(lookup.at({ latitude: 37.464773, longitude: 126.950076 })).toMatchObject({
+      place: { number: null, name: '종합운동장' },
+      relation: 'inside',
+    });
+    expect(lookup.at({ latitude: 37.465023, longitude: 126.954051 })).toMatchObject({
+      place: { number: null, name: '테니스장' },
+      relation: 'inside',
+    });
+  });
+
+  it('is, where the outlines of two Places hold the position, the one that comes first in the list', () => {
+    // The stand of 종합운동장, inside the outline of 종합운동장본부석 (149동) and inside 대운동장. A Place with a number
+    // comes before one without.
+    expect(lookup.at({ latitude: 37.464447, longitude: 126.950667 })).toMatchObject({
+      place: { number: '149', name: '종합운동장본부석' },
+      relation: 'inside',
+    });
   });
 });

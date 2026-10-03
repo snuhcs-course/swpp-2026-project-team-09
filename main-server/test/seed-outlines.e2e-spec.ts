@@ -2,14 +2,16 @@ import { cp, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { inject } from 'vitest';
-import { z } from 'zod';
+import { type z } from 'zod';
 import { type Position } from '../src/common/geometry.js';
 import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { loadSeed } from '../src/load-seed.js';
+import { toLongitudeLatitude } from '../scripts/national-map.ts';
 import { createDatabase } from './containers.js';
+import { NATIONAL_MAP, outlines, outlinesFileSchema } from './seed-outlines.js';
 
-// Which outlines the seed command gives a Place, on a database of this file's own.
+// Which outlines the rules of the seed command give a Place, on a database of this file's own.
 let prisma: PrismaClient;
 let drop: () => Promise<void>;
 // A copy of the seed that a test changes.
@@ -26,48 +28,19 @@ afterAll(async () => {
   await drop();
 });
 
-const NATIONAL_MAP = 'national-map-outlines.geojson';
-const OPENSTREETMAP = 'openstreetmap-outlines.geojson';
-
-const outlinesFileSchema = z.looseObject({
-  features: z.array(
-    z.looseObject({
-      id: z.string(),
-      geometry: z.object({ type: z.string(), coordinates: z.tuple([z.array(z.tuple([z.number(), z.number()]))]) }),
-    }),
-  ),
-});
-
-// The seed's outlines with these identifiers, the national map's or OpenStreetMap's, as a Place stores them.
-async function outlines(...ids: string[]): Promise<Position[][]> {
-  const files = await Promise.all(
-    [NATIONAL_MAP, OPENSTREETMAP].map((file) => readSeedFile(SEED_DIRECTORY, file, outlinesFileSchema)),
-  );
-  const features = files.flatMap((file) => file.features);
-  return ids.map((id) => {
-    const outline = features.find((feature) => feature.id === id);
-    if (outline === undefined) {
-      throw new Error(`The seed holds no outline ${id}`);
-    }
-    return outline.geometry.coordinates[0].map(([longitude, latitude]) => ({ latitude, longitude }));
-  });
-}
-
 async function outlinesOfPlace(number: string): Promise<unknown> {
   return (await prisma.place.findFirstOrThrow({ where: { number } })).outlines;
 }
 
-async function writeLinks(links: object[]): Promise<void> {
-  await writeFile(join(correctedSeed, 'place-outlines.json'), JSON.stringify({ links }));
+async function outlinesOfPlaceNamed(name: string): Promise<unknown> {
+  return (await prisma.place.findFirstOrThrow({ where: { name } })).outlines;
 }
 
-describe("The national map's outlines in the seed", () => {
-  it("have the longitude and latitude that PROJ gives for the layer's coordinates", async () => {
+describe("Converting the national map's coordinates", () => {
+  it('gives the longitude and latitude that PROJ gives', () => {
     // The first point of 151동미술관. The layer has it at 951361.3516 m east and 1940927.4663 m north in EPSG:5179, which
     // PROJ converts to 126.94997671°E 37.46628095°N.
-    const [[point]] = await outlines('B0010000000RF7I8F');
-
-    expect(point).toEqual({ latitude: 37.466281, longitude: 126.9499767 });
+    expect(toLongitudeLatitude([951_361.3516, 1_940_927.4663])).toEqual([126.9499767, 37.466281]);
   });
 });
 
@@ -122,12 +95,19 @@ describe('Linking a Place that no label names', () => {
     expect(await outlinesOfPlace('59')).toEqual(await outlines('B0010000000RF2E0Y', 'B0010000000RF2DZW'));
   });
 
-  it('gives it the nearest polygon when that is within 10 m and no Place has it', async () => {
+  it('gives it the nearest polygon within 10 m that no Place has', async () => {
     // 자연대 생명과학부 시약보관창고 (506동), 1.9 m outside a polygon without a label.
     expect(await outlinesOfPlace('506')).toEqual(await outlines('B0010000000RF2EYW'));
-    // 인문관연결동, 1.1 m outside the polygon of 인문관2.
-    expect(await outlinesOfPlace('250')).toEqual([]);
-    // 반도체연구소화공약품창고 (104-2동) is 0.1 m from a polygon and 반도체연구소수소창고 (104-3동) 6.7 m: the nearer has it.
+    // 인문관연결동 (250동) lies 1.1 m from the polygon of 인문관2, which 2동 has, and as near to one without a label,
+    // between 인문관1 and 인문관2.
+    expect(await outlinesOfPlace('250')).toEqual(await outlines('B0010000000RF235S'));
+    // 다목적차량보관소 (332동) lies 2.8 m from the polygon of 330동 and 5.4 m from one without a label.
+    expect(await outlinesOfPlace('332')).toEqual(await outlines('B0010000000RETC1N'));
+  });
+
+  it('gives a polygon to the nearer of two Places beside it, and the other none', async () => {
+    // 반도체연구소화공약품창고 (104-2동) is 0.1 m from a polygon and 반도체연구소수소창고 (104-3동) 6.7 m. No other
+    // polygon lies within 10 m of 104-3동.
     expect(await outlinesOfPlace('104-2')).toEqual(await outlines('B0010000000RF2992'));
     expect(await outlinesOfPlace('104-3')).toEqual([]);
   });
@@ -138,76 +118,58 @@ describe('Linking a Place that no label names', () => {
     expect(await outlinesOfPlace('254')).toEqual([]);
   });
 
-  it('gives a Place, an entry without a number, none', async () => {
-    const { outlines: ofPlace } = await prisma.place.findFirstOrThrow({ where: { name: '종합운동장' } });
-
-    expect(ofPlace).toEqual([]);
+  it('gives it none where no polygon lies within 10 m', async () => {
+    // 붉은광장, a square without a number, 16 m from the nearest polygon.
+    expect(await outlinesOfPlaceNamed('붉은광장')).toEqual([]);
   });
 });
 
-// A square around 우석경제관's position, as a polygon of the national map without a label.
-function squareAround223(id: string, halfSide: number): z.infer<typeof outlinesFileSchema>['features'][number] {
+// A square around a position, as a polygon of the national map without a label.
+function squareAround(
+  [longitude, latitude]: [number, number],
+  id: string,
+  halfSide: number,
+): z.infer<typeof outlinesFileSchema>['features'][number] {
   const corners = [
     [-1, -1],
     [1, -1],
     [1, 1],
     [-1, 1],
     [-1, -1],
-  ].map(([east = 0, north = 0]): [number, number] => [126.955673 + east * halfSide, 37.465509 + north * halfSide]);
+  ].map(([east = 0, north = 0]): [number, number] => [longitude + east * halfSide, latitude + north * halfSide]);
   return { id, properties: { label: null }, geometry: { type: 'Polygon', coordinates: [corners] } };
 }
 
-describe('Linking a Place whose position two polygons hold', () => {
-  afterAll(async () => {
+const ringOf = ({ geometry }: ReturnType<typeof squareAround>): Position[] =>
+  geometry.coordinates[0].map(([longitude, latitude]) => ({ latitude, longitude }));
+
+describe('Linking against polygons added to a copy of the seed', () => {
+  afterEach(async () => {
     await cp(join(SEED_DIRECTORY, NATIONAL_MAP), join(correctedSeed, NATIONAL_MAP));
   });
 
-  it('gives it the larger one', async () => {
+  it('gives a Place whose position two polygons hold the larger one', async () => {
     // 우석경제관's own polygon is 1,450 m². After it come a square of about 110 m a side and one of about 20 m.
     const seed = await readSeedFile(SEED_DIRECTORY, NATIONAL_MAP, outlinesFileSchema);
-    const larger = squareAround223('larger', 0.0006);
-    seed.features.push(larger, squareAround223('smaller', 0.0001));
+    const larger = squareAround([126.955673, 37.465509], 'larger', 0.0006);
+    seed.features.push(larger, squareAround([126.955673, 37.465509], 'smaller', 0.0001));
     await writeFile(join(correctedSeed, NATIONAL_MAP), JSON.stringify(seed));
 
     await loadSeed(prisma, correctedSeed);
 
-    expect(await outlinesOfPlace('223')).toEqual([
-      larger.geometry.coordinates[0].map(([longitude, latitude]) => ({ latitude, longitude })),
-    ]);
+    expect(await outlinesOfPlace('223')).toEqual([ringOf(larger)]);
   });
-});
 
-describe('Correcting the outlines', () => {
-  it("gives a Place an outline of OpenStreetMap, and takes a Place's outline away", async () => {
-    await writeLinks([]);
+  it('links a Place without a number by its position, as any other', async () => {
+    // 붉은광장 has no number for a label to name. A square of about 60 m a side around its position holds it, with
+    // its walls beyond the 10 m of the next rule.
+    const seed = await readSeedFile(SEED_DIRECTORY, NATIONAL_MAP, outlinesFileSchema);
+    const square = squareAround([126.9512305146599, 37.45587314704376], 'square', 0.0003);
+    seed.features.push(square);
+    await writeFile(join(correctedSeed, NATIONAL_MAP), JSON.stringify(seed));
+
     await loadSeed(prisma, correctedSeed);
-    // The national map does not draw 버들골 풍산마당 (100동). 화학관연결동 (253동) lies inside a polygon without a label.
-    expect(await outlinesOfPlace('100')).toEqual([]);
-    expect(await outlinesOfPlace('253')).toEqual(await outlines('B0010000000RF26TJ'));
 
-    // With the seed's own corrections.
-    await loadSeed(prisma);
-
-    expect(await outlinesOfPlace('100')).toEqual(await outlines('way/193893586'));
-    expect(await outlinesOfPlace('253')).toEqual([]);
-  });
-
-  it('leaves a Place the one outline a correction names, where a label of the national map is wrong', async () => {
-    await writeLinks([]);
-    await loadSeed(prisma, correctedSeed);
-    // The map labels a polygon at 국제대학원 `104-1동국제대학원`, 1 km from 반도체교육관 (104-1동).
-    expect(await outlinesOfPlace('104-1')).toEqual(await outlines('B0010000000RF2ENL', 'B0010000000RF2EB9'));
-
-    await loadSeed(prisma);
-
-    expect(await outlinesOfPlace('104-1')).toEqual(await outlines('B0010000000RF2ENL'));
-  });
-
-  it('refuses a correction that names an outline or a Place that the seed does not hold', async () => {
-    await writeLinks([{ number: '43', outline: 'way/1', why: 'A mistyped identifier.' }]);
-    await expect(loadSeed(prisma, correctedSeed)).rejects.toThrow('way/1');
-
-    await writeLinks([{ number: '1000', outline: null, why: 'A mistyped number.' }]);
-    await expect(loadSeed(prisma, correctedSeed)).rejects.toThrow('1000');
+    expect(await outlinesOfPlaceNamed('붉은광장')).toEqual([ringOf(square)]);
   });
 });

@@ -68,13 +68,13 @@ const loadedEntries = [
 ];
 
 describe('Loading the seed', () => {
-  it("loads the campus map's Places and Places inside the Campus Boundary, and OpenStreetMap's two", async () => {
+  it("loads the campus map's Places inside the Campus Boundary, OpenStreetMap's two and the national map's four", async () => {
     await loadSeed(prisma);
 
     const places = await prisma.place.findMany({ omit: { id: true, outlines: true } });
-    // 215 numbered Places and 8 Places of the campus map inside the outline, by
+    // 215 Places with a number and 8 without of the campus map inside the outline, by
     // .scratch/research/external-sources.md §6.2, and the gatehouse within the Boundary's 10 m.
-    expect(places).toHaveLength(226);
+    expect(places).toHaveLength(230);
     expect(places).toEqual(expect.arrayContaining(loadedEntries));
     expect(places.map(({ name }) => name)).not.toContain('Test');
   });
