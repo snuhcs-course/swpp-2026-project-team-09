@@ -246,7 +246,8 @@ The worker sends each post of the events list as one event, all those of a Colle
 - `events` holds the posts the main server did not store when the worker asked, and is `[]` when there are none.
 - `complete` is `false` when the Collection stopped early: at a page it could not fetch, at the firewall's block page,
   or at the third post in a row whose page was not the post. Its posts are stored all the same, but the Collection is
-  not recorded as successful.
+  not recorded as successful, so that `lastSucceededAt` stays the time of the last Collection that went through the
+  whole list. The failure follows at `/collections/failed`.
 - `start` and `end` are each a time with its offset, or a day when no time of day was read. `readFrom` says where they
   were read: `body` for the body's time line, `header` for the header's date. All three are `null` when no day was
   read.
@@ -304,10 +305,7 @@ account for makes a Draft:
 No Collection changes a stored event, whatever its state. A post is stored once, by its post number, and a later
 message carrying it again leaves it exactly as it is. So an Administrator's edits stay, and a discarded post does not
 come back. The worker asks which posts are stored before it reads any (`/global-events/stored-posts`), so it does not read a
-stored post again: an edit or a deletion at the Source after that is not seen. A Collection that stops, at a page it
-could not fetch, a block page or three posts in a row it could not read, sends the posts it read before, if any, with
-`complete: false`, then reports the failure, so that `lastSucceededAt` stays the time of the last Collection that went
-through the whole list.
+stored post again: an edit or a deletion at the Source after that is not seen.
 
 What the rules read from a post, and how, is in the worker server's README. In a test, `collectedEvent()`,
 `eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
@@ -855,7 +853,7 @@ The worker server only collects. It hands what a Collection read to the main ser
 server checks it, stores it and answers. A request reaches one main server, however many run behind the load balancer,
 so a message is stored once. Every route for the worker follows these rules.
 
-- **Route and shape**: a `POST` in the feature's controller, marked `@WorkerOnly()` from
+- **Route and shape**: a message is a `POST` in the feature's controller, marked `@WorkerOnly()` from
   `src/common/worker-only.decorator.ts` and `@HttpCode(HttpStatus.NO_CONTENT)`. Its path says what happened:
   `/menus/collected` for what a Collection of a menu Source read, `/global-events/collected` for the events list's, and
   `/collections/failed`. The body is a JSON object. It names its `source`, a value of `Source` in
@@ -863,8 +861,9 @@ so a message is stored once. Every route for the worker follows these rules.
   is `YYYY-MM-DD`, a calendar day in Asia/Seoul. A field without a value is `null`, not left out.
 - **Questions**: a Collection that needs to know what the main server holds asks it, since the worker keeps nothing. A
   question is a `POST` too, marked `@WorkerOnly()` and `@HttpCode(HttpStatus.OK)`, since what it asks about is a list.
-  Its path names what it asks for, its body carries only what it asks about, with no `source` and no time, and it
-  answers 200 with what it asks for and stores nothing. `/global-events/stored-posts` with
+  Its path names what it asks for, its body carries only what it asks about, and it answers 200 with what it asks for
+  and stores nothing: the events list is one Source and a post number identifies a post, so
+  `/global-events/stored-posts` carries no `source` and no time. `/global-events/stored-posts` with
   `{ "postNumbers": [176558, 176525] }` asks which of these posts are stored, and `{ "postNumbers": [176558] }` answers
   that 176558 is, in whatever state. The worker asks with `MainServer.ask()`.
 - **Who may call it**: the worker alone. The request carries `Authorization: Bearer <WORKER_TOKEN>`, the secret that
@@ -892,8 +891,8 @@ so a message is stored once. Every route for the worker follows these rules.
 
   A handler refuses a message that matches its schema but not what is stored, such as a shuttle stop the seed does not
   know, by throwing `ConflictException` with the problem before it stores anything; the answer is 409 with the problem
-  as its `message`. Any other error inside a handler is logged and answers 500. The worker takes any answer but 204, or
-  a question's 200, as a failure, and reports it as a failed Collection with the problem as the reason.
+  as its `message`. Any other error inside a handler is logged and answers 500. The worker takes any answer outside 2xx
+  as a failure, and reports it as a failed Collection with the problem as the reason.
 
 - **Repeats and order**: the same message sent twice leaves the records one would. Each feature states how, as
   [Menus](#menus) and [Global Events](#global-events) do. A Source's messages are stored in the order they arrive, not
@@ -901,7 +900,8 @@ so a message is stored once. Every route for the worker follows these rules.
 - **Collection status**: `collection_statuses` keeps, for each Source, the time of its last successful Collection
   (`lastSucceededAt`) and, apart from it, its last failure (`lastFailedAt`, `lastFailureReason`). A handler that stores
   what a Collection read calls `CollectionService.recordSuccess(tx, source, collectedAt)` in the same transaction,
-  unless the Collection did not finish (`complete: false` posted to `/global-events/collected`); the shuttle's vehicles
+  unless the message says the Collection did not finish, as `complete` does in [Global Events](#global-events); the
+  shuttle's vehicles
   are stored in Redis, so their handler records the success once the set is stored. A Collection that fails posts
   `{ "source", "failedAt", "reason" }` to `/collections/failed`, where `reason` says what went wrong. It records the
   failure and leaves every stored record as it is. A success leaves the last failure in place, so the two times tell

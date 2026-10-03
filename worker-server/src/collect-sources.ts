@@ -16,14 +16,14 @@ export async function collectSources(app: INestApplicationContext, names: string
     throw new Error(`Name one or more of: ${[...collectors.keys()].join(', ')}`);
   }
   const logger = new Logger('Collect');
-  let allTaken = true;
+  let allSucceeded = true;
   for (const [source, collector] of named) {
     // oxlint-disable-next-line no-await-in-loop -- one Collection at a time
-    const taken = await collector.collectOne(source);
-    logger.log(`${source}: ${taken ? 'taken by the main server' : 'failed, and recorded as failed'}`);
-    allTaken &&= taken;
+    const succeeded = await collector.collectOne(source);
+    logger.log(`${source}: ${succeeded ? 'succeeded' : 'failed, and recorded as failed'}`);
+    allSucceeded &&= succeeded;
   }
-  return allTaken;
+  return allSucceeded;
 }
 
 function collectorsBySource(app: INestApplicationContext): Map<string, Collector> {

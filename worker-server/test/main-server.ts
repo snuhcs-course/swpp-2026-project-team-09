@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 const payloadSchema = z.record(z.string(), z.unknown());
 
-// Stands for the main server: keeps each message the worker sends, with the path it was sent to, and answers it.
+// Stands for the main server: keeps each request the worker sends, a message or a question, with the path it was sent
+// to, and answers it.
 export class MainServerStub {
   readonly messages: { path: string; data: Record<string, unknown> }[] = [];
   // The token of each message, as the worker sent it.

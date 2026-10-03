@@ -1,9 +1,16 @@
+import { seoulDay } from '../common/seoul-day.js';
+
 const EVENTS = 'https://www.snu.ac.kr/snunow/events';
 
 // The list's date filter, written as the page writes it: 2026.10.02.
 export interface ListFilter {
   from: string;
   to: string;
+}
+
+// A day as the filter writes it, `days` after `time`.
+export function filterDay(time: Date, days: number): string {
+  return seoulDay(time, days).replaceAll('-', '.');
 }
 
 // The pager's links drop the filter, so each page's address is built here.

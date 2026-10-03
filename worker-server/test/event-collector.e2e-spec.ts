@@ -236,6 +236,18 @@ describe('A Collection of the events list that fails before reading a post', () 
     ]);
     expect(sources.requests).toHaveLength(3);
   });
+
+  it('reports an answer to its question that is not the one asked for, and reads no post', async () => {
+    const mainServer = new MainServerStub();
+    mainServer.answers.set('/global-events/stored-posts', { stored: [] });
+
+    const { sources } = await collect(pages, mainServer);
+
+    expect(mainServer.from('snu_events', '/collections/failed')).toMatchObject([
+      { reason: "The main server's answer to /global-events/stored-posts is not the one asked for" },
+    ]);
+    expect(sources.requests).toHaveLength(3);
+  });
 });
 
 describe('The schedule of the Collections of the events list', () => {

@@ -5,7 +5,7 @@ import { GlobalEventState, Prisma } from '../generated/prisma/client.js';
 import { PlaceDto } from '../places/dto/place.dto.js';
 import { PlacesService } from '../places/places.service.js';
 import { type CollectedEvent, type EventsCollectedMessage } from './dto/events-collected.dto.js';
-import { type StoredEventPosts } from './dto/stored-event-posts.dto.js';
+import { type StoredEventPostsDto } from './dto/stored-event-posts.dto.js';
 import { namedPlace } from './named-place.js';
 
 // Published when the body's time line gave a time of day and the place names one Place; a Draft otherwise. The
@@ -51,7 +51,7 @@ export class GlobalEventsService {
   }
 
   // In the order asked.
-  async storedPosts(postNumbers: number[]): Promise<StoredEventPosts> {
+  async storedPosts(postNumbers: number[]): Promise<StoredEventPostsDto> {
     const stored = await this.prisma.globalEvent.findMany({
       where: { postNumber: { in: postNumbers } },
       select: { postNumber: true },

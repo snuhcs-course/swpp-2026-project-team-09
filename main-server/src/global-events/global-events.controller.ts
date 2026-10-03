@@ -2,8 +2,8 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { WorkerOnly } from '../common/worker-only.decorator.js';
 import { type EventsCollectedMessage, eventsCollectedSchema } from './dto/events-collected.dto.js';
 import {
-  type StoredEventPosts,
-  type StoredEventPostsMessage,
+  type StoredEventPostsDto,
+  type StoredEventPostsQuestion,
   storedEventPostsSchema,
 } from './dto/stored-event-posts.dto.js';
 import { GlobalEventsService } from './global-events.service.js';
@@ -24,8 +24,8 @@ export class GlobalEventsController {
   @WorkerOnly()
   @HttpCode(HttpStatus.OK)
   storedPosts(
-    @Body({ schema: storedEventPostsSchema }) { postNumbers }: StoredEventPostsMessage,
-  ): Promise<StoredEventPosts> {
+    @Body({ schema: storedEventPostsSchema }) { postNumbers }: StoredEventPostsQuestion,
+  ): Promise<StoredEventPostsDto> {
     return this.globalEvents.storedPosts(postNumbers);
   }
 }

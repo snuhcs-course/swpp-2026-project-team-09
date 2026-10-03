@@ -3,7 +3,6 @@ import { Cron } from '@nestjs/schedule';
 import { load } from 'cheerio';
 import { Collector, Collects } from '../common/collector.js';
 import { PageFetcher } from '../common/page-fetcher.js';
-import { seoulDay } from '../common/seoul-day.js';
 import {
   type CollectedEvent,
   EVENT_LIST_SOURCES,
@@ -13,7 +12,7 @@ import {
 import { type StoredEventPostsQuestion, storedEventPostsAnswerSchema } from './dto/stored-event-posts.dto.js';
 import { type ListedPost, parseEventListPage } from './event-list-page.parser.js';
 import { parseEventPage } from './event-page.parser.js';
-import { type ListFilter, listPageAddress, postAddress } from './events-list.js';
+import { filterDay, type ListFilter, listPageAddress, postAddress } from './events-list.js';
 
 // 00:00, 06:00, 12:00 and 18:00. Provisional, until someone has observed when posts appear.
 const COLLECTION_TIMES = '0 0 0,6,12,18 * * *';
@@ -23,11 +22,6 @@ const LISTED_DAYS = 365;
 
 // Posts in a row whose pages are not posts fail the Collection at this many: then the pages have changed, not the posts.
 const UNREADABLE_IN_A_ROW = 3;
-
-// A day as the list's date filter writes it: 2026.10.02.
-function filterDay(time: Date, days: number): string {
-  return seoulDay(time, days).replaceAll('-', '.');
-}
 
 // The university's firewall answers a blocked request with status 200 and a page that refreshes to its error page.
 function isBlockPage(html: string): boolean {

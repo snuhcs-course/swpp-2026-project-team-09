@@ -29,7 +29,7 @@ The administrative API and the User-facing list of published Global Events belon
 
 ### What this ticket sets for P12 (2026-10-02)
 
-The main server's README holds the full text: Global Events, and Questions under Messages from the worker server. The worker server's README says how a post is read: Events.
+The main server's README holds the full text: Global Events, and Questions under Requests from the worker server. The worker server's README says how a post is read: Events.
 
 - **The record**: `global_events`, model `GlobalEvent`: `title`, `description`, `startsAt` and `endsAt` (optional), `place` (optional), `latitude` and `longitude` (optional), `state` (`draft`, `published`, `cancelled`, `discarded`, by default `draft`), `version` (from 1), and for a collected event `postNumber` (unique) and `sourceUrl`. The migration is `20261004010000_add_global_events`; it also adds `snu_events` to `Source`.
 - **What P12 must keep**: a published event has a title, a start and a position. Nothing in the database enforces it; the Collection only publishes such events, and P12's publishing has to check it.

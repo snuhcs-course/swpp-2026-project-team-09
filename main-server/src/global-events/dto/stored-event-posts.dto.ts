@@ -5,9 +5,9 @@ export const storedEventPostsSchema = z.strictObject({
   postNumbers: z.array(z.int32().positive()),
 });
 
-export type StoredEventPostsMessage = z.infer<typeof storedEventPostsSchema>;
+export type StoredEventPostsQuestion = z.infer<typeof storedEventPostsSchema>;
 
 // The answer: the posts asked about that are stored, in any state.
-export interface StoredEventPosts {
+export interface StoredEventPostsDto {
   postNumbers: number[];
 }

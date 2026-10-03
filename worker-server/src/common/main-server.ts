@@ -46,7 +46,11 @@ export class MainServer {
   // does.
   async ask<T>(path: string, question: object, schema: z.ZodType<T>): Promise<T> {
     const response = await this.post(path, question);
-    return schema.parse(await response.json());
+    try {
+      return schema.parse(await response.json());
+    } catch {
+      throw new Error(`The main server's answer to ${path} is not the one asked for`);
+    }
   }
 
   async isLive(): Promise<boolean> {
