@@ -8,7 +8,13 @@ describe('MapPin', () => {
 
     expect(screen.getByText('보드게임')).toBeVisible();
     expect(screen.getByText('3')).toBeVisible();
-    expect(screen.getByLabelText('보드게임')).toBeVisible();
+    expect(screen.getByLabelText('보드게임 3')).toBeVisible();
+  });
+
+  it('is read by its kind when it has no label', async () => {
+    await render(<MapPin kind="dining" />);
+
+    expect(screen.getByLabelText('식당')).toBeVisible();
   });
 
   it("marks the User's own position", async () => {

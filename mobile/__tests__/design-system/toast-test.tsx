@@ -43,13 +43,27 @@ describe('Toast', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: '추가' }));
 
+    await act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+
     expect(screen.getByText('수업을 추가했어요')).toBeVisible();
 
     await act(() => {
-      jest.advanceTimersByTime(3000);
+      jest.advanceTimersByTime(1000);
     });
 
     expect(screen.queryByText('수업을 추가했어요')).toBeNull();
+  });
+});
+
+describe('Toast, one at a time', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('says that a feature is not ready', async () => {
@@ -58,6 +72,21 @@ describe('Toast', () => {
     await fireEvent.press(screen.getByRole('button', { name: '파티' }));
 
     expect(screen.getByText('준비 중이에요')).toBeVisible();
+  });
+
+  it('starts its time again when the same words are shown again', async () => {
+    await renderButtons();
+
+    await fireEvent.press(screen.getByRole('button', { name: '추가' }));
+    await act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+    await fireEvent.press(screen.getByRole('button', { name: '추가' }));
+    await act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+
+    expect(screen.getByText('수업을 추가했어요')).toBeVisible();
   });
 
   it('replaces the toast before it with the new one', async () => {

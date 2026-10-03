@@ -56,6 +56,16 @@ export const shadow = {
   sheet: '0 -4px 24px rgba(14, 19, 48, 0.12)',
 } as const;
 
+// The translucent rings the design system's styles draw around a mark. Its token file gives them no names.
+export const halo = {
+  // Around the User's own position: the `me` colour at 16%.
+  me: 'rgba(47, 107, 255, 0.16)',
+  // Around the dot of Location Sharing that is on: the `live` colour at 18%.
+  live: 'rgba(11, 122, 85, 0.18)',
+  // Around a selected pin: the key colour at 18%.
+  selected: 'rgba(0, 26, 114, 0.18)',
+} as const;
+
 // One font file per weight, loaded under these names by the root layout. React Native picks a weight by the family's
 // name, so a style sets fontFamily and never fontWeight.
 export const font = {

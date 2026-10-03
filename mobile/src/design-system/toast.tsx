@@ -1,5 +1,5 @@
 import { createContext, type ReactElement, type ReactNode, use, useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 import { color, radius, shadow, size, space, text } from './tokens';
 
 // Long enough to read one short sentence.
@@ -18,6 +18,8 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactEleme
   const [toast, setToast] = useState<{ message: string } | null>(null);
   const show = useCallback<ShowToast>((message) => {
     setToast({ message });
+    // iOS has no live regions: the words are announced by hand.
+    AccessibilityInfo.announceForAccessibility(message);
   }, []);
   useEffect(() => {
     const timer =
@@ -37,7 +39,7 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactEleme
       {children}
       {toast === null ? null : (
         <View pointerEvents="none" style={styles.layer}>
-          <View accessibilityLiveRegion="polite" accessibilityRole="alert" style={styles.toast}>
+          <View accessibilityLiveRegion="polite" accessibilityRole="alert" accessible style={styles.toast}>
             <Text style={styles.words}>{toast.message}</Text>
           </View>
         </View>
@@ -64,7 +66,7 @@ export function useNotReadyToast(): () => void {
 }
 
 const styles = StyleSheet.create({
-  // Above the bottom navigation, clear of the system's gesture area.
+  // Above the bottom navigation.
   layer: {
     position: 'absolute',
     right: space[4],

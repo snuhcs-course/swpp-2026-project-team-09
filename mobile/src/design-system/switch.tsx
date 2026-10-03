@@ -11,7 +11,6 @@ interface SwitchProps {
   // itself, so that the owner can ask the User first.
   checked: boolean;
   onChange?: (checked: boolean) => void;
-  disabled?: boolean;
 }
 
 const TRACK_WIDTH = 52;
@@ -21,22 +20,26 @@ const KNOB_TRAVEL = 20;
 const SLIDE_MS = 150;
 
 // An on/off control for settings, above all Location Sharing.
-export function Switch({ label, description, checked, onChange, disabled = false }: SwitchProps): ReactElement {
+export function Switch({ label, description, checked, onChange }: SwitchProps): ReactElement {
   const reduceMotion = useReduceMotion();
   const [position] = useState(() => new Animated.Value(checked ? 1 : 0));
   useEffect(() => {
-    Animated.timing(position, {
+    const slide = Animated.timing(position, {
       toValue: checked ? 1 : 0,
       duration: reduceMotion ? 0 : SLIDE_MS,
       useNativeDriver: true,
-    }).start();
+    });
+    slide.start();
+    return (): void => {
+      slide.stop();
+    };
   }, [checked, position, reduceMotion]);
   return (
     <Pressable
+      accessibilityHint={description}
       accessibilityLabel={label}
       accessibilityRole="switch"
-      accessibilityState={{ checked, disabled }}
-      disabled={disabled}
+      accessibilityState={{ checked }}
       onPress={() => onChange?.(!checked)}
       style={styles.row}
     >

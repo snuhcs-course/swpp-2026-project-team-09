@@ -3,3 +3,9 @@ declare module '*.otf' {
   const source: number;
   export default source;
 }
+
+// A picture imported by a module is an image source.
+declare module '*.png' {
+  const source: number;
+  export default source;
+}

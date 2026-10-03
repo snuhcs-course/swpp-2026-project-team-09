@@ -2,86 +2,109 @@ import type { ReactElement } from 'react';
 import { type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 import { Avatar, type PresenceStatus } from './avatar';
 import { Icon, type IconName } from './icon';
-import { color, font, radius, shadow, size as sizes, text } from './tokens';
+import { color, halo, radius, shadow, size as sizes, text } from './tokens';
 
-type PlaceKind = 'official' | 'private' | 'party' | 'quest' | 'dining' | 'library' | 'shuttle';
-export type MapPinKind = PlaceKind | 'me' | 'friend';
+type CategoryKind = 'official' | 'private' | 'party' | 'quest' | 'dining' | 'library' | 'shuttle';
+export type MapPinKind = CategoryKind | 'me' | 'friend';
 
-// The kind decides the colour and the icon, so that pins stay apart without colour.
-const KINDS: Record<PlaceKind, { fill: string; icon: IconName; service: boolean }> = {
-  official: { fill: color.snuBlue, icon: 'calendar', service: false },
-  private: { fill: color.private, icon: 'lock', service: false },
-  party: { fill: color.party, icon: 'users', service: false },
-  quest: { fill: color.quest, icon: 'flag', service: false },
-  dining: { fill: color.svcDining, icon: 'meal', service: true },
-  library: { fill: color.svcStudy, icon: 'book', service: true },
-  shuttle: { fill: color.svcShuttle, icon: 'bus', service: true },
+// The kind decides the colour and the icon, so that pins stay apart without colour. `name` is what a screen reader
+// says for a pin without a label.
+const CATEGORIES: Record<CategoryKind, { fill: string; icon: IconName; service: boolean; name: string }> = {
+  official: { fill: color.snuBlue, icon: 'calendar', service: false, name: '공식 행사' },
+  private: { fill: color.private, icon: 'lock', service: false, name: '내 일정' },
+  party: { fill: color.party, icon: 'users', service: false, name: '파티' },
+  quest: { fill: color.quest, icon: 'flag', service: false, name: '퀘스트' },
+  dining: { fill: color.svcDining, icon: 'meal', service: true, name: '식당' },
+  library: { fill: color.svcStudy, icon: 'book', service: true, name: '공부공간' },
+  shuttle: { fill: color.svcShuttle, icon: 'bus', service: true, name: '셔틀버스' },
 };
 
-interface MapPinProps {
-  kind: MapPinKind;
-  // Short, 8 characters at most, shown in a white pill under the pin. Also the accessible name.
+interface MePinProps {
+  kind: 'me';
+}
+
+interface FriendPinProps {
+  kind: 'friend';
+  // The Friend's name, photo and status, as on an Avatar.
+  name: string;
+  source?: ImageSourcePropType;
+  status?: PresenceStatus;
+  label?: string;
+}
+
+interface CategoryPinProps {
+  kind: CategoryKind;
+  // Short, 8 characters at most, shown in a white pill under the pin.
   label?: string;
   // People who joined, or events clustered here.
   count?: number;
   selected?: boolean;
   // Another icon than the kind's own.
   icon?: IconName;
-  // For a Friend: the name, the photo and the status of the Avatar.
-  name?: string;
-  source?: ImageSourcePropType;
-  status?: PresenceStatus;
 }
 
-// A marker over the map. `me` is the only use of the `me` colour. A campus service's pin is a smaller rounded square,
-// so that the round social pins stay dominant.
-export function MapPin({
-  kind,
-  label,
-  count,
-  selected = false,
-  icon,
-  name,
-  source,
-  status,
-}: MapPinProps): ReactElement {
-  if (kind === 'me') {
+type MapPinProps = MePinProps | FriendPinProps | CategoryPinProps;
+
+function Label({ children }: { children: string }): ReactElement {
+  return (
+    <View style={styles.label}>
+      <Text style={styles.labelText}>{children}</Text>
+    </View>
+  );
+}
+
+function CategoryPin({ kind, label, count = 0, selected = false, icon }: CategoryPinProps): ReactElement {
+  const { fill, icon: kindIcon, service, name } = CATEGORIES[kind];
+  const spoken = count > 0 ? `${label ?? name} ${count}` : (label ?? name);
+  return (
+    <View
+      accessibilityLabel={spoken}
+      accessibilityRole="image"
+      accessibilityState={{ selected }}
+      accessible
+      style={styles.pin}
+    >
+      <View
+        style={[styles.head, service && styles.serviceHead, { backgroundColor: fill }, selected && styles.selectedHead]}
+      >
+        <Icon color={color.onPrimary} name={icon ?? kindIcon} size={18} />
+        {count > 0 ? (
+          <View style={styles.count}>
+            <Text style={styles.countText}>{count}</Text>
+          </View>
+        ) : null}
+      </View>
+      <View style={[styles.tail, { backgroundColor: fill }]} />
+      {label === undefined ? null : <Label>{label}</Label>}
+    </View>
+  );
+}
+
+// A marker over the map. `me` is the only use of the `me` colour. A Friend is an Avatar with the friend ring. A
+// campus service's pin is a smaller rounded square, so that the round social pins stay dominant.
+export function MapPin(props: MapPinProps): ReactElement {
+  if (props.kind === 'me') {
     return (
       <View accessibilityLabel="내 위치" accessibilityRole="image" accessible style={styles.me}>
         <View style={styles.meDot} />
       </View>
     );
   }
-  if (kind === 'friend') {
+  if (props.kind === 'friend') {
     return (
       <View style={styles.pin}>
-        <Avatar name={name ?? label ?? ''} ring="friend" source={source} status={status} />
-        {label === undefined ? null : <Text style={styles.label}>{label}</Text>}
+        <Avatar name={props.name} ring="friend" source={props.source} status={props.status} />
+        {props.label === undefined ? null : <Label>{props.label}</Label>}
       </View>
     );
   }
-  const { fill, icon: kindIcon, service } = KINDS[kind];
-  return (
-    <View accessibilityLabel={label} accessibilityRole="image" accessible style={styles.pin}>
-      <View
-        style={[styles.head, service && styles.serviceHead, { backgroundColor: fill }, selected && styles.selectedHead]}
-      >
-        <Icon color={color.onPrimary} name={icon ?? kindIcon} size={18} />
-        {count === undefined || count === 0 ? null : (
-          <View style={styles.count}>
-            <Text style={styles.countText}>{count}</Text>
-          </View>
-        )}
-      </View>
-      <View style={[styles.tail, { backgroundColor: fill }]} />
-      {label === undefined ? null : <Text style={styles.label}>{label}</Text>}
-    </View>
-  );
+  return <CategoryPin {...props} />;
 }
 
 const ME_HALO = 48;
 const ME_DOT = 16;
 const SERVICE_HEAD = 30;
+const COUNT = 18;
 
 const styles = StyleSheet.create({
   pin: {
@@ -105,7 +128,7 @@ const styles = StyleSheet.create({
   },
   selectedHead: {
     transform: [{ scale: 1.18 }],
-    boxShadow: `0 0 0 4px rgba(0, 26, 114, 0.18), ${shadow.float}`,
+    boxShadow: `0 0 0 4px ${halo.selected}, ${shadow.float}`,
   },
   tail: {
     width: 2,
@@ -113,42 +136,35 @@ const styles = StyleSheet.create({
     marginTop: -1,
   },
   label: {
-    ...text.micro,
     marginTop: 2,
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: radius.full,
-    overflow: 'hidden',
-    color: color.ink,
     backgroundColor: color.surface,
     boxShadow: shadow.card,
   },
+  labelText: { ...text.micro, color: color.ink },
   count: {
     position: 'absolute',
     top: -6,
     right: -8,
-    minWidth: 18,
-    height: 18,
-    paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: COUNT,
+    height: COUNT,
+    paddingHorizontal: 4,
     borderRadius: radius.full,
     backgroundColor: color.surface,
     boxShadow: shadow.card,
   },
-  countText: {
-    fontFamily: font.semiBold,
-    fontSize: 11,
-    lineHeight: 18,
-    color: color.ink,
-  },
+  countText: { ...text.micro, lineHeight: COUNT, color: color.ink },
   me: {
     alignItems: 'center',
     justifyContent: 'center',
     width: ME_HALO,
     height: ME_HALO,
     borderRadius: radius.full,
-    backgroundColor: 'rgba(47, 107, 255, 0.16)',
+    backgroundColor: halo.me,
   },
   meDot: {
     width: ME_DOT,

@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Icon, type IconName } from './icon';
-import { color, font, radius, space } from './tokens';
+import { color, font, halo, radius, space, text } from './tokens';
 
 export type BadgeTone =
   'official' | 'private' | 'party' | 'friend' | 'quest' | 'live' | 'warning' | 'danger' | 'neutral';
@@ -51,13 +51,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[2],
     borderRadius: radius.sm,
   },
-  label: { fontFamily: font.semiBold, fontSize: 12, lineHeight: 16 },
+  label: { ...text.caption, fontFamily: font.semiBold },
   liveDot: {
     width: 8,
     height: 8,
-    marginHorizontal: 3,
     borderRadius: radius.full,
     backgroundColor: color.live,
-    boxShadow: '0 0 0 3px rgba(11, 122, 85, 0.18)',
+    boxShadow: `0 0 0 3px ${halo.live}`,
   },
 });

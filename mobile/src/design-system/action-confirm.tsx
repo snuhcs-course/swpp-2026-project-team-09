@@ -35,7 +35,7 @@ export function ActionConfirm({
 }: ActionConfirmProps): ReactElement {
   const noteColor = noteTone === 'warning' ? color.warning : color.inkMuted;
   return (
-    <View accessibilityLabel={title} style={[cardStyles.card, styles.confirm]}>
+    <View style={[cardStyles.card, styles.confirm]}>
       <View style={styles.head}>
         <Icon color={color.snuBlue} name={icon} size={18} />
         <Text style={styles.title}>{title}</Text>
@@ -50,7 +50,9 @@ export function ActionConfirm({
       </View>
       {note === undefined ? null : (
         <View style={styles.note}>
-          <Icon color={noteColor} name={noteTone === 'warning' ? 'alert' : 'info'} size={14} />
+          <View style={styles.noteIcon}>
+            <Icon color={noteColor} name={noteTone === 'warning' ? 'alert' : 'info'} size={14} />
+          </View>
           <Text style={[styles.noteText, { color: noteColor }]}>{note}</Text>
         </View>
       )}
@@ -89,6 +91,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: space[1],
   },
+  noteIcon: { marginTop: 1 },
   noteText: { ...text.caption, flex: 1 },
   actions: { flexDirection: 'row', gap: space[2] },
   action: { flex: 1 },

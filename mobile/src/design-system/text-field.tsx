@@ -3,6 +3,9 @@ import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { Icon } from './icon';
 import { color, radius, size, space, text } from './tokens';
 
+// A second point of outline drawn outside the border, so that focus moves nothing.
+const FOCUS_RING = `0 0 0 1px ${color.focusRing}`;
+
 interface TextFieldProps {
   // Always visible. A placeholder is an example, not a label.
   label: string;
@@ -53,8 +56,8 @@ export function TextField({
         style={[
           styles.input,
           multiline && styles.multiline,
-          focused && styles.focused,
           error !== undefined && styles.invalid,
+          focused && styles.focused,
           disabled && styles.disabled,
         ]}
         value={value}
@@ -86,7 +89,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
   },
   multiline: { minHeight: MULTILINE_HEIGHT, textAlignVertical: 'top' },
-  focused: { borderWidth: 2, borderColor: color.focusRing },
+  focused: { borderColor: color.focusRing, boxShadow: FOCUS_RING },
   invalid: { borderColor: color.danger },
   disabled: { color: color.inkMuted, backgroundColor: color.surfaceSunken },
   help: {

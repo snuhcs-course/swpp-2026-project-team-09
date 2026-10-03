@@ -1,5 +1,6 @@
 import { type ReactElement, useState } from 'react';
 import { Avatar, Badge, Button, Chip, Icon, ICON_NAMES, MapPin } from '@/design-system';
+import samplePhoto from '../../assets/images/icon.png';
 import { Row, Section } from './layout';
 
 export function Icons(): ReactElement {
@@ -41,6 +42,7 @@ export function Chips(): ReactElement {
     <Section name="Chip">
       <Row>
         <Chip>#AI커리어</Chip>
+        <Chip size="sm">#작은칩</Chip>
         <Chip
           onPress={() => {
             setSelected(!selected);
@@ -77,6 +79,9 @@ export function Badges(): ReactElement {
         <Badge tone="warning">샘플 데이터</Badge>
         <Badge tone="danger">오류</Badge>
         <Badge>기본</Badge>
+        <Badge icon={false} tone="official">
+          아이콘 없음
+        </Badge>
       </Row>
     </Section>
   );
@@ -90,6 +95,7 @@ export function Avatars(): ReactElement {
         <Avatar name="홍길동" />
         <Avatar name="홍길동" size="lg" />
         <Avatar name="Jane Doe" />
+        <Avatar name="사진" source={samplePhoto} />
         <Avatar name="김서연" ring="friend" status="free" />
         <Avatar name="이준호" status="class" />
         <Avatar name="박지민" status="moving" />
@@ -109,9 +115,11 @@ export function MapPins(): ReactElement {
         <MapPin count={3} kind="party" label="보드게임" />
         <MapPin kind="quest" label="점심 약속" />
         <MapPin kind="official" label="선택됨" selected />
+        <MapPin icon="book" kind="official" label="다른 아이콘" />
       </Row>
       <Row>
         <MapPin kind="friend" name="김서연" status="free" />
+        <MapPin kind="friend" label="사진" name="사진" source={samplePhoto} />
         <MapPin kind="dining" label="학생회관" />
         <MapPin kind="shuttle" label="정문" />
         <MapPin kind="library" label="관정관" />

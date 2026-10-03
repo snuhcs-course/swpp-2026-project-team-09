@@ -24,8 +24,10 @@ export function EventCards(): ReactElement {
       <EventCard
         actions={
           <>
-            <Button variant="secondary">길찾기</Button>
-            <Button>같이 갈 사람 찾기</Button>
+            <Button full variant="secondary">
+              길찾기
+            </Button>
+            <Button full>같이 갈 사람 찾기</Button>
           </>
         }
         eligibility="학부생 누구나"
@@ -36,6 +38,8 @@ export function EventCards(): ReactElement {
         venue="301동 118호"
       />
       <EventCard floating kind="private" time="오늘 15:00–17:00" title="스터디룸 예약" venue="관정관 62-1동" />
+      <EventCard kind="party" time="오늘 19:00" title="보드게임 한 판" venue="학생회관 (63동)" />
+      <EventCard kind="quest" time="내일 12:00" title="점심 약속" venue="자하연" />
     </Section>
   );
 }
@@ -114,7 +118,6 @@ export function Switches(): ReactElement {
         label="친구와 위치 공유"
         onChange={setSharing}
       />
-      <Switch checked disabled label="꺼 둘 수 없는 설정" />
     </Section>
   );
 }
@@ -144,6 +147,11 @@ export function BottomSheets(): ReactElement {
       <View style={styles.sheetGround}>
         <BottomSheet title="근처 행사" trailing={<Button variant="ghost">전체 보기</Button>}>
           <Text style={styles.sample}>시트 안에 들어가는 내용</Text>
+        </BottomSheet>
+      </View>
+      <View style={styles.sheetGround}>
+        <BottomSheet>
+          <Text style={styles.sample}>제목 없는 시트</Text>
         </BottomSheet>
       </View>
     </Section>

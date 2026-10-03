@@ -21,7 +21,7 @@ interface BottomNavProps {
 // The primary navigation at the bottom of every top-level screen. The owner adds the system's gesture inset below it.
 export function BottomNav({ items, active, onSelect }: BottomNavProps): ReactElement {
   return (
-    <View accessibilityLabel="주요 메뉴" accessibilityRole="tablist" style={styles.nav}>
+    <View accessibilityRole="tablist" style={styles.nav}>
       {items.map(({ icon, label, badge }, index) => {
         const current = index === active;
         const tint = current ? color.snuBlue : color.inkMuted;
@@ -88,6 +88,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: color.danger,
   },
+  // Smaller than any text style: the design system's own size for this count.
   badgeText: {
     fontFamily: font.bold,
     fontSize: 10,

@@ -7,6 +7,7 @@ interface ChatInputProps {
   placeholder?: string;
   // Quick prompts for the moment, in a row above that scrolls sideways. A press sends one.
   suggestions?: readonly string[];
+  // Greys the send button: nothing typed is sent while the owner is busy with the message before.
   disabled?: boolean;
   onSend?: (message: string) => void;
   // The map's entry point opens the chat when the input is touched.
@@ -32,11 +33,10 @@ export function ChatInput({
   };
   return (
     <View style={styles.wrap}>
-      <Suggestions disabled={disabled} onSend={onSend} suggestions={suggestions} />
+      <Suggestions onSend={onSend} suggestions={suggestions} />
       <View style={[styles.bar, focused && styles.focused]}>
         <TextInput
           accessibilityLabel="메시지"
-          editable={!disabled}
           onBlur={() => {
             setFocused(false);
           }}
@@ -67,7 +67,7 @@ function SendButton({ disabled, onPress }: { disabled: boolean; onPress: () => v
       disabled={disabled}
       hitSlop={space[1]}
       onPress={onPress}
-      style={[styles.send, disabled && styles.sendDisabled]}
+      style={({ pressed }) => [styles.send, pressed && styles.sendPressed, disabled && styles.sendDisabled]}
     >
       <Icon color={disabled ? color.inkMuted : color.onPrimary} name="send" size={18} />
     </Pressable>
@@ -76,17 +76,15 @@ function SendButton({ disabled, onPress }: { disabled: boolean; onPress: () => v
 
 interface SuggestionsProps {
   suggestions: readonly string[];
-  disabled: boolean;
   onSend?: (message: string) => void;
 }
 
-function Suggestions({ suggestions, disabled, onSend }: SuggestionsProps): ReactElement | null {
+function Suggestions({ suggestions, onSend }: SuggestionsProps): ReactElement | null {
   if (suggestions.length === 0) {
     return null;
   }
   return (
     <ScrollView
-      accessibilityLabel="추천 입력"
       contentContainerStyle={styles.suggestions}
       horizontal
       keyboardShouldPersistTaps="handled"
@@ -95,11 +93,9 @@ function Suggestions({ suggestions, disabled, onSend }: SuggestionsProps): React
       {suggestions.map((suggestion) => (
         <Pressable
           accessibilityRole="button"
-          disabled={disabled}
-          hitSlop={space[2]}
           key={suggestion}
           onPress={() => onSend?.(suggestion)}
-          style={styles.suggestion}
+          style={({ pressed }) => [styles.suggestion, pressed && styles.suggestionPressed]}
         >
           <Text style={styles.suggestionText}>{suggestion}</Text>
         </Pressable>
@@ -120,7 +116,8 @@ const styles = StyleSheet.create({
     borderColor: color.border,
     backgroundColor: color.surface,
   },
-  suggestionText: { fontFamily: font.medium, fontSize: 14, lineHeight: 20, color: color.blue600 },
+  suggestionPressed: { backgroundColor: color.blue50 },
+  suggestionText: { ...text.label, fontFamily: font.medium, color: color.blue600 },
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -133,7 +130,7 @@ const styles = StyleSheet.create({
     borderColor: color.border,
     backgroundColor: color.surfaceSubtle,
   },
-  focused: { borderColor: color.focusRing },
+  focused: { borderColor: color.focusRing, boxShadow: `0 0 0 1px ${color.focusRing}` },
   input: {
     ...text.bodyLg,
     flex: 1,
@@ -149,5 +146,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: color.snuBlue,
   },
+  sendPressed: { backgroundColor: color.snuBluePressed },
   sendDisabled: { backgroundColor: color.surfaceSunken },
 });

@@ -1,4 +1,4 @@
-import type { ReactElement, ReactNode } from 'react';
+import { Children, type ReactElement, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Badge } from './badge';
 import { cardStyles } from './card';
@@ -28,7 +28,7 @@ interface EventCardProps {
   source?: string;
   // Hashtags, each with its `#`.
   tags?: readonly string[];
-  // Up to two Buttons, the primary one last.
+  // Up to two Buttons, the primary one last. Each gets an equal share of the row: pass them with `full`.
   actions?: ReactNode;
   // Over the map: no outline, and a shadow.
   floating?: boolean;
@@ -39,6 +39,28 @@ function MetaLine({ icon, label, children }: { icon: IconName; label: string; ch
     <View style={styles.metaLine}>
       <Icon color={color.inkMuted} label={label} name={icon} size={16} />
       <Text style={styles.metaText}>{children}</Text>
+    </View>
+  );
+}
+
+function Meta({ time, venue, eligibility }: Pick<EventCardProps, 'time' | 'venue' | 'eligibility'>): ReactElement {
+  return (
+    <View style={styles.meta}>
+      {time === undefined ? null : (
+        <MetaLine icon="clock" label="시간">
+          {time}
+        </MetaLine>
+      )}
+      {venue === undefined ? null : (
+        <MetaLine icon="pin" label="장소">
+          {venue}
+        </MetaLine>
+      )}
+      {eligibility === undefined ? null : (
+        <MetaLine icon="info" label="대상">
+          {eligibility}
+        </MetaLine>
+      )}
     </View>
   );
 }
@@ -64,31 +86,23 @@ export function EventCard({
       <Text accessibilityRole="header" style={styles.title}>
         {title}
       </Text>
-      <View style={styles.meta}>
-        {time === undefined ? null : (
-          <MetaLine icon="clock" label="시간">
-            {time}
-          </MetaLine>
-        )}
-        {venue === undefined ? null : (
-          <MetaLine icon="pin" label="장소">
-            {venue}
-          </MetaLine>
-        )}
-        {eligibility === undefined ? null : (
-          <MetaLine icon="info" label="대상">
-            {eligibility}
-          </MetaLine>
-        )}
-      </View>
+      <Meta eligibility={eligibility} time={time} venue={venue} />
       {tags.length === 0 ? null : (
         <View style={styles.tags}>
           {tags.map((tag) => (
-            <Chip key={tag}>{tag}</Chip>
+            <Chip key={tag} size="sm">
+              {tag}
+            </Chip>
           ))}
         </View>
       )}
-      {actions === undefined ? null : <View style={styles.actions}>{actions}</View>}
+      {actions === undefined ? null : (
+        <View style={styles.actions}>
+          {Children.map(actions, (action) => (
+            <View style={styles.action}>{action}</View>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -120,4 +134,5 @@ const styles = StyleSheet.create({
     gap: space[2],
     marginTop: space[2],
   },
+  action: { flex: 1 },
 });

@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   danger: { backgroundColor: color.surface, borderColor: color.danger },
   disabled: { backgroundColor: color.surfaceSunken, borderColor: 'transparent' },
   label: { ...text.label },
-  labelLg: { fontFamily: font.semiBold, fontSize: 16, lineHeight: 24 },
+  labelLg: { ...text.bodyLg, fontFamily: font.semiBold },
 });
 
 // Pressed: a fill darkens, and a ground is tinted.

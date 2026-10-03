@@ -58,6 +58,8 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
 - **Components**: Icon, Button, Chip, Badge, Avatar, MapPin, EventCard, ChatBubble, ActionConfirm, TextField,
   ChatInput, Switch, BottomNav and BottomSheet, with the names and properties of the design system's types. Where the
   web's differ from React Native's, the app's follow React Native: a press is `onPress`, and an image is a `source`.
+  Inside the design system the names are the design system's, also where the glossary prefers another word: its
+  `Avatar` is a person's picture anywhere, its event kind is `official`, and a card's place is its `venue`.
 - **Toast**: the design system has none and the wireframes use one. `useToast()` gives the call that shows a
   sentence for a moment, and `useNotReadyToast()` the call for a control whose feature belongs to another task: it
   says "준비 중이에요".

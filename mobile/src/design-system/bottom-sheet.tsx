@@ -13,7 +13,7 @@ interface BottomSheetProps {
 // sheet's body alone; the screen that shows it places it and moves it.
 export function BottomSheet({ children, title, trailing }: BottomSheetProps): ReactElement {
   return (
-    <View accessibilityLabel={title} style={styles.sheet}>
+    <View style={styles.sheet}>
       <View style={styles.handle} />
       {title === undefined ? null : (
         <View style={styles.head}>

@@ -26,6 +26,21 @@ describe('Chip', () => {
     expect(onRemove).toHaveBeenCalledTimes(1);
   });
 
+  it('offers the toggle and the × as two controls', async () => {
+    const onPress = jest.fn<void, []>();
+    const onRemove = jest.fn<void, []>();
+    await render(
+      <Chip onPress={onPress} onRemove={onRemove}>
+        #밴드
+      </Chip>,
+    );
+
+    await userEvent.press(screen.getByRole('button', { name: '#밴드 삭제' }));
+
+    expect(onRemove).toHaveBeenCalledTimes(1);
+    expect(onPress).not.toHaveBeenCalled();
+  });
+
   it('is plain text when it does nothing', async () => {
     await render(<Chip>#재즈</Chip>);
 

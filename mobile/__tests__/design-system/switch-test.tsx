@@ -15,6 +15,7 @@ describe('Switch', () => {
     );
 
     expect(screen.getByText('친구 12명이 내 위치를 볼 수 있어요')).toBeVisible();
+    expect(screen.getByHintText('친구 12명이 내 위치를 볼 수 있어요')).toBeVisible();
     expect(screen.getByRole('switch', { name: '친구와 위치 공유' })).not.toBeChecked();
 
     await userEvent.press(screen.getByRole('switch', { name: '친구와 위치 공유' }));

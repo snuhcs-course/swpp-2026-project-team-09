@@ -23,16 +23,20 @@ describe('ChatInput', () => {
     expect(onSend).toHaveBeenCalledWith('셔틀 언제 와?');
   });
 
-  it('sends nothing while it is empty or disabled', async () => {
-    const onSend = jest.fn<void, [string]>();
-    const { rerender } = await render(<ChatInput onSend={onSend} />);
+  it('sends nothing while it is empty', async () => {
+    await render(<ChatInput />);
 
     expect(screen.getByRole('button', { name: '보내기' })).toBeDisabled();
+  });
 
-    await rerender(<ChatInput disabled onSend={onSend} />);
+  it('keeps what was typed and sends nothing while it is disabled', async () => {
+    const onSend = jest.fn<void, [string]>();
+    await render(<ChatInput disabled onSend={onSend} />);
+
     await userEvent.type(screen.getByLabelText('메시지'), '안녕');
     await userEvent.press(screen.getByRole('button', { name: '보내기' }));
 
+    expect(screen.getByLabelText('메시지')).toHaveDisplayValue('안녕');
     expect(onSend).not.toHaveBeenCalled();
   });
 });

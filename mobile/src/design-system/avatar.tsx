@@ -4,7 +4,7 @@ import { color, font, radius, size as sizes } from './tokens';
 
 export type PresenceStatus = 'free' | 'class' | 'moving' | 'off';
 
-export const PRESENCE_LABEL: Record<PresenceStatus, string> = {
+const PRESENCE_LABEL: Record<PresenceStatus, string> = {
   free: '공강',
   class: '수업 중',
   moving: '이동 중',
