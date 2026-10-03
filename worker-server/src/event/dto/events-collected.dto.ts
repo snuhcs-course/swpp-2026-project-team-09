@@ -20,8 +20,8 @@ export interface CollectedEvent {
   place: string | null;
 }
 
-// What a Collection of the events list read, sent to the main server as `events-collected`: posts the main server does
-// not store yet.
+// What a Collection of the events list read, posted to the main server's `/global-events/collected`: posts the main
+// server does not store yet.
 export interface EventsCollectedMessage {
   source: EventListSource;
   collectedAt: string;

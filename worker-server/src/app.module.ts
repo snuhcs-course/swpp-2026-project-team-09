@@ -2,12 +2,13 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DiscoveryModule } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
-import { MessagingModule } from './common/messaging.module.js';
+import { MainServerModule } from './common/main-server.module.js';
 import { PageFetcherModule } from './common/page-fetcher.module.js';
 import { settingsSchema } from './common/settings.js';
 import { EventModule } from './event/event.module.js';
 import { HealthModule } from './health/health.module.js';
 import { MenuModule } from './menu/menu.module.js';
+import { ShuttleModule } from './shuttle/shuttle.module.js';
 
 @Module({
   imports: [
@@ -21,10 +22,11 @@ import { MenuModule } from './menu/menu.module.js';
     ScheduleModule.forRoot(),
     // Lets `pnpm collect` find the collector of each Source it names (src/collect-sources.ts).
     DiscoveryModule,
-    MessagingModule,
+    MainServerModule,
     PageFetcherModule,
     HealthModule,
     MenuModule,
+    ShuttleModule,
     EventModule,
   ],
 })

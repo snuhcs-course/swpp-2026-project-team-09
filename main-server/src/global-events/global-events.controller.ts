@@ -1,6 +1,5 @@
-import { Controller } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
-import { HANDLED, type Handled, WorkerMessage } from '../common/worker-message.decorator.js';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { WorkerOnly } from '../common/worker-only.decorator.js';
 import { type EventsCollectedMessage, eventsCollectedSchema } from './dto/events-collected.dto.js';
 import {
   type StoredEventPosts,
@@ -9,19 +8,23 @@ import {
 } from './dto/stored-event-posts.dto.js';
 import { GlobalEventsService } from './global-events.service.js';
 
-@Controller()
+@Controller('global-events')
 export class GlobalEventsController {
   constructor(private readonly globalEvents: GlobalEventsService) {}
 
-  @MessagePattern('events-collected')
-  async collected(@WorkerMessage(eventsCollectedSchema) message: EventsCollectedMessage): Promise<Handled> {
+  @Post('collected')
+  @WorkerOnly()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async collected(@Body({ schema: eventsCollectedSchema }) message: EventsCollectedMessage): Promise<void> {
     await this.globalEvents.storeCollected(message);
-    return HANDLED;
   }
 
-  @MessagePattern('stored-event-posts')
+  // A question, which stores nothing and answers with what it asks for (README.md: Requests from the worker server).
+  @Post('stored-posts')
+  @WorkerOnly()
+  @HttpCode(HttpStatus.OK)
   storedPosts(
-    @WorkerMessage(storedEventPostsSchema) { postNumbers }: StoredEventPostsMessage,
+    @Body({ schema: storedEventPostsSchema }) { postNumbers }: StoredEventPostsMessage,
   ): Promise<StoredEventPosts> {
     return this.globalEvents.storedPosts(postNumbers);
   }

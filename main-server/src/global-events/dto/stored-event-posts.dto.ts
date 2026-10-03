@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// The worker's question, `stored-event-posts`: which of these posts of the events list are stored?
+// The worker's question to `/global-events/stored-posts`: which of these posts of the events list are stored?
 export const storedEventPostsSchema = z.strictObject({
   postNumbers: z.array(z.int32().positive()),
 });

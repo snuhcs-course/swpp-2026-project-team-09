@@ -1,54 +1,45 @@
 import { INestApplication } from '@nestjs/common';
-import { ClientProxy, ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { Server } from 'node:http';
-import { lastValueFrom } from 'rxjs';
+import request from 'supertest';
 import { inject } from 'vitest';
 import { z } from 'zod';
-import { redisSettings, startRedis } from './containers.js';
-import { startApp } from './start-app.js';
 
-export interface WorkerHarness {
-  app: INestApplication<Server>;
-  // Sends messages as the worker server does.
-  worker: ClientProxy;
-  close: () => Promise<void>;
-}
-
-// Every test file's server listens on the shared test Redis, and each of them would handle and answer a message. A
-// file that sends messages therefore starts its server on a Redis of its own. The database stays the shared one.
-export async function startWithWorker(): Promise<WorkerHarness> {
-  const redis = await startRedis();
-  const settings = { ...inject('settings'), ...redisSettings(redis) };
-  const app = await startApp(settings);
-  const worker = ClientProxyFactory.create({
-    transport: Transport.REDIS,
-    options: { host: settings.REDIS_HOST, port: Number(settings.REDIS_PORT) },
-  });
-  await worker.connect();
-  return {
-    app,
-    worker,
-    close: async (): Promise<void> => {
-      await worker.close();
-      await app.close();
-      await redis.stop();
-    },
-  };
-}
-
-// Sends a message as the worker does and resolves with the answer. A refused message rejects with the answer.
-export function sendAsWorker(worker: ClientProxy, pattern: string, data: unknown): Promise<unknown> {
-  return lastValueFrom(worker.send(pattern, data));
-}
-
-const refusalSchema = z.strictObject({ status: z.literal('error'), message: z.string() });
-
-// Sends a message that the server should refuse and resolves with the problem its answer names.
-export async function refusal(worker: ClientProxy, pattern: string, data: unknown): Promise<string> {
-  try {
-    await sendAsWorker(worker, pattern, data);
-  } catch (answer) {
-    return refusalSchema.parse(answer).message;
+// Sends a request as the worker server does, with its token. Resolves when the server took it, and rejects with the
+// answer when it was refused.
+export async function sendAsWorker(app: INestApplication<Server>, path: string, data: object): Promise<void> {
+  const response = await request(app.getHttpServer())
+    .post(path)
+    .auth(inject('settings').WORKER_TOKEN, { type: 'bearer' })
+    .send(data);
+  if (response.status !== 204) {
+    throw new Error(JSON.stringify(response.body));
   }
-  throw new Error(`The server did not refuse ${pattern}`);
+}
+
+// Asks a question as the worker server does, with its token, and resolves with the answer.
+export async function askAsWorker(app: INestApplication<Server>, path: string, data: object): Promise<unknown> {
+  const response = await request(app.getHttpServer())
+    .post(path)
+    .auth(inject('settings').WORKER_TOKEN, { type: 'bearer' })
+    .send(data);
+  if (response.status !== 200) {
+    throw new Error(JSON.stringify(response.body));
+  }
+  return response.body as unknown;
+}
+
+const refusalSchema = z.object({
+  statusCode: z.number().min(400).max(499),
+  message: z.string().or(z.array(z.string())),
+});
+
+// Sends a request that the server should refuse and resolves with the problem its answer names, the problems of a
+// request that does not match its schema joined as the worker joins them.
+export async function refusal(app: INestApplication<Server>, path: string, data: object): Promise<string> {
+  const response = await request(app.getHttpServer())
+    .post(path)
+    .auth(inject('settings').WORKER_TOKEN, { type: 'bearer' })
+    .send(data);
+  const { message } = refusalSchema.parse(response.body);
+  return typeof message === 'string' ? message : message.join('; ');
 }

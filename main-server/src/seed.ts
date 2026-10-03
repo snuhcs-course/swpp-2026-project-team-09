@@ -14,8 +14,8 @@ async function seed(): Promise<void> {
   const adapter = new PrismaPg({ connectionString: databaseUrl, connectionTimeoutMillis: 5_000 });
   const prisma = new PrismaClient({ adapter });
   try {
-    const { places } = await loadSeed(prisma);
-    new Logger('Seed').log(`Loaded ${places} places`);
+    const { places, shuttleStops } = await loadSeed(prisma);
+    new Logger('Seed').log(`Loaded ${places} places and ${shuttleStops} shuttle stops`);
   } finally {
     await prisma.$disconnect();
   }

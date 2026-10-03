@@ -38,7 +38,7 @@ export class MenuCollector extends Collector {
       collectedAt: now.toISOString(),
       days: await read[source](),
     });
-    return this.handOver(source, now, 'menus-collected', message());
+    return this.handOver(source, now, '/menus/collected', message());
   }
 
   // The restaurants whose names start with "* " repeat one fixed menu in every cell, every day. 기숙사식당 is the

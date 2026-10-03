@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { load } from 'cheerio';
 import { Collector, Collects } from '../common/collector.js';
@@ -23,8 +23,6 @@ const LISTED_DAYS = 365;
 
 // Posts in a row whose pages are not posts fail the Collection at this many: then the pages have changed, not the posts.
 const UNREADABLE_IN_A_ROW = 3;
-
-const logger = new Logger('EventCollector');
 
 // A day as the list's date filter writes it: 2026.10.02.
 function filterDay(time: Date, days: number): string {
@@ -77,21 +75,21 @@ export class EventCollector extends Collector {
 
   collectOne(source: EventListSource): Promise<boolean> {
     const now = new Date();
-    return this.handOver(source, now, 'events-collected', this.read(source, now));
+    return this.handOver(source, now, '/global-events/collected', this.read(source, now));
   }
 
   // Reads the posts the main server does not store yet. A post is read once: a later edit at the Source is not seen.
   private async read(source: EventListSource, now: Date): Promise<EventsCollectedMessage> {
     const listed = await this.readList({ from: filterDay(now, 0), to: filterDay(now, LISTED_DAYS) });
     const question: StoredEventPostsQuestion = { postNumbers: listed.map(({ postNumber }) => postNumber) };
-    const answer = storedEventPostsAnswerSchema.parse(await this.send('stored-event-posts', question));
+    const answer = await this.mainServer.ask('/global-events/stored-posts', question, storedEventPostsAnswerSchema);
     const stored = new Set(answer.postNumbers);
     const { events, failure } = await this.readPosts(listed.filter(({ postNumber }) => !stored.has(postNumber)));
     const message = { source, collectedAt: now.toISOString(), complete: failure === null, events };
     if (failure !== null) {
       // What was read is stored all the same, so that it is not read again, and the Collection fails.
       if (events.length > 0) {
-        await this.send('events-collected', message);
+        await this.mainServer.send('/global-events/collected', message);
       }
       throw failure;
     }
@@ -132,7 +130,7 @@ export class EventCollector extends Collector {
       }
       const read = readPost(html, post.postNumber);
       if (read instanceof Error) {
-        logger.warn(`Post ${post.postNumber} could not be read: ${read.message}`);
+        this.logger.warn(`Post ${post.postNumber} could not be read: ${read.message}`);
         unreadable.push(unreadablePost(post));
         if (unreadable.length === UNREADABLE_IN_A_ROW) {
           const failure = `${UNREADABLE_IN_A_ROW} posts in a row could not be read: ${read.message}`;

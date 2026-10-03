@@ -1,0 +1,147 @@
+{
+  "exportedFrom": "https://map.snu.ac.kr/api/bus/suttle/61.action?sch_bus_deta_cd=1102",
+  "exportedOn": "2026-10-02",
+  "route": {
+    "bus_route_mode": "A",
+    "bus_route_type": "1102",
+    "bus_route_name": "정문<->순환도로",
+    "bus_route_id": "61"
+  },
+  "suttle_route_path_list": [
+    {
+      "route_stationlist_num": 0,
+      "bus_station_longitude": "126.948449058974",
+      "bus_station_name": "정문",
+      "bus_station_latitude": "37.4656884925184",
+      "bus_station_code": 101,
+      "bus_station_mode": "",
+      "bus_route_id": 61
+    },
+    {
+      "route_stationlist_num": 1,
+      "bus_station_longitude": "126.949069941419",
+      "bus_station_name": "법대입구",
+      "bus_station_latitude": "37.4627402015981",
+      "bus_station_code": 201,
+      "bus_station_mode": "",
+      "bus_route_id": 61
+    },
+    {
+      "route_stationlist_num": 2,
+      "bus_station_longitude": "126.948941576515",
+      "bus_station_name": "자연대500동(행정관)",
+      "bus_station_latitude": "37.4603524646429",
+      "bus_station_code": 401,
+      "bus_station_mode": "",
+      "bus_route_id": 61
+    },
+    {
+      "route_stationlist_num": 3,
+      "bus_station_longitude": "126.949212161221",
+      "bus_station_name": "농생대",
+      "bus_station_latitude": "37.4571900279417",
+      "bus_station_code": 501,
+      "bus_station_mode": "",
+      "bus_route_id": 61
+    },
+    {
+      "route_stationlist_num": 4,
+      "bus_station_longitude": "126.949840936747",
+      "bus_station_name": "공대입구",
+      "bus_station_latitude": "37.454964794994",
+      "bus_station_code": 601,
+      "bus_station_mode": "",
+      "bus_route_id": 61
+    },
+    {
+      "route_stationlist_num": 5,
+      "bus_station_longitude": "126.950220492609",
+      "bus_station_name": "신소재연구소",
+      "bus_station_latitude": "37.4535571226189",
+      "bus_station_code": 701,
+      "bus_station_mode": "",
+      "bus_route_id": 61
+    },
+    {
+      "route_stationlist_num": 6,
+      "bus_station_longitude": "126.95024834044337",
+      "bus_station_name": "제2파워플랜트",
+      "bus_station_latitude": "37.44990577747926",
+      "bus_station_code": 801,
+      "bus_station_mode": "",
+      "bus_route_id": 61
+    },
+    {
+      "route_stationlist_num": 7,
+      "bus_station_longitude": "126.952096825205",
+      "bus_station_name": "302동 공학관",
+      "bus_station_latitude": "37.4488027992655",
+      "bus_station_code": 901,
+      "bus_station_mode": "",
+      "bus_route_id": 61
+    },
+    {
+      "route_stationlist_num": 8,
+      "bus_station_longitude": "126.952504907509",
+      "bus_station_name": "301동 공학관",
+      "bus_station_latitude": "37.4513145395911",
+      "bus_station_code": 1001,
+      "bus_station_mode": "",
+      "bus_route_id": 61
+    },
+    {
+      "route_stationlist_num": 9,
+      "bus_station_longitude": "126.953938443076",
+      "bus_station_name": "유전공학연구소",
+      "bus_station_latitude": "37.4542028545218",
+      "bus_station_code": 1101,
+      "bus_station_mode": "",
+      "bus_route_id": 61
+    },
+    {
+      "route_stationlist_num": 10,
+      "bus_station_longitude": "126.955245592118",
+      "bus_station_name": "교수회관입구",
+      "bus_station_latitude": "37.455989614862",
+      "bus_station_code": 1301,
+      "bus_station_mode": "",
+      "bus_route_id": 61
+    },
+    {
+      "route_stationlist_num": 11,
+      "bus_station_longitude": "126.956652761066",
+      "bus_station_name": "기숙사삼거리",
+      "bus_station_latitude": "37.4608353336368",
+      "bus_station_code": 1501,
+      "bus_station_mode": "",
+      "bus_route_id": 61
+    },
+    {
+      "route_stationlist_num": 12,
+      "bus_station_longitude": "126.955252030382",
+      "bus_station_name": "국제대학원",
+      "bus_station_latitude": "37.4641527874505",
+      "bus_station_code": 1601,
+      "bus_station_mode": "",
+      "bus_route_id": 61
+    },
+    {
+      "route_stationlist_num": 13,
+      "bus_station_longitude": "126.954626320475",
+      "bus_station_name": "종합교육연구동",
+      "bus_station_latitude": "37.4661190061983",
+      "bus_station_code": 1701,
+      "bus_station_mode": "",
+      "bus_route_id": 61
+    },
+    {
+      "route_stationlist_num": 14,
+      "bus_station_longitude": "126.952148009596",
+      "bus_station_name": "경영대",
+      "bus_station_latitude": "37.4660256749621",
+      "bus_station_code": 1801,
+      "bus_station_mode": "",
+      "bus_route_id": 61
+    }
+  ]
+}

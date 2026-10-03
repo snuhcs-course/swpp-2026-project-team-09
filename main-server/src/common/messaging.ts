@@ -2,7 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { RedisOptions, Transport } from '@nestjs/microservices';
 import { Settings } from './settings.js';
 
-// NestJS messaging over Redis. The same options receive (main.ts), send (MessagingModule) and check readiness.
+// NestJS messaging over Redis. The same options send (MessagingModule) and check readiness.
 export function messagingOptions(settings: ConfigService<Settings, true>): Required<RedisOptions> {
   return {
     transport: Transport.REDIS,

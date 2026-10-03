@@ -1,4 +1,6 @@
+import { INestApplication } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { CollectionStatus, GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
 import {
@@ -9,21 +11,22 @@ import {
   placesNamingNoPlace,
   postNumbersFrom,
 } from './global-events.js';
-import { refusal, sendAsWorker, startWithWorker, type WorkerHarness } from './worker.js';
+import { startApp } from './start-app.js';
+import { refusal, sendAsWorker } from './worker.js';
 
-let harness: WorkerHarness;
+let app: INestApplication<Server>;
 // No route serves Global Events or the Collection status yet (P12 adds them), so the tests read them with a connection
 // of their own.
 let prisma: PrismaClient;
 
 beforeAll(async () => {
-  harness = await startWithWorker();
+  app = await startApp(inject('settings'));
   prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: inject('settings').DATABASE_URL }) });
 });
 
 afterAll(async () => {
   await prisma.$disconnect();
-  await harness.close();
+  await app.close();
 });
 
 const newPost = postNumbersFrom(900_000);
@@ -40,7 +43,7 @@ function eventsStatus(): Promise<CollectionStatus | null> {
 // Sends a post of its own, with `changes` applied, and gives what was stored of it.
 async function collect(changes: object): Promise<GlobalEvent | null> {
   const postNumber = newPost();
-  await sendAsWorker(harness.worker, 'events-collected', eventsMessage([collectedEvent(postNumber, changes)]));
+  await sendAsWorker(app, '/global-events/collected', eventsMessage([collectedEvent(postNumber, changes)]));
   return storedEvent(postNumber);
 }
 
@@ -54,8 +57,8 @@ describe('A collected event whose time and place were read', () => {
     const postNumber = newPost();
 
     await expect(
-      sendAsWorker(harness.worker, 'events-collected', eventsMessage([collectedEvent(postNumber)])),
-    ).resolves.toEqual({ status: 'ok' });
+      sendAsWorker(app, '/global-events/collected', eventsMessage([collectedEvent(postNumber)])),
+    ).resolves.toBeUndefined();
 
     expect(await storedEvent(postNumber)).toMatchObject({
       state: 'published',
@@ -136,10 +139,10 @@ describe('A post that is already stored', () => {
   it('is stored once when it is sent twice', async () => {
     const postNumber = newPost();
     const message = eventsMessage([collectedEvent(postNumber)]);
-    await sendAsWorker(harness.worker, 'events-collected', message);
+    await sendAsWorker(app, '/global-events/collected', message);
     const stored = await storedEvent(postNumber);
 
-    await expect(sendAsWorker(harness.worker, 'events-collected', message)).resolves.toEqual({ status: 'ok' });
+    await expect(sendAsWorker(app, '/global-events/collected', message)).resolves.toBeUndefined();
 
     expect(await storedEvent(postNumber)).toEqual(stored);
   });
@@ -154,15 +157,15 @@ describe('A post that is already stored', () => {
     ['discarded', { state: 'discarded' as const }],
   ])('is left as it is when it was %s', async (_case, changes) => {
     const postNumber = newPost();
-    await sendAsWorker(harness.worker, 'events-collected', eventsMessage([collectedEvent(postNumber)]));
+    await sendAsWorker(app, '/global-events/collected', eventsMessage([collectedEvent(postNumber)]));
     // As an Administrator would change it.
     const stored = await prisma.globalEvent.update({ where: { postNumber }, data: changes });
 
     // The post as a later Collection would read it, had the Source changed it.
     const changed = collectedEvent(postNumber, { title: '설명회 (온라인 전환)', place: '온라인 (Zoom)' });
     await sendAsWorker(
-      harness.worker,
-      'events-collected',
+      app,
+      '/global-events/collected',
       eventsMessage([changed], { collectedAt: '2026-10-02T12:00:00+09:00' }),
     );
 
@@ -177,7 +180,7 @@ describe('An events message that does not match the schema', () => {
       const [valid, other] = [newPost(), newPost()];
       const status = await eventsStatus();
 
-      expect(await refusal(harness.worker, 'events-collected', message(valid, other))).toContain(named);
+      expect(await refusal(app, '/global-events/collected', message(valid, other))).toContain(named);
       expect(await storedEvent(valid)).toBeNull();
       expect(await eventsStatus()).toEqual(status);
     },
@@ -187,8 +190,8 @@ describe('An events message that does not match the schema', () => {
 describe('A Collection of the events list', () => {
   it('is recorded with its time when its message is stored', async () => {
     await sendAsWorker(
-      harness.worker,
-      'events-collected',
+      app,
+      '/global-events/collected',
       eventsMessage([], { collectedAt: '2026-10-02T18:00:00+09:00' }),
     );
 
@@ -197,16 +200,16 @@ describe('A Collection of the events list', () => {
 
   it('that failed is recorded with its time and reason, and the stored events stay', async () => {
     const postNumber = newPost();
-    await sendAsWorker(harness.worker, 'events-collected', eventsMessage([collectedEvent(postNumber)]));
+    await sendAsWorker(app, '/global-events/collected', eventsMessage([collectedEvent(postNumber)]));
     const stored = await storedEvent(postNumber);
 
     await expect(
-      sendAsWorker(harness.worker, 'collection-failed', {
+      sendAsWorker(app, '/collections/failed', {
         source: 'snu_events',
         failedAt: '2026-10-03T00:00:00+09:00',
         reason: 'The page has no post',
       }),
-    ).resolves.toEqual({ status: 'ok' });
+    ).resolves.toBeUndefined();
 
     expect(await eventsStatus()).toMatchObject({
       lastFailedAt: new Date('2026-10-02T15:00:00Z'),
@@ -220,17 +223,17 @@ describe('A Collection of the events list that stopped early', () => {
   it('stores the posts read before it, and is recorded as failed but not as successful', async () => {
     const postNumber = newPost();
     await sendAsWorker(
-      harness.worker,
-      'events-collected',
+      app,
+      '/global-events/collected',
       eventsMessage([], { collectedAt: '2026-10-03T00:00:00+09:00' }),
     );
 
     await sendAsWorker(
-      harness.worker,
-      'events-collected',
+      app,
+      '/global-events/collected',
       eventsMessage([collectedEvent(postNumber)], { collectedAt: '2026-10-03T06:00:00+09:00', complete: false }),
     );
-    await sendAsWorker(harness.worker, 'collection-failed', {
+    await sendAsWorker(app, '/collections/failed', {
       source: 'snu_events',
       failedAt: '2026-10-03T06:00:00+09:00',
       reason: "The university's firewall blocked https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",

@@ -26,7 +26,7 @@ function mainServerStoring(
   stored = [...firstPage, ...secondPage].filter((post) => post !== 176558 && post !== 176525),
 ): MainServerStub {
   const mainServer = new MainServerStub();
-  mainServer.answers.set('stored-event-posts', { postNumbers: stored });
+  mainServer.answers.set('/global-events/stored-posts', { postNumbers: stored });
   return mainServer;
 }
 
@@ -59,7 +59,7 @@ describe('A Collection of the events list', () => {
 
     expect(sources.requests.slice(0, 3).map(({ url }) => url)).toEqual([`${LIST}1`, `${LIST}2`, `${LIST}3`]);
     expect(mainServer.messages[0]).toEqual({
-      pattern: 'stored-event-posts',
+      path: '/global-events/stored-posts',
       data: { postNumbers: [...firstPage, ...secondPage] },
     });
   });
@@ -69,7 +69,7 @@ describe('A Collection of the events list', () => {
 
     expect(sources.requests.slice(3).map(({ url }) => url)).toEqual([`${POST}176558`, `${POST}176525`]);
     expect(sources.mostAtOnce).toBe(1);
-    expect(mainServer.from('snu_events', 'events-collected')).toMatchObject([
+    expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
       {
         collectedAt: '2026-10-01T21:00:00.000Z',
         complete: true,
@@ -89,7 +89,7 @@ describe('A Collection of the events list', () => {
     const { sources, mainServer } = await collect(pages, mainServerStoring([...firstPage, ...secondPage]));
 
     expect(sources.requests).toHaveLength(3);
-    expect(mainServer.from('snu_events', 'events-collected')).toEqual([
+    expect(mainServer.from('snu_events', '/global-events/collected')).toEqual([
       { source: 'snu_events', collectedAt: '2026-10-01T21:00:00.000Z', complete: true, events: [] },
     ]);
   });
@@ -102,14 +102,14 @@ describe('A Collection of the events list that is blocked on a post', () => {
   it('reports the block, and reads no further post', async () => {
     const { sources, mainServer } = await collect({ ...pages, [`${POST}176558`]: blockPage });
 
-    expect(mainServer.from('snu_events', 'collection-failed')).toEqual([
+    expect(mainServer.from('snu_events', '/collections/failed')).toEqual([
       {
         source: 'snu_events',
         failedAt: '2026-10-01T21:00:00.000Z',
         reason: `The university's firewall blocked ${POST}176558`,
       },
     ]);
-    expect(mainServer.from('snu_events', 'events-collected')).toEqual([]);
+    expect(mainServer.from('snu_events', '/global-events/collected')).toEqual([]);
     expect(sources.requests.at(-1)?.url).toBe(`${POST}176558`);
   });
 
@@ -117,15 +117,15 @@ describe('A Collection of the events list that is blocked on a post', () => {
     // 176558 is read, then 176525 is blocked.
     const { mainServer } = await collect({ ...pages, [`${POST}176525`]: blockPage });
 
-    expect(mainServer.messages.map(({ pattern }) => pattern)).toEqual([
-      'stored-event-posts',
-      'events-collected',
-      'collection-failed',
+    expect(mainServer.messages.map(({ path }) => path)).toEqual([
+      '/global-events/stored-posts',
+      '/global-events/collected',
+      '/collections/failed',
     ]);
-    expect(mainServer.from('snu_events', 'events-collected')).toMatchObject([
+    expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
       { complete: false, events: [{ postNumber: 176558 }] },
     ]);
-    expect(mainServer.from('snu_events', 'collection-failed')).toMatchObject([
+    expect(mainServer.from('snu_events', '/collections/failed')).toMatchObject([
       { reason: `The university's firewall blocked ${POST}176525` },
     ]);
   });
@@ -135,8 +135,8 @@ describe('A post whose page is not a post', () => {
   it('is sent with its title from the list alone, and the posts after it are read', async () => {
     const { mainServer } = await collect({ ...pages, [`${POST}176558`]: notAPost });
 
-    expect(mainServer.from('snu_events', 'collection-failed')).toEqual([]);
-    expect(mainServer.from('snu_events', 'events-collected')).toMatchObject([
+    expect(mainServer.from('snu_events', '/collections/failed')).toEqual([]);
+    expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
       {
         complete: true,
         events: [
@@ -159,8 +159,8 @@ describe('A post whose page is not a post', () => {
   it('is sent when the list ends after it, two in a row as well', async () => {
     const { mainServer } = await collect({ ...pages, [`${POST}176558`]: notAPost, [`${POST}176525`]: notAPost });
 
-    expect(mainServer.from('snu_events', 'collection-failed')).toEqual([]);
-    expect(mainServer.from('snu_events', 'events-collected')).toMatchObject([
+    expect(mainServer.from('snu_events', '/collections/failed')).toEqual([]);
+    expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
       {
         complete: true,
         events: [
@@ -174,8 +174,8 @@ describe('A post whose page is not a post', () => {
   it('is not sent when the Collection is blocked before a post after it is read', async () => {
     const { mainServer } = await collect({ ...pages, [`${POST}176558`]: notAPost, [`${POST}176525`]: blockPage });
 
-    expect(mainServer.from('snu_events', 'events-collected')).toEqual([]);
-    expect(mainServer.from('snu_events', 'collection-failed')).toMatchObject([
+    expect(mainServer.from('snu_events', '/global-events/collected')).toEqual([]);
+    expect(mainServer.from('snu_events', '/collections/failed')).toMatchObject([
       { reason: `The university's firewall blocked ${POST}176525` },
     ]);
   });
@@ -190,10 +190,10 @@ describe('Three posts in a row whose pages are not posts', () => {
       mainServerStoring([...firstPage, ...secondPage].filter((post) => !unstored.has(post))),
     );
 
-    expect(mainServer.from('snu_events', 'events-collected')).toMatchObject([
+    expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
       { complete: false, events: [{ postNumber: 176558 }] },
     ]);
-    expect(mainServer.from('snu_events', 'collection-failed')).toMatchObject([
+    expect(mainServer.from('snu_events', '/collections/failed')).toMatchObject([
       { reason: '3 posts in a row could not be read: The page has no post' },
     ]);
   });
@@ -205,7 +205,7 @@ describe('A Collection of the events list that fails before reading a post', () 
 
     expect(mainServer.messages).toEqual([
       {
-        pattern: 'collection-failed',
+        path: '/collections/failed',
         data: {
           source: 'snu_events',
           failedAt: '2026-10-01T21:00:00.000Z',
@@ -219,7 +219,7 @@ describe('A Collection of the events list that fails before reading a post', () 
     // Page 2 answers with page 1, as a list that answered every page past the first with the first would.
     const { sources, mainServer } = await collect({ ...pages, [`${LIST}2`]: pages[`${LIST}1`] });
 
-    expect(mainServer.from('snu_events', 'collection-failed')).toMatchObject([
+    expect(mainServer.from('snu_events', '/collections/failed')).toMatchObject([
       { reason: 'Page 2 of the events list repeats the posts before it' },
     ]);
     expect(sources.requests).toHaveLength(2);
@@ -227,12 +227,12 @@ describe('A Collection of the events list that fails before reading a post', () 
 
   it('reports a question the main server does not answer, and reads no post', async () => {
     const mainServer = new MainServerStub();
-    mainServer.refusals.set('stored-event-posts', 'postNumbers.0: Invalid input');
+    mainServer.refusals.set('/global-events/stored-posts', 'postNumbers.0: Invalid input');
 
     const { sources } = await collect(pages, mainServer);
 
-    expect(mainServer.from('snu_events', 'collection-failed')).toMatchObject([
-      { reason: 'The main server did not take stored-event-posts: postNumbers.0: Invalid input' },
+    expect(mainServer.from('snu_events', '/collections/failed')).toMatchObject([
+      { reason: 'The main server did not take /global-events/stored-posts: postNumbers.0: Invalid input' },
     ]);
     expect(sources.requests).toHaveLength(3);
   });
@@ -267,6 +267,9 @@ describe('The command that runs one Collection', () => {
 
     expect(taken).toBe(true);
     expect(sources.requests.every(({ url }) => url.startsWith('https://www.snu.ac.kr/snunow/events?'))).toBe(true);
-    expect(mainServer.messages.map(({ pattern }) => pattern)).toEqual(['stored-event-posts', 'events-collected']);
+    expect(mainServer.messages.map(({ path }) => path)).toEqual([
+      '/global-events/stored-posts',
+      '/global-events/collected',
+    ]);
   });
 });

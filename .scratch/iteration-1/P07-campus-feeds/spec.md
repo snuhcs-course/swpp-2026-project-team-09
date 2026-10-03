@@ -62,7 +62,7 @@ The worker server collects events, menus and shuttle positions from their origin
 ### Worker and main server
 
 - The worker server only collects. It keeps no data of its own. When it needs to know what the main server already holds, such as which event posts are stored, it asks the main server.
-- The worker sends what it collected to the main server as request-and-response messages. The main server validates each message against a schema, refuses one that does not match, and stores the rest.
+- The worker sends what it collected to the main server as HTTP requests, each a message that the main server answers. A request reaches one main server, however many run. The main server validates each message against a schema, refuses one that does not match, and stores the rest. The worker's routes take the worker alone, by a secret the two servers share.
 - Storing is repeatable: the same event, the same menu or the same stop sent twice results in one record.
 - Schedules run inside the worker with the NestJS schedule module. One worker instance runs.
 - A developer runs one collection of a source by hand, with a command of the worker server that does what the scheduled run does. Nothing is collected when the worker starts.

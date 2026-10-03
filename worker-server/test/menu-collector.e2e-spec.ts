@@ -68,10 +68,10 @@ describe('A Collection of the menu Sources', () => {
   it('sends the menus of today and the six days after of each Source', async () => {
     const { mainServer } = await collect(pages);
 
-    expect(mainServer.messages.map(({ pattern }) => pattern)).toEqual([
-      'menus-collected',
-      'menus-collected',
-      'menus-collected',
+    expect(mainServer.messages.map(({ path }) => path)).toEqual([
+      '/menus/collected',
+      '/menus/collected',
+      '/menus/collected',
     ]);
     expect(mainServer.from('veterinary_menus')).toEqual([
       {
@@ -154,7 +154,7 @@ describe('A Collection that cannot fetch or read a page', () => {
   it('reports the Source as failed when a page does not come, and still collects the others', async () => {
     const { mainServer } = await collect({ ...pages, [`${DORMITORY}2026-10-02`]: 503 });
 
-    expect(mainServer.from('dormitory_menus', 'collection-failed')).toEqual([
+    expect(mainServer.from('dormitory_menus', '/collections/failed')).toEqual([
       {
         source: 'dormitory_menus',
         failedAt: '2026-09-30T20:00:00.000Z',
@@ -169,7 +169,7 @@ describe('A Collection that cannot fetch or read a page', () => {
   it('reports the Source as failed when a page is not the one the parser knows', async () => {
     const { mainServer } = await collect({ ...pages, [VETERINARY]: blockPage });
 
-    expect(mainServer.from('veterinary_menus', 'collection-failed')).toEqual([
+    expect(mainServer.from('veterinary_menus', '/collections/failed')).toEqual([
       { source: 'veterinary_menus', failedAt: '2026-09-30T20:00:00.000Z', reason: 'The page has no week table' },
     ]);
     expect(mainServer.from('veterinary_menus')).toEqual([]);
@@ -179,15 +179,15 @@ describe('A Collection that cannot fetch or read a page', () => {
 describe('A Collection whose menus the main server refuses', () => {
   it('is reported as failed, with the answer of the main server', async () => {
     const mainServer = new MainServerStub();
-    mainServer.refusals.set('menus-collected', 'days.0.date: Invalid ISO date');
+    mainServer.refusals.set('/menus/collected', 'days.0.date: Invalid ISO date');
 
     await collect(pages, mainServer);
 
-    expect(mainServer.from('coop_menus', 'collection-failed')).toEqual([
+    expect(mainServer.from('coop_menus', '/collections/failed')).toEqual([
       {
         source: 'coop_menus',
         failedAt: '2026-09-30T20:00:00.000Z',
-        reason: 'The main server did not take menus-collected: days.0.date: Invalid ISO date',
+        reason: 'The main server did not take /menus/collected: days.0.date: Invalid ISO date',
       },
     ]);
   });
@@ -199,8 +199,8 @@ describe('The command that runs one Collection', () => {
 
     expect(taken).toBe(true);
     expect(sources.requests.map(({ url }) => url)).toEqual(DAYS.map((day) => `${DORMITORY}${day}`));
-    expect(mainServer.messages.map(({ pattern, data }) => [pattern, data['source']])).toEqual([
-      ['menus-collected', 'dormitory_menus'],
+    expect(mainServer.messages.map(({ path, data }) => [path, data['source']])).toEqual([
+      ['/menus/collected', 'dormitory_menus'],
     ]);
   });
 
@@ -215,7 +215,7 @@ describe('The command that runs one Collection', () => {
     const { taken, mainServer } = await runCommand(['veterinary_menus'], { ...pages, [VETERINARY]: blockPage });
 
     expect(taken).toBe(false);
-    expect(mainServer.from('veterinary_menus', 'collection-failed')).toHaveLength(1);
+    expect(mainServer.from('veterinary_menus', '/collections/failed')).toHaveLength(1);
   });
 
   it.each([[['library_seats']], [['coop_menus', 'library_seats']], [[]]])(

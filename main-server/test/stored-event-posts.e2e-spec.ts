@@ -1,26 +1,29 @@
+import { INestApplication } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { GlobalEventState, PrismaClient } from '../src/generated/prisma/client.js';
 import { postNumbersFrom } from './global-events.js';
-import { refusal, sendAsWorker, startWithWorker, type WorkerHarness } from './worker.js';
+import { startApp } from './start-app.js';
+import { askAsWorker, refusal } from './worker.js';
 
-let harness: WorkerHarness;
+let app: INestApplication<Server>;
 let prisma: PrismaClient;
 
 beforeAll(async () => {
-  harness = await startWithWorker();
+  app = await startApp(inject('settings'));
   prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: inject('settings').DATABASE_URL }) });
 });
 
 afterAll(async () => {
   await prisma.$disconnect();
-  await harness.close();
+  await app.close();
 });
 
 const newPost = postNumbersFrom(910_000);
 
-// Stores a post as an earlier Collection, or an Administrator after it, left it. Sent as `events-collected` instead,
-// it would change the events list's Collection status, which test/global-events.e2e-spec.ts checks.
+// Stores a post as an earlier Collection, or an Administrator after it, left it. Posted to `/global-events/collected`
+// instead, it would change the events list's Collection status, which test/global-events.e2e-spec.ts checks.
 async function store(postNumber: number, state: GlobalEventState): Promise<void> {
   await prisma.globalEvent.create({
     data: {
@@ -40,13 +43,11 @@ describe("The worker's question about stored posts", () => {
     await store(discarded, 'discarded');
 
     await expect(
-      sendAsWorker(harness.worker, 'stored-event-posts', { postNumbers: [unknown, discarded, draft] }),
+      askAsWorker(app, '/global-events/stored-posts', { postNumbers: [unknown, discarded, draft] }),
     ).resolves.toEqual({ postNumbers: [discarded, draft] });
   });
 
   it('is refused when a post number is not a number', async () => {
-    expect(await refusal(harness.worker, 'stored-event-posts', { postNumbers: ['176525'] })).toContain(
-      'postNumbers.0: ',
-    );
+    expect(await refusal(app, '/global-events/stored-posts', { postNumbers: ['176525'] })).toContain('postNumbers.0: ');
   });
 });

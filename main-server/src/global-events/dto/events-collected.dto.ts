@@ -22,8 +22,8 @@ const collectedEventSchema = z.strictObject({
   place: z.string().min(1).nullable(),
 });
 
-// What one Collection of the events list read, sent by the worker as `events-collected`: the posts the main server
-// did not store when the worker asked.
+// What one Collection of the events list read, posted by the worker to `/global-events/collected`: the posts the main
+// server did not store when the worker asked.
 export const eventsCollectedSchema = z.strictObject({
   source: z.enum([Source.snu_events]),
   collectedAt: z.iso.datetime({ offset: true }),

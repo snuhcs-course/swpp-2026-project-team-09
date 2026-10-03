@@ -176,6 +176,9 @@ enum Source {
   coop_menus
   dormitory_menus
   veterinary_menus
+  // The shuttle operator's route page, for the stops and the service hours.
+  shuttle_stops
+  shuttle_vehicles
   // The university's events list, https://www.snu.ac.kr/snunow/events
   snu_events
 
@@ -224,4 +227,35 @@ enum PlaceOrigin {
   national_map
 
   @@map("place_origin")
+}
+
+// The circular shuttle route 41946, loaded from the seed files (README.md: Shuttle).
+model ShuttleRoute {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // The operator's number for the route.
+  number       String @unique
+  // Along OpenStreetMap's roads from 정문 around the loop back to 정문, as [{ latitude, longitude }, …].
+  line         Json
+  // As the route page writes them: the seed's, then those of the last Collection of shuttle_stops.
+  serviceHours String @map("service_hours")
+
+  @@map("shuttle_routes")
+}
+
+// One of the operator's stops of the route, at the coordinates of the campus map's stop it is paired with.
+model ShuttleStop {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // The stop's `key` in seed/shuttle-stops.json, by which loading the seed again updates the stop in place.
+  seedKey     Int    @unique @map("seed_key")
+  // As the operator writes it. The worker's messages name the stop by it.
+  name        String
+  // From 0 at 정문.
+  loopOrder   Int    @map("loop_order")
+  latitude    Float
+  longitude   Float
+  // Where the stop is on the operator's drawing of the route, in pixels: `left` and `top` on the route page.
+  drawingLeft Int    @map("drawing_left")
+  drawingTop  Int    @map("drawing_top")
+
+  @@map("shuttle_stops")
 }

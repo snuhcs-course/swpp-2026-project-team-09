@@ -1,0 +1,21 @@
+{
+  "exportedFrom": "https://web.busin.co.kr/BuslineCircleS.aspx?cd=snu_1&di=41946&tab=F",
+  "exportedOn": "2026-10-02",
+  "serviceHours": "· 운행시간 안내(주말,공휴일,개교기념일 미운행)\n-  학기 8:00~21:00 / 계절학기, 방학 8:00~18:00\n※ 학기 8:00~19:00 (5~7분), 19:00~21:00 (20분 간격)\n※ 계절학기 5~7분 간격 / 방학 10분 간격",
+  "stops": [
+    { "key": 1, "name": "정문", "left": 157, "top": 35, "campusMapStop": "정문" },
+    { "key": 2, "name": "법과대", "left": 195, "top": 86, "campusMapStop": "법대입구" },
+    { "key": 3, "name": "자연대", "left": 195, "top": 136, "campusMapStop": "자연대500동(행정관)" },
+    { "key": 4, "name": "농생대", "left": 195, "top": 188, "campusMapStop": "농생대" },
+    { "key": 5, "name": "38동", "left": 195, "top": 239, "campusMapStop": "공대입구" },
+    { "key": 6, "name": "신소재공동연구소", "left": 195, "top": 289, "campusMapStop": "신소재연구소" },
+    { "key": 7, "name": "302동", "left": 195, "top": 341, "campusMapStop": "302동 공학관" },
+    { "key": 8, "name": "301동", "left": 157, "top": 393, "campusMapStop": "301동 공학관" },
+    { "key": 9, "name": "유전공학연구소", "left": 116, "top": 341, "campusMapStop": "유전공학연구소" },
+    { "key": 10, "name": "교수회관", "left": 116, "top": 289, "campusMapStop": "교수회관입구" },
+    { "key": 11, "name": "기숙사삼거리", "left": 116, "top": 239, "campusMapStop": "기숙사삼거리" },
+    { "key": 12, "name": "국제대학원", "left": 116, "top": 188, "campusMapStop": "국제대학원" },
+    { "key": 13, "name": "수의대", "left": 116, "top": 136, "campusMapStop": "종합교육연구동" },
+    { "key": 14, "name": "경영대", "left": 116, "top": 86, "campusMapStop": "경영대" }
+  ]
+}

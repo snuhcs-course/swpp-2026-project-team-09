@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { settingsSchema } from './common/settings.js';
 import { HealthModule } from './health/health.module.js';
+import { ShuttleModule } from './shuttle/shuttle.module.js';
 import { UsersModule } from './users/users.module.js';
 
 @Module({
@@ -14,6 +15,7 @@ import { UsersModule } from './users/users.module.js';
     }),
     HealthModule,
     UsersModule,
+    ShuttleModule,
   ],
 })
 export class AppModule {}

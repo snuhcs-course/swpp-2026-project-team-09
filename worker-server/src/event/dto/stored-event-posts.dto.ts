@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// The question `stored-event-posts`: which of these posts of the events list does the main server store?
+// The question to `/global-events/stored-posts`: which of these posts of the events list does the main server store?
 export interface StoredEventPostsQuestion {
   postNumbers: number[];
 }

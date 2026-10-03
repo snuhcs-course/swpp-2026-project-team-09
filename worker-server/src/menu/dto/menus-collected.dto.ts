@@ -30,7 +30,7 @@ export const MENU_SOURCES = ['coop_menus', 'dormitory_menus', 'veterinary_menus'
 
 export type MenuSource = (typeof MENU_SOURCES)[number];
 
-// What one Collection of a menu Source read, sent to the main server as `menus-collected`.
+// What one Collection of a menu Source read, posted to the main server's `/menus/collected`.
 export interface MenusCollectedMessage {
   source: MenuSource;
   collectedAt: string;

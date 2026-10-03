@@ -1,9 +1,9 @@
-import { Global, Module } from '@nestjs/common';
+import { Global, Inject, Module, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ClientsModule } from '@nestjs/microservices';
+import { ClientProxy, ClientsModule } from '@nestjs/microservices';
 import { messagingOptions } from './messaging.js';
 
-// Injection token of the client that sends events and requests to the other servers: @Inject(MESSAGING_CLIENT).
+// Injection token of the client that sends events to the other servers: @Inject(MESSAGING_CLIENT).
 export const MESSAGING_CLIENT = 'MESSAGING_CLIENT';
 
 // Global, so that every feature module can inject the client without importing this module.
@@ -14,4 +14,11 @@ export const MESSAGING_CLIENT = 'MESSAGING_CLIENT';
   ],
   exports: [ClientsModule],
 })
-export class MessagingModule {}
+export class MessagingModule implements OnApplicationBootstrap {
+  constructor(@Inject(MESSAGING_CLIENT) private readonly client: ClientProxy) {}
+
+  // The client would otherwise connect at its first event. Connecting now stops a server that cannot reach Redis.
+  async onApplicationBootstrap(): Promise<void> {
+    await this.client.connect();
+  }
+}

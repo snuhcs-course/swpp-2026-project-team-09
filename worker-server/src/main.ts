@@ -5,7 +5,7 @@ import { Settings } from './common/settings.js';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
-  // On SIGTERM, finish the requests in progress and close the messaging client, then exit.
+  // On SIGTERM, finish the requests in progress, then exit.
   app.enableShutdownHooks();
   const settings = app.get<ConfigService<Settings, true>>(ConfigService);
   await app.listen(settings.get('PORT', { infer: true }));

@@ -28,6 +28,8 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     INITIAL_ADMINISTRATOR_EMAILS: 'admin@example.com',
     // Not a key: the tests never call Kakao.
     KAKAO_REST_API_KEY: 'test-kakao-rest-api-key',
+    // Not a secret: sendAsWorker(app, …) sends it as the worker does.
+    WORKER_TOKEN: 'test-worker-token-of-thirty-two-characters',
   };
   migrate(settings.DATABASE_URL);
   await seed(settings.DATABASE_URL);
