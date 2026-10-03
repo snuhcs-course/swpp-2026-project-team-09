@@ -220,6 +220,7 @@ The worker sends each post of the events list as one event, all those of a Colle
 {
   "source": "snu_events",
   "collectedAt": "2026-10-02T06:00:00+09:00",
+  "complete": true,
   "events": [
     {
       "postNumber": 176525,
@@ -236,6 +237,8 @@ The worker sends each post of the events list as one event, all those of a Colle
 ```
 
 - `events` holds the posts the main server did not store when the worker asked, and is `[]` when there are none.
+- `complete` is `false` when the Collection stopped at a post it could not read. Its posts are stored all the same,
+  but the Collection is not recorded as successful.
 - `start` and `end` are each a time with its offset, or a day when no time of day was read. `readFrom` says where they
   were read: `body` for the body's time line, `header` for the header's date. All three are `null` when no day was
   read.
@@ -278,8 +281,8 @@ No Collection changes a stored event, whatever its state. A post is stored once,
 message carrying it again leaves it exactly as it is. So an Administrator's edits stay, and a discarded post does not
 come back. The worker asks which posts are stored before it reads any (`stored-event-posts`), so it reads each post once:
 an edit or a deletion at the Source after that is not seen. A Collection that cannot read a post sends the posts it read
-before it, then reports the failure with the same time, so that the Collection status does not show it as having worked
-since.
+before it with `complete: false`, then reports the failure, so that `lastSucceededAt` stays the time of the last
+Collection that read every post.
 
 What the rules read from a post, and how, is in the worker server's README. In a test, `collectedEvent()`,
 `eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
@@ -759,7 +762,8 @@ follows these rules.
   by their times.
 - **Collection status**: `collection_statuses` keeps, for each Source, the time of its last successful Collection
   (`lastSucceededAt`) and, apart from it, its last failure (`lastFailedAt`, `lastFailureReason`). A handler that stores
-  what a Collection read calls `CollectionService.recordSuccess(tx, source, collectedAt)` in the same transaction. A
+  what a Collection read calls `CollectionService.recordSuccess(tx, source, collectedAt)` in the same transaction,
+  unless the message says the Collection did not finish (`complete: false` in `events-collected`). A
   Collection that fails sends `collection-failed` with `{ "source", "failedAt", "reason" }`, where `reason` says what
   went wrong. It records the failure and leaves every stored record as it is. A success leaves the last failure in
   place, so the two times tell whether the Source has worked since. No route serves the status yet; P12 shows it.

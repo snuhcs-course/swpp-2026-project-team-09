@@ -238,3 +238,31 @@ describe('A Collection of the events list', () => {
     expect(await storedEvent(postNumber)).toEqual(stored);
   });
 });
+
+describe('A Collection of the events list that stopped at a post it could not read', () => {
+  it('stores the posts read before it, and is recorded as failed but not as successful', async () => {
+    const postNumber = newPost();
+    await sendAsWorker(
+      harness.worker,
+      'events-collected',
+      eventsMessage([], { collectedAt: '2026-10-03T00:00:00+09:00' }),
+    );
+
+    await sendAsWorker(
+      harness.worker,
+      'events-collected',
+      eventsMessage([collectedEvent(postNumber)], { collectedAt: '2026-10-03T06:00:00+09:00', complete: false }),
+    );
+    await sendAsWorker(harness.worker, 'collection-failed', {
+      source: 'snu_events',
+      failedAt: '2026-10-03T06:00:00+09:00',
+      reason: 'The page has no post',
+    });
+
+    expect(await storedEvent(postNumber)).toMatchObject({ postNumber });
+    expect(await eventsStatus()).toMatchObject({
+      lastSucceededAt: new Date('2026-10-02T15:00:00Z'),
+      lastFailedAt: new Date('2026-10-02T21:00:00Z'),
+    });
+  });
+});

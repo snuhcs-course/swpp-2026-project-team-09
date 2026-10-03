@@ -37,10 +37,12 @@ export class GlobalEventsService {
 
   // A post already stored is left as it is, in whatever state, so that an Administrator's edits stay and a discarded
   // post does not come back.
-  async storeCollected({ source, collectedAt, events }: EventsCollectedMessage): Promise<void> {
+  async storeCollected({ source, collectedAt, complete, events }: EventsCollectedMessage): Promise<void> {
     const places = await this.places.list();
     await this.prisma.$transaction(async (tx) => {
-      await this.collection.recordSuccess(tx, source, new Date(collectedAt));
+      if (complete) {
+        await this.collection.recordSuccess(tx, source, new Date(collectedAt));
+      }
       await tx.globalEvent.createMany({
         data: events.map((event) => toGlobalEvent(event, places)),
         skipDuplicates: true,

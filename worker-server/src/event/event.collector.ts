@@ -49,7 +49,7 @@ export class EventCollector extends Collector {
     const answer = storedEventPostsAnswerSchema.parse(await this.send('stored-event-posts', question));
     const stored = new Set(answer.postNumbers);
     const { events, failure } = await this.readPosts(listed.filter((post) => !stored.has(post)));
-    const message = { source, collectedAt: now.toISOString(), events };
+    const message = { source, collectedAt: now.toISOString(), complete: failure === null, events };
     if (failure !== null) {
       // What was read is stored all the same, so that it is not read again, and the Collection fails.
       if (events.length > 0) {

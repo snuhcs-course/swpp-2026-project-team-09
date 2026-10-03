@@ -27,6 +27,8 @@ const collectedEventSchema = z.strictObject({
 export const eventsCollectedSchema = z.strictObject({
   source: z.enum([Source.snu_events]),
   collectedAt: z.iso.datetime({ offset: true }),
+  // False when the Collection stopped at a post it could not read: its posts are stored, but it did not succeed.
+  complete: z.boolean(),
   events: z
     .array(collectedEventSchema)
     .refine(

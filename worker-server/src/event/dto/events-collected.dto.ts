@@ -24,5 +24,7 @@ export interface CollectedEvent {
 export interface EventsCollectedMessage {
   source: EventListSource;
   collectedAt: string;
+  // False when the Collection stopped at a post it could not read, so that the main server does not record a success.
+  complete: boolean;
   events: CollectedEvent[];
 }

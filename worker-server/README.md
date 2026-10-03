@@ -195,8 +195,9 @@ A Collection does four things, one page at a time:
    `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525`, one after the other, and stops at the first that cannot be
    fetched or read: a blocked request is likely followed by more.
 4. It sends what it read, in the list's order. When every post is stored, the message has no event and still records a
-   successful Collection. When a post could not be read, the posts read before it are sent all the same, so that they
-   are stored and never read again, and the Collection then fails.
+   successful Collection. When a post could not be read, the posts read before it are sent all the same, with
+   `complete: false`, so that they are stored and never read again without counting as a success, and the Collection
+   then fails.
 
 So a post is read once, and an edit at the Source after that is not seen. While one post cannot be read, the posts
 listed after it wait for it, and each Collection fails on it, which the Collection status shows.

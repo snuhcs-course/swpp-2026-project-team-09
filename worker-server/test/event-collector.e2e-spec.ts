@@ -72,6 +72,7 @@ describe('A Collection of the events list', () => {
     expect(mainServer.from('snu_events', 'events-collected')).toMatchObject([
       {
         collectedAt: '2026-10-01T21:00:00.000Z',
+        complete: true,
         events: [
           { postNumber: 176558, start: '2026-10-26', end: '2026-11-27', readFrom: 'body' },
           {
@@ -89,7 +90,7 @@ describe('A Collection of the events list', () => {
 
     expect(sources.requests).toHaveLength(3);
     expect(mainServer.from('snu_events', 'events-collected')).toEqual([
-      { source: 'snu_events', collectedAt: '2026-10-01T21:00:00.000Z', events: [] },
+      { source: 'snu_events', collectedAt: '2026-10-01T21:00:00.000Z', complete: true, events: [] },
     ]);
   });
 });
@@ -105,7 +106,7 @@ describe('A Collection of the events list that cannot read a post', () => {
     expect(sources.requests.at(-1)?.url).toBe(`${POST}176558`);
   });
 
-  it('sends the posts read before the one it cannot read, so that they are not read again', async () => {
+  it('sends the posts read before the one it cannot read, so that they are not read again, as incomplete', async () => {
     // 176558 is read, then 176525 is blocked.
     const { mainServer } = await collect({ ...pages, [`${POST}176525`]: blockPage });
 
@@ -114,7 +115,9 @@ describe('A Collection of the events list that cannot read a post', () => {
       'events-collected',
       'collection-failed',
     ]);
-    expect(mainServer.from('snu_events', 'events-collected')).toMatchObject([{ events: [{ postNumber: 176558 }] }]);
+    expect(mainServer.from('snu_events', 'events-collected')).toMatchObject([
+      { complete: false, events: [{ postNumber: 176558 }] },
+    ]);
     expect(mainServer.from('snu_events', 'collection-failed')).toMatchObject([{ reason: 'The page has no post' }]);
   });
 });

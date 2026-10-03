@@ -25,7 +25,7 @@ export function collectedEvent(postNumber: number, changes: object = {}): Record
 
 // An events message of the worker, with `changes` applied.
 export function eventsMessage(events: object[], changes: object = {}): object {
-  return { source: 'snu_events', collectedAt: '2026-10-02T06:00:00+09:00', events, ...changes };
+  return { source: 'snu_events', collectedAt: '2026-10-02T06:00:00+09:00', complete: true, events, ...changes };
 }
 
 // A time no stored message carries, so that a success recorded for a refused message would be seen.
@@ -67,6 +67,11 @@ export const invalidEventsMessages: [string, (valid: number, other: number) => o
     'the same post twice',
     (valid) => eventsMessage([collectedEvent(valid), collectedEvent(valid)], refusedAt),
     'events: Each post must appear once',
+  ],
+  [
+    'no word on whether the Collection read every post',
+    (valid) => eventsMessage([collectedEvent(valid)], { ...refusedAt, complete: undefined }),
+    'complete: ',
   ],
   [
     'a Source that has no events',
