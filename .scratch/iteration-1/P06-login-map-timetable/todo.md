@@ -1,12 +1,11 @@
 # P06 to-do list
 
-Everything P06 has to deliver, everything filled with fake data for now, and everything asked of someone else. [`spec.md`](./spec.md) decides what is built, the tickets in [`issues/`](./issues/) say how each part is accepted, and this list tracks it all. Each section names who does its items. When a decision defers something, fills it with fake data, or needs a server API, add it here at once; tick it when it is done.
+Everything P06's app has to deliver, and everything filled with fake data for now. [`spec.md`](./spec.md) decides what is built, the tickets in [`issues/`](./issues/) say how each part is accepted, and this list tracks it all. Each section names who does its items. When a decision defers something or fills it with fake data, add it here at once; tick it when it is done.
 
 Who does what:
 
 - **Frontend**: the app's code. 안진영 writes it.
 - **Device check**: running a built app on a Mac and on the shared Android phone, and fixing what fails. 함재현 does it.
-- **Backend**: server APIs. 윤유상 does them.
 - **Design**: wireframes the team has to draw and texts it has to write.
 - **People**: what code cannot do, such as getting keys and registering the app in a console.
 
@@ -77,7 +76,7 @@ Places that lead to another screen (they show the "준비 중" notice; see secti
 ### 1.4 Sign-in, loading, Onboarding (tickets 12, 13, 14)
 
 - [ ] The sign-in screen's three states (default, checking, not an SNU account), and the refused state with other words for any other failure ("잠시 후 다시 시도해 주세요")
-- [ ] The screens that show the three legal documents (the texts are placeholders; see section 6)
+- [ ] The screens that show the three legal documents (the texts are placeholders; see section 5)
 - [ ] Google sign-in: real in a built app, fake in Expo Go, chosen while the app runs. On Android the account sheet first, then the button flow
 - [ ] Tokens kept in the phone's secure storage
 - [ ] The loading screen as in the wireframe: the bar fills while the Lobby is fetched, the screen stays for at least 0.5 seconds, and a failure offers "다시 시도"
@@ -113,7 +112,7 @@ Places that lead to another screen (they show the "준비 중" notice; see secti
 - [ ] The Private Event's teal pin on the map and its card with "수정" and "길찾기" (`MainPrivatePin`)
 - [ ] The screen for choosing a Place (`PlacePicker`, `PlacePickerClass`, `PlacePickerEmpty`): the list of Places and its search
 - [ ] "지도에서 직접 찍기" (`PlacePickerMap`): the map moves under a pin fixed at its centre, and the sheet names the Place under or nearest to it. From the Private Event form only
-- [ ] Until the server names the Place at a position (5.1), the app works the name out from the Places' positions
+- [ ] The app works the name out from the Places' positions
 - [ ] An `Idempotency-Key` on the creating request
 
 ### 1.8 iOS (ticket 22)
@@ -121,7 +120,11 @@ Places that lead to another screen (they show the "준비 중" notice; see secti
 - [ ] The iOS map module (Swift), written after the Android module was checked
 - [ ] Google sign-in settings for iOS
 
-### 1.9 Tests (every ticket)
+### 1.9 Connecting the fakes (ticket 23)
+
+- [ ] Each of this task's fakes is replaced by the main server when the main server serves it
+
+### 1.10 Tests (every ticket)
 
 - [ ] P06's own features in full, as the spec's Testing Decisions list them
 - [ ] Elements filled with fake data: the screen appears and its main buttons respond
@@ -142,27 +145,27 @@ What only a built app shows. 함재현 fixes what fails and merges. The list to 
 
 The same content as the app's per-feature list, for a built app. In Expo Go every feature is fake. Before the demo build (P20), check that nothing here is still fake by accident.
 
-| Feature | Now | Becomes real when | Server work by |
-|---|---|---|---|
-| Sign-in, refresh, sign-out | The server exists (fake only in Expo Go) | In a built app | Done |
-| Onboarding, Lobby, profile (name, department, admission year, interests) | The server exists | At once | Done |
-| The list of Places and its search | The server exists (`GET /places`, `GET /places/search`) | At once | Done |
-| Walking route | The server exists (`GET /walking-route`) | At once | Done |
-| The profile's course level and gender | Fake | The requests of 5.1 are built | 윤유상 |
-| Timetable | Fake | The requests of 5.1 are built | 윤유상 |
-| Private Events | Fake | The requests of 5.1 are built | 윤유상 |
-| The name of a point chosen on the map | Worked out in the app | The request of 5.1 is built | 윤유상 |
-| Global Event markers | Fake, in the shape of PR #30 | P12 serves the published list | P12 |
-| Sending the position, storing the Master Switch | Fake | P08 | P08 |
-| The friend list and Friends' positions | Fake, in a provisional shape | P08 and P14 | P08 |
-| The Quest list | Fake, in a provisional shape | P08 and P13 | P08 |
-| The dining layer | Fake | P15 connects it (`GET /menus` exists) | Done; the screen is P15's |
-| The shuttle layer | Fake | P07-04 (PR #31) and P15 | 김태현 |
-| Study space seats, the AI chat, stories, 오늘의 발자국 | Sample content inside the screen | No spec covers them (5.3) | Undecided |
+| Feature | Now | Becomes real when |
+|---|---|---|
+| Sign-in, refresh, sign-out | The server exists (fake only in Expo Go) | In a built app |
+| Onboarding, Lobby, profile (name, department, admission year, interests) | The server exists | At once |
+| The list of Places and its search | The server exists (`GET /places`, `GET /places/search`) | At once |
+| Walking route | The server exists (`GET /walking-route`) | At once |
+| The profile's course level and gender | Fake | The main server stores them (ticket 23) |
+| Timetable | Fake | The main server serves it (ticket 23) |
+| Private Events | Fake | The main server serves them (ticket 23) |
+| The name of a point chosen on the map | Worked out in the app | The main server serves its lookup (ticket 23) |
+| Global Event markers | Fake, in the shape of PR #30 | P12 serves the published list |
+| Sending the position, storing the Master Switch | Fake | P08 |
+| The friend list and Friends' positions | Fake, in a provisional shape | P08 and P14 |
+| The Quest list | Fake, in a provisional shape | P08 and P13 |
+| The dining layer | Fake | P15 connects it (`GET /menus` exists) |
+| The shuttle layer | Fake | P07-04 (PR #31) and P15 |
+| Study space seats, the AI chat, stories, 오늘의 발자국 | Sample content inside the screen | No spec covers them |
 
 ## 4. Buttons that show "준비 중"
 
-The control is there and only shows the toast. The task named is the frontend's proposal for who replaces it; P13 and P14's specs do not say so yet (section 7).
+The control is there and only shows the toast. The task named is the frontend's proposal for who replaces it; P13 and P14's specs do not say so yet (section 6).
 
 | Where | Button | Replaced by |
 |---|---|---|
@@ -175,34 +178,11 @@ The control is there and only shows the toast. The task named is the frontend's 
 | 내 정보 | 관심 행사 | In no Iteration 1 spec |
 | 내 정보 | The bell and 알림 설정 | In no Iteration 1 spec |
 | 내 정보 | 비공개 구역 관리 | Out of Iteration 1's scope (Private Zones) |
-| Profile editing | 사진 변경 | After the request of 5.2 |
+| Profile editing | 사진 변경 | When the main server takes photos |
 | Timetable card | 이미지로 불러오기 | Iteration 2 (timetable OCR) |
 | Timetable card | 빈 시간 말하기 | In no Iteration 1 spec |
 
-## 5. Requests to the backend (for 윤유상)
-
-### 5.1 Needed by P06 (tickets 23 to 26; ticket 27 connects the app to them)
-
-- [ ] The timetable API: one timetable per User. The semester's first and last day, and class entries (course name, one or more weekdays, start time, end time, Place, room text). Overlapping classes are accepted; the app works out the overlap itself. Only the owner reads or changes it. Adding a class without an `Idempotency-Key` is refused
-- [ ] The Private Event API: create, list, edit, delete. A title, a start, an optional end, a place (a Place, or a point on the map with the label the app showed) and a note. Only the owner reads or changes one. Creating without an `Idempotency-Key` is refused
-- [ ] The profile gains a course level: undergraduate or graduate
-- [ ] The profile gains a gender: not given, female, male, or a text of the User's own
-- [ ] A route that answers the Place a position is in or near, or none: the main server's own lookup, served to the app
-- [ ] A refresh refused because another sign-in ended the Session carries `SESSION_REPLACED`
-- [ ] The shapes the app expects are in the spec, under "Server APIs the app needs"; they go to 윤유상 as a server ticket
-
-### 5.2 Needed later (recorded, not asked yet)
-
-- [ ] Uploading a profile photo (large: file storage, a size limit, a format check)
-
-### 5.3 Server work of other tasks that the P06 app waits for
-
-- [ ] The list of published Global Events (P12)
-- [ ] Uploading a position, storing the Master Switch, serving the visible positions (P08)
-- [ ] The friend list and the Quest list (P08). The app's fake data has a provisional shape; tell the frontend when P08 settles the real one
-- [ ] In no spec: the AI chat, stories, 오늘의 발자국, study space seats, notifications, saved events. The team has to decide whether to build them
-
-## 6. Design: wireframes and texts (the frontend pair, with the team)
+## 5. Design: wireframes and texts (the frontend pair, with the team)
 
 Drawn on 2026-10-03:
 
@@ -232,7 +212,7 @@ Built without a frame; the spec gives the wording, which the team may change:
 - [ ] The notice of a failed sign-in
 - [ ] The toasts "캠퍼스 밖에 있어요", "길을 찾지 못했어요" and "준비 중이에요"
 
-## 7. For people (안진영, unless a name is given)
+## 6. For people (안진영, unless a name is given)
 
 - [ ] Get `KAKAO_REST_API_KEY` (the main server does not start without it)
 - [ ] Get `KAKAO_NATIVE_APP_KEY` (the app's map)
@@ -241,5 +221,5 @@ Built without a frame; the spec gives the wording, which the team may change:
 - [ ] Ask for an iOS sign-in client in Google Cloud
 - [ ] Tell the team: the frontend rewrote the P06 spec, iOS is in Iteration 1, and the whole main screen is built with fake data first
 - [ ] Update P06's scope and workers in the schedule sheet
-- [ ] Tell the owners of the other specs what P06 changed for them, as the spec's Further Notes list it: P13 and P14 (the lists and tabs of the main screen), P19 (nothing provisional left for these screens), P15, P07 and the main server's README (the attribution is on the map), P08 (the timetable API is a server ticket of P06, and a class holds several weekdays)
+- [ ] Tell the owners of the other specs what P06 changed for them, as the spec's Further Notes list it: P13 and P14 (the lists and tabs of the main screen), P19 (nothing provisional left for these screens), P15, P07 and the main server's README (the attribution is on the map), P08 (in the app a class holds several weekdays, and P06 no longer holds the timetable API)
 - [ ] Add an iOS section to `.scratch/research/external-sources.md` when the iOS side is built: Kakao's iOS SDK and its registration, the iOS Google client and its URL scheme, with sources

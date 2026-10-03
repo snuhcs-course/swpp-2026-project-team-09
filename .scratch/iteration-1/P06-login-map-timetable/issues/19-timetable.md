@@ -8,7 +8,7 @@ Blocked by: 15 (내 정보 screen), 18 (Choosing a Place: the list and its searc
 
 A User records their classes: sets the semester's first and last day, adds a class with its weekdays, times, Place and room, edits and deletes it, and is warned when two classes overlap. 내 정보 shows the week. The screens are the frames `Timetable`, `TimetableEmpty`, `TimetableClassForm`, `TimetableOverlap` and `TimetableOverlapList`, and the timetable card of `Profile`.
 
-The timetable is fake, in the shape the spec gives under "Server APIs the app needs", until ticket 27 connects ticket 23's API.
+The timetable is fake, holding what the spec lists under "What the fakes hold", until ticket 23 connects it to the main server.
 
 ## Acceptance criteria
 

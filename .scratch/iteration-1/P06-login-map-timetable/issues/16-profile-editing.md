@@ -6,7 +6,7 @@ Blocked by: 15 (내 정보 screen)
 
 ## What to build
 
-A User changes their name, department, admission year, interests, course level and gender on the frame `ProfileEdit`, and 내 정보 shows the change. The first four are saved through P04's profile API. The course level and the gender are fake fields of a real feature until ticket 25: the profile's adapter merges the server's fields with what the phone stored.
+A User changes their name, department, admission year, interests, course level and gender on the frame `ProfileEdit`, and 내 정보 shows the change. The first four are saved through P04's profile API. The course level and the gender are fake fields of a real feature until the main server stores them: the profile's adapter merges the server's fields with what the phone stored.
 
 ## Acceptance criteria
 

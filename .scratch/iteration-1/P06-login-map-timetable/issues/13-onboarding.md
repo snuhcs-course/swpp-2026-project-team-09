@@ -8,7 +8,7 @@ Blocked by: 12 (Sign-in, loading and the Session)
 
 A new User confirms a name and a department after the first sign-in and arrives at the map. The screen is the frame `Onboarding`. The main server's side exists (P04): its README records the suggestion, the request that completes Onboarding and the profile's limits.
 
-The course level and the gender are fake until the server stores them (ticket 25).
+The course level and the gender are fake until the main server stores them.
 
 ## Acceptance criteria
 

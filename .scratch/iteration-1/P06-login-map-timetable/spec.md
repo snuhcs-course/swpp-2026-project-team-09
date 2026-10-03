@@ -86,7 +86,6 @@ The screens follow the team's wireframes from the start. Each screen is first bu
 48. As an SNU student with an iPhone, I want the same app as on Android, so that my phone does not decide whether I can use it.
 49. As a frontend worker without a Mac or an Android phone, I want to see every screen in Expo Go, so that I can check my work alone.
 50. As a frontend worker, I want a built app to use the real map and the real sign-in without changing a setting, so that the same code serves both.
-51. As a backend worker, I want the APIs the app needs written down with the shapes the app expects, so that I can build them without reading the app.
 
 ## Implementation Decisions
 
@@ -163,7 +162,7 @@ The screens follow the team's wireframes from the start. Each screen is first bu
 
 - The client attaches the access token. On a 401 it renews the Session once and repeats the request; when renewal fails it shows the sign-in screen.
 - The code `SESSION_REPLACED`, on a 401 from the main server or on `session-ended` from the socket server, means that the User signed in on another phone. The app does not renew the Session, stops sending its position, and shows the notice and then the sign-in screen.
-  - Known gap: when the access token has already expired, the main server answers a plain 401 and then refuses the refresh with a plain 401, so the app shows the sign-in screen without the notice. The server request under [Server APIs the app needs](#server-apis-the-app-needs) closes it.
+  - Known gap: when the access token has already expired, the main server answers a plain 401 and then refuses the refresh with a plain 401, so the app shows the sign-in screen without the notice.
 - A 403 with `ONBOARDING_REQUIRED` from any request shows the Onboarding screen, with the suggestion that the answer carries.
 - Loading, errors, caching and refetching are left to TanStack Query. A screen asks for data and is told whether it is loading, failed or there.
 - The client adds an `Idempotency-Key` header to every request that creates something. The server side is described in P04.
@@ -324,7 +323,7 @@ The screens follow the team's wireframes from the start. Each screen is first bu
   - in a Place, or within 5 metres of its outline: the Place's name and number, and choosing it chooses that Place;
   - within 20 metres of a Place: "{Place} 근처", stored as a point with that label;
   - farther from every Place: "지도에서 고른 위치", stored as a point with that label.
-- Until the server answers that lookup for the app, the app measures to the Places' own positions with the same distances. It cannot tell "in" from "near" as well as the server will, which holds the outlines.
+- The app measures to the Places' own positions with those distances. It cannot tell "in" from "near" as well as the server, which holds the outlines.
 
 ### Route
 
@@ -348,25 +347,14 @@ Built from the design system's confirmation dialog, the `LoginError` frame and t
 | Toast | No route | "길을 찾지 못했어요" |
 | Toast | A feature of another task | "준비 중이에요" |
 
-### Server APIs the app needs
+### What the fakes hold
 
-윤유상 builds every server API, as tickets of this task. The shapes below are what the app's fakes use; 윤유상 decides the final shapes, and the app's adapters follow.
+The fakes of this task's own features hold the following, in the app's provisional shapes. When the main server serves a feature, its adapter follows the server's shape.
 
-- **Timetable.** One per User, read and changed by its owner alone.
-  - Reading answers the semester's first and last day, either of which may be missing, and the classes: an identifier, a course name of 30 characters at most, the weekdays, a start and an end time of day, the Place's identifier and a room text of 20 characters at most.
-  - Setting the semester's days, adding a class, changing a class and deleting a class are separate requests.
-  - Overlapping classes are accepted.
-  - Adding a class without an `Idempotency-Key` is refused.
-- **Private Events.** Read and changed by their owner alone.
-  - Listing, creating, changing and deleting.
-  - A Private Event has a title of 30 characters at most, a start, an optional end after the start, a place and a note of 200 characters at most.
-  - The place is either a Place's identifier or a point: a latitude, a longitude and the label the app showed.
-  - Creating without an `Idempotency-Key` is refused.
-- **Profile.** Two more fields, both optional: the course level, undergraduate or graduate, and the gender, which is female, male or a text of the User's own. Onboarding and the profile's change accept them.
-- **The Place at a position.** A route that answers the main server's own lookup: the Place a position is in or near, or none.
-- **The code on a refused refresh.** A refresh refused because another sign-in ended the Session carries `SESSION_REPLACED`, so that the app can say so even when the access token has expired.
-- **Later.** Uploading a profile photo. It is recorded in `todo.md` and not asked for yet.
-- **From other tasks.** The list of published Global Events (P12); uploading a position, storing the Master Switch and serving the visible positions (P08); the friend list and the Quest list (P08).
+- **Timetable.** One per User: the semester's first and last day, either of which may be missing, and the classes. A class has an identifier, a course name of 30 characters at most, one or more weekdays, a start and an end time of day, a Place's identifier and a room text of 20 characters at most.
+- **Private Events.** Each has an identifier, a title of 30 characters at most, a start, an optional end after the start, a place and a note of 200 characters at most. The place is either a Place's identifier or a point: a latitude, a longitude and the label the app showed.
+- **Profile.** Two fields beside the server's: the course level, undergraduate or graduate, and the gender, which is female, male or a text of the User's own. Both may be missing.
+- **The Place at a position.** For a latitude and a longitude: a Place and whether the position is in it or near it, or nothing.
 
 ### Builds
 
@@ -383,7 +371,6 @@ Built from the design system's confirmation dialog, the `LoginError` frame and t
 - An element filled with fake data is tested lightly: the screen appears and its main controls respond. The task that connects it tests it in full.
 - The API client is tested with Jest against a fake server: the token and the one renewal, the replaced Session, the same key on every retry, a new key for a new action, and the behaviour for each answer in the table.
 - The native module cannot be tested that way. 함재현 checks it by hand on a device against the list at the end of the Map decisions above, and checks a real Google sign-in on each platform, which nobody has tried yet.
-- The server APIs are tested by their own tickets, at the API level with Vitest against a real database, as P04's are.
 - Every pull request passes the project's four checks: lint, format, types and tests.
 - Prior art: the app's placeholder screen test, and the sign-in tests of P04.
 
@@ -415,9 +402,10 @@ Built from the design system's confirmation dialog, the `LoginError` frame and t
   - P13 and P14 lay the Quest list, the Party member list and the friend panels over the map as provisional panels. The wireframes give the main screen a friend list and a Quest list at its sides and separate party and events screens behind tabs. P06 builds those lists with fake data; P13 and P14 connect them and build the screens behind the tabs.
   - P19 adapts provisional screens to the wireframes. For the screens of this task nothing provisional is left to adapt.
   - P15, P07 and the main server's README put the map data's attribution on an information screen. P06 puts it on the map.
-  - P08 depends on the timetable API "of P06" with one weekday per class. The API is now a server ticket of this task, built by 윤유상, and a class holds several weekdays.
+  - P08 depends on the timetable API "of P06" with one weekday per class. This spec covers the app alone, and in the app a class holds several weekdays.
 - The wireframe's switch reads "친구와 위치 공유", while the Master Switch turns off all Location Sharing, a Party's included. The label is the design's to settle.
-- People: 안진영 writes the app, both sides of the native module included. 함재현 does the device checks, on a Mac and on the shared Android phone, and fixes and merges the native module. 윤유상 builds the server APIs.
+- People: 안진영 writes the app, both sides of the native module included. 함재현 does the device checks, on a Mac and on the shared Android phone, and fixes and merges the native module.
+- This spec covers the app. The server work that the first spec held, the timetable and Private Event APIs, is not part of it; the app's fakes stand in until the main server serves them.
 - 안진영 works on Windows with an iPhone and sees the app in Expo Go only. There every feature is fake, so the real APIs, the Session's renewal and the retries are exercised by the Jest tests and by 함재현's builds.
 - A real Google sign-in has never been tried. P05 built the sign-in library into a trial app and ran its configuration, no more.
 - Every build signing key needs its own registration: the key hash at Kakao and the SHA-1 fingerprint at Google. `.scratch/research/external-sources.md` §7 and §8 have the details for Android. They do not cover iOS yet: the bundle identifier's registration at Kakao, the iOS client at Google and its URL scheme are to be added there with their sources when the iOS side is built.

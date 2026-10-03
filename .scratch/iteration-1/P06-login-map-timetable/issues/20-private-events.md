@@ -8,7 +8,7 @@ Blocked by: 06 (Main screen: event markers, the event card and the walking route
 
 A User presses and holds a spot on the map, creates a Private Event there, and sees it as a teal marker that only they see. A tap on the marker shows its card, from which the User edits it, deletes it or asks for the way there. The frames are `MainLongPress`, `PrivateEventCreate`, `PrivateEventEdit` and `MainPrivatePin`.
 
-Private Events are fake, in the shape the spec gives under "Server APIs the app needs", until ticket 27 connects ticket 24's API. Until ticket 21, a spot that is not a Place is named by the nearest Place's name alone.
+Private Events are fake, holding what the spec lists under "What the fakes hold", until ticket 23 connects them to the main server. Until ticket 21, a spot that is not a Place is named by the nearest Place's name alone.
 
 ## Acceptance criteria
 
