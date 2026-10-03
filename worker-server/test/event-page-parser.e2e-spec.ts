@@ -43,6 +43,40 @@ describe('A post with a time and a place', () => {
   });
 });
 
+// 176525's place line, and the same place written another way.
+const PLACE_LINE = '- 장소: 뉴미디어통신공동연구소 이충웅홀(132동 103호)';
+
+function withPlaceLine(line: string): CollectedEvent {
+  return parsed(176525, (page) => page.replace(PLACE_LINE, line));
+}
+
+describe('The place line of a post', () => {
+  it.each([
+    ['a label naming the place of the event', '- 오프라인 장소: 뉴미디어통신공동연구소 이충웅홀(132동 103호)'],
+    ['a "]" after its label', '• 장소] 뉴미디어통신공동연구소 이충웅홀(132동 103호)'],
+    ['a "|" after its label', '장소 | 뉴미디어통신공동연구소 이충웅홀(132동 103호)'],
+    ['its label on the line before', '4. 장소<br>- 뉴미디어통신공동연구소 이충웅홀(132동 103호)'],
+  ])('is read with %s', (_case, line) => {
+    expect(withPlaceLine(line).place).toBe('뉴미디어통신공동연구소 이충웅홀(132동 103호)');
+  });
+
+  it.each([
+    ['a place to gather', '- 집결 장소: 서울대학교 정문'],
+    ['a place to apply', '- 신청 장소: 학생회관(63동) 2층'],
+    ['a label alone before another label', '4. 장소<br>- 장소 문의: 02-880-0000'],
+  ])('is not read from %s', (_case, line) => {
+    expect(withPlaceLine(line).place).toBeNull();
+  });
+
+  it('gives the time from a time line with a "|" after its label', () => {
+    const piped = parsed(176525, (page) =>
+      page.replace('- 일시: 2026. 10. 13.(화) 17:00', '일시 | 2026. 10. 13.(화) 17:00'),
+    );
+
+    expect(piped).toMatchObject({ start: '2026-10-13T17:00:00+09:00', readFrom: 'body' });
+  });
+});
+
 describe('The time line of a post', () => {
   it('reads the end of a time written in words', () => {
     // 176516's time line given an end.
