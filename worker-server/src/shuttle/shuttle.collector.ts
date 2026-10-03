@@ -44,9 +44,9 @@ export class ShuttleCollector extends Collector {
     const now = new Date();
     const collect = {
       shuttle_stops: (): Promise<boolean> =>
-        this.handOver(source, now, 'shuttle-stops-collected', this.readRoutePage(now)),
+        this.handOver(source, now, '/shuttle/stops/collected', this.readRoutePage(now)),
       shuttle_vehicles: (): Promise<boolean> =>
-        this.handOver(source, now, 'shuttle-vehicles-collected', this.readVehiclePositions()),
+        this.handOver(source, now, '/shuttle/vehicles/collected', this.readVehiclePositions()),
     };
     return collect[source]();
   }

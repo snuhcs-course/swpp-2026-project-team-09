@@ -1,8 +1,6 @@
 import { INestApplication, Type } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { Server } from 'node:http';
-import { messagingOptions } from '../src/common/messaging.js';
 import { Settings } from '../src/common/settings.js';
 import { FETCH_KAKAO } from '../src/walking-route/walking-route.service.js';
 import { TestGoogleIdTokenVerifier } from './google.js';
@@ -30,11 +28,7 @@ export async function startApp(
     .useValue(fetchKakao)
     .compile();
   const app = moduleRef.createNestApplication<INestApplication<Server>>();
-  // Started as main.ts starts it, so that the tests run the server as it runs.
-  app.connectMicroservice(messagingOptions(app.get<ConfigService<Settings, true>>(ConfigService)));
   try {
-    await app.init();
-    await app.startAllMicroservices();
     // On a free port, once. A server that does not listen is started and closed by supertest around each group of
     // requests, on a new port each time, and now and then a request reached something else or hung up.
     await app.listen(0, '127.0.0.1');

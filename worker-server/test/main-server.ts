@@ -1,30 +1,54 @@
-import { NEVER, Observable, of, throwError } from 'rxjs';
 import { z } from 'zod';
 
 const payloadSchema = z.record(z.string(), z.unknown());
 
-// Stands for the main server in place of the messaging client: keeps each message the worker sends and answers it.
+// Stands for the main server: keeps each message the worker sends, with the path it was sent to, and answers it.
 export class MainServerStub {
-  readonly messages: { pattern: string; data: Record<string, unknown> }[] = [];
-  // The problem to answer a message of a pattern with, in place of taking it.
+  readonly messages: { path: string; data: Record<string, unknown> }[] = [];
+  // The token of each message, as the worker sent it.
+  readonly tokens: (string | null)[] = [];
+  // The problem to answer a message to a path with, in place of taking it.
   readonly refusals = new Map<string, string>();
-  // The patterns whose messages get no answer, as from a main server that is down.
+  // The paths whose messages get no answer, as from a main server that hangs.
   readonly unanswered = new Set<string>();
+  // A main server that cannot be reached.
+  down = false;
 
-  send(pattern: string, data: unknown): Observable<unknown> {
-    // As JSON, which is how a message travels.
-    this.messages.push({ pattern, data: payloadSchema.parse(JSON.parse(JSON.stringify(data))) });
-    if (this.unanswered.has(pattern)) {
-      return NEVER;
+  // Give it to startApp in place of the HTTP call to the main server.
+  readonly fetch: typeof fetch = (input, init) => {
+    if (this.down) {
+      return Promise.reject(new Error('connect ECONNREFUSED'));
     }
-    const problem = this.refusals.get(pattern);
-    return problem === undefined ? of({ status: 'ok' }) : throwError(() => ({ status: 'error', message: problem }));
-  }
+    const { pathname } = new URL(input instanceof Request ? input.url : String(input));
+    if (init?.method !== 'POST') {
+      return Promise.resolve(Response.json({ status: 'ok' }));
+    }
+    const body = typeof init.body === 'string' ? init.body : '';
+    this.messages.push({ path: pathname, data: payloadSchema.parse(JSON.parse(body)) });
+    this.tokens.push(new Headers(init.headers).get('Authorization'));
+    if (this.unanswered.has(pathname)) {
+      return new Promise((_, reject) => {
+        // As fetch does, with the reason the request was aborted for.
+        init.signal?.addEventListener('abort', () => {
+          const reason: unknown = init.signal?.reason;
+          reject(reason instanceof Error ? reason : new Error(String(reason)));
+        });
+      });
+    }
+    const problem = this.refusals.get(pathname);
+    if (problem === undefined) {
+      return Promise.resolve(new Response(null, { status: 204 }));
+    }
+    // As the main server refuses a message that does not match its schema.
+    return Promise.resolve(
+      Response.json({ statusCode: 400, message: [problem], error: 'Bad Request' }, { status: 400 }),
+    );
+  };
 
-  // The messages of a pattern that name a Source.
-  from(source: string, pattern = 'menus-collected'): Record<string, unknown>[] {
+  // The messages sent to a path that name a Source.
+  from(source: string, path = '/menus/collected'): Record<string, unknown>[] {
     return this.messages
-      .filter((message) => message.pattern === pattern && message.data['source'] === source)
+      .filter((message) => message.path === path && message.data['source'] === source)
       .map(({ data }) => data);
   }
 }

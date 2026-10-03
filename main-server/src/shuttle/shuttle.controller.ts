@@ -1,6 +1,5 @@
-import { Controller, Get } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
-import { HANDLED, type Handled, WorkerMessage } from '../common/worker-message.decorator.js';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { WorkerOnly } from '../common/worker-only.decorator.js';
 import { ShuttleRouteDto } from './dto/shuttle-route.dto.js';
 import { type ShuttleStopsCollectedMessage, shuttleStopsCollectedSchema } from './dto/shuttle-stops-collected.dto.js';
 import { type ShuttleVehicleDto } from './dto/shuttle-vehicle.dto.js';
@@ -24,19 +23,21 @@ export class ShuttleController {
     return this.shuttle.vehicles();
   }
 
-  @MessagePattern('shuttle-stops-collected')
+  @Post('stops/collected')
+  @WorkerOnly()
+  @HttpCode(HttpStatus.NO_CONTENT)
   async stopsCollected(
-    @WorkerMessage(shuttleStopsCollectedSchema) message: ShuttleStopsCollectedMessage,
-  ): Promise<Handled> {
+    @Body({ schema: shuttleStopsCollectedSchema }) message: ShuttleStopsCollectedMessage,
+  ): Promise<void> {
     await this.shuttle.storeStops(message);
-    return HANDLED;
   }
 
-  @MessagePattern('shuttle-vehicles-collected')
+  @Post('vehicles/collected')
+  @WorkerOnly()
+  @HttpCode(HttpStatus.NO_CONTENT)
   async vehiclesCollected(
-    @WorkerMessage(shuttleVehiclesCollectedSchema) message: ShuttleVehiclesCollectedMessage,
-  ): Promise<Handled> {
+    @Body({ schema: shuttleVehiclesCollectedSchema }) message: ShuttleVehiclesCollectedMessage,
+  ): Promise<void> {
     await this.shuttle.storeVehicles(message);
-    return HANDLED;
   }
 }

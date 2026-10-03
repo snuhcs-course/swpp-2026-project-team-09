@@ -49,19 +49,19 @@ export function vehiclesMessage(vehicles: object[], changes: object = {}): objec
 export const invalidMessages: [string, string, object, string][] = [
   [
     'a vehicle without its carid',
-    'shuttle-vehicles-collected',
+    '/shuttle/vehicles/collected',
     vehiclesMessage([{ x: 157, y: 40 }]),
     'vehicles.0.carId: ',
   ],
   [
     'a position that is not a number',
-    'shuttle-vehicles-collected',
+    '/shuttle/vehicles/collected',
     vehiclesMessage([{ carId: '4522', x: '157', y: 40 }]),
     'vehicles.0.x: ',
   ],
   [
     'a vehicle listed twice',
-    'shuttle-vehicles-collected',
+    '/shuttle/vehicles/collected',
     vehiclesMessage([
       { carId: '4522', x: 157, y: 40 },
       { carId: '4522', x: 195, y: 91 },
@@ -70,24 +70,24 @@ export const invalidMessages: [string, string, object, string][] = [
   ],
   [
     "vehicles under the route page's Source",
-    'shuttle-vehicles-collected',
+    '/shuttle/vehicles/collected',
     vehiclesMessage([], { source: 'shuttle_stops' }),
     'source: ',
   ],
   [
     'a time without an offset',
-    'shuttle-vehicles-collected',
+    '/shuttle/vehicles/collected',
     vehiclesMessage([], { collectedAt: '2026-10-02T15:40:07' }),
     'collectedAt: ',
   ],
   [
     'a stop without its place on the drawing',
-    'shuttle-stops-collected',
+    '/shuttle/stops/collected',
     stopsMessage({ stops: [{ name: '정문', left: 157 }] }),
     'stops.0.top: ',
   ],
-  ['no service hours', 'shuttle-stops-collected', stopsMessage({ serviceHours: '' }), 'serviceHours: '],
-  ['an unknown field', 'shuttle-stops-collected', stopsMessage({ vehicles: 6 }), 'Unrecognized key: "vehicles"'],
+  ['no service hours', '/shuttle/stops/collected', stopsMessage({ serviceHours: '' }), 'serviceHours: '],
+  ['an unknown field', '/shuttle/stops/collected', stopsMessage({ vehicles: 6 }), 'Unrecognized key: "vehicles"'],
 ];
 
 const stopSchema = z.strictObject({ id: z.uuid(), name: z.string(), latitude: z.number(), longitude: z.number() });

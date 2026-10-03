@@ -1,57 +1,35 @@
 import { Inject, Logger } from '@nestjs/common';
 import { DiscoveryService } from '@nestjs/core';
-import { ClientProxy } from '@nestjs/microservices';
-import { lastValueFrom, throwError, timeout } from 'rxjs';
-import { MESSAGING_CLIENT } from './messaging.module.js';
-
-// The main server's answer is given up after this, so that a Collection never waits for a main server that is down.
-const ANSWER_TIMEOUT = 5000;
+import { MainServer } from './main-server.js';
 
 // Names the Sources a collector collects, which `pnpm collect` runs with its collectOne(): @Collects(MENU_SOURCES).
 export const Collects = DiscoveryService.createDecorator<readonly string[]>();
 
 // The worker's end of a Collection, which every collector extends.
 export abstract class Collector {
-  // A property, so that a collector's constructor does not have to pass the client on.
-  @Inject(MESSAGING_CLIENT) private readonly mainServer!: ClientProxy;
+  // A property, so that a collector's constructor does not have to pass it on.
+  @Inject(MainServer) private readonly mainServer!: MainServer;
   private readonly logger = new Logger(this.constructor.name);
 
   // One Collection of a Source. Gives whether the main server took what was read.
   abstract collectOne(source: string): Promise<boolean>;
 
-  // Ends one Collection of a Source: what it read goes to the main server, and so does a failure to fetch or read it.
+  // Ends one Collection of a Source: what it read goes to the main server at `path`, and so does a failure to fetch or
+  // read it.
   protected async handOver(
     source: string,
     collectedAt: Date,
-    pattern: string,
+    path: string,
     message: Promise<object>,
   ): Promise<boolean> {
     try {
-      await this.send(pattern, await message);
+      await this.mainServer.send(path, await message);
       return true;
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       this.logger.error(`The Collection of ${source} failed: ${reason}`);
-      await this.send('collection-failed', { source, failedAt: collectedAt.toISOString(), reason });
+      await this.mainServer.send('/collections/failed', { source, failedAt: collectedAt.toISOString(), reason });
       return false;
-    }
-  }
-
-  private async send(pattern: string, message: object): Promise<void> {
-    try {
-      await lastValueFrom(
-        this.mainServer.send(pattern, message).pipe(
-          timeout({
-            first: ANSWER_TIMEOUT,
-            with: () => throwError(() => new Error(`no answer within ${ANSWER_TIMEOUT / 1000} seconds`)),
-          }),
-        ),
-      );
-    } catch (answer) {
-      // A refusal arrives as the main server's answer, { status: 'error', message }, not as an Error.
-      const problem =
-        typeof answer === 'object' && answer !== null && 'message' in answer ? String(answer.message) : String(answer);
-      throw new Error(`The main server did not take ${pattern}: ${problem}`, { cause: answer });
     }
   }
 }

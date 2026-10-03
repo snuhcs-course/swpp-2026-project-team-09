@@ -34,16 +34,16 @@ This ticket sets what tickets 02 and 04 follow: how a worker message is named, s
 
 The READMEs hold the full text: the main server's Messages from the worker server and Menus, and the worker server's Collections and Menus.
 
-- **Names**: `menus-collected` and `collection-failed`, in kebab case and named after what happened, as `session-ended` is. Both are request-and-response, so the worker learns whether a message was taken. Later collectors send `<what>-collected`.
+- **Names**: `POST /menus/collected` and `POST /collections/failed`, each path saying what happened. Both are requests that the main server answers, so the worker learns whether a message was taken. Later collectors post to a path that ends in `collected`.
 - **Shape**: the payload names its `source` and the time of the Collection (`collectedAt`, `failedAt`) in ISO 8601 with an offset. Menus are `days: [{ date, restaurants: [{ name, lines: [{ meal, text, kind, price, name }] }] }]`, with `date` as `YYYY-MM-DD`. A `kind`, `price` or `name` the worker is not sure of is `null`, never left out.
   - A message lists the days it read, each with every restaurant the page lists. A day on which the page lists none is `restaurants: []`, and storing it empties the Source's day. A flat list of restaurants could not say that a day became empty.
-- **Validation**: `@WorkerMessage(schema)` in the main server's `src/common/worker-message.decorator.ts`. `main.ts` connects messaging without `inheritAppConfig`, so the global pipe never reaches a message handler. Schemas are `z.strictObject`; a price must fit the `INTEGER` column; a day or a restaurant listed twice is refused.
-- **The refusal answer**: `{ status: 'error', message }`, each problem as `path: problem`, joined by `; `. It is the form of Nest's answer to an error inside a handler, so the worker reads one form. A handled message answers `{ status: 'ok' }`.
+- **Validation**: `@Body({ schema })`, as every route of the main server. Schemas are `z.strictObject`; a price must fit the `INTEGER` column; a day or a restaurant listed twice is refused.
+- **The refusal answer**: 400 with `message`, each problem as `path: problem`; the worker joins them with `; `. A message that was taken answers 204.
 - **Collection status**: `collection_statuses`, one row per `Source` (`coop_menus`, `dormitory_menus`, `veterinary_menus`), with `lastSucceededAt` and, apart from it, `lastFailedAt` and `lastFailureReason`. The times are the worker's. No route serves it yet, so the tests read it with their own database connection.
 - **Schedule**: `@Cron(COLLECTION_TIMES, { timeZone: 'Asia/Seoul' })` on the collector's method, the times one constant at the top of its file, with the number of days a Collection covers (`COLLECTED_DAYS`) beside it.
 - **By hand**: `pnpm collect <Source> …` runs one Collection of each Source it names and exits (`src/collect.ts`). `collectSources()` in `src/collect-sources.ts` holds the Sources it knows; a new collector adds its Sources there and gives a method that collects one Source and says whether the main server took it, as `MenuCollector.collectOne()` does. The worker collects nothing when it starts.
-- **Fetch boundary**: `PageFetcher.fetch(url)`, one instance for the whole worker: one page at a time whichever collectors run, the project's `User-Agent`, an error for a status outside 2xx. The tests replace the HTTP call under it (`FETCH`), and without pages from the test every request fails.
-- **How a test sends a message**: `startWithWorker()` and `sendAsWorker()` in the main server's `test/worker.ts`, on a Redis of the file's own, because every test file's server listens on the shared one.
+- **Fetch boundary**: `PageFetcher.fetch(url)`: one page at a time for each collector, the project's `User-Agent`, an error for a status outside 2xx. The tests replace the HTTP call under it (`FETCH`), and without pages from the test every request fails.
+- **How a test sends a message**: `sendAsWorker()` in the main server's `test/worker.ts`, a request with the worker's token.
 - The worker's end of a Collection, `handOver()` and `send()`, lives in `MenuCollector`. Ticket 02 moves it to `src/common/` when its collector needs it, as the worker's README asks of code two features share.
 
 ### Decisions made while implementing (2026-10-01)
@@ -55,14 +55,14 @@ The READMEs hold the full text: the main server's Messages from the worker serve
 - **Restaurants are served in the Korean order of their names, sorted in the server.** The database's collation, `en_US.utf8`, put `학생회관식당` before `자하연식당 2층`.
 - **The time of collection is served for each restaurant**: the `collectedAt` of the Collection that stored its day. When one Source fails, its restaurants keep their older time.
 - **The veterinary college's page names no restaurant**, so its lunches are sent as `수의대식당`. A row is matched to a day by month, day and weekday, which settles the year without computing one.
-- **The worker sets no timeout.** Node's `fetch` gives up on a request without an answer after 300 seconds, and a main server that is down leaves a run waiting without a log line. The ticket asks for neither; ticket 04's requests every 15 seconds will want both.
+- **Timeouts** are ticket 04's: a page and the main server's answer are each given up after 5 seconds.
 - **The feature is `menus` on the main server and `menu` on the worker**, as each README's neighbours and example name it.
 
 ### Tests (2026-10-01)
 
-- Main server, at the message boundary: `test/menus.e2e-spec.ts` (17 tests) and `test/collection.e2e-spec.ts` (4). They send messages over Redis as the worker does and read the answer of `GET /menus` and the stored Collection status.
+- Main server, at the message boundary: `test/menus.e2e-spec.ts` (17 tests) and `test/collection.e2e-spec.ts` (4). They send requests as the worker does and read the answer of `GET /menus` and the stored Collection status.
 - Worker, parsers: `test/menu-page-parser.e2e-spec.ts` (11) and `test/veterinary-menu-page-parser.e2e-spec.ts` (7) feed saved pages to the parsers and check the lines.
-- Worker, collector: `test/menu-collector.e2e-spec.ts` (7) runs the Collections once with the HTTP call and the messaging client replaced, and checks the requests and the messages, and the next runs of the schedule.
+- Worker, collector: `test/menu-collector.e2e-spec.ts` (7) runs the Collections once with the HTTP calls to the Sources and to the main server replaced, and checks the requests and the messages, and the next runs of the schedule.
 - `worker-server/test/pages/` holds one page of each Source, each fetched once, on 2026-10-01 at 22:07 KST. Cases those pages do not show are edits made in the tests, each with a comment: the closure (`개천절 휴무` in the lunch cell of 학생회관식당), tomorrow's page (the date the page repeats), the turn of the year and a day written otherwise (the dates of the week table). The firewall's block page is written by hand from external-sources.md §2; none was saved.
 - Each test was written first and seen to fail, except these, which earlier slices had already made true. On the main server: a request without an access token, a day emptied by a later Collection, a restaurant listed without a menu, a failure that stays after a later success, and four of the eight invalid messages. On the worker: a corner on one line, an empty cell, the dormitory page, a day without a row in the week table, the December and January rows, and a page the collector cannot read.
 - The whole suites pass, also with `TZ=UTC`: main server 20 files and 230 tests, worker server 5 files and 33 tests.

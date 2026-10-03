@@ -17,6 +17,13 @@ cp .env.example .env
 pnpm keys:generate >> .env
 ```
 
+The worker server sends what it collects with a secret that the two servers share. Generate one and put the same
+line in `worker-server/.env`:
+
+```bash
+echo "WORKER_TOKEN=$(openssl rand -hex 32)" >> .env
+```
+
 `.env.example` already holds the team's Google client IDs in `GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID` (see
 [Sign-in](#sign-in)). Replace the example address in `INITIAL_ADMINISTRATOR_EMAILS` with your own (see
 [Administrators](#administrators)). Fill in `KAKAO_REST_API_KEY` with the REST API key that the Owner of the team's
@@ -192,8 +199,8 @@ export class AdminEventsController {
 ## Menus
 
 The worker server collects the menus of three Sources, the Co-op's, the dormitory's and the veterinary college's page,
-for today and the six days after, and sends them as `menus-collected` (see
-[Messages from the worker server](#messages-from-the-worker-server)). The app reads them:
+for today and the six days after, and posts them to `/menus/collected` (see
+[Requests from the worker server](#requests-from-the-worker-server)). The app reads them:
 
 - `GET /menus?date=2026-10-01` with a User's access token answers the menus of that day, a calendar day in
   Asia/Seoul, as a list of restaurants in the Korean order of their names:
@@ -233,7 +240,7 @@ for today and the six days after, and sends them as `menus-collected` (see
   by `kind` where there is one. A line the worker could not read is still shown.
 - A day with nothing stored answers `[]`. A `date` that is not a calendar day gets 400.
 
-For each day a `menus-collected` message carries, it replaces everything its Source had stored for that day. So the
+For each day a message to `/menus/collected` carries, it replaces everything its Source had stored for that day. So the
 same message twice leaves one set of records, and a restaurant the page dropped or renamed does not linger. The
 Source's other days and the other Sources' restaurants stay as they are. A failed Collection changes no menu, so the app
 keeps getting the last menus collected.
@@ -386,7 +393,7 @@ position there is outside.
 The circular shuttle, the operator's route 41946, runs anticlockwise around the campus. Its stops and its line are
 [seed data](#seed-data). The worker server collects the operator's route page once a day and its vehicle positions
 every 15 seconds while the shuttle runs (`.scratch/research/external-sources.md` §5), and sends them as
-`shuttle-stops-collected` and `shuttle-vehicles-collected`. The app reads them with a User's access token:
+`POST /shuttle/stops/collected` and `POST /shuttle/vehicles/collected`. The app reads them with a User's access token:
 
 - `GET /shuttle` answers the route:
 
@@ -433,32 +440,30 @@ How a vehicle is stored:
   at a stop comes 5 px below the stop's `top`, which never changes the nearest: the stops lie at least 50 px apart. No
   place between two stops is computed; the app moves a vehicle from one stop to the next (P15).
 - The stops' places on the drawing are the route page's: the seed gives those P05 recorded, and each
-  `shuttle-stops-collected` stores the page's.
-- Each `shuttle-vehicles-collected` replaces the vehicles as a whole, as the operator's page redraws them on each
+  message to `/shuttle/stops/collected` stores the page's.
+- Each message to `/shuttle/vehicles/collected` replaces the vehicles as a whole, as the operator's page redraws them on each
   answer: a vehicle the operator no longer reports is gone at once, and a set without vehicles empties the list.
   Vehicles are told apart by the operator's `carid`.
 - The vehicles are in Redis, not in a table: they are the present state of something outside, replaced every 15
-  seconds, of which no history is kept. The latest set is the one key `shuttle:vehicles`, holding the vehicles as
-  `GET /shuttle/vehicles` answers them and the time the set was received. The key expires a minute after that time,
-  which is how a position is no longer served. The Collection status of `shuttle_vehicles` is recorded in the
-  database, as every Source's is.
+  seconds, of which no history is kept. The latest set is the one key `shuttle:vehicles`, in the form
+  `GET /shuttle/vehicles` answers, and the key expires a minute after the set was received, which is how a position is
+  no longer served. The Collection status of `shuttle_vehicles` is recorded in the database, as every Source's is.
 - Each set stored goes to the socket server as the event `shuttle-vehicles-updated`, in the form `GET /shuttle/vehicles`
   answers, and the socket server sends it to every connected app (see the
   [socket server](../socket-server/README.md#shuttle-vehicles)). The event does not wait for an answer: an app that
   missed one gets the next set 15 seconds later.
-- Several main servers can run. Each receives the worker's message, since messaging publishes it to every main
-  server, and each stores the same set under the same key. The one whose write changed the key sends the event, so the
-  apps get each set once.
+- A message from the worker reaches one main server, however many run, so each set is stored and sent once. Every
+  main server reads the vehicles from the same key.
 
-The messages, which follow [Messages from the worker server](#messages-from-the-worker-server):
+The worker's two routes, which follow [Requests from the worker server](#requests-from-the-worker-server):
 
-- `shuttle-stops-collected`: `{ "source": "shuttle_stops", "collectedAt", "stops": [{ "name", "left", "top" }],
+- `POST /shuttle/stops/collected`: `{ "source": "shuttle_stops", "collectedAt", "stops": [{ "name", "left", "top" }],
 "serviceHours" }`, the stops in the page's order with their places on the drawing as the page writes them. The stops
   must be the seed's, by name and in loop order. A name the seed does not know is refused with
   `stops: the seed does not know 법학관`, and any other difference with
   `stops: not the seed's stops in its loop order, 정문, 법과대, …`. Nothing is stored, and the worker reports the refusal
   as a failed Collection: the page has changed, and a person corrects the seed.
-- `shuttle-vehicles-collected`: `{ "source": "shuttle_vehicles", "collectedAt", "vehicles": [{ "carId", "x", "y" }] }`,
+- `POST /shuttle/vehicles/collected`: `{ "source": "shuttle_vehicles", "collectedAt", "vehicles": [{ "carId", "x", "y" }] }`,
   where `collectedAt` is when the operator's answer arrived and `x`, `y` the position on the drawing. A `carId` listed
   twice is refused.
 
@@ -568,7 +573,7 @@ prisma/
 └── migrations/                      every schema change, applied in order
 seed/                                the seed files, each with where it came from
 src/
-├── main.ts                          starts the server and connects it to messaging
+├── main.ts                          starts the server
 ├── seed.ts                          the command that loads the seed files, `pnpm db:seed`
 ├── load-seed.ts                     loads every seed file; the command and the tests call it
 ├── app.module.ts                    root module, imports every feature module
@@ -580,15 +585,15 @@ src/
 │   ├── campus-boundary.module.ts    makes the Campus Boundary available to every feature
 │   ├── prisma.module.ts             makes PrismaService available to every feature
 │   ├── prisma.service.ts            the main database
-│   ├── messaging.module.ts          makes the messaging client available to every feature
+│   ├── messaging.module.ts          makes the client that sends events to the socket server available to every feature
 │   ├── messaging.ts                 options for NestJS messaging over Redis
 │   ├── redis.module.ts              makes a Redis client available to every feature
 │   ├── redis-idempotency.store.ts   keeps the results of requests safe to repeat in Redis
-│   ├── worker-message.decorator.ts  @WorkerMessage(): checks a message from the worker server against its schema
-│   ├── route-access.ts              who may call a route: anyone, a User or an Administrator
+│   ├── route-access.ts              who may call a route: anyone, a User, an Administrator or the worker server
 │   ├── public.decorator.ts          @Public(): opens a route to requests without an access token
 │   ├── allow-before-onboarding.decorator.ts  @AllowBeforeOnboarding(): opens a User's route before onboarding
 │   ├── administrator-only.decorator.ts  @AdministratorOnly(): gives a route to Administrators
+│   ├── worker-only.decorator.ts     @WorkerOnly(): gives a route to the worker server
 │   ├── current-user.decorator.ts    @CurrentUser(): the signed-in User in a handler
 │   └── current-administrator.decorator.ts  @CurrentAdministrator(): the signed-in Administrator
 ├── generated/                       Prisma Client, generated by `pnpm install` (not committed)
@@ -597,7 +602,7 @@ src/
 ├── users/                           a feature: the signed-in User, their profile and onboarding
 ├── lobby/                           a feature: what the app needs when it starts
 ├── administrators/                  a feature: the Administrators, who register and remove each other
-├── collection/                      a feature: each Source's Collection status, and the worker's failure messages
+├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a
@@ -724,38 +729,42 @@ create(@Body({ schema: createPartySchema }) body: CreatePartyDto, @CurrentUser()
 
 The results are kept in Redis by `src/common/redis-idempotency.store.ts`.
 
-## Messages from the worker server
+## Requests from the worker server
 
-The worker server only collects. It hands what a Collection read to the main server over messaging
-(`src/common/messaging.ts`), and the main server checks it, stores it and answers. Every message from the worker
-follows these rules.
+The worker server only collects. It hands what a Collection read to the main server as an HTTP request, and the main
+server checks it, stores it and answers. A request reaches one main server, however many run behind the load balancer,
+so a message is stored once. Every route for the worker follows these rules.
 
-- **Name and shape**: a request-and-response message, handled with `@MessagePattern()` in the feature's controller. It
-  is named in kebab case after what happened: `menus-collected` for what a Collection of a menu Source read, and
-  `collection-failed`. The payload is a JSON object. It names its `source`, a value of `Source` in
-  `prisma/schema.prisma`, and the time of the Collection in ISO 8601 with an offset (`collectedAt`, `failedAt`). A day
-  is `YYYY-MM-DD`, a calendar day in Asia/Seoul. A field without a value is `null`, not left out.
-- **Validation**: the handler takes the payload with `@WorkerMessage(schema)` from `src/common/worker-message.decorator.ts`,
-  and
-  the schema is zod in the feature's `dto/`, such as `src/menus/dto/menus-collected.dto.ts`. Use `z.strictObject`, so
-  that a misspelt field is refused instead of dropped. `main.ts` connects messaging without `inheritAppConfig`, so no
-  global guard, pipe or interceptor reaches a message handler: it needs no access token, and `@WorkerMessage` checks
-  the payload in place of the global pipe.
-- **Answers**: a handled message answers `{ "status": "ok" }` (`HANDLED`). A message that does not match its schema is
-  refused before the handler runs, and nothing from it is stored, the Collection status included. The answer names each
-  problem as the HTTP routes do, separated by `; `:
+- **Route and shape**: a `POST` in the feature's controller, marked `@WorkerOnly()` from
+  `src/common/worker-only.decorator.ts` and `@HttpCode(HttpStatus.NO_CONTENT)`. Its path says what happened:
+  `/menus/collected` for what a Collection of a menu Source read, and `/collections/failed`. The body is a JSON object.
+  It names its `source`, a value of `Source` in `prisma/schema.prisma`, and the time of the Collection in ISO 8601 with
+  an offset (`collectedAt`, `failedAt`). A day is `YYYY-MM-DD`, a calendar day in Asia/Seoul. A field without a value
+  is `null`, not left out.
+- **Who may call it**: the worker alone. The request carries `Authorization: Bearer <WORKER_TOKEN>`, the secret that
+  the two servers' settings share, and `WorkerGuard` in `src/auth/worker.guard.ts` answers 401 to any other request,
+  a User's and an Administrator's access token included. The token is no signed token: the worker is no User.
+- **Validation**: the handler takes the body with `@Body({ schema })`, as every route does, and the schema is zod in
+  the feature's `dto/`, such as `src/menus/dto/menus-collected.dto.ts`. Use `z.strictObject`, so that a misspelt field
+  is refused instead of dropped.
+- **Answers**: a message that was taken answers 204. One that does not match its schema is refused with 400 before the
+  handler runs, and nothing from it is stored, the Collection status included. The answer names each problem:
 
   ```json
   {
-    "status": "error",
-    "message": "days.0.restaurants.1.lines.0.kind: Invalid option: expected one of \"heading\"|\"dish\"|\"note\"; days.0.restaurants.1: Unrecognized key: \"hours\""
+    "statusCode": 400,
+    "message": [
+      "days.0.restaurants.1.lines.0.kind: Invalid option: expected one of \"heading\"|\"dish\"|\"note\"",
+      "days.0.restaurants.1: Unrecognized key: \"hours\""
+    ],
+    "error": "Bad Request"
   }
   ```
 
   A handler refuses a message that matches its schema but not what is stored, such as a shuttle stop the seed does not
-  know, by throwing `RpcException` with the problem before it stores anything; the answer has the same form. Any other
-  error inside a handler is logged and answers Nest's `{ "status": "error", "message": "Internal server error" }`. The
-  worker's `send()` fails with the answer in each case, and the worker reports it as a failed Collection.
+  know, by throwing `ConflictException` with the problem before it stores anything; the answer is 409 with the problem
+  as its `message`. Any other error inside a handler is logged and answers 500. The worker takes any answer but 204 as
+  a failure, and reports it as a failed Collection with the problem as the reason.
 
 - **Repeats and order**: the same message sent twice leaves the records one would. Each feature states how, as
   [Menus](#menus) does. A Source's messages are stored in the order they arrive, not by their times.
@@ -763,24 +772,22 @@ follows these rules.
   (`lastSucceededAt`) and, apart from it, its last failure (`lastFailedAt`, `lastFailureReason`). A handler that stores
   what a Collection read calls `CollectionService.recordSuccess(tx, source, collectedAt)` in the same transaction; the
   shuttle's vehicles are stored in Redis, so their handler records the success once the set is stored. A Collection
-  that fails sends `collection-failed` with `{ "source", "failedAt", "reason" }`, where `reason` says what
-  went wrong. It records the failure and leaves every stored record as it is. A success leaves the last failure in
-  place, so the two times tell whether the Source has worked since. No route serves the status yet; P12 shows it.
+  that fails posts `{ "source", "failedAt", "reason" }` to `/collections/failed`, where `reason` says what went wrong.
+  It records the failure and leaves every stored record as it is. A success leaves the last failure in place, so the
+  two times tell whether the Source has worked since. No route serves the status yet; P12 shows it.
 - **A new Source** adds its value to `Source` with a migration. `menusCollectedSchema` lists the Sources that send
   menus, and the shuttle's two schemas the one that sends each, so a Source of another kind is refused there.
 
-In a test, `startWithWorker()` from `test/worker.ts` starts the server with a client that sends as the worker does, as
+In a test, `sendAsWorker()` from `test/worker.ts` sends a request as the worker does, with its token, as
 `test/menus.e2e-spec.ts` does:
 
 ```ts
-const harness = await startWithWorker();
-await sendAsWorker(harness.worker, 'menus-collected', message); // resolves with the answer
-expect(await refusal(harness.worker, 'menus-collected', invalid)).toContain('days.0.date: ');
-await harness.close(); // in afterAll
+const app = await startApp(inject('settings'));
+await sendAsWorker(app, '/menus/collected', message); // resolves when the server took it
+expect(await refusal(app, '/menus/collected', invalid)).toContain('days.0.date: ');
+await app.close(); // in afterAll
 ```
 
-- `startWithWorker()` starts a Redis of its own for the file. Every test file's server listens on the shared test Redis,
-  and each of them would store and answer a message.
 - The database is the shared one, so each test stores data of its own. The menus tests take their days from `daysOf()`
   in `test/menus.ts`, a month for each file and a day for each test. A Source's Collection status is one row, so only
   one file checks the status of a Source: `test/collection.e2e-spec.ts` the dormitory's, `test/menus.e2e-spec.ts` the

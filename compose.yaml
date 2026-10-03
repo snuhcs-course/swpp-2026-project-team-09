@@ -75,15 +75,17 @@ services:
   worker-server:
     build: worker-server
     init: true
+    # The worker's token comes from worker-server/.env (see worker-server/.env.example).
+    env_file:
+      - path: worker-server/.env
+        required: false
     environment:
       PORT: 3002
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      MAIN_SERVER_URL: http://main-server:3000
     ports:
       - '127.0.0.1:3002:3002'
     depends_on:
-      redis:
-        condition: service_healthy
+      - main-server
 
   match-server:
     build: match-server

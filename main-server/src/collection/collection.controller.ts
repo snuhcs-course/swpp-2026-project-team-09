@@ -1,18 +1,18 @@
-import { Controller } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
-import { HANDLED, type Handled, WorkerMessage } from '../common/worker-message.decorator.js';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { WorkerOnly } from '../common/worker-only.decorator.js';
 import { CollectionService } from './collection.service.js';
 import { type CollectionFailedMessage, collectionFailedSchema } from './dto/collection-failed.dto.js';
 
-@Controller()
+@Controller('collections')
 export class CollectionController {
   constructor(private readonly collection: CollectionService) {}
 
-  @MessagePattern('collection-failed')
+  @Post('failed')
+  @WorkerOnly()
+  @HttpCode(HttpStatus.NO_CONTENT)
   async failed(
-    @WorkerMessage(collectionFailedSchema) { source, failedAt, reason }: CollectionFailedMessage,
-  ): Promise<Handled> {
+    @Body({ schema: collectionFailedSchema }) { source, failedAt, reason }: CollectionFailedMessage,
+  ): Promise<void> {
     await this.collection.recordFailure(source, new Date(failedAt), reason);
-    return HANDLED;
   }
 }

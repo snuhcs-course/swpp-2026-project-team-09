@@ -45,7 +45,8 @@ describe('A Collection of the route page', () => {
   it('sends its stops in loop order, each at its place on the drawing, and its service hours', async () => {
     const { sources, mainServer } = await collect('stops');
 
-    const [message] = mainServer.from('shuttle_stops', 'shuttle-stops-collected');
+    const [message] = mainServer.from('shuttle_stops', '/shuttle/stops/collected');
+    expect(mainServer.tokens).toEqual([`Bearer ${inject('settings').WORKER_TOKEN}`]);
     expect(message).toMatchObject({ source: 'shuttle_stops', collectedAt: '2026-10-02T06:40:07.000Z' });
     expect(message?.['stops']).toHaveLength(14);
     expect(message?.['stops']).toContainEqual({ name: '38동', left: 195, top: 239 });
@@ -60,7 +61,7 @@ describe('A Collection of the route page', () => {
 
     expect(mainServer.messages).toEqual([
       {
-        pattern: 'collection-failed',
+        path: '/collections/failed',
         data: {
           source: 'shuttle_stops',
           failedAt: '2026-10-02T06:40:07.000Z',
@@ -72,15 +73,15 @@ describe('A Collection of the route page', () => {
 
   it("fails when the main server refuses the stops, with the main server's answer", async () => {
     const mainServer = new MainServerStub();
-    mainServer.refusals.set('shuttle-stops-collected', 'stops: the seed does not know 법학관');
+    mainServer.refusals.set('/shuttle/stops/collected', 'stops: the seed does not know 법학관');
 
     await collect('stops', pages, mainServer);
 
-    expect(mainServer.from('shuttle_stops', 'collection-failed')).toEqual([
+    expect(mainServer.from('shuttle_stops', '/collections/failed')).toEqual([
       {
         source: 'shuttle_stops',
         failedAt: '2026-10-02T06:40:07.000Z',
-        reason: 'The main server did not take shuttle-stops-collected: stops: the seed does not know 법학관',
+        reason: 'The main server did not take /shuttle/stops/collected: stops: the seed does not know 법학관',
       },
     ]);
   });
@@ -104,7 +105,7 @@ describe('A Collection of the vehicle positions', () => {
   it('sends each vehicle with its carid and its position on the drawing, received now', async () => {
     const { mainServer } = await collect('vehicles');
 
-    expect(mainServer.from('shuttle_vehicles', 'shuttle-vehicles-collected')).toEqual([
+    expect(mainServer.from('shuttle_vehicles', '/shuttle/vehicles/collected')).toEqual([
       {
         source: 'shuttle_vehicles',
         collectedAt: '2026-10-02T06:40:07.000Z',
@@ -126,7 +127,7 @@ describe('A Collection of the vehicle positions', () => {
 
     const { mainServer } = await collect('vehicles', { [VEHICLE_POSITIONS]: empty });
 
-    expect(mainServer.from('shuttle_vehicles', 'shuttle-vehicles-collected')).toMatchObject([{ vehicles: [] }]);
+    expect(mainServer.from('shuttle_vehicles', '/shuttle/vehicles/collected')).toMatchObject([{ vehicles: [] }]);
   });
 });
 
@@ -204,7 +205,7 @@ describe('A vehicle Collection while the menu pages do not answer', () => {
     await vehicles;
 
     expect(sources.requests.map(({ url }) => url)).toEqual([menuPages[0], VEHICLE_POSITIONS]);
-    expect(mainServer.from('shuttle_vehicles', 'shuttle-vehicles-collected')).toHaveLength(1);
+    expect(mainServer.from('shuttle_vehicles', '/shuttle/vehicles/collected')).toHaveLength(1);
     // The fifteen menu pages, each given up after 5 seconds.
     await vi.advanceTimersByTimeAsync(80_000);
     await menus;
@@ -227,7 +228,7 @@ describe('A Collection that gets no answer', () => {
     const taken = await collectWithoutAnswer({ ...pages, [VEHICLE_POSITIONS]: null }, mainServer);
 
     expect(taken).toEqual({ vehicles: false, stops: true });
-    expect(mainServer.from('shuttle_vehicles', 'collection-failed')).toEqual([
+    expect(mainServer.from('shuttle_vehicles', '/collections/failed')).toEqual([
       {
         source: 'shuttle_vehicles',
         failedAt: '2026-10-03T03:00:00.000Z',
@@ -238,13 +239,13 @@ describe('A Collection that gets no answer', () => {
 
   it('gives up on the main server after 5 seconds, and reports the Collection as failed', async () => {
     const mainServer = new MainServerStub();
-    mainServer.unanswered.add('shuttle-vehicles-collected');
+    mainServer.unanswered.add('/shuttle/vehicles/collected');
 
     const taken = await collectWithoutAnswer(pages, mainServer);
 
     expect(taken).toEqual({ vehicles: false, stops: true });
-    expect(mainServer.from('shuttle_vehicles', 'collection-failed')).toMatchObject([
-      { reason: 'The main server did not take shuttle-vehicles-collected: no answer within 5 seconds' },
+    expect(mainServer.from('shuttle_vehicles', '/collections/failed')).toMatchObject([
+      { reason: 'The main server did not take /shuttle/vehicles/collected: no answer within 5 seconds' },
     ]);
   });
 });
@@ -269,6 +270,6 @@ describe('The command that runs one Collection', () => {
 
     expect(taken).toBe(true);
     expect(sources.requests.map(({ url }) => url)).toEqual([ROUTE_PAGE]);
-    expect(mainServer.messages.map(({ pattern }) => pattern)).toEqual(['shuttle-stops-collected']);
+    expect(mainServer.messages.map(({ path }) => path)).toEqual(['/shuttle/stops/collected']);
   });
 });

@@ -1,5 +1,5 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { ConflictException, Inject, Injectable, Logger } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import { Redis } from 'ioredis';
 import { z } from 'zod';
 import { CollectionService } from '../collection/collection.service.js';
@@ -13,12 +13,9 @@ import { type ShuttleVehicleDto, shuttleVehicleSchema } from './dto/shuttle-vehi
 import { type ShuttleVehiclesCollectedMessage } from './dto/shuttle-vehicles-collected.dto.js';
 import { ROUTE_NUMBER } from './shuttle.seed.js';
 
-// The Redis key of the latest set of vehicles. A state replaced every 15 seconds and gone after a minute, so no table
-// holds it.
+// The Redis key of the latest set of vehicles, as it is served. A state replaced every 15 seconds and gone after a
+// minute, so no table holds it.
 const VEHICLES_KEY = 'shuttle:vehicles';
-
-// The set as the key holds it. The time it was received tells one set without vehicles from the next.
-const storedSetSchema = z.object({ receivedAt: z.string(), vehicles: z.array(shuttleVehicleSchema) });
 
 // The key expires this long after its set was received, so that the vehicles disappear when the service ends or the
 // worker stops.
@@ -61,7 +58,7 @@ export class ShuttleService {
 
   async vehicles(): Promise<ShuttleVehicleDto[]> {
     const stored = await this.redis.get(VEHICLES_KEY);
-    return stored === null ? [] : storedSetSchema.parse(JSON.parse(stored)).vehicles;
+    return stored === null ? [] : z.array(shuttleVehicleSchema).parse(JSON.parse(stored));
   }
 
   // The stops of the page must be those of the seed, in its loop order. Any other list means that the page changed,
@@ -71,10 +68,10 @@ export class ShuttleService {
     const names = stops.map(({ name }) => name);
     const unknown = names.filter((name) => !seeded.includes(name));
     if (unknown.length > 0) {
-      throw new RpcException(`stops: the seed does not know ${unknown.join(', ')}`);
+      throw new ConflictException(`stops: the seed does not know ${unknown.join(', ')}`);
     }
     if (names.join('\n') !== seeded.join('\n')) {
-      throw new RpcException(`stops: not the seed's stops in its loop order, ${seeded.join(', ')}`);
+      throw new ConflictException(`stops: not the seed's stops in its loop order, ${seeded.join(', ')}`);
     }
     await this.prisma.$transaction(async (tx) => {
       await this.collection.recordSuccess(tx, Source.shuttle_stops, new Date(collectedAt));
@@ -91,8 +88,7 @@ export class ShuttleService {
   // no longer reports is gone at once. In the loop order of their stops.
   async storeVehicles({ collectedAt, vehicles }: ShuttleVehiclesCollectedMessage): Promise<void> {
     const receivedAt = new Date(collectedAt);
-    // In loop order, so that every main server places a vehicle halfway between two stops at the same one.
-    const stops = await this.prisma.shuttleStop.findMany({ orderBy: { loopOrder: 'asc' } });
+    const stops = await this.prisma.shuttleStop.findMany();
     const sent = vehicles
       .map(({ carId, x, y }) => ({ carId, stop: nearest(stops, x, y) }))
       .toSorted((a, b) => a.stop.loopOrder - b.stop.loopOrder || a.carId.localeCompare(b.carId))
@@ -101,21 +97,18 @@ export class ShuttleService {
         stop: toShuttleStopDto(stop),
         receivedAt: receivedAt.toISOString(),
       }));
-    const stored = JSON.stringify({ receivedAt: receivedAt.toISOString(), vehicles: sent });
     const expiresAt = receivedAt.getTime() + POSITION_LIFETIME;
-    // Every main server receives the message and stores the same set. The one whose write changed the key sends the
-    // set, so that the apps get each set once. A set already more than a minute old leaves nothing to serve.
-    const changed =
-      expiresAt > Date.now()
-        ? (await this.redis.set(VEHICLES_KEY, stored, 'PXAT', expiresAt, 'GET')) !== stored
-        : (await this.redis.del(VEHICLES_KEY)) === 1;
-    if (changed) {
-      this.messaging.emit('shuttle-vehicles-updated', sent).subscribe({
-        error: (error: unknown) => {
-          this.logger.warn(`The socket server was not given the shuttle's vehicles: ${String(error)}`);
-        },
-      });
+    if (expiresAt > Date.now()) {
+      await this.redis.set(VEHICLES_KEY, JSON.stringify(sent), 'PXAT', expiresAt);
+    } else {
+      // Already more than a minute old: it replaces the set before it with nothing to serve.
+      await this.redis.del(VEHICLES_KEY);
     }
+    this.messaging.emit('shuttle-vehicles-updated', sent).subscribe({
+      error: (error: unknown) => {
+        this.logger.warn(`The socket server was not given the shuttle's vehicles: ${String(error)}`);
+      },
+    });
     await this.collection.recordSuccess(this.prisma, Source.shuttle_vehicles, receivedAt);
   }
 }

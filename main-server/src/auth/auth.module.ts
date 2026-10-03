@@ -14,6 +14,7 @@ import { AuthService } from './auth.service.js';
 import { GoogleAuthLibraryVerifier } from './google-auth-library.verifier.js';
 import { GoogleIdTokenVerifier } from './google-id-token.verifier.js';
 import { SessionsService } from './sessions.service.js';
+import { WorkerGuard } from './worker.guard.js';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { SessionsService } from './sessions.service.js';
     // Each guard checks only its own kind of route (src/common/route-access.ts), so their order does not matter.
     { provide: APP_GUARD, useClass: AccessTokenGuard },
     { provide: APP_GUARD, useClass: AdministratorGuard },
+    { provide: APP_GUARD, useClass: WorkerGuard },
   ],
 })
 export class AuthModule {}
