@@ -120,11 +120,7 @@ Places that lead to another screen (they show the "준비 중" notice; see secti
 - [ ] The iOS map module (Swift), written after the Android module was checked
 - [ ] Google sign-in settings for iOS
 
-### 1.9 Connecting the fakes (ticket 23)
-
-- [ ] Each of this task's fakes is replaced by the main server when the main server serves it
-
-### 1.10 Tests (every ticket)
+### 1.9 Tests (every ticket)
 
 - [ ] P06's own features in full, as the spec's Testing Decisions list them
 - [ ] Elements filled with fake data: the screen appears and its main buttons respond
@@ -143,7 +139,7 @@ What only a built app shows. 함재현 fixes what fails and merges. The list to 
 
 ## 3. Fake now, real later
 
-The same content as the app's per-feature list, for a built app. In Expo Go every feature is fake. Before the demo build (P20), check that nothing here is still fake by accident.
+The same content as the app's per-feature list, for a built app. Connecting a fake to the main server is not a ticket of this task: it is done when the main server serves the feature. In Expo Go every feature is fake. Before the demo build (P20), check that nothing here is still fake by accident.
 
 | Feature | Now | Becomes real when |
 |---|---|---|
@@ -151,10 +147,10 @@ The same content as the app's per-feature list, for a built app. In Expo Go ever
 | Onboarding, Lobby, profile (name, department, admission year, interests) | The server exists | At once |
 | The list of Places and its search | The server exists (`GET /places`, `GET /places/search`) | At once |
 | Walking route | The server exists (`GET /walking-route`) | At once |
-| The profile's course level and gender | Fake | The main server stores them (ticket 23) |
-| Timetable | Fake | The main server serves it (ticket 23) |
-| Private Events | Fake | The main server serves them (ticket 23) |
-| The name of a point chosen on the map | Worked out in the app | The main server serves its lookup (ticket 23) |
+| The profile's course level and gender | Fake | The main server stores them |
+| Timetable | Fake | The main server serves it |
+| Private Events | Fake | The main server serves them |
+| The name of a point chosen on the map | Worked out in the app | The main server serves its lookup |
 | Global Event markers | Fake, in the shape of PR #30 | P12 serves the published list |
 | Sending the position, storing the Master Switch | Fake | P08 |
 | The friend list and Friends' positions | Fake, in a provisional shape | P08 and P14 |
