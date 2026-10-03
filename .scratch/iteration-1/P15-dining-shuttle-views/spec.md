@@ -52,8 +52,8 @@ A dining view that shows menus by day, meal and restaurant, and a shuttle view t
 - A vehicle whose position is older than a minute is removed, so that vehicles do not stay on the map when the service ends or no further message arrives.
 - Vehicles carry no label saying that their position is estimated.
 - Outside weekdays from 08:00 to 21:00 the layer shows the stops and the route with a notice that the shuttle is not in service.
-- The information screen shows the OpenStreetMap attribution with a link to its copyright page.
-- What the shuttle feed reports, its service hours, the menu pages' quirks and OpenStreetMap's attribution rules are in `.scratch/research/external-sources.md`.
+- The information screen shows the attributions of both sources of the map data: OpenStreetMap, with a link to its copyright page, and 국토지리정보원's 연속수치지형도 건물, used under 공공누리 type 1, with a link to the page it is downloaded from, `https://www.vworld.kr/dtmk/dtmk_ntads_s002.do?dsId=30162`.
+- What the shuttle feed reports, its service hours, the menu pages' quirks and OpenStreetMap's attribution rules are in `.scratch/research/external-sources.md`. What 공공누리 type 1 asks is in `.scratch/research/public-building-outlines.md` §8.
 - The arrangement is provisional. P19 adapts it to the wireframes.
 
 ## Testing Decisions

@@ -103,6 +103,10 @@ _Avoid_: Global toggle, ghost mode
 The outline of the Gwanak campus, with 10 m around it for the error of a phone's position. A User outside it is hidden from everyone.
 _Avoid_: Geofence
 
+**Place**:
+A building or a named spot on the Gwanak campus, such as 제1공학관 (301동) or 종합운동장. A User picks one from the list of Places, and a position is inside one, near one or at none.
+_Avoid_: Building (a building is a Place like any other), venue, location (a location is a User's position)
+
 **Private Zone**:
 An area in which a User's location is hidden from everyone else.
 _Avoid_: Hidden area

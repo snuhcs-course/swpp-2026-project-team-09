@@ -33,7 +33,7 @@ The main server's README holds the full text: Buildings, Campus Boundary and See
 - **Seed files**: `main-server/seed/`, one file per origin. Each keeps the address or Overpass query it came from (`exportedFrom`, `query`) and the day of the export (`exportedOn`, in Asia/Seoul); the GeoJSON file keeps them in `properties`. A file holds the answer as near as its format allows: the campus map's rows are kept as served, decoded from EUC-KR. What is loaded is decided by the loader, where the seed's tests reach it.
 - **Exporting**: `pnpm seed:export <name>…` (`scripts/export-seed.ts`) sends one request per file with the worker's User-Agent and writes the file formatted by Prettier, so that `format:check` also checks a hand correction. A seed that a request gives adds an entry to `EXPORTS`. A seed a person makes, such as ticket 04's route line, is written by hand with the same fields.
 - **Loading**: `pnpm db:seed` builds the server and runs `src/seed.ts`, which calls `loadSeed(prisma, directory)` in `src/load-seed.ts`, which loads every seed; ticket 04 adds its loading there. `readSeedFile()` beside `SEED_DIRECTORY` reads a seed file and checks it against its schema. The image, built already, runs `pnpm db:migrate && node dist/seed` before the server starts.
-- **Identity**: an entry is upserted by its origin and the identifier its origin gives it (`@@unique([origin, originId])`), all in one transaction, and keeps its own UUID. Nothing is deleted. Ticket 04's stops can keep their identifiers the same way.
+- **Identity**: an entry's `id` is the UUID v5 of its origin and the identifier its origin gives it, the same in every database, and `@@unique([origin, originId])` keeps the two unique. Entries are upserted by `id`, all in one transaction. Nothing is deleted. Ticket 04's stops are updated in place by their own key in the seed.
 - **Tests**: the global setup loads the seed into the shared test database (`seed()` in `test/containers.ts`), so ticket 02's tests match places against the real list. A test that changes a seed loads it into a database of its own, created in the shared PostgreSQL and migrated, as `test/seed.e2e-spec.ts` does with `connect()` and `migrate()` from `test/containers.ts`.
 - **For ticket 02**: the list is the `buildings` table, model `Building`: `number` as text (`302`, `25-1`, `71-1`) or `null` for the 8 places, `name` unwrapped, `latitude` and `longitude`. Inside the Boundary the numbers are unique and three names are shared: `(관악사)대학원 생활관` by 900, 902 to 906 and 918, `(관악사)학부 생활관` by 919 and 921 to 926, and `행정대학원` by 57 and 57-1. A place that names one of them matches several entries, which makes a Draft by the spec. `BuildingsModule` does not export `BuildingsService` yet: export it, as the README's step 6 says, or read `prisma.building`.
 - **For P08**: inject `CampusBoundary` (global, `src/common/campus-boundary.module.ts`); `contains({ latitude, longitude })` checks a position in memory.
@@ -197,3 +197,35 @@ The same session as the review, on another model than the run.
 - Tokens, counted when this section was written:
   - Input: 67,958,029 in total, of which 67,677,338 were cache reads, 280,515 cache writes and 176 uncached.
   - Output: 216,531.
+
+### Building ids computed from the origin (2026-10-02)
+
+Decided after a second review of this ticket's pull request, on `d9a692b`, which asked what the table is for.
+
+- **The table stays.** Nothing reads it but whole today: the list, the search, ticket 02's matching and the lookup each read every row and work in memory, and no table points at a building yet. A file read into memory, as the Campus Boundary is, would serve them. The table is kept for the timetable entries and Meetups that will point at a building (P06, P08), and for the day an Administrator corrects a building.
+- **A building's `id` is the UUID v5 of `<origin>:<originId>`**, such as `campus_map:188`, under a namespace fixed in `src/buildings/buildings.seed.ts`. The database generated the id before, so each database gave a building another id, and a database emptied and loaded anew gave new ones. The id is now the same everywhere, and would stay if the buildings were ever served from the file alone.
+  - Weighed against: the name, which a correction changes and which 16 of the map's rows share among three names; the number, which 13 rows lack; and the origin's identifier as text, `openstreetmap:way/456356713`, which tells a reader no more than a UUID does and does not fit a path.
+  - The namespace and the form of the name must not change, or every id does. The seed's test holds the ids of 제2공학관 and 체육문화교육연구동(71-1동).
+- **`id` has no default in the database**, so that a row written without the loader's id is refused rather than given a random one. The README's step 5 names the exception to its UUID v4 rule.
+- **The loader upserts by `id`.** `@@unique([origin, originId])` stays as a guard.
+- **`uuid` is the one new dependency**: Node itself gives only a UUID v4.
+- The ticket's one migration was edited in place, since it is not merged. A database that loaded the buildings before holds them under other ids, and the loader then stops at the unique key: recreate it with `docker compose down -v`.
+- The branches of tickets 02 and 04 carry this ticket's earlier migration and loader, and take the present ones when they next merge it.
+
+The review itself, Standards and Spec side by side, found no hard violation in the code and every criterion met. It left three notes: the orchestrating session's usage is recorded under no ticket of this branch; the search finds a number only when it is `q` whole, so `30` does not find 301동; and the campus map's own search also finds a building by its college's short name, such as `공대`, from data that none of its answers hold, which a seed of aliases could give this list.
+
+Tests and checks:
+
+- `test/seed.e2e-spec.ts` (12, one new): the two ids, written first and seen to fail with the database's random id.
+- 25 files and 284 tests pass, and lint, format:check and typecheck pass.
+- A temporary database of the project's PostgreSQL image, `p07-03-v5-check`, since removed: `prisma migrate diff` from the migrated database to the schema finds no difference, `id` has no default, and `pnpm db:seed` run twice leaves 226 rows with the two ids above.
+- One start, `docker compose -p p07-03-v5-check up --build -d postgres redis main-server`, under a project name of its own so that the developer database was not touched: the image built with the new dependency, applied the migrations, logged `Loaded 226 buildings` and started; both routes answered 401 without a token; a restart loaded the seed again and left 226 rows, 제2공학관 under the same id. The run's containers, volume and images were removed.
+
+### Agent usage, the second review and the ids (2026-10-02)
+
+One session on another machine than the run's: a Standards and a Spec review side by side on `d9a692b`, a look at how the campus map's own search answers, the questions that led to the ids, and the change.
+
+- Agent time: about 83 minutes, an estimate: the gaps under five minutes between the session's steps, which also count short pauses between questions. The two reviewers worked about 2 and 3 minutes within it, at the same time.
+- Tokens, the two reviewers included, counted when this section was written:
+  - Input: 18,695,436 in total, of which 18,136,876 were cache reads, 558,342 cache writes and 218 uncached.
+  - Output: 95,571.

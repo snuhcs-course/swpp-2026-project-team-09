@@ -1,0 +1,28 @@
+{
+  "places": [
+    {
+      "outline": "B0010000000SIJSPM",
+      "number": "303",
+      "name": "해동첨단공학관",
+      "why": "The campus map's list has no 303동. It names the building only in its amenities, as 해동첨단공학관(303동)."
+    },
+    {
+      "outline": "B0010000000RF2DSP",
+      "number": "944",
+      "name": "삼성전자서울대연구소",
+      "why": "The campus map does not list it. The layer labels the polygon 944동삼성전자서울대연구소."
+    },
+    {
+      "outline": "B0010000000RF20XH",
+      "number": "49-1",
+      "name": "디자인연구동",
+      "why": "The campus map does not list it. The layer labels the polygon 미술대학49-1동디자인연구동."
+    },
+    {
+      "outline": "B0010000000SIMQZX",
+      "number": null,
+      "name": "배터리공동연구센터",
+      "why": "The campus map does not list it. The layer labels the polygon 311관, which gives no number of its own."
+    }
+  ]
+}

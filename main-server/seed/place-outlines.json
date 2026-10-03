@@ -1,0 +1,64 @@
+{
+  "places": [
+    {
+      "number": "100",
+      "outlines": ["way/193893586"],
+      "why": "The national map does not draw 버들골 풍산마당. OpenStreetMap does."
+    },
+    {
+      "number": "43-2",
+      "outlines": ["way/1485386282"],
+      "why": "The national map does not draw 데이터사이언스대학원. OpenStreetMap does."
+    },
+    {
+      "number": "149",
+      "outlines": ["way/1469808348"],
+      "why": "The national map draws 종합운동장본부석 only as a wall-less structure, which the seed leaves out."
+    },
+    {
+      "number": "253",
+      "outlines": [],
+      "why": "The polygon that holds the position of 화학관연결동 has no label and is another structure."
+    },
+    {
+      "number": "104-1",
+      "outlines": ["B0010000000RF2ENL"],
+      "why": "The national map labels a second polygon, B0010000000RF2EB9 at 국제대학원, as 104-1동. It stands 1 km from 반도체교육관."
+    },
+    {
+      "number": "500",
+      "outlines": ["B0010000000RF2EZX", "B0010000000RF2G11", "B0010000000RF2G33", "B0010000000RF2G99"],
+      "why": "The national map labels the four parts of 500동 as 501동 to 504동. The campus map counts them as 500동."
+    },
+    {
+      "name": "종합운동장",
+      "outlines": ["way/185936754"],
+      "why": "The national map's building layer draws no sports ground. OpenStreetMap's 대운동장 holds the field, the track and the stands."
+    },
+    {
+      "name": "야구장",
+      "outlines": ["way/386891065"],
+      "why": "The national map's building layer draws no sports ground. OpenStreetMap draws the baseball field."
+    },
+    {
+      "name": "테니스장",
+      "outlines": ["way/320671088", "way/320671915", "way/320671917", "way/320671919", "way/320671921"],
+      "why": "The national map's building layer draws no courts. OpenStreetMap draws them as five groups, courts 1 to 14."
+    },
+    {
+      "name": "공대테니스장",
+      "outlines": ["way/320667500", "way/347802748"],
+      "why": "The national map's building layer draws no courts. OpenStreetMap draws them as two groups, courts A and B&C."
+    },
+    {
+      "name": "관악사운동장",
+      "outlines": ["way/482220677"],
+      "why": "The national map's building layer draws no sports ground. OpenStreetMap draws the field."
+    },
+    {
+      "name": "자하연",
+      "outlines": ["way/383390147"],
+      "why": "A pond, which the national map's building layer does not draw. OpenStreetMap does."
+    }
+  ]
+}
