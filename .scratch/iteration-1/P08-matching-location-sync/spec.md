@@ -52,7 +52,7 @@ This spec is large because the restart left most domain work without a task of i
 28. As a Holder, I want my Quest to end when all of its Sub Quests have ended for me, so that my list shows only what is ahead.
 29. As a Holder, I want to drop a Quest, so that I can change my mind.
 30. As a Holder of a Shared Quest, I want to see the other Holders, so that I know who is coming.
-31. As an SNU student, I want today's classes to appear as Class Quests in the same list with their buildings, so that one list shows my day.
+31. As an SNU student, I want today's classes to appear as Class Quests in the same list with their Places, so that one list shows my day.
 32. As an SNU student, I want to hold Quests whose times overlap, so that the app does not decide for me.
 
 ### Matching
@@ -144,7 +144,7 @@ This spec is large because the restart left most domain work without a task of i
 
 ### Meetup
 
-- A Meetup has a title, a place, a start time and an optional end time. The place is a building from the list or a point on the map.
+- A Meetup has a title, a place, a start time and an optional end time. The place is a Place from the list or a point on the map.
 - States: proposed, accepted, declined, withdrawn, expired.
 - Accepting creates a Shared Quest held by both Friends with one Sub Quest built from the Meetup. No Party is created.
 - A proposed Meetup cannot be edited. After acceptance the Quest follows the Quest rules, so either Friend can add Sub Quests.
@@ -159,7 +159,7 @@ This spec is large because the restart left most domain work without a task of i
 - Each Sub Quest has a completion kind. Two kinds exist now: by time and by hand. The kind is a field so that a verified kind, such as scanning a code at the venue, can be added later without changing the structure.
 - A Sub Quest with an end time counts as ended for everyone once that time has passed. This is computed when read; nothing is written.
 - Several Quests may point at the same Global Event: one per User who goes alone and one per match.
-- Class Quests are computed from the timetable when the Quest list is read. They are not stored. They are returned in the same shape as stored Quests, with one Sub Quest whose place is the class's building.
+- Class Quests are computed from the timetable when the Quest list is read. They are not stored. They are returned in the same shape as stored Quests, with one Sub Quest whose place is the class's Place.
 
 ### Matching
 
@@ -250,6 +250,6 @@ This spec is large because the restart left most domain work without a task of i
 ## Further Notes
 
 - The schedule names 윤유상 and 김태현 as workers and plans 4 hours. The real size is several times that, because Friend, Meetup, Party and Quest were added here. Pull requests are split by feature in this order: Friends, Quest, Party, Location, Signals, Meetup, Matching.
-- This task depends on the timetable API of P06 for Class Quests and on the Campus Boundary and building list of P07.
+- This task depends on the timetable API of P06 for Class Quests and on the Campus Boundary and the list of Places of P07.
 - Published practice for live location is to push positions over an open connection at intervals of 2 to 10 seconds. The reference app Bump keeps location history; this project does not.
 - The Invite Link needs a fixed https address. P05 checks whether the tunnel address can be fixed.

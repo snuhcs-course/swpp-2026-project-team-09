@@ -3,7 +3,7 @@
   "query": "[out:json][timeout:25][bbox:37.4470628,126.9474475,37.4692598,126.9612239];(nwr[\"building\"][\"name\"=\"체육문화교육연구동(71-1동)\"];nwr[\"building\"][\"name\"=\"901\"];);out tags center;",
   "exportedOn": "2026-10-02",
   "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-  "buildings": [
+  "places": [
     {
       "id": "way/456356713",
       "number": "71-1",

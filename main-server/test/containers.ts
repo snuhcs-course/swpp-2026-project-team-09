@@ -1,5 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { execFileSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
 import { PrismaClient } from '../src/generated/prisma/client.js';
@@ -32,6 +33,28 @@ export function migrate(databaseUrl: string): void {
 
 export function connect(databaseUrl: string): PrismaClient {
   return new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
+}
+
+// A database of its own beside the shared one, at the current schema, for a test file that loads a seed: what it loads
+// reaches no other test. `drop()` removes it.
+export async function createDatabase(
+  sharedDatabaseUrl: string,
+): Promise<{ prisma: PrismaClient; drop: () => Promise<void> }> {
+  const name = `seed_${randomUUID().replaceAll('-', '')}`;
+  const sharedDatabase = connect(sharedDatabaseUrl);
+  await sharedDatabase.$executeRawUnsafe(`CREATE DATABASE "${name}"`);
+  const url = new URL(sharedDatabaseUrl);
+  url.pathname = `/${name}`;
+  migrate(url.toString());
+  const prisma = connect(url.toString());
+  return {
+    prisma,
+    drop: async (): Promise<void> => {
+      await prisma.$disconnect();
+      await sharedDatabase.$executeRawUnsafe(`DROP DATABASE "${name}" WITH (FORCE)`);
+      await sharedDatabase.$disconnect();
+    },
+  };
 }
 
 // What `pnpm db:seed` does, without building the server first.

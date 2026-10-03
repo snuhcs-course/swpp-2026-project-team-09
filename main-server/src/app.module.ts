@@ -4,7 +4,6 @@ import { APP_PIPE } from '@nestjs/core';
 import { IdempotencyModule } from '@nestjs/idempotency';
 import { AdministratorsModule } from './administrators/administrators.module.js';
 import { AuthModule } from './auth/auth.module.js';
-import { BuildingsModule } from './buildings/buildings.module.js';
 import { CollectionModule } from './collection/collection.module.js';
 import { CampusBoundaryModule } from './common/campus-boundary.module.js';
 import { type SignedInAdministrator } from './common/current-administrator.decorator.js';
@@ -17,6 +16,7 @@ import { settingsSchema } from './common/settings.js';
 import { HealthModule } from './health/health.module.js';
 import { LobbyModule } from './lobby/lobby.module.js';
 import { MenusModule } from './menus/menus.module.js';
+import { PlacesModule } from './places/places.module.js';
 import { UsersModule } from './users/users.module.js';
 import { WalkingRouteModule } from './walking-route/walking-route.module.js';
 
@@ -49,7 +49,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     CollectionModule,
     MenusModule,
     WalkingRouteModule,
-    BuildingsModule,
+    PlacesModule,
   ],
   providers: [
     // Validates a handler parameter against the schema given in its decorator: @Body({ schema: signInSchema }).

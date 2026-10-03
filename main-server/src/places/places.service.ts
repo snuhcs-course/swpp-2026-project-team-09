@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
-import { Building } from '../generated/prisma/client.js';
-import { BuildingDto, toBuildingDto } from './dto/building.dto.js';
+import { Place } from '../generated/prisma/client.js';
+import { PlaceDto, toPlaceDto } from './dto/place.dto.js';
 
 // `25-1` comes after `25` and before `26`, and Korean names in the order a User reads them.
 const koreanOrder = new Intl.Collator('ko', { numeric: true });
 
-export function byNumber(a: Building, b: Building): number {
+export function byNumber(a: Place, b: Place): number {
   if (a.number !== null && b.number !== null) {
     return koreanOrder.compare(a.number, b.number);
   }
@@ -17,21 +17,19 @@ export function byNumber(a: Building, b: Building): number {
 }
 
 @Injectable()
-export class BuildingsService {
+export class PlacesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(): Promise<BuildingDto[]> {
-    const buildings = await this.prisma.building.findMany();
-    return buildings.toSorted(byNumber).map((building) => toBuildingDto(building));
+  async list(): Promise<PlaceDto[]> {
+    const places = await this.prisma.place.findMany();
+    return places.toSorted(byNumber).map((place) => toPlaceDto(place));
   }
 
   // In memory: the list is a few hundred entries, and `q` is then no LIKE pattern whose `%` and `_` need escaping.
-  async search(text: string): Promise<BuildingDto[]> {
+  async search(text: string): Promise<PlaceDto[]> {
     const part = text.toLowerCase();
-    // A User writes building 302 as 302동.
+    // A User writes the number 302 as 302동.
     const number = text.replace(/동$/u, '');
-    return (await this.list()).filter(
-      (building) => building.name.toLowerCase().includes(part) || building.number === number,
-    );
+    return (await this.list()).filter((place) => place.name.toLowerCase().includes(part) || place.number === number);
   }
 }
