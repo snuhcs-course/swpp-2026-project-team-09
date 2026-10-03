@@ -67,7 +67,9 @@ describe('The place line of a post', () => {
   ])('is not read from %s', (_case, line) => {
     expect(withPlaceLine(line).place).toBeNull();
   });
+});
 
+describe('The time line of a post', () => {
   it('gives the time from a time line with a "|" after its label', () => {
     const piped = parsed(176525, (page) =>
       page.replace('- 일시: 2026. 10. 13.(화) 17:00', '일시 | 2026. 10. 13.(화) 17:00'),
@@ -75,9 +77,7 @@ describe('The place line of a post', () => {
 
     expect(piped).toMatchObject({ start: '2026-10-13T17:00:00+09:00', readFrom: 'body' });
   });
-});
 
-describe('The time line of a post', () => {
   it('reads the end of a time written in words', () => {
     // 176516's time line given an end.
     const withEnd = parsed(176516, (page) => page.replace('오후 2시</span>', '오후 2시 ~ 오후 4시 30분</span>'));

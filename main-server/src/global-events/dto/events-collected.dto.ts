@@ -27,7 +27,8 @@ const collectedEventSchema = z.strictObject({
 export const eventsCollectedSchema = z.strictObject({
   source: z.enum([Source.snu_events]),
   collectedAt: z.iso.datetime({ offset: true }),
-  // False when the Collection stopped at a post it could not read: its posts are stored, but it did not succeed.
+  // False when the Collection stopped early, at a page it could not fetch, the firewall's block page or the third post
+  // in a row that was not a post: its posts are stored, but it did not succeed.
   complete: z.boolean(),
   events: z
     .array(collectedEventSchema)

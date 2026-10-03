@@ -1,7 +1,7 @@
 import { PlaceDto } from '../places/dto/place.dto.js';
 
 // A wrong position is published to every User, while a Draft only waits for an Administrator. So a place names a Place
-// only when every venue it writes is that Place, and anything the rules cannot account for makes a Draft.
+// only when all that it writes is that Place, and anything the rules cannot account for makes a Draft.
 
 // A number as a place writes it: "302동 105호", "학생회관(63동)", "71-1동", but not the address "역삼1동".
 const NUMBER = /(?<![\p{L}\p{N}-])(\d+(?:-\d+)?)동/gu;
@@ -30,12 +30,12 @@ const ON_CAMPUS = /서울대|관악캠퍼스|SNU|Seoul National University/iu;
 // "서울대학교미술관" is 서울대학교 and 미술관.
 const GLUED_CAMPUS = /(?<![\p{L}\p{N}])(서울대학교|서울대(?!학교)|관악캠퍼스)(?=\p{L})/gu;
 
-const URL = /https?:\/\/\S+/gu;
+const LINK = /https?:\/\/\S+/gu;
 
-// Where a place lists its venues, or a route between them.
+// Where a place lists several, or writes a route between them.
 const SEPARATOR = /[,，、/&·ㆍ;→⇒]|->|및|또는/gu;
 
-// A part that names no venue: online, or only a room or a floor once the campus is taken out.
+// A part that names nowhere to go: online, or only a room or a floor once the campus is taken out.
 const ONLINE = /zoom|줌|온라인|비대면|화상|webex|웨벡스|유튜브|youtube|teams|google meet|생중계|하이브리드/iu;
 const CAMPUS = /서울대학교|서울대|관악캠퍼스|SNU/giu;
 const ROOM_ONLY = /^(?:[\s\d().:~※[\]-]|호|층|지하|[fb])*$/iu;
@@ -105,7 +105,7 @@ function nameMentions(text: string, places: PlaceDto[]): NameMention[] {
   return [...bySpan.values()];
 }
 
-// The text cut where it lists venues, but not inside a name: 데이터사이언스대학원 및 공과대학 강의동 is one Place.
+// The text cut where it lists several, but not inside a name: 데이터사이언스대학원 및 공과대학 강의동 is one Place.
 function parts(text: string, names: Span[]): Span[] {
   const cuts = [...text.matchAll(SEPARATOR)].filter(
     ({ index }) => !names.some(({ start, end }) => start <= index && index < end),
@@ -120,7 +120,7 @@ function parts(text: string, names: Span[]): Span[] {
   return spans;
 }
 
-// The Places a part names, none when it names no venue, or null when it names one the list does not hold or two that
+// The Places a part names, none when it names nowhere to go, or null when it names one the list does not hold or two that
 // disagree. A number decides; a name beside it has to be of that building or its series.
 function partPlaces(
   part: string,
@@ -145,11 +145,11 @@ function partPlaces(
 }
 
 // The one Place of the list a place names, or null.
-export function namedPlace(place: string | null, places: PlaceDto[]): PlaceDto | null {
-  if (place === null) {
+export function namedPlace(placeText: string | null, places: PlaceDto[]): PlaceDto | null {
+  if (placeText === null) {
     return null;
   }
-  const text = place.replaceAll(' ', ' ').replaceAll(URL, ' ').replaceAll(GLUED_CAMPUS, '$1 ');
+  const text = placeText.replaceAll('\u00A0', ' ').replaceAll(LINK, ' ').replaceAll(GLUED_CAMPUS, '$1 ');
   if (isElsewhere(text)) {
     return null;
   }

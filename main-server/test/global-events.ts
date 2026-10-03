@@ -1,4 +1,4 @@
-// Post numbers from `first` on, one per call. Each test file takes numbers of its own, because the files share the
+// Post numbers after `first`, one per call. Each test file takes numbers of its own, because the files share the
 // database and a post is stored once.
 export function postNumbersFrom(first: number): () => number {
   let next = first;
@@ -143,7 +143,7 @@ export const placesNamingNoPlace: [string, string][] = [
   ['a name that begins a word', '서울대학교 행정관리팀 사무실'],
   // Not 행정관, 60동, nor 1동.
   ['a building of another campus by name', '서울대학교 연건캠퍼스 의과대학 행정관'],
-  ['a building of another campus by number', '연건캠퍼스 1동 강의실'],
+  ['a building of another campus by number', '서울대학교 연건캠퍼스 1동 강의실'],
   // Not 체육관, 71동: another university has one too.
   ["a name without the university's", '체육관 2층'],
   // Not 75동: a government complex numbers its buildings too.
@@ -155,7 +155,7 @@ export const placesNamingNoPlace: [string, string][] = [
   ["the university's hospital", '서울대학교병원 체육관'],
   // 국제대학원 is 140동, and 국제대학원2 140-1동.
   ['the name of a series of buildings', '서울대학교 국제대학원 국제회의실'],
-  ['a venue the list does not hold beside one it does', '서울대학교 종합운동장, 보조운동장'],
+  ['a name the list does not hold beside one it does', '서울대학교 종합운동장, 보조운동장'],
   ['a number the list does not hold beside one it does', '서울대학교 302동 및 999동'],
   ['two buildings', '서울대학교 301동 및 302동'],
   // 학생회관 is 63동.

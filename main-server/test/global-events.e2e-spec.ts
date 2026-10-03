@@ -105,7 +105,7 @@ describe('A collected event that cannot be published', () => {
   it.each([
     ['a number the list does not hold', '서울대학교 999동 101호'],
     ['two Places by number', '제1공학관(301동) 및 제2공학관(302동)'],
-    ['a name that several Places share', '행정대학원 국제회의실'],
+    ['a name that several Places share', '서울대학교 행정대학원 국제회의실'],
     ['no Place, being online', '온라인 (Zoom)'],
   ])('is a Draft without a position when its place names %s', async (_case, place) => {
     expect(await collect({ place })).toMatchObject({ state: 'draft', place, ...noPosition });
@@ -216,7 +216,7 @@ describe('A Collection of the events list', () => {
   });
 });
 
-describe('A Collection of the events list that stopped at a post it could not read', () => {
+describe('A Collection of the events list that stopped early', () => {
   it('stores the posts read before it, and is recorded as failed but not as successful', async () => {
     const postNumber = newPost();
     await sendAsWorker(
@@ -233,7 +233,7 @@ describe('A Collection of the events list that stopped at a post it could not re
     await sendAsWorker(harness.worker, 'collection-failed', {
       source: 'snu_events',
       failedAt: '2026-10-03T06:00:00+09:00',
-      reason: 'The page has no post',
+      reason: "The university's firewall blocked https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
     });
 
     expect(await storedEvent(postNumber)).toMatchObject({ postNumber });

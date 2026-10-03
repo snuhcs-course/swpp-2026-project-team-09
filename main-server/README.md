@@ -237,8 +237,9 @@ The worker sends each post of the events list as one event, all those of a Colle
 ```
 
 - `events` holds the posts the main server did not store when the worker asked, and is `[]` when there are none.
-- `complete` is `false` when the Collection stopped at a post it could not read. Its posts are stored all the same,
-  but the Collection is not recorded as successful.
+- `complete` is `false` when the Collection stopped early: at a page it could not fetch, at the firewall's block page,
+  or at the third post in a row whose page was not the post. Its posts are stored all the same, but the Collection is
+  not recorded as successful.
 - `start` and `end` are each a time with its offset, or a day when no time of day was read. `readFrom` says where they
   were read: `body` for the body's time line, `header` for the header's date. All three are `null` when no day was
   read.
@@ -265,7 +266,7 @@ those fields being filled:
   stored at 00:00;
 - its position is set whenever its place named exactly one Place, even when its time was not read.
 
-A place names a Place, in `src/global-events/named-place.ts`, only when every venue it writes is that Place. A wrong
+A place names a Place, in `src/global-events/named-place.ts`, only when all that it writes is that Place. A wrong
 position is published to every User, while a Draft only waits for an Administrator, so whatever the rules cannot
 account for makes a Draft:
 
@@ -276,15 +277,15 @@ account for makes a Draft:
   105동. A name without a letter, such as OpenStreetMap's `901`, is matched by number only. The university's name
   written onto a name, as in `서울대학교미술관`, is taken apart.
 - Neither a number nor a name alone shows that the place is on this campus: another university has its 체육관, and a
-  government complex its 1동. A number counts when the place also writes `서울대`, `관악캠퍼스` or `SNU`, or a name of
-  that building beside it, as in `뉴미디어통신공동연구소 이충웅홀(132동 103호)`. A name counts only with the
+  government complex its 1동. A number counts when the place also writes `서울대`, `관악캠퍼스`, `SNU` or
+  `Seoul National University`, or a name of that building beside it, as in `뉴미디어통신공동연구소 이충웅홀(132동 103호)`. A name counts only with the
   university's.
 - A number decides its building, and a name beside it has to be of that building or its series:
   `(관악사)학부 생활관 919동` is 919동 only, `국제대학원(140-2동)` 140-2동, and `302동 학생회관` names none.
 - A name that another Place's name continues with a number names that whole series: `국제대학원` alone is 140동 or
   국제대학원2, 140-1동, so it names none.
-- The place is cut where it lists venues or a route, at `,` `/` `&` `·` `및` `또는` `→`, but not inside a name, as in
-  `데이터사이언스대학원 및 공과대학 강의동 1`. Every part has to name the same Place, apart from a part that is online
+- The place is cut where it lists several or writes a route, at `,` `，` `、` `/` `&` `·` `ㆍ` `;` `및` `또는` `→` `⇒`
+  `->`, but not inside a name, as in `데이터사이언스대학원 및 공과대학 강의동 1`. Every part has to name the same Place, apart from a part that is online
   (`Zoom`, `온라인`, `비대면` and the like) or only a room or a floor. So `103동 444호 & Zoom` is 103동, while
   `종합운동장, 보조운동장`, `301동 및 302동` and `302동 및 999동` name none.
 - A place elsewhere names none: on another of the university's campuses or at its hospitals (`연건`, `시흥`, `평창`,

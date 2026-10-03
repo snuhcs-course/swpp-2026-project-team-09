@@ -83,7 +83,7 @@ export function parseEventPage(html: string, postNumber: number): CollectedEvent
   const $ = load(html);
   const view = $('.board-view');
   const title = clean(view.find('.header .title').text());
-  // A blocked request is answered with status 200 and another page, so the content is checked.
+  // Another page, such as an error page, can come with status 200 too, so the content is checked.
   if (view.find('.content').length === 0 || title === '') {
     throw new Error('The page has no post');
   }

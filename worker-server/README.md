@@ -217,11 +217,13 @@ From a post's page, `src/event/event-page.parser.ts` reads, by the team's own ru
 
 - The title, and the post's address as the post number and the source link.
 - The description: the body as text, one line of the page per line, with no-break spaces as spaces.
+- A label, of the time line or the place line, is followed by a colon, a `]` or a `|`, as in `- 일시:`, `• 장소]` or
+  `장소 | …`. A label alone on its line, as in `4. 장소`, takes the next line as its value, unless that line has a label
+  of its own.
 - The time line: the first line of the body labelled `일시`, `일자`, `일정` or `기간` that has a value. A bullet or a
   number may come before the label, and spaces inside it, no-break spaces included, do not count: `· 일   시:`,
-  `○일 정 :`, `- 일시:`. A `]` or a `|` may stand for the colon, as in `• 장소]` or `장소 | …`, and a label alone on
-  its line, as in `4. 장소`, takes the next line as its value. A label that only ends with one, such as `신청 기간` or
-  `접수기간`, is another line, so application periods and deadlines stay in the description, unread.
+  `○일 정 :`, `- 일시:`. A label that only ends with one, such as `신청 기간` or `접수기간`, is another line, so
+  application periods and deadlines stay in the description, unread.
 - The start and the end, from the time line, by `src/event/event-time.ts`:
   - The start is the first day written with its year, as `2026. 10. 13.(화)`, `2026.10.16(금)` or
     `2026년 10월 7일(수요일)`, with the time after it, if one comes before a range mark (`~`, `∼`, `〜`, `～`, `-`,
@@ -240,7 +242,7 @@ From a post's page, `src/event/event-page.parser.ts` reads, by the team's own ru
     from.
 - The place line: the first line labelled `장소`, or with a label that names the event's own place, that has a value,
   as it is written. Those labels are `행사 장소`, `개최 장소`, `교육 장소`, `강연 장소`, `강의 장소`, `오프라인 장소`,
-  `대면 장소`, and `일시 및 장소` or `시간 및 장소`, whose value also holds the time. A place to gather or to apply,
+  `대면 장소`, and `일시 및 장소`, `일시와 장소`, `시간 및 장소` or `시간과 장소`, whose value also holds the time. A place to gather or to apply,
   such as `집결 장소` or `신청 장소`, is somewhere else and is not read.
 
 What the rules cannot read is sent as `null`, and the post is still sent with its text. The main server decides from

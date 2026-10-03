@@ -12,7 +12,7 @@ export interface ListedPost {
 export function parseEventListPage(html: string, filter: ListFilter): ListedPost[] {
   const $ = load(html);
   const items = $('.event-board .board-imgline a.item');
-  // A blocked request is answered with status 200 and another page, so the content is checked.
+  // Another page, such as the firewall's block page, can come with status 200 too, so the content is checked.
   if (items.length === 0 && $('.event-board .board-noresult').length === 0) {
     throw new Error('The page has no events list');
   }
