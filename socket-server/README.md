@@ -132,7 +132,7 @@ server keeps no record of sessions:
 
 The main server sends each set of shuttle vehicles it stores, every 15 seconds while the shuttle runs, and the socket
 server sends it to every connected app as the event `shuttle-vehicles-updated`, whether or not the app shows the
-shuttle. A set that changes nothing, such as no vehicles after no vehicles, is not sent:
+shuttle:
 
 ```ts
 socket.on('shuttle-vehicles-updated', (vehicles) => {

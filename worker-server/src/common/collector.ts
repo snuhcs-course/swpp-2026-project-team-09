@@ -37,9 +37,9 @@ export abstract class Collector {
     }
   }
 
-  protected async send(pattern: string, message: object): Promise<unknown> {
+  private async send(pattern: string, message: object): Promise<void> {
     try {
-      return await lastValueFrom(
+      await lastValueFrom(
         this.mainServer.send(pattern, message).pipe(
           timeout({
             first: ANSWER_TIMEOUT,

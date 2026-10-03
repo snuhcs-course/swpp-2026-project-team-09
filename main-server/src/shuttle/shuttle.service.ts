@@ -13,9 +13,12 @@ import { type ShuttleVehicleDto, shuttleVehicleSchema } from './dto/shuttle-vehi
 import { type ShuttleVehiclesCollectedMessage } from './dto/shuttle-vehicles-collected.dto.js';
 import { ROUTE_NUMBER } from './shuttle.seed.js';
 
-// The Redis key of the latest set of vehicles, as it is served. A state replaced every 15 seconds and gone after a
-// minute, so no table holds it.
+// The Redis key of the latest set of vehicles. A state replaced every 15 seconds and gone after a minute, so no table
+// holds it.
 const VEHICLES_KEY = 'shuttle:vehicles';
+
+// The set as the key holds it. The time it was received tells one set without vehicles from the next.
+const storedSetSchema = z.object({ receivedAt: z.string(), vehicles: z.array(shuttleVehicleSchema) });
 
 // The key expires this long after its set was received, so that the vehicles disappear when the service ends or the
 // worker stops.
@@ -58,7 +61,7 @@ export class ShuttleService {
 
   async vehicles(): Promise<ShuttleVehicleDto[]> {
     const stored = await this.redis.get(VEHICLES_KEY);
-    return stored === null ? [] : z.array(shuttleVehicleSchema).parse(JSON.parse(stored));
+    return stored === null ? [] : storedSetSchema.parse(JSON.parse(stored)).vehicles;
   }
 
   // The stops of the page must be those of the seed, in its loop order. Any other list means that the page changed,
@@ -97,15 +100,14 @@ export class ShuttleService {
         stop: toShuttleStopDto(stop),
         receivedAt: receivedAt.toISOString(),
       }));
-    const stored = JSON.stringify(sent);
+    const stored = JSON.stringify({ receivedAt: receivedAt.toISOString(), vehicles: sent });
     const expiresAt = receivedAt.getTime() + POSITION_LIFETIME;
-    // Every main server receives the message and stores the same set. The one whose write changed what is served
-    // sends it, so that the apps get a set once. A set already more than a minute old leaves nothing to serve.
+    // Every main server receives the message and stores the same set. The one whose write changed the key sends the
+    // set, so that the apps get each set once. A set already more than a minute old leaves nothing to serve.
     const changed =
       expiresAt > Date.now()
         ? (await this.redis.set(VEHICLES_KEY, stored, 'PXAT', expiresAt, 'GET')) !== stored
         : (await this.redis.del(VEHICLES_KEY)) === 1;
-    await this.collection.recordSuccess(this.prisma, Source.shuttle_vehicles, receivedAt);
     if (changed) {
       this.messaging.emit('shuttle-vehicles-updated', sent).subscribe({
         error: (error: unknown) => {
@@ -113,5 +115,6 @@ export class ShuttleService {
         },
       });
     }
+    await this.collection.recordSuccess(this.prisma, Source.shuttle_vehicles, receivedAt);
   }
 }

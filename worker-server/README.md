@@ -60,9 +60,10 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
 
   One worker instance runs, so each Collection runs once. The worker collects nothing when it starts.
 
-- **By hand**: `pnpm collect` runs one Collection of each Source it names, as the schedule would, and exits. Use it
-  after starting the system outside the scheduled times, so that the main server holds data without waiting for the
-  next run:
+- **By hand**: `pnpm collect` runs one Collection of each Source it names, as the schedule would, and exits. It stops
+  its own schedule first, so that no run that falls due meanwhile, such as the vehicle positions' every 15 seconds,
+  collects a Source it was not asked for. Use it after starting the system outside the scheduled times, so that the
+  main server holds data without waiting for the next run:
 
   ```bash
   pnpm build
@@ -100,9 +101,9 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
   request with status 200 and another page. So a parser checks that the page is the one it knows, such as the table
   being there and the date being the one asked for, and throws an `Error` that says what is wrong.
 - **Handing over**: the collector sends what it read as one request-and-response message and waits for the answer,
-  with `handOver(source, collectedAt, pattern, message)` of `Collector`. `send(pattern, message)` sends any other
-  message the same way and gives the main server's answer. Both go through the messaging client (`MESSAGING_CLIENT`),
-  and give the answer up after 5 seconds, so that a Collection never waits for a main server that is down.
+  with `handOver(source, collectedAt, pattern, message)` of `Collector`. It goes through the messaging client
+  (`MESSAGING_CLIENT`) and gives the answer up after 5 seconds, so that a Collection never waits for a main server
+  that is down.
   The main server's README sets how a message is named and shaped and what it answers:
   [Messages from the worker server](../main-server/README.md#messages-from-the-worker-server). The shape of what a
   Collection read is a type in the feature's `dto/`, kept the same as the main server's schema by hand.
@@ -202,8 +203,9 @@ Two Sources of the shuttle operator's circular route 41946 (`.scratch/research/e
   the firewall's block page, is a failed Collection.
 - The vehicle positions are not asked for outside those hours, the service hours of the semester, nor at weekends. On a
   holiday or in a vacation the operator answers with no vehicles, which is sent as such.
-- A run that fails ends within 10 seconds, 5 for the page and 5 for the main server, before the next one is due, so
-  the requests never pile up.
+- The operator is asked once in each run, and the request is given up after 5 seconds, so the requests never pile up.
+  A run itself lasts 15 seconds at the longest, when the page comes late and the main server answers neither the
+  message nor the failure's report, each waited for 5 seconds.
 - The main server places each vehicle at a stop and sends the vehicles on to the apps:
   [Shuttle](../main-server/README.md#shuttle).
 

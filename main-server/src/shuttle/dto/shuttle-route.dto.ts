@@ -1,12 +1,15 @@
+import { z } from 'zod';
 import { type Position } from '../../common/geometry.js';
 import { ShuttleStop } from '../../generated/prisma/client.js';
 
-export interface ShuttleStopDto {
-  id: string;
-  name: string;
-  latitude: number;
-  longitude: number;
-}
+export const shuttleStopSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  latitude: z.number(),
+  longitude: z.number(),
+});
+
+export type ShuttleStopDto = z.infer<typeof shuttleStopSchema>;
 
 export interface ShuttleRouteDto {
   // As the route page writes them.

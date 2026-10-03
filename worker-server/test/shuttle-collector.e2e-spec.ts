@@ -139,7 +139,7 @@ async function nextRuns(now: string): Promise<Date[][]> {
   return jobs.map((job) => job.nextDates(3).map((run) => run.toJSDate()));
 }
 
-// Starts a Collection of the vehicle positions, then one of the route page, against `served`, lets 11 seconds pass,
+// Starts a Collection of the vehicle positions, then one of the route page, against `served`, lets 6 seconds pass,
 // and gives whether the main server took each.
 async function collectWithoutAnswer(
   served: Record<string, string | null>,
@@ -250,18 +250,25 @@ describe('A Collection that gets no answer', () => {
 });
 
 describe('The command that runs one Collection', () => {
-  it('collects the shuttle Source it names and no other', async () => {
+  it('collects the shuttle Source it names and no other, though a scheduled run falls due meanwhile', async () => {
+    // Friday, a second before a run of the vehicle positions, with the timers replaced too.
+    vi.useFakeTimers({
+      toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
+      now: new Date('2026-10-02T15:39:59+09:00'),
+    });
     const sources = sourcesServing(pages);
     const mainServer = new MainServerStub();
     const app = await startApp(inject('settings'), { fetchPage: sources.fetch, mainServer });
     // Imported after startApp, so that it finds the collectors AppModule registers.
     const { collectSources } = await import('../src/collect-sources.js');
 
-    const taken = await collectSources(app, ['shuttle_vehicles']);
+    const collected = collectSources(app, ['shuttle_stops']);
+    await vi.advanceTimersByTimeAsync(2000);
+    const taken = await collected;
     await app.close();
 
     expect(taken).toBe(true);
-    expect(sources.requests.map(({ url }) => url)).toEqual([VEHICLE_POSITIONS]);
-    expect(mainServer.messages.map(({ pattern }) => pattern)).toEqual(['shuttle-vehicles-collected']);
+    expect(sources.requests.map(({ url }) => url)).toEqual([ROUTE_PAGE]);
+    expect(mainServer.messages.map(({ pattern }) => pattern)).toEqual(['shuttle-stops-collected']);
   });
 });

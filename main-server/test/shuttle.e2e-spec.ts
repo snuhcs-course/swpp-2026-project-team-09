@@ -18,8 +18,8 @@ import {
 import { signIn } from './sign-in.js';
 import { refusal, sendAsWorker, startWithWorker, type WorkerHarness } from './worker.js';
 
-// The shuttle's stops, route and vehicles are one set of records in the shared database, so only this file sends
-// shuttle messages, one test after the other.
+// The shuttle's stops and route are one set of records in the shared database and its vehicles one key in Redis, so
+// only this file sends shuttle messages, one test after the other.
 let harness: WorkerHarness;
 let accessToken: string;
 // No route serves the Collection status yet (P12 adds one), so the tests read it with a connection of their own.
@@ -246,18 +246,21 @@ describe('Each set of vehicles stored', () => {
 });
 
 describe('A set of vehicles that arrives twice, as when every main server receives it', () => {
-  it('is sent to the socket server once', async () => {
-    const receivedAt = new Date().toISOString();
+  it('is sent to the socket server once, and the next set after it, with or without vehicles', async () => {
+    const now = Date.now();
+    const [first, second, third] = [0, 1, 2].map((later) => new Date(now + later).toISOString());
     const { stops } = await servedRoute();
     const before = events.length;
 
-    await sendVehicles([{ carId: '4522', x: 157, y: 40 }], { collectedAt: receivedAt });
-    await sendVehicles([{ carId: '4522', x: 157, y: 40 }], { collectedAt: receivedAt });
-    await sendVehicles([]);
+    await sendVehicles([{ carId: '4522', x: 157, y: 40 }], { collectedAt: first });
+    await sendVehicles([{ carId: '4522', x: 157, y: 40 }], { collectedAt: first });
+    await sendVehicles([], { collectedAt: second });
+    await sendVehicles([], { collectedAt: third });
 
     await vi.waitFor(() => {
       expect(events.slice(before)).toEqual([
-        { pattern: 'shuttle-vehicles-updated', data: [{ carId: '4522', stop: stops[0], receivedAt }] },
+        { pattern: 'shuttle-vehicles-updated', data: [{ carId: '4522', stop: stops[0], receivedAt: first }] },
+        { pattern: 'shuttle-vehicles-updated', data: [] },
         { pattern: 'shuttle-vehicles-updated', data: [] },
       ]);
     });

@@ -438,17 +438,17 @@ How a vehicle is stored:
   answer: a vehicle the operator no longer reports is gone at once, and a set without vehicles empties the list.
   Vehicles are told apart by the operator's `carid`.
 - The vehicles are in Redis, not in a table: they are the present state of something outside, replaced every 15
-  seconds, of which no history is kept. The latest set is the one key `shuttle:vehicles`, in the form
-  `GET /shuttle/vehicles` answers, and the key expires a minute after the set was received, which is how a position is
-  no longer served. The Collection status of `shuttle_vehicles` is recorded in the database, as every Source's is.
+  seconds, of which no history is kept. The latest set is the one key `shuttle:vehicles`, holding the vehicles as
+  `GET /shuttle/vehicles` answers them and the time the set was received. The key expires a minute after that time,
+  which is how a position is no longer served. The Collection status of `shuttle_vehicles` is recorded in the
+  database, as every Source's is.
 - Each set stored goes to the socket server as the event `shuttle-vehicles-updated`, in the form `GET /shuttle/vehicles`
   answers, and the socket server sends it to every connected app (see the
   [socket server](../socket-server/README.md#shuttle-vehicles)). The event does not wait for an answer: an app that
   missed one gets the next set 15 seconds later.
 - Several main servers can run. Each receives the worker's message, since messaging publishes it to every main
-  server, and each stores the same set under the same key. The one whose write changed what is served sends the
-  event, so the apps get each set once; a set that changes nothing, such as no vehicles after no vehicles, is not
-  sent.
+  server, and each stores the same set under the same key. The one whose write changed the key sends the event, so the
+  apps get each set once.
 
 The messages, which follow [Messages from the worker server](#messages-from-the-worker-server):
 
@@ -522,8 +522,8 @@ Each exported file keeps, at its top, where it came from and the day of the expo
 - **Adding a Place that the campus map does not list**: add an entry to `national-map-places.json`.
   `{ "outline": "B0010000000SIJSPM", "number": "303", "name": "해동첨단공학관", "why": … }` makes a Place at the middle
   of that polygon of the national map; `"number": null` makes one without a number.
-- **The shuttle's stops and line**, `shuttle-stops.json` and `shuttle-route.geojson`, have no export; each keeps
-  where its data came from at its top. The stops' names and places on the drawing are the route page's, as P05 read
+- **The shuttle's stops and line**, `shuttle-stops.json` and `shuttle-route.geojson`, are not written by
+  `pnpm seed:export`; each keeps at its top the address or query its data was read from, as `exportedFrom`. The stops' names and places on the drawing are the route page's, as P05 read
   it; `campusMapStop`, written by hand, pairs each with a stop of the campus map, which gives the coordinates. The
   line follows the roads that the Overpass query in its file gave, as the shortest way a vehicle may take from each of
   the campus map's 15 stops to the next. A person checked the pairs and the line on a map.
@@ -784,5 +784,5 @@ await harness.close(); // in afterAll
 - The database is the shared one, so each test stores data of its own. The menus tests take their days from `daysOf()`
   in `test/menus.ts`, a month for each file and a day for each test. A Source's Collection status is one row, so only
   one file checks the status of a Source: `test/collection.e2e-spec.ts` the dormitory's, `test/menus.e2e-spec.ts` the
-  Co-op's and `test/shuttle.e2e-spec.ts` the shuttle's two, whose stops, line and vehicles are one set of records
-  besides.
+  Co-op's and `test/shuttle.e2e-spec.ts` the shuttle's two, whose stops and line are one set of records and whose
+  vehicles one key in Redis besides.
