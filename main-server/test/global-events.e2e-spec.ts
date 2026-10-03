@@ -107,6 +107,12 @@ describe('A collected event that cannot be published', () => {
   it('is a Draft when no place was read', async () => {
     expect(await collect({ place: null })).toMatchObject({ state: 'draft', place: null, ...noPosition });
   });
+
+  it('is a Draft with its title alone when the worker could not read its page', async () => {
+    const unread = { description: '', start: null, end: null, readFrom: null, place: null };
+
+    expect(await collect(unread)).toMatchObject({ state: 'draft', description: '', startsAt: null, ...noPosition });
+  });
 });
 
 describe('The place of a collected event', () => {

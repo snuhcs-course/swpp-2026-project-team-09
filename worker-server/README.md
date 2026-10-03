@@ -192,20 +192,26 @@ A Collection does four things, one page at a time:
 2. It asks the main server which of the listed posts it stores, `stored-event-posts`. The question and its answer are
    shaped in `src/event/dto/stored-event-posts.dto.ts`.
 3. It reads the page of each post the main server does not store,
-   `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525`, one after the other, and stops at the first that cannot be
-   fetched or read: a blocked request is likely followed by more.
+   `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525`, one after the other. A page that cannot be fetched, or the
+   firewall's block page, stops it: a blocked request is likely followed by more. A page that is not the post asked for
+   is skipped: the post is sent with its title from the list alone, so that it waits as a Draft for an Administrator,
+   who reads it at the Source. Three such pages in a row stop it instead, since then the pages have changed, not the
+   posts; none of the three is sent. A skipped post is kept back until a post after it is read or the list ends, so a
+   Collection that stops before then does not send it either.
 4. It sends what it read, in the list's order. When every post is stored, the message has no event and still records a
-   successful Collection. When a post could not be read, the posts read before it are sent all the same, with
+   successful Collection. When the Collection stops, the posts read before are sent all the same, with
    `complete: false`, so that they are stored and never read again without counting as a success, and the Collection
    then fails.
 
-So a post is read once, and an edit at the Source after that is not seen. While one post cannot be read, the posts
-listed after it wait for it, and each Collection fails on it, which the Collection status shows.
+So a post is read once, and an edit at the Source after that is not seen. A post whose page is not a post holds up
+neither the posts after it nor the Collection status: it is logged as a warning and waits as a Draft.
 
 A page is read only when it has the structure the parser expects. A page of the list shows its posts, each with its post
 number, or the end of the list (`검색된 자료가 없습니다.`), and repeats the filter it was asked for, since an unfiltered
 list runs to some 600 pages. A post's page has its title and its body, and its canonical link is the address of the post
-asked for. A page without it, such as the firewall's block page, fails the Collection.
+asked for. A page of the list without it fails the Collection; a post's page without it is skipped, as step 3 says.
+The firewall's block page, which refreshes to `snucert.snu.ac.kr/waf/error.html`, is recognised before either and
+fails the Collection.
 
 From a post's page, `src/event/event-page.parser.ts` reads, by the team's own rules:
 

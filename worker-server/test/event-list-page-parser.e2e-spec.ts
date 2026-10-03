@@ -7,10 +7,13 @@ const filter = { from: '2026.10.02', to: '2027.10.02' };
 const firstPage = savedPage('snu-events-list-page-1-2026-10-02');
 
 describe('A page of the events list', () => {
-  it('gives the post number of each post it lists, in its order', () => {
-    expect(parseEventListPage(firstPage, filter)).toEqual([
+  it('gives the post number and the title of each post it lists, in its order', () => {
+    const posts = parseEventListPage(firstPage, filter);
+
+    expect(posts.map(({ postNumber }) => postNumber)).toEqual([
       176576, 176564, 176561, 176558, 176549, 176540, 176525, 176522, 176519, 176516, 176510, 176504,
     ]);
+    expect(posts[0]).toEqual({ postNumber: 176576, title: '[참가자 모집]제1회 과학데이터혁신 경진대회 개최' });
   });
 
   it('gives no post past the end of the list', () => {
@@ -32,5 +35,14 @@ describe('A page of the events list', () => {
     const withoutNumber = firstPage.replace('href="/snunow/events?md=v&bbsidx=176576"', 'href="/snunow/events?md=v"');
 
     expect(() => parseEventListPage(withoutNumber, filter)).toThrow('A post of the events list has no number');
+  });
+
+  it('is not read when a post it lists has no title', () => {
+    const withoutTitle = firstPage.replace(
+      '<span class="title">[참가자 모집]제1회 과학데이터혁신 경진대회 개최</span>',
+      '<span class="title"></span>',
+    );
+
+    expect(() => parseEventListPage(withoutTitle, filter)).toThrow('A post of the events list has no title');
   });
 });

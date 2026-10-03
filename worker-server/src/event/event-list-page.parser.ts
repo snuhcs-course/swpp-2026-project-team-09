@@ -1,8 +1,15 @@
 import { load } from 'cheerio';
+import { clean } from './event-page.parser.js';
 import { type ListFilter } from './events-list.js';
 
-// Reads the post numbers a page of the events list lists, in its order. A page past the end lists none.
-export function parseEventListPage(html: string, filter: ListFilter): number[] {
+// A post as the list shows it.
+export interface ListedPost {
+  postNumber: number;
+  title: string;
+}
+
+// Reads the posts a page of the events list lists, in its order. A page past the end lists none.
+export function parseEventListPage(html: string, filter: ListFilter): ListedPost[] {
   const $ = load(html);
   const items = $('.event-board .board-imgline a.item');
   // A blocked request is answered with status 200 and another page, so the content is checked.
@@ -18,6 +25,10 @@ export function parseEventListPage(html: string, filter: ListFilter): number[] {
     if (postNumber === undefined) {
       throw new Error('A post of the events list has no number');
     }
-    return Number(postNumber);
+    const title = clean($(item).find('.title').text());
+    if (title === '') {
+      throw new Error('A post of the events list has no title');
+    }
+    return { postNumber: Number(postNumber), title };
   });
 }

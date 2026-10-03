@@ -11,7 +11,7 @@ const PLACE_LABELS = new Set(['장소']);
 // Marks a line break of the page in the text, apart from the line breaks of the HTML source.
 const LINE_BREAK = '\u2028';
 
-function clean(text: string): string {
+export function clean(text: string): string {
   return text.replaceAll('\u00A0', ' ').trim();
 }
 

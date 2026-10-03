@@ -243,6 +243,8 @@ The worker sends each post of the events list as one event, all those of a Colle
   were read: `body` for the body's time line, `header` for the header's date. All three are `null` when no day was
   read.
 - `place` is the body's place line as the post writes it, or `null`.
+- A post whose page the worker could not read as the post comes with its title from the list, an empty `description`
+  and no time or place, so it is stored as a Draft. An Administrator reads it at its `sourceUrl`.
 
 The rules read one start and one end per post, so a post that describes several sessions, such as a lecture series, is
 one event, which an Administrator splits.
@@ -280,9 +282,9 @@ list is Gwanak's.
 No Collection changes a stored event, whatever its state. A post is stored once, by its post number, and a later
 message carrying it again leaves it exactly as it is. So an Administrator's edits stay, and a discarded post does not
 come back. The worker asks which posts are stored before it reads any (`stored-event-posts`), so it reads each post once:
-an edit or a deletion at the Source after that is not seen. A Collection that cannot read a post sends the posts it read
-before it with `complete: false`, then reports the failure, so that `lastSucceededAt` stays the time of the last
-Collection that read every post.
+an edit or a deletion at the Source after that is not seen. A Collection that stops, blocked or at three posts in a row
+it could not read, sends the posts it read before with `complete: false`, then reports the failure, so that
+`lastSucceededAt` stays the time of the last Collection that read every post.
 
 What the rules read from a post, and how, is in the worker server's README. In a test, `collectedEvent()`,
 `eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
