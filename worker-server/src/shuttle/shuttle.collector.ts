@@ -35,8 +35,8 @@ export class ShuttleCollector extends Collector {
     await this.collectOne('shuttle_stops');
   }
 
-  // A run that waits behind other pages, or for a main server that is down, makes the next ones skip, so that the
-  // requests do not pile up and go out together.
+  // A run that waits behind other pages makes the next ones skip, so that the requests do not pile up and go out
+  // together.
   @Cron(VEHICLES_TIMES, { timeZone: 'Asia/Seoul', waitForCompletion: true })
   async collectVehicles(): Promise<void> {
     await this.collectOne('shuttle_vehicles');

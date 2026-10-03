@@ -7,7 +7,7 @@ export const FETCH = 'FETCH';
 const USER_AGENT = 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)';
 
 // A page not served by then is given up, so that it does not hold up the pages asked for after it.
-const PAGE_TIMEOUT = 10_000;
+const PAGE_TIMEOUT = 5000;
 
 // The one place where pages are fetched.
 @Injectable()

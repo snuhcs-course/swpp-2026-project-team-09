@@ -91,7 +91,7 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
 
 - **Fetching**: every page is fetched with `PageFetcher.fetch(url)` from `src/common/page-fetcher.ts`, never with
   `fetch` itself. It sends a `User-Agent` that names the project, asks for one page at a time whichever collectors are
-  running, and fails when the answer's status is not 2xx or when the page has not come within 10 seconds, so that a
+  running, and fails when the answer's status is not 2xx or when the page has not come within 5 seconds, so that a
   Source that does not answer holds up the pages after it for no longer. `fetch(url, body)` asks with a POST of the
   body as JSON, as the shuttle operator's vehicle positions want.
 - **Parsing**: a parser is a function from a page's text to what the message carries, in the feature's folder, such as
@@ -102,7 +102,7 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
   with `handOver(source, collectedAt, pattern, message)` of `Collector`. `send(pattern, message)` sends any other
   message the same way and gives the main server's answer, such as the answer to a question: the worker keeps nothing,
   so a Collection that needs to know what the main server holds asks it, as the events collector asks which posts are
-  stored. Both go through the messaging client (`MESSAGING_CLIENT`), and give the answer up after 10 seconds, so that a
+  stored. Both go through the messaging client (`MESSAGING_CLIENT`), and give the answer up after 5 seconds, so that a
   Collection never waits for a main server that is down.
   The main server's README sets how a message is named and shaped and what it answers:
   [Messages from the worker server](../main-server/README.md#messages-from-the-worker-server). The shape of what a
@@ -110,7 +110,7 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
 - **Failure**: when a page cannot be fetched or read, or the main server does not take the message or answer the
   question, `handOver()` logs it and sends `collection-failed` with the Source, the time and the reason, such as
   `https://snudorm.snu.ac.kr/foodmenu/?date=2026-10-02 answered 503`, `The page has no menu table` or
-  `The main server did not take shuttle-vehicles-collected: no answer within 10 seconds`. The other Sources of the run
+  `The main server did not take shuttle-vehicles-collected: no answer within 5 seconds`. The other Sources of the run
   are still collected, and the main server keeps what it stored.
 
 The tests never call a real Source. `startApp` replaces the HTTP call under `PageFetcher` (`FETCH`), and every request
@@ -134,7 +134,7 @@ HTTP; their files are still named `*.e2e-spec.ts`, the one pattern Vitest runs.
   sends, as `test/menu-collector.e2e-spec.ts` does. `answers.set(pattern, answer)` gives the stub its answer to a
   question, and `refusals.set(pattern, problem)` makes it refuse a message. The test sets the clock with
   `vi.useFakeTimers({ toFake: ['Date'], now })`. An address given `null` in place of a page never answers, and so do
-  the patterns in the stub's `unanswered`; a test that waits for the 10 seconds replaces the timers too, as
+  the patterns in the stub's `unanswered`; a test that waits for the 5 seconds replaces the timers too, as
   `test/shuttle-collector.e2e-spec.ts` does.
 - **The command** is tested through `collectSources(app, names)`, which `src/collect.ts` calls, in the same file.
 
@@ -270,9 +270,10 @@ Two Sources of the shuttle operator's circular route 41946 (`.scratch/research/e
   the firewall's block page, is a failed Collection.
 - The vehicle positions are not asked for outside those hours, the service hours of the semester, nor at weekends. On a
   holiday or in a vacation the operator answers with no vehicles, which is sent as such.
-- A vehicle run that is still waiting, behind the menu pages of 10:00 or for a main server that is down, makes the next
-  runs skip (`waitForCompletion`), so that the requests do not pile up and go out together. The vehicles served then
-  grow more than a minute old and disappear until a run gets through.
+- A vehicle run that is still waiting behind other pages, such as the menu pages of 10:00, makes the next runs skip
+  (`waitForCompletion`), so that the requests do not pile up and go out together. The vehicles served then grow more
+  than a minute old and disappear until a run gets through. A run that fails ends within 10 seconds, 5 for the page and
+  5 for the main server, before the next one is due.
 - The main server places each vehicle at a stop and sends the vehicles on to the apps:
   [Shuttle](../main-server/README.md#shuttle).
 

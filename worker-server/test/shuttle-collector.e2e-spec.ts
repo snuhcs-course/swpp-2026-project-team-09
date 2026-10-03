@@ -7,6 +7,8 @@ import { startApp } from './start-app.js';
 
 const ROUTE_PAGE = 'https://web.busin.co.kr/BuslineCircleS.aspx?cd=snu_1&di=41946&tab=F';
 const VEHICLE_POSITIONS = 'https://web.busin.co.kr/BuslineCircleS.aspx/GetRoute';
+// A page of another collector.
+const OTHER_PAGE = 'https://snuco.snu.ac.kr/foodmenu/';
 const USER_AGENT = 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)';
 
 // What the operator answered at 15:40 on Friday 2 October 2026.
@@ -151,8 +153,8 @@ async function collectWithoutAnswer(
   const collector = app.get(ShuttleCollector);
   const vehicles = collector.collectOne('shuttle_vehicles');
   const stops = collector.collectOne('shuttle_stops');
-  // 10 seconds without an answer, and the page asked for after it.
-  await vi.advanceTimersByTimeAsync(11_000);
+  // 5 seconds without an answer, and the page asked for after it.
+  await vi.advanceTimersByTimeAsync(6000);
   const taken = { vehicles: await vehicles, stops: await stops };
   await app.close();
   return taken;
@@ -177,26 +179,35 @@ describe('The schedule of the shuttle Collections', () => {
   });
 });
 
-describe('A vehicle Collection still waiting for an answer', () => {
-  it('makes the next runs skip, so that the requests do not pile up', async () => {
+describe('A vehicle Collection still waiting behind other pages', () => {
+  it('makes the next run skip, so that the requests do not pile up', async () => {
     // Friday, ten seconds before a run, with the timers replaced too.
     vi.useFakeTimers({
       toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
       now: new Date('2026-10-02T15:39:50+09:00'),
     });
-    // A main server that is down: a run waits 10 seconds for each of its two messages.
     const mainServer = new MainServerStub();
-    mainServer.unanswered.add('shuttle-vehicles-collected');
-    mainServer.unanswered.add('collection-failed');
-    const app = await startApp(inject('settings'), { fetchPage: sourcesServing(pages).fetch, mainServer });
+    const app = await startApp(inject('settings'), {
+      fetchPage: sourcesServing({ ...pages, [OTHER_PAGE]: null }).fetch,
+      mainServer,
+    });
+    const { PageFetcher } = await import('../src/common/page-fetcher.js');
+    const fetcher = app.get(PageFetcher);
 
-    await vi.advanceTimersByTimeAsync(75_000);
+    // At 15:39:59 another collector asks for four pages that do not answer: each is given up after 5 seconds, so the
+    // run of 15:40:00 waits until 15:40:19.
+    await vi.advanceTimersByTimeAsync(9000);
+    const otherPages = Array.from({ length: 4 }, () => fetcher.fetch(OTHER_PAGE).catch(() => null));
+    await vi.advanceTimersByTimeAsync(66_000);
+    await Promise.all(otherPages);
     await app.close();
 
-    // Each run takes 20 seconds, so the runs of 15:40:15 and 15:40:45 are skipped.
+    // The run of 15:40:15 is skipped.
     expect(
-      mainServer.from('shuttle_vehicles', 'shuttle-vehicles-collected').map(({ collectedAt }) => collectedAt),
-    ).toEqual(['2026-10-02T06:40:00.005Z', '2026-10-02T06:40:30.005Z', '2026-10-02T06:41:00.005Z']);
+      mainServer
+        .from('shuttle_vehicles', 'shuttle-vehicles-collected')
+        .map(({ collectedAt }) => String(collectedAt).slice(11, 19)),
+    ).toEqual(['06:40:19', '06:40:30', '06:40:45', '06:41:00']);
   });
 });
 
@@ -209,7 +220,7 @@ describe('A Collection that gets no answer', () => {
     });
   });
 
-  it('gives up on a Source after 10 seconds, so that the next page is asked for', async () => {
+  it('gives up on a Source after 5 seconds, so that the next page is asked for', async () => {
     const mainServer = new MainServerStub();
 
     const taken = await collectWithoutAnswer({ ...pages, [VEHICLE_POSITIONS]: null }, mainServer);
@@ -219,12 +230,12 @@ describe('A Collection that gets no answer', () => {
       {
         source: 'shuttle_vehicles',
         failedAt: '2026-10-03T03:00:00.000Z',
-        reason: `${VEHICLE_POSITIONS} did not answer within 10 seconds`,
+        reason: `${VEHICLE_POSITIONS} did not answer within 5 seconds`,
       },
     ]);
   });
 
-  it('gives up on the main server after 10 seconds, and reports the Collection as failed', async () => {
+  it('gives up on the main server after 5 seconds, and reports the Collection as failed', async () => {
     const mainServer = new MainServerStub();
     mainServer.unanswered.add('shuttle-vehicles-collected');
 
@@ -232,7 +243,7 @@ describe('A Collection that gets no answer', () => {
 
     expect(taken).toEqual({ vehicles: false, stops: true });
     expect(mainServer.from('shuttle_vehicles', 'collection-failed')).toMatchObject([
-      { reason: 'The main server did not take shuttle-vehicles-collected: no answer within 10 seconds' },
+      { reason: 'The main server did not take shuttle-vehicles-collected: no answer within 5 seconds' },
     ]);
   });
 });

@@ -5,7 +5,7 @@ import { lastValueFrom, throwError, timeout } from 'rxjs';
 import { MESSAGING_CLIENT } from './messaging.module.js';
 
 // The main server's answer is given up after this, so that a Collection never waits for a main server that is down.
-const ANSWER_TIMEOUT = 10_000;
+const ANSWER_TIMEOUT = 5000;
 
 // Names the Sources a collector collects, which `pnpm collect` runs with its collectOne(): @Collects(MENU_SOURCES).
 export const Collects = DiscoveryService.createDecorator<readonly string[]>();
