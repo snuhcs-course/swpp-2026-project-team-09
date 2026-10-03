@@ -1,6 +1,7 @@
 {
   "exportedFrom": "https://web.busin.co.kr/BuslineCircleS.aspx?cd=snu_1&di=41946&tab=F",
   "exportedOn": "2026-09-30",
+  "serviceHours": "· 운행시간 안내(주말,공휴일,개교기념일 미운행)\n-  학기 8:00~21:00 / 계절학기, 방학 8:00~18:00\n※ 학기 8:00~19:00 (5~7분), 19:00~21:00 (20분 간격)\n※ 계절학기 5~7분 간격 / 방학 10분 간격",
   "stops": [
     { "key": 1, "name": "정문", "left": 157, "top": 35, "campusMapStop": "정문" },
     { "key": 2, "name": "법과대", "left": 195, "top": 86, "campusMapStop": "법대입구" },

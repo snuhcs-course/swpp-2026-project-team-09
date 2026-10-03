@@ -94,7 +94,7 @@ const stopSchema = z.strictObject({ id: z.uuid(), name: z.string(), latitude: z.
 
 // The answer of GET /shuttle, exactly.
 export const routeSchema = z.strictObject({
-  serviceHours: z.string().nullable(),
+  serviceHours: z.string(),
   stops: z.array(stopSchema),
   line: z.array(z.strictObject({ latitude: z.number(), longitude: z.number() })),
 });

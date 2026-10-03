@@ -72,14 +72,16 @@ async function carsAtStops(): Promise<string[][]> {
 }
 
 describe("A User's shuttle route", () => {
-  it('serves the stops in loop order at the coordinates of their campus map stops, and the route line', async () => {
-    const { stops, line } = await servedRoute();
+  it('serves the stops in loop order at the coordinates of their campus map stops, the route line, and the service hours of the seed', async () => {
+    const { stops, line, serviceHours } = await servedRoute();
 
     expect(stops.map(({ name }) => name)).toEqual(ROUTE_PAGE_STOPS.map(({ name }) => name));
     // 38동 stands at the campus map's 공대입구.
     expect(stops[4]).toMatchObject({ name: '38동', latitude: 37.454964794994, longitude: 126.949840936747 });
     expect(line.length).toBeGreaterThan(100);
     expect(line.at(-1)).toEqual(line[0]);
+    // Before any Collection of the route page.
+    expect(serviceHours).toBe(SERVICE_HOURS);
   });
 
   it('refuses a request without an access token', async () => {

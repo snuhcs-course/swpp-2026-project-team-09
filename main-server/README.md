@@ -406,8 +406,8 @@ every 15 seconds while the shuttle runs (`.scratch/research/external-sources.md`
 
   `stops` holds the operator's 14 stops in loop order from 정문, under the operator's names, at the coordinates of the
   campus map's stops they are paired with. `line` runs along OpenStreetMap's roads from 정문 around the loop back to
-  정문. `serviceHours` is the route page's text, a line for each line of the page, as the last Collection read it, and
-  `null` before the first. The app shows it to say that the shuttle is not in service.
+  정문. `serviceHours` is the route page's text, a line for each line of the page: the seed's until the route page is
+  first collected, then as the last Collection read it. The app shows it to say that the shuttle is not in service.
 
 - `GET /shuttle/vehicles` answers the vehicles in service, in the loop order of their stops:
 
@@ -467,18 +467,18 @@ The messages, which follow [Messages from the worker server](#messages-from-the-
 Seed data comes from outside the project once, rather than by Collection: a file in `seed/` that one command loads
 into the database.
 
-| File                             | What it holds                                                                    | Comes from                                           |
-| -------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `campus-boundary.geojson`        | The Campus Boundary, read by the server and not loaded                           | OpenStreetMap, through Overpass                      |
-| `campus-map-places.json`         | The campus map's Places, as it serves them                                       | The campus map, `map.snu.ac.kr`                      |
-| `openstreetmap-places.json`      | Two Places that the campus map does not list                                     | OpenStreetMap, through Overpass                      |
-| `national-map-places.json`       | More Places that the campus map does not list, each by its polygon               | Written by hand                                      |
-| `national-map-outlines.geojson`  | The polygons of the campus's buildings, each with its label                      | A file that a person downloads from VWorld           |
-| `openstreetmap-outlines.geojson` | The outlines that `place-outlines.json` takes from OpenStreetMap                 | OpenStreetMap, through Overpass                      |
-| `place-outlines.json`            | The outlines that a person gives a Place, each entry with its reason             | Written by hand                                      |
-| `campus-map-shuttle-stops.json`  | The campus map's 15 stops of its loop, route 61, as it serves them               | The campus map, `map.snu.ac.kr`                      |
-| `shuttle-stops.json`             | The operator's 14 stops in loop order, their places on the drawing and the pairs | The operator's route page; the pairs written by hand |
-| `shuttle-route.geojson`          | The shuttle's line, traced along OpenStreetMap's roads                           | OpenStreetMap, through Overpass                      |
+| File                             | What it holds                                                                                           | Comes from                                           |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `campus-boundary.geojson`        | The Campus Boundary, read by the server and not loaded                                                  | OpenStreetMap, through Overpass                      |
+| `campus-map-places.json`         | The campus map's Places, as it serves them                                                              | The campus map, `map.snu.ac.kr`                      |
+| `openstreetmap-places.json`      | Two Places that the campus map does not list                                                            | OpenStreetMap, through Overpass                      |
+| `national-map-places.json`       | More Places that the campus map does not list, each by its polygon                                      | Written by hand                                      |
+| `national-map-outlines.geojson`  | The polygons of the campus's buildings, each with its label                                             | A file that a person downloads from VWorld           |
+| `openstreetmap-outlines.geojson` | The outlines that `place-outlines.json` takes from OpenStreetMap                                        | OpenStreetMap, through Overpass                      |
+| `place-outlines.json`            | The outlines that a person gives a Place, each entry with its reason                                    | Written by hand                                      |
+| `campus-map-shuttle-stops.json`  | The campus map's 15 stops of its loop, route 61, as it serves them                                      | The campus map, `map.snu.ac.kr`                      |
+| `shuttle-stops.json`             | The operator's 14 stops in loop order, their places on the drawing and the pairs, and the service hours | The operator's route page; the pairs written by hand |
+| `shuttle-route.geojson`          | The shuttle's line, traced along OpenStreetMap's roads                                                  | OpenStreetMap, through Overpass                      |
 
 Each exported file keeps, at its top, where it came from and the day of the export.
 
@@ -509,7 +509,9 @@ Each exported file keeps, at its top, where it came from and the day of the expo
     keeps its `id` whatever a correction changes: its name, its pair or its place in the loop. A stop that has left the
     file is removed, since nothing that lasts points at a stop. A stop's place on the drawing
     is the file's only when the stop is first loaded; after that it is the one the route page's Collection last
-    stored. The line replaces the route's line.
+    stored. The line replaces the route's line. The service hours
+    are the file's `serviceHours` when the route is first loaded, so that a new database has them without waiting for
+    a Collection; after that they are the ones the route page's Collection last stored.
 - **Correcting a Place**: change it in its file, such as a name in `inst_kor_nm`, and load again. The next export
   overwrites the correction.
 - **Giving a Place its outlines by hand**: add an entry to `place-outlines.json`.

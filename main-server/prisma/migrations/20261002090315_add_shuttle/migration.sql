@@ -14,7 +14,7 @@ CREATE TABLE "shuttle_routes" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "number" TEXT NOT NULL,
     "line" JSONB NOT NULL,
-    "service_hours" TEXT,
+    "service_hours" TEXT NOT NULL,
 
     CONSTRAINT "shuttle_routes_pkey" PRIMARY KEY ("id")
 );

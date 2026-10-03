@@ -7,6 +7,7 @@ import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { loadSeed } from '../src/load-seed.js';
 import { createDatabase } from './containers.js';
+import { SERVICE_HOURS } from './shuttle.js';
 
 // The other test files read the shuttle stops of the shared database. These tests load the seed into a database of
 // their own, so that a corrected seed loaded here reaches no other test.
@@ -89,6 +90,16 @@ describe('Loading the shuttle seed', () => {
   });
 });
 
+describe("The route page's service hours in the seed", () => {
+  it('are loaded, so that a new database has them before any Collection', async () => {
+    await loadSeed(prisma);
+
+    expect(await prisma.shuttleRoute.findUniqueOrThrow({ where: { number: '41946' } })).toMatchObject({
+      serviceHours: SERVICE_HOURS,
+    });
+  });
+});
+
 describe('Loading the shuttle seed again', () => {
   it('leaves one set of stops and one route, each with the identifier it had', async () => {
     await loadSeed(prisma);
@@ -111,6 +122,18 @@ describe('Loading the shuttle seed again', () => {
     expect(await prisma.shuttleStop.findFirst({ where: { name: '정문' } })).toMatchObject({
       drawingLeft: 160,
       drawingTop: 30,
+    });
+  });
+
+  it('keeps the service hours that the worker read since', async () => {
+    await loadSeed(prisma);
+    // As a Collection of the route page stores them.
+    await prisma.shuttleRoute.update({ where: { number: '41946' }, data: { serviceHours: '방학 8:00~18:00' } });
+
+    await loadSeed(prisma);
+
+    expect(await prisma.shuttleRoute.findUniqueOrThrow({ where: { number: '41946' } })).toMatchObject({
+      serviceHours: '방학 8:00~18:00',
     });
   });
 });

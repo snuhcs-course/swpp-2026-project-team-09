@@ -17,9 +17,10 @@ const campusMapFileSchema = z.object({
   ),
 });
 
-// The operator's stops in loop order, each with its key, its place on the drawing and the campus map's stop it is
-// paired with.
+// The route page's service hours, and the operator's stops in loop order, each with its key, its place on the drawing
+// and the campus map's stop it is paired with.
 const stopsFileSchema = z.object({
+  serviceHours: z.string().min(1),
   stops: z
     .array(
       z.object({
@@ -46,7 +47,7 @@ const routeFileSchema = z.object({
 // that has left the seed is removed: nothing that lasts points at a stop.
 export async function loadShuttle(prisma: PrismaClient, directory: string): Promise<number> {
   const campusMap = await readSeedFile(directory, 'campus-map-shuttle-stops.json', campusMapFileSchema);
-  const { stops } = await readSeedFile(directory, 'shuttle-stops.json', stopsFileSchema);
+  const { stops, serviceHours } = await readSeedFile(directory, 'shuttle-stops.json', stopsFileSchema);
   const { geometry } = await readSeedFile(directory, 'shuttle-route.geojson', routeFileSchema);
   const entries = stops.map(({ key, name, left, top, campusMapStop }, loopOrder) => {
     const paired = campusMap.suttle_route_path_list.find((stop) => stop.bus_station_name === campusMapStop);
@@ -76,7 +77,8 @@ export async function loadShuttle(prisma: PrismaClient, directory: string): Prom
     ),
     prisma.shuttleRoute.upsert({
       where: { number: ROUTE_NUMBER },
-      create: { number: ROUTE_NUMBER, line },
+      // Once the route is loaded, its service hours are those the worker last read from the route page.
+      create: { number: ROUTE_NUMBER, line, serviceHours },
       update: { line },
     }),
   ]);

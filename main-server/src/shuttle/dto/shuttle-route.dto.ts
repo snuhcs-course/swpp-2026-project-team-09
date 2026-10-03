@@ -9,8 +9,8 @@ export interface ShuttleStopDto {
 }
 
 export interface ShuttleRouteDto {
-  // As the route page writes them. Null until the route page's first Collection.
-  serviceHours: string | null;
+  // As the route page writes them.
+  serviceHours: string;
   // In loop order.
   stops: ShuttleStopDto[];
   line: Position[];

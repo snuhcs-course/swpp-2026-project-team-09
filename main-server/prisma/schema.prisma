@@ -199,8 +199,8 @@ model ShuttleRoute {
   number       String  @unique
   // Along OpenStreetMap's roads from 정문 around the loop back to 정문, as [{ latitude, longitude }, …].
   line         Json
-  // As the route page writes them, from the last Collection of shuttle_stops.
-  serviceHours String? @map("service_hours")
+  // As the route page writes them: the seed's, then those of the last Collection of shuttle_stops.
+  serviceHours String  @map("service_hours")
 
   @@map("shuttle_routes")
 }
