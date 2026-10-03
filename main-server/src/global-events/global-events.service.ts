@@ -1,26 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { BuildingDto } from '../buildings/dto/building.dto.js';
-import { BuildingsService } from '../buildings/buildings.service.js';
 import { CollectionService } from '../collection/collection.service.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { GlobalEventState, Prisma } from '../generated/prisma/client.js';
-import { buildingOfPlace } from './building-of-place.js';
+import { PlaceDto } from '../places/dto/place.dto.js';
+import { PlacesService } from '../places/places.service.js';
 import { type CollectedEvent, type EventsCollectedMessage } from './dto/events-collected.dto.js';
 import { type StoredEventPosts } from './dto/stored-event-posts.dto.js';
+import { namedPlace } from './named-place.js';
 
-// Published when the body's time line gave a time of day and the place names one building; a Draft otherwise. The
+// Published when the body's time line gave a time of day and the place names one Place; a Draft otherwise. The
 // header's date is often the application period.
-function toGlobalEvent(event: CollectedEvent, buildings: BuildingDto[]): Prisma.GlobalEventCreateManyInput {
-  const building = buildingOfPlace(event.place, buildings);
-  const published = event.readFrom === 'body' && event.start?.hasTimeOfDay === true && building !== null;
+function toGlobalEvent(event: CollectedEvent, places: PlaceDto[]): Prisma.GlobalEventCreateManyInput {
+  const named = namedPlace(event.place, places);
+  const published = event.readFrom === 'body' && event.start?.hasTimeOfDay === true && named !== null;
   return {
     title: event.title,
     description: event.description,
     startsAt: event.start?.at ?? null,
     endsAt: event.end?.at ?? null,
     place: event.place,
-    latitude: building?.latitude ?? null,
-    longitude: building?.longitude ?? null,
+    latitude: named?.latitude ?? null,
+    longitude: named?.longitude ?? null,
     state: published ? GlobalEventState.published : GlobalEventState.draft,
     postNumber: event.postNumber,
     sourceUrl: event.sourceUrl,
@@ -32,17 +32,17 @@ export class GlobalEventsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly collection: CollectionService,
-    private readonly buildings: BuildingsService,
+    private readonly places: PlacesService,
   ) {}
 
   // A post already stored is left as it is, in whatever state, so that an Administrator's edits stay and a discarded
   // post does not come back.
   async storeCollected({ source, collectedAt, events }: EventsCollectedMessage): Promise<void> {
-    const buildings = await this.buildings.list();
+    const places = await this.places.list();
     await this.prisma.$transaction(async (tx) => {
       await this.collection.recordSuccess(tx, source, new Date(collectedAt));
       await tx.globalEvent.createMany({
-        data: events.map((event) => toGlobalEvent(event, buildings)),
+        data: events.map((event) => toGlobalEvent(event, places)),
         skipDuplicates: true,
       });
     });

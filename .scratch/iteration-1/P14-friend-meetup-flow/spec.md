@@ -32,7 +32,7 @@ Screens that let a User become Friends through an Invite Link, see Friends move 
 ### Meetup
 
 15. As an SNU student, I want to propose a Meetup to a Friend with a title, a place, a start time and an optional end time, so that we can agree to meet.
-16. As an SNU student, I want to choose the place from the building list or by pointing on the map, so that I do not type an address.
+16. As an SNU student, I want to choose the place from the list of Places or by pointing on the map, so that I do not type an address.
 17. As an SNU student, I want to see the Meetups proposed to me with who proposed them, so that I can answer.
 18. As an SNU student, I want to accept or decline a Meetup, so that the proposer knows.
 19. As the proposer, I want to see whether my Meetup is waiting, accepted, declined or expired, so that I know where it stands.

@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -7,30 +6,21 @@ import { z } from 'zod';
 import { SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { loadSeed } from '../src/load-seed.js';
-import { connect, migrate } from './containers.js';
+import { createDatabase } from './containers.js';
 
 // The other test files read the shuttle stops of the shared database. These tests load the seed into a database of
 // their own, so that a corrected seed loaded here reaches no other test.
-const database = `shuttle_seed_${randomUUID().replaceAll('-', '')}`;
-let main: PrismaClient;
 let prisma: PrismaClient;
+let drop: () => Promise<void>;
 const copies: string[] = [];
 
 beforeAll(async () => {
-  const { DATABASE_URL } = inject('settings');
-  main = connect(DATABASE_URL);
-  await main.$executeRawUnsafe(`CREATE DATABASE "${database}"`);
-  const url = new URL(DATABASE_URL);
-  url.pathname = `/${database}`;
-  migrate(url.toString());
-  prisma = connect(url.toString());
+  ({ prisma, drop } = await createDatabase(inject('settings').DATABASE_URL));
 });
 
 afterAll(async () => {
   await Promise.all(copies.map((copy) => rm(copy, { recursive: true })));
-  await prisma.$disconnect();
-  await main.$executeRawUnsafe(`DROP DATABASE "${database}" WITH (FORCE)`);
-  await main.$disconnect();
+  await drop();
 });
 
 const stopsFileSchema = z.looseObject({ stops: z.array(z.looseObject({ name: z.string() })) });
