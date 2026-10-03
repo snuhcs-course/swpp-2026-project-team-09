@@ -38,12 +38,12 @@ async function collect(changes: object): Promise<GlobalEvent | null> {
 }
 
 // 뉴미디어통신공동연구소, 132동, on the campus map.
-const building132 = { latitude: 37.45487, longitude: 126.95407 };
+const place132 = { latitude: 37.45487, longitude: 126.95407 };
 
 const noPosition = { latitude: null, longitude: null };
 
 describe('A collected event whose time and place were read', () => {
-  it("is published at the position of the building its place names, with the post's text", async () => {
+  it("is published at the position of the Place its place names, with the post's text", async () => {
     const postNumber = newPost();
 
     await expect(
@@ -57,7 +57,7 @@ describe('A collected event whose time and place were read', () => {
       startsAt: new Date('2026-10-13T08:00:00Z'),
       endsAt: null,
       place: '뉴미디어통신공동연구소 이충웅홀(132동 103호)',
-      ...building132,
+      ...place132,
       version: 1,
       postNumber,
       sourceUrl: `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=${postNumber}`,
@@ -79,7 +79,7 @@ describe('A collected event that cannot be published', () => {
       // 00:00 in Asia/Seoul.
       startsAt: new Date('2026-10-11T15:00:00Z'),
       endsAt: new Date('2026-10-15T15:00:00Z'),
-      ...building132,
+      ...place132,
     });
   });
 
@@ -96,10 +96,10 @@ describe('A collected event that cannot be published', () => {
   });
 
   it.each([
-    ['a building number the list does not hold', '서울대학교 999동 101호'],
-    ['two buildings by number', '제1공학관(301동) 및 제2공학관(302동)'],
-    ['a name that several buildings share', '행정대학원 국제회의실'],
-    ['no building, being online', '온라인 (Zoom)'],
+    ['a number the list does not hold', '서울대학교 999동 101호'],
+    ['two Places by number', '제1공학관(301동) 및 제2공학관(302동)'],
+    ['a name that several Places share', '행정대학원 국제회의실'],
+    ['no Place, being online', '온라인 (Zoom)'],
   ])('is a Draft without a position when its place names %s', async (_case, place) => {
     expect(await collect({ place })).toMatchObject({ state: 'draft', place, ...noPosition });
   });
@@ -121,7 +121,7 @@ describe('The place of a collected event', () => {
     ],
     // 자하연 is a place of its own, and 자하연식당 is 109동.
     ['by a whole name, not one inside it', '자하연식당 2층', { latitude: 37.46098, longitude: 126.95252 }],
-    // Seven buildings are named (관악사)학부 생활관.
+    // Seven Places are named (관악사)학부 생활관.
     [
       'by its number alone when it writes one',
       '(관악사)학부 생활관 919동',
@@ -137,7 +137,7 @@ describe('The place of a collected event', () => {
     ['by name, whatever its spacing', '중앙도서관관정관 6층', { latitude: 37.45903, longitude: 126.95247 }],
     // The campus map writes SK경영관, 58동.
     ['by name, whatever the case', 'sk경영관 B101호', { latitude: 37.46568, longitude: 126.95203 }],
-  ])('names a building %s', async (_case, place, position) => {
+  ])('names a Place %s', async (_case, place, position) => {
     expect(await collect({ place })).toMatchObject({ state: 'published', ...position });
   });
 
@@ -150,7 +150,7 @@ describe('The place of a collected event', () => {
     // Not 행정관, 60동, nor 1동.
     ['a building of another campus by name', '서울대학교 연건캠퍼스 의과대학 행정관'],
     ['a building of another campus by number', '연건캠퍼스 1동 강의실'],
-  ])('names no building when it holds %s', async (_case, place) => {
+  ])('names no Place when it holds %s', async (_case, place) => {
     expect(await collect({ place })).toMatchObject({ state: 'draft', place, ...noPosition });
   });
 });

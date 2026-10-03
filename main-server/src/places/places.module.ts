@@ -6,6 +6,6 @@ import { PlacesService } from './places.service.js';
 @Module({
   controllers: [PlacesController],
   providers: [PlacesService, PlaceLookup],
-  exports: [PlaceLookup],
+  exports: [PlacesService, PlaceLookup],
 })
 export class PlacesModule {}

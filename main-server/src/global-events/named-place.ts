@@ -1,9 +1,9 @@
-import { BuildingDto } from '../buildings/dto/building.dto.js';
+import { PlaceDto } from '../places/dto/place.dto.js';
 
-// A building number as a place writes it: "302동 105호", "학생회관(63동)", "71-1동", but not the address "역삼1동".
+// A number as a place writes it: "302동 105호", "학생회관(63동)", "71-1동", but not the address "역삼1동".
 const NUMBER = /(?<![\p{L}\p{N}-])(\d+(?:-\d+)?)동/gu;
 
-// The university's other campuses. The building list is Gwanak's, so a place there names none of it.
+// The university's other campuses. The list of Places is Gwanak's, so a place there names none of it.
 const OTHER_CAMPUS = /연건|시흥|평창|수원/u;
 
 function withoutSpaces(text: string): string {
@@ -20,28 +20,26 @@ function wordPattern(name: string): RegExp {
   return new RegExp(String.raw`(?<![\p{L}\p{N}])${words.join(String.raw`\s*`)}(?![\p{L}\p{N}])`, 'iu');
 }
 
-// The entries whose name the place holds. A name inside a longer one the place also holds does not count, so that
+// The Places whose name the place holds. A name inside a longer one the place also holds does not count, so that
 // 유전공학연구소 신관 is not also 유전공학연구소. A name without a letter, such as OpenStreetMap's 901, would be found in
 // a room number.
-function byName(place: string, buildings: BuildingDto[]): BuildingDto[] {
-  const held = buildings
+function byName(place: string, places: PlaceDto[]): PlaceDto[] {
+  const held = places
     .filter(({ name }) => /\p{L}/u.test(name) && wordPattern(name).test(place))
-    .map((building) => ({ building, name: withoutSpaces(building.name).toLowerCase() }));
+    .map((entry) => ({ entry, name: withoutSpaces(entry.name).toLowerCase() }));
   return held
     .filter(({ name }) => !held.some((other) => other.name.length > name.length && other.name.includes(name)))
-    .map(({ building }) => building);
+    .map(({ entry }) => entry);
 }
 
-// The one entry of the building list a place names, or null when it names none or several, or is on another campus. A
-// place that writes a building number is matched by its numbers alone, since several buildings can share a name.
-export function buildingOfPlace(place: string | null, buildings: BuildingDto[]): BuildingDto | null {
+// The one Place of the list a place names, or null when it names none or several, or is on another campus. A place
+// that writes a number is matched by its numbers alone, since several Places can share a name.
+export function namedPlace(place: string | null, places: PlaceDto[]): PlaceDto | null {
   if (place === null || OTHER_CAMPUS.test(place)) {
     return null;
   }
   const numbers = new Set([...place.matchAll(NUMBER)].map(([, number]) => number));
   const named =
-    numbers.size > 0
-      ? buildings.filter(({ number }) => number !== null && numbers.has(number))
-      : byName(place, buildings);
+    numbers.size > 0 ? places.filter(({ number }) => number !== null && numbers.has(number)) : byName(place, places);
   return named.length === 1 ? named[0] : null;
 }

@@ -248,29 +248,29 @@ A collected event is published, with no person involved, when the rules read bot
 
 - its start comes from the body's time line (`readFrom` is `body`) and has a time of day. A start read from the header's
   date does not count, because that date is often the application period;
-- its place names exactly one entry of the [building list](#buildings). Its position is that entry's coordinates.
+- its place names exactly one Place of the [list](#places). Its position is that Place's coordinates.
 
 Any other collected event is stored as a Draft with whatever was read: an event online or off campus, one whose place
-names no entry or several, and a post that is not an event. A rule that is not sure makes a Draft.
+names no Place or several, and a post that is not an event. A rule that is not sure makes a Draft.
 
 A Draft may already hold a start and a position, so P12's check before an Administrator publishes one cannot rest on
 those fields being filled:
 
 - its start may be the header's date, which is often the application period, and a day read without a time of day is
   stored at 00:00;
-- its position is set whenever its place named exactly one entry, even when its time was not read.
+- its position is set whenever its place named exactly one Place, even when its time was not read.
 
-A place names an entry in one of two ways, in `src/global-events/building-of-place.ts`:
+A place names a Place in one of two ways, in `src/global-events/named-place.ts`:
 
-- By building number, as in `302동 105호`, `학생회관(63동)` or `71-1동`, but not a number inside a word, as in the
-  address `역삼1동`. A place that writes a number is matched by its numbers alone, because several buildings share a
-  name: `(관악사)학부 생활관 919동` is 919동 only.
+- By number, as in `302동 105호`, `학생회관(63동)` or `71-1동`, but not a number inside a word, as in the address
+  `역삼1동`. A place that writes a number is matched by its numbers alone, because several Places share a name:
+  `(관악사)학부 생활관 919동` is 919동 only.
 - Otherwise by name, as a whole word, with or without the name's own spaces and whatever the case of its Latin letters:
   `국립중앙박물관` does not name 박물관, nor `행정관리팀` 행정관. A name inside a longer one that the place also names
   does not count, so `유전공학연구소 신관` is 105-2동 and not also 105동. A name without a letter, such as
   OpenStreetMap's `901`, is matched by number only.
 
-A place that names several entries, such as `행정대학원` (57동 and 57-1동) or `301동 및 302동`, makes a Draft. So does a
+A place that names several Places, such as `행정대학원` (57동 and 57-1동) or `301동 및 302동`, makes a Draft. So does a
 place on another of the university's campuses (`연건`, `시흥`, `평창`, `수원`), whose buildings are not in the list: the
 list is Gwanak's.
 
