@@ -17,8 +17,8 @@ import { ROUTE_NUMBER } from './shuttle.seed.js';
 // minute, so no table holds it.
 const VEHICLES_KEY = 'shuttle:vehicles';
 
-// The key expires this long after its set was received, so that the vehicles disappear when the service ends or the
-// worker stops.
+// The key expires this long after its set was stored, so that the vehicles disappear when the service ends or the
+// worker stops. Redis counts it, so the worker's clock does not decide it.
 const POSITION_LIFETIME = 60 * 1000;
 
 // The line as the seed stores it.
@@ -97,13 +97,7 @@ export class ShuttleService {
         stop: toShuttleStopDto(stop),
         receivedAt: receivedAt.toISOString(),
       }));
-    const expiresAt = receivedAt.getTime() + POSITION_LIFETIME;
-    if (expiresAt > Date.now()) {
-      await this.redis.set(VEHICLES_KEY, JSON.stringify(sent), 'PXAT', expiresAt);
-    } else {
-      // Already more than a minute old: it replaces the set before it with nothing to serve.
-      await this.redis.del(VEHICLES_KEY);
-    }
+    await this.redis.set(VEHICLES_KEY, JSON.stringify(sent), 'PX', POSITION_LIFETIME);
     this.messaging.emit('shuttle-vehicles-updated', sent).subscribe({
       error: (error: unknown) => {
         this.logger.warn(`The socket server was not given the shuttle's vehicles: ${String(error)}`);

@@ -5,6 +5,7 @@ import { Redis } from 'ioredis';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
+import { REDIS } from '../src/common/redis.module.js';
 import { Settings } from '../src/common/settings.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import {
@@ -194,25 +195,15 @@ describe('The vehicles served', () => {
     expect(await carsAtStops()).toEqual([['4522', '법과대']]);
   });
 
-  it('are no longer served once their positions are more than a minute old', async () => {
+  it("are kept for a minute after their set was stored, whatever time the worker's clock gave it", async () => {
     await sendVehicles([{ carId: '4522', x: 157, y: 40 }], {
-      collectedAt: new Date(Date.now() - 50_000).toISOString(),
+      collectedAt: new Date(Date.now() - 300_000).toISOString(),
     });
+
     expect(await carsAtStops()).toEqual([['4522', '정문']]);
-
-    await sendVehicles([{ carId: '4522', x: 157, y: 40 }], {
-      collectedAt: new Date(Date.now() - 61_000).toISOString(),
-    });
-    expect(await servedVehicles()).toEqual([]);
-  });
-
-  it('disappear by themselves a minute after their set was received, when no other set arrives', async () => {
-    await sendVehicles([{ carId: '4522', x: 157, y: 40 }], {
-      collectedAt: new Date(Date.now() - 58_000).toISOString(),
-    });
-    expect(await carsAtStops()).toEqual([['4522', '정문']]);
-
-    await expect.poll(servedVehicles, { timeout: 5000, interval: 250 }).toEqual([]);
+    const lifetime = await app.get<Redis>(REDIS).pttl('shuttle:vehicles');
+    expect(lifetime).toBeGreaterThan(55_000);
+    expect(lifetime).toBeLessThanOrEqual(60_000);
   });
 
   it('are emptied by a set without vehicles', async () => {

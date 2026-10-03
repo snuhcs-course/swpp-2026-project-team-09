@@ -429,8 +429,8 @@ every 15 seconds while the shuttle runs (`.scratch/research/external-sources.md`
   ```
 
   `stop` is the stop the operator reports the vehicle at, as `GET /shuttle` gives it. `receivedAt` is when the worker
-  received the operator's answer, which carries no time of its own. A position is served for a minute after it was
-  received, so that the vehicles disappear by themselves when the service ends or the worker stops. Outside service
+  received the operator's answer, which carries no time of its own. A set is served for a minute after the server
+  stored it, so that the vehicles disappear by themselves when the service ends or the worker stops. Outside service
   hours, or when the operator reports none, the answer is `[]`. No field says that a position is estimated.
 
 How a vehicle is stored:
@@ -446,8 +446,8 @@ How a vehicle is stored:
   Vehicles are told apart by the operator's `carid`.
 - The vehicles are in Redis, not in a table: they are the present state of something outside, replaced every 15
   seconds, of which no history is kept. The latest set is the one key `shuttle:vehicles`, in the form
-  `GET /shuttle/vehicles` answers, and the key expires a minute after the set was received, which is how a position is
-  no longer served. The Collection status of `shuttle_vehicles` is recorded in the database, as every Source's is.
+  `GET /shuttle/vehicles` answers, and the key expires a minute after the set was stored, which is how a position is no
+  longer served. Redis counts the minute, so it does not depend on the worker's clock. The Collection status of `shuttle_vehicles` is recorded in the database, as every Source's is.
 - Each set stored goes to the socket server as the event `shuttle-vehicles-updated`, in the form `GET /shuttle/vehicles`
   answers, and the socket server sends it to every connected app (see the
   [socket server](../socket-server/README.md#shuttle-vehicles)). The event does not wait for an answer: an app that
