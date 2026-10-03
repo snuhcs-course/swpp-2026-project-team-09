@@ -10,7 +10,7 @@ import { z } from 'zod';
 const LAYER = /^N3A_B0010000_\d+\.shp$/u;
 // What the layer classes as a building. The campus's other polygons are wall-less structures, temporary buildings and
 // greenhouses.
-const BUILDING = 'BDK004';
+const BUILDING_KIND = 'BDK004';
 // The layer's coordinates are in EPSG:5179.
 const FROM_EPSG_5179 = proj4(
   '+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs',
@@ -22,7 +22,7 @@ const attributesSchema = z.object({ UFID: z.string(), KIND: z.string(), ANNO: z.
 const ringSchema = z.array(z.tuple([z.number(), z.number()])).min(4);
 const polygonSchema = z.object({ type: z.literal('Polygon'), coordinates: z.tuple([ringSchema], ringSchema) });
 
-type Coordinates = [longitude: number, latitude: number];
+export type Coordinates = [longitude: number, latitude: number];
 
 interface Extent {
   south: number;
@@ -75,7 +75,7 @@ export async function nationalMapOutlines(path: string, campus: Extent): Promise
   // oxlint-disable-next-line no-await-in-loop -- one record at a time, as the file holds them
   for (let record = await records.read(); !record.done; record = await records.read()) {
     const { UFID, KIND, ANNO } = attributesSchema.parse(record.value.properties);
-    if (KIND === BUILDING) {
+    if (KIND === BUILDING_KIND) {
       const outline = outlineOf(record.value.geometry);
       const reachesCampus = outline.some(
         ([longitude, latitude]) =>

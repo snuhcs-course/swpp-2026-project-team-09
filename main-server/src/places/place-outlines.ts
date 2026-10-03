@@ -10,13 +10,9 @@ export interface LabelledOutline extends Outline {
   label: string | null;
 }
 
-// What `place-outlines.json` gives one Place: these outlines of either source, or none. It names the Place by its
-// number or, when it has none, by its name.
-export interface GivenOutlines {
-  number?: string;
-  name?: string;
-  outlines: string[];
-}
+// What `place-outlines.json` gives one Place, which it names by its number or by its name: these outlines of either
+// source, or none.
+export type GivenOutlines = ({ number: string } | { name: string }) & { outlines: string[] };
 
 interface Entry extends Position {
   number: string | null;
@@ -39,41 +35,51 @@ function areaOf(ring: Position[]): number {
   return Math.abs(twice) / 2;
 }
 
-function names(label: string | null, number: string | null): boolean {
+function labelNames(label: string | null, number: string | null): boolean {
   const numbers: string[] = label?.match(NUMBERS_IN_LABEL) ?? [];
   return number !== null && numbers.includes(number);
 }
 
 // The one Place that an entry of `place-outlines.json` names.
 function placeOf<T extends Entry>(given: GivenOutlines, entries: T[]): T {
-  const named = entries.filter(({ number, name }) =>
-    given.number === undefined ? name === given.name : number === given.number,
-  );
+  const [what, named] =
+    'number' in given
+      ? [`the number ${given.number}`, entries.filter(({ number }) => number === given.number)]
+      : [`the name ${given.name}`, entries.filter(({ name }) => name === given.name)];
   const [place] = named;
   if (place === undefined || named.length > 1) {
-    const what = given.number === undefined ? `the name ${given.name}` : `the number ${given.number}`;
     throw new Error(`place-outlines.json has ${what}, which ${named.length} Places of the seed bear`);
   }
   return place;
+}
+
+function outlinesNamed(ids: string[], outlines: Outline[]): Outline[] {
+  return ids.map((id) => {
+    const outline = outlines.find((candidate) => candidate.id === id);
+    if (outline === undefined) {
+      throw new Error(`place-outlines.json has the outline ${id}, which the seed does not hold`);
+    }
+    return outline;
+  });
 }
 
 // The outlines of each Place that has any.
 // - A Place takes every polygon of the national map whose label names its number.
 // - A Place that no label names takes the polygon that holds its position, the larger when two do. Another Place may
 //   have that polygon: an annexe stands inside the polygon of its main building.
-// - A Place still without one takes the nearest polygon within reach that no Place has, the nearest Place first. A
-//   polygon that a Place has by the rules above stays that Place's alone.
-// - `place-outlines.json` then replaces what the rules gave a Place, with outlines of the national map or of `others`,
-//   or with none.
+// - `place-outlines.json` then gives each Place it names its outlines, of either source, or none, in place of what
+//   the two rules gave.
+// - A Place still without one, which the file does not name, takes the nearest polygon within reach that no Place
+//   has, the nearest Place first. This rule guesses, so it comes last and takes nothing that a Place has.
 export function outlinesOf<T extends Entry>(
   entries: T[],
   polygons: LabelledOutline[],
-  others: Outline[],
+  openStreetMap: Outline[],
   given: GivenOutlines[],
 ): Map<T, Position[][]> {
   const found = new Map<T, Outline[]>();
   for (const place of entries) {
-    const named = polygons.filter(({ label }) => names(label, place.number));
+    const named = polygons.filter(({ label }) => labelNames(label, place.number));
     const holding = polygons.filter(({ ring }) => encloses(ring, place));
     if (named.length > 0) {
       found.set(place, named);
@@ -81,10 +87,21 @@ export function outlinesOf<T extends Entry>(
       found.set(place, [holding.reduce((a, b) => (areaOf(b.ring) > areaOf(a.ring) ? b : a))]);
     }
   }
+  const settled = new Set<T>();
+  for (const entry of given) {
+    const place = placeOf(entry, entries);
+    const itsOutlines = outlinesNamed(entry.outlines, [...polygons, ...openStreetMap]);
+    if (itsOutlines.length > 0) {
+      found.set(place, itsOutlines);
+    } else {
+      found.delete(place);
+    }
+    settled.add(place);
+  }
   const taken = new Set<Outline>([...found.values()].flat());
   const free = polygons.filter((polygon) => !taken.has(polygon));
   const beside = entries
-    .filter((place) => !found.has(place))
+    .filter((place) => !found.has(place) && !settled.has(place))
     .flatMap((place) => free.map((polygon) => ({ place, polygon, metres: metresToRing(polygon.ring, place) })))
     .filter(({ metres }) => metres <= REACH_IN_METRES)
     .toSorted((a, b) => a.metres - b.metres);
@@ -92,22 +109,6 @@ export function outlinesOf<T extends Entry>(
     if (!found.has(place) && !taken.has(polygon)) {
       found.set(place, [polygon]);
       taken.add(polygon);
-    }
-  }
-  const outlines = [...polygons, ...others];
-  for (const entry of given) {
-    const place = placeOf(entry, entries);
-    const itsOutlines = entry.outlines.map((id) => {
-      const outline = outlines.find((candidate) => candidate.id === id);
-      if (outline === undefined) {
-        throw new Error(`place-outlines.json has the outline ${id}, which the seed does not hold`);
-      }
-      return outline;
-    });
-    if (itsOutlines.length > 0) {
-      found.set(place, itsOutlines);
-    } else {
-      found.delete(place);
     }
   }
   return new Map([...found].map(([place, its]) => [place, its.map(({ ring }) => ring)]));

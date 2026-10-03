@@ -1,40 +1,15 @@
-import { cp, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { cp, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { inject } from 'vitest';
 import { type z } from 'zod';
 import { type Position } from '../src/common/geometry.js';
 import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
-import { PrismaClient } from '../src/generated/prisma/client.js';
 import { loadSeed } from '../src/load-seed.js';
-import { toLongitudeLatitude } from '../scripts/national-map.ts';
-import { createDatabase } from './containers.js';
-import { NATIONAL_MAP, outlines, outlinesFileSchema } from './seed-outlines.js';
+import { toLongitudeLatitude } from '../scripts/national-map.js';
+import { NATIONAL_MAP, outlines, outlinesFileSchema, positionsOf, seedDatabase } from './seed-outlines.js';
 
-// Which outlines the rules of the seed command give a Place, on a database of this file's own.
-let prisma: PrismaClient;
-let drop: () => Promise<void>;
-// A copy of the seed that a test changes.
-let correctedSeed: string;
-
-beforeAll(async () => {
-  ({ prisma, drop } = await createDatabase(inject('settings').DATABASE_URL));
-  correctedSeed = await mkdtemp(join(tmpdir(), 'seed-'));
-  await cp(SEED_DIRECTORY, correctedSeed, { recursive: true });
-});
-
-afterAll(async () => {
-  await rm(correctedSeed, { recursive: true });
-  await drop();
-});
-
-async function outlinesOfPlace(number: string): Promise<unknown> {
-  return (await prisma.place.findFirstOrThrow({ where: { number } })).outlines;
-}
-
-async function outlinesOfPlaceNamed(name: string): Promise<unknown> {
-  return (await prisma.place.findFirstOrThrow({ where: { name } })).outlines;
-}
+// Which outlines the rules of the seed command give a Place.
+const database = seedDatabase();
+const { outlinesOfPlace, outlinesOfPlaceNamed } = database;
 
 describe("Converting the national map's coordinates", () => {
   it('gives the longitude and latitude that PROJ gives', () => {
@@ -46,7 +21,7 @@ describe("Converting the national map's coordinates", () => {
 
 describe('Linking a Place to the polygons whose label names its number', () => {
   beforeAll(async () => {
-    await loadSeed(prisma);
+    await loadSeed(database.prisma());
   });
 
   it('gives a Place the polygon labelled with its number', async () => {
@@ -84,7 +59,7 @@ describe('Linking a Place to the polygons whose label names its number', () => {
 
 describe('Linking a Place that no label names', () => {
   beforeAll(async () => {
-    await loadSeed(prisma);
+    await loadSeed(database.prisma());
   });
 
   it('gives it the polygon that holds its position, also when another Place has that polygon', async () => {
@@ -140,12 +115,11 @@ function squareAround(
   return { id, properties: { label: null }, geometry: { type: 'Polygon', coordinates: [corners] } };
 }
 
-const ringOf = ({ geometry }: ReturnType<typeof squareAround>): Position[] =>
-  geometry.coordinates[0].map(([longitude, latitude]) => ({ latitude, longitude }));
+const ringOf = ({ geometry }: ReturnType<typeof squareAround>): Position[] => positionsOf(geometry.coordinates[0]);
 
 describe('Linking against polygons added to a copy of the seed', () => {
   afterEach(async () => {
-    await cp(join(SEED_DIRECTORY, NATIONAL_MAP), join(correctedSeed, NATIONAL_MAP));
+    await cp(join(SEED_DIRECTORY, NATIONAL_MAP), join(database.corrected(), NATIONAL_MAP));
   });
 
   it('gives a Place whose position two polygons hold the larger one', async () => {
@@ -153,9 +127,9 @@ describe('Linking against polygons added to a copy of the seed', () => {
     const seed = await readSeedFile(SEED_DIRECTORY, NATIONAL_MAP, outlinesFileSchema);
     const larger = squareAround([126.955673, 37.465509], 'larger', 0.0006);
     seed.features.push(larger, squareAround([126.955673, 37.465509], 'smaller', 0.0001));
-    await writeFile(join(correctedSeed, NATIONAL_MAP), JSON.stringify(seed));
+    await writeFile(join(database.corrected(), NATIONAL_MAP), JSON.stringify(seed));
 
-    await loadSeed(prisma, correctedSeed);
+    await loadSeed(database.prisma(), database.corrected());
 
     expect(await outlinesOfPlace('223')).toEqual([ringOf(larger)]);
   });
@@ -166,9 +140,9 @@ describe('Linking against polygons added to a copy of the seed', () => {
     const seed = await readSeedFile(SEED_DIRECTORY, NATIONAL_MAP, outlinesFileSchema);
     const square = squareAround([126.9512305146599, 37.45587314704376], 'square', 0.0003);
     seed.features.push(square);
-    await writeFile(join(correctedSeed, NATIONAL_MAP), JSON.stringify(seed));
+    await writeFile(join(database.corrected(), NATIONAL_MAP), JSON.stringify(seed));
 
-    await loadSeed(prisma, correctedSeed);
+    await loadSeed(database.prisma(), database.corrected());
 
     expect(await outlinesOfPlaceNamed('붉은광장')).toEqual([ringOf(square)]);
   });

@@ -114,7 +114,7 @@ interface SeedPlace extends Position {
   name: string;
 }
 
-// The Places of the three origins. One from the national map stands at the middle of its polygon.
+// The Places of every origin. One from the national map stands at the middle of its polygon.
 async function readPlaces(directory: string, nationalMap: LabelledOutline[]): Promise<SeedPlace[]> {
   const { rows } = await readSeedFile(directory, 'campus-map-places.json', campusMapFileSchema);
   const openStreetMapPlaces = await readSeedFile(directory, 'openstreetmap-places.json', openStreetMapFileSchema);
@@ -161,7 +161,6 @@ export async function loadPlaces(prisma: PrismaClient, directory: string, bounda
     entries.map((entry) => {
       const { origin, originId, ...values } = entry;
       const id = idOf(origin, originId);
-      // A Place that lost its outlines is stored without any.
       const outlines = found.get(entry) ?? [];
       return prisma.place.upsert({
         where: { id },

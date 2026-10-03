@@ -171,8 +171,7 @@ model Place {
   name      String
   latitude  Float
   longitude Float
-  // The Place's outlines, each a closed ring: [[{ latitude, longitude }, …], …]. They are the national map's
-  // polygons of the Place, or the outlines that `place-outlines.json` gives it.
+  // Each a closed ring: [[{ latitude, longitude }, …], …].
   outlines  Json           @default("[]")
 
   @@unique([origin, originId])

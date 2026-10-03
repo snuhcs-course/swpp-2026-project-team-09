@@ -4,7 +4,7 @@ import { basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { format, resolveConfig } from 'prettier';
 import { z } from 'zod';
-import { nationalMapOutlines } from './national-map.ts';
+import { type Coordinates, nationalMapOutlines } from './national-map.ts';
 
 // Exports the seed files named, such as `pnpm seed:export campus-boundary`. Each export is one request, or reads one
 // file that a person downloaded, and its file keeps the address or query it came from and the day of the export.
@@ -78,8 +78,6 @@ const outlinesAnswerSchema = z.object({
     ]),
   ),
 });
-
-type Coordinates = [longitude: number, latitude: number];
 
 async function request(url: string, init: RequestInit = {}): Promise<Response> {
   const response = await fetch(url, { ...init, headers: { 'User-Agent': USER_AGENT } });

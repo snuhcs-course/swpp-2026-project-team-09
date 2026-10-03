@@ -65,8 +65,6 @@ export class PlaceLookup implements OnModuleInit {
     }));
   }
 
-  // The nearest Place, each as far as measure() says. Within INSIDE_WITHIN_METRES of its wall the position is
-  // inside it, and within NEAR_WITHIN_METRES near it. A Place without an outline can only be near.
   at(position: Position): NearestPlace | null {
     let nearest: (Measured & { place: PlaceDto }) | null = null;
     for (const { place, outlines } of this.places) {
