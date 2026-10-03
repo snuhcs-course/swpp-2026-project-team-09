@@ -227,7 +227,7 @@ The worker sends each post of the events list as one event, all those of a Colle
 {
   "source": "snu_events",
   "collectedAt": "2026-10-02T06:00:00+09:00",
-  "complete": true,
+  "failureReason": null,
   "events": [
     {
       "postNumber": 176525,
@@ -244,10 +244,11 @@ The worker sends each post of the events list as one event, all those of a Colle
 ```
 
 - `events` holds the posts the main server did not store when the worker asked, and is `[]` when there are none.
-- `complete` is `false` when the Collection stopped early: at a page it could not fetch, at the firewall's block page,
-  or at the third post in a row whose page was not the post. Its posts are stored all the same, but the Collection is
-  not recorded as successful, so that `lastSucceededAt` stays the time of the last Collection that went through the
-  whole list. The failure follows at `/collections/failed`.
+- `failureReason` says why the Collection stopped early: at a page it could not fetch, at the firewall's block page,
+  or at the third post in a row whose page was not the post. It is `null` when the Collection went through the whole
+  list. A Collection that stopped hands over the posts it read all the same, and the main server stores them and
+  records the reason as the Collection's failure in the same transaction, so that `lastSucceededAt` stays the time of
+  the last Collection that went through the whole list.
 - `start` and `end` are each a time with its offset, or a day when no time of day was read. `readFrom` says where they
   were read: `body` for the body's time line, `header` for the header's date. All three are `null` when no day was
   read.
@@ -899,11 +900,11 @@ so a message is stored once. Every route for the worker follows these rules.
   by their times.
 - **Collection status**: `collection_statuses` keeps, for each Source, the time of its last successful Collection
   (`lastSucceededAt`) and, apart from it, its last failure (`lastFailedAt`, `lastFailureReason`). A handler that stores
-  what a Collection read calls `CollectionService.recordSuccess(tx, source, collectedAt)` in the same transaction,
-  unless the message says the Collection did not finish, as `complete` does in [Global Events](#global-events); the
-  shuttle's vehicles
-  are stored in Redis, so their handler records the success once the set is stored. A Collection that fails posts
-  `{ "source", "failedAt", "reason" }` to `/collections/failed`, where `reason` says what went wrong. It records the
+  what a Collection read calls `CollectionService.recordSuccess(tx, source, collectedAt)` in the same transaction; the
+  shuttle's vehicles are stored in Redis, so their handler records the success once the set is stored. A message that
+  says its Collection stopped early, as `failureReason` does in [Global Events](#global-events), has its handler call
+  `recordFailure()` with the transaction in place of the success. A Collection that fails with nothing to hand over
+  posts `{ "source", "failedAt", "reason" }` to `/collections/failed`, where `reason` says what went wrong. It records the
   failure and leaves every stored record as it is. A success leaves the last failure in place, so the two times tell
   whether the Source has worked since. No route serves the status yet; P12 shows it.
 - **A new Source** adds its value to `Source` with a migration. `menusCollectedSchema` lists the Sources that send

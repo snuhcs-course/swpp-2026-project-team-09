@@ -25,7 +25,7 @@ export function collectedEvent(postNumber: number, changes: object = {}): Record
 
 // An events message of the worker, with `changes` applied.
 export function eventsMessage(events: object[], changes: object = {}): object {
-  return { source: 'snu_events', collectedAt: '2026-10-02T06:00:00+09:00', complete: true, events, ...changes };
+  return { source: 'snu_events', collectedAt: '2026-10-02T06:00:00+09:00', failureReason: null, events, ...changes };
 }
 
 // A time no stored message carries, so that a success recorded for a refused message would be seen.
@@ -70,8 +70,8 @@ export const invalidEventsMessages: [string, (valid: number, other: number) => o
   ],
   [
     'no word on whether the Collection finished',
-    (valid) => eventsMessage([collectedEvent(valid)], { ...refusedAt, complete: undefined }),
-    'complete: ',
+    (valid) => eventsMessage([collectedEvent(valid)], { ...refusedAt, failureReason: undefined }),
+    'failureReason: ',
   ],
   [
     'a Source that has no events',

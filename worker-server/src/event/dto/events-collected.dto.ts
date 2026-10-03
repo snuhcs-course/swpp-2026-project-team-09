@@ -25,8 +25,8 @@ export interface CollectedEvent {
 export interface EventsCollectedMessage {
   source: EventListSource;
   collectedAt: string;
-  // False when the Collection stopped early, at a page it could not fetch, the firewall's block page or the third post
-  // in a row that was not a post, so that the main server does not record a success.
-  complete: boolean;
+  // Why the Collection stopped early, at a page it could not fetch, the firewall's block page or the third post in a row
+  // that was not a post; null when it went through the whole list. The main server records it as the failure.
+  failureReason: string | null;
   events: CollectedEvent[];
 }

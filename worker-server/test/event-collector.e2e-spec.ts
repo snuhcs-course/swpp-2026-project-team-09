@@ -72,7 +72,7 @@ describe('A Collection of the events list', () => {
     expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
       {
         collectedAt: '2026-10-01T21:00:00.000Z',
-        complete: true,
+        failureReason: null,
         events: [
           { postNumber: 176558, start: '2026-10-26', end: '2026-11-27', readFrom: 'body' },
           {
@@ -90,7 +90,7 @@ describe('A Collection of the events list', () => {
 
     expect(sources.requests).toHaveLength(3);
     expect(mainServer.from('snu_events', '/global-events/collected')).toEqual([
-      { source: 'snu_events', collectedAt: '2026-10-01T21:00:00.000Z', complete: true, events: [] },
+      { source: 'snu_events', collectedAt: '2026-10-01T21:00:00.000Z', failureReason: null, events: [] },
     ]);
   });
 });
@@ -99,34 +99,31 @@ describe('A Collection of the events list', () => {
 const notAPost = '<html><body><p>존재하지 않는 게시물입니다.</p></body></html>';
 
 describe('A Collection of the events list that is blocked on a post', () => {
-  it('reports the block, and reads no further post', async () => {
+  it('hands over why it stopped, and reads no further post', async () => {
     const { sources, mainServer } = await collect({ ...pages, [`${POST}176558`]: blockPage });
 
-    expect(mainServer.from('snu_events', '/collections/failed')).toEqual([
+    expect(mainServer.from('snu_events', '/global-events/collected')).toEqual([
       {
         source: 'snu_events',
-        failedAt: '2026-10-01T21:00:00.000Z',
-        reason: `The university's firewall blocked ${POST}176558`,
+        collectedAt: '2026-10-01T21:00:00.000Z',
+        failureReason: `The university's firewall blocked ${POST}176558`,
+        events: [],
       },
     ]);
-    expect(mainServer.from('snu_events', '/global-events/collected')).toEqual([]);
+    expect(mainServer.from('snu_events', '/collections/failed')).toEqual([]);
     expect(sources.requests.at(-1)?.url).toBe(`${POST}176558`);
   });
 
-  it('sends the posts read before it as incomplete, so that they are not read again', async () => {
+  it('hands over the posts read before it with why it stopped, in one request, so that they are not read again', async () => {
     // 176558 is read, then 176525 is blocked.
     const { mainServer } = await collect({ ...pages, [`${POST}176525`]: blockPage });
 
     expect(mainServer.messages.map(({ path }) => path)).toEqual([
       '/global-events/stored-posts',
       '/global-events/collected',
-      '/collections/failed',
     ]);
     expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
-      { complete: false, events: [{ postNumber: 176558 }] },
-    ]);
-    expect(mainServer.from('snu_events', '/collections/failed')).toMatchObject([
-      { reason: `The university's firewall blocked ${POST}176525` },
+      { failureReason: `The university's firewall blocked ${POST}176525`, events: [{ postNumber: 176558 }] },
     ]);
   });
 });
@@ -138,7 +135,7 @@ describe('A post whose page is not a post', () => {
     expect(mainServer.from('snu_events', '/collections/failed')).toEqual([]);
     expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
       {
-        complete: true,
+        failureReason: null,
         events: [
           {
             postNumber: 176558,
@@ -162,7 +159,7 @@ describe('A post whose page is not a post', () => {
     expect(mainServer.from('snu_events', '/collections/failed')).toEqual([]);
     expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
       {
-        complete: true,
+        failureReason: null,
         events: [
           { postNumber: 176558, description: '' },
           { postNumber: 176525, description: '' },
@@ -171,12 +168,11 @@ describe('A post whose page is not a post', () => {
     ]);
   });
 
-  it('is not sent when the Collection is blocked before a post after it is read', async () => {
+  it('is kept back when the Collection is blocked before a post after it is read', async () => {
     const { mainServer } = await collect({ ...pages, [`${POST}176558`]: notAPost, [`${POST}176525`]: blockPage });
 
-    expect(mainServer.from('snu_events', '/global-events/collected')).toEqual([]);
-    expect(mainServer.from('snu_events', '/collections/failed')).toMatchObject([
-      { reason: `The university's firewall blocked ${POST}176525` },
+    expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
+      { failureReason: `The university's firewall blocked ${POST}176525`, events: [] },
     ]);
   });
 });
@@ -191,11 +187,9 @@ describe('Three posts in a row whose pages are not posts', () => {
     );
 
     expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
-      { complete: false, events: [{ postNumber: 176558 }] },
+      { failureReason: '3 posts in a row could not be read: The page has no post', events: [{ postNumber: 176558 }] },
     ]);
-    expect(mainServer.from('snu_events', '/collections/failed')).toMatchObject([
-      { reason: '3 posts in a row could not be read: The page has no post' },
-    ]);
+    expect(mainServer.from('snu_events', '/collections/failed')).toEqual([]);
   });
 });
 
@@ -283,5 +277,16 @@ describe('The command that runs one Collection', () => {
       '/global-events/stored-posts',
       '/global-events/collected',
     ]);
+  });
+
+  it('gives that the Collection failed when it stopped early, though the main server took what it read', async () => {
+    const sources = sourcesServing({ ...pages, [`${POST}176525`]: blockPage });
+    const app = await startApp(inject('settings'), { fetchPage: sources.fetch, mainServer: mainServerStoring() });
+    const { collectSources } = await import('../src/collect-sources.js');
+
+    const succeeded = await collectSources(app, ['snu_events']);
+    await app.close();
+
+    expect(succeeded).toBe(false);
   });
 });

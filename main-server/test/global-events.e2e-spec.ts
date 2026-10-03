@@ -220,8 +220,9 @@ describe('A Collection of the events list', () => {
 });
 
 describe('A Collection of the events list that stopped early', () => {
-  it('stores the posts read before it, and is recorded as failed but not as successful', async () => {
+  it('stores the posts read before it, and records its failure in place of a success', async () => {
     const postNumber = newPost();
+    const failureReason = "The university's firewall blocked https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525";
     await sendAsWorker(
       app,
       '/global-events/collected',
@@ -231,18 +232,14 @@ describe('A Collection of the events list that stopped early', () => {
     await sendAsWorker(
       app,
       '/global-events/collected',
-      eventsMessage([collectedEvent(postNumber)], { collectedAt: '2026-10-03T06:00:00+09:00', complete: false }),
+      eventsMessage([collectedEvent(postNumber)], { collectedAt: '2026-10-03T06:00:00+09:00', failureReason }),
     );
-    await sendAsWorker(app, '/collections/failed', {
-      source: 'snu_events',
-      failedAt: '2026-10-03T06:00:00+09:00',
-      reason: "The university's firewall blocked https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
-    });
 
     expect(await storedEvent(postNumber)).toMatchObject({ postNumber });
     expect(await eventsStatus()).toMatchObject({
       lastSucceededAt: new Date('2026-10-02T15:00:00Z'),
       lastFailedAt: new Date('2026-10-02T21:00:00Z'),
+      lastFailureReason: failureReason,
     });
   });
 });

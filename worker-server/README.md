@@ -104,8 +104,8 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
   answer up after 5 seconds, so that a Collection never waits for a main server that is down. A request reaches one
   main server, however many run. `MainServer.ask(path, question, schema)` asks a question the same way and gives the
   answer, checked against its schema: the worker keeps nothing, so a Collection that needs to know what the main server
-  holds asks it, as the events collector asks which posts are stored. A collector reaches it as `this.mainServer`. The
-  main server's README sets the paths, the shapes and the answers:
+  holds asks it, as the events collector asks which posts are stored, through its `ask(path, question, schema)`. Nothing
+  else reaches the main server but `handOver()`. The main server's README sets the paths, the shapes and the answers:
   [Requests from the worker server](../main-server/README.md#requests-from-the-worker-server). The shape of what a
   Collection read is a type in the feature's `dto/`, kept the same as the main server's schema by hand.
 - **Failure**: when a page cannot be fetched or read, or the main server does not take the message or answer the
@@ -113,7 +113,7 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
   `https://snudorm.snu.ac.kr/foodmenu/?date=2026-10-02 answered 503`, `The page has no menu table` or
   `The main server did not take /shuttle/vehicles/collected: no answer within 5 seconds`. The other Sources of the run
   are still collected, and the main server keeps what it stored. The events collector skips a post's page that is not
-  the post instead, as [Events](#events) says.
+  the post instead, and when it stops early it hands over what it read with why it stopped, as [Events](#events) says.
 
 The tests never call a real Source or the main server. `startApp` replaces the HTTP call under `PageFetcher` (`FETCH`),
 and every request fails unless the test gives it pages; and the one under `MainServer` (`FETCH_MAIN_SERVER`), with a
@@ -208,10 +208,10 @@ A Collection does four things, one page at a time:
    who reads it at the Source. Three such pages in a row stop it instead, since then the pages have changed, not the
    posts; none of the three is sent. A skipped post is kept back until a post after it is read or the list ends, so a
    Collection that stops before then does not send it either.
-4. It sends what it read, in the list's order. When every post is stored, the message has no event and still records a
-   successful Collection. When the Collection stops, the posts read before are sent all the same, with
-   `complete: false`, so that they are stored and never read again without counting as a success, and the Collection
-   then fails.
+4. It sends what it read, in the list's order, in one message. When every post is stored, the message has no event and
+   still records a successful Collection. When the Collection stops, the posts read before are sent all the same, with
+   why it stopped as `failureReason`: the main server stores them, so that they are never read again, and records the
+   failure in place of a success in the same transaction. The command then says the Collection failed.
 
 So a post is read once, and an edit at the Source after that is not seen. A post whose page is not a post holds up
 neither the posts after it nor the Collection status: it is logged as a warning and waits as a Draft.

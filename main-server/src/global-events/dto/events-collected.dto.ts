@@ -27,9 +27,10 @@ const collectedEventSchema = z.strictObject({
 export const eventsCollectedSchema = z.strictObject({
   source: z.enum([Source.snu_events]),
   collectedAt: z.iso.datetime({ offset: true }),
-  // False when the Collection stopped early, at a page it could not fetch, the firewall's block page or the third post
-  // in a row that was not a post: its posts are stored, but it did not succeed.
-  complete: z.boolean(),
+  // Why the Collection stopped early, at a page it could not fetch, the firewall's block page or the third post in a row
+  // that was not a post; null when it went through the whole list. Its posts are stored all the same, and the reason is
+  // recorded as its failure.
+  failureReason: z.string().min(1).nullable(),
   events: z
     .array(collectedEventSchema)
     .refine(

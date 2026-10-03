@@ -15,8 +15,14 @@ export class CollectionService {
     });
   }
 
-  async recordFailure(source: Source, failedAt: Date, reason: string): Promise<void> {
-    await this.prisma.collectionStatus.upsert({
+  // On its own, or in the transaction that stores what a Collection read before it stopped.
+  async recordFailure(
+    source: Source,
+    failedAt: Date,
+    reason: string,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.collectionStatus.upsert({
       where: { source },
       create: { source, lastFailedAt: failedAt, lastFailureReason: reason },
       update: { lastFailedAt: failedAt, lastFailureReason: reason },

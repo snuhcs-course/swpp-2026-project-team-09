@@ -67,27 +67,26 @@ export class EventCollector extends Collector {
     await this.collectOne('snu_events');
   }
 
-  collectOne(source: EventListSource): Promise<boolean> {
+  async collectOne(source: EventListSource): Promise<boolean> {
     const now = new Date();
-    return this.handOver(source, now, '/global-events/collected', this.read(source, now));
+    const message = this.read(source, now);
+    const taken = await this.handOver(source, now, '/global-events/collected', message);
+    // One that stopped early is handed over all the same, and has failed.
+    return taken && (await message).failureReason === null;
   }
 
-  // Reads the posts the main server does not store yet. A post is read once: a later edit at the Source is not seen.
+  // Reads the posts the main server does not store yet. A post is read once: a later edit at the Source is not seen. What
+  // was read before a stop is handed over with why it stopped, so that it is not read again and the Collection fails.
   private async read(source: EventListSource, now: Date): Promise<EventsCollectedMessage> {
     const listed = await this.readList({ from: filterDay(now, 0), to: filterDay(now, LISTED_DAYS) });
     const question: StoredEventPostsQuestion = { postNumbers: listed.map(({ postNumber }) => postNumber) };
-    const answer = await this.mainServer.ask('/global-events/stored-posts', question, storedEventPostsAnswerSchema);
+    const answer = await this.ask('/global-events/stored-posts', question, storedEventPostsAnswerSchema);
     const stored = new Set(answer.postNumbers);
     const { events, failure } = await this.readPosts(listed.filter(({ postNumber }) => !stored.has(postNumber)));
-    const message = { source, collectedAt: now.toISOString(), complete: failure === null, events };
     if (failure !== null) {
-      // What was read is stored all the same, so that it is not read again, and the Collection fails.
-      if (events.length > 0) {
-        await this.mainServer.send('/global-events/collected', message);
-      }
-      throw failure;
+      this.logger.error(`The Collection of ${source} stopped: ${failure.message}`);
     }
-    return message;
+    return { source, collectedAt: now.toISOString(), failureReason: failure?.message ?? null, events };
   }
 
   private async readList(filter: ListFilter): Promise<ListedPost[]> {
