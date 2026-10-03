@@ -609,11 +609,11 @@ Each exported file keeps, at its top, where it came from and the day of the expo
 - **Adding a Place that the campus map does not list**: add an entry to `national-map-places.json`.
   `{ "outline": "B0010000000SIJSPM", "number": "303", "name": "해동첨단공학관", "why": … }` makes a Place at the middle
   of that polygon of the national map; `"number": null` makes one without a number.
-- **The shuttle's stops and line**, `shuttle-stops.json` and `shuttle-route.geojson`, are made by a person and have no
-  export. The stops' names and places on the drawing are the route page's, as P05 recorded it; `campusMapStop` pairs
-  each with a stop of the campus map, which gives the coordinates. The line was traced along the roads the Overpass
-  query in its file gave, as the shortest way a vehicle may take from each of the campus map's 15 stops to the next,
-  and a person checked it on a map.
+- **The shuttle's stops and line**, `shuttle-stops.json` and `shuttle-route.geojson`, have no export; each keeps
+  where its data came from at its top. The stops' names and places on the drawing are the route page's, as P05 read
+  it; `campusMapStop`, written by hand, pairs each with a stop of the campus map, which gives the coordinates. The
+  line follows the roads that the Overpass query in its file gave, as the shortest way a vehicle may take from each of
+  the campus map's 15 stops to the next. A person checked the pairs and the line on a map.
 - **Correcting the shuttle**: a stop's pair is `campusMapStop` in `shuttle-stops.json`, and a new stop takes the next
   unused `key`. The line is the list of coordinates in `shuttle-route.geojson`, longitude first, which GitHub and
   geojson.io draw on a map. Load again afterwards.
@@ -627,8 +627,9 @@ Each exported file keeps, at its top, where it came from and the day of the expo
   shuttle's stops and line. A test that changes the seed loads it into a database of its own, made by
   `createDatabase()` from `test/containers.ts`, with `loadSeed(prisma, directory)` from `src/load-seed.ts`, as
   `test/seed.e2e-spec.ts` and `test/shuttle-seed.e2e-spec.ts` do.
-- **A new seed** adds its export to `scripts/export-seed.ts` when the file is exported, its model with the identifier
-  its origin gives as a unique key, and its loading to `loadSeed()`. `readSeedFile()` beside `SEED_DIRECTORY` reads a
+- **A new seed** adds its export to `scripts/export-seed.ts` when the file is exported, its model with a unique key
+  that outlasts a reload, and its loading to `loadSeed()`. The key is the identifier the origin gives or, where no
+  origin gives one, as for a shuttle stop, a key of the seed's own. `readSeedFile()` beside `SEED_DIRECTORY` reads a
   file and checks it against a schema.
 
 ## Checks
