@@ -556,18 +556,18 @@ The messages, which follow [Messages from the worker server](#messages-from-the-
 Seed data comes from outside the project once, rather than by Collection: a file in `seed/` that one command loads
 into the database.
 
-| File                             | What it holds                                                                    | Comes from                                      |
-| -------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `campus-boundary.geojson`        | The Campus Boundary, read by the server and not loaded                           | OpenStreetMap, through Overpass                 |
-| `campus-map-places.json`         | The campus map's Places, as it serves them                                       | The campus map, `map.snu.ac.kr`                 |
-| `openstreetmap-places.json`      | Two Places that the campus map does not list                                     | OpenStreetMap, through Overpass                 |
-| `national-map-places.json`       | More Places that the campus map does not list, each by its polygon               | Written by hand                                 |
-| `national-map-outlines.geojson`  | The polygons of the campus's buildings, each with its label                      | A file that a person downloads from VWorld      |
-| `openstreetmap-outlines.geojson` | The outlines that `place-outlines.json` takes from OpenStreetMap                 | OpenStreetMap, through Overpass                 |
-| `place-outlines.json`            | The outlines that a person gives a Place, each entry with its reason             | Written by hand                                 |
-| `campus-map-shuttle-stops.json`  | The campus map's 15 stops of its loop, route 61, as it serves them               | The campus map, `map.snu.ac.kr`                 |
-| `shuttle-stops.json`             | The operator's 14 stops in loop order, their places on the drawing and the pairs | Written by hand, from the operator's route page |
-| `shuttle-route.geojson`          | The shuttle's line along OpenStreetMap's roads                                   | Traced by hand over OpenStreetMap's roads       |
+| File                             | What it holds                                                                    | Comes from                                           |
+| -------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `campus-boundary.geojson`        | The Campus Boundary, read by the server and not loaded                           | OpenStreetMap, through Overpass                      |
+| `campus-map-places.json`         | The campus map's Places, as it serves them                                       | The campus map, `map.snu.ac.kr`                      |
+| `openstreetmap-places.json`      | Two Places that the campus map does not list                                     | OpenStreetMap, through Overpass                      |
+| `national-map-places.json`       | More Places that the campus map does not list, each by its polygon               | Written by hand                                      |
+| `national-map-outlines.geojson`  | The polygons of the campus's buildings, each with its label                      | A file that a person downloads from VWorld           |
+| `openstreetmap-outlines.geojson` | The outlines that `place-outlines.json` takes from OpenStreetMap                 | OpenStreetMap, through Overpass                      |
+| `place-outlines.json`            | The outlines that a person gives a Place, each entry with its reason             | Written by hand                                      |
+| `campus-map-shuttle-stops.json`  | The campus map's 15 stops of its loop, route 61, as it serves them               | The campus map, `map.snu.ac.kr`                      |
+| `shuttle-stops.json`             | The operator's 14 stops in loop order, their places on the drawing and the pairs | The operator's route page; the pairs written by hand |
+| `shuttle-route.geojson`          | The shuttle's line, traced along OpenStreetMap's roads                           | OpenStreetMap, through Overpass                      |
 
 Each exported file keeps, at its top, where it came from and the day of the export.
 
