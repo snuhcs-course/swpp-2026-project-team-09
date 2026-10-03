@@ -258,7 +258,7 @@ What was decided for a change to 연속수치지형도, on 2026-10-03:
 - 화학관연결동 (253동) has no outline: its point lies in an unlabelled polygon that is not wanted.
 - 반도체교육관 (104-1동) keeps its own polygon alone: the layer labels a second polygon `104-1동국제대학원`, which stands at 국제대학원, about 1 km away. The count of 172 above takes a number as found when any polygon labelled with it lies at the building's point, so it did not show this.
 - Left without an outline, about 14: 김철수물리관 (56-1동), 정문수위실, three links between buildings, and stores.
-- Not decided: whether the change is made in the pull request that brought the outlines or as a ticket of its own.
+- The change is a ticket of its own: P07's ticket 06, `.scratch/iteration-1/P07-campus-feeds/issues/06-building-outlines-from-the-national-map.md`.
 
 ### 9.4 Repeating it
 
@@ -271,11 +271,10 @@ The shortest path for a person:
 
 1. Sign up at `https://www.vworld.kr` (terms, identity verification) and log in.
 2. Open GIS건물통합정보 under 공간정보 다운로드 [V6]. Set 시·도 to 서울특별시 and 구분 to 전체데이터, press 조회, and download the newest SHP (129 MB).
-3. Unzip it into the scratchpad folder and run:
+3. Unzip it and run the comparison script on the `.shp`:
 
    ```sh
-   cd /private/tmp/claude-501/-Users-fyoon-Developments-IdeaProjects-swpp-2026-project-team-09/baab0fb0-2ba5-405a-9fc5-c1eb50747dff/scratchpad/public-buildings
-   ./venv/bin/python compare_outlines.py --gov <path>.shp --crs EPSG:5186 --label GIS건물통합정보
+   python compare_outlines.py --gov <path>.shp --crs EPSG:5186 --label GIS건물통합정보
    ```
 
 - Input the script accepts: a `.shp` with its `.dbf` and `.shx`, a GeoJSON FeatureCollection of polygons, or a saved VWorld Data API answer. `--crs` is required for a shapefile: EPSG:5186 for GIS건물통합정보, EPSG:5179 for the 국토지리정보원 layers. `--encoding` is the `.dbf`'s, CP949 by default; pass `utf-8` if names come out garbled. A whole-city file is fine; everything outside the campus extent is skipped.
@@ -287,7 +286,7 @@ The shortest path for a person:
   - Around the three known gaps (303동 and 배터리공동연구센터, the 500동 complex, 301동): the outlines of each source with area, vertices and name.
   - The file's attributes with fill counts, and for how many points the containing polygon's text holds the building number.
 - The script was checked against the OpenStreetMap file itself (225 pairs, IoU 1.000, 0 m) and against a copy shifted 2 m east with every tenth outline removed, as GeoJSON in EPSG:5179 and as a CP949 shapefile in EPSG:5186 (200 pairs, median IoU 0.837, 90th percentile distance 1.99 m).
-- Also in the folder: `seoul_points_vs_osm.py`, which produced §7; the downloaded Seoul ZIP and CSV under `data/`; the fetched pages under `pages/`. Nothing from it is in the repository.
+- `compare_outlines.py`, and `seoul_points_vs_osm.py`, which produced §7, are not in the repository.
 
 ## 10. Unverified
 

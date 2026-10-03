@@ -98,7 +98,7 @@ The main server's README says, under Buildings and Seed data, how the outlines a
 - The migration was made with `prisma migrate dev --create-only` on a temporary database of the project's PostgreSQL image, `p07-06-outlines-postgres`, since removed with its volume. After `pnpm db:migrate`, `prisma migrate diff` from that database to the schema finds no difference. `pnpm db:seed` run twice on it left 226 rows, 204 of the 218 numbered buildings with outlines.
 - One start, `docker compose -p p07-06-outlines-check up --build -d postgres redis main-server` from the repository root, under a project name of its own so that the developer database was not touched:
   - The image built with the new dev dependencies, applied the four migrations, logged `Loaded 226 buildings` and started. Readiness and liveness answered 200, and `GET /buildings` and `GET /buildings/search?q=302` without a token 401.
-  - The table held 226 rows: 204 numbered buildings with outlines, 218 outlines in all, no place with one; 사회과학관 with five, 문화관 with two, 100동, 43-2동 and 149동 with one, 253동 with none.
+  - The table held 226 rows: 204 numbered buildings with outlines, no place with one; 사회과학관 with five, 문화관 with two, 100동, 43-2동 and 149동 with one, 253동 with none.
   - A restart of the main server found no pending migration, loaded the seed again, and left 226 rows, 제2공학관 under the id it had.
   - `docker compose -p p07-06-outlines-check down -v --rmi local` removed the run's containers, volume and images.
 
