@@ -33,24 +33,8 @@ CREATE TABLE "shuttle_stops" (
     CONSTRAINT "shuttle_stops_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "shuttle_vehicles" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "car_id" TEXT NOT NULL,
-    "stop_id" UUID NOT NULL,
-    "received_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "shuttle_vehicles_pkey" PRIMARY KEY ("id")
-);
-
 -- CreateIndex
 CREATE UNIQUE INDEX "shuttle_routes_number_key" ON "shuttle_routes"("number");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "shuttle_stops_seed_key_key" ON "shuttle_stops"("seed_key");
-
--- CreateIndex
-CREATE UNIQUE INDEX "shuttle_vehicles_car_id_key" ON "shuttle_vehicles"("car_id");
-
--- AddForeignKey
-ALTER TABLE "shuttle_vehicles" ADD CONSTRAINT "shuttle_vehicles_stop_id_fkey" FOREIGN KEY ("stop_id") REFERENCES "shuttle_stops"("id") ON DELETE CASCADE ON UPDATE CASCADE;

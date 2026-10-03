@@ -3,7 +3,7 @@ import { MessagePattern } from '@nestjs/microservices';
 import { HANDLED, type Handled, WorkerMessage } from '../common/worker-message.decorator.js';
 import { ShuttleRouteDto } from './dto/shuttle-route.dto.js';
 import { type ShuttleStopsCollectedMessage, shuttleStopsCollectedSchema } from './dto/shuttle-stops-collected.dto.js';
-import { ShuttleVehicleDto } from './dto/shuttle-vehicle.dto.js';
+import { type ShuttleVehicleDto } from './dto/shuttle-vehicle.dto.js';
 import {
   type ShuttleVehiclesCollectedMessage,
   shuttleVehiclesCollectedSchema,

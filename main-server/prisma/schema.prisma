@@ -256,20 +256,6 @@ model ShuttleStop {
   // Where the stop is on the operator's drawing of the route, in pixels: `left` and `top` on the route page.
   drawingLeft Int              @map("drawing_left")
   drawingTop  Int              @map("drawing_top")
-  vehicles    ShuttleVehicle[]
 
   @@map("shuttle_stops")
-}
-
-// A vehicle at a stop, as the last Collection of shuttle_vehicles reported it.
-model ShuttleVehicle {
-  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  // The operator's `carid`.
-  carId      String      @unique @map("car_id")
-  stopId     String      @map("stop_id") @db.Uuid
-  stop       ShuttleStop @relation(fields: [stopId], references: [id], onDelete: Cascade)
-  // When the worker received the operator's answer.
-  receivedAt DateTime    @map("received_at")
-
-  @@map("shuttle_vehicles")
 }

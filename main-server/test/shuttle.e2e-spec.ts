@@ -203,6 +203,20 @@ describe('The vehicles served', () => {
     expect(await servedVehicles()).toEqual([]);
   });
 
+  it('disappear by themselves a minute after their set was received, when no other set arrives', async () => {
+    await sendVehicles([{ carId: '4522', x: 157, y: 40 }], {
+      collectedAt: new Date(Date.now() - 58_000).toISOString(),
+    });
+    expect(await carsAtStops()).toEqual([['4522', '정문']]);
+
+    await vi.waitFor(
+      async () => {
+        expect(await servedVehicles()).toEqual([]);
+      },
+      { timeout: 5000, interval: 250 },
+    );
+  });
+
   it('are emptied by a set without vehicles', async () => {
     await sendVehicles([{ carId: '4522', x: 157, y: 40 }]);
 
@@ -223,6 +237,25 @@ describe('Each set of vehicles stored', () => {
     await vi.waitFor(() => {
       expect(events.slice(-2)).toEqual([
         { pattern: 'shuttle-vehicles-updated', data: [{ carId: '4520', stop: stops[7], receivedAt }] },
+        { pattern: 'shuttle-vehicles-updated', data: [] },
+      ]);
+    });
+  });
+});
+
+describe('A set of vehicles that arrives twice, as when every main server receives it', () => {
+  it('is sent to the socket server once', async () => {
+    const receivedAt = new Date().toISOString();
+    const { stops } = await servedRoute();
+    const before = events.length;
+
+    await sendVehicles([{ carId: '4522', x: 157, y: 40 }], { collectedAt: receivedAt });
+    await sendVehicles([{ carId: '4522', x: 157, y: 40 }], { collectedAt: receivedAt });
+    await sendVehicles([]);
+
+    await vi.waitFor(() => {
+      expect(events.slice(before)).toEqual([
+        { pattern: 'shuttle-vehicles-updated', data: [{ carId: '4522', stop: stops[0], receivedAt }] },
         { pattern: 'shuttle-vehicles-updated', data: [] },
       ]);
     });

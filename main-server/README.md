@@ -534,10 +534,18 @@ How a vehicle is stored:
 - Each `shuttle-vehicles-collected` replaces the vehicles as a whole, as the operator's page redraws them on each
   answer: a vehicle the operator no longer reports is gone at once, and a set without vehicles empties the list.
   Vehicles are told apart by the operator's `carid`.
+- The vehicles are in Redis, not in a table: they are the present state of something outside, replaced every 15
+  seconds, of which no history is kept. The latest set is the one key `shuttle:vehicles`, in the form
+  `GET /shuttle/vehicles` answers, and the key expires a minute after the set was received, which is how a position is
+  no longer served. The Collection status of `shuttle_vehicles` is recorded in the database, as every Source's is.
 - Each set stored goes to the socket server as the event `shuttle-vehicles-updated`, in the form `GET /shuttle/vehicles`
   answers, and the socket server sends it to every connected app (see the
   [socket server](../socket-server/README.md#shuttle-vehicles)). The event does not wait for an answer: an app that
   missed one gets the next set 15 seconds later.
+- Several main servers can run. Each receives the worker's message, since messaging publishes it to every main
+  server, and each stores the same set under the same key. The one whose write changed what is served sends the
+  event, so the apps get each set once; a set that changes nothing, such as no vehicles after no vehicles, is not
+  sent.
 
 The messages, which follow [Messages from the worker server](#messages-from-the-worker-server):
 
@@ -596,7 +604,7 @@ Each exported file keeps, at its top, where it came from and the day of the expo
     never reused, since neither the operator, which names its stops only, nor the campus map, whose stop only lends
     the coordinates, gives one that outlasts a correction. Loading again updates a stop in place by its key, so that it
     keeps its `id` whatever a correction changes: its name, its pair or its place in the loop. A stop that has left the
-    file is removed, with any vehicle at it, since nothing that lasts points at a stop. A stop's place on the drawing
+    file is removed, since nothing that lasts points at a stop. A stop's place on the drawing
     is the file's only when the stop is first loaded; after that it is the one the route page's Collection last
     stored. The line replaces the route's line.
 - **Correcting a Place**: change it in its file, such as a name in `inst_kor_nm`, and load again. The next export
@@ -856,8 +864,9 @@ follows these rules.
   by their times.
 - **Collection status**: `collection_statuses` keeps, for each Source, the time of its last successful Collection
   (`lastSucceededAt`) and, apart from it, its last failure (`lastFailedAt`, `lastFailureReason`). A handler that stores
-  what a Collection read calls `CollectionService.recordSuccess(tx, source, collectedAt)` in the same transaction. A
-  Collection that fails sends `collection-failed` with `{ "source", "failedAt", "reason" }`, where `reason` says what
+  what a Collection read calls `CollectionService.recordSuccess(tx, source, collectedAt)` in the same transaction; the
+  shuttle's vehicles are stored in Redis, so their handler records the success once the set is stored. A Collection
+  that fails sends `collection-failed` with `{ "source", "failedAt", "reason" }`, where `reason` says what
   went wrong. It records the failure and leaves every stored record as it is. A success leaves the last failure in
   place, so the two times tell whether the Source has worked since. No route serves the status yet; P12 shows it.
 - **A new Source** adds its value to `Source` with a migration. `menusCollectedSchema` lists the Sources that send

@@ -1,19 +1,12 @@
-import { ShuttleStop, ShuttleVehicle } from '../../generated/prisma/client.js';
-import { ShuttleStopDto, toShuttleStopDto } from './shuttle-route.dto.js';
+import { z } from 'zod';
 
-// A vehicle at the stop the operator reports, as the route serves it and the socket server sends it.
-export interface ShuttleVehicleDto {
+// A vehicle at the stop the operator reports, as Redis keeps it, the route serves it and the socket server sends it.
+export const shuttleVehicleSchema = z.object({
   // The operator's `carid`, which tells the vehicles apart.
-  carId: string;
-  stop: ShuttleStopDto;
-  // The app drops a vehicle whose position is more than a minute old.
-  receivedAt: Date;
-}
+  carId: z.string(),
+  stop: z.object({ id: z.string(), name: z.string(), latitude: z.number(), longitude: z.number() }),
+  // ISO 8601. The app drops a vehicle whose position is more than a minute old.
+  receivedAt: z.string(),
+});
 
-export function toShuttleVehicleDto({
-  carId,
-  stop,
-  receivedAt,
-}: Pick<ShuttleVehicle, 'carId' | 'receivedAt'> & { stop: ShuttleStop }): ShuttleVehicleDto {
-  return { carId, stop: toShuttleStopDto(stop), receivedAt };
-}
+export type ShuttleVehicleDto = z.infer<typeof shuttleVehicleSchema>;

@@ -43,7 +43,7 @@ const routeFileSchema = z.object({
 });
 
 // Updates each stop in place by its key, whatever else a correction changes, so that it keeps its identifier. A stop
-// that has left the seed is removed, with any vehicle placed at it: nothing that lasts points at a stop.
+// that has left the seed is removed: nothing that lasts points at a stop.
 export async function loadShuttle(prisma: PrismaClient, directory: string): Promise<number> {
   const campusMap = await readSeedFile(directory, 'campus-map-shuttle-stops.json', campusMapFileSchema);
   const { stops } = await readSeedFile(directory, 'shuttle-stops.json', stopsFileSchema);

@@ -1,28 +1,28 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { Redis } from 'ioredis';
 import { z } from 'zod';
 import { CollectionService } from '../collection/collection.service.js';
 import { MESSAGING_CLIENT } from '../common/messaging.module.js';
 import { PrismaService } from '../common/prisma.service.js';
-import { ShuttleStop, ShuttleVehicle, Source } from '../generated/prisma/client.js';
+import { REDIS } from '../common/redis.module.js';
+import { ShuttleStop, Source } from '../generated/prisma/client.js';
 import { ShuttleRouteDto, toShuttleStopDto } from './dto/shuttle-route.dto.js';
 import { type ShuttleStopsCollectedMessage } from './dto/shuttle-stops-collected.dto.js';
-import { ShuttleVehicleDto, toShuttleVehicleDto } from './dto/shuttle-vehicle.dto.js';
+import { type ShuttleVehicleDto, shuttleVehicleSchema } from './dto/shuttle-vehicle.dto.js';
 import { type ShuttleVehiclesCollectedMessage } from './dto/shuttle-vehicles-collected.dto.js';
 import { ROUTE_NUMBER } from './shuttle.seed.js';
 
-// A position older than this is no longer served, so that the vehicles disappear when the service ends or the worker
-// stops.
+// The Redis key of the latest set of vehicles, as it is served. A state replaced every 15 seconds and gone after a
+// minute, so no table holds it.
+const VEHICLES_KEY = 'shuttle:vehicles';
+
+// The key expires this long after its set was received, so that the vehicles disappear when the service ends or the
+// worker stops.
 const POSITION_LIFETIME = 60 * 1000;
 
 // The line as the seed stores it.
 const lineSchema = z.array(z.object({ latitude: z.number(), longitude: z.number() }));
-
-type PlacedVehicle = Pick<ShuttleVehicle, 'carId' | 'receivedAt'> & { stop: ShuttleStop };
-
-function inLoopOrder(a: PlacedVehicle, b: PlacedVehicle): number {
-  return a.stop.loopOrder - b.stop.loopOrder || a.carId.localeCompare(b.carId);
-}
 
 // The stop nearest to a position on the drawing. A vehicle at a stop comes 5 px below the stop's top, which never
 // changes the nearest: the stops lie at least 50 px apart.
@@ -42,6 +42,7 @@ export class ShuttleService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly collection: CollectionService,
+    @Inject(REDIS) private readonly redis: Redis,
     @Inject(MESSAGING_CLIENT) private readonly messaging: ClientProxy,
   ) {}
 
@@ -56,11 +57,8 @@ export class ShuttleService {
   }
 
   async vehicles(): Promise<ShuttleVehicleDto[]> {
-    const vehicles = await this.prisma.shuttleVehicle.findMany({
-      where: { receivedAt: { gte: new Date(Date.now() - POSITION_LIFETIME) } },
-      include: { stop: true },
-    });
-    return vehicles.toSorted(inLoopOrder).map((vehicle) => toShuttleVehicleDto(vehicle));
+    const stored = await this.redis.get(VEHICLES_KEY);
+    return stored === null ? [] : z.array(shuttleVehicleSchema).parse(JSON.parse(stored));
   }
 
   // The stops of the page must be those of the seed, in its loop order. Any other list means that the page changed,
@@ -87,23 +85,33 @@ export class ShuttleService {
   }
 
   // A set replaces the vehicles as a whole, as the operator's page redraws them on each answer: a vehicle the operator
-  // no longer reports is gone at once.
+  // no longer reports is gone at once. In the loop order of their stops.
   async storeVehicles({ collectedAt, vehicles }: ShuttleVehiclesCollectedMessage): Promise<void> {
     const receivedAt = new Date(collectedAt);
     const stops = await this.prisma.shuttleStop.findMany();
-    const placed = vehicles.map(({ carId, x, y }) => ({ carId, stop: nearest(stops, x, y), receivedAt }));
-    await this.prisma.$transaction(async (tx) => {
-      await this.collection.recordSuccess(tx, Source.shuttle_vehicles, receivedAt);
-      await tx.shuttleVehicle.deleteMany();
-      await tx.shuttleVehicle.createMany({
-        data: placed.map(({ carId, stop }) => ({ carId, stopId: stop.id, receivedAt })),
+    const sent = vehicles
+      .map(({ carId, x, y }) => ({ carId, stop: nearest(stops, x, y) }))
+      .toSorted((a, b) => a.stop.loopOrder - b.stop.loopOrder || a.carId.localeCompare(b.carId))
+      .map(({ carId, stop }): ShuttleVehicleDto => ({
+        carId,
+        stop: toShuttleStopDto(stop),
+        receivedAt: receivedAt.toISOString(),
+      }));
+    const stored = JSON.stringify(sent);
+    const expiresAt = receivedAt.getTime() + POSITION_LIFETIME;
+    // Every main server receives the message and stores the same set. The one whose write changed what is served
+    // sends it, so that the apps get a set once. A set already more than a minute old leaves nothing to serve.
+    const changed =
+      expiresAt > Date.now()
+        ? (await this.redis.set(VEHICLES_KEY, stored, 'PXAT', expiresAt, 'GET')) !== stored
+        : (await this.redis.del(VEHICLES_KEY)) === 1;
+    await this.collection.recordSuccess(this.prisma, Source.shuttle_vehicles, receivedAt);
+    if (changed) {
+      this.messaging.emit('shuttle-vehicles-updated', sent).subscribe({
+        error: (error: unknown) => {
+          this.logger.warn(`The socket server was not given the shuttle's vehicles: ${String(error)}`);
+        },
       });
-    });
-    const sent = placed.toSorted(inLoopOrder).map((vehicle) => toShuttleVehicleDto(vehicle));
-    this.messaging.emit('shuttle-vehicles-updated', sent).subscribe({
-      error: (error: unknown) => {
-        this.logger.warn(`The socket server was not given the shuttle's vehicles: ${String(error)}`);
-      },
-    });
+    }
   }
 }
