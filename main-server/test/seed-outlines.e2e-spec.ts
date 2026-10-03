@@ -9,7 +9,7 @@ import { PrismaClient } from '../src/generated/prisma/client.js';
 import { loadSeed } from '../src/load-seed.js';
 import { createDatabase } from './containers.js';
 
-// Which outlines the seed command gives a building, on a database of this file's own.
+// Which outlines the seed command gives a Place, on a database of this file's own.
 let prisma: PrismaClient;
 let drop: () => Promise<void>;
 // A copy of the seed that a test changes.
@@ -26,8 +26,8 @@ afterAll(async () => {
   await drop();
 });
 
-const NATIONAL_MAP = 'national-map-building-outlines.geojson';
-const OPENSTREETMAP = 'openstreetmap-building-outlines.geojson';
+const NATIONAL_MAP = 'national-map-outlines.geojson';
+const OPENSTREETMAP = 'openstreetmap-outlines.geojson';
 
 const outlinesFileSchema = z.looseObject({
   features: z.array(
@@ -38,7 +38,7 @@ const outlinesFileSchema = z.looseObject({
   ),
 });
 
-// The seed's outlines with these identifiers, the national map's or OpenStreetMap's, as a building stores them.
+// The seed's outlines with these identifiers, the national map's or OpenStreetMap's, as a Place stores them.
 async function outlines(...ids: string[]): Promise<Position[][]> {
   const files = await Promise.all(
     [NATIONAL_MAP, OPENSTREETMAP].map((file) => readSeedFile(SEED_DIRECTORY, file, outlinesFileSchema)),
@@ -53,12 +53,12 @@ async function outlines(...ids: string[]): Promise<Position[][]> {
   });
 }
 
-async function outlinesOfBuilding(number: string): Promise<unknown> {
-  return (await prisma.building.findFirstOrThrow({ where: { number } })).outlines;
+async function outlinesOfPlace(number: string): Promise<unknown> {
+  return (await prisma.place.findFirstOrThrow({ where: { number } })).outlines;
 }
 
 async function writeLinks(links: object[]): Promise<void> {
-  await writeFile(join(correctedSeed, 'building-outline-links.json'), JSON.stringify({ links }));
+  await writeFile(join(correctedSeed, 'place-outlines.json'), JSON.stringify({ links }));
 }
 
 describe("The national map's outlines in the seed", () => {
@@ -71,19 +71,19 @@ describe("The national map's outlines in the seed", () => {
   });
 });
 
-describe('Linking a building to the polygons whose label names its number', () => {
+describe('Linking a Place to the polygons whose label names its number', () => {
   beforeAll(async () => {
     await loadSeed(prisma);
   });
 
-  it('gives a building the polygon labelled with its number', async () => {
+  it('gives a Place the polygon labelled with its number', async () => {
     // 제1공학관, on the polygon labelled `301동제1공학관`.
-    expect(await outlinesOfBuilding('301')).toEqual(await outlines('B0010000000RETCCY'));
+    expect(await outlinesOfPlace('301')).toEqual(await outlines('B0010000000RETCCY'));
   });
 
-  it('gives a building drawn as several polygons all of them', async () => {
+  it('gives a Place drawn as several polygons all of them', async () => {
     // 사회과학관, five polygons labelled `사회과학대학16동`, and 문화관, two labelled `73동문화관`.
-    expect(await outlinesOfBuilding('16')).toEqual(
+    expect(await outlinesOfPlace('16')).toEqual(
       await outlines(
         'B0010000000RF21O9',
         'B0010000000RF21I3',
@@ -92,54 +92,54 @@ describe('Linking a building to the polygons whose label names its number', () =
         'B0010000000RF20O8',
       ),
     );
-    expect(await outlinesOfBuilding('73')).toEqual(await outlines('B0010000000RF22L7', 'B0010000000RF22G2'));
+    expect(await outlinesOfPlace('73')).toEqual(await outlines('B0010000000RF22L7', 'B0010000000RF22G2'));
   });
 
   it('reads the number whole, not as a part of a longer one', async () => {
     // 인문관1 has `인문대학1동` and not `101동아시아연구소`. 자연과학관7 has `자연과학대학25동` and not `자연과학대학25-1동`.
-    expect(await outlinesOfBuilding('1')).toEqual(await outlines('B0010000000RF234R'));
-    expect(await outlinesOfBuilding('25')).toEqual(await outlines('B0010000000RETCJ5'));
+    expect(await outlinesOfPlace('1')).toEqual(await outlines('B0010000000RF234R'));
+    expect(await outlinesOfPlace('25')).toEqual(await outlines('B0010000000RETCJ5'));
   });
 
-  it('reads a wing, a letter after the number, as the building', async () => {
+  it('reads a wing, a letter after the number, as the Place', async () => {
     // (관악사)학부 생활관, three polygons labelled `관악학생생활관919-C동`, `…919-B동` and `…919-A동`.
-    expect(await outlinesOfBuilding('919')).toEqual(
+    expect(await outlinesOfPlace('919')).toEqual(
       await outlines('B0010000000RF245T', 'B0010000000RF241P', 'B0010000000RF23UH'),
     );
   });
 });
 
-describe('Linking a building that no label names', () => {
+describe('Linking a Place that no label names', () => {
   beforeAll(async () => {
     await loadSeed(prisma);
   });
 
-  it('gives it the polygon that holds its position, also when another building has that polygon', async () => {
+  it('gives it the polygon that holds its position, also when another Place has that polygon', async () => {
     // 우석경제관, inside a polygon without a label. 매니지먼트센터 (59-1동), inside `경영대학59동경영전문대학원`, which
     // is one of the two polygons of LG경영관 (59동).
-    expect(await outlinesOfBuilding('223')).toEqual(await outlines('B0010000000RF1NOU'));
-    expect(await outlinesOfBuilding('59-1')).toEqual(await outlines('B0010000000RF2DZW'));
-    expect(await outlinesOfBuilding('59')).toEqual(await outlines('B0010000000RF2E0Y', 'B0010000000RF2DZW'));
+    expect(await outlinesOfPlace('223')).toEqual(await outlines('B0010000000RF1NOU'));
+    expect(await outlinesOfPlace('59-1')).toEqual(await outlines('B0010000000RF2DZW'));
+    expect(await outlinesOfPlace('59')).toEqual(await outlines('B0010000000RF2E0Y', 'B0010000000RF2DZW'));
   });
 
-  it('gives it the nearest polygon when that is within 10 m and no building has it', async () => {
+  it('gives it the nearest polygon when that is within 10 m and no Place has it', async () => {
     // 자연대 생명과학부 시약보관창고 (506동), 1.9 m outside a polygon without a label.
-    expect(await outlinesOfBuilding('506')).toEqual(await outlines('B0010000000RF2EYW'));
+    expect(await outlinesOfPlace('506')).toEqual(await outlines('B0010000000RF2EYW'));
     // 인문관연결동, 1.1 m outside the polygon of 인문관2.
-    expect(await outlinesOfBuilding('250')).toEqual([]);
+    expect(await outlinesOfPlace('250')).toEqual([]);
     // 반도체연구소화공약품창고 (104-2동) is 0.1 m from a polygon and 반도체연구소수소창고 (104-3동) 6.7 m: the nearer has it.
-    expect(await outlinesOfBuilding('104-2')).toEqual(await outlines('B0010000000RF2992'));
-    expect(await outlinesOfBuilding('104-3')).toEqual([]);
+    expect(await outlinesOfPlace('104-2')).toEqual(await outlines('B0010000000RF2992'));
+    expect(await outlinesOfPlace('104-3')).toEqual([]);
   });
 
   it('gives it none where the layer draws only a wall-less structure, which the seed leaves out', async () => {
     // 물리관연결동 (254동) lies inside B0010000000RETCI4, which the layer classes as wall-less.
     await expect(outlines('B0010000000RETCI4')).rejects.toThrow('The seed holds no outline');
-    expect(await outlinesOfBuilding('254')).toEqual([]);
+    expect(await outlinesOfPlace('254')).toEqual([]);
   });
 
-  it('gives a place, an entry without a number, none', async () => {
-    const { outlines: ofPlace } = await prisma.building.findFirstOrThrow({ where: { name: '종합운동장' } });
+  it('gives a Place, an entry without a number, none', async () => {
+    const { outlines: ofPlace } = await prisma.place.findFirstOrThrow({ where: { name: '종합운동장' } });
 
     expect(ofPlace).toEqual([]);
   });
@@ -157,7 +157,7 @@ function squareAround223(id: string, halfSide: number): z.infer<typeof outlinesF
   return { id, properties: { label: null }, geometry: { type: 'Polygon', coordinates: [corners] } };
 }
 
-describe('Linking a building whose position two polygons hold', () => {
+describe('Linking a Place whose position two polygons hold', () => {
   afterAll(async () => {
     await cp(join(SEED_DIRECTORY, NATIONAL_MAP), join(correctedSeed, NATIONAL_MAP));
   });
@@ -171,39 +171,39 @@ describe('Linking a building whose position two polygons hold', () => {
 
     await loadSeed(prisma, correctedSeed);
 
-    expect(await outlinesOfBuilding('223')).toEqual([
+    expect(await outlinesOfPlace('223')).toEqual([
       larger.geometry.coordinates[0].map(([longitude, latitude]) => ({ latitude, longitude })),
     ]);
   });
 });
 
 describe('Correcting the outlines', () => {
-  it("gives a building an outline of OpenStreetMap, and takes a building's outline away", async () => {
+  it("gives a Place an outline of OpenStreetMap, and takes a Place's outline away", async () => {
     await writeLinks([]);
     await loadSeed(prisma, correctedSeed);
     // The national map does not draw 버들골 풍산마당 (100동). 화학관연결동 (253동) lies inside a polygon without a label.
-    expect(await outlinesOfBuilding('100')).toEqual([]);
-    expect(await outlinesOfBuilding('253')).toEqual(await outlines('B0010000000RF26TJ'));
+    expect(await outlinesOfPlace('100')).toEqual([]);
+    expect(await outlinesOfPlace('253')).toEqual(await outlines('B0010000000RF26TJ'));
 
     // With the seed's own corrections.
     await loadSeed(prisma);
 
-    expect(await outlinesOfBuilding('100')).toEqual(await outlines('way/193893586'));
-    expect(await outlinesOfBuilding('253')).toEqual([]);
+    expect(await outlinesOfPlace('100')).toEqual(await outlines('way/193893586'));
+    expect(await outlinesOfPlace('253')).toEqual([]);
   });
 
-  it('leaves a building the one outline a correction names, where a label of the national map is wrong', async () => {
+  it('leaves a Place the one outline a correction names, where a label of the national map is wrong', async () => {
     await writeLinks([]);
     await loadSeed(prisma, correctedSeed);
     // The map labels a polygon at 국제대학원 `104-1동국제대학원`, 1 km from 반도체교육관 (104-1동).
-    expect(await outlinesOfBuilding('104-1')).toEqual(await outlines('B0010000000RF2ENL', 'B0010000000RF2EB9'));
+    expect(await outlinesOfPlace('104-1')).toEqual(await outlines('B0010000000RF2ENL', 'B0010000000RF2EB9'));
 
     await loadSeed(prisma);
 
-    expect(await outlinesOfBuilding('104-1')).toEqual(await outlines('B0010000000RF2ENL'));
+    expect(await outlinesOfPlace('104-1')).toEqual(await outlines('B0010000000RF2ENL'));
   });
 
-  it('refuses a correction that names an outline or a building that the seed does not hold', async () => {
+  it('refuses a correction that names an outline or a Place that the seed does not hold', async () => {
     await writeLinks([{ number: '43', outline: 'way/1', why: 'A mistyped identifier.' }]);
     await expect(loadSeed(prisma, correctedSeed)).rejects.toThrow('way/1');
 

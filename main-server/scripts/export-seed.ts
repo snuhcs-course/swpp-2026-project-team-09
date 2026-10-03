@@ -3,7 +3,7 @@ import { basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { format, resolveConfig } from 'prettier';
 import { z } from 'zod';
-import { nationalMapBuildings } from './national-map.ts';
+import { nationalMapOutlines } from './national-map.ts';
 
 // Exports the seed files named, such as `pnpm seed:export campus-boundary`. Each export is one request, or reads one
 // file that a person downloaded, and its file keeps the address or query it came from and the day of the export.
@@ -11,20 +11,20 @@ import { nationalMapBuildings } from './national-map.ts';
 // The worker server's. OpenStreetMap asks for a User-Agent that names the project.
 const USER_AGENT = 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)';
 const OVERPASS = 'https://overpass-api.de/api/interpreter';
-const CAMPUS_MAP_BUILDINGS = 'https://map.snu.ac.kr/api/building.action?page=1&rows=1000';
+const CAMPUS_MAP_PLACES = 'https://map.snu.ac.kr/api/building.action?page=1&rows=1000';
 
 const BOUNDARY_QUERY = '[out:json][timeout:25];relation(11917142);out geom;';
 
-// The buildings the campus map does not list, by their names in OpenStreetMap, which give their numbers.
-const MISSING_BUILDINGS = new Map([
+// The Places the campus map does not list, by their names in OpenStreetMap, which give their numbers.
+const MISSING_PLACES = new Map([
   ['체육문화교육연구동(71-1동)', '71-1'],
   ['901', '901'],
 ]);
 // In the order of an Overpass bounding box.
 const CAMPUS_EXTENT = { south: 37.4470628, west: 126.9474475, north: 37.4692598, east: 126.9612239 };
-const MISSING_BUILDINGS_QUERY =
+const MISSING_PLACES_QUERY =
   `[out:json][timeout:25][bbox:${Object.values(CAMPUS_EXTENT).join(',')}];(` +
-  [...MISSING_BUILDINGS.keys()].map((name) => `nwr["building"]["name"="${name}"];`).join('') +
+  [...MISSING_PLACES.keys()].map((name) => `nwr["building"]["name"="${name}"];`).join('') +
   ');out tags center;';
 
 const pointSchema = z.object({ lat: z.number(), lon: z.number() });
@@ -37,14 +37,14 @@ const boundaryAnswerSchema = z.object({
   ]),
 });
 
-const buildingsAnswerSchema = z.object({
+const placesAnswerSchema = z.object({
   osm3s: copyrightSchema,
   elements: z.array(
     z.object({ type: z.string(), id: z.number(), tags: z.object({ name: z.string() }), center: pointSchema }),
   ),
 });
 
-// `way/193893586`, as a correction names an outline of OpenStreetMap.
+// `way/193893586`, as `place-outlines.json` names an outline of OpenStreetMap.
 const OPENSTREETMAP_OUTLINE = /^(way|relation)\/(\d+)$/u;
 
 const linksFileSchema = z.object({ links: z.array(z.object({ outline: z.string().nullable() })) });
@@ -137,36 +137,33 @@ async function exportCampusBoundary(): Promise<void> {
   });
 }
 
-async function exportCampusMapBuildings(): Promise<void> {
-  const response = await request(CAMPUS_MAP_BUILDINGS);
+async function exportCampusMapPlaces(): Promise<void> {
+  const response = await request(CAMPUS_MAP_PLACES);
   // The map answers in EUC-KR.
   const text = new TextDecoder('euc-kr').decode(await response.arrayBuffer());
   const { rows } = z.object({ rows: z.array(z.looseObject({})) }).parse(JSON.parse(text));
-  await write('campus-map-buildings.json', { exportedFrom: CAMPUS_MAP_BUILDINGS, exportedOn: today(), rows });
+  await write('campus-map-places.json', { exportedFrom: CAMPUS_MAP_PLACES, exportedOn: today(), rows });
 }
 
-async function exportOpenStreetMapBuildings(): Promise<void> {
-  const { osm3s, elements } = buildingsAnswerSchema.parse(await overpass(MISSING_BUILDINGS_QUERY));
-  const buildings = elements.map(({ type, id, tags, center }) => ({
+async function exportOpenStreetMapPlaces(): Promise<void> {
+  const { osm3s, elements } = placesAnswerSchema.parse(await overpass(MISSING_PLACES_QUERY));
+  const places = elements.map(({ type, id, tags, center }) => ({
     id: `${type}/${id}`,
-    number: MISSING_BUILDINGS.get(tags.name),
+    number: MISSING_PLACES.get(tags.name),
     name: tags.name,
     // The centre of the element's bounding box, as Overpass computes it.
     latitude: center.lat,
     longitude: center.lon,
   }));
-  if (
-    buildings.length !== MISSING_BUILDINGS.size ||
-    new Set(buildings.map(({ name }) => name)).size !== buildings.length
-  ) {
-    throw new Error(`Expected one element of each of: ${[...MISSING_BUILDINGS.keys()].join(', ')}`);
+  if (places.length !== MISSING_PLACES.size || new Set(places.map(({ name }) => name)).size !== places.length) {
+    throw new Error(`Expected one element of each of: ${[...MISSING_PLACES.keys()].join(', ')}`);
   }
-  await write('openstreetmap-buildings.json', {
+  await write('openstreetmap-places.json', {
     exportedFrom: OVERPASS,
-    query: MISSING_BUILDINGS_QUERY,
+    query: MISSING_PLACES_QUERY,
     exportedOn: today(),
     copyright: osm3s.copyright,
-    buildings,
+    places,
   });
 }
 
@@ -174,9 +171,9 @@ function coordinates(geometry: z.infer<typeof pointSchema>[]): Coordinates[] {
   return geometry.map(({ lat, lon }): Coordinates => [lon, lat]);
 }
 
-// Each outline as one ring. A relation's outer way that is a ring by itself, a part of the building standing apart,
-// is an outline of its own under the way's identifier; its other outer ways are joined into one ring. A courtyard, an
-// inner way, is left out, so that a position in it is in the building.
+// Each outline as one ring. A relation's outer way that is a ring by itself, a part standing apart, is an outline of
+// its own under the way's identifier; its other outer ways are joined into one ring. A courtyard, an inner way, is
+// left out, so that a position in it is in the Place.
 function outlinesOf(
   element: z.infer<typeof outlinesAnswerSchema>['elements'][number],
 ): { id: string; outline: Coordinates[] }[] {
@@ -193,9 +190,9 @@ function outlinesOf(
     : apart.concat({ id: `relation/${element.id}`, outline: ring(open.map(({ outline }) => outline)) });
 }
 
-// The outlines of OpenStreetMap that the corrections name. Every other outline is the national map's.
-async function exportOpenStreetMapBuildingOutlines(): Promise<void> {
-  const file = fileURLToPath(new URL('../seed/building-outline-links.json', import.meta.url));
+// The outlines of OpenStreetMap that `place-outlines.json` names. Every other outline is the national map's.
+async function exportOpenStreetMapOutlines(): Promise<void> {
+  const file = fileURLToPath(new URL('../seed/place-outlines.json', import.meta.url));
   const { links } = linksFileSchema.parse(JSON.parse(await readFile(file, 'utf8')));
   const named = links.flatMap(({ outline }) =>
     outline !== null && OPENSTREETMAP_OUTLINE.test(outline) ? [outline] : [],
@@ -217,7 +214,7 @@ async function exportOpenStreetMapBuildingOutlines(): Promise<void> {
   if (missing.length > 0) {
     throw new Error(`OpenStreetMap answered no outline ${missing.join(', ')}`);
   }
-  await write('openstreetmap-building-outlines.geojson', {
+  await write('openstreetmap-outlines.geojson', {
     type: 'FeatureCollection',
     exportedFrom: OVERPASS,
     query,
@@ -227,27 +224,27 @@ async function exportOpenStreetMapBuildingOutlines(): Promise<void> {
   });
 }
 
-async function exportNationalMapBuildingOutlines(path: string): Promise<void> {
-  await write('national-map-building-outlines.geojson', {
+async function exportNationalMapOutlines(path: string): Promise<void> {
+  await write('national-map-outlines.geojson', {
     type: 'FeatureCollection',
     exportedFrom: NATIONAL_MAP_PAGE,
     file: basename(path),
     exportedOn: today(),
     attribution: NATIONAL_MAP_ATTRIBUTION,
-    features: await nationalMapBuildings(path, CAMPUS_EXTENT),
+    features: await nationalMapOutlines(path, CAMPUS_EXTENT),
   });
 }
 
 const EXPORTS: Record<string, () => Promise<void>> = {
   'campus-boundary': exportCampusBoundary,
-  'campus-map-buildings': exportCampusMapBuildings,
-  'openstreetmap-buildings': exportOpenStreetMapBuildings,
-  'openstreetmap-building-outlines': exportOpenStreetMapBuildingOutlines,
+  'campus-map-places': exportCampusMapPlaces,
+  'openstreetmap-places': exportOpenStreetMapPlaces,
+  'openstreetmap-outlines': exportOpenStreetMapOutlines,
 };
 
 // The exports that read a file a person downloaded, whose path follows the name.
 const FILE_EXPORTS: Record<string, (path: string) => Promise<void>> = {
-  'national-map-building-outlines': exportNationalMapBuildingOutlines,
+  'national-map-outlines': exportNationalMapOutlines,
 };
 
 // The exports that the arguments name, or null when an argument names none or a path is missing.

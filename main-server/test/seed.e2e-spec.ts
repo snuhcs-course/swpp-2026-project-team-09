@@ -4,11 +4,11 @@ import { join } from 'node:path';
 import { inject } from 'vitest';
 import { z } from 'zod';
 import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
-import { type BuildingOrigin, PrismaClient } from '../src/generated/prisma/client.js';
+import { type PlaceOrigin, PrismaClient } from '../src/generated/prisma/client.js';
 import { loadSeed } from '../src/load-seed.js';
 import { createDatabase } from './containers.js';
 
-// The other test files read the buildings of the shared database. These tests load the seed into a database of their
+// The other test files read the Places of the shared database. These tests load the seed into a database of their
 // own, so that a corrected seed loaded here reaches no other test. test/seed-outlines.e2e-spec.ts has the outlines.
 let prisma: PrismaClient;
 let drop: () => Promise<void>;
@@ -21,8 +21,8 @@ afterAll(async () => {
   await drop();
 });
 
-// A numbered building, a wrapped name, a place without a number, the gatehouse 2 m outside the outline, and the two
-// buildings from OpenStreetMap.
+// A numbered Place, a wrapped name, a Place without a number, the gatehouse 2 m outside the outline, and the two
+// Places from OpenStreetMap.
 const loadedEntries = [
   { origin: 'campus_map', originId: '188', number: '302', name: '제2공학관', latitude: 37.44887, longitude: 126.95265 },
   {
@@ -68,33 +68,33 @@ const loadedEntries = [
 ];
 
 describe('Loading the seed', () => {
-  it("loads the campus map's buildings and places inside the Campus Boundary, and OpenStreetMap's two", async () => {
+  it("loads the campus map's Places and Places inside the Campus Boundary, and OpenStreetMap's two", async () => {
     await loadSeed(prisma);
 
-    const buildings = await prisma.building.findMany({ omit: { id: true, outlines: true } });
-    // 215 numbered buildings and 8 places of the campus map inside the outline, by
+    const places = await prisma.place.findMany({ omit: { id: true, outlines: true } });
+    // 215 numbered Places and 8 Places of the campus map inside the outline, by
     // .scratch/research/external-sources.md §6.2, and the gatehouse within the Boundary's 10 m.
-    expect(buildings).toHaveLength(226);
-    expect(buildings).toEqual(expect.arrayContaining(loadedEntries));
-    expect(buildings.map(({ name }) => name)).not.toContain('Test');
+    expect(places).toHaveLength(226);
+    expect(places).toEqual(expect.arrayContaining(loadedEntries));
+    expect(places.map(({ name }) => name)).not.toContain('Test');
   });
 
   it('leaves out an entry outside the Campus Boundary', async () => {
     await loadSeed(prisma);
 
-    const loaded = (await prisma.building.findMany()).map(({ originId }) => originId);
+    const loaded = (await prisma.place.findMany()).map(({ originId }) => originId);
     // 서울대입구역, and 교수아파트1 and 관악 915동 in the wedge that the outline leaves out in the north-east.
     expect(loaded).not.toContain('239');
     expect(loaded).not.toContain('135');
     expect(loaded).not.toContain('248');
   });
 
-  it('gives a building the id computed from its origin, which is the same in every database', async () => {
+  it('gives a Place the id computed from its origin, which is the same in every database', async () => {
     await loadSeed(prisma);
 
-    const ids = async (origin: BuildingOrigin, originId: string): Promise<string> =>
-      (await prisma.building.findUniqueOrThrow({ where: { origin_originId: { origin, originId } } })).id;
-    // 제2공학관 and 체육문화교육연구동(71-1동). An id that differs here differs for whatever points at a building.
+    const ids = async (origin: PlaceOrigin, originId: string): Promise<string> =>
+      (await prisma.place.findUniqueOrThrow({ where: { origin_originId: { origin, originId } } })).id;
+    // 제2공학관 and 체육문화교육연구동(71-1동). An id that differs here differs for whatever points at a Place.
     expect(await ids('campus_map', '188')).toBe('fba342e9-4edb-560d-9ac4-2a4d2454f9d3');
     expect(await ids('openstreetmap', 'way/456356713')).toBe('68c63960-d0a5-5959-971f-244e08e7741b');
   });
@@ -103,11 +103,11 @@ describe('Loading the seed', () => {
 describe('Loading the seed again', () => {
   it('leaves one set of records, each with the identifier it had', async () => {
     await loadSeed(prisma);
-    const loaded = await prisma.building.findMany({ orderBy: { id: 'asc' } });
+    const loaded = await prisma.place.findMany({ orderBy: { id: 'asc' } });
 
     await loadSeed(prisma);
 
-    expect(await prisma.building.findMany({ orderBy: { id: 'asc' } })).toEqual(loaded);
+    expect(await prisma.place.findMany({ orderBy: { id: 'asc' } })).toEqual(loaded);
   });
 });
 
@@ -126,21 +126,21 @@ describe('Loading a corrected seed', () => {
   it('updates the entry whose name was corrected in place, so that it keeps its identifier', async () => {
     await loadSeed(prisma);
     const where = { origin_originId: { origin: 'campus_map', originId: '84' } } as const;
-    const building = await prisma.building.findUniqueOrThrow({ where });
-    const count = await prisma.building.count();
+    const place = await prisma.place.findUniqueOrThrow({ where });
+    const count = await prisma.place.count();
     // A person corrects the map's NH농협두레문예관.
     await correctRow(correctedSeed, 84, { inst_kor_nm: '두레문예관' });
 
     await loadSeed(prisma, correctedSeed);
 
-    expect(await prisma.building.findUniqueOrThrow({ where })).toEqual({ ...building, name: '두레문예관' });
-    expect(await prisma.building.count()).toBe(count);
+    expect(await prisma.place.findUniqueOrThrow({ where })).toEqual({ ...place, name: '두레문예관' });
+    expect(await prisma.place.count()).toBe(count);
   });
 });
 
 // Changes the row of the campus map's seed file that has `instSeq`.
 async function correctRow(directory: string, instSeq: number, changes: object): Promise<void> {
-  const file = 'campus-map-buildings.json';
+  const file = 'campus-map-places.json';
   const seed = await readSeedFile(
     directory,
     file,

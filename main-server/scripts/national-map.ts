@@ -4,7 +4,7 @@ import shapefile, { type Openable } from 'shapefile';
 import yauzl, { type Entry } from 'yauzl';
 import { z } from 'zod';
 
-// Reads 국토지리정보원's 연속수치지형도 건물 layer for `pnpm seed:export national-map-building-outlines`.
+// Reads 국토지리정보원's 연속수치지형도 건물 layer for `pnpm seed:export national-map-outlines`.
 
 // The layer's name in each of its files, such as N3A_B0010000_001.shp.
 const LAYER = /^N3A_B0010000_\d+\.shp$/u;
@@ -53,7 +53,7 @@ async function openLayer(path: string): Promise<{ shp: Openable; dbf: Openable }
 }
 
 // The outer ring in longitude and latitude, to seven decimals as OpenStreetMap's. A courtyard, an inner ring, is left
-// out, so that a position in it is in the building.
+// out, so that a position in it is in the Place.
 function outlineOf(geometry: unknown): Coordinates[] {
   const [outer] = polygonSchema.parse(geometry).coordinates;
   return outer.map((point): Coordinates => {
@@ -64,7 +64,7 @@ function outlineOf(geometry: unknown): Coordinates[] {
 
 // The layer's buildings with a point in the campus extent, each as a GeoJSON feature under the layer's identifier,
 // with its label.
-export async function nationalMapBuildings(path: string, campus: Extent): Promise<object[]> {
+export async function nationalMapOutlines(path: string, campus: Extent): Promise<object[]> {
   const { shp, dbf } = await openLayer(path);
   // No file of the layer names the attribute table's encoding. The table's language byte says Korean, code page 949,
   // which `euc-kr` decodes, and every label of the file reads as such.
