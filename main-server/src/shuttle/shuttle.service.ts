@@ -91,7 +91,8 @@ export class ShuttleService {
   // no longer reports is gone at once. In the loop order of their stops.
   async storeVehicles({ collectedAt, vehicles }: ShuttleVehiclesCollectedMessage): Promise<void> {
     const receivedAt = new Date(collectedAt);
-    const stops = await this.prisma.shuttleStop.findMany();
+    // In loop order, so that every main server places a vehicle halfway between two stops at the same one.
+    const stops = await this.prisma.shuttleStop.findMany({ orderBy: { loopOrder: 'asc' } });
     const sent = vehicles
       .map(({ carId, x, y }) => ({ carId, stop: nearest(stops, x, y) }))
       .toSorted((a, b) => a.stop.loopOrder - b.stop.loopOrder || a.carId.localeCompare(b.carId))

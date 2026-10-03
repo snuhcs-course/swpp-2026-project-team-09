@@ -169,11 +169,17 @@ describe('Vehicles collected by the worker', () => {
     });
   });
 
-  it('places a vehicle between two stops at the nearer one', async () => {
-    // 31 px below 38동 and 19 px above 신소재공동연구소.
-    await sendVehicles([{ carId: '4524', x: 195, y: 270 }]);
+  it('places a vehicle between two stops at the nearer one, and halfway at the earlier of the loop', async () => {
+    // 31 px below 38동 and 19 px above 신소재공동연구소; and 25 px from 법과대 and from 자연대.
+    await sendVehicles([
+      { carId: '4524', x: 195, y: 270 },
+      { carId: '4525', x: 195, y: 111 },
+    ]);
 
-    expect(await carsAtStops()).toEqual([['4524', '신소재공동연구소']]);
+    expect(await carsAtStops()).toEqual([
+      ['4525', '법과대'],
+      ['4524', '신소재공동연구소'],
+    ]);
   });
 
   it('are served only to a User', async () => {
@@ -211,12 +217,7 @@ describe('The vehicles served', () => {
     });
     expect(await carsAtStops()).toEqual([['4522', '정문']]);
 
-    await vi.waitFor(
-      async () => {
-        expect(await servedVehicles()).toEqual([]);
-      },
-      { timeout: 5000, interval: 250 },
-    );
+    await expect.poll(servedVehicles, { timeout: 5000, interval: 250 }).toEqual([]);
   });
 
   it('are emptied by a set without vehicles', async () => {
