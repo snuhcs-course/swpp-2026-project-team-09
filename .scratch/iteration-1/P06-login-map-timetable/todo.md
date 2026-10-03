@@ -15,12 +15,12 @@ Last updated: 2026-10-04
 
 ### 1.1 Foundation (tickets 01, 02)
 
-- [ ] Design tokens (colours, spacing, radii, sizes, the eight text sizes)
-- [ ] The Pretendard font (five weights)
-- [ ] The 22 icons
-- [ ] The 14 shared components: Icon, Button, Chip, Badge, Avatar, MapPin, EventCard, ChatBubble, ActionConfirm, TextField, ChatInput, Switch, BottomNav, BottomSheet
-- [ ] A shared Toast (the design system has none) and the "준비 중이에요" toast, shown by every control whose feature belongs to another task
-- [ ] The light theme only (the design system has no dark theme): the app's configuration says light, not automatic
+- [x] Design tokens (colours, spacing, radii, sizes, the eight text sizes)
+- [x] The Pretendard font (four weights: 400, 500, 600, 700)
+- [x] The 22 icons
+- [x] The 14 shared components: Icon, Button, Chip, Badge, Avatar, MapPin, EventCard, ChatBubble, ActionConfirm, TextField, ChatInput, Switch, BottomNav, BottomSheet
+- [x] A shared Toast (the design system has none) and the "준비 중이에요" toast, shown by every control whose feature belongs to another task
+- [x] The light theme only (the design system has no dark theme): the app's configuration says light, not automatic
 - [ ] The libraries the spec names, added with Expo's installer: TanStack Query, Expo's crypto, secure storage and location modules, the build properties plugin, the development client, the socket client. The sign-in library comes with 1.4
 - [ ] The settings file: the main server's address, the socket server's address, the Kakao native app key, the Google client IDs. The values stay empty
 - [ ] The API client: attaches the access token, renews the session once on a 401 and repeats the request, handles `SESSION_REPLACED` and `ONBOARDING_REQUIRED`, adds an `Idempotency-Key` to creating requests and follows the retry rules
@@ -192,6 +192,8 @@ Still open:
 
 - [ ] The texts of the three legal documents: 이용약관, 개인정보 처리방침, 위치정보 이용약관
 - [ ] The final friend marker (candidates: 지금, A, B, C, D). Until it is chosen the app uses 지금
+- [ ] Compare the app's catalogue screen with the design system's previews on a phone (ticket 01 was checked by tests and reviews only)
+- [ ] The Toast's look has no frame: an ink pill with white label text. Draw it or accept it
 - [ ] The design system's brand book says not to reproduce the university's emblem, and that the name "SNU Now" is set in plain type; the `Login` frame uses the emblem as its button. Settle which holds before the sign-in screen is built (ticket 12)
 - [ ] No frame shows the credit for the map data. The app puts it very small at the bottom left of the map, as the spec says
 - [ ] No frame shows the main screen when the User is off campus. The app shows the whole campus without an Avatar, as the spec says
