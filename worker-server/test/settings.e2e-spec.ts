@@ -12,11 +12,19 @@ describe('Settings', () => {
     await expect(startApp({ ...settings, PORT: 'abc' })).rejects.toThrow('PORT');
   });
 
-  it('stops startup and names REDIS_HOST when it is missing', async () => {
-    await expect(startApp({ ...settings, REDIS_HOST: undefined })).rejects.toThrow('REDIS_HOST');
+  it('stops startup and names MAIN_SERVER_URL when it is missing', async () => {
+    await expect(startApp({ ...settings, MAIN_SERVER_URL: undefined })).rejects.toThrow('MAIN_SERVER_URL');
   });
 
-  it('stops startup and names REDIS_PORT when it is not a port number', async () => {
-    await expect(startApp({ ...settings, REDIS_PORT: 'abc' })).rejects.toThrow('REDIS_PORT');
+  it('stops startup and names MAIN_SERVER_URL when it is not an address', async () => {
+    await expect(startApp({ ...settings, MAIN_SERVER_URL: 'main-server' })).rejects.toThrow('MAIN_SERVER_URL');
+  });
+
+  it('stops startup and names WORKER_TOKEN when it is missing', async () => {
+    await expect(startApp({ ...settings, WORKER_TOKEN: undefined })).rejects.toThrow('WORKER_TOKEN');
+  });
+
+  it('stops startup and names WORKER_TOKEN when it is short enough to guess', async () => {
+    await expect(startApp({ ...settings, WORKER_TOKEN: 'short' })).rejects.toThrow('WORKER_TOKEN');
   });
 });

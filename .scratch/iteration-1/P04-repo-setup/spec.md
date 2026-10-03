@@ -72,7 +72,7 @@ A repository that holds six independent projects: four servers, the admin site a
 - The main server is built first. The socket, worker and match servers are set up by following it.
 - Each server validates its settings at startup against a schema and stops with a message naming the faulty setting.
 - Each server exposes liveness and readiness checks.
-- Servers talk to each other through NestJS messaging over Redis: events for signals and positions, request and response where an answer is needed. This task sets up the connection and the event that tells the socket server a session has ended; the other messages belong to P07 and P08.
+- Servers talk to each other through NestJS messaging over Redis: events for signals and positions, request and response where an answer is needed. The worker server is the exception: it calls the main server over HTTP, because messaging over Redis reaches every main server and what the worker collected is stored by one. This task sets up the connection and the event that tells the socket server a session has ended; the other messages belong to P07 and P08.
 
 ### Quality rules
 

@@ -1,7 +1,6 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
 import { z } from 'zod';
-import { HANDLED, type Handled, WorkerMessage } from '../common/worker-message.decorator.js';
+import { WorkerOnly } from '../common/worker-only.decorator.js';
 import { type MenusCollectedMessage, menusCollectedSchema } from './dto/menus-collected.dto.js';
 import { RestaurantMenusDto } from './dto/restaurant-menus.dto.js';
 import { MenusService } from './menus.service.js';
@@ -15,9 +14,10 @@ export class MenusController {
     return this.menus.findByDate(date);
   }
 
-  @MessagePattern('menus-collected')
-  async collected(@WorkerMessage(menusCollectedSchema) message: MenusCollectedMessage): Promise<Handled> {
+  @Post('collected')
+  @WorkerOnly()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async collected(@Body({ schema: menusCollectedSchema }) message: MenusCollectedMessage): Promise<void> {
     await this.menus.store(message);
-    return HANDLED;
   }
 }

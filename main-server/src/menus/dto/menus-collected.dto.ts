@@ -26,7 +26,7 @@ const daySchema = z.strictObject({
     ),
 });
 
-// What one Collection of a menu Source read, sent by the worker as `menus-collected`.
+// What one Collection of a menu Source read, posted by the worker to `/menus/collected`.
 export const menusCollectedSchema = z.strictObject({
   source: z.enum([Source.coop_menus, Source.dormitory_menus, Source.veterinary_menus]),
   collectedAt: z.iso.datetime({ offset: true }),

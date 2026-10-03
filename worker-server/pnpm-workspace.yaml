@@ -1,6 +1,4 @@
 # pnpm runs a dependency's install scripts only when it is allowed here.
 allowBuilds:
-  # testcontainers pulls these in; the tests talk to Docker without them.
-  cpu-features: false
+  # @nestjs/terminus pulls it in for gRPC checks, which the worker does not run.
   protobufjs: false
-  ssh2: false

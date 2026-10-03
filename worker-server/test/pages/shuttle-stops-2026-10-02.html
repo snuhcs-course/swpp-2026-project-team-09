@@ -1,0 +1,307 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, minimum-scale=1.0, user-scalable=yes" >
+	<meta name="title" content="순환셔틀" >
+	<meta name="keywords" content="순환셔틀" >
+	<meta name="description" content="순환셔틀">
+    <link rel="stylesheet" href="/circles/css/font.css">
+    <link rel="stylesheet" href="/circles/css/common.css">
+    <title>순환셔틀</title>
+    
+        
+        <!-- 공통 Script -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    
+    
+
+    <script lang="ja">
+        const busMap = new Map();
+
+        function busmove(id, x, y) { 
+            var oldx = 0;
+            var oldy = 0;
+
+            // 버스맵에 없으면 넣기
+            if (!busMap.has(id)) {
+                oldx = 0;
+                oldy = 0;
+            }
+            // 버스맵에 있으면 위치가져오기
+            else {
+                var xy = busMap.get(id);
+                oldx = xy.split(',')[0];
+                oldy = xy.split(',')[1];
+            }
+
+
+            // 버스맵에 있으면 가져오고, 넣기
+            const element = document.getElementById(id);
+             
+            
+            element.animate(
+                {
+                    transform: [
+                        'translate(' + oldx + 'px,' + oldy + 'px)',  // 시작 값
+                        'translate(' + x + 'px,' + y + 'px)'  // 종료 값
+                    ]
+                },
+                {
+                    duration: 3000,  // 밀리초 지정
+                    fill: 'forwards',  // 종료 시 속성을 지님
+                    easing: 'ease'  // 가속도 종류
+                }
+            );
+
+            // 버스맵에 넣기
+            busMap.set(id, x + ',' + y);
+        }
+         
+    </script>
+      
+
+
+      <script type = "text/javascript" lang="ja">
+  
+
+          // 다시읽기
+          function reloadPage() {
+
+              document.location.reload();
+          }
+
+          window.onload = function () {
+              getRoute();
+              setInterval(function () { getRoute(); }, 5000); // 30초
+          };
+
+          ///라우트 가져오기
+          function getRoute() {
+               
+              var data = ",F,41946,snu_1";
+               
+
+              try {
+
+                  $.ajax({
+                      type: "POST",
+                      url: "/BuslineCircleS.aspx/GetRoute",
+                      data: '{ data: "' + data + '"}',
+                      contentType: "application/json; charset=utf-8",
+                      dataType: "json",
+                      timeout: 3000,
+                      success: function (response) { 
+                           
+
+                          var result = response.d;
+                          var bus_all = result.split(';');
+
+
+                          // HTML 생성
+                          var retHTML = ''
+                          for (var i = 0; i < bus_all.length; i++) {
+                              var bus = bus_all[i].split('/');
+                               
+                              var carid = bus[0];
+                              var busx = bus[1];
+                              var busy = bus[2] ;
+                              var carcnt = bus[3];
+                              var carnos = bus[4];
+                              var carcode = bus[5];
+
+                              retHTML = retHTML + "<div  id='bus" + carid + "'  onclick=\"alert('" + carnos + "\\n\\n(2026-10-02 15:40:12)')\" class='bus_icon'  style='position: absolute; z-index=101 !important  '>";
+                              retHTML = retHTML + "                                              <i>버스</i>";
+                              if (carcnt > 1) {
+                                  retHTML = retHTML + "                                               <em class='badge'>" + carcnt + "</em>";
+                              }
+                               
+                          
+                               
+                               
+
+                              retHTML = retHTML + "</div>"; 
+                          }
+                      //  alert(retHTML);
+                    
+                          document.getElementById("bus_icons").innerHTML = retHTML;
+
+                          // 자바스크립트 실행
+                          for (var i = 0; i < bus_all.length; i++) {
+                              var bus = bus_all[i].split('/');
+
+                              var carid = bus[0];
+                              var busx = bus[1] - 10;
+                              var busy = bus[2] - 12;
+                              var carcnt = bus[3];
+                              var carnos = bus[4];
+
+                              busmove('bus' + carid, busx, busy);
+                          }
+
+
+                      },
+                      failure: function (response) {
+                      },
+                      error: function (request, status, error) {
+                      }
+                  });
+
+              } catch (e) {
+                  //  alert(e);
+              }
+          }
+
+      </script>
+    
+    <style>        
+        #header .logo::before  {display:inline-block; content:''; position:absolute; left:0; top:0; width:34px; height:34px; background:url(https://busin3.busin.co.kr/images/Cust/businelogo_3909.png) no-repeat left center ; background-size: cover;}
+    </style>
+
+</head>
+
+<body>
+      
+<div id="container">
+<header id="header">
+    <div class="wrap">
+        <div class="top_box">
+            <h1 class="logo"> 
+			  <div class="bus_station">
+                  <a href="#" onclick="reloadPage(); return false;">
+				  <span class="start_point">순환셔틀</span><!-- 출발지명이 들어갑니다. -->
+                      </a>
+				
+			  </div> 
+			</h1>
+    </div>
+    <!--//top_box-->
+
+  <!--//bus_station-->
+
+    <div class="bottom_box">
+        <ul>
+            <li>·&nbsp;운행시간&nbsp;안내(주말,공휴일,개교기념일&nbsp;미운행)<br/>&nbsp;&nbsp;-&nbsp;&nbsp;학기&nbsp;8:00~21:00&nbsp;/&nbsp;계절학기,&nbsp;방학&nbsp;8:00~18:00<br/>※&nbsp;학기&nbsp;8:00~19:00&nbsp;(5~7분),&nbsp;19:00~21:00&nbsp;(20분&nbsp;간격)&nbsp;<br/>※&nbsp;계절학기&nbsp;5~7분&nbsp;간격&nbsp;/&nbsp;방학&nbsp;10분&nbsp;간격</li>
+        </ul>
+        <!-- 241209 운행 대 수 추가-->
+        <div class="driving"> 
+
+           <p >운행 <span class="num">6</span>대</p>
+        </div>
+        <!-- //241209 운행대 수 추가-->
+    </div>
+    <!-- //bottom_box -->
+    </div>
+    <!-- //wrap -->
+</header>
+<!-- //header -->
+
+<hr>
+        <main class="colgroup" id="colgroup">
+            <article>
+                <div id="contents">
+                  <div class="wrap"><!-- 241205 위치 변경-->
+              
+                    <div class="route_map "><!--reverse_type 역방향이 경우 clsss 추가-->
+                        
+                        <!-- 노선도 이미지 사이즈 width: 310px; height: 530px;-->                        
+                        <!-- 
+                        노선도 기본 class="route_point" = 기본 넓이값 width:80px;
+                        - 텍스트 위에 노출 .align_top
+                        - 텍스트 오른쪽 노출 .align_right
+                        - 텍스트 왼쪽 노출 .align_left
+                        - 텍스트 아래 노출 .align_bottom
+                        - 미정차 .unstop  추가
+                        - 
+                        --> 
+                         
+
+                        <div class="route_map_list" id="routef">
+                             
+                                
+                                <div id="bus_icons">
+    
+                            </div>
+                             
+                                    
+                                         <span class="route_point align_top " style="position: absolute; top: 35px; left:157px;">
+                                               <em>정문</em>
+                                         </span>
+                                     
+                                         <span class="route_point align_right " style="position: absolute; top: 86px; left:195px;">
+                                               <em>법과대</em>
+                                         </span>
+                                     
+                                         <span class="route_point align_right " style="position: absolute; top: 136px; left:195px;">
+                                               <em>자연대</em>
+                                         </span>
+                                     
+                                         <span class="route_point align_right " style="position: absolute; top: 188px; left:195px;">
+                                               <em>농생대</em>
+                                         </span>
+                                     
+                                         <span class="route_point align_right " style="position: absolute; top: 239px; left:195px;">
+                                               <em>38동</em>
+                                         </span>
+                                     
+                                         <span class="route_point align_right " style="position: absolute; top: 289px; left:195px;">
+                                               <em>신소재공동연구소</em>
+                                         </span>
+                                     
+                                         <span class="route_point align_right " style="position: absolute; top: 341px; left:195px;">
+                                               <em>302동</em>
+                                         </span>
+                                     
+                                         <span class="route_point align_bottom " style="position: absolute; top: 393px; left:157px;">
+                                               <em>301동</em>
+                                         </span>
+                                     
+                                         <span class="route_point align_left " style="position: absolute; top: 341px; left:116px;">
+                                               <em>유전공학연구소</em>
+                                         </span>
+                                     
+                                         <span class="route_point align_left " style="position: absolute; top: 289px; left:116px;">
+                                               <em>교수회관</em>
+                                         </span>
+                                     
+                                         <span class="route_point align_left " style="position: absolute; top: 239px; left:116px;">
+                                               <em>기숙사삼거리</em>
+                                         </span>
+                                     
+                                         <span class="route_point align_left " style="position: absolute; top: 188px; left:116px;">
+                                               <em>국제대학원</em>
+                                         </span>
+                                     
+                                         <span class="route_point align_left " style="position: absolute; top: 136px; left:116px;">
+                                               <em>수의대</em>
+                                         </span>
+                                     
+                                         <span class="route_point align_left " style="position: absolute; top: 86px; left:116px;">
+                                               <em>경영대</em>
+                                         </span>
+                                      
+                              
+                        </div>
+                        <!--// route_map_list -->
+                        </div>
+
+                  </div>
+                   <!-- //wrap -->
+                  </div>
+                <!-- //contents -->
+
+                 <!-- 241205 btn_box 임시 체크 개발할 때 삭제 요청 -->
+                <div class="btn_box fixed denial">
+                        <img src="images/btn_img.png" alt="">
+                  </div>
+                  <!-- //241205 btn_box 임시 체크 개발할 때 삭제 요청 -->
+            </article>
+        </main>
+        <!-- //colgroup -->
+
+</div>
+<!-- //container -->
+</body>
+</html>

@@ -1,31 +1,33 @@
+import { INestApplication } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { daysOf, getMenus, menusMessage, restaurant, servedLunch } from './menus.js';
 import { signIn } from './sign-in.js';
-import { refusal, sendAsWorker, startWithWorker, type WorkerHarness } from './worker.js';
+import { startApp } from './start-app.js';
+import { refusal, sendAsWorker } from './worker.js';
 
-let harness: WorkerHarness;
+let app: INestApplication<Server>;
 let accessToken: string;
 // No route serves the Collection status yet (P12 adds one), so the tests read it with a connection of their own.
 let prisma: PrismaClient;
 
 beforeAll(async () => {
-  harness = await startWithWorker();
-  ({ accessToken } = await signIn(harness.app));
+  app = await startApp(inject('settings'));
+  ({ accessToken } = await signIn(app));
   prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: inject('settings').DATABASE_URL }) });
 });
 
 afterAll(async () => {
-  await prisma.$disconnect();
-  await harness.close();
+  await Promise.all([prisma.$disconnect(), app.close()]);
 });
 
 const newDay = daysOf('2026-11');
 
 function menusOn(date: string): request.Test {
-  return getMenus(harness.app, accessToken, date);
+  return getMenus(app, accessToken, date);
 }
 
 // A cell of several kinds of line, as the Co-op page writes them, across the three meals.
@@ -44,7 +46,7 @@ describe('Menus collected by the worker', () => {
       { date, restaurants: [restaurant(), restaurant({ name: '두레미담', lines: selfServiceLines })] },
     ]);
 
-    await expect(sendAsWorker(harness.worker, 'menus-collected', message)).resolves.toEqual({ status: 'ok' });
+    await expect(sendAsWorker(app, '/menus/collected', message)).resolves.toBeUndefined();
 
     const response = await menusOn(date);
     expect(response.status).toBe(200);
@@ -79,8 +81,8 @@ describe('A restaurant the page lists without a menu', () => {
     const closure = { meal: 'lunch', text: '개천절 휴무', kind: 'note', name: null, price: null };
 
     await sendAsWorker(
-      harness.worker,
-      'menus-collected',
+      app,
+      '/menus/collected',
       menusMessage([
         { date, restaurants: [restaurant({ lines: [closure] }), restaurant({ name: '자하연식당 2층', lines: [] })] },
       ]),
@@ -102,8 +104,8 @@ describe('The same menus message twice', () => {
     const date = newDay();
     const message = menusMessage([{ date, restaurants: [restaurant()] }]);
 
-    await sendAsWorker(harness.worker, 'menus-collected', message);
-    await sendAsWorker(harness.worker, 'menus-collected', message);
+    await sendAsWorker(app, '/menus/collected', message);
+    await sendAsWorker(app, '/menus/collected', message);
 
     expect((await menusOn(date)).body).toEqual([
       { name: '학생회관식당', collectedAt: '2026-10-31T12:00:00.000Z', meals: [servedLunch] },
@@ -115,24 +117,24 @@ describe('A later Collection of a Source', () => {
   it('replaces everything the Source stored for the day, and leaves its other day and the other Sources', async () => {
     const [date, otherDate] = [newDay(), newDay()];
     await sendAsWorker(
-      harness.worker,
-      'menus-collected',
+      app,
+      '/menus/collected',
       menusMessage([
         { date, restaurants: [restaurant(), restaurant({ name: '자하연식당 2층' })] },
         { date: otherDate, restaurants: [restaurant()] },
       ]),
     );
     await sendAsWorker(
-      harness.worker,
-      'menus-collected',
+      app,
+      '/menus/collected',
       menusMessage([{ date, restaurants: [restaurant({ name: '수의대식당' })] }], { source: 'veterinary_menus' }),
     );
 
     // The page dropped 자하연식당 2층 and changed the other restaurant's lines.
     const changed = { text: '김치찌개 : 5,500원', kind: 'dish', name: '김치찌개', price: 5500 };
     await sendAsWorker(
-      harness.worker,
-      'menus-collected',
+      app,
+      '/menus/collected',
       menusMessage([{ date, restaurants: [restaurant({ lines: [{ meal: 'lunch', ...changed }] })] }], {
         collectedAt: '2026-11-01T10:00:00+09:00',
       }),
@@ -153,9 +155,9 @@ describe('A later Collection of a Source', () => {
 
   it('empties a day on which the page lists no restaurant any more', async () => {
     const date = newDay();
-    await sendAsWorker(harness.worker, 'menus-collected', menusMessage([{ date, restaurants: [restaurant()] }]));
+    await sendAsWorker(app, '/menus/collected', menusMessage([{ date, restaurants: [restaurant()] }]));
 
-    await sendAsWorker(harness.worker, 'menus-collected', menusMessage([{ date, restaurants: [] }]));
+    await sendAsWorker(app, '/menus/collected', menusMessage([{ date, restaurants: [] }]));
 
     expect((await menusOn(date)).body).toEqual([]);
   });
@@ -249,7 +251,7 @@ describe('A menus message that does not match the schema', () => {
       const date = newDay();
       const status = await prisma.collectionStatus.findUnique({ where: { source: 'coop_menus' } });
 
-      expect(await refusal(harness.worker, 'menus-collected', message(date))).toContain(named);
+      expect(await refusal(app, '/menus/collected', message(date))).toContain(named);
       expect((await menusOn(date)).body).toEqual([]);
       expect(await prisma.collectionStatus.findUnique({ where: { source: 'coop_menus' } })).toEqual(status);
     },
@@ -261,8 +263,8 @@ describe("A User's menus route", () => {
     const date = newDay();
     const names = ['학생회관식당', '자하연식당 2층', '아워홈(901동)', '3식당'];
     await sendAsWorker(
-      harness.worker,
-      'menus-collected',
+      app,
+      '/menus/collected',
       menusMessage([{ date, restaurants: names.map((name) => restaurant({ name })) }]),
     );
 
@@ -284,7 +286,7 @@ describe("A User's menus route", () => {
   });
 
   it('refuses a request without an access token', async () => {
-    const response = await request(harness.app.getHttpServer()).get('/menus').query({ date: newDay() });
+    const response = await request(app.getHttpServer()).get('/menus').query({ date: newDay() });
 
     expect(response.status).toBe(401);
   });
