@@ -149,3 +149,13 @@ Ticket 03's branch gained the buildings' outlines and the lookup of the building
 - One conflict, in `BuildingsModule`: it exports `BuildingsService`, which this ticket reads the list through, and `BuildingLookup`.
 - A building now carries an `outline`. The list that a place is matched against is the same; no test of this ticket changed.
 - On this branch: main server 27 files and 321 tests, worker server 8 files and 91 tests; lint, format:check and typecheck pass in both. The agent time of the move is counted under ticket 04.
+
+### On 1.0/Main with tickets 03 and 06 (2026-10-03)
+
+Ticket 03 reached `1.0/Main` squashed, as #29, and ticket 06 after it, as #32, which calls the entries of the list Places. `1.0/Main` at `039eb291` was merged into this branch, so its history stays as it was pushed.
+
+- Since the branch's copy of ticket 03 is not the squashed one, Git saw both sides add ticket 03's files: ten files conflicted, and the files ticket 06 removed came back without a conflict, among them `src/buildings/` and the migration `add_buildings` beside `add_places`. The merge keeps `1.0/Main`'s ticket 03 and 06 and this ticket's own changes alone; it differs from `1.0/Main` only in this ticket's files.
+- Ticket 06 removed `BuildingsModule`, which this ticket had made export `BuildingsService`. `PlacesModule` now exports `PlacesService`, and `GlobalEventsModule` reads the list through it.
+- A place is matched against the list of Places: `building-of-place.ts` is `named-place.ts`, `buildingOfPlace()` is `namedPlace()`, and the main server's README and the tests say Place. The rules are unchanged.
+- Ticket 06's list adds four Places, among them 해동첨단공학관 (303동), so a place that writes `303동` now names one. No test of this ticket changed its expectations.
+- On this branch: main server 29 files and 342 tests, worker server 8 files and 91 tests; lint, format:check and typecheck pass in both.

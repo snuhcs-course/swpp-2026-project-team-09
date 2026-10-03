@@ -262,9 +262,9 @@ those fields being filled:
 
 A place names a Place in one of two ways, in `src/global-events/named-place.ts`:
 
-- By building number, as in `302동 105호`, `학생회관(63동)` or `71-1동`, but not a number inside a word, as in the
-  address `역삼1동`. A place that writes a number is matched by its numbers alone, because several Places share a
-  name: `(관악사)학부 생활관 919동` is 919동 only.
+- By number, as in `302동 105호`, `학생회관(63동)` or `71-1동`, but not a number inside a word, as in the address
+  `역삼1동`. A place that writes a number is matched by its numbers alone, because several Places share a name:
+  `(관악사)학부 생활관 919동` is 919동 only.
 - Otherwise by name, as a whole word, with or without the name's own spaces and whatever the case of its Latin letters:
   `국립중앙박물관` does not name 박물관, nor `행정관리팀` 행정관. A name inside a longer one that the place also names
   does not count, so `유전공학연구소 신관` is 105-2동 and not also 105동. A name without a letter, such as

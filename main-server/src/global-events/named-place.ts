@@ -1,6 +1,6 @@
 import { PlaceDto } from '../places/dto/place.dto.js';
 
-// A building number as a place writes it: "302동 105호", "학생회관(63동)", "71-1동", but not the address "역삼1동".
+// A number as a place writes it: "302동 105호", "학생회관(63동)", "71-1동", but not the address "역삼1동".
 const NUMBER = /(?<![\p{L}\p{N}-])(\d+(?:-\d+)?)동/gu;
 
 // The university's other campuses. The list of Places is Gwanak's, so a place there names none of it.
@@ -26,14 +26,14 @@ function wordPattern(name: string): RegExp {
 function byName(place: string, places: PlaceDto[]): PlaceDto[] {
   const held = places
     .filter(({ name }) => /\p{L}/u.test(name) && wordPattern(name).test(place))
-    .map((listed) => ({ listed, name: withoutSpaces(listed.name).toLowerCase() }));
+    .map((entry) => ({ entry, name: withoutSpaces(entry.name).toLowerCase() }));
   return held
     .filter(({ name }) => !held.some((other) => other.name.length > name.length && other.name.includes(name)))
-    .map(({ listed }) => listed);
+    .map(({ entry }) => entry);
 }
 
 // The one Place of the list a place names, or null when it names none or several, or is on another campus. A place
-// that writes a building number is matched by its numbers alone, since several Places can share a name.
+// that writes a number is matched by its numbers alone, since several Places can share a name.
 export function namedPlace(place: string | null, places: PlaceDto[]): PlaceDto | null {
   if (place === null || OTHER_CAMPUS.test(place)) {
     return null;
