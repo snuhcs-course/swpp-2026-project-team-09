@@ -7,8 +7,6 @@ import { startApp } from './start-app.js';
 
 const ROUTE_PAGE = 'https://web.busin.co.kr/BuslineCircleS.aspx?cd=snu_1&di=41946&tab=F';
 const VEHICLE_POSITIONS = 'https://web.busin.co.kr/BuslineCircleS.aspx/GetRoute';
-// A page of another collector.
-const OTHER_PAGE = 'https://snuco.snu.ac.kr/foodmenu/';
 const USER_AGENT = 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)';
 
 // What the operator answered at 15:40 on Friday 2 October 2026.
@@ -179,35 +177,38 @@ describe('The schedule of the shuttle Collections', () => {
   });
 });
 
-describe('A vehicle Collection still waiting behind other pages', () => {
-  it('makes the next run skip, so that the requests do not pile up', async () => {
-    // Friday, ten seconds before a run, with the timers replaced too.
+describe('A vehicle Collection while the menu pages do not answer', () => {
+  it("does not wait for them: a collector's pages wait only for its own", async () => {
+    // A Saturday, with the timers replaced too, so that the menu pages are given up only when the test says.
     vi.useFakeTimers({
       toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
-      now: new Date('2026-10-02T15:39:50+09:00'),
+      now: new Date('2026-10-03T12:00:00+09:00'),
     });
+    const days = ['03', '04', '05', '06', '07', '08', '09'].map((day) => `2026-10-${day}`);
+    const menuPages = [
+      ...days.map((day) => `https://snuco.snu.ac.kr/foodmenu/?date=${day}`),
+      ...days.map((day) => `https://snudorm.snu.ac.kr/foodmenu/?date=${day}`),
+      'https://vet.snu.ac.kr/cafe_menu/',
+    ];
+    const unanswered = Object.fromEntries(menuPages.map((address) => [address, null]));
     const mainServer = new MainServerStub();
-    const app = await startApp(inject('settings'), {
-      fetchPage: sourcesServing({ ...pages, [OTHER_PAGE]: null }).fetch,
-      mainServer,
-    });
-    const { PageFetcher } = await import('../src/common/page-fetcher.js');
-    const fetcher = app.get(PageFetcher);
+    const sources = sourcesServing({ ...pages, ...unanswered });
+    const app = await startApp(inject('settings'), { fetchPage: sources.fetch, mainServer });
+    const { MenuCollector } = await import('../src/menu/menu.collector.js');
+    const { ShuttleCollector } = await import('../src/shuttle/shuttle.collector.js');
 
-    // At 15:39:59 another collector asks for four pages that do not answer: each is given up after 5 seconds, so the
-    // run of 15:40:00 waits until 15:40:19.
-    await vi.advanceTimersByTimeAsync(9000);
-    const otherPages = Array.from({ length: 4 }, () => fetcher.fetch(OTHER_PAGE).catch(() => null));
-    await vi.advanceTimersByTimeAsync(66_000);
-    await Promise.all(otherPages);
+    const menus = app.get(MenuCollector).collect();
+    const vehicles = app.get(ShuttleCollector).collectVehicles();
+    // Well within the 5 seconds for which the first menu page is waited for.
+    await vi.advanceTimersByTimeAsync(100);
+    await vehicles;
+
+    expect(sources.requests.map(({ url }) => url)).toEqual([menuPages[0], VEHICLE_POSITIONS]);
+    expect(mainServer.from('shuttle_vehicles', 'shuttle-vehicles-collected')).toHaveLength(1);
+    // The fifteen menu pages, each given up after 5 seconds.
+    await vi.advanceTimersByTimeAsync(80_000);
+    await menus;
     await app.close();
-
-    // The run of 15:40:15 is skipped.
-    expect(
-      mainServer
-        .from('shuttle_vehicles', 'shuttle-vehicles-collected')
-        .map(({ collectedAt }) => String(collectedAt).slice(11, 19)),
-    ).toEqual(['06:40:19', '06:40:30', '06:40:45', '06:41:00']);
   });
 });
 

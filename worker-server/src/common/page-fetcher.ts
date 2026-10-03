@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Scope } from '@nestjs/common';
 
 // Injection token of the HTTP call under PageFetcher. The tests replace it with saved pages.
 export const FETCH = 'FETCH';
@@ -9,14 +9,15 @@ const USER_AGENT = 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs
 // A page not served by then is given up, so that it does not hold up the pages asked for after it.
 const PAGE_TIMEOUT = 5000;
 
-// The one place where pages are fetched.
-@Injectable()
+// The one place where pages are fetched. Each collector has one of its own, so that its pages wait for one another
+// and not for another collector's.
+@Injectable({ scope: Scope.TRANSIENT })
 export class PageFetcher {
   private last: Promise<unknown> = Promise.resolve();
 
   constructor(@Inject(FETCH) private readonly fetchPage: typeof fetch) {}
 
-  // One page at a time: a request waits for those asked for before it, whoever asked. With a body, the page is asked
+  // One page at a time: a request waits for those the collector asked for before it. With a body, the page is asked
   // for by a POST of the body as JSON.
   fetch(url: string, body?: object): Promise<string> {
     const page = this.last.then(() => this.request(url, body));

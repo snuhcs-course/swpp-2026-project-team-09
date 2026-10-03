@@ -90,10 +90,11 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
   HTTP server to run them.
 
 - **Fetching**: every page is fetched with `PageFetcher.fetch(url)` from `src/common/page-fetcher.ts`, never with
-  `fetch` itself. It sends a `User-Agent` that names the project, asks for one page at a time whichever collectors are
-  running, and fails when the answer's status is not 2xx or when the page has not come within 5 seconds, so that a
-  Source that does not answer holds up the pages after it for no longer. `fetch(url, body)` asks with a POST of the
-  body as JSON, as the shuttle operator's vehicle positions want.
+  `fetch` itself. It sends a `User-Agent` that names the project and fails when the answer's status is not 2xx or when
+  the page has not come within 5 seconds. Each collector has a `PageFetcher` of its own, which asks for one page at a
+  time: a collector's pages wait for one another, and never for another collector's, so the shuttle's vehicle positions
+  are asked for on time while the menus' fifteen pages are read. `fetch(url, body)` asks with a POST of the body as
+  JSON, as the shuttle operator's vehicle positions want.
 - **Parsing**: a parser is a function from a page's text to what the message carries, in the feature's folder, such as
   `src/menu/menu-page.parser.ts`. No page is a versioned interface, and the university's firewall answers a blocked
   request with status 200 and another page. So a parser checks that the page is the one it knows, such as the table
@@ -201,10 +202,8 @@ Two Sources of the shuttle operator's circular route 41946 (`.scratch/research/e
   the firewall's block page, is a failed Collection.
 - The vehicle positions are not asked for outside those hours, the service hours of the semester, nor at weekends. On a
   holiday or in a vacation the operator answers with no vehicles, which is sent as such.
-- A vehicle run that is still waiting behind other pages, such as the menu pages of 10:00, makes the next runs skip
-  (`waitForCompletion`), so that the requests do not pile up and go out together. The vehicles served then grow more
-  than a minute old and disappear until a run gets through. A run that fails ends within 10 seconds, 5 for the page and
-  5 for the main server, before the next one is due.
+- A run that fails ends within 10 seconds, 5 for the page and 5 for the main server, before the next one is due, so
+  the requests never pile up.
 - The main server places each vehicle at a stop and sends the vehicles on to the apps:
   [Shuttle](../main-server/README.md#shuttle).
 
@@ -236,7 +235,7 @@ src/
 │   ├── settings.ts                  settings schema, checked at startup
 │   ├── messaging.module.ts          makes the messaging client available to every feature
 │   ├── messaging.ts                 options for NestJS messaging over Redis
-│   ├── page-fetcher.module.ts       makes the one PageFetcher available to every feature
+│   ├── page-fetcher.module.ts       gives every collector a PageFetcher of its own
 │   ├── page-fetcher.ts              the one place where pages are fetched
 │   └── collector.ts                 the worker's end of a Collection, which every collector extends
 ├── health/                          a feature: the liveness and readiness checks
