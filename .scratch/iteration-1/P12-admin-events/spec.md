@@ -4,7 +4,7 @@ Status: ready-for-agent
 
 ## Problem Statement
 
-Events collected from the university site have times and places written as free text. Rules read only some of them. A collected event whose time and place the rules read is published by the collection (P07); the others wait as Drafts, holding whatever the rules read but could not publish on, and a published one can still be wrong. Events that organizers send to the team have no way into the system at all.
+Events collected from the university's events list have times and places written as free text. Rules read only some of them. A collected event whose time and place the rules read is published by the collection (P07); the others wait as Drafts, holding whatever the rules read but could not publish on, and a published one can still be wrong. Events that organizers send to the team have no way into the system at all.
 
 ## Solution
 

@@ -24,7 +24,7 @@ const ELSEWHERE = new RegExp(
 const STREET = /([가-힣\d]+)(?:로|길)\s*\d+/gu;
 
 // Neither a name nor a number alone shows that the place is on this campus: another university has its 체육관 too,
-// and a government complex its 1동. The place has to say so, or write a building's name and number together.
+// and a government complex its 1동. The place has to say so, or write a Place's name and number together.
 const ON_CAMPUS = /서울대|관악캠퍼스|SNU|Seoul National University/iu;
 
 // "서울대학교미술관" is 서울대학교 and 미술관.
@@ -145,7 +145,6 @@ function partPlaces(
   return ONLINE.test(rest) || ROOM_ONLY.test(rest) ? [] : null;
 }
 
-// The one Place of the list a place names, or null.
 export function namedPlace(placeText: string | null, places: PlaceDto[]): PlaceDto | null {
   if (placeText === null) {
     return null;

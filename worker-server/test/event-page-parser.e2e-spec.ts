@@ -71,6 +71,7 @@ describe('The place line of a post', () => {
 
 describe('The time line of a post', () => {
   it('gives the time from a time line with a "|" after its label', () => {
+    // 176525's time line with a "|" in place of its bullet and colon.
     const piped = parsed(176525, (page) =>
       page.replace('- 일시: 2026. 10. 13.(화) 17:00', '일시 | 2026. 10. 13.(화) 17:00'),
     );
@@ -83,6 +84,16 @@ describe('The time line of a post', () => {
     const withEnd = parsed(176516, (page) => page.replace('오후 2시</span>', '오후 2시 ~ 오후 4시 30분</span>'));
 
     expect(withEnd).toMatchObject({ start: '2026-10-07T14:00:00+09:00', end: '2026-10-07T16:30:00+09:00' });
+  });
+
+  it.each([
+    ['in the half of the day the start names', '오후 2시 ~ 4시', '16:00'],
+    ['on the 24-hour clock, whatever half the start names', '오전 10시 ~ 14:00', '14:00'],
+  ])('reads an end that names no half of the day %s', (_case, time, read) => {
+    // 176516's time line given an end.
+    const withEnd = parsed(176516, (page) => page.replace('오후 2시</span>', `${time}</span>`));
+
+    expect(withEnd.end).toBe(`2026-10-07T${read}:00+09:00`);
   });
 
   it.each([
@@ -115,6 +126,8 @@ describe('The time of day on a time line', () => {
     ['오후 12시', '12:00'],
     ['5:00 PM', '17:00'],
     ['05:00 pm', '17:00'],
+    ['PM 02:00', '14:00'],
+    ['(오후) 03:00', '15:00'],
   ])('is read from %s, which says whether it is before or after noon', (time, read) => {
     expect(startAt(time).start).toBe(`2026-10-07T${read}:00+09:00`);
   });
@@ -123,11 +136,12 @@ describe('The time of day on a time line', () => {
     ['14시', '14:00'],
     ['19:30', '19:30'],
     ['09:30', '09:30'],
+    ['밤 21:00', '21:00'],
   ])('is read from %s, on the 24-hour clock', (time, read) => {
     expect(startAt(time).start).toBe(`2026-10-07T${read}:00+09:00`);
   });
 
-  it.each(['2시', '2:00', '7시 30분', '오전 12시'])(
+  it.each(['2시', '2:00', '7시 30분', '오전 12시', '밤 09:00', '낮 12시'])(
     'is not read from %s, which could be before or after noon',
     (time) => {
       expect(startAt(time)).toMatchObject({ start: '2026-10-07', readFrom: 'body' });

@@ -54,6 +54,11 @@ export const invalidEventsMessages: [string, (valid: number, other: number) => o
     'events.1.readFrom: ',
   ],
   [
+    'a source link that is not an https address',
+    (valid, other) => secondChanged(valid, other, { sourceUrl: 'javascript:alert(1)' }),
+    'events.1.sourceUrl: ',
+  ],
+  [
     'a post number that is not a number',
     (valid, other) => secondChanged(valid, other, { postNumber: String(other) }),
     'events.1.postNumber: ',
@@ -114,6 +119,8 @@ export const placesNamingAPlace: [string, string, { latitude: number; longitude:
     '관악캠퍼스 버들골·풍산마당 등',
     { latitude: 37.4584786551623, longitude: 126.955227154786 },
   ],
+  // 제2공학관, 302동.
+  ["by its number, with the university's name", '서울대학교 302동 105호', { latitude: 37.44887, longitude: 126.95265 }],
   // Seven Places are named (관악사)학부 생활관, 919동 among them.
   [
     'by its number, beside a name it agrees with',
@@ -147,18 +154,18 @@ export const placesNamingNoPlace: [string, string][] = [
   // Not 체육관, 71동: another university has one too.
   ["a name without the university's", '체육관 2층'],
   // Not 75동: a government complex numbers its buildings too.
-  ["a number without the university's or its building's name", '75동 1층 역사기록관'],
+  ["a number without the university's or its Place's name", '75동 1층 역사기록관'],
   ['another university', '연세대학교 학생회관(63동)'],
   ['an address in another district', '서울 은평구 학생회관(63동)'],
   ['a station named after the university', '서울대입구역 3번 출구 OO빌딩 2동'],
   ['a flat', '서울대학교 앞 OO아파트 101동'],
   ["the university's hospital", '서울대학교병원 체육관'],
   // 국제대학원 is 140동, and 국제대학원2 140-1동.
-  ['the name of a series of buildings', '서울대학교 국제대학원 국제회의실'],
+  ['the name of a series of Places', '서울대학교 국제대학원 국제회의실'],
   ['a name the list does not hold beside one it does', '서울대학교 종합운동장, 보조운동장'],
   ['a number the list does not hold beside one it does', '서울대학교 302동 및 999동'],
-  ['two buildings', '서울대학교 301동 및 302동'],
+  ['two Places', '서울대학교 301동 및 302동'],
   // 학생회관 is 63동.
-  ['a number and the name of another building', '서울대학교 302동 학생회관'],
+  ['a number and the name of another Place', '서울대학교 302동 학생회관'],
   ['a route', '학생회관(63동) 앞 → 관악산 정상'],
 ];

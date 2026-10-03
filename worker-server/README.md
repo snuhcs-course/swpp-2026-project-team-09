@@ -208,15 +208,17 @@ A Collection does four things, one page at a time:
    is skipped: the post is sent with its title from the list alone, so that it waits as a Draft for an Administrator,
    who reads it at the Source. Three such pages in a row stop it instead, since then the pages have changed, not the
    posts; none of the three is sent. A skipped post is kept back until a post after it is read or the list ends, so a
-   Collection that stops before then does not send it either.
+   Collection that stops before then does not send it either. A Collection that read no post fails as well and sends
+   none of its skipped posts: it cannot tell an odd post from pages that have changed.
 4. It sends what it read, in the list's order, in one message. When every post is stored, the message has no event and
    still records a successful Collection. When the Collection stops, the posts read before are sent all the same, with
    why it stopped as `failureReason`: the main server stores them, so that they are never read again, and records the
    failure in place of a success in the same transaction. The command then says the Collection failed.
 
 So a post is read once, and an edit at the Source after that is not seen. One post whose page is not a post holds up
-neither the posts after it nor the Collection status: it is logged as a warning and waits as a Draft. Only three in a
-row fail the Collection, as step 3 says.
+neither the posts after it nor the Collection status, as long as the Collection reads another: it is logged as a
+warning and waits as a Draft. Three in a row, or a Collection that reads none, fail it, as step 3 says, and those
+posts are read again at the next Collection.
 
 A page is read only when it has the structure the parser expects. A page of the list shows its posts, each with its post
 number, or the end of the list (`검색된 자료가 없습니다.`), and repeats the filter it was asked for, since an unfiltered
@@ -241,14 +243,16 @@ From a post's page, `src/event/event-page.parser.ts` reads, by the team's own ru
     `2026년 10월 7일(수요일)`, with the time after it, if one comes before a range mark (`~`, `∼`, `〜`, `～`, `-`,
     `–`). `3시간` is a length, not a time.
   - A time is read only when it is clear whether it is before or after noon: on the 24-hour clock, with two digits
-    before a colon or an hour after 12 (`09:30`, `17:00`, `14시`), or with `오전`, `오후`, `저녁`, `AM` or `PM`
-    (`오후 2시`, `저녁 7시 30분`, `5:00 PM`). `2시`, `2:00` or `7시 30분` alone could be either, and 12 with a half of
-    the day is read only as noon, `오후 12시` or `12:00 PM`. A time that is not clear is not read, and the start is its
-    day.
+    before a colon or an hour after 12 (`09:30`, `17:00`, `14시`), or with `오전`, `오후`, `저녁`, `AM` or `PM` before
+    or after it (`오후 2시`, `(오후) 3:00`, `저녁 7시 30분`, `PM 02:00`, `5:00 PM`). `2시`, `2:00` or `7시 30분` alone
+    could be either, 12 with a half of the day is read only as noon, `오후 12시` or `12:00 PM`, and `밤` or `낮` before
+    an hour up to 12 says neither half for certain, as in `밤 09:00`. A time that is not clear is not read, and the
+    start is its day.
   - The end follows the range mark: a day, with or without its year, and a time. A day without its year is in the
     start's year, or in the next when it would come before the start. The end takes the start's form, a time when the
     start has one and a day otherwise, and is dropped when it does not come after the start. So
-    `1부(18:30~19:30) / 2부(20:00~21:00)` gives the first session.
+    `1부(18:30~19:30) / 2부(20:00~21:00)` gives the first session. An end on the start's day that names no half of the
+    day is in the start's, unless it then comes before the start: `오후 2시 ~ 4시` ends at 16:00.
   - Without a time line that names a day with its year, the start and the end come from the header's date, such as
     `2026.10.12. ~ 2026.10.16.`, which is often the application period. `readFrom` says which of the two they came
     from.

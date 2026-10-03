@@ -2,7 +2,6 @@ import { load } from 'cheerio';
 import { clean } from './event-page.parser.js';
 import { type ListFilter } from './events-list.js';
 
-// A post as the list shows it.
 export interface ListedPost {
   postNumber: number;
   title: string;

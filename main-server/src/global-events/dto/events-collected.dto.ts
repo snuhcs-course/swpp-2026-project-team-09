@@ -12,7 +12,8 @@ const boundSchema = z
 const collectedEventSchema = z.strictObject({
   // The post's `bbsidx`. The column's range, so that a larger number is refused here rather than in the database.
   postNumber: z.int32().positive(),
-  sourceUrl: z.url(),
+  // Shown as a link, so no other scheme is taken.
+  sourceUrl: z.url({ protocol: /^https$/u }),
   title: z.string().min(1),
   description: z.string(),
   start: boundSchema,
@@ -27,9 +28,8 @@ const collectedEventSchema = z.strictObject({
 export const eventsCollectedSchema = z.strictObject({
   source: z.enum([Source.snu_events]),
   collectedAt: z.iso.datetime({ offset: true }),
-  // Why the Collection stopped early, at a page it could not fetch, the firewall's block page or the third post in a row
-  // that was not a post; null when it went through the whole list. Its posts are stored all the same, and the reason is
-  // recorded as its failure.
+  // Why the Collection stopped early, or null when it went through the whole list. Its posts are stored all the same,
+  // and the reason is recorded as its failure.
   failureReason: z.string().min(1).nullable(),
   events: z
     .array(collectedEventSchema)

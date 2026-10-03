@@ -245,8 +245,8 @@ The worker sends each post of the events list as one event, all those of a Colle
 
 - `events` holds the posts the main server did not store when the worker asked, and is `[]` when there are none.
 - `failureReason` says why the Collection stopped early: at a page it could not fetch, at the firewall's block page,
-  or at the third post in a row whose page was not the post. It is `null` when the Collection went through the whole
-  list. A Collection that stopped hands over the posts it read all the same, and the main server stores them and
+  at the third post in a row whose page was not the post, or with no post read. It is `null` when the Collection went
+  through the whole list. A Collection that stopped hands over the posts it read all the same, and the main server stores them and
   records the reason as the Collection's failure in the same transaction, so that `lastSucceededAt` stays the time of
   the last Collection that went through the whole list.
 - `start` and `end` are each a time with its offset, or a day when no time of day was read. `readFrom` says where they
@@ -280,7 +280,7 @@ A place names a Place, in `src/global-events/named-place.ts`, only when all that
 position is published to every User, while a Draft only waits for an Administrator, so whatever the rules cannot
 account for makes a Draft:
 
-- A building is written by number, as in `302동 105호`, `학생회관(63동)` or `71-1동`, but not a number inside a word, as
+- A Place is written by number, as in `302동 105호`, `학생회관(63동)` or `71-1동`, but not a number inside a word, as
   in the address `역삼1동`. Or by name, as a whole word, with or without the name's own spaces or a `·` between its
   words, and whatever the case of its Latin letters: `국립중앙박물관` does not name 박물관, nor `행정관리팀` 행정관. A
   name inside a longer one that the place also names does not count, so `서울대 유전공학연구소 신관` is 105-2동 and not also
@@ -288,9 +288,9 @@ account for makes a Draft:
   written onto a name, as in `서울대학교미술관`, is taken apart.
 - Neither a number nor a name alone shows that the place is on this campus: another university has its 체육관, and a
   government complex its 1동. A number counts when the place also writes `서울대`, `관악캠퍼스`, `SNU` or
-  `Seoul National University`, or a name of that building beside it, as in `뉴미디어통신공동연구소 이충웅홀(132동 103호)`. A name counts only with the
+  `Seoul National University`, or a name of that Place beside it, as in `뉴미디어통신공동연구소 이충웅홀(132동 103호)`. A name counts only with the
   university's.
-- A number decides its building, and a name beside it has to agree: one of the Places the name names, its series
+- A number decides the Place, and a name beside it has to agree: one of the Places the name names, its series
   included, has the same number before the hyphen. `(관악사)학부 생활관 919동` is 919동 only, `국제대학원(140-2동)`
   140-2동, and `302동 학생회관` names none.
 - A name that another Place's name continues with a number names that whole series: `국제대학원` alone is 140동 or

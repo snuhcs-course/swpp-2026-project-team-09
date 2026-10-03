@@ -153,18 +153,11 @@ describe('A post whose page is not a post', () => {
     ]);
   });
 
-  it('is sent when the list ends after it, two in a row as well', async () => {
-    const { mainServer } = await collect({ ...pages, [`${POST}176558`]: notAPost, [`${POST}176525`]: notAPost });
+  it('is sent when the list ends after it', async () => {
+    const { mainServer } = await collect({ ...pages, [`${POST}176525`]: notAPost });
 
-    expect(mainServer.from('snu_events', '/collections/failed')).toEqual([]);
     expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
-      {
-        failureReason: null,
-        events: [
-          { postNumber: 176558, description: '' },
-          { postNumber: 176525, description: '' },
-        ],
-      },
+      { failureReason: null, events: [{ postNumber: 176558 }, { postNumber: 176525, description: '' }] },
     ]);
   });
 
@@ -173,6 +166,16 @@ describe('A post whose page is not a post', () => {
 
     expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
       { failureReason: `The university's firewall blocked ${POST}176525`, events: [] },
+    ]);
+  });
+});
+
+describe('Posts whose pages are not posts, in a Collection that reads no post', () => {
+  it('fail the Collection, and none of them is sent', async () => {
+    const { mainServer } = await collect({ ...pages, [`${POST}176558`]: notAPost, [`${POST}176525`]: notAPost });
+
+    expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
+      { failureReason: 'No post could be read: The page has no post', events: [] },
     ]);
   });
 });
@@ -268,10 +271,10 @@ describe('The command that runs one Collection', () => {
     const app = await startApp(inject('settings'), { fetchPage: sources.fetch, mainServer });
     const { collectSources } = await import('../src/collect-sources.js');
 
-    const taken = await collectSources(app, ['snu_events']);
+    const succeeded = await collectSources(app, ['snu_events']);
     await app.close();
 
-    expect(taken).toBe(true);
+    expect(succeeded).toBe(true);
     expect(sources.requests.every(({ url }) => url.startsWith('https://www.snu.ac.kr/snunow/events?'))).toBe(true);
     expect(mainServer.messages.map(({ path }) => path)).toEqual([
       '/global-events/stored-posts',

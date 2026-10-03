@@ -42,8 +42,7 @@ export class MainServer {
     await this.post(path, message);
   }
 
-  // Asks a question with the worker's token and resolves with the answer, checked against `schema`. Rejects as send()
-  // does.
+  // Rejects as send() does, and when the answer does not match `schema`.
   async ask<T>(path: string, question: object, schema: z.ZodType<T>): Promise<T> {
     const response = await this.post(path, question);
     try {

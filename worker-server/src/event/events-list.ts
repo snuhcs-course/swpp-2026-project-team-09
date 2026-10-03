@@ -8,7 +8,6 @@ export interface ListFilter {
   to: string;
 }
 
-// A day as the filter writes it, `days` after `time`.
 export function filterDay(time: Date, days: number): string {
   return seoulDay(time, days).replaceAll('-', '.');
 }

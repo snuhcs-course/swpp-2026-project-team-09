@@ -38,6 +38,7 @@ describe('A page of the events list', () => {
   });
 
   it('is not read when a post it lists has no title', () => {
+    // The first post of the page with its title emptied.
     const withoutTitle = firstPage.replace(
       '<span class="title">[참가자 모집]제1회 과학데이터혁신 경진대회 개최</span>',
       '<span class="title"></span>',

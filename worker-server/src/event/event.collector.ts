@@ -109,10 +109,12 @@ export class EventCollector extends Collector {
 
   // The posts, one after the other until a page cannot be fetched or is blocked, since more are likely blocked, or until
   // three posts in a row are not posts. A post whose page is not a post is kept back, and sent as unreadable once a post
-  // after it is read or the list ends.
+  // after it is read, or when the list ends and the Collection read a post: one that read none cannot tell an odd post
+  // from pages that have changed, so it fails and its posts are read again.
   private async readPosts(posts: ListedPost[]): Promise<{ events: CollectedEvent[]; failure: Error | null }> {
     const events: CollectedEvent[] = [];
     let unreadable: CollectedEvent[] = [];
+    let problem: Error | null = null;
     for (const post of posts) {
       let html: string;
       try {
@@ -124,6 +126,7 @@ export class EventCollector extends Collector {
       const read = readPost(html, post.postNumber);
       if (read instanceof Error) {
         this.logger.warn(`Post ${post.postNumber} could not be read: ${read.message}`);
+        problem = read;
         unreadable.push(unreadablePost(post));
         if (unreadable.length === UNREADABLE_IN_A_ROW) {
           const failure = `${UNREADABLE_IN_A_ROW} posts in a row could not be read: ${read.message}`;
@@ -133,6 +136,9 @@ export class EventCollector extends Collector {
         events.push(...unreadable, read);
         unreadable = [];
       }
+    }
+    if (events.length === 0 && problem !== null) {
+      return { events, failure: new Error(`No post could be read: ${problem.message}`, { cause: problem }) };
     }
     return { events: [...events, ...unreadable], failure: null };
   }
