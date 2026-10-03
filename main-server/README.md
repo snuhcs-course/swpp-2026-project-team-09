@@ -903,10 +903,10 @@ so a message is stored once. Every route for the worker follows these rules.
   what a Collection read calls `CollectionService.recordSuccess(tx, source, collectedAt)` in the same transaction; the
   shuttle's vehicles are stored in Redis, so their handler records the success once the set is stored. A message that
   says its Collection stopped early, as `failureReason` does in [Global Events](#global-events), has its handler call
-  `recordFailure()` with the transaction in place of the success. A Collection that fails with nothing to hand over
-  posts `{ "source", "failedAt", "reason" }` to `/collections/failed`, where `reason` says what went wrong. It records the
-  failure and leaves every stored record as it is. A success leaves the last failure in place, so the two times tell
-  whether the Source has worked since. No route serves the status yet; P12 shows it.
+  `recordFailure()` with the transaction in place of the success, even when it carries no event. Any other Collection
+  that fails posts `{ "source", "failedAt", "reason" }` to `/collections/failed`, where `reason` says what went wrong.
+  It records the failure and leaves every stored record as it is. A success leaves the last failure in place, so the two
+  times tell whether the Source has worked since. No route serves the status yet; P12 shows it.
 - **A new Source** adds its value to `Source` with a migration. `menusCollectedSchema` lists the Sources that send
   menus, the shuttle's two schemas the one that sends each, and `eventsCollectedSchema` the one that sends events, so a
   Source of another kind is refused there.

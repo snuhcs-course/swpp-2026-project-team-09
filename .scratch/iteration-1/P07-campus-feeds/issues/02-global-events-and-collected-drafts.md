@@ -59,7 +59,7 @@ The main server's README holds the full text: Global Events, and Questions under
 - **A place elsewhere names no Place**: on another campus (`연건`, `시흥`, `평창`, `수원`; after the review), and since 2026-10-03 also at the university's hospitals, at the stations named after it, at another university, in another district or region, or in a flat, since the list is Gwanak's. A generic name such as `올림픽공원 체육관` no longer names one either: a name alone needs the university's name beside it.
 - **`PlacesModule` exports `PlacesService`**, and `GlobalEventsModule` reads the list of Places through it on each request to `/global-events/collected`. Ticket 03 had `BuildingsModule` export `BuildingsService`; ticket 06 replaced it.
 - **`seoulDay()` moved to the worker's `src/common/seoul-day.ts`**, now that two collectors use it.
-- **The menu schedule test looks for its job among the worker's jobs** (`toContainEqual`), since the worker now has two. Ticket 04's third job keeps it passing.
+- **The menu schedule test looks for its job among the worker's jobs** (`toContainEqual`), since the worker now has two. Ticket 04's two jobs keep it passing.
 - **No real run while implementing** (2026-10-02). The ticket does not ask for one, so none was made, following the rule for real runs; the offline run below uses the pages saved for the tests. One was made on 2026-10-03: see "The place rule after a real Collection".
 - **Not in `GLOSSARY.md`**: `published`, `cancelled`, `discarded` and `post`. They can go to `/domain-modeling`.
 
@@ -181,4 +181,5 @@ Ticket 04 reached `1.0/Main` as #31, which moved the worker's messages from Redi
 - **`Collector` is `1.0/Main`'s**: a collector hands over through `handOver()` alone. It gains a protected `ask()` for a question, which reads what the main server holds as a page is read, and its `logger` is protected, so that the events collector logs a skipped post with it. A Collection that stops early hands over what it read with `failureReason` instead of sending twice.
 - **The migration is `20261004010000_add_global_events`**, renamed from `20261002080053`, so that it comes after `1.0/Main`'s `20261002090315_add_shuttle`. Both add a value to `Source`; `snu_events` now comes after the shuttle's two.
 - **`seoulDay()` stays in `src/common/seoul-day.ts`**, which the menus collector reads again in place of its own copy, since the events collector needs it too.
+- **The menu schedule test is `1.0/Main`'s**: ticket 04 brought the same `toContainEqual`, so this ticket no longer changes that test. The worker has four jobs.
 - `1.0/Main`'s `PageFetcher`, one for each collector, gives a page up after 5 seconds; a post's page that does not come in time stops the Collection, as a page that cannot be fetched does.

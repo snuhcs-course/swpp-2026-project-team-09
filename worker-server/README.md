@@ -104,10 +104,11 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
   answer up after 5 seconds, so that a Collection never waits for a main server that is down. A request reaches one
   main server, however many run. `MainServer.ask(path, question, schema)` asks a question the same way and gives the
   answer, checked against its schema: the worker keeps nothing, so a Collection that needs to know what the main server
-  holds asks it, as the events collector asks which posts are stored, through its `ask(path, question, schema)`. Nothing
-  else reaches the main server but `handOver()`. The main server's README sets the paths, the shapes and the answers:
-  [Requests from the worker server](../main-server/README.md#requests-from-the-worker-server). The shape of what a
-  Collection read is a type in the feature's `dto/`, kept the same as the main server's schema by hand.
+  holds asks it, as the events collector asks which posts are stored, through its `ask(path, question, schema)`. A
+  collector reaches the main server through `handOver()` and `ask()` alone. The main server's README sets the paths, the
+  shapes and the answers: [Requests from the worker server](../main-server/README.md#requests-from-the-worker-server).
+  The shape of what a Collection read is a type in the feature's `dto/`, kept the same as the main server's schema by
+  hand.
 - **Failure**: when a page cannot be fetched or read, or the main server does not take the message or answer the
   question, `handOver()` logs it and posts the Source, the time and the reason to `/collections/failed`, such as
   `https://snudorm.snu.ac.kr/foodmenu/?date=2026-10-02 answered 503`, `The page has no menu table` or
@@ -120,9 +121,9 @@ and every request fails unless the test gives it pages; and the one under `MainS
 `MainServerStub`. A parser is tested as a function and a collector by running it once, not through
 HTTP; their files are still named `*.e2e-spec.ts`, the one pattern Vitest runs.
 
-- **Saved pages**: `test/pages/` holds pages of each Source as they were served, named after the Source, the page and
-  the day it was saved, and read with `savedPage(name)`, or `savedAnswer(name)` for a JSON answer. Save a page once,
-  with the project's `User-Agent`. Prettier leaves the folder alone:
+- **Saved pages**: `test/pages/` holds pages of each Source as they were served, named after the Source, the page when
+  the Source has several, and the day it was saved, and read with `savedPage(name)`, or `savedAnswer(name)` for a JSON
+  answer. Save a page once, with the project's `User-Agent`. Prettier leaves the folder alone:
 
   ```bash
   curl -A 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)' \
@@ -213,8 +214,9 @@ A Collection does four things, one page at a time:
    why it stopped as `failureReason`: the main server stores them, so that they are never read again, and records the
    failure in place of a success in the same transaction. The command then says the Collection failed.
 
-So a post is read once, and an edit at the Source after that is not seen. A post whose page is not a post holds up
-neither the posts after it nor the Collection status: it is logged as a warning and waits as a Draft.
+So a post is read once, and an edit at the Source after that is not seen. One post whose page is not a post holds up
+neither the posts after it nor the Collection status: it is logged as a warning and waits as a Draft. Only three in a
+row fail the Collection, as step 3 says.
 
 A page is read only when it has the structure the parser expects. A page of the list shows its posts, each with its post
 number, or the end of the list (`검색된 자료가 없습니다.`), and repeats the filter it was asked for, since an unfiltered
