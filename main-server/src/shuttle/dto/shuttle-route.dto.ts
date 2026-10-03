@@ -1,3 +1,4 @@
+import { type Position } from '../../common/geometry.js';
 import { ShuttleStop } from '../../generated/prisma/client.js';
 
 export interface ShuttleStopDto {
@@ -12,7 +13,7 @@ export interface ShuttleRouteDto {
   serviceHours: string | null;
   // In loop order.
   stops: ShuttleStopDto[];
-  line: { latitude: number; longitude: number }[];
+  line: Position[];
 }
 
 export function toShuttleStopDto({ id, name, latitude, longitude }: ShuttleStop): ShuttleStopDto {

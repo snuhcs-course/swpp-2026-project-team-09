@@ -1,9 +1,9 @@
-import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { inject } from 'vitest';
 import { z } from 'zod';
-import { SEED_DIRECTORY } from '../src/common/seed-directory.js';
+import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { loadSeed } from '../src/load-seed.js';
 import { createDatabase } from './containers.js';
@@ -32,9 +32,8 @@ async function seedWithStops(change: (stops: Stop[]) => Stop[]): Promise<string>
   const copy = await mkdtemp(join(tmpdir(), 'seed-'));
   copies.push(copy);
   await cp(SEED_DIRECTORY, copy, { recursive: true });
-  const file = join(copy, 'shuttle-stops.json');
-  const seed = stopsFileSchema.parse(JSON.parse(await readFile(file, 'utf8')));
-  await writeFile(file, JSON.stringify({ ...seed, stops: change(seed.stops) }));
+  const seed = await readSeedFile(copy, 'shuttle-stops.json', stopsFileSchema);
+  await writeFile(join(copy, 'shuttle-stops.json'), JSON.stringify({ ...seed, stops: change(seed.stops) }));
   return copy;
 }
 
