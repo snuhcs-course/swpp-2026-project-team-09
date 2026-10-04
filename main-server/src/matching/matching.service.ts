@@ -2,7 +2,12 @@ import { BadRequestException, ConflictException, HttpException, HttpStatus, Inje
 import { z } from 'zod';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
-import { type MatchingCandidate, type MatchingRefusal, QuestsService } from '../quests/quests.service.js';
+import {
+  type MatchingCandidate,
+  type MatchingRefusal,
+  MatchingQuestsService,
+} from '../quests/matching-quests.service.js';
+import { QuestsService } from '../quests/quests.service.js';
 import { UsersService } from '../users/users.service.js';
 import { MatchQuestDto, type MatchQuestRequestDto, StandingAnswerDto } from './dto/match-server-calls.dto.js';
 import { type AskForMatchingDto, MatchingRequestDto, matchingRequestSchema } from './dto/matching-request.dto.js';
@@ -40,6 +45,7 @@ export class MatchingService {
     private readonly prisma: PrismaService,
     private readonly matchServer: MatchServer,
     private readonly quests: QuestsService,
+    private readonly matchingQuests: MatchingQuestsService,
     private readonly users: UsersService,
     private readonly signals: SignalsService,
   ) {}
@@ -53,7 +59,7 @@ export class MatchingService {
         message: `A group has ${SIZES.min} to ${SIZES.max} Users.`,
       });
     }
-    const [refusal] = await this.quests.matchingRefusals([{ userId, globalEventId }]);
+    const [refusal] = await this.matchingQuests.matchingRefusals([{ userId, globalEventId }]);
     if (refusal !== null) {
       throw refusalOf(refusal);
     }
@@ -78,7 +84,7 @@ export class MatchingService {
   }
 
   async standing(requests: readonly MatchingCandidate[]): Promise<StandingAnswerDto> {
-    const refusals = await this.quests.matchingRefusals(requests);
+    const refusals = await this.matchingQuests.matchingRefusals(requests);
     return { standing: requests.filter((_, index) => refusals[index] === null) };
   }
 
@@ -91,13 +97,13 @@ export class MatchingService {
         // oxlint-disable-next-line no-await-in-loop -- one after another, in id order
         await this.users.lock(userId, tx);
       }
-      const existing = await this.quests.forMatch(matchId, tx);
+      const existing = await this.matchingQuests.forMatch(matchId, tx);
       if (existing !== null) {
         return { questId: existing, holderIds: await this.quests.holderIds(existing, tx), created: false };
       }
       // The Global Event's refusals come before a User's and are the same for every User.
       const candidates = userIds.map((userId) => ({ userId, globalEventId }));
-      const eventRefusal = (await this.quests.matchingRefusals(candidates, tx)).find(
+      const eventRefusal = (await this.matchingQuests.matchingRefusals(candidates, tx)).find(
         (refusal) => refusal === 'GLOBAL_EVENT_NOT_FOUND' || refusal === 'GLOBAL_EVENT_STARTED',
       );
       if (eventRefusal !== undefined) {

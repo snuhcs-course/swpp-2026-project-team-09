@@ -37,7 +37,7 @@ A match is never lost between the two servers: the match server keeps asking unt
   secret.
 - **Main server routes** (the match server's, `@MatchServerOnly()`, `MatchServerGuard`, 401 to any other token):
   `POST /matching-requests/standing { requests: [{ userId, globalEventId }] }` → 200 `{ standing: [...] }` in the order
-  given, from `QuestsService.matchingRefusals()`; `POST /matches/:matchId/quest` with
+  given, from `MatchingQuestsService.matchingRefusals()`; `POST /matches/:matchId/quest` with
   `{ globalEventId, userIds }` (2 to 4 Users, each once) → 201 `{ questId, holderIds }`. Refusals:
   `GLOBAL_EVENT_NOT_FOUND` 404 (unknown, cancelled, no longer published), `GLOBAL_EVENT_STARTED` 409,
   `MATCH_TOO_SMALL` 409.
@@ -51,8 +51,11 @@ A match is never lost between the two servers: the match server keeps asking unt
 - **Match identifier**: `quests.match_id`, unique index `quests_match_id_key`. Once all Holders drop the Quest it is
   deleted with its match id; the match server no longer asks by then.
 - **QuestsService** gains `freeForSharedQuest(userId, globalEventId, tx): Promise<boolean>` as agreed with ticket 05,
-  `forMatch(matchId, tx): Promise<string | null>`, and a fourth parameter `matchId: string | null = null` on
-  `createForGlobalEvent`. The file passed 300 lines, so it disables `max-lines` at its top.
+  and a fourth parameter `matchId: string | null = null` on `createForGlobalEvent`. The read-only operations only
+  Matching uses moved to a second provider of `QuestsModule`, exported too: `MatchingQuestsService` in
+  `src/quests/matching-quests.service.ts`, with `matchingRefusals(requests, tx?)` (and the types `MatchingCandidate`,
+  `MatchingRefusal`) and `forMatch(matchId, tx): Promise<string | null>`. This keeps `quests.service.ts` under 300
+  lines.
 - **Signals**: `matching-changed` then `quests-changed` to `holderIds` after the commit, on creation only. A User left
   out, and the Users of a closed match, get none.
 - **Match server tables**: `matches` (`global_event_id`, `state` enum `match_state`: `awaiting_quest`,

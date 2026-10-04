@@ -480,9 +480,13 @@ one Quest locks it first, so that changes run one after another:
 - `freeForSharedQuest(userId, globalEventId, tx)` answers whether the User may become a Holder of a Shared Quest for
   the Global Event: `true` when the User holds no Quest for it, or held one alone, which it deletes with its Sub Quests
   and the User's progress; `false` when the User holds a Shared Quest for it, which stays. Lock the User first.
-- `forMatch(matchId, tx)` answers the id of the Quest created for the match server's match, or `null`.
+
+What only [Matching](#matching) reads of the Quests is in `MatchingQuestsService`
+(`src/quests/matching-quests.service.ts`), which `QuestsModule` exports too:
+
 - `matchingRefusals(requests, tx?)` answers, for each `{ userId, globalEventId }` in order, why that request for
-  [Matching](#matching) cannot stand now, as the refusal's code, or `null` when it stands.
+  Matching cannot stand now, as the refusal's code, or `null` when it stands.
+- `forMatch(matchId, tx)` answers the id of the Quest created for the match server's match, or `null`.
 
 `quests-changed` goes to every Holder, the one who acted included, when a Quest is created by attending or for a match,
 when a Sub Quest is added, edited or cancelled, and when a Holder drops the Quest. A mark of done is the Holder's own
@@ -546,7 +550,7 @@ request again.
 reaches one match server however many run, with `Authorization: Bearer <MATCH_SERVER_TOKEN>`. That secret, of at least
 32 characters, is in both servers' settings, and the match server's calls to this server carry it too. The match
 server's README describes its routes. Whether requests still stand is one question, which the rounds ask again:
-`QuestsService.matchingRefusals()` (see [Quests](#quests)).
+`MatchingQuestsService.matchingRefusals()` (see [Quests](#quests)).
 
 **The match server's rounds.** Every minute the match server asks which of its waiting requests still stand, groups
 them and asks this server for one Shared Quest for each group, a match; its README describes the rounds. It calls two
@@ -556,8 +560,8 @@ User's, an Administrator's and the worker's included. The bodies are checked as 
 
 - `POST /matching-requests/standing` with `{ "requests": [{ "userId": "…", "globalEventId": "…" }] }` answers 200 with
   `{ "standing": [...] }`, the requests that still stand in the order given: their Global Event is published and has
-  not started, and their User holds no Shared Quest for it. It is `QuestsService.matchingRefusals()`, which also
-  decides whether a User may ask, and it stores nothing.
+  not started, and their User holds no Shared Quest for it. It is `MatchingQuestsService.matchingRefusals()`, which
+  also decides whether a User may ask, and it stores nothing.
 - `POST /matches/:matchId/quest` with `{ "globalEventId": "…", "userIds": ["…", "…"] }`, two to four Users, creates
   the match's Shared Quest and answers 201 with `{ "questId": "…", "holderIds": [...] }`. The match server repeats the
   request until it is answered, so the match identifier is stored with the Quest, `quests.match_id`, unique in the
