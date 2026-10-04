@@ -56,3 +56,10 @@ This is the first Quest with two Holders, so the ticket also tests what ticket 0
   `CLOCK`, which `FriendsModule` does not have.
 - **Signals**: `meetups-changed` to both on propose, accept, decline, withdraw and on a friendship's end that
   withdrew one; `quests-changed` to both on accept.
+
+### Agent usage (2026-10-04)
+
+- Agent time: about 15 minutes, an estimate: one implementing agent. The session that ran the agents of all P08 tickets is counted once, under ticket 09.
+- Tokens, counted from the agent's transcript:
+  - Input: 14,658,343, of which 14,446,154 were cache reads, 212,019 cache writes and 170 uncached.
+  - Output: 31,629, a lower bound, since the transcript records only part of the output of most steps.
