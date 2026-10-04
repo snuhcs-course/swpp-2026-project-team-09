@@ -25,3 +25,10 @@ A newly published Global Event appears on every User's map without the User aski
 - A Collection inserts with `createManyAndReturn({ skipDuplicates: true, select: { state: true } })`, so only the posts it newly stored count: the signal goes once, after the transaction, when at least one of them is `published`. A post already stored, in any state, sends none.
 - The socket server test is ticket 01's `A signal that names no Users reaches every connection` in `socket-server/test/signals.e2e-spec.ts`, which already sends `global-events-changed` without `userIds` and checks that two connections each receive it with no argument.
 - The main server tests are in `main-server/test/global-events.e2e-spec.ts`, the only file that publishes events, and frame each Collection between two signals of their own so that a late signal of an earlier test is not counted.
+
+### Agent usage (2026-10-04)
+
+- Agent time: about 5 minutes, an estimate: one implementing agent. The session that ran the agents of all P08 tickets is counted once, under ticket 09.
+- Tokens, counted from the agent's transcript:
+  - Input: 2,913,669, of which 2,834,260 were cache reads, 79,345 cache writes and 64 uncached.
+  - Output: 429, a lower bound, since the transcript records only part of the output of most steps.
