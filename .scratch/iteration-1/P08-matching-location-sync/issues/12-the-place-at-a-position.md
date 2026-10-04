@@ -28,3 +28,10 @@ A User picks a point on the map as the place of a Meetup, a Sub Quest or a Priva
 - Coordinates are read as the walking route reads them: text written as a decimal number, a latitude from -90 to 90
   and a longitude from -180 to 180, or 400 with a message that starts with the field. Both routes take the query schemas from
   `src/common/degrees-query.ts` (`latitudeQuerySchema`, `longitudeQuerySchema`).
+
+### Agent usage (2026-10-04)
+
+- Agent time: about 7 minutes, an estimate: the implementing agent about 5 minutes, and a Standards reviewer and a Spec reviewer about 1 minute each at the same time. The session that ran the agents of all P08 tickets is counted once, under ticket 09.
+- Tokens, counted from the three agents' transcripts:
+  - Input: 5,092,600, of which 4,795,044 were cache reads, 297,448 cache writes and 108 uncached.
+  - Output: 5,633, a lower bound, since the transcripts record only part of the output of most steps.
