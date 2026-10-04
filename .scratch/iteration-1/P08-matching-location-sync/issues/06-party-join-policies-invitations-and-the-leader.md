@@ -70,3 +70,10 @@ A Leader decides who enters. In an Approval Party a User asks to join and the Le
   the asking User when declined; to the invited User when invited and when they decline; to the members after a
   settings change or a hand-over; to the members before a removal, the removed one included. A removal runs inside
   `VisibilityService.announceRemovals` for the removed member.
+
+### Agent usage (2026-10-04)
+
+- Agent time: about 20 minutes, an estimate: one implementing agent. The session that ran the agents of all P08 tickets is counted once, under ticket 09.
+- Tokens, counted from the agent's transcript:
+  - Input: 14,213,409, of which 13,989,897 were cache reads, 223,354 cache writes and 158 uncached.
+  - Output: 21,321, a lower bound, since the transcript records only part of the output of most steps.
