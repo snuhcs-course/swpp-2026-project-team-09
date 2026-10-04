@@ -151,6 +151,7 @@ The signals and what the app does on each:
 | `friends-changed`  | nothing                                       | fetches `GET /friends` and `GET /friend-requests` of the main server again |
 | `position`         | `{ userId, latitude, longitude, measuredAt }` | moves that User's Avatar to the position, or shows it there                |
 | `position-removed` | `{ userId }`                                  | removes that User's Avatar from the map at once                            |
+| `quests-changed`   | nothing                                       | fetches `GET /quests` of the main server again                             |
 
 ```ts
 socket.on('friends-changed', () => {

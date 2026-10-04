@@ -15,25 +15,26 @@ datasource db {
 
 // A person who signed in with an SNU Google account.
 model User {
-  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   // Google's subject identifier ("sub"), which stays the same while the email address may change.
-  googleSubject  String       @unique @map("google_subject")
+  googleSubject  String        @unique @map("google_subject")
   email          String
   // The profile. The name and the department stay empty until onboarding. The limits are in src/users/dto/.
-  name           String       @default("")
-  department     String       @default("")
-  admissionYear  Int?         @map("admission_year")
-  hashtags       String[]     @default([])
+  name           String        @default("")
+  department     String        @default("")
+  admissionYear  Int?          @map("admission_year")
+  hashtags       String[]      @default([])
   // The Google account's name at the last sign-in, from which onboarding suggests a name and a department.
-  googleName     String       @default("") @map("google_name")
-  onboardedAt    DateTime?    @map("onboarded_at")
+  googleName     String        @default("") @map("google_name")
+  onboardedAt    DateTime?     @map("onboarded_at")
   // Made when the User is created (src/users/friend-id.ts), and never changed.
-  friendId       String       @unique @map("friend_id")
+  friendId       String        @unique @map("friend_id")
   // Location Sharing as a whole. Off until the User turns it on; signing in and out leave it as it is.
-  masterSwitchOn Boolean      @default(false) @map("master_switch_on")
+  masterSwitchOn Boolean       @default(false) @map("master_switch_on")
   sessions       Session[]
-  friendshipsAsA Friendship[] @relation("FriendshipUserA")
-  friendshipsAsB Friendship[] @relation("FriendshipUserB")
+  friendshipsAsA Friendship[]  @relation("FriendshipUserA")
+  friendshipsAsB Friendship[]  @relation("FriendshipUserB")
+  questHolders   QuestHolder[]
 
   @@map("users")
 }
@@ -115,23 +116,25 @@ model Administrator {
 // An Event published to every User, collected from the university's events list or created by an Administrator
 // (README.md: Global Events). A Collection never changes one once it is stored.
 model GlobalEvent {
-  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title       String
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String
   // The post's body as text, for a collected event.
-  description String
+  description  String
   // A Draft may have neither. A day read without a time of day is stored at 00:00 Asia/Seoul.
-  startsAt    DateTime?        @map("starts_at")
-  endsAt      DateTime?        @map("ends_at")
-  place       String?
+  startsAt     DateTime?        @map("starts_at")
+  endsAt       DateTime?        @map("ends_at")
+  place        String?
   // A published event has both.
-  latitude    Float?
-  longitude   Float?
-  state       GlobalEventState @default(draft)
+  latitude     Float?
+  longitude    Float?
+  state        GlobalEventState @default(draft)
   // Checked and raised by an Administrator's edit (P12), so that an edit made from an older version is refused.
-  version     Int              @default(1)
+  version      Int              @default(1)
   // The `bbsidx` and address of a collected event's post. An event an Administrator creates has neither.
-  postNumber  Int?             @unique @map("post_number")
-  sourceUrl   String?          @map("source_url")
+  postNumber   Int?             @unique @map("post_number")
+  sourceUrl    String?          @map("source_url")
+  quests       Quest[]
+  questHolders QuestHolder[]
 
   @@map("global_events")
 }
@@ -145,6 +148,78 @@ enum GlobalEventState {
   discarded
 
   @@map("global_event_state")
+}
+
+// What one or more Users set out to do (README.md: Quests). Its time and place belong to its Sub Quests.
+model Quest {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title         String
+  // Never changes.
+  globalEventId String?       @map("global_event_id") @db.Uuid
+  globalEvent   GlobalEvent?  @relation(fields: [globalEventId], references: [id], onDelete: Restrict)
+  createdAt     DateTime      @default(now()) @map("created_at")
+  holders       QuestHolder[]
+  subQuests     SubQuest[]
+
+  @@index([globalEventId])
+  @@map("quests")
+}
+
+// A User who holds a Quest. The row repeats the Quest's Global Event, so that a unique index keeps a User to one Quest
+// for a Global Event.
+model QuestHolder {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questId       String             @map("quest_id") @db.Uuid
+  quest         Quest              @relation(fields: [questId], references: [id], onDelete: Cascade)
+  userId        String             @map("user_id") @db.Uuid
+  user          User               @relation(fields: [userId], references: [id])
+  // The Quest's, written with the row.
+  globalEventId String?            @map("global_event_id") @db.Uuid
+  globalEvent   GlobalEvent?       @relation(fields: [globalEventId], references: [id], onDelete: Restrict)
+  progress      SubQuestProgress[]
+
+  @@unique([questId, userId])
+  @@unique([userId, globalEventId])
+  @@index([globalEventId])
+  @@map("quest_holders")
+}
+
+// One step of a Quest, the same for all its Holders. The attending Sub Quest of a Quest for a Global Event stores no
+// title, time or place: they are read from the Global Event. The migration checks which columns each kind fills.
+model SubQuest {
+  id         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questId    String             @map("quest_id") @db.Uuid
+  quest      Quest              @relation(fields: [questId], references: [id], onDelete: Cascade)
+  attending  Boolean            @default(false)
+  title      String?
+  startsAt   DateTime?          @map("starts_at")
+  endsAt     DateTime?          @map("ends_at")
+  // A Place from the list, or a point with the label the app showed for it.
+  placeId    String?            @map("place_id") @db.Uuid
+  place      Place?             @relation(fields: [placeId], references: [id])
+  latitude   Float?
+  longitude  Float?
+  placeLabel String?            @map("place_label")
+  createdAt  DateTime           @default(now()) @map("created_at")
+  progress   SubQuestProgress[]
+
+  @@unique([questId], where: { attending: true })
+  @@index([questId])
+  @@map("sub_quests")
+}
+
+// A Sub Quest one Holder marked as done. Progress is each Holder's own.
+model SubQuestProgress {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subQuestId String      @map("sub_quest_id") @db.Uuid
+  subQuest   SubQuest    @relation(fields: [subQuestId], references: [id], onDelete: Cascade)
+  holderId   String      @map("holder_id") @db.Uuid
+  holder     QuestHolder @relation(fields: [holderId], references: [id], onDelete: Cascade)
+  doneAt     DateTime    @default(now()) @map("done_at")
+
+  @@unique([subQuestId, holderId])
+  @@index([holderId])
+  @@map("sub_quest_progress")
 }
 
 // One restaurant on one day, as the last Collection of its Source read it.
@@ -242,6 +317,7 @@ model Place {
   longitude Float
   // Each a closed ring: [[{ latitude, longitude }, …], …].
   outlines  Json        @default("[]")
+  subQuests SubQuest[]
 
   @@unique([origin, originId])
   @@map("places")
