@@ -28,6 +28,8 @@ echo "WORKER_TOKEN=$(openssl rand -hex 32)" >> .env
 [Sign-in](#sign-in)). Replace the example address in `INITIAL_ADMINISTRATOR_EMAILS` with your own (see
 [Administrators](#administrators)). Fill in `KAKAO_REST_API_KEY` with the REST API key that the Owner of the team's
 Kakao app shares with you (see [Walking route](#walking-route)); the server does not start without it.
+`PUBLIC_URL` and `ANDROID_CERTIFICATE_FINGERPRINTS` work as they are for development (see
+[Invite Links](#invite-links)).
 
 To run the whole system, in the repository root:
 
@@ -193,6 +195,56 @@ Friends with `FriendsService.areFriends(userId, otherUserId, tx?)`, exported by 
 After each change, `friends-changed` goes to both Users: when a request is sent, accepted, declined or cancelled, and
 when a friendship ends. It carries nothing, and the app fetches `GET /friends` and `GET /friend-requests` again (see
 [Signals](#signals)).
+
+## Invite Links
+
+A User creates an Invite Link and sends it through any messenger. Whoever opens it sees who sent it and, on accepting,
+becomes the sender's Friend with no further step. A link works once and for 24 hours, and a User may hold several
+unused ones. The routes, all a User's:
+
+- `POST /invite-links`, with no body, answers `201 { "url": "https://…/invite/<token>", "expiresAt": "…" }`. The
+  address is `PUBLIC_URL` followed by `/invite/` and a random token of 43 characters. A repeat creates one more link, so
+  it takes no `Idempotency-Key`.
+- `GET /invite-links/:token` answers `{ "sender": { "name", "department" }, "status": … }`, where `status` says whether
+  the User asking can accept it: `usable`, `used`, `expired`, `own` (the User's own link) or `friend` (from a Friend).
+- `POST /invite-links/:token/accept` makes the two Friends, turning a Friend Request waiting between them into the
+  friendship, uses the link up and answers 204. `friends-changed` goes to both. Declining sends nothing: a link nobody
+  accepted stays usable until it expires.
+
+| Refusal                                    | Status | `code`                  |
+| ------------------------------------------ | ------ | ----------------------- |
+| A token nobody made, looked up or accepted | 404    | `INVITE_LINK_NOT_FOUND` |
+| Accepting the User's own link              | 400    | `OWN_INVITE_LINK`       |
+| Accepting a link that was used             | 409    | `INVITE_LINK_USED`      |
+| Accepting a link past its 24 hours         | 410    | `INVITE_LINK_EXPIRED`   |
+| Accepting a link from a Friend             | 409    | `ALREADY_FRIENDS`       |
+
+The table `invite_links` keeps the SHA-256 of each token, not the token, with the sender, `expires_at` and `used_at`.
+Accepting runs through `FriendsService.befriend(senderId, receiverId, alongside)`, which locks both Users as every
+change between two Users does and runs `alongside`, here the link's use, in the same transaction. The link is used up
+only while `used_at` is still empty, so of two Users who accept one link at the same moment one becomes the Friend and
+the other gets `INVITE_LINK_USED`.
+
+Android opens the app from the link through App Links. It asks for `GET /.well-known/assetlinks.json` on the link's
+host, without a token and following no redirect, and the server answers the Digital Asset Links file: the app's package
+name, `com.bonnieandclaude.snunow`, and the SHA-256 fingerprints of the certificates the app is signed with. Two
+settings serve this:
+
+- `PUBLIC_URL`: the address the apps reach this server at from outside, such as `https://snunow.example`, without a
+  path. App Links need https; `http://localhost:3000` serves for development. A link made under one address stops
+  working when the address changes.
+- `ANDROID_CERTIFICATE_FINGERPRINTS`: the fingerprints separated by commas, so that a development build and the demo
+  build both open the links. `.env.example` holds the one of the Expo template's debug key, which signs development
+  builds.
+
+A certificate's fingerprint is the `SHA256:` line that `keytool` prints for its keystore, for the debug key:
+
+```bash
+keytool -list -v -keystore android/app/debug.keystore -alias androiddebugkey -storepass android -keypass android
+```
+
+For a build signed on EAS, `eas credentials` shows the SHA-256 fingerprint of the Android keystore. An app the Play
+Store signs needs the fingerprint of the app signing key from the Play Console as well.
 
 ## Administrators
 
@@ -768,6 +820,7 @@ src/
 ├── auth/                            a feature: app and admin site sign-in, refresh, sign-out, the access token checks
 ├── users/                           a feature: the signed-in User, their profile, Friend ID and onboarding
 ├── friends/                         a feature: Friend IDs looked up, Friend Requests and Friends
+├── invite-links/                    a feature: Invite Links, and the Digital Asset Links file that opens them in the app
 ├── lobby/                           a feature: what the app needs when it starts
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
