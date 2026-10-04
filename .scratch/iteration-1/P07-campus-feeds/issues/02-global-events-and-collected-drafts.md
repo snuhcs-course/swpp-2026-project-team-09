@@ -192,9 +192,10 @@ A Standards review and a Spec review ran side by side on the pull request agains
 - **Changed pages could go unseen**: a Collection that found one or two new posts stored them as Drafts with their titles and succeeded, and three in a row was rarely reached. A Collection that reads no post now fails and stores none of them.
 - **An end that names no half of the day** is read in the start's, as `오후 2시 ~ 4시`.
 - **The source link is an `https` address**: it is shown as a link, so the schema takes no other scheme.
+- **A place at one of the university's schools names none**: `서울대학교 사범대학 부설고등학교 체육관` was published at 체육관, 71동. `부설` and `사대부` are elsewhere now; no Place's name holds either.
 - Criterion 4's example, `서울대학교 302동 105호`, has its test, and the two edits of a saved page that had no comment have one.
 - Left as it is: the firewall's block page of the tests is written from its description, since none was saved. A block page of another form would make a blocked post a Draft; a blocked list page fails the Collection either way.
-- On this branch: main server 31 files and 405 tests, worker server 11 files and 139 tests; lint, format:check and typecheck pass in both.
+- On this branch: main server 31 files and 406 tests, worker server 11 files and 139 tests; lint, format:check and typecheck pass in both.
 
 ### Agent usage (2026-10-04)
 

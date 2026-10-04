@@ -160,6 +160,7 @@ export const placesNamingNoPlace: [string, string][] = [
   ['a station named after the university', '서울대입구역 3번 출구 OO빌딩 2동'],
   ['a flat', '서울대학교 앞 OO아파트 101동'],
   ["the university's hospital", '서울대학교병원 체육관'],
+  ["one of the university's schools", '서울대학교 사범대학 부설고등학교 체육관'],
   // 국제대학원 is 140동, and 국제대학원2 140-1동.
   ['the name of a series of Places', '서울대학교 국제대학원 국제회의실'],
   ['a name the list does not hold beside one it does', '서울대학교 종합운동장, 보조운동장'],

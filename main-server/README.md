@@ -299,9 +299,9 @@ account for makes a Draft:
   `->`, but not inside a name, as in `데이터사이언스대학원 및 공과대학 강의동 1`. Every part has to name the same Place, apart from a part that is online
   (`Zoom`, `온라인`, `비대면` and the like) or only a room or a floor. So `서울대학교 103동 444호 & Zoom` is 103동, while
   `종합운동장, 보조운동장`, `301동 및 302동` and `302동 및 999동` name none.
-- A place elsewhere names none: on another of the university's campuses or at its hospitals (`연건`, `시흥`, `평창`,
-  `수원`, `의과대학`, `간호대학`, `서울대학교병원` and the like), at the stations named after it, at another university,
-  at an address in another district or region, or in a flat. The list is Gwanak's.
+- A place elsewhere names none: on another of the university's campuses, at its hospitals or at its schools (`연건`,
+  `시흥`, `평창`, `수원`, `의과대학`, `간호대학`, `서울대학교병원`, `부설` and the like), at the stations named after it, at
+  another university, at an address in another district or region, or in a flat. The list is Gwanak's.
 
 No Collection changes a stored event, whatever its state. A post is stored once, by its post number, and a later
 message carrying it again leaves it exactly as it is. So an Administrator's edits stay, and a discarded post does not

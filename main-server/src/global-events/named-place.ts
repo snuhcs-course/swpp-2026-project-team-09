@@ -6,12 +6,13 @@ import { PlaceDto } from '../places/dto/place.dto.js';
 // A number as a place writes it: "302동 105호", "학생회관(63동)", "71-1동", but not the address "역삼1동".
 const NUMBER = /(?<![\p{L}\p{N}-])(\d+(?:-\d+)?)동/gu;
 
-// What the list of Places, Gwanak's, cannot hold: the university's other campuses and hospitals, the stations near
-// it, another university, another district or region, and a flat, whose buildings have numbers too.
+// What the list of Places, Gwanak's, cannot hold: the university's other campuses, hospitals and schools, the stations
+// near it, another university, another district or region, and a flat, whose buildings have numbers too.
 const ELSEWHERE = new RegExp(
   [
     String.raw`연건|시흥|평창|수원|보라매|대학로|혜화|서울대\s*입구|낙성대`,
     String.raw`(?<!수)의과대학|간호대학|치과병원|서울대(?:학교)?\s*병원|SNUH|의학연구원|의학도서관`,
+    '부설|사대부',
     '(?<!서울)대학교',
     String.raw`서울(?:특별시|시)?\s+(?!관악구)[가-힣]{1,3}구(?![가-힣])`,
     '경기도|인천|부산|대구|대전|울산|세종시|제주|강원도|충청|전라|경상',
