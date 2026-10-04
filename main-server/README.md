@@ -24,6 +24,13 @@ line in `worker-server/.env`:
 echo "WORKER_TOKEN=$(openssl rand -hex 32)" >> .env
 ```
 
+The main server and the match server call each other with another shared secret. Generate it and put the same line in
+`match-server/.env`:
+
+```bash
+echo "MATCH_SERVER_TOKEN=$(openssl rand -hex 32)" >> .env
+```
+
 `.env.example` already holds the team's Google client IDs in `GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID` (see
 [Sign-in](#sign-in)). Replace the example address in `INITIAL_ADMINISTRATOR_EMAILS` with your own (see
 [Administrators](#administrators)). Fill in `KAKAO_REST_API_KEY` with the REST API key that the Owner of the team's
@@ -470,13 +477,83 @@ one Quest locks it first, so that changes run one after another:
 - `removeHolder(questId, userId, tx)` removes the Holder with the Holder's progress, and deletes the Quest when nobody
   holds it any more.
 - `holderIds(questId, tx)` answers the Holders' User ids.
+- `matchingRefusals(requests, tx?)` answers, for each `{ userId, globalEventId }` in order, why that request for
+  [Matching](#matching) cannot stand now, as the refusal's code, or `null` when it stands.
 
 `quests-changed` goes to every Holder, the one who acted included, when a Quest is created by attending, when a Sub
 Quest is added, edited or cancelled, and when a Holder drops the Quest. A mark of done is the Holder's own and sends
 nothing. The signal carries nothing, and the app fetches `GET /quests` again (see [Signals](#signals)).
 
 In a test, `test/quests.ts` stores a published Global Event with a connection of its own, since no route creates one
-yet, and calls the routes above.
+yet, and calls the routes above. `storeSharedQuest()` stores a Quest with several Holders the same way.
+
+## Matching
+
+A User asks for Matching on a Global Event with a group size and goes on using the app while the request waits. The
+match server keeps the requests in its own database, and the app never calls it: this server decides whether a request
+can be made and passes it on, and passes on withdrawals and reads. The routes, all a User's:
+
+- `POST /matching-requests` with `{ "globalEventId": "...", "size": 3 }` asks and answers 201 with the request, which
+  waits. It passes the User, the Global Event, the size and the User's interest hashtags, the profile's `hashtags`, on
+  to the match server. A repeat is refused while the first request waits, so it takes no `Idempotency-Key`.
+- `GET /matching-requests` answers the User's open requests, those that wait, oldest first.
+- `GET /matching-requests/:globalEventId` answers the User's latest request for the Global Event, in whatever state.
+- `POST /matching-requests/:globalEventId/withdraw` withdraws the waiting request and answers 204.
+
+A request reads:
+
+```json
+{ "globalEventId": "…", "size": 3, "state": "waiting", "arrivedAt": "2026-10-04T08:00:00.000Z" }
+```
+
+- `state` is `waiting`, `matched`, `withdrawn` or `expired`. Only a waiting request can be withdrawn. The match server
+  matches requests and expires those that no longer stand in its rounds (P08 ticket 09).
+- `arrivedAt` is when the match server stored it.
+- Once a request no longer waits, the User may ask again, and the new request is the one read.
+
+A request can be made for a published Global Event that has not started, with a size from 2 to 4, by a User who holds
+no Shared Quest for the event. A User who holds a Quest for it alone can ask, and so can a member of a Party. An event
+has started once its start is at or before `now()` of `CLOCK` (see [Quests](#quests)). A published Global Event without
+a start time counts as not started. The refusals each have a `code`:
+
+| Refusal                                                        | Status | `code`                         |
+| -------------------------------------------------------------- | ------ | ------------------------------ |
+| A size outside 2 to 4                                          | 400    | `MATCHING_SIZE_OUT_OF_RANGE`   |
+| A Global Event that is unknown or not published                | 404    | `GLOBAL_EVENT_NOT_FOUND`       |
+| A Global Event that has started                                | 409    | `GLOBAL_EVENT_STARTED`         |
+| A User who holds a Shared Quest for the Global Event           | 409    | `SHARED_QUEST_HELD`            |
+| A request while the User's request for the event waits         | 409    | `MATCHING_REQUEST_WAITING`     |
+| Reading or withdrawing when the User never asked for the event | 404    | `MATCHING_REQUEST_NOT_FOUND`   |
+| Withdrawing a request that is not waiting                      | 409    | `MATCHING_REQUEST_NOT_WAITING` |
+
+The last three are the match server's refusals, passed on as it gives them. A size that is not a whole number gets 400
+with a message naming the field, as any body that does not match.
+
+When the match server cannot be reached, answers anything else, or has not answered within 5 seconds, the app gets 502
+`{ "statusCode": 502, "error": "Bad Gateway", "message": "The match server did not answer." }`, without a `code`, so
+that it tells the failure apart from a refusal. The server logs a warning with the call and the reason, such as
+`The match server did not answer POST /users/…/matching-requests: TimeoutError: …`. This server stores nothing for a
+request. When only the answer was lost, the match server has stored the request, and the app sees it when it reads the
+request again.
+
+`MatchServer` in `src/matching/match-server.ts` makes the calls: HTTP requests to `MATCH_SERVER_URL`, each of which
+reaches one match server however many run, with `Authorization: Bearer <MATCH_SERVER_TOKEN>`. That secret, of at least
+32 characters, is in both servers' settings, and the match server's calls to this server carry it too. The match
+server's README describes its routes. Whether requests still stand is one question, which the rounds ask again:
+`QuestsService.matchingRefusals()` (see [Quests](#quests)).
+
+In a test, give `startApp` a `MatchServerStub` from `test/match-server.ts` in place of the HTTP call to the match
+server, and give the stub the answer to send back:
+
+```ts
+const matchServer = new MatchServerStub();
+const app = await startApp(inject('settings'), [], refuseKakao, matchServer.fetch);
+matchServer.answers('GET', `/users/${user.id}/matching-requests`, 200, []);
+matchServer.refuses('POST', `/users/${user.id}/matching-requests`, 409, 'MATCHING_REQUEST_WAITING');
+```
+
+The stub keeps each call in `calls`, with its method, path, body and `Authorization` header. A call it was given no
+answer for fails, as one to a match server that is down, and `hangs()` never answers.
 
 ## Menus
 
@@ -890,6 +967,7 @@ src/
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
 ├── quests/                          a feature: Quests, their Holders, Sub Quests and each Holder's progress
+├── matching/                        a feature: requests for Matching, checked and passed on to the match server
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a

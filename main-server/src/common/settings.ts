@@ -41,6 +41,10 @@ export const settingsSchema = z
     KAKAO_REST_API_KEY: z.string().min(1),
     // The secret that the worker server sends with what it collected. Long enough not to be guessed.
     WORKER_TOKEN: z.string().min(32),
+    // Where the match server is reached, such as http://localhost:3003.
+    MATCH_SERVER_URL: z.url(),
+    // The secret that this server and the match server send with each call to the other.
+    MATCH_SERVER_TOKEN: z.string().min(32),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),

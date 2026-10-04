@@ -18,6 +18,7 @@ import { FriendsModule } from './friends/friends.module.js';
 import { GlobalEventsModule } from './global-events/global-events.module.js';
 import { HealthModule } from './health/health.module.js';
 import { LobbyModule } from './lobby/lobby.module.js';
+import { MatchingModule } from './matching/matching.module.js';
 import { MenusModule } from './menus/menus.module.js';
 import { PlacesModule } from './places/places.module.js';
 import { QuestsModule } from './quests/quests.module.js';
@@ -60,6 +61,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     PlacesModule,
     ShuttleModule,
     QuestsModule,
+    MatchingModule,
   ],
   providers: [
     // Validates a handler parameter against the schema given in its decorator: @Body({ schema: signInSchema }).

@@ -135,3 +135,21 @@ export async function subQuestIn(
   }
   return z.object({ id: z.string() }).parse(response.body).id;
 }
+
+// A Quest for the Global Event held by these Users. No route makes a Shared Quest yet, so the tests store it with a
+// connection of their own.
+export async function storeSharedQuest(
+  prisma: PrismaClient,
+  globalEvent: Pick<GlobalEvent, 'id' | 'title'>,
+  holderIds: readonly string[],
+): Promise<string> {
+  const quest = await prisma.quest.create({
+    data: {
+      title: globalEvent.title,
+      globalEventId: globalEvent.id,
+      holders: { create: holderIds.map((userId) => ({ userId, globalEventId: globalEvent.id })) },
+      subQuests: { create: { attending: true } },
+    },
+  });
+  return quest.id;
+}

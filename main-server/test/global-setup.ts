@@ -30,6 +30,9 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     KAKAO_REST_API_KEY: 'test-kakao-rest-api-key',
     // Not a secret: sendAsWorker(app, …) sends it as the worker does.
     WORKER_TOKEN: 'test-worker-token-of-thirty-two-characters',
+    // Not reached: the tests give startApp a MatchServerStub from test/match-server.ts in the match server's place.
+    MATCH_SERVER_URL: 'http://match-server:3003',
+    MATCH_SERVER_TOKEN: 'test-match-server-token-of-32-characters',
   };
   migrate(settings.DATABASE_URL);
   await seed(settings.DATABASE_URL);
