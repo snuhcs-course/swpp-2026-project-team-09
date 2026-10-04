@@ -18,23 +18,23 @@ Screens laid over the map that take a User from a Global Event to companions and
 2. As an SNU student, I want a button to ask for Matching with a choice of group size, so that I can find companions.
 3. As an SNU student, I want to read what Matching will do before I confirm, so that I consent knowingly.
 4. As an SNU student, I want to see that my request is waiting and to withdraw it, so that I stay in control.
-5. As an SNU student, I want the card to list the Parties going to this event, so that I can join one directly.
-6. As an SNU student, I want the card to show whether I already hold a Quest for this event, so that I do not attend twice.
+5. As an SNU student, I want to go on using the app while my request waits and to see the Shared Quest appear in my list when I am matched, so that I do not watch a screen.
+6. As an SNU student, I want the card to list the Parties going to this event, so that I can join one directly.
+7. As an SNU student, I want the card to show whether I already hold a Quest for this event, so that I do not attend twice.
 
 ### Quest list
 
-7. As an SNU student, I want my Quests in a list at the side of the map, so that I see my plans without leaving the map.
-8. As an SNU student, I want each Quest shown with its title and its current Sub Quest beneath it, so that I see the next step at a glance.
-9. As an SNU student, I want today's Class Quests in the same list, so that one list shows my day.
-10. As an SNU student, I want a marker at the place of each Quest's current Sub Quest, so that I see where my day takes me.
-11. As an SNU student, I want to tap a Quest and see the walking route to its place, so that I know how to get there.
-12. As an SNU student, I want the map to move to the place with a message when no route is found, so that I still see where it is.
+8. As an SNU student, I want my Quests in a list at the side of the map, so that I see my plans without leaving the map.
+9. As an SNU student, I want each Quest shown with its title and its current Sub Quest beneath it, so that I see the next step at a glance.
+10. As an SNU student, I want today's Class Quests in the same list, so that one list shows my day.
+11. As an SNU student, I want a marker at the place of each Quest's current Sub Quest, so that I see where my day takes me.
+12. As an SNU student, I want to tap a Quest and see the walking route to its place, so that I know how to get there.
+13. As an SNU student, I want the map to move to the place with a message when no route is found, so that I still see where it is.
 
 ### Quest detail
 
-13. As a Holder, I want to open a Quest and see all its Sub Quests with their times and places, so that I know the whole plan.
-14. As a Holder, I want to see the other Holders of a Shared Quest, so that I know who is coming.
-15. As a matched SNU student, I want to read the sentence about what we have in common, so that I have something to start with.
+14. As a Holder, I want to open a Quest and see all its Sub Quests with their times and places, so that I know the whole plan.
+15. As a Holder, I want to see the other Holders of a Shared Quest, so that I know who is coming.
 16. As a Holder, I want to add, edit and cancel Sub Quests, so that the plan covers what we do next.
 17. As a Holder, I want to mark a Sub Quest as done, so that my list moves on.
 18. As a Holder, I want to drop the Quest, so that I can change my mind.
@@ -68,7 +68,7 @@ Screens laid over the map that take a User from a Global Event to companions and
 - This task builds screens and connects them to the API of P08. It adds no server behaviour.
 - The map stays the main screen. The Quest list and the Party member list are laid over it, one on each side. Cards and detail views open over the map as panels.
 - The Quest list shows stored Quests and Class Quests through one interface. The screen does not distinguish them except by an icon.
-- The app keeps one open socket connection. Positions arrive on it and move Avatars directly. For every other signal the app fetches the named item again.
+- The app keeps one open socket connection. Positions arrive on it and move Avatars directly. For every other signal the app fetches again the list that the signal names.
 - The app fetches the current state when it connects, when it reconnects and when it returns to the front. It does not poll.
 - Avatars move smoothly from the previous position to the new one using the map component of P06.
 - Markers, routes and Avatars use the map component of P06. No screen calls the native module directly.

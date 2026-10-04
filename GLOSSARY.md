@@ -23,12 +23,20 @@ The figure that stands for a User on the map and moves as the User moves.
 _Avoid_: Pin, profile marker
 
 **Friend**:
-A User connected to another by an accepted Invite Link. Friendship is mutual.
+A User connected to another by an accepted Friend Request or an accepted Invite Link. Friendship is mutual.
 _Avoid_: Follower, contact
+
+**Friend ID**:
+The short code by which others name a User when they send a Friend Request. Each User has one, and no two Users share it.
+_Avoid_: Friend code, username, handle
+
+**Friend Request**:
+A request to become Friends, sent by a User to the holder of a Friend ID, who accepts or declines it.
+_Avoid_: Follow request
 
 **Invite Link**:
 A one-time link a User sends so that whoever opens and accepts it becomes their Friend.
-_Avoid_: Friend code, friend request
+_Avoid_: Share link, invitation code
 
 ### Events
 
