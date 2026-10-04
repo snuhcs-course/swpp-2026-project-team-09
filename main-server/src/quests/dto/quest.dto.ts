@@ -1,4 +1,4 @@
-import { GlobalEvent, GlobalEventState, Prisma, SubQuest } from '../../generated/prisma/client.js';
+import { GlobalEvent, GlobalEventState, Place, Prisma, SubQuest } from '../../generated/prisma/client.js';
 
 // A Place from the list, with its id, or a point with the label the app showed. The attending Sub Quest's is the
 // Global Event's position and place text.
@@ -78,20 +78,25 @@ function contentOf(
       cancelled: globalEvent.state !== GlobalEventState.published,
     };
   }
-  const { place } = subQuest;
   return {
     title: subQuest.title ?? '',
     startsAt: subQuest.startsAt?.toISOString() ?? null,
     endsAt: subQuest.endsAt?.toISOString() ?? null,
-    place:
-      place === null
-        ? pointOf(subQuest)
-        : { placeId: place.id, label: place.name, latitude: place.latitude, longitude: place.longitude },
+    place: toPlaceDto(subQuest),
     cancelled: false,
   };
 }
 
-function pointOf({ latitude, longitude, placeLabel }: SubQuest): SubQuestPlaceDto | null {
+// The stored Place, or the stored point with its label, or null when there is neither.
+export function toPlaceDto({
+  place,
+  latitude,
+  longitude,
+  placeLabel,
+}: Pick<SubQuest, 'latitude' | 'longitude' | 'placeLabel'> & { place: Place | null }): SubQuestPlaceDto | null {
+  if (place !== null) {
+    return { placeId: place.id, label: place.name, latitude: place.latitude, longitude: place.longitude };
+  }
   return latitude === null || longitude === null || placeLabel === null
     ? null
     : { placeId: null, label: placeLabel, latitude, longitude };

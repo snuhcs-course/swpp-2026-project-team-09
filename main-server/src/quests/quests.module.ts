@@ -8,6 +8,6 @@ import { QuestsService } from './quests.service.js';
   imports: [UsersModule],
   controllers: [QuestsController],
   providers: [QuestsService, { provide: CLOCK, useValue: systemClock }],
-  exports: [QuestsService],
+  exports: [QuestsService, CLOCK],
 })
 export class QuestsModule {}

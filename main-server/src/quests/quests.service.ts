@@ -7,6 +7,14 @@ import { CLOCK, type Clock } from './clock.js';
 import { type SubQuestContentDto } from './dto/quest-requests.dto.js';
 import { QUEST_INCLUDE, QuestDto, SUB_QUEST_INCLUDE, SubQuestDto, toQuestDto, toSubQuestDto } from './dto/quest.dto.js';
 
+// What a Sub Quest that a Holder or a Meetup writes stores.
+export type SubQuestColumns = Pick<
+  SubQuest,
+  'startsAt' | 'endsAt' | 'placeId' | 'latitude' | 'longitude' | 'placeLabel'
+> & {
+  title: string;
+};
+
 const questNotFound = (): NotFoundException =>
   new NotFoundException({
     statusCode: HttpStatus.NOT_FOUND,
@@ -164,6 +172,22 @@ export class QuestsService {
     return quest.id;
   }
 
+  // A Quest without a Global Event, titled as its one Sub Quest, with these Holders.
+  async createWithSubQuest(
+    subQuest: SubQuestColumns,
+    holderIds: readonly string[],
+    tx: Prisma.TransactionClient,
+  ): Promise<string> {
+    const quest = await tx.quest.create({
+      data: {
+        title: subQuest.title,
+        holders: { create: holderIds.map((userId) => ({ userId })) },
+        subQuests: { create: subQuest },
+      },
+    });
+    return quest.id;
+  }
+
   // Removes the Holder with the Holder's progress, and the Quest with its Sub Quests when nobody holds it any more.
   // Lock the Quest first.
   async removeHolder(questId: string, userId: string, tx: Prisma.TransactionClient): Promise<void> {
@@ -203,10 +227,11 @@ export class QuestsService {
     return subQuest;
   }
 
-  private async columnsOf(
+  // Refuses a Place that is not in the list.
+  async columnsOf(
     { title, startsAt, endsAt, place }: SubQuestContentDto,
     tx: Prisma.TransactionClient,
-  ): Promise<Pick<SubQuest, 'title' | 'startsAt' | 'endsAt' | 'placeId' | 'latitude' | 'longitude' | 'placeLabel'>> {
+  ): Promise<SubQuestColumns> {
     const point = place !== null && 'latitude' in place ? place : null;
     const placeId = place !== null && 'placeId' in place ? place.placeId : null;
     if (placeId !== null && (await tx.place.findUnique({ where: { id: placeId } })) === null) {
