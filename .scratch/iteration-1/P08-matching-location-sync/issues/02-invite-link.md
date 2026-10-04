@@ -51,3 +51,10 @@ The link is an https address on the team's server. Android opens the app from it
   not set one yet) and the configured fingerprints. The link's address `/invite/<token>` has no page yet.
 - **Not checked**: opening a link on a phone from KakaoTalk and from the message app needs the app to handle the link
   (P14), so that criterion is left to a person.
+
+### Agent usage (2026-10-04)
+
+- Agent time: about 11 minutes, an estimate: one implementing agent. The session that ran the agents of all P08 tickets is counted once, under ticket 09.
+- Tokens, counted from the agent's transcript:
+  - Input: 10,446,121, of which 10,281,678 were cache reads, 164,299 cache writes and 144 uncached.
+  - Output: 17,129, a lower bound, since the transcript records only part of the output of most steps.
