@@ -67,3 +67,10 @@ This ticket lays down what Meetup, Party and Matching build on: the Quest with i
   for a held Quest. Ticket 07 adds a Quest with an ordinary first Sub Quest, 05 and 09 a Holder added to an existing
   Quest and the question of a Shared Quest, 05 whether a Quest has Sub Quests ahead, 09 the match identifier, 11 the
   Class Quest mark in the list.
+
+### Agent usage (2026-10-04)
+
+- Agent time: about 15 minutes, an estimate: one implementing agent. The session that ran the agents of all P08 tickets is counted once, under ticket 09.
+- Tokens, counted from the agent's transcript:
+  - Input: 13,712,948, of which 13,497,766 were cache reads, 215,028 cache writes and 154 uncached.
+  - Output: 38,483, a lower bound, since the transcript records only part of the output of most steps.
