@@ -5,7 +5,7 @@ import { PositionStore } from './position-store.js';
 
 // Answers who may see whom now. A viewer may see a subject when both Master Switches are on, the subject has a
 // position (only one inside the Campus Boundary is kept), and a relationship between the two has its switch on at both
-// ends. Sharing is mutual, so the rule reads the same from either User's side.
+// ends: a friendship or a common Party. Sharing is mutual, so the rule reads the same from either User's side.
 @Injectable()
 export class VisibilityService {
   constructor(
@@ -64,7 +64,7 @@ export class VisibilityService {
   // The Users with whom the User shares their location now, whether or not either has a position: both Master Switches
   // are on, and a relationship between the two has its switch on at both ends.
   private async linkedTo(userId: string): Promise<string[]> {
-    const related = await this.sharingFriendsOf(userId);
+    const related = [...new Set([...(await this.sharingFriendsOf(userId)), ...(await this.sharingMembersOf(userId))])];
     const switchedOn = await this.prisma.user.findMany({
       where: { id: { in: [userId, ...related] }, masterSwitchOn: true },
       select: { id: true },
@@ -85,5 +85,14 @@ export class VisibilityService {
       select: { userAId: true, userBId: true },
     });
     return rows.map(({ userAId, userBId }) => (userAId === userId ? userBId : userAId));
+  }
+
+  // The relationship of a common Party, with its switch on at both ends.
+  private async sharingMembersOf(userId: string): Promise<string[]> {
+    const rows = await this.prisma.partyMember.findMany({
+      where: { userId: { not: userId }, sharing: true, party: { members: { some: { userId, sharing: true } } } },
+      select: { userId: true },
+    });
+    return rows.map((row) => row.userId);
   }
 }

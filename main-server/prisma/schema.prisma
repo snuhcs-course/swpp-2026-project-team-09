@@ -35,6 +35,8 @@ model User {
   friendshipsAsA Friendship[]  @relation("FriendshipUserA")
   friendshipsAsB Friendship[]  @relation("FriendshipUserB")
   questHolders   QuestHolder[]
+  partyMember    PartyMember?
+  ledParties     Party[]
 
   @@map("users")
 }
@@ -160,6 +162,7 @@ model Quest {
   createdAt     DateTime      @default(now()) @map("created_at")
   holders       QuestHolder[]
   subQuests     SubQuest[]
+  party         Party?
 
   @@index([globalEventId])
   @@map("quests")
@@ -220,6 +223,54 @@ model SubQuestProgress {
   @@unique([subQuestId, holderId])
   @@index([holderId])
   @@map("sub_quest_progress")
+}
+
+// A group of Users who are together now (README.md: Party). It ends, and its row is deleted, when its last member
+// leaves.
+model Party {
+  id         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title      String
+  // From 1 to 8, which the migration checks.
+  capacity   Int
+  joinPolicy PartyJoinPolicy @map("join_policy")
+  leaderId   String          @map("leader_id") @db.Uuid
+  leader     User            @relation(fields: [leaderId], references: [id])
+  // The mark: one of the creator's Quests, set at creation. Unique, so that one running Party carries a Quest. Empty
+  // once the Quest is deleted, when its last Holder dropped it.
+  questId    String?         @unique @map("quest_id") @db.Uuid
+  quest      Quest?          @relation(fields: [questId], references: [id], onDelete: SetNull)
+  createdAt  DateTime        @default(now()) @map("created_at")
+  members    PartyMember[]
+
+  @@index([leaderId])
+  @@map("parties")
+}
+
+enum PartyJoinPolicy {
+  // Anyone joins at once.
+  open
+  // The Leader accepts each request.
+  approval
+  // Unlisted, entry by the Leader's invitation only.
+  closed
+
+  @@map("party_join_policy")
+}
+
+// A User in a Party. Unique for the User, so that a User is in one Party at most.
+model PartyMember {
+  id       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partyId  String   @map("party_id") @db.Uuid
+  party    Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  userId   String   @unique @map("user_id") @db.Uuid
+  user     User     @relation(fields: [userId], references: [id])
+  // Read when the row is written, after the Party is locked, so that the order of the times is the order of entry.
+  joinedAt DateTime @default(dbgenerated("clock_timestamp()")) @map("joined_at")
+  // The member's switch for Location Sharing with the Party.
+  sharing  Boolean  @default(true)
+
+  @@index([partyId])
+  @@map("party_members")
 }
 
 // One restaurant on one day, as the last Collection of its Source read it.

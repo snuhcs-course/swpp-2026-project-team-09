@@ -97,6 +97,11 @@ function pointOf({ latitude, longitude, placeLabel }: SubQuest): SubQuestPlaceDt
     : { placeId: null, label: placeLabel, latitude, longitude };
 }
 
+// Ended for every Holder alike: cancelled, or its end time has passed by `now`.
+function passed({ cancelled, endsAt }: Pick<SubQuestDto, 'cancelled' | 'endsAt'>, now: Date): boolean {
+  return cancelled || (endsAt !== null && new Date(endsAt) <= now);
+}
+
 // As `userId` reads it. Ended is computed at `now` and never stored.
 export function toSubQuestDto(
   subQuest: StoredSubQuest,
@@ -106,15 +111,20 @@ export function toSubQuestDto(
 ): SubQuestDto {
   const content = contentOf(subQuest, globalEvent);
   const done = subQuest.progress.some(({ holder }) => holder.userId === userId);
-  const passed = content.endsAt !== null && new Date(content.endsAt) <= now;
   return {
     id: subQuest.id,
     attending: subQuest.attending,
     ...content,
     completion: content.endsAt === null ? 'by_hand' : 'by_time',
     done,
-    ended: content.cancelled || done || passed,
+    ended: done || passed(content, now),
   };
+}
+
+// Whether a Sub Quest of the Quest has not passed for every Holder. A mark of done is one Holder's own and does not
+// count.
+export function hasSubQuestsAhead(quest: StoredQuest, now: Date): boolean {
+  return quest.subQuests.some((subQuest) => !passed(contentOf(subQuest, quest.globalEvent), now));
 }
 
 export function toQuestDto(quest: StoredQuest, userId: string, now: Date): QuestDto {

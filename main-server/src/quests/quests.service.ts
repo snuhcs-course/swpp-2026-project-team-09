@@ -5,9 +5,17 @@ import { GlobalEvent, GlobalEventState, Prisma, QuestHolder, SubQuest } from '..
 import { UsersService } from '../users/users.service.js';
 import { CLOCK, type Clock } from './clock.js';
 import { type SubQuestContentDto } from './dto/quest-requests.dto.js';
-import { QUEST_INCLUDE, QuestDto, SUB_QUEST_INCLUDE, SubQuestDto, toQuestDto, toSubQuestDto } from './dto/quest.dto.js';
+import {
+  hasSubQuestsAhead,
+  QUEST_INCLUDE,
+  QuestDto,
+  SUB_QUEST_INCLUDE,
+  SubQuestDto,
+  toQuestDto,
+  toSubQuestDto,
+} from './dto/quest.dto.js';
 
-const questNotFound = (): NotFoundException =>
+export const questNotFound = (): NotFoundException =>
   new NotFoundException({
     statusCode: HttpStatus.NOT_FOUND,
     error: 'Not Found',
@@ -176,6 +184,37 @@ export class QuestsService {
   async holderIds(questId: string, tx: Prisma.TransactionClient): Promise<string[]> {
     const holders = await tx.questHolder.findMany({ where: { questId }, select: { userId: true } });
     return holders.map(({ userId }) => userId);
+  }
+
+  // Makes the User a Holder of the Quest, with the Quest's Global Event on the Holder's row. For a Quest with a Global
+  // Event, ask freeForSharedQuest first. Lock the Quest first.
+  async addHolder(questId: string, userId: string, tx: Prisma.TransactionClient): Promise<void> {
+    const { globalEventId } = await tx.quest.findUniqueOrThrow({ where: { id: questId } });
+    await tx.questHolder.create({ data: { questId, userId, globalEventId } });
+  }
+
+  // Whether the User may become a Holder of a Shared Quest for the Global Event: yes when the User holds no Quest for
+  // it, or holds one alone, which this deletes with its Sub Quests and the User's progress; no when the User holds a
+  // Shared Quest for it, which stays.
+  async freeForSharedQuest(userId: string, globalEventId: string, tx: Prisma.TransactionClient): Promise<boolean> {
+    const questId = await this.heldFor(userId, globalEventId, tx);
+    if (questId === null) {
+      return true;
+    }
+    await this.lock(questId, tx);
+    if ((await this.holderIds(questId, tx)).length > 1) {
+      return false;
+    }
+    await this.removeHolder(questId, userId, tx);
+    return true;
+  }
+
+  // The Quests among these that have a Sub Quest ahead: one not cancelled whose end time has not passed. A mark of done
+  // is one Holder's own and does not count.
+  async withSubQuestsAhead(questIds: readonly string[], tx: Prisma.TransactionClient = this.prisma): Promise<string[]> {
+    const quests = await tx.quest.findMany({ where: { id: { in: [...questIds] } }, include: QUEST_INCLUDE });
+    const now = this.clock.now();
+    return quests.filter((quest) => hasSubQuestsAhead(quest, now)).map(({ id }) => id);
   }
 
   private async holderIn(questId: string, userId: string, tx: Prisma.TransactionClient): Promise<QuestHolder> {

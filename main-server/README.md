@@ -214,10 +214,12 @@ numbers below are provisional until P17 has checked them on a phone.
   `masterSwitch`. Turning it off clears the User's position.
 - **The switch of a friendship** is each Friend's own, on their end of the friendship, and starts on (see
   [Friends](#friends)).
+- **The switch of a Party** is each member's own, on their membership, and starts on (see [Party](#party)).
 - **Who sees whom**: a viewer sees a subject when both Master Switches are on, the subject has a position, which is
   kept only inside the [Campus Boundary](#campus-boundary), and a relationship between the two has its switch on at
-  both ends. A friendship is the one relationship so far. Sharing is mutual: the rule is the same both ways, and a User
-  who turns a switch off also stops seeing the other. A Friend off campus, one with sharing off and one whose position
+  both ends. The relationships are a friendship and a common Party, so a User whom a friendship's switch hides from a
+  Friend is still seen through their Party. Sharing is mutual: the rule is the same both ways, and a User who turns a
+  switch off also stops seeing the other. A Friend or member off campus, one with sharing off and one whose position
   has expired look the same: no position, and `visible` false.
 - `POST /positions` with `{ "latitude": 37.4594, "longitude": 126.95199, "accuracy": 12, "measuredAt": "..." }`
   uploads a position, where `accuracy` is the radius in metres within which the phone places itself and `measuredAt`
@@ -251,8 +253,9 @@ What is pushed, through the [socket server](../socket-server/README.md#signals):
 - Each position kept goes as `position`, with `{ "userId", "latitude", "longitude", "measuredAt" }`, to the Users who
   may see the subject at that moment. Delivery is lossy on purpose: only the newest position matters.
 - `position-removed`, with `{ "userId" }`, the subject, goes at once to each viewer who could see the subject before a
-  change and cannot after it: when either turns the Master Switch or the friendship's switch off, when the friendship
-  ends, when the subject leaves the Campus Boundary and when the subject's session ends.
+  change and cannot after it: when either turns the Master Switch, the friendship's switch or the Party's switch off,
+  when the friendship ends, when either leaves the Party, when the subject leaves the Campus Boundary and when the
+  subject's session ends.
 
 `VisibilityService` in `src/location-sharing/visibility.service.ts`, exported by `LocationSharingModule`, is the one
 place that decides who sees whom:
@@ -262,8 +265,8 @@ place that decides who sees whom:
 - `announceRemovals(userId, change)`: runs `change`, a change that may end what the User sees or who sees the User,
   and sends `position-removed` to each viewer who saw a subject before and does not after. It compares who sees whom
   among the pairs that include the User, before and after the change. Pass the User whose switch, relationship or
-  position the change touches: every sight it can end includes that User, so a new cause, such as leaving a Party,
-  only wraps its change in it.
+  position the change touches: every sight it can end includes that User, so a new cause only wraps its change in it,
+  as leaving a Party and the Party's switch do.
 
 ## Administrators
 
@@ -541,6 +544,13 @@ one Quest locks it first, so that changes run one after another:
 - `removeHolder(questId, userId, tx)` removes the Holder with the Holder's progress, and deletes the Quest when nobody
   holds it any more.
 - `holderIds(questId, tx)` answers the Holders' User ids.
+- `addHolder(questId, userId, tx)` makes the User a Holder of the Quest, with the Quest's Global Event on the Holder's
+  row. For a Quest with a Global Event, ask `freeForSharedQuest` first.
+- `freeForSharedQuest(userId, globalEventId, tx)` answers whether the User may become a Holder of a Shared Quest for
+  the Global Event: `true` when the User holds no Quest for it, or holds one alone, which it deletes with its Sub
+  Quests and the User's progress; `false` when the User holds a Shared Quest for it, which stays.
+- `withSubQuestsAhead(questIds, tx?)` answers those of the Quests with a Sub Quest ahead: not cancelled, and its end
+  time not passed. A mark of done is one Holder's own and does not count.
 
 `quests-changed` goes to every Holder, the one who acted included, when a Quest is created by attending, when a Sub
 Quest is added, edited or cancelled, and when a Holder drops the Quest. A mark of done is the Holder's own and sends
@@ -548,6 +558,105 @@ nothing. The signal carries nothing, and the app fetches `GET /quests` again (se
 
 In a test, `test/quests.ts` stores a published Global Event with a connection of its own, since no route creates one
 yet, and calls the routes above.
+
+## Party
+
+A Party is a group of Users who are together now: a title, a capacity from 1 to 8, a Join Policy, a Leader, its members
+and an optional mark naming one Quest. A User is in at most one Party. The creator is its Leader and first member. When
+the Leader leaves, the member who joined earliest becomes Leader, and the Party ends when its last member leaves. It
+never ends by itself. The routes, all a User's:
+
+- `POST /parties` with `{ "title": "점심 같이", "capacity": 4, "joinPolicy": "open", "questId": "..." }` creates a
+  Party and answers 201 with it. The title has 1 to 50 characters; `capacity` is 4 when left out; `joinPolicy` is
+  `open`, `approval` or `closed`; `questId`, the mark, is optional and names a Quest the creator holds whose Sub
+  Quests are not all passed. The mark never changes. A repeat is refused as a User in a Party, so it takes no
+  `Idempotency-Key`.
+- `GET /parties` answers the Open and Approval Parties, the newest first:
+  `[{ "id", "title", "capacity", "joinPolicy", "memberCount", "mark" }]`. `GET /parties?globalEventId=...` answers
+  those marked with a Quest of that Global Event while the Quest has Sub Quests ahead. A Closed Party is in neither.
+- `POST /parties/:partyId/join` makes the User a member and answers 201 with the Party. An Open Party admits anyone, and
+  a Party of any Join Policy admits a Holder of its mark, each within its capacity.
+- `GET /parties/mine` answers the User's Party.
+- `POST /parties/mine/leave` takes the User out of their Party and answers 204.
+- `PUT /parties/mine/sharing` with `{ "on": false }` turns the User's switch for the Party off, `{ "on": true }` on, and
+  answers 204.
+
+The User's Party reads:
+
+```json
+{
+  "id": "…",
+  "title": "설명회 같이",
+  "capacity": 4,
+  "joinPolicy": "open",
+  "mark": {
+    "questId": "…",
+    "title": "지능형통신 연합전공 설명회",
+    "globalEvent": { "id": "…", "title": "지능형통신 연합전공 설명회" }
+  },
+  "sharing": true,
+  "members": [
+    { "id": "…", "name": "홍길동", "department": "컴퓨터공학부", "leader": true, "visible": true },
+    { "id": "…", "name": "김철수", "department": "경영학과", "leader": false, "visible": false }
+  ]
+}
+```
+
+- `mark` is `null` for a Party without one, and becomes `null` when the last Holder drops the Quest.
+- `sharing` is the reading User's own switch for the Party. The members are in the order they joined, the reading User
+  among them, and `visible` says whether the reading User can see each on the map now, never why not (see
+  [Location Sharing](#location-sharing)).
+
+The refusals each have a `code`:
+
+| Refusal                                                                    | Status | `code`                   |
+| -------------------------------------------------------------------------- | ------ | ------------------------ |
+| Creating or joining while in a Party, also the same one                    | 409    | `ALREADY_IN_PARTY`       |
+| A mark that is no stored Quest the creator holds                           | 404    | `QUEST_NOT_FOUND`        |
+| A mark whose Sub Quests have all passed                                    | 409    | `QUEST_ENDED`            |
+| A mark that a running Party carries; `partyId` in the body names the Party | 409    | `PARTY_EXISTS_FOR_QUEST` |
+| Joining a Party that is not running                                        | 404    | `PARTY_NOT_FOUND`        |
+| Joining an Approval or Closed Party without holding its mark               | 409    | `PARTY_NOT_OPEN`         |
+| Joining a full Party                                                       | 409    | `PARTY_FULL`             |
+| Reading, leaving or switching while in no Party                            | 404    | `NOT_IN_PARTY`           |
+
+A Class Quest is computed and never stored, so naming it as a mark gets `QUEST_NOT_FOUND`. A body that does not match
+gets 400 with a message naming the field.
+
+**Two rules the database enforces.** `party_members` is unique on the User, so a User is in one Party at most, and
+`parties` is unique on the mark, `quest_id`, so one running Party carries a Quest. An ended Party's row is deleted with
+its members, so a new Party can carry the Quest again. Besides, every change to a membership locks the User's row and
+then the Party's, and creating a marked Party locks the Quest, so that two Users taking the last free place, one User
+joining two Parties and two Holders creating a Party for one Quest run one after the other: the later is refused with
+its code. The capacity is checked in the transaction that adds the member, after the Party is locked.
+
+**Entering a marked Party changes Quests.** A User who enters without holding its Quest becomes a Holder of it, under
+the one-Quest rule: a Quest the User held alone for the same Global Event is deleted with its Sub Quests and the User's
+progress, and a User who holds a Shared Quest for that Global Event keeps it and does not become a Holder. A mark
+without a Global Event has no such rule. After entry the Party and the Quest do not affect each other: leaving and the
+Party's end leave every Quest as it is, and dropping the marked Quest leaves the membership as it is.
+
+**Which Sub Quests are ahead.** For the mark and for the list of a Global Event's Parties, a Sub Quest is ahead while it
+is not cancelled and its end time has not passed at `now()` of `CLOCK`, the same for every Holder. A mark of done is one
+Holder's own, so it does not take a Party off the list.
+
+**Location Sharing.** A common Party is a relationship of [Location Sharing](#location-sharing): two members see each
+other while both have the Party's switch on, which starts on with each membership. Leaving and the switch are wrapped in
+`VisibilityService.announceRemovals`, so `position-removed` goes at once to and about the member.
+
+How they are stored: `parties` holds the title, the capacity, which a check keeps from 1 to 8, the Join Policy, the
+Leader and the mark, which becomes empty when its Quest is deleted; `party_members` one row for each member, with the
+time they joined and their switch.
+
+`party-changed` goes to every member when a Party is created, when a User joins and when a member leaves, the one who
+left included. `quests-changed` goes to every Holder when a User becomes a Holder by entering. Each carries nothing, and
+the app fetches `GET /parties/mine` or `GET /quests` again (see [Signals](#signals)).
+
+Every way into a Party ends in `PartiesService.admit(party, userId, tx)`, which refuses a User in a Party and a full
+Party, adds the member and makes the User a Holder of the mark, and every way out in
+`PartiesService.removeMember(party, userId, tx)`, which hands the Leader's role on and ends the Party with its last
+member. Both run after the User's row and then the Party's are locked; a way out runs inside
+`VisibilityService.announceRemovals` for the User.
 
 ## Menus
 
@@ -963,6 +1072,7 @@ src/
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
 ├── quests/                          a feature: Quests, their Holders, Sub Quests and each Holder's progress
+├── parties/                         a feature: Parties, who enters and leaves them, and the members' switches
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a

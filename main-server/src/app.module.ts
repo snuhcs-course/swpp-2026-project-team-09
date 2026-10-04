@@ -20,6 +20,7 @@ import { HealthModule } from './health/health.module.js';
 import { LobbyModule } from './lobby/lobby.module.js';
 import { LocationSharingModule } from './location-sharing/location-sharing.module.js';
 import { MenusModule } from './menus/menus.module.js';
+import { PartiesModule } from './parties/parties.module.js';
 import { PlacesModule } from './places/places.module.js';
 import { QuestsModule } from './quests/quests.module.js';
 import { ShuttleModule } from './shuttle/shuttle.module.js';
@@ -62,6 +63,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     ShuttleModule,
     LocationSharingModule,
     QuestsModule,
+    PartiesModule,
   ],
   providers: [
     // Validates a handler parameter against the schema given in its decorator: @Body({ schema: signInSchema }).
