@@ -43,3 +43,10 @@ A User's Quest list shows today's classes beside the stored Quests, so that one 
   `todayFor(userId, now): Promise<QuestDto[]>` builds the Class Quests from `TimetableService.timetableOf`, and
   `refuseChange(userId, questId)` throws `CLASS_QUEST`. `QuestsService.list` appends `todayFor` before leaving out
   ended Quests, and `drop` and `addSubQuest` call `refuseChange` first. `QuestsModule` imports `TimetableModule`.
+
+### Agent usage (2026-10-04)
+
+- Agent time: about 11 minutes, an estimate: one implementing agent. The session that ran the agents of all P08 tickets is counted once, under ticket 09.
+- Tokens, counted from the agent's transcript:
+  - Input: 7,969,524, of which 7,821,586 were cache reads, 147,804 cache writes and 134 uncached.
+  - Output: 18,779, a lower bound, since the transcript records only part of the output of most steps.
