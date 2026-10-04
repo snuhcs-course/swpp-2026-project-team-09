@@ -71,7 +71,7 @@ describe('The state of a request', () => {
     const response = await readRequest(app, userId, globalEventId);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ globalEventId, size: 2, state, arrivedAt: ANY_STRING });
+    expect(response.body).toEqual({ globalEventId, size: 2, state, arrivedAt: ANY_STRING, questId: null });
   });
 
   it('is none for a Global Event the User did not ask for', async () => {

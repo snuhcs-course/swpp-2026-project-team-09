@@ -13,6 +13,7 @@ import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { GoogleAuthLibraryVerifier } from './google-auth-library.verifier.js';
 import { GoogleIdTokenVerifier } from './google-id-token.verifier.js';
+import { MatchServerGuard } from './match-server.guard.js';
 import { SessionsService } from './sessions.service.js';
 import { WorkerGuard } from './worker.guard.js';
 
@@ -42,6 +43,7 @@ import { WorkerGuard } from './worker.guard.js';
     { provide: APP_GUARD, useClass: AccessTokenGuard },
     { provide: APP_GUARD, useClass: AdministratorGuard },
     { provide: APP_GUARD, useClass: WorkerGuard },
+    { provide: APP_GUARD, useClass: MatchServerGuard },
   ],
 })
 export class AuthModule {}

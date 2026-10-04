@@ -471,18 +471,22 @@ one Quest locks it first, so that changes run one after another:
 
 - `lock(questId, tx)` locks the Quest's row until the transaction ends.
 - `heldFor(userId, globalEventId, tx)` answers the id of the Quest the User holds for the Global Event, or `null`.
-- `createForGlobalEvent(globalEvent, holderIds, tx)` creates a Quest for the Global Event with these Holders and the
-  attending Sub Quest, and answers its id. A Holder who already holds a Quest for the event makes the unique index
-  refuse it, so remove that Quest first.
+- `createForGlobalEvent(globalEvent, holderIds, tx, matchId?)` creates a Quest for the Global Event with these Holders
+  and the attending Sub Quest, and answers its id. A Holder who already holds a Quest for the event makes the unique
+  index refuse it, so remove that Quest first. A match's Quest names the match (see [Matching](#matching)).
 - `removeHolder(questId, userId, tx)` removes the Holder with the Holder's progress, and deletes the Quest when nobody
   holds it any more.
 - `holderIds(questId, tx)` answers the Holders' User ids.
+- `freeForSharedQuest(userId, globalEventId, tx)` answers whether the User may become a Holder of a Shared Quest for
+  the Global Event: `true` when the User holds no Quest for it, or held one alone, which it deletes with its Sub Quests
+  and the User's progress; `false` when the User holds a Shared Quest for it, which stays. Lock the User first.
+- `forMatch(matchId, tx)` answers the id of the Quest created for the match server's match, or `null`.
 - `matchingRefusals(requests, tx?)` answers, for each `{ userId, globalEventId }` in order, why that request for
   [Matching](#matching) cannot stand now, as the refusal's code, or `null` when it stands.
 
-`quests-changed` goes to every Holder, the one who acted included, when a Quest is created by attending, when a Sub
-Quest is added, edited or cancelled, and when a Holder drops the Quest. A mark of done is the Holder's own and sends
-nothing. The signal carries nothing, and the app fetches `GET /quests` again (see [Signals](#signals)).
+`quests-changed` goes to every Holder, the one who acted included, when a Quest is created by attending or for a match,
+when a Sub Quest is added, edited or cancelled, and when a Holder drops the Quest. A mark of done is the Holder's own
+and sends nothing. The signal carries nothing, and the app fetches `GET /quests` again (see [Signals](#signals)).
 
 In a test, `test/quests.ts` stores a published Global Event with a connection of its own, since no route creates one
 yet, and calls the routes above. `storeSharedQuest()` stores a Quest with several Holders the same way.
@@ -503,12 +507,14 @@ can be made and passes it on, and passes on withdrawals and reads. The routes, a
 A request reads:
 
 ```json
-{ "globalEventId": "…", "size": 3, "state": "waiting", "arrivedAt": "2026-10-04T08:00:00.000Z" }
+{ "globalEventId": "…", "size": 3, "state": "matched", "arrivedAt": "2026-10-04T08:00:00.000Z", "questId": "…" }
 ```
 
 - `state` is `waiting`, `matched`, `withdrawn` or `expired`. Only a waiting request can be withdrawn. The match server
-  matches requests and expires those that no longer stand in its rounds (P08 ticket 09).
+  matches requests and expires those that no longer stand in its rounds (see below).
 - `arrivedAt` is when the match server stored it.
+- `questId` is the Shared Quest of a matched request, and `null` until this server has created it and for a request
+  in any other state.
 - Once a request no longer waits, the User may ask again, and the new request is the one read.
 
 A request can be made for a published Global Event that has not started, with a size from 2 to 4, by a User who holds
@@ -542,6 +548,36 @@ reaches one match server however many run, with `Authorization: Bearer <MATCH_SE
 server's README describes its routes. Whether requests still stand is one question, which the rounds ask again:
 `QuestsService.matchingRefusals()` (see [Quests](#quests)).
 
+**The match server's rounds.** Every minute the match server asks which of its waiting requests still stand, groups
+them and asks this server for one Shared Quest for each group, a match; its README describes the rounds. It calls two
+routes, marked `@MatchServerOnly()` from `src/common/match-server-only.decorator.ts`. `MatchServerGuard` in
+`src/auth/match-server.guard.ts` answers 401 to any call without `Authorization: Bearer <MATCH_SERVER_TOKEN>`, a
+User's, an Administrator's and the worker's included. The bodies are checked as every body is.
+
+- `POST /matching-requests/standing` with `{ "requests": [{ "userId": "…", "globalEventId": "…" }] }` answers 200 with
+  `{ "standing": [...] }`, the requests that still stand in the order given: their Global Event is published and has
+  not started, and their User holds no Shared Quest for it. It is `QuestsService.matchingRefusals()`, which also
+  decides whether a User may ask, and it stores nothing.
+- `POST /matches/:matchId/quest` with `{ "globalEventId": "…", "userIds": ["…", "…"] }`, two to four Users, creates
+  the match's Shared Quest and answers 201 with `{ "questId": "…", "holderIds": [...] }`. The match server repeats the
+  request until it is answered, so the match identifier is stored with the Quest, `quests.match_id`, unique in the
+  database, and a repeat answers the Quest created the first time, also after its Global Event has started.
+
+Creating the Quest locks the matched Users in id order first, as attending locks one, so that an attend or another
+match at the same moment runs before or after it. A matched User who holds a Quest for the Global Event alone becomes a
+Holder of the new one, and the Quest held alone is deleted with its Sub Quests and the User's progress. A matched User
+who holds a Shared Quest for it keeps that one and is left out, so `holderIds` names the Users who hold the new Quest.
+`matching-changed` and `quests-changed` go to them once the Quest is stored, and to nobody on a repeat. The match server
+expires the request of a User left out. Each refusal ends the match, and the match server asks no more:
+
+| Refusal                                                  | Status | `code`                   |
+| -------------------------------------------------------- | ------ | ------------------------ |
+| The Global Event is unknown or no longer published       | 404    | `GLOBAL_EVENT_NOT_FOUND` |
+| The Global Event has started                             | 409    | `GLOBAL_EVENT_STARTED`   |
+| Fewer than two matched Users are free for a Shared Quest | 409    | `MATCH_TOO_SMALL`        |
+
+A refused request changes nothing: a Quest held alone is deleted only with the Shared Quest that replaces it.
+
 In a test, give `startApp` a `MatchServerStub` from `test/match-server.ts` in place of the HTTP call to the match
 server, and give the stub the answer to send back:
 
@@ -553,7 +589,8 @@ matchServer.refuses('POST', `/users/${user.id}/matching-requests`, 409, 'MATCHIN
 ```
 
 The stub keeps each call in `calls`, with its method, path, body and `Authorization` header. A call it was given no
-answer for fails, as one to a match server that is down, and `hangs()` never answers.
+answer for fails, as one to a match server that is down, and `hangs()` never answers. A route for the match server is
+called with its token by `postAsMatchServer(app, path, body)`, as `test/matching-quests.e2e-spec.ts` does.
 
 ## Menus
 
@@ -950,11 +987,13 @@ src/
 │   ├── signals.service.ts           sends a signal to the apps of the Users named, through the socket servers
 │   ├── redis.module.ts              makes a Redis client available to every feature
 │   ├── redis-idempotency.store.ts   keeps the results of requests safe to repeat in Redis
-│   ├── route-access.ts              who may call a route: anyone, a User, an Administrator or the worker server
+│   ├── route-access.ts              who may call a route: anyone, a User, an Administrator, the worker or the match
+│   │                                server
 │   ├── public.decorator.ts          @Public(): opens a route to requests without an access token
 │   ├── allow-before-onboarding.decorator.ts  @AllowBeforeOnboarding(): opens a User's route before onboarding
 │   ├── administrator-only.decorator.ts  @AdministratorOnly(): gives a route to Administrators
 │   ├── worker-only.decorator.ts     @WorkerOnly(): gives a route to the worker server
+│   ├── match-server-only.decorator.ts  @MatchServerOnly(): gives a route to the match server
 │   ├── current-user.decorator.ts    @CurrentUser(): the signed-in User in a handler
 │   └── current-administrator.decorator.ts  @CurrentAdministrator(): the signed-in Administrator
 ├── generated/                       Prisma Client, generated by `pnpm install` (not committed)
@@ -967,7 +1006,8 @@ src/
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
 ├── quests/                          a feature: Quests, their Holders, Sub Quests and each Holder's progress
-├── matching/                        a feature: requests for Matching, checked and passed on to the match server
+├── matching/                        a feature: requests for Matching, checked and passed on to the match server, and
+│                                    the Shared Quests of its matches
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a

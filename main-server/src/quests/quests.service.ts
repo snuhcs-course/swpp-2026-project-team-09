@@ -1,3 +1,5 @@
+/* oxlint-disable max-lines
+   -- Every change to the Quest tables is made here, the other features' included (README.md: Quests). */
 import { ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
@@ -156,16 +158,18 @@ export class QuestsService {
   }
 
   // A Quest for the Global Event, with its title, the Holders and the Sub Quest for attending it. Each Holder must hold
-  // no Quest for it yet, or the unique index on the Holders refuses it.
+  // no Quest for it yet, or the unique index on the Holders refuses it. A match's Quest names the match, once.
   async createForGlobalEvent(
     globalEvent: Pick<GlobalEvent, 'id' | 'title'>,
     holderIds: readonly string[],
     tx: Prisma.TransactionClient,
+    matchId: string | null = null,
   ): Promise<string> {
     const quest = await tx.quest.create({
       data: {
         title: globalEvent.title,
         globalEventId: globalEvent.id,
+        matchId,
         holders: { create: holderIds.map((userId) => ({ userId, globalEventId: globalEvent.id })) },
         subQuests: { create: { attending: true } },
       },
@@ -185,6 +189,32 @@ export class QuestsService {
   async holderIds(questId: string, tx: Prisma.TransactionClient): Promise<string[]> {
     const holders = await tx.questHolder.findMany({ where: { questId }, select: { userId: true } });
     return holders.map(({ userId }) => userId);
+  }
+
+  // True when the User may become a Holder of a Shared Quest for the Global Event: the User holds no Quest for it, or
+  // held one alone, which this deletes with its Sub Quests and the User's progress. False when the User holds a Shared
+  // Quest for it, which stays. Lock the User first.
+  async freeForSharedQuest(userId: string, globalEventId: string, tx: Prisma.TransactionClient): Promise<boolean> {
+    const questId = await this.heldFor(userId, globalEventId, tx);
+    if (questId === null) {
+      return true;
+    }
+    await this.lock(questId, tx);
+    const holderIds = await this.holderIds(questId, tx);
+    if (holderIds.length > 1) {
+      return false;
+    }
+    // A drop of the Quest between the two reads leaves nothing to remove.
+    if (holderIds.includes(userId)) {
+      await this.removeHolder(questId, userId, tx);
+    }
+    return true;
+  }
+
+  // The id of the Quest created for the match server's match, if any.
+  async forMatch(matchId: string, tx: Prisma.TransactionClient): Promise<string | null> {
+    const quest = await tx.quest.findUnique({ where: { matchId }, select: { id: true } });
+    return quest?.id ?? null;
   }
 
   // Why each request for Matching cannot stand now, in the order given, or null for one that stands: its Global Event

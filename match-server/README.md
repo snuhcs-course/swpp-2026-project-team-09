@@ -1,7 +1,8 @@
 # match-server
 
-The SNU Now match server. It keeps the requests for Matching in its own database. Only the main server calls it, over
-HTTP; it takes no part in messaging over Redis. It follows the main server's layout, settings and checks.
+The SNU Now match server. It keeps the requests for Matching in its own database and groups them in rounds. Only the
+main server calls it, and it calls only the main server, over HTTP; it takes no part in messaging over Redis. It
+follows the main server's layout, settings and checks.
 
 ## Run it
 
@@ -17,7 +18,8 @@ cp .env.example .env
 ```
 
 The main server calls this server with a secret that the two servers share. Put the `MATCH_SERVER_TOKEN` line of
-`main-server/.env` in `.env` too; the main server's README says how to generate it.
+`main-server/.env` in `.env` too; the main server's README says how to generate it. `MAIN_SERVER_URL` is where this
+server reaches the main server, and `ROUND_INTERVAL_SECONDS` the seconds from one round to the next, 60 for now.
 
 To run the whole system, in the repository root:
 
@@ -65,13 +67,10 @@ arrived. The User and the Global Event are the main server's, so their ids refer
 A request is in one of four states:
 
 - `waiting`: as it is stored. Only a waiting request can be withdrawn.
-- `matched`: put in a group with others.
+- `matched`: put in a match with others by a round (see [Rounds](#rounds)).
 - `withdrawn`: withdrawn by its User.
 - `expired`: no longer standing, because its Global Event started or was cancelled or its User came to hold a Shared
-  Quest for it.
-
-`matched` and `expired` are written by the rounds that group the requests (P08 ticket 09). Until then a request leaves
-`waiting` only when it is withdrawn.
+  Quest for it. A round finds it so, or the main server answers so for its match.
 
 A User has at most one open request, one that waits, for a Global Event, which the database enforces: the table
 `matching_requests` has the partial unique index `matching_requests_user_id_global_event_id_key` on the User and the
@@ -91,8 +90,10 @@ checked the User's access token and whether the request can be made, and this se
 | `GET /users/:userId/matching-requests/:globalEventId`           |                                           | 200 with the latest request for the event   |
 | `POST /users/:userId/matching-requests/:globalEventId/withdraw` |                                           | 204, and the request is `withdrawn`         |
 
-A request reads `{ "globalEventId": "…", "size": 3, "state": "waiting", "arrivedAt": "2026-10-04T08:00:00.000Z" }`.
-The refusals each have a `code`:
+A request reads
+`{ "globalEventId": "…", "size": 3, "state": "matched", "arrivedAt": "2026-10-04T08:00:00.000Z", "questId": "…" }`.
+`questId` is the Shared Quest of a matched request, and `null` until the main server has created it and for a request
+in any other state. The refusals each have a `code`:
 
 | Refusal                                                        | Status | `code`                         |
 | -------------------------------------------------------------- | ------ | ------------------------------ |
@@ -130,6 +131,80 @@ await app.close(); // in afterAll
 shared one, so each test makes up a User and a Global Event of its own with `randomUUID()`. `connectToDatabase()` gives
 a test its own connection, for the states that only the rounds write.
 
+## Rounds
+
+Every `ROUND_INTERVAL_SECONDS`, provisionally a minute, a round turns waiting requests into matches and asks the main
+server for each match's Shared Quest. `RoundService` in `src/matching/round.service.ts` runs it, on an interval it
+registers with `SchedulerRegistry` from `@nestjs/schedule` when the server starts.
+
+1. **One at a time.** The round opens a transaction and takes PostgreSQL's advisory lock `matching-round` with
+   `pg_try_advisory_xact_lock`. While another match server's round holds it, the round is skipped; the lock ends with
+   the transaction. No state of a process decides it, so this holds however many match servers run.
+2. **Which requests stand.** It sends the waiting requests to the main server, which answers the ones whose Global
+   Event is published and has not started and whose User holds no Shared Quest for it. The others become `expired`.
+   When the main server does not answer, the round groups and expires nothing. A request withdrawn while the main
+   server answers is left as it is; the rest are locked until the round's transaction ends, so a withdrawal waits for
+   it.
+3. **Groups.** The requests that stand form a pool for each Global Event and size. A pool of at least one group's size
+   goes to the grouping module (see [Grouping](#grouping)), and each group it returns is stored as a match, its
+   requests `matched`. The others wait for the next round.
+4. **Quests.** The transaction ends, and the round asks the main server for the Quest of every match that awaits one,
+   the oldest first, each in a transaction of its own that claims the match with `FOR UPDATE SKIP LOCKED`, so that no
+   two match servers ask for one match at the same moment.
+
+A match is in one of three states, in `matches.state`:
+
+- `awaiting_quest`: as it is formed. Every round asks the main server for its Quest, also a round after a restart,
+  until the main server answers. Nothing about it is kept in memory.
+- `quest_created`: the main server created the Shared Quest, whose id is stored with the match, `quest_id`. A check in
+  the migration keeps `quest_id` to this state. The request of a matched User whom the main server left out of the
+  Quest, for holding a Shared Quest for the Global Event by then, becomes `expired`.
+- `closed`: the main server refused it with `GLOBAL_EVENT_NOT_FOUND`, `GLOBAL_EVENT_STARTED` or `MATCH_TOO_SMALL`,
+  fewer than two of its Users being free for a Shared Quest. Its requests become `expired`, and it is not asked for
+  again. A User whose request expired so asks again.
+
+The main server creates a match's Quest once, by the match's id, so asking again is safe. This one request is repeated
+this way; there is no general outbox.
+
+The calls go through `MainServer` in `src/matching/main-server.ts`: HTTP requests to `MAIN_SERVER_URL`, each of which
+reaches one main server however many run, with `Authorization: Bearer <MATCH_SERVER_TOKEN>`. Any answer outside 2xx
+other than a refusal with a code, an answer of another shape, or none within 5 seconds counts as no answer. The main
+server's README describes its two routes, `POST /matching-requests/standing` and `POST /matches/:matchId/quest`.
+
+In a test, `MainServerStub` from `test/main-server.ts` answers in the main server's place: `startApp` takes it as
+`mainServer`. Its `standing` and `quest` say how it answers, `null` for no answer, and it keeps each call in `calls`.
+A round never runs by itself in the tests, whose settings set an hour between rounds. `useRounds()` from
+`test/rounds.ts`, called at the top of a test file, gives the file a database of its own, since a round groups every
+waiting request, and `rounds.run(app)` runs a round, as `test/rounds.e2e-spec.ts` does:
+
+```ts
+const rounds = useRounds();
+
+it('groups the requests', async () => {
+  const mainServer = new MainServerStub();
+  const app = await rounds.start(mainServer);
+  await rounds.waiting(globalEventId, 2);
+  await rounds.waiting(globalEventId, 2);
+  await rounds.run(app);
+  expect(await rounds.matchesOf(globalEventId)).toHaveLength(1);
+});
+```
+
+## Grouping
+
+Grouping is one module with one question: given the waiting requests of one Global Event and size, which groups are
+formed? `Grouping` in `src/matching/grouping.ts` asks it with `group(requests, size)`, each request with its `id`,
+`hashtags` and `arrivedAt`, and answers groups of exactly `size` of the requests given. The requests in no group wait
+for the next round. A round calls it only with at least `size` requests. Nothing outside the module knows the rule.
+
+`HashtagGrouping` in `src/matching/hashtag-grouping.ts` is the rule now. It forms as many groups as the requests fill.
+Each group starts from the earliest request left and takes, until it is full, the request that shares the most hashtags
+with the requests already in it, counted for each of them, the earlier request first where two share as many.
+`test/grouping.e2e-spec.ts` tests it on its own.
+
+Grouping by AI lands here in a later iteration: another provider of `Grouping` in `MatchingModule`, which is why
+`group()` answers a promise. A test replaces the module as a whole by giving `startApp` a `grouping`.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
@@ -160,7 +235,8 @@ src/
 │   └── prisma.service.ts            the match database
 ├── generated/                       Prisma Client, generated by `pnpm install` (not committed)
 ├── health/                          a feature: the liveness and readiness checks
-└── matching/                        a feature: the requests for Matching, asked, withdrawn and read
+└── matching/                        a feature: the requests for Matching, asked, withdrawn and read, and the
+                                     rounds that group them and ask the main server for Shared Quests
 test/                                tests, run against PostgreSQL in a container
 ```
 

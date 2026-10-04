@@ -1,6 +1,7 @@
 import { Module, StandardSchemaValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_PIPE } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { MainServerGuard } from './common/main-server.guard.js';
 import { PrismaModule } from './common/prisma.module.js';
 import { settingsSchema } from './common/settings.js';
@@ -15,6 +16,8 @@ import { MatchingModule } from './matching/matching.module.js';
       ignoreEnvFile: true,
       validationSchema: settingsSchema,
     }),
+    // Holds the interval of the rounds, and clears it when the server stops.
+    ScheduleModule.forRoot(),
     PrismaModule,
     HealthModule,
     MatchingModule,

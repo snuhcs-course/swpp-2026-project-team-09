@@ -152,6 +152,8 @@ model Quest {
   // Never changes.
   globalEventId String?       @map("global_event_id") @db.Uuid
   globalEvent   GlobalEvent?  @relation(fields: [globalEventId], references: [id], onDelete: Restrict)
+  // The match server's match this Quest was created for, so that a repeated request finds it (README.md: Matching).
+  matchId       String?       @unique @map("match_id") @db.Uuid
   createdAt     DateTime      @default(now()) @map("created_at")
   holders       QuestHolder[]
   subQuests     SubQuest[]
