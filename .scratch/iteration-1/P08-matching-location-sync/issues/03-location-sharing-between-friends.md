@@ -60,3 +60,10 @@ One module answers who may see whom. This ticket gives it the friendship; ticket
   until it expires or the switch is turned on again; a `position` and a `position-removed` sent at the same moment by
   two main servers may arrive in either order; the clearing after a sign-in on another phone may remove the new phone's
   first position. Each lasts until the next upload or at most 10 minutes.
+
+### Agent usage (2026-10-04)
+
+- Agent time: about 23 minutes, an estimate: one implementing agent. The session that ran the agents of all P08 tickets is counted once, under ticket 09.
+- Tokens, counted from the agent's transcript:
+  - Input: 22,539,406, of which 22,292,611 were cache reads, 246,565 cache writes and 230 uncached.
+  - Output: 37,369, a lower bound, since the transcript records only part of the output of most steps.
