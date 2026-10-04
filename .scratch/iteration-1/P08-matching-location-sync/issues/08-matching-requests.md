@@ -65,3 +65,10 @@ The app speaks to the main server only. The main server decides whether a reques
 - **No signal** is sent on asking or withdrawing: only the User's own app changes, and it has the answer.
 - **Party**: nothing consults Parties, so being in one does not prevent a request. Parties are not on this branch, so no
   test covers it.
+
+### Agent usage (2026-10-04)
+
+- Agent time: about 19 minutes, an estimate: one implementing agent. The session that ran the agents of all P08 tickets is counted once, under ticket 09.
+- Tokens, counted from the agent's transcript:
+  - Input: 22,843,312, of which 22,568,942 were cache reads, 274,164 cache writes and 206 uncached.
+  - Output: 44,601, a lower bound, since the transcript records only part of the output of most steps.
