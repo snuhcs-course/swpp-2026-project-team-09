@@ -76,3 +76,10 @@ This ticket covers a Party that is Open, and the entry of a Holder of the marked
 - **Accepted race**: dropping the last Holder of a marked Quest sets the Party's mark to null, which waits for the
   Party's row while a join holds it and waits for the Quest. PostgreSQL then aborts one of the two with a deadlock, and
   that request answers 500. It needs a marked Quest whose only Holder drops it while someone joins its Party.
+
+### Agent usage (2026-10-04)
+
+- Agent time: about 20 minutes, an estimate: one implementing agent. The session that ran the agents of all P08 tickets is counted once, under ticket 09.
+- Tokens, counted from the agent's transcript:
+  - Input: 20,032,861, of which 19,773,684 were cache reads, 258,973 cache writes and 204 uncached.
+  - Output: 38,660, a lower bound, since the transcript records only part of the output of most steps.
