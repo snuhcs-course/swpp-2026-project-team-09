@@ -356,6 +356,11 @@ message carrying it again leaves it exactly as it is. So an Administrator's edit
 come back. The worker asks which posts are stored before it reads any (`/global-events/stored-posts`), so it does not read a
 stored post again: an edit or a deletion at the Source after that is not seen.
 
+A Collection that stores at least one event as published sends `global-events-changed` to every connected app once
+the events are stored, and the app fetches the published events again (see [Signals](#signals)). It carries nothing. A
+Collection that stores only Drafts, or no new post, sends none. `GlobalEventsService.signalChanged()` sends it, and P12
+calls it once its change is committed when an Administrator publishes, edits or cancels a Global Event.
+
 What the rules read from a post, and how, is in the worker server's README. In a test, `collectedEvent()`,
 `eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
 `test/global-events.e2e-spec.ts` does. No route serves Global Events yet, so the tests read them with a database
