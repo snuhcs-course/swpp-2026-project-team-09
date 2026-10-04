@@ -749,6 +749,59 @@ The worker's two routes, which follow [Requests from the worker server](#request
   where `collectedAt` is when the operator's answer arrived and `x`, `y` the position on the drawing. A `carId` listed
   twice is refused.
 
+## Timetable
+
+A User keeps one timetable on the server: the semester's first and last day and the classes. The routes name no
+User, so they never reach another User's timetable, and another User's class is answered 404 as an unknown one is.
+
+- `GET /timetable` answers the timetable. A User who never saved one reads an empty one: both days `null` and
+  `classes: []`.
+
+  ```json
+  {
+    "semesterFirstDay": "2026-09-01",
+    "semesterLastDay": "2026-12-18",
+    "classes": [
+      {
+        "id": "8c1d…",
+        "courseName": "컴파일러",
+        "weekdays": ["monday", "thursday"],
+        "startTime": "10:00",
+        "endTime": "11:15",
+        "placeId": "4f6c…",
+        "room": "101호",
+        "overlaps": [{ "id": "2b7e…", "courseName": "데이터베이스" }]
+      }
+    ]
+  }
+  ```
+
+  The classes are in the order of their earliest weekday, then of their start time.
+
+- `PATCH /timetable` with `{ "semesterFirstDay": "2026-09-01", "semesterLastDay": "2026-12-18" }` changes only the days
+  sent, and `null` clears one. It answers with the whole timetable. A last day before the first, the stored one
+  included, gets 400 `semesterLastDay: must not be before semesterFirstDay`, and nothing changes. The two days may be
+  the same.
+- `POST /timetable/classes` with a class's fields, without `id` and `overlaps`, adds it and answers 201 with the class.
+  It needs an `Idempotency-Key` (see [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)), because
+  nothing stops a User from having two classes with the same fields.
+- `PUT /timetable/classes/:id` with all the class's fields replaces them and answers with the class.
+- `DELETE /timetable/classes/:id` answers 204.
+
+A class's fields and their limits, set in `src/timetable/dto/save-class.dto.ts`. A value outside them gets 400 with a
+message that starts with the field, as the [profile's](#profile) do, and nothing changes:
+
+- `courseName`: 1 to 30 characters, with the spaces around dropped.
+- `weekdays`: one or more of `monday` to `sunday`, none twice. They are kept and answered in the order of the week.
+- `startTime` and `endTime`: times of day as `HH:MM`, from `00:00` to `23:59`. The end is after the start.
+- `placeId`: the `id` of a Place of the [list](#places). Another id gets 400 `placeId: no Place of the list has this id`.
+- `room`: up to 20 characters, with the spaces around dropped, or `null`. A room left out, empty or only spaces is
+  stored as `null`.
+
+Two classes overlap when they share a weekday and each starts before the other ends; a class that starts as another
+ends does not overlap it. An overlap is allowed. `overlaps` names each other class a class overlaps, in the answer to an
+add or an edit and for every class of `GET /timetable`.
+
 ## Seed data
 
 Seed data comes from outside the project once, rather than by Collection: a file in `seed/` that one command loads
@@ -894,8 +947,9 @@ src/
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a
 │                                    position
-└── shuttle/                         a feature: the shuttle's stops and line of the seed, the route page's places and
-                                     hours, and the vehicles the worker collects, served and sent to the socket server
+├── shuttle/                         a feature: the shuttle's stops and line of the seed, the route page's places and
+│                                    hours, and the vehicles the worker collects, served and sent to the socket server
+└── timetable/                       a feature: a User's timetable, the semester's days and the classes
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
 test/                                tests, run against PostgreSQL and Redis in containers
 ```
