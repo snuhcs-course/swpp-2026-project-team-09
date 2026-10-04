@@ -3,6 +3,7 @@ import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { z } from 'zod';
+import { A_FRIEND_ID } from './friends.js';
 import { googleSubject } from './google.js';
 import { getProfile, patchProfile } from './profile.js';
 import { getMe, ONBOARDED_PROFILE, signIn, signInAsAdministrator } from './sign-in.js';
@@ -26,7 +27,7 @@ describe('Reading the profile', () => {
     const response = await getProfile(app, accessToken);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ name: '홍길동', department: '컴퓨터공학부', admissionYear: null, hashtags: [] });
+    expect(response.body).toEqual({ ...ONBOARDED_PROFILE, admissionYear: null, hashtags: [], friendId: A_FRIEND_ID });
   });
 });
 
@@ -38,8 +39,8 @@ describe('Editing the profile', () => {
     const response = await patchProfile(app, accessToken, edited);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual(edited);
-    expect((await getProfile(app, accessToken)).body).toEqual(edited);
+    expect(response.body).toEqual({ ...edited, friendId: A_FRIEND_ID });
+    expect((await getProfile(app, accessToken)).body).toEqual(response.body);
   });
 
   it('changes only the fields sent', async () => {
@@ -53,6 +54,7 @@ describe('Editing the profile', () => {
       department: '경영학과',
       admissionYear: 2022,
       hashtags: ['러닝'],
+      friendId: A_FRIEND_ID,
     });
   });
 
@@ -62,7 +64,7 @@ describe('Editing the profile', () => {
 
     const response = await patchProfile(app, accessToken, { admissionYear: null, hashtags: [] });
 
-    expect(response.body).toEqual({ ...ONBOARDED_PROFILE, admissionYear: null, hashtags: [] });
+    expect(response.body).toEqual({ ...ONBOARDED_PROFILE, admissionYear: null, hashtags: [], friendId: A_FRIEND_ID });
   });
 
   it('saves text without the spaces around it', async () => {
@@ -102,6 +104,7 @@ describe("Another User's profile", () => {
       department: '경영학과',
       admissionYear: null,
       hashtags: [],
+      friendId: A_FRIEND_ID,
     });
   });
 

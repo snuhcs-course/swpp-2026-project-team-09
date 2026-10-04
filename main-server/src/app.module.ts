@@ -13,6 +13,8 @@ import { PrismaModule } from './common/prisma.module.js';
 import { RedisIdempotencyStore } from './common/redis-idempotency.store.js';
 import { RedisModule } from './common/redis.module.js';
 import { settingsSchema } from './common/settings.js';
+import { SignalsModule } from './common/signals.module.js';
+import { FriendsModule } from './friends/friends.module.js';
 import { GlobalEventsModule } from './global-events/global-events.module.js';
 import { HealthModule } from './health/health.module.js';
 import { LobbyModule } from './lobby/lobby.module.js';
@@ -32,6 +34,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     }),
     PrismaModule,
     MessagingModule,
+    SignalsModule,
     RedisModule,
     CampusBoundaryModule,
     // Makes a handler marked @Idempotent() safe to repeat. Its interceptor must run outside every other global
@@ -46,6 +49,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     HealthModule,
     AuthModule,
     UsersModule,
+    FriendsModule,
     AdministratorsModule,
     LobbyModule,
     CollectionModule,

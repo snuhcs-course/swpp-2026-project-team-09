@@ -27,9 +27,33 @@ model User {
   // The Google account's name at the last sign-in, from which onboarding suggests a name and a department.
   googleName    String    @default("") @map("google_name")
   onboardedAt   DateTime? @map("onboarded_at")
+  // Made when the User is created (src/users/friend-id.ts), and never changed.
+  friendId      String    @unique @map("friend_id")
   sessions      Session[]
+  friendshipsAsA Friendship[] @relation("FriendshipUserA")
+  friendshipsAsB Friendship[] @relation("FriendshipUserB")
 
   @@map("users")
+}
+
+// A Friend Request while acceptedAt is empty, and a friendship once it is accepted. One row for both, keyed by the two
+// Users in the order of their ids, so that the database allows one of them between two Users: two Friend Requests that
+// cross, or two answers to one, cannot leave two.
+model Friendship {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // The migration checks that userAId is less than userBId.
+  userAId    String    @map("user_a_id") @db.Uuid
+  userA      User      @relation("FriendshipUserA", fields: [userAId], references: [id])
+  userBId    String    @map("user_b_id") @db.Uuid
+  userB      User      @relation("FriendshipUserB", fields: [userBId], references: [id])
+  // One of the two, who sent the Friend Request.
+  senderId   String    @map("sender_id") @db.Uuid
+  sentAt     DateTime  @default(now()) @map("sent_at")
+  acceptedAt DateTime? @map("accepted_at")
+
+  @@unique([userAId, userBId])
+  @@index([userBId])
+  @@map("friendships")
 }
 
 // The app signed in on one phone. A sign-in ends the User's open session, so a User has at most one.

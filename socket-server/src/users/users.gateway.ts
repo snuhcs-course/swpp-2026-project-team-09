@@ -31,6 +31,11 @@ function sessionRoom(sessionId: string): string {
   return `session:${sessionId}`;
 }
 
+// Every connection of the User, whatever its session, so that a signal for the User reaches each of them.
+export function userRoom(userId: string): string {
+  return `user:${userId}`;
+}
+
 // The app's socket connection, on the same port as the HTTP server.
 @WebSocketGateway()
 export class UsersGateway implements OnGatewayInit<UsersServer>, OnGatewayConnection<UsersSocket> {
@@ -58,7 +63,7 @@ export class UsersGateway implements OnGatewayInit<UsersServer>, OnGatewayConnec
   // The token is checked only when a connection opens, so the connection closes when the token expires. The app then
   // refreshes its tokens and connects again, which a session that has ended cannot do.
   async handleConnection(socket: UsersSocket): Promise<void> {
-    await socket.join(sessionRoom(socket.data.sessionId));
+    await socket.join([sessionRoom(socket.data.sessionId), userRoom(socket.data.user.id)]);
     const expiry = setTimeout(() => {
       socket.disconnect(true);
     }, socket.data.tokenExpiresAt - Date.now());

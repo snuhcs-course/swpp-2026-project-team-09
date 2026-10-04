@@ -5,6 +5,7 @@ import { CompleteOnboardingDto } from './dto/complete-onboarding.dto.js';
 import { OnboardingDto, OnboardingSource } from './dto/onboarding.dto.js';
 import { ProfileDto, toProfileDto } from './dto/profile.dto.js';
 import { departmentSchema, nameSchema, UpdateProfileDto } from './dto/update-profile.dto.js';
+import { newFriendId } from './friend-id.js';
 
 // An SNU account's Google name reads "홍길동 / 학생 / 컴퓨터공학부".
 function googleNameParts(googleName: string): string[] {
@@ -18,12 +19,13 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   // A User is identified by the Google subject identifier. The email address and the Google name follow the ones Google
-  // sends.
+  // sends. A new Friend ID that another User already holds, one of 31^8, fails this sign-in, and the next one makes
+  // another.
   async findOrCreate(account: { googleSubject: string; email: string; googleName: string }): Promise<User> {
     const { googleSubject, email, googleName } = account;
     const user = await this.prisma.user.upsert({
       where: { googleSubject },
-      create: { googleSubject, email, googleName },
+      create: { googleSubject, email, googleName, friendId: newFriendId() },
       update: { email, googleName },
     });
     // The form is confirmed on an undergraduate's account only, so the log shows the accounts that differ.
