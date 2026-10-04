@@ -373,8 +373,9 @@ Quests with several Holders. The routes, all a User's:
   it. The first time it creates the Quest, with the event's title, the User as its only Holder and the Sub Quest for
   attending. Attending again, also twice at the same moment, answers the same Quest and changes nothing, so it takes
   no `Idempotency-Key`.
-- `GET /quests` answers the User's Quests in the order they were created, leaving out each Quest whose Sub Quests have
-  all ended for the User. `GET /quests/:questId` answers one, ended or not.
+- `GET /quests` answers the User's Quests in the order they were created, then today's Class Quests (see below) by
+  their start, leaving out each Quest whose Sub Quests have all ended for the User. `GET /quests/:questId` answers one
+  stored Quest, ended or not.
 - `DELETE /quests/:questId` drops the Quest and answers 204. It removes the User as a Holder, with the User's progress.
   The other Holders keep the Quest. When the last Holder drops it, it is deleted with its Sub Quests.
 - `POST /quests/:questId/sub-quests` adds a Sub Quest and answers 201 with it. It requires an `Idempotency-Key` (see
@@ -414,10 +415,12 @@ A Quest reads:
       "done": false,
       "ended": false
     }
-  ]
+  ],
+  "classQuest": false
 }
 ```
 
+- `classQuest` is `true` for a Class Quest only, so that the app shows it with an icon of its own.
 - `globalEvent` is `null` for a Quest without one. The Holders are in the order of their names, and the Sub Quests
   start with the attending one, then in the order they were added.
 - A Sub Quest's `place` is `null` when it has none. `placeId` is the Place's id for a Place from the list, whose name
@@ -434,6 +437,7 @@ The refusals each have a `code`:
 | A `placeId` that is not a Place of the list               | 404    | `PLACE_NOT_FOUND`        |
 | Editing or cancelling the attending Sub Quest             | 409    | `ATTENDING_SUB_QUEST`    |
 | Cancelling the only Sub Quest of a Quest                  | 409    | `LAST_SUB_QUEST`         |
+| Dropping a Class Quest, or adding a Sub Quest to it       | 409    | `CLASS_QUEST`            |
 
 A body that does not match gets 400 with a message naming the field, such as `endsAt: The end must be after the start`.
 
@@ -446,6 +450,21 @@ attending Sub Quest, when the Global Event has none. A Sub Quest is ended for a 
 every Holder alike, when the User marked it done, or when it is cancelled. This is computed when it is read and nothing
 is written. The time it is computed at is `now()` of `CLOCK` (`src/quests/clock.ts`), which a test moves with
 `vi.spyOn(app.get<Clock>(CLOCK), 'now')`, as `test/quest-progress.e2e-spec.ts` does.
+
+**Class Quests** are computed from the User's [timetable](#timetable) each time `GET /quests` is read, so a change to
+the timetable shows in the next read, and nothing is stored for them (`src/quests/class-quests.service.ts`). Today is
+the day of `now()` of `CLOCK` in Asia/Seoul. When today is before the semester's first day or after its last, where
+they are set, there are none. Otherwise each class held on today's weekday gives a Class Quest:
+
+- Its `id` is the class's id, which its one Sub Quest takes too. Its `title` is the course name, `globalEvent` is
+  `null`, the User is its only Holder and `classQuest` is `true`.
+- Its Sub Quest has the course name as its title, and starts and ends today at the class's times in Asia/Seoul, so its
+  `completion` is `by_time` and it ends once the class is over, which leaves the Class Quest out of the list. Its
+  `place` is the class's Place, with the class's room after the Place's name in the `label`, as `자연과학관 101호`.
+  It is never `done` or `cancelled`.
+
+Dropping a Class Quest or adding a Sub Quest to it is refused with `CLASS_QUEST`, for the id of any of the User's
+classes, held today or not. Every other route takes stored Quests only and answers `QUEST_NOT_FOUND` for it.
 
 **One Quest for a Global Event.** A User holds at most one Quest for a Global Event, which the database enforces: the
 row of each Holder, in `quest_holders`, repeats the Quest's Global Event, and a unique index on the User and the Global
@@ -753,6 +772,7 @@ The worker's two routes, which follow [Requests from the worker server](#request
 
 A User keeps one timetable on the server: the semester's first and last day and the classes. The routes name no
 User, so they never reach another User's timetable, and another User's class is answered 404 as an unknown one is.
+Today's classes show in the Quest list as Class Quests (see [Quests](#quests)).
 
 - `GET /timetable` answers the timetable. A User who never saved one reads an empty one: both days `null` and
   `classes: []`.

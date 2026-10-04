@@ -3,6 +3,7 @@ import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { GlobalEvent, GlobalEventState, Prisma, QuestHolder, SubQuest } from '../generated/prisma/client.js';
 import { UsersService } from '../users/users.service.js';
+import { ClassQuestsService } from './class-quests.service.js';
 import { CLOCK, type Clock } from './clock.js';
 import { type SubQuestContentDto } from './dto/quest-requests.dto.js';
 import { QUEST_INCLUDE, QuestDto, SUB_QUEST_INCLUDE, SubQuestDto, toQuestDto, toSubQuestDto } from './dto/quest.dto.js';
@@ -30,6 +31,7 @@ export class QuestsService {
     private readonly users: UsersService,
     private readonly signals: SignalsService,
     @Inject(CLOCK) private readonly clock: Clock,
+    private readonly classQuests: ClassQuestsService,
   ) {}
 
   // The User's Quest for the Global Event, made the first time. The User's row is locked first, so that two attempts
@@ -60,7 +62,7 @@ export class QuestsService {
     return this.read(userId, questId);
   }
 
-  // Leaves out the Quests whose Sub Quests have all ended for the User.
+  // The stored Quests, then today's Class Quests. Leaves out the Quests whose Sub Quests have all ended for the User.
   async list(userId: string): Promise<QuestDto[]> {
     const quests = await this.prisma.quest.findMany({
       where: { holders: { some: { userId } } },
@@ -68,9 +70,10 @@ export class QuestsService {
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
     const now = this.clock.now();
-    return quests
-      .map((quest) => toQuestDto(quest, userId, now))
-      .filter(({ subQuests }) => subQuests.some(({ ended }) => !ended));
+    return [
+      ...quests.map((quest) => toQuestDto(quest, userId, now)),
+      ...(await this.classQuests.todayFor(userId, now)),
+    ].filter(({ subQuests }) => subQuests.some(({ ended }) => !ended));
   }
 
   async read(userId: string, questId: string): Promise<QuestDto> {
@@ -85,10 +88,12 @@ export class QuestsService {
   }
 
   async drop(userId: string, questId: string): Promise<void> {
+    await this.classQuests.refuseChange(userId, questId);
     await this.changeShared(userId, questId, (tx) => this.removeHolder(questId, userId, tx));
   }
 
-  addSubQuest(userId: string, questId: string, content: SubQuestContentDto): Promise<SubQuestDto> {
+  async addSubQuest(userId: string, questId: string, content: SubQuestContentDto): Promise<SubQuestDto> {
+    await this.classQuests.refuseChange(userId, questId);
     return this.changeShared(userId, questId, async (tx) => {
       const subQuest = await tx.subQuest.create({
         data: { questId, ...(await this.columnsOf(content, tx)) },

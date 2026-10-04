@@ -39,6 +39,8 @@ export interface QuestDto {
   globalEvent: { id: string; title: string } | null;
   holders: HolderDto[];
   subQuests: SubQuestDto[];
+  // Computed from the timetable and never stored (class-quests.service.ts), so that the app shows it apart.
+  classQuest: boolean;
 }
 
 // Every Holder's progress, from which the reader's own is picked.
@@ -125,5 +127,6 @@ export function toQuestDto(quest: StoredQuest, userId: string, now: Date): Quest
     globalEvent: globalEvent === null ? null : { id: globalEvent.id, title: globalEvent.title },
     holders: quest.holders.map(({ user }) => user),
     subQuests: quest.subQuests.map((subQuest) => toSubQuestDto(subQuest, globalEvent, userId, now)),
+    classQuest: false,
   };
 }
