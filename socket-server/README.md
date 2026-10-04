@@ -148,6 +148,7 @@ The signals and what the app does on each:
 | Signal            | Carries | The app                                                                    |
 | ----------------- | ------- | -------------------------------------------------------------------------- |
 | `friends-changed` | nothing | fetches `GET /friends` and `GET /friend-requests` of the main server again |
+| `quests-changed`  | nothing | fetches `GET /quests` of the main server again                             |
 
 ```ts
 socket.on('friends-changed', () => {

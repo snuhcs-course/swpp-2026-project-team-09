@@ -361,6 +361,123 @@ What the rules read from a post, and how, is in the worker server's README. In a
 `test/global-events.e2e-spec.ts` does. No route serves Global Events yet, so the tests read them with a database
 connection of their own.
 
+## Quests
+
+A Quest is what one or more Users set out to do: a title, its Holders, an optional Global Event and one or more Sub
+Quests, which carry the times and places. A Quest with two or more Holders is a Shared Quest; nothing else tells it
+apart. The plan is shared and progress is personal: a Sub Quest is one record for all Holders, and whether it is done is
+kept for each Holder. A User gets a Quest by attending a published Global Event; Meetups, Matching and Parties add the
+Quests with several Holders. The routes, all a User's:
+
+- `POST /quests` with `{ "globalEventId": "..." }` attends the Global Event and answers 201 with the User's Quest for
+  it. The first time it creates the Quest, with the event's title, the User as its only Holder and the Sub Quest for
+  attending. Attending again, also twice at the same moment, answers the same Quest and changes nothing, so it takes
+  no `Idempotency-Key`.
+- `GET /quests` answers the User's Quests in the order they were created, leaving out each Quest whose Sub Quests have
+  all ended for the User. `GET /quests/:questId` answers one, ended or not.
+- `DELETE /quests/:questId` drops the Quest and answers 204. It removes the User as a Holder, with the User's progress.
+  The other Holders keep the Quest. When the last Holder drops it, it is deleted with its Sub Quests.
+- `POST /quests/:questId/sub-quests` adds a Sub Quest and answers 201 with it. It requires an `Idempotency-Key` (see
+  [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)). The body:
+  `{ "title": "카페", "startsAt": "...", "endsAt": "...", "place": ... }`. The title has 1 to 50 characters, the times
+  are optional and the end, when both are given, is after the start. `place` is optional and is a Place from the list,
+  `{ "placeId": "..." }`, or a point on the map with the label the app showed, `{ "latitude", "longitude", "label" }`,
+  the label 1 to 50 characters.
+- `PUT /quests/:questId/sub-quests/:subQuestId` replaces what a Holder wrote with the same body and answers 200 with the
+  Sub Quest. `DELETE /quests/:questId/sub-quests/:subQuestId` cancels it, which removes it, and answers 204.
+- `POST /quests/:questId/sub-quests/:subQuestId/done` marks the Sub Quest done for the User alone and answers 204. A
+  second mark changes nothing.
+
+A Quest reads:
+
+```json
+{
+  "id": "…",
+  "title": "지능형통신 연합전공 설명회",
+  "globalEvent": { "id": "…", "title": "지능형통신 연합전공 설명회" },
+  "holders": [{ "id": "…", "name": "홍길동", "department": "컴퓨터공학부" }],
+  "subQuests": [
+    {
+      "id": "…",
+      "attending": true,
+      "title": "지능형통신 연합전공 설명회",
+      "startsAt": "2026-10-13T08:00:00.000Z",
+      "endsAt": null,
+      "place": {
+        "placeId": null,
+        "label": "뉴미디어통신공동연구소 이충웅홀(132동 103호)",
+        "latitude": 37.45487,
+        "longitude": 126.95407
+      },
+      "completion": "by_hand",
+      "cancelled": false,
+      "done": false,
+      "ended": false
+    }
+  ]
+}
+```
+
+- `globalEvent` is `null` for a Quest without one. The Holders are in the order of their names, and the Sub Quests
+  start with the attending one, then in the order they were added.
+- A Sub Quest's `place` is `null` when it has none. `placeId` is the Place's id for a Place from the list, whose name
+  is then the `label`, and `null` for a point.
+- `done` and `ended` are the reading User's. Overlapping times, within a Quest or across a User's Quests, are accepted.
+
+The refusals each have a `code`:
+
+| Refusal                                                   | Status | `code`                   |
+| --------------------------------------------------------- | ------ | ------------------------ |
+| Attending a Global Event that is unknown or not published | 404    | `GLOBAL_EVENT_NOT_FOUND` |
+| A Quest the User does not hold, or that does not exist    | 404    | `QUEST_NOT_FOUND`        |
+| A Sub Quest the Quest does not have                       | 404    | `SUB_QUEST_NOT_FOUND`    |
+| A `placeId` that is not a Place of the list               | 404    | `PLACE_NOT_FOUND`        |
+| Editing or cancelling the attending Sub Quest             | 409    | `ATTENDING_SUB_QUEST`    |
+| Cancelling the only Sub Quest of a Quest                  | 409    | `LAST_SUB_QUEST`         |
+
+A body that does not match gets 400 with a message naming the field, such as `endsAt: The end must be after the start`.
+
+**The attending Sub Quest** stores no title, time or place. Each read takes the Global Event's title, `startsAt`,
+`endsAt`, `place` as the label and its position, so a change to the event shows at once. Once the event is no longer
+published, as when it is cancelled, the Sub Quest reads as `cancelled` and ended. No Holder edits or cancels it.
+
+**How a Sub Quest ends.** Its `completion` is `by_time` when it has an end time and `by_hand` when it has none; for the
+attending Sub Quest, when the Global Event has none. A Sub Quest is ended for a User when its end time has passed, for
+every Holder alike, when the User marked it done, or when it is cancelled. This is computed when it is read and nothing
+is written. The time it is computed at is `now()` of `CLOCK` (`src/quests/clock.ts`), which a test moves with
+`vi.spyOn(app.get<Clock>(CLOCK), 'now')`, as `test/quest-progress.e2e-spec.ts` does.
+
+**One Quest for a Global Event.** A User holds at most one Quest for a Global Event, which the database enforces: the
+row of each Holder, in `quest_holders`, repeats the Quest's Global Event, and a unique index on the User and the Global
+Event allows one such row. A Quest without a Global Event leaves the column empty, so a User holds any number of those.
+Attending locks the User's row first, so that two attempts at the same moment run one after the other and the later
+finds the Quest of the earlier.
+
+How they are stored: `quests` holds the title and the Global Event, which never changes; `quest_holders` one row for
+each Holder, unique for the Quest and the User; `sub_quests` the Sub Quests, `attending` marking the one for the Global
+Event, of which a Quest has at most one; and `sub_quest_progress` one row for each Sub Quest a Holder marked done, which
+goes with the Holder's row. Checks in the migration keep the attending Sub Quest without title, time and place, the end
+after the start, and the place a Place, a point with its label, or neither.
+
+Another feature changes Quests in its own transaction with `QuestsService`, exported by `QuestsModule`. Every change to
+one Quest locks it first, so that changes run one after another:
+
+- `lock(questId, tx)` locks the Quest's row until the transaction ends.
+- `heldFor(userId, globalEventId, tx)` answers the id of the Quest the User holds for the Global Event, or `null`.
+- `createForGlobalEvent(globalEvent, holderIds, tx)` creates a Quest for the Global Event with these Holders and the
+  attending Sub Quest, and answers its id. A Holder who already holds a Quest for the event makes the unique index
+  refuse it, so remove that Quest first.
+- `removeHolder(questId, userId, tx)` removes the Holder with the Holder's progress, and deletes the Quest when nobody
+  holds it any more.
+- `holderIds(questId, tx)` answers the Holders' User ids.
+
+`quests-changed` goes to every Holder, the one who acted included, when a Quest is created by attending, when a Sub
+Quest is added, edited or cancelled, and when a Holder drops the Quest. A mark of done is the Holder's own and sends
+nothing. The signal carries nothing, and the app fetches `GET /quests` again (see [Signals](#signals)).
+
+In a test, `test/quests.ts` stores a published Global Event with a connection of its own, since no route creates one
+yet, and calls the routes above.
+
 ## Menus
 
 The worker server collects the menus of three Sources, the Co-op's, the dormitory's and the veterinary college's page,
@@ -772,6 +889,7 @@ src/
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
+├── quests/                          a feature: Quests, their Holders, Sub Quests and each Holder's progress
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a
