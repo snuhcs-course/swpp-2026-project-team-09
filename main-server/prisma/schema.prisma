@@ -15,28 +15,30 @@ datasource db {
 
 // A person who signed in with an SNU Google account.
 model User {
-  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   // Google's subject identifier ("sub"), which stays the same while the email address may change.
-  googleSubject  String        @unique @map("google_subject")
-  email          String
+  googleSubject     String             @unique @map("google_subject")
+  email             String
   // The profile. The name and the department stay empty until onboarding. The limits are in src/users/dto/.
-  name           String        @default("")
-  department     String        @default("")
-  admissionYear  Int?          @map("admission_year")
-  hashtags       String[]      @default([])
+  name              String             @default("")
+  department        String             @default("")
+  admissionYear     Int?               @map("admission_year")
+  hashtags          String[]           @default([])
   // The Google account's name at the last sign-in, from which onboarding suggests a name and a department.
-  googleName     String        @default("") @map("google_name")
-  onboardedAt    DateTime?     @map("onboarded_at")
+  googleName        String             @default("") @map("google_name")
+  onboardedAt       DateTime?          @map("onboarded_at")
   // Made when the User is created (src/users/friend-id.ts), and never changed.
-  friendId       String        @unique @map("friend_id")
+  friendId          String             @unique @map("friend_id")
   // Location Sharing as a whole. Off until the User turns it on; signing in and out leave it as it is.
-  masterSwitchOn Boolean       @default(false) @map("master_switch_on")
-  sessions       Session[]
-  friendshipsAsA Friendship[]  @relation("FriendshipUserA")
-  friendshipsAsB Friendship[]  @relation("FriendshipUserB")
-  questHolders   QuestHolder[]
-  partyMember    PartyMember?
-  ledParties     Party[]
+  masterSwitchOn    Boolean            @default(false) @map("master_switch_on")
+  sessions          Session[]
+  friendshipsAsA    Friendship[]       @relation("FriendshipUserA")
+  friendshipsAsB    Friendship[]       @relation("FriendshipUserB")
+  questHolders      QuestHolder[]
+  partyMember       PartyMember?
+  ledParties        Party[]
+  partyJoinRequests PartyJoinRequest[]
+  partyInvitations  PartyInvitation[]
 
   @@map("users")
 }
@@ -228,19 +230,21 @@ model SubQuestProgress {
 // A group of Users who are together now (README.md: Party). It ends, and its row is deleted, when its last member
 // leaves.
 model Party {
-  id         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title      String
+  id           String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String
   // From 1 to 8, which the migration checks.
-  capacity   Int
-  joinPolicy PartyJoinPolicy @map("join_policy")
-  leaderId   String          @map("leader_id") @db.Uuid
-  leader     User            @relation(fields: [leaderId], references: [id])
+  capacity     Int
+  joinPolicy   PartyJoinPolicy    @map("join_policy")
+  leaderId     String             @map("leader_id") @db.Uuid
+  leader       User               @relation(fields: [leaderId], references: [id])
   // The mark: one of the creator's Quests, set at creation. Unique, so that one running Party carries a Quest. Empty
   // once the Quest is deleted, when its last Holder dropped it.
-  questId    String?         @unique @map("quest_id") @db.Uuid
-  quest      Quest?          @relation(fields: [questId], references: [id], onDelete: SetNull)
-  createdAt  DateTime        @default(now()) @map("created_at")
-  members    PartyMember[]
+  questId      String?            @unique @map("quest_id") @db.Uuid
+  quest        Quest?             @relation(fields: [questId], references: [id], onDelete: SetNull)
+  createdAt    DateTime           @default(now()) @map("created_at")
+  members      PartyMember[]
+  joinRequests PartyJoinRequest[]
+  invitations  PartyInvitation[]
 
   @@index([leaderId])
   @@map("parties")
@@ -271,6 +275,36 @@ model PartyMember {
 
   @@index([partyId])
   @@map("party_members")
+}
+
+// A User's request to join an Approval Party, which waits for its Leader. Unique for the Party and the User, so that a
+// User asks a Party once. It ends when it is answered, when the Party ends and when the User enters any Party.
+model PartyJoinRequest {
+  id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partyId String   @map("party_id") @db.Uuid
+  party   Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  userId  String   @map("user_id") @db.Uuid
+  user    User     @relation(fields: [userId], references: [id])
+  sentAt  DateTime @default(now()) @map("sent_at")
+
+  @@unique([partyId, userId])
+  @@index([userId])
+  @@map("party_join_requests")
+}
+
+// The Leader's invitation of a Friend into the Party, which waits for the invited User. Unique and ended as a request
+// to join is.
+model PartyInvitation {
+  id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partyId String   @map("party_id") @db.Uuid
+  party   Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  userId  String   @map("user_id") @db.Uuid
+  user    User     @relation(fields: [userId], references: [id])
+  sentAt  DateTime @default(now()) @map("sent_at")
+
+  @@unique([partyId, userId])
+  @@index([userId])
+  @@map("party_invitations")
 }
 
 // One restaurant on one day, as the last Collection of its Source read it.

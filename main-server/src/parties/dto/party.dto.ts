@@ -1,4 +1,4 @@
-import { PartyJoinPolicy, Prisma } from '../../generated/prisma/client.js';
+import { PartyJoinPolicy, Prisma, User } from '../../generated/prisma/client.js';
 
 export interface PartyMarkDto {
   questId: string;
@@ -89,3 +89,8 @@ export function toListedPartyDto(party: ListedParty): ListedPartyDto {
     mark: markOf(party),
   };
 }
+
+// Who asked to join, or who leads the Party of an invitation.
+export type UserSummaryDto = Pick<User, 'id' | 'name' | 'department'>;
+
+export const USER_SUMMARY = { select: { id: true, name: true, department: true } } satisfies Prisma.UserDefaultArgs;

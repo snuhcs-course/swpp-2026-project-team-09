@@ -1,4 +1,4 @@
-import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { Party, PartyJoinPolicy, Prisma } from '../generated/prisma/client.js';
@@ -14,20 +14,11 @@ import {
   toListedPartyDto,
   toPartyDto,
 } from './dto/party.dto.js';
-
-const notInParty = (): NotFoundException =>
-  new NotFoundException({
-    statusCode: HttpStatus.NOT_FOUND,
-    error: 'Not Found',
-    code: 'NOT_IN_PARTY',
-    message: 'The User is in no Party.',
-  });
-
-const conflict = (code: string, message: string, more: object = {}): ConflictException =>
-  new ConflictException({ statusCode: HttpStatus.CONFLICT, error: 'Conflict', code, message, ...more });
+import { conflict, notInParty } from './refusals.js';
 
 // Who enters a Party, how the Join Policy admits them, and who leaves. Every change to a Party's membership locks the
-// User first and then the Party, so that changes to one Party, and those of one User, run one after another.
+// User who enters or goes first and then the Party, so that changes to one Party, and those of one User, run one after
+// another.
 @Injectable()
 export class PartiesService {
   constructor(
@@ -48,6 +39,7 @@ export class PartiesService {
       await tx.party.create({
         data: { title, capacity, joinPolicy, questId, leaderId: userId, members: { create: { userId } } },
       });
+      await this.endWaiting(userId, tx);
     });
     this.signals.send([userId], 'party-changed');
     return this.read(userId);
@@ -123,9 +115,10 @@ export class PartiesService {
       .map((party) => toListedPartyDto(party));
   }
 
-  // Adds the User to the Party within its capacity, and makes the User a Holder of its mark. Every way into a Party
-  // ends here, after the User and then the Party were locked. Answers the members to tell of the change, and the
-  // Holders to tell of the Quest, none when the User did not become a Holder.
+  // Adds the User to the Party within its capacity, ends the User's requests to join and invitations, and makes the
+  // User a Holder of its mark. Every way into a Party but its creation ends here, after the User and then the Party
+  // were locked. Answers the members to tell of the change, and the Holders to tell of the Quest, none when the User
+  // did not become a Holder.
   async admit(
     party: Party,
     userId: string,
@@ -137,6 +130,7 @@ export class PartiesService {
       throw conflict('PARTY_FULL', 'This Party is full.');
     }
     await tx.partyMember.create({ data: { partyId: party.id, userId } });
+    await this.endWaiting(userId, tx);
     return {
       memberIds: [...members.map((member) => member.userId), userId],
       holderIds: await this.gainMark(party, userId, tx),
@@ -162,8 +156,13 @@ export class PartiesService {
     return members.map((member) => member.userId);
   }
 
+  async memberIds(partyId: string, tx: Prisma.TransactionClient): Promise<string[]> {
+    const members = await tx.partyMember.findMany({ where: { partyId }, select: { userId: true } });
+    return members.map((member) => member.userId);
+  }
+
   // Locks the Party's row until the transaction ends and reads it.
-  private async lock(partyId: string, tx: Prisma.TransactionClient): Promise<Party> {
+  async lock(partyId: string, tx: Prisma.TransactionClient): Promise<Party> {
     await tx.$queryRaw`SELECT 1 FROM parties WHERE id = ${partyId}::uuid FOR NO KEY UPDATE`;
     const party = await tx.party.findUnique({ where: { id: partyId } });
     if (party === null) {
@@ -175,6 +174,12 @@ export class PartiesService {
       });
     }
     return party;
+  }
+
+  // A User who enters any Party has no request to join and no invitation waiting any more.
+  private async endWaiting(userId: string, tx: Prisma.TransactionClient): Promise<void> {
+    await tx.partyJoinRequest.deleteMany({ where: { userId } });
+    await tx.partyInvitation.deleteMany({ where: { userId } });
   }
 
   private async refuseMember(userId: string, tx: Prisma.TransactionClient): Promise<void> {

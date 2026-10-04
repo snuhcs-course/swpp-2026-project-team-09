@@ -2,9 +2,18 @@ import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { signInUser } from './friends.js';
+import { befriend, signInUser } from './friends.js';
 import { overlapOnLock } from './overlap.js';
-import { createParty, getMyParty, joinParty, partyOf } from './parties.js';
+import {
+  answerInvitation,
+  answerJoinRequest,
+  createParty,
+  getMyParty,
+  invitationOf,
+  joinParty,
+  joinRequestOf,
+  partyOf,
+} from './parties.js';
 import { connectToDatabase, questFor, storeEvent } from './quests.js';
 import { refused } from './signals.js';
 import { startApp } from './start-app.js';
@@ -37,6 +46,27 @@ describe('Two Users joining the last free place at the same moment', () => {
     expect(answers.map(({ status }) => status)).toEqual([201, 409]);
     expect(answers[1].body).toMatchObject(refused(409, 'PARTY_FULL'));
     expect(await prisma.partyMember.count({ where: { partyId } })).toBe(2);
+  });
+});
+
+describe('A request and an invitation accepted for the last free place at the same moment', () => {
+  it('leave one of their Users in the Party', async () => {
+    const [leader, asking, invited] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
+    await befriend(app, leader, invited);
+    const partyId = await partyOf(app, leader, { capacity: 2, joinPolicy: 'approval' });
+    const requestId = await joinRequestOf(app, asking, partyId);
+    const invitationId = await invitationOf(app, leader, invited);
+
+    const answers = await overlapOnLock(
+      prisma,
+      (tx) => tx.$queryRaw`SELECT 1 FROM parties WHERE id = ${partyId}::uuid FOR UPDATE`,
+      () => answerJoinRequest(app, leader, requestId, 'accept'),
+      () => answerInvitation(app, invited, invitationId, 'accept'),
+    );
+
+    expect(answers.map(({ status }) => status)).toEqual([204, 409]);
+    expect(answers[1].body).toMatchObject(refused(409, 'PARTY_FULL'));
+    expect((await getMyParty(app, leader)).body).toMatchObject({ members: [{ id: leader.id }, { id: asking.id }] });
   });
 });
 
