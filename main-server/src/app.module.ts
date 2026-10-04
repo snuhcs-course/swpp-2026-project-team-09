@@ -19,6 +19,7 @@ import { LobbyModule } from './lobby/lobby.module.js';
 import { MenusModule } from './menus/menus.module.js';
 import { PlacesModule } from './places/places.module.js';
 import { ShuttleModule } from './shuttle/shuttle.module.js';
+import { TimetableModule } from './timetable/timetable.module.js';
 import { UsersModule } from './users/users.module.js';
 import { WalkingRouteModule } from './walking-route/walking-route.module.js';
 
@@ -54,6 +55,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     WalkingRouteModule,
     PlacesModule,
     ShuttleModule,
+    TimetableModule,
   ],
   providers: [
     // Validates a handler parameter against the schema given in its decorator: @Body({ schema: signInSchema }).
