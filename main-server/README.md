@@ -630,14 +630,12 @@ message that starts with the field, as the [profile's](#profile) do, and nothing
 - `weekdays`: one or more of `monday` to `sunday`, none twice. They are kept and answered in the order of the week.
 - `startTime` and `endTime`: times of day as `HH:MM`, from `00:00` to `23:59`. The end is after the start.
 - `placeId`: the `id` of a Place of the [list](#places). Another id gets 400 `placeId: no Place of the list has this id`.
-- `room`: 1 to 20 characters, or `null`, which it is when left out.
+- `room`: up to 20 characters, with the spaces around dropped, or `null`. A room left out, empty or only spaces is
+  stored as `null`.
 
 Two classes overlap when they share a weekday and each starts before the other ends; a class that starts as another
 ends does not overlap it. An overlap is allowed. `overlaps` names each other class a class overlaps, in the answer to an
 add or an edit and for every class of `GET /timetable`.
-
-`TimetableModule` exports `TimetableService`, whose `timetableOf(userId)` gives the timetable in the form
-`GET /timetable` answers, for Class Quests.
 
 ## Seed data
 

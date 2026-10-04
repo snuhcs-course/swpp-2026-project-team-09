@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Weekday } from '../../generated/prisma/client.js';
+import { WEEK } from './timetable.dto.js';
 
 const timeOfDaySchema = z
   .string()
@@ -9,17 +10,23 @@ const timeOfDaySchema = z
 export const saveClassSchema = z
   .object({
     courseName: z.string().trim().min(1).max(30),
-    // Kept in the order of the week, Monday first.
     weekdays: z
       .array(z.enum(Weekday))
       .min(1)
       .refine((weekdays) => new Set(weekdays).size === weekdays.length, 'Invalid input: must not repeat a weekday')
-      .transform((weekdays) => Object.values(Weekday).filter((weekday) => weekdays.includes(weekday))),
+      .transform((weekdays) => WEEK.filter((weekday) => weekdays.includes(weekday))),
     startTime: timeOfDaySchema,
     endTime: timeOfDaySchema,
     // One of the list of Places, which the service checks.
     placeId: z.uuid(),
-    room: z.string().trim().min(1).max(20).nullable().default(null),
+    // An empty field of the form means no room.
+    room: z
+      .string()
+      .trim()
+      .max(20)
+      .transform((room) => (room === '' ? null : room))
+      .nullable()
+      .default(null),
   })
   .refine(({ startTime, endTime }) => endTime > startTime, {
     path: ['endTime'],

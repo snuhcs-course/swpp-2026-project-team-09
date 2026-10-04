@@ -1,9 +1,10 @@
 import { INestApplication } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { signIn } from './sign-in.js';
 import { startApp } from './start-app.js';
-import { addClass, deleteClass, patchTimetable, putClass, timetableOf, twoPlaceIds } from './timetable.js';
+import { aClass, addClass, deleteClass, patchTimetable, putClass, timetableOf, twoPlaceIds } from './timetable.js';
 
 let app: INestApplication<Server>;
 let placeIds: [string, string];
@@ -16,17 +17,6 @@ beforeAll(async () => {
 afterAll(async () => {
   await app.close();
 });
-
-function databaseClass(): object {
-  return {
-    courseName: '데이터베이스',
-    weekdays: ['tuesday', 'thursday'],
-    startTime: '09:30',
-    endTime: '10:45',
-    placeId: placeIds[0],
-    room: '101호',
-  };
-}
 
 describe('A User without a timetable', () => {
   it('reads an empty one', async () => {
@@ -119,9 +109,9 @@ describe('A class', () => {
   it('is added and answered with its fields', async () => {
     const { accessToken } = await signIn(app);
 
-    const added = await addClass(app, accessToken, databaseClass());
+    const added = await addClass(app, accessToken, aClass(placeIds[0]));
 
-    expect(added).toEqual({ id: added.id, ...databaseClass(), overlaps: [] });
+    expect(added).toEqual({ id: added.id, ...aClass(placeIds[0]), overlaps: [] });
     expect((await timetableOf(app, accessToken)).classes).toEqual([added]);
   });
 
@@ -129,7 +119,7 @@ describe('A class', () => {
     const { accessToken } = await signIn(app);
 
     const added = await addClass(app, accessToken, {
-      ...databaseClass(),
+      ...aClass(placeIds[0]),
       weekdays: ['sunday', 'monday', 'friday'],
       room: undefined,
     });
@@ -139,7 +129,7 @@ describe('A class', () => {
 
   it('is edited whole', async () => {
     const { accessToken } = await signIn(app);
-    const { id } = await addClass(app, accessToken, databaseClass());
+    const { id } = await addClass(app, accessToken, aClass(placeIds[0]));
     const edited = {
       courseName: '운영체제',
       weekdays: ['monday'],
@@ -158,7 +148,7 @@ describe('A class', () => {
 
   it('is deleted', async () => {
     const { accessToken } = await signIn(app);
-    const { id } = await addClass(app, accessToken, databaseClass());
+    const { id } = await addClass(app, accessToken, aClass(placeIds[0]));
 
     expect((await deleteClass(app, accessToken, id)).status).toBe(204);
     expect((await timetableOf(app, accessToken)).classes).toEqual([]);
@@ -170,14 +160,25 @@ describe("Another User's class", () => {
   it('is answered as not found, and stays as it was', async () => {
     const owner = await signIn(app);
     const other = await signIn(app);
-    const added = await addClass(app, owner.accessToken, databaseClass());
+    const added = await addClass(app, owner.accessToken, aClass(placeIds[0]));
 
-    const edit = await putClass(app, other.accessToken, added.id, { ...databaseClass(), courseName: '운영체제' });
+    const edit = await putClass(app, other.accessToken, added.id, aClass(placeIds[0], { courseName: '운영체제' }));
     const removal = await deleteClass(app, other.accessToken, added.id);
 
     expect(edit.status).toBe(404);
     expect(removal.status).toBe(404);
     expect((await timetableOf(app, other.accessToken)).classes).toEqual([]);
+    expect((await timetableOf(app, owner.accessToken)).classes).toEqual([added]);
+  });
+
+  it('is answered as not found also when the edit names a Place the list does not hold', async () => {
+    const owner = await signIn(app);
+    const other = await signIn(app);
+    const added = await addClass(app, owner.accessToken, aClass(placeIds[0]));
+
+    const edit = await putClass(app, other.accessToken, added.id, aClass(randomUUID()));
+
+    expect(edit.status).toBe(404);
     expect((await timetableOf(app, owner.accessToken)).classes).toEqual([added]);
   });
 });
@@ -186,7 +187,7 @@ describe('A class id', () => {
   it('that is not a UUID is refused with 400', async () => {
     const { accessToken } = await signIn(app);
 
-    expect((await putClass(app, accessToken, 'not-a-uuid', databaseClass())).status).toBe(400);
+    expect((await putClass(app, accessToken, 'not-a-uuid', aClass(placeIds[0]))).status).toBe(400);
     expect((await deleteClass(app, accessToken, 'not-a-uuid')).status).toBe(400);
   });
 });

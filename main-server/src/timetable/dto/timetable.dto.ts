@@ -8,7 +8,6 @@ export interface OverlappedClassDto {
 export interface TimetableClassDto {
   id: string;
   courseName: string;
-  // In the order of the week, Monday first.
   weekdays: Weekday[];
   // `HH:MM`.
   startTime: string;
@@ -27,10 +26,10 @@ export interface TimetableDto {
   classes: TimetableClassDto[];
 }
 
-const WEEK = Object.values(Weekday);
+export const WEEK = Object.values(Weekday);
 
 // A `date` column holds the calendar day of the Date in UTC.
-function calendarDay(date: Date | null | undefined): string | null {
+function dayText(date: Date | null | undefined): string | null {
   return date?.toISOString().slice(0, 10) ?? null;
 }
 
@@ -61,8 +60,8 @@ export function toTimetableDto(timetable: (Timetable & { classes: TimetableClass
     (one, other) => earliestWeekday(one) - earliestWeekday(other) || one.startTime.localeCompare(other.startTime),
   );
   return {
-    semesterFirstDay: calendarDay(timetable?.semesterFirstDay),
-    semesterLastDay: calendarDay(timetable?.semesterLastDay),
+    semesterFirstDay: dayText(timetable?.semesterFirstDay),
+    semesterLastDay: dayText(timetable?.semesterLastDay),
     classes: classes.map((one) => toTimetableClassDto(one, classes)),
   };
 }

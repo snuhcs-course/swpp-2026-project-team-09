@@ -5,7 +5,7 @@ import request from 'supertest';
 import { z } from 'zod';
 
 // A class as the routes serve it, exactly.
-export const timetableClassSchema = z.strictObject({
+const timetableClassSchema = z.strictObject({
   id: z.uuid(),
   courseName: z.string(),
   weekdays: z.array(z.string()),
@@ -16,18 +16,18 @@ export const timetableClassSchema = z.strictObject({
   overlaps: z.array(z.strictObject({ id: z.uuid(), courseName: z.string() })),
 });
 
-export type TimetableClass = z.infer<typeof timetableClassSchema>;
+type TimetableClass = z.infer<typeof timetableClassSchema>;
 
 // A timetable as `GET /timetable` serves it, exactly.
-export const timetableSchema = z.strictObject({
+const timetableSchema = z.strictObject({
   semesterFirstDay: z.iso.date().nullable(),
   semesterLastDay: z.iso.date().nullable(),
   classes: z.array(timetableClassSchema),
 });
 
-export type Timetable = z.infer<typeof timetableSchema>;
+type Timetable = z.infer<typeof timetableSchema>;
 
-export function getTimetable(app: INestApplication<Server>, accessToken: string): request.Test {
+function getTimetable(app: INestApplication<Server>, accessToken: string): request.Test {
   return request(app.getHttpServer()).get('/timetable').auth(accessToken, { type: 'bearer' });
 }
 
@@ -68,6 +68,19 @@ export function putClass(app: INestApplication<Server>, accessToken: string, id:
 
 export function deleteClass(app: INestApplication<Server>, accessToken: string, id: string): request.Test {
   return request(app.getHttpServer()).delete(`/timetable/classes/${id}`).auth(accessToken, { type: 'bearer' });
+}
+
+// A class as the app sends it, with the fields given in place of the sample's.
+export function aClass(placeId: string, fields: object = {}): object {
+  return {
+    courseName: '데이터베이스',
+    weekdays: ['tuesday', 'thursday'],
+    startTime: '09:30',
+    endTime: '10:45',
+    placeId,
+    room: '101호',
+    ...fields,
+  };
 }
 
 // Two Places of the list, which the global setup loaded.

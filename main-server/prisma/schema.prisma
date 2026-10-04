@@ -281,7 +281,6 @@ model TimetableClass {
   timetableId String    @map("timetable_id") @db.Uuid
   timetable   Timetable @relation(fields: [timetableId], references: [id])
   courseName  String    @map("course_name")
-  // In the order of the week, Monday first.
   weekdays    Weekday[]
   // Times of day as `HH:MM`, which sort as the times do. The end is after the start.
   startTime   String    @map("start_time")
