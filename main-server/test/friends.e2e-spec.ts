@@ -2,7 +2,8 @@ import { INestApplication } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
-import { befriend, endFriendship, getFriends, refused, sendFriendRequest, signInUser } from './friends.js';
+import { befriend, endFriendship, getFriends, sendFriendRequest, signInUser } from './friends.js';
+import { refused } from './signals.js';
 import { startApp } from './start-app.js';
 
 const settings = inject('settings');

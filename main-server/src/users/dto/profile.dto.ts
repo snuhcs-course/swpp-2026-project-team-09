@@ -5,7 +5,6 @@ export interface ProfileDto {
   department: string;
   admissionYear: number | null;
   hashtags: string[];
-  // Not editable.
   friendId: string;
 }
 

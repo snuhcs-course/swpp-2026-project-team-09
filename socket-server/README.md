@@ -199,7 +199,8 @@ src/
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
-│   └── messaging.ts                 options for NestJS messaging over Redis
+│   ├── messaging.ts                 options for NestJS messaging over Redis
+│   └── rooms.ts                     the room of a User, which every connection of the User joins
 ├── health/                          a feature: the liveness and readiness checks
 ├── users/                           a feature: the app's socket connection, the access token check on it, its rooms and
 │                                    the end of a session

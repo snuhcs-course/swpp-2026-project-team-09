@@ -3,9 +3,14 @@ import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { Prisma, User } from '../generated/prisma/client.js';
 import { UsersService } from '../users/users.service.js';
-import { FriendDto, FriendRequestsDto, SentFriendRequestDto, toPersonDto } from './dto/friends.dto.js';
+import {
+  FriendDto,
+  FriendRequestsDto,
+  SentFriendRequestDto,
+  toFriendDto,
+  toUserSummaryDto,
+} from './dto/friends.dto.js';
 
-// Two Users in the order of their ids, as a row of friendships holds them.
 interface Pair {
   userAId: string;
   userBId: string;
@@ -15,11 +20,11 @@ function pairOf(userId: string, otherUserId: string): Pair {
   return userId < otherUserId ? { userAId: userId, userBId: otherUserId } : { userAId: otherUserId, userBId: userId };
 }
 
-const PERSON = { select: { id: true, name: true, department: true } } as const;
+const USER_SUMMARY = { select: { id: true, name: true, department: true } } as const;
 
-type Person = Pick<User, 'id' | 'name' | 'department'>;
+type UserSummary = Pick<User, 'id' | 'name' | 'department'>;
 
-function otherOf(row: { userAId: string; userA: Person; userB: Person }, userId: string): Person {
+function otherOf(row: { userAId: string; userA: UserSummary; userB: UserSummary }, userId: string): UserSummary {
   return row.userAId === userId ? row.userB : row.userA;
 }
 
@@ -107,20 +112,23 @@ export class FriendsService {
     });
   }
 
-  async requests(userId: string): Promise<FriendRequestsDto> {
+  async listRequests(userId: string): Promise<FriendRequestsDto> {
     const waiting = await this.prisma.friendship.findMany({
       where: { acceptedAt: null, ...ofUser(userId) },
-      include: { userA: PERSON, userB: PERSON },
+      include: { userA: USER_SUMMARY, userB: USER_SUMMARY },
       orderBy: { sentAt: 'desc' },
     });
-    return {
-      received: waiting
-        .filter(({ senderId }) => senderId !== userId)
-        .map((row) => ({ id: row.id, sender: toPersonDto(otherOf(row, userId)), sentAt: row.sentAt.toISOString() })),
-      sent: waiting
-        .filter(({ senderId }) => senderId === userId)
-        .map((row) => ({ id: row.id, receiver: toPersonDto(otherOf(row, userId)), sentAt: row.sentAt.toISOString() })),
-    };
+    const lists: FriendRequestsDto = { received: [], sent: [] };
+    for (const row of waiting) {
+      const other = toUserSummaryDto(otherOf(row, userId));
+      const sentAt = row.sentAt.toISOString();
+      if (row.senderId === userId) {
+        lists.sent.push({ id: row.id, receiver: other, sentAt });
+      } else {
+        lists.received.push({ id: row.id, sender: other, sentAt });
+      }
+    }
+    return lists;
   }
 
   accept(userId: string, requestId: string): Promise<void> {
@@ -141,15 +149,13 @@ export class FriendsService {
     return this.answer({ id: requestId, senderId: userId }, (tx) => removeWaiting(tx, requestId));
   }
 
-  // In the order of the names.
-  async friends(userId: string): Promise<FriendDto[]> {
+  async listFriends(userId: string): Promise<FriendDto[]> {
     const rows = await this.prisma.friendship.findMany({
       where: { acceptedAt: { not: null }, ...ofUser(userId) },
-      include: { userA: PERSON, userB: PERSON },
+      include: { userA: USER_SUMMARY, userB: USER_SUMMARY },
     });
     return rows
-      .map((row) => otherOf(row, userId))
-      .map(({ id, name, department }) => ({ id, name, department }))
+      .map((row) => toFriendDto(otherOf(row, userId)))
       .toSorted((a, b) => a.name.localeCompare(b.name, 'ko') || a.id.localeCompare(b.id));
   }
 

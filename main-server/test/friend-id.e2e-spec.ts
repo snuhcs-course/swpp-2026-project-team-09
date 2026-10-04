@@ -4,10 +4,11 @@ import request from 'supertest';
 import { inject } from 'vitest';
 import { z } from 'zod';
 import { connect } from './containers.js';
-import { FRIEND_ID, lookUpFriendId, refused, signInUser } from './friends.js';
+import { FRIEND_ID, lookUpFriendId, signInUser } from './friends.js';
 import { googleSubject } from './google.js';
 import { getProfile, patchProfile } from './profile.js';
 import { signIn } from './sign-in.js';
+import { refused } from './signals.js';
 import { startApp } from './start-app.js';
 
 const settings = inject('settings');

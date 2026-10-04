@@ -8,13 +8,12 @@ export const sendFriendRequestSchema = z.object({ friendId: friendIdSchema });
 
 export type SendFriendRequestDto = z.infer<typeof sendFriendRequestSchema>;
 
-// What a User sees of someone who is not yet their Friend.
-export interface PersonDto {
+export interface UserSummaryDto {
   name: string;
   department: string;
 }
 
-export function toPersonDto({ name, department }: Pick<User, 'name' | 'department'>): PersonDto {
+export function toUserSummaryDto({ name, department }: Pick<User, 'name' | 'department'>): UserSummaryDto {
   return { name, department };
 }
 
@@ -23,13 +22,16 @@ export interface SentFriendRequestDto {
   status: 'waiting' | 'friends';
 }
 
-// sentAt is ISO 8601. The newest first in each list.
 export interface FriendRequestsDto {
-  received: { id: string; sender: PersonDto; sentAt: string }[];
-  sent: { id: string; receiver: PersonDto; sentAt: string }[];
+  received: { id: string; sender: UserSummaryDto; sentAt: string }[];
+  sent: { id: string; receiver: UserSummaryDto; sentAt: string }[];
 }
 
 // id is the Friend's User id, which ending the friendship names.
-export interface FriendDto extends PersonDto {
+export interface FriendDto extends UserSummaryDto {
   id: string;
+}
+
+export function toFriendDto(user: Pick<User, 'id' | 'name' | 'department'>): FriendDto {
+  return { id: user.id, ...toUserSummaryDto(user) };
 }

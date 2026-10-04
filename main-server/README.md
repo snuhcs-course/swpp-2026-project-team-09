@@ -73,8 +73,7 @@ The app signs in with Google and sends the ID token it gets to the main server:
 - `POST /auth/google` with `{ "idToken": "..." }` answers
   `200 { "accessToken": "...", "refreshToken": "...", "onboarding": { ... } }`. The first sign-in of a Google account
   creates its User, with an empty name and department and a [Friend ID](#friends). `onboarding` tells the app where to
-  go next (see
-  [Onboarding and the lobby](#onboarding-and-the-lobby)).
+  go next (see [Onboarding and the lobby](#onboarding-and-the-lobby)).
 - Only SNU accounts get in: the token's hosted domain claim must be `snu.ac.kr` and its email address verified. Another
   account gets 403. An invalid or expired ID token, or one issued to another client than the app's
   (`GOOGLE_APP_CLIENT_ID`), the admin site's included, gets 401.
@@ -920,7 +919,7 @@ this.signals.send('everyone', 'global-events-changed');
   sends it under `name` to the connections of those Users. The socket server knows no signal by name, so a new signal
   needs no change there; the [socket server's README](../socket-server/README.md#signals) lists each signal with what
   the app does on it.
-- In a test, `SignalWatcher` from `test/friends.ts` collects the signals put on Redis, as
+- In a test, `SignalWatcher` from `test/signals.ts` collects the signals put on Redis, as
   `test/friend-signals.e2e-spec.ts` does.
 
 `session-ended` and `shuttle-vehicles-updated` are events of their own, not signals, which the socket server handles by

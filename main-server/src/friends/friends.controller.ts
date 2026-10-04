@@ -5,11 +5,11 @@ import {
   FriendDto,
   friendIdSchema,
   FriendRequestsDto,
-  PersonDto,
   type SendFriendRequestDto,
   sendFriendRequestSchema,
   SentFriendRequestDto,
-  toPersonDto,
+  toUserSummaryDto,
+  UserSummaryDto,
 } from './dto/friends.dto.js';
 import { FriendsService } from './friends.service.js';
 
@@ -18,8 +18,8 @@ export class FriendsController {
   constructor(private readonly friends: FriendsService) {}
 
   @Get('friend-ids/:friendId')
-  async lookUp(@Param('friendId', { schema: friendIdSchema }) friendId: string): Promise<PersonDto> {
-    return toPersonDto(await this.friends.ownerOf(friendId));
+  async lookUp(@Param('friendId', { schema: friendIdSchema }) friendId: string): Promise<UserSummaryDto> {
+    return toUserSummaryDto(await this.friends.ownerOf(friendId));
   }
 
   // A repeat is refused as a request already sent, so it takes no Idempotency-Key.
@@ -33,7 +33,7 @@ export class FriendsController {
 
   @Get('friend-requests')
   requests(@CurrentUser() user: SignedInUser): Promise<FriendRequestsDto> {
-    return this.friends.requests(user.id);
+    return this.friends.listRequests(user.id);
   }
 
   @Post('friend-requests/:id/accept')
@@ -56,7 +56,7 @@ export class FriendsController {
 
   @Get('friends')
   list(@CurrentUser() user: SignedInUser): Promise<FriendDto[]> {
-    return this.friends.friends(user.id);
+    return this.friends.listFriends(user.id);
   }
 
   @Delete('friends/:userId')

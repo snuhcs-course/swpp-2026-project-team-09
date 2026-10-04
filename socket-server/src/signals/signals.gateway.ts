@@ -1,6 +1,6 @@
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { userRoom } from '../users/users.gateway.js';
+import { userRoom } from '../common/rooms.js';
 import { type SignalEvent } from './dto/signal.dto.js';
 
 // The apps' connections, which UsersGateway accepts on the same server.

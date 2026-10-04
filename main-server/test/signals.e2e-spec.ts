@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
-import { SignalWatcher } from './friends.js';
+import { SignalWatcher } from './signals.js';
 import { startApp } from './start-app.js';
 
 const settings = inject('settings');

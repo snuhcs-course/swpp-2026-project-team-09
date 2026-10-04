@@ -8,9 +8,9 @@ import {
   requestFriendship,
   sendFriendRequest,
   signInUser,
-  SignalWatcher,
   TestUser,
 } from './friends.js';
+import { SignalWatcher } from './signals.js';
 import { startApp } from './start-app.js';
 
 const settings = inject('settings');

@@ -2,15 +2,14 @@ import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import {
-  ANY_STRING,
   befriend,
   getFriendRequests,
   getFriends,
-  refused,
   requestFriendship,
   sendFriendRequest,
   signInUser,
 } from './friends.js';
+import { ANY_STRING, refused } from './signals.js';
 import { startApp } from './start-app.js';
 
 const settings = inject('settings');

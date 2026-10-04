@@ -1,6 +1,7 @@
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayInit, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { DefaultEventsMap, Server, Socket } from 'socket.io';
+import { userRoom } from '../common/rooms.js';
 import { type SessionEndReason } from './dto/session-ended.dto.js';
 
 // What an access token says: the User's identifier as the subject, the session as `sid`, and its expiry as `exp` in
@@ -29,11 +30,6 @@ type UsersSocket = Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, 
 
 function sessionRoom(sessionId: string): string {
   return `session:${sessionId}`;
-}
-
-// Every connection of the User, whatever its session, so that a signal for the User reaches each of them.
-export function userRoom(userId: string): string {
-  return `user:${userId}`;
 }
 
 // The app's socket connection, on the same port as the HTTP server.
