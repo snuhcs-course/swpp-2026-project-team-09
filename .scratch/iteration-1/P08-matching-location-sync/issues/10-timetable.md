@@ -31,3 +31,10 @@ The shape is the one the app's timetable screens hold, so that the app's adapter
 - Overlap: two classes share a weekday and each starts before the other ends. A class that starts as another ends does not overlap it.
 - Tables: `timetables` (one per User, unique `user_id`, `semester_first_day` and `semester_last_day` as `date`) and `timetable_classes` (`timetable_id`, `course_name`, `weekdays` as the enum array `weekday[]`, `start_time` and `end_time` as `HH:MM` text, `place_id` referencing `places`, `room`). Migration `20261004120000_add_timetables`.
 - For ticket 11: `TimetableModule` exports `TimetableService`, and `timetableOf(userId): Promise<TimetableDto>` gives the semester's days and the classes in the form `GET /timetable` answers. `Weekday` is the Prisma enum from `src/generated/prisma/client.js`.
+
+### Agent usage (2026-10-04)
+
+- Agent time: about 17 minutes, an estimate: the implementing agent about 14 minutes, and a Standards reviewer and a Spec reviewer about 2 minutes each at the same time. The session that ran the agents of all P08 tickets is counted once, under ticket 09.
+- Tokens, counted from the three agents' transcripts:
+  - Input: 17,384,747, of which 16,990,909 were cache reads, 393,614 cache writes and 224 uncached.
+  - Output: 33,538, a lower bound, since the transcripts record only part of the output of most steps.
