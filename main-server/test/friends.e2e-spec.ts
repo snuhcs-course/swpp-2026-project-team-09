@@ -29,8 +29,8 @@ describe('The list of Friends', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual([
-      { id: cheolsu.id, name: '김철수', department: '경영학과' },
-      { id: gildong.id, name: '홍길동', department: '컴퓨터공학부' },
+      { id: cheolsu.id, name: '김철수', department: '경영학과', sharing: true, visible: false },
+      { id: gildong.id, name: '홍길동', department: '컴퓨터공학부', sharing: true, visible: false },
     ]);
   });
 

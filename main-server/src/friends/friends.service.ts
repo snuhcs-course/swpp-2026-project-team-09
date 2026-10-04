@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoun
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { Prisma, User } from '../generated/prisma/client.js';
+import { VisibilityService } from '../location-sharing/visibility.service.js';
 import { UsersService } from '../users/users.service.js';
 import {
   FriendDto,
@@ -57,12 +58,21 @@ const friendRequestNotFound = (): NotFoundException =>
     message: 'No such Friend Request waits for this answer from this User.',
   });
 
+const friendNotFound = (): NotFoundException =>
+  new NotFoundException({
+    statusCode: HttpStatus.NOT_FOUND,
+    error: 'Not Found',
+    code: 'FRIEND_NOT_FOUND',
+    message: 'This User is not your Friend.',
+  });
+
 @Injectable()
 export class FriendsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly users: UsersService,
     private readonly signals: SignalsService,
+    private readonly visibility: VisibilityService,
   ) {}
 
   async ownerOf(friendId: string): Promise<User> {
@@ -154,22 +164,39 @@ export class FriendsService {
       where: { acceptedAt: { not: null }, ...ofUser(userId) },
       include: { userA: USER_SUMMARY, userB: USER_SUMMARY },
     });
+    const visible = new Set(await this.visibility.visibleTo(userId));
     return rows
-      .map((row) => toFriendDto(otherOf(row, userId)))
+      .map((row) => {
+        const friend = otherOf(row, userId);
+        const sharing = row.userAId === userId ? row.userASharing : row.userBSharing;
+        return toFriendDto(friend, sharing, visible.has(friend.id));
+      })
       .toSorted((a, b) => a.name.localeCompare(b.name, 'ko') || a.id.localeCompare(b.id));
   }
 
   async end(userId: string, friendUserId: string): Promise<void> {
     const pair = pairOf(userId, friendUserId);
-    await this.changeBetween(pair, async (tx) => {
-      const { count } = await tx.friendship.deleteMany({ where: { ...pair, acceptedAt: { not: null } } });
+    await this.visibility.announceRemovals(userId, () =>
+      this.changeBetween(pair, async (tx) => {
+        const { count } = await tx.friendship.deleteMany({ where: { ...pair, acceptedAt: { not: null } } });
+        if (count === 0) {
+          throw friendNotFound();
+        }
+      }),
+    );
+  }
+
+  // The User's switch for Location Sharing at their own end of the friendship.
+  async setSharing(userId: string, friendUserId: string, on: boolean): Promise<void> {
+    const pair = pairOf(userId, friendUserId);
+    const data = userId === pair.userAId ? { userASharing: on } : { userBSharing: on };
+    await this.visibility.announceRemovals(userId, async () => {
+      const { count } = await this.prisma.friendship.updateMany({
+        where: { ...pair, acceptedAt: { not: null } },
+        data,
+      });
       if (count === 0) {
-        throw new NotFoundException({
-          statusCode: HttpStatus.NOT_FOUND,
-          error: 'Not Found',
-          code: 'FRIEND_NOT_FOUND',
-          message: 'This User is not your Friend.',
-        });
+        throw friendNotFound();
       }
     });
   }

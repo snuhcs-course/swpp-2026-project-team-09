@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
 import { z } from 'zod';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
+import { type SwitchDto, switchSchema } from '../location-sharing/dto/switch.dto.js';
 import {
   FriendDto,
   friendIdSchema,
@@ -63,5 +64,15 @@ export class FriendsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   end(@CurrentUser() user: SignedInUser, @Param('userId', { schema: z.uuid() }) userId: string): Promise<void> {
     return this.friends.end(user.id, userId);
+  }
+
+  @Put('friends/:userId/sharing')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  setSharing(
+    @CurrentUser() user: SignedInUser,
+    @Param('userId', { schema: z.uuid() }) userId: string,
+    @Body({ schema: switchSchema }) body: SwitchDto,
+  ): Promise<void> {
+    return this.friends.setSharing(user.id, userId, body.on);
   }
 }

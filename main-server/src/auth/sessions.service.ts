@@ -3,6 +3,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { MESSAGING_CLIENT } from '../common/messaging.module.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { Prisma, Session, SessionEndReason } from '../generated/prisma/client.js';
+import { LocationSharingService } from '../location-sharing/location-sharing.service.js';
 import { OnboardingSource } from '../users/dto/onboarding.dto.js';
 
 type SessionWithUser = Pick<Session, 'endedAt' | 'endReason'> & { user: OnboardingSource };
@@ -20,6 +21,7 @@ export class SessionsService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(MESSAGING_CLIENT) private readonly messaging: ClientProxy,
+    private readonly locationSharing: LocationSharingService,
   ) {}
 
   // With what the onboarding check needs of its User, in the same query.
@@ -50,9 +52,13 @@ export class SessionsService {
     return sessionIds;
   }
 
-  // Call it once the transaction that ended the sessions has committed. The answer does not wait for it: the database
-  // already refuses the sessions, and the event only closes their socket connections sooner.
-  announceEnd(sessionIds: readonly string[], reason: SessionEndReason): void {
+  // Call it once the transaction that ended the User's sessions has committed. Also clears the User's position, so that
+  // the phone's last position does not linger. The answer waits for neither: the database already refuses the sessions,
+  // and a sign-in or sign-out works while Redis is down.
+  announceEnd(userId: string, sessionIds: readonly string[], reason: SessionEndReason): void {
+    if (sessionIds.length === 0) {
+      return;
+    }
     for (const sessionId of sessionIds) {
       const event: SessionEndedEvent = { sessionId, reason };
       this.messaging.emit('session-ended', event).subscribe({
@@ -61,5 +67,8 @@ export class SessionsService {
         },
       });
     }
+    this.locationSharing.clearPosition(userId).catch((error: unknown) => {
+      this.logger.warn(`The position of User ${userId} was not cleared at the end of a session: ${String(error)}`);
+    });
   }
 }
