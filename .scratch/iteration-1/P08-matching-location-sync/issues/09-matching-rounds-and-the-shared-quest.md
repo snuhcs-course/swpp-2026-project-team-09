@@ -77,3 +77,13 @@ A match is never lost between the two servers: the match server keeps asking unt
   module takes one size. Round tests use `useRounds()` from `match-server/test/rounds.ts`, a database of the file's own
   made beside the shared one, and `MainServerStub` from `test/main-server.ts`. Main server tests call the routes with
   `postAsMatchServer()` from `test/match-server.ts`.
+
+### Agent usage (2026-10-04)
+
+- Agent time: about 34 minutes for this ticket, an estimate: one implementing agent, a fix after review included.
+- Tokens of this ticket's agent, counted from its transcript:
+  - Input: 39,292,182, of which 38,933,797 were cache reads, 358,089 cache writes and 296 uncached.
+  - Output: 40,339, a lower bound, since the transcript records only part of the output of most steps.
+- The session that ran the agents of the thirteen P08 tickets, reviewed their results and opened the pull requests, counted here once for all of them: about 40 minutes of its own work, an estimate; the time it waited for the agents is theirs. Its tokens when this section was written:
+  - Input: 15,251,718, of which 14,951,432 were cache reads, 300,112 cache writes and 174 uncached.
+  - Output: 81,864.
