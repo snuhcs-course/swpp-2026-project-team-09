@@ -72,7 +72,7 @@ A repository that holds six independent projects: four servers, the admin site a
 - The main server is built first. The socket, worker and match servers are set up by following it.
 - Each server validates its settings at startup against a schema and stops with a message naming the faulty setting.
 - Each server exposes liveness and readiness checks.
-- Servers talk to each other through NestJS messaging over Redis: events for signals and positions, request and response where an answer is needed. The worker server is the exception: it calls the main server over HTTP, because messaging over Redis reaches every main server and what the worker collected is stored by one. This task sets up the connection and the event that tells the socket server a session has ended; the other messages belong to P07 and P08.
+- The main server sends signals and positions to the socket server as NestJS events over Redis, which reach every socket server. A call that one server must handle goes over HTTP instead, because messaging over Redis reaches every instance of a server: the worker server and the match server call the main server so, and the main server calls the match server so. This task sets up the connection and the event that tells the socket server a session has ended; the other messages belong to P07 and P08.
 
 ### Quality rules
 
@@ -149,4 +149,4 @@ A repository that holds six independent projects: four servers, the admin site a
 - The repository conventions merged earlier (agent documents, code owners, pull request template) were preparatory work for this task.
 - P16 adds a seventh project at the repository root for the tests that run the servers together.
 - To verify early: type-aware linting with TypeScript 6, the database image on Apple Silicon, and that a real SNU account's ID token carries the hosted domain claim while a Gmail account's does not.
-- Backend work that the schedule's frontend tasks assume already exists is assigned as follows: sign-in, account and profile here; timetable and Private Events in P06; the administration of Global Events in P12; everything else in P07 and P08.
+- Backend work that the schedule's frontend tasks assume already exists is assigned as follows: sign-in, account and profile here; Private Events in P06; the administration of Global Events in P12; the timetable and everything else in P07 and P08.

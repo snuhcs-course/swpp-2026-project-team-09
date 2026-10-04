@@ -129,7 +129,7 @@ The worker server collects events, menus and shuttle positions from their origin
   - On 2026-10-03, 216 of the 230 Places had an outline. The others are stores, links between buildings, a few small buildings, 붉은광장 and the main gate.
 - The main server says which Place a position is in, without a database query: the nearest Place, each as far as the edge of its nearest outline, `inside` within 5 m of the edge and `near` up to 20 m. Farther than 20 m from every Place, the answer is none. A Place without an outline is as far as its position and can only be near.
   - Where the outlines of two Places hold the position, the one earlier in the list is the answer: in the stand of 종합운동장 that is 종합운동장본부석 (149동), since Places with a number come first.
-  - Nothing shows the answer to Users yet. P08 asks it when a User's position arrives.
+  - Nothing shows the answer to Users yet. P08 serves it to the app, for a point a User picks on the map.
 - The Places, the stops and the route line are stored in ordinary columns: a latitude and a longitude, and the line and a Place's outlines as lists of coordinates. No spatial type and no spatial query is used, because nothing asks a spatial question of the database: a vehicle is placed by its position on the drawing, and the Boundary and the Place at a position are checked in memory.
 - Each seed file is kept with the query or address it came from and the date, so that the export can be repeated.
 - The national map's layer is under 공공누리 type 1, which allows a changed copy with its source shown, and OpenStreetMap's data under the ODbL. Each source has seed files of its own, so that each stays under its own licence (`.scratch/research/public-building-outlines.md` §8).

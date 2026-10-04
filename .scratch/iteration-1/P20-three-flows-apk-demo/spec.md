@@ -32,7 +32,7 @@ The team installs the app on two phones, walks through the three flows on campus
 
 | Flow | Steps |
 |---|---|
-| Event | Two Users sign in. An Administrator publishes a Global Event. Both ask for Matching with size 2. Both see the Shared Quest and the explanation. One creates the Party for the Quest and the other joins. Both see each other's Avatar move. One taps the Quest and sees the route. |
+| Event | Two Users sign in. An Administrator publishes a Global Event. Both ask for Matching with size 2. Within a minute both see the Shared Quest. One creates the Party for the Quest and the other joins. Both see each other's Avatar move. One taps the Quest and sees the route. |
 | Friend | One User sends an Invite Link through a messenger. The other opens it and accepts. Both see each other's Avatar. One proposes a Meetup and the other accepts. Both see the Shared Quest. |
 | Campus services | A User opens the dining view and reads today's menus. The User turns on the shuttle layer and watches a vehicle move along the route. |
 
@@ -41,7 +41,6 @@ The team installs the app on two phones, walks through the three flows on campus
 - Both phones are inside the Campus Boundary. Outside it, Users are hidden by design and the flows cannot be shown.
 - The shuttle flow is run on a weekday between 08:00 and 21:00.
 - The servers run on a laptop behind an https tunnel.
-- The explanation model is running, so that the explanation in the event flow is produced by AI.
 
 ### APK
 
