@@ -196,6 +196,123 @@ export class AdminEventsController {
   Administrator of the test settings, and `signInAsNewAdministrator(app)` registers a new one and signs in as them. The
   test files share one database, so sign out or remove only a new one.
 
+## Global Events
+
+A Global Event is an Event published to every User. The worker server collects them from the university's events list
+and posts them to `/global-events/collected` (see
+[Requests from the worker server](#requests-from-the-worker-server)). P12 adds the Administrator's routes, which edit,
+publish, cancel, discard and create them, and the User's list of published events. Until then no route serves them.
+
+A Global Event, model `GlobalEvent` in `prisma/schema.prisma`, holds:
+
+- `title` and `description`. A collected event's description is the post's body as text, one line of the page per
+  line.
+- `startsAt` and `endsAt`, both optional, because a Draft may have neither. A day read without a time of day is stored
+  at 00:00 Asia/Seoul.
+- `place`, the place as text, and its position, `latitude` and `longitude`. All three are optional.
+- `state`, one of four:
+  - `draft`: not shown to Users. A collected event that could not be read fully, or one an Administrator is writing. An
+    Administrator publishes it or discards it.
+  - `published`: shown to Users. A published event has a title, a start and a position.
+  - `cancelled`: an event an Administrator called off after it was published.
+  - `discarded`: an event that should not be shown, such as a post that is not an event. It stays stored, so that the
+    next Collection does not bring its post back.
+- `version`, which starts at 1, for P12's edit check, which refuses an edit made from an older version.
+- For a collected event, `postNumber`, the post's `bbsidx`, which identifies the post, and `sourceUrl`, the post's
+  address. An event an Administrator creates has neither.
+
+The worker sends each post of the events list as one event, all those of a Collection in one message:
+
+```json
+{
+  "source": "snu_events",
+  "collectedAt": "2026-10-02T06:00:00+09:00",
+  "failureReason": null,
+  "events": [
+    {
+      "postNumber": 176525,
+      "sourceUrl": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
+      "title": "[연합전공 지능형통신] 2027학년도 1학기 선발 및 설명회 안내",
+      "description": "안녕하세요.\n…\n- 일시: 2026. 10. 13.(화) 17:00\n- 장소: 뉴미디어통신공동연구소 이충웅홀(132동 103호)\n…",
+      "start": "2026-10-13T17:00:00+09:00",
+      "end": null,
+      "readFrom": "body",
+      "place": "뉴미디어통신공동연구소 이충웅홀(132동 103호)"
+    }
+  ]
+}
+```
+
+- `events` holds the posts the main server did not store when the worker asked, and is `[]` when there are none.
+- `failureReason` says why the Collection stopped early: at a page it could not fetch, at the firewall's block page,
+  at the third post in a row whose page was not the post, or with no post read. It is `null` when the Collection went
+  through the whole list. A Collection that stopped hands over the posts it read all the same, and the main server stores them and
+  records the reason as the Collection's failure in the same transaction, so that `lastSucceededAt` stays the time of
+  the last Collection that went through the whole list.
+- `start` and `end` are each a time with its offset, or a day when no time of day was read. `readFrom` says where they
+  were read: `body` for the body's time line, `header` for the header's date. All three are `null` when no day was
+  read.
+- `place` is the body's place line as the post writes it, or `null`.
+- A post whose page the worker could not read as the post comes with its title from the list, an empty `description`
+  and no time or place, so it is stored as a Draft. An Administrator reads it at its `sourceUrl`.
+
+The rules read one start and one end per post, so a post that describes several sessions, such as a lecture series, is
+one event, which an Administrator splits.
+
+A collected event is published, with no person involved, when the rules read both its time and its place:
+
+- its start comes from the body's time line (`readFrom` is `body`) and has a time of day. A start read from the header's
+  date does not count, because that date is often the application period;
+- its place names exactly one Place of the [list](#places). Its position is that Place's coordinates.
+
+Any other collected event is stored as a Draft with whatever was read: an event online or off campus, one whose place
+names no Place or several, and a post that is not an event, which mostly writes no such time and place. A rule that
+is not sure makes a Draft.
+
+A Draft may already hold a start and a position, so P12's check before an Administrator publishes one cannot rest on
+those fields being filled:
+
+- its start may be the header's date, which is often the application period, and a day read without a time of day is
+  stored at 00:00;
+- its position is set whenever its place named exactly one Place, even when its time was not read.
+
+A place names a Place, in `src/global-events/named-place.ts`, only when all that it writes is that Place. A wrong
+position is published to every User, while a Draft only waits for an Administrator, so whatever the rules cannot
+account for makes a Draft:
+
+- A Place is written by number, as in `302동 105호`, `학생회관(63동)` or `71-1동`, but not a number inside a word, as
+  in the address `역삼1동`. Or by name, as a whole word, with or without the name's own spaces or a `·` between its
+  words, and whatever the case of its Latin letters: `국립중앙박물관` does not name 박물관, nor `행정관리팀` 행정관. A
+  name inside a longer one that the place also names does not count, so `서울대 유전공학연구소 신관` is 105-2동 and not also
+  105동. A name without a letter, such as OpenStreetMap's `901`, is matched by number only. The university's name
+  written onto a name, as in `서울대학교미술관`, is taken apart.
+- Neither a number nor a name alone shows that the place is on this campus: another university has its 체육관, and a
+  government complex its 1동. A number counts when the place also writes `서울대`, `관악캠퍼스`, `SNU` or
+  `Seoul National University`, or a name of that Place beside it, as in `뉴미디어통신공동연구소 이충웅홀(132동 103호)`. A name counts only with the
+  university's.
+- A number decides the Place, and a name beside it has to agree: one of the Places the name names, its series
+  included, has the same number before the hyphen. `(관악사)학부 생활관 919동` is 919동 only, `국제대학원(140-2동)`
+  140-2동, and `302동 학생회관` names none.
+- A name that another Place's name continues with a number names that whole series: `국제대학원` alone is 140동 or
+  국제대학원2, 140-1동, so it names none.
+- The place is cut where it lists several or writes a route, at `,` `，` `、` `/` `&` `·` `ㆍ` `;` `및` `또는` `→` `⇒`
+  `->`, but not inside a name, as in `데이터사이언스대학원 및 공과대학 강의동 1`. Every part has to name the same Place, apart from a part that is online
+  (`Zoom`, `온라인`, `비대면` and the like) or only a room or a floor. So `서울대학교 103동 444호 & Zoom` is 103동, while
+  `종합운동장, 보조운동장`, `301동 및 302동` and `302동 및 999동` name none.
+- A place elsewhere names none: on another of the university's campuses, at its hospitals or at its schools (`연건`,
+  `시흥`, `평창`, `수원`, `의과대학`, `간호대학`, `서울대학교병원`, `부설` and the like), at the stations named after it, at
+  another university, at an address in another district or region, or in a flat. The list is Gwanak's.
+
+No Collection changes a stored event, whatever its state. A post is stored once, by its post number, and a later
+message carrying it again leaves it exactly as it is. So an Administrator's edits stay, and a discarded post does not
+come back. The worker asks which posts are stored before it reads any (`/global-events/stored-posts`), so it does not read a
+stored post again: an edit or a deletion at the Source after that is not seen.
+
+What the rules read from a post, and how, is in the worker server's README. In a test, `collectedEvent()`,
+`eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
+`test/global-events.e2e-spec.ts` does. No route serves Global Events yet, so the tests read them with a database
+connection of their own.
+
 ## Menus
 
 The worker server collects the menus of three Sources, the Co-op's, the dormitory's and the veterinary college's page,
@@ -603,6 +720,7 @@ src/
 ├── lobby/                           a feature: what the app needs when it starts
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
+├── global-events/                   a feature: the Global Events, and the events the worker collects
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a
@@ -641,7 +759,7 @@ Prisma is pinned at 7.10.0. Ignore the message that suggests updating to Prisma 
 
 ## Adding a feature module
 
-The steps add a feature named `party`. Use a short lowercase name, with dashes between words (`global-event`).
+The steps add a feature named `party`. Use a short lowercase name, with dashes between words (`global-events`).
 
 1. Create the module. It lands in `src/party/` and is added to `AppModule`:
 
@@ -736,12 +854,19 @@ The worker server only collects. It hands what a Collection read to the main ser
 server checks it, stores it and answers. A request reaches one main server, however many run behind the load balancer,
 so a message is stored once. Every route for the worker follows these rules.
 
-- **Route and shape**: a `POST` in the feature's controller, marked `@WorkerOnly()` from
+- **Route and shape**: a message is a `POST` in the feature's controller, marked `@WorkerOnly()` from
   `src/common/worker-only.decorator.ts` and `@HttpCode(HttpStatus.NO_CONTENT)`. Its path says what happened:
-  `/menus/collected` for what a Collection of a menu Source read, and `/collections/failed`. The body is a JSON object.
-  It names its `source`, a value of `Source` in `prisma/schema.prisma`, and the time of the Collection in ISO 8601 with
-  an offset (`collectedAt`, `failedAt`). A day is `YYYY-MM-DD`, a calendar day in Asia/Seoul. A field without a value
-  is `null`, not left out.
+  `/menus/collected` for what a Collection of a menu Source read, `/global-events/collected` for the events list's, and
+  `/collections/failed`. The body is a JSON object. It names its `source`, a value of `Source` in
+  `prisma/schema.prisma`, and the time of the Collection in ISO 8601 with an offset (`collectedAt`, `failedAt`). A day
+  is `YYYY-MM-DD`, a calendar day in Asia/Seoul. A field without a value is `null`, not left out.
+- **Questions**: a Collection that needs to know what the main server holds asks it, since the worker keeps nothing. A
+  question is a `POST` too, marked `@WorkerOnly()` and `@HttpCode(HttpStatus.OK)`, since what it asks about is a list.
+  Its path names what it asks for, its body carries only what it asks about, and it answers 200 with what it asks for
+  and stores nothing: the events list is one Source and a post number identifies a post, so
+  `/global-events/stored-posts` carries no `source` and no time. `/global-events/stored-posts` with
+  `{ "postNumbers": [176558, 176525] }` asks which of these posts are stored, and `{ "postNumbers": [176558] }` answers
+  that 176558 is, in whatever state. The worker asks with `MainServer.ask()`.
 - **Who may call it**: the worker alone. The request carries `Authorization: Bearer <WORKER_TOKEN>`, the secret that
   the two servers' settings share, and `WorkerGuard` in `src/auth/worker.guard.ts` answers 401 to any other request,
   a User's and an Administrator's access token included. The token is no signed token: the worker is no User.
@@ -750,8 +875,9 @@ so a message is stored once. Every route for the worker follows these rules.
   is refused instead of dropped.
 - **Size**: a body may be up to 1 MB (`src/common/json-body-limit.ts`). Express takes 100 kB unless told otherwise, and
   a week of the Co-op's menus comes to about that. A larger body is refused with 413.
-- **Answers**: a message that was taken answers 204. One that does not match its schema is refused with 400 before the
-  handler runs, and nothing from it is stored, the Collection status included. The answer names each problem:
+- **Answers**: a message that was taken answers 204, and a question 200 with its answer. One that does not match its
+  schema is refused with 400 before the handler runs, and nothing from it is stored, the Collection status included.
+  The answer names each problem:
 
   ```json
   {
@@ -766,20 +892,24 @@ so a message is stored once. Every route for the worker follows these rules.
 
   A handler refuses a message that matches its schema but not what is stored, such as a shuttle stop the seed does not
   know, by throwing `ConflictException` with the problem before it stores anything; the answer is 409 with the problem
-  as its `message`. Any other error inside a handler is logged and answers 500. The worker takes any answer but 204 as
-  a failure, and reports it as a failed Collection with the problem as the reason.
+  as its `message`. Any other error inside a handler is logged and answers 500. The worker takes any answer outside 2xx
+  as a failure, and reports it as a failed Collection with the problem as the reason.
 
 - **Repeats and order**: the same message sent twice leaves the records one would. Each feature states how, as
-  [Menus](#menus) does. A Source's messages are stored in the order they arrive, not by their times.
+  [Menus](#menus) and [Global Events](#global-events) do. A Source's messages are stored in the order they arrive, not
+  by their times.
 - **Collection status**: `collection_statuses` keeps, for each Source, the time of its last successful Collection
   (`lastSucceededAt`) and, apart from it, its last failure (`lastFailedAt`, `lastFailureReason`). A handler that stores
   what a Collection read calls `CollectionService.recordSuccess(tx, source, collectedAt)` in the same transaction; the
-  shuttle's vehicles are stored in Redis, so their handler records the success once the set is stored. A Collection
+  shuttle's vehicles are stored in Redis, so their handler records the success once the set is stored. A message that
+  says its Collection stopped early, as `failureReason` does in [Global Events](#global-events), has its handler call
+  `recordFailure()` with the transaction in place of the success, even when it carries no event. Any other Collection
   that fails posts `{ "source", "failedAt", "reason" }` to `/collections/failed`, where `reason` says what went wrong.
-  It records the failure and leaves every stored record as it is. A success leaves the last failure in place, so the
-  two times tell whether the Source has worked since. No route serves the status yet; P12 shows it.
+  It records the failure and leaves every stored record as it is. A success leaves the last failure in place, so the two
+  times tell whether the Source has worked since. No route serves the status yet; P12 shows it.
 - **A new Source** adds its value to `Source` with a migration. `menusCollectedSchema` lists the Sources that send
-  menus, and the shuttle's two schemas the one that sends each, so a Source of another kind is refused there.
+  menus, the shuttle's two schemas the one that sends each, and `eventsCollectedSchema` the one that sends events, so a
+  Source of another kind is refused there.
 
 In a test, `sendAsWorker()` from `test/worker.ts` sends a request as the worker does, with its token, as
 `test/menus.e2e-spec.ts` does:
@@ -792,7 +922,10 @@ await app.close(); // in afterAll
 ```
 
 - The database is the shared one, so each test stores data of its own. The menus tests take their days from `daysOf()`
-  in `test/menus.ts`, a month for each file and a day for each test. A Source's Collection status is one row, so only
-  one file checks the status of a Source: `test/collection.e2e-spec.ts` the dormitory's, `test/menus.e2e-spec.ts` the
-  Co-op's and `test/shuttle.e2e-spec.ts` the shuttle's two, whose stops and line are one set of records and whose
-  vehicles one key in Redis besides.
+  in `test/menus.ts`, a month for each file and a day for each test, and the events tests their post numbers from
+  `postNumbersFrom()` in `test/global-events.ts`, a range for each file. A Source's Collection status is one row, so
+  only one file checks the status of a Source: `test/collection.e2e-spec.ts` the dormitory's, `test/menus.e2e-spec.ts`
+  the Co-op's, `test/shuttle.e2e-spec.ts` the shuttle's two, whose stops and line are one set of records and whose
+  vehicles one key in Redis besides, and `test/global-events.e2e-spec.ts` the events list's.
+  `test/stored-event-posts.e2e-spec.ts` therefore stores its posts with a database connection instead, and asks its
+  question with `askAsWorker()` from `test/worker.ts`, which resolves with the answer.

@@ -16,6 +16,18 @@ export async function sendAsWorker(app: INestApplication<Server>, path: string, 
   }
 }
 
+// Asks a question as the worker server does, with its token, and resolves with the answer.
+export async function askAsWorker(app: INestApplication<Server>, path: string, data: object): Promise<unknown> {
+  const response = await request(app.getHttpServer())
+    .post(path)
+    .auth(inject('settings').WORKER_TOKEN, { type: 'bearer' })
+    .send(data);
+  if (response.status !== 200) {
+    throw new Error(JSON.stringify(response.body));
+  }
+  return response.body as unknown;
+}
+
 const refusalSchema = z.object({
   statusCode: z.number().min(400).max(499),
   message: z.string().or(z.array(z.string())),

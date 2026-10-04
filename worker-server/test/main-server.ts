@@ -2,13 +2,16 @@ import { z } from 'zod';
 
 const payloadSchema = z.record(z.string(), z.unknown());
 
-// Stands for the main server: keeps each message the worker sends, with the path it was sent to, and answers it.
+// Stands for the main server: keeps each request the worker sends, a message or a question, with the path it was sent
+// to, and answers it.
 export class MainServerStub {
   readonly messages: { path: string; data: Record<string, unknown> }[] = [];
   // The token of each message, as the worker sent it.
   readonly tokens: (string | null)[] = [];
   // The problem to answer a message to a path with, in place of taking it.
   readonly refusals = new Map<string, string>();
+  // The answer to a question to a path, which the main server gives with 200.
+  readonly answers = new Map<string, object>();
   // The paths whose messages get no answer, as from a main server that hangs.
   readonly unanswered = new Set<string>();
   // A main server that cannot be reached.
@@ -37,7 +40,8 @@ export class MainServerStub {
     }
     const problem = this.refusals.get(pathname);
     if (problem === undefined) {
-      return Promise.resolve(new Response(null, { status: 204 }));
+      const answer = this.answers.get(pathname);
+      return Promise.resolve(answer === undefined ? new Response(null, { status: 204 }) : Response.json(answer));
     }
     // As the main server refuses a message that does not match its schema.
     return Promise.resolve(

@@ -1,5 +1,6 @@
 import { Inject, Logger } from '@nestjs/common';
 import { DiscoveryService } from '@nestjs/core';
+import { type z } from 'zod';
 import { MainServer } from './main-server.js';
 
 // Names the Sources a collector collects, which `pnpm collect` runs with its collectOne(): @Collects(MENU_SOURCES).
@@ -9,10 +10,15 @@ export const Collects = DiscoveryService.createDecorator<readonly string[]>();
 export abstract class Collector {
   // A property, so that a collector's constructor does not have to pass it on.
   @Inject(MainServer) private readonly mainServer!: MainServer;
-  private readonly logger = new Logger(this.constructor.name);
+  protected readonly logger = new Logger(this.constructor.name);
 
-  // One Collection of a Source. Gives whether the main server took what was read.
+  // One Collection of a Source. Gives whether it succeeded: one that stopped early may have handed over what it read.
   abstract collectOne(source: string): Promise<boolean>;
+
+  // Asks the main server what it holds, as a page is read: the worker keeps nothing.
+  protected ask<T>(path: string, question: object, schema: z.ZodType<T>): Promise<T> {
+    return this.mainServer.ask(path, question, schema);
+  }
 
   // Ends one Collection of a Source: what it read goes to the main server at `path`, and so does a failure to fetch or
   // read it.

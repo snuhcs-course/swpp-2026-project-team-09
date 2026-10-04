@@ -141,13 +141,16 @@ describe("A request to a worker's route without the worker's token", () => {
   });
 
   // A route left unmarked would take the User, and one marked @Public() anyone: either would answer 400 here.
-  it.each(['/menus/collected', '/shuttle/stops/collected', '/shuttle/vehicles/collected'])(
-    "is refused on %s, with no token and with a User's access token",
-    async (path) => {
-      const withoutToken = await request(app.getHttpServer()).post(path).send({});
-      const asUser = await request(app.getHttpServer()).post(path).auth(accessToken, { type: 'bearer' }).send({});
+  it.each([
+    '/menus/collected',
+    '/shuttle/stops/collected',
+    '/shuttle/vehicles/collected',
+    '/global-events/collected',
+    '/global-events/stored-posts',
+  ])("is refused on %s, with no token and with a User's access token", async (path) => {
+    const withoutToken = await request(app.getHttpServer()).post(path).send({});
+    const asUser = await request(app.getHttpServer()).post(path).auth(accessToken, { type: 'bearer' }).send({});
 
-      expect([withoutToken.status, asUser.status]).toEqual([401, 401]);
-    },
-  );
+    expect([withoutToken.status, asUser.status]).toEqual([401, 401]);
+  });
 });

@@ -13,6 +13,7 @@ import { PrismaModule } from './common/prisma.module.js';
 import { RedisIdempotencyStore } from './common/redis-idempotency.store.js';
 import { RedisModule } from './common/redis.module.js';
 import { settingsSchema } from './common/settings.js';
+import { GlobalEventsModule } from './global-events/global-events.module.js';
 import { HealthModule } from './health/health.module.js';
 import { LobbyModule } from './lobby/lobby.module.js';
 import { MenusModule } from './menus/menus.module.js';
@@ -48,6 +49,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     AdministratorsModule,
     LobbyModule,
     CollectionModule,
+    GlobalEventsModule,
     MenusModule,
     WalkingRouteModule,
     PlacesModule,

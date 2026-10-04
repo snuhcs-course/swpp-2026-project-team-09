@@ -3,8 +3,8 @@ import { DiscoveryService } from '@nestjs/core';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { Collector, Collects } from './common/collector.js';
 
-// Runs one Collection of each Source named, one after the other, as the schedule would. Gives whether the main server
-// took them all.
+// Runs one Collection of each Source named, one after the other, as the schedule would. Gives whether they all
+// succeeded.
 export async function collectSources(app: INestApplicationContext, names: string[]): Promise<boolean> {
   // The command starts the worker with its schedule, which would collect other Sources while the command runs.
   for (const job of app.get(SchedulerRegistry).getCronJobs().values()) {
@@ -16,14 +16,14 @@ export async function collectSources(app: INestApplicationContext, names: string
     throw new Error(`Name one or more of: ${[...collectors.keys()].join(', ')}`);
   }
   const logger = new Logger('Collect');
-  let allTaken = true;
+  let allSucceeded = true;
   for (const [source, collector] of named) {
-    // oxlint-disable-next-line no-await-in-loop -- one Collection at a time, in the order named
-    const taken = await collector.collectOne(source);
-    logger.log(`${source}: ${taken ? 'taken by the main server' : 'failed, and recorded as failed'}`);
-    allTaken &&= taken;
+    // oxlint-disable-next-line no-await-in-loop -- one Collection at a time
+    const succeeded = await collector.collectOne(source);
+    logger.log(`${source}: ${succeeded ? 'succeeded' : 'failed, and recorded as failed'}`);
+    allSucceeded &&= succeeded;
   }
-  return allTaken;
+  return allSucceeded;
 }
 
 function collectorsBySource(app: INestApplicationContext): Map<string, Collector> {
