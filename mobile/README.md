@@ -63,7 +63,7 @@ src/storage/        what the phone keeps between two starts of the app
 src/session/        where the User is in the flow between the screens, and the work of the start
 src/screens/        the screens that the routes show
 __tests__/          Jest tests
-assets/             app icons, the splash image, the fonts and the loading screen's photos
+assets/             app icons, the splash image, the fonts, the loading screen's photos and the sign-in screen's pictures
 ```
 
 Keep code that is not a screen, such as components and hooks, in `src/` outside `src/app/`.
@@ -84,6 +84,14 @@ starts with `useOwnPlace(...)`, which leads a User who does not belong there to 
 `enter`, a saved Onboarding `finishOnboarding`, a sign-out `leave`, and the screens follow.
 
 A screen's file in `src/app/` only says which place it is; the screen itself is in `src/screens/`.
+
+The sign-in screen has one button. A press asks the sign-in module (`src/auth/sign-in.ts`), and the screen shows the
+check, then follows the ending: `enter` for a User who signed in, the default state after a closed sheet, and a
+refused state for an account outside SNU or any other failure. A press in a refused state tries again.
+
+Its three legal documents open on a screen of their own, `/legal/terms`, `/legal/privacy` and `/legal/location`
+(`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it closes back to the
+screen it was opened from. The documents' texts are placeholders.
 
 ## Data
 

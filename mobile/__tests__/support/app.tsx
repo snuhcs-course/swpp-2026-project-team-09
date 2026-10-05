@@ -1,8 +1,9 @@
 import { act } from '@testing-library/react-native';
-import { Slot } from 'expo-router';
+import { Stack } from 'expo-router';
 import { renderRouter, screen } from 'expo-router/testing-library';
 import type { ReactElement } from 'react';
 import StartScreen from '@/app/index';
+import LegalScreen from '@/app/legal/[document]';
 import MainScreen from '@/app/main';
 import OnboardingScreen from '@/app/onboarding';
 import SignInScreen from '@/app/sign-in';
@@ -12,7 +13,7 @@ import { AppProviders } from '@/app-providers';
 function Layout(): ReactElement {
   return (
     <AppProviders>
-      <Slot />
+      <Stack screenOptions={{ headerShown: false }} />
     </AppProviders>
   );
 }
@@ -20,7 +21,14 @@ function Layout(): ReactElement {
 // Starts the app's screens at an address, as a start of the app or a link would.
 export async function startApp(initialUrl = '/'): Promise<void> {
   await renderRouter(
-    { _layout: Layout, index: StartScreen, 'sign-in': SignInScreen, onboarding: OnboardingScreen, main: MainScreen },
+    {
+      _layout: Layout,
+      index: StartScreen,
+      'sign-in': SignInScreen,
+      'legal/[document]': LegalScreen,
+      onboarding: OnboardingScreen,
+      main: MainScreen,
+    },
     { initialUrl },
   );
 }
