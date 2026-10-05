@@ -8,6 +8,12 @@ jest.mock('expo-location');
 jest.mock('@/map/native-module', (): { hasNativeMap: () => boolean } => ({
   hasNativeMap: (): boolean => true,
 }));
+// The plain ground stands in for the native map, which draws pictures a test cannot read: the looks it is given are
+// the plain ground's views.
+jest.mock('@/map/native-map', (): { __esModule: true; default: unknown } => {
+  const { PlainMap }: { PlainMap: unknown } = jest.requireActual('@/map/plain-map');
+  return { __esModule: true, default: PlainMap };
+});
 jest.mock('react-native-view-shot', (): { captureRef: jest.Mock<Promise<string>, []> } => ({
   captureRef: jest.fn<Promise<string>, []>(),
 }));

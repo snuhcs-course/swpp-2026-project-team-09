@@ -173,7 +173,8 @@ Request to it. The routes, all a User's:
   `[{ "id", "name", "department", "sharing", "visible" }]`, where `id` is the Friend's User id, `sharing` the User's own
   switch for the friendship and `visible` whether the User can see the Friend on the map now, never why not (see
   [Location Sharing](#location-sharing)).
-- `DELETE /friends/:userId` ends the friendship for both and answers 204.
+- `DELETE /friends/:userId` ends the friendship for both and answers 204. It withdraws the Meetups still proposed
+  between the two; the Quests of accepted ones stay (see [Meetup](#meetup)).
 - `PUT /friends/:userId/sharing` with `{ "on": false }` turns the User's switch for the friendship off, `{ "on": true }`
   on, and answers 204. It changes the User's own end only.
 
@@ -608,6 +609,7 @@ they ask and the Leader decides; `closed`, only by the Leader's invitation. A Qu
 - from attending a Global Event: led by the User, `closed`, capacity 4. The Leader opens it to others by changing the
   Join Policy.
 - made by a User: led by the User, with the capacity and the Join Policy given, 4 and `closed` when left out.
+- from an accepted Meetup: led by the proposer, `closed`, capacity 4 (see [Meetup](#meetup)).
 
 When the Leader drops the Quest, the Holder who entered earliest leads it. `quest_holders.joined_at` keeps when each
 Holder entered. The Leader changes the settings, hands the role over and removes Holders (see below).
@@ -734,6 +736,8 @@ one Quest locks it first, so that changes run one after another:
 - `holdsSharedQuestFor(userId, globalEventId, tx)` answers whether the User holds a Shared Quest for the Global Event,
   without a lock; entering checks it again.
 - `withSubQuestsAhead(questIds, tx?)` answers those of the Quests that have a Sub Quest ahead.
+- `columnsOf(content, tx)` turns the body of a Sub Quest into the columns it is stored in, and refuses a `placeId` that
+  is not a Place of the list.
 
 `RecruitingService`, also exported, has `enter(questId, userId, tx, admits?)`, described above. `admits(quest)` is the
 way in's own check, such as the Join Policy, made once the Quest is locked; it throws to refuse. It answers the Holders
@@ -749,6 +753,76 @@ nothing, and the app fetches `GET /quests`, the requests to join and the invitat
 In a test, `test/quests.ts` stores a published Global Event with a connection of its own, since no route creates one
 yet, and calls the routes above; `test/quest-recruiting.ts` calls those of requests, invitations and the Leader's
 controls.
+
+## Meetup
+
+A Meetup is a proposal from one Friend to another to meet. Accepting it gives both a Shared Quest. The routes, all a
+User's:
+
+- `POST /meetups` proposes a Meetup and answers 201 with it. It requires an `Idempotency-Key` (see
+  [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)). The body:
+  `{ "receiverId": "...", "title": "점심", "startsAt": "...", "endsAt": "...", "place": ... }`. `receiverId` is the
+  Friend's User id, as `GET /friends` gives it. The title, the times and the place are those of a Sub Quest (see
+  [Quests](#quests)), except that the start and the place are required and the start must be in the future. `endsAt`
+  is optional.
+- `GET /meetups` answers the Meetups proposed to the User and those the User proposed, the newest first:
+  `{ "received": [...], "sent": [...] }`, every state included.
+- `POST /meetups/:id/accept` and `POST /meetups/:id/decline` answer a Meetup proposed to the User, and
+  `POST /meetups/:id/withdraw` withdraws one the User proposed. Each answers 204 and takes a Meetup only while it is
+  proposed.
+
+No route edits a Meetup: the proposer withdraws it and proposes another. A Meetup reads:
+
+```json
+{
+  "id": "…",
+  "title": "점심",
+  "startsAt": "2026-10-13T03:00:00.000Z",
+  "endsAt": "2026-10-13T04:00:00.000Z",
+  "place": { "placeId": null, "label": "자하연 앞", "latitude": 37.4601, "longitude": 126.9512 },
+  "state": "proposed",
+  "proposer": { "id": "…", "name": "홍길동", "department": "컴퓨터공학부" },
+  "receiver": { "id": "…", "name": "김철수", "department": "경제학부" }
+}
+```
+
+`place` reads as a Sub Quest's does. `state` is one of:
+
+| State       | When                                                                    |
+| ----------- | ----------------------------------------------------------------------- |
+| `proposed`  | Proposed, and its start has not passed                                  |
+| `accepted`  | The receiver accepted it                                                |
+| `declined`  | The receiver declined it                                                |
+| `withdrawn` | The proposer withdrew it, or the friendship ended while it was proposed |
+| `expired`   | Proposed, and its start has passed                                      |
+
+**Expiry** is computed when a Meetup is read, at `now()` of `CLOCK` (see [Quests](#quests)), and nothing is written:
+the stored state stays `proposed`.
+
+**Accepting** creates one Quest held by both Friends, without a Global Event and without a Party, titled as the Meetup,
+with one Sub Quest that has the Meetup's title, start, end and place. The proposer leads it, and it is `closed` with
+capacity 4. From then on it is a Quest like any other: either Holder adds, edits or cancels Sub Quests, marks them done
+for themselves alone, and drops it. The Meetup only records that it was accepted.
+
+The refusals each have a `code`:
+
+| Refusal                                                                                                 | Status | `code`                |
+| ------------------------------------------------------------------------------------------------------- | ------ | --------------------- |
+| Proposing to a User who is not a Friend, or to oneself                                                  | 404    | `FRIEND_NOT_FOUND`    |
+| Proposing with a start that has passed                                                                  | 400    | `MEETUP_START_PASSED` |
+| A `placeId` that is not a Place of the list                                                             | 404    | `PLACE_NOT_FOUND`     |
+| An answer to a Meetup that is not proposed to the User, or a withdrawal of one the User did not propose | 404    | `MEETUP_NOT_FOUND`    |
+| An answer or a withdrawal once the Meetup is no longer proposed, expired included                       | 409    | `MEETUP_NOT_PROPOSED` |
+
+How they are stored: `meetups` holds one row for each Meetup, with the proposer, the receiver, its content and one of
+the four states that are stored. A check in the migration keeps the place a Place or a point with its label. Every
+change locks both Users' rows in the order of their ids first, as a change to a friendship does, and a Meetup leaves
+`proposed` only once, so two accepts at the same moment create one Quest, and no Meetup stays proposed between two
+Users who are no longer Friends.
+
+`meetups-changed` goes to both Friends when a Meetup is proposed, accepted, declined or withdrawn, and when ending the
+friendship withdraws one. On accepting, `quests-changed` goes to both too. The signals carry nothing, and the app
+fetches `GET /meetups` again (see [Signals](#signals)).
 
 ## Party
 
@@ -1317,6 +1391,7 @@ src/
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
 ├── parties/                         a feature: Parties, who sees, enters and leaves them, and the members' switches
 ├── quests/                          a feature: Quests, their Holders, Sub Quests, each Holder's progress and joining
+├── meetups/                         a feature: Meetups between Friends, and the Shared Quest an accepted one gives
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a

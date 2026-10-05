@@ -9,7 +9,7 @@ export const attendSchema = z.strictObject({ globalEventId: z.uuid() });
 
 export type AttendDto = z.infer<typeof attendSchema>;
 
-const placeSchema = z.union([
+export const placeSchema = z.union([
   z.strictObject({ placeId: z.uuid() }),
   // A point on the map, with the label the app showed for it.
   z.strictObject({

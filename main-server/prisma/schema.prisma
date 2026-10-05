@@ -39,6 +39,8 @@ model User {
   ledQuests     Quest[]
   questJoinRequests QuestJoinRequest[]
   questInvitations  QuestInvitation[]
+  meetupsProposed Meetup[] @relation("MeetupProposer")
+  meetupsReceived Meetup[] @relation("MeetupReceiver")
   partyMember       PartyMember?
   ledParties        Party[]
 
@@ -80,6 +82,40 @@ model InviteLink {
   usedAt    DateTime? @map("used_at")
 
   @@map("invite_links")
+}
+
+// A proposal from one Friend to another to meet (README.md: Meetup). It is never edited.
+model Meetup {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  proposerId String      @map("proposer_id") @db.Uuid
+  proposer   User        @relation("MeetupProposer", fields: [proposerId], references: [id])
+  receiverId String      @map("receiver_id") @db.Uuid
+  receiver   User        @relation("MeetupReceiver", fields: [receiverId], references: [id])
+  title      String
+  startsAt   DateTime    @map("starts_at")
+  endsAt     DateTime?   @map("ends_at")
+  // A Place from the list, or a point with the label the app showed for it. The migration checks that it is one.
+  placeId    String?     @map("place_id") @db.Uuid
+  place      Place?      @relation(fields: [placeId], references: [id], onDelete: Restrict)
+  latitude   Float?
+  longitude  Float?
+  placeLabel String?     @map("place_label")
+  state      MeetupState @default(proposed)
+  proposedAt DateTime    @default(now()) @map("proposed_at")
+
+  @@index([proposerId])
+  @@index([receiverId])
+  @@map("meetups")
+}
+
+// Expired is not among them: it is computed when a Meetup is read.
+enum MeetupState {
+  proposed
+  accepted
+  declined
+  withdrawn
+
+  @@map("meetup_state")
 }
 
 // The app signed in on one phone. A sign-in ends the User's open session, so a User has at most one.
@@ -427,6 +463,7 @@ model Place {
   // Each a closed ring: [[{ latitude, longitude }, …], …].
   outlines  Json           @default("[]")
   subQuests SubQuest[]
+  meetups   Meetup[]
 
   @@unique([origin, originId])
   @@map("places")
