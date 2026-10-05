@@ -1,4 +1,4 @@
-# 04: Quests for Global Events and their Sub Quests
+# 04: Quests, their Sub Quests and joining them
 
 Parent: [P08 spec](../spec.md)
 Status: ready-for-agent
@@ -6,9 +6,11 @@ Blocked by: 01 (Friends by Friend ID, and the signal path)
 
 ## What to build
 
-A User chooses a published Global Event to attend and gets a Quest for it. The Quest starts with a Sub Quest for attending the event, which shows the event's time and place and follows the event when it is changed or cancelled. The User adds further Sub Quests, marks Sub Quests as done, sees the Quest leave the list once every Sub Quest has ended, and can drop the Quest.
+A User chooses a published Global Event to attend and gets a Quest for it, or makes a Quest of their own with a title and a first Sub Quest. The Quest for a Global Event starts with a Sub Quest for attending the event, which shows the event's time and place and follows the event when it is changed or cancelled. The User adds further Sub Quests, marks Sub Quests as done, sees the Quest leave the list once every Sub Quest has ended, and can drop the Quest.
 
-This ticket lays down what Meetup, Party and Matching build on: the Quest with its Holders, the Sub Quests shared by all Holders, the progress each Holder keeps alone, and the rule that a User holds one Quest for a Global Event. The Quests of this ticket have one Holder; tickets 05, 07 and 09 add the others.
+A Quest is what people gather around. Every Quest has a Leader, a capacity and a Join Policy. Others find the Open and Approval Quests in the list of recruiting Quests, and join an Open one at once, within its capacity and under the rule that a User holds one Quest for a Global Event.
+
+This ticket lays down what Meetup, Party and Matching build on: the Quest with its Holders and its Leader, the Sub Quests shared by all Holders, the progress each Holder keeps alone, and the rule that a User holds one Quest for a Global Event. Asking to join, invitations and the Leader's controls are ticket 14; tickets 07 and 09 create Quests for several Users, and ticket 15 places requesters of Matching into Open Quests.
 
 ## Acceptance criteria
 
@@ -25,6 +27,19 @@ This ticket lays down what Meetup, Party and Matching build on: the Quest with i
 - [x] `quests-changed` goes to every Holder of a Quest when its Holders or its Sub Quests change.
 - [x] Main server tests at the API: attending and attending again, the event changed and cancelled under a Quest, each Sub Quest rule, a repeated key that leaves one Sub Quest and answers the same twice, an end time passing, marking done, the list leaving out an ended Quest, and dropping.
 - [x] The main server's README records the Quest and Sub Quest routes, the one-Quest rule, how the attending Sub Quest reads the Global Event, and how a Sub Quest ends.
+- [ ] A User makes a Quest of their own with a title and a first Sub Quest of the shape a Holder adds: a title, an optional start, an optional end after the start and an optional place. It has no Global Event and no attending Sub Quest, and the User is its only Holder. Making requires the key described in P04.
+- [ ] Every stored Quest has a Leader, a capacity from 1 to 8 and a Join Policy, Open, Approval or Closed. A Quest a User makes takes the capacity and the Join Policy the User gives, 4 and Closed when left out. A Quest from attending a Global Event is Closed with capacity 4. In both the User is the Leader.
+- [ ] A Quest, in the list and read by itself, shows its Leader, its capacity, its Join Policy and its Holders in the order they entered. A Class Quest has no Leader and is never in the list of recruiting Quests.
+- [ ] When the Leader drops the Quest, the Holder who entered earliest becomes Leader.
+- [ ] The list of recruiting Quests returns the Open and Approval Quests that have a Sub Quest ahead, the newest first, and the same for one Global Event. A Sub Quest is ahead while it is not cancelled and its end has not passed; a Holder's mark of done does not count. A Closed Quest and a Quest the reader holds are in neither.
+- [ ] Each entry of the list has the Quest's title, its Global Event if any, its Leader, the number of Holders, the capacity, the Join Policy, and its first Sub Quest ahead with its time and place.
+- [ ] A User joins an Open Quest and becomes a Holder at once. An Approval Quest, a Closed or unknown Quest, a Quest the User holds and a Quest without a Sub Quest ahead are refused, each with a code.
+- [ ] The capacity is checked inside the transaction that adds the Holder, and a full Quest refuses with a code. Two Users joining the last free place at the same moment leave one of them a Holder.
+- [ ] On joining a Quest for a Global Event, a Quest the User held alone for that event is deleted, with its Sub Quests and the User's progress. A User who holds a Shared Quest for that event is refused with a code and keeps it. A Quest without a Global Event has no such rule.
+- [ ] Joining a Quest changes no Party.
+- [ ] `quests-changed` goes to every Holder when a User joins or the Leader changes.
+- [ ] Main server tests at the API: making a Quest and a repeated key that leaves one Quest and answers the same twice, the settings each kind of Quest starts with, the Leader's succession, the list and the list for one Global Event with each Quest it leaves out, joining and each refusal, a Quest held alone replaced on joining, a Shared Quest kept, the last free place taken by two at the same moment, and one User joining two Quests of one Global Event at the same moment.
+- [ ] The main server's README records making a Quest, the Leader, the capacity and the Join Policy with the settings each kind of Quest starts with, the list of recruiting Quests, and joining with the one-Quest rule.
 
 ## Comments
 
@@ -64,9 +79,9 @@ This ticket lays down what Meetup, Party and Matching build on: the Quest with i
   `lock(questId, tx)`, `heldFor(userId, globalEventId, tx): string | null`,
   `createForGlobalEvent(globalEvent, holderIds, tx): questId`, `removeHolder(questId, userId, tx)` (deletes the Quest
   when nobody holds it), `holderIds(questId, tx)`. Attending locks the User's row (`UsersService.lock`) before checking
-  for a held Quest. Ticket 07 adds a Quest with an ordinary first Sub Quest, 05 and 09 a Holder added to an existing
-  Quest and the question of a Shared Quest, 05 whether a Quest has Sub Quests ahead, 09 the match identifier, 11 the
-  Class Quest mark in the list.
+  for a held Quest. Ticket 07 adds a Quest with an ordinary first Sub Quest, joining here and tickets 14 and 15 a
+  Holder added to an existing Quest and the question of a Shared Quest, 05 whether a Quest has Sub Quests ahead, 09 the
+  match identifier, 11 the Class Quest mark in the list.
 
 ### Agent usage (2026-10-04)
 
