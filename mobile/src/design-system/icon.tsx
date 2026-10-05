@@ -51,6 +51,8 @@ const ICONS = {
   info: [{ circle: [12, 12, 9] }, { path: 'M12 11v6' }, { path: 'M12 7.5v.5' }],
   alert: [{ path: 'M12 3 2 20h20z' }, { path: 'M12 10v4' }, { path: 'M12 17v.5' }],
   layers: [{ path: 'M12 3 3 8l9 5 9-5z' }, { path: 'M3 13l9 5 9-5' }, { path: 'M3 17.5l9 5 9-5' }],
+  // Not one of the design system's: the `Onboarding` frame draws it on the field that opens a list.
+  chevronDown: [{ path: 'M6 9l6 6 6-6' }],
 } as const satisfies Record<string, readonly Stroke[]>;
 
 export type IconName = keyof typeof ICONS;

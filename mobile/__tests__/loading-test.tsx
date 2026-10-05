@@ -1,6 +1,7 @@
 import { userEvent } from '@testing-library/react-native';
 import { pass, screen, startApp } from './support/app';
 import { startFresh } from './support/mocks';
+import { ONBOARDING, saveOnboarding } from './support/onboarding';
 import { keep } from '@/storage/kept';
 
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -83,7 +84,7 @@ describe('after the loading screen', () => {
     await startApp();
     await pass(600);
 
-    expect(screen.getByRole('header', { name: '온보딩' })).toBeVisible();
+    expect(screen.getByRole('header', { name: ONBOARDING })).toBeVisible();
   });
 
   it('shows the main screen to a User who finished Onboarding, with the Lobby fetched', async () => {
@@ -143,9 +144,9 @@ describe("a screen that is not the User's", () => {
     await pass(400);
     await user.press(screen.getByRole('button', { name: '동의하고 시작' }));
     await pass(100);
-    expect(screen.getByRole('header', { name: '온보딩' })).toBeVisible();
+    expect(screen.getByRole('header', { name: ONBOARDING })).toBeVisible();
 
-    await user.press(screen.getByRole('button', { name: '저장 (임시)' }));
+    await saveOnboarding(user);
     await pass(400);
     expect(screen.getByRole('header', { name: '메인' })).toBeVisible();
 

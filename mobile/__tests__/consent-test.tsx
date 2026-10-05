@@ -1,6 +1,7 @@
 import { userEvent } from '@testing-library/react-native';
 import { pass, screen, startApp } from './support/app';
 import { startFresh } from './support/mocks';
+import { ONBOARDING } from './support/onboarding';
 import { keep, readKept } from '@/storage/kept';
 
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -47,7 +48,7 @@ describe('the consent screen', () => {
     for (const name of ['이용약관', '개인정보 처리방침', '위치정보 이용약관']) {
       expect(screen.getByRole('link', { name })).toBeVisible();
     }
-    expect(screen.queryByRole('header', { name: '온보딩' })).toBeNull();
+    expect(screen.queryByRole('header', { name: ONBOARDING })).toBeNull();
     expect((await readKept()).consented).toBe(false);
   });
 
@@ -55,7 +56,7 @@ describe('the consent screen', () => {
     const user = await signInFresh();
     await press(user, AGREE);
 
-    expect(screen.getByRole('header', { name: '온보딩' })).toBeVisible();
+    expect(screen.getByRole('header', { name: ONBOARDING })).toBeVisible();
     expect(screen.queryByRole('header', { name: TITLE })).toBeNull();
     expect((await readKept()).consented).toBe(true);
   });
@@ -85,7 +86,7 @@ describe('consent, once on a phone', () => {
     await press(user, '로그아웃');
 
     await press(user, SIGN_IN, 400);
-    expect(screen.getByRole('header', { name: '온보딩' })).toBeVisible();
+    expect(screen.getByRole('header', { name: ONBOARDING })).toBeVisible();
     expect(screen.queryByRole('header', { name: TITLE })).toBeNull();
   });
 

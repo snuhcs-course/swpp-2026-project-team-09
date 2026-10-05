@@ -106,7 +106,7 @@ src/features/       one folder per feature: its adapter and the hooks a screen a
 src/map/            the one map component, its interface and the pictures of its markers
 src/storage/        what the phone keeps between two starts of the app
 src/session/        where the User is in the flow between the screens, and the work of the start
-src/screens/        the screens that the routes show
+src/screens/        the screens that the routes show; a screen of several files has a folder
 __tests__/          Jest tests
 assets/             app icons, the splash image, the fonts, the loading screen's photos and the sign-in screen's pictures
 ```
@@ -138,6 +138,12 @@ refused state for an account outside SNU or any other failure. A press in a refu
 The consent screen asks once on a phone: a signed-in User who has not agreed there sees it after the sign-in, or after
 the loading screen, and the Session remembers where they go next. "동의하고 시작" stores the consent and calls `agree`;
 "로그아웃" signs out. A sign-out leaves the consent on the phone.
+
+The Onboarding screen (`src/screens/onboarding/`) starts from what the sign-in suggested: the name and the department,
+each with the badge "Google 계정에서 가져옴" until the User changes that field. The department is a name from the
+lists in `departments.ts`, found by a search. "저장하고 시작하기" is enabled once a name and a department are there: it
+calls `completeOnboarding` and then `finishOnboarding`, and a save that failed says so in a toast and leaves the form.
+"로그아웃" signs out. Nothing on the screen leads back.
 
 The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and
 `/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
