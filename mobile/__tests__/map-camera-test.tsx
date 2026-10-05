@@ -150,3 +150,22 @@ describe('fitting the camera to points', () => {
     expect(map.camera()?.centre.longitude).toBeCloseTo(LIBRARY.longitude, 9);
   });
 });
+
+describe('fitting the camera with clear room that differs from edge to edge', () => {
+  it("brings the points' middle to the middle of what is left of the view", async () => {
+    const map = await holdMap();
+
+    await map.move((handle) => {
+      handle.fitTo([GATE, LIBRARY], { padding: { top: 200, right: 40, bottom: 100, left: 40 } });
+    });
+    const camera = map.camera();
+
+    // 400 of the 700 points are left from top to bottom, where 620 were with 40 at each edge.
+    expect(camera?.zoom).toBeCloseTo(16.093 + Math.log2(400 / 620), 3);
+    // What is left is 50 lower than the view's middle, so the camera's centre is north of the points' middle by 50
+    // points, which is an eighth of the way between the two.
+    const apart = LIBRARY.latitude - GATE.latitude;
+    expect(camera?.centre.latitude).toBeCloseTo((GATE.latitude + LIBRARY.latitude) / 2 + apart / 8, 5);
+    expect(camera?.centre.longitude).toBeCloseTo((GATE.longitude + LIBRARY.longitude) / 2, 6);
+  });
+});

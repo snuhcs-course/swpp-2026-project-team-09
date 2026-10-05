@@ -65,8 +65,10 @@ Last updated: 2026-10-05
 
 - [x] The map with the User's Avatar, the zoom and position buttons, the location explanation, off campus
 - [x] The walk on campus for development (section 5)
-- [ ] Avatars and markers with their detail by zoom: Friends, a member of the User's Party, a Global Event, a Party
-- [ ] A card for each, "가까이 보기", "길찾기" with the route line, the card's X
+- [x] Avatars and markers with their detail by zoom: Friends, a member of the User's Party, a Global Event, a Party, a Shared Quest
+- [x] A card for each, "가까이 보기", "길찾기" with the route line, the card's X
+- [x] The route to the User's next Quest when the screen opens
+- [ ] The native map draws the new looks, the route's style and a fit with a padding for each edge (ticket 07)
 - [ ] The friend list and the Quest list, collapsing; a Friend's row; a Class Quest's row
 - [ ] "오늘의 발자국", "활성 파티", the 편의기능 button, the AI input, the bottom navigation, in place
 - [ ] The "준비 중이에요" toast on every control of section 4
@@ -249,7 +251,7 @@ getMyParty(): Promise<MyParty | null>; // the main server answers 404 NOT_IN_PAR
 // so the list itself is the app's own. A published event has a title, a start and a position.
 interface GlobalEvent {
   id: string;
-  title: string; // "AI 커리어 채용설명회"
+  title: string; // "AI 커리어 설명회"
   description: string;
   startsAt: string;
   endsAt: string | null;
@@ -343,16 +345,17 @@ It is `usePosition` of `mobile/src/position`, on `expo-location`, read inside a 
   markers={[
     // name: what a screen reader says. image: a picture made from the design system's marker view.
     // text: shown under the marker by the map. order: higher is on top; left out, 0.
-    { id: 'event:e1', name: 'AI 커리어 채용설명회', position: { latitude: 37.4499, longitude: 126.9525 },
+    { id: 'event:e1', name: '공식 행사 · AI 커리어 설명회', position: { latitude: 37.45016, longitude: 126.95259 },
       image: globalEventPin, text: 'AI 커리어' },
   ]}
   avatars={[
     { id: 'me', name: '내 위치', position: { latitude: 37.45905, longitude: 126.9512 }, image: myAvatar, glideMs: 5000,
       order: 1 },
-    { id: 'friend:f1', name: '김민준', position: { latitude: 37.4598, longitude: 126.9521 }, image: friendAvatar,
-      text: '민준', glideMs: 5000 },
+    { id: 'friend:f1', name: '김민준 · 공강 · 중앙도서관 근처 · 15:00까지 비어 있어요',
+      position: { latitude: 37.45952, longitude: 126.95209 }, image: friendAvatar, text: '민준', glideMs: 5000 },
   ]}
   route={[{ latitude: 37.45905, longitude: 126.9512 }, { latitude: 37.4601, longitude: 126.9507 }]} // or null for none
+  routeStyle={{ color: '#865600', width: 3, dash: [2, 6] }} // left out, the map's own plain line
   onPress={(id) => {}} // a marker's or an Avatar's id
   onCameraIdle={({ centre, zoom }) => {}} // the screen switches the detail of markers and Avatars from zoom
   onFitZoom={(zoom) => {}} // the zoom at which the whole campus is in view; the zoom levels are counted from it
@@ -361,13 +364,17 @@ It is `usePosition` of `mobile/src/position`, on `expo-location`, read inside a 
 
 map.current.moveCamera({ centre, zoom, animated: true }); // each of the three may be left out
 map.current.fitTo(points, { padding: 48, animated: true }); // the closest view that shows all the points
+map.current.fitTo(points, { padding: { top: 288, right: 78, bottom: 142, left: 24 } }); // clear room for each edge
 
 // The images, one for each look, in the order asked. An image names its look at once and gains its picture when it
 // is made; a native side draws a marker once the picture is there and reads it again when its uri changes.
 const [globalEventPin, myAvatar, friendAvatar] = useMarkerImages([
-  { kind: 'official', form: 'pin' }, // a marker of each kind of the design system, as a 'dot' or a 'pin'
+  // A place of each kind of the design system, as a 'dot' or a 'pin'; a pin with `count`; either with `selected`.
+  { kind: 'official', form: 'pin' },
   { kind: 'me' }, // with `small: true`, at three quarters of its size, while the whole campus is in view
-  { kind: 'friend', form: 'pin', name: '김민준', photo: null, status: 'free' },
+  // A person: the frame's teardrop in a tone ('free', 'class', 'moving', 'off', or 'member' for a member of the
+  // User's Party who is no Friend), with `small: true` while the whole campus is in view, and with `selected`.
+  { kind: 'person', tone: 'free', name: '김민준', photo: null },
 ]);
 
 interface MarkerImage {
@@ -384,7 +391,9 @@ The rules, for every implementation:
 
 - A zoom is the Web Mercator zoom level at the camera's centre: the world is 256 × 2^zoom points wide. It may be a fraction. A native side converts it to its SDK's own scale.
 - The camera stays inside `bounds`: the visible area never leaves the rectangle. The lowest zoom allowed is the larger of `minZoom` and the zoom at which the view just fits inside the rectangle, which depends on the view's size; the centre is kept far enough from the edges; the highest zoom is `maxZoom`. The map opens on the middle of the rectangle at the lowest zoom allowed.
-- `moveCamera` and `fitTo` are first brought inside these rules. `fitTo` moves to the middle of the points at the closest zoom at which all of them are inside the view with the padding.
+- `moveCamera` and `fitTo` are first brought inside these rules. `fitTo` moves to the closest zoom at which all the points are inside what the padding leaves of the view, with their middle in the middle of that. The padding is one number for all four edges, or `{ top, right, bottom, left }`.
+- `routeStyle` is the route line's look: `color`, `width` in points on the screen, and `dash`, the length of a dash and of the gap after it, measured as SVG's `stroke-dasharray`. The ends and the dashes are round, and the width and the dashes are the same at every zoom. Without it the line is the map's own.
+- A look's name is the key of its picture, and two looks that draw the same picture have the same name: `me`, `me:small`, `person:<small|full>:<tone>:<name>:<photo>`, `<kind>:dot`, `<kind>:pin`, `<kind>:pin:<count>`, each of the last four also with `:selected`. A person's marker and a pin stand on their tip; a dot and the User's own Avatar sit on their middle.
 - `onCameraIdle` is sent once when the map is ready and each time the camera comes to rest somewhere else: after a User's pan or zoom ends, and after `moveCamera` or `fitTo`. A call that changes nothing sends nothing.
 - `onFitZoom` gives the fit zoom, which is the lowest zoom allowed: once when the map is ready, before the first `onCameraIdle`, and again whenever the view's size changes it. The main screen's levels are offsets from it, `ZOOM_OFFSET` in `mobile/src/map/campus.ts`: `pins` +0.68, `names` +1.26, `close` +1.38, `step` 0.585.
 - A marker that is new in its list is added, one whose `id` stays is changed, one that is gone is removed.
@@ -420,15 +429,34 @@ interface QuestRowView {
   position: LatLng | null; // where the map goes on a press
 }
 
-// What a card shows for anything pressed on the map.
+// What a card shows for anything pressed on the map, and what its marker shows. Its id is the marker's id:
+// "event:<id>", "party:<the Quest's id>", "friend:<the User's id>", "party-member:<the User's id>" (`cardId`).
 interface CardView {
   id: string;
-  kind: 'global-event' | 'party' | 'friend' | 'party-member';
+  // 'shared-quest' is a Quest of the User's that no Party names, such as a dinner with a Friend.
+  kind: 'global-event' | 'party' | 'shared-quest' | 'friend' | 'party-member';
+  // At the card's head and as the marker: a person's Avatar, or a place's kind in the design system.
+  // `presence` is null for a member of the User's Party who is no Friend.
+  mark:
+    | { type: 'person'; name: string; photo: string | null; presence: 'free' | 'class' | 'moving' | 'off' | null }
+    | { type: 'place'; place: 'official' | 'party' | 'quest' };
+  marker: {
+    name: string; // what a screen reader says: "공식 행사 · AI 커리어 설명회", "김민준 · 공강 · 중앙도서관 근처 · …"
+    short: string; // under the marker from the "names" level: "AI 커리어", "민준"
+    count: number; // on a place's pin: a Party's members, or the Parties of a Global Event when more than one; else 0
+  };
   subLabel: string; // "공식 행사 · 컴퓨터공학부 공지"
   title: string;
-  lines: { icon: string; text: string }[];
+  lines: { icon: 'clock' | 'pin' | 'users' | 'info' | 'route'; text: string }[];
   primary: { label: string; action: 'route' | 'not-ready' };
   secondary: { label: string; action: 'not-ready' } | null;
+  position: LatLng;
+}
+
+// The User's next Quest by time: where the route goes that is drawn when the main screen opens.
+interface NextQuestView {
+  id: string;
+  title: string; // "자료구조"
   position: LatLng;
 }
 ```
@@ -495,8 +523,15 @@ Each is a setting given when the app is started, as an `EXPO_PUBLIC_` variable. 
 - [ ] The texts of the three legal documents: 이용약관, 개인정보 처리방침, 위치정보 이용약관
 - [ ] The consent screen has no frame: its look and words are the app's own. The `Login` frame still asks for consent in its footer, which the app leaves out. Draw the consent screen and settle the sign-in frame's footer
 - [ ] The two drawings beside the sign-in button are copied from the wireframes, and where they come from is not recorded. Record it and whether the app may ship them
-- [ ] A Friend's Avatar on the map: the frame draws a teardrop in the status colour; the candidates frame (지금, A, B, C, D) is still open
-- [ ] The frame draws a route when the screen opens, without a press, and has no way to clear a route. The app follows it; settle whether both are meant
+- [x] A Friend's Avatar on the map: settled as the `Main` frame's teardrop in the status colour, at every zoom
+- [x] The route drawn when the screen opens: settled as the way to the User's next Quest by time, where the frame draws it to the fixed "저녁 약속"
+- [ ] Neither the frame nor the app has a way to clear a route. Settle whether one is meant
+- [ ] The frame goes to its zoom 1.6 on the middle of a route after "길찾기". The app fits both ends between the controls
+- [ ] The frame's pins say "AI 커리어", "AI 파티" and "저녁 약속", which are not cut from the titles. The app cuts a title at a word's end within 8 characters, so the Party's pin says "AI 커리어" too
+- [ ] The frame's pin of the Global Event counts 3. The app counts the Parties that go to it, from two on: one in the mock, so no count
+- [ ] The frame's card of the Party's member has "301동까지 도보 15분". No answer holds a member's distance, and the app leaves it out
+- [ ] The frame's card of the dinner writes the place as "학생회관 (63동) 식당". The app shows the Quest's own label, "학생회관 (63동)"
+- [ ] "길을 찾지 못했어요", for a way that is not found, and what "길찾기" does without a position have no frame; the spec gives their wording
 - [ ] The frame's toast sits over the row of buttons above the navigation
 - [ ] The frame's friend pill says 12 whatever the list holds. The app shows the number of Friends in the list
 - [ ] No frame shows the main screen off campus, the explanation before the location prompt and its form for a permission that only the phone's settings can allow, the toast while the position is looked for, or the credit for the map data; the spec gives their wording

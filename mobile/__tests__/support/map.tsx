@@ -30,7 +30,7 @@ export const FRIEND: MapAvatar = {
   id: 'friend:f1',
   name: '김민준',
   position: LIBRARY,
-  image: unmadeImage({ kind: 'friend', form: 'pin', name: '김민준', photo: null, status: 'free' }),
+  image: unmadeImage({ kind: 'person', tone: 'free', name: '김민준', photo: null }),
   glideMs: 5000,
 };
 

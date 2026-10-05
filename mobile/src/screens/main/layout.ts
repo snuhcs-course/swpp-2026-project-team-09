@@ -15,6 +15,15 @@ export function navPaddingBottom(inset: number): number {
 // The zoom control: 18 from the right, its bottom 216 from the frame's bottom, which is 136 above the navigation.
 export const ZOOM_CONTROL = { right: 18, bottom: 136 } as const;
 
+// A card of something pressed on the map: 16 from the sides, its bottom 152 from the frame's bottom, which is 72
+// above the navigation and clear of the AI input.
+export const CARD = { side: space[4], bottom: 72 } as const;
+
+// What the screen's controls take at each edge of the map, with clear room of 16: the two lists end 272 from the
+// top; the row of buttons above the AI input ends 126 above the navigation; the zoom control takes 62 at the right.
+// A route is fitted into what is left.
+export const ROUTE_PADDING = { top: 288, right: 78, bottom: 142, left: 24 } as const;
+
 // The toast's bottom is 158 from the frame's bottom, 78 above the navigation: over the row of buttons, clear of the
 // AI input.
 const TOAST_BOTTOM = 78;

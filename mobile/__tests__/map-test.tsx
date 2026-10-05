@@ -51,8 +51,9 @@ describe('what is on the plain ground', () => {
     await render(<Map {...EMPTY} avatars={[FRIEND]} />);
 
     expect(screen.getByText('민준', { includeHiddenElements: true })).toBeOnTheScreen();
-    expect(screen.queryByLabelText('김민준 · 공강')).toBeNull();
-    expect(screen.getByLabelText('김민준 · 공강', { includeHiddenElements: true })).toBeOnTheScreen();
+    // The marker's button is read; the Avatar in its look is not.
+    expect(screen.getAllByLabelText('김민준')).toHaveLength(1);
+    expect(screen.getAllByLabelText('김민준', { includeHiddenElements: true })).toHaveLength(2);
   });
 
   it('removes a marker that is no longer listed', async () => {

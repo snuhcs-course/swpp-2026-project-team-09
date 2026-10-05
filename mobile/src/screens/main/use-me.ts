@@ -22,8 +22,14 @@ export interface Me {
   position: LatLng | null;
   // For `<Map>`: the User's own Avatar, or nothing.
   avatars: readonly MapAvatar[];
+  // The phone told a position and it is outside the campus rectangle.
+  offCampus: boolean;
   // "내 위치로 이동".
   goToMe: () => void;
+  // Says why the map has no position to start from, for a part that needs one: the explanation before the location
+  // prompt without the permission, "캠퍼스 밖에 있어요" off campus, or "위치를 찾는 중이에요", with the phone's watch
+  // started again. True when it showed the explanation.
+  sayWhyNotHere: () => boolean;
   // The explanation before the system's location prompt, and its two answers. `blocked`: the system no longer
   // prompts, so the explanation leads to the phone's settings instead.
   explaining: boolean;
@@ -42,20 +48,26 @@ export function useMe(map: MainMap): Me {
   const [full, small] = useMarkerImages(MY_LOOKS);
   const image = map.detail === 'overview' ? small : full;
   const position = phone !== null && isInside(phone, CAMPUS_BOUNDS) ? phone : null;
+  const offCampus = phone !== null && position === null;
+  const sayWhyNotHere = (): boolean => {
+    if (permission !== 'granted') {
+      explain();
+      return true;
+    }
+    if (phone === null) {
+      // No position yet, or a watch that could not start: it is started again.
+      retry();
+    }
+    showToast(offCampus ? OFF_CAMPUS : FINDING_POSITION);
+    return false;
+  };
   const goToMe = (): void => {
     if (permission === 'checking') {
       return;
     }
-    if (permission !== 'granted') {
-      explain();
-    } else if (position !== null) {
+    if (position !== null) {
       map.goTo(position, 'close', true);
-    } else if (phone === null) {
-      // No position yet, or a watch that could not start: it is started again.
-      retry();
-      showToast(FINDING_POSITION);
-    } else {
-      showToast(OFF_CAMPUS);
+    } else if (!sayWhyNotHere() && offCampus) {
       map.showCampus();
     }
   };
@@ -67,7 +79,9 @@ export function useMe(map: MainMap): Me {
       position === null || image === undefined
         ? []
         : [{ id: ME_AVATAR_ID, name: '내 위치', position, image, glideMs: stepMs, order: 1 }],
+    offCampus,
     goToMe,
+    sayWhyNotHere,
     explaining,
     blocked,
     allow: (): void => {

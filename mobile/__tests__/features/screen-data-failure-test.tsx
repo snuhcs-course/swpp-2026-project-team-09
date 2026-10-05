@@ -79,7 +79,7 @@ describe('a failure of one operation of the map', () => {
 
     expect(result.current.isPending).toBe(false);
     expect(result.current.isError).toBe(true);
-    expect(kinds(result.current.data)).toEqual(['party', 'friend', 'party-member']);
+    expect(kinds(result.current.data)).toEqual(['party', 'shared-quest', 'friend', 'party-member']);
   });
 
   it("takes off the cards that the User's Party words", async () => {
@@ -99,7 +99,7 @@ describe('a failure of one operation of the map', () => {
     await settle();
 
     expect(result.current.isError).toBe(true);
-    expect(kinds(result.current.data)).toEqual(['global-event', 'party']);
+    expect(kinds(result.current.data)).toEqual(['global-event', 'party', 'shared-quest']);
   });
 });
 

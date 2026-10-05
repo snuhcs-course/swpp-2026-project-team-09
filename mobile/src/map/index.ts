@@ -13,4 +13,15 @@ export {
 export { Map } from './map';
 export { MarkerImageStage, unmadeImage, useMarkerImages } from './marker-images';
 export type { MarkerForm, MarkerLook } from './marker-looks';
-export type { CameraMove, MapAvatar, MapBounds, MapCamera, MapHandle, MapMarker, MapProps, MarkerImage } from './types';
+export type {
+  CameraMove,
+  FitPadding,
+  MapAvatar,
+  MapBounds,
+  MapCamera,
+  MapHandle,
+  MapMarker,
+  MapProps,
+  MarkerImage,
+  RouteStyle,
+} from './types';

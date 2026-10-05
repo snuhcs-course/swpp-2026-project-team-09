@@ -78,9 +78,18 @@ export interface CameraMove {
   animated?: boolean;
 }
 
+// Clear room at each edge of the view, in points: what a screen's controls cover there.
+export interface FitPadding {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
 export interface FitOptions {
-  // Clear room between the points and the view's edges, in points. Left out, 0.
-  padding?: number;
+  // Clear room between the points and the view's edges, in points: one number for all four edges, or one for each.
+  // The points are fitted into what is left of the view, and its middle is where their middle comes. Left out, 0.
+  padding?: number | FitPadding;
   // Left out, the camera jumps.
   animated?: boolean;
 }
@@ -98,10 +107,20 @@ export interface FitOptions {
 // - `onFitZoom` gives the fit zoom: the lowest zoom allowed, at which the map opens and the whole campus is in view.
 //   It is sent once when the map is ready, before the first `onCameraIdle`, and again whenever it changes, which it
 //   does with the view's size. A screen counts its zoom levels from it (`ZOOM_OFFSET` in `campus.ts`).
+// How the route line is drawn. A screen says it; without it the line is the map's own plain one.
+export interface RouteStyle {
+  color: string;
+  // In points on the screen, the same at every zoom.
+  width: number;
+  // A dashed line: the length of a dash and of the gap after it, in points on the screen, the same at every zoom,
+  // measured as SVG's `stroke-dasharray` is. Left out, a solid line.
+  dash?: readonly [length: number, gap: number];
+}
+
 export interface MapHandle {
   moveCamera: (move: CameraMove) => void;
-  // Moves the camera to the middle of the points, at the closest zoom at which all of them are inside the view with
-  // the padding. No points, no move.
+  // Moves the camera so that the middle of the points is in the middle of what the padding leaves of the view, at
+  // the closest zoom at which all of them are inside it. No points, no move.
   fitTo: (points: readonly LatLng[], options?: FitOptions) => void;
 }
 
@@ -114,6 +133,8 @@ export interface MapProps {
   avatars: readonly MapAvatar[];
   // The one route line, drawn through these points in order, under the markers. Null for none.
   route: readonly LatLng[] | null;
+  // The line's look. Its ends and its dashes are round. Left out, the map's own plain line.
+  routeStyle?: RouteStyle;
   // A press on a marker or an Avatar, with its identifier.
   onPress?: (id: string) => void;
   onCameraIdle?: (camera: MapCamera) => void;

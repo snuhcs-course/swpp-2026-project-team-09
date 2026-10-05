@@ -1,5 +1,5 @@
 import type { LatLng } from '@/api/types';
-import type { MapBounds, MapCamera } from './types';
+import type { FitPadding, MapBounds, MapCamera } from './types';
 
 // Web Mercator, and the camera's rules of `types.ts` worked out with it. The plain ground uses these; a native side
 // follows the same rules with its SDK's own means.
@@ -89,20 +89,31 @@ export function settle(camera: MapCamera, rules: CameraRules): MapCamera {
   };
 }
 
-// The camera that shows all the points with clear room around them, inside the rules. Null without points.
-export function fit(points: readonly LatLng[], padding: number, rules: CameraRules): MapCamera | null {
+// The camera that shows all the points with clear room around them, inside the rules. Null without points. The
+// points' middle comes to the middle of what the padding leaves of the view.
+export function fit(points: readonly LatLng[], padding: number | FitPadding, rules: CameraRules): MapCamera | null {
   if (points.length === 0) {
     return null;
   }
+  const clear =
+    typeof padding === 'number' ? { top: padding, right: padding, bottom: padding, left: padding } : padding;
   const projected = points.map((point) => project(point, 0));
   const xs = projected.map(({ x }) => x);
   const ys = projected.map(({ y }) => y);
   const [left, right, top, bottom] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
-  const zoom = Math.min(
-    zoomWhere(rules.size.width - 2 * padding, right - left),
-    zoomWhere(rules.size.height - 2 * padding, bottom - top),
+  const fits = Math.min(
+    zoomWhere(rules.size.width - clear.left - clear.right, right - left),
+    zoomWhere(rules.size.height - clear.top - clear.bottom, bottom - top),
   );
-  return settle({ centre: unproject({ x: (left + right) / 2, y: (top + bottom) / 2 }, 0), zoom }, rules);
+  // The zoom the camera will rest at decides how far the unequal padding moves the centre.
+  const low = lowestZoom(rules);
+  const zoom = between(fits, low, Math.max(low, rules.maxZoom));
+  const scale = 2 ** zoom;
+  const centre = {
+    x: ((left + right) / 2) * scale + (clear.right - clear.left) / 2,
+    y: ((top + bottom) / 2) * scale + (clear.bottom - clear.top) / 2,
+  };
+  return settle({ centre: unproject(centre, zoom), zoom }, rules);
 }
 
 // What moves less than this has not moved: a camera that is settled twice differs in its last digits.

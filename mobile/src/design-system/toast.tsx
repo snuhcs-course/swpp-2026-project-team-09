@@ -50,7 +50,8 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactEleme
       toast === null
         ? null
         : setTimeout(() => {
-            setToast(null);
+            // A toast shown at the very moment this one ends stays.
+            setToast((now) => (now === toast ? null : now));
           }, toast.shownMs);
     return (): void => {
       if (timer !== null) {

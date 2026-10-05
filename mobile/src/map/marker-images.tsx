@@ -187,8 +187,9 @@ export function MarkerImageStage(): ReactElement {
   );
 }
 
-// Clear room around a look, so that its ring and its shadow are in the picture.
-const MARGIN = 8;
+// Clear room around a look, so that what reaches out of its box is in the picture: a shadow, a pin's count, and the
+// rings of a selected look, of which a selected pin's reaches furthest, a little over 8.
+const MARGIN = 12;
 const OFF_SCREEN = -10_000;
 
 const styles = StyleSheet.create({

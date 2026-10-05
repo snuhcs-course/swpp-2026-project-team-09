@@ -101,35 +101,7 @@ export function Thing({ thing, glideMs, place, view, onPress }: ThingProps): Rea
   );
 }
 
-// The route on the plain ground: a straight stroke between each two points, and its words for a screen reader.
-export function RouteLine({ points }: { points: readonly Point[] }): ReactElement {
-  return (
-    <>
-      <View accessibilityLabel="경로가 그려져 있습니다" accessibilityRole="image" accessible style={styles.unseen} />
-      {points.slice(1).map((to, index) => {
-        const from = points[index] ?? to;
-        const length = Math.hypot(to.x - from.x, to.y - from.y);
-        return (
-          <View
-            key={`${from.x}:${from.y}:${to.x}:${to.y}`}
-            style={[
-              styles.stroke,
-              {
-                left: (from.x + to.x) / 2 - length / 2 - STROKE / 2,
-                top: (from.y + to.y) / 2 - STROKE / 2,
-                width: length + STROKE,
-                transform: [{ rotate: `${Math.atan2(to.y - from.y, to.x - from.x)}rad` }],
-              },
-            ]}
-          />
-        );
-      })}
-    </>
-  );
-}
-
 const HIT_SLOP = 12;
-const STROKE = 5;
 const UNDER_WIDTH = 160;
 
 const styles = StyleSheet.create({
@@ -155,12 +127,5 @@ const styles = StyleSheet.create({
     color: color.ink,
     backgroundColor: color.surface,
     boxShadow: shadow.card,
-  },
-  stroke: {
-    position: 'absolute',
-    height: STROKE,
-    borderRadius: radius.full,
-    backgroundColor: color.me,
-    pointerEvents: 'none',
   },
 });

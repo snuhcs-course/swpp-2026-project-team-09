@@ -45,6 +45,29 @@ function startOf(quest: Quest): number {
   return start === null ? Number.POSITIVE_INFINITY : new Date(start).getTime();
 }
 
+// Where the User goes next.
+export interface NextQuestView {
+  id: string;
+  // "자료구조"
+  title: string;
+  position: LatLng;
+}
+
+// The User's next Quest by time: of the Quests that have a place and start after now, the one that starts first.
+// Null when none is left.
+export function toNextQuest(quests: readonly Quest[], now: Date): NextQuestView | null {
+  const later = quests
+    .filter((quest) => Number.isFinite(startOf(quest)) && startOf(quest) > now.getTime())
+    .toSorted((first, second) => startOf(first) - startOf(second));
+  for (const quest of later) {
+    const position = positionOf(shownSubQuest(quest));
+    if (position !== null) {
+      return { id: quest.id, title: quest.title, position };
+    }
+  }
+  return null;
+}
+
 // The Party that is marked with a Quest: the User's own or a listed one. Null for a Quest that no Party names, which
 // is a Shared Quest, such as an accepted Meetup with a Friend, or a Quest the User holds alone.
 export interface QuestParty {

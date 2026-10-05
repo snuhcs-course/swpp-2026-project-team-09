@@ -3,6 +3,7 @@ import type { LatLng } from '@/api/types';
 import {
   CAMPUS_BOUNDS,
   centreOf,
+  type FitPadding,
   type MapCamera,
   type MapHandle,
   ZOOM_OFFSET,
@@ -31,6 +32,8 @@ export interface MainMap {
   // To a position at a level of `ZOOM_OFFSET`. With `orCloser`, a camera that is closer already keeps its zoom.
   goTo: (position: LatLng, level: ZoomLevel, orCloser?: boolean) => void;
   showCampus: () => void;
+  // To the closest view that shows all the points inside what the padding leaves of the view.
+  fitTo: (points: readonly LatLng[], padding: FitPadding) => void;
 }
 
 // Owns the map's handle and follows its camera. The zoom is counted from the fit zoom, which the map gives. A move
@@ -72,6 +75,10 @@ export function useMainMap(): MainMap {
   const showCampus = useCallback(() => {
     move((fit) => ({ centre: centreOf(CAMPUS_BOUNDS), zoom: fit }));
   }, [move]);
+  // The camera's rest tells the zoom it ended at, which the zoom buttons then count from.
+  const fitTo = useCallback((points: readonly LatLng[], padding: FitPadding) => {
+    ref.current?.fitTo(points, { padding, animated: true });
+  }, []);
   const detail = camera === null || fitZoom === null ? 'overview' : zoomDetail(camera.zoom, fitZoom);
-  return { ref, onCameraIdle, onFitZoom, camera, fitZoom, detail, zoomBy, goTo, showCampus };
+  return { ref, onCameraIdle, onFitZoom, camera, fitZoom, detail, zoomBy, goTo, showCampus, fitTo };
 }
