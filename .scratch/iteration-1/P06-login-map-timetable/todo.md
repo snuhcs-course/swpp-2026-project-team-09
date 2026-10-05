@@ -70,9 +70,10 @@ Last updated: 2026-10-05
 
 ### 1.9 Connecting to the server (ticket 12, the last)
 
-- [ ] For each feature named: the client calls the main server, the adapter follows its answer, the mock stays for the tests
+- [ ] For each feature the demo's flows use, and each other feature named: the client calls the main server, the adapter follows its answer, the mock stays for the tests
+- [ ] One connection to the socket server: the Session's end, the positions of the Users the app may see, and the signals that something changed
 - [ ] A real Google sign-in in a built app, with tokens in the phone's secure storage
-- [ ] Section 3's table updated with what is connected
+- [ ] Section 3's table updated with what is connected, and checked before the demo build (P20)
 
 ## 2. Interfaces
 
@@ -362,7 +363,9 @@ interface CardView {
 
 ## 3. Mock now, server later
 
-Every row is a mock in this task. The last ticket connects the rows named when it starts.
+Every row is a mock until the last ticket. That ticket connects every row the demo's flows (P20) use, where the main server serves it by then, and any other row that is named.
+
+Sending the User's own position is not in this table: it is built in P09 with the Master Switch, which is on 내 정보. The main server refuses every position while the switch is off, so the two are built together.
 
 | Feature | Mock's shape | Connects to |
 |---|---|---|
@@ -394,7 +397,7 @@ The control is there and only shows the toast. The last column is a proposal for
 | Above the navigation | The AI input and its send button | The AI chat | In no Iteration 1 spec |
 | Bottom navigation | 파티, 행사 | The party and events screens | P13 |
 | Bottom navigation | 올리기 | The story sheet | In no Iteration 1 spec |
-| Bottom navigation | 내 정보 | 내 정보 | A later task |
+| Bottom navigation | 내 정보 | 내 정보, with the Master Switch, sign-out and the timetable | P09 |
 | A Global Event's card | 같이 갈 사람 찾기 | The party screen | P13 |
 | A Party's card | 참여하기, 파티 열기 | The party screen | P13 |
 | A Friend's card | 파티 만들기 | Making a Party | P14 |

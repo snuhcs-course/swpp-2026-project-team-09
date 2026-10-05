@@ -81,7 +81,7 @@ Every piece of data is a mock inside the app, in the shape the server gives or w
 - A User who signed in and finished Onboarding on this phone: the app starts, shows the loading screen, then the main screen.
 - A User who signed in and did not finish Onboarding: the loading screen, then Onboarding.
 - The loading screen is shown once, when the app starts. It is not shown again after a sign-in or after Onboarding.
-- Nothing in this task signs a User out of the main screen: the screen with sign-out is out of scope. A development setting puts the app back in its first state.
+- Nothing in this task signs a User out of the main screen: sign-out is on 내 정보, which P09 builds. A development setting puts the app back in its first state.
 
 ### Wireframes and design system
 
@@ -203,7 +203,7 @@ Every piece of data is a mock inside the app, in the shape the server gives or w
 - Before the system's location prompt, the app shows its own explanation. It appears the first time the main screen opens, and again when the User, without the permission, presses "내 위치로 이동". A User who chooses "나중에" or refuses the system's prompt gets the map without an Avatar.
 - Off campus, in this task, means outside the campus rectangle. The Avatar is shown only while the position is inside it. Off campus there is no Avatar, the map shows the whole campus, and "내 위치로 이동" says "캠퍼스 밖에 있어요".
 - A development setting replaces the phone's position with a walk along a fixed path on campus, so that the Avatar's gliding can be seen anywhere.
-- Nothing is sent to a server in this task.
+- This task does not send the User's position. The Master Switch is on 내 정보, which P09 builds, and the main server refuses every position while the switch is off. Sending is therefore built with the switch, in P09, so that a User turns sharing on and off in one place from the first day it exists.
 
 ### Wording without a frame
 
@@ -215,14 +215,18 @@ Built from the design system's dialog and the shared Toast. The team may change 
 | Refused state | A failed sign-in | "로그인하지 못했어요", "잠시 후 다시 시도해 주세요" |
 | Loading screen | The loading failed | "불러오지 못했어요", button "다시 시도" |
 | Map's place | A build without the native map | "지도는 Android 빌드에서 보입니다" |
+| Dialog | A sign-in on another phone ended this Session (ticket 12) | Title "다른 기기에서 로그인했어요". Body "이 기기에서는 로그아웃됐어요. 다시 쓰려면 로그인해 주세요." Button "확인" |
 | Toast | My position, off campus | "캠퍼스 밖에 있어요" |
 | Toast | A control of another task | "준비 중이에요" |
 
 ### Connecting to the server
 
-- The last ticket replaces mocks with the main server, one feature at a time, for the features the app's developers name when the ticket starts. A feature nobody names stays a mock.
+- The last ticket replaces mocks with the main server, one feature at a time.
+- Every feature that the demo's flows (P20) use on these screens is connected, where the main server serves it by then: sign-in, Onboarding, the Lobby, Friends and their positions, Quests, Parties, Global Events and the walking route. What the main server does not serve by then stays a mock and is recorded as such. Any other feature is connected when the app's developers name it.
 - For each feature it connects, the client and the adapter change and the screens do not.
 - Once sign-in is connected, the main server says whether a User finished Onboarding, and what the phone kept gives way to it.
+- The app keeps one connection to the socket server open with the access token. Through it the app learns that the Session ended, receives the positions of the Users it may see, and is told when something it shows has changed, which it then fetches again.
+- Before the demo build (P20), the list of mocks is checked, so that none is left by accident.
 - A real sign-in needs a built app, a Google sign-in client registered for the app's identifier and signing key, and a main server that the phone can reach. The ticket records which of these hold when it starts.
 
 ## Testing Decisions
@@ -238,12 +242,12 @@ Built from the design system's dialog and the shared Toast. The team may change 
 
 ## Out of Scope
 
-- The timetable.
+- The timetable, which opens from 내 정보. P09 builds both.
 - Private Events: a Private Event on the map, the long press that makes one, its form, choosing a Place, and editing.
-- 내 정보: the profile, the Master Switch and sign-out from the main screen.
+- 내 정보: the profile, the Master Switch and sign-out. P09 builds it.
 - The panels and sheets of the main screen: the friend panel, the full-screen Quest view, the 편의기능 layers, the AI chat, the story sheets and 오늘의 발자국.
 - The party and events screens.
-- Sending the position, in the foreground or the background.
+- Sending the position: in the foreground with the Master Switch, in P09; in the background, in P17.
 - A stand-in map for Expo Go and the web.
 - A dark theme.
 - The texts of the legal documents.
