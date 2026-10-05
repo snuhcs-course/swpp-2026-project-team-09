@@ -28,6 +28,8 @@ echo "WORKER_TOKEN=$(openssl rand -hex 32)" >> .env
 [Sign-in](#sign-in)). Replace the example address in `INITIAL_ADMINISTRATOR_EMAILS` with your own (see
 [Administrators](#administrators)). Fill in `KAKAO_REST_API_KEY` with the REST API key that the Owner of the team's
 Kakao app shares with you (see [Walking route](#walking-route)); the server does not start without it.
+`PUBLIC_URL` and `ANDROID_CERTIFICATE_FINGERPRINTS` work as they are for development (see
+[Invite Links](#invite-links)).
 
 To run the whole system, in the repository root:
 
@@ -153,8 +155,8 @@ A User reads and edits their own profile. The routes name no User, so they never
 ## Friends
 
 Every User has a Friend ID: 8 characters from capital letters and digits, without `0`, `O`, `1`, `I` and `L`, such as
-`7KX2M9QD`. The server makes it at random when it creates the User (`src/users/friend-id.ts`), the database keeps it
-unique, and it never changes. The User gives it to someone in any way they like, and that person sends a Friend
+`7KX2M9QD`. The server makes it at random when it creates the User (`src/users/friend-id.ts`) and draws another when
+one is already held, the database keeps it unique, and it never changes. The User gives it to someone in any way they like, and that person sends a Friend
 Request to it. The routes, all a User's:
 
 - `GET /friend-ids/:friendId` answers the owner's `{ "name": ..., "department": ... }`.
@@ -202,6 +204,56 @@ when a friendship ends. It carries nothing, and the app fetches `GET /friends` a
 
 A friendship starts with both switches on, so accepting a Friend Request starts Location Sharing between the two. The
 table keeps each User's switch at their own end, in `user_a_sharing` and `user_b_sharing`.
+
+## Invite Links
+
+A User creates an Invite Link and sends it through any messenger. Whoever opens it sees who sent it and, on accepting,
+becomes the sender's Friend with no further step. A link works once and for 24 hours, and a User may hold several
+unused ones. The routes, all a User's:
+
+- `POST /invite-links`, with no body, answers `201 { "url": "https://…/invite/<token>", "expiresAt": "…" }`. The
+  address is `PUBLIC_URL` followed by `/invite/` and a random token of 43 characters. A repeat creates one more link, so
+  it takes no `Idempotency-Key`.
+- `GET /invite-links/:token` answers `{ "sender": { "name", "department" }, "status": … }`, where `status` says whether
+  the User asking can accept it: `usable`, `used`, `expired`, `own` (the User's own link) or `friend` (from a Friend).
+- `POST /invite-links/:token/accept` makes the two Friends, turning a Friend Request waiting between them into the
+  friendship, uses the link up and answers 204. `friends-changed` goes to both. Declining sends nothing: a link nobody
+  accepted stays usable until it expires.
+
+| Refusal                                    | Status | `code`                  |
+| ------------------------------------------ | ------ | ----------------------- |
+| A token nobody made, looked up or accepted | 404    | `INVITE_LINK_NOT_FOUND` |
+| Accepting the User's own link              | 400    | `OWN_INVITE_LINK`       |
+| Accepting a link that was used             | 409    | `INVITE_LINK_USED`      |
+| Accepting a link past its 24 hours         | 410    | `INVITE_LINK_EXPIRED`   |
+| Accepting a link from a Friend             | 409    | `ALREADY_FRIENDS`       |
+
+The table `invite_links` keeps the SHA-256 of each token, not the token, with the sender, `expires_at` and `used_at`.
+Accepting runs through `FriendsService.befriend(senderId, receiverId, alongside)`, which locks both Users as every
+change between two Users does and runs `alongside`, here the link's use, in the same transaction. The link is used up
+only while `used_at` is still empty, so of two Users who accept one link at the same moment one becomes the Friend and
+the other gets `INVITE_LINK_USED`.
+
+Android opens the app from the link through App Links. It asks for `GET /.well-known/assetlinks.json` on the link's
+host, without a token and following no redirect, and the server answers the Digital Asset Links file: the app's package
+name, `com.bonnieandclaude.snunow`, and the SHA-256 fingerprints of the certificates the app is signed with. Two
+settings serve this:
+
+- `PUBLIC_URL`: the address the apps reach this server at from outside, such as `https://snunow.example`, without a
+  path. App Links need https; `http://localhost:3000` serves for development. A link made under one address stops
+  working when the address changes.
+- `ANDROID_CERTIFICATE_FINGERPRINTS`: the fingerprints separated by commas, so that a development build and the demo
+  build both open the links. `.env.example` holds the one of the Expo template's debug key, which signs development
+  builds.
+
+A certificate's fingerprint is the `SHA256:` line that `keytool` prints for its keystore, for the debug key:
+
+```bash
+keytool -list -v -keystore android/app/debug.keystore -alias androiddebugkey -storepass android -keypass android
+```
+
+For a build signed on EAS, `eas credentials` shows the SHA-256 fingerprint of the Android keystore. An app the Play
+Store signs needs the fingerprint of the app signing key from the Play Console as well.
 
 ## Location Sharing
 
@@ -429,6 +481,11 @@ No Collection changes a stored event, whatever its state. A post is stored once,
 message carrying it again leaves it exactly as it is. So an Administrator's edits stay, and a discarded post does not
 come back. The worker asks which posts are stored before it reads any (`/global-events/stored-posts`), so it does not read a
 stored post again: an edit or a deletion at the Source after that is not seen.
+
+A Collection that stores at least one event as published sends `global-events-changed` to every connected app once
+the events are stored, and the app fetches the published events again (see [Signals](#signals)). It carries nothing. A
+Collection that stores only Drafts, or no new post, sends none. `GlobalEventsService.signalChanged()` sends it, and P12
+calls it once its change is committed when an Administrator publishes, edits or cancels a Global Event.
 
 What the rules read from a post, and how, is in the worker server's README. In a test, `collectedEvent()`,
 `eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
@@ -827,6 +884,25 @@ const found = this.placeLookup.at({ latitude, longitude });
 - It does not check the [Campus Boundary](#campus-boundary): a feature that hides a User outside it checks that first.
 - The Places are read once, when the server starts, after the seed was loaded.
 
+The app asks the same lookup for a point a User picks on the map, so that a Meetup or a Sub Quest shows a name instead
+of coordinates:
+
+- `GET /places/at?latitude=37.45016&longitude=126.95259` with a User's access token answers the Place at the position,
+  in the form of the list, and its `relation`, `inside` or `near` as above:
+
+  ```json
+  {
+    "place": { "id": "1b7e…", "number": "301", "name": "제1공학관", "latitude": 37.45016, "longitude": 126.95259 },
+    "relation": "inside"
+  }
+  ```
+
+  A position farther than 20 m from every Place is answered `{ "place": null, "relation": "none" }`. The answer comes
+  from the lookup's memory, without a database query.
+
+- A coordinate that is missing, is not a decimal number, or lies outside -90 to 90 for a latitude or -180 to 180 for a
+  longitude gets 400 with a message that starts with the field.
+
 ## Campus Boundary
 
 The Campus Boundary is a file of the main server, `seed/campus-boundary.geojson`: OpenStreetMap's relation 11917142
@@ -1065,6 +1141,7 @@ src/
 ├── auth/                            a feature: app and admin site sign-in, refresh, sign-out, the access token checks
 ├── users/                           a feature: the signed-in User, their profile, Friend ID and onboarding
 ├── friends/                         a feature: Friend IDs looked up, Friend Requests and Friends
+├── invite-links/                    a feature: Invite Links, and the Digital Asset Links file that opens them in the app
 ├── location-sharing/                a feature: the Master Switch, the positions uploaded, kept and pushed, and who
 │                                    sees whom
 ├── lobby/                           a feature: what the app needs when it starts

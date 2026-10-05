@@ -58,6 +58,14 @@ const friendRequestNotFound = (): NotFoundException =>
     message: 'No such Friend Request waits for this answer from this User.',
   });
 
+const alreadyFriends = (): ConflictException =>
+  new ConflictException({
+    statusCode: HttpStatus.CONFLICT,
+    error: 'Conflict',
+    code: 'ALREADY_FRIENDS',
+    message: 'This User is already your Friend.',
+  });
+
 const friendNotFound = (): NotFoundException =>
   new NotFoundException({
     statusCode: HttpStatus.NOT_FOUND,
@@ -101,12 +109,7 @@ export class FriendsService {
         return { status: 'waiting' };
       }
       if (existing.acceptedAt !== null) {
-        throw new ConflictException({
-          statusCode: HttpStatus.CONFLICT,
-          error: 'Conflict',
-          code: 'ALREADY_FRIENDS',
-          message: 'This User is already your Friend.',
-        });
+        throw alreadyFriends();
       }
       if (existing.senderId === senderId) {
         throw new ConflictException({
@@ -119,6 +122,30 @@ export class FriendsService {
       // The other User's request waits, so the two have asked each other.
       await tx.friendship.update({ where: { id: existing.id }, data: { acceptedAt: new Date() } });
       return { status: 'friends' };
+    });
+  }
+
+  // Makes two Users Friends at once, as accepting an Invite Link does: a Friend Request waiting between them becomes
+  // the friendship. `alongside` runs in the same transaction once both are locked, so that what it changes is stored
+  // only with the friendship, and a refusal it throws stores neither.
+  async befriend(
+    senderId: string,
+    receiverId: string,
+    alongside: (tx: Prisma.TransactionClient) => Promise<void>,
+  ): Promise<void> {
+    const pair = pairOf(senderId, receiverId);
+    await this.changeBetween(pair, async (tx) => {
+      const existing = await tx.friendship.findUnique({ where: { userAId_userBId: pair } });
+      if (existing !== null && existing.acceptedAt !== null) {
+        throw alreadyFriends();
+      }
+      await alongside(tx);
+      const acceptedAt = new Date();
+      if (existing === null) {
+        await tx.friendship.create({ data: { ...pair, senderId, acceptedAt } });
+      } else {
+        await tx.friendship.update({ where: { id: existing.id }, data: { acceptedAt } });
+      }
     });
   }
 
