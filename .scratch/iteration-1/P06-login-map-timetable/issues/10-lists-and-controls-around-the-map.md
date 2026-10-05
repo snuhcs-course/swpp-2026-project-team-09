@@ -120,3 +120,8 @@ Not checked:
 - The short and narrow screens. The widths at which "오늘의 발자국" gives way, 390 and 360, come from the frame's width and an estimate of the words' widths, not from a measurement. The two pills with their round buttons are about 156 and 172 wide by the same estimate, so at 360 they meet in the middle and under 360 they overlap; nothing was changed for that.
 - Kakao's logo against the controls: the Android module still places it itself, as said above.
 - The play mark's look at 10 by 10 inside its round of 24.
+
+### Agent usage (2026-10-06)
+
+- Agent time: about 1 hour 45 minutes, an estimate, nearly all of it in subagents. The last round took 36 minutes, much of it waiting for the tests on a loaded machine.
+- Tokens: four subagent runs (the build, a review, the screenshots with presses, and the round that merged the main line and fixed the findings): about 760 thousand in all. The main session's share was small and is not counted apart.
