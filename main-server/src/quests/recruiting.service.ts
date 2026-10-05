@@ -6,9 +6,7 @@ import { UsersService } from '../users/users.service.js';
 import { CLOCK, type Clock } from './clock.js';
 import { QUEST_INCLUDE, QuestDto, RecruitingQuestDto, toRecruitingQuestDto } from './dto/quest.dto.js';
 import { QuestsService } from './quests.service.js';
-import { conflict, notFound } from './refusals.js';
-
-const notRecruiting = (): Error => notFound('QUEST_NOT_FOUND', 'No such Quest takes this User.');
+import { alreadyHolder, conflict, notRecruiting, sharedQuestHeld } from './refusals.js';
 
 // The list of recruiting Quests and every way into a Quest (README.md: Quests).
 @Injectable()
@@ -53,9 +51,10 @@ export class RecruitingService {
   }
 
   // Makes the User a Holder of the Quest within its capacity and under the one-Quest rule for its Global Event: a Quest
-  // the User held alone for the event is deleted, and a Shared Quest held for it refuses. Every way into a Quest ends
-  // here; `admits` refuses whom that way does not take, once the Quest is locked. Locks the User and then the Quests in
-  // the order of their ids, so lock no Quest before. Answers the Holders to tell, the User included.
+  // the User held alone for the event is deleted, and a Shared Quest held for it refuses. Ends the User's request to
+  // join the Quest and invitation into it. Every way into a Quest ends here; `admits` refuses whom that way does not
+  // take, once the Quest is locked. Locks the User and then the Quests in the order of their ids, so lock no Quest
+  // before. Answers the Holders to tell, the User included.
   async enter(
     questId: string,
     userId: string,
@@ -74,7 +73,7 @@ export class RecruitingService {
       throw notRecruiting();
     }
     if (quest.holders.some((holder) => holder.userId === userId)) {
-      throw conflict('ALREADY_HOLDER', 'The User holds this Quest already.');
+      throw alreadyHolder();
     }
     admits?.(quest);
     if ((await this.quests.withSubQuestsAhead([questId], tx)).length === 0) {
@@ -84,9 +83,11 @@ export class RecruitingService {
       throw conflict('QUEST_FULL', 'This Quest is full.');
     }
     if (globalEventId !== null && !(await this.quests.freeForSharedQuest(userId, globalEventId, tx))) {
-      throw conflict('SHARED_QUEST_HELD', 'The User holds a Shared Quest for this Global Event.');
+      throw sharedQuestHeld();
     }
     await tx.questHolder.create({ data: { questId, userId, globalEventId } });
+    await tx.questJoinRequest.deleteMany({ where: { questId, userId } });
+    await tx.questInvitation.deleteMany({ where: { questId, userId } });
     return [...quest.holders.map((holder) => holder.userId), userId];
   }
 }
