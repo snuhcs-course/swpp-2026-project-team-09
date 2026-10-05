@@ -35,7 +35,7 @@ async function pass(milliseconds: number): Promise<void> {
   });
 }
 
-// The stage's view of a look: the last of the two views of it, after the one the plain ground draws.
+// The stage's view of a look: the last view of it, after any that the map draws.
 function onStage(label: string): ReturnType<typeof screen.getByLabelText> {
   const views = screen.getAllByLabelText(label, { includeHiddenElements: true });
   return views.at(-1) ?? screen.getByLabelText(label);
@@ -83,8 +83,9 @@ describe('marker images in a build with a native map', () => {
     await layOutOnStage('파티');
     await pass(100);
 
+    // The look has left the stage, and the native map draws the picture, not the view.
     expect(screen.getByText('그림: file:///tmp/party-pin.png')).toBeVisible();
-    expect(screen.getAllByLabelText('파티', { includeHiddenElements: true })).toHaveLength(1);
+    expect(screen.queryAllByLabelText('파티', { includeHiddenElements: true })).toHaveLength(0);
     await pass(10_000);
     expect(captureRef).toHaveBeenCalledTimes(1);
   });

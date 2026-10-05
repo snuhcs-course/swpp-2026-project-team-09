@@ -34,7 +34,17 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "buildArchs": ["arm64-v8a"],
+            "extraMavenRepos": ["https://devrepo.kakao.com/nexus/repository/kakaomap-releases/"]
+          }
+        }
+      ],
+      "./modules/snu-now-map/app.plugin.ts"
     ],
     "experiments": {
       "typedRoutes": true,
