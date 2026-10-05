@@ -8,37 +8,29 @@ import { z } from 'zod';
 const timetableClassSchema = z.strictObject({
   id: z.uuid(),
   courseName: z.string(),
-  weekdays: z.array(z.string()),
-  startTime: z.string(),
-  endTime: z.string(),
-  placeId: z.uuid(),
-  room: z.string().nullable(),
+  times: z.array(
+    z.strictObject({
+      id: z.uuid(),
+      weekday: z.string(),
+      startTime: z.string(),
+      endTime: z.string(),
+      placeId: z.uuid().nullable(),
+      room: z.string().nullable(),
+    }),
+  ),
   overlaps: z.array(z.strictObject({ id: z.uuid(), courseName: z.string() })),
 });
 
-type TimetableClass = z.infer<typeof timetableClassSchema>;
+export type TimetableClass = z.infer<typeof timetableClassSchema>;
 
-// A timetable as `GET /timetable` serves it, exactly.
-const timetableSchema = z.strictObject({
-  semesterFirstDay: z.iso.date().nullable(),
-  semesterLastDay: z.iso.date().nullable(),
-  classes: z.array(timetableClassSchema),
-});
-
-type Timetable = z.infer<typeof timetableSchema>;
-
-function getTimetable(app: INestApplication<Server>, accessToken: string): request.Test {
-  return request(app.getHttpServer()).get('/timetable').auth(accessToken, { type: 'bearer' });
+export function getClasses(app: INestApplication<Server>, accessToken: string): request.Test {
+  return request(app.getHttpServer()).get('/timetable/classes').auth(accessToken, { type: 'bearer' });
 }
 
-export async function timetableOf(app: INestApplication<Server>, accessToken: string): Promise<Timetable> {
-  const response = await getTimetable(app, accessToken);
+export async function classesOf(app: INestApplication<Server>, accessToken: string): Promise<TimetableClass[]> {
+  const response = await getClasses(app, accessToken);
   expect(response.status).toBe(200);
-  return timetableSchema.parse(response.body);
-}
-
-export function patchTimetable(app: INestApplication<Server>, accessToken: string, body: object): request.Test {
-  return request(app.getHttpServer()).patch('/timetable').auth(accessToken, { type: 'bearer' }).send(body);
+  return z.array(timetableClassSchema).parse(response.body);
 }
 
 // With a new Idempotency-Key unless one is given, as the app sends it.
@@ -66,21 +58,42 @@ export function putClass(app: INestApplication<Server>, accessToken: string, id:
   return request(app.getHttpServer()).put(`/timetable/classes/${id}`).auth(accessToken, { type: 'bearer' }).send(body);
 }
 
+export async function replaceClass(
+  app: INestApplication<Server>,
+  accessToken: string,
+  id: string,
+  body: object,
+): Promise<TimetableClass> {
+  const response = await putClass(app, accessToken, id, body);
+  expect(response.status).toBe(200);
+  return timetableClassSchema.parse(response.body);
+}
+
 export function deleteClass(app: INestApplication<Server>, accessToken: string, id: string): request.Test {
   return request(app.getHttpServer()).delete(`/timetable/classes/${id}`).auth(accessToken, { type: 'bearer' });
 }
 
-// A class as the app sends it, with the fields given in place of the sample's.
-export function aClass(placeId: string, fields: object = {}): object {
+export function resetTimetable(app: INestApplication<Server>, accessToken: string): request.Test {
+  return request(app.getHttpServer()).delete('/timetable/classes').auth(accessToken, { type: 'bearer' });
+}
+
+// A time as the app sends it, with the fields given in place of the sample's.
+export function aTime(placeId: string | null, fields: object = {}): object {
+  return { weekday: 'tuesday', startTime: '09:30', endTime: '10:45', placeId, room: '101호', ...fields };
+}
+
+// A class as the app sends it, held on Tuesday and Thursday at the same times.
+export function aClass(placeId: string | null, fields: object = {}): object {
   return {
     courseName: '데이터베이스',
-    weekdays: ['tuesday', 'thursday'],
-    startTime: '09:30',
-    endTime: '10:45',
-    placeId,
-    room: '101호',
+    times: [aTime(placeId), aTime(placeId, { weekday: 'thursday' })],
     ...fields,
   };
+}
+
+// The class as it is answered, without the identifiers the server gives.
+export function withoutIds({ courseName, times }: TimetableClass): object {
+  return { courseName, times: times.map(({ id: _id, ...time }) => time) };
 }
 
 // Two Places of the list, which the global setup loaded.

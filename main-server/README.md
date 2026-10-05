@@ -1313,7 +1313,7 @@ typing coordinates:
   ```
 
   The Places with a number come first, by number (`25`, `25-1`, `26`), then those without one, such as `자하연`, in the
-  Korean order of their names. `id` is the same in every database and never changes, so a timetable entry or a Meetup
+  Korean order of their names. `id` is the same in every database and never changes, so a class's time or a Meetup
   can point at it (`docs/adr/0002-place-ids-computed-from-the-source.md`).
 
 - `GET /places/search?q=공학관` answers, in the same order and form, the Places whose name holds `q`, whatever the
@@ -1467,56 +1467,94 @@ The worker's two routes, which follow [Requests from the worker server](#request
 
 ## Timetable
 
-A User keeps one timetable on the server: the semester's first and last day and the classes. The routes name no
-User, so they never reach another User's timetable, and another User's class is answered 404 as an unknown one is.
+A User's timetable is the User's classes, and nothing else is stored for it. A User keeps one timetable from semester
+to semester and resets it when a semester ends. A class is a course name and one or more times, so a course held on
+Monday in one room and on Wednesday in another is one class with two times. The routes name no User, so they never
+reach another User's classes:
 
-- `GET /timetable` answers the timetable. A User who never saved one reads an empty one: both days `null` and
-  `classes: []`.
+- `GET /timetable/classes` answers the classes. A User without classes reads `[]`.
 
   ```json
-  {
-    "semesterFirstDay": "2026-09-01",
-    "semesterLastDay": "2026-12-18",
-    "classes": [
-      {
-        "id": "8c1d…",
-        "courseName": "컴파일러",
-        "weekdays": ["monday", "thursday"],
-        "startTime": "10:00",
-        "endTime": "11:15",
-        "placeId": "4f6c…",
-        "room": "101호",
-        "overlaps": [{ "id": "2b7e…", "courseName": "데이터베이스" }]
-      }
-    ]
-  }
+  [
+    {
+      "id": "8c1d…",
+      "courseName": "컴파일러",
+      "times": [
+        {
+          "id": "51e0…",
+          "weekday": "monday",
+          "startTime": "10:00",
+          "endTime": "11:15",
+          "placeId": "4f6c…",
+          "room": "101호"
+        },
+        {
+          "id": "c93a…",
+          "weekday": "wednesday",
+          "startTime": "13:00",
+          "endTime": "14:15",
+          "placeId": null,
+          "room": null
+        }
+      ],
+      "overlaps": [{ "id": "2b7e…", "courseName": "데이터베이스" }]
+    }
+  ]
   ```
 
-  The classes are in the order of their earliest weekday, then of their start time.
+  The classes are in the order of their first time in the week, and a class's times in the order of the week, Monday
+  first, then by start.
 
-- `PATCH /timetable` with `{ "semesterFirstDay": "2026-09-01", "semesterLastDay": "2026-12-18" }` changes only the days
-  sent, and `null` clears one. It answers with the whole timetable. A last day before the first, the stored one
-  included, gets 400 `semesterLastDay: must not be before semesterFirstDay`, and nothing changes. The two days may be
-  the same.
-- `POST /timetable/classes` with a class's fields, without `id` and `overlaps`, adds it and answers 201 with the class.
-  It needs an `Idempotency-Key` (see [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)), because
-  nothing stops a User from having two classes with the same fields.
-- `PUT /timetable/classes/:id` with all the class's fields replaces them and answers with the class.
-- `DELETE /timetable/classes/:id` answers 204.
+- `POST /timetable/classes` with `courseName` and `times`, without the identifiers and `overlaps`, adds a class and
+  answers 201 with it. It requires an `Idempotency-Key` (see
+  [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)), because nothing stops a User from having two
+  classes with the same fields.
+- `PUT /timetable/classes/:classId` with the whole class replaces it and answers 200 with it. The class keeps its
+  identifier, and its times get new ones.
+- `DELETE /timetable/classes/:classId` deletes a class with its times and answers 204.
+- `DELETE /timetable/classes` resets the timetable: it deletes every class of the User and answers 204, also when there
+  were none. It needs no key, since a repeat changes nothing.
 
 A class's fields and their limits, set in `src/timetable/dto/save-class.dto.ts`. A value outside them gets 400 with a
-message that starts with the field, as the [profile's](#profile) do, and nothing changes:
+message that starts with the field, such as `times.1.endTime: `, as the [profile's](#profile) do, and nothing changes:
 
 - `courseName`: 1 to 30 characters, with the spaces around dropped.
-- `weekdays`: one or more of `monday` to `sunday`, none twice. They are kept and answered in the order of the week.
-- `startTime` and `endTime`: times of day as `HH:MM`, from `00:00` to `23:59`. The end is after the start.
-- `placeId`: the `id` of a Place of the [list](#places). Another id gets 400 `placeId: no Place of the list has this id`.
+- `times`: 1 to 10 times. Two times that share a weekday and cross each other are refused, and the message names the
+  later one, `times.2: Invalid time: crosses times.1 on the same weekday`. Times that touch do not cross.
+- `weekday` of a time: one of `monday` to `sunday`.
+- `startTime` and `endTime`: times of day in Asia/Seoul as `HH:MM`, from `00:00` to `23:59`. The end is after the
+  start.
+- `placeId`: the `id` of a Place of the [list](#places), or `null` or left out for a time without a Place.
 - `room`: up to 20 characters, with the spaces around dropped, or `null`. A room left out, empty or only spaces is
   stored as `null`.
 
-Two classes overlap when they share a weekday and each starts before the other ends; a class that starts as another
-ends does not overlap it. An overlap is allowed. `overlaps` names each other class a class overlaps, in the answer to an
-add or an edit and for every class of `GET /timetable`.
+A User holds at most 15 classes, however many times they have. An add counts them and inserts the class in one
+transaction that locks the User's row (`UsersService.lock`), so adds at the same moment are counted one after another
+and stop at the limit.
+
+Two classes overlap when a time of one and a time of the other share a weekday and each starts before the other ends;
+times that touch do not overlap. An overlap is allowed. `overlaps` names each other class a class overlaps, in the
+order of the timetable, in the answer to an add or a replacement and for every class of `GET /timetable/classes`.
+
+The refusals each have a `code`:
+
+| Refusal                                              | Status | `code`            |
+| ---------------------------------------------------- | ------ | ----------------- |
+| A `placeId` that is not a Place of the list          | 404    | `PLACE_NOT_FOUND` |
+| An add when the User has 15 classes                  | 409    | `TIMETABLE_FULL`  |
+| Replacing or deleting a class the User does not have | 404    | `CLASS_NOT_FOUND` |
+
+Another User's class is answered as an unknown one is, before the body's Places are checked, so a replacement naming a
+Place not in the list is not found too. The body's shape is checked before the handler runs, for any class, so a body
+that does not match gets 400 whoever's the class is.
+
+How they are stored: `timetable_classes` holds one row for each class, with its User and course name, and
+`class_times` one row for each time, deleted with its class. A time's `weekday` is the enum `weekday`, which sorts in
+the order of the week.
+
+Other modules read the classes through `TimetableService` (`src/timetable/timetable.service.ts`): `classesOf(userId)`
+answers the User's classes, each with its times in the order of the week and each time's Place, and
+`isClassOf(userId, classId)` whether an identifier is one of the User's classes.
 
 ## Seed data
 
@@ -1674,7 +1712,7 @@ src/
 │                                    position
 ├── shuttle/                         a feature: the shuttle's stops and line of the seed, the route page's places and
 │                                    hours, and the vehicles the worker collects, served and sent to the socket server
-└── timetable/                       a feature: a User's timetable, the semester's days and the classes
+└── timetable/                       a feature: a User's timetable, the classes and their times
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
 test/                                tests, run against PostgreSQL and Redis in containers
 ```
