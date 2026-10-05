@@ -2,7 +2,7 @@
 
 Parent: [P08 spec](../spec.md)
 Status: ready-for-agent
-Blocked by: 04 (Quests for Global Events and their Sub Quests)
+Blocked by: 04 (Quests, their Sub Quests and joining them)
 
 ## What to build
 

@@ -55,24 +55,10 @@ _Avoid_: Pending event, unverified event
 An Event a User registers for their own use, visible only on that User's map.
 _Avoid_: Personal event
 
-### Parties
-
-**Party**:
-A group of Users who are together now. It is formed on its own, not under an Event, and a User belongs to at most one Party at a time. A Party can be marked with one Quest when it is created.
-_Avoid_: Group, team
-
-**Leader**:
-The one member of a Party who holds authority over its settings and membership.
-_Avoid_: Owner, host
-
-**Join Policy**:
-The Leader's setting for how Users enter a Party: Open (anyone joins at once), Approval (the Leader accepts each request) or Closed (unlisted, entry by the Leader's invitation only).
-_Avoid_: Visibility, privacy setting
-
 ### Quests
 
 **Quest**:
-An activity a User sets out to do, held by one or more Users and made of one or more Sub Quests. A Quest can point at a Global Event.
+An activity a User sets out to do and what Users gather around, held by one or more Users and made of one or more Sub Quests. A Quest can point at a Global Event. The screens call a Quest that several Users hold or gather for a "파티".
 _Avoid_: Mission, plan
 
 **Sub Quest**:
@@ -84,19 +70,33 @@ A User who holds a Quest. Each Holder tracks their own progress through its Sub 
 _Avoid_: Participant, assignee
 
 **Shared Quest**:
-A Quest with two or more Holders, such as matched Users or the two Friends of an accepted Meetup.
+A Quest with two or more Holders, such as matched Users, the two Friends of an accepted Meetup or Users who joined another's Quest.
 _Avoid_: Common quest
+
+**Leader**:
+The one Holder of a Quest, or the one member of a Party, who holds authority over its settings and over who enters it.
+_Avoid_: Owner, host
+
+**Join Policy**:
+The Leader's setting for how Users enter a Quest or a Party: Open (whoever can see it enters at once), Approval (the Leader accepts each request) or Closed (entry by the Leader's invitation only).
+_Avoid_: Visibility, privacy setting
 
 **Class Quest**:
 A Quest for attending one of the User's own classes on a given day, derived from the User's timetable.
 
 **Meetup**:
-A proposal between Friends to meet. Accepting it creates a Shared Quest and does not form a Party.
+A proposal between Friends to meet. Accepting it creates a Shared Quest and does not open a Party.
 _Avoid_: Appointment
 
 **Matching**:
-Grouping Users who want companions for the same Global Event. A finished match gives those Users a Shared Quest; they form a Party themselves when the time comes.
+Finding companions for Users who want them for the same Global Event, by grouping them into a new Shared Quest or by placing one into an Open Quest for that event. They open a Party themselves when the time comes.
 _Avoid_: Auto-join
+
+### Parties
+
+**Party**:
+A group of Users who are together now and share their locations. A User opens it by hand, for one Quest or for none, and belongs to at most one Party at a time. The screens call it the "활성 파티".
+_Avoid_: Group, team
 
 ### Location
 

@@ -20,7 +20,7 @@ The team installs the app on two phones, walks through the three flows on campus
 6. As a teaching assistant, I want a branch named for the iteration's demo, so that I find the submitted state.
 7. As a teaching assistant, I want a short video of the key functions, so that I can see the product without setting it up.
 8. As a teammate, I want the build steps for the APK written down, so that the next iteration's manager can repeat them.
-9. As an SNU student in the demo, I want to choose a Global Event, be matched, form a Party and see my companion's Avatar, so that the main flow is shown.
+9. As an SNU student in the demo, I want to choose a Global Event, be matched, open a Party and see my companion's Avatar, so that the main flow is shown.
 10. As an SNU student in the demo, I want to tap my Quest and see the route to the event, so that finding the way is shown.
 11. As an SNU student in the demo, I want to invite a Friend by link, propose a Meetup and see it become a Shared Quest, so that the second flow is shown.
 12. As an SNU student in the demo, I want to read today's menus and watch the shuttle on the map, so that the third flow is shown.
@@ -32,7 +32,7 @@ The team installs the app on two phones, walks through the three flows on campus
 
 | Flow | Steps |
 |---|---|
-| Event | Two Users sign in. An Administrator publishes a Global Event. Both ask for Matching with size 2. Within a minute both see the Shared Quest. One creates the Party for the Quest and the other joins. Both see each other's Avatar move. One taps the Quest and sees the route. |
+| Event | Two Users sign in. An Administrator publishes a Global Event. Both ask for Matching with size 2. Within a minute both see the Shared Quest. One opens the Party of the Quest and the other enters it. Both see each other's Avatar move. One taps the Quest and sees the route. |
 | Friend | One User sends an Invite Link through a messenger. The other opens it and accepts. Both see each other's Avatar. One proposes a Meetup and the other accepts. Both see the Shared Quest. |
 | Campus services | A User opens the dining view and reads today's menus. The User turns on the shuttle layer and watches a vehicle move along the route. |
 

@@ -6,11 +6,11 @@ Blocked by: 08 (Main screen: the map, my position and the bottom navigation)
 
 ## What to build
 
-The map shows the people, the Global Event and the Party of the `Main` frame. A User presses one, reads its card, looks closer, and asks for the way there. The frames are `Main`, `MapOverviewSelect` and `MapZoomed`. Everything shown is mock data from the client of ticket 02.
+The map shows the people, the Global Event and the Quest, the frame's "파티", of the `Main` frame. A User presses one, reads its card, looks closer, and asks for the way there. The frames are `Main`, `MapOverviewSelect` and `MapZoomed`. Everything shown is mock data from the client of ticket 02.
 
 ## Acceptance criteria
 
-- [ ] What the frame shows is on the map. Avatars: the Friends who can be seen and a member of the User's Party. Markers: a Global Event and a Party. The frame's Private Event is left out.
+- [ ] What the frame shows is on the map. Avatars: the Friends who can be seen and a member of the User's Party. Markers: a Global Event and a Quest that the frame calls "파티". The frame's Private Event is left out.
 - [ ] Their detail follows the camera's zoom as in the frames: dots when the whole campus is in view, pins closer, and pins with names closest. A Friend's Avatar is the frame's, with the status colour and the name below at the closest level. The two zoom levels where the detail changes are chosen so that the three frames match, and recorded under Comments.
 - [ ] A press on a marker opens its card with what the frame shows for its kind: the sub-label, the title, the lines and the buttons. A selected marker looks selected.
 - [ ] The card's X closes it, and so does Android's back button.
