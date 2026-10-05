@@ -12,6 +12,9 @@ export interface Kept {
   onboardingCompleted: boolean;
   // The Onboarding's answers. The course level and the gender live nowhere else.
   answers: OnboardingAnswers | null;
+  // The User answered the explanation before the location prompt on this phone, so the main screen does not show it
+  // by itself again.
+  locationExplained: boolean;
 }
 
 const KEY = 'snunow.kept';
@@ -22,10 +25,11 @@ const FIRST_STATE: Kept = {
   suggestion: null,
   onboardingCompleted: false,
   answers: null,
+  locationExplained: false,
 };
 
-// What a version before the consent screen stored has no `consented`: the rest of it still counts.
-function isKept(value: unknown): value is Omit<Kept, 'consented'> {
+// What an older version stored has no `consented` or no `locationExplained`: the rest of it still counts.
+function isKept(value: unknown): value is Omit<Kept, 'consented' | 'locationExplained'> {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -49,7 +53,11 @@ export async function readKept(): Promise<Kept> {
     if (!isKept(value)) {
       return FIRST_STATE;
     }
-    return { ...value, consented: 'consented' in value && value.consented === true };
+    return {
+      ...value,
+      consented: 'consented' in value && value.consented === true,
+      locationExplained: 'locationExplained' in value && value.locationExplained === true,
+    };
   } catch {
     return FIRST_STATE;
   }

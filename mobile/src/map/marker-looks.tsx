@@ -1,54 +1,92 @@
 import type { ReactElement } from 'react';
-import { Avatar, MapDot, MapPin, type MapPlaceKind, type PresenceStatus } from '@/design-system';
+import { MapDot, MapPerson, MapPin, type MapPlaceKind, type PersonTone } from '@/design-system';
 
-// How something on the map looks. One picture is made for each look, so two Friends who look the same share one.
+// How something on the map looks. One picture is made for each look and kept under the look's name, so two things
+// that look the same share one, and the number of pictures is the number of names:
+// - two for the User's own Avatar;
+// - for each person, the two sizes in each tone the person was seen in, with and without a photo, and each of them
+//   selected, which only the one selected person ever asks for;
+// - for each kind of place, the dot and the pin, the pin once for each count it shows, and each of them selected.
+// No look holds a name or a label: that is the map's own text under the marker (`text` of `MapMarker`).
+//
+// A name holds nothing that changes from one answer of the server to the next: a person is named by their id and by
+// whether they have a photo, never by the photo's address, which is new with every answer. So a person whose name or
+// photo changes keeps the picture made first until the app starts again.
+//
+// What a release of unused pictures (ticket 07) has to cover, since no picture is released while the app runs: the
+// looks of a person who is no longer on the map or no longer a Friend, a person's looks in the tones they are no
+// longer in, the selected looks once nothing is selected, a pin's looks for the counts it no longer shows, and a
+// person's pictures when their name or their photo changed, which are then made again.
+
 // A dot is the look from far away, a pin the look from close.
 export type MarkerForm = 'dot' | 'pin';
 
 export type MarkerLook =
-  // The User's own Avatar.
-  | { kind: 'me' }
-  // A Friend's Avatar: the letters of the name or the photo, and the status colour.
-  | { kind: 'friend'; form: MarkerForm; name: string; photo: string | null; status: PresenceStatus }
-  // A marker of each kind the design system has.
-  | { kind: MapPlaceKind; form: MarkerForm };
+  // The User's own Avatar. `small` is its look while the whole campus is in view: three quarters of its size.
+  | { kind: 'me'; small?: boolean }
+  // A person: a Friend in the status's colour, or a member of the User's Party in the tone `member`. The frames'
+  // teardrop with the person's letters or photo in it. `small` is its look while the whole campus is in view.
+  // `id` is the person's own, which names the look; `name` and `photo` are what is drawn.
+  | {
+      kind: 'person';
+      id: string;
+      tone: PersonTone;
+      small?: boolean;
+      selected?: boolean;
+      name: string;
+      photo: string | null;
+    }
+  // A place, of each kind the design system has. `count` is drawn on a pin, never on a dot; 0 or left out, none.
+  | { kind: MapPlaceKind; form: MarkerForm; count?: number; selected?: boolean };
 
-// The look's name: the key its picture is kept under.
+function parts(...names: (string | false)[]): string {
+  return names.filter((name) => name !== false).join(':');
+}
+
+// The look's name: the key its picture is kept under. Two looks that draw the same picture have the same name.
 export function lookName(look: MarkerLook): string {
   if (look.kind === 'me') {
-    return 'me';
+    return look.small === true ? 'me:small' : 'me';
   }
-  if (look.kind === 'friend') {
-    return ['friend', look.form, look.status, look.name, look.photo ?? ''].join(':');
+  const selected = look.selected === true && 'selected';
+  if (look.kind === 'person') {
+    const photo = look.photo !== null && 'photo';
+    return parts('person', look.small === true ? 'small' : 'full', look.tone, look.id, photo, selected);
   }
-  return `${look.kind}:${look.form}`;
+  const count = look.form === 'pin' && (look.count ?? 0) > 0 && String(look.count);
+  return parts(look.kind, look.form, count, selected);
 }
 
 export function hasPhoto(look: MarkerLook): boolean {
-  return look.kind === 'friend' && look.photo !== null;
+  return look.kind === 'person' && look.photo !== null;
 }
 
-// A pin stands on its tip. Everything else, a round thing, sits on its middle.
+// A pin and a person's marker stand on their tip, the bottom of their view. Everything else, a round thing, sits on
+// its middle.
 export function standsOnTip(look: MarkerLook): boolean {
-  return look.kind !== 'me' && look.kind !== 'friend' && look.form === 'pin';
+  return look.kind === 'person' || (look.kind !== 'me' && look.form === 'pin');
 }
 
-// The design system's view of a look. A name under it is the map's own text, so no view has a label.
+// The design system's view of a look.
 export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSettled?: () => void }): ReactElement {
   if (look.kind === 'me') {
-    return <MapPin kind="me" />;
+    return <MapPin kind="me" small={look.small} />;
   }
-  if (look.kind === 'friend') {
+  if (look.kind === 'person') {
     return (
-      <Avatar
+      <MapPerson
         name={look.name}
         onPhotoSettled={onPhotoSettled}
-        ring="friend"
-        size={look.form === 'dot' ? 'sm' : 'md'}
+        selected={look.selected}
+        small={look.small}
         source={look.photo === null ? undefined : { uri: look.photo }}
-        status={look.status}
+        tone={look.tone}
       />
     );
   }
-  return look.form === 'dot' ? <MapDot kind={look.kind} /> : <MapPin kind={look.kind} />;
+  return look.form === 'dot' ? (
+    <MapDot kind={look.kind} selected={look.selected} />
+  ) : (
+    <MapPin count={look.count} kind={look.kind} selected={look.selected} />
+  );
 }

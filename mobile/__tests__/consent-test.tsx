@@ -67,7 +67,7 @@ describe('the consent screen', () => {
     expect(screen.getByRole('header', { name: TITLE })).toBeVisible();
 
     await press(user, AGREE, 1000);
-    expect(screen.getByRole('header', { name: '메인' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '지도' })).toBeVisible();
   });
 
   it('signs a User who does not agree out, back to the sign-in screen', async () => {
@@ -98,7 +98,7 @@ describe('consent, once on a phone', () => {
 
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     await press(user, AGREE, 1000);
-    expect(screen.getByRole('header', { name: '메인' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '지도' })).toBeVisible();
   });
 
   it('cannot be reached by a User who is not signed in', async () => {

@@ -10,14 +10,16 @@ import {
 } from 'react';
 import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
-import { color, radius, shadow, space, text } from './tokens';
+import { Icon } from './icon';
+import { color, font, radius, space, text } from './tokens';
 
-// Long enough to read one short sentence.
+// Long enough to read one short sentence: the time the `Main` frame gives its toasts.
 const SHOWN_MS = 2400;
 
 const NOT_READY = '준비 중이에요';
 
-type ShowToast = (message: string) => void;
+// `shownMs` is how long the words stay. Left out, 2400 ms.
+type ShowToast = (message: string, shownMs?: number) => void;
 
 interface Toasts {
   show: ShowToast;
@@ -27,16 +29,17 @@ interface Toasts {
 
 const ToastContext = createContext<Toasts | null>(null);
 
-// Shows one toast at a time over everything it wraps, except an open Dialog, which the phone draws above the app. A new toast replaces the one before it. The design system has
-// no toast; the wireframes use one, so the app adds it in the design system's terms.
+// Shows one toast at a time over everything it wraps, except an open Dialog, which the phone draws above the app. A
+// new toast replaces the one before it. The design system has no toast; the `Main` frame draws one, a dark bar from
+// side to side with a check mark before its words and no shadow, and the app adds it in the design system's terms.
 export function ToastProvider({ children }: { children: ReactNode }): ReactElement {
   // A new object for every toast, so that the same words shown twice start the time again.
-  const [toast, setToast] = useState<{ message: string } | null>(null);
+  const [toast, setToast] = useState<{ message: string; shownMs: number } | null>(null);
   const [taken, setTaken] = useState(0);
   // The phone's own bar at the bottom. Without a provider of it, as in a test, there is none.
   const inset = use(SafeAreaInsetsContext)?.bottom ?? 0;
-  const show = useCallback<ShowToast>((message) => {
-    setToast({ message });
+  const show = useCallback<ShowToast>((message, shownMs = SHOWN_MS) => {
+    setToast({ message, shownMs });
     // iOS has no live regions: the words are announced by hand. Android reads the live region below.
     if (Platform.OS === 'ios') {
       AccessibilityInfo.announceForAccessibility(message);
@@ -47,8 +50,9 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactEleme
       toast === null
         ? null
         : setTimeout(() => {
-            setToast(null);
-          }, SHOWN_MS);
+            // A toast shown at the very moment this one ends stays.
+            setToast((now) => (now === toast ? null : now));
+          }, toast.shownMs);
     return (): void => {
       if (timer !== null) {
         clearTimeout(timer);
@@ -62,6 +66,7 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactEleme
       {toast === null ? null : (
         <View style={[styles.layer, { bottom: inset + taken + space[6] }]} testID="toast-layer">
           <View accessibilityLiveRegion="polite" accessibilityRole="alert" accessible style={styles.toast}>
+            <Icon color={color.onPrimary} name="check" size={ICON} />
             <Text style={styles.words}>{toast.message}</Text>
           </View>
         </View>
@@ -103,21 +108,26 @@ export function useNotReadyToast(): () => void {
   }, [show]);
 }
 
+const ICON = 18;
+const GAP = 10;
+
 const styles = StyleSheet.create({
-  // Its distance from the bottom is set where it is drawn.
+  // Its distance from the bottom is set where it is drawn. The bar runs from side to side.
   layer: {
     position: 'absolute',
     right: space[4],
     left: space[4],
-    alignItems: 'center',
     pointerEvents: 'none',
   },
   toast: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: GAP,
     paddingVertical: space[3],
     paddingHorizontal: space[4],
-    borderRadius: radius.full,
+    borderRadius: radius.md,
     backgroundColor: color.ink,
-    boxShadow: shadow.float,
   },
-  words: { ...text.label, color: color.onPrimary, textAlign: 'center' },
+  // The frame's words are the label's size in the medium weight.
+  words: { ...text.label, flexShrink: 1, fontFamily: font.medium, color: color.onPrimary },
 });

@@ -1,6 +1,19 @@
 import { type ReactElement, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Avatar, Badge, Button, Chip, color, Icon, ICON_NAMES, MapPin, space, text } from '@/design-system';
+import {
+  Avatar,
+  Badge,
+  Button,
+  Chip,
+  color,
+  Icon,
+  ICON_NAMES,
+  MapDot,
+  MapPerson,
+  MapPin,
+  space,
+  text,
+} from '@/design-system';
 import samplePhoto from '../../assets/images/icon.png';
 import { Row, Section } from './layout';
 
@@ -123,6 +136,7 @@ export function MapPins(): ReactElement {
     <Section name="MapPin">
       <View style={styles.pins}>
         <MapPin kind="me" />
+        <MapPin kind="me" small />
         <MapPin count={3} kind="official" label="채용설명회" />
         <MapPin kind="official" label="선택됨" selected />
         <MapPin kind="private" label="스터디" />
@@ -134,6 +148,12 @@ export function MapPins(): ReactElement {
         <MapPin kind="library" label="관정관" />
         <MapPin icon="book" kind="official" label="다른 아이콘" />
         <MapPin kind="friend" label="사진" name="사진" source={samplePhoto} />
+        <MapDot kind="official" />
+        <MapDot kind="party" selected />
+        <MapPerson name="김민준" small tone="free" />
+        <MapPerson name="정하은" tone="class" />
+        <MapPerson name="임채원" selected tone="moving" />
+        <MapPerson name="오현우" tone="member" />
       </View>
     </Section>
   );

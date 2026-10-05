@@ -21,6 +21,8 @@ const CATEGORIES: Record<MapPlaceKind, { fill: string; icon: IconName; service: 
 
 interface MePinProps {
   kind: 'me';
+  // At three quarters of its size, as the `Main` frame draws it while the whole campus is in view.
+  small?: boolean;
 }
 
 interface FriendPinProps {
@@ -85,8 +87,13 @@ function CategoryPin({ kind, label, count = 0, selected = false, icon }: Categor
 export function MapPin(props: MapPinProps): ReactElement {
   if (props.kind === 'me') {
     return (
-      <View accessibilityLabel="내 위치" accessibilityRole="image" accessible style={styles.me}>
-        <View style={styles.meDot} />
+      <View
+        accessibilityLabel="내 위치"
+        accessibilityRole="image"
+        accessible
+        style={[styles.me, props.small === true && styles.smallMe]}
+      >
+        <View style={[styles.meDot, props.small === true && styles.smallMeDot]} />
       </View>
     );
   }
@@ -102,21 +109,29 @@ export function MapPin(props: MapPinProps): ReactElement {
 }
 
 // A pin from far away, when the whole campus is in view: the kind's colour alone. A campus service's is a smaller
-// square.
-export function MapDot({ kind }: { kind: MapPlaceKind }): ReactElement {
+// square. A selected one is 4 larger, inside a ring of the key colour.
+export function MapDot({ kind, selected = false }: { kind: MapPlaceKind; selected?: boolean }): ReactElement {
   const { fill, service, name } = CATEGORIES[kind];
   return (
     <View
       accessibilityLabel={name}
       accessibilityRole="image"
+      accessibilityState={{ selected }}
       accessible
-      style={[styles.dot, service && styles.serviceDot, { backgroundColor: fill }]}
+      style={[
+        styles.dot,
+        service && styles.serviceDot,
+        { backgroundColor: fill },
+        selected && (service ? styles.selectedServiceDot : styles.selectedDot),
+      ]}
     />
   );
 }
 
 const ME_HALO = 48;
 const ME_DOT = 16;
+const ME_BORDER = 3;
+const ME_SMALL = 0.75;
 // The design system's sizes are the inside of a head; its white border of 2 is added around it.
 const HEAD_BORDER = 2;
 const HEAD = sizes.pin + HEAD_BORDER * 2;
@@ -124,6 +139,8 @@ const SERVICE_HEAD = 30 + HEAD_BORDER * 2;
 // 12 of colour, or 9 for a campus service, inside a white border of 2.
 const DOT = 12 + HEAD_BORDER * 2;
 const SERVICE_DOT = 9 + HEAD_BORDER * 2;
+const SELECTED_DOT_MORE = 4;
+const SELECTED_DOT_RING = `0 0 0 4px ${halo.selectedDot}, ${shadow.dot}`;
 const COUNT = 18;
 const COUNT_PADDING = 4;
 
@@ -158,12 +175,23 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     borderWidth: HEAD_BORDER,
     borderColor: color.surface,
-    boxShadow: shadow.card,
+    boxShadow: shadow.dot,
   },
   serviceDot: {
     width: SERVICE_DOT,
     height: SERVICE_DOT,
     borderRadius: 3,
+  },
+  // The frame's ring reaches 6 from the colour: 4 beyond the white border of 2.
+  selectedDot: {
+    width: DOT + SELECTED_DOT_MORE,
+    height: DOT + SELECTED_DOT_MORE,
+    boxShadow: SELECTED_DOT_RING,
+  },
+  selectedServiceDot: {
+    width: SERVICE_DOT + SELECTED_DOT_MORE,
+    height: SERVICE_DOT + SELECTED_DOT_MORE,
+    boxShadow: SELECTED_DOT_RING,
   },
   tail: {
     width: 2,
@@ -205,9 +233,11 @@ const styles = StyleSheet.create({
     width: ME_DOT,
     height: ME_DOT,
     borderRadius: radius.full,
-    borderWidth: 3,
+    borderWidth: ME_BORDER,
     borderColor: color.surface,
     backgroundColor: color.me,
     boxShadow: shadow.float,
   },
+  smallMe: { width: ME_HALO * ME_SMALL, height: ME_HALO * ME_SMALL },
+  smallMeDot: { width: ME_DOT * ME_SMALL, height: ME_DOT * ME_SMALL, borderWidth: ME_BORDER * ME_SMALL },
 });

@@ -1,4 +1,4 @@
-import { GlobalEvent, GlobalEventState, JoinPolicy, Prisma, SubQuest } from '../../generated/prisma/client.js';
+import { GlobalEvent, GlobalEventState, JoinPolicy, Place, Prisma, SubQuest } from '../../generated/prisma/client.js';
 
 // A Place from the list, with its id, or a point with the label the app showed. The attending Sub Quest's is the
 // Global Event's position and place text.
@@ -45,8 +45,9 @@ export interface QuestDto {
   subQuests: SubQuestDto[];
 }
 
-// A Quest in the list of recruiting Quests, read by a User who does not hold it.
-export interface RecruitingQuestDto {
+// A Quest as a User who does not hold it reads it: in the list of recruiting Quests, in a request to join it and in an
+// invitation into it.
+export interface QuestSummaryDto {
   id: string;
   title: string;
   globalEvent: { id: string; title: string } | null;
@@ -54,6 +55,10 @@ export interface RecruitingQuestDto {
   holderCount: number;
   capacity: number;
   joinPolicy: JoinPolicy;
+}
+
+// A Quest in the list of recruiting Quests.
+export interface RecruitingQuestDto extends QuestSummaryDto {
   // The first Sub Quest ahead.
   nextSubQuest: Pick<SubQuestDto, 'id' | 'attending' | 'title' | 'startsAt' | 'endsAt' | 'place'>;
 }
@@ -64,7 +69,13 @@ export const SUB_QUEST_INCLUDE = {
   progress: { select: { holder: { select: { userId: true } } } },
 } satisfies Prisma.SubQuestInclude;
 
-const HOLDER_SELECT = { id: true, name: true, department: true } satisfies Prisma.UserSelect;
+export const HOLDER_SELECT = { id: true, name: true, department: true } satisfies Prisma.UserSelect;
+
+export const QUEST_SUMMARY_INCLUDE = {
+  globalEvent: true,
+  leader: { select: HOLDER_SELECT },
+  holders: { select: { id: true } },
+} satisfies Prisma.QuestInclude;
 
 export const QUEST_INCLUDE = {
   globalEvent: true,
@@ -95,20 +106,25 @@ function contentOf(
       cancelled: globalEvent.state !== GlobalEventState.published,
     };
   }
-  const { place } = subQuest;
   return {
     title: subQuest.title ?? '',
     startsAt: subQuest.startsAt?.toISOString() ?? null,
     endsAt: subQuest.endsAt?.toISOString() ?? null,
-    place:
-      place === null
-        ? pointOf(subQuest)
-        : { placeId: place.id, label: place.name, latitude: place.latitude, longitude: place.longitude },
+    place: toPlaceDto(subQuest),
     cancelled: false,
   };
 }
 
-function pointOf({ latitude, longitude, placeLabel }: SubQuest): SubQuestPlaceDto | null {
+// The stored Place, or the stored point with its label, or null when there is neither.
+export function toPlaceDto({
+  place,
+  latitude,
+  longitude,
+  placeLabel,
+}: Pick<SubQuest, 'latitude' | 'longitude' | 'placeLabel'> & { place: Place | null }): SubQuestPlaceDto | null {
+  if (place !== null) {
+    return { placeId: place.id, label: place.name, latitude: place.latitude, longitude: place.longitude };
+  }
   return latitude === null || longitude === null || placeLabel === null
     ? null
     : { placeId: null, label: placeLabel, latitude, longitude };
@@ -165,16 +181,25 @@ export function toRecruitingQuestDto(quest: StoredQuest, now: Date): RecruitingQ
     const { cancelled, ...content } = contentOf(subQuest, globalEvent);
     if (!passed({ cancelled, endsAt: content.endsAt }, now)) {
       return {
-        id: quest.id,
-        title: quest.title,
-        globalEvent: globalEvent === null ? null : { id: globalEvent.id, title: globalEvent.title },
-        leader: quest.leader,
-        holderCount: quest.holders.length,
-        capacity: quest.capacity,
-        joinPolicy: quest.joinPolicy,
+        ...toQuestSummaryDto(quest),
         nextSubQuest: { id: subQuest.id, attending: subQuest.attending, ...content },
       };
     }
   }
   return null;
+}
+
+export function toQuestSummaryDto(
+  quest: Prisma.QuestGetPayload<{ include: typeof QUEST_SUMMARY_INCLUDE }>,
+): QuestSummaryDto {
+  const { globalEvent } = quest;
+  return {
+    id: quest.id,
+    title: quest.title,
+    globalEvent: globalEvent === null ? null : { id: globalEvent.id, title: globalEvent.title },
+    leader: quest.leader,
+    holderCount: quest.holders.length,
+    capacity: quest.capacity,
+    joinPolicy: quest.joinPolicy,
+  };
 }

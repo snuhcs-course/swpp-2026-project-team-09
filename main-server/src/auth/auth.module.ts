@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { AdministratorsModule } from '../administrators/administrators.module.js';
 import { Settings } from '../common/settings.js';
+import { LocationSharingModule } from '../location-sharing/location-sharing.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { AccessTokenGuard, USER_TOKEN_AUDIENCE } from './access-token.guard.js';
 import { AdministratorAuthController } from './administrator-auth.controller.js';
@@ -21,6 +22,7 @@ import { WorkerGuard } from './worker.guard.js';
   imports: [
     UsersModule,
     AdministratorsModule,
+    LocationSharingModule,
     // Access tokens are signed with the main server's private key. The other servers verify them with the public key
     // alone. The defaults are a User's token; the Administrator's sign-in and guard pass their own audience.
     JwtModule.registerAsync({
