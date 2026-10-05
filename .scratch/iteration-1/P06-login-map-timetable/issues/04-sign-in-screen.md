@@ -59,3 +59,18 @@ Differences from the frame:
 - The legal screen's header is as high as the phone's own status bar plus 56, where the frame has a fixed 44 plus 56.
 
 Not checked: nothing ran in a browser or on a phone. The layout, the pictures, the motion, the shadow, the touch areas and Android's back button are checked by the tests only as far as the tests can see them: the tests run with reduced motion and close a document with "닫기".
+
+### After the review and the screenshots (2026-10-05)
+
+- The two lines of legal links lay against each other, and the touch area of "위치정보 이용" covered most of "이용약관": a press on the one opened the other. The upper line's links now grow up and the lower line's down. No Jest test sees this, because Jest lays nothing out.
+- A legal address with a name such as `__proto__` broke the screen. It now leads to the start of the app, as any unknown name does.
+- The refused line is announced by hand on iOS, which has no live regions.
+- While the account is checked the legal links take no press, and the same document asked for twice is opened once.
+- The button and the drawing keep their places around the middle of the screen on a phone narrower than the frame.
+- Screenshots of the web target at 390 wide, beside the frame's three states: the wordmark, the tagline, the line under the headline, the footer, the button and the drawing are in the frame's places, measured in the default state. The ring around the button is not drawn under reduced motion, where the frame's still picture shows it. At 360 by 640 nothing overlaps; the footer is reached by scrolling and the drawing is cut off 40 further.
+- The screenshots were taken before the changes of this section. None of them moves anything at 390 wide; the press on each link was not tried in a browser or on a phone.
+
+### Agent usage (2026-10-05)
+
+- Agent time: about 35 minutes, an estimate, most of it in subagents.
+- Tokens: the main session about 20 thousand out and 4 million read from the cache, an estimate; four subagent runs (the build, a review, the screenshots): about 350 thousand in all.

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import type { ReactElement } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type ReactElement, useEffect } from 'react';
+import { AccessibilityInfo, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, font, size, space, text } from '@/design-system';
 import type { LegalDocument } from './legal-documents';
@@ -16,6 +16,7 @@ const COPY_TOP = 560;
 const COPY_HEIGHT = 60;
 const FOOTER_BOTTOM = 36;
 const FOOTER_LINE = 18;
+const LINK_REACH = size.touchMin - FOOTER_LINE;
 
 const COPY: Record<SignInPhase, { headline: string; line: string }> = {
   default: { headline: '서울대 계정으로 로그인', line: '@snu.ac.kr' },
@@ -27,6 +28,12 @@ const COPY: Record<SignInPhase, { headline: string; line: string }> = {
 function Copy({ phase }: { phase: SignInPhase }): ReactElement {
   const { headline, line } = COPY[phase];
   const refused = phase === 'not-snu-account' || phase === 'failed';
+  // iOS has no live regions: the refusal is announced by hand. Android and the web read the region below.
+  useEffect(() => {
+    if (refused && Platform.OS === 'ios') {
+      AccessibilityInfo.announceForAccessibility(`${headline}. ${line}`);
+    }
+  }, [refused, headline, line]);
   return (
     <View style={styles.copy}>
       <Text accessibilityRole="header" style={styles.headline}>
@@ -43,14 +50,26 @@ function Copy({ phase }: { phase: SignInPhase }): ReactElement {
   );
 }
 
-function LegalLink({ document, children }: { document: LegalDocument; children: string }): ReactElement {
+interface LegalLinkProps {
+  document: LegalDocument;
+  // Which way the touch area grows from the line: the two lines of links lie against each other, so the upper line's
+  // links grow up and the lower line's down, and none lies over another.
+  reach: 'up' | 'down';
+  disabled: boolean;
+  children: string;
+}
+
+function LegalLink({ document, reach, disabled, children }: LegalLinkProps): ReactElement {
   return (
     <Pressable
       accessibilityRole="link"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       onPress={() => {
-        router.push({ pathname: '/legal/[document]', params: { document } });
+        // The same document asked for twice is opened once.
+        router.navigate({ pathname: '/legal/[document]', params: { document } });
       }}
-      style={styles.link}
+      style={reach === 'up' ? styles.linkUp : styles.linkDown}
     >
       <Text style={styles.linkWords}>{children}</Text>
     </Pressable>
@@ -58,19 +77,26 @@ function LegalLink({ document, children }: { document: LegalDocument; children: 
 }
 
 // The sentence is laid out in pieces, not as one text, so that each link is a control of its own with a touch area
-// of the design system's least height.
-function Footer({ bottom }: { bottom: number }): ReactElement {
+// of the design system's least height. While the account is checked the links take no press: a document opened then
+// would hide where the sign-in leads.
+function Footer({ bottom, busy }: { bottom: number; busy: boolean }): ReactElement {
   return (
     <View style={[styles.footer, { bottom }]}>
       <View style={styles.footerLine}>
         <Text style={styles.footerWords}>계속하면 </Text>
-        <LegalLink document="terms">이용약관</LegalLink>
+        <LegalLink disabled={busy} document="terms" reach="up">
+          이용약관
+        </LegalLink>
         <Text style={styles.footerWords}>과 </Text>
-        <LegalLink document="privacy">개인정보 처리방침</LegalLink>
+        <LegalLink disabled={busy} document="privacy" reach="up">
+          개인정보 처리방침
+        </LegalLink>
         <Text style={styles.footerWords}>,</Text>
       </View>
       <View style={styles.footerLine}>
-        <LegalLink document="location">위치정보 이용</LegalLink>
+        <LegalLink disabled={busy} document="location" reach="down">
+          위치정보 이용
+        </LegalLink>
         <Text style={styles.footerWords}>에 동의하게 돼요.</Text>
       </View>
     </View>
@@ -93,11 +119,13 @@ export function SignInScreen(): ReactElement {
             <Text style={styles.name}>SNU Now</Text>
             <Text style={styles.tagline}>관악캠퍼스의 지금</Text>
           </View>
-          <SignInButton checking={phase === 'checking'} onPress={start} />
-          <Drawing refused={phase === 'not-snu-account' || phase === 'failed'} />
+          <View style={styles.stage}>
+            <SignInButton checking={phase === 'checking'} onPress={start} />
+            <Drawing refused={phase === 'not-snu-account' || phase === 'failed'} />
+          </View>
           <Copy phase={phase} />
         </View>
-        <Footer bottom={bottom} />
+        <Footer bottom={bottom} busy={phase === 'checking'} />
       </View>
     </ScrollView>
   );
@@ -109,6 +137,9 @@ const styles = StyleSheet.create({
   // The frame's width, in the middle of a wider screen. What the frame draws past its edge is cut off, as there.
   column: { flexGrow: 1, alignSelf: 'center', width: '100%', maxWidth: FRAME_WIDTH, overflow: 'hidden' },
   upper: { position: 'absolute', right: 0, left: 0, height: COPY_TOP + COPY_HEIGHT },
+  // The button and the drawing keep the frame's places around the middle of the screen, also on a narrower phone,
+  // where the drawing's far edge is cut off a little more.
+  stage: { position: 'absolute', top: 0, bottom: 0, left: '50%', width: FRAME_WIDTH, marginLeft: -FRAME_WIDTH / 2 },
   wordmark: { position: 'absolute', top: 84, right: 0, left: 0, alignItems: 'center', gap: 6 },
   // Larger than any text style: the wordmark's own size.
   name: { fontFamily: font.bold, fontSize: 40, lineHeight: 44, letterSpacing: -1.4, color: color.snuBlue },
@@ -128,6 +159,7 @@ const styles = StyleSheet.create({
   footerLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: FOOTER_LINE },
   footerWords: { ...text.caption, fontFamily: font.regular, lineHeight: FOOTER_LINE, color: color.inkMuted },
   // As tall as the least touch area, without moving the line: what the padding adds, the margin takes back.
-  link: { paddingVertical: (size.touchMin - FOOTER_LINE) / 2, marginVertical: -(size.touchMin - FOOTER_LINE) / 2 },
+  linkUp: { paddingTop: LINK_REACH, marginTop: -LINK_REACH },
+  linkDown: { paddingBottom: LINK_REACH, marginBottom: -LINK_REACH },
   linkWords: { ...text.caption, fontFamily: font.semiBold, lineHeight: FOOTER_LINE, color: color.blue600 },
 });

@@ -55,6 +55,7 @@ export function SignInButton({ checking, onPress }: SignInButtonProps): ReactEle
         accessibilityLabel="서울대학교 구글 계정(@snu.ac.kr)으로 로그인"
         accessibilityRole="button"
         accessibilityState={{ busy: checking }}
+        aria-busy={checking}
         onPress={onPress}
         style={({ pressed }): StyleProp<ViewStyle> => [styles.button, pressed && !checking && styles.pressed]}
       >

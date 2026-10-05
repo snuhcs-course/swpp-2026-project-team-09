@@ -172,3 +172,22 @@ describe('a legal document', () => {
     expect(screen.getByRole('button', { name: SIGN_IN })).toBeVisible();
   });
 });
+
+describe('a legal document that does not exist', () => {
+  it.each(['nothing', '__proto__', 'constructor'])('leads from the name "%s" to the start of the app', async (name) => {
+    await startApp(`/legal/${name}`);
+    await pass(700);
+
+    expect(screen.getByRole('button', { name: SIGN_IN })).toBeVisible();
+  });
+
+  it('takes no press on a link while the account is checked', async () => {
+    const user = await openSignIn();
+
+    await user.press(screen.getByRole('button', { name: SIGN_IN }));
+    expect(screen.getByRole('link', { name: '이용약관' })).toBeDisabled();
+
+    await pass(400);
+    expect(screen.queryByRole('header', { name: '이용약관' })).toBeNull();
+  });
+});

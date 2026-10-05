@@ -8,5 +8,5 @@ export const LEGAL_DOCUMENTS = {
 export type LegalDocument = keyof typeof LEGAL_DOCUMENTS;
 
 export function isLegalDocument(name: string): name is LegalDocument {
-  return name in LEGAL_DOCUMENTS;
+  return Object.hasOwn(LEGAL_DOCUMENTS, name);
 }
