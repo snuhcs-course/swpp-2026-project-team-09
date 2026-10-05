@@ -7,10 +7,15 @@ export function Option({
   children,
   selected,
   onPress,
+  onPressIn,
+  onPressOut,
 }: {
   children: string;
   selected: boolean;
   onPress: () => void;
+  // The press began, and ended: a field that closes its list when it loses the focus waits for the press between.
+  onPressIn?: () => void;
+  onPressOut?: () => void;
 }): ReactElement {
   return (
     <Pressable
@@ -18,6 +23,8 @@ export function Option({
       accessibilityRole="button"
       accessibilityState={{ selected }}
       onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
       style={({ pressed }): StyleProp<ViewStyle> => [styles.option, (selected || pressed) && styles.optionOn]}
     >
       <Text style={[styles.optionWords, selected && styles.optionWordsOn]}>{children}</Text>

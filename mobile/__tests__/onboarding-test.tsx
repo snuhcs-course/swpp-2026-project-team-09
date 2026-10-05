@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { userEvent } from '@testing-library/react-native';
+import { fireEvent, userEvent } from '@testing-library/react-native';
 import { pass, screen, startApp } from './support/app';
 import { startFresh } from './support/mocks';
 import {
@@ -119,6 +119,26 @@ describe('the save button', () => {
     expect(screen.getByLabelText('학과')).toHaveDisplayValue('컴퓨터공학부');
     expect(button(SAVE)).toBeEnabled();
     expect((await readKept()).onboardingCompleted).toBe(false);
+  });
+});
+
+describe('a save, asked for', () => {
+  it('that failed says so above the foot, clear of its buttons', async () => {
+    process.env.EXPO_PUBLIC_MOCK_FAIL = 'completeOnboarding';
+    const user = await arriveAtOnboarding(SUGGESTION);
+    await fireEvent(screen.getByTestId('onboarding-foot'), 'layout', { nativeEvent: { layout: { height: 132 } } });
+    await user.press(button(SAVE));
+    await pass(400);
+
+    expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 132 + 24 });
+  });
+
+  it('counts the name by characters and takes thirty, an emoji being one', async () => {
+    await arriveAtOnboarding(SUGGESTION);
+    await fireEvent.changeText(screen.getByLabelText('이름'), '😀'.repeat(31));
+
+    expect(screen.getByLabelText('이름')).toHaveDisplayValue('😀'.repeat(30));
+    expect(screen.getByText('30/30')).toBeVisible();
   });
 });
 

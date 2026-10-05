@@ -4,6 +4,7 @@ import { color, Icon, radius, size, space, text } from '@/design-system';
 import { FieldLabel } from './field-label';
 import { admissionYears, type YearChoice, yearLabel } from './form';
 import { Option, OptionList } from './option-list';
+import { useRevealed } from './reveal';
 
 const NO_CHOICE = '학번 선택';
 const OTHER = '그 외';
@@ -25,9 +26,10 @@ export function YearField({
   onChange: (year: YearChoice) => void;
 }): ReactElement {
   const [open, setOpen] = useState(false);
+  const { block, onLayout } = useRevealed(open);
   const choices: YearChoice[] = [null, ...admissionYears(), 'other'];
   return (
-    <View style={styles.field}>
+    <View onLayout={onLayout} ref={block} style={styles.field}>
       <FieldLabel>학번</FieldLabel>
       <Pressable
         accessibilityLabel="학번"
@@ -39,7 +41,7 @@ export function YearField({
         }}
         style={({ pressed }): StyleProp<ViewStyle> => [styles.box, pressed && styles.pressed]}
       >
-        <Text style={[styles.words, value === null && styles.none]}>{labelOf(value)}</Text>
+        <Text style={styles.words}>{labelOf(value)}</Text>
         <Icon color={color.inkMuted} name="chevronDown" size={18} />
       </Pressable>
       {open ? (
@@ -68,14 +70,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: size.touchMin,
+    height: size.touchMin,
     paddingHorizontal: space[4],
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: color.borderStrong,
+    borderColor: color.border,
     backgroundColor: color.surface,
   },
   pressed: { backgroundColor: color.blue50 },
   words: { ...text.bodyLg, color: color.ink },
-  none: { color: color.inkMuted },
 });

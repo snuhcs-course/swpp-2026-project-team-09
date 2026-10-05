@@ -1,17 +1,26 @@
-import { type ReactElement, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Button, cardStyles, Chip, color, space, text } from '@/design-system';
+import { type ReactElement, useEffect, useState } from 'react';
+import {
+  AccessibilityInfo,
+  Platform,
+  Pressable,
+  type StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  type ViewStyle,
+} from 'react-native';
+import { cardStyles, Chip, color, font, radius, size, space, text } from '@/design-system';
 import { Input } from './input';
 import {
-  interestOf,
+  addInterests,
+  interestsIn,
   isFull,
-  LONGEST_INTEREST,
   MOST_INTERESTS,
+  type Refusal,
+  REFUSAL_WORDS,
   suggestedFor,
-  tidyDraft,
-  withInterest,
 } from './interests';
-import { Pill } from './pill';
+import { Pill, PILL_ROW_GAP } from './pill';
 
 interface InterestsSectionProps {
   // Without the '#'.
@@ -19,13 +28,12 @@ interface InterestsSectionProps {
   onChange: (interests: readonly string[]) => void;
 }
 
-function Suggested({
-  interests,
-  onAdd,
-}: {
+interface SuggestedProps {
   interests: readonly string[];
   onAdd: (interest: string) => void;
-}): ReactElement {
+}
+
+function Suggested({ interests, onAdd }: SuggestedProps): ReactElement {
   return (
     <View style={styles.suggested}>
       <Text style={styles.small}>추천</Text>
@@ -44,48 +52,80 @@ function Suggested({
   );
 }
 
-// The field an interest is typed into, and its button. The keyboard's own button adds too.
-function Adding({ full, onAdd }: { full: boolean; onAdd: (typed: string) => void }): ReactElement {
+// The frame's button beside the field, as high as the field. The design system's Button is lower or higher.
+function AddButton({ disabled, onPress }: { disabled: boolean; onPress: () => void }): ReactElement {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }): StyleProp<ViewStyle> => [
+        styles.add,
+        pressed && styles.addPressed,
+        disabled && styles.addDisabled,
+      ]}
+    >
+      <Text style={[styles.addWords, disabled && styles.addWordsDisabled]}>추가</Text>
+    </Pressable>
+  );
+}
+
+// Why an interest was not added, under the field. iOS has no live regions: there the words are announced by hand.
+function Why({ refusal }: { refusal: Refusal }): ReactElement {
+  const words = REFUSAL_WORDS[refusal];
+  useEffect(() => {
+    if (Platform.OS === 'ios') {
+      AccessibilityInfo.announceForAccessibility(words);
+    }
+  }, [words]);
+  return (
+    <Text accessibilityLiveRegion="polite" accessibilityRole="alert" style={styles.why}>
+      {words}
+    </Text>
+  );
+}
+
+interface AddingProps {
+  interests: readonly string[];
+  onChange: (interests: readonly string[]) => void;
+}
+
+// The field interests are typed or pasted into, several at once if the User likes, and its button. The keyboard's
+// own button adds too. What was not added stays in the field, with the reason under it until the User types again.
+function Adding({ interests, onChange }: AddingProps): ReactElement {
   const [draft, setDraft] = useState('');
+  const [refusal, setRefusal] = useState<Refusal | null>(null);
   const add = (): void => {
-    onAdd(draft);
-    setDraft('');
+    const added = addInterests(interests, draft);
+    onChange(added.interests);
+    setDraft(added.left);
+    setRefusal(added.refusal);
   };
   return (
-    <View style={styles.adding}>
-      <Input
-        label="관심사 추가"
-        // One more than an interest's length, for the '#' a User may type in front.
-        maxLength={LONGEST_INTEREST + 1}
-        onChangeText={(typed) => {
-          setDraft(tidyDraft(typed));
-        }}
-        onSubmit={() => {
-          add();
-        }}
-        placeholder={full ? `${MOST_INTERESTS}개까지 넣을 수 있어요` : '#관심사'}
-        style={styles.draft}
-        value={draft}
-      />
-      <Button
-        centred
-        disabled={interestOf(draft) === '' || full}
-        onPress={() => {
-          add();
-        }}
-      >
-        추가
-      </Button>
-    </View>
+    <>
+      <View style={styles.adding}>
+        <Input
+          hint={refusal === null ? undefined : REFUSAL_WORDS[refusal]}
+          label="관심사 추가"
+          onChangeText={(typed) => {
+            setDraft(typed);
+            setRefusal(null);
+          }}
+          onSubmit={add}
+          placeholder={isFull(interests) ? `${MOST_INTERESTS}개까지 넣을 수 있어요` : '#관심사'}
+          style={styles.draft}
+          value={draft}
+        />
+        <AddButton disabled={interestsIn(draft).length === 0} onPress={add} />
+      </View>
+      {refusal === null ? null : <Why refusal={refusal} />}
+    </>
   );
 }
 
 // The User's interests: typed in, or taken from the suggested ones with a press. Each is shown with a '#'.
 export function InterestsSection({ interests, onChange }: InterestsSectionProps): ReactElement {
-  const full = isFull(interests);
-  const add = (typed: string): void => {
-    onChange(withInterest(interests, typed));
-  };
   return (
     <View style={[cardStyles.card, styles.section]}>
       <View style={styles.head}>
@@ -111,8 +151,13 @@ export function InterestsSection({ interests, onChange }: InterestsSectionProps)
           ))}
         </View>
       )}
-      <Adding full={full} onAdd={add} />
-      <Suggested interests={interests} onAdd={add} />
+      <Adding interests={interests} onChange={onChange} />
+      <Suggested
+        interests={interests}
+        onAdd={(interest) => {
+          onChange(addInterests(interests, interest).interests);
+        }}
+      />
     </View>
   );
 }
@@ -125,5 +170,24 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   adding: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   draft: { flex: 1, minWidth: 0 },
-  suggested: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space[2] },
+  add: {
+    justifyContent: 'center',
+    height: size.touchMin,
+    paddingHorizontal: space[4],
+    borderRadius: radius.md,
+    backgroundColor: color.snuBlue,
+  },
+  addPressed: { backgroundColor: color.snuBluePressed },
+  addDisabled: { backgroundColor: color.surfaceSunken },
+  addWords: { ...text.body, fontFamily: font.semiBold, color: color.onPrimary },
+  addWordsDisabled: { color: color.inkSubtle },
+  why: { ...text.caption, marginTop: -space[1], color: color.danger },
+  // What a pill's touch area is higher than the pill, beyond the rows' own space, is taken back around the rows.
+  suggested: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    columnGap: PILL_ROW_GAP.offer,
+    marginVertical: -PILL_ROW_GAP.offer / 2,
+  },
 });

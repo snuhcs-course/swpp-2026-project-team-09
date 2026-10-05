@@ -1,7 +1,7 @@
 import { fireEvent } from '@testing-library/react-native';
 import { pass, screen } from './support/app';
 import { startFresh } from './support/mocks';
-import { arriveAtOnboarding, button, chooseDepartment, SAVE, type User } from './support/onboarding';
+import { arriveAtOnboarding, BADGE, button, chooseDepartment, SAVE, type User } from './support/onboarding';
 import type { OnboardingAnswers } from '@/api/types';
 import { readKept } from '@/storage/kept';
 
@@ -12,18 +12,12 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 }));
 
 const SUGGESTION = { name: '홍길동', department: '컴퓨터공학부' };
-const INTEREST = '관심사 추가';
 
 async function saved(user: User): Promise<OnboardingAnswers | null> {
   await user.press(button(SAVE));
   await pass(400);
   const { answers } = await readKept();
   return answers;
-}
-
-async function addInterest(user: User, typed: string): Promise<void> {
-  await fireEvent.changeText(screen.getByLabelText(INTEREST), typed);
-  await user.press(button('추가'));
 }
 
 beforeEach(async () => {
@@ -74,6 +68,44 @@ describe('the department', () => {
   });
 });
 
+describe('the department, left without a choice', () => {
+  it('closes the list and shows the department it held, with its badge', async () => {
+    const user = await arriveAtOnboarding(SUGGESTION);
+    await user.type(screen.getByLabelText('학과'), '마법학과');
+    expect(screen.getByText('결과 없음')).toBeVisible();
+
+    await pass(300);
+    expect(screen.queryByText('결과 없음')).toBeNull();
+    expect(screen.getByLabelText('학과')).toHaveDisplayValue('컴퓨터공학부');
+    expect(screen.getAllByText(BADGE)).toHaveLength(2);
+    expect(await saved(user)).toMatchObject({ department: '컴퓨터공학부' });
+  });
+
+  it('shows the held department again after a focus alone', async () => {
+    await arriveAtOnboarding(SUGGESTION);
+    await fireEvent(screen.getByLabelText('학과'), 'focus');
+    expect(screen.getByLabelText('학과')).toHaveDisplayValue('');
+    expect(button('간호학과')).toBeVisible();
+
+    await fireEvent(screen.getByLabelText('학과'), 'blur');
+    await pass(300);
+    expect(screen.queryByRole('button', { name: '간호학과' })).toBeNull();
+    expect(screen.getByLabelText('학과')).toHaveDisplayValue('컴퓨터공학부');
+  });
+
+  it('still takes a press on a row that began as the field lost the focus', async () => {
+    const user = await arriveAtOnboarding(SUGGESTION);
+    await fireEvent(screen.getByLabelText('학과'), 'focus');
+    await fireEvent(screen.getByLabelText('학과'), 'blur');
+    await pass(200);
+
+    await user.longPress(button('간호학과'), { duration: 400 });
+    await pass(300);
+    expect(screen.getByLabelText('학과')).toHaveDisplayValue('간호학과');
+    expect(screen.getAllByText(BADGE)).toHaveLength(1);
+  });
+});
+
 describe('the admission year', () => {
   it('offers this year and the eleven before it, and stores the one chosen', async () => {
     const user = await arriveAtOnboarding(SUGGESTION);
@@ -116,63 +148,5 @@ describe('the gender', () => {
     await user.press(screen.getByRole('radio', { name: '직접 입력' }));
     await user.type(screen.getByLabelText('성별 직접 입력'), '논바이너리');
     expect(await saved(user)).toMatchObject({ gender: { kind: 'custom', text: '논바이너리' } });
-  });
-});
-
-describe('the interests', () => {
-  it('are shown with a "#" and stored without, with no whitespace and none twice whatever the case', async () => {
-    const user = await arriveAtOnboarding(SUGGESTION);
-    expect(button('추가')).toBeDisabled();
-
-    await addInterest(user, '#AI 커리어');
-    await addInterest(user, 'ai커리어');
-    await addInterest(user, '러 닝');
-    await addInterest(user, '#');
-
-    expect(screen.getByText('#AI커리어')).toBeVisible();
-    expect(screen.getByText('2/20')).toBeVisible();
-    expect(await saved(user)).toMatchObject({ hashtags: ['AI커리어', '러닝'] });
-  });
-
-  it('are thirty characters long at most', async () => {
-    const user = await arriveAtOnboarding(SUGGESTION);
-    await fireEvent.changeText(screen.getByLabelText(INTEREST), `#${'가'.repeat(40)}`);
-
-    expect(screen.getByLabelText(INTEREST)).toHaveDisplayValue(`#${'가'.repeat(30)}`);
-    await user.press(button('추가'));
-    expect(await saved(user)).toMatchObject({ hashtags: ['가'.repeat(30)] });
-  });
-});
-
-describe('the interests, suggested and counted', () => {
-  it('are added from the suggested ones with a press, and removed with the ×', async () => {
-    const user = await arriveAtOnboarding(SUGGESTION);
-    expect(screen.queryByRole('button', { name: '#클라이밍 추가' })).toBeNull();
-
-    await user.press(button('#러닝 추가'));
-    await user.press(button('#재즈 추가'));
-    expect(screen.queryByRole('button', { name: '#러닝 추가' })).toBeNull();
-    expect(button('#클라이밍 추가')).toBeVisible();
-
-    await user.press(button('#러닝 삭제'));
-    expect(button('#러닝 추가')).toBeVisible();
-    expect(await saved(user)).toMatchObject({ hashtags: ['재즈'] });
-  });
-
-  it('are twenty at most', async () => {
-    const user = await arriveAtOnboarding(SUGGESTION);
-    for (let count = 1; count <= 20; count += 1) {
-      // oxlint-disable-next-line no-await-in-loop -- one interest after the other, as a User adds them
-      await addInterest(user, `관심${count}`);
-    }
-    expect(screen.getByText('20/20')).toBeVisible();
-    expect(screen.getByText('추천')).toBeVisible();
-    expect(screen.queryByRole('button', { name: '#러닝 추가' })).toBeNull();
-
-    await fireEvent.changeText(screen.getByLabelText(INTEREST), '하나더');
-    expect(button('추가')).toBeDisabled();
-    const answers = await saved(user);
-    expect(answers?.hashtags).toHaveLength(20);
-    expect(answers?.hashtags.at(-1)).toBe('관심20');
   });
 });

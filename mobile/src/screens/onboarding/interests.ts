@@ -1,3 +1,5 @@
+import { lengthOf } from './length';
+
 // The main server's limits for a User's hashtags.
 export const MOST_INTERESTS = 20;
 export const LONGEST_INTEREST = 30;
@@ -6,34 +8,63 @@ export const LONGEST_INTEREST = 30;
 const SUGGESTED = ['AI커리어', '러닝', '알고리즘', '재즈', '보드게임', '클라이밍', '스터디', '밴드'] as const;
 const MOST_SUGGESTED = 5;
 
+// Why an interest was not added.
+export type Refusal = 'full' | 'twice' | 'long';
+
+export const REFUSAL_WORDS: Record<Refusal, string> = {
+  full: `관심사는 ${MOST_INTERESTS}개까지 추가할 수 있어요`,
+  twice: '이미 추가한 관심사예요',
+  long: `${LONGEST_INTEREST}자까지 쓸 수 있어요`,
+};
+
 function sameInterest(one: string, other: string): boolean {
   return one.toLowerCase() === other.toLowerCase();
 }
 
-// What the User typed, as an interest: no whitespace, no '#' in front, 30 characters at most.
-export function interestOf(typed: string): string {
-  const [...characters] = typed.replaceAll(/\s/gu, '').replace(/^#+/u, '');
-  return characters.slice(0, LONGEST_INTEREST).join('');
-}
-
-// What the field shows of what the User typed: the same, with the '#' the User put in front.
-export function tidyDraft(typed: string): string {
-  const prefix = typed.trimStart().startsWith('#') ? '#' : '';
-  return `${prefix}${interestOf(typed)}`;
+// The interests in what the User typed or pasted: whitespace, a comma and a '#' each end one, and none holds a '#'.
+export function interestsIn(typed: string): string[] {
+  return typed.split(/[\s,#]+/u).filter((part) => part !== '');
 }
 
 export function isFull(interests: readonly string[]): boolean {
   return interests.length >= MOST_INTERESTS;
 }
 
-// The interests with one more. They stay as they are for nothing typed, for a full list, and for an interest that
-// is there already, whatever its case.
-export function withInterest(interests: readonly string[], typed: string): readonly string[] {
-  const interest = interestOf(typed);
-  if (interest === '' || isFull(interests) || interests.some((held) => sameInterest(held, interest))) {
-    return interests;
+function refusalOf(interests: readonly string[], interest: string): Refusal | null {
+  if (lengthOf(interest) > LONGEST_INTEREST) {
+    return 'long';
   }
-  return [...interests, interest];
+  if (interests.some((held) => sameInterest(held, interest))) {
+    return 'twice';
+  }
+  return isFull(interests) ? 'full' : null;
+}
+
+export interface Added {
+  interests: readonly string[];
+  // What stays in the field: nothing, or the interests that were not added. When none was, it is what was typed.
+  left: string;
+  // Why the first of those was not added.
+  refusal: Refusal | null;
+}
+
+// Adds every interest in what was typed. One that is too long, there already whatever its case, or more than the
+// list takes is not added and stays in the field.
+export function addInterests(held: readonly string[], typed: string): Added {
+  const interests = [...held];
+  const refused: string[] = [];
+  let refusal: Refusal | null = null;
+  for (const interest of interestsIn(typed)) {
+    const why = refusalOf(interests, interest);
+    if (why === null) {
+      interests.push(interest);
+    } else {
+      refusal ??= why;
+      refused.push(interest);
+    }
+  }
+  const left = interests.length === held.length ? typed : refused.join(' ');
+  return { interests, left, refusal };
 }
 
 // The first five suggested interests that the User does not have yet, and none for a full list.

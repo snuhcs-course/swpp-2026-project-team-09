@@ -5,7 +5,7 @@ import type { CourseLevel } from './departments';
 import { FieldLabel } from './field-label';
 import type { GenderChoice } from './form';
 import { Input } from './input';
-import { Pill } from './pill';
+import { Pill, PILL_ROW_GAP } from './pill';
 
 const LEVELS: readonly { level: CourseLevel; label: string }[] = [
   { level: 'undergraduate', label: '학부생' },
@@ -80,7 +80,7 @@ export function GenderField({ value, words, onChange, onChangeWords }: GenderFie
       {value === 'custom' ? (
         <Input
           label="성별 직접 입력"
-          maxLength={LONGEST_GENDER}
+          most={LONGEST_GENDER}
           onChangeText={onChangeWords}
           placeholder="직접 입력"
           value={words}
@@ -111,6 +111,6 @@ const styles = StyleSheet.create({
   levelOn: { backgroundColor: color.surface, boxShadow: shadow.card },
   levelWords: { ...text.body, fontFamily: font.medium, color: color.inkMuted },
   levelWordsOn: { fontFamily: font.bold, color: color.snuBlue },
-  // The pills' touch areas are higher than the pills, so the rows need no space between them.
-  genders: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space[2] },
+  // What a pill's touch area is higher than the pill, beyond the rows' own space, is taken back around the rows.
+  genders: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space[2], marginVertical: -PILL_ROW_GAP.choice / 2 },
 });

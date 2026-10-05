@@ -22,7 +22,7 @@ export function Pill({ children, label, checked, onPress }: PillProps): ReactEle
       accessibilityRole={choice ? 'radio' : 'button'}
       accessibilityState={choice ? { checked } : undefined}
       onPress={onPress}
-      style={styles.touch}
+      style={[styles.touch, choice ? styles.choiceTouch : styles.offerTouch]}
     >
       {({ pressed }) => (
         <View
@@ -44,18 +44,27 @@ export function Pill({ children, label, checked, onPress }: PillProps): ReactEle
 
 const CHOICE_HEIGHT = 36;
 const OFFER_HEIGHT = 28;
+// The frame's space between two rows of pills. The touch areas of two rows lie over each other by what they are
+// higher than a pill and this space, so that the rows stand as far apart as the frame's.
+export const PILL_ROW_GAP = { choice: space[2], offer: 6 } as const;
+
+function overlap(height: number, gap: number): number {
+  return -(size.touchMin - height - gap) / 2;
+}
 
 const styles = StyleSheet.create({
   touch: { minHeight: size.touchMin, justifyContent: 'center' },
+  choiceTouch: { marginVertical: overlap(CHOICE_HEIGHT, PILL_ROW_GAP.choice) },
+  offerTouch: { marginVertical: overlap(OFFER_HEIGHT, PILL_ROW_GAP.offer) },
   pill: {
     justifyContent: 'center',
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: color.borderStrong,
+    borderColor: color.border,
     backgroundColor: color.surface,
   },
   choice: { height: CHOICE_HEIGHT, paddingHorizontal: space[4] },
-  offer: { height: OFFER_HEIGHT, paddingHorizontal: space[3], borderStyle: 'dashed' },
+  offer: { height: OFFER_HEIGHT, paddingHorizontal: space[3], borderStyle: 'dashed', borderColor: color.borderStrong },
   checked: { borderColor: color.snuBlue, backgroundColor: color.blue100 },
   pressed: { opacity: 0.6 },
   words: { ...text.label, color: color.ink },

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { apiClient } from '@/api/client';
 import { signOut } from '@/auth/sign-in';
 import { useToast } from '@/design-system';
@@ -12,16 +12,31 @@ export function useOnboarding(): { working: boolean; save: (form: Form) => void;
   const { finishOnboarding, leave } = useSession();
   const showToast = useToast();
   const [working, setWorking] = useState(false);
-  const save = (form: Form): void => {
+  // The state reaches the buttons with the next drawing; a second press before it is stopped here.
+  const busy = useRef(false);
+  const begin = (): boolean => {
+    if (busy.current) {
+      return false;
+    }
+    busy.current = true;
     setWorking(true);
+    return true;
+  };
+  const save = (form: Form): void => {
+    if (!begin()) {
+      return;
+    }
     apiClient.completeOnboarding(answersOf(form)).then(finishOnboarding, () => {
       // The form stays as it is, for the User to try again.
       showToast(NOT_SAVED);
+      busy.current = false;
       setWorking(false);
     });
   };
   const out = (): void => {
-    setWorking(true);
+    if (!begin()) {
+      return;
+    }
     void signOut()
       .catch(() => null)
       .then(leave);

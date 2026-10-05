@@ -4,6 +4,7 @@ import { now } from '@/clock';
 import { koreaYear } from '@/korea-time';
 import { isDepartment } from './department-search';
 import type { CourseLevel } from './departments';
+import { cut } from './length';
 
 export type GenderChoice = 'none' | 'female' | 'male' | 'custom';
 
@@ -33,7 +34,7 @@ const YEARS = 12;
 // The form a User starts with: undergraduate, and the suggestion's name and department. A part the suggestion lacks
 // stays empty, and so does a department that is not in the list.
 export function firstForm(suggestion: Suggestion | null): Form {
-  const name = (suggestion?.name ?? '').slice(0, LONGEST_NAME);
+  const name = cut(suggestion?.name ?? '', LONGEST_NAME);
   const suggested = suggestion?.department ?? '';
   const department = isDepartment('undergraduate', suggested) ? suggested : '';
   return {

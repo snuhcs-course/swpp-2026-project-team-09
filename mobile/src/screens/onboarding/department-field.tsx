@@ -1,11 +1,13 @@
-import { type ReactElement, useRef, useState } from 'react';
-import { Pressable, StyleSheet, type TextInput, View } from 'react-native';
+import type { ReactElement } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { color, Icon, size, space } from '@/design-system';
 import { searchDepartments } from './department-search';
 import type { CourseLevel, DepartmentGroup } from './departments';
 import { FieldLabel } from './field-label';
 import { Input } from './input';
 import { NoOption, Option, OptionHeading, OptionList } from './option-list';
+import { useRevealed } from './reveal';
+import { useDepartmentSearch } from './use-department-search';
 
 const LONGEST = 50;
 
@@ -29,55 +31,15 @@ function headingsOf(groups: readonly DepartmentGroup[]): number[] {
   return places;
 }
 
-// The search: the list opens with the focus, what is typed narrows it, and a press chooses and closes it.
-function useSearch(onChange: (department: string) => void): {
-  open: boolean;
-  words: string;
-  input: React.RefObject<TextInput | null>;
-  begin: () => void;
-  type: (typed: string) => void;
-  choose: (department: string) => void;
-  clear: () => void;
-} {
-  const [open, setOpen] = useState(false);
-  const [words, setWords] = useState('');
-  const input = useRef<TextInput>(null);
-  const show = (typed: string): void => {
-    setOpen(true);
-    setWords(typed);
-  };
-  const choose = (department: string): void => {
-    onChange(department);
-    setOpen(false);
-    setWords('');
-    input.current?.blur();
-  };
-  const clear = (): void => {
-    onChange('');
-    show('');
-  };
-  return {
-    open,
-    words,
-    input,
-    begin: () => {
-      show('');
-    },
-    type: show,
-    choose,
-    clear,
-  };
-}
-
-function Choices({
-  groups,
-  value,
-  onChoose,
-}: {
+interface ChoicesProps {
   groups: readonly DepartmentGroup[];
   value: string;
   onChoose: (department: string) => void;
-}): ReactElement {
+  onHold: () => void;
+  onRelease: () => void;
+}
+
+function Choices({ groups, value, onChoose, onHold, onRelease }: ChoicesProps): ReactElement {
   if (groups.length === 0) {
     return (
       <OptionList label="학과 목록">
@@ -95,6 +57,8 @@ function Choices({
             onPress={() => {
               onChoose(department);
             }}
+            onPressIn={onHold}
+            onPressOut={onRelease}
             selected={department === value}
           >
             {department}
@@ -107,17 +71,19 @@ function Choices({
 
 // The department, chosen from the course level's list by searching it. Nothing but a name from the list is taken.
 export function DepartmentField({ level, value, suggested, onChange }: DepartmentFieldProps): ReactElement {
-  const search = useSearch(onChange);
+  const search = useDepartmentSearch(onChange);
+  const { block, onLayout } = useRevealed(search.open);
   const shown = search.open ? search.words : value;
   return (
-    <View style={styles.field}>
+    <View onLayout={onLayout} ref={block} style={styles.field}>
       <FieldLabel required suggested={suggested}>
         학과
       </FieldLabel>
       <View>
         <Input
           label="학과"
-          maxLength={LONGEST}
+          most={LONGEST}
+          onBlur={search.leave}
           onChangeText={search.type}
           onFocus={search.begin}
           placeholder="학과 검색"
@@ -140,7 +106,13 @@ export function DepartmentField({ level, value, suggested, onChange }: Departmen
         )}
       </View>
       {search.open ? (
-        <Choices groups={searchDepartments(level, search.words)} onChoose={search.choose} value={value} />
+        <Choices
+          groups={searchDepartments(level, search.words)}
+          onChoose={search.choose}
+          onHold={search.hold}
+          onRelease={search.release}
+          value={value}
+        />
       ) : null}
     </View>
   );

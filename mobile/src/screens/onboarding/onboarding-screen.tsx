@@ -1,14 +1,17 @@
 import type { ReactElement } from 'react';
 import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, cardStyles, color, shadow, space, text } from '@/design-system';
+import { cardStyles, color, space, text } from '@/design-system';
 import { useSession } from '@/session/session';
 import { CourseLevelField, GenderField } from './choice-fields';
 import { DepartmentField } from './department-field';
 import { FieldLabel } from './field-label';
+import { Foot } from './foot';
 import { canSave, type ChangeForm, type Form, LONGEST_NAME, useForm } from './form';
 import { Input } from './input';
 import { InterestsSection } from './interests-section';
+import { lengthOf } from './length';
+import { RevealContext, useRevealer } from './reveal';
 import { useOnboarding } from './use-onboarding';
 import { YearField } from './year-field';
 
@@ -22,15 +25,15 @@ function NameField({ form, change }: { form: Form; change: ChangeForm }): ReactE
       </FieldLabel>
       <Input
         label="이름"
-        maxLength={LONGEST_NAME}
+        most={LONGEST_NAME}
         onChangeText={(name) => {
           change({ name, nameSuggested: false });
         }}
         placeholder="이름"
         value={form.name}
       />
-      <Text accessibilityLabel={`${form.name.length}자, 최대 ${LONGEST_NAME}자`} style={styles.count}>
-        {`${form.name.length}/${LONGEST_NAME}`}
+      <Text accessibilityLabel={`${lengthOf(form.name)}자, 최대 ${LONGEST_NAME}자`} style={styles.count}>
+        {`${lengthOf(form.name)}/${LONGEST_NAME}`}
       </Text>
     </View>
   );
@@ -90,6 +93,7 @@ export function OnboardingScreen(): ReactElement {
   const { suggestion } = useSession();
   const { form, change } = useForm(suggestion);
   const { working, save, out } = useOnboarding();
+  const revealer = useRevealer();
   return (
     <KeyboardAvoidingView behavior="padding" style={styles.screen}>
       <View style={styles.column}>
@@ -99,30 +103,33 @@ export function OnboardingScreen(): ReactElement {
           </Text>
           <Text style={styles.sentence}>이름과 학과만 채우면 바로 시작해요</Text>
         </View>
-        <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
-          <BasicSection change={change} form={form} />
-          <InterestsSection
-            interests={form.interests}
-            onChange={(interests) => {
-              change({ interests });
-            }}
-          />
-        </ScrollView>
-        <View style={[styles.foot, { paddingBottom: insets.bottom + space[3] }]}>
-          <Button
-            disabled={working || !canSave(form)}
-            full
-            onPress={() => {
-              save(form);
-            }}
-            size="lg"
+        <View onLayout={revealer.settle} ref={revealer.frame} style={styles.frame}>
+          <ScrollView
+            contentContainerStyle={styles.form}
+            keyboardShouldPersistTaps="handled"
+            onScroll={revealer.onScroll}
+            ref={revealer.scroll}
+            scrollEventThrottle={16}
           >
-            저장하고 시작하기
-          </Button>
-          <Button centred disabled={working} onPress={out} variant="ghost">
-            로그아웃
-          </Button>
+            <RevealContext value={revealer}>
+              <BasicSection change={change} form={form} />
+              <InterestsSection
+                interests={form.interests}
+                onChange={(interests) => {
+                  change({ interests });
+                }}
+              />
+            </RevealContext>
+          </ScrollView>
         </View>
+        <Foot
+          onOut={out}
+          onSave={() => {
+            save(form);
+          }}
+          ready={canSave(form)}
+          working={working}
+        />
       </View>
     </KeyboardAvoidingView>
   );
@@ -147,11 +154,6 @@ const styles = StyleSheet.create({
   title: { ...text.title, color: color.ink },
   field: { gap: space[2] },
   count: { ...text.caption, alignSelf: 'flex-end', color: color.inkMuted },
-  foot: {
-    gap: space[2],
-    paddingTop: space[3],
-    paddingHorizontal: space[4],
-    backgroundColor: color.surface,
-    boxShadow: shadow.sheet,
-  },
+  // What is seen of the form, between the head and the foot or the keyboard.
+  frame: { flex: 1 },
 });
