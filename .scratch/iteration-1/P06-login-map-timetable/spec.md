@@ -47,7 +47,7 @@ Every piece of data is a mock inside the app, in the shape the server gives or w
 18. As an SNU student who is off campus, I want the map to show the whole campus without my Avatar, and the button for my position to say that I am off campus, so that I can still look around and know why the map did not move.
 19. As an SNU student, I want an explanation before the location permission prompt, so that I know why it is asked.
 20. As an SNU student who refused the location permission, I want the map to work without my Avatar, so that I can still look around.
-21. As an SNU student, I want my Friends, Global Events and Parties on the map, with more detail as I zoom in, so that the whole campus is not cluttered.
+21. As an SNU student, I want my Friends, Global Events and Quests on the map, with more detail as I zoom in, so that the whole campus is not cluttered.
 22. As an SNU student, I want to tap a marker and read its card, so that I can decide what to do.
 23. As an SNU student, I want a card's "길찾기" to draw the way there, so that I know how to get there.
 24. As an SNU student, I want the sources of the map data credited on the map, so that the project meets their licences.
@@ -197,12 +197,12 @@ Every piece of data is a mock inside the app, in the shape the server gives or w
   - The zoom in, zoom out and "내 위치로 이동" buttons.
   - A tap on a marker opens its card. "가까이 보기" zooms in on it. The card's X closes it.
   - "길찾기" on a card draws the route line from the User's position, moves the map to show it and says "…까지 길 안내".
-- What is on the map follows the frame. Avatars, which glide: the User's own, the Friends who can be seen, and a member of the User's Party. Markers: a Global Event and a Party. The frame's Private Event is left out.
+- What is on the map follows the frame. Avatars, which glide: the User's own, the Friends who can be seen, and a member of the User's Party. Markers: a Global Event and a Quest that the frame calls "파티". The frame's Private Event is left out.
 - Their detail follows the camera's zoom, as in the frames: dots when the whole campus is in view, pins closer, and pins with names closest. The screen switches the detail from the zoom the map reports.
 - A route to the User's next Quest is drawn when the screen opens, as in the frame, once the app has a position inside the campus rectangle; without one, none is drawn. Another "길찾기" replaces it, and leaving the screen drops it.
 - When the app has no position to start from, "길찾기" moves the map to the place and says "캠퍼스 밖에 있어요" off campus, or shows the explanation before the location prompt when the permission is missing.
 - Every other control shows one shared toast, "준비 중이에요", because it opens a panel, a sheet or another screen that this task does not build:
-  - the friend pill, the Quest list's full-screen button, a Party's row in the Quest list;
+  - the friend pill, the Quest list's full-screen button, the row of a Quest other than a Class Quest in the Quest list;
   - "오늘의 발자국", "활성 파티", the 편의기능 button, the AI input and its send button;
   - the bottom navigation's 파티, 올리기, 행사 and 내 정보;
   - on a card: "같이 갈 사람 찾기", "참여하기", "파티 만들기", "파티 열기".

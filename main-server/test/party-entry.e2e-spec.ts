@@ -188,6 +188,7 @@ describe('Entering a Party marked with a Quest without a Global Event', () => {
     const quest = await prisma.quest.create({
       data: {
         title: '저녁 약속',
+        leaderId: leader.id,
         holders: { create: { userId: leader.id } },
         subQuests: { create: { title: '저녁', endsAt: new Date(Date.now() + 60 * 60 * 1000) } },
       },

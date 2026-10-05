@@ -1,4 +1,4 @@
-import { GlobalEvent, GlobalEventState, Prisma, SubQuest } from '../../generated/prisma/client.js';
+import { GlobalEvent, GlobalEventState, JoinPolicy, Prisma, SubQuest } from '../../generated/prisma/client.js';
 
 // A Place from the list, with its id, or a point with the label the app showed. The attending Sub Quest's is the
 // Global Event's position and place text.
@@ -37,8 +37,25 @@ export interface QuestDto {
   id: string;
   title: string;
   globalEvent: { id: string; title: string } | null;
+  leader: HolderDto;
+  capacity: number;
+  joinPolicy: JoinPolicy;
+  // In the order they entered.
   holders: HolderDto[];
   subQuests: SubQuestDto[];
+}
+
+// A Quest in the list of recruiting Quests, read by a User who does not hold it.
+export interface RecruitingQuestDto {
+  id: string;
+  title: string;
+  globalEvent: { id: string; title: string } | null;
+  leader: HolderDto;
+  holderCount: number;
+  capacity: number;
+  joinPolicy: JoinPolicy;
+  // The first Sub Quest ahead.
+  nextSubQuest: Pick<SubQuestDto, 'id' | 'attending' | 'title' | 'startsAt' | 'endsAt' | 'place'>;
 }
 
 // Every Holder's progress, from which the reader's own is picked.
@@ -47,12 +64,12 @@ export const SUB_QUEST_INCLUDE = {
   progress: { select: { holder: { select: { userId: true } } } },
 } satisfies Prisma.SubQuestInclude;
 
+const HOLDER_SELECT = { id: true, name: true, department: true } satisfies Prisma.UserSelect;
+
 export const QUEST_INCLUDE = {
   globalEvent: true,
-  holders: {
-    include: { user: { select: { id: true, name: true, department: true } } },
-    orderBy: [{ user: { name: 'asc' } }, { userId: 'asc' }],
-  },
+  leader: { select: HOLDER_SELECT },
+  holders: { include: { user: { select: HOLDER_SELECT } }, orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }] },
   subQuests: { include: SUB_QUEST_INCLUDE, orderBy: [{ attending: 'desc' }, { createdAt: 'asc' }, { id: 'asc' }] },
 } satisfies Prisma.QuestInclude;
 
@@ -133,7 +150,31 @@ export function toQuestDto(quest: StoredQuest, userId: string, now: Date): Quest
     id: quest.id,
     title: quest.title,
     globalEvent: globalEvent === null ? null : { id: globalEvent.id, title: globalEvent.title },
+    leader: quest.leader,
+    capacity: quest.capacity,
+    joinPolicy: quest.joinPolicy,
     holders: quest.holders.map(({ user }) => user),
     subQuests: quest.subQuests.map((subQuest) => toSubQuestDto(subQuest, globalEvent, userId, now)),
   };
+}
+
+// Null for a Quest without a Sub Quest ahead, which is not in the list.
+export function toRecruitingQuestDto(quest: StoredQuest, now: Date): RecruitingQuestDto | null {
+  const { globalEvent } = quest;
+  for (const subQuest of quest.subQuests) {
+    const { cancelled, ...content } = contentOf(subQuest, globalEvent);
+    if (!passed({ cancelled, endsAt: content.endsAt }, now)) {
+      return {
+        id: quest.id,
+        title: quest.title,
+        globalEvent: globalEvent === null ? null : { id: globalEvent.id, title: globalEvent.title },
+        leader: quest.leader,
+        holderCount: quest.holders.length,
+        capacity: quest.capacity,
+        joinPolicy: quest.joinPolicy,
+        nextSubQuest: { id: subQuest.id, attending: subQuest.attending, ...content },
+      };
+    }
+  }
+  return null;
 }

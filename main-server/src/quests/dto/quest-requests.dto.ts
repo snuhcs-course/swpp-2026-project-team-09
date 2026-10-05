@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { JoinPolicy } from '../../generated/prisma/client.js';
 
 export const attendSchema = z.strictObject({ globalEventId: z.uuid() });
 
@@ -28,3 +29,13 @@ export const subQuestContentSchema = z
   });
 
 export type SubQuestContentDto = z.infer<typeof subQuestContentSchema>;
+
+// A Quest of the User's own, without a Global Event. Left out, the capacity is 4 and the Join Policy Closed.
+export const makeQuestSchema = z.strictObject({
+  title: z.string().trim().min(1).max(50),
+  subQuest: subQuestContentSchema,
+  capacity: z.int().min(1).max(8).optional(),
+  joinPolicy: z.enum(JoinPolicy).optional(),
+});
+
+export type MakeQuestDto = z.infer<typeof makeQuestSchema>;

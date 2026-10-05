@@ -38,6 +38,7 @@ model User {
   partyMember    PartyMember?
   ledParties     Party[]
   inviteLinks    InviteLink[]
+  ledQuests      Quest[]
 
   @@map("users")
 }
@@ -174,6 +175,12 @@ model Quest {
   // Never changes.
   globalEventId String?       @map("global_event_id") @db.Uuid
   globalEvent   GlobalEvent?  @relation(fields: [globalEventId], references: [id], onDelete: Restrict)
+  // One of the Holders (README.md: Quests).
+  leaderId      String        @map("leader_id") @db.Uuid
+  leader        User          @relation(fields: [leaderId], references: [id])
+  // From 1 to 8, which the migration checks.
+  capacity      Int           @default(4)
+  joinPolicy    JoinPolicy    @default(closed) @map("join_policy")
   createdAt     DateTime      @default(now()) @map("created_at")
   holders       QuestHolder[]
   subQuests     SubQuest[]
@@ -181,6 +188,18 @@ model Quest {
 
   @@index([globalEventId])
   @@map("quests")
+}
+
+// How Users enter a Quest.
+enum JoinPolicy {
+  // Whoever can see it enters at once.
+  open
+  // Whoever can see it asks, and the Leader accepts or declines.
+  approval
+  // Only by the Leader's invitation.
+  closed
+
+  @@map("join_policy")
 }
 
 // A User who holds a Quest. The row repeats the Quest's Global Event, so that a unique index keeps a User to one Quest
@@ -194,6 +213,9 @@ model QuestHolder {
   // The Quest's, written with the row.
   globalEventId String?            @map("global_event_id") @db.Uuid
   globalEvent   GlobalEvent?       @relation(fields: [globalEventId], references: [id], onDelete: Restrict)
+  // Read when the row is written, so that the order of the times is the order of entry. In microseconds, so that the
+  // Holders a Quest is created with keep the order they were given in.
+  joinedAt      DateTime           @default(dbgenerated("clock_timestamp()")) @map("joined_at") @db.Timestamp(6)
   progress      SubQuestProgress[]
 
   @@unique([questId, userId])

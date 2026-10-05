@@ -3,7 +3,8 @@ import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { Party, PartyJoinPolicy, Prisma } from '../generated/prisma/client.js';
 import { VisibilityService } from '../location-sharing/visibility.service.js';
-import { questNotFound, QuestsService } from '../quests/quests.service.js';
+import { QuestsService } from '../quests/quests.service.js';
+import { questNotFound } from '../quests/refusals.js';
 import { UsersService } from '../users/users.service.js';
 import { type CreatePartyDto } from './dto/party-requests.dto.js';
 import {
@@ -218,7 +219,7 @@ export class PartiesService {
     if (globalEventId !== null && !(await this.quests.freeForSharedQuest(userId, globalEventId, tx))) {
       return [];
     }
-    await this.quests.addHolder(party.questId, userId, tx);
+    await tx.questHolder.create({ data: { questId: party.questId, userId, globalEventId } });
     return [...holderIds, userId];
   }
 }

@@ -42,6 +42,44 @@ export function attend(app: INestApplication<Server>, user: TestUser, globalEven
   return withAccessToken(request(app.getHttpServer()).post('/quests'), user.accessToken).send({ globalEventId });
 }
 
+export function makeQuest(
+  app: INestApplication<Server>,
+  user: TestUser,
+  body: object,
+  key: string | null = randomUUID(),
+): request.Test {
+  const call = withAccessToken(request(app.getHttpServer()).post('/quests/own'), user.accessToken).send(body);
+  return key === null ? call : call.set('Idempotency-Key', key);
+}
+
+// Makes a Quest of the User's own with one Sub Quest a day from now, and `body` over that, and answers its id.
+export async function ownQuest(app: INestApplication<Server>, user: TestUser, body: object = {}): Promise<string> {
+  const startsAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const response = await makeQuest(app, user, {
+    title: '저녁 같이 먹어요',
+    subQuest: { title: '저녁', startsAt },
+    ...body,
+  });
+  if (response.status !== 201) {
+    throw new Error(`Making a Quest answered ${response.status}: ${JSON.stringify(response.body)}`);
+  }
+  return z.object({ id: z.string() }).parse(response.body).id;
+}
+
+export function getRecruitingQuests(
+  app: INestApplication<Server>,
+  user: TestUser,
+  globalEventId?: string,
+): request.Test {
+  return withAccessToken(request(app.getHttpServer()).get('/quests/recruiting'), user.accessToken).query(
+    globalEventId === undefined ? {} : { globalEventId },
+  );
+}
+
+export function joinQuest(app: INestApplication<Server>, user: TestUser, questId: string): request.Test {
+  return withAccessToken(request(app.getHttpServer()).post(`/quests/${questId}/join`), user.accessToken);
+}
+
 export function getQuests(app: INestApplication<Server>, user: TestUser): request.Test {
   return withAccessToken(request(app.getHttpServer()).get('/quests'), user.accessToken);
 }
