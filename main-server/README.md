@@ -151,8 +151,8 @@ A User reads and edits their own profile. The routes name no User, so they never
 ## Friends
 
 Every User has a Friend ID: 8 characters from capital letters and digits, without `0`, `O`, `1`, `I` and `L`, such as
-`7KX2M9QD`. The server makes it at random when it creates the User (`src/users/friend-id.ts`), the database keeps it
-unique, and it never changes. The User gives it to someone in any way they like, and that person sends a Friend
+`7KX2M9QD`. The server makes it at random when it creates the User (`src/users/friend-id.ts`) and draws another when
+one is already held, the database keeps it unique, and it never changes. The User gives it to someone in any way they like, and that person sends a Friend
 Request to it. The routes, all a User's:
 
 - `GET /friend-ids/:friendId` answers the owner's `{ "name": ..., "department": ... }`.

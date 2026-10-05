@@ -41,7 +41,8 @@ The other User's app learns of each step without asking. This is the first signa
   `session-ended` and `shuttle-vehicles-updated` keep their own events.
 - **Rooms**: each connection joins `session:<sessionId>` and `user:<userId>`.
 - **Friend ID**: `users.friend_id`, unique, made by `newFriendId()` in `src/users/friend-id.ts` at creation; in the
-  profile (and so the lobby) as `friendId`. Looked up in capitals, so small letters are found too.
+  profile (and so the lobby) as `friendId`. When the database refuses a new User's Friend ID as already held (`P2002`
+  on `users_friend_id_key`), `UsersService.findOrCreate` draws another, up to `FRIEND_ID_ATTEMPTS` (3) tries in all. Looked up in capitals, so small letters are found too.
 - **Table**: `friendships` holds one row for two Users: a waiting Friend Request while `accepted_at` is null, a
   friendship once set. `user_a_id < user_b_id` (CHECK), `sender_id` one of the two (CHECK), unique
   `(user_a_id, user_b_id)`. Every change between two Users locks both `users` rows in id order first
