@@ -69,7 +69,8 @@ Last updated: 2026-10-05
 - [x] Avatars and markers with their detail by zoom: Friends, a member of the User's Party, a Global Event, a Party, a Shared Quest
 - [x] A card for each, "가까이 보기", "길찾기" with the route line, the card's X
 - [x] The route to the User's next Quest when the screen opens
-- [ ] The native map draws the new looks, the route's style and a fit with a padding for each edge (ticket 07)
+- [x] On a native map, in TypeScript: the fit zoom, a fit with a padding for each edge and a closest zoom, the route's colour and width, a passive press dropped
+- [ ] The Android module draws the route's dashes, takes no press on a passive marker, and is checked on a phone with the new looks (ticket 07)
 - [ ] The friend list and the Quest list, collapsing; a Friend's row; a Class Quest's row
 - [ ] "오늘의 발자국", "활성 파티", the 편의기능 button, the AI input, the bottom navigation, in place
 - [ ] The "준비 중이에요" toast on every control of section 4
@@ -350,8 +351,9 @@ It is `usePosition` of `mobile/src/position`, on `expo-location`, read inside a 
       image: globalEventPin, text: 'AI 커리어' },
   ]}
   avatars={[
+    // passive: it takes no press, and a press on it reaches what is under it; it is still read by its name.
     { id: 'me', name: '내 위치', position: { latitude: 37.45905, longitude: 126.9512 }, image: myAvatar, glideMs: 5000,
-      order: 1 },
+      order: 1, passive: true },
     { id: 'friend:f1', name: '김민준 · 공강 · 중앙도서관 근처 · 15:00까지 비어 있어요',
       position: { latitude: 37.45952, longitude: 126.95209 }, image: friendAvatar, text: '민준', glideMs: 5000 },
   ]}
@@ -365,7 +367,8 @@ It is `usePosition` of `mobile/src/position`, on `expo-location`, read inside a 
 
 map.current.moveCamera({ centre, zoom, animated: true }); // each of the three may be left out
 map.current.fitTo(points, { padding: 48, animated: true }); // the closest view that shows all the points
-map.current.fitTo(points, { padding: { top: 288, right: 78, bottom: 142, left: 24 } }); // clear room for each edge
+map.current.fitTo(points, { padding: { top: 288, right: 108, bottom: 166, left: 46 } }); // clear room for each edge
+map.current.fitTo(points, { padding: 48, maxZoom: 15.8 }); // and no closer than a zoom
 
 // The images, one for each look, in the order asked. An image names its look at once and gains its picture when it
 // is made; a native side draws a marker once the picture is there and reads it again when its uri changes.
@@ -375,7 +378,8 @@ const [globalEventPin, myAvatar, friendAvatar] = useMarkerImages([
   { kind: 'me' }, // with `small: true`, at three quarters of its size, while the whole campus is in view
   // A person: the frame's teardrop in a tone ('free', 'class', 'moving', 'off', or 'member' for a member of the
   // User's Party who is no Friend), with `small: true` while the whole campus is in view, and with `selected`.
-  { kind: 'person', tone: 'free', name: '김민준', photo: null },
+  // `id` is the person's own and names the look; `name` and `photo` are what is drawn.
+  { kind: 'person', id: 'f1', tone: 'free', name: '김민준', photo: null },
 ]);
 
 interface MarkerImage {
@@ -394,10 +398,13 @@ The rules, for every implementation:
 - The camera stays inside `bounds`: the visible area never leaves the rectangle. The lowest zoom allowed is the larger of `minZoom` and the zoom at which the view just fits inside the rectangle, which depends on the view's size; the centre is kept far enough from the edges; the highest zoom is `maxZoom`. The map opens on the middle of the rectangle at the lowest zoom allowed.
 - `moveCamera` and `fitTo` are first brought inside these rules. `fitTo` moves to the closest zoom at which all the points are inside what the padding leaves of the view, with their middle in the middle of that. The padding is one number for all four edges, or `{ top, right, bottom, left }`.
 - `routeStyle` is the route line's look: `color`, `width` in points on the screen, and `dash`, the length of a dash and of the gap after it, measured as SVG's `stroke-dasharray`. The ends and the dashes are round, and the width and the dashes are the same at every zoom. Without it the line is the map's own.
-- A look's name is the key of its picture, and two looks that draw the same picture have the same name: `me`, `me:small`, `person:<small|full>:<tone>:<name>:<photo>`, `<kind>:dot`, `<kind>:pin`, `<kind>:pin:<count>`, each of the last four also with `:selected`. A person's marker and a pin stand on their tip; a dot and the User's own Avatar sit on their middle.
+- A look's name is the key of its picture, and two looks that draw the same picture have the same name: `me`, `me:small`, `person:<small|full>:<tone>:<id>` and the same with `:photo` for a person who has one, `<kind>:dot`, `<kind>:pin`, `<kind>:pin:<count>`, each of the last four also with `:selected`. A person's marker and a pin stand on their tip; a dot and the User's own Avatar sit on their middle.
 - `onCameraIdle` is sent once when the map is ready and each time the camera comes to rest somewhere else: after a User's pan or zoom ends, and after `moveCamera` or `fitTo`. A call that changes nothing sends nothing.
 - `onFitZoom` gives the fit zoom, which is the lowest zoom allowed: once when the map is ready, before the first `onCameraIdle`, and again whenever the view's size changes it. The main screen's levels are offsets from it, `ZOOM_OFFSET` in `mobile/src/map/campus.ts`: `pins` +0.68, `names` +1.26, `close` +1.38, `step` 0.585.
 - A marker that is new in its list is added, one whose `id` stays is changed, one that is gone is removed.
+- A `passive` marker or Avatar takes no press: `onPress` is never sent for it, and a press on it goes to what is drawn under it. It is drawn, and a screen reader reads its `name`.
+- `fitTo` with `maxZoom` comes no closer than that zoom: points that are near each other are shown from there.
+- A person's look is named by the person's id and by whether there is a photo, never by the photo's address, which changes with every answer.
 - An Avatar glides. The map keeps each Avatar's last target and starts a glide only when `position` differs from it; the lists are new on every render. An Avatar that first appears is placed without a glide. A new position is reached over `glideMs`; one that comes during a glide starts from where the Avatar is shown. A new `image` or `text` alone does not restart a glide. A `glideMs` of 0 places it at once.
 - Every Avatar is above every marker, and the route is under both. Among markers, and among Avatars, the higher `order` is on top, and of two that are equal the later in the list. The screen ranks the User's own Avatar and a selected marker.
 
@@ -439,7 +446,7 @@ interface CardView {
   // At the card's head and as the marker: a person's Avatar, or a place's kind in the design system.
   // `presence` is null for a member of the User's Party who is no Friend.
   mark:
-    | { type: 'person'; name: string; photo: string | null; presence: 'free' | 'class' | 'moving' | 'off' | null }
+    | { type: 'person'; id: string; name: string; photo: string | null; presence: 'free' | 'class' | 'moving' | 'off' | null }
     | { type: 'place'; place: 'official' | 'party' | 'quest' };
   marker: {
     name: string; // what a screen reader says: "공식 행사 · AI 커리어 설명회", "김민준 · 공강 · 중앙도서관 근처 · …"

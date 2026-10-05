@@ -32,6 +32,11 @@ export function koreaDay(instant: string, now: Date): string {
   return `${korea.getUTCMonth() + 1}월 ${korea.getUTCDate()}일 (${WEEKDAYS[korea.getUTCDay()]})`;
 }
 
+// Whether two instants are on the same day of Korea's calendar.
+export function sameKoreaDay(one: Date, other: Date): boolean {
+  return Math.floor(inKorea(one).getTime() / DAY_MS) === Math.floor(inKorea(other).getTime() / DAY_MS);
+}
+
 // 2026
 export function koreaYear(instant: Date): number {
   return inKorea(instant).getUTCFullYear();

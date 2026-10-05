@@ -38,10 +38,10 @@ describe('the map of the main screen, with the whole campus in view', () => {
   it('shows the Friends who can be seen and the member of the Party as small teardrops in their colours', async () => {
     await openMain();
 
-    expect(lookOf(FRIEND)).toBe('person:small:free:김민준:');
-    expect(lookOf('정하은 · 수업 중 · 301동 · 13:50에 끝나요')).toBe('person:small:class:정하은:');
-    expect(lookOf('임채원 · 이동 중 · 교내 순환 셔틀 · 302동 방향')).toBe('person:small:moving:임채원:');
-    expect(lookOf(MEMBER)).toBe('person:small:member:오현우:');
+    expect(lookOf(FRIEND)).toBe('person:small:free:f1');
+    expect(lookOf('정하은 · 수업 중 · 301동 · 13:50에 끝나요')).toBe('person:small:class:f5');
+    expect(lookOf('임채원 · 이동 중 · 교내 순환 셔틀 · 302동 방향')).toBe('person:small:moving:f10');
+    expect(lookOf(MEMBER)).toBe('person:small:member:pm1');
     expect(screen.getAllByTestId(/^person:small:(free|class|moving):/u)).toHaveLength(10);
   });
 
@@ -69,8 +69,8 @@ describe('the map of the main screen, closer', () => {
 
     await zoomIn(user, 2);
 
-    expect(lookOf(FRIEND)).toBe('person:full:free:김민준:');
-    expect(lookOf(MEMBER)).toBe('person:full:member:오현우:');
+    expect(lookOf(FRIEND)).toBe('person:full:free:f1');
+    expect(lookOf(MEMBER)).toBe('person:full:member:pm1');
     // One Party goes to the Global Event: its pin has no count.
     expect(lookOf(EVENT)).toBe('official:pin');
     expect(lookOf(PARTY)).toBe('party:pin:4');
@@ -96,7 +96,7 @@ describe('the map of the main screen, closest', () => {
     await press(user, FRIEND);
     await press(user, '가까이 보기');
 
-    expect(lookOf(FRIEND)).toBe('person:full:free:김민준::selected');
+    expect(lookOf(FRIEND)).toBe('person:full:free:f1:selected');
     expect(lookOf(DINNER)).toBe('party:pin');
     expect(wordsUnder(FRIEND, '민준')).toBeVisible();
     expect(wordsUnder(DINNER, '저녁 약속')).toBeVisible();
@@ -128,10 +128,10 @@ describe('a selected marker', () => {
     const user = await openMain();
 
     await press(user, FRIEND);
-    expect(lookOf(FRIEND)).toBe('person:small:free:김민준::selected');
+    expect(lookOf(FRIEND)).toBe('person:small:free:f1:selected');
 
     await press(user, EVENT);
-    expect(lookOf(FRIEND)).toBe('person:small:free:김민준:');
+    expect(lookOf(FRIEND)).toBe('person:small:free:f1');
     expect(lookOf(EVENT)).toBe('official:dot:selected');
   });
 
@@ -139,7 +139,7 @@ describe('a selected marker', () => {
     const user = await openMain();
     await press(user, OTHER_FRIEND);
 
-    const drawn = screen.getAllByRole('button').map((button) => String(button.props.accessibilityLabel));
+    const drawn = screen.getAllByTestId(/^(person|me)/u).map((thing) => String(thing.props.accessibilityLabel));
 
     // The plain ground draws the later one above: the User's own Avatar is above every other, but the selected one.
     expect(drawn.indexOf(OTHER_FRIEND)).toBeGreaterThan(drawn.indexOf(ME));

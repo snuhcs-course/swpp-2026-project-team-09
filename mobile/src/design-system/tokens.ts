@@ -61,6 +61,8 @@ export const shadow = {
   // Under a person's marker on the map, as the `Main` frame draws it: 3 down. The marker's fill is turned by 45°
   // and its shadow with it, so the offset is given against the turn.
   markerTurned: '-2px 2px 4px rgba(14, 19, 48, 0.35)',
+  // Under the name below a marker on the map, as the `Main` frame draws it.
+  mapName: '0 1px 3px rgba(14, 19, 48, 0.25)',
   // Under a place's dot on the map.
   dot: '0 1px 4px rgba(14, 19, 48, 0.35)',
   // Under the round action in the middle of the main screen's bottom navigation, in the key colour, as the `Main`

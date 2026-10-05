@@ -82,3 +82,51 @@ What ticket 07 must know:
 - `MapProps` gained `routeStyle?: { color, width, dash?: [length, gap] }`: the line's colour, its width in points on the screen and its dashes, measured as SVG's `stroke-dasharray`, with round ends, the same at every zoom. Without it the line is the map's own. `native-map.tsx` passes it on with the other properties.
 - `fitTo`'s `padding` is one number or `{ top, right, bottom, left }`. With unequal sides the points' middle comes to the middle of what is left of the view.
 - Friends and the member of the Party are Avatars with `glideMs` 5000. Their positions do not move in the mock.
+
+### After the review, the screenshots and the Android module's merge (2026-10-06)
+
+The main line was merged in, with the Android map module (ticket 07) and ticket 08. The picture's clear room is one exported constant, `IMAGE_MARGIN` of `mobile/src/map/marker-images.tsx`, at 12, which a selected pin's ring needs; the main line had 8. The module reads the room from what `native-map.tsx` hands it (`looks.imageMargin`) and holds no number of its own: it draws a marker's text that much higher, and the `anchor` of a look that stands on its tip is that much above the picture's foot, so a marker's point and its text stay where they were.
+
+What `mobile/src/map/native-map.tsx` does now, in TypeScript, for what the interface gained after the module was written:
+
+- The fit zoom. The module sends none. It is worked out from the view's size as it is laid out, `bounds` and `minZoom`, with `lowestZoom` of `projection.ts`, the rule the plain ground uses and the module's Kotlin repeats. `onFitZoom` is told before the first `onCameraIdle`, which is kept back until then, and again when the size changes it.
+- A fit. Once the view's size is known, `fitTo` is worked out with `fit` of `projection.ts` and sent as the module's `moveCamera`: a padding for each edge and the closest zoom hold on a phone without a change of the module. Before the size is known, the module's own `fitTo` is asked with the largest side of the padding, so that no end is under a control.
+- The route's colour and width go to the module with the looks it is handed (`looks.routeColor`, `looks.routeWidth`), from `routeStyle`. The dashes do not: the module draws a solid line.
+- A passive marker is handed over with `passive: true`, which the module does not read, and its press is dropped.
+- Nothing in `native-map.tsx` or its tests names the look `friend`: the module reads a look's name only as the key of its picture.
+
+What changed after the review:
+
+- A selection whose card leaves the map is dropped for good. A Friend who turns their location off and on again comes back without an open card.
+- The User's next Quest is a Quest of today in Korea's time that has not ended. A class in progress is the next one until it ends; a Quest without an end, until it starts.
+- A "길찾기" without a position draws nothing later either: neither that way nor the opening route to another place comes when the position does. Leaving the screen also drops the opening route that was still to come, and coming back draws nothing by itself.
+- A person's look is named by the tone, the size, `selected`, the person's id and whether there is a photo: `person:<small|full>:<tone>:<id>`, with `:photo` and `:selected`. The photo's address, which is new with every answer, is no part of it. `CardMark` of a person and the look `person` gained `id`. `marker-looks.tsx` says what a release of unused pictures has to cover.
+- The interface gained `passive` for a marker or an Avatar: it takes no press, and a press on it reaches what is under it. The User's own Avatar is passive, as in the frame. The plain ground gives it no pointer events and draws it as a picture read by its name, not as a button.
+- The interface's `fitTo` gained `maxZoom`, the closest the camera may come.
+- The main screen's `fitTo` goes through the queue of the other camera moves: it is kept until the map is ready, and the zoom buttons count from the closest zoom it may end at until the camera's rest tells where it ended.
+- A short title is counted and cut in whole characters: an emoji of several code points is one. A given name is the name without its first syllable only for a Korean name of three syllables; any other name is written whole.
+
+What changed after the screenshots of the web target:
+
+- The teardrop has its tip on the web: its four corners are named one by one. The shorthand `borderRadius` had rounded the tip there.
+- The name under a marker on the plain ground is the frame's: 11/16 in the bold weight, padding 1 and 7, the shadow `0 1px 3px rgba(14, 19, 48, 0.25)` (`shadow.mapName`), 3 under the marker's foot. On a native map it stays the SDK's text.
+- "길찾기" goes to the two ends as the frame does: the closest zoom at which both fit inside the padded view, and never closer than the "pins" level. `ROUTE_PADDING` leaves room for a pin's name at either end: 288 from the top, 166 from the bottom, 46 from the left and 108 from the right.
+- While a card is open a toast sits 8 above the card, not over its buttons. The card tells its height, and the navigation tells the toast.
+
+Left as they are: a card covers a selected marker that stands low on the screen while the whole campus is in view, as in the frame, and the names of markers that are close to each other overlap at the "names" level.
+
+For the Android module, what it has to add; none of it is needed for what is listed above to work:
+
+- The route's dashes and round ends from `routeStyle`: `dash` as `[length, gap]` in points on the screen, the same at every zoom. The colour and the width reach it already as `looks.routeColor` and `looks.routeWidth`; it draws a route when the points change, so a change of the looks alone does not redraw a line.
+- `fitTo` with a padding for each edge, `{ top, right, bottom, left }`, and with `maxZoom`, the closest zoom. Its function takes one number today. `native-map.tsx` works the fit out itself once the view's size is known; a module that takes both can be given every fit again.
+- A marker or an Avatar that takes no press: `passive` of a thing. Its label must not be clickable, so that a press reaches the label under it. Today every label takes the press, and `native-map.tsx` only drops the event: a Friend's marker under the User's own Avatar cannot be pressed on a phone.
+- It need not send the fit zoom: `native-map.tsx` works it out. If the module's lowest zoom ever differs from `lowestZoom` of `projection.ts`, the levels of detail are off by that much, and the module should then send its own.
+
+Not checked: nothing ran on a phone or in a native build, and the Kotlin was not built. In particular:
+
+- the fit zoom worked out in TypeScript against Kakao's real camera: whether the zoom the module reports at the whole campus equals it, to within the 0.01 the module counts as the same;
+- the levels of detail on the real map, which were "overview" for ever before this, since no fit zoom came;
+- a fit sent as `moveCamera`, and the route's colour and width from `routeStyle`;
+- that the module takes a thing with the field `passive`, which its record does not name, and that a passive press is dropped.
+
+The screenshots of the web target were not taken again after these changes.

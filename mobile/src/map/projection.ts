@@ -1,5 +1,5 @@
 import type { LatLng } from '@/api/types';
-import type { FitPadding, MapBounds, MapCamera } from './types';
+import type { FitOptions, MapBounds, MapCamera } from './types';
 
 // Web Mercator, and the camera's rules of `types.ts` worked out with it. The plain ground uses these; a native side
 // follows the same rules with its SDK's own means.
@@ -89,12 +89,18 @@ export function settle(camera: MapCamera, rules: CameraRules): MapCamera {
   };
 }
 
-// The camera that shows all the points with clear room around them, inside the rules. Null without points. The
-// points' middle comes to the middle of what the padding leaves of the view.
-export function fit(points: readonly LatLng[], padding: number | FitPadding, rules: CameraRules): MapCamera | null {
+// The camera that shows all the points with clear room around them, inside the rules and no closer than the
+// options' `maxZoom`. Null without points. The points' middle comes to the middle of what the padding leaves of the
+// view.
+export function fit(
+  points: readonly LatLng[],
+  options: Pick<FitOptions, 'padding' | 'maxZoom'>,
+  rules: CameraRules,
+): MapCamera | null {
   if (points.length === 0) {
     return null;
   }
+  const { padding = 0, maxZoom = rules.maxZoom } = options;
   const clear =
     typeof padding === 'number' ? { top: padding, right: padding, bottom: padding, left: padding } : padding;
   const projected = points.map((point) => project(point, 0));
@@ -107,7 +113,7 @@ export function fit(points: readonly LatLng[], padding: number | FitPadding, rul
   );
   // The zoom the camera will rest at decides how far the unequal padding moves the centre.
   const low = lowestZoom(rules);
-  const zoom = between(fits, low, Math.max(low, rules.maxZoom));
+  const zoom = between(fits, low, Math.max(low, Math.min(maxZoom, rules.maxZoom)));
   const scale = 2 ** zoom;
   const centre = {
     x: ((left + right) / 2) * scale + (clear.right - clear.left) / 2,

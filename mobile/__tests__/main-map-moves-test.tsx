@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native';
 import type { LatLng } from '@/api/types';
-import { type CameraMove, CAMPUS_BOUNDS, centreOf, ZOOM_OFFSET } from '@/map';
+import { type CameraMove, CAMPUS_BOUNDS, centreOf, type FitOptions, ZOOM_OFFSET } from '@/map';
 import { type MainMap, useMainMap } from '@/screens/main/use-main-map';
 
 const FIT = 15;
@@ -11,6 +11,7 @@ interface Opened {
   map: () => MainMap;
   // What the map was asked, in order.
   moves: CameraMove[];
+  fits: { points: readonly LatLng[]; options?: FitOptions }[];
   // The map opens: it tells its fit zoom and then where its camera rests.
   ready: () => Promise<void>;
   rest: (zoom: number) => Promise<void>;
@@ -19,14 +20,15 @@ interface Opened {
 // The main screen's map with a native map's handle that only records what it is asked.
 async function open(): Promise<Opened> {
   const moves: CameraMove[] = [];
+  const fits: Opened['fits'] = [];
   const { result } = await renderHook(() => useMainMap());
   const map = (): MainMap => result.current;
   map().ref.current = {
     moveCamera: (move): void => {
       moves.push(move);
     },
-    fitTo: (): void => {
-      // Not asked by these moves.
+    fitTo: (points, options): void => {
+      fits.push({ points, options });
     },
   };
   const rest = async (zoom: number): Promise<void> => {
@@ -40,7 +42,7 @@ async function open(): Promise<Opened> {
     });
     await rest(FIT);
   };
-  return { map, moves, ready, rest };
+  return { map, moves, fits, ready, rest };
 }
 
 describe("a move of the main screen's camera before the map is ready", () => {
@@ -105,5 +107,35 @@ describe("a move of the main screen's camera that changes nothing", () => {
     await rest(FIT + 1);
     map().zoomBy(-1);
     expect(moves.at(-1)?.zoom).toBeCloseTo(FIT + 1 - ZOOM_OFFSET.step, 6);
+  });
+});
+
+describe("a fit of the main screen's camera", () => {
+  const PADDING = { top: 10, right: 20, bottom: 30, left: 40 };
+
+  it('is kept like a move until the map is ready, and comes no closer than the "pins" level', async () => {
+    const { map, fits, ready } = await open();
+
+    map().fitTo([CENTRE, LIBRARY], PADDING);
+    expect(fits).toEqual([]);
+
+    await ready();
+    expect(fits).toEqual([
+      { points: [CENTRE, LIBRARY], options: { padding: PADDING, maxZoom: FIT + ZOOM_OFFSET.pins, animated: true } },
+    ]);
+  });
+
+  it('is what the zoom buttons count from, before the camera rests', async () => {
+    const { map, moves, ready, rest } = await open();
+    await ready();
+
+    map().fitTo([CENTRE, LIBRARY], PADDING);
+    map().zoomBy(1);
+    expect(moves.map(({ zoom }) => zoom)).toEqual([FIT + ZOOM_OFFSET.pins + ZOOM_OFFSET.step]);
+
+    // A fit that ended further out is counted from where it rests.
+    await rest(FIT + 0.2);
+    map().zoomBy(1);
+    expect(moves.at(-1)?.zoom).toBeCloseTo(FIT + 0.2 + ZOOM_OFFSET.step, 6);
   });
 });

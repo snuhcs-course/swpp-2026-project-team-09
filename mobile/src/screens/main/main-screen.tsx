@@ -1,4 +1,4 @@
-import type { ReactElement, ReactNode } from 'react';
+import { type ReactElement, type ReactNode, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, useNotReadyToast } from '@/design-system';
@@ -10,7 +10,7 @@ import { Card } from './card';
 import { LocationExplanation } from './location-explanation';
 import { MainNav } from './main-nav';
 import { type MainMap, useMainMap } from './use-main-map';
-import { useMe } from './use-me';
+import { type Me, useMe } from './use-me';
 import { type MainRoute, ROUTE_STYLE, useRoute } from './use-route';
 import { useSelection } from './use-selection';
 import { useThings } from './use-things';
@@ -23,6 +23,7 @@ interface SelectedCardProps {
   map: MainMap;
   route: MainRoute;
   onClose: () => void;
+  onHeight: (height: number) => void;
 }
 
 // What floats over the map, between the phone's status bar and the navigation: each child places itself there, by
@@ -35,13 +36,14 @@ function OverMap({ children }: { children: ReactNode }): ReactElement {
 // The card of the selected thing, with what its buttons do. "가까이 보기" is offered below the "names" level of detail
 // and brings the camera to the "close" level, keeping the card. "길찾기" closes the card once the route is asked for.
 // Every other button belongs to another task and says that it is not ready.
-function SelectedCard({ card, map, route, onClose }: SelectedCardProps): ReactElement {
+function SelectedCard({ card, map, route, onClose, onHeight }: SelectedCardProps): ReactElement {
   const showNotReady = useNotReadyToast();
   return (
     <Card
       canLookCloser={map.detail !== 'names'}
       card={card}
       onClose={onClose}
+      onHeight={onHeight}
       onLookCloser={() => {
         map.goTo(card.position, 'close');
       }}
@@ -51,6 +53,20 @@ function SelectedCard({ card, map, route, onClose }: SelectedCardProps): ReactEl
         } else if (route.routeTo(card)) {
           onClose();
         }
+      }}
+    />
+  );
+}
+
+function MainZoomControl({ map, me }: { map: MainMap; me: Me }): ReactElement {
+  return (
+    <ZoomControl
+      onMyPosition={me.goToMe}
+      onZoomIn={() => {
+        map.zoomBy(1);
+      }}
+      onZoomOut={() => {
+        map.zoomBy(-1);
       }}
     />
   );
@@ -80,6 +96,8 @@ function MainParts(): ReactElement {
   const selection = useSelection(cards);
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
   const route = useRoute(map, me);
+  // An open card's height, for the toast above it. A card that opens counts from the last one's until it is laid out.
+  const [cardHeight, setCardHeight] = useState(0);
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
@@ -98,21 +116,19 @@ function MainParts(): ReactElement {
         />
         <OverMap>
           {selection.selected === null ? (
-            <ZoomControl
-              onMyPosition={me.goToMe}
-              onZoomIn={() => {
-                map.zoomBy(1);
-              }}
-              onZoomOut={() => {
-                map.zoomBy(-1);
-              }}
-            />
+            <MainZoomControl map={map} me={me} />
           ) : (
-            <SelectedCard card={selection.selected} map={map} onClose={selection.close} route={route} />
+            <SelectedCard
+              card={selection.selected}
+              map={map}
+              onClose={selection.close}
+              onHeight={setCardHeight}
+              route={route}
+            />
           )}
         </OverMap>
       </View>
-      <MainNav />
+      <MainNav cardHeight={selection.open ? cardHeight : null} />
       <LocationExplanation blocked={me.blocked} onAllow={me.allow} onLater={me.later} visible={me.explaining} />
     </View>
   );

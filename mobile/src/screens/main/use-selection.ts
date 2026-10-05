@@ -4,7 +4,8 @@ import type { CardView } from '@/features/map/adapter';
 
 // What is selected on the main screen's map: the thing whose card is open.
 export interface Selection {
-  // The open card, or null. A card that is no longer among the map's cards is closed.
+  // The open card, or null. A card that is no longer among the map's cards is closed for good: it does not open
+  // again when its thing comes back, such as a Friend who turned their location off and on.
   selected: CardView | null;
   // Whether a card is open: the parts of the screen that a card hides ask this.
   open: boolean;
@@ -19,6 +20,10 @@ export interface Selection {
 export function useSelection(cards: readonly CardView[]): Selection {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = cards.find(({ id }) => id === selectedId) ?? null;
+  // The selected thing left the map: the selection is dropped, during this render, so that its return opens nothing.
+  if (selectedId !== null && selected === null) {
+    setSelectedId(null);
+  }
   const open = selected !== null;
   const select = useCallback(
     (id: string) => {

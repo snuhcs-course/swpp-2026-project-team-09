@@ -186,7 +186,7 @@ describe('the cards of people and Parties', () => {
       primary: { label: '길찾기', action: 'route' },
     });
     expect(cards.find(({ id }) => id === 'friend:f1')).toMatchObject({
-      mark: { type: 'person', name: '김민준', photo: null, presence: 'free' },
+      mark: { type: 'person', id: 'f1', name: '김민준', photo: null, presence: 'free' },
       marker: { name: '김민준 · 공강 · 중앙도서관 근처 · 15:00까지 비어 있어요', short: '민준', count: 0 },
       subLabel: '컴퓨터공학부',
       title: '김민준',
@@ -197,7 +197,7 @@ describe('the cards of people and Parties', () => {
       primary: { label: '파티 만들기', action: 'not-ready' },
     });
     expect(cards.find(({ id }) => id === 'party-member:pm1')).toMatchObject({
-      mark: { type: 'person', name: '오현우', photo: null, presence: null },
+      mark: { type: 'person', id: 'pm1', name: '오현우', photo: null, presence: null },
       marker: { name: '오현우 · 활성 파티 멤버 · 위치 공유 중', short: '현우', count: 0 },
       subLabel: '산업공학과 · 친구 아님',
       title: '오현우',

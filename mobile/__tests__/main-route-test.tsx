@@ -100,8 +100,9 @@ describe('"길찾기"', () => {
     expect(findWalkingRoute).toHaveBeenLastCalledWith(ON_CAMPUS, DINNER_PLACE);
     await pass(500);
     expect(screen.getAllByLabelText(ROUTE)).toHaveLength(1);
-    // The two ends are a few steps apart: the map came close enough to write the names.
-    expect(wordsUnder(DINNER, '저녁 약속')).toBeVisible();
+    // The two ends are a few steps apart: the map came to the "pins" level, as the frame does, and no closer.
+    expect(lookOf(DINNER)).toBe('party:pin');
+    expect(wordsUnder(DINNER, '저녁 약속')).toBeNull();
     expect(screen.getByRole('button', { name: '확대' })).toBeVisible();
     await pass(2400);
     expect(screen.queryByText(GUIDING)).toBeNull();
@@ -153,7 +154,7 @@ describe('"길찾기" without a position to start from', () => {
     expect(screen.getByText('캠퍼스 밖에 있어요')).toBeVisible();
     expect(findWalkingRoute).not.toHaveBeenCalled();
     // Closer than the whole campus, and the card is still there to try again.
-    expect(lookOf(FRIEND)).toBe('person:full:free:김민준:');
+    expect(lookOf(FRIEND)).toBe('person:full:free:f1');
     expect(screen.getByRole('header', { name: '저녁 약속' })).toBeVisible();
   });
 
@@ -167,11 +168,11 @@ describe('"길찾기" without a position to start from', () => {
 
     expect(screen.getByRole('header', { name: EXPLANATION })).toBeVisible();
     expect(findWalkingRoute).not.toHaveBeenCalled();
-    expect(lookOf(FRIEND)).toBe('person:small:free:김민준:');
+    expect(lookOf(FRIEND)).toBe('person:small:free:f1');
   });
 
   it('says that the position is being looked for when the phone has told none yet', async () => {
-    givePhone({ permission: 'granted' });
+    const phone = givePhone({ permission: 'granted' });
     const user = await openMain();
     await press(user, DINNER);
 
@@ -179,6 +180,12 @@ describe('"길찾기" without a position to start from', () => {
 
     expect(screen.getByText('위치를 찾는 중이에요')).toBeVisible();
     expect(findWalkingRoute).not.toHaveBeenCalled();
+
+    // The position comes: neither the way that was asked nor the opening route to another place is drawn.
+    await phone.moveTo(ON_CAMPUS);
+    await pass(500);
+    expect(findWalkingRoute).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText(ROUTE)).toBeNull();
   });
 });
 
@@ -200,5 +207,29 @@ describe('leaving the main screen', () => {
 
     expect(screen.queryByLabelText(ROUTE)).toBeNull();
     expect(findWalkingRoute).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('leaving the main screen before the opening route is drawn', () => {
+  it('drops it: a position that comes later, away or back on the screen, draws none', async () => {
+    const phone = givePhone({ permission: 'granted' });
+    await openMain();
+    await pass(500);
+
+    await act(() => {
+      router.push('/legal/terms');
+    });
+    await pass(500);
+    await phone.moveTo(ON_CAMPUS);
+    await pass(500);
+    await act(() => {
+      router.back();
+    });
+    await pass(500);
+    await phone.moveTo(NEAR_LIBRARY);
+    await pass(500);
+
+    expect(findWalkingRoute).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText(ROUTE)).toBeNull();
   });
 });

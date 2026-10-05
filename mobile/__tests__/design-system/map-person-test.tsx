@@ -28,6 +28,21 @@ describe('MapPerson', () => {
     expect(sizeOf('person').height).toBeCloseTo(36 * 1.207, 1);
   });
 
+  it("has the frame's tip: three round corners, and the one that the turn brings to the bottom is square", async () => {
+    await render(<MapPerson name="김민준" testID="person" tone="free" />);
+
+    const drop = screen.getByTestId('person:drop');
+    expect(drop).toHaveStyle({
+      borderTopLeftRadius: 18,
+      borderTopRightRadius: 18,
+      borderBottomRightRadius: 18,
+      borderBottomLeftRadius: 0,
+      transform: [{ rotate: '-45deg' }],
+    });
+    // The shorthand would round the tip on the web, whatever the corner says.
+    expect(drop).not.toHaveStyle({ borderRadius: 18 });
+  });
+
   it('is 1.18 times as large when it is selected', async () => {
     await render(<MapPerson name="김민준" selected testID="person" tone="class" />);
 

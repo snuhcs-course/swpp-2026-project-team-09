@@ -44,7 +44,7 @@ describe('an Avatar that glides', () => {
   it('does not start again for a new image or text alone', async () => {
     const glides = watchGlides();
     const { rerender } = await render(<Map {...EMPTY} avatars={[FRIEND]} />);
-    const image = unmadeImage({ kind: 'person', tone: 'class', small: true, name: '김민준', photo: null });
+    const image = unmadeImage({ kind: 'person', id: 'f1', tone: 'class', small: true, name: '김민준', photo: null });
 
     await rerender(<Map {...EMPTY} avatars={[{ ...FRIEND, image, text: '민준' }]} />);
 

@@ -178,7 +178,7 @@ function isStyle(style: unknown): style is StyleProp<ViewStyle> {
 
 // Where something is drawn on the plain ground, in points from the map's top left.
 export function placeOf(name: string): { left: number; top: number } {
-  const style: unknown = screen.getByRole('button', { name }).parent?.props.style;
+  const style: unknown = screen.getByLabelText(name).parent?.props.style;
   const { left, top } = StyleSheet.flatten<ViewStyle>(isStyle(style) ? style : {});
   return { left: Number(left), top: Number(top) };
 }

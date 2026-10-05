@@ -15,6 +15,7 @@ export { MarkerImageStage, unmadeImage, useMarkerImages } from './marker-images'
 export type { MarkerForm, MarkerLook } from './marker-looks';
 export type {
   CameraMove,
+  FitOptions,
   FitPadding,
   MapAvatar,
   MapBounds,

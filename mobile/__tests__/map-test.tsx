@@ -89,3 +89,28 @@ describe('what is on the plain ground', () => {
     expect(names).toEqual(['AI 커리어 채용설명회', '둘째', '맨 위', '김민준', '내 위치']);
   });
 });
+
+describe('the plain ground, as the frame draws and takes presses', () => {
+  it('writes the text under a marker as the frame writes a name', async () => {
+    await render(<Map {...EMPTY} markers={[EVENT]} />);
+
+    const words = screen.getByText('AI 커리어');
+    expect(words).toHaveStyle({ fontFamily: 'Pretendard-Bold', fontSize: 11, lineHeight: 16 });
+    expect(words).toHaveStyle({ paddingVertical: 1, paddingHorizontal: 7, backgroundColor: '#FFFFFF' });
+    expect(words).toHaveStyle({ boxShadow: '0 1px 3px rgba(14, 19, 48, 0.25)' });
+    expect(words.parent).toHaveStyle({ top: '100%', marginTop: 3 });
+  });
+
+  it('gives a passive Avatar no press: it is read by its name and is no button', async () => {
+    const onPress = jest.fn<void, [string]>();
+    const me = { ...FRIEND, id: 'me', name: '내 위치', passive: true };
+    await render(<Map {...EMPTY} avatars={[FRIEND, me]} onPress={onPress} />);
+
+    expect(screen.getAllByRole('button').map((button) => String(button.props.accessibilityLabel))).toEqual(['김민준']);
+    const drawn = screen.getByRole('image', { name: '내 위치' });
+    expect(drawn).toHaveStyle({ pointerEvents: 'none' });
+    expect(drawn.parent).toHaveStyle({ pointerEvents: 'none' });
+    await userEvent.press(drawn);
+    expect(onPress).not.toHaveBeenCalled();
+  });
+});

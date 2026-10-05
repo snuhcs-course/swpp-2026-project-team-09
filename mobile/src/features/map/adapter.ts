@@ -9,10 +9,11 @@ export type CardIcon = 'clock' | 'pin' | 'users' | 'info' | 'route';
 
 // What stands for the thing, at the head of its card and as its marker on the map:
 // - a person: the Avatar, with the status for a Friend; `presence` is null for a member of the User's Party who is
-//   no Friend, whose marker has the Party's colour;
+//   no Friend, whose marker has the Party's colour; `id` is the person's own, which stays while what is shown of
+//   them changes;
 // - a place: the icon and the colour of its kind in the design system. The frames draw a Shared Quest as a Party.
 export type CardMark =
-  | { type: 'person'; name: string; photo: string | null; presence: Presence | null }
+  | { type: 'person'; id: string; name: string; photo: string | null; presence: Presence | null }
   | { type: 'place'; place: 'official' | 'party' | 'quest' };
 
 // The thing's marker on the map, beside its `mark` and its `position`.
@@ -179,7 +180,7 @@ function friendCards({ friends }: MapSources): CardView[] {
           {
             id: cardId.friend(id),
             kind: 'friend',
-            mark: { type: 'person', name, photo, presence },
+            mark: { type: 'person', id, name, photo, presence },
             marker: { name: detail === '' ? name : `${name} · ${detail}`, short: givenName(name), count: 0 },
             subLabel: department,
             title: name,
@@ -205,7 +206,7 @@ function partyMemberCards({ myParty, friends, positions, meId }: MapSources): Ca
       {
         id: cardId.partyMember(id),
         kind: 'party-member',
-        mark: { type: 'person', name, photo: null, presence: null },
+        mark: { type: 'person', id, name, photo: null, presence: null },
         marker: { name: `${name} · ${SHARING_MEMBER}`, short: givenName(name), count: 0 },
         subLabel: `${department} · 친구 아님`,
         title: name,

@@ -14,6 +14,8 @@ interface CardProps {
   // The card's own button: "길찾기", or one whose feature belongs to another task.
   onPrimary: () => void;
   onClose: () => void;
+  // The card's height, once it is laid out and whenever it changes: a toast sits above it.
+  onHeight?: (height: number) => void;
 }
 
 // A place's kind in the design system: its colour and its icon.
@@ -74,9 +76,15 @@ function Head({ card, onClose }: Pick<CardProps, 'card' | 'onClose'>): ReactElem
 
 // The card of what was pressed on the map, as the `MapOverviewSelect` frame draws it: above the AI input's place,
 // with the leading mark, the sub-label, the title, the lines, "가까이 보기" where it is offered and the card's button.
-export function Card({ card, canLookCloser, onLookCloser, onPrimary, onClose }: CardProps): ReactElement {
+export function Card({ card, canLookCloser, onLookCloser, onPrimary, onClose, onHeight }: CardProps): ReactElement {
   return (
-    <View style={styles.card} testID="map-card">
+    <View
+      onLayout={({ nativeEvent: { layout } }) => {
+        onHeight?.(layout.height);
+      }}
+      style={styles.card}
+      testID="map-card"
+    >
       <Head card={card} onClose={onClose} />
       {card.lines.length === 0 ? null : (
         <View style={styles.lines}>

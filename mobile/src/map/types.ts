@@ -51,6 +51,9 @@ export interface MapMarker {
   // `order` is on top; without one it is 0, and of two that are equal the later in the list is on top. Which one
   // matters most, such as the User's own Avatar or a selected marker, is the screen's to say.
   order?: number;
+  // It takes no press: `onPress` is never sent for it, and a press on it goes to what is drawn under it, another
+  // marker or the map. It is still drawn, and a screen reader still reads its `name`. Left out, it takes presses.
+  passive?: boolean;
 }
 
 // An Avatar is a marker that glides. The rules, for every implementation:
@@ -90,6 +93,9 @@ export interface FitOptions {
   // Clear room between the points and the view's edges, in points: one number for all four edges, or one for each.
   // The points are fitted into what is left of the view, and its middle is where their middle comes. Left out, 0.
   padding?: number | FitPadding;
+  // The closest the camera may come: points that are near each other are shown from here and no closer. Left out,
+  // the map's `maxZoom`.
+  maxZoom?: number;
   // Left out, the camera jumps.
   animated?: boolean;
 }
@@ -120,7 +126,8 @@ export interface RouteStyle {
 export interface MapHandle {
   moveCamera: (move: CameraMove) => void;
   // Moves the camera so that the middle of the points is in the middle of what the padding leaves of the view, at
-  // the closest zoom at which all of them are inside it. No points, no move.
+  // the closest zoom at which all of them are inside it, and no closer than the options' `maxZoom`. No points, no
+  // move.
   fitTo: (points: readonly LatLng[], options?: FitOptions) => void;
 }
 

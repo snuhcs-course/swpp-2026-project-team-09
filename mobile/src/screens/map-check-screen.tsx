@@ -30,7 +30,7 @@ const LOOKS: MarkerLook[] = [
   { kind: 'official', form: 'pin' },
   { kind: 'party', form: 'dot' },
   { kind: 'me' },
-  { kind: 'person', tone: 'free', name: '김민준', photo: null },
+  { kind: 'person', id: 'f1', tone: 'free', name: '김민준', photo: null },
 ];
 
 // What the check puts on the map: a pin with a name, a dot, the User's own Avatar and a Friend's.

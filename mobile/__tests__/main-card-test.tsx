@@ -1,5 +1,5 @@
 import { BackHandler } from 'react-native';
-import { act } from '@testing-library/react-native';
+import { act, fireEvent } from '@testing-library/react-native';
 import { pass, screen } from './support/app';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { CLOSER, DINNER, EVENT, FRIEND, lookOf, MEMBER, NOT_READY, PARTY, press, wordsUnder } from './support/markers';
@@ -87,12 +87,12 @@ describe('a press on a marker of the main screen', () => {
     expect(screen.getByLabelText('오현우')).toBeVisible();
   });
 
-  it('opens nothing for the User’s own Avatar', async () => {
-    const user = await openMain();
+  it('finds no button in the User’s own Avatar: it takes no press and is still read', async () => {
+    givePhone({ permission: 'granted', position: ON_CAMPUS });
+    await openMain();
 
-    await press(user, '내 위치');
-
-    expect(screen.queryByTestId('map-card')).toBeNull();
+    expect(screen.queryByRole('button', { name: '내 위치' })).toBeNull();
+    expect(screen.getByRole('image', { name: '내 위치' })).toHaveStyle({ pointerEvents: 'none' });
   });
 });
 
@@ -106,7 +106,7 @@ describe('an open card', () => {
 
     await press(user, '닫기');
     expect(screen.queryByTestId('map-card')).toBeNull();
-    expect(lookOf(FRIEND)).toBe('person:small:free:김민준:');
+    expect(lookOf(FRIEND)).toBe('person:small:free:f1');
     expect(screen.getByRole('button', { name: '확대' })).toBeVisible();
   });
 
@@ -147,7 +147,7 @@ describe('"가까이 보기"', () => {
     await press(user, CLOSER);
 
     expect(screen.getByRole('header', { name: '김민준' })).toBeVisible();
-    expect(lookOf(FRIEND)).toBe('person:full:free:김민준::selected');
+    expect(lookOf(FRIEND)).toBe('person:full:free:f1:selected');
     expect(wordsUnder(FRIEND, '민준')).toBeVisible();
     expect(screen.queryByRole('button', { name: CLOSER })).toBeNull();
   });
@@ -182,6 +182,22 @@ describe("a card's button whose feature belongs to another task", () => {
     expect(screen.getByTestId('map-card')).toBeVisible();
     await pass(2400);
     expect(screen.queryByText(NOT_READY)).toBeNull();
+  });
+
+  it('says so above the card, so that the toast never lies over the buttons', async () => {
+    const user = await openMain();
+    await press(user, FRIEND);
+    await fireEvent(screen.getByTestId('map-card'), 'layout', {
+      nativeEvent: { layout: { x: 16, y: 300, width: 358, height: 180 } },
+    });
+
+    await press(user, '파티 만들기');
+
+    // The navigation's 80, the card's bottom 72 above it, its height, and 8 of clear room.
+    expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 340 });
+    await press(user, '닫기');
+    await user.press(screen.getByRole('tab', { name: '행사' }));
+    expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 158 });
   });
 
   it('says so for "참여하기", on the card of a Party the User is not in', async () => {

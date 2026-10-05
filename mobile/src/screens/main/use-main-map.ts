@@ -32,7 +32,8 @@ export interface MainMap {
   // To a position at a level of `ZOOM_OFFSET`. With `orCloser`, a camera that is closer already keeps its zoom.
   goTo: (position: LatLng, level: ZoomLevel, orCloser?: boolean) => void;
   showCampus: () => void;
-  // To the closest view that shows all the points inside what the padding leaves of the view.
+  // To the closest view that shows all the points inside what the padding leaves of the view, and no closer than
+  // the "pins" level, which is where the `Main` frame goes for a route.
   fitTo: (points: readonly LatLng[], padding: FitPadding) => void;
 }
 
@@ -42,7 +43,7 @@ export function useMainMap(): MainMap {
   const ref = useRef<MapHandle>(null);
   const [camera, setCamera] = useState<MapCamera | null>(null);
   const [fitZoom, setFitZoom] = useState<number | null>(null);
-  const { move, rested, fitted } = useCameraMoves(ref);
+  const { move, fit: fitInto, rested, fitted } = useCameraMoves(ref);
   const onCameraIdle = useCallback(
     (now: MapCamera) => {
       setCamera(now);
@@ -75,10 +76,12 @@ export function useMainMap(): MainMap {
   const showCampus = useCallback(() => {
     move((fit) => ({ centre: centreOf(CAMPUS_BOUNDS), zoom: fit }));
   }, [move]);
-  // The camera's rest tells the zoom it ended at, which the zoom buttons then count from.
-  const fitTo = useCallback((points: readonly LatLng[], padding: FitPadding) => {
-    ref.current?.fitTo(points, { padding, animated: true });
-  }, []);
+  const fitTo = useCallback(
+    (points: readonly LatLng[], padding: FitPadding) => {
+      fitInto(points, padding, ZOOM_OFFSET.pins);
+    },
+    [fitInto],
+  );
   const detail = camera === null || fitZoom === null ? 'overview' : zoomDetail(camera.zoom, fitZoom);
   return { ref, onCameraIdle, onFitZoom, camera, fitZoom, detail, zoomBy, goTo, showCampus, fitTo };
 }

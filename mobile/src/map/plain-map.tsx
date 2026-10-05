@@ -47,7 +47,7 @@ function useCamera(
         go((now) => settle({ centre: move.centre ?? now.centre, zoom: move.zoom ?? now.zoom }, rules));
       },
       fitTo: (points, options): void => {
-        go(() => fit(points, options?.padding ?? 0, rules));
+        go(() => fit(points, options ?? {}, rules));
       },
     };
   }, [rules]);

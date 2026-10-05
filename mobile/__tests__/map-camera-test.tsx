@@ -138,6 +138,21 @@ describe('fitting the camera to points', () => {
     expect(screen.getByText('민준')).toBeVisible();
   });
 
+  it('comes no closer than the closest zoom it is given, and stays further out where the points need it', async () => {
+    const map = await holdMap();
+    const near = { latitude: LIBRARY.latitude + 0.0002, longitude: LIBRARY.longitude };
+
+    await map.move((handle) => {
+      handle.fitTo([LIBRARY, near], { maxZoom: 15.5 });
+    });
+    expect(map.camera()?.zoom).toBe(15.5);
+
+    await map.move((handle) => {
+      handle.fitTo([GATE, LIBRARY], { padding: 40, maxZoom: 17 });
+    });
+    expect(map.camera()?.zoom).toBeCloseTo(16.093, 3);
+  });
+
   it('comes no closer to one point than the highest zoom', async () => {
     const map = await holdMap();
 

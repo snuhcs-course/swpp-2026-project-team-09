@@ -19,8 +19,8 @@ const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 function lookOf({ mark, marker }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
   const far = detail === 'overview';
   if (mark.type === 'person') {
-    const { name, photo, presence } = mark;
-    return { kind: 'person', tone: presence ?? 'member', small: far, selected, name, photo };
+    const { id, name, photo, presence } = mark;
+    return { kind: 'person', id, tone: presence ?? 'member', small: far, selected, name, photo };
   }
   return far
     ? { kind: mark.place, form: 'dot', selected }

@@ -5,7 +5,8 @@ import { openLocationSettings, type PositionPermission, usePosition } from '@/po
 import { useLocationExplanation } from './use-location-explanation';
 import type { MainMap } from './use-main-map';
 
-// The identifier of the User's own Avatar on the map. A press on it opens nothing.
+// The identifier of the User's own Avatar on the map. It takes no press, as in the frame: a press on it reaches a
+// Friend's marker that it stands over.
 export const ME_AVATAR_ID = 'me';
 
 export const OFF_CAMPUS = '캠퍼스 밖에 있어요';
@@ -78,7 +79,7 @@ export function useMe(map: MainMap): Me {
     avatars:
       position === null || image === undefined
         ? []
-        : [{ id: ME_AVATAR_ID, name: '내 위치', position, image, glideMs: stepMs, order: 1 }],
+        : [{ id: ME_AVATAR_ID, name: '내 위치', position, image, glideMs: stepMs, order: 1, passive: true }],
     offCampus,
     goToMe,
     sayWhyNotHere,

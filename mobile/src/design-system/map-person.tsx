@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { type ImageSourcePropType, StyleSheet, View } from 'react-native';
+import { type ImageSourcePropType, StyleSheet, View, type ViewStyle } from 'react-native';
 import { Avatar } from './avatar';
 import { color, presence, radius, shadow } from './tokens';
 
@@ -28,6 +28,17 @@ const SELECTED = 1.18;
 // A square turned by 45° reaches (√2 − 1) / 2 of its side below its own box: the marker's tip.
 const TIP = (Math.SQRT2 - 1) / 2;
 
+// The frame's `50% 50% 50% 0`: round but for the corner that the turn brings to the bottom, the tip. Each corner is
+// named, because a `borderRadius` beside one corner's own rounds that corner too on the web.
+function roundBut(round: number): ViewStyle {
+  return {
+    borderTopLeftRadius: round,
+    borderTopRightRadius: round,
+    borderBottomRightRadius: round,
+    borderBottomLeftRadius: 0,
+  };
+}
+
 // A person on the map, as the `Main` frame draws one: a teardrop filled with the tone's colour, with the person's
 // small Avatar in it. Its box ends at its tip, which stands on the person's position. A selected one is 1.18 times
 // as large, inside a white ring and a ring of the key colour.
@@ -47,9 +58,11 @@ export function MapPerson({
       <View
         style={[
           styles.drop,
-          { width: side, height: side, borderRadius: side / 2, backgroundColor: presence[tone] },
+          { width: side, height: side, backgroundColor: presence[tone] },
+          roundBut(side / 2),
           selected && styles.selected,
         ]}
+        testID={testID === undefined ? undefined : `${testID}:drop`}
       >
         <View style={[styles.face, { transform: [{ rotate: '45deg' }, { scale: (small ? SMALL_FACE : 1) * grown }] }]}>
           <Avatar name={name} onPhotoSettled={onPhotoSettled} size="sm" source={source} />
@@ -60,12 +73,10 @@ export function MapPerson({
 }
 
 const styles = StyleSheet.create({
-  // Round but for the corner that the turn brings to the bottom. The shadow is turned with it, so it is given
-  // against the turn to fall straight down.
+  // The shadow is turned with the fill, so it is given against the turn to fall straight down.
   drop: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderBottomLeftRadius: 0,
     transform: [{ rotate: '-45deg' }],
     boxShadow: shadow.markerTurned,
   },
