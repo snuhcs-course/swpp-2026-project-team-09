@@ -130,3 +130,8 @@ Not checked: nothing ran on a phone or in a native build, and the Kotlin was not
 - that the module takes a thing with the field `passive`, which its record does not name, and that a passive press is dropped.
 
 The screenshots of the web target were not taken again after these changes.
+
+### Agent usage (2026-10-06)
+
+- Agent time: about 1 hour 50 minutes, an estimate, nearly all of it in subagents.
+- Tokens: four subagent runs (the build, a review, the screenshots with presses, and the round that merged the main line and fixed the findings): about 900 thousand in all. The main session's share was small and is not counted apart.
