@@ -10,6 +10,7 @@ import {
   SubQuest,
 } from '../generated/prisma/client.js';
 import { UsersService } from '../users/users.service.js';
+import { ClassQuestsService } from './class-quests.service.js';
 import { CLOCK, type Clock } from './clock.js';
 import { type MakeQuestDto, type SubQuestContentDto } from './dto/quest-requests.dto.js';
 import { hasSubQuestsAhead, QUEST_INCLUDE, QuestDto, toQuestDto } from './dto/quest.dto.js';
@@ -37,6 +38,7 @@ export class QuestsService {
     private readonly users: UsersService,
     private readonly signals: SignalsService,
     @Inject(CLOCK) private readonly clock: Clock,
+    private readonly classQuests: ClassQuestsService,
   ) {}
 
   // The User's Quest for the Global Event, made the first time. The User's row is locked first, so that two attempts
@@ -71,7 +73,7 @@ export class QuestsService {
     return this.read(userId, questId);
   }
 
-  // Leaves out the Quests whose Sub Quests have all ended for the User.
+  // The stored Quests, then today's Class Quests. Leaves out the Quests whose Sub Quests have all ended for the User.
   async list(userId: string): Promise<QuestDto[]> {
     const quests = await this.prisma.quest.findMany({
       where: { holders: { some: { userId } } },
@@ -79,9 +81,10 @@ export class QuestsService {
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
     const now = this.clock.now();
-    return quests
-      .map((quest) => toQuestDto(quest, userId, now))
-      .filter(({ subQuests }) => subQuests.some(({ ended }) => !ended));
+    return [
+      ...quests.map((quest) => toQuestDto(quest, userId, now)),
+      ...(await this.classQuests.todayFor(userId, now)),
+    ].filter(({ subQuests }) => subQuests.some(({ ended }) => !ended));
   }
 
   async read(userId: string, questId: string): Promise<QuestDto> {
@@ -89,10 +92,15 @@ export class QuestsService {
       where: { id: questId, holders: { some: { userId } } },
       include: QUEST_INCLUDE,
     });
+    const now = this.clock.now();
     if (quest === null) {
-      throw questNotFound();
+      const classQuest = await this.classQuests.todayOne(userId, questId, now);
+      if (classQuest === null) {
+        throw questNotFound();
+      }
+      return classQuest;
     }
-    return toQuestDto(quest, userId, this.clock.now());
+    return toQuestDto(quest, userId, now);
   }
 
   async drop(userId: string, questId: string): Promise<void> {
@@ -111,15 +119,16 @@ export class QuestsService {
   }
 
   // A Quest for the Global Event, with its title, the Holders and the Sub Quest for attending it. Each Holder must hold
-  // no Quest for it yet, or the unique index on the Holders refuses it. The Holders enter in the order given.
+  // no Quest for it yet, or the unique index on the Holders refuses it. The Holders enter in the order given. A match's
+  // Quest names the match, once.
   createForGlobalEvent(
     globalEvent: Pick<GlobalEvent, 'id' | 'title'>,
     holderIds: readonly string[],
     tx: Prisma.TransactionClient,
-    settings: QuestSettings = {},
+    { matchId, ...settings }: QuestSettings & { matchId?: string } = {},
   ): Promise<string> {
     return this.create(
-      { title: globalEvent.title, globalEventId: globalEvent.id, subQuest: { attending: true } },
+      { title: globalEvent.title, globalEventId: globalEvent.id, matchId, subQuest: { attending: true } },
       holderIds,
       settings,
       tx,
@@ -180,6 +189,12 @@ export class QuestsService {
     return true;
   }
 
+  // Whether the User holds a Shared Quest for the Global Event, read without a lock: entering checks it again.
+  async holdsSharedQuestFor(userId: string, globalEventId: string, tx: Prisma.TransactionClient): Promise<boolean> {
+    const questId = await this.heldFor(userId, globalEventId, tx);
+    return questId !== null && (await this.holderIds(questId, tx)).length > 1;
+  }
+
   // The Quests among these that have a Sub Quest ahead: one not cancelled whose end time has not passed. A mark of done
   // is one Holder's own and does not count.
   async withSubQuestsAhead(questIds: readonly string[], tx: Prisma.TransactionClient = this.prisma): Promise<string[]> {
@@ -191,22 +206,29 @@ export class QuestsService {
   private async holderIn(questId: string, userId: string, tx: Prisma.TransactionClient): Promise<QuestHolder> {
     const holder = await tx.questHolder.findUnique({ where: { questId_userId: { questId, userId } } });
     if (holder === null) {
+      await this.classQuests.refuse(userId, questId, tx);
       throw questNotFound();
     }
     return holder;
   }
 
   private async create(
-    quest: { title: string; globalEventId: string | null; subQuest: Prisma.SubQuestCreateWithoutQuestInput },
+    quest: {
+      title: string;
+      globalEventId: string | null;
+      matchId?: string;
+      subQuest: Prisma.SubQuestCreateWithoutQuestInput;
+    },
     holderIds: readonly string[],
     { leaderId = holderIds[0], capacity, joinPolicy }: QuestSettings,
     tx: Prisma.TransactionClient,
   ): Promise<string> {
-    const { title, globalEventId, subQuest } = quest;
+    const { title, globalEventId, matchId, subQuest } = quest;
     const { id } = await tx.quest.create({
       data: {
         title,
         globalEventId,
+        matchId,
         leaderId,
         capacity,
         joinPolicy,

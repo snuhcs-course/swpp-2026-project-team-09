@@ -51,8 +51,9 @@ describe('what is on the plain ground', () => {
     await render(<Map {...EMPTY} avatars={[FRIEND]} />);
 
     expect(screen.getByText('민준', { includeHiddenElements: true })).toBeOnTheScreen();
-    expect(screen.queryByLabelText('김민준 · 공강')).toBeNull();
-    expect(screen.getByLabelText('김민준 · 공강', { includeHiddenElements: true })).toBeOnTheScreen();
+    // The marker's button is read; the Avatar in its look is not.
+    expect(screen.getAllByLabelText('김민준')).toHaveLength(1);
+    expect(screen.getAllByLabelText('김민준', { includeHiddenElements: true })).toHaveLength(2);
   });
 
   it('removes a marker that is no longer listed', async () => {
@@ -86,5 +87,44 @@ describe('what is on the plain ground', () => {
     const names = screen.getAllByRole('button').map(({ props }): unknown => props.accessibilityLabel);
 
     expect(names).toEqual(['AI 커리어 채용설명회', '둘째', '맨 위', '김민준', '내 위치']);
+  });
+});
+
+describe('the plain ground, as the frame draws and takes presses', () => {
+  it('writes the text under a marker as the frame writes a name', async () => {
+    await render(<Map {...EMPTY} markers={[EVENT]} />);
+
+    const words = screen.getByText('AI 커리어');
+    expect(words).toHaveStyle({ fontFamily: 'Pretendard-Bold', fontSize: 11, lineHeight: 16 });
+    expect(words).toHaveStyle({ paddingVertical: 1, paddingHorizontal: 7, backgroundColor: '#FFFFFF' });
+    expect(words).toHaveStyle({ boxShadow: '0 1px 3px rgba(14, 19, 48, 0.25)' });
+    expect(words.parent).toHaveStyle({ top: '100%', marginTop: 3 });
+  });
+
+  it('gives a passive Avatar no press: it is read by its name and is no button', async () => {
+    const onPress = jest.fn<void, [string]>();
+    const me = { ...FRIEND, id: 'me', name: '내 위치', passive: true };
+    await render(<Map {...EMPTY} avatars={[FRIEND, me]} onPress={onPress} />);
+
+    expect(screen.getAllByRole('button').map((button) => String(button.props.accessibilityLabel))).toEqual(['김민준']);
+    const drawn = screen.getByRole('image', { name: '내 위치' });
+    expect(drawn).toHaveStyle({ pointerEvents: 'none' });
+    expect(drawn.parent).toHaveStyle({ pointerEvents: 'none' });
+    await userEvent.press(drawn);
+    expect(onPress).not.toHaveBeenCalled();
+  });
+});
+
+describe("the map's credit", () => {
+  it('draws the credit at the bottom left of the whole map, 8 from its edges', async () => {
+    await render(<Map {...EMPTY} />);
+
+    expect(screen.getByText('© OpenStreetMap · 국토지리정보원')).toHaveStyle({ left: 8, bottom: 8 });
+  });
+
+  it('draws the credit inside what an inset leaves of the map', async () => {
+    await render(<Map {...EMPTY} inset={{ bottom: 126, left: 8, right: 62 }} />);
+
+    expect(screen.getByText('© OpenStreetMap · 국토지리정보원')).toHaveStyle({ left: 16, bottom: 134 });
   });
 });

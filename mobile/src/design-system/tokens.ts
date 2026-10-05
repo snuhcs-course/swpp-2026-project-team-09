@@ -54,6 +54,29 @@ export const shadow = {
   card: '0 1px 2px rgba(14, 19, 48, 0.06), 0 1px 1px rgba(14, 19, 48, 0.04)',
   float: '0 4px 16px rgba(14, 19, 48, 0.14)',
   sheet: '0 -4px 24px rgba(14, 19, 48, 0.12)',
+  // Above the main screen's bottom navigation, as the `Main` frame draws it: the sheet's shadow, lighter.
+  nav: '0 -4px 24px rgba(14, 19, 48, 0.08)',
+  // Under a card that floats over the map, as the `Main` frame draws it: the floating shadow, darker.
+  mapCard: '0 4px 16px rgba(14, 19, 48, 0.18)',
+  // Under a person's marker on the map, as the `Main` frame draws it: 3 down. The marker's fill is turned by 45°
+  // and its shadow with it, so the offset is given against the turn.
+  markerTurned: '-2px 2px 4px rgba(14, 19, 48, 0.35)',
+  // Under the name below a marker on the map, as the `Main` frame draws it.
+  mapName: '0 1px 3px rgba(14, 19, 48, 0.25)',
+  // Under a place's dot on the map.
+  dot: '0 1px 4px rgba(14, 19, 48, 0.35)',
+  // Under the round action in the middle of the main screen's bottom navigation, in the key colour, as the `Main`
+  // frame draws it.
+  navAction: '0 4px 12px rgba(0, 26, 114, 0.28)',
+  // Around a small mark that sits on the map itself, as the `Main` frame draws it: the dot of a Friend's row and the
+  // round of a Quest's row. A white ring of 2 over a soft shadow.
+  mapMark: '0 0 0 2px #FFFFFF, 0 1px 4px rgba(14, 19, 48, 0.25)',
+  // Around the rail that joins the Quest list's rows, as the `Main` frame draws it: a white ring of 1.5.
+  mapRail: '0 0 0 1.5px #FFFFFF',
+  // Around a small face that overlaps its neighbour, as on "오늘의 발자국": a white ring of 2.
+  faceRing: '0 0 0 2px #FFFFFF',
+  // Under a floating button in the key colour, as the `Main` frame draws "활성 파티": the floating shadow, darker.
+  floatKey: '0 4px 16px rgba(14, 19, 48, 0.24)',
 } as const;
 
 // The translucent rings the design system's styles draw around a mark. Its token file gives them no names.
@@ -64,9 +87,47 @@ export const halo = {
   live: 'rgba(11, 122, 85, 0.18)',
   // Around a selected pin: the key colour at 18%.
   selected: 'rgba(0, 26, 114, 0.18)',
-  // Under the round button of the main screen's bottom navigation: the key colour at 35%, as its frame draws it.
-  raised: 'rgba(0, 26, 114, 0.35)',
+  // Around a selected dot, as the `Main` frame draws it: the key colour at 25%.
+  selectedDot: 'rgba(0, 26, 114, 0.25)',
 } as const;
+
+// The colour that says what a person is doing: a status's dot on an Avatar, a row's dot in the friend list and the
+// fill of a person's marker on the map. `member` is a member of the User's Party who is not a Friend.
+export const presence = {
+  free: color.live,
+  class: color.snuBlue,
+  moving: color.warning,
+  off: color.inkSubtle,
+  member: color.party,
+} as const;
+
+// The colour of a row of the main screen's Quest list, which its round, its kicker and its icon share, as the `Main`
+// frame draws them: a class in the muted ink; `open`, a Party that others may join, in a blue that no token of the
+// design system names; `closed`, a Party that takes nobody else and a Shared Quest, in the Party's colour.
+export const questTone = {
+  class: color.inkMuted,
+  open: '#2F6FC0',
+  closed: color.party,
+} as const;
+
+// On a fill of the key colour, as the `Main` frame draws "활성 파티": the dot that says the Party is live, the ring
+// around it, and the second line's white at 85%.
+export const onKey = {
+  live: '#5FE0A8',
+  liveRing: 'rgba(95, 224, 168, 0.28)',
+  textMuted: 'rgba(255, 255, 255, 0.85)',
+  // A count beside a label, as in the friend pill: white at 80%.
+  textSubtle: 'rgba(255, 255, 255, 0.8)',
+} as const;
+
+// Around text that sits on the map itself, so that it stays readable over any ground: the `Main` frame's white
+// glow. The frame also strokes the text in white, 3 wide; React Native has no stroke for text and one shadow, so
+// the glow alone is drawn.
+export const textHalo = {
+  textShadowColor: 'rgba(255, 255, 255, 0.95)',
+  textShadowOffset: { width: 0, height: 0 },
+  textShadowRadius: 6,
+} as const satisfies TextStyle;
 
 // Over a photo, as on the loading screen: white at the frame's strengths, and the shade that keeps it readable.
 export const onPhoto = {
@@ -103,4 +164,23 @@ export const text = {
   label: { fontFamily: font.semiBold, fontSize: 14, lineHeight: 20 },
   caption: { fontFamily: font.medium, fontSize: 12, lineHeight: 16 },
   micro: { fontFamily: font.semiBold, fontSize: 11, lineHeight: 14, letterSpacing: 0.11 },
+} as const satisfies Record<string, TextStyle>;
+
+// The text of the main screen's lists and buttons over the map, as the `Main` frame draws it: sizes and weights that
+// the eight styles lack.
+export const mapText = {
+  // A row's name or title.
+  rowTitle: { fontFamily: font.bold, fontSize: 15, lineHeight: 20 },
+  // The line under it.
+  rowLine: { fontFamily: font.semiBold, fontSize: 12, lineHeight: 16 },
+  // The line over a Quest's title.
+  rowKicker: { fontFamily: font.bold, fontSize: 11, lineHeight: 14, letterSpacing: 0.11 },
+  // "오늘 일정 없음".
+  empty: { fontFamily: font.semiBold, fontSize: 13, lineHeight: 18 },
+  // The two lines of "오늘의 발자국".
+  buttonTitle: { fontFamily: font.bold, fontSize: 14, lineHeight: 18 },
+  buttonLine: { fontFamily: font.medium, fontSize: 11, lineHeight: 14 },
+  // The two lines of "활성 파티".
+  smallTitle: { fontFamily: font.bold, fontSize: 12, lineHeight: 16 },
+  smallLine: { fontFamily: font.medium, fontSize: 10, lineHeight: 13 },
 } as const satisfies Record<string, TextStyle>;

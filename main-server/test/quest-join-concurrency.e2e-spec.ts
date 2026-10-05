@@ -2,8 +2,9 @@ import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { signInUser } from './friends.js';
+import { befriend, signInUser } from './friends.js';
 import { overlapOnLock } from './overlap.js';
+import { answerInvitation, answerJoinRequest, invitationOf, joinRequestOf } from './quest-recruiting.js';
 import { connectToDatabase, getQuest, getQuests, joinQuest, ownQuest, questFor, storeEvent } from './quests.js';
 import { refused } from './signals.js';
 import { startApp } from './start-app.js';
@@ -37,6 +38,29 @@ describe('Two Users joining the last free place at the same moment', () => {
     expect(answers[1].body).toMatchObject(refused(409, 'QUEST_FULL'));
     expect((await getQuest(app, leader, questId)).body).toMatchObject({
       holders: [{ id: leader.id }, { id: first.id }],
+    });
+  });
+});
+
+describe('A request and an invitation accepted for the last free place at the same moment', () => {
+  it('leave one of their Users a Holder', async () => {
+    const [leader, asking, invited] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
+    await befriend(app, leader, invited);
+    const questId = await ownQuest(app, leader, { joinPolicy: 'approval', capacity: 2 });
+    const requestId = await joinRequestOf(app, asking, questId);
+    const invitationId = await invitationOf(app, leader, questId, invited);
+
+    const answers = await overlapOnLock(
+      prisma,
+      (tx) => tx.$queryRaw`SELECT 1 FROM quests WHERE id = ${questId}::uuid FOR UPDATE`,
+      () => answerJoinRequest(app, leader, { questId, requestId }, 'accept'),
+      () => answerInvitation(app, invited, invitationId, 'accept'),
+    );
+
+    expect(answers[0].status).toBe(204);
+    expect(answers[1].body).toMatchObject(refused(409, 'QUEST_FULL'));
+    expect((await getQuest(app, leader, questId)).body).toMatchObject({
+      holders: [{ id: leader.id }, { id: asking.id }],
     });
   });
 });

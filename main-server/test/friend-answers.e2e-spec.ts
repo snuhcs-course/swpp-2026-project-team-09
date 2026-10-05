@@ -30,9 +30,11 @@ describe('Accepting a Friend Request', () => {
 
     expect(response.status).toBe(204);
     expect((await getFriends(app, receiver)).body).toEqual([
-      { id: sender.id, name: '홍길동', department: '컴퓨터공학부' },
+      { id: sender.id, name: '홍길동', department: '컴퓨터공학부', sharing: true, visible: false },
     ]);
-    expect((await getFriends(app, sender)).body).toEqual([{ id: receiver.id, name: '김철수', department: '경영학과' }]);
+    expect((await getFriends(app, sender)).body).toEqual([
+      { id: receiver.id, name: '김철수', department: '경영학과', sharing: true, visible: false },
+    ]);
     expect((await getFriendRequests(app, receiver)).body).toEqual(NO_REQUESTS);
     expect((await getFriendRequests(app, sender)).body).toEqual(NO_REQUESTS);
   });

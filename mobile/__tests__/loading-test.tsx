@@ -92,7 +92,7 @@ describe('after the loading screen', () => {
     await startApp();
     await pass(1000);
 
-    expect(screen.getByRole('header', { name: '메인' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '지도' })).toBeVisible();
   });
 });
 
@@ -113,7 +113,7 @@ describe('a failure while loading', () => {
     expect(screen.getByRole('progressbar')).toHaveAccessibilityValue({ now: 0 });
 
     await pass(1000);
-    expect(screen.getByRole('header', { name: '메인' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '지도' })).toBeVisible();
   });
 });
 
@@ -123,7 +123,7 @@ describe("a screen that is not the User's", () => {
     await pass(600);
 
     expect(screen.getByRole('button', { name: SIGN_IN })).toBeVisible();
-    expect(screen.queryByRole('header', { name: '메인' })).toBeNull();
+    expect(screen.queryByRole('tab', { name: '지도' })).toBeNull();
   });
 
   it('leads a signed-in User from the sign-in screen to the main screen', async () => {
@@ -131,11 +131,11 @@ describe("a screen that is not the User's", () => {
     await startApp('/sign-in');
     await pass(1000);
 
-    expect(screen.getByRole('header', { name: '메인' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '지도' })).toBeVisible();
     expect(screen.queryByRole('button', { name: SIGN_IN })).toBeNull();
   });
 
-  it('follows a sign-in, Onboarding and a sign-out and no loading screen again', async () => {
+  it('follows a sign-in and Onboarding to the main screen and shows no loading screen again', async () => {
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     await startApp();
     await pass(600);
@@ -148,11 +148,7 @@ describe("a screen that is not the User's", () => {
 
     await saveOnboarding(user);
     await pass(400);
-    expect(screen.getByRole('header', { name: '메인' })).toBeVisible();
-
-    await user.press(screen.getByRole('button', { name: '로그아웃 (임시)' }));
-    await pass(100);
-    expect(screen.getByRole('button', { name: SIGN_IN })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '지도' })).toBeVisible();
     expect(screen.queryByRole('progressbar')).toBeNull();
   });
 });

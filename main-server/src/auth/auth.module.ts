@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { AdministratorsModule } from '../administrators/administrators.module.js';
 import { Settings } from '../common/settings.js';
+import { LocationSharingModule } from '../location-sharing/location-sharing.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { AccessTokenGuard, USER_TOKEN_AUDIENCE } from './access-token.guard.js';
 import { AdministratorAuthController } from './administrator-auth.controller.js';
@@ -13,6 +14,7 @@ import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { GoogleAuthLibraryVerifier } from './google-auth-library.verifier.js';
 import { GoogleIdTokenVerifier } from './google-id-token.verifier.js';
+import { MatchServerGuard } from './match-server.guard.js';
 import { SessionsService } from './sessions.service.js';
 import { WorkerGuard } from './worker.guard.js';
 
@@ -20,6 +22,7 @@ import { WorkerGuard } from './worker.guard.js';
   imports: [
     UsersModule,
     AdministratorsModule,
+    LocationSharingModule,
     // Access tokens are signed with the main server's private key. The other servers verify them with the public key
     // alone. The defaults are a User's token; the Administrator's sign-in and guard pass their own audience.
     JwtModule.registerAsync({
@@ -42,6 +45,7 @@ import { WorkerGuard } from './worker.guard.js';
     { provide: APP_GUARD, useClass: AccessTokenGuard },
     { provide: APP_GUARD, useClass: AdministratorGuard },
     { provide: APP_GUARD, useClass: WorkerGuard },
+    { provide: APP_GUARD, useClass: MatchServerGuard },
   ],
 })
 export class AuthModule {}

@@ -1,30 +1,34 @@
 import { INestApplication } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { Server } from 'node:http';
-import { messagingOptions } from '../src/common/messaging.js';
 import { Settings } from '../src/common/settings.js';
+import { type Grouping } from '../src/matching/grouping.js';
+import { FETCH_MAIN_SERVER } from '../src/matching/main-server.js';
+import { MainServerStub } from './main-server.js';
 
 // AppModule validates the settings when it is imported, so it is imported afresh after the environment is set.
+// `mainServer` answers in the main server's place, and `grouping`, when given, replaces the grouping module.
 export async function startApp(
   settings: Partial<Record<keyof Settings, string | undefined>>,
+  { mainServer = new MainServerStub(), grouping }: { mainServer?: MainServerStub; grouping?: Grouping } = {},
 ): Promise<INestApplication<Server>> {
   for (const [name, value] of Object.entries(settings)) {
     vi.stubEnv(name, value);
   }
   vi.resetModules();
   const { AppModule } = await import('../src/app.module.js');
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-  const app = moduleRef.createNestApplication<INestApplication<Server>>();
-  // Started as main.ts starts it, so that the tests run the server as it runs.
-  app.connectMicroservice(messagingOptions(app.get<ConfigService<Settings, true>>(ConfigService)));
-  try {
-    await app.init();
-    await app.startAllMicroservices();
-  } catch (error) {
-    // Close what already started, such as a messaging connection that would keep retrying.
-    await app.close();
-    throw error;
+  // Imported after AppModule, so that it is the same class AppModule registers.
+  const { Grouping: GroupingToken } = await import('../src/matching/grouping.js');
+  let builder = Test.createTestingModule({ imports: [AppModule] })
+    .overrideProvider(FETCH_MAIN_SERVER)
+    .useValue(mainServer.fetch);
+  if (grouping !== undefined) {
+    builder = builder.overrideProvider(GroupingToken).useValue(grouping);
   }
+  const app = (await builder.compile()).createNestApplication<INestApplication<Server>>();
+  // On a free port of 127.0.0.1, once. A server that does not listen is started and closed by supertest around each
+  // group of requests on a port of every address, which macOS also gives out while another program holds it on
+  // 127.0.0.1: now and then a request then reached that program instead.
+  await app.listen(0, '127.0.0.1');
   return app;
 }

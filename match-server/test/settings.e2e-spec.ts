@@ -16,11 +16,19 @@ describe('Settings', () => {
     await expect(startApp({ ...settings, DATABASE_URL: undefined })).rejects.toThrow('DATABASE_URL');
   });
 
-  it('stops startup and names REDIS_HOST when it is missing', async () => {
-    await expect(startApp({ ...settings, REDIS_HOST: undefined })).rejects.toThrow('REDIS_HOST');
+  it('stops startup and names MATCH_SERVER_TOKEN when it is missing', async () => {
+    await expect(startApp({ ...settings, MATCH_SERVER_TOKEN: undefined })).rejects.toThrow('MATCH_SERVER_TOKEN');
   });
 
-  it('stops startup and names REDIS_PORT when it is not a port number', async () => {
-    await expect(startApp({ ...settings, REDIS_PORT: 'abc' })).rejects.toThrow('REDIS_PORT');
+  it('stops startup and names MATCH_SERVER_TOKEN when it is short enough to guess', async () => {
+    await expect(startApp({ ...settings, MATCH_SERVER_TOKEN: 'short' })).rejects.toThrow('MATCH_SERVER_TOKEN');
+  });
+
+  it('stops startup and names MAIN_SERVER_URL when it is not an address', async () => {
+    await expect(startApp({ ...settings, MAIN_SERVER_URL: 'main-server' })).rejects.toThrow('MAIN_SERVER_URL');
+  });
+
+  it.each([undefined, '0', '1.5'])('stops startup and names ROUND_INTERVAL_SECONDS when it is %s', async (interval) => {
+    await expect(startApp({ ...settings, ROUND_INTERVAL_SECONDS: interval })).rejects.toThrow('ROUND_INTERVAL_SECONDS');
   });
 });

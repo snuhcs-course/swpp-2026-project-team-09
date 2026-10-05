@@ -123,6 +123,25 @@ describe('the mock of Parties', () => {
       ['안진영', false],
     ]);
   });
+
+  it('counts what waits for the User in Parties, which no answer of the main server holds', async () => {
+    expect(await answered(mockClient.getPartyNews())).toEqual({ count: 3 });
+
+    process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getPartyNews';
+    expect(await answered(mockClient.getPartyNews())).toEqual({ count: 0 });
+  });
+});
+
+describe('the mock of 오늘의 발자국', () => {
+  it('counts the Friends who left a story today and gives three faces, which no answer of the main server holds', async () => {
+    const footprints = await answered(mockClient.getFootprints());
+
+    expect(footprints.friendCount).toBe(5);
+    expect(footprints.faces.map(({ name }) => name)).toEqual(['김민준', '이서연', '박지호']);
+
+    process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getFootprints';
+    expect(await answered(mockClient.getFootprints())).toEqual({ friendCount: 0, faces: [] });
+  });
 });
 
 describe('the mock of the walking route', () => {
