@@ -34,7 +34,7 @@ export function standsOnTip(look: MarkerLook): boolean {
 }
 
 // The design system's view of a look. A name under it is the map's own text, so no view has a label.
-export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSettled: () => void }): ReactElement {
+export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSettled?: () => void }): ReactElement {
   if (look.kind === 'me') {
     return <MapPin kind="me" />;
   }

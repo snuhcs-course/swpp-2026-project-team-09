@@ -1,8 +1,7 @@
-import { act, render, screen, userEvent } from '@testing-library/react-native';
-import { createRef } from 'react';
+import { render, screen, userEvent } from '@testing-library/react-native';
 
-import { CAMPUS_BOUNDS, centreOf, Map, type MapCamera, type MapHandle, MAX_ZOOM, MIN_ZOOM } from '@/map';
-import { EMPTY, EVENT, FRIEND, GATE, LIBRARY } from './support/map';
+import { Map } from '@/map';
+import { EMPTY, EVENT, FRIEND, GATE, holdMap, LIBRARY } from './support/map';
 
 describe('the map without a native module', () => {
   it('is a plain ground that says where the map shows', async () => {
@@ -35,6 +34,27 @@ describe('the map without a native module', () => {
     expect(onPress.mock.calls).toEqual([['event:e1'], ['friend:f1']]);
   });
 
+  it('draws the route line and clears it', async () => {
+    const { rerender } = await render(<Map {...EMPTY} />);
+    expect(screen.queryByLabelText('경로가 그려져 있습니다')).toBeNull();
+
+    await rerender(<Map {...EMPTY} route={[GATE, LIBRARY]} />);
+    expect(screen.getByLabelText('경로가 그려져 있습니다')).toBeVisible();
+
+    await rerender(<Map {...EMPTY} route={null} />);
+    expect(screen.queryByLabelText('경로가 그려져 있습니다')).toBeNull();
+  });
+});
+
+describe('what is on the plain ground', () => {
+  it("draws a look as the design system's view, read once, by the marker's name", async () => {
+    await render(<Map {...EMPTY} avatars={[FRIEND]} />);
+
+    expect(screen.getByText('민준', { includeHiddenElements: true })).toBeOnTheScreen();
+    expect(screen.queryByLabelText('김민준 · 공강')).toBeNull();
+    expect(screen.getByLabelText('김민준 · 공강', { includeHiddenElements: true })).toBeOnTheScreen();
+  });
+
   it('removes a marker that is no longer listed', async () => {
     const { rerender } = await render(<Map {...EMPTY} markers={[EVENT]} />);
 
@@ -43,57 +63,28 @@ describe('the map without a native module', () => {
     expect(screen.queryByRole('button', { name: 'AI 커리어 채용설명회' })).toBeNull();
   });
 
-  it('draws the route line and clears it', async () => {
-    const { rerender } = await render(<Map {...EMPTY} />);
-    expect(screen.queryByText('경로가 그려져 있습니다')).toBeNull();
+  it('keeps a marker outside the view reachable by its name, and does not draw it', async () => {
+    const onPress = jest.fn<void, [string]>();
+    const map = await holdMap({ avatars: [{ ...FRIEND, text: '민준' }], markers: [EVENT], onPress });
 
-    await rerender(<Map {...EMPTY} route={[GATE, LIBRARY]} />);
-    expect(screen.getByText('경로가 그려져 있습니다')).toBeVisible();
+    await map.move((handle) => {
+      handle.moveCamera({ centre: LIBRARY, zoom: 19 });
+    });
 
-    await rerender(<Map {...EMPTY} route={null} />);
-    expect(screen.queryByText('경로가 그려져 있습니다')).toBeNull();
-  });
-});
-
-// A map as a screen holds it: by a handle, and told when the camera stops.
-async function renderMap(): Promise<{ map: MapHandle | null; onCameraIdle: jest.Mock<void, [MapCamera]> }> {
-  const ref = createRef<MapHandle>();
-  const onCameraIdle = jest.fn<void, [MapCamera]>();
-  await render(<Map {...EMPTY} onCameraIdle={onCameraIdle} ref={ref} />);
-  return { map: ref.current, onCameraIdle };
-}
-
-describe("the map's camera", () => {
-  it('opens on the whole campus', async () => {
-    const { onCameraIdle } = await renderMap();
-
-    expect(onCameraIdle.mock.calls).toEqual([[{ centre: centreOf(CAMPUS_BOUNDS), zoom: MIN_ZOOM }]]);
+    expect(screen.getByText('민준')).toBeVisible();
+    expect(screen.queryByText('AI 커리어')).toBeNull();
+    await userEvent.press(screen.getByRole('button', { name: 'AI 커리어 채용설명회' }));
+    expect(onPress.mock.calls).toEqual([['event:e1']]);
   });
 
-  it('answers a move with where it stopped', async () => {
-    const { map, onCameraIdle } = await renderMap();
+  it('draws Avatars above markers, and the higher order above the lower', async () => {
+    const second = { ...EVENT, id: 'event:e2', name: '둘째' };
+    const top = { ...EVENT, id: 'event:e3', name: '맨 위', order: 1 };
+    const me = { ...FRIEND, id: 'me', name: '내 위치', order: 2 };
+    await render(<Map {...EMPTY} avatars={[me, FRIEND]} markers={[top, EVENT, second]} />);
 
-    await act(() => {
-      map?.moveCamera({ centre: LIBRARY, zoom: 17, animated: true });
-    });
-    expect(onCameraIdle).toHaveBeenLastCalledWith({ centre: LIBRARY, zoom: 17 });
+    const names = screen.getAllByRole('button').map(({ props }): unknown => props.accessibilityLabel);
 
-    await act(() => {
-      map?.moveCamera({ zoom: 18 });
-    });
-    expect(onCameraIdle).toHaveBeenLastCalledWith({ centre: LIBRARY, zoom: 18 });
-  });
-
-  it('stays inside the campus rectangle and the zoom limits', async () => {
-    const { map, onCameraIdle } = await renderMap();
-
-    await act(() => {
-      map?.moveCamera({ centre: { latitude: 37.5, longitude: 126.9 }, zoom: 30 });
-    });
-
-    expect(onCameraIdle).toHaveBeenLastCalledWith({
-      centre: { latitude: CAMPUS_BOUNDS.north, longitude: CAMPUS_BOUNDS.west },
-      zoom: MAX_ZOOM,
-    });
+    expect(names).toEqual(['AI 커리어 채용설명회', '둘째', '맨 위', '김민준', '내 위치']);
   });
 });

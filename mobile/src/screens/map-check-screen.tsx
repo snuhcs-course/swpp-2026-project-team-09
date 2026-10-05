@@ -18,12 +18,13 @@ import {
 } from '@/map';
 
 const HERE: LatLng = { latitude: 37.45905, longitude: 126.9512 };
-const THERE: LatLng = { latitude: 37.4601, longitude: 126.9507 };
+const THERE: LatLng = { latitude: 37.4635, longitude: 126.9545 };
 const EVENT: LatLng = { latitude: 37.4499, longitude: 126.9525 };
 const PARTY: LatLng = { latitude: 37.4563, longitude: 126.9498 };
 const FRIEND: LatLng = { latitude: 37.4598, longitude: 126.9521 };
 const ROUTE: LatLng[] = [HERE, { latitude: 37.4552, longitude: 126.9516 }, EVENT];
 const GLIDE_MS = 5000;
+const FIT_PADDING = 48;
 
 const LOOKS: MarkerLook[] = [
   { kind: 'official', form: 'pin' },
@@ -52,18 +53,20 @@ function describe(camera: MapCamera | null): string {
     return '카메라: 아직 없음';
   }
   const { latitude, longitude } = camera.centre;
-  return `카메라: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} · 줌 ${camera.zoom}`;
+  return `카메라: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} · 줌 ${camera.zoom.toFixed(2)}`;
 }
 
 interface ControlsProps {
   onMoveAvatar: () => void;
   onDrawRoute: () => void;
   onClearRoute: () => void;
+  onFitRoute: () => void;
   onZoomIn: () => void;
   onShowCampus: () => void;
 }
 
-function Controls({ onMoveAvatar, onDrawRoute, onClearRoute, onZoomIn, onShowCampus }: ControlsProps): ReactElement {
+function Controls(props: ControlsProps): ReactElement {
+  const { onMoveAvatar, onDrawRoute, onClearRoute, onFitRoute, onZoomIn, onShowCampus } = props;
   return (
     <View style={styles.controls}>
       <Button onPress={onMoveAvatar} variant="secondary">
@@ -74,6 +77,9 @@ function Controls({ onMoveAvatar, onDrawRoute, onClearRoute, onZoomIn, onShowCam
       </Button>
       <Button onPress={onClearRoute} variant="secondary">
         경로 지우기
+      </Button>
+      <Button onPress={onFitRoute} variant="secondary">
+        경로에 맞추기
       </Button>
       <Button onPress={onZoomIn} variant="secondary">
         확대
@@ -116,6 +122,9 @@ export function MapCheckScreen(): ReactElement {
           }}
           onDrawRoute={() => {
             setRoute(ROUTE);
+          }}
+          onFitRoute={() => {
+            map.current?.fitTo([HERE, EVENT], { padding: FIT_PADDING, animated: true });
           }}
           onMoveAvatar={() => {
             setMe(me === HERE ? THERE : HERE);

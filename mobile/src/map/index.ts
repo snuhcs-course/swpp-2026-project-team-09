@@ -2,6 +2,6 @@
 // module.
 export { CAMPUS_BOUNDS, centreOf, isInside, MAX_ZOOM, MIN_ZOOM } from './campus';
 export { Map } from './map';
-export { MarkerImageStage, useMarkerImages } from './marker-images';
+export { MarkerImageStage, unmadeImage, useMarkerImages } from './marker-images';
 export type { MarkerForm, MarkerLook } from './marker-looks';
 export type { CameraMove, MapAvatar, MapBounds, MapCamera, MapHandle, MapMarker, MapProps, MarkerImage } from './types';
