@@ -62,8 +62,8 @@ Keep code that is not a screen, such as components and hooks, in `src/` outside 
 
 ## Data
 
-A screen holds no data of its own and never reads an answer of the main server. It calls a hook of a feature, and
-TanStack Query tells it whether the data is loading, failed or there:
+A screen holds no data of its own and never reads an answer of the main server. It calls a hook of a feature, which
+tells it whether the data is loading, failed or there (`ScreenData` in `src/api/screen-data.ts`):
 
 ```tsx
 const friends = useFriends();
@@ -71,9 +71,28 @@ if (friends.isPending) {
   /* loading */
 }
 if (friends.isError) {
-  /* failed: friends.refetch() asks again */
+  /* failed: friends.refetch() asks the failed operations again */
 }
 friends.data; // FriendView[], what the screen shows
+```
+
+TanStack Query keeps one cache entry per operation, each under its own key (`src/api/queries.ts`), and a hook combines
+the entries it needs. So an operation that two screens need is asked once, and one entry can be asked again alone.
+
+When an operation fails:
+
+- `listFriendStatuses` and `listGlobalEventAnnouncers`, the app's own, never fail a screen: it shows what it has
+  without them.
+- The friend list and the Quest list have `isError` and no `data`.
+- The map has `isError` and keeps in `data` the cards that are still right: without the Global Events, the Friends'
+  cards still show.
+
+The walking route is asked when the User asks, not as the User's position moves:
+
+```tsx
+const { route, isPending, isError, ask, clear } = useWalkingRoute();
+ask(myPosition, card.position); // on "길찾기": the start is where the User is now
+clear(); // when the route is dismissed or the screen is left
 ```
 
 Behind a hook are three layers:

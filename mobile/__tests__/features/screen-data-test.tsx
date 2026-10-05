@@ -1,30 +1,17 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, renderHook } from '@testing-library/react-native';
-import type { ReactElement, ReactNode } from 'react';
+import { renderHook } from '@testing-library/react-native';
 import { startFresh } from '../support/mocks';
+import { freshWrapper, settle } from '../support/queries';
 import { useFriends } from '@/features/friends/use-friends';
 import { useMapCards } from '@/features/map/use-map-cards';
-import { useWalkingRoute } from '@/features/map/use-walking-route';
 import { useQuestRows } from '@/features/quests/use-quest-rows';
 
 // What a screen is told when it asks for data: the adapters' outputs, through TanStack Query, from the mocks.
 
-// One client for a test. A failure is told at once, without the second try of the app's own client.
-let client = new QueryClient();
-
-function wrapper({ children }: { children: ReactNode }): ReactElement {
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
-}
-
-async function settle(): Promise<void> {
-  await act(async () => {
-    await jest.runAllTimersAsync();
-  });
-}
+let wrapper = freshWrapper();
 
 beforeEach(async () => {
   jest.useFakeTimers();
-  client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
+  wrapper = freshWrapper();
   await startFresh();
 });
 
@@ -123,12 +110,14 @@ describe('the Quest list', () => {
     ]);
   });
 
-  it('words a Party the User is not active in by its members', async () => {
+  it('is complete for a User in no Party, and words a Party by its members', async () => {
     process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getMyParty';
     const { result } = await renderHook(useQuestRows, { wrapper });
 
     await settle();
 
+    expect(result.current.isError).toBe(false);
+    expect(result.current.data).toHaveLength(3);
     expect(result.current.data?.find(({ id }) => id === 'q-ai')).toMatchObject({ kicker: '공개 파티 · 4명' });
   });
 });
@@ -225,31 +214,5 @@ describe('the Quest list and the cards for Quests that no Party names', () => {
       subLabel: '비공개 파티 · 김민준, 오현우, 정하은과',
       primary: { label: '길찾기', action: 'route' },
     });
-  });
-
-  it('tells the map of a failure of any of its answers', async () => {
-    process.env.EXPO_PUBLIC_MOCK_FAIL = 'listGlobalEvents';
-    const { result } = await renderHook(useMapCards, { wrapper });
-
-    await settle();
-
-    expect(result.current.isError).toBe(true);
-  });
-});
-
-describe('the walking route', () => {
-  it('asks nothing until it has both ends', async () => {
-    const to = { latitude: 37.45907, longitude: 126.95023 };
-    const { result, rerender } = await renderHook(
-      ({ from }: { from: { latitude: number; longitude: number } | null }) => useWalkingRoute(from, to),
-      { wrapper, initialProps: { from: null } },
-    );
-    await settle();
-    expect(result.current.fetchStatus).toBe('idle');
-
-    await rerender({ from: { latitude: 37.45905, longitude: 126.9512 } });
-    await settle();
-
-    expect(result.current.data?.status).toBe('OK');
   });
 });

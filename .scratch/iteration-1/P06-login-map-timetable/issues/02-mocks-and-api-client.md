@@ -60,9 +60,17 @@ Review, and what changed after it:
 Not checked, and known:
 
 - Nothing ran on a phone: the code is exercised by Jest alone. `Array.prototype.toSorted` is used once and is assumed to exist in the phone's JavaScript engine.
-- The Quest list, the map's cards and the friend list each ask on their own, so the same operation is asked more than once and the three can show different moments. The last ticket, which adds the socket's "something changed", is where they are brought together.
-- One failed answer fails the whole of the map's cards.
 - `CardView.secondary` is null on every card: the frame's "가까이 보기" comes with the cards' ticket.
+
+### After the pull request's review (2026-10-05)
+
+- One cache entry per operation, each under its own key (`src/api/queries.ts`). `useFriends`, `useQuestRows` and `useMapCards` combine the entries they need, so an operation that two of them need is asked once, and a signal of the socket can ask one entry again.
+- The three hooks return the same small type, `ScreenData` (`src/api/screen-data.ts`): `data`, `isPending`, `isError` and `refetch`, which asks again the operations that failed, or all of them when none failed.
+- `listFriendStatuses` and `listGlobalEventAnnouncers`, the app's own, no longer fail a screen. A failed operation of the map takes off only the cards that cannot be right without it, and `isError` is true. The friend list and the Quest list have `isError` and no `data`, as before.
+- `useWalkingRoute()` holds what was asked: `ask(from, to)` fixes the start at that moment, and `clear()` drops the route. A position that moves asks nothing.
+- A User in no Party: the comment on `getMyParty` says that the main server answers 404 `NOT_IN_PARTY` and that the operation turns exactly that into null, `isRefusal` in `src/api/errors.ts` is the check for it, and ticket 12 has a criterion for it. A null Party is ordinary data to the hooks.
+- `src/expo-types.d.ts` is committed, because the lint of CI ran without the types Expo generates when the app starts.
+- The four checks pass: lint, format, types, and 52 tests in 7 files.
 
 ### Agent usage (2026-10-05)
 

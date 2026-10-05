@@ -26,7 +26,8 @@ export interface ApiClient {
   // Who announced each Global Event. The app's own: the stored event does not hold it.
   listGlobalEventAnnouncers: () => Promise<{ eventId: string; announcer: string }[]>;
   listParties: () => Promise<Party[]>;
-  // Null for a User who is in no Party.
+  // Null for a User who is in no Party. The main server says so with a refusal, 404 NOT_IN_PARTY: the operation turns
+  // exactly that one into null, with `isRefusal`, and throws any other.
   getMyParty: () => Promise<MyParty | null>;
   findWalkingRoute: (from: LatLng, to: LatLng) => Promise<WalkingRoute>;
 }

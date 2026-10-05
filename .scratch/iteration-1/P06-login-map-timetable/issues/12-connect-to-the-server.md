@@ -22,6 +22,7 @@ A real sign-in needs three things that code cannot give: a built app, a Google s
 - [ ] A real sign-in in a built Android app: the sign-in module uses `react-native-nitro-google-signin` with the main server's client as the server client, tokens are kept in the phone's secure storage, and each ending of the spec's table comes from Google's and the main server's answers. Expo Go keeps the mock sign-in.
 - [ ] Onboarding is completed on the main server with the fields it stores, and the fields it does not store stay on the phone. The main server's word on whether a User finished Onboarding replaces the phone's.
 - [ ] Each of the other features is read from the main server through its adapter, and its mock stays for the tests.
+- [ ] A User in no Party is not a failure: `GET /parties/mine` answers 404 `NOT_IN_PARTY`, and the client's `getMyParty` turns exactly that into null. A test against the fake server covers it.
 - [ ] The app keeps one connection to the socket server open with the access token, and opens it again with a new token when the server closes it at the token's expiry.
 - [ ] `session-ended` with the code for a replaced Session shows the notice and the sign-in screen, as a 401 with that code does.
 - [ ] A `position` moves that User's Avatar on the map, gliding, and a `position-removed` takes it off. The visible positions are fetched when the connection opens and when the app returns to the front.

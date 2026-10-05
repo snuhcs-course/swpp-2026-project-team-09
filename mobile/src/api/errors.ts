@@ -11,3 +11,9 @@ export class ApiError extends Error {
     this.code = code;
   }
 }
+
+// Whether something thrown is that refusal of the main server. For an operation whose answer for "none" is a refusal,
+// such as 404 NOT_IN_PARTY for a User in no Party.
+export function isRefusal(error: unknown, status: number, code: string): boolean {
+  return error instanceof ApiError && error.status === status && error.code === code;
+}
