@@ -19,6 +19,22 @@ Expo Go.
 
 Add packages with `pnpm expo install <package>`, not `pnpm add`. It picks the version that matches the Expo SDK.
 
+### Development settings
+
+A setting is an `EXPO_PUBLIC_` variable given when the app is started, for example
+`EXPO_PUBLIC_MOCK_FAIL=listFriends pnpm start`. A released app ignores all of them.
+
+| Variable                     | Value                                                 | What it does                                        |
+| ---------------------------- | ----------------------------------------------------- | --------------------------------------------------- |
+| `EXPO_PUBLIC_SIGN_IN_ENDING` | `signed-in`, `cancelled`, `not-snu-account`, `failed` | How the mock sign-in ends. Without it: `signed-in`  |
+| `EXPO_PUBLIC_MOCK_SLOW`      | operations, separated by commas                       | These mocks answer after three seconds              |
+| `EXPO_PUBLIC_MOCK_FAIL`      | operations, separated by commas                       | These mocks answer with a failure                   |
+| `EXPO_PUBLIC_MOCK_EMPTY`     | operations, separated by commas                       | These mocks answer with nothing                     |
+| `EXPO_PUBLIC_FIRST_STATE`    | `1`                                                   | What the phone keeps is cleared when the app starts |
+
+An operation is named as in the table under "Data" below, such as `listFriends`. `completeOnboarding` and `enterLobby`
+have no empty answer, so `EXPO_PUBLIC_MOCK_EMPTY` leaves them as they are.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
@@ -40,11 +56,94 @@ src/app/            screens; every file is a route and _layout.tsx sets the navi
 src/design-system/  the tokens and the shared components
 src/catalogue/      the sections of the design system's catalogue screen
 src/hooks/          hooks shared by components and screens
+src/api/            the API client, the main server's answers as types, and the mocks that answer for now
+src/auth/           sign-in and sign-out
+src/features/       one folder per feature: its adapter and the hooks a screen asks for data with
+src/storage/        what the phone keeps between two starts of the app
 __tests__/          Jest tests
 assets/             app icons, the splash image and the fonts
 ```
 
 Keep code that is not a screen, such as components and hooks, in `src/` outside `src/app/`.
+
+## Data
+
+A screen holds no data of its own and never reads an answer of the main server. It calls a hook of a feature, which
+tells it whether the data is loading, failed or there (`ScreenData` in `src/api/screen-data.ts`):
+
+```tsx
+const friends = useFriends();
+if (friends.isPending) {
+  /* loading */
+}
+if (friends.isError) {
+  /* failed: friends.refetch() asks the failed operations again */
+}
+friends.data; // FriendView[], what the screen shows
+```
+
+TanStack Query keeps one cache entry per operation, each under its own key (`src/api/queries.ts`), and a hook combines
+the entries it needs. So an operation that two screens need is asked once, and one entry can be asked again alone.
+
+When an operation fails:
+
+- `listFriendStatuses` and `listGlobalEventAnnouncers`, the app's own, never fail a screen: it shows what it has
+  without them.
+- The friend list and the Quest list have `isError` and no `data`.
+- The map has `isError` and keeps in `data` the cards that are still right: without the Global Events, the Friends'
+  cards still show.
+
+The walking route is asked when the User asks, not as the User's position moves:
+
+```tsx
+const { route, isPending, isError, ask, clear } = useWalkingRoute();
+ask(myPosition, card.position); // on "길찾기": the start is where the User is now
+clear(); // when the route is dismissed or the screen is left
+```
+
+Behind a hook are three layers:
+
+- **The API client** (`src/api/client.ts`): one operation per question to the main server. `src/api/types.ts` holds
+  the answers' shapes. A shape marked "provisional" comes from an open pull request of the main server, and one marked
+  "the app's own" is defined nowhere else yet.
+- **An adapter** per feature (`src/features/<feature>/adapter.ts`): turns answers into what the screens use, such as
+  `FriendView`, `QuestRowView` and `CardView`.
+- **The mocks** (`src/api/mock/`): for now every operation is answered inside the app, in the main server's shape,
+  with what the `Main` wireframe shows. A mock answers after 0.3 seconds.
+
+| Operation                                   | Answers                                            | The main server's route                       |
+| ------------------------------------------- | -------------------------------------------------- | --------------------------------------------- |
+| `signIn`, `signOut` (`src/auth/sign-in.ts`) | Whether the User signed in, and Onboarding's state | `POST /auth/google`, `/auth/sign-out`         |
+| `completeOnboarding`                        | Nothing                                            | `POST /users/me/onboarding`                   |
+| `enterLobby`                                | The User's profile                                 | `POST /lobby`                                 |
+| `listFriends`                               | The Friends                                        | `GET /friends` (provisional)                  |
+| `listPositions`                             | The positions the User may see                     | `GET /positions` (provisional)                |
+| `listFriendStatuses`                        | Each Friend's status, place and photo              | None: the app's own                           |
+| `listQuests`                                | The User's Quests and today's Class Quests         | `GET /quests` (provisional)                   |
+| `listGlobalEvents`                          | The published Global Events                        | None yet: the app's own                       |
+| `listGlobalEventAnnouncers`                 | Who announced each Global Event                    | None: the app's own                           |
+| `listParties`, `getMyParty`                 | The Parties, and the one the User is in            | `GET /parties`, `/parties/mine` (provisional) |
+| `findWalkingRoute`                          | The way on foot between two points                 | `GET /walking-route`                          |
+
+While the answers are mocks, the app's time is the moment the wireframe shows, 1 October 2026 at 13:37
+(`src/clock.ts`), so that the screens read as the wireframe on any day.
+
+The phone keeps that the User signed in, what the sign-in suggested for Onboarding, whether Onboarding is finished and
+its answers (`src/storage/kept.ts`). `openKept()` is the read for the start of the app: it is the one that honours
+`EXPO_PUBLIC_FIRST_STATE`.
+
+### From a mock to the main server
+
+To connect one operation:
+
+1. Write the operation against the main server and put it in place of the mock's in `src/api/client.ts`. A refusal is
+   thrown as an `ApiError` with the status and the main server's code.
+2. If the answer's shape changed, change it in `src/api/types.ts` and follow the type errors into the adapter.
+3. Keep the mock: a test of a screen puts it back with `jest.mock('@/api/client', …)`, so that no test asks the main
+   server.
+
+No screen changes. When every operation of a feature is connected, remove its row from the mock list of
+`.scratch/iteration-1/P06-login-map-timetable/todo.md`.
 
 ## Design system
 

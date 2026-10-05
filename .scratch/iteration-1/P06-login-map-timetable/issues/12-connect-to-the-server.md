@@ -22,11 +22,13 @@ A real sign-in needs three things that code cannot give: a built app, a Google s
 - [ ] A real sign-in in a built Android app: the sign-in module uses `react-native-nitro-google-signin` with the main server's client as the server client, tokens are kept in the phone's secure storage, and each ending of the spec's table comes from Google's and the main server's answers. Expo Go keeps the mock sign-in.
 - [ ] Onboarding is completed on the main server with the fields it stores, and the fields it does not store stay on the phone. The main server's word on whether a User finished Onboarding replaces the phone's.
 - [ ] Each of the other features is read from the main server through its adapter, and its mock stays for the tests.
+- [ ] A User in no Party is not a failure: `GET /parties/mine` answers 404 `NOT_IN_PARTY`, and the client's `getMyParty` turns exactly that into null. A test against the fake server covers it.
 - [ ] The app keeps one connection to the socket server open with the access token, and opens it again with a new token when the server closes it at the token's expiry.
 - [ ] `session-ended` with the code for a replaced Session shows the notice and the sign-in screen, as a 401 with that code does.
 - [ ] A `position` moves that User's Avatar on the map, gliding, and a `position-removed` takes it off. The visible positions are fetched when the connection opens and when the app returns to the front.
 - [ ] A signal that something the screen shows has changed makes the app fetch it again.
 - [ ] The app sends no position of its own: that is built in P09 with the Master Switch.
+- [ ] The app's time is the phone's: the fixed moment of the mocks (`src/clock.ts`) and the mock's fixed User id (`myUserId()`) are gone from a build that asks the main server.
 - [ ] Jest tests against a fake server: the token and the one renewal, a failed renewal, each ending of a sign-in, Onboarding completed, each connected feature's answer through its adapter, and, with a fake socket, a position arriving, a position removed and the Session's end. The screens' tests pass unchanged.
 - [ ] `todo.md` section 3 says what is connected and what is still a mock, and the list of mocks in the app holds nothing that the demo's flows use and the main server serves.
 - [ ] A sign-in with an SNU account on the emulator or the shared phone reaches the main screen, recorded under Comments with a screenshot in the pull request.

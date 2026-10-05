@@ -5,6 +5,8 @@
   "packageManager": "pnpm@12.6.0",
   "dependencies": {
     "@expo/ui": "~57.0.20",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@tanstack/react-query": "^5.104.1",
     "expo": "~57.0.25",
     "expo-constants": "~57.0.19",
     "expo-device": "~57.0.2",
@@ -54,6 +56,13 @@
   },
   "jest": {
     "preset": "jest-expo",
+    "moduleNameMapper": {
+      "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock"
+    },
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/__tests__/support/"
+    ],
     "testTimeout": 60000
   },
   "private": true,
