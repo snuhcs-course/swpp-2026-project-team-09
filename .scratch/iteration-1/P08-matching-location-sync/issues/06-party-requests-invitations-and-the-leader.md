@@ -83,3 +83,10 @@ As in ticket 05, entering a Party changes no Quest.
 - Tokens, counted from the agent's transcript:
   - Input: 14,213,409, of which 13,989,897 were cache reads, 223,354 cache writes and 158 uncached.
   - Output: 21,321, a lower bound, since the transcript records only part of the output of most steps.
+
+### Agent usage (2026-10-06)
+
+- Agent time: about 27 minutes, an estimate: one agent that reworked the ticket for the Party as the group that is together now, in two runs. The session that ran it is not counted here.
+- Tokens, counted from the agent's transcript, a lower bound, since the transcript records only part of the second run and of the output:
+  - Input: 10,718,606, of which 10,527,592 were cache reads, 190,874 cache writes and 140 uncached.
+  - Output: 6,109.
