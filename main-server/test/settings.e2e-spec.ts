@@ -111,3 +111,30 @@ describe('Initial Administrator settings', () => {
     ).rejects.toThrow('INITIAL_ADMINISTRATOR_EMAILS');
   });
 });
+
+describe('Invite Link settings', () => {
+  const settings = inject('settings');
+
+  it('stops startup and names PUBLIC_URL when it is missing', async () => {
+    await expect(startApp({ ...settings, PUBLIC_URL: undefined })).rejects.toThrow('PUBLIC_URL');
+  });
+
+  it('stops startup and names PUBLIC_URL when it is not a web address', async () => {
+    await expect(startApp({ ...settings, PUBLIC_URL: 'snunow.example' })).rejects.toThrow('PUBLIC_URL');
+  });
+
+  it('stops startup and names ANDROID_CERTIFICATE_FINGERPRINTS when it is missing', async () => {
+    await expect(startApp({ ...settings, ANDROID_CERTIFICATE_FINGERPRINTS: undefined })).rejects.toThrow(
+      'ANDROID_CERTIFICATE_FINGERPRINTS',
+    );
+  });
+
+  it('stops startup and names ANDROID_CERTIFICATE_FINGERPRINTS when it holds a SHA-1 fingerprint', async () => {
+    await expect(
+      startApp({
+        ...settings,
+        ANDROID_CERTIFICATE_FINGERPRINTS: '5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25',
+      }),
+    ).rejects.toThrow('ANDROID_CERTIFICATE_FINGERPRINTS');
+  });
+});

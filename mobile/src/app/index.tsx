@@ -1,18 +1,15 @@
 import type { ReactElement } from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import { LoadingScreen } from '@/screens/loading-screen';
+import { useOwnPlace } from '@/session/session';
 
-export default function PlaceholderScreen(): ReactElement {
+// The app starts here, on the loading screen. Once it is over, this address leads to where the User belongs; the
+// loading screen stays drawn until the next screen has taken its place.
+export default function StartScreen(): ReactElement {
+  const away = useOwnPlace('loading');
   return (
-    <View style={styles.container}>
-      <Text>SNU Now</Text>
-    </View>
+    <>
+      <LoadingScreen />
+      {away}
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

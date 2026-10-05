@@ -41,7 +41,8 @@ The other User's app learns of each step without asking. This is the first signa
   `session-ended` and `shuttle-vehicles-updated` keep their own events.
 - **Rooms**: each connection joins `session:<sessionId>` and `user:<userId>`.
 - **Friend ID**: `users.friend_id`, unique, made by `newFriendId()` in `src/users/friend-id.ts` at creation; in the
-  profile (and so the lobby) as `friendId`. Looked up in capitals, so small letters are found too.
+  profile (and so the lobby) as `friendId`. When the database refuses a new User's Friend ID as already held (`P2002`
+  on `users_friend_id_key`), `UsersService.findOrCreate` draws another, up to `FRIEND_ID_ATTEMPTS` (3) tries in all. Looked up in capitals, so small letters are found too.
 - **Table**: `friendships` holds one row for two Users: a waiting Friend Request while `accepted_at` is null, a
   friendship once set. `user_a_id < user_b_id` (CHECK), `sender_id` one of the two (CHECK), unique
   `(user_a_id, user_b_id)`. Every change between two Users locks both `users` rows in id order first
@@ -60,7 +61,7 @@ The other User's app learns of each step without asking. This is the first signa
 
 ### Agent usage (2026-10-04)
 
-- Agent time: about 24 minutes, an estimate: the implementing agent about 21 minutes, and a Standards reviewer and a Spec reviewer about 1.5 minutes each at the same time. The session that ran the agents of all P08 tickets is counted once, under ticket 09.
+- Agent time: about 28 minutes, an estimate: the implementing agent about 25 minutes, the review's fixes included, and a Standards reviewer and a Spec reviewer about 1.5 minutes each at the same time. The session that ran the agents of all P08 tickets is counted once, under ticket 09.
 - Tokens, counted from the three agents' transcripts:
-  - Input: 20,996,644, of which 20,562,478 were cache reads, 433,918 cache writes and 248 uncached.
-  - Output: 49,659, a lower bound, since the transcripts record only part of the output of most steps.
+  - Input: 27,653,121, of which 27,189,275 were cache reads, 463,552 cache writes and 294 uncached.
+  - Output: 56,577, a lower bound, since the transcripts record only part of the output of most steps.
