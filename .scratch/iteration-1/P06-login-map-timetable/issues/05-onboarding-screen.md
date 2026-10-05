@@ -71,3 +71,24 @@ The frame `Onboarding` was read again when the work started and is unchanged sin
 - The gender's rows stand 8 apart and the suggested interests' 6, as the frame's.
 
 The tests are joined by `mobile/__tests__/onboarding-interests-test.tsx` and `mobile/__tests__/onboarding-rules-test.tsx`. Nothing ran in a browser or on a phone in this round either: the scrolling to an open list and the hidden foot are unseen.
+
+### After the second look in a browser (2026-10-05)
+
+The fixes above were pressed and measured on the web target at 390 by 844 and 360 by 640:
+
+- The department field: a press elsewhere closes the list and shows the kept department again; a row pressed after typing is chosen; words that match nothing are dropped when the field is left.
+- `#러닝 #재즈,보드게임` becomes three interests. One added twice stays in the draft with "이미 추가한 관심사예요".
+- The toast ends above the foot, and the open 학번 and 학과 lists end above it too.
+- The borders, the badge, "추가" and "로그아웃" have the frame's colours and sizes.
+
+Two things were still wrong, and are changed without a new look:
+
+- The lowest 4 of a suggested interest's pill pressed the pill in the row below, because the touch areas of two rows lay over each other. A pill's touch area is now the pill and half the space to the rows beside it: 34 high for a suggested interest and 44 for a gender, less than the 48 of the design system, which the frame's row spacing does not leave room for.
+- A focused field on the web still drew the browser's own dark outline over the navy border. The outline is given no width and no colour.
+
+The radios tell the web whether they are checked.
+
+### Agent usage (2026-10-05)
+
+- Agent time: about 1 hour 10 minutes, an estimate, nearly all of it in subagents.
+- Tokens: five subagent runs (the build with its fix round, a review, two rounds of screenshots and presses): about 650 thousand in all. The main session's share was small and is not counted apart.

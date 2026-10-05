@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { color, radius, size, space, text } from '@/design-system';
+import { color, radius, space, text } from '@/design-system';
 
 interface PillProps {
   // The words on the pill.
@@ -12,8 +12,9 @@ interface PillProps {
   onPress: () => void;
 }
 
-// A round choice, as the frame draws the gender's choices and the suggested interests. The pill is lower than the
-// smallest touch area, so the pressed area around it has that height itself.
+// A round choice, as the frame draws the gender's choices and the suggested interests. The pressed area is the pill
+// and half of the space to its neighbours above and below: two rows stand closer than the smallest touch area is
+// high, and an area that reached that height would lie over the next row's pills and take their presses.
 export function Pill({ children, label, checked, onPress }: PillProps): ReactElement {
   const choice = checked !== undefined;
   return (
@@ -21,6 +22,7 @@ export function Pill({ children, label, checked, onPress }: PillProps): ReactEle
       accessibilityLabel={label ?? children}
       accessibilityRole={choice ? 'radio' : 'button'}
       accessibilityState={choice ? { checked } : undefined}
+      aria-checked={choice ? checked : undefined}
       onPress={onPress}
       style={[styles.touch, choice ? styles.choiceTouch : styles.offerTouch]}
     >
@@ -44,18 +46,13 @@ export function Pill({ children, label, checked, onPress }: PillProps): ReactEle
 
 const CHOICE_HEIGHT = 36;
 const OFFER_HEIGHT = 28;
-// The frame's space between two rows of pills. The touch areas of two rows lie over each other by what they are
-// higher than a pill and this space, so that the rows stand as far apart as the frame's.
+// The frame's space between two rows of pills.
 export const PILL_ROW_GAP = { choice: space[2], offer: 6 } as const;
 
-function overlap(height: number, gap: number): number {
-  return -(size.touchMin - height - gap) / 2;
-}
-
 const styles = StyleSheet.create({
-  touch: { minHeight: size.touchMin, justifyContent: 'center' },
-  choiceTouch: { marginVertical: overlap(CHOICE_HEIGHT, PILL_ROW_GAP.choice) },
-  offerTouch: { marginVertical: overlap(OFFER_HEIGHT, PILL_ROW_GAP.offer) },
+  touch: { justifyContent: 'center' },
+  choiceTouch: { minHeight: CHOICE_HEIGHT + PILL_ROW_GAP.choice },
+  offerTouch: { minHeight: OFFER_HEIGHT + PILL_ROW_GAP.offer },
   pill: {
     justifyContent: 'center',
     borderRadius: radius.full,

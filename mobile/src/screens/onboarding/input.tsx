@@ -68,6 +68,8 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     // The web's own outline of a focused field: the border and the ring say it here.
     outlineWidth: 0,
+    outlineStyle: 'solid',
+    outlineColor: 'transparent',
   },
   focused: { borderColor: color.snuBlue, boxShadow: FOCUS_RING },
 });

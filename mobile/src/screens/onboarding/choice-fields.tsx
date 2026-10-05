@@ -29,6 +29,7 @@ export function CourseLevelField({
             accessibilityLabel={label}
             accessibilityRole="radio"
             accessibilityState={{ checked: level === value }}
+            aria-checked={level === value}
             key={level}
             onPress={() => {
               onChange(level);
