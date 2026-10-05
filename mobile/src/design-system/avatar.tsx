@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import { Image, type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
-import { color, font, radius, size as sizes } from './tokens';
+import { color, font, presence, radius, size as sizes } from './tokens';
 
 export type PresenceStatus = 'free' | 'class' | 'moving' | 'off';
 
@@ -9,13 +9,6 @@ const PRESENCE_LABEL: Record<PresenceStatus, string> = {
   class: '수업 중',
   moving: '이동 중',
   off: '위치 꺼짐',
-};
-
-const STATUS_COLOR: Record<PresenceStatus, string> = {
-  free: color.live,
-  class: color.snuBlue,
-  moving: color.warning,
-  off: color.inkSubtle,
 };
 
 const DIAMETER = { sm: 28, md: sizes.avatar, lg: 56 } as const;
@@ -71,7 +64,7 @@ export function Avatar({ name, source, size = 'md', status, ring, onPhotoSettled
       ) : (
         <Image onError={onPhotoSettled} onLoad={onPhotoSettled} source={source} style={styles.photo} />
       )}
-      {status === undefined ? null : <View style={[styles.status, { backgroundColor: STATUS_COLOR[status] }]} />}
+      {status === undefined ? null : <View style={[styles.status, { backgroundColor: presence[status] }]} />}
     </View>
   );
 }

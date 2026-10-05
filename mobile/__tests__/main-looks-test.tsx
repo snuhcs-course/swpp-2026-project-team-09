@@ -33,9 +33,7 @@ describe("the User's own looks on the main screen", () => {
     givePhone({ permission: 'granted', position: ON_CAMPUS });
     await openMain();
 
-    // The whole campus is in view: the map shows the small look.
-    expect(screen.getByRole('button', { name: ME })).toHaveProp('testID', 'me:small');
-    // The plain ground's button and the view in it are two; the other two are the views of both looks on the stage.
-    expect(screen.getAllByLabelText(ME, { includeHiddenElements: true })).toHaveLength(4);
+    // The native map draws the pictures, not the views: what is labelled is the views of both looks on the stage.
+    expect(screen.getAllByLabelText(ME, { includeHiddenElements: true })).toHaveLength(2);
   });
 });

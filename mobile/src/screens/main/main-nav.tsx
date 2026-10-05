@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomNav, type BottomNavItem, color, shadow, useNotReadyToast, useToastAbove } from '@/design-system';
 import { usePartyBadge } from '@/features/parties/use-party-badge';
-import { navPaddingBottom, takenUnderToast } from './layout';
+import { navPaddingBottom, takenUnderToast, takenUnderToastOverCard } from './layout';
 
 const MAP = 0;
 
@@ -20,12 +20,13 @@ function itemsWith(partyBadge: number): BottomNavItem[] {
 
 // The main screen's bottom navigation, as the `Main` frame draws it: no line on top but a soft shadow over the map,
 // and 16 under the items, or the phone's own bar where that is higher. 지도 is where the User is; every other slot
-// belongs to another task and says that it is not ready. A toast on this screen sits above it.
-export function MainNav(): ReactElement {
+// belongs to another task and says that it is not ready. A toast on this screen sits above it, over the row of
+// buttons, and above an open card: `cardHeight` is the open card's height, or null while none is open.
+export function MainNav({ cardHeight }: { cardHeight: number | null }): ReactElement {
   const partyBadge = usePartyBadge();
   const showNotReady = useNotReadyToast();
   const { bottom } = useSafeAreaInsets();
-  useToastAbove(takenUnderToast(bottom));
+  useToastAbove(cardHeight === null ? takenUnderToast(bottom) : takenUnderToastOverCard(bottom, cardHeight));
   return (
     <View style={[styles.bar, { paddingBottom: navPaddingBottom(bottom) }]}>
       <BottomNav

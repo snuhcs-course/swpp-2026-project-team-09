@@ -56,6 +56,15 @@ export const shadow = {
   sheet: '0 -4px 24px rgba(14, 19, 48, 0.12)',
   // Above the main screen's bottom navigation, as the `Main` frame draws it: the sheet's shadow, lighter.
   nav: '0 -4px 24px rgba(14, 19, 48, 0.08)',
+  // Under a card that floats over the map, as the `Main` frame draws it: the floating shadow, darker.
+  mapCard: '0 4px 16px rgba(14, 19, 48, 0.18)',
+  // Under a person's marker on the map, as the `Main` frame draws it: 3 down. The marker's fill is turned by 45°
+  // and its shadow with it, so the offset is given against the turn.
+  markerTurned: '-2px 2px 4px rgba(14, 19, 48, 0.35)',
+  // Under the name below a marker on the map, as the `Main` frame draws it.
+  mapName: '0 1px 3px rgba(14, 19, 48, 0.25)',
+  // Under a place's dot on the map.
+  dot: '0 1px 4px rgba(14, 19, 48, 0.35)',
   // Under the round action in the middle of the main screen's bottom navigation, in the key colour, as the `Main`
   // frame draws it.
   navAction: '0 4px 12px rgba(0, 26, 114, 0.28)',
@@ -69,6 +78,18 @@ export const halo = {
   live: 'rgba(11, 122, 85, 0.18)',
   // Around a selected pin: the key colour at 18%.
   selected: 'rgba(0, 26, 114, 0.18)',
+  // Around a selected dot, as the `Main` frame draws it: the key colour at 25%.
+  selectedDot: 'rgba(0, 26, 114, 0.25)',
+} as const;
+
+// The colour that says what a person is doing: a status's dot on an Avatar, a row's dot in the friend list and the
+// fill of a person's marker on the map. `member` is a member of the User's Party who is not a Friend.
+export const presence = {
+  free: color.live,
+  class: color.snuBlue,
+  moving: color.warning,
+  off: color.inkSubtle,
+  member: color.party,
 } as const;
 
 // Over a photo, as on the loading screen: white at the frame's strengths, and the shade that keeps it readable.

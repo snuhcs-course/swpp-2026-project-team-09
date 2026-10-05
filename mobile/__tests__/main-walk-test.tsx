@@ -55,7 +55,7 @@ describe('the development walk on campus', () => {
     await openMain();
 
     expect(screen.queryByText(EXPLANATION)).toBeNull();
-    expect(screen.getByRole('button', { name: ME })).toBeVisible();
+    expect(screen.getByRole('image', { name: ME })).toBeVisible();
     expect(Location.getForegroundPermissionsAsync).not.toHaveBeenCalled();
     expect(Location.watchPositionAsync).not.toHaveBeenCalled();
   });
