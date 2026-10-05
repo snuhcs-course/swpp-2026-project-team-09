@@ -122,3 +122,11 @@ This ticket lays down what Meetup, Party and Matching build on: the Quest with i
 - Tokens, counted from the agent's transcript:
   - Input: 13,712,948, of which 13,497,766 were cache reads, 215,028 cache writes and 154 uncached.
   - Output: 38,483, a lower bound, since the transcript records only part of the output of most steps.
+
+### Agent usage (2026-10-05)
+
+- Agent time: about 33 minutes, an estimate: the agent that reworked the ticket for making a Quest and joining about 19 minutes, and the agent that rewrote the P08 documents for it about 14 minutes, counted here once for the tickets it touched. The session that ran them is not counted here.
+- Tokens, counted from the two agents' transcripts:
+  - The reworking agent: input 17,129,353, of which 16,878,067 were cache reads, 251,104 cache writes and 182 uncached; output 25,891.
+  - The documents' agent: input 7,926,565, of which 7,705,953 were cache reads, 220,506 cache writes and 106 uncached; output 53,031.
+  - The outputs are lower bounds, since the transcripts record only part of the output of most steps.
