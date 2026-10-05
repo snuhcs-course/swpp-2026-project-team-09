@@ -1,12 +1,9 @@
--- CreateEnum
-CREATE TYPE "party_join_policy" AS ENUM ('open', 'approval', 'closed');
-
 -- CreateTable
 CREATE TABLE "parties" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "title" TEXT NOT NULL,
     "capacity" INTEGER NOT NULL,
-    "join_policy" "party_join_policy" NOT NULL,
+    "join_policy" "join_policy" NOT NULL,
     "leader_id" UUID NOT NULL,
     "quest_id" UUID,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

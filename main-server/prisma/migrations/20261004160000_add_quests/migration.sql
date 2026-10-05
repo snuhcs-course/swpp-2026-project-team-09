@@ -1,11 +1,18 @@
+-- CreateEnum
+CREATE TYPE "join_policy" AS ENUM ('open', 'approval', 'closed');
+
 -- CreateTable
 CREATE TABLE "quests" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "title" TEXT NOT NULL,
     "global_event_id" UUID,
+    "leader_id" UUID NOT NULL,
+    "capacity" INTEGER NOT NULL DEFAULT 4,
+    "join_policy" "join_policy" NOT NULL DEFAULT 'closed',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "quests_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "quests_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "quests_capacity_check" CHECK ("capacity" BETWEEN 1 AND 8)
 );
 
 -- CreateTable
@@ -14,6 +21,7 @@ CREATE TABLE "quest_holders" (
     "quest_id" UUID NOT NULL,
     "user_id" UUID NOT NULL,
     "global_event_id" UUID,
+    "joined_at" TIMESTAMP(6) NOT NULL DEFAULT clock_timestamp(),
 
     CONSTRAINT "quest_holders_pkey" PRIMARY KEY ("id")
 );
@@ -83,6 +91,9 @@ CREATE UNIQUE INDEX "sub_quest_progress_sub_quest_id_holder_id_key" ON "sub_ques
 
 -- AddForeignKey
 ALTER TABLE "quests" ADD CONSTRAINT "quests_global_event_id_fkey" FOREIGN KEY ("global_event_id") REFERENCES "global_events"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "quests" ADD CONSTRAINT "quests_leader_id_fkey" FOREIGN KEY ("leader_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "quest_holders" ADD CONSTRAINT "quest_holders_quest_id_fkey" FOREIGN KEY ("quest_id") REFERENCES "quests"("id") ON DELETE CASCADE ON UPDATE CASCADE;

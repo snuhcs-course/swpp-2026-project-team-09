@@ -50,7 +50,7 @@ export class LeaderService {
     const partyId = await this.ledBy(userId);
     const memberIds = await this.prisma.$transaction(async (tx) => {
       const party = await this.lockLed(partyId, userId, tx);
-      const ids = await this.parties.memberIds(party.id, tx);
+      const ids = await this.parties.memberIds(party, tx);
       if (changes.capacity !== undefined && changes.capacity < ids.length) {
         throw conflict('CAPACITY_BELOW_MEMBERS', 'The Party has more members than this capacity.');
       }
@@ -65,7 +65,7 @@ export class LeaderService {
     const partyId = await this.ledBy(userId);
     const memberIds = await this.prisma.$transaction(async (tx) => {
       const party = await this.lockLed(partyId, userId, tx);
-      const ids = await this.parties.memberIds(party.id, tx);
+      const ids = await this.parties.memberIds(party, tx);
       if (!ids.includes(newLeaderId)) {
         throw notMember();
       }

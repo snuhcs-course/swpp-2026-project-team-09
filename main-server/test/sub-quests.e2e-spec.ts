@@ -11,6 +11,7 @@ import {
   connectToDatabase,
   editSubQuest,
   getQuest,
+  ownQuest,
   questFor,
   storeEvent,
   subQuestIn,
@@ -215,14 +216,10 @@ describe('Cancelling a Sub Quest', () => {
 
   it('is refused for the only Sub Quest of a Quest', async () => {
     const user = await signInUser(app);
-    // A Quest with one Sub Quest and no Global Event, as an accepted Meetup gives.
-    const quest = await prisma.quest.create({
-      data: { title: '점심', holders: { create: { userId: user.id } }, subQuests: { create: { title: '점심' } } },
-      include: { subQuests: true },
-    });
-    const [only] = quest.subQuests;
+    const questId = await ownQuest(app, user);
+    const [only] = await prisma.subQuest.findMany({ where: { questId } });
 
-    const response = await cancelSubQuest(app, user, { questId: quest.id, subQuestId: only?.id ?? '' });
+    const response = await cancelSubQuest(app, user, { questId, subQuestId: only?.id ?? '' });
 
     expect(response.body).toMatchObject(refused(409, 'LAST_SUB_QUEST'));
   });

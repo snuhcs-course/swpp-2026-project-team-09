@@ -3,9 +3,9 @@ import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { signInUser, TestUser } from './friends.js';
-import { enter, getMyParty, joinParty, partyOf } from './parties.js';
-import { connectToDatabase, getQuest, getQuests, markDone, questFor, storeEvent, subQuestIn } from './quests.js';
+import { befriend, signInUser, TestUser } from './friends.js';
+import { enter, getMyParty, joinParty, leaveParty, partyOf, partyOfHolders, sharedQuest } from './parties.js';
+import { connectToDatabase, getQuest, getQuests, questFor, storeEvent } from './quests.js';
 import { refused, SignalWatcher } from './signals.js';
 import { startApp } from './start-app.js';
 
@@ -24,74 +24,102 @@ afterAll(async () => {
   await app.close();
 });
 
-// The names of the signals that went to the User, in order.
-function signalsTo(user: TestUser): string[] {
-  return watcher.for(user).map(({ name }) => name);
+// How many `party-changed` signals went to the User.
+function partyChangedTo(user: TestUser): number {
+  return watcher.for(user).filter(({ name }) => name === 'party-changed').length;
 }
 
-// A Party marked with the Leader's Quest for a new Global Event.
-async function markedParty(
-  leader: TestUser,
-  joinPolicy = 'open',
-): Promise<{ partyId: string; questId: string; globalEventId: string }> {
-  const event = await storeEvent(prisma);
-  const { questId } = await questFor(app, leader, event.id);
-  const partyId = await partyOf(app, leader, { questId, joinPolicy });
-  return { partyId, questId, globalEventId: event.id };
-}
+describe('A Holder of the Party’s Quest', () => {
+  it.each(['open', 'approval', 'closed'])('enters a %s Party at once', async (joinPolicy) => {
+    const [leader, holder] = await Promise.all([signInUser(app), signInUser(app)]);
+    const questId = await sharedQuest(app, leader, [holder]);
+    const partyId = await partyOf(app, leader, { questId, joinPolicy });
 
-describe('Joining an Open Party', () => {
-  it('makes the User a member at once, and tells every member', async () => {
-    const [leader, user] = await Promise.all([signInUser(app), signInUser(app)]);
-    const partyId = await partyOf(app, leader);
-
-    const response = await joinParty(app, user, partyId);
+    const response = await joinParty(app, holder, partyId);
 
     expect(response.status).toBe(201);
     expect(response.body).toMatchObject({
       id: partyId,
       members: [
         { id: leader.id, leader: true },
-        { id: user.id, leader: false },
+        { id: holder.id, leader: false },
       ],
     });
     expect((await getMyParty(app, leader)).body).toEqual(response.body);
-    await vi.waitFor(() => {
-      expect(signalsTo(leader)).toEqual(['party-changed', 'party-changed']);
-      expect(signalsTo(user)).toEqual(['party-changed']);
-    });
-  });
-});
-
-describe('Joining is refused', () => {
-  it.each(['approval', 'closed'])('to a User who holds no Quest the %s Party is marked with', async (joinPolicy) => {
-    const [leader, user] = await Promise.all([signInUser(app), signInUser(app)]);
-    const partyId = await partyOf(app, leader, { joinPolicy });
-
-    const response = await joinParty(app, user, partyId);
-
-    expect(response.status).toBe(409);
-    expect(response.body).toMatchObject(refused(409, 'PARTY_NOT_OPEN'));
   });
 
-  it('when the Party is full', async () => {
-    const [leader, user] = await Promise.all([signInUser(app), signInUser(app)]);
-    const partyId = await partyOf(app, leader, { capacity: 1 });
+  it('is refused when the Party is full', async () => {
+    const [leader, holder] = await Promise.all([signInUser(app), signInUser(app)]);
+    const questId = await sharedQuest(app, leader, [holder]);
+    const partyId = await partyOf(app, leader, { questId, capacity: 1 });
 
-    const response = await joinParty(app, user, partyId);
+    const response = await joinParty(app, holder, partyId);
 
     expect(response.status).toBe(409);
     expect(response.body).toMatchObject(refused(409, 'PARTY_FULL'));
-    expect((await getMyParty(app, user)).status).toBe(404);
+    expect((await getMyParty(app, holder)).status).toBe(404);
+  });
+});
+
+describe('A Friend of a member', () => {
+  it('enters an Open Party at once, also as the Friend of a member who is not its Leader', async () => {
+    const [leader, member, friend] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
+    await befriend(app, member, friend);
+    const { partyId } = await partyOfHolders(app, leader, [member], { joinPolicy: 'open' });
+
+    const response = await joinParty(app, friend, partyId);
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ members: [{ id: leader.id }, { id: member.id }, { id: friend.id }] });
   });
 
+  it.each(['approval', 'closed'])('is refused by a %s Party', async (joinPolicy) => {
+    const [leader, friend] = await Promise.all([signInUser(app), signInUser(app)]);
+    await befriend(app, leader, friend);
+    const partyId = await partyOf(app, leader, { joinPolicy });
+
+    const response = await joinParty(app, friend, partyId);
+
+    expect(response.status).toBe(409);
+    expect(response.body).toMatchObject(refused(409, 'PARTY_NOT_OPEN'));
+    expect((await getMyParty(app, friend)).status).toBe(404);
+  });
+
+  it('is refused when the Party is full', async () => {
+    const [leader, friend] = await Promise.all([signInUser(app), signInUser(app)]);
+    await befriend(app, leader, friend);
+    const partyId = await partyOf(app, leader, { joinPolicy: 'open', capacity: 1 });
+
+    const response = await joinParty(app, friend, partyId);
+
+    expect(response.status).toBe(409);
+    expect(response.body).toMatchObject(refused(409, 'PARTY_FULL'));
+  });
+});
+
+describe('A User who is neither a Holder of the Party’s Quest nor a Friend of a member', () => {
+  it.each(['open', 'approval', 'closed'])('is refused by a %s Party as for an unknown one', async (joinPolicy) => {
+    const [leader, holder, stranger] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
+    const { partyId } = await partyOfHolders(app, leader, [holder], { joinPolicy });
+
+    const response = await joinParty(app, stranger, partyId);
+
+    expect(response.status).toBe(404);
+    expect(response.body).toMatchObject(refused(404, 'PARTY_NOT_FOUND'));
+    expect((await getMyParty(app, stranger)).status).toBe(404);
+  });
+});
+
+describe('Entering is refused', () => {
   it.each([
     ['another Party', 'other'],
     ['the same Party', 'same'],
-  ] as const)('to a User in a Party, joining %s', async (_case, which) => {
+  ] as const)('to a User in a Party, entering %s', async (_case, which) => {
     const [leader, other, user] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
-    const partyId = await partyOf(app, leader);
-    const otherId = await partyOf(app, other);
+    await befriend(app, leader, user);
+    await befriend(app, other, user);
+    const partyId = await partyOf(app, leader, { joinPolicy: 'open' });
+    const otherId = await partyOf(app, other, { joinPolicy: 'open' });
     await enter(app, user, partyId);
 
     const response = await joinParty(app, user, which === 'same' ? partyId : otherId);
@@ -111,91 +139,105 @@ describe('Joining is refused', () => {
   });
 });
 
-describe('A Holder of the marked Quest', () => {
-  it.each(['open', 'approval', 'closed'])('joins a %s Party at once', async (joinPolicy) => {
-    const [leader, holder] = await Promise.all([signInUser(app), signInUser(app)]);
-    const { partyId, questId, globalEventId } = await markedParty(leader, joinPolicy);
-    await prisma.questHolder.create({ data: { questId, userId: holder.id, globalEventId } });
-
-    const response = await joinParty(app, holder, partyId);
-
-    expect(response.status).toBe(201);
-    expect((await getQuests(app, holder)).body).toMatchObject([{ id: questId }]);
-  });
-
-  it('is refused when the Party is full', async () => {
-    const [leader, holder] = await Promise.all([signInUser(app), signInUser(app)]);
+describe('Entering a Party', () => {
+  it('changes no Quest of a Friend who does not hold its Quest', async () => {
+    const [leader, friend] = await Promise.all([signInUser(app), signInUser(app)]);
+    await befriend(app, leader, friend);
     const event = await storeEvent(prisma);
     const { questId } = await questFor(app, leader, event.id);
-    const partyId = await partyOf(app, leader, { questId, joinPolicy: 'closed', capacity: 1 });
-    await prisma.questHolder.create({ data: { questId, userId: holder.id, globalEventId: event.id } });
+    const own = await questFor(app, friend, event.id);
+    const partyId = await partyOf(app, leader, { questId, joinPolicy: 'open' });
 
-    const response = await joinParty(app, holder, partyId);
+    await enter(app, friend, partyId);
 
-    expect(response.body).toMatchObject(refused(409, 'PARTY_FULL'));
-  });
-});
-
-describe('Entering a marked Party without holding its Quest', () => {
-  it('makes the User a Holder of it, and tells every Holder', async () => {
-    const [leader, user] = await Promise.all([signInUser(app), signInUser(app)]);
-    const { partyId, questId } = await markedParty(leader);
-
-    await enter(app, user, partyId);
-
-    expect((await getQuest(app, user, questId)).status).toBe(200);
-    expect((await getQuest(app, leader, questId)).body).toMatchObject({ holders: [{}, {}] });
-    await vi.waitFor(() => {
-      expect(signalsTo(user)).toEqual(['party-changed', 'quests-changed']);
-      expect(signalsTo(leader).filter((name) => name === 'quests-changed')).toHaveLength(2);
-    });
-  });
-
-  it('deletes the Quest the User held alone for the Global Event, with its Sub Quests and the User’s progress', async () => {
-    const [leader, user] = await Promise.all([signInUser(app), signInUser(app)]);
-    const { partyId, questId, globalEventId } = await markedParty(leader);
-    const own = await questFor(app, user, globalEventId);
-    const subQuestId = await subQuestIn(app, user, own.questId);
-    await markDone(app, user, { questId: own.questId, subQuestId });
-
-    await enter(app, user, partyId);
-
-    expect((await getQuests(app, user)).body).toMatchObject([{ id: questId }]);
-    expect(await prisma.quest.count({ where: { id: own.questId } })).toBe(0);
-    expect(await prisma.subQuest.count({ where: { questId: own.questId } })).toBe(0);
-    expect(await prisma.subQuestProgress.count({ where: { subQuestId } })).toBe(0);
-  });
-});
-
-describe('Entering a marked Party while holding a Shared Quest for its Global Event', () => {
-  it('leaves the User with that Quest, and no Holder of the mark', async () => {
-    const [leader, user, companion] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
-    const { partyId, questId, globalEventId } = await markedParty(leader);
-    const shared = await questFor(app, user, globalEventId);
-    await prisma.questHolder.create({ data: { questId: shared.questId, userId: companion.id, globalEventId } });
-
-    await enter(app, user, partyId);
-
-    expect((await getQuests(app, user)).body).toMatchObject([{ id: shared.questId }]);
+    expect((await getQuests(app, friend)).body).toMatchObject([{ id: own.questId, holders: [{ id: friend.id }] }]);
     expect((await getQuest(app, leader, questId)).body).toMatchObject({ holders: [{ id: leader.id }] });
-    expect((await getMyParty(app, user)).body).toMatchObject({ id: partyId });
+    expect((await getQuest(app, friend, questId)).status).toBe(404);
+  });
+
+  it('changes no Quest of a Holder', async () => {
+    const [leader, holder] = await Promise.all([signInUser(app), signInUser(app)]);
+    const { questId } = await partyOfHolders(app, leader, [holder]);
+
+    expect((await getQuests(app, holder)).body).toMatchObject([
+      { id: questId, holders: [{ id: leader.id }, { id: holder.id }] },
+    ]);
   });
 });
 
-describe('Entering a Party marked with a Quest without a Global Event', () => {
-  it('makes the User a Holder of it', async () => {
-    const [leader, user] = await Promise.all([signInUser(app), signInUser(app)]);
-    const quest = await prisma.quest.create({
-      data: {
-        title: '저녁 약속',
-        holders: { create: { userId: leader.id } },
-        subQuests: { create: { title: '저녁', endsAt: new Date(Date.now() + 60 * 60 * 1000) } },
-      },
+// How many `party-changed` signals went to each User.
+function partyChangedCounts(...users: TestUser[]): number[] {
+  return users.map((user) => partyChangedTo(user));
+}
+
+interface Around {
+  leader: TestUser;
+  holder: TestUser;
+  leaderFriend: TestUser;
+  holderFriend: TestUser;
+  stranger: TestUser;
+  questId: string;
+}
+
+// A Quest of the Leader's that the Holder holds too, a Friend of each and a User who is none of these.
+async function around(): Promise<Around> {
+  const [leader, holder, leaderFriend, holderFriend, stranger] = await Promise.all(
+    Array.from({ length: 5 }, () => signInUser(app)),
+  );
+  await befriend(app, leader, leaderFriend);
+  await befriend(app, holder, holderFriend);
+  const questId = await sharedQuest(app, leader, [holder]);
+  return { leader, holder, leaderFriend, holderFriend, stranger, questId };
+}
+
+describe('party-changed when a Party opens and ends', () => {
+  it('goes to the members, the Holders of its Quest and the Friends of its members when it opens', async () => {
+    const { leader, holder, leaderFriend, holderFriend, stranger, questId } = await around();
+
+    await partyOf(app, leader, { questId });
+
+    await vi.waitFor(() => {
+      expect(partyChangedCounts(leader, holder, leaderFriend)).toEqual([1, 1, 1]);
     });
-    const partyId = await partyOf(app, leader, { questId: quest.id });
+    expect(partyChangedCounts(holderFriend, stranger)).toEqual([0, 0]);
+  });
 
-    await enter(app, user, partyId);
+  it('goes to them when the Party ends', async () => {
+    const { leader, holder, leaderFriend, stranger, questId } = await around();
+    await partyOf(app, leader, { questId });
 
-    expect((await getQuests(app, user)).body).toMatchObject([{ id: quest.id, globalEvent: null }]);
+    await leaveParty(app, leader);
+
+    await vi.waitFor(() => {
+      expect(partyChangedCounts(leader, holder, leaderFriend)).toEqual([2, 2, 2]);
+    });
+    expect(partyChangedTo(stranger)).toBe(0);
+  });
+});
+
+describe('party-changed when the members change', () => {
+  it('goes to them when a member enters, the Friends of the new member included', async () => {
+    const { leader, holder, leaderFriend, holderFriend, stranger, questId } = await around();
+    const partyId = await partyOf(app, leader, { questId });
+
+    await enter(app, holder, partyId);
+
+    await vi.waitFor(() => {
+      expect(partyChangedCounts(leader, holder, leaderFriend, holderFriend)).toEqual([2, 2, 2, 1]);
+    });
+    expect(partyChangedTo(stranger)).toBe(0);
+  });
+
+  it('goes to them when a member leaves, the one who left and their Friends included', async () => {
+    const { leader, holder, leaderFriend, holderFriend, stranger, questId } = await around();
+    const partyId = await partyOf(app, leader, { questId });
+    await enter(app, holder, partyId);
+
+    await leaveParty(app, holder);
+
+    await vi.waitFor(() => {
+      expect(partyChangedCounts(leader, holder, leaderFriend, holderFriend)).toEqual([3, 3, 3, 2]);
+    });
+    expect(partyChangedTo(stranger)).toBe(0);
   });
 });

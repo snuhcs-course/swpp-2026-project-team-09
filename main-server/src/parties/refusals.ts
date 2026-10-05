@@ -8,6 +8,9 @@ export const conflict = (code: string, message: string, more: object = {}): Conf
 
 export const notInParty = (): NotFoundException => notFound('NOT_IN_PARTY', 'The User is in no Party.');
 
+// Also for a Party the User may not see, so that its existence stays hidden.
+export const partyNotFound = (): NotFoundException => notFound('PARTY_NOT_FOUND', 'No such Party is running.');
+
 export const notLeader = (): ForbiddenException =>
   new ForbiddenException({
     statusCode: HttpStatus.FORBIDDEN,

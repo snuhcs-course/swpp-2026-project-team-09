@@ -1,11 +1,12 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
-import { PartyJoinPolicy } from '../generated/prisma/client.js';
+import { JoinPolicy } from '../generated/prisma/client.js';
+import { FriendsService } from '../friends/friends.service.js';
 import { UsersService } from '../users/users.service.js';
 import {
   ReceivedJoinRequestDto,
-  SENT_JOIN_REQUEST_INCLUDE,
+  sentJoinRequestInclude,
   SentJoinRequestDto,
   toReceivedJoinRequestDto,
   toSentJoinRequestDto,
@@ -30,6 +31,7 @@ export class JoinRequestsService {
     private readonly users: UsersService,
     private readonly parties: PartiesService,
     private readonly leader: LeaderService,
+    private readonly friends: FriendsService,
     private readonly signals: SignalsService,
   ) {}
 
@@ -37,10 +39,10 @@ export class JoinRequestsService {
   async ask(userId: string, partyId: string): Promise<SentJoinRequestDto> {
     const { request, leaderId } = await this.prisma.$transaction(async (tx) => {
       const party = await this.parties.lock(partyId, tx);
-      if ((await this.parties.memberIds(party.id, tx)).includes(userId)) {
+      if ((await this.parties.memberIds(party, tx)).includes(userId)) {
         throw alreadyMember();
       }
-      if (party.joinPolicy !== PartyJoinPolicy.approval) {
+      if (party.joinPolicy !== JoinPolicy.approval) {
         throw notApproval();
       }
       if ((await tx.partyJoinRequest.findUnique({ where: { partyId_userId: { partyId, userId } } })) !== null) {
@@ -49,23 +51,24 @@ export class JoinRequestsService {
       return {
         request: await tx.partyJoinRequest.create({
           data: { partyId, userId },
-          include: SENT_JOIN_REQUEST_INCLUDE,
+          include: sentJoinRequestInclude(userId),
         }),
         leaderId: party.leaderId,
       };
     });
     this.signals.send([leaderId], 'party-changed');
-    return toSentJoinRequestDto(request);
+    return toSentJoinRequestDto(request, new Set(await this.friends.friendsOfAny([userId])));
   }
 
   // The User's own waiting requests, the newest first.
   async listSent(userId: string): Promise<SentJoinRequestDto[]> {
     const requests = await this.prisma.partyJoinRequest.findMany({
       where: { userId },
-      include: SENT_JOIN_REQUEST_INCLUDE,
+      include: sentJoinRequestInclude(userId),
       orderBy: [{ sentAt: 'desc' }, { id: 'desc' }],
     });
-    return requests.map((request) => toSentJoinRequestDto(request));
+    const friendIds = new Set(await this.friends.friendsOfAny([userId]));
+    return requests.map((request) => toSentJoinRequestDto(request, friendIds));
   }
 
   // The User's row is locked, as for the Leader's acceptance, so that a request is not both withdrawn and accepted.
@@ -103,19 +106,18 @@ export class JoinRequestsService {
     if (request === null) {
       throw joinRequestNotFound();
     }
-    const { memberIds, holderIds } = await this.prisma.$transaction(async (tx) => {
+    const audience = await this.prisma.$transaction(async (tx) => {
       await this.users.lock(request.userId, tx);
       const party = await this.leader.lockLed(partyId, leaderId, tx);
       if ((await tx.partyJoinRequest.findUnique({ where: { id: requestId } })) === null) {
         throw joinRequestNotFound();
       }
-      if (party.joinPolicy !== PartyJoinPolicy.approval) {
+      if (party.joinPolicy !== JoinPolicy.approval) {
         throw notApproval();
       }
       return this.parties.admit(party, request.userId, tx);
     });
-    this.signals.send(memberIds, 'party-changed');
-    this.signals.send(holderIds, 'quests-changed');
+    this.signals.send(audience, 'party-changed');
   }
 
   async decline(leaderId: string, requestId: string): Promise<void> {

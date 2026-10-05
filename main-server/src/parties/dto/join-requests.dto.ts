@@ -1,15 +1,22 @@
 import { z } from 'zod';
 import { Prisma } from '../../generated/prisma/client.js';
-import { LISTED_PARTY_INCLUDE, ListedPartyDto, toListedPartyDto, USER_SUMMARY, UserSummaryDto } from './party.dto.js';
+import {
+  toVisiblePartyDto,
+  USER_SUMMARY,
+  UserSummaryDto,
+  VisibleParty,
+  visiblePartyInclude,
+  VisiblePartyDto,
+} from './party.dto.js';
 
 export const askToJoinSchema = z.strictObject({ partyId: z.uuid() });
 
 export type AskToJoinDto = z.infer<typeof askToJoinSchema>;
 
-// A request as the User who asked lists it.
+// A request as the User who asked lists it, with the Party as their list of Parties shows it.
 export interface SentJoinRequestDto {
   id: string;
-  party: ListedPartyDto;
+  party: VisiblePartyDto;
   sentAt: string;
 }
 
@@ -20,14 +27,17 @@ export interface ReceivedJoinRequestDto {
   sentAt: string;
 }
 
-export const SENT_JOIN_REQUEST_INCLUDE = {
-  party: { include: LISTED_PARTY_INCLUDE },
-} satisfies Prisma.PartyJoinRequestInclude;
+// As the User `readerId` who asked reads it.
+export function sentJoinRequestInclude(readerId: string) {
+  return { party: { include: visiblePartyInclude(readerId) } } satisfies Prisma.PartyJoinRequestInclude;
+}
 
+// As the reader of sentJoinRequestInclude, a Friend of the Users `friendIds`, reads it.
 export function toSentJoinRequestDto(
-  request: Prisma.PartyJoinRequestGetPayload<{ include: typeof SENT_JOIN_REQUEST_INCLUDE }>,
+  request: { id: string; party: VisibleParty; sentAt: Date },
+  friendIds: ReadonlySet<string>,
 ): SentJoinRequestDto {
-  return { id: request.id, party: toListedPartyDto(request.party), sentAt: request.sentAt.toISOString() };
+  return { id: request.id, party: toVisiblePartyDto(request.party, friendIds), sentAt: request.sentAt.toISOString() };
 }
 
 export function toReceivedJoinRequestDto(

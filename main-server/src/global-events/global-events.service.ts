@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CollectionService } from '../collection/collection.service.js';
 import { PrismaService } from '../common/prisma.service.js';
+import { SignalsService } from '../common/signals.service.js';
 import { GlobalEventState, Prisma } from '../generated/prisma/client.js';
 import { PlaceDto } from '../places/dto/place.dto.js';
 import { PlacesService } from '../places/places.service.js';
@@ -33,6 +34,7 @@ export class GlobalEventsService {
     private readonly prisma: PrismaService,
     private readonly collection: CollectionService,
     private readonly places: PlacesService,
+    private readonly signals: SignalsService,
   ) {}
 
   // A post already stored is left as it is, in whatever state, so that an Administrator's edits stay and a discarded
@@ -40,17 +42,26 @@ export class GlobalEventsService {
   // A Collection that stopped early is recorded as failed, with the posts it read, so that the two are stored together.
   async storeCollected({ source, collectedAt, failureReason, events }: EventsCollectedMessage): Promise<void> {
     const places = await this.places.list();
-    await this.prisma.$transaction(async (tx) => {
+    const stored = await this.prisma.$transaction(async (tx) => {
       if (failureReason === null) {
         await this.collection.recordSuccess(tx, source, new Date(collectedAt));
       } else {
         await this.collection.recordFailure(source, new Date(collectedAt), failureReason, tx);
       }
-      await tx.globalEvent.createMany({
+      return tx.globalEvent.createManyAndReturn({
         data: events.map((event) => toGlobalEvent(event, places)),
         skipDuplicates: true,
+        select: { state: true },
       });
     });
+    if (stored.some(({ state }) => state === GlobalEventState.published)) {
+      this.signalChanged();
+    }
+  }
+
+  // Tells every connected app to fetch the published Global Events again. Call it once a change to them is committed.
+  signalChanged(): void {
+    this.signals.send('everyone', 'global-events-changed');
   }
 
   // In the order asked.

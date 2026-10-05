@@ -11,7 +11,7 @@ import {
   sharingFriends,
   uploadPosition,
 } from './location-sharing.js';
-import { enter, getMyParty, leaveParty, partyOf, setPartySharing } from './parties.js';
+import { enter, getMyParty, leaveParty, partyOf, partyOfHolders, setPartySharing } from './parties.js';
 import { refused, SignalWatcher } from './signals.js';
 import { startApp } from './start-app.js';
 
@@ -47,7 +47,7 @@ async function expectRemoved(viewer: TestUser, subject: TestUser): Promise<void>
 // Two Users in one Party, not Friends, who have turned their Master Switches on.
 async function sharingMembers(): Promise<[TestUser, TestUser]> {
   const [leader, member] = await Promise.all([signInUser(app), signInUser(app)]);
-  await enter(app, member, await partyOf(app, leader));
+  await partyOfHolders(app, leader, [member]);
   await Promise.all([
     expectStatus(setMasterSwitch(app, leader, true), 204),
     expectStatus(setMasterSwitch(app, member, true), 204),
@@ -92,7 +92,7 @@ describe('Members of a Party', () => {
   it('see a member whom the friendship’s switch hides', async () => {
     const [user, friend] = await sharingFriends(app);
     await expectStatus(setFriendSharing(app, user, friend.id, false), 204);
-    await enter(app, friend, await partyOf(app, user));
+    await enter(app, friend, await partyOf(app, user, { joinPolicy: 'open' }));
 
     await expectStatus(uploadPosition(app, friend), 200);
 

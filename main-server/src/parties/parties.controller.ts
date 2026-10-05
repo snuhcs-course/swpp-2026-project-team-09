@@ -1,20 +1,20 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Put } from '@nestjs/common';
 import { z } from 'zod';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
 import { type SwitchDto, switchSchema } from '../location-sharing/dto/switch.dto.js';
 import {
-  type CreatePartyDto,
-  createPartySchema,
+  type OpenPartyDto,
+  openPartySchema,
   type UpdatePartyDto,
   updatePartySchema,
   type UserIdDto,
   userIdSchema,
 } from './dto/party-requests.dto.js';
-import { ListedPartyDto, PartyDto } from './dto/party.dto.js';
+import { PartyDto, VisiblePartyDto } from './dto/party.dto.js';
 import { LeaderService } from './leader.service.js';
 import { PartiesService } from './parties.service.js';
 
-// A repeat of creating or joining is refused as a User in a Party already, so neither takes an Idempotency-Key.
+// A repeat of opening or entering is refused as a User in a Party already, so neither takes an Idempotency-Key.
 @Controller('parties')
 export class PartiesController {
   constructor(
@@ -23,18 +23,13 @@ export class PartiesController {
   ) {}
 
   @Post()
-  create(
-    @CurrentUser() user: SignedInUser,
-    @Body({ schema: createPartySchema }) body: CreatePartyDto,
-  ): Promise<PartyDto> {
-    return this.parties.create(user.id, body);
+  open(@CurrentUser() user: SignedInUser, @Body({ schema: openPartySchema }) body: OpenPartyDto): Promise<PartyDto> {
+    return this.parties.open(user.id, body);
   }
 
   @Get()
-  list(
-    @Query('globalEventId', { schema: z.uuid().optional() }) globalEventId: string | undefined,
-  ): Promise<ListedPartyDto[]> {
-    return this.parties.list(globalEventId);
+  listVisible(@CurrentUser() user: SignedInUser): Promise<VisiblePartyDto[]> {
+    return this.parties.listVisible(user.id);
   }
 
   @Get('mine')

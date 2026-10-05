@@ -3,7 +3,7 @@ import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { FriendsService } from '../friends/friends.service.js';
 import { UsersService } from '../users/users.service.js';
-import { INVITATION_INCLUDE, InvitationDto, toInvitationDto } from './dto/invitations.dto.js';
+import { invitationInclude, InvitationDto, toInvitationDto } from './dto/invitations.dto.js';
 import { PartyDto } from './dto/party.dto.js';
 import { LeaderService } from './leader.service.js';
 import { PartiesService } from './parties.service.js';
@@ -30,7 +30,7 @@ export class InvitationsService {
     const partyId = await this.leader.ledBy(leaderId);
     await this.prisma.$transaction(async (tx) => {
       await this.leader.lockLed(partyId, leaderId, tx);
-      if ((await this.parties.memberIds(partyId, tx)).includes(userId)) {
+      if ((await this.parties.memberIds({ id: partyId }, tx)).includes(userId)) {
         throw alreadyMember();
       }
       if (!(await this.friends.areFriends(leaderId, userId, tx))) {
@@ -48,14 +48,15 @@ export class InvitationsService {
   async list(userId: string): Promise<InvitationDto[]> {
     const invitations = await this.prisma.partyInvitation.findMany({
       where: { userId },
-      include: INVITATION_INCLUDE,
+      include: invitationInclude(userId),
       orderBy: [{ sentAt: 'desc' }, { id: 'desc' }],
     });
-    return invitations.map((invitation) => toInvitationDto(invitation));
+    const friendIds = new Set(await this.friends.friendsOfAny([userId]));
+    return invitations.map((invitation) => toInvitationDto(invitation, friendIds));
   }
 
   async accept(userId: string, invitationId: string): Promise<PartyDto> {
-    const { memberIds, holderIds } = await this.prisma.$transaction(async (tx) => {
+    const audience = await this.prisma.$transaction(async (tx) => {
       await this.users.lock(userId, tx);
       const invitation = await tx.partyInvitation.findFirst({ where: { id: invitationId, userId } });
       if (invitation === null) {
@@ -63,8 +64,7 @@ export class InvitationsService {
       }
       return this.parties.admit(await this.parties.lock(invitation.partyId, tx), userId, tx);
     });
-    this.signals.send(memberIds, 'party-changed');
-    this.signals.send(holderIds, 'quests-changed');
+    this.signals.send(audience, 'party-changed');
     return this.parties.read(userId);
   }
 

@@ -12,7 +12,7 @@ import { PartiesController } from './parties.controller.js';
 import { PartiesService } from './parties.service.js';
 
 @Module({
-  imports: [UsersModule, QuestsModule, LocationSharingModule, FriendsModule],
+  imports: [UsersModule, QuestsModule, FriendsModule, LocationSharingModule],
   controllers: [PartiesController, JoinRequestsController, InvitationsController],
   providers: [PartiesService, LeaderService, JoinRequestsService, InvitationsService],
 })
