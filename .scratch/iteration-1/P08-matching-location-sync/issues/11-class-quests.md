@@ -78,3 +78,14 @@ Since nothing is stored, a Class Quest takes no part in what Users do with store
 - Tokens, counted from the agent's transcript:
   - Input: 9,309,083, of which 9,139,521 were cache reads, 169,432 cache writes and 130 uncached.
   - Output: 13,435, a lower bound, since the transcript records only part of the output of most steps.
+
+### Agent usage of P08 as a whole (2026-10-06)
+
+Counted here once for the task, beside what each ticket records of its own agents.
+
+- The session that ran the agents of every P08 ticket, reviewed their results, kept the pull requests in step with the main line and opened them, from the first build through the rework of the Quest, the Party and the timetable: about 4 hours of its own work, a rough estimate; the time it waited for agents and for people is not counted. Its tokens when this section was written, which include the part ticket 09 records:
+  - Input: 162,740,448, of which 160,843,950 were cache reads, 1,895,632 cache writes and 866 uncached.
+  - Output: 299,519.
+- Seven agents no ticket records: three that looked into how SNUTT and Haengsha keep and share timetables and what the app holds, one that rewrote the timetable's documents, one that added the retry of a Friend ID to ticket 01, and two that brought tickets 07, 08 and 09 in step with the reworked Quest. About 40 minutes together, an estimate.
+  - Input: 27,551,341, of which 26,717,934 were cache reads, 832,891 cache writes and 516 uncached.
+  - Output: 16,544, a lower bound, since the transcripts record only part of the output of most steps.
