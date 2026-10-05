@@ -4,7 +4,7 @@ import { inject } from 'vitest';
 import { type VisibilityService } from '../src/location-sharing/visibility.service.js';
 import { befriend, signInUser } from './friends.js';
 import { expectStatus, OFF_CAMPUS, setFriendSharing, setMasterSwitch, uploadPosition } from './location-sharing.js';
-import { enter, partyOf, setPartySharing } from './parties.js';
+import { partyOf, partyOfHolders, setPartySharing, sharedQuest } from './parties.js';
 import { startApp } from './start-app.js';
 
 const settings = inject('settings');
@@ -259,7 +259,7 @@ describe('Whether a viewer may see a subject now', () => {
       }
       if (party !== 'none') {
         const [viewerSwitch, subjectSwitch] = party.split('/');
-        await enter(app, subject, await partyOf(app, viewer));
+        await partyOfHolders(app, viewer, [subject]);
         await expectStatus(setPartySharing(app, viewer, viewerSwitch === 'on'), 204);
         await expectStatus(setPartySharing(app, subject, subjectSwitch === 'on'), 204);
       }
@@ -270,4 +270,24 @@ describe('Whether a viewer may see a subject now', () => {
       expect((await visibility.visibleTo(viewer.id)).includes(subject.id)).toBe(sees);
     },
   );
+});
+
+describe('A Holder of the Party’s Quest who has not entered it', () => {
+  it('sees none of its members through it, and none of them sees the Holder', async () => {
+    const [viewer, subject] = await Promise.all([signInUser(app), signInUser(app)]);
+    const questId = await sharedQuest(app, subject, [viewer]);
+    await partyOf(app, subject, { questId });
+    await Promise.all([
+      expectStatus(setMasterSwitch(app, viewer, true), 204),
+      expectStatus(setMasterSwitch(app, subject, true), 204),
+    ]);
+    await Promise.all([
+      expectStatus(uploadPosition(app, subject), 200),
+      expectStatus(uploadPosition(app, viewer), 200),
+    ]);
+
+    expect(await visibility.viewersOf(subject.id)).toEqual([]);
+    expect(await visibility.visibleTo(viewer.id)).toEqual([]);
+    expect(await visibility.viewersOf(viewer.id)).toEqual([]);
+  });
 });

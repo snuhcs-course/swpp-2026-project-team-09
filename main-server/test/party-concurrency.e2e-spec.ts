@@ -2,9 +2,9 @@ import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { signInUser } from './friends.js';
+import { befriend, signInUser } from './friends.js';
 import { overlapOnLock } from './overlap.js';
-import { createParty, getMyParty, joinParty, partyOf } from './parties.js';
+import { getMyParty, joinParty, openParty, partyOf } from './parties.js';
 import { connectToDatabase, questFor, storeEvent } from './quests.js';
 import { refused } from './signals.js';
 import { startApp } from './start-app.js';
@@ -22,10 +22,12 @@ afterAll(async () => {
   await app.close();
 });
 
-describe('Two Users joining the last free place at the same moment', () => {
+describe('Two Users entering the last free place at the same moment', () => {
   it('leave one of them in the Party', async () => {
     const [leader, first, second] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
-    const partyId = await partyOf(app, leader, { capacity: 2 });
+    await befriend(app, leader, first);
+    await befriend(app, leader, second);
+    const partyId = await partyOf(app, leader, { capacity: 2, joinPolicy: 'open' });
 
     const answers = await overlapOnLock(
       prisma,
@@ -40,7 +42,7 @@ describe('Two Users joining the last free place at the same moment', () => {
   });
 });
 
-describe('Two Holders creating a Party for the same Quest at the same moment', () => {
+describe('Two Holders opening a Party for the same Quest at the same moment', () => {
   it('leave one running Party for it, which the later is led to', async () => {
     const [first, second] = await Promise.all([signInUser(app), signInUser(app)]);
     const event = await storeEvent(prisma);
@@ -50,8 +52,8 @@ describe('Two Holders creating a Party for the same Quest at the same moment', (
     const answers = await overlapOnLock(
       prisma,
       (tx) => tx.$queryRaw`SELECT 1 FROM quests WHERE id = ${questId}::uuid FOR UPDATE`,
-      () => createParty(app, first, { questId }),
-      () => createParty(app, second, { questId }),
+      () => openParty(app, first, { questId }),
+      () => openParty(app, second, { questId }),
     );
 
     expect(answers.map(({ status }) => status)).toEqual([201, 409]);
@@ -61,10 +63,15 @@ describe('Two Holders creating a Party for the same Quest at the same moment', (
   });
 });
 
-describe('One User joining two Parties at the same moment', () => {
+describe('One User entering two Parties at the same moment', () => {
   it('leaves the User in one of them', async () => {
     const [user, oneLeader, otherLeader] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
-    const [one, other] = await Promise.all([partyOf(app, oneLeader), partyOf(app, otherLeader)]);
+    await befriend(app, oneLeader, user);
+    await befriend(app, otherLeader, user);
+    const [one, other] = await Promise.all([
+      partyOf(app, oneLeader, { joinPolicy: 'open' }),
+      partyOf(app, otherLeader, { joinPolicy: 'open' }),
+    ]);
 
     const answers = await overlapOnLock(
       prisma,
@@ -91,7 +98,7 @@ describe('The database', () => {
     });
   });
 
-  it('lets one running Party carry a Quest', async () => {
+  it('lets one running Party have a Quest', async () => {
     const leader = await signInUser(app);
     const { questId } = await questFor(app, leader, (await storeEvent(prisma)).id);
     await partyOf(app, leader, { questId });
