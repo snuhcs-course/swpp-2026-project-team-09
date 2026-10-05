@@ -17,7 +17,7 @@ import {
 } from '@/design-system';
 import type { QuestRowView } from '@/features/quests/adapter';
 import { useQuestRows } from '@/features/quests/use-quest-rows';
-import { LISTS, listsTop } from './layout';
+import { listRows, LISTS, listsTop, type Room } from './layout';
 import { CollapseButton, RowWindow } from './list-parts';
 import type { MainMap } from './use-main-map';
 import type { Selection } from './use-selection';
@@ -25,6 +25,14 @@ import type { Selection } from './use-selection';
 interface QuestListProps {
   map: MainMap;
   selection: Selection;
+  // The room the list has: its window is lower on a low screen.
+  room: Room;
+}
+
+interface RowsProps {
+  rows: readonly QuestRowView[];
+  shown: number;
+  onPress: (row: QuestRowView) => void;
 }
 
 interface QuestRowProps {
@@ -102,7 +110,7 @@ function QuestRow({ row, first, last, onPress }: QuestRowProps): ReactElement {
 // What a press on a row does. A class's row brings the map to its place at the "names" level, closes an open card
 // as the frame does, and says the class and the place. Any other row would open its Party's page, which belongs to
 // another task.
-function usePress({ map, selection }: QuestListProps): (row: QuestRowView) => void {
+function usePress({ map, selection }: Pick<QuestListProps, 'map' | 'selection'>): (row: QuestRowView) => void {
   const showToast = useToast();
   const showNotReady = useNotReadyToast();
   return (row) => {
@@ -119,15 +127,16 @@ function usePress({ map, selection }: QuestListProps): (row: QuestRowView) => vo
 }
 
 // The Quest list of the `Main` frame, at the right over the map: the round button that collapses the list, the pill,
-// and today's Quests joined by the rail, in a window three rows high. Without a Quest it says so.
-export function QuestList({ map, selection }: QuestListProps): ReactElement {
+// and today's Quests joined by the rail, in a window of up to three rows. Without a Quest it says so.
+export function QuestList({ map, selection, room }: QuestListProps): ReactElement {
   const rows = useQuestRows().data;
   const [open, setOpen] = useState(true);
   const showNotReady = useNotReadyToast();
   const press = usePress({ map, selection });
   const { top } = useSafeAreaInsets();
+  const shown = listRows(room, top).quests;
   return (
-    <View style={[styles.list, { top: listsTop(top) }]}>
+    <View style={[styles.list, { top: listsTop(top) }]} testID="quest-list">
       <View style={styles.header}>
         <CollapseButton
           list="퀘스트 목록"
@@ -139,20 +148,17 @@ export function QuestList({ map, selection }: QuestListProps): ReactElement {
         />
         <QuestPill count={rows?.length ?? null} onFullScreen={showNotReady} />
       </View>
-      {open && rows !== undefined ? <Rows onPress={press} rows={rows} /> : null}
+      {open && rows !== undefined ? <Rows onPress={press} rows={rows} shown={shown} /> : null}
     </View>
   );
 }
 
-function Rows({
-  rows,
-  onPress,
-}: {
-  rows: readonly QuestRowView[];
-  onPress: (row: QuestRowView) => void;
-}): ReactElement {
+function Rows({ rows, shown, onPress }: RowsProps): ReactElement | null {
   if (rows.length === 0) {
     return <Text style={styles.empty}>오늘 일정 없음</Text>;
+  }
+  if (shown === 0) {
+    return null;
   }
   return (
     <View style={styles.rows}>
@@ -168,6 +174,9 @@ function Rows({
             row={row}
           />
         ))}
+        shown={shown}
+        side="right"
+        testID="quest-rows"
       />
     </View>
   );
@@ -215,8 +224,16 @@ const styles = StyleSheet.create({
   },
   fullScreenPressed: { backgroundColor: color.surfaceSunken },
   rows: { alignSelf: 'stretch', pointerEvents: 'box-none' },
-  // A row is as wide as its words and its round, at the right, so that the map beside it still takes a press.
-  row: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-end', gap: space[2], height: LISTS.row },
+  // A row is as wide as its words and its round, at the right, and no wider than its column: the map beside it takes
+  // the touch.
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    gap: space[2],
+    maxWidth: '100%',
+    height: LISTS.row,
+  },
   words: { alignItems: 'flex-end', flexShrink: 1 },
   kicker: { ...mapText.rowKicker, ...textHalo },
   title: { ...mapText.rowTitle, ...textHalo, maxWidth: TITLE_WIDTH, color: color.ink },
@@ -244,5 +261,6 @@ const styles = StyleSheet.create({
     paddingVertical: space[2],
     paddingHorizontal: space[1],
     color: color.inkMuted,
+    pointerEvents: 'none',
   },
 });

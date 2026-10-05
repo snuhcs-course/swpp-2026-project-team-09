@@ -10,7 +10,7 @@ export {
   type ZoomDetail,
   zoomDetail,
 } from './campus';
-export { Map } from './map';
+export { CREDIT_ROOM, Map } from './map';
 export { MarkerImageStage, unmadeImage, useMarkerImages } from './marker-images';
 export type { MarkerForm, MarkerLook } from './marker-looks';
 export type {

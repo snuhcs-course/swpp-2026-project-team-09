@@ -19,7 +19,7 @@ import {
 import type { FriendView } from '@/features/friends/adapter';
 import { useFriends } from '@/features/friends/use-friends';
 import { cardId } from '@/features/map/adapter';
-import { LISTS, listsTop } from './layout';
+import { friendsWidth, listRows, LISTS, listsTop, type Room } from './layout';
 import { CollapseButton, RowWindow } from './list-parts';
 import type { MainMap } from './use-main-map';
 import type { Selection } from './use-selection';
@@ -30,6 +30,14 @@ const LOCATION_OFF_MS = 2000;
 interface FriendListProps {
   map: MainMap;
   selection: Selection;
+  // The room the list has: its column narrows on a narrow screen and its window is lower on a low one.
+  room: Room;
+}
+
+interface RowsProps {
+  friends: readonly FriendView[];
+  shown: number;
+  onPress: (friend: FriendView) => void;
 }
 
 // The pill at the list's head: "친구" and the number of Friends in the list. The friend panel that it opens belongs
@@ -79,25 +87,52 @@ function FriendRow({ friend, onPress }: { friend: FriendView; onPress: () => voi
   );
 }
 
-// The friend list of the `Main` frame, at the left over the map: the pill, the round button that collapses the list,
-// and every Friend in a window three rows high. A press on a row brings the map to that Friend at the "close" level
-// and opens their card; for a Friend whose position is not known it says so.
-export function FriendList({ map, selection }: FriendListProps): ReactElement {
-  const friends = useFriends().data;
-  const [open, setOpen] = useState(true);
+// What a press on a Friend's row does: it brings the map to the Friend at the "close" level and opens their card,
+// also when the map's cards are still to come; for a Friend whose position is not known it says so.
+function useShow({ map, selection }: Pick<FriendListProps, 'map' | 'selection'>): (friend: FriendView) => void {
   const showToast = useToast();
-  const showNotReady = useNotReadyToast();
-  const { top } = useSafeAreaInsets();
-  const show = (friend: FriendView): void => {
+  return (friend) => {
     if (friend.position === null) {
       showToast(`${friend.name}님은 위치가 꺼져 있어요`, LOCATION_OFF_MS);
       return;
     }
     map.goTo(friend.position, 'close');
-    selection.select(cardId.friend(friend.id));
+    selection.selectOrWait(cardId.friend(friend.id));
   };
+}
+
+function Rows({ friends, shown, onPress }: RowsProps): ReactElement {
   return (
-    <View style={[styles.list, { top: listsTop(top) }]}>
+    <View style={styles.rows}>
+      <RowWindow
+        rows={friends.map((friend) => (
+          <FriendRow
+            friend={friend}
+            key={friend.id}
+            onPress={() => {
+              onPress(friend);
+            }}
+          />
+        ))}
+        shown={shown}
+        side="left"
+        testID="friend-rows"
+      />
+    </View>
+  );
+}
+
+// The friend list of the `Main` frame, at the left over the map: the pill, the round button that collapses the list,
+// and every Friend in a window of up to three rows.
+export function FriendList({ map, selection, room }: FriendListProps): ReactElement {
+  const friends = useFriends().data;
+  const [open, setOpen] = useState(true);
+  const showNotReady = useNotReadyToast();
+  const show = useShow({ map, selection });
+  const { top } = useSafeAreaInsets();
+  const shown = listRows(room, top).friends;
+  return (
+    <View style={[styles.list, { top: listsTop(top), width: friendsWidth(room) }]} testID="friend-list">
       <View style={styles.header}>
         <FriendPill count={friends?.length ?? null} onPress={showNotReady} />
         <CollapseButton
@@ -109,22 +144,7 @@ export function FriendList({ map, selection }: FriendListProps): ReactElement {
           pill="left"
         />
       </View>
-      {open && friends !== undefined ? (
-        <View style={styles.rows}>
-          <RowWindow
-            testID="friend-rows"
-            rows={friends.map((friend) => (
-              <FriendRow
-                friend={friend}
-                key={friend.id}
-                onPress={() => {
-                  show(friend);
-                }}
-              />
-            ))}
-          />
-        </View>
-      ) : null}
+      {open && shown > 0 && friends !== undefined ? <Rows friends={friends} onPress={show} shown={shown} /> : null}
     </View>
   );
 }
@@ -135,13 +155,7 @@ const HEADER_GAP = 6;
 const DOT = 10;
 
 const styles = StyleSheet.create({
-  list: {
-    position: 'absolute',
-    left: LISTS.side,
-    width: LISTS.friendsWidth,
-    gap: LISTS.gap,
-    pointerEvents: 'box-none',
-  },
+  list: { position: 'absolute', left: LISTS.side, gap: LISTS.gap, pointerEvents: 'box-none' },
   header: { flexDirection: 'row', alignItems: 'center', gap: HEADER_GAP, pointerEvents: 'box-none' },
   pill: {
     flexDirection: 'row',
@@ -158,8 +172,15 @@ const styles = StyleSheet.create({
   pillLabel: { ...text.label, color: color.onPrimary },
   pillCount: { ...text.label, fontFamily: font.medium, color: onKey.textSubtle },
   rows: { paddingLeft: space[1], pointerEvents: 'box-none' },
-  // A row is as wide as its words, so that the map beside a short name still takes a press.
-  row: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space[2], height: LISTS.row },
+  // A row is as wide as its words and no wider than its column: the map beside a short name takes the touch.
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: space[2],
+    maxWidth: '100%',
+    height: LISTS.row,
+  },
   // Raised to the name's line, as in the frame.
   dot: {
     width: DOT,

@@ -275,8 +275,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   button. "가까이 보기" is offered below the `names` level and brings the camera to the `close` level, keeping the
   card. "같이 갈 사람 찾기", "참여하기", "파티 만들기" and "파티 열기" say "준비 중이에요". While a card is open the zoom
   control is not shown; a part that a card hides asks `selection.open`. A row of a list opens a card with
-  `selection.select(cardId.friend(id))` (`cardId` of `src/features/map/adapter.ts`) and moves the map with
-  `map.goTo`.
+  `selection.selectOrWait(cardId.friend(id))` (`cardId` of `src/features/map/adapter.ts`) and moves the map with
+  `map.goTo`. A row may be pressed before the map's cards came: `selectOrWait` waits for an id that no card has
+  until the cards change, and opens its card then if it is among them; another selection or a close ends the wait.
+  A press on the map uses `selection.select`, which does nothing for an id that no card has.
 - **The route.** `useRoute(map, me)` gives the one line for `<Map>` and `routeTo(place)`. When the screen opens, the
   way to the User's next Quest by time (`useNextQuest()`) is drawn, once, as soon as the User has a position on
   campus, without a toast and without moving the map; without a position none is drawn. The next Quest is the first
@@ -310,11 +312,26 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
 - **The lists.** `FriendList` (`friend-list.tsx`) is at the left and `QuestList` (`quest-list.tsx`) at the right, each
   with the wireframe's pill and a round button beside it that collapses the list and is read as "친구 목록 접기" or
   "친구 목록 펼치기" ("퀘스트 목록 …"); the two collapse separately, and a pill stays as it is. The friend pill
-  counts the Friends in the list; the Quest pill counts the rows. The rows are in a window three rows high
-  (`RowWindow` in `list-parts.tsx`) that scrolls and snaps to the rows. With more rows than it shows, the row in its
-  third place is drawn at 40%, and the last row becomes solid at the list's end. React Native has no mask, and a
-  gradient over the window would colour the map under it, so each row's own strength follows the scroll. The web
-  does not snap. The text over the map has a white glow (`textHalo`).
+  counts the Friends in the list; the Quest pill counts the rows. The rows are in a window of up to three rows
+  (`RowWindow` in `list-parts.tsx`) that scrolls and snaps to the rows; the web does not snap. The text over the map
+  has a white glow (`textHalo`).
+  - **Only a row takes a touch.** A row is as wide as its words; the window is as wide as its widest row, never
+    wider than its column, and stands at the list's side; the window, its content and the box around each row are
+    `box-none`, as is everything around the window. So a touch beside a row, between two rows or under the last one
+    reaches the map. A scroll view that is `box-none` does not scroll on Android, so the window takes touches from
+    the moment a touch starts on a row until that touch or its drag ends: a drag that starts on a row scrolls the
+    list.
+  - **The fade.** With more rows than it shows, a window of two rows or more fades as the wireframe's mask does:
+    each row is drawn as strongly as the mask is at the row's middle, so the rows above the last place are solid,
+    the row in it is at 40%, and a row that scrolls out at the end goes down to nothing. The fade lifts as the list
+    reaches its end. React Native has no mask, and a gradient over the window would colour the map under it, so
+    each row's own strength follows the scroll.
+  - **The room** (`Room` in `layout.ts`: the stage's size, which `OverMap` tells, and the open card's height). A
+    window shows the whole rows that fit above what is under it, with 8 clear (`listRows`): three, or two, one or
+    none on a low screen. Under the Quest list is the zoom control; under the friend list is the strip of the
+    map's credit, on "오늘의 발자국"; while a card is open, under both is the credit's strip on the card. The Quest
+    column is 182 wide; the friend column is 160 or, on a screen narrower than 374, what the Quest column leaves
+    (`friendsWidth`), 146 at 360, so the two never share a point.
   - A Friend's row has the dot in the status's colour (`presence`), the name and the line, "공강 · 중앙도서관" or
     "위치 꺼짐". A press brings the map to the Friend at the `close` level and opens their card; for a Friend whose
     position is not known it says "<이름>님은 위치가 꺼져 있어요" for 2 seconds.
@@ -329,9 +346,15 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   5명의 오늘" from `useFootprints()`; "활성 파티", shown only while the User is in a Party, with "<n>명 공유 중" for
   the members who share their position, the User left out, or "응답 대기" when nobody else does
   (`useActiveParty()`); the 편의기능 button; and the AI input. Each says "준비 중이에요", as do the friend pill and the
-  Quest list's full-screen button. The AI input's send button is disabled while the input is empty; a touch of the
-  input and a sent message say "준비 중이에요" and put the keyboard away at once, so on a phone nothing can be typed
-  into it yet.
+  Quest list's full-screen button.
+  - The AI input (`ai-input.tsx`) is not a text field yet. It is a button with the look of the wireframe's empty
+    input, the placeholder "무엇이든 부탁해 보세요" and the grey send button: nothing takes the focus, no keyboard
+    comes up and nothing can be typed. A press on it says "준비 중이에요"; so does a press on the send button, which
+    a screen reader reads as disabled. The field comes with the AI chat's own task; the design system's `ChatInput`
+    is that field and no screen uses it yet.
+  - On a screen narrower than the wireframe's 390, "오늘의 발자국" gives way to "활성 파티", whose two lines stay
+    whole (`footprintsForm` in `layout.ts`): it drops its second line and keeps one face, has no face under 360,
+    and is the one button of the row that shrinks, its name cut with an ellipsis. Alone in the row it is whole.
 - While a card is open, the row of "오늘의 발자국" and "활성 파티" and the 편의기능 button are not shown, as the zoom
   control is not; both lists, the AI input and the navigation stay.
 - Every control has a Korean name for a screen reader, the wireframe's where it has one. A touch area is at least 48
@@ -339,9 +362,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   into a neighbour's shape.
 - **The map's credit.** The map ends at the navigation's top and is told what the controls cover of its edges
   (`mapInset` in `layout.ts`, the `inset` of `<Map>`): 126 at the bottom, the row of buttons' top, and 62 at the
-  right, the zoom control. So the credit is just above "오늘의 발자국", 16 from the left, in the strip that the
-  wireframe leaves free under the friend list, and a provider's logo belongs left of the zoom control, above "활성
-  파티". While a card is open the inset's bottom is the card's top, and the credit sits above the card.
+  right, the zoom control. So the credit is just above "오늘의 발자국", 16 from the left, and a provider's logo
+  belongs left of the zoom control, above "활성 파티". While a card is open the inset's bottom is the card's top,
+  and the credit sits above the card. Nothing is drawn over the credit: the lists end 8 above its strip
+  (`CREDIT_ROOM` of `@/map`, the credit's margin and its line), on a low screen with fewer rows.
 
 The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and
 `/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
@@ -479,8 +503,7 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
 - **Font**: Pretendard, one file per weight in `assets/fonts/`, loaded by the root layout before any screen appears.
   A style sets `fontFamily` from `font` and never `fontWeight`.
 - **Components**: Icon, Button, Chip, Badge, Avatar, MapPin, EventCard, TextField, ChatInput and BottomNav, with the
-  names and properties of the design system's types. `ChatInput` has two additions for the main screen: `label`, what a screen reader says for the field, and
-  `floating`, the `Main` wireframe's white ground and floating shadow over a map. `BottomNav` has two additions that the `Main` wireframe draws:
+  names and properties of the design system's types. `BottomNav` has two additions that the `Main` wireframe draws:
   an item with `action` is the one action in the middle, its icon of 22 in white on a round fill of 44 in `snuBlue`
   with the shadow `shadow.navAction`, inside the bar, its label not shown and kept as what a screen reader says; and
   `line={false}` leaves out the line on top, for a screen that draws its own edge above the bar. A component of the design system that no screen uses yet is

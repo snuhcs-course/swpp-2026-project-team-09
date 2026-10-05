@@ -1,7 +1,7 @@
 import { type ReactElement, useState } from 'react';
 import { Animated, type Insets, Platform, Pressable, StyleSheet } from 'react-native';
 import { color, Icon, radius, shadow } from '@/design-system';
-import { LIST_WINDOW, LISTS } from './layout';
+import { LISTS, listWindow } from './layout';
 
 // What the friend list and the Quest list of the main screen share: the round button that collapses a list, and the
 // window its rows scroll in.
@@ -36,6 +36,8 @@ export function CollapseButton({ list, open, pill, onPress }: CollapseButtonProp
       accessibilityLabel={`${list} ${open ? '접기' : '펼치기'}`}
       accessibilityRole="button"
       accessibilityState={{ expanded: open }}
+      // The web reads the state from this one.
+      aria-expanded={open}
       hitSlop={reachOf(pill)}
       onPress={onPress}
       style={({ pressed }) => [styles.collapse, pressed && styles.pressed, !open && styles.turned]}
@@ -45,26 +47,63 @@ export function CollapseButton({ list, open, pill, onPress }: CollapseButtonProp
   );
 }
 
-const STEP = LISTS.row + LISTS.rowGap;
-// The frame's mask draws the third row of the window at 40%.
-const FADED = 0.4;
-
-// How strongly the row at `index` is drawn while the list is scrolled by `scrolled`: the rows in the window's first
-// two places are solid and the one in its third place is faded, which says that the list goes on. The last row
-// becomes solid as the list reaches its end, where nothing goes on.
-function strengthAt(scrolled: Animated.Value, index: number, count: number): Animated.AnimatedInterpolation<number> {
-  const third = (index - (LISTS.rows - 1)) * STEP;
-  const from = index === count - 1 ? third - STEP : third;
-  return scrolled.interpolate({ inputRange: [from, from + STEP], outputRange: [FADED, 1], extrapolate: 'clamp' });
+interface RowWindowProps {
+  rows: readonly ReactElement[];
+  // How many rows the window shows: three, or fewer on a low screen (`listRows`).
+  shown: number;
+  // The side of the screen the list is at: the window and its rows start there.
+  side: 'left' | 'right';
+  testID?: string;
 }
 
-// The window that a list's rows scroll in: three rows high, or as high as fewer rows are. It snaps to the rows.
-// With more rows than it shows, the row in its third place is faded. The frame fades with a mask over the window,
+const STEP = LISTS.row + LISTS.rowGap;
+
+// The frame's mask over the window, counted back from the window's end: solid until 58 before it, at 40% from 50 to
+// 14 before it, nothing at the end. In the frame's window of 172 that is solid down to 114 and 40% from 122 to 158.
+const MASK = { before: [0, 14, 50, 58], strength: [0, 0.4, 0.4, 1] } as const;
+
+// How strongly the row at `index` is drawn while the list is scrolled by `scrolled`: what the mask has at the row's
+// middle. So the rows above the window's last place are solid, the row in it is at 40%, and a row is nothing by the
+// time its middle is at the window's end. As the list reaches its end the fade lifts, where nothing goes on.
+function strengthAt(
+  scrolled: Animated.Value,
+  index: number,
+  count: number,
+  shown: number,
+): Animated.AnimatedSubtraction<number> {
+  // The scroll at which the row's middle is at the window's end.
+  const atEnd = index * STEP + LISTS.row / 2 - listWindow(shown);
+  const taken = scrolled.interpolate({
+    inputRange: MASK.before.map((before) => atEnd + before),
+    outputRange: MASK.strength.map((strength) => 1 - strength),
+    extrapolate: 'clamp',
+  });
+  const end = (count - shown) * STEP;
+  const goesOn = scrolled.interpolate({ inputRange: [end - STEP, end], outputRange: [1, 0], extrapolate: 'clamp' });
+  return Animated.subtract(1, Animated.multiply(taken, goesOn));
+}
+
+// The window that a list's rows scroll in: `shown` rows high, or as high as fewer rows are. It snaps to the rows
+// where the platform does (not on the web).
+//
+// Only the rows take a touch; everything else in the window lets it through to the map:
+// - the window is as wide as its widest row and no wider than its column, and stands at the list's side;
+// - the window, its content and the box around each row are `box-none`, so a touch beside a shorter row or between
+//   two rows reaches the map;
+// - a scroll view that is `box-none` does not scroll on Android (`ReactScrollView.onTouchEvent` refuses the touch),
+//   so the window takes touches from the moment a touch starts on a row until that touch or its drag ends. A touch
+//   that starts on a row scrolls the list; one that starts anywhere else never reaches the window.
+//
+// With more rows than it shows, a window of two rows or more fades towards its end. The frame fades with a mask,
 // which React Native does not have; a gradient over the window would colour the map under it, so each row's own
-// strength follows the scroll instead.
-export function RowWindow({ rows, testID }: { rows: readonly ReactElement[]; testID?: string }): ReactElement {
+// strength follows the scroll instead (`strengthAt`).
+export function RowWindow({ rows, shown, side, testID }: RowWindowProps): ReactElement {
   const [scrolled] = useState(() => new Animated.Value(0));
-  const fades = rows.length > LISTS.rows;
+  const [held, setHeld] = useState(false);
+  const fades = rows.length > shown && shown > 1;
+  const release = (): void => {
+    setHeld(false);
+  };
   return (
     <Animated.ScrollView
       contentContainerStyle={styles.rows}
@@ -74,14 +113,22 @@ export function RowWindow({ rows, testID }: { rows: readonly ReactElement[]; tes
         // The web has no native driver.
         useNativeDriver: Platform.OS !== 'web',
       })}
+      onScrollEndDrag={release}
+      onTouchEnd={release}
+      onTouchStart={() => {
+        setHeld(true);
+      }}
       scrollEventThrottle={16}
       showsVerticalScrollIndicator={false}
       snapToInterval={STEP}
-      style={styles.window}
+      style={[styles.window, styles[side], held ? styles.held : styles.through, { maxHeight: listWindow(shown) }]}
       testID={testID}
     >
       {rows.map((row, index) => (
-        <Animated.View key={row.key} style={fades ? { opacity: strengthAt(scrolled, index, rows.length) } : null}>
+        <Animated.View
+          key={row.key}
+          style={[styles.through, { opacity: fades ? strengthAt(scrolled, index, rows.length, shown) : 1 }]}
+        >
           {row}
         </Animated.View>
       ))}
@@ -101,6 +148,11 @@ const styles = StyleSheet.create({
   },
   pressed: { backgroundColor: color.surfaceSunken },
   turned: { transform: [{ rotate: '180deg' }] },
-  window: { flexGrow: 0, maxHeight: LIST_WINDOW },
-  rows: { gap: LISTS.rowGap },
+  // As wide as its widest row, and no wider than its column.
+  window: { flexGrow: 0, maxWidth: '100%' },
+  left: { alignSelf: 'flex-start' },
+  right: { alignSelf: 'flex-end' },
+  through: { pointerEvents: 'box-none' },
+  held: { pointerEvents: 'auto' },
+  rows: { gap: LISTS.rowGap, pointerEvents: 'box-none' },
 });

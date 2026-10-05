@@ -1,3 +1,4 @@
+import { fireEvent, type screen as Screen } from '@testing-library/react-native';
 import { screen } from './app';
 
 // What a screen reader says for the controls that the `Main` frame puts around the map.
@@ -26,4 +27,33 @@ export function button(name: string): ReturnType<typeof screen.getByRole> {
 
 export function findButton(name: string | RegExp): ReturnType<typeof screen.queryByRole> {
   return screen.queryByRole('button', { name });
+}
+
+type Found = ReturnType<typeof Screen.getByTestId>;
+
+// The stage is laid out: the room between the status bar and the navigation, which the lists and the row of buttons
+// fit themselves to. A test's status bar takes nothing.
+export async function layStage(width: number, height: number): Promise<void> {
+  await fireEvent(screen.getByTestId('over-map'), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width, height } } });
+}
+
+// An open card is laid out with this height.
+export async function layCard(height: number): Promise<void> {
+  await fireEvent(screen.getByTestId('map-card'), 'layout', {
+    nativeEvent: { layout: { x: 16, y: 0, width: 328, height } },
+  });
+}
+
+// The box around a row, which carries the row's strength in its window.
+export function boxOf(row: string): Found {
+  const box = button(row).parent;
+  if (box === null) {
+    throw new Error(`The row "${row}" stands in no box`);
+  }
+  return box;
+}
+
+// The list is scrolled by this much.
+export async function scroll(window: Found, y: number): Promise<void> {
+  await fireEvent.scroll(window, { nativeEvent: { contentOffset: { x: 0, y } } });
 }

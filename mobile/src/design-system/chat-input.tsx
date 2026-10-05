@@ -1,7 +1,7 @@
 import { type ReactElement, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Icon } from './icon';
-import { color, font, radius, shadow, space, text } from './tokens';
+import { color, font, radius, space, text } from './tokens';
 
 interface ChatInputProps {
   placeholder?: string;
@@ -12,10 +12,6 @@ interface ChatInputProps {
   onSend?: (message: string) => void;
   // The map's entry point opens the chat when the input is touched.
   onFocus?: () => void;
-  // What a screen reader says for the field. Left out, "메시지".
-  label?: string;
-  // Over a map, as the `Main` frame draws it: a white ground and the floating shadow.
-  floating?: boolean;
 }
 
 const SEND_SIZE = 40;
@@ -27,8 +23,6 @@ export function ChatInput({
   disabled = false,
   onSend,
   onFocus,
-  label = '메시지',
-  floating = false,
 }: ChatInputProps): ReactElement {
   const [message, setMessage] = useState('');
   const [focused, setFocused] = useState(false);
@@ -40,9 +34,9 @@ export function ChatInput({
   return (
     <View style={styles.wrap}>
       <Suggestions disabled={disabled} onSend={onSend} suggestions={suggestions} />
-      <View style={[styles.bar, floating && styles.floating, focused && styles.focused]}>
+      <View style={[styles.bar, focused && styles.focused]}>
         <TextInput
-          accessibilityLabel={label}
+          accessibilityLabel="메시지"
           onBlur={() => {
             setFocused(false);
           }}
@@ -148,7 +142,6 @@ const styles = StyleSheet.create({
     borderColor: color.border,
     backgroundColor: color.surfaceSubtle,
   },
-  floating: { backgroundColor: color.surface, boxShadow: shadow.float },
   focused: { borderColor: color.focusRing, boxShadow: `0 0 0 1px ${color.focusRing}` },
   input: {
     ...text.bodyLg,

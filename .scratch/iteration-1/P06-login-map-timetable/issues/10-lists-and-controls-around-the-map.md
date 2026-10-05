@@ -88,3 +88,35 @@ What the Android module (`mobile/modules/snu-now-map`) has to do for the inset; 
 - With the main screen's inset the logo's bottom right corner is 70 from the view's right edge and 134 from its bottom, left of the zoom control and above "활성 파티". While a card is open it is 16 from the right, 8 above the card.
 - The camera need not follow the inset.
 - The iOS module (ticket 11) takes the same prop.
+
+### After the review and the screenshots (2026-10-06)
+
+The main line was merged in, with ticket 09 squashed in it, and a review of the code and screenshots of the web target were answered. Where this comment and the result above differ, this one holds.
+
+Measured on the web target at 390 by 844 before this round: both pills, the rows, the three buttons, the AI input and the whole stack from the bottom had the frame's sizes and places to the pixel.
+
+What changed:
+
+- **The lists no longer take the map's touches.** Before, each list's window was as wide as its column and 172 high and took every touch in it: on the web a marker beside a Friend's row could not be pressed until the list was collapsed. Now only a row takes a touch. The window is as wide as its widest row, never wider than its column, and stands at the list's side, the friend list's at the left and the Quest list's at the right. The window, its content, the box around each row and everything around the window are `box-none`, so a touch beside a row, between two rows or under the last one reaches the map. "오늘 일정 없음" takes no touch.
+- **A drag that starts on a row scrolls the list.** A scroll view that is `box-none` does not scroll on Android: `ReactScrollView.onTouchEvent` refuses the touch (read in React Native 0.86's source). So the window takes touches from the moment a touch starts on a row until that touch or its drag ends, and is `box-none` at every other time. The same code runs on every platform.
+- **The two columns never share a point.** The Quest column keeps 182. The friend column is 160 or, on a screen narrower than 374, what the Quest column leaves: 146 at 360, 106 at 320.
+- **The AI input is a button, not a field.** It has the look of the frame's empty input: the white bar of radius 28, the placeholder "무엇이든 부탁해 보세요" and the grey send button. Nothing takes the focus, no keyboard comes up and nothing can be typed, on a phone and on the web alike. A press on the bar says "준비 중이에요", and so does a press on the send button. The bar is read as the button "AI에게 메시지" and the send button as "보내기", disabled. The code and the tests for typing and sending are removed, and the design system's `ChatInput` is as it was before this ticket, without `label` and `floating`. The real input comes with the AI chat's own task.
+- **The lists fit a low screen.** A window shows the whole rows that fit above what is under it, with 8 clear: three where they fit, else two, one or none. Under the Quest list is the zoom control, whose top is 270 above the navigation. Under the friend list is the strip of the map's credit, 22 high, on "오늘의 발자국". While a card is open, under both lists is the credit's strip on the card. The rule is `listRows` in `layout.ts`, from the stage's height, which `OverMap` tells when it is laid out; until then a window has three rows. With a status bar of 24 the Quest list has three rows on a stage of 526 or more and the friend list on one of 404 or more.
+- **The credit is never under a list or a control.** It stays where it was, just above "오늘의 발자국" and, while a card is open, just above the card. It was not moved: the lists end above its strip instead, so there is always a free strip for it, down to a list with no rows.
+- **A Friend's row pressed before the map's cards came** moves the map at once and opens the card when the cards come. A selection of something else, or a close, before that ends the wait. If the cards come without that Friend, as they do after a failure of the Friends or of their positions, nothing opens and nothing is said.
+- **"활성 파티" stays whole on a narrow screen.** It never shrinks. "오늘의 발자국" gives way on a stage narrower than 390 while a Party is shown: it drops its second line and keeps one face, has no face under 360, and is the one button of the row that shrinks, its name cut with an ellipsis. The second line is not wider than the name, so dropping it frees no width by itself; the faces do, 18 each. Alone in the row, "오늘의 발자국" is whole at every width.
+- **The collapse buttons** carry `aria-expanded` beside the state for the phone's screen reader, and so does the 편의기능 button.
+- **The fade follows the frame's mask.** Each row is drawn as strongly as the mask is at the row's middle: solid down to 114 of the window's 172, 40% from 122 to 158, nothing at 172. So the row in the last place is at 40% while the list rests, as the frame's is, and a row that scrolls out at the window's end goes down to nothing. The fade still lifts as the list reaches its end, and a list with no more rows than its window fades none. A window of one row, on a low screen, fades none either. The lists snap to the rows on Android and iOS; React Native's web target has no snap.
+- **The play mark** is a triangle of 10 by 10.
+
+The tests: `__tests__/main-room-test.tsx` is new (the touches, the columns, the low and the narrow screens, `aria-expanded`); `main-lists-test.tsx` has the fade at rest, after a scroll and at the list's end, and the row pressed before the cards came; `main-controls-test.tsx` has the AI input as a button. The test that asserted nothing about the Quest list's fade is replaced by one that fails when a row's strength or a window's height is wrong.
+
+Left as they were: the Friends' order, the single white glow behind the text, and the class's toast without the professor's name.
+
+Not checked:
+
+- The fixes of this round were not looked at in a browser, and nothing ran on a phone. Jest sees the styles and the rules, not the layout or a touch.
+- The map's touches beside the lists. That a window is as wide as its widest row, that a touch beside a row reaches the native map, and that a drag from a row scrolls on Android all rest on how React Native lays out and hit-tests, read in its source and not seen. On Android the window turns to taking touches a frame or two after the touch starts on a row; whether a very fast flick scrolls from its first moment was not seen. On iOS a `box-none` scroll view may still take a touch in its own box; there the window is no wider than its widest row.
+- The short and narrow screens. The widths at which "오늘의 발자국" gives way, 390 and 360, come from the frame's width and an estimate of the words' widths, not from a measurement. The two pills with their round buttons are about 156 and 172 wide by the same estimate, so at 360 they meet in the middle and under 360 they overlap; nothing was changed for that.
+- Kakao's logo against the controls: the Android module still places it itself, as said above.
+- The play mark's look at 10 by 10 inside its round of 24.

@@ -38,6 +38,10 @@ export function Map({ style, ...props }: MapProps): ReactElement {
 // Between the credit and the edges of what is left of the map.
 const CREDIT_MARGIN = space[2];
 
+// What the credit takes above the bottom of what is left of the map: its margin and its one line. A screen keeps
+// that strip free at the left.
+export const CREDIT_ROOM = CREDIT_MARGIN + text.micro.lineHeight;
+
 const styles = StyleSheet.create({
   map: { flex: 1, backgroundColor: color.surfaceSubtle },
   credit: {

@@ -1,5 +1,7 @@
+import { Animated } from 'react-native';
 import { pass, screen } from './support/app';
 import {
+  boxOf,
   button,
   CLASS_ROW,
   DINNER_ROW,
@@ -9,10 +11,11 @@ import {
   FRIEND_ROW,
   FRIEND_ROW_OFF,
   PARTY_ROW,
+  scroll,
   UNFOLD_FRIENDS,
   UNFOLD_QUESTS,
 } from './support/lists';
-import { givePhone, ON_CAMPUS, openMain, placeOf } from './support/main';
+import { givePhone, ME, ON_CAMPUS, openMain, placeOf } from './support/main';
 import { EVENT, FRIEND, lookOf, OTHER_FRIEND, press, wordsUnder } from './support/markers';
 import { startFresh } from './support/mocks';
 
@@ -78,23 +81,46 @@ describe("the main screen's friend list", () => {
 });
 
 describe("the window of the friend list's rows", () => {
-  it('is three rows high, snaps to the rows and fades the row in its third place', async () => {
+  // The Friends come in the order of their names: 강도윤, 김민준, 박지호, 서지우 and, the last, 한지민.
+  const THIRD = '박지호 지도에서 보기';
+  const LAST = '한지민 지도에서 보기';
+
+  it('is three rows high, snaps to the rows and fades as the frame does: solid, then 40%, then nothing', async () => {
     await openMain();
 
-    // The Friends come in the order of their names: 강도윤, 김민준, 박지호.
-    const second = button(FRIEND_ROW).parent;
-    const third = button('박지호 지도에서 보기').parent;
-    expect(second).toHaveStyle({ opacity: 1 });
-    expect(third).toHaveStyle({ opacity: 0.4 });
     // Three rows of 56 and two gaps of 2; a step is a row and a gap.
     expect(screen.getByTestId('friend-rows')).toHaveStyle({ maxHeight: 172 });
     expect(screen.getByTestId('friend-rows')).toHaveProp('snapToInterval', 58);
+    expect(boxOf(FRIEND_ROW)).toHaveStyle({ opacity: 1 });
+    expect(boxOf(THIRD)).toHaveStyle({ opacity: 0.4 });
+    expect(boxOf(FRIEND_ROW_OFF)).toHaveStyle({ opacity: 0 });
   });
 
-  it('fades no row of the Quest list, which has no more rows than the window shows', async () => {
+  it('draws a row solid once it is above the last place, and every row at the end of the list', async () => {
+    // The scroll is followed in JavaScript, as on the web, where a test can see it.
+    const follow = Animated.event;
+    jest
+      .spyOn(Animated, 'event')
+      .mockImplementation((mapping, config) => follow(mapping, { ...config, useNativeDriver: false }));
     await openMain();
 
-    expect(button(DINNER_ROW).parent).not.toHaveStyle({ opacity: 0.4 });
+    await scroll(screen.getByTestId('friend-rows'), 58);
+    expect(boxOf(THIRD)).toHaveStyle({ opacity: 1 });
+    expect(boxOf(FRIEND_ROW_OFF)).toHaveStyle({ opacity: 0.4 });
+    expect(boxOf(LAST)).toHaveStyle({ opacity: 0 });
+
+    // Twelve rows in a window of three: nine steps to the end.
+    await scroll(screen.getByTestId('friend-rows'), 522);
+    expect(boxOf(LAST)).toHaveStyle({ opacity: 1 });
+  });
+
+  it('gives the Quest list the same window, and fades none of its three rows', async () => {
+    await openMain();
+
+    expect(screen.getByTestId('quest-rows')).toHaveStyle({ maxHeight: 172 });
+    for (const row of [CLASS_ROW, PARTY_ROW, DINNER_ROW]) {
+      expect(boxOf(row)).toHaveStyle({ opacity: 1 });
+    }
   });
 });
 
@@ -135,6 +161,34 @@ describe("a press on a Friend's row", () => {
     expect(screen.getByText('서지우님은 위치가 꺼져 있어요')).toBeVisible();
     await pass(100);
     expect(screen.queryByText('서지우님은 위치가 꺼져 있어요')).toBeNull();
+  });
+});
+
+describe("a press on a Friend's row before the map's cards came", () => {
+  it('moves the map at once and opens the card when it comes, while the cards of the map are still asked for', async () => {
+    // The Friends answer after 300 ms; the map's cards wait for the Global Events, 3000 ms.
+    process.env.EXPO_PUBLIC_MOCK_SLOW = 'listGlobalEvents';
+    const user = await openMain();
+    const before = placeOf(ME);
+
+    await press(user, FRIEND_ROW);
+
+    expect(placeOf(ME)).not.toEqual(before);
+    expect(screen.queryByTestId('map-card')).toBeNull();
+    await pass(3000);
+    expect(screen.getByRole('header', { name: '김민준' })).toBeVisible();
+    expect(lookOf(FRIEND)).toBe('person:full:free:f1:selected');
+  });
+
+  it('opens nothing when the card was closed or another was asked for before the cards came', async () => {
+    process.env.EXPO_PUBLIC_MOCK_SLOW = 'listGlobalEvents';
+    const user = await openMain();
+
+    await press(user, FRIEND_ROW);
+    await press(user, CLASS_ROW);
+    await pass(3000);
+
+    expect(screen.queryByTestId('map-card')).toBeNull();
   });
 });
 

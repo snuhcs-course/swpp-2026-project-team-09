@@ -1,5 +1,4 @@
-import { fireEvent, within } from '@testing-library/react-native';
-import { Keyboard } from 'react-native';
+import { within } from '@testing-library/react-native';
 import { pass, screen } from './support/app';
 import {
   ACTIVE_PARTY,
@@ -12,6 +11,7 @@ import {
   FRIEND_PILL,
   FRIEND_ROW,
   FULL_SCREEN,
+  layCard,
   LAYERS,
   PARTY_ROW,
   SEND,
@@ -47,7 +47,7 @@ describe('the controls above the navigation of the main screen', () => {
     expect(button(FOOTPRINTS)).toHaveTextContent('민준서연지호오늘의 발자국친구 5명의 오늘');
     expect(button(ACTIVE_PARTY)).toHaveTextContent('활성 파티3명 공유 중');
     expect(button(LAYERS)).toBeVisible();
-    expect(screen.getByPlaceholderText('무엇이든 부탁해 보세요')).toBeVisible();
+    expect(button(AI_INPUT)).toHaveTextContent('무엇이든 부탁해 보세요');
   });
 
   it('draws the three faces of "오늘의 발자국" as decoration, hidden from a screen reader', async () => {
@@ -98,33 +98,29 @@ describe('a control of the main screen whose feature belongs to another task', (
 });
 
 describe("the main screen's AI input", () => {
-  it('says that it is not ready when it is touched, and puts the keyboard away', async () => {
-    const dismiss = jest.spyOn(Keyboard, 'dismiss');
+  it('is a button with the look of the empty input, not a field: nothing takes the focus or a letter', async () => {
     await openMain();
 
-    await fireEvent(screen.getByLabelText(AI_INPUT), 'focus');
+    expect(button(AI_INPUT)).toBeVisible();
+    expect(screen.queryByPlaceholderText('무엇이든 부탁해 보세요')).toBeNull();
+    expect(screen.queryByDisplayValue('')).toBeNull();
+  });
+
+  it('says that it is not ready when it is pressed', async () => {
+    const user = await openMain();
+
+    await press(user, AI_INPUT);
 
     expect(screen.getByText(NOT_READY)).toBeVisible();
-    expect(dismiss).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps its send button disabled while it is empty', async () => {
-    await openMain();
-
-    expect(button(SEND)).toBeDisabled();
-  });
-
-  it('says that it is not ready when a message is sent, empties itself and puts the keyboard away', async () => {
-    const dismiss = jest.spyOn(Keyboard, 'dismiss');
+  it('reads its send button as disabled, and says that it is not ready when that is pressed', async () => {
     const user = await openMain();
-    await fireEvent.changeText(screen.getByLabelText(AI_INPUT), '빈 강의실 찾아줘');
-    expect(button(SEND)).toBeEnabled();
+    expect(button(SEND)).toBeDisabled();
 
     await press(user, SEND);
 
     expect(screen.getByText(NOT_READY)).toBeVisible();
-    expect(screen.getByLabelText(AI_INPUT)).toHaveDisplayValue('');
-    expect(dismiss).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -161,9 +157,7 @@ describe("the map's credit on the main screen", () => {
   it('sits above a card while one is open', async () => {
     const user = await openMain();
     await press(user, FRIEND);
-    await fireEvent(screen.getByTestId('map-card'), 'layout', {
-      nativeEvent: { layout: { x: 16, y: 300, width: 358, height: 180 } },
-    });
+    await layCard(180);
 
     // The card's bottom is 72 above the navigation and it is 180 high.
     expect(screen.getByText(CREDIT)).toHaveStyle({ left: 16, bottom: 260 });

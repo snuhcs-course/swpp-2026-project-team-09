@@ -530,7 +530,7 @@ The control is there and only shows the toast. The last column is a proposal for
 | Above the navigation | 오늘의 발자국 | The story replay | In no Iteration 1 spec |
 | Above the navigation | 활성 파티 | The party screen | P13 |
 | Above the navigation | The 편의기능 button | The dining, shuttle and study layers | P15 |
-| Above the navigation | The AI input, when it is touched, and its send button | The AI chat | In no Iteration 1 spec |
+| Above the navigation | The AI input, which is a button with the input's look and takes no focus and no text, and its send button, read as disabled | The AI chat, with the real text field | In no Iteration 1 spec |
 | Bottom navigation | 파티, 행사 | The party and events screens | P13 |
 | Bottom navigation | 올리기 | The story sheet | In no Iteration 1 spec |
 | Bottom navigation | 내 정보 | 내 정보, with the Master Switch, sign-out and the timetable | P09 |
@@ -569,10 +569,12 @@ Each is a setting given when the app is started, as an `EXPO_PUBLIC_` variable. 
 - [x] The frame's friend pill says 12 whatever the list holds: settled as the number of Friends in the list
 - [x] Where the credit for the map data goes on the main screen: settled as just above "오늘의 발자국", 16 from the left, and above a card while one is open
 - [ ] The frame strokes the text of the lists in white under a glow. The app draws the glow alone, which React Native can; settle whether the lists are readable enough over Kakao's map
-- [ ] The frame fades the friend list with a mask, also at the list's end. The app fades the row in the window's third place and makes the last row solid at the end
+- [ ] The frame fades the friend list with a mask, also at the list's end. The app draws each row as strongly as the mask is at the row's middle, and lifts the fade at the list's end
 - [ ] The frame lists the Friends in an order of its own. The app keeps the main server's, by name
 - [ ] The frame's toast for a class has the professor's name ("자료구조 · 301동 118호 · 이정훈 교수"). No answer holds it, and the app leaves it out
-- [ ] The AI input puts the keyboard away when it is touched, so nothing can be typed into it until the AI chat is built. Settle whether it should look disabled until then
+- [ ] The AI input is a button with the look of the empty input until the AI chat is built: it takes no focus and no text, and its send button is read as disabled. Settle whether it should look disabled until then
+- [ ] On a screen narrower than the frame's 390, "오늘의 발자국" drops its second line and all faces but one, and under 360 every face, so that "활성 파티" stays whole; the frame lets "활성 파티" shrink. Settle the look at 360 and 320
+- [ ] On a low screen the lists show two rows, one or none, so that they end above the zoom control, the map's credit and an open card. No frame shows a low screen
 - [ ] Nothing says that the friend list or the Quest list failed to load: the pill has no number and the list no rows. Settle the words and whether a press asks again
 - [ ] "활성 파티" says "1명 공유 중" for one other member who shares; the frame says "응답 대기" there
 - [ ] No frame shows the main screen off campus, the explanation before the location prompt and its form for a permission that only the phone's settings can allow, the toast while the position is looked for, or the credit for the map data; the spec gives their wording

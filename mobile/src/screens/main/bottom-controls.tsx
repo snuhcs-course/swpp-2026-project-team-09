@@ -1,31 +1,33 @@
 import type { ReactElement } from 'react';
-import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
-import {
-  Avatar,
-  ChatInput,
-  color,
-  Icon,
-  mapText,
-  onKey,
-  radius,
-  shadow,
-  space,
-  useNotReadyToast,
-} from '@/design-system';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Avatar, color, Icon, mapText, onKey, radius, shadow, space, useNotReadyToast } from '@/design-system';
 import type { FootprintsView } from '@/features/footprints/adapter';
 import { useFootprints } from '@/features/footprints/use-footprints';
 import type { ActivePartyView } from '@/features/parties/adapter';
 import { useActiveParty } from '@/features/parties/use-active-party';
-import { AI_INPUT, BUTTON_ROW, LAYERS_BUTTON } from './layout';
+import { AiInput } from './ai-input';
+import { BUTTON_ROW, footprintsForm, LAYERS_BUTTON, type Room } from './layout';
 
 interface ButtonProps<Shown> {
   view: Shown;
   onPress: () => void;
 }
 
+interface FootprintsProps extends ButtonProps<FootprintsView> {
+  form: ReturnType<typeof footprintsForm>;
+}
+
+interface BottomControlsProps {
+  cardOpen: boolean;
+  // The room the row of buttons has: "오늘의 발자국" gives way on a narrow screen.
+  room: Room;
+}
+
 // "오늘의 발자국": the faces of up to three Friends who left a story today, the name, how many Friends did, and the
-// round with the play mark. Until that is known, and when nobody did, it has its name and the play mark alone.
-function FootprintsButton({ view, onPress }: ButtonProps<FootprintsView>): ReactElement {
+// round with the play mark. Until that is known, and when nobody did, it has its name and the play mark alone. On a
+// narrow screen it gives way to "활성 파티": `form` says what it still shows, and it is the one that shrinks.
+function FootprintsButton({ view, form, onPress }: FootprintsProps): ReactElement {
+  const faces = view.faces.slice(0, form.faces);
   return (
     <Pressable
       accessibilityLabel="오늘의 발자국 재생 · 친구들의 오늘 스토리"
@@ -33,10 +35,10 @@ function FootprintsButton({ view, onPress }: ButtonProps<FootprintsView>): React
       onPress={onPress}
       style={({ pressed }) => [styles.footprints, pressed && styles.footprintsPressed]}
     >
-      {view.faces.length === 0 ? null : (
+      {faces.length === 0 ? null : (
         // The faces are decoration: the button is read by its own name.
         <View aria-hidden style={styles.faces}>
-          {view.faces.map(({ id, name, photo }, index) => (
+          {faces.map(({ id, name, photo }, index) => (
             <View key={id} style={[styles.face, index > 0 && styles.faceOver]}>
               <Avatar name={name} size="sm" source={photo === null ? undefined : { uri: photo }} />
             </View>
@@ -47,7 +49,7 @@ function FootprintsButton({ view, onPress }: ButtonProps<FootprintsView>): React
         <Text numberOfLines={1} style={styles.footprintsTitle}>
           오늘의 발자국
         </Text>
-        {view.line === '' ? null : (
+        {view.line === '' || !form.line ? null : (
           <Text numberOfLines={1} style={styles.footprintsLine}>
             {view.line}
           </Text>
@@ -61,7 +63,8 @@ function FootprintsButton({ view, onPress }: ButtonProps<FootprintsView>): React
 }
 
 // "활성 파티": the Party the User is in now, with the dot that says it is live and how many of its members share
-// their position. On a narrow phone it is the one that gives way, as in the frame.
+// their position. Its two lines stay whole on a narrow phone: "오늘의 발자국" gives way, where the frame lets this one
+// shrink.
 function ActivePartyButton({ view, onPress }: ButtonProps<ActivePartyView>): ReactElement {
   return (
     <Pressable
@@ -71,7 +74,7 @@ function ActivePartyButton({ view, onPress }: ButtonProps<ActivePartyView>): Rea
       style={({ pressed }) => [styles.party, pressed && styles.partyPressed]}
     >
       <View style={styles.live} />
-      <View style={styles.partyWords}>
+      <View>
         <Text numberOfLines={1} style={styles.partyTitle}>
           활성 파티
         </Text>
@@ -83,34 +86,20 @@ function ActivePartyButton({ view, onPress }: ButtonProps<ActivePartyView>): Rea
   );
 }
 
-// The AI input. The chat it opens belongs to another task: a touch and a sent message say so, and the keyboard is
-// put away at once, so that it never stays up over the map.
-function AiInput(): ReactElement {
-  const showNotReady = useNotReadyToast();
-  const say = (): void => {
-    showNotReady();
-    Keyboard.dismiss();
-  };
-  return (
-    <View style={styles.input} testID="ai-input">
-      <ChatInput floating label="AI에게 메시지" onFocus={say} onSend={say} />
-    </View>
-  );
-}
-
 // What the `Main` frame puts between the map and the navigation: the row of "오늘의 발자국" and "활성 파티", the
 // 편의기능 button at its right, and the AI input under them. Each belongs to another task and says that it is not
 // ready. "활성 파티" is shown only while the User is in a Party. While a card is open the row and the 편의기능
 // button are not shown, as in the frame; the AI input stays.
-export function BottomControls({ cardOpen }: { cardOpen: boolean }): ReactElement {
+export function BottomControls({ cardOpen, room }: BottomControlsProps): ReactElement {
   const footprints = useFootprints();
   const party = useActiveParty();
   const showNotReady = useNotReadyToast();
+  const form = footprintsForm(room, party !== null);
   return (
     <>
       {cardOpen ? null : (
         <View style={styles.row}>
-          <FootprintsButton onPress={showNotReady} view={footprints} />
+          <FootprintsButton form={form} onPress={showNotReady} view={footprints} />
           {party === null ? null : <ActivePartyButton onPress={showNotReady} view={party} />}
         </View>
       )}
@@ -119,6 +108,7 @@ export function BottomControls({ cardOpen }: { cardOpen: boolean }): ReactElemen
           accessibilityLabel="편의기능 (식당 · 셔틀버스 · 공부공간)"
           accessibilityRole="button"
           accessibilityState={{ expanded: false }}
+          aria-expanded={false}
           onPress={showNotReady}
           style={({ pressed }) => [styles.layers, pressed && styles.footprintsPressed]}
         >
@@ -132,6 +122,7 @@ export function BottomControls({ cardOpen }: { cardOpen: boolean }): ReactElemen
 
 const FACE_OVER = -10;
 const PLAY = 24;
+const PLAY_MARK = 10;
 const LIVE = 8;
 const WORDS_GAP = 6;
 
@@ -147,10 +138,13 @@ const styles = StyleSheet.create({
     height: BUTTON_ROW.height,
     pointerEvents: 'box-none',
   },
+  // The one button of the row that shrinks: its name is cut with an ellipsis before "활성 파티" loses a letter.
   footprints: {
     flexDirection: 'row',
+    flexShrink: 1,
     alignItems: 'center',
     gap: space[2],
+    minWidth: 0,
     height: BUTTON_ROW.height,
     paddingRight: 14,
     paddingLeft: space[2],
@@ -162,7 +156,7 @@ const styles = StyleSheet.create({
   faces: { flexDirection: 'row' },
   face: { borderRadius: radius.full, boxShadow: shadow.faceRing },
   faceOver: { marginLeft: FACE_OVER },
-  footprintsWords: { alignItems: 'flex-start' },
+  footprintsWords: { flexShrink: 1, alignItems: 'flex-start', minWidth: 0 },
   footprintsTitle: { ...mapText.buttonTitle, color: color.ink },
   footprintsLine: { ...mapText.buttonLine, color: color.inkMuted },
   play: {
@@ -173,25 +167,24 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: color.snuBlue,
   },
-  // The frame's filled triangle of 10, which the design system's line icons cannot draw: a border's corner, set 1
-  // to the right so that it looks centred.
+  // The frame's filled triangle, 10 by 10, which the design system's line icons cannot draw: a border's corner, set
+  // 2 to the right so that it looks centred.
   playMark: {
     width: 0,
     height: 0,
     marginLeft: 2,
-    borderTopWidth: 4,
-    borderBottomWidth: 4,
-    borderLeftWidth: 7,
+    borderTopWidth: PLAY_MARK / 2,
+    borderBottomWidth: PLAY_MARK / 2,
+    borderLeftWidth: PLAY_MARK,
     borderTopColor: 'transparent',
     borderBottomColor: 'transparent',
     borderLeftColor: color.onPrimary,
   },
   party: {
     flexDirection: 'row',
-    flexShrink: 1,
+    flexShrink: 0,
     alignItems: 'center',
     gap: WORDS_GAP,
-    minWidth: 0,
     height: BUTTON_ROW.height,
     paddingRight: 10,
     paddingLeft: 9,
@@ -207,7 +200,6 @@ const styles = StyleSheet.create({
     backgroundColor: onKey.live,
     boxShadow: `0 0 0 3px ${onKey.liveRing}`,
   },
-  partyWords: { flexShrink: 1, minWidth: 0 },
   partyTitle: { ...mapText.smallTitle, color: color.onPrimary },
   partyLine: { ...mapText.smallLine, color: onKey.textMuted },
   layers: {
@@ -222,5 +214,4 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.float,
   },
-  input: { position: 'absolute', right: AI_INPUT.side, bottom: AI_INPUT.bottom, left: AI_INPUT.side },
 });
