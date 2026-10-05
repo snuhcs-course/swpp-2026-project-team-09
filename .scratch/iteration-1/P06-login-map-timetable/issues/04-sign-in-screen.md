@@ -8,7 +8,7 @@ Blocked by: 03 (Loading screen and the flow between screens)
 
 A User presses the one button of the sign-in screen, sees that the account is being checked, and is taken on, or is told why not. The screens are the `Login`, `LoginLoading` and `LoginError` frames.
 
-The sign-in is the mock of ticket 02 behind the sign-in module. Google and the main server are connected in ticket 12.
+The sign-in is behind the sign-in module. In a build that holds Google's sign-in module it asks Google and checks the account's domain in the app; everywhere else it is the mock of ticket 02. The main server is connected in ticket 12.
 
 ## Acceptance criteria
 
@@ -18,6 +18,8 @@ The sign-in is the mock of ticket 02 behind the sign-in module. Google and the m
 - [x] Each of the three legal documents opens from the consent screen on a screen of its own with the frame's placeholder text and closes back to the consent screen, also with Android's back button.
 - [x] The consent screen is shown once on a phone, after the first sign-in and before Onboarding: "동의하고 시작" stores the consent and leads on, and "로그아웃" returns to the sign-in screen.
 - [x] The button and the links carry Korean accessibility labels, and the refused state's line is announced.
+- [x] In a build that holds Google's sign-in module, the sign-in module asks Google: an SNU account signs in with its name as the suggestion, an account outside SNU is refused and forgotten, a closed sheet is `cancelled`, and anything else is `failed`. Expo Go, the web, the tests and a named development ending keep the mock. Proven by Jest tests against a stand-in for Google's library.
+- [ ] A sign-in with Google tried in a development build on an emulator or a phone, recorded under Comments.
 - [x] Jest tests: each of the four endings, the button while checking, the consent screen's ways on and out, and a legal document opened and closed.
 - [x] The frames were read again when the work started, and what changed since the spec is recorded under Comments.
 - [ ] Screenshots of each state, taken from the app's web target at a phone's size and compared with the frames, are in the pull request under Test Results.
@@ -81,6 +83,33 @@ Not checked: nothing ran in a browser or on a phone. The layout, the pictures, t
 - A legal document closes back to the consent screen. Opened by its address alone, it closes to the start of the app.
 - Tests: `__tests__/consent-test.tsx` is new; the sign-in, loading and storage tests follow the new flow.
 - Not checked: nothing ran in a browser or on a phone.
+
+### Google sign-in before the server (2026-10-05)
+
+What is built, in `mobile/`:
+
+- `src/auth/google.ts` is the one file that touches `react-native-nitro-google-signin` 2.3.0 (with `react-native-nitro-modules` 0.37.1). `askGoogle()` checks Google Play services, opens the sheet that lists every Google account on the phone (`createAccount`), falls back to Google's own dialog on a phone with no account to list (`presentExplicitSignIn`), and gives the ID token or says that the sheet was closed. `forgetGoogle()` signs out of Google. No hosted domain is given to Google, which would hide the other accounts without a word.
+- `src/auth/id-token.ts` reads the token's claims: the email, the hosted domain (`hd`) and the name. It checks no signature. An SNU account is one whose `hd` is `snu.ac.kr`; a Gmail account has no `hd`. A token that cannot be read is a failure.
+- `src/auth/sign-in.ts` keeps its two operations and their types. With Google: a closed sheet is `cancelled`; an account outside SNU is signed out of Google and is `not-snu-account`; an SNU account is remembered on the phone as the mock's is, with the account's name as the suggestion and no department; anything thrown is `failed`. A sign-out also signs out of Google. Nothing is sent to the main server and no token is kept.
+- `.env.example` names the three settings, with empty values. `app.json` holds the Android package and the iOS bundle identifier. `app.config.ts` adds the library's config plugin only when `GOOGLE_IOS_URL_SCHEME` is set, since the plugin is for iOS and refuses to run without the scheme.
+
+How the build is chosen:
+
+- `googleAvailable()` is true on Android and iOS when the build holds the `NitroModules` native module, which the library is built on, and `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` is set; on iOS `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` must be set too. Expo Go and Jest hold no such module. The library is loaded by a `require` inside the functions, after that check, because loading it without the native module throws.
+- On the web `src/auth/google.web.ts` takes the file's place and names the library nowhere, so that the web's bundle holds nothing of a native library. The library builds on `react-native-nitro-modules`, which imports a file from inside React Native; whether the web's bundler could resolve it was not tried.
+- `EXPO_PUBLIC_SIGN_IN_ENDING` with a known ending keeps the mock in every build, including `signed-in`.
+
+Tests: `__tests__/auth/google-sign-in-test.ts` (the sign-in module with `google.ts` replaced), `__tests__/auth/google-test.ts` (`google.ts` with a stand-in for the library) and `__tests__/auth/id-token-test.ts` (tokens written by hand). The screens' tests are unchanged and run the mock.
+
+Checked without a build: the development server's bundle for the web holds `google.web.ts` and nothing of the library, and its bundle for Android holds `google.ts` with the library behind the `require`. The app's configuration is read with and without `.env`.
+
+Not checked:
+
+- No native build was made, and no sign-in was tried on a device or an emulator.
+- The account sheet, the way a closed sheet is reported (`type: 'cancelled'`, not an error) and the token's claims are as the library's types and sources and Google's documents say. None of it is proven here.
+- That the library builds with this app is known only from the trial build of the research file, section 7.2, where its `configure` ran.
+- The library reports a build that Google does not know either as an error or as a closed sheet. The second case looks to the User like nothing happened.
+- The iOS build, its plugin and its settings.
 
 ### Agent usage (2026-10-05)
 

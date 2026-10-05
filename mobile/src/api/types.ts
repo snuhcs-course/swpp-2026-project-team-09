@@ -21,7 +21,7 @@ export type SignInResult =
   | { outcome: 'signed-in'; onboarding: Onboarding }
   // The User closed Google's sheet.
   | { outcome: 'cancelled' }
-  // The main server's 403: not an snu.ac.kr account.
+  // Not an snu.ac.kr account: the app's own check for now, and the main server's 403 once it is asked.
   | { outcome: 'not-snu-account' }
   // Any other refusal, or no answer.
   | { outcome: 'failed' };

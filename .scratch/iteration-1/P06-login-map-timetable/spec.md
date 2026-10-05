@@ -128,7 +128,9 @@ Every piece of data is a mock inside the app, in the shape the server gives or w
 ### Sign-in
 
 - The screen is the `Login` frame, with its three states: default, checking and refused.
-- Sign-in lives behind one module with two operations, sign in and sign out. In this task the module is a mock: it signs in after a short wait. A sign-in that succeeds brings whether the User finished Onboarding and, when not, the suggestion.
+- Sign-in lives behind one module with two operations, sign in and sign out. A sign-in that succeeds brings whether the User finished Onboarding and, when not, the suggestion.
+- In a build that holds Google's sign-in module, the module asks Google: Google's account sheet opens, and the app itself checks the account's domain in the ID token. An account whose hosted domain is not `snu.ac.kr` is outside SNU and is signed out of Google again. Nothing is sent to the main server, and the suggestion is the Google account's name with no department. The app does not verify the token, so its check only decides what the screen shows until the main server's word replaces it ("Connecting to the server").
+- Everywhere else, in Expo Go, on the web and in the tests, the module is a mock: it signs in after a short wait.
 - How a sign-in ends, and what the screen shows:
 
 | Ending | What the screen shows |
@@ -138,7 +140,7 @@ Every piece of data is a mock inside the app, in the shape the server gives or w
 | The User closed Google's sheet | The default state |
 | Any other failure | The refused state with other words: "로그인하지 못했어요", "잠시 후 다시 시도해 주세요" |
 
-- The mock ends in "signed in" unless a development setting names another ending.
+- The mock ends in "signed in" unless a development setting names another ending. With that setting the module is the mock in every build.
 - The sign-in screen does not ask for consent to the legal documents and has no links to them, unlike the frame's footer.
 
 ### Consent
@@ -237,6 +239,7 @@ Built from the design system's dialog and the shared Toast. The team may change 
 - Once sign-in is connected, the main server says whether a User finished Onboarding, and what the phone kept gives way to it.
 - The app keeps one connection to the socket server open with the access token. Through it the app learns that the Session ended, receives the positions of the Users it may see, and is told when something it shows has changed, which it then fetches again.
 - Before the demo build (P20), the list of mocks is checked, so that none is left by accident.
+- The sign-in module already asks Google in a built app. The last ticket sends Google's ID token to the main server, keeps the main server's tokens in the phone's secure storage, and lets the main server's answer replace the app's own check of the account's domain.
 - A real sign-in needs a built app, a Google sign-in client registered for the app's identifier and signing key, and a main server that the phone can reach. The ticket records which of these hold when it starts.
 
 ## Testing Decisions

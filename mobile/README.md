@@ -26,7 +26,7 @@ A setting is an `EXPO_PUBLIC_` variable given when the app is started, for examp
 
 | Variable                     | Value                                                 | What it does                                        |
 | ---------------------------- | ----------------------------------------------------- | --------------------------------------------------- |
-| `EXPO_PUBLIC_SIGN_IN_ENDING` | `signed-in`, `cancelled`, `not-snu-account`, `failed` | How the mock sign-in ends. Without it: `signed-in`  |
+| `EXPO_PUBLIC_SIGN_IN_ENDING` | `signed-in`, `cancelled`, `not-snu-account`, `failed` | The sign-in is the mock and ends in this            |
 | `EXPO_PUBLIC_MOCK_SLOW`      | operations, separated by commas                       | These mocks answer after three seconds              |
 | `EXPO_PUBLIC_MOCK_FAIL`      | operations, separated by commas                       | These mocks answer with a failure                   |
 | `EXPO_PUBLIC_MOCK_EMPTY`     | operations, separated by commas                       | These mocks answer with nothing                     |
@@ -34,6 +34,50 @@ A setting is an `EXPO_PUBLIC_` variable given when the app is started, for examp
 
 An operation is named as in the table under "Data" below, such as `listFriends`. `completeOnboarding` and `enterLobby`
 have no empty answer, so `EXPO_PUBLIC_MOCK_EMPTY` leaves them as they are.
+
+### Google sign-in
+
+The sign-in module (`src/auth/sign-in.ts`) asks Google in a build that holds Google's sign-in module, and is a mock
+everywhere else:
+
+| Where the app runs                               | The sign-in                                            |
+| ------------------------------------------------ | ------------------------------------------------------ |
+| A development build on Android with the settings | Google's account sheet                                 |
+| Expo Go, the web, the tests                      | The mock: it signs in after 0.3 seconds, with no sheet |
+| Any of them with `EXPO_PUBLIC_SIGN_IN_ENDING`    | The mock, with the ending that the setting names       |
+
+With Google, an account outside SNU is refused, a closed sheet returns to the default state, and anything else is a
+failure. The main server is not asked yet. The app itself reads the ID token and takes an account for an SNU one when
+its hosted domain, the `hd` claim, is `snu.ac.kr` (`src/auth/id-token.ts`). It does not check the token's signature, so
+this decides only what the screen says. The main server's check takes its place with ticket 12 of P06.
+
+The settings are a person's. Copy `.env.example` to `.env`, which is not committed, and fill in:
+
+| Variable                           | Value                                                                             |
+| ---------------------------------- | --------------------------------------------------------------------------------- |
+| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | The ID of the main server's Google client, of type "Web application"              |
+| `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` | The ID of the Google client of type "iOS". Only the iOS build needs it            |
+| `GOOGLE_IOS_URL_SCHEME`            | The iOS client's ID reversed (`com.googleusercontent.apps.…`). Only the iOS build |
+
+The IDs are in the Google Cloud project's list of clients. The Web application client's ID is also the main server's
+`GOOGLE_APP_CLIENT_ID`. Without the web client's ID the sign-in stays the mock in every build.
+
+A development build on Android, with an emulator running or a phone attached:
+
+```bash
+npx expo run:android
+```
+
+It generates `android/`, which is not committed, builds the app with the native modules and installs it. The emulator
+or phone needs Google Play and a Google account. Google answers only an app that it knows: the Google Cloud project
+must hold a client of type "Android" with the package name `com.bonnieandclaude.snunow` and the SHA-1 of the key that
+signed the build. A development build is signed with the debug key that every checkout shares; its SHA-1 and the ways
+to read a key's SHA-1 are in `.scratch/research/external-sources.md`, sections 7.2 and 8. A build that Google does not
+know ends in the failure state, or closes the sheet as if the User had.
+
+`src/auth/google.ts` is the one file that touches the library, `react-native-nitro-google-signin`, and loads it only
+in a build that holds it. On the web `google.web.ts` takes its place. The iOS build also needs the library's config
+plugin, which `app.config.ts` adds when `GOOGLE_IOS_URL_SCHEME` is set.
 
 ## Checks
 
@@ -141,7 +185,8 @@ Behind a hook are three layers:
 - **An adapter** per feature (`src/features/<feature>/adapter.ts`): turns answers into what the screens use, such as
   `FriendView`, `QuestRowView` and `CardView`.
 - **The mocks** (`src/api/mock/`): for now every operation is answered inside the app, in the main server's shape,
-  with what the `Main` wireframe shows. A mock answers after 0.3 seconds.
+  with what the `Main` wireframe shows. A mock answers after 0.3 seconds. The sign-in is the one exception: see "Google
+  sign-in" above.
 
 | Operation                                   | Answers                                            | The main server's route                       |
 | ------------------------------------------- | -------------------------------------------------- | --------------------------------------------- |
