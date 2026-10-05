@@ -34,6 +34,7 @@ model User {
   sessions       Session[]
   friendshipsAsA Friendship[] @relation("FriendshipUserA")
   friendshipsAsB Friendship[] @relation("FriendshipUserB")
+  inviteLinks   InviteLink[]
 
   @@map("users")
 }
@@ -59,6 +60,20 @@ model Friendship {
   @@unique([userAId, userBId])
   @@index([userBId])
   @@map("friendships")
+}
+
+// A link a User sends through any messenger, so that whoever accepts it becomes their Friend. It works once.
+model InviteLink {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  senderId  String    @map("sender_id") @db.Uuid
+  sender    User      @relation(fields: [senderId], references: [id])
+  // The SHA-256 of the random token in the link's address, which is not stored itself.
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  // Set when the link is accepted.
+  usedAt    DateTime? @map("used_at")
+
+  @@map("invite_links")
 }
 
 // The app signed in on one phone. A sign-in ends the User's open session, so a User has at most one.

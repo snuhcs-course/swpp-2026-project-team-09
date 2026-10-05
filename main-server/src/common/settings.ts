@@ -41,6 +41,13 @@ export const settingsSchema = z
     KAKAO_REST_API_KEY: z.string().min(1),
     // The secret that the worker server sends with what it collected. Long enough not to be guessed.
     WORKER_TOKEN: z.string().min(32),
+    // Where the apps reach this server from outside, such as https://snunow.example. Invite Links are built from it.
+    PUBLIC_URL: z.url({ protocol: /^https?$/u }).transform((url) => url.replace(/\/+$/u, '')),
+    // The SHA-256 fingerprints of the certificates the Android app is signed with, separated by commas.
+    ANDROID_CERTIFICATE_FINGERPRINTS: z
+      .string()
+      .transform((fingerprints) => fingerprints.split(',').map((fingerprint) => fingerprint.trim().toUpperCase()))
+      .pipe(z.array(z.string().regex(/^(?:[0-9A-F]{2}:){31}[0-9A-F]{2}$/u, 'Expected a SHA-256 fingerprint'))),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),

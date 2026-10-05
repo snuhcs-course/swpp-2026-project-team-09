@@ -30,6 +30,12 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     KAKAO_REST_API_KEY: 'test-kakao-rest-api-key',
     // Not a secret: sendAsWorker(app, …) sends it as the worker does.
     WORKER_TOKEN: 'test-worker-token-of-thirty-two-characters',
+    PUBLIC_URL: 'https://snunow.example',
+    // Two, as for a development build and the demo build.
+    ANDROID_CERTIFICATE_FINGERPRINTS: [
+      'FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C',
+      '14:6D:E9:83:C5:73:06:50:D8:EE:B9:95:2F:34:FC:64:16:A0:83:42:E6:1D:BE:A8:8A:04:96:B2:3F:CF:44:E5',
+    ].join(','),
   };
   migrate(settings.DATABASE_URL);
   await seed(settings.DATABASE_URL);
