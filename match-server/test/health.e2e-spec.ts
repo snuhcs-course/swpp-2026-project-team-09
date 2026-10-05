@@ -5,7 +5,7 @@ import { inject } from 'vitest';
 import { startProxy } from './proxy.js';
 import { startApp } from './start-app.js';
 
-describe('Health checks with the database and Redis up', () => {
+describe('Health checks with the database up', () => {
   let app: INestApplication<Server>;
 
   beforeAll(async () => {
@@ -23,52 +23,16 @@ describe('Health checks with the database and Redis up', () => {
     expect(response.body).toMatchObject({ status: 'ok' });
   });
 
-  it('reports the database and Redis as ready', async () => {
+  it('reports the database as ready', async () => {
     const response = await request(app.getHttpServer()).get('/health/ready');
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({
-      status: 'ok',
-      info: { database: { status: 'up' }, redis: { status: 'up' } },
-    });
+    expect(response.body).toMatchObject({ status: 'ok', info: { database: { status: 'up' } } });
   });
 });
 
-// The cases below reach one shared store through a proxy and stop the proxy once the server is running, so that the
-// store stays up for the other test files.
-
-describe('Health checks with Redis down', () => {
-  let app: INestApplication<Server>;
-
-  beforeAll(async () => {
-    const settings = inject('settings');
-    const redis = await startProxy(settings.REDIS_HOST, Number(settings.REDIS_PORT));
-    app = await startApp({ ...settings, REDIS_HOST: '127.0.0.1', REDIS_PORT: String(redis.port) });
-    await redis.stop();
-  });
-
-  afterAll(async () => {
-    await app.close();
-  });
-
-  it('reports not ready and names Redis', async () => {
-    const response = await request(app.getHttpServer()).get('/health/ready');
-
-    expect(response.status).toBe(503);
-    expect(response.body).toMatchObject({
-      status: 'error',
-      info: { database: { status: 'up' } },
-      error: { redis: { status: 'down' } },
-    });
-  });
-
-  it('still answers the liveness check', async () => {
-    const response = await request(app.getHttpServer()).get('/health/live');
-
-    expect(response.status).toBe(200);
-  });
-});
-
+// The server reaches the shared database through a proxy, which stops once the server is running, so that the
+// database stays up for the other test files.
 describe('Health checks with the database down', () => {
   let app: INestApplication<Server>;
 
@@ -90,11 +54,7 @@ describe('Health checks with the database down', () => {
     const response = await request(app.getHttpServer()).get('/health/ready');
 
     expect(response.status).toBe(503);
-    expect(response.body).toMatchObject({
-      status: 'error',
-      info: { redis: { status: 'up' } },
-      error: { database: { status: 'down' } },
-    });
+    expect(response.body).toMatchObject({ status: 'error', error: { database: { status: 'down' } } });
   });
 
   it('still answers the liveness check', async () => {

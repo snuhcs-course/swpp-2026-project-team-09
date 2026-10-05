@@ -94,7 +94,7 @@ describe('the save button', () => {
     await saveOnboarding(user);
     await pass(600);
 
-    expect(screen.getByRole('header', { name: '메인' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '지도' })).toBeVisible();
     expect(screen.queryByRole('header', { name: ONBOARDING })).toBeNull();
     expect(await readKept()).toMatchObject({
       onboardingCompleted: true,
@@ -152,7 +152,7 @@ describe('around Onboarding', () => {
     await startApp();
     expect(screen.getByRole('progressbar')).toBeVisible();
     await pass(1000);
-    expect(screen.getByRole('header', { name: '메인' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '지도' })).toBeVisible();
     expect(screen.queryByRole('header', { name: ONBOARDING })).toBeNull();
   });
 

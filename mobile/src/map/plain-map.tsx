@@ -4,22 +4,31 @@ import type { LatLng } from '@/api/types';
 import { color, text } from '@/design-system';
 import { useMotionAllowed } from '@/hooks/use-reduce-motion';
 import { centreOf } from './campus';
-import { RouteLine, Thing } from './plain-things';
-import { type CameraRules, fit, inView, type Point, sameCamera, settle, type Size } from './projection';
+import { RouteLine } from './plain-route';
+import { Thing } from './plain-things';
+import { type CameraRules, fit, inView, lowestZoom, type Point, sameCamera, settle, type Size } from './projection';
 import type { MapCamera, MapHandle, MapMarker, MapProps } from './types';
 
 // The camera of the plain ground, by the rules of `MapHandle`. It jumps: an animated move ends where it would.
 function useCamera(
   rules: CameraRules,
   ref: Ref<MapHandle> | undefined,
-  onCameraIdle: ((camera: MapCamera) => void) | undefined,
+  { onCameraIdle, onFitZoom }: Pick<MapProps, 'onCameraIdle' | 'onFitZoom'>,
 ): MapCamera {
   const [asked, setAsked] = useState<MapCamera>({ centre: centreOf(rules.bounds), zoom: rules.minZoom });
   const camera = settle(asked, rules);
   const { centre, zoom } = camera;
+  const fitZoom = lowestZoom(rules);
   const report = useEffectEvent(() => {
     onCameraIdle?.(camera);
   });
+  const reportFit = useEffectEvent(() => {
+    onFitZoom?.(fitZoom);
+  });
+  // Before the camera's first report, and each time the view's size changes it.
+  useEffect(() => {
+    reportFit();
+  }, [fitZoom]);
   // Once when the ground is first shown, and each time the camera rests somewhere else.
   useEffect(() => {
     report();
@@ -38,7 +47,7 @@ function useCamera(
         go((now) => settle({ centre: move.centre ?? now.centre, zoom: move.zoom ?? now.zoom }, rules));
       },
       fitTo: (points, options): void => {
-        go(() => fit(points, options?.padding ?? 0, rules));
+        go(() => fit(points, options ?? {}, rules));
       },
     };
   }, [rules]);
@@ -54,12 +63,13 @@ function ranked<Kind extends MapMarker>(things: readonly Kind[]): Kind[] {
 // tiles and draws no campus. It places what it was asked to show by position, with the camera it was asked for, so
 // that a move of the camera or of an Avatar is seen and a screen can be laid out around it. A User cannot pan it.
 export function PlainMap(props: MapProps): ReactElement {
-  const { bounds, minZoom, maxZoom, markers, avatars, route, onPress, onCameraIdle, ref } = props;
+  const { bounds, minZoom, maxZoom, markers, avatars, route, routeStyle, onPress, onCameraIdle, onFitZoom, ref } =
+    props;
   const window = useWindowDimensions();
   // Until the ground is laid out it counts as large as the window, so that it is ready at once.
   const [laidOut, setLaidOut] = useState<Size | null>(null);
   const size = laidOut ?? { width: window.width, height: window.height };
-  const camera = useCamera({ bounds, minZoom, maxZoom, size }, ref, onCameraIdle);
+  const camera = useCamera({ bounds, minZoom, maxZoom, size }, ref, { onCameraIdle, onFitZoom });
   const gliding = useMotionAllowed();
   const place = (position: LatLng): Point => inView(position, camera, size);
   return (
@@ -70,7 +80,7 @@ export function PlainMap(props: MapProps): ReactElement {
       style={styles.ground}
     >
       <Text style={styles.words}>지도는 Android 빌드에서 보입니다</Text>
-      {route === null ? null : <RouteLine points={route.map((point) => place(point))} />}
+      {route === null ? null : <RouteLine look={routeStyle} points={route.map((point) => place(point))} />}
       {ranked(markers).map((marker) => (
         <Thing glideMs={0} key={marker.id} onPress={onPress} place={place} thing={marker} view={size} />
       ))}

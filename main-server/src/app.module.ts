@@ -20,6 +20,8 @@ import { HealthModule } from './health/health.module.js';
 import { InviteLinksModule } from './invite-links/invite-links.module.js';
 import { LobbyModule } from './lobby/lobby.module.js';
 import { LocationSharingModule } from './location-sharing/location-sharing.module.js';
+import { MeetupsModule } from './meetups/meetups.module.js';
+import { MatchingModule } from './matching/matching.module.js';
 import { MenusModule } from './menus/menus.module.js';
 import { PartiesModule } from './parties/parties.module.js';
 import { PlacesModule } from './places/places.module.js';
@@ -63,8 +65,10 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     WalkingRouteModule,
     PlacesModule,
     ShuttleModule,
-    LocationSharingModule,
     QuestsModule,
+    LocationSharingModule,
+    MeetupsModule,
+    MatchingModule,
     PartiesModule,
   ],
   providers: [

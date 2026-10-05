@@ -1,7 +1,7 @@
-import { type ReactElement, useEffect, useEffectEvent, useRef, useState } from 'react';
+import { type ReactElement, type ReactNode, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Animated, Easing, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { LatLng } from '@/api/types';
-import { color, radius, shadow, text } from '@/design-system';
+import { color, font, radius, shadow } from '@/design-system';
 import { LookView, standsOnTip } from './marker-looks';
 import type { Point, Size } from './projection';
 import type { MapMarker } from './types';
@@ -50,11 +50,57 @@ interface ThingProps {
   onPress?: (id: string) => void;
 }
 
+// The look of a thing, unread: its name is said by what holds it.
+function Look({ thing, onSize }: { thing: MapMarker; onSize: (size: Size) => void }): ReactElement {
+  return (
+    <View
+      accessibilityElementsHidden
+      aria-hidden
+      importantForAccessibility="no-hide-descendants"
+      onLayout={({ nativeEvent: { layout } }) => {
+        onSize({ width: layout.width, height: layout.height });
+      }}
+    >
+      <LookView look={thing.image.view} />
+    </View>
+  );
+}
+
+// What holds a thing's look and says its name: a button, or for a passive thing a picture that takes no press, so
+// that a press on it reaches what is drawn under it.
+function Held({
+  thing,
+  onPress,
+  children,
+}: Pick<ThingProps, 'thing' | 'onPress'> & { children: ReactNode }): ReactElement {
+  const { id, name, image, passive } = thing;
+  if (passive === true) {
+    return (
+      <View accessibilityLabel={name} accessibilityRole="image" accessible style={styles.passive} testID={image.look}>
+        {children}
+      </View>
+    );
+  }
+  return (
+    <Pressable
+      accessibilityLabel={name}
+      accessibilityRole="button"
+      hitSlop={HIT_SLOP}
+      onPress={() => {
+        onPress?.(id);
+      }}
+      testID={image.look}
+    >
+      {children}
+    </Pressable>
+  );
+}
+
 // A marker or an Avatar on the plain ground: the design system's own view of its look, standing on its position,
-// with its text under it. One outside the view is not drawn, and stays a button under its name, so that a screen
+// with its text under it. One outside the view is not drawn, and stays in the tree under its name, so that a screen
 // reader and a test reach everything the map was asked to show.
 export function Thing({ thing, glideMs, place, view, onPress }: ThingProps): ReactElement {
-  const { id, name, position, image, text: words } = thing;
+  const { position, image, text: words, passive } = thing;
   const offset = useGlide(position, glideMs, place);
   const [box, setBox] = useState<Size>({ width: 0, height: 0 });
   const at = place(position);
@@ -64,32 +110,17 @@ export function Thing({ thing, glideMs, place, view, onPress }: ThingProps): Rea
     <Animated.View
       style={
         seen
-          ? [styles.thing, { left: at.x - box.width / 2, top, transform: offset.getTranslateTransform() }]
+          ? [
+              styles.thing,
+              passive === true && styles.passive,
+              { left: at.x - box.width / 2, top, transform: offset.getTranslateTransform() },
+            ]
           : styles.unseen
       }
     >
-      <Pressable
-        accessibilityLabel={name}
-        accessibilityRole="button"
-        hitSlop={HIT_SLOP}
-        onPress={() => {
-          onPress?.(id);
-        }}
-        testID={image.look}
-      >
-        {seen ? (
-          <View
-            accessibilityElementsHidden
-            aria-hidden
-            importantForAccessibility="no-hide-descendants"
-            onLayout={({ nativeEvent: { layout } }) => {
-              setBox({ width: layout.width, height: layout.height });
-            }}
-          >
-            <LookView look={image.view} />
-          </View>
-        ) : null}
-      </Pressable>
+      <Held onPress={onPress} thing={thing}>
+        {seen ? <Look onSize={setBox} thing={thing} /> : null}
+      </Held>
       {seen && words !== undefined ? (
         <View style={styles.under}>
           <Text numberOfLines={1} style={styles.words}>
@@ -101,39 +132,12 @@ export function Thing({ thing, glideMs, place, view, onPress }: ThingProps): Rea
   );
 }
 
-// The route on the plain ground: a straight stroke between each two points, and its words for a screen reader.
-export function RouteLine({ points }: { points: readonly Point[] }): ReactElement {
-  return (
-    <>
-      <View accessibilityLabel="경로가 그려져 있습니다" accessibilityRole="image" accessible style={styles.unseen} />
-      {points.slice(1).map((to, index) => {
-        const from = points[index] ?? to;
-        const length = Math.hypot(to.x - from.x, to.y - from.y);
-        return (
-          <View
-            key={`${from.x}:${from.y}:${to.x}:${to.y}`}
-            style={[
-              styles.stroke,
-              {
-                left: (from.x + to.x) / 2 - length / 2 - STROKE / 2,
-                top: (from.y + to.y) / 2 - STROKE / 2,
-                width: length + STROKE,
-                transform: [{ rotate: `${Math.atan2(to.y - from.y, to.x - from.x)}rad` }],
-              },
-            ]}
-          />
-        );
-      })}
-    </>
-  );
-}
-
 const HIT_SLOP = 12;
-const STROKE = 5;
 const UNDER_WIDTH = 160;
 
 const styles = StyleSheet.create({
   thing: { position: 'absolute' },
+  passive: { pointerEvents: 'none' },
   // In the tree for a screen reader, and too small to see.
   unseen: { position: 'absolute', left: 0, top: 0, width: 1, height: 1, overflow: 'hidden' },
   under: {
@@ -142,25 +146,20 @@ const styles = StyleSheet.create({
     left: '50%',
     width: UNDER_WIDTH,
     marginLeft: -UNDER_WIDTH / 2,
-    marginTop: 2,
+    marginTop: 3,
     alignItems: 'center',
     pointerEvents: 'none',
   },
+  // The `Main` frame's name under a marker: 11/16 in the bold weight on a white round, 3 under the marker's foot.
   words: {
-    ...text.micro,
-    paddingVertical: 2,
-    paddingHorizontal: 6,
+    fontFamily: font.bold,
+    fontSize: 11,
+    lineHeight: 16,
+    paddingVertical: 1,
+    paddingHorizontal: 7,
     borderRadius: radius.full,
-    overflow: 'hidden',
     color: color.ink,
     backgroundColor: color.surface,
-    boxShadow: shadow.card,
-  },
-  stroke: {
-    position: 'absolute',
-    height: STROKE,
-    borderRadius: radius.full,
-    backgroundColor: color.me,
-    pointerEvents: 'none',
+    boxShadow: shadow.mapName,
   },
 });

@@ -87,26 +87,25 @@ export function BottomNavs(): ReactElement {
         ]}
         onSelect={setActive}
       />
-      {/* The main screen's bar, as its frame draws it. */}
-      <View style={styles.raisedNav}>
-        <BottomNav
-          active={mainActive}
-          items={[
-            { icon: 'map', label: '지도' },
-            { icon: 'users', label: '파티', badge: 2 },
-            { icon: 'plus', label: '올리기', raised: true },
-            { icon: 'calendar', label: '행사' },
-            { icon: 'user', label: '내 정보' },
-          ]}
-          onSelect={(index) => {
-            if (index === 2) {
-              showToast('올리기');
-            } else {
-              setMainActive(index);
-            }
-          }}
-        />
-      </View>
+      {/* The main screen's bar, as its frame draws it: an action in the middle and no line on top. */}
+      <BottomNav
+        active={mainActive}
+        items={[
+          { icon: 'map', label: '지도' },
+          { icon: 'users', label: '파티', badge: 2 },
+          { icon: 'plus', label: '올리기', action: true },
+          { icon: 'calendar', label: '행사' },
+          { icon: 'user', label: '내 정보' },
+        ]}
+        line={false}
+        onSelect={(index) => {
+          if (index === 2) {
+            showToast('올리기');
+          } else {
+            setMainActive(index);
+          }
+        }}
+      />
     </Section>
   );
 }
@@ -174,6 +173,14 @@ export function Toasts(): ReactElement {
         <Button onPress={showNotReady} variant="secondary">
           준비 중 알림
         </Button>
+        <Button
+          onPress={() => {
+            showToast('서지우님은 위치가 꺼져 있어요', 2000);
+          }}
+          variant="secondary"
+        >
+          2초 알림
+        </Button>
       </Row>
     </Section>
   );
@@ -185,6 +192,4 @@ const styles = StyleSheet.create({
     padding: space[4],
     backgroundColor: color.surfaceSubtle,
   },
-  // Room for the round button, which stands out of the bar.
-  raisedNav: { paddingTop: space[8] },
 });

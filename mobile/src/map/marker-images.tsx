@@ -187,9 +187,11 @@ export function MarkerImageStage(): ReactElement {
   );
 }
 
-// Clear room around a look, so that its ring and its shadow are in the picture. A native side draws a marker's text
-// that much higher, so that it sits under the look and not under the room.
-export const IMAGE_MARGIN = 8;
+// Clear room around a look, so that what reaches out of its box is in the picture: a shadow, a pin's count, and the
+// rings of a selected look, of which a selected pin's reaches furthest, a little over 8. A look that stands on its
+// tip has its `anchor` that much above the picture's foot, and a native side is told the room (`imageMargin`) and
+// draws a marker's text that much higher, so that it sits under the look and not under the room.
+export const IMAGE_MARGIN = 12;
 const OFF_SCREEN = -10_000;
 
 const styles = StyleSheet.create({

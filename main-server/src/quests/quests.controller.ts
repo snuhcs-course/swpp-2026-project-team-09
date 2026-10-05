@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { Idempotent } from '@nestjs/idempotency';
 import { z } from 'zod';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
@@ -9,8 +9,13 @@ import {
   makeQuestSchema,
   type SubQuestContentDto,
   subQuestContentSchema,
+  type UpdateQuestDto,
+  updateQuestSchema,
+  type UserIdDto,
+  userIdSchema,
 } from './dto/quest-requests.dto.js';
 import { QuestDto, RecruitingQuestDto, SubQuestDto } from './dto/quest.dto.js';
+import { LeaderService } from './leader.service.js';
 import { QuestsService } from './quests.service.js';
 import { RecruitingService } from './recruiting.service.js';
 import { SubQuestsService } from './sub-quests.service.js';
@@ -21,6 +26,7 @@ export class QuestsController {
     private readonly quests: QuestsService,
     private readonly subQuests: SubQuestsService,
     private readonly recruiting: RecruitingService,
+    private readonly leader: LeaderService,
   ) {}
 
   // A repeat gives the same Quest, so it takes no Idempotency-Key.
@@ -58,6 +64,35 @@ export class QuestsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   drop(@CurrentUser() user: SignedInUser, @Param('questId', { schema: z.uuid() }) questId: string): Promise<void> {
     return this.quests.drop(user.id, questId);
+  }
+
+  @Patch(':questId')
+  update(
+    @CurrentUser() user: SignedInUser,
+    @Param('questId', { schema: z.uuid() }) questId: string,
+    @Body({ schema: updateQuestSchema }) changes: UpdateQuestDto,
+  ): Promise<QuestDto> {
+    return this.leader.update(user.id, questId, changes);
+  }
+
+  @Put(':questId/leader')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  handOver(
+    @CurrentUser() user: SignedInUser,
+    @Param('questId', { schema: z.uuid() }) questId: string,
+    @Body({ schema: userIdSchema }) body: UserIdDto,
+  ): Promise<void> {
+    return this.leader.handOver(user.id, questId, body.userId);
+  }
+
+  @Delete(':questId/holders/:userId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeHolder(
+    @CurrentUser() user: SignedInUser,
+    @Param('questId', { schema: z.uuid() }) questId: string,
+    @Param('userId', { schema: z.uuid() }) holderId: string,
+  ): Promise<void> {
+    return this.leader.remove(user.id, questId, holderId);
   }
 
   // A repeat is refused as a Holder already, so it takes no Idempotency-Key.

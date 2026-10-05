@@ -33,7 +33,7 @@ As in ticket 05, entering a Party changes no Quest.
 
 - **Tables**: `party_join_requests` and `party_invitations`, each `(id, party_id, user_id, sent_at)`, unique
   `(party_id, user_id)`, `party_id` `ON DELETE CASCADE` (they end with the Party). Migration
-  `20261004180000_add_party_join_requests_and_invitations`. An invitation stores no inviter: it is the Party's, and the
+  `20261004260000_add_party_join_requests_and_invitations`. An invitation stores no inviter: it is the Party's, and the
   invited User sees its Leader now. The Join Policy is the shared enum `JoinPolicy`; a Party's default is Closed.
 - **Who asks**: whoever can see the Party (`PartiesService.canSee`): a Friend of any member, and also a Holder of the
   Party's Quest, who could enter at once instead. Anyone else is refused with `PARTY_NOT_FOUND`, as ticket 05's join
