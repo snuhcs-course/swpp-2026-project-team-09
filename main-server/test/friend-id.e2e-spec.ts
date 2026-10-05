@@ -3,6 +3,7 @@ import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { z } from 'zod';
+import { newFriendId } from '../src/users/friend-id.js';
 import { connect } from './containers.js';
 import { FRIEND_ID, lookUpFriendId, signInUser } from './friends.js';
 import { googleSubject } from './google.js';
@@ -10,6 +11,11 @@ import { getProfile, patchProfile } from './profile.js';
 import { signIn } from './sign-in.js';
 import { refused } from './signals.js';
 import { startApp } from './start-app.js';
+
+vi.mock(import('../src/users/friend-id.js'), async (importOriginal) => {
+  const original = await importOriginal();
+  return { newFriendId: vi.fn(original.newFriendId) };
+});
 
 const settings = inject('settings');
 let app: INestApplication<Server>;
@@ -59,6 +65,31 @@ describe('A Friend ID', () => {
     await expect(
       prisma.user.update({ where: { id: second.id }, data: { friendId: first.friendId } }),
     ).rejects.toMatchObject({ code: 'P2002' });
+  });
+});
+
+describe('A Friend ID already held when drawn', () => {
+  it('is drawn again for a new User', async () => {
+    const holder = await signInUser(app);
+    vi.mocked(newFriendId).mockReturnValueOnce(holder.friendId);
+
+    const { accessToken } = await signIn(app);
+
+    const { friendId } = friendIdOf((await getProfile(app, accessToken)).body);
+    expect(friendId).toMatch(FRIEND_ID);
+    expect(friendId).not.toBe(holder.friendId);
+  });
+
+  it('stays the same for a User signing in again', async () => {
+    const holder = await signInUser(app);
+    const sub = googleSubject();
+    const { accessToken } = await signIn(app, { sub });
+    const { friendId } = friendIdOf((await getProfile(app, accessToken)).body);
+    vi.mocked(newFriendId).mockReturnValueOnce(holder.friendId);
+
+    const again = await signIn(app, { sub });
+
+    expect(friendIdOf((await getProfile(app, again.accessToken)).body).friendId).toBe(friendId);
   });
 });
 
