@@ -62,8 +62,10 @@ export function SignInScreen(): ReactElement {
             <Text style={styles.tagline}>관악캠퍼스의 지금</Text>
           </View>
           <View style={styles.stage}>
-            <SignInButton checking={phase === 'checking'} onPress={start} />
+            {/* The drawing's picture has a white ground. It lies under the button, so that the ring and the shadow
+                around the button are whole where the two meet. */}
             <Drawing refused={phase === 'not-snu-account' || phase === 'failed'} />
+            <SignInButton checking={phase === 'checking'} onPress={start} />
           </View>
           <Copy phase={phase} />
         </View>
