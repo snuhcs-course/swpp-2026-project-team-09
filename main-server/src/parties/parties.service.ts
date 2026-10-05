@@ -1,4 +1,4 @@
-import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { FriendsService } from '../friends/friends.service.js';
@@ -16,29 +16,11 @@ import {
   visiblePartyInclude,
   VisiblePartyDto,
 } from './dto/party.dto.js';
+import { conflict, notInParty, partyNotFound } from './refusals.js';
 
-const notInParty = (): NotFoundException =>
-  new NotFoundException({
-    statusCode: HttpStatus.NOT_FOUND,
-    error: 'Not Found',
-    code: 'NOT_IN_PARTY',
-    message: 'The User is in no Party.',
-  });
-
-// Also for a Party the User may not see, so that its existence stays hidden.
-const partyNotFound = (): NotFoundException =>
-  new NotFoundException({
-    statusCode: HttpStatus.NOT_FOUND,
-    error: 'Not Found',
-    code: 'PARTY_NOT_FOUND',
-    message: 'No such Party is running.',
-  });
-
-const conflict = (code: string, message: string, more: object = {}): ConflictException =>
-  new ConflictException({ statusCode: HttpStatus.CONFLICT, error: 'Conflict', code, message, ...more });
-
-// Who opens, enters and leaves a Party. Every change to a Party's membership locks the User first and then the Party,
-// so that changes to one Party, and those of one User, run one after another. Entering or leaving changes no Quest.
+// Who opens, enters and leaves a Party. Every change to a Party's membership locks the User who enters or goes first and
+// then the Party, so that changes to one Party, and those of one User, run one after another. Entering or leaving
+// changes no Quest.
 @Injectable()
 export class PartiesService {
   constructor(
@@ -60,6 +42,7 @@ export class PartiesService {
       const party = await tx.party.create({
         data: { title, capacity, joinPolicy, questId, leaderId: userId, members: { create: { userId } } },
       });
+      await this.endWaiting(userId, tx);
       return this.audienceOf(party, tx);
     });
     this.signals.send(audience, 'party-changed');
@@ -74,7 +57,7 @@ export class PartiesService {
       const party = await this.lock(partyId, tx);
       await this.refuseMember(userId, tx);
       if (!(await this.holdsQuest(party, userId, tx))) {
-        if (!(await this.friends.friendsOfAny(await this.memberIds(party, tx), tx)).includes(userId)) {
+        if (!(await this.isFriendOfMember(party, userId, tx))) {
           throw partyNotFound();
         }
         if (party.joinPolicy !== JoinPolicy.open) {
@@ -138,14 +121,16 @@ export class PartiesService {
     return parties.map((party) => toVisiblePartyDto(party, friends));
   }
 
-  // Adds the User to the Party within its capacity. Every way into a Party ends here, after the User and then the Party
-  // were locked. Answers the Users to send `party-changed` to once the transaction commits.
+  // Adds the User to the Party within its capacity, and ends the User's requests to enter and invitations. Every way
+  // into a Party ends here, after the User and then the Party were locked. Answers the Users to send `party-changed` to
+  // once the transaction commits.
   async admit(party: Party, userId: string, tx: Prisma.TransactionClient): Promise<string[]> {
     await this.refuseMember(userId, tx);
     if ((await this.memberIds(party, tx)).length >= party.capacity) {
       throw conflict('PARTY_FULL', 'This Party is full.');
     }
     await tx.partyMember.create({ data: { partyId: party.id, userId } });
+    await this.endWaiting(userId, tx);
     return this.audienceOf(party, tx);
   }
 
@@ -173,7 +158,7 @@ export class PartiesService {
   }
 
   // Locks the Party's row until the transaction ends and reads it.
-  private async lock(partyId: string, tx: Prisma.TransactionClient): Promise<Party> {
+  async lock(partyId: string, tx: Prisma.TransactionClient): Promise<Party> {
     await tx.$queryRaw`SELECT 1 FROM parties WHERE id = ${partyId}::uuid FOR NO KEY UPDATE`;
     const party = await tx.party.findUnique({ where: { id: partyId } });
     if (party === null) {
@@ -183,13 +168,19 @@ export class PartiesService {
   }
 
   // In the order they entered.
-  private async memberIds(party: Pick<Party, 'id'>, tx: Prisma.TransactionClient): Promise<string[]> {
+  async memberIds(party: Pick<Party, 'id'>, tx: Prisma.TransactionClient): Promise<string[]> {
     const members = await tx.partyMember.findMany({
       where: { partyId: party.id },
       select: { userId: true },
       orderBy: PARTY_INCLUDE.members.orderBy,
     });
     return members.map((member) => member.userId);
+  }
+
+  // A User who enters any Party has no request to enter and no invitation waiting any more.
+  private async endWaiting(userId: string, tx: Prisma.TransactionClient): Promise<void> {
+    await tx.partyJoinRequest.deleteMany({ where: { userId } });
+    await tx.partyInvitation.deleteMany({ where: { userId } });
   }
 
   private async refuseMember(userId: string, tx: Prisma.TransactionClient): Promise<void> {
@@ -214,7 +205,16 @@ export class PartiesService {
     }
   }
 
-  private async holdsQuest(party: Party, userId: string, tx: Prisma.TransactionClient): Promise<boolean> {
+  // Whether the User may see the Party: a Holder of its Quest or a Friend of a member. To anyone else it is unknown.
+  async canSee(party: Party, userId: string, tx: Prisma.TransactionClient): Promise<boolean> {
+    return (await this.holdsQuest(party, userId, tx)) || this.isFriendOfMember(party, userId, tx);
+  }
+
+  async holdsQuest(party: Party, userId: string, tx: Prisma.TransactionClient): Promise<boolean> {
     return party.questId !== null && (await this.quests.holderIds(party.questId, tx)).includes(userId);
+  }
+
+  private async isFriendOfMember(party: Party, userId: string, tx: Prisma.TransactionClient): Promise<boolean> {
+    return (await this.friends.friendsOfAny(await this.memberIds(party, tx), tx)).includes(userId);
   }
 }

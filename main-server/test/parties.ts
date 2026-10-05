@@ -35,6 +35,99 @@ export function listParties(app: INestApplication<Server>, user: SignedIn): requ
   return withAccessToken(request(app.getHttpServer()).get('/parties'), user.accessToken);
 }
 
+export function askToJoin(app: INestApplication<Server>, user: SignedIn, partyId: string): request.Test {
+  return withAccessToken(request(app.getHttpServer()).post('/party-join-requests'), user.accessToken).send({ partyId });
+}
+
+export function getSentJoinRequests(app: INestApplication<Server>, user: SignedIn): request.Test {
+  return withAccessToken(request(app.getHttpServer()).get('/party-join-requests'), user.accessToken);
+}
+
+export function withdrawJoinRequest(app: INestApplication<Server>, user: SignedIn, requestId: string): request.Test {
+  return withAccessToken(
+    request(app.getHttpServer()).post(`/party-join-requests/${requestId}/withdraw`),
+    user.accessToken,
+  );
+}
+
+export function getJoinRequests(app: INestApplication<Server>, leader: SignedIn): request.Test {
+  return withAccessToken(request(app.getHttpServer()).get('/parties/mine/join-requests'), leader.accessToken);
+}
+
+export function answerJoinRequest(
+  app: INestApplication<Server>,
+  leader: SignedIn,
+  requestId: string,
+  answer: 'accept' | 'decline',
+): request.Test {
+  return withAccessToken(
+    request(app.getHttpServer()).post(`/parties/mine/join-requests/${requestId}/${answer}`),
+    leader.accessToken,
+  );
+}
+
+export function invite(app: INestApplication<Server>, leader: SignedIn, userId: string): request.Test {
+  return withAccessToken(request(app.getHttpServer()).post('/parties/mine/invitations'), leader.accessToken).send({
+    userId,
+  });
+}
+
+export function getInvitations(app: INestApplication<Server>, user: SignedIn): request.Test {
+  return withAccessToken(request(app.getHttpServer()).get('/party-invitations'), user.accessToken);
+}
+
+export function answerInvitation(
+  app: INestApplication<Server>,
+  user: SignedIn,
+  invitationId: string,
+  answer: 'accept' | 'decline',
+): request.Test {
+  return withAccessToken(
+    request(app.getHttpServer()).post(`/party-invitations/${invitationId}/${answer}`),
+    user.accessToken,
+  );
+}
+
+export function changeParty(app: INestApplication<Server>, leader: SignedIn, changes: object): request.Test {
+  return withAccessToken(request(app.getHttpServer()).patch('/parties/mine'), leader.accessToken).send(changes);
+}
+
+export function handOver(app: INestApplication<Server>, leader: SignedIn, userId: string): request.Test {
+  return withAccessToken(request(app.getHttpServer()).put('/parties/mine/leader'), leader.accessToken).send({
+    userId,
+  });
+}
+
+export function removeMember(app: INestApplication<Server>, leader: SignedIn, userId: string): request.Test {
+  return withAccessToken(request(app.getHttpServer()).delete(`/parties/mine/members/${userId}`), leader.accessToken);
+}
+
+// The User asks to join the Party, and the id of the request is answered.
+export async function joinRequestOf(app: INestApplication<Server>, user: SignedIn, partyId: string): Promise<string> {
+  const response = await askToJoin(app, user, partyId);
+  if (response.status !== 201) {
+    throw new Error(`Asking to join answered ${response.status}: ${JSON.stringify(response.body)}`);
+  }
+  return z.object({ id: z.string() }).parse(response.body).id;
+}
+
+// The Leader invites the User, and the id of the invitation, as the User lists it, is answered.
+export async function invitationOf(
+  app: INestApplication<Server>,
+  leader: SignedIn,
+  user: SignedIn & { id: string },
+): Promise<string> {
+  const response = await invite(app, leader, user.id);
+  if (response.status !== 204) {
+    throw new Error(`Inviting answered ${response.status}: ${JSON.stringify(response.body)}`);
+  }
+  const [newest] = z.array(z.object({ id: z.string() })).parse((await getInvitations(app, user)).body);
+  if (newest === undefined) {
+    throw new Error('The invited User lists no invitation');
+  }
+  return newest.id;
+}
+
 // Opens a Party and answers its id.
 export async function partyOf(app: INestApplication<Server>, user: SignedIn, body: object = {}): Promise<string> {
   const response = await openParty(app, user, body);

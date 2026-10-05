@@ -1,15 +1,26 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Put } from '@nestjs/common';
 import { z } from 'zod';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
 import { type SwitchDto, switchSchema } from '../location-sharing/dto/switch.dto.js';
-import { type OpenPartyDto, openPartySchema } from './dto/party-requests.dto.js';
+import {
+  type OpenPartyDto,
+  openPartySchema,
+  type UpdatePartyDto,
+  updatePartySchema,
+  type UserIdDto,
+  userIdSchema,
+} from './dto/party-requests.dto.js';
 import { PartyDto, VisiblePartyDto } from './dto/party.dto.js';
+import { LeaderService } from './leader.service.js';
 import { PartiesService } from './parties.service.js';
 
 // A repeat of opening or entering is refused as a User in a Party already, so neither takes an Idempotency-Key.
 @Controller('parties')
 export class PartiesController {
-  constructor(private readonly parties: PartiesService) {}
+  constructor(
+    private readonly parties: PartiesService,
+    private readonly leader: LeaderService,
+  ) {}
 
   @Post()
   open(@CurrentUser() user: SignedInUser, @Body({ schema: openPartySchema }) body: OpenPartyDto): Promise<PartyDto> {
@@ -24,6 +35,26 @@ export class PartiesController {
   @Get('mine')
   read(@CurrentUser() user: SignedInUser): Promise<PartyDto> {
     return this.parties.read(user.id);
+  }
+
+  @Patch('mine')
+  update(
+    @CurrentUser() user: SignedInUser,
+    @Body({ schema: updatePartySchema }) body: UpdatePartyDto,
+  ): Promise<PartyDto> {
+    return this.leader.update(user.id, body);
+  }
+
+  @Put('mine/leader')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  handOver(@CurrentUser() user: SignedInUser, @Body({ schema: userIdSchema }) body: UserIdDto): Promise<void> {
+    return this.leader.handOver(user.id, body.userId);
+  }
+
+  @Delete('mine/members/:userId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@CurrentUser() user: SignedInUser, @Param('userId', { schema: z.uuid() }) userId: string): Promise<void> {
+    return this.leader.remove(user.id, userId);
   }
 
   @Post('mine/leave')
