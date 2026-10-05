@@ -4,6 +4,7 @@ import { HashtagGrouping } from './hashtag-grouping.js';
 import { FETCH_MAIN_SERVER, MainServer } from './main-server.js';
 import { MatchingController } from './matching.controller.js';
 import { MatchingService } from './matching.service.js';
+import { PlacementService } from './placement.service.js';
 import { RoundService } from './round.service.js';
 
 @Module({
@@ -11,6 +12,7 @@ import { RoundService } from './round.service.js';
   providers: [
     MatchingService,
     RoundService,
+    PlacementService,
     MainServer,
     { provide: FETCH_MAIN_SERVER, useValue: fetch },
     { provide: Grouping, useClass: HashtagGrouping },

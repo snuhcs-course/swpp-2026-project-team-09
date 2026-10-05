@@ -6,7 +6,7 @@ import { useRounds } from './rounds.js';
 const rounds = useRounds();
 
 describe('The start of a round', () => {
-  it('asks the main server which requests stand, with its token, and expires the others', async () => {
+  it('asks the main server which requests stand, with its token, expires the others and then asks for the eligible Quests', async () => {
     const mainServer = new MainServerStub();
     const app = await rounds.start(mainServer);
     const globalEventId = randomUUID();
@@ -22,6 +22,11 @@ describe('The start of a round', () => {
       {
         path: '/matching-requests/standing',
         body: { requests: [stands, standsNot].map(({ userId }) => ({ userId, globalEventId })) },
+        authorization: `Bearer ${rounds.settings.MATCH_SERVER_TOKEN}`,
+      },
+      {
+        path: '/matching-requests/eligible-quests',
+        body: { pools: [{ globalEventId, size: 3 }] },
         authorization: `Bearer ${rounds.settings.MATCH_SERVER_TOKEN}`,
       },
     ]);

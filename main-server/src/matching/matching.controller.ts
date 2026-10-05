@@ -2,7 +2,17 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestj
 import { z } from 'zod';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
 import { MatchServerOnly } from '../common/match-server-only.decorator.js';
-import { StandingAnswerDto, type StandingQuestionDto, standingQuestionSchema } from './dto/match-server-calls.dto.js';
+import {
+  EligibleAnswerDto,
+  type EligibleQuestionDto,
+  eligibleQuestionSchema,
+  MatchQuestDto,
+  type PlacementDto,
+  placementSchema,
+  StandingAnswerDto,
+  type StandingQuestionDto,
+  standingQuestionSchema,
+} from './dto/match-server-calls.dto.js';
 import { type AskForMatchingDto, askForMatchingSchema, MatchingRequestDto } from './dto/matching-request.dto.js';
 import { MatchingService } from './matching.service.js';
 
@@ -25,6 +35,20 @@ export class MatchingController {
   @HttpCode(HttpStatus.OK)
   standing(@Body({ schema: standingQuestionSchema }) { requests }: StandingQuestionDto): Promise<StandingAnswerDto> {
     return this.matching.standing(requests);
+  }
+
+  // The match server's question after the standing one. It stores nothing, so it answers 200.
+  @Post('eligible-quests')
+  @MatchServerOnly()
+  @HttpCode(HttpStatus.OK)
+  eligibleQuests(@Body({ schema: eligibleQuestionSchema }) body: EligibleQuestionDto): Promise<EligibleAnswerDto> {
+    return this.matching.eligibleQuests(body);
+  }
+
+  @Post('placements')
+  @MatchServerOnly()
+  place(@Body({ schema: placementSchema }) body: PlacementDto): Promise<MatchQuestDto> {
+    return this.matching.place(body);
   }
 
   @Get()

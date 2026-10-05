@@ -67,7 +67,7 @@ arrived. The User and the Global Event are the main server's, so their ids refer
 A request is in one of four states:
 
 - `waiting`: as it is stored. Only a waiting request can be withdrawn.
-- `matched`: put in a match with others by a round (see [Rounds](#rounds)).
+- `matched`: placed into an Open Quest or put in a match with others by a round (see [Rounds](#rounds)).
 - `withdrawn`: withdrawn by its User.
 - `expired`: no longer standing, because its Global Event started or was cancelled or its User came to hold a Shared
   Quest for it. A round finds it so, or the main server answers so for its match.
@@ -92,8 +92,9 @@ checked the User's access token and whether the request can be made, and this se
 
 A request reads
 `{ "globalEventId": "…", "size": 3, "state": "matched", "arrivedAt": "2026-10-04T08:00:00.000Z", "questId": "…" }`.
-`questId` is the Shared Quest of a matched request, and `null` until the main server has created it and for a request
-in any other state. The refusals each have a `code`:
+`questId` is the Quest of a matched request: the Open Quest it was placed into, or its match's Shared Quest, `null`
+until the main server has created that. It is `null` for a request in any other state. The refusals each have a
+`code`:
 
 | Refusal                                                        | Status | `code`                         |
 | -------------------------------------------------------------- | ------ | ------------------------------ |
@@ -133,22 +134,38 @@ a test its own connection, for the states that only the rounds write.
 
 ## Rounds
 
-Every `ROUND_INTERVAL_SECONDS`, provisionally a minute, a round turns waiting requests into matches and asks the main
-server for each match's Shared Quest. `RoundService` in `src/matching/round.service.ts` runs it, on an interval it
-registers with `SchedulerRegistry` from `@nestjs/schedule` when the server starts.
+Every `ROUND_INTERVAL_SECONDS`, provisionally a minute, a round places waiting requests into Open Quests, turns the
+rest into matches and asks the main server for each match's Shared Quest. `RoundService` in
+`src/matching/round.service.ts` runs it, on an interval it registers with `SchedulerRegistry` from `@nestjs/schedule`
+when the server starts.
 
 1. **One at a time.** The round opens a transaction and takes PostgreSQL's advisory lock `matching-round` with
    `pg_try_advisory_xact_lock`. While another match server's round holds it, the round is skipped; the lock ends with
    the transaction. No state of a process decides it, so this holds however many match servers run.
 2. **Which requests stand.** It sends the waiting requests to the main server, which answers the ones whose Global
    Event is published and has not started and whose User holds no Shared Quest for it. The others become `expired`.
-   When the main server does not answer, the round groups and expires nothing. A request withdrawn while the main
-   server answers is left as it is; the rest are locked until the round's transaction ends, so a withdrawal waits for
-   it.
-3. **Groups.** The requests that stand form a pool for each Global Event and size. A pool of at least one group's size
-   goes to the grouping module (see [Grouping](#grouping)), and each group it returns is stored as a match, its
+   When the main server does not answer, the round places, groups and expires nothing. A request withdrawn while the
+   main server answers is left as it is; the rest are locked until the round's transaction ends, so a withdrawal waits
+   for it.
+3. **Placements.** The requests that stand form a pool for each Global Event and size. The round asks the main server
+   for the eligible Quests of these pools: the Open Quests of the Global Event whose capacity is the size and that have
+   a free place, each with its free places, its Holders and the time it was made. The earliest Quest takes the
+   earliest requests of its pool, in the order they arrived, until it is full or none is left; a request is never
+   placed into a Quest its User holds. For each placement the round asks the main server to place the User into the
+   Quest, and once it answers that the User entered, the request is `matched` and names the Quest in `quest_id`. A
+   placement the main server refuses, whatever the code (the Quest filled, is no longer Open, no longer has the size
+   as its capacity, or its User holds a Shared Quest for the event by then), or does not answer, leaves the request
+   waiting, and the round goes on with the next; it is not grouped in this round. A placement keeps no record of its
+   own: the next round asks which requests stand again and expires, places or groups the request anew. A User who
+   entered while the answer was lost holds the Quest, and the next round expires the request, since its User holds a
+   Shared Quest by then. When the main server does not answer about the eligible Quests, the round places nothing.
+   `PlacementService` in `src/matching/placement.service.ts` makes the placements, inside the round's transaction, so
+   that one match server places a request once. A check in the migration keeps `quest_id` to a `matched` request in no
+   match.
+4. **Groups.** The requests the round did not try to place go to the grouping module (see [Grouping](#grouping)), a
+   pool at a time once it holds at least one group's size, and each group it returns is stored as a match, its
    requests `matched`. The others wait for the next round.
-4. **Quests.** The transaction ends, and the round asks the main server for the Quest of every match that awaits one,
+5. **Quests.** The transaction ends, and the round asks the main server for the Quest of every match that awaits one,
    the oldest first, each in a transaction of its own that claims the match with `FOR UPDATE SKIP LOCKED`, so that no
    two match servers ask for one match at the same moment. It names the match's Users in the order their requests
    arrived, and the main server lets the earliest of them who is free lead the Quest.
@@ -170,10 +187,12 @@ this way; there is no general outbox.
 The calls go through `MainServer` in `src/matching/main-server.ts`: HTTP requests to `MAIN_SERVER_URL`, each of which
 reaches one main server however many run, with `Authorization: Bearer <MATCH_SERVER_TOKEN>`. Any answer outside 2xx
 other than a refusal with a code, an answer of another shape, or none within 5 seconds counts as no answer. The main
-server's README describes its two routes, `POST /matching-requests/standing` and `POST /matches/:matchId/quest`.
+server's README describes its four routes, `POST /matching-requests/standing`, `POST /matching-requests/eligible-quests`,
+`POST /matching-requests/placements` and `POST /matches/:matchId/quest`.
 
 In a test, `MainServerStub` from `test/main-server.ts` answers in the main server's place: `startApp` takes it as
-`mainServer`. Its `standing` and `quest` say how it answers, `null` for no answer, and it keeps each call in `calls`.
+`mainServer`. Its `standing`, `eligible`, `placement` and `quest` say how it answers, `null` for no answer, and it keeps
+each call in `calls`; `placements()` lists the placements asked for.
 A round never runs by itself in the tests, whose settings set an hour between rounds. `useRounds()` from
 `test/rounds.ts`, called at the top of a test file, gives the file a database of its own, since a round groups every
 waiting request, and `rounds.run(app)` runs a round, as `test/rounds.e2e-spec.ts` does:
@@ -237,7 +256,8 @@ src/
 ├── generated/                       Prisma Client, generated by `pnpm install` (not committed)
 ├── health/                          a feature: the liveness and readiness checks
 └── matching/                        a feature: the requests for Matching, asked, withdrawn and read, and the
-                                     rounds that group them and ask the main server for Shared Quests
+                                     rounds that place them into Open Quests, group them and ask the main
+                                     server for Shared Quests
 test/                                tests, run against PostgreSQL in a container
 ```
 

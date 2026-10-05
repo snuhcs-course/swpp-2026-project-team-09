@@ -18,7 +18,7 @@ export interface MatchingRequestDto {
   questId: string | null;
 }
 
-// Read with its match, which names the Quest once the main server has created it.
+// Read with its match, which names the Quest once the main server has created it, unless the request was placed.
 export const MATCHING_REQUEST_INCLUDE = { match: { select: { questId: true } } } as const;
 
 export type MatchingRequestWithMatch = Prisma.MatchingRequestGetPayload<{ include: typeof MATCHING_REQUEST_INCLUDE }>;
@@ -28,6 +28,7 @@ export function toMatchingRequestDto({
   size,
   state,
   arrivedAt,
+  questId,
   match,
 }: MatchingRequestWithMatch): MatchingRequestDto {
   return {
@@ -35,7 +36,7 @@ export function toMatchingRequestDto({
     size,
     state,
     arrivedAt: arrivedAt.toISOString(),
-    // A User left out of the match's Quest has an expired request.
-    questId: state === 'matched' ? (match?.questId ?? null) : null,
+    // A placed request names its Quest itself. A User left out of the match's Quest has an expired request.
+    questId: state === 'matched' ? (questId ?? match?.questId ?? null) : null,
   };
 }

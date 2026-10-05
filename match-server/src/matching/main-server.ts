@@ -12,6 +12,11 @@ const ANSWER_TIMEOUT_MS = 5000;
 
 const refusalSchema = z.object({ code: z.string() });
 
+// What went wrong with a call, for the log.
+export function problemOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 // This server's way to the main server: HTTP requests with MATCH_SERVER_TOKEN, each of which reaches one main server
 // however many run (README.md: Rounds).
 @Injectable()

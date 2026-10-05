@@ -7,7 +7,8 @@ import { Settings } from '../common/settings.js';
 import { MatchingRequest, Prisma } from '../generated/prisma/client.js';
 import { Grouping } from './grouping.js';
 import { MainServerRefusal } from './main-server-refusal.js';
-import { MainServer } from './main-server.js';
+import { MainServer, problemOf } from './main-server.js';
+import { PlacementService } from './placement.service.js';
 
 const standingSchema = z.object({ standing: z.array(z.object({ userId: z.string(), globalEventId: z.string() })) });
 
@@ -16,18 +17,15 @@ const questSchema = z.object({ questId: z.uuid(), holderIds: z.array(z.string())
 // The main server's answers that it creates no Quest for the match, however often it is asked.
 const CLOSING_REFUSALS = new Set(['GLOBAL_EVENT_NOT_FOUND', 'GLOBAL_EVENT_STARTED', 'MATCH_TOO_SMALL']);
 
-// A transaction ends after 5 seconds unless told otherwise, and a call to the main server may take that long.
+// A transaction ends after 5 seconds unless told otherwise, and each call to the main server may take that long.
 const TRANSACTION_TIMEOUT_MS = 30_000;
 
 function keyOf({ userId, globalEventId }: { userId: string; globalEventId: string }): string {
   return `${userId} ${globalEventId}`;
 }
 
-function problemOf(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
-
-// The rounds that turn waiting requests into matches and matches into Shared Quests (README.md: Rounds).
+// The rounds that place waiting requests into Open Quests, turn the rest into matches and matches into Shared Quests
+// (README.md: Rounds).
 @Injectable()
 export class RoundService implements OnApplicationBootstrap {
   private readonly logger = new Logger(RoundService.name);
@@ -35,6 +33,7 @@ export class RoundService implements OnApplicationBootstrap {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mainServer: MainServer,
+    private readonly placement: PlacementService,
     private readonly grouping: Grouping,
     private readonly scheduler: SchedulerRegistry,
     private readonly settings: ConfigService<Settings, true>,
@@ -50,16 +49,17 @@ export class RoundService implements OnApplicationBootstrap {
     this.scheduler.addInterval('round', timer);
   }
 
-  // Forms the matches, then asks the main server for the Quest of every match that awaits one. Skipped while another
-  // match server runs a round.
+  // Places requests into Open Quests and forms the matches, then asks the main server for the Quest of every match that
+  // awaits one. Skipped while another match server runs a round.
   async run(): Promise<void> {
-    if (await this.formMatches()) {
+    if (await this.placeAndGroup()) {
       await this.askForQuests();
     }
   }
 
-  // The advisory lock is held until the transaction ends, and only by one match server at a time.
-  private formMatches(): Promise<boolean> {
+  // The advisory lock is held until the transaction ends, and only by one match server at a time, so that no request is
+  // placed or grouped twice.
+  private placeAndGroup(): Promise<boolean> {
     return this.prisma.$transaction(
       async (tx) => {
         const [{ locked }] = await tx.$queryRaw<[{ locked: boolean }]>`
@@ -86,10 +86,11 @@ export class RoundService implements OnApplicationBootstrap {
           where: { id: { in: open.filter((request) => !standing.has(keyOf(request))).map(({ id }) => id) } },
           data: { state: 'expired' },
         });
-        await this.group(
+        const unplaced = await this.placement.place(
           open.filter((request) => standing.has(keyOf(request))),
           tx,
         );
+        await this.group(unplaced, tx);
         return true;
       },
       { timeout: TRANSACTION_TIMEOUT_MS },

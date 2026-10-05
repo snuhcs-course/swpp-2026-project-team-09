@@ -752,6 +752,8 @@ What only [Matching](#matching) reads of the Quests is in `MatchingQuestsService
 
 - `matchingRefusals(requests, tx?)` answers, for each `{ userId, globalEventId }` in order, why that request for
   Matching cannot stand now, as the refusal's code, or `null` when it stands.
+- `eligibleQuests(pools)` answers, for `{ globalEventId, size }` pools, the Open Quests of the Global Event whose
+  capacity is the size and that have a free place and a Sub Quest ahead, the earliest made first.
 - `forMatch(matchId, tx)` answers the id of the Quest created for the match server's match, or `null`.
 
 `RecruitingService`, also exported, has `enter(questId, userId, tx, admits?)`, described above. `admits(quest)` is the
@@ -759,7 +761,7 @@ way in's own check, such as the Join Policy, made once the Quest is locked; it t
 to send `quests-changed` to, the User included, once the transaction commits.
 
 `quests-changed` goes to every Holder, the one who acted included, when a Quest is created by attending, made or for a match, when a
-Sub Quest is added, edited or cancelled, when a User enters, when a Holder drops the Quest, which may pass on the
+Sub Quest is added, edited or cancelled, when a User enters or is placed by Matching, when a Holder drops the Quest, which may pass on the
 Leader's role, and when the Leader changes the settings, hands the role over or removes a Holder, the removed one
 included. It goes to the Leader when a request arrives or is withdrawn, to a User whose request the Leader declines or
 who declines an invitation, and to an invited User. A mark of done is the Holder's own and sends nothing. The signal carries
@@ -792,8 +794,8 @@ A request reads:
 - `state` is `waiting`, `matched`, `withdrawn` or `expired`. Only a waiting request can be withdrawn. The match server
   matches requests and expires those that no longer stand in its rounds (see below).
 - `arrivedAt` is when the match server stored it.
-- `questId` is the Shared Quest of a matched request, and `null` until this server has created it and for a request
-  in any other state.
+- `questId` is the Quest of a matched request: the Open Quest it was placed into, or its match's Shared Quest, `null`
+  until this server has created that. It is `null` for a request in any other state.
 - Once a request no longer waits, the User may ask again, and the new request is the one read.
 
 A request can be made for a published Global Event that has not started, with a size from 2 to 4, by a User who holds
@@ -827,16 +829,24 @@ reaches one match server however many run, with `Authorization: Bearer <MATCH_SE
 server's README describes its routes. Whether requests still stand is one question, which the rounds ask again:
 `MatchingQuestsService.matchingRefusals()` (see [Quests](#quests)).
 
-**The match server's rounds.** Every minute the match server asks which of its waiting requests still stand, groups
-them and asks this server for one Shared Quest for each group, a match; its README describes the rounds. It calls two
-routes, marked `@MatchServerOnly()` from `src/common/match-server-only.decorator.ts`. `MatchServerGuard` in
-`src/auth/match-server.guard.ts` answers 401 to any call without `Authorization: Bearer <MATCH_SERVER_TOKEN>`, a
+**The match server's rounds.** Every minute the match server asks which of its waiting requests still stand, places
+some into Open Quests that are gathering, groups the rest and asks this server for one Shared Quest for each group, a
+match; its README describes the rounds. It calls four routes, marked `@MatchServerOnly()` from
+`src/common/match-server-only.decorator.ts`. `MatchServerGuard` in `src/auth/match-server.guard.ts` answers 401 to any call without `Authorization: Bearer <MATCH_SERVER_TOKEN>`, a
 User's, an Administrator's and the worker's included. The bodies are checked as every body is.
 
 - `POST /matching-requests/standing` with `{ "requests": [{ "userId": "…", "globalEventId": "…" }] }` answers 200 with
   `{ "standing": [...] }`, the requests that still stand in the order given: their Global Event is published and has
   not started, and their User holds no Shared Quest for it. It is `MatchingQuestsService.matchingRefusals()`, which
   also decides whether a User may ask, and it stores nothing.
+- `POST /matching-requests/eligible-quests` with `{ "pools": [{ "globalEventId": "…", "size": 3 }] }`, sizes 2 to 4,
+  answers 200 with `{ "quests": [{ "id", "globalEventId", "capacity", "freePlaces", "holderIds", "createdAt" }] }`,
+  the earliest made first: the Open Quests of each pool's Global Event whose capacity is the size, that have a free
+  place and a Sub Quest ahead. `holderIds` are in the order the Holders entered, so that the match server never places
+  a User into a Quest the User holds. An Approval or a Closed Quest is never answered. It is
+  `MatchingQuestsService.eligibleQuests()`, and it stores nothing.
+- `POST /matching-requests/placements` with `{ "questId": "…", "userId": "…", "size": 3 }` places the User into the
+  Quest and answers 201 with `{ "questId": "…", "holderIds": [...] }`, the Holders the User included (see below).
 - `POST /matches/:matchId/quest` with `{ "globalEventId": "…", "userIds": ["…", "…"] }`, two to four Users, creates
   the match's Shared Quest and answers 201 with `{ "questId": "…", "holderIds": [...] }`. The match server repeats the
   request until it is answered, so the match identifier is stored with the Quest, `quests.match_id`, unique in the
@@ -862,6 +872,23 @@ Each refusal ends the match, and the match server asks no more:
 | Fewer than two matched Users are free for a Shared Quest | 409    | `MATCH_TOO_SMALL`        |
 
 A refused request changes nothing: a Quest held alone is deleted only with the Shared Quest that replaces it.
+
+A placement is a way into a Quest like joining, and goes through `RecruitingService.enter()` (see [Quests](#quests)):
+the User is locked first, the capacity is checked inside the transaction that adds the Holder, a Quest the User held
+alone for the Global Event is deleted with its Sub Quests and the User's progress, and the Holder enters last.
+`matching-changed` goes to the User and `quests-changed` to the Holders, the User included, once the Holder is stored.
+A User who already holds the Quest, such as one who joined it after the match server read the eligible Quests, is
+answered as entered with the Holders as they are, and no signal goes out. The match server then names the Quest in the
+request. Each refusal leaves the request waiting in the match server, which decides it again in its next round:
+
+| Refusal                                                    | Status | `code`                   |
+| ---------------------------------------------------------- | ------ | ------------------------ |
+| The Quest is unknown                                       | 404    | `QUEST_NOT_FOUND`        |
+| The Quest is no longer Open                                | 409    | `QUEST_NOT_OPEN`         |
+| The Quest's capacity is no longer the size                 | 409    | `QUEST_CAPACITY_DIFFERS` |
+| The Quest has no Sub Quest ahead                           | 409    | `QUEST_ENDED`            |
+| The Quest is full                                          | 409    | `QUEST_FULL`             |
+| The User holds a Shared Quest for the Global Event by then | 409    | `SHARED_QUEST_HELD`      |
 
 In a test, give `startApp` a `MatchServerStub` from `test/match-server.ts` in place of the HTTP call to the match
 server, and give the stub the answer to send back:

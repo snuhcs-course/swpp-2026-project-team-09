@@ -11,6 +11,31 @@ export interface StandingAnswerDto {
   standing: z.infer<typeof candidateSchema>[];
 }
 
+const sizeSchema = z.int().min(2).max(4);
+
+// The Global Events and sizes the match server has waiting requests for, whose eligible Quests it asks for.
+export const eligibleQuestionSchema = z.strictObject({
+  pools: z.array(z.strictObject({ globalEventId: z.uuid(), size: sizeSchema })),
+});
+
+export type EligibleQuestionDto = z.infer<typeof eligibleQuestionSchema>;
+
+export interface EligibleAnswerDto {
+  quests: {
+    id: string;
+    globalEventId: string;
+    capacity: number;
+    freePlaces: number;
+    holderIds: string[];
+    createdAt: string;
+  }[];
+}
+
+// A waiting request the match server places into an eligible Quest.
+export const placementSchema = z.strictObject({ questId: z.uuid(), userId: z.uuid(), size: sizeSchema });
+
+export type PlacementDto = z.infer<typeof placementSchema>;
+
 // A match the match server formed, for which it asks for the Shared Quest.
 export const matchQuestRequestSchema = z.strictObject({
   globalEventId: z.uuid(),
