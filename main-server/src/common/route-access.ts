@@ -1,11 +1,11 @@
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
-// @Public(), @AdministratorOnly() and @WorkerOnly() set this one key, so a handler's marking replaces its
-// controller's and every route is exactly one kind.
+// @Public(), @AdministratorOnly(), @WorkerOnly() and @MatchServerOnly() set this one key, so a handler's marking
+// replaces its controller's and every route is exactly one kind.
 export const ROUTE_ACCESS = 'routeAccess';
 
-export type RouteAccess = 'public' | 'user' | 'administrator' | 'worker';
+export type RouteAccess = 'public' | 'user' | 'administrator' | 'worker' | 'match-server';
 
 export function routeAccess(reflector: Reflector, context: ExecutionContext): RouteAccess {
   return (

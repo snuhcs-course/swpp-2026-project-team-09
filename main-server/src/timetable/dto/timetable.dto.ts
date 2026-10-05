@@ -1,67 +1,62 @@
-import { Timetable, TimetableClass, Weekday } from '../../generated/prisma/client.js';
+import { Prisma, Weekday } from '../../generated/prisma/client.js';
+import { cross } from './save-class.dto.js';
+
+// With each time's Place in full, which Class Quests show. Two times of a class never share a weekday and a start.
+export const CLASS_INCLUDE = {
+  times: { include: { place: true }, orderBy: [{ weekday: 'asc' }, { startTime: 'asc' }] },
+} satisfies Prisma.TimetableClassInclude;
+
+// A class with its times in the order of the week, Monday first, then by start.
+export type StoredClass = Prisma.TimetableClassGetPayload<{ include: typeof CLASS_INCLUDE }>;
 
 export interface OverlappedClassDto {
   id: string;
   courseName: string;
 }
 
-export interface TimetableClassDto {
+export interface ClassTimeDto {
   id: string;
-  courseName: string;
-  weekdays: Weekday[];
+  weekday: Weekday;
   // `HH:MM`.
   startTime: string;
   endTime: string;
-  placeId: string;
+  placeId: string | null;
   room: string | null;
-  // The other classes that share a weekday with this one and cross its time.
+}
+
+export interface TimetableClassDto {
+  id: string;
+  courseName: string;
+  times: ClassTimeDto[];
+  // The other classes with a time that crosses one of this one's.
   overlaps: OverlappedClassDto[];
 }
 
-export interface TimetableDto {
-  // `YYYY-MM-DD`.
-  semesterFirstDay: string | null;
-  semesterLastDay: string | null;
-  // By their earliest weekday, then by start time.
-  classes: TimetableClassDto[];
+function overlap(one: StoredClass, other: StoredClass): boolean {
+  return one.id !== other.id && one.times.some((time) => other.times.some((otherTime) => cross(time, otherTime)));
 }
 
-export const WEEK = Object.values(Weekday);
-
-// A `date` column holds the calendar day of the Date in UTC.
-function dayText(date: Date | null | undefined): string | null {
-  return date?.toISOString().slice(0, 10) ?? null;
-}
-
-// A class that ends as another starts does not overlap it.
-function overlap(one: TimetableClass, other: TimetableClass): boolean {
-  return (
-    one.id !== other.id &&
-    one.weekdays.some((weekday) => other.weekdays.includes(weekday)) &&
-    one.startTime < other.endTime &&
-    other.startTime < one.endTime
+// The classes in the order of their first time in the week, each with the classes it overlaps.
+export function toTimetableDto(classes: StoredClass[]): TimetableClassDto[] {
+  const week = Object.values(Weekday);
+  const firstTime = ({ times: [first] }: StoredClass): string =>
+    first === undefined ? '' : `${week.indexOf(first.weekday)} ${first.startTime}`;
+  const sorted = classes.toSorted(
+    (one, other) => firstTime(one).localeCompare(firstTime(other)) || one.id.localeCompare(other.id),
   );
-}
-
-function toTimetableClassDto(one: TimetableClass, classes: TimetableClass[]): TimetableClassDto {
-  const { id, courseName, weekdays, startTime, endTime, placeId, room } = one;
-  const overlaps = classes
-    .filter((other) => overlap(one, other))
-    .map((other) => ({ id: other.id, courseName: other.courseName }));
-  return { id, courseName, weekdays, startTime, endTime, placeId, room, overlaps };
-}
-
-function earliestWeekday({ weekdays }: TimetableClass): number {
-  return Math.min(...weekdays.map((weekday) => WEEK.indexOf(weekday)));
-}
-
-export function toTimetableDto(timetable: (Timetable & { classes: TimetableClass[] }) | null): TimetableDto {
-  const classes = (timetable?.classes ?? []).toSorted(
-    (one, other) => earliestWeekday(one) - earliestWeekday(other) || one.startTime.localeCompare(other.startTime),
-  );
-  return {
-    semesterFirstDay: dayText(timetable?.semesterFirstDay),
-    semesterLastDay: dayText(timetable?.semesterLastDay),
-    classes: classes.map((one) => toTimetableClassDto(one, classes)),
-  };
+  return sorted.map((one) => ({
+    id: one.id,
+    courseName: one.courseName,
+    times: one.times.map(({ id, weekday, startTime, endTime, placeId, room }) => ({
+      id,
+      weekday,
+      startTime,
+      endTime,
+      placeId,
+      room,
+    })),
+    overlaps: sorted
+      .filter((other) => overlap(one, other))
+      .map((other) => ({ id: other.id, courseName: other.courseName })),
+  }));
 }

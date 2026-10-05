@@ -1,86 +1,87 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
+import { Prisma } from '../generated/prisma/client.js';
+import { conflict, notFound } from '../quests/refusals.js';
+import { UsersService } from '../users/users.service.js';
 import { SaveClassDto } from './dto/save-class.dto.js';
-import { TimetableClassDto, TimetableDto, toTimetableDto } from './dto/timetable.dto.js';
-import { UpdateSemesterDto } from './dto/update-semester.dto.js';
+import { CLASS_INCLUDE, StoredClass, TimetableClassDto, toTimetableDto } from './dto/timetable.dto.js';
 
-// A `date` column holds the calendar day of the Date in UTC. `undefined` leaves the column as it is.
-function dateColumn(day: string | null | undefined): Date | null | undefined {
-  return typeof day === 'string' ? new Date(`${day}T00:00:00Z`) : day;
-}
+const CLASS_LIMIT = 15;
 
-function classNotFound(): NotFoundException {
-  return new NotFoundException('No class of your timetable has this id.');
-}
+const classNotFound = (): NotFoundException => notFound('CLASS_NOT_FOUND', 'The User has no such class.');
 
 @Injectable()
 export class TimetableService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly users: UsersService,
+  ) {}
 
-  async timetableOf(userId: string): Promise<TimetableDto> {
-    return toTimetableDto(await this.prisma.timetable.findUnique({ where: { userId }, include: { classes: true } }));
+  // The User's classes, each with its times in the order of the week and their Places.
+  classesOf(userId: string, db: Prisma.TransactionClient = this.prisma): Promise<StoredClass[]> {
+    return db.timetableClass.findMany({ where: { userId }, include: CLASS_INCLUDE });
   }
 
-  async updateSemester(userId: string, days: UpdateSemesterDto): Promise<TimetableDto> {
-    const data = {
-      semesterFirstDay: dateColumn(days.semesterFirstDay),
-      semesterLastDay: dateColumn(days.semesterLastDay),
-    };
-    await this.prisma.$transaction(async (tx) => {
-      // The day not sent is the stored one, which the update's row lock keeps until the check is done.
-      const { semesterFirstDay, semesterLastDay } = await tx.timetable.upsert({
-        where: { userId },
-        create: { userId, ...data },
-        update: data,
-      });
-      if (semesterFirstDay !== null && semesterLastDay !== null && semesterLastDay < semesterFirstDay) {
-        throw new BadRequestException(['semesterLastDay: must not be before semesterFirstDay']);
+  async isClassOf(userId: string, classId: string): Promise<boolean> {
+    return (await this.prisma.timetableClass.count({ where: { id: classId, userId } })) > 0;
+  }
+
+  async timetableOf(userId: string): Promise<TimetableClassDto[]> {
+    return toTimetableDto(await this.classesOf(userId));
+  }
+
+  // The User's row is locked, so that adds at the same moment are counted one after another.
+  addClass(userId: string, { courseName, times }: SaveClassDto): Promise<TimetableClassDto> {
+    return this.prisma.$transaction(async (tx) => {
+      await this.users.lock(userId, tx);
+      if ((await tx.timetableClass.count({ where: { userId } })) >= CLASS_LIMIT) {
+        throw conflict('TIMETABLE_FULL', `The User has ${CLASS_LIMIT} classes already.`);
       }
+      await this.checkPlaces(times, tx);
+      const { id } = await tx.timetableClass.create({ data: { userId, courseName, times: { create: times } } });
+      return this.answer(userId, id, tx);
     });
-    return this.timetableOf(userId);
   }
 
-  async addClass(userId: string, saved: SaveClassDto): Promise<TimetableClassDto> {
-    await this.checkPlace(saved.placeId);
-    const { id: timetableId } = await this.prisma.timetable.upsert({
-      where: { userId },
-      create: { userId },
-      update: {},
+  // Updating the class first finds it among the User's and locks it, before anything about the body is checked.
+  replaceClass(userId: string, id: string, { courseName, times }: SaveClassDto): Promise<TimetableClassDto> {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.timetableClass.updateMany({ where: { id, userId }, data: { courseName } });
+      if (count === 0) {
+        throw classNotFound();
+      }
+      await this.checkPlaces(times, tx);
+      await tx.classTime.deleteMany({ where: { classId: id } });
+      await tx.classTime.createMany({ data: times.map((time) => ({ classId: id, ...time })) });
+      return this.answer(userId, id, tx);
     });
-    const { id } = await this.prisma.timetableClass.create({ data: { timetableId, ...saved } });
-    return this.classOf(userId, id);
   }
 
-  // The class is looked up before the Place, so that another User's class is not found whatever the body holds.
-  async editClass(userId: string, id: string, saved: SaveClassDto): Promise<TimetableClassDto> {
-    const own = { id, timetable: { userId } };
-    if ((await this.prisma.timetableClass.count({ where: own })) === 0) {
-      throw classNotFound();
-    }
-    await this.checkPlace(saved.placeId);
-    await this.prisma.timetableClass.updateMany({ where: own, data: saved });
-    return this.classOf(userId, id);
-  }
-
+  // Its times go with it.
   async deleteClass(userId: string, id: string): Promise<void> {
-    const { count } = await this.prisma.timetableClass.deleteMany({ where: { id, timetable: { userId } } });
+    const { count } = await this.prisma.timetableClass.deleteMany({ where: { id, userId } });
     if (count === 0) {
       throw classNotFound();
     }
   }
 
-  private async checkPlace(id: string): Promise<void> {
-    if ((await this.prisma.place.count({ where: { id } })) === 0) {
-      throw new BadRequestException(['placeId: no Place of the list has this id']);
+  async reset(userId: string): Promise<void> {
+    await this.prisma.timetableClass.deleteMany({ where: { userId } });
+  }
+
+  private async checkPlaces(times: SaveClassDto['times'], tx: Prisma.TransactionClient): Promise<void> {
+    const ids = new Set(times.flatMap(({ placeId }) => (placeId === null ? [] : [placeId])));
+    if ((await tx.place.count({ where: { id: { in: [...ids] } } })) < ids.size) {
+      throw notFound('PLACE_NOT_FOUND', 'No such Place is in the list.');
     }
   }
 
-  // With the classes it overlaps, which only the whole timetable tells. A class deleted meanwhile is not found.
-  private async classOf(userId: string, id: string): Promise<TimetableClassDto> {
-    const found = (await this.timetableOf(userId)).classes.find((timetableClass) => timetableClass.id === id);
-    if (found === undefined) {
+  // The class with the classes it overlaps, which only the whole timetable tells.
+  private async answer(userId: string, id: string, tx: Prisma.TransactionClient): Promise<TimetableClassDto> {
+    const answer = toTimetableDto(await this.classesOf(userId, tx)).find((one) => one.id === id);
+    if (answer === undefined) {
       throw classNotFound();
     }
-    return found;
+    return answer;
   }
 }

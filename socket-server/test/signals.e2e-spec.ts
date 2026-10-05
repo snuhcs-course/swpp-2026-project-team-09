@@ -127,6 +127,25 @@ describe('A signal for some Users', () => {
   });
 });
 
+describe('A position', () => {
+  it('reaches the viewer it names and no other connection', async () => {
+    const [subject, viewer, other] = [randomUUID(), randomUUID(), randomUUID()];
+    const sockets = await Promise.all([connectAs(subject), connectAs(viewer), connectAs(other)]);
+    const [subjectSocket, , otherSocket] = sockets;
+    const [subjectReceived, viewerReceived, otherReceived] = record(sockets, 'position');
+    const position = { userId: subject, latitude: 37.4594, longitude: 126.95199, measuredAt: new Date().toISOString() };
+
+    await sendSignal({ userIds: [viewer], name: 'position', payload: position });
+    await Promise.all([sendMarker(subjectSocket, subject), sendMarker(otherSocket, other)]);
+
+    await vi.waitFor(() => {
+      expect(viewerReceived).toEqual([[position]]);
+    });
+    expect(subjectReceived).toEqual([]);
+    expect(otherReceived).toEqual([]);
+  });
+});
+
 describe('A signal that names no Users', () => {
   it('reaches every connection', async () => {
     const sockets = await Promise.all([connectAs(randomUUID()), connectAs(randomUUID())]);

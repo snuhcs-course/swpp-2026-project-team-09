@@ -1,4 +1,4 @@
-import { GlobalEvent, GlobalEventState, Prisma, SubQuest } from '../../generated/prisma/client.js';
+import { GlobalEvent, GlobalEventState, JoinPolicy, Place, Prisma, SubQuest } from '../../generated/prisma/client.js';
 
 // A Place from the list, with its id, or a point with the label the app showed. The attending Sub Quest's is the
 // Global Event's position and place text.
@@ -37,10 +37,30 @@ export interface QuestDto {
   id: string;
   title: string;
   globalEvent: { id: string; title: string } | null;
+  leader: HolderDto;
+  capacity: number;
+  joinPolicy: JoinPolicy;
+  // In the order they entered.
   holders: HolderDto[];
   subQuests: SubQuestDto[];
-  // Computed from the timetable and never stored (class-quests.service.ts), so that the app shows it apart.
-  classQuest: boolean;
+}
+
+// A Quest as a User who does not hold it reads it: in the list of recruiting Quests, in a request to join it and in an
+// invitation into it.
+export interface QuestSummaryDto {
+  id: string;
+  title: string;
+  globalEvent: { id: string; title: string } | null;
+  leader: HolderDto;
+  holderCount: number;
+  capacity: number;
+  joinPolicy: JoinPolicy;
+}
+
+// A Quest in the list of recruiting Quests.
+export interface RecruitingQuestDto extends QuestSummaryDto {
+  // The first Sub Quest ahead.
+  nextSubQuest: Pick<SubQuestDto, 'id' | 'attending' | 'title' | 'startsAt' | 'endsAt' | 'place'>;
 }
 
 // Every Holder's progress, from which the reader's own is picked.
@@ -49,12 +69,18 @@ export const SUB_QUEST_INCLUDE = {
   progress: { select: { holder: { select: { userId: true } } } },
 } satisfies Prisma.SubQuestInclude;
 
+export const HOLDER_SELECT = { id: true, name: true, department: true } satisfies Prisma.UserSelect;
+
+export const QUEST_SUMMARY_INCLUDE = {
+  globalEvent: true,
+  leader: { select: HOLDER_SELECT },
+  holders: { select: { id: true } },
+} satisfies Prisma.QuestInclude;
+
 export const QUEST_INCLUDE = {
   globalEvent: true,
-  holders: {
-    include: { user: { select: { id: true, name: true, department: true } } },
-    orderBy: [{ user: { name: 'asc' } }, { userId: 'asc' }],
-  },
+  leader: { select: HOLDER_SELECT },
+  holders: { include: { user: { select: HOLDER_SELECT } }, orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }] },
   subQuests: { include: SUB_QUEST_INCLUDE, orderBy: [{ attending: 'desc' }, { createdAt: 'asc' }, { id: 'asc' }] },
 } satisfies Prisma.QuestInclude;
 
@@ -80,23 +106,33 @@ function contentOf(
       cancelled: globalEvent.state !== GlobalEventState.published,
     };
   }
-  const { place } = subQuest;
   return {
     title: subQuest.title ?? '',
     startsAt: subQuest.startsAt?.toISOString() ?? null,
     endsAt: subQuest.endsAt?.toISOString() ?? null,
-    place:
-      place === null
-        ? pointOf(subQuest)
-        : { placeId: place.id, label: place.name, latitude: place.latitude, longitude: place.longitude },
+    place: toPlaceDto(subQuest),
     cancelled: false,
   };
 }
 
-function pointOf({ latitude, longitude, placeLabel }: SubQuest): SubQuestPlaceDto | null {
+// The stored Place, or the stored point with its label, or null when there is neither.
+export function toPlaceDto({
+  place,
+  latitude,
+  longitude,
+  placeLabel,
+}: Pick<SubQuest, 'latitude' | 'longitude' | 'placeLabel'> & { place: Place | null }): SubQuestPlaceDto | null {
+  if (place !== null) {
+    return { placeId: place.id, label: place.name, latitude: place.latitude, longitude: place.longitude };
+  }
   return latitude === null || longitude === null || placeLabel === null
     ? null
     : { placeId: null, label: placeLabel, latitude, longitude };
+}
+
+// Ended for every Holder alike: cancelled, or its end time has passed by `now`.
+function passed({ cancelled, endsAt }: Pick<SubQuestDto, 'cancelled' | 'endsAt'>, now: Date): boolean {
+  return cancelled || (endsAt !== null && new Date(endsAt) <= now);
 }
 
 // As `userId` reads it. Ended is computed at `now` and never stored.
@@ -108,15 +144,20 @@ export function toSubQuestDto(
 ): SubQuestDto {
   const content = contentOf(subQuest, globalEvent);
   const done = subQuest.progress.some(({ holder }) => holder.userId === userId);
-  const passed = content.endsAt !== null && new Date(content.endsAt) <= now;
   return {
     id: subQuest.id,
     attending: subQuest.attending,
     ...content,
     completion: content.endsAt === null ? 'by_hand' : 'by_time',
     done,
-    ended: content.cancelled || done || passed,
+    ended: done || passed(content, now),
   };
+}
+
+// Whether a Sub Quest of the Quest has not passed for every Holder. A mark of done is one Holder's own and does not
+// count.
+export function hasSubQuestsAhead(quest: StoredQuest, now: Date): boolean {
+  return quest.subQuests.some((subQuest) => !passed(contentOf(subQuest, quest.globalEvent), now));
 }
 
 export function toQuestDto(quest: StoredQuest, userId: string, now: Date): QuestDto {
@@ -125,8 +166,40 @@ export function toQuestDto(quest: StoredQuest, userId: string, now: Date): Quest
     id: quest.id,
     title: quest.title,
     globalEvent: globalEvent === null ? null : { id: globalEvent.id, title: globalEvent.title },
+    leader: quest.leader,
+    capacity: quest.capacity,
+    joinPolicy: quest.joinPolicy,
     holders: quest.holders.map(({ user }) => user),
     subQuests: quest.subQuests.map((subQuest) => toSubQuestDto(subQuest, globalEvent, userId, now)),
-    classQuest: false,
+  };
+}
+
+// Null for a Quest without a Sub Quest ahead, which is not in the list.
+export function toRecruitingQuestDto(quest: StoredQuest, now: Date): RecruitingQuestDto | null {
+  const { globalEvent } = quest;
+  for (const subQuest of quest.subQuests) {
+    const { cancelled, ...content } = contentOf(subQuest, globalEvent);
+    if (!passed({ cancelled, endsAt: content.endsAt }, now)) {
+      return {
+        ...toQuestSummaryDto(quest),
+        nextSubQuest: { id: subQuest.id, attending: subQuest.attending, ...content },
+      };
+    }
+  }
+  return null;
+}
+
+export function toQuestSummaryDto(
+  quest: Prisma.QuestGetPayload<{ include: typeof QUEST_SUMMARY_INCLUDE }>,
+): QuestSummaryDto {
+  const { globalEvent } = quest;
+  return {
+    id: quest.id,
+    title: quest.title,
+    globalEvent: globalEvent === null ? null : { id: globalEvent.id, title: globalEvent.title },
+    leader: quest.leader,
+    holderCount: quest.holders.length,
+    capacity: quest.capacity,
+    joinPolicy: quest.joinPolicy,
   };
 }

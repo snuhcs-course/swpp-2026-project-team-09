@@ -110,7 +110,9 @@ describe('The one Quest for a Global Event', () => {
     const user = await signInUser(app);
     const event = await storeEvent(prisma);
     await questFor(app, user, event.id);
-    const second = await prisma.quest.create({ data: { title: event.title, globalEventId: event.id } });
+    const second = await prisma.quest.create({
+      data: { title: event.title, globalEventId: event.id, leaderId: user.id },
+    });
 
     await expect(
       prisma.questHolder.create({ data: { questId: second.id, userId: user.id, globalEventId: event.id } }),

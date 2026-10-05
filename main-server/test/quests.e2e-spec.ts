@@ -33,6 +33,9 @@ describe('Attending a Global Event', () => {
       id: ANY_STRING,
       title: '지능형통신 연합전공 설명회',
       globalEvent: { id: event.id, title: '지능형통신 연합전공 설명회' },
+      leader: { id: user.id, name: '김철수', department: '경영학과' },
+      capacity: 4,
+      joinPolicy: 'closed',
       holders: [{ id: user.id, name: '김철수', department: '경영학과' }],
       subQuests: [
         {
@@ -48,7 +51,6 @@ describe('Attending a Global Event', () => {
           ended: false,
         },
       ],
-      classQuest: false,
     });
   });
 

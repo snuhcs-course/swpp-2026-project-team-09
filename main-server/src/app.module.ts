@@ -17,8 +17,13 @@ import { SignalsModule } from './common/signals.module.js';
 import { FriendsModule } from './friends/friends.module.js';
 import { GlobalEventsModule } from './global-events/global-events.module.js';
 import { HealthModule } from './health/health.module.js';
+import { InviteLinksModule } from './invite-links/invite-links.module.js';
 import { LobbyModule } from './lobby/lobby.module.js';
+import { LocationSharingModule } from './location-sharing/location-sharing.module.js';
+import { MeetupsModule } from './meetups/meetups.module.js';
+import { MatchingModule } from './matching/matching.module.js';
 import { MenusModule } from './menus/menus.module.js';
+import { PartiesModule } from './parties/parties.module.js';
 import { PlacesModule } from './places/places.module.js';
 import { QuestsModule } from './quests/quests.module.js';
 import { ShuttleModule } from './shuttle/shuttle.module.js';
@@ -52,6 +57,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     AuthModule,
     UsersModule,
     FriendsModule,
+    InviteLinksModule,
     AdministratorsModule,
     LobbyModule,
     CollectionModule,
@@ -61,6 +67,10 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     PlacesModule,
     ShuttleModule,
     QuestsModule,
+    LocationSharingModule,
+    MeetupsModule,
+    MatchingModule,
+    PartiesModule,
     TimetableModule,
   ],
   providers: [

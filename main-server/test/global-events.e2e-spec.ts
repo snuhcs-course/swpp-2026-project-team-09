@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { CollectionStatus, GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
@@ -11,6 +12,7 @@ import {
   placesNamingNoPlace,
   postNumbersFrom,
 } from './global-events.js';
+import { SignalEvent, SignalWatcher } from './signals.js';
 import { startApp } from './start-app.js';
 import { refusal, sendAsWorker } from './worker.js';
 
@@ -18,14 +20,16 @@ let app: INestApplication<Server>;
 // No route serves Global Events or the Collection status yet (P12 adds them), so the tests read them with a connection
 // of their own.
 let prisma: PrismaClient;
+let watcher: SignalWatcher;
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'));
+  [app, watcher] = await Promise.all([startApp(inject('settings')), SignalWatcher.start()]);
   prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: inject('settings').DATABASE_URL }) });
 });
 
 afterAll(async () => {
   await prisma.$disconnect();
+  await watcher.stop();
   await app.close();
 });
 
@@ -241,5 +245,56 @@ describe('A Collection of the events list that stopped early', () => {
       lastFailedAt: new Date('2026-10-02T21:00:00Z'),
       lastFailureReason: failureReason,
     });
+  });
+});
+
+// The `global-events-changed` signals sent while `act` runs. Only this file publishes events, and a server's signals
+// reach Redis in order, so two signals of the test's own around `act` leave out those an earlier test sent late.
+async function signalsWhile(act: () => Promise<unknown>): Promise<SignalEvent[]> {
+  // Imported after startApp, so that it is the same class AppModule registers.
+  const { SignalsService } = await import('../src/common/signals.service.js');
+  const signals = app.get(SignalsService);
+  const sendMarker = (): Promise<number> => {
+    const name = `test-${randomUUID()}`;
+    signals.send('everyone', name);
+    return vi.waitFor(() => {
+      const at = watcher.all().findIndex((signal) => signal.name === name);
+      expect(at).not.toBe(-1);
+      return at;
+    });
+  };
+  const start = await sendMarker();
+  await act();
+  const end = await sendMarker();
+  return watcher
+    .all()
+    .slice(start + 1, end)
+    .filter(({ name }) => name === 'global-events-changed');
+}
+
+describe('global-events-changed', () => {
+  it('goes once to every connected app, carrying nothing, when a Collection publishes an event', async () => {
+    const message = eventsMessage([
+      collectedEvent(newPost()),
+      collectedEvent(newPost()),
+      collectedEvent(newPost(), { place: null }),
+    ]);
+
+    expect(await signalsWhile(() => sendAsWorker(app, '/global-events/collected', message))).toEqual([
+      { name: 'global-events-changed' },
+    ]);
+  });
+
+  it('is not sent when a Collection stores only Drafts', async () => {
+    const message = eventsMessage([collectedEvent(newPost(), { place: null })]);
+
+    expect(await signalsWhile(() => sendAsWorker(app, '/global-events/collected', message))).toEqual([]);
+  });
+
+  it('is not sent when a Collection stores nothing new', async () => {
+    const message = eventsMessage([collectedEvent(newPost())]);
+    await sendAsWorker(app, '/global-events/collected', message);
+
+    expect(await signalsWhile(() => sendAsWorker(app, '/global-events/collected', message))).toEqual([]);
   });
 });
