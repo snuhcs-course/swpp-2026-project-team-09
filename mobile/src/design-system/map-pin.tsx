@@ -4,12 +4,12 @@ import { Avatar, type PresenceStatus } from './avatar';
 import { Icon, type IconName } from './icon';
 import { color, halo, radius, shadow, size as sizes, text } from './tokens';
 
-type CategoryKind = 'official' | 'private' | 'party' | 'quest' | 'dining' | 'library' | 'shuttle';
-export type MapPinKind = CategoryKind | 'me' | 'friend';
+export type MapPlaceKind = 'official' | 'private' | 'party' | 'quest' | 'dining' | 'library' | 'shuttle';
+export type MapPinKind = MapPlaceKind | 'me' | 'friend';
 
 // The kind decides the colour and the icon, so that pins stay apart without colour. `name` is what a screen reader
 // says for a pin without a label.
-const CATEGORIES: Record<CategoryKind, { fill: string; icon: IconName; service: boolean; name: string }> = {
+const CATEGORIES: Record<MapPlaceKind, { fill: string; icon: IconName; service: boolean; name: string }> = {
   official: { fill: color.snuBlue, icon: 'calendar', service: false, name: '공식 행사' },
   private: { fill: color.private, icon: 'lock', service: false, name: '내 일정' },
   party: { fill: color.party, icon: 'users', service: false, name: '파티' },
@@ -33,7 +33,7 @@ interface FriendPinProps {
 }
 
 interface CategoryPinProps {
-  kind: CategoryKind;
+  kind: MapPlaceKind;
   // Short, 8 characters at most, shown in a white pill under the pin.
   label?: string;
   // People who joined, or events clustered here.
@@ -101,12 +101,29 @@ export function MapPin(props: MapPinProps): ReactElement {
   return <CategoryPin {...props} />;
 }
 
+// A pin from far away, when the whole campus is in view: the kind's colour alone. A campus service's is a smaller
+// square.
+export function MapDot({ kind }: { kind: MapPlaceKind }): ReactElement {
+  const { fill, service, name } = CATEGORIES[kind];
+  return (
+    <View
+      accessibilityLabel={name}
+      accessibilityRole="image"
+      accessible
+      style={[styles.dot, service && styles.serviceDot, { backgroundColor: fill }]}
+    />
+  );
+}
+
 const ME_HALO = 48;
 const ME_DOT = 16;
 // The design system's sizes are the inside of a head; its white border of 2 is added around it.
 const HEAD_BORDER = 2;
 const HEAD = sizes.pin + HEAD_BORDER * 2;
 const SERVICE_HEAD = 30 + HEAD_BORDER * 2;
+// 12 of colour, or 9 for a campus service, inside a white border of 2.
+const DOT = 12 + HEAD_BORDER * 2;
+const SERVICE_DOT = 9 + HEAD_BORDER * 2;
 const COUNT = 18;
 const COUNT_PADDING = 4;
 
@@ -133,6 +150,20 @@ const styles = StyleSheet.create({
   selectedHead: {
     transform: [{ scale: 1.18 }],
     boxShadow: `0 0 0 4px ${halo.selected}, ${shadow.float}`,
+  },
+  dot: {
+    alignSelf: 'flex-start',
+    width: DOT,
+    height: DOT,
+    borderRadius: radius.full,
+    borderWidth: HEAD_BORDER,
+    borderColor: color.surface,
+    boxShadow: shadow.card,
+  },
+  serviceDot: {
+    width: SERVICE_DOT,
+    height: SERVICE_DOT,
+    borderRadius: 3,
   },
   tail: {
     width: 2,
