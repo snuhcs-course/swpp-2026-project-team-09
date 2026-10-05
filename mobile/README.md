@@ -59,6 +59,7 @@ src/hooks/          hooks shared by components and screens
 src/api/            the API client, the main server's answers as types, and the mocks that answer for now
 src/auth/           sign-in and sign-out
 src/features/       one folder per feature: its adapter and the hooks a screen asks for data with
+src/map/            the one map component, its interface and the pictures of its markers
 src/storage/        what the phone keeps between two starts of the app
 src/session/        where the User is in the flow between the screens, and the work of the start
 src/screens/        the screens that the routes show
@@ -190,8 +191,114 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
 
 A repeated element that the design system lacks becomes a shared component here, not a copy in each screen.
 
+`MapDot` is a marker from far away, which the frames draw and the design system does not name: the kind's colour in a
+white border.
+
 To see every component in every variant, start the app and press "디자인 시스템 보기" on a screen that is still a
 placeholder, or open
 `/catalogue`. The catalogue is for developers: a released app does not show it. Compare it with the design system's
 own previews when a component changes: `pnpm web` serves the catalogue to a browser, where a phone-sized window
 shows it as the previews do.
+
+## Map
+
+A screen shows a map with one component, `Map` from `@/map`, and nothing else. No screen calls a map SDK or the native
+module: what the component's interface (`src/map/types.ts`) cannot say, a screen cannot ask of any map. The rules
+below hold for every implementation, and `src/map/types.ts` states them for the native sides.
+
+```tsx
+const map = useRef<MapHandle>(null);
+const [eventPin, myAvatar] = useMarkerImages([{ kind: 'official', form: 'pin' }, { kind: 'me' }]);
+
+<Map
+  bounds={CAMPUS_BOUNDS} // the visible area never leaves it
+  minZoom={MIN_ZOOM}
+  maxZoom={MAX_ZOOM}
+  markers={[{ id: 'event:e1', name: 'AI 커리어 채용설명회', position, image: eventPin, text: 'AI 커리어' }]}
+  avatars={[{ id: 'me', name: '내 위치', position: mine, image: myAvatar, glideMs: 5000, order: 1 }]}
+  route={line} // LatLng[], or null for none
+  onPress={(id) => {}} // a marker's or an Avatar's id
+  onCameraIdle={({ centre, zoom }) => {}} // once when the map is ready, then each time the camera rests elsewhere
+  ref={map}
+/>;
+
+map.current?.moveCamera({ centre, zoom, animated: true }); // each of the three may be left out
+map.current?.fitTo([from, to], { padding: 48, animated: true }); // the closest view that shows all the points
+```
+
+- **Positions** are a latitude and a longitude in degrees. A **zoom** is the Web Mercator zoom level at the camera's
+  centre, where the world is 256 × 2^zoom points wide. It may be a fraction. A native side converts it to its SDK's
+  own scale.
+- **The camera stays inside `bounds`**: the visible area never leaves the rectangle. So the lowest zoom allowed is
+  the larger of `minZoom` and the zoom at which the view just fits inside the rectangle, which depends on the
+  view's size, and the centre is kept far enough from the edges. The highest zoom is `maxZoom`. The map opens on
+  the middle of the rectangle at the lowest zoom allowed. Whatever `moveCamera` or `fitTo` asks is first brought
+  inside these rules.
+- **`onCameraIdle`** is sent once when the map is ready, and each time the camera comes to rest somewhere else:
+  after a User's pan or zoom ends, and after `moveCamera` or `fitTo`. A call that changes nothing sends nothing.
+- **Markers** are what the list says: one that is new is added, one whose `id` stays is changed, one that is gone is
+  removed. `name` is what a screen reader says; `text` is drawn under the image by the map, in the map's own text.
+- **Avatars** are markers that glide. The map keeps each Avatar's last target and starts a glide only when
+  `position` differs from it: the same position in a new list is no move. An Avatar that first appears is placed
+  without a glide. A new position is reached over `glideMs`, and one that comes during a glide starts from where the
+  Avatar is shown. A new `image` or `text` alone does not restart a glide. With a `glideMs` of 0 the Avatar is
+  placed at once.
+- **What is on top**: every Avatar is above every marker, and the route is under both. Among markers, and among
+  Avatars, the higher `order` is on top; without one it is 0, and of two that are equal the later in the list is on
+  top. The screen ranks what matters, such as the User's own Avatar or a selected marker.
+- **The route** is one line through the points given, or none.
+- `CAMPUS_BOUNDS`, the campus rectangle, and the limits `MIN_ZOOM` and `MAX_ZOOM` are constants in
+  `src/map/campus.ts`. The rectangle is a little wider than the Campus Boundary, which stays the main server's.
+- The credit "© OpenStreetMap · 국토지리정보원" is at the bottom left of every map, inside the component.
+
+### Which map is shown
+
+The component chooses while the app runs (`src/map/map.tsx`), by whether the build holds the native map module
+`SnuNowMap`:
+
+- **With the module**, it shows the native map, `src/map/native-map.tsx`. That file is loaded only then, and it is
+  the only file that may name the native view. No build holds the module yet: its Android side is ticket 07's and
+  its iOS side ticket 11's, and until then the file is a marked seam.
+- **Without it**, which Expo Go, the web and the tests are, it shows the plain ground (`src/map/plain-map.tsx`) with
+  the words "지도는 Android 빌드에서 보입니다". It is no stand-in map: it has no tiles and draws no campus, and a User
+  cannot pan it. It follows the camera's rules (`src/map/projection.ts`) and places what it was asked to show by
+  position: each marker and Avatar as the design system's own view with its `text` under it, and the route as
+  straight strokes. So `moveCamera`, `fitTo` and a moved Avatar are seen, and a screen can be laid out around it.
+  An Avatar glides there too, unless the phone asks for less motion.
+- On the plain ground each marker and Avatar is a button under its `name`, with the look's name as its `testID`,
+  and the route is read as "경로가 그려져 있습니다". One outside the view is not drawn and stays such a button. So a
+  screen reader, and a test, reach everything the map was asked to show. In a test the ground is as large as the
+  window until it is laid out.
+
+### Marker images
+
+A native map draws images, not React views. An image is a picture of the design system's own marker view, made once
+for each look and kept for as long as the app runs:
+
+- A look (`MarkerLook` in `src/map/marker-looks.tsx`) is the User's own Avatar (`MapPin` of the kind `me`), a Friend's
+  Avatar (`Avatar` with the friend ring: the letters or the photo, and the status colour) or a marker of each kind
+  of the design system. A Friend and a marker have two forms: a `dot` from far away, a `pin` from close. No look has
+  a label: a name is the map's own text.
+- `useMarkerImages(looks)` answers one `MarkerImage` for each look, in the order asked. An image names its look at
+  once (`look`, such as `official:pin`, and `view`, the look itself) and gains its picture (`uri`, with `width`,
+  `height` and the `anchor` that stands on the position) when it is made. A native side draws a marker once its
+  picture is there, and reads the picture again whenever the `uri` under a look's name changes.
+- Pictures are made only in a build that holds the native map module. There the look's view is drawn on a stage
+  outside the screen, `MarkerImageStage`, which the app shows once around every screen, with clear room for its ring
+  and shadow, and `react-native-view-shot` captures it as a PNG file in the phone's own pixels.
+- A capture that gives no picture is tried again, four times in all, after 0.5, 1 and 2 seconds. A look whose tries
+  are used up is tried again when a screen that asks for it is next shown.
+- A look with a photo is captured when the photo is shown. After three seconds without it the picture is made with
+  the letters, and made again under the same look when the photo comes.
+- Without the module, as in Expo Go, on the web and in a test, no picture is made and `uri` stays null: the plain
+  ground draws the view itself.
+
+Left to the Android module (ticket 07): whether a native map draws these pictures as the design system does, at the
+view's size and with its shadow, and when a picture that no screen uses any more is released.
+
+### Trying it
+
+`/map-check`, also behind "지도 보기" on a screen that is still a placeholder, shows the component with sample markers,
+Avatars and buttons that move the User's Avatar, draw and clear the route line, fit the camera to the route, zoom in
+and show the whole campus. It says what was pressed and where the camera stopped. It is for developers: a released
+app does not show it. The native modules are checked on it.
