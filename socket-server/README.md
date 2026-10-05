@@ -146,11 +146,12 @@ change here.
 
 The signals and what the app does on each:
 
-| Signal             | Carries                                       | The app                                                                    |
-| ------------------ | --------------------------------------------- | -------------------------------------------------------------------------- |
-| `friends-changed`  | nothing                                       | fetches `GET /friends` and `GET /friend-requests` of the main server again |
-| `position`         | `{ userId, latitude, longitude, measuredAt }` | moves that User's Avatar to the position, or shows it there                |
-| `position-removed` | `{ userId }`                                  | removes that User's Avatar from the map at once                            |
+| Signal                  | Carries                                       | The app                                                                                             |
+| ----------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `friends-changed`       | nothing                                       | fetches `GET /friends` and `GET /friend-requests` of the main server again                          |
+| `global-events-changed` | nothing                                       | fetches the published Global Events of the main server again (P12's list); sent to every connection |
+| `position`              | `{ userId, latitude, longitude, measuredAt }` | moves that User's Avatar to the position, or shows it there                                         |
+| `position-removed`      | `{ userId }`                                  | removes that User's Avatar from the map at once                                                     |
 
 ```ts
 socket.on('friends-changed', () => {
@@ -171,38 +172,6 @@ includes the main server's `GET /positions`. The app dims an Avatar whose `measu
 removes it at 10 minutes, so that one whose phone stopped reporting leaves the map by itself.
 
 `fetchFriends`, `fetchFriendRequests`, `showAvatar` and `removeAvatar` stand for the app's own code. `session-ended` and `shuttle-vehicles-updated`
-are events of their own, handled by name (see [Sessions](#sessions) and [Shuttle vehicles](#shuttle-vehicles)).
-
-## Signals
-
-When one User changes something another User's app shows, the main server sends a signal, and the socket server
-passes it on. It knows no signal by name: the main server names the Users each one is for, so a new signal needs no
-change here.
-
-- Each connection also joins its User's own room, beside its session's, so a signal for a User reaches every
-  connection of that User.
-- The main server sends each signal over messaging as the event `signal`:
-  `{ "userIds": ["…"], "name": "friends-changed", "payload": … }`. The socket server sends it under `name` to the rooms
-  of the Users in `userIds`, with `payload` as its one argument, or with no argument when there is no `payload`. A
-  signal without `userIds` goes to every connection, and one with an empty list to none.
-- Delivery is not guaranteed. The app fetches what it shows when it connects, when it reconnects and when it returns
-  to the front (`fetchCurrentState` above), and never polls. A lost signal only makes a list update late.
-
-The signals and what the app does on each:
-
-| Signal                  | Carries | The app                                                                                             |
-| ----------------------- | ------- | --------------------------------------------------------------------------------------------------- |
-| `friends-changed`       | nothing | fetches `GET /friends` and `GET /friend-requests` of the main server again                          |
-| `global-events-changed` | nothing | fetches the published Global Events of the main server again (P12's list); sent to every connection |
-
-```ts
-socket.on('friends-changed', () => {
-  fetchFriends();
-  fetchFriendRequests();
-});
-```
-
-`fetchFriends` and `fetchFriendRequests` stand for the app's own code. `session-ended` and `shuttle-vehicles-updated`
 are events of their own, handled by name (see [Sessions](#sessions) and [Shuttle vehicles](#shuttle-vehicles)).
 
 ## Shuttle vehicles
