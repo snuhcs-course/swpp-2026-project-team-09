@@ -266,12 +266,10 @@ numbers below are provisional until P17 has checked them on a phone.
   `masterSwitch`. Turning it off clears the User's position.
 - **The switch of a friendship** is each Friend's own, on their end of the friendship, and starts on (see
   [Friends](#friends)).
-- **The switch of a Party** is each member's own, on their membership, and starts on (see [Party](#party)).
 - **Who sees whom**: a viewer sees a subject when both Master Switches are on, the subject has a position, which is
   kept only inside the [Campus Boundary](#campus-boundary), and a relationship between the two has its switch on at
-  both ends. The relationships are a friendship and a common Party, so a User whom a friendship's switch hides from a
-  Friend is still seen through their Party. Sharing is mutual: the rule is the same both ways, and a User who turns a
-  switch off also stops seeing the other. A Friend or member off campus, one with sharing off and one whose position
+  both ends. A friendship is the one relationship so far. Sharing is mutual: the rule is the same both ways, and a User
+  who turns a switch off also stops seeing the other. A Friend off campus, one with sharing off and one whose position
   has expired look the same: no position, and `visible` false.
 - `POST /positions` with `{ "latitude": 37.4594, "longitude": 126.95199, "accuracy": 12, "measuredAt": "..." }`
   uploads a position, where `accuracy` is the radius in metres within which the phone places itself and `measuredAt`
@@ -305,9 +303,8 @@ What is pushed, through the [socket server](../socket-server/README.md#signals):
 - Each position kept goes as `position`, with `{ "userId", "latitude", "longitude", "measuredAt" }`, to the Users who
   may see the subject at that moment. Delivery is lossy on purpose: only the newest position matters.
 - `position-removed`, with `{ "userId" }`, the subject, goes at once to each viewer who could see the subject before a
-  change and cannot after it: when either turns the Master Switch, the friendship's switch or the Party's switch off,
-  when the friendship ends, when either leaves the Party, when the subject leaves the Campus Boundary and when the
-  subject's session ends.
+  change and cannot after it: when either turns the Master Switch or the friendship's switch off, when the friendship
+  ends, when the subject leaves the Campus Boundary and when the subject's session ends.
 
 `VisibilityService` in `src/location-sharing/visibility.service.ts`, exported by `LocationSharingModule`, is the one
 place that decides who sees whom:
@@ -317,8 +314,8 @@ place that decides who sees whom:
 - `announceRemovals(userId, change)`: runs `change`, a change that may end what the User sees or who sees the User,
   and sends `position-removed` to each viewer who saw a subject before and does not after. It compares who sees whom
   among the pairs that include the User, before and after the change. Pass the User whose switch, relationship or
-  position the change touches: every sight it can end includes that User, so a new cause only wraps its change in it,
-  as leaving a Party and the Party's switch do.
+  position the change touches: every sight it can end includes that User, so a new cause, such as leaving a Party,
+  only wraps its change in it.
 
 ## Administrators
 

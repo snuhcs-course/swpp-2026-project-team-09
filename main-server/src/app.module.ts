@@ -63,6 +63,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     WalkingRouteModule,
     PlacesModule,
     ShuttleModule,
+    QuestsModule,
     LocationSharingModule,
     QuestsModule,
     PartiesModule,
