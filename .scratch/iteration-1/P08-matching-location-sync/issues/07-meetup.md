@@ -2,7 +2,7 @@
 
 Parent: [P08 spec](../spec.md)
 Status: ready-for-agent
-Blocked by: 01 (Friends by Friend ID, and the signal path), 04 (Quests for Global Events and their Sub Quests)
+Blocked by: 01 (Friends by Friend ID, and the signal path), 04 (Quests, their Sub Quests and joining them)
 
 ## What to build
 
@@ -15,7 +15,7 @@ This is the first Quest with two Holders, so the ticket also tests what ticket 0
 - [x] Proposing a Meetup to a Friend takes a title, a place, a start in the future and an optional end after the start. The place is a Place from the list, or a latitude, a longitude and a label. Proposing requires the key described in P04. A User who is not a Friend cannot be proposed to.
 - [x] A User lists the Meetups proposed to them, each with its proposer, and the ones they proposed, each with its state: proposed, accepted, declined, withdrawn or expired.
 - [x] A proposed Meetup whose start has passed is expired. This is computed when read and nothing is written. An expired Meetup can be neither accepted nor declined.
-- [x] Accepting creates one Quest held by both Friends, with the Meetup's title and one Sub Quest with the Meetup's title, time and place. No Party is created. Two accepts of one Meetup leave one Quest.
+- [x] Accepting creates one Quest held by both Friends, with the Meetup's title and one Sub Quest with the Meetup's title, time and place. The proposer leads it, and it is Closed with capacity 4. No Party is opened. Two accepts of one Meetup leave one Quest.
 - [x] The receiver declines. The proposer withdraws a Meetup while it is proposed. No route edits a Meetup.
 - [x] Ending a friendship withdraws the Meetups still proposed between the two. The Quests of accepted Meetups stay.
 - [x] `meetups-changed` goes to both Friends when a Meetup is proposed, accepted, declined or withdrawn, and `quests-changed` goes to both when one is accepted.
@@ -49,8 +49,8 @@ This is the first Quest with two Holders, so the ticket also tests what ticket 0
 - **Locking**: proposing, answering and withdrawing lock both Users' rows in id order, as a change to a friendship
   does, and move the state only from `proposed` with a start still ahead, so two accepts leave one Quest and a
   proposal cannot cross the end of the friendship.
-- **`QuestsService`**: `createWithSubQuest(subQuest: SubQuestColumns, holderIds, tx): questId`, a Quest without a
-  Global Event titled as its one Sub Quest; `columnsOf(content, tx): SubQuestColumns`, made public.
+- **`QuestsService`**: accepting calls `createWithSubQuest(subQuest, [proposerId, receiverId], tx)` without
+  settings, so the proposer, the first Holder, leads, and the Quest is Closed with capacity 4.
 - **`FriendsService.end()`** withdraws, in its own transaction, the pair's Meetups that are `proposed` with a start
   still ahead, and sends `meetups-changed` to both when it withdrew any. It reads the time with `new Date()`, not
   `CLOCK`, which `FriendsModule` does not have.

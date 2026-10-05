@@ -34,7 +34,7 @@ function setClock(at: Date): void {
 }
 
 describe('Accepting a Meetup', () => {
-  it('gives both one Quest without a Global Event, with one Sub Quest built from the Meetup', async () => {
+  it('gives both a Closed Quest the proposer leads, without a Global Event and with a Sub Quest from the Meetup', async () => {
     const [proposer, receiver] = await friends(app);
     const content = lunch();
     const meetupId = await meetupBetween(app, proposer, receiver, content);
@@ -53,15 +53,12 @@ describe('Accepting a Meetup', () => {
       done: false,
       ended: false,
     };
-    // Of one name, the Holders are in the order of their ids.
-    const holders = [proposer, receiver]
-      .toSorted((a, b) => (a.id < b.id ? -1 : 1))
-      .map(({ id }) => ({ id, name: '홍길동', department: '컴퓨터공학부' }));
-    const quest = { id: ANY_STRING, title: '점심', globalEvent: null, holders, subQuests: [subQuest] };
+    const [leader, other] = [proposer, receiver].map(({ id }) => ({ id, name: '홍길동', department: '컴퓨터공학부' }));
+    const quest = { id: ANY_STRING, title: '점심', globalEvent: null, leader, capacity: 4, joinPolicy: 'closed' };
     expect(response.status).toBe(204);
     expect(await statesOf(app, meetupId, proposer, receiver)).toEqual({ proposer: 'accepted', receiver: 'accepted' });
     const forProposer = await getQuests(app, proposer);
-    expect(forProposer.body).toEqual([quest]);
+    expect(forProposer.body).toEqual([{ ...quest, holders: [leader, other], subQuests: [subQuest] }]);
     expect((await getQuests(app, receiver)).body).toEqual(forProposer.body);
   });
 

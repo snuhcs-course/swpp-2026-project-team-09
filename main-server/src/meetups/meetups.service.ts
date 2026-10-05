@@ -81,7 +81,8 @@ export class MeetupsService {
     return lists;
   }
 
-  // Gives both one Quest without a Global Event, with the Meetup's title and one Sub Quest built from it.
+  // Gives both one Quest without a Global Event, with the Meetup's title and one Sub Quest built from it. The proposer,
+  // the first Holder, leads it.
   async accept(userId: string, meetupId: string): Promise<void> {
     const meetup = await this.answer({ id: meetupId, receiverId: userId }, MeetupState.accepted, async (tx, stored) => {
       const { title, startsAt, endsAt, placeId, latitude, longitude, placeLabel } = stored;
