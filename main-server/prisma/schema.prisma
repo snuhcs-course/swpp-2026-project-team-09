@@ -221,6 +221,8 @@ model Quest {
   // From 1 to 8, which the migration checks.
   capacity      Int           @default(4)
   joinPolicy    JoinPolicy    @default(closed) @map("join_policy")
+  // The match server's match this Quest was created for, so that a repeated request finds it (README.md: Matching).
+  matchId       String?       @unique @map("match_id") @db.Uuid
   createdAt     DateTime      @default(now()) @map("created_at")
   holders       QuestHolder[]
   subQuests     SubQuest[]

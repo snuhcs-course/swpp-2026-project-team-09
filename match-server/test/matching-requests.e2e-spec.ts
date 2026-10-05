@@ -27,7 +27,7 @@ describe('A request for Matching', () => {
     const response = await ask(app, userId, { globalEventId, size: 3, hashtags: ['보드게임', 'jazz'] });
 
     expect(response.status).toBe(201);
-    expect(response.body).toEqual({ globalEventId, size: 3, state: 'waiting', arrivedAt: ANY_STRING });
+    expect(response.body).toEqual({ globalEventId, size: 3, state: 'waiting', arrivedAt: ANY_STRING, questId: null });
     const { arrivedAt } = z.object({ arrivedAt: z.iso.datetime() }).parse(response.body);
     expect(Math.abs(Date.parse(arrivedAt) - Date.now())).toBeLessThan(5000);
     expect((await readRequest(app, userId, globalEventId)).body).toEqual(response.body);
@@ -111,8 +111,8 @@ describe("A User's open requests", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual([
-      { globalEventId: first, size: 2, state: 'waiting', arrivedAt: ANY_STRING },
-      { globalEventId: second, size: 2, state: 'waiting', arrivedAt: ANY_STRING },
+      { globalEventId: first, size: 2, state: 'waiting', arrivedAt: ANY_STRING, questId: null },
+      { globalEventId: second, size: 2, state: 'waiting', arrivedAt: ANY_STRING, questId: null },
     ]);
   });
 

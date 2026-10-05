@@ -27,7 +27,7 @@ afterAll(async () => {
 });
 
 function requestIn(state: string): object {
-  return { globalEventId, size: 3, state, arrivedAt: '2026-10-04T08:00:00.000Z' };
+  return { globalEventId, size: 3, state, arrivedAt: '2026-10-04T08:00:00.000Z', questId: null };
 }
 
 describe('Withdrawing a request', () => {
@@ -69,6 +69,16 @@ describe('The state of a request', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(requestIn(state));
+  });
+
+  it('names the Quest of a matched request', async () => {
+    const matched = { ...requestIn('matched'), questId: randomUUID() };
+    matchServer.answers('GET', `/users/${user.id}/matching-requests/${globalEventId}`, 200, matched);
+
+    const response = await getMatchingRequest(app, user, globalEventId);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(matched);
   });
 
   it('is none when the User has not asked', async () => {

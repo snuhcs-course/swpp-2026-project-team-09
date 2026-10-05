@@ -11,6 +11,7 @@ import { EMPTY, EVENT, FRIEND, GATE, LIBRARY } from './support/map';
 interface MockViewProps {
   avatars: { id: string; passive: boolean }[];
   looks: { routeColor: string; routeWidth: number };
+  inset: { top: number; right: number; bottom: number; left: number };
   onThingPress: (event: { nativeEvent: { id: string } }) => void;
   onCameraIdle: (event: { nativeEvent: LatLng & { zoom: number } }) => void;
   ref: Ref<{ moveCamera: (move: object) => Promise<void>; fitTo: (...asked: unknown[]) => Promise<void> }>;
@@ -172,5 +173,17 @@ describe('what the native map hands the module', () => {
 
     await show();
     expect(mockProps?.looks).toMatchObject({ routeColor: '#2F6BFF', routeWidth: 5 });
+  });
+});
+
+describe("the native map's inset", () => {
+  it('hands the module what the controls cover, with every side said', async () => {
+    await show({ inset: { bottom: 126, right: 62 } });
+    expect(mockProps?.inset).toEqual({ top: 0, right: 62, bottom: 126, left: 0 });
+  });
+
+  it('hands the module no inset as 0 at every edge', async () => {
+    await show();
+    expect(mockProps?.inset).toEqual({ top: 0, right: 0, bottom: 0, left: 0 });
   });
 });

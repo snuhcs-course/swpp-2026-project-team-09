@@ -11,6 +11,8 @@ export const matchingRequestSchema = z.object({
   size: z.int(),
   state: z.enum(['waiting', 'matched', 'withdrawn', 'expired']),
   arrivedAt: z.iso.datetime(),
+  // The Quest of a matched request once the main server has created it.
+  questId: z.uuid().nullable(),
 });
 
 export type MatchingRequestDto = z.infer<typeof matchingRequestSchema>;

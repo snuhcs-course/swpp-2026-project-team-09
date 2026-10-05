@@ -54,4 +54,10 @@ export class MatchingQuestsService {
       return holdingShared.has(`${userId} ${globalEventId}`) ? 'SHARED_QUEST_HELD' : null;
     });
   }
+
+  // The id of the Quest created for the match server's match, if any.
+  async forMatch(matchId: string, tx: Prisma.TransactionClient): Promise<string | null> {
+    const quest = await tx.quest.findUnique({ where: { matchId }, select: { id: true } });
+    return quest?.id ?? null;
+  }
 }

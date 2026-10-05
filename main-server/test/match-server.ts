@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import request from 'supertest';
+import { inject } from 'vitest';
 import { TestUser } from './friends.js';
 import { withAccessToken } from './sign-in.js';
 
@@ -58,6 +59,18 @@ export class MatchServerStub {
     const respond = this.responses.get(`${method} ${pathname}`) ?? refuseMatchServer;
     return respond(init?.signal);
   };
+}
+
+// Posts to a route for the match server as the match server does: with MATCH_SERVER_TOKEN unless `token` names
+// another, or with none for `null`.
+export function postAsMatchServer(
+  app: INestApplication<Server>,
+  path: string,
+  body: object,
+  token: string | null = inject('settings').MATCH_SERVER_TOKEN,
+): request.Test {
+  const call = request(app.getHttpServer()).post(path);
+  return (token === null ? call : call.auth(token, { type: 'bearer' })).send(body);
 }
 
 export function askForMatching(app: INestApplication<Server>, user: TestUser, body: object): request.Test {

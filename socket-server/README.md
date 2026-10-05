@@ -146,15 +146,16 @@ change here.
 
 The signals and what the app does on each:
 
-| Signal                  | Carries                                       | The app                                                                                                  |
-| ----------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `friends-changed`       | nothing                                       | fetches `GET /friends` and `GET /friend-requests` of the main server again                               |
-| `global-events-changed` | nothing                                       | fetches the published Global Events of the main server again (P12's list); sent to every connection      |
-| `position`              | `{ userId, latitude, longitude, measuredAt }` | moves that User's Avatar to the position, or shows it there                                              |
-| `position-removed`      | `{ userId }`                                  | removes that User's Avatar from the map at once                                                          |
-| `quests-changed`        | nothing                                       | fetches `GET /quests`, the requests to join and the invitations of the main server again                 |
-| `meetups-changed`       | nothing                                       | fetches `GET /meetups` of the main server again                                                          |
-| `party-changed`         | nothing                                       | fetches `GET /parties/mine`, `GET /parties`, the Party requests and invitations of the main server again |
+| Signal                  | Carries                                       | The app                                                                                                    |
+| ----------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `friends-changed`       | nothing                                       | fetches `GET /friends` and `GET /friend-requests` of the main server again                                 |
+| `global-events-changed` | nothing                                       | fetches the published Global Events of the main server again (P12's list); sent to every connection        |
+| `position`              | `{ userId, latitude, longitude, measuredAt }` | moves that User's Avatar to the position, or shows it there                                                |
+| `position-removed`      | `{ userId }`                                  | removes that User's Avatar from the map at once                                                            |
+| `quests-changed`        | nothing                                       | fetches `GET /quests`, the requests to join and the invitations of the main server again                   |
+| `meetups-changed`       | nothing                                       | fetches `GET /meetups` of the main server again                                                            |
+| `party-changed`         | nothing                                       | fetches `GET /parties/mine`, `GET /parties`, the Party requests and invitations of the main server again   |
+| `matching-changed`      | nothing                                       | fetches `GET /matching-requests` and each request it shows, `GET /matching-requests/:globalEventId`, again |
 
 ```ts
 socket.on('friends-changed', () => {

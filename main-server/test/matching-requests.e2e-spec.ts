@@ -36,7 +36,7 @@ afterAll(async () => {
 
 // The match server takes the User's request and answers that it waits.
 function waits(user: TestUser, globalEventId: string, size: number): object {
-  const answer = { globalEventId, size, state: 'waiting', arrivedAt: new Date().toISOString() };
+  const answer = { globalEventId, size, state: 'waiting', arrivedAt: new Date().toISOString(), questId: null };
   matchServer.answers('POST', `/users/${user.id}/matching-requests`, 201, answer);
   return answer;
 }
