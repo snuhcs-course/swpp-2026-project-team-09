@@ -152,6 +152,7 @@ The signals and what the app does on each:
 | `global-events-changed` | nothing                                       | fetches the published Global Events of the main server again (P12's list); sent to every connection |
 | `position`              | `{ userId, latitude, longitude, measuredAt }` | moves that User's Avatar to the position, or shows it there                                         |
 | `position-removed`      | `{ userId }`                                  | removes that User's Avatar from the map at once                                                     |
+| `quests-changed`        | nothing                                       | fetches `GET /quests` of the main server again                                                      |
 
 ```ts
 socket.on('friends-changed', () => {

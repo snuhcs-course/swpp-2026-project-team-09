@@ -489,6 +489,206 @@ What the rules read from a post, and how, is in the worker server's README. In a
 `test/global-events.e2e-spec.ts` does. No route serves Global Events yet, so the tests read them with a database
 connection of their own.
 
+## Quests
+
+A Quest is what one or more Users set out to do and what Users gather around: a title, its Holders, a Leader, a
+capacity, a Join Policy, an optional Global Event and one or more Sub Quests, which carry the times and places. A Quest
+with two or more Holders is a Shared Quest; nothing else tells it apart. The plan is shared and progress is personal: a
+Sub Quest is one record for all Holders, and whether it is done is kept for each Holder. A User gets a Quest by
+attending a published Global Event or by making one of their own, and enters another's by joining it; Meetups and
+Matching add the Quests with several Holders. The routes, all a User's:
+
+- `POST /quests` with `{ "globalEventId": "..." }` attends the Global Event and answers 201 with the User's Quest for
+  it. The first time it creates the Quest, with the event's title, the User as its only Holder and the Sub Quest for
+  attending. Attending again, also twice at the same moment, answers the same Quest and changes nothing, so it takes
+  no `Idempotency-Key`.
+- `POST /quests/own` makes a Quest of the User's own, without a Global Event, and answers 201 with it. It requires an
+  `Idempotency-Key`, which is why it is a route apart from attending. The body:
+  `{ "title": "저녁 같이 먹어요", "subQuest": { ... }, "capacity": 4, "joinPolicy": "open" }`: the title has 1 to 50
+  characters, `subQuest` is the body of adding a Sub Quest below and becomes the Quest's first, and `capacity` (1 to 8)
+  and `joinPolicy` (`open`, `approval` or `closed`) are optional.
+- `GET /quests/recruiting` answers the list of recruiting Quests, and `GET /quests/recruiting?globalEventId=...` the
+  same for one Global Event (see below).
+- `POST /quests/:questId/join` joins an Open Quest and answers 201 with it. A second join is refused, so it takes no
+  `Idempotency-Key`.
+- `GET /quests` answers the User's Quests in the order they were created, leaving out each Quest whose Sub Quests have
+  all ended for the User. `GET /quests/:questId` answers one, ended or not.
+- `DELETE /quests/:questId` drops the Quest and answers 204. It removes the User as a Holder, with the User's progress.
+  The other Holders keep the Quest. When the last Holder drops it, it is deleted with its Sub Quests.
+- `POST /quests/:questId/sub-quests` adds a Sub Quest and answers 201 with it. It requires an `Idempotency-Key` (see
+  [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)). The body:
+  `{ "title": "카페", "startsAt": "...", "endsAt": "...", "place": ... }`. The title has 1 to 50 characters, the times
+  are optional and the end, when both are given, is after the start. `place` is optional and is a Place from the list,
+  `{ "placeId": "..." }`, or a point on the map with the label the app showed, `{ "latitude", "longitude", "label" }`,
+  the label 1 to 50 characters.
+- `PUT /quests/:questId/sub-quests/:subQuestId` replaces what a Holder wrote with the same body and answers 200 with the
+  Sub Quest. `DELETE /quests/:questId/sub-quests/:subQuestId` cancels it, which removes it, and answers 204.
+- `POST /quests/:questId/sub-quests/:subQuestId/done` marks the Sub Quest done for the User alone and answers 204. A
+  second mark changes nothing.
+
+A Quest reads:
+
+```json
+{
+  "id": "…",
+  "title": "지능형통신 연합전공 설명회",
+  "globalEvent": { "id": "…", "title": "지능형통신 연합전공 설명회" },
+  "leader": { "id": "…", "name": "홍길동", "department": "컴퓨터공학부" },
+  "capacity": 4,
+  "joinPolicy": "closed",
+  "holders": [{ "id": "…", "name": "홍길동", "department": "컴퓨터공학부" }],
+  "subQuests": [
+    {
+      "id": "…",
+      "attending": true,
+      "title": "지능형통신 연합전공 설명회",
+      "startsAt": "2026-10-13T08:00:00.000Z",
+      "endsAt": null,
+      "place": {
+        "placeId": null,
+        "label": "뉴미디어통신공동연구소 이충웅홀(132동 103호)",
+        "latitude": 37.45487,
+        "longitude": 126.95407
+      },
+      "completion": "by_hand",
+      "cancelled": false,
+      "done": false,
+      "ended": false
+    }
+  ]
+}
+```
+
+- `globalEvent` is `null` for a Quest without one. The Holders are in the order they entered, and the Sub Quests start
+  with the attending one, then in the order they were added.
+- A Sub Quest's `place` is `null` when it has none. `placeId` is the Place's id for a Place from the list, whose name
+  is then the `label`, and `null` for a point.
+- `done` and `ended` are the reading User's. Overlapping times, within a Quest or across a User's Quests, are accepted.
+
+The refusals each have a `code`:
+
+| Refusal                                                   | Status | `code`                   |
+| --------------------------------------------------------- | ------ | ------------------------ |
+| Attending a Global Event that is unknown or not published | 404    | `GLOBAL_EVENT_NOT_FOUND` |
+| A Quest the User does not hold, or that does not exist    | 404    | `QUEST_NOT_FOUND`        |
+| A Sub Quest the Quest does not have                       | 404    | `SUB_QUEST_NOT_FOUND`    |
+| A `placeId` that is not a Place of the list               | 404    | `PLACE_NOT_FOUND`        |
+| Editing or cancelling the attending Sub Quest             | 409    | `ATTENDING_SUB_QUEST`    |
+| Cancelling the only Sub Quest of a Quest                  | 409    | `LAST_SUB_QUEST`         |
+| Joining a Closed Quest, or one that does not exist        | 404    | `QUEST_NOT_FOUND`        |
+| Joining an Approval Quest                                 | 409    | `QUEST_NOT_OPEN`         |
+| Joining a Quest the User holds                            | 409    | `ALREADY_HOLDER`         |
+| Joining a Quest without a Sub Quest ahead                 | 409    | `QUEST_ENDED`            |
+| Joining a Quest whose Holders fill its capacity           | 409    | `QUEST_FULL`             |
+| Joining while holding a Shared Quest for its Global Event | 409    | `SHARED_QUEST_HELD`      |
+
+A body that does not match gets 400 with a message naming the field, such as `endsAt: The end must be after the start`.
+
+**The attending Sub Quest** stores no title, time or place. Each read takes the Global Event's title, `startsAt`,
+`endsAt`, `place` as the label and its position, so a change to the event shows at once. Once the event is no longer
+published, as when it is cancelled, the Sub Quest reads as `cancelled` and ended. No Holder edits or cancels it.
+
+**How a Sub Quest ends.** Its `completion` is `by_time` when it has an end time and `by_hand` when it has none; for the
+attending Sub Quest, when the Global Event has none. A Sub Quest is ended for a User when its end time has passed, for
+every Holder alike, when the User marked it done, or when it is cancelled. This is computed when it is read and nothing
+is written. The time it is computed at is `now()` of `CLOCK` (`src/quests/clock.ts`), which a test moves with
+`vi.spyOn(app.get<Clock>(CLOCK), 'now')`, as `test/quest-progress.e2e-spec.ts` does.
+
+**One Quest for a Global Event.** A User holds at most one Quest for a Global Event, which the database enforces: the
+row of each Holder, in `quest_holders`, repeats the Quest's Global Event, and a unique index on the User and the Global
+Event allows one such row. A Quest without a Global Event leaves the column empty, so a User holds any number of those.
+Attending locks the User's row first, so that two attempts at the same moment run one after the other and the later
+finds the Quest of the earlier.
+
+**Leader, capacity and Join Policy.** The Leader is one of the Holders. The capacity, from 1 to 8, is the most Holders
+the Quest takes. The Join Policy says how others enter: `open`, whoever can see the Quest joins at once; `approval`,
+they ask and the Leader decides; `closed`, only by the Leader's invitation. A Quest starts by how it came to be:
+
+- from attending a Global Event: led by the User, `closed`, capacity 4. The Leader opens it to others by changing the
+  Join Policy.
+- made by a User: led by the User, with the capacity and the Join Policy given, 4 and `closed` when left out.
+
+When the Leader drops the Quest, the Holder who entered earliest leads it. `quest_holders.joined_at` keeps when each
+Holder entered.
+
+**The list of recruiting Quests** holds the `open` and `approval` Quests that the reader does not hold and that have a
+Sub Quest ahead, the newest first. A Sub Quest is ahead while it is not cancelled and its end time has not passed; a
+Holder's mark of done does not count. A `closed` Quest is in no list. Each entry reads:
+
+```json
+{
+  "id": "…",
+  "title": "저녁 같이 먹어요",
+  "globalEvent": null,
+  "leader": { "id": "…", "name": "홍길동", "department": "컴퓨터공학부" },
+  "holderCount": 2,
+  "capacity": 4,
+  "joinPolicy": "open",
+  "nextSubQuest": {
+    "id": "…",
+    "attending": false,
+    "title": "저녁",
+    "startsAt": "2026-10-13T09:00:00.000Z",
+    "endsAt": null,
+    "place": { "placeId": null, "label": "132동 앞", "latitude": 37.45487, "longitude": 126.95407 }
+  }
+}
+```
+
+`nextSubQuest` is the first Sub Quest ahead, in the Quest's order.
+
+**Joining** makes the User a Holder of an `open` Quest at once. Every way into a Quest, joining and those of later
+features, ends in `RecruitingService.enter`, which:
+
+- locks the User, then the Quest and the Quest the User holds for its Global Event, in the order of their ids;
+- refuses a User who holds the Quest, a Quest without a Sub Quest ahead and a full Quest. The capacity is counted after
+  the lock, so two Users taking the last free place at the same moment leave one of them a Holder;
+- keeps the one-Quest rule for a Quest with a Global Event: a Quest the User held alone for that event is deleted, with
+  its Sub Quests and the User's progress; a User who holds a Shared Quest for it is refused and keeps it until they
+  drop it. A Quest without a Global Event has no such rule.
+
+Joining changes no Party.
+
+How they are stored: `quests` holds the title, the Global Event, which never changes, `leader_id`, `capacity`, which
+the migration checks to be from 1 to 8, and `join_policy`; `quest_holders` one row for each Holder, unique for the
+Quest and the User, with the time the Holder entered; `sub_quests` the Sub Quests, `attending` marking the one for the Global
+Event, of which a Quest has at most one; and `sub_quest_progress` one row for each Sub Quest a Holder marked done, which
+goes with the Holder's row. Checks in the migration keep the attending Sub Quest without title, time and place, the end
+after the start, and the place a Place, a point with its label, or neither.
+
+Another feature changes Quests in its own transaction with `QuestsService`, exported by `QuestsModule`. Every change to
+one Quest locks it first, so that changes run one after another:
+
+- `lock(questId, tx)` locks the Quest's row until the transaction ends.
+- `heldFor(userId, globalEventId, tx)` answers the id of the Quest the User holds for the Global Event, or `null`.
+- `createForGlobalEvent(globalEvent, holderIds, tx, settings?)` creates a Quest for the Global Event with these
+  Holders and the attending Sub Quest, and answers its id. A Holder who already holds a Quest for the event makes the
+  unique index refuse it, so ask `freeForSharedQuest` first.
+- `createWithSubQuest(subQuest, holderIds, tx, settings?)` creates a Quest without a Global Event with these Holders
+  and one Sub Quest, titled as the Sub Quest unless `settings.title` is given, and answers its id.
+- Both take `settings` as `{ leaderId?, capacity?, joinPolicy? }`, by default the first Holder, 4 and `closed`. The
+  Holders enter in the order given.
+- `removeHolder(questId, userId, tx)` removes the Holder with the Holder's progress, passes the Leader's role to the
+  Holder who entered earliest when the Leader goes, and deletes the Quest when nobody holds it any more.
+- `holderIds(questId, tx)` answers the Holders' User ids in the order they entered.
+- `freeForSharedQuest(userId, globalEventId, tx)` answers whether the User may become a Holder of a Shared Quest for
+  the Global Event: true when the User holds no Quest for it, or held one alone, which it deletes with its Sub Quests
+  and the User's progress; false when the User holds a Shared Quest for it, which stays.
+- `withSubQuestsAhead(questIds, tx?)` answers those of the Quests that have a Sub Quest ahead.
+
+`RecruitingService`, also exported, has `enter(questId, userId, tx, admits?)`, described above. `admits(quest)` is the
+way in's own check, such as the Join Policy, made once the Quest is locked; it throws to refuse. It answers the Holders
+to send `quests-changed` to, the User included, once the transaction commits.
+
+`quests-changed` goes to every Holder, the one who acted included, when a Quest is created by attending or made, when a
+Sub Quest is added, edited or cancelled, when a User joins, and when a Holder drops the Quest, which may pass on the
+Leader's role. A mark of done is the Holder's own and sends
+nothing. The signal carries nothing, and the app fetches `GET /quests` again (see [Signals](#signals)).
+
+In a test, `test/quests.ts` stores a published Global Event with a connection of its own, since no route creates one
+yet, and calls the routes above. A test that needs an `open` Quest for a Global Event sets its Join Policy with that
+connection, as no route changes it yet.
+
 ## Menus
 
 The worker server collects the menus of three Sources, the Co-op's, the dormitory's and the veterinary college's page,
@@ -922,6 +1122,7 @@ src/
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
+├── quests/                          a feature: Quests, their Holders, Sub Quests, each Holder's progress and joining
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a
