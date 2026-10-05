@@ -92,6 +92,25 @@ describe("A match's Shared Quest", () => {
       expect(await questIdsOf(user)).toEqual([questId]);
     }
   });
+
+  it("is Closed, has the match's size as its capacity and is led by the free User whose request arrived earliest", async () => {
+    const [sharing, partner, ...others] = await Promise.all([1, 2, 3, 4].map(() => signInUser(app)));
+    const event = await storeEvent(prisma);
+    await storeSharedQuest(prisma, event, [sharing.id, partner.id]);
+    // The match server names the Users in the order their requests arrived, here not the order of their ids.
+    const [earliest, later] = others.toSorted((a, b) => (a.id < b.id ? 1 : -1));
+
+    const response = await askForQuest(randomUUID(), event, [sharing, earliest, later]);
+
+    const { questId, holderIds } = answerSchema.parse(response.body);
+    expect(holderIds).toEqual([earliest.id, later.id]);
+    expect((await getQuest(app, later, questId)).body).toMatchObject({
+      leader: { id: earliest.id },
+      capacity: 3,
+      joinPolicy: 'closed',
+      holders: [{ id: earliest.id }, { id: later.id }],
+    });
+  });
 });
 
 describe("A repeated request for a match's Shared Quest", () => {

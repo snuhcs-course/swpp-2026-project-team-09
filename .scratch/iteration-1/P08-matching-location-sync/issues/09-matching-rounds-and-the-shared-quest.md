@@ -19,7 +19,7 @@ A match is never lost between the two servers: the match server keeps asking unt
 - [x] The grouping module takes the waiting requests of one Global Event and size, each with its hashtags and the time it arrived, and returns groups of exactly that size. It forms as many groups as it can. It puts together the requests that share the most hashtags, and the earlier request first where they share the same. The requests left over wait for the next round.
 - [x] The module is called only when at least as many requests wait as one group takes. It is replaced as a whole in tests, and the match server's README names it as the place where grouping by AI lands.
 - [x] Each group is stored as a match awaiting its Quest, and its requests are matched. The match server asks the main server to create the Shared Quest and repeats the request until it is answered, also after a restart.
-- [x] The main server creates one Quest for the match's Global Event, held by the matched Users, with the Sub Quest for attending. It stores the match identifier with the Quest, unique in the database, and a repeated request returns the Quest created the first time.
+- [x] The main server creates one Quest for the match's Global Event, held by the matched Users, with the Sub Quest for attending. It is Closed, its capacity is the match's size, and it is led by the free User whose request arrived earliest: the match server names the Users in the order their requests arrived. It stores the match identifier with the Quest, unique in the database, and a repeated request returns the Quest created the first time.
 - [x] A Quest a matched User held alone for the Global Event is deleted, with its Sub Quests and the User's progress. A matched User who holds a Shared Quest for it by then keeps that one and is left out of the new one.
 - [x] When the Global Event has started or was cancelled by the time the request arrives, the main server answers so and creates nothing. The match server closes the match, expires its requests and does not ask again.
 - [x] `matching-changed` and `quests-changed` go to the Holders of the new Quest. The state of a matched request names its Quest.
@@ -45,14 +45,17 @@ A match is never lost between the two servers: the match server keeps asking unt
   `MATCH_TOO_SMALL` and rolls back, so no Quest held alone is deleted. The match server closes the match and expires
   all its requests, as for a started or cancelled event; the User who was free asks again.
 - **Creating the Quest**: one transaction locks the matched Users in id order, then answers the Quest already stored
-  for the match id, then checks the Global Event, then calls `freeForSharedQuest()` for each User in id order and
-  `createForGlobalEvent(globalEvent, free, tx, matchId)`. Looking up the match after the locks makes two requests at
-  the same moment give one Quest. A repeat answers the Quest's current Holders and sends no signal.
+  for the match id, then checks the Global Event, then calls `freeForSharedQuest()` for each User in the order the
+  match server names them, which is the order their requests arrived, and
+  `createForGlobalEvent(globalEvent, free, tx, { matchId, capacity: userIds.length, joinPolicy: 'closed' })` with the
+  free Users in that order, so that the earliest free User leads. The capacity is the match's size, Users left out included. Looking up the match after the locks
+  makes two requests at the same moment give one Quest. A repeat answers the Quest's current Holders and sends no
+  signal.
 - **Match identifier**: `quests.match_id`, unique index `quests_match_id_key`. Once all Holders drop the Quest it is
   deleted with its match id; the match server no longer asks by then.
-- **QuestsService** gains `freeForSharedQuest(userId, globalEventId, tx): Promise<boolean>` as agreed with ticket 05,
-  and a fourth parameter `matchId: string | null = null` on `createForGlobalEvent`. The read-only operations only
-  Matching uses moved to a second provider of `QuestsModule`, exported too: `MatchingQuestsService` in
+- **QuestsService**: `createForGlobalEvent(globalEvent, holderIds, tx, settings?)` takes `settings.matchId` beside
+  ticket 04's `{ leaderId?, capacity?, joinPolicy? }`; `freeForSharedQuest()` is ticket 04's. The read-only operations
+  only Matching uses are in a second provider of `QuestsModule`, exported too: `MatchingQuestsService` in
   `src/quests/matching-quests.service.ts`, with `matchingRefusals(requests, tx?)` (and the types `MatchingCandidate`,
   `MatchingRefusal`) and `forMatch(matchId, tx): Promise<string | null>`. This keeps `quests.service.ts` under 300
   lines.

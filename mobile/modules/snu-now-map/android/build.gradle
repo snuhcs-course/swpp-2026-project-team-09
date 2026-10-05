@@ -1,0 +1,21 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.bonnieandclaude.snunow'
+version = '1.0.0'
+
+android {
+  namespace 'com.bonnieandclaude.snunow.map'
+  defaultConfig {
+    versionCode 1
+    versionName '1.0.0'
+  }
+}
+
+dependencies {
+  // From Kakao's Maven repository, which the app's configuration adds through expo-build-properties. It ships ARM
+  // libraries only, so the app is built for arm64.
+  implementation 'com.kakao.maps.open:android:2.15.2'
+}

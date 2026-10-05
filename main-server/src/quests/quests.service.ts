@@ -1,27 +1,34 @@
-import { ConflictException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
-import { GlobalEvent, GlobalEventState, Prisma, QuestHolder, SubQuest } from '../generated/prisma/client.js';
+import {
+  GlobalEvent,
+  GlobalEventState,
+  JoinPolicy,
+  Prisma,
+  QuestHolder,
+  SubQuest,
+} from '../generated/prisma/client.js';
 import { UsersService } from '../users/users.service.js';
 import { CLOCK, type Clock } from './clock.js';
-import { type SubQuestContentDto } from './dto/quest-requests.dto.js';
-import { QUEST_INCLUDE, QuestDto, SUB_QUEST_INCLUDE, SubQuestDto, toQuestDto, toSubQuestDto } from './dto/quest.dto.js';
+import { type MakeQuestDto, type SubQuestContentDto } from './dto/quest-requests.dto.js';
+import { hasSubQuestsAhead, QUEST_INCLUDE, QuestDto, toQuestDto } from './dto/quest.dto.js';
+import { notFound, questNotFound } from './refusals.js';
 
-const questNotFound = (): NotFoundException =>
-  new NotFoundException({
-    statusCode: HttpStatus.NOT_FOUND,
-    error: 'Not Found',
-    code: 'QUEST_NOT_FOUND',
-    message: 'This User holds no such Quest.',
-  });
+// What a Sub Quest that a Holder or a Meetup writes stores.
+export type SubQuestColumns = Pick<
+  SubQuest,
+  'startsAt' | 'endsAt' | 'placeId' | 'latitude' | 'longitude' | 'placeLabel'
+> & {
+  title: string;
+};
 
-const subQuestNotFound = (): NotFoundException =>
-  new NotFoundException({
-    statusCode: HttpStatus.NOT_FOUND,
-    error: 'Not Found',
-    code: 'SUB_QUEST_NOT_FOUND',
-    message: 'This Quest has no such Sub Quest.',
-  });
+// How a new Quest starts. Left out, its first Holder leads it, and it is Closed with capacity 4.
+export interface QuestSettings {
+  leaderId?: string;
+  capacity?: number;
+  joinPolicy?: JoinPolicy;
+}
 
 @Injectable()
 export class QuestsService {
@@ -40,12 +47,7 @@ export class QuestsService {
         where: { id: globalEventId, state: GlobalEventState.published },
       });
       if (globalEvent === null) {
-        throw new NotFoundException({
-          statusCode: HttpStatus.NOT_FOUND,
-          error: 'Not Found',
-          code: 'GLOBAL_EVENT_NOT_FOUND',
-          message: 'No such Global Event is published.',
-        });
+        throw notFound('GLOBAL_EVENT_NOT_FOUND', 'No such Global Event is published.');
       }
       await this.users.lock(userId, tx);
       const held = await this.heldFor(userId, globalEventId, tx);
@@ -57,6 +59,15 @@ export class QuestsService {
     if (created) {
       this.signals.send([userId], 'quests-changed');
     }
+    return this.read(userId, questId);
+  }
+
+  // A Quest of the User's own, without a Global Event.
+  async make(userId: string, { title, subQuest, capacity, joinPolicy }: MakeQuestDto): Promise<QuestDto> {
+    const questId = await this.prisma.$transaction(async (tx) =>
+      this.createWithSubQuest(await this.columnsOf(subQuest, tx), [userId], tx, { title, capacity, joinPolicy }),
+    );
+    this.signals.send([userId], 'quests-changed');
     return this.read(userId, questId);
   }
 
@@ -88,53 +99,6 @@ export class QuestsService {
     await this.changeShared(userId, questId, (tx) => this.removeHolder(questId, userId, tx));
   }
 
-  addSubQuest(userId: string, questId: string, content: SubQuestContentDto): Promise<SubQuestDto> {
-    return this.changeShared(userId, questId, async (tx) => {
-      const subQuest = await tx.subQuest.create({
-        data: { questId, ...(await this.columnsOf(content, tx)) },
-        include: SUB_QUEST_INCLUDE,
-      });
-      return toSubQuestDto(subQuest, null, userId, this.clock.now());
-    });
-  }
-
-  editSubQuest(userId: string, questId: string, subQuestId: string, content: SubQuestContentDto): Promise<SubQuestDto> {
-    return this.changeShared(userId, questId, async (tx) => {
-      await this.addedSubQuest(questId, subQuestId, tx);
-      const subQuest = await tx.subQuest.update({
-        where: { id: subQuestId },
-        data: await this.columnsOf(content, tx),
-        include: SUB_QUEST_INCLUDE,
-      });
-      return toSubQuestDto(subQuest, null, userId, this.clock.now());
-    });
-  }
-
-  async cancelSubQuest(userId: string, questId: string, subQuestId: string): Promise<void> {
-    await this.changeShared(userId, questId, async (tx) => {
-      await this.addedSubQuest(questId, subQuestId, tx);
-      if ((await tx.subQuest.count({ where: { questId } })) === 1) {
-        throw new ConflictException({
-          statusCode: HttpStatus.CONFLICT,
-          error: 'Conflict',
-          code: 'LAST_SUB_QUEST',
-          message: 'The only Sub Quest of a Quest cannot be cancelled.',
-        });
-      }
-      await tx.subQuest.delete({ where: { id: subQuestId } });
-    });
-  }
-
-  // The mark is the Holder's own, so no other Holder is told.
-  async markDone(userId: string, questId: string, subQuestId: string): Promise<void> {
-    await this.inQuest(userId, questId, async (tx, holder) => {
-      if ((await tx.subQuest.findFirst({ where: { id: subQuestId, questId } })) === null) {
-        throw subQuestNotFound();
-      }
-      await tx.subQuestProgress.createMany({ data: { subQuestId, holderId: holder.id }, skipDuplicates: true });
-    });
-  }
-
   // Locks the Quest's row until the transaction ends, so that changes to one Quest run one after another.
   async lock(questId: string, tx: Prisma.TransactionClient): Promise<void> {
     await tx.$queryRaw`SELECT 1 FROM quests WHERE id = ${questId}::uuid FOR NO KEY UPDATE`;
@@ -147,57 +111,77 @@ export class QuestsService {
   }
 
   // A Quest for the Global Event, with its title, the Holders and the Sub Quest for attending it. Each Holder must hold
-  // no Quest for it yet, or the unique index on the Holders refuses it. A match's Quest names the match, once.
-  async createForGlobalEvent(
+  // no Quest for it yet, or the unique index on the Holders refuses it. The Holders enter in the order given. A match's
+  // Quest names the match, once.
+  createForGlobalEvent(
     globalEvent: Pick<GlobalEvent, 'id' | 'title'>,
     holderIds: readonly string[],
     tx: Prisma.TransactionClient,
-    matchId: string | null = null,
+    { matchId, ...settings }: QuestSettings & { matchId?: string } = {},
   ): Promise<string> {
-    const quest = await tx.quest.create({
-      data: {
-        title: globalEvent.title,
-        globalEventId: globalEvent.id,
-        matchId,
-        holders: { create: holderIds.map((userId) => ({ userId, globalEventId: globalEvent.id })) },
-        subQuests: { create: { attending: true } },
-      },
-    });
-    return quest.id;
+    return this.create(
+      { title: globalEvent.title, globalEventId: globalEvent.id, matchId, subQuest: { attending: true } },
+      holderIds,
+      settings,
+      tx,
+    );
+  }
+
+  // A Quest without a Global Event, titled as its one Sub Quest unless a title is given, with these Holders in the order
+  // given.
+  createWithSubQuest(
+    subQuest: SubQuestColumns,
+    holderIds: readonly string[],
+    tx: Prisma.TransactionClient,
+    { title = subQuest.title, ...settings }: QuestSettings & { title?: string } = {},
+  ): Promise<string> {
+    return this.create({ title, globalEventId: null, subQuest }, holderIds, settings, tx);
   }
 
   // Removes the Holder with the Holder's progress, and the Quest with its Sub Quests when nobody holds it any more.
-  // Lock the Quest first.
+  // When the Leader goes, the Holder who entered earliest leads. Lock the Quest first.
   async removeHolder(questId: string, userId: string, tx: Prisma.TransactionClient): Promise<void> {
     await tx.questHolder.delete({ where: { questId_userId: { questId, userId } } });
-    if ((await tx.questHolder.count({ where: { questId } })) === 0) {
+    const [earliest] = await this.holderIds(questId, tx);
+    if (earliest === undefined) {
       await tx.quest.delete({ where: { id: questId } });
+    } else {
+      await tx.quest.updateMany({ where: { id: questId, leaderId: userId }, data: { leaderId: earliest } });
     }
   }
 
+  // In the order they entered.
   async holderIds(questId: string, tx: Prisma.TransactionClient): Promise<string[]> {
-    const holders = await tx.questHolder.findMany({ where: { questId }, select: { userId: true } });
+    const holders = await tx.questHolder.findMany({
+      where: { questId },
+      select: { userId: true },
+      orderBy: QUEST_INCLUDE.holders.orderBy,
+    });
     return holders.map(({ userId }) => userId);
   }
 
-  // True when the User may become a Holder of a Shared Quest for the Global Event: the User holds no Quest for it, or
-  // held one alone, which this deletes with its Sub Quests and the User's progress. False when the User holds a Shared
-  // Quest for it, which stays. Lock the User first.
+  // Whether the User may become a Holder of a Shared Quest for the Global Event: yes when the User holds no Quest for
+  // it, or holds one alone, which this deletes with its Sub Quests and the User's progress; no when the User holds a
+  // Shared Quest for it, which stays.
   async freeForSharedQuest(userId: string, globalEventId: string, tx: Prisma.TransactionClient): Promise<boolean> {
     const questId = await this.heldFor(userId, globalEventId, tx);
     if (questId === null) {
       return true;
     }
     await this.lock(questId, tx);
-    const holderIds = await this.holderIds(questId, tx);
-    if (holderIds.length > 1) {
+    if ((await this.holderIds(questId, tx)).length > 1) {
       return false;
     }
-    // A drop of the Quest between the two reads leaves nothing to remove.
-    if (holderIds.includes(userId)) {
-      await this.removeHolder(questId, userId, tx);
-    }
+    await this.removeHolder(questId, userId, tx);
     return true;
+  }
+
+  // The Quests among these that have a Sub Quest ahead: one not cancelled whose end time has not passed. A mark of done
+  // is one Holder's own and does not count.
+  async withSubQuestsAhead(questIds: readonly string[], tx: Prisma.TransactionClient = this.prisma): Promise<string[]> {
+    const quests = await tx.quest.findMany({ where: { id: { in: [...questIds] } }, include: QUEST_INCLUDE });
+    const now = this.clock.now();
+    return quests.filter((quest) => hasSubQuestsAhead(quest, now)).map(({ id }) => id);
   }
 
   private async holderIn(questId: string, userId: string, tx: Prisma.TransactionClient): Promise<QuestHolder> {
@@ -208,36 +192,42 @@ export class QuestsService {
     return holder;
   }
 
-  // A Sub Quest of the Quest that a Holder added, which a Holder may edit or cancel.
-  private async addedSubQuest(questId: string, subQuestId: string, tx: Prisma.TransactionClient): Promise<SubQuest> {
-    const subQuest = await tx.subQuest.findFirst({ where: { id: subQuestId, questId } });
-    if (subQuest === null) {
-      throw subQuestNotFound();
-    }
-    if (subQuest.attending) {
-      throw new ConflictException({
-        statusCode: HttpStatus.CONFLICT,
-        error: 'Conflict',
-        code: 'ATTENDING_SUB_QUEST',
-        message: 'The Sub Quest for attending follows its Global Event and cannot be edited or cancelled.',
-      });
-    }
-    return subQuest;
+  private async create(
+    quest: {
+      title: string;
+      globalEventId: string | null;
+      matchId?: string;
+      subQuest: Prisma.SubQuestCreateWithoutQuestInput;
+    },
+    holderIds: readonly string[],
+    { leaderId = holderIds[0], capacity, joinPolicy }: QuestSettings,
+    tx: Prisma.TransactionClient,
+  ): Promise<string> {
+    const { title, globalEventId, matchId, subQuest } = quest;
+    const { id } = await tx.quest.create({
+      data: {
+        title,
+        globalEventId,
+        matchId,
+        leaderId,
+        capacity,
+        joinPolicy,
+        holders: { create: holderIds.map((userId) => ({ userId, globalEventId })) },
+        subQuests: { create: subQuest },
+      },
+    });
+    return id;
   }
 
-  private async columnsOf(
+  // Refuses a Place that is not in the list.
+  async columnsOf(
     { title, startsAt, endsAt, place }: SubQuestContentDto,
     tx: Prisma.TransactionClient,
-  ): Promise<Pick<SubQuest, 'title' | 'startsAt' | 'endsAt' | 'placeId' | 'latitude' | 'longitude' | 'placeLabel'>> {
+  ): Promise<SubQuestColumns> {
     const point = place !== null && 'latitude' in place ? place : null;
     const placeId = place !== null && 'placeId' in place ? place.placeId : null;
     if (placeId !== null && (await tx.place.findUnique({ where: { id: placeId } })) === null) {
-      throw new NotFoundException({
-        statusCode: HttpStatus.NOT_FOUND,
-        error: 'Not Found',
-        code: 'PLACE_NOT_FOUND',
-        message: 'No such Place is in the list.',
-      });
+      throw notFound('PLACE_NOT_FOUND', 'No such Place is in the list.');
     }
     return {
       title,
@@ -252,7 +242,7 @@ export class QuestsService {
 
   // Locks the Quest, checks that the User holds it and makes the change. Answers the change's result and the Holders
   // the Quest had before it.
-  private inQuest<T>(
+  inQuest<T>(
     userId: string,
     questId: string,
     change: (tx: Prisma.TransactionClient, holder: QuestHolder) => Promise<T>,
@@ -266,7 +256,7 @@ export class QuestsService {
   }
 
   // As inQuest, and tells every Holder the Quest had, the User included.
-  private async changeShared<T>(
+  async changeShared<T>(
     userId: string,
     questId: string,
     change: (tx: Prisma.TransactionClient, holder: QuestHolder) => Promise<T>,

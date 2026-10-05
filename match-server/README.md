@@ -150,7 +150,8 @@ registers with `SchedulerRegistry` from `@nestjs/schedule` when the server start
    requests `matched`. The others wait for the next round.
 4. **Quests.** The transaction ends, and the round asks the main server for the Quest of every match that awaits one,
    the oldest first, each in a transaction of its own that claims the match with `FOR UPDATE SKIP LOCKED`, so that no
-   two match servers ask for one match at the same moment.
+   two match servers ask for one match at the same moment. It names the match's Users in the order their requests
+   arrived, and the main server lets the earliest of them who is free lead the Quest.
 
 A match is in one of three states, in `matches.state`:
 

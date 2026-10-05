@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, HttpException, HttpStatus, Inje
 import { z } from 'zod';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
+import { JoinPolicy } from '../generated/prisma/client.js';
 import {
   type MatchingCandidate,
   type MatchingRefusal,
@@ -89,7 +90,8 @@ export class MatchingService {
   }
 
   // The match's Shared Quest, created once: a repeat answers the Quest of the first. The Users are locked in id order,
-  // as attending locks one, so that an attend or another match at the same moment runs before or after.
+  // as attending locks one, so that an attend or another match at the same moment runs before or after. The match server
+  // names the Users in the order their requests arrived, which the Holders keep, so the earliest free User leads.
   async createQuest(matchId: string, { globalEventId, userIds }: MatchQuestRequestDto): Promise<MatchQuestDto> {
     const inIdOrder = userIds.toSorted();
     const { questId, holderIds, created } = await this.prisma.$transaction(async (tx) => {
@@ -110,7 +112,7 @@ export class MatchingService {
         throw refusalOf(eventRefusal);
       }
       const free: string[] = [];
-      for (const userId of inIdOrder) {
+      for (const userId of userIds) {
         // oxlint-disable-next-line no-await-in-loop -- one transaction runs one query at a time
         if (await this.quests.freeForSharedQuest(userId, globalEventId, tx)) {
           free.push(userId);
@@ -126,8 +128,9 @@ export class MatchingService {
         });
       }
       const globalEvent = await tx.globalEvent.findUniqueOrThrow({ where: { id: globalEventId } });
+      const settings = { matchId, capacity: userIds.length, joinPolicy: JoinPolicy.closed };
       return {
-        questId: await this.quests.createForGlobalEvent(globalEvent, free, tx, matchId),
+        questId: await this.quests.createForGlobalEvent(globalEvent, free, tx, settings),
         holderIds: free,
         created: true,
       };
