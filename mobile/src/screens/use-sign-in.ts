@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { signIn } from '@/auth/sign-in';
 import { useSession } from '@/session/session';
+import { readKept } from '@/storage/kept';
 
 // What the sign-in screen shows: its default state, the check of the account, or why the sign-in was refused.
 export type SignInPhase = 'default' | 'checking' | 'not-snu-account' | 'failed';
@@ -25,9 +26,10 @@ export function useSignIn(): { phase: SignInPhase; start: () => void } {
     }
     checking.current = true;
     setPhase('checking');
-    void ending().then((result) => {
+    void ending().then(async (result) => {
       if (result.outcome === 'signed-in') {
-        enter(result.onboarding);
+        const { consented } = await readKept();
+        enter(result.onboarding, consented);
         return;
       }
       checking.current = false;

@@ -5,6 +5,8 @@ import { startsFromFirstState } from '@/dev-settings';
 // What the phone keeps so that the app can open again where the User left it.
 export interface Kept {
   signedIn: boolean;
+  // The User agreed to the legal documents on this phone. A sign-out leaves it as it is.
+  consented: boolean;
   // What the sign-in suggested for Onboarding's name and department. Null once Onboarding is finished.
   suggestion: Suggestion | null;
   onboardingCompleted: boolean;
@@ -14,9 +16,16 @@ export interface Kept {
 
 const KEY = 'snunow.kept';
 
-const FIRST_STATE: Kept = { signedIn: false, suggestion: null, onboardingCompleted: false, answers: null };
+const FIRST_STATE: Kept = {
+  signedIn: false,
+  consented: false,
+  suggestion: null,
+  onboardingCompleted: false,
+  answers: null,
+};
 
-function isKept(value: unknown): value is Kept {
+// What a version before the consent screen stored has no `consented`: the rest of it still counts.
+function isKept(value: unknown): value is Omit<Kept, 'consented'> {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -37,7 +46,10 @@ export async function readKept(): Promise<Kept> {
   }
   try {
     const value: unknown = JSON.parse(stored);
-    return isKept(value) ? value : FIRST_STATE;
+    if (!isKept(value)) {
+      return FIRST_STATE;
+    }
+    return { ...value, consented: 'consented' in value && value.consented === true };
   } catch {
     return FIRST_STATE;
   }

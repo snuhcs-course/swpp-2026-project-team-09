@@ -23,6 +23,7 @@ const ANSWERS = {
 async function keepSignedIn(onboardingCompleted: boolean): Promise<void> {
   await keep({
     signedIn: true,
+    consented: true,
     onboardingCompleted,
     suggestion: onboardingCompleted ? null : { name: '홍길동', department: null },
     answers: onboardingCompleted ? { ...ANSWERS, hashtags: [] } : null,
@@ -133,13 +134,15 @@ describe("a screen that is not the User's", () => {
     expect(screen.queryByRole('button', { name: SIGN_IN })).toBeNull();
   });
 
-  it('follows a sign-in, Onboarding and a sign-out without the loading screen again', async () => {
+  it('follows a sign-in, Onboarding and a sign-out and no loading screen again', async () => {
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     await startApp();
     await pass(600);
 
     await user.press(screen.getByRole('button', { name: SIGN_IN }));
     await pass(400);
+    await user.press(screen.getByRole('button', { name: '동의하고 시작' }));
+    await pass(100);
     expect(screen.getByRole('header', { name: '온보딩' })).toBeVisible();
 
     await user.press(screen.getByRole('button', { name: '저장 (임시)' }));

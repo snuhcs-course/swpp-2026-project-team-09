@@ -14,10 +14,11 @@ The sign-in is the mock of ticket 02 behind the sign-in module. Google and the m
 
 - [x] The screen has the frame's default, checking and refused states, with the frame's words, pictures and motion.
 - [x] A press shows the checking state, and the button takes no second press while it lasts.
-- [x] Each ending shows what the spec's table says: signed in leads on to Onboarding or the main screen; an account outside SNU shows the refused state; a closed sheet returns to the default state; any other failure shows the refused state with "잠시 후 다시 시도해 주세요".
-- [x] Each of the three legal documents opens on a screen of its own with the frame's placeholder text and closes back to the sign-in screen, also with Android's back button.
+- [x] Each ending shows what the spec's table says: signed in leads on to the consent screen the first time on a phone, and after that to Onboarding or the main screen; an account outside SNU shows the refused state; a closed sheet returns to the default state; any other failure shows the refused state with "잠시 후 다시 시도해 주세요".
+- [x] Each of the three legal documents opens from the consent screen on a screen of its own with the frame's placeholder text and closes back to the consent screen, also with Android's back button.
+- [x] The consent screen is shown once on a phone, after the first sign-in and before Onboarding: "동의하고 시작" stores the consent and leads on, and "로그아웃" returns to the sign-in screen.
 - [x] The button and the links carry Korean accessibility labels, and the refused state's line is announced.
-- [x] Jest tests: each of the four endings, the button while checking, and a legal document opened and closed.
+- [x] Jest tests: each of the four endings, the button while checking, the consent screen's ways on and out, and a legal document opened and closed.
 - [x] The frames were read again when the work started, and what changed since the spec is recorded under Comments.
 - [ ] Screenshots of each state, taken from the app's web target at a phone's size and compared with the frames, are in the pull request under Test Results.
 - [x] The app's four checks pass: lint, format, types and tests.
@@ -69,6 +70,17 @@ Not checked: nothing ran in a browser or on a phone. The layout, the pictures, t
 - The button and the drawing keep their places around the middle of the screen on a phone narrower than the frame.
 - Screenshots of the web target at 390 wide, beside the frame's three states: the wordmark, the tagline, the line under the headline, the footer, the button and the drawing are in the frame's places, measured in the default state. The ring around the button is not drawn under reduced motion, where the frame's still picture shows it. At 360 by 640 nothing overlaps; the footer is reached by scrolling and the drawing is cut off 40 further.
 - The screenshots were taken before the changes of this section. None of them moves anything at 390 wide; the press on each link was not tried in a browser or on a phone.
+
+### Consent moved after the sign-in (2026-10-05)
+
+- The sign-in screen no longer has the footer sentence and its three links. It keeps the wordmark, the button, the drawing and the words of each state. This is a difference from the `Login` frame.
+- Consent is a screen of its own, `/consent` (`src/screens/consent-screen.tsx`, `src/app/consent.tsx`): the title "약관에 동의해 주세요", one sentence, the three documents as rows that open `/legal/<name>`, "동의하고 시작" and "로그아웃". No frame exists for it, so its look is the app's own, built from the design system.
+- The flow has a place `consent` between the sign-in and Onboarding. The phone keeps `consented` (`src/storage/kept.ts`); what an earlier version stored reads as not agreed. A sign-out keeps it, and the development setting for the first state clears it.
+- The Session remembers where the sign-in led while consent is asked, so "동의하고 시작" leads to Onboarding with the suggestion, or to the main screen, without asking anything again. A signed-in User who has not agreed sees consent after the loading screen, and the Lobby is not fetched before.
+- If the phone cannot store the consent, the User still goes on and is asked again at the next start.
+- A legal document closes back to the consent screen. Opened by its address alone, it closes to the start of the app.
+- Tests: `__tests__/consent-test.tsx` is new; the sign-in, loading and storage tests follow the new flow.
+- Not checked: nothing ran in a browser or on a phone.
 
 ### Agent usage (2026-10-05)
 

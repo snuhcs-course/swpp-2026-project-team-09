@@ -71,13 +71,14 @@ Keep code that is not a screen, such as components and hooks, in `src/` outside 
 ## Screens and the flow between them
 
 The app starts on the loading screen (`/`), once. While it shows, the app reads what the phone keeps and, for a User
-who signed in and finished Onboarding, fetches the Lobby. Then it shows where the User belongs:
+who signed in, agreed to the legal documents and finished Onboarding, fetches the Lobby. Then it shows where the User belongs:
 
-| The User                                  | Sees        | Address       |
-| ----------------------------------------- | ----------- | ------------- |
-| is not signed in                          | Sign-in     | `/sign-in`    |
-| signed in and has not finished Onboarding | Onboarding  | `/onboarding` |
-| finished Onboarding                       | Main screen | `/main`       |
+| The User                                                          | Sees        | Address       |
+| ----------------------------------------------------------------- | ----------- | ------------- |
+| is not signed in                                                  | Sign-in     | `/sign-in`    |
+| signed in and has not agreed to the legal documents on this phone | Consent     | `/consent`    |
+| agreed and has not finished Onboarding                            | Onboarding  | `/onboarding` |
+| agreed and finished Onboarding                                    | Main screen | `/main`       |
 
 `src/session/session.tsx` holds where the User is while the app runs. A screen that belongs to one of these places
 starts with `useOwnPlace(...)`, which leads a User who does not belong there to where they do. A sign-in calls
@@ -89,9 +90,13 @@ The sign-in screen has one button. A press asks the sign-in module (`src/auth/si
 check, then follows the ending: `enter` for a User who signed in, the default state after a closed sheet, and a
 refused state for an account outside SNU or any other failure. A press in a refused state tries again.
 
-Its three legal documents open on a screen of their own, `/legal/terms`, `/legal/privacy` and `/legal/location`
-(`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it closes back to the
-screen it was opened from. The documents' texts are placeholders.
+The consent screen asks once on a phone: a signed-in User who has not agreed there sees it after the sign-in, or after
+the loading screen, and the Session remembers where they go next. "동의하고 시작" stores the consent and calls `agree`;
+"로그아웃" signs out. A sign-out leaves the consent on the phone.
+
+The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and
+`/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
+closes back to the screen it was opened from. The documents' texts are placeholders.
 
 ## Data
 
@@ -155,9 +160,9 @@ Behind a hook are three layers:
 While the answers are mocks, the app's time is the moment the wireframe shows, 1 October 2026 at 13:37
 (`src/clock.ts`), so that the screens read as the wireframe on any day.
 
-The phone keeps that the User signed in, what the sign-in suggested for Onboarding, whether Onboarding is finished and
-its answers (`src/storage/kept.ts`). `openKept()` is the read for the start of the app: it is the one that honours
-`EXPO_PUBLIC_FIRST_STATE`.
+The phone keeps that the User signed in, that the User agreed to the legal documents, what the sign-in suggested for
+Onboarding, whether Onboarding is finished and its answers (`src/storage/kept.ts`). `openKept()` is the read for the
+start of the app: it is the one that honours `EXPO_PUBLIC_FIRST_STATE`.
 
 ### From a mock to the main server
 

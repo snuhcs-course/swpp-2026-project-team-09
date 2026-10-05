@@ -38,6 +38,7 @@ Last updated: 2026-10-05
 
 - [x] The three states, and the refused state with other words for any other failure
 - [x] The three legal documents' placeholder screens
+- [x] The consent screen after the first sign-in, with the three documents, "동의하고 시작" and "로그아웃"
 - [x] The mock sign-in behind the sign-in module
 
 ### 1.5 Onboarding screen (ticket 05; `Onboarding`)
@@ -442,6 +443,7 @@ Each is a setting given when the app is started, as an `EXPO_PUBLIC_` variable. 
 
 - [ ] The sign-in button holds the university's emblem, and the design system's brand book says not to reproduce it. Settle which holds
 - [ ] The texts of the three legal documents: 이용약관, 개인정보 처리방침, 위치정보 이용약관
+- [ ] The consent screen has no frame: its look and words are the app's own. The `Login` frame still asks for consent in its footer, which the app leaves out. Draw the consent screen and settle the sign-in frame's footer
 - [ ] The two drawings beside the sign-in button are copied from the wireframes, and where they come from is not recorded. Record it and whether the app may ship them
 - [ ] A Friend's Avatar on the map: the frame draws a teardrop in the status colour; the candidates frame (지금, A, B, C, D) is still open
 - [ ] The frame draws a route when the screen opens, without a press, and has no way to clear a route. The app follows it; settle whether both are meant

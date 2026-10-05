@@ -2,6 +2,7 @@ import { act } from '@testing-library/react-native';
 import { Stack } from 'expo-router';
 import { renderRouter, screen } from 'expo-router/testing-library';
 import type { ReactElement } from 'react';
+import ConsentScreen from '@/app/consent';
 import StartScreen from '@/app/index';
 import LegalScreen from '@/app/legal/[document]';
 import MainScreen from '@/app/main';
@@ -25,6 +26,7 @@ export async function startApp(initialUrl = '/'): Promise<void> {
       _layout: Layout,
       index: StartScreen,
       'sign-in': SignInScreen,
+      consent: ConsentScreen,
       'legal/[document]': LegalScreen,
       onboarding: OnboardingScreen,
       main: MainScreen,
