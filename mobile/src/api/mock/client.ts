@@ -2,6 +2,7 @@ import type { ApiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import { keep, readKept } from '@/storage/kept';
 import { answer } from './answer';
+import { FOOTPRINTS } from './data/footprints';
 import { FRIEND_STATUSES, FRIENDS, POSITIONS } from './data/friends';
 import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, PARTY_NEWS, QUESTS } from './data/quests';
 import { mockWalkingRoute } from './walking-route';
@@ -32,6 +33,7 @@ export const mockClient: ApiClient = {
   listParties: () => answer('listParties', () => PARTIES, []),
   getMyParty: () => answer('getMyParty', () => MY_PARTY, null),
   getPartyNews: () => answer('getPartyNews', () => PARTY_NEWS, { count: 0 }),
+  getFootprints: () => answer('getFootprints', () => FOOTPRINTS, { friendCount: 0, faces: [] }),
   findWalkingRoute: (from, to) =>
     answer('findWalkingRoute', () => mockWalkingRoute(from, to), {
       status: 'ROUTE_RESULT_NOT_FOUND',

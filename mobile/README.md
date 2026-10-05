@@ -237,7 +237,8 @@ calls `completeOnboarding` and then `finishOnboarding`, and a save that failed s
 "로그아웃" signs out. Nothing on the screen leads back.
 
 The main screen (`src/screens/main/`) is the `Main` wireframe: the map on the whole campus with the people and places
-on it, the zoom control or an open card over it, and the bottom navigation under it, above the phone's own bar.
+on it; over it the friend list, the Quest list, the zoom control or an open card, and the controls above the
+navigation; and the bottom navigation under it, above the phone's own bar.
 
 - `useMainMap()` owns the map's handle and follows its camera: `camera`, `fitZoom`, the `detail` the zoom asks for
   (`overview`, `pins` or `names`), and the moves `zoomBy(steps)`, `goTo(position, level, orCloser)` and
@@ -250,8 +251,11 @@ on it, the zoom control or an open card over it, and the bottom navigation under
   explanation before the location prompt, and `sayWhyNotHere()` for a part that needs a position and has none.
 - What floats over the map is a child of `OverMap` in `main-screen.tsx` and places itself by the offsets of
   `layout.ts`, which are counted from the navigation's top edge: the zoom control's bottom is 136 above it, a
-  toast's bottom 78 and a card's bottom 72. While a card is open a toast sits 8 above the card, never over its
-  buttons: the card tells its height and `MainNav` tells the toast (`useToastAbove`).
+  toast's bottom 78, the row of buttons' and the 편의기능 button's 78, a card's bottom 72 and the AI input's 12. The
+  input is 50 high, so a card ends 10 above it. The two lists are counted from the top: 52 from the screen's top
+  edge, or 8 under a status bar that leaves less. While a card is open a toast sits 8 above the card, never over
+  its buttons: the card tells its height and `MainNav` tells the toast (`useToastAbove`). The children are in the
+  wireframe's order, the later above the earlier: the lists, the zoom control or the card, the controls.
 - **Markers.** `useMapCards()` gives one `CardView` for each thing on the map, and `useThings(cards, detail,
 selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under its card's id. A Friend who can be
   seen and a member of the User's Party who is no Friend are the wireframe's teardrop at every zoom, in the status's
@@ -271,8 +275,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   button. "가까이 보기" is offered below the `names` level and brings the camera to the `close` level, keeping the
   card. "같이 갈 사람 찾기", "참여하기", "파티 만들기" and "파티 열기" say "준비 중이에요". While a card is open the zoom
   control is not shown; a part that a card hides asks `selection.open`. A row of a list opens a card with
-  `selection.select(cardId.friend(id))` (`cardId` of `src/features/map/adapter.ts`) and moves the map with
-  `map.goTo`.
+  `selection.selectOrWait(cardId.friend(id))` (`cardId` of `src/features/map/adapter.ts`) and moves the map with
+  `map.goTo`. A row may be pressed before the map's cards came: `selectOrWait` waits for an id that no card has
+  until the cards change, and opens its card then if it is among them; another selection or a close ends the wait.
+  A press on the map uses `selection.select`, which does nothing for an id that no card has.
 - **The route.** `useRoute(map, me)` gives the one line for `<Map>` and `routeTo(place)`. When the screen opens, the
   way to the User's next Quest by time (`useNextQuest()`) is drawn, once, as soon as the User has a position on
   campus, without a toast and without moving the map; without a position none is drawn. The next Quest is the first
@@ -303,7 +309,63 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
 - The bottom navigation's 파티, 올리기, 행사 and 내 정보 say "준비 중이에요". The number on 파티 is `usePartyBadge()`.
   The bar has no line on top but the frame's shadow (`shadow.nav`), and under its items 16 or the phone's own inset,
   whichever is larger (`navPaddingBottom` in `layout.ts`).
-- The map ends at the navigation's top, so that its credit stays uncovered.
+- **The lists.** `FriendList` (`friend-list.tsx`) is at the left and `QuestList` (`quest-list.tsx`) at the right, each
+  with the wireframe's pill and a round button beside it that collapses the list and is read as "친구 목록 접기" or
+  "친구 목록 펼치기" ("퀘스트 목록 …"); the two collapse separately, and a pill stays as it is. The friend pill
+  counts the Friends in the list; the Quest pill counts the rows. The rows are in a window of up to three rows
+  (`RowWindow` in `list-parts.tsx`) that scrolls and snaps to the rows; the web does not snap. The text over the map
+  has a white glow (`textHalo`).
+  - **Only a row takes a touch.** A row is as wide as its words; the window is as wide as its widest row, never
+    wider than its column, and stands at the list's side; the window, its content and the box around each row are
+    `box-none`, as is everything around the window. So a touch beside a row, between two rows or under the last one
+    reaches the map. A scroll view that is `box-none` does not scroll on Android, so the window takes touches from
+    the moment a touch starts on a row until that touch or its drag ends: a drag that starts on a row scrolls the
+    list.
+  - **The fade.** With more rows than it shows, a window of two rows or more fades as the wireframe's mask does:
+    each row is drawn as strongly as the mask is at the row's middle, so the rows above the last place are solid,
+    the row in it is at 40%, and a row that scrolls out at the end goes down to nothing. The fade lifts as the list
+    reaches its end. React Native has no mask, and a gradient over the window would colour the map under it, so
+    each row's own strength follows the scroll.
+  - **The room** (`Room` in `layout.ts`: the stage's size, which `OverMap` tells, and the open card's height). A
+    window shows the whole rows that fit above what is under it, with 8 clear (`listRows`): three, or two, one or
+    none on a low screen. Under the Quest list is the zoom control; under the friend list is the strip of the
+    map's credit, on "오늘의 발자국"; while a card is open, under both is the credit's strip on the card. The Quest
+    column is 182 wide; the friend column is 160 or, on a screen narrower than 374, what the Quest column leaves
+    (`friendsWidth`), 146 at 360, so the two never share a point.
+  - A Friend's row has the dot in the status's colour (`presence`), the name and the line, "공강 · 중앙도서관" or
+    "위치 꺼짐". A press brings the map to the Friend at the `close` level and opens their card; for a Friend whose
+    position is not known it says "<이름>님은 위치가 꺼져 있어요" for 2 seconds.
+  - A Quest's row has the round with its icon, the kicker, the title and the time with the place, and the rail joins
+    the rounds. The adapter says the row's `tone` and `icon`: a class is `clock` in grey; `open`, a Party that
+    others may join, is `users` in blue; `closed`, a Party that takes nobody else and a Shared Quest, is `lock` in
+    the Party's colour (`questTone`). A press on a class's row brings the map to its place at the `names` level,
+    closes an open card and says "<title> · <place>", "자료구조 · 301동 118호"; any other row says "준비 중이에요".
+    Without a Quest the list says "오늘 일정 없음".
+  - While a list's data is loading, and after a failure, its pill has no number and the list has no rows.
+- **The controls above the navigation** (`bottom-controls.tsx`): "오늘의 발자국", with up to three faces and "친구
+  5명의 오늘" from `useFootprints()`; "활성 파티", shown only while the User is in a Party, with "<n>명 공유 중" for
+  the members who share their position, the User left out, or "응답 대기" when nobody else does
+  (`useActiveParty()`); the 편의기능 button; and the AI input. Each says "준비 중이에요", as do the friend pill and the
+  Quest list's full-screen button.
+  - The AI input (`ai-input.tsx`) is not a text field yet. It is a button with the look of the wireframe's empty
+    input, the placeholder "무엇이든 부탁해 보세요" and the grey send button: nothing takes the focus, no keyboard
+    comes up and nothing can be typed. A press on it says "준비 중이에요"; so does a press on the send button, which
+    a screen reader reads as disabled. The field comes with the AI chat's own task; the design system's `ChatInput`
+    is that field and no screen uses it yet.
+  - On a screen narrower than the wireframe's 390, "오늘의 발자국" gives way to "활성 파티", whose two lines stay
+    whole (`footprintsForm` in `layout.ts`): it drops its second line and keeps one face, has no face under 360,
+    and is the one button of the row that shrinks, its name cut with an ellipsis. Alone in the row it is whole.
+- While a card is open, the row of "오늘의 발자국" and "활성 파티" and the 편의기능 button are not shown, as the zoom
+  control is not; both lists, the AI input and the navigation stay.
+- Every control has a Korean name for a screen reader, the wireframe's where it has one. A touch area is at least 48
+  high: a row is 56, and the pills and the round buttons of 32 and 40 reach past their shapes (`hitSlop`), never
+  into a neighbour's shape.
+- **The map's credit.** The map ends at the navigation's top and is told what the controls cover of its edges
+  (`mapInset` in `layout.ts`, the `inset` of `<Map>`): 126 at the bottom, the row of buttons' top, and 62 at the
+  right, the zoom control. So the credit is just above "오늘의 발자국", 16 from the left, and a provider's logo
+  belongs left of the zoom control, above "활성 파티". While a card is open the inset's bottom is the card's top,
+  and the credit sits above the card. Nothing is drawn over the credit: the lists end 8 above its strip
+  (`CREDIT_ROOM` of `@/map`, the credit's margin and its line), on a low screen with fewer rows.
 
 The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and
 `/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
@@ -330,8 +392,8 @@ the entries it needs. So an operation that two screens need is asked once, and o
 
 When an operation fails:
 
-- `listFriendStatuses`, `listGlobalEventAnnouncers` and `getPartyNews`, the app's own, never fail a screen: it shows
-  what it has without them.
+- `listFriendStatuses`, `listGlobalEventAnnouncers`, `getPartyNews` and `getFootprints`, the app's own, never fail
+  a screen: it shows what it has without them.
 - The friend list and the Quest list have `isError` and no `data`.
 - The map has `isError` and keeps in `data` the cards that are still right: without the Global Events, the Friends'
   cards still show.
@@ -354,7 +416,7 @@ Behind a hook are three layers:
   the answers' shapes. A shape marked "provisional" comes from an open pull request of the main server, and one marked
   "the app's own" is defined nowhere else yet.
 - **An adapter** per feature (`src/features/<feature>/adapter.ts`): turns answers into what the screens use, such as
-  `FriendView`, `QuestRowView` and `CardView`.
+  `FriendView`, `QuestRowView`, `CardView`, `FootprintsView` and `ActivePartyView`.
 - **The mocks** (`src/api/mock/`): for now every operation is answered inside the app, in the main server's shape,
   with what the `Main` wireframe shows. A mock answers after 0.3 seconds. The sign-in is the one exception: see "Google
   sign-in" above.
@@ -372,6 +434,7 @@ Behind a hook are three layers:
 | `listGlobalEventAnnouncers`                 | Who announced each Global Event                    | None: the app's own                           |
 | `listParties`, `getMyParty`                 | The Parties, and the one the User is in            | `GET /parties`, `/parties/mine` (provisional) |
 | `getPartyNews`                              | How many things wait for the User in Parties       | None: the app's own                           |
+| `getFootprints`                             | What "오늘의 발자국" shows: a number and faces     | None: the app's own                           |
 | `findWalkingRoute`                          | The way on foot between two points                 | `GET /walking-route`                          |
 
 While the answers are mocks, the app's time is the moment the wireframe shows, 1 October 2026 at 13:37
@@ -471,7 +534,14 @@ colour. `presence` names the colours of what a person is doing: `free`, `class`,
 which an Avatar's dot uses too, and `member`, a member of the User's Party who is no Friend.
 
 `MapPin` of the kind `me` has a `small` form, three quarters of its size, which the `Main` wireframe draws while the
-whole campus is in view. The icons `chevronDown` and `minus` are the wireframes' and not the design system's.
+whole campus is in view. The icons `chevronDown`, `chevronRight`, `chevronUp`, `expand` and `minus` are the
+wireframes' and not the design system's.
+
+For what the `Main` wireframe draws over the map and the design system does not name, `tokens.ts` has `questTone`
+(the colour of a Quest's row: `class`, `open`, `closed`), `onKey` (the dot and the muted text on a fill of the key
+colour), `textHalo` (the white glow around text that sits on the map; the wireframe also strokes that text, which
+React Native cannot), `mapText` (the sizes of the lists' and the buttons' text) and the shadows `mapMark`,
+`mapRail`, `faceRing` and `floatKey`.
 
 To see every component in every variant, open `/catalogue`: in the browser's address bar, with the link
 `snunow://catalogue` in a development build (on Android,
@@ -503,6 +573,7 @@ const [eventPin, myAvatar] = useMarkerImages([{ kind: 'official', form: 'pin' },
   onPress={(id) => {}} // a marker's or an Avatar's id
   onCameraIdle={({ centre, zoom }) => {}} // once when the map is ready, then each time the camera rests elsewhere
   onFitZoom={(zoom) => {}} // the zoom at which the whole campus is in view, before the first onCameraIdle
+  inset={{ bottom: 126, right: 62, left: 8 }} // what the screen's controls cover of the map's edges; left out, 0
   ref={map}
 />;
 
@@ -550,7 +621,11 @@ map.current?.fitTo([from, to], { padding: 48, maxZoom: 15.8 }); // and no closer
   comes no closer than that zoom: points that are near each other are shown from there.
 - `CAMPUS_BOUNDS`, the campus rectangle, and the limits `MIN_ZOOM` and `MAX_ZOOM` are constants in
   `src/map/campus.ts`. The rectangle is a little wider than the Campus Boundary, which stays the main server's.
-- The credit "© OpenStreetMap · 국토지리정보원" is at the bottom left of every map, inside the component.
+- The credit "© OpenStreetMap · 국토지리정보원" is on every map, inside the component.
+- **`inset`** says what a screen's controls cover of the map's edges, in points from each edge; a side left out is 0. The credit and a provider's logo are drawn inside what is left: the credit at its bottom left and the logo at
+  its bottom right, each 8 from it. Nothing else follows it: the map is drawn under the controls, and the cameras
+  may ignore it, so a move centres on the whole view and a fit takes its own `padding`. It may change while the map
+  is shown.
 
 ### Which map is shown
 
@@ -639,7 +714,9 @@ of the design system's tokens. How it keeps the rules:
   - a passive marker's press, which the module sends, is dropped. A marker under a passive one still cannot be
     pressed on a phone: that is the module's to add.
     None of this was checked on a phone.
-- **Kakao's logo** stays as it is, moved to the bottom right, apart from the credit at the bottom left.
+- **Kakao's logo** stays as it is, moved to the bottom right, apart from the credit at the bottom left. The module
+  places it 8 from the bottom right of the whole view and does not read `inset` yet, which `native-map.tsx` hands
+  it with all four sides: until it does, the main screen's controls cover the logo.
 - **The screen**: the module starts the SDK with the key when the app starts, and pauses and resumes each map when
   the app leaves and comes back to the screen.
 

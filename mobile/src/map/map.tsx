@@ -20,24 +20,33 @@ function chooseMap(): ComponentType<MapProps> {
 }
 
 // The one component a screen uses to show a map. It chooses while the app runs: the native map in a build that
-// holds the module, the plain ground anywhere else. The credit for the map data is on every one.
+// holds the module, the plain ground anywhere else. The credit for the map data is on every one, at the bottom left
+// of what the screen's controls leave of the map (`inset`).
 export function Map({ style, ...props }: MapProps): ReactElement {
   const [Chosen] = useState(chooseMap);
+  const { left = 0, bottom = 0 } = props.inset ?? {};
   return (
     <View style={[styles.map, style]}>
       <Chosen {...props} />
-      <Text style={styles.credit}>© OpenStreetMap · 국토지리정보원</Text>
+      <Text style={[styles.credit, { left: CREDIT_MARGIN + left, bottom: CREDIT_MARGIN + bottom }]}>
+        © OpenStreetMap · 국토지리정보원
+      </Text>
     </View>
   );
 }
+
+// Between the credit and the edges of what is left of the map.
+const CREDIT_MARGIN = space[2];
+
+// What the credit takes above the bottom of what is left of the map: its margin and its one line. A screen keeps
+// that strip free at the left.
+export const CREDIT_ROOM = CREDIT_MARGIN + text.micro.lineHeight;
 
 const styles = StyleSheet.create({
   map: { flex: 1, backgroundColor: color.surfaceSubtle },
   credit: {
     ...text.micro,
     position: 'absolute',
-    left: space[2],
-    bottom: space[2],
     color: color.inkMuted,
     pointerEvents: 'none',
   },

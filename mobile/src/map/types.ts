@@ -89,6 +89,14 @@ export interface FitPadding {
   left: number;
 }
 
+// The part of the map's edges that a screen's controls cover, in points from each edge. A side left out is 0.
+export interface MapInset {
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+}
+
 export interface FitOptions {
   // Clear room between the points and the view's edges, in points: one number for all four edges, or one for each.
   // The points are fitted into what is left of the view, and its middle is where their middle comes. Left out, 0.
@@ -147,6 +155,13 @@ export interface MapProps {
   onCameraIdle?: (camera: MapCamera) => void;
   // The lowest zoom allowed, in the map's own measure: see the camera's rules above.
   onFitZoom?: (zoom: number) => void;
+  // What the screen's controls cover of the map's edges. The rule, for every implementation: the credit for the map
+  // data and a provider's logo are drawn inside what is left, the credit at its bottom left and the logo at its
+  // bottom right, each with the map's own margin. Nothing else follows it: the map is drawn under the controls as
+  // before, and the cameras may ignore it, so `moveCamera` and `fitTo` centre on the whole view (a fit takes its own
+  // `padding`). It may change while the map is shown, and the credit and the logo move with it. Left out, 0 at
+  // every edge.
+  inset?: MapInset;
   ref?: Ref<MapHandle>;
   // The map fills its parent unless this says otherwise.
   style?: StyleProp<ViewStyle>;

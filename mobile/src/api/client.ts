@@ -1,5 +1,6 @@
 import { mockClient } from './mock/client';
 import type {
+  Footprints,
   Friend,
   FriendStatus,
   GlobalEvent,
@@ -32,6 +33,9 @@ export interface ApiClient {
   getMyParty: () => Promise<MyParty | null>;
   // How many things wait for the User in Parties. The app's own: no answer of the main server holds it.
   getPartyNews: () => Promise<PartyNews>;
+  // What "오늘의 발자국" shows: how many Friends left a story today, and three faces. The app's own: no answer of the
+  // main server holds it.
+  getFootprints: () => Promise<Footprints>;
   findWalkingRoute: (from: LatLng, to: LatLng) => Promise<WalkingRoute>;
 }
 

@@ -71,9 +71,11 @@ Last updated: 2026-10-05
 - [x] The route to the User's next Quest when the screen opens
 - [x] On a native map, in TypeScript: the fit zoom, a fit with a padding for each edge and a closest zoom, the route's colour and width, a passive press dropped
 - [ ] The Android module draws the route's dashes, takes no press on a passive marker, and is checked on a phone with the new looks (ticket 07)
-- [ ] The friend list and the Quest list, collapsing; a Friend's row; a Class Quest's row
-- [ ] "오늘의 발자국", "활성 파티", the 편의기능 button, the AI input, the bottom navigation, in place
-- [ ] The "준비 중이에요" toast on every control of section 4
+- [x] The friend list and the Quest list, collapsing; a Friend's row; a Class Quest's row
+- [x] "오늘의 발자국", "활성 파티", the 편의기능 button, the AI input, the bottom navigation, in place
+- [x] The "준비 중이에요" toast on every control of section 4
+- [x] The map's inset: the credit above the row of buttons, and the inset handed to the native map
+- [ ] The Android module reads the inset and places Kakao's logo inside it (ticket 10's Comments say how)
 
 ### 1.8 iOS map module (ticket 11)
 
@@ -362,6 +364,7 @@ It is `usePosition` of `mobile/src/position`, on `expo-location`, read inside a 
   onPress={(id) => {}} // a marker's or an Avatar's id
   onCameraIdle={({ centre, zoom }) => {}} // the screen switches the detail of markers and Avatars from zoom
   onFitZoom={(zoom) => {}} // the zoom at which the whole campus is in view; the zoom levels are counted from it
+  inset={{ bottom: 126, right: 62, left: 8 }} // what the screen's controls cover of the map's edges; left out, 0
   ref={map}
 />
 
@@ -406,6 +409,7 @@ The rules, for every implementation:
 - `fitTo` with `maxZoom` comes no closer than that zoom: points that are near each other are shown from there.
 - A person's look is named by the person's id and by whether there is a photo, never by the photo's address, which changes with every answer.
 - An Avatar glides. The map keeps each Avatar's last target and starts a glide only when `position` differs from it; the lists are new on every render. An Avatar that first appears is placed without a glide. A new position is reached over `glideMs`; one that comes during a glide starts from where the Avatar is shown. A new `image` or `text` alone does not restart a glide. A `glideMs` of 0 places it at once.
+- `inset` is what a screen's controls cover of the map's edges, in points from each edge: `{ top?, right?, bottom?, left? }`, a side left out being 0. The credit for the map data and a provider's logo are drawn inside what is left, the credit at its bottom left and the logo at its bottom right, each with the map's margin of 8. The map is drawn under the controls as before and the cameras may ignore it. It may change while the map is shown.
 - Every Avatar is above every marker, and the route is under both. Among markers, and among Avatars, the higher `order` is on top, and of two that are equal the later in the list. The screen ranks the User's own Avatar and a selected marker.
 
 ### 2.10 What the screens use
@@ -430,10 +434,15 @@ interface FriendView {
 interface QuestRowView {
   id: string;
   kind: 'class' | 'party'; // 'party' is every Quest that is not a class
+  // What the row is drawn as: 'open' is a Party that others may join; 'closed' is a Party that takes nobody else,
+  // and a Quest that no Party names. The screen takes the colour from the design system's `questTone`.
+  tone: 'class' | 'open' | 'closed';
+  icon: 'clock' | 'users' | 'lock'; // in the row's round: by the tone, in that order
   joinPolicy: 'open' | 'approval' | 'closed' | null; // the Party's that names the Quest; null for a class and for a Quest no Party names
   kicker: string; // "다음 강의 · 23분 후"
   title: string; // "자료구조"
   meta: string; // "14:00 · 301동 118호"
+  place: string; // "301동 118호", or ""; a class's row says "<title> · <place>" on a press
   position: LatLng | null; // where the map goes on a press
 }
 
@@ -467,6 +476,20 @@ interface NextQuestView {
   title: string; // "자료구조"
   position: LatLng;
 }
+
+// What "오늘의 발자국" shows beside its name. From Footprints, the app's own:
+// getFootprints(): Promise<{ friendCount: number; faces: { userId: string; name: string; photo: string | null }[] }>
+interface FootprintsView {
+  faces: { id: string; name: string; photo: string | null }[]; // three at most; none while nothing is known
+  line: string; // "친구 5명의 오늘", or "" while nothing is known and when no Friend left a story
+}
+
+// "활성 파티": the Party the User is in now. From MyParty; null for a User in no Party.
+interface ActivePartyView {
+  id: string;
+  title: string; // "AI 커리어 설명회 같이 가요"
+  line: string; // "3명 공유 중": the members who share, the User left out; "응답 대기" when nobody else does
+}
 ```
 
 ## 3. Mock now, server later
@@ -492,7 +515,8 @@ Sending the User's own position is not in this table: it is built in P09 with th
 | Parties | Open pull request | `GET /parties`, `GET /parties/mine` |
 | The number on the bottom navigation's 파티 (`getPartyNews`) | The app's own: 3 | Nothing yet |
 | Walking route | On the main line | `GET /walking-route` |
-| The AI input, stories, 오늘의 발자국 | Sample content inside the screen | No spec covers them |
+| What 오늘의 발자국 shows (`getFootprints`) | The app's own: five Friends and three faces | Nothing yet; no spec covers stories |
+| The AI input | No data: it only says that it is not ready | No spec covers it |
 
 ## 4. Controls that say "준비 중이에요"
 
@@ -502,17 +526,18 @@ The control is there and only shows the toast. The last column is a proposal for
 |---|---|---|---|
 | Friend list | The friend pill | The friend panel | P14 |
 | Quest list | The full-screen button | The full-screen Quest view | P13 |
-| Quest list | A Party's row | The party screen | P13 |
+| Quest list | The row of a Party or of a Shared Quest: every row that is no class's | The party screen | P13 |
 | Above the navigation | 오늘의 발자국 | The story replay | In no Iteration 1 spec |
 | Above the navigation | 활성 파티 | The party screen | P13 |
 | Above the navigation | The 편의기능 button | The dining, shuttle and study layers | P15 |
-| Above the navigation | The AI input and its send button | The AI chat | In no Iteration 1 spec |
+| Above the navigation | The AI input, which is a button with the input's look and takes no focus and no text, and its send button, read as disabled | The AI chat, with the real text field | In no Iteration 1 spec |
 | Bottom navigation | 파티, 행사 | The party and events screens | P13 |
 | Bottom navigation | 올리기 | The story sheet | In no Iteration 1 spec |
 | Bottom navigation | 내 정보 | 내 정보, with the Master Switch, sign-out and the timetable | P09 |
 | A Global Event's card | 같이 갈 사람 찾기 | The party screen | P13 |
 | A Party's card | 참여하기, 파티 열기 | The party screen | P13 |
 | A Friend's card | 파티 만들기 | Making a Party | P14 |
+| The card of a member of the User's Party | 파티 열기 | The party screen | P13 |
 
 ## 5. Development settings
 
@@ -541,7 +566,17 @@ Each is a setting given when the app is started, as an `EXPO_PUBLIC_` variable. 
 - [ ] The frame's card of the dinner writes the place as "학생회관 (63동) 식당". The app shows the Quest's own label, "학생회관 (63동)"
 - [ ] "길을 찾지 못했어요", for a way that is not found, and what "길찾기" does without a position have no frame; the spec gives their wording
 - [ ] The frame's toast sits over the row of buttons above the navigation
-- [ ] The frame's friend pill says 12 whatever the list holds. The app shows the number of Friends in the list
+- [x] The frame's friend pill says 12 whatever the list holds: settled as the number of Friends in the list
+- [x] Where the credit for the map data goes on the main screen: settled as just above "오늘의 발자국", 16 from the left, and above a card while one is open
+- [ ] The frame strokes the text of the lists in white under a glow. The app draws the glow alone, which React Native can; settle whether the lists are readable enough over Kakao's map
+- [ ] The frame fades the friend list with a mask, also at the list's end. The app draws each row as strongly as the mask is at the row's middle, and lifts the fade at the list's end
+- [ ] The frame lists the Friends in an order of its own. The app keeps the main server's, by name
+- [ ] The frame's toast for a class has the professor's name ("자료구조 · 301동 118호 · 이정훈 교수"). No answer holds it, and the app leaves it out
+- [ ] The AI input is a button with the look of the empty input until the AI chat is built: it takes no focus and no text, and its send button is read as disabled. Settle whether it should look disabled until then
+- [ ] On a screen narrower than the frame's 390, "오늘의 발자국" drops its second line and all faces but one, and under 360 every face, so that "활성 파티" stays whole; the frame lets "활성 파티" shrink. Settle the look at 360 and 320
+- [ ] On a low screen the lists show two rows, one or none, so that they end above the zoom control, the map's credit and an open card. No frame shows a low screen
+- [ ] Nothing says that the friend list or the Quest list failed to load: the pill has no number and the list no rows. Settle the words and whether a press asks again
+- [ ] "활성 파티" says "1명 공유 중" for one other member who shares; the frame says "응답 대기" there
 - [ ] No frame shows the main screen off campus, the explanation before the location prompt and its form for a permission that only the phone's settings can allow, the toast while the position is looked for, or the credit for the map data; the spec gives their wording
 - [ ] Onboarding's "그 외" admission year stores no year. Decide whether it should ask for one
 - [ ] The credit for the map data is text alone. Decide whether a press should open the sources' pages
@@ -549,7 +584,7 @@ Each is a setting given when the app is started, as an `EXPO_PUBLIC_` variable. 
 - [ ] The frame writes a Friend's year after the department ("컴퓨터공학부 22"). No answer holds a Friend's year, so the app shows the department alone
 - [ ] The loading screen's two photos are copied from the wireframes. Record where they come from and whether the app may ship them
 - [ ] The loading screen leaves out the frame's band of light and uses weight 700 for the wordmark, where the frame has 800. Settle whether either matters
-- [ ] The frame's numbers for the one Party disagree: "4명" in the Quest list, "4/6명" on the card, "3명 공유 중" on the button. The mock has four members of six, three of them shared with the User
+- [ ] The frame's numbers for the one Party differ: "4/6명" on the card and "3명 공유 중" on the button. The mock has four members of six, three of them shared with the User. The Quest list says "공개 파티 · 활성화 중" for the Party the User is in, and "4명" only for one the User is not in
 - [ ] The frame calls a dinner with one Friend a "비공개 파티". In the glossary it is a Shared Quest from a Meetup and no Party, and a User is in one Party at a time. The app uses the frame's words; settle the word
 - [ ] A Party's card in the frame has the line "#AI커리어 관심사가 겹쳐요". No answer holds it, and the app leaves it out
 

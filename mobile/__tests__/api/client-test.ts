@@ -132,6 +132,18 @@ describe('the mock of Parties', () => {
   });
 });
 
+describe('the mock of 오늘의 발자국', () => {
+  it('counts the Friends who left a story today and gives three faces, which no answer of the main server holds', async () => {
+    const footprints = await answered(mockClient.getFootprints());
+
+    expect(footprints.friendCount).toBe(5);
+    expect(footprints.faces.map(({ name }) => name)).toEqual(['김민준', '이서연', '박지호']);
+
+    process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getFootprints';
+    expect(await answered(mockClient.getFootprints())).toEqual({ friendCount: 0, faces: [] });
+  });
+});
+
 describe('the mock of the walking route', () => {
   it('draws a walking route from the first point to the second', async () => {
     const answer = await answered(mockClient.findWalkingRoute(STUDENT_CENTRE, LIBRARY));

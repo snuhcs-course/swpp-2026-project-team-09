@@ -83,34 +83,45 @@ describe('the Quest list', () => {
       {
         id: 'c1',
         kind: 'class',
+        tone: 'class',
+        icon: 'clock',
         joinPolicy: null,
         kicker: '다음 강의 · 23분 후',
         title: '자료구조',
         meta: '14:00 · 301동 118호',
+        place: '301동 118호',
         position: { latitude: 37.45016, longitude: 126.95259 },
       },
       {
         id: 'q-ai',
         kind: 'party',
+        tone: 'open',
+        icon: 'users',
         joinPolicy: 'open',
         kicker: '공개 파티 · 활성화 중',
         title: 'AI 커리어 설명회 같이 가요',
         meta: '17:40 · 301동 앞',
+        place: '301동 앞',
         position: { latitude: 37.45091, longitude: 126.95289 },
       },
       {
         id: 'q-dinner',
         kind: 'party',
+        tone: 'closed',
+        icon: 'lock',
         joinPolicy: null,
         kicker: '비공개 파티 · 김민준',
         title: '저녁 약속',
         meta: '20:10 · 학생회관 (63동)',
+        place: '학생회관 (63동)',
         position: { latitude: 37.45907, longitude: 126.95023 },
       },
     ]);
   });
+});
 
-  it('is complete for a User in no Party, and words a Party by its members', async () => {
+describe('the Quest list of a User in no Party', () => {
+  it('is complete, and words a Party by its members', async () => {
     process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getMyParty';
     const { result } = await renderHook(useQuestRows, { wrapper });
 

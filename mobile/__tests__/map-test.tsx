@@ -114,3 +114,17 @@ describe('the plain ground, as the frame draws and takes presses', () => {
     expect(onPress).not.toHaveBeenCalled();
   });
 });
+
+describe("the map's credit", () => {
+  it('draws the credit at the bottom left of the whole map, 8 from its edges', async () => {
+    await render(<Map {...EMPTY} />);
+
+    expect(screen.getByText('© OpenStreetMap · 국토지리정보원')).toHaveStyle({ left: 8, bottom: 8 });
+  });
+
+  it('draws the credit inside what an inset leaves of the map', async () => {
+    await render(<Map {...EMPTY} inset={{ bottom: 126, left: 8, right: 62 }} />);
+
+    expect(screen.getByText('© OpenStreetMap · 국토지리정보원')).toHaveStyle({ left: 16, bottom: 134 });
+  });
+});
