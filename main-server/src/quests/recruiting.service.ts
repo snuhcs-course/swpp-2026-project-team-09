@@ -3,6 +3,7 @@ import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { JoinPolicy, Prisma, Quest } from '../generated/prisma/client.js';
 import { UsersService } from '../users/users.service.js';
+import { ClassQuestsService } from './class-quests.service.js';
 import { CLOCK, type Clock } from './clock.js';
 import { QUEST_INCLUDE, QuestDto, RecruitingQuestDto, toRecruitingQuestDto } from './dto/quest.dto.js';
 import { QuestsService } from './quests.service.js';
@@ -17,6 +18,7 @@ export class RecruitingService {
     private readonly quests: QuestsService,
     private readonly signals: SignalsService,
     @Inject(CLOCK) private readonly clock: Clock,
+    private readonly classQuests: ClassQuestsService,
   ) {}
 
   // The Open and Approval Quests the reader does not hold that have a Sub Quest ahead, the newest first.
@@ -70,6 +72,7 @@ export class RecruitingService {
     await this.quests.lock(second, tx);
     const quest = await tx.quest.findUnique({ where: { id: questId }, include: { holders: true } });
     if (quest === null) {
+      await this.classQuests.refuse(userId, questId, tx);
       throw notRecruiting();
     }
     if (quest.holders.some((holder) => holder.userId === userId)) {

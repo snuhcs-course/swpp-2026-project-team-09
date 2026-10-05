@@ -64,6 +64,7 @@ describe('Making a Quest of one’s own', () => {
           ended: false,
         },
       ],
+      classQuest: false,
     });
     expect((await getQuests(app, user)).body).toEqual([response.body]);
   });

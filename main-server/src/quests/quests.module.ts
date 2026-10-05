@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { FriendsModule } from '../friends/friends.module.js';
+import { TimetableModule } from '../timetable/timetable.module.js';
 import { UsersModule } from '../users/users.module.js';
+import { ClassQuestsService } from './class-quests.service.js';
 import { CLOCK, systemClock } from './clock.js';
 import { InvitationsController } from './invitations.controller.js';
 import { InvitationsService } from './invitations.service.js';
@@ -14,10 +16,11 @@ import { RecruitingService } from './recruiting.service.js';
 import { SubQuestsService } from './sub-quests.service.js';
 
 @Module({
-  imports: [UsersModule, FriendsModule],
+  imports: [UsersModule, FriendsModule, TimetableModule],
   controllers: [QuestsController, JoinRequestsController, InvitationsController],
   providers: [
     QuestsService,
+    ClassQuestsService,
     SubQuestsService,
     RecruitingService,
     LeaderService,

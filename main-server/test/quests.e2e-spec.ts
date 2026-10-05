@@ -51,6 +51,7 @@ describe('Attending a Global Event', () => {
           ended: false,
         },
       ],
+      classQuest: false,
     });
   });
 

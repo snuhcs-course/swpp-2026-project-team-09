@@ -22,8 +22,8 @@ export class TimetableService {
     return db.timetableClass.findMany({ where: { userId }, include: CLASS_INCLUDE });
   }
 
-  async isClassOf(userId: string, classId: string): Promise<boolean> {
-    return (await this.prisma.timetableClass.count({ where: { id: classId, userId } })) > 0;
+  async isClassOf(userId: string, classId: string, db: Prisma.TransactionClient = this.prisma): Promise<boolean> {
+    return (await db.timetableClass.count({ where: { id: classId, userId } })) > 0;
   }
 
   async timetableOf(userId: string): Promise<TimetableClassDto[]> {
