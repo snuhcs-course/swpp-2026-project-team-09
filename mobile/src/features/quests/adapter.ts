@@ -101,11 +101,11 @@ export interface QuestParty {
 }
 
 export function partyOf(quest: Quest, myParty: MyParty | null, parties: readonly Party[]): QuestParty | null {
-  if (myParty?.mark?.questId === quest.id) {
+  if (myParty?.quest?.id === quest.id) {
     const { title, joinPolicy, members, capacity } = myParty;
     return { title, joinPolicy, mine: true, memberCount: members.length, capacity };
   }
-  const listed = parties.find(({ mark }) => mark?.questId === quest.id);
+  const listed = parties.find((party) => party.quest?.id === quest.id);
   if (listed === undefined) {
     return null;
   }

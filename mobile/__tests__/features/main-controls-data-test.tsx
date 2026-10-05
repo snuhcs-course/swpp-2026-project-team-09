@@ -66,7 +66,7 @@ describe('활성 파티', () => {
       title: '점심',
       capacity: 4,
       joinPolicy: 'closed',
-      mark: null,
+      quest: null,
       sharing: true,
       members: [
         { ...member, id: 'me', visible: true },

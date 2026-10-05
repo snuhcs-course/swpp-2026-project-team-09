@@ -1,6 +1,6 @@
-// The answers of the main server, as the app reads them. A shape marked "provisional" comes from an open pull request
-// of the main server and may still change; one marked "the app's own" is defined nowhere else yet. All times are
-// ISO 8601 instants and all positions a latitude and a longitude in degrees.
+// The answers of the main server, as the app reads them; `src/api/server/answers.ts` checks them. A shape marked "the
+// app's own" is defined nowhere else yet, and a mock answers it. All times are ISO 8601 instants and all positions a
+// latitude and a longitude in degrees.
 
 export interface LatLng {
   latitude: number;
@@ -21,7 +21,7 @@ export type SignInResult =
   | { outcome: 'signed-in'; onboarding: Onboarding }
   // The User closed Google's sheet.
   | { outcome: 'cancelled' }
-  // Not an snu.ac.kr account: the app's own check for now, and the main server's 403 once it is asked.
+  // Not an snu.ac.kr account: the main server's 403, or the app's own check where it asks no main server.
   | { outcome: 'not-snu-account' }
   // Any other refusal, or no answer.
   | { outcome: 'failed' };
@@ -47,14 +47,14 @@ export interface OnboardingAnswers {
 
 // --- Lobby (POST /lobby) ---
 
-// An open pull request of the main server adds `masterSwitch` to it.
+// The main server's answer also holds the profile's `friendId` and `masterSwitch`, which nothing here reads yet.
 export interface Lobby {
   profile: { name: string; department: string; admissionYear: number | null; hashtags: string[] };
 }
 
 // --- Friends and their positions ---
 
-// Provisional: GET /friends, in the order of the names.
+// GET /friends, in the order of the names.
 export interface Friend {
   // The Friend's User id.
   id: string;
@@ -66,7 +66,7 @@ export interface Friend {
   visible: boolean;
 }
 
-// Provisional: GET /positions, the positions the User may see now. A User without one is absent.
+// GET /positions, and the socket's `position`: the positions the User may see now. A User without one is absent.
 export interface Position {
   userId: string;
   latitude: number;
@@ -92,7 +92,7 @@ export interface FriendStatus {
 
 // --- Quests ---
 
-// Provisional: one Sub Quest of GET /quests.
+// One Sub Quest of GET /quests.
 export interface SubQuest {
   id: string;
   attending: boolean;
@@ -106,7 +106,8 @@ export interface SubQuest {
   ended: boolean;
 }
 
-// Provisional: GET /quests. The User's Quests, then today's Class Quests by their start.
+// GET /quests. The User's Quests, then today's Class Quests by their start. The main server's Quest also holds
+// `leader`, `capacity` and `joinPolicy`, which nothing here reads.
 export interface Quest {
   id: string;
   title: string;
@@ -137,32 +138,36 @@ export interface GlobalEvent {
 
 export type JoinPolicy = 'open' | 'approval' | 'closed';
 
-// Provisional: the Quest a Party is marked with. Where and when the Party meets are that Quest's, not the Party's.
-export interface PartyMark {
-  questId: string;
+// The Quest a Party is marked with. Where and when the Party meets are that Quest's, not the Party's.
+export interface PartyQuest {
+  id: string;
   title: string;
   globalEvent: { id: string; title: string } | null;
 }
 
-// Provisional: one Party of GET /parties, the newest first. The list never holds a closed Party.
+// GET /parties: the Parties the User may see and is not in, the newest first. The list never holds a closed Party.
 export interface Party {
   id: string;
   title: string;
+  memberCount: number;
   // 1 to 8.
   capacity: number;
   joinPolicy: JoinPolicy;
-  memberCount: number;
   // Null once the Quest is deleted.
-  mark: PartyMark | null;
+  quest: PartyQuest | null;
+  // Whether the User holds the Party's Quest.
+  holdsQuest: boolean;
+  // The User's Friends among the members, in the order they entered.
+  friends: { id: string; name: string; department: string }[];
 }
 
-// Provisional: GET /parties/mine, the Party the User is in now. The frame's "활성 파티".
+// GET /parties/mine, the Party the User is in now; 404 NOT_IN_PARTY for a User in no Party. The frame's "활성 파티".
 export interface MyParty {
   id: string;
   title: string;
   capacity: number;
   joinPolicy: JoinPolicy;
-  mark: PartyMark | null;
+  quest: PartyQuest | null;
   // The User's own switch for sharing a position with this Party.
   sharing: boolean;
   // In the order they joined, the User among them.

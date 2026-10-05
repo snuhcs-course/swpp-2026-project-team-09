@@ -1,4 +1,6 @@
 import { mockClient } from './mock/client';
+import { serverClient } from './server/client';
+import { asksMainServer } from './servers';
 import type {
   Footprints,
   Friend,
@@ -39,6 +41,25 @@ export interface ApiClient {
   findWalkingRoute: (from: LatLng, to: LatLng) => Promise<WalkingRoute>;
 }
 
-// The one client of the app. Every operation is a mock for now; the last ticket of P06 puts the main server behind an
-// operation by replacing it here, and no screen changes.
-export const apiClient: ApiClient = mockClient;
+// The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`). Chosen at each
+// call, so that a test can choose by its settings.
+function chosen(): ApiClient {
+  return asksMainServer() ? serverClient : mockClient;
+}
+
+// The one client of the app. The screens ask it and never know which of the two answers.
+export const apiClient: ApiClient = {
+  completeOnboarding: (answers) => chosen().completeOnboarding(answers),
+  enterLobby: () => chosen().enterLobby(),
+  listFriends: () => chosen().listFriends(),
+  listPositions: () => chosen().listPositions(),
+  listFriendStatuses: () => chosen().listFriendStatuses(),
+  listQuests: () => chosen().listQuests(),
+  listGlobalEvents: () => chosen().listGlobalEvents(),
+  listGlobalEventAnnouncers: () => chosen().listGlobalEventAnnouncers(),
+  listParties: () => chosen().listParties(),
+  getMyParty: () => chosen().getMyParty(),
+  getPartyNews: () => chosen().getPartyNews(),
+  getFootprints: () => chosen().getFootprints(),
+  findWalkingRoute: (from, to) => chosen().findWalkingRoute(from, to),
+};

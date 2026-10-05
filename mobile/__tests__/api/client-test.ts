@@ -112,10 +112,12 @@ describe('the mock of Parties', () => {
         capacity: 6,
         joinPolicy: 'open',
         memberCount: 4,
-        mark: { questId: 'q-ai', title: 'AI 커리어 설명회', globalEvent: { id: 'e1', title: 'AI 커리어 설명회' } },
+        quest: { id: 'q-ai', title: 'AI 커리어 설명회', globalEvent: { id: 'e1', title: 'AI 커리어 설명회' } },
+        holdsQuest: true,
+        friends: [{ id: 'f1', name: '김민준', department: '컴퓨터공학부' }],
       },
     ]);
-    expect(mine).toMatchObject({ id: 'm1', sharing: true, mark: { questId: 'q-ai' } });
+    expect(mine).toMatchObject({ id: 'm1', sharing: true, quest: { id: 'q-ai' } });
     expect(mine?.members.map(({ name, leader }) => [name, leader])).toEqual([
       ['정하은', true],
       ['김민준', false],

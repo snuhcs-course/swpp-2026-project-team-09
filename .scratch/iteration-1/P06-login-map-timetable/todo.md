@@ -2,7 +2,7 @@
 
 What P06 has to deliver, what is a mock for now, and the interfaces between the screens and the data behind them. [`spec.md`](./spec.md) decides what is built and the tickets in [`issues/`](./issues/) say how each part is accepted; this list tracks it and describes the interfaces. When a decision defers something or fills it with mock data, add it here at once; tick an item when it is done.
 
-Last updated: 2026-10-05
+Last updated: 2026-10-06
 
 ## 1. The work, in order
 
@@ -83,16 +83,18 @@ Last updated: 2026-10-05
 
 ### 1.9 Connecting to the server (ticket 12, the last)
 
-- [ ] For each feature the demo's flows use, and each other feature named: the client calls the main server, the adapter follows its answer, the mock stays for the tests
-- [ ] One connection to the socket server: the Session's end, the positions of the Users the app may see, and the signals that something changed
-- [ ] Google's ID token sent to the main server, its tokens kept in the phone's secure storage, and its word in place of the app's check of the account's domain
-- [ ] Section 3's table updated with what is connected, and checked before the demo build (P20)
+- [x] For each feature the demo's flows use, and each other feature named: the client calls the main server, the adapter follows its answer, the mock stays for the tests
+- [x] One connection to the socket server: the Session's end, the positions of the Users the app may see, and the signals that something changed
+- [x] Google's ID token sent to the main server, its tokens kept in the phone's secure storage, and its word in place of the app's check of the account's domain
+- [x] Section 3's table updated with what is connected
+- [ ] Section 3's table checked again before the demo build (P20)
+- [ ] A sign-in with an SNU account on the emulator against the main server, reaching the main screen, with a screenshot (a person's: section 7)
 
 ## 2. Interfaces
 
-The screens reach data through these operations and nothing else. In this task each is answered by a mock.
+The screens reach data through these operations and nothing else. In a build that asks the main server (`asksMainServer()`: a build that signs in with Google and has the main server's address), the operations the main server serves come from it; every other operation, and every operation in Expo Go, on the web and in the tests, is answered by a mock.
 
-- A mock answers in the main server's shape. "On the main line" means the main server serves it today. "Open pull request" means a pull request of P08 defines it and it may still change. "The app's own" means nothing defines it yet.
+- A mock answers in the main server's shape. "On the main line" means the main server serves it today. "The app's own" means nothing defines it yet. Section 3 says which operations a build that asks the main server takes from it.
 - An adapter turns an answer into what a screen uses (section 2.10). What a frame shows and no answer holds comes from a mock of the app's own beside the answer.
 - All times are ISO 8601 instants. All positions are a latitude and a longitude in degrees.
 
@@ -120,8 +122,10 @@ type Onboarding =
 //   "onboarding": { "completed": false, "suggestion": { "name": "홍길동", "department": "컴퓨터공학부" } }
 // }
 // A part of the suggestion that cannot be read is null. After Onboarding: "onboarding": { "completed": true }.
-// The mock keeps no tokens: it remembers on the phone that the User signed in. So does a sign-in with Google until
-// the main server is asked: the app reads the ID token's hosted domain and sends the token nowhere.
+// The main server's tokens are kept in the phone's secure storage. A 403 is an account outside SNU; a 401 and any other
+// failure is 'failed'. The mock keeps no tokens: it remembers on the phone that the User signed in. So does a sign-in
+// with Google in a build without the main server's address: the app reads the ID token's hosted domain and sends the
+// token nowhere.
 ```
 
 Shape: on the main line (`POST /auth/google`, `POST /auth/refresh`, `POST /auth/sign-out`).
@@ -162,7 +166,7 @@ interface Lobby {
 // so the app asks for it only for a User who finished Onboarding.
 ```
 
-Shape: on the main line (`POST /lobby`). An open pull request adds `masterSwitch` to it.
+Shape: on the main line (`POST /lobby`). The answer also holds `profile.friendId` and `masterSwitch`, which nothing reads yet; P09 reads the switch.
 
 ### 2.4 Friends and their positions
 
@@ -171,7 +175,7 @@ listFriends(): Promise<Friend[]>;
 listPositions(): Promise<Position[]>;
 listFriendStatuses(): Promise<FriendStatus[]>;
 
-// Open pull request: GET /friends, in the order of the names.
+// On the main line: GET /friends, in the order of the names.
 interface Friend {
   id: string; // the Friend's User id
   name: string;
@@ -180,7 +184,7 @@ interface Friend {
   visible: boolean; // whether the User can see the Friend on the map now, never why not
 }
 
-// Open pull request: GET /positions, the positions the User may see now.
+// On the main line: GET /positions, the positions the User may see now, and the socket's `position`.
 interface Position {
   userId: string;
   latitude: number;
@@ -210,7 +214,8 @@ interface FriendStatus {
 ```ts
 listQuests(): Promise<Quest[]>;
 
-// Open pull request: GET /quests. The User's Quests, then today's Class Quests by their start.
+// On the main line: GET /quests. The User's Quests, then today's Class Quests by their start. The main server's Quest
+// also holds `leader`, `capacity` and `joinPolicy`, which the app does not read.
 interface Quest {
   id: string;
   title: string;
@@ -265,29 +270,33 @@ interface GlobalEvent {
   sourceUrl: string | null;
 }
 
-// Open pull request: GET /parties, the newest first. The list holds open and approval Parties, never a closed one.
+// On the main line: GET /parties, the Parties the User may see and is not in, the newest first. The list holds open and
+// approval Parties, never a closed one.
 interface Party {
   id: string;
   title: string; // "AI 커리어 설명회 같이 가요"
+  memberCount: number;
   capacity: number; // 1 to 8
   joinPolicy: 'open' | 'approval' | 'closed';
-  memberCount: number;
-  mark: PartyMark | null; // the Quest the Party is marked with; null once that Quest is deleted
+  quest: PartyQuest | null; // the Quest the Party is marked with; null once that Quest is deleted
+  holdsQuest: boolean; // whether the User holds that Quest
+  friends: { id: string; name: string; department: string }[]; // the User's Friends among the members
 }
 
-interface PartyMark {
-  questId: string;
+interface PartyQuest {
+  id: string;
   title: string;
   globalEvent: { id: string; title: string } | null;
 }
 
-// Open pull request: GET /parties/mine, the Party the User is in now. The frame's "활성 파티".
+// On the main line: GET /parties/mine, the Party the User is in now; 404 NOT_IN_PARTY for a User in no Party. The
+// frame's "활성 파티".
 interface MyParty {
   id: string;
   title: string;
   capacity: number;
   joinPolicy: 'open' | 'approval' | 'closed';
-  mark: PartyMark | null;
+  quest: PartyQuest | null;
   sharing: boolean; // the User's own switch for sharing a position with this Party
   members: { id: string; name: string; department: string; leader: boolean; visible: boolean }[]; // the User among them
 }
@@ -494,29 +503,32 @@ interface ActivePartyView {
 
 ## 3. Mock now, server later
 
-Every row is a mock until the last ticket. That ticket connects every row the demo's flows (P20) use, where the main server serves it by then, and any other row that is named.
+Ticket 12 connected every row that the demo's flows (P20) use and the main server serves on its main line (`origin/1.0/Main` at `61881c7`, 2026-10-06). A connected row is answered by the main server in a build that asks it (`asksMainServer()`: Google's sign-in module, the Google settings and `EXPO_PUBLIC_MAIN_SERVER_URL`), and by its mock in Expo Go, on the web, in the tests and in a build without the address. A row left a mock is answered by its mock in every build; the reason is in its row. Before the demo build (P20), check the table again against the main line.
 
 Sending the User's own position is not in this table: it is built in P09 with the Master Switch, which is on 내 정보. The main server refuses every position while the switch is off, so the two are built together.
 
-| Feature | Mock's shape | Connects to |
-|---|---|---|
-| Sign-in, refresh, sign-out | On the main line. A build that holds Google's sign-in module already asks Google and checks the account's domain in the app; nothing is sent | `POST /auth/google`, `/auth/refresh`, `/auth/sign-out` |
-| Onboarding: name, department, admission year, interests | On the main line | `POST /users/me/onboarding` |
-| Onboarding: course level, gender | The app's own | Nothing yet |
-| Lobby | On the main line | `POST /lobby` |
-| Friends | Open pull request | `GET /friends` |
-| Friends' positions | Open pull request | `GET /positions` and the socket's `position` |
-| Friends' status, place and photo | The app's own | Nothing yet |
-| Quests, Class Quests | Open pull request | `GET /quests` |
-| Global Events | The stored event's fields | Nothing lists them for a User yet |
-| Who announced a Global Event (`listGlobalEventAnnouncers`) | The app's own | Nothing yet |
-| The User's own id | The mock's fixed one | The access token |
-| The app's time | The moment the `Main` frame shows | The phone's time |
-| Parties | Open pull request | `GET /parties`, `GET /parties/mine` |
-| The number on the bottom navigation's 파티 (`getPartyNews`) | The app's own: 3 | Nothing yet |
-| Walking route | On the main line | `GET /walking-route` |
-| What 오늘의 발자국 shows (`getFootprints`) | The app's own: five Friends and three faces | Nothing yet; no spec covers stories |
-| The AI input | No data: it only says that it is not ready | No spec covers it |
+| Feature | State | With the main server | Why |
+|---|---|---|---|
+| Sign-in, refresh, sign-out | Connected | `POST /auth/google`, `/auth/refresh`, `/auth/sign-out`; tokens in the phone's secure storage | The main server's 403 replaces the app's check of the domain |
+| Onboarding: name, department, admission year, interests | Connected | `POST /users/me/onboarding` | |
+| Whether a User finished Onboarding | Connected | The sign-in's answer, and every 403 `ONBOARDING_REQUIRED` with its suggestion | The main server's word replaces the phone's |
+| Onboarding: course level, gender | The app's own, on the phone | Nothing | The main server has no field for them |
+| Lobby | Connected | `POST /lobby` | Its `masterSwitch` waits for P09 |
+| Friends | Connected | `GET /friends`; fetched again on `friends-changed` | |
+| Friends' positions | Connected | `GET /positions`, the socket's `position` and `position-removed` | Fetched when the connection opens and when the app returns to the front |
+| Friends' status, place, walk and photo (`listFriendStatuses`) | Mock | Nothing | No answer holds them; a Friend without a status is shown by `visible` alone: "공강" or "위치 꺼짐" |
+| Quests, Class Quests | Connected | `GET /quests`; fetched again on `quests-changed` and when the app returns to the front | |
+| Global Events (`listGlobalEvents`) | Mock | Nothing | No route lists the published events for a User: they reach a User only as the attending Sub Quest of a Quest the User holds, through `matching-requests` by id, and through `GET /quests/recruiting?globalEventId=`. A build that asks the main server still shows the mock's event "AI 커리어 설명회"; its signal `global-events-changed` already fetches the list again |
+| Who announced a Global Event (`listGlobalEventAnnouncers`) | Mock | Nothing | No answer holds it |
+| The User's own id | Connected | The access token's `sub` | |
+| The app's time | Connected | The phone's clock | A Quest row's "23분 후" is worded when the Quests are fetched: on a signal, when the connection opens again and when the app returns to the front |
+| Parties | Connected | `GET /parties`, `GET /parties/mine` (404 `NOT_IN_PARTY` is null); fetched again on `party-changed` | The answers' shape replaced the provisional one: `quest` with `id`, and `holdsQuest` and `friends` |
+| The number on the bottom navigation's 파티 (`getPartyNews`) | Mock: 3 | Nothing | No answer gives the frame's number; `GET /party-invitations` and `GET /parties/mine/join-requests` hold its parts, for P13 |
+| Walking route | Connected | `GET /walking-route` | Needs the main server's `KAKAO_REST_API_KEY`; without it the main server answers 502 and the app says "길을 찾지 못했어요" |
+| What 오늘의 발자국 shows (`getFootprints`) | Mock: five Friends and three faces | Nothing | No spec covers stories |
+| The AI input | No data | Nothing | It only says that it is not ready; no spec covers it |
+| The Session's end | Connected | The socket's `session-ended`, and a 401 that one renewal cannot mend | `SESSION_REPLACED` shows "다른 기기에서 로그인했어요" |
+| The signals `meetups-changed`, `matching-changed` | Not used | The socket | They name nothing these screens show; an accepted Meetup also sends `quests-changed` |
 
 ## 4. Controls that say "준비 중이에요"
 
@@ -594,6 +606,9 @@ Each is a setting given when the app is started, as an `EXPO_PUBLIC_` variable. 
 - [x] Google Cloud holds an Android sign-in client for `com.bonnieandclaude.snunow` and the development SHA-1
 - [ ] `mobile/.env` filled in from `mobile/.env.example`: `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, the ID of the main server's client, which must be of type "Web application"; for the iOS build also `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` and `GOOGLE_IOS_URL_SCHEME`
 - [ ] A sign-in with Google tried in a development build on Android (`mobile/README.md`, "Google sign-in"): an SNU account, an account outside SNU and a closed sheet
-- [ ] Before the last ticket: a main server that a phone can reach
+- [x] Before the last ticket: a main server that a phone can reach: the emulator reaches one on the same computer as `10.0.2.2` (ticket 12)
+- [ ] A main server that the shared phone can reach: a deployed one, for P20
+- [ ] Google Cloud's Android client holds the SHA-1 of `mobile/android/app/debug.keystore`, `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`, and the SNU account used to test is a test User of the consent screen (ticket 12's Comments)
+- [ ] A sign-in with an SNU account on the emulator against the main server reaches the main screen, with a screenshot for ticket 12's pull request
 - [ ] For the iOS ticket: the iOS app registered at Kakao
 - [ ] Update P06's row in the schedule sheet

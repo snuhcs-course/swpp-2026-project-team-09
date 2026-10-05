@@ -1,16 +1,23 @@
+import { ApiError } from '@/api/errors';
 import { MOCK_WAIT_MS } from '@/api/mock/answer';
 import { ME } from '@/api/mock/data/frame';
+import { isNothing, isSignInAnswer, type SignInAnswer } from '@/api/server/answers';
+import { call } from '@/api/server/http';
+import { asksMainServer } from '@/api/servers';
 import type { Onboarding, SignInResult, Suggestion } from '@/api/types';
 import { askGoogle, forgetGoogle, googleAvailable } from '@/auth/google';
-import { isSnuAccount, readIdToken } from '@/auth/id-token';
+import { isSnuAccount, readIdToken, subjectOf } from '@/auth/id-token';
+import { forgetTokens, heldTokens, keepTokens } from '@/auth/tokens';
 import { namedSignInEnding, signInEnding } from '@/dev-settings';
 import { keep, readKept } from '@/storage/kept';
 
-// Sign-in lives behind these two operations. A build that holds Google's sign-in module asks Google which account,
-// and the app itself checks that it is an SNU one. Everywhere else, in Expo Go, on the web and in the tests, and
-// whenever a development setting names the ending, the sign-in is a mock: no Google sheet opens and no token exists.
-// Either way nothing is sent to the main server yet and no token is kept: the phone remembers that the User signed
-// in. The last ticket of P06 sends Google's ID token to the main server behind the same two operations.
+// Sign-in lives behind these two operations. A build that holds Google's sign-in module asks Google which account.
+// Where the app asks the main server (`asksMainServer()`), Google's ID token goes to the main server, whose answer says
+// whether the account is an SNU one and whether the User finished Onboarding, and whose tokens the phone's secure
+// storage keeps. A build that holds Google's module and has no main server's address checks the account's domain
+// itself and sends the token nowhere. Everywhere else, in Expo Go, on the web and in the tests, and whenever a
+// development setting names the ending, the sign-in is a mock: no Google sheet opens and no token exists. Without the
+// main server the phone remembers that the User signed in, and nothing else.
 
 // What the mock sign-in suggests to a User who has not finished Onboarding, as the main server reads it from the
 // Google account. The department cannot always be read.
@@ -34,19 +41,47 @@ async function forgetGoogleQuietly(): Promise<void> {
   }
 }
 
+// The main server's word in place of the app's own check. 403 is an account outside SNU, or one whose address Google
+// has not verified; 401 is an ID token that the main server could not verify, and every other refusal and no answer
+// are a failure too.
+async function enterMainServer(idToken: string): Promise<SignInResult> {
+  let answer: SignInAnswer;
+  try {
+    answer = await call('POST', '/auth/google', isSignInAnswer, { body: { idToken }, signedIn: false });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 403) {
+      await forgetGoogleQuietly();
+      return { outcome: 'not-snu-account' };
+    }
+    return { outcome: 'failed' };
+  }
+  await keepTokens({ accessToken: answer.accessToken, refreshToken: answer.refreshToken });
+  const onboarding: Onboarding = answer.onboarding.completed
+    ? { completed: true }
+    : { completed: false, suggestion: answer.onboarding.suggestion ?? { name: null, department: null } };
+  await keep({
+    signedIn: true,
+    onboardingCompleted: onboarding.completed,
+    suggestion: onboarding.completed ? null : onboarding.suggestion,
+  });
+  return { outcome: 'signed-in', onboarding };
+}
+
 async function signInWithGoogle(): Promise<SignInResult> {
   try {
     const answer = await askGoogle();
     if (answer.kind === 'cancelled') {
       return { outcome: 'cancelled' };
     }
+    if (asksMainServer()) {
+      return await enterMainServer(answer.idToken);
+    }
     const account = readIdToken(answer.idToken);
     if (!isSnuAccount(account)) {
       await forgetGoogleQuietly();
       return { outcome: 'not-snu-account' };
     }
-    const result = await enter({ name: account.name, department: null });
-    return result;
+    return await enter({ name: account.name, department: null });
   } catch {
     return { outcome: 'failed' };
   }
@@ -67,15 +102,36 @@ export function signIn(): Promise<SignInResult> {
   return googleAvailable() && namedSignInEnding() === null ? signInWithGoogle() : signInWithMock();
 }
 
+// Ends the Session on the main server too. The User leaves whatever it answers: a Session it cannot end is over for
+// this phone anyway once the tokens are forgotten.
+async function signOutOfMainServer(): Promise<void> {
+  if (heldTokens() === null) {
+    return;
+  }
+  try {
+    await call('POST', '/auth/sign-out', isNothing);
+  } catch {
+    // Nothing to do.
+  }
+  await forgetTokens();
+}
+
 export async function signOut(): Promise<void> {
+  if (asksMainServer()) {
+    await signOutOfMainServer();
+  }
   await keep({ signedIn: false, suggestion: null });
   if (googleAvailable()) {
     await forgetGoogleQuietly();
   }
 }
 
-// The signed-in User's own id, by which the app finds the User among a Quest's Holders and a Party's members. The
-// mock's User has a fixed one; with the main server it is read from the access token.
+// The signed-in User's own id, by which the app finds the User among a Quest's Holders and a Party's members: the
+// subject of the main server's access token, and the mock's fixed one where the app asks no main server.
 export function myUserId(): string {
-  return ME.id;
+  if (!asksMainServer()) {
+    return ME.id;
+  }
+  const accessToken = heldTokens()?.accessToken;
+  return accessToken === undefined ? '' : (subjectOf(accessToken) ?? '');
 }

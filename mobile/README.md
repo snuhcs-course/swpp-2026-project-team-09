@@ -53,27 +53,38 @@ screen again, start the app with `EXPO_PUBLIC_FIRST_STATE=1`.
 The sign-in module (`src/auth/sign-in.ts`) asks Google in a build that holds Google's sign-in module, and is a mock
 everywhere else:
 
-| Where the app runs                               | The sign-in                                            |
-| ------------------------------------------------ | ------------------------------------------------------ |
-| A development build on Android with the settings | Google's account sheet                                 |
-| Expo Go, the web, the tests                      | The mock: it signs in after 0.3 seconds, with no sheet |
-| Any of them with `EXPO_PUBLIC_SIGN_IN_ENDING`    | The mock, with the ending that the setting names       |
+| Where the app runs                                                         | The sign-in                                                   |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| A development build with the Google settings and the main server's address | Google's account sheet, then the main server                  |
+| A development build with the Google settings and no main server's address  | Google's account sheet, and the app's own check of the domain |
+| Expo Go, the web, the tests                                                | The mock: it signs in after 0.3 seconds, with no sheet        |
+| Any of them with `EXPO_PUBLIC_SIGN_IN_ENDING`                              | The mock, with the ending that the setting names              |
 
-With Google, an account outside SNU is refused, a closed sheet returns to the default state, and anything else is a
-failure. The main server is not asked yet. The app itself reads the ID token and takes an account for an SNU one when
-its hosted domain, the `hd` claim, is `snu.ac.kr` (`src/auth/id-token.ts`). It does not check the token's signature, so
-this decides only what the screen says. The main server's check takes its place with ticket 12 of P06.
+With the main server's address (`asksMainServer()` in `src/api/servers.ts`), Google's ID token goes to
+`POST /auth/google`, and the main server's answer gives the ending: 200 signs in, with whether the User finished
+Onboarding and the suggestion; 403 is an account outside SNU; anything else, and no answer, is a failure. A closed sheet
+returns to the default state and sends nothing. The main server's access and refresh tokens are kept in the phone's
+secure storage (`src/auth/tokens.ts`, on `expo-secure-store`). The same build then asks the main server for every
+operation it serves (see "Data" below) and opens the connection to the socket server.
+
+Without the main server's address, the app itself reads the ID token and takes an account for an SNU one when its
+hosted domain, the `hd` claim, is `snu.ac.kr` (`src/auth/id-token.ts`). It does not check the token's signature, so
+this decides only what the screen says, and every answer stays a mock.
 
 The settings are a person's. Copy `.env.example` to `.env`, which is not committed, and fill in:
 
-| Variable                           | Value                                                                             |
-| ---------------------------------- | --------------------------------------------------------------------------------- |
-| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | The ID of the main server's Google client, of type "Web application"              |
-| `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` | The ID of the Google client of type "iOS". Only the iOS build needs it            |
-| `GOOGLE_IOS_URL_SCHEME`            | The iOS client's ID reversed (`com.googleusercontent.apps.…`). Only the iOS build |
+| Variable                           | Value                                                                                                     |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | The ID of the main server's Google client, of type "Web application"                                      |
+| `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` | The ID of the Google client of type "iOS". Only the iOS build needs it                                    |
+| `GOOGLE_IOS_URL_SCHEME`            | The iOS client's ID reversed (`com.googleusercontent.apps.…`). Only the iOS build                         |
+| `EXPO_PUBLIC_MAIN_SERVER_URL`      | The main server's address; from the Android emulator, `http://10.0.2.2:3000` for one on the same computer |
+| `EXPO_PUBLIC_SOCKET_SERVER_URL`    | The socket server's address; from the emulator, `http://10.0.2.2:3001`                                    |
 
 The IDs are in the Google Cloud project's list of clients. The Web application client's ID is also the main server's
-`GOOGLE_APP_CLIENT_ID`. Without the web client's ID the sign-in stays the mock in every build.
+`GOOGLE_APP_CLIENT_ID`. Without the web client's ID the sign-in stays the mock in every build. The servers run on the
+computer with `docker compose up --build` at the repository root (see the main server's README); the emulator reaches
+the computer as `10.0.2.2`, and a debug build allows plain HTTP. A phone needs an address it can reach.
 
 A development build on Android, with an emulator running or a phone attached:
 
@@ -274,8 +285,9 @@ src/app/            screens; every file is a route and _layout.tsx sets the navi
 src/design-system/  the tokens and the shared components
 src/catalogue/      the sections of the design system's catalogue screen
 src/hooks/          hooks shared by components and screens
-src/api/            the API client, the main server's answers as types, and the mocks that answer for now
-src/auth/           sign-in and sign-out
+src/api/            the API client, the main server's answers as types, the main server's client and the mocks
+src/auth/           sign-in and sign-out, and the main server's tokens
+src/live/           the one connection to the socket server
 src/features/       one folder per feature: its adapter and the hooks a screen asks for data with
 src/map/            the one map component, its interface and the pictures of its markers
 src/position/       the User's own position: the phone's, or the development walk
@@ -502,28 +514,38 @@ Behind a hook are three layers:
   "the app's own" is defined nowhere else yet.
 - **An adapter** per feature (`src/features/<feature>/adapter.ts`): turns answers into what the screens use, such as
   `FriendView`, `QuestRowView`, `CardView`, `FootprintsView` and `ActivePartyView`.
-- **The mocks** (`src/api/mock/`): for now every operation is answered inside the app, in the main server's shape,
-  with what the `Main` wireframe shows. A mock answers after 0.3 seconds. The sign-in is the one exception: see "Google
-  sign-in" above.
+- **The main server's client** (`src/api/server/`): the operations the main server serves, in a build that asks it
+  (`asksMainServer()`). `http.ts` is the one way to the main server: it attaches the access token, renews the Session
+  once on a 401 and asks again, and ends the Session when that cannot mend it. `answers.ts` checks each answer's shape
+  before the app believes it; an answer of another shape fails as no answer does.
+- **The mocks** (`src/api/mock/`): every other operation, and every operation where the app asks no main server, is
+  answered inside the app, in the main server's shape, with what the `Main` wireframe shows. A mock answers after 0.3
+  seconds. The tests use the mocks, or a fake main server behind `fetch` (`__tests__/support/fake-server.ts`).
 
-| Operation                                   | Answers                                            | The main server's route                       |
+| Operation                                   | Answers                                            | Where it comes from with the main server      |
 | ------------------------------------------- | -------------------------------------------------- | --------------------------------------------- |
 | `signIn`, `signOut` (`src/auth/sign-in.ts`) | Whether the User signed in, and Onboarding's state | `POST /auth/google`, `/auth/sign-out`         |
 | `completeOnboarding`                        | Nothing                                            | `POST /users/me/onboarding`                   |
 | `enterLobby`                                | The User's profile                                 | `POST /lobby`                                 |
-| `listFriends`                               | The Friends                                        | `GET /friends` (provisional)                  |
-| `listPositions`                             | The positions the User may see                     | `GET /positions` (provisional)                |
-| `listFriendStatuses`                        | Each Friend's status, place and photo              | None: the app's own                           |
-| `listQuests`                                | The User's Quests and today's Class Quests         | `GET /quests` (provisional)                   |
-| `listGlobalEvents`                          | The published Global Events                        | None yet: the app's own                       |
-| `listGlobalEventAnnouncers`                 | Who announced each Global Event                    | None: the app's own                           |
-| `listParties`, `getMyParty`                 | The Parties, and the one the User is in            | `GET /parties`, `/parties/mine` (provisional) |
-| `getPartyNews`                              | How many things wait for the User in Parties       | None: the app's own                           |
-| `getFootprints`                             | What "오늘의 발자국" shows: a number and faces     | None: the app's own                           |
+| `listFriends`                               | The Friends                                        | `GET /friends`                                |
+| `listPositions`                             | The positions the User may see                     | `GET /positions`, and the socket's `position` |
+| `listFriendStatuses`                        | Each Friend's status, place and photo              | The mock: the app's own                       |
+| `listQuests`                                | The User's Quests and today's Class Quests         | `GET /quests`                                 |
+| `listGlobalEvents`                          | The published Global Events                        | The mock: no route lists them for a User yet  |
+| `listGlobalEventAnnouncers`                 | Who announced each Global Event                    | The mock: the app's own                       |
+| `listParties`, `getMyParty`                 | The Parties, and the one the User is in            | `GET /parties`, `/parties/mine`               |
+| `getPartyNews`                              | How many things wait for the User in Parties       | The mock: the app's own                       |
+| `getFootprints`                             | What "오늘의 발자국" shows: a number and faces     | The mock: the app's own                       |
 | `findWalkingRoute`                          | The way on foot between two points                 | `GET /walking-route`                          |
 
-While the answers are mocks, the app's time is the moment the wireframe shows, 1 October 2026 at 13:37
-(`src/clock.ts`), so that the screens read as the wireframe on any day.
+`getMyParty` turns exactly the main server's 404 `NOT_IN_PARTY` into null. A 401 with `SESSION_REPLACED` ends the
+Session without a renewal and shows the notice "다른 기기에서 로그인했어요" with the sign-in screen; a 403 with
+`ONBOARDING_REQUIRED` shows Onboarding with the suggestion it carries (`src/session/session-events.ts`, which
+`SessionProvider` follows).
+
+The User's own id is the access token's subject, and the app's time is the phone's. Where the answers are mocks, the
+User is the mock's `me` and the time is the moment the wireframe shows, 1 October 2026 at 13:37 (`src/clock.ts`), so
+that the screens read as the wireframe on any day.
 
 The phone keeps that the User signed in, that the User agreed to the legal documents, what the sign-in suggested for
 Onboarding, whether Onboarding is finished and its answers, and that the User answered the explanation before the
@@ -565,18 +587,36 @@ openLocationSettings(); // of `@/position`: the phone's settings of the app, for
   position in the background.
 - The position is sent nowhere. Sending it is built with the Master Switch, by another task.
 
+### The connection to the socket server
+
+In a build that asks the main server, the app keeps one Socket.IO connection to the socket server open while the User
+is past the sign-in and Onboarding (`LiveUpdates` in `src/live/live-updates.tsx`, on `src/live/connection.ts`), as the
+socket server's README describes:
+
+- It opens with the access token, which it asks for again at every attempt. When the socket server closes it at the
+  token's expiry, or refuses the token, it renews the Session once and opens again; a refused renewal, or a second
+  refusal, ends the Session. When nothing answers a renewal it tries again after five seconds.
+- `session-ended` ends the Session, with the notice when its code is `SESSION_REPLACED`.
+- `position` replaces that User's position in the cache, and the Avatar glides there; `position-removed` takes it
+  out. A position for a Friend or a member whom the answers call unseen fetches those answers again.
+- The positions are fetched when the connection opens, and everything it shows when it opens again after a drop. When
+  the app returns to the front, the positions and the Quests are fetched again.
+- The signals fetch what they name again: `friends-changed` the Friends and the positions, `quests-changed` the
+  Quests, `party-changed` the Parties and the positions, `global-events-changed` the Global Events and the Quests.
+
+The app sends no position of its own: that is built with the Master Switch, by another task.
+
 ### From a mock to the main server
 
-To connect one operation:
+To connect one more operation:
 
-1. Write the operation against the main server and put it in place of the mock's in `src/api/client.ts`. A refusal is
-   thrown as an `ApiError` with the status and the main server's code.
-2. If the answer's shape changed, change it in `src/api/types.ts` and follow the type errors into the adapter.
-3. Keep the mock: a test of a screen puts it back with `jest.mock('@/api/client', …)`, so that no test asks the main
-   server.
+1. Write it in `src/api/server/client.ts` with `call()` and a check of its answer in `answers.ts`. A refusal is thrown
+   as an `ApiError` with the status and the main server's code.
+2. If the answer's shape differs, change it in `src/api/types.ts`, then the mock, and follow the type errors into the
+   adapter.
+3. Keep the mock: the screens' tests use it. Test the operation against the fake main server.
 
-No screen changes. When every operation of a feature is connected, remove its row from the mock list of
-`.scratch/iteration-1/P06-login-map-timetable/todo.md`.
+No screen changes. Keep `.scratch/iteration-1/P06-login-map-timetable/todo.md`, section 3, in step.
 
 ## Design system
 

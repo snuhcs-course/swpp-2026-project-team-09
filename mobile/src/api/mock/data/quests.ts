@@ -1,4 +1,4 @@
-import type { GlobalEvent, MyParty, Party, PartyMark, PartyNews, Quest, SubQuest } from '@/api/types';
+import type { GlobalEvent, MyParty, Party, PartyNews, PartyQuest, Quest, SubQuest } from '@/api/types';
 import { PARTY_MEMBER } from './friends';
 import { frameTime, ME } from './frame';
 
@@ -95,20 +95,22 @@ export const QUESTS: Quest[] = [
   },
 ];
 
-const AI_PARTY_MARK: PartyMark = {
-  questId: 'q-ai',
+const AI_PARTY_QUEST: PartyQuest = {
+  id: 'q-ai',
   title: 'AI 커리어 설명회',
   globalEvent: { id: 'e1', title: 'AI 커리어 설명회' },
 };
 
 const AI_PARTY = { id: 'm1', title: 'AI 커리어 설명회 같이 가요', capacity: 6, joinPolicy: 'open' } as const;
 
-export const PARTIES: Party[] = [{ ...AI_PARTY, memberCount: 4, mark: AI_PARTY_MARK }];
+export const PARTIES: Party[] = [
+  { ...AI_PARTY, memberCount: 4, quest: AI_PARTY_QUEST, holdsQuest: true, friends: [MIN_JUN] },
+];
 
 // The frame's "활성 파티": three members share their position with the User.
 export const MY_PARTY: MyParty = {
   ...AI_PARTY,
-  mark: AI_PARTY_MARK,
+  quest: AI_PARTY_QUEST,
   sharing: true,
   members: [
     { ...HA_EUN, leader: true, visible: true },
