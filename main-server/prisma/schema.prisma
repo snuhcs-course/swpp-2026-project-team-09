@@ -303,7 +303,7 @@ model PartyMember {
   @@map("party_members")
 }
 
-// A User's request to join an Approval Party, which waits for its Leader. Unique for the Party and the User, so that a
+// A User's request to enter an Approval Party, which waits for its Leader. Unique for the Party and the User, so that a
 // User asks a Party once. It ends when it is answered, when the Party ends and when the User enters any Party.
 model PartyJoinRequest {
   id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -318,8 +318,8 @@ model PartyJoinRequest {
   @@map("party_join_requests")
 }
 
-// The Leader's invitation of a Friend into the Party, which waits for the invited User. Unique and ended as a request
-// to join is.
+// The Leader's invitation of a Friend or a Holder of the Party's Quest into the Party, which waits for the invited User.
+// Unique and ended as a request to enter is.
 model PartyInvitation {
   id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   partyId String   @map("party_id") @db.Uuid

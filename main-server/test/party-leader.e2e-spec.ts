@@ -2,9 +2,19 @@ import { INestApplication } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
-import { signInUser, TestUser } from './friends.js';
+import { befriend, signInUser, TestUser } from './friends.js';
 import { expectStatus, getPositions, setMasterSwitch, uploadPosition } from './location-sharing.js';
-import { changeParty, enter, getMyParty, handOver, joinParty, partyOf, removeMember } from './parties.js';
+import {
+  changeParty,
+  enter,
+  getMyParty,
+  handOver,
+  joinParty,
+  partyOf,
+  partyOfHolders,
+  removeMember,
+  sharedQuest,
+} from './parties.js';
 import { refused, SignalWatcher } from './signals.js';
 import { startApp } from './start-app.js';
 
@@ -24,28 +34,28 @@ function partySignalsTo(user: TestUser): number {
   return watcher.for(user).filter(({ name }) => name === 'party-changed').length;
 }
 
-// An Open Party of the Leader and the others, who join in the order given.
+// A Party of the Leader and the others, Holders of its Quest who enter in the order given.
 async function partyWith(leader: TestUser, others: TestUser[], body: object = {}): Promise<string> {
-  const partyId = await partyOf(app, leader, body);
-  await others.reduce(async (previous, other) => {
-    await previous;
-    await enter(app, other, partyId);
-  }, Promise.resolve());
-  return partyId;
+  return (await partyOfHolders(app, leader, others, body)).partyId;
 }
 
 describe('The Leader changing the settings', () => {
-  it('changes the title, the capacity and the Join Policy, and tells every member', async () => {
-    const [leader, member] = await Promise.all([signInUser(app), signInUser(app)]);
-    const partyId = await partyWith(leader, [member]);
+  it('changes the title, the capacity and the Join Policy, and tells the members, Holders and Friends of members', async () => {
+    const [leader, member, holder, friend] = await Promise.all(Array.from({ length: 4 }, () => signInUser(app)));
+    await befriend(app, member, friend);
+    const questId = await sharedQuest(app, leader, [member, holder]);
+    const partyId = await partyOf(app, leader, { questId });
+    await enter(app, member, partyId);
 
-    const response = await changeParty(app, leader, { title: '저녁 같이', capacity: 2, joinPolicy: 'closed' });
+    const response = await changeParty(app, leader, { title: '저녁 같이', capacity: 2, joinPolicy: 'open' });
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ id: partyId, title: '저녁 같이', capacity: 2, joinPolicy: 'closed' });
+    expect(response.body).toMatchObject({ id: partyId, title: '저녁 같이', capacity: 2, joinPolicy: 'open' });
     expect((await getMyParty(app, member)).body).toEqual({ ...response.body, sharing: true });
     await vi.waitFor(() => {
-      expect(partySignalsTo(member)).toBe(2);
+      expect(partySignalsTo(member)).toBe(3);
+      expect(partySignalsTo(holder)).toBe(3);
+      expect(partySignalsTo(friend)).toBe(2);
     });
   });
 
@@ -81,9 +91,10 @@ describe('The Leader changing the settings', () => {
 });
 
 describe('The Leader handing the role over', () => {
-  it('makes another member the Leader, and tells every member', async () => {
-    const [leader, member] = await Promise.all([signInUser(app), signInUser(app)]);
-    await partyWith(leader, [member]);
+  it('makes another member the Leader, and tells the members', async () => {
+    const [leader, member, holder] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
+    const questId = await sharedQuest(app, leader, [member, holder]);
+    await enter(app, member, await partyOf(app, leader, { questId }));
 
     const response = await handOver(app, leader, member.id);
 
@@ -97,6 +108,7 @@ describe('The Leader handing the role over', () => {
     expect((await changeParty(app, member, { title: '새 이름' })).status).toBe(200);
     await vi.waitFor(() => {
       expect(partySignalsTo(leader)).toBe(4);
+      expect(partySignalsTo(holder)).toBe(3);
     });
   });
 
@@ -112,7 +124,7 @@ describe('The Leader handing the role over', () => {
 });
 
 describe('The Leader removing a member', () => {
-  it('takes the member out, and tells every member, the one removed included', async () => {
+  it('takes the member out, and tells the members, the one removed included', async () => {
     const [leader, member, other] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
     const partyId = await partyWith(leader, [member, other]);
 
@@ -125,8 +137,8 @@ describe('The Leader removing a member', () => {
       members: [{ id: leader.id }, { id: other.id }],
     });
     await vi.waitFor(() => {
-      expect(partySignalsTo(member)).toBe(3);
-      expect(partySignalsTo(other)).toBe(2);
+      expect(partySignalsTo(member)).toBe(4);
+      expect(partySignalsTo(other)).toBe(4);
     });
   });
 

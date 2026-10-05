@@ -712,54 +712,6 @@ the Party ends when its last member leaves. It never ends by itself. The routes,
 - `PUT /parties/mine/sharing` with `{ "on": false }` turns the User's switch for the Party off, `{ "on": true }` on, and
   answers 204.
 
-**Join Policies.** The Leader sets how Users enter:
-
-- `open`: anyone joins at once with `POST /parties/:partyId/join`. The Party is listed.
-- `approval`: a User asks to join, and the Leader accepts or declines each request. The Party is listed.
-- `closed`: the Party is in no list, and a User enters only by the Leader's invitation.
-
-Under every Join Policy a Holder of the mark joins at once, and an invited Friend enters on accepting, each within the
-capacity.
-
-**Requests to join** an Approval Party, the asking User's routes:
-
-- `POST /party-join-requests` with `{ "partyId": "..." }` asks to join and answers 201 with the request as
-  `GET /party-join-requests` lists it. A User in another Party may ask, and must have left it by the time the Leader
-  accepts. A repeat is refused as a request already sent, so it takes no `Idempotency-Key`.
-- `GET /party-join-requests` answers the User's waiting requests, the newest first:
-  `[{ "id", "party": { "id", "title", "capacity", "joinPolicy", "memberCount", "mark" }, "sentAt" }]`.
-- `POST /party-join-requests/:id/withdraw` ends the request and answers 204.
-
-And the Leader's:
-
-- `GET /parties/mine/join-requests` answers the requests to the Leader's Party, the newest first:
-  `[{ "id", "user": { "id", "name", "department" }, "sentAt" }]`.
-- `POST /parties/mine/join-requests/:id/accept` adds the User who asked and answers 204, and
-  `POST /parties/mine/join-requests/:id/decline` ends the request and answers 204. A request waiting in a Party the
-  Leader has made Open or Closed since can only be declined, so that a Closed Party admits only by invitation.
-
-**Invitations.** The Leader invites a Friend into the Party, whatever its Join Policy:
-
-- `POST /parties/mine/invitations` with `{ "userId": "..." }`, a Friend's User id as `GET /friends` gives it, invites
-  the Friend and answers 204. A Friend in another Party may be invited, and must have left it by the time they accept.
-  A repeat is refused as an invitation already sent, so it takes no `Idempotency-Key`.
-- `GET /party-invitations` answers the invitations of the User, the newest first:
-  `[{ "id", "party": { "id", "title", "capacity", "joinPolicy", "memberCount", "mark" }, "leader": { "id", "name", "department" }, "sentAt" }]`,
-  with the Party's Leader now.
-- `POST /party-invitations/:id/accept` makes the User a member and answers 201 with the Party, and
-  `POST /party-invitations/:id/decline` ends the invitation and answers 204.
-
-A request to join and an invitation wait until they are answered. They end when the Party ends and when their User
-enters any Party, by any way in or by creating one. Ending this way sends no signal.
-
-**The Leader's controls**, each refused for another member:
-
-- `PATCH /parties/mine` with any of `{ "title", "capacity", "joinPolicy" }` changes those and answers 200 with the
-  Party. A field left out stays as it is, and the mark never changes. A capacity below the number of members is
-  refused.
-- `PUT /parties/mine/leader` with `{ "userId": "..." }` hands the role to that member and answers 204.
-- `DELETE /parties/mine/members/:userId` removes that member and answers 204. A removed member may enter again.
-
 The User's Party reads:
 
 ```json
@@ -809,41 +761,97 @@ without the User's own:
 `holdsQuest` says whether the reading User holds the Party's Quest, and `friends` are the reading User's Friends among
 the members, in the order they entered. No position is in the list.
 
-**Who enters.** By their own action, `POST /parties/:partyId/join`:
+**Who enters.**
 
-- a Holder of the Party's Quest enters at once, whatever the Join Policy;
-- a Friend of any member enters an `open` Party at once, and is refused by an `approval` or a `closed` one;
-- anyone else is answered as for an unknown Party, so that a Party stays hidden from those who cannot see it.
+- A Holder of the Party's Quest enters at once with `POST /parties/:partyId/join`, whatever the Join Policy.
+- A Friend of any member enters an `open` Party at once with `POST /parties/:partyId/join`, asks to enter an
+  `approval` Party, which the Leader accepts or declines, and enters a `closed` Party only by invitation.
+- The Leader invites a Friend of theirs or a Holder of the Party's Quest, whatever the Join Policy, and the invited
+  User enters on accepting.
+- Anyone else is answered as for an unknown Party, so that a Party stays hidden from those who cannot see it.
 
 Every entry holds only within the capacity, counted in the transaction that adds the member after the Party is locked.
 
-**Entering a Party changes no Quest.** A User who enters without holding the Party's Quest does not become its Holder,
-and a Quest the User holds for the same Global Event stays. Joining the plan goes through the Quest
-([Quests](#quests)). Leaving and the Party's end leave every Quest as it is, and dropping the Party's Quest leaves the
-membership as it is.
+**Requests to enter** an Approval Party, the asking User's routes:
+
+- `POST /party-join-requests` with `{ "partyId": "..." }` asks to enter and answers 201 with the request as
+  `GET /party-join-requests` lists it. Whoever can see the Party may ask, a Holder of its Quest too, though they can
+  enter at once instead. A User in another Party may ask, and must have left it by the time the Leader accepts. A
+  repeat is refused as a request already sent, so it takes no `Idempotency-Key`.
+- `GET /party-join-requests` answers the User's waiting requests, the newest first, each with the Party as
+  `GET /parties` shows it: `[{ "id", "party": { "id", "title", "memberCount", … }, "sentAt" }]`.
+- `POST /party-join-requests/:id/withdraw` ends the request and answers 204.
+
+And the Leader's:
+
+- `GET /parties/mine/join-requests` answers the requests to the Leader's Party, the newest first:
+  `[{ "id", "user": { "id", "name", "department" }, "sentAt" }]`.
+- `POST /parties/mine/join-requests/:id/accept` adds the User who asked and answers 204, and
+  `POST /parties/mine/join-requests/:id/decline` ends the request and answers 204. A request stays when the Leader
+  changes the Join Policy, and the Leader may still accept or decline it: accepting is the Leader's own decision, as
+  an invitation is.
+
+**Invitations.** The Leader invites into the Party, whatever its Join Policy:
+
+- `POST /parties/mine/invitations` with `{ "userId": "..." }` invites a Friend of the Leader, by the User id
+  `GET /friends` gives, or a Holder of the Party's Quest, and answers 204. A User in another Party may be invited, and
+  must have left it by the time they accept. A repeat is refused as an invitation already sent, so it takes no
+  `Idempotency-Key`.
+- `GET /party-invitations` answers the invitations of the User, the newest first, each with the Party as
+  `GET /parties` shows it and its Leader now:
+  `[{ "id", "party": { "id", "title", "memberCount", … }, "leader": { "id", "name", "department" }, "sentAt" }]`.
+- `POST /party-invitations/:id/accept` makes the User a member and answers 201 with the Party, and
+  `POST /party-invitations/:id/decline` ends the invitation and answers 204.
+
+A request and an invitation wait until they are answered. They end when the Party ends and when their User enters any
+Party, by any way in or by opening one. Ending this way sends no signal of its own.
+
+**Entering a Party changes no Quest.** A User who enters, by any way, without holding the Party's Quest does not
+become its Holder, and a Quest the User holds for the same Global Event stays. Joining the plan goes through the Quest
+([Quests](#quests)). Leaving, a removal and the Party's end leave every Quest as it is, and dropping the Party's Quest
+leaves the membership as it is.
+
+**The Leader's controls**, each refused for another member:
+
+- `PATCH /parties/mine` with any of `{ "title", "capacity", "joinPolicy" }` changes those and answers 200 with the
+  Party. A field left out stays as it is, and the Party's Quest never changes. A capacity below the number of members
+  is refused.
+- `PUT /parties/mine/leader` with `{ "userId": "..." }` hands the role to that member and answers 204.
+- `DELETE /parties/mine/members/:userId` removes that member and answers 204. A removed member may enter again.
 
 The refusals each have a `code`:
 
-| Refusal                                                                 | Status | `code`                   |
-| ----------------------------------------------------------------------- | ------ | ------------------------ |
-| Opening or entering while in a Party, also the same one                 | 409    | `ALREADY_IN_PARTY`       |
-| A Quest that is no stored Quest the opener holds                        | 404    | `QUEST_NOT_FOUND`        |
-| A Quest whose Sub Quests have all passed                                | 409    | `QUEST_ENDED`            |
-| A Quest that a running Party has; `partyId` in the body names the Party | 409    | `PARTY_EXISTS_FOR_QUEST` |
-| Entering a Party that is not running, or one the User cannot see        | 404    | `PARTY_NOT_FOUND`        |
-| A Friend of a member entering an `approval` or `closed` Party           | 409    | `PARTY_NOT_OPEN`         |
-| Entering a full Party                                                   | 409    | `PARTY_FULL`             |
-| Reading, leaving or switching while in no Party                         | 404    | `NOT_IN_PARTY`           |
+| Refusal                                                                   | Status | `code`                          |
+| ------------------------------------------------------------------------- | ------ | ------------------------------- |
+| Opening or entering while in a Party, also the same one                   | 409    | `ALREADY_IN_PARTY`              |
+| A Quest that is no stored Quest the opener holds                          | 404    | `QUEST_NOT_FOUND`               |
+| A Quest whose Sub Quests have all passed                                  | 409    | `QUEST_ENDED`                   |
+| A Quest that a running Party has; `partyId` in the body names the Party   | 409    | `PARTY_EXISTS_FOR_QUEST`        |
+| Entering, or asking to enter, a Party not running or hidden from the User | 404    | `PARTY_NOT_FOUND`               |
+| A Friend of a member entering an `approval` or `closed` Party             | 409    | `PARTY_NOT_OPEN`                |
+| Entering, or accepting a request or invitation into, a full Party         | 409    | `PARTY_FULL`                    |
+| Reading, leaving, switching or an action of the Leader while in no Party  | 404    | `NOT_IN_PARTY`                  |
+| Asking to enter an `open` or `closed` Party                               | 409    | `PARTY_NOT_APPROVAL`            |
+| Asking to enter, or inviting into, a Party the User is a member of        | 409    | `ALREADY_MEMBER`                |
+| Asking to enter a Party the User's request already waits for              | 409    | `JOIN_REQUEST_ALREADY_SENT`     |
+| An answer to a request that is not waiting for it from this User          | 404    | `JOIN_REQUEST_NOT_FOUND`        |
+| Inviting a User neither the Leader's Friend nor a Holder of the Quest     | 404    | `INVITEE_NOT_FOUND`             |
+| Inviting a User whose invitation into the Party already waits             | 409    | `PARTY_INVITATION_ALREADY_SENT` |
+| An answer to an invitation that is not waiting for this User              | 404    | `PARTY_INVITATION_NOT_FOUND`    |
+| An action of the Leader by another member                                 | 403    | `NOT_PARTY_LEADER`              |
+| A capacity below the number of members                                    | 409    | `CAPACITY_BELOW_MEMBERS`        |
+| Handing the role to, or removing, a User who is not a member              | 404    | `NOT_PARTY_MEMBER`              |
 
 A Class Quest is computed and never stored, so giving it as the Party's Quest gets `QUEST_NOT_FOUND`. A body that does
 not match gets 400 with a message naming the field.
 
 **Two rules the database enforces.** `party_members` is unique on the User, so a User is in one Party at most, and
 `parties` is unique on its Quest, `quest_id`, so one running Party has a Quest. An ended Party's row is deleted with its
-members, so a new Party can be opened for the Quest. Besides, every change to a membership locks the User's row and
-then the Party's, and opening the Party of a Quest locks the Quest, so that two Users taking the last free place, one
-User entering two Parties and two Holders opening a Party for one Quest run one after the other: the later is refused
-with its code.
+members, its requests and its invitations, so a new Party can be opened for the Quest. Besides, every change to a
+membership locks the row of the User who enters or goes and then the Party's, also when the Leader accepts a request or
+removes a member, whose role is checked once the Party is locked; and opening the Party of a Quest locks the Quest. So
+two Users taking the last free place, by any way in, one User entering two Parties and two Holders opening a Party for
+one Quest run one after the other: the later is refused with its code.
 
 **Which Sub Quests are ahead.** For the Quest given at opening, a Sub Quest is ahead while it is not cancelled and its
 end time has not passed at `now()` of `CLOCK`, the same for every Holder. A mark of done is one Holder's own, so it does
@@ -851,26 +859,39 @@ not stop the opening.
 
 **Location Sharing.** A common Party is a relationship of [Location Sharing](#location-sharing): two members see each
 other while both have the Party's switch on, which starts on with each membership. Holding the Party's Quest is no
-relationship: a Holder shares nothing with the Party until they enter it. Leaving and the switch are wrapped in
-`VisibilityService.announceRemovals`, so `position-removed` goes at once to and about the member.
+relationship: a Holder shares nothing with the Party until they enter it. Leaving, a removal and the switch are wrapped
+in `VisibilityService.announceRemovals`, so `position-removed` goes at once to and about the member.
 
 How they are stored: `parties` holds the title, the capacity, which a check keeps from 1 to 8, the Join Policy, the
 shared `join_policy` type of Quests, the Leader and the Quest, which becomes empty when its Quest is deleted;
-`party_members` one row for each member, with the time they entered and their switch.
+`party_members` one row for each member, with the time they entered and their switch; `party_join_requests` and
+`party_invitations` one row for each waiting request and invitation, each unique on the Party and the User and deleted
+with the Party.
 
-`party-changed` goes to the members, the Holders of the Party's Quest and the Friends of its members when a Party
-opens, when a User enters, when a member leaves, the one who left and their Friends included, and when it ends. It
-carries nothing, and the app fetches `GET /parties/mine` and `GET /parties` again (see [Signals](#signals)).
+`party-changed` carries nothing, and the app fetches `GET /parties/mine`, `GET /parties`, the requests and the
+invitations again (see [Signals](#signals)). It goes:
 
-`PartiesService`, in `src/parties/`, is where later ways in and out go:
+- to the members, the Holders of the Party's Quest and the Friends of its members when a Party opens, when a User
+  enters by any way, when a member leaves or is removed, the one who went and their Friends included, when the Leader
+  changes the settings and when the Party ends;
+- to the members when the Leader hands the role over;
+- to the Leader when a request arrives or is withdrawn;
+- to the User who asked when the Leader declines, and to the invited User when invited and when they decline.
 
-- `admit(party, userId, tx)` adds a member within the capacity and refuses a User in a Party and a full Party. Every way
-  into a Party ends here, after the User's row and then the Party's are locked.
+`PartiesService`, in `src/parties/`, is where every way in and out goes:
+
+- `admit(party, userId, tx)` adds a member within the capacity, refuses a User in a Party and a full Party, and ends
+  the User's requests and invitations. Every way into a Party ends here, after the User's row and then the Party's are
+  locked; opening ends them too.
 - `removeMember(party, userId, tx)` takes a member out, hands the Leader's role on and ends the Party with its last
   member. Every way out ends here, after the same locks and inside `VisibilityService.announceRemovals` for the User.
 - `audienceOf(party, tx)` answers who hears of a change to the Party: its members, the Holders of its Quest and the
   Friends of its members. `admit` answers it after the change and `removeMember` before; send `party-changed` to it
   once the transaction commits.
+- `canSee(party, userId, tx)` says whether the User is a Holder of the Party's Quest or a Friend of a member.
+
+`LeaderService.ledBy(userId)` answers the Party the User leads, read without a lock, and `lockLed(partyId, userId, tx)`
+locks it and refuses unless the User still leads it.
 
 ## Menus
 
@@ -1305,7 +1326,7 @@ src/
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
-├── parties/                         a feature: Parties, who sees, enters and leaves them, and the members' switches
+├── parties/                         a feature: Parties, who sees, enters and leaves them, the Leader's controls and the switches
 ├── quests/                          a feature: Quests, their Holders, Sub Quests, each Holder's progress and joining
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request

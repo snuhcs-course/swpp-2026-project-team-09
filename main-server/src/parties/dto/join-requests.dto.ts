@@ -6,6 +6,7 @@ import {
   UserSummaryDto,
   VisibleParty,
   visiblePartyInclude,
+  VisiblePartyInclude,
   VisiblePartyDto,
 } from './party.dto.js';
 
@@ -28,7 +29,7 @@ export interface ReceivedJoinRequestDto {
 }
 
 // As the User `readerId` who asked reads it.
-export function sentJoinRequestInclude(readerId: string) {
+export function sentJoinRequestInclude(readerId: string): { party: { include: VisiblePartyInclude } } {
   return { party: { include: visiblePartyInclude(readerId) } } satisfies Prisma.PartyJoinRequestInclude;
 }
 

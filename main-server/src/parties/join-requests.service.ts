@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { JoinPolicy } from '../generated/prisma/client.js';
@@ -14,15 +14,12 @@ import {
 import { USER_SUMMARY } from './dto/party.dto.js';
 import { LeaderService } from './leader.service.js';
 import { PartiesService } from './parties.service.js';
-import { alreadyMember, conflict, notFound } from './refusals.js';
-
-const notApproval = (): ConflictException =>
-  conflict('PARTY_NOT_APPROVAL', 'Only an Approval Party takes requests to join.');
+import { alreadyMember, conflict, notFound, partyNotFound } from './refusals.js';
 
 const joinRequestNotFound = (): NotFoundException =>
-  notFound('JOIN_REQUEST_NOT_FOUND', 'No such request to join waits for this answer from this User.');
+  notFound('JOIN_REQUEST_NOT_FOUND', 'No such request to enter waits for this answer from this User.');
 
-// Requests to join an Approval Party. A request waits until the User withdraws it or the Leader answers it, and ends
+// Requests to enter an Approval Party. A request waits until the User withdraws it or the Leader answers it, and ends
 // with the Party and when the User enters any Party (PartiesService.admit).
 @Injectable()
 export class JoinRequestsService {
@@ -35,18 +32,22 @@ export class JoinRequestsService {
     private readonly signals: SignalsService,
   ) {}
 
-  // A User in another Party may ask, and is refused when the Leader accepts unless they left it by then.
+  // Whoever can see the Party asks: a Friend of a member, and a Holder of its Quest, who could enter at once instead. A
+  // User in another Party may ask, and is refused when the Leader accepts unless they left it by then.
   async ask(userId: string, partyId: string): Promise<SentJoinRequestDto> {
     const { request, leaderId } = await this.prisma.$transaction(async (tx) => {
       const party = await this.parties.lock(partyId, tx);
       if ((await this.parties.memberIds(party, tx)).includes(userId)) {
         throw alreadyMember();
       }
+      if (!(await this.parties.canSee(party, userId, tx))) {
+        throw partyNotFound();
+      }
       if (party.joinPolicy !== JoinPolicy.approval) {
-        throw notApproval();
+        throw conflict('PARTY_NOT_APPROVAL', 'Only an Approval Party takes requests to enter.');
       }
       if ((await tx.partyJoinRequest.findUnique({ where: { partyId_userId: { partyId, userId } } })) !== null) {
-        throw conflict('JOIN_REQUEST_ALREADY_SENT', 'Your request to join this Party is waiting.');
+        throw conflict('JOIN_REQUEST_ALREADY_SENT', 'Your request to enter this Party is waiting.');
       }
       return {
         request: await tx.partyJoinRequest.create({
@@ -98,8 +99,8 @@ export class JoinRequestsService {
     return requests.map((request) => toReceivedJoinRequestDto(request));
   }
 
-  // Locks the User who asked before the Party, as every way into a Party does, and checks the Leader after. A Party
-  // whose Leader made it Open or Closed since admits no request, so that a Closed Party admits only by invitation.
+  // Locks the User who asked before the Party, as every way into a Party does, and checks the Leader after. Whatever the
+  // Join Policy is by now: accepting is the Leader's own decision, as an invitation is.
   async accept(leaderId: string, requestId: string): Promise<void> {
     const partyId = await this.leader.ledBy(leaderId);
     const request = await this.prisma.partyJoinRequest.findFirst({ where: { id: requestId, partyId } });
@@ -111,9 +112,6 @@ export class JoinRequestsService {
       const party = await this.leader.lockLed(partyId, leaderId, tx);
       if ((await tx.partyJoinRequest.findUnique({ where: { id: requestId } })) === null) {
         throw joinRequestNotFound();
-      }
-      if (party.joinPolicy !== JoinPolicy.approval) {
-        throw notApproval();
       }
       return this.parties.admit(party, request.userId, tx);
     });

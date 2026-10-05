@@ -45,19 +45,18 @@ export class LeaderService {
     return party;
   }
 
-  // A capacity below the number of members is refused.
+  // A capacity below the number of members is refused. Requests that wait stay when the Join Policy changes.
   async update(userId: string, changes: UpdatePartyDto): Promise<PartyDto> {
     const partyId = await this.ledBy(userId);
-    const memberIds = await this.prisma.$transaction(async (tx) => {
+    const audience = await this.prisma.$transaction(async (tx) => {
       const party = await this.lockLed(partyId, userId, tx);
-      const ids = await this.parties.memberIds(party, tx);
-      if (changes.capacity !== undefined && changes.capacity < ids.length) {
+      if (changes.capacity !== undefined && changes.capacity < (await this.parties.memberIds(party, tx)).length) {
         throw conflict('CAPACITY_BELOW_MEMBERS', 'The Party has more members than this capacity.');
       }
       await tx.party.update({ where: { id: party.id }, data: changes });
-      return ids;
+      return this.parties.audienceOf(party, tx);
     });
-    this.signals.send(memberIds, 'party-changed');
+    this.signals.send(audience, 'party-changed');
     return this.parties.read(userId);
   }
 

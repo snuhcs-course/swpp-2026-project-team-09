@@ -5,6 +5,7 @@ import {
   UserSummaryDto,
   VisibleParty,
   visiblePartyInclude,
+  VisiblePartyInclude,
   VisiblePartyDto,
 } from './party.dto.js';
 
@@ -17,7 +18,9 @@ export interface InvitationDto {
 }
 
 // As the invited User `readerId` reads it.
-export function invitationInclude(readerId: string) {
+export function invitationInclude(readerId: string): {
+  party: { include: VisiblePartyInclude & { leader: typeof USER_SUMMARY } };
+} {
   return {
     party: { include: { ...visiblePartyInclude(readerId), leader: USER_SUMMARY } },
   } satisfies Prisma.PartyInvitationInclude;

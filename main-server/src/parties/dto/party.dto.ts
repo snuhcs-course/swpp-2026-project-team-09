@@ -53,7 +53,7 @@ export const PARTY_INCLUDE = {
   },
 } satisfies Prisma.PartyInclude;
 
-type VisiblePartyInclude = typeof PARTY_INCLUDE & {
+export type VisiblePartyInclude = typeof PARTY_INCLUDE & {
   quest: {
     include: typeof PARTY_QUEST_INCLUDE.quest.include & {
       holders: { where: { userId: string }; select: { id: true } };

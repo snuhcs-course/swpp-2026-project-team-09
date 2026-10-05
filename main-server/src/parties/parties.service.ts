@@ -57,7 +57,7 @@ export class PartiesService {
       const party = await this.lock(partyId, tx);
       await this.refuseMember(userId, tx);
       if (!(await this.holdsQuest(party, userId, tx))) {
-        if (!(await this.friends.friendsOfAny(await this.memberIds(party, tx), tx)).includes(userId)) {
+        if (!(await this.isFriendOfMember(party, userId, tx))) {
           throw partyNotFound();
         }
         if (party.joinPolicy !== JoinPolicy.open) {
@@ -205,7 +205,16 @@ export class PartiesService {
     }
   }
 
-  private async holdsQuest(party: Party, userId: string, tx: Prisma.TransactionClient): Promise<boolean> {
+  // Whether the User may see the Party: a Holder of its Quest or a Friend of a member. To anyone else it is unknown.
+  async canSee(party: Party, userId: string, tx: Prisma.TransactionClient): Promise<boolean> {
+    return (await this.holdsQuest(party, userId, tx)) || this.isFriendOfMember(party, userId, tx);
+  }
+
+  async holdsQuest(party: Party, userId: string, tx: Prisma.TransactionClient): Promise<boolean> {
     return party.questId !== null && (await this.quests.holderIds(party.questId, tx)).includes(userId);
+  }
+
+  private async isFriendOfMember(party: Party, userId: string, tx: Prisma.TransactionClient): Promise<boolean> {
+    return (await this.friends.friendsOfAny(await this.memberIds(party, tx), tx)).includes(userId);
   }
 }
