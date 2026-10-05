@@ -106,3 +106,8 @@ What ticket 07 must know, beyond the list above: the User's Avatar now has a `gl
 Tests added: `__tests__/main-position-test.tsx` (the blocked permission, the explanation kept on the phone, a failed watch, the last known position, one watch for several readers), `main-map-moves-test.tsx` (moves before the map is ready, and the zoom counted from), `main-looks-test.tsx` (both looks asked for), and additions to the walk's, the main screen's, the `BottomNav`'s and the kept state's tests.
 
 Not checked: nothing ran on a phone. The permission states, among them when Android and iOS answer `canAskAgain` false and whether the settings open on the app's page; a watch after location services are turned on, and whether a watch started with them off fails at all or waits; and iOS's rate of about one position a second, were not tried on devices. In a browser a refused permission always reads as `refused`, never `blocked`, so "계속" there asks a browser that will not prompt again and nothing happens. No new screenshot was taken after these changes.
+
+### Agent usage (2026-10-05)
+
+- Agent time: about 1 hour 15 minutes, an estimate, nearly all of it in subagents.
+- Tokens: five subagent runs (the comparison of the frame with the spec, the build, a review, the screenshots and a fix round): about 750 thousand in all. The main session's share was small and is not counted apart.
