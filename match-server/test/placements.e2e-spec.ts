@@ -213,9 +213,10 @@ describe('Two match servers running a round at the same moment', () => {
     await vi.waitFor(() => {
       expect(first.calls).toHaveLength(1);
     });
-    const secondRound = rounds.run(secondApp);
+    // The second round ends at once, since the first holds the lock until its answer comes.
+    await rounds.run(secondApp);
     answerFirst?.();
-    await Promise.all([firstRound, secondRound]);
+    await firstRound;
 
     expect([...first.placements(), ...second.placements()]).toEqual([placementOf(request, quest)]);
     expect(await rounds.stateOf(firstApp, request)).toEqual({ state: 'matched', questId: quest.id });
