@@ -5,8 +5,37 @@ generator client {
   output              = "../src/generated/prisma"
   // Stated, not inferred from tsconfig.json, so that the Docker image generates the same code before it has tsconfig.json.
   importFileExtension = "js"
+  // For the one waiting request per User and Global Event in MatchingRequest.
+  previewFeatures     = ["partialIndexes"]
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+// A User's request for Matching on a Global Event (README.md: Matching requests). The User and the Global Event are
+// the main server's, so their ids refer to nothing here.
+model MatchingRequest {
+  id            String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String               @map("user_id") @db.Uuid
+  globalEventId String               @map("global_event_id") @db.Uuid
+  // The group size the User asked for, 2 to 4.
+  size          Int
+  // The User's interest hashtags when the request arrived.
+  hashtags      String[]
+  state         MatchingRequestState @default(waiting)
+  arrivedAt     DateTime             @default(now()) @map("arrived_at")
+
+  @@unique([userId, globalEventId], where: { state: "waiting" })
+  @@index([userId, globalEventId])
+  @@map("matching_requests")
+}
+
+enum MatchingRequestState {
+  waiting
+  matched
+  withdrawn
+  expired
+
+  @@map("matching_request_state")
 }

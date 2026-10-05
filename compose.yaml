@@ -47,6 +47,7 @@ services:
       DATABASE_URL: postgresql://main:main@postgres:5432/main
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      MATCH_SERVER_URL: http://match-server:3003
     ports:
       - '3000:3000'
     depends_on:
@@ -90,17 +91,17 @@ services:
   match-server:
     build: match-server
     init: true
+    # The secret it shares with the main server comes from match-server/.env (see match-server/.env.example).
+    env_file:
+      - path: match-server/.env
+        required: false
     environment:
       PORT: 3003
       DATABASE_URL: postgresql://match:match@postgres:5432/match
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
     ports:
       - '127.0.0.1:3003:3003'
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
 
 volumes:
