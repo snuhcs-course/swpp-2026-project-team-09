@@ -71,3 +71,10 @@ Since nothing is stored, a Class Quest takes no part in what Users do with store
 - Tokens, counted from the agent's transcript:
   - Input: 7,969,524, of which 7,821,586 were cache reads, 147,804 cache writes and 134 uncached.
   - Output: 18,779, a lower bound, since the transcript records only part of the output of most steps.
+
+### Agent usage (2026-10-06)
+
+- Agent time: about 12 minutes, an estimate: one agent that reworked the ticket for classes with their times and for the Quest as it is now. The session that ran it is not counted here.
+- Tokens, counted from the agent's transcript:
+  - Input: 9,309,083, of which 9,139,521 were cache reads, 169,432 cache writes and 130 uncached.
+  - Output: 13,435, a lower bound, since the transcript records only part of the output of most steps.
