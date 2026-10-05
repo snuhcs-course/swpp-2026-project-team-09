@@ -28,11 +28,11 @@ Last updated: 2026-10-05
 
 ### 1.3 Loading screen (ticket 03; `Splash`)
 
-- [ ] The frame's look: the photos, the wordmark, the bar, the step labels
-- [ ] The bar follows the real work: what the phone keeps and, for a User who finished Onboarding, the Lobby
-- [ ] At least 0.5 seconds
-- [ ] "불러오지 못했어요" and "다시 시도" on a failure
-- [ ] Then the sign-in screen, Onboarding or the main screen, as the spec's flow says
+- [x] The frame's look: the photos, the wordmark, the bar, the step labels
+- [x] The bar follows the real work: what the phone keeps and, for a User who finished Onboarding, the Lobby
+- [x] At least 0.5 seconds
+- [x] "불러오지 못했어요" and "다시 시도" on a failure
+- [x] Then the sign-in screen, Onboarding or the main screen, as the spec's flow says
 
 ### 1.4 Sign-in screen (ticket 04; `Login`, `LoginLoading`, `LoginError`)
 
@@ -451,6 +451,8 @@ Each is a setting given when the app is started, as an `EXPO_PUBLIC_` variable. 
 - [ ] The credit for the map data is text alone. Decide whether a press should open the sources' pages
 - [ ] The frame shows a photo for two Friends. The app has no pictures of people, so every Friend shows the name's letters
 - [ ] The frame writes a Friend's year after the department ("컴퓨터공학부 22"). No answer holds a Friend's year, so the app shows the department alone
+- [ ] The loading screen's two photos are copied from the wireframes. Record where they come from and whether the app may ship them
+- [ ] The loading screen leaves out the frame's band of light and uses weight 700 for the wordmark, where the frame has 800. Settle whether either matters
 - [ ] The frame's numbers for the one Party disagree: "4명" in the Quest list, "4/6명" on the card, "3명 공유 중" on the button. The mock has four members of six, three of them shared with the User
 - [ ] The frame calls a dinner with one Friend a "비공개 파티". In the glossary it is a Shared Quest from a Meetup and no Party, and a User is in one Party at a time. The app uses the frame's words; settle the word
 - [ ] A Party's card in the frame has the line "#AI커리어 관심사가 겹쳐요". No answer holds it, and the app leaves it out
