@@ -89,3 +89,10 @@ Asking to enter an Approval Party, invitations and the Leader's controls are tic
 - Tokens, counted from the agent's transcript:
   - Input: 20,032,861, of which 19,773,684 were cache reads, 258,973 cache writes and 204 uncached.
   - Output: 38,660, a lower bound, since the transcript records only part of the output of most steps.
+
+### Agent usage (2026-10-05)
+
+- Agent time: about 18 minutes, an estimate: one agent that reworked the ticket for the Party as the group that is together now. The session that ran it is not counted here.
+- Tokens, counted from the agent's transcript:
+  - Input: 14,548,078, of which 14,315,675 were cache reads, 232,233 cache writes and 170 uncached.
+  - Output: 14,421, a lower bound, since the transcript records only part of the output of most steps.
