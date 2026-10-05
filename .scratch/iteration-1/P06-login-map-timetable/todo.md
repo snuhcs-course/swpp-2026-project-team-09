@@ -13,8 +13,10 @@ Last updated: 2026-10-05
 - [x] The icons
 - [x] The components the four screens use, and a shared Toast with the "준비 중이에요" call
 - [x] The app's configuration says light, not automatic
-- [ ] On a phone: a Chip, a ChatInput suggestion and a middle-sized Button take a press 48 high (their touch areas reach past their own height)
-- [ ] A Toast's place on a screen without the bottom navigation, with the phone's gesture inset, and over an open Dialog
+- [x] On an Android emulator: a Chip, a ChatInput suggestion and a middle-sized Button take a press 48 high (their touch areas reach past their own height)
+- [ ] The same on an iPhone and on the shared Android phone
+- [x] A Toast's place on a screen without the bottom navigation and with the phone's gesture inset
+- [ ] A Toast over an open Dialog, when a screen needs one
 
 ### 1.2 Mocks and the API client (ticket 02)
 

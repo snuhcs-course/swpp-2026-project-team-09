@@ -15,6 +15,9 @@ interface ChipProps {
   onRemove?: () => void;
 }
 
+// The text is 20 high: its touch area reaches the smallest size above and below, and the chip's padding at its sides.
+const TOGGLE_REACH = (sizes.touchMin - 20) / 2;
+const TOGGLE_HIT_SLOP = { top: TOGGLE_REACH, bottom: TOGGLE_REACH, left: space[3], right: space[1] / 2 };
 const REMOVE_ICON = 14;
 const REMOVE_PADDING = 2;
 // The × reaches the design system's smallest touch area without growing the chip. Towards the text it stops halfway,
@@ -43,7 +46,7 @@ export function Chip({ children, selected = false, size = 'md', onPress, onRemov
           accessibilityLabel={children}
           accessibilityRole="button"
           accessibilityState={{ selected }}
-          hitSlop={space[2]}
+          hitSlop={TOGGLE_HIT_SLOP}
           onPress={onPress}
           style={({ pressed }) => [styles.toggle, pressed && styles.pressed]}
         >

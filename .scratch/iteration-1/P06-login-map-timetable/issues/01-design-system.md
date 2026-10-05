@@ -54,11 +54,19 @@ Review, and what changed after it:
 
 Not checked, and left for the first run on a phone:
 
-- Whether a touch area that reaches past its parent works on both phones. A Chip (34 high), a suggestion (32 high) and a middle-sized Button (40 high) reach 48 through `hitSlop`; React Native's documents say that a touch area stops at the parent's bounds.
-- A Toast shown while a Dialog is open is drawn under it.
-- A Toast sits above where the bottom navigation is, also on a screen without one, and does not add the phone's gesture inset.
+- A Toast shown while a Dialog is open is drawn under it. No screen of this task shows one over the other.
 - The catalogue's variants are the design system's previews and a few more, not every combination of every property.
 - The Dialog and the Toast are in no screenshot: both need a press.
+
+### After the pull request's review (2026-10-05)
+
+- A Toast sits just above the phone's own bar. A screen with a bottom navigation says how high it stands, with `useToastAbove`, and the Toast sits above that too.
+- The bottom navigation has the round button in its middle that the main screen's frame draws (`raised`), and the catalogue shows the bar with the frame's five items beside the design system's.
+- The touch areas were measured on an Android emulator (Android 15, Expo Go 57), three presses at each point. A touch area that reaches past its parent takes presses, unless the parent cuts its content off, as a scrolling row does.
+  - A Chip's text and its ×, a middle-sized Button in a row of its own height, a Dialog's two Buttons and the part of the round button that stands out of the bar: every press inside the touch area counted, and none outside it.
+  - A ChatInput's suggestion took no press above or below itself: its scrolling row cut the touch area off at 32. The row is now taller by the reach and takes that much less room around it, and the same presses count. Nothing moved, and a press just below a suggestion does not reach the input.
+  - A Chip's text reached 36, not 48. It reaches 48 now.
+- Not measured: iOS and a real phone.
 
 ### Agent usage (2026-10-05)
 

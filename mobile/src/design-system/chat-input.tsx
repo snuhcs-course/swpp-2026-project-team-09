@@ -88,6 +88,7 @@ function Suggestions({ suggestions, disabled, onSend }: SuggestionsProps): React
     <ScrollView
       contentContainerStyle={styles.suggestions}
       horizontal
+      style={styles.suggestionScroller}
       keyboardShouldPersistTaps="handled"
       showsHorizontalScrollIndicator={false}
     >
@@ -109,11 +110,15 @@ function Suggestions({ suggestions, disabled, onSend }: SuggestionsProps): React
 }
 
 // A suggestion is 32 high: its touch area grows above and below, not into its neighbours.
-const SUGGESTION_HIT_SLOP = { top: space[2], bottom: space[2] };
+const SUGGESTION_REACH = space[2];
+const SUGGESTION_HIT_SLOP = { top: SUGGESTION_REACH, bottom: SUGGESTION_REACH };
 
 const styles = StyleSheet.create({
   wrap: { gap: space[2] },
-  suggestions: { gap: space[2] },
+  // A scrolling row cuts a touch area off at its own edge. The row is taller than its pills by the reach above and
+  // below them, and takes that much less room around it, so that nothing moves.
+  suggestionScroller: { marginVertical: -SUGGESTION_REACH },
+  suggestions: { gap: space[2], paddingVertical: SUGGESTION_REACH },
   suggestion: {
     justifyContent: 'center',
     height: 32,
