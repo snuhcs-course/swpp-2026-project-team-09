@@ -236,19 +236,56 @@ lists in `departments.ts`, found by a search. "저장하고 시작하기" is ena
 calls `completeOnboarding` and then `finishOnboarding`, and a save that failed says so in a toast and leaves the form.
 "로그아웃" signs out. Nothing on the screen leads back.
 
-The main screen (`src/screens/main/`) is the `Main` wireframe: the map on the whole campus, the zoom control over it
-and the bottom navigation under it, above the phone's own bar.
+The main screen (`src/screens/main/`) is the `Main` wireframe: the map on the whole campus with the people and places
+on it, the zoom control or an open card over it, and the bottom navigation under it, above the phone's own bar.
 
 - `useMainMap()` owns the map's handle and follows its camera: `camera`, `fitZoom`, the `detail` the zoom asks for
   (`overview`, `pins` or `names`), and the moves `zoomBy(steps)`, `goTo(position, level, orCloser)` and
-  `showCampus()`. Every part of the screen that moves the map or draws by zoom takes it. A move asked before the map
-  is ready is kept and carried out at the camera's first rest; of several, the last (`use-camera-moves.ts`).
+  `showCampus()`, and `fitTo(points, padding)`, which comes no closer than the `pins` level. Every part of the
+  screen that moves the map or draws by zoom takes it. A move or a fit asked before the map is ready is kept and
+  carried out at the camera's first rest; of several, the last (`use-camera-moves.ts`). The zoom buttons count from
+  where the last of them is on its way to.
 - The screen stands in a `PositionProvider`, so every part of it reads the same position with `usePosition()`.
-- `useMe(map)` gives the User's Avatar for the map, the position while it is on campus, "내 위치로 이동" and the
-  explanation before the location prompt.
+- `useMe(map)` gives the User's Avatar for the map, the position while it is on campus, "내 위치로 이동", the
+  explanation before the location prompt, and `sayWhyNotHere()` for a part that needs a position and has none.
 - What floats over the map is a child of `OverMap` in `main-screen.tsx` and places itself by the offsets of
-  `layout.ts`, which are counted from the navigation's top edge: the zoom control's bottom is 136 above it and a
-  toast's bottom 78.
+  `layout.ts`, which are counted from the navigation's top edge: the zoom control's bottom is 136 above it, a
+  toast's bottom 78 and a card's bottom 72. While a card is open a toast sits 8 above the card, never over its
+  buttons: the card tells its height and `MainNav` tells the toast (`useToastAbove`).
+- **Markers.** `useMapCards()` gives one `CardView` for each thing on the map, and `useThings(cards, detail,
+selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under its card's id. A Friend who can be
+  seen and a member of the User's Party who is no Friend are the wireframe's teardrop at every zoom, in the status's
+  colour or the Party's: small while the whole campus is in view, at full size from the `pins` level, and with the
+  given name under it from the `names` level. A Friend whose position is not known has no marker. The Global Event,
+  the User's Party and a Shared Quest are dots while the whole campus is in view, pins from the `pins` level and pins
+  with a short name from the `names` level. A Party's pin counts its members; a Global Event's counts the Parties
+  that go to it when they are more than one. A short name is the title cut at a word's end within 8 characters,
+  counted in whole characters, so that an emoji is never cut. A given name is the name without its first syllable for
+  a Korean name of three syllables, and the whole name otherwise (`src/features/map/short-name.ts`). A marker is read as the wireframe reads it: "김민준 · 공강 · 중앙도서관 근처 · 15:00까지 비어 있어요", "공식 행사 · AI 커리어
+  설명회". The selected marker has the selected look and is drawn above the others, the User's own Avatar included.
+- **Cards.** `useSelection(cards)` holds what is selected: `selected` (the open card), `open`, `select(id)` and
+  `close()`. A press on a marker selects it and opens its card (`card.tsx`) in place of the one that was open; the
+  card's X and Android's back button close it; a press beside the markers leaves it open. A card whose thing leaves
+  the map, such as a Friend who turns their location off, is closed for good: it does not open again on their return. The card shows the leading
+  mark (a person's Avatar, or the place's icon on its kind's colour), the sub-label, the title, the lines and its
+  button. "가까이 보기" is offered below the `names` level and brings the camera to the `close` level, keeping the
+  card. "같이 갈 사람 찾기", "참여하기", "파티 만들기" and "파티 열기" say "준비 중이에요". While a card is open the zoom
+  control is not shown; a part that a card hides asks `selection.open`. A row of a list opens a card with
+  `selection.select(cardId.friend(id))` (`cardId` of `src/features/map/adapter.ts`) and moves the map with
+  `map.goTo`.
+- **The route.** `useRoute(map, me)` gives the one line for `<Map>` and `routeTo(place)`. When the screen opens, the
+  way to the User's next Quest by time (`useNextQuest()`) is drawn, once, as soon as the User has a position on
+  campus, without a toast and without moving the map; without a position none is drawn. The next Quest is the first
+  of today's, in Korea's time, that has not ended: a class in progress is the next one until it ends. "길찾기", on a
+  Shared Quest's card, closes the card, asks the way from the User's position, fits both ends into what the screen's
+  controls and a pin's name leave of the map (`ROUTE_PADDING` in `layout.ts`), no closer than the `pins` level as
+  in the wireframe, and says "…까지 길 안내"; it replaces the line that is drawn. Without a position to start from it
+  draws nothing and keeps the card: without the permission it shows the explanation; off campus it brings the map to
+  the place and says "캠퍼스 밖에 있어요"; before the first position it says "위치를 찾는 중이에요". Nothing is drawn
+  for it later either, when the position comes: neither that way nor the opening route. A way that is not found says
+  "길을 찾지 못했어요". Leaving the screen drops the line and the opening route that was still to come, and coming
+  back draws nothing by itself.
+  The line is the wireframe's: dots in the Quest's colour, 3 wide, 2 long and 6 apart (`ROUTE_STYLE`).
 - The zoom in and zoom out buttons change the zoom by a factor 1.5 around the middle of the view. "내 위치로 이동"
   brings the map to the User at the larger of the current zoom and the `close` level; off campus it says "캠퍼스 밖에
   있어요" and shows the whole campus; without the permission it shows the explanation; with the permission and no
@@ -261,7 +298,8 @@ and the bottom navigation under it, above the phone's own bar.
   again when the app returns to the front.
 - The User's Avatar is shown while the position is inside the campus rectangle, at three quarters of its size while
   the whole campus is in view, and glides to each new position over the time that position took to come (`stepMs`).
-  Both of its looks, `me` and `me:small`, are asked for when the screen opens.
+  Both of its looks, `me` and `me:small`, are asked for when the screen opens. It takes no press (`passive`), as in
+  the wireframe: a press on it reaches a Friend's marker that it stands over.
 - The bottom navigation's 파티, 올리기, 행사 and 내 정보 say "준비 중이에요". The number on 파티 is `usePartyBadge()`.
   The bar has no line on top but the frame's shadow (`shadow.nav`), and under its items 16 or the phone's own inset,
   whichever is larger (`navPaddingBottom` in `layout.ts`).
@@ -305,6 +343,10 @@ const { route, isPending, isError, ask, clear } = useWalkingRoute();
 ask(myPosition, card.position); // on "길찾기": the start is where the User is now
 clear(); // when the route is dismissed or the screen is left
 ```
+
+A `CardView` holds what its card and its marker show: the card's words and buttons, `mark` (a person with the status,
+or a place's kind), `marker` (what a screen reader says, the short name under it and the count on its pin) and the
+position. Its `kind` is `global-event`, `party`, `shared-quest`, `friend` or `party-member`.
 
 Behind a hook are three layers:
 
@@ -420,7 +462,13 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
 A repeated element that the design system lacks becomes a shared component here, not a copy in each screen.
 
 `MapDot` is a marker from far away, which the frames draw and the design system does not name: the kind's colour in a
-white border.
+white border. A selected one is 4 larger, inside a ring of the key colour.
+
+`MapPerson` is a person on the map, which the `Main` wireframe draws and the design system does not name: a teardrop
+filled with a colour of `presence`, with the person's small Avatar in it, 24 wide in its `small` form and 36
+otherwise. Its box ends at its tip. A selected one is 1.18 times as large, inside a white ring and a ring of the key
+colour. `presence` names the colours of what a person is doing: `free`, `class`, `moving` and `off`, the statuses,
+which an Avatar's dot uses too, and `member`, a member of the User's Party who is no Friend.
 
 `MapPin` of the kind `me` has a `small` form, three quarters of its size, which the `Main` wireframe draws while the
 whole campus is in view. The icons `chevronDown` and `minus` are the wireframes' and not the design system's.
@@ -431,7 +479,7 @@ To see every component in every variant, open `/catalogue`: in the browser's add
 `exp://<the development server's address>/--/catalogue` in Expo Go. No screen links to it. The catalogue is for
 developers: a released app does not show it. Compare it with the design system's
 own previews when a component changes: `pnpm web` serves the catalogue to a browser, where a phone-sized window
-shows it as the previews do.
+shows it as the previews do. `MapDot` and `MapPerson` are in its `MapPin` section.
 
 ## Map
 
@@ -447,9 +495,11 @@ const [eventPin, myAvatar] = useMarkerImages([{ kind: 'official', form: 'pin' },
   bounds={CAMPUS_BOUNDS} // the visible area never leaves it
   minZoom={MIN_ZOOM}
   maxZoom={MAX_ZOOM}
-  markers={[{ id: 'event:e1', name: 'AI 커리어 채용설명회', position, image: eventPin, text: 'AI 커리어' }]}
-  avatars={[{ id: 'me', name: '내 위치', position: mine, image: myAvatar, glideMs: 5000, order: 1 }]}
+  markers={[{ id: 'event:e1', name: '공식 행사 · AI 커리어 설명회', position, image: eventPin, text: 'AI 커리어' }]}
+  // passive: it takes no press, and a press on it reaches what is drawn under it
+  avatars={[{ id: 'me', name: '내 위치', position: mine, image: myAvatar, glideMs: 5000, order: 1, passive: true }]}
   route={line} // LatLng[], or null for none
+  routeStyle={{ color: color.quest, width: 3, dash: [2, 6] }} // left out, the map's own plain line
   onPress={(id) => {}} // a marker's or an Avatar's id
   onCameraIdle={({ centre, zoom }) => {}} // once when the map is ready, then each time the camera rests elsewhere
   onFitZoom={(zoom) => {}} // the zoom at which the whole campus is in view, before the first onCameraIdle
@@ -458,6 +508,8 @@ const [eventPin, myAvatar] = useMarkerImages([{ kind: 'official', form: 'pin' },
 
 map.current?.moveCamera({ centre, zoom, animated: true }); // each of the three may be left out
 map.current?.fitTo([from, to], { padding: 48, animated: true }); // the closest view that shows all the points
+map.current?.fitTo([from, to], { padding: { top: 288, right: 108, bottom: 166, left: 46 } }); // room for controls
+map.current?.fitTo([from, to], { padding: 48, maxZoom: 15.8 }); // and no closer than a zoom
 ```
 
 - **Positions** are a latitude and a longitude in degrees. A **zoom** is the Web Mercator zoom level at the camera's
@@ -479,6 +531,8 @@ map.current?.fitTo([from, to], { padding: 48, animated: true }); // the closest 
   one press of the zoom in or zoom out button. `zoomDetail(zoom, fitZoom)` answers `overview`, `pins` or `names`.
 - **Markers** are what the list says: one that is new is added, one whose `id` stays is changed, one that is gone is
   removed. `name` is what a screen reader says; `text` is drawn under the image by the map, in the map's own text.
+  A `passive` marker or Avatar takes no press: `onPress` is never sent for it, and a press on it goes to what is
+  drawn under it, another marker or the map. It is still drawn and still read by its `name`.
 - **Avatars** are markers that glide. The map keeps each Avatar's last target and starts a glide only when
   `position` differs from it: the same position in a new list is no move. An Avatar that first appears is placed
   without a glide. A new position is reached over `glideMs`, and one that comes during a glide starts from where the
@@ -487,7 +541,13 @@ map.current?.fitTo([from, to], { padding: 48, animated: true }); // the closest 
 - **What is on top**: every Avatar is above every marker, and the route is under both. Among markers, and among
   Avatars, the higher `order` is on top; without one it is 0, and of two that are equal the later in the list is on
   top. The screen ranks what matters, such as the User's own Avatar or a selected marker.
-- **The route** is one line through the points given, or none.
+- **The route** is one line through the points given, or none. `routeStyle` says its look: a colour, a width in
+  points on the screen and, for a dashed line, the length of a dash and of the gap after it, measured as SVG's
+  `stroke-dasharray` is; the ends and the dashes are round, and the width and the dashes are the same at every zoom.
+  Without it the line is the map's own.
+- **`fitTo`** takes its `padding` as one number for all four edges or as one for each edge. The points are fitted
+  into what the padding leaves of the view, and their middle comes to the middle of that. With `maxZoom` the camera
+  comes no closer than that zoom: points that are near each other are shown from there.
 - `CAMPUS_BOUNDS`, the campus rectangle, and the limits `MIN_ZOOM` and `MAX_ZOOM` are constants in
   `src/map/campus.ts`. The rectangle is a little wider than the Campus Boundary, which stays the main server's.
 - The credit "© OpenStreetMap · 국토지리정보원" is at the bottom left of every map, inside the component.
@@ -504,10 +564,12 @@ The component chooses while the app runs (`src/map/map.tsx`), by whether the bui
   the words "지도는 Android 빌드에서 보입니다". It is no stand-in map: it has no tiles and draws no campus, and a User
   cannot pan it. It follows the camera's rules (`src/map/projection.ts`) and places what it was asked to show by
   position: each marker and Avatar as the design system's own view with its `text` under it, and the route as
-  straight strokes. So `moveCamera`, `fitTo` and a moved Avatar are seen, and a screen can be laid out around it.
+  straight strokes, or as the dashes of a dashed `routeStyle` (`src/map/plain-route.tsx`). So `moveCamera`, `fitTo` and a moved Avatar are seen, and a screen can be laid out around it.
   An Avatar glides there too, unless the phone asks for less motion.
 - On the plain ground each marker and Avatar is a button under its `name`, with the look's name as its `testID`,
-  and the route is read as "경로가 그려져 있습니다". One outside the view is not drawn and stays such a button. So a
+  and the route is read as "경로가 그려져 있습니다". A passive one is a picture under its `name`, not a button, and
+  takes no pointer events. The `text` under a marker is the `Main` wireframe's name: 11/16 in the bold weight on a
+  white round, 3 under the marker's foot. One outside the view is not drawn and stays in the tree under its name. So a
   screen reader, and a test, reach everything the map was asked to show. In a test the ground is as large as the
   window until it is laid out.
 
@@ -516,18 +578,29 @@ The component chooses while the app runs (`src/map/map.tsx`), by whether the bui
 A native map draws images, not React views. An image is a picture of the design system's own marker view, made once
 for each look and kept for as long as the app runs:
 
-- A look (`MarkerLook` in `src/map/marker-looks.tsx`) is the User's own Avatar (`MapPin` of the kind `me`, and its
-  `small` form under the name `me:small`), a Friend's
-  Avatar (`Avatar` with the friend ring: the letters or the photo, and the status colour) or a marker of each kind
-  of the design system. A Friend and a marker have two forms: a `dot` from far away, a `pin` from close. No look has
+- A look (`MarkerLook` in `src/map/marker-looks.tsx`) is one of three:
+  - the User's own Avatar: `MapPin` of the kind `me`, and its `small` form under the name `me:small`;
+  - a person: `MapPerson` with the letters or the photo, in a `tone` (a status, or `member`), `small` or at full
+    size, `selected` or not, named by the person's `id` and by whether there is a photo, such as
+    `person:full:free:f1`, `person:full:free:f2:photo` and `person:small:member:pm1:selected`. The photo's address,
+    which is new with every answer of the server, is no part of the name;
+  - a place of each kind of the design system, as a `dot` from far away or a `pin` from close, a pin with its
+    `count` when it has one, `selected` or not, such as `official:dot`, `party:pin:4` and `party:pin:4:selected`.
+- Two looks that draw the same picture have the same name, so the pictures stay few: two for each person in each
+  tone the person was seen in, a dot and a pin for each kind of place and count, and the selected look of the one
+  thing that is selected. No look has
   a label: a name is the map's own text.
+- A person's marker and a pin stand on their tip, the bottom of their view; a dot and the User's own Avatar sit on
+  their middle (`anchor`).
+- The main screen asks for every unselected look of its cards when the cards come, so that a change of the level of
+  detail finds its pictures made. A selected look is made when something is selected.
 - `useMarkerImages(looks)` answers one `MarkerImage` for each look, in the order asked. An image names its look at
   once (`look`, such as `official:pin`, and `view`, the look itself) and gains its picture (`uri`, with `width`,
   `height` and the `anchor` that stands on the position) when it is made. A native side draws a marker once its
   picture is there, and reads the picture again whenever the `uri` under a look's name changes.
 - Pictures are made only in a build that holds the native map module. There the look's view is drawn on a stage
-  outside the screen, `MarkerImageStage`, which the app shows once around every screen, with clear room for its ring
-  and shadow, and `react-native-view-shot` captures it as a PNG file in the phone's own pixels.
+  outside the screen, `MarkerImageStage`, which the app shows once around every screen, with clear room of 12
+  (`IMAGE_MARGIN`) for its rings and shadow, and `react-native-view-shot` captures it as a PNG file in the phone's own pixels.
 - A capture that gives no picture is tried again, four times in all, after 0.5, 1 and 2 seconds. A look whose tries
   are used up is tried again when a screen that asks for it is next shown.
 - A look with a photo is captured when the photo is shown. After three seconds without it the picture is made with
@@ -536,7 +609,9 @@ for each look and kept for as long as the app runs:
   ground draws the view itself.
 
 On Kakao's map a picture is drawn pixel for pixel, at the view's size and with its shadow. No picture is released
-while the app runs: there is one small file per look, and the looks grow only with the Friends a User has.
+while the app runs: there is one small file per look, and the looks grow only with the Friends a User has and the
+tones they are seen in. A person whose name or photo changes keeps the picture made first until the app starts
+again. `src/map/marker-looks.tsx` lists what a release of unused pictures has to cover.
 
 ### The Android module
 
@@ -552,13 +627,25 @@ of the design system's tokens. How it keeps the rules:
 - **Markers and Avatars** are labels on two layers, the Avatars' above the markers', ranked by `order` and their
   place in the list. A label is drawn once its picture is there; its `text` is the SDK's own text under it. An Avatar
   glides at an even speed, from where it is shown.
-- **The route** is the SDK's route line, under the labels.
+- **The route** is the SDK's route line, under the labels: a solid line in the colour and the width of `routeStyle`.
+  It does not draw the dashes yet.
+- **In TypeScript**, `src/map/native-map.tsx` keeps what the interface gained after the module was written, with the
+  sums of `src/map/projection.ts`, which the module's Kotlin repeats:
+  - the fit zoom, which the module does not send, from the view's size as it is laid out. `onFitZoom` is told before
+    the first `onCameraIdle`, which is kept back until then, and again when the size changes;
+  - a fit, worked out once the view's size is known and sent as the module's `moveCamera`, so that a padding for
+    each edge and `maxZoom` hold. Before that, the module's own `fitTo`, which takes one number, is asked with the
+    largest side of the padding;
+  - a passive marker's press, which the module sends, is dropped. A marker under a passive one still cannot be
+    pressed on a phone: that is the module's to add.
+    None of this was checked on a phone.
 - **Kakao's logo** stays as it is, moved to the bottom right, apart from the credit at the bottom left.
 - **The screen**: the module starts the SDK with the key when the app starts, and pauses and resumes each map when
   the app leaves and comes back to the screen.
 
 The module cannot be tested with Jest: Jest runs without it. It is checked by hand on `/map-check`, against the
-device check of the spec.
+device check of the spec. `native-map.tsx` is tested with the module's view mocked
+(`__tests__/map-native-view-test.tsx`).
 
 ### Trying it
 

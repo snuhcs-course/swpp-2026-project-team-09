@@ -123,7 +123,7 @@ describe('the Quest list', () => {
 });
 
 describe('the cards of the map', () => {
-  it('has a card for the Global Event, each Party, each Friend on the map and the other member of the Party, in that order', async () => {
+  it('has a card for the Global Event, the Party, the Shared Quest, each Friend on the map and the other member of the Party, in that order', async () => {
     const { result } = await renderHook(useMapCards, { wrapper });
 
     await settle();
@@ -132,13 +132,16 @@ describe('the cards of the map', () => {
     expect(cards.map(({ kind }) => kind)).toEqual([
       'global-event',
       'party',
-      'party',
+      'shared-quest',
       ...Array.from({ length: 10 }, () => 'friend'),
       'party-member',
     ]);
     expect(cards.find(({ id }) => id === 'event:e1')).toEqual({
       id: 'event:e1',
       kind: 'global-event',
+      mark: { type: 'place', place: 'official' },
+      // One Party goes to it: a pin shows a count from two on.
+      marker: { name: '공식 행사 · AI 커리어 설명회', short: 'AI 커리어', count: 0 },
       subLabel: '공식 행사 · 컴퓨터공학부 공지',
       title: 'AI 커리어 설명회',
       lines: [
@@ -161,21 +164,30 @@ describe('the cards of people and Parties', () => {
 
     const cards = result.current.data ?? [];
     expect(cards.find(({ id }) => id === 'party:q-ai')).toMatchObject({
+      kind: 'party',
+      mark: { type: 'place', place: 'party' },
+      marker: { name: '파티 · AI 커리어 설명회 같이 가요', short: 'AI 커리어', count: 4 },
       subLabel: '파티 · 4/6명',
       title: 'AI 커리어 설명회 같이 가요',
       lines: [{ icon: 'clock', text: '17:40 301동 앞에서 출발' }],
       primary: { label: '파티 열기', action: 'not-ready' },
     });
     expect(cards.find(({ id }) => id === 'party:q-dinner')).toMatchObject({
+      kind: 'shared-quest',
+      mark: { type: 'place', place: 'party' },
+      marker: { name: '파티 · 저녁 약속', short: '저녁 약속', count: 0 },
       subLabel: '비공개 파티 · 김민준과',
       title: '저녁 약속',
       lines: [
         { icon: 'clock', text: '오늘 20:10' },
         { icon: 'pin', text: '학생회관 (63동)' },
+        { icon: 'info', text: '활성화에 참여하면 서로 위치가 공유돼요' },
       ],
       primary: { label: '길찾기', action: 'route' },
     });
     expect(cards.find(({ id }) => id === 'friend:f1')).toMatchObject({
+      mark: { type: 'person', id: 'f1', name: '김민준', photo: null, presence: 'free' },
+      marker: { name: '김민준 · 공강 · 중앙도서관 근처 · 15:00까지 비어 있어요', short: '민준', count: 0 },
       subLabel: '컴퓨터공학부',
       title: '김민준',
       lines: [
@@ -185,6 +197,8 @@ describe('the cards of people and Parties', () => {
       primary: { label: '파티 만들기', action: 'not-ready' },
     });
     expect(cards.find(({ id }) => id === 'party-member:pm1')).toMatchObject({
+      mark: { type: 'person', id: 'pm1', name: '오현우', photo: null, presence: null },
+      marker: { name: '오현우 · 활성 파티 멤버 · 위치 공유 중', short: '현우', count: 0 },
       subLabel: '산업공학과 · 친구 아님',
       title: '오현우',
       lines: [{ icon: 'info', text: '활성 파티 멤버 · 위치 공유 중' }],

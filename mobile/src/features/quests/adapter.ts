@@ -1,5 +1,5 @@
 import type { JoinPolicy, LatLng, MyParty, Party, Quest, SubQuest } from '@/api/types';
-import { koreaClock } from '@/korea-time';
+import { koreaClock, sameKoreaDay } from '@/korea-time';
 
 // One row of the Quest list.
 export interface QuestRowView {
@@ -43,6 +43,40 @@ export function positionOf(subQuest: SubQuest | null): LatLng | null {
 function startOf(quest: Quest): number {
   const start = shownSubQuest(quest)?.startsAt ?? null;
   return start === null ? Number.POSITIVE_INFINITY : new Date(start).getTime();
+}
+
+// Where the User goes next.
+export interface NextQuestView {
+  id: string;
+  // "자료구조"
+  title: string;
+  position: LatLng;
+}
+
+// Whether a Quest is still ahead of the User today: it starts today in Korea's time and has not ended. One that is
+// going on, such as a class in progress, is ahead until its end; one without an end, until its start.
+function aheadToday(quest: Quest, now: Date): boolean {
+  const subQuest = shownSubQuest(quest);
+  const start = subQuest?.startsAt ?? null;
+  if (start === null || !sameKoreaDay(new Date(start), now)) {
+    return false;
+  }
+  return new Date(subQuest?.endsAt ?? start).getTime() > now.getTime();
+}
+
+// The User's next Quest by time: of today's Quests that have a place and have not ended, the one that starts first.
+// Null when none is left today.
+export function toNextQuest(quests: readonly Quest[], now: Date): NextQuestView | null {
+  const later = quests
+    .filter((quest) => aheadToday(quest, now))
+    .toSorted((first, second) => startOf(first) - startOf(second));
+  for (const quest of later) {
+    const position = positionOf(shownSubQuest(quest));
+    if (position !== null) {
+      return { id: quest.id, title: quest.title, position };
+    }
+  }
+  return null;
 }
 
 // The Party that is marked with a Quest: the User's own or a listed one. Null for a Quest that no Party names, which

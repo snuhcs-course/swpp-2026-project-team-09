@@ -1,24 +1,15 @@
 import { Controller, Get } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import {
-  HealthCheck,
-  HealthCheckResult,
-  HealthCheckService,
-  MicroserviceHealthIndicator,
-  PrismaHealthIndicator,
-} from '@nestjs/terminus';
-import { messagingOptions } from '../common/messaging.js';
+import { HealthCheck, HealthCheckResult, HealthCheckService, PrismaHealthIndicator } from '@nestjs/terminus';
 import { PrismaService } from '../common/prisma.service.js';
-import { Settings } from '../common/settings.js';
+import { Public } from '../common/public.decorator.js';
 
 @Controller('health')
+@Public()
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
     private readonly databaseHealth: PrismaHealthIndicator,
-    private readonly redisHealth: MicroserviceHealthIndicator,
     private readonly prisma: PrismaService,
-    private readonly settings: ConfigService<Settings, true>,
   ) {}
 
   @Get('live')
@@ -27,13 +18,10 @@ export class HealthController {
     return this.health.check([]);
   }
 
-  // Not ready while the database or Redis cannot be reached.
+  // Not ready while the database cannot be reached.
   @Get('ready')
   @HealthCheck()
   ready(): Promise<HealthCheckResult> {
-    return this.health.check([
-      () => this.databaseHealth.pingCheck('database', this.prisma),
-      () => this.redisHealth.pingCheck('redis', messagingOptions(this.settings)),
-    ]);
+    return this.health.check([() => this.databaseHealth.pingCheck('database', this.prisma)]);
   }
 }

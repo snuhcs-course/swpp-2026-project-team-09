@@ -109,15 +109,21 @@ export function MapPin(props: MapPinProps): ReactElement {
 }
 
 // A pin from far away, when the whole campus is in view: the kind's colour alone. A campus service's is a smaller
-// square.
-export function MapDot({ kind }: { kind: MapPlaceKind }): ReactElement {
+// square. A selected one is 4 larger, inside a ring of the key colour.
+export function MapDot({ kind, selected = false }: { kind: MapPlaceKind; selected?: boolean }): ReactElement {
   const { fill, service, name } = CATEGORIES[kind];
   return (
     <View
       accessibilityLabel={name}
       accessibilityRole="image"
+      accessibilityState={{ selected }}
       accessible
-      style={[styles.dot, service && styles.serviceDot, { backgroundColor: fill }]}
+      style={[
+        styles.dot,
+        service && styles.serviceDot,
+        { backgroundColor: fill },
+        selected && (service ? styles.selectedServiceDot : styles.selectedDot),
+      ]}
     />
   );
 }
@@ -133,6 +139,8 @@ const SERVICE_HEAD = 30 + HEAD_BORDER * 2;
 // 12 of colour, or 9 for a campus service, inside a white border of 2.
 const DOT = 12 + HEAD_BORDER * 2;
 const SERVICE_DOT = 9 + HEAD_BORDER * 2;
+const SELECTED_DOT_MORE = 4;
+const SELECTED_DOT_RING = `0 0 0 4px ${halo.selectedDot}, ${shadow.dot}`;
 const COUNT = 18;
 const COUNT_PADDING = 4;
 
@@ -167,12 +175,23 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     borderWidth: HEAD_BORDER,
     borderColor: color.surface,
-    boxShadow: shadow.card,
+    boxShadow: shadow.dot,
   },
   serviceDot: {
     width: SERVICE_DOT,
     height: SERVICE_DOT,
     borderRadius: 3,
+  },
+  // The frame's ring reaches 6 from the colour: 4 beyond the white border of 2.
+  selectedDot: {
+    width: DOT + SELECTED_DOT_MORE,
+    height: DOT + SELECTED_DOT_MORE,
+    boxShadow: SELECTED_DOT_RING,
+  },
+  selectedServiceDot: {
+    width: SERVICE_DOT + SELECTED_DOT_MORE,
+    height: SERVICE_DOT + SELECTED_DOT_MORE,
+    boxShadow: SELECTED_DOT_RING,
   },
   tail: {
     width: 2,
