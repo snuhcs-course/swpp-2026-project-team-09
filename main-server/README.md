@@ -96,7 +96,8 @@ The app signs in with Google and sends the ID token it gets to the main server:
   session's access tokens then get the plain 401, a second sign-out included, so the app takes a 401 to sign-out as
   done.
 - Sessions are kept in the database, and every User's request reads its session, so an access token stops working as
-  soon as its session ends. The main server then tells the socket server, which disconnects the session's connections.
+  soon as its session ends. The main server then tells the socket server, which disconnects the session's connections,
+  and clears the User's position (see [Location Sharing](#location-sharing)).
 
 `GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID` are the OAuth client IDs of the app and the admin site; startup
 stops when they are the same. They are not secrets. Access tokens are signed with ES256 and
@@ -122,8 +123,9 @@ lobby, which gives it what it needs to run, after a sign-in or a start with stor
 3. `POST /users/me/onboarding` with `{ "name": "...", "department": "...", "admissionYear": ..., "hashtags": [...] }`
    saves the profile and completes onboarding, and answers 204. The name and the department are required, and the
    profile's limits apply. The app sends it again when the answer was lost: a repeat saves the profile again.
-4. `POST /lobby`, with no body, answers `200 { "profile": { ... } }`, the profile as `GET /users/me/profile` gives it.
-   Later features add what the app needs when it starts.
+4. `POST /lobby`, with no body, answers `200 { "profile": { ... }, "masterSwitch": false }`, the profile as
+   `GET /users/me/profile` gives it and whether the User's [Master Switch](#location-sharing) is on. Later features add
+   what the app needs when it starts.
 
 A sign-in on another phone during onboarding ends the first phone's session as any sign-in does: its next request, the
 onboarding's included, gets 401 with `"code": "SESSION_REPLACED"`, and the other phone goes through onboarding.
@@ -167,20 +169,24 @@ Request to it. The routes, all a User's:
 - `POST /friend-requests/:id/accept` makes the two Friends, and `POST /friend-requests/:id/decline` removes the request.
   Only its receiver answers it. `POST /friend-requests/:id/cancel` removes it, and only its sender cancels it. Each
   answers 204.
-- `GET /friends` answers the User's Friends in the order of their names: `[{ "id", "name", "department" }]`, where
-  `id` is the Friend's User id.
+- `GET /friends` answers the User's Friends in the order of their names:
+  `[{ "id", "name", "department", "sharing", "visible" }]`, where `id` is the Friend's User id, `sharing` the User's own
+  switch for the friendship and `visible` whether the User can see the Friend on the map now, never why not (see
+  [Location Sharing](#location-sharing)).
 - `DELETE /friends/:userId` ends the friendship for both and answers 204.
+- `PUT /friends/:userId/sharing` with `{ "on": false }` turns the User's switch for the friendship off, `{ "on": true }`
+  on, and answers 204. It changes the User's own end only.
 
 A Friend ID is read in capitals, so one typed in small letters is found too. The refusals each have a `code`:
 
-| Refusal                                                           | Status | `code`                        |
-| ----------------------------------------------------------------- | ------ | ----------------------------- |
-| A Friend ID nobody holds, looked up or sent to                    | 404    | `FRIEND_ID_NOT_FOUND`         |
-| A Friend Request to the sender's own Friend ID                    | 400    | `OWN_FRIEND_ID`               |
-| A Friend Request to a Friend                                      | 409    | `ALREADY_FRIENDS`             |
-| A Friend Request to a User the sender's request already waits for | 409    | `FRIEND_REQUEST_ALREADY_SENT` |
-| An answer to a request that is not waiting for it from this User  | 404    | `FRIEND_REQUEST_NOT_FOUND`    |
-| Ending a friendship with a User who is not a Friend               | 404    | `FRIEND_NOT_FOUND`            |
+| Refusal                                                                     | Status | `code`                        |
+| --------------------------------------------------------------------------- | ------ | ----------------------------- |
+| A Friend ID nobody holds, looked up or sent to                              | 404    | `FRIEND_ID_NOT_FOUND`         |
+| A Friend Request to the sender's own Friend ID                              | 400    | `OWN_FRIEND_ID`               |
+| A Friend Request to a Friend                                                | 409    | `ALREADY_FRIENDS`             |
+| A Friend Request to a User the sender's request already waits for           | 409    | `FRIEND_REQUEST_ALREADY_SENT` |
+| An answer to a request that is not waiting for it from this User            | 404    | `FRIEND_REQUEST_NOT_FOUND`    |
+| Ending a friendship, or turning its switch, with a User who is not a Friend | 404    | `FRIEND_NOT_FOUND`            |
 
 A request answered or cancelled already is not waiting, so a second answer gets `FRIEND_REQUEST_NOT_FOUND`.
 
@@ -195,6 +201,9 @@ Friends with `FriendsService.areFriends(userId, otherUserId, tx?)`, exported by 
 After each change, `friends-changed` goes to both Users: when a request is sent, accepted, declined or cancelled, and
 when a friendship ends. It carries nothing, and the app fetches `GET /friends` and `GET /friend-requests` again (see
 [Signals](#signals)).
+
+A friendship starts with both switches on, so accepting a Friend Request starts Location Sharing between the two. The
+table keeps each User's switch at their own end, in `user_a_sharing` and `user_b_sharing`.
 
 ## Invite Links
 
@@ -245,6 +254,68 @@ keytool -list -v -keystore android/app/debug.keystore -alias androiddebugkey -st
 
 For a build signed on EAS, `eas credentials` shows the SHA-256 fingerprint of the Android keystore. An app the Play
 Store signs needs the fingerprint of the app signing key from the Play Console as well.
+
+## Location Sharing
+
+A User's app uploads the phone's positions, and the User's Friends see the User's Avatar move on their map. The
+numbers below are provisional until P17 has checked them on a phone.
+
+- **The Master Switch** turns all of a User's Location Sharing on or off. It is kept on the User
+  (`users.master_switch_on`), starts off, and signing in and signing out leave it as it is.
+  `PUT /users/me/master-switch` with `{ "on": true }` or `{ "on": false }` answers 204, and the lobby returns it as
+  `masterSwitch`. Turning it off clears the User's position.
+- **The switch of a friendship** is each Friend's own, on their end of the friendship, and starts on (see
+  [Friends](#friends)).
+- **Who sees whom**: a viewer sees a subject when both Master Switches are on, the subject has a position, which is
+  kept only inside the [Campus Boundary](#campus-boundary), and a relationship between the two has its switch on at
+  both ends. A friendship is the one relationship so far. Sharing is mutual: the rule is the same both ways, and a User
+  who turns a switch off also stops seeing the other. A Friend off campus, one with sharing off and one whose position
+  has expired look the same: no position, and `visible` false.
+- `POST /positions` with `{ "latitude": 37.4594, "longitude": 126.95199, "accuracy": 12, "measuredAt": "..." }`
+  uploads a position, where `accuracy` is the radius in metres within which the phone places itself and `measuredAt`
+  the time the phone measured it, in ISO 8601 with an offset. It answers `200 { "offCampus": false }` when the position
+  was kept. A position outside the Campus Boundary is not kept and clears the one stored, and the answer is
+  `200 { "offCampus": true }`: the app tells the User that they are not shared because they are off campus. The
+  Boundary is checked in server code, without a database query. Each upload replaces the one before, so it takes no
+  `Idempotency-Key`.
+- `GET /positions` answers the positions the User may see now:
+  `[{ "userId", "latitude", "longitude", "measuredAt" }]`. The app fetches it when it connects, reconnects and returns
+  to the front.
+
+An upload is refused, and nothing is stored, with these codes. The three numbers are `MAX_POSITION_AGE_MS`,
+`MAX_POSITION_LEAD_MS` and `MAX_ACCURACY_METRES` in `src/location-sharing/location-sharing.service.ts`.
+
+| Refusal                                                   | Status | `code`                    |
+| --------------------------------------------------------- | ------ | ------------------------- |
+| The User's Master Switch is off                           | 409    | `MASTER_SWITCH_OFF`       |
+| Measured more than 60 seconds ago                         | 400    | `POSITION_TOO_OLD`        |
+| Measured more than 10 seconds ahead of the server's clock | 400    | `POSITION_IN_THE_FUTURE`  |
+| An accuracy radius over 100 metres                        | 400    | `POSITION_TOO_INACCURATE` |
+
+What is stored: only each User's latest position, in Redis under `position:<userId>` as
+`{ "latitude", "longitude", "measuredAt" }`, which expires 10 minutes after it was stored. Redis counts the 10
+minutes. No position is written to the database or to a log, and no history is kept. The position is cleared when the
+User turns the Master Switch off, uploads a position off campus, and when the User's session ends, by a sign-in on
+another phone, a sign-out or a used refresh token, so that the phone's last position does not linger.
+
+What is pushed, through the [socket server](../socket-server/README.md#signals):
+
+- Each position kept goes as `position`, with `{ "userId", "latitude", "longitude", "measuredAt" }`, to the Users who
+  may see the subject at that moment. Delivery is lossy on purpose: only the newest position matters.
+- `position-removed`, with `{ "userId" }`, the subject, goes at once to each viewer who could see the subject before a
+  change and cannot after it: when either turns the Master Switch or the friendship's switch off, when the friendship
+  ends, when the subject leaves the Campus Boundary and when the subject's session ends.
+
+`VisibilityService` in `src/location-sharing/visibility.service.ts`, exported by `LocationSharingModule`, is the one
+place that decides who sees whom:
+
+- `viewersOf(subjectId)`: who may see the subject now.
+- `visibleTo(viewerId)`: whom the viewer may see now.
+- `announceRemovals(userId, change)`: runs `change`, a change that may end what the User sees or who sees the User,
+  and sends `position-removed` to each viewer who saw a subject before and does not after. It compares who sees whom
+  among the pairs that include the User, before and after the change. Pass the User whose switch, relationship or
+  position the change touches: every sight it can end includes that User, so a new cause, such as leaving a Party,
+  only wraps its change in it.
 
 ## Administrators
 
@@ -1106,6 +1177,8 @@ src/
 ├── users/                           a feature: the signed-in User, their profile, Friend ID and onboarding
 ├── friends/                         a feature: Friend IDs looked up, Friend Requests and Friends
 ├── invite-links/                    a feature: Invite Links, and the Digital Asset Links file that opens them in the app
+├── location-sharing/                a feature: the Master Switch, the positions uploaded, kept and pushed, and who
+│                                    sees whom
 ├── lobby/                           a feature: what the app needs when it starts
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
