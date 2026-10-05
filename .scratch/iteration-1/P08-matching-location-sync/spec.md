@@ -62,7 +62,7 @@ This spec is large because the restart left most domain work without a task of i
 38. As a Holder, I want my Quest to end when all of its Sub Quests have ended for me, so that my list shows only what is ahead.
 39. As a Holder, I want to drop a Quest, so that I can change my mind.
 40. As a Holder of a Shared Quest, I want to see the other Holders and which of them is the Leader, so that I know who is coming and who decides.
-41. As an SNU student, I want today's classes to appear as Class Quests in the same list with their Places, so that one list shows my day.
+41. As an SNU student, I want each of today's classes to appear as a Class Quest in the same list, with a Sub Quest for each of its times today and that time's Place and room, so that one list shows my day.
 42. As an SNU student, I want to hold Quests whose times overlap, so that the app does not decide for me.
 
 ### Gathering around a Quest
@@ -87,78 +87,79 @@ This spec is large because the restart left most domain work without a task of i
 
 ### Timetable
 
-60. As an SNU student, I want my timetable kept on the server, with the semester's first and last day and my classes, so that it survives a new phone and Class Quests can be made from it.
-61. As an SNU student, I want to add, edit and delete a class with its name, weekdays, times, Place and room, so that I can follow a changed timetable.
+60. As an SNU student, I want my classes kept on the server, so that they survive a new phone and Class Quests can be made from them.
+61. As an SNU student, I want to add, replace and delete a class with its course name and its times, each with a weekday, a start, an end, a Place and a room, so that a course held on two days in two rooms is one class and I can follow a changed timetable.
 62. As an SNU student, I want to be warned when two classes overlap and still be able to save, so that I notice a mistake without being stopped.
+63. As an SNU student, I want to clear my timetable at once when a semester ends, so that I can enter the next semester's classes.
 
 ### Matching
 
-63. As an SNU student, I want to ask for Matching on a Global Event and choose a group size from 2 to 4, so that I find companions.
-64. As an SNU student, I want to be told before asking that Matching gives me a Shared Quest with people I do not know, so that I consent knowingly.
-65. As an SNU student, I want one open request per Global Event, so that I am not matched twice.
-66. As an SNU student who already holds a Shared Quest for a Global Event, I want to be told that I cannot ask for Matching on it again, so that I do not end up in two groups.
-67. As an SNU student, I want to withdraw my request, so that I can change my mind.
-68. As an SNU student, I want to go on using the app while my request waits and to be told when I am matched, so that I do not watch a screen.
-69. As an SNU student, I want to be matched within about a minute once enough requests for the same event and the same size exist, or an Open Quest for the event has a free place, so that I do not wait needlessly.
-70. As an SNU student, I want to be placed into an Open Quest for the event whose capacity is the size I chose, so that I join a group that is already gathering.
-71. As the Leader of an Open Quest, I want Matching to fill its free places with people who asked for the same event and size, so that my group fills without my searching.
-72. As an SNU student, I want to be grouped with people who share my interest hashtags when there is a choice, so that we have something in common.
-73. As a matched SNU student, I want a Shared Quest with the others, so that we have a common plan.
-74. As a matched SNU student who already held a Quest for that event alone, I want it merged into the Shared Quest, so that I do not hold two.
-75. As an SNU student, I want my request to expire when the event starts or is cancelled, so that I am not matched after the fact.
-76. As a matched SNU student, I want the match never to be lost between servers, so that I am not told I was matched without getting a Quest.
+64. As an SNU student, I want to ask for Matching on a Global Event and choose a group size from 2 to 4, so that I find companions.
+65. As an SNU student, I want to be told before asking that Matching gives me a Shared Quest with people I do not know, so that I consent knowingly.
+66. As an SNU student, I want one open request per Global Event, so that I am not matched twice.
+67. As an SNU student who already holds a Shared Quest for a Global Event, I want to be told that I cannot ask for Matching on it again, so that I do not end up in two groups.
+68. As an SNU student, I want to withdraw my request, so that I can change my mind.
+69. As an SNU student, I want to go on using the app while my request waits and to be told when I am matched, so that I do not watch a screen.
+70. As an SNU student, I want to be matched within about a minute once enough requests for the same event and the same size exist, or an Open Quest for the event has a free place, so that I do not wait needlessly.
+71. As an SNU student, I want to be placed into an Open Quest for the event whose capacity is the size I chose, so that I join a group that is already gathering.
+72. As the Leader of an Open Quest, I want Matching to fill its free places with people who asked for the same event and size, so that my group fills without my searching.
+73. As an SNU student, I want to be grouped with people who share my interest hashtags when there is a choice, so that we have something in common.
+74. As a matched SNU student, I want a Shared Quest with the others, so that we have a common plan.
+75. As a matched SNU student who already held a Quest for that event alone, I want it merged into the Shared Quest, so that I do not hold two.
+76. As an SNU student, I want my request to expire when the event starts or is cancelled, so that I am not matched after the fact.
+77. As a matched SNU student, I want the match never to be lost between servers, so that I am not told I was matched without getting a Quest.
 
 ### Party
 
-77. As a Holder, I want to open the Party of one of my Quests when the time comes, so that we who hold it can be together and see each other.
-78. As an SNU student, I want to open a Party tied to no Quest, so that I can be with my Friends now.
-79. As an SNU student, I want to give a Party a title, a capacity from 1 to 8 with 4 as the default, and a Join Policy that is Closed unless I choose otherwise, so that I decide who comes.
-80. As an SNU student, I want to be in one Party at a time, so that it is always clear whom I am with.
-81. As a Holder, I want to be told when another Holder opens the Party of our Quest, so that I can enter it.
-82. As a Holder, I want to enter the Party of my Quest at once whatever its Join Policy is, so that the people I planned with are not kept waiting.
-83. As a Holder, I want my location shared with a Party only once I enter it myself, so that holding a Quest never shares where I am.
-84. As an SNU student, I want to see in my list of Friends which Friends are in a Party, with its title, its number of members and its Join Policy but not where it is, so that I can join my Friends.
-85. As an SNU student, I want to enter an Open Party that a Friend is in at once, so that I can walk in.
-86. As an SNU student, I want to ask to enter an Approval Party that a Friend is in, so that the Leader decides.
-87. As a Leader, I want to accept or decline each request, so that I control who enters.
-88. As a Leader, I want a Closed Party to admit only the people I invite and the Holders of its Quest, so that nobody else walks in.
-89. As a Leader, I want to invite a Friend or a Holder of the Party's Quest, so that they can enter whatever the Join Policy is.
-90. As an invited SNU student, I want to accept or decline, so that I am never added without my decision.
-91. As an SNU student who enters a Party without holding its Quest, I want my Quests to stay as they are, so that being together now does not sign me up for the plan.
-92. As an SNU student, I want to be told before entering that Party members share their location, so that I consent knowingly.
-93. As an SNU student, I want the capacity to hold even when two people enter at the same moment, so that a Party is never over its limit.
-94. As a Leader, I want to change the title, the capacity and the Join Policy, so that I can adjust as things change.
-95. As a Leader, I want to hand the role to another member, so that I can step back.
-96. As a Leader, I want to remove a member, so that I can deal with a problem.
-97. As a member, I want to leave, so that I can go my own way.
-98. As a member, I want the longest-standing member to become Leader when the Leader leaves, so that the Party goes on.
-99. As an SNU student, I want the Party to end when its last member leaves, so that empty Parties do not linger.
-100. As a Holder, I want to keep my Quest when I leave a Party or when it ends, so that my plan does not depend on the group.
-101. As a member, I want to stay in the Party when I drop its Quest, so that the group does not depend on my plan.
-102. As a Holder, I want at most one running Party per Quest, so that the Holders do not split by accident.
-103. As a Holder, I want to be led to the existing Party when I try to open a second one for the same Quest, so that I enter it instead.
-104. As a Holder, I want to open a new Party for the Quest after the earlier one ended, so that we can regroup.
-105. As a member, I want a switch for the Party, so that I can stop sharing with the group without leaving it.
+78. As a Holder, I want to open the Party of one of my Quests when the time comes, so that we who hold it can be together and see each other.
+79. As an SNU student, I want to open a Party tied to no Quest, so that I can be with my Friends now.
+80. As an SNU student, I want to give a Party a title, a capacity from 1 to 8 with 4 as the default, and a Join Policy that is Closed unless I choose otherwise, so that I decide who comes.
+81. As an SNU student, I want to be in one Party at a time, so that it is always clear whom I am with.
+82. As a Holder, I want to be told when another Holder opens the Party of our Quest, so that I can enter it.
+83. As a Holder, I want to enter the Party of my Quest at once whatever its Join Policy is, so that the people I planned with are not kept waiting.
+84. As a Holder, I want my location shared with a Party only once I enter it myself, so that holding a Quest never shares where I am.
+85. As an SNU student, I want to see in my list of Friends which Friends are in a Party, with its title, its number of members and its Join Policy but not where it is, so that I can join my Friends.
+86. As an SNU student, I want to enter an Open Party that a Friend is in at once, so that I can walk in.
+87. As an SNU student, I want to ask to enter an Approval Party that a Friend is in, so that the Leader decides.
+88. As a Leader, I want to accept or decline each request, so that I control who enters.
+89. As a Leader, I want a Closed Party to admit only the people I invite and the Holders of its Quest, so that nobody else walks in.
+90. As a Leader, I want to invite a Friend or a Holder of the Party's Quest, so that they can enter whatever the Join Policy is.
+91. As an invited SNU student, I want to accept or decline, so that I am never added without my decision.
+92. As an SNU student who enters a Party without holding its Quest, I want my Quests to stay as they are, so that being together now does not sign me up for the plan.
+93. As an SNU student, I want to be told before entering that Party members share their location, so that I consent knowingly.
+94. As an SNU student, I want the capacity to hold even when two people enter at the same moment, so that a Party is never over its limit.
+95. As a Leader, I want to change the title, the capacity and the Join Policy, so that I can adjust as things change.
+96. As a Leader, I want to hand the role to another member, so that I can step back.
+97. As a Leader, I want to remove a member, so that I can deal with a problem.
+98. As a member, I want to leave, so that I can go my own way.
+99. As a member, I want the longest-standing member to become Leader when the Leader leaves, so that the Party goes on.
+100. As an SNU student, I want the Party to end when its last member leaves, so that empty Parties do not linger.
+101. As a Holder, I want to keep my Quest when I leave a Party or when it ends, so that my plan does not depend on the group.
+102. As a member, I want to stay in the Party when I drop its Quest, so that the group does not depend on my plan.
+103. As a Holder, I want at most one running Party per Quest, so that the Holders do not split by accident.
+104. As a Holder, I want to be led to the existing Party when I try to open a second one for the same Quest, so that I enter it instead.
+105. As a Holder, I want to open a new Party for the Quest after the earlier one ended, so that we can regroup.
+106. As a member, I want a switch for the Party, so that I can stop sharing with the group without leaving it.
 
 ### Location
 
-106. As an SNU student, I want my Master Switch to be off until I turn it on, so that nothing is shared by default.
-107. As an SNU student, I want a Friend or a Party member to see me only while we both have the switch for that relationship on, so that sharing is always mutual.
-108. As an SNU student, I want to be visible to a person as long as one relationship between us is on, so that turning off one Friend's switch does not hide me from my Party.
-109. As an SNU student, I want to stop seeing the people of a relationship when I turn its switch off, so that I cannot watch without being seen.
-110. As an SNU student, I want the Master Switch to hide me from everyone and everyone from me, so that one switch is enough when I want to disappear.
-111. As an SNU student, I want to be hidden whenever I am outside the Campus Boundary, so that my life off campus stays private.
-112. As an SNU student, I want being hidden to look the same as having sharing off, so that nobody can tell why I am not shown.
-113. As an SNU student, I want the server to keep only my latest position, so that no history of my movement exists.
-114. As an SNU student, I want others' Avatars to move in near real time, so that the map feels alive.
-115. As an SNU student, I want a Friend whose phone stopped reporting to stay on the map, dimmed and marked with the time since the last report, for up to 10 minutes, so that the map does not flicker in a building with poor signal.
-116. As an SNU student, I want leaving a Party, ending a friendship or turning a switch off to take effect at once, so that revoking means now.
+107. As an SNU student, I want my Master Switch to be off until I turn it on, so that nothing is shared by default.
+108. As an SNU student, I want a Friend or a Party member to see me only while we both have the switch for that relationship on, so that sharing is always mutual.
+109. As an SNU student, I want to be visible to a person as long as one relationship between us is on, so that turning off one Friend's switch does not hide me from my Party.
+110. As an SNU student, I want to stop seeing the people of a relationship when I turn its switch off, so that I cannot watch without being seen.
+111. As an SNU student, I want the Master Switch to hide me from everyone and everyone from me, so that one switch is enough when I want to disappear.
+112. As an SNU student, I want to be hidden whenever I am outside the Campus Boundary, so that my life off campus stays private.
+113. As an SNU student, I want being hidden to look the same as having sharing off, so that nobody can tell why I am not shown.
+114. As an SNU student, I want the server to keep only my latest position, so that no history of my movement exists.
+115. As an SNU student, I want others' Avatars to move in near real time, so that the map feels alive.
+116. As an SNU student, I want a Friend whose phone stopped reporting to stay on the map, dimmed and marked with the time since the last report, for up to 10 minutes, so that the map does not flicker in a building with poor signal.
+117. As an SNU student, I want leaving a Party, ending a friendship or turning a switch off to take effect at once, so that revoking means now.
 
 ### Signals
 
-117. As an SNU student, I want changes made by others to my Party, Quests, Friends, Meetups and matches to appear without my asking, so that my screen is current.
-118. As an SNU student, I want my app to catch up when it reconnects or returns to the front, so that a missed signal is repaired.
-119. As an SNU student, I want newly published or changed Global Events to appear on my map, so that the map is current.
+118. As an SNU student, I want changes made by others to my Party, Quests, Friends, Meetups and matches to appear without my asking, so that my screen is current.
+119. As an SNU student, I want my app to catch up when it reconnects or returns to the front, so that a missed signal is repaired.
+120. As an SNU student, I want newly published or changed Global Events to appear on my map, so that the map is current.
 
 ## Implementation Decisions
 
@@ -220,7 +221,8 @@ This spec is large because the restart left most domain work without a task of i
 - A Quest whose Sub Quests have all ended for a Holder is left out of that Holder's list.
 - Dropping a Quest removes that Holder and that Holder's progress. The other Holders keep the Quest and are told. When the last Holder drops it, the Quest is deleted.
 - Several Quests may point at the same Global Event, each with its own Holders.
-- Class Quests are computed from the timetable when the Quest list is read. They are not stored. They are returned in the same shape as stored Quests, with one Sub Quest whose place is the class's Place. A Class Quest has no Leader and never takes other Holders.
+- Class Quests are computed from the timetable when the Quest list is read, and nothing is stored for them. A Class Quest exists for each class that has a time on today's weekday, by the date in Asia/Seoul, every week. It is returned in the shape of a stored Quest and marked as a Class Quest: the course name as its title, the User as its only Holder, no Leader, capacity 1 and Join Policy Closed, and one Sub Quest for each of the class's times today, in the order of their starts, with today's start and end, completion by time, and the time's Place with the room after its name as its place. A time without a Place gives a Sub Quest without a place. The Quest's identifier is the class's, and a Sub Quest's is its time's.
+- A Class Quest cannot be dropped, given a Sub Quest, joined, asked to join, given settings, invited to or given a Party, and it is never in the list of recruiting Quests.
 
 ### Gathering around a Quest
 
@@ -246,10 +248,12 @@ This spec is large because the restart left most domain work without a task of i
 
 ### Timetable
 
-- The main server stores one timetable per User: the semester's first and last day, either of which may be missing, and the classes. A class has a course name of 30 characters at most, one or more weekdays, a start and an end time of day, a Place from the list and a room text of 20 characters at most.
-- Overlapping classes are accepted, and the answer names the classes that overlap.
-- Only the owner reads or changes a timetable.
-- A Class Quest exists for each class held on today's weekday, within the semester's days where they are set.
+- A User's timetable is the User's classes, and nothing else is stored for it: no semester's days and no record of its own. A User keeps one timetable from semester to semester and clears it when a semester ends.
+- A class has a course name of 30 characters at most and from 1 to 10 times. A time has a weekday, a start and an end time of day in Asia/Seoul with the end after the start, an optional Place from the list and an optional room of 20 characters at most; an empty room is no room. A course held on Monday in one room and on Wednesday in another is one class with two times. Two times of one class that share a weekday and cross each other are refused.
+- A User holds at most 15 classes, however many times they have. The count and the insert happen in one transaction that locks the User's row, so that two adds at the same moment cannot pass the limit together.
+- A User reads the timetable, adds a class, replaces a class whole, deletes a class, and resets the timetable, which deletes every class and answers the same when there were none.
+- Two classes overlap when a time of one and a time of the other share a weekday and each starts before the other ends; times that touch do not overlap. Overlapping classes are accepted, and the answer names the classes each class overlaps.
+- Only its owner reads or changes a class: another User's class is answered as not found, before anything else about the request is checked.
 
 ### Matching
 
@@ -336,6 +340,8 @@ This spec is large because the restart left most domain work without a task of i
 - Grouping is tested at the module: a pool with shared hashtags, a pool without, the order of arrival, a remainder that waits.
 - Matching is tested for size, expiry of a closed event's requests, withdrawal, merging of a Quest held alone, the repeated request from match to main, a main server that answers only later, placement into an Open Quest in order of arrival, a Quest that filled or closed before its placement, and two match servers running a round at the same moment.
 - Proposing a Meetup, making a Quest, adding a Sub Quest and adding a class are tested with a repeated key: one record, the same response twice.
+- The timetable is tested under concurrency: several first adds of one User at once each succeed, and adds at the same moment stop at the limit of 15 classes.
+- Class Quests are tested with the clock set by the test.
 - Quest progress is tested per Holder: one Holder marks done and the other's state is unchanged; an end time passes and both see it ended.
 - Socket tests check that a signal reaches only the Users it names, that a position is pushed only to allowed viewers and that a connection with an invalid token is refused.
 - Prior art: the API-level tests of P04 and P07.
@@ -359,11 +365,12 @@ This spec is large because the restart left most domain work without a task of i
 - A Party ending by itself.
 - A list of Parties for every User or for a Global Event.
 - Location history.
+- Bringing a timetable in from SNUTT. SNUTT offers no public API, and the page SNUTT hosts for bringing a timetable in works only for the web addresses SNUTT's operators allow, so it needs their permission first. It is a later possibility that depends on that permission. The timetable's shape fits such a timetable: a class with several times, each with its own place, and a Place that may be missing.
 
 ## Further Notes
 
 - The schedule names 윤유상 and 김태현 as workers and plans 4 hours. The real size is several times that, because Friend, Meetup, Party, Quest and the timetable were added here.
 - This task depends on the Campus Boundary, the list of Places and the lookup of P07. The list of published Global Events that the app reads belongs to P12.
-- P06 covers the app. Its timetable screens, its Master Switch and its position sending connect to this task's API, and so does its naming of a point on the map.
+- P06 covers the app. Its Master Switch and its position sending connect to this task's API, and so does its naming of a point on the map. The app's timetable screens are not P06's: a later task of the app builds them on this task's timetable routes.
 - Published practice for live location is to push positions over an open connection at intervals of 2 to 10 seconds. The reference app Bump keeps location history; this project does not.
 - The Invite Link needs a fixed https address, and a build of the app is tied to it. A link made under one address stops working when the address changes.
