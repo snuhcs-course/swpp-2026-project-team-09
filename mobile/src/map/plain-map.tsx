@@ -96,5 +96,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: color.surfaceSubtle,
   },
-  words: { ...text.body, color: color.inkMuted },
+  // Small and at the top, so that the words do not run through what is placed on the ground.
+  words: { ...text.caption, position: 'absolute', top: 12, alignSelf: 'center', color: color.inkMuted },
 });
