@@ -95,6 +95,9 @@ export interface FitOptions {
 // - `onCameraIdle` is sent once when the map is ready, and each time the camera comes to rest somewhere else: after
 //   a User's pan or zoom ends, and after `moveCamera` or `fitTo`, animated or not. A call that changes nothing
 //   sends nothing.
+// - `onFitZoom` gives the fit zoom: the lowest zoom allowed, at which the map opens and the whole campus is in view.
+//   It is sent once when the map is ready, before the first `onCameraIdle`, and again whenever it changes, which it
+//   does with the view's size. A screen counts its zoom levels from it (`ZOOM_OFFSET` in `campus.ts`).
 export interface MapHandle {
   moveCamera: (move: CameraMove) => void;
   // Moves the camera to the middle of the points, at the closest zoom at which all of them are inside the view with
@@ -114,6 +117,8 @@ export interface MapProps {
   // A press on a marker or an Avatar, with its identifier.
   onPress?: (id: string) => void;
   onCameraIdle?: (camera: MapCamera) => void;
+  // The lowest zoom allowed, in the map's own measure: see the camera's rules above.
+  onFitZoom?: (zoom: number) => void;
   ref?: Ref<MapHandle>;
   // The map fills its parent unless this says otherwise.
   style?: StyleProp<ViewStyle>;

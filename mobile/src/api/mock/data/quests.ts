@@ -1,4 +1,4 @@
-import type { GlobalEvent, MyParty, Party, PartyMark, Quest, SubQuest } from '@/api/types';
+import type { GlobalEvent, MyParty, Party, PartyMark, PartyNews, Quest, SubQuest } from '@/api/types';
 import { PARTY_MEMBER } from './friends';
 import { frameTime, ME } from './frame';
 
@@ -117,3 +117,6 @@ export const MY_PARTY: MyParty = {
     { ...ME, leader: false, visible: true },
   ],
 };
+
+// The app's own. The frame's badge on 파티: one Party that waits for the User's answer and two invitations.
+export const PARTY_NEWS: PartyNews = { count: 3 };

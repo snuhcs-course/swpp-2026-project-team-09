@@ -21,6 +21,8 @@ const CATEGORIES: Record<MapPlaceKind, { fill: string; icon: IconName; service: 
 
 interface MePinProps {
   kind: 'me';
+  // At three quarters of its size, as the `Main` frame draws it while the whole campus is in view.
+  small?: boolean;
 }
 
 interface FriendPinProps {
@@ -85,8 +87,13 @@ function CategoryPin({ kind, label, count = 0, selected = false, icon }: Categor
 export function MapPin(props: MapPinProps): ReactElement {
   if (props.kind === 'me') {
     return (
-      <View accessibilityLabel="내 위치" accessibilityRole="image" accessible style={styles.me}>
-        <View style={styles.meDot} />
+      <View
+        accessibilityLabel="내 위치"
+        accessibilityRole="image"
+        accessible
+        style={[styles.me, props.small === true && styles.smallMe]}
+      >
+        <View style={[styles.meDot, props.small === true && styles.smallMeDot]} />
       </View>
     );
   }
@@ -117,6 +124,8 @@ export function MapDot({ kind }: { kind: MapPlaceKind }): ReactElement {
 
 const ME_HALO = 48;
 const ME_DOT = 16;
+const ME_BORDER = 3;
+const ME_SMALL = 0.75;
 // The design system's sizes are the inside of a head; its white border of 2 is added around it.
 const HEAD_BORDER = 2;
 const HEAD = sizes.pin + HEAD_BORDER * 2;
@@ -205,9 +214,11 @@ const styles = StyleSheet.create({
     width: ME_DOT,
     height: ME_DOT,
     borderRadius: radius.full,
-    borderWidth: 3,
+    borderWidth: ME_BORDER,
     borderColor: color.surface,
     backgroundColor: color.me,
     boxShadow: shadow.float,
   },
+  smallMe: { width: ME_HALO * ME_SMALL, height: ME_HALO * ME_SMALL },
+  smallMeDot: { width: ME_DOT * ME_SMALL, height: ME_DOT * ME_SMALL, borderWidth: ME_BORDER * ME_SMALL },
 });

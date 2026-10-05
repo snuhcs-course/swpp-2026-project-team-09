@@ -31,9 +31,17 @@ A setting is an `EXPO_PUBLIC_` variable given when the app is started, for examp
 | `EXPO_PUBLIC_MOCK_FAIL`      | operations, separated by commas                       | These mocks answer with a failure                   |
 | `EXPO_PUBLIC_MOCK_EMPTY`     | operations, separated by commas                       | These mocks answer with nothing                     |
 | `EXPO_PUBLIC_FIRST_STATE`    | `1`                                                   | What the phone keeps is cleared when the app starts |
+| `EXPO_PUBLIC_CAMPUS_WALK`    | `1`                                                   | The User's position is a walk on campus (see below) |
 
 An operation is named as in the table under "Data" below, such as `listFriends`. `completeOnboarding` and `enterLobby`
 have no empty answer, so `EXPO_PUBLIC_MOCK_EMPTY` leaves them as they are.
+
+With `EXPO_PUBLIC_CAMPUS_WALK=1` the phone is not asked for its position or for the permission. The User's position
+is a fixed round on campus (`src/position/walk.ts`) that starts where the `Main` wireframe draws the User and takes a
+step every five seconds, so the User's Avatar is on the map and glides, also on the web and far from the campus.
+
+Nothing on the main screen signs a User out: sign-out is on 내 정보, which another task builds. To see the sign-in
+screen again, start the app with `EXPO_PUBLIC_FIRST_STATE=1`.
 
 ### Google sign-in
 
@@ -104,6 +112,7 @@ src/api/            the API client, the main server's answers as types, and the 
 src/auth/           sign-in and sign-out
 src/features/       one folder per feature: its adapter and the hooks a screen asks for data with
 src/map/            the one map component, its interface and the pictures of its markers
+src/position/       the User's own position: the phone's, or the development walk
 src/storage/        what the phone keeps between two starts of the app
 src/session/        where the User is in the flow between the screens, and the work of the start
 src/screens/        the screens that the routes show; a screen of several files has a folder
@@ -145,6 +154,26 @@ lists in `departments.ts`, found by a search. "저장하고 시작하기" is ena
 calls `completeOnboarding` and then `finishOnboarding`, and a save that failed says so in a toast and leaves the form.
 "로그아웃" signs out. Nothing on the screen leads back.
 
+The main screen (`src/screens/main/`) is the `Main` wireframe: the map on the whole campus, the zoom control over it
+and the bottom navigation under it, above the phone's own bar.
+
+- `useMainMap()` owns the map's handle and follows its camera: `camera`, `fitZoom`, the `detail` the zoom asks for
+  (`overview`, `pins` or `names`), and the moves `zoomBy(steps)`, `goTo(position, level, orCloser)` and
+  `showCampus()`. Every part of the screen that moves the map or draws by zoom takes it.
+- `useMe(map)` gives the User's Avatar for the map, the position while it is on campus, "내 위치로 이동" and the
+  explanation before the location prompt.
+- What floats over the map is a child of `OverMap` in `main-screen.tsx` and places itself by the offsets of
+  `layout.ts`, which are counted from the navigation's top edge.
+- The zoom in and zoom out buttons change the zoom by a factor 1.5 around the middle of the view. "내 위치로 이동"
+  brings the map to the User at the larger of the current zoom and the `close` level; off campus it says "캠퍼스 밖에
+  있어요" and shows the whole campus; without the permission it shows the explanation.
+- The explanation, "내 위치를 지도에 표시할까요?", appears when the screen opens to a User whom the phone never asked.
+  "계속" leads to the system's prompt, "나중에" closes it, and either way it comes again only on "내 위치로 이동".
+- The User's Avatar is shown while the position is inside the campus rectangle, at three quarters of its size while
+  the whole campus is in view, and glides to each new position over the five seconds between two positions.
+- The bottom navigation's 파티, 올리기, 행사 and 내 정보 say "준비 중이에요". The number on 파티 is `usePartyBadge()`.
+- The map ends at the navigation's top, so that its credit stays uncovered.
+
 The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and
 `/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
 closes back to the screen it was opened from. The documents' texts are placeholders.
@@ -170,8 +199,8 @@ the entries it needs. So an operation that two screens need is asked once, and o
 
 When an operation fails:
 
-- `listFriendStatuses` and `listGlobalEventAnnouncers`, the app's own, never fail a screen: it shows what it has
-  without them.
+- `listFriendStatuses`, `listGlobalEventAnnouncers` and `getPartyNews`, the app's own, never fail a screen: it shows
+  what it has without them.
 - The friend list and the Quest list have `isError` and no `data`.
 - The map has `isError` and keeps in `data` the cards that are still right: without the Global Events, the Friends'
   cards still show.
@@ -207,6 +236,7 @@ Behind a hook are three layers:
 | `listGlobalEvents`                          | The published Global Events                        | None yet: the app's own                       |
 | `listGlobalEventAnnouncers`                 | Who announced each Global Event                    | None: the app's own                           |
 | `listParties`, `getMyParty`                 | The Parties, and the one the User is in            | `GET /parties`, `/parties/mine` (provisional) |
+| `getPartyNews`                              | How many things wait for the User in Parties       | None: the app's own                           |
 | `findWalkingRoute`                          | The way on foot between two points                 | `GET /walking-route`                          |
 
 While the answers are mocks, the app's time is the moment the wireframe shows, 1 October 2026 at 13:37
@@ -215,6 +245,26 @@ While the answers are mocks, the app's time is the moment the wireframe shows, 1
 The phone keeps that the User signed in, that the User agreed to the legal documents, what the sign-in suggested for
 Onboarding, whether Onboarding is finished and its answers (`src/storage/kept.ts`). `openKept()` is the read for the
 start of the app: it is the one that honours `EXPO_PUBLIC_FIRST_STATE`.
+
+### The User's position
+
+The User's own position is not a server's answer. It comes from one hook, `usePosition()` of `@/position`:
+
+```tsx
+const { permission, position, ask } = usePosition();
+permission; // 'checking' until the phone has said, then 'unasked', 'granted' or 'refused'
+position; // LatLng, or null without the permission and until the first position comes
+await ask(); // shows the system's prompt and follows its answer
+```
+
+- It reads the phone through `expo-location`, which `src/position/phone.ts` alone names: the permission for the time
+  the app is in use, and a new position about every five seconds (`POSITION_EVERY_MS`) while a screen that asks is
+  shown. On the web that is the browser's geolocation. Where the phone or the browser cannot answer, the permission
+  counts as never asked or refused and the position stays null: nothing throws.
+- With `EXPO_PUBLIC_CAMPUS_WALK=1` the hook answers the development walk instead and never asks the phone.
+- The words of the system's prompt on iOS are in `app.json`, with the library's config plugin. The app asks for no
+  position in the background.
+- The position is sent nowhere. Sending it is built with the Master Switch, by another task.
 
 ### From a mock to the main server
 
@@ -247,10 +297,12 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
   `Avatar` is a person's picture anywhere, its event kind is `official`, and a card's place is its `venue`.
 - **Dialog**: the design system has none and the frames ask questions with two answers. `Dialog` shows a title, a
   sentence and one or two Buttons over the screen.
-- **Toast**: the design system has none and the wireframes use one. `useToast()` gives the call that shows a
-  sentence for a moment, and `useNotReadyToast()` the call for a control whose feature belongs to another task: it
-  says "준비 중이에요". A toast sits just above the phone's own bar; a screen with a bottom navigation
-  calls `useToastAbove(height)` so that it sits above that too.
+- **Toast**: the design system has none and the wireframes use one. It is the `Main` wireframe's: a dark bar from 16
+  to 16 from the sides with a check mark before its words. `useToast()` gives the call that shows a sentence for 2.4
+  seconds, or for the time given as its second argument (`showToast(words, 2000)`), and `useNotReadyToast()` the call
+  for a control whose feature belongs to another task: it says "준비 중이에요". A toast sits just above the phone's own
+  bar; a screen with something fixed to its bottom calls `useToastAbove(height)` so that it sits above that too, as
+  the main screen's navigation does.
 - The app is light only. The design system has no dark theme, so `app.json` says `light`.
 
 A repeated element that the design system lacks becomes a shared component here, not a copy in each screen.
@@ -258,9 +310,14 @@ A repeated element that the design system lacks becomes a shared component here,
 `MapDot` is a marker from far away, which the frames draw and the design system does not name: the kind's colour in a
 white border.
 
-To see every component in every variant, start the app and press "디자인 시스템 보기" on a screen that is still a
-placeholder, or open
-`/catalogue`. The catalogue is for developers: a released app does not show it. Compare it with the design system's
+`MapPin` of the kind `me` has a `small` form, three quarters of its size, which the `Main` wireframe draws while the
+whole campus is in view. The icons `chevronDown` and `minus` are the wireframes' and not the design system's.
+
+To see every component in every variant, open `/catalogue`: in the browser's address bar, with the link
+`snunow://catalogue` in a development build (on Android,
+`adb shell am start -a android.intent.action.VIEW -d snunow://catalogue`), or with the link
+`exp://<the development server's address>/--/catalogue` in Expo Go. No screen links to it. The catalogue is for
+developers: a released app does not show it. Compare it with the design system's
 own previews when a component changes: `pnpm web` serves the catalogue to a browser, where a phone-sized window
 shows it as the previews do.
 
@@ -283,6 +340,7 @@ const [eventPin, myAvatar] = useMarkerImages([{ kind: 'official', form: 'pin' },
   route={line} // LatLng[], or null for none
   onPress={(id) => {}} // a marker's or an Avatar's id
   onCameraIdle={({ centre, zoom }) => {}} // once when the map is ready, then each time the camera rests elsewhere
+  onFitZoom={(zoom) => {}} // the zoom at which the whole campus is in view, before the first onCameraIdle
   ref={map}
 />;
 
@@ -300,6 +358,13 @@ map.current?.fitTo([from, to], { padding: 48, animated: true }); // the closest 
   inside these rules.
 - **`onCameraIdle`** is sent once when the map is ready, and each time the camera comes to rest somewhere else:
   after a User's pan or zoom ends, and after `moveCamera` or `fitTo`. A call that changes nothing sends nothing.
+- **`onFitZoom`** gives the fit zoom: the lowest zoom allowed, at which the map opens. It is sent once when the map
+  is ready, before the first `onCameraIdle`, and again whenever the view's size changes it.
+- **Zoom levels** are counted from the fit zoom, because it differs from phone to phone. `ZOOM_OFFSET` in
+  `src/map/campus.ts` names them once, from the `Main` wireframe's zoom factor z as log2(z): `pins` (z 1.6, +0.68),
+  from which a place is a pin and not a dot; `names` (z 2.4, +1.26), from which a name is under it; `close` (z 2.6,
+  +1.38), where "가까이 보기", a Friend's row and "내 위치로 이동" bring the camera; and `step` (a factor 1.5, 0.585),
+  one press of the zoom in or zoom out button. `zoomDetail(zoom, fitZoom)` answers `overview`, `pins` or `names`.
 - **Markers** are what the list says: one that is new is added, one whose `id` stays is changed, one that is gone is
   removed. `name` is what a screen reader says; `text` is drawn under the image by the map, in the map's own text.
 - **Avatars** are markers that glide. The map keeps each Avatar's last target and starts a glide only when
@@ -339,7 +404,8 @@ The component chooses while the app runs (`src/map/map.tsx`), by whether the bui
 A native map draws images, not React views. An image is a picture of the design system's own marker view, made once
 for each look and kept for as long as the app runs:
 
-- A look (`MarkerLook` in `src/map/marker-looks.tsx`) is the User's own Avatar (`MapPin` of the kind `me`), a Friend's
+- A look (`MarkerLook` in `src/map/marker-looks.tsx`) is the User's own Avatar (`MapPin` of the kind `me`, and its
+  `small` form under the name `me:small`), a Friend's
   Avatar (`Avatar` with the friend ring: the letters or the photo, and the status colour) or a marker of each kind
   of the design system. A Friend and a marker have two forms: a `dot` from far away, a `pin` from close. No look has
   a label: a name is the map's own text.
@@ -362,7 +428,7 @@ view's size and with its shadow, and when a picture that no screen uses any more
 
 ### Trying it
 
-`/map-check`, also behind "지도 보기" on a screen that is still a placeholder, shows the component with sample markers,
+`/map-check`, opened as `/catalogue` is (`snunow://map-check` in a development build), shows the component with sample markers,
 Avatars and buttons that move the User's Avatar, draw and clear the route line, fit the camera to the route, zoom in
 and show the whole campus. It says what was pressed and where the camera stopped. It is for developers: a released
 app does not show it. The native modules are checked on it.

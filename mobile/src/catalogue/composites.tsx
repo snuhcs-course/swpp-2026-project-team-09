@@ -174,6 +174,14 @@ export function Toasts(): ReactElement {
         <Button onPress={showNotReady} variant="secondary">
           준비 중 알림
         </Button>
+        <Button
+          onPress={() => {
+            showToast('서지우님은 위치가 꺼져 있어요', 2000);
+          }}
+          variant="secondary"
+        >
+          2초 알림
+        </Button>
       </Row>
     </Section>
   );

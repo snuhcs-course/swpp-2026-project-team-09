@@ -63,8 +63,8 @@ Last updated: 2026-10-05
 
 ### 1.7 Main screen (tickets 08 to 10; `Main` and its states)
 
-- [ ] The map with the User's Avatar, the zoom and position buttons, the location explanation, off campus
-- [ ] The walk on campus for development (section 5)
+- [x] The map with the User's Avatar, the zoom and position buttons, the location explanation, off campus
+- [x] The walk on campus for development (section 5)
 - [ ] Avatars and markers with their detail by zoom: Friends, a member of the User's Party, a Global Event, a Party
 - [ ] A card for each, "가까이 보기", "길찾기" with the route line, the card's X
 - [ ] The friend list and the Quest list, collapsing; a Friend's row; a Class Quest's row
@@ -318,8 +318,15 @@ Shape: on the main line (`GET /walking-route`).
 
 ```ts
 // Not a server's answer: the phone's own position, behind one hook, so that the development walk can replace it.
-usePosition(): { permission: 'unasked' | 'granted' | 'refused'; position: LatLng | null; ask: () => Promise<void> };
+// `checking` is the moment until the phone has said whether the User was asked before.
+usePosition(): {
+  permission: 'checking' | 'unasked' | 'granted' | 'refused';
+  position: LatLng | null;
+  ask: () => Promise<void>;
+};
 ```
+
+It is `usePosition` of `mobile/src/position`, on `expo-location`. A new position comes about every five seconds.
 
 ### 2.9 The map component
 
@@ -345,6 +352,7 @@ usePosition(): { permission: 'unasked' | 'granted' | 'refused'; position: LatLng
   route={[{ latitude: 37.45905, longitude: 126.9512 }, { latitude: 37.4601, longitude: 126.9507 }]} // or null for none
   onPress={(id) => {}} // a marker's or an Avatar's id
   onCameraIdle={({ centre, zoom }) => {}} // the screen switches the detail of markers and Avatars from zoom
+  onFitZoom={(zoom) => {}} // the zoom at which the whole campus is in view; the zoom levels are counted from it
   ref={map}
 />
 
@@ -355,7 +363,7 @@ map.current.fitTo(points, { padding: 48, animated: true }); // the closest view 
 // is made; a native side draws a marker once the picture is there and reads it again when its uri changes.
 const [globalEventPin, myAvatar, friendAvatar] = useMarkerImages([
   { kind: 'official', form: 'pin' }, // a marker of each kind of the design system, as a 'dot' or a 'pin'
-  { kind: 'me' },
+  { kind: 'me' }, // with `small: true`, at three quarters of its size, while the whole campus is in view
   { kind: 'friend', form: 'pin', name: '김민준', photo: null, status: 'free' },
 ]);
 
@@ -375,6 +383,7 @@ The rules, for every implementation:
 - The camera stays inside `bounds`: the visible area never leaves the rectangle. The lowest zoom allowed is the larger of `minZoom` and the zoom at which the view just fits inside the rectangle, which depends on the view's size; the centre is kept far enough from the edges; the highest zoom is `maxZoom`. The map opens on the middle of the rectangle at the lowest zoom allowed.
 - `moveCamera` and `fitTo` are first brought inside these rules. `fitTo` moves to the middle of the points at the closest zoom at which all of them are inside the view with the padding.
 - `onCameraIdle` is sent once when the map is ready and each time the camera comes to rest somewhere else: after a User's pan or zoom ends, and after `moveCamera` or `fitTo`. A call that changes nothing sends nothing.
+- `onFitZoom` gives the fit zoom, which is the lowest zoom allowed: once when the map is ready, before the first `onCameraIdle`, and again whenever the view's size changes it. The main screen's levels are offsets from it, `ZOOM_OFFSET` in `mobile/src/map/campus.ts`: `pins` +0.68, `names` +1.26, `close` +1.38, `step` 0.585.
 - A marker that is new in its list is added, one whose `id` stays is changed, one that is gone is removed.
 - An Avatar glides. The map keeps each Avatar's last target and starts a glide only when `position` differs from it; the lists are new on every render. An Avatar that first appears is placed without a glide. A new position is reached over `glideMs`; one that comes during a glide starts from where the Avatar is shown. A new `image` or `text` alone does not restart a glide. A `glideMs` of 0 places it at once.
 - Every Avatar is above every marker, and the route is under both. Among markers, and among Avatars, the higher `order` is on top, and of two that are equal the later in the list. The screen ranks the User's own Avatar and a selected marker.
@@ -442,6 +451,7 @@ Sending the User's own position is not in this table: it is built in P09 with th
 | The User's own id | The mock's fixed one | The access token |
 | The app's time | The moment the `Main` frame shows | The phone's time |
 | Parties | Open pull request | `GET /parties`, `GET /parties/mine` |
+| The number on the bottom navigation's 파티 (`getPartyNews`) | The app's own: 3 | Nothing yet |
 | Walking route | On the main line | `GET /walking-route` |
 | The AI input, stories, 오늘의 발자국 | Sample content inside the screen | No spec covers them |
 
@@ -474,7 +484,7 @@ Each is a setting given when the app is started, as an `EXPO_PUBLIC_` variable. 
 | The sign-in's ending | The sign-in is the mock, also in a build that could ask Google, and ends in `signed-in`, `cancelled`, `not-snu-account` or `failed` | 02 |
 | A slow or failing mock | A named mock answers slowly, with a failure or with nothing | 02 |
 | The first state | What the phone keeps is cleared when the app starts: not signed in, no Onboarding | 02 |
-| The walk on campus | The phone's position is replaced by a walk along a fixed path on campus | 08 |
+| The walk on campus, `EXPO_PUBLIC_CAMPUS_WALK=1` | The phone's position is replaced by a walk along a fixed path on campus | 08 |
 
 ## 6. Design: to settle
 
