@@ -96,7 +96,8 @@ The app signs in with Google and sends the ID token it gets to the main server:
   session's access tokens then get the plain 401, a second sign-out included, so the app takes a 401 to sign-out as
   done.
 - Sessions are kept in the database, and every User's request reads its session, so an access token stops working as
-  soon as its session ends. The main server then tells the socket server, which disconnects the session's connections.
+  soon as its session ends. The main server then tells the socket server, which disconnects the session's connections,
+  and clears the User's position (see [Location Sharing](#location-sharing)).
 
 `GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID` are the OAuth client IDs of the app and the admin site; startup
 stops when they are the same. They are not secrets. Access tokens are signed with ES256 and
@@ -122,8 +123,9 @@ lobby, which gives it what it needs to run, after a sign-in or a start with stor
 3. `POST /users/me/onboarding` with `{ "name": "...", "department": "...", "admissionYear": ..., "hashtags": [...] }`
    saves the profile and completes onboarding, and answers 204. The name and the department are required, and the
    profile's limits apply. The app sends it again when the answer was lost: a repeat saves the profile again.
-4. `POST /lobby`, with no body, answers `200 { "profile": { ... } }`, the profile as `GET /users/me/profile` gives it.
-   Later features add what the app needs when it starts.
+4. `POST /lobby`, with no body, answers `200 { "profile": { ... }, "masterSwitch": false }`, the profile as
+   `GET /users/me/profile` gives it and whether the User's [Master Switch](#location-sharing) is on. Later features add
+   what the app needs when it starts.
 
 A sign-in on another phone during onboarding ends the first phone's session as any sign-in does: its next request, the
 onboarding's included, gets 401 with `"code": "SESSION_REPLACED"`, and the other phone goes through onboarding.
@@ -167,20 +169,24 @@ Request to it. The routes, all a User's:
 - `POST /friend-requests/:id/accept` makes the two Friends, and `POST /friend-requests/:id/decline` removes the request.
   Only its receiver answers it. `POST /friend-requests/:id/cancel` removes it, and only its sender cancels it. Each
   answers 204.
-- `GET /friends` answers the User's Friends in the order of their names: `[{ "id", "name", "department" }]`, where
-  `id` is the Friend's User id.
+- `GET /friends` answers the User's Friends in the order of their names:
+  `[{ "id", "name", "department", "sharing", "visible" }]`, where `id` is the Friend's User id, `sharing` the User's own
+  switch for the friendship and `visible` whether the User can see the Friend on the map now, never why not (see
+  [Location Sharing](#location-sharing)).
 - `DELETE /friends/:userId` ends the friendship for both and answers 204.
+- `PUT /friends/:userId/sharing` with `{ "on": false }` turns the User's switch for the friendship off, `{ "on": true }`
+  on, and answers 204. It changes the User's own end only.
 
 A Friend ID is read in capitals, so one typed in small letters is found too. The refusals each have a `code`:
 
-| Refusal                                                           | Status | `code`                        |
-| ----------------------------------------------------------------- | ------ | ----------------------------- |
-| A Friend ID nobody holds, looked up or sent to                    | 404    | `FRIEND_ID_NOT_FOUND`         |
-| A Friend Request to the sender's own Friend ID                    | 400    | `OWN_FRIEND_ID`               |
-| A Friend Request to a Friend                                      | 409    | `ALREADY_FRIENDS`             |
-| A Friend Request to a User the sender's request already waits for | 409    | `FRIEND_REQUEST_ALREADY_SENT` |
-| An answer to a request that is not waiting for it from this User  | 404    | `FRIEND_REQUEST_NOT_FOUND`    |
-| Ending a friendship with a User who is not a Friend               | 404    | `FRIEND_NOT_FOUND`            |
+| Refusal                                                                     | Status | `code`                        |
+| --------------------------------------------------------------------------- | ------ | ----------------------------- |
+| A Friend ID nobody holds, looked up or sent to                              | 404    | `FRIEND_ID_NOT_FOUND`         |
+| A Friend Request to the sender's own Friend ID                              | 400    | `OWN_FRIEND_ID`               |
+| A Friend Request to a Friend                                                | 409    | `ALREADY_FRIENDS`             |
+| A Friend Request to a User the sender's request already waits for           | 409    | `FRIEND_REQUEST_ALREADY_SENT` |
+| An answer to a request that is not waiting for it from this User            | 404    | `FRIEND_REQUEST_NOT_FOUND`    |
+| Ending a friendship, or turning its switch, with a User who is not a Friend | 404    | `FRIEND_NOT_FOUND`            |
 
 A request answered or cancelled already is not waiting, so a second answer gets `FRIEND_REQUEST_NOT_FOUND`.
 
@@ -195,6 +201,9 @@ Friends with `FriendsService.areFriends(userId, otherUserId, tx?)`, exported by 
 After each change, `friends-changed` goes to both Users: when a request is sent, accepted, declined or cancelled, and
 when a friendship ends. It carries nothing, and the app fetches `GET /friends` and `GET /friend-requests` again (see
 [Signals](#signals)).
+
+A friendship starts with both switches on, so accepting a Friend Request starts Location Sharing between the two. The
+table keeps each User's switch at their own end, in `user_a_sharing` and `user_b_sharing`.
 
 ## Invite Links
 
@@ -245,6 +254,68 @@ keytool -list -v -keystore android/app/debug.keystore -alias androiddebugkey -st
 
 For a build signed on EAS, `eas credentials` shows the SHA-256 fingerprint of the Android keystore. An app the Play
 Store signs needs the fingerprint of the app signing key from the Play Console as well.
+
+## Location Sharing
+
+A User's app uploads the phone's positions, and the User's Friends see the User's Avatar move on their map. The
+numbers below are provisional until P17 has checked them on a phone.
+
+- **The Master Switch** turns all of a User's Location Sharing on or off. It is kept on the User
+  (`users.master_switch_on`), starts off, and signing in and signing out leave it as it is.
+  `PUT /users/me/master-switch` with `{ "on": true }` or `{ "on": false }` answers 204, and the lobby returns it as
+  `masterSwitch`. Turning it off clears the User's position.
+- **The switch of a friendship** is each Friend's own, on their end of the friendship, and starts on (see
+  [Friends](#friends)).
+- **Who sees whom**: a viewer sees a subject when both Master Switches are on, the subject has a position, which is
+  kept only inside the [Campus Boundary](#campus-boundary), and a relationship between the two has its switch on at
+  both ends. A friendship is the one relationship so far. Sharing is mutual: the rule is the same both ways, and a User
+  who turns a switch off also stops seeing the other. A Friend off campus, one with sharing off and one whose position
+  has expired look the same: no position, and `visible` false.
+- `POST /positions` with `{ "latitude": 37.4594, "longitude": 126.95199, "accuracy": 12, "measuredAt": "..." }`
+  uploads a position, where `accuracy` is the radius in metres within which the phone places itself and `measuredAt`
+  the time the phone measured it, in ISO 8601 with an offset. It answers `200 { "offCampus": false }` when the position
+  was kept. A position outside the Campus Boundary is not kept and clears the one stored, and the answer is
+  `200 { "offCampus": true }`: the app tells the User that they are not shared because they are off campus. The
+  Boundary is checked in server code, without a database query. Each upload replaces the one before, so it takes no
+  `Idempotency-Key`.
+- `GET /positions` answers the positions the User may see now:
+  `[{ "userId", "latitude", "longitude", "measuredAt" }]`. The app fetches it when it connects, reconnects and returns
+  to the front.
+
+An upload is refused, and nothing is stored, with these codes. The three numbers are `MAX_POSITION_AGE_MS`,
+`MAX_POSITION_LEAD_MS` and `MAX_ACCURACY_METRES` in `src/location-sharing/location-sharing.service.ts`.
+
+| Refusal                                                   | Status | `code`                    |
+| --------------------------------------------------------- | ------ | ------------------------- |
+| The User's Master Switch is off                           | 409    | `MASTER_SWITCH_OFF`       |
+| Measured more than 60 seconds ago                         | 400    | `POSITION_TOO_OLD`        |
+| Measured more than 10 seconds ahead of the server's clock | 400    | `POSITION_IN_THE_FUTURE`  |
+| An accuracy radius over 100 metres                        | 400    | `POSITION_TOO_INACCURATE` |
+
+What is stored: only each User's latest position, in Redis under `position:<userId>` as
+`{ "latitude", "longitude", "measuredAt" }`, which expires 10 minutes after it was stored. Redis counts the 10
+minutes. No position is written to the database or to a log, and no history is kept. The position is cleared when the
+User turns the Master Switch off, uploads a position off campus, and when the User's session ends, by a sign-in on
+another phone, a sign-out or a used refresh token, so that the phone's last position does not linger.
+
+What is pushed, through the [socket server](../socket-server/README.md#signals):
+
+- Each position kept goes as `position`, with `{ "userId", "latitude", "longitude", "measuredAt" }`, to the Users who
+  may see the subject at that moment. Delivery is lossy on purpose: only the newest position matters.
+- `position-removed`, with `{ "userId" }`, the subject, goes at once to each viewer who could see the subject before a
+  change and cannot after it: when either turns the Master Switch or the friendship's switch off, when the friendship
+  ends, when the subject leaves the Campus Boundary and when the subject's session ends.
+
+`VisibilityService` in `src/location-sharing/visibility.service.ts`, exported by `LocationSharingModule`, is the one
+place that decides who sees whom:
+
+- `viewersOf(subjectId)`: who may see the subject now.
+- `visibleTo(viewerId)`: whom the viewer may see now.
+- `announceRemovals(userId, change)`: runs `change`, a change that may end what the User sees or who sees the User,
+  and sends `position-removed` to each viewer who saw a subject before and does not after. It compares who sees whom
+  among the pairs that include the User, before and after the change. Pass the User whose switch, relationship or
+  position the change touches: every sight it can end includes that User, so a new cause, such as leaving a Party,
+  only wraps its change in it.
 
 ## Administrators
 
@@ -417,6 +488,267 @@ What the rules read from a post, and how, is in the worker server's README. In a
 `eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
 `test/global-events.e2e-spec.ts` does. No route serves Global Events yet, so the tests read them with a database
 connection of their own.
+
+## Quests
+
+A Quest is what one or more Users set out to do and what Users gather around: a title, its Holders, a Leader, a
+capacity, a Join Policy, an optional Global Event and one or more Sub Quests, which carry the times and places. A Quest
+with two or more Holders is a Shared Quest; nothing else tells it apart. The plan is shared and progress is personal: a
+Sub Quest is one record for all Holders, and whether it is done is kept for each Holder. A User gets a Quest by
+attending a published Global Event or by making one of their own, and enters another's by joining it, by a request to
+join that the Leader accepts or by the Leader's invitation; Meetups and Matching add the Quests with several Holders.
+The routes, all a User's:
+
+- `POST /quests` with `{ "globalEventId": "..." }` attends the Global Event and answers 201 with the User's Quest for
+  it. The first time it creates the Quest, with the event's title, the User as its only Holder and the Sub Quest for
+  attending. Attending again, also twice at the same moment, answers the same Quest and changes nothing, so it takes
+  no `Idempotency-Key`.
+- `POST /quests/own` makes a Quest of the User's own, without a Global Event, and answers 201 with it. It requires an
+  `Idempotency-Key`, which is why it is a route apart from attending. The body:
+  `{ "title": "저녁 같이 먹어요", "subQuest": { ... }, "capacity": 4, "joinPolicy": "open" }`: the title has 1 to 50
+  characters, `subQuest` is the body of adding a Sub Quest below and becomes the Quest's first, and `capacity` (1 to 8)
+  and `joinPolicy` (`open`, `approval` or `closed`) are optional.
+- `GET /quests/recruiting` answers the list of recruiting Quests, and `GET /quests/recruiting?globalEventId=...` the
+  same for one Global Event (see below).
+- `POST /quests/:questId/join` joins an Open Quest and answers 201 with it. A second join is refused, so it takes no
+  `Idempotency-Key`.
+- `GET /quests` answers the User's Quests in the order they were created, leaving out each Quest whose Sub Quests have
+  all ended for the User. `GET /quests/:questId` answers one, ended or not.
+- `DELETE /quests/:questId` drops the Quest and answers 204. It removes the User as a Holder, with the User's progress.
+  The other Holders keep the Quest. When the last Holder drops it, it is deleted with its Sub Quests.
+- `POST /quests/:questId/sub-quests` adds a Sub Quest and answers 201 with it. It requires an `Idempotency-Key` (see
+  [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)). The body:
+  `{ "title": "카페", "startsAt": "...", "endsAt": "...", "place": ... }`. The title has 1 to 50 characters, the times
+  are optional and the end, when both are given, is after the start. `place` is optional and is a Place from the list,
+  `{ "placeId": "..." }`, or a point on the map with the label the app showed, `{ "latitude", "longitude", "label" }`,
+  the label 1 to 50 characters.
+- `PUT /quests/:questId/sub-quests/:subQuestId` replaces what a Holder wrote with the same body and answers 200 with the
+  Sub Quest. `DELETE /quests/:questId/sub-quests/:subQuestId` cancels it, which removes it, and answers 204.
+- `POST /quests/:questId/sub-quests/:subQuestId/done` marks the Sub Quest done for the User alone and answers 204. A
+  second mark changes nothing.
+
+A Quest reads:
+
+```json
+{
+  "id": "…",
+  "title": "지능형통신 연합전공 설명회",
+  "globalEvent": { "id": "…", "title": "지능형통신 연합전공 설명회" },
+  "leader": { "id": "…", "name": "홍길동", "department": "컴퓨터공학부" },
+  "capacity": 4,
+  "joinPolicy": "closed",
+  "holders": [{ "id": "…", "name": "홍길동", "department": "컴퓨터공학부" }],
+  "subQuests": [
+    {
+      "id": "…",
+      "attending": true,
+      "title": "지능형통신 연합전공 설명회",
+      "startsAt": "2026-10-13T08:00:00.000Z",
+      "endsAt": null,
+      "place": {
+        "placeId": null,
+        "label": "뉴미디어통신공동연구소 이충웅홀(132동 103호)",
+        "latitude": 37.45487,
+        "longitude": 126.95407
+      },
+      "completion": "by_hand",
+      "cancelled": false,
+      "done": false,
+      "ended": false
+    }
+  ]
+}
+```
+
+- `globalEvent` is `null` for a Quest without one. The Holders are in the order they entered, and the Sub Quests start
+  with the attending one, then in the order they were added.
+- A Sub Quest's `place` is `null` when it has none. `placeId` is the Place's id for a Place from the list, whose name
+  is then the `label`, and `null` for a point.
+- `done` and `ended` are the reading User's. Overlapping times, within a Quest or across a User's Quests, are accepted.
+
+The refusals each have a `code`:
+
+| Refusal                                                   | Status | `code`                   |
+| --------------------------------------------------------- | ------ | ------------------------ |
+| Attending a Global Event that is unknown or not published | 404    | `GLOBAL_EVENT_NOT_FOUND` |
+| A Quest the User does not hold, or that does not exist    | 404    | `QUEST_NOT_FOUND`        |
+| A Sub Quest the Quest does not have                       | 404    | `SUB_QUEST_NOT_FOUND`    |
+| A `placeId` that is not a Place of the list               | 404    | `PLACE_NOT_FOUND`        |
+| Editing or cancelling the attending Sub Quest             | 409    | `ATTENDING_SUB_QUEST`    |
+| Cancelling the only Sub Quest of a Quest                  | 409    | `LAST_SUB_QUEST`         |
+| Joining a Closed Quest, or one that does not exist        | 404    | `QUEST_NOT_FOUND`        |
+| Joining an Approval Quest                                 | 409    | `QUEST_NOT_OPEN`         |
+| Joining a Quest the User holds                            | 409    | `ALREADY_HOLDER`         |
+| Joining a Quest without a Sub Quest ahead                 | 409    | `QUEST_ENDED`            |
+| Joining a Quest whose Holders fill its capacity           | 409    | `QUEST_FULL`             |
+| Joining while holding a Shared Quest for its Global Event | 409    | `SHARED_QUEST_HELD`      |
+
+A body that does not match gets 400 with a message naming the field, such as `endsAt: The end must be after the start`.
+
+**The attending Sub Quest** stores no title, time or place. Each read takes the Global Event's title, `startsAt`,
+`endsAt`, `place` as the label and its position, so a change to the event shows at once. Once the event is no longer
+published, as when it is cancelled, the Sub Quest reads as `cancelled` and ended. No Holder edits or cancels it.
+
+**How a Sub Quest ends.** Its `completion` is `by_time` when it has an end time and `by_hand` when it has none; for the
+attending Sub Quest, when the Global Event has none. A Sub Quest is ended for a User when its end time has passed, for
+every Holder alike, when the User marked it done, or when it is cancelled. This is computed when it is read and nothing
+is written. The time it is computed at is `now()` of `CLOCK` (`src/quests/clock.ts`), which a test moves with
+`vi.spyOn(app.get<Clock>(CLOCK), 'now')`, as `test/quest-progress.e2e-spec.ts` does.
+
+**One Quest for a Global Event.** A User holds at most one Quest for a Global Event, which the database enforces: the
+row of each Holder, in `quest_holders`, repeats the Quest's Global Event, and a unique index on the User and the Global
+Event allows one such row. A Quest without a Global Event leaves the column empty, so a User holds any number of those.
+Attending locks the User's row first, so that two attempts at the same moment run one after the other and the later
+finds the Quest of the earlier.
+
+**Leader, capacity and Join Policy.** The Leader is one of the Holders. The capacity, from 1 to 8, is the most Holders
+the Quest takes. The Join Policy says how others enter: `open`, whoever can see the Quest joins at once; `approval`,
+they ask and the Leader decides; `closed`, only by the Leader's invitation. A Quest starts by how it came to be:
+
+- from attending a Global Event: led by the User, `closed`, capacity 4. The Leader opens it to others by changing the
+  Join Policy.
+- made by a User: led by the User, with the capacity and the Join Policy given, 4 and `closed` when left out.
+
+When the Leader drops the Quest, the Holder who entered earliest leads it. `quest_holders.joined_at` keeps when each
+Holder entered. The Leader changes the settings, hands the role over and removes Holders (see below).
+
+**The list of recruiting Quests** holds the `open` and `approval` Quests that the reader does not hold and that have a
+Sub Quest ahead, the newest first. A Sub Quest is ahead while it is not cancelled and its end time has not passed; a
+Holder's mark of done does not count. A `closed` Quest is in no list. Each entry reads:
+
+```json
+{
+  "id": "…",
+  "title": "저녁 같이 먹어요",
+  "globalEvent": null,
+  "leader": { "id": "…", "name": "홍길동", "department": "컴퓨터공학부" },
+  "holderCount": 2,
+  "capacity": 4,
+  "joinPolicy": "open",
+  "nextSubQuest": {
+    "id": "…",
+    "attending": false,
+    "title": "저녁",
+    "startsAt": "2026-10-13T09:00:00.000Z",
+    "endsAt": null,
+    "place": { "placeId": null, "label": "132동 앞", "latitude": 37.45487, "longitude": 126.95407 }
+  }
+}
+```
+
+`nextSubQuest` is the first Sub Quest ahead, in the Quest's order.
+
+**Joining** makes the User a Holder of an `open` Quest at once. Every way into a Quest, joining and those of later
+features, ends in `RecruitingService.enter`, which:
+
+- locks the User, then the Quest and the Quest the User holds for its Global Event, in the order of their ids;
+- refuses a User who holds the Quest, a Quest without a Sub Quest ahead and a full Quest. The capacity is counted after
+  the lock, so two Users taking the last free place at the same moment leave one of them a Holder;
+- keeps the one-Quest rule for a Quest with a Global Event: a Quest the User held alone for that event is deleted, with
+  its Sub Quests and the User's progress; a User who holds a Shared Quest for it is refused and keeps it until they
+  drop it. A Quest without a Global Event has no such rule;
+- ends the User's request to join the Quest and invitation into it.
+
+Joining changes no Party.
+
+**Requests to join and invitations.** A User asks to join an `approval` Quest, and the Leader accepts or declines. The
+Leader invites a Friend into the Quest whatever its Join Policy, and the Friend accepts or declines. Accepting either
+goes through `RecruitingService.enter`, so it is refused as joining is: `QUEST_ENDED`, `QUEST_FULL` and
+`SHARED_QUEST_HELD`, while a Quest the User holds alone for the Global Event is replaced. A refused acceptance leaves
+the request or the invitation waiting. Both wait until they are answered, and end with the Quest and when their User
+enters that Quest in any way; entering another Quest leaves them. A request stays the Leader's to accept or decline
+after the Leader changes the Join Policy, since accepting it is the Leader's own decision, as an invitation is. The
+routes:
+
+- `POST /quest-join-requests` with `{ "questId": "..." }` asks to join and answers 201 with the request. A second
+  request is refused, so it takes no `Idempotency-Key`. `GET /quest-join-requests` answers the User's waiting requests,
+  and `POST /quest-join-requests/:id/withdraw` withdraws one and answers 204.
+- `GET /quests/:questId/join-requests` answers the Leader the Quest's requests with who asked,
+  `{ "id", "user": { "id", "name", "department" }, "sentAt" }`. `POST /quests/:questId/join-requests/:id/accept` makes
+  the User a Holder and `.../decline` ends the request; both answer 204.
+- `POST /quests/:questId/invitations` with `{ "userId": "..." }` invites a Friend of the Leader and answers 204.
+  `GET /quest-invitations` answers the User's invitations, `POST /quest-invitations/:id/accept` makes the User a Holder
+  and answers 201 with the Quest, and `.../decline` ends the invitation and answers 204.
+
+A request as its User lists it, and an invitation, read
+`{ "id", "quest": { "id", "title", "globalEvent", "leader", "holderCount", "capacity", "joinPolicy" }, "sentAt" }`, the
+Quest as it is now; the lists are the newest first.
+
+**The Leader's controls**, each refused with `NOT_QUEST_LEADER` for another Holder:
+
+- `PATCH /quests/:questId` with any of `{ "title", "capacity", "joinPolicy" }` changes the settings and answers 200 with
+  the Quest. What is left out stays. A Quest with a Global Event keeps the event's title. Making a Quest from attending
+  `open` or `approval` is how it starts gathering people.
+- `PUT /quests/:questId/leader` with `{ "userId": "..." }` hands the role to another Holder and answers 204.
+- `DELETE /quests/:questId/holders/:userId` removes a Holder and answers 204. The Holder goes as one who dropped the
+  Quest, with their progress, and may enter it again.
+
+Accepting a request and removing a Holder lock that User before the Quest, as entering does, and every control checks
+the Leader once the Quest is locked, so that a control and a change of Leader at the same moment run one after the
+other.
+
+| Refusal                                                               | Status | `code`                            |
+| --------------------------------------------------------------------- | ------ | --------------------------------- |
+| Asking to join a Closed Quest, or one that does not exist             | 404    | `QUEST_NOT_FOUND`                 |
+| Asking to join an Open Quest                                          | 409    | `QUEST_NOT_APPROVAL`              |
+| Asking to join a Quest the User holds, or inviting one of its Holders | 409    | `ALREADY_HOLDER`                  |
+| Asking to join while holding a Shared Quest for its Global Event      | 409    | `SHARED_QUEST_HELD`               |
+| A second request to the same Quest                                    | 409    | `QUEST_JOIN_REQUEST_ALREADY_SENT` |
+| A request that is not waiting, or not the User's or the Quest's       | 404    | `QUEST_JOIN_REQUEST_NOT_FOUND`    |
+| Inviting a User who is not the Leader's Friend                        | 404    | `FRIEND_NOT_FOUND`                |
+| A second invitation of the same User into the Quest                   | 409    | `QUEST_INVITATION_ALREADY_SENT`   |
+| An invitation that is not waiting for the User                        | 404    | `QUEST_INVITATION_NOT_FOUND`      |
+| A Leader's action by another Holder                                   | 403    | `NOT_QUEST_LEADER`                |
+| A Leader's action by a User who does not hold the Quest               | 404    | `QUEST_NOT_FOUND`                 |
+| A capacity below the number of Holders                                | 409    | `CAPACITY_BELOW_HOLDERS`          |
+| A title for a Quest with a Global Event                               | 409    | `QUEST_TITLE_FROM_GLOBAL_EVENT`   |
+| Handing the role to, or removing, a User who does not hold the Quest  | 404    | `NOT_QUEST_HOLDER`                |
+
+How they are stored: `quests` holds the title, the Global Event, which never changes, `leader_id`, `capacity`, which
+the migration checks to be from 1 to 8, and `join_policy`; `quest_holders` one row for each Holder, unique for the
+Quest and the User, with the time the Holder entered; `sub_quests` the Sub Quests, `attending` marking the one for the Global
+Event, of which a Quest has at most one; and `sub_quest_progress` one row for each Sub Quest a Holder marked done, which
+goes with the Holder's row; `quest_join_requests` and `quest_invitations` one row for each waiting request and
+invitation, unique for the Quest and the User, deleted with the Quest. Checks in the migration keep the attending Sub
+Quest without title, time and place, the end after the start, and the place a Place, a point with its label, or
+neither.
+
+Another feature changes Quests in its own transaction with `QuestsService`, exported by `QuestsModule`. Every change to
+one Quest locks it first, so that changes run one after another:
+
+- `lock(questId, tx)` locks the Quest's row until the transaction ends.
+- `heldFor(userId, globalEventId, tx)` answers the id of the Quest the User holds for the Global Event, or `null`.
+- `createForGlobalEvent(globalEvent, holderIds, tx, settings?)` creates a Quest for the Global Event with these
+  Holders and the attending Sub Quest, and answers its id. A Holder who already holds a Quest for the event makes the
+  unique index refuse it, so ask `freeForSharedQuest` first.
+- `createWithSubQuest(subQuest, holderIds, tx, settings?)` creates a Quest without a Global Event with these Holders
+  and one Sub Quest, titled as the Sub Quest unless `settings.title` is given, and answers its id.
+- Both take `settings` as `{ leaderId?, capacity?, joinPolicy? }`, by default the first Holder, 4 and `closed`. The
+  Holders enter in the order given.
+- `removeHolder(questId, userId, tx)` removes the Holder with the Holder's progress, passes the Leader's role to the
+  Holder who entered earliest when the Leader goes, and deletes the Quest when nobody holds it any more.
+- `holderIds(questId, tx)` answers the Holders' User ids in the order they entered.
+- `freeForSharedQuest(userId, globalEventId, tx)` answers whether the User may become a Holder of a Shared Quest for
+  the Global Event: true when the User holds no Quest for it, or held one alone, which it deletes with its Sub Quests
+  and the User's progress; false when the User holds a Shared Quest for it, which stays.
+- `holdsSharedQuestFor(userId, globalEventId, tx)` answers whether the User holds a Shared Quest for the Global Event,
+  without a lock; entering checks it again.
+- `withSubQuestsAhead(questIds, tx?)` answers those of the Quests that have a Sub Quest ahead.
+
+`RecruitingService`, also exported, has `enter(questId, userId, tx, admits?)`, described above. `admits(quest)` is the
+way in's own check, such as the Join Policy, made once the Quest is locked; it throws to refuse. It answers the Holders
+to send `quests-changed` to, the User included, once the transaction commits.
+
+`quests-changed` goes to every Holder, the one who acted included, when a Quest is created by attending or made, when a
+Sub Quest is added, edited or cancelled, when a User enters, when a Holder drops the Quest, which may pass on the
+Leader's role, and when the Leader changes the settings, hands the role over or removes a Holder, the removed one
+included. It goes to the Leader when a request arrives or is withdrawn, to a User whose request the Leader declines or
+who declines an invitation, and to an invited User. A mark of done is the Holder's own and sends nothing. The signal carries
+nothing, and the app fetches `GET /quests`, the requests to join and the invitations again (see [Signals](#signals)).
+
+In a test, `test/quests.ts` stores a published Global Event with a connection of its own, since no route creates one
+yet, and calls the routes above; `test/quest-recruiting.ts` calls those of requests, invitations and the Leader's
+controls.
 
 ## Menus
 
@@ -845,10 +1177,13 @@ src/
 ├── users/                           a feature: the signed-in User, their profile, Friend ID and onboarding
 ├── friends/                         a feature: Friend IDs looked up, Friend Requests and Friends
 ├── invite-links/                    a feature: Invite Links, and the Digital Asset Links file that opens them in the app
+├── location-sharing/                a feature: the Master Switch, the positions uploaded, kept and pushed, and who
+│                                    sees whom
 ├── lobby/                           a feature: what the app needs when it starts
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
+├── quests/                          a feature: Quests, their Holders, Sub Quests, each Holder's progress and joining
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a

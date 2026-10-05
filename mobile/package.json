@@ -8,6 +8,7 @@
     "@react-native-async-storage/async-storage": "2.2.0",
     "@tanstack/react-query": "^5.104.1",
     "expo": "~57.0.25",
+    "expo-build-properties": "~57.0.22",
     "expo-constants": "~57.0.19",
     "expo-device": "~57.0.2",
     "expo-font": "~57.0.4",
@@ -49,7 +50,7 @@
   },
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
+    "android": "expo run:android",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "format": "prettier --write .",

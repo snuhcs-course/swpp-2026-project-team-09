@@ -57,9 +57,10 @@ Last updated: 2026-10-05
 - [x] The plain ground with "지도는 Android 빌드에서 보입니다" for a build without the native module
 - [x] Images for markers and Avatars, made from the design system's marker views
 - [x] The credit for the map data at the bottom left
-- [ ] The Android module in Kotlin, with the build settings and the steps to a build in the app's README
-- [ ] The camera stays inside the campus rectangle
-- [ ] The device check on an Android emulator, then once on the shared phone
+- [x] The Android module in Kotlin, with the build settings and the steps to a build in the app's README
+- [x] The camera stays inside the campus rectangle
+- [x] The device check on an Android emulator
+- [ ] The device check once on the shared phone
 
 ### 1.7 Main screen (tickets 08 to 10; `Main` and its states)
 
@@ -340,7 +341,7 @@ It is `usePosition` of `mobile/src/position`, on `expo-location`, read inside a 
 // to the rules below; `mobile/src/map/types.ts` states them in full.
 <Map
   bounds={CAMPUS_BOUNDS} // { south: 37.445, west: 126.945, north: 37.471, east: 126.963 }: the visible area stays inside
-  minZoom={MIN_ZOOM} // 14; the numbers are settled with the Android module
+  minZoom={MIN_ZOOM} // 14, a floor: on a phone the rectangle sets the lowest zoom, 14.97 at 411 points wide
   maxZoom={MAX_ZOOM} // 19
   markers={[
     // name: what a screen reader says. image: a picture made from the design system's marker view.

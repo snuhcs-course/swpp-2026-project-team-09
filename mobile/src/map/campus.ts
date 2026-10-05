@@ -5,9 +5,9 @@ import type { MapBounds } from './types';
 // position outside it is off campus for the app.
 export const CAMPUS_BOUNDS: MapBounds = { south: 37.445, west: 126.945, north: 37.471, east: 126.963 };
 
-// Web Mercator zoom levels. The map never shows more than the rectangle, so on a phone the lowest zoom in use is the
-// one at which the view fits inside it, a little under 15. Both numbers are settled with the Android module
-// (ticket 07).
+// Web Mercator zoom levels, settled on Kakao's map (ticket 07). The map never shows more than the rectangle, so on a
+// phone the lowest zoom in use is the one at which the view fits inside it: 14.97 on a phone 411 points wide.
+// `MIN_ZOOM` is only a floor under that. At `MAX_ZOOM` one building fills the view.
 export const MIN_ZOOM = 14;
 export const MAX_ZOOM = 19;
 
