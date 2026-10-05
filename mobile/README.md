@@ -66,7 +66,8 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
   sentence and one or two Buttons over the screen.
 - **Toast**: the design system has none and the wireframes use one. `useToast()` gives the call that shows a
   sentence for a moment, and `useNotReadyToast()` the call for a control whose feature belongs to another task: it
-  says "준비 중이에요".
+  says "준비 중이에요". A toast sits just above the phone's own bar; a screen with a bottom navigation
+  calls `useToastAbove(height)` so that it sits above that too.
 - The app is light only. The design system has no dark theme, so `app.json` says `light`.
 
 A repeated element that the design system lacks becomes a shared component here, not a copy in each screen.

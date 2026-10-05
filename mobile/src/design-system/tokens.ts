@@ -64,6 +64,8 @@ export const halo = {
   live: 'rgba(11, 122, 85, 0.18)',
   // Around a selected pin: the key colour at 18%.
   selected: 'rgba(0, 26, 114, 0.18)',
+  // Under the round button of the main screen's bottom navigation: the key colour at 35%, as its frame draws it.
+  raised: 'rgba(0, 26, 114, 0.35)',
 } as const;
 
 // One font file per weight, loaded under these names by the root layout. React Native picks a weight by the family's

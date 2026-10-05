@@ -1,8 +1,9 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
+import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 
 import { Button } from '@/design-system/button';
-import { ToastProvider, useNotReadyToast, useToast } from '@/design-system/toast';
+import { ToastProvider, useNotReadyToast, useToast, useToastAbove } from '@/design-system/toast';
 
 function Buttons(): ReactElement {
   const showToast = useToast();
@@ -97,5 +98,34 @@ describe('Toast, one at a time', () => {
 
     expect(screen.queryByText('수업을 추가했어요')).toBeNull();
     expect(screen.getByText('준비 중이에요')).toBeVisible();
+  });
+});
+
+function ScreenWithNavigation(): ReactElement {
+  useToastAbove(65);
+  return <Buttons />;
+}
+
+describe("Toast's place", () => {
+  it('is just above the bottom of a screen with nothing fixed there', async () => {
+    await renderButtons();
+
+    await fireEvent.press(screen.getByRole('button', { name: '추가' }));
+
+    expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 24 });
+  });
+
+  it("is above the bottom navigation and the phone's own bar on a screen that has them", async () => {
+    await render(
+      <SafeAreaInsetsContext value={{ top: 0, right: 0, bottom: 34, left: 0 }}>
+        <ToastProvider>
+          <ScreenWithNavigation />
+        </ToastProvider>
+      </SafeAreaInsetsContext>,
+    );
+
+    await fireEvent.press(screen.getByRole('button', { name: '추가' }));
+
+    expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 34 + 65 + 24 });
   });
 });

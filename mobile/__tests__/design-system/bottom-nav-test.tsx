@@ -31,4 +31,24 @@ describe('BottomNav', () => {
     expect(screen.getByText('2')).toBeVisible();
     expect(screen.getByRole('tab', { name: '파티, 새 소식 2개' })).toBeVisible();
   });
+
+  it('has an action in the middle that is pressed like a tab and is never the current one', async () => {
+    const onSelect = jest.fn<void, [number]>();
+    await render(
+      <BottomNav
+        active={0}
+        items={[
+          { icon: 'map', label: '지도' },
+          { icon: 'plus', label: '올리기', raised: true },
+          { icon: 'user', label: '내 정보' },
+        ]}
+        onSelect={onSelect}
+      />,
+    );
+
+    await userEvent.press(screen.getByRole('button', { name: '올리기' }));
+
+    expect(onSelect).toHaveBeenCalledWith(1);
+    expect(screen.queryByRole('tab', { name: '올리기' })).toBeNull();
+  });
 });

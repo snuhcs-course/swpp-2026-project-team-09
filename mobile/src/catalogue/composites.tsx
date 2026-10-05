@@ -72,6 +72,8 @@ export function ChatInputs(): ReactElement {
 
 export function BottomNavs(): ReactElement {
   const [active, setActive] = useState(0);
+  const [mainActive, setMainActive] = useState(0);
+  const showToast = useToast();
   return (
     <Section name="BottomNav">
       <BottomNav
@@ -85,6 +87,26 @@ export function BottomNavs(): ReactElement {
         ]}
         onSelect={setActive}
       />
+      {/* The main screen's bar, as its frame draws it. */}
+      <View style={styles.raisedNav}>
+        <BottomNav
+          active={mainActive}
+          items={[
+            { icon: 'map', label: '지도' },
+            { icon: 'users', label: '파티', badge: 2 },
+            { icon: 'plus', label: '올리기', raised: true },
+            { icon: 'calendar', label: '행사' },
+            { icon: 'user', label: '내 정보' },
+          ]}
+          onSelect={(index) => {
+            if (index === 2) {
+              showToast('올리기');
+            } else {
+              setMainActive(index);
+            }
+          }}
+        />
+      </View>
     </Section>
   );
 }
@@ -163,4 +185,6 @@ const styles = StyleSheet.create({
     padding: space[4],
     backgroundColor: color.surfaceSubtle,
   },
+  // Room for the round button, which stands out of the bar.
+  raisedNav: { paddingTop: space[8] },
 });

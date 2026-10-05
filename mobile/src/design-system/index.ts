@@ -12,5 +12,5 @@ export { EventCard, type EventKind } from './event-card';
 export { Icon, ICON_NAMES, type IconName } from './icon';
 export { MapPin, type MapPinKind } from './map-pin';
 export { TextField } from './text-field';
-export { ToastProvider, useNotReadyToast, useToast } from './toast';
+export { ToastProvider, useNotReadyToast, useToast, useToastAbove } from './toast';
 export { color, font, halo, radius, shadow, size, space, text } from './tokens';
