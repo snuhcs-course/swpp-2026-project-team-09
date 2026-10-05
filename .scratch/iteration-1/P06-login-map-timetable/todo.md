@@ -43,11 +43,11 @@ Last updated: 2026-10-05
 
 ### 1.5 Onboarding screen (ticket 05; `Onboarding`)
 
-- [ ] The six fields with the frame's choices and limits
-- [ ] The suggestion filled in, with its badges
-- [ ] Save enabled once a name and a department are there; saving shows the main screen
-- [ ] "로그아웃" back to the sign-in screen; no way back
-- [ ] The answers kept on the phone, so that Onboarding is shown once
+- [x] The six fields with the frame's choices and limits
+- [x] The suggestion filled in, with its badges
+- [x] Save enabled once a name and a department are there; saving shows the main screen
+- [x] "로그아웃" back to the sign-in screen; no way back
+- [x] The answers kept on the phone, so that Onboarding is shown once
 
 ### 1.6 Map component and the Android module (tickets 06, 07)
 

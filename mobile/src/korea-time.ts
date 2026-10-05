@@ -31,3 +31,8 @@ export function koreaDay(instant: string, now: Date): string {
   }
   return `${korea.getUTCMonth() + 1}월 ${korea.getUTCDate()}일 (${WEEKDAYS[korea.getUTCDay()]})`;
 }
+
+// 2026
+export function koreaYear(instant: Date): number {
+  return inKorea(instant).getUTCFullYear();
+}

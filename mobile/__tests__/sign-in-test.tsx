@@ -1,6 +1,7 @@
 import { userEvent } from '@testing-library/react-native';
 import { pass, screen, startApp } from './support/app';
 import { startFresh } from './support/mocks';
+import { ONBOARDING } from './support/onboarding';
 import * as auth from '@/auth/sign-in';
 import { keep } from '@/storage/kept';
 
@@ -80,7 +81,7 @@ describe('how a sign-in ends', () => {
     await pressSignIn(user);
     await pass(400);
 
-    expect(screen.getByRole('header', { name: '온보딩' })).toBeVisible();
+    expect(screen.getByRole('header', { name: ONBOARDING })).toBeVisible();
     expect(screen.queryByRole('button', { name: SIGN_IN })).toBeNull();
   });
 
