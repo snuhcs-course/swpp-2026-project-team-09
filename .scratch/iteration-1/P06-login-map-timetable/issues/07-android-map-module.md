@@ -87,6 +87,11 @@ The device check changed nothing in the interface of ticket 06 (`src/map/types.t
 - The screenshots in the pull request: six were taken on the emulator (the map opened, a pressed marker, an Avatar mid-glide, the route drawn, fitted to the route, the route cleared), to be attached when the pull request is opened.
 - No main-screen ticket (08 to 10) is merged yet, so none was run.
 
+### Review and merge (2026-10-05)
+
+- 함재현 built the branch and ran it on an Android emulator on a Mac (`Medium_Phone`, Android 16, API 36, Google Play, arm64-v8a). The map works there. The results were not recorded item by item.
+- The device check on the team's shared phone is not done yet. 함재현 decided to merge on the emulator's result, so the criterion "merged only after the device check passed on the team's shared phone" is left unticked and waived for this merge.
+- Still to do on the shared phone, recorded here when done: the device check's items, a two-finger pinch, and how the snap-back feels when the map is dragged off campus.
 
 ### Agent usage (2026-10-05)
 
