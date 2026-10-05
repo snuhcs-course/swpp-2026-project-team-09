@@ -168,7 +168,12 @@ export class QuestsService {
       return true;
     }
     await this.lock(questId, tx);
-    if ((await this.holderIds(questId, tx)).length > 1) {
+    const holderIds = await this.holderIds(questId, tx);
+    // Dropped while the lock was waited for: nothing holds the User back.
+    if (!holderIds.includes(userId)) {
+      return true;
+    }
+    if (holderIds.length > 1) {
       return false;
     }
     await this.removeHolder(questId, userId, tx);
