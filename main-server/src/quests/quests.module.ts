@@ -26,6 +26,6 @@ import { SubQuestsService } from './sub-quests.service.js';
     MatchingQuestsService,
     { provide: CLOCK, useValue: systemClock },
   ],
-  exports: [QuestsService, RecruitingService, MatchingQuestsService],
+  exports: [QuestsService, RecruitingService, CLOCK, MatchingQuestsService],
 })
 export class QuestsModule {}
