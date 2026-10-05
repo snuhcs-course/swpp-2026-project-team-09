@@ -45,6 +45,7 @@ model User {
   ledParties        Party[]
   partyJoinRequests PartyJoinRequest[]
   partyInvitations  PartyInvitation[]
+  timetableClasses  TimetableClass[]
 
   @@map("users")
 }
@@ -500,6 +501,7 @@ model Place {
   outlines  Json           @default("[]")
   subQuests SubQuest[]
   meetups   Meetup[]
+  classTimes ClassTime[]
 
   @@unique([origin, originId])
   @@map("places")
@@ -545,4 +547,46 @@ model ShuttleStop {
   drawingTop  Int    @map("drawing_top")
 
   @@map("shuttle_stops")
+}
+
+// A class of a User's timetable (README.md: Timetable). The User's timetable is the User's classes.
+model TimetableClass {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String      @map("user_id") @db.Uuid
+  user       User        @relation(fields: [userId], references: [id])
+  courseName String      @map("course_name")
+  times      ClassTime[]
+
+  @@index([userId])
+  @@map("timetable_classes")
+}
+
+// One of the times a class is held each week. Two times of one class do not cross on a weekday.
+model ClassTime {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  classId   String         @map("class_id") @db.Uuid
+  class     TimetableClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  weekday   Weekday
+  // Times of day in Asia/Seoul as `HH:MM`, which sort as the times do. The end is after the start.
+  startTime String         @map("start_time")
+  endTime   String         @map("end_time")
+  placeId   String?        @map("place_id") @db.Uuid
+  place     Place?         @relation(fields: [placeId], references: [id])
+  room      String?
+
+  @@index([classId])
+  @@map("class_times")
+}
+
+// In the order of the week, Monday first.
+enum Weekday {
+  monday
+  tuesday
+  wednesday
+  thursday
+  friday
+  saturday
+  sunday
+
+  @@map("weekday")
 }
