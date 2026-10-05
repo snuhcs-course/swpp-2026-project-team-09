@@ -69,7 +69,7 @@ export function PlainMap(props: MapProps): ReactElement {
       }}
       style={styles.ground}
     >
-      <Text style={styles.words}>지도는 Android 빌드에서 보입니다</Text>
+      <Text style={styles.words}>지도는 Android·iOS 빌드에서 보입니다</Text>
       {route === null ? null : <RouteLine points={route.map((point) => place(point))} />}
       {ranked(markers).map((marker) => (
         <Thing glideMs={0} key={marker.id} onPress={onPress} place={place} thing={marker} view={size} />

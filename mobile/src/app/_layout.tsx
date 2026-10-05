@@ -1,3 +1,4 @@
+import '@/polyfills';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
 import { type ReactElement, useEffect } from 'react';

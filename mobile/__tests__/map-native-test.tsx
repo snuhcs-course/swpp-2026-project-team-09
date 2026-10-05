@@ -27,7 +27,7 @@ describe('choosing the map while the app runs', () => {
     mockHasNativeMap = false;
     await render(<Map {...EMPTY} />);
 
-    expect(screen.getByText('지도는 Android 빌드에서 보입니다')).toBeVisible();
+    expect(screen.getByText('지도는 Android·iOS 빌드에서 보입니다')).toBeVisible();
     expect(mockNativeMapLoads).toBe(0);
   });
 
@@ -36,7 +36,7 @@ describe('choosing the map while the app runs', () => {
     await render(<Map {...EMPTY} />);
 
     expect(screen.getByText('네이티브 지도')).toBeVisible();
-    expect(screen.queryByText('지도는 Android 빌드에서 보입니다')).toBeNull();
+    expect(screen.queryByText('지도는 Android·iOS 빌드에서 보입니다')).toBeNull();
     expect(screen.getByText('© OpenStreetMap · 국토지리정보원')).toBeVisible();
     expect(mockNativeMapLoads).toBe(1);
   });

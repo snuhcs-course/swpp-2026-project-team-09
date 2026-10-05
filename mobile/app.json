@@ -44,7 +44,8 @@
           }
         }
       ],
-      "./modules/snu-now-map/app.plugin.ts"
+      "./modules/snu-now-map/app.plugin.ts",
+      "./plugins/ios-scene-life-cycle.ts"
     ],
     "experiments": {
       "typedRoutes": true,

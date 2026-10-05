@@ -54,7 +54,7 @@ Last updated: 2026-10-05
 ### 1.6 Map component and the Android module (tickets 06, 07)
 
 - [x] The map component's interface (section 2.9)
-- [x] The plain ground with "지도는 Android 빌드에서 보입니다" for a build without the native module
+- [x] The plain ground with "지도는 Android·iOS 빌드에서 보입니다" for a build without the native module
 - [x] Images for markers and Avatars, made from the design system's marker views
 - [x] The credit for the map data at the bottom left
 - [x] The Android module in Kotlin, with the build settings and the steps to a build in the app's README
