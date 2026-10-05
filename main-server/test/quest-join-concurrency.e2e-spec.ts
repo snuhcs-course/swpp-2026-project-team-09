@@ -1,0 +1,67 @@
+import { INestApplication } from '@nestjs/common';
+import { Server } from 'node:http';
+import { inject } from 'vitest';
+import { PrismaClient } from '../src/generated/prisma/client.js';
+import { signInUser } from './friends.js';
+import { overlapOnLock } from './overlap.js';
+import { connectToDatabase, getQuest, getQuests, joinQuest, ownQuest, questFor, storeEvent } from './quests.js';
+import { refused } from './signals.js';
+import { startApp } from './start-app.js';
+
+let app: INestApplication<Server>;
+let prisma: PrismaClient;
+
+beforeAll(async () => {
+  app = await startApp(inject('settings'));
+  prisma = connectToDatabase();
+});
+
+afterAll(async () => {
+  await prisma.$disconnect();
+  await app.close();
+});
+
+describe('Two Users joining the last free place at the same moment', () => {
+  it('leave one of them a Holder', async () => {
+    const [leader, first, second] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
+    const questId = await ownQuest(app, leader, { joinPolicy: 'open', capacity: 2 });
+
+    const answers = await overlapOnLock(
+      prisma,
+      (tx) => tx.$queryRaw`SELECT 1 FROM quests WHERE id = ${questId}::uuid FOR UPDATE`,
+      () => joinQuest(app, first, questId),
+      () => joinQuest(app, second, questId),
+    );
+
+    expect(answers[0].status).toBe(201);
+    expect(answers[1].body).toMatchObject(refused(409, 'QUEST_FULL'));
+    expect((await getQuest(app, leader, questId)).body).toMatchObject({
+      holders: [{ id: leader.id }, { id: first.id }],
+    });
+  });
+});
+
+describe('One User joining two Quests of one Global Event at the same moment', () => {
+  it('leaves the User a Holder of one of them', async () => {
+    const [user, first, second] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
+    const event = await storeEvent(prisma);
+    const questIds = await Promise.all(
+      [first, second].map(async (leader) => {
+        const { questId } = await questFor(app, leader, event.id);
+        await prisma.quest.update({ where: { id: questId }, data: { joinPolicy: 'open' } });
+        return questId;
+      }),
+    );
+
+    const answers = await overlapOnLock(
+      prisma,
+      (tx) => tx.$queryRaw`SELECT 1 FROM users WHERE id = ${user.id}::uuid FOR UPDATE`,
+      () => joinQuest(app, user, questIds[0] ?? ''),
+      () => joinQuest(app, user, questIds[1] ?? ''),
+    );
+
+    expect(answers[0].status).toBe(201);
+    expect(answers[1].body).toMatchObject(refused(409, 'SHARED_QUEST_HELD'));
+    expect((await getQuests(app, user)).body).toMatchObject([{ id: questIds[0] }]);
+  });
+});
