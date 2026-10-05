@@ -1,8 +1,7 @@
 import { z } from 'zod';
-import { type FriendDto } from '../../friends/dto/friends.dto.js';
 import { MeetupState, Prisma } from '../../generated/prisma/client.js';
 import { placeSchema, subQuestContentSchema } from '../../quests/dto/quest-requests.dto.js';
-import { SubQuestPlaceDto, toPlaceDto } from '../../quests/dto/quest.dto.js';
+import { HolderDto, SubQuestPlaceDto, toPlaceDto } from '../../quests/dto/quest.dto.js';
 
 // The content of the Sub Quest that accepting it creates, with a start and a place required, and the Friend it is for.
 export const proposeMeetupSchema = subQuestContentSchema.safeExtend({
@@ -20,8 +19,8 @@ export interface MeetupDto {
   endsAt: string | null;
   place: SubQuestPlaceDto | null;
   state: MeetupState | 'expired';
-  proposer: FriendDto;
-  receiver: FriendDto;
+  proposer: HolderDto;
+  receiver: HolderDto;
 }
 
 export interface MeetupsDto {
