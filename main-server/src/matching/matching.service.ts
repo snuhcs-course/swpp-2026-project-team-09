@@ -1,6 +1,6 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { z } from 'zod';
-import { type MatchingRefusal, QuestsService } from '../quests/quests.service.js';
+import { type MatchingRefusal, MatchingQuestsService } from '../quests/matching-quests.service.js';
 import { UsersService } from '../users/users.service.js';
 import { type AskForMatchingDto, MatchingRequestDto, matchingRequestSchema } from './dto/matching-request.dto.js';
 import { MatchServer } from './match-server.js';
@@ -30,7 +30,7 @@ const REFUSALS: Record<MatchingRefusal, { statusCode: HttpStatus; error: string;
 export class MatchingService {
   constructor(
     private readonly matchServer: MatchServer,
-    private readonly quests: QuestsService,
+    private readonly matchingQuests: MatchingQuestsService,
     private readonly users: UsersService,
   ) {}
 
@@ -43,7 +43,7 @@ export class MatchingService {
         message: `A group has ${SIZES.min} to ${SIZES.max} Users.`,
       });
     }
-    const [refusal] = await this.quests.matchingRefusals([{ userId, globalEventId }]);
+    const [refusal] = await this.matchingQuests.matchingRefusals([{ userId, globalEventId }]);
     if (refusal !== null) {
       const { statusCode, error, message } = REFUSALS[refusal];
       throw new HttpException({ statusCode, error, code: refusal, message }, statusCode);

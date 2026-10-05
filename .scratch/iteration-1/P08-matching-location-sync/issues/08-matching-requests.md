@@ -2,7 +2,7 @@
 
 Parent: [P08 spec](../spec.md)
 Status: ready-for-agent
-Blocked by: 04 (Quests for Global Events and their Sub Quests)
+Blocked by: 04 (Quests, their Sub Quests and joining them)
 
 ## What to build
 
@@ -44,8 +44,9 @@ The app speaks to the main server only. The main server decides whether a reques
   gives 502 `{ statusCode, error: 'Bad Gateway', message: 'The match server did not answer.' }` without a `code`.
 - **Has started**: the Global Event's `startsAt` is at or before `CLOCK.now()`. A published Global Event without a
   start time counts as not started, so Matching stays open for it until it is cancelled.
-- **The standing question**: `QuestsService.matchingRefusals(requests: readonly { userId, globalEventId }[], tx?)` →
-  `(MatchingRefusal | null)[]` in the order given, `MatchingRefusal` being `'GLOBAL_EVENT_NOT_FOUND' |
+- **The standing question**: `MatchingQuestsService.matchingRefusals(requests: readonly { userId, globalEventId }[],
+  tx?)` → `(MatchingRefusal | null)[]` in the order given, in `main-server/src/quests/matching-quests.service.ts`, which
+  `QuestsModule` exports beside `QuestsService`, `MatchingRefusal` being `'GLOBAL_EVENT_NOT_FOUND' |
   'GLOBAL_EVENT_STARTED' | 'SHARED_QUEST_HELD'`. Two queries for any number of requests; ticket 09's "which still
   stand" uses it as it is. A Shared Quest is one with more than one Holder.
 - **Main server client**: `MatchServer.call(method, path, schema, body?)` in `main-server/src/matching/match-server.ts`,
@@ -60,7 +61,7 @@ The app speaks to the main server only. The main server decides whether a reques
   again once the request no longer waits; the latest row is the one read.
 - **Tests**: main server `MatchServerStub` in `main-server/test/match-server.ts`, given to `startApp` as its fourth
   argument (`answers`, `refuses`, `hangs`, `calls`; an unanswered call fails); `storeSharedQuest()` in
-  `test/quests.ts`. Match server `test/main-server.ts` (`asMainServer`, route helpers, `connectToDatabase()` for the
+  `test/quests.ts`, led by its first Holder. Match server `test/main-server.ts` (`asMainServer`, route helpers, `connectToDatabase()` for the
   states only rounds write).
 - **No signal** is sent on asking or withdrawing: only the User's own app changes, and it has the answer.
 - **Party**: nothing consults Parties, so being in one does not prevent a request. Parties are not on this branch, so no
