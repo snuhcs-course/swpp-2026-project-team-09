@@ -68,6 +68,17 @@ export const halo = {
   raised: 'rgba(0, 26, 114, 0.35)',
 } as const;
 
+// Over a photo, as on the loading screen: white at the frame's strengths, and the shade that keeps it readable.
+export const onPhoto = {
+  textMuted: 'rgba(255, 255, 255, 0.85)',
+  textSubtle: 'rgba(255, 255, 255, 0.8)',
+  track: 'rgba(255, 255, 255, 0.25)',
+  textShadow: 'rgba(0, 0, 0, 0.35)',
+  shade: 'rgba(14, 19, 48, 0.4)',
+  scrim:
+    'linear-gradient(rgba(0, 26, 114, 0.25) 0%, rgba(14, 19, 48, 0.05) 35%, rgba(14, 19, 48, 0.35) 65%, rgba(0, 16, 64, 0.85) 100%)',
+} as const;
+
 // One font file per weight, loaded under these names by the root layout. React Native picks a weight by the family's
 // name, so a style sets fontFamily and never fontWeight.
 export const font = {

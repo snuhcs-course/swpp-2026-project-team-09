@@ -1,6 +1,6 @@
 # mobile
 
-The SNU Now mobile app, built with Expo SDK 57 and Expo Router. For now it shows a placeholder screen.
+The SNU Now mobile app, built with Expo SDK 57 and Expo Router.
 
 ## Run it
 
@@ -60,11 +60,30 @@ src/api/            the API client, the main server's answers as types, and the 
 src/auth/           sign-in and sign-out
 src/features/       one folder per feature: its adapter and the hooks a screen asks for data with
 src/storage/        what the phone keeps between two starts of the app
+src/session/        where the User is in the flow between the screens, and the work of the start
+src/screens/        the screens that the routes show
 __tests__/          Jest tests
-assets/             app icons, the splash image and the fonts
+assets/             app icons, the splash image, the fonts and the loading screen's photos
 ```
 
 Keep code that is not a screen, such as components and hooks, in `src/` outside `src/app/`.
+
+## Screens and the flow between them
+
+The app starts on the loading screen (`/`), once. While it shows, the app reads what the phone keeps and, for a User
+who signed in and finished Onboarding, fetches the Lobby. Then it shows where the User belongs:
+
+| The User                                  | Sees        | Address       |
+| ----------------------------------------- | ----------- | ------------- |
+| is not signed in                          | Sign-in     | `/sign-in`    |
+| signed in and has not finished Onboarding | Onboarding  | `/onboarding` |
+| finished Onboarding                       | Main screen | `/main`       |
+
+`src/session/session.tsx` holds where the User is while the app runs. A screen that belongs to one of these places
+starts with `useOwnPlace(...)`, which leads a User who does not belong there to where they do. A sign-in calls
+`enter`, a saved Onboarding `finishOnboarding`, a sign-out `leave`, and the screens follow.
+
+A screen's file in `src/app/` only says which place it is; the screen itself is in `src/screens/`.
 
 ## Data
 
@@ -171,7 +190,8 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
 
 A repeated element that the design system lacks becomes a shared component here, not a copy in each screen.
 
-To see every component in every variant, start the app and press "디자인 시스템 보기" on the first screen, or open
+To see every component in every variant, start the app and press "디자인 시스템 보기" on a screen that is still a
+placeholder, or open
 `/catalogue`. The catalogue is for developers: a released app does not show it. Compare it with the design system's
 own previews when a component changes: `pnpm web` serves the catalogue to a browser, where a phone-sized window
 shows it as the previews do.
