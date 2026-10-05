@@ -17,6 +17,10 @@ The development server keeps running in the same terminal. Press `a` there to op
 emulator or `i` on the iOS simulator. The first time, Expo installs Expo Go on it. On a phone, scan the QR code with
 Expo Go.
 
+Expo Go shows every screen, but the map only as a plain ground: Kakao's map needs a build of the app with its native
+module, which "Build the app for Android" below makes. `pnpm android` makes that build; `pnpm start` is the way to
+Expo Go.
+
 Add packages with `pnpm expo install <package>`, not `pnpm add`. It picks the version that matches the Expo SDK.
 
 ### Development settings
@@ -79,6 +83,82 @@ know ends in the failure state, or closes the sheet as if the User had.
 in a build that holds it. On the web `google.web.ts` takes its place. The iOS build also needs the library's config
 plugin, which `app.config.ts` adds when `GOOGLE_IOS_URL_SCHEME` is set.
 
+## Build the app for Android
+
+A build of the app holds the native map module, `modules/snu-now-map`, and shows Kakao's map. These are the steps
+from a clean checkout to the app on an emulator and on a phone, on a Mac with Apple Silicon. They were checked on
+2026-10-05.
+
+### Tools
+
+| Tool                                                    | Version                                                     |
+| ------------------------------------------------------- | ----------------------------------------------------------- |
+| Node.js and pnpm                                        | As in "Run it": Node.js 24, pnpm 12.6.0                     |
+| JDK                                                     | 17 (Temurin 17.0.8 was used); a build with JDK 21 also ran  |
+| Android Studio, for the SDK and the emulator            | Any recent one                                              |
+| Android SDK Platform and Build-Tools                    | 36                                                          |
+| Android SDK Platform-Tools (`adb`) and Android Emulator | The latest                                                  |
+| NDK                                                     | 27.1.12297006, which Gradle installs during the first build |
+| Gradle                                                  | 9.3.1, which the project's wrapper fetches                  |
+
+Install the SDK parts in Android Studio under Settings > Languages & Frameworks > Android SDK, and point the build at
+the JDK and the SDK, for example in `~/.zshrc`:
+
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+export ANDROID_HOME=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
+```
+
+### The emulator
+
+Kakao's SDK ships ARM libraries only, so the app is built for `arm64-v8a` alone (`app.json`) and runs on an ARM
+emulator or a phone, not on an x86_64 emulator. In Android Studio's Device Manager, create a phone with the system
+image **Android 16.0 (API 36), Google Play, arm64-v8a** (`system-images;android-36;google_apis_playstore;arm64-v8a`)
+and start it.
+
+### The settings
+
+```bash
+cp .env.example .env
+```
+
+Fill in `KAKAO_NATIVE_APP_KEY` in `.env` with the native app key of the team's Kakao app; the Owner shares it. Git
+ignores `.env`. The app's configuration writes the key into the Android project when the project is generated, so
+after a change to it, generate the project again with `pnpm expo prebuild --platform android`.
+
+The app's identifier is `com.bonnieandclaude.snunow`. Kakao accepts the map only from this identifier and a signing
+key whose key hash is registered. A development build is signed with the debug key that Expo's template ships, whose
+key hash, `Xo8WBi6jzSxKDVR4drqm84yr9iU=`, is registered, so a teammate needs no key of their own.
+
+### The commands
+
+```bash
+pnpm install
+pnpm android
+```
+
+`pnpm android` generates the Android project in `android/` (not committed), builds the app, installs it on the
+running emulator, opens it and starts the development server. The first build takes 15 to 30 minutes; later ones a
+few minutes. Then press "지도 보기" on a placeholder screen, or open `/map-check`, to see the map.
+
+On a phone: turn on Developer options and USB debugging, connect it with a cable, accept the prompt on the phone,
+check that `adb devices` lists it, and run `pnpm android --device` to choose it.
+
+### When the map does not appear
+
+Read what the map says with `adb logcat -s SnuNowMap K3fAApi`:
+
+- **A wrong key hash or identifier**: the map stays blank and the log says `The map could not start` with
+  `MapAuthException(401)` and `android keyhash mismatched!`. Kakao's own words for it are
+  `invalid android_key_hash or ios_bundle_id or web_site_url`. The app was signed with a key whose hash is not
+  registered at Kakao, or built under another identifier.
+- **An empty key**: the log says `KAKAO_NATIVE_APP_KEY was empty when the app was built`. Fill it in and generate the
+  project again.
+- **`MapTimeoutException`**: the map's engine took longer than 10 seconds to start, which a busy machine can do to
+  an emulator. Close what else is running and open the screen again.
+- `MapAuthException(429)`: the day's quota is used up.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
@@ -107,6 +187,7 @@ src/map/            the one map component, its interface and the pictures of its
 src/storage/        what the phone keeps between two starts of the app
 src/session/        where the User is in the flow between the screens, and the work of the start
 src/screens/        the screens that the routes show; a screen of several files has a folder
+modules/            the native map module, a local Expo module
 __tests__/          Jest tests
 assets/             app icons, the splash image, the fonts, the loading screen's photos and the sign-in screen's pictures
 ```
@@ -321,8 +402,8 @@ The component chooses while the app runs (`src/map/map.tsx`), by whether the bui
 `SnuNowMap`:
 
 - **With the module**, it shows the native map, `src/map/native-map.tsx`. That file is loaded only then, and it is
-  the only file that may name the native view. No build holds the module yet: its Android side is ticket 07's and
-  its iOS side ticket 11's, and until then the file is a marked seam.
+  the only file that may name the native view. A build for Android holds the module (see "The Android module"
+  below); its iOS side is ticket 11's.
 - **Without it**, which Expo Go, the web and the tests are, it shows the plain ground (`src/map/plain-map.tsx`) with
   the words "지도는 Android 빌드에서 보입니다". It is no stand-in map: it has no tiles and draws no campus, and a User
   cannot pan it. It follows the camera's rules (`src/map/projection.ts`) and places what it was asked to show by
@@ -357,8 +438,30 @@ for each look and kept for as long as the app runs:
 - Without the module, as in Expo Go, on the web and in a test, no picture is made and `uri` stays null: the plain
   ground draws the view itself.
 
-Left to the Android module (ticket 07): whether a native map draws these pictures as the design system does, at the
-view's size and with its shadow, and when a picture that no screen uses any more is released.
+On Kakao's map a picture is drawn pixel for pixel, at the view's size and with its shadow. No picture is released
+while the app runs: there is one small file per look, and the looks grow only with the Friends a User has.
+
+### The Android module
+
+`modules/snu-now-map` is a local Expo module, in Kotlin, around Kakao Maps SDK for Android 2.15.2. Expo links it
+into every build for Android; `src/map/native-map.tsx` hands it the interface, flattened, and the colours and sizes
+of the design system's tokens. How it keeps the rules:
+
+- **Zoom**: the SDK takes whole levels only. The module measures the Web Mercator zoom from what the view's width
+  shows, and sets a fractional zoom through the camera's height, whose relation to the zoom it measures once when the
+  map is ready.
+- **The rectangle**: the SDK does not keep the camera inside one. When a move ends outside the rules, the module
+  moves the camera back inside, at once, and reports only a camera inside them.
+- **Markers and Avatars** are labels on two layers, the Avatars' above the markers', ranked by `order` and their
+  place in the list. A label is drawn once its picture is there; its `text` is the SDK's own text under it. An Avatar
+  glides at an even speed, from where it is shown.
+- **The route** is the SDK's route line, under the labels.
+- **Kakao's logo** stays as it is, moved to the bottom right, apart from the credit at the bottom left.
+- **The screen**: the module starts the SDK with the key when the app starts, and pauses and resumes each map when
+  the app leaves and comes back to the screen.
+
+The module cannot be tested with Jest: Jest runs without it. It is checked by hand on `/map-check`, against the
+device check of the spec.
 
 ### Trying it
 
