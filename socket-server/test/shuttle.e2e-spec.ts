@@ -17,7 +17,6 @@ let mainServer: ClientProxy;
 
 beforeAll(async () => {
   app = await startApp(settings);
-  await app.listen(0);
   url = await app.getUrl();
   mainServer = ClientProxyFactory.create({
     transport: Transport.REDIS,

@@ -26,6 +26,9 @@ export async function startApp(
     builder = builder.overrideProvider(GroupingToken).useValue(grouping);
   }
   const app = (await builder.compile()).createNestApplication<INestApplication<Server>>();
-  await app.init();
+  // On a free port of 127.0.0.1, once. A server that does not listen is started and closed by supertest around each
+  // group of requests on a port of every address, which macOS also gives out while another program holds it on
+  // 127.0.0.1: now and then a request then reached that program instead.
+  await app.listen(0, '127.0.0.1');
   return app;
 }

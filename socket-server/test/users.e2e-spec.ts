@@ -21,8 +21,6 @@ let mainServer: ClientProxy;
 
 beforeAll(async () => {
   app = await startApp(settings);
-  // On a free port, so that the tests connect over the network as the app does.
-  await app.listen(0);
   url = await app.getUrl();
   mainServer = ClientProxyFactory.create({
     transport: Transport.REDIS,
