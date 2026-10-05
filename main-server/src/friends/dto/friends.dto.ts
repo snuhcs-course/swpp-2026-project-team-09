@@ -27,11 +27,18 @@ export interface FriendRequestsDto {
   sent: { id: string; receiver: UserSummaryDto; sentAt: string }[];
 }
 
-// id is the Friend's User id, which ending the friendship names.
+// id is the Friend's User id, which ending the friendship names. sharing is the User's own switch for the friendship,
+// and visible whether the User can see the Friend now, never why not.
 export interface FriendDto extends UserSummaryDto {
   id: string;
+  sharing: boolean;
+  visible: boolean;
 }
 
-export function toFriendDto(user: Pick<User, 'id' | 'name' | 'department'>): FriendDto {
-  return { id: user.id, ...toUserSummaryDto(user) };
+export function toFriendDto(
+  user: Pick<User, 'id' | 'name' | 'department'>,
+  sharing: boolean,
+  visible: boolean,
+): FriendDto {
+  return { id: user.id, ...toUserSummaryDto(user), sharing, visible };
 }
