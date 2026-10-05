@@ -15,6 +15,7 @@ export function Placeholder({ name, children }: { name: string; children?: React
         <>
           {children}
           <Button
+            centred
             onPress={() => {
               router.push('/catalogue');
             }}

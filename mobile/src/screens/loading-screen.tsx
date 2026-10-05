@@ -1,5 +1,5 @@
 import { type ReactElement, useEffect, useRef } from 'react';
-import { Animated, Easing, Platform, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Platform, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import campusGate from '../../assets/images/campus-1.jpg';
 import campusView from '../../assets/images/campus-2.jpg';
 import { Button, color, font, onPhoto, radius, space, text } from '@/design-system';
@@ -54,8 +54,10 @@ function Progress({ percent }: { percent: number }): ReactElement {
     <View
       accessibilityLabel="불러오는 중"
       accessibilityRole="progressbar"
-      accessibilityValue={{ min: 0, max: 100, now: percent }}
       accessible
+      aria-valuemax={100}
+      aria-valuemin={0}
+      aria-valuenow={percent}
       style={styles.progress}
     >
       <View style={styles.track}>
@@ -75,7 +77,7 @@ function Failure({ onRetry }: { onRetry: () => void }): ReactElement {
       <Text accessibilityLiveRegion="polite" accessibilityRole="alert" style={styles.failed}>
         불러오지 못했어요
       </Text>
-      <Button onPress={onRetry} variant="secondary">
+      <Button centred onPress={onRetry} variant="secondary">
         다시 시도
       </Button>
     </View>
@@ -102,14 +104,15 @@ export function LoadingScreen(): ReactElement {
 
 const SIDE = 56;
 
+// The shade over the photos is one gradient. React Native and the web each have their own style for it, and the
+// web's is not among React Native's types.
+const webShade = { flex: 1, backgroundImage: onPhoto.scrim };
+const scrimShade: ViewStyle = Platform.OS === 'web' ? webShade : { experimental_backgroundImage: onPhoto.scrim };
+
 const styles = StyleSheet.create({
   screen: { flex: 1, overflow: 'hidden', backgroundColor: color.ink },
   photo: { ...StyleSheet.absoluteFill, width: '100%', height: '100%' },
-  // The web target draws no gradient from this style, and gets one even shade.
-  scrim: {
-    ...StyleSheet.absoluteFill,
-    ...(Platform.OS === 'web' ? { backgroundColor: onPhoto.shade } : { experimental_backgroundImage: onPhoto.scrim }),
-  },
+  scrim: { ...StyleSheet.absoluteFill, ...scrimShade },
   wordmark: {
     position: 'absolute',
     right: 0,

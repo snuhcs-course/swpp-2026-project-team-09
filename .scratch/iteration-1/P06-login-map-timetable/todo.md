@@ -36,9 +36,12 @@ Last updated: 2026-10-05
 
 ### 1.4 Sign-in screen (ticket 04; `Login`, `LoginLoading`, `LoginError`)
 
-- [ ] The three states, and the refused state with other words for any other failure
-- [ ] The three legal documents' placeholder screens
-- [ ] The mock sign-in behind the sign-in module
+- [x] The three states, and the refused state with other words for any other failure
+- [x] The three legal documents' placeholder screens
+- [x] The consent screen after the first sign-in, with the three documents, "동의하고 시작" and "로그아웃"
+- [x] The mock sign-in behind the sign-in module
+- [x] Google's account sheet in a build that holds Google's sign-in module, with the account's domain checked in the app
+- [ ] A sign-in with Google tried in a development build on an emulator or a phone
 
 ### 1.5 Onboarding screen (ticket 05; `Onboarding`)
 
@@ -76,7 +79,7 @@ Last updated: 2026-10-05
 
 - [ ] For each feature the demo's flows use, and each other feature named: the client calls the main server, the adapter follows its answer, the mock stays for the tests
 - [ ] One connection to the socket server: the Session's end, the positions of the Users the app may see, and the signals that something changed
-- [ ] A real Google sign-in in a built app, with tokens in the phone's secure storage
+- [ ] Google's ID token sent to the main server, its tokens kept in the phone's secure storage, and its word in place of the app's check of the account's domain
 - [ ] Section 3's table updated with what is connected, and checked before the demo build (P20)
 
 ## 2. Interfaces
@@ -97,7 +100,7 @@ signOut(): Promise<void>;
 type SignInResult =
   | { outcome: 'signed-in'; onboarding: Onboarding }
   | { outcome: 'cancelled' } // the User closed Google's sheet
-  | { outcome: 'not-snu-account' } // the main server's 403
+  | { outcome: 'not-snu-account' } // the main server's 403; until it is asked, the app's own check
   | { outcome: 'failed' }; // any other refusal, or no answer
 
 type Onboarding =
@@ -111,7 +114,8 @@ type Onboarding =
 //   "onboarding": { "completed": false, "suggestion": { "name": "홍길동", "department": "컴퓨터공학부" } }
 // }
 // A part of the suggestion that cannot be read is null. After Onboarding: "onboarding": { "completed": true }.
-// The mock keeps no tokens: it remembers on the phone that the User signed in.
+// The mock keeps no tokens: it remembers on the phone that the User signed in. So does a sign-in with Google until
+// the main server is asked: the app reads the ID token's hosted domain and sends the token nowhere.
 ```
 
 Shape: on the main line (`POST /auth/google`, `POST /auth/refresh`, `POST /auth/sign-out`).
@@ -425,7 +429,7 @@ Sending the User's own position is not in this table: it is built in P09 with th
 
 | Feature | Mock's shape | Connects to |
 |---|---|---|
-| Sign-in, refresh, sign-out | On the main line | `POST /auth/google`, `/auth/refresh`, `/auth/sign-out` |
+| Sign-in, refresh, sign-out | On the main line. A build that holds Google's sign-in module already asks Google and checks the account's domain in the app; nothing is sent | `POST /auth/google`, `/auth/refresh`, `/auth/sign-out` |
 | Onboarding: name, department, admission year, interests | On the main line | `POST /users/me/onboarding` |
 | Onboarding: course level, gender | The app's own | Nothing yet |
 | Lobby | On the main line | `POST /lobby` |
@@ -467,7 +471,7 @@ Each is a setting given when the app is started, as an `EXPO_PUBLIC_` variable. 
 
 | Setting | What it does | Ticket |
 |---|---|---|
-| The sign-in's ending | The mock sign-in ends in `cancelled`, `not-snu-account` or `failed` instead of `signed-in` | 02 |
+| The sign-in's ending | The sign-in is the mock, also in a build that could ask Google, and ends in `signed-in`, `cancelled`, `not-snu-account` or `failed` | 02 |
 | A slow or failing mock | A named mock answers slowly, with a failure or with nothing | 02 |
 | The first state | What the phone keeps is cleared when the app starts: not signed in, no Onboarding | 02 |
 | The walk on campus | The phone's position is replaced by a walk along a fixed path on campus | 08 |
@@ -476,6 +480,8 @@ Each is a setting given when the app is started, as an `EXPO_PUBLIC_` variable. 
 
 - [ ] The sign-in button holds the university's emblem, and the design system's brand book says not to reproduce it. Settle which holds
 - [ ] The texts of the three legal documents: 이용약관, 개인정보 처리방침, 위치정보 이용약관
+- [ ] The consent screen has no frame: its look and words are the app's own. The `Login` frame still asks for consent in its footer, which the app leaves out. Draw the consent screen and settle the sign-in frame's footer
+- [ ] The two drawings beside the sign-in button are copied from the wireframes, and where they come from is not recorded. Record it and whether the app may ship them
 - [ ] A Friend's Avatar on the map: the frame draws a teardrop in the status colour; the candidates frame (지금, A, B, C, D) is still open
 - [ ] The frame draws a route when the screen opens, without a press, and has no way to clear a route. The app follows it; settle whether both are meant
 - [ ] The frame's toast sits over the row of buttons above the navigation
@@ -494,7 +500,9 @@ Each is a setting given when the app is started, as an `EXPO_PUBLIC_` variable. 
 ## 7. For people
 
 - [ ] `KAKAO_NATIVE_APP_KEY` filled in for the app
-- [ ] Before the last ticket: check that Google Cloud holds an Android sign-in client for `com.bonnieandclaude.snunow` and the development SHA-1, and that the app's client is a Web application client
+- [x] Google Cloud holds an Android sign-in client for `com.bonnieandclaude.snunow` and the development SHA-1
+- [ ] `mobile/.env` filled in from `mobile/.env.example`: `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, the ID of the main server's client, which must be of type "Web application"; for the iOS build also `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` and `GOOGLE_IOS_URL_SCHEME`
+- [ ] A sign-in with Google tried in a development build on Android (`mobile/README.md`, "Google sign-in"): an SNU account, an account outside SNU and a closed sheet
 - [ ] Before the last ticket: a main server that a phone can reach
 - [ ] For the iOS ticket: the iOS app registered at Kakao
 - [ ] Update P06's row in the schedule sheet

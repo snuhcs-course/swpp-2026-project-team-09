@@ -6,7 +6,10 @@ import { keep } from '@/storage/kept';
 jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotion: (): boolean => true,
   useMotionAllowed: (): boolean => false,
+  useReduceMotionSetting: (): boolean => true,
 }));
+
+const SIGN_IN = '서울대학교 구글 계정(@snu.ac.kr)으로 로그인';
 
 const ANSWERS = {
   name: '홍길동',
@@ -20,6 +23,7 @@ const ANSWERS = {
 async function keepSignedIn(onboardingCompleted: boolean): Promise<void> {
   await keep({
     signedIn: true,
+    consented: true,
     onboardingCompleted,
     suggestion: onboardingCompleted ? null : { name: '홍길동', department: null },
     answers: onboardingCompleted ? { ...ANSWERS, hashtags: [] } : null,
@@ -61,7 +65,8 @@ describe('the loading screen', () => {
     expect(screen.getByText('100%')).toBeVisible();
 
     await pass(50);
-    expect(screen.queryByText('관악캠퍼스의 지금')).toBeNull();
+    // The sign-in screen has the wordmark too: the bar is what only the loading screen has.
+    expect(screen.queryByRole('progressbar')).toBeNull();
   });
 });
 
@@ -70,7 +75,7 @@ describe('after the loading screen', () => {
     await startApp();
     await pass(600);
 
-    expect(screen.getByRole('header', { name: '로그인' })).toBeVisible();
+    expect(screen.getByRole('button', { name: SIGN_IN })).toBeVisible();
   });
 
   it('shows Onboarding to a User who signed in and did not finish it', async () => {
@@ -116,7 +121,7 @@ describe("a screen that is not the User's", () => {
     await startApp('/main');
     await pass(600);
 
-    expect(screen.getByRole('header', { name: '로그인' })).toBeVisible();
+    expect(screen.getByRole('button', { name: SIGN_IN })).toBeVisible();
     expect(screen.queryByRole('header', { name: '메인' })).toBeNull();
   });
 
@@ -126,16 +131,18 @@ describe("a screen that is not the User's", () => {
     await pass(1000);
 
     expect(screen.getByRole('header', { name: '메인' })).toBeVisible();
-    expect(screen.queryByRole('header', { name: '로그인' })).toBeNull();
+    expect(screen.queryByRole('button', { name: SIGN_IN })).toBeNull();
   });
 
-  it('follows a sign-in, Onboarding and a sign-out without the loading screen again', async () => {
+  it('follows a sign-in, Onboarding and a sign-out and no loading screen again', async () => {
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     await startApp();
     await pass(600);
 
-    await user.press(screen.getByRole('button', { name: '로그인 (임시)' }));
+    await user.press(screen.getByRole('button', { name: SIGN_IN }));
     await pass(400);
+    await user.press(screen.getByRole('button', { name: '동의하고 시작' }));
+    await pass(100);
     expect(screen.getByRole('header', { name: '온보딩' })).toBeVisible();
 
     await user.press(screen.getByRole('button', { name: '저장 (임시)' }));
@@ -144,7 +151,7 @@ describe("a screen that is not the User's", () => {
 
     await user.press(screen.getByRole('button', { name: '로그아웃 (임시)' }));
     await pass(100);
-    expect(screen.getByRole('header', { name: '로그인' })).toBeVisible();
-    expect(screen.queryByText('관악캠퍼스의 지금')).toBeNull();
+    expect(screen.getByRole('button', { name: SIGN_IN })).toBeVisible();
+    expect(screen.queryByRole('progressbar')).toBeNull();
   });
 });

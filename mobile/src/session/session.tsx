@@ -3,21 +3,25 @@ import { createContext, type ReactElement, type ReactNode, use, useCallback, use
 import type { Onboarding, Suggestion } from '@/api/types';
 
 // Where the User is in the app's flow. `loading` is only the start of the app: nothing leads back to it.
-export type SessionStatus = 'loading' | 'signed-out' | 'onboarding' | 'ready';
+export type SessionStatus = 'loading' | 'signed-out' | 'consent' | 'onboarding' | 'ready';
 
 // What the start of the app found, or a sign-in brought.
 export interface Opened {
   status: Exclude<SessionStatus, 'loading'>;
   // What the sign-in suggested for Onboarding. Null outside Onboarding.
   suggestion: Suggestion | null;
+  // Where the User goes once they agreed. Only with `consent`.
+  next?: Opened;
 }
 
-interface Session extends Omit<Opened, 'status'> {
+interface Session extends Omit<Opened, 'status' | 'next'> {
   status: SessionStatus;
   // The loading screen is over: the app goes where the User belongs.
   open: (opened: Opened) => void;
-  // A sign-in succeeded.
-  enter: (onboarding: Onboarding) => void;
+  // A sign-in succeeded. `consented` is whether the User agreed to the legal documents on this phone before.
+  enter: (onboarding: Onboarding, consented: boolean) => void;
+  // The User agreed to the legal documents.
+  agree: () => void;
   // Onboarding was saved.
   finishOnboarding: () => void;
   // The User signed out.
@@ -26,7 +30,13 @@ interface Session extends Omit<Opened, 'status'> {
 
 const SessionContext = createContext<Session | null>(null);
 
-const PLACE = { loading: '/', 'signed-out': '/sign-in', onboarding: '/onboarding', ready: '/main' } as const;
+const PLACE = {
+  loading: '/',
+  'signed-out': '/sign-in',
+  consent: '/consent',
+  onboarding: '/onboarding',
+  ready: '/main',
+} as const;
 
 export function openedBy(onboarding: Onboarding): Opened {
   return onboarding.completed
@@ -34,12 +44,20 @@ export function openedBy(onboarding: Onboarding): Opened {
     : { status: 'onboarding', suggestion: onboarding.suggestion };
 }
 
+// A signed-in User who has not agreed to the legal documents is asked first, and goes on from there.
+export function behindConsent(opened: Opened, consented: boolean): Opened {
+  return consented || opened.status === 'signed-out' ? opened : { status: 'consent', suggestion: null, next: opened };
+}
+
 // Holds where the User is, for the screens to follow. The phone keeps the same through the sign-in module and the
 // client; this is the app's memory of it while it runs.
 export function SessionProvider({ children }: { children: ReactNode }): ReactElement {
   const [opened, setOpened] = useState<Opened | null>(null);
-  const enter = useCallback((onboarding: Onboarding) => {
-    setOpened(openedBy(onboarding));
+  const enter = useCallback((onboarding: Onboarding, consented: boolean) => {
+    setOpened(behindConsent(openedBy(onboarding), consented));
+  }, []);
+  const agree = useCallback(() => {
+    setOpened((now) => now?.next ?? now);
   }, []);
   const finishOnboarding = useCallback(() => {
     setOpened({ status: 'ready', suggestion: null });
@@ -53,10 +71,11 @@ export function SessionProvider({ children }: { children: ReactNode }): ReactEle
       suggestion: opened?.suggestion ?? null,
       open: setOpened,
       enter,
+      agree,
       finishOnboarding,
       leave,
     }),
-    [opened, enter, finishOnboarding, leave],
+    [opened, enter, agree, finishOnboarding, leave],
   );
   return <SessionContext value={session}>{children}</SessionContext>;
 }

@@ -27,6 +27,7 @@ export default function OnboardingScreen(): ReactElement {
     useOwnPlace('onboarding') ?? (
       <Placeholder name="온보딩">
         <Button
+          centred
           onPress={() => {
             void save();
           }}
@@ -34,6 +35,7 @@ export default function OnboardingScreen(): ReactElement {
           저장 (임시)
         </Button>
         <Button
+          centred
           onPress={() => {
             void out();
           }}

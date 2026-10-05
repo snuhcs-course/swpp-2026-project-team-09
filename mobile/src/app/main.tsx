@@ -15,6 +15,7 @@ export default function MainScreen(): ReactElement {
     useOwnPlace('ready') ?? (
       <Placeholder name="메인">
         <Button
+          centred
           onPress={() => {
             void out();
           }}

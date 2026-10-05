@@ -77,9 +77,10 @@ Every piece of data is a mock inside the app, in the shape the server gives or w
 
 ### The flow between screens
 
-- The first time: the app starts, shows the loading screen, then the sign-in screen, then Onboarding, then the main screen.
+- The first time: the app starts, shows the loading screen, then the sign-in screen, then the consent screen, then Onboarding, then the main screen.
+- The consent screen is shown once on a phone, to a signed-in User who has not agreed there yet: after the sign-in, or after the loading screen. A sign-out and a new sign-in do not show it again.
 - A User who signed in and finished Onboarding on this phone: the app starts, shows the loading screen, then the main screen.
-- A User who signed in and did not finish Onboarding: the loading screen, then Onboarding.
+- A User who signed in, agreed and did not finish Onboarding: the loading screen, then Onboarding.
 - The loading screen is shown once, when the app starts. It is not shown again after a sign-in or after Onboarding.
 - Nothing in this task signs a User out of the main screen: sign-out is on 내 정보, which P09 builds. A development setting puts the app back in its first state.
 
@@ -111,7 +112,7 @@ Every piece of data is a mock inside the app, in the shape the server gives or w
   - where nothing defines it, the app gives it a shape of its own, marked provisional.
 - One adapter per feature turns the answer into what the screens use, so that connecting the server changes the adapter and the client, not a screen. What a frame shows and no answer holds, such as a Friend's status line, comes from a mock of the app's own beside the answer, not from fields added to it.
 - A mock answers after a short wait and can answer with a failure and with nothing, so that loading, error and empty states can be seen.
-- The phone keeps what the app needs to open again: that the User signed in, the suggestion the sign-in brought, whether Onboarding is finished, and the Onboarding's answers.
+- The phone keeps what the app needs to open again: that the User signed in, that the User agreed to the legal documents, the suggestion the sign-in brought, whether Onboarding is finished, and the Onboarding's answers.
 - A feature that the main server already serves is still a mock here. The last ticket connects it.
 - What the app needs from the server is not written into this task's documents. It is passed on in person.
 
@@ -127,18 +128,28 @@ Every piece of data is a mock inside the app, in the shape the server gives or w
 ### Sign-in
 
 - The screen is the `Login` frame, with its three states: default, checking and refused.
-- Sign-in lives behind one module with two operations, sign in and sign out. In this task the module is a mock: it signs in after a short wait. A sign-in that succeeds brings whether the User finished Onboarding and, when not, the suggestion.
+- Sign-in lives behind one module with two operations, sign in and sign out. A sign-in that succeeds brings whether the User finished Onboarding and, when not, the suggestion.
+- In a build that holds Google's sign-in module, the module asks Google: Google's account sheet opens, and the app itself checks the account's domain in the ID token. An account whose hosted domain is not `snu.ac.kr` is outside SNU and is signed out of Google again. Nothing is sent to the main server, and the suggestion is the Google account's name with no department. The app does not verify the token, so its check only decides what the screen shows until the main server's word replaces it ("Connecting to the server").
+- Everywhere else, in Expo Go, on the web and in the tests, the module is a mock: it signs in after a short wait.
 - How a sign-in ends, and what the screen shows:
 
 | Ending | What the screen shows |
 |---|---|
-| Signed in | Onboarding, or the main screen for a User who finished it on this phone |
+| Signed in | The consent screen the first time on this phone; after that Onboarding, or the main screen for a User who finished it on this phone |
 | The account is outside SNU | The refused state: "로그인하지 못했어요", "@snu.ac.kr 계정만 가능해요" |
 | The User closed Google's sheet | The default state |
 | Any other failure | The refused state with other words: "로그인하지 못했어요", "잠시 후 다시 시도해 주세요" |
 
-- The mock ends in "signed in" unless a development setting names another ending.
-- Each of the three legal documents opens on a screen of its own with a placeholder text, as in the frame.
+- The mock ends in "signed in" unless a development setting names another ending. With that setting the module is the mock in every build.
+- The sign-in screen does not ask for consent to the legal documents and has no links to them, unlike the frame's footer.
+
+### Consent
+
+- The consent screen comes after the first sign-in on a phone and before Onboarding. No frame draws it: it is built from the design system.
+- It lists the three legal documents, 이용약관, 개인정보 처리방침 and 위치정보 이용약관. Each opens on a screen of its own with a placeholder text, the frame's legal overlay, and closes back to the consent screen.
+- "동의하고 시작" stores on the phone that the User agreed and leads to Onboarding, or to the main screen for a User who finished Onboarding, as the sign-in would have.
+- "로그아웃" signs the User out and shows the sign-in screen, so that a User who does not agree is not held there.
+- The Lobby is fetched at the start of the app only for a User who agreed and finished Onboarding.
 
 ### Onboarding
 
@@ -212,6 +223,7 @@ Built from the design system's dialog and the shared Toast. The team may change 
 | Kind | Where | Words |
 |---|---|---|
 | Dialog | Before the location prompt | Title "내 위치를 지도에 표시할까요?". Body "지도에 내 아바타를 보여 주려면 위치 권한이 필요해요." Buttons "나중에" and "계속" |
+| Consent screen | After the first sign-in | Title "약관에 동의해 주세요". Body "SNU Now를 쓰려면 아래 약관에 동의해야 해요." Rows "이용약관", "개인정보 처리방침", "위치정보 이용약관". Buttons "동의하고 시작" and "로그아웃" |
 | Refused state | A failed sign-in | "로그인하지 못했어요", "잠시 후 다시 시도해 주세요" |
 | Loading screen | The loading failed | "불러오지 못했어요", button "다시 시도" |
 | Map's place | A build without the native map | "지도는 Android 빌드에서 보입니다" |
@@ -227,6 +239,7 @@ Built from the design system's dialog and the shared Toast. The team may change 
 - Once sign-in is connected, the main server says whether a User finished Onboarding, and what the phone kept gives way to it.
 - The app keeps one connection to the socket server open with the access token. Through it the app learns that the Session ended, receives the positions of the Users it may see, and is told when something it shows has changed, which it then fetches again.
 - Before the demo build (P20), the list of mocks is checked, so that none is left by accident.
+- The sign-in module already asks Google in a built app. The last ticket sends Google's ID token to the main server, keeps the main server's tokens in the phone's secure storage, and lets the main server's answer replace the app's own check of the account's domain.
 - A real sign-in needs a built app, a Google sign-in client registered for the app's identifier and signing key, and a main server that the phone can reach. The ticket records which of these hold when it starts.
 
 ## Testing Decisions

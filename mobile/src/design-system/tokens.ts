@@ -74,9 +74,14 @@ export const onPhoto = {
   textSubtle: 'rgba(255, 255, 255, 0.8)',
   track: 'rgba(255, 255, 255, 0.25)',
   textShadow: 'rgba(0, 0, 0, 0.35)',
-  shade: 'rgba(14, 19, 48, 0.4)',
   scrim:
     'linear-gradient(rgba(0, 26, 114, 0.25) 0%, rgba(14, 19, 48, 0.05) 35%, rgba(14, 19, 48, 0.35) 65%, rgba(0, 16, 64, 0.85) 100%)',
+} as const;
+
+// The sign-in screen's round button, as its frame draws it: a wide shadow in the key colour over a close one. No
+// shadow of the design system is this deep.
+export const signInButton = {
+  shadow: '0 12px 32px rgba(0, 26, 114, 0.18), 0 2px 6px rgba(14, 19, 48, 0.08)',
 } as const;
 
 // One font file per weight, loaded under these names by the root layout. React Native picks a weight by the family's

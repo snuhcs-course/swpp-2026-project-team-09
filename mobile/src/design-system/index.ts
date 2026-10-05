@@ -13,4 +13,4 @@ export { Icon, ICON_NAMES, type IconName } from './icon';
 export { MapDot, MapPin, type MapPinKind, type MapPlaceKind } from './map-pin';
 export { TextField } from './text-field';
 export { ToastProvider, useNotReadyToast, useToast, useToastAbove } from './toast';
-export { color, font, halo, onPhoto, radius, shadow, size, space, text } from './tokens';
+export { color, font, halo, onPhoto, radius, shadow, signInButton, size, space, text } from './tokens';

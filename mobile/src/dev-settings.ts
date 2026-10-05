@@ -1,6 +1,6 @@
 // Settings for development, given when the app is started as `EXPO_PUBLIC_` variables. A released app ignores them.
 //
-//   EXPO_PUBLIC_SIGN_IN_ENDING=cancelled        the mock sign-in's ending: signed-in, cancelled, not-snu-account, failed
+//   EXPO_PUBLIC_SIGN_IN_ENDING=cancelled        the sign-in is the mock and ends so: signed-in, cancelled, not-snu-account, failed
 //   EXPO_PUBLIC_MOCK_SLOW=listFriends,listQuests  these mocks answer after three seconds
 //   EXPO_PUBLIC_MOCK_FAIL=enterLobby             these mocks answer with a failure
 //   EXPO_PUBLIC_MOCK_EMPTY=listFriends           these mocks answer with nothing
@@ -24,9 +24,15 @@ function names(list: string | undefined): string[] {
 }
 
 // Each variable is read by its full name, because the bundler replaces only those.
-export function signInEnding(): SignInEnding {
+// The ending that the setting names, or null without the setting. A named ending also keeps the sign-in a mock in a
+// build that could ask Google.
+export function namedSignInEnding(): SignInEnding | null {
   const ending = process.env.EXPO_PUBLIC_SIGN_IN_ENDING;
-  return __DEV__ && isSignInEnding(ending) ? ending : 'signed-in';
+  return __DEV__ && isSignInEnding(ending) ? ending : null;
+}
+
+export function signInEnding(): SignInEnding {
+  return namedSignInEnding() ?? 'signed-in';
 }
 
 // How the mock of one operation answers. A failure wins over nothing, and nothing over a slow answer.

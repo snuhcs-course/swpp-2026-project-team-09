@@ -15,6 +15,8 @@ interface ButtonProps {
   size?: 'md' | 'lg';
   // Stretches to the container's width.
   full?: boolean;
+  // Stands in the middle of the container's width, where it would otherwise stand at its start.
+  centred?: boolean;
   // Shown before the label.
   icon?: IconName;
   disabled?: boolean;
@@ -37,6 +39,7 @@ export function Button({
   variant = 'primary',
   size = 'md',
   full = false,
+  centred = false,
   icon,
   disabled = false,
   onPress,
@@ -53,6 +56,7 @@ export function Button({
         styles.base,
         size === 'lg' ? styles.lg : styles.md,
         full ? styles.full : styles.hug,
+        centred && !full && styles.centred,
         styles[variant],
         pressed && pressedStyles[variant],
         disabled && styles.disabled,
@@ -80,6 +84,7 @@ const styles = StyleSheet.create({
   lg: { height: sizes.button, paddingHorizontal: space[5] },
   full: { alignSelf: 'stretch' },
   hug: { alignSelf: 'flex-start' },
+  centred: { alignSelf: 'center' },
   primary: { backgroundColor: color.snuBlue },
   secondary: { backgroundColor: color.surface, borderColor: color.borderStrong },
   ghost: { backgroundColor: 'transparent' },

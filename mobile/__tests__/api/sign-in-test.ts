@@ -23,6 +23,14 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
+const FIRST_STATE = {
+  signedIn: false,
+  consented: false,
+  suggestion: null,
+  onboardingCompleted: false,
+  answers: null,
+};
+
 describe('sign-in', () => {
   it('signs a new User in with a suggestion for Onboarding, and the phone keeps both', async () => {
     const result = await answered(signIn());
@@ -33,6 +41,7 @@ describe('sign-in', () => {
     });
     expect(await readKept()).toEqual({
       signedIn: true,
+      consented: false,
       suggestion: { name: '안진영', department: null },
       onboardingCompleted: false,
       answers: null,
@@ -62,7 +71,13 @@ describe('what the phone keeps', () => {
     await answered(mockClient.completeOnboarding(ANSWERS));
 
     // The next start reads the phone again: nothing lives in the app's memory.
-    expect(await openKept()).toEqual({ signedIn: true, suggestion: null, onboardingCompleted: true, answers: ANSWERS });
+    expect(await openKept()).toEqual({
+      signedIn: true,
+      consented: false,
+      suggestion: null,
+      onboardingCompleted: true,
+      answers: ANSWERS,
+    });
   });
 
   it('remembers after a sign-out that the User finished Onboarding', async () => {
@@ -77,9 +92,10 @@ describe('what the phone keeps', () => {
   it('is cleared at the start of the app when the development setting asks for the first state', async () => {
     await answered(signIn());
     await answered(mockClient.completeOnboarding(ANSWERS));
+    await keep({ consented: true });
     process.env.EXPO_PUBLIC_FIRST_STATE = '1';
 
-    expect(await openKept()).toEqual({ signedIn: false, suggestion: null, onboardingCompleted: false, answers: null });
+    expect(await openKept()).toEqual(FIRST_STATE);
   });
 
   it('treats what it cannot read as the first state', async () => {
@@ -87,7 +103,23 @@ describe('what the phone keeps', () => {
     expect((await readKept()).signedIn).toBe(false);
 
     await AsyncStorage.setItem('snunow.kept', '{"signedIn":"yes","onboardingCompleted":true}');
-    expect(await readKept()).toEqual({ signedIn: false, suggestion: null, onboardingCompleted: false, answers: null });
+    expect(await readKept()).toEqual(FIRST_STATE);
+  });
+});
+
+describe('what the phone keeps of the consent', () => {
+  it('reads what a version without consent stored, as not agreed yet', async () => {
+    const stored = { signedIn: true, suggestion: null, onboardingCompleted: true, answers: ANSWERS };
+    await AsyncStorage.setItem('snunow.kept', JSON.stringify(stored));
+
+    expect(await readKept()).toEqual({ ...stored, consented: false });
+  });
+
+  it('remembers after a sign-out that the User agreed to the legal documents', async () => {
+    await keep({ signedIn: true, consented: true });
+    await signOut();
+
+    expect((await readKept()).consented).toBe(true);
   });
 
   it('keeps both of two changes made at once', async () => {
