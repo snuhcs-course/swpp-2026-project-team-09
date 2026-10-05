@@ -45,3 +45,10 @@ Ticket 11 makes Class Quests from the classes. A later task of the app builds th
 - Tokens, counted from the three agents' transcripts:
   - Input: 17,384,747, of which 16,990,909 were cache reads, 393,614 cache writes and 224 uncached.
   - Output: 33,538, a lower bound, since the transcripts record only part of the output of most steps.
+
+### Agent usage (2026-10-06)
+
+- Agent time: about 11 minutes, an estimate: one agent that reworked the ticket for classes with their times. The session that ran it is not counted here.
+- Tokens, counted from the agent's transcript:
+  - Input: 9,508,667, of which 9,349,597 were cache reads, 158,930 cache writes and 140 uncached.
+  - Output: 15,671, a lower bound, since the transcript records only part of the output of most steps.
