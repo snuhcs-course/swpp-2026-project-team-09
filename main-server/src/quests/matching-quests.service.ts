@@ -1,7 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
-import { GlobalEventState, Prisma } from '../generated/prisma/client.js';
+import { GlobalEventState, JoinPolicy, Prisma } from '../generated/prisma/client.js';
 import { CLOCK, type Clock } from './clock.js';
+import { hasSubQuestsAhead, QUEST_INCLUDE } from './dto/quest.dto.js';
 
 // A request for Matching on a Global Event, which the match server keeps.
 export interface MatchingCandidate {
@@ -11,6 +12,22 @@ export interface MatchingCandidate {
 
 // The refusal codes of a request for Matching that cannot stand.
 export type MatchingRefusal = 'GLOBAL_EVENT_NOT_FOUND' | 'GLOBAL_EVENT_STARTED' | 'SHARED_QUEST_HELD';
+
+// The waiting requests of one Global Event and group size.
+export interface MatchingPool {
+  globalEventId: string;
+  size: number;
+}
+
+// An Open Quest a request for Matching can be placed into.
+export interface EligibleQuest {
+  id: string;
+  globalEventId: string;
+  capacity: number;
+  freePlaces: number;
+  holderIds: string[];
+  createdAt: Date;
+}
 
 // What Matching reads of the Quests (README.md: Quests). QuestsService makes every change to them.
 @Injectable()
@@ -52,6 +69,32 @@ export class MatchingQuestsService {
         return 'GLOBAL_EVENT_STARTED';
       }
       return holdingShared.has(`${userId} ${globalEventId}`) ? 'SHARED_QUEST_HELD' : null;
+    });
+  }
+
+  // The Quests Matching may place a request of the pool into: Open, of the pool's Global Event, with a capacity of the
+  // pool's size, a free place and a Sub Quest ahead. The earliest first, each with its Holders in the order they
+  // entered.
+  async eligibleQuests(pools: readonly MatchingPool[]): Promise<EligibleQuest[]> {
+    if (pools.length === 0) {
+      return [];
+    }
+    const quests = await this.prisma.quest.findMany({
+      where: {
+        joinPolicy: JoinPolicy.open,
+        OR: pools.map(({ globalEventId, size }) => ({ globalEventId, capacity: size })),
+      },
+      include: QUEST_INCLUDE,
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+    const now = this.clock.now();
+    return quests.flatMap((quest) => {
+      const { id, globalEventId, capacity, holders, createdAt } = quest;
+      if (globalEventId === null || holders.length >= capacity || !hasSubQuestsAhead(quest, now)) {
+        return [];
+      }
+      const holderIds = holders.map(({ userId }) => userId);
+      return [{ id, globalEventId, capacity, freePlaces: capacity - holders.length, holderIds, createdAt }];
     });
   }
 

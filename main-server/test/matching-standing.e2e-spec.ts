@@ -63,7 +63,12 @@ describe('Which requests for Matching still stand', () => {
 });
 
 describe("A call for the match server without the match server's token", () => {
-  const routes = ['/matching-requests/standing', `/matches/${randomUUID()}/quest`];
+  const routes = [
+    '/matching-requests/standing',
+    '/matching-requests/eligible-quests',
+    '/matching-requests/placements',
+    `/matches/${randomUUID()}/quest`,
+  ];
 
   // A route left unmarked would take the User, and one marked @WorkerOnly() the worker: either would answer 400 here.
   it.each(routes)("is refused on %s, with no token, the worker's token and a User's access token", async (path) => {

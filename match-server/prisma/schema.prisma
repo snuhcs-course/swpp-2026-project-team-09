@@ -28,6 +28,9 @@ model MatchingRequest {
   // The match a round put it in.
   matchId       String?              @map("match_id") @db.Uuid
   match         Match?               @relation(fields: [matchId], references: [id])
+  // The main server's Open Quest a round placed it into, for a request in no match. A check in the migration keeps it
+  // to `matched`.
+  questId       String?              @map("quest_id") @db.Uuid
 
   @@unique([userId, globalEventId], where: { state: "waiting" })
   @@index([userId, globalEventId])

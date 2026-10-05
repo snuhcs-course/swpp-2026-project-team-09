@@ -45,6 +45,20 @@ export function connectToDatabase(databaseUrl = inject('settings').DATABASE_URL)
 const candidateSchema = z.object({ userId: z.string(), globalEventId: z.string() });
 const standingQuestionSchema = z.object({ requests: z.array(candidateSchema) });
 const questRequestSchema = z.object({ globalEventId: z.string(), userIds: z.array(z.string()) });
+const eligibleQuestionSchema = z.object({ pools: z.array(z.object({ globalEventId: z.string(), size: z.number() })) });
+const placementSchema = z.object({ questId: z.string(), userId: z.string(), size: z.number() });
+
+export type Placement = z.infer<typeof placementSchema>;
+
+// An Open Quest the main server answers as eligible.
+export interface EligibleQuest {
+  id: string;
+  globalEventId: string;
+  capacity: number;
+  freePlaces: number;
+  holderIds: string[];
+  createdAt: string;
+}
 
 // An answer of the main server with its status, or none, as from a main server that is down.
 export type Reply = { status: number; body: object } | null;
@@ -75,6 +89,16 @@ export class MainServerStub {
     status: 201,
     body: { questId: this.questIdOf(matchId), holderIds: userIds },
   });
+  // The eligible Quests: none, unless a test says otherwise.
+  eligible: (pools: z.infer<typeof eligibleQuestionSchema>['pools']) => Reply = () => ({
+    status: 200,
+    body: { quests: [] },
+  });
+  // The answer to a placement: unless a test says otherwise, the User entered.
+  placement: (placement: Placement) => Reply = ({ questId, userId }) => ({
+    status: 201,
+    body: { questId, holderIds: [userId] },
+  });
   private readonly questIds = new Map<string, string>();
 
   // The Quest the stub creates for the match.
@@ -89,6 +113,13 @@ export class MainServerStub {
     return this.calls.filter(({ path }) => path.startsWith('/matches/'));
   }
 
+  // The placements asked for, in order.
+  placements(): Placement[] {
+    return this.calls
+      .filter(({ path }) => path === '/matching-requests/placements')
+      .map(({ body }) => placementSchema.parse(body));
+  }
+
   // Give it to startApp in place of the HTTP call to the main server.
   readonly fetch: typeof fetch = async (input, init) => {
     const { pathname } = new URL(input instanceof Request ? input.url : String(input));
@@ -98,6 +129,10 @@ export class MainServerStub {
     let reply: Reply = null;
     if (pathname === '/matching-requests/standing') {
       reply = await this.standing(standingQuestionSchema.parse(body).requests);
+    } else if (pathname === '/matching-requests/eligible-quests') {
+      reply = this.eligible(eligibleQuestionSchema.parse(body).pools);
+    } else if (pathname === '/matching-requests/placements') {
+      reply = this.placement(placementSchema.parse(body));
     } else if (matchId !== undefined) {
       reply = this.quest(matchId, questRequestSchema.parse(body).userIds);
     }
