@@ -250,6 +250,25 @@ export class FriendsService {
     return row !== null && row.acceptedAt !== null;
   }
 
+  // The Users who are a Friend of any of these Users, some of them possibly among them.
+  async friendsOfAny(userIds: readonly string[], tx: Prisma.TransactionClient = this.prisma): Promise<string[]> {
+    const ids = new Set(userIds);
+    const rows = await tx.friendship.findMany({
+      where: { acceptedAt: { not: null }, OR: [{ userAId: { in: [...ids] } }, { userBId: { in: [...ids] } }] },
+      select: { userAId: true, userBId: true },
+    });
+    const friendIds = new Set<string>();
+    for (const { userAId, userBId } of rows) {
+      if (ids.has(userAId)) {
+        friendIds.add(userBId);
+      }
+      if (ids.has(userBId)) {
+        friendIds.add(userAId);
+      }
+    }
+    return [...friendIds];
+  }
+
   // Answers the waiting Friend Request that `where` finds. `change` answers how many rows it changed, none when the
   // request was answered in the meantime.
   private async answer(
