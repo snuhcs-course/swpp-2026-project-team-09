@@ -81,7 +81,7 @@ export class AuthService {
       });
       return { sessionId: id, replacedSessionIds: ended };
     });
-    this.sessions.announceEnd(replacedSessionIds, 'replaced');
+    this.sessions.announceEnd(user.id, replacedSessionIds, 'replaced');
     return {
       accessToken: await this.signAccessToken(user.id, sessionId),
       refreshToken: refreshToken.token,
@@ -122,7 +122,7 @@ export class AuthService {
       return issued;
     });
     if (outcome === 'reused') {
-      this.sessions.announceEnd([sessionId], 'refresh_token_reused');
+      this.sessions.announceEnd(session.userId, [sessionId], 'refresh_token_reused');
     }
     if (outcome === 'refused' || outcome === 'reused') {
       throw new UnauthorizedException(REFRESH_TOKEN_REFUSED);
@@ -135,7 +135,7 @@ export class AuthService {
       await this.users.lock(user.id, tx);
       return this.sessions.end(tx, { id: user.sessionId }, 'signed_out');
     });
-    this.sessions.announceEnd(ended, 'signed_out');
+    this.sessions.announceEnd(user.id, ended, 'signed_out');
   }
 
   private signAccessToken(userId: string, sessionId: string): Promise<string> {

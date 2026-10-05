@@ -33,6 +33,7 @@ describe('The lobby', () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
       profile: { name: '김철수', department: '경영학과', admissionYear: null, hashtags: ['AI'], friendId: A_FRIEND_ID },
+      masterSwitch: false,
     });
   });
 
