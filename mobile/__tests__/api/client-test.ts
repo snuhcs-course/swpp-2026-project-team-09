@@ -123,6 +123,13 @@ describe('the mock of Parties', () => {
       ['안진영', false],
     ]);
   });
+
+  it('counts what waits for the User in Parties, which no answer of the main server holds', async () => {
+    expect(await answered(mockClient.getPartyNews())).toEqual({ count: 3 });
+
+    process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getPartyNews';
+    expect(await answered(mockClient.getPartyNews())).toEqual({ count: 0 });
+  });
 });
 
 describe('the mock of the walking route', () => {

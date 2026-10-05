@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react-native';
 
-import { CAMPUS_BOUNDS, centreOf, MAX_ZOOM } from '@/map';
+import { CAMPUS_BOUNDS, centreOf, MAX_ZOOM, ZOOM_OFFSET, zoomDetail } from '@/map';
 import { EVENT, FRIEND, GATE, holdMap, layOutMap, LIBRARY } from './support/map';
 
 // The zoom at which a view of 390 by 700 points just fits inside the campus rectangle.
@@ -72,6 +72,49 @@ describe("the camera's limits", () => {
     expect(map.camera()?.zoom).toBeCloseTo(WHOLE_CAMPUS, 3);
     await layOutMap(780, 700);
     expect(map.camera()?.zoom).toBeCloseTo(WHOLE_CAMPUS + 1, 3);
+  });
+});
+
+describe("the map's fit zoom", () => {
+  it('is told before the camera, and again when the size of the view changes it', async () => {
+    const said: string[] = [];
+    const onFitZoom = jest.fn<void, [number]>(() => {
+      said.push('fit');
+    });
+    const map = await holdMap({ onFitZoom });
+    map.onCameraIdle.mockImplementation(() => {
+      said.push('camera');
+    });
+
+    expect(onFitZoom.mock.lastCall?.[0]).toBeCloseTo(WHOLE_CAMPUS, 3);
+    expect(map.camera()?.zoom).toBe(onFitZoom.mock.lastCall?.[0]);
+
+    await layOutMap(780, 700);
+    expect(onFitZoom.mock.lastCall?.[0]).toBeCloseTo(WHOLE_CAMPUS + 1, 3);
+    expect(said.slice(-2)).toEqual(['fit', 'camera']);
+
+    // A move of the camera does not change it.
+    const told = onFitZoom.mock.calls.length;
+    await map.move((handle) => {
+      handle.moveCamera({ centre: LIBRARY, zoom: 18 });
+    });
+    expect(onFitZoom).toHaveBeenCalledTimes(told);
+  });
+});
+
+describe('the zoom levels of the main screen', () => {
+  it('count from the fit zoom, as the frame counts its factor from 1', () => {
+    const fit = 15.1;
+
+    expect(zoomDetail(fit, fit)).toBe('overview');
+    expect(zoomDetail(fit + Math.log2(1.5), fit)).toBe('overview');
+    expect(zoomDetail(fit + ZOOM_OFFSET.pins, fit)).toBe('pins');
+    expect(zoomDetail(fit + Math.log2(2.25), fit)).toBe('pins');
+    // A camera moved to a level is at that level.
+    expect(zoomDetail(fit + ZOOM_OFFSET.names, fit)).toBe('names');
+    expect(zoomDetail(fit + ZOOM_OFFSET.close, fit)).toBe('names');
+    expect(ZOOM_OFFSET.step).toBeCloseTo(0.585, 3);
+    expect(ZOOM_OFFSET.close).toBeCloseTo(1.379, 3);
   });
 });
 

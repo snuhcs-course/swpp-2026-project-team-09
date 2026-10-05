@@ -37,6 +37,10 @@ model User {
   inviteLinks   InviteLink[]
   questHolders  QuestHolder[]
   ledQuests     Quest[]
+  questJoinRequests QuestJoinRequest[]
+  questInvitations  QuestInvitation[]
+  partyMember       PartyMember?
+  ledParties        Party[]
 
   @@map("users")
 }
@@ -182,6 +186,9 @@ model Quest {
   createdAt     DateTime      @default(now()) @map("created_at")
   holders       QuestHolder[]
   subQuests     SubQuest[]
+  joinRequests  QuestJoinRequest[]
+  invitations   QuestInvitation[]
+  party         Party?
 
   @@index([globalEventId])
   @@map("quests")
@@ -257,6 +264,34 @@ model SubQuestProgress {
   @@unique([subQuestId, holderId])
   @@index([holderId])
   @@map("sub_quest_progress")
+}
+
+// A User's request to join an Approval Quest, which waits for the Leader's answer (README.md: Quests).
+model QuestJoinRequest {
+  id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questId String   @map("quest_id") @db.Uuid
+  quest   Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+  userId  String   @map("user_id") @db.Uuid
+  user    User     @relation(fields: [userId], references: [id])
+  sentAt  DateTime @default(now()) @map("sent_at")
+
+  @@unique([questId, userId])
+  @@index([userId])
+  @@map("quest_join_requests")
+}
+
+// The Leader's invitation of a Friend into a Quest, which waits for the Friend's answer (README.md: Quests).
+model QuestInvitation {
+  id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questId String   @map("quest_id") @db.Uuid
+  quest   Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+  userId  String   @map("user_id") @db.Uuid
+  user    User     @relation(fields: [userId], references: [id])
+  sentAt  DateTime @default(now()) @map("sent_at")
+
+  @@unique([questId, userId])
+  @@index([userId])
+  @@map("quest_invitations")
 }
 
 // A group of Users who are together now (README.md: Party). It ends, and its row is deleted, when its last member

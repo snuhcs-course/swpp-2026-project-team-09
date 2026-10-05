@@ -23,6 +23,12 @@ describe('MapPin', () => {
     expect(screen.getByLabelText('내 위치')).toBeVisible();
   });
 
+  it("draws the User's own position at three quarters of its size from far away", async () => {
+    await render(<MapPin kind="me" small />);
+
+    expect(screen.getByLabelText('내 위치')).toHaveStyle({ width: 36, height: 36 });
+  });
+
   it('shows a Friend as an Avatar with the status', async () => {
     await render(<MapPin kind="friend" name="김서연" status="moving" />);
 
