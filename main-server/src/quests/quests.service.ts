@@ -111,15 +111,16 @@ export class QuestsService {
   }
 
   // A Quest for the Global Event, with its title, the Holders and the Sub Quest for attending it. Each Holder must hold
-  // no Quest for it yet, or the unique index on the Holders refuses it. The Holders enter in the order given.
+  // no Quest for it yet, or the unique index on the Holders refuses it. The Holders enter in the order given. A match's
+  // Quest names the match, once.
   createForGlobalEvent(
     globalEvent: Pick<GlobalEvent, 'id' | 'title'>,
     holderIds: readonly string[],
     tx: Prisma.TransactionClient,
-    settings: QuestSettings = {},
+    { matchId, ...settings }: QuestSettings & { matchId?: string } = {},
   ): Promise<string> {
     return this.create(
-      { title: globalEvent.title, globalEventId: globalEvent.id, subQuest: { attending: true } },
+      { title: globalEvent.title, globalEventId: globalEvent.id, matchId, subQuest: { attending: true } },
       holderIds,
       settings,
       tx,
@@ -203,16 +204,22 @@ export class QuestsService {
   }
 
   private async create(
-    quest: { title: string; globalEventId: string | null; subQuest: Prisma.SubQuestCreateWithoutQuestInput },
+    quest: {
+      title: string;
+      globalEventId: string | null;
+      matchId?: string;
+      subQuest: Prisma.SubQuestCreateWithoutQuestInput;
+    },
     holderIds: readonly string[],
     { leaderId = holderIds[0], capacity, joinPolicy }: QuestSettings,
     tx: Prisma.TransactionClient,
   ): Promise<string> {
-    const { title, globalEventId, subQuest } = quest;
+    const { title, globalEventId, matchId, subQuest } = quest;
     const { id } = await tx.quest.create({
       data: {
         title,
         globalEventId,
+        matchId,
         leaderId,
         capacity,
         joinPolicy,

@@ -98,6 +98,7 @@ services:
     environment:
       PORT: 3003
       DATABASE_URL: postgresql://match:match@postgres:5432/match
+      MAIN_SERVER_URL: http://main-server:3000
     ports:
       - '127.0.0.1:3003:3003'
     depends_on:
