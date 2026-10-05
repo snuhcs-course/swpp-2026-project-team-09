@@ -5,6 +5,7 @@
 //   EXPO_PUBLIC_MOCK_FAIL=enterLobby             these mocks answer with a failure
 //   EXPO_PUBLIC_MOCK_EMPTY=listFriends           these mocks answer with nothing
 //   EXPO_PUBLIC_FIRST_STATE=1                    what the phone keeps is cleared when the app starts
+//   EXPO_PUBLIC_CAMPUS_WALK=1                    the phone's position is replaced by a walk along a fixed path on campus
 
 export type SignInEnding = 'signed-in' | 'cancelled' | 'not-snu-account' | 'failed';
 
@@ -54,4 +55,9 @@ export function mockBehaviour(operation: string): MockBehaviour {
 
 export function startsFromFirstState(): boolean {
   return __DEV__ && process.env.EXPO_PUBLIC_FIRST_STATE === '1';
+}
+
+// The User's position is a walk on campus and the phone is not asked for one.
+export function walksOnCampus(): boolean {
+  return __DEV__ && process.env.EXPO_PUBLIC_CAMPUS_WALK === '1';
 }

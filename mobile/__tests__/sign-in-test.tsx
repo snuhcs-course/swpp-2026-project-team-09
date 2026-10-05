@@ -91,7 +91,7 @@ describe('how a sign-in ends', () => {
     await pressSignIn(user);
     await pass(1000);
 
-    expect(screen.getByRole('header', { name: '메인' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '지도' })).toBeVisible();
   });
 
   it('refuses an account outside SNU and says which accounts may sign in', async () => {
