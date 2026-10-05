@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
-import { Prisma, User } from '../generated/prisma/client.js';
+import { MeetupState, Prisma, User } from '../generated/prisma/client.js';
 import { VisibilityService } from '../location-sharing/visibility.service.js';
 import { UsersService } from '../users/users.service.js';
 import {
@@ -201,16 +201,32 @@ export class FriendsService {
       .toSorted((a, b) => a.name.localeCompare(b.name, 'ko') || a.id.localeCompare(b.id));
   }
 
+  // Withdraws the Meetups still proposed between the two. The Quests of accepted ones stay.
   async end(userId: string, friendUserId: string): Promise<void> {
     const pair = pairOf(userId, friendUserId);
-    await this.visibility.announceRemovals(userId, () =>
+    const withdrawn = await this.visibility.announceRemovals(userId, () =>
       this.changeBetween(pair, async (tx) => {
         const { count } = await tx.friendship.deleteMany({ where: { ...pair, acceptedAt: { not: null } } });
         if (count === 0) {
           throw friendNotFound();
         }
+        const meetups = await tx.meetup.updateMany({
+          where: {
+            state: MeetupState.proposed,
+            startsAt: { gt: new Date() },
+            OR: [
+              { proposerId: pair.userAId, receiverId: pair.userBId },
+              { proposerId: pair.userBId, receiverId: pair.userAId },
+            ],
+          },
+          data: { state: MeetupState.withdrawn },
+        });
+        return meetups.count;
       }),
     );
+    if (withdrawn > 0) {
+      this.signals.send([pair.userAId, pair.userBId], 'meetups-changed');
+    }
   }
 
   // The User's switch for Location Sharing at their own end of the friendship.
