@@ -123,6 +123,7 @@ export function MapPins(): ReactElement {
     <Section name="MapPin">
       <View style={styles.pins}>
         <MapPin kind="me" />
+        <MapPin kind="me" small />
         <MapPin count={3} kind="official" label="채용설명회" />
         <MapPin kind="official" label="선택됨" selected />
         <MapPin kind="private" label="스터디" />

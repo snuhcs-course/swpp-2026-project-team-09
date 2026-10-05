@@ -1,0 +1,79 @@
+import type { LatLng } from '@/api/types';
+import { useToast } from '@/design-system';
+import { CAMPUS_BOUNDS, isInside, type MapAvatar, type MarkerLook, useMarkerImages } from '@/map';
+import { openLocationSettings, type PositionPermission, usePosition } from '@/position';
+import { useLocationExplanation } from './use-location-explanation';
+import type { MainMap } from './use-main-map';
+
+// The identifier of the User's own Avatar on the map. A press on it opens nothing.
+export const ME_AVATAR_ID = 'me';
+
+export const OFF_CAMPUS = '캠퍼스 밖에 있어요';
+export const FINDING_POSITION = '위치를 찾는 중이에요';
+
+// Both of the User's own looks are asked for when the screen opens, so that the change between them at the "pins"
+// level never hands a native map an image whose picture is still to be made.
+const MY_LOOKS: readonly MarkerLook[] = [{ kind: 'me' }, { kind: 'me', small: true }];
+
+export interface Me {
+  permission: PositionPermission;
+  // The User's position while it is inside the campus rectangle. Null off campus, without the permission and until
+  // the first position comes. A route starts from here.
+  position: LatLng | null;
+  // For `<Map>`: the User's own Avatar, or nothing.
+  avatars: readonly MapAvatar[];
+  // "내 위치로 이동".
+  goToMe: () => void;
+  // The explanation before the system's location prompt, and its two answers. `blocked`: the system no longer
+  // prompts, so the explanation leads to the phone's settings instead.
+  explaining: boolean;
+  blocked: boolean;
+  allow: () => void;
+  later: () => void;
+}
+
+// The User on the main screen's map: their Avatar while they are on campus, and the button that brings the map to
+// them. The Avatar is at three quarters of its size while the whole campus is in view, and glides to each new
+// position over the time that position took to come.
+export function useMe(map: MainMap): Me {
+  const { permission, position: phone, stepMs, ask, retry } = usePosition();
+  const { explaining, explain, close } = useLocationExplanation(permission);
+  const showToast = useToast();
+  const [full, small] = useMarkerImages(MY_LOOKS);
+  const image = map.detail === 'overview' ? small : full;
+  const position = phone !== null && isInside(phone, CAMPUS_BOUNDS) ? phone : null;
+  const goToMe = (): void => {
+    if (permission === 'checking') {
+      return;
+    }
+    if (permission !== 'granted') {
+      explain();
+    } else if (position !== null) {
+      map.goTo(position, 'close', true);
+    } else if (phone === null) {
+      // No position yet, or a watch that could not start: it is started again.
+      retry();
+      showToast(FINDING_POSITION);
+    } else {
+      showToast(OFF_CAMPUS);
+      map.showCampus();
+    }
+  };
+  const blocked = permission === 'blocked';
+  return {
+    permission,
+    position,
+    avatars:
+      position === null || image === undefined
+        ? []
+        : [{ id: ME_AVATAR_ID, name: '내 위치', position, image, glideMs: stepMs, order: 1 }],
+    goToMe,
+    explaining,
+    blocked,
+    allow: (): void => {
+      close();
+      void (blocked ? openLocationSettings() : ask());
+    },
+    later: close,
+  };
+}

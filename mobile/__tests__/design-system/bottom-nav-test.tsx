@@ -31,15 +31,17 @@ describe('BottomNav', () => {
     expect(screen.getByText('2')).toBeVisible();
     expect(screen.getByRole('tab', { name: '파티, 새 소식 2개' })).toBeVisible();
   });
+});
 
-  it('has an action in the middle that is pressed like a tab and is never the current one', async () => {
+describe("BottomNav's action", () => {
+  it('is in the middle, is pressed like a tab, is never the current one and shows no name', async () => {
     const onSelect = jest.fn<void, [number]>();
     await render(
       <BottomNav
         active={0}
         items={[
           { icon: 'map', label: '지도' },
-          { icon: 'plus', label: '올리기', raised: true },
+          { icon: 'plus', label: '올리기', action: true },
           { icon: 'user', label: '내 정보' },
         ]}
         onSelect={onSelect}
@@ -50,5 +52,25 @@ describe('BottomNav', () => {
 
     expect(onSelect).toHaveBeenCalledWith(1);
     expect(screen.queryByRole('tab', { name: '올리기' })).toBeNull();
+    // Its name is what a screen reader says, and is not drawn.
+    expect(screen.queryByText('올리기')).toBeNull();
+    expect(screen.getByText('지도')).toBeVisible();
+  });
+
+  it('draws the action inside the bar: nothing of it is placed out of its slot', async () => {
+    await render(<BottomNav active={0} items={[{ icon: 'plus', label: '올리기', action: true }]} line={false} />);
+
+    expect(screen.getByRole('button', { name: '올리기' }).parent).toHaveStyle({ height: 64 });
+    expect(screen.getByRole('button', { name: '올리기' }).children).toHaveLength(1);
+    expect(screen.getByRole('button', { name: '올리기' }).children[0]).toHaveStyle({ width: 44, height: 44 });
+    expect(screen.getByRole('button', { name: '올리기' }).children[0]).not.toHaveStyle({ position: 'absolute' });
+  });
+});
+
+describe("BottomNav's bar", () => {
+  it('has a line on top unless its owner draws the edge', async () => {
+    await render(<BottomNav active={0} items={ITEMS} />);
+
+    expect(screen.getByRole('tab', { name: '지도' }).parent).toHaveStyle({ height: 65, borderTopWidth: 1 });
   });
 });

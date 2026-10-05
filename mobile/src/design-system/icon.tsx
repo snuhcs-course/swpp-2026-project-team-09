@@ -53,6 +53,8 @@ const ICONS = {
   layers: [{ path: 'M12 3 3 8l9 5 9-5z' }, { path: 'M3 13l9 5 9-5' }, { path: 'M3 17.5l9 5 9-5' }],
   // Not one of the design system's: the `Onboarding` frame draws it on the field that opens a list.
   chevronDown: [{ path: 'M6 9l6 6 6-6' }],
+  // Not one of the design system's: the `Main` frame draws it on the button that zooms out.
+  minus: [{ path: 'M5 12h14' }],
 } as const satisfies Record<string, readonly Stroke[]>;
 
 export type IconName = keyof typeof ICONS;
