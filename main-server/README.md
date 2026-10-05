@@ -151,8 +151,8 @@ A User reads and edits their own profile. The routes name no User, so they never
 ## Friends
 
 Every User has a Friend ID: 8 characters from capital letters and digits, without `0`, `O`, `1`, `I` and `L`, such as
-`7KX2M9QD`. The server makes it at random when it creates the User (`src/users/friend-id.ts`), the database keeps it
-unique, and it never changes. The User gives it to someone in any way they like, and that person sends a Friend
+`7KX2M9QD`. The server makes it at random when it creates the User (`src/users/friend-id.ts`) and draws another when
+one is already held, the database keeps it unique, and it never changes. The User gives it to someone in any way they like, and that person sends a Friend
 Request to it. The routes, all a User's:
 
 - `GET /friend-ids/:friendId` answers the owner's `{ "name": ..., "department": ... }`.
@@ -534,6 +534,25 @@ const found = this.placeLookup.at({ latitude, longitude });
   `종합운동장` that is `종합운동장본부석` (149동).
 - It does not check the [Campus Boundary](#campus-boundary): a feature that hides a User outside it checks that first.
 - The Places are read once, when the server starts, after the seed was loaded.
+
+The app asks the same lookup for a point a User picks on the map, so that a Meetup or a Sub Quest shows a name instead
+of coordinates:
+
+- `GET /places/at?latitude=37.45016&longitude=126.95259` with a User's access token answers the Place at the position,
+  in the form of the list, and its `relation`, `inside` or `near` as above:
+
+  ```json
+  {
+    "place": { "id": "1b7e…", "number": "301", "name": "제1공학관", "latitude": 37.45016, "longitude": 126.95259 },
+    "relation": "inside"
+  }
+  ```
+
+  A position farther than 20 m from every Place is answered `{ "place": null, "relation": "none" }`. The answer comes
+  from the lookup's memory, without a database query.
+
+- A coordinate that is missing, is not a decimal number, or lies outside -90 to 90 for a latitude or -180 to 180 for a
+  longitude gets 400 with a message that starts with the field.
 
 ## Campus Boundary
 
