@@ -11,7 +11,7 @@ import {
 import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { Icon } from './icon';
-import { color, font, radius, shadow, space, text } from './tokens';
+import { color, font, radius, space, text } from './tokens';
 
 // Long enough to read one short sentence: the time the `Main` frame gives its toasts.
 const SHOWN_MS = 2400;
@@ -31,7 +31,7 @@ const ToastContext = createContext<Toasts | null>(null);
 
 // Shows one toast at a time over everything it wraps, except an open Dialog, which the phone draws above the app. A
 // new toast replaces the one before it. The design system has no toast; the `Main` frame draws one, a dark bar from
-// side to side with a check mark before its words, and the app adds it in the design system's terms.
+// side to side with a check mark before its words and no shadow, and the app adds it in the design system's terms.
 export function ToastProvider({ children }: { children: ReactNode }): ReactElement {
   // A new object for every toast, so that the same words shown twice start the time again.
   const [toast, setToast] = useState<{ message: string; shownMs: number } | null>(null);
@@ -126,7 +126,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[4],
     borderRadius: radius.md,
     backgroundColor: color.ink,
-    boxShadow: shadow.float,
   },
   // The frame's words are the label's size in the medium weight.
   words: { ...text.label, flexShrink: 1, fontFamily: font.medium, color: color.onPrimary },

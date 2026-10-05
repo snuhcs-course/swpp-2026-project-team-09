@@ -13,7 +13,7 @@ The main screen appears after a sign-in: the map filling the screen, the User's 
 - [x] The map fills the screen and opens on the whole campus.
 - [x] The bottom navigation has the frame's five slots, 지도, 파티, 올리기, 행사 and 내 정보, with the frame's centre button and badge. Every slot but 지도 shows the "준비 중이에요" toast.
 - [x] The 파티 badge shows 3: the number of things waiting for the User in Parties, a mock of the app's own behind the API client.
-- [x] The centre button, 올리기, is the design system's raised item. A long press on it does nothing.
+- [x] The centre button, 올리기, is the bottom navigation's action item, drawn as the frame draws it: a round 44 inside the bar, its label hidden. A long press on it does nothing.
 - [x] The zoom in, zoom out and "내 위치로 이동" buttons sit where the frame puts them and work as in the frame.
 - [x] The zoom in and zoom out buttons change the zoom by a factor 1.5 around the view's centre.
 - [x] "내 위치로 이동" goes to the User's position at the larger of the current zoom and the "close" level.
@@ -75,3 +75,34 @@ What ticket 07 must know:
 - There is a new look, `me:small`, the User's Avatar at three quarters of its size (36 points with its ring). The screen swaps the Avatar's image between `me` and `me:small` at the "pins" level; a new image alone must not restart a glide.
 - The User's Avatar has `glideMs` 5000 and `order` 1.
 - `/map-check` is no longer linked from a screen. In a development build it opens with `adb shell am start -a android.intent.action.VIEW -d snunow://map-check`.
+
+### After the review and the screenshots (2026-10-05)
+
+A code review and screenshots of the web target led to a second round. What changed, in `mobile/`:
+
+Position
+
+- A refusal after which the system no longer prompts is its own permission, `blocked` (`canAskAgain` false in `expo-location`). In that state the explanation's body is "휴대폰 설정에서 이 앱의 위치 권한이 꺼져 있어요. 설정에서 켜면 지도에 내 아바타가 보여요." and its buttons are "나중에" and "설정 열기", which opens the phone's settings (`Linking.openSettings()`, behind `openLocationSettings()` of `@/position`). The words are in the spec's wording table. The permission is read again each time the app returns to the front, so a User who allows it in the settings gets the Avatar on return.
+- A watch that could not start, as with location services off, is started again when the app returns to the front and when "내 위치로 이동" is pressed. The first position is the last one the phone knows (`getLastKnownPositionAsync`), until one is measured. With the permission and no position yet, "내 위치로 이동" says "위치를 찾는 중이에요", also in the spec's table.
+- The explanation appears by itself once on a phone. The phone keeps that it was answered, with "계속", "나중에", "설정 열기" or Android's back button, as `locationExplained` in `src/storage/kept.ts`. A value stored without the field reads as not answered, and `EXPO_PUBLIC_FIRST_STATE=1` clears it with the rest. "내 위치로 이동" without the permission still shows it. This replaces the earlier decision that the phone keeps nothing about it.
+- The Avatar glides over the time since the position before, held between one and five seconds (`stepMs` of `usePosition()`), not over a fixed five seconds. The walk's is five seconds.
+- The position is held once, by a `PositionProvider` around the main screen: one permission and one watch, whatever number of parts call `usePosition()`. Outside a provider the hook throws. `src/position/use-phone.ts` holds the phone's side, `use-position.tsx` the provider, the walk and the hook.
+- Both of the User's own looks, `me` and `me:small`, are asked for when the screen opens.
+- A camera move asked before the map is ready is kept and sent at the camera's first rest; of several, the last. The zoom that the zoom buttons count from changes only with a move that was sent and with the camera's rest (`src/screens/main/use-camera-moves.ts`). A map that tells no fit zoom is still moved, held by `MIN_ZOOM`.
+
+Looks, after the frame
+
+- The design system's `BottomNav` item property `raised` is now `action`: the icon of 22 in white on a round fill of 44 in `snuBlue` with the shadow `0 4px 12px rgba(0,26,114,.28)` (`shadow.navAction`), inside the bar, the label not drawn and kept as the accessibility label. Nothing stands out of the bar or covers the map's credit. The token `halo.raised` is gone.
+- `BottomNav` takes `line={false}` to leave out its top line; with the line it stays 65 high, without it 64. The main screen's navigation has no line, the frame's shadow `0 -4px 24px rgba(14,19,48,.08)` (`shadow.nav`) and, under its items, 16 or the phone's own inset, whichever is larger.
+- `layout.ts` was derived again from the frame's 80 for the navigation: the zoom control's bottom stays 136 above the navigation's top (216 − 80) and a toast's 78 (158 − 80). What the toast is told is now counted with the inset, `takenUnderToast(inset)`, because the padding under the bar is no longer the inset alone. Without an inset a toast's bottom is 158 from the screen's bottom, as in the frame.
+- The Toast has no shadow.
+
+Of the "Differences from the frame" above, the three about the centre button, the bar's line and the 16 under the bar no longer hold.
+
+What tickets 09 and 10 use: `usePosition()` anywhere inside the main screen (`position`, `permission`, `stepMs`, `ask`, `retry`); `me.position` of `useMe` for the position on campus; `map.goTo`, `map.zoomBy` and `map.showCampus` of `useMainMap`, which may be called before the map is ready. A new kind of move is a `CameraWish` given to `useCameraMoves().move`.
+
+What ticket 07 must know, beyond the list above: the User's Avatar now has a `glideMs` between 1000 and 5000 that changes from one position to the next, and the screen holds the images of both `me` and `me:small` from the start. The screen sends no `moveCamera` before the first `onCameraIdle`.
+
+Tests added: `__tests__/main-position-test.tsx` (the blocked permission, the explanation kept on the phone, a failed watch, the last known position, one watch for several readers), `main-map-moves-test.tsx` (moves before the map is ready, and the zoom counted from), `main-looks-test.tsx` (both looks asked for), and additions to the walk's, the main screen's, the `BottomNav`'s and the kept state's tests.
+
+Not checked: nothing ran on a phone. The permission states, among them when Android and iOS answer `canAskAgain` false and whether the settings open on the app's page; a watch after location services are turned on, and whether a watch started with them off fails at all or waits; and iOS's rate of about one position a second, were not tried on devices. In a browser a refused permission always reads as `refused`, never `blocked`, so "계속" there asks a browser that will not prompt again and nothing happens. No new screenshot was taken after these changes.

@@ -68,6 +68,15 @@ describe("the main screen's bottom navigation", () => {
 
     expect(screen.getByRole('tab', { name: '파티' })).toBeVisible();
   });
+
+  it("keeps a toast where the frame has it: 158 from the bottom, 78 above the navigation's top", async () => {
+    givePhone({ permission: 'granted' });
+    const user = await openMain();
+
+    await user.press(screen.getByRole('tab', { name: '행사' }));
+
+    expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 158 });
+  });
 });
 
 describe("a slot of the main screen's bottom navigation", () => {

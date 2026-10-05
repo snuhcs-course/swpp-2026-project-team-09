@@ -318,15 +318,18 @@ Shape: on the main line (`GET /walking-route`).
 
 ```ts
 // Not a server's answer: the phone's own position, behind one hook, so that the development walk can replace it.
-// `checking` is the moment until the phone has said whether the User was asked before.
+// `checking` is the moment until the phone has said whether the User was asked before. `blocked` is a refusal after
+// which the system no longer prompts: `openLocationSettings()` opens the phone's settings.
 usePosition(): {
-  permission: 'checking' | 'unasked' | 'granted' | 'refused';
+  permission: 'checking' | 'unasked' | 'granted' | 'refused' | 'blocked';
   position: LatLng | null;
+  stepMs: number; // the time since the position before, between 1000 and 5000: an Avatar's glide
   ask: () => Promise<void>;
+  retry: () => void; // starts the phone's watch again if it could not start
 };
 ```
 
-It is `usePosition` of `mobile/src/position`, on `expo-location`. A new position comes about every five seconds.
+It is `usePosition` of `mobile/src/position`, on `expo-location`, read inside a `PositionProvider`, which the main screen has around it: one permission and one watch for every part that reads it. A new position is asked for about every five seconds; a phone may tell more often.
 
 ### 2.9 The map component
 
@@ -496,7 +499,7 @@ Each is a setting given when the app is started, as an `EXPO_PUBLIC_` variable. 
 - [ ] The frame draws a route when the screen opens, without a press, and has no way to clear a route. The app follows it; settle whether both are meant
 - [ ] The frame's toast sits over the row of buttons above the navigation
 - [ ] The frame's friend pill says 12 whatever the list holds. The app shows the number of Friends in the list
-- [ ] No frame shows the main screen off campus, the explanation before the location prompt, or the credit for the map data; the spec gives their wording
+- [ ] No frame shows the main screen off campus, the explanation before the location prompt and its form for a permission that only the phone's settings can allow, the toast while the position is looked for, or the credit for the map data; the spec gives their wording
 - [ ] Onboarding's "그 외" admission year stores no year. Decide whether it should ask for one
 - [ ] The credit for the map data is text alone. Decide whether a press should open the sources' pages
 - [ ] The frame shows a photo for two Friends. The app has no pictures of people, so every Friend shows the name's letters

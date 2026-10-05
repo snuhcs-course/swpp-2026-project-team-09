@@ -26,15 +26,25 @@ afterEach(() => {
 });
 
 describe("the User's Avatar on the move", () => {
-  it('glides to each new position over the time between two positions', async () => {
+  it('glides to each new position over the time it took to come, between one and five seconds', async () => {
     const phone = givePhone({ permission: 'granted', position: ON_CAMPUS });
     await openMain();
     const glides = jest.spyOn(Animated, 'timing');
+    const durations = (): unknown[] => glides.mock.calls.map(([, { duration }]) => duration);
 
+    // A phone that tells a position every two seconds.
+    await pass(2000);
     await phone.moveTo(NEAR_LIBRARY);
+    await pass(2000);
+    await phone.moveTo(ON_CAMPUS);
+    expect(durations()).toEqual([expect.any(Number), 2000]);
 
-    expect(glides).toHaveBeenCalledTimes(1);
-    expect(glides.mock.calls[0]).toEqual([expect.anything(), expect.objectContaining({ duration: 5000 })]);
+    // Sooner than a second, and later than five.
+    await pass(300);
+    await phone.moveTo(NEAR_LIBRARY);
+    await pass(20_000);
+    await phone.moveTo(ON_CAMPUS);
+    expect(durations().slice(2)).toEqual([1000, 5000]);
   });
 });
 

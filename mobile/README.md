@@ -39,6 +39,7 @@ have no empty answer, so `EXPO_PUBLIC_MOCK_EMPTY` leaves them as they are.
 With `EXPO_PUBLIC_CAMPUS_WALK=1` the phone is not asked for its position or for the permission. The User's position
 is a fixed round on campus (`src/position/walk.ts`) that starts where the `Main` wireframe draws the User and takes a
 step every five seconds, so the User's Avatar is on the map and glides, also on the web and far from the campus.
+The walk has no explanation and no permission to try: for those, start without it.
 
 Nothing on the main screen signs a User out: sign-out is on 내 정보, which another task builds. To see the sign-in
 screen again, start the app with `EXPO_PUBLIC_FIRST_STATE=1`.
@@ -159,19 +160,30 @@ and the bottom navigation under it, above the phone's own bar.
 
 - `useMainMap()` owns the map's handle and follows its camera: `camera`, `fitZoom`, the `detail` the zoom asks for
   (`overview`, `pins` or `names`), and the moves `zoomBy(steps)`, `goTo(position, level, orCloser)` and
-  `showCampus()`. Every part of the screen that moves the map or draws by zoom takes it.
+  `showCampus()`. Every part of the screen that moves the map or draws by zoom takes it. A move asked before the map
+  is ready is kept and carried out at the camera's first rest; of several, the last (`use-camera-moves.ts`).
+- The screen stands in a `PositionProvider`, so every part of it reads the same position with `usePosition()`.
 - `useMe(map)` gives the User's Avatar for the map, the position while it is on campus, "내 위치로 이동" and the
   explanation before the location prompt.
 - What floats over the map is a child of `OverMap` in `main-screen.tsx` and places itself by the offsets of
-  `layout.ts`, which are counted from the navigation's top edge.
+  `layout.ts`, which are counted from the navigation's top edge: the zoom control's bottom is 136 above it and a
+  toast's bottom 78.
 - The zoom in and zoom out buttons change the zoom by a factor 1.5 around the middle of the view. "내 위치로 이동"
   brings the map to the User at the larger of the current zoom and the `close` level; off campus it says "캠퍼스 밖에
-  있어요" and shows the whole campus; without the permission it shows the explanation.
-- The explanation, "내 위치를 지도에 표시할까요?", appears when the screen opens to a User whom the phone never asked.
-  "계속" leads to the system's prompt, "나중에" closes it, and either way it comes again only on "내 위치로 이동".
+  있어요" and shows the whole campus; without the permission it shows the explanation; with the permission and no
+  position yet it says "위치를 찾는 중이에요" and starts the phone's watch again if that had failed.
+- The explanation, "내 위치를 지도에 표시할까요?", appears by itself once on a phone: the first time the screen opens
+  to a User whom the system never asked. "계속" leads to the system's prompt, "나중에" closes it, the phone keeps
+  that it was answered, and from then on it comes only on "내 위치로 이동".
+- When the system no longer prompts (the permission is `blocked`), the explanation says that the location is turned
+  off for the app in the phone's settings, and its button is "설정 열기", which opens them. The permission is read
+  again when the app returns to the front.
 - The User's Avatar is shown while the position is inside the campus rectangle, at three quarters of its size while
-  the whole campus is in view, and glides to each new position over the five seconds between two positions.
+  the whole campus is in view, and glides to each new position over the time that position took to come (`stepMs`).
+  Both of its looks, `me` and `me:small`, are asked for when the screen opens.
 - The bottom navigation's 파티, 올리기, 행사 and 내 정보 say "준비 중이에요". The number on 파티 is `usePartyBadge()`.
+  The bar has no line on top but the frame's shadow (`shadow.nav`), and under its items 16 or the phone's own inset,
+  whichever is larger (`navPaddingBottom` in `layout.ts`).
 - The map ends at the navigation's top, so that its credit stays uncovered.
 
 The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and
@@ -243,24 +255,40 @@ While the answers are mocks, the app's time is the moment the wireframe shows, 1
 (`src/clock.ts`), so that the screens read as the wireframe on any day.
 
 The phone keeps that the User signed in, that the User agreed to the legal documents, what the sign-in suggested for
-Onboarding, whether Onboarding is finished and its answers (`src/storage/kept.ts`). `openKept()` is the read for the
-start of the app: it is the one that honours `EXPO_PUBLIC_FIRST_STATE`.
+Onboarding, whether Onboarding is finished and its answers, and that the User answered the explanation before the
+location prompt (`locationExplained`) (`src/storage/kept.ts`). A value stored by an older version, without a newer
+field, reads as "not yet" for that field. `openKept()` is the read for the start of the app: it is the one that
+honours `EXPO_PUBLIC_FIRST_STATE`, which clears all of it.
 
 ### The User's position
 
-The User's own position is not a server's answer. It comes from one hook, `usePosition()` of `@/position`:
+The User's own position is not a server's answer. A screen that shows it stands in a `PositionProvider` of
+`@/position`, and every part of that screen reads it with one hook, `usePosition()`. The provider holds one
+permission and one watch of the phone, however many parts read it; outside a provider the hook throws.
 
 ```tsx
-const { permission, position, ask } = usePosition();
-permission; // 'checking' until the phone has said, then 'unasked', 'granted' or 'refused'
+<PositionProvider>…the screen…</PositionProvider>;
+
+const { permission, position, stepMs, ask, retry } = usePosition();
+permission; // 'checking' until the phone has said, then 'unasked', 'granted', 'refused' or 'blocked'
 position; // LatLng, or null without the permission and until the first position comes
+stepMs; // how long this position took to come after the one before, between 1000 and 5000: an Avatar's glide
 await ask(); // shows the system's prompt and follows its answer
+retry(); // starts the phone's watch again if it could not start
+openLocationSettings(); // of `@/position`: the phone's settings of the app, for a `blocked` permission
 ```
 
 - It reads the phone through `expo-location`, which `src/position/phone.ts` alone names: the permission for the time
   the app is in use, and a new position about every five seconds (`POSITION_EVERY_MS`) while a screen that asks is
   shown. On the web that is the browser's geolocation. Where the phone or the browser cannot answer, the permission
   counts as never asked or refused and the position stays null: nothing throws.
+- `refused` is a refusal after which the system still prompts; `blocked` is one after which it does not
+  (`canAskAgain` is false), so that only the phone's settings can allow the location.
+- The first position is the last one the phone knows, where it knows one, until it measures one.
+- A watch that cannot start, as with location services turned off, is started again when the app returns to the
+  front and on `retry()`. The permission is read again when the app returns to the front.
+- A phone may tell positions more often than every five seconds, as iOS does about every second. `stepMs` is the
+  time since the position before, held between one and five seconds; the walk's is five seconds.
 - With `EXPO_PUBLIC_CAMPUS_WALK=1` the hook answers the development walk instead and never asks the phone.
 - The words of the system's prompt on iOS are in `app.json`, with the library's config plugin. The app asks for no
   position in the background.
@@ -289,7 +317,10 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
 - **Font**: Pretendard, one file per weight in `assets/fonts/`, loaded by the root layout before any screen appears.
   A style sets `fontFamily` from `font` and never `fontWeight`.
 - **Components**: Icon, Button, Chip, Badge, Avatar, MapPin, EventCard, TextField, ChatInput and BottomNav, with the
-  names and properties of the design system's types. A component of the design system that no screen uses yet is
+  names and properties of the design system's types. `BottomNav` has two additions that the `Main` wireframe draws:
+  an item with `action` is the one action in the middle, its icon of 22 in white on a round fill of 44 in `snuBlue`
+  with the shadow `shadow.navAction`, inside the bar, its label not shown and kept as what a screen reader says; and
+  `line={false}` leaves out the line on top, for a screen that draws its own edge above the bar. A component of the design system that no screen uses yet is
   ported by the task that needs it. Where the web's differ from React Native's, the app's follow React Native: a press
   is `onPress`, and an image is a `source`. The design system's sizes do not count a border, so a size here adds it:
   a pin's head is 36 and its border of 2 on each side.
@@ -298,7 +329,7 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
 - **Dialog**: the design system has none and the frames ask questions with two answers. `Dialog` shows a title, a
   sentence and one or two Buttons over the screen.
 - **Toast**: the design system has none and the wireframes use one. It is the `Main` wireframe's: a dark bar from 16
-  to 16 from the sides with a check mark before its words. `useToast()` gives the call that shows a sentence for 2.4
+  to 16 from the sides with a check mark before its words, and no shadow. `useToast()` gives the call that shows a sentence for 2.4
   seconds, or for the time given as its second argument (`showToast(words, 2000)`), and `useNotReadyToast()` the call
   for a control whose feature belongs to another task: it says "준비 중이에요". A toast sits just above the phone's own
   bar; a screen with something fixed to its bottom calls `useToastAbove(height)` so that it sits above that too, as

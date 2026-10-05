@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color } from '@/design-system';
 import { CAMPUS_BOUNDS, Map, type MapMarker, MAX_ZOOM, MIN_ZOOM } from '@/map';
+import { PositionProvider } from '@/position';
 import { LocationExplanation } from './location-explanation';
 import { MainNav } from './main-nav';
 import { useMainMap } from './use-main-map';
@@ -23,8 +24,17 @@ function OverMap({ children }: { children: ReactNode }): ReactElement {
 //
 // How it grows: `useMainMap` owns the map's handle, its camera and the moves; a part of the screen takes `map`, and
 // `me` for the User's position, and gives what it shows. Markers, other Avatars and the route go into `<Map>`
-// (ticket 09); cards, lists and controls are children of `OverMap` (tickets 09 and 10).
+// (ticket 09); cards, lists and controls are children of `OverMap` (tickets 09 and 10). Any of them reads the
+// User's position with `usePosition()`: the provider below holds the one watch of the phone.
 export function MainScreen(): ReactElement {
+  return (
+    <PositionProvider>
+      <MainParts />
+    </PositionProvider>
+  );
+}
+
+function MainParts(): ReactElement {
   const map = useMainMap();
   const me = useMe(map);
   return (
@@ -54,7 +64,7 @@ export function MainScreen(): ReactElement {
         </OverMap>
       </View>
       <MainNav />
-      <LocationExplanation onAllow={me.allow} onLater={me.later} visible={me.explaining} />
+      <LocationExplanation blocked={me.blocked} onAllow={me.allow} onLater={me.later} visible={me.explaining} />
     </View>
   );
 }

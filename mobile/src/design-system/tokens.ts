@@ -54,6 +54,11 @@ export const shadow = {
   card: '0 1px 2px rgba(14, 19, 48, 0.06), 0 1px 1px rgba(14, 19, 48, 0.04)',
   float: '0 4px 16px rgba(14, 19, 48, 0.14)',
   sheet: '0 -4px 24px rgba(14, 19, 48, 0.12)',
+  // Above the main screen's bottom navigation, as the `Main` frame draws it: the sheet's shadow, lighter.
+  nav: '0 -4px 24px rgba(14, 19, 48, 0.08)',
+  // Under the round action in the middle of the main screen's bottom navigation, in the key colour, as the `Main`
+  // frame draws it.
+  navAction: '0 4px 12px rgba(0, 26, 114, 0.28)',
 } as const;
 
 // The translucent rings the design system's styles draw around a mark. Its token file gives them no names.
@@ -64,8 +69,6 @@ export const halo = {
   live: 'rgba(11, 122, 85, 0.18)',
   // Around a selected pin: the key colour at 18%.
   selected: 'rgba(0, 26, 114, 0.18)',
-  // Under the round button of the main screen's bottom navigation: the key colour at 35%, as its frame draws it.
-  raised: 'rgba(0, 26, 114, 0.35)',
 } as const;
 
 // Over a photo, as on the loading screen: white at the frame's strengths, and the shade that keeps it readable.
