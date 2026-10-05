@@ -48,8 +48,8 @@ describe('the map of the main screen, with the whole campus in view', () => {
   it('has no marker for a Friend whose position is not known', async () => {
     await openMain();
 
-    expect(screen.queryByRole('button', { name: /서지우/u })).toBeNull();
-    expect(screen.queryByRole('button', { name: /신예린/u })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^서지우 · /u })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^신예린 · /u })).toBeNull();
   });
 
   it('shows the Global Event, the Party and the Shared Quest as dots, without names', async () => {

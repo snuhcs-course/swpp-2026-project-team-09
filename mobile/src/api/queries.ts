@@ -12,6 +12,7 @@ export const QUESTS_KEY = ['quests'] as const;
 export const MY_PARTY_KEY = ['my-party'] as const;
 export const PARTIES_KEY = ['parties'] as const;
 export const PARTY_NEWS_KEY = ['party-news'] as const;
+export const FOOTPRINTS_KEY = ['footprints'] as const;
 export const GLOBAL_EVENTS_KEY = ['global-events'] as const;
 export const GLOBAL_EVENT_ANNOUNCERS_KEY = ['global-event-announcers'] as const;
 
@@ -34,6 +35,7 @@ export const questsQuery = queryOptions({ queryKey: QUESTS_KEY, queryFn: () => a
 export const myPartyQuery = queryOptions({ queryKey: MY_PARTY_KEY, queryFn: () => apiClient.getMyParty() });
 export const partiesQuery = queryOptions({ queryKey: PARTIES_KEY, queryFn: () => apiClient.listParties() });
 export const partyNewsQuery = queryOptions({ queryKey: PARTY_NEWS_KEY, queryFn: () => apiClient.getPartyNews() });
+export const footprintsQuery = queryOptions({ queryKey: FOOTPRINTS_KEY, queryFn: () => apiClient.getFootprints() });
 export const globalEventsQuery = queryOptions({
   queryKey: GLOBAL_EVENTS_KEY,
   queryFn: () => apiClient.listGlobalEvents(),

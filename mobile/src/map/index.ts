@@ -21,6 +21,7 @@ export type {
   MapBounds,
   MapCamera,
   MapHandle,
+  MapInset,
   MapMarker,
   MapProps,
   MarkerImage,

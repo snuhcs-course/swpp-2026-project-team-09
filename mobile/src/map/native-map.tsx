@@ -17,7 +17,17 @@ import { useMotionAllowed } from '@/hooks/use-reduce-motion';
 import { IMAGE_MARGIN } from './marker-images';
 import { NATIVE_MAP_MODULE } from './native-module';
 import { type CameraRules, fit, lowestZoom, type Size } from './projection';
-import type { FitOptions, MapBounds, MapCamera, MapHandle, MapMarker, MapProps, RouteStyle } from './types';
+import type {
+  FitOptions,
+  FitPadding,
+  MapBounds,
+  MapCamera,
+  MapHandle,
+  MapInset,
+  MapMarker,
+  MapProps,
+  RouteStyle,
+} from './types';
 
 // The native map module's view, as `modules/snu-now-map` defines it: the interface of `types.ts`, flattened. The
 // module keeps the camera's rules of `types.ts` itself, with the same Web Mercator sums as `projection.ts`. What the
@@ -26,6 +36,8 @@ import type { FitOptions, MapBounds, MapCamera, MapHandle, MapMarker, MapProps, 
 // - a fit with a padding for each edge and a closest zoom, which the module's `fitTo` cannot take;
 // - a passive marker's press, which the module sends and this file drops.
 // The route's dashes are the module's to draw: it draws a solid line in the colour and the width it is given.
+// `inset` is handed over with all four sides; the module does not read it yet, and keeps its logo 8 from the bottom
+// right of the whole view until it does.
 
 // A marker or an Avatar. A marker's `glideMs` is 0.
 interface NativeThing {
@@ -72,6 +84,8 @@ interface NativeMapProps {
   avatars: NativeThing[];
   route: readonly LatLng[] | null;
   looks: NativeLooks;
+  // What the screen's controls cover of each edge, in points: the module's logo belongs inside what is left.
+  inset: FitPadding;
   onThingPress: (event: NativeEvent<{ id: string }>) => void;
   onCameraIdle: (event: NativeEvent<LatLng & { zoom: number }>) => void;
   ref: Ref<NativeMapView>;
@@ -120,6 +134,11 @@ function thing({ id, position, image, text: words, order, passive }: MapMarker, 
     glideMs,
     passive: passive ?? false,
   };
+}
+
+// The inset with every side said, and the same object for as long as no side changes.
+function useInset({ top = 0, right = 0, bottom = 0, left = 0 }: MapInset = {}): FitPadding {
+  return useMemo(() => ({ top, right, bottom, left }), [top, right, bottom, left]);
 }
 
 // Tells the fit zoom, which the module does not send: the lowest zoom allowed by the rule of `projection.ts`, the
@@ -202,6 +221,7 @@ export default function NativeMap(props: MapProps): ReactElement {
   const report = useReports(rules, props);
   useHandle(ref, view, rules);
   const looks = useMemo(() => looksOf(routeStyle), [routeStyle]);
+  const inset = useInset(props.inset);
   const passive = new Set([...markers, ...avatars].filter((one) => one.passive === true).map(({ id }) => id));
   return (
     <View
@@ -217,6 +237,7 @@ export default function NativeMap(props: MapProps): ReactElement {
       <NativeView
         avatars={avatars.map((avatar) => thing(avatar, gliding ? avatar.glideMs : 0))}
         bounds={bounds}
+        inset={inset}
         looks={looks}
         markers={markers.map((marker) => thing(marker, 0))}
         maxZoom={maxZoom}

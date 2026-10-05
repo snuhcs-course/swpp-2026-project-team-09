@@ -178,6 +178,7 @@ Every piece of data is a mock inside the app, in the shape the server gives or w
 - A marker's image is a picture the app makes from the design system's own marker views, once for each look, and hands to the map: the native map draws images, not React views. A name under a marker is the SDK's own text. A count on a pin and a selected look are part of the picture.
 - The camera stays inside the campus rectangle: a fixed rectangle a little wider than the Campus Boundary. The rectangle is a constant in the app; the Campus Boundary stays the server's. The map opens on the whole rectangle, which is also the furthest zoom out. Where the SDK does not limit panning, the module brings the camera back inside when a move ends outside.
 - The credit for the map data is one line in the smallest text size at the bottom left of the map: "© OpenStreetMap · 국토지리정보원". Kakao's logo stays visible and unchanged.
+- A screen tells the map component what its controls cover of the map's edges, an inset in points from each edge. The credit and the provider's logo are drawn inside what is left, the credit at its bottom left and the logo at its bottom right. The map itself is drawn under the controls, and the camera does not follow the inset.
 - In a build without the native module, which Expo Go and the web are, the map's place holds a plain ground and the words "지도는 Android 빌드에서 보입니다". Everything around the map is shown as usual. There is no stand-in map.
 - The app chooses while it runs, by whether the build holds the native module, and loads the module only when it does.
 - The Android side:
@@ -191,9 +192,9 @@ Every piece of data is a mock inside the app, in the shape the server gives or w
 
 - The screen shows every element that the `Main` frame shows in its default state, with mock data.
 - What works, because it ends inside the screen:
-  - The friend list and the Quest list collapse and expand.
-  - A Friend's row moves the map to that Friend and opens their card, or says "…님은 위치가 꺼져 있어요" for a Friend without a position.
-  - A Class Quest's row moves the map to its Place and says what the frame says.
+  - The friend list and the Quest list collapse and expand, each by the round button beside its pill, separately. A collapsed list keeps its pill.
+  - A Friend's row moves the map to that Friend at the "close" level and opens their card, or says "<이름>님은 위치가 꺼져 있어요" for 2000 ms for a Friend without a position.
+  - A Class Quest's row moves the map to its Place at the "names" level, closes an open card and says "<title> · <place>", "자료구조 · 301동 118호". The frame's professor's name is in no answer and is left out.
   - The zoom in, zoom out and "내 위치로 이동" buttons. A zoom button changes the zoom by a factor 1.5 around the view's centre. "내 위치로 이동" goes to the User's position at the larger of the current zoom and the "close" level.
   - A tap on a marker selects it and opens its card, in place of a card that is open. The card's X closes it. A tap beside the markers leaves it open.
   - "가까이 보기" is offered on a card below the "names" level and brings the camera to the "close" level on the marker, keeping the card.
@@ -203,7 +204,15 @@ Every piece of data is a mock inside the app, in the shape the server gives or w
 - A place's detail follows the camera's zoom, as in the frames: a dot while the whole campus is in view, a pin with its count from the "pins" level, and a pin with a short name from the "names" level. A Party's count is its members. A Global Event has a count only when more than one Party goes to it. A short name is the title cut at a word's end within 8 characters: "AI 커리어 설명회" is "AI 커리어". The screen switches the detail from the zoom the map reports.
 - A selected marker has the frame's selected look and is drawn above the others: a teardrop 1.18 times as large inside a white ring and a ring of the key colour, a dot 4 larger inside a ring, a pin as the design system draws a selected one.
 - A card is the frame's: a leading mark, which is the person's Avatar or the kind's icon in a round of 40 in the kind's colour, the sub-label, the title, the lines with their icons, the buttons and the X. Its bottom is 152 from the frame's bottom, above the AI input.
-- While a card is open the zoom control is hidden.
+- While a card is open the zoom control, the row of "오늘의 발자국" and "활성 파티" and the 편의기능 button are hidden. Both lists, the AI input and the navigation stay.
+- The friend list is at the left, 16 from the side and 52 from the top: the pill "친구" with the number of Friends in the list, the round collapse button beside it, and every Friend as a row of 56 with a dot in the status colour, the name, and the status with the place. The rows are in a window three rows high that scrolls, snaps to the rows and fades towards its end. The text over the map has a white glow.
+- The Quest list mirrors it at the right: the collapse button, the pill "퀘스트" with the number of today's Quests and the full-screen button inside it, and the rows joined by the rail, or "오늘 일정 없음". A row has a round with its icon, the kicker, the title and the time with the place, in the colour of its kind: a class with `clock` in grey `#555C74`; a Party that others may join with `users` in blue `#2F6FC0`; a closed Party or a Shared Quest with `lock` in `#B63A07`. The colours are tokens of the design system, and the adapter says a row's kind and icon.
+- Above the navigation, counted from its top edge: the AI input 12 above it, 16 from the sides; the row of "오늘의 발자국" and "활성 파티" 78 above it, 48 high, from 16 at the left to 70 from the right; the 편의기능 button, a round of 48, at the right of that row.
+- "오늘의 발자국" shows three small faces, its name, "친구 5명의 오늘" and the play mark. The faces and the number are in no answer of the main server: they are a mock of the app's own behind the API client.
+- "활성 파티" is shown only while the User is in a Party. Its second line is "<n>명 공유 중", the members who share their position without the User, or "응답 대기" when nobody else shares.
+- The AI input says "무엇이든 부탁해 보세요". Its send button is disabled while the input is empty. A touch of the input and a sent message say "준비 중이에요", and the keyboard is put away at once.
+- The main screen's inset for the map is the row of buttons' top at the bottom and the zoom control at the right: the credit is just above "오늘의 발자국", 16 from the left, and the logo's place is left of the zoom control. While a card is open the inset's bottom is the card's top edge.
+- Every control has a Korean accessibility label and a touch area at least 48 high.
 - The zoom levels are counted from the fit zoom, the zoom at which the campus rectangle just fits the view, which the map reports. The frame's zoom factor z is log2(z) levels above it: "pins" from z 1.6 (+0.68), "names" from z 2.4 (+1.26), "close" at z 2.6 (+1.38), and one press of a zoom button is a factor 1.5 (0.585). The levels are named once in the app.
 - The User's own Avatar is drawn at 0.75 of its size while the whole campus is in view, below the "pins" level.
 - The bottom navigation has the frame's five slots: 지도, 파티, 올리기, 행사 and 내 정보. 올리기 is the bottom navigation's action item, drawn as the frame draws it: its icon on a round fill of 44 inside the bar, with its label hidden. A long press on it does nothing. The badge on 파티 is the number of things waiting for the User in Parties, 3 in the mock. No answer of the main server gives it: it is a mock of the app's own behind the API client.
@@ -243,6 +252,8 @@ Built from the design system's dialog and the shared Toast. The team may change 
 | Toast | My position, off campus | "캠퍼스 밖에 있어요" |
 | Toast | My position, with the permission and no position yet | "위치를 찾는 중이에요" |
 | Toast | A control of another task | "준비 중이에요" |
+| Toast | A Friend's row, for a Friend without a position, for 2000 ms | "<이름>님은 위치가 꺼져 있어요" |
+| Toast | A Class Quest's row | "<title> · <place>", as in "자료구조 · 301동 118호" |
 | Toast | "길찾기", when no way is found or the question failed | "길을 찾지 못했어요" |
 
 ### Connecting to the server
