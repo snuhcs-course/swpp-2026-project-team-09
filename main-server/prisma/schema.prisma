@@ -43,6 +43,8 @@ model User {
   meetupsReceived Meetup[] @relation("MeetupReceiver")
   partyMember       PartyMember?
   ledParties        Party[]
+  partyJoinRequests PartyJoinRequest[]
+  partyInvitations  PartyInvitation[]
 
   @@map("users")
 }
@@ -348,6 +350,8 @@ model Party {
   quest      Quest?        @relation(fields: [questId], references: [id], onDelete: SetNull)
   createdAt  DateTime      @default(now()) @map("created_at")
   members    PartyMember[]
+  joinRequests PartyJoinRequest[]
+  invitations  PartyInvitation[]
 
   @@index([leaderId])
   @@map("parties")
@@ -367,6 +371,36 @@ model PartyMember {
 
   @@index([partyId])
   @@map("party_members")
+}
+
+// A User's request to enter an Approval Party, which waits for its Leader. Unique for the Party and the User, so that a
+// User asks a Party once. It ends when it is answered, when the Party ends and when the User enters any Party.
+model PartyJoinRequest {
+  id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partyId String   @map("party_id") @db.Uuid
+  party   Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  userId  String   @map("user_id") @db.Uuid
+  user    User     @relation(fields: [userId], references: [id])
+  sentAt  DateTime @default(now()) @map("sent_at")
+
+  @@unique([partyId, userId])
+  @@index([userId])
+  @@map("party_join_requests")
+}
+
+// The Leader's invitation of a Friend or a Holder of the Party's Quest into the Party, which waits for the invited User.
+// Unique and ended as a request to enter is.
+model PartyInvitation {
+  id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  partyId String   @map("party_id") @db.Uuid
+  party   Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  userId  String   @map("user_id") @db.Uuid
+  user    User     @relation(fields: [userId], references: [id])
+  sentAt  DateTime @default(now()) @map("sent_at")
+
+  @@unique([partyId, userId])
+  @@index([userId])
+  @@map("party_invitations")
 }
 
 // One restaurant on one day, as the last Collection of its Source read it.

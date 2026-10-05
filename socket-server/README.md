@@ -154,7 +154,7 @@ The signals and what the app does on each:
 | `position-removed`      | `{ userId }`                                  | removes that User's Avatar from the map at once                                                            |
 | `quests-changed`        | nothing                                       | fetches `GET /quests`, the requests to join and the invitations of the main server again                   |
 | `meetups-changed`       | nothing                                       | fetches `GET /meetups` of the main server again                                                            |
-| `party-changed`         | nothing                                       | fetches `GET /parties/mine` and `GET /parties` of the main server again                                    |
+| `party-changed`         | nothing                                       | fetches `GET /parties/mine`, `GET /parties`, the Party requests and invitations of the main server again   |
 | `matching-changed`      | nothing                                       | fetches `GET /matching-requests` and each request it shows, `GET /matching-requests/:globalEventId`, again |
 
 ```ts

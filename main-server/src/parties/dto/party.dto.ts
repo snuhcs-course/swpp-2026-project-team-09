@@ -1,4 +1,4 @@
-import { JoinPolicy, Prisma } from '../../generated/prisma/client.js';
+import { JoinPolicy, Prisma, User } from '../../generated/prisma/client.js';
 
 export interface PartyQuestDto {
   id: string;
@@ -53,7 +53,7 @@ export const PARTY_INCLUDE = {
   },
 } satisfies Prisma.PartyInclude;
 
-type VisiblePartyInclude = typeof PARTY_INCLUDE & {
+export type VisiblePartyInclude = typeof PARTY_INCLUDE & {
   quest: {
     include: typeof PARTY_QUEST_INCLUDE.quest.include & {
       holders: { where: { userId: string }; select: { id: true } };
@@ -73,7 +73,7 @@ export function visiblePartyInclude(readerId: string): VisiblePartyInclude {
 
 type StoredParty = Prisma.PartyGetPayload<{ include: typeof PARTY_INCLUDE }>;
 
-type VisibleParty = Prisma.PartyGetPayload<{ include: VisiblePartyInclude }>;
+export type VisibleParty = Prisma.PartyGetPayload<{ include: VisiblePartyInclude }>;
 
 function questOf({ quest }: Prisma.PartyGetPayload<{ include: typeof PARTY_QUEST_INCLUDE }>): PartyQuestDto | null {
   return quest === null ? null : { id: quest.id, title: quest.title, globalEvent: quest.globalEvent };
@@ -109,3 +109,8 @@ export function toVisiblePartyDto(party: VisibleParty, friendIds: ReadonlySet<st
     friends: party.members.flatMap(({ user }) => (friendIds.has(user.id) ? [user] : [])),
   };
 }
+
+// Who asked to enter, or who leads the Party of an invitation.
+export type UserSummaryDto = Pick<User, 'id' | 'name' | 'department'>;
+
+export const USER_SUMMARY = { select: { id: true, name: true, department: true } } satisfies Prisma.UserDefaultArgs;
