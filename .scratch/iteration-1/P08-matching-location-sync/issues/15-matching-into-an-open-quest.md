@@ -54,3 +54,10 @@ A Quest is eligible for a request when it is for the request's Global Event, is 
   round's standing question expires the request (the User holds a Shared Quest by then).
 - **Tests**: `MainServerStub` has `eligible`, `placement` and `placements()`; match server `test/placements.e2e-spec.ts`,
   main server `test/matching-placements.e2e-spec.ts`.
+
+### Agent usage (2026-10-06)
+
+- Agent time: about 35 minutes, an estimate: one implementing agent, in two runs. The session that ran it is not counted here.
+- Tokens, counted from the agent's transcript, a lower bound, since the transcript records only part of the second run and of the output:
+  - Input: 13,264,173, of which 13,068,942 were cache reads, 195,069 cache writes and 162 uncached.
+  - Output: 18,853.
