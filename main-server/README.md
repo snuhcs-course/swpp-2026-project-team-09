@@ -424,8 +424,9 @@ A Quest is what one or more Users set out to do and what Users gather around: a 
 capacity, a Join Policy, an optional Global Event and one or more Sub Quests, which carry the times and places. A Quest
 with two or more Holders is a Shared Quest; nothing else tells it apart. The plan is shared and progress is personal: a
 Sub Quest is one record for all Holders, and whether it is done is kept for each Holder. A User gets a Quest by
-attending a published Global Event or by making one of their own, and enters another's by joining it; Meetups and
-Matching add the Quests with several Holders. The routes, all a User's:
+attending a published Global Event or by making one of their own, and enters another's by joining it, by a request to
+join that the Leader accepts or by the Leader's invitation; Meetups and Matching add the Quests with several Holders.
+The routes, all a User's:
 
 - `POST /quests` with `{ "globalEventId": "..." }` attends the Global Event and answers 201 with the User's Quest for
   it. The first time it creates the Quest, with the event's title, the User as its only Holder and the Sub Quest for
@@ -538,7 +539,7 @@ they ask and the Leader decides; `closed`, only by the Leader's invitation. A Qu
 - made by a User: led by the User, with the capacity and the Join Policy given, 4 and `closed` when left out.
 
 When the Leader drops the Quest, the Holder who entered earliest leads it. `quest_holders.joined_at` keeps when each
-Holder entered.
+Holder entered. The Leader changes the settings, hands the role over and removes Holders (see below).
 
 **The list of recruiting Quests** holds the `open` and `approval` Quests that the reader does not hold and that have a
 Sub Quest ahead, the newest first. A Sub Quest is ahead while it is not cancelled and its end time has not passed; a
@@ -574,16 +575,72 @@ features, ends in `RecruitingService.enter`, which:
   the lock, so two Users taking the last free place at the same moment leave one of them a Holder;
 - keeps the one-Quest rule for a Quest with a Global Event: a Quest the User held alone for that event is deleted, with
   its Sub Quests and the User's progress; a User who holds a Shared Quest for it is refused and keeps it until they
-  drop it. A Quest without a Global Event has no such rule.
+  drop it. A Quest without a Global Event has no such rule;
+- ends the User's request to join the Quest and invitation into it.
 
 Joining changes no Party.
+
+**Requests to join and invitations.** A User asks to join an `approval` Quest, and the Leader accepts or declines. The
+Leader invites a Friend into the Quest whatever its Join Policy, and the Friend accepts or declines. Accepting either
+goes through `RecruitingService.enter`, so it is refused as joining is: `QUEST_ENDED`, `QUEST_FULL` and
+`SHARED_QUEST_HELD`, while a Quest the User holds alone for the Global Event is replaced. A refused acceptance leaves
+the request or the invitation waiting. Both wait until they are answered, and end with the Quest and when their User
+enters that Quest in any way; entering another Quest leaves them. A request stays the Leader's to accept or decline
+after the Leader changes the Join Policy, since accepting it is the Leader's own decision, as an invitation is. The
+routes:
+
+- `POST /quest-join-requests` with `{ "questId": "..." }` asks to join and answers 201 with the request. A second
+  request is refused, so it takes no `Idempotency-Key`. `GET /quest-join-requests` answers the User's waiting requests,
+  and `POST /quest-join-requests/:id/withdraw` withdraws one and answers 204.
+- `GET /quests/:questId/join-requests` answers the Leader the Quest's requests with who asked,
+  `{ "id", "user": { "id", "name", "department" }, "sentAt" }`. `POST /quests/:questId/join-requests/:id/accept` makes
+  the User a Holder and `.../decline` ends the request; both answer 204.
+- `POST /quests/:questId/invitations` with `{ "userId": "..." }` invites a Friend of the Leader and answers 204.
+  `GET /quest-invitations` answers the User's invitations, `POST /quest-invitations/:id/accept` makes the User a Holder
+  and answers 201 with the Quest, and `.../decline` ends the invitation and answers 204.
+
+A request as its User lists it, and an invitation, read
+`{ "id", "quest": { "id", "title", "globalEvent", "leader", "holderCount", "capacity", "joinPolicy" }, "sentAt" }`, the
+Quest as it is now; the lists are the newest first.
+
+**The Leader's controls**, each refused with `NOT_QUEST_LEADER` for another Holder:
+
+- `PATCH /quests/:questId` with any of `{ "title", "capacity", "joinPolicy" }` changes the settings and answers 200 with
+  the Quest. What is left out stays. A Quest with a Global Event keeps the event's title. Making a Quest from attending
+  `open` or `approval` is how it starts gathering people.
+- `PUT /quests/:questId/leader` with `{ "userId": "..." }` hands the role to another Holder and answers 204.
+- `DELETE /quests/:questId/holders/:userId` removes a Holder and answers 204. The Holder goes as one who dropped the
+  Quest, with their progress, and may enter it again.
+
+Accepting a request and removing a Holder lock that User before the Quest, as entering does, and every control checks
+the Leader once the Quest is locked, so that a control and a change of Leader at the same moment run one after the
+other.
+
+| Refusal                                                               | Status | `code`                            |
+| --------------------------------------------------------------------- | ------ | --------------------------------- |
+| Asking to join a Closed Quest, or one that does not exist             | 404    | `QUEST_NOT_FOUND`                 |
+| Asking to join an Open Quest                                          | 409    | `QUEST_NOT_APPROVAL`              |
+| Asking to join a Quest the User holds, or inviting one of its Holders | 409    | `ALREADY_HOLDER`                  |
+| Asking to join while holding a Shared Quest for its Global Event      | 409    | `SHARED_QUEST_HELD`               |
+| A second request to the same Quest                                    | 409    | `QUEST_JOIN_REQUEST_ALREADY_SENT` |
+| A request that is not waiting, or not the User's or the Quest's       | 404    | `QUEST_JOIN_REQUEST_NOT_FOUND`    |
+| Inviting a User who is not the Leader's Friend                        | 404    | `FRIEND_NOT_FOUND`                |
+| A second invitation of the same User into the Quest                   | 409    | `QUEST_INVITATION_ALREADY_SENT`   |
+| An invitation that is not waiting for the User                        | 404    | `QUEST_INVITATION_NOT_FOUND`      |
+| A Leader's action by another Holder                                   | 403    | `NOT_QUEST_LEADER`                |
+| A Leader's action by a User who does not hold the Quest               | 404    | `QUEST_NOT_FOUND`                 |
+| A capacity below the number of Holders                                | 409    | `CAPACITY_BELOW_HOLDERS`          |
+| A title for a Quest with a Global Event                               | 409    | `QUEST_TITLE_FROM_GLOBAL_EVENT`   |
+| Handing the role to, or removing, a User who does not hold the Quest  | 404    | `NOT_QUEST_HOLDER`                |
 
 How they are stored: `quests` holds the title, the Global Event, which never changes, `leader_id`, `capacity`, which
 the migration checks to be from 1 to 8, and `join_policy`; `quest_holders` one row for each Holder, unique for the
 Quest and the User, with the time the Holder entered; `sub_quests` the Sub Quests, `attending` marking the one for the Global
 Event, of which a Quest has at most one; and `sub_quest_progress` one row for each Sub Quest a Holder marked done, which
-goes with the Holder's row. Checks in the migration keep the attending Sub Quest without title, time and place, the end
-after the start, and the place a Place, a point with its label, or neither.
+goes with the Holder's row; `quest_join_requests` and `quest_invitations` one row for each waiting request and
+invitation, unique for the Quest and the User, deleted with the Quest. Checks in the migration keep the attending Sub
+Quest without title, time and place, the end after the start, and the place a Place, a point with its label, or
+neither.
 
 Another feature changes Quests in its own transaction with `QuestsService`, exported by `QuestsModule`. Every change to
 one Quest locks it first, so that changes run one after another:
@@ -603,6 +660,8 @@ one Quest locks it first, so that changes run one after another:
 - `freeForSharedQuest(userId, globalEventId, tx)` answers whether the User may become a Holder of a Shared Quest for
   the Global Event: true when the User holds no Quest for it, or held one alone, which it deletes with its Sub Quests
   and the User's progress; false when the User holds a Shared Quest for it, which stays.
+- `holdsSharedQuestFor(userId, globalEventId, tx)` answers whether the User holds a Shared Quest for the Global Event,
+  without a lock; entering checks it again.
 - `withSubQuestsAhead(questIds, tx?)` answers those of the Quests that have a Sub Quest ahead.
 
 `RecruitingService`, also exported, has `enter(questId, userId, tx, admits?)`, described above. `admits(quest)` is the
@@ -610,13 +669,15 @@ way in's own check, such as the Join Policy, made once the Quest is locked; it t
 to send `quests-changed` to, the User included, once the transaction commits.
 
 `quests-changed` goes to every Holder, the one who acted included, when a Quest is created by attending or made, when a
-Sub Quest is added, edited or cancelled, when a User joins, and when a Holder drops the Quest, which may pass on the
-Leader's role. A mark of done is the Holder's own and sends
-nothing. The signal carries nothing, and the app fetches `GET /quests` again (see [Signals](#signals)).
+Sub Quest is added, edited or cancelled, when a User enters, when a Holder drops the Quest, which may pass on the
+Leader's role, and when the Leader changes the settings, hands the role over or removes a Holder, the removed one
+included. It goes to the Leader when a request arrives or is withdrawn, to a User whose request the Leader declines or
+who declines an invitation, and to an invited User. A mark of done is the Holder's own and sends nothing. The signal carries
+nothing, and the app fetches `GET /quests`, the requests to join and the invitations again (see [Signals](#signals)).
 
 In a test, `test/quests.ts` stores a published Global Event with a connection of its own, since no route creates one
-yet, and calls the routes above. A test that needs an `open` Quest for a Global Event sets its Join Policy with that
-connection, as no route changes it yet.
+yet, and calls the routes above; `test/quest-recruiting.ts` calls those of requests, invitations and the Leader's
+controls.
 
 ## Menus
 
