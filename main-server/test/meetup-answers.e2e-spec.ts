@@ -58,7 +58,9 @@ describe('Accepting a Meetup', () => {
     expect(response.status).toBe(204);
     expect(await statesOf(app, meetupId, proposer, receiver)).toEqual({ proposer: 'accepted', receiver: 'accepted' });
     const forProposer = await getQuests(app, proposer);
-    expect(forProposer.body).toEqual([{ ...quest, holders: [leader, other], subQuests: [subQuest] }]);
+    expect(forProposer.body).toEqual([
+      { ...quest, holders: [leader, other], subQuests: [subQuest], classQuest: false },
+    ]);
     expect((await getQuests(app, receiver)).body).toEqual(forProposer.body);
   });
 

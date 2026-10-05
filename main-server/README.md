@@ -520,8 +520,8 @@ The routes, all a User's:
   same for one Global Event (see below).
 - `POST /quests/:questId/join` joins an Open Quest and answers 201 with it. A second join is refused, so it takes no
   `Idempotency-Key`.
-- `GET /quests` answers the User's Quests in the order they were created, leaving out each Quest whose Sub Quests have
-  all ended for the User. `GET /quests/:questId` answers one, ended or not.
+- `GET /quests` answers the User's Quests in the order they were created, then today's Class Quests (below), leaving
+  out each Quest whose Sub Quests have all ended for the User. `GET /quests/:questId` answers one, ended or not.
 - `DELETE /quests/:questId` drops the Quest and answers 204. It removes the User as a Holder, with the User's progress.
   The other Holders keep the Quest. When the last Holder drops it, it is deleted with its Sub Quests.
 - `POST /quests/:questId/sub-quests` adds a Sub Quest and answers 201 with it. It requires an `Idempotency-Key` (see
@@ -564,7 +564,8 @@ A Quest reads:
       "done": false,
       "ended": false
     }
-  ]
+  ],
+  "classQuest": false
 }
 ```
 
@@ -573,6 +574,8 @@ A Quest reads:
 - A Sub Quest's `place` is `null` when it has none. `placeId` is the Place's id for a Place from the list, whose name
   is then the `label`, and `null` for a point.
 - `done` and `ended` are the reading User's. Overlapping times, within a Quest or across a User's Quests, are accepted.
+- `classQuest` is `true` for a Class Quest and `false` for every stored Quest. `leader` is `null` for a Class Quest
+  only.
 
 The refusals each have a `code`:
 
@@ -590,6 +593,7 @@ The refusals each have a `code`:
 | Joining a Quest without a Sub Quest ahead                 | 409    | `QUEST_ENDED`            |
 | Joining a Quest whose Holders fill its capacity           | 409    | `QUEST_FULL`             |
 | Joining while holding a Shared Quest for its Global Event | 409    | `SHARED_QUEST_HELD`      |
+| A Class Quest of the User's, on a route that changes it   | 409    | `CLASS_QUEST`            |
 
 A body that does not match gets 400 with a message naming the field, such as `endsAt: The end must be after the start`.
 
@@ -602,6 +606,33 @@ attending Sub Quest, when the Global Event has none. A Sub Quest is ended for a 
 every Holder alike, when the User marked it done, or when it is cancelled. This is computed when it is read and nothing
 is written. The time it is computed at is `now()` of `CLOCK` (`src/quests/clock.ts`), which a test moves with
 `vi.spyOn(app.get<Clock>(CLOCK), 'now')`, as `test/quest-progress.e2e-spec.ts` does.
+
+**Class Quests.** A Class Quest stands for one of the User's classes on a day it is held. It is computed from the
+[timetable](#timetable) each time `GET /quests` or `GET /quests/:questId` is read, and nothing is stored for it, so a
+change to the timetable shows in the next read. `ClassQuestsService` (`src/quests/class-quests.service.ts`) builds it
+from `TimetableService.classesOf`:
+
+- There is one for each class with a time on today's weekday, by the date in Asia/Seoul at `now()` of `CLOCK`, every
+  week. The list puts them after the stored Quests, in the order of their first start today.
+- Its `id` is the class's and its `title` the course name. `globalEvent` and `leader` are `null`, `capacity` is 1,
+  `joinPolicy` is `closed` and the User is its only Holder.
+- It has one Sub Quest for each of the class's times today, in the order of their starts. The Sub Quest's `id` is the
+  time's, `attending` is `false`, its `title` is the course name, `startsAt` and `endsAt` are today's start and end as
+  instants (the `HH:MM` at +09:00), `completion` is `by_time`, and `cancelled` and `done` are `false`. Its `place` is
+  the time's Place, labelled `<Place name> <room>`, or the Place's name alone for a time without a room; a time without
+  a Place gives `null`, and its room is not shown.
+- It ends by time and leaves the list once all its Sub Quests have ended, as any Quest. `GET /quests/:questId` answers
+  it, ended or not, on a day its class has a time, and `QUEST_NOT_FOUND` on another day.
+
+It takes no part in what Users do with stored Quests. For the identifier of any of the User's classes, held today or
+not, these routes refuse with 409 `CLASS_QUEST` and change nothing: dropping it; adding a Sub Quest, and editing,
+cancelling and marking one done; joining; asking to join; the Leader's controls; listing, accepting and declining its
+requests to join; and inviting. Another User's class is no Quest of the User, and each of these routes answers it as a
+Quest the User does not hold: `QUEST_NOT_FOUND`. The check is asked only when no stored Quest answers the identifier,
+where each route first looks its Quest up, so stored Quests are served as before: `QuestsService.inQuest` for dropping
+and the Sub Quest routes, `LeaderService.ledBy` for the Leader's controls, the requests and inviting,
+`RecruitingService.enter` for joining and `JoinRequestsService.ask` for asking. A Class Quest is no stored Quest, so it
+is never in the list of recruiting Quests, and opening a [Party](#party) for it gets `QUEST_NOT_FOUND`.
 
 **One Quest for a Global Event.** A User holds at most one Quest for a Global Event, which the database enforces: the
 row of each Holder, in `quest_holders`, repeats the Quest's Global Event, and a unique index on the User and the Global
@@ -1554,7 +1585,8 @@ the order of the week.
 
 Other modules read the classes through `TimetableService` (`src/timetable/timetable.service.ts`): `classesOf(userId)`
 answers the User's classes, each with its times in the order of the week and each time's Place, and
-`isClassOf(userId, classId)` whether an identifier is one of the User's classes.
+`isClassOf(userId, classId, db?)` whether an identifier is one of the User's classes. The Quest list shows each class
+held today as a Class Quest, computed from these and never stored (see [Quests](#quests), Class Quests).
 
 ## Seed data
 

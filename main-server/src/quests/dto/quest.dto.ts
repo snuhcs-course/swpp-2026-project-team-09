@@ -37,12 +37,15 @@ export interface QuestDto {
   id: string;
   title: string;
   globalEvent: { id: string; title: string } | null;
-  leader: HolderDto;
+  // Null for a Class Quest only.
+  leader: HolderDto | null;
   capacity: number;
   joinPolicy: JoinPolicy;
   // In the order they entered.
   holders: HolderDto[];
   subQuests: SubQuestDto[];
+  // Computed from the timetable and never stored (class-quests.service.ts).
+  classQuest: boolean;
 }
 
 // A Quest as a User who does not hold it reads it: in the list of recruiting Quests, in a request to join it and in an
@@ -171,6 +174,7 @@ export function toQuestDto(quest: StoredQuest, userId: string, now: Date): Quest
     joinPolicy: quest.joinPolicy,
     holders: quest.holders.map(({ user }) => user),
     subQuests: quest.subQuests.map((subQuest) => toSubQuestDto(subQuest, globalEvent, userId, now)),
+    classQuest: false,
   };
 }
 

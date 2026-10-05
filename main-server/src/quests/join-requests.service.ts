@@ -3,6 +3,7 @@ import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { JoinPolicy, QuestJoinRequest } from '../generated/prisma/client.js';
 import { UsersService } from '../users/users.service.js';
+import { ClassQuestsService } from './class-quests.service.js';
 import {
   RECEIVED_JOIN_REQUEST_INCLUDE,
   ReceivedJoinRequestDto,
@@ -31,6 +32,7 @@ export class JoinRequestsService {
     private readonly recruiting: RecruitingService,
     private readonly leader: LeaderService,
     private readonly signals: SignalsService,
+    private readonly classQuests: ClassQuestsService,
   ) {}
 
   // A Closed Quest is answered as unknown, as joining it is. A User who holds the Quest alone for its Global Event may
@@ -40,6 +42,7 @@ export class JoinRequestsService {
       await this.quests.lock(questId, tx);
       const quest = await tx.quest.findUnique({ where: { id: questId }, include: { holders: true } });
       if (quest === null) {
+        await this.classQuests.refuse(userId, questId, tx);
         throw notRecruiting();
       }
       if (quest.holders.some((holder) => holder.userId === userId)) {

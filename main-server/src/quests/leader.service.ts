@@ -3,6 +3,7 @@ import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { Prisma, Quest } from '../generated/prisma/client.js';
 import { UsersService } from '../users/users.service.js';
+import { ClassQuestsService } from './class-quests.service.js';
 import { type UpdateQuestDto } from './dto/quest-requests.dto.js';
 import { QuestDto } from './dto/quest.dto.js';
 import { QuestsService } from './quests.service.js';
@@ -19,6 +20,7 @@ export class LeaderService {
     private readonly users: UsersService,
     private readonly quests: QuestsService,
     private readonly signals: SignalsService,
+    private readonly classQuests: ClassQuestsService,
   ) {}
 
   // Refuses unless the User holds and leads the Quest. Read without a lock, so that the Leader's actions are refused in
@@ -26,6 +28,7 @@ export class LeaderService {
   async ledBy(questId: string, userId: string, tx: Prisma.TransactionClient = this.prisma): Promise<Quest> {
     const quest = await tx.quest.findFirst({ where: { id: questId, holders: { some: { userId } } } });
     if (quest === null) {
+      await this.classQuests.refuse(userId, questId, tx);
       throw questNotFound();
     }
     if (quest.leaderId !== userId) {
