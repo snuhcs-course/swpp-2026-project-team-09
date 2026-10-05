@@ -17,6 +17,7 @@ export default function SignInScreen(): ReactElement {
     useOwnPlace('signed-out') ?? (
       <Placeholder name="로그인">
         <Button
+          centred
           onPress={() => {
             void pressed();
           }}
