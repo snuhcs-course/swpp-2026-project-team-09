@@ -1,10 +1,29 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { z } from 'zod';
 import { PrismaService } from '../common/prisma.service.js';
 import { Prisma, User } from '../generated/prisma/client.js';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto.js';
 import { OnboardingDto, OnboardingSource } from './dto/onboarding.dto.js';
 import { ProfileDto, toProfileDto } from './dto/profile.dto.js';
 import { departmentSchema, nameSchema, UpdateProfileDto } from './dto/update-profile.dto.js';
+import { newFriendId } from './friend-id.js';
+
+const FRIEND_ID_ATTEMPTS = 3;
+
+// With the driver adapter, P2002 names the unique index in the adapter's error, not in `meta.target`.
+const friendIdHeldSchema = z.object({
+  driverAdapterError: z.object({
+    cause: z.object({ constraint: z.object({ index: z.literal('users_friend_id_key') }) }),
+  }),
+});
+
+function isFriendIdHeld(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === 'P2002' &&
+    friendIdHeldSchema.safeParse(error.meta).success
+  );
+}
 
 // An SNU account's Google name reads "홍길동 / 학생 / 컴퓨터공학부".
 function googleNameParts(googleName: string): string[] {
@@ -18,20 +37,34 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   // A User is identified by the Google subject identifier. The email address and the Google name follow the ones Google
-  // sends.
+  // sends. A new User's Friend ID that another User already holds, one of 31^8, is drawn again.
   async findOrCreate(account: { googleSubject: string; email: string; googleName: string }): Promise<User> {
-    const { googleSubject, email, googleName } = account;
-    const user = await this.prisma.user.upsert({
-      where: { googleSubject },
-      create: { googleSubject, email, googleName },
-      update: { email, googleName },
-    });
+    const user = await this.upsert(account);
+    const { googleName } = account;
     // The form is confirmed on an undergraduate's account only, so the log shows the accounts that differ.
     const parts = googleNameParts(googleName).length;
     if (parts !== 3) {
       this.logger.warn(`The Google name of User ${user.id} has ${parts} parts separated by "/", not 3.`);
     }
     return user;
+  }
+
+  private async upsert(
+    { googleSubject, email, googleName }: { googleSubject: string; email: string; googleName: string },
+    attempt = 1,
+  ): Promise<User> {
+    try {
+      return await this.prisma.user.upsert({
+        where: { googleSubject },
+        create: { googleSubject, email, googleName, friendId: newFriendId() },
+        update: { email, googleName },
+      });
+    } catch (error) {
+      if (attempt < FRIEND_ID_ATTEMPTS && isFriendIdHeld(error)) {
+        return this.upsert({ googleSubject, email, googleName }, attempt + 1);
+      }
+      throw error;
+    }
   }
 
   // A part of the Google name that the profile would refuse is left out of the suggestion.

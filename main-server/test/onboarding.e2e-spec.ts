@@ -3,6 +3,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
+import { A_FRIEND_ID } from './friends.js';
 import { googleSubject } from './google.js';
 import { getProfile } from './profile.js';
 import { postOnboarding, postSignIn, signInBeforeOnboarding, signInResultSchema } from './sign-in.js';
@@ -71,7 +72,7 @@ describe('Completing onboarding', () => {
     const response = await postOnboarding(app, accessToken, profile);
 
     expect(response.status).toBe(204);
-    expect((await getProfile(app, accessToken)).body).toEqual(profile);
+    expect((await getProfile(app, accessToken)).body).toEqual({ ...profile, friendId: A_FRIEND_ID });
     expect(signInResultSchema.parse((await postSignIn(app, { sub })).body).onboarding).toEqual({ completed: true });
   });
 
@@ -86,6 +87,7 @@ describe('Completing onboarding', () => {
       department: '경영학과',
       admissionYear: null,
       hashtags: [],
+      friendId: A_FRIEND_ID,
     });
   });
 

@@ -72,8 +72,8 @@ The app signs in with Google and sends the ID token it gets to the main server:
 
 - `POST /auth/google` with `{ "idToken": "..." }` answers
   `200 { "accessToken": "...", "refreshToken": "...", "onboarding": { ... } }`. The first sign-in of a Google account
-  creates its User, with an empty name and department. `onboarding` tells the app where to go next (see
-  [Onboarding and the lobby](#onboarding-and-the-lobby)).
+  creates its User, with an empty name and department and a [Friend ID](#friends). `onboarding` tells the app where to
+  go next (see [Onboarding and the lobby](#onboarding-and-the-lobby)).
 - Only SNU accounts get in: the token's hosted domain claim must be `snu.ac.kr` and its email address verified. Another
   account gets 403. An invalid or expired ID token, or one issued to another client than the app's
   (`GOOGLE_APP_CLIENT_ID`), the admin site's included, gets 401.
@@ -133,10 +133,12 @@ on an undergraduate's account only.
 
 A User reads and edits their own profile. The routes name no User, so they never reach another User's profile.
 
-- `GET /users/me/profile` answers `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...] }`. Like
-  every User route but two, it needs the User to have finished onboarding.
+- `GET /users/me/profile` answers
+  `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...], "friendId": "7KX2M9QD" }`. Like every User
+  route but two, it needs the User to have finished onboarding. `friendId` is the User's [Friend ID](#friends).
 - `PATCH /users/me/profile` with some of these fields changes only those and answers with the whole profile. `null`
-  empties `admissionYear`, and `[]` empties `hashtags`. The name and the department cannot be emptied.
+  empties `admissionYear`, and `[]` empties `hashtags`. The name and the department cannot be emptied. The Friend ID
+  cannot be changed: a `friendId` sent is ignored.
 - A value outside these limits gets 400 with a message that starts with the field, and nothing changes. Spaces around
   text are dropped first. The limits are set in `src/users/dto/update-profile.dto.ts`, and onboarding follows the same
   ones.
@@ -145,6 +147,52 @@ A User reads and edits their own profile. The routes name no User, so they never
   - `admissionYear`: a whole number from 1946, when SNU was founded, to this year in Korea.
   - `hashtags`: at most 20. Each is kept without the `#` in front, in the case sent, and then has 1 to 30 characters
     without whitespace. None may appear twice, whatever the case.
+
+## Friends
+
+Every User has a Friend ID: 8 characters from capital letters and digits, without `0`, `O`, `1`, `I` and `L`, such as
+`7KX2M9QD`. The server makes it at random when it creates the User (`src/users/friend-id.ts`) and draws another when
+one is already held, the database keeps it unique, and it never changes. The User gives it to someone in any way they like, and that person sends a Friend
+Request to it. The routes, all a User's:
+
+- `GET /friend-ids/:friendId` answers the owner's `{ "name": ..., "department": ... }`.
+- `POST /friend-requests` with `{ "friendId": "7KX2M9QD" }` sends a Friend Request to the owner and answers
+  `201 { "status": "waiting" }`. When the owner's own request to the sender is waiting, the two become Friends at once,
+  no request is left, and the answer is `201 { "status": "friends" }`. A repeat is refused as a request already sent,
+  so it takes no `Idempotency-Key`.
+- `GET /friend-requests` answers the waiting requests sent to the User and those the User sent, the newest first:
+  `{ "received": [{ "id", "sender": { "name", "department" }, "sentAt" }], "sent": [{ "id", "receiver": { ... }, "sentAt" }] }`.
+- `POST /friend-requests/:id/accept` makes the two Friends, and `POST /friend-requests/:id/decline` removes the request.
+  Only its receiver answers it. `POST /friend-requests/:id/cancel` removes it, and only its sender cancels it. Each
+  answers 204.
+- `GET /friends` answers the User's Friends in the order of their names: `[{ "id", "name", "department" }]`, where
+  `id` is the Friend's User id.
+- `DELETE /friends/:userId` ends the friendship for both and answers 204.
+
+A Friend ID is read in capitals, so one typed in small letters is found too. The refusals each have a `code`:
+
+| Refusal                                                           | Status | `code`                        |
+| ----------------------------------------------------------------- | ------ | ----------------------------- |
+| A Friend ID nobody holds, looked up or sent to                    | 404    | `FRIEND_ID_NOT_FOUND`         |
+| A Friend Request to the sender's own Friend ID                    | 400    | `OWN_FRIEND_ID`               |
+| A Friend Request to a Friend                                      | 409    | `ALREADY_FRIENDS`             |
+| A Friend Request to a User the sender's request already waits for | 409    | `FRIEND_REQUEST_ALREADY_SENT` |
+| An answer to a request that is not waiting for it from this User  | 404    | `FRIEND_REQUEST_NOT_FOUND`    |
+| Ending a friendship with a User who is not a Friend               | 404    | `FRIEND_NOT_FOUND`            |
+
+A request answered or cancelled already is not waiting, so a second answer gets `FRIEND_REQUEST_NOT_FOUND`.
+
+How they are stored: the table `friendships` holds one row for two Users, a waiting Friend Request while `accepted_at`
+is empty and a friendship once it is set. The row keeps the two Users in the order of their ids, `user_a_id` before
+`user_b_id`, and `sender_id`, who sent the request. A unique index on the two Users therefore allows one friendship or
+one waiting request between them, whichever sent it. Every change between two Users also locks both Users' rows in the
+order of their ids first, so that two requests that cross, or two answers to one request, run one after the other: the
+later sees what the earlier left and is refused or makes the two Friends. Another feature asks whether two Users are
+Friends with `FriendsService.areFriends(userId, otherUserId, tx?)`, exported by `FriendsModule`.
+
+After each change, `friends-changed` goes to both Users: when a request is sent, accepted, declined or cancelled, and
+when a friendship ends. It carries nothing, and the app fetches `GET /friends` and `GET /friend-requests` again (see
+[Signals](#signals)).
 
 ## Administrators
 
@@ -723,6 +771,8 @@ src/
 │   ├── prisma.service.ts            the main database
 │   ├── messaging.module.ts          makes the client that sends events to the socket server available to every feature
 │   ├── messaging.ts                 options for NestJS messaging over Redis
+│   ├── signals.module.ts            makes SignalsService available to every feature
+│   ├── signals.service.ts           sends a signal to the apps of the Users named, through the socket servers
 │   ├── redis.module.ts              makes a Redis client available to every feature
 │   ├── redis-idempotency.store.ts   keeps the results of requests safe to repeat in Redis
 │   ├── route-access.ts              who may call a route: anyone, a User, an Administrator or the worker server
@@ -735,7 +785,8 @@ src/
 ├── generated/                       Prisma Client, generated by `pnpm install` (not committed)
 ├── health/                          a feature: the liveness and readiness checks
 ├── auth/                            a feature: app and admin site sign-in, refresh, sign-out, the access token checks
-├── users/                           a feature: the signed-in User, their profile and onboarding
+├── users/                           a feature: the signed-in User, their profile, Friend ID and onboarding
+├── friends/                         a feature: Friend IDs looked up, Friend Requests and Friends
 ├── lobby/                           a feature: what the app needs when it starts
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
@@ -866,6 +917,32 @@ create(@Body({ schema: createPartySchema }) body: CreatePartyDto, @CurrentUser()
 - In a test, send the key with `.set('Idempotency-Key', randomUUID())`, as `test/idempotency.e2e-spec.ts` does.
 
 The results are kept in Redis by `src/common/redis-idempotency.store.ts`.
+
+## Signals
+
+When one User changes something another User's app shows, the main server sends a signal, and the socket server
+passes it to that User's app. A feature sends one with `SignalsService` from `src/common/signals.service.ts`, which
+every module can inject:
+
+```ts
+this.signals.send([userId, friendUserId], 'friends-changed');
+this.signals.send('everyone', 'global-events-changed');
+```
+
+- `send(to, name, payload?)` names the Users the signal is for, or `'everyone'` for every connected app, the signal's
+  name and what it carries, if anything. An empty list of Users sends nothing.
+- Call it once what the signal announces is stored, after the transaction has committed. It does not wait: a lost
+  signal is logged as a warning, and the app catches up when it connects, reconnects or returns to the front.
+- It goes over messaging as one event, `signal`, with `{ "userIds": [...], "name": "...", "payload": ... }`, without
+  `userIds` for every connected app and without `payload` when it carries nothing. Every socket server receives it and
+  sends it under `name` to the connections of those Users. The socket server knows no signal by name, so a new signal
+  needs no change there; the [socket server's README](../socket-server/README.md#signals) lists each signal with what
+  the app does on it.
+- In a test, `SignalWatcher` from `test/signals.ts` collects the signals put on Redis, as
+  `test/friend-signals.e2e-spec.ts` does.
+
+`session-ended` and `shuttle-vehicles-updated` are events of their own, not signals, which the socket server handles by
+name (see [Sign-in](#sign-in) and [Shuttle](#shuttle)).
 
 ## Requests from the worker server
 
