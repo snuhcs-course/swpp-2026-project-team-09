@@ -8,6 +8,7 @@ export class LobbyService {
 
   // The onboarding check in AccessTokenGuard lets only an onboarded User in.
   async enter(userId: string): Promise<LobbyDto> {
-    return { profile: this.users.profileOf(await this.users.findById(userId)) };
+    const user = await this.users.findById(userId);
+    return { profile: this.users.profileOf(user), masterSwitch: user.masterSwitchOn };
   }
 }

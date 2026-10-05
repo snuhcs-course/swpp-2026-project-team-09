@@ -6,6 +6,7 @@ const SETTINGS = [
   'EXPO_PUBLIC_MOCK_FAIL',
   'EXPO_PUBLIC_MOCK_EMPTY',
   'EXPO_PUBLIC_FIRST_STATE',
+  'EXPO_PUBLIC_CAMPUS_WALK',
 ] as const;
 
 // A phone that keeps nothing and an app started without development settings.

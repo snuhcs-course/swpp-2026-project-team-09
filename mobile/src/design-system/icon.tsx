@@ -53,6 +53,13 @@ const ICONS = {
   layers: [{ path: 'M12 3 3 8l9 5 9-5z' }, { path: 'M3 13l9 5 9-5' }, { path: 'M3 17.5l9 5 9-5' }],
   // Not one of the design system's: the `Onboarding` frame draws it on the field that opens a list.
   chevronDown: [{ path: 'M6 9l6 6 6-6' }],
+  // Not one of the design system's: the `Main` frame draws it on the button that zooms out.
+  minus: [{ path: 'M5 12h14' }],
+  // Not the design system's: the `Main` frame draws them on the friend pill, on the buttons that collapse a list and
+  // on the button that opens the Quest list on the whole screen.
+  chevronRight: [{ path: 'M9 6l6 6-6 6' }],
+  chevronUp: [{ path: 'M6 15l6-6 6 6' }],
+  expand: [{ path: 'M14 4h6v6' }, { path: 'M10 20H4v-6' }, { path: 'M20 4l-7 7' }, { path: 'M4 20l7-7' }],
 } as const satisfies Record<string, readonly Stroke[]>;
 
 export type IconName = keyof typeof ICONS;

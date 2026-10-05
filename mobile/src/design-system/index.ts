@@ -10,7 +10,24 @@ export { Chip } from './chip';
 export { Dialog } from './dialog';
 export { EventCard, type EventKind } from './event-card';
 export { Icon, ICON_NAMES, type IconName } from './icon';
+export { MapPerson, type PersonTone } from './map-person';
 export { MapDot, MapPin, type MapPinKind, type MapPlaceKind } from './map-pin';
 export { TextField } from './text-field';
 export { ToastProvider, useNotReadyToast, useToast, useToastAbove } from './toast';
-export { color, font, halo, onPhoto, radius, shadow, signInButton, size, space, text } from './tokens';
+export {
+  color,
+  font,
+  halo,
+  mapText,
+  onKey,
+  onPhoto,
+  presence,
+  questTone,
+  radius,
+  shadow,
+  signInButton,
+  size,
+  space,
+  text,
+  textHalo,
+} from './tokens';

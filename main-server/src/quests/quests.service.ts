@@ -169,11 +169,22 @@ export class QuestsService {
       return true;
     }
     await this.lock(questId, tx);
-    if ((await this.holderIds(questId, tx)).length > 1) {
+    const holderIds = await this.holderIds(questId, tx);
+    // Dropped while the lock was waited for: nothing holds the User back.
+    if (!holderIds.includes(userId)) {
+      return true;
+    }
+    if (holderIds.length > 1) {
       return false;
     }
     await this.removeHolder(questId, userId, tx);
     return true;
+  }
+
+  // Whether the User holds a Shared Quest for the Global Event, read without a lock: entering checks it again.
+  async holdsSharedQuestFor(userId: string, globalEventId: string, tx: Prisma.TransactionClient): Promise<boolean> {
+    const questId = await this.heldFor(userId, globalEventId, tx);
+    return questId !== null && (await this.holderIds(questId, tx)).length > 1;
   }
 
   // The Quests among these that have a Sub Quest ahead: one not cancelled whose end time has not passed. A mark of done

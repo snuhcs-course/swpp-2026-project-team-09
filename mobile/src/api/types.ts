@@ -169,6 +169,23 @@ export interface MyParty {
   members: { id: string; name: string; department: string; leader: boolean; visible: boolean }[];
 }
 
+// The app's own: how many things wait for the User in Parties, which is the number on the bottom navigation's 파티.
+// The `Main` frame counts the Parties that wait for the User's answer, the invitations not yet answered and the
+// people who ask to join a Party the User made. No answer of the main server holds it.
+export interface PartyNews {
+  count: number;
+}
+
+// The app's own: what the main screen's "오늘의 발자국" shows, which no answer of the main server holds. The `Main`
+// frame counts the people who left a story today, the User left out, and draws the faces of the first three by the
+// time of their story.
+export interface Footprints {
+  // How many Friends left a story today.
+  friendCount: number;
+  // The first three of them. A photo is an image address; null shows the name's letters.
+  faces: { userId: string; name: string; photo: string | null }[];
+}
+
 // --- Walking route (GET /walking-route) ---
 
 export type NoRouteStatus =

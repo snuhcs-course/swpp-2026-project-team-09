@@ -1,7 +1,8 @@
 import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
-import { Prisma, User } from '../generated/prisma/client.js';
+import { MeetupState, Prisma, User } from '../generated/prisma/client.js';
+import { VisibilityService } from '../location-sharing/visibility.service.js';
 import { UsersService } from '../users/users.service.js';
 import {
   FriendDto,
@@ -65,12 +66,21 @@ const alreadyFriends = (): ConflictException =>
     message: 'This User is already your Friend.',
   });
 
+const friendNotFound = (): NotFoundException =>
+  new NotFoundException({
+    statusCode: HttpStatus.NOT_FOUND,
+    error: 'Not Found',
+    code: 'FRIEND_NOT_FOUND',
+    message: 'This User is not your Friend.',
+  });
+
 @Injectable()
 export class FriendsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly users: UsersService,
     private readonly signals: SignalsService,
+    private readonly visibility: VisibilityService,
   ) {}
 
   async ownerOf(friendId: string): Promise<User> {
@@ -181,22 +191,55 @@ export class FriendsService {
       where: { acceptedAt: { not: null }, ...ofUser(userId) },
       include: { userA: USER_SUMMARY, userB: USER_SUMMARY },
     });
+    const visible = new Set(await this.visibility.visibleTo(userId));
     return rows
-      .map((row) => toFriendDto(otherOf(row, userId)))
+      .map((row) => {
+        const friend = otherOf(row, userId);
+        const sharing = row.userAId === userId ? row.userASharing : row.userBSharing;
+        return toFriendDto(friend, sharing, visible.has(friend.id));
+      })
       .toSorted((a, b) => a.name.localeCompare(b.name, 'ko') || a.id.localeCompare(b.id));
   }
 
+  // Withdraws the Meetups still proposed between the two. The Quests of accepted ones stay.
   async end(userId: string, friendUserId: string): Promise<void> {
     const pair = pairOf(userId, friendUserId);
-    await this.changeBetween(pair, async (tx) => {
-      const { count } = await tx.friendship.deleteMany({ where: { ...pair, acceptedAt: { not: null } } });
-      if (count === 0) {
-        throw new NotFoundException({
-          statusCode: HttpStatus.NOT_FOUND,
-          error: 'Not Found',
-          code: 'FRIEND_NOT_FOUND',
-          message: 'This User is not your Friend.',
+    const withdrawn = await this.visibility.announceRemovals(userId, () =>
+      this.changeBetween(pair, async (tx) => {
+        const { count } = await tx.friendship.deleteMany({ where: { ...pair, acceptedAt: { not: null } } });
+        if (count === 0) {
+          throw friendNotFound();
+        }
+        const meetups = await tx.meetup.updateMany({
+          where: {
+            state: MeetupState.proposed,
+            startsAt: { gt: new Date() },
+            OR: [
+              { proposerId: pair.userAId, receiverId: pair.userBId },
+              { proposerId: pair.userBId, receiverId: pair.userAId },
+            ],
+          },
+          data: { state: MeetupState.withdrawn },
         });
+        return meetups.count;
+      }),
+    );
+    if (withdrawn > 0) {
+      this.signals.send([pair.userAId, pair.userBId], 'meetups-changed');
+    }
+  }
+
+  // The User's switch for Location Sharing at their own end of the friendship.
+  async setSharing(userId: string, friendUserId: string, on: boolean): Promise<void> {
+    const pair = pairOf(userId, friendUserId);
+    const data = userId === pair.userAId ? { userASharing: on } : { userBSharing: on };
+    await this.visibility.announceRemovals(userId, async () => {
+      const { count } = await this.prisma.friendship.updateMany({
+        where: { ...pair, acceptedAt: { not: null } },
+        data,
+      });
+      if (count === 0) {
+        throw friendNotFound();
       }
     });
   }
@@ -205,6 +248,25 @@ export class FriendsService {
   async areFriends(userId: string, otherUserId: string, tx: Prisma.TransactionClient = this.prisma): Promise<boolean> {
     const row = await tx.friendship.findUnique({ where: { userAId_userBId: pairOf(userId, otherUserId) } });
     return row !== null && row.acceptedAt !== null;
+  }
+
+  // The Users who are a Friend of any of these Users, some of them possibly among them.
+  async friendsOfAny(userIds: readonly string[], tx: Prisma.TransactionClient = this.prisma): Promise<string[]> {
+    const ids = new Set(userIds);
+    const rows = await tx.friendship.findMany({
+      where: { acceptedAt: { not: null }, OR: [{ userAId: { in: [...ids] } }, { userBId: { in: [...ids] } }] },
+      select: { userAId: true, userBId: true },
+    });
+    const friendIds = new Set<string>();
+    for (const { userAId, userBId } of rows) {
+      if (ids.has(userAId)) {
+        friendIds.add(userBId);
+      }
+      if (ids.has(userBId)) {
+        friendIds.add(userAId);
+      }
+    }
+    return [...friendIds];
   }
 
   // Answers the waiting Friend Request that `where` finds. `change` answers how many rows it changed, none when the

@@ -2,8 +2,9 @@ import type { ApiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import { keep, readKept } from '@/storage/kept';
 import { answer } from './answer';
+import { FOOTPRINTS } from './data/footprints';
 import { FRIEND_STATUSES, FRIENDS, POSITIONS } from './data/friends';
-import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
+import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, PARTY_NEWS, QUESTS } from './data/quests';
 import { mockWalkingRoute } from './walking-route';
 
 // Answers every operation from inside the app, in the main server's shapes, with what the `Main` frame shows. The
@@ -31,6 +32,8 @@ export const mockClient: ApiClient = {
   listGlobalEventAnnouncers: () => answer('listGlobalEventAnnouncers', () => GLOBAL_EVENT_ANNOUNCERS, []),
   listParties: () => answer('listParties', () => PARTIES, []),
   getMyParty: () => answer('getMyParty', () => MY_PARTY, null),
+  getPartyNews: () => answer('getPartyNews', () => PARTY_NEWS, { count: 0 }),
+  getFootprints: () => answer('getFootprints', () => FOOTPRINTS, { friendCount: 0, faces: [] }),
   findWalkingRoute: (from, to) =>
     answer('findWalkingRoute', () => mockWalkingRoute(from, to), {
       status: 'ROUTE_RESULT_NOT_FOUND',

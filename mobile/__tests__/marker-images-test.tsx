@@ -60,11 +60,13 @@ describe('marker images in a build without a native map', () => {
   });
 
   it('names the look and makes no picture: the plain ground draws the view itself', async () => {
-    await render(<Sample look={{ kind: 'friend', form: 'dot', name: '김서연', photo: null, status: 'moving' }} />);
+    await render(
+      <Sample look={{ kind: 'person', id: 's1', tone: 'moving', small: true, name: '김서연', photo: null }} />,
+    );
     await pass(5000);
 
-    expect(screen.getByRole('button', { name: '표시' })).toHaveProp('testID', 'friend:dot:moving:김서연:');
-    expect(screen.getAllByLabelText('김서연 · 이동 중', { includeHiddenElements: true })).toHaveLength(1);
+    expect(screen.getByRole('button', { name: '표시' })).toHaveProp('testID', 'person:small:moving:s1');
+    expect(screen.getAllByLabelText('김서연', { includeHiddenElements: true })).toHaveLength(1);
     expect(screen.getByText('그림: 없음')).toBeVisible();
     expect(captureRef).not.toHaveBeenCalled();
   });
@@ -115,16 +117,16 @@ describe("a Friend's photo that arrives late", () => {
   it('replaces the picture made without it', async () => {
     jest.mocked(captureRef).mockResolvedValueOnce('file:///tmp/letters.png').mockResolvedValue('file:///tmp/photo.png');
     const photo = 'https://example.test/seoyeon.jpg';
-    await render(<Sample look={{ kind: 'friend', form: 'pin', name: '김서연', photo, status: 'free' }} />);
+    await render(<Sample look={{ kind: 'person', id: 's1', tone: 'free', name: '김서연', photo }} />);
 
-    await layOutOnStage('김서연 · 공강');
+    await layOutOnStage('김서연');
     await pass(100);
     expect(screen.getByText('그림: 없음')).toBeVisible();
     await pass(3000);
     await pass(100);
     expect(screen.getByText('그림: file:///tmp/letters.png')).toBeVisible();
 
-    const [shownPhoto] = onStage('김서연 · 공강').children;
+    const [shownPhoto] = onStage('김서연').children;
     if (typeof shownPhoto !== 'string') {
       await fireEvent(shownPhoto, 'load');
     }

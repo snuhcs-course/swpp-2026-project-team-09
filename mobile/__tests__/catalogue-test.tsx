@@ -43,5 +43,8 @@ describe('design system catalogue', () => {
 
     await userEvent.press(screen.getByRole('button', { name: '준비 중 알림' }));
     expect(screen.getByText('준비 중이에요')).toBeVisible();
+
+    await userEvent.press(screen.getByRole('button', { name: '2초 알림' }));
+    expect(screen.getByText('서지우님은 위치가 꺼져 있어요')).toBeVisible();
   });
 });
