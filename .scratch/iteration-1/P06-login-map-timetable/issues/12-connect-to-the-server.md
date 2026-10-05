@@ -27,6 +27,7 @@ A real sign-in needs three things that code cannot give: a built app, a Google s
 - [ ] A `position` moves that User's Avatar on the map, gliding, and a `position-removed` takes it off. The visible positions are fetched when the connection opens and when the app returns to the front.
 - [ ] A signal that something the screen shows has changed makes the app fetch it again.
 - [ ] The app sends no position of its own: that is built in P09 with the Master Switch.
+- [ ] The app's time is the phone's: the fixed moment of the mocks (`src/clock.ts`) and the mock's fixed User id (`myUserId()`) are gone from a build that asks the main server.
 - [ ] Jest tests against a fake server: the token and the one renewal, a failed renewal, each ending of a sign-in, Onboarding completed, each connected feature's answer through its adapter, and, with a fake socket, a position arriving, a position removed and the Session's end. The screens' tests pass unchanged.
 - [ ] `todo.md` section 3 says what is connected and what is still a mock, and the list of mocks in the app holds nothing that the demo's flows use and the main server serves.
 - [ ] A sign-in with an SNU account on the emulator or the shared phone reaches the main screen, recorded under Comments with a screenshot in the pull request.
