@@ -59,6 +59,7 @@ src/hooks/          hooks shared by components and screens
 src/api/            the API client, the main server's answers as types, and the mocks that answer for now
 src/auth/           sign-in and sign-out
 src/features/       one folder per feature: its adapter and the hooks a screen asks for data with
+src/map/            the one map component, its interface and the pictures of its markers
 src/storage/        what the phone keeps between two starts of the app
 src/session/        where the User is in the flow between the screens, and the work of the start
 src/screens/        the screens that the routes show
@@ -190,8 +191,88 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
 
 A repeated element that the design system lacks becomes a shared component here, not a copy in each screen.
 
+`MapDot` is a marker from far away, which the frames draw and the design system does not name: the kind's colour in a
+white border.
+
 To see every component in every variant, start the app and press "디자인 시스템 보기" on a screen that is still a
 placeholder, or open
 `/catalogue`. The catalogue is for developers: a released app does not show it. Compare it with the design system's
 own previews when a component changes: `pnpm web` serves the catalogue to a browser, where a phone-sized window
 shows it as the previews do.
+
+## Map
+
+A screen shows a map with one component, `Map` from `@/map`, and nothing else. No screen calls a map SDK or the native
+module: what the component's interface (`src/map/types.ts`) cannot say, a screen cannot ask of any map.
+
+```tsx
+const map = useRef<MapHandle>(null);
+const [eventPin, myAvatar] = useMarkerImages([{ kind: 'official', form: 'pin' }, { kind: 'me' }]);
+
+<Map
+  bounds={CAMPUS_BOUNDS} // the camera stays inside; the map opens on its middle at minZoom
+  minZoom={MIN_ZOOM}
+  maxZoom={MAX_ZOOM}
+  markers={[{ id: 'event:e1', name: 'AI 커리어 채용설명회', position, image: eventPin, text: 'AI 커리어' }]}
+  avatars={[{ id: 'me', name: '내 위치', position: mine, image: myAvatar, glideMs: 5000 }]}
+  route={line} // LatLng[], or null for none
+  onPress={(id) => {}} // a marker's or an Avatar's id
+  onCameraIdle={({ centre, zoom }) => {}} // once when the map is ready, then after every move
+  ref={map}
+/>;
+
+map.current?.moveCamera({ centre, zoom, animated: true }); // each of the three may be left out
+```
+
+- Every position is a latitude and a longitude in degrees.
+- **Markers** are what the list says: one that is new is added, one whose `id` stays is changed, one that is gone is
+  removed. `name` is what a screen reader says; `text` is drawn under the image by the map, in the map's own text.
+- **Avatars** are markers that glide: a new `position` is reached over `glideMs`, and a move that starts during
+  another starts from where the Avatar is shown.
+- **The route** is one line through the points given, or none.
+- **The camera** stays inside `bounds` and between the zoom limits whatever is asked. `CAMPUS_BOUNDS`, the campus
+  rectangle, and the limits `MIN_ZOOM` and `MAX_ZOOM` are constants in `src/map/campus.ts`. The rectangle is a little
+  wider than the Campus Boundary, which stays the main server's.
+- The credit "© OpenStreetMap · 국토지리정보원" is at the bottom left of every map, inside the component.
+
+### Which map is shown
+
+The component chooses while the app runs (`src/map/map.tsx`), by whether the build holds the native map module
+`SnuNowMap`:
+
+- **With the module**, it shows the native map, `src/map/native-map.tsx`. That file is loaded only then, and it is
+  the only file that may name the native view. No build holds the module yet: its Android side is ticket 07's and
+  its iOS side ticket 11's, and until then the file is a marked seam.
+- **Without it**, which Expo Go, the web and the tests are, it shows the plain ground (`src/map/plain-map.tsx`) with
+  the words "지도는 Android 빌드에서 보입니다". It is no stand-in map. It lists what it was asked to show: each marker
+  and Avatar is a button under its `name`, with its picture and its `text`, and a route is a line of words. It keeps
+  the camera it was asked for and answers with `onCameraIdle`. So a screen reader, and a test, read a marker's name,
+  press it and follow the zoom as on a map.
+
+### Marker images
+
+A native map draws images, not React views. An image is a picture of the design system's own marker view, made once
+for each look and kept for as long as the app runs:
+
+- A look (`MarkerLook` in `src/map/marker-looks.tsx`) is the User's own Avatar (`MapPin` of the kind `me`), a Friend's
+  Avatar (`Avatar` with the friend ring: the letters or the photo, and the status colour) or a marker of each kind
+  of the design system. A Friend and a marker have two forms: a `dot` from far away, a `pin` from close. No look has
+  a label: a name is the map's own text.
+- `useMarkerImages(looks)` answers one `MarkerImage` for each look, in the order asked. An image names its look at
+  once (`look`, such as `official:pin`) and gains its picture (`uri`, with `width`, `height` and the `anchor` that
+  stands on the position) when it is made. A map draws a marker once its picture is there.
+- The picture is made on a stage outside the screen, `MarkerImageStage`, which the app shows once around every
+  screen: the look's view is drawn there with clear room for its ring and shadow, and `react-native-view-shot`
+  captures it as a PNG in the phone's own pixels, a temporary file on a phone and a data address in a browser. A look
+  with a photo is captured when the photo is shown, or after three seconds without it.
+- In a test no picture is made: `uri` stays null, and the plain ground shows the look's name as the `testID` of the
+  marker's button.
+
+Whether a native map draws these pictures as the design system does is proven with the Android module (ticket 07).
+
+### Trying it
+
+`/map-check`, also behind "지도 보기" on a screen that is still a placeholder, shows the component with sample markers,
+Avatars and buttons that move the User's Avatar, draw and clear the route line, zoom in and show the whole campus.
+It says what was pressed and where the camera stopped. It is for developers: a released app does not show it. The
+native modules are checked on it.

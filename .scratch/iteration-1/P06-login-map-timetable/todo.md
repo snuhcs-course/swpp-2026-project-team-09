@@ -50,10 +50,10 @@ Last updated: 2026-10-05
 
 ### 1.6 Map component and the Android module (tickets 06, 07)
 
-- [ ] The map component's interface (section 2.9)
-- [ ] The plain ground with "지도는 Android 빌드에서 보입니다" for a build without the native module
-- [ ] Images for markers and Avatars, made from the design system's marker views
-- [ ] The credit for the map data at the bottom left
+- [x] The map component's interface (section 2.9)
+- [x] The plain ground with "지도는 Android 빌드에서 보입니다" for a build without the native module
+- [x] Images for markers and Avatars, made from the design system's marker views
+- [x] The credit for the map data at the bottom left
 - [ ] The Android module in Kotlin, with the build settings and the steps to a build in the app's README
 - [ ] The camera stays inside the campus rectangle
 - [ ] The device check on an Android emulator, then once on the shared phone
@@ -320,25 +320,47 @@ usePosition(): { permission: 'unasked' | 'granted' | 'refused'; position: LatLng
 ### 2.9 The map component
 
 ```tsx
-// The one component a screen uses to show a map. The native modules and the plain ground implement it.
+// The one component a screen uses to show a map, from `@/map`. The native modules and the plain ground implement it.
 <Map
-  bounds={{ south: 37.445, west: 126.945, north: 37.471, east: 126.963 }} // the camera stays inside
-  minZoom={14} // the whole rectangle; the numbers are settled with the Android module
-  maxZoom={19}
+  bounds={CAMPUS_BOUNDS} // { south: 37.445, west: 126.945, north: 37.471, east: 126.963 }: the camera stays inside
+  minZoom={MIN_ZOOM} // 14, the whole rectangle; the numbers are settled with the Android module
+  maxZoom={MAX_ZOOM} // 19
   markers={[
-    // image: a picture made from the design system's marker view. text: shown under the marker by the map.
-    { id: 'event:e1', position: { latitude: 37.4499, longitude: 126.9525 }, image: globalEventPin, text: 'AI 커리어' },
+    // name: what a screen reader says. image: a picture made from the design system's marker view.
+    // text: shown under the marker by the map.
+    { id: 'event:e1', name: 'AI 커리어 채용설명회', position: { latitude: 37.4499, longitude: 126.9525 },
+      image: globalEventPin, text: 'AI 커리어' },
   ]}
   avatars={[
     // An Avatar glides to a new position over glideMs. A move that starts during another starts from where it is shown.
-    { id: 'me', position: { latitude: 37.45905, longitude: 126.9512 }, image: myAvatar, glideMs: 5000 },
-    { id: 'friend:f1', position: { latitude: 37.4598, longitude: 126.9521 }, image: friendAvatar, text: '민준', glideMs: 5000 },
+    { id: 'me', name: '내 위치', position: { latitude: 37.45905, longitude: 126.9512 }, image: myAvatar, glideMs: 5000 },
+    { id: 'friend:f1', name: '김민준', position: { latitude: 37.4598, longitude: 126.9521 }, image: friendAvatar,
+      text: '민준', glideMs: 5000 },
   ]}
   route={[{ latitude: 37.45905, longitude: 126.9512 }, { latitude: 37.4601, longitude: 126.9507 }]} // or null for none
   onPress={(id) => {}} // a marker's or an Avatar's id
-  onCameraIdle={({ centre, zoom }) => {}} // the screen switches the detail of markers and Avatars from zoom
-  ref={map} // map.current.moveCamera({ centre, zoom, animated: true })
+  onCameraIdle={({ centre, zoom }) => {}} // once when the map is ready and after every move; the screen switches
+  // the detail of markers and Avatars from zoom
+  ref={map} // map.current.moveCamera({ centre, zoom, animated: true }); each of the three may be left out
 />
+
+// A marker that is new in its list is added, one whose id stays is changed, one that is gone is removed.
+
+// The images, one for each look, in the order asked. An image names its look at once and gains its picture when it
+// is made; a map draws a marker once the picture is there.
+const [globalEventPin, myAvatar, friendAvatar] = useMarkerImages([
+  { kind: 'official', form: 'pin' }, // a marker of each kind of the design system, as a 'dot' or a 'pin'
+  { kind: 'me' },
+  { kind: 'friend', form: 'pin', name: '김민준', photo: null, status: 'free' },
+]);
+
+interface MarkerImage {
+  look: string; // "official:pin"
+  uri: string | null; // null until the picture is made, and in a test
+  width: number; // points
+  height: number;
+  anchor: { x: number; y: number }; // the point that stands on the position, as a share of the width and the height
+}
 ```
 
 ### 2.10 What the screens use

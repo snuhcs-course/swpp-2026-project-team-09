@@ -50,10 +50,12 @@ interface AvatarProps {
   status?: PresenceStatus;
   // The ring that marks a Friend.
   ring?: 'friend';
+  // Called once the photo is shown or has failed, for a caller that waits for the finished look.
+  onPhotoSettled?: () => void;
 }
 
 // A person, as initials or a photo.
-export function Avatar({ name, source, size = 'md', status, ring }: AvatarProps): ReactElement {
+export function Avatar({ name, source, size = 'md', status, ring, onPhotoSettled }: AvatarProps): ReactElement {
   const diameter = DIAMETER[size];
   return (
     <View
@@ -67,7 +69,7 @@ export function Avatar({ name, source, size = 'md', status, ring }: AvatarProps)
           {initials(name)}
         </Text>
       ) : (
-        <Image source={source} style={styles.photo} />
+        <Image onError={onPhotoSettled} onLoad={onPhotoSettled} source={source} style={styles.photo} />
       )}
       {status === undefined ? null : <View style={[styles.status, { backgroundColor: STATUS_COLOR[status] }]} />}
     </View>
