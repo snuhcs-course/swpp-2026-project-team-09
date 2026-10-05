@@ -5,8 +5,66 @@ generator client {
   output              = "../src/generated/prisma"
   // Stated, not inferred from tsconfig.json, so that the Docker image generates the same code before it has tsconfig.json.
   importFileExtension = "js"
+  // For the one waiting request per User and Global Event in MatchingRequest.
+  previewFeatures     = ["partialIndexes"]
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+// A User's request for Matching on a Global Event (README.md: Matching requests). The User and the Global Event are
+// the main server's, so their ids refer to nothing here.
+model MatchingRequest {
+  id            String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String               @map("user_id") @db.Uuid
+  globalEventId String               @map("global_event_id") @db.Uuid
+  // The group size the User asked for, 2 to 4.
+  size          Int
+  // The User's interest hashtags when the request arrived.
+  hashtags      String[]
+  state         MatchingRequestState @default(waiting)
+  arrivedAt     DateTime             @default(now()) @map("arrived_at")
+  // The match a round put it in.
+  matchId       String?              @map("match_id") @db.Uuid
+  match         Match?               @relation(fields: [matchId], references: [id])
+  // The main server's Open Quest a round placed it into, for a request in no match. A check in the migration keeps it
+  // to `matched`.
+  questId       String?              @map("quest_id") @db.Uuid
+
+  @@unique([userId, globalEventId], where: { state: "waiting" })
+  @@index([userId, globalEventId])
+  @@index([matchId])
+  @@map("matching_requests")
+}
+
+enum MatchingRequestState {
+  waiting
+  matched
+  withdrawn
+  expired
+
+  @@map("matching_request_state")
+}
+
+// A group a round formed, for which the main server creates one Shared Quest (README.md: Rounds).
+model Match {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  globalEventId String            @map("global_event_id") @db.Uuid
+  state         MatchState        @default(awaiting_quest)
+  // The main server's Quest, once it has answered. A check in the migration keeps it to `quest_created`.
+  questId       String?           @map("quest_id") @db.Uuid
+  formedAt      DateTime          @default(now()) @map("formed_at")
+  requests      MatchingRequest[]
+
+  @@index([state])
+  @@map("matches")
+}
+
+enum MatchState {
+  awaiting_quest
+  quest_created
+  closed
+
+  @@map("match_state")
 }

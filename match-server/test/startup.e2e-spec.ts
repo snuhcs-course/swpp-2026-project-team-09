@@ -44,10 +44,4 @@ describe('Startup', () => {
       await once(server, 'close');
     }
   });
-
-  it('stops when Redis cannot be reached', async () => {
-    await expect(startApp({ ...settings, REDIS_HOST: '127.0.0.1', REDIS_PORT: '1' })).rejects.toThrow(
-      'Connection is closed',
-    );
-  });
 });

@@ -5,8 +5,9 @@ export interface ProfileDto {
   department: string;
   admissionYear: number | null;
   hashtags: string[];
+  friendId: string;
 }
 
-export function toProfileDto({ name, department, admissionYear, hashtags }: User): ProfileDto {
-  return { name, department, admissionYear, hashtags };
+export function toProfileDto({ name, department, admissionYear, hashtags, friendId }: User): ProfileDto {
+  return { name, department, admissionYear, hashtags, friendId };
 }

@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
+import { A_FRIEND_ID } from './friends.js';
 import { googleSubject } from './google.js';
 import { patchProfile } from './profile.js';
 import { signIn, signInBeforeOnboarding, withAccessToken } from './sign-in.js';
@@ -31,7 +32,8 @@ describe('The lobby', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
-      profile: { name: '김철수', department: '경영학과', admissionYear: null, hashtags: ['AI'] },
+      profile: { name: '김철수', department: '경영학과', admissionYear: null, hashtags: ['AI'], friendId: A_FRIEND_ID },
+      masterSwitch: false,
     });
   });
 

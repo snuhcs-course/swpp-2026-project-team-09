@@ -1,6 +1,6 @@
 # socket-server
 
-The SNU Now socket server. It will push signals and positions to the apps over Socket.IO. It holds no data. It follows
+The SNU Now socket server. It pushes signals to the apps over Socket.IO. It holds no data. It follows
 the [main server](../main-server/README.md): the same layout, settings and checks.
 
 ## Run it
@@ -123,10 +123,60 @@ server keeps no record of sessions:
   `{ code: 'SESSION_REPLACED' }` when a sign-in on another phone ended it and `{}` otherwise, and disconnects them.
 - If that event is lost, the connections close when their access token expires, at most an hour later, and the app
   cannot connect again, because an ended session gets no new tokens.
-- A connection with the access token of an ended session is accepted until the token expires, because the server
-  checks only the token. Socket.IO reconnects by itself after a network drop, so a phone that was offline when its
-  session ended connects again; its `fetchCurrentState` then gets 401, and the app shows sign-in and closes the
-  connection.
+- A connection opened with the access token of an ended session is accepted and stays open until the token expires, an
+  hour at most, because the server checks only the token. It is in its User's room, so it receives the User's signals,
+  positions included, until then. Socket.IO reconnects by itself after a network drop, so a phone that was offline
+  when its session ended connects again; its `fetchCurrentState` then gets 401, and the app shows sign-in and closes
+  the connection.
+
+## Signals
+
+When one User changes something another User's app shows, the main server sends a signal, and the socket server
+passes it on. It knows no signal by name: the main server names the Users each one is for, so a new signal needs no
+change here.
+
+- Each connection also joins its User's own room, beside its session's, so a signal for a User reaches every
+  connection of that User.
+- The main server sends each signal over messaging as the event `signal`:
+  `{ "userIds": ["…"], "name": "friends-changed", "payload": … }`. The socket server sends it under `name` to the rooms
+  of the Users in `userIds`, with `payload` as its one argument, or with no argument when there is no `payload`. A
+  signal without `userIds` goes to every connection, and one with an empty list to none.
+- Delivery is not guaranteed. The app fetches what it shows when it connects, when it reconnects and when it returns
+  to the front (`fetchCurrentState` above), and never polls. A lost signal only makes a list update late.
+
+The signals and what the app does on each:
+
+| Signal                  | Carries                                       | The app                                                                                                    |
+| ----------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `friends-changed`       | nothing                                       | fetches `GET /friends` and `GET /friend-requests` of the main server again                                 |
+| `global-events-changed` | nothing                                       | fetches the published Global Events of the main server again (P12's list); sent to every connection        |
+| `position`              | `{ userId, latitude, longitude, measuredAt }` | moves that User's Avatar to the position, or shows it there                                                |
+| `position-removed`      | `{ userId }`                                  | removes that User's Avatar from the map at once                                                            |
+| `quests-changed`        | nothing                                       | fetches `GET /quests`, the requests to join and the invitations of the main server again                   |
+| `meetups-changed`       | nothing                                       | fetches `GET /meetups` of the main server again                                                            |
+| `party-changed`         | nothing                                       | fetches `GET /parties/mine`, `GET /parties`, the Party requests and invitations of the main server again   |
+| `matching-changed`      | nothing                                       | fetches `GET /matching-requests` and each request it shows, `GET /matching-requests/:globalEventId`, again |
+
+```ts
+socket.on('friends-changed', () => {
+  fetchFriends();
+  fetchFriendRequests();
+});
+socket.on('position', ({ userId, latitude, longitude, measuredAt }) => {
+  showAvatar(userId, { latitude, longitude }, measuredAt);
+});
+socket.on('position-removed', ({ userId }) => {
+  removeAvatar(userId);
+});
+```
+
+A `position` goes only to the Users who may see that User at that moment, and `position-removed` to each User who could
+see them and no longer can (see the [main server](../main-server/README.md#location-sharing)). `fetchCurrentState`
+includes the main server's `GET /positions`. The app dims an Avatar whose `measuredAt` is more than 2 minutes old and
+removes it at 10 minutes, so that one whose phone stopped reporting leaves the map by itself.
+
+`fetchFriends`, `fetchFriendRequests`, `showAvatar` and `removeAvatar` stand for the app's own code. `session-ended` and `shuttle-vehicles-updated`
+are events of their own, handled by name (see [Sessions](#sessions) and [Shuttle vehicles](#shuttle-vehicles)).
 
 ## Shuttle vehicles
 
@@ -168,10 +218,13 @@ src/
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
-│   └── messaging.ts                 options for NestJS messaging over Redis
+│   ├── messaging.ts                 options for NestJS messaging over Redis
+│   └── rooms.ts                     the room of a User, which every connection of the User joins
 ├── health/                          a feature: the liveness and readiness checks
-├── users/                           a feature: the app's socket connection, the access token check on it and the end of
-│                                    a session
+├── users/                           a feature: the app's socket connection, the access token check on it, its rooms and
+│                                    the end of a session
+├── signals/                         a feature: sends each signal of the main server to the connections of the Users it
+│                                    names, or to every connection
 └── shuttle/                         a feature: sends the shuttle's vehicles to every connected app
 test/                                tests, run against Redis in a container
 ```

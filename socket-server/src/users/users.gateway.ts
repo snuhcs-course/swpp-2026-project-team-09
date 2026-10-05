@@ -1,6 +1,7 @@
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayInit, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { DefaultEventsMap, Server, Socket } from 'socket.io';
+import { userRoom } from '../common/rooms.js';
 import { type SessionEndReason } from './dto/session-ended.dto.js';
 
 // What an access token says: the User's identifier as the subject, the session as `sid`, and its expiry as `exp` in
@@ -58,7 +59,7 @@ export class UsersGateway implements OnGatewayInit<UsersServer>, OnGatewayConnec
   // The token is checked only when a connection opens, so the connection closes when the token expires. The app then
   // refreshes its tokens and connects again, which a session that has ended cannot do.
   async handleConnection(socket: UsersSocket): Promise<void> {
-    await socket.join(sessionRoom(socket.data.sessionId));
+    await socket.join([sessionRoom(socket.data.sessionId), userRoom(socket.data.user.id)]);
     const expiry = setTimeout(() => {
       socket.disconnect(true);
     }, socket.data.tokenExpiresAt - Date.now());

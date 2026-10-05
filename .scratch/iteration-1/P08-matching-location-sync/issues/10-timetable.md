@@ -6,35 +6,22 @@ Blocked by: None (can start immediately)
 
 ## What to build
 
-A User's timetable is kept on the main server: the semester's first and last day and the classes. The User adds a class with its name, weekdays, times, Place and room, edits it and deletes it, and is told when a class overlaps another without being stopped. The app's timetable screens (P06) read and change it, and ticket 11 makes Class Quests from it.
+A User's timetable is kept on the main server as the User's classes. A class is a course name and one or more times, each with a weekday, a start, an end, an optional Place and an optional room, so that a course held on Monday in one room and on Wednesday in another is one class with two times. The User reads the timetable, adds, replaces and deletes a class, resets the timetable when a semester ends, and is told when classes overlap without being stopped.
 
-The shape is the one the app's timetable screens hold, so that the app's adapter needs no translation.
+Ticket 11 makes Class Quests from the classes. A later task of the app builds the timetable screens on these routes.
 
 ## Acceptance criteria
 
-- [x] A User has one timetable. Reading it returns the semester's first and last day, either of which may be missing, and the classes. A User without a timetable reads an empty one.
-- [x] A User sets and clears the semester's first and last day. A last day before the first is refused.
-- [x] A class has a course name of 30 characters at most, one or more weekdays from Monday to Sunday, a start and an end time of day with the end after the start, a Place from the list of Places and an optional room of 20 characters at most. A Place the list does not hold is refused.
-- [x] A User adds, edits and deletes a class. Adding requires the key described in P04.
-- [x] A class that shares a weekday with another and crosses its time is accepted, and the answer names the classes it overlaps. Reading the timetable says for each class which others it overlaps.
-- [x] Only its owner reads or changes a timetable: another User's class is answered as not found.
-- [x] Main server tests at the API: an empty timetable, the semester's days and their refusal, a class added, edited and deleted, each invalid field, an overlap on one of several weekdays, another User's class, adding without the key refused, and a repeated key that leaves one class and answers the same twice.
-- [x] The main server's README records the timetable routes, the fields with their limits and how an overlap is reported.
-
-## Comments
-
-### Decisions (2026-10-04)
-
-- No timetable types exist in `mobile/` or on the P06 branches; P06 describes the shape in words only. The fields follow those words: `semesterFirstDay` and `semesterLastDay` (`YYYY-MM-DD` or `null`), and `classes`, each with `id`, `courseName`, `weekdays` (`monday` to `sunday`, Monday first), `startTime` and `endTime` (`HH:MM`), `placeId`, `room` (or `null`; one left out, empty or only spaces is stored as `null`) and `overlaps` (`[{ id, courseName }]`).
-- Routes: `GET /timetable`; `PATCH /timetable` with either day, `null` clearing it, answering the whole timetable; `POST /timetable/classes` with `@Idempotent({ required: true })`, answering 201 with the class; `PUT /timetable/classes/:id` with the whole class; `DELETE /timetable/classes/:id`, answering 204.
-- Refusals: 400 with a message that starts with the field, as the profile's. A last day before the first, the stored one included: `semesterLastDay: must not be before semesterFirstDay`. An unknown Place: `placeId: no Place of the list has this id`. Another User's class, or an unknown one: 404, checked before the Place, so an edit of another User's class is 404 whatever its body holds. A class id that is not a UUID: 400. Adding without a key: 400 `IDEMPOTENCY_KEY_REQUIRED`.
-- Overlap: two classes share a weekday and each starts before the other ends. A class that starts as another ends does not overlap it.
-- Tables: `timetables` (one per User, unique `user_id`, `semester_first_day` and `semester_last_day` as `date`) and `timetable_classes` (`timetable_id`, `course_name`, `weekdays` as the enum array `weekday[]`, `start_time` and `end_time` as `HH:MM` text, `place_id` referencing `places`, `room`). Migration `20261004120000_add_timetables`.
-- For ticket 11: `TimetableModule` exports `TimetableService`, and `timetableOf(userId): Promise<TimetableDto>` gives the semester's days and the classes in the form `GET /timetable` answers. `Weekday` is the Prisma enum from `src/generated/prisma/client.js`.
-
-### Agent usage (2026-10-04)
-
-- Agent time: about 17 minutes, an estimate: the implementing agent about 14 minutes, and a Standards reviewer and a Spec reviewer about 2 minutes each at the same time. The session that ran the agents of all P08 tickets is counted once, under ticket 09.
-- Tokens, counted from the three agents' transcripts:
-  - Input: 17,384,747, of which 16,990,909 were cache reads, 393,614 cache writes and 224 uncached.
-  - Output: 33,538, a lower bound, since the transcripts record only part of the output of most steps.
+- [ ] A User's timetable is the User's classes and nothing else: no semester's days and no record of the timetable itself. Reading it returns the classes, each with its times and the classes it overlaps. A User without classes reads an empty timetable.
+- [ ] A class has a course name of 1 to 30 characters and from 1 to 10 times. A time has a weekday from Monday to Sunday, a start and an end time of day in Asia/Seoul written `HH:MM` with the end after the start, an optional Place from the list of Places and an optional room of 20 characters at most; an empty room is no room. A class has no professor's name. A Place the list does not hold is refused.
+- [ ] Each class and each time has an identifier of its own. Replacing a class gives its times new identifiers.
+- [ ] Two times of one class that share a weekday and cross each other are refused. Two that touch are accepted.
+- [ ] The classes are read in the order of their first time in the week, and a class's times in the order of the week, Monday first, then by start.
+- [ ] A User adds a class, replaces a class whole with its times, and deletes a class. Adding requires the key described in P04.
+- [ ] A User resets the timetable, which deletes every class of the User and answers the same when there were none. It needs no key.
+- [ ] A User holds at most 15 classes, however many times they have. An add past the limit is refused with a code. The count and the insert happen in one transaction that locks the User's row, so that several first adds of one User at the same moment each succeed, and adds at the same moment stop at the limit.
+- [ ] Two classes overlap when a time of one and a time of the other share a weekday and each starts before the other ends; times that touch do not overlap. An overlapping class is accepted. The answer to an add or a replacement names the classes the class overlaps, and reading the timetable names them for each class.
+- [ ] Only its owner reads or changes a class. Another User's class is answered as not found, as an unknown class is, before anything else about the request is checked, so that replacing it is not found whatever the body holds.
+- [ ] One migration, dated after the latest migration on the main line, creates the classes and their times.
+- [ ] Main server tests at the API: an empty timetable; a class of several times added, replaced and deleted; a time without a Place; a reset with classes and without; each invalid field, among them no times, 11 times, an end not after the start and an unknown Place; an empty room stored as none; two crossing times of one class refused and two touching ones accepted; an overlap between classes on one of several times, and touching times that do not overlap; an add past the limit refused; several first adds of one User at the same moment; adds at the same moment at the limit; another User's class on replacing, with an invalid body and with an unknown Place, and on deleting; adding without the key refused; and a repeated key that leaves one class and answers the same twice.
+- [ ] The main server's README records the timetable routes, a class's fields with their limits, the limit of 15 classes, how an overlap is reported, and the refusals with their codes.
