@@ -248,8 +248,8 @@ describe('A Collection of the events list that stopped early', () => {
   });
 });
 
-// The signals sent while `act` runs. Only this file publishes events, and a server's signals reach Redis in the order it
-// sends them, so two signals of the test's own around `act` leave out those an earlier test sent late.
+// The `global-events-changed` signals sent while `act` runs. Only this file publishes events, and a server's signals
+// reach Redis in order, so two signals of the test's own around `act` leave out those an earlier test sent late.
 async function signalsWhile(act: () => Promise<unknown>): Promise<SignalEvent[]> {
   // Imported after startApp, so that it is the same class AppModule registers.
   const { SignalsService } = await import('../src/common/signals.service.js');
@@ -266,7 +266,10 @@ async function signalsWhile(act: () => Promise<unknown>): Promise<SignalEvent[]>
   const start = await sendMarker();
   await act();
   const end = await sendMarker();
-  return watcher.all().slice(start + 1, end);
+  return watcher
+    .all()
+    .slice(start + 1, end)
+    .filter(({ name }) => name === 'global-events-changed');
 }
 
 describe('global-events-changed', () => {

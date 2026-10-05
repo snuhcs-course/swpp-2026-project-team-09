@@ -33,6 +33,8 @@ model User {
   friendshipsAsA Friendship[] @relation("FriendshipUserA")
   friendshipsAsB Friendship[] @relation("FriendshipUserB")
   inviteLinks   InviteLink[]
+  questHolders  QuestHolder[]
+  ledQuests     Quest[]
 
   @@map("users")
 }
@@ -142,6 +144,8 @@ model GlobalEvent {
   // The `bbsidx` and address of a collected event's post. An event an Administrator creates has neither.
   postNumber  Int?             @unique @map("post_number")
   sourceUrl   String?          @map("source_url")
+  quests      Quest[]
+  questHolders QuestHolder[]
 
   @@map("global_events")
 }
@@ -155,6 +159,99 @@ enum GlobalEventState {
   discarded
 
   @@map("global_event_state")
+}
+
+// What one or more Users set out to do (README.md: Quests). Its time and place belong to its Sub Quests.
+model Quest {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title         String
+  // Never changes.
+  globalEventId String?       @map("global_event_id") @db.Uuid
+  globalEvent   GlobalEvent?  @relation(fields: [globalEventId], references: [id], onDelete: Restrict)
+  // One of the Holders (README.md: Quests).
+  leaderId      String        @map("leader_id") @db.Uuid
+  leader        User          @relation(fields: [leaderId], references: [id])
+  // From 1 to 8, which the migration checks.
+  capacity      Int           @default(4)
+  joinPolicy    JoinPolicy    @default(closed) @map("join_policy")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  holders       QuestHolder[]
+  subQuests     SubQuest[]
+
+  @@index([globalEventId])
+  @@map("quests")
+}
+
+// How Users enter a Quest.
+enum JoinPolicy {
+  // Whoever can see it enters at once.
+  open
+  // Whoever can see it asks, and the Leader accepts or declines.
+  approval
+  // Only by the Leader's invitation.
+  closed
+
+  @@map("join_policy")
+}
+
+// A User who holds a Quest. The row repeats the Quest's Global Event, so that a unique index keeps a User to one Quest
+// for a Global Event.
+model QuestHolder {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questId       String             @map("quest_id") @db.Uuid
+  quest         Quest              @relation(fields: [questId], references: [id], onDelete: Cascade)
+  userId        String             @map("user_id") @db.Uuid
+  user          User               @relation(fields: [userId], references: [id])
+  // The Quest's, written with the row.
+  globalEventId String?            @map("global_event_id") @db.Uuid
+  globalEvent   GlobalEvent?       @relation(fields: [globalEventId], references: [id], onDelete: Restrict)
+  // Read when the row is written, so that the order of the times is the order of entry. In microseconds, so that the
+  // Holders a Quest is created with keep the order they were given in.
+  joinedAt      DateTime           @default(dbgenerated("clock_timestamp()")) @map("joined_at") @db.Timestamp(6)
+  progress      SubQuestProgress[]
+
+  @@unique([questId, userId])
+  @@unique([userId, globalEventId])
+  @@index([globalEventId])
+  @@map("quest_holders")
+}
+
+// One step of a Quest, the same for all its Holders. The attending Sub Quest of a Quest for a Global Event stores no
+// title, time or place: they are read from the Global Event. The migration checks which columns each kind fills.
+model SubQuest {
+  id         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questId    String             @map("quest_id") @db.Uuid
+  quest      Quest              @relation(fields: [questId], references: [id], onDelete: Cascade)
+  attending  Boolean            @default(false)
+  title      String?
+  startsAt   DateTime?          @map("starts_at")
+  endsAt     DateTime?          @map("ends_at")
+  // A Place from the list, or a point with the label the app showed for it.
+  placeId    String?            @map("place_id") @db.Uuid
+  place      Place?             @relation(fields: [placeId], references: [id])
+  latitude   Float?
+  longitude  Float?
+  placeLabel String?            @map("place_label")
+  createdAt  DateTime           @default(now()) @map("created_at")
+  progress   SubQuestProgress[]
+
+  @@unique([questId], where: { attending: true })
+  @@index([questId])
+  @@map("sub_quests")
+}
+
+// A Sub Quest one Holder marked as done. Progress is each Holder's own.
+model SubQuestProgress {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subQuestId String      @map("sub_quest_id") @db.Uuid
+  subQuest   SubQuest    @relation(fields: [subQuestId], references: [id], onDelete: Cascade)
+  holderId   String      @map("holder_id") @db.Uuid
+  holder     QuestHolder @relation(fields: [holderId], references: [id], onDelete: Cascade)
+  doneAt     DateTime    @default(now()) @map("done_at")
+
+  @@unique([subQuestId, holderId])
+  @@index([holderId])
+  @@map("sub_quest_progress")
 }
 
 // One restaurant on one day, as the last Collection of its Source read it.
@@ -252,6 +349,7 @@ model Place {
   longitude Float
   // Each a closed ring: [[{ latitude, longitude }, …], …].
   outlines  Json           @default("[]")
+  subQuests SubQuest[]
 
   @@unique([origin, originId])
   @@map("places")
