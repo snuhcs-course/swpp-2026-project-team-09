@@ -85,3 +85,8 @@ A review and screenshots of the web target led to these changes. `src/map/types.
 What is approximate on the plain ground: a glide's path is worked out in the view's points when it starts, so a change of zoom during a glide bends it; and an animated camera move jumps.
 
 Not checked after these changes: nothing ran in a browser, on a phone or in a native build. That the plain ground's look in a browser is right, with the views standing on their positions and the route's strokes, is for the next screenshots to show.
+
+### Agent usage (2026-10-05)
+
+- Agent time: about 45 minutes, an estimate, nearly all of it in subagents.
+- Tokens: three subagent runs (the build with its fix round, and a review with screenshots): about 400 thousand in all. The main session's share was small and is not counted apart.
