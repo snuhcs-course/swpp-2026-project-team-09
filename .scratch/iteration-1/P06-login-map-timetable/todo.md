@@ -16,11 +16,11 @@ Last updated: 2026-10-05
 
 ### 1.2 Mocks and the API client (ticket 02)
 
-- [ ] The sign-in module and the API client with the operations of section 2, every one answered by a mock
-- [ ] One adapter per feature between the answer and the screens (section 2.10)
-- [ ] A mock answers after a short wait and can answer with a failure and with nothing
-- [ ] The phone keeps that a User signed in, the suggestion, whether Onboarding is finished, and the Onboarding's answers
-- [ ] The development settings of section 5, except the walk on campus
+- [x] The sign-in module and the API client with the operations of section 2, every one answered by a mock
+- [x] One adapter per feature between the answer and the screens (section 2.10)
+- [x] A mock answers after a short wait and can answer with a failure and with nothing
+- [x] The phone keeps that a User signed in, the suggestion, whether Onboarding is finished, and the Onboarding's answers
+- [x] The development settings of section 5, except the walk on campus
 
 ### 1.3 Loading screen (ticket 03; `Splash`)
 
@@ -180,6 +180,7 @@ interface FriendStatus {
   presence: 'free' | 'class' | 'moving' | 'off'; // 공강, 수업 중, 이동 중, 위치 꺼짐
   where: string; // "중앙도서관"; "" for a Friend whose location is off
   detail: string; // "공강 · 중앙도서관 근처 · 15:00까지 비어 있어요"
+  walk: string; // "도보 4분"; "" when it is not known
   photo: string | null; // an image address; null shows the name's letters
 }
 
@@ -187,7 +188,7 @@ interface FriendStatus {
 // friends:   [{ "id": "f1", "name": "김민준", "department": "컴퓨터공학부", "sharing": true, "visible": true }]
 // positions: [{ "userId": "f1", "latitude": 37.4598, "longitude": 126.9521, "measuredAt": "2026-10-05T05:00:00.000Z" }]
 // statuses:  [{ "userId": "f1", "presence": "free", "where": "중앙도서관",
-//               "detail": "공강 · 중앙도서관 근처 · 15:00까지 비어 있어요", "photo": null }]
+//               "detail": "공강 · 중앙도서관 근처 · 15:00까지 비어 있어요", "walk": "도보 4분", "photo": null }]
 ```
 
 ### 2.5 Quests
@@ -232,8 +233,9 @@ interface SubQuest {
 
 ```ts
 listGlobalEvents(): Promise<GlobalEvent[]>;
+listGlobalEventAnnouncers(): Promise<{ eventId: string; announcer: string }[]>; // the app's own: "컴퓨터공학부 공지"
 listParties(): Promise<Party[]>;
-getMyParty(): Promise<MyParty | null>;
+getMyParty(): Promise<MyParty | null>; // the main server answers 404 NOT_IN_PARTY; the client turns it into null
 
 // The published Global Events, with the fields the main server stores for one. No route lists them for a User yet,
 // so the list itself is the app's own. A published event has a title, a start and a position.
@@ -249,23 +251,37 @@ interface GlobalEvent {
   sourceUrl: string | null;
 }
 
-// Open pull request: GET /parties.
+// Open pull request: GET /parties, the newest first. The list holds open and approval Parties, never a closed one.
 interface Party {
   id: string;
   title: string; // "AI 커리어 설명회 같이 가요"
   capacity: number; // 1 to 8
   joinPolicy: 'open' | 'approval' | 'closed';
   memberCount: number;
-  mark: unknown; // the Quest the Party is marked with; read from the pull request when the adapter is written
+  mark: PartyMark | null; // the Quest the Party is marked with; null once that Quest is deleted
+}
+
+interface PartyMark {
+  questId: string;
+  title: string;
+  globalEvent: { id: string; title: string } | null;
 }
 
 // Open pull request: GET /parties/mine, the Party the User is in now. The frame's "활성 파티".
-interface MyParty extends Party {
-  members: { id: string; name: string; department: string; leader: boolean; visible: boolean }[];
+interface MyParty {
+  id: string;
+  title: string;
+  capacity: number;
+  joinPolicy: 'open' | 'approval' | 'closed';
+  mark: PartyMark | null;
+  sharing: boolean; // the User's own switch for sharing a position with this Party
+  members: { id: string; name: string; department: string; leader: boolean; visible: boolean }[]; // the User among them
 }
 ```
 
-Where a Party is and when it starts are not in its answer: they are those of the Quest it is marked with. A member's position comes from `listPositions()`.
+Where a Party is and when it starts are not in its answer: they are those of the Quest it is marked with, and a User reads only the Quests the User holds. So the map shows the Parties of the User's own Quests; a listed Party of others has no place to stand on. A member's position comes from `listPositions()`.
+
+A Quest that neither the User's own Party nor a listed Party names is no Party's: it is a Shared Quest, such as an accepted Meetup with a Friend, or a Quest the User holds alone. The frame words a Shared Quest as a "비공개 파티" (its row "비공개 파티 · 김민준", its card "비공개 파티 · 김민준과"), and the adapter uses the frame's words without calling it a Party: its `joinPolicy` is null.
 
 ### 2.7 Walking route
 
@@ -279,7 +295,8 @@ interface LatLng {
 
 type WalkingRoute =
   | { status: 'OK'; route: { line: LatLng[]; distance: number; duration: number } } // metres, seconds
-  | { status: string; route: null }; // Kakao's status for no route, such as "SAME_POINT"
+  | { status: NoRouteStatus; route: null }; // SAME_POINT, START_LINK_NOT_FOUND, END_LINK_NOT_FOUND,
+                                            // TOO_MANY_SEARCH_LINK, TOO_FAR_AWAY or ROUTE_RESULT_NOT_FOUND
 
 // Example (GET /walking-route?startLatitude=…&startLongitude=…&endLatitude=…&endLongitude=…):
 // { "status": "OK", "route": { "line": [{ "latitude": 37.46632, "longitude": 126.94829 }, …],
@@ -333,6 +350,7 @@ interface FriendView {
   presence: 'free' | 'class' | 'moving' | 'off';
   line: string; // "공강 · 중앙도서관"
   detail: string;
+  walk: string; // "도보 4분", or ""
   photo: string | null;
   position: LatLng | null; // null when the Friend cannot be seen
 }
@@ -340,8 +358,8 @@ interface FriendView {
 // One row of the Quest list. From Quest, and from MyParty for a Party's row.
 interface QuestRowView {
   id: string;
-  kind: 'class' | 'party';
-  joinPolicy: 'open' | 'approval' | 'closed' | null; // a Party's; the frame words "closed" as "비공개 파티"
+  kind: 'class' | 'party'; // 'party' is every Quest that is not a class
+  joinPolicy: 'open' | 'approval' | 'closed' | null; // the Party's that names the Quest; null for a class and for a Quest no Party names
   kicker: string; // "다음 강의 · 23분 후"
   title: string; // "자료구조"
   meta: string; // "14:00 · 301동 118호"
@@ -378,6 +396,9 @@ Sending the User's own position is not in this table: it is built in P09 with th
 | Friends' status, place and photo | The app's own | Nothing yet |
 | Quests, Class Quests | Open pull request | `GET /quests` |
 | Global Events | The stored event's fields | Nothing lists them for a User yet |
+| Who announced a Global Event (`listGlobalEventAnnouncers`) | The app's own | Nothing yet |
+| The User's own id | The mock's fixed one | The access token |
+| The app's time | The moment the `Main` frame shows | The phone's time |
 | Parties | Open pull request | `GET /parties`, `GET /parties/mine` |
 | Walking route | On the main line | `GET /walking-route` |
 | The AI input, stories, 오늘의 발자국 | Sample content inside the screen | No spec covers them |
@@ -424,6 +445,11 @@ Each is a setting given when the app is started, as an `EXPO_PUBLIC_` variable. 
 - [ ] No frame shows the main screen off campus, the explanation before the location prompt, or the credit for the map data; the spec gives their wording
 - [ ] Onboarding's "그 외" admission year stores no year. Decide whether it should ask for one
 - [ ] The credit for the map data is text alone. Decide whether a press should open the sources' pages
+- [ ] The frame shows a photo for two Friends. The app has no pictures of people, so every Friend shows the name's letters
+- [ ] The frame writes a Friend's year after the department ("컴퓨터공학부 22"). No answer holds a Friend's year, so the app shows the department alone
+- [ ] The frame's numbers for the one Party disagree: "4명" in the Quest list, "4/6명" on the card, "3명 공유 중" on the button. The mock has four members of six, three of them shared with the User
+- [ ] The frame calls a dinner with one Friend a "비공개 파티". In the glossary it is a Shared Quest from a Meetup and no Party, and a User is in one Party at a time. The app uses the frame's words; settle the word
+- [ ] A Party's card in the frame has the line "#AI커리어 관심사가 겹쳐요". No answer holds it, and the app leaves it out
 
 ## 7. For people
 
