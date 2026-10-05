@@ -27,7 +27,7 @@ Every entry follows ticket 04's rules: within capacity, and a User holds one Que
 
 ## Comments
 
-### Decisions (2026-10-04)
+### Decisions (2026-10-05)
 
 - **Tables**: `quest_join_requests` and `quest_invitations`, each `(id, quest_id → quests ON DELETE CASCADE, user_id →
   users, sent_at)`, unique `(quest_id, user_id)`, index on `user_id`. A row is a waiting request or invitation; an
@@ -69,3 +69,10 @@ Every entry follows ticket 04's rules: within capacity, and a User holds one Que
   route here answers it `QUEST_NOT_FOUND`, which is how its settings cannot be changed; ticket 11 needs no further
   check as long as Class Quests stay unstored.
 - No Party exists on this branch, and nothing here touches one.
+
+### Agent usage (2026-10-05)
+
+- Agent time: about 16 minutes, an estimate: one implementing agent. The session that ran it is not counted here.
+- Tokens, counted from the agent's transcript:
+  - Input: 16,108,318, of which 15,864,757 were cache reads, 243,391 cache writes and 170 uncached.
+  - Output: 40,251, a lower bound, since the transcript records only part of the output of most steps.
