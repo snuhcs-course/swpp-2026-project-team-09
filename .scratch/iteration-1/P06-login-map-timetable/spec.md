@@ -194,11 +194,15 @@ Every piece of data is a mock inside the app, in the shape the server gives or w
   - The friend list and the Quest list collapse and expand.
   - A Friend's row moves the map to that Friend and opens their card, or says "…님은 위치가 꺼져 있어요" for a Friend without a position.
   - A Class Quest's row moves the map to its Place and says what the frame says.
-  - The zoom in, zoom out and "내 위치로 이동" buttons.
+  - The zoom in, zoom out and "내 위치로 이동" buttons. A zoom button changes the zoom by a factor 1.5 around the view's centre. "내 위치로 이동" goes to the User's position at the larger of the current zoom and the "close" level.
   - A tap on a marker opens its card. "가까이 보기" zooms in on it. The card's X closes it.
   - "길찾기" on a card draws the route line from the User's position, moves the map to show it and says "…까지 길 안내".
 - What is on the map follows the frame. Avatars, which glide: the User's own, the Friends who can be seen, and a member of the User's Party. Markers: a Global Event and a Quest that the frame calls "파티". The frame's Private Event is left out.
 - Their detail follows the camera's zoom, as in the frames: dots when the whole campus is in view, pins closer, and pins with names closest. The screen switches the detail from the zoom the map reports.
+- The zoom levels are counted from the fit zoom, the zoom at which the campus rectangle just fits the view, which the map reports. The frame's zoom factor z is log2(z) levels above it: "pins" from z 1.6 (+0.68), "names" from z 2.4 (+1.26), "close" at z 2.6 (+1.38), and one press of a zoom button is a factor 1.5 (0.585). The levels are named once in the app.
+- The User's own Avatar is drawn at 0.75 of its size while the whole campus is in view, below the "pins" level.
+- The bottom navigation has the frame's five slots: 지도, 파티, 올리기, 행사 and 내 정보. 올리기 is the bottom navigation's action item, drawn as the frame draws it: its icon on a round fill of 44 inside the bar, with its label hidden. A long press on it does nothing. The badge on 파티 is the number of things waiting for the User in Parties, 3 in the mock. No answer of the main server gives it: it is a mock of the app's own behind the API client.
+- The shared Toast has the frame's look: a bar from 16 to 16 from the sides on the `ink` ground, radius 12, padding 12 and 16, a `check` icon of 18 and white words of 14/20 in the medium weight. It lasts 2400 ms, or the time its caller gives.
 - A route to the User's next Quest is drawn when the screen opens, as in the frame, once the app has a position inside the campus rectangle; without one, none is drawn. Another "길찾기" replaces it, and leaving the screen drops it.
 - When the app has no position to start from, "길찾기" moves the map to the place and says "캠퍼스 밖에 있어요" off campus, or shows the explanation before the location prompt when the permission is missing.
 - Every other control shows one shared toast, "준비 중이에요", because it opens a panel, a sheet or another screen that this task does not build:
@@ -210,10 +214,10 @@ Every piece of data is a mock inside the app, in the shape the server gives or w
 
 ### Location
 
-- The User's Avatar is at the phone's real position.
-- Before the system's location prompt, the app shows its own explanation. It appears the first time the main screen opens, and again when the User, without the permission, presses "내 위치로 이동". A User who chooses "나중에" or refuses the system's prompt gets the map without an Avatar.
+- The User's Avatar is at the phone's real position, which the app reads with `expo-location` in the version Expo SDK 57 expects. It glides to each new position.
+- Before the system's location prompt, the app shows its own explanation, in the design system's Dialog. It appears the first time the main screen opens, and again when the User, without the permission, presses "내 위치로 이동". A User who chooses "나중에" or refuses the system's prompt gets the map without an Avatar.
 - Off campus, in this task, means outside the campus rectangle. The Avatar is shown only while the position is inside it. Off campus there is no Avatar, the map shows the whole campus, and "내 위치로 이동" says "캠퍼스 밖에 있어요".
-- A development setting replaces the phone's position with a walk along a fixed path on campus, so that the Avatar's gliding can be seen anywhere.
+- A development setting replaces the phone's position with a walk along a fixed path on campus, so that the Avatar's gliding can be seen anywhere. With it the phone is asked for neither the permission nor a position.
 - This task does not send the User's position. The Master Switch is on 내 정보, which P09 builds, and the main server refuses every position while the switch is off. Sending is therefore built with the switch, in P09, so that a User turns sharing on and off in one place from the first day it exists.
 
 ### Wording without a frame
@@ -223,12 +227,14 @@ Built from the design system's dialog and the shared Toast. The team may change 
 | Kind | Where | Words |
 |---|---|---|
 | Dialog | Before the location prompt | Title "내 위치를 지도에 표시할까요?". Body "지도에 내 아바타를 보여 주려면 위치 권한이 필요해요." Buttons "나중에" and "계속" |
+| Dialog | The same, when the system no longer shows its prompt | Title "내 위치를 지도에 표시할까요?". Body "휴대폰 설정에서 이 앱의 위치 권한이 꺼져 있어요. 설정에서 켜면 지도에 내 아바타가 보여요." Buttons "나중에" and "설정 열기", which opens the phone's settings |
 | Consent screen | After the first sign-in | Title "약관에 동의해 주세요". Body "SNU Now를 쓰려면 아래 약관에 동의해야 해요." Rows "이용약관", "개인정보 처리방침", "위치정보 이용약관". Buttons "동의하고 시작" and "로그아웃" |
 | Refused state | A failed sign-in | "로그인하지 못했어요", "잠시 후 다시 시도해 주세요" |
 | Loading screen | The loading failed | "불러오지 못했어요", button "다시 시도" |
 | Map's place | A build without the native map | "지도는 Android 빌드에서 보입니다" |
 | Dialog | A sign-in on another phone ended this Session (ticket 12) | Title "다른 기기에서 로그인했어요". Body "이 기기에서는 로그아웃됐어요. 다시 쓰려면 로그인해 주세요." Button "확인" |
 | Toast | My position, off campus | "캠퍼스 밖에 있어요" |
+| Toast | My position, with the permission and no position yet | "위치를 찾는 중이에요" |
 | Toast | A control of another task | "준비 중이에요" |
 
 ### Connecting to the server

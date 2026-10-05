@@ -29,6 +29,7 @@ const FIRST_STATE = {
   suggestion: null,
   onboardingCompleted: false,
   answers: null,
+  locationExplained: false,
 };
 
 describe('sign-in', () => {
@@ -45,6 +46,7 @@ describe('sign-in', () => {
       suggestion: { name: '안진영', department: null },
       onboardingCompleted: false,
       answers: null,
+      locationExplained: false,
     });
   });
 
@@ -77,6 +79,7 @@ describe('what the phone keeps', () => {
       suggestion: null,
       onboardingCompleted: true,
       answers: ANSWERS,
+      locationExplained: false,
     });
   });
 
@@ -92,7 +95,7 @@ describe('what the phone keeps', () => {
   it('is cleared at the start of the app when the development setting asks for the first state', async () => {
     await answered(signIn());
     await answered(mockClient.completeOnboarding(ANSWERS));
-    await keep({ consented: true });
+    await keep({ consented: true, locationExplained: true });
     process.env.EXPO_PUBLIC_FIRST_STATE = '1';
 
     expect(await openKept()).toEqual(FIRST_STATE);
@@ -112,7 +115,16 @@ describe('what the phone keeps of the consent', () => {
     const stored = { signedIn: true, suggestion: null, onboardingCompleted: true, answers: ANSWERS };
     await AsyncStorage.setItem('snunow.kept', JSON.stringify(stored));
 
-    expect(await readKept()).toEqual({ ...stored, consented: false });
+    expect(await readKept()).toEqual({ ...stored, consented: false, locationExplained: false });
+  });
+
+  it('reads what a version without the location explanation stored, as not answered yet', async () => {
+    const stored = { signedIn: true, consented: true, suggestion: null, onboardingCompleted: true, answers: ANSWERS };
+    await AsyncStorage.setItem('snunow.kept', JSON.stringify(stored));
+
+    expect(await readKept()).toEqual({ ...stored, locationExplained: false });
+    expect((await keep({ locationExplained: true })).locationExplained).toBe(true);
+    expect(await readKept()).toEqual({ ...stored, locationExplained: true });
   });
 
   it('remembers after a sign-out that the User agreed to the legal documents', async () => {

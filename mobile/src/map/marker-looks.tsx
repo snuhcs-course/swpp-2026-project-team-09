@@ -6,8 +6,8 @@ import { Avatar, MapDot, MapPin, type MapPlaceKind, type PresenceStatus } from '
 export type MarkerForm = 'dot' | 'pin';
 
 export type MarkerLook =
-  // The User's own Avatar.
-  | { kind: 'me' }
+  // The User's own Avatar. `small` is its look while the whole campus is in view: three quarters of its size.
+  | { kind: 'me'; small?: boolean }
   // A Friend's Avatar: the letters of the name or the photo, and the status colour.
   | { kind: 'friend'; form: MarkerForm; name: string; photo: string | null; status: PresenceStatus }
   // A marker of each kind the design system has.
@@ -16,7 +16,7 @@ export type MarkerLook =
 // The look's name: the key its picture is kept under.
 export function lookName(look: MarkerLook): string {
   if (look.kind === 'me') {
-    return 'me';
+    return look.small === true ? 'me:small' : 'me';
   }
   if (look.kind === 'friend') {
     return ['friend', look.form, look.status, look.name, look.photo ?? ''].join(':');
@@ -36,7 +36,7 @@ export function standsOnTip(look: MarkerLook): boolean {
 // The design system's view of a look. A name under it is the map's own text, so no view has a label.
 export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSettled?: () => void }): ReactElement {
   if (look.kind === 'me') {
-    return <MapPin kind="me" />;
+    return <MapPin kind="me" small={look.small} />;
   }
   if (look.kind === 'friend') {
     return (

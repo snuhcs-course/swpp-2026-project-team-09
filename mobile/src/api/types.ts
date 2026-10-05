@@ -169,6 +169,13 @@ export interface MyParty {
   members: { id: string; name: string; department: string; leader: boolean; visible: boolean }[];
 }
 
+// The app's own: how many things wait for the User in Parties, which is the number on the bottom navigation's 파티.
+// The `Main` frame counts the Parties that wait for the User's answer, the invitations not yet answered and the
+// people who ask to join a Party the User made. No answer of the main server holds it.
+export interface PartyNews {
+  count: number;
+}
+
 // --- Walking route (GET /walking-route) ---
 
 export type NoRouteStatus =

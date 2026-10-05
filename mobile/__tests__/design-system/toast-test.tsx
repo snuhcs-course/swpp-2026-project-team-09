@@ -18,6 +18,13 @@ function Buttons(): ReactElement {
         추가
       </Button>
       <Button onPress={showNotReady}>파티</Button>
+      <Button
+        onPress={() => {
+          showToast('서지우님은 위치가 꺼져 있어요', 2000);
+        }}
+      >
+        친구
+      </Button>
     </>
   );
 }
@@ -55,6 +62,40 @@ describe('Toast', () => {
     });
 
     expect(screen.queryByText('수업을 추가했어요')).toBeNull();
+  });
+});
+
+describe("Toast's time", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('is 2.4 seconds unless the caller gives another', async () => {
+    await renderButtons();
+
+    await fireEvent.press(screen.getByRole('button', { name: '추가' }));
+    await act(() => {
+      jest.advanceTimersByTime(2399);
+    });
+    expect(screen.getByText('수업을 추가했어요')).toBeVisible();
+    await act(() => {
+      jest.advanceTimersByTime(1);
+    });
+    expect(screen.queryByText('수업을 추가했어요')).toBeNull();
+
+    await fireEvent.press(screen.getByRole('button', { name: '친구' }));
+    await act(() => {
+      jest.advanceTimersByTime(1999);
+    });
+    expect(screen.getByText('서지우님은 위치가 꺼져 있어요')).toBeVisible();
+    await act(() => {
+      jest.advanceTimersByTime(1);
+    });
+    expect(screen.queryByText('서지우님은 위치가 꺼져 있어요')).toBeNull();
   });
 });
 
@@ -112,7 +153,8 @@ describe("Toast's place", () => {
 
     await fireEvent.press(screen.getByRole('button', { name: '추가' }));
 
-    expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 24 });
+    // A bar from 16 to 16 from the sides.
+    expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 24, left: 16, right: 16 });
   });
 
   it("is above the bottom navigation and the phone's own bar on a screen that has them", async () => {
