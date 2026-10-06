@@ -380,8 +380,9 @@ export class AdminEventsController {
 
 A Global Event is an Event published to every User. The worker server collects them from the university's events list
 and posts them to `/global-events/collected` (see
-[Requests from the worker server](#requests-from-the-worker-server)). P12 adds the Administrator's routes, which edit,
-publish, cancel, discard and create them, and the User's list of published events. Until then no route serves them.
+[Requests from the worker server](#requests-from-the-worker-server)). Users read the published ones, and Administrators
+every one, through the routes below. P12 adds the Administrator's routes that edit, publish, cancel, discard and create
+them.
 
 A Global Event, model `GlobalEvent` in `prisma/schema.prisma`, holds:
 
@@ -400,6 +401,72 @@ A Global Event, model `GlobalEvent` in `prisma/schema.prisma`, holds:
 - `version`, which starts at 1, for P12's edit check, which refuses an edit made from an older version.
 - For a collected event, `postNumber`, the post's `bbsidx`, which identifies the post, and `sourceUrl`, the post's
   address. An event an Administrator creates has neither.
+
+An event has ended when its end has passed or, when it has no end, once the day of its start has passed in Asia/Seoul:
+an event without an end that starts today is listed until midnight. The same rule decides both lists of published
+events below.
+
+`GET /global-events` with a User's access token answers the published Global Events that have not ended, ordered by
+start, then by title. The app fetches it again on `global-events-changed`.
+
+```json
+[
+  {
+    "id": "5d0e…",
+    "title": "[연합전공 지능형통신] 2027학년도 1학기 선발 및 설명회 안내",
+    "description": "안녕하세요.\n…",
+    "startsAt": "2026-10-13T08:00:00.000Z",
+    "endsAt": null,
+    "place": "뉴미디어통신공동연구소 이충웅홀(132동 103호)",
+    "latitude": 37.45487,
+    "longitude": 126.95407,
+    "sourceUrl": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525"
+  }
+]
+```
+
+- A Draft, a cancelled, a discarded and an ended event are never in it.
+- `sourceUrl` is `null` for an event an Administrator created.
+- An Administrator's access token gets 401, and a User before onboarding 403 `ONBOARDING_REQUIRED`, as on every User's
+  route.
+
+An Administrator reads them through `src/global-events/admin-global-events.controller.ts`, and the lists the admin site
+needs beside them through a controller of their own feature. Each route needs an Administrator's access token (see
+[Administrators](#administrators)):
+
+- `GET /admin/global-events?state=draft` answers every Draft, and `GET /admin/global-events?state=published` the
+  published events that have not ended. Both are ordered by start, the events without a start last, then by title. A
+  missing or other `state` gets 400. Each entry is:
+
+  ```json
+  {
+    "id": "8c2a…",
+    "title": "[연합전공 지능형통신] 2027학년도 1학기 선발 및 설명회 안내",
+    "startsAt": null,
+    "endsAt": null,
+    "place": "뉴미디어통신공동연구소 이충웅홀(132동 103호)",
+    "latitude": 37.45487,
+    "longitude": 126.95407,
+    "state": "draft",
+    "version": 1,
+    "postNumber": 176525,
+    "sourceUrl": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
+    "missing": ["startsAt"]
+  }
+  ```
+
+- `missing` names what publishing a Draft still needs, `startsAt` and `position` in that order, so a Draft that could
+  not be read fully shows it. It is `[]` for an event in any other state. An empty `missing` does not make a Draft
+  right: its start may be the header's date (see below).
+- `GET /admin/global-events/:id` answers one event in any state, as an entry of the lists with its `description`, the
+  text to check against the post at `sourceUrl`. An unknown id gets 404 `GLOBAL_EVENT_NOT_FOUND`, and an id that is
+  not a UUID 400.
+- `GET /admin/places` answers every Place in the order and form of `GET /places` (see [Places](#places)), so that the
+  admin site offers the list without a User's token. `src/places/admin-places.controller.ts` serves it.
+- `GET /admin/collection-statuses` answers one entry for every Source, in the order of the `Source` enum:
+  `{ "source": "snu_events", "lastSucceededAt": "…", "lastFailedAt": null, "lastFailureReason": null }`. All three are
+  `null` for a Source never collected (see [Requests from the worker server](#requests-from-the-worker-server)).
+  `src/collection/admin-collection.controller.ts` serves it.
 
 The worker sends each post of the events list as one event, all those of a Collection in one message:
 
@@ -495,8 +562,9 @@ calls it once its change is committed when an Administrator publishes, edits or 
 
 What the rules read from a post, and how, is in the worker server's README. In a test, `collectedEvent()`,
 `eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
-`test/global-events.e2e-spec.ts` does. No route serves Global Events yet, so the tests read them with a database
-connection of their own.
+`test/global-events.e2e-spec.ts` does; it reads what a Collection stored, by post number, with a database connection
+of its own. `test/global-event-lists.ts` reads the lists above. The test files share one database, so
+`publishedAmong()` and `listedAmong()` keep only the events a test names, in the list's order.
 
 ## Quests
 
@@ -1397,6 +1465,7 @@ typing coordinates:
   Korean order of their names. `id` is the same in every database and never changes, so a class's time or a Meetup
   can point at it (`docs/adr/0002-place-ids-computed-from-the-source.md`).
 
+- An Administrator reads the same list at `GET /admin/places` (see [Global Events](#global-events)).
 - `GET /places/search?q=공학관` answers, in the same order and form, the Places whose name holds `q`, whatever the
   case of its Latin letters, and the Place whose number is `q`, written with or without `동` (`302`, `302동`). A search
   that finds nothing answers `[]`, and `q` without text gets 400.
@@ -2000,7 +2069,8 @@ so a message is stored once. Every route for the worker follows these rules.
   `recordFailure()` with the transaction in place of the success, even when it carries no event. Any other Collection
   that fails posts `{ "source", "failedAt", "reason" }` to `/collections/failed`, where `reason` says what went wrong.
   It records the failure and leaves every stored record as it is. A success leaves the last failure in place, so the two
-  times tell whether the Source has worked since. No route serves the status yet; P12 shows it.
+  times tell whether the Source has worked since. `GET /admin/collection-statuses` serves it to Administrators (see
+  [Global Events](#global-events)).
 - **A new Source** adds its value to `Source` with a migration. `menusCollectedSchema` lists the Sources that send
   menus, the shuttle's two schemas the one that sends each, and `eventsCollectedSchema` the one that sends events, so a
   Source of another kind is refused there.

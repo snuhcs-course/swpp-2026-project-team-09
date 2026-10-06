@@ -17,8 +17,7 @@ import { startApp } from './start-app.js';
 import { refusal, sendAsWorker } from './worker.js';
 
 let app: INestApplication<Server>;
-// No route serves Global Events or the Collection status yet (P12 adds them), so the tests read them with a connection
-// of their own.
+// The tests read what a Collection stored, by post number, and the Source's status with a connection of their own.
 let prisma: PrismaClient;
 let watcher: SignalWatcher;
 

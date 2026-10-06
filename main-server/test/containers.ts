@@ -36,10 +36,10 @@ export function connect(databaseUrl: string): PrismaClient {
 }
 
 // A database of its own beside the shared one, at the current schema, for a test file that loads a seed: what it loads
-// reaches no other test. `drop()` removes it.
+// reaches no other test. `url` lets a server use it, and `drop()` removes it.
 export async function createDatabase(
   sharedDatabaseUrl: string,
-): Promise<{ prisma: PrismaClient; drop: () => Promise<void> }> {
+): Promise<{ prisma: PrismaClient; url: string; drop: () => Promise<void> }> {
   const name = `seed_${randomUUID().replaceAll('-', '')}`;
   const sharedDatabase = connect(sharedDatabaseUrl);
   await sharedDatabase.$executeRawUnsafe(`CREATE DATABASE "${name}"`);
@@ -49,6 +49,7 @@ export async function createDatabase(
   const prisma = connect(url.toString());
   return {
     prisma,
+    url: url.toString(),
     drop: async (): Promise<void> => {
       await prisma.$disconnect();
       await sharedDatabase.$executeRawUnsafe(`DROP DATABASE "${name}" WITH (FORCE)`);

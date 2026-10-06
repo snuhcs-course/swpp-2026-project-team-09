@@ -2,10 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { CollectionService } from '../collection/collection.service.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
-import { GlobalEventState, Prisma } from '../generated/prisma/client.js';
+import { GlobalEvent, GlobalEventState, Prisma } from '../generated/prisma/client.js';
 import { PlaceDto } from '../places/dto/place.dto.js';
 import { PlacesService } from '../places/places.service.js';
+import { notFound } from '../quests/refusals.js';
 import { type CollectedEvent, type EventsCollectedMessage } from './dto/events-collected.dto.js';
+import {
+  GlobalEventDetailDto,
+  ListedGlobalEventDto,
+  type ListedState,
+  PublishedGlobalEventDto,
+  toGlobalEventDetailDto,
+  toListedGlobalEventDto,
+  toPublishedGlobalEventDto,
+} from './dto/global-event.dto.js';
 import { type StoredEventPostsDto } from './dto/stored-event-posts.dto.js';
 import { namedPlace } from './named-place.js';
 
@@ -27,6 +37,22 @@ function toGlobalEvent(event: CollectedEvent, places: PlaceDto[]): Prisma.Global
     sourceUrl: event.sourceUrl,
   };
 }
+
+// 00:00 in Asia/Seoul, which keeps +09:00 all year, of the day `now` falls on there.
+function startOfSeoulDay(now: Date): Date {
+  const day = new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return new Date(`${day}T00:00:00+09:00`);
+}
+
+// An event has ended once its end has passed or, without an end, once the day of its start has passed in Asia/Seoul.
+function notEnded(now: Date): Prisma.GlobalEventWhereInput {
+  return { OR: [{ endsAt: { gt: now } }, { endsAt: null, startsAt: { gte: startOfSeoulDay(now) } }] };
+}
+
+const BY_START: Prisma.GlobalEventOrderByWithRelationInput[] = [
+  { startsAt: { sort: 'asc', nulls: 'last' } },
+  { title: 'asc' },
+];
 
 @Injectable()
 export class GlobalEventsService {
@@ -72,5 +98,30 @@ export class GlobalEventsService {
     });
     const storedNumbers = new Set(stored.map(({ postNumber }) => postNumber));
     return { postNumbers: postNumbers.filter((postNumber) => storedNumbers.has(postNumber)) };
+  }
+
+  async listPublished(): Promise<PublishedGlobalEventDto[]> {
+    return (await this.findListed(GlobalEventState.published)).map((event) => toPublishedGlobalEventDto(event));
+  }
+
+  async listForAdministrators(state: ListedState): Promise<ListedGlobalEventDto[]> {
+    return (await this.findListed(state)).map((event) => toListedGlobalEventDto(event));
+  }
+
+  // In any state.
+  async read(id: string): Promise<GlobalEventDetailDto> {
+    const event = await this.prisma.globalEvent.findUnique({ where: { id } });
+    if (event === null) {
+      throw notFound('GLOBAL_EVENT_NOT_FOUND', 'No Global Event has this id.');
+    }
+    return toGlobalEventDetailDto(event);
+  }
+
+  // Every Draft, or the published events that have not ended.
+  private findListed(state: ListedState): Promise<GlobalEvent[]> {
+    return this.prisma.globalEvent.findMany({
+      where: state === GlobalEventState.published ? { state, ...notEnded(new Date()) } : { state },
+      orderBy: BY_START,
+    });
   }
 }
