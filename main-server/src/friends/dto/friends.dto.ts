@@ -42,3 +42,33 @@ export function toFriendDto(
 ): FriendDto {
   return { id: user.id, ...toUserSummaryDto(user), sharing, visible };
 }
+
+// The order of a User's Friends, as `GET /friends` lists them: by name in the Korean order.
+export function byName(a: Pick<User, 'id' | 'name'>, b: Pick<User, 'id' | 'name'>): number {
+  return a.name.localeCompare(b.name, 'ko') || a.id.localeCompare(b.id);
+}
+
+// A User as an Administrator lists them. A User before onboarding has an empty name and department.
+export interface AdminUserDto {
+  id: string;
+  name: string;
+  email: string;
+  department: string;
+  friendId: string;
+  onboarded: boolean;
+  friendCount: number;
+}
+
+// A Friend of a User as an Administrator reads them, with when the friendship started.
+export interface AdminFriendDto {
+  id: string;
+  name: string;
+  email: string;
+  department: string;
+  friendId: string;
+  since: string;
+}
+
+export const makeFriendshipSchema = z.strictObject({ userAId: z.uuid(), userBId: z.uuid() });
+
+export type MakeFriendshipDto = z.infer<typeof makeFriendshipSchema>;

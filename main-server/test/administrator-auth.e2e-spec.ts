@@ -231,6 +231,23 @@ describe('Signing out of the admin site', () => {
   });
 });
 
+describe('The signed-in Administrator', () => {
+  it('reads their own id and email address', async () => {
+    const { id, email, accessToken } = await signInAsNewAdministrator(app);
+
+    const response = await get('/admin/auth/me', accessToken);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ id, email });
+  });
+
+  it("is refused with a User's access token", async () => {
+    const { accessToken } = await signIn(app);
+
+    expect((await get('/admin/auth/me', accessToken)).status).toBe(401);
+  });
+});
+
 // GET /users/me stands for every route of a User.
 describe("A User's route", () => {
   it("refuses an Administrator's access token", async () => {

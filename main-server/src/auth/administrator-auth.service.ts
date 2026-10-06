@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AdministratorsService } from '../administrators/administrators.service.js';
 import { Settings } from '../common/settings.js';
 import { ADMINISTRATOR_TOKEN_AUDIENCE, AdministratorTokenPayload } from './administrator.guard.js';
+import { AdministratorAccountDto } from './dto/administrator-account.dto.js';
 import { AdministratorTokenDto } from './dto/administrator-token.dto.js';
 import { GoogleIdTokenVerifier } from './google-id-token.verifier.js';
 
@@ -35,6 +36,15 @@ export class AdministratorAuthService {
     return {
       accessToken: await this.jwt.signAsync(payload, { audience: ADMINISTRATOR_TOKEN_AUDIENCE, expiresIn: '8h' }),
     };
+  }
+
+  // Removed since the guard read them: refused as the guard would.
+  async account(administratorId: string): Promise<AdministratorAccountDto> {
+    const administrator = await this.administrators.findById(administratorId);
+    if (administrator === null) {
+      throw new UnauthorizedException();
+    }
+    return { id: administrator.id, email: administrator.email };
   }
 
   async signOut(administratorId: string): Promise<void> {

@@ -162,3 +162,13 @@ export async function signInAsNewAdministrator(app: INestApplication<Server>): P
   const { accessToken } = await signInAsAdministrator(app, { sub, email });
   return { id, email, sub, accessToken };
 }
+
+// The access token of an Administrator removed after signing in, which has not expired.
+export async function removedAdministratorToken(app: INestApplication<Server>): Promise<string> {
+  const removed = await signInAsNewAdministrator(app);
+  const { accessToken } = await signInAsAdministrator(app);
+  await request(app.getHttpServer())
+    .delete(`/admin/administrators/${removed.id}`)
+    .auth(accessToken, { type: 'bearer' });
+  return removed.accessToken;
+}

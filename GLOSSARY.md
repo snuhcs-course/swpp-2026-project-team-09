@@ -15,7 +15,7 @@ The app signed in on one phone for a User. A User has at most one: signing in on
 _Avoid_: Login, device
 
 **Administrator**:
-A team member who signs in to the admin site to confirm, publish and create Global Events. An Administrator is not a User, even when the same person also uses the app.
+A team member who signs in to the admin site to confirm, publish and create Global Events, and to make two Users Friends or end their friendship when setting up demo accounts. An Administrator is not a User, even when the same person also uses the app.
 _Avoid_: Organizer, manager
 
 **Avatar**:
@@ -23,7 +23,7 @@ The figure that stands for a User on the map and moves as the User moves.
 _Avoid_: Pin, profile marker
 
 **Friend**:
-A User connected to another by an accepted Friend Request or an accepted Invite Link. Friendship is mutual.
+A User connected to another by an accepted Friend Request, an accepted Invite Link or an Administrator. Friendship is mutual.
 _Avoid_: Follower, contact
 
 **Friend ID**:

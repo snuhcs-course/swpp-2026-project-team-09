@@ -213,6 +213,40 @@ when a friendship ends. It carries nothing, and the app fetches `GET /friends` a
 A friendship starts with both switches on, so accepting a Friend Request starts Location Sharing between the two. The
 table keeps each User's switch at their own end, in `user_a_sharing` and `user_b_sharing`.
 
+An Administrator sets up demo accounts through `src/friends/admin-friends.controller.ts`, whose routes need an
+Administrator's access token (see [Administrators](#administrators)). Nothing else about a User is read or changed
+there:
+
+- `GET /admin/users` answers every User as
+  `{ "id", "name", "email", "department", "friendId", "onboarded", "friendCount" }`, where `friendCount` is the number
+  of their Friends. The order is by name in the Korean order, then by email address; Users before onboarding, whose
+  name and department are empty, come last.
+- `GET /admin/users/:id/friends` answers the User's Friends in the order of `GET /friends`, each as
+  `{ "id", "name", "email", "department", "friendId", "since" }`, `since` being when the friendship started.
+- `POST /admin/friendships` with `{ "userAId": "...", "userBId": "..." }`, in either order, makes the two Friends and
+  answers 204. The friendship is stored and announced as an accepted Friend Request's: the same row, both switches on,
+  and `friends-changed` to both once it is stored. A Friend Request waiting between the two becomes the friendship and
+  keeps its sender, as accepting an Invite Link does; otherwise the sender is `userAId`. A repeat is refused as already
+  Friends, so it takes no `Idempotency-Key`.
+- `DELETE /admin/friendships/:userAId/:userBId`, in either order, ends the friendship as `DELETE /friends/:userId`
+  does, and answers 204: `friends-changed` to both, `position-removed` to each who saw the other, and the Meetups still
+  proposed between them withdrawn with `meetups-changed`.
+
+Both changes go through `FriendsService`, so a change by an Administrator and one by either User lock the two Users
+alike and run one after the other. The refusals each have a `code`, checked in the order of the table, and a refusal
+stores nothing and sends no signal:
+
+| Refusal                                                        | Status | `code`               |
+| -------------------------------------------------------------- | ------ | -------------------- |
+| Making a User a Friend of themselves                           | 400    | `SAME_USER`          |
+| Reading the Friends of, or making a Friend of, an unknown User | 404    | `USER_NOT_FOUND`     |
+| Making a Friend of a User before onboarding                    | 409    | `USER_NOT_ONBOARDED` |
+| Making two Friends Friends                                     | 409    | `ALREADY_FRIENDS`    |
+| Ending a friendship between two Users who are not Friends      | 404    | `FRIEND_NOT_FOUND`   |
+
+An id that is not a UUID gets 400 before any of these. Unknown Users are not Friends, so ending a friendship between
+them gets `FRIEND_NOT_FOUND`.
+
 ## Invite Links
 
 A User creates an Invite Link and sends it through any messenger. Whoever opens it sees who sent it and, on accepting,
@@ -342,6 +376,7 @@ Signing in and out:
 - The access token has the audience `snu-now-admin`, the Administrator's id and no email address. It is valid for 8
   hours and comes without a refresh token: when it expires, the admin site sends the person through Sign in with Google
   again. There is no idle timeout; ticket 14 says why.
+- `GET /admin/auth/me` answers the signed-in Administrator as `{ "id", "email" }`, for the admin site to show.
 - `POST /admin/auth/sign-out` answers 204 and ends every access token issued to that Administrator so far, in every
   browser. A new sign-in works afterwards.
 

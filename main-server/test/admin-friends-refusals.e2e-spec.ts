@@ -16,19 +16,20 @@ afterAll(async () => {
   await app.close();
 });
 
+const [first, second] = [randomUUID(), randomUUID()];
+
 describe.each([
-  '/admin/global-events?state=draft',
-  '/admin/global-events?state=published',
-  `/admin/global-events/${randomUUID()}`,
-  '/admin/places',
-  '/admin/collection-statuses',
-])('GET %s', (path) => {
+  ['get', '/admin/users', {}],
+  ['get', `/admin/users/${first}/friends`, {}],
+  ['post', '/admin/friendships', { userAId: first, userBId: second }],
+  ['delete', `/admin/friendships/${first}/${second}`, {}],
+] as const)('%s %s', (method, path, body) => {
   it.each([
     ['no access token', (): undefined => undefined],
     ["a User's access token", async (): Promise<string> => (await signIn(app)).accessToken],
     ['a removed Administrator', (): Promise<string> => removedAdministratorToken(app)],
   ])('refuses a request with %s with 401', async (_case, accessToken) => {
-    const response = await withAccessToken(request(app.getHttpServer()).get(path), await accessToken());
+    const response = await withAccessToken(request(app.getHttpServer())[method](path), await accessToken()).send(body);
 
     expect(response.status).toBe(401);
   });
