@@ -242,6 +242,7 @@ This spec is large because the restart left most domain work without a task of i
   - an accepted Meetup: Closed, capacity 4, led by the proposer.
   - a match: Closed, capacity the match's size, led by the User whose request arrived earliest.
 - The list of recruiting Quests holds the Open and Approval Quests that have Sub Quests ahead, the newest first, and the same for one Global Event. A Sub Quest is ahead while it is not cancelled and its end has not passed; a Holder's own mark of done does not count. Each entry has the Quest's title, its Global Event if any, its Leader, the number of Holders, the capacity, the Join Policy and its first Sub Quest ahead with its time and place. The list leaves out the Quests the reader holds.
+- An Open or Approval Quest is posted on a board, one of meal, career, hobby and show, which the list of recruiting Quests can be narrowed to; a Closed Quest has none, and every Quest may carry a description of up to 200 characters, its recruiting post.
 - A User enters a Quest by joining an Open one, by a request the Leader accepts, or by an invitation the User accepts. The capacity is checked inside the transaction that adds the Holder. A Quest whose Sub Quests have all passed takes nobody, and the one-Quest rule above holds on every entry.
 - The Leader invites Friends. A request and an invitation wait until they are answered, and end with the Quest and when their User becomes a Holder of that Quest.
 - Entering a Quest neither opens nor enters a Party.
