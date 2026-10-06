@@ -2,14 +2,8 @@ import { router } from 'expo-router';
 import { type ReactElement, useCallback, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import type { Quest } from '@/api/types';
-import { EmptyState, ErrorState, IconButton, LoadingState, space, useToast } from '@/design-system';
-import {
-  type EventFilter,
-  type EventSources,
-  type RecruitRowView,
-  sharedQuestFor,
-  toEventViews,
-} from '@/features/events/adapter';
+import { EmptyState, ErrorState, IconButton, LoadingState, space } from '@/design-system';
+import { type EventFilter, type EventSources, type RecruitRowView, toEventViews } from '@/features/events/adapter';
 import { useEventSources } from '@/features/events/use-events';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
 import { TabScreen } from '../shell/tab-screen';
@@ -80,13 +74,12 @@ interface Sheets {
   onRecruit: (eventId: string) => void;
 }
 
-function useSheets(quests: readonly Quest[]): Sheets {
+function useSheets(): Sheets {
   const [recruitEvent, setRecruitEvent] = useState<Picked | null>(null);
   const [matchEvent, setMatchEvent] = useState<Picked | null>(null);
   const [ask, setAsk] = useState<Ask | null>(null);
   const actions = useEventActions();
   const openPartyCreate = useOpenPartyCreate();
-  const showToast = useToast();
   return {
     recruitEvent,
     matchEvent,
@@ -112,13 +105,7 @@ function useSheets(quests: readonly Quest[]): Sheets {
     // A User who holds the event's 파티 with others is led to it; anyone else recruits.
     onRecruit: (eventId) => {
       setRecruitEvent(null);
-      const shared = sharedQuestFor(quests, eventId);
-      if (shared === null) {
-        openPartyCreate(eventId);
-      } else {
-        router.push(`/room/${shared.id}`);
-        showToast('이 행사에 함께 가는 파티가 이미 있어요');
-      }
+      openPartyCreate(eventId);
     },
   };
 }
@@ -176,7 +163,7 @@ export function EventsScreen({ focus, onFocused }: EventsScreenProps): ReactElem
   }, []);
   const focusing = useFocus(focus, data !== undefined, onFocused, showAll);
   const quests = data?.quests ?? [];
-  const sheets = useSheets(quests);
+  const sheets = useSheets();
   return (
     <TabScreen
       actions={

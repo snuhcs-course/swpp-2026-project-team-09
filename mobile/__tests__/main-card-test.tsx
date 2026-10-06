@@ -167,14 +167,11 @@ describe('"가까이 보기"', () => {
 });
 
 describe("a card's button whose feature belongs to another task", () => {
-  it.each([
-    [FRIEND, '파티 만들기'],
-    [EVENT, '같이 갈 사람 찾기'],
-  ] as const)('says that it is not ready: %s, %s', async (name, button) => {
+  it("says that it is not ready: a Friend's 파티 만들기", async () => {
     const user = await openMain();
-    await press(user, name);
+    await press(user, FRIEND);
 
-    await press(user, button);
+    await press(user, '파티 만들기');
 
     expect(screen.getByText(NOT_READY)).toBeVisible();
     expect(screen.getByTestId('map-card')).toBeVisible();

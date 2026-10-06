@@ -6,7 +6,7 @@ import type { QuestSummary } from '@/api/waiting-types';
 import { answer } from './answer';
 import { RECRUITING_QUESTS } from './data/boards';
 import { frameTime, ME } from './data/frame';
-import { QUESTS } from './data/quests';
+import { GLOBAL_EVENTS, QUESTS } from './data/quests';
 import { QUEST_INVITATIONS } from './data/waiting';
 
 // The 파티 tab's operations as the main server answers them. As the room's, the mock keeps no change.
@@ -63,6 +63,34 @@ function madeOf({ title, description, capacity, joinPolicy, board, subQuest }: Q
   };
 }
 
+// The User's Quest for a Global Event, as attending it makes it.
+function attendedOf(globalEventId: string): Quest {
+  const event = GLOBAL_EVENTS.find(({ id }) => id === globalEventId);
+  if (event === undefined) {
+    throw new ApiError(404, 'GLOBAL_EVENT_NOT_FOUND');
+  }
+  const { id, title, startsAt, endsAt, place, latitude, longitude } = event;
+  return {
+    ...madeOf({ title, description: '', capacity: 4, joinPolicy: 'closed', subQuest: { title } }),
+    id: `attended-${id}`,
+    globalEvent: { id, title },
+    subQuests: [
+      {
+        id: `attended-${id}-1`,
+        attending: true,
+        title,
+        startsAt,
+        endsAt,
+        place: place === null ? null : { placeId: null, label: place, latitude, longitude },
+        completion: 'by_time',
+        cancelled: false,
+        done: false,
+        ended: false,
+      },
+    ],
+  };
+}
+
 function recruiting(questId: string): RecruitingQuest {
   const entry = RECRUITING_QUESTS.find(({ id }) => id === questId);
   if (entry === undefined) {
@@ -73,6 +101,9 @@ function recruiting(questId: string): RecruitingQuest {
 
 function held(questId: string): Quest {
   const quest = QUESTS.find(({ id }) => id === questId);
+  if (quest === undefined && questId.startsWith('attended-')) {
+    return attendedOf(questId.slice('attended-'.length));
+  }
   if (quest === undefined) {
     throw new ApiError(404, 'QUEST_NOT_FOUND');
   }
@@ -91,6 +122,7 @@ type MockParty = Pick<
   | 'listMyJoinRequests'
   | 'withdrawJoinRequest'
   | 'makeQuest'
+  | 'attendGlobalEvent'
   | 'changeQuest'
   | 'inviteToQuest'
   | 'acceptInvitation'
@@ -120,6 +152,11 @@ export const mockParty: MockParty = {
   listMyJoinRequests: () => answer('listMyJoinRequests', () => [], []),
   withdrawJoinRequest: () => nothing('withdrawJoinRequest'),
   makeQuest: (making) => answer('makeQuest', () => madeOf(making)),
+  attendGlobalEvent: (globalEventId) =>
+    answer(
+      'attendGlobalEvent',
+      () => QUESTS.find(({ globalEvent }) => globalEvent?.id === globalEventId) ?? attendedOf(globalEventId),
+    ),
   changeQuest: (questId, change) => answer('changeQuest', () => ({ ...held(questId), ...change })),
   inviteToQuest: () => nothing('inviteToQuest'),
   acceptInvitation: (invitationId) =>

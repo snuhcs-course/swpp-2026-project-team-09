@@ -1,5 +1,3 @@
-import type { ReactElement } from 'react';
-import { Text } from 'react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal } from './support/fake-server';
@@ -7,7 +5,7 @@ import { sockets } from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
 import { answerEvents, card, CAREER, MY_CAREER, openEvents, SEO_YEON_GOING, TAE_O_GOING } from './support/events';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
-import { EVENT, lookOf, NOT_READY, press, zoomIn } from './support/markers';
+import { EVENT, lookOf, press, zoomIn } from './support/markers';
 import { requestFor } from './support/party';
 import { startFresh } from './support/mocks';
 import { answer, MIN_JUN_HOLDER, toast } from './support/room';
@@ -29,13 +27,6 @@ jest.mock('@/auth/google', () => ({
 }));
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
-
-// 파티 만들기, which another task builds, in its place.
-function PartyCreate(): ReactElement {
-  return <Text>파티 만들기 화면</Text>;
-}
-
-const WITH_PARTY_CREATE = { '(signed-in)/party/create': PartyCreate };
 
 let server: FakeServer;
 
@@ -171,23 +162,15 @@ describe('joining from the sheet', () => {
 describe('+ 파티 모집', () => {
   it('opens 파티 만들기 with the event chosen', async () => {
     answerEvents(server, { quests: [DINNER, MY_CAREER] });
-    const user = await openEvents(WITH_PARTY_CREATE);
+    const user = await openEvents();
     await openSheet(user);
 
     await user.press(screen.getByRole('button', { name: '파티 모집' }));
     await pass(500);
 
-    expect(shownAddress()).toBe(`/party/create?eventId=${CAREER.id}`);
-  });
-
-  it('says that it is not ready while the app has no 파티 만들기', async () => {
-    answerEvents(server);
-    const user = await openEvents();
-    await openSheet(user);
-
-    await user.press(screen.getByRole('button', { name: '파티 모집' }));
-
-    expect(toast()).toHaveTextContent(NOT_READY);
+    expect(shownAddress()).toBe(`/party-form?eventId=${CAREER.id}`);
+    expect(screen.getByTestId('chosen-event')).toHaveTextContent(CAREER.title, { exact: false });
+    expect(screen.getByLabelText('제목')).toHaveDisplayValue(CAREER.title);
   });
 
   it('opens the room of the Quest the User already shares for the event', async () => {
@@ -195,7 +178,7 @@ describe('+ 파티 모집', () => {
     answerEvents(server, { quests: [DINNER, shared] });
     server.on(`GET /quests/${shared.id}`, { status: 200, body: shared });
     server.on(`GET /quests/${shared.id}/invitations`, { status: 200, body: [] });
-    const user = await openEvents(WITH_PARTY_CREATE);
+    const user = await openEvents();
     await openSheet(user);
 
     await user.press(screen.getByRole('button', { name: '파티 모집' }));
@@ -209,7 +192,7 @@ describe('+ 파티 모집', () => {
 describe("the map's event card", () => {
   it('counts the Quests gathering for the event, and opens 파티 만들기 with it', async () => {
     answerEvents(server);
-    const user = await openMain({}, WITH_PARTY_CREATE);
+    const user = await openMain();
     await zoomIn(user, 2);
     expect(lookOf(EVENT)).toBe('official:pin:2');
 
@@ -218,6 +201,6 @@ describe("the map's event card", () => {
     await press(user, '같이 갈 사람 찾기');
     await pass(500);
 
-    expect(shownAddress()).toBe(`/party/create?eventId=${CAREER.id}`);
+    expect(shownAddress()).toBe(`/party-form?eventId=${CAREER.id}`);
   });
 });

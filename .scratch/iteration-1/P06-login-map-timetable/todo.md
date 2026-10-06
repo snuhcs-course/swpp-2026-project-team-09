@@ -554,6 +554,7 @@ Ticket 12 connected every row that the demo's flows (P20) use and the main serve
 | Joining a Quest (`joinQuest`) | Connected | `POST /quests/:questId/join` | From the 파티 tab's posts and from 행사 › 파티 찾기/모집 |
 | The User's requests to join (`askToJoinQuest`, `listMyJoinRequests`, `withdrawJoinRequest`) | Connected | `POST /quest-join-requests`, `GET /quest-join-requests`, `POST /quest-join-requests/:id/withdraw`; fetched again on `quests-changed` | |
 | Making and changing a Quest (`makeQuest`, `changeQuest`) | Connected | `POST /quests/own` with an `Idempotency-Key`, `PATCH /quests/:questId` | |
+| Attending a Global Event (`attendGlobalEvent`) | Connected | `POST /quests` with `{ globalEventId }` | 파티 만들기 with `관련 행사` attends, then changes the Quest with `PATCH`; the mock makes the User's Quest for the event |
 | Inviting a Friend into a Quest (`inviteToQuest`) | Connected | `POST /quests/:questId/invitations` | |
 | Answering an invitation (`acceptInvitation`, `declineInvitation`) | Connected | `POST /quest-invitations/:id/accept`, `/decline` | |
 | The signal `matching-changed` | Connected | The socket | Fetches the requests, the Quests and the recruiting Quests again; a request that stopped waiting and was matched shows a toast |
@@ -569,7 +570,6 @@ The control is there and only shows the toast. The last column is a proposal for
 | Above the navigation | The AI input, which is a button with the input's look and takes no focus and no text, and its send button, read as disabled | The AI chat, with the real text field | In no Iteration 1 spec |
 | Bottom navigation | 올리기 | The story sheet | In no Iteration 1 spec |
 | 내 정보 | 이미지로 불러오기, 빈 시간 말하기 | Reading a timetable from an image or from words | In no Iteration 1 spec |
-| A Global Event's card on the map, 행사 › 파티 찾기/모집 | 같이 갈 사람 찾기, + 파티 모집 | 파티 만들기 with the event chosen (`/party/create?eventId=`); they open it once the app has that screen | P13 (ticket 02) |
 | A Friend's card | 파티 만들기 | Making a Party | P14 |
 
 ## 5. Development settings

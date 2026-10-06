@@ -1,10 +1,13 @@
 import type { QuestChange, QuestMaking } from '@/api/party-types';
-import type { SubQuestPlace } from '@/api/room-types';
-import type { Board, Quest } from '@/api/types';
+import type { SubQuestContent, SubQuestPlace } from '@/api/room-types';
+import type { Board, GlobalEvent, Quest } from '@/api/types';
 
 // What 파티 만들기 sends: a new Quest, or the change to one, from what the form holds.
 
 export type Visibility = 'public' | 'private';
+
+// The Global Event of `관련 행사`, with who announced it where the app knows.
+export type FormEvent = GlobalEvent & { source: string | null };
 
 export interface PartyForm {
   title: string;
@@ -17,6 +20,7 @@ export interface PartyForm {
   board: Board | null;
   startsAt: string | null;
   place: SubQuestPlace | undefined;
+  event: FormEvent | null;
 }
 
 export const MIN_CAPACITY = 2;
@@ -34,7 +38,13 @@ export function emptyForm(): PartyForm {
     board: null,
     startsAt: null,
     place: undefined,
+    event: null,
   };
+}
+
+// A chosen event gives its title, which the Quest keeps, and its start, which `언제` may move to a meeting before it.
+export function withEvent(form: PartyForm, event: FormEvent | null): PartyForm {
+  return { ...form, event, title: event?.title ?? '', startsAt: event?.startsAt ?? null };
 }
 
 // The form of a Quest the Leader edits.
@@ -111,4 +121,18 @@ export function changeOf(quest: Quest, form: PartyForm): QuestChange {
 // How many Friends may be invited: the free places, all of a private Quest's.
 export function invitable(form: PartyForm, holders: number): number {
   return Math.max((form.visibility === 'private' ? PRIVATE_CAPACITY : form.capacity) - holders, 0);
+}
+
+// The PATCH after attending the event: everything the form sets but the title, which stays the event's.
+export function recruitingOf(form: PartyForm): QuestChange {
+  const { title: _title, subQuest: _subQuest, ...change } = makingOf(form);
+  return change;
+}
+
+// The Sub Quest `모이기`, when `언제` moved from the event's start to a meeting before it.
+export function meetingOf(form: PartyForm): SubQuestContent | null {
+  if (form.event === null || form.startsAt === null || form.startsAt === form.event.startsAt) {
+    return null;
+  }
+  return { title: '모이기', startsAt: form.startsAt, ...(form.place === undefined ? {} : { place: form.place }) };
 }

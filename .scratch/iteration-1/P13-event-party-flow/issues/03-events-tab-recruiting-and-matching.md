@@ -58,8 +58,8 @@ Each new operation goes into the API client with its mock. The mock keeps Matchi
 
 ### 관련 행사 in 파티 만들기
 
-- [ ] The form of ticket 02 gains `관련 행사` before `제목`: `행사 선택` opens the event picker, a screen with `뒤로`, `행사`, the search `행사 검색` and the cards of the list without their buttons. Choosing shows a box with a navy border: the source when known, the title, `{time} · {place}`, and ✕ `행사 빼기`.
-- [ ] With an event, `제목` shows the event's title and cannot be changed, and `언제` and `어디서` are where to meet before it, both optional. Submitting attends, then changes the Quest as described above, with the same toasts as ticket 02. In edit mode the event cannot be changed.
+- [x] The form of ticket 02 gains `관련 행사` before `제목`: `행사 선택` opens the event picker, a screen with `뒤로`, `행사`, the search `행사 검색` and the cards of the list without their buttons. Choosing shows a box with a navy border: the source when known, the title, `{time} · {place}`, and ✕ `행사 빼기`.
+- [x] With an event, `제목` shows the event's title and cannot be changed, and `언제` and `어디서` are where to meet before it, both optional. Submitting attends, then changes the Quest as described above, with the same toasts as ticket 02. In edit mode the event cannot be changed.
 - [x] The map's event card `같이 갈 사람 찾기` opens the form with that event chosen, in place of its toast. Its line `같이 갈 파티 {n}개 모집 중` and its marker's count come from the recruiting Quests for the event.
 
 ### AI 매칭
@@ -125,11 +125,13 @@ The frame `Events` was read in the copy of the canvas at version `1791265989-e23
 
 Where things are, in `mobile/`:
 
-- `src/api/`: `server/event-client.ts` (`GET /global-events`, the recruiting Quests, joining, Matching, with the
-  checks of their answers) and `mock/events.ts` (the requests for Matching in memory, refused as the main server
-  refuses them); `RecruitingQuest` and `MatchingRequest` in `types.ts`; the keys `recruiting-quests` and
-  `matching-requests` in `queries.ts`. `matching-changed` fetches the requests, the Quests and the recruiting Quests
-  again, and `quests-changed` the recruiting Quests too.
+- `src/api/`: `server/event-client.ts` (`GET /global-events` and Matching, with the checks of their answers),
+  `mock/events.ts` (the requests for Matching in memory, refused as the main server refuses them) and
+  `matching-types.ts`. The recruiting Quests and joining are ticket 02's operations: `listRecruitingQuests` takes
+  `{ board, globalEventId }`, joining uses its `joinQuest` and `askToJoinQuest`, and `attendGlobalEvent`
+  (`POST /quests`) was added beside them. One event's recruiting Quests are under ticket 02's key `recruiting`, and
+  `matching-requests` is new in `queries.ts`. `matching-changed` fetches the requests, the Quests and the recruiting
+  Quests again.
 - `src/features/events/`: `adapter.ts` (the filters, the search, the cards, the rows of 파티 찾기/모집, the rows of the
   list, `eventTime`, which the map's card shares), `use-events.ts`, `matching-watch.tsx` (the toast of a match,
   mounted in the signed-in layout).
@@ -144,10 +146,13 @@ Where things are, in `mobile/`:
 
 Decisions made while building:
 
-- 파티 만들기 is ticket 02's and is built in parallel. `+ 파티 모집` and `같이 갈 사람 찾기` open
-  `/party/create?eventId=<id>` once the app has that route, and say "준비 중이에요" until then: `useOpenPartyCreate()`
-  looks for it in Expo Router's sitemap. So `관련 행사`, the event picker inside the form, and attending then
-  changing the Quest are left to the form; their criteria and the test of that flow stay unticked here.
+- `+ 파티 모집` and `같이 갈 사람 찾기` open ticket 02's form at `/party-form?eventId=<id>` (`useOpenPartyCreate()`),
+  or the room of the Quest the User shares for the event. In the form (`src/screens/party/form/event-field.tsx`,
+  `use-send.ts`), a chosen event gives the title, which the main server keeps as the event's
+  (`QUEST_TITLE_FROM_GLOBAL_EVENT`), so the frame's `{event} 같이 가요` cannot be sent; and, as the frame draws, the
+  event's start as `언제` and its place as `어디서`. `모이기` is added only when `언제` moves from the event's start,
+  so that a form left as filled does not repeat the event's own Sub Quest. The picker is drawn inside the form's
+  screen, not as a route of its own. The edit mode hides `관련 행사` and keeps the title of a Quest for an event.
 - The cards count the recruiting Quests of the whole list (`GET /quests/recruiting`); the sheet asks for one event
   (`?globalEventId=`). Both are under one key, so a signal fetches both again.
 - A match is noticed by the requests: one that waited and no longer does is read once more, and only `matched` makes
@@ -162,6 +167,12 @@ Checks: `pnpm lint`, `pnpm format:check` and `pnpm typecheck` pass. The three ne
 The whole `pnpm test` ran once: 709 of 714 passed. `main-markers-test` counted the event's pin by the Parties and
 `room-activation-test` found the event's title once, so both follow the recruiting Quests and the room's
 `EventCard` now and pass alone; `main-walk-test` timed out in the whole run and passed alone, as before this ticket.
+
+With ticket 02's form joined, `pnpm lint`, `pnpm format:check` and `pnpm typecheck` pass, and the whole `pnpm test`
+ran once: 925 of 926 passed; `main-card-test` still expected `같이 갈 사람 찾기` to say "준비 중이에요", and passed alone
+once it no longer did. `events-party-form-test.tsx` covers the picker filling the form and `행사 빼기`, attending then `PATCH`, and a refused
+`PATCH` opening the room. The Jest criterion stays unticked: `모이기` with its `Idempotency-Key` and the invitations
+after attending have no test of their own.
 
 Not checked: nothing ran in a browser, on a phone or against a running main server, so the run on two emulators and
 its screenshots are still to be done.

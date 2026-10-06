@@ -735,6 +735,14 @@ hooks. The tabs count the User's Quests but the Class Quests (`내 파티 {n}`) 
   with a fresh `Idempotency-Key`, then invite each chosen Friend and show 내 파티. The rules of the body and of what
   changed are in `src/features/party/making.ts`. The edit mode leaves out `언제` and `어디서`, which the room's 일정
   changes, sends `PATCH /quests/:questId` with what changed and invites the newly chosen Friends.
+- **관련 행사**, before `제목` in a new form (`event-field.tsx`): `행사 선택` opens the event picker, the 행사 list's
+  cards without their buttons under the search `행사 검색`. A chosen event shows in a navy box with its source, title,
+  time and place and ✕ `행사 빼기`, and gives the form its title, which cannot be changed, its start as `언제` and its
+  place as `어디서`. `/party-form?eventId=<id>` opens the form with the event chosen. Submitting attends the event
+  (`POST /quests` with `{ globalEventId }`, which gives the User's Quest for it, Closed and titled as the event), then
+  sends `PATCH /quests/:questId` with the description, the capacity, the Join Policy and the board, adds the Sub Quest
+  `모이기` when `언제` moved from the event's start, and invites (`form/use-send.ts`). When a step after attending is
+  refused, the Quest stays: the form says why and opens its room.
 - **내 파티**: the chips `전체`, `비공개` and `공개`, and the groups `활성화 중`, `활성화 알림`, then the next Sub Quest's
   day (`오늘`, `내일`, `이번 주` to Sunday, `다음 주`, `그 이후`, `시간 미정`). A card has the kind, a Badge of its
   members, its recruiting or its running Party, the next Sub Quest and the Holders; a Party running without the User
@@ -762,9 +770,9 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
   "참여 중" with its Leader otherwise), then the Quests gathering for it (`GET /quests/recruiting?globalEventId=`),
   each with its fill and its next Sub Quest. The User's own opens its room; another's asks "‘{title}’에
   참여할까요?" and joins an Open Quest (`POST /quests/:questId/join`, then its room) or asks to join an Approval one
-  (`POST /quest-join-requests`). "+ 파티 모집" opens the room of a Quest the User already holds with others for the
-  event, with "이 행사에 함께 가는 파티가 이미 있어요", and 파티 만들기 with the event chosen otherwise
-  (`/party/create?eventId=<id>`, `use-party-create.ts`); while the app has no such screen it says "준비 중이에요".
+  (`POST /quest-join-requests`). "+ 파티 모집", like the map card's "같이 갈 사람 찾기", opens the room of a Quest the
+  User already holds with others for the event, with "이 행사에 함께 가는 파티가 이미 있어요", and 파티 만들기 with the
+  event chosen otherwise (`/party-form?eventId=<id>`, `use-party-create.ts`).
 - **AI 매칭** (`matching-sheet.tsx`) asks only the group size, "2명", "3명" or "4명", explains what Matching does and
   sends `POST /matching-requests`. **The AI 매칭 신청 list** (`matching-screen.tsx`, `/matching`) shows each waiting
   request with "매칭 중", when it was asked, the event and the size, and withdraws one after "매칭 신청을 취소할까요?"
@@ -890,6 +898,7 @@ Behind a hook are three layers:
 | `joinQuest`, `askToJoinQuest`                                        | The Quest; nothing                                           | `POST /quests/:questId/join`, `POST /quest-join-requests`               |
 | `listMyJoinRequests`, `withdrawJoinRequest`                          | The User's waiting requests; nothing                         | `GET /quest-join-requests`, `POST …/:id/withdraw`                       |
 | `makeQuest`, `changeQuest`                                           | The Quest                                                    | `POST /quests/own` with an `Idempotency-Key`, `PATCH /quests/:questId`  |
+| `attendGlobalEvent`                                                  | The User's Quest for the Global Event                        | `POST /quests` with `{ globalEventId }`                                 |
 | `inviteToQuest`                                                      | Nothing                                                      | `POST /quests/:questId/invitations`                                     |
 | `acceptInvitation`, `declineInvitation`                              | The Quest; nothing                                           | `POST /quest-invitations/:id/accept`, `/decline`                        |
 | `requestMatching`, `listMatchingRequests`                            | The request; the waiting requests                            | `POST`, `GET /matching-requests`                                        |

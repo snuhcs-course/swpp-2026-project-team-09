@@ -1,10 +1,8 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { router, useIsFocused } from 'expo-router';
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { apiClient } from '@/api/client';
-import { newIdempotencyKey } from '@/api/idempotency-key';
-import { friendsQuery, QUESTS_KEY, RECRUITING_KEY, questQuery, SENT_INVITATIONS_KEY } from '@/api/queries';
+import { friendsQuery, globalEventAnnouncersQuery, globalEventsQuery, questQuery } from '@/api/queries';
 import type { Friend, Quest } from '@/api/types';
 import {
   Button,
@@ -15,33 +13,32 @@ import {
   LoadingState,
   space,
   TextField,
-  useToast,
   useToastAbove,
 } from '@/design-system';
 import type { PickedPlace } from '@/features/places/picked-place';
-import { changeOf, emptyForm, formOf, invitable, isReady, makingOf, type PartyForm } from '@/features/party/making';
-import { refusalWords } from '@/features/quests/refusals';
+import {
+  emptyForm,
+  type FormEvent,
+  formOf,
+  invitable,
+  isReady,
+  type PartyForm,
+  withEvent,
+} from '@/features/party/making';
 import { placeOf, WhenField, WhereField } from '../../room/plan-form';
 import { showMine } from '../use-party-actions';
+import { EventField, EventPicker } from './event-field';
 import { FriendPicker } from './friend-picker';
 import { BoardField, CapacityField, DescriptionField, VisibilityField } from './party-form-fields';
+import { useSend } from './use-send';
 
 const FOOTER = 81;
-const NOT_SAVED = '저장하지 못했어요. 다시 시도해 주세요';
 
-// Invites each Friend and counts those the main server refused.
-async function invite(questId: string, friends: readonly string[]): Promise<number> {
-  const answers = await Promise.allSettled(friends.map((userId) => apiClient.inviteToQuest(questId, userId)));
-  return answers.filter(({ status }) => status === 'rejected').length;
-}
-
-function toastOf(form: PartyForm, editing: boolean, invited: number, missed: number): string {
-  const main = editing
-    ? '모집글을 수정했어요'
-    : form.visibility === 'private'
-      ? `비공개 파티를 만들었어요 · ${String(invited)}명에게 초대 요청`
-      : '파티를 올렸어요';
-  return missed === 0 ? main : `${main} · ${String(missed)}명은 초대하지 못했어요`;
+interface FormProps {
+  // The Quest edited, or null for a new one.
+  quest: Quest | null;
+  // A new one's Global Event, chosen at the start.
+  eventId: string | null;
 }
 
 function friendsHint(form: PartyForm, chosen: number): string {
@@ -49,40 +46,6 @@ function friendsHint(form: PartyForm, chosen: number): string {
     return `${String(chosen)}명에게 요청`;
   }
   return form.visibility === 'private' ? '1명 이상' : '선택';
-}
-
-interface FormProps {
-  // The Quest edited, or null for a new one.
-  quest: Quest | null;
-}
-
-// Sends the form: makes the Quest or changes it, then invites the chosen Friends. True once it was taken.
-function useSend({ quest }: FormProps): (form: PartyForm, friends: string[]) => Promise<boolean> {
-  const queryClient = useQueryClient();
-  const showToast = useToast();
-  return async (form, friends) => {
-    let questId: string;
-    try {
-      if (quest === null) {
-        questId = (await apiClient.makeQuest(makingOf(form), newIdempotencyKey())).id;
-      } else {
-        const change = changeOf(quest, form);
-        if (Object.keys(change).length > 0) {
-          await apiClient.changeQuest(quest.id, change);
-        }
-        questId = quest.id;
-      }
-    } catch (error) {
-      showToast(refusalWords(error, {}, NOT_SAVED));
-      return false;
-    }
-    const missed = await invite(questId, friends);
-    showToast(toastOf(form, quest !== null, friends.length - missed, missed));
-    for (const queryKey of [QUESTS_KEY, RECRUITING_KEY, SENT_INVITATIONS_KEY]) {
-      void queryClient.invalidateQueries({ queryKey });
-    }
-    return true;
-  };
 }
 
 interface FormState {
@@ -99,12 +62,52 @@ interface FormState {
   unplaced: boolean;
   ready: boolean;
   submit: () => void;
+  pickEvent: (event: FormEvent | null) => void;
+}
+
+// The event of `/party-form?eventId=`, chosen once the Global Events are there.
+function usePreselected(eventId: string | null, pick: (event: FormEvent) => void): void {
+  const events = useQuery(globalEventsQuery).data;
+  const announcers = useQuery(globalEventAnnouncersQuery).data;
+  const done = useRef(false);
+  useEffect(() => {
+    const event = events?.find(({ id }) => id === eventId);
+    if (done.current || event === undefined) {
+      return;
+    }
+    done.current = true;
+    pick({ ...event, source: announcers?.find((one) => one.eventId === event.id)?.announcer ?? null });
+  }, [events, announcers, eventId, pick]);
+}
+
+// Choosing an event gives the form its title and time, and `어디서` its place; `행사 빼기` clears them.
+function useEventPick(
+  setForm: (change: (held: PartyForm) => PartyForm) => void,
+  setWords: (words: string) => void,
+  setPicked: (place: PickedPlace | null) => void,
+  eventId: string | null,
+): (event: FormEvent | null) => void {
+  const pickEvent = useCallback(
+    (event: FormEvent | null) => {
+      setForm((held) => withEvent(held, event));
+      const place = event?.place ?? null;
+      setWords(place ?? '');
+      setPicked(
+        event === null || place === null
+          ? null
+          : { placeId: null, position: { latitude: event.latitude, longitude: event.longitude }, words: place },
+      );
+    },
+    [setForm, setWords, setPicked],
+  );
+  usePreselected(eventId, pickEvent);
+  return pickEvent;
 }
 
 // What the form holds, and its sending: back to the room or the post after an edit, to 내 파티 after making one.
-function useFormState(quest: Quest | null): FormState {
+function useFormState(quest: Quest | null, eventId: string | null): FormState {
   const editing = quest !== null;
-  const send = useSend({ quest });
+  const send = useSend(quest);
   const holders = quest?.holders ?? [];
   const friends = (useQuery(friendsQuery).data ?? []).filter(({ id }) => !holders.some((holder) => holder.id === id));
   const [form, setForm] = useState<PartyForm>(() => (quest === null ? emptyForm() : formOf(quest)));
@@ -113,6 +116,7 @@ function useFormState(quest: Quest | null): FormState {
   const [picked, setPicked] = useState<PickedPlace | null>(null);
   const [saving, setSaving] = useState(false);
   const unplaced = words.trim() !== '' && picked === null;
+  const pickEvent = useEventPick(setForm, setWords, setPicked, editing ? null : eventId);
   const most = invitable(form, Math.max(holders.length, 1));
   const shownChosen = chosen.slice(0, most);
   return {
@@ -134,20 +138,59 @@ function useFormState(quest: Quest | null): FormState {
       setSaving(true);
       void send({ ...form, place: placeOf(words, picked) }, shownChosen).then((sent) => {
         setSaving(false);
-        if (sent) {
+        if (sent === 'taken') {
           (editing ? router.back : showMine)();
         }
       });
     },
+    pickEvent,
   };
 }
 
-function Fields({ state, editing }: { state: FormState; editing: boolean }): ReactElement {
+function When({ state }: { state: FormState }): ReactElement {
+  return (
+    <WhenField
+      onPick={(startsAt) => {
+        state.change({ startsAt });
+      }}
+      startsAt={state.form.startsAt}
+    />
+  );
+}
+
+function Where({ state }: { state: FormState }): ReactElement {
+  return (
+    <View style={styles.where}>
+      <WhereField onPicked={state.setPicked} onWords={state.setWords} picked={state.picked} words={state.words} />
+      {state.unplaced ? <Text style={styles.hint}>지도에서 위치를 골라 주세요</Text> : null}
+    </View>
+  );
+}
+
+interface FieldsProps {
+  state: FormState;
+  editing: boolean;
+  // A Quest for a Global Event keeps the event's title.
+  titleLocked: boolean;
+  onChooseEvent: () => void;
+}
+
+function Fields({ state, editing, titleLocked, onChooseEvent }: FieldsProps): ReactElement {
   const { form, change } = state;
   const open = form.visibility === 'public';
   return (
     <View style={styles.body}>
+      {editing ? null : (
+        <EventField
+          event={form.event}
+          onChoose={onChooseEvent}
+          onClear={() => {
+            state.pickEvent(null);
+          }}
+        />
+      )}
       <TextField
+        disabled={titleLocked}
         label="제목"
         maxLength={30}
         onChangeText={(next) => {
@@ -157,21 +200,9 @@ function Fields({ state, editing }: { state: FormState; editing: boolean }): Rea
         value={form.title}
       />
       <DescriptionField form={form} onChange={change} />
-      {editing ? null : (
-        <WhenField
-          onPick={(startsAt) => {
-            change({ startsAt });
-          }}
-          startsAt={form.startsAt}
-        />
-      )}
+      {editing ? null : <When state={state} />}
       {open ? <CapacityField form={form} onChange={change} /> : null}
-      {editing ? null : (
-        <View style={styles.where}>
-          <WhereField onPicked={state.setPicked} onWords={state.setWords} picked={state.picked} words={state.words} />
-          {state.unplaced ? <Text style={styles.hint}>지도에서 위치를 골라 주세요</Text> : null}
-        </View>
-      )}
+      {editing ? null : <Where state={state} />}
       <VisibilityField form={form} onChange={change} />
       {open ? <BoardField form={form} onChange={change} /> : null}
       <FriendPicker
@@ -185,10 +216,25 @@ function Fields({ state, editing }: { state: FormState; editing: boolean }): Rea
   );
 }
 
-function Form({ quest }: FormProps): ReactElement {
-  const state = useFormState(quest);
+function Form({ quest, eventId }: FormProps): ReactElement {
+  const state = useFormState(quest, eventId);
+  const [picking, setPicking] = useState(false);
   useToastAbove(FOOTER, useIsFocused());
   const editing = quest !== null;
+  if (picking) {
+    const back = (): void => {
+      setPicking(false);
+    };
+    return (
+      <EventPicker
+        onBack={back}
+        onPick={(event) => {
+          state.pickEvent(event);
+          back();
+        }}
+      />
+    );
+  }
   const title = editing ? (quest.joinPolicy === 'closed' ? '파티 수정' : '모집글 수정') : '파티 만들기';
   const open = state.form.visibility === 'public';
   const submitWords = editing ? '수정 완료' : open ? '파티 올리기' : '파티 만들기';
@@ -202,15 +248,28 @@ function Form({ quest }: FormProps): ReactElement {
       leave={{ kind: 'back', onPress: router.back }}
       title={title}
     >
-      <Fields editing={editing} state={state} />
+      <Fields
+        editing={editing}
+        onChooseEvent={() => {
+          setPicking(true);
+        }}
+        state={state}
+        titleLocked={(quest?.globalEvent ?? state.form.event) !== null}
+      />
     </FullScreenPanel>
   );
 }
 
 // 파티 만들기, the frames `PartyCreate` and `PartyAppt`; with a Quest, its edit mode.
-export function PartyFormScreen({ questId }: { questId: string | null }): ReactElement {
+export function PartyFormScreen({
+  questId,
+  eventId,
+}: {
+  questId: string | null;
+  eventId: string | null;
+}): ReactElement {
   if (questId === null) {
-    return <Form quest={null} />;
+    return <Form eventId={eventId} quest={null} />;
   }
   return <EditedForm questId={questId} />;
 }
@@ -218,7 +277,7 @@ export function PartyFormScreen({ questId }: { questId: string | null }): ReactE
 function EditedForm({ questId }: { questId: string }): ReactElement {
   const { data: quest, isPending, refetch } = useQuery(questQuery(questId));
   if (quest !== undefined) {
-    return <Form quest={quest} />;
+    return <Form eventId={null} quest={quest} />;
   }
   return (
     <FullScreenPanel leave={{ kind: 'back', onPress: router.back }} title="모집글 수정">

@@ -31,6 +31,7 @@ type PartyClient = Pick<
   | 'listMyJoinRequests'
   | 'withdrawJoinRequest'
   | 'makeQuest'
+  | 'attendGlobalEvent'
   | 'changeQuest'
   | 'inviteToQuest'
   | 'acceptInvitation'
@@ -52,6 +53,7 @@ export const partyClient: PartyClient = {
   },
   makeQuest: (making, idempotencyKey) =>
     call('POST', '/quests/own', isQuest, { body: making, headers: { 'Idempotency-Key': idempotencyKey } }),
+  attendGlobalEvent: (globalEventId) => call('POST', '/quests', isQuest, { body: { globalEventId } }),
   changeQuest: (questId, change) => call('PATCH', path('quests', questId), isQuest, { body: change }),
   inviteToQuest: async (questId, userId) => {
     await call('POST', path('quests', questId, 'invitations'), isNothing, { body: { userId } });

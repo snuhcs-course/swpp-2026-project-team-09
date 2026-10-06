@@ -1,33 +1,25 @@
-import { router, type SitemapType, useSitemap } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { useCallback } from 'react';
-import { useNotReadyToast } from '@/design-system';
+import { questsQuery } from '@/api/queries';
+import { useToast } from '@/design-system';
+import { sharedQuestFor } from '@/features/events/adapter';
 
-const PARTY_CREATE = '/party/create';
-
-// The address without its groups: "/(signed-in)/party/create" is "/party/create".
-function addressOf(href: SitemapType['href']): string {
-  const path = typeof href === 'string' ? href : href.pathname;
-  return path.replaceAll(/\/\([^/]+\)/gu, '') || '/';
-}
-
-function holds(node: SitemapType, address: string): boolean {
-  return addressOf(node.href) === address || node.children.some((child) => holds(child, address));
-}
-
-// Opens 파티 만들기 with a Global Event chosen, `/party/create?eventId=…`. Another task builds that screen: until the
-// app has it, the control says that it is not ready.
+// Opens 파티 만들기 with a Global Event chosen (`/party-form?eventId=…`). A User who already holds the event's 파티 with
+// others is led to its room instead.
 export function useOpenPartyCreate(): (eventId: string) => void {
-  const sitemap = useSitemap();
-  const showNotReady = useNotReadyToast();
-  const ready = sitemap !== null && holds(sitemap, PARTY_CREATE);
+  const quests = useQuery(questsQuery).data ?? [];
+  const showToast = useToast();
   return useCallback(
     (eventId: string) => {
-      if (ready) {
-        router.push({ pathname: PARTY_CREATE, params: { eventId } });
+      const shared = sharedQuestFor(quests, eventId);
+      if (shared === null) {
+        router.push({ pathname: '/party-form', params: { eventId } });
       } else {
-        showNotReady();
+        router.push(`/room/${shared.id}`);
+        showToast('이 행사에 함께 가는 파티가 이미 있어요');
       }
     },
-    [ready, showNotReady],
+    [quests, showToast],
   );
 }
