@@ -1,6 +1,7 @@
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { apiClient } from './client';
 import type { RestaurantMenus } from './menu-types';
+import type { Place } from './types';
 import type { JoinRequest } from './waiting-types';
 
 // One entry of the cache per operation, each under its own key. The hooks of the features combine them, so that an
@@ -76,3 +77,6 @@ export const placesQuery = queryOptions({
   queryFn: () => apiClient.listPlaces(),
   staleTime: Infinity,
 });
+export function placeSearchQuery(words: string): UseQueryOptions<Place[], Error, Place[], string[]> {
+  return { queryKey: [...PLACES_KEY, 'search', words], queryFn: () => apiClient.searchPlaces(words) };
+}

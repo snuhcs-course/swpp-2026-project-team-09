@@ -64,6 +64,8 @@ export default function SignedInLayout(): ReactElement {
             <Stack.Screen name="me/friends/index" options={slideFrom('right', reduceMotion)} />
             <Stack.Screen name="me/friends/requests" options={slideFrom('right', reduceMotion)} />
             <Stack.Screen name="me/friends/add" options={slideFrom('right', reduceMotion)} />
+            <Stack.Screen name="me/timetable/index" options={slideFrom('right', reduceMotion)} />
+            <Stack.Screen name="me/timetable/class" options={slideFrom('right', reduceMotion)} />
             <Stack.Screen name="invite/[token]" options={slideFrom('bottom', reduceMotion)} />
             <Stack.Screen name="menus" options={slideFrom('bottom', reduceMotion)} />
             <Stack.Screen name="map-sources" options={slideFrom('right', reduceMotion)} />

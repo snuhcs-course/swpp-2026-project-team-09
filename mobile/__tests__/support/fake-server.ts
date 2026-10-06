@@ -10,6 +10,8 @@ export interface Received {
   query: Record<string, string>;
   // The Authorization header, or null without one.
   authorization: string | null;
+  // The Idempotency-Key header; left out without one.
+  idempotencyKey?: string;
   body: unknown;
 }
 
@@ -58,6 +60,7 @@ export function startFakeServer(): FakeServer {
       path: url.pathname,
       query: Object.fromEntries(url.searchParams),
       authorization: headerOf(init, 'Authorization'),
+      idempotencyKey: headerOf(init, 'Idempotency-Key') ?? undefined,
       body: bodyOf(init),
     };
     received.push({ route, request });

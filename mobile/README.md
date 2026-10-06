@@ -346,7 +346,8 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   address can ask for its 위치 공유 card (`/me?show=sharing`). The bodies of 파티 and 행사 say "준비 중이에요" until
   their tasks fill them; 내 정보 is described below.
 - **Screens above the tabs** are routes of the stack: the Quest list on the whole screen (`/quests`), 알림
-  (`/notifications`) and 프로필 편집 (`/profile-edit`). Each is a
+  (`/notifications`), 프로필 편집 (`/profile-edit`), 시간표 (`/me/timetable`) and its class form
+  (`/me/timetable/class`). Each is a
   `FullScreenPanel` and slides in over 0.28 s, from the bottom for `/quests` and from the right for a pushed screen,
   or appears without sliding where the phone asks for less motion (`slideFrom` in the layout). The tabs lie under
   them also when the app opens at their address (`unstable_settings`).
@@ -585,8 +586,8 @@ number of 알림's rows in red ("9+" above nine), and four cards from the top:
   admission year), "SNU 계정 인증됨" and "프로필 편집";
 - 시간표 (`week-card.tsx`): Monday to Friday from 09 to 18, today's day in navy, a block for each time of a class
   (`GET /timetable/classes`, with `GET /places` for the numbers) in the colour of the class's place in the timetable
-  (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". The tiles "직접 입력", "이미지로 불러오기"
-  and "빈 시간 말하기" say "준비 중이에요";
+  (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". The tile "직접 입력" opens 시간표; "이미지로
+  불러오기" and "빈 시간 말하기" say "준비 중이에요";
 - 위치 공유 (`sharing-card.tsx`): the switch "친구와 위치 공유", which is the Master Switch, with the number of
   Friends, and "캠퍼스 밖이라 위치가 공유되지 않아요" while the last upload was off campus. Turning it on without the
   location permission shows the map's explanation and the system's prompt first; a refusal leaves it off with
@@ -600,6 +601,24 @@ number of 알림's rows in red ("9+" above nine), and four cards from the top:
 (`profile-edit-screen.tsx`) edits the name, the department, the admission year and the interests with Onboarding's
 fields, sends the changed ones with `PATCH /users/me/profile`, puts the answer in the Lobby and goes back; a failure
 says "저장하지 못했어요. 다시 시도해 주세요" and stays.
+
+시간표 (`/me/timetable`, `src/screens/timetable/timetable-screen.tsx`, the `Timetable` frame without its 학기 card,
+since the main server stores no semester) lists the classes in the main server's order: a bar in the class's colour of
+the week, the name with "겹침" when the answer's `overlaps` names another class, "월·수 10:30–12:00" and "제1공학관
+301동 118호" or "장소 미정" from the first time. Without classes it says "등록된 수업이 없어요". A row and "+ 수업 추가"
+open the class form (`/me/timetable/class`, with `?classId=` for an edit; `class-form-screen.tsx` and
+`class-fields.tsx`): 과목명, the seven days, the hour and minute selects of 시작 시각 and 종료 시각, 장소 and 강의실
+선택. It is saved as one time per chosen day with the same hours, Place and room (`saveOf` in
+`src/features/timetable/class-form.ts`); a class whose times differ opens with its first time's. While the days and
+hours cross another class by the main server's rule, a warning names each one, and saving is still allowed. "저장"
+waits for a name, a day, both times with the end after the start and a Place, and goes back with "수업을
+추가했어요", "수업을 수정했어요" or "저장했어요 · 겹치는 수업이 있어요"; a refusal keeps the form open with its words.
+"삭제" asks "이 수업을 삭제할까요?". After each change `useClassChanges()` fetches the classes and the Quests again.
+
+장소 선택 (`src/screens/places/place-picker.tsx`) is a component, not a route: the screen that needs a Place draws
+`<PlacePicker mode picked onPick onClose />` over itself, and Android's back closes it. It lists `GET /places`, and
+`GET /places/search?q=` once the User has stopped typing for 300 ms. Its only `mode` so far is `class`, a list;
+`event`, with "지도에서 직접 찍기" and the map, is for P13's Sub Quests and P14's Meetups.
 
 알림 (`notifications-screen.tsx`) is composed from the main server's lists (`useNotices()` of the notifications
 feature), in this order: a Party running for a Quest the User holds ("{name}님이 파티를 활성화했어요", or "파티가

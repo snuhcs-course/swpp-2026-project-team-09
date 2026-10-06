@@ -243,7 +243,7 @@ function isOverlap(value: unknown): value is TimetableClass['overlaps'][number] 
   return hasTexts(value, ['id', 'courseName']);
 }
 
-function isTimetableClass(value: unknown): value is TimetableClass {
+export function isTimetableClass(value: unknown): value is TimetableClass {
   return (
     hasTexts(value, ['id', 'courseName']) &&
     listOf(isClassTime)(field(value, 'times')) &&

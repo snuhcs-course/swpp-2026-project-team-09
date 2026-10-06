@@ -9,9 +9,9 @@ import { FRIEND_STATUSES, MY_FRIEND_ID } from './data/friends';
 import { MENUS } from './data/menus';
 import { PLACES } from './data/places';
 import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
-import { CLASSES } from './data/timetable';
 import { MEETUPS, QUEST_INVITATIONS } from './data/waiting';
 import { mockFriendships as friendships } from './friendships';
+import { mockTimetable as timetable } from './timetable';
 import { mockWalkingRoute } from './walking-route';
 
 // The Master Switch, which the main server keeps on the User. The mock keeps it in memory: off at each start.
@@ -106,8 +106,16 @@ export const mockClient: ApiClient = {
   // The User leads no Quest of the mock's.
   listJoinRequests: () => answer('listJoinRequests', () => [], []),
   listMeetups: () => answer('listMeetups', () => MEETUPS, { received: [], sent: [] }),
-  listClasses: () => answer('listClasses', () => CLASSES, []),
+  listClasses: () => answer('listClasses', timetable.listClasses, []),
+  addClass: (save) => answer('addClass', () => timetable.addClass(save)),
+  replaceClass: (classId, save) => answer('replaceClass', () => timetable.replaceClass(classId, save)),
+  deleteClass: async (classId) => {
+    await answer('deleteClass', () => {
+      timetable.deleteClass(classId);
+    });
+  },
   listPlaces: () => answer('listPlaces', () => PLACES, []),
+  searchPlaces: (words) => answer('searchPlaces', () => timetable.searchPlaces(words), []),
   listGlobalEvents: () => answer('listGlobalEvents', () => GLOBAL_EVENTS, []),
   listGlobalEventAnnouncers: () => answer('listGlobalEventAnnouncers', () => GLOBAL_EVENT_ANNOUNCERS, []),
   listParties: () => answer('listParties', () => PARTIES, []),

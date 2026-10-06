@@ -15,6 +15,7 @@ type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 interface Request {
   body?: unknown;
   query?: Record<string, string | number>;
+  headers?: Record<string, string>;
   // Whether the request carries the access token. Only the sign-in and the renewal go without one.
   signedIn?: boolean;
 }
@@ -55,7 +56,7 @@ async function readBody(response: Response): Promise<unknown> {
 
 // Sends the request once and gives the answer's body, or throws the refusal. Nothing answering is status 0.
 async function send(method: Method, path: string, request: Request, accessToken: string | null): Promise<unknown> {
-  const headers: Record<string, string> = { Accept: 'application/json' };
+  const headers: Record<string, string> = { Accept: 'application/json', ...request.headers };
   if (request.body !== undefined) {
     headers['Content-Type'] = 'application/json';
   }

@@ -272,6 +272,8 @@ export interface TimetableClass {
   overlaps: { id: string; courseName: string }[];
 }
 
+export type ClassSave = Pick<TimetableClass, 'courseName'> & { times: Omit<ClassTime, 'id'>[] };
+
 // A building of the campus, or a spot without a number.
 export interface Place {
   id: string;

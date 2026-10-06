@@ -9,10 +9,18 @@ interface SearchFieldProps {
   placeholder: string;
   // What a screen reader says, such as "친구 검색".
   label: string;
+  // What a screen reader says for ✕: "지우기" unless given.
+  clearLabel?: string;
 }
 
 // A field that narrows a list: a search icon, the words, and ✕ "지우기" while it holds any.
-export function SearchField({ value, onChangeText, placeholder, label }: SearchFieldProps): ReactElement {
+export function SearchField({
+  value,
+  onChangeText,
+  placeholder,
+  label,
+  clearLabel = '지우기',
+}: SearchFieldProps): ReactElement {
   return (
     <View style={styles.field}>
       <Icon color={color.inkMuted} name="search" size={18} />
@@ -28,7 +36,7 @@ export function SearchField({ value, onChangeText, placeholder, label }: SearchF
       />
       {value === '' ? null : (
         <Pressable
-          accessibilityLabel="지우기"
+          accessibilityLabel={clearLabel}
           accessibilityRole="button"
           hitSlop={space[3]}
           onPress={() => {

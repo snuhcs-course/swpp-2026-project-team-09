@@ -16,6 +16,8 @@ import FriendsScreen from '@/app/(signed-in)/me/friends/index';
 import FriendRequestsScreen from '@/app/(signed-in)/me/friends/requests';
 import MapSourcesScreen from '@/app/(signed-in)/map-sources';
 import MenusScreen from '@/app/(signed-in)/menus';
+import ClassFormScreen from '@/app/(signed-in)/me/timetable/class';
+import TimetableScreen from '@/app/(signed-in)/me/timetable/index';
 import QuestsScreen from '@/app/(signed-in)/quests';
 import ConsentScreen from '@/app/consent';
 import StartScreen from '@/app/index';
@@ -58,6 +60,8 @@ export async function startApp(initialUrl = '/'): Promise<void> {
       '(signed-in)/me/friends/index': FriendsScreen,
       '(signed-in)/me/friends/requests': FriendRequestsScreen,
       '(signed-in)/me/friends/add': AddFriendScreen,
+      '(signed-in)/me/timetable/index': TimetableScreen,
+      '(signed-in)/me/timetable/class': ClassFormScreen,
       '(signed-in)/invite/[token]': InviteScreen,
       '(signed-in)/menus': MenusScreen,
       '(signed-in)/map-sources': MapSourcesScreen,

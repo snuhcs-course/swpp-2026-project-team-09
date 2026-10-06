@@ -102,7 +102,7 @@ describe('the week', () => {
     expect(screen.getAllByTestId('class-block')).toHaveLength(7);
   });
 
-  it.each(['직접 입력', '이미지로 불러오기', '빈 시간 말하기'])('says that "%s" is not ready', async (tile) => {
+  it.each(['이미지로 불러오기', '빈 시간 말하기'])('says that "%s" is not ready', async (tile) => {
     const user = await openMe();
 
     await user.press(screen.getByRole('button', { name: tile }));

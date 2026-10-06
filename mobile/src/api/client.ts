@@ -2,6 +2,7 @@ import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
 import { asksMainServer } from './servers';
 import type {
+  ClassSave,
   Footprints,
   Friend,
   FriendStatus,
@@ -63,7 +64,15 @@ export interface ApiClient {
   listJoinRequests: (questId: string) => Promise<JoinRequest[]>;
   listMeetups: () => Promise<Meetups>;
   listClasses: () => Promise<TimetableClass[]>;
+  // A class without its identifiers and overlaps. Each refused with 404 PLACE_NOT_FOUND for a Place not in the list; an add also with 409 TIMETABLE_FULL at 15
+  // classes, and a replacement with 404 CLASS_NOT_FOUND.
+  addClass: (save: ClassSave) => Promise<TimetableClass>;
+  replaceClass: (classId: string, save: ClassSave) => Promise<TimetableClass>;
+  // Refused with 404 CLASS_NOT_FOUND.
+  deleteClass: (classId: string) => Promise<void>;
   listPlaces: () => Promise<Place[]>;
+  // The Places whose name holds the words, or whose number they are, with or without 동.
+  searchPlaces: (words: string) => Promise<Place[]>;
   listGlobalEvents: () => Promise<GlobalEvent[]>;
   // Who announced each Global Event. The app's own: the stored event does not hold it.
   listGlobalEventAnnouncers: () => Promise<{ eventId: string; announcer: string }[]>;
@@ -111,7 +120,11 @@ export const apiClient: ApiClient = {
   listJoinRequests: (questId) => chosen().listJoinRequests(questId),
   listMeetups: () => chosen().listMeetups(),
   listClasses: () => chosen().listClasses(),
+  addClass: (save) => chosen().addClass(save),
+  replaceClass: (classId, save) => chosen().replaceClass(classId, save),
+  deleteClass: (classId) => chosen().deleteClass(classId),
   listPlaces: () => chosen().listPlaces(),
+  searchPlaces: (words) => chosen().searchPlaces(words),
   listGlobalEvents: () => chosen().listGlobalEvents(),
   listGlobalEventAnnouncers: () => chosen().listGlobalEventAnnouncers(),
   listParties: () => chosen().listParties(),

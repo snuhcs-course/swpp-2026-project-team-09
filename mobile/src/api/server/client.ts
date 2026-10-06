@@ -17,6 +17,7 @@ import {
   isProfile,
   isQuests,
   isSentFriendRequest,
+  isTimetableClass,
   isTimetableClasses,
   isUserSummary,
   isWalkingRoute,
@@ -24,6 +25,14 @@ import {
 import { isMenus } from './menu-answers';
 import { isFriendRequests, isJoinRequests, isMeetups, isQuestInvitations } from './waiting-answers';
 import { call } from './http';
+
+// A new key for a request the main server must not run twice, in the form of a random UUID.
+function idempotencyKey(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replaceAll(/[xy]/gu, (letter) => {
+    const digit = Math.floor(Math.random() * 16);
+    return (letter === 'x' ? digit : 8 + (digit % 4)).toString(16);
+  });
+}
 
 // The operations the main server serves on its main line, each from its route. What it does not serve stays the
 // mock's: the Friends' statuses, the Global Events and who announced them, and 오늘의 발자국 (todo.md, section 3).
@@ -77,7 +86,19 @@ export const serverClient: ApiClient = {
   listJoinRequests: (questId) => call('GET', `/quests/${encodeURIComponent(questId)}/join-requests`, isJoinRequests),
   listMeetups: () => call('GET', '/meetups', isMeetups),
   listClasses: () => call('GET', '/timetable/classes', isTimetableClasses),
+  // Sent once for each press of 저장, so its key is new each time.
+  addClass: (save) =>
+    call('POST', '/timetable/classes', isTimetableClass, {
+      body: save,
+      headers: { 'Idempotency-Key': idempotencyKey() },
+    }),
+  replaceClass: (classId, save) =>
+    call('PUT', `/timetable/classes/${encodeURIComponent(classId)}`, isTimetableClass, { body: save }),
+  deleteClass: async (classId) => {
+    await call('DELETE', `/timetable/classes/${encodeURIComponent(classId)}`, isNothing);
+  },
   listPlaces: () => call('GET', '/places', isPlaces),
+  searchPlaces: (words) => call('GET', '/places/search', isPlaces, { query: { q: words } }),
   listParties: () => call('GET', '/parties', isParties),
   getMyParty: async () => {
     try {
