@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 import { Modal, StyleSheet, Text, View } from 'react-native';
 import { Button } from './button';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
-import { color, radius, shadow, space, text } from './tokens';
+import { color, font, radius, shadow, space, text } from './tokens';
 
 interface DialogProps {
   visible: boolean;
@@ -10,8 +10,10 @@ interface DialogProps {
   title: string;
   // What an answer leads to, in plain words.
   body?: string;
-  // The answer that goes on. It is the one fill in the key colour.
+  // The answer that goes on. It is the one fill: in the key colour, or in red for `danger`.
   confirmLabel: string;
+  // `danger` for an answer that cannot be taken back, such as "로그아웃".
+  tone?: 'primary' | 'danger';
   // The answer that leaves things as they are. Without it the dialog has one button.
   cancelLabel?: string;
   onConfirm?: () => void;
@@ -27,6 +29,7 @@ export function Dialog({
   body,
   confirmLabel,
   cancelLabel,
+  tone = 'primary',
   onConfirm,
   onCancel,
 }: DialogProps): ReactElement {
@@ -54,7 +57,7 @@ export function Dialog({
               </View>
             )}
             <View style={styles.action}>
-              <Button full onPress={onConfirm}>
+              <Button full onPress={onConfirm} variant={tone === 'danger' ? 'destructive' : 'primary'}>
                 {confirmLabel}
               </Button>
             </View>
@@ -84,7 +87,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.float,
   },
-  title: { ...text.title, color: color.ink },
+  title: { ...text.title, fontFamily: font.bold, color: color.ink },
   body: { ...text.body, color: color.inkMuted },
   actions: {
     flexDirection: 'row',

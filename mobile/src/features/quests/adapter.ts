@@ -1,11 +1,11 @@
 import type { JoinPolicy, LatLng, MyParty, Party, Quest, SubQuest } from '@/api/types';
-import { koreaClock, sameKoreaDay } from '@/korea-time';
+import { koreaClock, koreaDate, koreaDaysAfter, koreaNextDay, sameKoreaDay } from '@/korea-time';
 
 // What a row of the Quest list is drawn as, which gives its colour: a class; `open`, a Party that others may join;
 // `closed`, a Party that takes nobody else, and a Quest that no Party names, such as a dinner with a Friend.
 export type QuestRowTone = 'class' | 'open' | 'closed';
 
-// One row of the Quest list.
+// One row of the Quest list, on the map and on the whole screen.
 export interface QuestRowView {
   id: string;
   // `party` is every Quest that is not a class: the frames draw a Shared Quest as a Party.
@@ -16,14 +16,22 @@ export interface QuestRowView {
   icon: 'clock' | 'users' | 'lock';
   // The Party's that is marked with the Quest. Null for a class and for a Quest that no Party names.
   joinPolicy: JoinPolicy | null;
-  // "다음 강의 · 23분 후"
+  // "다음 강의 · 23분 후", the list on the map's.
   kicker: string;
+  // The frames' word for its kind, the list on the whole screen's: "강의", "공개 파티" or "비공개 파티 · 김민준".
+  label: string;
   // "자료구조"
   title: string;
   // "14:00 · 301동 118호"
   meta: string;
   // "301동 118호", or "" for a Quest without a place.
   place: string;
+  // "14:00", the start of the Sub Quest it shows, or "" without one.
+  time: string;
+  // How many days of Korea's calendar its start is after today, or null without a start.
+  daysAway: number | null;
+  // Every Sub Quest of it ended or was cancelled.
+  ended: boolean;
   // Where the map goes on a press. Null for a Quest without a place.
   position: LatLng | null;
 }
@@ -157,6 +165,19 @@ function meta(subQuest: SubQuest | null): string {
   return [start === null ? '' : koreaClock(start), label].filter((part) => part !== '').join(' · ');
 }
 
+// The frames' words for a kind on the whole screen: a class, a Party that others may join, and anything else, with
+// whom the User holds it.
+function kindLabel(tone: QuestRowTone, quest: Quest, meId: string): string {
+  if (tone === 'class') {
+    return '강의';
+  }
+  if (tone === 'open') {
+    return '공개 파티';
+  }
+  const others = otherHolders(quest, meId);
+  return others === '' ? '비공개 파티' : `비공개 파티 · ${others}`;
+}
+
 const ROW_ICON = { class: 'clock', open: 'users', closed: 'lock' } as const;
 
 function toneOf(quest: Quest, party: QuestParty | null): QuestRowTone {
@@ -175,6 +196,7 @@ export function toQuestRows(sources: QuestSources): QuestRowView[] {
     const subQuest = shownSubQuest(quest);
     const party = quest.classQuest ? null : partyOf(quest, myParty, parties);
     const tone = toneOf(quest, party);
+    const start = subQuest?.startsAt ?? null;
     return {
       id: quest.id,
       kind: quest.classQuest ? 'class' : 'party',
@@ -182,10 +204,43 @@ export function toQuestRows(sources: QuestSources): QuestRowView[] {
       icon: ROW_ICON[tone],
       joinPolicy: party?.joinPolicy ?? null,
       kicker: quest.classQuest ? classKicker(subQuest, quest === nextClass, now) : sharedKicker(quest, party, meId),
+      label: kindLabel(tone, quest, meId),
       title: party?.title ?? quest.title,
       meta: meta(subQuest),
       place: subQuest?.place?.label ?? '',
+      time: start === null ? '' : koreaClock(start),
+      daysAway: start === null ? null : koreaDaysAfter(now, new Date(start)),
+      ended: subQuest === null && quest.subQuests.length > 0,
       position: positionOf(subQuest),
     };
   });
+}
+
+// A group of the Quest list on the whole screen, under its header.
+export interface QuestGroup {
+  title: string;
+  rows: QuestRowView[];
+}
+
+// The groups of the `MainQuests` frame by the days from today to a Quest's start, the last day of each first. Their
+// rows keep the list's order. Ended Quests are left out; a Quest without a start goes last, under "시간 미정".
+export function toQuestGroups(rows: readonly QuestRowView[], now: Date): QuestGroup[] {
+  const tomorrow = koreaNextDay(now);
+  const groups = [
+    { upTo: 0, title: `오늘 · ${koreaDate(now)}` },
+    { upTo: 1, title: `내일 · ${koreaDate(tomorrow)}` },
+    { upTo: 4, title: '이번 주' },
+    { upTo: 11, title: '다음 주' },
+    { upTo: Number.POSITIVE_INFINITY, title: '그 이후' },
+  ];
+  const shown = rows.filter(({ ended }) => !ended);
+  const timed = groups.map(({ upTo, title }, index) => {
+    const from = index === 0 ? Number.NEGATIVE_INFINITY : (groups[index - 1]?.upTo ?? 0) + 1;
+    return {
+      title,
+      rows: shown.filter(({ daysAway }) => daysAway !== null && daysAway >= from && daysAway <= upTo),
+    };
+  });
+  const untimed = { title: '시간 미정', rows: shown.filter(({ daysAway }) => daysAway === null) };
+  return [...timed, untimed].filter((group) => group.rows.length > 0);
 }

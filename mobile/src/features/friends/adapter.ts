@@ -14,6 +14,8 @@ export interface FriendView {
   photo: string | null;
   // Null when the Friend cannot be seen.
   position: LatLng | null;
+  // Whether the User can see the Friend on the map now, as the main server says.
+  visible: boolean;
 }
 
 export const PRESENCE_LABEL: Record<Presence, string> = {
@@ -49,6 +51,7 @@ export function toFriendViews(
       walk: status?.walk ?? '',
       photo: status?.photo ?? null,
       position: position === undefined ? null : { latitude: position.latitude, longitude: position.longitude },
+      visible,
     };
   });
 }

@@ -73,6 +73,7 @@ describe('the Friends from the main server', () => {
         walk: '',
         photo: null,
         position: { latitude: 37.4598, longitude: 126.9521 },
+        visible: true,
       },
       {
         id: JI_WOO.id,
@@ -84,6 +85,7 @@ describe('the Friends from the main server', () => {
         walk: '',
         photo: null,
         position: null,
+        visible: false,
       },
     ]);
   });

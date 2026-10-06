@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 
 import { Dialog } from '@/design-system/dialog';
 
@@ -39,5 +39,33 @@ describe('Dialog', () => {
     await render(<Dialog confirmLabel="확인" title="다른 기기에서 로그인했어요" visible />);
 
     expect(screen.getAllByRole('button')).toHaveLength(1);
+  });
+});
+
+describe('Dialog, confirming what cannot be taken back', () => {
+  it('fills its answer in red', async () => {
+    await render(<Dialog cancelLabel="취소" confirmLabel="로그아웃" title="로그아웃할까요?" tone="danger" visible />);
+
+    expect(screen.getByRole('button', { name: '로그아웃' })).toHaveStyle({ backgroundColor: '#C42B2B' });
+    expect(screen.getByRole('header', { name: '로그아웃할까요?' })).toHaveStyle({ fontSize: 18 });
+  });
+
+  it("is closed by Android's back button as by its cancel", async () => {
+    const onCancel = jest.fn<void, []>();
+    await render(
+      <Dialog cancelLabel="취소" confirmLabel="로그아웃" onCancel={onCancel} title="로그아웃할까요?" visible />,
+    );
+
+    // The Modal around the dialog takes Android's back button.
+    let modal = screen.getByRole('header', { name: '로그아웃할까요?' }).parent;
+    while (modal !== null && modal.props.onRequestClose === undefined) {
+      modal = modal.parent;
+    }
+    if (modal === null) {
+      throw new Error('The dialog stands in no Modal');
+    }
+    await fireEvent(modal, 'requestClose');
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });

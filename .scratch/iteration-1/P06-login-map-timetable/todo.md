@@ -536,16 +536,17 @@ The control is there and only shows the toast. The last column is a proposal for
 
 | Where | Control | Opens | Proposed for |
 |---|---|---|---|
-| Friend list | The friend pill | The friend panel | P14 |
-| Quest list | The full-screen button | The full-screen Quest view | P13 |
-| Quest list | The row of a Party or of a Shared Quest: every row that is no class's | The party screen | P13 |
+| Quest list, on the map and on the whole screen | The row of a Party or of a Shared Quest: every row that is no class's | The party screen | P13 |
+| Friend panel | A Friend's calendar button, "{이름}님과 파티 만들기" | Proposing a Meetup to the Friend | P14 |
+| Friend panel | + 친구 추가 | 친구 추가 | P14 |
 | Above the navigation | 오늘의 발자국 | The story replay | In no Iteration 1 spec |
 | Above the navigation | 활성 파티 | The party screen | P13 |
 | Above the navigation | The 편의기능 button | The dining, shuttle and study layers | P15 |
 | Above the navigation | The AI input, which is a button with the input's look and takes no focus and no text, and its send button, read as disabled | The AI chat, with the real text field | In no Iteration 1 spec |
-| Bottom navigation | 파티, 행사 | The party and events screens | P13 |
 | Bottom navigation | 올리기 | The story sheet | In no Iteration 1 spec |
-| Bottom navigation | 내 정보 | 내 정보, with the Master Switch, sign-out and the timetable | P09 |
+| 파티 | + 만들기, and the bodies of 찾기, 내 파티 and 초대 | 파티 만들기 and the lists of Quests | P13 |
+| 행사 | Its body | The list of Global Events | P13 |
+| 내 정보 | Its body | 내 정보, with the Master Switch, sign-out and the timetable | P19 (ticket 02) |
 | A Global Event's card | 같이 갈 사람 찾기 | The party screen | P13 |
 | A Party's card | 참여하기, 파티 열기 | The party screen | P13 |
 | A Friend's card | 파티 만들기 | Making a Party | P14 |

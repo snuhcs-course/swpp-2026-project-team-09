@@ -78,8 +78,6 @@ describe('the controls above the navigation of the main screen', () => {
 
 describe('a control of the main screen whose feature belongs to another task', () => {
   it.each([
-    ['the friend pill', FRIEND_PILL],
-    ["the Quest list's full-screen button", FULL_SCREEN],
     ["a Party's row", PARTY_ROW],
     ["a Shared Quest's row", DINNER_ROW],
     ['오늘의 발자국', FOOTPRINTS],

@@ -1,17 +1,16 @@
+import { useIsFocused } from 'expo-router';
 import { type ReactElement, type ReactNode, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { color, useNotReadyToast } from '@/design-system';
+import { color, useNotReadyToast, useToastAbove } from '@/design-system';
 import type { CardView } from '@/features/map/adapter';
 import { useMapCards } from '@/features/map/use-map-cards';
 import { CAMPUS_BOUNDS, Map, MAX_ZOOM, MIN_ZOOM } from '@/map';
-import { PositionProvider } from '@/position';
 import { BottomControls } from './bottom-controls';
 import { Card } from './card';
 import { FriendList } from './friend-list';
-import { mapInset, type Room } from './layout';
+import { mapInset, type Room, takenUnderToast, takenUnderToastOverCard } from './layout';
 import { LocationExplanation } from './location-explanation';
-import { MainNav } from './main-nav';
 import { QuestList } from './quest-list';
 import { type MainMap, useMainMap } from './use-main-map';
 import { type Me, useMe } from './use-me';
@@ -79,6 +78,15 @@ function SelectedCard({ card, map, route, onClose, onHeight }: SelectedCardProps
   );
 }
 
+// While the map is in front, a toast sits over the row of buttons, or above an open card.
+function useToastOverMap(cardHeight: number | null): void {
+  const { bottom } = useSafeAreaInsets();
+  useToastAbove(
+    cardHeight === null ? takenUnderToast(bottom) : takenUnderToastOverCard(bottom, cardHeight),
+    useIsFocused(),
+  );
+}
+
 function MainZoomControl({ map, me }: { map: MainMap; me: Me }): ReactElement {
   return (
     <ZoomControl
@@ -95,35 +103,29 @@ function MainZoomControl({ map, me }: { map: MainMap; me: Me }): ReactElement {
 
 // The main screen, the `Main` frame: the map with the User's own Avatar, the people and places of the map's cards
 // and the route; over it the friend list, the Quest list, the zoom control or the selected thing's card, and the
-// controls above the navigation; and the bottom navigation under it.
+// controls above the navigation. It is the first tab: the bottom navigation under it is the tabs', and it stays
+// mounted while another tab is shown, so that the map, the selection, the route and the lists are kept.
 //
 // How it grows: `useMainMap` owns the map's handle, its camera and the moves; `useSelection` holds what is selected,
 // which is the card that is open. A part of the screen takes `map`, `me` for the User's position and `selection`,
 // and gives what it shows. What floats over the map is a child of `OverMap`, in the frame's order, the later above
 // the earlier; a part that a card hides asks `selection.open`. A row of a list selects a thing with
 // `selection.select(cardId.friend(id))` and moves the map with `map.goTo`. Any part reads the User's position with
-// `usePosition()`: the provider below holds the one watch of the phone. The map is told what the controls cover of
-// its edges (`mapInset`), so that its credit and the provider's logo stay clear of them. A part that fits itself to
-// the screen takes `room`: the stage's size and the open card's height.
+// `usePosition()`: the signed-in place's layout holds the one watch of the phone. The map is told what the controls
+// cover of its edges (`mapInset`), so that its credit and the provider's logo stay clear of them. A part that fits
+// itself to the screen takes `room`: the stage's size and the open card's height.
 export function MainScreen(): ReactElement {
-  return (
-    <PositionProvider>
-      <MainParts />
-    </PositionProvider>
-  );
-}
-
-function MainParts(): ReactElement {
   const map = useMainMap();
   const me = useMe(map);
   const cards = useMapCards().data ?? NO_CARDS;
-  const selection = useSelection(cards);
+  const selection = useSelection(cards, useIsFocused());
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
   const route = useRoute(map, me);
   // An open card's height, for the toast above it. A card that opens counts from the last one's until it is laid out.
   const [cardHeight, setCardHeight] = useState(0);
   const [stage, setStage] = useState<Room['stage']>(null);
   const room: Room = { stage, cardHeight: selection.open ? cardHeight : null };
+  useToastOverMap(room.cardHeight);
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
@@ -158,7 +160,6 @@ function MainParts(): ReactElement {
           <BottomControls cardOpen={selection.open} room={room} />
         </OverMap>
       </View>
-      <MainNav cardHeight={room.cardHeight} />
       <LocationExplanation blocked={me.blocked} onAllow={me.allow} onLater={me.later} visible={me.explaining} />
     </View>
   );

@@ -18,6 +18,8 @@ export const color = {
   ink: '#0E1330',
   inkMuted: '#555C74',
   inkSubtle: '#8A90A3',
+  // The frames' faint words of an empty list, such as "결과 없음".
+  inkFaint: '#858CA0',
   onPrimary: '#FFFFFF',
   focusRing: '#3D63D6',
   me: '#2F6BFF',

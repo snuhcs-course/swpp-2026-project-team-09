@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { BackHandler } from 'react-native';
+import { useCallback, useState } from 'react';
 import type { CardView } from '@/features/map/adapter';
+import { useBackToClose } from '@/hooks/use-back-to-close';
 
 // What is selected on the main screen's map: the thing whose card is open.
 export interface Selection {
@@ -29,24 +29,10 @@ function has(cards: readonly CardView[], wanted: string): boolean {
   return cards.some(({ id }) => id === wanted);
 }
 
-// On Android the back button closes an open card before it leaves the app.
-function useBackToClose(open: boolean, close: () => void): void {
-  useEffect(() => {
-    const back = open
-      ? BackHandler.addEventListener('hardwareBackPress', () => {
-          close();
-          return true;
-        })
-      : null;
-    return (): void => {
-      back?.remove();
-    };
-  }, [open, close]);
-}
-
-// One thing at a time is selected. The card's X and Android's back button close it; a press on another thing
-// replaces it. A press on the map beside the things leaves it open, as in the frames.
-export function useSelection(cards: readonly CardView[]): Selection {
+// One thing at a time is selected. The card's X and Android's back button close it, the button only while the map
+// is `inFront`; a press on another thing replaces it. A press on the map beside the things leaves it open, as in the
+// frames.
+export function useSelection(cards: readonly CardView[], inFront: boolean): Selection {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [wait, setWait] = useState<Wait | null>(null);
   const selected = cards.find(({ id }) => id === selectedId) ?? null;
@@ -84,6 +70,6 @@ export function useSelection(cards: readonly CardView[]): Selection {
     setSelectedId(null);
     setWait(null);
   }, []);
-  useBackToClose(open, close);
+  useBackToClose(open && inFront, close);
   return { selected, open, select, selectOrWait, close };
 }
