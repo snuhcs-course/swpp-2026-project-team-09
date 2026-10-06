@@ -176,6 +176,10 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
         override fun getPosition(): LatLng = bounds.middle.toLatLng()
       },
     )
+    // Left to itself, the SDK pauses its drawing when the view leaves the window, as when another tab or a screen
+    // over the map hides it, and does not take it up again when the view comes back: the map stays black. This view
+    // finishes the map itself when it is destroyed, so the SDK is told not to.
+    mapView.setFinishManually(true)
   }
 
   private fun ready(kakaoMap: KakaoMap) {

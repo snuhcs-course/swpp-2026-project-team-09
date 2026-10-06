@@ -1327,7 +1327,10 @@ of the design system's tokens. How it keeps the rules:
   places it 8 from the bottom right of the whole view and does not read `inset` yet, which `native-map.tsx` hands
   it with all four sides: until it does, the main screen's controls cover the logo.
 - **The screen**: the module starts the SDK with the key when the app starts, and pauses and resumes each map when
-  the app leaves and comes back to the screen.
+  the app leaves and comes back to the screen. A map whose view leaves the window, as when another tab or a screen
+  over the map hides it, keeps its engine: the SDK would pause its drawing there and never take it up again, leaving
+  the map black, so the module tells it that the map is finished by hand (`setFinishManually`) and finishes it when
+  the view is destroyed.
 
 The module cannot be tested with Jest: Jest runs without it. It is checked by hand on `/map-check`, against the
 device check of the spec. `native-map.tsx` is tested with the module's view mocked
