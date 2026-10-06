@@ -21,6 +21,7 @@ import {
   isUserSummary,
   isWalkingRoute,
 } from './answers';
+import { isMenus } from './menu-answers';
 import { isFriendRequests, isJoinRequests, isMeetups, isQuestInvitations } from './waiting-answers';
 import { call } from './http';
 
@@ -97,4 +98,5 @@ export const serverClient: ApiClient = {
         endLongitude: to.longitude,
       },
     }),
+  listMenus: (date) => call('GET', '/menus', isMenus, { query: { date } }),
 };

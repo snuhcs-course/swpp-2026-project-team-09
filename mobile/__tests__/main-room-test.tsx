@@ -28,6 +28,7 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 }));
 
 const CREDIT = '© OpenStreetMap · 국토지리정보원';
+const CREDIT_BUTTON = '지도 데이터 출처 보기';
 
 function rows(list: 'friend' | 'quest'): ReturnType<typeof screen.getByTestId> {
   return screen.getByTestId(`${list}-rows`);
@@ -120,7 +121,8 @@ describe("the main screen's lists on a low screen", () => {
     await openMain();
 
     // The credit's bottom is 134 above the navigation and its line is 14: its top is at 148, and 8 are clear.
-    expect(screen.getByText(CREDIT)).toHaveStyle({ left: 16, bottom: 134, lineHeight: 14 });
+    expect(screen.getByRole('button', { name: CREDIT_BUTTON })).toHaveStyle({ left: 16, bottom: 134 });
+    expect(screen.getByText(CREDIT)).toHaveStyle({ lineHeight: 14 });
     await layStage(360, 428);
     expect(rows('friend')).toHaveStyle({ maxHeight: 172 });
     await layStage(360, 427);
@@ -136,7 +138,7 @@ describe("the main screen's lists on a low screen while a card is open", () => {
     await layCard(180);
 
     // The credit's top is 72, 180, 8 and 14 above the navigation: 274. With 8 clear, 138 are left of 520.
-    expect(screen.getByText(CREDIT)).toHaveStyle({ left: 16, bottom: 260 });
+    expect(screen.getByRole('button', { name: CREDIT_BUTTON })).toHaveStyle({ left: 16, bottom: 260 });
     expect(rows('friend')).toHaveStyle({ maxHeight: 114 });
     expect(rows('quest')).toHaveStyle({ maxHeight: 114 });
     expect(button(FRIEND_ROW).parent).toHaveStyle({ opacity: 0.4 });

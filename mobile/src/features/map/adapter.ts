@@ -5,7 +5,7 @@ import { koreaClock, koreaDay } from '@/korea-time';
 import { givenName, shortTitle } from './short-name';
 
 // The icons a card's lines use, by their names in the design system.
-export type CardIcon = 'clock' | 'pin' | 'users' | 'info' | 'route';
+export type CardIcon = 'clock' | 'pin' | 'users' | 'info' | 'route' | 'meal';
 
 // What stands for the thing, at the head of its card and as its marker on the map:
 // - a person: the Avatar, with the status for a Friend; `presence` is null for a member of the User's Party who is
@@ -14,7 +14,7 @@ export type CardIcon = 'clock' | 'pin' | 'users' | 'info' | 'route';
 // - a place: the icon and the colour of its kind in the design system. The frames draw a Shared Quest as a Party.
 export type CardMark =
   | { type: 'person'; id: string; name: string; photo: string | null; presence: Presence | null }
-  | { type: 'place'; place: 'official' | 'party' | 'quest' };
+  | { type: 'place'; place: 'official' | 'party' | 'quest' | 'dining' };
 
 // The thing's marker on the map, beside its `mark` and its `position`.
 export interface CardMarker {
@@ -34,16 +34,18 @@ export interface CardMarker {
 // What a card shows for anything pressed on the map. Its id is also the id of the marker or the Avatar.
 export interface CardView {
   id: string;
-  // `shared-quest` is a Quest of the User's that no Party names, such as a dinner with a Friend.
-  kind: 'global-event' | 'party' | 'shared-quest' | 'friend' | 'party-member';
+  // `shared-quest` is a Quest of the User's that no Party names, such as a dinner with a Friend. `dining` is the
+  // Place of restaurants with menus today, while the 식당 layer is on.
+  kind: 'global-event' | 'party' | 'shared-quest' | 'friend' | 'party-member' | 'dining';
   mark: CardMark;
   marker: CardMarker;
   // "공식 행사 · 컴퓨터공학부 공지"
   subLabel: string;
   title: string;
   lines: { icon: CardIcon; text: string }[];
-  // `route` draws the way there. `not-ready` says "준비 중이에요": the feature belongs to another task.
-  primary: { label: string; action: 'route' | 'not-ready' };
+  // `route` draws the way there. `menu` opens the menu panel at the restaurant. `not-ready` says "준비 중이에요": the
+  // feature belongs to another task.
+  primary: { label: string; action: 'route' | 'not-ready' } | { label: string; action: 'menu'; restaurant: string };
   secondary: { label: string; action: 'not-ready' } | null;
   position: LatLng;
 }
@@ -54,6 +56,7 @@ export const cardId = {
   quest: (questId: string): string => `party:${questId}`,
   friend: (userId: string): string => `friend:${userId}`,
   partyMember: (userId: string): string => `party-member:${userId}`,
+  dining: (placeId: string): string => `dining:${placeId}`,
 } as const;
 
 type Line = CardView['lines'][number];

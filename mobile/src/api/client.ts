@@ -25,6 +25,7 @@ import type {
   UserSummary,
   WalkingRoute,
 } from './types';
+import type { RestaurantMenus } from './menu-types';
 import type { FriendRequests, JoinRequest, Meetups, QuestInvitation } from './waiting-types';
 
 // Everything the screens ask of the main server. A refusal or no answer is thrown as an `ApiError`.
@@ -74,6 +75,8 @@ export interface ApiClient {
   // main server holds it.
   getFootprints: () => Promise<Footprints>;
   findWalkingRoute: (from: LatLng, to: LatLng) => Promise<WalkingRoute>;
+  // One day's menus, a calendar day in Korea as "2026-10-06", by restaurant.
+  listMenus: (date: string) => Promise<RestaurantMenus[]>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`). Chosen at each
@@ -115,4 +118,5 @@ export const apiClient: ApiClient = {
   getMyParty: () => chosen().getMyParty(),
   getFootprints: () => chosen().getFootprints(),
   findWalkingRoute: (from, to) => chosen().findWalkingRoute(from, to),
+  listMenus: (date) => chosen().listMenus(date),
 };

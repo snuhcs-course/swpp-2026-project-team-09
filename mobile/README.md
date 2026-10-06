@@ -482,7 +482,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
 - **The controls above the navigation** (`bottom-controls.tsx`): "오늘의 발자국", with up to three faces and "친구
   5명의 오늘" from `useFootprints()`; "활성 파티", shown only while the User is in a Party, with "<n>명 공유 중" for
   the members who share their position, the User left out, or "응답 대기" when nobody else does
-  (`useActiveParty()`); the 편의기능 button; and the AI input. Each says "준비 중이에요".
+  (`useActiveParty()`); the 편의기능 button (`layers.tsx`, below); and the AI input. Each but the 편의기능 button says
+  "준비 중이에요".
   - The AI input (`ai-input.tsx`) is not a text field yet. It is a button with the look of the wireframe's empty
     input, the placeholder "무엇이든 부탁해 보세요" and the grey send button: nothing takes the focus, no keyboard
     comes up and nothing can be typed. A press on it says "준비 중이에요"; so does a press on the send button, which
@@ -491,8 +492,29 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   - On a screen narrower than the wireframe's 390, "오늘의 발자국" gives way to "활성 파티", whose two lines stay
     whole (`footprintsForm` in `layout.ts`): it drops its second line and keeps one face, has no face under 360,
     and is the one button of the row that shrinks, its name cut with an ellipsis. Alone in the row it is whole.
-- While a card is open, the row of "오늘의 발자국" and "활성 파티" and the 편의기능 button are not shown, as the zoom
-  control is not; both lists, the AI input and the navigation stay.
+- While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
+  are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
+  the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
+  and the 편의기능 button stay.
+- **The 편의기능 stack** (`layers.tsx`, the `MainLayers` frame). The button, "편의기능 (식당 · 셔틀버스)", opens and
+  closes it and says whether it is open; it is navy with a white icon while the stack is open, and under its icon a
+  dot of 5 in each colour of a layer that is on. The stack rises 8 above it, or appears at once where the phone asks
+  for less motion: from the bottom up the toggles 식당 and 셔틀버스, 60 by 64, read as toggle buttons "식당 켜기" or
+  "식당 끄기", filled with their layer's colour while on; above them the tile 메뉴 ("메뉴 보기"), which closes the
+  stack and opens the menu panel at the meal served next. A transparent scrim over the map ("편의기능 레이어 닫기")
+  and Android's back button close it, the button before a card under it; the zoom control is hidden while it is
+  open. 셔틀버스 says "준비 중이에요" and stays off until P15's ticket 02. The layers start off when the app starts
+  and stay as they are while another tab is shown.
+- **The 식당 layer** (`src/features/dining/`, the `MapDining` frame). Turning it on fetches today's menus, a day of
+  Korea's calendar, and the Places, every time; failing either shows no pins and says "식당 정보를 불러오지
+  못했어요". A pin stands on the Place of each restaurant of the restaurant → Place table (see "Data") that has a
+  line today; restaurants that share a Place share it. A pin is the frame's single 학식 mark (`MapRestaurant`), with
+  the restaurant's name under it from the `names` level, or "{first} 외 {n}곳". Its card says "식당 · 학식 · 63동",
+  the restaurant's name (the Place's when several share it), the Place, and the meals each restaurant serves today
+  ("오늘 점심 · 저녁"); "메뉴 보기" opens the menu panel at the meal served next, at the first of its restaurants.
+  Turning the layer off takes the pins away and closes a 식당's card. The frame's clusters, cafés and convenience
+  stores are not built.
+- **The map's credit** is a button, "지도 데이터 출처 보기", that opens the sources of the map's data.
 - Every control has a Korean name for a screen reader, the wireframe's where it has one. A touch area is at least 48
   high: a row is 56, and the pills and the round buttons of 32 and 40 reach past their shapes (`hitSlop`), never
   into a neighbour's shape.
@@ -585,6 +607,23 @@ waiting ("{name}님의 파티 초대"), and the requests to join each Quest the 
 {n}명"). An invitation's and a Meetup's row open 파티 at 초대, a Friend Request's 친구 요청; the others say "준비 중이에요". A list that failed is
 left out; when every one failed it shows the error state. Without rows it says "새 알림이 없어요".
 
+**The menu panel** (`src/screens/menus/`, `/menus`) has no frame. It is a `FullScreenPanel` that comes up from the
+bottom: ✕ "닫기" and "메뉴"; under the app bar the 7 days from today as `DayTile`s ("오늘", "내일", then the weekday),
+the tabs 아침, 점심 and 저녁, and "{M월 d일 HH:mm}에 가져온 메뉴예요" from the oldest collection of the day. It opens
+on the meal served next by Korea's clock: 아침 before 10:00, 점심 from 10:00, 저녁 from 15:00, and 내일's 아침 from
+20:00 (`NEXT_MEAL_FROM` in the dining adapter). Its address may name the day, the meal and a restaurant
+(`/menus?date=2026-10-06&meal=lunch&restaurant=학생회관식당`), whose section is then scrolled to the top. A day is
+fetched once when it is chosen, and kept; a meal fetches nothing. The restaurants are cards in the server's order,
+the name with "{number}동" where the table places it, and the chosen meal's lines in the page's order (ADR 0001): a
+line with a name and a price as a row with the price at the right ("6,000원"), a heading in 14/700, a note in 13
+muted, any other line as written; a restaurant without lines for the meal says "운영하지 않아요". An empty day says
+"이날 올라온 메뉴가 없어요"; the shared loading and error states cover the rest.
+
+**The sources of the map's data** (`src/screens/map-sources-screen.tsx`, `/map-sources`), opened from the map's
+credit, slide in from the right: "뒤로" and "지도 데이터 출처", a card for OpenStreetMap (ODbL, with its copyright
+page) and one for 국토지리정보원's 연속수치지형도 건물 under 공공누리 type 1 (with the VWorld page it is downloaded
+from). Each link opens the browser. The year in the second card is that of the files' renewal on the VWorld page.
+
 The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and
 `/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
 closes back to the screen it was opened from. The documents' texts are placeholders.
@@ -629,15 +668,17 @@ position. Its `kind` is `global-event`, `party`, `shared-quest`, `friend` or `pa
 
 Behind a hook are three layers:
 
-- **The API client** (`src/api/client.ts`): one operation per question to the main server. `src/api/types.ts` (and `waiting-types.ts`, the lists of what waits for the User) holds
-  the answers' shapes. A shape marked "provisional" comes from an open pull request of the main server, and one marked
-  "the app's own" is defined nowhere else yet.
+- **The API client** (`src/api/client.ts`): one operation per question to the main server. `src/api/types.ts` (with
+  `waiting-types.ts`, the lists of what waits for the User, and `menu-types.ts`, the menus) holds the answers' shapes.
+  A shape marked "provisional" comes from an open pull request of the main server, and one marked "the app's own" is
+  defined nowhere else yet.
 - **An adapter** per feature (`src/features/<feature>/adapter.ts`): turns answers into what the screens use, such as
   `FriendView`, `QuestRowView`, `CardView`, `FootprintsView` and `ActivePartyView`.
 - **The main server's client** (`src/api/server/`): the operations the main server serves, in a build that asks it
   (`asksMainServer()`). `http.ts` is the one way to the main server: it attaches the access token, renews the Session
-  once on a 401 and asks again, and ends the Session when that cannot mend it. `answers.ts` checks each answer's shape
-  before the app believes it; an answer of another shape fails as no answer does.
+  once on a 401 and asks again, and ends the Session when that cannot mend it. `answers.ts` (with `waiting-answers.ts`
+  and `menu-answers.ts`) checks each answer's shape before the app believes it; an answer of another shape fails as
+  no answer does.
 - **The mocks** (`src/api/mock/`): every other operation, and every operation where the app asks no main server, is
   answered inside the app, in the main server's shape, with what the `Main` wireframe shows. A mock answers after 0.3
   seconds. The tests use the mocks, or a fake main server behind `fetch` (`__tests__/support/fake-server.ts`).
@@ -670,6 +711,7 @@ Behind a hook are three layers:
 | `listParties`, `getMyParty`                                          | The Parties, and the one the User is in            | `GET /parties`, `/parties/mine`                                |
 | `getFootprints`                                                      | What "오늘의 발자국" shows: a number and faces     | The mock: the app's own                                        |
 | `findWalkingRoute`                                                   | The way on foot between two points                 | `GET /walking-route`                                           |
+| `listMenus`                                                          | One day's menus by restaurant                      | `GET /menus?date=`                                             |
 
 The mock keeps the Friends, the Friend Requests and the Invite Links in memory while the app runs
 (`src/api/mock/friendships.ts`), with Friend IDs for the frame's people, and refuses as the main server does. The
@@ -679,6 +721,12 @@ User's Friend ID is `7KX2M9QD`; `/invite/from-yujian` opens a link the User can 
 Session without a renewal and shows the notice "다른 기기에서 로그인했어요" with the sign-in screen; a 403 with
 `ONBOARDING_REQUIRED` shows Onboarding with the suggestion it carries (`src/session/session-events.ts`, which
 `SessionProvider` follows).
+
+**The restaurant → Place table** (`src/features/dining/restaurant-places.ts`) gives the number of the Place of each
+restaurant whose menus are collected, by the restaurant's name as `GET /menus` gives it. A restaurant missing from
+it, or whose number `GET /places` does not answer, has no pin and is still in the menu panel. When the Co-op renames
+or moves a restaurant, correct its row there, with the name exactly as the worker sends it and the number as the
+main server's Places have it (`main-server/seed/`).
 
 The User's own id is the access token's subject, and the app's time is the phone's. Where the answers are mocks, the
 User is the mock's `me` and the time is the moment the wireframe shows, 1 October 2026 at 13:37 (`src/clock.ts`), so
@@ -834,6 +882,11 @@ otherwise. Its box ends at its tip. A selected one is 1.18 times as large, insid
 colour. `presence` names the colours of what a person is doing: `free`, `class`, `moving` and `off`, the statuses,
 which an Avatar's dot uses too, and `member`, a member of the User's Party who is no Friend.
 
+`MapRestaurant` is the `MapDining` frame's single 학식 on the map: a round of 22 in the dining colour with 학, a white
+ring and a small tail; selected, 26 inside a ring of the key colour. `DayTile` is a day to choose as the
+`PartyCreate` frame's date sheet draws it: 52 by 60, the day's name over its number, Sunday in red, Saturday in blue,
+the chosen one in navy.
+
 `MapPin` of the kind `me` has a `small` form, three quarters of its size, which the `Main` wireframe draws while the
 whole campus is in view. The icons `chevronDown`, `chevronLeft`, `chevronRight`, `chevronUp`, `expand` and
 `minus` are the wireframes' and not the design system's.
@@ -922,7 +975,8 @@ map.current?.fitTo([from, to], { padding: 48, maxZoom: 15.8 }); // and no closer
   comes no closer than that zoom: points that are near each other are shown from there.
 - `CAMPUS_BOUNDS`, the campus rectangle, and the limits `MIN_ZOOM` and `MAX_ZOOM` are constants in
   `src/map/campus.ts`. The rectangle is a little wider than the Campus Boundary, which stays the main server's.
-- The credit "© OpenStreetMap · 국토지리정보원" is on every map, inside the component.
+- The credit "© OpenStreetMap · 국토지리정보원" is on every map, inside the component, drawn by the app over the map,
+  so no native module draws it. With `onCreditPress` it is a button, "지도 데이터 출처 보기", and is still written.
 - **`inset`** says what a screen's controls cover of the map's edges, in points from each edge; a side left out is 0. The credit and a provider's logo are drawn inside what is left: the credit at its bottom left and the logo at
   its bottom right, each 8 from it. Nothing else follows it: the map is drawn under the controls, and the cameras
   may ignore it, so a move centres on the whole view and a fit takes its own `padding`. It may change while the map

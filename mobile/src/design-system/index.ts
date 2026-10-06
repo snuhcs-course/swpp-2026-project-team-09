@@ -7,6 +7,7 @@ export { BottomNav, type BottomNavItem } from './bottom-nav';
 export { BottomSheet } from './bottom-sheet';
 export { Button } from './button';
 export { cardStyles } from './card';
+export { DayTile } from './day-tile';
 export { ChatInput } from './chat-input';
 export { Chip } from './chip';
 export { type CountedChip, ChipRow } from './chip-row';
@@ -16,7 +17,7 @@ export { FullScreenPanel } from './full-screen-panel';
 export { Icon, ICON_NAMES, type IconName } from './icon';
 export { ListRow, RoundIcon, SectionHeader } from './list-row';
 export { MapPerson, type PersonTone } from './map-person';
-export { MapDot, MapPin, type MapPinKind, type MapPlaceKind } from './map-pin';
+export { MapDot, MapPin, type MapPinKind, type MapPlaceKind, MapRestaurant } from './map-pin';
 export { Overlay, OverlayHost } from './overlay';
 export { SearchField } from './search-field';
 export { type Segment, SegmentedTabs } from './segmented-tabs';
@@ -24,6 +25,7 @@ export { SidePanel } from './side-panel';
 export { Switch, SwitchRow } from './switch';
 export { EmptyState, ErrorState, LoadingState } from './states';
 export { TextField } from './text-field';
+export { useSlide } from './use-slide';
 export { ToastProvider, useNotReadyToast, useToast, useToastAbove } from './toast';
 export {
   classColors,

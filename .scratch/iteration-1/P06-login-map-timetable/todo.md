@@ -515,7 +515,7 @@ Ticket 12 connected every row that the demo's flows (P20) use and the main serve
 | The profile (프로필 편집) | Connected | `PATCH /users/me/profile` with the changed fields | |
 | The Master Switch | Connected | `PUT /users/me/master-switch`; read from the Lobby | The mock keeps it in memory, off at each start |
 | Sending the User's position | Connected | `POST /positions`, at most every 5 s while the switch is on, the permission granted and the app in front | `MASTER_SWITCH_OFF` turns the switch off; the 400s and no answer drop a position; sending in the background is P17's. The mock refuses while the switch is off and answers `offCampus` by the campus rectangle |
-| The timetable on 내 정보, the Places | Connected | `GET /timetable/classes`, `GET /places` | Read only; the mock has the `Profile` frame's four classes |
+| The timetable on 내 정보, the Places | Connected | `GET /timetable/classes`, `GET /places` | Read only; the mock has the `Profile` frame's four classes. The Places also place the 식당 pins (P15) |
 | Friend Requests | Connected | `GET /friend-requests`; fetched again on `friends-changed` | |
 | Quest invitations, requests to join | Connected | `GET /quest-invitations`, `GET /quests/:questId/join-requests` for each Quest the User leads with Approval; fetched again on `quests-changed` | The mock leads no Quest, so it has no request to join |
 | Meetups | Connected | `GET /meetups`; fetched again on `meetups-changed` | |
@@ -537,6 +537,7 @@ Ticket 12 connected every row that the demo's flows (P20) use and the main serve
 | What 오늘의 발자국 shows (`getFootprints`) | Mock: five Friends and three faces | Nothing | No spec covers stories |
 | The AI input | No data | Nothing | It only says that it is not ready; no spec covers it |
 | The Session's end | Connected | The socket's `session-ended`, and a 401 that one renewal cannot mend | `SESSION_REPLACED` shows "다른 기기에서 로그인했어요" |
+| Menus (`listMenus`) | Connected | `GET /menus?date=` | The 식당 layer and the menu panel (P15); the mock is a week of lines from the saved menu pages |
 | The signal `matching-changed` | Not used | The socket | It names nothing these screens show |
 
 ## 4. Controls that say "준비 중이에요"
@@ -549,7 +550,7 @@ The control is there and only shows the toast. The last column is a proposal for
 | Friend panel | A Friend's calendar button, "{이름}님과 파티 만들기" | Proposing a Meetup to the Friend | P14 |
 | Above the navigation | 오늘의 발자국 | The story replay | In no Iteration 1 spec |
 | Above the navigation | 활성 파티 | The party screen | P13 |
-| Above the navigation | The 편의기능 button | The dining, shuttle and study layers | P15 |
+| 편의기능 stack | The 셔틀버스 toggle | The shuttle layer | P15 (ticket 02) |
 | Above the navigation | The AI input, which is a button with the input's look and takes no focus and no text, and its send button, read as disabled | The AI chat, with the real text field | In no Iteration 1 spec |
 | Bottom navigation | 올리기 | The story sheet | In no Iteration 1 spec |
 | 파티 | + 만들기, and the bodies of 찾기, 내 파티 and 초대 | 파티 만들기 and the lists of Quests | P13 |

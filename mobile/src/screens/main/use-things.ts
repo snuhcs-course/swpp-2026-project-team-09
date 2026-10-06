@@ -23,6 +23,9 @@ function lookOf({ mark, marker }: CardView, detail: ZoomDetail, selected: boolea
     const old = marker.minutesOld !== null;
     return { kind: 'person', id, tone: presence ?? 'member', small: far, selected, old, name, photo };
   }
+  if (mark.place === 'dining') {
+    return { kind: 'restaurant', selected };
+  }
   return far
     ? { kind: mark.place, form: 'dot', selected }
     : { kind: mark.place, form: 'pin', count: marker.count, selected };

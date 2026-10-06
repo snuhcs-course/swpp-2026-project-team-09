@@ -9,6 +9,7 @@ import {
   Icon,
   ICON_NAMES,
   MapDot,
+  MapRestaurant,
   MapPerson,
   MapPin,
   space,
@@ -150,6 +151,8 @@ export function MapPins(): ReactElement {
         <MapPin kind="friend" label="사진" name="사진" source={samplePhoto} />
         <MapDot kind="official" />
         <MapDot kind="party" selected />
+        <MapRestaurant />
+        <MapRestaurant selected />
         <MapPerson name="김민준" small tone="free" />
         <MapPerson name="정하은" tone="class" />
         <MapPerson name="임채원" selected tone="moving" />

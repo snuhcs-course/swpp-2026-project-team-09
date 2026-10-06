@@ -1,12 +1,4 @@
-import type { Place, TimetableClass } from '@/api/types';
-
-// The Places the mock's classes are held in, in the main server's order: by number, then those without one.
-export const PLACES: Place[] = [
-  { id: 'place-301', number: '301', name: '제1공학관', latitude: 37.45016, longitude: 126.95259 },
-  { id: 'place-302', number: '302', name: '제2공학관', latitude: 37.44887, longitude: 126.95265 },
-  { id: 'place-500', number: '500', name: '대학원연구동(2단계)', latitude: 37.45922, longitude: 126.94812 },
-  { id: 'place-jahayeon', number: null, name: '자하연', latitude: 37.4607, longitude: 126.9521 },
-];
+import type { TimetableClass } from '@/api/types';
 
 // The `Profile` frame's four classes, in the order of their first time in the week.
 export const CLASSES: TimetableClass[] = [

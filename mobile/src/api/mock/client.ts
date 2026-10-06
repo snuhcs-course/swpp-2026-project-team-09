@@ -6,8 +6,10 @@ import { keep, readKept } from '@/storage/kept';
 import { answer } from './answer';
 import { FOOTPRINTS } from './data/footprints';
 import { FRIEND_STATUSES, MY_FRIEND_ID } from './data/friends';
+import { MENUS } from './data/menus';
+import { PLACES } from './data/places';
 import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
-import { CLASSES, PLACES } from './data/timetable';
+import { CLASSES } from './data/timetable';
 import { MEETUPS, QUEST_INVITATIONS } from './data/waiting';
 import { mockFriendships as friendships } from './friendships';
 import { mockWalkingRoute } from './walking-route';
@@ -116,4 +118,5 @@ export const mockClient: ApiClient = {
       status: 'ROUTE_RESULT_NOT_FOUND',
       route: null,
     }),
+  listMenus: (date) => answer('listMenus', () => MENUS[date] ?? [], []),
 };

@@ -10,8 +10,8 @@ export const unstable_settings = { initialRouteName: '(tabs)' };
 
 const SLIDE_MS = 280;
 
-// A screen above the tabs slides in, from the bottom for the Quest list on the whole screen, and appears without
-// sliding where the phone asks for less motion.
+// A screen above the tabs slides in, from the bottom for the Quest list on the whole screen and the menu panel, from
+// the right for the sources of the map's data, and appears without sliding where the phone asks for less motion.
 function slideFrom(edge: 'bottom' | 'right', reduceMotion: boolean): NativeStackNavigationOptions {
   if (reduceMotion) {
     return { animation: 'none', animationDuration: SLIDE_MS };
@@ -64,6 +64,8 @@ export default function SignedInLayout(): ReactElement {
           <Stack.Screen name="me/friends/requests" options={slideFrom('right', reduceMotion)} />
           <Stack.Screen name="me/friends/add" options={slideFrom('right', reduceMotion)} />
           <Stack.Screen name="invite/[token]" options={slideFrom('bottom', reduceMotion)} />
+          <Stack.Screen name="menus" options={slideFrom('bottom', reduceMotion)} />
+          <Stack.Screen name="map-sources" options={slideFrom('right', reduceMotion)} />
         </Stack>
       </PositionSending>
     </PositionProvider>

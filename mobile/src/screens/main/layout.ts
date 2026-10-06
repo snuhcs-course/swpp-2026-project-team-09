@@ -116,6 +116,13 @@ export function footprintsForm({ stage }: Room, withParty: boolean): { faces: nu
 // The 편의기능 button: a round of 48 at the right of that row, 16 from the side.
 export const LAYERS_BUTTON = { right: space[4], bottom: BUTTON_ROW.bottom, size: 48 } as const;
 
+// The stack of layers over it: toggles of 60 in a padding of 6, centred over the button and 8 above it.
+const STACK_WIDTH = 60 + 2 * 6;
+export const LAYER_STACK = {
+  right: LAYERS_BUTTON.right + (LAYERS_BUTTON.size - STACK_WIDTH) / 2,
+  bottom: LAYERS_BUTTON.bottom + LAYERS_BUTTON.size + space[2],
+} as const;
+
 // What the controls cover of the map's edges, for `<Map inset>`: the credit for the map data and the provider's logo
 // are drawn inside what is left. The row of buttons ends 126 above the navigation, so the credit sits just above
 // "오늘의 발자국", in a strip that the friend list always leaves free (`listRows`); the 8 at the left brings it in

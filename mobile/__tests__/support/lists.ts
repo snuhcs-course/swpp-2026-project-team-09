@@ -10,7 +10,7 @@ export const UNFOLD_QUESTS = '퀘스트 목록 펼치기';
 export const FULL_SCREEN = '퀘스트 전체 화면으로 열기';
 export const FOOTPRINTS = '오늘의 발자국 재생 · 친구들의 오늘 스토리';
 export const ACTIVE_PARTY = '활성 파티 AI 커리어 설명회 같이 가요 열기';
-export const LAYERS = '편의기능 (식당 · 셔틀버스 · 공부공간)';
+export const LAYERS = '편의기능 (식당 · 셔틀버스)';
 export const AI_INPUT = 'AI에게 메시지';
 export const SEND = '보내기';
 

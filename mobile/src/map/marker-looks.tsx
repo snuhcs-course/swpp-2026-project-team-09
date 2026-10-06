@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { MapDot, MapPerson, MapPin, type MapPlaceKind, type PersonTone } from '@/design-system';
+import { MapDot, MapPerson, MapPin, type MapPlaceKind, MapRestaurant, type PersonTone } from '@/design-system';
 
 // How something on the map looks. One picture is made for each look and kept under the look's name, so two things
 // that look the same share one, and the number of pictures is the number of names:
@@ -39,7 +39,9 @@ export type MarkerLook =
       photo: string | null;
     }
   // A place, of each kind the design system has. `count` is drawn on a pin, never on a dot; 0 or left out, none.
-  | { kind: MapPlaceKind; form: MarkerForm; count?: number; selected?: boolean };
+  | { kind: MapPlaceKind; form: MarkerForm; count?: number; selected?: boolean }
+  // The Place of restaurants with menus today, at every level of detail.
+  | { kind: 'restaurant'; selected?: boolean };
 
 function parts(...names: (string | false)[]): string {
   return names.filter((name) => name !== false).join(':');
@@ -51,6 +53,9 @@ export function lookName(look: MarkerLook): string {
     return look.small === true ? 'me:small' : 'me';
   }
   const selected = look.selected === true && 'selected';
+  if (look.kind === 'restaurant') {
+    return parts('restaurant', selected);
+  }
   if (look.kind === 'person') {
     const photo = look.photo !== null && 'photo';
     const old = look.old === true && 'old';
@@ -67,7 +72,10 @@ export function hasPhoto(look: MarkerLook): boolean {
 // A pin and a person's marker stand on their tip, the bottom of their view. Everything else, a round thing, sits on
 // its middle.
 export function standsOnTip(look: MarkerLook): boolean {
-  return look.kind === 'person' || (look.kind !== 'me' && look.form === 'pin');
+  if (look.kind === 'me') {
+    return false;
+  }
+  return look.kind === 'person' || look.kind === 'restaurant' || look.form === 'pin';
 }
 
 // The design system's view of a look.
@@ -87,6 +95,9 @@ export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSe
         tone={look.tone}
       />
     );
+  }
+  if (look.kind === 'restaurant') {
+    return <MapRestaurant selected={look.selected} />;
   }
   return look.form === 'dot' ? (
     <MapDot kind={look.kind} selected={look.selected} />
