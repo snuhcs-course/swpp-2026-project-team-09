@@ -25,6 +25,8 @@ jobs:
           - match-server
           - admin
           - mobile
+          # Starts the four servers with Docker and runs the demo flows across them.
+          - flow-tests
     defaults:
       run:
         working-directory: ${{ matrix.project }}
