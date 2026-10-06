@@ -8,6 +8,7 @@ export default defineConfig({
   test: {
     globals: true,
     restoreMocks: true,
+    unstubEnvs: true,
     projects: [
       {
         extends: true,
@@ -15,7 +16,7 @@ export default defineConfig({
           name: 'pages',
           environment: 'jsdom',
           // Far from Seoul, so that a time shown in the browser's zone instead of Seoul's fails.
-          env: { TZ: 'America/Los_Angeles' },
+          env: { TZ: 'America/Los_Angeles', NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY: '' },
           include: ['__tests__/*.test.tsx'],
           setupFiles: ['./vitest.setup.ts'],
         },

@@ -29,6 +29,8 @@ vi.mock('@/main-server', async (importOriginal) => {
   return { ...(await importOriginal<object>()), mainServer: fakeMainServer };
 });
 
+vi.mock('@/app/(signed-in)/events/position-map', () => import('./__tests__/support/fake-maps'));
+
 afterEach(async () => {
   const { resetBrowser } = await import('./__tests__/support/browser');
   const { fakeMainServer } = await import('./__tests__/support/fake-main-server');

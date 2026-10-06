@@ -1,5 +1,6 @@
 import type {
   Administrator,
+  CollectionStatus,
   GlobalEvent,
   GlobalEventChange,
   ListedGlobalEvent,
@@ -24,12 +25,34 @@ class FakeMainServer implements MainServer {
   private issued = 0;
   private events: GlobalEvent[] = [];
   private places: Place[] = [];
+  // The key of each request that creates an event, in order.
+  creationKeys: string[] = [];
+  private created = new Map<string, GlobalEvent>();
+  private nextCreation: 'fails' | 'answer lost' | undefined;
+  private statuses: CollectionStatus[] = [];
 
   reset(): void {
     this.requests = [];
     this.accounts = [];
     this.events = [];
     this.places = [];
+    this.creationKeys = [];
+    this.created.clear();
+    this.nextCreation = undefined;
+    this.statuses = [];
+  }
+
+  // The next creation answers 502, before storing the event or after, as when the answer is lost on the way.
+  breaksNextCreation(how: 'fails' | 'answer lost'): void {
+    this.nextCreation = how;
+  }
+
+  hasCollectionStatuses(...statuses: CollectionStatus[]): void {
+    this.statuses.push(...statuses);
+  }
+
+  storedEvents(): GlobalEvent[] {
+    return this.events;
   }
 
   hasGlobalEvents(...events: Partial<GlobalEvent>[]): GlobalEvent[] {
@@ -126,6 +149,36 @@ class FakeMainServer implements MainServer {
         .toSorted(byStart)
         .map(({ description: _description, ...listed }) => listed),
     );
+  }
+
+  // A key used before answers what its first request created, as the main server's idempotency does.
+  createGlobalEvent(token: string, idempotencyKey: string, change: GlobalEventChange): Promise<GlobalEvent> {
+    this.requests.push('POST /admin/global-events');
+    return this.as(token, () => {
+      this.creationKeys.push(idempotencyKey);
+      const replayed = this.created.get(idempotencyKey);
+      if (replayed !== undefined) {
+        return replayed;
+      }
+      refuseFields(change);
+      const how = this.nextCreation;
+      this.nextCreation = undefined;
+      if (how === 'fails') {
+        throw refused(502, {});
+      }
+      const event = newEvent({ ...change, title: change.title.trim() });
+      this.events.push(event);
+      this.created.set(idempotencyKey, event);
+      if (how === 'answer lost') {
+        throw refused(502, {});
+      }
+      return event;
+    });
+  }
+
+  listCollectionStatuses(token: string): Promise<CollectionStatus[]> {
+    this.requests.push('GET /admin/collection-statuses');
+    return this.as(token, () => this.statuses);
   }
 
   readGlobalEvent(token: string, id: string): Promise<GlobalEvent> {

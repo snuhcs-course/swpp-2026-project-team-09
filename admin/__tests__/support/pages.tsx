@@ -2,7 +2,9 @@ import { screen, within } from '@testing-library/react';
 
 import SignedInLayout from '@/app/(signed-in)/layout';
 import AdministratorsPage from '@/app/(signed-in)/administrators/page';
+import CollectionPage from '@/app/(signed-in)/collection/page';
 import EventPage from '@/app/(signed-in)/events/[id]/page';
+import NewEventPage from '@/app/(signed-in)/events/new/page';
 import EventsPage from '@/app/(signed-in)/page';
 import SignInPage from '@/app/sign-in/page';
 import { EMAIL_COOKIE, SESSION_COOKIE } from '@/session';
@@ -25,6 +27,14 @@ export async function openEvent(id: string): Promise<void> {
       children: await EventPage({ params: Promise.resolve({ id }), searchParams: Promise.resolve({}) }),
     }),
   );
+}
+
+export async function openNewEvent(): Promise<void> {
+  await openPage(async () => SignedInLayout({ children: await NewEventPage() }));
+}
+
+export async function openCollection(): Promise<void> {
+  await openPage(async () => SignedInLayout({ children: await CollectionPage() }));
 }
 
 export async function openSignIn(location: string): Promise<void> {

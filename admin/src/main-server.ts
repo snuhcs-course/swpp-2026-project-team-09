@@ -76,7 +76,20 @@ async function refusalOf(response: Response): Promise<Refusal> {
   }
 }
 
-async function request<T>(method: string, path: string, token?: string, body?: unknown): Promise<T> {
+export interface CollectionStatus {
+  source: string;
+  lastSucceededAt: string | null;
+  lastFailedAt: string | null;
+  lastFailureReason: string | null;
+}
+
+async function request<T>(
+  method: string,
+  path: string,
+  token?: string,
+  body?: unknown,
+  idempotencyKey?: string,
+): Promise<T> {
   const address = process.env.MAIN_SERVER_URL;
   if (address === undefined || address === '') {
     throw new Error('MAIN_SERVER_URL is not set.');
@@ -87,6 +100,9 @@ async function request<T>(method: string, path: string, token?: string, body?: u
   }
   if (body !== undefined) {
     headers.set('content-type', 'application/json');
+  }
+  if (idempotencyKey !== undefined) {
+    headers.set('idempotency-key', idempotencyKey);
   }
   const response = await fetch(new URL(path, address), {
     method,
@@ -115,6 +131,9 @@ export const mainServer = {
     request('DELETE', `/admin/administrators/${encodeURIComponent(id)}`, token),
   listGlobalEvents: (token: string, state: 'draft' | 'published'): Promise<ListedGlobalEvent[]> =>
     request('GET', `/admin/global-events?state=${state}`, token),
+  // The same key on a retry gets the event the first attempt created.
+  createGlobalEvent: (token: string, idempotencyKey: string, change: GlobalEventChange): Promise<GlobalEvent> =>
+    request('POST', '/admin/global-events', token, change, idempotencyKey),
   readGlobalEvent: (token: string, id: string): Promise<GlobalEvent> => request('GET', eventPath(id), token),
   editGlobalEvent: (token: string, id: string, version: number, change: GlobalEventChange): Promise<GlobalEvent> =>
     request('PATCH', eventPath(id), token, { version, ...change }),
@@ -125,6 +144,8 @@ export const mainServer = {
     version: number,
   ): Promise<GlobalEvent> => request('POST', `${eventPath(id)}/${change}`, token, { version }),
   listPlaces: (token: string): Promise<Place[]> => request('GET', '/admin/places', token),
+  listCollectionStatuses: (token: string): Promise<CollectionStatus[]> =>
+    request('GET', '/admin/collection-statuses', token),
 };
 
 export type MainServer = typeof mainServer;

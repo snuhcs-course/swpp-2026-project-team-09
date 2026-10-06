@@ -5,7 +5,7 @@ import { refresh } from 'next/cache';
 import { type GlobalEventChange, type GlobalEventState, mainServer, MainServerError } from '@/main-server';
 import { asAdministrator } from '@/session';
 
-import { listed, NEEDED } from './fields';
+import { listed, NEEDED } from '../fields';
 
 // What the page says after a refused change. `reload` offers to load the current version, keeping the input until then.
 export interface Refused {

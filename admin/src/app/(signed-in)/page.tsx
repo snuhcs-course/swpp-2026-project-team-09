@@ -75,7 +75,12 @@ export default async function EventsPage(): Promise<ReactElement> {
   return (
     <div className="space-y-8">
       <header className="space-y-1">
-        <h1>Events</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1>Events</h1>
+          <Link href="/events/new" className="button button-primary">
+            New event
+          </Link>
+        </div>
         <p className="text-sm text-zinc-600">
           Drafts wait for an Administrator to check and publish them, nearest start first. Published events that have
           not ended are below. Times are Seoul&apos;s.

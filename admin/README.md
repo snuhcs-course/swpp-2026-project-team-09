@@ -1,7 +1,7 @@
 # admin
 
 The SNU Now admin site, built with Next.js 16, the App Router and Tailwind CSS. Administrators sign in with Google,
-review, correct and publish Global Events, and manage the Administrators. The site keeps no data of its own: every page
+review, correct, create and publish Global Events, see whether each Source is collected, and manage the Administrators. The site keeps no data of its own: every page
 and every change goes to the main server's administrator routes (`/admin/...`, see the main server's README, sections
 Administrators and Global Events).
 
@@ -28,16 +28,22 @@ empty database).
 
 `.env.example` lists them; copy it to `.env`, which Git ignores.
 
-| Variable                       | Read by          | What it is                                                                 |
-| ------------------------------ | ---------------- | -------------------------------------------------------------------------- |
-| `MAIN_SERVER_URL`              | the server only  | The main server's address, such as `http://localhost:3000`                 |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | the browser, too | The admin site's Google client, the main server's `GOOGLE_ADMIN_CLIENT_ID` |
+| Variable                           | Read by          | What it is                                                                 |
+| ---------------------------------- | ---------------- | -------------------------------------------------------------------------- |
+| `MAIN_SERVER_URL`                  | the server only  | The main server's address, such as `http://localhost:3000`                 |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`     | the browser, too | The admin site's Google client, the main server's `GOOGLE_ADMIN_CLIENT_ID` |
+| `NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY` | the browser, too | The JavaScript key of the team's Kakao app, for the maps                   |
 
 A `NEXT_PUBLIC_` value is written into the browser's code when the site is built, so change it before `pnpm build`.
 
 The admin site's Google client is a Web application client of its own. Its authorized JavaScript origins must include
 both `http://localhost` and `http://localhost:3100` (`.scratch/research/external-sources.md`, section 8); the sign-in
 button does not work on an address that is not among them.
+
+The Kakao key works only on the addresses registered for it in the Kakao app, under JavaScript SDK domains;
+`http://localhost:3100` is registered (`.scratch/research/external-sources.md`, section 7.3). `src/kakao-maps.ts` loads
+Kakao's JavaScript SDK once, in the browser. Without the key the event form takes the position as two numbers instead
+of on the map.
 
 ## The session
 
@@ -86,12 +92,15 @@ controls and tables so that every page looks alike.
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/sign-in`        | Sign in with Google                                                                                                                                                                                     |
 | `/`               | Events: the Drafts, each with what publishing it still needs, and below them the published events that have not ended, both in the main server's order. A title opens the event's page.                 |
+| `/events/new`     | A new event entered by hand, with the event's form; creating it opens the new Draft's page.                                                                                                             |
 | `/events/<id>`    | One Global Event: its state, its source link and post number, its text as stored, and the form that saves, publishes, discards or cancels it. An unknown id shows the not-found page.                   |
+| `/collection`     | Collection status: each Source with its last successful Collection and its last failure, a broken Source marked.                                                                                        |
 | `/administrators` | Lists the Administrators with whether each has signed in; registers an address; removes one, the signed-in one included, after a confirmation. The main server keeps the last one and the page says so. |
 
 ## Global Events
 
-The home page reads `GET /admin/global-events?state=draft` and `?state=published`; the event's page reads
+The home page reads `GET /admin/global-events?state=draft` and `?state=published`, and links to the page for a new
+event; the event's page reads
 `GET /admin/global-events/:id` and the Places from `GET /admin/places`.
 
 Times are shown and entered in Asia/Seoul, whatever the browser's time zone (`src/seoul-time.ts`). A start at 00:00 is
@@ -100,8 +109,18 @@ without its time at 00:00.
 
 The form holds the title, the description, the start and the end as a day and a time, the place name and the position.
 Finding a Place by name or number and choosing it sets the place name and the position to the Place's; the place name
-can then be edited, and the position can be cleared. Before anything is sent the form says, beside the field, that a
+can then be edited, and the position can be cleared. The position is a marker on Kakao's map (`events/position-map.tsx`),
+on the campus when there is none: pointing on the map moves the marker there and sets the position, kept to 6 decimals,
+and leaves the place name as it is. A position outside the Campus Boundary is refused by the main server, and the form
+shows its message. Before anything is sent the form says, beside the field, that a
 title is needed, that a day needs its time and the other way round, and that the end must be after the start.
+
+The page for a new event holds the same form (`events/event-fields.tsx`). Create the Draft sends
+`POST /admin/global-events` through the Server Action `createEvent` in `src/app/(signed-in)/events/new/actions.ts`, with
+an `Idempotency-Key` made when the button is pressed, and opens the new Draft's page. When the main server does not
+answer, or answers 5xx, the form stays and says to try again: pressing the button again with the form unchanged sends
+the same key, so the event is not created twice even if the first answer was lost; a change to the form makes a new key
+at the next press.
 
 Each change is the Server Action `changeEvent` in `src/app/(signed-in)/events/[id]/actions.ts`, sent with the version
 the page loaded:
@@ -142,7 +161,9 @@ into `.next/types/`, so both checks also work on a fresh clone, before `pnpm dev
 - **pages** (`__tests__/*.test.tsx`): each test renders a page with React Testing Library in jsdom, as Next.js would
   on a request, and clicks through it. `vitest.setup.ts` replaces the parts of Next.js that need a request (`cookies()`,
   `redirect()`, `refresh()`) with `__tests__/support/browser.tsx`, which keeps the cookies and the page a redirect led
-  to, and replaces the main server with the fake in `__tests__/support/fake-main-server.ts`. `__tests__/support/google.ts`
+  to, and replaces the main server with the fake in `__tests__/support/fake-main-server.ts`. Kakao's map is replaced by
+  `__tests__/support/fake-maps.tsx`, which shows where its marker is and lets a test point on it. The tests run without
+  a Kakao key; a test of the map sets one with `vi.stubEnv`. `__tests__/support/google.ts`
   stands in for Google's script on the sign-in page. `notFound()` is replaced too, and `browser.notFound` tells a test
   that the page would show the not-found page. The tests run in `America/Los_Angeles`, so that a time shown in the
   browser's zone instead of Seoul's fails.
@@ -156,11 +177,15 @@ into `.next/types/`, so both checks also work on a fresh clone, before `pnpm dev
 ```text
 src/app/sign-in/         the sign-in page, Google's button and the sign-in Server Action
 src/app/(signed-in)/     the pages behind the session; layout.tsx and site-menu.tsx are the menu around them
-src/app/(signed-in)/events/[id]/  the event's page, its form (event-form.tsx, fields.ts) and its Server Action
+src/app/(signed-in)/events/       the form's fields shared by both event pages (event-fields.tsx, fields.ts) and the map
+src/app/(signed-in)/events/[id]/  the event's page, its form (event-form.tsx) and its Server Action
+src/app/(signed-in)/events/new/   the page for a new event and its Server Action
+src/app/(signed-in)/collection/   the Collection status page
 src/app/globals.css      the palette, the font and the shared classes
 src/main-server.ts       the only way the site calls the main server; server-only
 src/session.ts           the cookie, and asAdministrator(), which sends the person to sign-in on a missing cookie or a 401
 src/seoul-time.ts        times in Asia/Seoul
+src/kakao-maps.ts        loads Kakao's JavaScript SDK in the browser, and the types of the parts the site uses
 __tests__/               page tests, named *.test.tsx, and their support/
 __tests__/site/          tests against the built site
 ```
