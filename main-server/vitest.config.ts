@@ -16,6 +16,9 @@ export default defineConfig({
   test: {
     root: './',
     globalSetup: ['test/global-setup.ts'],
+    // Every worker opens its own connections to the one PostgreSQL, which refuses them past its limit on a machine
+    // with many cores.
+    maxWorkers: 8,
     projects: [
       {
         test: {
