@@ -1,13 +1,16 @@
 import { act, cleanup, render } from '@testing-library/react';
 import { Component, type ReactElement, type ReactNode } from 'react';
 
+import { NotFound } from './not-found';
 import { Redirect } from './redirect';
 
-// Stands in for what Next.js does around a page in these tests: the request's cookies, redirect() and refresh().
+// Stands in for what Next.js does around a page in these tests: the request's cookies, redirect(), notFound() and
+// refresh().
 
-export const browser: { cookies: Map<string, string>; location: string | undefined } = {
+export const browser: { cookies: Map<string, string>; location: string | undefined; notFound: boolean } = {
   cookies: new Map(),
   location: undefined,
+  notFound: false,
 };
 
 interface Named {
@@ -42,6 +45,7 @@ export function resetBrowser(): void {
   cleanup();
   browser.cookies.clear();
   browser.location = undefined;
+  browser.notFound = false;
   reload = undefined;
   window.google = undefined;
 }
@@ -71,6 +75,10 @@ async function load(page: () => Promise<ReactElement>): Promise<ReactElement | n
   } catch (error) {
     if (error instanceof Redirect) {
       browser.location = error.location;
+      return null;
+    }
+    if (error instanceof NotFound) {
+      browser.notFound = true;
       return null;
     }
     throw error;

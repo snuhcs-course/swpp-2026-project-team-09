@@ -1,5 +1,14 @@
-import type { Administrator, MainServer } from '@/main-server';
+import type {
+  Administrator,
+  GlobalEvent,
+  GlobalEventChange,
+  ListedGlobalEvent,
+  MainServer,
+  Place,
+} from '@/main-server';
 import type * as MainServerModule from '@/main-server';
+
+import { byStart, missingFor, newEvent, refused, refuseFields, TRANSITIONS, withMissing } from './fake-global-events';
 
 // The setup file replaces '@/main-server' with this fake, so the real error class comes from the actual module.
 const { MainServerError } = await vi.importActual<typeof MainServerModule>('@/main-server');
@@ -13,10 +22,30 @@ class FakeMainServer implements MainServer {
   requests: string[] = [];
   private accounts: Account[] = [];
   private issued = 0;
+  private events: GlobalEvent[] = [];
+  private places: Place[] = [];
 
   reset(): void {
     this.requests = [];
     this.accounts = [];
+    this.events = [];
+    this.places = [];
+  }
+
+  hasGlobalEvents(...events: Partial<GlobalEvent>[]): GlobalEvent[] {
+    const stored = events.map((each) => newEvent(each));
+    this.events.push(...stored);
+    return stored;
+  }
+
+  hasPlaces(...places: Omit<Place, 'id'>[]): void {
+    for (const place of places) {
+      this.places.push({ id: crypto.randomUUID(), ...place });
+    }
+  }
+
+  storedEvent(id: string): GlobalEvent | undefined {
+    return this.events.find((each) => each.id === id);
   }
 
   hasAdministrators(...emails: string[]): void {
@@ -87,6 +116,91 @@ class FakeMainServer implements MainServer {
       }
       this.accounts = this.accounts.filter((each) => each.id !== id);
     });
+  }
+
+  listGlobalEvents(token: string, state: 'draft' | 'published'): Promise<ListedGlobalEvent[]> {
+    this.requests.push(`GET /admin/global-events?state=${state}`);
+    return this.as(token, () =>
+      this.events
+        .filter((each) => each.state === state)
+        .toSorted(byStart)
+        .map(({ description: _description, ...listed }) => listed),
+    );
+  }
+
+  readGlobalEvent(token: string, id: string): Promise<GlobalEvent> {
+    this.requests.push(`GET /admin/global-events/${id}`);
+    return this.as(token, () => this.found(id));
+  }
+
+  editGlobalEvent(token: string, id: string, version: number, change: GlobalEventChange): Promise<GlobalEvent> {
+    this.requests.push(`PATCH /admin/global-events/${id}`);
+    return this.as(token, () => {
+      const event = this.found(id);
+      refuseFields(change);
+      if (event.state !== 'draft' && event.state !== 'published') {
+        throw refused(409, { code: 'GLOBAL_EVENT_STATE', state: event.state });
+      }
+      this.refuseOlder(event, version);
+      const edited = withMissing({ ...event, ...change, title: change.title.trim() });
+      if (event.state === 'published') {
+        this.refuseIncomplete(edited);
+      }
+      return this.replace(edited);
+    });
+  }
+
+  changeGlobalEventState(
+    token: string,
+    id: string,
+    change: 'publish' | 'discard' | 'cancel',
+    version: number,
+  ): Promise<GlobalEvent> {
+    this.requests.push(`POST /admin/global-events/${id}/${change}`);
+    return this.as(token, () => {
+      const event = this.found(id);
+      const [from, to] = TRANSITIONS[change];
+      if (event.state !== from) {
+        throw refused(409, { code: 'GLOBAL_EVENT_STATE', state: event.state });
+      }
+      this.refuseOlder(event, version);
+      if (change === 'publish') {
+        this.refuseIncomplete(event);
+      }
+      return this.replace(withMissing({ ...event, state: to }));
+    });
+  }
+
+  listPlaces(token: string): Promise<Place[]> {
+    this.requests.push('GET /admin/places');
+    return this.as(token, () => this.places);
+  }
+
+  private found(id: string): GlobalEvent {
+    const event = this.storedEvent(id);
+    if (event === undefined) {
+      throw refused(404, { code: 'GLOBAL_EVENT_NOT_FOUND' });
+    }
+    return event;
+  }
+
+  private refuseOlder(event: GlobalEvent, version: number): void {
+    if (event.version !== version) {
+      throw refused(409, { code: 'GLOBAL_EVENT_CHANGED', version: event.version });
+    }
+  }
+
+  private refuseIncomplete(event: GlobalEvent): void {
+    const missing = missingFor(event);
+    if (missing.length > 0) {
+      throw refused(409, { code: 'GLOBAL_EVENT_INCOMPLETE', missing });
+    }
+  }
+
+  private replace(event: GlobalEvent): GlobalEvent {
+    const changed = { ...event, version: event.version + 1 };
+    this.events = this.events.map((each) => (each.id === event.id ? changed : each));
+    return changed;
   }
 
   private add(email: string): Account {

@@ -1,8 +1,9 @@
 # admin
 
-The SNU Now admin site, built with Next.js 16, the App Router and Tailwind CSS. Administrators sign in with Google and
-manage the Administrators. The site keeps no data of its own: every page and every change goes to the main server's
-administrator routes (`/admin/...`, see the main server's README, section Administrators).
+The SNU Now admin site, built with Next.js 16, the App Router and Tailwind CSS. Administrators sign in with Google,
+review, correct and publish Global Events, and manage the Administrators. The site keeps no data of its own: every page
+and every change goes to the main server's administrator routes (`/admin/...`, see the main server's README, sections
+Administrators and Global Events).
 
 ## Run it
 
@@ -70,7 +71,9 @@ Every page behind the session shares `src/app/(signed-in)/layout.tsx`: a menu on
 site's sections, the current one marked, and the signed-in address and the sign-out button at the bottom; the page on
 the right. Under Tailwind's `md` breakpoint (768px) the menu folds into a top bar with a Menu button.
 
-To add a section, add a route under `src/app/(signed-in)/` and one entry to `SECTIONS` in `site-menu.tsx`.
+To add a section, add a route under `src/app/(signed-in)/` and one entry to `SECTIONS` in `site-menu.tsx`: its `href`,
+and in `under` the path its other pages start with, so that the menu marks the section on them too (Events is `/`, its
+events under `/events`).
 
 The look is one neutral palette (zinc) with one accent (indigo), set in `src/app/globals.css` as `accent`,
 `accent-strong` and `accent-soft`, and Pretendard where it is installed, else the system font. `globals.css` also holds
@@ -82,8 +85,41 @@ controls and tables so that every page looks alike.
 | Path              | What it does                                                                                                                                                                                            |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/sign-in`        | Sign in with Google                                                                                                                                                                                     |
-| `/`               | Opens `/administrators` for now                                                                                                                                                                         |
+| `/`               | Events: the Drafts, each with what publishing it still needs, and below them the published events that have not ended, both in the main server's order. A title opens the event's page.                 |
+| `/events/<id>`    | One Global Event: its state, its source link and post number, its text as stored, and the form that saves, publishes, discards or cancels it. An unknown id shows the not-found page.                   |
 | `/administrators` | Lists the Administrators with whether each has signed in; registers an address; removes one, the signed-in one included, after a confirmation. The main server keeps the last one and the page says so. |
+
+## Global Events
+
+The home page reads `GET /admin/global-events?state=draft` and `?state=published`; the event's page reads
+`GET /admin/global-events/:id` and the Places from `GET /admin/places`.
+
+Times are shown and entered in Asia/Seoul, whatever the browser's time zone (`src/seoul-time.ts`). A start at 00:00 is
+marked as possibly a day without its time, in the list and on the form, since a collection often stores a day read
+without its time at 00:00.
+
+The form holds the title, the description, the start and the end as a day and a time, the place name and the position.
+Finding a Place by name or number and choosing it sets the place name and the position to the Place's; the place name
+can then be edited, and the position can be cleared. Before anything is sent the form says, beside the field, that a
+title is needed, that a day needs its time and the other way round, and that the end must be after the start.
+
+Each change is the Server Action `changeEvent` in `src/app/(signed-in)/events/[id]/actions.ts`, sent with the version
+the page loaded:
+
+| Control          | Shown on         | Sends                                                                                                                                         |
+| ---------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Save             | Draft, published | `PATCH /admin/global-events/:id` with `{ version, title, description, startsAt, endsAt, place, latitude, longitude }`; empty fields as `null` |
+| Publish          | Draft            | after a confirmation, the same `PATCH`, then `POST /admin/global-events/:id/publish` with the version it answered                             |
+| Discard          | Draft            | `POST /admin/global-events/:id/discard` with `{ version }`, after a confirmation                                                              |
+| Cancel the event | published        | `POST /admin/global-events/:id/cancel` with `{ version }`, after a confirmation that names Users and Holders                                  |
+
+Publish stays disabled, saying what is missing, until the form has a title, a start and a position. A published event
+says that Users see a saved change at once. A cancelled or a discarded event is shown without the form.
+
+After a change goes through the page is read again. A refusal leaves what the person typed in the form and says why: a
+400 with the main server's message, `GLOBAL_EVENT_INCOMPLETE` as what is missing, `GLOBAL_EVENT_STATE` as the event's
+state now, and `GLOBAL_EVENT_CHANGED` as a warning that another Administrator changed the event. The last two offer
+"Load the current version", which reads the page again and replaces the input.
 
 ## Checks
 
@@ -107,7 +143,9 @@ into `.next/types/`, so both checks also work on a fresh clone, before `pnpm dev
   on a request, and clicks through it. `vitest.setup.ts` replaces the parts of Next.js that need a request (`cookies()`,
   `redirect()`, `refresh()`) with `__tests__/support/browser.tsx`, which keeps the cookies and the page a redirect led
   to, and replaces the main server with the fake in `__tests__/support/fake-main-server.ts`. `__tests__/support/google.ts`
-  stands in for Google's script on the sign-in page.
+  stands in for Google's script on the sign-in page. `notFound()` is replaced too, and `browser.notFound` tells a test
+  that the page would show the not-found page. The tests run in `America/Los_Angeles`, so that a time shown in the
+  browser's zone instead of Seoul's fails.
 - **site** (`__tests__/site/*.test.ts`): builds the site once (`next build`, about 20 seconds) into `.next-test/`, with
   a test Google client ID, starts it with `next start` on a free port against a fake main server over HTTP, and checks
   what only the real server shows: the cookie's attributes, that the token is in no page, and that a Server Action
@@ -118,9 +156,11 @@ into `.next/types/`, so both checks also work on a fresh clone, before `pnpm dev
 ```text
 src/app/sign-in/         the sign-in page, Google's button and the sign-in Server Action
 src/app/(signed-in)/     the pages behind the session; layout.tsx and site-menu.tsx are the menu around them
+src/app/(signed-in)/events/[id]/  the event's page, its form (event-form.tsx, fields.ts) and its Server Action
 src/app/globals.css      the palette, the font and the shared classes
 src/main-server.ts       the only way the site calls the main server; server-only
 src/session.ts           the cookie, and asAdministrator(), which sends the person to sign-in on a missing cookie or a 401
+src/seoul-time.ts        times in Asia/Seoul
 __tests__/               page tests, named *.test.tsx, and their support/
 __tests__/site/          tests against the built site
 ```

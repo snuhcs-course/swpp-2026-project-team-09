@@ -14,6 +14,8 @@ export default defineConfig({
         test: {
           name: 'pages',
           environment: 'jsdom',
+          // Far from Seoul, so that a time shown in the browser's zone instead of Seoul's fails.
+          env: { TZ: 'America/Los_Angeles' },
           include: ['__tests__/*.test.tsx'],
           setupFiles: ['./vitest.setup.ts'],
         },

@@ -7,10 +7,14 @@ vi.mock('next/headers', async () => {
 
 vi.mock('next/navigation', async (importOriginal) => {
   const { Redirect } = await import('./__tests__/support/redirect');
+  const { NotFound } = await import('./__tests__/support/not-found');
   return {
     ...(await importOriginal<object>()),
     redirect: (location: string): never => {
       throw new Redirect(location);
+    },
+    notFound: (): never => {
+      throw new NotFound();
     },
   };
 });

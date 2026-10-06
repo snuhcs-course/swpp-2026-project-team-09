@@ -6,11 +6,14 @@ import { type ReactElement, useState } from 'react';
 
 import { signOut } from './actions';
 
-// A section of the site is one entry here and one route under (signed-in).
-const SECTIONS = [{ href: '/administrators', label: 'Administrators' }];
+// A section of the site is one entry here and one route under (signed-in); its pages live under `href` or `under`.
+const SECTIONS = [
+  { href: '/', under: '/events', label: 'Events' },
+  { href: '/administrators', under: '/administrators', label: 'Administrators' },
+];
 
-function isCurrent(pathname: string | null, href: string): boolean {
-  return pathname === href || (pathname?.startsWith(`${href}/`) ?? false);
+function isCurrent(pathname: string | null, { href, under }: (typeof SECTIONS)[number]): boolean {
+  return pathname === href || pathname === under || (pathname?.startsWith(`${under}/`) ?? false);
 }
 
 function SignedIn({ email }: { email: string | undefined }): ReactElement {
@@ -55,17 +58,17 @@ export function SiteMenu({ email }: { email: string | undefined }): ReactElement
       </div>
       <div id="site-menu" className={`${open ? 'flex' : 'hidden'} flex-1 flex-col md:flex`}>
         <nav aria-label="Sections" className="flex flex-col gap-1 px-3 py-2">
-          {SECTIONS.map(({ href, label }) => (
+          {SECTIONS.map((section) => (
             <Link
-              key={href}
-              href={href}
-              aria-current={isCurrent(pathname, href) ? 'page' : undefined}
+              key={section.href}
+              href={section.href}
+              aria-current={isCurrent(pathname, section) ? 'page' : undefined}
               onClick={() => {
                 setOpen(false);
               }}
               className="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 aria-[current=page]:bg-accent-soft aria-[current=page]:text-accent-strong"
             >
-              {label}
+              {section.label}
             </Link>
           ))}
         </nav>
