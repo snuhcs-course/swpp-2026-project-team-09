@@ -9,6 +9,7 @@ import {
   font,
   FullScreenPanel,
   LoadingState,
+  radius,
   space,
   useToast,
   useToastAbove,
@@ -34,6 +35,7 @@ function leaveRoom(): void {
 }
 
 function Head({ room }: { room: RoomView }): ReactElement {
+  const { description } = room.quest;
   return (
     <View style={styles.head}>
       <View style={styles.badges}>
@@ -46,6 +48,40 @@ function Head({ room }: { room: RoomView }): ReactElement {
       <Text accessibilityRole="header" style={styles.title}>
         {room.quest.title}
       </Text>
+      {description === '' ? null : (
+        <View style={styles.quote}>
+          <Text style={styles.quoteWords}>{description}</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+// The app bar's `모집글 보기` for an Open or Approval Quest, and `수정` for its Leader.
+function RecruitingActions({ room }: { room: RoomView }): ReactElement {
+  const { quest, leads } = room;
+  return (
+    <View style={styles.actions}>
+      {quest.joinPolicy === 'closed' ? null : (
+        <Button
+          onPress={() => {
+            router.push(`/post/${quest.id}`);
+          }}
+          variant="secondary"
+        >
+          모집글 보기
+        </Button>
+      )}
+      {leads ? (
+        <Button
+          onPress={() => {
+            router.push({ pathname: '/party-form', params: { questId: quest.id } });
+          }}
+          variant="ghost"
+        >
+          수정
+        </Button>
+      ) : null}
     </View>
   );
 }
@@ -128,6 +164,7 @@ export function RoomScreen({ questId }: { questId: string }): ReactElement {
           />
         )
       }
+      actions={room === undefined ? undefined : <RecruitingActions room={room} />}
       leave={{ kind: 'back', onPress: leaveRoom }}
       title="파티"
     >
@@ -159,4 +196,14 @@ const styles = StyleSheet.create({
   head: { gap: space[2] },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   title: { fontFamily: font.bold, fontSize: 22, lineHeight: 30, letterSpacing: -0.33, color: color.ink },
+  quote: {
+    paddingVertical: space[3],
+    paddingHorizontal: 14,
+    borderLeftWidth: 3,
+    borderLeftColor: color.border,
+    borderRadius: radius.sm,
+    backgroundColor: color.surfaceSubtle,
+  },
+  quoteWords: { fontFamily: font.regular, fontSize: 15, lineHeight: 22, color: color.ink },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
 });

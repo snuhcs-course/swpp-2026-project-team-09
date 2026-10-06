@@ -100,3 +100,9 @@ export function koreaDayOfMonth(instant: Date): number {
 export function koreaWeekdayName(instant: Date): string {
   return WEEKDAYS[koreaWeekday(instant)] ?? '';
 }
+
+// "10/03 (토)"
+export function koreaShortDate(instant: Date): string {
+  const korea = inKorea(instant);
+  return `${twoDigits(korea.getUTCMonth() + 1)}/${twoDigits(korea.getUTCDate())} (${WEEKDAYS[korea.getUTCDay()]})`;
+}

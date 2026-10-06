@@ -101,6 +101,9 @@ export const DINNER: Quest = {
     },
   ],
   classQuest: false,
+  board: null,
+  description: '',
+  createdAt: '2026-10-05T09:00:00.000Z',
 };
 
 // What every route of the main screen answers, for a User in no Party.
@@ -140,6 +143,9 @@ export const INVITATION: QuestInvitation = {
     holderCount: 1,
     capacity: 4,
     joinPolicy: 'closed',
+    board: null,
+    description: '실험 3 보고서 같이 정리해요.',
+    createdAt: '2026-10-06T03:20:00.000Z',
   },
   sentAt: '2026-10-06T03:30:00.000Z',
 };
@@ -181,6 +187,7 @@ export const STUDY: Quest = {
   title: '알고리즘 스터디',
   capacity: 6,
   joinPolicy: 'approval',
+  board: 'career',
   holders: [{ id: ME_ID, name: '홍길동', department: '컴퓨터공학부' }],
 };
 

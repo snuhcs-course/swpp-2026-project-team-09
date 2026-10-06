@@ -52,6 +52,9 @@ export const PICNIC: Quest = {
     },
   ],
   classQuest: false,
+  board: 'hobby',
+  description: '',
+  createdAt: '2026-10-05T10:00:00.000Z',
 };
 
 // The same Quest, which 김민준 leads.

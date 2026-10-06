@@ -67,14 +67,13 @@ describe('a slot of the bottom navigation', () => {
 });
 
 describe('파티', () => {
-  it('has its app bar and the tabs 찾기, 내 파티 and 초대, each not ready', async () => {
+  it('has its app bar and the tabs 찾기, 내 파티 and 초대', async () => {
     const user = await openMain();
     await user.press(screen.getByRole('tab', { name: /^파티/u }));
 
     expect(screen.getByRole('tab', { name: '찾기' })).toBeSelected();
-    expect(screen.getByText(NOT_READY)).toBeVisible();
-    await user.press(screen.getByRole('tab', { name: '내 파티' }));
-    expect(screen.getByRole('tab', { name: '내 파티' })).toBeSelected();
+    await user.press(screen.getByRole('tab', { name: /^내 파티/u }));
+    expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
     expect(shownAddress()).toBe('/party?tab=mine');
   });
 
@@ -85,17 +84,17 @@ describe('파티', () => {
       router.navigate('/party?tab=invites');
     });
 
-    expect(screen.getByRole('tab', { name: '초대' })).toBeSelected();
+    expect(screen.getByRole('tab', { name: /^초대/u })).toBeSelected();
     expect(screen.getByRole('tab', { name: '찾기' })).not.toBeSelected();
   });
 
-  it('says that "만들기" is not ready', async () => {
+  it('opens 파티 만들기 with "만들기"', async () => {
     const user = await openMain();
     await user.press(screen.getByRole('tab', { name: /^파티/u }));
 
     await user.press(screen.getByRole('button', { name: '만들기' }));
 
-    expect(screen.getByTestId('toast-layer')).toHaveTextContent(NOT_READY);
+    expect(screen.getByRole('header', { name: '파티 만들기' })).toBeVisible();
   });
 });
 

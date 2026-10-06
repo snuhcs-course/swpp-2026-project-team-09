@@ -549,6 +549,12 @@ Ticket 12 connected every row that the demo's flows (P20) use and the main serve
 | The Leader's invitations (`listSentInvitations`, `cancelInvitation`) | Connected | `GET /quests/:questId/invitations`, `DELETE /quests/:questId/invitations/:id`; fetched again on `quests-changed` | The room's 초대 중 |
 | 활성화 (`openParty`, `joinParty`, `leaveParty`, `setPartySharing`, `removePartyMember`, `endParty`) | Connected | `POST /parties`, `POST /parties/:partyId/join`, `POST /parties/mine/leave`, `PUT /parties/mine/sharing`, `DELETE /parties/mine/members/:userId`, `POST /parties/mine/end` | `거절` is the phone's own: the main server stores no decline |
 | The map view's place (`findPlaceAt`) | Connected | `GET /places/at` | The mock answers by the nearest of its Places |
+| Recruiting Quests (`listRecruitingQuests`) | Connected | `GET /quests/recruiting`, `?board=`; fetched again on `quests-changed` | The mock has the `Party` frame's posts on the four boards |
+| Joining a Quest (`joinQuest`) | Connected | `POST /quests/:questId/join` | |
+| The User's requests to join (`askToJoinQuest`, `listMyJoinRequests`, `withdrawJoinRequest`) | Connected | `POST /quest-join-requests`, `GET /quest-join-requests`, `POST /quest-join-requests/:id/withdraw`; fetched again on `quests-changed` | |
+| Making and changing a Quest (`makeQuest`, `changeQuest`) | Connected | `POST /quests/own` with an `Idempotency-Key`, `PATCH /quests/:questId` | |
+| Inviting a Friend into a Quest (`inviteToQuest`) | Connected | `POST /quests/:questId/invitations` | |
+| Answering an invitation (`acceptInvitation`, `declineInvitation`) | Connected | `POST /quest-invitations/:id/accept`, `/decline` | |
 | The signal `matching-changed` | Not used | The socket | It names nothing these screens show |
 
 ## 4. Controls that say "준비 중이에요"
@@ -561,7 +567,6 @@ The control is there and only shows the toast. The last column is a proposal for
 | Above the navigation | 오늘의 발자국 | The story replay | In no Iteration 1 spec |
 | Above the navigation | The AI input, which is a button with the input's look and takes no focus and no text, and its send button, read as disabled | The AI chat, with the real text field | In no Iteration 1 spec |
 | Bottom navigation | 올리기 | The story sheet | In no Iteration 1 spec |
-| 파티 | + 만들기, and the bodies of 찾기, 내 파티 and 초대 | 파티 만들기 and the lists of Quests | P13 |
 | 행사 | Its body | The list of Global Events | P13 |
 | 내 정보 | 이미지로 불러오기, 빈 시간 말하기 | Reading a timetable from an image or from words | In no Iteration 1 spec |
 | A Global Event's card | 같이 갈 사람 찾기 | The party screen | P13 |

@@ -17,7 +17,7 @@ interface PlanFormProps {
 
 // A point picked on the map keeps its place while the words change, and is then sent as a point with those words. A
 // Place of the list is sent as itself while its words stay.
-function placeOf(words: string, picked: PickedPlace | null): SubQuestPlace | undefined {
+export function placeOf(words: string, picked: PickedPlace | null): SubQuestPlace | undefined {
   const label = words.trim();
   if (label === '' || picked === null) {
     return undefined;
@@ -40,7 +40,13 @@ function pickedOf(subQuest: SubQuest | null): PickedPlace | null {
 }
 
 // `언제`: a button with the time chosen, which opens the date·time sheet.
-function WhenField({ startsAt, onPick }: { startsAt: string | null; onPick: (instant: string) => void }): ReactElement {
+export function WhenField({
+  startsAt,
+  onPick,
+}: {
+  startsAt: string | null;
+  onPick: (instant: string) => void;
+}): ReactElement {
   const [picking, setPicking] = useState(false);
   const words = startsAt === null ? '날짜·시간 선택' : whenWords(startsAt);
   return (
@@ -77,7 +83,7 @@ interface WhereFieldProps {
 }
 
 // `어디서`: words of the User's own, and the map view, whose choice fills them. Emptied words drop the choice.
-function WhereField({ words, picked, onWords, onPicked }: WhereFieldProps): ReactElement {
+export function WhereField({ words, picked, onWords, onPicked }: WhereFieldProps): ReactElement {
   return (
     <View style={styles.where}>
       <View style={styles.whereField}>

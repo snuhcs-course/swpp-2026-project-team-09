@@ -8,8 +8,12 @@ import EventsScreen from '@/app/(signed-in)/(tabs)/events';
 import MainScreen from '@/app/(signed-in)/(tabs)/main';
 import MeScreen from '@/app/(signed-in)/(tabs)/me';
 import PartyScreen from '@/app/(signed-in)/(tabs)/party';
+import BoardScreen from '@/app/(signed-in)/boards/[board]';
+import BoardsScreen from '@/app/(signed-in)/boards/index';
 import NotificationsScreen from '@/app/(signed-in)/notifications';
+import PartyFormScreen from '@/app/(signed-in)/party-form';
 import PlaceMapScreen from '@/app/(signed-in)/place-map';
+import PostScreen from '@/app/(signed-in)/post/[questId]';
 import ProfileEditScreen from '@/app/(signed-in)/profile-edit';
 import InviteScreen from '@/app/(signed-in)/invite/[token]';
 import AddFriendScreen from '@/app/(signed-in)/me/friends/add';
@@ -69,6 +73,10 @@ export async function startApp(initialUrl = '/'): Promise<void> {
       '(signed-in)/map-sources': MapSourcesScreen,
       '(signed-in)/room/[questId]': RoomScreen,
       '(signed-in)/place-map': PlaceMapScreen,
+      '(signed-in)/boards/index': BoardsScreen,
+      '(signed-in)/boards/[board]': BoardScreen,
+      '(signed-in)/post/[questId]': PostScreen,
+      '(signed-in)/party-form': PartyFormScreen,
     },
     { initialUrl },
   );

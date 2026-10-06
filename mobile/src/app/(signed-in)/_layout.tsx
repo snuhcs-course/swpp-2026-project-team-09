@@ -71,6 +71,10 @@ export default function SignedInLayout(): ReactElement {
             <Stack.Screen name="map-sources" options={slideFrom('right', reduceMotion)} />
             <Stack.Screen name="room/[questId]" options={slideFrom('right', reduceMotion)} />
             <Stack.Screen name="place-map" options={slideFrom('right', reduceMotion)} />
+            <Stack.Screen name="boards/index" options={slideFrom('right', reduceMotion)} />
+            <Stack.Screen name="boards/[board]" options={slideFrom('right', reduceMotion)} />
+            <Stack.Screen name="post/[questId]" options={slideFrom('right', reduceMotion)} />
+            <Stack.Screen name="party-form" options={slideFrom('right', reduceMotion)} />
           </Stack>
         </BackgroundSharingProvider>
       </PositionSending>

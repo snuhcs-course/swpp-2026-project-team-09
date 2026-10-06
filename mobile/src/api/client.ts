@@ -2,6 +2,7 @@ import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
 import { asksMainServer } from './servers';
 import type {
+  Board,
   ClassSave,
   Footprints,
   Friend,
@@ -25,12 +26,13 @@ import type {
   SubQuest,
   TimetableClass,
   UserSummary,
-  WalkingRoute,
 } from './types';
 import type { RestaurantMenus } from './menu-types';
 import type { ShuttleRoute, ShuttleVehicle } from './shuttle-types';
 import type { PartyOpening, PlaceAt, SubQuestContent } from './room-types';
-import type { FriendRequests, JoinRequest, Meetups, QuestInvitation } from './waiting-types';
+import type { FriendRequests, JoinRequest, Meetups, MyJoinRequest, QuestInvitation } from './waiting-types';
+import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
+import type { WalkingRoute } from './walking-route-types';
 
 // Everything the screens ask of the main server. A refusal or no answer is thrown as an `ApiError`.
 export interface ApiClient {
@@ -117,6 +119,19 @@ export interface ApiClient {
   // Ends the User's Party for every member.
   endParty: () => Promise<void>;
   findPlaceAt: (position: LatLng) => Promise<PlaceAt>;
+  // The newest first; all boards without one.
+  listRecruitingQuests: (board?: Board) => Promise<RecruitingQuest[]>;
+  // An Open Quest, at once.
+  joinQuest: (questId: string) => Promise<Quest>;
+  // An Approval Quest: a request that the Leader answers.
+  askToJoinQuest: (questId: string) => Promise<void>;
+  listMyJoinRequests: () => Promise<MyJoinRequest[]>;
+  withdrawJoinRequest: (requestId: string) => Promise<void>;
+  makeQuest: (making: QuestMaking, idempotencyKey: string) => Promise<Quest>;
+  changeQuest: (questId: string, change: QuestChange) => Promise<Quest>;
+  inviteToQuest: (questId: string, userId: string) => Promise<void>;
+  acceptInvitation: (invitationId: string) => Promise<Quest>;
+  declineInvitation: (invitationId: string) => Promise<void>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`). Chosen at each
@@ -185,4 +200,14 @@ export const apiClient: ApiClient = {
   removePartyMember: (userId) => chosen().removePartyMember(userId),
   endParty: () => chosen().endParty(),
   findPlaceAt: (position) => chosen().findPlaceAt(position),
+  listRecruitingQuests: (board) => chosen().listRecruitingQuests(board),
+  joinQuest: (questId) => chosen().joinQuest(questId),
+  askToJoinQuest: (questId) => chosen().askToJoinQuest(questId),
+  listMyJoinRequests: () => chosen().listMyJoinRequests(),
+  withdrawJoinRequest: (requestId) => chosen().withdrawJoinRequest(requestId),
+  makeQuest: (making, key) => chosen().makeQuest(making, key),
+  changeQuest: (questId, change) => chosen().changeQuest(questId, change),
+  inviteToQuest: (questId, userId) => chosen().inviteToQuest(questId, userId),
+  acceptInvitation: (invitationId) => chosen().acceptInvitation(invitationId),
+  declineInvitation: (invitationId) => chosen().declineInvitation(invitationId),
 };

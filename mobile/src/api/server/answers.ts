@@ -1,4 +1,5 @@
 import type {
+  Board,
   ClassTime,
   Friend,
   InviteLink,
@@ -18,8 +19,8 @@ import type {
   Suggestion,
   TimetableClass,
   UserSummary,
-  WalkingRoute,
 } from '@/api/types';
+import type { WalkingRoute } from '@/api/walking-route-types';
 
 // What the app checks of each answer of the main server before it believes it. The fields the screens read are
 // checked; a field the app does not read may be there or not. An answer of another shape is a failure, as no answer is.
@@ -170,9 +171,18 @@ export function isJoinPolicy(value: unknown): value is Party['joinPolicy'] {
   return value === 'open' || value === 'approval' || value === 'closed';
 }
 
+const BOARDS = new Set(['meal', 'career', 'hobby', 'show']);
+
+export function isBoard(value: unknown): value is Board | null {
+  return value === null || (isText(value) && BOARDS.has(value));
+}
+
 export function isQuest(value: unknown): value is Quest {
   const leader = field(value, 'leader');
   return (
+    isBoard(field(value, 'board')) &&
+    isText(field(value, 'description')) &&
+    isTextOrNull(field(value, 'createdAt')) &&
     hasTexts(value, ['id', 'title']) &&
     isEventName(field(value, 'globalEvent')) &&
     (leader === null || isHolder(leader)) &&

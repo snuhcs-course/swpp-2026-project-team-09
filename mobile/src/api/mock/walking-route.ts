@@ -1,4 +1,5 @@
-import type { LatLng, WalkingRoute } from '@/api/types';
+import type { LatLng } from '@/api/types';
+import type { WalkingRoute } from '@/api/walking-route-types';
 
 const EARTH_RADIUS_M = 6_371_000;
 const POINTS = 12;

@@ -1,7 +1,8 @@
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { apiClient } from './client';
 import type { RestaurantMenus } from './menu-types';
-import type { Place, Quest } from './types';
+import type { RecruitingQuest } from './party-types';
+import type { Board, Place, Quest } from './types';
 import type { JoinRequest } from './waiting-types';
 
 // One entry of the cache per operation, each under its own key. The hooks of the features combine them, so that an
@@ -28,6 +29,8 @@ export const GLOBAL_EVENT_ANNOUNCERS_KEY = ['global-event-announcers'] as const;
 export const SHUTTLE_KEY = ['shuttle'] as const;
 export const SHUTTLE_VEHICLES_KEY = ['shuttle-vehicles'] as const;
 type MenusKey = readonly ['menus', string];
+export const RECRUITING_KEY = ['recruiting'] as const;
+export const MY_JOIN_REQUESTS_KEY = ['my-join-requests'] as const;
 
 // Ask it only for a User who finished Onboarding: the main server refuses it before.
 // Entering the Lobby is done once, by the loading screen or after a sign-in, and its answer is not asked again by a
@@ -97,4 +100,17 @@ export const shuttleQuery = queryOptions({ queryKey: SHUTTLE_KEY, queryFn: () =>
 export const shuttleVehiclesQuery = queryOptions({
   queryKey: SHUTTLE_VEHICLES_KEY,
   queryFn: () => apiClient.listShuttleVehicles(),
+});
+// The recruiting Quests of one board, or of all under 'all', each under the one key.
+export function recruitingQuery(
+  board: Board | 'all',
+): UseQueryOptions<RecruitingQuest[], Error, RecruitingQuest[], string[]> {
+  return {
+    queryKey: [...RECRUITING_KEY, board],
+    queryFn: () => apiClient.listRecruitingQuests(board === 'all' ? undefined : board),
+  };
+}
+export const myJoinRequestsQuery = queryOptions({
+  queryKey: MY_JOIN_REQUESTS_KEY,
+  queryFn: () => apiClient.listMyJoinRequests(),
 });

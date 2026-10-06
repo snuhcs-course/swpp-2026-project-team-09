@@ -61,6 +61,9 @@ export const QUESTS: Quest[] = [
       }),
     ],
     classQuest: false,
+    board: 'career',
+    description: '설명회 끝나고 같이 저녁 먹어요.',
+    createdAt: frameTime('09:12'),
   },
   {
     id: 'q-dinner',
@@ -80,6 +83,9 @@ export const QUESTS: Quest[] = [
       }),
     ],
     classQuest: false,
+    board: null,
+    description: '',
+    createdAt: frameTime('10:40'),
   },
   {
     id: 'c1',
@@ -102,6 +108,9 @@ export const QUESTS: Quest[] = [
       },
     ],
     classQuest: true,
+    board: null,
+    description: '',
+    createdAt: null,
   },
 ];
 

@@ -1,4 +1,4 @@
-import type { JoinPolicy, Person, SubQuest, UserSummary } from './types';
+import type { Board, JoinPolicy, Person, SubQuest, UserSummary } from './types';
 
 // The main server's lists of what waits for the User, which 알림 and the badge on 파티 are composed from.
 
@@ -8,18 +8,31 @@ export interface FriendRequests {
   sent: { id: string; receiver: UserSummary; sentAt: string }[];
 }
 
-// GET /quest-invitations, the newest first: the Leader's invitations into a Quest, the Quest as it is now.
+// A Quest as the lists of what waits and the list of recruiting Quests show it, as it is now.
+export interface QuestSummary {
+  id: string;
+  title: string;
+  globalEvent: { id: string; title: string } | null;
+  leader: Person;
+  holderCount: number;
+  capacity: number;
+  joinPolicy: JoinPolicy;
+  board: Board | null;
+  description: string;
+  createdAt: string;
+}
+
+// GET /quest-invitations, the newest first: the Leader's invitations into a Quest.
 export interface QuestInvitation {
   id: string;
-  quest: {
-    id: string;
-    title: string;
-    globalEvent: { id: string; title: string } | null;
-    leader: Person;
-    holderCount: number;
-    capacity: number;
-    joinPolicy: JoinPolicy;
-  };
+  quest: QuestSummary;
+  sentAt: string;
+}
+
+// GET /quest-join-requests, the newest first: the User's waiting requests to join an Approval Quest.
+export interface MyJoinRequest {
+  id: string;
+  quest: QuestSummary;
   sentAt: string;
 }
 

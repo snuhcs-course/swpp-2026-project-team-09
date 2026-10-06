@@ -129,7 +129,7 @@ export function otherHolders(quest: Quest, meId: string): string {
     .join(', ');
 }
 
-function wait(minutes: number): string {
+export function waitWords(minutes: number): string {
   return minutes < 60 ? `${minutes}분 후` : `${Math.floor(minutes / 60)}시간 후`;
 }
 
@@ -143,7 +143,7 @@ function classKicker(subQuest: SubQuest | null, next: boolean, now: Date): strin
   if (untilStart <= 0) {
     return end !== null && new Date(end).getTime() <= now.getTime() ? '강의' : '강의 · 수업 중';
   }
-  return next ? `다음 강의 · ${wait(Math.ceil(untilStart / MINUTE_MS))}` : '강의';
+  return next ? `다음 강의 · ${waitWords(Math.ceil(untilStart / MINUTE_MS))}` : '강의';
 }
 
 // The frames word a Shared Quest that is no Party's, such as a dinner with a Friend, as a "비공개 파티", and a Party

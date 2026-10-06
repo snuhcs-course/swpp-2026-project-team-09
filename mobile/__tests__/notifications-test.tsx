@@ -115,7 +115,7 @@ describe("a row of 알림's press", () => {
 
     await user.press(screen.getByRole('button', { name: row }));
 
-    expect(screen.getByRole('tab', { name: '초대' })).toBeSelected();
+    expect(screen.getByRole('tab', { name: /^초대/u })).toBeSelected();
     expect(shownAddress()).toBe('/party?tab=invites');
   });
 

@@ -27,6 +27,7 @@ import { isMenus } from './menu-answers';
 import { isShuttleRoute, isShuttleVehicles } from './shuttle-answers';
 import { isFriendRequests, isJoinRequests, isMeetups, isQuestInvitations } from './waiting-answers';
 import { call } from './http';
+import { partyClient } from './party-client';
 import { roomClient } from './room-client';
 
 // The operations the main server serves on its main line, each from its route. What it does not serve stays the
@@ -34,6 +35,7 @@ import { roomClient } from './room-client';
 export const serverClient: ApiClient = {
   ...mockClient,
   ...roomClient,
+  ...partyClient,
   // The main server stores four of the answers. The course level and the gender have no place there, so the phone
   // keeps them with the rest, once the main server has saved its part.
   completeOnboarding: async (answers: OnboardingAnswers) => {

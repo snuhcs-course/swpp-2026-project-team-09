@@ -7,11 +7,13 @@ import {
   GLOBAL_EVENTS_KEY,
   JOIN_REQUESTS_KEY,
   MEETUPS_KEY,
+  MY_JOIN_REQUESTS_KEY,
   MY_PARTY_KEY,
   PARTIES_KEY,
   POSITIONS_KEY,
   QUEST_INVITATIONS_KEY,
   QUESTS_KEY,
+  RECRUITING_KEY,
   SENT_INVITATIONS_KEY,
   SHUTTLE_VEHICLES_KEY,
 } from '@/api/queries';
@@ -29,7 +31,14 @@ import { openLiveConnection } from './connection';
 const REFETCH: Record<string, readonly QueryKey[]> = {
   'friends-changed': [FRIENDS_KEY, POSITIONS_KEY, FRIEND_REQUESTS_KEY],
   // The Quests' key also holds the open room's Quest.
-  'quests-changed': [QUESTS_KEY, QUEST_INVITATIONS_KEY, JOIN_REQUESTS_KEY, SENT_INVITATIONS_KEY],
+  'quests-changed': [
+    QUESTS_KEY,
+    QUEST_INVITATIONS_KEY,
+    JOIN_REQUESTS_KEY,
+    SENT_INVITATIONS_KEY,
+    RECRUITING_KEY,
+    MY_JOIN_REQUESTS_KEY,
+  ],
   'meetups-changed': [MEETUPS_KEY],
   // Who is in the User's Party changes whom the User sees.
   'party-changed': [MY_PARTY_KEY, PARTIES_KEY, POSITIONS_KEY],
@@ -55,6 +64,8 @@ const SHOWN: readonly QueryKey[] = [
   MY_PARTY_KEY,
   GLOBAL_EVENTS_KEY,
   SHUTTLE_VEHICLES_KEY,
+  RECRUITING_KEY,
+  MY_JOIN_REQUESTS_KEY,
   ...WAITING,
 ];
 

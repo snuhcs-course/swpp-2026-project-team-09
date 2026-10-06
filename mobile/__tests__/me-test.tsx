@@ -152,7 +152,7 @@ describe('the activity rows', () => {
 
     await user.press(screen.getByRole('button', { name: '참여 중인 파티 2' }));
 
-    expect(screen.getByRole('tab', { name: '내 파티' })).toBeSelected();
+    expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
     expect(shownAddress()).toBe('/party?tab=mine');
   });
 

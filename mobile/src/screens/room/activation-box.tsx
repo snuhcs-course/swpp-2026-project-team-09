@@ -31,6 +31,17 @@ function switchLine(otherParty: string | null): string {
     : `\n한 번에 한 파티에만 참여할 수 있어요. 지금 참여 중인 ‘${otherParty}’ 활성화에서는 나가게 돼요.`;
 }
 
+// The question before entering a Party while the User is in another, also asked from 내 파티.
+export function joinAsk(title: string, otherParty: string, onConfirm: () => void): Ask {
+  return {
+    title: `‘${title}’ 활성화에 참여할까요?`,
+    body: `참여한 멤버끼리 서로 위치를 볼 수 있어요.${switchLine(otherParty)}`,
+    confirm: '나가고 참여',
+    danger: false,
+    onConfirm,
+  };
+}
+
 const SWITCH_OFF_LINE = '\n내 정보에서 위치 공유를 켜야 멤버에게 내 위치가 보여요';
 
 const TONES = {
@@ -104,13 +115,7 @@ function joinButton({ room, actions, onAsk }: ActivationBoxProps, partyId: strin
         void actions.joinParty(partyId, false);
         return;
       }
-      onAsk({
-        title: `‘${title}’ 활성화에 참여할까요?`,
-        body: `참여한 멤버끼리 서로 위치를 볼 수 있어요.${switchLine(otherParty)}`,
-        confirm: '나가고 참여',
-        danger: false,
-        onConfirm: () => void actions.joinParty(partyId, true),
-      });
+      onAsk(joinAsk(title, otherParty, () => void actions.joinParty(partyId, true)));
     },
   };
 }

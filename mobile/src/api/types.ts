@@ -164,6 +164,9 @@ export interface Person {
   department: string;
 }
 
+// Where an Open or Approval Quest is posted: 식사, 진로, 취미 or 공연 게시판.
+export type Board = 'meal' | 'career' | 'hobby' | 'show';
+
 // GET /quests. The User's Quests, then today's Class Quests by their start.
 export interface Quest {
   id: string;
@@ -179,6 +182,12 @@ export interface Quest {
   subQuests: SubQuest[];
   // True for a Class Quest, which the timetable makes for today.
   classQuest: boolean;
+  // Null for a Closed Quest and a Class Quest.
+  board: Board | null;
+  // The recruiting post, 0 to 200 characters.
+  description: string;
+  // Null for a Class Quest.
+  createdAt: string | null;
 }
 
 // --- What is on the map ---
@@ -283,18 +292,3 @@ export interface Place {
   latitude: number;
   longitude: number;
 }
-
-// --- Walking route (GET /walking-route) ---
-
-export type NoRouteStatus =
-  | 'SAME_POINT'
-  | 'START_LINK_NOT_FOUND'
-  | 'END_LINK_NOT_FOUND'
-  | 'TOO_MANY_SEARCH_LINK'
-  | 'TOO_FAR_AWAY'
-  | 'ROUTE_RESULT_NOT_FOUND';
-
-// The distance is in metres and the duration in seconds.
-export type WalkingRoute =
-  | { status: 'OK'; route: { line: LatLng[]; distance: number; duration: number } }
-  | { status: NoRouteStatus; route: null };

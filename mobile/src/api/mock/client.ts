@@ -11,6 +11,7 @@ import { PLACES } from './data/places';
 import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
 import { MEETUPS, QUEST_INVITATIONS } from './data/waiting';
 import { mockFriendships as friendships } from './friendships';
+import { mockParty } from './party';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
 import { mockRoom } from './room';
@@ -132,4 +133,5 @@ export const mockClient: ApiClient = {
   getShuttle: () => answer('getShuttle', () => SHUTTLE),
   listShuttleVehicles: () => answer('listShuttleVehicles', () => SHUTTLE_VEHICLES, []),
   ...mockRoom,
+  ...mockParty,
 };
