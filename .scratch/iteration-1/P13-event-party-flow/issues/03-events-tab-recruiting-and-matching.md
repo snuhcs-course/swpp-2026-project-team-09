@@ -2,7 +2,7 @@
 
 Parent: [P13 spec](../spec.md)
 Status: ready-for-agent
-Blocked by: 02 (The 파티 tab: recruiting Quests, the boards, 파티 만들기, 내 파티 and 초대), P12-01 (Reading Global Events: the administrative API's lists and the User's list)
+Blocked by: 02 (The 파티 tab: recruiting Quests, the boards, 파티 만들기, 내 파티 and 초대), P12-01 (The administrative API: Global Events, Places, Collection status, Users and friendships)
 
 ## What to build
 
