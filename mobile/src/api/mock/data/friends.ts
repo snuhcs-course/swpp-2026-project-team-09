@@ -1,5 +1,5 @@
 import type { Friend, FriendStatus, Position } from '@/api/types';
-import { FRAME_NOW } from './frame';
+import { FRAME_NOW, frameTime } from './frame';
 
 // The twelve Friends of the `Main` frame, in the order of their names as the main server lists them. Two have their
 // location off: the User cannot see them, and no position exists for them.
@@ -139,3 +139,43 @@ export const FRIEND_STATUSES: FriendStatus[] = MOCK_FRIENDS.map(
     photo,
   }),
 );
+
+// The User's own Friend ID, as the Lobby gives it.
+export const MY_FRIEND_ID = '7KX2M9QD';
+
+// Each Friend's Friend ID, by their id.
+export const FRIEND_IDS: Readonly<Record<string, string>> = {
+  f1: 'KM4J8QZA',
+  f2: 'YS3N7WEB',
+  f3: 'PJ5H2RXC',
+  f4: 'CY6N9TUD',
+  f5: 'JH7E3VKF',
+  f6: 'KD8Y4MPG',
+  f7: 'JS9A5NRH',
+  f8: 'YT2E6QWJ',
+  f9: 'HJ3M7XSK',
+  f10: 'YC4W8ZTM',
+  f11: 'SJ5U9BVN',
+  f12: 'SY6R2CXP',
+};
+
+// Users of the `Friends` frame who are no Friend, each with a Friend ID. The first three sent the User a Friend
+// Request, as in the frame's 친구 요청; the User sent one to 백승호; 유지안 sent the User an Invite Link.
+export const OTHER_USERS = [
+  { id: 'u1', name: '한도경', department: '산업공학과', friendId: 'HD3K8P2R' },
+  { id: 'u2', name: '김하늘', department: '컴퓨터공학부', friendId: 'KH4N9S3T' },
+  { id: 'u3', name: '박서준', department: '기계공학부', friendId: 'PS5J2U4V' },
+  { id: 'u4', name: '백승호', department: '작곡과', friendId: 'BS6H3W5X' },
+  { id: 'u5', name: '유지안', department: '경제학부', friendId: 'YJ7A4Y6Z' },
+] as const;
+
+// The Friend Requests waiting when the app starts: from whom, to whom (`me` is the User) and when, the newest first.
+export const FRIEND_REQUESTS = [
+  { id: 'r1', from: 'u1', to: 'me', sentAt: frameTime('13:20') },
+  { id: 'r2', from: 'u2', to: 'me', sentAt: frameTime('12:05') },
+  { id: 'r3', from: 'u3', to: 'me', sentAt: frameTime('09:40') },
+  { id: 'r4', from: 'me', to: 'u4', sentAt: frameTime('11:00') },
+] as const;
+
+// An Invite Link from 유지안 that the User can accept: the app opens it at `/invite/from-yujian`.
+export const INVITE_LINK_FROM_YUJIAN = 'from-yujian';

@@ -35,11 +35,32 @@ const withGooglePods: ConfigPlugin = (config) =>
     return withFile;
   });
 
-export default function appConfig({ config }: ConfigContext): Partial<ExpoConfig> {
+// Android opens an Invite Link, `https://<host>/invite/<token>`, in the app through App Links, which it verifies
+// against the main server's `/.well-known/assetlinks.json`. Without the host the build declares no App Link, and
+// links open the app only through its scheme, `snunow://invite/<token>`.
+function withInviteLinks(config: ExpoConfig, host: string): ExpoConfig {
+  if (host === '') {
+    return config;
+  }
+  const inviteLinks = {
+    action: 'VIEW',
+    autoVerify: true,
+    data: [{ scheme: 'https', host, pathPrefix: '/invite/' }],
+    category: ['BROWSABLE', 'DEFAULT'],
+  };
+  return {
+    ...config,
+    android: { ...config.android, intentFilters: [...(config.android?.intentFilters ?? []), inviteLinks] },
+  };
+}
+
+export default function appConfig({ config: fromJson }: ConfigContext): Partial<ExpoConfig> {
+  // `app.json` names both; they are repeated only because a plugin takes a whole configuration.
+  const named = { ...fromJson, name: fromJson.name ?? 'SNU Now', slug: fromJson.slug ?? 'snu-now' };
+  const config = withInviteLinks(named, (process.env.INVITE_LINK_HOST ?? '').trim());
   const iosUrlScheme = process.env.GOOGLE_IOS_URL_SCHEME ?? '';
   if (iosUrlScheme === '') {
-    // `app.json` names both; they are repeated only because a plugin takes a whole configuration.
-    return withGooglePods({ ...config, name: config.name ?? 'SNU Now', slug: config.slug ?? 'snu-now' });
+    return withGooglePods(config);
   }
   return {
     ...config,

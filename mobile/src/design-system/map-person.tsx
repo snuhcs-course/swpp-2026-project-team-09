@@ -15,6 +15,8 @@ interface MapPersonProps {
   // The look while the whole campus is in view: a side of 24 where it is 36 otherwise.
   small?: boolean;
   selected?: boolean;
+  // Drawn faint, for a position that is old.
+  dimmed?: boolean;
   // Called once the photo is shown or has failed, for a caller that waits for the finished look.
   onPhotoSettled?: () => void;
   testID?: string;
@@ -48,13 +50,14 @@ export function MapPerson({
   tone,
   small = false,
   selected = false,
+  dimmed = false,
   onPhotoSettled,
   testID,
 }: MapPersonProps): ReactElement {
   const grown = selected ? SELECTED : 1;
   const side = (small ? SMALL_SIDE : SIDE) * grown;
   return (
-    <View style={{ width: side, height: side * (1 + TIP) }} testID={testID}>
+    <View style={[{ width: side, height: side * (1 + TIP) }, dimmed && styles.dimmed]} testID={testID}>
       <View
         style={[
           styles.drop,
@@ -73,6 +76,7 @@ export function MapPerson({
 }
 
 const styles = StyleSheet.create({
+  dimmed: { opacity: 0.45 },
   // The shadow is turned with the fill, so it is given against the turn to fall straight down.
   drop: {
     alignItems: 'center',

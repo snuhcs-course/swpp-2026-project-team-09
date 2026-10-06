@@ -158,6 +158,15 @@ pnpm install
 pnpm android
 ```
 
+### Invite Links on Android
+
+Set `INVITE_LINK_HOST` in `.env` to the host of the main server's `PUBLIC_URL`, such as `snunow.example`, before the
+project is generated. The build then declares an App Link with `autoVerify` for `https://<host>/invite/`
+(`app.config.ts`), and Android checks it against `https://<host>/.well-known/assetlinks.json`, which the main server
+answers. The check passes only when the build's signing certificate is among the main server's
+`ANDROID_CERTIFICATE_FINGERPRINTS`; the debug key's fingerprint is in the main server's `.env.example`. Without the
+host the build declares no App Link, and a link opens the app only through `snunow://invite/<token>`.
+
 `pnpm android` generates the Android project in `android/` (not committed), builds the app, installs it on the
 running emulator, opens it and starts the development server. The first build takes 15 to 30 minutes; later ones a
 few minutes. Then press "지도 보기" on a placeholder screen, or open `/map-check`, to see the map.
@@ -501,7 +510,39 @@ hidden but 전체; and the Friends grouped by presence ("공강 · 4"), each row
 and the department, the detail (or the line where the app has no detail), and the round calendar button "{이름}님과
 파티 만들기", which says "준비 중이에요". Its footer has the live Badge "친구 {n}명과 위치 공유 중", n the Friends the
 User sees now (`visible`); "공유 설정", which closes the panel and shows 내 정보 at `/me?show=sharing`; and "+ 친구
-추가", which says "준비 중이에요". The scrim ("친구 패널 닫기"), ✕ and Android's back button close it.
+추가", which closes the panel and opens 친구 추가. The scrim ("친구 패널 닫기"), ✕ and Android's back button close it.
+A Friend is under "위치 꺼짐" whenever the main server says the User cannot see them (`visible`), whatever the app's
+own status says.
+
+**The friend screens** (`src/screens/friends/`, the `Friends` and `FriendsAdd` frames) are screens above the tabs that
+slide in from the right, each a `FullScreenPanel` whose "뒤로" goes back to where it was opened from:
+
+- **친구 관리** (`/me/friends`): "친구 {n}"; the search "친구 검색", by name and department, with "결과 없음"; the row
+  "친구 추가"; the row "친구 요청 {n}", n the requests received; and under "친구 {n}" every Friend in the main server's
+  order, with the department (and " · 위치 꺼짐" for a Friend the User cannot see) and the switch "{이름}님과 위치 공유".
+  A switch shows its new state at once, sends `setFriendSharing`, and turns back with "위치 공유를 바꾸지 못했어요" when
+  that fails; the Friends and the positions are fetched again after it. A press on a Friend opens a bottom sheet with
+  "친구 끊기", which a danger dialog confirms; the Friend then leaves the list, the friend panel and the map. A
+  friendship that ended already is fetched again without a word. With no Friend it says "아직 친구가 없어요".
+- **친구 요청** (`/me/friends/requests`): "받은 요청 · {n}" with "거절" and "수락", and "보낸 요청 · {n}" with "요청 취소",
+  left out when empty. A request that waits no more says "이미 처리된 요청이에요" and the requests are fetched again.
+- **친구 추가** (`/me/friends/add`): the User's Friend ID from the Lobby, which "복사" puts on the clipboard
+  (`expo-clipboard`); the field "친구 ID", which keeps letters and digits in capitals, at most 8, and "찾기", which looks
+  the owner up before "추가" sends the Friend Request; each refusal under the field; and "초대 링크 보내기", which makes
+  an Invite Link and opens the phone's share sheet (React Native's `Share`).
+- **The accept screen** of an Invite Link (`/invite/[token]`), which slides up: who sent it, "수락" and "거절", or why it
+  cannot be accepted, with "확인". "수락" closes it on 지도 with "{name}님과 친구가 됐어요"; "거절" only closes it.
+
+Only the friend panel's "+ 친구 추가" opens one of them in the app so far: 내 정보 and its 알림 lead to the others when
+they are built.
+
+**An Invite Link** is `<PUBLIC_URL>/invite/<token>`, and the main server's page opens `snunow://invite/<token>` where a
+messenger shows the address in its own browser. Both reach the route `/invite/[token]`. A link opened before the User
+belongs to the signed-in place (at the start of the app, or signed out) meets the signed-in place's guard, which keeps
+its token on the phone (`inviteToken` of `Kept`) before it leads away; once the User is there, after the loading
+screen or after the sign-in, the consent and Onboarding, the layout opens the accept screen of the kept token. Opened
+while signed in, the link shows its screen at once. The accept screen drops the kept token, and a later link replaces
+it. Android opens the https address in the app only through App Links (see "Invite Links on Android" below).
 
 **The Quest list on the whole screen** (`src/screens/quests/`, the `MainQuests` frame, `/quests`) is a
 `FullScreenPanel` that comes up from the bottom: ✕ "닫기" and "퀘스트 {n}", n the Quests that have not ended; the
@@ -601,28 +642,38 @@ Behind a hook are three layers:
   answered inside the app, in the main server's shape, with what the `Main` wireframe shows. A mock answers after 0.3
   seconds. The tests use the mocks, or a fake main server behind `fetch` (`__tests__/support/fake-server.ts`).
 
-| Operation                                   | Answers                                            | Where it comes from with the main server      |
-| ------------------------------------------- | -------------------------------------------------- | --------------------------------------------- |
-| `signIn`, `signOut` (`src/auth/sign-in.ts`) | Whether the User signed in, and Onboarding's state | `POST /auth/google`, `/auth/sign-out`         |
-| `completeOnboarding`                        | Nothing                                            | `POST /users/me/onboarding`                   |
-| `enterLobby`                                | The User's profile and Master Switch               | `POST /lobby`                                 |
-| `updateProfile`                             | The changed profile                                | `PATCH /users/me/profile`                     |
-| `setMasterSwitch`                           | Nothing                                            | `PUT /users/me/master-switch`                 |
-| `uploadPosition`                            | Whether the position was off campus                | `POST /positions`                             |
-| `listFriends`                               | The Friends                                        | `GET /friends`                                |
-| `listFriendRequests`                        | The Friend Requests received and sent              | `GET /friend-requests`                        |
-| `listPositions`                             | The positions the User may see                     | `GET /positions`, and the socket's `position` |
-| `listFriendStatuses`                        | Each Friend's status, place and photo              | The mock: the app's own                       |
-| `listQuests`                                | The User's Quests and today's Class Quests         | `GET /quests`                                 |
-| `listQuestInvitations`                      | The invitations into a Quest                       | `GET /quest-invitations`                      |
-| `listJoinRequests`                          | The requests to join a Quest the User leads        | `GET /quests/:questId/join-requests`          |
-| `listMeetups`                               | The Meetups proposed to the User and by the User   | `GET /meetups`                                |
-| `listClasses`, `listPlaces`                 | The User's classes, and the Places                 | `GET /timetable/classes`, `GET /places`       |
-| `listGlobalEvents`                          | The published Global Events                        | The mock: no route lists them for a User yet  |
-| `listGlobalEventAnnouncers`                 | Who announced each Global Event                    | The mock: the app's own                       |
-| `listParties`, `getMyParty`                 | The Parties, and the one the User is in            | `GET /parties`, `/parties/mine`               |
-| `getFootprints`                             | What "오늘의 발자국" shows: a number and faces     | The mock: the app's own                       |
-| `findWalkingRoute`                          | The way on foot between two points                 | `GET /walking-route`                          |
+| Operation                                                            | Answers                                            | Where it comes from with the main server                       |
+| -------------------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------- |
+| `signIn`, `signOut` (`src/auth/sign-in.ts`)                          | Whether the User signed in, and Onboarding's state | `POST /auth/google`, `/auth/sign-out`                          |
+| `completeOnboarding`                                                 | Nothing                                            | `POST /users/me/onboarding`                                    |
+| `enterLobby`                                                         | The User's profile and Master Switch               | `POST /lobby`                                                  |
+| `updateProfile`                                                      | The changed profile                                | `PATCH /users/me/profile`                                      |
+| `setMasterSwitch`                                                    | Nothing                                            | `PUT /users/me/master-switch`                                  |
+| `uploadPosition`                                                     | Whether the position was off campus                | `POST /positions`                                              |
+| `listFriends`                                                        | The Friends                                        | `GET /friends`                                                 |
+| `setFriendSharing`, `endFriendship`                                  | Nothing                                            | `PUT /friends/:userId/sharing`, `DELETE /friends/:userId`      |
+| `findFriendId`                                                       | The owner of a Friend ID                           | `GET /friend-ids/:friendId`                                    |
+| `sendFriendRequest`                                                  | Whether the request waits or made two Friends      | `POST /friend-requests`                                        |
+| `listFriendRequests`                                                 | The Friend Requests received and sent              | `GET /friend-requests`                                         |
+| `acceptFriendRequest`, `declineFriendRequest`, `cancelFriendRequest` | Nothing                                            | `POST /friend-requests/:id/accept`, `/decline`, `/cancel`      |
+| `createInviteLink`                                                   | A new Invite Link's address                        | `POST /invite-links`                                           |
+| `getInviteLink`, `acceptInviteLink`                                  | Who sent the link and its status; nothing          | `GET /invite-links/:token`, `POST /invite-links/:token/accept` |
+| `listPositions`                                                      | The positions the User may see                     | `GET /positions`, and the socket's `position`                  |
+| `listFriendStatuses`                                                 | Each Friend's status, place and photo              | The mock: the app's own                                        |
+| `listQuests`                                                         | The User's Quests and today's Class Quests         | `GET /quests`                                                  |
+| `listQuestInvitations`                                               | The invitations into a Quest                       | `GET /quest-invitations`                                       |
+| `listJoinRequests`                                                   | The requests to join a Quest the User leads        | `GET /quests/:questId/join-requests`                           |
+| `listMeetups`                                                        | The Meetups proposed to the User and by the User   | `GET /meetups`                                                 |
+| `listClasses`, `listPlaces`                                          | The User's classes, and the Places                 | `GET /timetable/classes`, `GET /places`                        |
+| `listGlobalEvents`                                                   | The published Global Events                        | The mock: no route lists them for a User yet                   |
+| `listGlobalEventAnnouncers`                                          | Who announced each Global Event                    | The mock: the app's own                                        |
+| `listParties`, `getMyParty`                                          | The Parties, and the one the User is in            | `GET /parties`, `/parties/mine`                                |
+| `getFootprints`                                                      | What "오늘의 발자국" shows: a number and faces     | The mock: the app's own                                        |
+| `findWalkingRoute`                                                   | The way on foot between two points                 | `GET /walking-route`                                           |
+
+The mock keeps the Friends, the Friend Requests and the Invite Links in memory while the app runs
+(`src/api/mock/friendships.ts`), with Friend IDs for the frame's people, and refuses as the main server does. The
+User's Friend ID is `7KX2M9QD`; `/invite/from-yujian` opens a link the User can accept.
 
 `getMyParty` turns exactly the main server's 404 `NOT_IN_PARTY` into null. A 401 with `SESSION_REPLACED` ends the
 Session without a renewal and shows the notice "다른 기기에서 로그인했어요" with the sign-in screen; a 403 with
@@ -634,8 +685,9 @@ User is the mock's `me` and the time is the moment the wireframe shows, 1 Octobe
 that the screens read as the wireframe on any day.
 
 The phone keeps that the User signed in, that the User agreed to the legal documents, what the sign-in suggested for
-Onboarding, whether Onboarding is finished and its answers, and that the User answered the explanation before the
-location prompt (`locationExplained`) (`src/storage/kept.ts`). A value stored by an older version, without a newer
+Onboarding, whether Onboarding is finished and its answers, that the User answered the explanation before the
+location prompt (`locationExplained`), and the token of an Invite Link until its accept screen shows it
+(`inviteToken`) (`src/storage/kept.ts`). A value stored by an older version, without a newer
 field, reads as "not yet" for that field. `openKept()` is the read for the start of the app: it is the one that
 honours `EXPO_PUBLIC_FIRST_STATE`, which clears all of it.
 
@@ -700,10 +752,15 @@ socket server's README describes:
   out. A position for a Friend or a member whom the answers call unseen fetches those answers again.
 - The positions are fetched when the connection opens, and everything it shows when it opens again after a drop. When
   the app returns to the front, the positions and the Quests are fetched again.
-- The signals fetch what they name again: `friends-changed` the Friends and the positions, `quests-changed` the
-  Quests, the invitations and the requests to join, `meetups-changed` the Meetups, `party-changed` the Parties and
-  the positions, `global-events-changed` the Global Events and the Quests. `friends-changed` also fetches the Friend
-  Requests. When the app returns to the front, the lists of 알림 are fetched again too.
+- A person's position ages by the app's clock (`now()`), looked at again every 30 seconds. Measured more than 2 minutes
+  ago (`OLD_POSITION_MS`), it is old: the Avatar is drawn dimmed, a look of its own, its name reads "민준 · 3분 전" from
+  the `names` level, and the Friend's card, row in the friend list and row in the friend panel add "3분 전 위치".
+  Measured more than 10 minutes ago (`KEPT_POSITION_MS`, the main server's keep), it is no longer on the map. The rule
+  is the same for a Friend and for a member of the User's Party; the limits are beside `POSITION_EVERY_MS`.
+- The signals fetch what they name again: `friends-changed` the Friends, the positions and the Friend Requests,
+  `quests-changed` the Quests, the invitations and the requests to join, `meetups-changed` the Meetups, `party-changed`
+  the Parties and the positions, `global-events-changed` the Global Events and the Quests. When the app returns to the
+  front, the lists of 알림, the Friend Requests among them, are fetched again too.
 
 The app sends its own position over `POST /positions`, not over the connection (see "The User's position").
 

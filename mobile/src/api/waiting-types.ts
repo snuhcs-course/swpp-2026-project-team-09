@@ -1,11 +1,11 @@
-import type { JoinPolicy, Person, SubQuest } from './types';
+import type { JoinPolicy, Person, SubQuest, UserSummary } from './types';
 
 // The main server's lists of what waits for the User, which 알림 and the badge on 파티 are composed from.
 
 // GET /friend-requests: the waiting requests sent to the User and those the User sent, the newest first.
 export interface FriendRequests {
-  received: { id: string; sender: { name: string; department: string }; sentAt: string }[];
-  sent: { id: string; receiver: { name: string; department: string }; sentAt: string }[];
+  received: { id: string; sender: UserSummary; sentAt: string }[];
+  sent: { id: string; receiver: UserSummary; sentAt: string }[];
 }
 
 // GET /quest-invitations, the newest first: the Leader's invitations into a Quest, the Quest as it is now.

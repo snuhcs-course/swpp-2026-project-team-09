@@ -30,6 +30,7 @@ const FIRST_STATE = {
   onboardingCompleted: false,
   answers: null,
   locationExplained: false,
+  inviteToken: null,
 };
 
 describe('sign-in', () => {
@@ -47,6 +48,7 @@ describe('sign-in', () => {
       onboardingCompleted: false,
       answers: null,
       locationExplained: false,
+      inviteToken: null,
     });
   });
 
@@ -80,6 +82,7 @@ describe('what the phone keeps', () => {
       onboardingCompleted: true,
       answers: ANSWERS,
       locationExplained: false,
+      inviteToken: null,
     });
   });
 
@@ -115,16 +118,16 @@ describe('what the phone keeps of the consent', () => {
     const stored = { signedIn: true, suggestion: null, onboardingCompleted: true, answers: ANSWERS };
     await AsyncStorage.setItem('snunow.kept', JSON.stringify(stored));
 
-    expect(await readKept()).toEqual({ ...stored, consented: false, locationExplained: false });
+    expect(await readKept()).toEqual({ ...stored, consented: false, locationExplained: false, inviteToken: null });
   });
 
   it('reads what a version without the location explanation stored, as not answered yet', async () => {
     const stored = { signedIn: true, consented: true, suggestion: null, onboardingCompleted: true, answers: ANSWERS };
     await AsyncStorage.setItem('snunow.kept', JSON.stringify(stored));
 
-    expect(await readKept()).toEqual({ ...stored, locationExplained: false });
+    expect(await readKept()).toEqual({ ...stored, locationExplained: false, inviteToken: null });
     expect((await keep({ locationExplained: true })).locationExplained).toBe(true);
-    expect(await readKept()).toEqual({ ...stored, locationExplained: true });
+    expect(await readKept()).toEqual({ ...stored, locationExplained: true, inviteToken: null });
   });
 
   it('remembers after a sign-out that the User agreed to the legal documents', async () => {

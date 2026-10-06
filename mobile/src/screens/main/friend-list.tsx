@@ -15,7 +15,7 @@ import {
   textHalo,
   useToast,
 } from '@/design-system';
-import type { FriendView } from '@/features/friends/adapter';
+import { type FriendView, withAge } from '@/features/friends/adapter';
 import { useFriends } from '@/features/friends/use-friends';
 import { cardId } from '@/features/map/adapter';
 import { FriendPanel } from './friend-panel';
@@ -64,11 +64,13 @@ function FriendPill({ count, onPress }: { count: number | null; onPress: () => v
   );
 }
 
-// One Friend: the dot in the status's colour, the name, and the status with the place.
+// One Friend: the dot in the status's colour, the name, and the status with the place, and the age of an old
+// position.
 function FriendRow({ friend, onPress }: { friend: FriendView; onPress: () => void }): ReactElement {
+  const line = withAge(friend.line, friend.minutesOld);
   return (
     <Pressable
-      accessibilityHint={friend.line}
+      accessibilityHint={line}
       accessibilityLabel={`${friend.name} 지도에서 보기`}
       accessibilityRole="button"
       onPress={onPress}
@@ -80,7 +82,7 @@ function FriendRow({ friend, onPress }: { friend: FriendView; onPress: () => voi
           {friend.name}
         </Text>
         <Text numberOfLines={1} style={styles.line}>
-          {friend.line}
+          {line}
         </Text>
       </View>
     </Pressable>

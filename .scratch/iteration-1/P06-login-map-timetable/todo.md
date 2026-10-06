@@ -520,6 +520,10 @@ Ticket 12 connected every row that the demo's flows (P20) use and the main serve
 | Quest invitations, requests to join | Connected | `GET /quest-invitations`, `GET /quests/:questId/join-requests` for each Quest the User leads with Approval; fetched again on `quests-changed` | The mock leads no Quest, so it has no request to join |
 | Meetups | Connected | `GET /meetups`; fetched again on `meetups-changed` | |
 | Friends | Connected | `GET /friends`; fetched again on `friends-changed` | |
+| Friends' switches and their end (`setFriendSharing`, `endFriendship`) | Connected | `PUT /friends/:userId/sharing`, `DELETE /friends/:userId` | |
+| Friend IDs (`findFriendId`) and the User's own | Connected | `GET /friend-ids/:friendId`; the Lobby's `profile.friendId` | |
+| Friend Requests (`sendFriendRequest`, `listFriendRequests`, `acceptFriendRequest`, `declineFriendRequest`, `cancelFriendRequest`) | Connected | `POST /friend-requests`, `GET /friend-requests`, `POST /friend-requests/:id/accept`, `/decline`, `/cancel`; fetched again on `friends-changed` and when the app returns to the front | |
+| Invite Links (`createInviteLink`, `getInviteLink`, `acceptInviteLink`) | Connected | `POST /invite-links`, `GET /invite-links/:token`, `POST /invite-links/:token/accept` | App Links need `INVITE_LINK_HOST` in the build |
 | Friends' positions | Connected | `GET /positions`, the socket's `position` and `position-removed` | Fetched when the connection opens and when the app returns to the front |
 | Friends' status, place, walk and photo (`listFriendStatuses`) | Mock | Nothing | No answer holds them; a Friend without a status is shown by `visible` alone: "공강" or "위치 꺼짐" |
 | Quests, Class Quests | Connected | `GET /quests`; fetched again on `quests-changed` and when the app returns to the front | |
@@ -543,7 +547,6 @@ The control is there and only shows the toast. The last column is a proposal for
 |---|---|---|---|
 | Quest list, on the map and on the whole screen | The row of a Party or of a Shared Quest: every row that is no class's | The party screen | P13 |
 | Friend panel | A Friend's calendar button, "{이름}님과 파티 만들기" | Proposing a Meetup to the Friend | P14 |
-| Friend panel | + 친구 추가 | 친구 추가 | P14 |
 | Above the navigation | 오늘의 발자국 | The story replay | In no Iteration 1 spec |
 | Above the navigation | 활성 파티 | The party screen | P13 |
 | Above the navigation | The 편의기능 button | The dining, shuttle and study layers | P15 |

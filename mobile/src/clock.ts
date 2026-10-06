@@ -6,3 +6,8 @@ import { asksMainServer } from '@/api/servers';
 export function now(): Date {
   return asksMainServer() ? new Date() : new Date(FRAME_NOW);
 }
+
+// Whether the app's time moves: it stands still where every answer is a mock.
+export function clockMoves(): boolean {
+  return asksMainServer();
+}

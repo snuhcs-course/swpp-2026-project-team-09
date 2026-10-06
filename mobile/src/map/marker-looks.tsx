@@ -4,8 +4,8 @@ import { MapDot, MapPerson, MapPin, type MapPlaceKind, type PersonTone } from '@
 // How something on the map looks. One picture is made for each look and kept under the look's name, so two things
 // that look the same share one, and the number of pictures is the number of names:
 // - two for the User's own Avatar;
-// - for each person, the two sizes in each tone the person was seen in, with and without a photo, and each of them
-//   selected, which only the one selected person ever asks for;
+// - for each person, the two sizes in each tone the person was seen in, with and without a photo, dimmed while the
+//   person's position was old, and each of them selected, which only the one selected person ever asks for;
 // - for each kind of place, the dot and the pin, the pin once for each count it shows, and each of them selected.
 // No look holds a name or a label: that is the map's own text under the marker (`text` of `MapMarker`).
 //
@@ -25,14 +25,16 @@ export type MarkerLook =
   // The User's own Avatar. `small` is its look while the whole campus is in view: three quarters of its size.
   | { kind: 'me'; small?: boolean }
   // A person: a Friend in the status's colour, or a member of the User's Party in the tone `member`. The frames'
-  // teardrop with the person's letters or photo in it. `small` is its look while the whole campus is in view.
-  // `id` is the person's own, which names the look; `name` and `photo` are what is drawn.
+  // teardrop with the person's letters or photo in it. `small` is its look while the whole campus is in view, `old`
+  // its dimmed look while the person's position is old. `id` is the person's own, which names the look; `name` and
+  // `photo` are what is drawn.
   | {
       kind: 'person';
       id: string;
       tone: PersonTone;
       small?: boolean;
       selected?: boolean;
+      old?: boolean;
       name: string;
       photo: string | null;
     }
@@ -51,7 +53,8 @@ export function lookName(look: MarkerLook): string {
   const selected = look.selected === true && 'selected';
   if (look.kind === 'person') {
     const photo = look.photo !== null && 'photo';
-    return parts('person', look.small === true ? 'small' : 'full', look.tone, look.id, photo, selected);
+    const old = look.old === true && 'old';
+    return parts('person', look.small === true ? 'small' : 'full', look.tone, look.id, photo, old, selected);
   }
   const count = look.form === 'pin' && (look.count ?? 0) > 0 && String(look.count);
   return parts(look.kind, look.form, count, selected);
@@ -75,6 +78,7 @@ export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSe
   if (look.kind === 'person') {
     return (
       <MapPerson
+        dimmed={look.old}
         name={look.name}
         onPhotoSettled={onPhotoSettled}
         selected={look.selected}

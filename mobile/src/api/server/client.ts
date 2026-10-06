@@ -5,16 +5,20 @@ import type { OnboardingAnswers } from '@/api/types';
 import { keep } from '@/storage/kept';
 import {
   isFriends,
+  isInviteLink,
   isLobby,
   isMyParty,
   isNothing,
+  isOpenedInviteLink,
   isParties,
   isPlaces,
   isPositionKept,
   isPositions,
   isProfile,
   isQuests,
+  isSentFriendRequest,
   isTimetableClasses,
+  isUserSummary,
   isWalkingRoute,
 } from './answers';
 import { isFriendRequests, isJoinRequests, isMeetups, isQuestInvitations } from './waiting-answers';
@@ -43,7 +47,29 @@ export const serverClient: ApiClient = {
   },
   uploadPosition: (position) => call('POST', '/positions', isPositionKept, { body: position }),
   listFriends: () => call('GET', '/friends', isFriends),
+  setFriendSharing: async (userId, on) => {
+    await call('PUT', `/friends/${encodeURIComponent(userId)}/sharing`, isNothing, { body: { on } });
+  },
+  endFriendship: async (userId) => {
+    await call('DELETE', `/friends/${encodeURIComponent(userId)}`, isNothing);
+  },
+  findFriendId: (friendId) => call('GET', `/friend-ids/${encodeURIComponent(friendId)}`, isUserSummary),
+  sendFriendRequest: (friendId) => call('POST', '/friend-requests', isSentFriendRequest, { body: { friendId } }),
   listFriendRequests: () => call('GET', '/friend-requests', isFriendRequests),
+  acceptFriendRequest: async (requestId) => {
+    await call('POST', `/friend-requests/${encodeURIComponent(requestId)}/accept`, isNothing);
+  },
+  declineFriendRequest: async (requestId) => {
+    await call('POST', `/friend-requests/${encodeURIComponent(requestId)}/decline`, isNothing);
+  },
+  cancelFriendRequest: async (requestId) => {
+    await call('POST', `/friend-requests/${encodeURIComponent(requestId)}/cancel`, isNothing);
+  },
+  createInviteLink: () => call('POST', '/invite-links', isInviteLink),
+  getInviteLink: (token) => call('GET', `/invite-links/${encodeURIComponent(token)}`, isOpenedInviteLink),
+  acceptInviteLink: async (token) => {
+    await call('POST', `/invite-links/${encodeURIComponent(token)}/accept`, isNothing);
+  },
   listPositions: () => call('GET', '/positions', isPositions),
   listQuests: () => call('GET', '/quests', isQuests),
   listQuestInvitations: () => call('GET', '/quest-invitations', isQuestInvitations),

@@ -15,12 +15,13 @@ const SELECTED_ORDER = 2;
 const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 
 // A card's look at a level of detail. A person is the frames' teardrop at every level, small while the whole campus
-// is in view. A place is a dot there, and a pin with its count closer.
+// is in view, and dimmed while their position is old. A place is a dot there, and a pin with its count closer.
 function lookOf({ mark, marker }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
   const far = detail === 'overview';
   if (mark.type === 'person') {
     const { id, name, photo, presence } = mark;
-    return { kind: 'person', id, tone: presence ?? 'member', small: far, selected, name, photo };
+    const old = marker.minutesOld !== null;
+    return { kind: 'person', id, tone: presence ?? 'member', small: far, selected, old, name, photo };
   }
   return far
     ? { kind: mark.place, form: 'dot', selected }
@@ -31,6 +32,12 @@ function lookOf({ mark, marker }: CardView, detail: ZoomDetail, selected: boolea
 // never hands a native map an image whose picture is still to be made. A selected look is made when it is asked.
 function everyLook(cards: readonly CardView[]): MarkerLook[] {
   return cards.flatMap((card) => DETAILS.map((detail) => lookOf(card, detail, false)));
+}
+
+// The words under a marker from the "names" level of detail: its short name, and for an old position its age, "민준 ·
+// 3분 전".
+function wordsOf({ marker }: CardView): string {
+  return marker.minutesOld === null ? marker.short : `${marker.short} · ${marker.minutesOld}분 전`;
 }
 
 // Turns the cards into what the map shows at a level of detail. From the "names" level each has its short name
@@ -48,7 +55,7 @@ export function useThings(cards: readonly CardView[], detail: ZoomDetail, select
         name: card.marker.name,
         position: card.position,
         image,
-        text: detail === 'names' ? card.marker.short : undefined,
+        text: detail === 'names' ? wordsOf(card) : undefined,
         order: card.id === selectedId ? SELECTED_ORDER : 0,
       };
       if (card.mark.type === 'person') {

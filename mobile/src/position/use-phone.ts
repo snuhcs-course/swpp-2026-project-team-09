@@ -6,6 +6,13 @@ import { askPermission, type Measured, type PhonePermission, readPermission, wat
 // How often a new position is asked for, from the phone or from the walk. It is also the longest an Avatar glides.
 export const POSITION_EVERY_MS = 5000;
 
+// Another person's position measured longer ago than this is old, and their Avatar is dimmed.
+export const OLD_POSITION_MS = 2 * 60 * 1000;
+// The main server keeps a position this long, so one measured longer ago is no longer on the map.
+export const KEPT_POSITION_MS = 10 * 60 * 1000;
+// How often the age of the positions on the map is looked at again.
+export const POSITION_AGE_EVERY_MS = 30 * 1000;
+
 // The shortest glide. A phone may tell a position more often than it was asked to: iOS does about every second.
 const SHORTEST_STEP_MS = 1000;
 

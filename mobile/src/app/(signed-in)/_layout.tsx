@@ -1,8 +1,9 @@
-import { type NativeStackNavigationOptions, Stack } from 'expo-router';
-import type { ReactElement } from 'react';
+import { type NativeStackNavigationOptions, router, Stack, useGlobalSearchParams, useSegments } from 'expo-router';
+import { type ReactElement, useEffect } from 'react';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { PositionProvider, PositionSending } from '@/position';
 import { useOwnPlace } from '@/session/session';
+import { keep, readKeptAfterChanges } from '@/storage/kept';
 
 // The tabs lie under every screen above them, also when the app is opened at such a screen's address.
 export const unstable_settings = { initialRouteName: '(tabs)' };
@@ -18,12 +19,36 @@ function slideFrom(edge: 'bottom' | 'right', reduceMotion: boolean): NativeStack
   return { animation: edge === 'bottom' ? 'slide_from_bottom' : 'slide_from_right', animationDuration: SLIDE_MS };
 }
 
+// An Invite Link opened before the User belongs here, at the start of the app or signed out, is kept on the phone, and
+// its accept screen is shown once the User is here: after the loading screen, or after the sign-in, the consent and
+// Onboarding. Opened while the User is here, the link shows its screen at once.
+function useInviteLinks(here: boolean): void {
+  const segments: readonly string[] = useSegments();
+  const { token } = useGlobalSearchParams<{ token?: string }>();
+  const opened = segments[1] === 'invite' && typeof token === 'string' ? token : null;
+  useEffect(() => {
+    if (!here && opened !== null) {
+      void keep({ inviteToken: opened });
+    }
+  }, [here, opened]);
+  useEffect(() => {
+    if (here) {
+      void readKeptAfterChanges().then(({ inviteToken }) => {
+        if (inviteToken !== null) {
+          router.push({ pathname: '/invite/[token]', params: { token: inviteToken } });
+        }
+      });
+    }
+  }, [here]);
+}
+
 // The signed-in place: a User who agreed to the legal documents and finished Onboarding. The tabs, and the screens
 // that cover them, which the stack's back closes. The User's position is watched here, once for all of them, and sent
 // from here while the Master Switch is on.
 export default function SignedInLayout(): ReactElement {
   const reduceMotion = useReduceMotion();
   const away = useOwnPlace('ready');
+  useInviteLinks(away === null);
   if (away !== null) {
     return away;
   }
@@ -35,6 +60,10 @@ export default function SignedInLayout(): ReactElement {
           <Stack.Screen name="quests" options={slideFrom('bottom', reduceMotion)} />
           <Stack.Screen name="notifications" options={slideFrom('right', reduceMotion)} />
           <Stack.Screen name="profile-edit" options={slideFrom('right', reduceMotion)} />
+          <Stack.Screen name="me/friends/index" options={slideFrom('right', reduceMotion)} />
+          <Stack.Screen name="me/friends/requests" options={slideFrom('right', reduceMotion)} />
+          <Stack.Screen name="me/friends/add" options={slideFrom('right', reduceMotion)} />
+          <Stack.Screen name="invite/[token]" options={slideFrom('bottom', reduceMotion)} />
         </Stack>
       </PositionSending>
     </PositionProvider>

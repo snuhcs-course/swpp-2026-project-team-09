@@ -1,8 +1,10 @@
 import type {
   ClassTime,
   Friend,
+  InviteLink,
   Lobby,
   MyParty,
+  OpenedInviteLink,
   Party,
   PartyQuest,
   Person,
@@ -11,9 +13,11 @@ import type {
   PositionKept,
   Profile,
   Quest,
+  SentFriendRequest,
   SubQuest,
   Suggestion,
   TimetableClass,
+  UserSummary,
   WalkingRoute,
 } from '@/api/types';
 
@@ -101,6 +105,26 @@ function isFriend(value: unknown): value is Friend {
 }
 
 export const isFriends = listOf(isFriend);
+
+export function isUserSummary(value: unknown): value is UserSummary {
+  return hasTexts(value, ['name', 'department']);
+}
+
+export function isSentFriendRequest(value: unknown): value is SentFriendRequest {
+  const status = field(value, 'status');
+  return status === 'waiting' || status === 'friends';
+}
+
+export function isInviteLink(value: unknown): value is InviteLink {
+  return hasTexts(value, ['url', 'expiresAt']);
+}
+
+const INVITE_LINK_STATUSES = new Set(['usable', 'used', 'expired', 'own', 'friend']);
+
+export function isOpenedInviteLink(value: unknown): value is OpenedInviteLink {
+  const status = field(value, 'status');
+  return isUserSummary(field(value, 'sender')) && isText(status) && INVITE_LINK_STATUSES.has(status);
+}
 
 function isPosition(value: unknown): value is Position {
   return (

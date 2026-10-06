@@ -163,10 +163,10 @@ describe("the friend panel's footer and buttons", () => {
     expect(shownAddress()).toBe('/me?show=sharing');
   });
 
-  it.each(['김민준님과 파티 만들기', '친구 추가'])('says that "%s" is not ready', async (name) => {
+  it('says that "김민준님과 파티 만들기" is not ready', async () => {
     const user = await openPanel();
 
-    await user.press(screen.getByRole('button', { name }));
+    await user.press(screen.getByRole('button', { name: '김민준님과 파티 만들기' }));
 
     expect(screen.getByText(NOT_READY)).toBeVisible();
     expect(screen.getByRole('header', { name: '친구 12' })).toBeVisible();
