@@ -1,4 +1,4 @@
-import { type ReactElement, useRef, useState } from 'react';
+import { type ReactElement, type RefObject, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { LatLng } from '@/api/types';
@@ -63,10 +63,11 @@ interface ControlsProps {
   onFitRoute: () => void;
   onZoomIn: () => void;
   onShowCampus: () => void;
+  onReopenAndFit: () => void;
 }
 
 function Controls(props: ControlsProps): ReactElement {
-  const { onMoveAvatar, onDrawRoute, onClearRoute, onFitRoute, onZoomIn, onShowCampus } = props;
+  const { onMoveAvatar, onDrawRoute, onClearRoute, onFitRoute, onZoomIn, onShowCampus, onReopenAndFit } = props;
   return (
     <View style={styles.controls}>
       <Button onPress={onMoveAvatar} variant="secondary">
@@ -87,8 +88,29 @@ function Controls(props: ControlsProps): ReactElement {
       <Button onPress={onShowCampus} variant="secondary">
         캠퍼스 전체
       </Button>
+      <Button onPress={onReopenAndFit} variant="secondary">
+        새로 열고 바로 맞추기
+      </Button>
     </View>
   );
+}
+
+// Each call makes the map anew, as the key changes, and asks it to fit the route at once, before a native map is
+// ready, so that a request kept until the map opens can be seen: the new map opens fitted to the route, not on the
+// whole campus.
+function useReopening(map: RefObject<MapHandle | null>): [number, () => void] {
+  const [opening, setOpening] = useState(0);
+  useEffect(() => {
+    if (opening > 0) {
+      map.current?.fitTo([HERE, EVENT], { padding: FIT_PADDING });
+    }
+  }, [map, opening]);
+  return [
+    opening,
+    (): void => {
+      setOpening((count) => count + 1);
+    },
+  ];
 }
 
 // The map component as a screen uses it, to try by hand what the device check lists: markers and their names, an
@@ -99,12 +121,14 @@ export function MapCheckScreen(): ReactElement {
   const [route, setRoute] = useState<LatLng[] | null>(null);
   const [pressed, setPressed] = useState<string | null>(null);
   const [camera, setCamera] = useState<MapCamera | null>(null);
+  const [opening, reopen] = useReopening(map);
   const { markers, avatars } = useSamples(me);
   return (
     <SafeAreaView style={styles.screen}>
       <Map
         avatars={avatars}
         bounds={CAMPUS_BOUNDS}
+        key={opening}
         markers={markers}
         maxZoom={MAX_ZOOM}
         minZoom={MIN_ZOOM}
@@ -129,6 +153,7 @@ export function MapCheckScreen(): ReactElement {
           onMoveAvatar={() => {
             setMe(me === HERE ? THERE : HERE);
           }}
+          onReopenAndFit={reopen}
           onShowCampus={() => {
             map.current?.moveCamera({ centre: centreOf(CAMPUS_BOUNDS), zoom: MIN_ZOOM });
           }}

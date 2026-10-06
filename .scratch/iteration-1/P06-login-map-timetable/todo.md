@@ -75,7 +75,7 @@ Last updated: 2026-10-05
 - [x] "오늘의 발자국", "활성 파티", the 편의기능 button, the AI input, the bottom navigation, in place
 - [x] The "준비 중이에요" toast on every control of section 4
 - [x] The map's inset: the credit above the row of buttons, and the inset handed to the native map
-- [ ] The Android module reads the inset and places Kakao's logo inside it (ticket 10's Comments say how)
+- [ ] The Android and iOS modules read the inset and place Kakao's logo inside it: written in ticket 11's review, not yet seen in a build (ticket 11's Comments)
 
 ### 1.8 iOS map module (ticket 11)
 

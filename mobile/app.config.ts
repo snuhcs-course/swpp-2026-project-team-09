@@ -16,12 +16,22 @@ const GOOGLE_PODS = [
   "  pod 'RecaptchaInterop', :modular_headers => true",
 ].join('\n');
 
+const ANCHOR = /^(\s*config = use_native_modules)/mu;
+
 const withGooglePods: ConfigPlugin = (config) =>
   withPodfile(config, (withFile) => {
     const podfile = withFile.modResults.contents;
-    if (!podfile.includes("pod 'AppCheckCore'")) {
-      withFile.modResults.contents = podfile.replace(/^(\s*config = use_native_modules)/mu, `${GOOGLE_PODS}\n$1`);
+    if (podfile.includes("pod 'AppCheckCore'")) {
+      return withFile;
     }
+    // The lines go before this one. Without it they would be left out silently, and `pod install` would fail later on
+    // `AppCheckCore` with no word of why.
+    if (!ANCHOR.test(podfile)) {
+      throw new Error(
+        "withGooglePods: the Podfile has no `config = use_native_modules` line. Expo's Podfile template changed; check where Google's pods now go.",
+      );
+    }
+    withFile.modResults.contents = podfile.replace(ANCHOR, `${GOOGLE_PODS}\n$1`);
     return withFile;
   });
 

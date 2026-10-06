@@ -106,6 +106,22 @@ The first run on the simulator found five faults, each fixed in the module:
 - Expo Go with the polyfill, on Android and on iOS. Left unticked.
 - The device check on the phone was 함재현's, not recorded item by item.
 
+### After the review (2026-10-06)
+
+Changed in code after the pull request's review. Nothing here was built or run: the four checks pass, and each item is left for a build to show.
+
+- Kakao's logo and the map's inset, on both sides. The modules take the `inset` prop that `native-map.tsx` already sent, and place the logo 8 points from the bottom right of what the screen's controls leave (`placeLogo`, again whenever the inset changes). iOS uses `setLogoPosition(origin: GuiAlignment(vAlign: .bottom, hAlign: .right), position:)` with positive offsets; the SDK's documents call the position an offset from the alignment's point and do not say which way a positive one goes, so the direction is the first thing to see in a build.
+- A camera call before the map is ready, on Android. `moveCamera` and `fitTo` were dropped there before the map opened; they are now kept, the last one only, and carried out once it opens, as on iOS. `/map-check` gains "새로 열고 바로 맞추기", which makes the map anew and asks it to fit the route at once: a map that keeps the request opens fitted to the route, not on the whole campus.
+- `withGooglePods` throws with a clear message when the Podfile has no `config = use_native_modules` line, instead of leaving Google's pods out silently.
+- The scene life cycle and URLs: no change. Expo's `ExpoAppSceneDelegate` forwards `openURLContexts`, `continue userActivity` and the URL a cold start is opened with (expo 57.0.25, `ios/AppDelegates/ExpoAppSceneDelegate.swift`). Not yet seen working: a `snunow://` link, the return from Google's sign-in on iOS (ticket 12), and the Invite Link (P14).
+
+Left to check in a build:
+
+- On the main screen, on iOS and on Android: Kakao's logo inside the inset, left of the zoom control and above "활성 파티", and above a card while one is open. On iOS, first that a positive offset moves the logo inwards.
+- On `/map-check`, on iOS and on Android: "새로 열고 바로 맞추기" opens the new map fitted to the route.
+- `pnpm expo prebuild --platform ios` still generates the Podfile with Google's pods.
+- On the iOS simulator: `xcrun simctl openurl booted snunow://main` opens the app on that screen.
+
 ### Agent usage (2026-10-06)
 
 - Agent time: about 3 hours 40 minutes, an estimate, in one session, of which about 1 hour 20 minutes was builds and downloads the agent waited on. Waiting for 함재현 (installing Xcode, Kakao's registration, signing, pressing a system alert) is not counted.

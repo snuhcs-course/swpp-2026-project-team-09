@@ -48,6 +48,7 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
   var avatars: List<ThingRecord> = emptyList()
   var route: List<Position>? = null
   var looks = LooksRecord()
+  var inset = InsetRecord()
 
   private val mapView = MapView(context)
   private val density = resources.displayMetrics.density
@@ -57,6 +58,11 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
   private var avatarThings: Things? = null
   private var routeLine: RouteLine? = null
   private var routeShown: List<Position>? = null
+  // Where the logo was last put, as its margins from the bottom right in points, so that it is moved only when they
+  // change.
+  private var logoAt: Pair<Double, Double>? = null
+  // What the screen asked of the camera before the map was ready, the last request only, carried out once it opens.
+  private var waiting: (() -> Unit)? = null
 
   // The camera as last reported, whether the map has opened on the campus, and whether a finger moves it now.
   private var reported: Camera? = null
@@ -82,6 +88,7 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
       start()
       return
     }
+    placeLogo()
     showThings()
     showRoute()
     rest()
@@ -104,14 +111,19 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
     markerThings?.stop()
     avatarThings?.stop()
     map = null
+    waiting = null
     if (started) {
       mapView.finish()
     }
   }
 
   fun moveCamera(move: CameraMoveRecord) {
-    val rules = rules() ?: return
-    val now = measure() ?: return
+    val rules = rules()
+    val now = measure()
+    if (!opened || rules == null || now == null) {
+      waiting = { moveCamera(move) }
+      return
+    }
     val centre = if (move.latitude != null && move.longitude != null) {
       Position(move.latitude, move.longitude)
     } else {
@@ -121,8 +133,12 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
   }
 
   fun fitTo(points: List<Position>, padding: Double, animated: Boolean) {
-    val rules = rules() ?: return
-    val now = measure() ?: return
+    val rules = rules()
+    val now = measure()
+    if (!opened || rules == null || now == null) {
+      waiting = { fitTo(points, padding, animated) }
+      return
+    }
     go(rules, now, rules.fit(points, padding) ?: return, animated)
   }
 
@@ -162,8 +178,8 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
     // The interface's camera looks straight down, north up.
     kakaoMap.setGestureEnable(GestureType.Rotate, false)
     kakaoMap.setGestureEnable(GestureType.Tilt, false)
-    // Kakao's logo is kept as it is, at the bottom right, apart from the credit at the bottom left.
-    kakaoMap.logo?.setPosition(MapGravity.RIGHT or MapGravity.BOTTOM, pixels(LOGO_MARGIN), pixels(LOGO_MARGIN))
+    logoAt = null
+    placeLogo()
     val labels = kakaoMap.labelManager ?: return
     val pictures = Pictures(labels, density)
     markerThings = layer(labels, "markers", MARKER_Z)?.let { Things(it, pictures) }
@@ -216,6 +232,22 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
     }
     opened = true
     place(rules.opening, animated = false)
+    val asked = waiting
+    waiting = null
+    asked?.invoke()
+  }
+
+  // Kakao's logo, unchanged, at the bottom right of what the screen's controls leave of the map (`inset`), so that no
+  // control covers it. Kakao's terms let the logo be moved and not hidden. It is placed again when the inset changes,
+  // as when a card opens on the main screen.
+  private fun placeLogo() {
+    val logo = map?.logo ?: return
+    val at = Pair(LOGO_MARGIN + inset.right, LOGO_MARGIN + inset.bottom)
+    if (at == logoAt) {
+      return
+    }
+    logoAt = at
+    logo.setPosition(MapGravity.RIGHT or MapGravity.BOTTOM, pixels(at.first), pixels(at.second))
   }
 
   private fun showThings() {

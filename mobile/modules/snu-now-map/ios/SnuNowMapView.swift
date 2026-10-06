@@ -18,6 +18,8 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
   // side needed 10 on an emulator under load.
   private static let startTimeoutMs: UInt = 10_000
   private static let maxCorrections = 3
+  // Kakao's logo is this far from the edges of what the controls leave, as the credit is at the bottom left.
+  private static let logoMargin = 8.0
 
   let onThingPress = EventDispatcher()
   let onCameraIdle = EventDispatcher()
@@ -30,6 +32,7 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
   var avatars: [ThingRecord] = []
   var route: [Position]?
   var looks = LooksRecord()
+  var inset = InsetRecord()
 
   private let container = KMViewContainer(frame: .zero)
   private var controller: KMController?
@@ -41,6 +44,8 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
   private var routeShown: [Position]?
   private var routeStyles = Set<String>()
   private var laidOut = CGSize.zero
+  // Where the logo was last put, as its offsets from the bottom right, so that it is moved only when they change.
+  private var logoAt: CGPoint?
 
   // The camera as last reported, whether the map has opened on the campus, and whether a finger moves it now.
   private var reported: Camera?
@@ -129,6 +134,7 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
     routeShown = nil
     routeStyles.removeAll()
     map = nil
+    logoAt = nil
     opened = false
     heightScale = nil
     placed = nil
@@ -204,7 +210,7 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
     kakaoMap.setGestureEnable(type: .rotate, enable: false)
     kakaoMap.setGestureEnable(type: .tilt, enable: false)
     kakaoMap.setGestureEnable(type: .rotateZoom, enable: false)
-    // Kakao's logo stays as it is, at the bottom right where the SDK puts it, apart from the credit at the bottom left.
+    placeLogo()
     let labels = kakaoMap.getLabelManager()
     let pictures = Pictures(manager: labels)
     markerThings = layer(labels, "markers", Self.markerZ).map { Things(layer: $0, pictures: pictures) }
@@ -233,6 +239,7 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
     guard map != nil else {
       return
     }
+    placeLogo()
     showThings()
     showRoute()
     rest()
@@ -263,6 +270,21 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
     let asked = waiting
     waiting = nil
     asked?()
+  }
+
+  // Kakao's logo, unchanged, at the bottom right of what the screen's controls leave of the map (`inset`), so that no
+  // control covers it. Kakao's terms let the logo be moved and not hidden. It is placed again when the inset changes,
+  // as when a card opens on the main screen.
+  private func placeLogo() {
+    guard let map else {
+      return
+    }
+    let offset = CGPoint(x: Self.logoMargin + inset.right, y: Self.logoMargin + inset.bottom)
+    if offset == logoAt {
+      return
+    }
+    logoAt = offset
+    map.setLogoPosition(origin: GuiAlignment(vAlign: .bottom, hAlign: .right), position: offset)
   }
 
   private func showThings() {

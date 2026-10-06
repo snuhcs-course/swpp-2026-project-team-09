@@ -56,6 +56,9 @@ public class SnuNowMapModule: Module {
       Prop("looks") { (view: SnuNowMapView, looks: LooksRecord) in
         view.looks = looks
       }
+      Prop("inset") { (view: SnuNowMapView, inset: InsetRecord) in
+        view.inset = inset
+      }
 
       OnViewDidUpdateProps { (view: SnuNowMapView) in
         self.views.add(view)

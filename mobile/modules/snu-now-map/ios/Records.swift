@@ -13,6 +13,14 @@ struct BoundsRecord: Record {
   }
 }
 
+// What the screen's controls cover of each edge of the map, in points. Kakao's logo is placed inside what is left.
+struct InsetRecord: Record {
+  @Field var top: Double = 0
+  @Field var right: Double = 0
+  @Field var bottom: Double = 0
+  @Field var left: Double = 0
+}
+
 struct PositionRecord: Record {
   @Field var latitude: Double = 0
   @Field var longitude: Double = 0
