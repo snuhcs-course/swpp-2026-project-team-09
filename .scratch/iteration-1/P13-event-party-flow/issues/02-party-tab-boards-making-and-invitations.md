@@ -2,7 +2,7 @@
 
 Parent: [P13 spec](../spec.md)
 Status: ready-for-agent
-Blocked by: 01 (The 파티 room, its 활성화, and the members on the map), P08-16 (Recruiting boards and the Quest's description)
+Blocked by: 01 (The 파티 room, its 활성화, and the members on the map), P08-16 (Recruiting boards, the Quest's description, and the Leader's endings)
 
 ## What to build
 
@@ -15,7 +15,7 @@ The server routes:
 - `GET /quests/recruiting` and `?board=` (P08-16), `GET /quests` (with `board`, `description` and `createdAt`);
 - `POST /quests/:questId/join`;
 - `POST /quest-join-requests`, `GET /quest-join-requests`, `POST /quest-join-requests/:id/withdraw`;
-- `POST /quests/own` with its `Idempotency-Key`, and `PATCH /quests/:questId` with `board` and `description`;
+- `POST /quests/own` with its `Idempotency-Key`, `PATCH /quests/:questId` with `board` and `description`, and `POST /quests/:questId/end` for `없애기`;
 - `POST /quests/:questId/invitations`, `GET /quest-invitations` (P19-02 adds it to the client), `POST /quest-invitations/:id/accept` and `/decline`;
 - `GET /friends`, read for `친구 초대`;
 - on the socket, `quests-changed`, which now also fetches the recruiting Quests, the User's requests to join and the invitations again.
@@ -60,7 +60,7 @@ Each new operation goes into the API client with its mock. The mock's recruiting
   - a footer, by who reads it:
     - not a Holder, Open: `참여하기`;
     - not a Holder, Approval: `참여 신청`, or, while the User's request waits, the note `참여 신청을 기다리는 중이에요` with `신청 취소`;
-    - the Leader: `없애기` and `수정하기`. `없애기` asks `파티를 없앨까요?` / `모집글과 파티가 함께 사라져요.` with `취소` and `없애기`, and ends the Quest as the room's `파티 없애기` does. `수정하기` opens the form in its edit mode;
+    - the Leader: `없애기` and `수정하기`. `없애기` asks `파티를 없앨까요?` / `모집글과 파티가 함께 사라져요.` with `취소` and `없애기`, and ends the Quest as the room's `파티 없애기` does, with `POST /quests/:questId/end` for every Holder. `수정하기` opens the form in its edit mode;
     - another Holder: the grey note `이미 참여 중인 파티예요`.
 - [ ] **The join confirm sheet** (users icon): `‘{title}’에 참여할까요?`, the rows 일정, 장소 and 멤버 (`{Leader} 외 {n}명 ({holders}/{capacity}명)`), the note `멤버가 파티를 활성화하면, 수락한 멤버끼리 위치를 공유해요.`, and `참여하기` with `취소`. Joining says `{title} 참여 완료` and shows `내 파티`. For an Approval Quest the button is `참여 신청`, and the toast `참여를 신청했어요`.
 
@@ -93,7 +93,7 @@ Each new operation goes into the API client with its mock. The mock's recruiting
   - the title in 18/600;
   - the next box: a route icon in a circle, `{time} · {n}분 후` (or the day and time) and the next Sub Quest's title and place;
   - the Avatars of the Holders and `나, {name} 외 {n}명`;
-  - while a Party runs without the User, the light strip `활성화 중 · 참여하지 않는 중` with `참여`, which enters as the room's `참여` does.
+  - while a Party runs without the User, the navy strip `{name}님이 활성화했어요`, {name} being the `leader` of the Party's entry in `GET /parties`, with `참여`, which enters as the room's `참여` does.
 
   A press opens the room. Empty: `참여 중인 파티가 없어요`, `비공개 파티가 없어요`, `참여 중인 공개 파티가 없어요`.
 
@@ -118,9 +118,9 @@ Each new operation goes into the API client with its mock. The mock's recruiting
 - [ ] Jest tests, through `startApp`, against the fake server and the fake socket:
   - 찾기: the cards, the search, the empty state, `참여하기` through the sheet for an Open and an Approval Quest;
   - 전체 파티: the counts and the `N` mark; a board merging the User's own posts with the others', newest first, with their Badges; the empty board;
-  - the post: each footer, withdrawing a request, `없애기`;
+  - the post: each footer, withdrawing a request, `없애기` with the request it sends;
   - 파티 만들기: public and private, the enabled rules, the bodies and the `Idempotency-Key` sent, the invitations and a refused one, the edit mode with a `PATCH` of what changed, each refusal;
-  - 내 파티: the chips, each group, each Badge, the strip's `참여`;
+  - 내 파티: the chips, each group, each Badge, the strip with the Leader's name and its `참여`;
   - 초대: accepting, declining, each refusal, the empty state;
   - each joining refusal's words;
   - `quests-changed` through the fake socket changing 찾기, 내 파티 and 초대.
@@ -131,7 +131,7 @@ Each new operation goes into the API client with its mock. The mock's recruiting
   - the chips `바로 참여` and `승인 후 참여`, and the confirm sheet's note naming any member, by decision 4;
   - `친구 1명 포함` and the Holders' Avatars on others' posts, which the recruiting entry does not hold;
   - the invitation's meta without a time and a place, which the invitation does not hold;
-  - the groups `다른 활성 파티` and `지난 일정`, and the navy strip `{host}님이 활성화했어요`;
+  - the groups `다른 활성 파티` and `지난 일정`;
   - `언제` and `어디서` absent from the edit mode;
   - `관련 행사`, which ticket 03 adds.
 - [ ] Screenshots of the web target are in the pull request under Test Results, compared with the frames.
