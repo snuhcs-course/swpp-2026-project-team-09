@@ -17,7 +17,7 @@ import {
 import { meetupMeta, SENT_STATE } from '@/features/meetups/meetup-view';
 import { type MeetupAnswers, useMeetupAnswers, useMeetupInvites } from '@/features/meetups/use-meetups';
 
-const SHARING_NOTE = '파티장이 파티를 활성화하면, 수락한 멤버끼리 위치를 공유해요.';
+const SHARING_NOTE = '멤버가 파티를 활성화하면, 수락한 멤버끼리 위치를 공유해요.';
 
 function Head({ name, words, aside }: { name: string; words: string; aside?: ReactElement }): ReactElement {
   return (

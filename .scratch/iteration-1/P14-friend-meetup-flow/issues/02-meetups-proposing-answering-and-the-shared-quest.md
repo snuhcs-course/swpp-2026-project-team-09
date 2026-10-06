@@ -89,7 +89,7 @@ Each new operation goes into the API client with its mock, which keeps Meetups i
   - the proposer's Avatar and `{name}님이 비공개 파티에 초대했어요`;
   - the title in 18/600;
   - the meta `{when} · {place}`, where `{when}` reads as the date·time sheet's preview does (`내일 12:10`), with `–{end}` when the Meetup has an end;
-  - the note `파티장이 파티를 활성화하면, 수락한 멤버끼리 위치를 공유해요.`, the words of the join sheet;
+  - the note `멤버가 파티를 활성화하면, 수락한 멤버끼리 위치를 공유해요.`, the words of the join sheet;
   - `거절` (secondary) and `수락` (primary).
 - [x] `수락` sends `POST /meetups/:id/accept`, and the toast says `파티에 참여했어요`. The Meetup leaves the list, and the Shared Quest arrives with `quests-changed`. `거절` sends `POST /meetups/:id/decline`, and the card goes without a toast, as in the frame.
 - [x] A 409 `MEETUP_NOT_PROPOSED` or a 404 `MEETUP_NOT_FOUND`, a Meetup withdrawn or expired meanwhile, shows `이미 취소됐거나 지난 초대예요` (new) and fetches the Meetups again.
