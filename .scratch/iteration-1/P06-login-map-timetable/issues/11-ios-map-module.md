@@ -20,7 +20,7 @@ The registration is a person's: the iOS app's identifier at Kakao. The agent add
 - [x] The iOS app's identifier is `com.bonnieandclaude.snunow`, and the iOS project folder is generated and not committed.
 - [x] The app's README gives the steps to a build on the simulator and on an iPhone, with what must be registered at Kakao.
 - [x] `.scratch/research/external-sources.md` gains what was learned for iOS, with its sources: the SDK, its version and its registration.
-- [ ] The device check is run on the simulator and recorded under Comments, item by item as in ticket 07, with screenshots of ticket 06's development screen in the pull request under Test Results.
+- [x] The device check is run on the simulator and recorded under Comments, item by item as in ticket 07, with screenshots of ticket 06's development screen in the pull request under Test Results.
 - [x] The words of the plain ground no longer name Android alone.
 - [ ] The Jest tests, Expo Go and the Android build are unchanged.
 - [x] The app's four checks pass: lint, format, types and tests.
@@ -39,7 +39,7 @@ Where things are, in `mobile/`:
 - The plain ground says "지도는 Android·iOS 빌드에서 보입니다". The tests that read the words, the README, ticket 06, the spec and `todo.md` say the same.
 - `pnpm ios` is now `expo run:ios`, as `pnpm android` is `expo run:android`.
 - The README gains "Build the app for iOS" and "The iOS module"; `.scratch/research/external-sources.md` gains §7.6 and the iOS bundle ID in the registration record.
-- `src/map/types.ts` and `src/map/native-map.tsx` are unchanged: the iOS side takes the same view, props and calls as the Android side.
+- `src/map/types.ts` and `src/map/native-map.tsx` are unchanged: the iOS side takes the same view, props and calls as the Android side. After the review, `native-map.tsx` changed in one comment only, on `inset`.
 
 Decisions:
 
@@ -52,7 +52,7 @@ Decisions:
 - A picture is redrawn at twice its size in points, in 8-bit RGBA sRGB, since the SDK draws a pixel at half the screen's scale and throws on a wider format. The text is the SDK's, in `ink` with a white halo, moved up into the picture's clear room by a negative padding.
 - The glide is the module's own, a display link that moves the Poi every frame.
 - The route is the SDK's route line in `me`, 5 points wide; the SDK always draws routes under labels.
-- Kakao's logo is left where the SDK puts it, at the bottom right, apart from the credit.
+- Kakao's logo is left where the SDK puts it, at the bottom right, apart from the credit. Changed after the review: it is placed inside the map's inset ("After the review" below).
 - The SDK's wait for the map's configuration is 10 seconds, as the Android side's start timeout.
 - Markers, Avatars and camera moves are read from dictionaries: Expo's records refuse the `null` that `native-map.tsx` sends, and Expo drops a prop that fails to convert without a log.
 
@@ -102,9 +102,10 @@ The first run on the simulator found five faults, each fixed in the module:
 ### Not done here
 
 - The criterion "What the screen asks for before the map is ready is kept and carried out once it is" is built (`waiting` in `SnuNowMapView.swift`, the last `moveCamera` or `fitTo` only) but no screen asks that early, so it was not seen working. Left unticked.
-- The screenshots are not in a pull request yet: fourteen were taken (the twelve of the device check, Expo Go's error and the Android map), kept on 함재현's Mac in `~/Developer/snu-now-ios-build/screenshots-p06-11/`, to be attached under Test Results.
+- The screenshots: fourteen were taken (the twelve of the device check, Expo Go's error and the Android map), kept on 함재현's Mac in `~/Developer/snu-now-ios-build/screenshots-p06-11/`. All fourteen are attached to pull request #64, under Evidence.
 - Expo Go with the polyfill, on Android and on iOS. Left unticked.
 - The device check on the phone was 함재현's, not recorded item by item.
+- The criterion "the Android build is unchanged": the review's fixes changed the Android module (`SnuNowMapView.kt`, `SnuNowMapModule.kt`, `Records.kt`: the logo inside the inset, and camera calls kept until the map opens) after the Android build of 2026-10-06 was checked. Left unticked until an Android build shows them ("Left to check in a build" below).
 
 ### After the review (2026-10-06)
 
@@ -117,7 +118,7 @@ Changed in code after the pull request's review. Nothing here was built or run: 
 
 Left to check in a build:
 
-- On the main screen, on iOS and on Android: Kakao's logo inside the inset, left of the zoom control and above "활성 파티", and above a card while one is open. On iOS, first that a positive offset moves the logo inwards.
+- On the main screen, on iOS and on Android: Kakao's logo inside the inset, left of the zoom control and above "활성 파티", and above a card while one is open. On iOS, first that a positive offset moves the logo inwards, then how far: the SDK draws its pixel at half a point (`enginePixels` in `Things.swift`), and `placeLogo` hands it points; if the offset is in the SDK's pixels, the logo stands half as far from the edges as asked and under the controls.
 - On `/map-check`, on iOS and on Android: "새로 열고 바로 맞추기" opens the new map fitted to the route.
 - `pnpm expo prebuild --platform ios` still generates the Podfile with Google's pods.
 - On the iOS simulator: `xcrun simctl openurl booted snunow://main` opens the app on that screen.
@@ -126,3 +127,14 @@ Left to check in a build:
 
 - Agent time: about 3 hours 40 minutes, an estimate, in one session, of which about 1 hour 20 minutes was builds and downloads the agent waited on. Waiting for 함재현 (installing Xcode, Kakao's registration, signing, pressing a system alert) is not counted.
 - Tokens: no subagents. The session's split into input and output, and its cache reads and writes, were not measured; most of its input is cache reads of the conversation's context, turn after turn.
+
+### Agent usage, all sessions (2026-10-06)
+
+Counted again from the sessions' records, in place of the entry above. Agent time is an estimate: from each request to the agent's last answer to it, waits for builds included, waits for 함재현 not. The implementation session's 3 hours 40 minutes above also counts the minutes between requests while builds ran, so it is kept as the larger estimate.
+
+- Agent time: about 4 hours in all, across four sessions in this checkout:
+  - preparing the ticket (what it does, what to install, the prompt), 2026-10-05: about 5 minutes;
+  - the implementation and the device check, 2026-10-05 to 06: about 3 hours 40 minutes (above);
+  - the pull request's review and its fixes (`a4c57f4`), 2026-10-06: about 10 minutes;
+  - a second review of the pull request, and this update of the ticket and the pull request, 2026-10-06: about 10 minutes.
+- Tokens, no subagents in any session: about 0.9 thousand input, not counting cache, with about 164 million cache reads and 1.4 million cache writes; about 280 thousand output. The implementation session alone: 710 input, 138.8 million cache reads, 0.61 million cache writes, 208 thousand output.
