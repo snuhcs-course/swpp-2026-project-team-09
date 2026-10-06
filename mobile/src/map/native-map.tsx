@@ -36,8 +36,7 @@ import type {
 // - a fit with a padding for each edge and a closest zoom, which the module's `fitTo` cannot take;
 // - a passive marker's press, which the module sends and this file drops.
 // The route's dashes are the module's to draw: it draws a solid line in the colour and the width it is given.
-// `inset` is handed over with all four sides; the module does not read it yet, and keeps its logo 8 from the bottom
-// right of the whole view until it does.
+// `inset` is handed over with all four sides; the module places Kakao's logo 8 from the bottom right of what it leaves.
 
 // A marker or an Avatar. A marker's `glideMs` is 0.
 interface NativeThing {

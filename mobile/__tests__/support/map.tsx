@@ -46,7 +46,7 @@ export const EMPTY: MapProps = {
 
 // Gives the map the size of a phone's screen above a panel.
 export async function layOutMap(width = 390, height = 700): Promise<void> {
-  await fireEvent(screen.getByText('지도는 Android 빌드에서 보입니다'), 'layout', {
+  await fireEvent(screen.getByText('지도는 Android·iOS 빌드에서 보입니다'), 'layout', {
     nativeEvent: { layout: { x: 0, y: 0, width, height } },
   });
 }

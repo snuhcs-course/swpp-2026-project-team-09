@@ -7,7 +7,7 @@ describe('the map without a native module', () => {
   it('is a plain ground that says where the map shows', async () => {
     await render(<Map {...EMPTY} />);
 
-    expect(screen.getByText('지도는 Android 빌드에서 보입니다')).toBeVisible();
+    expect(screen.getByText('지도는 Android·iOS 빌드에서 보입니다')).toBeVisible();
   });
 
   it('credits the map data', async () => {

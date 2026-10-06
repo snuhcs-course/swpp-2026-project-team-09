@@ -25,7 +25,7 @@ describe('the main screen', () => {
     givePhone({ permission: 'granted', position: ON_CAMPUS });
     await openMain();
 
-    expect(screen.getByText('지도는 Android 빌드에서 보입니다')).toBeVisible();
+    expect(screen.getByText('지도는 Android·iOS 빌드에서 보입니다')).toBeVisible();
     expect(screen.getByText('© OpenStreetMap · 국토지리정보원')).toBeVisible();
     // The User's Avatar is at three quarters of its size while the whole campus is in view.
     expect(screen.getByRole('image', { name: ME })).toHaveProp('testID', 'me:small');

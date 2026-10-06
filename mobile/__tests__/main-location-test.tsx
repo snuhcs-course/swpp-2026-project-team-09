@@ -119,7 +119,7 @@ describe('the explanation before the location prompt', () => {
     expect(phone.prompts()).toBe(0);
     expect(screen.queryByText(EXPLANATION)).toBeNull();
     expect(screen.queryByRole('image', { name: ME })).toBeNull();
-    expect(screen.getByText('지도는 Android 빌드에서 보입니다')).toBeVisible();
+    expect(screen.getByText('지도는 Android·iOS 빌드에서 보입니다')).toBeVisible();
   });
 });
 

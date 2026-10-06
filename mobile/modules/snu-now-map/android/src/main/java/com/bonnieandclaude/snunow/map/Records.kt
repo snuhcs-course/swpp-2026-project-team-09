@@ -14,6 +14,14 @@ class BoundsRecord : Record {
   fun toBounds() = Bounds(south, west, north, east)
 }
 
+// What the screen's controls cover of each edge of the map, in points. Kakao's logo is placed inside what is left.
+class InsetRecord : Record {
+  @Field val top: Double = 0.0
+  @Field val right: Double = 0.0
+  @Field val bottom: Double = 0.0
+  @Field val left: Double = 0.0
+}
+
 class PositionRecord : Record {
   @Field val latitude: Double = 0.0
   @Field val longitude: Double = 0.0

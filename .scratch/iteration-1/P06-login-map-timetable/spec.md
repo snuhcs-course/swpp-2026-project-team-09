@@ -179,7 +179,7 @@ Every piece of data is a mock inside the app, in the shape the server gives or w
 - The camera stays inside the campus rectangle: a fixed rectangle a little wider than the Campus Boundary. The rectangle is a constant in the app; the Campus Boundary stays the server's. The map opens on the whole rectangle, which is also the furthest zoom out. Where the SDK does not limit panning, the module brings the camera back inside when a move ends outside.
 - The credit for the map data is one line in the smallest text size at the bottom left of the map: "© OpenStreetMap · 국토지리정보원". Kakao's logo stays visible and unchanged.
 - A screen tells the map component what its controls cover of the map's edges, an inset in points from each edge. The credit and the provider's logo are drawn inside what is left, the credit at its bottom left and the logo at its bottom right. The map itself is drawn under the controls, and the camera does not follow the inset.
-- In a build without the native module, which Expo Go and the web are, the map's place holds a plain ground and the words "지도는 Android 빌드에서 보입니다". Everything around the map is shown as usual. There is no stand-in map.
+- In a build without the native module, which Expo Go and the web are, the map's place holds a plain ground and the words "지도는 Android·iOS 빌드에서 보입니다". Everything around the map is shown as usual. There is no stand-in map.
 - The app chooses while it runs, by whether the build holds the native module, and loads the module only when it does.
 - The Android side:
   - Kotlin, with Kakao Maps SDK for Android 2.15.2 from Kakao's Maven repository, built for arm64.
@@ -247,7 +247,7 @@ Built from the design system's dialog and the shared Toast. The team may change 
 | Consent screen | After the first sign-in | Title "약관에 동의해 주세요". Body "SNU Now를 쓰려면 아래 약관에 동의해야 해요." Rows "이용약관", "개인정보 처리방침", "위치정보 이용약관". Buttons "동의하고 시작" and "로그아웃" |
 | Refused state | A failed sign-in | "로그인하지 못했어요", "잠시 후 다시 시도해 주세요" |
 | Loading screen | The loading failed | "불러오지 못했어요", button "다시 시도" |
-| Map's place | A build without the native map | "지도는 Android 빌드에서 보입니다" |
+| Map's place | A build without the native map | "지도는 Android·iOS 빌드에서 보입니다" |
 | Dialog | A sign-in on another phone ended this Session (ticket 12) | Title "다른 기기에서 로그인했어요". Body "이 기기에서는 로그아웃됐어요. 다시 쓰려면 로그인해 주세요." Button "확인" |
 | Toast | My position, off campus | "캠퍼스 밖에 있어요" |
 | Toast | My position, with the permission and no position yet | "위치를 찾는 중이에요" |

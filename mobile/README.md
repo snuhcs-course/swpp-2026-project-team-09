@@ -18,8 +18,8 @@ emulator or `i` on the iOS simulator. The first time, Expo installs Expo Go on i
 Expo Go.
 
 Expo Go shows every screen, but the map only as a plain ground: Kakao's map needs a build of the app with its native
-module, which "Build the app for Android" below makes. `pnpm android` makes that build; `pnpm start` is the way to
-Expo Go.
+module, which "Build the app for Android" and "Build the app for iOS" below make. `pnpm android` and `pnpm ios` make
+that build; `pnpm start` is the way to Expo Go.
 
 Add packages with `pnpm expo install <package>`, not `pnpm add`. It picks the version that matches the Expo SDK.
 
@@ -167,6 +167,91 @@ Read what the map says with `adb logcat -s SnuNowMap K3fAApi`:
 - **`MapTimeoutException`**: the map's engine took longer than 10 seconds to start, which a busy machine can do to
   an emulator. Close what else is running and open the screen again.
 - `MapAuthException(429)`: the day's quota is used up.
+
+## Build the app for iOS
+
+A build for iOS holds the same module, `modules/snu-now-map`, around Kakao Maps SDK for iOS. These are the steps from
+a clean checkout to the app on the iOS simulator and on an iPhone, on a Mac with Apple Silicon. They were checked on
+2026-10-06 with the iPhone 17 simulator (iOS 27.0) and an iPhone 14 Pro.
+
+### Tools
+
+| Tool                         | Version                                                                     |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| Node.js and pnpm             | As in "Run it": Node.js 24, pnpm 12.6.0                                     |
+| Xcode, with an iOS simulator | 27.0 (27A266a), with the iOS 27.0 simulator                                 |
+| CocoaPods                    | 1.17.0 (`brew install cocoapods`); it fetches `KakaoMapsSDK` 2.12.19 itself |
+
+After installing Xcode, point the command line at it, accept its licence and install a simulator's runtime:
+
+```bash
+sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+sudo xcodebuild -license accept
+xcodebuild -downloadPlatform iOS
+```
+
+**Keep the checkout out of iCloud Drive.** When the Mac's Desktop and Documents are synced to iCloud Drive, a checkout
+under them cannot be built for iOS: iCloud marks the folders that the build makes inside `node_modules` and `ios/`,
+and `codesign` refuses them with `resource fork, Finder information, or similar detritus not allowed`. Clone the
+repository elsewhere, such as `~/Developer`.
+
+### The settings
+
+The same `.env` as for Android: `KAKAO_NATIVE_APP_KEY` is the team's native app key (see "Build the app for
+Android", "The settings"). The app's configuration writes it into the iOS app's `Info.plist` when the project is
+generated, so after a change to it, generate the project again with `pnpm expo prebuild --platform ios`.
+
+Kakao accepts the map only from an app whose bundle ID is registered in the team's Kakao app, under [앱] > [플랫폼] >
+[iOS]. The app's bundle ID, `com.bonnieandclaude.snunow`, is registered; iOS needs no key hash.
+
+### The commands
+
+```bash
+pnpm install
+pnpm ios
+```
+
+`pnpm ios` generates the iOS project in `ios/` (not committed), installs the pods, builds the app, installs it on a
+simulator, opens it and starts the development server. The first `pod install` downloads about 200 MB of React
+Native and Hermes builds; when it seems stuck, it is a slow download, which a second try takes from the cache. The build
+itself took 5 minutes on an Apple Silicon Mac. Then press "지도 보기" on a placeholder screen, or open `/map-check`, to
+see the map. A link that opens the app on the simulator asks "Open in “SNU Now”?" first.
+
+On an iPhone: connect it with a cable, trust the Mac on the phone, and turn on Developer Mode under Settings > Privacy &
+Security. Open `ios/SNUNow.xcworkspace` in Xcode once and, under the target's Signing & Capabilities, choose a team.
+Then run `pnpm ios --device` and choose the phone, and on the phone trust the developer under Settings > General > VPN
+& Device Management. A personal team of a free Apple ID can sign the app, for 7 days at a time, if no other team has
+taken the bundle ID; otherwise the phone build needs the team's Apple Developer account.
+
+- Signing asks for the login keychain's password once for each framework in the app. To be asked no more, run
+  `security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k '<the Mac's password>'
+~/Library/Keychains/login.keychain-db` once.
+- The map is only on the development screens, which a release build does not show, so check it with a debug build. A
+  debug build loads its JavaScript from the development server: the phone and the Mac must be on the same Wi-Fi, and
+  the phone must allow the app on the local network.
+
+Two things in the app's configuration exist for the iOS build alone:
+
+- `plugins/ios-scene-life-cycle.ts`: an app built with the iOS 27 SDK quits at launch unless it adopts the scene
+  life cycle, and Expo SDK 57's project template, up to 57.0.28, does not. The plugin makes the generated project use
+  Expo's own `ExpoAppSceneDelegate`. Remove it once Expo's template does the same.
+- `app.config.ts` lets CocoaPods link three of Google's pods as static libraries when `GOOGLE_IOS_URL_SCHEME` is
+  empty, which the sign-in library's plugin otherwise does; without it `pod install` fails on `AppCheckCore`.
+
+### When the map does not appear
+
+Read what the map says in the simulator's log:
+
+```bash
+xcrun simctl spawn booted log stream --predicate 'eventMessage CONTAINS "SnuNowMap"'
+```
+
+- **A bundle ID that is not registered, or a wrong key**: the map stays blank and the log says
+  `The map could not start: 401` with Kakao's `invalid android_key_hash or ios_bundle_id or web_site_url`.
+- **An empty key**: the log says `KAKAO_NATIVE_APP_KEY was empty when the app was built`. Fill it in and generate
+  the project again.
+- **`The map could not be added`**: the map's configuration did not arrive within 10 seconds. Check the network.
+- `The map could not start: 429`: the day's quota is used up. `499`: no network.
 
 ## Checks
 
@@ -633,10 +718,10 @@ The component chooses while the app runs (`src/map/map.tsx`), by whether the bui
 `SnuNowMap`:
 
 - **With the module**, it shows the native map, `src/map/native-map.tsx`. That file is loaded only then, and it is
-  the only file that may name the native view. A build for Android holds the module (see "The Android module"
-  below); its iOS side is ticket 11's.
+  the only file that may name the native view. A build for Android or iOS holds the module (see "The Android
+  module" and "The iOS module" below).
 - **Without it**, which Expo Go, the web and the tests are, it shows the plain ground (`src/map/plain-map.tsx`) with
-  the words "지도는 Android 빌드에서 보입니다". It is no stand-in map: it has no tiles and draws no campus, and a User
+  the words "지도는 Android·iOS 빌드에서 보입니다". It is no stand-in map: it has no tiles and draws no campus, and a User
   cannot pan it. It follows the camera's rules (`src/map/projection.ts`) and places what it was asked to show by
   position: each marker and Avatar as the design system's own view with its `text` under it, and the route as
   straight strokes, or as the dashes of a dashed `routeStyle` (`src/map/plain-route.tsx`). So `moveCamera`, `fitTo` and a moved Avatar are seen, and a screen can be laid out around it.
@@ -723,6 +808,33 @@ of the design system's tokens. How it keeps the rules:
 The module cannot be tested with Jest: Jest runs without it. It is checked by hand on `/map-check`, against the
 device check of the spec. `native-map.tsx` is tested with the module's view mocked
 (`__tests__/map-native-view-test.tsx`).
+
+### The iOS module
+
+The module's iOS side is in Swift, in `modules/snu-now-map/ios/`, around Kakao Maps SDK for iOS 2.12.19, taken as the
+CocoaPods pod `KakaoMapsSDK`. Expo links it into every build for iOS. It takes the same view, with the same props and
+calls, as the Android side, and keeps the rules the same way: the zoom through the camera's height, the camera brought
+back inside the rectangle after a move, markers and Avatars as the SDK's Pois on two layers, its own glide, and the
+SDK's route line under them. What is different:
+
+- **The engine**: the SDK starts nothing by itself. Each map view prepares and activates Kakao's engine when it is put
+  in a window, and pauses and resets it when it leaves, which frees the map. When the app goes to the background the
+  engine is paused and keeps what it shows; it is activated again when the app is active.
+- **The size**: the module sets the map's size whenever the view's size changes, a first size of zero included. The
+  SDK refuses to prepare an engine whose view has no size yet, so the engine is prepared on the first layout that gives
+  the view one.
+- **Zoom**: as on Android, through the camera's height. The SDK answers a point on the view's right or bottom edge as
+  outside the map, so the zoom is measured from the left edge to the middle; and the scale is measured again after
+  each move the module makes, since one measured while the view still takes its size is off.
+- **Calls before the map is ready**: a `moveCamera` or `fitTo` that comes before the map is ready is kept and
+  carried out once it is.
+- **Pixels**: the SDK draws its pixels at half the screen's scale, so a picture is handed over at twice its size in
+  points, and the text and the route's width likewise. A picture is redrawn in 8-bit RGBA: the SDK throws, and the app
+  quits, on one in a wider format.
+- **Markers, Avatars and camera moves** are read from plain dictionaries rather than Expo's records, which refuse the
+  `null` that the component sends for a picture not made yet or a marker without text. Expo drops such a prop without
+  a word.
+- **Kakao's logo** stays where the SDK puts it, at the bottom right, apart from the credit at the bottom left.
 
 ### Trying it
 

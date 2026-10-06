@@ -54,7 +54,7 @@ Last updated: 2026-10-05
 ### 1.6 Map component and the Android module (tickets 06, 07)
 
 - [x] The map component's interface (section 2.9)
-- [x] The plain ground with "지도는 Android 빌드에서 보입니다" for a build without the native module
+- [x] The plain ground with "지도는 Android·iOS 빌드에서 보입니다" for a build without the native module
 - [x] Images for markers and Avatars, made from the design system's marker views
 - [x] The credit for the map data at the bottom left
 - [x] The Android module in Kotlin, with the build settings and the steps to a build in the app's README
@@ -75,7 +75,7 @@ Last updated: 2026-10-05
 - [x] "오늘의 발자국", "활성 파티", the 편의기능 button, the AI input, the bottom navigation, in place
 - [x] The "준비 중이에요" toast on every control of section 4
 - [x] The map's inset: the credit above the row of buttons, and the inset handed to the native map
-- [ ] The Android module reads the inset and places Kakao's logo inside it (ticket 10's Comments say how)
+- [ ] The Android and iOS modules read the inset and place Kakao's logo inside it: written in ticket 11's review, not yet seen in a build (ticket 11's Comments)
 
 ### 1.8 iOS map module (ticket 11)
 

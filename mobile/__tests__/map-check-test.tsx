@@ -48,3 +48,13 @@ describe('the map check for developers', () => {
     expect(screen.getByRole('button', { name: '내 위치' })).toBeVisible();
   });
 });
+
+describe('a camera call before the map is ready', () => {
+  it('is carried out on a map made anew', async () => {
+    await render(<MapCheck />);
+
+    await userEvent.press(screen.getByRole('button', { name: '새로 열고 바로 맞추기' }));
+
+    expect(screen.getByText(/카메라: 37\.4544\d, 126\.9518\d · 줌 17\.\d\d/u)).toBeVisible();
+  });
+});

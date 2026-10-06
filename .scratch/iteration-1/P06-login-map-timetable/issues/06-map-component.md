@@ -8,7 +8,7 @@ Blocked by: 01 (Design system)
 
 The app gets its one map component, with the provider-neutral interface of the spec's "Map" decisions and of `todo.md` section 2.9. Every screen uses this component and nothing else to show a map; the Android module (ticket 07) and the iOS module (ticket 11) implement it. What the interface cannot say, a screen cannot ask of any map, so it is settled here.
 
-In a build without a native module, which Expo Go, the web and the tests are, the component is a plain ground with the words "지도는 Android 빌드에서 보입니다". There is no stand-in map.
+In a build without a native module, which Expo Go, the web and the tests are, the component is a plain ground with the words "지도는 Android·iOS 빌드에서 보입니다". There is no stand-in map.
 
 ## Acceptance criteria
 

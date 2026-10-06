@@ -16,6 +16,7 @@ Everything was checked on 2026-09-30 unless a line says otherwise. `[K1]`-style 
 | OpenStreetMap | P07, P08, P15 | Open data, loaded once as seed data | Confirmed |
 | SNU campus map | P07 | Public JSON behind the map's pages; no terms published | Confirmed on 2026-10-01 |
 | Kakao Maps SDK for Android | P06 | Native app key and key hash | Key issued; package name and development key hash registered; map shown in a trial build |
+| Kakao Maps SDK for iOS | P06 | Native app key and bundle ID | Bundle ID registered on 2026-10-06; see §7.6 |
 | Kakao Maps JavaScript SDK | P12 | JavaScript key and domain | Key issued; `http://localhost:3100` registered |
 | Kakao walking route API | P07 | REST API key | Key issued; called on 2026-10-02 |
 | Google Sign-In | P04, P06, P12 | OAuth clients | Clients exist; see §8 |
@@ -231,6 +232,7 @@ The university's own map of the Gwanak campus, `https://map.snu.ac.kr` [M1]. `ww
 | Members | The team, invited on 2026-09-30 |
 | Keys | REST API, JavaScript and native app keys issued on 2026-09-30 |
 | Android package name | `com.bonnieandclaude.snunow`, registered on 2026-10-01. The prototype used `kr.ac.campus.prototype`. |
+| iOS bundle ID | `com.bonnieandclaude.snunow`, registered on 2026-10-06 |
 | Key hashes (which keystore) | `Xo8WBi6jzSxKDVR4drqm84yr9iU=`, the Expo template's debug keystore, registered on 2026-10-01. Development builds only. |
 | JavaScript SDK domains | `http://localhost:3100`, registered on 2026-09-30 |
 | Allowed IP addresses for the REST API key | None |
@@ -342,6 +344,37 @@ A build on EAS does not receive `mobile/.env`, because EAS uploads only the file
   - Checked again on 2026-10-01: these are articles 20 and 30 of the policy. It has no article on maps or place search in particular, and none on a position that a person picks on a map.
   - My judgement, by the kind of coordinate. A list kept in our database, such as the buildings or the stops, must not come from Kakao's map or place search. A position that a person sets by pointing on the map (P06, P12) is that person's input. A route is shown and not kept (§7.4).
 
+### 7.6 Maps SDK for iOS (P06)
+
+Checked on 2026-10-06 against Kakao's guide [K19], the API reference [K20], the change log [K21], the pod's spec [K22] and the SDK 2.12.19 itself: its `.swiftinterface` and headers. Where the guide and the SDK disagree, the SDK is right: the guide still shows `PoiTextLineStyle(textStyle:textLayout:)`, `PoiTextStyle(textStyles:)` and `RouteStyle()` with `addPerLevelStyle`, none of which 2.12.19 has.
+
+- Registration: the same native app key as Android, `KAKAO_NATIVE_APP_KEY` (§7.1.1), with the app's bundle ID registered under [앱] > [플랫폼] > [iOS] [K1]. iOS has no key hash. A bundle ID that is not registered gives the same `invalid android_key_hash or ios_bundle_id or web_site_url` as a wrong key hash (§7.2).
+- The key is handed over in code, `SDKInitializer.InitSDK(appKey:)`, before any engine starts. Since 2.9.0 the SDK no longer reads it from `Info.plist` itself [K21]; the app's configuration writes it there and the module reads it from there.
+- SDK: the CocoaPods pod `KakaoMapsSDK`, 2.12.19, the latest on 2026-10-06 [K22]. Also on Swift Package Manager [K19].
+  - iOS 13 or later. The pod vendors `KakaoMapsSDK.xcframework`, a dynamic framework, and a resource bundle `KakaoMapsSDKBundle.bundle`; it links `OpenGLES`, `Metal` and `c++`.
+  - The xcframework has a device slice, `ios-arm64`, and a simulator slice, `ios-arm64_x86_64-simulator`, so it runs on the simulator of an Apple Silicon Mac [K19]. Since 2.9.3 the simulator renders with Metal [K21].
+- The engine's life is the app's to drive; nothing is automatic [K23]:
+  - `KMController(viewContainer:)` drives a `KMViewContainer`, a `UIView`. `prepareEngine()` prepares it and authenticates in the background; `activateEngine()` starts drawing, and the controller's delegate is then asked for its views in `addViews()`.
+  - `addView(_:viewSize:timeout:)` adds the map, `MapviewInfo(viewName:viewInfoName: "map", defaultPosition:defaultLevel:)`. It is asynchronous; `addViewSucceeded` or `addViewFailed` answers. The timeout is for fetching the map's configuration and is 5 seconds by default.
+  - `pauseEngine()` stops drawing and keeps what is shown, for the app in the background. `resetEngine()` stops the engine and frees everything: the map, its labels, styles and routes. A `prepareEngine()` is needed after it.
+  - The delegate's `containerDidResized(_:)` reports the container's new size; the map's size is set there, through `KakaoMap.viewRect`. A size that arrives before the map is added is missed, so the size is set again in `addViewSucceeded` [K23]. 2.12.5 fixed a crash on a container resized to zero [K21].
+  - `authenticationFailed(_:desc:)` gives 400, 401 (the key or the bundle ID), 403, 429 (the quota) or 499 (no network). After a failure the engine is stopped; `prepareEngine()` tries again [K24].
+- Camera [K25]: `moveCamera(_:callback:)` and `animateCamera(cameraUpdate:options:callback:)` take a `CameraUpdate`. `CameraPosition(target:height:rotation:tilt:)` sets the camera's height in metres, so any zoom between levels; `CameraPosition(target:zoomLevel:…)` and `zoomLevel` are whole levels, 6 to 21 on the map. The map has no getter for the camera's centre: `getPosition(_:)` gives the place under a point of the view, and `cameraHeight` the height. `cameraMinLevel` and `cameraMaxLevel` limit the zoom in whole levels; nothing limits panning.
+- Events: `KakaoMapEventDelegate` has `cameraWillMove(kakaoMap:by:)`, `cameraDidStopped(kakaoMap:by:)`, where `by` is `.notUserAction` for a move the app made, and `poiDidTapped(kakaoMap:layerID:poiID:position:)`.
+- Labels [K26]: a `Poi` on a `LabelLayer` made with `LabelLayerOptions(layerID:competitionType:competitionUnit:orderType:zOrder:)`. The layer `zOrder`s 1000 to 1999, 3000 to 3999 and 5000 up are the app's; the others are the engine's. `competitionType: .none` draws labels over one another without hiding any. A Poi takes a press only with `PoiOptions.clickable`, which is false by default. Its look is a `PoiStyle` of `PerLevelPoiStyle(iconStyle:textStyle:padding:level:)`, registered once under its ID and never overwritten; a text is a `PoiText(text:styleIndex:)`, placed by `PoiTextStyle.textLayouts`. A Poi has `position` to set and `moveAt(_:duration:)`.
+- Pixels [K27]: the SDK draws every pixel value, a picture included, at `UIScreen.main.scale / 2`, so a picture of `n` pixels is `n / 2` points wide on any screen. A 3x picture comes out half as large again as meant.
+- Route [K28]: `RouteManager`, `RouteStyleSet` of `RouteStyle(styles: [PerLevelRouteStyle(width:color:level:)])`, a `RouteLayer`, and `RouteOptions` with `RouteSegment(points:styleIndex:)`. Each segment needs two distinct points or more. Routes are always drawn under labels; the order of the kinds is fixed. A route's colour has no alpha.
+- The logo is at the bottom right by default. It must stay visible and unchanged; `KakaoMap.setLogoPosition(origin:position:)` may move it [K27].
+- Checked on 2026-10-06 in the app, on the iPhone 17 simulator with iOS 27.0 (Xcode 27.0) and on an iPhone 14 Pro:
+  - The map runs on the simulator of an Apple Silicon Mac.
+  - Before the bundle ID was registered, the authentication answered `401 Unauthorized`; a few minutes after it was registered, `Authentication OK!!`.
+  - `prepareEngine()` fails with `Prepare engine failed! ViewSize is zero.` while the container's drawing view has no size yet, as when the view is in a window but not laid out.
+  - `getPosition(_:)` takes the view's points. A point on the right or bottom edge, such as `x` equal to the width, answers (0, 0).
+  - The camera's height and the Web Mercator zoom keep a fixed relation (the zoom plus log2 of the height), measured once the view has its final size.
+  - A picture in a format other than 8-bit RGBA makes the SDK throw in `ImageData::_setPixelSize` when a Poi style is added, and the app quits.
+  - The logo appears at the bottom right without being moved.
+- Expo SDK 57, for the same app: a record with an optional field refuses a JavaScript `null` ("Cannot cast 'nil' for field … of type Optional<String>"), and a view prop that fails to convert is dropped without a log. The iOS 27 SDK refuses to launch an app without the scene life cycle, which Expo 57's template lacks (`mobile/README.md`, "Build the app for iOS").
+
 ## 8. Google Sign-In
 
 - The Google Cloud project and two OAuth clients were made during the prototype. Their IDs go in `GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID` of `main-server/.env.example` (P04).
@@ -438,6 +471,16 @@ A build on EAS does not receive `mobile/.env`, because EAS uploads only the file
 [K16]: https://devtalk.kakao.com/t/topic/150466
 [K17]: https://apis.map.kakao.com/android_v2/docs/getting-started/ (accessed 2026-10-01)
 [K18]: https://apis.map.kakao.com/android_v2/docs/getting-started/precautions/ (accessed 2026-10-01)
+[K19]: https://apis.map.kakao.com/ios_v2/docs/getting-started/gettingstarted/ (accessed 2026-10-06)
+[K20]: https://apis.map.kakao.com/ios_v2/references/index.html (accessed 2026-10-06)
+[K21]: https://apis.map.kakao.com/ios_v2/changelogs/ (accessed 2026-10-06)
+[K22]: https://cdn.cocoapods.org/Specs/8/8/e/KakaoMapsSDK/2.12.19/KakaoMapsSDK.podspec.json (accessed 2026-10-06)
+[K23]: https://apis.map.kakao.com/ios_v2/docs/getting-started/basics/01_view/ (accessed 2026-10-06)
+[K24]: https://apis.map.kakao.com/ios_v2/docs/getting-started/basics/02_auth/ (accessed 2026-10-06)
+[K25]: https://apis.map.kakao.com/ios_v2/docs/map/03_camera/ (accessed 2026-10-06)
+[K26]: https://apis.map.kakao.com/ios_v2/docs/map/04_label/02_poi/ (accessed 2026-10-06)
+[K27]: https://apis.map.kakao.com/ios_v2/docs/getting-started/knownissues/ (accessed 2026-10-06)
+[K28]: https://apis.map.kakao.com/ios_v2/docs/map/07_route/ (accessed 2026-10-06)
 [G1]: https://support.google.com/cloud/answer/15544987
 [G2]: https://developer.android.com/identity/sign-in/credential-manager-siwg-implementation
 [G3]: https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid
