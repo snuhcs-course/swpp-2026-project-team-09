@@ -1,0 +1,30 @@
+# 02: Changing Global Events: create, edit, publish, cancel and discard
+
+Parent: [P12 spec](../spec.md)
+Status: ready-for-agent
+Blocked by: 01 (Reading Global Events: the administrative API's lists and the User's list)
+
+## What to build
+
+An Administrator changes Global Events through the administrative API. They create one by hand from an organizer's submission, correct a Draft and publish it, discard a Draft that is not an event, correct a published event, and cancel a published event that will not happen. A Draft can be published or discarded, a published event can be cancelled, and nothing else changes an event's state. A published event can be edited and stays published.
+
+Publishing needs a title, a start and a position, and a published event keeps all three. Every change to an existing event carries the version the Administrator loaded, so that one who edited from an older version is told instead of overwriting another's work.
+
+What Users see follows at once. Publishing, editing a published event and cancelling send `global-events-changed`, and the app fetches `GET /global-events` again. The attending Sub Quest of every Quest for the event reads the event's title, time and place, and reads as cancelled once the event is, as P08 built it; the Holders of those Quests get `quests-changed`, so their Quest lists are fetched again too.
+
+## Acceptance criteria
+
+- [ ] `POST /admin/global-events` with `{ title, description, startsAt?, endsAt?, place?, latitude?, longitude? }` creates a Draft and answers 201 with it as `GET /admin/global-events/:id` answers it: version 1, `postNumber` and `sourceUrl` `null`. It is marked `@Idempotent({ required: true })` with the module's interceptor as the README's "Making a handler safe to repeat" says: a request without an `Idempotency-Key` gets 400 `IDEMPOTENCY_KEY_REQUIRED`, and the same key again answers the same event and stores no second one.
+- [ ] `PATCH /admin/global-events/:id` with `{ version, title?, description?, startsAt?, endsAt?, place?, latitude?, longitude? }` edits a Draft or a published event and answers 200 with the event, its version raised by one. A field left out stays, and `null` clears an optional one. A published event stays published.
+- [ ] The fields, on creating and editing: `title` 1 to 200 characters after trimming; `description` any text, empty included; `startsAt` and `endsAt` times with their offset, the end after the start; `place` 1 to 200 characters after trimming, or `null`; `latitude` and `longitude` given together, both `null` to clear the position, and inside the Campus Boundary. A body that breaks a rule gets 400 with a message naming the field, and nothing changes.
+- [ ] `POST /admin/global-events/:id/publish` with `{ version }` turns a Draft into a published event and answers 200 with it, its version raised. A Draft without a start or a position gets 409 `GLOBAL_EVENT_INCOMPLETE` with `missing` as in ticket 01. An edit that would leave a published event without its start or its position gets the same refusal.
+- [ ] `POST /admin/global-events/:id/discard` with `{ version }` turns a Draft into a discarded event, and `POST /admin/global-events/:id/cancel` with `{ version }` a published event into a cancelled one; each answers 200 with the event, its version raised.
+- [ ] Any other change of state, and an edit of a cancelled or a discarded event, gets 409 `GLOBAL_EVENT_STATE` with the event's `state` in the body.
+- [ ] A change whose `version` is not the stored one gets 409 `GLOBAL_EVENT_CHANGED` with the stored `version` in the body, and nothing changes. The version is compared and raised in the statement that writes the change, so of two changes made from the same version at the same moment one is applied and the other refused.
+- [ ] The checks run in this order: 404 `GLOBAL_EVENT_NOT_FOUND`, `GLOBAL_EVENT_STATE`, `GLOBAL_EVENT_CHANGED`, `GLOBAL_EVENT_INCOMPLETE`.
+- [ ] After the change commits, `GlobalEventsService.signalChanged()` sends `global-events-changed` once for publishing, for an edit of a published event and for cancelling. Creating, editing a Draft, discarding and a refused change send none.
+- [ ] After an edit of a published event or its cancelling commits, `quests-changed` goes to the Holders of every Quest for the event. A Holder's `GET /quests` then shows the edited title, time and place on the attending Sub Quest, and `cancelled` after cancelling.
+- [ ] Main server tests at the API: a hand-made Draft, its repeat with the same key, and one without a key; each field rule; an edit of a Draft and of a published event, with a field left out and one cleared; publishing, with the start missing, the position missing, and an edit that removes the position from a published event; discarding and cancelling; each forbidden change of state and an edit of a cancelled and of a discarded event; an edit from an older version, and two edits from the same version at the same moment; that a published event then appears in `GET /global-events` and a Draft, a cancelled and a discarded one do not; the signal for each change that sends it and none for the others; a Holder's attending Sub Quest after an edit and after cancelling, with `quests-changed` to the Holders; a User's token refused on each route.
+- [ ] The test that a change sends no `global-events-changed` is not broken by another test file's signal. Today only `test/global-events.e2e-spec.ts` publishes events and frames each check between two signals of its own; every test that now publishes, edits or cancels either joins that file or the checks of no signal are made so that another file's signals cannot break them.
+- [ ] The main server's README records the routes, the field rules, the allowed changes of state, the version check, the refusals and the signals in Global Events, and the Quests section says that the Holders get `quests-changed` when their event is edited or cancelled.
+- [ ] `pnpm lint`, `pnpm format:check`, `pnpm typecheck` and `pnpm test` pass in `main-server/`.
