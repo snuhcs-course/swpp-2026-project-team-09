@@ -1,7 +1,7 @@
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { apiClient } from './client';
 import type { RestaurantMenus } from './menu-types';
-import type { Place } from './types';
+import type { Place, Quest } from './types';
 import type { JoinRequest } from './waiting-types';
 
 // One entry of the cache per operation, each under its own key. The hooks of the features combine them, so that an
@@ -17,6 +17,8 @@ export const PARTIES_KEY = ['parties'] as const;
 export const FRIEND_REQUESTS_KEY = ['friend-requests'] as const;
 export const QUEST_INVITATIONS_KEY = ['quest-invitations'] as const;
 export const JOIN_REQUESTS_KEY = ['join-requests'] as const;
+export const SENT_INVITATIONS_KEY = ['sent-invitations'] as const;
+export const DECLINED_PARTIES_KEY = ['declined-parties'] as const;
 export const MEETUPS_KEY = ['meetups'] as const;
 export const CLASSES_KEY = ['timetable-classes'] as const;
 export const PLACES_KEY = ['places'] as const;
@@ -56,6 +58,14 @@ export const questInvitationsQuery = queryOptions({
 // One entry for each Quest the User leads, all under one key, so that a signal fetches them all again.
 export function joinRequestsQuery(questId: string): UseQueryOptions<JoinRequest[], Error, JoinRequest[], string[]> {
   return { queryKey: [...JOIN_REQUESTS_KEY, questId], queryFn: () => apiClient.listJoinRequests(questId) };
+}
+// One Quest, for its room. Under the key of the Quests, so that whatever fetches them again fetches it too.
+export function questQuery(questId: string): UseQueryOptions<Quest, Error, Quest, string[]> {
+  return { queryKey: [...QUESTS_KEY, questId], queryFn: () => apiClient.getQuest(questId) };
+}
+// The Leader's invitations into one Quest.
+export function sentInvitationsQuery(questId: string): UseQueryOptions<JoinRequest[], Error, JoinRequest[], string[]> {
+  return { queryKey: [...SENT_INVITATIONS_KEY, questId], queryFn: () => apiClient.listSentInvitations(questId) };
 }
 export const meetupsQuery = queryOptions({ queryKey: MEETUPS_KEY, queryFn: () => apiClient.listMeetups() });
 export const classesQuery = queryOptions({ queryKey: CLASSES_KEY, queryFn: () => apiClient.listClasses() });

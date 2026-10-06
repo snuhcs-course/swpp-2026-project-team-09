@@ -347,7 +347,8 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   their tasks fill them; 내 정보 is described below.
 - **Screens above the tabs** are routes of the stack: the Quest list on the whole screen (`/quests`), 알림
   (`/notifications`), 프로필 편집 (`/profile-edit`), 시간표 (`/me/timetable`) and its class form
-  (`/me/timetable/class`). Each is a
+  (`/me/timetable/class`), a Quest's room (`/room/<questId>`) and the map view of the place picker (`/place-map`).
+  Each is a
   `FullScreenPanel` and slides in over 0.28 s, from the bottom for `/quests` and from the right for a pushed screen,
   or appears without sliding where the phone asks for less motion (`slideFrom` in the layout). The tabs lie under
   them also when the app opens at their address (`unstable_settings`).
@@ -407,6 +408,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   counted in whole characters, so that an emoji is never cut. A given name is the name without its first syllable for
   a Korean name of three syllables, and the whole name otherwise (`src/features/map/short-name.ts`). A marker is read as the wireframe reads it: "김민준 · 공강 · 중앙도서관 근처 · 15:00까지 비어 있어요", "공식 행사 · AI 커리어
   설명회". The selected marker has the selected look and is drawn above the others, the User's own Avatar included.
+  A Friend's or a member's Avatar whose position was measured 2 minutes ago or more is dimmed (the look `stale`,
+  a picture of its own), and its card's line says "마지막 위치 {n}분 전"; at 10 minutes it leaves the map, while the
+  Friend's row stays in the list. `useMapCards()` checks the age every 15 seconds and whenever a position arrives.
 - **Cards.** `useSelection(cards)` holds what is selected: `selected` (the open card), `open`, `select(id)` and
   `close()`. A press on a marker selects it and opens its card (`card.tsx`) in place of the one that was open; the
   card's X and Android's back button close it, the button only while the map is in front; a press beside the
@@ -414,7 +418,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   the map, such as a Friend who turns their location off, is closed for good: it does not open again on their return. The card shows the leading
   mark (a person's Avatar, or the place's icon on its kind's colour), the sub-label, the title, the lines and its
   button. "가까이 보기" is offered below the `names` level and brings the camera to the `close` level, keeping the
-  card. "같이 갈 사람 찾기", "참여하기", "파티 만들기" and "파티 열기" say "준비 중이에요". While a card is open the zoom
+  card. On the card of a Party that others may join, "파티 열기" and "참여하기" open the Quest's room; on a Party
+  member's card, "파티 열기" does what "활성 파티" does. "같이 갈 사람 찾기" and "파티 만들기" say "준비 중이에요". The
+  room's member list shows a member by the main screen's address, `/main?person=<userId>`: the map goes to the
+  Friend's or the member's Avatar at the `close` level and opens its card. While a card is open the zoom
   control is not shown; a part that a card hides asks `selection.open`. A row of a list opens a card with
   `selection.selectOrWait(cardId.friend(id))` (`cardId` of `src/features/map/adapter.ts`) and moves the map with
   `map.goTo`. A row may be pressed before the map's cards came: `selectOrWait` waits for an id that no card has
@@ -478,14 +485,16 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     the rounds. The adapter says the row's `tone` and `icon`: a class is `clock` in grey; `open`, a Party that
     others may join, is `users` in blue; `closed`, a Party that takes nobody else and a Shared Quest, is `lock` in
     the Party's colour (`questTone`). A press on a class's row brings the map to its place at the `names` level,
-    closes an open card and says "<title> · <place>", "자료구조 · 301동 118호"; any other row says "준비 중이에요".
+    closes an open card and says "<title> · <place>", "자료구조 · 301동 118호"; any other row opens the Quest's
+    room.
     Without a Quest the list says "오늘 일정 없음".
   - While a list's data is loading, and after a failure, its pill has no number and the list has no rows.
 - **The controls above the navigation** (`bottom-controls.tsx`): "오늘의 발자국", with up to three faces and "친구
   5명의 오늘" from `useFootprints()`; "활성 파티", shown only while the User is in a Party, with "<n>명 공유 중" for
   the members who share their position, the User left out, or "응답 대기" when nobody else does
-  (`useActiveParty()`); the 편의기능 button (`layers.tsx`, below); and the AI input. Each but the 편의기능 button says
-  "준비 중이에요".
+  (`useActiveParty()`); the 편의기능 button (`layers.tsx`, below); and the AI input. "활성 파티" opens the room of the
+  Party's Quest, or, for a Party tied to no Quest, which has no room, asks "활성화에서 나갈까요?" and leaves it
+  (`use-active-party-room.tsx`). "오늘의 발자국" and the AI input say "준비 중이에요".
   - The AI input (`ai-input.tsx`) is not a text field yet. It is a button with the look of the wireframe's empty
     input, the placeholder "무엇이든 부탁해 보세요" and the grey send button: nothing takes the focus, no keyboard
     comes up and nothing can be typed. A press on it says "준비 중이에요"; so does a press on the send button, which
@@ -596,7 +605,7 @@ start of the Sub Quest each shows (`toQuestGroups` in the quest feature's adapte
 A Quest whose Sub Quests all ended or were cancelled is not shown. A row is 72 high: the round of 40 in its
 `questTone`, the kind ("강의", "공개 파티", "비공개 파티 · 김민준"), the title, the place and the time. A class's row
 closes the screen and goes back to the map by `/main?quest=<id>`, which the Quest list on the map carries out as a
-press of its own row; any other row says "준비 중이에요". Without a Quest it says "퀘스트가 없어요"; while the Quests
+press of its own row; any other row opens the Quest's room above it. Without a Quest it says "퀘스트가 없어요"; while the Quests
 load and after a failure it shows the shared states.
 
 **내 정보** (`src/screens/me/me-screen.tsx`, the `Profile` frame) has the bell, "알림" or "알림 {n}개" with the
@@ -644,8 +653,9 @@ waits for a name, a day, both times with the end after the start and a Place, an
 feature), in this order: a Party running for a Quest the User holds ("{name}님이 파티를 활성화했어요", or "파티가
 활성화됐어요" without its Leader), a Friend Request received, a Quest invitation, a Meetup proposed to the User and
 waiting ("{name}님의 파티 초대"), and the requests to join each Quest the User leads with Approval ("참여 신청
-{n}명"). An invitation's and a Meetup's row open 파티 at 초대, a Friend Request's 친구 요청; the others say "준비 중이에요". A list that failed is
-left out; when every one failed it shows the error state. Without rows it says "새 알림이 없어요".
+{n}명"). An invitation's and a Meetup's row open 파티 at 초대, a Friend Request's 친구 요청, and a running Party's
+and the requests' the Quest's room. A list that failed is left out; when every one failed it shows the error state.
+Without rows it says "새 알림이 없어요".
 
 **The menu panel** (`src/screens/menus/`, `/menus`) has no frame. It is a `FullScreenPanel` that comes up from the
 bottom: ✕ "닫기" and "메뉴"; under the app bar the 7 days from today as `DayTile`s ("오늘", "내일", then the weekday),
@@ -663,6 +673,43 @@ muted, any other line as written; a restaurant without lines for the meal says "
 credit, slide in from the right: "뒤로" and "지도 데이터 출처", a card for OpenStreetMap (ODbL, with its copyright
 page) and one for 국토지리정보원's 연속수치지형도 건물 under 공공누리 type 1 (with the VWorld page it is downloaded
 from). Each link opens the browser. The year in the second card is that of the files' renewal on the VWorld page.
+
+**A Quest's room** (`src/screens/room/`, the frame's `PartyDetail`, `/room/<questId>`) is the room of every Quest the
+User holds but a Class Quest: its `파티장` is the Quest's Leader, its `멤버` the Holders and its `일정` the Sub Quests.
+It reads the Quest (`GET /quests/:questId`), the User's Party and the listed Parties (`useRoom()` of the quests
+feature, `room-adapter.ts`), and closes with "파티에서 빠졌어요" once the main server no longer answers the Quest,
+after a removal, a drop on another phone or the Leader's end. From the top:
+
+- the Badges, "파티 · {holders}/{capacity}명" or "파티 · {holders}명" for a Closed Quest, "내가 만든 파티", "비공개" and
+  the Global Event's title, and the title;
+- the box `파티 활성화` (`activation-box.tsx`). `활성화` is the domain Party opened for the Quest. While none runs,
+  any Holder opens it (`POST /parties`, closed, for 8, titled as the Quest) after the sheet "파티를 활성화할까요?",
+  which also says when the User leaves another Party for it and when the Master Switch is off; a Party another Holder
+  opened at the same moment (409 `PARTY_EXISTS_FOR_QUEST`) is entered instead. The User in it sees how many share,
+  the switch "내 위치 공유" (`PUT /parties/mine/sharing`, shown at once and turned back after a failure) and
+  "활성화 끄기" for its Leader (`POST /parties/mine/end`) or "활성화에서 나가기". A Party running without the User
+  names its Leader, with "거절" and "참여"; "거절" sends nothing and is kept on the phone by the Party's id
+  (`declinedParties` of `src/storage/kept.ts`), so the box then says "활성화 중인 파티예요" with "참여";
+- `일정` (`plan-section.tsx`): the Sub Quests by their start, the next one in the Party's colour, the ended ones dimmed;
+  "완료로 표시" for every Holder; "+ 추가", "일정 수정" and "일정 삭제" for the Leader alone. The rules of who edits
+  Sub Quests and who opens the Party are in one module, `src/features/quests/rules.ts`. The inline form
+  (`plan-form.tsx`) asks `내용`, `언제` through the date·time sheet and `어디서`, typed or chosen on the map view; it
+  waits for a point while the place has words of its own. A Place is sent as `{ placeId }`, a point as a point with
+  the words shown; an add carries an `Idempotency-Key` kept for its retries;
+- `신청 {n}` and `초대 중 {n}` for the Leader, and `멤버 {n}` with what the User sees of each Holder while in the
+  Party, "내보내기" and "파티장 넘기기" for the Leader, and a press that shows a seen member on the map;
+- the footer's "나가기" (`DELETE /quests/:questId`, after leaving the Party when it is the Quest's) or, for the Leader,
+  "파티 없애기" (`POST /quests/:questId/end`, after ending or leaving the Party).
+
+A refusal says why in the words of one table, `src/features/quests/refusals.ts`, and the room fetches what it shows
+again.
+
+**The date·time sheet** (`src/screens/date-time-sheet.tsx`) is shared: "언제" with the choice in words ("오늘 19:00"),
+21 days from today in Korea's time, the hours and the minutes by tens, and "확인". **The map view**
+(`src/screens/place-map/`, `/place-map`) is the frame's `PlacePickerMap`: the map under a teal pin fixed at its
+middle, which lifts while the map moves; when the camera stops it asks `GET /places/at` and the sheet says the Place
+("{name} {number}동", "건물 위치예요"), a point near one ("{name} 근처") or a point at none ("지도에서 고른 위치").
+"이 위치로 정하기" gives the choice back to the screen that opened it (`src/features/places/picked-place.ts`).
 
 The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and
 `/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
@@ -718,11 +765,13 @@ Behind a hook are three layers:
 - **The main server's client** (`src/api/server/`): the operations the main server serves, in a build that asks it
   (`asksMainServer()`). `http.ts` is the one way to the main server: it attaches the access token, renews the Session
   once on a 401 and asks again, and ends the Session when that cannot mend it. `answers.ts` (with `waiting-answers.ts`,
-  `menu-answers.ts` and `shuttle-answers.ts`) checks each answer's shape before the app believes it; an answer of another shape fails as
-  no answer does.
+  `menu-answers.ts` and `shuttle-answers.ts`) checks each answer's shape before the app believes it; an answer of
+  another shape fails as no answer does.
 - **The mocks** (`src/api/mock/`): every other operation, and every operation where the app asks no main server, is
   answered inside the app, in the main server's shape, with what the `Main` wireframe shows. A mock answers after 0.3
-  seconds. The tests use the mocks, or a fake main server behind `fetch` (`__tests__/support/fake-server.ts`).
+  seconds. The tests use the mocks, or a fake main server behind `fetch` (`__tests__/support/fake-server.ts`). The
+  mocks of a Quest's room (`src/api/mock/room.ts`) answer as the main server does and keep no change: the next read
+  is the frame's again.
 
 | Operation                                                            | Answers                                            | Where it comes from with the main server                       |
 | -------------------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------- |
@@ -756,6 +805,17 @@ Behind a hook are three layers:
 | `getShuttle`                                                         | The shuttle's route: hours, stops and line         | `GET /shuttle`                                                 |
 | `listShuttleVehicles`                                                | The shuttle's vehicles in service, at their stops  | `GET /shuttle/vehicles`, and the socket's set                  |
 
+| `getQuest`, `dropQuest` | One Quest, ended or not; nothing | `GET`, `DELETE /quests/:questId` |
+| `addSubQuest`, `editSubQuest` | The Sub Quest | `POST /quests/:questId/sub-quests`, `PUT …/:subQuestId` |
+| `cancelSubQuest`, `markSubQuestDone` | Nothing | `DELETE …/:subQuestId`, `POST …/:subQuestId/done` |
+| `handOverQuest`, `removeHolder`, `endQuest` | Nothing | `PUT /quests/:questId/leader`, `DELETE …/holders/:userId`, `POST …/end` |
+| `acceptJoinRequest`, `declineJoinRequest` | Nothing | `POST /quests/:questId/join-requests/:id/accept`, `/decline` |
+| `listSentInvitations`, `cancelInvitation` | The Leader's invitations that wait; nothing | `GET`, `DELETE /quests/:questId/invitations…` |
+| `openParty`, `joinParty` | The User's Party | `POST /parties`, `POST /parties/:partyId/join` |
+| `leaveParty`, `setPartySharing` | Nothing | `POST /parties/mine/leave`, `PUT /parties/mine/sharing` |
+| `removePartyMember`, `endParty` | Nothing | `DELETE /parties/mine/members/:userId`, `POST /parties/mine/end` |
+| `findPlaceAt` | The Place a point is inside or near, or none | `GET /places/at` |
+
 The mock keeps the Friends, the Friend Requests and the Invite Links in memory while the app runs
 (`src/api/mock/friendships.ts`), with Friend IDs for the frame's people, and refuses as the main server does. The
 User's Friend ID is `7KX2M9QD`; `/invite/from-yujian` opens a link the User can accept.
@@ -777,8 +837,9 @@ that the screens read as the wireframe on any day.
 
 The phone keeps that the User signed in, that the User agreed to the legal documents, what the sign-in suggested for
 Onboarding, whether Onboarding is finished and its answers, that the User answered the explanation before the
-location prompt (`locationExplained`), and the token of an Invite Link until its accept screen shows it
-(`inviteToken`) (`src/storage/kept.ts`). A value stored by an older version, without a newer
+location prompt (`locationExplained`), the token of an Invite Link until its accept screen shows it (`inviteToken`),
+and the running Parties whose 활성화 the User declined (`declinedParties`) (`src/storage/kept.ts`). A value stored by
+an older version, without a newer
 field, reads as "not yet" for that field. `openKept()` is the read for the start of the app: it is the one that
 honours `EXPO_PUBLIC_FIRST_STATE`, which clears all of it.
 
@@ -869,15 +930,17 @@ socket server's README describes:
   out. A position for a Friend or a member whom the answers call unseen fetches those answers again.
 - The positions are fetched when the connection opens, and everything it shows when it opens again after a drop. When
   the app returns to the front, the positions and the Quests are fetched again.
-- A person's position ages by the app's clock (`now()`), looked at again every 30 seconds. Measured more than 2 minutes
-  ago (`OLD_POSITION_MS`), it is old: the Avatar is drawn dimmed, a look of its own, its name reads "민준 · 3분 전" from
-  the `names` level, and the Friend's card, row in the friend list and row in the friend panel add "3분 전 위치".
-  Measured more than 10 minutes ago (`KEPT_POSITION_MS`, the main server's keep), it is no longer on the map. The rule
-  is the same for a Friend and for a member of the User's Party; the limits are beside `POSITION_EVERY_MS`.
+- A person's position ages by the app's clock (`now()`), looked at again every 15 seconds. Measured 2 minutes ago or
+  more (`OLD_POSITION_MS`), it is old: the Avatar is drawn dimmed, a look of its own (`stale`), its name reads "민준 ·
+  3분 전" from the `names` level, its card says "마지막 위치 3분 전", and the Friend's row in the friend list and in
+  the friend panel adds "3분 전 위치". Measured 10 minutes ago or more (`KEPT_POSITION_MS`, the main server's keep),
+  it is no longer on the map. The rule is the same for a Friend and for a member of the User's Party; the limits are
+  beside `POSITION_EVERY_MS`.
 - The signals fetch what they name again: `friends-changed` the Friends, the positions and the Friend Requests,
-  `quests-changed` the Quests, the invitations and the requests to join, `meetups-changed` the Meetups, `party-changed`
-  the Parties and the positions, `global-events-changed` the Global Events and the Quests. When the app returns to the
-  front, the lists of 알림, the Friend Requests among them, are fetched again too.
+  `quests-changed` the Quests (the open room's Quest among them), the invitations, the requests to join and the
+  Leader's invitations, `meetups-changed` the Meetups, `party-changed` the Parties and the positions,
+  `global-events-changed` the Global Events and the Quests. When the app returns to the front, the lists of 알림, the
+  Friend Requests among them, are fetched again too.
 - `shuttle-vehicles-updated` replaces the shuttle's vehicles in the cache of `GET /shuttle/vehicles` while the
   shuttle layer is on, which is while that query is in use; a set that comes while it is off is dropped. When the
   connection opens again while the layer is on, the vehicles are fetched again.

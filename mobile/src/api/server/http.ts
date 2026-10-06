@@ -15,6 +15,7 @@ type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 interface Request {
   body?: unknown;
   query?: Record<string, string | number>;
+  // Such as an Idempotency-Key.
   headers?: Record<string, string>;
   // Whether the request carries the access token. Only the sign-in and the renewal go without one.
   signedIn?: boolean;

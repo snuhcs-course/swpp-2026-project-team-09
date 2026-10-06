@@ -198,7 +198,7 @@ describe('the cards of people and Parties', () => {
       subLabel: '파티 · 4/6명',
       title: 'AI 커리어 설명회 같이 가요',
       lines: [{ icon: 'clock', text: '17:40 301동 앞에서 출발' }],
-      primary: { label: '파티 열기', action: 'not-ready' },
+      primary: { label: '파티 열기', action: 'room', questId: 'q-ai' },
     });
     expect(cards.find(({ id }) => id === 'party:q-dinner')).toMatchObject({
       kind: 'shared-quest',

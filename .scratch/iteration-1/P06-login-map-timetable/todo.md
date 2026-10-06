@@ -541,6 +541,14 @@ Ticket 12 connected every row that the demo's flows (P20) use and the main serve
 | Menus (`listMenus`) | Connected | `GET /menus?date=` | The 식당 layer and the menu panel (P15); the mock is a week of lines from the saved menu pages |
 | The shuttle's route (`getShuttle`) | Connected | `GET /shuttle` | The shuttle layer (P15); the mock is the main server's seed |
 | The shuttle's vehicles (`listShuttleVehicles`) | Connected | `GET /shuttle/vehicles`, the socket's `shuttle-vehicles-updated` | Fetched when the layer is turned on and when the connection opens again while it is on; the mock is three vehicles at stops |
+| A Quest's room: the Quest (`getQuest`) | Connected | `GET /quests/:questId`; fetched again on `quests-changed` | 404 `QUEST_NOT_FOUND` closes the room |
+| Dropping a Quest (`dropQuest`) | Connected | `DELETE /quests/:questId` | The room's 나가기 |
+| Sub Quests (`addSubQuest`, `editSubQuest`, `cancelSubQuest`, `markSubQuestDone`) | Connected | `POST /quests/:questId/sub-quests` with an `Idempotency-Key`, `PUT` and `DELETE /quests/:questId/sub-quests/:subQuestId`, `POST …/:subQuestId/done` | The room's 일정 |
+| The Leader's controls (`handOverQuest`, `removeHolder`, `endQuest`) | Connected | `PUT /quests/:questId/leader`, `DELETE /quests/:questId/holders/:userId`, `POST /quests/:questId/end` | |
+| Answering requests to join (`acceptJoinRequest`, `declineJoinRequest`) | Connected | `POST /quests/:questId/join-requests/:id/accept`, `/decline` | |
+| The Leader's invitations (`listSentInvitations`, `cancelInvitation`) | Connected | `GET /quests/:questId/invitations`, `DELETE /quests/:questId/invitations/:id`; fetched again on `quests-changed` | The room's 초대 중 |
+| 활성화 (`openParty`, `joinParty`, `leaveParty`, `setPartySharing`, `removePartyMember`, `endParty`) | Connected | `POST /parties`, `POST /parties/:partyId/join`, `POST /parties/mine/leave`, `PUT /parties/mine/sharing`, `DELETE /parties/mine/members/:userId`, `POST /parties/mine/end` | `거절` is the phone's own: the main server stores no decline |
+| The map view's place (`findPlaceAt`) | Connected | `GET /places/at` | The mock answers by the nearest of its Places |
 | The signal `matching-changed` | Not used | The socket | It names nothing these screens show |
 
 ## 4. Controls that say "준비 중이에요"
@@ -549,20 +557,15 @@ The control is there and only shows the toast. The last column is a proposal for
 
 | Where | Control | Opens | Proposed for |
 |---|---|---|---|
-| Quest list, on the map and on the whole screen | The row of a Party or of a Shared Quest: every row that is no class's | The party screen | P13 |
 | Friend panel | A Friend's calendar button, "{이름}님과 파티 만들기" | Proposing a Meetup to the Friend | P14 |
 | Above the navigation | 오늘의 발자국 | The story replay | In no Iteration 1 spec |
-| Above the navigation | 활성 파티 | The party screen | P13 |
 | Above the navigation | The AI input, which is a button with the input's look and takes no focus and no text, and its send button, read as disabled | The AI chat, with the real text field | In no Iteration 1 spec |
 | Bottom navigation | 올리기 | The story sheet | In no Iteration 1 spec |
 | 파티 | + 만들기, and the bodies of 찾기, 내 파티 and 초대 | 파티 만들기 and the lists of Quests | P13 |
 | 행사 | Its body | The list of Global Events | P13 |
 | 내 정보 | 이미지로 불러오기, 빈 시간 말하기 | Reading a timetable from an image or from words | In no Iteration 1 spec |
-| 알림 | A Party opened, and 참여 신청 | The Quest's room | P13 |
 | A Global Event's card | 같이 갈 사람 찾기 | The party screen | P13 |
-| A Party's card | 참여하기, 파티 열기 | The party screen | P13 |
 | A Friend's card | 파티 만들기 | Making a Party | P14 |
-| The card of a member of the User's Party | 파티 열기 | The party screen | P13 |
 
 ## 5. Development settings
 

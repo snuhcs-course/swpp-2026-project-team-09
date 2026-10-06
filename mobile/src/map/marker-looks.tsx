@@ -25,16 +25,16 @@ export type MarkerLook =
   // The User's own Avatar. `small` is its look while the whole campus is in view: three quarters of its size.
   | { kind: 'me'; small?: boolean }
   // A person: a Friend in the status's colour, or a member of the User's Party in the tone `member`. The frames'
-  // teardrop with the person's letters or photo in it. `small` is its look while the whole campus is in view, `old`
-  // its dimmed look while the person's position is old. `id` is the person's own, which names the look; `name` and
-  // `photo` are what is drawn.
+  // teardrop with the person's letters or photo in it. `small` is its look while the whole campus is in view.
+  // `id` is the person's own, which names the look; `name` and `photo` are what is drawn. `stale` is dimmed: the
+  // position is old.
   | {
       kind: 'person';
       id: string;
       tone: PersonTone;
       small?: boolean;
       selected?: boolean;
-      old?: boolean;
+      stale?: boolean;
       name: string;
       photo: string | null;
     }
@@ -58,8 +58,8 @@ export function lookName(look: MarkerLook): string {
   }
   if (look.kind === 'person') {
     const photo = look.photo !== null && 'photo';
-    const old = look.old === true && 'old';
-    return parts('person', look.small === true ? 'small' : 'full', look.tone, look.id, photo, old, selected);
+    const stale = look.stale === true && 'stale';
+    return parts('person', look.small === true ? 'small' : 'full', look.tone, look.id, photo, stale, selected);
   }
   const count = look.form === 'pin' && (look.count ?? 0) > 0 && String(look.count);
   return parts(look.kind, look.form, count, selected);
@@ -86,12 +86,12 @@ export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSe
   if (look.kind === 'person') {
     return (
       <MapPerson
-        dimmed={look.old}
         name={look.name}
         onPhotoSettled={onPhotoSettled}
         selected={look.selected}
         small={look.small}
         source={look.photo === null ? undefined : { uri: look.photo }}
+        stale={look.stale}
         tone={look.tone}
       />
     );

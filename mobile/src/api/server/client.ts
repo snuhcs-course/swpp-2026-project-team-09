@@ -2,6 +2,7 @@ import type { ApiClient } from '@/api/client';
 import { isRefusal } from '@/api/errors';
 import { mockClient } from '@/api/mock/client';
 import type { OnboardingAnswers } from '@/api/types';
+import { newIdempotencyKey } from '@/api/idempotency-key';
 import { keep } from '@/storage/kept';
 import {
   isFriends,
@@ -26,19 +27,13 @@ import { isMenus } from './menu-answers';
 import { isShuttleRoute, isShuttleVehicles } from './shuttle-answers';
 import { isFriendRequests, isJoinRequests, isMeetups, isQuestInvitations } from './waiting-answers';
 import { call } from './http';
-
-// A new key for a request the main server must not run twice, in the form of a random UUID.
-function idempotencyKey(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replaceAll(/[xy]/gu, (letter) => {
-    const digit = Math.floor(Math.random() * 16);
-    return (letter === 'x' ? digit : 8 + (digit % 4)).toString(16);
-  });
-}
+import { roomClient } from './room-client';
 
 // The operations the main server serves on its main line, each from its route. What it does not serve stays the
 // mock's: the Friends' statuses, the Global Events and who announced them, and 오늘의 발자국 (todo.md, section 3).
 export const serverClient: ApiClient = {
   ...mockClient,
+  ...roomClient,
   // The main server stores four of the answers. The course level and the gender have no place there, so the phone
   // keeps them with the rest, once the main server has saved its part.
   completeOnboarding: async (answers: OnboardingAnswers) => {
@@ -91,7 +86,7 @@ export const serverClient: ApiClient = {
   addClass: (save) =>
     call('POST', '/timetable/classes', isTimetableClass, {
       body: save,
-      headers: { 'Idempotency-Key': idempotencyKey() },
+      headers: { 'Idempotency-Key': newIdempotencyKey() },
     }),
   replaceClass: (classId, save) =>
     call('PUT', `/timetable/classes/${encodeURIComponent(classId)}`, isTimetableClass, { body: save }),

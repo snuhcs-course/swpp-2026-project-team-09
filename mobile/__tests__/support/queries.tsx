@@ -13,9 +13,13 @@ export function freshWrapper(): Wrapper {
   };
 }
 
+// Long enough for a slow mock's answer. Running every timer would never end: the map ages its positions on a timer
+// that repeats.
+const SETTLE_MS = 5000;
+
 // Lets the mocks' waits pass and the hooks take the answers. Use with Jest's fake timers.
 export async function settle(): Promise<void> {
   await act(async () => {
-    await jest.runAllTimersAsync();
+    await jest.advanceTimersByTimeAsync(SETTLE_MS);
   });
 }

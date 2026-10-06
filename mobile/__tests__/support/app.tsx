@@ -9,6 +9,7 @@ import MainScreen from '@/app/(signed-in)/(tabs)/main';
 import MeScreen from '@/app/(signed-in)/(tabs)/me';
 import PartyScreen from '@/app/(signed-in)/(tabs)/party';
 import NotificationsScreen from '@/app/(signed-in)/notifications';
+import PlaceMapScreen from '@/app/(signed-in)/place-map';
 import ProfileEditScreen from '@/app/(signed-in)/profile-edit';
 import InviteScreen from '@/app/(signed-in)/invite/[token]';
 import AddFriendScreen from '@/app/(signed-in)/me/friends/add';
@@ -19,6 +20,7 @@ import MenusScreen from '@/app/(signed-in)/menus';
 import ClassFormScreen from '@/app/(signed-in)/me/timetable/class';
 import TimetableScreen from '@/app/(signed-in)/me/timetable/index';
 import QuestsScreen from '@/app/(signed-in)/quests';
+import RoomScreen from '@/app/(signed-in)/room/[questId]';
 import ConsentScreen from '@/app/consent';
 import StartScreen from '@/app/index';
 import LegalScreen from '@/app/legal/[document]';
@@ -65,6 +67,8 @@ export async function startApp(initialUrl = '/'): Promise<void> {
       '(signed-in)/invite/[token]': InviteScreen,
       '(signed-in)/menus': MenusScreen,
       '(signed-in)/map-sources': MapSourcesScreen,
+      '(signed-in)/room/[questId]': RoomScreen,
+      '(signed-in)/place-map': PlaceMapScreen,
     },
     { initialUrl },
   );

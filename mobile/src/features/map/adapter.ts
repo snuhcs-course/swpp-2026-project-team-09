@@ -1,5 +1,5 @@
 import type { GlobalEvent, LatLng, MyParty, Party, Position, Presence, Quest } from '@/api/types';
-import { type FriendView, keptPositions, minutesOld, withAge } from '@/features/friends/adapter';
+import { type FriendView, keptPositions, minutesOld } from '@/features/friends/adapter';
 import { otherHolders, partyOf, positionOf, type QuestParty, shownSubQuest } from '@/features/quests/adapter';
 import { koreaClock, koreaDay } from '@/korea-time';
 import { givenName, shortTitle } from './short-name';
@@ -14,7 +14,8 @@ export type CardIcon = 'clock' | 'pin' | 'users' | 'info' | 'route' | 'meal';
 // - a place: the icon and the colour of its kind in the design system. The frames draw a Shared Quest as a Party, and a
 //   shuttle's vehicle as its stops.
 export type CardMark =
-  | { type: 'person'; id: string; name: string; photo: string | null; presence: Presence | null }
+  // `stale`: the position is over two minutes old, and the Avatar is dimmed.
+  | { type: 'person'; id: string; name: string; photo: string | null; presence: Presence | null; stale: boolean }
   | { type: 'place'; place: 'official' | 'party' | 'quest' | 'dining' | 'shuttle' };
 
 // The thing's marker on the map, beside its `mark` and its `position`.
@@ -53,11 +54,13 @@ export interface CardView {
   subLabel: string;
   title: string;
   lines: { icon: CardIcon; text: string }[];
-  // `route` draws the way there. `menu` opens the menu panel at the restaurant. `shuttle-line` shows the shuttle's
-  // whole line. `not-ready` says "준비 중이에요": the feature belongs to another task. Null for a card without one.
+  // `route` draws the way there; `room` opens the Quest's room; `active-party` opens the room of the User's Party's
+  // Quest. `menu` opens the menu panel at the restaurant. `shuttle-line` shows the shuttle's whole line. `not-ready`
+  // says "준비 중이에요": the feature belongs to another task. Null for a card without one.
   primary:
-    | { label: string; action: 'route' | 'not-ready' | 'shuttle-line' }
+    | { label: string; action: 'route' | 'active-party' | 'not-ready' | 'shuttle-line' }
     | { label: string; action: 'menu'; restaurant: string }
+    | { label: string; action: 'room'; questId: string }
     | null;
   secondary: { label: string; action: 'not-ready' } | null;
   position: LatLng;
@@ -136,8 +139,13 @@ function withParticle(words: string): string {
   return `${words}${open ? '와' : '과'}`;
 }
 
-// A Party that others may join: its members and how to join.
-function openPartyCard(party: QuestParty, start: string | null, label: string): Omit<CardView, 'id' | 'position'> {
+// A Party that others may join: its members and how to join, in the Quest's room.
+function openPartyCard(
+  questId: string,
+  party: QuestParty,
+  start: string | null,
+  label: string,
+): Omit<CardView, 'id' | 'position'> {
   return {
     kind: 'party',
     mark: { type: 'place', place: 'party' },
@@ -150,7 +158,7 @@ function openPartyCard(party: QuestParty, start: string | null, label: string): 
     subLabel: `파티 · ${party.memberCount}/${party.capacity}명`,
     title: party.title,
     lines: [line('clock', start === null ? label : `${koreaClock(start)} ${label}에서 출발`)],
-    primary: { label: party.mine ? '파티 열기' : '참여하기', action: 'not-ready' },
+    primary: { label: party.mine ? '파티 열기' : '참여하기', action: 'room', questId },
     secondary: null,
   };
 }
@@ -168,7 +176,7 @@ function partyCard(
   const start = subQuest?.startsAt ?? null;
   const label = subQuest?.place?.label ?? '';
   if (party !== null && party.joinPolicy !== 'closed') {
-    return openPartyCard(party, start, label);
+    return openPartyCard(quest.id, party, start, label);
   }
   const alone = party === null && others === '';
   const title = party?.title ?? quest.title;
@@ -201,61 +209,77 @@ function questCards({ quests, myParty, parties, meId, now }: MapSources): CardVi
   });
 }
 
-// A Friend whose position is unknown has no marker and no card. An old position adds its age to the card's line.
-function friendCards({ friends }: MapSources): CardView[] {
-  return friends.flatMap((friend): CardView[] => {
-    const { id, name, department, presence, detail, walk, photo, position } = friend;
-    const info = withAge(detail, friend.minutesOld);
-    return position === null
-      ? []
-      : [
-          {
-            id: cardId.friend(id),
-            kind: 'friend',
-            mark: { type: 'person', id, name, photo, presence },
-            marker: {
-              name: detail === '' ? name : `${name} · ${detail}`,
-              short: givenName(name),
-              count: 0,
-              minutesOld: friend.minutesOld,
-            },
-            subLabel: department,
-            title: name,
-            lines: [...(info === '' ? [] : [line('info', info)]), ...(walk === '' ? [] : [line('route', walk)])],
-            primary: { label: '파티 만들기', action: 'not-ready' },
-            secondary: null,
-            position,
-          },
-        ];
+// How old a person's last position is, in minutes, once it is old enough to dim: null while it is fresh, and
+// `Infinity` once it is too old to show.
+function staleMinutes({ positions, now }: MapSources, userId: string): number | null {
+  const position = positions.find((one) => one.userId === userId);
+  if (position === undefined) {
+    return null;
+  }
+  return keptPositions([position], now).length === 0 ? Number.POSITIVE_INFINITY : minutesOld(position, now);
+}
+
+function staleLine(minutes: number): Line {
+  return line('info', `마지막 위치 ${minutes}분 전`);
+}
+
+// A Friend whose position is unknown, or older than ten minutes, has no marker and no card.
+function friendCards(sources: MapSources): CardView[] {
+  return sources.friends.flatMap(({ id, name, department, presence, detail, walk, photo, position }): CardView[] => {
+    const stale = staleMinutes(sources, id);
+    if (position === null || stale === Number.POSITIVE_INFINITY) {
+      return [];
+    }
+    const info = stale === null ? (detail === '' ? [] : [line('info', detail)]) : [staleLine(stale)];
+    return [
+      {
+        id: cardId.friend(id),
+        kind: 'friend',
+        mark: { type: 'person', id, name, photo, presence, stale: stale !== null },
+        marker: {
+          name: detail === '' ? name : `${name} · ${detail}`,
+          short: givenName(name),
+          count: 0,
+          minutesOld: stale,
+        },
+        subLabel: department,
+        title: name,
+        lines: [...info, ...(walk === '' ? [] : [line('route', walk)])],
+        primary: { label: '파티 만들기', action: 'not-ready' },
+        secondary: null,
+        position,
+      },
+    ];
   });
 }
 
 const SHARING_MEMBER = '활성 파티 멤버 · 위치 공유 중';
 
-// The members of the User's Party who are on the map and are not Friends: a Friend is on it already. Their positions
-// age as a Friend's do.
-function partyMemberCards({ myParty, friends, positions, meId, now }: MapSources): CardView[] {
-  const kept = keptPositions(positions, now);
+// The members of the User's Party who are on the map and are not Friends: a Friend is on it already.
+function partyMemberCards(sources: MapSources): CardView[] {
+  const { myParty, friends, positions, meId } = sources;
   return (myParty?.members ?? []).flatMap(({ id, name, department, visible }): CardView[] => {
-    const position = kept.find(({ userId }) => userId === id);
-    if (id === meId || !visible || position === undefined || friends.some((friend) => friend.id === id)) {
+    const position = positions.find(({ userId }) => userId === id);
+    const stale = staleMinutes(sources, id);
+    if (
+      id === meId ||
+      !visible ||
+      position === undefined ||
+      stale === Number.POSITIVE_INFINITY ||
+      friends.some((friend) => friend.id === id)
+    ) {
       return [];
     }
     return [
       {
         id: cardId.partyMember(id),
         kind: 'party-member',
-        mark: { type: 'person', id, name, photo: null, presence: null },
-        marker: {
-          name: `${name} · ${SHARING_MEMBER}`,
-          short: givenName(name),
-          count: 0,
-          minutesOld: minutesOld(position, now),
-        },
+        mark: { type: 'person', id, name, photo: null, presence: null, stale: stale !== null },
+        marker: { name: `${name} · ${SHARING_MEMBER}`, short: givenName(name), count: 0, minutesOld: stale },
         subLabel: `${department} · 친구 아님`,
         title: name,
-        lines: [line('info', withAge(SHARING_MEMBER, minutesOld(position, now)))],
-        primary: { label: '파티 열기', action: 'not-ready' },
+        lines: [stale === null ? line('info', SHARING_MEMBER) : staleLine(stale)],
+        primary: { label: '파티 열기', action: 'active-party' },
         secondary: null,
         position: { latitude: position.latitude, longitude: position.longitude },
       },

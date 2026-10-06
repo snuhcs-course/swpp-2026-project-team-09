@@ -69,6 +69,8 @@ export default function SignedInLayout(): ReactElement {
             <Stack.Screen name="invite/[token]" options={slideFrom('bottom', reduceMotion)} />
             <Stack.Screen name="menus" options={slideFrom('bottom', reduceMotion)} />
             <Stack.Screen name="map-sources" options={slideFrom('right', reduceMotion)} />
+            <Stack.Screen name="room/[questId]" options={slideFrom('right', reduceMotion)} />
+            <Stack.Screen name="place-map" options={slideFrom('right', reduceMotion)} />
           </Stack>
         </BackgroundSharingProvider>
       </PositionSending>

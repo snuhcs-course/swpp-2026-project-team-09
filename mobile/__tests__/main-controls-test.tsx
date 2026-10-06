@@ -1,5 +1,5 @@
 import { within } from '@testing-library/react-native';
-import { pass, screen } from './support/app';
+import { pass, screen, shownAddress } from './support/app';
 import {
   ACTIVE_PARTY,
   AI_INPUT,
@@ -78,11 +78,20 @@ describe('the controls above the navigation of the main screen', () => {
 
 describe('a control of the main screen whose feature belongs to another task', () => {
   it.each([
-    ["a Party's row", PARTY_ROW],
-    ["a Shared Quest's row", DINNER_ROW],
-    ['오늘의 발자국', FOOTPRINTS],
-    ['활성 파티', ACTIVE_PARTY],
-  ] as const)('says that it is not ready: %s', async (_control, name) => {
+    ["a Party's row", PARTY_ROW, '/room/q-ai'],
+    ["a Shared Quest's row", DINNER_ROW, '/room/q-dinner'],
+    ['활성 파티', ACTIVE_PARTY, '/room/q-ai'],
+  ] as const)("opens the Quest's room: %s", async (_control, name, address) => {
+    const user = await openMain();
+
+    await press(user, name);
+    await pass(500);
+
+    expect(shownAddress()).toBe(address);
+    expect(screen.getByRole('header', { name: '파티' })).toBeVisible();
+  });
+
+  it.each([['오늘의 발자국', FOOTPRINTS]] as const)('says that it is not ready: %s', async (_control, name) => {
     const user = await openMain();
 
     await press(user, name);

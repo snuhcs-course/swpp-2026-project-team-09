@@ -13,6 +13,7 @@ import {
 import { type ScreenData, askAgain, someFailed, somePending } from '@/api/screen-data';
 import type { Friend, FriendStatus, GlobalEvent, MyParty, Party, Position, Quest } from '@/api/types';
 import { myUserId } from '@/auth/sign-in';
+import { now } from '@/clock';
 import { toFriendViews } from '@/features/friends/adapter';
 import { useNow } from '@/hooks/use-now';
 import { POSITION_AGE_EVERY_MS } from '@/position';
@@ -34,7 +35,7 @@ type Results = [
 // - a Friend's card needs the Friends and the positions;
 // - a card of a member of the User's Party also needs the Friends, to know that the member is not one.
 // A Global Event's card without the Parties only lacks its line of Parties.
-function cardsOf(results: Results, now: Date): CardView[] {
+function cardsOf(results: Results, at: Date): CardView[] {
   const [globalEvents, announcers, quests, parties, myParty, friends, positions, statuses] = results;
   const cards = toCards({
     globalEvents: globalEvents.data ?? [],
@@ -42,20 +43,26 @@ function cardsOf(results: Results, now: Date): CardView[] {
     quests: someFailed([myParty, parties]) ? [] : (quests.data ?? []),
     parties: parties.data ?? [],
     myParty: myParty.data ?? null,
-    friends: toFriendViews(friends.data ?? [], positions.data ?? [], statuses.data ?? [], now),
+    friends: toFriendViews(friends.data ?? [], positions.data ?? [], statuses.data ?? [], at),
     positions: positions.data ?? [],
     meId: myUserId(),
-    now,
+    now: at,
   });
   return friends.isError ? cards.filter(({ kind }) => kind !== 'party-member') : cards;
 }
 
-// The announcers and the statuses are the app's own and never fail the map.
+// The phone's clock may be read later than the last look: a position that arrives is aged against it at once.
+function agedAt(at: number): Date {
+  return new Date(Math.max(now().getTime(), at));
+}
+
+// The announcers and the statuses are the app's own and never fail the map. It runs again when an answer changes and
+// when `at` does, which ages the positions.
 function combine(results: Results, at: number): ScreenData<CardView[]> {
   const [globalEvents, , quests, parties, myParty, friends, positions] = results;
   const isPending = somePending(results);
   return {
-    data: isPending ? undefined : cardsOf(results, new Date(at)),
+    data: isPending ? undefined : cardsOf(results, agedAt(at)),
     isPending,
     isError: someFailed([globalEvents, quests, parties, myParty, friends, positions]),
     refetch: askAgain(results),
@@ -64,7 +71,7 @@ function combine(results: Results, at: number): ScreenData<CardView[]> {
 
 // Everything on the map that a press opens, each with its card: Global Events, the User's Parties, Friends and the
 // members of the User's Party. After a failure `data` holds the cards that are still right and `isError` is true. The
-// age of the people's positions is looked at again every 30 seconds.
+// age of the people's positions is looked at again every 15 seconds: an Avatar dims at two minutes and goes at ten.
 export function useMapCards(): ScreenData<CardView[]> {
   const at = useNow(POSITION_AGE_EVERY_MS);
   const combineAt = useCallback((results: Results) => combine(results, at), [at]);

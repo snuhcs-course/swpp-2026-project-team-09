@@ -27,7 +27,7 @@ function combine(results: Results, at: number): ScreenData<FriendView[]> {
 }
 
 // The User's Friends, for the friend list and the Avatars on the map. The age of their positions is looked at again
-// every 30 seconds.
+// every 15 seconds.
 export function useFriends(): ScreenData<FriendView[]> {
   const at = useNow(POSITION_AGE_EVERY_MS);
   const combineAt = useCallback((results: Results) => combine(results, at), [at]);

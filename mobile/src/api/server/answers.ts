@@ -150,7 +150,7 @@ export function isPlace(value: unknown): value is SubQuest['place'] {
   );
 }
 
-function isSubQuest(value: unknown): value is SubQuest {
+export function isSubQuest(value: unknown): value is SubQuest {
   const completion = field(value, 'completion');
   return (
     hasTexts(value, ['id', 'title']) &&
@@ -170,7 +170,7 @@ export function isJoinPolicy(value: unknown): value is Party['joinPolicy'] {
   return value === 'open' || value === 'approval' || value === 'closed';
 }
 
-function isQuest(value: unknown): value is Quest {
+export function isQuest(value: unknown): value is Quest {
   const leader = field(value, 'leader');
   return (
     hasTexts(value, ['id', 'title']) &&
@@ -253,7 +253,7 @@ export function isTimetableClass(value: unknown): value is TimetableClass {
 
 export const isTimetableClasses = listOf(isTimetableClass);
 
-function isCampusPlace(value: unknown): value is Place {
+export function isCampusPlace(value: unknown): value is Place {
   return (
     hasTexts(value, ['id', 'name']) &&
     isTextOrNull(field(value, 'number')) &&

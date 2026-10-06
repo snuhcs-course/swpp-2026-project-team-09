@@ -12,6 +12,7 @@ import {
   POSITIONS_KEY,
   QUEST_INVITATIONS_KEY,
   QUESTS_KEY,
+  SENT_INVITATIONS_KEY,
   SHUTTLE_VEHICLES_KEY,
 } from '@/api/queries';
 import { renewSession } from '@/api/server/http';
@@ -27,7 +28,8 @@ import { openLiveConnection } from './connection';
 // nothing these screens show; an accepted Meetup also sends `quests-changed`.
 const REFETCH: Record<string, readonly QueryKey[]> = {
   'friends-changed': [FRIENDS_KEY, POSITIONS_KEY, FRIEND_REQUESTS_KEY],
-  'quests-changed': [QUESTS_KEY, QUEST_INVITATIONS_KEY, JOIN_REQUESTS_KEY],
+  // The Quests' key also holds the open room's Quest.
+  'quests-changed': [QUESTS_KEY, QUEST_INVITATIONS_KEY, JOIN_REQUESTS_KEY, SENT_INVITATIONS_KEY],
   'meetups-changed': [MEETUPS_KEY],
   // Who is in the User's Party changes whom the User sees.
   'party-changed': [MY_PARTY_KEY, PARTIES_KEY, POSITIONS_KEY],
