@@ -517,14 +517,14 @@ own status says.
 **The friend screens** (`src/screens/friends/`, the `Friends` and `FriendsAdd` frames) are screens above the tabs that
 slide in from the right, each a `FullScreenPanel` whose "뒤로" goes back to where it was opened from:
 
-- **친구 관리** (`/me/friends`): "친구 {n}"; the search "친구 검색", by name and department, with "결과 없음"; the row
+- **친구 관리** (`/me/friends`, from 내 정보's "친구 관리"): "친구 {n}"; the search "친구 검색", by name and department, with "결과 없음"; the row
   "친구 추가"; the row "친구 요청 {n}", n the requests received; and under "친구 {n}" every Friend in the main server's
   order, with the department (and " · 위치 꺼짐" for a Friend the User cannot see) and the switch "{이름}님과 위치 공유".
   A switch shows its new state at once, sends `setFriendSharing`, and turns back with "위치 공유를 바꾸지 못했어요" when
   that fails; the Friends and the positions are fetched again after it. A press on a Friend opens a bottom sheet with
   "친구 끊기", which a danger dialog confirms; the Friend then leaves the list, the friend panel and the map. A
   friendship that ended already is fetched again without a word. With no Friend it says "아직 친구가 없어요".
-- **친구 요청** (`/me/friends/requests`): "받은 요청 · {n}" with "거절" and "수락", and "보낸 요청 · {n}" with "요청 취소",
+- **친구 요청** (`/me/friends/requests`, also from a Friend Request in 알림): "받은 요청 · {n}" with "거절" and "수락", and "보낸 요청 · {n}" with "요청 취소",
   left out when empty. A request that waits no more says "이미 처리된 요청이에요" and the requests are fetched again.
 - **친구 추가** (`/me/friends/add`): the User's Friend ID from the Lobby, which "복사" puts on the clipboard
   (`expo-clipboard`); the field "친구 ID", which keeps letters and digits in capitals, at most 8, and "찾기", which looks
@@ -570,7 +570,7 @@ number of 알림's rows in red ("9+" above nine), and four cards from the top:
   "위치 권한을 허용해야 공유할 수 있어요". The new state shows at once, and turns back with "위치 공유를 바꾸지
   못했어요" when the main server did not take it. At `/me?show=sharing` the screen scrolls to the card and outlines
   it for 1.2 s;
-- "친구 관리 {n}" ("준비 중이에요"), "참여 중인 파티 {n}" (파티 at 내 파티) and "내 퀘스트" (the Quest list on the
+- "친구 관리 {n}" (친구 관리), "참여 중인 파티 {n}" (파티 at 내 파티) and "내 퀘스트" (the Quest list on the
   whole screen).
 
 "로그아웃" asks "로그아웃할까요?", then stops the sending, signs out and shows the sign-in screen. 프로필 편집
@@ -582,7 +582,7 @@ says "저장하지 못했어요. 다시 시도해 주세요" and stays.
 feature), in this order: a Party running for a Quest the User holds ("{name}님이 파티를 활성화했어요", or "파티가
 활성화됐어요" without its Leader), a Friend Request received, a Quest invitation, a Meetup proposed to the User and
 waiting ("{name}님의 파티 초대"), and the requests to join each Quest the User leads with Approval ("참여 신청
-{n}명"). An invitation's and a Meetup's row open 파티 at 초대; the others say "준비 중이에요". A list that failed is
+{n}명"). An invitation's and a Meetup's row open 파티 at 초대, a Friend Request's 친구 요청; the others say "준비 중이에요". A list that failed is
 left out; when every one failed it shows the error state. Without rows it says "새 알림이 없어요".
 
 The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and

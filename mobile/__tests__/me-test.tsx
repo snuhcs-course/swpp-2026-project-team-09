@@ -138,12 +138,13 @@ describe('the 위치 공유 card', () => {
 });
 
 describe('the activity rows', () => {
-  it('say that 친구 관리 is not ready', async () => {
+  it('open 친구 관리 from its row', async () => {
     const user = await openMe();
 
     await user.press(screen.getByRole('button', { name: '친구 관리 12' }));
+    await pass(500);
 
-    expect(screen.getByTestId('toast-layer')).toHaveTextContent(NOT_READY);
+    expect(shownAddress()).toBe('/me/friends');
   });
 
   it("open 파티 at 내 파티 from 참여 중인 파티, which counts the User's Quests that are not classes", async () => {

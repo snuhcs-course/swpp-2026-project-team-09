@@ -556,9 +556,7 @@ The control is there and only shows the toast. The last column is a proposal for
 | 행사 | Its body | The list of Global Events | P13 |
 | 내 정보 | 직접 입력 | The timetable screen | P19 (ticket 03) |
 | 내 정보 | 이미지로 불러오기, 빈 시간 말하기 | Reading a timetable from an image or from words | In no Iteration 1 spec |
-| 내 정보 | 친구 관리 | 친구 관리 | P14 |
 | 알림 | A Party opened, and 참여 신청 | The Quest's room | P13 |
-| 알림 | A Friend Request | 친구 관리 › 친구 요청 | P14 |
 | A Global Event's card | 같이 갈 사람 찾기 | The party screen | P13 |
 | A Party's card | 참여하기, 파티 열기 | The party screen | P13 |
 | A Friend's card | 파티 만들기 | Making a Party | P14 |

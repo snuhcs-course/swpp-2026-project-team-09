@@ -20,7 +20,6 @@ import {
   size,
   space,
   text,
-  useNotReadyToast,
 } from '@/design-system';
 import { useNotices } from '@/features/notifications/use-notices';
 import { useSending } from '@/position';
@@ -122,12 +121,18 @@ function partyCountOf(quests: Quest[]): string {
 }
 
 function ActivityCard(): ReactElement {
-  const showNotReady = useNotReadyToast();
   const friends = useQuery({ ...friendsQuery, select: friendCountOf }).data ?? '';
   const parties = useQuery({ ...questsQuery, select: partyCountOf }).data ?? '';
   return (
     <View style={[cardStyles.card, styles.activity]}>
-      <ActivityRow icon="user" label="친구 관리" onPress={showNotReady} value={friends} />
+      <ActivityRow
+        icon="user"
+        label="친구 관리"
+        onPress={() => {
+          router.push('/me/friends');
+        }}
+        value={friends}
+      />
       <ActivityRow
         icon="users"
         label="참여 중인 파티"
