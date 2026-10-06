@@ -1,9 +1,10 @@
 import { INestApplication } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
+import { StartedTestContainer } from 'testcontainers';
 import { CollectionStatus, GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
+import { redisSettings, startRedis } from './containers.js';
 import {
   collectedEvent,
   eventsMessage,
@@ -12,24 +13,30 @@ import {
   placesNamingNoPlace,
   postNumbersFrom,
 } from './global-events.js';
-import { SignalEvent, SignalWatcher } from './signals.js';
+import { SignalWatcher, signalsWhile } from './signals.js';
 import { startApp } from './start-app.js';
 import { refusal, sendAsWorker } from './worker.js';
 
 let app: INestApplication<Server>;
 // The tests read what a Collection stored, by post number, and the Source's status with a connection of their own.
 let prisma: PrismaClient;
+// Administrators publish, edit and cancel Global Events in other files. The server sends its signals to a Redis of its
+// own, so that the signals of those files never reach a check that none is sent.
+let redis: StartedTestContainer;
 let watcher: SignalWatcher;
 
 beforeAll(async () => {
-  [app, watcher] = await Promise.all([startApp(inject('settings')), SignalWatcher.start()]);
-  prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: inject('settings').DATABASE_URL }) });
+  redis = await startRedis();
+  const settings = { ...inject('settings'), ...redisSettings(redis) };
+  [app, watcher] = await Promise.all([startApp(settings), SignalWatcher.start(settings)]);
+  prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: settings.DATABASE_URL }) });
 });
 
 afterAll(async () => {
   await prisma.$disconnect();
   await watcher.stop();
   await app.close();
+  await redis.stop();
 });
 
 const newPost = postNumbersFrom(900_000);
@@ -247,30 +254,6 @@ describe('A Collection of the events list that stopped early', () => {
   });
 });
 
-// The `global-events-changed` signals sent while `act` runs. Only this file publishes events, and a server's signals
-// reach Redis in order, so two signals of the test's own around `act` leave out those an earlier test sent late.
-async function signalsWhile(act: () => Promise<unknown>): Promise<SignalEvent[]> {
-  // Imported after startApp, so that it is the same class AppModule registers.
-  const { SignalsService } = await import('../src/common/signals.service.js');
-  const signals = app.get(SignalsService);
-  const sendMarker = (): Promise<number> => {
-    const name = `test-${randomUUID()}`;
-    signals.send('everyone', name);
-    return vi.waitFor(() => {
-      const at = watcher.all().findIndex((signal) => signal.name === name);
-      expect(at).not.toBe(-1);
-      return at;
-    });
-  };
-  const start = await sendMarker();
-  await act();
-  const end = await sendMarker();
-  return watcher
-    .all()
-    .slice(start + 1, end)
-    .filter(({ name }) => name === 'global-events-changed');
-}
-
 describe('global-events-changed', () => {
   it('goes once to every connected app, carrying nothing, when a Collection publishes an event', async () => {
     const message = eventsMessage([
@@ -279,21 +262,31 @@ describe('global-events-changed', () => {
       collectedEvent(newPost(), { place: null }),
     ]);
 
-    expect(await signalsWhile(() => sendAsWorker(app, '/global-events/collected', message))).toEqual([
-      { name: 'global-events-changed' },
-    ]);
+    expect(
+      await signalsWhile(app, watcher, 'global-events-changed', () =>
+        sendAsWorker(app, '/global-events/collected', message),
+      ),
+    ).toEqual([{ name: 'global-events-changed' }]);
   });
 
   it('is not sent when a Collection stores only Drafts', async () => {
     const message = eventsMessage([collectedEvent(newPost(), { place: null })]);
 
-    expect(await signalsWhile(() => sendAsWorker(app, '/global-events/collected', message))).toEqual([]);
+    expect(
+      await signalsWhile(app, watcher, 'global-events-changed', () =>
+        sendAsWorker(app, '/global-events/collected', message),
+      ),
+    ).toEqual([]);
   });
 
   it('is not sent when a Collection stores nothing new', async () => {
     const message = eventsMessage([collectedEvent(newPost())]);
     await sendAsWorker(app, '/global-events/collected', message);
 
-    expect(await signalsWhile(() => sendAsWorker(app, '/global-events/collected', message))).toEqual([]);
+    expect(
+      await signalsWhile(app, watcher, 'global-events-changed', () =>
+        sendAsWorker(app, '/global-events/collected', message),
+      ),
+    ).toEqual([]);
   });
 });

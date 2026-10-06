@@ -52,7 +52,7 @@ export interface ListedGlobalEventDto {
   missing: Missing[];
 }
 
-function missingFor({ startsAt, latitude, longitude }: GlobalEvent): Missing[] {
+export function missingFor({ startsAt, latitude, longitude }: GlobalEvent): Missing[] {
   return [
     ...(startsAt === null ? ['startsAt' as const] : []),
     ...(latitude === null || longitude === null ? ['position' as const] : []),

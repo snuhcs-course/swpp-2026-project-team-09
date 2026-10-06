@@ -122,6 +122,12 @@ export class QuestsService {
     return holder?.questId ?? null;
   }
 
+  // The Holders of every Quest for the Global Event.
+  async holderIdsFor(globalEventId: string): Promise<string[]> {
+    const holders = await this.prisma.questHolder.findMany({ where: { globalEventId }, select: { userId: true } });
+    return holders.map(({ userId }) => userId);
+  }
+
   // A Quest for the Global Event, with its title, the Holders and the Sub Quest for attending it. Each Holder must hold
   // no Quest for it yet, or the unique index on the Holders refuses it. The Holders enter in the order given. A match's
   // Quest names the match, once.

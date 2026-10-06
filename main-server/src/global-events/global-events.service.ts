@@ -1,16 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CollectionService } from '../collection/collection.service.js';
+import { CampusBoundary } from '../common/campus-boundary.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { GlobalEvent, GlobalEventState, Prisma } from '../generated/prisma/client.js';
 import { PlaceDto } from '../places/dto/place.dto.js';
 import { PlacesService } from '../places/places.service.js';
-import { notFound } from '../quests/refusals.js';
+import { QuestsService } from '../quests/quests.service.js';
+import { conflict, notFound } from '../quests/refusals.js';
+import { type CreateGlobalEventDto, type EditGlobalEventDto } from './dto/change-global-event.dto.js';
 import { type CollectedEvent, type EventsCollectedMessage } from './dto/events-collected.dto.js';
 import {
   GlobalEventDetailDto,
   ListedGlobalEventDto,
   type ListedState,
+  missingFor,
   PublishedGlobalEventDto,
   toGlobalEventDetailDto,
   toListedGlobalEventDto,
@@ -49,6 +53,35 @@ function notEnded(now: Date): Prisma.GlobalEventWhereInput {
   return { OR: [{ endsAt: { gt: now } }, { endsAt: null, startsAt: { gte: startOfSeoulDay(now) } }] };
 }
 
+// What an edit or a change of state writes besides the version.
+type Change = Partial<
+  Pick<GlobalEvent, 'title' | 'description' | 'startsAt' | 'endsAt' | 'place' | 'latitude' | 'longitude' | 'state'>
+>;
+
+const globalEventNotFound = (): NotFoundException => notFound('GLOBAL_EVENT_NOT_FOUND', 'No Global Event has this id.');
+
+// Refuses a change from `version` to an event that does not exist, that is not in one of the states `from`, or whose
+// stored version is another.
+function refuseUnlessChangeable(
+  stored: GlobalEvent | null,
+  from: readonly GlobalEventState[],
+  version: number,
+): asserts stored is GlobalEvent {
+  if (stored === null) {
+    throw globalEventNotFound();
+  }
+  if (!from.includes(stored.state)) {
+    throw conflict('GLOBAL_EVENT_STATE', `A Global Event that is ${stored.state} cannot be changed so.`, {
+      state: stored.state,
+    });
+  }
+  if (stored.version !== version) {
+    throw conflict('GLOBAL_EVENT_CHANGED', 'The Global Event was changed since this version.', {
+      version: stored.version,
+    });
+  }
+}
+
 const BY_START: Prisma.GlobalEventOrderByWithRelationInput[] = [
   { startsAt: { sort: 'asc', nulls: 'last' } },
   { title: 'asc' },
@@ -61,6 +94,8 @@ export class GlobalEventsService {
     private readonly collection: CollectionService,
     private readonly places: PlacesService,
     private readonly signals: SignalsService,
+    private readonly campusBoundary: CampusBoundary,
+    private readonly quests: QuestsService,
   ) {}
 
   // A post already stored is left as it is, in whatever state, so that an Administrator's edits stay and a discarded
@@ -112,9 +147,81 @@ export class GlobalEventsService {
   async read(id: string): Promise<GlobalEventDetailDto> {
     const event = await this.prisma.globalEvent.findUnique({ where: { id } });
     if (event === null) {
-      throw notFound('GLOBAL_EVENT_NOT_FOUND', 'No Global Event has this id.');
+      throw globalEventNotFound();
     }
     return toGlobalEventDetailDto(event);
+  }
+
+  async create(fields: CreateGlobalEventDto): Promise<GlobalEventDetailDto> {
+    this.refuseOffCampus(fields);
+    return toGlobalEventDetailDto(await this.prisma.globalEvent.create({ data: fields }));
+  }
+
+  // A Draft or a published event, which stays published.
+  edit(id: string, { version, ...fields }: EditGlobalEventDto): Promise<GlobalEventDetailDto> {
+    this.refuseOffCampus(fields);
+    return this.change(id, version, [GlobalEventState.draft, GlobalEventState.published], fields);
+  }
+
+  publish(id: string, version: number): Promise<GlobalEventDetailDto> {
+    return this.change(id, version, [GlobalEventState.draft], { state: GlobalEventState.published });
+  }
+
+  discard(id: string, version: number): Promise<GlobalEventDetailDto> {
+    return this.change(id, version, [GlobalEventState.draft], { state: GlobalEventState.discarded });
+  }
+
+  cancel(id: string, version: number): Promise<GlobalEventDetailDto> {
+    return this.change(id, version, [GlobalEventState.published], { state: GlobalEventState.cancelled });
+  }
+
+  // Writes the change to an event in one of the states `from` and raises its version, in one statement that also
+  // compares the version, so that of two changes from the same version one is applied and the other refused. Every
+  // write raises the version, so the fields checked are those written over. A change Users see is announced once
+  // written: to every app, and to the Holders of the event's Quests when the event was published.
+  private async change(
+    id: string,
+    version: number,
+    from: readonly GlobalEventState[],
+    change: Change,
+  ): Promise<GlobalEventDetailDto> {
+    const stored = await this.prisma.globalEvent.findUnique({ where: { id } });
+    refuseUnlessChangeable(stored, from, version);
+    const changed = { ...stored, ...change };
+    const timed = change.startsAt !== undefined || change.endsAt !== undefined;
+    if (timed && changed.startsAt !== null && changed.endsAt !== null && changed.endsAt <= changed.startsAt) {
+      throw new BadRequestException(['endsAt: The end must be after the start']);
+    }
+    const missing = missingFor(changed);
+    if (changed.state === GlobalEventState.published && missing.length > 0) {
+      throw conflict('GLOBAL_EVENT_INCOMPLETE', 'A published Global Event needs a start and a position.', { missing });
+    }
+    const [written] = await this.prisma.globalEvent.updateManyAndReturn({
+      where: { id, version },
+      data: { ...change, version: { increment: 1 } },
+    });
+    // Changed between the read and the write: checked again as it is now.
+    if (written === undefined) {
+      return this.change(id, version, from, change);
+    }
+    if (stored.state === GlobalEventState.published || written.state === GlobalEventState.published) {
+      this.signalChanged();
+    }
+    if (stored.state === GlobalEventState.published) {
+      this.signals.send(await this.quests.holderIdsFor(id), 'quests-changed');
+    }
+    return toGlobalEventDetailDto(written);
+  }
+
+  // A body's rule that needs the Campus Boundary, so it is checked here rather than by the body's schema.
+  private refuseOffCampus({ latitude, longitude }: { latitude?: number | null; longitude?: number | null }): void {
+    if (
+      typeof latitude === 'number' &&
+      typeof longitude === 'number' &&
+      !this.campusBoundary.contains({ latitude, longitude })
+    ) {
+      throw new BadRequestException(['latitude: The position must be inside the Campus Boundary']);
+    }
   }
 
   // Every Draft, or the published events that have not ended.

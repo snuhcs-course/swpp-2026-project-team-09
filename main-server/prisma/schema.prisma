@@ -187,7 +187,7 @@ model GlobalEvent {
   latitude    Float?
   longitude   Float?
   state       GlobalEventState @default(draft)
-  // Checked and raised by an Administrator's edit (P12), so that an edit made from an older version is refused.
+  // Checked and raised by every change an Administrator makes, so that a change from an older version is refused.
   version     Int              @default(1)
   // The `bbsidx` and address of a collected event's post. An event an Administrator creates has neither.
   postNumber  Int?             @unique @map("post_number")

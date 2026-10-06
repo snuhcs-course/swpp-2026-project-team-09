@@ -85,6 +85,8 @@ export async function listedAmong(
 // An event as an Administrator reads it alone, exactly.
 export const eventDetailSchema = listedEventSchema.extend({ description: z.string() });
 
+export type EventDetail = z.infer<typeof eventDetailSchema>;
+
 export function getAdminGlobalEvent(
   app: INestApplication<Server>,
   accessToken: string | undefined,

@@ -381,8 +381,7 @@ export class AdminEventsController {
 A Global Event is an Event published to every User. The worker server collects them from the university's events list
 and posts them to `/global-events/collected` (see
 [Requests from the worker server](#requests-from-the-worker-server)). Users read the published ones, and Administrators
-every one, through the routes below. P12 adds the Administrator's routes that edit, publish, cancel, discard and create
-them.
+read every one, and create and change them, through the routes below.
 
 A Global Event, model `GlobalEvent` in `prisma/schema.prisma`, holds:
 
@@ -398,7 +397,8 @@ A Global Event, model `GlobalEvent` in `prisma/schema.prisma`, holds:
   - `cancelled`: an event an Administrator called off after it was published.
   - `discarded`: an event that should not be shown, such as a post that is not an event. It stays stored, so that the
     next Collection does not bring its post back.
-- `version`, which starts at 1, for P12's edit check, which refuses an edit made from an older version.
+- `version`, which starts at 1 and which every change by an Administrator raises by one, so that a change made from an
+  older version is refused (see below).
 - For a collected event, `postNumber`, the post's `bbsidx`, which identifies the post, and `sourceUrl`, the post's
   address. An event an Administrator creates has neither.
 
@@ -468,6 +468,63 @@ needs beside them through a controller of their own feature. Each route needs an
   `null` for a Source never collected (see [Requests from the worker server](#requests-from-the-worker-server)).
   `src/collection/admin-collection.controller.ts` serves it.
 
+An Administrator creates and changes them through the same controller. Each answers the event as
+`GET /admin/global-events/:id` does:
+
+- `POST /admin/global-events` with `{ "title", "description", "startsAt", "endsAt", "place", "latitude", "longitude" }`
+  creates a Draft by hand, such as from an organizer's submission, and answers 201 with it: version 1, `postNumber` and
+  `sourceUrl` `null`. `title` and `description` are required, and a field left out is `null`. It requires an
+  `Idempotency-Key` (see [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)).
+- `PATCH /admin/global-events/:id` with `{ "version", ... }` and any of the same fields edits a Draft or a published
+  event, which stays published, and answers 200 with it. A field left out stays as it is, and `null` clears an optional
+  one.
+- `POST /admin/global-events/:id/publish`, `/discard` and `/cancel`, each with `{ "version" }`, change the event's
+  state and answer 200 with it.
+
+The fields, on creating and editing. A body that breaks a rule gets 400 with a message that starts with the field, such
+as `endsAt: The end must be after the start`, and nothing changes:
+
+- `title`: 1 to 200 characters, with the spaces around dropped.
+- `description`: any text, empty included.
+- `startsAt` and `endsAt`: times with their offset, or `null`. The end is after the start, also when an edit sends one
+  of them and the other is stored.
+- `place`: 1 to 200 characters, with the spaces around dropped, or `null`.
+- `latitude` and `longitude`: given together, both `null` to clear the position, and inside the
+  [Campus Boundary](#campus-boundary). The boundary is checked by `GlobalEventsService`, not by the body's schema.
+
+The changes of state an Administrator makes are these, and no other:
+
+| Change    | From        | To          |
+| --------- | ----------- | ----------- |
+| `publish` | `draft`     | `published` |
+| `discard` | `draft`     | `discarded` |
+| `cancel`  | `published` | `cancelled` |
+
+Publishing needs a title, a start and a position, and a published event keeps all three: an edit that would leave it
+without its start or its position is refused too. The refusal's `missing` names what is lacking, as in the lists; a
+title is never empty.
+
+Every change carries the version the Administrator loaded and raises it by one. The version is compared and raised in
+the statement that writes the change, so of two changes made from the same version at the same moment one is applied
+and the other refused, and an Administrator who edited from an older version is told instead of overwriting another's
+work.
+
+The refusals each have a `code`, and are checked in the order of the table:
+
+| Refusal                                                                         | Status | `code`                    | Also in the body |
+| ------------------------------------------------------------------------------- | ------ | ------------------------- | ---------------- |
+| An unknown id                                                                   | 404    | `GLOBAL_EVENT_NOT_FOUND`  |                  |
+| A change the state does not allow, or an edit of a cancelled or discarded event | 409    | `GLOBAL_EVENT_STATE`      | `state`          |
+| A `version` that is not the stored one                                          | 409    | `GLOBAL_EVENT_CHANGED`    | `version`        |
+| Publishing without a start or a position, or an edit that would remove one      | 409    | `GLOBAL_EVENT_INCOMPLETE` | `missing`        |
+
+An id that is not a UUID gets 400, as does a body that breaks the rules above, before any of these.
+
+Once the change is written, `global-events-changed` goes to every connected app when an event is published, when a
+published event is edited and when it is cancelled. Creating, editing a Draft, discarding and a refused change send
+none. When a published event is edited or cancelled, `quests-changed` goes to the Holders of every Quest for it too,
+since their attending Sub Quests read the event (see [Quests](#quests)).
+
 The worker sends each post of the events list as one event, all those of a Collection in one message:
 
 ```json
@@ -516,7 +573,7 @@ Any other collected event is stored as a Draft with whatever was read: an event 
 names no Place or several, and a post that is not an event, which mostly writes no such time and place. A rule that
 is not sure makes a Draft.
 
-A Draft may already hold a start and a position, so P12's check before an Administrator publishes one cannot rest on
+A Draft may already hold a start and a position, so the check before an Administrator publishes one cannot rest on
 those fields being filled:
 
 - its start may be the header's date, which is often the application period, and a day read without a time of day is
@@ -557,14 +614,18 @@ stored post again: an edit or a deletion at the Source after that is not seen.
 
 A Collection that stores at least one event as published sends `global-events-changed` to every connected app once
 the events are stored, and the app fetches the published events again (see [Signals](#signals)). It carries nothing. A
-Collection that stores only Drafts, or no new post, sends none. `GlobalEventsService.signalChanged()` sends it, and P12
-calls it once its change is committed when an Administrator publishes, edits or cancels a Global Event.
+Collection that stores only Drafts, or no new post, sends none. `GlobalEventsService.signalChanged()` sends it, also
+after an Administrator's change (see above).
 
 What the rules read from a post, and how, is in the worker server's README. In a test, `collectedEvent()`,
 `eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
 `test/global-events.e2e-spec.ts` does; it reads what a Collection stored, by post number, with a database connection
-of its own. `test/global-event-lists.ts` reads the lists above. The test files share one database, so
-`publishedAmong()` and `listedAmong()` keep only the events a test names, in the list's order.
+of its own. `test/global-event-lists.ts` reads the lists above, and `test/global-event-changes.ts` calls the
+Administrator's changes. The test files share one database, so `publishedAmong()` and `listedAmong()` keep only the
+events a test names, in the list's order. `signalsWhile()` in `test/signals.ts` gives the `global-events-changed`
+signals sent while a test acts, between two signals of the test's own. Other files publish, edit and cancel events
+too, so `test/global-events.e2e-spec.ts` and `test/admin-global-event-signals.e2e-spec.ts`, which check that none is
+sent, each run their server and `SignalWatcher` on a Redis of their own, where no other file's signal can reach them.
 
 ## Quests
 
@@ -675,7 +736,8 @@ A body that does not match gets 400 with a message naming the field, such as `en
 
 **The attending Sub Quest** stores no title, time or place. Each read takes the Global Event's title, `startsAt`,
 `endsAt`, `place` as the label and its position, so a change to the event shows at once. Once the event is no longer
-published, as when it is cancelled, the Sub Quest reads as `cancelled` and ended. No Holder edits or cancels it.
+published, as when it is cancelled, the Sub Quest reads as `cancelled` and ended. No Holder edits or cancels it. When
+an Administrator edits a published event or cancels it, the Holders of every Quest for it get `quests-changed`.
 
 **How a Sub Quest ends.** Its `completion` is `by_time` when it has an end time and `by_hand` when it has none; for the
 attending Sub Quest, when the Global Event has none. A Sub Quest is ended for a User when its end time has passed, for
@@ -901,15 +963,16 @@ the Holders to send `quests-changed` to, the User included, once the transaction
 `quests-changed` goes to every Holder, the one who acted included, when a Quest is created by attending, made or for a
 match, when a Sub Quest is added, edited or cancelled, when a User enters or is placed by Matching, when a Holder drops
 the Quest, which may pass on the Leader's role, and when the Leader changes the settings, hands the role over or removes
-a Holder, the removed one included. When the Leader ends the Quest, it goes to every Holder and to every User whose
+a Holder, the removed one included, and when an Administrator edits or cancels the Quest's published Global Event.
+When the Leader ends the Quest, it goes to every Holder and to every User whose
 request or invitation was waiting, all read before the Quest is deleted. It goes to the Leader when a request arrives or
 is withdrawn and when an invitation is declined, to a User whose request the Leader declines or who declines an
 invitation, and to an invited User when invited and when the Leader cancels the invitation. A mark of done is the
 Holder's own and sends nothing. The signal carries nothing, and the app fetches `GET /quests`, the requests to join and
 the invitations again (see [Signals](#signals)).
 
-In a test, `test/quests.ts` stores a published Global Event with a connection of its own, since no route creates one
-yet, and calls the routes above; `test/quest-recruiting.ts` calls those of requests, invitations and the Leader's
+In a test, `test/quests.ts` stores a Global Event with a connection of its own, in any state and without the signals of
+the Administrator's routes, and calls the routes above; `test/quest-recruiting.ts` calls those of requests, invitations and the Leader's
 controls. `storeSharedQuest()` stores a Quest with
 several Holders the same way, led by the first.
 

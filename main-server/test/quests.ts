@@ -9,8 +9,8 @@ import { GlobalEvent, Prisma, PrismaClient } from '../src/generated/prisma/clien
 import { TestUser } from './friends.js';
 import { withAccessToken } from './sign-in.js';
 
-// No route creates or changes a Global Event yet (P12 adds them), so the tests store them with a connection of their
-// own.
+// The tests store Global Events with a connection of their own, in any state and without the signals of the
+// Administrator's routes.
 export function connectToDatabase(): PrismaClient {
   return new PrismaClient({ adapter: new PrismaPg({ connectionString: inject('settings').DATABASE_URL }) });
 }
