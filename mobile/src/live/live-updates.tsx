@@ -6,6 +6,7 @@ import {
   FRIENDS_KEY,
   GLOBAL_EVENTS_KEY,
   JOIN_REQUESTS_KEY,
+  MATCHING_REQUESTS_KEY,
   MEETUPS_KEY,
   MY_JOIN_REQUESTS_KEY,
   MY_PARTY_KEY,
@@ -26,8 +27,8 @@ import { useSession } from '@/session/session';
 import { endSession } from '@/session/session-events';
 import { openLiveConnection } from './connection';
 
-// What each signal of the main server makes the app fetch again. The signals carry nothing. `matching-changed` names
-// nothing these screens show; an accepted Meetup also sends `quests-changed`.
+// What each signal of the main server makes the app fetch again. The signals carry nothing. An accepted Meetup also
+// sends `quests-changed`.
 const REFETCH: Record<string, readonly QueryKey[]> = {
   'friends-changed': [FRIENDS_KEY, POSITIONS_KEY, FRIEND_REQUESTS_KEY],
   // The Quests' key also holds the open room's Quest.
@@ -43,6 +44,7 @@ const REFETCH: Record<string, readonly QueryKey[]> = {
   // Who is in the User's Party changes whom the User sees.
   'party-changed': [MY_PARTY_KEY, PARTIES_KEY, POSITIONS_KEY],
   'global-events-changed': [GLOBAL_EVENTS_KEY, QUESTS_KEY],
+  'matching-changed': [MATCHING_REQUESTS_KEY, QUESTS_KEY, RECRUITING_KEY],
 };
 
 // The lists of what waits for the User, which 알림 and the badge on 파티 show.
@@ -66,6 +68,7 @@ const SHOWN: readonly QueryKey[] = [
   SHUTTLE_VEHICLES_KEY,
   RECRUITING_KEY,
   MY_JOIN_REQUESTS_KEY,
+  MATCHING_REQUESTS_KEY,
   ...WAITING,
 ];
 

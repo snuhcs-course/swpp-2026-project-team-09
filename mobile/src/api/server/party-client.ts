@@ -38,8 +38,10 @@ type PartyClient = Pick<
 >;
 
 export const partyClient: PartyClient = {
-  listRecruitingQuests: (board) =>
-    call('GET', '/quests/recruiting', listOf(isRecruitingQuest), board === undefined ? {} : { query: { board } }),
+  listRecruitingQuests: ({ board, globalEventId } = {}) =>
+    call('GET', '/quests/recruiting', listOf(isRecruitingQuest), {
+      query: { ...(board === undefined ? {} : { board }), ...(globalEventId === undefined ? {} : { globalEventId }) },
+    }),
   joinQuest: (questId) => call('POST', path('quests', questId, 'join'), isQuest),
   askToJoinQuest: async (questId) => {
     await call('POST', '/quest-join-requests', isQuestWaiting, { body: { questId } });

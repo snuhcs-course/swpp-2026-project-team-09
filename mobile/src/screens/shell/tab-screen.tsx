@@ -8,17 +8,19 @@ import { takenUnderToastOverNav } from './layout';
 interface TabScreenProps {
   title: string;
   actions?: ReactNode;
+  // In place of the app bar, such as a search field over the title.
+  bar?: ReactNode;
   children: ReactNode;
 }
 
 // A tab other than 지도, as the `Party`, `Events` and `Profile` frames draw it: the tab's app bar on the grey ground,
 // and a toast 16 above the navigation while the tab is in front.
-export function TabScreen({ title, actions, children }: TabScreenProps): ReactElement {
+export function TabScreen({ title, actions, bar, children }: TabScreenProps): ReactElement {
   const { bottom } = useSafeAreaInsets();
   useToastAbove(takenUnderToastOverNav(bottom), useIsFocused());
   return (
     <View style={styles.screen}>
-      <AppBar actions={actions} title={title} />
+      {bar ?? <AppBar actions={actions} title={title} />}
       {children}
     </View>
   );

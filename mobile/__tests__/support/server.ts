@@ -121,6 +121,9 @@ export function answerMainScreen(server: FakeServer): void {
   server.on('GET /friend-requests', { status: 200, body: { received: [], sent: [] } });
   server.on('GET /quest-invitations', { status: 200, body: [] });
   server.on('GET /meetups', { status: 200, body: { received: [], sent: [] } });
+  server.on('GET /global-events', { status: 200, body: [] });
+  server.on('GET /quests/recruiting', { status: 200, body: [] });
+  server.on('GET /matching-requests', { status: 200, body: [] });
 }
 
 // --- What waits for the User, which 알림 lists ---

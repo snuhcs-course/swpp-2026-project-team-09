@@ -1,6 +1,7 @@
 import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
 import { asksMainServer } from './servers';
+import type { MatchingRequest } from './matching-types';
 import type {
   Board,
   ClassSave,
@@ -82,6 +83,13 @@ export interface ApiClient {
   // Who announced each Global Event. The app's own: the stored event does not hold it.
   listGlobalEventAnnouncers: () => Promise<{ eventId: string; announcer: string }[]>;
   listParties: () => Promise<Party[]>;
+  // `size` is 2 to 4.
+  requestMatching: (globalEventId: string, size: number) => Promise<MatchingRequest>;
+  // The waiting requests, the oldest first.
+  listMatchingRequests: () => Promise<MatchingRequest[]>;
+  // The latest request for the Global Event, in whatever state.
+  getMatchingRequest: (globalEventId: string) => Promise<MatchingRequest>;
+  withdrawMatchingRequest: (globalEventId: string) => Promise<void>;
   // Null for a User who is in no Party. The main server says so with a refusal, 404 NOT_IN_PARTY: the operation turns
   // exactly that one into null, with `isRefusal`, and throws any other.
   getMyParty: () => Promise<MyParty | null>;
@@ -119,8 +127,8 @@ export interface ApiClient {
   // Ends the User's Party for every member.
   endParty: () => Promise<void>;
   findPlaceAt: (position: LatLng) => Promise<PlaceAt>;
-  // The newest first; all boards without one.
-  listRecruitingQuests: (board?: Board) => Promise<RecruitingQuest[]>;
+  // The newest first; every board and Global Event without a filter.
+  listRecruitingQuests: (filter?: { board?: Board; globalEventId?: string }) => Promise<RecruitingQuest[]>;
   // An Open Quest, at once.
   joinQuest: (questId: string) => Promise<Quest>;
   // An Approval Quest: a request that the Leader answers.
@@ -174,6 +182,10 @@ export const apiClient: ApiClient = {
   listGlobalEvents: () => chosen().listGlobalEvents(),
   listGlobalEventAnnouncers: () => chosen().listGlobalEventAnnouncers(),
   listParties: () => chosen().listParties(),
+  requestMatching: (globalEventId, size) => chosen().requestMatching(globalEventId, size),
+  listMatchingRequests: () => chosen().listMatchingRequests(),
+  getMatchingRequest: (globalEventId) => chosen().getMatchingRequest(globalEventId),
+  withdrawMatchingRequest: (globalEventId) => chosen().withdrawMatchingRequest(globalEventId),
   getMyParty: () => chosen().getMyParty(),
   getFootprints: () => chosen().getFootprints(),
   findWalkingRoute: (from, to) => chosen().findWalkingRoute(from, to),
@@ -200,7 +212,7 @@ export const apiClient: ApiClient = {
   removePartyMember: (userId) => chosen().removePartyMember(userId),
   endParty: () => chosen().endParty(),
   findPlaceAt: (position) => chosen().findPlaceAt(position),
-  listRecruitingQuests: (board) => chosen().listRecruitingQuests(board),
+  listRecruitingQuests: (filter) => chosen().listRecruitingQuests(filter),
   joinQuest: (questId) => chosen().joinQuest(questId),
   askToJoinQuest: (questId) => chosen().askToJoinQuest(questId),
   listMyJoinRequests: () => chosen().listMyJoinRequests(),

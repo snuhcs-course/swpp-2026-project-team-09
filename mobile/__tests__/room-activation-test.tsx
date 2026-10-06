@@ -80,7 +80,8 @@ describe("the room's head", () => {
 
     expect(screen.getByText('파티 · 3명')).toBeVisible();
     expect(screen.getByText('비공개')).toBeVisible();
-    expect(screen.getByText('AI 커리어 설명회')).toBeVisible();
+    expect(screen.getAllByText('AI 커리어 설명회')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: '행사 · AI 커리어 설명회' })).toBeVisible();
     expect(screen.queryByText('내가 만든 파티')).toBeNull();
   });
 });

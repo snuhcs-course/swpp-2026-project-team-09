@@ -1,6 +1,7 @@
 import type { RecruitingQuest } from '@/api/party-types';
 import type { Board } from '@/api/types';
 import { frameTime } from './frame';
+import { CAREER_GATHERING } from './quests';
 
 // The posts of the `Party` frame's boards and its three recommended 파티, as the list of recruiting Quests answers
 // them. Days count from the frame's day; every third post takes requests. The third goes to the frame's 재즈 정기공연.
@@ -88,6 +89,7 @@ function entryOf(row: string, index: number): RecruitingQuest {
   };
 }
 
-export const RECRUITING_QUESTS: RecruitingQuest[] = ROWS.map((row, index) => entryOf(row, index)).toSorted(
-  (one, other) => other.createdAt.localeCompare(one.createdAt),
-);
+export const RECRUITING_QUESTS: RecruitingQuest[] = [
+  ...ROWS.map((row, index) => entryOf(row, index)),
+  CAREER_GATHERING,
+].toSorted((one, other) => other.createdAt.localeCompare(one.createdAt));

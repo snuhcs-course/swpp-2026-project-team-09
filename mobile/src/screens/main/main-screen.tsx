@@ -9,6 +9,7 @@ import type { CardView } from '@/features/map/adapter';
 import { useMapCards } from '@/features/map/use-map-cards';
 import { type ShuttleLayer, useShuttle } from '@/features/shuttle/use-shuttle';
 import { CAMPUS_BOUNDS, Map, type MapLine, MAX_ZOOM, MIN_ZOOM } from '@/map';
+import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { Card } from './card';
 import { FriendList } from './friend-list';
 import { useLayerStack } from './layers';
@@ -72,11 +73,12 @@ function OverMap({ children, onStage }: OverMapProps): ReactElement {
 // The card of the selected thing, if any, with what its buttons do. "가까이 보기" is offered below the "names" level of detail
 // and brings the camera to the "close" level, keeping the card. "길찾기" closes the card once the route is asked for.
 // "메뉴 보기" opens the menu panel at the restaurant. "노선 보기" brings the shuttle's whole line into view and closes
-// the card. "파티 열기" and "참여하기" open a Quest's room. Every other button belongs to another task and says that it
-// is not ready.
+// the card. "파티 열기" and "참여하기" open a Quest's room, and "같이 갈 사람 찾기" 파티 만들기 for the Global Event. Every
+// other button belongs to another task and says that it is not ready.
 function SelectedCard(props: SelectedCardProps): ReactElement | null {
   const { selection, map, route, shuttleLine, onActiveParty, onHeight, top } = props;
   const showNotReady = useNotReadyToast();
+  const openPartyCreate = useOpenPartyCreate();
   const { top: inset } = useSafeAreaInsets();
   const { selected: card, close: onClose } = selection;
   if (card === null) {
@@ -105,6 +107,8 @@ function SelectedCard(props: SelectedCardProps): ReactElement | null {
           router.push(`/room/${primary.questId}`);
         } else if (primary.action === 'active-party') {
           onActiveParty();
+        } else if (primary.action === 'recruit') {
+          openPartyCreate(primary.eventId);
         } else if (primary.action !== 'route') {
           showNotReady();
         } else if (route.routeTo(card)) {

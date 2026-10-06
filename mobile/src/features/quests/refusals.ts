@@ -25,6 +25,11 @@ const WORDS: Readonly<Record<string, string>> = {
   QUEST_JOIN_REQUEST_NOT_FOUND: '이미 끝난 신청이에요',
   CAPACITY_BELOW_HOLDERS: '지금 멤버 수보다 적게 정할 수 없어요',
   BOARD_REQUIRED: '게시판을 골라 주세요',
+  GLOBAL_EVENT_STARTED: '이미 시작한 행사예요',
+  GLOBAL_EVENT_NOT_FOUND: '행사를 찾을 수 없어요',
+  MATCHING_REQUEST_WAITING: '이미 매칭 중이에요',
+  MATCHING_REQUEST_NOT_WAITING: '이미 매칭이 끝났어요',
+  MATCHING_REQUEST_NOT_FOUND: '이미 매칭이 끝났어요',
 };
 
 // Where the User enters a Quest, by joining, asking or accepting, an ended Quest is the Quest's, not its Party's.

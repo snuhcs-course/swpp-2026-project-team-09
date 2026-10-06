@@ -1,4 +1,6 @@
+import type { RecruitingQuest } from '@/api/party-types';
 import type { GlobalEvent, LatLng, MyParty, Party, Position, Presence, Quest } from '@/api/types';
+import { eventTime, recruitingCounts } from '@/features/events/adapter';
 import { type FriendView, keptPositions, minutesOld } from '@/features/friends/adapter';
 import { otherHolders, partyOf, positionOf, type QuestParty, shownSubQuest } from '@/features/quests/adapter';
 import { koreaClock, koreaDay } from '@/korea-time';
@@ -25,8 +27,8 @@ export interface CardMarker {
   // Under the marker from the "names" level of detail on: a person's given name, "민준"; a place's title cut at a
   // word's end within 8 characters, "AI 커리어".
   short: string;
-  // On a place's pin: a Party's members; the Parties that go to a Global Event, when they are more than one. 0 for
-  // none, and for a person.
+  // On a place's pin: a Party's members; the Quests that gather for a Global Event, when they are more than one. 0
+  // for none, and for a person.
   count: number;
   // For a person whose position is old: how many minutes ago it was measured. The marker is dimmed and its short
   // name says so. Null otherwise.
@@ -55,12 +57,14 @@ export interface CardView {
   title: string;
   lines: { icon: CardIcon; text: string }[];
   // `route` draws the way there; `room` opens the Quest's room; `active-party` opens the room of the User's Party's
-  // Quest. `menu` opens the menu panel at the restaurant. `shuttle-line` shows the shuttle's whole line. `not-ready`
-  // says "준비 중이에요": the feature belongs to another task. Null for a card without one.
+  // Quest; `recruit` opens 파티 만들기 for the Global Event. `menu` opens the menu panel at the restaurant.
+  // `shuttle-line` shows the shuttle's whole line. `not-ready` says "준비 중이에요": the feature belongs to another task.
+  // Null for a card without one.
   primary:
     | { label: string; action: 'route' | 'active-party' | 'not-ready' | 'shuttle-line' }
     | { label: string; action: 'menu'; restaurant: string }
     | { label: string; action: 'room'; questId: string }
+    | { label: string; action: 'recruit'; eventId: string }
     | null;
   secondary: { label: string; action: 'not-ready' } | null;
   position: LatLng;
@@ -89,6 +93,7 @@ function line(icon: CardIcon, text: string): Line {
 export interface MapSources {
   globalEvents: readonly GlobalEvent[];
   globalEventAnnouncers: readonly { eventId: string; announcer: string }[];
+  recruiting: readonly RecruitingQuest[];
   quests: readonly Quest[];
   parties: readonly Party[];
   myParty: MyParty | null;
@@ -98,12 +103,11 @@ export interface MapSources {
   now: Date;
 }
 
-function globalEventCards({ globalEvents, globalEventAnnouncers, parties, now }: MapSources): CardView[] {
+function globalEventCards({ globalEvents, globalEventAnnouncers, recruiting: gathering, now }: MapSources): CardView[] {
+  const counts = recruitingCounts(gathering);
   return globalEvents.map((event) => {
     const announcer = globalEventAnnouncers.find(({ eventId }) => eventId === event.id)?.announcer;
-    const recruiting = parties.filter(({ quest }) => quest?.globalEvent?.id === event.id).length;
-    const hours =
-      event.endsAt === null ? koreaClock(event.startsAt) : `${koreaClock(event.startsAt)}–${koreaClock(event.endsAt)}`;
+    const recruiting = counts.get(event.id) ?? 0;
     return {
       id: cardId.globalEvent(event.id),
       kind: 'global-event',
@@ -117,11 +121,11 @@ function globalEventCards({ globalEvents, globalEventAnnouncers, parties, now }:
       subLabel: announcer === undefined ? '공식 행사' : `공식 행사 · ${announcer}`,
       title: event.title,
       lines: [
-        line('clock', `${koreaDay(event.startsAt, now)} ${hours}`),
+        line('clock', eventTime(event, now)),
         ...(event.place === null ? [] : [line('pin', event.place)]),
         ...(recruiting === 0 ? [] : [line('users', `같이 갈 파티 ${recruiting}개 모집 중`)]),
       ],
-      primary: { label: '같이 갈 사람 찾기', action: 'not-ready' },
+      primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: event.id },
       secondary: null,
       position: { latitude: event.latitude, longitude: event.longitude },
     };

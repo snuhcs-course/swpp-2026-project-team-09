@@ -10,6 +10,7 @@ import { MENUS } from './data/menus';
 import { PLACES } from './data/places';
 import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
 import { MEETUPS, QUEST_INVITATIONS } from './data/waiting';
+import { mockEvents } from './events';
 import { mockFriendships as friendships } from './friendships';
 import { mockParty } from './party';
 import { mockTimetable as timetable } from './timetable';
@@ -134,4 +135,5 @@ export const mockClient: ApiClient = {
   listShuttleVehicles: () => answer('listShuttleVehicles', () => SHUTTLE_VEHICLES, []),
   ...mockRoom,
   ...mockParty,
+  ...mockEvents,
 };

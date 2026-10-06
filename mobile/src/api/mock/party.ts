@@ -98,10 +98,15 @@ type MockParty = Pick<
 >;
 
 export const mockParty: MockParty = {
-  listRecruitingQuests: (board) =>
+  listRecruitingQuests: ({ board, globalEventId } = {}) =>
     answer(
       'listRecruitingQuests',
-      () => RECRUITING_QUESTS.filter((entry) => board === undefined || entry.board === board),
+      () =>
+        RECRUITING_QUESTS.filter(
+          (entry) =>
+            (board === undefined || entry.board === board) &&
+            (globalEventId === undefined || entry.globalEvent?.id === globalEventId),
+        ),
       [],
     ),
   joinQuest: (questId) =>

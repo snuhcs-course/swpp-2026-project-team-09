@@ -1,7 +1,7 @@
 import { act } from '@testing-library/react-native';
 import { Stack } from 'expo-router';
 import { renderRouter, screen } from 'expo-router/testing-library';
-import type { ReactElement } from 'react';
+import type { ComponentType, ReactElement } from 'react';
 import * as SignedInLayout from '@/app/(signed-in)/_layout';
 import TabsLayout from '@/app/(signed-in)/(tabs)/_layout';
 import EventsScreen from '@/app/(signed-in)/(tabs)/events';
@@ -10,6 +10,7 @@ import MeScreen from '@/app/(signed-in)/(tabs)/me';
 import PartyScreen from '@/app/(signed-in)/(tabs)/party';
 import BoardScreen from '@/app/(signed-in)/boards/[board]';
 import BoardsScreen from '@/app/(signed-in)/boards/index';
+import MatchingScreen from '@/app/(signed-in)/matching';
 import NotificationsScreen from '@/app/(signed-in)/notifications';
 import PartyFormScreen from '@/app/(signed-in)/party-form';
 import PlaceMapScreen from '@/app/(signed-in)/place-map';
@@ -44,8 +45,9 @@ function Layout(): ReactElement {
 // The started app. The address readers are on what `renderRouter` gives at once, not on what it settles to.
 let started: ReturnType<typeof renderRouter> | null = null;
 
-// Starts the app's screens at an address, as a start of the app or a link would.
-export async function startApp(initialUrl = '/'): Promise<void> {
+// Starts the app's screens at an address, as a start of the app or a link would. `more` adds screens that another
+// task builds, by their files' names.
+export async function startApp(initialUrl = '/', more: Record<string, ComponentType> = {}): Promise<void> {
   started = renderRouter(
     {
       _layout: Layout,
@@ -77,6 +79,8 @@ export async function startApp(initialUrl = '/'): Promise<void> {
       '(signed-in)/boards/[board]': BoardScreen,
       '(signed-in)/post/[questId]': PostScreen,
       '(signed-in)/party-form': PartyFormScreen,
+      '(signed-in)/matching': MatchingScreen,
+      ...more,
     },
     { initialUrl },
   );

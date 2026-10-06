@@ -31,6 +31,7 @@ export const SHUTTLE_VEHICLES_KEY = ['shuttle-vehicles'] as const;
 type MenusKey = readonly ['menus', string];
 export const RECRUITING_KEY = ['recruiting'] as const;
 export const MY_JOIN_REQUESTS_KEY = ['my-join-requests'] as const;
+export const MATCHING_REQUESTS_KEY = ['matching-requests'] as const;
 
 // Ask it only for a User who finished Onboarding: the main server refuses it before.
 // Entering the Lobby is done once, by the loading screen or after a sign-in, and its answer is not asked again by a
@@ -107,10 +108,25 @@ export function recruitingQuery(
 ): UseQueryOptions<RecruitingQuest[], Error, RecruitingQuest[], string[]> {
   return {
     queryKey: [...RECRUITING_KEY, board],
-    queryFn: () => apiClient.listRecruitingQuests(board === 'all' ? undefined : board),
+    queryFn: () => apiClient.listRecruitingQuests(board === 'all' ? {} : { board }),
+  };
+}
+// Every recruiting Quest, which the map and the 행사 tab count by event.
+export const recruitingQuestsQuery = recruitingQuery('all');
+// One Global Event's, under the same key, so that a signal fetches it with the boards'.
+export function eventRecruitingQuery(
+  globalEventId: string,
+): UseQueryOptions<RecruitingQuest[], Error, RecruitingQuest[], string[]> {
+  return {
+    queryKey: [...RECRUITING_KEY, 'event', globalEventId],
+    queryFn: () => apiClient.listRecruitingQuests({ globalEventId }),
   };
 }
 export const myJoinRequestsQuery = queryOptions({
   queryKey: MY_JOIN_REQUESTS_KEY,
   queryFn: () => apiClient.listMyJoinRequests(),
+});
+export const matchingRequestsQuery = queryOptions({
+  queryKey: MATCHING_REQUESTS_KEY,
+  queryFn: () => apiClient.listMatchingRequests(),
 });

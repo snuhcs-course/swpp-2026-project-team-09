@@ -1,3 +1,4 @@
+import type { RecruitingQuest } from '@/api/party-types';
 import type { GlobalEvent, MyParty, Party, PartyQuest, Quest, SubQuest } from '@/api/types';
 import { PARTY_MEMBER } from './friends';
 import { frameTime, ME } from './frame';
@@ -144,4 +145,25 @@ export const MY_PARTY: MyParty = {
     { ...PARTY_MEMBER, leader: false, visible: true },
     { ...ME, leader: false, visible: true },
   ],
+};
+
+// A Quest that gathers people for the Global Event, which the User does not hold. The boards' list holds it too.
+export const CAREER_GATHERING: RecruitingQuest = {
+  id: 'q-ai-seo-yeon',
+  title: 'AI 커리어 설명회',
+  globalEvent: { id: 'e1', title: 'AI 커리어 설명회' },
+  leader: { id: 'f7', name: '이서연', department: '경영학과' },
+  holderCount: 2,
+  capacity: 4,
+  joinPolicy: 'open',
+  board: 'career',
+  description: '설명회 전에 301동 앞에서 만나요.',
+  createdAt: frameTime('11:20'),
+  nextSubQuest: {
+    id: 'q-ai-seo-yeon-1',
+    title: '모이기',
+    startsAt: frameTime('17:30'),
+    endsAt: null,
+    place: { placeId: null, label: '301동 앞', latitude: 37.45091, longitude: 126.95289 },
+  },
 };

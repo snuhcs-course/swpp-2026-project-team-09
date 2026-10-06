@@ -192,8 +192,7 @@ export interface Quest {
 
 // --- What is on the map ---
 
-// The app's own as a list: no route lists the published Global Events for a User yet. The fields are those the main
-// server stores for one.
+// GET /global-events: the published Global Events that have not ended, by their start.
 export interface GlobalEvent {
   id: string;
   title: string;

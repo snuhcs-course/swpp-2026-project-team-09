@@ -9,8 +9,10 @@ import {
   partiesQuery,
   positionsQuery,
   questsQuery,
+  recruitingQuestsQuery,
 } from '@/api/queries';
 import { type ScreenData, askAgain, someFailed, somePending } from '@/api/screen-data';
+import type { RecruitingQuest } from '@/api/party-types';
 import type { Friend, FriendStatus, GlobalEvent, MyParty, Party, Position, Quest } from '@/api/types';
 import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
@@ -28,18 +30,20 @@ type Results = [
   UseQueryResult<Friend[]>,
   UseQueryResult<Position[]>,
   UseQueryResult<FriendStatus[]>,
+  UseQueryResult<RecruitingQuest[]>,
 ];
 
 // A failed operation takes away only the cards that cannot be right without it, and the others stay:
 // - a Party's card is worded by the Quest, the User's Party and the listed Parties, so it needs all three;
 // - a Friend's card needs the Friends and the positions;
 // - a card of a member of the User's Party also needs the Friends, to know that the member is not one.
-// A Global Event's card without the Parties only lacks its line of Parties.
+// A Global Event's card without the recruiting Quests only lacks its line of them.
 function cardsOf(results: Results, at: Date): CardView[] {
-  const [globalEvents, announcers, quests, parties, myParty, friends, positions, statuses] = results;
+  const [globalEvents, announcers, quests, parties, myParty, friends, positions, statuses, recruiting] = results;
   const cards = toCards({
     globalEvents: globalEvents.data ?? [],
     globalEventAnnouncers: announcers.data ?? [],
+    recruiting: recruiting.data ?? [],
     quests: someFailed([myParty, parties]) ? [] : (quests.data ?? []),
     parties: parties.data ?? [],
     myParty: myParty.data ?? null,
@@ -56,8 +60,8 @@ function agedAt(at: number): Date {
   return new Date(Math.max(now().getTime(), at));
 }
 
-// The announcers and the statuses are the app's own and never fail the map. It runs again when an answer changes and
-// when `at` does, which ages the positions.
+// The announcers and the statuses are the app's own, and the recruiting Quests only count, so none fails the map. It
+// runs again when an answer changes and when `at` does, which ages the positions.
 function combine(results: Results, at: number): ScreenData<CardView[]> {
   const [globalEvents, , quests, parties, myParty, friends, positions] = results;
   const isPending = somePending(results);
@@ -85,6 +89,7 @@ export function useMapCards(): ScreenData<CardView[]> {
       friendsQuery,
       positionsQuery,
       friendStatusesQuery,
+      recruitingQuestsQuery,
     ],
     combine: combineAt,
   });

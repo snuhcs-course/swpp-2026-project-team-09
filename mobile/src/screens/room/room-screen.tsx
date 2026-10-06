@@ -20,6 +20,7 @@ import { ActivationBox } from './activation-box';
 import { type Ask, ConfirmSheet } from './confirm-sheet';
 import { InvitationsSection, MembersSection, RequestsSection } from './people-sections';
 import { PlanSection } from './plan-section';
+import { RoomEvent } from './room-event';
 import { type RoomActions, useRoomActions } from './use-room-actions';
 
 // The footer's button, its padding and its line: a toast sits above it.
@@ -48,6 +49,7 @@ function Head({ room }: { room: RoomView }): ReactElement {
       <Text accessibilityRole="header" style={styles.title}>
         {room.quest.title}
       </Text>
+      {room.quest.globalEvent === null ? null : <RoomEvent event={room.quest.globalEvent} />}
       {description === '' ? null : (
         <View style={styles.quote}>
           <Text style={styles.quoteWords}>{description}</Text>

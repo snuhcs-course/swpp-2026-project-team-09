@@ -26,16 +26,18 @@ import {
 import { isMenus } from './menu-answers';
 import { isShuttleRoute, isShuttleVehicles } from './shuttle-answers';
 import { isFriendRequests, isJoinRequests, isMeetups, isQuestInvitations } from './waiting-answers';
+import { eventClient } from './event-client';
 import { call } from './http';
 import { partyClient } from './party-client';
 import { roomClient } from './room-client';
 
 // The operations the main server serves on its main line, each from its route. What it does not serve stays the
-// mock's: the Friends' statuses, the Global Events and who announced them, and 오늘의 발자국 (todo.md, section 3).
+// mock's: the Friends' statuses, who announced the Global Events, and 오늘의 발자국 (todo.md, section 3).
 export const serverClient: ApiClient = {
   ...mockClient,
   ...roomClient,
   ...partyClient,
+  ...eventClient,
   // The main server stores four of the answers. The course level and the gender have no place there, so the phone
   // keeps them with the rest, once the main server has saved its part.
   completeOnboarding: async (answers: OnboardingAnswers) => {
