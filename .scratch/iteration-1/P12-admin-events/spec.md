@@ -8,7 +8,7 @@ Events collected from the university's events list have times and places written
 
 ## Solution
 
-An admin site where an Administrator reviews each Draft, corrects its time and place, sets its position on the map and publishes it. The Administrator can also correct or cancel an event that a collection published, create a Global Event by hand and cancel a published one.
+An admin site where an Administrator reviews each Draft, corrects its time and place, sets its position on the map and publishes it. The Administrator can also correct or cancel an event that a collection published, create a Global Event by hand and cancel a published one. The site also shows the campus map with every Place, and makes two Users Friends or ends a friendship, so that demo accounts are set up without two phones.
 
 ## User Stories
 
@@ -32,6 +32,10 @@ An admin site where an Administrator reviews each Draft, corrects its time and p
 18. As a Holder of a Quest for a Global Event, I want my Quest to follow the Administrator's changes, so that my plan is correct.
 19. As an Administrator, I want to register and remove Administrators, so that the team changes without a change to the server's settings.
 20. As an Administrator, I want to sign out from any page, so that nobody else uses my session on a shared computer.
+21. As an Administrator, I want to see the campus map with every Place drawn by its outlines, and find a Place by its number or name, so that I notice a Place or an outline that the seed got wrong.
+22. As an Administrator, I want to list the Users and see each one's Friends, so that I know how the demo accounts stand.
+23. As an Administrator, I want to make two Users Friends, so that demo accounts are set up without two phones.
+24. As an Administrator, I want to end a friendship between two Users, so that demo accounts can be set up again.
 
 ## Implementation Decisions
 
@@ -49,27 +53,30 @@ An admin site where an Administrator reviews each Draft, corrects its time and p
 - An Administrators screen lists the Administrators, with each one's email address and whether they have signed in yet. On it an Administrator registers an email address of any Google domain and removes an Administrator, themselves included. The main server keeps the last one.
 - Access checks are made where data is read or changed. A check in the request proxy alone is not relied on.
 - The position picker shows a Kakao map through Kakao's JavaScript SDK. This is a web page on a registered domain, which is the use that SDK is meant for.
+- A Places page shows the Kakao map with every Place: its outlines as polygons, or a marker when it has none, and its number, or its name when it has none. A search by number or name, or a click, selects a Place and shows its record.
+- A Users page lists the Users and each one's Friends. On it an Administrator makes two Users Friends and ends a friendship. Nothing else about a User is managed.
 - How the Kakao JavaScript key reaches the admin site, its registered domains, and the admin site's Google client are in `.scratch/research/external-sources.md`.
 
 ### Administrative API
 
 - The API lives in the main server under its own routes, below `/admin`. Every request needs an Administrator's access token and checks the Administrator, as P04 sets up; a User's access token is refused.
-- Operations: list Drafts and published events, read one, create, edit, publish, cancel, discard a Draft, read the collection status.
+- Operations: list Drafts and published events, read one, create, edit, publish, cancel, discard a Draft, read the collection status, list the Places with their outlines, list the Users and a User's Friends, make two Users Friends and end a friendship.
 - State changes allowed: Draft to published, Draft to discarded, published to cancelled. A published event can be edited without leaving the published state.
 - Publishing requires a title, a start time and a position.
 - An edit carries the version the Administrator loaded. The main server refuses it when the stored version is newer.
 - Publishing, editing and cancelling send a signal as described in P08, and the attending Sub Quests of affected Quests follow as described there. An event that a collection publishes (P07) sends the same signal.
 - Creating a Global Event by hand requires the key described in P04. The admin site makes the key when the Administrator confirms the form and sends the same key on a retry.
 - How Global Events are stored, which states exist and when a collection publishes an event is defined in P07.
+- A friendship made by an Administrator is stored and announced as an accepted Friend Request's: the same row, both switches of Location Sharing on, `friends-changed` to both. Ending one does what a User's ending does: Location Sharing between the two stops, the Meetups still proposed between them are withdrawn, and both get `friends-changed`. These routes live in the Friends module, under `/admin`.
 - The list of published Global Events that the app reads is built in this task, as a User's route of the main server outside `/admin`.
 
 ## Testing Decisions
 
 - A good test calls the administrative API as an Administrator, or with a User's access token to see it refused, and checks the response and what Users can then see.
-- API tests run with Vitest against a real database: refusal of a User's access token, each allowed and each forbidden state change, the publishing requirements, the version check, and that a published event appears in the User-facing list while a Draft does not.
-- Admin pages are tested at the page level against a fake API: the Draft list, the edit form's validation messages, the publish button's disabled state and the Administrators screen.
+- API tests run with Vitest against a real database: refusal of a User's access token, each allowed and each forbidden state change, the publishing requirements, the version check, that a published event appears in the User-facing list while a Draft does not, the Places with their outlines, and making and ending a friendship with its refusals and signals.
+- Admin pages are tested at the page level against a fake API: the Draft list, the edit form's validation messages, the publish button's disabled state, the Administrators screen, the Places page's search and selection, and the Users page.
 - The session is tested at the page level as well: the cookie's attributes, the token absent from what reaches the browser, a 401 leading to sign-in and back to the same page, sign-out, and a Server Action posted from another origin refused.
-- The map picker is checked by hand.
+- The map picker and the Places page's map are checked by hand.
 - Prior art: the API-level tests of P04 and P07.
 
 ## Out of Scope
@@ -78,7 +85,7 @@ An admin site where an Administrator reviews each Draft, corrects its time and p
 - Reading a poster into an event.
 - Codes for check-in, rewards and participation counts.
 - Starting a collection by hand.
-- Managing Users, Parties or Quests from the admin site.
+- Managing Users, Parties or Quests from the admin site, other than making and ending friendships.
 
 ## Further Notes
 
