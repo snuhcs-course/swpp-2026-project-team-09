@@ -22,7 +22,7 @@ import {
   text,
 } from '@/design-system';
 import { useNotices } from '@/features/notifications/use-notices';
-import { useSending } from '@/position';
+import { stopBackground, useSending } from '@/position';
 import { useSession } from '@/session/session';
 import { LocationExplanation } from '../main/location-explanation';
 import { yearLabel } from '../onboarding/form';
@@ -153,7 +153,7 @@ function ActivityCard(): ReactElement {
   );
 }
 
-// "로그아웃", after the danger dialog. The sending stops before the Session ends.
+// "로그아웃", after the danger dialog. The sending, in front and in the background, stops before the Session ends.
 function SignOut(): ReactElement {
   const { leave } = useSession();
   const { stop } = useSending();
@@ -178,7 +178,8 @@ function SignOut(): ReactElement {
         onConfirm={() => {
           setAsking(false);
           stop();
-          void signOut()
+          void stopBackground(true)
+            .then(signOut)
             .catch(() => null)
             .then(leave);
         }}

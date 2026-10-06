@@ -1,4 +1,6 @@
 // The User's own position: the phone's, or the development walk on campus, and its sending to the main server.
+export { stopBackground } from './background';
+export { BackgroundSharingProvider, useBackgroundSharing } from './background-sharing';
 export { openLocationSettings } from './phone';
 export { PositionSending, type Sending, useSending } from './sending';
 export {

@@ -290,6 +290,7 @@ parts of React Native, which is slow on a machine that has not run the tests bef
 ## Folder layout
 
 ```text
+index.ts            the bundle's entry: defines the background task, then starts Expo Router
 src/app/            screens; every file is a route and _layout.tsx sets the navigation around them
 src/design-system/  the tokens and the shared components
 src/catalogue/      the sections of the design system's catalogue screen
@@ -299,7 +300,7 @@ src/auth/           sign-in and sign-out, and the main server's tokens
 src/live/           the one connection to the socket server
 src/features/       one folder per feature: its adapter and the hooks a screen asks for data with
 src/map/            the one map component, its interface and the pictures of its markers
-src/position/       the User's own position: the phone's, or the development walk
+src/position/       the User's own position: the phone's, or the development walk, and its sending
 src/storage/        what the phone keeps between two starts of the app
 src/session/        where the User is in the flow between the screens, and the work of the start
 src/screens/        the screens that the routes show; a screen of several files has a folder
@@ -757,7 +758,7 @@ retry(); // starts the phone's watch again if it could not start
 openLocationSettings(); // of `@/position`: the phone's settings of the app, for a `blocked` permission
 ```
 
-- It reads the phone through `expo-location`, which `src/position/phone.ts` alone names: the permission for the time
+- It reads the phone through `expo-location`, which `src/position/phone.ts` and `background.ts` alone name: the permission for the time
   the app is in use, and a new position about every five seconds (`POSITION_EVERY_MS`) while a screen that asks is
   shown. On the web that is the browser's geolocation. Where the phone or the browser cannot answer, the permission
   counts as never asked or refused and the position stays null: nothing throws.
@@ -769,8 +770,8 @@ openLocationSettings(); // of `@/position`: the phone's settings of the app, for
 - A phone may tell positions more often than every five seconds, as iOS does about every second. `stepMs` is the
   time since the position before, held between one and five seconds; the walk's is five seconds.
 - With `EXPO_PUBLIC_CAMPUS_WALK=1` the hook answers the development walk instead and never asks the phone.
-- The words of the system's prompt on iOS are in `app.json`, with the library's config plugin. The app asks for no
-  position in the background.
+- The words of the system's prompt on iOS are in `app.json`, with the library's config plugin, which also gives
+  Android the background location and foreground service permissions. iOS asks for no position in the background.
 - `accuracy` is the radius in metres the phone places itself within, and `measuredAt` the time it measured the
   position. The walk gives an accuracy of 10 and the time it moves.
 - `ask()` gives the answer, so that the switch on 내 정보 knows whether to turn on.
@@ -785,6 +786,32 @@ again; the 400s and no answer drop that position. The mock keeps the switch in m
 positions while it is off and answers `offCampus` by the campus rectangle.
 
 - The signed-in place's layout holds the provider, so the tabs and the screens above them share one watch.
+
+**Sending in the background.** On Android, in a development build (not Expo Go), the row "백그라운드에서도 공유" under
+the Master Switch on 내 정보 keeps the sending going once the app is in the background. The background permission is
+asked only there, after the app's explanation; the foreground one stays the Master Switch's. While the Master Switch
+is on, the User chose the row and the permission is granted, `BackgroundSharingProvider`
+(`src/position/background-sharing.tsx`, inside `PositionSending`) runs `expo-location`'s updates as a foreground
+service with a permanent notification (`background.ts`): a position every 30 s (`BACKGROUND_EVERY_MS`), told to the
+task that `index.ts` defines before the screens (`background-task.ts`), since Android may start the app for the task
+alone.
+
+- Each run (`background-upload.ts`) reads what the phone keeps (`src/storage/kept.ts`): the sign-in, the Master
+  Switch, which the provider keeps there, and the User's choice. It stops itself when one is off, sends nothing while
+  the app is in front, where `PositionSending` sends, and otherwise sends the newest position of the batch to
+  `POST /positions`. The decisions are in `background-rules.ts`, without device calls.
+- The tokens are read from the secure storage first, so that the client renews the Session on a 401 also without the
+  screens. `MASTER_SWITCH_OFF` keeps the switch off on the phone and stops; a 401 the renewal cannot mend,
+  `SESSION_REPLACED` and a 403 stop; the 400s and no answer drop that position.
+- It stops at once when the Master Switch or the row goes off, when the permission is taken back, at sign-out and at
+  any end of the Session; the last two also forget the choice.
+- The service ends with the app when the User swipes it away, and nothing restarts it while the app is closed. The
+  next start of the app finds that it was running and the signed-in screens say "백그라운드 위치 공유가 멈췄어요"; it
+  starts again while the app is open.
+- On a phone the main server's address (`EXPO_PUBLIC_MAIN_SERVER_URL`) must be https: Android refuses plain
+  connections outside a debug build, and a phone on campus reaches the servers only through the https tunnel they run
+  behind, whose address goes there. The emulator's `http://10.0.2.2` works only in a debug build.
+- What a person checks on a phone is in the P17 ticket (`.scratch/iteration-1/P17-background-sharing/`).
 
 ### The connection to the socket server
 

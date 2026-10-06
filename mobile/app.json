@@ -34,7 +34,9 @@
           "locationWhenInUsePermission": "지도에 내 아바타를 보여 주려면 위치 권한이 필요해요.",
           "locationAlwaysAndWhenInUsePermission": false,
           "locationAlwaysPermission": false,
-          "motionUsagePermission": false
+          "motionUsagePermission": false,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
         }
       ],
       [

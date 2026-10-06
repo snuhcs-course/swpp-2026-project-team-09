@@ -17,6 +17,11 @@ export interface Kept {
   locationExplained: boolean;
   // The token of the Invite Link the app was opened with, until its accept screen shows it. A later link replaces it.
   inviteToken: string | null;
+  // For the background task, which has no screens to ask: the Master Switch as the app last knew it, whether the User
+  // chose background sharing on this phone, and whether it was started and not stopped by the app since.
+  masterSwitch: boolean;
+  backgroundChosen: boolean;
+  backgroundRunning: boolean;
 }
 
 const KEY = 'snunow.kept';
@@ -29,10 +34,16 @@ const FIRST_STATE: Kept = {
   answers: null,
   locationExplained: false,
   inviteToken: null,
+  masterSwitch: false,
+  backgroundChosen: false,
+  backgroundRunning: false,
 };
 
-// What an older version stored has no `consented`, `locationExplained` or `inviteToken`: the rest of it still counts.
-function isKept(value: unknown): value is Omit<Kept, 'consented' | 'locationExplained' | 'inviteToken'> {
+type Later =
+  'consented' | 'locationExplained' | 'inviteToken' | 'masterSwitch' | 'backgroundChosen' | 'backgroundRunning';
+
+// What an older version stored lacks the fields added later: the rest of it still counts.
+function isKept(value: unknown): value is Omit<Kept, Later> {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -61,6 +72,9 @@ export async function readKept(): Promise<Kept> {
       consented: 'consented' in value && value.consented === true,
       locationExplained: 'locationExplained' in value && value.locationExplained === true,
       inviteToken: 'inviteToken' in value && typeof value.inviteToken === 'string' ? value.inviteToken : null,
+      masterSwitch: 'masterSwitch' in value && value.masterSwitch === true,
+      backgroundChosen: 'backgroundChosen' in value && value.backgroundChosen === true,
+      backgroundRunning: 'backgroundRunning' in value && value.backgroundRunning === true,
     };
   } catch {
     return FIRST_STATE;

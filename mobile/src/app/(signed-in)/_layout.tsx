@@ -1,7 +1,7 @@
 import { type NativeStackNavigationOptions, router, Stack, useGlobalSearchParams, useSegments } from 'expo-router';
 import { type ReactElement, useEffect } from 'react';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
-import { PositionProvider, PositionSending } from '@/position';
+import { BackgroundSharingProvider, PositionProvider, PositionSending } from '@/position';
 import { useOwnPlace } from '@/session/session';
 import { keep, readKeptAfterChanges } from '@/storage/kept';
 
@@ -44,7 +44,7 @@ function useInviteLinks(here: boolean): void {
 
 // The signed-in place: a User who agreed to the legal documents and finished Onboarding. The tabs, and the screens
 // that cover them, which the stack's back closes. The User's position is watched here, once for all of them, and sent
-// from here while the Master Switch is on.
+// from here while the Master Switch is on, in front and, where the User chose it, in the background.
 export default function SignedInLayout(): ReactElement {
   const reduceMotion = useReduceMotion();
   const away = useOwnPlace('ready');
@@ -55,18 +55,20 @@ export default function SignedInLayout(): ReactElement {
   return (
     <PositionProvider>
       <PositionSending>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="quests" options={slideFrom('bottom', reduceMotion)} />
-          <Stack.Screen name="notifications" options={slideFrom('right', reduceMotion)} />
-          <Stack.Screen name="profile-edit" options={slideFrom('right', reduceMotion)} />
-          <Stack.Screen name="me/friends/index" options={slideFrom('right', reduceMotion)} />
-          <Stack.Screen name="me/friends/requests" options={slideFrom('right', reduceMotion)} />
-          <Stack.Screen name="me/friends/add" options={slideFrom('right', reduceMotion)} />
-          <Stack.Screen name="invite/[token]" options={slideFrom('bottom', reduceMotion)} />
-          <Stack.Screen name="menus" options={slideFrom('bottom', reduceMotion)} />
-          <Stack.Screen name="map-sources" options={slideFrom('right', reduceMotion)} />
-        </Stack>
+        <BackgroundSharingProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="quests" options={slideFrom('bottom', reduceMotion)} />
+            <Stack.Screen name="notifications" options={slideFrom('right', reduceMotion)} />
+            <Stack.Screen name="profile-edit" options={slideFrom('right', reduceMotion)} />
+            <Stack.Screen name="me/friends/index" options={slideFrom('right', reduceMotion)} />
+            <Stack.Screen name="me/friends/requests" options={slideFrom('right', reduceMotion)} />
+            <Stack.Screen name="me/friends/add" options={slideFrom('right', reduceMotion)} />
+            <Stack.Screen name="invite/[token]" options={slideFrom('bottom', reduceMotion)} />
+            <Stack.Screen name="menus" options={slideFrom('bottom', reduceMotion)} />
+            <Stack.Screen name="map-sources" options={slideFrom('right', reduceMotion)} />
+          </Stack>
+        </BackgroundSharingProvider>
       </PositionSending>
     </PositionProvider>
   );

@@ -514,7 +514,7 @@ Ticket 12 connected every row that the demo's flows (P20) use and the main serve
 | Lobby | Connected | `POST /lobby`, with `masterSwitch` and `profile.friendId` | |
 | The profile (프로필 편집) | Connected | `PATCH /users/me/profile` with the changed fields | |
 | The Master Switch | Connected | `PUT /users/me/master-switch`; read from the Lobby | The mock keeps it in memory, off at each start |
-| Sending the User's position | Connected | `POST /positions`, at most every 5 s while the switch is on, the permission granted and the app in front | `MASTER_SWITCH_OFF` turns the switch off; the 400s and no answer drop a position; sending in the background is P17's. The mock refuses while the switch is off and answers `offCampus` by the campus rectangle |
+| Sending the User's position | Connected | `POST /positions`, at most every 5 s while the switch is on, the permission granted and the app in front | `MASTER_SWITCH_OFF` turns the switch off; the 400s and no answer drop a position. On Android, with the row `백그라운드에서도 공유`, also every 30 s in the background under a notification (P17). The mock refuses while the switch is off and answers `offCampus` by the campus rectangle |
 | The timetable on 내 정보, the Places | Connected | `GET /timetable/classes`, `GET /places` | Read only; the mock has the `Profile` frame's four classes. The Places also place the 식당 pins (P15) |
 | Friend Requests | Connected | `GET /friend-requests`; fetched again on `friends-changed` | |
 | Quest invitations, requests to join | Connected | `GET /quest-invitations`, `GET /quests/:questId/join-requests` for each Quest the User leads with Approval; fetched again on `quests-changed` | The mock leads no Quest, so it has no request to join |

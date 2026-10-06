@@ -1,6 +1,6 @@
 {
   "name": "mobile",
-  "main": "expo-router/entry",
+  "main": "index.ts",
   "version": "1.0.0",
   "packageManager": "pnpm@12.6.0",
   "dependencies": {
@@ -23,6 +23,7 @@
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.3",
     "expo-system-ui": "~57.0.4",
+    "expo-task-manager": "~57.0.21",
     "expo-web-browser": "~57.0.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
