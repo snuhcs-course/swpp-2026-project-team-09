@@ -20,11 +20,12 @@ describe('the map check for developers', () => {
     expect(screen.getByText('누른 것: friend:f1')).toBeVisible();
   });
 
-  it('draws and clears the route line', async () => {
+  it('draws and clears two lines, one of them dashed', async () => {
     await render(<MapCheck />);
 
     await userEvent.press(screen.getByRole('button', { name: '경로 그리기' }));
-    expect(screen.getByLabelText('경로가 그려져 있습니다')).toBeVisible();
+    expect(screen.getAllByLabelText('경로가 그려져 있습니다')).toHaveLength(2);
+    expect(screen.getAllByTestId('route-stroke').length).toBeGreaterThan(2);
     await userEvent.press(screen.getByRole('button', { name: '경로 지우기' }));
     expect(screen.queryByLabelText('경로가 그려져 있습니다')).toBeNull();
   });

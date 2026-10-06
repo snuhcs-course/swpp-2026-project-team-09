@@ -10,7 +10,7 @@ import { EMPTY, EVENT, FRIEND, GATE, LIBRARY } from './support/map';
 // What `native-map.tsx` hands the module's view, as far as these tests read it.
 interface MockViewProps {
   avatars: { id: string; passive: boolean }[];
-  looks: { routeColor: string; routeWidth: number };
+  lines: { id: string; points: LatLng[]; color: string; width: number }[];
   inset: { top: number; right: number; bottom: number; left: number };
   onThingPress: (event: { nativeEvent: { id: string } }) => void;
   onCameraIdle: (event: { nativeEvent: LatLng & { zoom: number } }) => void;
@@ -167,12 +167,18 @@ describe('what the native map hands the module', () => {
     expect(map.onPress.mock.calls).toEqual([['friend:f1']]);
   });
 
-  it("gives the route the screen's colour and width, or the map's own plain line", async () => {
-    await show({ routeStyle: { color: '#865600', width: 3, dash: [2, 6] } });
-    expect(mockProps?.looks).toMatchObject({ routeColor: '#865600', routeWidth: 3 });
+  it('hands the module each line in order, with its id, points, colour and width', async () => {
+    await show({
+      lines: [
+        { id: 'shuttle', points: [GATE, LIBRARY, GATE], style: { color: '#6B46C1', width: 3, dash: [8, 6] } },
+        { id: 'walking-route', points: [LIBRARY, GATE], style: { color: '#865600', width: 3, dash: [2, 6] } },
+      ],
+    });
 
-    await show();
-    expect(mockProps?.looks).toMatchObject({ routeColor: '#2F6BFF', routeWidth: 5 });
+    expect(mockProps?.lines).toEqual([
+      { id: 'shuttle', points: [GATE, LIBRARY, GATE], color: '#6B46C1', width: 3 },
+      { id: 'walking-route', points: [LIBRARY, GATE], color: '#865600', width: 3 },
+    ]);
   });
 });
 

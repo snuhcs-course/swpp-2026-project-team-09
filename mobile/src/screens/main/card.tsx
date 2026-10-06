@@ -11,7 +11,7 @@ interface CardProps {
   // "가까이 보기" is offered: the camera is below the "names" level of detail.
   canLookCloser: boolean;
   onLookCloser: () => void;
-  // The card's own button: "길찾기", or one whose feature belongs to another task.
+  // The card's own button, where it has one: "길찾기", or one whose feature belongs to another task.
   onPrimary: () => void;
   onClose: () => void;
   // The card's height, once it is laid out and whenever it changes: a toast sits above it.
@@ -27,6 +27,7 @@ const PLACE: Record<Extract<CardMark, { type: 'place' }>['place'], { tint: strin
   party: { tint: color.party, icon: 'users' },
   quest: { tint: color.quest, icon: 'flag' },
   dining: { tint: color.svcDining, icon: 'meal' },
+  shuttle: { tint: color.svcShuttle, icon: 'bus' },
 };
 
 // What stands at the card's head: a person's Avatar, with the status for a Friend, or the place's icon on a round
@@ -114,11 +115,13 @@ export function Card({
             {LOOK_CLOSER}
           </Button>
         ) : null}
-        <View style={styles.primary}>
-          <Button full onPress={onPrimary}>
-            {card.primary.label}
-          </Button>
-        </View>
+        {card.primary === null ? null : (
+          <View style={styles.primary}>
+            <Button full onPress={onPrimary}>
+              {card.primary.label}
+            </Button>
+          </View>
+        )}
       </View>
     </View>
   );

@@ -505,8 +505,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   "식당 끄기", filled with their layer's colour while on; above them the tile 메뉴 ("메뉴 보기"), which closes the
   stack and opens the menu panel at the meal served next. A transparent scrim over the map ("편의기능 레이어 닫기")
   and Android's back button close it, the button before a card under it; the zoom control is hidden while it is
-  open. 셔틀버스 says "준비 중이에요" and stays off until P15's ticket 02. The layers start off when the app starts
-  and stay as they are while another tab is shown.
+  open. The layers start off when the app starts and stay as they are while another tab is shown.
 - **The 식당 layer** (`src/features/dining/`, the `MapDining` frame). Turning it on fetches today's menus, a day of
   Korea's calendar, and the Places, every time; failing either shows no pins and says "식당 정보를 불러오지
   못했어요". A pin stands on the Place of each restaurant of the restaurant → Place table (see "Data") that has a
@@ -516,6 +515,27 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   ("오늘 점심 · 저녁"); "메뉴 보기" opens the menu panel at the meal served next, at the first of its restaurants.
   Turning the layer off takes the pins away and closes a 식당's card. The frame's clusters, cafés and convenience
   stores are not built.
+- **The shuttle layer** (`src/features/shuttle/`, the `Main` frame). Turning 셔틀버스 on fetches the route
+  (`GET /shuttle`) and the vehicles (`GET /shuttle/vehicles`), every time; a failure of the route shows nothing and
+  says "셔틀버스 정보를 불러오지 못했어요", and a failure of the vehicles alone leaves the route until the socket's next
+  set. The route's line is drawn purple, 3 wide, dashed 8 and 6, under every marker; each stop is the shuttle's pin
+  of `MapPin`, with its name under it from the `names` level; each vehicle in service is the same pin, an Avatar
+  above the stops, with "운행 중" under it. A stop's card says "셔틀버스 · 교내 순환", "{stop} 정류장" and the next stop
+  in loop order, and has no button but "가까이 보기"; a vehicle's says "셔틀버스 · 운행 중", "교내 순환 셔틀" and
+  "{stop}에 있어요 · 다음 정류장 {next}", follows the vehicle's sets and closes when it goes, and "노선 보기" fits the
+  camera to the whole line and closes the card. Outside weekdays from 08:00 to 21:00 in Korea's time
+  (`SERVICE_HOURS`), a notice at the bottom card's place says "지금은 셔틀버스가 운행하지 않아요" over the route's
+  service hours as the server words them; it is checked every 5 seconds, gives way to an open card, hides the row of
+  buttons and the zoom control as a card does, and the 편의기능 button stands 8 above it. Turning the layer off takes
+  everything away and closes a stop's or a vehicle's card.
+- **How a vehicle travels.** The operator reports a vehicle only at a stop. A vehicle seen for the first time is
+  placed at its stop. One reported at a new stop travels there along the line in the line's direction, the order of
+  the stops, past any stops skipped between two sets, in 10 seconds (`TRIP_MS`): every second it glides for a second
+  to the next point along the line, so that the straight glides follow the line's bends. A stop is where the line
+  comes nearest to it, found once when the route arrives. A stop more than half the loop ahead counts as behind the
+  last one, and the vehicle is placed there at once, as every move is on a phone that asks for less motion. A
+  vehicle missing from a newer set goes at once, and one whose report is more than a minute old goes too, checked
+  every 5 seconds against the phone's clock, so that the vehicles leave when the service ends or no set comes.
 - **The map's credit** is a button, "지도 데이터 출처 보기", that opens the sources of the map's data.
 - Every control has a Korean name for a screen reader, the wireframe's where it has one. A touch area is at least 48
   high: a row is 56, and the pills and the round buttons of 32 and 40 reach past their shapes (`hitSlop`), never
@@ -689,15 +709,16 @@ position. Its `kind` is `global-event`, `party`, `shared-quest`, `friend` or `pa
 Behind a hook are three layers:
 
 - **The API client** (`src/api/client.ts`): one operation per question to the main server. `src/api/types.ts` (with
-  `waiting-types.ts`, the lists of what waits for the User, and `menu-types.ts`, the menus) holds the answers' shapes.
+  `waiting-types.ts`, the lists of what waits for the User, `menu-types.ts`, the menus, and `shuttle-types.ts`, the
+  shuttle) holds the answers' shapes.
   A shape marked "provisional" comes from an open pull request of the main server, and one marked "the app's own" is
   defined nowhere else yet.
 - **An adapter** per feature (`src/features/<feature>/adapter.ts`): turns answers into what the screens use, such as
   `FriendView`, `QuestRowView`, `CardView`, `FootprintsView` and `ActivePartyView`.
 - **The main server's client** (`src/api/server/`): the operations the main server serves, in a build that asks it
   (`asksMainServer()`). `http.ts` is the one way to the main server: it attaches the access token, renews the Session
-  once on a 401 and asks again, and ends the Session when that cannot mend it. `answers.ts` (with `waiting-answers.ts`
-  and `menu-answers.ts`) checks each answer's shape before the app believes it; an answer of another shape fails as
+  once on a 401 and asks again, and ends the Session when that cannot mend it. `answers.ts` (with `waiting-answers.ts`,
+  `menu-answers.ts` and `shuttle-answers.ts`) checks each answer's shape before the app believes it; an answer of another shape fails as
   no answer does.
 - **The mocks** (`src/api/mock/`): every other operation, and every operation where the app asks no main server, is
   answered inside the app, in the main server's shape, with what the `Main` wireframe shows. A mock answers after 0.3
@@ -732,6 +753,8 @@ Behind a hook are three layers:
 | `getFootprints`                                                      | What "오늘의 발자국" shows: a number and faces     | The mock: the app's own                                        |
 | `findWalkingRoute`                                                   | The way on foot between two points                 | `GET /walking-route`                                           |
 | `listMenus`                                                          | One day's menus by restaurant                      | `GET /menus?date=`                                             |
+| `getShuttle`                                                         | The shuttle's route: hours, stops and line         | `GET /shuttle`                                                 |
+| `listShuttleVehicles`                                                | The shuttle's vehicles in service, at their stops  | `GET /shuttle/vehicles`, and the socket's set                  |
 
 The mock keeps the Friends, the Friend Requests and the Invite Links in memory while the app runs
 (`src/api/mock/friendships.ts`), with Friend IDs for the frame's people, and refuses as the main server does. The
@@ -855,6 +878,9 @@ socket server's README describes:
   `quests-changed` the Quests, the invitations and the requests to join, `meetups-changed` the Meetups, `party-changed`
   the Parties and the positions, `global-events-changed` the Global Events and the Quests. When the app returns to the
   front, the lists of 알림, the Friend Requests among them, are fetched again too.
+- `shuttle-vehicles-updated` replaces the shuttle's vehicles in the cache of `GET /shuttle/vehicles` while the
+  shuttle layer is on, which is while that query is in use; a set that comes while it is off is dropped. When the
+  connection opens again while the layer is on, the vehicles are fetched again.
 
 The app sends its own position over `POST /positions`, not over the connection (see "The User's position").
 
@@ -968,8 +994,7 @@ const [eventPin, myAvatar] = useMarkerImages([{ kind: 'official', form: 'pin' },
   markers={[{ id: 'event:e1', name: '공식 행사 · AI 커리어 설명회', position, image: eventPin, text: 'AI 커리어' }]}
   // passive: it takes no press, and a press on it reaches what is drawn under it
   avatars={[{ id: 'me', name: '내 위치', position: mine, image: myAvatar, glideMs: 5000, order: 1, passive: true }]}
-  route={line} // LatLng[], or null for none
-  routeStyle={{ color: color.quest, width: 3, dash: [2, 6] }} // left out, the map's own plain line
+  lines={[{ id: 'walking-route', points: line, style: { color: color.quest, width: 3, dash: [2, 6] } }]}
   onPress={(id) => {}} // a marker's or an Avatar's id
   onCameraIdle={({ centre, zoom }) => {}} // once when the map is ready, then each time the camera rests elsewhere
   onFitZoom={(zoom) => {}} // the zoom at which the whole campus is in view, before the first onCameraIdle
@@ -1009,13 +1034,16 @@ map.current?.fitTo([from, to], { padding: 48, maxZoom: 15.8 }); // and no closer
   without a glide. A new position is reached over `glideMs`, and one that comes during a glide starts from where the
   Avatar is shown. A new `image` or `text` alone does not restart a glide. With a `glideMs` of 0 the Avatar is
   placed at once.
-- **What is on top**: every Avatar is above every marker, and the route is under both. Among markers, and among
+- **What is on top**: every Avatar is above every marker, and every line is under both. Among markers, and among
   Avatars, the higher `order` is on top; without one it is 0, and of two that are equal the later in the list is on
   top. The screen ranks what matters, such as the User's own Avatar or a selected marker.
-- **The route** is one line through the points given, or none. `routeStyle` says its look: a colour, a width in
-  points on the screen and, for a dashed line, the length of a dash and of the gap after it, measured as SVG's
-  `stroke-dasharray` is; the ends and the dashes are round, and the width and the dashes are the same at every zoom.
-  Without it the line is the map's own.
+- **Lines** are what the list says, as markers are: a line with a new `id` is added, one whose `id` stays is the
+  same line with its points or its style changed, and one that is gone is removed; the same points and style in a
+  new list draw nothing again. Among lines, the later in the list is on top. A line runs through its `points` in
+  order, and its `style` says its look: a colour, a width in points on the screen and, for a dashed line, the length
+  of a dash and of the gap after it, measured as SVG's `stroke-dasharray` is; the ends and the dashes are round, and
+  the width and the dashes are the same at every zoom. The main screen draws the shuttle's line under the walking
+  route.
 - **`fitTo`** takes its `padding` as one number for all four edges or as one for each edge. The points are fitted
   into what the padding leaves of the view, and their middle comes to the middle of that. With `maxZoom` the camera
   comes no closer than that zoom: points that are near each other are shown from there.
@@ -1039,11 +1067,11 @@ The component chooses while the app runs (`src/map/map.tsx`), by whether the bui
 - **Without it**, which Expo Go, the web and the tests are, it shows the plain ground (`src/map/plain-map.tsx`) with
   the words "지도는 Android·iOS 빌드에서 보입니다". It is no stand-in map: it has no tiles and draws no campus, and a User
   cannot pan it. It follows the camera's rules (`src/map/projection.ts`) and places what it was asked to show by
-  position: each marker and Avatar as the design system's own view with its `text` under it, and the route as
-  straight strokes, or as the dashes of a dashed `routeStyle` (`src/map/plain-route.tsx`). So `moveCamera`, `fitTo` and a moved Avatar are seen, and a screen can be laid out around it.
+  position: each marker and Avatar as the design system's own view with its `text` under it, and each line as
+  straight strokes, or as the dashes of a dashed style (`src/map/plain-route.tsx`), under `line:{id}`. So `moveCamera`, `fitTo` and a moved Avatar are seen, and a screen can be laid out around it.
   An Avatar glides there too, unless the phone asks for less motion.
 - On the plain ground each marker and Avatar is a button under its `name`, with the look's name as its `testID`,
-  and the route is read as "경로가 그려져 있습니다". A passive one is a picture under its `name`, not a button, and
+  and each line is read as "경로가 그려져 있습니다". A passive one is a picture under its `name`, not a button, and
   takes no pointer events. The `text` under a marker is the `Main` wireframe's name: 11/16 in the bold weight on a
   white round, 3 under the marker's foot. One outside the view is not drawn and stays in the tree under its name. So a
   screen reader, and a test, reach everything the map was asked to show. In a test the ground is as large as the
@@ -1103,8 +1131,11 @@ of the design system's tokens. How it keeps the rules:
 - **Markers and Avatars** are labels on two layers, the Avatars' above the markers', ranked by `order` and their
   place in the list. A label is drawn once its picture is there; its `text` is the SDK's own text under it. An Avatar
   glides at an even speed, from where it is shown.
-- **The route** is the SDK's route line, under the labels: a solid line in the colour and the width of `routeStyle`.
-  It does not draw the dashes yet.
+- **Lines** are the SDK's route lines, under the labels, one for each `id`: a new one is added, a kept one whose
+  points, colour or width changed takes the new ones (`changeSegments`), and one no longer listed is removed. Each
+  line's z order is its place in the list, so the later is on top. A line is solid, in its colour and width: the
+  module does not draw the dashes, and is handed no dash. The SDK's own patterns repeat a picture along a line, which
+  would draw dashes only with a picture for each look; that is not built.
 - **In TypeScript**, `src/map/native-map.tsx` keeps what the interface gained after the module was written, with the
   sums of `src/map/projection.ts`, which the module's Kotlin repeats:
   - the fit zoom, which the module does not send, from the view's size as it is laid out. `onFitZoom` is told before
@@ -1131,7 +1162,7 @@ The module's iOS side is in Swift, in `modules/snu-now-map/ios/`, around Kakao M
 CocoaPods pod `KakaoMapsSDK`. Expo links it into every build for iOS. It takes the same view, with the same props and
 calls, as the Android side, and keeps the rules the same way: the zoom through the camera's height, the camera brought
 back inside the rectangle after a move, markers and Avatars as the SDK's Pois on two layers, its own glide, and the
-SDK's route line under them. What is different:
+lines under them. What is different:
 
 - **The engine**: the SDK starts nothing by itself. Each map view prepares and activates Kakao's engine when it is put
   in a window, and pauses and resets it when it leaves, which frees the map. When the app goes to the background the
@@ -1151,10 +1182,14 @@ SDK's route line under them. What is different:
   `null` that the component sends for a picture not made yet or a marker without text. Expo drops such a prop without
   a word.
 - **Kakao's logo** stays where the SDK puts it, at the bottom right, apart from the credit at the bottom left.
+- **Lines** are routes of one route layer, each under its line's `id`, with a style set for each colour and width,
+  registered once. A new one is added, one whose points, look or place in the list changed is removed and added again
+  under its `id`, with its place in the list as its z order, and one no longer listed is removed. A line is solid, as
+  on Android.
 
 ### Trying it
 
 `/map-check`, opened as `/catalogue` is (`snunow://map-check` in a development build), shows the component with sample markers,
-Avatars and buttons that move the User's Avatar, draw and clear the route line, fit the camera to the route, zoom in
+Avatars and buttons that move the User's Avatar, draw and clear two lines, one of them dashed, fit the camera to the solid one, zoom in
 and show the whole campus. It says what was pressed and where the camera stopped. It is for developers: a released
 app does not show it. The native modules are checked on it.

@@ -2,13 +2,21 @@ import ExpoModulesCore
 import KakaoMapsSDK
 import UIKit
 
+// What a line was last drawn with.
+private struct DrawnLine: Equatable {
+  let points: [Position]
+  let color: String
+  let width: Double
+  let z: Int
+}
+
 // Kakao's map behind the map component, to the rules of `src/map/types.ts`. The SDK takes whole zoom levels only,
 // so the camera is set by its height, which is measured against the Web Mercator zoom when the map is ready. The SDK
 // does not keep the camera inside a rectangle, so the view brings it back when a move ends outside. The view drives
 // the SDK's engine itself: it starts it when it is put in a window and resets it when it leaves.
 final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegate {
   private static let mapName = "map"
-  private static let routeName = "route"
+  private static let lineLayerName = "lines"
   private static let markerZ = 5001
   private static let avatarZ = 5002
   private static let animationMs: UInt = 300
@@ -30,7 +38,7 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
   var maxZoom = 0.0
   var markers: [ThingRecord] = []
   var avatars: [ThingRecord] = []
-  var route: [Position]?
+  var lines: [LineRecord] = []
   var looks = LooksRecord()
   var inset = InsetRecord()
 
@@ -41,8 +49,9 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
   private var map: KakaoMap?
   private var markerThings: Things?
   private var avatarThings: Things?
-  private var routeShown: [Position]?
-  private var routeStyles = Set<String>()
+  // The lines drawn, by their `id`, and the style sets registered, by their look.
+  private var drawnLines: [String: DrawnLine] = [:]
+  private var lineStyles = Set<String>()
   private var laidOut = CGSize.zero
   // Where the logo was last put, as its offsets from the bottom right, so that it is moved only when they change.
   private var logoAt: CGPoint?
@@ -121,7 +130,7 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
     }
   }
 
-  // Pauses the engine and resets it, which frees the map with its Pois and route. Coming back makes a new map, opened
+  // Pauses the engine and resets it, which frees the map with its Pois and lines. Coming back makes a new map, opened
   // on the camera last reported.
   private func detach() {
     controller?.pauseEngine()
@@ -131,8 +140,8 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
     avatarThings?.stop()
     markerThings = nil
     avatarThings = nil
-    routeShown = nil
-    routeStyles.removeAll()
+    drawnLines.removeAll()
+    lineStyles.removeAll()
     map = nil
     logoAt = nil
     opened = false
@@ -216,11 +225,11 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
     markerThings = layer(labels, "markers", Self.markerZ).map { Things(layer: $0, pictures: pictures) }
     avatarThings = layer(labels, "avatars", Self.avatarZ).map { Things(layer: $0, pictures: pictures) }
     showThings()
-    showRoute()
+    showLines()
     open()
   }
 
-  // Every Avatar above every marker, none hiding another, and the route under both.
+  // Every Avatar above every marker, none hiding another, and the lines under both.
   private func layer(_ labels: LabelManager, _ id: String, _ z: Int) -> LabelLayer? {
     let layer = labels.addLabelLayer(
       option: LabelLayerOptions(
@@ -241,7 +250,7 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
     }
     placeLogo()
     showThings()
-    showRoute()
+    showLines()
     rest()
   }
 
@@ -292,39 +301,53 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
     avatarThings?.show(avatars, looks)
   }
 
-  private func showRoute() {
-    guard let manager = map?.getRouteManager() else {
+  // One route of the SDK for each line, under the line's `id`, in the one route layer: a new one is added, a kept one
+  // whose points, look or place in the list changed is drawn again under its `id`, and one no longer listed is
+  // removed. A line's z order is its place in the list, so the later is on top. Each look has its style set.
+  private func showLines() {
+    guard let manager = map?.getRouteManager(),
+      let layer = manager.getRouteLayer(layerID: Self.lineLayerName)
+        ?? manager.addRouteLayer(layerID: Self.lineLayerName, zOrder: 0)
+    else {
       return
     }
-    if route == routeShown {
-      return
+    var listed = Set<String>()
+    for (z, line) in lines.enumerated() {
+      // The SDK draws a segment of two distinct points or more.
+      var points: [Position] = []
+      for point in line.points.map({ $0.toPosition() }) where point != points.last {
+        points.append(point)
+      }
+      guard points.count >= 2 else {
+        continue
+      }
+      listed.insert(line.id)
+      let drawn = DrawnLine(points: points, color: line.color, width: line.width, z: z)
+      if drawnLines[line.id] == drawn {
+        continue
+      }
+      if drawnLines[line.id] != nil {
+        layer.removeRoute(routeID: line.id)
+      }
+      let options = RouteOptions(routeID: line.id, styleID: styleOf(drawn, in: manager), zOrder: z)
+      options.segments = [RouteSegment(points: points.map(\.mapPoint), styleIndex: 0)]
+      layer.addRoute(option: options)?.show()
+      drawnLines[line.id] = drawn
     }
-    let layer = manager.getRouteLayer(layerID: Self.routeName) ?? manager.addRouteLayer(layerID: Self.routeName, zOrder: 0)
-    if routeShown != nil {
-      layer?.removeRoute(routeID: Self.routeName)
+    for id in Array(drawnLines.keys) where !listed.contains(id) {
+      layer.removeRoute(routeID: id)
+      drawnLines[id] = nil
     }
-    routeShown = route
-    // The SDK draws a segment of two distinct points or more.
-    var points: [Position] = []
-    for point in route ?? [] where point != points.last {
-      points.append(point)
+  }
+
+  private func styleOf(_ line: DrawnLine, in manager: RouteManager) -> String {
+    let style = "line|\(line.color)|\(line.width)"
+    if !lineStyles.contains(style) {
+      let look = PerLevelRouteStyle(width: UInt(enginePixels(line.width).rounded()), color: color(line.color), level: 0)
+      manager.addRouteStyleSet(RouteStyleSet(styleID: style, styles: [RouteStyle(styles: [look])]))
+      lineStyles.insert(style)
     }
-    if points.count < 2 {
-      return
-    }
-    let style = "\(Self.routeName)|\(looks.routeColor)|\(looks.routeWidth)"
-    if !routeStyles.contains(style) {
-      let line = PerLevelRouteStyle(
-        width: UInt(enginePixels(looks.routeWidth).rounded()),
-        color: color(looks.routeColor),
-        level: 0
-      )
-      manager.addRouteStyleSet(RouteStyleSet(styleID: style, styles: [RouteStyle(styles: [line])]))
-      routeStyles.insert(style)
-    }
-    let options = RouteOptions(routeID: Self.routeName, styleID: style, zOrder: 0)
-    options.segments = [RouteSegment(points: points.map(\.mapPoint), styleIndex: 0)]
-    layer?.addRoute(option: options)?.show()
+    return style
   }
 
   // MARK: The camera

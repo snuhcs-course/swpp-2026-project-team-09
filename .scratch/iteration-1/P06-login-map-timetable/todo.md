@@ -539,6 +539,8 @@ Ticket 12 connected every row that the demo's flows (P20) use and the main serve
 | The AI input | No data | Nothing | It only says that it is not ready; no spec covers it |
 | The Session's end | Connected | The socket's `session-ended`, and a 401 that one renewal cannot mend | `SESSION_REPLACED` shows "다른 기기에서 로그인했어요" |
 | Menus (`listMenus`) | Connected | `GET /menus?date=` | The 식당 layer and the menu panel (P15); the mock is a week of lines from the saved menu pages |
+| The shuttle's route (`getShuttle`) | Connected | `GET /shuttle` | The shuttle layer (P15); the mock is the main server's seed |
+| The shuttle's vehicles (`listShuttleVehicles`) | Connected | `GET /shuttle/vehicles`, the socket's `shuttle-vehicles-updated` | Fetched when the layer is turned on and when the connection opens again while it is on; the mock is three vehicles at stops |
 | The signal `matching-changed` | Not used | The socket | It names nothing these screens show |
 
 ## 4. Controls that say "준비 중이에요"
@@ -551,7 +553,6 @@ The control is there and only shows the toast. The last column is a proposal for
 | Friend panel | A Friend's calendar button, "{이름}님과 파티 만들기" | Proposing a Meetup to the Friend | P14 |
 | Above the navigation | 오늘의 발자국 | The story replay | In no Iteration 1 spec |
 | Above the navigation | 활성 파티 | The party screen | P13 |
-| 편의기능 stack | The 셔틀버스 toggle | The shuttle layer | P15 (ticket 02) |
 | Above the navigation | The AI input, which is a button with the input's look and takes no focus and no text, and its send button, read as disabled | The AI chat, with the real text field | In no Iteration 1 spec |
 | Bottom navigation | 올리기 | The story sheet | In no Iteration 1 spec |
 | 파티 | + 만들기, and the bodies of 찾기, 내 파티 and 초대 | 파티 만들기 and the lists of Quests | P13 |

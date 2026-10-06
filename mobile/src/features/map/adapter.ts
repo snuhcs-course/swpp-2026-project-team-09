@@ -11,10 +11,11 @@ export type CardIcon = 'clock' | 'pin' | 'users' | 'info' | 'route' | 'meal';
 // - a person: the Avatar, with the status for a Friend; `presence` is null for a member of the User's Party who is
 //   no Friend, whose marker has the Party's colour; `id` is the person's own, which stays while what is shown of
 //   them changes;
-// - a place: the icon and the colour of its kind in the design system. The frames draw a Shared Quest as a Party.
+// - a place: the icon and the colour of its kind in the design system. The frames draw a Shared Quest as a Party, and a
+//   shuttle's vehicle as its stops.
 export type CardMark =
   | { type: 'person'; id: string; name: string; photo: string | null; presence: Presence | null }
-  | { type: 'place'; place: 'official' | 'party' | 'quest' | 'dining' };
+  | { type: 'place'; place: 'official' | 'party' | 'quest' | 'dining' | 'shuttle' };
 
 // The thing's marker on the map, beside its `mark` and its `position`.
 export interface CardMarker {
@@ -35,19 +36,34 @@ export interface CardMarker {
 export interface CardView {
   id: string;
   // `shared-quest` is a Quest of the User's that no Party names, such as a dinner with a Friend. `dining` is the
-  // Place of restaurants with menus today, while the 식당 layer is on.
-  kind: 'global-event' | 'party' | 'shared-quest' | 'friend' | 'party-member' | 'dining';
+  // Place of restaurants with menus today, `shuttle-stop` and `shuttle-vehicle` the shuttle's, while their layer is
+  // on.
+  kind:
+    | 'global-event'
+    | 'party'
+    | 'shared-quest'
+    | 'friend'
+    | 'party-member'
+    | 'dining'
+    | 'shuttle-stop'
+    | 'shuttle-vehicle';
   mark: CardMark;
   marker: CardMarker;
   // "공식 행사 · 컴퓨터공학부 공지"
   subLabel: string;
   title: string;
   lines: { icon: CardIcon; text: string }[];
-  // `route` draws the way there. `menu` opens the menu panel at the restaurant. `not-ready` says "준비 중이에요": the
-  // feature belongs to another task.
-  primary: { label: string; action: 'route' | 'not-ready' } | { label: string; action: 'menu'; restaurant: string };
+  // `route` draws the way there. `menu` opens the menu panel at the restaurant. `shuttle-line` shows the shuttle's
+  // whole line. `not-ready` says "준비 중이에요": the feature belongs to another task. Null for a card without one.
+  primary:
+    | { label: string; action: 'route' | 'not-ready' | 'shuttle-line' }
+    | { label: string; action: 'menu'; restaurant: string }
+    | null;
   secondary: { label: string; action: 'not-ready' } | null;
   position: LatLng;
+  // For a thing that glides on the map other than a person, how long its glide to a new position takes. A person's
+  // Avatar glides as the positions come.
+  glideMs?: number;
 }
 
 // A card's id from the id of what it shows, for a part of a screen that holds the thing and not its card.
@@ -57,6 +73,8 @@ export const cardId = {
   friend: (userId: string): string => `friend:${userId}`,
   partyMember: (userId: string): string => `party-member:${userId}`,
   dining: (placeId: string): string => `dining:${placeId}`,
+  shuttleStop: (stopId: string): string => `shuttle-stop:${stopId}`,
+  shuttleVehicle: (carId: string): string => `shuttle-vehicle:${carId}`,
 } as const;
 
 type Line = CardView['lines'][number];

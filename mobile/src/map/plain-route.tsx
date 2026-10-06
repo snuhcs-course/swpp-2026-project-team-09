@@ -1,11 +1,8 @@
 import type { ReactElement } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
-import { color, radius } from '@/design-system';
+import { radius } from '@/design-system';
 import type { Point } from './projection';
-import type { RouteStyle } from './types';
-
-// The plain ground's own line: what a route looks like when a screen says nothing about it.
-const PLAIN: RouteStyle = { color: color.me, width: 5 };
+import type { LineStyle } from './types';
 
 interface Stroke {
   // Its middle, its length without the round ends, and its turn.
@@ -47,7 +44,7 @@ function dashesAlong(points: readonly Point[], [length, gap]: readonly [number, 
   return dashes;
 }
 
-function placed({ at, length, angle }: Stroke, { color: fill, width }: RouteStyle): ViewStyle {
+function placed({ at, length, angle }: Stroke, { color: fill, width }: LineStyle): ViewStyle {
   return {
     left: at.x - (length + width) / 2,
     top: at.y - width / 2,
@@ -58,15 +55,23 @@ function placed({ at, length, angle }: Stroke, { color: fill, width }: RouteStyl
   };
 }
 
-// The route on the plain ground, with round ends: a straight stroke between each two points, or the dashes of a
-// dashed look, and its words for a screen reader.
-export function RouteLine({ points, look = PLAIN }: { points: readonly Point[]; look?: RouteStyle }): ReactElement {
+// A line on the plain ground, with round ends: a straight stroke between each two points, or the dashes of a dashed
+// look, and its words for a screen reader. Its strokes are under `line:{id}`.
+export function PlainLine({
+  id,
+  points,
+  look,
+}: {
+  id: string;
+  points: readonly Point[];
+  look: LineStyle;
+}): ReactElement {
   const strokes =
     look.dash === undefined
       ? points.slice(1).map((to, index) => strokeBetween(points[index] ?? to, to))
       : dashesAlong(points, look.dash);
   return (
-    <>
+    <View style={styles.line} testID={`line:${id}`}>
       <View accessibilityLabel="경로가 그려져 있습니다" accessibilityRole="image" accessible style={styles.unseen} />
       {strokes.map((stroke) => (
         <View
@@ -75,11 +80,12 @@ export function RouteLine({ points, look = PLAIN }: { points: readonly Point[]; 
           testID="route-stroke"
         />
       ))}
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  line: { ...StyleSheet.absoluteFill, pointerEvents: 'none' },
   // In the tree for a screen reader, and too small to see.
   unseen: { position: 'absolute', left: 0, top: 0, width: 1, height: 1, overflow: 'hidden' },
   stroke: { position: 'absolute', borderRadius: radius.full, pointerEvents: 'none' },

@@ -1,22 +1,22 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useEffectEvent, useRef } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef } from 'react';
 import type { LatLng } from '@/api/types';
 import { color, useToast } from '@/design-system';
 import { useWalkingRoute } from '@/features/map/use-walking-route';
 import { useNextQuest } from '@/features/quests/use-next-quest';
-import type { RouteStyle } from '@/map';
+import type { LineStyle, MapLine } from '@/map';
 import { ROUTE_PADDING } from './layout';
 import type { MainMap } from './use-main-map';
 import type { Me } from './use-me';
 
 // The route line as the `Main` frame draws it: dots of the Quest's colour, 3 wide, a dash of 2 after each gap of 6.
-export const ROUTE_STYLE: RouteStyle = { color: color.quest, width: 3, dash: [2, 6] };
+export const ROUTE_STYLE: LineStyle = { color: color.quest, width: 3, dash: [2, 6] };
 
 export const NO_WAY = '길을 찾지 못했어요';
 
 export interface MainRoute {
   // For `<Map>`: the one route line, or null.
-  line: readonly LatLng[] | null;
+  line: MapLine | null;
   // "길찾기": draws the way from the User's position to the place, in place of the line that is drawn, brings both
   // ends into view and says "…까지 길 안내". Without a position to start from it draws nothing and answers false:
   // it shows the explanation before the location prompt when the permission is missing, and otherwise brings the
@@ -86,5 +86,9 @@ export function useRoute(map: MainMap, me: Me): MainRoute {
     showToast(`${title}까지 길 안내`);
     return true;
   };
-  return { line: route?.status === 'OK' ? route.route.line : null, routeTo };
+  const line = useMemo(
+    () => (route?.status === 'OK' ? { id: 'walking-route', points: route.route.line, style: ROUTE_STYLE } : null),
+    [route],
+  );
+  return { line, routeTo };
 }

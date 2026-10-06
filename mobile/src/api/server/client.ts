@@ -23,6 +23,7 @@ import {
   isWalkingRoute,
 } from './answers';
 import { isMenus } from './menu-answers';
+import { isShuttleRoute, isShuttleVehicles } from './shuttle-answers';
 import { isFriendRequests, isJoinRequests, isMeetups, isQuestInvitations } from './waiting-answers';
 import { call } from './http';
 
@@ -120,4 +121,6 @@ export const serverClient: ApiClient = {
       },
     }),
   listMenus: (date) => call('GET', '/menus', isMenus, { query: { date } }),
+  getShuttle: () => call('GET', '/shuttle', isShuttleRoute),
+  listShuttleVehicles: () => call('GET', '/shuttle/vehicles', isShuttleVehicles),
 };

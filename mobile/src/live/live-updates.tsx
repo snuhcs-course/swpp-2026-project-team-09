@@ -12,9 +12,11 @@ import {
   POSITIONS_KEY,
   QUEST_INVITATIONS_KEY,
   QUESTS_KEY,
+  SHUTTLE_VEHICLES_KEY,
 } from '@/api/queries';
 import { renewSession } from '@/api/server/http';
 import { asksMainServer, socketServerUrl } from '@/api/servers';
+import type { ShuttleVehicle } from '@/api/shuttle-types';
 import type { Friend, MyParty, Position } from '@/api/types';
 import { heldTokens } from '@/auth/tokens';
 import { useSession } from '@/session/session';
@@ -41,7 +43,8 @@ const WAITING: readonly QueryKey[] = [
   JOIN_REQUESTS_KEY,
 ];
 
-// What is fetched again when the connection opens again: what may have changed while it was closed.
+// What is fetched again when the connection opens again: what may have changed while it was closed. The shuttle's
+// vehicles are fetched only while the layer that shows them is on.
 const SHOWN: readonly QueryKey[] = [
   FRIENDS_KEY,
   FRIEND_REQUESTS_KEY,
@@ -49,6 +52,7 @@ const SHOWN: readonly QueryKey[] = [
   QUESTS_KEY,
   MY_PARTY_KEY,
   GLOBAL_EVENTS_KEY,
+  SHUTTLE_VEHICLES_KEY,
   ...WAITING,
 ];
 
@@ -97,6 +101,12 @@ function openFor(queryClient: QueryClient): () => void {
       queryClient.setQueryData<Position[]>(POSITIONS_KEY, (positions) =>
         positions?.filter((position) => position.userId !== userId),
       );
+    },
+    onShuttleVehicles: (vehicles) => {
+      // Kept only while the shuttle layer is on: a set that comes while it is off is dropped.
+      if (queryClient.getQueryCache().find({ queryKey: SHUTTLE_VEHICLES_KEY })?.isActive() === true) {
+        queryClient.setQueryData<ShuttleVehicle[]>(SHUTTLE_VEHICLES_KEY, vehicles);
+      }
     },
     onSignal: (name) => {
       refetch(queryClient, REFETCH[name] ?? []);

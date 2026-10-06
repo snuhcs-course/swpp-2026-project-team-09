@@ -273,7 +273,7 @@ const NO_ROUTE = new Set([
   'ROUTE_RESULT_NOT_FOUND',
 ]);
 
-function isPoint(value: unknown): value is { latitude: number; longitude: number } {
+export function isPoint(value: unknown): value is { latitude: number; longitude: number } {
   return isNumber(field(value, 'latitude')) && isNumber(field(value, 'longitude'));
 }
 

@@ -1,9 +1,11 @@
 import { io, type Socket } from 'socket.io-client';
+import { isShuttleVehicles } from '@/api/server/shuttle-answers';
+import type { ShuttleVehicle } from '@/api/shuttle-types';
 import type { Position } from '@/api/types';
 
 // The app's one connection to the socket server (`socket-server/README.md`, "Socket connection"). It opens with the
-// access token and tells what arrives: the Session's end, the positions of the Users the app may see, and the signals
-// that something the app shows has changed. The socket server closes it when the access token expires, and refuses a
+// access token and tells what arrives: the Session's end, the positions of the Users the app may see, the shuttle's
+// vehicles, and the signals that something the app shows has changed. The socket server closes it when the access token expires, and refuses a
 // token that has expired; either way the connection renews the Session once and opens again with the new token.
 
 export interface LiveHandlers {
@@ -17,6 +19,8 @@ export interface LiveHandlers {
   onSessionEnded: (replaced: boolean) => void;
   onPosition: (position: Position) => void;
   onPositionRemoved: (userId: string) => void;
+  // Every vehicle in service, in place of the ones before; [] when none runs.
+  onShuttleVehicles: (vehicles: ShuttleVehicle[]) => void;
   // Any other event: a signal by its name, which carries nothing.
   onSignal: (name: string) => void;
 }
@@ -24,7 +28,7 @@ export interface LiveHandlers {
 // When nothing answered a renewal, it is tried again after this wait.
 export const RETRY_MS = 5000;
 
-const OWN_EVENTS = new Set(['session-ended', 'position', 'position-removed']);
+const OWN_EVENTS = new Set(['session-ended', 'position', 'position-removed', 'shuttle-vehicles-updated']);
 
 function field(value: unknown, name: string): unknown {
   return typeof value === 'object' && value !== null ? Reflect.get(value, name) : undefined;
@@ -115,6 +119,11 @@ function listen(socket: Socket, handlers: LiveHandlers, end: (replaced: boolean)
     const userId = field(event, 'userId');
     if (typeof userId === 'string') {
       handlers.onPositionRemoved(userId);
+    }
+  });
+  socket.on('shuttle-vehicles-updated', (vehicles: unknown) => {
+    if (isShuttleVehicles(vehicles)) {
+      handlers.onShuttleVehicles(vehicles);
     }
   });
   socket.onAny((name: string) => {
