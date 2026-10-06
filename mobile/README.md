@@ -1307,7 +1307,10 @@ of the design system's tokens. How it keeps the rules:
   moves the camera back inside, at once, and reports only a camera inside them.
 - **Markers and Avatars** are labels on two layers, the Avatars' above the markers', ranked by `order` and their
   place in the list. A label is drawn once its picture is there; its `text` is the SDK's own text under it. An Avatar
-  glides at an even speed, from where it is shown.
+  glides at an even speed, from where it is shown. A press goes to the thing whose picture is drawn where the finger
+  came down, an Avatar before a marker: the SDK would give it to the label whose whole picture, clear room included,
+  holds the point, so a small pin beside an Avatar could not be pressed. Where no picture is drawn, as on a label's
+  text, the SDK's label takes it.
 - **Lines** are the SDK's route lines, under the labels, one for each `id`: a new one is added, a kept one whose
   points, colour or width changed takes the new ones (`changeSegments`), and one no longer listed is removed. Each
   line's z order is its place in the list, so the later is on top. A line is solid, in its colour and width: the
