@@ -1,21 +1,11 @@
 import type { ReactElement } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { QuestInvitation } from '@/api/waiting-types';
 import { now } from '@/clock';
-import {
-  Avatar,
-  Button,
-  cardStyles,
-  color,
-  EmptyState,
-  ErrorState,
-  font,
-  LoadingState,
-  SectionHeader,
-  space,
-} from '@/design-system';
+import { Avatar, Button, cardStyles, color, ErrorState, font, LoadingState, space } from '@/design-system';
 import { useInvitations } from '@/features/party/use-party';
 import { agoWords } from '@/features/quests/room-adapter';
+import { MeetupInvites } from './invites-meetups';
 import { type PartyActions, usePartyActions } from './use-party-actions';
 
 function InvitationCard({ invitation, actions }: { invitation: QuestInvitation; actions: PartyActions }): ReactElement {
@@ -51,25 +41,24 @@ function InvitationCard({ invitation, actions }: { invitation: QuestInvitation; 
   );
 }
 
-// 초대, the frame's `PartyInvites`: the invitations into Quests, the newest first.
+// 초대, the frame's `PartyInvites`: the invitations into Quests, the newest first, and then the Meetups.
 export function InvitesTab(): ReactElement {
   const { data: invitations, isPending, refetch } = useInvitations();
   const actions = usePartyActions();
+  if (invitations === undefined) {
+    return isPending ? <LoadingState /> : <ErrorState onRetry={refetch} />;
+  }
   return (
-    <ScrollView contentContainerStyle={styles.body}>
-      {invitations === undefined && isPending ? <LoadingState /> : null}
-      {invitations === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
-      {invitations === undefined ? null : <SectionHeader>{`받은 초대 · ${String(invitations.length)}`}</SectionHeader>}
-      {invitations?.length === 0 ? <EmptyState icon="users" words="받은 초대가 없어요" /> : null}
-      {(invitations ?? []).map((invitation) => (
+    <MeetupInvites
+      before={invitations.map((invitation) => (
         <InvitationCard actions={actions} invitation={invitation} key={invitation.id} />
       ))}
-    </ScrollView>
+      beforeCount={invitations.length}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  body: { gap: space[3], padding: space[4] },
   card: { gap: space[2] },
   from: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   fromWords: { flex: 1, fontFamily: font.semiBold, fontSize: 13, lineHeight: 18, color: color.ink },

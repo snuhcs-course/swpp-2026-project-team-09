@@ -666,9 +666,9 @@ and on success goes back to the map with "{이름}님에게 파티 초대를 보
 **The Meetups under 초대** (`src/screens/party/invites-meetups.tsx`) are `받은 초대 · {n}`, the Meetups proposed to
 the User that wait, with "거절" and "수락", and `보낸 초대 · {n}` with its note that a sent one cannot be edited, the
 User's own but the withdrawn and those whose start passed more than seven days ago, each with its state as a Badge
-and "초대 취소" while it waits. Without received ones it says "받은 초대가 없어요". `useMeetupAnswers()` sends each
+and "초대 취소" while it waits. With nothing received it says "받은 초대가 없어요". `useMeetupAnswers()` sends each
 answer, says the refusals ("이미 취소됐거나 지난 초대예요", "이미 답한 초대예요") and fetches the Meetups again, and
-the Quests after an accept. The Quest invitations of P13 join the received ones above the Meetups.
+the Quests after an accept. `받은 초대 · {n}` counts the Quest invitations too, which come first (below).
 
 알림 (`notifications-screen.tsx`) is composed from the main server's lists (`useNotices()` of the notifications
 feature), in this order: a Party running for a Quest the User holds ("{name}님이 파티를 활성화했어요", or "파티가
@@ -732,7 +732,8 @@ again.
 **The 파티 tab** (`src/screens/party/`, the frames `Party`, `PartyPost`, `PartyJoin`, `PartyMine`, `PartyInvites`,
 `PartyCreate` and `PartyAppt`) reads its lists through `src/features/party/`: `posts.ts` makes a post of another's
 recruiting Quest (`GET /quests/recruiting`) or of the User's own, `mine.ts` the cards of 내 파티, `use-party.ts` the
-hooks. The tabs count the User's Quests but the Class Quests (`내 파티 {n}`) and the invitations (`초대 {n}`, red).
+hooks. The tabs count the User's Quests but the Class Quests (`내 파티 {n}`) and what waits under 초대, the Quest
+invitations and the Meetups proposed to the User (`초대 {n}`, red).
 
 - **찾기**: the search `파티 검색` over the titles and descriptions, and `모집 중인 파티`, the recruiting Quests the
   newest first. A card has the Badges, the fill, the next Sub Quest's time and place ("시간 미정", "장소 미정"), the
@@ -766,7 +767,8 @@ hooks. The tabs count the User's Quests but the Class Quests (`내 파티 {n}`) 
   day (`오늘`, `내일`, `이번 주` to Sunday, `다음 주`, `그 이후`, `시간 미정`). A card has the kind, a Badge of its
   members, its recruiting or its running Party, the next Sub Quest and the Holders; a Party running without the User
   adds the strip "{name}님이 활성화했어요" with `참여`, which enters as the room's `참여` does.
-- **초대** lists `GET /quest-invitations` with `거절` and `수락`; a refused acceptance keeps the invitation.
+- **초대** lists `GET /quest-invitations` with `거절` and `수락` under `받은 초대`, above the Meetups proposed to the User
+  (`MeetupInvites`, above); a refused acceptance keeps the invitation.
 
 Every joining, asking, withdrawing and answer fetches the recruiting Quests, the User's Quests, requests and
 invitations again, as `quests-changed` does. Refusals take their words from the same table as the room's; where the

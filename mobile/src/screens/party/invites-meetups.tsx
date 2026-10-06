@@ -115,9 +115,9 @@ function Section({ title, children }: { title: string; children: ReactNode }): R
   );
 }
 
-// The Meetups of the 파티 tab's `초대`: those proposed to the User under `받은 초대`, then those the User sent, which
-// cannot be edited. Quest invitations join the received ones when the rest of the tab is built.
-export function MeetupInvites(): ReactElement {
+// The 파티 tab's `초대` from the Meetups on: under `받은 초대` the Quest invitations given as `before`, then the Meetups
+// proposed to the User, then those the User sent, which cannot be edited.
+export function MeetupInvites({ before, beforeCount }: { before: ReactNode; beforeCount: number }): ReactElement {
   const { data, isPending, refetch } = useMeetupInvites();
   const answers = useMeetupAnswers();
   if (data === undefined) {
@@ -132,14 +132,15 @@ export function MeetupInvites(): ReactElement {
     );
   }
   const { received, sent } = data;
+  const count = beforeCount + received.length;
   return (
     <ScrollView contentContainerStyle={styles.body}>
-      <Section title={`받은 초대 · ${received.length}`}>
-        {received.length === 0 ? (
-          <EmptyState icon="users" words="받은 초대가 없어요" />
-        ) : (
-          received.map((meetup) => <ReceivedCard answers={answers} key={meetup.id} meetup={meetup} />)
-        )}
+      <Section title={`받은 초대 · ${count}`}>
+        {count === 0 ? <EmptyState icon="users" words="받은 초대가 없어요" /> : null}
+        {before}
+        {received.map((meetup) => (
+          <ReceivedCard answers={answers} key={meetup.id} meetup={meetup} />
+        ))}
       </Section>
       {sent.length === 0 ? null : (
         <Section title={`보낸 초대 · ${sent.length}`}>

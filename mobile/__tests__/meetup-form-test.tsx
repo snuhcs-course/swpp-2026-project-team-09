@@ -157,7 +157,7 @@ describe('sending the Meetup form', () => {
     expect(toast()).toHaveTextContent('김민준님에게 파티 초대를 보냈어요');
     expect(shownAddress()).toBe('/main');
     await user.press(screen.getByRole('tab', { name: /^파티/u }));
-    await user.press(screen.getByRole('tab', { name: '초대' }));
+    await user.press(screen.getByRole('tab', { name: /^초대 \d+$/u }));
     await pass(500);
     expect(screen.getByRole('header', { name: '보낸 초대 · 1' })).toBeVisible();
     expect(screen.getByText('응답 대기')).toBeVisible();
