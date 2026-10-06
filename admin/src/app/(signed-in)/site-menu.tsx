@@ -9,6 +9,7 @@ import { signOut } from './actions';
 // A section of the site is one entry here and one route under (signed-in); its pages live under `href` or `under`.
 const SECTIONS = [
   { href: '/', under: '/events', label: 'Events' },
+  { href: '/places', under: '/places', label: 'Places' },
   { href: '/collection', under: '/collection', label: 'Collection status' },
   { href: '/administrators', under: '/administrators', label: 'Administrators' },
 ];

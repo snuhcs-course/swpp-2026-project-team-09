@@ -1,3 +1,5 @@
+import { type RefObject, useEffect, useState } from 'react';
+
 // Kakao Maps' JavaScript SDK, loaded once in the browser with the admin site's JavaScript key. Only the parts the site
 // uses are typed here.
 
@@ -95,4 +97,42 @@ export function loadKakaoMaps(key: string): Promise<KakaoMaps> {
     document.head.append(script);
   });
   return loading;
+}
+
+export interface LoadedMap {
+  maps: KakaoMaps;
+  map: KakaoMap;
+}
+
+// Loads Kakao's map into `container`, on the campus. `failed` when the SDK did not load, such as on an address its key
+// is not registered for.
+export function useKakaoMap(
+  container: RefObject<HTMLDivElement | null>,
+  level: number,
+): { loaded: LoadedMap | null; failed: boolean } {
+  const [loaded, setLoaded] = useState<LoadedMap | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const key = kakaoJavaScriptKey();
+    let live = key !== undefined;
+    if (key !== undefined) {
+      loadKakaoMaps(key).then(
+        (maps) => {
+          if (live && container.current !== null) {
+            const center = new maps.LatLng(CAMPUS_CENTER.latitude, CAMPUS_CENTER.longitude);
+            setLoaded({ maps, map: new maps.Map(container.current, { center, level }) });
+          }
+        },
+        () => {
+          setFailed(true);
+        },
+      );
+    }
+    return (): void => {
+      live = false;
+    };
+  }, [container, level]);
+
+  return { loaded, failed };
 }

@@ -1,7 +1,8 @@
 # admin
 
 The SNU Now admin site, built with Next.js 16, the App Router and Tailwind CSS. Administrators sign in with Google,
-review, correct, create and publish Global Events, see whether each Source is collected, and manage the Administrators. The site keeps no data of its own: every page
+review, correct, create and publish Global Events, check the Places on a map, see whether each Source is collected, and
+manage the Administrators. The site keeps no data of its own: every page
 and every change goes to the main server's administrator routes (`/admin/...`, see the main server's README, sections
 Administrators and Global Events).
 
@@ -94,6 +95,7 @@ controls and tables so that every page looks alike.
 | `/`               | Events: the Drafts, each with what publishing it still needs, and below them the published events that have not ended, both in the main server's order. A title opens the event's page.                 |
 | `/events/new`     | A new event entered by hand, with the event's form; creating it opens the new Draft's page.                                                                                                             |
 | `/events/<id>`    | One Global Event: its state, its source link and post number, its text as stored, and the form that saves, publishes, discards or cancels it. An unknown id shows the not-found page.                   |
+| `/places`         | Kakao's map of the campus with every Place's outlines, or a marker for a Place without one; a search and a click select a Place and show its record.                                                    |
 | `/collection`     | Collection status: each Source with its last successful Collection and its last failure, a broken Source marked.                                                                                        |
 | `/administrators` | Lists the Administrators with whether each has signed in; registers an address; removes one, the signed-in one included, after a confirmation. The main server keeps the last one and the page says so. |
 
@@ -140,6 +142,18 @@ After a change goes through the page is read again. A refusal leaves what the pe
 state now, and `GLOBAL_EVENT_CHANGED` as a warning that another Administrator changed the event. The last two offer
 "Load the current version", which reads the page again and replaces the input.
 
+## Places
+
+The Places page reads `GET /admin/places`, where each Place carries its origin and its outlines as stored, and hands
+the list to `places/places-map.tsx`, a Client Component that takes the Places and the selected one and reports a click
+on a Place. The map draws each outline once, also when several Places share it, a marker for each Place without an
+outline, and each Place's number, or its name when it has none, at its position. Kakao's map type control switches to
+the sky view. The search finds Places as `GET /places/search` does, the first 10 shown. The selected Place is
+highlighted and the map moves to it; its record shows its number, name, origin, position and outlines, and for an
+outline that other Places share, those Places, each of which can be selected. The stored outlines do not say which file
+they came from, so the record does not either. The page shows the attributions that OpenStreetMap's licence and the
+national map's 공공누리 type 1 ask for. Without the Kakao key the page says so in place of the map.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
@@ -162,7 +176,8 @@ into `.next/types/`, so both checks also work on a fresh clone, before `pnpm dev
   on a request, and clicks through it. `vitest.setup.ts` replaces the parts of Next.js that need a request (`cookies()`,
   `redirect()`, `refresh()`) with `__tests__/support/browser.tsx`, which keeps the cookies and the page a redirect led
   to, and replaces the main server with the fake in `__tests__/support/fake-main-server.ts`. Kakao's map is replaced by
-  `__tests__/support/fake-maps.tsx`, which shows where its marker is and lets a test point on it. The tests run without
+  `__tests__/support/fake-maps.tsx`, which shows where its marker is and lets a test point on it, and the Places' map by
+  `__tests__/support/fake-places-map.tsx`, which lists the Places it was handed as buttons that select them. The tests run without
   a Kakao key; a test of the map sets one with `vi.stubEnv`. `__tests__/support/google.ts`
   stands in for Google's script on the sign-in page. `notFound()` is replaced too, and `browser.notFound` tells a test
   that the page would show the not-found page. The tests run in `America/Los_Angeles`, so that a time shown in the
@@ -180,6 +195,7 @@ src/app/(signed-in)/     the pages behind the session; layout.tsx and site-menu.
 src/app/(signed-in)/events/       the form's fields shared by both event pages (event-fields.tsx, fields.ts) and the map
 src/app/(signed-in)/events/[id]/  the event's page, its form (event-form.tsx) and its Server Action
 src/app/(signed-in)/events/new/   the page for a new event and its Server Action
+src/app/(signed-in)/places/       the Places page and its map
 src/app/(signed-in)/collection/   the Collection status page
 src/app/globals.css      the palette, the font and the shared classes
 src/main-server.ts       the only way the site calls the main server; server-only

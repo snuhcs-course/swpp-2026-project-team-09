@@ -30,6 +30,7 @@ vi.mock('@/main-server', async (importOriginal) => {
 });
 
 vi.mock('@/app/(signed-in)/events/position-map', () => import('./__tests__/support/fake-maps'));
+vi.mock('@/app/(signed-in)/places/places-map', () => import('./__tests__/support/fake-places-map'));
 
 afterEach(async () => {
   const { resetBrowser } = await import('./__tests__/support/browser');

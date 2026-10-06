@@ -61,10 +61,12 @@ class FakeMainServer implements MainServer {
     return stored;
   }
 
-  hasPlaces(...places: Omit<Place, 'id'>[]): void {
-    for (const place of places) {
-      this.places.push({ id: crypto.randomUUID(), ...place });
-    }
+  hasPlaces(...places: (Omit<Place, 'id' | 'origin' | 'outlines'> & Partial<Place>)[]): Place[] {
+    const stored = places.map((place): Place =>
+      Object.assign({ id: crypto.randomUUID(), origin: 'campus_map', outlines: [] }, place),
+    );
+    this.places.push(...stored);
+    return stored;
   }
 
   storedEvent(id: string): GlobalEvent | undefined {

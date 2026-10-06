@@ -59,12 +59,17 @@ export interface GlobalEventChange {
   longitude: number | null;
 }
 
+export type PlaceOrigin = 'campus_map' | 'openstreetmap' | 'national_map';
+
 export interface Place {
   id: string;
   number: string | null;
   name: string;
   latitude: number;
   longitude: number;
+  // Where the seed took the Place from, and its outlines as stored: each a closed ring.
+  origin: PlaceOrigin;
+  outlines: { latitude: number; longitude: number }[][];
 }
 
 async function refusalOf(response: Response): Promise<Refusal> {
