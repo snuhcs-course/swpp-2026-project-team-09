@@ -19,7 +19,7 @@ const campusMapFileSchema = z.object({
 
 // The route page's service hours, and the operator's stops in loop order, each with its key, its place on the drawing
 // and the campus map's stop it is paired with.
-const stopsFileSchema = z.object({
+export const stopsFileSchema = z.object({
   serviceHours: z.string().min(1),
   stops: z
     .array(
@@ -36,7 +36,7 @@ const stopsFileSchema = z.object({
 });
 
 // GeoJSON's order: longitude, then latitude.
-const routeFileSchema = z.object({
+export const routeFileSchema = z.object({
   geometry: z.object({
     type: z.literal('LineString'),
     coordinates: z.array(z.tuple([z.number(), z.number()])).min(2),

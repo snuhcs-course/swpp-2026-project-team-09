@@ -50,6 +50,11 @@ services:
       MATCH_SERVER_URL: http://match-server:3003
     ports:
       - '3000:3000'
+    healthcheck:
+      # The image has no curl.
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3000/health/ready').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 2s
+      retries: 60
     depends_on:
       postgres:
         condition: service_healthy
@@ -103,6 +108,57 @@ services:
       - '127.0.0.1:3003:3003'
     depends_on:
       postgres:
+        condition: service_healthy
+
+  # The demo profile, `docker compose --profile demo up --build`: demo data, moving Avatars and menus, so that every
+  # feature can be tried at once (main-server/README.md, Demo data). Never started without the profile.
+  demo-seed:
+    build: main-server
+    profiles: [demo]
+    init: true
+    command: ['node', 'dist/demo-seed', '--watch']
+    env_file:
+      - path: main-server/.env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://main:main@postgres:5432/main
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    # Healthy once the data is written; it then keeps watching for the accounts of DEMO_ACCOUNT_EMAILS.
+    healthcheck:
+      test: ['CMD', 'test', '-f', '/tmp/demo-seeded']
+      interval: 2s
+      retries: 60
+    depends_on:
+      main-server:
+        condition: service_healthy
+
+  demo-walker:
+    build: main-server
+    profiles: [demo]
+    init: true
+    command: ['node', 'dist/demo-walk']
+    env_file:
+      - path: main-server/.env
+        required: false
+    environment:
+      MAIN_SERVER_URL: http://main-server:3000
+    depends_on:
+      demo-seed:
+        condition: service_healthy
+
+  demo-menus:
+    build: worker-server
+    profiles: [demo]
+    init: true
+    command: ['node', 'dist/demo-menus']
+    env_file:
+      - path: worker-server/.env
+        required: false
+    environment:
+      MAIN_SERVER_URL: http://main-server:3000
+    depends_on:
+      main-server:
         condition: service_healthy
 
 volumes:

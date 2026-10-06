@@ -20,6 +20,8 @@
     "start:prod": "node --env-file-if-exists=.env dist/main",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "nest build && node --env-file-if-exists=.env dist/seed",
+    "demo:seed": "nest build && node --env-file-if-exists=.env dist/demo-seed",
+    "demo:walk": "nest build && node --env-file-if-exists=.env dist/demo-walk",
     "seed:export": "node scripts/export-seed.ts",
     "keys:generate": "node scripts/generate-access-token-keys.ts",
     "lint": "oxlint --type-aware",

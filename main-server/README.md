@@ -1896,6 +1896,66 @@ Each exported file keeps, at its top, where it came from and the day of the expo
   origin gives one, as for a shuttle stop, a key of the seed's own. `readSeedFile()` beside `SEED_DIRECTORY` reads a
   file and checks it against a schema.
 
+## Demo data
+
+`docker compose --profile demo up --build` in the repository root starts the system as `docker compose up --build`
+does and fills it with demo data, so that every feature of the app can be tried at once. Three services do it, all
+under the profile `demo`, so that `docker compose up` and the tests never start them:
+
+| Service       | Image         | Command                       | What it does                                                                                  |
+| ------------- | ------------- | ----------------------------- | --------------------------------------------------------------------------------------------- |
+| `demo-seed`   | main server   | `node dist/demo-seed --watch` | writes the demo data once the main server is healthy, then prepares the accounts named below  |
+| `demo-walker` | main server   | `node dist/demo-walk`         | once the data is written, uploads the demo Users' positions every 5 seconds, and the vehicles |
+| `demo-menus`  | worker server | `node dist/demo-menus`        | sends the saved menu pages as today's and the next six days' menus, then exits                |
+
+They read the `.env` files of their projects, as the servers do. Outside Compose, `pnpm demo:seed` writes the data
+and prepares the accounts once against `DATABASE_URL`, and `pnpm demo:walk` walks against `MAIN_SERVER_URL`, or
+`http://localhost:3000` without it; the worker server's `pnpm demo:menus` is in its README.
+
+**What the data holds** (`src/demo/demo-data.ts`):
+
+- 8 demo Users, onboarded, with Korean names, departments, admission years, hashtags and the Friend IDs `DEMA2345` to
+  `DEMH2345`. Their Google subjects, `demo-1` to `demo-8`, are no Google account's, so nobody signs in as them, and
+  their addresses end in `@demo.invalid`. Each has an open Session, for which the walker signs access tokens. All but
+  정예준 have the Master Switch on. Some are Friends of each other.
+- 6 published Global Events at Places of the campus map, with their names and coordinates: one under way, one later
+  today and one on each of the next four days.
+- 8 recruiting Quests, an Open and an Approval one on each of the four Boards, led by demo Users, with descriptions and
+  Sub Quests at Places. The 공연 Board's two are Quests for Global Events. Some have two Holders.
+- The Party `중도 스터디 중`, Open, for the Quest `중도에서 같이 공부해요`, whose two Holders are its members.
+
+The times count from the run: a time of the day in hours after the next half hour, and the days ahead at a time of day
+in Asia/Seoul. Every row has an id of its own, a UUID computed from its name, or a unique key such as the Google subject
+or the two Users of a friendship, so a run updates in place what an earlier run wrote and makes again what was deleted.
+`docker compose --profile demo restart demo-seed` brings the times up to date. The run tells every app that the Global
+Events changed.
+
+**Real accounts.** `DEMO_ACCOUNT_EMAILS` in `main-server/.env` lists the addresses of real SNU accounts, separated by
+commas, in any case. A User with one of them who has finished Onboarding is given:
+
+- friendships with 김민준, 이서연, 박지호, 최수아 and 정예준: the Party's two members, whose Party the account can enter,
+  and 정예준, whose Avatar never shows;
+- Friend Requests from 강하은 and 윤도윤;
+- an invitation into `체육관 배드민턴`, an Approval Quest led by 박지호;
+- a Meetup proposed by 최수아, in two hours at 학생회관;
+
+and then `friends-changed`, `quests-changed`, `meetups-changed` and `party-changed`. What already lies between the
+account and a demo User, such as a friendship the person ended, is left as it is. `demo-seed` looks for such Users every
+5 seconds and prepares each once per run, so that a request the person declined does not come back until the service
+starts again. The main server itself has no demo code or setting: the seed writes through Prisma and sends the signals
+over Redis as `SignalsService` does.
+
+**The walker** signs each demo User's access token with `ACCESS_TOKEN_PRIVATE_KEY`, for the User's Session, as a
+sign-in does, and uploads a position through `POST /positions` every 5 seconds, so that the positions take a phone's
+path: the checks, the Campus Boundary and the `position` signals. The Users walk the shuttle's line at 1.4 m/s, spread
+along it, every other one the other way round (`src/demo/walk.ts`); the whole line lies inside the Campus Boundary. A
+refused upload is logged and the walker goes on. Every 15 seconds outside weekdays 08:00 to 21:00 in Asia/Seoul, when
+the worker does not collect the operator's vehicles, it also sends two vehicles, `DEMO1` and `DEMO2`, half a loop apart
+and a stop further every 90 seconds, through `POST /shuttle/vehicles/collected` with `WORKER_TOKEN`. Within those hours
+the operator's vehicles are shown, since each set replaces the one before.
+
+**Starting again**: `docker compose --profile demo down -v` deletes the database with the demo data.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
@@ -1922,6 +1982,9 @@ src/
 ├── main.ts                          starts the server
 ├── seed.ts                          the command that loads the seed files, `pnpm db:seed`
 ├── load-seed.ts                     loads every seed file; the command and the tests call it
+├── demo-seed.ts                     the command that writes the demo data, `pnpm demo:seed`
+├── demo-walk.ts                     the command that walks the demo Users, `pnpm demo:walk`
+├── demo/                            the demo profile's data, its seed and the walker's paths (not a module)
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup

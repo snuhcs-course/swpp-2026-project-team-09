@@ -3,7 +3,13 @@ import { Cron } from '@nestjs/schedule';
 import { Collector, Collects } from '../common/collector.js';
 import { PageFetcher } from '../common/page-fetcher.js';
 import { seoulDay } from '../common/seoul-day.js';
-import { MENU_SOURCES, type MenuDay, type MenuSource, type MenusCollectedMessage } from './dto/menus-collected.dto.js';
+import {
+  MENU_SOURCES,
+  type MenuDay,
+  type MenuSource,
+  type MenusCollectedMessage,
+  type RestaurantMenu,
+} from './dto/menus-collected.dto.js';
 import { parseMenuPage } from './menu-page.parser.js';
 import { parseVeterinaryMenuPage } from './veterinary-menu-page.parser.js';
 
@@ -12,6 +18,12 @@ const COLLECTION_TIMES = '0 0 5,10 * * *';
 
 // A Collection covers today and the six days after. Restaurants fill in their later days as they post them.
 const COLLECTED_DAYS = 7;
+
+// The restaurants whose names start with "* " repeat one fixed menu in every cell, every day. 기숙사식당 is the
+// dormitory page's 생협기숙사(919동), and is taken from there.
+export function coopRestaurants(restaurants: RestaurantMenu[]): RestaurantMenu[] {
+  return restaurants.filter(({ name }) => !name.startsWith('* ') && name !== '기숙사식당');
+}
 
 @Injectable()
 @Collects(MENU_SOURCES)
@@ -41,14 +53,9 @@ export class MenuCollector extends Collector {
     return this.handOver(source, now, '/menus/collected', message());
   }
 
-  // The restaurants whose names start with "* " repeat one fixed menu in every cell, every day. 기숙사식당 is the
-  // dormitory page's 생협기숙사(919동), and is taken from there.
   private async readCoopPages(dates: string[]): Promise<MenuDay[]> {
     const days = await this.readDailyPages('https://snuco.snu.ac.kr/foodmenu/', dates);
-    return days.map(({ date, restaurants }) => ({
-      date,
-      restaurants: restaurants.filter(({ name }) => !name.startsWith('* ') && name !== '기숙사식당'),
-    }));
+    return days.map(({ date, restaurants }) => ({ date, restaurants: coopRestaurants(restaurants) }));
   }
 
   // The Co-op's and the dormitory's page take a date.

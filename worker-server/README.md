@@ -186,6 +186,15 @@ restaurant fills in its later days as it posts them, and the next Collection bri
 What the collectors sent on the real pages, and how many lines got a `kind`, a `name` and a `price`, is recorded in
 `.scratch/iteration-1/P07-campus-feeds/issues/01-menus-first-collection.md`.
 
+## Demo menus
+
+`pnpm demo:menus` sends the menus of the pages saved in `test/pages/` as those of today and the six days after, one
+message per Source to `/menus/collected`, as a Collection would, and exits with status 1 when the main server refuses
+one. The demo profile of `compose.yaml` runs it as `demo-menus` (the main server's README: Demo data). The Co-op's and
+the dormitory's page of 1 October 2026 stand for each day's, and the veterinary college's week is moved by whole weeks
+to the current one, so that each weekday keeps its lunch. The same parsers read them, and the Co-op's restaurants are
+left out as the collector leaves them out (`src/menu/saved-menus.ts`).
+
 ## Events
 
 The university's events list, the Source `snu_events`, is collected four times a day, at 00:00, 06:00, 12:00 and 18:00,
@@ -321,6 +330,7 @@ src/
 ├── main.ts                          starts the server
 ├── collect.ts                       the command that runs one Collection by hand
 ├── collect-sources.ts               finds the collector of each Source the command names, and runs it
+├── demo-menus.ts                    the command that sends the saved pages' menus, `pnpm demo:menus`
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
