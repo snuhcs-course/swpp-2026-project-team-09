@@ -530,9 +530,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
 - **The shuttle layer** (`src/features/shuttle/`, the `Main` frame). Turning 셔틀버스 on fetches the route
   (`GET /shuttle`) and the vehicles (`GET /shuttle/vehicles`), every time; a failure of the route shows nothing and
   says "셔틀버스 정보를 불러오지 못했어요", and a failure of the vehicles alone leaves the route until the socket's next
-  set. The route's line is drawn purple, 3 wide, dashed 8 and 6, under every marker; each stop is the shuttle's pin
-  of `MapPin`, with its name under it from the `names` level; each vehicle in service is the same pin, an Avatar
-  above the stops, with "운행 중" under it. A stop's card says "셔틀버스 · 교내 순환", "{stop} 정류장" and the next stop
+  set. The route's line is drawn purple, 3 wide, dashed 8 and 6, under every marker; each stop is the shuttle's dot
+  of `MapDot`, with its name under it from the `names` level; each vehicle in service is the shuttle's pin of
+  `MapPin`, an Avatar above the stops, with "운행 중" under it, so that a vehicle standing at its stop is seen. A stop's card says "셔틀버스 · 교내 순환", "{stop} 정류장" and the next stop
   in loop order, and has no button but "가까이 보기"; a vehicle's says "셔틀버스 · 운행 중", "교내 순환 셔틀" and
   "{stop}에 있어요 · 다음 정류장 {next}", follows the vehicle's sets and closes when it goes, and "노선 보기" fits the
   camera to the whole line and closes the card. Outside weekdays from 08:00 to 21:00 in Korea's time

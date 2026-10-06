@@ -16,8 +16,9 @@ const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 
 // A card's look at a level of detail. A person is the frames' teardrop at every level, small while the whole campus
 // is in view, and dimmed while their position is old. A place is a dot there, and a pin with its count closer; a
-// restaurant and the shuttle's stops and vehicles look the same at every level.
-function lookOf({ mark, marker }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
+// restaurant and the shuttle's stops and vehicles look the same at every level: a stop a dot and a vehicle a pin, so
+// that a vehicle standing at its stop is seen.
+function lookOf({ kind, mark, marker }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
   const far = detail === 'overview';
   if (mark.type === 'person') {
     const { id, name, photo, presence, stale } = mark;
@@ -27,7 +28,7 @@ function lookOf({ mark, marker }: CardView, detail: ZoomDetail, selected: boolea
     return { kind: 'restaurant', selected };
   }
   if (mark.place === 'shuttle') {
-    return { kind: 'shuttle', form: 'pin', selected };
+    return { kind: 'shuttle', form: kind === 'shuttle-stop' ? 'dot' : 'pin', selected };
   }
   return far
     ? { kind: mark.place, form: 'dot', selected }

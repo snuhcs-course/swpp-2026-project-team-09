@@ -94,11 +94,11 @@ describe('the shuttle layer', () => {
     expect(dashes[0]).toHaveStyle({ width: 11, height: 3, backgroundColor: '#6B46C1' });
   });
 
-  it('puts a pin on each stop, in the shuttle\'s look, with the stop\'s name under it from the "names" level', async () => {
+  it('puts a dot on each stop, in the shuttle\'s look, with the stop\'s name under it from the "names" level', async () => {
     const user = await openMain();
     await toggleShuttle(user);
     for (const stop of STOPS) {
-      expect(screen.getByRole('button', { name: stopMarker(stop) })).toHaveProp('testID', 'shuttle:pin');
+      expect(screen.getByRole('button', { name: stopMarker(stop) })).toHaveProp('testID', 'shuttle:dot');
     }
     expect(wordsUnder(stopMarker(SCIENCE), '자연대')).toBeNull();
 
