@@ -1563,7 +1563,15 @@ typing coordinates:
   Korean order of their names. `id` is the same in every database and never changes, so a class's time or a Meetup
   can point at it (`docs/adr/0002-place-ids-computed-from-the-source.md`).
 
-- An Administrator reads the same list at `GET /admin/places` (see [Global Events](#global-events)).
+- An Administrator reads the same list at `GET /admin/places`, each Place with two more fields, so that the admin site
+  can show how the seed placed and outlined it: `origin`, `campus_map`, `openstreetmap` or `national_map`, and
+  `outlines`, the stored outlines, `[]` for a Place without one:
+
+  ```json
+  { "id": "1b7e…", "number": "301", "name": "제1공학관", "latitude": 37.45016, "longitude": 126.95259,
+    "origin": "campus_map", "outlines": [[{ "latitude": 37.4504, "longitude": 126.9521 }, …]] }
+  ```
+
 - `GET /places/search?q=공학관` answers, in the same order and form, the Places whose name holds `q`, whatever the
   case of its Latin letters, and the Place whose number is `q`, written with or without `동` (`302`, `302동`). A search
   that finds nothing answers `[]`, and `q` without text gets 400.
