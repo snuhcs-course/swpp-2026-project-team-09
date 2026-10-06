@@ -1,10 +1,10 @@
 # admin
 
 The SNU Now admin site, built with Next.js 16, the App Router and Tailwind CSS. Administrators sign in with Google,
-review, correct, create and publish Global Events, check the Places on a map, see whether each Source is collected, and
-manage the Administrators. The site keeps no data of its own: every page
+review, correct, create and publish Global Events, check the Places on a map, see whether each Source is collected, make
+and end friendships between Users, and manage the Administrators. The site keeps no data of its own: every page
 and every change goes to the main server's administrator routes (`/admin/...`, see the main server's README, sections
-Administrators and Global Events).
+Administrators, Global Events, Places and Friends).
 
 ## Run it
 
@@ -96,6 +96,8 @@ controls and tables so that every page looks alike.
 | `/events/new`     | A new event entered by hand, with the event's form; creating it opens the new Draft's page.                                                                                                             |
 | `/events/<id>`    | One Global Event: its state, its source link and post number, its text as stored, and the form that saves, publishes, discards or cancels it. An unknown id shows the not-found page.                   |
 | `/places`         | Kakao's map of the campus with every Place's outlines, or a marker for a Place without one; a search and a click select a Place and show its record.                                                    |
+| `/users`          | Lists the Users with their name, email, department, Friend ID and number of Friends, a User before onboarding marked; a search filters them. A User opens their page.                                   |
+| `/users/<id>`     | A User's Friends, "친구 맺기" with another onboarded User who is not yet their Friend, and "친구 끊기" after a confirmation. An unknown id shows the not-found page.                                    |
 | `/collection`     | Collection status: each Source with its last successful Collection and its last failure, a broken Source marked.                                                                                        |
 | `/administrators` | Lists the Administrators with whether each has signed in; registers an address; removes one, the signed-in one included, after a confirmation. The main server keeps the last one and the page says so. |
 
@@ -154,6 +156,17 @@ outline that other Places share, those Places, each of which can be selected. Th
 they came from, so the record does not either. The page shows the attributions that OpenStreetMap's licence and the
 national map's 공공누리 type 1 ask for. Without the Kakao key the page says so in place of the map.
 
+## Users and friendships
+
+The Users page reads `GET /admin/users`; its search keeps the Users whose name, email, department or Friend ID holds
+the text. A User's page reads the same list and `GET /admin/users/:id/friends`. "친구 맺기" offers the onboarded Users
+who are neither the User nor their Friends, searchable in the same way, and choosing one sends
+`POST /admin/friendships`. "친구 끊기" asks first, saying that Location Sharing between the two stops and that their
+proposed Meetups are withdrawn, then sends `DELETE /admin/friendships/:userAId/:userBId`. Both are the Server Action
+`changeFriendship` in `src/app/(signed-in)/users/[id]/actions.ts`. After a change, and after a refusal, the page says
+what happened and reads the lists again; the refusals `ALREADY_FRIENDS`, `USER_NOT_ONBOARDED`, `USER_NOT_FOUND` and
+`FRIEND_NOT_FOUND` each have their message. Nothing else about a User is read or changed.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
@@ -196,6 +209,7 @@ src/app/(signed-in)/events/       the form's fields shared by both event pages (
 src/app/(signed-in)/events/[id]/  the event's page, its form (event-form.tsx) and its Server Action
 src/app/(signed-in)/events/new/   the page for a new event and its Server Action
 src/app/(signed-in)/places/       the Places page and its map
+src/app/(signed-in)/users/        the Users page, and in [id]/ a User's page with their friendships
 src/app/(signed-in)/collection/   the Collection status page
 src/app/globals.css      the palette, the font and the shared classes
 src/main-server.ts       the only way the site calls the main server; server-only

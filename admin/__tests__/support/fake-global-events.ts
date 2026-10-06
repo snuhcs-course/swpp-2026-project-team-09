@@ -83,3 +83,38 @@ export function newEvent(event: Partial<GlobalEvent>): GlobalEvent {
     ...event,
   });
 }
+
+// Creating events by hand: a key used before answers what its first request created, as the main server's idempotency
+// does, and breakNext() makes the next creation answer 502, before storing the event or after, as when the answer is
+// lost on the way.
+export class FakeCreations {
+  // The key of each request, in order.
+  keys: string[] = [];
+  private created = new Map<string, GlobalEvent>();
+  private next: 'fails' | 'answer lost' | undefined;
+
+  breakNext(how: 'fails' | 'answer lost'): void {
+    this.next = how;
+  }
+
+  create(key: string, change: GlobalEventChange, store: (event: GlobalEvent) => void): GlobalEvent {
+    this.keys.push(key);
+    const replayed = this.created.get(key);
+    if (replayed !== undefined) {
+      return replayed;
+    }
+    refuseFields(change);
+    const how = this.next;
+    this.next = undefined;
+    if (how === 'fails') {
+      throw refused(502, {});
+    }
+    const event = newEvent({ ...change, title: change.title.trim() });
+    store(event);
+    this.created.set(key, event);
+    if (how === 'answer lost') {
+      throw refused(502, {});
+    }
+    return event;
+  }
+}

@@ -22,16 +22,13 @@ Nothing else about a User is read or changed: no profile edits, no sign-outs, no
 - [x] `DELETE /admin/friendships/:userAId/:userBId`, in either order, ends the friendship through `FriendsService.end()` and answers 204: `friends-changed` to both, `position-removed` to each who saw the other, and the Meetups still proposed between them withdrawn with `meetups-changed`. Two Users who are not Friends, unknown Users included, get 404 `FRIEND_NOT_FOUND`, and an id that is not a UUID 400.
 - [x] Every route of this ticket refuses a request without a token, with a User's access token, or from a removed Administrator, with 401.
 - [x] Main server tests with Vitest at the API: the Users list with its order, a User before onboarding and the count of Friends; a User's Friends, an unknown id and one that is not a UUID; making two Users Friends, after which each sees the other in `GET /friends` with sharing on; making Friends of two Users with a Friend Request waiting, which leaves no request; each refusal; `friends-changed` to both, and no signal after a refusal; ending a friendship, with `position-removed` between two Users who saw each other and a proposed Meetup withdrawn; ending one that does not exist; a User's token refused on each route. The test files share one database, so a test looks for its own Users in the list instead of expecting the whole list.
-- [ ] The Users page, at `/users`, lists `GET /admin/users` with each User's name, email, department, Friend ID and number of Friends, a User before onboarding marked as such. A search box filters the list by name, email, department or Friend ID. Each User opens their page.
-  - Still to build: the admin site's Users page is not part of this commit, which holds the administrative API only.
-- [ ] A User's page lists their Friends from `GET /admin/users/:id/friends`. "친구 맺기" offers the other onboarded Users who are not yet their Friends, searchable as the list is, and makes the chosen one their Friend with `POST /admin/friendships` through a Server Action. "친구 끊기" beside each Friend asks for confirmation, saying that Location Sharing between the two stops and their proposed Meetups are withdrawn, and then calls `DELETE /admin/friendships/:userAId/:userBId`. After each change, and after each refusal, the page shows a message and reads the lists again. An unknown User shows Next.js's not-found page.
-  - Still to build, with the Users page.
-- [ ] Page-level tests with Vitest and React Testing Library against a fake of the main server: the Users list and its search by each field; a User's Friends; making a Friend, with the User and current Friends absent from the choices; ending a friendship only after confirmation; the messages for `ALREADY_FRIENDS`, `USER_NOT_ONBOARDED`, `USER_NOT_FOUND` and `FRIEND_NOT_FOUND`.
-  - Still to build, with the Users page.
-- [ ] The main server's README records the routes, their shapes and the refusals in Friends, and says that an Administrator's friendship is stored and announced as an accepted Friend Request's. The admin site's README records the Users page. `GLOSSARY.md` says that an Administrator can also make two Users Friends.
-  - Partly met: the main server's README records the routes, their shapes, the refusals and that an Administrator's friendship is stored and announced as an accepted Friend Request's (Friends), and `GLOSSARY.md` says that an Administrator can make two Users Friends (Administrator, Friend). The admin site's README is to record the Users page when it is built.
-- [ ] `pnpm lint`, `pnpm format:check`, `pnpm typecheck` and `pnpm test` pass in `main-server/` and `admin/`.
-  - Met in `main-server/`: the four pass, the whole suite in one run with `--maxWorkers=4` (105 files, 1380 tests). `admin/` is to be checked with the Users page.
+- [x] The Users page, at `/users`, lists `GET /admin/users` with each User's name, email, department, Friend ID and number of Friends, a User before onboarding marked as such. A search box filters the list by name, email, department or Friend ID. Each User opens their page.
+- [x] A User's page lists their Friends from `GET /admin/users/:id/friends`. "친구 맺기" offers the other onboarded Users who are not yet their Friends, searchable as the list is, and makes the chosen one their Friend with `POST /admin/friendships` through a Server Action. "친구 끊기" beside each Friend asks for confirmation, saying that Location Sharing between the two stops and their proposed Meetups are withdrawn, and then calls `DELETE /admin/friendships/:userAId/:userBId`. After each change, and after each refusal, the page shows a message and reads the lists again. An unknown User shows Next.js's not-found page.
+- [x] Page-level tests with Vitest and React Testing Library against a fake of the main server: the Users list and its search by each field; a User's Friends; making a Friend, with the User and current Friends absent from the choices; ending a friendship only after confirmation; the messages for `ALREADY_FRIENDS`, `USER_NOT_ONBOARDED`, `USER_NOT_FOUND` and `FRIEND_NOT_FOUND`.
+- [x] The main server's README records the routes, their shapes and the refusals in Friends, and says that an Administrator's friendship is stored and announced as an accepted Friend Request's. The admin site's README records the Users page. `GLOSSARY.md` says that an Administrator can also make two Users Friends.
+  - The main server's README (Friends) and `GLOSSARY.md` (Administrator, Friend) were updated with the API; the admin site's README records the Users pages in Users and friendships.
+- [x] `pnpm lint`, `pnpm format:check`, `pnpm typecheck` and `pnpm test` pass in `main-server/` and `admin/`.
+  - In `main-server/` the four passed with the API, the whole suite in one run with `--maxWorkers=4` (105 files, 1380 tests); in `admin/` the four pass with the Users pages.
 
 ## Comments
 
@@ -45,6 +42,34 @@ Nothing else about a User is read or changed: no profile edits, no sign-outs, no
 - **`friendCount`** counts accepted friendships through Prisma's filtered relation counts (`friendshipsAsA` and `friendshipsAsB`); a waiting request is not a Friend.
 - **`GET /admin/auth/me`** → `{ id, email }`, in `AdministratorAuthController`, read through `AdministratorAuthService.account()`; the DTO is `src/auth/dto/administrator-account.dto.ts`. An Administrator removed between the guard and the read gets 401, as the guard would answer.
 - **Tests**: `test/admin-users.ts` (callers and Users with an email address of their own, since the list is ordered and found by email), `test/admin-users.e2e-spec.ts`, `test/admin-friendships.e2e-spec.ts` (no signal after a refusal is checked with `signalsWhile()` and the User's own signals, which no other file sends), `test/admin-friendship-ending.e2e-spec.ts`, `test/admin-friends-refusals.e2e-spec.ts`, and `GET /admin/auth/me` in `test/administrator-auth.e2e-spec.ts`. `removedAdministratorToken(app)` moved from `test/admin-reading-refusals.e2e-spec.ts` to `test/sign-in.ts` for both refusal files.
+
+### Decisions (2026-10-06), the Users pages
+
+- **Pages**: `/users` (`src/app/(signed-in)/users/`) and `/users/<id>` (`users/[id]/`), a menu section after Places.
+  The list's search and the "친구 맺기" choices share `usersMatching()` (name, email, department or Friend ID, whatever
+  the case of Latin letters). A User before onboarding shows "Before onboarding" in place of a name, and their email
+  address in messages. A User's page finds the User in `GET /admin/users`, since no route reads one User; an id the
+  list lacks, or that `GET /admin/users/:id/friends` answers 404 or 400, shows the not-found page.
+- **Changes**: one Server Action, `changeFriendship('make' | 'end', { user, other })`, which calls `refresh()` after a
+  change and after a refusal and returns the message: "X and Y are now Friends.", "… are no longer Friends.", and for
+  the refusals "were already Friends", "cannot be made Friends: one of them has not finished onboarding", "… no longer
+  exists" and "were no longer Friends". Choosing a User in "친구 맺기" makes the friendship at once; only "친구 끊기"
+  asks first. The labels "친구 맺기" and "친구 끊기" are Korean as the ticket names them; the rest of the site stays in
+  English.
+- **The menu's address** stays the `__Host-administrator-email` cookie: `GET /admin/auth/me` would add a request to the
+  main server on every page from the layout, which knows no page path for `asAdministrator`, and would change the
+  sign-in action and the built-site tests, so it is not simpler.
+- **Fake**: `__tests__/support/fake-users.ts` keeps the rules of Users and friendships (order, `friendCount`, the
+  refusals in the main server's order) and lets a test change them behind the page's back. The fake main server's
+  creation of events moved to `FakeCreations` in `support/fake-global-events.ts` to keep the file within lint's 300
+  lines. Tests in `__tests__/users.test.tsx`.
+
+### Agent usage (2026-10-06), the Users pages
+
+- Agent time: about 15 minutes, an estimate, for the implementing agent of tickets 05 to 07; the session that ran it
+  is not counted.
+- Tokens: about 2M input, nearly all cache reads, and a few thousand output tokens, an estimate from the agent's own
+  context; the transcript was not measured.
 
 ### Agent usage (2026-10-06)
 

@@ -1,5 +1,7 @@
 import type {
+  AdminFriend,
   Administrator,
+  AdminUser,
   CollectionStatus,
   GlobalEvent,
   GlobalEventChange,
@@ -9,7 +11,17 @@ import type {
 } from '@/main-server';
 import type * as MainServerModule from '@/main-server';
 
-import { byStart, missingFor, newEvent, refused, refuseFields, TRANSITIONS, withMissing } from './fake-global-events';
+import { FakeUsers } from './fake-users';
+import {
+  byStart,
+  FakeCreations,
+  missingFor,
+  newEvent,
+  refused,
+  refuseFields,
+  TRANSITIONS,
+  withMissing,
+} from './fake-global-events';
 
 // The setup file replaces '@/main-server' with this fake, so the real error class comes from the actual module.
 const { MainServerError } = await vi.importActual<typeof MainServerModule>('@/main-server');
@@ -25,26 +37,18 @@ class FakeMainServer implements MainServer {
   private issued = 0;
   private events: GlobalEvent[] = [];
   private places: Place[] = [];
-  // The key of each request that creates an event, in order.
-  creationKeys: string[] = [];
-  private created = new Map<string, GlobalEvent>();
-  private nextCreation: 'fails' | 'answer lost' | undefined;
+  creations = new FakeCreations();
   private statuses: CollectionStatus[] = [];
+  readonly users = new FakeUsers();
 
   reset(): void {
     this.requests = [];
     this.accounts = [];
     this.events = [];
     this.places = [];
-    this.creationKeys = [];
-    this.created.clear();
-    this.nextCreation = undefined;
+    this.creations = new FakeCreations();
     this.statuses = [];
-  }
-
-  // The next creation answers 502, before storing the event or after, as when the answer is lost on the way.
-  breaksNextCreation(how: 'fails' | 'answer lost'): void {
-    this.nextCreation = how;
+    this.users.reset();
   }
 
   hasCollectionStatuses(...statuses: CollectionStatus[]): void {
@@ -153,35 +157,31 @@ class FakeMainServer implements MainServer {
     );
   }
 
-  // A key used before answers what its first request created, as the main server's idempotency does.
   createGlobalEvent(token: string, idempotencyKey: string, change: GlobalEventChange): Promise<GlobalEvent> {
     this.requests.push('POST /admin/global-events');
-    return this.as(token, () => {
-      this.creationKeys.push(idempotencyKey);
-      const replayed = this.created.get(idempotencyKey);
-      if (replayed !== undefined) {
-        return replayed;
-      }
-      refuseFields(change);
-      const how = this.nextCreation;
-      this.nextCreation = undefined;
-      if (how === 'fails') {
-        throw refused(502, {});
-      }
-      const event = newEvent({ ...change, title: change.title.trim() });
-      this.events.push(event);
-      this.created.set(idempotencyKey, event);
-      if (how === 'answer lost') {
-        throw refused(502, {});
-      }
-      return event;
-    });
+    return this.as(token, () =>
+      this.creations.create(idempotencyKey, change, (event) => {
+        this.events.push(event);
+      }),
+    );
   }
 
   listCollectionStatuses(token: string): Promise<CollectionStatus[]> {
     this.requests.push('GET /admin/collection-statuses');
     return this.as(token, () => this.statuses);
   }
+
+  listUsers = (token: string): Promise<AdminUser[]> => this.answer('GET /admin/users', token, () => this.users.list());
+  listFriendsOf = (token: string, id: string): Promise<AdminFriend[]> =>
+    this.answer(`GET /admin/users/${id}/friends`, token, () => this.users.friendsOf(id));
+  befriend = (token: string, a: string, b: string): Promise<void> =>
+    this.answer('POST /admin/friendships', token, () => {
+      this.users.befriend(a, b);
+    });
+  endFriendship = (token: string, a: string, b: string): Promise<void> =>
+    this.answer(`DELETE /admin/friendships/${a}/${b}`, token, () => {
+      this.users.end(a, b);
+    });
 
   readGlobalEvent(token: string, id: string): Promise<GlobalEvent> {
     this.requests.push(`GET /admin/global-events/${id}`);
@@ -262,6 +262,11 @@ class FakeMainServer implements MainServer {
     const account = { id: crypto.randomUUID(), email, signedIn: false, tokens: new Set<string>() };
     this.accounts.push(account);
     return account;
+  }
+
+  private answer<T>(request: string, token: string, answer: () => T): Promise<T> {
+    this.requests.push(request);
+    return this.as(token, answer);
   }
 
   private as<T>(token: string, answer: (account: Account) => T): Promise<T> {

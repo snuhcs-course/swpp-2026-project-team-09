@@ -10,6 +10,7 @@ import { signOut } from './actions';
 const SECTIONS = [
   { href: '/', under: '/events', label: 'Events' },
   { href: '/places', under: '/places', label: 'Places' },
+  { href: '/users', under: '/users', label: 'Users' },
   { href: '/collection', under: '/collection', label: 'Collection status' },
   { href: '/administrators', under: '/administrators', label: 'Administrators' },
 ];

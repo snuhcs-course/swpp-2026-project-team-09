@@ -6,6 +6,8 @@ import CollectionPage from '@/app/(signed-in)/collection/page';
 import EventPage from '@/app/(signed-in)/events/[id]/page';
 import NewEventPage from '@/app/(signed-in)/events/new/page';
 import PlacesPage from '@/app/(signed-in)/places/page';
+import UserPage from '@/app/(signed-in)/users/[id]/page';
+import UsersPage from '@/app/(signed-in)/users/page';
 import EventsPage from '@/app/(signed-in)/page';
 import SignInPage from '@/app/sign-in/page';
 import { EMAIL_COOKIE, SESSION_COOKIE } from '@/session';
@@ -40,6 +42,18 @@ export async function openCollection(): Promise<void> {
 
 export async function openPlaces(): Promise<void> {
   await openPage(async () => SignedInLayout({ children: await PlacesPage() }));
+}
+
+export async function openUsers(): Promise<void> {
+  await openPage(async () => SignedInLayout({ children: await UsersPage() }));
+}
+
+export async function openUser(id: string): Promise<void> {
+  await openPage(async () =>
+    SignedInLayout({
+      children: await UserPage({ params: Promise.resolve({ id }), searchParams: Promise.resolve({}) }),
+    }),
+  );
 }
 
 export async function openSignIn(location: string): Promise<void> {

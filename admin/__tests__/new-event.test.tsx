@@ -43,7 +43,7 @@ describe('creating an event by hand', () => {
 
 describe('a retry', () => {
   it('sends the same key again on a retry of the same form, so that one Draft is created', async () => {
-    fakeMainServer.breaksNextCreation('answer lost');
+    fakeMainServer.creations.breakNext('answer lost');
     await fillIn();
 
     click('Create the Draft');
@@ -53,13 +53,13 @@ describe('a retry', () => {
     await vi.waitFor(() => {
       expect(browser.location).toBeDefined();
     });
-    const [first, second] = fakeMainServer.creationKeys;
+    const [first, second] = fakeMainServer.creations.keys;
     expect(second).toBe(first);
     expect(fakeMainServer.storedEvents()).toHaveLength(1);
   });
 
   it('makes a new key once the form changed after a failure', async () => {
-    fakeMainServer.breaksNextCreation('fails');
+    fakeMainServer.creations.breakNext('fails');
     await fillIn();
 
     click('Create the Draft');
@@ -70,7 +70,7 @@ describe('a retry', () => {
     await vi.waitFor(() => {
       expect(browser.location).toBeDefined();
     });
-    const [first, second] = fakeMainServer.creationKeys;
+    const [first, second] = fakeMainServer.creations.keys;
     expect(second).not.toBe(first);
     expect(fakeMainServer.storedEvents()).toMatchObject([{ title: '관악 밴드 정기 공연' }]);
   });

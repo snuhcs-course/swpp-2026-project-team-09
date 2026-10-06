@@ -72,6 +72,27 @@ export interface Place {
   outlines: { latitude: number; longitude: number }[][];
 }
 
+// A User as an Administrator reads them. Before onboarding, `name` and `department` are empty.
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  department: string;
+  friendId: string;
+  onboarded: boolean;
+  friendCount: number;
+}
+
+export interface AdminFriend {
+  id: string;
+  name: string;
+  email: string;
+  department: string;
+  friendId: string;
+  // When the friendship started.
+  since: string;
+}
+
 async function refusalOf(response: Response): Promise<Refusal> {
   try {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the main server answers in the documented shape
@@ -149,6 +170,13 @@ export const mainServer = {
     version: number,
   ): Promise<GlobalEvent> => request('POST', `${eventPath(id)}/${change}`, token, { version }),
   listPlaces: (token: string): Promise<Place[]> => request('GET', '/admin/places', token),
+  listUsers: (token: string): Promise<AdminUser[]> => request('GET', '/admin/users', token),
+  listFriendsOf: (token: string, id: string): Promise<AdminFriend[]> =>
+    request('GET', `/admin/users/${encodeURIComponent(id)}/friends`, token),
+  befriend: (token: string, userAId: string, userBId: string): Promise<void> =>
+    request('POST', '/admin/friendships', token, { userAId, userBId }),
+  endFriendship: (token: string, userAId: string, userBId: string): Promise<void> =>
+    request('DELETE', `/admin/friendships/${encodeURIComponent(userAId)}/${encodeURIComponent(userBId)}`, token),
   listCollectionStatuses: (token: string): Promise<CollectionStatus[]> =>
     request('GET', '/admin/collection-statuses', token),
 };
