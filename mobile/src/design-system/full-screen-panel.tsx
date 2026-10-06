@@ -14,6 +14,8 @@ interface FullScreenPanelProps {
   under?: ReactNode;
   // What stays at the bottom, such as the one 52 primary button of a form.
   footer?: ReactNode;
+  // A grey ground under the app bar, for a body of cards, as 프로필 편집 and 알림 have.
+  subtle?: boolean;
   children: ReactNode;
 }
 
@@ -26,6 +28,7 @@ export function FullScreenPanel({
   actions,
   under,
   footer,
+  subtle = false,
   children,
 }: FullScreenPanelProps): ReactElement {
   const { bottom } = useInsets();
@@ -36,7 +39,7 @@ export function FullScreenPanel({
       <ScrollView
         contentContainerStyle={footer === undefined ? { paddingBottom: bottom } : undefined}
         keyboardShouldPersistTaps="handled"
-        style={styles.body}
+        style={[styles.body, subtle && styles.subtle]}
       >
         {children}
       </ScrollView>
@@ -50,6 +53,7 @@ export function FullScreenPanel({
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface },
   body: { flex: 1 },
+  subtle: { backgroundColor: color.surfaceSubtle, borderTopWidth: 1, borderTopColor: color.border },
   footer: {
     paddingTop: space[3],
     paddingHorizontal: space[4],

@@ -133,8 +133,9 @@ describe('positions over the connection', () => {
 
 describe('signals over the connection', () => {
   it.each([
-    ['friends-changed', ['GET /friends', 'GET /positions']],
-    ['quests-changed', ['GET /quests']],
+    ['friends-changed', ['GET /friends', 'GET /positions', 'GET /friend-requests']],
+    ['quests-changed', ['GET /quests', 'GET /quest-invitations']],
+    ['meetups-changed', ['GET /meetups']],
     ['party-changed', ['GET /parties/mine', 'GET /parties', 'GET /positions']],
   ])('fetches what changed again on the signal %s', async (signal, routes) => {
     const socket = await openLive();

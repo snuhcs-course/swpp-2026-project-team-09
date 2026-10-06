@@ -1,4 +1,5 @@
-import type { Friend, Lobby, Position, Quest } from '@/api/types';
+import type { Friend, Lobby, Party, Position, Quest } from '@/api/types';
+import type { FriendRequests, JoinRequest, Meetups, QuestInvitation } from '@/api/waiting-types';
 import { googleAvailable } from '@/auth/google';
 import { dropHeldTokens, forgetTokens, keepTokens, type Tokens } from '@/auth/tokens';
 import { type FakeServer, MAIN_SERVER, SOCKET_SERVER, startFakeServer } from './fake-server';
@@ -58,8 +59,14 @@ export const LIBRARY_POSITION: Position = {
   measuredAt: '2026-10-06T05:00:00.000Z',
 };
 
-export const LOBBY: Lobby & { masterSwitch: boolean } = {
-  profile: { name: '홍길동', department: '컴퓨터공학부', admissionYear: 2022, hashtags: ['러닝'] },
+export const LOBBY: Lobby = {
+  profile: {
+    name: '홍길동',
+    department: '컴퓨터공학부',
+    admissionYear: 2022,
+    hashtags: ['러닝'],
+    friendId: '7KX2M9QD',
+  },
   masterSwitch: false,
 };
 
@@ -68,7 +75,7 @@ export const LOBBY: Lobby & { masterSwitch: boolean } = {
 export const PHONE_NOW = new Date('2026-10-06T04:00:00.000Z');
 
 // A Quest the User holds with 김민준, which no Party names: a Shared Quest, tonight at 20:10.
-export const DINNER: Quest & { leader: unknown; capacity: number; joinPolicy: string } = {
+export const DINNER: Quest = {
   id: '9a7e0c1d-0000-4f00-8000-00000000d001',
   title: '저녁 약속',
   globalEvent: null,
@@ -108,4 +115,80 @@ export function answerMainScreen(server: FakeServer): void {
     body: { statusCode: 404, error: 'Not Found', code: 'NOT_IN_PARTY', message: 'The User is in no Party.' },
   });
   server.on('GET /walking-route', { status: 200, body: { status: 'ROUTE_RESULT_NOT_FOUND', route: null } });
+  server.on('GET /friend-requests', { status: 200, body: { received: [], sent: [] } });
+  server.on('GET /quest-invitations', { status: 200, body: [] });
+  server.on('GET /meetups', { status: 200, body: { received: [], sent: [] } });
 }
+
+// --- What waits for the User, which 알림 lists ---
+
+const SEO_YEON = { id: '6d1c3f5e-3333-4a5b-8c9d-000000000003', name: '이서연', department: '경영학과' };
+const TAE_O = { id: '6d1c3f5e-4444-4a5b-8c9d-000000000004', name: '윤태오', department: '물리천문학부' };
+
+export const FRIEND_REQUESTS: FriendRequests = {
+  received: [{ id: 'fr1', sender: { name: '한도경', department: '산업공학과' }, sentAt: '2026-10-06T03:00:00.000Z' }],
+  sent: [],
+};
+
+export const INVITATION: QuestInvitation = {
+  id: 'qi1',
+  quest: {
+    id: '9a7e0c1d-0000-4f00-8000-00000000e001',
+    title: '물리 실험 보고서',
+    globalEvent: null,
+    leader: TAE_O,
+    holderCount: 1,
+    capacity: 4,
+    joinPolicy: 'closed',
+  },
+  sentAt: '2026-10-06T03:30:00.000Z',
+};
+
+// A Meetup proposed to the User for tomorrow at 12:10, and one the User proposed.
+export const MEETUPS: Meetups = {
+  received: [
+    {
+      id: 'mu1',
+      title: '학관 점심',
+      startsAt: '2026-10-07T03:10:00.000Z',
+      endsAt: null,
+      place: { placeId: null, label: '학생회관', latitude: 37.45932, longitude: 126.95058 },
+      state: 'proposed',
+      proposer: SEO_YEON,
+      receiver: { id: ME_ID, name: '홍길동', department: '컴퓨터공학부' },
+    },
+  ],
+  sent: [],
+};
+
+// The Party opened for the dinner by 김민준, which the User has not entered.
+export const DINNER_PARTY: Party = {
+  id: 'pa1',
+  title: '저녁 먹으러 가요',
+  memberCount: 1,
+  capacity: 4,
+  joinPolicy: 'closed',
+  quest: { id: DINNER.id, title: '저녁 약속', globalEvent: null },
+  holdsQuest: true,
+  friends: [{ id: MIN_JUN.id, name: MIN_JUN.name, department: MIN_JUN.department }],
+  leader: { id: MIN_JUN.id, name: MIN_JUN.name },
+};
+
+// A Quest the User leads that others ask to join, and two requests to it.
+export const STUDY: Quest = {
+  ...DINNER,
+  id: '9a7e0c1d-0000-4f00-8000-00000000f001',
+  title: '알고리즘 스터디',
+  capacity: 6,
+  joinPolicy: 'approval',
+  holders: [{ id: ME_ID, name: '홍길동', department: '컴퓨터공학부' }],
+};
+
+export const JOIN_REQUESTS: JoinRequest[] = [
+  {
+    id: 'jr1',
+    user: { id: TAE_O.id, name: TAE_O.name, department: TAE_O.department },
+    sentAt: '2026-10-06T03:40:00.000Z',
+  },
+  { id: 'jr2', user: SEO_YEON, sentAt: '2026-10-06T03:50:00.000Z' },
+];

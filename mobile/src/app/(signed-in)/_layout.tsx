@@ -1,7 +1,7 @@
 import { type NativeStackNavigationOptions, Stack } from 'expo-router';
 import type { ReactElement } from 'react';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
-import { PositionProvider } from '@/position';
+import { PositionProvider, PositionSending } from '@/position';
 import { useOwnPlace } from '@/session/session';
 
 // The tabs lie under every screen above them, also when the app is opened at such a screen's address.
@@ -19,7 +19,8 @@ function slideFrom(edge: 'bottom' | 'right', reduceMotion: boolean): NativeStack
 }
 
 // The signed-in place: a User who agreed to the legal documents and finished Onboarding. The tabs, and the screens
-// that cover them, which the stack's back closes. The User's position is watched here, once for all of them.
+// that cover them, which the stack's back closes. The User's position is watched here, once for all of them, and sent
+// from here while the Master Switch is on.
 export default function SignedInLayout(): ReactElement {
   const reduceMotion = useReduceMotion();
   const away = useOwnPlace('ready');
@@ -28,10 +29,14 @@ export default function SignedInLayout(): ReactElement {
   }
   return (
     <PositionProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="quests" options={slideFrom('bottom', reduceMotion)} />
-      </Stack>
+      <PositionSending>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="quests" options={slideFrom('bottom', reduceMotion)} />
+          <Stack.Screen name="notifications" options={slideFrom('right', reduceMotion)} />
+          <Stack.Screen name="profile-edit" options={slideFrom('right', reduceMotion)} />
+        </Stack>
+      </PositionSending>
     </PositionProvider>
   );
 }

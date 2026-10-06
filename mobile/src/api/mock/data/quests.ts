@@ -1,4 +1,4 @@
-import type { GlobalEvent, MyParty, Party, PartyNews, PartyQuest, Quest, SubQuest } from '@/api/types';
+import type { GlobalEvent, MyParty, Party, PartyQuest, Quest, SubQuest } from '@/api/types';
 import { PARTY_MEMBER } from './friends';
 import { frameTime, ME } from './frame';
 
@@ -48,6 +48,9 @@ export const QUESTS: Quest[] = [
     id: 'q-ai',
     title: 'AI 커리어 설명회',
     globalEvent: { id: 'e1', title: 'AI 커리어 설명회' },
+    leader: MIN_JUN,
+    capacity: 6,
+    joinPolicy: 'open',
     holders: [MIN_JUN, ME, PARTY_MEMBER, HA_EUN],
     subQuests: [
       subQuest('q-ai-1', 'AI 커리어 설명회', frameTime('17:40'), frameTime('20:00'), {
@@ -63,6 +66,10 @@ export const QUESTS: Quest[] = [
     id: 'q-dinner',
     title: '저녁 약속',
     globalEvent: null,
+    // A Meetup that 김민준 proposed.
+    leader: MIN_JUN,
+    capacity: 4,
+    joinPolicy: 'closed',
     holders: [MIN_JUN, ME],
     subQuests: [
       subQuest('q-dinner-1', '저녁 약속', frameTime('20:10'), null, {
@@ -78,6 +85,9 @@ export const QUESTS: Quest[] = [
     id: 'c1',
     title: '자료구조',
     globalEvent: null,
+    leader: null,
+    capacity: 1,
+    joinPolicy: 'closed',
     holders: [ME],
     subQuests: [
       {
@@ -104,7 +114,14 @@ const AI_PARTY_QUEST: PartyQuest = {
 const AI_PARTY = { id: 'm1', title: 'AI 커리어 설명회 같이 가요', capacity: 6, joinPolicy: 'open' } as const;
 
 export const PARTIES: Party[] = [
-  { ...AI_PARTY, memberCount: 4, quest: AI_PARTY_QUEST, holdsQuest: true, friends: [MIN_JUN] },
+  {
+    ...AI_PARTY,
+    memberCount: 4,
+    quest: AI_PARTY_QUEST,
+    holdsQuest: true,
+    friends: [MIN_JUN],
+    leader: { id: HA_EUN.id, name: HA_EUN.name },
+  },
 ];
 
 // The frame's "활성 파티": three members share their position with the User.
@@ -119,6 +136,3 @@ export const MY_PARTY: MyParty = {
     { ...ME, leader: false, visible: true },
   ],
 };
-
-// The app's own. The frame's badge on 파티: one Party that waits for the User's answer and two invitations.
-export const PARTY_NEWS: PartyNews = { count: 3 };

@@ -45,12 +45,26 @@ export interface OnboardingAnswers {
   gender: Gender | null;
 }
 
-// --- Lobby (POST /lobby) ---
+// --- Lobby (POST /lobby) and the profile (PATCH /users/me/profile) ---
 
-// The main server's answer also holds the profile's `friendId` and `masterSwitch`, which nothing here reads yet.
-export interface Lobby {
-  profile: { name: string; department: string; admissionYear: number | null; hashtags: string[] };
+export interface Profile {
+  name: string;
+  department: string;
+  admissionYear: number | null;
+  // Without '#'.
+  hashtags: string[];
+  // "7KX2M9QD": what another User sends a Friend Request to.
+  friendId: string;
 }
+
+export interface Lobby {
+  profile: Profile;
+  // Whether the User's Master Switch is on.
+  masterSwitch: boolean;
+}
+
+// The fields of the profile that change; a field left out stays. `null` empties the admission year.
+export type ProfileChange = Partial<Pick<Profile, 'name' | 'department' | 'admissionYear' | 'hashtags'>>;
 
 // --- Friends and their positions ---
 
@@ -72,6 +86,20 @@ export interface Position {
   latitude: number;
   longitude: number;
   measuredAt: string;
+}
+
+// POST /positions: the User's own position. `accuracy` is the radius in metres the phone places itself within, and
+// `measuredAt` the time the phone measured it.
+export interface PositionUpload {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  measuredAt: string;
+}
+
+// The answer to an upload: a position off the Campus Boundary was not kept, and the User is not shared.
+export interface PositionKept {
+  offCampus: boolean;
 }
 
 export type Presence = 'free' | 'class' | 'moving' | 'off';
@@ -106,13 +134,23 @@ export interface SubQuest {
   ended: boolean;
 }
 
-// GET /quests. The User's Quests, then today's Class Quests by their start. The main server's Quest also holds
-// `leader`, `capacity` and `joinPolicy`, which nothing here reads.
+export interface Person {
+  id: string;
+  name: string;
+  department: string;
+}
+
+// GET /quests. The User's Quests, then today's Class Quests by their start.
 export interface Quest {
   id: string;
   title: string;
   globalEvent: { id: string; title: string } | null;
-  holders: { id: string; name: string; department: string }[];
+  // Null for a Class Quest only.
+  leader: Person | null;
+  // 1 to 8: the most Holders the Quest takes.
+  capacity: number;
+  joinPolicy: JoinPolicy;
+  holders: Person[];
   // The attending one first.
   subQuests: SubQuest[];
   // True for a Class Quest, which the timetable makes for today.
@@ -158,7 +196,9 @@ export interface Party {
   // Whether the User holds the Party's Quest.
   holdsQuest: boolean;
   // The User's Friends among the members, in the order they entered.
-  friends: { id: string; name: string; department: string }[];
+  friends: Person[];
+  // Provisional: the Party's Leader now, from an open pull request of the main server (P08-16).
+  leader?: { id: string; name: string };
 }
 
 // GET /parties/mine, the Party the User is in now; 404 NOT_IN_PARTY for a User in no Party. The frame's "활성 파티".
@@ -174,13 +214,6 @@ export interface MyParty {
   members: { id: string; name: string; department: string; leader: boolean; visible: boolean }[];
 }
 
-// The app's own: how many things wait for the User in Parties, which is the number on the bottom navigation's 파티.
-// The `Main` frame counts the Parties that wait for the User's answer, the invitations not yet answered and the
-// people who ask to join a Party the User made. No answer of the main server holds it.
-export interface PartyNews {
-  count: number;
-}
-
 // The app's own: what the main screen's "오늘의 발자국" shows, which no answer of the main server holds. The `Main`
 // frame counts the people who left a story today, the User left out, and draws the faces of the first three by the
 // time of their story.
@@ -189,6 +222,40 @@ export interface Footprints {
   friendCount: number;
   // The first three of them. A photo is an image address; null shows the name's letters.
   faces: { userId: string; name: string; photo: string | null }[];
+}
+
+// --- Timetable (GET /timetable/classes) and Places (GET /places) ---
+
+export type Weekday = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+// A time of a class: in Korea's time, "10:30".
+export interface ClassTime {
+  id: string;
+  weekday: Weekday;
+  startTime: string;
+  endTime: string;
+  placeId: string | null;
+  // "118호", or null.
+  room: string | null;
+}
+
+// In the order of their first time in the week, each time in the order of the week.
+export interface TimetableClass {
+  id: string;
+  courseName: string;
+  times: ClassTime[];
+  // The other classes that cross this one.
+  overlaps: { id: string; courseName: string }[];
+}
+
+// A building of the campus, or a spot without a number.
+export interface Place {
+  id: string;
+  // "301", or null for a spot such as 자하연.
+  number: string | null;
+  name: string;
+  latitude: number;
+  longitude: number;
 }
 
 // --- Walking route (GET /walking-route) ---

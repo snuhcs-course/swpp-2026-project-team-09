@@ -10,6 +10,9 @@ function quest(id: string, startsAt: string | null, endsAt: string | null, class
     id,
     title: id,
     globalEvent: null,
+    leader: null,
+    capacity: 1,
+    joinPolicy: 'closed',
     holders: [],
     subQuests: [
       {

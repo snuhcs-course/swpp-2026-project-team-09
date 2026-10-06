@@ -26,10 +26,12 @@ export { EmptyState, ErrorState, LoadingState } from './states';
 export { TextField } from './text-field';
 export { ToastProvider, useNotReadyToast, useToast, useToastAbove } from './toast';
 export {
+  classColors,
   color,
   font,
   halo,
   mapText,
+  noticeTone,
   onKey,
   onPhoto,
   presence,

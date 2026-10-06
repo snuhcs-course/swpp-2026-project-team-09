@@ -52,6 +52,11 @@ export function sameKoreaDay(one: Date, other: Date): boolean {
   return Math.floor(inKorea(one).getTime() / DAY_MS) === Math.floor(inKorea(other).getTime() / DAY_MS);
 }
 
+// The day of the week in Korea: 0 for Sunday, 1 for Monday.
+export function koreaWeekday(instant: Date): number {
+  return inKorea(instant).getUTCDay();
+}
+
 // 2026
 export function koreaYear(instant: Date): number {
   return inKorea(instant).getUTCFullYear();

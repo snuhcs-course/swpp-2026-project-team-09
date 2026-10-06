@@ -3,7 +3,7 @@ import type { ReactElement } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomNav, type BottomNavItem, color, shadow, useNotReadyToast } from '@/design-system';
-import { usePartyBadge } from '@/features/parties/use-party-badge';
+import { usePartyBadge } from '@/features/notifications/use-notices';
 import { navPaddingBottom } from './layout';
 
 // The frames' five slots and the tab each opens. 올리기 is the action in the middle and opens no tab.

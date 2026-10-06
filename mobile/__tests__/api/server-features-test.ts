@@ -255,23 +255,21 @@ describe('Onboarding with the main server', () => {
 });
 
 describe('what the main server does not serve', () => {
-  it("stays the mock's: the Friends' statuses, the Global Events, the number on 파티 and 오늘의 발자국", async () => {
+  it("stays the mock's: the Friends' statuses, the Global Events and 오늘의 발자국", async () => {
     const server = await askMainServer({ signedIn: true });
 
     const asked = Promise.all([
       apiClient.listFriendStatuses(),
       apiClient.listGlobalEvents(),
       apiClient.listGlobalEventAnnouncers(),
-      apiClient.getPartyNews(),
       apiClient.getFootprints(),
     ]);
     await jest.runAllTimersAsync();
-    const [statuses, globalEvents, announcers, news, footprints] = await asked;
+    const [statuses, globalEvents, announcers, footprints] = await asked;
 
     expect(statuses).toHaveLength(12);
     expect(globalEvents.map(({ title }) => title)).toEqual(['AI 커리어 설명회']);
     expect(announcers).toHaveLength(1);
-    expect(news).toEqual({ count: 3 });
     expect(footprints.friendCount).toBe(5);
     expect(server.received()).toEqual([]);
   });

@@ -505,15 +505,20 @@ interface ActivePartyView {
 
 Ticket 12 connected every row that the demo's flows (P20) use and the main server serves on its main line (`origin/1.0/Main` at `61881c7`, 2026-10-06). A connected row is answered by the main server in a build that asks it (`asksMainServer()`: Google's sign-in module, the Google settings and `EXPO_PUBLIC_MAIN_SERVER_URL`), and by its mock in Expo Go, on the web, in the tests and in a build without the address. A row left a mock is answered by its mock in every build; the reason is in its row. Before the demo build (P20), check the table again against the main line.
 
-Sending the User's own position is not in this table: it is built in P09 with the Master Switch, which is on 내 정보. The main server refuses every position while the switch is off, so the two are built together.
-
 | Feature | State | With the main server | Why |
 |---|---|---|---|
 | Sign-in, refresh, sign-out | Connected | `POST /auth/google`, `/auth/refresh`, `/auth/sign-out`; tokens in the phone's secure storage | The main server's 403 replaces the app's check of the domain |
 | Onboarding: name, department, admission year, interests | Connected | `POST /users/me/onboarding` | |
 | Whether a User finished Onboarding | Connected | The sign-in's answer, and every 403 `ONBOARDING_REQUIRED` with its suggestion | The main server's word replaces the phone's |
 | Onboarding: course level, gender | The app's own, on the phone | Nothing | The main server has no field for them |
-| Lobby | Connected | `POST /lobby` | Its `masterSwitch` waits for P09 |
+| Lobby | Connected | `POST /lobby`, with `masterSwitch` and `profile.friendId` | |
+| The profile (프로필 편집) | Connected | `PATCH /users/me/profile` with the changed fields | |
+| The Master Switch | Connected | `PUT /users/me/master-switch`; read from the Lobby | The mock keeps it in memory, off at each start |
+| Sending the User's position | Connected | `POST /positions`, at most every 5 s while the switch is on, the permission granted and the app in front | `MASTER_SWITCH_OFF` turns the switch off; the 400s and no answer drop a position; sending in the background is P17's. The mock refuses while the switch is off and answers `offCampus` by the campus rectangle |
+| The timetable on 내 정보, the Places | Connected | `GET /timetable/classes`, `GET /places` | Read only; the mock has the `Profile` frame's four classes |
+| Friend Requests | Connected | `GET /friend-requests`; fetched again on `friends-changed` | |
+| Quest invitations, requests to join | Connected | `GET /quest-invitations`, `GET /quests/:questId/join-requests` for each Quest the User leads with Approval; fetched again on `quests-changed` | The mock leads no Quest, so it has no request to join |
+| Meetups | Connected | `GET /meetups`; fetched again on `meetups-changed` | |
 | Friends | Connected | `GET /friends`; fetched again on `friends-changed` | |
 | Friends' positions | Connected | `GET /positions`, the socket's `position` and `position-removed` | Fetched when the connection opens and when the app returns to the front |
 | Friends' status, place, walk and photo (`listFriendStatuses`) | Mock | Nothing | No answer holds them; a Friend without a status is shown by `visible` alone: "공강" or "위치 꺼짐" |
@@ -523,12 +528,12 @@ Sending the User's own position is not in this table: it is built in P09 with th
 | The User's own id | Connected | The access token's `sub` | |
 | The app's time | Connected | The phone's clock | A Quest row's "23분 후" is worded when the Quests are fetched: on a signal, when the connection opens again and when the app returns to the front |
 | Parties | Connected | `GET /parties`, `GET /parties/mine` (404 `NOT_IN_PARTY` is null); fetched again on `party-changed` | The answers' shape replaced the provisional one: `quest` with `id`, and `holdsQuest` and `friends` |
-| The number on the bottom navigation's 파티 (`getPartyNews`) | Mock: 3 | Nothing | No answer gives the frame's number; `GET /party-invitations` and `GET /parties/mine/join-requests` hold its parts, for P13 |
+| The number on the bottom navigation's 파티, and 알림 | Composed | The rows of 알림 from `GET /parties` (`holdsQuest`), `GET /friend-requests`, `GET /quest-invitations`, `GET /meetups` and the requests to join; 파티 counts all but the Friend Requests | Fetched again on their signals and when the app returns to the front. A Party's `leader` is optional until P08-16 |
 | Walking route | Connected | `GET /walking-route` | Needs the main server's `KAKAO_REST_API_KEY`; without it the main server answers 502 and the app says "길을 찾지 못했어요" |
 | What 오늘의 발자국 shows (`getFootprints`) | Mock: five Friends and three faces | Nothing | No spec covers stories |
 | The AI input | No data | Nothing | It only says that it is not ready; no spec covers it |
 | The Session's end | Connected | The socket's `session-ended`, and a 401 that one renewal cannot mend | `SESSION_REPLACED` shows "다른 기기에서 로그인했어요" |
-| The signals `meetups-changed`, `matching-changed` | Not used | The socket | They name nothing these screens show; an accepted Meetup also sends `quests-changed` |
+| The signal `matching-changed` | Not used | The socket | It names nothing these screens show |
 
 ## 4. Controls that say "준비 중이에요"
 
@@ -546,7 +551,11 @@ The control is there and only shows the toast. The last column is a proposal for
 | Bottom navigation | 올리기 | The story sheet | In no Iteration 1 spec |
 | 파티 | + 만들기, and the bodies of 찾기, 내 파티 and 초대 | 파티 만들기 and the lists of Quests | P13 |
 | 행사 | Its body | The list of Global Events | P13 |
-| 내 정보 | Its body | 내 정보, with the Master Switch, sign-out and the timetable | P19 (ticket 02) |
+| 내 정보 | 직접 입력 | The timetable screen | P19 (ticket 03) |
+| 내 정보 | 이미지로 불러오기, 빈 시간 말하기 | Reading a timetable from an image or from words | In no Iteration 1 spec |
+| 내 정보 | 친구 관리 | 친구 관리 | P14 |
+| 알림 | A Party opened, and 참여 신청 | The Quest's room | P13 |
+| 알림 | A Friend Request | 친구 관리 › 친구 요청 | P14 |
 | A Global Event's card | 같이 갈 사람 찾기 | The party screen | P13 |
 | A Party's card | 참여하기, 파티 열기 | The party screen | P13 |
 | A Friend's card | 파티 만들기 | Making a Party | P14 |

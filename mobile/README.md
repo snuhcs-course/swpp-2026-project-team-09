@@ -45,8 +45,8 @@ is a fixed round on campus (`src/position/walk.ts`) that starts where the `Main`
 step every five seconds, so the User's Avatar is on the map and glides, also on the web and far from the campus.
 The walk has no explanation and no permission to try: for those, start without it.
 
-Nothing on the main screen signs a User out: sign-out is on 내 정보, which another task builds. To see the sign-in
-screen again, start the app with `EXPO_PUBLIC_FIRST_STATE=1`.
+"로그아웃" on 내 정보 signs a User out. To start at the sign-in screen with nothing kept, start the app with
+`EXPO_PUBLIC_FIRST_STATE=1`.
 
 ### Google sign-in
 
@@ -320,19 +320,23 @@ starts with `useOwnPlace(...)`, which leads a User who does not belong there to 
 A screen's file in `src/app/` only says which place it is; the screen itself is in `src/screens/`.
 
 **The signed-in place** is the route group `src/app/(signed-in)/`. Its layout is the guard (`useOwnPlace('ready')`)
-for every route in it, the `PositionProvider` that every tab and every screen above them reads, and a stack:
+for every route in it, the `PositionProvider` that every tab and every screen above them reads, the
+`PositionSending` inside it (see "The User's position"), and a stack:
 
 - **The tabs** (`(signed-in)/(tabs)/`): Expo Router's `Tabs`, with `TabBar` (`src/screens/shell/tab-bar.tsx`)
   drawing the design system's `BottomNav`. 지도 is the main screen at `/main`; 파티 is `/party`, 행사 `/events`, 내
   정보 `/me`. 올리기 is no tab and says "준비 중이에요". A tab stays mounted while another is shown, so the map keeps
   its native view, its camera, the open card, the route and the collapsed lists. The bar has no line on top but the
   frames' shadow (`shadow.nav`), and under its items 16 or the phone's own inset, whichever is larger
-  (`navPaddingBottom` in `src/screens/shell/layout.ts`). The number on 파티 is `usePartyBadge()`.
+  (`navPaddingBottom` in `src/screens/shell/layout.ts`). The number on 파티 is `usePartyBadge()`: the rows of 알림
+  that concern 파티, every row but the Friend Requests. While the lists load, and when every one failed, there is no
+  badge.
 - 파티, 행사 and 내 정보 are a `TabScreen` (`src/screens/shell/tab-screen.tsx`): the tab's app bar on the grey ground.
   파티 has "+ 만들기" and the tabs 찾기, 내 파티 and 초대; its address names the tab (`/party?tab=invites`). 내 정보's
-  address can ask for its 위치 공유 card (`/me?show=sharing`). Their bodies say "준비 중이에요" until their tasks
-  fill them.
-- **Screens above the tabs** are routes of the stack: the Quest list on the whole screen (`/quests`). Each is a
+  address can ask for its 위치 공유 card (`/me?show=sharing`). The bodies of 파티 and 행사 say "준비 중이에요" until
+  their tasks fill them; 내 정보 is described below.
+- **Screens above the tabs** are routes of the stack: the Quest list on the whole screen (`/quests`), 알림
+  (`/notifications`) and 프로필 편집 (`/profile-edit`). Each is a
   `FullScreenPanel` and slides in over 0.28 s, from the bottom for `/quests` and from the right for a pushed screen,
   or appears without sliding where the phone asks for less motion (`slideFrom` in the layout). The tabs lie under
   them also when the app opens at their address (`unstable_settings`).
@@ -510,6 +514,36 @@ closes the screen and goes back to the map by `/main?quest=<id>`, which the Ques
 press of its own row; any other row says "준비 중이에요". Without a Quest it says "퀘스트가 없어요"; while the Quests
 load and after a failure it shows the shared states.
 
+**내 정보** (`src/screens/me/me-screen.tsx`, the `Profile` frame) has the bell, "알림" or "알림 {n}개" with the
+number of 알림's rows in red ("9+" above nine), and four cards from the top:
+
+- the profile from the Lobby: the Avatar, the name, "컴퓨터공학부 · 22학번" (the department alone without an
+  admission year), "SNU 계정 인증됨" and "프로필 편집";
+- 시간표 (`week-card.tsx`): Monday to Friday from 09 to 18, today's day in navy, a block for each time of a class
+  (`GET /timetable/classes`, with `GET /places` for the numbers) in the colour of the class's place in the timetable
+  (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". The tiles "직접 입력", "이미지로 불러오기"
+  and "빈 시간 말하기" say "준비 중이에요";
+- 위치 공유 (`sharing-card.tsx`): the switch "친구와 위치 공유", which is the Master Switch, with the number of
+  Friends, and "캠퍼스 밖이라 위치가 공유되지 않아요" while the last upload was off campus. Turning it on without the
+  location permission shows the map's explanation and the system's prompt first; a refusal leaves it off with
+  "위치 권한을 허용해야 공유할 수 있어요". The new state shows at once, and turns back with "위치 공유를 바꾸지
+  못했어요" when the main server did not take it. At `/me?show=sharing` the screen scrolls to the card and outlines
+  it for 1.2 s;
+- "친구 관리 {n}" ("준비 중이에요"), "참여 중인 파티 {n}" (파티 at 내 파티) and "내 퀘스트" (the Quest list on the
+  whole screen).
+
+"로그아웃" asks "로그아웃할까요?", then stops the sending, signs out and shows the sign-in screen. 프로필 편집
+(`profile-edit-screen.tsx`) edits the name, the department, the admission year and the interests with Onboarding's
+fields, sends the changed ones with `PATCH /users/me/profile`, puts the answer in the Lobby and goes back; a failure
+says "저장하지 못했어요. 다시 시도해 주세요" and stays.
+
+알림 (`notifications-screen.tsx`) is composed from the main server's lists (`useNotices()` of the notifications
+feature), in this order: a Party running for a Quest the User holds ("{name}님이 파티를 활성화했어요", or "파티가
+활성화됐어요" without its Leader), a Friend Request received, a Quest invitation, a Meetup proposed to the User and
+waiting ("{name}님의 파티 초대"), and the requests to join each Quest the User leads with Approval ("참여 신청
+{n}명"). An invitation's and a Meetup's row open 파티 at 초대; the others say "준비 중이에요". A list that failed is
+left out; when every one failed it shows the error state. Without rows it says "새 알림이 없어요".
+
 The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and
 `/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
 closes back to the screen it was opened from. The documents' texts are placeholders.
@@ -535,8 +569,7 @@ the entries it needs. So an operation that two screens need is asked once, and o
 
 When an operation fails:
 
-- `listFriendStatuses`, `listGlobalEventAnnouncers`, `getPartyNews` and `getFootprints`, the app's own, never fail
-  a screen: it shows what it has without them.
+- `listFriendStatuses`, `listGlobalEventAnnouncers` and `getFootprints`, the app's own, never fail a screen: it shows what it has without them.
 - The friend list and the Quest list have `isError` and no `data`.
 - The map has `isError` and keeps in `data` the cards that are still right: without the Global Events, the Friends'
   cards still show.
@@ -555,7 +588,7 @@ position. Its `kind` is `global-event`, `party`, `shared-quest`, `friend` or `pa
 
 Behind a hook are three layers:
 
-- **The API client** (`src/api/client.ts`): one operation per question to the main server. `src/api/types.ts` holds
+- **The API client** (`src/api/client.ts`): one operation per question to the main server. `src/api/types.ts` (and `waiting-types.ts`, the lists of what waits for the User) holds
   the answers' shapes. A shape marked "provisional" comes from an open pull request of the main server, and one marked
   "the app's own" is defined nowhere else yet.
 - **An adapter** per feature (`src/features/<feature>/adapter.ts`): turns answers into what the screens use, such as
@@ -572,15 +605,22 @@ Behind a hook are three layers:
 | ------------------------------------------- | -------------------------------------------------- | --------------------------------------------- |
 | `signIn`, `signOut` (`src/auth/sign-in.ts`) | Whether the User signed in, and Onboarding's state | `POST /auth/google`, `/auth/sign-out`         |
 | `completeOnboarding`                        | Nothing                                            | `POST /users/me/onboarding`                   |
-| `enterLobby`                                | The User's profile                                 | `POST /lobby`                                 |
+| `enterLobby`                                | The User's profile and Master Switch               | `POST /lobby`                                 |
+| `updateProfile`                             | The changed profile                                | `PATCH /users/me/profile`                     |
+| `setMasterSwitch`                           | Nothing                                            | `PUT /users/me/master-switch`                 |
+| `uploadPosition`                            | Whether the position was off campus                | `POST /positions`                             |
 | `listFriends`                               | The Friends                                        | `GET /friends`                                |
+| `listFriendRequests`                        | The Friend Requests received and sent              | `GET /friend-requests`                        |
 | `listPositions`                             | The positions the User may see                     | `GET /positions`, and the socket's `position` |
 | `listFriendStatuses`                        | Each Friend's status, place and photo              | The mock: the app's own                       |
 | `listQuests`                                | The User's Quests and today's Class Quests         | `GET /quests`                                 |
+| `listQuestInvitations`                      | The invitations into a Quest                       | `GET /quest-invitations`                      |
+| `listJoinRequests`                          | The requests to join a Quest the User leads        | `GET /quests/:questId/join-requests`          |
+| `listMeetups`                               | The Meetups proposed to the User and by the User   | `GET /meetups`                                |
+| `listClasses`, `listPlaces`                 | The User's classes, and the Places                 | `GET /timetable/classes`, `GET /places`       |
 | `listGlobalEvents`                          | The published Global Events                        | The mock: no route lists them for a User yet  |
 | `listGlobalEventAnnouncers`                 | Who announced each Global Event                    | The mock: the app's own                       |
 | `listParties`, `getMyParty`                 | The Parties, and the one the User is in            | `GET /parties`, `/parties/mine`               |
-| `getPartyNews`                              | How many things wait for the User in Parties       | The mock: the app's own                       |
 | `getFootprints`                             | What "오늘의 발자국" shows: a number and faces     | The mock: the app's own                       |
 | `findWalkingRoute`                          | The way on foot between two points                 | `GET /walking-route`                          |
 
@@ -631,7 +671,19 @@ openLocationSettings(); // of `@/position`: the phone's settings of the app, for
 - With `EXPO_PUBLIC_CAMPUS_WALK=1` the hook answers the development walk instead and never asks the phone.
 - The words of the system's prompt on iOS are in `app.json`, with the library's config plugin. The app asks for no
   position in the background.
-- The position is sent nowhere. Sending it is built with the Master Switch, by another task.
+- `accuracy` is the radius in metres the phone places itself within, and `measuredAt` the time it measured the
+  position. The walk gives an accuracy of 10 and the time it moves.
+- `ask()` gives the answer, so that the switch on 내 정보 knows whether to turn on.
+
+**Sending.** `PositionSending` (`src/position/sending.tsx`), inside the provider in the signed-in layout, sends each
+new position to `POST /positions` while the Master Switch is on, the permission is granted and the app is in front,
+on every tab: at most one upload every `POSITION_EVERY_MS`, one at a time, a newer position replacing one that
+waits. It stops at once when the switch is turned off, the app goes to the background, the User signs out
+(`useSending().stop()`) or the Session ends, and starts again in front. An answer `offCampus: true` shows the line
+on 내 정보 until a position is kept again; 409 `MASTER_SWITCH_OFF` turns the switch off and fetches the Lobby
+again; the 400s and no answer drop that position. The mock keeps the switch in memory, off at each start, refuses
+positions while it is off and answers `offCampus` by the campus rectangle.
+
 - The signed-in place's layout holds the provider, so the tabs and the screens above them share one watch.
 
 ### The connection to the socket server
@@ -649,9 +701,11 @@ socket server's README describes:
 - The positions are fetched when the connection opens, and everything it shows when it opens again after a drop. When
   the app returns to the front, the positions and the Quests are fetched again.
 - The signals fetch what they name again: `friends-changed` the Friends and the positions, `quests-changed` the
-  Quests, `party-changed` the Parties and the positions, `global-events-changed` the Global Events and the Quests.
+  Quests, the invitations and the requests to join, `meetups-changed` the Meetups, `party-changed` the Parties and
+  the positions, `global-events-changed` the Global Events and the Quests. `friends-changed` also fetches the Friend
+  Requests. When the app returns to the front, the lists of 알림 are fetched again too.
 
-The app sends no position of its own: that is built with the Master Switch, by another task.
+The app sends its own position over `POST /positions`, not over the connection (see "The User's position").
 
 ### From a mock to the main server
 

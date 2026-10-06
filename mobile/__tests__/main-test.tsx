@@ -53,15 +53,15 @@ describe("the main screen's bottom navigation", () => {
     expect(screen.getByRole('tab', { name: '내 정보' })).toBeVisible();
   });
 
-  it('counts on 파티 what waits for the User in Parties', async () => {
+  it('counts on 파티 what waits for the User in Parties: a Party opened, an invitation and a Meetup', async () => {
     givePhone({ permission: 'granted' });
     await openMain();
 
     expect(screen.getByRole('tab', { name: '파티, 새 소식 3개' })).toBeVisible();
   });
 
-  it('shows no count when the number cannot be read', async () => {
-    process.env.EXPO_PUBLIC_MOCK_FAIL = 'getPartyNews';
+  it('shows no count when the lists cannot be read', async () => {
+    process.env.EXPO_PUBLIC_MOCK_FAIL = 'listParties,listFriendRequests,listQuestInvitations,listMeetups,listQuests';
     givePhone({ permission: 'granted' });
     await openMain();
     await pass(3000);

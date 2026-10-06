@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { forgetMockSwitch } from '@/api/mock/client';
 
 const SETTINGS = [
   'EXPO_PUBLIC_SIGN_IN_ENDING',
@@ -17,6 +18,7 @@ export async function startFresh(): Promise<void> {
     Reflect.deleteProperty(process.env, setting);
   }
   await AsyncStorage.clear();
+  forgetMockSwitch();
 }
 
 // Lets a mock's wait pass and gives its answer. Use with Jest's fake timers.

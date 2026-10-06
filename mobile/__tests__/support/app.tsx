@@ -8,6 +8,8 @@ import EventsScreen from '@/app/(signed-in)/(tabs)/events';
 import MainScreen from '@/app/(signed-in)/(tabs)/main';
 import MeScreen from '@/app/(signed-in)/(tabs)/me';
 import PartyScreen from '@/app/(signed-in)/(tabs)/party';
+import NotificationsScreen from '@/app/(signed-in)/notifications';
+import ProfileEditScreen from '@/app/(signed-in)/profile-edit';
 import QuestsScreen from '@/app/(signed-in)/quests';
 import ConsentScreen from '@/app/consent';
 import StartScreen from '@/app/index';
@@ -45,6 +47,8 @@ export async function startApp(initialUrl = '/'): Promise<void> {
       '(signed-in)/(tabs)/events': EventsScreen,
       '(signed-in)/(tabs)/me': MeScreen,
       '(signed-in)/quests': QuestsScreen,
+      '(signed-in)/notifications': NotificationsScreen,
+      '(signed-in)/profile-edit': ProfileEditScreen,
     },
     { initialUrl },
   );

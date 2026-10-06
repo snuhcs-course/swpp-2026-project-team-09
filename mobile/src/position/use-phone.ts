@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import type { LatLng } from '@/api/types';
-import { askPermission, type PhonePermission, readPermission, watchPhone } from './phone';
+import { askPermission, type Measured, type PhonePermission, readPermission, watchPhone } from './phone';
 
 // How often a new position is asked for, from the phone or from the walk. It is also the longest an Avatar glides.
 export const POSITION_EVERY_MS = 5000;
@@ -18,25 +18,28 @@ export interface MyPosition {
   permission: PositionPermission;
   // Null without the permission, and until the first position comes.
   position: LatLng | null;
+  // The position's accuracy in metres, null where the phone does not say, and the time it was measured, in
+  // milliseconds since 1970. Null without a position.
+  accuracy: number | null;
+  measuredAt: number | null;
   // How long this position took to come after the one before, between one and five seconds. An Avatar glides to it
   // over this time, so that it keeps moving from one position to the next without trailing behind.
   stepMs: number;
-  // Shows the system's prompt and follows its answer.
-  ask: () => Promise<void>;
+  // Shows the system's prompt and follows its answer, which it gives.
+  ask: () => Promise<PositionPermission>;
   // Starts the phone's watch again if it could not start, as with location services turned off. The same happens
   // by itself when the app returns to the front.
   retry: () => void;
 }
 
-interface Fix {
-  position: LatLng;
+interface Fix extends Measured {
   at: number;
   stepMs: number;
 }
 
-function fixAfter(last: Fix | null, position: LatLng, at: number): Fix {
+function fixAfter(last: Fix | null, measured: Measured, at: number): Fix {
   const since = last === null ? POSITION_EVERY_MS : at - last.at;
-  return { position, at, stepMs: Math.min(Math.max(since, SHORTEST_STEP_MS), POSITION_EVERY_MS) };
+  return { ...measured, at, stepMs: Math.min(Math.max(since, SHORTEST_STEP_MS), POSITION_EVERY_MS) };
 }
 
 // Calls `onFront` each time the app returns to the front, from the phone's settings for example.
@@ -89,9 +92,9 @@ function useWatch(watching: boolean): { fix: Fix | null; retry: () => void } {
     failed.current = false;
     const stop = watching
       ? watchPhone(POSITION_EVERY_MS, {
-          tell: (position): void => {
+          tell: (measured): void => {
             const at = Date.now();
-            setFix((last) => fixAfter(last, position, at));
+            setFix((last) => fixAfter(last, measured, at));
           },
           failed: (): void => {
             failed.current = true;
@@ -120,17 +123,21 @@ export function usePhone(asking: boolean): MyPosition {
     setLook((last) => last + 1);
     retry();
   });
-  const ask = useCallback(async (): Promise<void> => {
-    setPermission(await askPermission());
+  const ask = useCallback(async (): Promise<PositionPermission> => {
+    const answer = await askPermission();
+    setPermission(answer);
+    return answer;
   }, [setPermission]);
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    const shown = watching ? fix : null;
+    return {
       permission,
-      position: watching && fix !== null ? fix.position : null,
+      position: shown?.position ?? null,
+      accuracy: shown?.accuracy ?? null,
+      measuredAt: shown?.measuredAt ?? null,
       stepMs: fix === null ? POSITION_EVERY_MS : fix.stepMs,
       ask,
       retry,
-    }),
-    [permission, watching, fix, ask, retry],
-  );
+    };
+  }, [permission, watching, fix, ask, retry]);
 }

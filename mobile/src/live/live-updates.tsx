@@ -1,7 +1,18 @@
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
-import { FRIENDS_KEY, GLOBAL_EVENTS_KEY, MY_PARTY_KEY, PARTIES_KEY, POSITIONS_KEY, QUESTS_KEY } from '@/api/queries';
+import {
+  FRIEND_REQUESTS_KEY,
+  FRIENDS_KEY,
+  GLOBAL_EVENTS_KEY,
+  JOIN_REQUESTS_KEY,
+  MEETUPS_KEY,
+  MY_PARTY_KEY,
+  PARTIES_KEY,
+  POSITIONS_KEY,
+  QUEST_INVITATIONS_KEY,
+  QUESTS_KEY,
+} from '@/api/queries';
 import { renewSession } from '@/api/server/http';
 import { asksMainServer, socketServerUrl } from '@/api/servers';
 import type { Friend, MyParty, Position } from '@/api/types';
@@ -10,15 +21,25 @@ import { useSession } from '@/session/session';
 import { endSession } from '@/session/session-events';
 import { openLiveConnection } from './connection';
 
-// What each signal of the main server makes the app fetch again. The signals carry nothing. `meetups-changed` and
-// `matching-changed` name nothing these screens show; an accepted Meetup also sends `quests-changed`.
+// What each signal of the main server makes the app fetch again. The signals carry nothing. `matching-changed` names
+// nothing these screens show; an accepted Meetup also sends `quests-changed`.
 const REFETCH: Record<string, readonly QueryKey[]> = {
-  'friends-changed': [FRIENDS_KEY, POSITIONS_KEY],
-  'quests-changed': [QUESTS_KEY],
+  'friends-changed': [FRIENDS_KEY, POSITIONS_KEY, FRIEND_REQUESTS_KEY],
+  'quests-changed': [QUESTS_KEY, QUEST_INVITATIONS_KEY, JOIN_REQUESTS_KEY],
+  'meetups-changed': [MEETUPS_KEY],
   // Who is in the User's Party changes whom the User sees.
   'party-changed': [MY_PARTY_KEY, PARTIES_KEY, POSITIONS_KEY],
   'global-events-changed': [GLOBAL_EVENTS_KEY, QUESTS_KEY],
 };
+
+// The lists of what waits for the User, which 알림 and the badge on 파티 show.
+const WAITING: readonly QueryKey[] = [
+  PARTIES_KEY,
+  FRIEND_REQUESTS_KEY,
+  QUEST_INVITATIONS_KEY,
+  MEETUPS_KEY,
+  JOIN_REQUESTS_KEY,
+];
 
 // What is fetched again when the connection opens again: what may have changed while it was closed.
 const SHOWN: readonly QueryKey[] = [
@@ -26,8 +47,8 @@ const SHOWN: readonly QueryKey[] = [
   POSITIONS_KEY,
   QUESTS_KEY,
   MY_PARTY_KEY,
-  PARTIES_KEY,
   GLOBAL_EVENTS_KEY,
+  ...WAITING,
 ];
 
 function refetch(queryClient: QueryClient, keys: readonly QueryKey[]): void {
@@ -83,8 +104,8 @@ function openFor(queryClient: QueryClient): () => void {
 }
 
 // Keeps the one connection to the socket server open while a signed-in User is past the sign-in and Onboarding, in a
-// build that asks the main server. When the app comes back to the front, the positions are fetched again, and the
-// Quests, whose rows word their times against the phone's clock. Draws nothing.
+// build that asks the main server. When the app comes back to the front, the positions are fetched again, the Quests,
+// whose rows word their times against the phone's clock, and the lists of what waits for the User. Draws nothing.
 export function LiveUpdates(): null {
   const queryClient = useQueryClient();
   const { status } = useSession();
@@ -96,7 +117,7 @@ export function LiveUpdates(): null {
     const close = openFor(queryClient);
     const watch = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
-        refetch(queryClient, [POSITIONS_KEY, QUESTS_KEY]);
+        refetch(queryClient, [POSITIONS_KEY, QUESTS_KEY, ...WAITING]);
       }
     });
     return () => {

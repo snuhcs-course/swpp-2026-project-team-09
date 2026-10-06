@@ -4,13 +4,14 @@ import { walksOnCampus } from '@/dev-settings';
 import { type MyPosition, POSITION_EVERY_MS, usePhone } from './use-phone';
 import { walkAt } from './walk';
 
-// The development walk: a new position of the fixed path each time, and the phone is never asked.
-function useWalk(walking: boolean): LatLng | null {
-  const [step, setStep] = useState(0);
+// The development walk: a new position of the fixed path each time, measured when it moves, and the phone is never
+// asked.
+function useWalk(walking: boolean): { position: LatLng; measuredAt: number } | null {
+  const [step, setStep] = useState({ count: 0, at: Date.now() });
   useEffect(() => {
     const timer = walking
       ? setInterval(() => {
-          setStep((last) => last + 1);
+          setStep((last) => ({ count: last.count + 1, at: Date.now() }));
         }, POSITION_EVERY_MS)
       : null;
     return (): void => {
@@ -19,11 +20,14 @@ function useWalk(walking: boolean): LatLng | null {
       }
     };
   }, [walking]);
-  return walking ? walkAt(step) : null;
+  return useMemo(() => (walking ? { position: walkAt(step.count), measuredAt: step.at } : null), [walking, step]);
 }
 
+// The walk's accuracy, in metres: as a phone's outdoors.
+const WALK_ACCURACY = 10;
+
 // The walk needs no permission, and has no watch to start again.
-const asksNothing = (): Promise<void> => Promise.resolve();
+const asksNothing = (): Promise<'granted'> => Promise.resolve('granted');
 const retriesNothing = (): void => {
   // The walk never fails.
 };
@@ -31,8 +35,8 @@ const retriesNothing = (): void => {
 const PositionContext = createContext<MyPosition | null>(null);
 
 // Holds the User's own position for everything inside it: one permission and one watch of the phone, however many
-// parts of the screen read it. The development walk can replace the phone's. The position is not a server's answer
-// and is sent nowhere.
+// parts of the screen read it. The development walk can replace the phone's. The position is not a server's answer;
+// `PositionSending` sends it while the Master Switch is on.
 export function PositionProvider({ children }: { children: ReactNode }): ReactElement {
   const [walking] = useState(walksOnCampus);
   const phone = usePhone(!walking);
@@ -40,7 +44,9 @@ export function PositionProvider({ children }: { children: ReactNode }): ReactEl
   const walked = useMemo<MyPosition>(
     () => ({
       permission: 'granted',
-      position: walk,
+      position: walk?.position ?? null,
+      accuracy: walk === null ? null : WALK_ACCURACY,
+      measuredAt: walk?.measuredAt ?? null,
       stepMs: POSITION_EVERY_MS,
       ask: asksNothing,
       retry: retriesNothing,

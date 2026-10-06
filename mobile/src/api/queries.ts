@@ -1,5 +1,6 @@
-import { queryOptions } from '@tanstack/react-query';
+import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { apiClient } from './client';
+import type { JoinRequest } from './waiting-types';
 
 // One entry of the cache per operation, each under its own key. The hooks of the features combine them, so that an
 // operation two screens need is asked once, and a change to one of them is one entry to ask again.
@@ -11,7 +12,12 @@ export const FRIEND_STATUSES_KEY = ['friend-statuses'] as const;
 export const QUESTS_KEY = ['quests'] as const;
 export const MY_PARTY_KEY = ['my-party'] as const;
 export const PARTIES_KEY = ['parties'] as const;
-export const PARTY_NEWS_KEY = ['party-news'] as const;
+export const FRIEND_REQUESTS_KEY = ['friend-requests'] as const;
+export const QUEST_INVITATIONS_KEY = ['quest-invitations'] as const;
+export const JOIN_REQUESTS_KEY = ['join-requests'] as const;
+export const MEETUPS_KEY = ['meetups'] as const;
+export const CLASSES_KEY = ['timetable-classes'] as const;
+export const PLACES_KEY = ['places'] as const;
 export const FOOTPRINTS_KEY = ['footprints'] as const;
 export const GLOBAL_EVENTS_KEY = ['global-events'] as const;
 export const GLOBAL_EVENT_ANNOUNCERS_KEY = ['global-event-announcers'] as const;
@@ -34,7 +40,21 @@ export const questsQuery = queryOptions({ queryKey: QUESTS_KEY, queryFn: () => a
 // Null, for a User in no Party, is an answer as any other.
 export const myPartyQuery = queryOptions({ queryKey: MY_PARTY_KEY, queryFn: () => apiClient.getMyParty() });
 export const partiesQuery = queryOptions({ queryKey: PARTIES_KEY, queryFn: () => apiClient.listParties() });
-export const partyNewsQuery = queryOptions({ queryKey: PARTY_NEWS_KEY, queryFn: () => apiClient.getPartyNews() });
+export const friendRequestsQuery = queryOptions({
+  queryKey: FRIEND_REQUESTS_KEY,
+  queryFn: () => apiClient.listFriendRequests(),
+});
+export const questInvitationsQuery = queryOptions({
+  queryKey: QUEST_INVITATIONS_KEY,
+  queryFn: () => apiClient.listQuestInvitations(),
+});
+// One entry for each Quest the User leads, all under one key, so that a signal fetches them all again.
+export function joinRequestsQuery(questId: string): UseQueryOptions<JoinRequest[], Error, JoinRequest[], string[]> {
+  return { queryKey: [...JOIN_REQUESTS_KEY, questId], queryFn: () => apiClient.listJoinRequests(questId) };
+}
+export const meetupsQuery = queryOptions({ queryKey: MEETUPS_KEY, queryFn: () => apiClient.listMeetups() });
+export const classesQuery = queryOptions({ queryKey: CLASSES_KEY, queryFn: () => apiClient.listClasses() });
+export const placesQuery = queryOptions({ queryKey: PLACES_KEY, queryFn: () => apiClient.listPlaces() });
 export const footprintsQuery = queryOptions({ queryKey: FOOTPRINTS_KEY, queryFn: () => apiClient.getFootprints() });
 export const globalEventsQuery = queryOptions({
   queryKey: GLOBAL_EVENTS_KEY,

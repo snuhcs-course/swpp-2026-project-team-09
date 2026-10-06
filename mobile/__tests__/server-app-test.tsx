@@ -104,7 +104,7 @@ describe('the main screen against the main server', () => {
     expect((await readKept()).onboardingCompleted).toBe(false);
   });
 
-  it('sends no position of its own', async () => {
+  it('sends no position of its own while the Master Switch is off', async () => {
     await openLive();
     await phone.moveTo(STUDENT_CENTRE);
     await pass(10_000);

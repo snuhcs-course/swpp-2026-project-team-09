@@ -1,13 +1,19 @@
 import type {
+  ClassTime,
   Friend,
   Lobby,
   MyParty,
   Party,
   PartyQuest,
+  Person,
+  Place,
   Position,
+  PositionKept,
+  Profile,
   Quest,
   SubQuest,
   Suggestion,
+  TimetableClass,
   WalkingRoute,
 } from '@/api/types';
 
@@ -16,27 +22,27 @@ import type {
 
 export type Guard<Answer> = (value: unknown) => value is Answer;
 
-function field(value: unknown, name: string): unknown {
+export function field(value: unknown, name: string): unknown {
   return typeof value === 'object' && value !== null ? Reflect.get(value, name) : undefined;
 }
 
-function isText(value: unknown): value is string {
+export function isText(value: unknown): value is string {
   return typeof value === 'string';
 }
 
-function isNumber(value: unknown): value is number {
+export function isNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-function isTextOrNull(value: unknown): value is string | null {
+export function isTextOrNull(value: unknown): value is string | null {
   return value === null || isText(value);
 }
 
-function listOf<Item>(isItem: Guard<Item>): Guard<Item[]> {
+export function listOf<Item>(isItem: Guard<Item>): Guard<Item[]> {
   return (value: unknown): value is Item[] => Array.isArray(value) && value.every((item) => isItem(item));
 }
 
-function hasTexts(value: unknown, names: readonly string[]): boolean {
+export function hasTexts(value: unknown, names: readonly string[]): boolean {
   return names.every((name) => isText(field(value, name)));
 }
 
@@ -69,14 +75,21 @@ export function isTokens(value: unknown): value is { accessToken: string; refres
   return hasTexts(value, ['accessToken', 'refreshToken']);
 }
 
-export function isLobby(value: unknown): value is Lobby {
-  const profile = field(value, 'profile');
-  const admissionYear = field(profile, 'admissionYear');
+export function isProfile(value: unknown): value is Profile {
+  const admissionYear = field(value, 'admissionYear');
   return (
-    hasTexts(profile, ['name', 'department']) &&
+    hasTexts(value, ['name', 'department', 'friendId']) &&
     (admissionYear === null || isNumber(admissionYear)) &&
-    listOf(isText)(field(profile, 'hashtags'))
+    listOf(isText)(field(value, 'hashtags'))
   );
+}
+
+export function isLobby(value: unknown): value is Lobby {
+  return isProfile(field(value, 'profile')) && typeof field(value, 'masterSwitch') === 'boolean';
+}
+
+export function isPositionKept(value: unknown): value is PositionKept {
+  return typeof field(value, 'offCampus') === 'boolean';
 }
 
 function isFriend(value: unknown): value is Friend {
@@ -99,11 +112,11 @@ function isPosition(value: unknown): value is Position {
 
 export const isPositions = listOf(isPosition);
 
-function isEventName(value: unknown): value is { id: string; title: string } | null {
+export function isEventName(value: unknown): value is { id: string; title: string } | null {
   return value === null || hasTexts(value, ['id', 'title']);
 }
 
-function isPlace(value: unknown): value is SubQuest['place'] {
+export function isPlace(value: unknown): value is SubQuest['place'] {
   return (
     value === null ||
     (isTextOrNull(field(value, 'placeId')) &&
@@ -125,14 +138,22 @@ function isSubQuest(value: unknown): value is SubQuest {
   );
 }
 
-function isHolder(value: unknown): value is Quest['holders'][number] {
+export function isHolder(value: unknown): value is Person {
   return hasTexts(value, ['id', 'name', 'department']);
 }
 
+export function isJoinPolicy(value: unknown): value is Party['joinPolicy'] {
+  return value === 'open' || value === 'approval' || value === 'closed';
+}
+
 function isQuest(value: unknown): value is Quest {
+  const leader = field(value, 'leader');
   return (
     hasTexts(value, ['id', 'title']) &&
     isEventName(field(value, 'globalEvent')) &&
+    (leader === null || isHolder(leader)) &&
+    isNumber(field(value, 'capacity')) &&
+    isJoinPolicy(field(value, 'joinPolicy')) &&
     listOf(isHolder)(field(value, 'holders')) &&
     listOf(isSubQuest)(field(value, 'subQuests')) &&
     typeof field(value, 'classQuest') === 'boolean'
@@ -140,10 +161,6 @@ function isQuest(value: unknown): value is Quest {
 }
 
 export const isQuests = listOf(isQuest);
-
-function isJoinPolicy(value: unknown): value is Party['joinPolicy'] {
-  return value === 'open' || value === 'approval' || value === 'closed';
-}
 
 function isPartyQuest(value: unknown): value is PartyQuest | null {
   return value === null || (hasTexts(value, ['id', 'title']) && isEventName(field(value, 'globalEvent')));
@@ -159,11 +176,13 @@ function isPartyHead(value: unknown): boolean {
 }
 
 function isParty(value: unknown): value is Party {
+  const leader = field(value, 'leader');
   return (
     isPartyHead(value) &&
     isNumber(field(value, 'memberCount')) &&
     typeof field(value, 'holdsQuest') === 'boolean' &&
-    listOf(isHolder)(field(value, 'friends'))
+    listOf(isHolder)(field(value, 'friends')) &&
+    (leader === undefined || hasTexts(leader, ['id', 'name']))
   );
 }
 
@@ -182,6 +201,44 @@ export function isMyParty(value: unknown): value is MyParty {
     isPartyHead(value) && typeof field(value, 'sharing') === 'boolean' && listOf(isMember)(field(value, 'members'))
   );
 }
+
+const WEEKDAYS = new Set(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
+
+function isClassTime(value: unknown): value is ClassTime {
+  const weekday = field(value, 'weekday');
+  return (
+    hasTexts(value, ['id', 'startTime', 'endTime']) &&
+    isText(weekday) &&
+    WEEKDAYS.has(weekday) &&
+    isTextOrNull(field(value, 'placeId')) &&
+    isTextOrNull(field(value, 'room'))
+  );
+}
+
+function isOverlap(value: unknown): value is TimetableClass['overlaps'][number] {
+  return hasTexts(value, ['id', 'courseName']);
+}
+
+function isTimetableClass(value: unknown): value is TimetableClass {
+  return (
+    hasTexts(value, ['id', 'courseName']) &&
+    listOf(isClassTime)(field(value, 'times')) &&
+    listOf(isOverlap)(field(value, 'overlaps'))
+  );
+}
+
+export const isTimetableClasses = listOf(isTimetableClass);
+
+function isCampusPlace(value: unknown): value is Place {
+  return (
+    hasTexts(value, ['id', 'name']) &&
+    isTextOrNull(field(value, 'number')) &&
+    isNumber(field(value, 'latitude')) &&
+    isNumber(field(value, 'longitude'))
+  );
+}
+
+export const isPlaces = listOf(isCampusPlace);
 
 const NO_ROUTE = new Set([
   'SAME_POINT',
