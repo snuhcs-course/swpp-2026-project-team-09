@@ -2,7 +2,7 @@ import { BackHandler } from 'react-native';
 import { act, fireEvent } from '@testing-library/react-native';
 import { pass, screen, shownAddress } from './support/app';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
-import { CLOSER, DINNER, EVENT, FRIEND, lookOf, MEMBER, NOT_READY, PARTY, press, wordsUnder } from './support/markers';
+import { CLOSER, DINNER, EVENT, FRIEND, lookOf, MEMBER, PARTY, press, wordsUnder } from './support/markers';
 import { startFresh } from './support/mocks';
 
 jest.mock('expo-location');
@@ -166,27 +166,15 @@ describe('"가까이 보기"', () => {
   });
 });
 
-describe("a card's button whose feature belongs to another task", () => {
-  it("says that it is not ready: a Friend's 파티 만들기", async () => {
+describe('a toast while a card is open', () => {
+  it('shows above the card, so that it never lies over the buttons', async () => {
     const user = await openMain();
-    await press(user, FRIEND);
-
-    await press(user, '파티 만들기');
-
-    expect(screen.getByText(NOT_READY)).toBeVisible();
-    expect(screen.getByTestId('map-card')).toBeVisible();
-    await pass(2400);
-    expect(screen.queryByText(NOT_READY)).toBeNull();
-  });
-
-  it('says so above the card, so that the toast never lies over the buttons', async () => {
-    const user = await openMain();
-    await press(user, FRIEND);
+    await press(user, EVENT);
     await fireEvent(screen.getByTestId('map-card'), 'layout', {
       nativeEvent: { layout: { x: 16, y: 300, width: 358, height: 180 } },
     });
 
-    await press(user, '파티 만들기');
+    await user.press(screen.getByRole('button', { name: '올리기' }));
 
     // The navigation's 80, the card's bottom 72 above it, its height, and 8 of clear room.
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 340 });

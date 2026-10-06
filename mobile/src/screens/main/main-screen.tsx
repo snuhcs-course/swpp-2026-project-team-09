@@ -25,6 +25,7 @@ import { type MainRoute, useRoute } from './use-route';
 import { type Selection, useSelection } from './use-selection';
 import { type Things, useThings } from './use-things';
 import { ZoomControl } from './zoom-control';
+import { openMeetupForm } from '../meetup/open-meetup-form';
 
 const NO_CARDS: readonly CardView[] = [];
 
@@ -73,8 +74,8 @@ function OverMap({ children, onStage }: OverMapProps): ReactElement {
 // The card of the selected thing, if any, with what its buttons do. "가까이 보기" is offered below the "names" level of detail
 // and brings the camera to the "close" level, keeping the card. "길찾기" closes the card once the route is asked for.
 // "메뉴 보기" opens the menu panel at the restaurant. "노선 보기" brings the shuttle's whole line into view and closes
-// the card. "파티 열기" and "참여하기" open a Quest's room, and "같이 갈 사람 찾기" 파티 만들기 for the Global Event. Every
-// other button belongs to another task and says that it is not ready.
+// the card. "파티 열기" and "참여하기" open a Quest's room, "같이 갈 사람 찾기" 파티 만들기 for the Global Event, and a
+// Friend's "파티 만들기" the Meetup form. Every other button belongs to another task and says that it is not ready.
 function SelectedCard(props: SelectedCardProps): ReactElement | null {
   const { selection, map, route, shuttleLine, onActiveParty, onHeight, top } = props;
   const showNotReady = useNotReadyToast();
@@ -109,6 +110,8 @@ function SelectedCard(props: SelectedCardProps): ReactElement | null {
           onActiveParty();
         } else if (primary.action === 'recruit') {
           openPartyCreate(primary.eventId);
+        } else if (primary.action === 'meetup') {
+          openMeetupForm(primary.userId, primary.name);
         } else if (primary.action !== 'route') {
           showNotReady();
         } else if (route.routeTo(card)) {

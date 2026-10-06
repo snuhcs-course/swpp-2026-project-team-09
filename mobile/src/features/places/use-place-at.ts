@@ -17,7 +17,7 @@ const POINT_HINT = '직접 찍은 위치 · 가장 가까운 건물 기준';
 export function toPlaceAt(at: PlaceAt, point: LatLng): PlaceAtView {
   if (at.place === null) {
     const words = '지도에서 고른 위치';
-    return { words, hint: POINT_HINT, choice: { placeId: null, position: point, words } };
+    return { words, hint: '직접 찍은 위치', choice: { placeId: null, position: point, words } };
   }
   const { id, name, number, latitude, longitude } = at.place;
   if (at.relation === 'near') {

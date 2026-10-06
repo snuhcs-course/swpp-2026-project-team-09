@@ -4,6 +4,7 @@ import { Button, SegmentedTabs } from '@/design-system';
 import { usePartyCounts } from '@/features/party/use-party';
 import { TabScreen } from '../shell/tab-screen';
 import { FindTab } from './find-tab';
+import { MeetupInvites } from './invites-meetups';
 import { InvitesTab } from './invites-tab';
 import { MineTab } from './mine-tab';
 
@@ -42,7 +43,12 @@ export function PartyScreen({ tab, onTab }: PartyScreenProps): ReactElement {
       />
       {tab === 'find' ? <FindTab /> : null}
       {tab === 'mine' ? <MineTab /> : null}
-      {tab === 'invites' ? <InvitesTab /> : null}
+      {tab === 'invites' ? (
+        <>
+          <InvitesTab />
+          <MeetupInvites />
+        </>
+      ) : null}
     </TabScreen>
   );
 }

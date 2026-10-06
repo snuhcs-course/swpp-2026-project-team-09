@@ -1,4 +1,4 @@
-import { pass, screen, shownAddress } from './support/app';
+import { screen, shownAddress } from './support/app';
 import { holdBackButton } from './support/back';
 import { FRIEND_PILL } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
@@ -15,7 +15,6 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotionSetting: (): boolean => true,
 }));
 
-const NOT_READY = '준비 중이에요';
 const SEARCH = '친구 검색';
 
 beforeEach(async () => {
@@ -161,15 +160,5 @@ describe("the friend panel's footer and buttons", () => {
     expect(screen.queryByRole('header', { name: '친구 12' })).toBeNull();
     expect(screen.getByRole('tab', { name: '내 정보' })).toBeSelected();
     expect(shownAddress()).toBe('/me?show=sharing');
-  });
-
-  it('says that "김민준님과 파티 만들기" is not ready', async () => {
-    const user = await openPanel();
-
-    await user.press(screen.getByRole('button', { name: '김민준님과 파티 만들기' }));
-
-    expect(screen.getByText(NOT_READY)).toBeVisible();
-    expect(screen.getByRole('header', { name: '친구 12' })).toBeVisible();
-    await pass(2400);
   });
 });

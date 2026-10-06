@@ -6,6 +6,7 @@ import { answer } from './answer';
 import { ME } from './data/frame';
 import { MY_PARTY, QUESTS } from './data/quests';
 import { PLACES } from './data/places';
+import { mockMeetups } from './meetups';
 
 // The room's operations as the main server answers them. The mock keeps no change: the next read is the frame's again.
 
@@ -79,7 +80,7 @@ type MockRoom = Pick<
 export const mockRoom: MockRoom = {
   getQuest: (questId) =>
     answer('getQuest', () => {
-      const quest = QUESTS.find(({ id }) => id === questId);
+      const quest = [...QUESTS, ...mockMeetups.sharedQuests()].find(({ id }) => id === questId);
       if (quest === undefined) {
         throw new ApiError(404, 'QUEST_NOT_FOUND');
       }

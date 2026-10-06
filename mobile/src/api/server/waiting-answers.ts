@@ -49,7 +49,7 @@ export const isQuestInvitations = listOf(isQuestWaiting);
 
 const MEETUP_STATES = new Set(['proposed', 'accepted', 'declined', 'withdrawn', 'expired']);
 
-function isMeetup(value: unknown): value is Meetup {
+export function isMeetup(value: unknown): value is Meetup {
   const state = field(value, 'state');
   return (
     hasTexts(value, ['id', 'title', 'startsAt']) &&

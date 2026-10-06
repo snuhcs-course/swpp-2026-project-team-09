@@ -349,8 +349,9 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   (`/notifications`), 프로필 편집 (`/profile-edit`), 시간표 (`/me/timetable`) and its class form
   (`/me/timetable/class`), a Quest's room (`/room/<questId>`), the map view of the place picker (`/place-map`), 전체
   파티 (`/boards`), a board (`/boards/meal`), 파티 모집글 (`/post/<questId>`), 파티 만들기 (`/party-form`, and
-  `/party-form?questId=<id>` for its edit mode) and the AI 매칭 신청 list (`/matching`). Each is a
-  `FullScreenPanel` and slides in over 0.28 s, from the bottom for `/quests` and from the right for a pushed screen,
+  `/party-form?questId=<id>` for its edit mode), the AI 매칭 신청 list (`/matching`) and the Meetup form
+  (`/meetup/<friendId>?name=`). Each is a `FullScreenPanel` and slides in over 0.28 s, from the bottom for `/quests`
+  and the Meetup form and from the right for a pushed screen,
   or appears without sliding where the phone asks for less motion (`slideFrom` in the layout). The tabs lie under
   them also when the app opens at their address (`unstable_settings`).
 - **Android's back button** closes the topmost thing: a Dialog through its Modal; a side panel, a bottom sheet and
@@ -648,8 +649,26 @@ waits for a name, a day, both times with the end after the start and a Place, an
 
 장소 선택 (`src/screens/places/place-picker.tsx`) is a component, not a route: the screen that needs a Place draws
 `<PlacePicker mode picked onPick onClose />` over itself, and Android's back closes it. It lists `GET /places`, and
-`GET /places/search?q=` once the User has stopped typing for 300 ms. Its only `mode` so far is `class`, a list;
-`event`, with "지도에서 직접 찍기" and the map, is for P13's Sub Quests and P14's Meetups.
+`GET /places/search?q=` once the User has stopped typing for 300 ms. Its `mode` is `class`, a list, or `event`, which
+adds the first row "지도에서 직접 찍기" while nothing is searched, and the same words as a button when a search finds
+nothing; both call `onMap`, and the Meetup form opens the map view from there.
+
+**The Meetup form** (`src/screens/meetup/`, `/meetup/<friendId>?name=`) is 파티 만들기 opened from a Friend, the
+`PartyAppt` frame with only the fields a Meetup has. A Friend's calendar button in the Friend panel closes the panel
+and opens it, and so does "파티 만들기" on a Friend's card. It has "제목" (30 characters), "언제" and the optional
+"끝나는 시간" through the date·time sheet, "어디서" with 장소 선택's list in its `event` mode and the map button
+"지도에서 선택", and the one Friend under "친구 초대" ("1명에게 요청"). "파티 만들기" waits for a title, a start and a
+place; a start that has passed and an end not after the start are said under their field and nothing is sent.
+`useProposeMeetup()` (`src/features/meetups/`) posts `POST /meetups` with a Place as `{ placeId }` and a point as
+`{ latitude, longitude, label }`, keeps one `Idempotency-Key` for the same proposal until the main server answers,
+and on success goes back to the map with "{이름}님에게 파티 초대를 보냈어요"; a refusal keeps the form with its words.
+
+**The Meetups under 초대** (`src/screens/party/invites-meetups.tsx`) are `받은 초대 · {n}`, the Meetups proposed to
+the User that wait, with "거절" and "수락", and `보낸 초대 · {n}` with its note that a sent one cannot be edited, the
+User's own but the withdrawn and those whose start passed more than seven days ago, each with its state as a Badge
+and "초대 취소" while it waits. Without received ones it says "받은 초대가 없어요". `useMeetupAnswers()` sends each
+answer, says the refusals ("이미 취소됐거나 지난 초대예요", "이미 답한 초대예요") and fetches the Meetups again, and
+the Quests after an accept. The Quest invitations of P13 join the received ones above the Meetups.
 
 알림 (`notifications-screen.tsx`) is composed from the main server's lists (`useNotices()` of the notifications
 feature), in this order: a Party running for a Quest the User holds ("{name}님이 파티를 활성화했어요", or "파티가
@@ -785,7 +804,8 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
 **The date·time sheet** (`src/screens/date-time-sheet.tsx`) is shared: "언제" with the choice in words ("오늘 19:00"),
 21 days from today in Korea's time, the hours and the minutes by tens, and "확인". **The map view**
 (`src/screens/place-map/`, `/place-map`) is the frame's `PlacePickerMap`: the map under a teal pin fixed at its
-middle, which lifts while the map moves; when the camera stops it asks `GET /places/at` and the sheet says the Place
+middle, which lifts while the map moves. It opens on the User's position when it is known and on the campus, else on
+the campus; when the camera stops it asks `GET /places/at` and the sheet says the Place
 ("{name} {number}동", "건물 위치예요"), a point near one ("{name} 근처") or a point at none ("지도에서 고른 위치").
 "이 위치로 정하기" gives the choice back to the screen that opened it (`src/features/places/picked-place.ts`).
 
@@ -875,6 +895,8 @@ Behind a hook are three layers:
 | `listQuestInvitations`                                               | The invitations into a Quest                                 | `GET /quest-invitations`                                                |
 | `listJoinRequests`                                                   | The requests to join a Quest the User leads                  | `GET /quests/:questId/join-requests`                                    |
 | `listMeetups`                                                        | The Meetups proposed to the User and by the User             | `GET /meetups`                                                          |
+| `proposeMeetup`                                                      | The Meetup proposed                                          | `POST /meetups` with an `Idempotency-Key`                               |
+| `acceptMeetup`, `declineMeetup`, `withdrawMeetup`                    | Nothing                                                      | `POST /meetups/:id/accept`, `/decline`, `/withdraw`                     |
 | `listClasses`, `listPlaces`                                          | The User's classes, and the Places                           | `GET /timetable/classes`, `GET /places`                                 |
 | `listGlobalEvents`                                                   | The published Global Events                                  | The mock: no route lists them for a User yet                            |
 | `listGlobalEventAnnouncers`                                          | Who announced each Global Event                              | The mock: the app's own                                                 |

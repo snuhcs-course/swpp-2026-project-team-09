@@ -520,6 +520,8 @@ Ticket 12 connected every row that the demo's flows (P20) use and the main serve
 | Friend Requests | Connected | `GET /friend-requests`; fetched again on `friends-changed` | |
 | Quest invitations, requests to join | Connected | `GET /quest-invitations`, `GET /quests/:questId/join-requests` for each Quest the User leads with Approval; fetched again on `quests-changed` | The mock leads no Quest, so it has no request to join |
 | Meetups | Connected | `GET /meetups`; fetched again on `meetups-changed` | |
+| Proposing a Meetup (`proposeMeetup`) | Connected | `POST /meetups` with an `Idempotency-Key`, kept for the same proposal until the main server answers | The mock keeps its Meetups in memory, refuses as the main server does and reads a proposed one whose start passed as expired |
+| Answering a Meetup (`acceptMeetup`, `declineMeetup`, `withdrawMeetup`) | Connected | `POST /meetups/:id/accept`, `/decline`, `/withdraw`; the Meetups, and the Quests after an accept, fetched again | The mock's accept makes the Shared Quest, which its `listQuests` and `getQuest` then answer |
 | Friends | Connected | `GET /friends`; fetched again on `friends-changed` | |
 | Friends' switches and their end (`setFriendSharing`, `endFriendship`) | Connected | `PUT /friends/:userId/sharing`, `DELETE /friends/:userId` | |
 | Friend IDs (`findFriendId`) and the User's own | Connected | `GET /friend-ids/:friendId`; the Lobby's `profile.friendId` | |
@@ -565,12 +567,10 @@ The control is there and only shows the toast. The last column is a proposal for
 
 | Where | Control | Opens | Proposed for |
 |---|---|---|---|
-| Friend panel | A Friend's calendar button, "{이름}님과 파티 만들기" | Proposing a Meetup to the Friend | P14 |
 | Above the navigation | 오늘의 발자국 | The story replay | In no Iteration 1 spec |
 | Above the navigation | The AI input, which is a button with the input's look and takes no focus and no text, and its send button, read as disabled | The AI chat, with the real text field | In no Iteration 1 spec |
 | Bottom navigation | 올리기 | The story sheet | In no Iteration 1 spec |
 | 내 정보 | 이미지로 불러오기, 빈 시간 말하기 | Reading a timetable from an image or from words | In no Iteration 1 spec |
-| A Friend's card | 파티 만들기 | Making a Party | P14 |
 
 ## 5. Development settings
 

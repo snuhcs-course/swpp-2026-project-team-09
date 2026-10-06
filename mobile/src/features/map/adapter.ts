@@ -57,14 +57,15 @@ export interface CardView {
   title: string;
   lines: { icon: CardIcon; text: string }[];
   // `route` draws the way there; `room` opens the Quest's room; `active-party` opens the room of the User's Party's
-  // Quest; `recruit` opens 파티 만들기 for the Global Event. `menu` opens the menu panel at the restaurant.
-  // `shuttle-line` shows the shuttle's whole line. `not-ready` says "준비 중이에요": the feature belongs to another task.
-  // Null for a card without one.
+  // Quest; `recruit` opens 파티 만들기 for the Global Event; `meetup` opens the Meetup form for the Friend. `menu` opens
+  // the menu panel at the restaurant. `shuttle-line` shows the shuttle's whole line. `not-ready` says "준비 중이에요":
+  // the feature belongs to another task. Null for a card without one.
   primary:
     | { label: string; action: 'route' | 'active-party' | 'not-ready' | 'shuttle-line' }
     | { label: string; action: 'menu'; restaurant: string }
     | { label: string; action: 'room'; questId: string }
     | { label: string; action: 'recruit'; eventId: string }
+    | { label: string; action: 'meetup'; userId: string; name: string }
     | null;
   secondary: { label: string; action: 'not-ready' } | null;
   position: LatLng;
@@ -249,7 +250,7 @@ function friendCards(sources: MapSources): CardView[] {
         subLabel: department,
         title: name,
         lines: [...info, ...(walk === '' ? [] : [line('route', walk)])],
-        primary: { label: '파티 만들기', action: 'not-ready' },
+        primary: { label: '파티 만들기', action: 'meetup', userId: id, name },
         secondary: null,
         position,
       },
