@@ -1,9 +1,12 @@
 import { z } from 'zod';
-import { JoinPolicy } from '../../generated/prisma/client.js';
+import { JoinPolicy, QuestBoard } from '../../generated/prisma/client.js';
 
 const titleSchema = z.string().trim().min(1).max(50);
 
 const capacitySchema = z.int().min(1).max(8);
+
+// The recruiting post. Empty is none.
+const descriptionSchema = z.string().trim().max(200);
 
 export const attendSchema = z.strictObject({ globalEventId: z.uuid() });
 
@@ -34,13 +37,21 @@ export const subQuestContentSchema = z
 
 export type SubQuestContentDto = z.infer<typeof subQuestContentSchema>;
 
-// A Quest of the User's own, without a Global Event. Left out, the capacity is 4 and the Join Policy Closed.
-export const makeQuestSchema = z.strictObject({
-  title: titleSchema,
-  subQuest: subQuestContentSchema,
-  capacity: capacitySchema.optional(),
-  joinPolicy: z.enum(JoinPolicy).optional(),
-});
+// A Quest of the User's own, without a Global Event. Left out, the capacity is 4, the Join Policy Closed and the
+// description empty. An Open or an Approval Quest is posted on a board, and a Closed one on none.
+export const makeQuestSchema = z
+  .strictObject({
+    title: titleSchema,
+    subQuest: subQuestContentSchema,
+    capacity: capacitySchema.optional(),
+    joinPolicy: z.enum(JoinPolicy).optional(),
+    board: z.enum(QuestBoard).optional(),
+    description: descriptionSchema.optional(),
+  })
+  .refine(({ joinPolicy = JoinPolicy.closed, board }) => (board === undefined) === (joinPolicy === JoinPolicy.closed), {
+    path: ['board'],
+    message: 'An Open or an Approval Quest has a board, and a Closed Quest none',
+  });
 
 export type MakeQuestDto = z.infer<typeof makeQuestSchema>;
 
@@ -49,6 +60,8 @@ export const updateQuestSchema = z.strictObject({
   title: titleSchema.optional(),
   capacity: capacitySchema.optional(),
   joinPolicy: z.enum(JoinPolicy).optional(),
+  board: z.enum(QuestBoard).optional(),
+  description: descriptionSchema.optional(),
 });
 
 export type UpdateQuestDto = z.infer<typeof updateQuestSchema>;

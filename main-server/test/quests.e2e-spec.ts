@@ -36,6 +36,9 @@ describe('Attending a Global Event', () => {
       leader: { id: user.id, name: '김철수', department: '경영학과' },
       capacity: 4,
       joinPolicy: 'closed',
+      board: null,
+      description: '',
+      createdAt: ANY_STRING,
       holders: [{ id: user.id, name: '김철수', department: '경영학과' }],
       subQuests: [
         {

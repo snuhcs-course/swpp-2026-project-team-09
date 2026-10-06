@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post
 import { Idempotent } from '@nestjs/idempotency';
 import { z } from 'zod';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
+import { QuestBoard } from '../generated/prisma/client.js';
 import {
   type AttendDto,
   attendSchema,
@@ -51,8 +52,9 @@ export class QuestsController {
   listRecruiting(
     @CurrentUser() user: SignedInUser,
     @Query('globalEventId', { schema: z.uuid().optional() }) globalEventId: string | undefined,
+    @Query('board', { schema: z.enum(QuestBoard).optional() }) board: QuestBoard | undefined,
   ): Promise<RecruitingQuestDto[]> {
-    return this.recruiting.list(user.id, globalEventId);
+    return this.recruiting.list(user.id, globalEventId, board);
   }
 
   @Get(':questId')
@@ -73,6 +75,13 @@ export class QuestsController {
     @Body({ schema: updateQuestSchema }) changes: UpdateQuestDto,
   ): Promise<QuestDto> {
     return this.leader.update(user.id, questId, changes);
+  }
+
+  // A repeat is refused, as the Quest is gone, so it takes no Idempotency-Key.
+  @Post(':questId/end')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  end(@CurrentUser() user: SignedInUser, @Param('questId', { schema: z.uuid() }) questId: string): Promise<void> {
+    return this.leader.end(user.id, questId);
   }
 
   @Put(':questId/leader')

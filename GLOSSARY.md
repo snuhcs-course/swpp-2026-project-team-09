@@ -81,6 +81,10 @@ _Avoid_: Owner, host
 The Leader's setting for how Users enter a Quest or a Party: Open (whoever can see it enters at once), Approval (the Leader accepts each request) or Closed (entry by the Leader's invitation only).
 _Avoid_: Visibility, privacy setting
 
+**Board**:
+Where an Open or Approval Quest is listed for recruiting, one of four kinds: 식사, 진로, 취미 and 공연. A Closed Quest is on none.
+_Avoid_: Category
+
 **Class Quest**:
 A Quest for attending one of the User's own classes on a given day, derived from the User's timetable.
 

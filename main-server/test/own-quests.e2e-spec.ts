@@ -31,6 +31,8 @@ const subQuest = {
   place: { label: '자하연 앞', ...place132 },
 };
 
+const post = { joinPolicy: 'open', board: 'meal', description: '학관에서 저녁 먹을 사람' };
+
 describe('Making a Quest of one’s own', () => {
   it('gives a Quest without a Global Event, led and held by the User, with the Sub Quest given', async () => {
     const user = await signInUser(app, { name: '김철수', department: '경영학과' });
@@ -39,7 +41,7 @@ describe('Making a Quest of one’s own', () => {
       title: '저녁 같이 먹어요',
       subQuest,
       capacity: 6,
-      joinPolicy: 'open',
+      ...post,
     });
 
     expect(response.status).toBe(201);
@@ -50,7 +52,8 @@ describe('Making a Quest of one’s own', () => {
       globalEvent: null,
       leader: holder,
       capacity: 6,
-      joinPolicy: 'open',
+      ...post,
+      createdAt: ANY_STRING,
       holders: [holder],
       subQuests: [
         {

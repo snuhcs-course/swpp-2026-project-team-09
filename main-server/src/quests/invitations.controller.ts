@@ -1,9 +1,9 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { z } from 'zod';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
 import { type UserIdDto, userIdSchema } from './dto/quest-requests.dto.js';
 import { QuestDto } from './dto/quest.dto.js';
-import { WaitingDto } from './dto/waiting.dto.js';
+import { WaitingDto, WaitingUserDto } from './dto/waiting.dto.js';
 import { InvitationsService } from './invitations.service.js';
 
 @Controller()
@@ -19,6 +19,25 @@ export class InvitationsController {
     @Body({ schema: userIdSchema }) body: UserIdDto,
   ): Promise<void> {
     return this.invitations.invite(user.id, questId, body.userId);
+  }
+
+  @Get('quests/:questId/invitations')
+  listSent(
+    @CurrentUser() user: SignedInUser,
+    @Param('questId', { schema: z.uuid() }) questId: string,
+  ): Promise<WaitingUserDto[]> {
+    return this.invitations.listSent(user.id, questId);
+  }
+
+  // A repeat is refused, as the invitation no longer waits, so it takes no Idempotency-Key.
+  @Delete('quests/:questId/invitations/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  cancel(
+    @CurrentUser() user: SignedInUser,
+    @Param('questId', { schema: z.uuid() }) questId: string,
+    @Param('id', { schema: z.uuid() }) id: string,
+  ): Promise<void> {
+    return this.invitations.cancel(user.id, questId, id);
   }
 
   @Get('quest-invitations')

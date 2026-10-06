@@ -5,12 +5,12 @@ import { JoinPolicy, QuestJoinRequest } from '../generated/prisma/client.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import {
-  RECEIVED_JOIN_REQUEST_INCLUDE,
-  ReceivedJoinRequestDto,
-  toReceivedJoinRequestDto,
   toWaitingDto,
+  toWaitingUserDto,
   WAITING_INCLUDE,
+  WAITING_USER_INCLUDE,
   WaitingDto,
+  WaitingUserDto,
 } from './dto/waiting.dto.js';
 import { LeaderService } from './leader.service.js';
 import { QuestsService } from './quests.service.js';
@@ -95,14 +95,14 @@ export class JoinRequestsService {
   }
 
   // The requests to the Quest, the newest first.
-  async listReceived(leaderId: string, questId: string): Promise<ReceivedJoinRequestDto[]> {
+  async listReceived(leaderId: string, questId: string): Promise<WaitingUserDto[]> {
     await this.leader.ledBy(questId, leaderId);
     const requests = await this.prisma.questJoinRequest.findMany({
       where: { questId },
-      include: RECEIVED_JOIN_REQUEST_INCLUDE,
+      include: WAITING_USER_INCLUDE,
       orderBy: [{ sentAt: 'desc' }, { id: 'desc' }],
     });
-    return requests.map((request) => toReceivedJoinRequestDto(request));
+    return requests.map((request) => toWaitingUserDto(request));
   }
 
   // Whatever the Join Policy is by now: accepting is the Leader's own decision, as an invitation is.

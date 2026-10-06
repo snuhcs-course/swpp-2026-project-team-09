@@ -57,6 +57,13 @@ export class PartiesController {
     return this.leader.remove(user.id, userId);
   }
 
+  // A repeat is refused as a User in no Party, so it takes no Idempotency-Key.
+  @Post('mine/end')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  end(@CurrentUser() user: SignedInUser): Promise<void> {
+    return this.leader.end(user.id);
+  }
+
   @Post('mine/leave')
   @HttpCode(HttpStatus.NO_CONTENT)
   leave(@CurrentUser() user: SignedInUser): Promise<void> {

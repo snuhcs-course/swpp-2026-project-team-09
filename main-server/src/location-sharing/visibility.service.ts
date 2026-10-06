@@ -27,17 +27,18 @@ export class VisibilityService {
     return linked.filter((userId) => positions.has(userId));
   }
 
-  // Runs a change to the User's switches, relationships or position, and sends `position-removed` at once to each viewer
-  // who could see a subject before the change and cannot after it. Every sight such a change can end includes the
-  // User, so comparing the sights around the User finds them all.
-  async announceRemovals<T>(userId: string, change: () => Promise<T>): Promise<T> {
-    const before = await this.sightsAround(userId);
+  // Runs a change to the switches, relationships or position of the User, or of several Users at once, and sends
+  // `position-removed` at once to each viewer who could see a subject before the change and cannot after it. Every
+  // sight such a change can end includes one of the Users, so comparing the sights around them finds them all.
+  async announceRemovals<T>(userIds: string | readonly string[], change: () => Promise<T>): Promise<T> {
+    const around = typeof userIds === 'string' ? [userIds] : userIds;
+    const before = await this.sightsAround(around);
     const result = await change();
-    const after = await this.sightsAround(userId);
+    const after = await this.sightsAround(around);
     for (const [subjectId, viewerIds] of before) {
-      const still = after.get(subjectId) ?? [];
+      const still = after.get(subjectId);
       this.signals.send(
-        viewerIds.filter((viewerId) => !still.includes(viewerId)),
+        [...viewerIds].filter((viewerId) => still?.has(viewerId) !== true),
         'position-removed',
         { userId: subjectId },
       );
@@ -45,17 +46,26 @@ export class VisibilityService {
     return result;
   }
 
-  // Who sees whom of the pairs that include the User: each subject with their viewers.
-  private async sightsAround(userId: string): Promise<Map<string, string[]>> {
-    const linked = await this.linkedTo(userId);
-    const positions = await this.positions.read([userId, ...linked]);
-    const sights = new Map<string, string[]>();
-    if (positions.has(userId)) {
-      sights.set(userId, linked);
-    }
-    for (const otherId of linked) {
-      if (positions.has(otherId)) {
-        sights.set(otherId, [userId]);
+  // Who sees whom of the pairs that include one of the Users: each subject with their viewers.
+  private async sightsAround(userIds: readonly string[]): Promise<Map<string, Set<string>>> {
+    const sights = new Map<string, Set<string>>();
+    const sees = (viewerId: string, subjectId: string): void => {
+      sights.set(subjectId, (sights.get(subjectId) ?? new Set()).add(viewerId));
+    };
+    const around = await Promise.all(
+      userIds.map(async (userId) => {
+        const linked = await this.linkedTo(userId);
+        return { userId, linked, positions: await this.positions.read([userId, ...linked]) };
+      }),
+    );
+    for (const { userId, linked, positions } of around) {
+      for (const otherId of linked) {
+        if (positions.has(userId)) {
+          sees(otherId, userId);
+        }
+        if (positions.has(otherId)) {
+          sees(userId, otherId);
+        }
       }
     }
     return sights;

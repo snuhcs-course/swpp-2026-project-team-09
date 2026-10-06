@@ -11,8 +11,11 @@ import { openParty } from './parties.js';
 import {
   answerJoinRequest,
   askToJoin,
+  cancelInvitation,
   changeQuest,
+  endQuest,
   getJoinRequests,
+  getSentInvitations,
   handOver,
   invite,
   removeHolder,
@@ -90,6 +93,9 @@ const routes: [string, Route][] = [
     (user, { questId }) => answerJoinRequest(app, user, { questId, requestId: randomUUID() }, 'decline'),
   ],
   ['inviting into it', (user, { questId }) => invite(app, user, questId, randomUUID())],
+  ['listing its invitations', (user, { questId }) => getSentInvitations(app, user, questId)],
+  ['cancelling an invitation', (user, { questId }) => cancelInvitation(app, user, questId, randomUUID())],
+  ['ending it', (user, { questId }) => endQuest(app, user, questId)],
 ];
 
 // What the User reads of the Quests and the timetable, and what is stored under the class's id.

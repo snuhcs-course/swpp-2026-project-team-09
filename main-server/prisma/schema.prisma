@@ -222,6 +222,10 @@ model Quest {
   // From 1 to 8, which the migration checks.
   capacity      Int           @default(4)
   joinPolicy    JoinPolicy    @default(closed) @map("join_policy")
+  // Set for an Open or an Approval Quest and empty for a Closed one, which the migration checks.
+  board         QuestBoard?
+  // The recruiting post, up to 200 characters, which the migration checks.
+  description   String        @default("")
   // The match server's match this Quest was created for, so that a repeated request finds it (README.md: Matching).
   matchId       String?       @unique @map("match_id") @db.Uuid
   createdAt     DateTime      @default(now()) @map("created_at")
@@ -245,6 +249,16 @@ enum JoinPolicy {
   closed
 
   @@map("join_policy")
+}
+
+// Where an Open or an Approval Quest is listed for recruiting.
+enum QuestBoard {
+  meal
+  career
+  hobby
+  show
+
+  @@map("quest_board")
 }
 
 // A User who holds a Quest. The row repeats the Quest's Global Event, so that a unique index keeps a User to one Quest
