@@ -27,6 +27,7 @@ The app keeps sending the User's position while it is in the background, under a
 
 ## Implementation Decisions
 
+- Background sending builds on the sending of P19, which uploads the position every 5 seconds while the Master Switch is on and the app is in front. It uses the same upload and follows the same answers from the server.
 - Background sending uses the location and task modules that Expo provides, with a foreground service. It requires a development build.
 - The app asks for the foreground permission first and for the background permission only when the User turns on background sharing.
 - The interval is 30 seconds in the background against 5 seconds while the app is open.
@@ -70,4 +71,4 @@ The app keeps sending the User's position while it is in the background, under a
 - The schedule names 안진영 as the worker. The task is a test task; the background sending itself is built here as well, because no other task contains it.
 - An agent can write the code. The verification needs a person with a phone on campus, which is why the status is ready-for-human.
 - Phone makers differ in how aggressively they stop background work. One phone passing does not prove all phones pass.
-- This task depends on P06 and P08.
+- This task depends on P06, on P08, and on the Master Switch and the sending while the app is open of P19.

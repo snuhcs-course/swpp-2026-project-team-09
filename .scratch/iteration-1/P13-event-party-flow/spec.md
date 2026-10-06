@@ -8,14 +8,14 @@ The servers can match Users, keep Quests and Parties and deliver locations, but 
 
 ## Solution
 
-Screens laid over the map that take a User from a Global Event to companions and to seeing them. The User chooses an event, joins a Quest gathering for it, asks for Matching or goes alone, sees the resulting Quest in a list at the side of the map, opens or enters its Party, and watches the members' Avatars move. Tapping a Quest shows the way to its place.
+Screens laid over the map that take a User from a Global Event to companions and to seeing them. The User chooses an event, joins a Quest gathering for it, recruits one of their own or asks for Matching, sees the resulting Quest in a list at the side of the map, opens or enters its Party, and watches the members' Avatars move. Tapping a Quest shows the way to its place.
 
 ## User Stories
 
 ### From a Global Event
 
-1. As an SNU student, I want a card for a Global Event with a button to attend, so that I get a Quest for it.
-2. As an SNU student, I want a button to ask for Matching with a choice of group size, so that I can find companions.
+1. As an SNU student, I want a card for a Global Event with `파티 찾기/모집`, which lists the Quests gathering for it and lets me recruit one of my own, so that I get a Quest for it.
+2. As an SNU student, I want `AI 매칭` on the card to ask for Matching with a group size of 2, 3 or 4, so that I can find companions.
 3. As an SNU student, I want to read what Matching will do before I confirm, so that I consent knowingly.
 4. As an SNU student, I want to see that my request is waiting and to withdraw it, so that I stay in control.
 5. As an SNU student, I want to go on using the app while my request waits and to see the Shared Quest appear in my list when I am matched, so that I do not watch a screen.
@@ -35,7 +35,7 @@ Screens laid over the map that take a User from a Global Event to companions and
 
 14. As a Holder, I want to open a Quest and see all its Sub Quests with their times and places, so that I know the whole plan.
 15. As a Holder, I want to see the other Holders of a Shared Quest, so that I know who is coming.
-16. As a Holder, I want to add, edit and cancel Sub Quests, so that the plan covers what we do next.
+16. As a Leader, I want to add, edit and cancel Sub Quests, so that the plan covers what we do next.
 17. As a Holder, I want to mark a Sub Quest as done, so that my list moves on.
 18. As a Holder, I want to drop the Quest, so that I can change my mind.
 19. As a Holder, I want to see whether the Party of this Quest is open and to enter it with one tap, so that I find my companions.
@@ -49,7 +49,7 @@ Screens laid over the map that take a User from a Global Event to companions and
 24. As an SNU student, I want to see that my request to an Approval Party is waiting, so that I know what is happening.
 25. As an SNU student already in a Party, I want to be told that I must leave it before entering another, so that I understand the refusal.
 26. As an SNU student, I want to be led to the existing Party when one already runs for my Quest, so that I enter it instead of opening another.
-27. As a member, I want the members listed at the side of the map with the Leader marked, so that I see who I am with.
+27. As a member, I want the members listed in the Party's room with the Leader marked, so that I see who I am with.
 28. As a member, I want a mark next to a member whose sharing is off, so that I know why I do not see them.
 29. As a member, I want to tap a member and have the map move to their Avatar, so that I find them quickly.
 30. As a member, I want the members' Avatars to move on the map as they walk, so that we can find each other.
@@ -66,7 +66,7 @@ Screens laid over the map that take a User from a Global Event to companions and
 ## Implementation Decisions
 
 - This task builds screens and connects them to the API of P08. It adds no server behaviour.
-- The map stays the main screen. The Quest list and the Party member list are laid over it, one on each side. Cards and detail views open over the map as panels.
+- The map stays the main screen. The Quest list is laid over it at the right, as P06 built it; a Party's members are listed in its room. Cards open over the map, and the 파티 and 행사 screens are tabs of the shell of P19.
 - The Quest list shows stored Quests and Class Quests through one interface. The screen does not distinguish them except by an icon.
 - The app keeps one open socket connection. Positions arrive on it and move Avatars directly. For every other signal the app fetches again the list that the signal names.
 - The app fetches the current state when it connects, when it reconnects and when it returns to the front. It does not poll.
@@ -74,13 +74,21 @@ Screens laid over the map that take a User from a Global Event to companions and
 - Markers, routes and Avatars use the map component of P06. No screen calls the native module directly.
 - Every refusal from the server is shown with its reason in Korean: Quest or Party full, already in a Party, a Party already runs for this Quest, a Shared Quest already held for this event, request waiting.
 - Screens read only what the server returns about visibility. The app never decides by itself who may be seen.
-- The arrangement is provisional. P19 adapts it to the wireframes.
+- The screens follow the wireframe's frames:
+  - `Party`, `PartyJoin`, `PartyMine`, `PartyInvites`, `PartyDetail`, `PartyLeave`, `PartyCreate`, `PartyPost`, and `PartyAppt` for the form's 비공개 mode (a Closed Quest whose Friends are invited), with the views inside `Party`: 전체 파티 and its boards (게시판). The boards build on P08's ticket 16, which gives a Quest its board and its description;
+  - `Events` and `EventsFest`;
+  - the cards on the map in `Main` and `MapZoomed`;
+  - the rows of `MainQuests`, the Quest full screen of P19, which open a Quest's room.
+
+  The frames' features that no task covers are recorded and not built.
+- An event card has `자세히`, which opens the event's `sourceUrl` in the browser; `파티 찾기/모집`; and `AI 매칭`, whose sheet asks only the group size, with the chips `2명`, `3명` and `4명`. A sent Matching request is withdrawn and asked again, not edited.
+- Sub Quests are added, edited and cancelled by the Quest's Leader only. The other Holders see them and mark their own progress. Any Holder opens the Party of the Quest (`파티 활성화`) while none runs for it. The server's rules stay as they are, and the app keeps these two rules in one place, because they may change.
 
 ## Testing Decisions
 
 - A good test drives a screen as a User would and checks what is shown. It does not inspect component internals.
 - Screens are tested with Jest against a fake API and a fake socket placed at the app's API client and socket client.
-- Covered behaviour: attending from an event card; joining a Quest from an event card; requesting and withdrawing Matching; the Quest list showing stored Quests and Class Quests; marking a Sub Quest done; opening a Party for a Quest and being led to the existing one; entering under each Join Policy; each refusal message; an Avatar appearing, moving, dimming and disappearing as messages arrive.
+- Covered behaviour: recruiting a Quest from an event card; joining a Quest from an event card; requesting and withdrawing Matching; the Quest list showing stored Quests and Class Quests; marking a Sub Quest done; opening a Party for a Quest and being led to the existing one; entering under each Join Policy; each refusal message; an Avatar appearing, moving, dimming and disappearing as messages arrive.
 - The whole flow on real phones is checked in P20.
 - Prior art: the screen tests of P06.
 
@@ -88,12 +96,11 @@ Screens laid over the map that take a User from a Global Event to companions and
 
 - Conversation inside a Party.
 - Notifications while the app is closed.
-- The final layout.
 - Friend and Meetup screens. They belong to P14.
 - A chat assistant.
 
 ## Further Notes
 
 - The schedule names 함재현 as the worker.
-- This task depends on the map and sign-in of P06 and on the API of P08.
+- This task depends on the map and sign-in of P06, on the API of P08, and on the shell and shared components of P19.
 - The demo of this flow needs two Users, a published Global Event and both phones inside the Campus Boundary. Outside the campus both are hidden by design.

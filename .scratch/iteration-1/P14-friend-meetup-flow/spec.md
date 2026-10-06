@@ -50,15 +50,22 @@ Screens that let a User become Friends through a Friend Request or an Invite Lin
 ## Implementation Decisions
 
 - This task builds screens and connects them to the API of P08. It adds no server behaviour.
-- A Friend Request is sent from a screen that takes a Friend ID and shows its owner's name and department before sending. The User's own Friend ID is shown beside it with a control that copies it.
-- Friend Requests received and sent are listed in the Friend panel, each with its answer or its cancel control.
+- A Friend Request is sent from the 친구 추가 screen, which takes a Friend ID and shows its owner's name and department before sending. The User's own Friend ID is shown beside it with a control that copies it. The same screen has the control that creates an Invite Link.
+- Friend Requests are listed under 친구 관리: those received under `친구 요청`, each with its answer, and those sent beside them, each with its cancel control.
 - The Invite Link is shared through Android's share sheet.
 - The Invite Link is an https address that opens the app on the accept screen. The app declares that address for Android App Links, and also opens the accept screen from its own scheme, which the server's page uses where a messenger shows the address in its own browser (P08). When the app is opened by a link while signed out, the app remembers the link, shows sign-in and continues afterwards.
 - Friends' Avatars use the same map component and the same message handling as Party members in P13. A person who is both a Friend and a Party member has one Avatar.
 - The app shows a Friend's Avatar only when the server sends that Friend's position. The app never decides by itself who may be seen.
 - The Shared Quest from a Meetup is shown by the Quest list of P13. This task adds nothing to that list.
-- The Friend list and the Meetup list open as panels over the map.
-- The arrangement is provisional. P19 adapts it to the wireframes.
+- A Meetup is proposed to one Friend from the calendar button on the Friend's row in the Friend panel and from `파티 만들기` on the Friend's card on the map. Meetups proposed to the User are listed under the 파티 tab's `초대` with `수락` and `거절`. The Meetups the User sent are listed there too, below them, each with its state and, while it waits, a control that withdraws it.
+- The screens follow the wireframe's frames:
+  - `MainFriends`: the Friend panel, whose list and footer P19 builds;
+  - `Friends`: 친구 관리;
+  - `FriendsAdd`: 친구 추가, which holds the User's Friend ID, a Friend ID field and the Invite Link in place of the frame's search by name;
+  - `PartyInvites`: the Meetups received;
+  - the Friend's card on the map in `Main`.
+
+  The frames' 비공개 파티 made with several Friends is not a Meetup: it is P13's Closed Quest with invitations. The Meetup form, the Invite Link's accept screen, the per-Friend switch and ending a friendship have no frame.
 
 ## Testing Decisions
 
@@ -79,5 +86,5 @@ Screens that let a User become Friends through a Friend Request or an Invite Lin
 ## Further Notes
 
 - The schedule names 안진영 as the worker.
-- This task depends on the map of P06, on the Quest list of P13 and on the API of P08.
+- This task depends on the map of P06, on the Quest list of P13, on the API of P08, and on the shell and shared components of P19.
 - The Invite Link needs a fixed https address for the server. If P05 finds that the tunnel address cannot be fixed, the link changes with every restart of the tunnel and old links stop working.
