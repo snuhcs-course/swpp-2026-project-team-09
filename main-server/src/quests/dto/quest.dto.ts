@@ -59,6 +59,8 @@ export interface QuestDto {
   subQuests: SubQuestDto[];
   // Computed from the timetable and never stored (class-quests.service.ts).
   classQuest: boolean;
+  // The requests to join waiting for the Leader's answer, when the User who reads it leads it; 0 otherwise.
+  waitingJoinRequests: number;
 }
 
 // A Quest as a User who does not hold it reads it: in the list of recruiting Quests, in a request to join it and in an
@@ -101,6 +103,7 @@ export const QUEST_INCLUDE = {
   leader: { select: HOLDER_SELECT },
   holders: { include: { user: { select: HOLDER_SELECT } }, orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }] },
   subQuests: { include: SUB_QUEST_INCLUDE, orderBy: [{ attending: 'desc' }, { createdAt: 'asc' }, { id: 'asc' }] },
+  _count: { select: { joinRequests: true } },
 } satisfies Prisma.QuestInclude;
 
 type StoredSubQuest = Prisma.SubQuestGetPayload<{ include: typeof SUB_QUEST_INCLUDE }>;
@@ -180,7 +183,7 @@ export function hasSubQuestsAhead(quest: StoredQuest, now: Date): boolean {
 }
 
 export function toQuestDto(quest: StoredQuest, userId: string, now: Date): QuestDto {
-  const { globalEvent } = quest;
+  const { globalEvent, _count } = quest;
   return {
     id: quest.id,
     title: quest.title,
@@ -194,6 +197,7 @@ export function toQuestDto(quest: StoredQuest, userId: string, now: Date): Quest
     holders: quest.holders.map(({ user }) => user),
     subQuests: quest.subQuests.map((subQuest) => toSubQuestDto(subQuest, globalEvent, userId, now)),
     classQuest: false,
+    waitingJoinRequests: quest.leaderId === userId ? _count.joinRequests : 0,
   };
 }
 

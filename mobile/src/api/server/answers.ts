@@ -190,7 +190,8 @@ export function isQuest(value: unknown): value is Quest {
     isJoinPolicy(field(value, 'joinPolicy')) &&
     listOf(isHolder)(field(value, 'holders')) &&
     listOf(isSubQuest)(field(value, 'subQuests')) &&
-    typeof field(value, 'classQuest') === 'boolean'
+    typeof field(value, 'classQuest') === 'boolean' &&
+    isNumber(field(value, 'waitingJoinRequests'))
   );
 }
 

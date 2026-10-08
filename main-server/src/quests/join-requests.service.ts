@@ -131,7 +131,8 @@ export class JoinRequestsService {
         throw joinRequestNotFound();
       }
     });
-    this.signals.send([request.userId], 'quests-changed');
+    // The Leader's count of waiting requests changed too.
+    this.signals.send([request.userId, leaderId], 'quests-changed');
   }
 
   // The request to the Quest the User leads, read without a lock to learn whom to lock.

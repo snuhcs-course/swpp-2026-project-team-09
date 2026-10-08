@@ -739,7 +739,8 @@ A Quest reads:
       "ended": false
     }
   ],
-  "classQuest": false
+  "classQuest": false,
+  "waitingJoinRequests": 0
 }
 ```
 
@@ -752,6 +753,8 @@ A Quest reads:
   made.
 - `classQuest` is `true` for a Class Quest and `false` for every stored Quest. `leader` and `createdAt` are `null` for
   a Class Quest only.
+- `waitingJoinRequests` is the number of requests to join waiting for the Leader's answer when the reading User leads
+  the Quest, and `0` otherwise.
 
 The refusals each have a `code`:
 
@@ -1004,10 +1007,10 @@ the Quest, which may pass on the Leader's role, and when the Leader changes the 
 a Holder, the removed one included, and when an Administrator edits or cancels the Quest's published Global Event. When
 the Leader ends the Quest, it goes to every Holder and to every User whose request or invitation was waiting, all read
 before the Quest is deleted. It goes to the Leader when a request arrives or is withdrawn and when an invitation is
-declined, to a User whose request the Leader declines or who declines an invitation, and to an invited User when invited
-and when the Leader cancels the invitation. A mark of done and its undoing are the Holder's own and send nothing. The
-signal carries nothing, and the app fetches `GET /quests`, the requests to join and the invitations again (see
-[Signals](#signals)).
+declined, to the Leader and the User when the Leader declines the User's request, to a User who declines an
+invitation, and to an invited User when invited and when the Leader cancels the invitation. A mark of done and its
+undoing are the Holder's own and send nothing. The signal carries nothing, and the app fetches `GET /quests`, the
+requests to join and the invitations again (see [Signals](#signals)).
 
 In a test, `test/quests.ts` stores a Global Event with a connection of its own, in any state and without the signals of
 the Administrator's routes, and calls the routes above; `test/quest-recruiting.ts` calls those of requests, invitations and the Leader's
