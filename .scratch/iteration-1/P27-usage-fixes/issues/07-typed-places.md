@@ -30,3 +30,8 @@ A Sub Quest's place becomes one of three: a Place, a point with its words, or wo
 - `SubQuest.place.latitude/longitude` are now `number | null` in the app's types and the server answer guard. `positionOf` gives no position for words alone, so the main screen draws no marker or route for them. A Meetup proposal's body is now typed as `ChosenPlace`, which leaves out words alone. The mock API mirrors the server: the room's add/edit and `makeQuest` keep the place they are sent, words alone included.
 - Tests: `sub-quests.e2e-spec` adds words alone on add and edit, plus the database check. New `room-typed-place-test` covers the room form: Place names, words alone, ambiguous names, editing a typed place, and keeping a picked point when its words change. `party-form-test` adds typed `어디서`, and `main-route-test` adds a Quest with words alone (no marker, no route, words in the list).
 - Changed existing test: `room-plan-test` loses "the Leader's 일정 form, waiting › waits for a point while the place has words of its own", which asserted the refusal this ticket removes. No other existing test was changed.
+
+### Agent usage (2026-10-09)
+
+- Agent time: about 55 minutes (the implementer) in the resumed session (2026-10-08 to 09), an estimate. Much of it was spent waiting for the shared test slot while the Mac was short on memory. The earlier session, which was force-quit, is not counted: its usage was lost.
+- Tokens: about 238 thousand in all, all subagents: the implementer (202 thousand). The subagent reports give only totals, so input and output, and the cache reads and writes, cannot be shown separately. Included is a ninth of the shared code review and review fixes (about 36 thousand tokens and 2.5 minutes). The orchestrator's own tokens are not counted.

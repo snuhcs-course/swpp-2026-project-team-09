@@ -43,3 +43,8 @@ Pinching out stops at the lowest zoom instead of snapping back: the map componen
 - `mobile/__tests__/map-camera-area-test.tsx`: 메인, 장소 선택, 지도 확인이 지도에 넘기는 카메라 영역, `fitBounds`, 레벨 15.
 - `mobile/__tests__/map-camera-test.tsx`: 일반 지도에서 넓은 영역 안의 카메라는 그대로 두고, 그 밖은 영역 가장자리로 되돌린다.
 - `mobile/__tests__/map-native-view-test.tsx`: 네이티브 뷰가 받는 `bounds`, `minLevel`, 크기를 안 뒤의 `minZoom`(맞춤 줌), 맞춤 줌이 캠퍼스 기준인 것.
+
+### Agent usage (2026-10-09)
+
+- Agent time: about 1 hour 20 minutes (the implementer) in the resumed session (2026-10-08 to 09), an estimate. Much of it was spent waiting for the shared test slot while the Mac was short on memory. The earlier session, which was force-quit, is not counted: its usage was lost.
+- Tokens: about 181 thousand in all, all subagents: the implementer (145 thousand). The subagent reports give only totals, so input and output, and the cache reads and writes, cannot be shown separately. Included is a ninth of the shared code review and review fixes (about 36 thousand tokens and 2.5 minutes). The orchestrator's own tokens are not counted.

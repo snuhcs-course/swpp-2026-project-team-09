@@ -38,3 +38,8 @@ The main server gains the undoing of a done mark, and the mock API follows both 
 - `main-server/test/class-quest-refusals.e2e-spec.ts`: 기존 단언은 그대로 두고, 표의 경로 목록에 `undoing a mark of done`(새 `DELETE …/done`) 한 줄만 더했다. Class Quest에 대한 새 경로도 `CLASS_QUEST`로 거절됨을 확인하기 위해서다.
 - `main-server/test/meetup-quests.e2e-spec.ts` (스펙이 이름을 대지 않은 테스트): `Progress on the Shared Quest of an accepted Meetup > keeps a mark of done to the Holder who made it`가 완료 표시 뒤 `ended: true`와 `GET /quests`에서 빠지는 것을 단언했다. 같은 규칙 변경이므로 `ended: false`와 목록에 남는 것으로 바꿨다. PR에서 이 테스트도 이름을 대야 한다.
 - 앱의 기존 테스트는 바꾸지 않았다. 새 화면 테스트는 `room-plan-test.tsx`가 파일 길이 lint 한도(300줄)에 걸려 새 파일 `mobile/__tests__/room-done-test.tsx`에 두었다.
+
+### Agent usage (2026-10-09)
+
+- Agent time: about 2 hours 45 minutes (the resumed implementer, and half of the merge with 04) in the resumed session (2026-10-08 to 09), an estimate. Much of it was spent waiting for the shared test slot while the Mac was short on memory. The earlier session, which was force-quit, is not counted: its usage was lost.
+- Tokens: about 144 thousand in all, all subagents: the resumed implementer (88 thousand) and half of the merger shared with 04 (20 thousand). The subagent reports give only totals, so input and output, and the cache reads and writes, cannot be shown separately. Included is a ninth of the shared code review and review fixes (about 36 thousand tokens and 2.5 minutes). The orchestrator's own tokens are not counted.

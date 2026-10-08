@@ -40,3 +40,8 @@ Each Quest in the main server's answer for the User's Quests carries that number
 - `main-server/test/meetup-answers.e2e-spec.ts` (`Accepting a Meetup > gives both a Closed Quest ...`)
 
 앱 쪽은 단언을 바꾸지 않았고, `Quest` 타입이 필드를 요구해서 고정 데이터(`__tests__/support/server.ts`·`room.ts`·`meetups.ts`, `__tests__/features/next-quest-test.ts`)에 `waitingJoinRequests: 0`만 더했다.
+
+### Agent usage (2026-10-09)
+
+- Agent time: about 1 hour (the implementer) in the resumed session (2026-10-08 to 09), an estimate. Much of it was spent waiting for the shared test slot while the Mac was short on memory. The earlier session, which was force-quit, is not counted: its usage was lost.
+- Tokens: about 167 thousand in all, all subagents: the implementer (131 thousand). The subagent reports give only totals, so input and output, and the cache reads and writes, cannot be shown separately. Included is a ninth of the shared code review and review fixes (about 36 thousand tokens and 2.5 minutes). The orchestrator's own tokens are not counted.

@@ -43,3 +43,8 @@ Global Events at the same position become one marker. A Place with one Global Ev
 - `mobile/__tests__/shuttle-layer-test.tsx` "puts a dot on each stop, ... with the stop's name under it from the "names" level" → "... without the stop's name under it at any level": `자연대` 단언을 `toBeNull()`로 바꿈.
 
 새 테스트: `mobile/__tests__/main-event-place-test.tsx` (가짜 메인 서버와 소켓 위에서, 한 장소의 행사 두 개가 마커 하나와 개수, 행사 하나는 오늘의 마커, 목록과 고른 행사의 카드와 `같이 갈 사람 찾기`, 행사가 늘고 줄 때 같은 마커로 카드가 열려 있고 하나만 남으면 단일 행사 마커).
+
+### Agent usage (2026-10-09)
+
+- Agent time: about 2 hours (the resumed implementer) in the resumed session (2026-10-08 to 09), an estimate. Much of it was spent waiting for the shared test slot while the Mac was short on memory. The earlier session, which was force-quit, is not counted: its usage was lost.
+- Tokens: about 106 thousand in all, all subagents: the resumed implementer (70 thousand). The subagent reports give only totals, so input and output, and the cache reads and writes, cannot be shown separately. Included is a ninth of the shared code review and review fixes (about 36 thousand tokens and 2.5 minutes). The orchestrator's own tokens are not counted.

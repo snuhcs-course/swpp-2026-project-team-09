@@ -26,3 +26,8 @@ In the 행사 tab's 파티 찾기/모집, pressing another User's Quest opens it
 ### 바꾼 기존 테스트
 
 - `mobile/__tests__/events-recruiting-test.tsx`, "joining from the sheet": 행을 누르면 "참여할까요?"를 묻던 것을 단언하던 테스트 세 개("joins an Open Quest after the question, and opens its room", "asks the Leader of an Approval Quest", 거절 사유 `it.each`)를 모집글 경유로 바꿨다. 이제 남의 Quest를 누르면 `/post/:id`가 열리고 질문이 없음을 확인하는 테스트를 더했고, 참여·신청·거절은 모집글의 `참여하기`/`참여 신청`으로 한다. Open 참여 후 방으로 가던 단언은 빠졌다(모집글의 참여는 게시판과 같이 내 파티를 연다). 거절 `it.each`는 줄 수 제한 때문에 "a refusal on the post" describe로 옮겼다. 스펙이 이 테스트의 변경을 허용한다.
+
+### Agent usage (2026-10-09)
+
+- Agent time: about 1 hour (the merge with 01, half of it) in the resumed session (2026-10-08 to 09), an estimate. Much of it was spent waiting for the shared test slot while the Mac was short on memory. The earlier session, which was force-quit, is not counted: its usage was lost.
+- Tokens: about 62 thousand in all, all subagents: half of the merger shared with 01 (27 thousand). The subagent reports give only totals, so input and output, and the cache reads and writes, cannot be shown separately. Included is a ninth of the shared code review and review fixes (about 36 thousand tokens and 2.5 minutes). The orchestrator's own tokens are not counted.

@@ -34,3 +34,8 @@ PR에 적을 것: 이 티켓은 기존 테스트의 단언을 바꿨다.
 
 - `mobile/__tests__/events-party-form-test.tsx`의 `chooses an event in the picker, …` 테스트: 행사를 고르면 제목 칸이 잠기고(`toBeDisabled`) `행사 빼기`가 제목을 비우던 단언을, 제목 칸이 열려 있고(`toBeEnabled`) `행사 빼기` 뒤에도 행사 제목이 남는 단언으로 바꿨다. 테스트 이름도 `… 행사 빼기 clears it`에서 `… 행사 빼기 leaves the title`로 바뀌었다.
 - `main-server/test/quest-settings.e2e-spec.ts`: Global Event가 있는 Quest의 제목 변경을 `QUEST_TITLE_FROM_GLOBAL_EVENT`(409)로 거절하던 테스트를 지우고, 제목이 바뀌고 행사 이름은 그대로인 테스트(`The Leader of a Quest with a Global Event › changes its title, …`)로 바꿨다.
+
+### Agent usage (2026-10-09)
+
+- Agent time: about 2 hours 45 minutes (the resumed implementer, and half of the merge with 06) in the resumed session (2026-10-08 to 09), an estimate. Much of it was spent waiting for the shared test slot while the Mac was short on memory. The earlier session, which was force-quit, is not counted: its usage was lost.
+- Tokens: about 150 thousand in all, all subagents: the resumed implementer (93 thousand) and half of the merger shared with 06 (20 thousand). The subagent reports give only totals, so input and output, and the cache reads and writes, cannot be shown separately. Included is a ninth of the shared code review and review fixes (about 36 thousand tokens and 2.5 minutes). The orchestrator's own tokens are not counted.
