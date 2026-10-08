@@ -52,6 +52,7 @@ export const PICNIC: Quest = {
     },
   ],
   classQuest: false,
+  waitingJoinRequests: 0,
   board: 'hobby',
   description: '',
   createdAt: '2026-10-05T10:00:00.000Z',

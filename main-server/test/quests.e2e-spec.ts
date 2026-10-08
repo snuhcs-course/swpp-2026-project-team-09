@@ -55,6 +55,7 @@ describe('Attending a Global Event', () => {
         },
       ],
       classQuest: false,
+      waitingJoinRequests: 0,
     });
   });
 

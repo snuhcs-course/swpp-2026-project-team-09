@@ -768,7 +768,9 @@ invitations and the Meetups proposed to the User (`초대 {n}`, red).
 - **내 파티**: the chips `전체`, `비공개` and `공개`, and the groups `활성화 중`, `활성화 알림`, then the next Sub Quest's
   day (`오늘`, `내일`, `이번 주` to Sunday, `다음 주`, `그 이후`, `시간 미정`). A card has the kind, a Badge of its
   members, its recruiting or its running Party, the next Sub Quest and the Holders; a Party running without the User
-  adds the strip "{name}님이 활성화했어요" with `참여`, which enters as the room's `참여` does.
+  adds the strip "{name}님이 활성화했어요" with `참여`, which enters as the room's `참여` does. A card of a Quest the User
+  leads has, at its top right, a red circle with the number of requests to join waiting (`waitingJoinRequests`), and
+  none at 0; `quests-changed` keeps it current.
 - **초대** lists `GET /quest-invitations` with `거절` and `수락` under `받은 초대`, above the Meetups proposed to the User
   (`MeetupInvites`, above); a refused acceptance keeps the invitation.
 

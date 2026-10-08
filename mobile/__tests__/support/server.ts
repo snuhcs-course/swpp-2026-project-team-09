@@ -101,6 +101,7 @@ export const DINNER: Quest = {
     },
   ],
   classQuest: false,
+  waitingJoinRequests: 0,
   board: null,
   description: '',
   createdAt: '2026-10-05T09:00:00.000Z',

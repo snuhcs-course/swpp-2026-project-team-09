@@ -63,6 +63,34 @@ function Strip({ card, onEnter }: MineCardProps): ReactElement | null {
   );
 }
 
+// The Holders' faces, the User first, and their names.
+function People({ card, ground }: { card: MineCardView; ground: string }): ReactElement {
+  return (
+    <View style={styles.people}>
+      <View style={styles.faces}>
+        {card.faces.slice(0, 4).map((name, index) => (
+          <View key={`${name}-${String(index)}`} style={[styles.face, { boxShadow: `0 0 0 2px ${ground}` }]}>
+            <Avatar name={name} size="sm" />
+          </View>
+        ))}
+      </View>
+      <Text style={styles.peopleWords}>{card.people}</Text>
+    </View>
+  );
+}
+
+// The requests to join waiting for the Leader's answer: a red circle at the card's top right, none at 0.
+function Waiting({ count }: { count: number }): ReactElement | null {
+  if (count <= 0) {
+    return null;
+  }
+  return (
+    <View accessibilityLabel={`기다리는 참여 신청 ${String(count)}건`} accessible style={styles.waiting}>
+      <Text style={styles.waitingWords}>{count}</Text>
+    </View>
+  );
+}
+
 // A card of 내 파티: tinted by its kind, outlined in navy while the User is in its Party.
 function MineCard({ card, onEnter }: MineCardProps): ReactElement {
   const tint = TINT[card.private ? 'private' : 'public'];
@@ -100,17 +128,9 @@ function MineCard({ card, onEnter }: MineCardProps): ReactElement {
           </View>
         </View>
       )}
-      <View style={styles.people}>
-        <View style={styles.faces}>
-          {card.faces.slice(0, 4).map((name, index) => (
-            <View key={`${name}-${String(index)}`} style={[styles.face, { boxShadow: `0 0 0 2px ${tint.ground}` }]}>
-              <Avatar name={name} size="sm" />
-            </View>
-          ))}
-        </View>
-        <Text style={styles.peopleWords}>{card.people}</Text>
-      </View>
+      <People card={card} ground={tint.ground} />
       <Strip card={card} onEnter={onEnter} />
+      <Waiting count={card.waiting} />
     </Pressable>
   );
 }
@@ -176,6 +196,7 @@ export function MineTab(): ReactElement {
 
 const FACE_OVERLAP = -8;
 const ROUND = 40;
+const WAITING = 22;
 
 const styles = StyleSheet.create({
   body: { gap: space[5], paddingHorizontal: space[4], paddingBottom: space[6] },
@@ -219,4 +240,17 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
   },
   stripButtonWords: { fontFamily: font.bold, fontSize: 13, lineHeight: 18, color: color.snuBlue },
+  waiting: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: WAITING,
+    height: WAITING,
+    paddingHorizontal: 6,
+    borderRadius: radius.full,
+    backgroundColor: color.danger,
+  },
+  waitingWords: { fontFamily: font.bold, fontSize: 12, lineHeight: WAITING, color: color.onPrimary },
 });

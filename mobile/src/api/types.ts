@@ -183,6 +183,8 @@ export interface Quest {
   subQuests: SubQuest[];
   // True for a Class Quest, which the timetable makes for today.
   classQuest: boolean;
+  // The requests to join waiting for the Leader's answer, when the User leads the Quest; 0 otherwise.
+  waitingJoinRequests: number;
   // Null for a Closed Quest and a Class Quest.
   board: Board | null;
   // The recruiting post, 0 to 200 characters.

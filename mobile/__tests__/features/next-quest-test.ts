@@ -29,6 +29,7 @@ function quest(id: string, startsAt: string | null, endsAt: string | null, class
       },
     ],
     classQuest,
+    waitingJoinRequests: 0,
     board: null,
     description: '',
     createdAt: null,
