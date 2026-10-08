@@ -33,7 +33,7 @@ export class QuestsController {
   // A repeat gives the same Quest, so it takes no Idempotency-Key.
   @Post()
   attend(@CurrentUser() user: SignedInUser, @Body({ schema: attendSchema }) body: AttendDto): Promise<QuestDto> {
-    return this.quests.attend(user.id, body.globalEventId);
+    return this.quests.attend(user.id, body.globalEventId, body.title);
   }
 
   // A route of its own, since only making a Quest needs a key.

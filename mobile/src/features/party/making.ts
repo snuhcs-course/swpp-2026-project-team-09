@@ -42,9 +42,10 @@ export function emptyForm(): PartyForm {
   };
 }
 
-// A chosen event gives its title, which the Quest keeps, and its start, which `언제` may move to a meeting before it.
+// A chosen event gives its title, which the User may change, and its start, which `언제` may move to a meeting before
+// it. Taking the event away leaves the title.
 export function withEvent(form: PartyForm, event: FormEvent | null): PartyForm {
-  return { ...form, event, title: event?.title ?? '', startsAt: event?.startsAt ?? null };
+  return { ...form, event, title: event?.title ?? form.title, startsAt: event?.startsAt ?? null };
 }
 
 // The form of a Quest the Leader edits.
@@ -123,10 +124,17 @@ export function invitable(form: PartyForm, holders: number): number {
   return Math.max((form.visibility === 'private' ? PRIVATE_CAPACITY : form.capacity) - holders, 0);
 }
 
-// The PATCH after attending the event: everything the form sets but the title, which stays the event's.
-export function recruitingOf(form: PartyForm): QuestChange {
-  const { title: _title, subQuest: _subQuest, ...change } = makingOf(form);
-  return change;
+// The title attending the event is asked for: none when it is the event's own, which the main server gives.
+export function attendingTitleOf(form: PartyForm): string | undefined {
+  const title = form.title.trim();
+  return title === form.event?.title ? undefined : title;
+}
+
+// The PATCH after attending the event: everything the form sets, and the title when the attended Quest has another,
+// as a Quest the User already held for the event does.
+export function recruitingOf(attended: Quest, form: PartyForm): QuestChange {
+  const { title, subQuest: _subQuest, ...change } = makingOf(form);
+  return title === attended.title ? change : { title, ...change };
 }
 
 // The Sub Quest `모이기`, when `언제` moved from the event's start to a meeting before it.

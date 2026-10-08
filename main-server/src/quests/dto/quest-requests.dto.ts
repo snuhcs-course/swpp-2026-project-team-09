@@ -8,7 +8,8 @@ const capacitySchema = z.int().min(1).max(8);
 // The recruiting post. Empty is none.
 const descriptionSchema = z.string().trim().max(200);
 
-export const attendSchema = z.strictObject({ globalEventId: z.uuid() });
+// Left out, the title is the Global Event's.
+export const attendSchema = z.strictObject({ globalEventId: z.uuid(), title: titleSchema.optional() });
 
 export type AttendDto = z.infer<typeof attendSchema>;
 

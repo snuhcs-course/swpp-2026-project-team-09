@@ -672,10 +672,12 @@ attending a published Global Event or by making one of their own, and enters ano
 join that the Leader accepts or by the Leader's invitation; Meetups and Matching add the Quests with several Holders.
 The routes, all a User's:
 
-- `POST /quests` with `{ "globalEventId": "..." }` attends the Global Event and answers 201 with the User's Quest for
-  it. The first time it creates the Quest, with the event's title, the User as its only Holder and the Sub Quest for
-  attending. Attending again, also twice at the same moment, answers the same Quest and changes nothing, so it takes
-  no `Idempotency-Key`.
+- `POST /quests` with `{ "globalEventId": "...", "title"? }` attends the Global Event and answers 201 with the User's
+  Quest for it. The first time it creates the Quest, with the `title` given (1 to 50 characters once trimmed) or else
+  the event's, the User as its only Holder and the Sub Quest for attending. The title is the Quest's own: it does not
+  follow later changes to the event's title, which the attending Sub Quest and `globalEvent` still read. Attending
+  again, also twice at the same moment, answers the same Quest and changes nothing, its title included, so it takes no
+  `Idempotency-Key`.
 - `POST /quests/own` makes a Quest of the User's own, without a Global Event, and answers 201 with it. It requires an
   `Idempotency-Key`, which is why it is a route apart from attending. The body:
   `{ "title": "저녁 같이 먹어요", "subQuest": { ... }, "joinPolicy": "open", "board": "meal", "description": "…" }`:
@@ -913,7 +915,7 @@ the lists are the newest first.
   settings and answers 200 with the Quest. What is left out stays, and the Quest the change leads to is checked: an
   `open` or `approval` Quest without a board, from the body or stored, is refused with `BOARD_REQUIRED`; a `board` in
   a body that leaves the Quest Closed with `BOARD_FOR_CLOSED_QUEST`; a change to `closed` without a board clears the
-  stored one, and a `description` of `""` clears it. A Quest with a Global Event keeps the event's title. Making a
+  stored one, and a `description` of `""` clears it. A Quest with a Global Event takes a title like any other. Making a
   Quest from attending `open` or `approval`, on a board, is how it starts gathering people.
 - `PUT /quests/:questId/leader` with `{ "userId": "..." }` hands the role to another Holder and answers 204.
 - `DELETE /quests/:questId/holders/:userId` removes a Holder and answers 204. The Holder goes as one who dropped the
@@ -942,7 +944,6 @@ other.
 | A Leader's action by another Holder                                   | 403    | `NOT_QUEST_LEADER`                |
 | A Leader's action by a User who does not hold the Quest               | 404    | `QUEST_NOT_FOUND`                 |
 | A capacity below the number of Holders                                | 409    | `CAPACITY_BELOW_HOLDERS`          |
-| A title for a Quest with a Global Event                               | 409    | `QUEST_TITLE_FROM_GLOBAL_EVENT`   |
 | An `open` or `approval` Quest without a board                         | 409    | `BOARD_REQUIRED`                  |
 | A `board` for a Quest that stays or becomes Closed                    | 409    | `BOARD_FOR_CLOSED_QUEST`          |
 | Handing the role to, or removing, a User who does not hold the Quest  | 404    | `NOT_QUEST_HOLDER`                |
@@ -963,7 +964,7 @@ one Quest locks it first, so that changes run one after another:
 - `lock(questId, tx)` locks the Quest's row until the transaction ends.
 - `heldFor(userId, globalEventId, tx)` answers the id of the Quest the User holds for the Global Event, or `null`.
 - `createForGlobalEvent(globalEvent, holderIds, tx, settings?)` creates a Quest for the Global Event with these
-  Holders and the attending Sub Quest, and answers its id. A Holder who already holds a Quest for the event makes the
+  Holders and the attending Sub Quest, titled as the event unless `settings.title` is given, and answers its id. A Holder who already holds a Quest for the event makes the
   unique index refuse it, so ask `freeForSharedQuest` first. `settings.matchId` names the match server's match the
   Quest is created for (see [Matching](#matching)).
 - `createWithSubQuest(subQuest, holderIds, tx, settings?)` creates a Quest without a Global Event with these Holders
