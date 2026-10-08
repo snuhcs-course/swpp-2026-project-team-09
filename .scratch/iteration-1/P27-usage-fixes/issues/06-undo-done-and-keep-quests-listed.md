@@ -1,7 +1,7 @@
 # 06: Undo a done mark, and keep Quests listed when every Sub Quest is done
 
 Parent: [P27 spec](../spec.md)
-Status: ready-for-agent
+Status: resolved
 Blocked by: None (can start immediately)
 
 ## What to build
