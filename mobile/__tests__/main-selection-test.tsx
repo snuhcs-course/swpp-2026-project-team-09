@@ -7,7 +7,7 @@ function friendCard(id: string, name: string): CardView {
     id: `friend:${id}`,
     kind: 'friend',
     mark: { type: 'person', id, name, photo: null, presence: 'free' },
-    marker: { name, short: name, count: 0 },
+    marker: { name, short: name, count: 0, minutesOld: null },
     subLabel: '컴퓨터공학부 22',
     title: name,
     lines: [],

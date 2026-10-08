@@ -514,12 +514,16 @@ Ticket 12 connected every row that the demo's flows (P20) use and the main serve
 | Lobby | Connected | `POST /lobby`, with `masterSwitch` and `profile.friendId` | |
 | The profile (프로필 편집) | Connected | `PATCH /users/me/profile` with the changed fields | |
 | The Master Switch | Connected | `PUT /users/me/master-switch`; read from the Lobby | The mock keeps it in memory, off at each start |
-| Sending the User's position | Connected | `POST /positions`, at most every 5 s while the switch is on, the permission granted and the app in front | `MASTER_SWITCH_OFF` turns the switch off; the 400s and no answer drop a position; sending in the background is P17's. The mock refuses while the switch is off and answers `offCampus` by the campus rectangle |
-| The timetable on 내 정보, the Places | Connected | `GET /timetable/classes`, `GET /places` | Read only; the mock has the `Profile` frame's four classes |
+| Sending the User's position | Connected | `POST /positions`, at most every 5 s while the switch is on, the permission granted and the app in front | `MASTER_SWITCH_OFF` turns the switch off; the 400s and no answer drop a position. On Android, with the row `백그라운드에서도 공유`, also every 30 s in the background under a notification (P17). The mock refuses while the switch is off and answers `offCampus` by the campus rectangle |
+| The timetable on 내 정보, the Places | Connected | `GET /timetable/classes`, `GET /places` | Read only; the mock has the `Profile` frame's four classes. The Places also place the 식당 pins (P15) |
 | Friend Requests | Connected | `GET /friend-requests`; fetched again on `friends-changed` | |
 | Quest invitations, requests to join | Connected | `GET /quest-invitations`, `GET /quests/:questId/join-requests` for each Quest the User leads with Approval; fetched again on `quests-changed` | The mock leads no Quest, so it has no request to join |
 | Meetups | Connected | `GET /meetups`; fetched again on `meetups-changed` | |
 | Friends | Connected | `GET /friends`; fetched again on `friends-changed` | |
+| Friends' switches and their end (`setFriendSharing`, `endFriendship`) | Connected | `PUT /friends/:userId/sharing`, `DELETE /friends/:userId` | |
+| Friend IDs (`findFriendId`) and the User's own | Connected | `GET /friend-ids/:friendId`; the Lobby's `profile.friendId` | |
+| Friend Requests (`sendFriendRequest`, `listFriendRequests`, `acceptFriendRequest`, `declineFriendRequest`, `cancelFriendRequest`) | Connected | `POST /friend-requests`, `GET /friend-requests`, `POST /friend-requests/:id/accept`, `/decline`, `/cancel`; fetched again on `friends-changed` and when the app returns to the front | |
+| Invite Links (`createInviteLink`, `getInviteLink`, `acceptInviteLink`) | Connected | `POST /invite-links`, `GET /invite-links/:token`, `POST /invite-links/:token/accept` | App Links need `INVITE_LINK_HOST` in the build |
 | Friends' positions | Connected | `GET /positions`, the socket's `position` and `position-removed` | Fetched when the connection opens and when the app returns to the front |
 | Friends' status, place, walk and photo (`listFriendStatuses`) | Mock | Nothing | No answer holds them; a Friend without a status is shown by `visible` alone: "공강" or "위치 꺼짐" |
 | Quests, Class Quests | Connected | `GET /quests`; fetched again on `quests-changed` and when the app returns to the front | |
@@ -533,6 +537,7 @@ Ticket 12 connected every row that the demo's flows (P20) use and the main serve
 | What 오늘의 발자국 shows (`getFootprints`) | Mock: five Friends and three faces | Nothing | No spec covers stories |
 | The AI input | No data | Nothing | It only says that it is not ready; no spec covers it |
 | The Session's end | Connected | The socket's `session-ended`, and a 401 that one renewal cannot mend | `SESSION_REPLACED` shows "다른 기기에서 로그인했어요" |
+| Menus (`listMenus`) | Connected | `GET /menus?date=` | The 식당 layer and the menu panel (P15); the mock is a week of lines from the saved menu pages |
 | The signal `matching-changed` | Not used | The socket | It names nothing these screens show |
 
 ## 4. Controls that say "준비 중이에요"
@@ -543,19 +548,16 @@ The control is there and only shows the toast. The last column is a proposal for
 |---|---|---|---|
 | Quest list, on the map and on the whole screen | The row of a Party or of a Shared Quest: every row that is no class's | The party screen | P13 |
 | Friend panel | A Friend's calendar button, "{이름}님과 파티 만들기" | Proposing a Meetup to the Friend | P14 |
-| Friend panel | + 친구 추가 | 친구 추가 | P14 |
 | Above the navigation | 오늘의 발자국 | The story replay | In no Iteration 1 spec |
 | Above the navigation | 활성 파티 | The party screen | P13 |
-| Above the navigation | The 편의기능 button | The dining, shuttle and study layers | P15 |
+| 편의기능 stack | The 셔틀버스 toggle | The shuttle layer | P15 (ticket 02) |
 | Above the navigation | The AI input, which is a button with the input's look and takes no focus and no text, and its send button, read as disabled | The AI chat, with the real text field | In no Iteration 1 spec |
 | Bottom navigation | 올리기 | The story sheet | In no Iteration 1 spec |
 | 파티 | + 만들기, and the bodies of 찾기, 내 파티 and 초대 | 파티 만들기 and the lists of Quests | P13 |
 | 행사 | Its body | The list of Global Events | P13 |
 | 내 정보 | 직접 입력 | The timetable screen | P19 (ticket 03) |
 | 내 정보 | 이미지로 불러오기, 빈 시간 말하기 | Reading a timetable from an image or from words | In no Iteration 1 spec |
-| 내 정보 | 친구 관리 | 친구 관리 | P14 |
 | 알림 | A Party opened, and 참여 신청 | The Quest's room | P13 |
-| 알림 | A Friend Request | 친구 관리 › 친구 요청 | P14 |
 | A Global Event's card | 같이 갈 사람 찾기 | The party screen | P13 |
 | A Party's card | 참여하기, 파티 열기 | The party screen | P13 |
 | A Friend's card | 파티 만들기 | Making a Party | P14 |

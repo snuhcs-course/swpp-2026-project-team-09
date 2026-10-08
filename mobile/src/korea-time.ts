@@ -2,7 +2,7 @@
 // year.
 const KOREA_OFFSET_MS = 9 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const;
+export const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const;
 
 // A date whose UTC fields read as Korea's clock and calendar.
 function inKorea(instant: Date): Date {
@@ -60,4 +60,21 @@ export function koreaWeekday(instant: Date): number {
 // 2026
 export function koreaYear(instant: Date): number {
   return inKorea(instant).getUTCFullYear();
+}
+
+// "2026-10-06": the day of Korea's calendar, as the main server takes a date.
+export function koreaDateKey(instant: Date): string {
+  return inKorea(instant).toISOString().slice(0, 10);
+}
+
+// The month, the day of the month and the weekday, 0 for Sunday, of Korea's calendar.
+export function koreaCalendar(instant: Date): { month: number; date: number; weekday: number } {
+  const korea = inKorea(instant);
+  return { month: korea.getUTCMonth() + 1, date: korea.getUTCDate(), weekday: korea.getUTCDay() };
+}
+
+// The minutes since midnight of Korea's clock.
+export function koreaMinutes(instant: Date): number {
+  const korea = inKorea(instant);
+  return korea.getUTCHours() * 60 + korea.getUTCMinutes();
 }

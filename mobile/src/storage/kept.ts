@@ -15,6 +15,13 @@ export interface Kept {
   // The User answered the explanation before the location prompt on this phone, so the main screen does not show it
   // by itself again.
   locationExplained: boolean;
+  // The token of the Invite Link the app was opened with, until its accept screen shows it. A later link replaces it.
+  inviteToken: string | null;
+  // For the background task, which has no screens to ask: the Master Switch as the app last knew it, whether the User
+  // chose background sharing on this phone, and whether it was started and not stopped by the app since.
+  masterSwitch: boolean;
+  backgroundChosen: boolean;
+  backgroundRunning: boolean;
 }
 
 const KEY = 'snunow.kept';
@@ -26,10 +33,17 @@ const FIRST_STATE: Kept = {
   onboardingCompleted: false,
   answers: null,
   locationExplained: false,
+  inviteToken: null,
+  masterSwitch: false,
+  backgroundChosen: false,
+  backgroundRunning: false,
 };
 
-// What an older version stored has no `consented` or no `locationExplained`: the rest of it still counts.
-function isKept(value: unknown): value is Omit<Kept, 'consented' | 'locationExplained'> {
+type Later =
+  'consented' | 'locationExplained' | 'inviteToken' | 'masterSwitch' | 'backgroundChosen' | 'backgroundRunning';
+
+// What an older version stored lacks the fields added later: the rest of it still counts.
+function isKept(value: unknown): value is Omit<Kept, Later> {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -57,6 +71,10 @@ export async function readKept(): Promise<Kept> {
       ...value,
       consented: 'consented' in value && value.consented === true,
       locationExplained: 'locationExplained' in value && value.locationExplained === true,
+      inviteToken: 'inviteToken' in value && typeof value.inviteToken === 'string' ? value.inviteToken : null,
+      masterSwitch: 'masterSwitch' in value && value.masterSwitch === true,
+      backgroundChosen: 'backgroundChosen' in value && value.backgroundChosen === true,
+      backgroundRunning: 'backgroundRunning' in value && value.backgroundRunning === true,
     };
   } catch {
     return FIRST_STATE;
@@ -75,6 +93,12 @@ export function keep(change: Partial<Kept>): Promise<Kept> {
   // A change that failed is told to the one who asked for it, and does not stop the next.
   lastChange = written.catch(() => null);
   return written;
+}
+
+// What the phone keeps once the changes on their way are written.
+export async function readKeptAfterChanges(): Promise<Kept> {
+  await lastChange;
+  return readKept();
 }
 
 export async function clearKept(): Promise<void> {

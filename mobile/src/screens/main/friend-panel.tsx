@@ -24,7 +24,7 @@ import {
   text,
   useNotReadyToast,
 } from '@/design-system';
-import { type FriendView, PRESENCE_LABEL } from '@/features/friends/adapter';
+import { type FriendView, PRESENCE_LABEL, withAge } from '@/features/friends/adapter';
 import { useFriends } from '@/features/friends/use-friends';
 
 type Filter = Presence | 'all';
@@ -53,7 +53,7 @@ function FriendRow({ friend, onMeet }: { friend: FriendView; onMeet: () => void 
           status={friend.presence}
         />
       }
-      lines={[friend.detail === '' ? friend.line : friend.detail]}
+      lines={[withAge(friend.detail === '' ? friend.line : friend.detail, friend.minutesOld)]}
       title={friend.name}
       trailing={
         <Pressable
@@ -95,8 +95,17 @@ function Groups({ friends, onMeet }: GroupsProps): ReactElement {
   );
 }
 
-function Footer({ seen, onShare, onAdd }: { seen: number; onShare: () => void; onAdd: () => void }): ReactElement {
+// "공유 설정" and "+ 친구 추가" close the panel and show their screen.
+function Footer({ seen, onLeave }: { seen: number; onLeave: () => void }): ReactElement {
   const { bottom } = useSafeAreaInsets();
+  const onShare = (): void => {
+    onLeave();
+    router.navigate({ pathname: '/me', params: { show: 'sharing' } });
+  };
+  const onAdd = (): void => {
+    onLeave();
+    router.push('/me/friends/add');
+  };
   return (
     <View style={[styles.footer, { paddingBottom: space[6] + bottom }]}>
       <View style={styles.sharing}>
@@ -113,8 +122,8 @@ function Footer({ seen, onShare, onAdd }: { seen: number; onShare: () => void; o
 }
 
 // The friend panel, the `MainFriends` frame: every Friend by what they are doing, with a search and chips, how many
-// the User sees now, and the way to the 위치 공유 card of 내 정보. Making a Party with a Friend and adding a Friend
-// belong to other tasks.
+// the User sees now, the way to the 위치 공유 card of 내 정보 and to 친구 추가. Making a Party with a Friend belongs
+// to another task.
 export function FriendPanel({ open, onClose }: FriendPanelProps): ReactElement {
   const { data: friends, isPending, refetch } = useFriends();
   const [query, setQuery] = useState('');
@@ -152,14 +161,7 @@ export function FriendPanel({ open, onClose }: FriendPanelProps): ReactElement {
         {shown === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
         {shown === undefined ? null : <Groups friends={shown} onMeet={showNotReady} />}
       </ScrollView>
-      <Footer
-        onAdd={showNotReady}
-        onShare={() => {
-          onClose();
-          router.navigate({ pathname: '/me', params: { show: 'sharing' } });
-        }}
-        seen={friends?.filter(({ visible }) => visible).length ?? 0}
-      />
+      <Footer onLeave={onClose} seen={friends?.filter(({ visible }) => visible).length ?? 0} />
     </SidePanel>
   );
 }

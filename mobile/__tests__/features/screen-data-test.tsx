@@ -37,7 +37,9 @@ describe('the friend list', () => {
       walk: '도보 4분',
       photo: null,
       position: { latitude: 37.45952, longitude: 126.95209 },
+      minutesOld: null,
       visible: true,
+      sharing: true,
     });
   });
 
@@ -167,7 +169,7 @@ describe('the cards of the map', () => {
       kind: 'global-event',
       mark: { type: 'place', place: 'official' },
       // One Party goes to it: a pin shows a count from two on.
-      marker: { name: '공식 행사 · AI 커리어 설명회', short: 'AI 커리어', count: 0 },
+      marker: { name: '공식 행사 · AI 커리어 설명회', short: 'AI 커리어', count: 0, minutesOld: null },
       subLabel: '공식 행사 · 컴퓨터공학부 공지',
       title: 'AI 커리어 설명회',
       lines: [

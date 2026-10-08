@@ -1,6 +1,7 @@
 import { type ReactElement, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import {
+  DayTile,
   AppBar,
   Avatar,
   BottomSheet,
@@ -96,12 +97,20 @@ export function Panels(): ReactElement {
   );
 }
 
+// A weekday, Saturday and Sunday: the day, the top line and the weekday.
+const DAYS: readonly (readonly [number, string, number])[] = [
+  [6, '오늘', 2],
+  [10, '토', 6],
+  [11, '일', 0],
+];
+
 export function Filters(): ReactElement {
   const [tab, setTab] = useState<'find' | 'mine' | 'invites'>('find');
   const [chip, setChip] = useState<'all' | 'free' | 'moving'>('all');
   const [query, setQuery] = useState('');
+  const [day, setDay] = useState(6);
   return (
-    <Section name="SegmentedTabs · ChipRow · SearchField">
+    <Section name="SegmentedTabs · ChipRow · SearchField · DayTile">
       <SegmentedTabs
         onSelect={setTab}
         segments={[
@@ -122,6 +131,21 @@ export function Filters(): ReactElement {
         selected={chip}
       />
       <SearchField label="친구 검색" onChangeText={setQuery} placeholder="이름, 학과 검색" value={query} />
+      <View style={styles.row}>
+        {DAYS.map(([date, top, weekday]) => (
+          <DayTile
+            date={date}
+            key={date}
+            label={`10월 ${date}일`}
+            onPress={() => {
+              setDay(date);
+            }}
+            selected={date === day}
+            top={top}
+            weekday={weekday}
+          />
+        ))}
+      </View>
     </Section>
   );
 }

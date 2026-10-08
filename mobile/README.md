@@ -158,6 +158,15 @@ pnpm install
 pnpm android
 ```
 
+### Invite Links on Android
+
+Set `INVITE_LINK_HOST` in `.env` to the host of the main server's `PUBLIC_URL`, such as `snunow.example`, before the
+project is generated. The build then declares an App Link with `autoVerify` for `https://<host>/invite/`
+(`app.config.ts`), and Android checks it against `https://<host>/.well-known/assetlinks.json`, which the main server
+answers. The check passes only when the build's signing certificate is among the main server's
+`ANDROID_CERTIFICATE_FINGERPRINTS`; the debug key's fingerprint is in the main server's `.env.example`. Without the
+host the build declares no App Link, and a link opens the app only through `snunow://invite/<token>`.
+
 `pnpm android` generates the Android project in `android/` (not committed), builds the app, installs it on the
 running emulator, opens it and starts the development server. The first build takes 15 to 30 minutes; later ones a
 few minutes. Then press "지도 보기" on a placeholder screen, or open `/map-check`, to see the map.
@@ -281,6 +290,7 @@ parts of React Native, which is slow on a machine that has not run the tests bef
 ## Folder layout
 
 ```text
+index.ts            the bundle's entry: defines the background task, then starts Expo Router
 src/app/            screens; every file is a route and _layout.tsx sets the navigation around them
 src/design-system/  the tokens and the shared components
 src/catalogue/      the sections of the design system's catalogue screen
@@ -290,7 +300,7 @@ src/auth/           sign-in and sign-out, and the main server's tokens
 src/live/           the one connection to the socket server
 src/features/       one folder per feature: its adapter and the hooks a screen asks for data with
 src/map/            the one map component, its interface and the pictures of its markers
-src/position/       the User's own position: the phone's, or the development walk
+src/position/       the User's own position: the phone's, or the development walk, and its sending
 src/storage/        what the phone keeps between two starts of the app
 src/session/        where the User is in the flow between the screens, and the work of the start
 src/screens/        the screens that the routes show; a screen of several files has a folder
@@ -473,7 +483,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
 - **The controls above the navigation** (`bottom-controls.tsx`): "오늘의 발자국", with up to three faces and "친구
   5명의 오늘" from `useFootprints()`; "활성 파티", shown only while the User is in a Party, with "<n>명 공유 중" for
   the members who share their position, the User left out, or "응답 대기" when nobody else does
-  (`useActiveParty()`); the 편의기능 button; and the AI input. Each says "준비 중이에요".
+  (`useActiveParty()`); the 편의기능 button (`layers.tsx`, below); and the AI input. Each but the 편의기능 button says
+  "준비 중이에요".
   - The AI input (`ai-input.tsx`) is not a text field yet. It is a button with the look of the wireframe's empty
     input, the placeholder "무엇이든 부탁해 보세요" and the grey send button: nothing takes the focus, no keyboard
     comes up and nothing can be typed. A press on it says "준비 중이에요"; so does a press on the send button, which
@@ -482,8 +493,29 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   - On a screen narrower than the wireframe's 390, "오늘의 발자국" gives way to "활성 파티", whose two lines stay
     whole (`footprintsForm` in `layout.ts`): it drops its second line and keeps one face, has no face under 360,
     and is the one button of the row that shrinks, its name cut with an ellipsis. Alone in the row it is whole.
-- While a card is open, the row of "오늘의 발자국" and "활성 파티" and the 편의기능 button are not shown, as the zoom
-  control is not; both lists, the AI input and the navigation stay.
+- While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
+  are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
+  the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
+  and the 편의기능 button stay.
+- **The 편의기능 stack** (`layers.tsx`, the `MainLayers` frame). The button, "편의기능 (식당 · 셔틀버스)", opens and
+  closes it and says whether it is open; it is navy with a white icon while the stack is open, and under its icon a
+  dot of 5 in each colour of a layer that is on. The stack rises 8 above it, or appears at once where the phone asks
+  for less motion: from the bottom up the toggles 식당 and 셔틀버스, 60 by 64, read as toggle buttons "식당 켜기" or
+  "식당 끄기", filled with their layer's colour while on; above them the tile 메뉴 ("메뉴 보기"), which closes the
+  stack and opens the menu panel at the meal served next. A transparent scrim over the map ("편의기능 레이어 닫기")
+  and Android's back button close it, the button before a card under it; the zoom control is hidden while it is
+  open. 셔틀버스 says "준비 중이에요" and stays off until P15's ticket 02. The layers start off when the app starts
+  and stay as they are while another tab is shown.
+- **The 식당 layer** (`src/features/dining/`, the `MapDining` frame). Turning it on fetches today's menus, a day of
+  Korea's calendar, and the Places, every time; failing either shows no pins and says "식당 정보를 불러오지
+  못했어요". A pin stands on the Place of each restaurant of the restaurant → Place table (see "Data") that has a
+  line today; restaurants that share a Place share it. A pin is the frame's single 학식 mark (`MapRestaurant`), with
+  the restaurant's name under it from the `names` level, or "{first} 외 {n}곳". Its card says "식당 · 학식 · 63동",
+  the restaurant's name (the Place's when several share it), the Place, and the meals each restaurant serves today
+  ("오늘 점심 · 저녁"); "메뉴 보기" opens the menu panel at the meal served next, at the first of its restaurants.
+  Turning the layer off takes the pins away and closes a 식당's card. The frame's clusters, cafés and convenience
+  stores are not built.
+- **The map's credit** is a button, "지도 데이터 출처 보기", that opens the sources of the map's data.
 - Every control has a Korean name for a screen reader, the wireframe's where it has one. A touch area is at least 48
   high: a row is 56, and the pills and the round buttons of 32 and 40 reach past their shapes (`hitSlop`), never
   into a neighbour's shape.
@@ -501,7 +533,39 @@ hidden but 전체; and the Friends grouped by presence ("공강 · 4"), each row
 and the department, the detail (or the line where the app has no detail), and the round calendar button "{이름}님과
 파티 만들기", which says "준비 중이에요". Its footer has the live Badge "친구 {n}명과 위치 공유 중", n the Friends the
 User sees now (`visible`); "공유 설정", which closes the panel and shows 내 정보 at `/me?show=sharing`; and "+ 친구
-추가", which says "준비 중이에요". The scrim ("친구 패널 닫기"), ✕ and Android's back button close it.
+추가", which closes the panel and opens 친구 추가. The scrim ("친구 패널 닫기"), ✕ and Android's back button close it.
+A Friend is under "위치 꺼짐" whenever the main server says the User cannot see them (`visible`), whatever the app's
+own status says.
+
+**The friend screens** (`src/screens/friends/`, the `Friends` and `FriendsAdd` frames) are screens above the tabs that
+slide in from the right, each a `FullScreenPanel` whose "뒤로" goes back to where it was opened from:
+
+- **친구 관리** (`/me/friends`, from 내 정보's "친구 관리"): "친구 {n}"; the search "친구 검색", by name and department, with "결과 없음"; the row
+  "친구 추가"; the row "친구 요청 {n}", n the requests received; and under "친구 {n}" every Friend in the main server's
+  order, with the department (and " · 위치 꺼짐" for a Friend the User cannot see) and the switch "{이름}님과 위치 공유".
+  A switch shows its new state at once, sends `setFriendSharing`, and turns back with "위치 공유를 바꾸지 못했어요" when
+  that fails; the Friends and the positions are fetched again after it. A press on a Friend opens a bottom sheet with
+  "친구 끊기", which a danger dialog confirms; the Friend then leaves the list, the friend panel and the map. A
+  friendship that ended already is fetched again without a word. With no Friend it says "아직 친구가 없어요".
+- **친구 요청** (`/me/friends/requests`, also from a Friend Request in 알림): "받은 요청 · {n}" with "거절" and "수락", and "보낸 요청 · {n}" with "요청 취소",
+  left out when empty. A request that waits no more says "이미 처리된 요청이에요" and the requests are fetched again.
+- **친구 추가** (`/me/friends/add`): the User's Friend ID from the Lobby, which "복사" puts on the clipboard
+  (`expo-clipboard`); the field "친구 ID", which keeps letters and digits in capitals, at most 8, and "찾기", which looks
+  the owner up before "추가" sends the Friend Request; each refusal under the field; and "초대 링크 보내기", which makes
+  an Invite Link and opens the phone's share sheet (React Native's `Share`).
+- **The accept screen** of an Invite Link (`/invite/[token]`), which slides up: who sent it, "수락" and "거절", or why it
+  cannot be accepted, with "확인". "수락" closes it on 지도 with "{name}님과 친구가 됐어요"; "거절" only closes it.
+
+Only the friend panel's "+ 친구 추가" opens one of them in the app so far: 내 정보 and its 알림 lead to the others when
+they are built.
+
+**An Invite Link** is `<PUBLIC_URL>/invite/<token>`, and the main server's page opens `snunow://invite/<token>` where a
+messenger shows the address in its own browser. Both reach the route `/invite/[token]`. A link opened before the User
+belongs to the signed-in place (at the start of the app, or signed out) meets the signed-in place's guard, which keeps
+its token on the phone (`inviteToken` of `Kept`) before it leads away; once the User is there, after the loading
+screen or after the sign-in, the consent and Onboarding, the layout opens the accept screen of the kept token. Opened
+while signed in, the link shows its screen at once. The accept screen drops the kept token, and a later link replaces
+it. Android opens the https address in the app only through App Links (see "Invite Links on Android" below).
 
 **The Quest list on the whole screen** (`src/screens/quests/`, the `MainQuests` frame, `/quests`) is a
 `FullScreenPanel` that comes up from the bottom: ✕ "닫기" and "퀘스트 {n}", n the Quests that have not ended; the
@@ -529,7 +593,7 @@ number of 알림's rows in red ("9+" above nine), and four cards from the top:
   "위치 권한을 허용해야 공유할 수 있어요". The new state shows at once, and turns back with "위치 공유를 바꾸지
   못했어요" when the main server did not take it. At `/me?show=sharing` the screen scrolls to the card and outlines
   it for 1.2 s;
-- "친구 관리 {n}" ("준비 중이에요"), "참여 중인 파티 {n}" (파티 at 내 파티) and "내 퀘스트" (the Quest list on the
+- "친구 관리 {n}" (친구 관리), "참여 중인 파티 {n}" (파티 at 내 파티) and "내 퀘스트" (the Quest list on the
   whole screen).
 
 "로그아웃" asks "로그아웃할까요?", then stops the sending, signs out and shows the sign-in screen. 프로필 편집
@@ -541,8 +605,25 @@ says "저장하지 못했어요. 다시 시도해 주세요" and stays.
 feature), in this order: a Party running for a Quest the User holds ("{name}님이 파티를 활성화했어요", or "파티가
 활성화됐어요" without its Leader), a Friend Request received, a Quest invitation, a Meetup proposed to the User and
 waiting ("{name}님의 파티 초대"), and the requests to join each Quest the User leads with Approval ("참여 신청
-{n}명"). An invitation's and a Meetup's row open 파티 at 초대; the others say "준비 중이에요". A list that failed is
+{n}명"). An invitation's and a Meetup's row open 파티 at 초대, a Friend Request's 친구 요청; the others say "준비 중이에요". A list that failed is
 left out; when every one failed it shows the error state. Without rows it says "새 알림이 없어요".
+
+**The menu panel** (`src/screens/menus/`, `/menus`) has no frame. It is a `FullScreenPanel` that comes up from the
+bottom: ✕ "닫기" and "메뉴"; under the app bar the 7 days from today as `DayTile`s ("오늘", "내일", then the weekday),
+the tabs 아침, 점심 and 저녁, and "{M월 d일 HH:mm}에 가져온 메뉴예요" from the oldest collection of the day. It opens
+on the meal served next by Korea's clock: 아침 before 10:00, 점심 from 10:00, 저녁 from 15:00, and 내일's 아침 from
+20:00 (`NEXT_MEAL_FROM` in the dining adapter). Its address may name the day, the meal and a restaurant
+(`/menus?date=2026-10-06&meal=lunch&restaurant=학생회관식당`), whose section is then scrolled to the top. A day is
+fetched once when it is chosen, and kept; a meal fetches nothing. The restaurants are cards in the server's order,
+the name with "{number}동" where the table places it, and the chosen meal's lines in the page's order (ADR 0001): a
+line with a name and a price as a row with the price at the right ("6,000원"), a heading in 14/700, a note in 13
+muted, any other line as written; a restaurant without lines for the meal says "운영하지 않아요". An empty day says
+"이날 올라온 메뉴가 없어요"; the shared loading and error states cover the rest.
+
+**The sources of the map's data** (`src/screens/map-sources-screen.tsx`, `/map-sources`), opened from the map's
+credit, slide in from the right: "뒤로" and "지도 데이터 출처", a card for OpenStreetMap (ODbL, with its copyright
+page) and one for 국토지리정보원's 연속수치지형도 건물 under 공공누리 type 1 (with the VWorld page it is downloaded
+from). Each link opens the browser. The year in the second card is that of the files' renewal on the VWorld page.
 
 The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and
 `/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
@@ -588,54 +669,74 @@ position. Its `kind` is `global-event`, `party`, `shared-quest`, `friend` or `pa
 
 Behind a hook are three layers:
 
-- **The API client** (`src/api/client.ts`): one operation per question to the main server. `src/api/types.ts` (and `waiting-types.ts`, the lists of what waits for the User) holds
-  the answers' shapes. A shape marked "provisional" comes from an open pull request of the main server, and one marked
-  "the app's own" is defined nowhere else yet.
+- **The API client** (`src/api/client.ts`): one operation per question to the main server. `src/api/types.ts` (with
+  `waiting-types.ts`, the lists of what waits for the User, and `menu-types.ts`, the menus) holds the answers' shapes.
+  A shape marked "provisional" comes from an open pull request of the main server, and one marked "the app's own" is
+  defined nowhere else yet.
 - **An adapter** per feature (`src/features/<feature>/adapter.ts`): turns answers into what the screens use, such as
   `FriendView`, `QuestRowView`, `CardView`, `FootprintsView` and `ActivePartyView`.
 - **The main server's client** (`src/api/server/`): the operations the main server serves, in a build that asks it
   (`asksMainServer()`). `http.ts` is the one way to the main server: it attaches the access token, renews the Session
-  once on a 401 and asks again, and ends the Session when that cannot mend it. `answers.ts` checks each answer's shape
-  before the app believes it; an answer of another shape fails as no answer does.
+  once on a 401 and asks again, and ends the Session when that cannot mend it. `answers.ts` (with `waiting-answers.ts`
+  and `menu-answers.ts`) checks each answer's shape before the app believes it; an answer of another shape fails as
+  no answer does.
 - **The mocks** (`src/api/mock/`): every other operation, and every operation where the app asks no main server, is
   answered inside the app, in the main server's shape, with what the `Main` wireframe shows. A mock answers after 0.3
   seconds. The tests use the mocks, or a fake main server behind `fetch` (`__tests__/support/fake-server.ts`).
 
-| Operation                                   | Answers                                            | Where it comes from with the main server      |
-| ------------------------------------------- | -------------------------------------------------- | --------------------------------------------- |
-| `signIn`, `signOut` (`src/auth/sign-in.ts`) | Whether the User signed in, and Onboarding's state | `POST /auth/google`, `/auth/sign-out`         |
-| `completeOnboarding`                        | Nothing                                            | `POST /users/me/onboarding`                   |
-| `enterLobby`                                | The User's profile and Master Switch               | `POST /lobby`                                 |
-| `updateProfile`                             | The changed profile                                | `PATCH /users/me/profile`                     |
-| `setMasterSwitch`                           | Nothing                                            | `PUT /users/me/master-switch`                 |
-| `uploadPosition`                            | Whether the position was off campus                | `POST /positions`                             |
-| `listFriends`                               | The Friends                                        | `GET /friends`                                |
-| `listFriendRequests`                        | The Friend Requests received and sent              | `GET /friend-requests`                        |
-| `listPositions`                             | The positions the User may see                     | `GET /positions`, and the socket's `position` |
-| `listFriendStatuses`                        | Each Friend's status, place and photo              | The mock: the app's own                       |
-| `listQuests`                                | The User's Quests and today's Class Quests         | `GET /quests`                                 |
-| `listQuestInvitations`                      | The invitations into a Quest                       | `GET /quest-invitations`                      |
-| `listJoinRequests`                          | The requests to join a Quest the User leads        | `GET /quests/:questId/join-requests`          |
-| `listMeetups`                               | The Meetups proposed to the User and by the User   | `GET /meetups`                                |
-| `listClasses`, `listPlaces`                 | The User's classes, and the Places                 | `GET /timetable/classes`, `GET /places`       |
-| `listGlobalEvents`                          | The published Global Events                        | The mock: no route lists them for a User yet  |
-| `listGlobalEventAnnouncers`                 | Who announced each Global Event                    | The mock: the app's own                       |
-| `listParties`, `getMyParty`                 | The Parties, and the one the User is in            | `GET /parties`, `/parties/mine`               |
-| `getFootprints`                             | What "오늘의 발자국" shows: a number and faces     | The mock: the app's own                       |
-| `findWalkingRoute`                          | The way on foot between two points                 | `GET /walking-route`                          |
+| Operation                                                            | Answers                                            | Where it comes from with the main server                       |
+| -------------------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------- |
+| `signIn`, `signOut` (`src/auth/sign-in.ts`)                          | Whether the User signed in, and Onboarding's state | `POST /auth/google`, `/auth/sign-out`                          |
+| `completeOnboarding`                                                 | Nothing                                            | `POST /users/me/onboarding`                                    |
+| `enterLobby`                                                         | The User's profile and Master Switch               | `POST /lobby`                                                  |
+| `updateProfile`                                                      | The changed profile                                | `PATCH /users/me/profile`                                      |
+| `setMasterSwitch`                                                    | Nothing                                            | `PUT /users/me/master-switch`                                  |
+| `uploadPosition`                                                     | Whether the position was off campus                | `POST /positions`                                              |
+| `listFriends`                                                        | The Friends                                        | `GET /friends`                                                 |
+| `setFriendSharing`, `endFriendship`                                  | Nothing                                            | `PUT /friends/:userId/sharing`, `DELETE /friends/:userId`      |
+| `findFriendId`                                                       | The owner of a Friend ID                           | `GET /friend-ids/:friendId`                                    |
+| `sendFriendRequest`                                                  | Whether the request waits or made two Friends      | `POST /friend-requests`                                        |
+| `listFriendRequests`                                                 | The Friend Requests received and sent              | `GET /friend-requests`                                         |
+| `acceptFriendRequest`, `declineFriendRequest`, `cancelFriendRequest` | Nothing                                            | `POST /friend-requests/:id/accept`, `/decline`, `/cancel`      |
+| `createInviteLink`                                                   | A new Invite Link's address                        | `POST /invite-links`                                           |
+| `getInviteLink`, `acceptInviteLink`                                  | Who sent the link and its status; nothing          | `GET /invite-links/:token`, `POST /invite-links/:token/accept` |
+| `listPositions`                                                      | The positions the User may see                     | `GET /positions`, and the socket's `position`                  |
+| `listFriendStatuses`                                                 | Each Friend's status, place and photo              | The mock: the app's own                                        |
+| `listQuests`                                                         | The User's Quests and today's Class Quests         | `GET /quests`                                                  |
+| `listQuestInvitations`                                               | The invitations into a Quest                       | `GET /quest-invitations`                                       |
+| `listJoinRequests`                                                   | The requests to join a Quest the User leads        | `GET /quests/:questId/join-requests`                           |
+| `listMeetups`                                                        | The Meetups proposed to the User and by the User   | `GET /meetups`                                                 |
+| `listClasses`, `listPlaces`                                          | The User's classes, and the Places                 | `GET /timetable/classes`, `GET /places`                        |
+| `listGlobalEvents`                                                   | The published Global Events                        | The mock: no route lists them for a User yet                   |
+| `listGlobalEventAnnouncers`                                          | Who announced each Global Event                    | The mock: the app's own                                        |
+| `listParties`, `getMyParty`                                          | The Parties, and the one the User is in            | `GET /parties`, `/parties/mine`                                |
+| `getFootprints`                                                      | What "오늘의 발자국" shows: a number and faces     | The mock: the app's own                                        |
+| `findWalkingRoute`                                                   | The way on foot between two points                 | `GET /walking-route`                                           |
+| `listMenus`                                                          | One day's menus by restaurant                      | `GET /menus?date=`                                             |
+
+The mock keeps the Friends, the Friend Requests and the Invite Links in memory while the app runs
+(`src/api/mock/friendships.ts`), with Friend IDs for the frame's people, and refuses as the main server does. The
+User's Friend ID is `7KX2M9QD`; `/invite/from-yujian` opens a link the User can accept.
 
 `getMyParty` turns exactly the main server's 404 `NOT_IN_PARTY` into null. A 401 with `SESSION_REPLACED` ends the
 Session without a renewal and shows the notice "다른 기기에서 로그인했어요" with the sign-in screen; a 403 with
 `ONBOARDING_REQUIRED` shows Onboarding with the suggestion it carries (`src/session/session-events.ts`, which
 `SessionProvider` follows).
 
+**The restaurant → Place table** (`src/features/dining/restaurant-places.ts`) gives the number of the Place of each
+restaurant whose menus are collected, by the restaurant's name as `GET /menus` gives it. A restaurant missing from
+it, or whose number `GET /places` does not answer, has no pin and is still in the menu panel. When the Co-op renames
+or moves a restaurant, correct its row there, with the name exactly as the worker sends it and the number as the
+main server's Places have it (`main-server/seed/`).
+
 The User's own id is the access token's subject, and the app's time is the phone's. Where the answers are mocks, the
 User is the mock's `me` and the time is the moment the wireframe shows, 1 October 2026 at 13:37 (`src/clock.ts`), so
 that the screens read as the wireframe on any day.
 
 The phone keeps that the User signed in, that the User agreed to the legal documents, what the sign-in suggested for
-Onboarding, whether Onboarding is finished and its answers, and that the User answered the explanation before the
-location prompt (`locationExplained`) (`src/storage/kept.ts`). A value stored by an older version, without a newer
+Onboarding, whether Onboarding is finished and its answers, that the User answered the explanation before the
+location prompt (`locationExplained`), and the token of an Invite Link until its accept screen shows it
+(`inviteToken`) (`src/storage/kept.ts`). A value stored by an older version, without a newer
 field, reads as "not yet" for that field. `openKept()` is the read for the start of the app: it is the one that
 honours `EXPO_PUBLIC_FIRST_STATE`, which clears all of it.
 
@@ -657,7 +758,7 @@ retry(); // starts the phone's watch again if it could not start
 openLocationSettings(); // of `@/position`: the phone's settings of the app, for a `blocked` permission
 ```
 
-- It reads the phone through `expo-location`, which `src/position/phone.ts` alone names: the permission for the time
+- It reads the phone through `expo-location`, which `src/position/phone.ts` and `background.ts` alone name: the permission for the time
   the app is in use, and a new position about every five seconds (`POSITION_EVERY_MS`) while a screen that asks is
   shown. On the web that is the browser's geolocation. Where the phone or the browser cannot answer, the permission
   counts as never asked or refused and the position stays null: nothing throws.
@@ -669,8 +770,8 @@ openLocationSettings(); // of `@/position`: the phone's settings of the app, for
 - A phone may tell positions more often than every five seconds, as iOS does about every second. `stepMs` is the
   time since the position before, held between one and five seconds; the walk's is five seconds.
 - With `EXPO_PUBLIC_CAMPUS_WALK=1` the hook answers the development walk instead and never asks the phone.
-- The words of the system's prompt on iOS are in `app.json`, with the library's config plugin. The app asks for no
-  position in the background.
+- The words of the system's prompt on iOS are in `app.json`, with the library's config plugin, which also gives
+  Android the background location and foreground service permissions. iOS asks for no position in the background.
 - `accuracy` is the radius in metres the phone places itself within, and `measuredAt` the time it measured the
   position. The walk gives an accuracy of 10 and the time it moves.
 - `ask()` gives the answer, so that the switch on 내 정보 knows whether to turn on.
@@ -686,6 +787,32 @@ positions while it is off and answers `offCampus` by the campus rectangle.
 
 - The signed-in place's layout holds the provider, so the tabs and the screens above them share one watch.
 
+**Sending in the background.** On Android, in a development build (not Expo Go), the row "백그라운드에서도 공유" under
+the Master Switch on 내 정보 keeps the sending going once the app is in the background. The background permission is
+asked only there, after the app's explanation; the foreground one stays the Master Switch's. While the Master Switch
+is on, the User chose the row and the permission is granted, `BackgroundSharingProvider`
+(`src/position/background-sharing.tsx`, inside `PositionSending`) runs `expo-location`'s updates as a foreground
+service with a permanent notification (`background.ts`): a position every 30 s (`BACKGROUND_EVERY_MS`), told to the
+task that `index.ts` defines before the screens (`background-task.ts`), since Android may start the app for the task
+alone.
+
+- Each run (`background-upload.ts`) reads what the phone keeps (`src/storage/kept.ts`): the sign-in, the Master
+  Switch, which the provider keeps there, and the User's choice. It stops itself when one is off, sends nothing while
+  the app is in front, where `PositionSending` sends, and otherwise sends the newest position of the batch to
+  `POST /positions`. The decisions are in `background-rules.ts`, without device calls.
+- The tokens are read from the secure storage first, so that the client renews the Session on a 401 also without the
+  screens. `MASTER_SWITCH_OFF` keeps the switch off on the phone and stops; a 401 the renewal cannot mend,
+  `SESSION_REPLACED` and a 403 stop; the 400s and no answer drop that position.
+- It stops at once when the Master Switch or the row goes off, when the permission is taken back, at sign-out and at
+  any end of the Session; the last two also forget the choice.
+- The service ends with the app when the User swipes it away, and nothing restarts it while the app is closed. The
+  next start of the app finds that it was running and the signed-in screens say "백그라운드 위치 공유가 멈췄어요"; it
+  starts again while the app is open.
+- On a phone the main server's address (`EXPO_PUBLIC_MAIN_SERVER_URL`) must be https: Android refuses plain
+  connections outside a debug build, and a phone on campus reaches the servers only through the https tunnel they run
+  behind, whose address goes there. The emulator's `http://10.0.2.2` works only in a debug build.
+- What a person checks on a phone is in the P17 ticket (`.scratch/iteration-1/P17-background-sharing/`).
+
 ### The connection to the socket server
 
 In a build that asks the main server, the app keeps one Socket.IO connection to the socket server open while the User
@@ -700,10 +827,15 @@ socket server's README describes:
   out. A position for a Friend or a member whom the answers call unseen fetches those answers again.
 - The positions are fetched when the connection opens, and everything it shows when it opens again after a drop. When
   the app returns to the front, the positions and the Quests are fetched again.
-- The signals fetch what they name again: `friends-changed` the Friends and the positions, `quests-changed` the
-  Quests, the invitations and the requests to join, `meetups-changed` the Meetups, `party-changed` the Parties and
-  the positions, `global-events-changed` the Global Events and the Quests. `friends-changed` also fetches the Friend
-  Requests. When the app returns to the front, the lists of 알림 are fetched again too.
+- A person's position ages by the app's clock (`now()`), looked at again every 30 seconds. Measured more than 2 minutes
+  ago (`OLD_POSITION_MS`), it is old: the Avatar is drawn dimmed, a look of its own, its name reads "민준 · 3분 전" from
+  the `names` level, and the Friend's card, row in the friend list and row in the friend panel add "3분 전 위치".
+  Measured more than 10 minutes ago (`KEPT_POSITION_MS`, the main server's keep), it is no longer on the map. The rule
+  is the same for a Friend and for a member of the User's Party; the limits are beside `POSITION_EVERY_MS`.
+- The signals fetch what they name again: `friends-changed` the Friends, the positions and the Friend Requests,
+  `quests-changed` the Quests, the invitations and the requests to join, `meetups-changed` the Meetups, `party-changed`
+  the Parties and the positions, `global-events-changed` the Global Events and the Quests. When the app returns to the
+  front, the lists of 알림, the Friend Requests among them, are fetched again too.
 
 The app sends its own position over `POST /positions`, not over the connection (see "The User's position").
 
@@ -776,6 +908,11 @@ filled with a colour of `presence`, with the person's small Avatar in it, 24 wid
 otherwise. Its box ends at its tip. A selected one is 1.18 times as large, inside a white ring and a ring of the key
 colour. `presence` names the colours of what a person is doing: `free`, `class`, `moving` and `off`, the statuses,
 which an Avatar's dot uses too, and `member`, a member of the User's Party who is no Friend.
+
+`MapRestaurant` is the `MapDining` frame's single 학식 on the map: a round of 22 in the dining colour with 학, a white
+ring and a small tail; selected, 26 inside a ring of the key colour. `DayTile` is a day to choose as the
+`PartyCreate` frame's date sheet draws it: 52 by 60, the day's name over its number, Sunday in red, Saturday in blue,
+the chosen one in navy.
 
 `MapPin` of the kind `me` has a `small` form, three quarters of its size, which the `Main` wireframe draws while the
 whole campus is in view. The icons `chevronDown`, `chevronLeft`, `chevronRight`, `chevronUp`, `expand` and
@@ -865,7 +1002,8 @@ map.current?.fitTo([from, to], { padding: 48, maxZoom: 15.8 }); // and no closer
   comes no closer than that zoom: points that are near each other are shown from there.
 - `CAMPUS_BOUNDS`, the campus rectangle, and the limits `MIN_ZOOM` and `MAX_ZOOM` are constants in
   `src/map/campus.ts`. The rectangle is a little wider than the Campus Boundary, which stays the main server's.
-- The credit "© OpenStreetMap · 국토지리정보원" is on every map, inside the component.
+- The credit "© OpenStreetMap · 국토지리정보원" is on every map, inside the component, drawn by the app over the map,
+  so no native module draws it. With `onCreditPress` it is a button, "지도 데이터 출처 보기", and is still written.
 - **`inset`** says what a screen's controls cover of the map's edges, in points from each edge; a side left out is 0. The credit and a provider's logo are drawn inside what is left: the credit at its bottom left and the logo at
   its bottom right, each 8 from it. Nothing else follows it: the map is drawn under the controls, and the cameras
   may ignore it, so a move centres on the whole view and a fit takes its own `padding`. It may change while the map

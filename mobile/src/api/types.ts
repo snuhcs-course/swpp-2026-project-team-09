@@ -80,6 +80,30 @@ export interface Friend {
   visible: boolean;
 }
 
+// Another User as a Friend ID, a Friend Request or an Invite Link names them.
+export interface UserSummary {
+  name: string;
+  department: string;
+}
+
+// POST /friend-requests. `friends`: the owner's own request to the User was waiting, and the two are Friends now.
+export interface SentFriendRequest {
+  status: 'waiting' | 'friends';
+}
+
+// POST /invite-links: the link to send, which works once and for 24 hours.
+export interface InviteLink {
+  url: string;
+  expiresAt: string;
+}
+
+// GET /invite-links/:token: who sent the link and whether the User asking can accept it. `own` is the User's own
+// link, `friend` one from a Friend.
+export interface OpenedInviteLink {
+  sender: UserSummary;
+  status: 'usable' | 'used' | 'expired' | 'own' | 'friend';
+}
+
 // GET /positions, and the socket's `position`: the positions the User may see now. A User without one is absent.
 export interface Position {
   userId: string;

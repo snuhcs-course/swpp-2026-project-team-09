@@ -44,6 +44,7 @@ const WAITING: readonly QueryKey[] = [
 // What is fetched again when the connection opens again: what may have changed while it was closed.
 const SHOWN: readonly QueryKey[] = [
   FRIENDS_KEY,
+  FRIEND_REQUESTS_KEY,
   POSITIONS_KEY,
   QUESTS_KEY,
   MY_PARTY_KEY,

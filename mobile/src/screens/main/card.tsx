@@ -16,13 +16,17 @@ interface CardProps {
   onClose: () => void;
   // The card's height, once it is laid out and whenever it changes: a toast sits above it.
   onHeight?: (height: number) => void;
+  // Its distance from the top, for a card that sits at the top of the map, as a 식당's does. Left out, at the bottom.
+  top?: number;
 }
 
-// A place's kind in the design system: its colour and its icon.
+// A place's kind in the design system: its colour and its icon. A campus service's round is a rounded square, as the
+// frame draws it.
 const PLACE: Record<Extract<CardMark, { type: 'place' }>['place'], { tint: string; icon: IconName }> = {
   official: { tint: color.snuBlue, icon: 'calendar' },
   party: { tint: color.party, icon: 'users' },
   quest: { tint: color.quest, icon: 'flag' },
+  dining: { tint: color.svcDining, icon: 'meal' },
 };
 
 // What stands at the card's head: a person's Avatar, with the status for a Friend, or the place's icon on a round
@@ -39,7 +43,7 @@ function Leading({ mark }: { mark: CardMark }): ReactElement {
   }
   const { tint, icon } = PLACE[mark.place];
   return (
-    <View style={[styles.round, { backgroundColor: tint }]}>
+    <View style={[styles.round, mark.place === 'dining' && styles.service, { backgroundColor: tint }]}>
       <Icon color={color.onPrimary} name={icon} size={20} />
     </View>
   );
@@ -76,13 +80,21 @@ function Head({ card, onClose }: Pick<CardProps, 'card' | 'onClose'>): ReactElem
 
 // The card of what was pressed on the map, as the `MapOverviewSelect` frame draws it: above the AI input's place,
 // with the leading mark, the sub-label, the title, the lines, "가까이 보기" where it is offered and the card's button.
-export function Card({ card, canLookCloser, onLookCloser, onPrimary, onClose, onHeight }: CardProps): ReactElement {
+export function Card({
+  card,
+  canLookCloser,
+  onLookCloser,
+  onPrimary,
+  onClose,
+  onHeight,
+  top,
+}: CardProps): ReactElement {
   return (
     <View
       onLayout={({ nativeEvent: { layout } }) => {
         onHeight?.(layout.height);
       }}
-      style={styles.card}
+      style={[styles.card, top === undefined ? styles.atBottom : { top }]}
       testID="map-card"
     >
       <Head card={card} onClose={onClose} />
@@ -122,7 +134,6 @@ const styles = StyleSheet.create({
   card: {
     position: 'absolute',
     right: CARD.side,
-    bottom: CARD.bottom,
     left: CARD.side,
     gap: GAP,
     padding: space[4],
@@ -130,8 +141,10 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.mapCard,
   },
+  atBottom: { bottom: CARD.bottom },
   head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   round: { alignItems: 'center', justifyContent: 'center', width: ROUND, height: ROUND, borderRadius: radius.full },
+  service: { borderRadius: radius.md },
   words: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
   // The frame's sub-labels are the caption's size, heavier: a person's in the semi-bold weight and grey, a place's
   // in the bold weight and its kind's colour.

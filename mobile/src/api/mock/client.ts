@@ -5,13 +5,14 @@ import { CAMPUS_BOUNDS, isInside } from '@/map/campus';
 import { keep, readKept } from '@/storage/kept';
 import { answer } from './answer';
 import { FOOTPRINTS } from './data/footprints';
-import { FRIEND_STATUSES, FRIENDS, POSITIONS } from './data/friends';
+import { FRIEND_STATUSES, MY_FRIEND_ID } from './data/friends';
+import { MENUS } from './data/menus';
+import { PLACES } from './data/places';
 import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
-import { CLASSES, PLACES } from './data/timetable';
-import { FRIEND_REQUESTS, MEETUPS, QUEST_INVITATIONS } from './data/waiting';
+import { CLASSES } from './data/timetable';
+import { MEETUPS, QUEST_INVITATIONS } from './data/waiting';
+import { mockFriendships as friendships } from './friendships';
 import { mockWalkingRoute } from './walking-route';
-
-const MOCK_FRIEND_ID = '7KX2M9QD';
 
 // The Master Switch, which the main server keeps on the User. The mock keeps it in memory: off at each start.
 let masterSwitchOn = false;
@@ -30,7 +31,7 @@ async function onboardingAnswers(): Promise<OnboardingAnswers> {
 }
 
 function profileOf({ name, department, admissionYear, hashtags }: OnboardingAnswers): Profile {
-  return { name, department, admissionYear, hashtags, friendId: MOCK_FRIEND_ID };
+  return { name, department, admissionYear, hashtags, friendId: MY_FRIEND_ID };
 }
 
 // Answers every operation from inside the app, in the main server's shapes, with what the `Main` frame shows. The
@@ -62,9 +63,43 @@ export const mockClient: ApiClient = {
       }
       return { offCampus: !isInside(position, CAMPUS_BOUNDS) };
     }),
-  listFriends: () => answer('listFriends', () => FRIENDS, []),
-  listFriendRequests: () => answer('listFriendRequests', () => FRIEND_REQUESTS, { received: [], sent: [] }),
-  listPositions: () => answer('listPositions', () => POSITIONS, []),
+  listFriends: () => answer('listFriends', friendships.listFriends, []),
+  setFriendSharing: async (userId, on) => {
+    await answer('setFriendSharing', () => {
+      friendships.setFriendSharing(userId, on);
+    });
+  },
+  endFriendship: async (userId) => {
+    await answer('endFriendship', () => {
+      friendships.endFriendship(userId);
+    });
+  },
+  findFriendId: (friendId) => answer('findFriendId', () => friendships.findFriendId(friendId)),
+  sendFriendRequest: (friendId) => answer('sendFriendRequest', () => friendships.sendFriendRequest(friendId)),
+  listFriendRequests: () => answer('listFriendRequests', friendships.listFriendRequests, { received: [], sent: [] }),
+  acceptFriendRequest: async (requestId) => {
+    await answer('acceptFriendRequest', () => {
+      friendships.acceptFriendRequest(requestId);
+    });
+  },
+  declineFriendRequest: async (requestId) => {
+    await answer('declineFriendRequest', () => {
+      friendships.declineFriendRequest(requestId);
+    });
+  },
+  cancelFriendRequest: async (requestId) => {
+    await answer('cancelFriendRequest', () => {
+      friendships.cancelFriendRequest(requestId);
+    });
+  },
+  createInviteLink: () => answer('createInviteLink', friendships.createInviteLink),
+  getInviteLink: (token) => answer('getInviteLink', () => friendships.getInviteLink(token)),
+  acceptInviteLink: async (token) => {
+    await answer('acceptInviteLink', () => {
+      friendships.acceptInviteLink(token);
+    });
+  },
+  listPositions: () => answer('listPositions', friendships.listPositions, []),
   listFriendStatuses: () => answer('listFriendStatuses', () => FRIEND_STATUSES, []),
   listQuests: () => answer('listQuests', () => QUESTS, []),
   listQuestInvitations: () => answer('listQuestInvitations', () => QUEST_INVITATIONS, []),
@@ -83,4 +118,5 @@ export const mockClient: ApiClient = {
       status: 'ROUTE_RESULT_NOT_FOUND',
       route: null,
     }),
+  listMenus: (date) => answer('listMenus', () => MENUS[date] ?? [], []),
 };

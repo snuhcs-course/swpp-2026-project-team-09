@@ -1,12 +1,12 @@
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Avatar, color, Icon, mapText, onKey, radius, shadow, space, useNotReadyToast } from '@/design-system';
+import { Avatar, color, mapText, onKey, radius, shadow, space, useNotReadyToast } from '@/design-system';
 import type { FootprintsView } from '@/features/footprints/adapter';
 import { useFootprints } from '@/features/footprints/use-footprints';
 import type { ActivePartyView } from '@/features/parties/adapter';
 import { useActiveParty } from '@/features/parties/use-active-party';
 import { AiInput } from './ai-input';
-import { BUTTON_ROW, footprintsForm, LAYERS_BUTTON, type Room } from './layout';
+import { BUTTON_ROW, footprintsForm, type Room } from './layout';
 
 interface ButtonProps<Shown> {
   view: Shown;
@@ -86,10 +86,10 @@ function ActivePartyButton({ view, onPress }: ButtonProps<ActivePartyView>): Rea
   );
 }
 
-// What the `Main` frame puts between the map and the navigation: the row of "오늘의 발자국" and "활성 파티", the
-// 편의기능 button at its right, and the AI input under them. Each belongs to another task and says that it is not
-// ready. "활성 파티" is shown only while the User is in a Party. While a card is open the row and the 편의기능
-// button are not shown, as in the frame; the AI input stays.
+// What the `Main` frame puts between the map and the navigation: the row of "오늘의 발자국" and "활성 파티", and the
+// AI input under them; the 편의기능 button at the row's right is `LayerControls`. Each belongs to another task and
+// says that it is not ready. "활성 파티" is shown only while the User is in a Party. While a card is open the row is
+// not shown, as in the frame; the AI input stays.
 export function BottomControls({ cardOpen, room }: BottomControlsProps): ReactElement {
   const footprints = useFootprints();
   const party = useActiveParty();
@@ -102,18 +102,6 @@ export function BottomControls({ cardOpen, room }: BottomControlsProps): ReactEl
           <FootprintsButton form={form} onPress={showNotReady} view={footprints} />
           {party === null ? null : <ActivePartyButton onPress={showNotReady} view={party} />}
         </View>
-      )}
-      {cardOpen ? null : (
-        <Pressable
-          accessibilityLabel="편의기능 (식당 · 셔틀버스 · 공부공간)"
-          accessibilityRole="button"
-          accessibilityState={{ expanded: false }}
-          aria-expanded={false}
-          onPress={showNotReady}
-          style={({ pressed }) => [styles.layers, pressed && styles.footprintsPressed]}
-        >
-          <Icon color={color.snuBlue} name="layers" size={22} />
-        </Pressable>
       )}
       <AiInput />
     </>
@@ -202,16 +190,4 @@ const styles = StyleSheet.create({
   },
   partyTitle: { ...mapText.smallTitle, color: color.onPrimary },
   partyLine: { ...mapText.smallLine, color: onKey.textMuted },
-  layers: {
-    position: 'absolute',
-    right: LAYERS_BUTTON.right,
-    bottom: LAYERS_BUTTON.bottom,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: LAYERS_BUTTON.size,
-    height: LAYERS_BUTTON.size,
-    borderRadius: radius.full,
-    backgroundColor: color.surface,
-    boxShadow: shadow.float,
-  },
 });

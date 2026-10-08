@@ -2,7 +2,7 @@ import * as Location from 'expo-location';
 import { Linking } from 'react-native';
 import type { LatLng } from '@/api/types';
 
-// The phone's own position, through `expo-location`: this is the one file that names the library. On the web it is
+// The phone's own position, through `expo-location`: this file and `background.ts` alone name the library. On the web it is
 // the browser's geolocation. Nothing here throws: where the phone or the browser has no answer, there is no
 // permission and no position.
 
@@ -10,7 +10,7 @@ import type { LatLng } from '@/api/types';
 // so only the phone's settings can allow it.
 export type PhonePermission = 'unasked' | 'granted' | 'refused' | 'blocked';
 
-function permissionOf({ status, canAskAgain }: { status: string; canAskAgain: boolean }): PhonePermission {
+export function permissionOf({ status, canAskAgain }: { status: string; canAskAgain: boolean }): PhonePermission {
   if (status === 'granted') {
     return 'granted';
   }

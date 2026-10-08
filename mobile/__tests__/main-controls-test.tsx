@@ -27,7 +27,7 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotionSetting: (): boolean => true,
 }));
 
-const CREDIT = '© OpenStreetMap · 국토지리정보원';
+const CREDIT = '지도 데이터 출처 보기';
 
 beforeEach(async () => {
   jest.useFakeTimers();
@@ -82,7 +82,6 @@ describe('a control of the main screen whose feature belongs to another task', (
     ["a Shared Quest's row", DINNER_ROW],
     ['오늘의 발자국', FOOTPRINTS],
     ['활성 파티', ACTIVE_PARTY],
-    ['the 편의기능 button', LAYERS],
   ] as const)('says that it is not ready: %s', async (_control, name) => {
     const user = await openMain();
 
@@ -149,7 +148,7 @@ describe("the map's credit on the main screen", () => {
     await openMain();
 
     // The row ends 126 above the navigation; the map's own margin of 8 is over that.
-    expect(screen.getByText(CREDIT)).toHaveStyle({ left: 16, bottom: 134 });
+    expect(button(CREDIT)).toHaveStyle({ left: 16, bottom: 134 });
   });
 
   it('sits above a card while one is open', async () => {
@@ -158,7 +157,7 @@ describe("the map's credit on the main screen", () => {
     await layCard(180);
 
     // The card's bottom is 72 above the navigation and it is 180 high.
-    expect(screen.getByText(CREDIT)).toHaveStyle({ left: 16, bottom: 260 });
+    expect(button(CREDIT)).toHaveStyle({ left: 16, bottom: 260 });
   });
 
   it('leaves the card and the AI input clear of each other', async () => {

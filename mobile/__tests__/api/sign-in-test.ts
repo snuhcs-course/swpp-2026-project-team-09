@@ -23,6 +23,9 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
+// What the background sharing keeps, which nothing here changes.
+const NO_BACKGROUND = { masterSwitch: false, backgroundChosen: false, backgroundRunning: false };
+
 const FIRST_STATE = {
   signedIn: false,
   consented: false,
@@ -30,6 +33,8 @@ const FIRST_STATE = {
   onboardingCompleted: false,
   answers: null,
   locationExplained: false,
+  inviteToken: null,
+  ...NO_BACKGROUND,
 };
 
 describe('sign-in', () => {
@@ -47,6 +52,8 @@ describe('sign-in', () => {
       onboardingCompleted: false,
       answers: null,
       locationExplained: false,
+      inviteToken: null,
+      ...NO_BACKGROUND,
     });
   });
 
@@ -80,6 +87,8 @@ describe('what the phone keeps', () => {
       onboardingCompleted: true,
       answers: ANSWERS,
       locationExplained: false,
+      inviteToken: null,
+      ...NO_BACKGROUND,
     });
   });
 
@@ -115,16 +124,22 @@ describe('what the phone keeps of the consent', () => {
     const stored = { signedIn: true, suggestion: null, onboardingCompleted: true, answers: ANSWERS };
     await AsyncStorage.setItem('snunow.kept', JSON.stringify(stored));
 
-    expect(await readKept()).toEqual({ ...stored, consented: false, locationExplained: false });
+    expect(await readKept()).toEqual({
+      ...stored,
+      consented: false,
+      locationExplained: false,
+      inviteToken: null,
+      ...NO_BACKGROUND,
+    });
   });
 
   it('reads what a version without the location explanation stored, as not answered yet', async () => {
     const stored = { signedIn: true, consented: true, suggestion: null, onboardingCompleted: true, answers: ANSWERS };
     await AsyncStorage.setItem('snunow.kept', JSON.stringify(stored));
 
-    expect(await readKept()).toEqual({ ...stored, locationExplained: false });
+    expect(await readKept()).toEqual({ ...stored, locationExplained: false, inviteToken: null, ...NO_BACKGROUND });
     expect((await keep({ locationExplained: true })).locationExplained).toBe(true);
-    expect(await readKept()).toEqual({ ...stored, locationExplained: true });
+    expect(await readKept()).toEqual({ ...stored, locationExplained: true, inviteToken: null, ...NO_BACKGROUND });
   });
 
   it('remembers after a sign-out that the User agreed to the legal documents', async () => {

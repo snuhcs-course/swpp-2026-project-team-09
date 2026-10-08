@@ -9,21 +9,18 @@ import {
   isPlace,
   isText,
   isTextOrNull,
+  isUserSummary,
   listOf,
 } from './answers';
 
 // The checks of the main server's lists of what waits for the User.
 
-function isSomeone(value: unknown): value is { name: string; department: string } {
-  return hasTexts(value, ['name', 'department']);
-}
-
 function isReceivedRequest(value: unknown): value is FriendRequests['received'][number] {
-  return hasTexts(value, ['id', 'sentAt']) && isSomeone(field(value, 'sender'));
+  return hasTexts(value, ['id', 'sentAt']) && isUserSummary(field(value, 'sender'));
 }
 
 function isSentRequest(value: unknown): value is FriendRequests['sent'][number] {
-  return hasTexts(value, ['id', 'sentAt']) && isSomeone(field(value, 'receiver'));
+  return hasTexts(value, ['id', 'sentAt']) && isUserSummary(field(value, 'receiver'));
 }
 
 export function isFriendRequests(value: unknown): value is FriendRequests {

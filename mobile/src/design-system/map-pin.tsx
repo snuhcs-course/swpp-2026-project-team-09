@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 import { type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 import { Avatar, type PresenceStatus } from './avatar';
 import { Icon, type IconName } from './icon';
-import { color, halo, radius, shadow, size as sizes, text } from './tokens';
+import { color, font, halo, radius, shadow, size as sizes, text } from './tokens';
 
 export type MapPlaceKind = 'official' | 'private' | 'party' | 'quest' | 'dining' | 'library' | 'shuttle';
 export type MapPinKind = MapPlaceKind | 'me' | 'friend';
@@ -128,6 +128,29 @@ export function MapDot({ kind, selected = false }: { kind: MapPlaceKind; selecte
   );
 }
 
+// A restaurant on the map, as the `MapDining` frame draws a single 학식: a round of 22 in the dining colour with 학 in
+// white, a white ring and a small tail. A selected one is 26, inside a ring of the key colour.
+export function MapRestaurant({ selected = false }: { selected?: boolean }): ReactElement {
+  return (
+    <View
+      accessibilityLabel="식당"
+      accessibilityRole="image"
+      accessibilityState={{ selected }}
+      accessible
+      style={styles.pin}
+    >
+      <View style={[styles.restaurant, selected && styles.selectedRestaurant]}>
+        <Text style={styles.restaurantLetter}>학</Text>
+      </View>
+      <View style={styles.restaurantTail} />
+    </View>
+  );
+}
+
+const RESTAURANT = 22;
+const SELECTED_RESTAURANT = 26;
+const RESTAURANT_TAIL = 4;
+
 const ME_HALO = 48;
 const ME_DOT = 16;
 const ME_BORDER = 3;
@@ -192,6 +215,33 @@ const styles = StyleSheet.create({
     width: SERVICE_DOT + SELECTED_DOT_MORE,
     height: SERVICE_DOT + SELECTED_DOT_MORE,
     boxShadow: SELECTED_DOT_RING,
+  },
+  restaurant: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: RESTAURANT,
+    height: RESTAURANT,
+    borderRadius: radius.full,
+    backgroundColor: color.svcDining,
+    boxShadow: `0 0 0 2px ${color.surface}, 0 1px 4px rgba(14, 19, 48, 0.3)`,
+  },
+  selectedRestaurant: {
+    width: SELECTED_RESTAURANT,
+    height: SELECTED_RESTAURANT,
+    boxShadow: `0 0 0 2px ${color.surface}, 0 1px 4px rgba(14, 19, 48, 0.3), 0 0 0 6px ${halo.selectedDot}`,
+  },
+  restaurantLetter: { ...text.micro, fontFamily: font.bold, letterSpacing: 0, lineHeight: 13, color: color.onPrimary },
+  // The frame's triangle of 8 by 6 under the round.
+  restaurantTail: {
+    width: 0,
+    height: 0,
+    marginTop: -1,
+    borderLeftWidth: RESTAURANT_TAIL,
+    borderRightWidth: RESTAURANT_TAIL,
+    borderTopWidth: 6,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: color.svcDining,
   },
   tail: {
     width: 2,

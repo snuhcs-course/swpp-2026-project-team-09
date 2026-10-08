@@ -1,4 +1,4 @@
-import type { ReactElement, ReactNode } from 'react';
+import type { ReactElement, ReactNode, Ref } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useInsets } from './insets';
 import { AppBar } from './app-bar';
@@ -16,6 +16,8 @@ interface FullScreenPanelProps {
   footer?: ReactNode;
   // A grey ground under the app bar, for a body of cards, as 프로필 편집 and 알림 have.
   subtle?: boolean;
+  // The body, for a screen that scrolls it to a part.
+  scrollRef?: Ref<ScrollView>;
   children: ReactNode;
 }
 
@@ -29,6 +31,7 @@ export function FullScreenPanel({
   under,
   footer,
   subtle = false,
+  scrollRef,
   children,
 }: FullScreenPanelProps): ReactElement {
   const { bottom } = useInsets();
@@ -39,6 +42,7 @@ export function FullScreenPanel({
       <ScrollView
         contentContainerStyle={footer === undefined ? { paddingBottom: bottom } : undefined}
         keyboardShouldPersistTaps="handled"
+        ref={scrollRef}
         style={[styles.body, subtle && styles.subtle]}
       >
         {children}

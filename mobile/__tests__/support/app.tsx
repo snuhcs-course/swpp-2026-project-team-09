@@ -10,6 +10,12 @@ import MeScreen from '@/app/(signed-in)/(tabs)/me';
 import PartyScreen from '@/app/(signed-in)/(tabs)/party';
 import NotificationsScreen from '@/app/(signed-in)/notifications';
 import ProfileEditScreen from '@/app/(signed-in)/profile-edit';
+import InviteScreen from '@/app/(signed-in)/invite/[token]';
+import AddFriendScreen from '@/app/(signed-in)/me/friends/add';
+import FriendsScreen from '@/app/(signed-in)/me/friends/index';
+import FriendRequestsScreen from '@/app/(signed-in)/me/friends/requests';
+import MapSourcesScreen from '@/app/(signed-in)/map-sources';
+import MenusScreen from '@/app/(signed-in)/menus';
 import QuestsScreen from '@/app/(signed-in)/quests';
 import ConsentScreen from '@/app/consent';
 import StartScreen from '@/app/index';
@@ -49,6 +55,12 @@ export async function startApp(initialUrl = '/'): Promise<void> {
       '(signed-in)/quests': QuestsScreen,
       '(signed-in)/notifications': NotificationsScreen,
       '(signed-in)/profile-edit': ProfileEditScreen,
+      '(signed-in)/me/friends/index': FriendsScreen,
+      '(signed-in)/me/friends/requests': FriendRequestsScreen,
+      '(signed-in)/me/friends/add': AddFriendScreen,
+      '(signed-in)/invite/[token]': InviteScreen,
+      '(signed-in)/menus': MenusScreen,
+      '(signed-in)/map-sources': MapSourcesScreen,
     },
     { initialUrl },
   );

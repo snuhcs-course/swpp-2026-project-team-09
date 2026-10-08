@@ -121,7 +121,16 @@ describe("a row of 알림's press", () => {
     expect(shownAddress()).toBe('/party?tab=invites');
   });
 
-  it.each([ROWS[0], ROWS[1], ROWS[4]])('says that the screen of "%s" is not ready', async (row) => {
+  it('opens 친구 요청 from a Friend Request', async () => {
+    const user = await openNotifications();
+
+    await user.press(screen.getByRole('button', { name: ROWS[1] }));
+    await pass(500);
+
+    expect(shownAddress()).toBe('/me/friends/requests');
+  });
+
+  it.each([ROWS[0], ROWS[4]])('says that the screen of "%s" is not ready', async (row) => {
     const user = await openNotifications();
 
     await user.press(screen.getByRole('button', { name: row }));

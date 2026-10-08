@@ -31,7 +31,7 @@ describe('design system catalogue', () => {
       'AppBar',
       'FullScreenPanel',
       'SidePanel · BottomSheet',
-      'SegmentedTabs · ChipRow · SearchField',
+      'SegmentedTabs · ChipRow · SearchField · DayTile',
       'ListRow · SectionHeader · SwitchRow',
       'EmptyState · LoadingState · ErrorState',
     ]) {

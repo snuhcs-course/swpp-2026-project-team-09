@@ -20,10 +20,9 @@ import {
   size,
   space,
   text,
-  useNotReadyToast,
 } from '@/design-system';
 import { useNotices } from '@/features/notifications/use-notices';
-import { useSending } from '@/position';
+import { stopBackground, useSending } from '@/position';
 import { useSession } from '@/session/session';
 import { LocationExplanation } from '../main/location-explanation';
 import { yearLabel } from '../onboarding/form';
@@ -122,12 +121,18 @@ function partyCountOf(quests: Quest[]): string {
 }
 
 function ActivityCard(): ReactElement {
-  const showNotReady = useNotReadyToast();
   const friends = useQuery({ ...friendsQuery, select: friendCountOf }).data ?? '';
   const parties = useQuery({ ...questsQuery, select: partyCountOf }).data ?? '';
   return (
     <View style={[cardStyles.card, styles.activity]}>
-      <ActivityRow icon="user" label="친구 관리" onPress={showNotReady} value={friends} />
+      <ActivityRow
+        icon="user"
+        label="친구 관리"
+        onPress={() => {
+          router.push('/me/friends');
+        }}
+        value={friends}
+      />
       <ActivityRow
         icon="users"
         label="참여 중인 파티"
@@ -148,7 +153,7 @@ function ActivityCard(): ReactElement {
   );
 }
 
-// "로그아웃", after the danger dialog. The sending stops before the Session ends.
+// "로그아웃", after the danger dialog. The sending, in front and in the background, stops before the Session ends.
 function SignOut(): ReactElement {
   const { leave } = useSession();
   const { stop } = useSending();
@@ -173,7 +178,8 @@ function SignOut(): ReactElement {
         onConfirm={() => {
           setAsking(false);
           stop();
-          void signOut()
+          void stopBackground(true)
+            .then(signOut)
             .catch(() => null)
             .then(leave);
         }}

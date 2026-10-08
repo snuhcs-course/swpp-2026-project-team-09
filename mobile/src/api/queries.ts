@@ -1,5 +1,6 @@
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { apiClient } from './client';
+import type { RestaurantMenus } from './menu-types';
 import type { JoinRequest } from './waiting-types';
 
 // One entry of the cache per operation, each under its own key. The hooks of the features combine them, so that an
@@ -21,6 +22,7 @@ export const PLACES_KEY = ['places'] as const;
 export const FOOTPRINTS_KEY = ['footprints'] as const;
 export const GLOBAL_EVENTS_KEY = ['global-events'] as const;
 export const GLOBAL_EVENT_ANNOUNCERS_KEY = ['global-event-announcers'] as const;
+type MenusKey = readonly ['menus', string];
 
 // Ask it only for a User who finished Onboarding: the main server refuses it before.
 // Entering the Lobby is done once, by the loading screen or after a sign-in, and its answer is not asked again by a
@@ -54,7 +56,6 @@ export function joinRequestsQuery(questId: string): UseQueryOptions<JoinRequest[
 }
 export const meetupsQuery = queryOptions({ queryKey: MEETUPS_KEY, queryFn: () => apiClient.listMeetups() });
 export const classesQuery = queryOptions({ queryKey: CLASSES_KEY, queryFn: () => apiClient.listClasses() });
-export const placesQuery = queryOptions({ queryKey: PLACES_KEY, queryFn: () => apiClient.listPlaces() });
 export const footprintsQuery = queryOptions({ queryKey: FOOTPRINTS_KEY, queryFn: () => apiClient.getFootprints() });
 export const globalEventsQuery = queryOptions({
   queryKey: GLOBAL_EVENTS_KEY,
@@ -63,4 +64,15 @@ export const globalEventsQuery = queryOptions({
 export const globalEventAnnouncersQuery = queryOptions({
   queryKey: GLOBAL_EVENT_ANNOUNCERS_KEY,
   queryFn: () => apiClient.listGlobalEventAnnouncers(),
+});
+
+// A day's menus and the Places change at most twice a day: an answer is kept while it is in use, and a day chosen
+// again is not asked again.
+export function menusQuery(date: string): UseQueryOptions<RestaurantMenus[], Error, RestaurantMenus[], MenusKey> {
+  return { queryKey: ['menus', date], queryFn: () => apiClient.listMenus(date), staleTime: Infinity };
+}
+export const placesQuery = queryOptions({
+  queryKey: PLACES_KEY,
+  queryFn: () => apiClient.listPlaces(),
+  staleTime: Infinity,
 });

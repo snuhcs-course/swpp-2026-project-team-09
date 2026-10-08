@@ -6,10 +6,12 @@ import type {
   Friend,
   FriendStatus,
   GlobalEvent,
+  InviteLink,
   LatLng,
   Lobby,
   MyParty,
   OnboardingAnswers,
+  OpenedInviteLink,
   Party,
   Place,
   Position,
@@ -18,9 +20,12 @@ import type {
   Profile,
   ProfileChange,
   Quest,
+  SentFriendRequest,
   TimetableClass,
+  UserSummary,
   WalkingRoute,
 } from './types';
+import type { RestaurantMenus } from './menu-types';
 import type { FriendRequests, JoinRequest, Meetups, QuestInvitation } from './waiting-types';
 
 // Everything the screens ask of the main server. A refusal or no answer is thrown as an `ApiError`.
@@ -33,7 +38,23 @@ export interface ApiClient {
   // Refused with 409 MASTER_SWITCH_OFF while the Master Switch is off.
   uploadPosition: (position: PositionUpload) => Promise<PositionKept>;
   listFriends: () => Promise<Friend[]>;
+  // Refused with 404 FRIEND_NOT_FOUND for a User who is no Friend.
+  setFriendSharing: (userId: string, on: boolean) => Promise<void>;
+  endFriendship: (userId: string) => Promise<void>;
+  // Refused with 404 FRIEND_ID_NOT_FOUND.
+  findFriendId: (friendId: string) => Promise<UserSummary>;
+  // Also refused with 400 OWN_FRIEND_ID, 409 ALREADY_FRIENDS and 409 FRIEND_REQUEST_ALREADY_SENT.
+  sendFriendRequest: (friendId: string) => Promise<SentFriendRequest>;
   listFriendRequests: () => Promise<FriendRequests>;
+  // Each refused with 404 FRIEND_REQUEST_NOT_FOUND for a request that waits no more.
+  acceptFriendRequest: (requestId: string) => Promise<void>;
+  declineFriendRequest: (requestId: string) => Promise<void>;
+  cancelFriendRequest: (requestId: string) => Promise<void>;
+  createInviteLink: () => Promise<InviteLink>;
+  // Refused with 404 INVITE_LINK_NOT_FOUND.
+  getInviteLink: (token: string) => Promise<OpenedInviteLink>;
+  // Also refused with 400 OWN_INVITE_LINK, 409 INVITE_LINK_USED, 410 INVITE_LINK_EXPIRED and 409 ALREADY_FRIENDS.
+  acceptInviteLink: (token: string) => Promise<void>;
   listPositions: () => Promise<Position[]>;
   listFriendStatuses: () => Promise<FriendStatus[]>;
   listQuests: () => Promise<Quest[]>;
@@ -54,6 +75,8 @@ export interface ApiClient {
   // main server holds it.
   getFootprints: () => Promise<Footprints>;
   findWalkingRoute: (from: LatLng, to: LatLng) => Promise<WalkingRoute>;
+  // One day's menus, a calendar day in Korea as "2026-10-06", by restaurant.
+  listMenus: (date: string) => Promise<RestaurantMenus[]>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`). Chosen at each
@@ -70,7 +93,17 @@ export const apiClient: ApiClient = {
   setMasterSwitch: (on) => chosen().setMasterSwitch(on),
   uploadPosition: (position) => chosen().uploadPosition(position),
   listFriends: () => chosen().listFriends(),
+  setFriendSharing: (userId, on) => chosen().setFriendSharing(userId, on),
+  endFriendship: (userId) => chosen().endFriendship(userId),
+  findFriendId: (friendId) => chosen().findFriendId(friendId),
+  sendFriendRequest: (friendId) => chosen().sendFriendRequest(friendId),
   listFriendRequests: () => chosen().listFriendRequests(),
+  acceptFriendRequest: (requestId) => chosen().acceptFriendRequest(requestId),
+  declineFriendRequest: (requestId) => chosen().declineFriendRequest(requestId),
+  cancelFriendRequest: (requestId) => chosen().cancelFriendRequest(requestId),
+  createInviteLink: () => chosen().createInviteLink(),
+  getInviteLink: (token) => chosen().getInviteLink(token),
+  acceptInviteLink: (token) => chosen().acceptInviteLink(token),
   listPositions: () => chosen().listPositions(),
   listFriendStatuses: () => chosen().listFriendStatuses(),
   listQuests: () => chosen().listQuests(),
@@ -85,4 +118,5 @@ export const apiClient: ApiClient = {
   getMyParty: () => chosen().getMyParty(),
   getFootprints: () => chosen().getFootprints(),
   findWalkingRoute: (from, to) => chosen().findWalkingRoute(from, to),
+  listMenus: (date) => chosen().listMenus(date),
 };

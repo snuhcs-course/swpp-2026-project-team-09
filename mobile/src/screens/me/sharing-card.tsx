@@ -6,6 +6,7 @@ import type { Friend } from '@/api/types';
 import { cardStyles, color, radius, space, SwitchRow, text } from '@/design-system';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { useSending } from '@/position';
+import { BackgroundRow } from './background-row';
 import type { SharingSwitch } from './use-sharing-switch';
 
 const FADE_MS = 600;
@@ -56,8 +57,8 @@ interface SharingCardProps {
   onLayout: (event: LayoutChangeEvent) => void;
 }
 
-// The 위치 공유 card: the Master Switch, with the number of Friends under it, and the line that says the User is not
-// shared off campus.
+// The 위치 공유 card: the Master Switch, with the number of Friends under it, the row for background sharing, and the
+// line that says the User is not shared off campus.
 export function SharingCard({ sharing, outlined, onLayout }: SharingCardProps): ReactElement {
   const friends = useQuery({ ...friendsQuery, select: countOf }).data;
   const { offCampus } = useSending();
@@ -72,6 +73,7 @@ export function SharingCard({ sharing, outlined, onLayout }: SharingCardProps): 
         onValueChange={sharing.change}
         value={sharing.on}
       />
+      <BackgroundRow masterOn={sharing.on} />
       {sharing.on && offCampus ? <Text style={styles.offCampus}>캠퍼스 밖이라 위치가 공유되지 않아요</Text> : null}
       <Outline on={outlined} />
     </View>

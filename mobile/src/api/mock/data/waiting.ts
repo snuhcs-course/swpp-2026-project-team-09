@@ -1,20 +1,11 @@
-import type { FriendRequests, Meetups, QuestInvitation } from '@/api/waiting-types';
+import type { Meetups, QuestInvitation } from '@/api/waiting-types';
 import { frameTime, ME } from './frame';
 
-// What waits for the User in the `Profile` frame's 알림: three Friend Requests, and two invitations to 파티, one a
-// Quest's and one a Meetup's.
+// What waits for the User in the `Profile` frame's 알림 besides the Friend Requests, which `../friendships.ts` keeps:
+// two invitations to 파티, one a Quest's and one a Meetup's.
 
 const SEO_YEON = { id: 'f2', name: '이서연', department: '경영학과' };
 const TAE_O = { id: 'f8', name: '윤태오', department: '물리천문학부' };
-
-export const FRIEND_REQUESTS: FriendRequests = {
-  received: [
-    { id: 'fr-1', sender: { name: '한도경', department: '산업공학과' }, sentAt: frameTime('12:40') },
-    { id: 'fr-2', sender: { name: '김하늘', department: '컴퓨터공학부' }, sentAt: frameTime('11:05') },
-    { id: 'fr-3', sender: { name: '박서준', department: '기계공학부' }, sentAt: frameTime('09:20') },
-  ],
-  sent: [],
-};
 
 export const QUEST_INVITATIONS: QuestInvitation[] = [
   {

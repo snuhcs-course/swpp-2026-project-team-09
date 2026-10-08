@@ -1,5 +1,5 @@
 import { type ComponentType, type ReactElement, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, space, text } from '@/design-system';
 import { hasNativeMap } from './native-module';
 import { PlainMap } from './plain-map';
@@ -21,19 +21,34 @@ function chooseMap(): ComponentType<MapProps> {
 
 // The one component a screen uses to show a map. It chooses while the app runs: the native map in a build that
 // holds the module, the plain ground anywhere else. The credit for the map data is on every one, at the bottom left
-// of what the screen's controls leave of the map (`inset`).
-export function Map({ style, ...props }: MapProps): ReactElement {
+// of what the screen's controls leave of the map (`inset`), drawn by the app over the map. With `onCreditPress` it is
+// a button that opens the sources.
+export function Map({ style, onCreditPress, ...props }: MapProps): ReactElement {
   const [Chosen] = useState(chooseMap);
   const { left = 0, bottom = 0 } = props.inset ?? {};
+  const place = { left: CREDIT_MARGIN + left, bottom: CREDIT_MARGIN + bottom };
+  const credit = <Text style={[styles.credit, onCreditPress === undefined && [styles.placed, place]]}>{CREDIT}</Text>;
   return (
     <View style={[styles.map, style]}>
       <Chosen {...props} />
-      <Text style={[styles.credit, { left: CREDIT_MARGIN + left, bottom: CREDIT_MARGIN + bottom }]}>
-        © OpenStreetMap · 국토지리정보원
-      </Text>
+      {onCreditPress === undefined ? (
+        credit
+      ) : (
+        <Pressable
+          accessibilityLabel="지도 데이터 출처 보기"
+          accessibilityRole="button"
+          hitSlop={CREDIT_MARGIN}
+          onPress={onCreditPress}
+          style={[styles.placed, place]}
+        >
+          {credit}
+        </Pressable>
+      )}
     </View>
   );
 }
+
+const CREDIT = '© OpenStreetMap · 국토지리정보원';
 
 // Between the credit and the edges of what is left of the map.
 const CREDIT_MARGIN = space[2];
@@ -44,10 +59,6 @@ export const CREDIT_ROOM = CREDIT_MARGIN + text.micro.lineHeight;
 
 const styles = StyleSheet.create({
   map: { flex: 1, backgroundColor: color.surfaceSubtle },
-  credit: {
-    ...text.micro,
-    position: 'absolute',
-    color: color.inkMuted,
-    pointerEvents: 'none',
-  },
+  credit: { ...text.micro, color: color.inkMuted, pointerEvents: 'none' },
+  placed: { position: 'absolute' },
 });

@@ -162,6 +162,8 @@ export interface MapProps {
   // `padding`). It may change while the map is shown, and the credit and the logo move with it. Left out, 0 at
   // every edge.
   inset?: MapInset;
+  // A press on the credit, which the app draws over every map. Without it the credit takes no press.
+  onCreditPress?: () => void;
   ref?: Ref<MapHandle>;
   // The map fills its parent unless this says otherwise.
   style?: StyleProp<ViewStyle>;

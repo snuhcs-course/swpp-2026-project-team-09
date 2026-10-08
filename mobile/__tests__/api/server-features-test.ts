@@ -62,7 +62,7 @@ describe('the Friends from the main server', () => {
     const friends = await apiClient.listFriends();
     const positions = await apiClient.listPositions();
 
-    expect(toFriendViews(friends, positions, [])).toEqual([
+    expect(toFriendViews(friends, positions, [], now())).toEqual([
       {
         id: MIN_JUN.id,
         name: '김민준',
@@ -73,7 +73,9 @@ describe('the Friends from the main server', () => {
         walk: '',
         photo: null,
         position: { latitude: 37.4598, longitude: 126.9521 },
+        minutesOld: null,
         visible: true,
+        sharing: true,
       },
       {
         id: JI_WOO.id,
@@ -85,7 +87,9 @@ describe('the Friends from the main server', () => {
         walk: '',
         photo: null,
         position: null,
+        minutesOld: null,
         visible: false,
+        sharing: true,
       },
     ]);
   });

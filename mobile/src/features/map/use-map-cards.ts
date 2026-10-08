@@ -1,4 +1,5 @@
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import {
   friendStatusesQuery,
   friendsQuery,
@@ -12,8 +13,9 @@ import {
 import { type ScreenData, askAgain, someFailed, somePending } from '@/api/screen-data';
 import type { Friend, FriendStatus, GlobalEvent, MyParty, Party, Position, Quest } from '@/api/types';
 import { myUserId } from '@/auth/sign-in';
-import { now } from '@/clock';
 import { toFriendViews } from '@/features/friends/adapter';
+import { useNow } from '@/hooks/use-now';
+import { POSITION_AGE_EVERY_MS } from '@/position';
 import { type CardView, toCards } from './adapter';
 
 type Results = [
@@ -32,7 +34,7 @@ type Results = [
 // - a Friend's card needs the Friends and the positions;
 // - a card of a member of the User's Party also needs the Friends, to know that the member is not one.
 // A Global Event's card without the Parties only lacks its line of Parties.
-function cardsOf(results: Results): CardView[] {
+function cardsOf(results: Results, now: Date): CardView[] {
   const [globalEvents, announcers, quests, parties, myParty, friends, positions, statuses] = results;
   const cards = toCards({
     globalEvents: globalEvents.data ?? [],
@@ -40,21 +42,20 @@ function cardsOf(results: Results): CardView[] {
     quests: someFailed([myParty, parties]) ? [] : (quests.data ?? []),
     parties: parties.data ?? [],
     myParty: myParty.data ?? null,
-    friends: toFriendViews(friends.data ?? [], positions.data ?? [], statuses.data ?? []),
+    friends: toFriendViews(friends.data ?? [], positions.data ?? [], statuses.data ?? [], now),
     positions: positions.data ?? [],
     meId: myUserId(),
-    now: now(),
+    now,
   });
   return friends.isError ? cards.filter(({ kind }) => kind !== 'party-member') : cards;
 }
 
-// The announcers and the statuses are the app's own and never fail the map. Defined outside the hook, so that it runs
-// again only when an answer changes.
-function combine(results: Results): ScreenData<CardView[]> {
+// The announcers and the statuses are the app's own and never fail the map.
+function combine(results: Results, at: number): ScreenData<CardView[]> {
   const [globalEvents, , quests, parties, myParty, friends, positions] = results;
   const isPending = somePending(results);
   return {
-    data: isPending ? undefined : cardsOf(results),
+    data: isPending ? undefined : cardsOf(results, new Date(at)),
     isPending,
     isError: someFailed([globalEvents, quests, parties, myParty, friends, positions]),
     refetch: askAgain(results),
@@ -62,8 +63,11 @@ function combine(results: Results): ScreenData<CardView[]> {
 }
 
 // Everything on the map that a press opens, each with its card: Global Events, the User's Parties, Friends and the
-// members of the User's Party. After a failure `data` holds the cards that are still right and `isError` is true.
+// members of the User's Party. After a failure `data` holds the cards that are still right and `isError` is true. The
+// age of the people's positions is looked at again every 30 seconds.
 export function useMapCards(): ScreenData<CardView[]> {
+  const at = useNow(POSITION_AGE_EVERY_MS);
+  const combineAt = useCallback((results: Results) => combine(results, at), [at]);
   return useQueries({
     queries: [
       globalEventsQuery,
@@ -75,6 +79,6 @@ export function useMapCards(): ScreenData<CardView[]> {
       positionsQuery,
       friendStatusesQuery,
     ],
-    combine,
+    combine: combineAt,
   });
 }
