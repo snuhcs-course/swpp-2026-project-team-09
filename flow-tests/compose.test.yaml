@@ -1,0 +1,103 @@
+# The flow tests' stack: compose.yaml at the repository root with this file over it, under a project name of its own
+# (flow-tests/README.md). Paths are relative to the repository root. The variables come from flow-tests/.stack/compose.env,
+# which the tests write for each run. No project's .env file is read, and only the main and socket servers are published,
+# on free ports of the loopback address.
+x-sources-trusted: &sources-trusted
+  NODE_EXTRA_CA_CERTS: /tls/sources-cert.pem
+
+services:
+  postgres:
+    ports: !reset []
+
+  redis:
+    ports: !reset []
+
+  main-server:
+    env_file: !reset []
+    environment:
+      <<: *sources-trusted
+      ACCESS_TOKEN_PRIVATE_KEY: ${ACCESS_TOKEN_PRIVATE_KEY}
+      ACCESS_TOKEN_PUBLIC_KEY: ${ACCESS_TOKEN_PUBLIC_KEY}
+      GOOGLE_APP_CLIENT_ID: flow-tests-app.apps.googleusercontent.com
+      GOOGLE_ADMIN_CLIENT_ID: flow-tests-admin.apps.googleusercontent.com
+      INITIAL_ADMINISTRATOR_EMAILS: admin@flow-tests.example
+      KAKAO_REST_API_KEY: flow-tests
+      WORKER_TOKEN: ${WORKER_TOKEN}
+      PUBLIC_URL: http://localhost:3000
+      ANDROID_CERTIFICATE_FINGERPRINTS: FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C
+      MATCH_SERVER_TOKEN: ${MATCH_SERVER_TOKEN}
+    volumes:
+      - ./flow-tests/.stack/tls:/tls:ro
+    ports: !override
+      - '127.0.0.1::3000'
+    depends_on:
+      sources:
+        condition: service_healthy
+
+  socket-server:
+    env_file: !reset []
+    environment:
+      ACCESS_TOKEN_PUBLIC_KEY: ${ACCESS_TOKEN_PUBLIC_KEY}
+    ports: !override
+      - '127.0.0.1::3001'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3001/health/ready').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 2s
+      retries: 60
+
+  worker-server:
+    env_file: !reset []
+    environment:
+      <<: *sources-trusted
+      WORKER_TOKEN: ${WORKER_TOKEN}
+    volumes:
+      - ./flow-tests/.stack/tls:/tls:ro
+    ports: !reset []
+    depends_on: !override
+      main-server:
+        condition: service_healthy
+
+  match-server:
+    env_file: !reset []
+    environment:
+      MATCH_SERVER_TOKEN: ${MATCH_SERVER_TOKEN}
+      ROUND_INTERVAL_SECONDS: 1
+    ports: !reset []
+
+  # Google, the worker's Sources and Kakao, answered from the saved pages and answers of the servers' own tests. A Source
+  # the flows do not collect, which the worker's schedule may still ask for, gets 404.
+  sources:
+    image: node:24-slim
+    init: true
+    command: ['node', '/sources/serve.ts']
+    volumes:
+      - ./flow-tests/sources:/sources:ro
+      - ./flow-tests/.stack/tls:/tls:ro
+      - ./worker-server/test/pages:/pages:ro
+      - ./main-server/test/answers:/answers:ro
+    networks:
+      default:
+        aliases:
+          - www.googleapis.com
+          - snuco.snu.ac.kr
+          - snudorm.snu.ac.kr
+          - vet.snu.ac.kr
+          - www.snu.ac.kr
+          - web.busin.co.kr
+          - dapi.kakao.com
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('node:net').connect(443, '127.0.0.1').on('connect', () => process.exit(0)).on('error', () => process.exit(1))",
+        ]
+      interval: 1s
+      retries: 30

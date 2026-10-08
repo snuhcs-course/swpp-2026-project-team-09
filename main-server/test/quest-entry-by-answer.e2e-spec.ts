@@ -49,14 +49,14 @@ async function forEvent(joinPolicy: string): Promise<ForEvent> {
   await befriend(app, leader, user);
   const event = await storeEvent(prisma);
   const { questId } = await questFor(app, leader, event.id);
-  await setQuest(app, leader, questId, { joinPolicy });
+  await setQuest(app, leader, questId, { joinPolicy, ...(joinPolicy === 'closed' ? {} : { board: 'hobby' }) });
   const { questId: aloneId } = await questFor(app, user, event.id);
   return { leader, user, questId, aloneId };
 }
 
 // Another User joins the User's Quest, which makes it a Shared Quest.
 async function share(user: TestUser, questId: string): Promise<void> {
-  await setQuest(app, user, questId, { joinPolicy: 'open' });
+  await setQuest(app, user, questId, { joinPolicy: 'open', board: 'hobby' });
   await joinQuest(app, await signInUser(app), questId);
 }
 
@@ -167,7 +167,7 @@ describe('A request and an invitation', () => {
 
   it('both end when the User joins the Quest once it is Open', async () => {
     const { leader, user, questId } = await waiting();
-    await setQuest(app, leader, questId, { joinPolicy: 'open' });
+    await setQuest(app, leader, questId, { joinPolicy: 'open', board: 'hobby' });
 
     await joinQuest(app, user, questId);
 

@@ -72,6 +72,9 @@ describe('The Quest list on a day with a class', () => {
       leader: null,
       capacity: 1,
       joinPolicy: 'closed',
+      board: null,
+      description: '',
+      createdAt: null,
       holders: [holder],
       subQuests: [
         {

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { Place } from '../generated/prisma/client.js';
+import { AdminPlaceDto, toAdminPlaceDto } from './dto/admin-place.dto.js';
 import { PlaceDto, toPlaceDto } from './dto/place.dto.js';
 
 // `25-1` comes after `25` and before `26`, and Korean names in the order a User reads them.
@@ -23,6 +24,11 @@ export class PlacesService {
   async list(): Promise<PlaceDto[]> {
     const places = await this.prisma.place.findMany();
     return places.toSorted(byNumber).map((place) => toPlaceDto(place));
+  }
+
+  async listForAdministrators(): Promise<AdminPlaceDto[]> {
+    const places = await this.prisma.place.findMany();
+    return places.toSorted(byNumber).map((place) => toAdminPlaceDto(place));
   }
 
   // In memory: the list is a few hundred entries, and `q` is then no LIKE pattern whose `%` and `_` need escaping.

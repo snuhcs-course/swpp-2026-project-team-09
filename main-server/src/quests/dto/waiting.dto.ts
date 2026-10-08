@@ -13,8 +13,8 @@ export interface WaitingDto {
   sentAt: string;
 }
 
-// A request to join as the Leader lists it.
-export interface ReceivedJoinRequestDto {
+// A request to join or an invitation as the Leader lists it, with its User.
+export interface WaitingUserDto {
   id: string;
   user: Pick<User, 'id' | 'name' | 'department'>;
   sentAt: string;
@@ -24,9 +24,9 @@ export const WAITING_INCLUDE = {
   quest: { include: QUEST_SUMMARY_INCLUDE },
 } satisfies Prisma.QuestJoinRequestInclude & Prisma.QuestInvitationInclude;
 
-export const RECEIVED_JOIN_REQUEST_INCLUDE = {
+export const WAITING_USER_INCLUDE = {
   user: { select: HOLDER_SELECT },
-} satisfies Prisma.QuestJoinRequestInclude;
+} satisfies Prisma.QuestJoinRequestInclude & Prisma.QuestInvitationInclude;
 
 export function toWaitingDto(
   waiting:
@@ -36,8 +36,10 @@ export function toWaitingDto(
   return { id: waiting.id, quest: toQuestSummaryDto(waiting.quest), sentAt: waiting.sentAt.toISOString() };
 }
 
-export function toReceivedJoinRequestDto(
-  request: Prisma.QuestJoinRequestGetPayload<{ include: typeof RECEIVED_JOIN_REQUEST_INCLUDE }>,
-): ReceivedJoinRequestDto {
-  return { id: request.id, user: request.user, sentAt: request.sentAt.toISOString() };
+export function toWaitingUserDto(
+  waiting:
+    | Prisma.QuestJoinRequestGetPayload<{ include: typeof WAITING_USER_INCLUDE }>
+    | Prisma.QuestInvitationGetPayload<{ include: typeof WAITING_USER_INCLUDE }>,
+): WaitingUserDto {
+  return { id: waiting.id, user: waiting.user, sentAt: waiting.sentAt.toISOString() };
 }

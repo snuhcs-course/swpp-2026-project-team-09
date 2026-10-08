@@ -15,7 +15,7 @@ The app signed in on one phone for a User. A User has at most one: signing in on
 _Avoid_: Login, device
 
 **Administrator**:
-A team member who signs in to the admin site to confirm, publish and create Global Events. An Administrator is not a User, even when the same person also uses the app.
+A team member who signs in to the admin site to confirm, publish and create Global Events, and to make two Users Friends or end their friendship when setting up demo accounts. An Administrator is not a User, even when the same person also uses the app.
 _Avoid_: Organizer, manager
 
 **Avatar**:
@@ -23,7 +23,7 @@ The figure that stands for a User on the map and moves as the User moves.
 _Avoid_: Pin, profile marker
 
 **Friend**:
-A User connected to another by an accepted Friend Request or an accepted Invite Link. Friendship is mutual.
+A User connected to another by an accepted Friend Request, an accepted Invite Link or an Administrator. Friendship is mutual.
 _Avoid_: Follower, contact
 
 **Friend ID**:
@@ -80,6 +80,10 @@ _Avoid_: Owner, host
 **Join Policy**:
 The Leader's setting for how Users enter a Quest or a Party: Open (whoever can see it enters at once), Approval (the Leader accepts each request) or Closed (entry by the Leader's invitation only).
 _Avoid_: Visibility, privacy setting
+
+**Board**:
+Where an Open or Approval Quest is listed for recruiting, one of four kinds: 식사, 진로, 취미 and 공연. A Closed Quest is on none.
+_Avoid_: Category
 
 **Class Quest**:
 A Quest for attending one of the User's own classes on a given day, derived from the User's timetable.

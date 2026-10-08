@@ -26,3 +26,17 @@ Please note that the README doesn't affect your grade and is not included in doc
 ### Installation
 
 [Installation link here]
+
+## Demo data
+
+To try every feature at once, start the system with demo data in the repository root:
+
+```bash
+docker compose --profile demo up --build
+```
+
+It adds demo Users and their friendships, published Global Events, recruiting Quests on every Board, a running Party,
+this week's menus and shuttle vehicles, and keeps the demo Users' Avatars moving on campus. List your own SNU address in
+`DEMO_ACCOUNT_EMAILS` of `main-server/.env` to receive demo Friends, Friend Requests, a Quest invitation and a Meetup
+after your Onboarding. `docker compose --profile demo down -v` removes it all. The details are in
+[main-server/README.md](main-server/README.md#demo-data).

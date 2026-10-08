@@ -9,8 +9,8 @@ import { GlobalEvent, Prisma, PrismaClient } from '../src/generated/prisma/clien
 import { TestUser } from './friends.js';
 import { withAccessToken } from './sign-in.js';
 
-// No route creates or changes a Global Event yet (P12 adds them), so the tests store them with a connection of their
-// own.
+// The tests store Global Events with a connection of their own, in any state and without the signals of the
+// Administrator's routes.
 export function connectToDatabase(): PrismaClient {
   return new PrismaClient({ adapter: new PrismaPg({ connectionString: inject('settings').DATABASE_URL }) });
 }
@@ -52,12 +52,15 @@ export function makeQuest(
   return key === null ? call : call.set('Idempotency-Key', key);
 }
 
-// Makes a Quest of the User's own with one Sub Quest a day from now, and `body` over that, and answers its id.
+// Makes a Quest of the User's own with one Sub Quest a day from now, and `body` over that, and answers its id. An Open
+// or an Approval Quest is posted on the board `hobby` unless `body` names one.
 export async function ownQuest(app: INestApplication<Server>, user: TestUser, body: object = {}): Promise<string> {
   const startsAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const recruiting = 'joinPolicy' in body && (body.joinPolicy === 'open' || body.joinPolicy === 'approval');
   const response = await makeQuest(app, user, {
     title: '저녁 같이 먹어요',
     subQuest: { title: '저녁', startsAt },
+    ...(recruiting ? { board: 'hobby' } : {}),
     ...body,
   });
   if (response.status !== 201) {
@@ -70,10 +73,12 @@ export function getRecruitingQuests(
   app: INestApplication<Server>,
   user: TestUser,
   globalEventId?: string,
+  board?: string,
 ): request.Test {
-  return withAccessToken(request(app.getHttpServer()).get('/quests/recruiting'), user.accessToken).query(
-    globalEventId === undefined ? {} : { globalEventId },
-  );
+  return withAccessToken(request(app.getHttpServer()).get('/quests/recruiting'), user.accessToken).query({
+    ...(globalEventId === undefined ? {} : { globalEventId }),
+    ...(board === undefined ? {} : { board }),
+  });
 }
 
 export function joinQuest(app: INestApplication<Server>, user: TestUser, questId: string): request.Test {

@@ -1,6 +1,7 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { WorkerOnly } from '../common/worker-only.decorator.js';
 import { type EventsCollectedMessage, eventsCollectedSchema } from './dto/events-collected.dto.js';
+import { PublishedGlobalEventDto } from './dto/global-event.dto.js';
 import {
   type StoredEventPostsDto,
   type StoredEventPostsQuestion,
@@ -11,6 +12,11 @@ import { GlobalEventsService } from './global-events.service.js';
 @Controller('global-events')
 export class GlobalEventsController {
   constructor(private readonly globalEvents: GlobalEventsService) {}
+
+  @Get()
+  listPublished(): Promise<PublishedGlobalEventDto[]> {
+    return this.globalEvents.listPublished();
+  }
 
   @Post('collected')
   @WorkerOnly()

@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
-import { GlobalEvent, JoinPolicy, PrismaClient } from '../src/generated/prisma/client.js';
+import { GlobalEvent, JoinPolicy, PrismaClient, QuestBoard } from '../src/generated/prisma/client.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { signInUser, TestUser } from './friends.js';
 import { postAsMatchServer } from './match-server.js';
@@ -39,7 +39,8 @@ async function questWith(
 ): Promise<string> {
   const [leader, ...others] = holders.map(({ id }) => id);
   const questId = await storeSharedQuest(prisma, event, [leader ?? '', ...others]);
-  await prisma.quest.update({ where: { id: questId }, data: { capacity, joinPolicy } });
+  const board = joinPolicy === JoinPolicy.closed ? null : QuestBoard.hobby;
+  await prisma.quest.update({ where: { id: questId }, data: { capacity, joinPolicy, board } });
   return questId;
 }
 

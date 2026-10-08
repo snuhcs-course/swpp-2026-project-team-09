@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { z } from 'zod';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
-import { type AskToJoinDto, askToJoinSchema, ReceivedJoinRequestDto, WaitingDto } from './dto/waiting.dto.js';
+import { type AskToJoinDto, askToJoinSchema, WaitingDto, WaitingUserDto } from './dto/waiting.dto.js';
 import { JoinRequestsService } from './join-requests.service.js';
 
 @Controller()
@@ -29,7 +29,7 @@ export class JoinRequestsController {
   listReceived(
     @CurrentUser() user: SignedInUser,
     @Param('questId', { schema: z.uuid() }) questId: string,
-  ): Promise<ReceivedJoinRequestDto[]> {
+  ): Promise<WaitingUserDto[]> {
     return this.joinRequests.listReceived(user.id, questId);
   }
 

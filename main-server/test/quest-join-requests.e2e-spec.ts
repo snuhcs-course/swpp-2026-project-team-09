@@ -61,6 +61,9 @@ describe('Asking to join an Approval Quest', () => {
         holderCount: 1,
         capacity: 4,
         joinPolicy: 'approval',
+        board: 'hobby',
+        description: '',
+        createdAt: ANY_STRING,
       },
       sentAt: ANY_STRING,
     };

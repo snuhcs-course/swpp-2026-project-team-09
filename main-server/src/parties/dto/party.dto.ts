@@ -35,6 +35,8 @@ export interface VisiblePartyDto {
   capacity: number;
   joinPolicy: JoinPolicy;
   quest: PartyQuestDto | null;
+  // Its Leader now.
+  leader: { id: string; name: string };
   // Whether the reader holds the Party's Quest.
   holdsQuest: boolean;
   // The reader's Friends among the members, in the order they entered.
@@ -54,6 +56,7 @@ export const PARTY_INCLUDE = {
 } satisfies Prisma.PartyInclude;
 
 export type VisiblePartyInclude = typeof PARTY_INCLUDE & {
+  leader: { select: { id: true; name: true } };
   quest: {
     include: typeof PARTY_QUEST_INCLUDE.quest.include & {
       holders: { where: { userId: string }; select: { id: true } };
@@ -65,6 +68,7 @@ export type VisiblePartyInclude = typeof PARTY_INCLUDE & {
 export function visiblePartyInclude(readerId: string): VisiblePartyInclude {
   return {
     ...PARTY_INCLUDE,
+    leader: { select: { id: true, name: true } },
     quest: {
       include: { ...PARTY_QUEST_INCLUDE.quest.include, holders: { where: { userId: readerId }, select: { id: true } } },
     },
@@ -105,6 +109,7 @@ export function toVisiblePartyDto(party: VisibleParty, friendIds: ReadonlySet<st
     capacity: party.capacity,
     joinPolicy: party.joinPolicy,
     quest: questOf(party),
+    leader: { id: party.leader.id, name: party.leader.name },
     holdsQuest: (party.quest?.holders.length ?? 0) > 0,
     friends: party.members.flatMap(({ user }) => (friendIds.has(user.id) ? [user] : [])),
   };

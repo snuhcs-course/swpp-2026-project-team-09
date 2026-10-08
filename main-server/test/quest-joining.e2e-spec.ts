@@ -36,7 +36,10 @@ afterAll(async () => {
 // The User's Quest for the Global Event, under the Join Policy given, as the Leader sets it in ticket 14.
 async function attendedQuest(user: TestUser, globalEventId: string, joinPolicy: JoinPolicy = 'open'): Promise<string> {
   const { questId } = await questFor(app, user, globalEventId);
-  await prisma.quest.update({ where: { id: questId }, data: { joinPolicy } });
+  await prisma.quest.update({
+    where: { id: questId },
+    data: { joinPolicy, board: joinPolicy === 'closed' ? null : 'hobby' },
+  });
   return questId;
 }
 

@@ -187,7 +187,7 @@ model GlobalEvent {
   latitude    Float?
   longitude   Float?
   state       GlobalEventState @default(draft)
-  // Checked and raised by an Administrator's edit (P12), so that an edit made from an older version is refused.
+  // Checked and raised by every change an Administrator makes, so that a change from an older version is refused.
   version     Int              @default(1)
   // The `bbsidx` and address of a collected event's post. An event an Administrator creates has neither.
   postNumber  Int?             @unique @map("post_number")
@@ -222,6 +222,10 @@ model Quest {
   // From 1 to 8, which the migration checks.
   capacity      Int           @default(4)
   joinPolicy    JoinPolicy    @default(closed) @map("join_policy")
+  // Set for an Open or an Approval Quest and empty for a Closed one, which the migration checks.
+  board         QuestBoard?
+  // The recruiting post, up to 200 characters, which the migration checks.
+  description   String        @default("")
   // The match server's match this Quest was created for, so that a repeated request finds it (README.md: Matching).
   matchId       String?       @unique @map("match_id") @db.Uuid
   createdAt     DateTime      @default(now()) @map("created_at")
@@ -245,6 +249,16 @@ enum JoinPolicy {
   closed
 
   @@map("join_policy")
+}
+
+// Where an Open or an Approval Quest is listed for recruiting.
+enum QuestBoard {
+  meal
+  career
+  hobby
+  show
+
+  @@map("quest_board")
 }
 
 // A User who holds a Quest. The row repeats the Quest's Global Event, so that a unique index keeps a User to one Quest

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
-import { Prisma, Quest } from '../generated/prisma/client.js';
+import { JoinPolicy, Prisma, Quest } from '../generated/prisma/client.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import { type UpdateQuestDto } from './dto/quest-requests.dto.js';
@@ -44,7 +44,8 @@ export class LeaderService {
   }
 
   // A capacity below the number of Holders is refused, and so is a title for a Quest with a Global Event, which keeps
-  // the event's.
+  // the event's. The Quest the changes lead to is on a board when it is Open or Approval, and on none when Closed: a
+  // change to Closed clears the board.
   async update(userId: string, questId: string, changes: UpdateQuestDto): Promise<QuestDto> {
     await this.changeAsLeader(userId, questId, async (tx, quest, holderIds) => {
       if (changes.title !== undefined && quest.globalEventId !== null) {
@@ -53,9 +54,30 @@ export class LeaderService {
       if (changes.capacity !== undefined && changes.capacity < holderIds.length) {
         throw conflict('CAPACITY_BELOW_HOLDERS', 'The Quest has more Holders than this capacity.');
       }
-      await tx.quest.update({ where: { id: questId }, data: changes });
+      const closed = (changes.joinPolicy ?? quest.joinPolicy) === JoinPolicy.closed;
+      if (closed && changes.board !== undefined) {
+        throw conflict('BOARD_FOR_CLOSED_QUEST', 'A Closed Quest is on no board.');
+      }
+      if (!closed && (changes.board ?? quest.board) === null) {
+        throw conflict('BOARD_REQUIRED', 'An Open or an Approval Quest is on a board.');
+      }
+      await tx.quest.update({ where: { id: questId }, data: closed ? { ...changes, board: null } : changes });
     });
     return this.quests.read(userId, questId);
+  }
+
+  // Ends the Quest for every Holder at once, as when its last Holder drops it: it is deleted with its Sub Quests, the
+  // Holders' progress, its requests to join and its invitations. Tells the Holders and the Users who waited.
+  async end(userId: string, questId: string): Promise<void> {
+    const told = await this.prisma.$transaction(async (tx) => {
+      await this.lockLed(questId, userId, tx);
+      const { holders, joinRequests, invitations } = await tx.quest.delete({
+        where: { id: questId },
+        select: { holders: true, joinRequests: true, invitations: true },
+      });
+      return [...holders, ...joinRequests, ...invitations].map((one) => one.userId);
+    });
+    this.signals.send([...new Set(told)], 'quests-changed');
   }
 
   async handOver(userId: string, questId: string, newLeaderId: string): Promise<void> {

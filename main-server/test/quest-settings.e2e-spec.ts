@@ -74,7 +74,7 @@ describe('The Leader changing the settings', () => {
     const { questId } = await questFor(app, leader, event.id);
     expect((await joinQuest(app, user, questId)).body).toMatchObject(refused(404, 'QUEST_NOT_FOUND'));
 
-    await setQuest(app, leader, questId, { joinPolicy: 'open' });
+    await setQuest(app, leader, questId, { joinPolicy: 'open', board: 'hobby' });
 
     expect((await getRecruitingQuests(app, user, event.id)).body).toMatchObject([{ id: questId }]);
     expect((await joinQuest(app, user, questId)).status).toBe(201);

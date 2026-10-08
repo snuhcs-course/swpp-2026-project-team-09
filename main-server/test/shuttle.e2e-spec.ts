@@ -26,7 +26,7 @@ import { refusal, sendAsWorker } from './worker.js';
 // only this file sends shuttle messages, one test after the other.
 let app: INestApplication<Server>;
 let accessToken: string;
-// No route serves the Collection status yet (P12 adds one), so the tests read it with a connection of their own.
+// The tests read the status of one Source with a connection of their own.
 let prisma: PrismaClient;
 // Stands for the socket server: NestJS messaging publishes each event on a Redis channel named after it.
 let socketServer: Redis;

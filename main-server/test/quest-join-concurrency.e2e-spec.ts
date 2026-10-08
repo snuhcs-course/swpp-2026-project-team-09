@@ -72,7 +72,7 @@ describe('One User joining two Quests of one Global Event at the same moment', (
     const questIds = await Promise.all(
       [first, second].map(async (leader) => {
         const { questId } = await questFor(app, leader, event.id);
-        await prisma.quest.update({ where: { id: questId }, data: { joinPolicy: 'open' } });
+        await prisma.quest.update({ where: { id: questId }, data: { joinPolicy: 'open', board: 'hobby' } });
         return questId;
       }),
     );

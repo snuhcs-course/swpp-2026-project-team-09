@@ -59,6 +59,7 @@ describe('A Friend of a member asking to enter an Approval Party', () => {
         capacity: 4,
         joinPolicy: 'approval',
         quest: null,
+        leader: { id: leader.id, name: ANY_STRING },
         holdsQuest: false,
         friends: [{ id: leader.id, name: ANY_STRING, department: ANY_STRING }],
       },

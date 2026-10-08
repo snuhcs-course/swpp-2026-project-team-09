@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
-import { JoinPolicy, Prisma, Quest } from '../generated/prisma/client.js';
+import { JoinPolicy, Prisma, Quest, QuestBoard } from '../generated/prisma/client.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import { CLOCK, type Clock } from './clock.js';
@@ -22,11 +22,16 @@ export class RecruitingService {
   ) {}
 
   // The Open and Approval Quests the reader does not hold that have a Sub Quest ahead, the newest first.
-  async list(readerId: string, globalEventId: string | undefined): Promise<RecruitingQuestDto[]> {
+  async list(
+    readerId: string,
+    globalEventId: string | undefined,
+    board: QuestBoard | undefined,
+  ): Promise<RecruitingQuestDto[]> {
     const quests = await this.prisma.quest.findMany({
       where: {
         joinPolicy: { in: [JoinPolicy.open, JoinPolicy.approval] },
         globalEventId,
+        board,
         holders: { none: { userId: readerId } },
       },
       include: QUEST_INCLUDE,
@@ -61,7 +66,7 @@ export class RecruitingService {
     questId: string,
     userId: string,
     tx: Prisma.TransactionClient,
-    admits?: (quest: Quest) => void,
+    admits?: (quest: Quest) => void | Promise<void>,
   ): Promise<string[]> {
     await this.users.lock(userId, tx);
     const globalEventId = (await tx.quest.findUnique({ where: { id: questId } }))?.globalEventId ?? null;
@@ -78,7 +83,7 @@ export class RecruitingService {
     if (quest.holders.some((holder) => holder.userId === userId)) {
       throw alreadyHolder();
     }
-    admits?.(quest);
+    await admits?.(quest);
     if ((await this.quests.withSubQuestsAhead([questId], tx)).length === 0) {
       throw conflict('QUEST_ENDED', 'This Quest has no Sub Quest ahead.');
     }

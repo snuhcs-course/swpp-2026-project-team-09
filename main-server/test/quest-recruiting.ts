@@ -44,6 +44,22 @@ export function invite(app: INestApplication<Server>, leader: TestUser, questId:
   });
 }
 
+export function getSentInvitations(app: INestApplication<Server>, leader: TestUser, questId: string): request.Test {
+  return withAccessToken(request(app.getHttpServer()).get(`/quests/${questId}/invitations`), leader.accessToken);
+}
+
+export function cancelInvitation(
+  app: INestApplication<Server>,
+  leader: TestUser,
+  questId: string,
+  invitationId: string,
+): request.Test {
+  return withAccessToken(
+    request(app.getHttpServer()).delete(`/quests/${questId}/invitations/${invitationId}`),
+    leader.accessToken,
+  );
+}
+
 export function getInvitations(app: INestApplication<Server>, user: TestUser): request.Test {
   return withAccessToken(request(app.getHttpServer()).get('/quest-invitations'), user.accessToken);
 }
@@ -78,6 +94,10 @@ export function handOver(
   return withAccessToken(request(app.getHttpServer()).put(`/quests/${questId}/leader`), leader.accessToken).send({
     userId,
   });
+}
+
+export function endQuest(app: INestApplication<Server>, leader: TestUser, questId: string): request.Test {
+  return withAccessToken(request(app.getHttpServer()).post(`/quests/${questId}/end`), leader.accessToken);
 }
 
 export function removeHolder(

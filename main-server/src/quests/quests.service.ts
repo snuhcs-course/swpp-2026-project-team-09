@@ -6,6 +6,7 @@ import {
   GlobalEventState,
   JoinPolicy,
   Prisma,
+  QuestBoard,
   QuestHolder,
   SubQuest,
 } from '../generated/prisma/client.js';
@@ -24,11 +25,14 @@ export type SubQuestColumns = Pick<
   title: string;
 };
 
-// How a new Quest starts. Left out, its first Holder leads it, and it is Closed with capacity 4.
+// How a new Quest starts. Left out, its first Holder leads it, and it is Closed with capacity 4, no board and an empty
+// description.
 export interface QuestSettings {
   leaderId?: string;
   capacity?: number;
   joinPolicy?: JoinPolicy;
+  board?: QuestBoard;
+  description?: string;
 }
 
 @Injectable()
@@ -65,9 +69,9 @@ export class QuestsService {
   }
 
   // A Quest of the User's own, without a Global Event.
-  async make(userId: string, { title, subQuest, capacity, joinPolicy }: MakeQuestDto): Promise<QuestDto> {
+  async make(userId: string, { subQuest, ...settings }: MakeQuestDto): Promise<QuestDto> {
     const questId = await this.prisma.$transaction(async (tx) =>
-      this.createWithSubQuest(await this.columnsOf(subQuest, tx), [userId], tx, { title, capacity, joinPolicy }),
+      this.createWithSubQuest(await this.columnsOf(subQuest, tx), [userId], tx, settings),
     );
     this.signals.send([userId], 'quests-changed');
     return this.read(userId, questId);
@@ -116,6 +120,12 @@ export class QuestsService {
   async heldFor(userId: string, globalEventId: string, tx: Prisma.TransactionClient): Promise<string | null> {
     const holder = await tx.questHolder.findFirst({ where: { userId, globalEventId } });
     return holder?.questId ?? null;
+  }
+
+  // The Holders of every Quest for the Global Event.
+  async holderIdsFor(globalEventId: string): Promise<string[]> {
+    const holders = await this.prisma.questHolder.findMany({ where: { globalEventId }, select: { userId: true } });
+    return holders.map(({ userId }) => userId);
   }
 
   // A Quest for the Global Event, with its title, the Holders and the Sub Quest for attending it. Each Holder must hold
@@ -220,7 +230,7 @@ export class QuestsService {
       subQuest: Prisma.SubQuestCreateWithoutQuestInput;
     },
     holderIds: readonly string[],
-    { leaderId = holderIds[0], capacity, joinPolicy }: QuestSettings,
+    { leaderId = holderIds[0], ...settings }: QuestSettings,
     tx: Prisma.TransactionClient,
   ): Promise<string> {
     const { title, globalEventId, matchId, subQuest } = quest;
@@ -230,8 +240,7 @@ export class QuestsService {
         globalEventId,
         matchId,
         leaderId,
-        capacity,
-        joinPolicy,
+        ...settings,
         holders: { create: holderIds.map((userId) => ({ userId, globalEventId })) },
         subQuests: { create: subQuest },
       },

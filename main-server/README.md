@@ -213,6 +213,40 @@ when a friendship ends. It carries nothing, and the app fetches `GET /friends` a
 A friendship starts with both switches on, so accepting a Friend Request starts Location Sharing between the two. The
 table keeps each User's switch at their own end, in `user_a_sharing` and `user_b_sharing`.
 
+An Administrator sets up demo accounts through `src/friends/admin-friends.controller.ts`, whose routes need an
+Administrator's access token (see [Administrators](#administrators)). Nothing else about a User is read or changed
+there:
+
+- `GET /admin/users` answers every User as
+  `{ "id", "name", "email", "department", "friendId", "onboarded", "friendCount" }`, where `friendCount` is the number
+  of their Friends. The order is by name in the Korean order, then by email address; Users before onboarding, whose
+  name and department are empty, come last.
+- `GET /admin/users/:id/friends` answers the User's Friends in the order of `GET /friends`, each as
+  `{ "id", "name", "email", "department", "friendId", "since" }`, `since` being when the friendship started.
+- `POST /admin/friendships` with `{ "userAId": "...", "userBId": "..." }`, in either order, makes the two Friends and
+  answers 204. The friendship is stored and announced as an accepted Friend Request's: the same row, both switches on,
+  and `friends-changed` to both once it is stored. A Friend Request waiting between the two becomes the friendship and
+  keeps its sender, as accepting an Invite Link does; otherwise the sender is `userAId`. A repeat is refused as already
+  Friends, so it takes no `Idempotency-Key`.
+- `DELETE /admin/friendships/:userAId/:userBId`, in either order, ends the friendship as `DELETE /friends/:userId`
+  does, and answers 204: `friends-changed` to both, `position-removed` to each who saw the other, and the Meetups still
+  proposed between them withdrawn with `meetups-changed`.
+
+Both changes go through `FriendsService`, so a change by an Administrator and one by either User lock the two Users
+alike and run one after the other. The refusals each have a `code`, checked in the order of the table, and a refusal
+stores nothing and sends no signal:
+
+| Refusal                                                        | Status | `code`               |
+| -------------------------------------------------------------- | ------ | -------------------- |
+| Making a User a Friend of themselves                           | 400    | `SAME_USER`          |
+| Reading the Friends of, or making a Friend of, an unknown User | 404    | `USER_NOT_FOUND`     |
+| Making a Friend of a User before onboarding                    | 409    | `USER_NOT_ONBOARDED` |
+| Making two Friends Friends                                     | 409    | `ALREADY_FRIENDS`    |
+| Ending a friendship between two Users who are not Friends      | 404    | `FRIEND_NOT_FOUND`   |
+
+An id that is not a UUID gets 400 before any of these. Unknown Users are not Friends, so ending a friendship between
+them gets `FRIEND_NOT_FOUND`.
+
 ## Invite Links
 
 A User creates an Invite Link and sends it through any messenger. Whoever opens it sees who sent it and, on accepting,
@@ -323,7 +357,8 @@ place that decides who sees whom:
   and sends `position-removed` to each viewer who saw a subject before and does not after. It compares who sees whom
   among the pairs that include the User, before and after the change. Pass the User whose switch, relationship or
   position the change touches: every sight it can end includes that User, so a new cause, such as leaving a Party,
-  only wraps its change in it.
+  only wraps its change in it. A change that touches several Users at once, as the end of a Party does, passes them
+  all as a list, and each sight is announced once.
 
 ## Administrators
 
@@ -341,6 +376,7 @@ Signing in and out:
 - The access token has the audience `snu-now-admin`, the Administrator's id and no email address. It is valid for 8
   hours and comes without a refresh token: when it expires, the admin site sends the person through Sign in with Google
   again. There is no idle timeout; ticket 14 says why.
+- `GET /admin/auth/me` answers the signed-in Administrator as `{ "id", "email" }`, for the admin site to show.
 - `POST /admin/auth/sign-out` answers 204 and ends every access token issued to that Administrator so far, in every
   browser. A new sign-in works afterwards.
 
@@ -379,8 +415,8 @@ export class AdminEventsController {
 
 A Global Event is an Event published to every User. The worker server collects them from the university's events list
 and posts them to `/global-events/collected` (see
-[Requests from the worker server](#requests-from-the-worker-server)). P12 adds the Administrator's routes, which edit,
-publish, cancel, discard and create them, and the User's list of published events. Until then no route serves them.
+[Requests from the worker server](#requests-from-the-worker-server)). Users read the published ones, and Administrators
+read every one, and create and change them, through the routes below.
 
 A Global Event, model `GlobalEvent` in `prisma/schema.prisma`, holds:
 
@@ -396,9 +432,133 @@ A Global Event, model `GlobalEvent` in `prisma/schema.prisma`, holds:
   - `cancelled`: an event an Administrator called off after it was published.
   - `discarded`: an event that should not be shown, such as a post that is not an event. It stays stored, so that the
     next Collection does not bring its post back.
-- `version`, which starts at 1, for P12's edit check, which refuses an edit made from an older version.
+- `version`, which starts at 1 and which every change by an Administrator raises by one, so that a change made from an
+  older version is refused (see below).
 - For a collected event, `postNumber`, the post's `bbsidx`, which identifies the post, and `sourceUrl`, the post's
   address. An event an Administrator creates has neither.
+
+An event has ended when its end has passed or, when it has no end, once the day of its start has passed in Asia/Seoul:
+an event without an end that starts today is listed until midnight. The same rule decides both lists of published
+events below.
+
+`GET /global-events` with a User's access token answers the published Global Events that have not ended, ordered by
+start, then by title. The app fetches it again on `global-events-changed`.
+
+```json
+[
+  {
+    "id": "5d0e…",
+    "title": "[연합전공 지능형통신] 2027학년도 1학기 선발 및 설명회 안내",
+    "description": "안녕하세요.\n…",
+    "startsAt": "2026-10-13T08:00:00.000Z",
+    "endsAt": null,
+    "place": "뉴미디어통신공동연구소 이충웅홀(132동 103호)",
+    "latitude": 37.45487,
+    "longitude": 126.95407,
+    "sourceUrl": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525"
+  }
+]
+```
+
+- A Draft, a cancelled, a discarded and an ended event are never in it.
+- `sourceUrl` is `null` for an event an Administrator created.
+- An Administrator's access token gets 401, and a User before onboarding 403 `ONBOARDING_REQUIRED`, as on every User's
+  route.
+
+An Administrator reads them through `src/global-events/admin-global-events.controller.ts`, and the lists the admin site
+needs beside them through a controller of their own feature. Each route needs an Administrator's access token (see
+[Administrators](#administrators)):
+
+- `GET /admin/global-events?state=draft` answers every Draft, and `GET /admin/global-events?state=published` the
+  published events that have not ended. Both are ordered by start, the events without a start last, then by title. A
+  missing or other `state` gets 400. Each entry is:
+
+  ```json
+  {
+    "id": "8c2a…",
+    "title": "[연합전공 지능형통신] 2027학년도 1학기 선발 및 설명회 안내",
+    "startsAt": null,
+    "endsAt": null,
+    "place": "뉴미디어통신공동연구소 이충웅홀(132동 103호)",
+    "latitude": 37.45487,
+    "longitude": 126.95407,
+    "state": "draft",
+    "version": 1,
+    "postNumber": 176525,
+    "sourceUrl": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
+    "missing": ["startsAt"]
+  }
+  ```
+
+- `missing` names what publishing a Draft still needs, `startsAt` and `position` in that order, so a Draft that could
+  not be read fully shows it. It is `[]` for an event in any other state. An empty `missing` does not make a Draft
+  right: its start may be the header's date (see below).
+- `GET /admin/global-events/:id` answers one event in any state, as an entry of the lists with its `description`, the
+  text to check against the post at `sourceUrl`. An unknown id gets 404 `GLOBAL_EVENT_NOT_FOUND`, and an id that is
+  not a UUID 400.
+- `GET /admin/places` answers every Place in the order and form of `GET /places` (see [Places](#places)), so that the
+  admin site offers the list without a User's token. `src/places/admin-places.controller.ts` serves it.
+- `GET /admin/collection-statuses` answers one entry for every Source, in the order of the `Source` enum:
+  `{ "source": "snu_events", "lastSucceededAt": "…", "lastFailedAt": null, "lastFailureReason": null }`. All three are
+  `null` for a Source never collected (see [Requests from the worker server](#requests-from-the-worker-server)).
+  `src/collection/admin-collection.controller.ts` serves it.
+
+An Administrator creates and changes them through the same controller. Each answers the event as
+`GET /admin/global-events/:id` does:
+
+- `POST /admin/global-events` with `{ "title", "description", "startsAt", "endsAt", "place", "latitude", "longitude" }`
+  creates a Draft by hand, such as from an organizer's submission, and answers 201 with it: version 1, `postNumber` and
+  `sourceUrl` `null`. `title` and `description` are required, and a field left out is `null`. It requires an
+  `Idempotency-Key` (see [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)).
+- `PATCH /admin/global-events/:id` with `{ "version", ... }` and any of the same fields edits a Draft or a published
+  event, which stays published, and answers 200 with it. A field left out stays as it is, and `null` clears an optional
+  one.
+- `POST /admin/global-events/:id/publish`, `/discard` and `/cancel`, each with `{ "version" }`, change the event's
+  state and answer 200 with it.
+
+The fields, on creating and editing. A body that breaks a rule gets 400 with a message that starts with the field, such
+as `endsAt: The end must be after the start`, and nothing changes:
+
+- `title`: 1 to 200 characters, with the spaces around dropped.
+- `description`: any text, empty included.
+- `startsAt` and `endsAt`: times with their offset, or `null`. The end is after the start, also when an edit sends one
+  of them and the other is stored.
+- `place`: 1 to 200 characters, with the spaces around dropped, or `null`.
+- `latitude` and `longitude`: given together, both `null` to clear the position, and inside the
+  [Campus Boundary](#campus-boundary). The boundary is checked by `GlobalEventsService`, not by the body's schema.
+
+The changes of state an Administrator makes are these, and no other:
+
+| Change    | From        | To          |
+| --------- | ----------- | ----------- |
+| `publish` | `draft`     | `published` |
+| `discard` | `draft`     | `discarded` |
+| `cancel`  | `published` | `cancelled` |
+
+Publishing needs a title, a start and a position, and a published event keeps all three: an edit that would leave it
+without its start or its position is refused too. The refusal's `missing` names what is lacking, as in the lists; a
+title is never empty.
+
+Every change carries the version the Administrator loaded and raises it by one. The version is compared and raised in
+the statement that writes the change, so of two changes made from the same version at the same moment one is applied
+and the other refused, and an Administrator who edited from an older version is told instead of overwriting another's
+work.
+
+The refusals each have a `code`, and are checked in the order of the table:
+
+| Refusal                                                                         | Status | `code`                    | Also in the body |
+| ------------------------------------------------------------------------------- | ------ | ------------------------- | ---------------- |
+| An unknown id                                                                   | 404    | `GLOBAL_EVENT_NOT_FOUND`  |                  |
+| A change the state does not allow, or an edit of a cancelled or discarded event | 409    | `GLOBAL_EVENT_STATE`      | `state`          |
+| A `version` that is not the stored one                                          | 409    | `GLOBAL_EVENT_CHANGED`    | `version`        |
+| Publishing without a start or a position, or an edit that would remove one      | 409    | `GLOBAL_EVENT_INCOMPLETE` | `missing`        |
+
+An id that is not a UUID gets 400, as does a body that breaks the rules above, before any of these.
+
+Once the change is written, `global-events-changed` goes to every connected app when an event is published, when a
+published event is edited and when it is cancelled. Creating, editing a Draft, discarding and a refused change send
+none. When a published event is edited or cancelled, `quests-changed` goes to the Holders of every Quest for it too,
+since their attending Sub Quests read the event (see [Quests](#quests)).
 
 The worker sends each post of the events list as one event, all those of a Collection in one message:
 
@@ -448,7 +608,7 @@ Any other collected event is stored as a Draft with whatever was read: an event 
 names no Place or several, and a post that is not an event, which mostly writes no such time and place. A rule that
 is not sure makes a Draft.
 
-A Draft may already hold a start and a position, so P12's check before an Administrator publishes one cannot rest on
+A Draft may already hold a start and a position, so the check before an Administrator publishes one cannot rest on
 those fields being filled:
 
 - its start may be the header's date, which is often the application period, and a day read without a time of day is
@@ -489,13 +649,18 @@ stored post again: an edit or a deletion at the Source after that is not seen.
 
 A Collection that stores at least one event as published sends `global-events-changed` to every connected app once
 the events are stored, and the app fetches the published events again (see [Signals](#signals)). It carries nothing. A
-Collection that stores only Drafts, or no new post, sends none. `GlobalEventsService.signalChanged()` sends it, and P12
-calls it once its change is committed when an Administrator publishes, edits or cancels a Global Event.
+Collection that stores only Drafts, or no new post, sends none. `GlobalEventsService.signalChanged()` sends it, also
+after an Administrator's change (see above).
 
 What the rules read from a post, and how, is in the worker server's README. In a test, `collectedEvent()`,
 `eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
-`test/global-events.e2e-spec.ts` does. No route serves Global Events yet, so the tests read them with a database
-connection of their own.
+`test/global-events.e2e-spec.ts` does; it reads what a Collection stored, by post number, with a database connection
+of its own. `test/global-event-lists.ts` reads the lists above, and `test/global-event-changes.ts` calls the
+Administrator's changes. The test files share one database, so `publishedAmong()` and `listedAmong()` keep only the
+events a test names, in the list's order. `signalsWhile()` in `test/signals.ts` gives the `global-events-changed`
+signals sent while a test acts, between two signals of the test's own. Other files publish, edit and cancel events
+too, so `test/global-events.e2e-spec.ts` and `test/admin-global-event-signals.e2e-spec.ts`, which check that none is
+sent, each run their server and `SignalWatcher` on a Redis of their own, where no other file's signal can reach them.
 
 ## Quests
 
@@ -513,11 +678,13 @@ The routes, all a User's:
   no `Idempotency-Key`.
 - `POST /quests/own` makes a Quest of the User's own, without a Global Event, and answers 201 with it. It requires an
   `Idempotency-Key`, which is why it is a route apart from attending. The body:
-  `{ "title": "저녁 같이 먹어요", "subQuest": { ... }, "capacity": 4, "joinPolicy": "open" }`: the title has 1 to 50
-  characters, `subQuest` is the body of adding a Sub Quest below and becomes the Quest's first, and `capacity` (1 to 8)
-  and `joinPolicy` (`open`, `approval` or `closed`) are optional.
-- `GET /quests/recruiting` answers the list of recruiting Quests, and `GET /quests/recruiting?globalEventId=...` the
-  same for one Global Event (see below).
+  `{ "title": "저녁 같이 먹어요", "subQuest": { ... }, "joinPolicy": "open", "board": "meal", "description": "…" }`:
+  the title has 1 to 50 characters, `subQuest` is the body of adding a Sub Quest below and becomes the Quest's first,
+  and `capacity` (1 to 8), `joinPolicy` (`open`, `approval` or `closed`), `board` and `description` are optional in
+  the schema. `board` is required for an `open` or `approval` Quest and refused for a Closed one, also when
+  `joinPolicy` is left out (see the boards below).
+- `GET /quests/recruiting` answers the list of recruiting Quests, `GET /quests/recruiting?globalEventId=...` the same
+  for one Global Event and `GET /quests/recruiting?board=meal` for one board; the two combine (see below).
 - `POST /quests/:questId/join` joins an Open Quest and answers 201 with it. A second join is refused, so it takes no
   `Idempotency-Key`.
 - `GET /quests` answers the User's Quests in the order they were created, then today's Class Quests (below), leaving
@@ -545,6 +712,9 @@ A Quest reads:
   "leader": { "id": "…", "name": "홍길동", "department": "컴퓨터공학부" },
   "capacity": 4,
   "joinPolicy": "closed",
+  "board": null,
+  "description": "",
+  "createdAt": "2026-10-06T08:00:00.000Z",
   "holders": [{ "id": "…", "name": "홍길동", "department": "컴퓨터공학부" }],
   "subQuests": [
     {
@@ -574,8 +744,10 @@ A Quest reads:
 - A Sub Quest's `place` is `null` when it has none. `placeId` is the Place's id for a Place from the list, whose name
   is then the `label`, and `null` for a point.
 - `done` and `ended` are the reading User's. Overlapping times, within a Quest or across a User's Quests, are accepted.
-- `classQuest` is `true` for a Class Quest and `false` for every stored Quest. `leader` is `null` for a Class Quest
-  only.
+- `board` is `null` for a Closed Quest, `description` is `""` when there is none, and `createdAt` is when the Quest was
+  made.
+- `classQuest` is `true` for a Class Quest and `false` for every stored Quest. `leader` and `createdAt` are `null` for
+  a Class Quest only.
 
 The refusals each have a `code`:
 
@@ -599,7 +771,8 @@ A body that does not match gets 400 with a message naming the field, such as `en
 
 **The attending Sub Quest** stores no title, time or place. Each read takes the Global Event's title, `startsAt`,
 `endsAt`, `place` as the label and its position, so a change to the event shows at once. Once the event is no longer
-published, as when it is cancelled, the Sub Quest reads as `cancelled` and ended. No Holder edits or cancels it.
+published, as when it is cancelled, the Sub Quest reads as `cancelled` and ended. No Holder edits or cancels it. When
+an Administrator edits a published event or cancels it, the Holders of every Quest for it get `quests-changed`.
 
 **How a Sub Quest ends.** Its `completion` is `by_time` when it has an end time and `by_hand` when it has none; for the
 attending Sub Quest, when the Global Event has none. A Sub Quest is ended for a User when its end time has passed, for
@@ -614,8 +787,8 @@ from `TimetableService.classesOf`:
 
 - There is one for each class with a time on today's weekday, by the date in Asia/Seoul at `now()` of `CLOCK`, every
   week. The list puts them after the stored Quests, in the order of their first start today.
-- Its `id` is the class's and its `title` the course name. `globalEvent` and `leader` are `null`, `capacity` is 1,
-  `joinPolicy` is `closed` and the User is its only Holder.
+- Its `id` is the class's and its `title` the course name. `globalEvent`, `leader`, `board` and `createdAt` are
+  `null`, `description` is `""`, `capacity` is 1, `joinPolicy` is `closed` and the User is its only Holder.
 - It has one Sub Quest for each of the class's times today, in the order of their starts. The Sub Quest's `id` is the
   time's, `attending` is `false`, its `title` is the course name, `startsAt` and `endsAt` are today's start and end as
   instants (the `HH:MM` at +09:00), `completion` is `by_time`, and `cancelled` and `done` are `false`. Its `place` is
@@ -626,11 +799,12 @@ from `TimetableService.classesOf`:
 
 It takes no part in what Users do with stored Quests. For the identifier of any of the User's classes, held today or
 not, these routes refuse with 409 `CLASS_QUEST` and change nothing: dropping it; adding a Sub Quest, and editing,
-cancelling and marking one done; joining; asking to join; the Leader's controls; listing, accepting and declining its
-requests to join; and inviting. Another User's class is no Quest of the User, and each of these routes answers it as a
-Quest the User does not hold: `QUEST_NOT_FOUND`. The check is asked only when no stored Quest answers the identifier,
+cancelling and marking one done; joining; asking to join; the Leader's controls, ending it included; listing,
+accepting and declining its requests to join; and inviting, listing its invitations and cancelling one. Another User's
+class is no Quest of the User, and each of these routes answers it as a Quest the User does not hold:
+`QUEST_NOT_FOUND`. The check is asked only when no stored Quest answers the identifier,
 where each route first looks its Quest up, so stored Quests are served as before: `QuestsService.inQuest` for dropping
-and the Sub Quest routes, `LeaderService.ledBy` for the Leader's controls, the requests and inviting,
+and the Sub Quest routes, `LeaderService.ledBy` for the Leader's controls, the requests and the invitations,
 `RecruitingService.enter` for joining and `JoinRequestsService.ask` for asking. A Class Quest is no stored Quest, so it
 is never in the list of recruiting Quests, and opening a [Party](#party) for it gets `QUEST_NOT_FOUND`.
 
@@ -652,9 +826,19 @@ they ask and the Leader decides; `closed`, only by the Leader's invitation. A Qu
 When the Leader drops the Quest, the Holder who entered earliest leads it. `quest_holders.joined_at` keeps when each
 Holder entered. The Leader changes the settings, hands the role over and removes Holders (see below).
 
+**Boards and the description.** An `open` or `approval` Quest is posted on a board, where the list of recruiting Quests
+shows it: `meal` (식사), `career` (진로), `hobby` (취미) or `show` (공연). A `closed` Quest is on none. Every Quest,
+under any Join Policy, carries a `description` of 0 to 200 characters, its recruiting post, empty by default. A Quest
+from attending, from a Meetup or from a match starts Closed, on no board and with an empty description. The Leader sets
+both when making the Quest (`POST /quests/own`, which refuses with 400 naming `board` a recruiting Quest without one
+and a Closed Quest with one, and naming `description` one over 200 characters) and changes them with
+`PATCH /quests/:questId` (below), also for a Quest with a Global Event. The migration checks both rules, so no way of
+storing a Quest breaks them.
+
 **The list of recruiting Quests** holds the `open` and `approval` Quests that the reader does not hold and that have a
-Sub Quest ahead, the newest first. A Sub Quest is ahead while it is not cancelled and its end time has not passed; a
-Holder's mark of done does not count. A `closed` Quest is in no list. Each entry reads:
+Sub Quest ahead, the newest first, by `createdAt`; `?board=` narrows it to one board, and a board outside the four is
+refused with 400. A Sub Quest is ahead while it is not cancelled and its end time has not passed; a Holder's mark of
+done does not count. A `closed` Quest is in no list. Each entry reads:
 
 ```json
 {
@@ -665,6 +849,9 @@ Holder's mark of done does not count. A `closed` Quest is in no list. Each entry
   "holderCount": 2,
   "capacity": 4,
   "joinPolicy": "open",
+  "board": "meal",
+  "description": "학관에서 저녁 먹을 사람",
+  "createdAt": "2026-10-06T08:00:00.000Z",
   "nextSubQuest": {
     "id": "…",
     "attending": false,
@@ -695,10 +882,10 @@ Joining changes no Party.
 Leader invites a Friend into the Quest whatever its Join Policy, and the Friend accepts or declines. Accepting either
 goes through `RecruitingService.enter`, so it is refused as joining is: `QUEST_ENDED`, `QUEST_FULL` and
 `SHARED_QUEST_HELD`, while a Quest the User holds alone for the Global Event is replaced. A refused acceptance leaves
-the request or the invitation waiting. Both wait until they are answered, and end with the Quest and when their User
-enters that Quest in any way; entering another Quest leaves them. A request stays the Leader's to accept or decline
-after the Leader changes the Join Policy, since accepting it is the Leader's own decision, as an invitation is. The
-routes:
+the request or the invitation waiting. Both wait until they are answered, or the Leader cancels the invitation, and end
+with the Quest and when their User enters that Quest in any way; entering another Quest leaves them. A request stays the
+Leader's to accept or decline after the Leader changes the Join Policy, since accepting it is the Leader's own decision,
+as an invitation is. The routes:
 
 - `POST /quest-join-requests` with `{ "questId": "..." }` asks to join and answers 201 with the request. A second
   request is refused, so it takes no `Idempotency-Key`. `GET /quest-join-requests` answers the User's waiting requests,
@@ -709,19 +896,33 @@ routes:
 - `POST /quests/:questId/invitations` with `{ "userId": "..." }` invites a Friend of the Leader and answers 204.
   `GET /quest-invitations` answers the User's invitations, `POST /quest-invitations/:id/accept` makes the User a Holder
   and answers 201 with the Quest, and `.../decline` ends the invitation and answers 204.
+- `GET /quests/:questId/invitations` answers the Leader the Quest's waiting invitations with who was invited,
+  `{ "id", "user": { "id", "name", "department" }, "sentAt" }`, as the list of requests reads.
+  `DELETE /quests/:questId/invitations/:id` cancels a waiting invitation and answers 204. An invitation that is not
+  waiting in this Quest, a repeat included, is refused, so it takes no `Idempotency-Key`. Accepting checks once the
+  Quest is locked that the invitation still waits, so an acceptance and a cancel at the same moment leave either a
+  Holder or a cancelled invitation.
 
-A request as its User lists it, and an invitation, read
-`{ "id", "quest": { "id", "title", "globalEvent", "leader", "holderCount", "capacity", "joinPolicy" }, "sentAt" }`, the
-Quest as it is now; the lists are the newest first.
+A request as its User lists it, and an invitation, read `{ "id", "quest": { "id", "title", "globalEvent", "leader",
+"holderCount", "capacity", "joinPolicy", "board", "description", "createdAt" }, "sentAt" }`, the Quest as it is now;
+the lists are the newest first.
 
 **The Leader's controls**, each refused with `NOT_QUEST_LEADER` for another Holder:
 
-- `PATCH /quests/:questId` with any of `{ "title", "capacity", "joinPolicy" }` changes the settings and answers 200 with
-  the Quest. What is left out stays. A Quest with a Global Event keeps the event's title. Making a Quest from attending
-  `open` or `approval` is how it starts gathering people.
+- `PATCH /quests/:questId` with any of `{ "title", "capacity", "joinPolicy", "board", "description" }` changes the
+  settings and answers 200 with the Quest. What is left out stays, and the Quest the change leads to is checked: an
+  `open` or `approval` Quest without a board, from the body or stored, is refused with `BOARD_REQUIRED`; a `board` in
+  a body that leaves the Quest Closed with `BOARD_FOR_CLOSED_QUEST`; a change to `closed` without a board clears the
+  stored one, and a `description` of `""` clears it. A Quest with a Global Event keeps the event's title. Making a
+  Quest from attending `open` or `approval`, on a board, is how it starts gathering people.
 - `PUT /quests/:questId/leader` with `{ "userId": "..." }` hands the role to another Holder and answers 204.
 - `DELETE /quests/:questId/holders/:userId` removes a Holder and answers 204. The Holder goes as one who dropped the
   Quest, with their progress, and may enter it again.
+- `POST /quests/:questId/end` ends the Quest for every Holder and answers 204: it is deleted with its Sub Quests, the
+  Holders' progress, its requests to join and its invitations, as when its last Holder drops it, and a running Party
+  for it goes on with `quest: null`. A repeat is refused as a Quest the User does not hold, so it takes no
+  `Idempotency-Key`. An entry, an answer or another control at the same moment runs after it and is refused as for a
+  Quest that is gone. `DELETE /quests/:questId` stays one Holder's drop.
 
 Accepting a request and removing a Holder lock that User before the Quest, as entering does, and every control checks
 the Leader once the Quest is locked, so that a control and a change of Leader at the same moment run one after the
@@ -737,21 +938,24 @@ other.
 | A request that is not waiting, or not the User's or the Quest's       | 404    | `QUEST_JOIN_REQUEST_NOT_FOUND`    |
 | Inviting a User who is not the Leader's Friend                        | 404    | `FRIEND_NOT_FOUND`                |
 | A second invitation of the same User into the Quest                   | 409    | `QUEST_INVITATION_ALREADY_SENT`   |
-| An invitation that is not waiting for the User                        | 404    | `QUEST_INVITATION_NOT_FOUND`      |
+| An invitation that is not waiting for the User, or in the Quest       | 404    | `QUEST_INVITATION_NOT_FOUND`      |
 | A Leader's action by another Holder                                   | 403    | `NOT_QUEST_LEADER`                |
 | A Leader's action by a User who does not hold the Quest               | 404    | `QUEST_NOT_FOUND`                 |
 | A capacity below the number of Holders                                | 409    | `CAPACITY_BELOW_HOLDERS`          |
 | A title for a Quest with a Global Event                               | 409    | `QUEST_TITLE_FROM_GLOBAL_EVENT`   |
+| An `open` or `approval` Quest without a board                         | 409    | `BOARD_REQUIRED`                  |
+| A `board` for a Quest that stays or becomes Closed                    | 409    | `BOARD_FOR_CLOSED_QUEST`          |
 | Handing the role to, or removing, a User who does not hold the Quest  | 404    | `NOT_QUEST_HOLDER`                |
 
-How they are stored: `quests` holds the title, the Global Event, which never changes, `leader_id`, `capacity`, which
-the migration checks to be from 1 to 8, and `join_policy`; `quest_holders` one row for each Holder, unique for the
-Quest and the User, with the time the Holder entered; `sub_quests` the Sub Quests, `attending` marking the one for the Global
-Event, of which a Quest has at most one; and `sub_quest_progress` one row for each Sub Quest a Holder marked done, which
-goes with the Holder's row; `quest_join_requests` and `quest_invitations` one row for each waiting request and
-invitation, unique for the Quest and the User, deleted with the Quest. Checks in the migration keep the attending Sub
-Quest without title, time and place, the end after the start, and the place a Place, a point with its label, or
-neither.
+How they are stored: `quests` holds the title, the Global Event, which never changes, `leader_id`, `capacity`, which the
+migration checks to be from 1 to 8, `join_policy`, `board` of the type `quest_board`, which a check keeps set exactly
+when the Join Policy is not `closed`, and `description`, which a check keeps to 200 characters; `quest_holders` one row
+for each Holder, unique for the Quest and the User, with the time the Holder entered; `sub_quests` the Sub Quests,
+`attending` marking the one for the Global Event, of which a Quest has at most one; and `sub_quest_progress` one row for
+each Sub Quest a Holder marked done, which goes with the Holder's row; `quest_join_requests` and `quest_invitations` one
+row for each waiting request and invitation, unique for the Quest and the User, deleted with the Quest. Checks in the
+migration keep the attending Sub Quest without title, time and place, the end after the start, and the place a Place, a
+point with its label, or neither.
 
 Another feature changes Quests in its own transaction with `QuestsService`, exported by `QuestsModule`. Every change to
 one Quest locks it first, so that changes run one after another:
@@ -788,18 +992,22 @@ What only [Matching](#matching) reads of the Quests is in `MatchingQuestsService
 - `forMatch(matchId, tx)` answers the id of the Quest created for the match server's match, or `null`.
 
 `RecruitingService`, also exported, has `enter(questId, userId, tx, admits?)`, described above. `admits(quest)` is the
-way in's own check, such as the Join Policy, made once the Quest is locked; it throws to refuse. It answers the Holders
-to send `quests-changed` to, the User included, once the transaction commits.
+way in's own check, such as the Join Policy, made once the Quest is locked; it throws, or rejects, to refuse. It answers
+the Holders to send `quests-changed` to, the User included, once the transaction commits.
 
-`quests-changed` goes to every Holder, the one who acted included, when a Quest is created by attending, made or for a match, when a
-Sub Quest is added, edited or cancelled, when a User enters or is placed by Matching, when a Holder drops the Quest, which may pass on the
-Leader's role, and when the Leader changes the settings, hands the role over or removes a Holder, the removed one
-included. It goes to the Leader when a request arrives or is withdrawn, to a User whose request the Leader declines or
-who declines an invitation, and to an invited User. A mark of done is the Holder's own and sends nothing. The signal carries
-nothing, and the app fetches `GET /quests`, the requests to join and the invitations again (see [Signals](#signals)).
+`quests-changed` goes to every Holder, the one who acted included, when a Quest is created by attending, made or for a
+match, when a Sub Quest is added, edited or cancelled, when a User enters or is placed by Matching, when a Holder drops
+the Quest, which may pass on the Leader's role, and when the Leader changes the settings, hands the role over or removes
+a Holder, the removed one included, and when an Administrator edits or cancels the Quest's published Global Event.
+When the Leader ends the Quest, it goes to every Holder and to every User whose
+request or invitation was waiting, all read before the Quest is deleted. It goes to the Leader when a request arrives or
+is withdrawn and when an invitation is declined, to a User whose request the Leader declines or who declines an
+invitation, and to an invited User when invited and when the Leader cancels the invitation. A mark of done is the
+Holder's own and sends nothing. The signal carries nothing, and the app fetches `GET /quests`, the requests to join and
+the invitations again (see [Signals](#signals)).
 
-In a test, `test/quests.ts` stores a published Global Event with a connection of its own, since no route creates one
-yet, and calls the routes above; `test/quest-recruiting.ts` calls those of requests, invitations and the Leader's
+In a test, `test/quests.ts` stores a Global Event with a connection of its own, in any state and without the signals of
+the Administrator's routes, and calls the routes above; `test/quest-recruiting.ts` calls those of requests, invitations and the Leader's
 controls. `storeSharedQuest()` stores a Quest with
 several Holders the same way, led by the first.
 
@@ -1011,7 +1219,7 @@ A Party is the group of Users who are together now: a title, a capacity from 1 t
 members and, when it was opened for one, its Quest. A User is in at most one Party. A Party is opened by hand: a Holder
 opens the Party of one of their Quests when the time comes, or a User opens one tied to no Quest to be with Friends.
 The opener is its Leader and first member. When the Leader leaves, the member who entered earliest becomes Leader, and
-the Party ends when its last member leaves. It never ends by itself. The routes, all a User's:
+the Party ends when its last member leaves or when the Leader ends it. It never ends by itself. The routes, all a User's:
 
 - `POST /parties` with `{ "title": "설명회 같이", "capacity": 4, "joinPolicy": "open", "questId": "..." }` opens a
   Party and answers 201 with it. The title has 1 to 50 characters; `capacity` is 4 and `joinPolicy` (`open`,
@@ -1046,8 +1254,8 @@ The User's Party reads:
 }
 ```
 
-- `quest` is `null` for a Party tied to no Quest, and becomes `null` when the last Holder drops the Quest; the Party
-  goes on. Its `globalEvent` is `null` for a Quest without one.
+- `quest` is `null` for a Party tied to no Quest, and becomes `null` when the last Holder drops the Quest or its Leader
+  ends it; the Party goes on. Its `globalEvent` is `null` for a Quest without one.
 - `sharing` is the reading User's own switch for the Party. The members are in the order they entered, the reading
   User among them, and `visible` says whether the reading User can see each on the map now, never why not (see
   [Location Sharing](#location-sharing)).
@@ -1065,14 +1273,16 @@ without the User's own:
     "capacity": 4,
     "joinPolicy": "approval",
     "quest": { "id": "…", "title": "지능형통신 연합전공 설명회", "globalEvent": { "id": "…", "title": "…" } },
+    "leader": { "id": "…", "name": "홍길동" },
     "holdsQuest": false,
     "friends": [{ "id": "…", "name": "김철수", "department": "경영학과" }]
   }
 ]
 ```
 
-`holdsQuest` says whether the reading User holds the Party's Quest, and `friends` are the reading User's Friends among
-the members, in the order they entered. No position is in the list.
+`leader` is the Party's Leader now, its opener until the role passes. `holdsQuest` says whether the reading User holds
+the Party's Quest, and `friends` are the reading User's Friends among the members, in the order they entered. No
+position is in the list.
 
 **Who enters.**
 
@@ -1121,8 +1331,8 @@ Party, by any way in or by opening one. Ending this way sends no signal of its o
 
 **Entering a Party changes no Quest.** A User who enters, by any way, without holding the Party's Quest does not
 become its Holder, and a Quest the User holds for the same Global Event stays. Joining the plan goes through the Quest
-([Quests](#quests)). Leaving, a removal and the Party's end leave every Quest as it is, and dropping the Party's Quest
-leaves the membership as it is.
+([Quests](#quests)). Leaving, a removal and the Party's end leave every Quest as it is, and dropping or ending the
+Party's Quest leaves the membership as it is.
 
 **The Leader's controls**, each refused for another member:
 
@@ -1131,6 +1341,11 @@ leaves the membership as it is.
   is refused.
 - `PUT /parties/mine/leader` with `{ "userId": "..." }` hands the role to that member and answers 204.
 - `DELETE /parties/mine/members/:userId` removes that member and answers 204. A removed member may enter again.
+- `POST /parties/mine/end` ends the Party for every member and answers 204: every member is taken out, and the Party is
+  deleted with its requests and invitations, as when its last member leaves. A repeat is refused as a User in no Party,
+  so it takes no `Idempotency-Key`. It locks every member, in the order of their ids, and then the Party, so a User
+  entering or leaving at the same moment runs before or after it; after it, entering gets `PARTY_NOT_FOUND` and
+  leaving `NOT_IN_PARTY`.
 
 The refusals each have a `code`:
 
@@ -1173,7 +1388,8 @@ not stop the opening.
 **Location Sharing.** A common Party is a relationship of [Location Sharing](#location-sharing): two members see each
 other while both have the Party's switch on, which starts on with each membership. Holding the Party's Quest is no
 relationship: a Holder shares nothing with the Party until they enter it. Leaving, a removal and the switch are wrapped
-in `VisibilityService.announceRemovals`, so `position-removed` goes at once to and about the member.
+in `VisibilityService.announceRemovals`, so `position-removed` goes at once to and about the member; the Party's end
+wraps its change around all the members, so it goes for every sight the end takes away.
 
 How they are stored: `parties` holds the title, the capacity, which a check keeps from 1 to 8, the Join Policy, the
 shared `join_policy` type of Quests, the Leader and the Quest, which becomes empty when its Quest is deleted;
@@ -1186,7 +1402,7 @@ invitations again (see [Signals](#signals)). It goes:
 
 - to the members, the Holders of the Party's Quest and the Friends of its members when a Party opens, when a User
   enters by any way, when a member leaves or is removed, the one who went and their Friends included, when the Leader
-  changes the settings and when the Party ends;
+  changes the settings and when the Party ends, also by the Leader's end, to the audience it had before;
 - to the members when the Leader hands the role over;
 - to the Leader when a request arrives or is withdrawn;
 - to the User who asked when the Leader declines, and to the invited User when invited and when they decline.
@@ -1346,6 +1562,15 @@ typing coordinates:
   The Places with a number come first, by number (`25`, `25-1`, `26`), then those without one, such as `자하연`, in the
   Korean order of their names. `id` is the same in every database and never changes, so a class's time or a Meetup
   can point at it (`docs/adr/0002-place-ids-computed-from-the-source.md`).
+
+- An Administrator reads the same list at `GET /admin/places`, each Place with two more fields, so that the admin site
+  can show how the seed placed and outlined it: `origin`, `campus_map`, `openstreetmap` or `national_map`, and
+  `outlines`, the stored outlines, `[]` for a Place without one:
+
+  ```json
+  { "id": "1b7e…", "number": "301", "name": "제1공학관", "latitude": 37.45016, "longitude": 126.95259,
+    "origin": "campus_map", "outlines": [[{ "latitude": 37.4504, "longitude": 126.9521 }, …]] }
+  ```
 
 - `GET /places/search?q=공학관` answers, in the same order and form, the Places whose name holds `q`, whatever the
   case of its Latin letters, and the Place whose number is `q`, written with or without `동` (`302`, `302동`). A search
@@ -1671,6 +1896,66 @@ Each exported file keeps, at its top, where it came from and the day of the expo
   origin gives one, as for a shuttle stop, a key of the seed's own. `readSeedFile()` beside `SEED_DIRECTORY` reads a
   file and checks it against a schema.
 
+## Demo data
+
+`docker compose --profile demo up --build` in the repository root starts the system as `docker compose up --build`
+does and fills it with demo data, so that every feature of the app can be tried at once. Three services do it, all
+under the profile `demo`, so that `docker compose up` and the tests never start them:
+
+| Service       | Image         | Command                       | What it does                                                                                  |
+| ------------- | ------------- | ----------------------------- | --------------------------------------------------------------------------------------------- |
+| `demo-seed`   | main server   | `node dist/demo-seed --watch` | writes the demo data once the main server is healthy, then prepares the accounts named below  |
+| `demo-walker` | main server   | `node dist/demo-walk`         | once the data is written, uploads the demo Users' positions every 5 seconds, and the vehicles |
+| `demo-menus`  | worker server | `node dist/demo-menus`        | sends the saved menu pages as today's and the next six days' menus, then exits                |
+
+They read the `.env` files of their projects, as the servers do. Outside Compose, `pnpm demo:seed` writes the data
+and prepares the accounts once against `DATABASE_URL`, and `pnpm demo:walk` walks against `MAIN_SERVER_URL`, or
+`http://localhost:3000` without it; the worker server's `pnpm demo:menus` is in its README.
+
+**What the data holds** (`src/demo/demo-data.ts`):
+
+- 8 demo Users, onboarded, with Korean names, departments, admission years, hashtags and the Friend IDs `DEMA2345` to
+  `DEMH2345`. Their Google subjects, `demo-1` to `demo-8`, are no Google account's, so nobody signs in as them, and
+  their addresses end in `@demo.invalid`. Each has an open Session, for which the walker signs access tokens. All but
+  정예준 have the Master Switch on. Some are Friends of each other.
+- 6 published Global Events at Places of the campus map, with their names and coordinates: one under way, one later
+  today and one on each of the next four days.
+- 8 recruiting Quests, an Open and an Approval one on each of the four Boards, led by demo Users, with descriptions and
+  Sub Quests at Places. The 공연 Board's two are Quests for Global Events. Some have two Holders.
+- The Party `중도 스터디 중`, Open, for the Quest `중도에서 같이 공부해요`, whose two Holders are its members.
+
+The times count from the run: a time of the day in hours after the next half hour, and the days ahead at a time of day
+in Asia/Seoul. Every row has an id of its own, a UUID computed from its name, or a unique key such as the Google subject
+or the two Users of a friendship, so a run updates in place what an earlier run wrote and makes again what was deleted.
+`docker compose --profile demo restart demo-seed` brings the times up to date. The run tells every app that the Global
+Events changed.
+
+**Real accounts.** `DEMO_ACCOUNT_EMAILS` in `main-server/.env` lists the addresses of real SNU accounts, separated by
+commas, in any case. A User with one of them who has finished Onboarding is given:
+
+- friendships with 김민준, 이서연, 박지호, 최수아 and 정예준: the Party's two members, whose Party the account can enter,
+  and 정예준, whose Avatar never shows;
+- Friend Requests from 강하은 and 윤도윤;
+- an invitation into `체육관 배드민턴`, an Approval Quest led by 박지호;
+- a Meetup proposed by 최수아, in two hours at 학생회관;
+
+and then `friends-changed`, `quests-changed`, `meetups-changed` and `party-changed`. What already lies between the
+account and a demo User, such as a friendship the person ended, is left as it is. `demo-seed` looks for such Users every
+5 seconds and prepares each once per run, so that a request the person declined does not come back until the service
+starts again. The main server itself has no demo code or setting: the seed writes through Prisma and sends the signals
+over Redis as `SignalsService` does.
+
+**The walker** signs each demo User's access token with `ACCESS_TOKEN_PRIVATE_KEY`, for the User's Session, as a
+sign-in does, and uploads a position through `POST /positions` every 5 seconds, so that the positions take a phone's
+path: the checks, the Campus Boundary and the `position` signals. The Users walk the shuttle's line at 1.4 m/s, spread
+along it, every other one the other way round (`src/demo/walk.ts`); the whole line lies inside the Campus Boundary. A
+refused upload is logged and the walker goes on. Every 15 seconds outside weekdays 08:00 to 21:00 in Asia/Seoul, when
+the worker does not collect the operator's vehicles, it also sends two vehicles, `DEMO1` and `DEMO2`, half a loop apart
+and a stop further every 90 seconds, through `POST /shuttle/vehicles/collected` with `WORKER_TOKEN`. Within those hours
+the operator's vehicles are shown, since each set replaces the one before.
+
+**Starting again**: `docker compose --profile demo down -v` deletes the database with the demo data.
+
 ## Checks
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
@@ -1697,6 +1982,9 @@ src/
 ├── main.ts                          starts the server
 ├── seed.ts                          the command that loads the seed files, `pnpm db:seed`
 ├── load-seed.ts                     loads every seed file; the command and the tests call it
+├── demo-seed.ts                     the command that writes the demo data, `pnpm demo:seed`
+├── demo-walk.ts                     the command that walks the demo Users, `pnpm demo:walk`
+├── demo/                            the demo profile's data, its seed and the walker's paths (not a module)
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
@@ -1950,7 +2238,8 @@ so a message is stored once. Every route for the worker follows these rules.
   `recordFailure()` with the transaction in place of the success, even when it carries no event. Any other Collection
   that fails posts `{ "source", "failedAt", "reason" }` to `/collections/failed`, where `reason` says what went wrong.
   It records the failure and leaves every stored record as it is. A success leaves the last failure in place, so the two
-  times tell whether the Source has worked since. No route serves the status yet; P12 shows it.
+  times tell whether the Source has worked since. `GET /admin/collection-statuses` serves it to Administrators (see
+  [Global Events](#global-events)).
 - **A new Source** adds its value to `Source` with a migration. `menusCollectedSchema` lists the Sources that send
   menus, the shuttle's two schemas the one that sends each, and `eventsCollectedSchema` the one that sends events, so a
   Source of another kind is refused there.

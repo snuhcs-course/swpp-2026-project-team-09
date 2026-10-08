@@ -3,14 +3,20 @@ import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { FriendsService } from '../friends/friends.service.js';
 import { QuestDto } from './dto/quest.dto.js';
-import { toWaitingDto, WAITING_INCLUDE, WaitingDto } from './dto/waiting.dto.js';
+import {
+  toWaitingDto,
+  toWaitingUserDto,
+  WAITING_INCLUDE,
+  WAITING_USER_INCLUDE,
+  WaitingDto,
+  WaitingUserDto,
+} from './dto/waiting.dto.js';
 import { LeaderService } from './leader.service.js';
 import { QuestsService } from './quests.service.js';
 import { RecruitingService } from './recruiting.service.js';
 import { alreadyHolder, conflict, notFound } from './refusals.js';
 
-const invitationNotFound = (): NotFoundException =>
-  notFound('QUEST_INVITATION_NOT_FOUND', 'No such invitation waits for this User.');
+const invitationNotFound = (): NotFoundException => notFound('QUEST_INVITATION_NOT_FOUND', 'No such invitation waits.');
 
 // The Leader's invitations of Friends. An invitation admits whatever the Join Policy is, waits until the invited User
 // answers it, and ends with the Quest and when the User enters it in any way (RecruitingService.enter).
@@ -52,24 +58,62 @@ export class InvitationsService {
     return invitations.map((invitation) => toWaitingDto(invitation));
   }
 
-  // A refused acceptance leaves the invitation waiting.
+  // The Quest's waiting invitations, the newest first.
+  listSent(leaderId: string, questId: string): Promise<WaitingUserDto[]> {
+    return this.prisma.$transaction(async (tx) => {
+      await this.leader.lockLed(questId, leaderId, tx);
+      const invitations = await tx.questInvitation.findMany({
+        where: { questId },
+        include: WAITING_USER_INCLUDE,
+        orderBy: [{ sentAt: 'desc' }, { id: 'desc' }],
+      });
+      return invitations.map((invitation) => toWaitingUserDto(invitation));
+    });
+  }
+
+  async cancel(leaderId: string, questId: string, invitationId: string): Promise<void> {
+    const userId = await this.prisma.$transaction(async (tx) => {
+      await this.leader.lockLed(questId, leaderId, tx);
+      const invitation = await tx.questInvitation.findFirst({ where: { id: invitationId, questId } });
+      if (invitation === null || (await tx.questInvitation.deleteMany({ where: { id: invitationId } })).count === 0) {
+        throw invitationNotFound();
+      }
+      return invitation.userId;
+    });
+    this.signals.send([userId], 'quests-changed');
+  }
+
+  // A refused acceptance leaves the invitation waiting. Checked again once the Quest is locked, so that an invitation
+  // the Leader cancelled meanwhile admits nobody.
   async accept(userId: string, invitationId: string): Promise<QuestDto> {
     const { questId, holderIds } = await this.prisma.$transaction(async (tx) => {
       const invitation = await tx.questInvitation.findFirst({ where: { id: invitationId, userId } });
       if (invitation === null) {
         throw invitationNotFound();
       }
-      return { questId: invitation.questId, holderIds: await this.recruiting.enter(invitation.questId, userId, tx) };
+      const entered = await this.recruiting.enter(invitation.questId, userId, tx, async () => {
+        if ((await tx.questInvitation.count({ where: { id: invitationId } })) === 0) {
+          throw invitationNotFound();
+        }
+      });
+      return { questId: invitation.questId, holderIds: entered };
     });
     this.signals.send(holderIds, 'quests-changed');
     return this.quests.read(userId, questId);
   }
 
+  // Tells the Leader too, whose list drops the invitation.
   async decline(userId: string, invitationId: string): Promise<void> {
-    const { count } = await this.prisma.questInvitation.deleteMany({ where: { id: invitationId, userId } });
-    if (count === 0) {
+    const invitation = await this.prisma.questInvitation.findFirst({
+      where: { id: invitationId, userId },
+      include: { quest: true },
+    });
+    if (
+      invitation === null ||
+      (await this.prisma.questInvitation.deleteMany({ where: { id: invitationId, userId } })).count === 0
+    ) {
       throw invitationNotFound();
     }
-    this.signals.send([userId], 'quests-changed');
+    this.signals.send([userId, invitation.quest.leaderId], 'quests-changed');
   }
 }

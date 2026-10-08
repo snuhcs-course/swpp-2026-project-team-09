@@ -12,7 +12,7 @@ import { refusal, sendAsWorker } from './worker.js';
 const newDay = daysOf('2026-12');
 let app: INestApplication<Server>;
 let accessToken: string;
-// No route serves the Collection status yet (P12 adds one), so the tests read it with a connection of their own.
+// The tests read the status of one Source with a connection of their own.
 let prisma: PrismaClient;
 
 beforeAll(async () => {

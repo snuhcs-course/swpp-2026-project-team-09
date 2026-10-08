@@ -47,7 +47,10 @@ async function recruitingAmong(
 // The User's Quest for the Global Event, under the Join Policy given, as the Leader sets it in ticket 14.
 async function attendedQuest(user: TestUser, globalEventId: string, joinPolicy: JoinPolicy): Promise<string> {
   const { questId } = await questFor(app, user, globalEventId);
-  await prisma.quest.update({ where: { id: questId }, data: { joinPolicy } });
+  await prisma.quest.update({
+    where: { id: questId },
+    data: { joinPolicy, board: joinPolicy === 'closed' ? null : 'hobby' },
+  });
   return questId;
 }
 
@@ -61,7 +64,14 @@ describe('The list of recruiting Quests', () => {
     const open = await ownQuest(app, other, { joinPolicy: 'open' });
     const startsAt = new Date(Date.now() + 5 * HOUR).toISOString();
     const subQuest = { title: '저녁', startsAt, endsAt: null, place: { label: '자하연 앞', ...place132 } };
-    const approval = await ownQuest(app, leader, { title: '저녁 모임', subQuest, capacity: 3, joinPolicy: 'approval' });
+    const approval = await ownQuest(app, leader, {
+      title: '저녁 모임',
+      subQuest,
+      capacity: 3,
+      joinPolicy: 'approval',
+      board: 'meal',
+      description: '학관에서 저녁',
+    });
 
     const entries = await recruitingAmong(reader, [open, approval]);
 
@@ -74,6 +84,9 @@ describe('The list of recruiting Quests', () => {
       holderCount: 1,
       capacity: 3,
       joinPolicy: 'approval',
+      board: 'meal',
+      description: '학관에서 저녁',
+      createdAt: expect.any(String) as unknown,
       nextSubQuest: {
         id: expect.any(String) as unknown,
         attending: false,

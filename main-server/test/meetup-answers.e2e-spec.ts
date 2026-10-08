@@ -55,11 +55,12 @@ describe('Accepting a Meetup', () => {
     };
     const [leader, other] = [proposer, receiver].map(({ id }) => ({ id, name: '홍길동', department: '컴퓨터공학부' }));
     const quest = { id: ANY_STRING, title: '점심', globalEvent: null, leader, capacity: 4, joinPolicy: 'closed' };
+    const post = { board: null, description: '', createdAt: ANY_STRING };
     expect(response.status).toBe(204);
     expect(await statesOf(app, meetupId, proposer, receiver)).toEqual({ proposer: 'accepted', receiver: 'accepted' });
     const forProposer = await getQuests(app, proposer);
     expect(forProposer.body).toEqual([
-      { ...quest, holders: [leader, other], subQuests: [subQuest], classQuest: false },
+      { ...quest, ...post, holders: [leader, other], subQuests: [subQuest], classQuest: false },
     ]);
     expect((await getQuests(app, receiver)).body).toEqual(forProposer.body);
   });

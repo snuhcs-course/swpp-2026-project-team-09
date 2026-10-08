@@ -1,4 +1,12 @@
-import { GlobalEvent, GlobalEventState, JoinPolicy, Place, Prisma, SubQuest } from '../../generated/prisma/client.js';
+import {
+  GlobalEvent,
+  GlobalEventState,
+  JoinPolicy,
+  Place,
+  Prisma,
+  QuestBoard,
+  SubQuest,
+} from '../../generated/prisma/client.js';
 
 // A Place from the list, with its id, or a point with the label the app showed. The attending Sub Quest's is the
 // Global Event's position and place text.
@@ -41,6 +49,11 @@ export interface QuestDto {
   leader: HolderDto | null;
   capacity: number;
   joinPolicy: JoinPolicy;
+  // Null for a Closed Quest.
+  board: QuestBoard | null;
+  description: string;
+  // Null for a Class Quest only.
+  createdAt: string | null;
   // In the order they entered.
   holders: HolderDto[];
   subQuests: SubQuestDto[];
@@ -58,6 +71,9 @@ export interface QuestSummaryDto {
   holderCount: number;
   capacity: number;
   joinPolicy: JoinPolicy;
+  board: QuestBoard | null;
+  description: string;
+  createdAt: string;
 }
 
 // A Quest in the list of recruiting Quests.
@@ -172,6 +188,9 @@ export function toQuestDto(quest: StoredQuest, userId: string, now: Date): Quest
     leader: quest.leader,
     capacity: quest.capacity,
     joinPolicy: quest.joinPolicy,
+    board: quest.board,
+    description: quest.description,
+    createdAt: quest.createdAt.toISOString(),
     holders: quest.holders.map(({ user }) => user),
     subQuests: quest.subQuests.map((subQuest) => toSubQuestDto(subQuest, globalEvent, userId, now)),
     classQuest: false,
@@ -205,5 +224,8 @@ export function toQuestSummaryDto(
     holderCount: quest.holders.length,
     capacity: quest.capacity,
     joinPolicy: quest.joinPolicy,
+    board: quest.board,
+    description: quest.description,
+    createdAt: quest.createdAt.toISOString(),
   };
 }

@@ -66,6 +66,7 @@ describe('The Leader inviting a Friend', () => {
           capacity: 4,
           joinPolicy: 'closed',
           quest: null,
+          leader: { id: leader.id, name: '홍길동' },
           holdsQuest: false,
           friends: [leaderSummary],
         },

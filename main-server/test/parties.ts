@@ -27,6 +27,10 @@ export function leaveParty(app: INestApplication<Server>, user: SignedIn): reque
   return withAccessToken(request(app.getHttpServer()).post('/parties/mine/leave'), user.accessToken);
 }
 
+export function endParty(app: INestApplication<Server>, leader: SignedIn): request.Test {
+  return withAccessToken(request(app.getHttpServer()).post('/parties/mine/end'), leader.accessToken);
+}
+
 export function setPartySharing(app: INestApplication<Server>, user: SignedIn, on: boolean): request.Test {
   return withAccessToken(request(app.getHttpServer()).put('/parties/mine/sharing'), user.accessToken).send({ on });
 }

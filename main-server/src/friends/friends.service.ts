@@ -29,7 +29,7 @@ function otherOf(row: { userAId: string; userA: UserSummary; userB: UserSummary 
   return row.userAId === userId ? row.userB : row.userA;
 }
 
-function ofUser(userId: string): Prisma.FriendshipWhereInput {
+export function ofUser(userId: string): Prisma.FriendshipWhereInput {
   return { OR: [{ userAId: userId }, { userBId: userId }] };
 }
 
