@@ -13,12 +13,12 @@ import {
   space,
   text,
   textHalo,
-  useNotReadyToast,
   useToast,
 } from '@/design-system';
 import type { FriendView } from '@/features/friends/adapter';
 import { useFriends } from '@/features/friends/use-friends';
 import { cardId } from '@/features/map/adapter';
+import { FriendPanel } from './friend-panel';
 import { friendsWidth, listRows, LISTS, listsTop, type Room } from './layout';
 import { CollapseButton, RowWindow } from './list-parts';
 import type { MainMap } from './use-main-map';
@@ -40,8 +40,8 @@ interface RowsProps {
   onPress: (friend: FriendView) => void;
 }
 
-// The pill at the list's head: "친구" and the number of Friends in the list. The friend panel that it opens belongs
-// to another task. Until the Friends are known it has no number.
+// The pill at the list's head: "친구" and the number of Friends in the list. It opens the friend panel. Until the
+// Friends are known it has no number.
 function FriendPill({ count, onPress }: { count: number | null; onPress: () => void }): ReactElement {
   return (
     <Pressable
@@ -123,18 +123,23 @@ function Rows({ friends, shown, onPress }: RowsProps): ReactElement {
 }
 
 // The friend list of the `Main` frame, at the left over the map: the pill, the round button that collapses the list,
-// and every Friend in a window of up to three rows.
+// and every Friend in a window of up to three rows. The pill opens the friend panel over the whole screen.
 export function FriendList({ map, selection, room }: FriendListProps): ReactElement {
   const friends = useFriends().data;
   const [open, setOpen] = useState(true);
-  const showNotReady = useNotReadyToast();
+  const [panelOpen, setPanelOpen] = useState(false);
   const show = useShow({ map, selection });
   const { top } = useSafeAreaInsets();
   const shown = listRows(room, top).friends;
   return (
     <View style={[styles.list, { top: listsTop(top), width: friendsWidth(room) }]} testID="friend-list">
       <View style={styles.header}>
-        <FriendPill count={friends?.length ?? null} onPress={showNotReady} />
+        <FriendPill
+          count={friends?.length ?? null}
+          onPress={() => {
+            setPanelOpen(true);
+          }}
+        />
         <CollapseButton
           list="친구 목록"
           onPress={() => {
@@ -145,6 +150,12 @@ export function FriendList({ map, selection, room }: FriendListProps): ReactElem
         />
       </View>
       {open && shown > 0 && friends !== undefined ? <Rows friends={friends} onPress={show} shown={shown} /> : null}
+      <FriendPanel
+        onClose={() => {
+          setPanelOpen(false);
+        }}
+        open={panelOpen}
+      />
     </View>
   );
 }

@@ -1,9 +1,4 @@
-import type { MyParty, PartyNews } from '@/api/types';
-
-// The number on the bottom navigation's 파티. Nothing waiting shows no badge.
-export function toPartyBadge(news: PartyNews | undefined): number {
-  return Math.max(0, Math.trunc(news?.count ?? 0));
-}
+import type { MyParty } from '@/api/types';
 
 // The main screen's "활성 파티": the Party the User is in now.
 export interface ActivePartyView {

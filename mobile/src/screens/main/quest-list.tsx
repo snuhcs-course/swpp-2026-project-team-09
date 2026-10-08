@@ -1,4 +1,5 @@
-import { type ReactElement, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { type ReactElement, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -44,8 +45,8 @@ interface QuestRowProps {
   onPress: () => void;
 }
 
-// The pill at the list's head: "퀘스트", the number of today's Quests, and the round button for the Quest list on the
-// whole screen, which belongs to another task. The pill itself takes no press.
+// The pill at the list's head: "퀘스트", the number of today's Quests, and the round button that opens the Quest list
+// on the whole screen. The pill itself takes no press.
 function QuestPill({ count, onFullScreen }: { count: number | null; onFullScreen: () => void }): ReactElement {
   return (
     <View style={styles.pill}>
@@ -126,13 +127,29 @@ function usePress({ map, selection }: Pick<QuestListProps, 'map' | 'selection'>)
   };
 }
 
+// A class pressed on the Quest list on the whole screen comes back by the main screen's address, `/main?quest=…`:
+// the map goes to it as for a press of its row here, once the rows are known.
+function useAskedQuest(rows: readonly QuestRowView[] | undefined, press: (row: QuestRowView) => void): void {
+  const { quest } = useLocalSearchParams<{ quest?: string }>();
+  useEffect(() => {
+    if (quest === undefined || rows === undefined) {
+      return;
+    }
+    router.setParams({ quest: undefined });
+    const row = rows.find(({ id }) => id === quest);
+    if (row !== undefined) {
+      press(row);
+    }
+  }, [quest, rows, press]);
+}
+
 // The Quest list of the `Main` frame, at the right over the map: the round button that collapses the list, the pill,
 // and today's Quests joined by the rail, in a window of up to three rows. Without a Quest it says so.
 export function QuestList({ map, selection, room }: QuestListProps): ReactElement {
   const rows = useQuestRows().data;
   const [open, setOpen] = useState(true);
-  const showNotReady = useNotReadyToast();
   const press = usePress({ map, selection });
+  useAskedQuest(rows, press);
   const { top } = useSafeAreaInsets();
   const shown = listRows(room, top).quests;
   return (
@@ -146,7 +163,12 @@ export function QuestList({ map, selection, room }: QuestListProps): ReactElemen
           open={open}
           pill="right"
         />
-        <QuestPill count={rows?.length ?? null} onFullScreen={showNotReady} />
+        <QuestPill
+          count={rows?.length ?? null}
+          onFullScreen={() => {
+            router.push('/quests');
+          }}
+        />
       </View>
       {open && rows !== undefined ? <Rows onPress={press} rows={rows} shown={shown} /> : null}
     </View>

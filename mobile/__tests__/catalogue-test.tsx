@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
 
 import CatalogueScreen from '@/app/catalogue';
 import { ToastProvider } from '@/design-system';
@@ -28,6 +28,12 @@ describe('design system catalogue', () => {
       'BottomNav',
       'Dialog',
       'Toast',
+      'AppBar',
+      'FullScreenPanel',
+      'SidePanel · BottomSheet',
+      'SegmentedTabs · ChipRow · SearchField',
+      'ListRow · SectionHeader · SwitchRow',
+      'EmptyState · LoadingState · ErrorState',
     ]) {
       expect(screen.getByRole('header', { name })).toBeOnTheScreen();
     }
@@ -46,5 +52,19 @@ describe('design system catalogue', () => {
 
     await userEvent.press(screen.getByRole('button', { name: '2초 알림' }));
     expect(screen.getByText('서지우님은 위치가 꺼져 있어요')).toBeVisible();
+  });
+});
+
+describe("design system catalogue's panels", () => {
+  it('lets a developer open and close a side panel', async () => {
+    await renderCatalogue();
+
+    await userEvent.press(screen.getByRole('button', { name: '패널 열기' }));
+    expect(screen.getByRole('header', { name: '친구 12' })).toBeVisible();
+    await userEvent.press(screen.getByRole('button', { name: '친구 패널 닫기' }));
+    // It slides out first.
+    await waitFor(() => {
+      expect(screen.queryByRole('header', { name: '친구 12' })).toBeNull();
+    });
   });
 });

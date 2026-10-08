@@ -45,35 +45,46 @@ is a fixed round on campus (`src/position/walk.ts`) that starts where the `Main`
 step every five seconds, so the User's Avatar is on the map and glides, also on the web and far from the campus.
 The walk has no explanation and no permission to try: for those, start without it.
 
-Nothing on the main screen signs a User out: sign-out is on 내 정보, which another task builds. To see the sign-in
-screen again, start the app with `EXPO_PUBLIC_FIRST_STATE=1`.
+"로그아웃" on 내 정보 signs a User out. To start at the sign-in screen with nothing kept, start the app with
+`EXPO_PUBLIC_FIRST_STATE=1`.
 
 ### Google sign-in
 
 The sign-in module (`src/auth/sign-in.ts`) asks Google in a build that holds Google's sign-in module, and is a mock
 everywhere else:
 
-| Where the app runs                               | The sign-in                                            |
-| ------------------------------------------------ | ------------------------------------------------------ |
-| A development build on Android with the settings | Google's account sheet                                 |
-| Expo Go, the web, the tests                      | The mock: it signs in after 0.3 seconds, with no sheet |
-| Any of them with `EXPO_PUBLIC_SIGN_IN_ENDING`    | The mock, with the ending that the setting names       |
+| Where the app runs                                                         | The sign-in                                                   |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| A development build with the Google settings and the main server's address | Google's account sheet, then the main server                  |
+| A development build with the Google settings and no main server's address  | Google's account sheet, and the app's own check of the domain |
+| Expo Go, the web, the tests                                                | The mock: it signs in after 0.3 seconds, with no sheet        |
+| Any of them with `EXPO_PUBLIC_SIGN_IN_ENDING`                              | The mock, with the ending that the setting names              |
 
-With Google, an account outside SNU is refused, a closed sheet returns to the default state, and anything else is a
-failure. The main server is not asked yet. The app itself reads the ID token and takes an account for an SNU one when
-its hosted domain, the `hd` claim, is `snu.ac.kr` (`src/auth/id-token.ts`). It does not check the token's signature, so
-this decides only what the screen says. The main server's check takes its place with ticket 12 of P06.
+With the main server's address (`asksMainServer()` in `src/api/servers.ts`), Google's ID token goes to
+`POST /auth/google`, and the main server's answer gives the ending: 200 signs in, with whether the User finished
+Onboarding and the suggestion; 403 is an account outside SNU; anything else, and no answer, is a failure. A closed sheet
+returns to the default state and sends nothing. The main server's access and refresh tokens are kept in the phone's
+secure storage (`src/auth/tokens.ts`, on `expo-secure-store`). The same build then asks the main server for every
+operation it serves (see "Data" below) and opens the connection to the socket server.
+
+Without the main server's address, the app itself reads the ID token and takes an account for an SNU one when its
+hosted domain, the `hd` claim, is `snu.ac.kr` (`src/auth/id-token.ts`). It does not check the token's signature, so
+this decides only what the screen says, and every answer stays a mock.
 
 The settings are a person's. Copy `.env.example` to `.env`, which is not committed, and fill in:
 
-| Variable                           | Value                                                                             |
-| ---------------------------------- | --------------------------------------------------------------------------------- |
-| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | The ID of the main server's Google client, of type "Web application"              |
-| `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` | The ID of the Google client of type "iOS". Only the iOS build needs it            |
-| `GOOGLE_IOS_URL_SCHEME`            | The iOS client's ID reversed (`com.googleusercontent.apps.…`). Only the iOS build |
+| Variable                           | Value                                                                                                     |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | The ID of the main server's Google client, of type "Web application"                                      |
+| `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` | The ID of the Google client of type "iOS". Only the iOS build needs it                                    |
+| `GOOGLE_IOS_URL_SCHEME`            | The iOS client's ID reversed (`com.googleusercontent.apps.…`). Only the iOS build                         |
+| `EXPO_PUBLIC_MAIN_SERVER_URL`      | The main server's address; from the Android emulator, `http://10.0.2.2:3000` for one on the same computer |
+| `EXPO_PUBLIC_SOCKET_SERVER_URL`    | The socket server's address; from the emulator, `http://10.0.2.2:3001`                                    |
 
 The IDs are in the Google Cloud project's list of clients. The Web application client's ID is also the main server's
-`GOOGLE_APP_CLIENT_ID`. Without the web client's ID the sign-in stays the mock in every build.
+`GOOGLE_APP_CLIENT_ID`. Without the web client's ID the sign-in stays the mock in every build. The servers run on the
+computer with `docker compose up --build` at the repository root (see the main server's README); the emulator reaches
+the computer as `10.0.2.2`, and a debug build allows plain HTTP. A phone needs an address it can reach.
 
 A development build on Android, with an emulator running or a phone attached:
 
@@ -274,8 +285,9 @@ src/app/            screens; every file is a route and _layout.tsx sets the navi
 src/design-system/  the tokens and the shared components
 src/catalogue/      the sections of the design system's catalogue screen
 src/hooks/          hooks shared by components and screens
-src/api/            the API client, the main server's answers as types, and the mocks that answer for now
-src/auth/           sign-in and sign-out
+src/api/            the API client, the main server's answers as types, the main server's client and the mocks
+src/auth/           sign-in and sign-out, and the main server's tokens
+src/live/           the one connection to the socket server
 src/features/       one folder per feature: its adapter and the hooks a screen asks for data with
 src/map/            the one map component, its interface and the pictures of its markers
 src/position/       the User's own position: the phone's, or the development walk
@@ -307,6 +319,37 @@ starts with `useOwnPlace(...)`, which leads a User who does not belong there to 
 
 A screen's file in `src/app/` only says which place it is; the screen itself is in `src/screens/`.
 
+**The signed-in place** is the route group `src/app/(signed-in)/`. Its layout is the guard (`useOwnPlace('ready')`)
+for every route in it, the `PositionProvider` that every tab and every screen above them reads, the
+`PositionSending` inside it (see "The User's position"), and a stack:
+
+- **The tabs** (`(signed-in)/(tabs)/`): Expo Router's `Tabs`, with `TabBar` (`src/screens/shell/tab-bar.tsx`)
+  drawing the design system's `BottomNav`. 지도 is the main screen at `/main`; 파티 is `/party`, 행사 `/events`, 내
+  정보 `/me`. 올리기 is no tab and says "준비 중이에요". A tab stays mounted while another is shown, so the map keeps
+  its native view, its camera, the open card, the route and the collapsed lists. The bar has no line on top but the
+  frames' shadow (`shadow.nav`), and under its items 16 or the phone's own inset, whichever is larger
+  (`navPaddingBottom` in `src/screens/shell/layout.ts`). The number on 파티 is `usePartyBadge()`: the rows of 알림
+  that concern 파티, every row but the Friend Requests. While the lists load, and when every one failed, there is no
+  badge.
+- 파티, 행사 and 내 정보 are a `TabScreen` (`src/screens/shell/tab-screen.tsx`): the tab's app bar on the grey ground.
+  파티 has "+ 만들기" and the tabs 찾기, 내 파티 and 초대; its address names the tab (`/party?tab=invites`). 내 정보's
+  address can ask for its 위치 공유 card (`/me?show=sharing`). The bodies of 파티 and 행사 say "준비 중이에요" until
+  their tasks fill them; 내 정보 is described below.
+- **Screens above the tabs** are routes of the stack: the Quest list on the whole screen (`/quests`), 알림
+  (`/notifications`) and 프로필 편집 (`/profile-edit`). Each is a
+  `FullScreenPanel` and slides in over 0.28 s, from the bottom for `/quests` and from the right for a pushed screen,
+  or appears without sliding where the phone asks for less motion (`slideFrom` in the layout). The tabs lie under
+  them also when the app opens at their address (`unstable_settings`).
+- **Android's back button** closes the topmost thing: a Dialog through its Modal; a side panel, a bottom sheet and
+  the open card on the map through `useBackToClose(open, close)` (`src/hooks/use-back-to-close.ts`), the latest to
+  open first; a screen above the tabs through the stack. With nothing open, back on 파티, 행사 or 내 정보 shows 지도
+  (`backBehavior: 'firstRoute'`), and on 지도 it leaves the app. The card answers only while the map is in front.
+- **A toast** sits where the screen in front says (`useToastAbove(height, inFront)`): on 지도 where the main screen
+  puts it, on another tab 16 above the navigation (the frames' 96 from the bottom), and on a screen above the tabs
+  just above the phone's own bar.
+- Side panels and bottom sheets are drawn in the `OverlayHost` of `AppProviders`: over every screen and the
+  navigation, and under the toast, which a Modal would hide.
+
 The sign-in screen has one button. A press asks the sign-in module (`src/auth/sign-in.ts`), and the screen shows the
 check, then follows the ending: `enter` for a User who signed in, the default state after a closed sheet, and a
 refused state for an account outside SNU or any other failure. A press in a refused state tries again.
@@ -321,9 +364,9 @@ lists in `departments.ts`, found by a search. "저장하고 시작하기" is ena
 calls `completeOnboarding` and then `finishOnboarding`, and a save that failed says so in a toast and leaves the form.
 "로그아웃" signs out. Nothing on the screen leads back.
 
-The main screen (`src/screens/main/`) is the `Main` wireframe: the map on the whole campus with the people and places
-on it; over it the friend list, the Quest list, the zoom control or an open card, and the controls above the
-navigation; and the bottom navigation under it, above the phone's own bar.
+The main screen (`src/screens/main/`) is the `Main` wireframe and the first tab: the map on the whole campus with the
+people and places on it; over it the friend list, the Quest list, the zoom control or an open card, and the controls
+above the navigation.
 
 - `useMainMap()` owns the map's handle and follows its camera: `camera`, `fitZoom`, the `detail` the zoom asks for
   (`overview`, `pins` or `names`), and the moves `zoomBy(steps)`, `goTo(position, level, orCloser)` and
@@ -331,7 +374,8 @@ navigation; and the bottom navigation under it, above the phone's own bar.
   screen that moves the map or draws by zoom takes it. A move or a fit asked before the map is ready is kept and
   carried out at the camera's first rest; of several, the last (`use-camera-moves.ts`). The zoom buttons count from
   where the last of them is on its way to.
-- The screen stands in a `PositionProvider`, so every part of it reads the same position with `usePosition()`.
+- The signed-in place's layout holds the `PositionProvider`, so every part of the screen reads the same position with
+  `usePosition()`.
 - `useMe(map)` gives the User's Avatar for the map, the position while it is on campus, "내 위치로 이동", the
   explanation before the location prompt, and `sayWhyNotHere()` for a part that needs a position and has none.
 - What floats over the map is a child of `OverMap` in `main-screen.tsx` and places itself by the offsets of
@@ -339,7 +383,7 @@ navigation; and the bottom navigation under it, above the phone's own bar.
   toast's bottom 78, the row of buttons' and the 편의기능 button's 78, a card's bottom 72 and the AI input's 12. The
   input is 50 high, so a card ends 10 above it. The two lists are counted from the top: 52 from the screen's top
   edge, or 8 under a status bar that leaves less. While a card is open a toast sits 8 above the card, never over
-  its buttons: the card tells its height and `MainNav` tells the toast (`useToastAbove`). The children are in the
+  its buttons: the card tells its height and the screen tells the toast while it is in front (`useToastAbove`). The children are in the
   wireframe's order, the later above the earlier: the lists, the zoom control or the card, the controls.
 - **Markers.** `useMapCards()` gives one `CardView` for each thing on the map, and `useThings(cards, detail,
 selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under its card's id. A Friend who can be
@@ -354,7 +398,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   설명회". The selected marker has the selected look and is drawn above the others, the User's own Avatar included.
 - **Cards.** `useSelection(cards)` holds what is selected: `selected` (the open card), `open`, `select(id)` and
   `close()`. A press on a marker selects it and opens its card (`card.tsx`) in place of the one that was open; the
-  card's X and Android's back button close it; a press beside the markers leaves it open. A card whose thing leaves
+  card's X and Android's back button close it, the button only while the map is in front; a press beside the
+  markers leaves it open. A card whose thing leaves
   the map, such as a Friend who turns their location off, is closed for good: it does not open again on their return. The card shows the leading
   mark (a person's Avatar, or the place's icon on its kind's colour), the sub-label, the title, the lines and its
   button. "가까이 보기" is offered below the `names` level and brings the camera to the `close` level, keeping the
@@ -391,13 +436,11 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   the whole campus is in view, and glides to each new position over the time that position took to come (`stepMs`).
   Both of its looks, `me` and `me:small`, are asked for when the screen opens. It takes no press (`passive`), as in
   the wireframe: a press on it reaches a Friend's marker that it stands over.
-- The bottom navigation's 파티, 올리기, 행사 and 내 정보 say "준비 중이에요". The number on 파티 is `usePartyBadge()`.
-  The bar has no line on top but the frame's shadow (`shadow.nav`), and under its items 16 or the phone's own inset,
-  whichever is larger (`navPaddingBottom` in `layout.ts`).
 - **The lists.** `FriendList` (`friend-list.tsx`) is at the left and `QuestList` (`quest-list.tsx`) at the right, each
   with the wireframe's pill and a round button beside it that collapses the list and is read as "친구 목록 접기" or
   "친구 목록 펼치기" ("퀘스트 목록 …"); the two collapse separately, and a pill stays as it is. The friend pill
-  counts the Friends in the list; the Quest pill counts the rows. The rows are in a window of up to three rows
+  counts the Friends in the list and opens the friend panel; the Quest pill counts the rows, and its round button
+  opens the Quest list on the whole screen. The rows are in a window of up to three rows
   (`RowWindow` in `list-parts.tsx`) that scrolls and snaps to the rows; the web does not snap. The text over the map
   has a white glow (`textHalo`).
   - **Only a row takes a touch.** A row is as wide as its words; the window is as wide as its widest row, never
@@ -430,8 +473,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
 - **The controls above the navigation** (`bottom-controls.tsx`): "오늘의 발자국", with up to three faces and "친구
   5명의 오늘" from `useFootprints()`; "활성 파티", shown only while the User is in a Party, with "<n>명 공유 중" for
   the members who share their position, the User left out, or "응답 대기" when nobody else does
-  (`useActiveParty()`); the 편의기능 button; and the AI input. Each says "준비 중이에요", as do the friend pill and the
-  Quest list's full-screen button.
+  (`useActiveParty()`); the 편의기능 button; and the AI input. Each says "준비 중이에요".
   - The AI input (`ai-input.tsx`) is not a text field yet. It is a button with the look of the wireframe's empty
     input, the placeholder "무엇이든 부탁해 보세요" and the grey send button: nothing takes the focus, no keyboard
     comes up and nothing can be typed. A press on it says "준비 중이에요"; so does a press on the send button, which
@@ -451,6 +493,56 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   belongs left of the zoom control, above "활성 파티". While a card is open the inset's bottom is the card's top,
   and the credit sits above the card. Nothing is drawn over the credit: the lists end 8 above its strip
   (`CREDIT_ROOM` of `@/map`, the credit's margin and its line), on a low screen with fewer rows.
+
+**The friend panel** (`friend-panel.tsx`, the `MainFriends` frame) is a `SidePanel` from the left over the whole
+screen: "친구 {N}" and ✕ "닫기"; the search "이름, 학과 검색" ("친구 검색"), by name and department, spaces aside, with
+"결과 없음" when nobody is found; the chips 전체, 공강, 수업 중, 이동 중 and 위치 꺼짐 with their counts, those of 0
+hidden but 전체; and the Friends grouped by presence ("공강 · 4"), each row with the Avatar and its status, the name
+and the department, the detail (or the line where the app has no detail), and the round calendar button "{이름}님과
+파티 만들기", which says "준비 중이에요". Its footer has the live Badge "친구 {n}명과 위치 공유 중", n the Friends the
+User sees now (`visible`); "공유 설정", which closes the panel and shows 내 정보 at `/me?show=sharing`; and "+ 친구
+추가", which says "준비 중이에요". The scrim ("친구 패널 닫기"), ✕ and Android's back button close it.
+
+**The Quest list on the whole screen** (`src/screens/quests/`, the `MainQuests` frame, `/quests`) is a
+`FullScreenPanel` that comes up from the bottom: ✕ "닫기" and "퀘스트 {n}", n the Quests that have not ended; the
+chips "전체", "강의" and "파티", whose counts stay while one filters; and the rows grouped by the Korean day of the
+start of the Sub Quest each shows (`toQuestGroups` in the quest feature's adapter): "오늘 · 10월 1일 (목)", "내일 ·
+…", "이번 주" (2 to 4 days ahead), "다음 주" (5 to 11), "그 이후", and "시간 미정" last for a Quest without a start.
+A Quest whose Sub Quests all ended or were cancelled is not shown. A row is 72 high: the round of 40 in its
+`questTone`, the kind ("강의", "공개 파티", "비공개 파티 · 김민준"), the title, the place and the time. A class's row
+closes the screen and goes back to the map by `/main?quest=<id>`, which the Quest list on the map carries out as a
+press of its own row; any other row says "준비 중이에요". Without a Quest it says "퀘스트가 없어요"; while the Quests
+load and after a failure it shows the shared states.
+
+**내 정보** (`src/screens/me/me-screen.tsx`, the `Profile` frame) has the bell, "알림" or "알림 {n}개" with the
+number of 알림's rows in red ("9+" above nine), and four cards from the top:
+
+- the profile from the Lobby: the Avatar, the name, "컴퓨터공학부 · 22학번" (the department alone without an
+  admission year), "SNU 계정 인증됨" and "프로필 편집";
+- 시간표 (`week-card.tsx`): Monday to Friday from 09 to 18, today's day in navy, a block for each time of a class
+  (`GET /timetable/classes`, with `GET /places` for the numbers) in the colour of the class's place in the timetable
+  (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". The tiles "직접 입력", "이미지로 불러오기"
+  and "빈 시간 말하기" say "준비 중이에요";
+- 위치 공유 (`sharing-card.tsx`): the switch "친구와 위치 공유", which is the Master Switch, with the number of
+  Friends, and "캠퍼스 밖이라 위치가 공유되지 않아요" while the last upload was off campus. Turning it on without the
+  location permission shows the map's explanation and the system's prompt first; a refusal leaves it off with
+  "위치 권한을 허용해야 공유할 수 있어요". The new state shows at once, and turns back with "위치 공유를 바꾸지
+  못했어요" when the main server did not take it. At `/me?show=sharing` the screen scrolls to the card and outlines
+  it for 1.2 s;
+- "친구 관리 {n}" ("준비 중이에요"), "참여 중인 파티 {n}" (파티 at 내 파티) and "내 퀘스트" (the Quest list on the
+  whole screen).
+
+"로그아웃" asks "로그아웃할까요?", then stops the sending, signs out and shows the sign-in screen. 프로필 편집
+(`profile-edit-screen.tsx`) edits the name, the department, the admission year and the interests with Onboarding's
+fields, sends the changed ones with `PATCH /users/me/profile`, puts the answer in the Lobby and goes back; a failure
+says "저장하지 못했어요. 다시 시도해 주세요" and stays.
+
+알림 (`notifications-screen.tsx`) is composed from the main server's lists (`useNotices()` of the notifications
+feature), in this order: a Party running for a Quest the User holds ("{name}님이 파티를 활성화했어요", or "파티가
+활성화됐어요" without its Leader), a Friend Request received, a Quest invitation, a Meetup proposed to the User and
+waiting ("{name}님의 파티 초대"), and the requests to join each Quest the User leads with Approval ("참여 신청
+{n}명"). An invitation's and a Meetup's row open 파티 at 초대; the others say "준비 중이에요". A list that failed is
+left out; when every one failed it shows the error state. Without rows it says "새 알림이 없어요".
 
 The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and
 `/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
@@ -477,8 +569,7 @@ the entries it needs. So an operation that two screens need is asked once, and o
 
 When an operation fails:
 
-- `listFriendStatuses`, `listGlobalEventAnnouncers`, `getPartyNews` and `getFootprints`, the app's own, never fail
-  a screen: it shows what it has without them.
+- `listFriendStatuses`, `listGlobalEventAnnouncers` and `getFootprints`, the app's own, never fail a screen: it shows what it has without them.
 - The friend list and the Quest list have `isError` and no `data`.
 - The map has `isError` and keeps in `data` the cards that are still right: without the Global Events, the Friends'
   cards still show.
@@ -497,33 +588,50 @@ position. Its `kind` is `global-event`, `party`, `shared-quest`, `friend` or `pa
 
 Behind a hook are three layers:
 
-- **The API client** (`src/api/client.ts`): one operation per question to the main server. `src/api/types.ts` holds
+- **The API client** (`src/api/client.ts`): one operation per question to the main server. `src/api/types.ts` (and `waiting-types.ts`, the lists of what waits for the User) holds
   the answers' shapes. A shape marked "provisional" comes from an open pull request of the main server, and one marked
   "the app's own" is defined nowhere else yet.
 - **An adapter** per feature (`src/features/<feature>/adapter.ts`): turns answers into what the screens use, such as
   `FriendView`, `QuestRowView`, `CardView`, `FootprintsView` and `ActivePartyView`.
-- **The mocks** (`src/api/mock/`): for now every operation is answered inside the app, in the main server's shape,
-  with what the `Main` wireframe shows. A mock answers after 0.3 seconds. The sign-in is the one exception: see "Google
-  sign-in" above.
+- **The main server's client** (`src/api/server/`): the operations the main server serves, in a build that asks it
+  (`asksMainServer()`). `http.ts` is the one way to the main server: it attaches the access token, renews the Session
+  once on a 401 and asks again, and ends the Session when that cannot mend it. `answers.ts` checks each answer's shape
+  before the app believes it; an answer of another shape fails as no answer does.
+- **The mocks** (`src/api/mock/`): every other operation, and every operation where the app asks no main server, is
+  answered inside the app, in the main server's shape, with what the `Main` wireframe shows. A mock answers after 0.3
+  seconds. The tests use the mocks, or a fake main server behind `fetch` (`__tests__/support/fake-server.ts`).
 
-| Operation                                   | Answers                                            | The main server's route                       |
+| Operation                                   | Answers                                            | Where it comes from with the main server      |
 | ------------------------------------------- | -------------------------------------------------- | --------------------------------------------- |
 | `signIn`, `signOut` (`src/auth/sign-in.ts`) | Whether the User signed in, and Onboarding's state | `POST /auth/google`, `/auth/sign-out`         |
 | `completeOnboarding`                        | Nothing                                            | `POST /users/me/onboarding`                   |
-| `enterLobby`                                | The User's profile                                 | `POST /lobby`                                 |
-| `listFriends`                               | The Friends                                        | `GET /friends` (provisional)                  |
-| `listPositions`                             | The positions the User may see                     | `GET /positions` (provisional)                |
-| `listFriendStatuses`                        | Each Friend's status, place and photo              | None: the app's own                           |
-| `listQuests`                                | The User's Quests and today's Class Quests         | `GET /quests` (provisional)                   |
-| `listGlobalEvents`                          | The published Global Events                        | None yet: the app's own                       |
-| `listGlobalEventAnnouncers`                 | Who announced each Global Event                    | None: the app's own                           |
-| `listParties`, `getMyParty`                 | The Parties, and the one the User is in            | `GET /parties`, `/parties/mine` (provisional) |
-| `getPartyNews`                              | How many things wait for the User in Parties       | None: the app's own                           |
-| `getFootprints`                             | What "오늘의 발자국" shows: a number and faces     | None: the app's own                           |
+| `enterLobby`                                | The User's profile and Master Switch               | `POST /lobby`                                 |
+| `updateProfile`                             | The changed profile                                | `PATCH /users/me/profile`                     |
+| `setMasterSwitch`                           | Nothing                                            | `PUT /users/me/master-switch`                 |
+| `uploadPosition`                            | Whether the position was off campus                | `POST /positions`                             |
+| `listFriends`                               | The Friends                                        | `GET /friends`                                |
+| `listFriendRequests`                        | The Friend Requests received and sent              | `GET /friend-requests`                        |
+| `listPositions`                             | The positions the User may see                     | `GET /positions`, and the socket's `position` |
+| `listFriendStatuses`                        | Each Friend's status, place and photo              | The mock: the app's own                       |
+| `listQuests`                                | The User's Quests and today's Class Quests         | `GET /quests`                                 |
+| `listQuestInvitations`                      | The invitations into a Quest                       | `GET /quest-invitations`                      |
+| `listJoinRequests`                          | The requests to join a Quest the User leads        | `GET /quests/:questId/join-requests`          |
+| `listMeetups`                               | The Meetups proposed to the User and by the User   | `GET /meetups`                                |
+| `listClasses`, `listPlaces`                 | The User's classes, and the Places                 | `GET /timetable/classes`, `GET /places`       |
+| `listGlobalEvents`                          | The published Global Events                        | The mock: no route lists them for a User yet  |
+| `listGlobalEventAnnouncers`                 | Who announced each Global Event                    | The mock: the app's own                       |
+| `listParties`, `getMyParty`                 | The Parties, and the one the User is in            | `GET /parties`, `/parties/mine`               |
+| `getFootprints`                             | What "오늘의 발자국" shows: a number and faces     | The mock: the app's own                       |
 | `findWalkingRoute`                          | The way on foot between two points                 | `GET /walking-route`                          |
 
-While the answers are mocks, the app's time is the moment the wireframe shows, 1 October 2026 at 13:37
-(`src/clock.ts`), so that the screens read as the wireframe on any day.
+`getMyParty` turns exactly the main server's 404 `NOT_IN_PARTY` into null. A 401 with `SESSION_REPLACED` ends the
+Session without a renewal and shows the notice "다른 기기에서 로그인했어요" with the sign-in screen; a 403 with
+`ONBOARDING_REQUIRED` shows Onboarding with the suggestion it carries (`src/session/session-events.ts`, which
+`SessionProvider` follows).
+
+The User's own id is the access token's subject, and the app's time is the phone's. Where the answers are mocks, the
+User is the mock's `me` and the time is the moment the wireframe shows, 1 October 2026 at 13:37 (`src/clock.ts`), so
+that the screens read as the wireframe on any day.
 
 The phone keeps that the User signed in, that the User agreed to the legal documents, what the sign-in suggested for
 Onboarding, whether Onboarding is finished and its answers, and that the User answered the explanation before the
@@ -538,7 +646,7 @@ The User's own position is not a server's answer. A screen that shows it stands 
 permission and one watch of the phone, however many parts read it; outside a provider the hook throws.
 
 ```tsx
-<PositionProvider>…the screen…</PositionProvider>;
+<PositionProvider>…the screens…</PositionProvider>;
 
 const { permission, position, stepMs, ask, retry } = usePosition();
 permission; // 'checking' until the phone has said, then 'unasked', 'granted', 'refused' or 'blocked'
@@ -563,20 +671,53 @@ openLocationSettings(); // of `@/position`: the phone's settings of the app, for
 - With `EXPO_PUBLIC_CAMPUS_WALK=1` the hook answers the development walk instead and never asks the phone.
 - The words of the system's prompt on iOS are in `app.json`, with the library's config plugin. The app asks for no
   position in the background.
-- The position is sent nowhere. Sending it is built with the Master Switch, by another task.
+- `accuracy` is the radius in metres the phone places itself within, and `measuredAt` the time it measured the
+  position. The walk gives an accuracy of 10 and the time it moves.
+- `ask()` gives the answer, so that the switch on 내 정보 knows whether to turn on.
+
+**Sending.** `PositionSending` (`src/position/sending.tsx`), inside the provider in the signed-in layout, sends each
+new position to `POST /positions` while the Master Switch is on, the permission is granted and the app is in front,
+on every tab: at most one upload every `POSITION_EVERY_MS`, one at a time, a newer position replacing one that
+waits. It stops at once when the switch is turned off, the app goes to the background, the User signs out
+(`useSending().stop()`) or the Session ends, and starts again in front. An answer `offCampus: true` shows the line
+on 내 정보 until a position is kept again; 409 `MASTER_SWITCH_OFF` turns the switch off and fetches the Lobby
+again; the 400s and no answer drop that position. The mock keeps the switch in memory, off at each start, refuses
+positions while it is off and answers `offCampus` by the campus rectangle.
+
+- The signed-in place's layout holds the provider, so the tabs and the screens above them share one watch.
+
+### The connection to the socket server
+
+In a build that asks the main server, the app keeps one Socket.IO connection to the socket server open while the User
+is past the sign-in and Onboarding (`LiveUpdates` in `src/live/live-updates.tsx`, on `src/live/connection.ts`), as the
+socket server's README describes:
+
+- It opens with the access token, which it asks for again at every attempt. When the socket server closes it at the
+  token's expiry, or refuses the token, it renews the Session once and opens again; a refused renewal, or a second
+  refusal, ends the Session. When nothing answers a renewal it tries again after five seconds.
+- `session-ended` ends the Session, with the notice when its code is `SESSION_REPLACED`.
+- `position` replaces that User's position in the cache, and the Avatar glides there; `position-removed` takes it
+  out. A position for a Friend or a member whom the answers call unseen fetches those answers again.
+- The positions are fetched when the connection opens, and everything it shows when it opens again after a drop. When
+  the app returns to the front, the positions and the Quests are fetched again.
+- The signals fetch what they name again: `friends-changed` the Friends and the positions, `quests-changed` the
+  Quests, the invitations and the requests to join, `meetups-changed` the Meetups, `party-changed` the Parties and
+  the positions, `global-events-changed` the Global Events and the Quests. `friends-changed` also fetches the Friend
+  Requests. When the app returns to the front, the lists of 알림 are fetched again too.
+
+The app sends its own position over `POST /positions`, not over the connection (see "The User's position").
 
 ### From a mock to the main server
 
-To connect one operation:
+To connect one more operation:
 
-1. Write the operation against the main server and put it in place of the mock's in `src/api/client.ts`. A refusal is
-   thrown as an `ApiError` with the status and the main server's code.
-2. If the answer's shape changed, change it in `src/api/types.ts` and follow the type errors into the adapter.
-3. Keep the mock: a test of a screen puts it back with `jest.mock('@/api/client', …)`, so that no test asks the main
-   server.
+1. Write it in `src/api/server/client.ts` with `call()` and a check of its answer in `answers.ts`. A refusal is thrown
+   as an `ApiError` with the status and the main server's code.
+2. If the answer's shape differs, change it in `src/api/types.ts`, then the mock, and follow the type errors into the
+   adapter.
+3. Keep the mock: the screens' tests use it. Test the operation against the fake main server.
 
-No screen changes. When every operation of a feature is connected, remove its row from the mock list of
-`.scratch/iteration-1/P06-login-map-timetable/todo.md`.
+No screen changes. Keep `.scratch/iteration-1/P06-login-map-timetable/todo.md`, section 3, in step.
 
 ## Design system
 
@@ -587,8 +728,8 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
   design system's names. A style spreads a text style and adds a colour: `{ ...text.body, color: color.inkMuted }`.
 - **Font**: Pretendard, one file per weight in `assets/fonts/`, loaded by the root layout before any screen appears.
   A style sets `fontFamily` from `font` and never `fontWeight`.
-- **Components**: Icon, Button, Chip, Badge, Avatar, MapPin, EventCard, TextField, ChatInput and BottomNav, with the
-  names and properties of the design system's types. `BottomNav` has two additions that the `Main` wireframe draws:
+- **Components**: Icon, Button, Chip, Badge, Avatar, MapPin, EventCard, TextField, ChatInput, BottomNav and Switch,
+  with the names and properties of the design system's types. `BottomNav` has two additions that the `Main` wireframe draws:
   an item with `action` is the one action in the middle, its icon of 22 in white on a round fill of 44 in `snuBlue`
   with the shadow `shadow.navAction`, inside the bar, its label not shown and kept as what a screen reader says; and
   `line={false}` leaves out the line on top, for a screen that draws its own edge above the bar. A component of the design system that no screen uses yet is
@@ -597,14 +738,32 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
   a pin's head is 36 and its border of 2 on each side.
   Inside the design system the names are the design system's, also where the glossary prefers another word: its
   `Avatar` is a person's picture anywhere, its event kind is `official`, and a card's place is its `venue`.
-- **Dialog**: the design system has none and the frames ask questions with two answers. `Dialog` shows a title, a
-  sentence and one or two Buttons over the screen.
+- **Dialog**: the design system has none and the frames ask questions with two answers. `Dialog` shows a title in
+  18/700, a sentence and one or two Buttons over the screen; `tone="danger"` fills the confirming answer in red
+  (the Button variant `destructive`) for what cannot be taken back. Android's back button is its cancel.
+- **The parts the screens around the map repeat**, which the design system lacks and the frames draw:
+  - `AppBar`: a tab's (title 22/700, actions at the right) or, with `leave`, a sub-screen's (✕ "닫기" or the chevron
+    "뒤로" in 48, title 20/700), with an optional count after the title ("퀘스트 12"). `IconButton` is an icon in 48.
+  - `FullScreenPanel`: a screen above the tabs, white, with an app bar, what stays under it, a body that scrolls and
+    an optional footer.
+  - `SidePanel` (from the left, 324 wide, radius 24 at its right, the scrim) and `BottomSheet` (a handle, top radius
+    24, the scrim). The scrim, Android's back button and, for the sheet, a drag down from its handle close them.
+    They slide over 0.28 s, or appear at once where the phone asks for less motion (`use-slide.ts`), and are drawn
+    in the `OverlayHost` (`Overlay`).
+  - `SegmentedTabs` (48 high, the selected one underlined in navy, a count pill in grey or red), `ChipRow` (chips
+    with counts that scroll sideways; `hideEmpty` hides those of 0), `SearchField` (with ✕ "지우기").
+  - `ListRow` (an Avatar or a `RoundIcon` of 40, the name in 15/600 or 16/600 for `large`, an aside, a kicker, one
+    or two lines, a trailing slot, 56 to 72 high over a line of 1, one button when it has a press) and
+    `SectionHeader` ("공강 · 4").
+  - `Switch`, React Native's switch in navy, and `SwitchRow` with a label and a description.
+  - `EmptyState` (the caller's words in `inkFaint`), `LoadingState` ("불러오는 중") and `ErrorState` ("불러오지
+    못했어요" and "다시 시도").
 - **Toast**: the design system has none and the wireframes use one. It is the `Main` wireframe's: a dark bar from 16
   to 16 from the sides with a check mark before its words, and no shadow. `useToast()` gives the call that shows a sentence for 2.4
   seconds, or for the time given as its second argument (`showToast(words, 2000)`), and `useNotReadyToast()` the call
   for a control whose feature belongs to another task: it says "준비 중이에요". A toast sits just above the phone's own
-  bar; a screen with something fixed to its bottom calls `useToastAbove(height)` so that it sits above that too, as
-  the main screen's navigation does.
+  bar; a screen with something fixed to its bottom calls `useToastAbove(height, inFront)` so that it sits above that
+  too while it is in front, as the tabs do. Of several screens that say so, the latest still in front wins.
 - The app is light only. The design system has no dark theme, so `app.json` says `light`.
 
 A repeated element that the design system lacks becomes a shared component here, not a copy in each screen.
@@ -619,8 +778,8 @@ colour. `presence` names the colours of what a person is doing: `free`, `class`,
 which an Avatar's dot uses too, and `member`, a member of the User's Party who is no Friend.
 
 `MapPin` of the kind `me` has a `small` form, three quarters of its size, which the `Main` wireframe draws while the
-whole campus is in view. The icons `chevronDown`, `chevronRight`, `chevronUp`, `expand` and `minus` are the
-wireframes' and not the design system's.
+whole campus is in view. The icons `chevronDown`, `chevronLeft`, `chevronRight`, `chevronUp`, `expand` and
+`minus` are the wireframes' and not the design system's.
 
 For what the `Main` wireframe draws over the map and the design system does not name, `tokens.ts` has `questTone`
 (the colour of a Quest's row: `class`, `open`, `closed`), `onKey` (the dot and the muted text on a fill of the key

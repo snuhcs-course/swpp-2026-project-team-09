@@ -44,6 +44,8 @@ A dining view that shows menus by day, meal and restaurant, and a shuttle view t
 
 - This task builds screens and connects them to the API of P07. It adds no server behaviour.
 - The dining view opens as a panel over the map. It shows 7 days starting today.
+- The 식당 layer, when on, puts a pin on the Place of each restaurant that has menus for today, from the three Sources: coop, dormitory and veterinary. The app carries the mapping from a restaurant to its Place. A pin's card has `메뉴 보기`, which opens the dining view scrolled to that restaurant. The layer stack also opens the view.
+- The layer stack holds 식당 and 셔틀버스 only.
 - A meal is shown as its lines, in the page's order (P07, ADR 0001). A dish that has a name and a price is a row with both. A heading is a section title, with its set price when it has one. A note, such as operating hours or a closure, is in smaller text. Any other line is shown as it was written. The app does not group by corner or compute a cheapest dish.
 - The meal served next is chosen by the time of day.
 - The shuttle is a layer of the map, not a separate map. Stops, the route line and vehicles use the map component of P06.
@@ -54,7 +56,7 @@ A dining view that shows menus by day, meal and restaurant, and a shuttle view t
 - Outside weekdays from 08:00 to 21:00 the layer shows the stops and the route with a notice that the shuttle is not in service.
 - The information screen shows the attributions of both sources of the map data: OpenStreetMap, with a link to its copyright page, and 국토지리정보원's 연속수치지형도 건물, used under 공공누리 type 1, with a link to the page it is downloaded from, `https://www.vworld.kr/dtmk/dtmk_ntads_s002.do?dsId=30162`.
 - What the shuttle feed reports, its service hours, the menu pages' quirks and OpenStreetMap's attribution rules are in `.scratch/research/external-sources.md`. What 공공누리 type 1 asks is in `.scratch/research/public-building-outlines.md` §8.
-- The arrangement is provisional. P19 adapts it to the wireframes.
+- The screens follow the wireframe's frames `MainLayers` (the layer stack) and `MapDining` (the 식당 layer), and the cards on the map in `Main`, built on the shell and shared components of P19. The dining view has no frame. The frames' 공부공간 layer and the shuttle stop's `알림 받기` are not built.
 
 ## Testing Decisions
 
@@ -75,5 +77,5 @@ A dining view that shows menus by day, meal and restaurant, and a shuttle view t
 ## Further Notes
 
 - The schedule names 함재현 as the worker.
-- This task depends on the map of P06 and on the API of P07.
+- This task depends on the map of P06, on the API of P07, and on the shell and shared components of P19.
 - P05 saw the operator report vehicles at stops only, each moving on by one stop every 45 to 90 seconds. `.scratch/research/external-sources.md` §5 has the observations.

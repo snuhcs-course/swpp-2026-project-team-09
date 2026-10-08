@@ -35,7 +35,8 @@ function answerOf(permission: Permission): Location.LocationPermissionResponse {
 function fix({ latitude, longitude }: LatLng): Location.LocationObject {
   return {
     coords: { latitude, longitude, altitude: null, accuracy: 10, altitudeAccuracy: null, heading: null, speed: null },
-    timestamp: 0,
+    // Measured now, by the test's clock.
+    timestamp: Date.now(),
   };
 }
 
@@ -65,6 +66,8 @@ export interface Phone {
   turnServicesOn: () => void;
   // The app returns to the front, as after the phone's settings.
   comeToFront: () => Promise<void>;
+  // The User leaves the app for another, or the home screen.
+  goToBackground: () => Promise<void>;
 }
 
 type FrontListener = Parameters<typeof AppState.addEventListener>[1];
@@ -140,6 +143,14 @@ export function givePhone(given: Given): Phone {
       await act(async () => {
         for (const listener of front) {
           listener('active');
+        }
+        await jest.advanceTimersByTimeAsync(0);
+      });
+    },
+    goToBackground: async (): Promise<void> => {
+      await act(async () => {
+        for (const listener of front) {
+          listener('background');
         }
         await jest.advanceTimersByTimeAsync(0);
       });

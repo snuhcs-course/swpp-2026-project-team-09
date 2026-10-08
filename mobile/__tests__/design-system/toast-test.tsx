@@ -171,3 +171,32 @@ describe("Toast's place", () => {
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 34 + 65 + 24 });
   });
 });
+
+function Tab({ height, inFront }: { height: number; inFront: boolean }): ReactElement {
+  useToastAbove(height, inFront);
+  return <></>;
+}
+
+function tabs(front: 'map' | 'other'): ReactElement {
+  return (
+    <ToastProvider>
+      <Tab height={134} inFront={front === 'map'} />
+      <Tab height={72} inFront={front === 'other'} />
+      <Buttons />
+    </ToastProvider>
+  );
+}
+
+describe("Toast's place among screens that stay mounted", () => {
+  it('follows the screen in front, and not one behind it', async () => {
+    await render(tabs('map'));
+    await fireEvent.press(screen.getByRole('button', { name: '추가' }));
+    expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 134 + 24 });
+
+    await screen.rerender(tabs('other'));
+    expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 72 + 24 });
+
+    await screen.rerender(tabs('map'));
+    expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 134 + 24 });
+  });
+});

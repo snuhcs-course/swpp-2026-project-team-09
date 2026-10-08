@@ -22,7 +22,7 @@ const JI_HO = friendCard('f3', '박지호');
 
 describe('the selection of the main screen', () => {
   it('is dropped for good when its card leaves the map: the card does not open again on its return', async () => {
-    const { result, rerender } = await renderHook(({ cards }: { cards: CardView[] }) => useSelection(cards), {
+    const { result, rerender } = await renderHook(({ cards }: { cards: CardView[] }) => useSelection(cards, true), {
       initialProps: { cards: [MIN_JUN, JI_HO] },
     });
     await act(() => {
@@ -40,7 +40,7 @@ describe('the selection of the main screen', () => {
   });
 
   it('stays while its card is only worded anew', async () => {
-    const { result, rerender } = await renderHook(({ cards }: { cards: CardView[] }) => useSelection(cards), {
+    const { result, rerender } = await renderHook(({ cards }: { cards: CardView[] }) => useSelection(cards, true), {
       initialProps: { cards: [MIN_JUN] },
     });
     await act(() => {

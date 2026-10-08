@@ -110,30 +110,31 @@ export function BottomNavs(): ReactElement {
   );
 }
 
+const DIALOG_BUTTONS = [
+  ['question', '질문 열기'],
+  ['statement', '알림 열기'],
+  ['danger', '확인 열기'],
+] as const;
+
 export function Dialogs(): ReactElement {
-  const [open, setOpen] = useState<'question' | 'statement' | null>(null);
+  const [open, setOpen] = useState<(typeof DIALOG_BUTTONS)[number][0] | null>(null);
   const close = (): void => {
     setOpen(null);
   };
   return (
     <Section name="Dialog">
       <Row>
-        <Button
-          onPress={() => {
-            setOpen('question');
-          }}
-          variant="secondary"
-        >
-          질문 열기
-        </Button>
-        <Button
-          onPress={() => {
-            setOpen('statement');
-          }}
-          variant="secondary"
-        >
-          알림 열기
-        </Button>
+        {DIALOG_BUTTONS.map(([dialog, label]) => (
+          <Button
+            key={dialog}
+            onPress={() => {
+              setOpen(dialog);
+            }}
+            variant="secondary"
+          >
+            {label}
+          </Button>
+        ))}
       </Row>
       <Dialog
         body="지도에 내 아바타를 보여 주려면 위치 권한이 필요해요."
@@ -151,6 +152,15 @@ export function Dialogs(): ReactElement {
         onConfirm={close}
         title="다른 기기에서 로그인했어요"
         visible={open === 'statement'}
+      />
+      <Dialog
+        cancelLabel="취소"
+        confirmLabel="로그아웃"
+        onCancel={close}
+        onConfirm={close}
+        title="로그아웃할까요?"
+        tone="danger"
+        visible={open === 'danger'}
       />
     </Section>
   );

@@ -196,7 +196,7 @@ describe("a card's button whose feature belongs to another task", () => {
     // The navigation's 80, the card's bottom 72 above it, its height, and 8 of clear room.
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 340 });
     await press(user, '닫기');
-    await user.press(screen.getByRole('tab', { name: '행사' }));
+    await user.press(screen.getByRole('button', { name: '올리기' }));
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 158 });
   });
 

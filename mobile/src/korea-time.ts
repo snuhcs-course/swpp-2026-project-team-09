@@ -19,22 +19,42 @@ export function koreaClock(instant: string): string {
   return `${twoDigits(korea.getUTCHours())}:${twoDigits(korea.getUTCMinutes())}`;
 }
 
+// How many days of Korea's calendar `instant` is after `now`: 0 on the same day, 1 on the next, less than 0 before.
+export function koreaDaysAfter(now: Date, instant: Date): number {
+  return Math.floor(inKorea(instant).getTime() / DAY_MS) - Math.floor(inKorea(now).getTime() / DAY_MS);
+}
+
+// "10월 3일 (토)"
+export function koreaDate(instant: Date): string {
+  const korea = inKorea(instant);
+  return `${korea.getUTCMonth() + 1}월 ${korea.getUTCDate()}일 (${WEEKDAYS[korea.getUTCDay()]})`;
+}
+
+// The next day of Korea's calendar, at the same time.
+export function koreaNextDay(instant: Date): Date {
+  return new Date(instant.getTime() + DAY_MS);
+}
+
 // "오늘", "내일", or "10월 3일 (토)".
 export function koreaDay(instant: string, now: Date): string {
-  const korea = inKorea(new Date(instant));
-  const days = Math.floor(korea.getTime() / DAY_MS) - Math.floor(inKorea(now).getTime() / DAY_MS);
+  const days = koreaDaysAfter(now, new Date(instant));
   if (days === 0) {
     return '오늘';
   }
   if (days === 1) {
     return '내일';
   }
-  return `${korea.getUTCMonth() + 1}월 ${korea.getUTCDate()}일 (${WEEKDAYS[korea.getUTCDay()]})`;
+  return koreaDate(new Date(instant));
 }
 
 // Whether two instants are on the same day of Korea's calendar.
 export function sameKoreaDay(one: Date, other: Date): boolean {
   return Math.floor(inKorea(one).getTime() / DAY_MS) === Math.floor(inKorea(other).getTime() / DAY_MS);
+}
+
+// The day of the week in Korea: 0 for Sunday, 1 for Monday.
+export function koreaWeekday(instant: Date): number {
+  return inKorea(instant).getUTCDay();
 }
 
 // 2026

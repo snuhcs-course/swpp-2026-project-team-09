@@ -37,6 +37,7 @@ describe('the friend list', () => {
       walk: '도보 4분',
       photo: null,
       position: { latitude: 37.45952, longitude: 126.95209 },
+      visible: true,
     });
   });
 
@@ -79,7 +80,7 @@ describe('the Quest list', () => {
 
     await settle();
 
-    expect(result.current.data).toEqual([
+    expect(result.current.data).toMatchObject([
       {
         id: 'c1',
         kind: 'class',
@@ -116,6 +117,20 @@ describe('the Quest list', () => {
         place: '학생회관 (63동)',
         position: { latitude: 37.45907, longitude: 126.95023 },
       },
+    ]);
+  });
+});
+
+describe('the Quest list on the whole screen', () => {
+  it("has the same rows with their kinds in the frame's words, their times and their days from today", async () => {
+    const { result } = await renderHook(useQuestRows, { wrapper });
+
+    await settle();
+
+    expect(result.current.data?.map(({ label, time, daysAway, ended }) => ({ label, time, daysAway, ended }))).toEqual([
+      { label: '강의', time: '14:00', daysAway: 0, ended: false },
+      { label: '공개 파티', time: '17:40', daysAway: 0, ended: false },
+      { label: '비공개 파티 · 김민준', time: '20:10', daysAway: 0, ended: false },
     ]);
   });
 });

@@ -2,8 +2,9 @@
 // middle one is the claims as JSON.
 //
 // Nothing here checks the signature, the audience or the expiry, so the claims are only as true as the phone they came
-// from. From ticket 12 on the main server verifies the signature and the claims and gives the word that counts. Until
-// then this check in the app only decides what the sign-in screen says.
+// from. In a build that asks the main server, the main server verifies the signature and the claims and gives the word
+// that counts. In a build that signs in with Google and asks no main server, this check in the app decides what the
+// sign-in screen says.
 //
 // The decoding relies on `decodeURIComponent` and `JSON.parse` alone, which every JavaScript engine has. It uses no
 // `atob`, `Buffer` or `TextDecoder`, which Hermes, the web and Jest do not all provide alike.
@@ -73,6 +74,16 @@ function text(claims: object, name: string): string | null {
 export function readIdToken(idToken: string): IdTokenClaims {
   const claims = claimsOf(idToken);
   return { email: text(claims, 'email'), hostedDomain: text(claims, 'hd'), name: text(claims, 'name') };
+}
+
+// The subject of a token of the same form, or null when it cannot be read. The main server's access token is one, and
+// its subject is the User's id. Nothing is checked here either: the main server checks the token it is sent.
+export function subjectOf(token: string): string | null {
+  try {
+    return text(claimsOf(token), 'sub');
+  } catch {
+    return null;
+  }
 }
 
 // An SNU account carries `hd=snu.ac.kr`. The address alone does not make one.

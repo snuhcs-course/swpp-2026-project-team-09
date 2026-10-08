@@ -53,9 +53,17 @@ const nothing = (): void => {
   // Nothing was started, so there is nothing to stop.
 };
 
+// A position as the phone measured it: the radius in metres it places itself within, null where it does not say, and
+// the time of the measurement in milliseconds since 1970.
+export interface Measured {
+  position: LatLng;
+  accuracy: number | null;
+  measuredAt: number;
+}
+
 export interface PhoneWatcher {
   // Each new position.
-  tell: (position: LatLng) => void;
+  tell: (measured: Measured) => void;
   // The watch could not start, as with the phone's location services turned off. It tells nothing until a new one
   // is started.
   failed: () => void;
@@ -67,10 +75,10 @@ export function watchPhone(everyMs: number, { tell, failed }: PhoneWatcher): () 
   let stop = nothing;
   let stopped = false;
   let told = false;
-  const give = ({ coords: { latitude, longitude } }: Location.LocationObject): void => {
+  const give = ({ coords: { latitude, longitude, accuracy }, timestamp }: Location.LocationObject): void => {
     if (!stopped) {
       told = true;
-      tell({ latitude, longitude });
+      tell({ position: { latitude, longitude }, accuracy, measuredAt: timestamp });
     }
   };
   const seed = async (): Promise<void> => {

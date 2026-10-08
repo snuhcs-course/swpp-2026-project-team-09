@@ -5,39 +5,15 @@ import { cardStyles, color, space, text } from '@/design-system';
 import { useSession } from '@/session/session';
 import { CourseLevelField, GenderField } from './choice-fields';
 import { DepartmentField } from './department-field';
-import { FieldLabel } from './field-label';
 import { Foot } from './foot';
-import { canSave, type ChangeForm, type Form, LONGEST_NAME, useForm } from './form';
-import { Input } from './input';
+import { canSave, type ChangeForm, type Form, useForm } from './form';
 import { InterestsSection } from './interests-section';
-import { lengthOf } from './length';
+import { NameField } from './name-field';
 import { RevealContext, useRevealer } from './reveal';
 import { useOnboarding } from './use-onboarding';
 import { YearField } from './year-field';
 
 const WIDEST = 390;
-
-function NameField({ form, change }: { form: Form; change: ChangeForm }): ReactElement {
-  return (
-    <View style={styles.field}>
-      <FieldLabel required suggested={form.nameSuggested}>
-        이름
-      </FieldLabel>
-      <Input
-        label="이름"
-        most={LONGEST_NAME}
-        onChangeText={(name) => {
-          change({ name, nameSuggested: false });
-        }}
-        placeholder="이름"
-        value={form.name}
-      />
-      <Text accessibilityLabel={`${lengthOf(form.name)}자, 최대 ${LONGEST_NAME}자`} style={styles.count}>
-        {`${lengthOf(form.name)}/${LONGEST_NAME}`}
-      </Text>
-    </View>
-  );
-}
 
 // The fields about the User. A badge leaves its field with the User's first change there, and another course level
 // has other departments, so it clears the one chosen.
@@ -47,7 +23,13 @@ function BasicSection({ form, change }: { form: Form; change: ChangeForm }): Rea
       <Text accessibilityRole="header" style={styles.title}>
         기본 정보
       </Text>
-      <NameField change={change} form={form} />
+      <NameField
+        onChange={(name) => {
+          change({ name, nameSuggested: false });
+        }}
+        suggested={form.nameSuggested}
+        value={form.name}
+      />
       <CourseLevelField
         onChange={(level) => {
           if (level !== form.level) {
@@ -152,8 +134,6 @@ const styles = StyleSheet.create({
   form: { gap: space[3], paddingTop: space[4], paddingHorizontal: space[4], paddingBottom: space[6] },
   section: { gap: space[4] },
   title: { ...text.title, color: color.ink },
-  field: { gap: space[2] },
-  count: { ...text.caption, alignSelf: 'flex-end', color: color.inkMuted },
   // What is seen of the form, between the head and the foot or the keyboard.
   frame: { flex: 1 },
 });

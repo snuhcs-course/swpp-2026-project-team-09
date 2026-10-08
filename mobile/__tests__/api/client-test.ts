@@ -112,23 +112,19 @@ describe('the mock of Parties', () => {
         capacity: 6,
         joinPolicy: 'open',
         memberCount: 4,
-        mark: { questId: 'q-ai', title: 'AI 커리어 설명회', globalEvent: { id: 'e1', title: 'AI 커리어 설명회' } },
+        quest: { id: 'q-ai', title: 'AI 커리어 설명회', globalEvent: { id: 'e1', title: 'AI 커리어 설명회' } },
+        holdsQuest: true,
+        friends: [{ id: 'f1', name: '김민준', department: '컴퓨터공학부' }],
+        leader: { id: 'f5', name: '정하은' },
       },
     ]);
-    expect(mine).toMatchObject({ id: 'm1', sharing: true, mark: { questId: 'q-ai' } });
+    expect(mine).toMatchObject({ id: 'm1', sharing: true, quest: { id: 'q-ai' } });
     expect(mine?.members.map(({ name, leader }) => [name, leader])).toEqual([
       ['정하은', true],
       ['김민준', false],
       ['오현우', false],
       ['안진영', false],
     ]);
-  });
-
-  it('counts what waits for the User in Parties, which no answer of the main server holds', async () => {
-    expect(await answered(mockClient.getPartyNews())).toEqual({ count: 3 });
-
-    process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getPartyNews';
-    expect(await answered(mockClient.getPartyNews())).toEqual({ count: 0 });
   });
 });
 

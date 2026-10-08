@@ -58,7 +58,11 @@ const ICONS = {
   // Not the design system's: the `Main` frame draws them on the friend pill, on the buttons that collapse a list and
   // on the button that opens the Quest list on the whole screen.
   chevronRight: [{ path: 'M9 6l6 6-6 6' }],
+  // Not the design system's: the frames draw it on the back button of a screen above the tabs.
+  chevronLeft: [{ path: 'M15 6l-6 6 6 6' }],
   chevronUp: [{ path: 'M6 15l6-6 6 6' }],
+  // Not the design system's: the `Profile` frame draws it on the button that opens 알림.
+  bell: [{ path: 'M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z' }, { path: 'M10 20.5a2 2 0 0 0 4 0' }],
   expand: [{ path: 'M14 4h6v6' }, { path: 'M10 20H4v-6' }, { path: 'M20 4l-7 7' }, { path: 'M4 20l7-7' }],
 } as const satisfies Record<string, readonly Stroke[]>;
 

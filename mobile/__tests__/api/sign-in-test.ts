@@ -153,7 +153,14 @@ describe('the Lobby', () => {
     await answered(mockClient.completeOnboarding(ANSWERS));
 
     expect(await answered(mockClient.enterLobby())).toEqual({
-      profile: { name: '홍길동', department: '컴퓨터공학부', admissionYear: 2022, hashtags: ['AI커리어', '러닝'] },
+      profile: {
+        name: '홍길동',
+        department: '컴퓨터공학부',
+        admissionYear: 2022,
+        hashtags: ['AI커리어', '러닝'],
+        friendId: '7KX2M9QD',
+      },
+      masterSwitch: false,
     });
   });
 });

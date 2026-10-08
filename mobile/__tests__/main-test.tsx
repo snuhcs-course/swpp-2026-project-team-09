@@ -53,15 +53,15 @@ describe("the main screen's bottom navigation", () => {
     expect(screen.getByRole('tab', { name: '내 정보' })).toBeVisible();
   });
 
-  it('counts on 파티 what waits for the User in Parties', async () => {
+  it('counts on 파티 what waits for the User in Parties: a Party opened, an invitation and a Meetup', async () => {
     givePhone({ permission: 'granted' });
     await openMain();
 
     expect(screen.getByRole('tab', { name: '파티, 새 소식 3개' })).toBeVisible();
   });
 
-  it('shows no count when the number cannot be read', async () => {
-    process.env.EXPO_PUBLIC_MOCK_FAIL = 'getPartyNews';
+  it('shows no count when the lists cannot be read', async () => {
+    process.env.EXPO_PUBLIC_MOCK_FAIL = 'listParties,listFriendRequests,listQuestInvitations,listMeetups,listQuests';
     givePhone({ permission: 'granted' });
     await openMain();
     await pass(3000);
@@ -73,23 +73,18 @@ describe("the main screen's bottom navigation", () => {
     givePhone({ permission: 'granted' });
     const user = await openMain();
 
-    await user.press(screen.getByRole('tab', { name: '행사' }));
+    await user.press(screen.getByRole('button', { name: '올리기' }));
 
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 158 });
   });
 });
 
 describe("a slot of the main screen's bottom navigation", () => {
-  it.each([
-    ['tab', '파티, 새 소식 3개'],
-    ['button', '올리기'],
-    ['tab', '행사'],
-    ['tab', '내 정보'],
-  ] as const)('says that a %s, %s, is not ready', async (role, name) => {
+  it('says that 올리기 is not ready', async () => {
     givePhone({ permission: 'granted' });
     const user = await openMain();
 
-    await user.press(screen.getByRole(role, { name }));
+    await user.press(screen.getByRole('button', { name: '올리기' }));
 
     expect(screen.getByText(NOT_READY)).toBeVisible();
     await pass(2400);

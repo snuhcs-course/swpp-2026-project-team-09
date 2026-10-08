@@ -18,6 +18,8 @@ export const color = {
   ink: '#0E1330',
   inkMuted: '#555C74',
   inkSubtle: '#8A90A3',
+  // The frames' faint words of an empty list, such as "결과 없음".
+  inkFaint: '#858CA0',
   onPrimary: '#FFFFFF',
   focusRing: '#3D63D6',
   me: '#2F6BFF',
@@ -108,6 +110,18 @@ export const questTone = {
   class: color.inkMuted,
   open: '#2F6FC0',
   closed: color.party,
+} as const;
+
+// The colours of a class in the timetable, by its place in it, as the `Profile` frame draws the week: the first class
+// navy, the eighth navy again.
+export const classColors = ['#001A72', '#0E7383', '#865600', '#6B46C1', '#B8336A', '#0369A1', '#4D7C0F'] as const;
+
+// The rounds of 알림's rows, as the `Profile` frame draws them: an icon on its tinted ground. `navy` for a Party
+// opened and a Friend Request, `invitation` for an invitation to 파티, and `request` for requests to join.
+export const noticeTone = {
+  navy: { ink: color.snuBlue, ground: color.blue50 },
+  invitation: { ink: color.quest, ground: '#FFF4D6' },
+  request: { ink: color.party, ground: color.partySoft },
 } as const;
 
 // On a fill of the key colour, as the `Main` frame draws "활성 파티": the dot that says the Party is live, the ring

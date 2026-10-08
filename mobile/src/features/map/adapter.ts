@@ -74,7 +74,7 @@ export interface MapSources {
 function globalEventCards({ globalEvents, globalEventAnnouncers, parties, now }: MapSources): CardView[] {
   return globalEvents.map((event) => {
     const announcer = globalEventAnnouncers.find(({ eventId }) => eventId === event.id)?.announcer;
-    const recruiting = parties.filter(({ mark }) => mark?.globalEvent?.id === event.id).length;
+    const recruiting = parties.filter(({ quest }) => quest?.globalEvent?.id === event.id).length;
     const hours =
       event.endsAt === null ? koreaClock(event.startsAt) : `${koreaClock(event.startsAt)}–${koreaClock(event.endsAt)}`;
     return {

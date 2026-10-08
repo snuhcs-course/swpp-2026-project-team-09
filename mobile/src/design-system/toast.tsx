@@ -23,8 +23,9 @@ type ShowToast = (message: string, shownMs?: number) => void;
 
 interface Toasts {
   show: ShowToast;
-  // Says how much of the screen's bottom is taken, by a bottom navigation for example. The toast sits above it.
-  setTaken: (height: number) => void;
+  // Says how much of the screen's bottom is taken, by a bottom navigation for example, until the call it gives is
+  // made. The toast sits above the latest claim that still holds.
+  claim: (height: number) => () => void;
 }
 
 const ToastContext = createContext<Toasts | null>(null);
@@ -35,7 +36,8 @@ const ToastContext = createContext<Toasts | null>(null);
 export function ToastProvider({ children }: { children: ReactNode }): ReactElement {
   // A new object for every toast, so that the same words shown twice start the time again.
   const [toast, setToast] = useState<{ message: string; shownMs: number } | null>(null);
-  const [taken, setTaken] = useState(0);
+  const [claims, setClaims] = useState<readonly { height: number }[]>([]);
+  const taken = claims.at(-1)?.height ?? 0;
   // The phone's own bar at the bottom. Without a provider of it, as in a test, there is none.
   const inset = use(SafeAreaInsetsContext)?.bottom ?? 0;
   const show = useCallback<ShowToast>((message, shownMs = SHOWN_MS) => {
@@ -59,7 +61,14 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactEleme
       }
     };
   }, [toast]);
-  const toasts = useMemo(() => ({ show, setTaken }), [show]);
+  const claim = useCallback((height: number) => {
+    const mine = { height };
+    setClaims((now) => [...now, mine]);
+    return (): void => {
+      setClaims((now) => now.filter((other) => other !== mine));
+    };
+  }, []);
+  const toasts = useMemo(() => ({ show, claim }), [show, claim]);
   return (
     <ToastContext value={toasts}>
       {children}
@@ -88,16 +97,12 @@ export function useToast(): ShowToast {
   return useToasts().show;
 }
 
-// For a screen with something fixed to its bottom, such as the bottom navigation: while the screen is shown, a toast
-// sits above that height. A screen without it calls nothing, and a toast sits just above the phone's own bar.
-export function useToastAbove(height: number): void {
-  const { setTaken } = useToasts();
-  useEffect(() => {
-    setTaken(height);
-    return (): void => {
-      setTaken(0);
-    };
-  }, [height, setTaken]);
+// For a screen with something fixed to its bottom, such as the bottom navigation: while the screen is shown and
+// `active`, a toast sits above that height. A screen that stays mounted behind another, such as a tab, passes whether
+// it is the one in front. A screen without it calls nothing, and a toast sits just above the phone's own bar.
+export function useToastAbove(height: number, active = true): void {
+  const { claim } = useToasts();
+  useEffect(() => (active ? claim(height) : undefined), [height, active, claim]);
 }
 
 // Gives the call for a control whose feature belongs to another task: it says that the feature is not ready.
