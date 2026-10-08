@@ -1,11 +1,14 @@
 // The app's one map. A screen shows a map with `Map` and nothing else: no screen calls a map SDK or the native
 // module.
 export {
+  CAMERA_BOUNDS,
   CAMPUS_BOUNDS,
+  CAMPUS_CAMERA,
   centreOf,
   isInside,
   MAX_ZOOM,
   MIN_ZOOM,
+  NATIVE_MIN_LEVEL,
   ZOOM_OFFSET,
   type ZoomDetail,
   zoomDetail,

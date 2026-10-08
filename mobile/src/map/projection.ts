@@ -16,6 +16,8 @@ export interface Size {
 
 export interface CameraRules {
   bounds: MapBounds;
+  // The rectangle the lowest zoom fits the view inside. Left out, `bounds`.
+  fitBounds?: MapBounds;
   minZoom: number;
   maxZoom: number;
   // The view's size in points.
@@ -56,9 +58,9 @@ function corners({ south, west, north, east }: MapBounds, zoom: number): { topLe
   };
 }
 
-// The lowest zoom allowed: the view fits inside the rectangle from here on.
-export function lowestZoom({ bounds, minZoom, size }: CameraRules): number {
-  const { topLeft, bottomRight } = corners(bounds, 0);
+// The lowest zoom allowed: the view fits inside the rectangle that fits it from here on.
+export function lowestZoom({ bounds, fitBounds = bounds, minZoom, size }: CameraRules): number {
+  const { topLeft, bottomRight } = corners(fitBounds, 0);
   const fits = Math.max(
     zoomWhere(size.width, bottomRight.x - topLeft.x),
     zoomWhere(size.height, bottomRight.y - topLeft.y),

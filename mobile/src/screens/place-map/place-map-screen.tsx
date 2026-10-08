@@ -6,7 +6,7 @@ import { color, font, Icon, radius, shadow, space } from '@/design-system';
 import { useInsets } from '@/design-system/insets';
 import { givePlace } from '@/features/places/picked-place';
 import { type PlaceAtView, usePlaceAt } from '@/features/places/use-place-at';
-import { CAMPUS_BOUNDS, isInside, Map, type MapHandle, MAX_ZOOM, MIN_ZOOM } from '@/map';
+import { CAMPUS_BOUNDS, CAMPUS_CAMERA, isInside, Map, type MapHandle } from '@/map';
 import { usePosition } from '@/position';
 
 // The floating back button and the pill over the map.
@@ -77,10 +77,8 @@ export function PlaceMapScreen(): ReactElement {
       >
         <Map
           avatars={[]}
-          bounds={CAMPUS_BOUNDS}
+          {...CAMPUS_CAMERA}
           markers={[]}
-          maxZoom={MAX_ZOOM}
-          minZoom={MIN_ZOOM}
           onCameraIdle={({ centre }) => {
             if (!opened.current) {
               opened.current = true;

@@ -63,12 +63,12 @@ function ranked<Kind extends MapMarker>(things: readonly Kind[]): Kind[] {
 // tiles and draws no campus. It places what it was asked to show by position, with the camera it was asked for, so
 // that a move of the camera or of an Avatar is seen and a screen can be laid out around it. A User cannot pan it.
 export function PlainMap(props: MapProps): ReactElement {
-  const { bounds, minZoom, maxZoom, markers, avatars, lines, onPress, onCameraIdle, onFitZoom, ref } = props;
+  const { bounds, fitBounds, minZoom, maxZoom, markers, avatars, lines, onPress, onCameraIdle, onFitZoom, ref } = props;
   const window = useWindowDimensions();
   // Until the ground is laid out it counts as large as the window, so that it is ready at once.
   const [laidOut, setLaidOut] = useState<Size | null>(null);
   const size = laidOut ?? { width: window.width, height: window.height };
-  const camera = useCamera({ bounds, minZoom, maxZoom, size }, ref, { onCameraIdle, onFitZoom });
+  const camera = useCamera({ bounds, fitBounds, minZoom, maxZoom, size }, ref, { onCameraIdle, onFitZoom });
   const gliding = useMotionAllowed();
   const place = (position: LatLng): Point => inView(position, camera, size);
   return (
