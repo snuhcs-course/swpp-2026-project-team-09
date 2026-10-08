@@ -1,21 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { router, useIsFocused } from 'expo-router';
 import { type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { friendsQuery, globalEventAnnouncersQuery, globalEventsQuery, questQuery } from '@/api/queries';
 import type { Friend, Quest } from '@/api/types';
-import {
-  Button,
-  color,
-  ErrorState,
-  font,
-  FullScreenPanel,
-  LoadingState,
-  space,
-  TextField,
-  useToastAbove,
-} from '@/design-system';
+import { Button, ErrorState, FullScreenPanel, LoadingState, space, TextField, useToastAbove } from '@/design-system';
 import type { PickedPlace } from '@/features/places/picked-place';
+import { usePlaceOf } from '@/features/places/typed-place';
 import {
   emptyForm,
   type FormEvent,
@@ -25,7 +16,7 @@ import {
   type PartyForm,
   withEvent,
 } from '@/features/party/making';
-import { placeOf, WhenField, WhereField } from '../../room/plan-form';
+import { WhenField, WhereField } from '../../room/plan-form';
 import { showMine } from '../use-party-actions';
 import { EventField, EventPicker } from './event-field';
 import { FriendPicker } from './friend-picker';
@@ -59,7 +50,6 @@ interface FormState {
   setWords: (words: string) => void;
   picked: PickedPlace | null;
   setPicked: (place: PickedPlace | null) => void;
-  unplaced: boolean;
   ready: boolean;
   submit: () => void;
   pickEvent: (event: FormEvent | null) => void;
@@ -116,7 +106,7 @@ function useFormState(quest: Quest | null, eventId: string | null): FormState {
   const [words, setWords] = useState('');
   const [picked, setPicked] = useState<PickedPlace | null>(null);
   const [saving, setSaving] = useState(false);
-  const unplaced = words.trim() !== '' && picked === null;
+  const placeOf = usePlaceOf();
   const pickEvent = useEventPick(setForm, setWords, setPicked, editing ? null : eventId);
   const most = invitable(form, Math.max(holders.length, 1));
   const shownChosen = chosen.slice(0, most);
@@ -133,16 +123,17 @@ function useFormState(quest: Quest | null, eventId: string | null): FormState {
     setWords,
     picked,
     setPicked,
-    unplaced,
-    ready: isReady(form, shownChosen.length, editing) && !unplaced && !saving,
+    ready: isReady(form, shownChosen.length, editing) && !saving,
     submit: () => {
       setSaving(true);
-      void send({ ...form, place: placeOf(words, picked) }, shownChosen).then((sent) => {
-        setSaving(false);
-        if (sent === 'taken') {
-          (editing ? router.back : showMine)();
-        }
-      });
+      void placeOf(words, picked)
+        .then((place) => send({ ...form, place }, shownChosen))
+        .then((sent) => {
+          setSaving(false);
+          if (sent === 'taken') {
+            (editing ? router.back : showMine)();
+          }
+        });
     },
     pickEvent,
   };
@@ -160,12 +151,7 @@ function When({ state }: { state: FormState }): ReactElement {
 }
 
 function Where({ state }: { state: FormState }): ReactElement {
-  return (
-    <View style={styles.where}>
-      <WhereField onPicked={state.setPicked} onWords={state.setWords} picked={state.picked} words={state.words} />
-      {state.unplaced ? <Text style={styles.hint}>지도에서 위치를 골라 주세요</Text> : null}
-    </View>
-  );
+  return <WhereField onPicked={state.setPicked} onWords={state.setWords} picked={state.picked} words={state.words} />;
 }
 
 interface FieldsProps {
@@ -285,6 +271,4 @@ function EditedForm({ questId }: { questId: string }): ReactElement {
 
 const styles = StyleSheet.create({
   body: { gap: space[5], padding: space[4] },
-  where: { gap: space[1] },
-  hint: { fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.danger },
 });

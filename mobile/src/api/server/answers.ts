@@ -146,8 +146,7 @@ export function isPlace(value: unknown): value is SubQuest['place'] {
     value === null ||
     (isTextOrNull(field(value, 'placeId')) &&
       isText(field(value, 'label')) &&
-      isNumber(field(value, 'latitude')) &&
-      isNumber(field(value, 'longitude')))
+      (isPoint(value) || (field(value, 'latitude') === null && field(value, 'longitude') === null)))
   );
 }
 

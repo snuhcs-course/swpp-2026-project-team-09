@@ -268,7 +268,7 @@ export class QuestsService {
       placeId,
       latitude: point?.latitude ?? null,
       longitude: point?.longitude ?? null,
-      placeLabel: point?.label ?? null,
+      placeLabel: place !== null && 'label' in place ? place.label : null,
     };
   }
 

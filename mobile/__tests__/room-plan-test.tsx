@@ -177,22 +177,6 @@ describe('the map view', () => {
   });
 });
 
-describe("the Leader's 일정 form, waiting", () => {
-  it('waits for a point while the place has words of its own', async () => {
-    const user = await openRoom();
-    await user.press(screen.getByRole('button', { name: '일정 추가' }));
-    await user.type(screen.getByLabelText('내용'), '모이기');
-    await user.press(screen.getByRole('button', { name: '언제 날짜·시간 선택' }));
-    await answer(user, '확인');
-    expect(screen.getByRole('button', { name: '추가' })).toBeEnabled();
-
-    await user.type(screen.getByLabelText('어디서'), '정문');
-
-    expect(screen.getByText('지도에서 위치를 골라 주세요')).toBeVisible();
-    expect(screen.getByRole('button', { name: '추가' })).toBeDisabled();
-  });
-});
-
 describe("the Leader's 일정 form, editing and cancelling", () => {
   it('edits a Sub Quest', async () => {
     server.on(`PUT ${STEPS}/${MEET?.id}`, { status: 200, body: MEET });

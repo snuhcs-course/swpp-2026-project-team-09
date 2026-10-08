@@ -13,15 +13,20 @@ export const attendSchema = z.strictObject({ globalEventId: z.uuid(), title: tit
 
 export type AttendDto = z.infer<typeof attendSchema>;
 
+const labelSchema = z.string().trim().min(1).max(50);
+
 export const placeSchema = z.union([
   z.strictObject({ placeId: z.uuid() }),
   // A point on the map, with the label the app showed for it.
   z.strictObject({
     latitude: z.number().min(-90).max(90),
     longitude: z.number().min(-180).max(180),
-    label: z.string().trim().min(1).max(50),
+    label: labelSchema,
   }),
 ]);
+
+// A Sub Quest's place may also be words alone, which name no Place and have no point, such as 서울대입구역.
+const subQuestPlaceSchema = z.union([...placeSchema.options, z.strictObject({ label: labelSchema })]);
 
 // What a Holder writes when adding or editing a Sub Quest. Left out is the same as null.
 export const subQuestContentSchema = z
@@ -29,7 +34,7 @@ export const subQuestContentSchema = z
     title: titleSchema,
     startsAt: z.iso.datetime({ offset: true }).nullable().default(null),
     endsAt: z.iso.datetime({ offset: true }).nullable().default(null),
-    place: placeSchema.nullable().default(null),
+    place: subQuestPlaceSchema.nullable().default(null),
   })
   .refine(({ startsAt, endsAt }) => startsAt === null || endsAt === null || new Date(endsAt) > new Date(startsAt), {
     path: ['endsAt'],

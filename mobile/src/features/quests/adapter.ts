@@ -55,7 +55,9 @@ export function shownSubQuest(quest: Quest): SubQuest | null {
 
 export function positionOf(subQuest: SubQuest | null): LatLng | null {
   const place = subQuest?.place ?? null;
-  return place === null ? null : { latitude: place.latitude, longitude: place.longitude };
+  return place === null || place.latitude === null || place.longitude === null
+    ? null
+    : { latitude: place.latitude, longitude: place.longitude };
 }
 
 function startOf(quest: Quest): number {
