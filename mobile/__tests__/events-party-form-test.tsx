@@ -3,7 +3,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
-import { answerEvents, CAREER, MY_CAREER } from './support/events';
+import { answerEvents, CAREER, MAJOR, MY_CAREER } from './support/events';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { openAt } from './support/party';
@@ -52,7 +52,7 @@ afterEach(() => {
 });
 
 describe('관련 행사', () => {
-  it('chooses an event in the picker, which fills the form with its title, time and place, and 행사 빼기 clears it', async () => {
+  it('chooses an event in the picker, which fills the form with its title, time and place, and 행사 빼기 leaves the title', async () => {
     const user = await openAt('/party-form');
 
     await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
@@ -63,12 +63,27 @@ describe('관련 행사', () => {
       exact: false,
     });
     expect(screen.getByLabelText('제목')).toHaveDisplayValue(CAREER.title);
-    expect(screen.getByLabelText('제목')).toBeDisabled();
+    expect(screen.getByLabelText('제목')).toBeEnabled();
     expect(screen.getByLabelText('어디서')).toHaveDisplayValue('301동 대강당');
 
     await user.press(screen.getByRole('button', { name: '행사 빼기' }));
     expect(screen.getByRole('button', { name: '관련 행사 선택' })).toBeVisible();
-    expect(screen.getByLabelText('제목')).toHaveDisplayValue('');
+    expect(screen.getByLabelText('제목')).toHaveDisplayValue(CAREER.title);
+  });
+
+  it('lets the User change the filled-in title, which choosing another event replaces again', async () => {
+    const user = await openAt('/party-form');
+    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    await user.press(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
+
+    await user.clear(screen.getByLabelText('제목'));
+    await user.type(screen.getByLabelText('제목'), '설명회 같이 가요');
+    await user.press(screen.getByRole('button', { name: '행사 빼기' }));
+    expect(screen.getByLabelText('제목')).toHaveDisplayValue('설명회 같이 가요');
+
+    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    await user.press(screen.getByRole('button', { name: `행사 · ${MAJOR.title}` }));
+    expect(screen.getByLabelText('제목')).toHaveDisplayValue(MAJOR.title);
   });
 });
 
@@ -103,5 +118,74 @@ describe('recruiting for an event', () => {
 
     expect(toast()).toHaveTextContent('파티장만 할 수 있어요');
     expect(shownAddress()).toBe(`/room/${MY_CAREER.id}`);
+  });
+});
+
+describe('recruiting for an event under a title of the User’s', () => {
+  it('attends the event with the title the User gave it', async () => {
+    const titled = { ...MY_CAREER, title: '설명회 같이 가요' };
+    server.on('POST /quests', { status: 201, body: titled });
+    server.on(`PATCH /quests/${MY_CAREER.id}`, { status: 200, body: titled });
+    const user = await openAt(`/party-form?eventId=${CAREER.id}`);
+    await user.clear(screen.getByLabelText('제목'));
+    await user.type(screen.getByLabelText('제목'), '설명회 같이 가요');
+    await fillRecruiting(user);
+
+    await user.press(screen.getByRole('button', { name: '파티 올리기' }));
+    await pass(500);
+
+    expect(server.received('POST /quests').map(({ body }) => body)).toEqual([
+      { globalEventId: CAREER.id, title: '설명회 같이 가요' },
+    ]);
+    expect(server.received(`PATCH /quests/${MY_CAREER.id}`).map(({ body }) => body)).toEqual([
+      { description: '설명회 끝나고 저녁도 같이 먹어요', capacity: 4, joinPolicy: 'open', board: 'career' },
+    ]);
+  });
+
+  it('gives the title to a Quest for the event the User already held, which attending leaves as it was', async () => {
+    server.on('POST /quests', { status: 201, body: MY_CAREER });
+    server.on(`PATCH /quests/${MY_CAREER.id}`, { status: 200, body: MY_CAREER });
+    const user = await openAt(`/party-form?eventId=${CAREER.id}`);
+    await user.clear(screen.getByLabelText('제목'));
+    await user.type(screen.getByLabelText('제목'), '설명회 같이 가요');
+    await fillRecruiting(user);
+
+    await user.press(screen.getByRole('button', { name: '파티 올리기' }));
+    await pass(500);
+
+    expect(server.received(`PATCH /quests/${MY_CAREER.id}`).map(({ body }) => body)).toEqual([
+      {
+        title: '설명회 같이 가요',
+        description: '설명회 끝나고 저녁도 같이 먹어요',
+        capacity: 4,
+        joinPolicy: 'open',
+        board: 'career',
+      },
+    ]);
+  });
+});
+
+describe('editing a Quest for an event', () => {
+  it('lets the Leader change its title', async () => {
+    const recruiting = {
+      ...MY_CAREER,
+      capacity: 4,
+      joinPolicy: 'open' as const,
+      board: 'career' as const,
+      description: '같이 가요',
+    };
+    server.on(`GET /quests/${MY_CAREER.id}`, { status: 200, body: recruiting });
+    server.on(`PATCH /quests/${MY_CAREER.id}`, { status: 200, body: { ...recruiting, title: '설명회 모임' } });
+    const user = await openAt(`/party-form?questId=${MY_CAREER.id}`);
+
+    expect(screen.getByLabelText('제목')).toBeEnabled();
+    await user.clear(screen.getByLabelText('제목'));
+    await user.type(screen.getByLabelText('제목'), '설명회 모임');
+    await user.press(screen.getByRole('button', { name: '수정 완료' }));
+    await pass(500);
+
+    expect(server.received(`PATCH /quests/${MY_CAREER.id}`).map(({ body }) => body)).toEqual([
+      { title: '설명회 모임' },
+    ]);
   });
 });

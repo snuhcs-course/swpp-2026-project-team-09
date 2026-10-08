@@ -154,7 +154,7 @@ function passed({ cancelled, endsAt }: Pick<SubQuestDto, 'cancelled' | 'endsAt'>
   return cancelled || (endsAt !== null && new Date(endsAt) <= now);
 }
 
-// As `userId` reads it. Ended is computed at `now` and never stored.
+// As `userId` reads it. Ended is computed at `now` and never stored; the User's mark of done does not end it.
 export function toSubQuestDto(
   subQuest: StoredSubQuest,
   globalEvent: GlobalEvent | null,
@@ -169,7 +169,7 @@ export function toSubQuestDto(
     ...content,
     completion: content.endsAt === null ? 'by_hand' : 'by_time',
     done,
-    ended: done || passed(content, now),
+    ended: passed(content, now),
   };
 }
 

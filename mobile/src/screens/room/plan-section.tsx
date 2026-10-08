@@ -24,7 +24,14 @@ interface StepProps {
   onCancel: () => void;
 }
 
-function SmallButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }): ReactElement {
+interface SmallButtonProps {
+  icon: IconName;
+  label: string;
+  onPress: () => void;
+  tint?: string;
+}
+
+function SmallButton({ icon, label, onPress, tint = color.inkFaint }: SmallButtonProps): ReactElement {
   return (
     <Pressable
       accessibilityLabel={label}
@@ -33,7 +40,7 @@ function SmallButton({ icon, label, onPress }: { icon: IconName; label: string; 
       onPress={onPress}
       style={styles.small}
     >
-      <Icon color={color.inkFaint} name={icon} size={15} />
+      <Icon color={tint} name={icon} size={15} />
     </Pressable>
   );
 }
@@ -51,7 +58,11 @@ function Step({ step, last, editsPlan, onDone, onEdit, onCancel }: StepProps): R
         <Text style={styles.what}>{subQuest.title}</Text>
         {place === '' ? null : <Text style={styles.place}>{place}</Text>}
       </View>
-      {over ? null : <SmallButton icon="check" label="완료로 표시" onPress={onDone} />}
+      {subQuest.done ? (
+        <SmallButton icon="check" label="완료 취소" onPress={onDone} tint={color.snuBlue} />
+      ) : over ? null : (
+        <SmallButton icon="check" label="완료로 표시" onPress={onDone} />
+      )}
       {editsPlan && !subQuest.attending ? (
         <>
           <SmallButton icon="edit" label="일정 수정" onPress={onEdit} />
@@ -89,7 +100,7 @@ function Steps({ room, actions, onEdit, onCancel }: StepsProps): ReactElement {
           onCancel={() => {
             onCancel(step.subQuest);
           }}
-          onDone={() => void actions.markDone(quest.id, step.subQuest)}
+          onDone={() => void actions.toggleDone(quest.id, step.subQuest)}
           onEdit={() => {
             onEdit(step.subQuest);
           }}

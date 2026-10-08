@@ -45,9 +45,10 @@ export class QuestsService {
     private readonly classQuests: ClassQuestsService,
   ) {}
 
-  // The User's Quest for the Global Event, made the first time. The User's row is locked first, so that two attempts
-  // at the same moment run one after the other and the later finds the Quest of the earlier.
-  async attend(userId: string, globalEventId: string): Promise<QuestDto> {
+  // The User's Quest for the Global Event, made the first time, with the title given or else the event's. The User's
+  // row is locked first, so that two attempts at the same moment run one after the other and the later finds the Quest
+  // of the earlier, whose title stays.
+  async attend(userId: string, globalEventId: string, title?: string): Promise<QuestDto> {
     const { questId, created } = await this.prisma.$transaction(async (tx) => {
       const globalEvent = await tx.globalEvent.findFirst({
         where: { id: globalEventId, state: GlobalEventState.published },
@@ -60,7 +61,7 @@ export class QuestsService {
       if (held !== null) {
         return { questId: held, created: false };
       }
-      return { questId: await this.createForGlobalEvent(globalEvent, [userId], tx), created: true };
+      return { questId: await this.createForGlobalEvent(globalEvent, [userId], tx, { title }), created: true };
     });
     if (created) {
       this.signals.send([userId], 'quests-changed');
@@ -77,7 +78,8 @@ export class QuestsService {
     return this.read(userId, questId);
   }
 
-  // The stored Quests, then today's Class Quests. Leaves out the Quests whose Sub Quests have all ended for the User.
+  // The stored Quests, then today's Class Quests. Leaves out the Quests whose Sub Quests are all cancelled or past their
+  // end; a mark of done does not count.
   async list(userId: string): Promise<QuestDto[]> {
     const quests = await this.prisma.quest.findMany({
       where: { holders: { some: { userId } } },
@@ -128,17 +130,18 @@ export class QuestsService {
     return holders.map(({ userId }) => userId);
   }
 
-  // A Quest for the Global Event, with its title, the Holders and the Sub Quest for attending it. Each Holder must hold
+  // A Quest for the Global Event, with the Holders and the Sub Quest for attending it, titled as the event unless a
+  // title is given. The title is the Quest's own and does not follow later changes to the event's. Each Holder must hold
   // no Quest for it yet, or the unique index on the Holders refuses it. The Holders enter in the order given. A match's
   // Quest names the match, once.
   createForGlobalEvent(
     globalEvent: Pick<GlobalEvent, 'id' | 'title'>,
     holderIds: readonly string[],
     tx: Prisma.TransactionClient,
-    { matchId, ...settings }: QuestSettings & { matchId?: string } = {},
+    { matchId, title = globalEvent.title, ...settings }: QuestSettings & { matchId?: string; title?: string } = {},
   ): Promise<string> {
     return this.create(
-      { title: globalEvent.title, globalEventId: globalEvent.id, matchId, subQuest: { attending: true } },
+      { title, globalEventId: globalEvent.id, matchId, subQuest: { attending: true } },
       holderIds,
       settings,
       tx,

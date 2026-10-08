@@ -1,4 +1,4 @@
-import { act } from '@testing-library/react-native';
+import { act, within } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { Linking } from 'react-native';
 import type * as SecureStoreFake from './support/secure-store';
@@ -155,5 +155,18 @@ describe('the tab opened at one event', () => {
 
     expect(screen.getByRole('tab', { name: '행사' })).toBeSelected();
     expect(screen.getByTestId(`event-${CAREER.id}`)).toHaveStyle({ borderWidth: 2 });
+  });
+
+  it('names the event on the Badge and card of a Quest the Leader titled otherwise', async () => {
+    const titled = { ...MY_CAREER, title: '설명회 같이 가요' };
+    answerRoom(server, titled);
+    answerEvents(server, { quests: [DINNER, titled] });
+    await openRoom(titled);
+
+    expect(screen.getByRole('header', { name: '설명회 같이 가요' })).toBeVisible();
+    const eventCard = screen.getByRole('button', { name: `행사 · ${CAREER.title}` });
+    expect(within(eventCard).getByText(CAREER.title)).toBeVisible();
+    // The official Badge over the title, the card, and the attending Sub Quest in the plan.
+    expect(screen.getAllByText(CAREER.title)).toHaveLength(3);
   });
 });

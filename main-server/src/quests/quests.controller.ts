@@ -33,7 +33,7 @@ export class QuestsController {
   // A repeat gives the same Quest, so it takes no Idempotency-Key.
   @Post()
   attend(@CurrentUser() user: SignedInUser, @Body({ schema: attendSchema }) body: AttendDto): Promise<QuestDto> {
-    return this.quests.attend(user.id, body.globalEventId);
+    return this.quests.attend(user.id, body.globalEventId, body.title);
   }
 
   // A route of its own, since only making a Quest needs a key.
@@ -148,5 +148,15 @@ export class QuestsController {
     @Param('subQuestId', { schema: z.uuid() }) subQuestId: string,
   ): Promise<void> {
     return this.subQuests.markDone(user.id, questId, subQuestId);
+  }
+
+  @Delete(':questId/sub-quests/:subQuestId/done')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  unmarkDone(
+    @CurrentUser() user: SignedInUser,
+    @Param('questId', { schema: z.uuid() }) questId: string,
+    @Param('subQuestId', { schema: z.uuid() }) subQuestId: string,
+  ): Promise<void> {
+    return this.subQuests.unmarkDone(user.id, questId, subQuestId);
   }
 }

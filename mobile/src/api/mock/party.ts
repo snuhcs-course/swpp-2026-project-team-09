@@ -63,15 +63,15 @@ function madeOf({ title, description, capacity, joinPolicy, board, subQuest }: Q
   };
 }
 
-// The User's Quest for a Global Event, as attending it makes it.
-function attendedOf(globalEventId: string): Quest {
+// The User's Quest for a Global Event, as attending it makes it: with the title given, or else the event's.
+function attendedOf(globalEventId: string, given?: string): Quest {
   const event = GLOBAL_EVENTS.find(({ id }) => id === globalEventId);
   if (event === undefined) {
     throw new ApiError(404, 'GLOBAL_EVENT_NOT_FOUND');
   }
   const { id, title, startsAt, endsAt, place, latitude, longitude } = event;
   return {
-    ...madeOf({ title, description: '', capacity: 4, joinPolicy: 'closed', subQuest: { title } }),
+    ...madeOf({ title: given ?? title, description: '', capacity: 4, joinPolicy: 'closed', subQuest: { title } }),
     id: `attended-${id}`,
     globalEvent: { id, title },
     subQuests: [
@@ -152,10 +152,10 @@ export const mockParty: MockParty = {
   listMyJoinRequests: () => answer('listMyJoinRequests', () => [], []),
   withdrawJoinRequest: () => nothing('withdrawJoinRequest'),
   makeQuest: (making) => answer('makeQuest', () => madeOf(making)),
-  attendGlobalEvent: (globalEventId) =>
+  attendGlobalEvent: (globalEventId, title) =>
     answer(
       'attendGlobalEvent',
-      () => QUESTS.find(({ globalEvent }) => globalEvent?.id === globalEventId) ?? attendedOf(globalEventId),
+      () => QUESTS.find(({ globalEvent }) => globalEvent?.id === globalEventId) ?? attendedOf(globalEventId, title),
     ),
   changeQuest: (questId, change) => answer('changeQuest', () => ({ ...held(questId), ...change })),
   inviteToQuest: () => nothing('inviteToQuest'),

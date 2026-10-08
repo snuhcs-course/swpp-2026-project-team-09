@@ -5,7 +5,16 @@ import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { signInUser } from './friends.js';
-import { connectToDatabase, getQuest, getQuests, markDone, questFor, storeEvent, subQuestIn } from './quests.js';
+import {
+  connectToDatabase,
+  getQuest,
+  getQuests,
+  markDone,
+  questFor,
+  storeEvent,
+  subQuestIn,
+  unmarkDone,
+} from './quests.js';
 import { refused } from './signals.js';
 import { startApp } from './start-app.js';
 
@@ -61,7 +70,7 @@ describe('A Sub Quest with an end time', () => {
 });
 
 describe('Marking a Sub Quest as done', () => {
-  it('ends it for the User', async () => {
+  it('marks it done for the User without ending it', async () => {
     const user = await signInUser(app);
     const { questId, attendingId } = await questFor(app, user, (await storeEvent(prisma, { endsAt: null })).id);
 
@@ -69,7 +78,7 @@ describe('Marking a Sub Quest as done', () => {
 
     expect(response.status).toBe(204);
     expect((await getQuest(app, user, questId)).body).toMatchObject({
-      subQuests: [{ completion: 'by_hand', done: true, ended: true }],
+      subQuests: [{ completion: 'by_hand', done: true, ended: false }],
     });
   });
 
@@ -94,7 +103,7 @@ describe('Marking a Sub Quest as done', () => {
 
     await markDone(app, user, { questId, subQuestId: attendingId });
 
-    expect((await getQuest(app, user, questId)).body).toMatchObject({ subQuests: [{ done: true, ended: true }] });
+    expect((await getQuest(app, user, questId)).body).toMatchObject({ subQuests: [{ done: true, ended: false }] });
     expect((await getQuest(app, other, questId)).body).toMatchObject({ subQuests: [{ done: false, ended: false }] });
   });
 
@@ -110,22 +119,84 @@ describe('Marking a Sub Quest as done', () => {
   });
 });
 
-describe('The Quest list', () => {
-  it('leaves out a Quest whose Sub Quests have all ended for the User, which can still be read', async () => {
+describe('Undoing a mark of done', () => {
+  it("removes the User's mark", async () => {
     const user = await signInUser(app);
-    const ahead = await questFor(app, user, (await storeEvent(prisma)).id);
-    const event = await storeEvent(prisma, { endsAt: null });
-    const { questId, attendingId } = await questFor(app, user, event.id);
-    const subQuestId = await subQuestIn(app, user, questId, { title: '카페' });
+    const { questId, attendingId } = await questFor(app, user, (await storeEvent(prisma, { endsAt: null })).id);
     await markDone(app, user, { questId, subQuestId: attendingId });
 
-    const partly = await getQuests(app, user);
-    await markDone(app, user, { questId, subQuestId });
-    const ended = await getQuests(app, user);
+    const response = await unmarkDone(app, user, { questId, subQuestId: attendingId });
 
-    expect(partly.body).toMatchObject([{ id: ahead.questId }, { id: questId }]);
-    expect(ended.body).toMatchObject([{ id: ahead.questId }]);
-    expect((await getQuest(app, user, questId)).status).toBe(200);
+    expect(response.status).toBe(204);
+    expect((await getQuest(app, user, questId)).body).toMatchObject({ subQuests: [{ done: false, ended: false }] });
+  });
+
+  it('changes nothing when it is not done', async () => {
+    const user = await signInUser(app);
+    const { questId, attendingId } = await questFor(app, user, (await storeEvent(prisma)).id);
+
+    const response = await unmarkDone(app, user, { questId, subQuestId: attendingId });
+
+    expect(response.status).toBe(204);
+    expect((await getQuest(app, user, questId)).body).toMatchObject({ subQuests: [{ done: false }] });
+  });
+
+  it("leaves the other Holders' marks as they were", async () => {
+    const [user, other] = await Promise.all([signInUser(app), signInUser(app)]);
+    const event = await storeEvent(prisma);
+    const { questId, attendingId } = await questFor(app, user, event.id);
+    await prisma.questHolder.create({ data: { questId, userId: other.id, globalEventId: event.id } });
+    await markDone(app, user, { questId, subQuestId: attendingId });
+    await markDone(app, other, { questId, subQuestId: attendingId });
+
+    await unmarkDone(app, user, { questId, subQuestId: attendingId });
+
+    expect((await getQuest(app, user, questId)).body).toMatchObject({ subQuests: [{ done: false }] });
+    expect((await getQuest(app, other, questId)).body).toMatchObject({ subQuests: [{ done: true }] });
+  });
+
+  it('is refused for a Sub Quest the Quest does not have, and to a User who is not a Holder', async () => {
+    const [user, stranger] = await Promise.all([signInUser(app), signInUser(app)]);
+    const { questId, attendingId } = await questFor(app, user, (await storeEvent(prisma)).id);
+
+    const unknown = await unmarkDone(app, user, { questId, subQuestId: randomUUID() });
+    const notHeld = await unmarkDone(app, stranger, { questId, subQuestId: attendingId });
+
+    expect(unknown.body).toMatchObject(refused(404, 'SUB_QUEST_NOT_FOUND'));
+    expect(notHeld.body).toMatchObject(refused(404, 'QUEST_NOT_FOUND'));
+  });
+});
+
+describe('The Quest list', () => {
+  it('keeps a Quest whose Sub Quests the User marked all done', async () => {
+    const user = await signInUser(app);
+    const { questId, attendingId } = await questFor(app, user, (await storeEvent(prisma, { endsAt: null })).id);
+    const subQuestId = await subQuestIn(app, user, questId, { title: '카페' });
+
+    await markDone(app, user, { questId, subQuestId: attendingId });
+    await markDone(app, user, { questId, subQuestId });
+
+    expect((await getQuests(app, user)).body).toMatchObject([
+      {
+        id: questId,
+        subQuests: [
+          { done: true, ended: false },
+          { done: true, ended: false },
+        ],
+      },
+    ]);
+  });
+
+  it('leaves out a Quest whose Sub Quests are all cancelled, which can still be read', async () => {
+    const user = await signInUser(app);
+    const ahead = await questFor(app, user, (await storeEvent(prisma)).id);
+    const event = await storeEvent(prisma);
+    const { questId } = await questFor(app, user, event.id);
+
+    await prisma.globalEvent.update({ where: { id: event.id }, data: { state: 'cancelled' } });
+
+    expect((await getQuests(app, user)).body).toMatchObject([{ id: ahead.questId }]);
+    expect((await getQuest(app, user, questId)).body).toMatchObject({ subQuests: [{ cancelled: true, ended: true }] });
   });
 
   it('leaves out a Quest once the end times of its Sub Quests have passed', async () => {

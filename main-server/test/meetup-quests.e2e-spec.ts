@@ -61,11 +61,11 @@ describe('Progress on the Shared Quest of an accepted Meetup', () => {
 
     await markDone(app, receiver, { questId, subQuestId });
 
-    expect((await getQuest(app, receiver, questId)).body).toMatchObject({ subQuests: [{ done: true, ended: true }] });
+    expect((await getQuest(app, receiver, questId)).body).toMatchObject({ subQuests: [{ done: true, ended: false }] });
     expect((await getQuest(app, proposer, questId)).body).toMatchObject({
       subQuests: [{ done: false, ended: false }],
     });
-    expect((await getQuests(app, receiver)).body).toEqual([]);
+    expect((await getQuests(app, receiver)).body).toMatchObject([{ id: questId }]);
     expect((await getQuests(app, proposer)).body).toMatchObject([{ id: questId }]);
   });
 

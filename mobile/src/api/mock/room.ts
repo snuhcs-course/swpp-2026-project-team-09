@@ -61,6 +61,7 @@ type MockRoom = Pick<
   | 'editSubQuest'
   | 'cancelSubQuest'
   | 'markSubQuestDone'
+  | 'unmarkSubQuestDone'
   | 'handOverQuest'
   | 'removeHolder'
   | 'endQuest'
@@ -91,6 +92,7 @@ export const mockRoom: MockRoom = {
   editSubQuest: (_questId, _subQuestId, content) => answer('editSubQuest', () => subQuestOf(content)),
   cancelSubQuest: () => nothing('cancelSubQuest'),
   markSubQuestDone: () => nothing('markSubQuestDone'),
+  unmarkSubQuestDone: () => nothing('unmarkSubQuestDone'),
   handOverQuest: () => nothing('handOverQuest'),
   removeHolder: () => nothing('removeHolder'),
   endQuest: () => nothing('endQuest'),

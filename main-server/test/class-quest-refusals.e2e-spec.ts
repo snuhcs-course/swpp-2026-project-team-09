@@ -33,6 +33,7 @@ import {
   ownQuest,
   storeEvent,
   type SubQuestPath,
+  unmarkDone,
 } from './quests.js';
 import { refused } from './signals.js';
 import { startApp } from './start-app.js';
@@ -78,6 +79,7 @@ const routes: [string, Route][] = [
   ['editing a Sub Quest', (user, path) => editSubQuest(app, user, path, { title: '카페' })],
   ['cancelling a Sub Quest', (user, path) => cancelSubQuest(app, user, path)],
   ['marking a Sub Quest done', (user, path) => markDone(app, user, path)],
+  ['undoing a mark of done', (user, path) => unmarkDone(app, user, path)],
   ['joining it', (user, { questId }) => joinQuest(app, user, questId)],
   ['asking to join it', (user, { questId }) => askToJoin(app, user, questId)],
   ['changing its settings', (user, { questId }) => changeQuest(app, user, questId, { capacity: 2 })],

@@ -6,7 +6,17 @@ import { GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
 import { signInUser, TestUser } from './friends.js';
 import { changeState, patchGlobalEvent } from './global-event-changes.js';
 import { signInAsAdministrator } from './sign-in.js';
-import { connectToDatabase, getQuests, questFor, storeEvent, storeSharedQuest, subQuestIn } from './quests.js';
+import {
+  attend,
+  connectToDatabase,
+  getQuest,
+  getQuests,
+  questFor,
+  storeEvent,
+  storeSharedQuest,
+  subQuestIn,
+} from './quests.js';
+import { setQuest } from './quest-recruiting.js';
 import { SignalWatcher } from './signals.js';
 import { startApp } from './start-app.js';
 
@@ -80,6 +90,31 @@ describe("An edit of a published event's", () => {
     await vi.waitFor(() => {
       expect(holders.map((holder) => questsChangedTo(holder))).toEqual(before.map((count) => count + 1));
     });
+  });
+});
+
+describe('A rename of a published event', () => {
+  it('leaves the titles the Holders gave their Quests, and the attending Sub Quest and event read the new one', async () => {
+    const event = await storeEvent(prisma);
+    const [made, renamed, plain] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
+    const madeId = z
+      .object({ id: z.string() })
+      .parse((await attend(app, made, event.id, { title: '같이 가요' })).body).id;
+    const { questId: renamedId } = await questFor(app, renamed, event.id);
+    await setQuest(app, renamed, renamedId, { title: '설명회 모임' });
+    const { questId: plainId } = await questFor(app, plain, event.id);
+
+    await patchGlobalEvent(app, accessToken, event.id, { version: 1, title: '설명회 (이름 변경)' }).expect(200);
+
+    const renamedEvent = { globalEvent: { title: '설명회 (이름 변경)' } };
+    const attending = { subQuests: [{ attending: true, title: '설명회 (이름 변경)' }] };
+    expect((await getQuest(app, made, madeId)).body).toMatchObject({
+      title: '같이 가요',
+      ...renamedEvent,
+      ...attending,
+    });
+    expect((await getQuest(app, renamed, renamedId)).body).toMatchObject({ title: '설명회 모임', ...renamedEvent });
+    expect((await getQuest(app, plain, plainId)).body).toMatchObject({ title: event.title, ...renamedEvent });
   });
 });
 
