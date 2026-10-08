@@ -1,7 +1,7 @@
 # 09: The waiting requests to join on 내 파티
 
 Parent: [P27 spec](../spec.md)
-Status: ready-for-agent
+Status: resolved
 Blocked by: 06 (Undo a done mark, and keep Quests listed), as both change the User's Quests answer and 내 파티
 
 ## What to build
