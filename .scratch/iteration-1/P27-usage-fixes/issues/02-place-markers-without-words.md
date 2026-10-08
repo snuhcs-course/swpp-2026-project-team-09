@@ -1,7 +1,7 @@
 # 02: Place markers without words, and Global Events at one Place as one marker
 
 Parent: [P27 spec](../spec.md)
-Status: ready-for-agent
+Status: resolved
 Blocked by: None (can start immediately)
 
 ## What to build
