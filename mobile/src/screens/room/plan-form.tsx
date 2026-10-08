@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { type ReactElement, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { SubQuestContent, SubQuestPlace } from '@/api/room-types';
 import type { SubQuest } from '@/api/types';
 import { Button, color, font, Icon, radius, space, TextField } from '@/design-system';
@@ -39,7 +39,7 @@ function pickedOf(subQuest: SubQuest | null): PickedPlace | null {
       };
 }
 
-// `언제`: a button with the time chosen, which opens the date·time sheet.
+// `언제`: a button with the time chosen, which closes the keyboard and opens the date·time sheet.
 export function WhenField({
   startsAt,
   onPick,
@@ -56,6 +56,8 @@ export function WhenField({
         accessibilityLabel={`언제 ${words}`}
         accessibilityRole="button"
         onPress={() => {
+          // The keyboard goes first, so that the sheet is never behind it.
+          Keyboard.dismiss();
           setPicking(true);
         }}
         style={styles.when}
