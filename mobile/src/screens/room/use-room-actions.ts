@@ -42,7 +42,8 @@ export interface RoomActions {
   addSubQuest: (questId: string, content: SubQuestContent, key: string) => Promise<boolean>;
   editSubQuest: (questId: string, subQuestId: string, content: SubQuestContent) => Promise<boolean>;
   cancelSubQuest: (questId: string, subQuest: SubQuest) => Promise<void>;
-  markDone: (questId: string, subQuest: SubQuest) => Promise<void>;
+  // Marks the Sub Quest done for the User, or unmarks one done.
+  toggleDone: (questId: string, subQuest: SubQuest) => Promise<void>;
   accept: (questId: string, request: JoinRequest) => Promise<void>;
   decline: (questId: string, request: JoinRequest) => Promise<void>;
   cancelInvitation: (questId: string, invitation: JoinRequest) => Promise<void>;
@@ -170,7 +171,7 @@ function partyActions(tools: Tools): PartyActions {
   };
 }
 
-type PlanActions = Pick<RoomActions, 'addSubQuest' | 'editSubQuest' | 'cancelSubQuest' | 'markDone'>;
+type PlanActions = Pick<RoomActions, 'addSubQuest' | 'editSubQuest' | 'cancelSubQuest' | 'toggleDone'>;
 
 function planActions({ run }: Tools): PlanActions {
   return {
@@ -180,8 +181,11 @@ function planActions({ run }: Tools): PlanActions {
     cancelSubQuest: async (questId, { id }) => {
       await run(() => apiClient.cancelSubQuest(questId, id), null);
     },
-    markDone: async (questId, { id }) => {
-      await run(() => apiClient.markSubQuestDone(questId, id), null);
+    toggleDone: async (questId, { id, done }) => {
+      await run(
+        () => (done ? apiClient.unmarkSubQuestDone(questId, id) : apiClient.markSubQuestDone(questId, id)),
+        null,
+      );
     },
   };
 }

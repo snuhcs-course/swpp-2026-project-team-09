@@ -149,4 +149,14 @@ export class QuestsController {
   ): Promise<void> {
     return this.subQuests.markDone(user.id, questId, subQuestId);
   }
+
+  @Delete(':questId/sub-quests/:subQuestId/done')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  unmarkDone(
+    @CurrentUser() user: SignedInUser,
+    @Param('questId', { schema: z.uuid() }) questId: string,
+    @Param('subQuestId', { schema: z.uuid() }) subQuestId: string,
+  ): Promise<void> {
+    return this.subQuests.unmarkDone(user.id, questId, subQuestId);
+  }
 }

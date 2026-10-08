@@ -125,6 +125,8 @@ export interface ApiClient {
   editSubQuest: (questId: string, subQuestId: string, content: SubQuestContent) => Promise<SubQuest>;
   cancelSubQuest: (questId: string, subQuestId: string) => Promise<void>;
   markSubQuestDone: (questId: string, subQuestId: string) => Promise<void>;
+  // Removes the User's mark; nothing happens without one.
+  unmarkSubQuestDone: (questId: string, subQuestId: string) => Promise<void>;
   handOverQuest: (questId: string, userId: string) => Promise<void>;
   removeHolder: (questId: string, userId: string) => Promise<void>;
   // Ends the Quest for every Holder.
@@ -219,6 +221,7 @@ export const apiClient: ApiClient = {
   editSubQuest: (questId, subQuestId, content) => chosen().editSubQuest(questId, subQuestId, content),
   cancelSubQuest: (questId, subQuestId) => chosen().cancelSubQuest(questId, subQuestId),
   markSubQuestDone: (questId, subQuestId) => chosen().markSubQuestDone(questId, subQuestId),
+  unmarkSubQuestDone: (questId, subQuestId) => chosen().unmarkSubQuestDone(questId, subQuestId),
   handOverQuest: (questId, userId) => chosen().handOverQuest(questId, userId),
   removeHolder: (questId, userId) => chosen().removeHolder(questId, userId),
   endQuest: (questId) => chosen().endQuest(questId),

@@ -688,7 +688,8 @@ The routes, all a User's:
 - `POST /quests/:questId/join` joins an Open Quest and answers 201 with it. A second join is refused, so it takes no
   `Idempotency-Key`.
 - `GET /quests` answers the User's Quests in the order they were created, then today's Class Quests (below), leaving
-  out each Quest whose Sub Quests have all ended for the User. `GET /quests/:questId` answers one, ended or not.
+  out each Quest whose Sub Quests have all ended, that is each is cancelled or past its end time; the User's marks of
+  done do not count. `GET /quests/:questId` answers one, ended or not.
 - `DELETE /quests/:questId` drops the Quest and answers 204. It removes the User as a Holder, with the User's progress.
   The other Holders keep the Quest. When the last Holder drops it, it is deleted with its Sub Quests.
 - `POST /quests/:questId/sub-quests` adds a Sub Quest and answers 201 with it. It requires an `Idempotency-Key` (see
@@ -700,7 +701,8 @@ The routes, all a User's:
 - `PUT /quests/:questId/sub-quests/:subQuestId` replaces what a Holder wrote with the same body and answers 200 with the
   Sub Quest. `DELETE /quests/:questId/sub-quests/:subQuestId` cancels it, which removes it, and answers 204.
 - `POST /quests/:questId/sub-quests/:subQuestId/done` marks the Sub Quest done for the User alone and answers 204. A
-  second mark changes nothing.
+  second mark changes nothing. `DELETE /quests/:questId/sub-quests/:subQuestId/done` removes the User's mark and answers
+  204; without a mark it changes nothing. Neither touches another Holder's marks.
 
 A Quest reads:
 
@@ -775,10 +777,10 @@ published, as when it is cancelled, the Sub Quest reads as `cancelled` and ended
 an Administrator edits a published event or cancels it, the Holders of every Quest for it get `quests-changed`.
 
 **How a Sub Quest ends.** Its `completion` is `by_time` when it has an end time and `by_hand` when it has none; for the
-attending Sub Quest, when the Global Event has none. A Sub Quest is ended for a User when its end time has passed, for
-every Holder alike, when the User marked it done, or when it is cancelled. This is computed when it is read and nothing
-is written. The time it is computed at is `now()` of `CLOCK` (`src/quests/clock.ts`), which a test moves with
-`vi.spyOn(app.get<Clock>(CLOCK), 'now')`, as `test/quest-progress.e2e-spec.ts` does.
+attending Sub Quest, when the Global Event has none. A Sub Quest is ended when its end time has passed or when it is
+cancelled, for every Holder alike. A mark of done is shown as `done` and does not end it. This is computed when it is
+read and nothing is written. The time it is computed at is `now()` of `CLOCK` (`src/quests/clock.ts`), which a test
+moves with `vi.spyOn(app.get<Clock>(CLOCK), 'now')`, as `test/quest-progress.e2e-spec.ts` does.
 
 **Class Quests.** A Class Quest stands for one of the User's classes on a day it is held. It is computed from the
 [timetable](#timetable) each time `GET /quests` or `GET /quests/:questId` is read, and nothing is stored for it, so a
@@ -799,14 +801,14 @@ from `TimetableService.classesOf`:
 
 It takes no part in what Users do with stored Quests. For the identifier of any of the User's classes, held today or
 not, these routes refuse with 409 `CLASS_QUEST` and change nothing: dropping it; adding a Sub Quest, and editing,
-cancelling and marking one done; joining; asking to join; the Leader's controls, ending it included; listing,
-accepting and declining its requests to join; and inviting, listing its invitations and cancelling one. Another User's
-class is no Quest of the User, and each of these routes answers it as a Quest the User does not hold:
-`QUEST_NOT_FOUND`. The check is asked only when no stored Quest answers the identifier,
-where each route first looks its Quest up, so stored Quests are served as before: `QuestsService.inQuest` for dropping
-and the Sub Quest routes, `LeaderService.ledBy` for the Leader's controls, the requests and the invitations,
-`RecruitingService.enter` for joining and `JoinRequestsService.ask` for asking. A Class Quest is no stored Quest, so it
-is never in the list of recruiting Quests, and opening a [Party](#party) for it gets `QUEST_NOT_FOUND`.
+cancelling, marking one done and undoing the mark; joining; asking to join; the Leader's controls, ending it included;
+listing, accepting and declining its requests to join; and inviting, listing its invitations and cancelling one. Another
+User's class is no Quest of the User, and each of these routes answers it as a Quest the User does not hold:
+`QUEST_NOT_FOUND`. The check is asked only when no stored Quest answers the identifier, where each route first looks its
+Quest up, so stored Quests are served as before: `QuestsService.inQuest` for dropping and the Sub Quest routes,
+`LeaderService.ledBy` for the Leader's controls, the requests and the invitations, `RecruitingService.enter` for joining
+and `JoinRequestsService.ask` for asking. A Class Quest is no stored Quest, so it is never in the list of recruiting
+Quests, and opening a [Party](#party) for it gets `QUEST_NOT_FOUND`.
 
 **One Quest for a Global Event.** A User holds at most one Quest for a Global Event, which the database enforces: the
 row of each Holder, in `quest_holders`, repeats the Quest's Global Event, and a unique index on the User and the Global
@@ -998,13 +1000,13 @@ the Holders to send `quests-changed` to, the User included, once the transaction
 `quests-changed` goes to every Holder, the one who acted included, when a Quest is created by attending, made or for a
 match, when a Sub Quest is added, edited or cancelled, when a User enters or is placed by Matching, when a Holder drops
 the Quest, which may pass on the Leader's role, and when the Leader changes the settings, hands the role over or removes
-a Holder, the removed one included, and when an Administrator edits or cancels the Quest's published Global Event.
-When the Leader ends the Quest, it goes to every Holder and to every User whose
-request or invitation was waiting, all read before the Quest is deleted. It goes to the Leader when a request arrives or
-is withdrawn and when an invitation is declined, to a User whose request the Leader declines or who declines an
-invitation, and to an invited User when invited and when the Leader cancels the invitation. A mark of done is the
-Holder's own and sends nothing. The signal carries nothing, and the app fetches `GET /quests`, the requests to join and
-the invitations again (see [Signals](#signals)).
+a Holder, the removed one included, and when an Administrator edits or cancels the Quest's published Global Event. When
+the Leader ends the Quest, it goes to every Holder and to every User whose request or invitation was waiting, all read
+before the Quest is deleted. It goes to the Leader when a request arrives or is withdrawn and when an invitation is
+declined, to a User whose request the Leader declines or who declines an invitation, and to an invited User when invited
+and when the Leader cancels the invitation. A mark of done and its undoing are the Holder's own and send nothing. The
+signal carries nothing, and the app fetches `GET /quests`, the requests to join and the invitations again (see
+[Signals](#signals)).
 
 In a test, `test/quests.ts` stores a Global Event with a connection of its own, in any state and without the signals of
 the Administrator's routes, and calls the routes above; `test/quest-recruiting.ts` calls those of requests, invitations and the Leader's

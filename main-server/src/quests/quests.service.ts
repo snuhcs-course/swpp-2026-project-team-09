@@ -77,7 +77,8 @@ export class QuestsService {
     return this.read(userId, questId);
   }
 
-  // The stored Quests, then today's Class Quests. Leaves out the Quests whose Sub Quests have all ended for the User.
+  // The stored Quests, then today's Class Quests. Leaves out the Quests whose Sub Quests are all cancelled or past their
+  // end; a mark of done does not count.
   async list(userId: string): Promise<QuestDto[]> {
     const quests = await this.prisma.quest.findMany({
       where: { holders: { some: { userId } } },
