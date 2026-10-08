@@ -1,4 +1,5 @@
 import { within } from '@testing-library/react-native';
+import { Keyboard } from 'react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal } from './support/fake-server';
@@ -128,6 +129,23 @@ describe("the Leader's 일정 form, adding", () => {
     expect(sent[0]?.idempotencyKey).toMatch(UUID);
     expect(sent[1]?.idempotencyKey).toBe(sent[0]?.idempotencyKey);
     expect(screen.queryByLabelText('내용')).toBeNull();
+  });
+});
+
+describe("the Leader's 일정 form, 언제", () => {
+  it('closes the keyboard before the time sheet of 언제 opens', async () => {
+    const sheetShownWhenDismissed: boolean[] = [];
+    jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {
+      sheetShownWhenDismissed.push(screen.queryByRole('button', { name: '확인' }) !== null);
+    });
+    const user = await openRoom();
+    await user.press(screen.getByRole('button', { name: '일정 추가' }));
+    await user.type(screen.getByLabelText('내용'), '카페에서 쉬기');
+
+    await user.press(screen.getByRole('button', { name: '언제 날짜·시간 선택' }));
+
+    expect(sheetShownWhenDismissed).toEqual([false]);
+    expect(screen.getByText('오늘 19:00')).toBeVisible();
   });
 });
 

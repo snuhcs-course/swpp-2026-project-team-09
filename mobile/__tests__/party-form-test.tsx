@@ -1,3 +1,4 @@
+import { Keyboard } from 'react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal, type Reply } from './support/fake-server';
@@ -115,6 +116,22 @@ describe('a public 파티', () => {
     ]);
     expect(toast()).toHaveTextContent('파티를 올렸어요 · 1명은 초대하지 못했어요');
     expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
+  });
+});
+
+describe('언제', () => {
+  it('closes the keyboard before the time sheet opens', async () => {
+    const sheetShownWhenDismissed: boolean[] = [];
+    jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {
+      sheetShownWhenDismissed.push(screen.queryByRole('button', { name: '확인' }) !== null);
+    });
+    const user = await openForm();
+    await user.type(screen.getByLabelText('제목'), '보드게임');
+
+    await user.press(screen.getByRole('button', { name: '언제 날짜·시간 선택' }));
+
+    expect(sheetShownWhenDismissed).toEqual([false]);
+    expect(screen.getByRole('button', { name: '확인' })).toBeVisible();
   });
 });
 
