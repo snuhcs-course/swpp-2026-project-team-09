@@ -3,6 +3,7 @@ import { createRef } from 'react';
 
 import type { LatLng } from '@/api/types';
 import {
+  CAMERA_BOUNDS,
   CAMPUS_BOUNDS,
   Map,
   type MapAvatar,
@@ -12,6 +13,7 @@ import {
   type MapProps,
   MAX_ZOOM,
   MIN_ZOOM,
+  NATIVE_MIN_LEVEL,
   unmadeImage,
 } from '@/map';
 
@@ -36,8 +38,10 @@ export const FRIEND: MapAvatar = {
 
 // What a screen gives the map when it shows nothing yet.
 export const EMPTY: MapProps = {
-  bounds: CAMPUS_BOUNDS,
+  bounds: CAMERA_BOUNDS,
+  fitBounds: CAMPUS_BOUNDS,
   minZoom: MIN_ZOOM,
+  nativeMinLevel: NATIVE_MIN_LEVEL,
   maxZoom: MAX_ZOOM,
   markers: [],
   avatars: [],

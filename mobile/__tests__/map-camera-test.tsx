@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react-native';
 
-import { CAMPUS_BOUNDS, centreOf, MAX_ZOOM, ZOOM_OFFSET, zoomDetail } from '@/map';
+import { CAMERA_BOUNDS, CAMPUS_BOUNDS, centreOf, MAX_ZOOM, ZOOM_OFFSET, zoomDetail } from '@/map';
 import { EVENT, FRIEND, GATE, holdMap, layOutMap, LIBRARY } from './support/map';
 
 // The zoom at which a view of 390 by 700 points just fits inside the campus rectangle.
@@ -47,7 +47,7 @@ describe("the map's camera", () => {
 });
 
 describe("the camera's limits", () => {
-  it('keeps the view inside the campus rectangle and the zoom limits', async () => {
+  it("keeps the view inside the camera's area and the zoom limits", async () => {
     const map = await holdMap();
 
     await map.move((handle) => {
@@ -55,13 +55,34 @@ describe("the camera's limits", () => {
     });
     expect(map.camera()?.zoom).toBe(MAX_ZOOM);
     // Half a view of 390 points is 0.0005 degrees wide at this zoom, and half of 700 is 0.0007 degrees high.
-    expect(map.camera()?.centre.longitude).toBeCloseTo(CAMPUS_BOUNDS.west + 0.00052, 5);
-    expect(map.camera()?.centre.latitude).toBeCloseTo(CAMPUS_BOUNDS.north - 0.00075, 5);
+    expect(map.camera()?.centre.longitude).toBeCloseTo(CAMERA_BOUNDS.west + 0.00052, 5);
+    expect(map.camera()?.centre.latitude).toBeCloseTo(CAMERA_BOUNDS.north - 0.000745, 5);
 
     await map.move((handle) => {
       handle.moveCamera({ zoom: 1 });
     });
     expect(map.camera()?.zoom).toBeCloseTo(WHOLE_CAMPUS, 3);
+  });
+
+  it('lets the view go half a campus past each edge of the campus, and settles it back past that', async () => {
+    const map = await holdMap();
+
+    // At the lowest zoom the view is as wide as the campus. Here its top left corner is at 37.4808 north and
+    // 126.939 east, past the campus's north-west corner and inside the camera's area: it stays.
+    const pastCorner = { latitude: 37.468, longitude: 126.948 };
+    await map.move((handle) => {
+      handle.moveCamera({ centre: pastCorner, zoom: 1 });
+    });
+    expect(map.camera()?.zoom).toBeCloseTo(WHOLE_CAMPUS, 3);
+    expect(map.camera()?.centre).toEqual(pastCorner);
+
+    // Far past the south-east, it settles where its bottom right corner is at 37.432 north and 126.972 east, half a
+    // campus past the campus's corner.
+    await map.move((handle) => {
+      handle.moveCamera({ centre: { latitude: 37.4, longitude: 127 } });
+    });
+    expect(map.camera()?.centre.latitude).toBeCloseTo(37.44483, 5);
+    expect(map.camera()?.centre.longitude).toBeCloseTo(126.963, 5);
   });
 
   it('follows the size of the view', async () => {

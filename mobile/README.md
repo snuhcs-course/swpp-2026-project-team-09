@@ -1165,8 +1165,10 @@ const map = useRef<MapHandle>(null);
 const [eventPin, myAvatar] = useMarkerImages([{ kind: 'official', form: 'pin' }, { kind: 'me' }]);
 
 <Map
-  bounds={CAMPUS_BOUNDS} // the visible area never leaves it
+  bounds={CAMERA_BOUNDS} // the visible area never leaves it
+  fitBounds={CAMPUS_BOUNDS} // the lowest zoom fits the view inside it; left out, bounds
   minZoom={MIN_ZOOM}
+  nativeMinLevel={NATIVE_MIN_LEVEL} // a native SDK holds a pinch out to this whole level
   maxZoom={MAX_ZOOM}
   markers={[{ id: 'event:e1', name: '공식 행사 · AI 커리어 설명회', position, image: eventPin, text: 'AI 커리어' }]}
   // passive: it takes no press, and a press on it reaches what is drawn under it
@@ -1188,9 +1190,9 @@ map.current?.fitTo([from, to], { padding: 48, maxZoom: 15.8 }); // and no closer
 - **Positions** are a latitude and a longitude in degrees. A **zoom** is the Web Mercator zoom level at the camera's
   centre, where the world is 256 × 2^zoom points wide. It may be a fraction. A native side converts it to its SDK's
   own scale.
-- **The camera stays inside `bounds`**: the visible area never leaves the rectangle. So the lowest zoom allowed is
-  the larger of `minZoom` and the zoom at which the view just fits inside the rectangle, which depends on the
-  view's size, and the centre is kept far enough from the edges. The highest zoom is `maxZoom`. The map opens on
+- **The camera stays inside `bounds`**: the visible area never leaves the rectangle. The lowest zoom allowed is
+  the larger of `minZoom` and the zoom at which the view just fits inside `fitBounds` (`bounds` when left out),
+  which depends on the view's size, and the centre is kept far enough from the edges of `bounds`. The highest zoom is `maxZoom`. The map opens on
   the middle of the rectangle at the lowest zoom allowed. Whatever `moveCamera` or `fitTo` asks is first brought
   inside these rules.
 - **`onCameraIdle`** is sent once when the map is ready, and each time the camera comes to rest somewhere else:
@@ -1224,8 +1226,14 @@ map.current?.fitTo([from, to], { padding: 48, maxZoom: 15.8 }); // and no closer
 - **`fitTo`** takes its `padding` as one number for all four edges or as one for each edge. The points are fitted
   into what the padding leaves of the view, and their middle comes to the middle of that. With `maxZoom` the camera
   comes no closer than that zoom: points that are near each other are shown from there.
-- `CAMPUS_BOUNDS`, the campus rectangle, and the limits `MIN_ZOOM` and `MAX_ZOOM` are constants in
-  `src/map/campus.ts`. The rectangle is a little wider than the Campus Boundary, which stays the main server's.
+- **`nativeMinLevel`** is the lowest whole level of Kakao's SDK on Android and iOS (`setCameraMinLevel` /
+  `cameraMinLevel`): pinching out stops there instead of going below the lowest zoom and snapping back. The plain
+  map has no levels. The SDK cannot hold panning, so a drag past `bounds` still settles back when it ends.
+- `CAMPUS_BOUNDS`, the on-campus rectangle, `CAMERA_BOUNDS`, the camera's area, the limits `MIN_ZOOM` and
+  `MAX_ZOOM` and `NATIVE_MIN_LEVEL` (15) are constants in `src/map/campus.ts`. The on-campus rectangle is a little
+  wider than the Campus Boundary, which stays the main server's; it decides whether the User's own Avatar is shown,
+  and the lowest zoom fits it. The camera's area is it widened by half its height to the north and to the south and
+  by half its width to the east and to the west.
 - The credit "© OpenStreetMap · 국토지리정보원" is on every map, inside the component, drawn by the app over the map,
   so no native module draws it. With `onCreditPress` it is a button, "지도 데이터 출처 보기", and is still written.
 - **`inset`** says what a screen's controls cover of the map's edges, in points from each edge; a side left out is 0. The credit and a provider's logo are drawn inside what is left: the credit at its bottom left and the logo at

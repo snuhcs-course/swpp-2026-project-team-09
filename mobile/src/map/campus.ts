@@ -1,15 +1,40 @@
 import type { LatLng } from '@/api/types';
-import type { MapBounds } from './types';
+import type { MapBounds, MapProps } from './types';
 
-// The rectangle the camera stays in: a little wider than the Campus Boundary, which stays the main server's. A
-// position outside it is off campus for the app.
+// The on-campus rectangle: a little wider than the Campus Boundary, which stays the main server's. A position outside
+// it is off campus for the app: the User's own Avatar is not shown there, and 장소 선택 does not open on it. The
+// lowest zoom is the one at which the view fits inside it.
 export const CAMPUS_BOUNDS: MapBounds = { south: 37.445, west: 126.945, north: 37.471, east: 126.963 };
 
-// Web Mercator zoom levels, settled on Kakao's map (ticket 07). The map never shows more than the rectangle, so on a
-// phone the lowest zoom in use is the one at which the view fits inside it: 14.97 on a phone 411 points wide.
-// `MIN_ZOOM` is only a floor under that. At `MAX_ZOOM` one building fills the view.
+// The rectangle widened by half its height to the north and to the south and by half its width to the east and to
+// the west.
+function widened({ south, west, north, east }: MapBounds): MapBounds {
+  const [height, width] = [north - south, east - west];
+  return { south: south - height / 2, west: west - width / 2, north: north + height / 2, east: east + width / 2 };
+}
+
+// The area the camera may move over: about half a campus past each edge of the on-campus rectangle (P27-03).
+export const CAMERA_BOUNDS: MapBounds = widened(CAMPUS_BOUNDS);
+
+// Web Mercator zoom levels, settled on Kakao's map (ticket 07). The lowest zoom in use is the one at which the view
+// fits inside the on-campus rectangle: 14.97 on a phone 411 points wide. `MIN_ZOOM` is only a floor under that. At
+// `MAX_ZOOM` one building fills the view.
 export const MIN_ZOOM = 14;
 export const MAX_ZOOM = 19;
+
+// The lowest level of Kakao's SDK, which takes whole levels only: pinching out stops there instead of snapping back
+// from below the lowest zoom. A hair closer than the lowest zoom of 14.97.
+export const NATIVE_MIN_LEVEL = 15;
+
+// The camera every campus map has: it moves over the camera's area, no further out than the zoom at which the view
+// fits inside the on-campus rectangle, and on a native map a pinch out stops at Kakao's level 15.
+export const CAMPUS_CAMERA = {
+  bounds: CAMERA_BOUNDS,
+  fitBounds: CAMPUS_BOUNDS,
+  minZoom: MIN_ZOOM,
+  maxZoom: MAX_ZOOM,
+  nativeMinLevel: NATIVE_MIN_LEVEL,
+} as const satisfies Partial<MapProps>;
 
 export function centreOf({ south, west, north, east }: MapBounds): LatLng {
   return { latitude: (south + north) / 2, longitude: (west + east) / 2 };

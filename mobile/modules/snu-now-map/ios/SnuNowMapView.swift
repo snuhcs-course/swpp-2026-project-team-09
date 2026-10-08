@@ -36,6 +36,8 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
   var rectangle = Bounds(south: 0, west: 0, north: 0, east: 0)
   var minZoom = 0.0
   var maxZoom = 0.0
+  // The SDK's lowest level, which it holds a pinch to; nil, the SDK's own.
+  var minLevel: Int?
   var markers: [ThingRecord] = []
   var avatars: [ThingRecord] = []
   var lines: [LineRecord] = []
@@ -219,6 +221,7 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
     kakaoMap.setGestureEnable(type: .rotate, enable: false)
     kakaoMap.setGestureEnable(type: .tilt, enable: false)
     kakaoMap.setGestureEnable(type: .rotateZoom, enable: false)
+    holdLevel()
     placeLogo()
     let labels = kakaoMap.getLabelManager()
     let pictures = Pictures(manager: labels)
@@ -248,10 +251,19 @@ final class SnuNowMapView: ExpoView, MapControllerDelegate, KakaoMapEventDelegat
     guard map != nil else {
       return
     }
+    holdLevel()
     placeLogo()
     showThings()
     showLines()
     rest()
+  }
+
+  // Pinching out stops at the lowest level instead of going below the lowest zoom and being brought back.
+  private func holdLevel() {
+    guard let map else {
+      return
+    }
+    map.cameraMinLevel = minLevel ?? map.minLevel
   }
 
   private func sized() {

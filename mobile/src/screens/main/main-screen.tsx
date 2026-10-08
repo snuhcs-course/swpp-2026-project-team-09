@@ -8,7 +8,7 @@ import { useDiningCards } from '@/features/dining/use-dining';
 import type { CardView } from '@/features/map/adapter';
 import { useMapCards } from '@/features/map/use-map-cards';
 import { type ShuttleLayer, useShuttle } from '@/features/shuttle/use-shuttle';
-import { CAMPUS_BOUNDS, Map, type MapLine, MAX_ZOOM, MIN_ZOOM } from '@/map';
+import { CAMPUS_CAMERA, Map, type MapLine } from '@/map';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { Card } from './card';
 import { FriendList } from './friend-list';
@@ -162,11 +162,9 @@ function MainMapView({ map, me, things, lines, cardHeight, onPress }: MainMapVie
   return (
     <Map
       avatars={[...things.avatars, ...me.avatars]}
-      bounds={CAMPUS_BOUNDS}
+      {...CAMPUS_CAMERA}
       inset={mapInset(cardHeight)}
       markers={things.markers}
-      maxZoom={MAX_ZOOM}
-      minZoom={MIN_ZOOM}
       onCameraIdle={map.onCameraIdle}
       onCreditPress={() => {
         router.push('/map-sources');
