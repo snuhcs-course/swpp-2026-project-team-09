@@ -1,18 +1,10 @@
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
-import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
-import {
-  GLOBAL_EVENTS_KEY,
-  MATCHING_REQUESTS_KEY,
-  MY_JOIN_REQUESTS_KEY,
-  QUESTS_KEY,
-  RECRUITING_KEY,
-} from '@/api/queries';
+import { GLOBAL_EVENTS_KEY, MATCHING_REQUESTS_KEY } from '@/api/queries';
 import { useToast } from '@/design-system';
-import type { RecruitRowView } from '@/features/events/adapter';
-import { ENTERING, refusalWords } from '@/features/quests/refusals';
+import { refusalWords } from '@/features/quests/refusals';
 
 const MATCH_SERVER_DOWN = '매칭 서버가 응답하지 않아요. 잠시 후 다시 시도해 주세요';
 
@@ -20,8 +12,6 @@ export interface EventActions {
   requestMatching: (globalEventId: string, size: number) => Promise<void>;
   // True once the request is withdrawn.
   withdrawMatching: (globalEventId: string) => Promise<boolean>;
-  // Joins an Open Quest, and opens its room, or asks to join an Approval one.
-  join: (row: RecruitRowView) => Promise<void>;
 }
 
 interface Tools {
@@ -57,22 +47,6 @@ async function withdrawMatching({ refetch, showToast }: Tools, globalEventId: st
   }
 }
 
-async function join({ refetch, showToast }: Tools, row: RecruitRowView): Promise<void> {
-  try {
-    if (row.joinPolicy === 'open') {
-      await apiClient.joinQuest(row.questId);
-      showToast(`${row.title} 참여 완료`);
-      router.push(`/room/${row.questId}`);
-    } else {
-      await apiClient.askToJoinQuest(row.questId);
-      showToast('참여를 신청했어요');
-    }
-  } catch (error) {
-    showToast(refusalWords(error, ENTERING));
-  }
-  refetch([RECRUITING_KEY, QUESTS_KEY, MY_JOIN_REQUESTS_KEY]);
-}
-
 function toolsOf(queryClient: QueryClient, showToast: (message: string) => void): Tools {
   return {
     refetch: (keys) => {
@@ -94,7 +68,6 @@ export function useEventActions(): EventActions {
     return {
       requestMatching: (globalEventId, size) => requestMatching(tools, globalEventId, size),
       withdrawMatching: (globalEventId) => withdrawMatching(tools, globalEventId),
-      join: (row) => join(tools, row),
     };
   }, [queryClient, showToast]);
 }
