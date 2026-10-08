@@ -1,7 +1,7 @@
 # 04: Titles of Quests for a Global Event that the Leader may change
 
 Parent: [P27 spec](../spec.md)
-Status: ready-for-agent
+Status: resolved
 Blocked by: None (can start immediately)
 
 ## What to build
