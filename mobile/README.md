@@ -605,8 +605,9 @@ it. Android opens the https address in the app only through App Links (see "Invi
 chips "전체", "강의" and "파티", whose counts stay while one filters; and the rows grouped by the Korean day of the
 start of the Sub Quest each shows (`toQuestGroups` in the quest feature's adapter): "오늘 · 10월 1일 (목)", "내일 ·
 …", "이번 주" (2 to 4 days ahead), "다음 주" (5 to 11), "그 이후", and "시간 미정" last for a Quest without a start.
-A Quest whose Sub Quests all ended or were cancelled is not shown. A row is 72 high: the round of 40 in its
-`questTone`, the kind ("강의", "공개 파티", "비공개 파티 · 김민준"), the title, the place and the time. A class's row
+A Quest whose Sub Quests all ended (past their end time) or were cancelled is not shown; marks of done do not count.
+A row is 72 high: the round of 40 in its `questTone`, the kind ("강의", "공개 파티", "비공개 파티 · 김민준"), the
+title, the place and the time. A class's row
 closes the screen and goes back to the map by `/main?quest=<id>`, which the Quest list on the map carries out as a
 press of its own row; any other row opens the Quest's room above it. Without a Quest it says "퀘스트가 없어요"; while the Quests
 load and after a failure it shows the shared states.
@@ -715,9 +716,10 @@ after a removal, a drop on another phone or the Leader's end. From the top:
   "활성화 끄기" for its Leader (`POST /parties/mine/end`) or "활성화에서 나가기". A Party running without the User
   names its Leader, with "거절" and "참여"; "거절" sends nothing and is kept on the phone by the Party's id
   (`declinedParties` of `src/storage/kept.ts`), so the box then says "활성화 중인 파티예요" with "참여";
-- `일정` (`plan-section.tsx`): the Sub Quests by their start, the next one in the Party's colour, the ended ones dimmed;
-  "완료로 표시" for every Holder; "+ 추가", "일정 수정" and "일정 삭제" for the Leader alone. The rules of who edits
-  Sub Quests and who opens the Party are in one module, `src/features/quests/rules.ts`. The inline form
+- `일정` (`plan-section.tsx`): the Sub Quests by their start, the next one in the Party's colour, the ended ones and
+  those done dimmed; "완료로 표시" for every Holder, and on one done "완료 취소", which unmarks it; "+ 추가",
+  "일정 수정" and "일정 삭제" for the Leader alone. The rules of who edits Sub Quests and who opens the Party are in
+  one module, `src/features/quests/rules.ts`. The inline form
   (`plan-form.tsx`) asks `내용`, `언제` through the date·time sheet and `어디서`, typed or chosen on the map view; it
   waits for a point while the place has words of its own. A Place is sent as `{ placeId }`, a point as a point with
   the words shown; an add carries an `Idempotency-Key` kept for its retries;
@@ -911,6 +913,7 @@ Behind a hook are three layers:
 | `getQuest`, `dropQuest`                                              | One Quest, ended or not; nothing                             | `GET`, `DELETE /quests/:questId`                                        |
 | `addSubQuest`, `editSubQuest`                                        | The Sub Quest                                                | `POST /quests/:questId/sub-quests`, `PUT …/:subQuestId`                 |
 | `cancelSubQuest`, `markSubQuestDone`                                 | Nothing                                                      | `DELETE …/:subQuestId`, `POST …/:subQuestId/done`                       |
+| `unmarkSubQuestDone`                                                 | Nothing                                                      | `DELETE …/:subQuestId/done`                                             |
 | `handOverQuest`, `removeHolder`, `endQuest`                          | Nothing                                                      | `PUT /quests/:questId/leader`, `DELETE …/holders/:userId`, `POST …/end` |
 | `acceptJoinRequest`, `declineJoinRequest`                            | Nothing                                                      | `POST /quests/:questId/join-requests/:id/accept`, `/decline`            |
 | `listSentInvitations`, `cancelInvitation`                            | The Leader's invitations that wait; nothing                  | `GET`, `DELETE /quests/:questId/invitations…`                           |

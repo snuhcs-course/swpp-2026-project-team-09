@@ -145,6 +145,13 @@ export function markDone(app: INestApplication<Server>, user: TestUser, path: Su
   );
 }
 
+export function unmarkDone(app: INestApplication<Server>, user: TestUser, path: SubQuestPath): request.Test {
+  return withAccessToken(
+    request(app.getHttpServer()).delete(`/quests/${path.questId}/sub-quests/${path.subQuestId}/done`),
+    user.accessToken,
+  );
+}
+
 export interface SubQuestPath {
   questId: string;
   subQuestId: string;
