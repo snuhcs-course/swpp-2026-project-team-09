@@ -1,7 +1,7 @@
 # 02: Meetups: proposing to a Friend, answering under 초대, and the Shared Quest
 
 Parent: [P14 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human
 Blocked by:
 
 - P19's ticket 01 (The shell, the shared components, the Quest full screen and the Friend panel);
@@ -40,13 +40,13 @@ Each new operation goes into the API client with its mock, which keeps Meetups i
 
 ### Opening the form
 
-- [ ] The calendar button on a Friend's row in the Friend panel, `{이름}님과 파티 만들기`, closes the panel and opens the form for that Friend. It replaces the toast P19's ticket 01 left.
-- [ ] `파티 만들기` on a Friend's card on the map opens the form for that Friend. It replaces the card's toast.
-- [ ] The form is a screen above the tabs. Closing it, or sending, returns to the map as it was.
+- [x] The calendar button on a Friend's row in the Friend panel, `{이름}님과 파티 만들기`, closes the panel and opens the form for that Friend. It replaces the toast P19's ticket 01 left.
+- [x] `파티 만들기` on a Friend's card on the map opens the form for that Friend. It replaces the card's toast.
+- [x] The form is a screen above the tabs. Closing it, or sending, returns to the map as it was.
 
 ### The Meetup form (`PartyAppt`)
 
-- [ ] It has ✕ `닫기` and `파티 만들기`, and these fields in order:
+- [x] It has ✕ `닫기` and `파티 만들기`, and these fields in order:
   - `제목`, up to 30 characters, with the placeholder `제목`;
   - `언제`, a button reading `날짜·시간 선택` or the chosen start. It opens the date·time sheet: `언제` with its preview, 21 day chips from today, `00시`…`23시`, `00분`…`50분` in steps of 10, and `확인`;
   - `끝나는 시간` (new), optional: a button reading `선택 안 함` (new) or the chosen end. It opens the same sheet titled `끝나는 시간` (new), and the chosen end has ✕ `끝나는 시간 빼기` (new);
@@ -54,12 +54,12 @@ Each new operation goes into the API client with its mock, which keeps Meetups i
   - `친구 초대` with the hint `1명에게 요청`: the one Friend, as a selected chip that cannot be removed. There is no friend search or list.
 
   The date·time sheet is shared with P13's forms. Whichever lands first makes it a shared part, and the other uses it.
-- [ ] `사진`, `관련 행사`, `본문`, `인원`, `공개 범위`, `게시판` and `태그` are not shown: a Meetup has none of them.
-- [ ] The footer's `파티 만들기` (52, navy) stays disabled until the form has a title, a start and a place. Before it sends:
+- [x] `사진`, `관련 행사`, `본문`, `인원`, `공개 범위`, `게시판` and `태그` are not shown: a Meetup has none of them.
+- [x] The footer's `파티 만들기` (52, navy) stays disabled until the form has a title, a start and a place. Before it sends:
   - a start that has passed shows `시작 시간이 지났어요. 다시 골라 주세요` (new);
   - an end not after the start shows `끝나는 시간이 시작 시간보다 늦어야 해요` (new) under the field.
-- [ ] Sending posts `POST /meetups` with `receiverId`, `title`, `startsAt`, `endsAt` when chosen, and `place`. The place is `{ placeId }` for a Place, or `{ latitude, longitude, label }` for a point. The form keeps one `Idempotency-Key` until the main server answers, so that a retry after no answer cannot propose twice.
-- [ ] On success the form closes, and the toast says `{이름}님에게 파티 초대를 보냈어요` (new). The refusals keep the form open:
+- [x] Sending posts `POST /meetups` with `receiverId`, `title`, `startsAt`, `endsAt` when chosen, and `place`. The place is `{ placeId }` for a Place, or `{ latitude, longitude, label }` for a point. The form keeps one `Idempotency-Key` until the main server answers, so that a retry after no answer cannot propose twice.
+- [x] On success the form closes, and the toast says `{이름}님에게 파티 초대를 보냈어요` (new). The refusals keep the form open:
   - 400 `MEETUP_START_PASSED`: `시작 시간이 지났어요. 다시 골라 주세요` (new);
   - 404 `FRIEND_NOT_FOUND`: `{이름}님과 더 이상 친구가 아니에요` (new);
   - 404 `PLACE_NOT_FOUND`: `장소를 다시 골라 주세요`, the timetable form's words;
@@ -67,15 +67,15 @@ Each new operation goes into the API client with its mock, which keeps Meetups i
 
 ### 장소 선택 in its event mode (`PlacePicker`, `PlacePickerMap`, `PlacePickerEmpty`)
 
-- [ ] The list is the picker of P19's ticket 03: `뒤로`, `장소 선택`, the search `건물 이름, 동 번호` (`장소 검색`, ✕ `검색어 지우기`), and the rows `장소 목록` with the name and `{number}동`. The event mode adds the first row `지도에서 직접 찍기` (teal, map icon) while the search is empty.
-- [ ] A search that finds nothing shows `‘{q}’에 맞는 장소가 없어요`, `건물 이름이나 동 번호로 다시 찾거나, 지도에서 직접 찍어 보세요` and the outlined button `지도에서 직접 찍기`.
-- [ ] The map view is a full-screen `<Map>` from P06's map component, a second map view while 지도's stays mounted. It has:
+- [x] The list is the picker of P19's ticket 03: `뒤로`, `장소 선택`, the search `건물 이름, 동 번호` (`장소 검색`, ✕ `검색어 지우기`), and the rows `장소 목록` with the name and `{number}동`. The event mode adds the first row `지도에서 직접 찍기` (teal, map icon) while the search is empty.
+- [x] A search that finds nothing shows `‘{q}’에 맞는 장소가 없어요`, `건물 이름이나 동 번호로 다시 찾거나, 지도에서 직접 찍어 보세요` and the outlined button `지도에서 직접 찍기`.
+- [x] The map view is a full-screen `<Map>` from P06's map component, a second map view while 지도's stays mounted. It has:
   - a teal pin fixed at the centre, which lifts while the map moves;
   - the floating `뒤로` and the pill `지도를 움직여 핀에 맞추기`;
   - a bottom sheet with a pin icon in a teal circle, the place's name, its hint, and `이 위치로 정하기` (teal, 52).
 
   It opens on the User's position when known, else on the campus.
-- [ ] Each time the camera stops, the app asks `GET /places/at` for the centre:
+- [x] Each time the camera stops, the app asks `GET /places/at` for the centre:
   - `inside`: the name reads `{name} {number}동`, or the name alone without a number, and the hint `건물 위치예요`. Choosing it gives the Place, `{ placeId }`;
   - `near`: `{name} 근처` and `직접 찍은 위치 · 가장 가까운 건물 기준`. Choosing it gives the point with the label `{name} 근처`;
   - `none`: `지도에서 고른 위치` (new) and `직접 찍은 위치` (new). Choosing it gives the point with that label.
@@ -85,42 +85,42 @@ Each new operation goes into the API client with its mock, which keeps Meetups i
 ### Received Meetups under 초대 (`PartyInvites`)
 
 - [ ] Under `받은 초대 · {n}` the tab lists the Quest invitations (P13), then the Meetups proposed to the User that are still `proposed`, in the main server's order. n counts both, and so does the tab's red count pill `초대 {n}`.
-- [ ] A Meetup's card has:
+- [x] A Meetup's card has:
   - the proposer's Avatar and `{name}님이 비공개 파티에 초대했어요`;
   - the title in 18/600;
   - the meta `{when} · {place}`, where `{when}` reads as the date·time sheet's preview does (`내일 12:10`), with `–{end}` when the Meetup has an end;
   - the note `파티장이 파티를 활성화하면, 수락한 멤버끼리 위치를 공유해요.`, the words of the join sheet;
   - `거절` (secondary) and `수락` (primary).
-- [ ] `수락` sends `POST /meetups/:id/accept`, and the toast says `파티에 참여했어요`. The Meetup leaves the list, and the Shared Quest arrives with `quests-changed`. `거절` sends `POST /meetups/:id/decline`, and the card goes without a toast, as in the frame.
-- [ ] A 409 `MEETUP_NOT_PROPOSED` or a 404 `MEETUP_NOT_FOUND`, a Meetup withdrawn or expired meanwhile, shows `이미 취소됐거나 지난 초대예요` (new) and fetches the Meetups again.
-- [ ] With neither invitations nor Meetups, the tab shows P13's empty state, `받은 초대가 없어요`.
+- [x] `수락` sends `POST /meetups/:id/accept`, and the toast says `파티에 참여했어요`. The Meetup leaves the list, and the Shared Quest arrives with `quests-changed`. `거절` sends `POST /meetups/:id/decline`, and the card goes without a toast, as in the frame.
+- [x] A 409 `MEETUP_NOT_PROPOSED` or a 404 `MEETUP_NOT_FOUND`, a Meetup withdrawn or expired meanwhile, shows `이미 취소됐거나 지난 초대예요` (new) and fetches the Meetups again.
+- [x] With neither invitations nor Meetups, the tab shows P13's empty state, `받은 초대가 없어요`.
 
 ### Sent Meetups
 
-- [ ] Below the received ones, under `보낸 초대 · {n}` (new), the tab lists the Meetups the User proposed, except those withdrawn and those whose start passed more than 7 days ago. Under the header is the note `보낸 초대는 고칠 수 없어요. 바꾸려면 초대를 취소하고 다시 보내 주세요.` (new).
-- [ ] A card has:
+- [x] Below the received ones, under `보낸 초대 · {n}` (new), the tab lists the Meetups the User proposed, except those withdrawn and those whose start passed more than 7 days ago. Under the header is the note `보낸 초대는 고칠 수 없어요. 바꾸려면 초대를 취소하고 다시 보내 주세요.` (new).
+- [x] A card has:
   - the receiver's Avatar and `{name}님에게 보낸 초대` (new);
   - the title;
   - the meta, as above;
   - the state as a Badge: `응답 대기` for `proposed` (tone warning), `수락함` (new) for `accepted` (tone live), `거절함` (new) for `declined` (tone neutral) and `기간 지남` (new) for `expired` (tone neutral).
-- [ ] While the Meetup is `proposed`, the card has `초대 취소`. It sends `POST /meetups/:id/withdraw`, and the toast says `{name}님 초대를 취소했어요`, the words of the room's 초대 중. A 409 `MEETUP_NOT_PROPOSED`, a Meetup answered meanwhile, shows `이미 답한 초대예요` (new) and fetches the Meetups again.
-- [ ] The section is left out when nothing is in it.
+- [x] While the Meetup is `proposed`, the card has `초대 취소`. It sends `POST /meetups/:id/withdraw`, and the toast says `{name}님 초대를 취소했어요`, the words of the room's 초대 중. A 409 `MEETUP_NOT_PROPOSED`, a Meetup answered meanwhile, shows `이미 답한 초대예요` (new) and fetches the Meetups again.
+- [x] The section is left out when nothing is in it.
 
 ### The Shared Quest
 
-- [ ] An accepted Meetup's Quest is shown by the screens that show every Quest, and this ticket adds nothing to them:
+- [x] An accepted Meetup's Quest is shown by the screens that show every Quest, and this ticket adds nothing to them:
   - the floating Quest list and the Quest full screen, with the kicker `비공개 파티 · {the Friend}` (P19's ticket 01);
   - 내 파티 and the Quest's room (P13).
-- [ ] Either Friend cancels it from its room's footer (P13): `파티 없애기` for the proposer, who leads it, and `나가기` for the other. Both drop it through P13's code. This ticket adds no control there.
-- [ ] Refresh:
+- [x] Either Friend cancels it from its room's footer (P13): `파티 없애기` for the proposer, who leads it, and `나가기` for the other. Both drop it through P13's code. This ticket adds no control there.
+- [x] Refresh:
   - `meetups-changed` fetches the Meetups again, and the app's signal table (`live-updates.tsx`) gains it;
   - `quests-changed` fetches the Quests again, as today;
   - both are fetched when the connection opens again and when the app returns to the front.
 
 ### Records and checks
 
-- [ ] P06's `todo.md` §3 gains a row for each new operation, with its route. §4 loses the calendar button and the card's `파티 만들기`. `mobile/README.md` ("Screens and the flow between them", "Data") describes the Meetup form, 장소 선택's map, and the Meetups under 초대.
-- [ ] Jest tests through `startApp` on the real routes:
+- [x] P06's `todo.md` §3 gains a row for each new operation, with its route. §4 loses the calendar button and the card's `파티 만들기`. `mobile/README.md` ("Screens and the flow between them", "Data") describes the Meetup form, 장소 선택's map, and the Meetups under 초대.
+- [x] Jest tests through `startApp` on the real routes:
   - against the mocks:
     - the form opened from the panel's button and from the card;
     - the disabled `파티 만들기`, the start in the past, the end before the start, and the end added and removed;
@@ -136,7 +136,7 @@ Each new operation goes into the API client with its mock, which keeps Meetups i
     - the other Friend's drop of the Quest arriving as `quests-changed` and changing this User's row;
     - this User's drop through the room's footer.
 - [ ] Two Users on the emulator and a phone against the main server: one proposes from the Friend panel, the other accepts under 초대, and both see the Quest in their Quest lists. This is recorded under Comments, with a screenshot in the pull request.
-- [ ] Under Comments, "Differences from the frame" lists each difference with its reason. Expected among them:
+- [x] Under Comments, "Differences from the frame" lists each difference with its reason. Expected among them:
   - the form's fields that a Meetup lacks, and the one fixed Friend in place of the friend list;
   - `어디서` without free text, since the main server takes a Place or a point;
   - `끝나는 시간`;
@@ -145,4 +145,54 @@ Each new operation goes into the API client with its mock, which keeps Meetups i
   - the sent section and its note;
   - every word marked (new).
 - [ ] Screenshots of the web target are in the pull request under Test Results, each compared with its frame: the form, 장소 선택's list and map, and the 초대 tab with received and sent Meetups.
-- [ ] The app's four checks pass: `pnpm lint`, `pnpm format:check`, `pnpm typecheck` and `pnpm test` in `mobile/`.
+- [x] The app's four checks pass: `pnpm lint`, `pnpm format:check`, `pnpm typecheck` and `pnpm test` in `mobile/`.
+
+## Comments
+
+### For a person
+
+Three criteria are left:
+
+- `받은 초대 · {n}` and the tab's red pill `초대 {n}` count the Meetups only for now. P13's ticket that builds the 초대 tab, built in parallel, puts the Quest invitations above the Meetups in `MeetupInvites` (`src/screens/party/invites-meetups.tsx`), counts both and adds the pill;
+- two Users on the emulator and a phone against the main server: one proposes from the Friend panel, the other accepts under 초대, and both see the Quest in their Quest lists. What was seen goes here, with a screenshot in the pull request;
+- the screenshots of the web target beside their frames: the form, 장소 선택's list and map, and the 초대 tab with received and sent Meetups. On the web the mocks answer: the Friend panel's calendar button opens the form, and the mock's 이서연 has proposed `학관 점심` under 초대.
+
+### Differences from the frame
+
+- The form has only the fields a Meetup has: no `사진`, `관련 행사`, `본문`, `인원`, `공개 범위`, `게시판` or `태그`, and under `친구 초대` the one Friend as a chip that cannot be removed, without the friend search and list.
+- `어디서` is a button for 장소 선택 and the map button, without free text: the main server takes a Place or a point.
+- `끝나는 시간` (new), with `선택 안 함` (new) and ✕ `끝나는 시간 빼기` (new), has no frame. Its sheet is the shared date·time sheet titled `끝나는 시간`, and opens at the start while no end is chosen.
+- The end not after the start is said under the field as soon as it is chosen; a start that has passed is said under `언제` when `파티 만들기` is pressed, since time moves.
+- The sent toast `{이름}님에게 파티 초대를 보냈어요` (new) replaces `비공개 파티를 만들었어요 · 1명에게 초대 요청`: nothing is made until the Friend accepts. The form goes back to the map, not to 내 파티.
+- The received card has no `{ago}` (a Meetup has no time of sending) and no body (a Meetup has none). Its meta is `{when} · {place}`, with `–{end}` when it has an end, and it carries the join sheet's note.
+- The `보낸 초대 · {n}` (new) section, its note, the card `{name}님에게 보낸 초대` (new), the Badges `수락함`, `거절함` and `기간 지남` (new) and `초대 취소` have no frame.
+- 장소 선택's map view says `지도에서 고른 위치` (new) and `직접 찍은 위치` (new) for a point near no Place.
+- Words marked (new) in the criteria are the ticket's. A refused 수락, 거절 or 초대 취소 that the ticket does not word says the app's `요청하지 못했어요. 다시 시도해 주세요`.
+
+### Result (2026-10-06)
+
+The frames `Party` (`PartyAppt`, `PartyInvites`) and `PlacePicker` (with `PlacePickerMap` and `PlacePickerEmpty`) were read in the copy of the canvas at version `1791265989-e23c`.
+
+Where things are, in `mobile/`:
+
+- Route: `src/app/(signed-in)/meetup/[friendId].tsx` (`?name=`), sliding from the bottom. `src/screens/meetup/`: `meetup-form-screen.tsx`, `meetup-fields.tsx` (the time and place fields), `open-meetup-form.ts`, which the Friend panel's calendar button and the Friend card's `파티 만들기` (the card's action `meetup`) call.
+- `src/screens/party/invites-meetups.tsx`: `MeetupInvites`, the received and the sent Meetups, mounted in the 파티 tab's `초대` body in place of its 준비 중이에요. P13's 초대 ticket adds the Quest invitations above the received Meetups and the count pill.
+- `src/screens/places/place-picker.tsx` gained the mode `event` with `onMap`: the row `지도에서 직접 찍기` and the button of `PlacePickerEmpty`. The map view (`/place-map`) opens on the User's position when known and on campus; its `none` hint is `직접 찍은 위치`. The date·time sheet takes a `title`.
+- `src/features/meetups/`: `meetup-form.ts` (the draft, its checks, the body, the refusals' words), `meetup-view.ts` (the meta, which Meetups 초대 shows, the Badges), `use-meetups.ts` (`useMeetupInvites`, `useMeetupAnswers`, `useProposeMeetup`).
+- API: `proposeMeetup` (the key passed in), `acceptMeetup`, `declineMeetup`, `withdrawMeetup`, with `MeetupProposal`; `src/api/server/meetup-client.ts`; the mock `src/api/mock/meetups.ts` keeps the Meetups in memory, reads a proposed one whose start passed as expired, refuses as the main server does and makes the Shared Quest on accepting, which the mock's `listQuests` and `getQuest` answer. `startFresh()` resets it.
+- The refresh needed nothing new: `meetups-changed` was in `live-updates.tsx` since P19's ticket 02, and both lists are fetched when the connection opens again and when the app returns to the front.
+- Tests: `__tests__/meetup-form-test.tsx` (mocks), `meetups-proposing-test.tsx` and `meetups-invites-test.tsx` (fake server and socket) with `support/meetups.ts`. `friend-panel-test` and `main-card-test` lost the not-ready cases of the two buttons.
+
+Decisions made while building:
+
+- The form keeps its key for the same proposal until the main server answers, a refusal included; a changed proposal gets a new key, so that a retry after no answer cannot send other content under the old key.
+- 수락, 거절 and 초대 취소 fetch the Meetups again whether done or refused, and 수락 also the Quests, so that the Shared Quest appears under the mocks, which send no signal.
+- `MeetupInvites` scrolls on its own; the received section is always shown, with the empty state when nothing waits, and the sent section is left out when empty.
+
+Checks: `pnpm lint`, `pnpm format:check` and `pnpm typecheck` pass. The whole `pnpm test` ran once: `screen-data-test` followed the Friend card's new action and then passed; `main-card-test`, `timetable-test` and `room-plan-test` timed out under the whole run's load and passed alone, as did every touched test file; CI is the final check.
+
+Not checked: nothing ran in a browser, on a phone or against a running main server, so the screenshots and the two-User run are still to take. The map view's opening on the User's position was not seen on a real map.
+
+### Agent usage (2026-10-06)
+
+Estimates, not read from the transcripts: about 1.5 hours of agent time in one session. Tokens: about 6 M input, of which about 5.6 M cache reads and 0.35 M cache writes, and about 0.1 M output. No subagents.

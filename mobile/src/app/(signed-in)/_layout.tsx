@@ -79,6 +79,7 @@ export default function SignedInLayout(): ReactElement {
             <Stack.Screen name="post/[questId]" options={slideFrom('right', reduceMotion)} />
             <Stack.Screen name="party-form" options={slideFrom('right', reduceMotion)} />
             <Stack.Screen name="matching" options={slideFrom('right', reduceMotion)} />
+            <Stack.Screen name="meetup/[friendId]" options={slideFrom('bottom', reduceMotion)} />
           </Stack>
         </BackgroundSharingProvider>
       </PositionSending>

@@ -14,6 +14,8 @@ import {
 
 interface DateTimeSheetProps {
   open: boolean;
+  // `언제` when left out.
+  title?: string;
   // The instant shown when it opens, or null for today at 19:00.
   value: string | null;
   onClose: () => void;
@@ -173,7 +175,7 @@ function useChoice(open: boolean, value: string | null, today: Date): [Choice, (
 
 // When something happens, in Korea's time: `언제` with the choice in words, 21 days from today, the hour and the
 // minute by tens, and `확인`. Shared by the forms that ask for a time.
-export function DateTimeSheet({ open, value, onClose, onPick }: DateTimeSheetProps): ReactElement {
+export function DateTimeSheet({ open, title = '언제', value, onClose, onPick }: DateTimeSheetProps): ReactElement {
   const today = now();
   const [choice, change] = useChoice(open, value, today);
   const picked = koreaInstant(today, choice.day, choice.hour, choice.minute).toISOString();
@@ -181,7 +183,7 @@ export function DateTimeSheet({ open, value, onClose, onPick }: DateTimeSheetPro
     <BottomSheet label="날짜·시간" onClose={onClose} open={open}>
       <View style={styles.body}>
         <View style={styles.head}>
-          <Text style={styles.title}>언제</Text>
+          <Text style={styles.title}>{title}</Text>
           <Text style={styles.preview}>{whenWords(picked)}</Text>
         </View>
         <Days choice={choice} onChange={change} today={today} />

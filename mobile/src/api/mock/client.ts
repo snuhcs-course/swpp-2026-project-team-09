@@ -9,9 +9,10 @@ import { FRIEND_STATUSES, MY_FRIEND_ID } from './data/friends';
 import { MENUS } from './data/menus';
 import { PLACES } from './data/places';
 import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
-import { MEETUPS, QUEST_INVITATIONS } from './data/waiting';
+import { QUEST_INVITATIONS } from './data/waiting';
 import { mockEvents } from './events';
 import { mockFriendships as friendships } from './friendships';
+import { mockMeetups as meetups } from './meetups';
 import { mockParty } from './party';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
@@ -105,11 +106,27 @@ export const mockClient: ApiClient = {
   },
   listPositions: () => answer('listPositions', friendships.listPositions, []),
   listFriendStatuses: () => answer('listFriendStatuses', () => FRIEND_STATUSES, []),
-  listQuests: () => answer('listQuests', () => QUESTS, []),
+  listQuests: () => answer('listQuests', () => [...QUESTS, ...meetups.sharedQuests()], []),
   listQuestInvitations: () => answer('listQuestInvitations', () => QUEST_INVITATIONS, []),
   // The User leads no Quest of the mock's.
   listJoinRequests: () => answer('listJoinRequests', () => [], []),
-  listMeetups: () => answer('listMeetups', () => MEETUPS, { received: [], sent: [] }),
+  listMeetups: () => answer('listMeetups', meetups.listMeetups, { received: [], sent: [] }),
+  proposeMeetup: (proposal, key) => answer('proposeMeetup', () => meetups.propose(proposal, key)),
+  acceptMeetup: async (meetupId) => {
+    await answer('acceptMeetup', () => {
+      meetups.accept(meetupId);
+    });
+  },
+  declineMeetup: async (meetupId) => {
+    await answer('declineMeetup', () => {
+      meetups.decline(meetupId);
+    });
+  },
+  withdrawMeetup: async (meetupId) => {
+    await answer('withdrawMeetup', () => {
+      meetups.withdraw(meetupId);
+    });
+  },
   listClasses: () => answer('listClasses', timetable.listClasses, []),
   addClass: (save) => answer('addClass', () => timetable.addClass(save)),
   replaceClass: (classId, save) => answer('replaceClass', () => timetable.replaceClass(classId, save)),

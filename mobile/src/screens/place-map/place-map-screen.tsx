@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { LatLng } from '@/api/types';
 import { color, font, Icon, radius, shadow, space } from '@/design-system';
 import { useInsets } from '@/design-system/insets';
 import { givePlace } from '@/features/places/picked-place';
 import { type PlaceAtView, usePlaceAt } from '@/features/places/use-place-at';
-import { CAMPUS_BOUNDS, Map, MAX_ZOOM, MIN_ZOOM } from '@/map';
+import { CAMPUS_BOUNDS, isInside, Map, type MapHandle, MAX_ZOOM, MIN_ZOOM } from '@/map';
+import { usePosition } from '@/position';
 
 // The floating back button and the pill over the map.
 function Header(): ReactElement {
@@ -57,12 +58,15 @@ function Sheet({ at }: { at: PlaceAtView | undefined }): ReactElement {
 }
 
 // The map view of the place picker, the frame's `PlacePickerMap`: the map moves under a pin fixed at the middle, which
-// lifts while it moves, and the sheet says what is under it once the camera stops. Its choice goes back to the screen
-// that opened it.
+// lifts while it moves, and the sheet says what is under it once the camera stops. It opens on the User's position when
+// known, else on the campus. Its choice goes back to the screen that opened it.
 export function PlaceMapScreen(): ReactElement {
   const [point, setPoint] = useState<LatLng | null>(null);
   const [moving, setMoving] = useState(false);
   const at = usePlaceAt(point);
+  const { position } = usePosition();
+  const map = useRef<MapHandle>(null);
+  const opened = useRef(false);
   return (
     <View style={styles.screen}>
       <View
@@ -78,10 +82,18 @@ export function PlaceMapScreen(): ReactElement {
           maxZoom={MAX_ZOOM}
           minZoom={MIN_ZOOM}
           onCameraIdle={({ centre }) => {
+            if (!opened.current) {
+              opened.current = true;
+              if (position !== null && isInside(position, CAMPUS_BOUNDS)) {
+                map.current?.moveCamera({ centre: position, zoom: OPENING_ZOOM });
+                return;
+              }
+            }
             setPoint(centre);
             setMoving(false);
           }}
           lines={[]}
+          ref={map}
         />
       </View>
       <View style={styles.pinLayer}>
@@ -95,6 +107,7 @@ export function PlaceMapScreen(): ReactElement {
   );
 }
 
+const OPENING_ZOOM = 17;
 const BACK = 44;
 const ROUND = 40;
 const LIFT = -12;

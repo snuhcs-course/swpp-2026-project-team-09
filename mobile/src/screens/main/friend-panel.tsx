@@ -22,10 +22,10 @@ import {
   SidePanel,
   space,
   text,
-  useNotReadyToast,
 } from '@/design-system';
 import { type FriendView, PRESENCE_LABEL, withAge } from '@/features/friends/adapter';
 import { useFriends } from '@/features/friends/use-friends';
+import { openMeetupForm } from '../meetup/open-meetup-form';
 
 type Filter = Presence | 'all';
 
@@ -42,7 +42,7 @@ function found(friend: FriendView, query: string): boolean {
   return `${friend.name}${friend.department}`.replaceAll(/\s/gu, '').includes(wanted);
 }
 
-function FriendRow({ friend, onMeet }: { friend: FriendView; onMeet: () => void }): ReactElement {
+function FriendRow({ friend, onMeet }: { friend: FriendView; onMeet: (friend: FriendView) => void }): ReactElement {
   return (
     <ListRow
       aside={friend.department}
@@ -59,7 +59,9 @@ function FriendRow({ friend, onMeet }: { friend: FriendView; onMeet: () => void 
         <Pressable
           accessibilityLabel={`${friend.name}님과 파티 만들기`}
           accessibilityRole="button"
-          onPress={onMeet}
+          onPress={() => {
+            onMeet(friend);
+          }}
           style={({ pressed }) => [styles.meet, pressed && styles.meetPressed]}
         >
           <Icon color={color.snuBlue} name="calendar" size={18} />
@@ -71,7 +73,7 @@ function FriendRow({ friend, onMeet }: { friend: FriendView; onMeet: () => void 
 
 interface GroupsProps {
   friends: readonly FriendView[];
-  onMeet: () => void;
+  onMeet: (friend: FriendView) => void;
 }
 
 function Groups({ friends, onMeet }: GroupsProps): ReactElement {
@@ -122,13 +124,16 @@ function Footer({ seen, onLeave }: { seen: number; onLeave: () => void }): React
 }
 
 // The friend panel, the `MainFriends` frame: every Friend by what they are doing, with a search and chips, how many
-// the User sees now, the way to the 위치 공유 card of 내 정보 and to 친구 추가. Making a Party with a Friend belongs
-// to another task.
+// the User sees now, the way to the 위치 공유 card of 내 정보 and to 친구 추가. A Friend's calendar button closes the
+// panel and opens the Meetup form for that Friend.
 export function FriendPanel({ open, onClose }: FriendPanelProps): ReactElement {
   const { data: friends, isPending, refetch } = useFriends();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
-  const showNotReady = useNotReadyToast();
+  const onMeet = ({ id, name }: FriendView): void => {
+    onClose();
+    openMeetupForm(id, name);
+  };
   const shown = friends?.filter((friend) => (filter === 'all' || friend.presence === filter) && found(friend, query));
   return (
     <SidePanel label="친구" onClose={onClose} open={open}>
@@ -159,7 +164,7 @@ export function FriendPanel({ open, onClose }: FriendPanelProps): ReactElement {
       <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled" style={styles.scroll}>
         {shown === undefined && isPending ? <LoadingState /> : null}
         {shown === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
-        {shown === undefined ? null : <Groups friends={shown} onMeet={showNotReady} />}
+        {shown === undefined ? null : <Groups friends={shown} onMeet={onMeet} />}
       </ScrollView>
       <Footer onLeave={onClose} seen={friends?.filter(({ visible }) => visible).length ?? 0} />
     </SidePanel>
