@@ -81,7 +81,7 @@ function Head({ card, onClose }: Pick<CardProps, 'card' | 'onClose'>): ReactElem
   );
 }
 
-// The choices of a card that stands for several things, such as the Global Events at one place: a row each, with its
+// The choices of a card that stands for several things, such as the Global Events at one point: a row each, with its
 // title and its time, which opens the thing's own card.
 function Choices({ card, onChoose }: Pick<CardProps, 'card' | 'onChoose'>): ReactElement | null {
   if (card.choices === undefined) {

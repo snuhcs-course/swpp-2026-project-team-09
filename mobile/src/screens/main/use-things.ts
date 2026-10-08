@@ -52,7 +52,7 @@ function wordsOf({ mark, marker }: CardView, detail: ZoomDetail): string | undef
 
 // Turns the cards into what the map shows at a level of detail. From the "names" level a person has their given name
 // under them, in the map's own text. The selected one is drawn selected and above the others. A Global Event within a
-// place has no marker: the place's stands for it, and is selected while the event is.
+// point has no marker: the point's stands for it, and is selected while the event is.
 export function useThings(cards: readonly CardView[], detail: ZoomDetail, selectedId: string | null): Things {
   const selectedWithin = cards.find(({ id }) => id === selectedId)?.within ?? selectedId;
   const isSelected = (card: CardView): boolean => card.id === selectedId || card.id === selectedWithin;

@@ -26,7 +26,7 @@ export function placeNamed(words: string, places: readonly Place[]): Place | nul
 // A point picked on the map keeps its place while the words change, and is then sent as a point with those words. A
 // Place of the list is sent as itself while its words stay. Typed words are the Place they name, or else the words
 // alone.
-export function placeOf(
+export function placeToSend(
   words: string,
   picked: PickedPlace | null,
   places: readonly Place[],
@@ -45,12 +45,13 @@ export function placeOf(
   return { ...picked.position, label };
 }
 
-// `placeOf`, with the Places of the list asked when typed words are to be named. Without the list, the words go alone.
-export function usePlaceOf(): (words: string, picked: PickedPlace | null) => Promise<SubQuestPlace | undefined> {
+// `placeToSend`, with the Places of the list asked when typed words are to be named. Without the list, the words go
+// alone.
+export function usePlaceToSend(): (words: string, picked: PickedPlace | null) => Promise<SubQuestPlace | undefined> {
   const queryClient = useQueryClient();
   return async (words, picked) => {
     const places =
       picked === null && words.trim() !== '' ? await queryClient.query(placesQuery).catch((): Place[] => []) : [];
-    return placeOf(words, picked, places);
+    return placeToSend(words, picked, places);
   };
 }

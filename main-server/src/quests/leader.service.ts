@@ -43,8 +43,8 @@ export class LeaderService {
     return this.ledBy(questId, userId, tx);
   }
 
-  // A capacity below the number of Holders is refused. The Quest the changes lead to is on a board when it is Open or Approval, and on none when Closed: a
-  // change to Closed clears the board.
+  // A capacity below the number of Holders is refused. The Quest the changes lead to is on a board when it is Open or
+  // Approval, and on none when Closed: a change to Closed clears the board.
   async update(userId: string, questId: string, changes: UpdateQuestDto): Promise<QuestDto> {
     await this.changeAsLeader(userId, questId, async (tx, quest, holderIds) => {
       if (changes.capacity !== undefined && changes.capacity < holderIds.length) {

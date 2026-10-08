@@ -1,9 +1,10 @@
-import { act, render } from '@testing-library/react-native';
+import { act, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import type { ReactElement } from 'react';
 import { Text } from 'react-native';
 
 import MapCheck from '@/app/map-check';
+import type { LatLng } from '@/api/types';
 import type { MapBounds, MapProps } from '@/map';
 import { pass } from './support/app';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
@@ -52,6 +53,14 @@ function expectCameraArea(props: MapProps | undefined): void {
   expect(props?.nativeMinLevel).toBe(15);
 }
 
+// Brings 장소 선택's camera to rest at the centre. The main screen's map, under it, shows the campus's places;
+// 장소 선택's shows nothing but its own pin.
+async function stopOnPlaceMap(centre: LatLng): Promise<void> {
+  await act(() => {
+    mockShown.findLast(({ markers }) => markers.length === 0)?.onCameraIdle?.({ centre, zoom: 17 });
+  });
+}
+
 beforeEach(async () => {
   mockHasNativeMap = true;
   mockShown = [];
@@ -82,6 +91,26 @@ describe('the area the camera may move over', () => {
     await pass(500);
 
     expectCameraArea(mockShown.at(-1));
+  });
+
+  it('lets 장소 선택 pick a point on campus only, though its camera may move past it', async () => {
+    givePhone({ permission: 'granted', position: ON_CAMPUS });
+    await openMain();
+    await act(() => {
+      router.push('/place-map');
+    });
+    await pass(500);
+    // The first stop sends the camera to the User's position, on campus, and the second stops there.
+    await stopOnPlaceMap(ON_CAMPUS);
+    await stopOnPlaceMap(ON_CAMPUS);
+    await pass(500);
+    expect(screen.getByRole('button', { name: '이 위치로 정하기' })).toBeEnabled();
+
+    // Inside the camera's area, north of the on-campus rectangle.
+    await stopOnPlaceMap({ latitude: 37.478, longitude: 126.954 });
+    await pass(500);
+
+    expect(screen.getByRole('button', { name: '이 위치로 정하기' })).toBeDisabled();
   });
 
   it('is the same on the map check', async () => {

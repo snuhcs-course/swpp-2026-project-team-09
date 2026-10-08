@@ -5,7 +5,7 @@ import { isNothing, isSignInAnswer, type SignInAnswer } from '@/api/server/answe
 import { call } from '@/api/server/http';
 import { asksMainServer } from '@/api/servers';
 import type { Onboarding, SignInResult, Suggestion } from '@/api/types';
-import { askGoogle, forgetGoogle, type GoogleWay, googleAvailable } from '@/auth/google';
+import { askGoogle, forgetGoogle, type GoogleAccountPrompt, googleAvailable } from '@/auth/google';
 import { isSnuAccount, readIdToken, subjectOf } from '@/auth/id-token';
 import { forgetTokens, heldTokens, keepTokens } from '@/auth/tokens';
 import { namedSignInEnding, signInEnding } from '@/dev-settings';
@@ -67,7 +67,7 @@ async function enterMainServer(idToken: string): Promise<SignInResult> {
   return { outcome: 'signed-in', onboarding };
 }
 
-async function signInWithGoogle(way: GoogleWay): Promise<SignInResult> {
+async function signInWithGoogle(way: GoogleAccountPrompt): Promise<SignInResult> {
   try {
     const answer = await askGoogle(way);
     if (answer.kind === 'cancelled') {
@@ -99,7 +99,7 @@ async function signInWithMock(): Promise<SignInResult> {
 }
 
 // `way` is how Google is asked for the account; everything after its ID token is the same. The mock ignores it.
-export function signIn(way: GoogleWay = 'phone-accounts'): Promise<SignInResult> {
+export function signIn(way: GoogleAccountPrompt = 'phone-accounts'): Promise<SignInResult> {
   return googleAvailable() && namedSignInEnding() === null ? signInWithGoogle(way) : signInWithMock();
 }
 

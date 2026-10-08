@@ -8,7 +8,7 @@ import { RECRUITING_QUESTS } from './data/boards';
 import { frameTime, ME } from './data/frame';
 import { GLOBAL_EVENTS, QUESTS } from './data/quests';
 import { QUEST_INVITATIONS } from './data/waiting';
-import { placeOf } from './room';
+import { storedPlace } from './room';
 
 // The 파티 tab's operations as the main server answers them. As the room's, the mock keeps no change.
 
@@ -51,7 +51,7 @@ function madeOf({ title, description, capacity, joinPolicy, board, subQuest }: Q
         title: subQuest.title,
         startsAt: subQuest.startsAt ?? null,
         endsAt: null,
-        place: placeOf(subQuest.place),
+        place: storedPlace(subQuest.place),
         completion: 'by_hand',
         cancelled: false,
         done: false,

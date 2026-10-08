@@ -59,7 +59,8 @@ function Sheet({ at }: { at: PlaceAtView | undefined }): ReactElement {
 
 // The map view of the place picker, the frame's `PlacePickerMap`: the map moves under a pin fixed at the middle, which
 // lifts while it moves, and the sheet says what is under it once the camera stops. It opens on the User's position when
-// known, else on the campus. Its choice goes back to the screen that opened it.
+// known, else on the campus. The camera may move past the on-campus rectangle, but a point outside it is not a pick:
+// the sheet is empty and `이 위치로 정하기` is off. Its choice goes back to the screen that opened it.
 export function PlaceMapScreen(): ReactElement {
   const [point, setPoint] = useState<LatLng | null>(null);
   const [moving, setMoving] = useState(false);
@@ -87,7 +88,7 @@ export function PlaceMapScreen(): ReactElement {
                 return;
               }
             }
-            setPoint(centre);
+            setPoint(isInside(centre, CAMPUS_BOUNDS) ? centre : null);
             setMoving(false);
           }}
           lines={[]}
