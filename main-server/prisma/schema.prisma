@@ -293,7 +293,8 @@ model SubQuest {
   title      String?
   startsAt   DateTime?          @map("starts_at")
   endsAt     DateTime?          @map("ends_at")
-  // A Place from the list, or a point with the label the app showed for it.
+  // A Place from the list, a point with the label the app showed for it, or the label alone: words the User typed
+  // that name no Place.
   placeId    String?            @map("place_id") @db.Uuid
   place      Place?             @relation(fields: [placeId], references: [id])
   latitude   Float?

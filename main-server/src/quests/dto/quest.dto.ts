@@ -8,13 +8,13 @@ import {
   SubQuest,
 } from '../../generated/prisma/client.js';
 
-// A Place from the list, with its id, or a point with the label the app showed. The attending Sub Quest's is the
-// Global Event's position and place text.
+// A Place from the list, with its id, a point with the label the app showed, or the label alone without a position.
+// The attending Sub Quest's is the Global Event's position and place text.
 export interface SubQuestPlaceDto {
   placeId: string | null;
   label: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export interface SubQuestDto {
@@ -137,7 +137,7 @@ function contentOf(
   };
 }
 
-// The stored Place, or the stored point with its label, or null when there is neither.
+// The stored Place, or the stored label with its point if it has one, or null when there is neither.
 export function toPlaceDto({
   place,
   latitude,
@@ -147,9 +147,7 @@ export function toPlaceDto({
   if (place !== null) {
     return { placeId: place.id, label: place.name, latitude: place.latitude, longitude: place.longitude };
   }
-  return latitude === null || longitude === null || placeLabel === null
-    ? null
-    : { placeId: null, label: placeLabel, latitude, longitude };
+  return placeLabel === null ? null : { placeId: null, label: placeLabel, latitude, longitude };
 }
 
 // Ended for every Holder alike: cancelled, or its end time has passed by `now`.

@@ -119,6 +119,30 @@ describe('a public 파티', () => {
   });
 });
 
+describe('어디서, typed', () => {
+  const ENGINEERING = { id: 'p301', number: '301', name: '제1공학관', latitude: 37.45016, longitude: 126.95259 };
+
+  it.each([
+    ['301동', { placeId: 'p301' }],
+    ['제1공학관 (301동)', { placeId: 'p301' }],
+    ['서울대입구역', { label: '서울대입구역' }],
+  ])('posts %j as the Place it names, or as the words alone', async (words, place) => {
+    server.on('GET /places', { status: 200, body: [ENGINEERING] });
+    const user = await openForm();
+    await fillPublic(user);
+
+    await user.type(screen.getByLabelText('어디서'), words);
+    expect(screen.queryByText('지도에서 위치를 골라 주세요')).toBeNull();
+    expect(submit('파티 올리기')).toBeEnabled();
+    await user.press(submit('파티 올리기'));
+    await pass(500);
+
+    expect(server.received('POST /quests/own')[0]?.body).toMatchObject({
+      subQuest: { title: '보드게임 카페 가실 분', place },
+    });
+  });
+});
+
 describe('언제', () => {
   it('closes the keyboard before the time sheet opens', async () => {
     const sheetShownWhenDismissed: boolean[] = [];

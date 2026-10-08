@@ -151,7 +151,8 @@ export interface SubQuest {
   title: string;
   startsAt: string | null;
   endsAt: string | null;
-  place: { placeId: string | null; label: string; latitude: number; longitude: number } | null;
+  // Words alone, which name no Place, have no position.
+  place: { placeId: string | null; label: string; latitude: number | null; longitude: number | null } | null;
   completion: 'by_time' | 'by_hand';
   cancelled: boolean;
   done: boolean;

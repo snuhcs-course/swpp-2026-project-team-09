@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
 import { type ReactElement, useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
-import type { SubQuestContent, SubQuestPlace } from '@/api/room-types';
+import type { SubQuestContent } from '@/api/room-types';
 import type { SubQuest } from '@/api/types';
 import { Button, color, font, Icon, radius, space, TextField } from '@/design-system';
 import { type PickedPlace, waitForPlace } from '@/features/places/picked-place';
+import { usePlaceOf } from '@/features/places/typed-place';
 import { DateTimeSheet, whenWords } from '../date-time-sheet';
 
 interface PlanFormProps {
@@ -15,22 +16,10 @@ interface PlanFormProps {
   onSave: (content: SubQuestContent) => Promise<boolean>;
 }
 
-// A point picked on the map keeps its place while the words change, and is then sent as a point with those words. A
-// Place of the list is sent as itself while its words stay.
-export function placeOf(words: string, picked: PickedPlace | null): SubQuestPlace | undefined {
-  const label = words.trim();
-  if (label === '' || picked === null) {
-    return undefined;
-  }
-  if (picked.placeId !== null && label === picked.words) {
-    return { placeId: picked.placeId };
-  }
-  return { ...picked.position, label };
-}
-
+// The Sub Quest's place as if picked on the map. Words alone were typed, and are named again when sent.
 function pickedOf(subQuest: SubQuest | null): PickedPlace | null {
   const place = subQuest?.place ?? null;
-  return place === null
+  return place === null || place.latitude === null || place.longitude === null
     ? null
     : {
         placeId: place.placeId,
@@ -84,7 +73,8 @@ interface WhereFieldProps {
   onPicked: (place: PickedPlace | null) => void;
 }
 
-// `어디서`: words of the User's own, and the map view, whose choice fills them. Emptied words drop the choice.
+// `어디서`: words of the User's own, and the map view, whose choice fills them. Emptied words drop the choice. Words
+// without a choice are the Place they name, or else the words alone.
 export function WhereField({ words, picked, onWords, onPicked }: WhereFieldProps): ReactElement {
   return (
     <View style={styles.where}>
@@ -120,35 +110,35 @@ export function WhereField({ words, picked, onWords, onPicked }: WhereFieldProps
 }
 
 // The room's inline form for a Sub Quest, on a grey box: `내용`, `언제`, `어디서` with the map, `취소` and `추가` or
-// `수정`, which waits for the content and the time, and for a point while the place has words of its own.
+// `수정`, which waits for the content and the time.
 export function PlanForm({ editing, onCancel, onSave }: PlanFormProps): ReactElement {
   const [title, setTitle] = useState(editing?.title ?? '');
   const [startsAt, setStartsAt] = useState(editing?.startsAt ?? null);
   const [words, setWords] = useState(editing?.place?.label ?? '');
   const [picked, setPicked] = useState(() => pickedOf(editing));
   const [saving, setSaving] = useState(false);
-  const unplaced = words.trim() !== '' && picked === null;
+  const placeOf = usePlaceOf();
   const save = (): void => {
     if (startsAt === null) {
       return;
     }
-    const place = placeOf(words, picked);
     setSaving(true);
-    void onSave({ title: title.trim(), startsAt, ...(place === undefined ? {} : { place }) }).finally(() => {
-      setSaving(false);
-    });
+    void placeOf(words, picked)
+      .then((place) => onSave({ title: title.trim(), startsAt, ...(place === undefined ? {} : { place }) }))
+      .finally(() => {
+        setSaving(false);
+      });
   };
   return (
     <View style={styles.form}>
       <TextField label="내용" maxLength={30} onChangeText={setTitle} placeholder="301동 앞에서 만나기" value={title} />
       <WhenField onPick={setStartsAt} startsAt={startsAt} />
       <WhereField onPicked={setPicked} onWords={setWords} picked={picked} words={words} />
-      {unplaced ? <Text style={styles.hint}>지도에서 위치를 골라 주세요</Text> : null}
       <View style={styles.buttons}>
         <Button onPress={onCancel} variant="secondary">
           취소
         </Button>
-        <Button disabled={title.trim() === '' || startsAt === null || unplaced || saving} onPress={save}>
+        <Button disabled={title.trim() === '' || startsAt === null || saving} onPress={save}>
           {editing === null ? '추가' : '수정'}
         </Button>
       </View>
@@ -195,6 +185,5 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
   },
   mapPicked: { borderWidth: 2, borderColor: color.snuBlue, backgroundColor: color.blue50 },
-  hint: { fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.danger },
   buttons: { flexDirection: 'row', justifyContent: 'flex-end', gap: space[2] },
 });

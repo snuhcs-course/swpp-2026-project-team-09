@@ -14,11 +14,19 @@ A Sub Quest's place becomes one of three: a Place, a point with its words, or wo
 
 ## Acceptance criteria
 
-- [ ] The main server creates and edits a Sub Quest whose place is words alone, and answers its place with the words and no position.
-- [ ] The migration relaxes the place check only as far as words without a point; a Place with a point, or a point without words, is still refused.
-- [ ] `지도에서 위치를 골라 주세요` is gone from both forms, and saving with typed words is allowed.
-- [ ] Typed `301동`, `301`, `제1공학관` and `제1공학관 (301동)` save the Place 제1공학관 (301동); typed `서울대입구역` saves the words alone.
-- [ ] A Sub Quest with words alone shows its words, has no marker on the main screen's map and offers no route.
-- [ ] Picking on the map and then keeping or changing the words behaves as today.
-- [ ] A Sub Quest's typed place can be edited later.
-- [ ] Server end-to-end tests and screen tests cover the above; `room-plan-test`, which asserted that typed words are refused, changes with it and the PR names it.
+- [x] The main server creates and edits a Sub Quest whose place is words alone, and answers its place with the words and no position.
+- [x] The migration relaxes the place check only as far as words without a point; a Place with a point, or a point without words, is still refused.
+- [x] `지도에서 위치를 골라 주세요` is gone from both forms, and saving with typed words is allowed.
+- [x] Typed `301동`, `301`, `제1공학관` and `제1공학관 (301동)` save the Place 제1공학관 (301동); typed `서울대입구역` saves the words alone.
+- [x] A Sub Quest with words alone shows its words, has no marker on the main screen's map and offers no route.
+- [x] Picking on the map and then keeping or changing the words behaves as today.
+- [x] A Sub Quest's typed place can be edited later.
+- [x] Server end-to-end tests and screen tests cover the above; `room-plan-test`, which asserted that typed words are refused, changes with it and the PR names it.
+
+## Comments
+
+- Server: migration `20261009120000_allow_sub_quest_place_words` replaces `sub_quests_place_check`. Latitude and longitude must still come together, a point still needs words, and a Place still stands alone. The only new case is words without a point. A Sub Quest's request body adds `{ label }` to its place union. Meetups keep their own `placeSchema` and check, so a Meetup still refuses words alone. In the answer, `latitude`/`longitude` of a place may now be `null`, which happens only for words alone. `toPlaceDto` is shared with Meetups, so a Meetup's answer type is wider too, though its data never holds a null.
+- App: `mobile/src/features/places/typed-place.ts` decides the Place for typed words. It compares the words with spaces removed against the Place's name, its number, its number with `동`, `name number동` and `name (number동)`, and the match must be exactly one Place. The Places list (`placesQuery`, kept for good) is fetched when the form saves. If the fetch fails, the words are sent alone. Both forms use `usePlaceOf`. A point picked on the map is handled as before, and a Place picked with its words kept is still sent as the Place.
+- `SubQuest.place.latitude/longitude` are now `number | null` in the app's types and the server answer guard. `positionOf` gives no position for words alone, so the main screen draws no marker or route for them. A Meetup proposal's body is now typed as `ChosenPlace`, which leaves out words alone. The mock API mirrors the server: the room's add/edit and `makeQuest` keep the place they are sent, words alone included.
+- Tests: `sub-quests.e2e-spec` adds words alone on add and edit, plus the database check. New `room-typed-place-test` covers the room form: Place names, words alone, ambiguous names, editing a typed place, and keeping a picked point when its words change. `party-form-test` adds typed `어디서`, and `main-route-test` adds a Quest with words alone (no marker, no route, words in the list).
+- Changed existing test: `room-plan-test` loses "the Leader's 일정 form, waiting › waits for a point while the place has words of its own", which asserted the refusal this ticket removes. No other existing test was changed.

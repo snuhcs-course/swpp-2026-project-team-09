@@ -90,6 +90,17 @@ describe('Adding a Sub Quest', () => {
     });
     expect(titleOnly.body).toMatchObject({ title: '저녁', place: null, completion: 'by_hand' });
   });
+
+  it('keeps words alone, without a position', async () => {
+    const { user, questId } = await attendingUser();
+
+    const response = await addSubQuest(app, user, questId, { title: '저녁', place: { label: '서울대입구역' } });
+
+    const place = { placeId: null, label: '서울대입구역', latitude: null, longitude: null };
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ title: '저녁', place });
+    expect((await getQuest(app, user, questId)).body).toMatchObject({ subQuests: [{}, { place }] });
+  });
 });
 
 describe('Adding a Sub Quest with an Idempotency-Key', () => {
@@ -191,6 +202,41 @@ describe('Editing a Sub Quest', () => {
 
     expect(elsewhere.body).toMatchObject(refused(404, 'SUB_QUEST_NOT_FOUND'));
     expect(stranger.body).toMatchObject(refused(404, 'QUEST_NOT_FOUND'));
+  });
+
+  it('replaces a point with words alone, and words alone with a Place', async () => {
+    const { user, questId } = await attendingUser();
+    const subQuestId = await subQuestIn(app, user, questId, cafe);
+    const placeId = await engineering1Id();
+
+    const toWords = await editSubQuest(app, user, { questId, subQuestId }, { title: '저녁', place: { label: '홍대' } });
+    const toPlace = await editSubQuest(app, user, { questId, subQuestId }, { title: '저녁', place: { placeId } });
+
+    expect(toWords.body).toMatchObject({ place: { placeId: null, label: '홍대', latitude: null, longitude: null } });
+    expect(toPlace.body).toMatchObject({ place: { placeId, label: '제1공학관', ...engineering1 } });
+  });
+});
+
+// Stores a Sub Quest with the place columns given, and the Place 제1공학관 when `withPlace`.
+async function storeSubQuest(columns: object, withPlace = false): Promise<unknown> {
+  const user = await signInUser(app);
+  const questId = await ownQuest(app, user);
+  const placeId = withPlace ? await engineering1Id() : null;
+  return prisma.subQuest.create({ data: { questId, title: '저녁', placeId, ...columns } });
+}
+
+describe("The database's check on a Sub Quest's place", () => {
+  it('keeps words without a point', async () => {
+    await expect(storeSubQuest({ placeLabel: '서울대입구역' })).resolves.toMatchObject({ latitude: null });
+  });
+
+  it.each([
+    ['a Place with a point', { ...engineering1, placeLabel: '공대' }, true],
+    ['a Place with words', { placeLabel: '공대' }, true],
+    ['a point without words', engineering1, false],
+    ['a latitude without a longitude', { latitude: 37.45, placeLabel: '공대' }, false],
+  ])('refuses %s', async (_problem, columns, withPlace) => {
+    await expect(storeSubQuest(columns, withPlace)).rejects.toThrow('sub_quests_place_check');
   });
 });
 
