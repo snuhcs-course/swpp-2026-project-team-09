@@ -34,7 +34,10 @@ import type {
 // interface gained after the module was written is kept here, in TypeScript, with those sums:
 // - the fit zoom (`onFitZoom`), which the module does not send, from the view's size;
 // - a fit with a padding for each edge and a closest zoom, which the module's `fitTo` cannot take;
-// - a passive marker's press, which the module sends and this file drops.
+// - a passive marker's press, which the module sends and this file drops;
+// - the rectangle the lowest zoom fits (`fitBounds`), which the module does not take: once the view's size is known,
+//   the module is handed the fit zoom as its `minZoom`, so that its own rule, the view inside `bounds` and no lower
+//   than `minZoom`, comes to the interface's.
 // A line's dashes are the module's to draw: it draws a solid line in the colour and the width it is given.
 // `inset` is handed over with all four sides; the module places Kakao's logo 8 from the bottom right of what it leaves.
 
@@ -85,6 +88,8 @@ interface NativeMapView {
 interface NativeMapProps {
   bounds: MapBounds;
   minZoom: number;
+  // The SDK's lowest level, which it holds a pinch to. Null, the SDK's own.
+  minLevel: number | null;
   maxZoom: number;
   markers: NativeThing[];
   avatars: NativeThing[];
@@ -213,13 +218,13 @@ function useHandle(
 // nothing here runs in Expo Go or on the web, and it is the only file that names the native view. The iOS side
 // (ticket 11) implements the same view.
 export default function NativeMap(props: MapProps): ReactElement {
-  const { bounds, minZoom, maxZoom, markers, avatars, lines, onPress, ref } = props;
+  const { bounds, fitBounds, minZoom, maxZoom, nativeMinLevel, markers, avatars, lines, onPress, ref } = props;
   const view = useRef<NativeMapView>(null);
   const gliding = useMotionAllowed();
   const [size, setSize] = useState<Size | null>(null);
   const rules = useMemo(
-    () => (size === null ? null : { bounds, minZoom, maxZoom, size }),
-    [bounds, minZoom, maxZoom, size],
+    () => (size === null ? null : { bounds, fitBounds, minZoom, maxZoom, size }),
+    [bounds, fitBounds, minZoom, maxZoom, size],
   );
   const report = useReports(rules, props);
   useHandle(ref, view, rules);
@@ -244,7 +249,8 @@ export default function NativeMap(props: MapProps): ReactElement {
         looks={LOOKS}
         markers={markers.map((marker) => thing(marker, 0))}
         maxZoom={maxZoom}
-        minZoom={minZoom}
+        minLevel={nativeMinLevel ?? null}
+        minZoom={rules === null ? minZoom : lowestZoom(rules)}
         onCameraIdle={({ nativeEvent: { latitude, longitude, zoom } }) => {
           report({ centre: { latitude, longitude }, zoom });
         }}

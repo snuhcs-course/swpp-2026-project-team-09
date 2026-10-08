@@ -5,6 +5,7 @@ import type { LatLng } from '@/api/types';
 import { Button, color, space, text } from '@/design-system';
 import {
   CAMPUS_BOUNDS,
+  CAMPUS_CAMERA,
   centreOf,
   Map,
   type MapAvatar,
@@ -13,7 +14,6 @@ import {
   type MapLine,
   type MapMarker,
   type MarkerLook,
-  MAX_ZOOM,
   MIN_ZOOM,
   useMarkerImages,
 } from '@/map';
@@ -137,12 +137,10 @@ export function MapCheckScreen(): ReactElement {
     <SafeAreaView style={styles.screen}>
       <Map
         avatars={avatars}
-        bounds={CAMPUS_BOUNDS}
+        {...CAMPUS_CAMERA}
         key={opening}
         lines={lines}
         markers={markers}
-        maxZoom={MAX_ZOOM}
-        minZoom={MIN_ZOOM}
         onCameraIdle={setCamera}
         onPress={setPressed}
         ref={map}

@@ -132,10 +132,10 @@ export interface MapLine {
 }
 
 // The camera's rules, for every implementation:
-// - The camera stays inside `bounds`: the visible area never leaves the rectangle. So the lowest zoom allowed is the
-//   larger of `minZoom` and the zoom at which the view just fits inside `bounds`, which depends on the view's size,
-//   and the centre is kept far enough from the rectangle's edges for the view's edges to stay inside. The highest
-//   zoom is `maxZoom`. The rectangle wins where the two disagree.
+// - The camera stays inside `bounds`: the visible area never leaves the rectangle. The lowest zoom allowed is the
+//   larger of `minZoom` and the zoom at which the view just fits inside `fitBounds` (`bounds` when left out), which
+//   depends on the view's size, and the centre is kept far enough from the edges of `bounds` for the view's edges to
+//   stay inside. The highest zoom is `maxZoom`. The rectangle wins where the two disagree.
 // - The map opens on the middle of `bounds` at the lowest zoom allowed.
 // - Whatever is asked is first brought inside these rules.
 // - `onCameraIdle` is sent once when the map is ready, and each time the camera comes to rest somewhere else: after
@@ -155,7 +155,12 @@ export interface MapHandle {
 export interface MapProps {
   // The rectangle the camera stays in.
   bounds: MapBounds;
+  // The rectangle the lowest zoom fits the view inside, by the camera's rules above. Left out, `bounds`.
+  fitBounds?: MapBounds;
   minZoom: number;
+  // The lowest level of a native map's SDK, which takes whole levels only: pinching out stops there. The plain map
+  // has no levels and keeps to the camera's rules alone. Left out, the SDK's own.
+  nativeMinLevel?: number;
   maxZoom: number;
   markers: readonly MapMarker[];
   avatars: readonly MapAvatar[];
