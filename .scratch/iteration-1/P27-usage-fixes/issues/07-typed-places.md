@@ -1,7 +1,7 @@
 # 07: Typed places for Sub Quests
 
 Parent: [P27 spec](../spec.md)
-Status: ready-for-agent
+Status: resolved
 Blocked by: 04 (Titles of Quests for a Global Event) and 05 (Close the keyboard before the time sheet), as all three change 파티 만들기 and 05 changes the room's Sub Quest form
 
 ## What to build
