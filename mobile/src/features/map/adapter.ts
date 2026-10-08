@@ -4,7 +4,8 @@ import { eventTime, recruitingCounts } from '@/features/events/adapter';
 import { type FriendView, keptPositions, minutesOld } from '@/features/friends/adapter';
 import { otherHolders, partyOf, positionOf, type QuestParty, shownSubQuest } from '@/features/quests/adapter';
 import { koreaClock, koreaDay } from '@/korea-time';
-import { givenName, shortTitle } from './short-name';
+import { atPlaces, eventPlaceId } from './event-places';
+import { givenName, shortTitle, withParticle } from './short-name';
 
 // The icons a card's lines use, by their names in the design system.
 export type CardIcon = 'clock' | 'pin' | 'users' | 'info' | 'route' | 'meal';
@@ -24,11 +25,11 @@ export type CardMark =
 export interface CardMarker {
   // What a screen reader says for it: "김민준 · 공강 · 중앙도서관 근처 · 15:00까지 비어 있어요", "공식 행사 · AI 커리어 설명회".
   name: string;
-  // Under the marker from the "names" level of detail on: a person's given name, "민준"; a place's title cut at a
-  // word's end within 8 characters, "AI 커리어".
+  // Under a person's Avatar from the "names" level of detail on: the given name, "민준". A place's title cut at a
+  // word's end within 8 characters, "AI 커리어", which the map does not draw: no words stand under a place.
   short: string;
-  // On a place's pin: a Party's members; the Quests that gather for a Global Event, when they are more than one. 0
-  // for none, and for a person.
+  // On a place's pin: a Party's members; the Quests that gather for a Global Event, when they are more than one; the
+  // Global Events at one place. 0 for none, and for a person.
   count: number;
   // For a person whose position is old: how many minutes ago it was measured. The marker is dimmed and its short
   // name says so. Null otherwise.
@@ -40,9 +41,10 @@ export interface CardView {
   id: string;
   // `shared-quest` is a Quest of the User's that no Party names, such as a dinner with a Friend. `dining` is the
   // Place of restaurants with menus today, `shuttle-stop` and `shuttle-vehicle` the shuttle's, while their layer is
-  // on.
+  // on. `event-place` is the place of two or more Global Events, which its card lists.
   kind:
     | 'global-event'
+    | 'event-place'
     | 'party'
     | 'shared-quest'
     | 'friend'
@@ -72,11 +74,17 @@ export interface CardView {
   // For a thing that glides on the map other than a person, how long its glide to a new position takes. A person's
   // Avatar glides as the positions come.
   glideMs?: number;
+  // For a Global Event at a place with others: the id of the place's card, whose marker stands for the event. The
+  // event has no marker of its own, and its card opens from the place's.
+  within?: string;
+  // For the place of Global Events: the events, each with its card's id, its title and its time.
+  choices?: { id: string; title: string; detail: string }[];
 }
 
 // A card's id from the id of what it shows, for a part of a screen that holds the thing and not its card.
 export const cardId = {
   globalEvent: (eventId: string): string => `event:${eventId}`,
+  eventPlace: eventPlaceId,
   quest: (questId: string): string => `party:${questId}`,
   friend: (userId: string): string => `friend:${userId}`,
   partyMember: (userId: string): string => `party-member:${userId}`,
@@ -104,9 +112,10 @@ export interface MapSources {
   now: Date;
 }
 
-function globalEventCards({ globalEvents, globalEventAnnouncers, recruiting: gathering, now }: MapSources): CardView[] {
+// The Global Events' cards, before those at one position are one place (`event-places.ts`).
+function eventCards({ globalEvents, globalEventAnnouncers, recruiting: gathering, now }: MapSources): CardView[] {
   const counts = recruitingCounts(gathering);
-  return globalEvents.map((event) => {
+  return globalEvents.map((event): CardView => {
     const announcer = globalEventAnnouncers.find(({ eventId }) => eventId === event.id)?.announcer;
     const recruiting = counts.get(event.id) ?? 0;
     return {
@@ -131,17 +140,6 @@ function globalEventCards({ globalEvents, globalEventAnnouncers, recruiting: gat
       position: { latitude: event.latitude, longitude: event.longitude },
     };
   });
-}
-
-const HANGUL_FIRST = 0xac00;
-const HANGUL_LAST = 0xd7a3;
-const FINALS = 28;
-
-// "김민준과", "최유나와": the particle follows the last syllable's final consonant.
-function withParticle(words: string): string {
-  const last = words.codePointAt(words.length - 1) ?? 0;
-  const open = last >= HANGUL_FIRST && last <= HANGUL_LAST && (last - HANGUL_FIRST) % FINALS === 0;
-  return `${words}${open ? '와' : '과'}`;
 }
 
 // A Party that others may join: its members and how to join, in the Quest's room.
@@ -294,5 +292,9 @@ function partyMemberCards(sources: MapSources): CardView[] {
 
 // One card for each thing on the map that a press opens.
 export function toCards(sources: MapSources): CardView[] {
-  return [...globalEventCards(sources), ...questCards(sources), ...friendCards(sources), ...partyMemberCards(sources)];
+  const events = atPlaces(
+    eventCards(sources),
+    sources.globalEvents.map(({ place }) => place),
+  );
+  return [...events, ...questCards(sources), ...friendCards(sources), ...partyMemberCards(sources)];
 }
