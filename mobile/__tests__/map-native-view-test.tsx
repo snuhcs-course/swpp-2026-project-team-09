@@ -3,12 +3,23 @@ import { createRef, type ReactElement, type Ref, useImperativeHandle } from 'rea
 import { View } from 'react-native';
 
 import type { LatLng } from '@/api/types';
-import { CAMPUS_BOUNDS, type MapCamera, type MapHandle, type MapProps, ZOOM_OFFSET } from '@/map';
+import {
+  CAMERA_BOUNDS,
+  CAMPUS_BOUNDS,
+  type MapCamera,
+  type MapHandle,
+  type MapProps,
+  MIN_ZOOM,
+  ZOOM_OFFSET,
+} from '@/map';
 import NativeMap from '@/map/native-map';
 import { EMPTY, EVENT, FRIEND, GATE, LIBRARY } from './support/map';
 
 // What `native-map.tsx` hands the module's view, as far as these tests read it.
 interface MockViewProps {
+  bounds: { south: number; west: number; north: number; east: number };
+  minZoom: number;
+  minLevel: number | null;
   avatars: { id: string; passive: boolean }[];
   lines: { id: string; points: LatLng[]; color: string; width: number }[];
   inset: { top: number; right: number; bottom: number; left: number };
@@ -179,6 +190,27 @@ describe('what the native map hands the module', () => {
       { id: 'shuttle', points: [GATE, LIBRARY, GATE], color: '#6B46C1', width: 3 },
       { id: 'walking-route', points: [LIBRARY, GATE], color: '#865600', width: 3 },
     ]);
+  });
+});
+
+describe("the native map's camera area and lowest zoom", () => {
+  it('hands the module the area, the lowest level, and the fit zoom of the campus as its lowest zoom', async () => {
+    const map = await show();
+    expect(mockProps?.bounds).toEqual(CAMERA_BOUNDS);
+    expect(mockProps?.minLevel).toBe(15);
+    // Until the view's size is known, the floor the screen gave.
+    expect(mockProps?.minZoom).toBe(MIN_ZOOM);
+
+    await map.layOut(390, 700);
+
+    // Not the lower zoom at which the view would fit inside the wider area.
+    expect(map.onFitZoom.mock.lastCall?.[0]).toBeCloseTo(WHOLE_CAMPUS, 3);
+    expect(mockProps?.minZoom).toBeCloseTo(WHOLE_CAMPUS, 3);
+  });
+
+  it('hands the module no lowest level when the screen gives none', async () => {
+    await show({ nativeMinLevel: undefined });
+    expect(mockProps?.minLevel).toBeNull();
   });
 });
 

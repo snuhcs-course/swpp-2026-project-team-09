@@ -44,6 +44,9 @@ public class SnuNowMapModule: Module {
       Prop("maxZoom") { (view: SnuNowMapView, zoom: Double) in
         view.maxZoom = zoom
       }
+      Prop("minLevel") { (view: SnuNowMapView, level: Int?) in
+        view.minLevel = level
+      }
       Prop("markers") { (view: SnuNowMapView, markers: [[String: Any]]) in
         view.markers = markers.map(ThingRecord.init)
       }

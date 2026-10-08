@@ -51,6 +51,8 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
   var bounds = Bounds(0.0, 0.0, 0.0, 0.0)
   var minZoom = 0.0
   var maxZoom = 0.0
+  // The SDK's lowest level, which it holds a pinch to; null, the SDK's own.
+  var minLevel: Int? = null
   var markers: List<ThingRecord> = emptyList()
   var avatars: List<ThingRecord> = emptyList()
   var lines: List<LineRecord> = emptyList()
@@ -97,10 +99,17 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
       start()
       return
     }
+    holdLevel()
     placeLogo()
     showThings()
     showLines()
     rest()
+  }
+
+  // Pinching out stops at the lowest level instead of going below the lowest zoom and being brought back.
+  private fun holdLevel() {
+    val kakaoMap = map ?: return
+    kakaoMap.setCameraMinLevel(minLevel ?: kakaoMap.minZoomLevel)
   }
 
   fun resume() {
@@ -206,6 +215,7 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
     // The interface's camera looks straight down, north up.
     kakaoMap.setGestureEnable(GestureType.Rotate, false)
     kakaoMap.setGestureEnable(GestureType.Tilt, false)
+    holdLevel()
     logoAt = null
     placeLogo()
     val labels = kakaoMap.labelManager ?: return
