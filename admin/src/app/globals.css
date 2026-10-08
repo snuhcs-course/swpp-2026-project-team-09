@@ -1,24 +1,64 @@
 @import 'tailwindcss';
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* One neutral palette (zinc) and one accent. Change the accent here. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-accent: var(--color-indigo-600);
+  --color-accent-strong: var(--color-indigo-700);
+  --color-accent-soft: var(--color-indigo-50);
+  --font-sans:
+    Pretendard, -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI',
+    sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  body {
+    @apply bg-zinc-50 font-sans text-zinc-900;
+  }
+
+  h1 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+
+  h2 {
+    @apply text-lg font-semibold;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Shared looks for every page's controls and tables. */
+@layer components {
+  .button {
+    @apply inline-flex items-center justify-center rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50;
+  }
+
+  .button-primary {
+    @apply border-accent bg-accent text-white hover:bg-accent-strong;
+  }
+
+  .button-danger {
+    @apply border-red-200 text-red-700 hover:bg-red-50;
+  }
+
+  .input {
+    @apply rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-accent focus:outline-2 focus:outline-accent/30;
+  }
+
+  .data-table {
+    @apply w-full border-collapse text-left text-sm;
+
+    & th {
+      @apply border-b border-zinc-200 bg-zinc-50 px-4 py-2 text-xs font-medium tracking-wide text-zinc-500 uppercase;
+    }
+
+    & td {
+      @apply border-b border-zinc-100 px-4 py-3;
+    }
+
+    & tr:last-child td {
+      @apply border-b-0;
+    }
+  }
+
+  .card {
+    @apply overflow-hidden rounded-lg border border-zinc-200 bg-white;
+  }
 }
