@@ -51,7 +51,7 @@ export class SubQuestsService {
   // The mark is the Holder's own, so no other Holder is told.
   async markDone(userId: string, questId: string, subQuestId: string): Promise<void> {
     await this.quests.inQuest(userId, questId, async (tx, holder) => {
-      await this.ofQuest(questId, subQuestId, tx);
+      await this.findInQuestOrThrow(questId, subQuestId, tx);
       await tx.subQuestProgress.createMany({ data: { subQuestId, holderId: holder.id }, skipDuplicates: true });
     });
   }
@@ -59,12 +59,17 @@ export class SubQuestsService {
   // Removes the Holder's own mark, if there is one; no other Holder is told.
   async unmarkDone(userId: string, questId: string, subQuestId: string): Promise<void> {
     await this.quests.inQuest(userId, questId, async (tx, holder) => {
-      await this.ofQuest(questId, subQuestId, tx);
+      await this.findInQuestOrThrow(questId, subQuestId, tx);
       await tx.subQuestProgress.deleteMany({ where: { subQuestId, holderId: holder.id } });
     });
   }
 
-  private async ofQuest(questId: string, subQuestId: string, tx: Prisma.TransactionClient): Promise<SubQuest> {
+  // The Sub Quest of the Quest, or `SUB_QUEST_NOT_FOUND` when the Quest has no Sub Quest with that id.
+  private async findInQuestOrThrow(
+    questId: string,
+    subQuestId: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<SubQuest> {
     const subQuest = await tx.subQuest.findFirst({ where: { id: subQuestId, questId } });
     if (subQuest === null) {
       throw subQuestNotFound();
@@ -74,7 +79,7 @@ export class SubQuestsService {
 
   // A Sub Quest of the Quest that a Holder added, which a Holder may edit or cancel.
   private async added(questId: string, subQuestId: string, tx: Prisma.TransactionClient): Promise<SubQuest> {
-    const subQuest = await this.ofQuest(questId, subQuestId, tx);
+    const subQuest = await this.findInQuestOrThrow(questId, subQuestId, tx);
     if (subQuest.attending) {
       throw conflict(
         'ATTENDING_SUB_QUEST',

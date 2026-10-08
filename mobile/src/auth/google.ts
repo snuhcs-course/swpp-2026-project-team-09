@@ -10,7 +10,7 @@ export type GoogleAnswer = { kind: 'token'; idToken: string } | { kind: 'cancell
 
 // How Google is asked for the account: the quick sheet of the accounts on the phone, or Google's own chooser, which
 // can also add an account that is not on the phone yet.
-export type GoogleWay = 'phone-accounts' | 'chooser';
+export type GoogleAccountPrompt = 'phone-accounts' | 'chooser';
 
 // The main server's client, of type "Web application". Google issues the ID token for it.
 function webClientId(): string {
@@ -62,7 +62,7 @@ function google(): typeof GoogleOneTapSignIn {
 // Opens Google's account sheet, or its chooser when asked that way, and gives the chosen account's ID token. A User
 // who closes either is not a failure. Anything else throws: no Google Play services, a client that Google does not
 // know, no network.
-export async function askGoogle(way: GoogleWay = 'phone-accounts'): Promise<GoogleAnswer> {
+export async function askGoogle(way: GoogleAccountPrompt = 'phone-accounts'): Promise<GoogleAnswer> {
   const signIn = google();
   await signIn.checkPlayServices();
   // `createAccount` is the sheet with every Google account on the phone. A phone with no Google account has nothing

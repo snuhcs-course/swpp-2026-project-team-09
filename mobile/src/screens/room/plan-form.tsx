@@ -5,7 +5,8 @@ import type { SubQuestContent } from '@/api/room-types';
 import type { SubQuest } from '@/api/types';
 import { Button, color, font, Icon, radius, space, TextField } from '@/design-system';
 import { type PickedPlace, waitForPlace } from '@/features/places/picked-place';
-import { usePlaceOf } from '@/features/places/typed-place';
+import { usePlaceToSend } from '@/features/places/typed-place';
+import { pointOf } from '@/features/quests/adapter';
 import { DateTimeSheet, whenWords } from '../date-time-sheet';
 
 interface PlanFormProps {
@@ -19,13 +20,8 @@ interface PlanFormProps {
 // The Sub Quest's place as if picked on the map. Words alone were typed, and are named again when sent.
 function pickedOf(subQuest: SubQuest | null): PickedPlace | null {
   const place = subQuest?.place ?? null;
-  return place === null || place.latitude === null || place.longitude === null
-    ? null
-    : {
-        placeId: place.placeId,
-        position: { latitude: place.latitude, longitude: place.longitude },
-        words: place.label,
-      };
+  const position = pointOf(place);
+  return place === null || position === null ? null : { placeId: place.placeId, position, words: place.label };
 }
 
 // `언제`: a button with the time chosen, which closes the keyboard and opens the date·time sheet.
@@ -117,13 +113,13 @@ export function PlanForm({ editing, onCancel, onSave }: PlanFormProps): ReactEle
   const [words, setWords] = useState(editing?.place?.label ?? '');
   const [picked, setPicked] = useState(() => pickedOf(editing));
   const [saving, setSaving] = useState(false);
-  const placeOf = usePlaceOf();
+  const placeToSend = usePlaceToSend();
   const save = (): void => {
     if (startsAt === null) {
       return;
     }
     setSaving(true);
-    void placeOf(words, picked)
+    void placeToSend(words, picked)
       .then((place) => onSave({ title: title.trim(), startsAt, ...(place === undefined ? {} : { place }) }))
       .finally(() => {
         setSaving(false);

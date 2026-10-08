@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import type { GoogleWay } from '@/auth/google';
+import type { GoogleAccountPrompt } from '@/auth/google';
 import { signIn } from '@/auth/sign-in';
 import { useSession } from '@/session/session';
 import { readKept } from '@/storage/kept';
@@ -7,7 +7,7 @@ import { readKept } from '@/storage/kept';
 // What the sign-in screen shows: its default state, the check of the account, or why the sign-in was refused.
 export type SignInPhase = 'default' | 'checking' | 'not-snu-account' | 'failed';
 
-async function ending(way: GoogleWay): Promise<Awaited<ReturnType<typeof signIn>>> {
+async function ending(way: GoogleAccountPrompt): Promise<Awaited<ReturnType<typeof signIn>>> {
   try {
     return await signIn(way);
   } catch {
@@ -17,12 +17,12 @@ async function ending(way: GoogleWay): Promise<Awaited<ReturnType<typeof signIn>
 
 // One sign-in at a time, whichever way Google is asked. A sign-in that succeeds tells the Session, and the flow leads
 // the User on; until then the screen keeps showing the check.
-export function useSignIn(): { phase: SignInPhase; start: (way: GoogleWay) => void } {
+export function useSignIn(): { phase: SignInPhase; start: (way: GoogleAccountPrompt) => void } {
   const { enter } = useSession();
   const [phase, setPhase] = useState<SignInPhase>('default');
   const checking = useRef(false);
   const start = useCallback(
-    (way: GoogleWay) => {
+    (way: GoogleAccountPrompt) => {
       if (checking.current) {
         return;
       }

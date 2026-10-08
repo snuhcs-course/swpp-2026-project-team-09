@@ -6,7 +6,7 @@ import { friendsQuery, globalEventAnnouncersQuery, globalEventsQuery, questQuery
 import type { Friend, Quest } from '@/api/types';
 import { Button, ErrorState, FullScreenPanel, LoadingState, space, TextField, useToastAbove } from '@/design-system';
 import type { PickedPlace } from '@/features/places/picked-place';
-import { usePlaceOf } from '@/features/places/typed-place';
+import { usePlaceToSend } from '@/features/places/typed-place';
 import {
   emptyForm,
   type FormEvent,
@@ -106,7 +106,7 @@ function useFormState(quest: Quest | null, eventId: string | null): FormState {
   const [words, setWords] = useState('');
   const [picked, setPicked] = useState<PickedPlace | null>(null);
   const [saving, setSaving] = useState(false);
-  const placeOf = usePlaceOf();
+  const placeToSend = usePlaceToSend();
   const pickEvent = useEventPick(setForm, setWords, setPicked, editing ? null : eventId);
   const most = invitable(form, Math.max(holders.length, 1));
   const shownChosen = chosen.slice(0, most);
@@ -126,7 +126,7 @@ function useFormState(quest: Quest | null, eventId: string | null): FormState {
     ready: isReady(form, shownChosen.length, editing) && !saving,
     submit: () => {
       setSaving(true);
-      void placeOf(words, picked)
+      void placeToSend(words, picked)
         .then((place) => send({ ...form, place }, shownChosen))
         .then((sent) => {
           setSaving(false);
