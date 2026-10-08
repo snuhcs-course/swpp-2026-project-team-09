@@ -1,7 +1,7 @@
 # 03: A wider camera area, and pinching out that stops
 
 Parent: [P27 spec](../spec.md)
-Status: ready-for-agent
+Status: resolved
 Blocked by: 02 (Place markers without words), as both change the main screen's map
 
 ## What to build
