@@ -2,8 +2,8 @@ import type { LatLng } from '@/api/types';
 import type { MapBounds, MapProps } from './types';
 
 // The on-campus rectangle: a little wider than the Campus Boundary, which stays the main server's. A position outside
-// it is off campus for the app: the User's own Avatar is not shown there, and 장소 선택 does not open on it. The
-// lowest zoom is the one at which the view fits inside it.
+// it is off campus for the app: the User's own Avatar is not shown there, and 장소 선택 does not open on it nor pick
+// it. The lowest zoom is the one at which the view fits inside it.
 export const CAMPUS_BOUNDS: MapBounds = { south: 37.445, west: 126.945, north: 37.471, east: 126.963 };
 
 // The rectangle widened by half its height to the north and to the south and by half its width to the east and to
@@ -13,7 +13,7 @@ function widened({ south, west, north, east }: MapBounds): MapBounds {
   return { south: south - height / 2, west: west - width / 2, north: north + height / 2, east: east + width / 2 };
 }
 
-// The area the camera may move over: about half a campus past each edge of the on-campus rectangle (P27-03).
+// The area the camera may move over: about half a campus past each edge of the on-campus rectangle (ticket 03).
 export const CAMERA_BOUNDS: MapBounds = widened(CAMPUS_BOUNDS);
 
 // Web Mercator zoom levels, settled on Kakao's map (ticket 07). The lowest zoom in use is the one at which the view

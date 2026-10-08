@@ -153,8 +153,8 @@ export interface ApiClient {
   listMyJoinRequests: () => Promise<MyJoinRequest[]>;
   withdrawJoinRequest: (requestId: string) => Promise<void>;
   makeQuest: (making: QuestMaking, idempotencyKey: string) => Promise<Quest>;
-  // The User's Quest for the Global Event, Closed, made the first time with the title given or else the event's. A Quest
-  // the User already holds for it keeps its title.
+  // The User's Quest for the Global Event, Closed, made the first time with the title given or else the event's. A
+  // Quest the User already holds for it keeps its title.
   attendGlobalEvent: (globalEventId: string, title?: string) => Promise<Quest>;
   changeQuest: (questId: string, change: QuestChange) => Promise<Quest>;
   inviteToQuest: (questId: string, userId: string) => Promise<void>;

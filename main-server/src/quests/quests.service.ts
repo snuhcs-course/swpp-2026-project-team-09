@@ -78,8 +78,8 @@ export class QuestsService {
     return this.read(userId, questId);
   }
 
-  // The stored Quests, then today's Class Quests. Leaves out the Quests whose Sub Quests are all cancelled or past their
-  // end; a mark of done does not count.
+  // The stored Quests, then today's Class Quests. Leaves out the Quests whose Sub Quests are all cancelled or past
+  // their end; a mark of done does not count.
   async list(userId: string): Promise<QuestDto[]> {
     const quests = await this.prisma.quest.findMany({
       where: { holders: { some: { userId } } },
@@ -131,9 +131,9 @@ export class QuestsService {
   }
 
   // A Quest for the Global Event, with the Holders and the Sub Quest for attending it, titled as the event unless a
-  // title is given. The title is the Quest's own and does not follow later changes to the event's. Each Holder must hold
-  // no Quest for it yet, or the unique index on the Holders refuses it. The Holders enter in the order given. A match's
-  // Quest names the match, once.
+  // title is given. The title is the Quest's own and does not follow later changes to the event's. Each Holder must
+  // hold no Quest for it yet, or the unique index on the Holders refuses it. The Holders enter in the order given. A
+  // match's Quest names the match, once.
   createForGlobalEvent(
     globalEvent: Pick<GlobalEvent, 'id' | 'title'>,
     holderIds: readonly string[],

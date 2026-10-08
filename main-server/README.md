@@ -968,10 +968,10 @@ one Quest locks it first, so that changes run one after another:
 
 - `lock(questId, tx)` locks the Quest's row until the transaction ends.
 - `heldFor(userId, globalEventId, tx)` answers the id of the Quest the User holds for the Global Event, or `null`.
-- `createForGlobalEvent(globalEvent, holderIds, tx, settings?)` creates a Quest for the Global Event with these
-  Holders and the attending Sub Quest, titled as the event unless `settings.title` is given, and answers its id. A Holder who already holds a Quest for the event makes the
-  unique index refuse it, so ask `freeForSharedQuest` first. `settings.matchId` names the match server's match the
-  Quest is created for (see [Matching](#matching)).
+- `createForGlobalEvent(globalEvent, holderIds, tx, settings?)` creates a Quest for the Global Event with these Holders
+  and the attending Sub Quest, titled as the event unless `settings.title` is given, and answers its id. A Holder who
+  already holds a Quest for the event makes the unique index refuse it, so ask `freeForSharedQuest` first.
+  `settings.matchId` names the match server's match the Quest is created for (see [Matching](#matching)).
 - `createWithSubQuest(subQuest, holderIds, tx, settings?)` creates a Quest without a Global Event with these Holders
   and one Sub Quest, titled as the Sub Quest unless `settings.title` is given, and answers its id.
 - Both take `settings` as `{ leaderId?, capacity?, joinPolicy? }`, by default the first Holder, 4 and `closed`. The

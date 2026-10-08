@@ -607,10 +607,9 @@ start of the Sub Quest each shows (`toQuestGroups` in the quest feature's adapte
 …", "이번 주" (2 to 4 days ahead), "다음 주" (5 to 11), "그 이후", and "시간 미정" last for a Quest without a start.
 A Quest whose Sub Quests all ended (past their end time) or were cancelled is not shown; marks of done do not count.
 A row is 72 high: the round of 40 in its `questTone`, the kind ("강의", "공개 파티", "비공개 파티 · 김민준"), the
-title, the place and the time. A class's row
-closes the screen and goes back to the map by `/main?quest=<id>`, which the Quest list on the map carries out as a
-press of its own row; any other row opens the Quest's room above it. Without a Quest it says "퀘스트가 없어요"; while the Quests
-load and after a failure it shows the shared states.
+title, the place and the time. A class's row closes the screen and goes back to the map by `/main?quest=<id>`, which the
+Quest list on the map carries out as a press of its own row; any other row opens the Quest's room above it. Without a
+Quest it says "퀘스트가 없어요"; while the Quests load and after a failure it shows the shared states.
 
 **내 정보** (`src/screens/me/me-screen.tsx`, the `Profile` frame) has the bell, "알림" or "알림 {n}개" with the
 number of 알림's rows in red ("9+" above nine), and four cards from the top:
@@ -1195,11 +1194,11 @@ map.current?.fitTo([from, to], { padding: 48, maxZoom: 15.8 }); // and no closer
 - **Positions** are a latitude and a longitude in degrees. A **zoom** is the Web Mercator zoom level at the camera's
   centre, where the world is 256 × 2^zoom points wide. It may be a fraction. A native side converts it to its SDK's
   own scale.
-- **The camera stays inside `bounds`**: the visible area never leaves the rectangle. The lowest zoom allowed is
-  the larger of `minZoom` and the zoom at which the view just fits inside `fitBounds` (`bounds` when left out),
-  which depends on the view's size, and the centre is kept far enough from the edges of `bounds`. The highest zoom is `maxZoom`. The map opens on
-  the middle of the rectangle at the lowest zoom allowed. Whatever `moveCamera` or `fitTo` asks is first brought
-  inside these rules.
+- **The camera stays inside `bounds`**: the visible area never leaves the rectangle. The lowest zoom allowed is the
+  larger of `minZoom` and the zoom at which the view just fits inside `fitBounds` (`bounds` when left out), which
+  depends on the view's size, and the centre is kept far enough from the edges of `bounds`. The highest zoom is
+  `maxZoom`. The map opens on the middle of the rectangle at the lowest zoom allowed. Whatever `moveCamera` or `fitTo`
+  asks is first brought inside these rules.
 - **`onCameraIdle`** is sent once when the map is ready, and each time the camera comes to rest somewhere else:
   after a User's pan or zoom ends, and after `moveCamera` or `fitTo`. A call that changes nothing sends nothing.
 - **`onFitZoom`** gives the fit zoom: the lowest zoom allowed, at which the map opens. It is sent once when the map
