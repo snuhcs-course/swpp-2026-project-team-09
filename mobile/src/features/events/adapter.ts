@@ -115,7 +115,6 @@ export interface RecruitRowView {
   fill: string;
   meta: string;
   held: boolean;
-  joinPolicy: Quest['joinPolicy'];
 }
 
 // The rows of 파티 찾기/모집: the User's own Quest for the event first, then the others gathering for it.
@@ -139,7 +138,6 @@ export function toRecruitRows(
         fill: `${quest.holders.length}/${quest.capacity}명`,
         meta: metaOf(leads ? where : [quest.leader?.name ?? '', ...where]),
         held: true,
-        joinPolicy: quest.joinPolicy,
       };
     });
   const others = recruiting.map((quest): RecruitRowView => ({
@@ -149,7 +147,6 @@ export function toRecruitRows(
     fill: `${quest.holderCount}/${quest.capacity}명`,
     meta: metaOf([whenWords(quest.nextSubQuest.startsAt, now), quest.nextSubQuest.place?.label ?? '']),
     held: false,
-    joinPolicy: quest.joinPolicy,
   }));
   return [...own, ...others];
 }
