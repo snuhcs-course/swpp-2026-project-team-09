@@ -24,9 +24,9 @@ import type {
   MapCamera,
   MapHandle,
   MapInset,
+  MapLine,
   MapMarker,
   MapProps,
-  RouteStyle,
 } from './types';
 
 // The native map module's view, as `modules/snu-now-map` defines it: the interface of `types.ts`, flattened. The
@@ -35,7 +35,7 @@ import type {
 // - the fit zoom (`onFitZoom`), which the module does not send, from the view's size;
 // - a fit with a padding for each edge and a closest zoom, which the module's `fitTo` cannot take;
 // - a passive marker's press, which the module sends and this file drops.
-// The route's dashes are the module's to draw: it draws a solid line in the colour and the width it is given.
+// A line's dashes are the module's to draw: it draws a solid line in the colour and the width it is given.
 // `inset` is handed over with all four sides; the module places Kakao's logo 8 from the bottom right of what it leaves.
 
 // A marker or an Avatar. A marker's `glideMs` is 0.
@@ -56,10 +56,17 @@ interface NativeThing {
   passive: boolean;
 }
 
-// What the interface names no colour or width for, from the design system's tokens.
+// A line, by the rules of `MapLine`. The module keeps, changes and removes each by its `id`, and draws the later in
+// the list on top.
+interface NativeLine {
+  id: string;
+  points: readonly LatLng[];
+  color: string;
+  width: number;
+}
+
+// What the interface names no colour or size for, from the design system's tokens.
 interface NativeLooks {
-  routeColor: string;
-  routeWidth: number;
   textColor: string;
   textHaloColor: string;
   textSize: number;
@@ -81,7 +88,7 @@ interface NativeMapProps {
   maxZoom: number;
   markers: NativeThing[];
   avatars: NativeThing[];
-  route: readonly LatLng[] | null;
+  lines: NativeLine[];
   looks: NativeLooks;
   // What the screen's controls cover of each edge, in points: the module's logo belongs inside what is left.
   inset: FitPadding;
@@ -93,18 +100,15 @@ interface NativeMapProps {
 
 const NativeView = requireNativeView<NativeMapProps>(NATIVE_MAP_MODULE);
 
-const ROUTE_WIDTH = 5;
+const LOOKS: NativeLooks = {
+  textColor: color.ink,
+  textHaloColor: color.surface,
+  textSize: text.micro.fontSize,
+  imageMargin: IMAGE_MARGIN,
+};
 
-// The route's colour and width are the screen's (`routeStyle`), or the map's own plain line.
-function looksOf(routeStyle: RouteStyle | undefined): NativeLooks {
-  return {
-    routeColor: routeStyle?.color ?? color.me,
-    routeWidth: routeStyle?.width ?? ROUTE_WIDTH,
-    textColor: color.ink,
-    textHaloColor: color.surface,
-    textSize: text.micro.fontSize,
-    imageMargin: IMAGE_MARGIN,
-  };
+function nativeLine({ id, points, style }: MapLine): NativeLine {
+  return { id, points, color: style.color, width: style.width };
 }
 
 // The module's `fitTo` takes one number for all four edges. Of a padding for each edge it is given the largest, so
@@ -209,7 +213,7 @@ function useHandle(
 // nothing here runs in Expo Go or on the web, and it is the only file that names the native view. The iOS side
 // (ticket 11) implements the same view.
 export default function NativeMap(props: MapProps): ReactElement {
-  const { bounds, minZoom, maxZoom, markers, avatars, route, routeStyle, onPress, ref } = props;
+  const { bounds, minZoom, maxZoom, markers, avatars, lines, onPress, ref } = props;
   const view = useRef<NativeMapView>(null);
   const gliding = useMotionAllowed();
   const [size, setSize] = useState<Size | null>(null);
@@ -219,7 +223,6 @@ export default function NativeMap(props: MapProps): ReactElement {
   );
   const report = useReports(rules, props);
   useHandle(ref, view, rules);
-  const looks = useMemo(() => looksOf(routeStyle), [routeStyle]);
   const inset = useInset(props.inset);
   const passive = new Set([...markers, ...avatars].filter((one) => one.passive === true).map(({ id }) => id));
   return (
@@ -237,7 +240,8 @@ export default function NativeMap(props: MapProps): ReactElement {
         avatars={avatars.map((avatar) => thing(avatar, gliding ? avatar.glideMs : 0))}
         bounds={bounds}
         inset={inset}
-        looks={looks}
+        lines={lines.map((line) => nativeLine(line))}
+        looks={LOOKS}
         markers={markers.map((marker) => thing(marker, 0))}
         maxZoom={maxZoom}
         minZoom={minZoom}
@@ -250,7 +254,6 @@ export default function NativeMap(props: MapProps): ReactElement {
           }
         }}
         ref={view}
-        route={route}
         style={StyleSheet.absoluteFill}
       />
     </View>

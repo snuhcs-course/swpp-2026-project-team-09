@@ -61,8 +61,8 @@ class SnuNowMapModule : Module() {
       Prop("avatars") { view: SnuNowMapView, avatars: List<ThingRecord> ->
         view.avatars = avatars
       }
-      Prop("route") { view: SnuNowMapView, route: List<PositionRecord>? ->
-        view.route = route?.map { it.toPosition() }
+      Prop("lines") { view: SnuNowMapView, lines: List<LineRecord> ->
+        view.lines = lines
       }
       Prop("looks") { view: SnuNowMapView, looks: LooksRecord ->
         view.looks = looks

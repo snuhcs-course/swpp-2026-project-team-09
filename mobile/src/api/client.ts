@@ -2,6 +2,7 @@ import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
 import { asksMainServer } from './servers';
 import type {
+  ClassSave,
   Footprints,
   Friend,
   FriendStatus,
@@ -26,6 +27,7 @@ import type {
   WalkingRoute,
 } from './types';
 import type { RestaurantMenus } from './menu-types';
+import type { ShuttleRoute, ShuttleVehicle } from './shuttle-types';
 import type { FriendRequests, JoinRequest, Meetups, QuestInvitation } from './waiting-types';
 
 // Everything the screens ask of the main server. A refusal or no answer is thrown as an `ApiError`.
@@ -63,7 +65,15 @@ export interface ApiClient {
   listJoinRequests: (questId: string) => Promise<JoinRequest[]>;
   listMeetups: () => Promise<Meetups>;
   listClasses: () => Promise<TimetableClass[]>;
+  // A class without its identifiers and overlaps. Each refused with 404 PLACE_NOT_FOUND for a Place not in the list; an add also with 409 TIMETABLE_FULL at 15
+  // classes, and a replacement with 404 CLASS_NOT_FOUND.
+  addClass: (save: ClassSave) => Promise<TimetableClass>;
+  replaceClass: (classId: string, save: ClassSave) => Promise<TimetableClass>;
+  // Refused with 404 CLASS_NOT_FOUND.
+  deleteClass: (classId: string) => Promise<void>;
   listPlaces: () => Promise<Place[]>;
+  // The Places whose name holds the words, or whose number they are, with or without 동.
+  searchPlaces: (words: string) => Promise<Place[]>;
   listGlobalEvents: () => Promise<GlobalEvent[]>;
   // Who announced each Global Event. The app's own: the stored event does not hold it.
   listGlobalEventAnnouncers: () => Promise<{ eventId: string; announcer: string }[]>;
@@ -77,6 +87,9 @@ export interface ApiClient {
   findWalkingRoute: (from: LatLng, to: LatLng) => Promise<WalkingRoute>;
   // One day's menus, a calendar day in Korea as "2026-10-06", by restaurant.
   listMenus: (date: string) => Promise<RestaurantMenus[]>;
+  getShuttle: () => Promise<ShuttleRoute>;
+  // The vehicles in service, [] when none runs.
+  listShuttleVehicles: () => Promise<ShuttleVehicle[]>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`). Chosen at each
@@ -111,7 +124,11 @@ export const apiClient: ApiClient = {
   listJoinRequests: (questId) => chosen().listJoinRequests(questId),
   listMeetups: () => chosen().listMeetups(),
   listClasses: () => chosen().listClasses(),
+  addClass: (save) => chosen().addClass(save),
+  replaceClass: (classId, save) => chosen().replaceClass(classId, save),
+  deleteClass: (classId) => chosen().deleteClass(classId),
   listPlaces: () => chosen().listPlaces(),
+  searchPlaces: (words) => chosen().searchPlaces(words),
   listGlobalEvents: () => chosen().listGlobalEvents(),
   listGlobalEventAnnouncers: () => chosen().listGlobalEventAnnouncers(),
   listParties: () => chosen().listParties(),
@@ -119,4 +136,6 @@ export const apiClient: ApiClient = {
   getFootprints: () => chosen().getFootprints(),
   findWalkingRoute: (from, to) => chosen().findWalkingRoute(from, to),
   listMenus: (date) => chosen().listMenus(date),
+  getShuttle: () => chosen().getShuttle(),
+  listShuttleVehicles: () => chosen().listShuttleVehicles(),
 };

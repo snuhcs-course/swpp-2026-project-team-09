@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import type { ReactElement } from 'react';
 import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import {
@@ -25,11 +26,16 @@ const HOUR_HEIGHT = GRID_HEIGHT / (LAST_HOUR - FIRST_HOUR);
 const HOUR_LABELS = [9, 11, 13, 15, 17] as const;
 const LABEL_WIDTH = 28;
 
-const TILES: readonly { icon: IconName; label: string }[] = [
-  { icon: 'calendar', label: '직접 입력' },
-  { icon: 'plus', label: '이미지로 불러오기' },
-  { icon: 'chat', label: '빈 시간 말하기' },
+// `직접 입력` opens the timetable; the other two say that they are not ready.
+const TILES: readonly { icon: IconName; label: string; opens: boolean }[] = [
+  { icon: 'calendar', label: '직접 입력', opens: true },
+  { icon: 'plus', label: '이미지로 불러오기', opens: false },
+  { icon: 'chat', label: '빈 시간 말하기', opens: false },
 ];
+
+function openTimetable(): void {
+  router.push('/me/timetable');
+}
 
 function Block({ block }: { block: ClassBlockView }): ReactElement {
   return (
@@ -103,11 +109,11 @@ export function WeekCard(): ReactElement {
       {data === undefined && isPending ? <LoadingState /> : null}
       {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
       <View style={styles.tiles}>
-        {TILES.map(({ icon, label }) => (
+        {TILES.map(({ icon, label, opens }) => (
           <Pressable
             accessibilityRole="button"
             key={label}
-            onPress={showNotReady}
+            onPress={opens ? openTimetable : showNotReady}
             style={({ pressed }): StyleProp<ViewStyle> => [styles.tile, pressed && styles.pressed]}
           >
             <Icon color={color.snuBlue} name={icon} size={20} />

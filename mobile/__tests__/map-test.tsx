@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { render, screen, userEvent, within } from '@testing-library/react-native';
 
 import { Map } from '@/map';
 import { EMPTY, EVENT, FRIEND, GATE, holdMap, LIBRARY } from './support/map';
@@ -33,16 +33,40 @@ describe('the map without a native module', () => {
 
     expect(onPress.mock.calls).toEqual([['event:e1'], ['friend:f1']]);
   });
+});
 
-  it('draws the route line and clears it', async () => {
+describe('the lines on the plain ground', () => {
+  it('draws several lines, each with its look, changes one by its id and removes one that is no longer listed', async () => {
+    const solid = { id: 'route', points: [GATE, LIBRARY], style: { color: '#2F6BFF', width: 5 } };
+    const dashed = {
+      id: 'shuttle',
+      points: [LIBRARY, GATE],
+      style: { color: '#6B46C1', width: 3, dash: [8, 6] },
+    } as const;
     const { rerender } = await render(<Map {...EMPTY} />);
     expect(screen.queryByLabelText('경로가 그려져 있습니다')).toBeNull();
 
-    await rerender(<Map {...EMPTY} route={[GATE, LIBRARY]} />);
-    expect(screen.getByLabelText('경로가 그려져 있습니다')).toBeVisible();
+    await rerender(<Map {...EMPTY} lines={[solid, dashed]} />);
+    expect(screen.getAllByLabelText('경로가 그려져 있습니다')).toHaveLength(2);
+    expect(within(screen.getByTestId('line:route')).getAllByTestId('route-stroke')).toHaveLength(1);
+    expect(within(screen.getByTestId('line:route')).getByTestId('route-stroke')).toHaveStyle({
+      height: 5,
+      backgroundColor: '#2F6BFF',
+    });
+    const dashes = within(screen.getByTestId('line:shuttle')).getAllByTestId('route-stroke');
+    expect(dashes.length).toBeGreaterThan(1);
+    // A dash of 8 with round ends, 3 wide.
+    expect(dashes[0]).toHaveStyle({ width: 11, height: 3, backgroundColor: '#6B46C1' });
+    // The later in the list is drawn later, on top.
+    const drawn = screen.getAllByTestId(/^line:/u);
+    expect(drawn[0]).toHaveProp('testID', 'line:route');
+    expect(drawn[1]).toHaveProp('testID', 'line:shuttle');
 
-    await rerender(<Map {...EMPTY} route={null} />);
-    expect(screen.queryByLabelText('경로가 그려져 있습니다')).toBeNull();
+    await rerender(<Map {...EMPTY} lines={[{ ...dashed, points: [GATE, LIBRARY, GATE] }]} />);
+    expect(screen.queryByTestId('line:route')).toBeNull();
+    expect(within(screen.getByTestId('line:shuttle')).getAllByTestId('route-stroke').length).toBeGreaterThan(
+      dashes.length,
+    );
   });
 });
 

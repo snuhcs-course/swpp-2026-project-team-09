@@ -243,7 +243,7 @@ function isOverlap(value: unknown): value is TimetableClass['overlaps'][number] 
   return hasTexts(value, ['id', 'courseName']);
 }
 
-function isTimetableClass(value: unknown): value is TimetableClass {
+export function isTimetableClass(value: unknown): value is TimetableClass {
   return (
     hasTexts(value, ['id', 'courseName']) &&
     listOf(isClassTime)(field(value, 'times')) &&
@@ -273,7 +273,7 @@ const NO_ROUTE = new Set([
   'ROUTE_RESULT_NOT_FOUND',
 ]);
 
-function isPoint(value: unknown): value is { latitude: number; longitude: number } {
+export function isPoint(value: unknown): value is { latitude: number; longitude: number } {
   return isNumber(field(value, 'latitude')) && isNumber(field(value, 'longitude'));
 }
 

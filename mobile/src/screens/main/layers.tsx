@@ -1,6 +1,6 @@
 import { type ReactElement, useCallback, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
-import { color, font, Icon, type IconName, radius, shadow, useNotReadyToast, useSlide } from '@/design-system';
+import { color, font, Icon, type IconName, radius, shadow, useSlide } from '@/design-system';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { LAYER_STACK, LAYERS_BUTTON } from './layout';
 
@@ -8,6 +8,7 @@ import { LAYER_STACK, LAYERS_BUTTON } from './layout';
 // shown, since the main screen stays mounted.
 export interface Layers {
   dining: boolean;
+  shuttle: boolean;
 }
 
 export interface LayerStack {
@@ -16,12 +17,13 @@ export interface LayerStack {
   toggleOpen: () => void;
   close: () => void;
   toggleDining: () => void;
+  toggleShuttle: () => void;
 }
 
 // The stack's state. Android's back button closes the stack while the map is `inFront`, before a card under it.
 export function useLayerStack(inFront: boolean): LayerStack {
   const [open, setOpen] = useState(false);
-  const [layers, setLayers] = useState<Layers>({ dining: false });
+  const [layers, setLayers] = useState<Layers>({ dining: false, shuttle: false });
   const close = useCallback(() => {
     setOpen(false);
   }, []);
@@ -35,6 +37,9 @@ export function useLayerStack(inFront: boolean): LayerStack {
     close,
     toggleDining: () => {
       setLayers((now) => ({ ...now, dining: !now.dining }));
+    },
+    toggleShuttle: () => {
+      setLayers((now) => ({ ...now, shuttle: !now.shuttle }));
     },
   };
 }
@@ -67,6 +72,8 @@ function LayerToggle({ label, icon, tint, on, onPress }: Toggle): ReactElement {
 interface LayerControlsProps {
   stack: LayerStack;
   onMenus: () => void;
+  // How much higher than its place the button stands, with the stack over it: above the shuttle's notice.
+  lift?: number;
 }
 
 function MenuTile({ onPress }: { onPress: () => void }): ReactElement {
@@ -87,10 +94,12 @@ function MenuTile({ onPress }: { onPress: () => void }): ReactElement {
 function LayersButton({
   open,
   on,
+  lift,
   onPress,
 }: {
   open: boolean;
   on: readonly Toggle[];
+  lift: number;
   onPress: () => void;
 }): ReactElement {
   return (
@@ -100,7 +109,7 @@ function LayersButton({
       accessibilityState={{ expanded: open }}
       aria-expanded={open}
       onPress={onPress}
-      style={[styles.button, open && styles.buttonOpen]}
+      style={[styles.button, { bottom: LAYERS_BUTTON.bottom + lift }, open && styles.buttonOpen]}
     >
       <Icon color={open ? color.onPrimary : color.snuBlue} name="layers" size={22} />
       <View aria-hidden style={styles.dots}>
@@ -114,12 +123,11 @@ function LayersButton({
 
 // The 편의기능 button and the stack of the `MainLayers` frame, which rises above it: the toggles from the bottom up,
 // 식당 then 셔틀버스, and the 메뉴 tile, which opens the menu panel. A transparent scrim over the map closes it.
-export function LayerControls({ stack, onMenus }: LayerControlsProps): ReactElement {
-  const showNotReady = useNotReadyToast();
+export function LayerControls({ stack, onMenus, lift = 0 }: LayerControlsProps): ReactElement {
   const { shown, progress } = useSlide(stack.open);
   const toggles: Toggle[] = [
     { label: '식당', icon: 'meal', tint: color.svcDining, on: stack.layers.dining, onPress: stack.toggleDining },
-    { label: '셔틀버스', icon: 'bus', tint: color.svcShuttle, on: false, onPress: showNotReady },
+    { label: '셔틀버스', icon: 'bus', tint: color.svcShuttle, on: stack.layers.shuttle, onPress: stack.toggleShuttle },
   ];
   const rise = progress.interpolate({ inputRange: [0, 1], outputRange: [RISE, 0] });
   return (
@@ -136,7 +144,10 @@ export function LayerControls({ stack, onMenus }: LayerControlsProps): ReactElem
         <Animated.View
           accessibilityLabel="편의기능 레이어"
           role="group"
-          style={[styles.stack, { opacity: progress, transform: [{ translateY: rise }] }]}
+          style={[
+            styles.stack,
+            { bottom: LAYER_STACK.bottom + lift, opacity: progress, transform: [{ translateY: rise }] },
+          ]}
         >
           {toggles.map((toggle) => (
             <LayerToggle key={toggle.label} {...toggle} />
@@ -149,7 +160,7 @@ export function LayerControls({ stack, onMenus }: LayerControlsProps): ReactElem
           />
         </Animated.View>
       ) : null}
-      <LayersButton on={toggles.filter(({ on }) => on)} onPress={stack.toggleOpen} open={stack.open} />
+      <LayersButton lift={lift} on={toggles.filter(({ on }) => on)} onPress={stack.toggleOpen} open={stack.open} />
     </>
   );
 }
@@ -163,7 +174,6 @@ const styles = StyleSheet.create({
   stack: {
     position: 'absolute',
     right: LAYER_STACK.right,
-    bottom: LAYER_STACK.bottom,
     flexDirection: 'column-reverse',
     gap: 6,
     padding: 6,
@@ -186,7 +196,6 @@ const styles = StyleSheet.create({
   button: {
     position: 'absolute',
     right: LAYERS_BUTTON.right,
-    bottom: LAYERS_BUTTON.bottom,
     alignItems: 'center',
     justifyContent: 'center',
     width: LAYERS_BUTTON.size,

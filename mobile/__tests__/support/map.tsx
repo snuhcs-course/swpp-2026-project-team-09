@@ -41,7 +41,7 @@ export const EMPTY: MapProps = {
   maxZoom: MAX_ZOOM,
   markers: [],
   avatars: [],
-  route: null,
+  lines: [],
 };
 
 // Gives the map the size of a phone's screen above a panel.

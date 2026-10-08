@@ -22,8 +22,9 @@ export type {
   MapCamera,
   MapHandle,
   MapInset,
+  MapLine,
   MapMarker,
   MapProps,
   MarkerImage,
-  RouteStyle,
+  LineStyle,
 } from './types';

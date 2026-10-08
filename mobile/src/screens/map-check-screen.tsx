@@ -10,6 +10,7 @@ import {
   type MapAvatar,
   type MapCamera,
   type MapHandle,
+  type MapLine,
   type MapMarker,
   type MarkerLook,
   MAX_ZOOM,
@@ -22,7 +23,16 @@ const THERE: LatLng = { latitude: 37.4635, longitude: 126.9545 };
 const EVENT: LatLng = { latitude: 37.4499, longitude: 126.9525 };
 const PARTY: LatLng = { latitude: 37.4563, longitude: 126.9498 };
 const FRIEND: LatLng = { latitude: 37.4598, longitude: 126.9521 };
-const ROUTE: LatLng[] = [HERE, { latitude: 37.4552, longitude: 126.9516 }, EVENT];
+// Two lines: a solid one, and a dashed one on top of it that crosses it.
+const LINES: MapLine[] = [
+  {
+    id: 'solid',
+    points: [HERE, { latitude: 37.4552, longitude: 126.9516 }, EVENT],
+    style: { color: color.me, width: 5 },
+  },
+  { id: 'dashed', points: [PARTY, FRIEND, THERE], style: { color: color.svcShuttle, width: 3, dash: [8, 6] } },
+];
+const NO_LINES: MapLine[] = [];
 const GLIDE_MS = 5000;
 const FIT_PADDING = 48;
 
@@ -114,11 +124,11 @@ function useReopening(map: RefObject<MapHandle | null>): [number, () => void] {
 }
 
 // The map component as a screen uses it, to try by hand what the device check lists: markers and their names, an
-// Avatar that glides, the route line, a press and the camera's stop.
+// Avatar that glides, the lines, a press and the camera's stop.
 export function MapCheckScreen(): ReactElement {
   const map = useRef<MapHandle>(null);
   const [me, setMe] = useState(HERE);
-  const [route, setRoute] = useState<LatLng[] | null>(null);
+  const [lines, setLines] = useState(NO_LINES);
   const [pressed, setPressed] = useState<string | null>(null);
   const [camera, setCamera] = useState<MapCamera | null>(null);
   const [opening, reopen] = useReopening(map);
@@ -129,23 +139,23 @@ export function MapCheckScreen(): ReactElement {
         avatars={avatars}
         bounds={CAMPUS_BOUNDS}
         key={opening}
+        lines={lines}
         markers={markers}
         maxZoom={MAX_ZOOM}
         minZoom={MIN_ZOOM}
         onCameraIdle={setCamera}
         onPress={setPressed}
         ref={map}
-        route={route}
       />
       <View style={styles.panel}>
         <Text style={styles.line}>{pressed === null ? '누른 것: 없음' : `누른 것: ${pressed}`}</Text>
         <Text style={styles.line}>{describe(camera)}</Text>
         <Controls
           onClearRoute={() => {
-            setRoute(null);
+            setLines(NO_LINES);
           }}
           onDrawRoute={() => {
-            setRoute(ROUTE);
+            setLines(LINES);
           }}
           onFitRoute={() => {
             map.current?.fitTo([HERE, EVENT], { padding: FIT_PADDING, animated: true });

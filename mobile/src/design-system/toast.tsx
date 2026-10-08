@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
-import { Icon } from './icon';
+import { Icon, type IconName } from './icon';
 import { color, font, radius, space, text } from './tokens';
 
 // Long enough to read one short sentence: the time the `Main` frame gives its toasts.
@@ -18,8 +18,8 @@ const SHOWN_MS = 2400;
 
 const NOT_READY = '준비 중이에요';
 
-// `shownMs` is how long the words stay. Left out, 2400 ms.
-type ShowToast = (message: string, shownMs?: number) => void;
+// `shownMs` is how long the words stay. Left out, 2400 ms. `icon` is the check mark unless given, such as `alert`.
+type ShowToast = (message: string, shownMs?: number, icon?: IconName) => void;
 
 interface Toasts {
   show: ShowToast;
@@ -35,13 +35,13 @@ const ToastContext = createContext<Toasts | null>(null);
 // side to side with a check mark before its words and no shadow, and the app adds it in the design system's terms.
 export function ToastProvider({ children }: { children: ReactNode }): ReactElement {
   // A new object for every toast, so that the same words shown twice start the time again.
-  const [toast, setToast] = useState<{ message: string; shownMs: number } | null>(null);
+  const [toast, setToast] = useState<{ message: string; shownMs: number; icon: IconName } | null>(null);
   const [claims, setClaims] = useState<readonly { height: number }[]>([]);
   const taken = claims.at(-1)?.height ?? 0;
   // The phone's own bar at the bottom. Without a provider of it, as in a test, there is none.
   const inset = use(SafeAreaInsetsContext)?.bottom ?? 0;
-  const show = useCallback<ShowToast>((message, shownMs = SHOWN_MS) => {
-    setToast({ message, shownMs });
+  const show = useCallback<ShowToast>((message, shownMs = SHOWN_MS, icon = 'check') => {
+    setToast({ message, shownMs, icon });
     // iOS has no live regions: the words are announced by hand. Android reads the live region below.
     if (Platform.OS === 'ios') {
       AccessibilityInfo.announceForAccessibility(message);
@@ -75,7 +75,7 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactEleme
       {toast === null ? null : (
         <View style={[styles.layer, { bottom: inset + taken + space[6] }]} testID="toast-layer">
           <View accessibilityLiveRegion="polite" accessibilityRole="alert" accessible style={styles.toast}>
-            <Icon color={color.onPrimary} name="check" size={ICON} />
+            <Icon color={color.onPrimary} name={toast.icon} size={ICON} />
             <Text style={styles.words}>{toast.message}</Text>
           </View>
         </View>

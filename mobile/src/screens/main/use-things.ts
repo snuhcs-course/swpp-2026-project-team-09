@@ -2,8 +2,8 @@ import type { CardView } from '@/features/map/adapter';
 import { type MapAvatar, type MapMarker, type MarkerLook, useMarkerImages, type ZoomDetail } from '@/map';
 import { POSITION_EVERY_MS } from '@/position';
 
-// What `<Map>` shows of the cards: the people as Avatars, which glide, and the places as markers. Each has its
-// card's id, so a press on it gives the id of the card to open.
+// What `<Map>` shows of the cards: the people and the shuttle's vehicles as Avatars, which glide, and the places as
+// markers. Each has its card's id, so a press on it gives the id of the card to open.
 export interface Things {
   markers: readonly MapMarker[];
   avatars: readonly MapAvatar[];
@@ -15,7 +15,8 @@ const SELECTED_ORDER = 2;
 const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 
 // A card's look at a level of detail. A person is the frames' teardrop at every level, small while the whole campus
-// is in view, and dimmed while their position is old. A place is a dot there, and a pin with its count closer.
+// is in view, and dimmed while their position is old. A place is a dot there, and a pin with its count closer; a
+// restaurant and the shuttle's stops and vehicles look the same at every level.
 function lookOf({ mark, marker }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
   const far = detail === 'overview';
   if (mark.type === 'person') {
@@ -25,6 +26,9 @@ function lookOf({ mark, marker }: CardView, detail: ZoomDetail, selected: boolea
   }
   if (mark.place === 'dining') {
     return { kind: 'restaurant', selected };
+  }
+  if (mark.place === 'shuttle') {
+    return { kind: 'shuttle', form: 'pin', selected };
   }
   return far
     ? { kind: mark.place, form: 'dot', selected }
@@ -61,8 +65,8 @@ export function useThings(cards: readonly CardView[], detail: ZoomDetail, select
         text: detail === 'names' ? wordsOf(card) : undefined,
         order: card.id === selectedId ? SELECTED_ORDER : 0,
       };
-      if (card.mark.type === 'person') {
-        avatars.push({ ...thing, glideMs: POSITION_EVERY_MS });
+      if (card.mark.type === 'person' || card.glideMs !== undefined) {
+        avatars.push({ ...thing, glideMs: card.glideMs ?? POSITION_EVERY_MS });
       } else {
         markers.push(thing);
       }

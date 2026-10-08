@@ -50,8 +50,8 @@ public class SnuNowMapModule: Module {
       Prop("avatars") { (view: SnuNowMapView, avatars: [[String: Any]]) in
         view.avatars = avatars.map(ThingRecord.init)
       }
-      Prop("route") { (view: SnuNowMapView, route: [PositionRecord]?) in
-        view.route = route?.map { $0.toPosition() }
+      Prop("lines") { (view: SnuNowMapView, lines: [LineRecord]) in
+        view.lines = lines
       }
       Prop("looks") { (view: SnuNowMapView, looks: LooksRecord) in
         view.looks = looks

@@ -515,7 +515,8 @@ Ticket 12 connected every row that the demo's flows (P20) use and the main serve
 | The profile (프로필 편집) | Connected | `PATCH /users/me/profile` with the changed fields | |
 | The Master Switch | Connected | `PUT /users/me/master-switch`; read from the Lobby | The mock keeps it in memory, off at each start |
 | Sending the User's position | Connected | `POST /positions`, at most every 5 s while the switch is on, the permission granted and the app in front | `MASTER_SWITCH_OFF` turns the switch off; the 400s and no answer drop a position. On Android, with the row `백그라운드에서도 공유`, also every 30 s in the background under a notification (P17). The mock refuses while the switch is off and answers `offCampus` by the campus rectangle |
-| The timetable on 내 정보, the Places | Connected | `GET /timetable/classes`, `GET /places` | Read only; the mock has the `Profile` frame's four classes. The Places also place the 식당 pins (P15) |
+| The timetable (내 정보's week, 시간표 and the class form) | Connected | `GET /timetable/classes`, `POST /timetable/classes` with a new `Idempotency-Key` for each press of 저장, `PUT` and `DELETE /timetable/classes/:classId`; the classes and the Quests are fetched again after each change | The mock starts from the frame's four classes, keeps the changes in memory with the overlaps and the refusals, and does not change its Class Quests |
+| The Places (the Place picker, the 식당 pins) | Connected | `GET /places`, `GET /places/search?q=` | The mock searches its Places by name and by number |
 | Friend Requests | Connected | `GET /friend-requests`; fetched again on `friends-changed` | |
 | Quest invitations, requests to join | Connected | `GET /quest-invitations`, `GET /quests/:questId/join-requests` for each Quest the User leads with Approval; fetched again on `quests-changed` | The mock leads no Quest, so it has no request to join |
 | Meetups | Connected | `GET /meetups`; fetched again on `meetups-changed` | |
@@ -538,6 +539,8 @@ Ticket 12 connected every row that the demo's flows (P20) use and the main serve
 | The AI input | No data | Nothing | It only says that it is not ready; no spec covers it |
 | The Session's end | Connected | The socket's `session-ended`, and a 401 that one renewal cannot mend | `SESSION_REPLACED` shows "다른 기기에서 로그인했어요" |
 | Menus (`listMenus`) | Connected | `GET /menus?date=` | The 식당 layer and the menu panel (P15); the mock is a week of lines from the saved menu pages |
+| The shuttle's route (`getShuttle`) | Connected | `GET /shuttle` | The shuttle layer (P15); the mock is the main server's seed |
+| The shuttle's vehicles (`listShuttleVehicles`) | Connected | `GET /shuttle/vehicles`, the socket's `shuttle-vehicles-updated` | Fetched when the layer is turned on and when the connection opens again while it is on; the mock is three vehicles at stops |
 | The signal `matching-changed` | Not used | The socket | It names nothing these screens show |
 
 ## 4. Controls that say "준비 중이에요"
@@ -550,12 +553,10 @@ The control is there and only shows the toast. The last column is a proposal for
 | Friend panel | A Friend's calendar button, "{이름}님과 파티 만들기" | Proposing a Meetup to the Friend | P14 |
 | Above the navigation | 오늘의 발자국 | The story replay | In no Iteration 1 spec |
 | Above the navigation | 활성 파티 | The party screen | P13 |
-| 편의기능 stack | The 셔틀버스 toggle | The shuttle layer | P15 (ticket 02) |
 | Above the navigation | The AI input, which is a button with the input's look and takes no focus and no text, and its send button, read as disabled | The AI chat, with the real text field | In no Iteration 1 spec |
 | Bottom navigation | 올리기 | The story sheet | In no Iteration 1 spec |
 | 파티 | + 만들기, and the bodies of 찾기, 내 파티 and 초대 | 파티 만들기 and the lists of Quests | P13 |
 | 행사 | Its body | The list of Global Events | P13 |
-| 내 정보 | 직접 입력 | The timetable screen | P19 (ticket 03) |
 | 내 정보 | 이미지로 불러오기, 빈 시간 말하기 | Reading a timetable from an image or from words | In no Iteration 1 spec |
 | 알림 | A Party opened, and 참여 신청 | The Quest's room | P13 |
 | A Global Event's card | 같이 갈 사람 찾기 | The party screen | P13 |

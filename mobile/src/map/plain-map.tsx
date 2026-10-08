@@ -4,7 +4,7 @@ import type { LatLng } from '@/api/types';
 import { color, text } from '@/design-system';
 import { useMotionAllowed } from '@/hooks/use-reduce-motion';
 import { centreOf } from './campus';
-import { RouteLine } from './plain-route';
+import { PlainLine } from './plain-route';
 import { Thing } from './plain-things';
 import { type CameraRules, fit, inView, lowestZoom, type Point, sameCamera, settle, type Size } from './projection';
 import type { MapCamera, MapHandle, MapMarker, MapProps } from './types';
@@ -63,8 +63,7 @@ function ranked<Kind extends MapMarker>(things: readonly Kind[]): Kind[] {
 // tiles and draws no campus. It places what it was asked to show by position, with the camera it was asked for, so
 // that a move of the camera or of an Avatar is seen and a screen can be laid out around it. A User cannot pan it.
 export function PlainMap(props: MapProps): ReactElement {
-  const { bounds, minZoom, maxZoom, markers, avatars, route, routeStyle, onPress, onCameraIdle, onFitZoom, ref } =
-    props;
+  const { bounds, minZoom, maxZoom, markers, avatars, lines, onPress, onCameraIdle, onFitZoom, ref } = props;
   const window = useWindowDimensions();
   // Until the ground is laid out it counts as large as the window, so that it is ready at once.
   const [laidOut, setLaidOut] = useState<Size | null>(null);
@@ -80,7 +79,9 @@ export function PlainMap(props: MapProps): ReactElement {
       style={styles.ground}
     >
       <Text style={styles.words}>지도는 Android·iOS 빌드에서 보입니다</Text>
-      {route === null ? null : <RouteLine look={routeStyle} points={route.map((point) => place(point))} />}
+      {lines.map(({ id, points, style }) => (
+        <PlainLine id={id} key={id} look={style} points={points.map((point) => place(point))} />
+      ))}
       {ranked(markers).map((marker) => (
         <Thing glideMs={0} key={marker.id} onPress={onPress} place={place} thing={marker} view={size} />
       ))}

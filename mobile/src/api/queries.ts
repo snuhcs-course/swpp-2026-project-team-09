@@ -1,6 +1,7 @@
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { apiClient } from './client';
 import type { RestaurantMenus } from './menu-types';
+import type { Place } from './types';
 import type { JoinRequest } from './waiting-types';
 
 // One entry of the cache per operation, each under its own key. The hooks of the features combine them, so that an
@@ -22,6 +23,8 @@ export const PLACES_KEY = ['places'] as const;
 export const FOOTPRINTS_KEY = ['footprints'] as const;
 export const GLOBAL_EVENTS_KEY = ['global-events'] as const;
 export const GLOBAL_EVENT_ANNOUNCERS_KEY = ['global-event-announcers'] as const;
+export const SHUTTLE_KEY = ['shuttle'] as const;
+export const SHUTTLE_VEHICLES_KEY = ['shuttle-vehicles'] as const;
 type MenusKey = readonly ['menus', string];
 
 // Ask it only for a User who finished Onboarding: the main server refuses it before.
@@ -75,4 +78,13 @@ export const placesQuery = queryOptions({
   queryKey: PLACES_KEY,
   queryFn: () => apiClient.listPlaces(),
   staleTime: Infinity,
+});
+export function placeSearchQuery(words: string): UseQueryOptions<Place[], Error, Place[], string[]> {
+  return { queryKey: [...PLACES_KEY, 'search', words], queryFn: () => apiClient.searchPlaces(words) };
+}
+// The shuttle's route and its vehicles, which the socket's `shuttle-vehicles-updated` replaces in the cache.
+export const shuttleQuery = queryOptions({ queryKey: SHUTTLE_KEY, queryFn: () => apiClient.getShuttle() });
+export const shuttleVehiclesQuery = queryOptions({
+  queryKey: SHUTTLE_VEHICLES_KEY,
+  queryFn: () => apiClient.listShuttleVehicles(),
 });

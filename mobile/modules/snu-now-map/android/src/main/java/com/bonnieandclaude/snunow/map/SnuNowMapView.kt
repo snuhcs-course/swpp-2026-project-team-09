@@ -31,6 +31,11 @@ import kotlin.math.log2
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
+// What a line was last drawn with.
+private data class LineLook(val points: List<Position>, val color: String, val width: Double)
+
+private class DrawnLine(val routeLine: RouteLine, var look: LineLook, var z: Int)
+
 // Kakao's map behind the map component, to the rules of `src/map/types.ts`. The SDK takes whole zoom levels only,
 // so the camera is set by its height, which is measured against the Web Mercator zoom when the map is ready. The SDK
 // does not keep the camera inside a rectangle, so the view brings it back when a move ends outside.
@@ -46,7 +51,7 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
   var maxZoom = 0.0
   var markers: List<ThingRecord> = emptyList()
   var avatars: List<ThingRecord> = emptyList()
-  var route: List<Position>? = null
+  var lines: List<LineRecord> = emptyList()
   var looks = LooksRecord()
   var inset = InsetRecord()
 
@@ -56,8 +61,8 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
   private var map: KakaoMap? = null
   private var markerThings: Things? = null
   private var avatarThings: Things? = null
-  private var routeLine: RouteLine? = null
-  private var routeShown: List<Position>? = null
+  // The lines drawn, by their `id`.
+  private val drawnLines = mutableMapOf<String, DrawnLine>()
   // Where the logo was last put, as its margins from the bottom right in points, so that it is moved only when they
   // change.
   private var logoAt: Pair<Double, Double>? = null
@@ -90,7 +95,7 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
     }
     placeLogo()
     showThings()
-    showRoute()
+    showLines()
     rest()
   }
 
@@ -106,7 +111,7 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
     }
   }
 
-  // Finishing the map frees its labels and its route; only the glides are this view's to stop.
+  // Finishing the map frees its labels and its lines; only the glides are this view's to stop.
   fun destroy() {
     markerThings?.stop()
     avatarThings?.stop()
@@ -175,6 +180,7 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
 
   private fun ready(kakaoMap: KakaoMap) {
     map = kakaoMap
+    drawnLines.clear()
     // The interface's camera looks straight down, north up.
     kakaoMap.setGestureEnable(GestureType.Rotate, false)
     kakaoMap.setGestureEnable(GestureType.Tilt, false)
@@ -207,12 +213,12 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
     }
     post {
       showThings()
-      showRoute()
+      showLines()
       open()
     }
   }
 
-  // Every Avatar above every marker, and the route under both.
+  // Every Avatar above every marker, and the lines under both.
   private fun layer(labels: LabelManager, id: String, z: Int): LabelLayer? = labels.addLayer(
     LabelLayerOptions.from(id)
       .setOrderingType(OrderingType.Rank)
@@ -255,21 +261,40 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
     avatarThings?.show(avatars, looks)
   }
 
-  private fun showRoute() {
+  // One route line of the SDK for each line, kept by its `id`: a new one is added, a kept one whose points or look
+  // changed takes the new ones, and one no longer listed is removed. A line's z order is its place in the list, so the
+  // later is on top. The SDK draws a line of two points or more.
+  private fun showLines() {
     val layer = map?.routeLineManager?.layer ?: return
-    if (route == routeShown) {
-      return
+    val listed = lines.associateBy { it.id }
+    drawnLines.keys.filter { id -> (listed[id]?.points?.size ?: 0) < 2 }.forEach { id ->
+      drawnLines.remove(id)?.let { layer.remove(it.routeLine) }
     }
-    routeLine?.let { layer.remove(it) }
-    routeLine = null
-    routeShown = route
-    val points = route ?: return
-    if (points.size < 2) {
-      return
+    lines.forEachIndexed { z, line ->
+      if (line.points.size < 2) {
+        return@forEachIndexed
+      }
+      val look = LineLook(line.points.map { it.toPosition() }, line.color, line.width)
+      val drawn = drawnLines[line.id]
+      if (drawn == null) {
+        val routeLine = layer.addRouteLine(RouteLineOptions.from(segmentOf(look)).setZOrder(z)) ?: return@forEachIndexed
+        drawnLines[line.id] = DrawnLine(routeLine, look, z)
+        return@forEachIndexed
+      }
+      if (drawn.look != look) {
+        drawn.routeLine.changeSegments(listOf(segmentOf(look)))
+        drawn.look = look
+      }
+      if (drawn.z != z) {
+        drawn.routeLine.setZOrder(z)
+        drawn.z = z
+      }
     }
-    val style = RouteLineStyle.from(pixels(looks.routeWidth), Color.parseColor(looks.routeColor))
-    val segment = RouteLineSegment.from(points.map { it.toLatLng() }, RouteLineStyles.from(style))
-    routeLine = layer.addRouteLine(RouteLineOptions.from(segment))
+  }
+
+  private fun segmentOf(look: LineLook): RouteLineSegment {
+    val style = RouteLineStyle.from(pixels(look.width), Color.parseColor(look.color))
+    return RouteLineSegment.from(look.points.map { it.toLatLng() }, RouteLineStyles.from(style))
   }
 
   // The camera has come to rest: brought back inside the rules if it is outside, else reported if it moved.

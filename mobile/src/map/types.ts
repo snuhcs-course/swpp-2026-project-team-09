@@ -108,6 +108,29 @@ export interface FitOptions {
   animated?: boolean;
 }
 
+// How a line is drawn.
+export interface LineStyle {
+  color: string;
+  // In points on the screen, the same at every zoom.
+  width: number;
+  // A dashed line: the length of a dash and of the gap after it, in points on the screen, the same at every zoom,
+  // measured as SVG's `stroke-dasharray` is. Left out, a solid line.
+  dash?: readonly [length: number, gap: number];
+}
+
+// A line through points in order, such as a walking route or the shuttle's route. Its ends and its dashes are round.
+// The rules, for every implementation:
+// - every line is drawn under every marker and Avatar;
+// - among lines, the later in the list is on top;
+// - in a new list, a line with a new `id` is added, one whose `id` stays is the same line with its points or its
+//   style changed, and one that is no longer listed is removed;
+// - the same points and style in a new list draw nothing again. The lists are new on every render.
+export interface MapLine {
+  id: string;
+  points: readonly LatLng[];
+  style: LineStyle;
+}
+
 // The camera's rules, for every implementation:
 // - The camera stays inside `bounds`: the visible area never leaves the rectangle. So the lowest zoom allowed is the
 //   larger of `minZoom` and the zoom at which the view just fits inside `bounds`, which depends on the view's size,
@@ -121,16 +144,6 @@ export interface FitOptions {
 // - `onFitZoom` gives the fit zoom: the lowest zoom allowed, at which the map opens and the whole campus is in view.
 //   It is sent once when the map is ready, before the first `onCameraIdle`, and again whenever it changes, which it
 //   does with the view's size. A screen counts its zoom levels from it (`ZOOM_OFFSET` in `campus.ts`).
-// How the route line is drawn. A screen says it; without it the line is the map's own plain one.
-export interface RouteStyle {
-  color: string;
-  // In points on the screen, the same at every zoom.
-  width: number;
-  // A dashed line: the length of a dash and of the gap after it, in points on the screen, the same at every zoom,
-  // measured as SVG's `stroke-dasharray` is. Left out, a solid line.
-  dash?: readonly [length: number, gap: number];
-}
-
 export interface MapHandle {
   moveCamera: (move: CameraMove) => void;
   // Moves the camera so that the middle of the points is in the middle of what the padding leaves of the view, at
@@ -146,10 +159,8 @@ export interface MapProps {
   maxZoom: number;
   markers: readonly MapMarker[];
   avatars: readonly MapAvatar[];
-  // The one route line, drawn through these points in order, under the markers. Null for none.
-  route: readonly LatLng[] | null;
-  // The line's look. Its ends and its dashes are round. Left out, the map's own plain line.
-  routeStyle?: RouteStyle;
+  // The lines, by the rules of `MapLine`.
+  lines: readonly MapLine[];
   // A press on a marker or an Avatar, with its identifier.
   onPress?: (id: string) => void;
   onCameraIdle?: (camera: MapCamera) => void;

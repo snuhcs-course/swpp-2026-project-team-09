@@ -104,15 +104,22 @@ describe('the stack', () => {
     await user.press(toggle('식당 끄기'));
     expect(toggle('식당 켜기')).toHaveTextContent('식당OFF');
   });
+});
 
-  it('says that 셔틀버스 is not ready, and leaves it off', async () => {
+describe('the 셔틀버스 toggle', () => {
+  it('turns 셔틀버스 on and off, with its dot under the button while it is on', async () => {
     const user = await openMain();
     await press(user, LAYERS);
 
     await user.press(toggle('셔틀버스 켜기'));
+    expect(toggle('셔틀버스 끄기')).toHaveTextContent('셔틀버스ON');
+    expect(toggle('셔틀버스 끄기')).toHaveStyle({ backgroundColor: '#6B46C1' });
+    expect(found.getByTestId('layer-dot', { includeHiddenElements: true })).toHaveStyle({ backgroundColor: '#6B46C1' });
+    expect(screen.queryByText(NOT_READY)).toBeNull();
 
-    expect(screen.getByText(NOT_READY)).toBeVisible();
+    await user.press(toggle('셔틀버스 끄기'));
     expect(toggle('셔틀버스 켜기')).toHaveTextContent('셔틀버스OFF');
+    expect(found.queryByTestId('layer-dot', { includeHiddenElements: true })).toBeNull();
   });
 
   it('appears without rising where the phone asks for less motion', async () => {

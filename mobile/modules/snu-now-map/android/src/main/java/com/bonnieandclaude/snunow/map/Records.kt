@@ -46,11 +46,17 @@ class ThingRecord : Record {
   @Field val glideMs: Double = 0.0
 }
 
-// How the map draws what the interface names no colour or width for, from the design system's tokens. The app always
+// A line through its points in order, in a colour and a width in points. Lines are kept by their `id`.
+class LineRecord : Record {
+  @Field val id: String = ""
+  @Field val points: List<PositionRecord> = emptyList()
+  @Field val color: String = "#000000"
+  @Field val width: Double = 1.0
+}
+
+// How the map draws what the interface names no colour or size for, from the design system's tokens. The app always
 // sends these; the defaults only let the record be made.
 class LooksRecord : Record {
-  @Field val routeColor: String = "#2F6BFF"
-  @Field val routeWidth: Double = 5.0
   @Field val textColor: String = "#0E1330"
   @Field val textHaloColor: String = "#FFFFFF"
   @Field val textSize: Double = 11.0

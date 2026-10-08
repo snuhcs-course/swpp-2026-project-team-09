@@ -74,11 +74,17 @@ struct ThingRecord {
   }
 }
 
-// How the map draws what the interface names no colour or width for, from the design system's tokens. The app always
+// A line through its points in order, in a colour and a width in points. Lines are kept by their `id`.
+struct LineRecord: Record {
+  @Field var id: String = ""
+  @Field var points: [PositionRecord] = []
+  @Field var color: String = "#000000"
+  @Field var width: Double = 1
+}
+
+// How the map draws what the interface names no colour or size for, from the design system's tokens. The app always
 // sends these; the defaults only let the record be made.
 struct LooksRecord: Record {
-  @Field var routeColor: String = "#2F6BFF"
-  @Field var routeWidth: Double = 5
   @Field var textColor: String = "#0E1330"
   @Field var textHaloColor: String = "#FFFFFF"
   @Field var textSize: Double = 11

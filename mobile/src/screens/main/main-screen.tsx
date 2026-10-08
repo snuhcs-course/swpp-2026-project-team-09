@@ -3,22 +3,24 @@ import { type ReactElement, type ReactNode, useMemo, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { now } from '@/clock';
+import type { LatLng } from '@/api/types';
 import { color, useNotReadyToast, useToastAbove } from '@/design-system';
 import { nextMeal } from '@/features/dining/adapter';
 import { useDiningCards } from '@/features/dining/use-dining';
 import type { CardView } from '@/features/map/adapter';
 import { useMapCards } from '@/features/map/use-map-cards';
-import { CAMPUS_BOUNDS, Map, MAX_ZOOM, MIN_ZOOM } from '@/map';
-import { BottomControls } from './bottom-controls';
+import { type ShuttleLayer, useShuttle } from '@/features/shuttle/use-shuttle';
+import { CAMPUS_BOUNDS, Map, type MapLine, MAX_ZOOM, MIN_ZOOM } from '@/map';
 import { Card } from './card';
 import { FriendList } from './friend-list';
-import { LayerControls, useLayerStack } from './layers';
-import { listsTop, mapInset, type Room, takenUnderToast, takenUnderToastOverCard } from './layout';
+import { useLayerStack } from './layers';
+import { listsTop, mapInset, ROUTE_PADDING, type Room, takenUnderToast, takenUnderToastOverCard } from './layout';
 import { LocationExplanation } from './location-explanation';
+import { MapBottom, takenBy } from './map-bottom';
 import { QuestList } from './quest-list';
 import { type MainMap, useMainMap } from './use-main-map';
 import { type Me, useMe } from './use-me';
-import { type MainRoute, ROUTE_STYLE, useRoute } from './use-route';
+import { type MainRoute, useRoute } from './use-route';
 import { type Selection, useSelection } from './use-selection';
 import { type Things, useThings } from './use-things';
 import { ZoomControl } from './zoom-control';
@@ -40,6 +42,8 @@ interface SelectedCardProps {
   card: CardView;
   map: MainMap;
   route: MainRoute;
+  // The shuttle's line, which "노선 보기" brings into view.
+  shuttleLine: readonly LatLng[];
   onClose: () => void;
   onHeight: (height: number) => void;
   // A 식당's card sits at the top of the map, without "가까이 보기".
@@ -73,9 +77,9 @@ function OverMap({ children, onStage }: OverMapProps): ReactElement {
 
 // The card of the selected thing, with what its buttons do. "가까이 보기" is offered below the "names" level of detail
 // and brings the camera to the "close" level, keeping the card. "길찾기" closes the card once the route is asked for.
-// "메뉴 보기" opens the menu panel at the restaurant. Every other button belongs to another task and says that it is
-// not ready.
-function SelectedCard({ card, map, route, onClose, onHeight, top }: SelectedCardProps): ReactElement {
+// "메뉴 보기" opens the menu panel at the restaurant. "노선 보기" brings the shuttle's whole line into view and closes
+// the card. Every other button belongs to another task and says that it is not ready.
+function SelectedCard({ card, map, route, shuttleLine, onClose, onHeight, top }: SelectedCardProps): ReactElement {
   const showNotReady = useNotReadyToast();
   const { top: inset } = useSafeAreaInsets();
   const { primary } = card;
@@ -89,8 +93,14 @@ function SelectedCard({ card, map, route, onClose, onHeight, top }: SelectedCard
         map.goTo(card.position, 'close');
       }}
       onPrimary={() => {
+        if (primary === null) {
+          return;
+        }
         if (primary.action === 'menu') {
           openMenus(primary.restaurant);
+        } else if (primary.action === 'shuttle-line') {
+          map.fitTo(shuttleLine, ROUTE_PADDING);
+          onClose();
         } else if (primary.action !== 'route') {
           showNotReady();
         } else if (route.routeTo(card)) {
@@ -129,13 +139,13 @@ interface MainMapViewProps {
   map: MainMap;
   me: Me;
   things: Things;
-  route: MainRoute;
+  lines: readonly MapLine[];
   cardHeight: number | null;
   onPress: (id: string) => void;
 }
 
-// The map with the things of the cards, the User's own Avatar and the route. Its credit opens the sources of its data.
-function MainMapView({ map, me, things, route, cardHeight, onPress }: MainMapViewProps): ReactElement {
+// The map with the things of the cards, the User's own Avatar and the lines. Its credit opens the sources of its data.
+function MainMapView({ map, me, things, lines, cardHeight, onPress }: MainMapViewProps): ReactElement {
   return (
     <Map
       avatars={[...things.avatars, ...me.avatars]}
@@ -150,18 +160,22 @@ function MainMapView({ map, me, things, route, cardHeight, onPress }: MainMapVie
       }}
       onFitZoom={map.onFitZoom}
       onPress={onPress}
+      lines={lines}
       ref={map.ref}
-      route={route.line}
-      routeStyle={ROUTE_STYLE}
     />
   );
 }
 
-// The map's cards, and the 식당 layer's while it is on.
-function useCards(dining: boolean): readonly CardView[] {
+// The map's cards, and the 식당 layer's and the shuttle layer's while they are on.
+function useCards(dining: boolean, shuttle: ShuttleLayer): readonly CardView[] {
   const mapCards = useMapCards().data ?? NO_CARDS;
   const diningCards = useDiningCards(dining);
-  return useMemo(() => [...mapCards, ...diningCards], [mapCards, diningCards]);
+  return useMemo(() => [...mapCards, ...diningCards, ...shuttle.cards], [mapCards, diningCards, shuttle.cards]);
+}
+
+// The shuttle's line under the walking route.
+function useLines(shuttle: ShuttleLayer, route: MainRoute): readonly MapLine[] {
+  return useMemo(() => [...shuttle.lines, ...(route.line === null ? [] : [route.line])], [shuttle.lines, route.line]);
 }
 
 // The friend list and the Quest list, which give way to a card at the top.
@@ -174,16 +188,16 @@ function Lists({ hidden, map, room, selection }: { hidden: boolean } & ListProps
   );
 }
 
-// The room the parts over the map have, and the toast's place. An open card's height counts only for a card at the
-// bottom; a card that opens counts from the last one's until it is laid out.
-function useRoom(bottomCard: boolean): {
+// The room the parts over the map have, and the toast's place. What is at the bottom card's place counts: a card at
+// the bottom, or the shuttle's notice; one that appears counts from the last one's height until it is laid out.
+function useRoom(atBottom: boolean): {
   room: Room;
   setStage: (stage: Room['stage']) => void;
   setCardHeight: (height: number) => void;
 } {
   const [cardHeight, setCardHeight] = useState(0);
   const [stage, setStage] = useState<Room['stage']>(null);
-  const room: Room = { stage, cardHeight: bottomCard ? cardHeight : null };
+  const room: Room = { stage, cardHeight: atBottom ? cardHeight : null };
   useToastOverMap(room.cardHeight);
   return { room, setStage, setCardHeight };
 }
@@ -206,28 +220,28 @@ export function MainScreen(): ReactElement {
   const map = useMainMap();
   const me = useMe(map);
   const stack = useLayerStack(inFront);
-  const cards = useCards(stack.layers.dining);
+  const shuttle = useShuttle(stack.layers.shuttle);
+  const cards = useCards(stack.layers.dining, shuttle);
   const selection = useSelection(cards, inFront);
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
   const route = useRoute(map, me);
-  // A 식당's card sits at the top: the lists give way to it, and what is at the bottom stays.
-  const topCard = selection.selected?.kind === 'dining';
-  const bottomCard = selection.open && !topCard;
-  const { room, setStage, setCardHeight } = useRoom(bottomCard);
+  const lines = useLines(shuttle, route);
+  const taken = takenBy(selection.selected, shuttle.serviceHours);
+  const { room, setStage, setCardHeight } = useRoom(taken.bottomCard || taken.notice !== null);
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
         <MainMapView
           cardHeight={room.cardHeight}
+          lines={lines}
           map={map}
           me={me}
           onPress={selection.select}
-          route={route}
           things={things}
         />
         <OverMap onStage={setStage}>
-          <Lists hidden={topCard} map={map} room={room} selection={selection} />
-          {bottomCard || stack.open ? null : <MainZoomControl map={map} me={me} />}
+          <Lists hidden={taken.topCard} map={map} room={room} selection={selection} />
+          {taken.bottomCard || taken.notice !== null || stack.open ? null : <MainZoomControl map={map} me={me} />}
           {selection.selected === null ? null : (
             <SelectedCard
               card={selection.selected}
@@ -235,11 +249,11 @@ export function MainScreen(): ReactElement {
               onClose={selection.close}
               onHeight={setCardHeight}
               route={route}
-              top={topCard}
+              shuttleLine={shuttle.line}
+              top={taken.topCard}
             />
           )}
-          <BottomControls cardOpen={bottomCard} room={room} />
-          {bottomCard ? null : <LayerControls onMenus={openMenus} stack={stack} />}
+          <MapBottom onMenus={openMenus} onNoticeHeight={setCardHeight} room={room} stack={stack} taken={taken} />
         </OverMap>
       </View>
       <LocationExplanation blocked={me.blocked} onAllow={me.allow} onLater={me.later} visible={me.explaining} />
