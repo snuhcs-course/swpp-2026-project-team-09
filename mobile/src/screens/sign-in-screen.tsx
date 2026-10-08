@@ -1,7 +1,7 @@
 import { type ReactElement, useEffect } from 'react';
 import { AccessibilityInfo, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { color, font, space, text } from '@/design-system';
+import { Button, color, font, space, text } from '@/design-system';
 import { Drawing, SignInButton } from './sign-in-button';
 import { type SignInPhase, useSignIn } from './use-sign-in';
 
@@ -11,7 +11,8 @@ const FRAME_WIDTH = 390;
 const FRAME_BARS = { top: 44, bottom: 34 };
 const FRAME_FOOT = 36;
 const COPY_TOP = 560;
-const COPY_HEIGHT = 60;
+// The headline, the line under it and, below them, the link to another account with its gap.
+const COPY_HEIGHT = 108;
 
 const COPY: Record<SignInPhase, { headline: string; line: string }> = {
   default: { headline: '서울대 계정으로 로그인', line: '@snu.ac.kr' },
@@ -20,7 +21,12 @@ const COPY: Record<SignInPhase, { headline: string; line: string }> = {
   failed: { headline: '로그인하지 못했어요', line: '잠시 후 다시 시도해 주세요' },
 };
 
-function Copy({ phase }: { phase: SignInPhase }): ReactElement {
+interface CopyProps {
+  phase: SignInPhase;
+  onAnotherAccount: () => void;
+}
+
+function Copy({ phase, onAnotherAccount }: CopyProps): ReactElement {
   const { headline, line } = COPY[phase];
   const refused = phase === 'not-snu-account' || phase === 'failed';
   // iOS has no live regions: the refusal is announced by hand. Android and the web read the region below.
@@ -41,11 +47,18 @@ function Copy({ phase }: { phase: SignInPhase }): ReactElement {
       ) : (
         <Text style={styles.line}>{line}</Text>
       )}
+      {/* For a phone whose quick sheet lists no SNU account: Google's own chooser, which can add one. While the
+          account is checked there is nothing to start. */}
+      {phase === 'checking' ? null : (
+        <Button centred onPress={onAnotherAccount} variant="ghost">
+          다른 서울대 계정으로 로그인
+        </Button>
+      )}
     </View>
   );
 }
 
-// Where a User signs in with the SNU Google account: one button and what is happening.
+// Where a User signs in with the SNU Google account: one button, what is happening, and a link to another account.
 export function SignInScreen(): ReactElement {
   const insets = useSafeAreaInsets();
   const { phase, start } = useSignIn();
@@ -65,9 +78,19 @@ export function SignInScreen(): ReactElement {
             {/* The drawing's picture has a white ground. It lies under the button, so that the ring and the shadow
                 around the button are whole where the two meet. */}
             <Drawing refused={phase === 'not-snu-account' || phase === 'failed'} />
-            <SignInButton checking={phase === 'checking'} onPress={start} />
+            <SignInButton
+              checking={phase === 'checking'}
+              onPress={(): void => {
+                start('phone-accounts');
+              }}
+            />
           </View>
-          <Copy phase={phase} />
+          <Copy
+            onAnotherAccount={(): void => {
+              start('chooser');
+            }}
+            phase={phase}
+          />
         </View>
       </View>
     </ScrollView>
