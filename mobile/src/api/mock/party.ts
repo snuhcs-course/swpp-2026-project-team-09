@@ -27,6 +27,7 @@ function questOf(summary: QuestSummary, next: RecruitingQuest['nextSubQuest'] | 
         ? []
         : [{ ...next, attending: false, completion: 'by_hand', cancelled: false, done: false, ended: false }],
     classQuest: false,
+    waitingJoinRequests: 0,
     board,
     description,
     createdAt,
@@ -57,6 +58,7 @@ function madeOf({ title, description, capacity, joinPolicy, board, subQuest }: Q
       },
     ],
     classQuest: false,
+    waitingJoinRequests: 0,
     board: board ?? null,
     description,
     createdAt: frameTime('13:37'),

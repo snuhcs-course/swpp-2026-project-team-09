@@ -68,6 +68,7 @@ describe('Making a Quest of one’s own', () => {
         },
       ],
       classQuest: false,
+      waitingJoinRequests: 0,
     });
     expect((await getQuests(app, user)).body).toEqual([response.body]);
   });

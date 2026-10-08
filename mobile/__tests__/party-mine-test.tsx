@@ -4,6 +4,7 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal, type Reply } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { socketServer } from './support/live';
 import { pass, screen, shownAddress } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
@@ -147,6 +148,39 @@ describe('a card of 내 파티', () => {
     await user.press(screen.getByRole('button', { name: MY_HIKE.title }));
 
     expect(shownAddress()).toBe(`/room/${MY_HIKE.id}`);
+  });
+});
+
+describe('the requests to join waiting on a card of 내 파티', () => {
+  it('shows their number on a Quest the User leads, and nothing when none waits', async () => {
+    setAnswers({ quests: [DINNER, { ...MY_HIKE, waitingJoinRequests: 2 }] });
+    await openAt('/party?tab=mine');
+
+    expect(card(MY_HIKE.title).getByLabelText('기다리는 참여 신청 2건')).toHaveTextContent('2');
+    expect(card(DINNER.title).queryByLabelText(/기다리는 참여 신청/u)).toBeNull();
+  });
+
+  it('follows the requests after quests-changed, and goes when none waits', async () => {
+    setAnswers({ quests: [{ ...MY_HIKE, waitingJoinRequests: 1 }] });
+    await openAt('/party?tab=mine');
+    await socketServer((socket) => {
+      socket.accept();
+    });
+    expect(card(MY_HIKE.title).getByLabelText('기다리는 참여 신청 1건')).toBeVisible();
+
+    setAnswers({ quests: [{ ...MY_HIKE, waitingJoinRequests: 3 }] });
+    await socketServer((socket) => {
+      socket.send('quests-changed');
+    });
+    await pass(500);
+    expect(card(MY_HIKE.title).getByLabelText('기다리는 참여 신청 3건')).toHaveTextContent('3');
+
+    setAnswers({ quests: [{ ...MY_HIKE, waitingJoinRequests: 0 }] });
+    await socketServer((socket) => {
+      socket.send('quests-changed');
+    });
+    await pass(500);
+    expect(card(MY_HIKE.title).queryByLabelText(/기다리는 참여 신청/u)).toBeNull();
   });
 });
 
