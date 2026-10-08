@@ -530,9 +530,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
 - **The shuttle layer** (`src/features/shuttle/`, the `Main` frame). Turning 셔틀버스 on fetches the route
   (`GET /shuttle`) and the vehicles (`GET /shuttle/vehicles`), every time; a failure of the route shows nothing and
   says "셔틀버스 정보를 불러오지 못했어요", and a failure of the vehicles alone leaves the route until the socket's next
-  set. The route's line is drawn purple, 3 wide, dashed 8 and 6, under every marker; each stop is the shuttle's pin
-  of `MapPin`, with its name under it from the `names` level; each vehicle in service is the same pin, an Avatar
-  above the stops, with "운행 중" under it. A stop's card says "셔틀버스 · 교내 순환", "{stop} 정류장" and the next stop
+  set. The route's line is drawn purple, 3 wide, dashed 8 and 6, under every marker; each stop is the shuttle's dot
+  of `MapDot`, with its name under it from the `names` level; each vehicle in service is the shuttle's pin of
+  `MapPin`, an Avatar above the stops, with "운행 중" under it, so that a vehicle standing at its stop is seen. A stop's card says "셔틀버스 · 교내 순환", "{stop} 정류장" and the next stop
   in loop order, and has no button but "가까이 보기"; a vehicle's says "셔틀버스 · 운행 중", "교내 순환 셔틀" and
   "{stop}에 있어요 · 다음 정류장 {next}", follows the vehicle's sets and closes when it goes, and "노선 보기" fits the
   camera to the whole line and closes the card. Outside weekdays from 08:00 to 21:00 in Korea's time
@@ -1307,7 +1307,10 @@ of the design system's tokens. How it keeps the rules:
   moves the camera back inside, at once, and reports only a camera inside them.
 - **Markers and Avatars** are labels on two layers, the Avatars' above the markers', ranked by `order` and their
   place in the list. A label is drawn once its picture is there; its `text` is the SDK's own text under it. An Avatar
-  glides at an even speed, from where it is shown.
+  glides at an even speed, from where it is shown. A press goes to the thing whose picture is drawn where the finger
+  came down, an Avatar before a marker: the SDK would give it to the label whose whole picture, clear room included,
+  holds the point, so a small pin beside an Avatar could not be pressed. Where no picture is drawn, as on a label's
+  text, the SDK's label takes it.
 - **Lines** are the SDK's route lines, under the labels, one for each `id`: a new one is added, a kept one whose
   points, colour or width changed takes the new ones (`changeSegments`), and one no longer listed is removed. Each
   line's z order is its place in the list, so the later is on top. A line is solid, in its colour and width: the
@@ -1327,7 +1330,10 @@ of the design system's tokens. How it keeps the rules:
   places it 8 from the bottom right of the whole view and does not read `inset` yet, which `native-map.tsx` hands
   it with all four sides: until it does, the main screen's controls cover the logo.
 - **The screen**: the module starts the SDK with the key when the app starts, and pauses and resumes each map when
-  the app leaves and comes back to the screen.
+  the app leaves and comes back to the screen. A map whose view leaves the window, as when another tab or a screen
+  over the map hides it, keeps its engine: the SDK would pause its drawing there and never take it up again, leaving
+  the map black, so the module tells it that the map is finished by hand (`setFinishManually`) and finishes it when
+  the view is destroyed.
 
 The module cannot be tested with Jest: Jest runs without it. It is checked by hand on `/map-check`, against the
 device check of the spec. `native-map.tsx` is tested with the module's view mocked

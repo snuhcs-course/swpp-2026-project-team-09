@@ -123,11 +123,16 @@ function Days({ today, choice, onChange }: PartsProps): ReactElement {
   );
 }
 
-// The hours and the minutes, side by side.
+// Where a list opens: its selected cell in the middle, as near as the list's ends allow.
+function openingAt(index: number): { x: number; y: number } {
+  return { x: 0, y: Math.max(0, index * CELL_HEIGHT - (LIST_HEIGHT - CELL_HEIGHT) / 2) };
+}
+
+// The hours and the minutes, side by side, each list opening on the choice.
 function Times({ choice, onChange }: Omit<PartsProps, 'today'>): ReactElement {
   return (
     <View style={styles.lists}>
-      <ScrollView accessibilityLabel="시" style={styles.list}>
+      <ScrollView accessibilityLabel="시" contentOffset={openingAt(choice.hour)} style={styles.list}>
         {HOURS.map((hour) => (
           <Cell
             key={hour}
@@ -139,7 +144,7 @@ function Times({ choice, onChange }: Omit<PartsProps, 'today'>): ReactElement {
           />
         ))}
       </ScrollView>
-      <ScrollView accessibilityLabel="분" style={styles.list}>
+      <ScrollView accessibilityLabel="분" contentOffset={openingAt(MINUTES.indexOf(choice.minute))} style={styles.list}>
         {MINUTES.map((minute) => (
           <Cell
             key={minute}
@@ -206,6 +211,7 @@ export function DateTimeSheet({ open, title = '언제', value, onClose, onPick }
 const DAY_WIDTH = 52;
 const DAY_HEIGHT = 60;
 const LIST_HEIGHT = 200;
+const CELL_HEIGHT = 44;
 
 const styles = StyleSheet.create({
   body: { gap: 14, paddingHorizontal: space[4] },
@@ -228,7 +234,13 @@ const styles = StyleSheet.create({
   dayNumber: { fontFamily: font.bold, fontSize: 18, lineHeight: 24 },
   lists: { flexDirection: 'row', gap: 10, height: LIST_HEIGHT },
   list: { flex: 1, borderWidth: 1, borderColor: color.border, borderRadius: radius.md },
-  cell: { alignItems: 'center', justifyContent: 'center', minHeight: 44, borderBottomWidth: 1, borderColor: '#F0F1F5' },
+  cell: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: CELL_HEIGHT,
+    borderBottomWidth: 1,
+    borderColor: '#F0F1F5',
+  },
   cellWords: { fontFamily: font.medium, fontSize: 16, lineHeight: 22, color: color.ink },
   selected: { borderColor: color.snuBlue, backgroundColor: color.snuBlue },
   selectedWords: { fontFamily: font.bold, color: color.onPrimary },

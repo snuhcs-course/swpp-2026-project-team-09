@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.net.Uri
 import android.util.Log
 import android.view.animation.LinearInterpolator
+import com.kakao.vectormap.KakaoMap
 import com.kakao.vectormap.LatLng
 import com.kakao.vectormap.label.Label
 import com.kakao.vectormap.label.LabelLayer
@@ -25,6 +26,10 @@ fun Position.toLatLng(): LatLng = LatLng.from(latitude, longitude)
 class Pictures(private val manager: LabelManager, private val density: Float) {
   // The files that could not be read, so that each is tried once and not on every change of the lists.
   private val unreadable = HashSet<String>()
+  // Each style's picture, by the style's name, for telling where a picture is clear.
+  private val bitmaps = HashMap<String, Bitmap>()
+
+  fun bitmapOf(name: String): Bitmap? = bitmaps[name]
 
   private fun pixels(points: Double): Float = (points * density).toFloat()
 
@@ -41,6 +46,7 @@ class Pictures(private val manager: LabelManager, private val density: Float) {
       unreadable.add(uri)
       return null
     }
+    bitmaps[name] = bitmap
     // The file holds the phone's pixels, so the picture is drawn pixel for pixel, at its size in points.
     var style = LabelStyle.from(bitmap)
       .setAnchorPoint(thing.anchorX.toFloat(), thing.anchorY.toFloat())
@@ -93,6 +99,8 @@ class Things(private val layer: LabelLayer, private val pictures: Pictures) {
     var style: String? = null,
     var text: String? = null,
     var rank: Long = 0,
+    var anchorX: Float = 0.5f,
+    var anchorY: Float = 0.5f,
   )
 
   private val held = HashMap<String, Held>()
@@ -105,6 +113,26 @@ class Things(private val layer: LabelLayer, private val pictures: Pictures) {
     val ranks = LongArray(things.size)
     things.indices.sortedBy { things[it].order }.forEachIndexed { rank, index -> ranks[index] = rank.toLong() }
     things.forEachIndexed { index, thing -> update(thing, ranks[index], looks) }
+  }
+
+  // The thing whose picture is drawn at a point of the view, in pixels: of those whose picture is not clear there, the
+  // one ranked highest. The SDK answers a press with the label whose whole picture holds the point, clear room and all,
+  // so a small pin beside an Avatar could not be pressed.
+  fun at(map: KakaoMap, x: Float, y: Float): String? = held.entries
+    .filter { (_, one) -> one.label != null }
+    .sortedByDescending { (_, one) -> one.rank }
+    .firstOrNull { (_, one) -> drawnAt(map, one, x, y) }
+    ?.key
+
+  private fun drawnAt(map: KakaoMap, one: Held, x: Float, y: Float): Boolean {
+    val bitmap = one.style?.let { pictures.bitmapOf(it) } ?: return false
+    val point = map.toScreenPoint(one.shown.toLatLng()) ?: return false
+    val px = (x - point.x + one.anchorX * bitmap.width).toInt()
+    val py = (y - point.y + one.anchorY * bitmap.height).toInt()
+    if (px !in 0 until bitmap.width || py !in 0 until bitmap.height) {
+      return false
+    }
+    return Color.alpha(bitmap.getPixel(px, py)) >= SOLID_ALPHA
   }
 
   fun stop() {
@@ -147,8 +175,15 @@ class Things(private val layer: LabelLayer, private val pictures: Pictures) {
       }
     }
     one.style = styles.styleId
+    one.anchorX = thing.anchorX.toFloat()
+    one.anchorY = thing.anchorY.toFloat()
     one.text = text
     one.rank = rank
+  }
+
+  private companion object {
+    // A pixel at least this opaque is part of what a picture shows; a fainter one is its shadow or its clear room.
+    const val SOLID_ALPHA = 128
   }
 
   // At an even speed, from where it is shown to its target.

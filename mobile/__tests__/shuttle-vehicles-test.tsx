@@ -95,6 +95,8 @@ describe('a vehicle', () => {
     await openShuttle();
 
     expect(placeOf(vehicleMarker(GATE))).toEqual(placeOf(stopMarker(GATE)));
+    // A pin over the stop's dot, so that it is seen.
+    expect(screen.getByRole('button', { name: vehicleMarker(GATE) })).toHaveProp('testID', 'shuttle:pin');
   });
 
   it('travels to a new stop along the line in 10 seconds, through its bend', async () => {

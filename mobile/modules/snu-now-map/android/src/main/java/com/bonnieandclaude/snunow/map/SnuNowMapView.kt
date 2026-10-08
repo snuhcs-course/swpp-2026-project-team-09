@@ -2,8 +2,10 @@ package com.bonnieandclaude.snunow.map
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.PointF
 import android.os.SystemClock
 import android.util.Log
+import android.view.MotionEvent
 import com.kakao.vectormap.GestureType
 import com.kakao.vectormap.KakaoMap
 import com.kakao.vectormap.KakaoMapReadyCallback
@@ -83,6 +85,8 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
   // Until when a move this view started is still on its way. The SDK takes a moment to begin a move and says that a
   // move ended as soon as another starts, so a camera measured before then is not where it will rest.
   private var movingUntil = 0L
+  // Where the last touch began, in the view's pixels, to tell which thing a press was on.
+  private var pressedAt: PointF? = null
 
   init {
     addView(mapView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
@@ -147,6 +151,20 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
     go(rules, now, rules.fit(points, padding) ?: return, animated)
   }
 
+  override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+    if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+      pressedAt = PointF(event.x, event.y)
+    }
+    return super.dispatchTouchEvent(event)
+  }
+
+  // The thing drawn where the press began: an Avatar above a marker.
+  private fun thingPressed(): String? {
+    val kakaoMap = map ?: return null
+    val at = pressedAt ?: return null
+    return avatarThings?.at(kakaoMap, at.x, at.y) ?: markerThings?.at(kakaoMap, at.x, at.y)
+  }
+
   override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
     super.onSizeChanged(w, h, oldw, oldh)
     post { if (opened) rest() else open() }
@@ -176,6 +194,10 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
         override fun getPosition(): LatLng = bounds.middle.toLatLng()
       },
     )
+    // Left to itself, the SDK pauses its drawing when the view leaves the window, as when another tab or a screen
+    // over the map hides it, and does not take it up again when the view comes back: the map stays black. This view
+    // finishes the map itself when it is destroyed, so the SDK is told not to.
+    mapView.setFinishManually(true)
   }
 
   private fun ready(kakaoMap: KakaoMap) {
@@ -191,9 +213,12 @@ class SnuNowMapView(context: Context, appContext: AppContext) : ExpoView(context
     markerThings = layer(labels, "markers", MARKER_Z)?.let { Things(it, pictures) }
     avatarThings = layer(labels, "avatars", AVATAR_Z)?.let { Things(it, pictures) }
     kakaoMap.setOnLabelClickListener { _, _, label ->
-      val id = label.tag as? String
-      if (id != null) {
-        post { onThingPress(mapOf("id" to id)) }
+      val pressed = label.tag as? String
+      post {
+        val id = thingPressed() ?: pressed
+        if (id != null) {
+          onThingPress(mapOf("id" to id))
+        }
       }
       true
     }

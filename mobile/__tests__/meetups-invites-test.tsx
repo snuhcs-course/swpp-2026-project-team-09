@@ -58,7 +58,7 @@ describe('a received Meetup', () => {
     for (const words of ['이서연님이 비공개 파티에 초대했어요', '학관 점심', '오늘 18:00 · 학생회관']) {
       expect(screen.getByText(words)).toBeVisible();
     }
-    expect(screen.getByText('파티장이 파티를 활성화하면, 수락한 멤버끼리 위치를 공유해요.')).toBeVisible();
+    expect(screen.getByText('멤버가 파티를 활성화하면, 수락한 멤버끼리 위치를 공유해요.')).toBeVisible();
     await socketServer((socket) => {
       socket.accept();
     });
