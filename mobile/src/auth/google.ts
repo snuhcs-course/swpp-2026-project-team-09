@@ -8,6 +8,10 @@ import type { GoogleOneTapSignIn } from 'react-native-nitro-google-signin';
 
 export type GoogleAnswer = { kind: 'token'; idToken: string } | { kind: 'cancelled' };
 
+// How Google is asked for the account: the quick sheet of the accounts on the phone, or Google's own chooser, which
+// can also add an account that is not on the phone yet.
+export type GoogleWay = 'phone-accounts' | 'chooser';
+
 // The main server's client, of type "Web application". Google issues the ID token for it.
 function webClientId(): string {
   return process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
@@ -55,15 +59,16 @@ function google(): typeof GoogleOneTapSignIn {
   return loaded.GoogleOneTapSignIn;
 }
 
-// Opens Google's account sheet and gives the chosen account's ID token. A User who closes the sheet is not a failure.
-// Anything else throws: no Google Play services, a client that Google does not know, no network.
-export async function askGoogle(): Promise<GoogleAnswer> {
+// Opens Google's account sheet, or its chooser when asked that way, and gives the chosen account's ID token. A User
+// who closes either is not a failure. Anything else throws: no Google Play services, a client that Google does not
+// know, no network.
+export async function askGoogle(way: GoogleWay = 'phone-accounts'): Promise<GoogleAnswer> {
   const signIn = google();
   await signIn.checkPlayServices();
   // `createAccount` is the sheet with every Google account on the phone. A phone with no Google account has nothing
-  // to list there, and Google's own dialog, which can add one, opens instead.
-  let response = await signIn.createAccount();
-  if (response.type === 'noSavedCredentialFound') {
+  // to list there, and Google's own dialog, which can add one, opens instead. `presentExplicitSignIn` is that dialog.
+  let response = way === 'chooser' ? await signIn.presentExplicitSignIn() : await signIn.createAccount();
+  if (response.type === 'noSavedCredentialFound' && way === 'phone-accounts') {
     response = await signIn.presentExplicitSignIn();
   }
   if (response.type === 'cancelled') {
