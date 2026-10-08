@@ -50,6 +50,16 @@ async function openSheet(user: User): Promise<void> {
   await pass(500);
 }
 
+// The sheet, then the recruiting post of the Quest whose row is named so.
+async function openPostOf(name: RegExp): Promise<User> {
+  server.on('GET /quest-join-requests', { status: 200, body: [] });
+  const user = await openEvents();
+  await openSheet(user);
+  await user.press(screen.getByRole('button', { name }));
+  await pass(500);
+  return user;
+}
+
 describe('the sheet of the Quests gathering for an event', () => {
   it("lists the User's own Quest first, then the others with their Leaders", async () => {
     answerEvents(server, { quests: [DINNER, MY_CAREER] });
@@ -111,35 +121,44 @@ describe('the sheet of an event that nothing gathers for, and its rows', () => {
 });
 
 describe('joining from the sheet', () => {
-  it('joins an Open Quest after the question, and opens its room', async () => {
+  it("opens the recruiting post of another's Quest, without asking first", async () => {
+    answerEvents(server);
+
+    await openPostOf(/^이서연/u);
+
+    expect(shownAddress()).toBe(`/post/${SEO_YEON_GOING.id}`);
+    expect(screen.queryByRole('header', { name: '모집 중인 파티 2' })).toBeNull();
+    expect(screen.getByText('이서연 · 모집자')).toBeVisible();
+    expect(screen.getByRole('header', { name: SEO_YEON_GOING.title })).toBeVisible();
+    expect(screen.getByRole('button', { name: '참여하기' })).toBeVisible();
+  });
+
+  it("joins an Open Quest with the post's 참여하기", async () => {
     answerEvents(server);
     server.on(`POST /quests/${SEO_YEON_GOING.id}/join`, { status: 201, body: { ...MY_CAREER, id: SEO_YEON_GOING.id } });
-    const user = await openEvents();
-    await openSheet(user);
+    const user = await openPostOf(/^이서연/u);
 
-    await user.press(screen.getByRole('button', { name: /^이서연/u }));
-    expect(screen.getByRole('header', { name: '‘AI 커리어 설명회’에 참여할까요?' })).toBeVisible();
-    expect(screen.getByText('멤버가 파티를 활성화하면, 수락한 멤버끼리 위치를 공유해요.')).toBeVisible();
+    await user.press(screen.getByRole('button', { name: '참여하기' }));
     await answer(user, '참여하기');
 
     expect(server.received(`POST /quests/${SEO_YEON_GOING.id}/join`)).toHaveLength(1);
     expect(toast()).toHaveTextContent('AI 커리어 설명회 참여 완료');
-    expect(shownAddress()).toBe(`/room/${SEO_YEON_GOING.id}`);
   });
 
-  it('asks the Leader of an Approval Quest', async () => {
+  it("asks the Leader of an Approval Quest with the post's 참여 신청", async () => {
     answerEvents(server);
     server.on('POST /quest-join-requests', { status: 201, body: requestFor(TAE_O_GOING, 'qjr1') });
-    const user = await openEvents();
-    await openSheet(user);
+    const user = await openPostOf(/^윤태오/u);
 
-    await user.press(screen.getByRole('button', { name: /^윤태오/u }));
+    await user.press(screen.getByRole('button', { name: '참여 신청' }));
     await answer(user, '참여 신청');
 
     expect(server.received('POST /quest-join-requests').map(({ body }) => body)).toEqual([{ questId: TAE_O_GOING.id }]);
     expect(toast()).toHaveTextContent('참여를 신청했어요');
   });
+});
 
+describe('a refusal on the post', () => {
   it.each([
     ['QUEST_FULL', '자리가 다 찼어요'],
     ['QUEST_ENDED', '이미 끝난 파티예요'],
@@ -147,11 +166,10 @@ describe('joining from the sheet', () => {
   ])('says why when joining is refused with %s', async (code, words) => {
     answerEvents(server);
     server.on(`POST /quests/${SEO_YEON_GOING.id}/join`, refusal(409, code));
-    const user = await openEvents();
-    await openSheet(user);
+    const user = await openPostOf(/^이서연/u);
     const asked = server.received('GET /quests/recruiting').length;
 
-    await user.press(screen.getByRole('button', { name: /^이서연/u }));
+    await user.press(screen.getByRole('button', { name: '참여하기' }));
     await answer(user, '참여하기');
 
     expect(toast()).toHaveTextContent(words);
