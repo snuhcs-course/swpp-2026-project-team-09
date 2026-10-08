@@ -151,8 +151,9 @@ export interface ApiClient {
   listMyJoinRequests: () => Promise<MyJoinRequest[]>;
   withdrawJoinRequest: (requestId: string) => Promise<void>;
   makeQuest: (making: QuestMaking, idempotencyKey: string) => Promise<Quest>;
-  // The User's Quest for the Global Event, Closed and titled as the event, made the first time.
-  attendGlobalEvent: (globalEventId: string) => Promise<Quest>;
+  // The User's Quest for the Global Event, Closed, made the first time with the title given or else the event's. A Quest
+  // the User already holds for it keeps its title.
+  attendGlobalEvent: (globalEventId: string, title?: string) => Promise<Quest>;
   changeQuest: (questId: string, change: QuestChange) => Promise<Quest>;
   inviteToQuest: (questId: string, userId: string) => Promise<void>;
   acceptInvitation: (invitationId: string) => Promise<Quest>;
@@ -239,7 +240,7 @@ export const apiClient: ApiClient = {
   listMyJoinRequests: () => chosen().listMyJoinRequests(),
   withdrawJoinRequest: (requestId) => chosen().withdrawJoinRequest(requestId),
   makeQuest: (making, key) => chosen().makeQuest(making, key),
-  attendGlobalEvent: (globalEventId) => chosen().attendGlobalEvent(globalEventId),
+  attendGlobalEvent: (globalEventId, title) => chosen().attendGlobalEvent(globalEventId, title),
   changeQuest: (questId, change) => chosen().changeQuest(questId, change),
   inviteToQuest: (questId, userId) => chosen().inviteToQuest(questId, userId),
   acceptInvitation: (invitationId) => chosen().acceptInvitation(invitationId),

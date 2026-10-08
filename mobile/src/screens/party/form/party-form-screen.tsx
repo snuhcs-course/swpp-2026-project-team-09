@@ -80,7 +80,8 @@ function usePreselected(eventId: string | null, pick: (event: FormEvent) => void
   }, [events, announcers, eventId, pick]);
 }
 
-// Choosing an event gives the form its title and time, and `어디서` its place; `행사 빼기` clears them.
+// Choosing an event gives the form its title and time, and `어디서` its place; `행사 빼기` clears the time and place and
+// leaves the title.
 function useEventPick(
   setForm: (change: (held: PartyForm) => PartyForm) => void,
   setWords: (words: string) => void,
@@ -170,12 +171,10 @@ function Where({ state }: { state: FormState }): ReactElement {
 interface FieldsProps {
   state: FormState;
   editing: boolean;
-  // A Quest for a Global Event keeps the event's title.
-  titleLocked: boolean;
   onChooseEvent: () => void;
 }
 
-function Fields({ state, editing, titleLocked, onChooseEvent }: FieldsProps): ReactElement {
+function Fields({ state, editing, onChooseEvent }: FieldsProps): ReactElement {
   const { form, change } = state;
   const open = form.visibility === 'public';
   return (
@@ -190,7 +189,6 @@ function Fields({ state, editing, titleLocked, onChooseEvent }: FieldsProps): Re
         />
       )}
       <TextField
-        disabled={titleLocked}
         label="제목"
         maxLength={30}
         onChangeText={(next) => {
@@ -254,7 +252,6 @@ function Form({ quest, eventId }: FormProps): ReactElement {
           setPicking(true);
         }}
         state={state}
-        titleLocked={(quest?.globalEvent ?? state.form.event) !== null}
       />
     </FullScreenPanel>
   );

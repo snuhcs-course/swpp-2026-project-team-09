@@ -38,8 +38,16 @@ export function storeEvent(
   });
 }
 
-export function attend(app: INestApplication<Server>, user: TestUser, globalEventId: string): request.Test {
-  return withAccessToken(request(app.getHttpServer()).post('/quests'), user.accessToken).send({ globalEventId });
+export function attend(
+  app: INestApplication<Server>,
+  user: TestUser,
+  globalEventId: string,
+  body: object = {},
+): request.Test {
+  return withAccessToken(request(app.getHttpServer()).post('/quests'), user.accessToken).send({
+    globalEventId,
+    ...body,
+  });
 }
 
 export function makeQuest(
