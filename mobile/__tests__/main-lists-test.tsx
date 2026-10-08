@@ -243,9 +243,9 @@ describe("a press on a class's row", () => {
 
     await press(user, CLASS_ROW);
 
-    // The Global Event stands on the class's building: its pin has its name, and the map moved.
+    // The Global Event stands on the class's building: it is a pin without words, and the map moved.
     expect(lookOf(EVENT)).toBe('official:pin');
-    expect(wordsUnder(EVENT, 'AI 커리어')).toBeVisible();
+    expect(wordsUnder(EVENT, 'AI 커리어')).toBeNull();
     expect(placeOf(EVENT)).not.toEqual(before);
     expect(screen.getByText('자료구조 · 301동 118호')).toBeVisible();
     await pass(2400);
