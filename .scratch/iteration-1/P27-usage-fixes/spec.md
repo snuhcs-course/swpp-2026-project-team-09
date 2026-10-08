@@ -1,6 +1,6 @@
 # P27: Fix what using the app turned up
 
-Status: ready-for-agent
+Status: resolved
 
 ## Problem Statement
 
