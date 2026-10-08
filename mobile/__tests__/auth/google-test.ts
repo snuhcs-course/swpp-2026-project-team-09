@@ -122,3 +122,23 @@ describe('asking Google', () => {
     expect(mockSignOut).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("asking Google's chooser", () => {
+  beforeEach(aBuildWithGoogle);
+
+  it("opens Google's chooser, which can add an account, when asked that way, and not the phone's sheet", async () => {
+    mockPresentExplicitSignIn.mockResolvedValue(success('another'));
+
+    expect(await askGoogle('chooser')).toEqual({ kind: 'token', idToken: 'another' });
+    expect(mockCheckPlayServices).toHaveBeenCalledTimes(1);
+    expect(mockCreateAccount).not.toHaveBeenCalled();
+  });
+
+  it('says "cancelled" when the User closes the chooser, and throws when it gives no account', async () => {
+    mockPresentExplicitSignIn.mockResolvedValue(CANCELLED);
+    expect(await askGoogle('chooser')).toEqual({ kind: 'cancelled' });
+
+    mockPresentExplicitSignIn.mockResolvedValue(NO_ACCOUNT);
+    await expect(askGoogle('chooser')).rejects.toThrow('Google gave no account');
+  });
+});

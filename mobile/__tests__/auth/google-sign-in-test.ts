@@ -79,6 +79,35 @@ describe('a sign-in with Google', () => {
   });
 });
 
+describe("a sign-in through Google's chooser", () => {
+  it("asks Google's chooser, and the phone's accounts when no way is named", async () => {
+    googleGives(SNU_TOKEN);
+
+    expect((await answered(signIn('chooser'))).outcome).toBe('signed-in');
+    expect(askGoogle).toHaveBeenLastCalledWith('chooser');
+
+    await answered(signIn());
+    expect(askGoogle).toHaveBeenLastCalledWith('phone-accounts');
+  });
+
+  it('refuses an account outside SNU as the sheet does, and ends in "cancelled" when the chooser is closed', async () => {
+    googleGives(GMAIL_TOKEN);
+    expect(await answered(signIn('chooser'))).toEqual({ outcome: 'not-snu-account' });
+    expect(forgetGoogle).toHaveBeenCalledTimes(1);
+
+    jest.mocked(askGoogle).mockResolvedValue({ kind: 'cancelled' });
+    expect(await answered(signIn('chooser'))).toEqual({ outcome: 'cancelled' });
+    expect((await readKept()).signedIn).toBe(false);
+  });
+
+  it('uses the mock where Google is not available', async () => {
+    jest.mocked(googleAvailable).mockReturnValue(false);
+
+    expect((await answered(signIn('chooser'))).outcome).toBe('signed-in');
+    expect(askGoogle).not.toHaveBeenCalled();
+  });
+});
+
 describe('a sign-in with Google that does not sign in', () => {
   it('ends in "cancelled" when the User closes the sheet', async () => {
     jest.mocked(askGoogle).mockResolvedValue({ kind: 'cancelled' });
