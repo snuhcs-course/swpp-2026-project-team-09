@@ -14,7 +14,6 @@ import {
   SectionHeader,
   space,
   text,
-  useNotReadyToast,
 } from '@/design-system';
 import { type QuestRowView, toQuestGroups } from '@/features/quests/adapter';
 import { useQuestRows } from '@/features/quests/use-quest-rows';
@@ -39,17 +38,13 @@ function QuestRow({ row, onPress }: { row: QuestRowView; onPress: () => void }):
 }
 
 // What a press on a row does. A class's row closes this screen and brings the map to the class's place, by the main
-// screen's address (`/main?quest=…`), as its row on the map does. Any other row would open its Party's room, which
-// belongs to another task.
-function usePress(): (row: QuestRowView) => void {
-  const showNotReady = useNotReadyToast();
-  return (row) => {
-    if (row.kind === 'class') {
-      router.dismissTo({ pathname: '/main', params: { quest: row.id } });
-    } else {
-      showNotReady();
-    }
-  };
+// screen's address (`/main?quest=…`), as its row on the map does. Any other row opens the Quest's room above it.
+function press(row: QuestRowView): void {
+  if (row.kind === 'class') {
+    router.dismissTo({ pathname: '/main', params: { quest: row.id } });
+  } else {
+    router.push(`/room/${row.id}`);
+  }
 }
 
 interface GroupsProps {
@@ -86,7 +81,6 @@ function Groups({ rows, onPress }: GroupsProps): ReactElement {
 export function QuestsScreen(): ReactElement {
   const { data, isPending, refetch } = useQuestRows();
   const [filter, setFilter] = useState<Filter>('all');
-  const press = usePress();
   const quests = data?.filter(({ ended }) => !ended);
   const classes = quests?.filter(({ kind }) => kind === 'class') ?? [];
   const parties = quests?.filter(({ kind }) => kind === 'party') ?? [];

@@ -160,7 +160,10 @@ export function givePhone(given: Given): Phone {
 
 // Starts the app for a User who finished Onboarding, and waits until the main screen has its data. `kept` adds to
 // what the phone keeps, such as an explanation answered earlier.
-export async function openMain(kept: Partial<Kept> = {}): Promise<ReturnType<typeof userEvent.setup>> {
+export async function openMain(
+  kept: Partial<Kept> = {},
+  more: Parameters<typeof startApp>[1] = {},
+): Promise<ReturnType<typeof userEvent.setup>> {
   await keep({
     signedIn: true,
     consented: true,
@@ -176,7 +179,7 @@ export async function openMain(kept: Partial<Kept> = {}): Promise<ReturnType<typ
     },
     ...kept,
   });
-  await startApp();
+  await startApp('/', more);
   // The loading screen first; the main screen asks for its data once it is shown.
   await pass(1000);
   await pass(500);

@@ -2,24 +2,25 @@ import { router, useIsFocused } from 'expo-router';
 import { type ReactElement, type ReactNode, useMemo, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { now } from '@/clock';
 import type { LatLng } from '@/api/types';
 import { color, useNotReadyToast, useToastAbove } from '@/design-system';
-import { nextMeal } from '@/features/dining/adapter';
 import { useDiningCards } from '@/features/dining/use-dining';
 import type { CardView } from '@/features/map/adapter';
 import { useMapCards } from '@/features/map/use-map-cards';
 import { type ShuttleLayer, useShuttle } from '@/features/shuttle/use-shuttle';
 import { CAMPUS_BOUNDS, Map, type MapLine, MAX_ZOOM, MIN_ZOOM } from '@/map';
+import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { Card } from './card';
 import { FriendList } from './friend-list';
 import { useLayerStack } from './layers';
 import { listsTop, mapInset, ROUTE_PADDING, type Room, takenUnderToast, takenUnderToastOverCard } from './layout';
 import { LocationExplanation } from './location-explanation';
-import { MapBottom, takenBy } from './map-bottom';
+import { MapBottom, openMenus, takenBy } from './map-bottom';
 import { QuestList } from './quest-list';
 import { type MainMap, useMainMap } from './use-main-map';
 import { type Me, useMe } from './use-me';
+import { useActivePartyRoom } from './use-active-party-room';
+import { useAskedPerson } from './use-asked-person';
 import { type MainRoute, useRoute } from './use-route';
 import { type Selection, useSelection } from './use-selection';
 import { type Things, useThings } from './use-things';
@@ -39,21 +40,15 @@ interface OverMapProps {
 }
 
 interface SelectedCardProps {
-  card: CardView;
+  selection: Selection;
   map: MainMap;
   route: MainRoute;
   // The shuttle's line, which "노선 보기" brings into view.
   shuttleLine: readonly LatLng[];
-  onClose: () => void;
+  onActiveParty: () => void;
   onHeight: (height: number) => void;
   // A 식당's card sits at the top of the map, without "가까이 보기".
   top: boolean;
-}
-
-// The menu panel at the meal served next, at a restaurant's section or at the top of the list.
-function openMenus(restaurant?: string): void {
-  const { date, meal } = nextMeal(now());
-  router.push({ pathname: '/menus', params: restaurant === undefined ? { date, meal } : { date, meal, restaurant } });
 }
 
 // What floats over the map, between the phone's status bar and the navigation: each child places itself there, by
@@ -75,13 +70,20 @@ function OverMap({ children, onStage }: OverMapProps): ReactElement {
   );
 }
 
-// The card of the selected thing, with what its buttons do. "가까이 보기" is offered below the "names" level of detail
+// The card of the selected thing, if any, with what its buttons do. "가까이 보기" is offered below the "names" level of detail
 // and brings the camera to the "close" level, keeping the card. "길찾기" closes the card once the route is asked for.
 // "메뉴 보기" opens the menu panel at the restaurant. "노선 보기" brings the shuttle's whole line into view and closes
-// the card. Every other button belongs to another task and says that it is not ready.
-function SelectedCard({ card, map, route, shuttleLine, onClose, onHeight, top }: SelectedCardProps): ReactElement {
+// the card. "파티 열기" and "참여하기" open a Quest's room, and "같이 갈 사람 찾기" 파티 만들기 for the Global Event. Every
+// other button belongs to another task and says that it is not ready.
+function SelectedCard(props: SelectedCardProps): ReactElement | null {
+  const { selection, map, route, shuttleLine, onActiveParty, onHeight, top } = props;
   const showNotReady = useNotReadyToast();
+  const openPartyCreate = useOpenPartyCreate();
   const { top: inset } = useSafeAreaInsets();
+  const { selected: card, close: onClose } = selection;
+  if (card === null) {
+    return null;
+  }
   const { primary } = card;
   return (
     <Card
@@ -101,6 +103,12 @@ function SelectedCard({ card, map, route, shuttleLine, onClose, onHeight, top }:
         } else if (primary.action === 'shuttle-line') {
           map.fitTo(shuttleLine, ROUTE_PADDING);
           onClose();
+        } else if (primary.action === 'room') {
+          router.push(`/room/${primary.questId}`);
+        } else if (primary.action === 'active-party') {
+          onActiveParty();
+        } else if (primary.action === 'recruit') {
+          openPartyCreate(primary.eventId);
         } else if (primary.action !== 'route') {
           showNotReady();
         } else if (route.routeTo(card)) {
@@ -167,10 +175,13 @@ function MainMapView({ map, me, things, lines, cardHeight, onPress }: MainMapVie
 }
 
 // The map's cards, and the 식당 layer's and the shuttle layer's while they are on.
-function useCards(dining: boolean, shuttle: ShuttleLayer): readonly CardView[] {
-  const mapCards = useMapCards().data ?? NO_CARDS;
+// `ready` once the map's own cards are known.
+function useCards(dining: boolean, shuttle: ShuttleLayer): { cards: readonly CardView[]; ready: boolean } {
+  const { data } = useMapCards();
+  const mapCards = data ?? NO_CARDS;
   const diningCards = useDiningCards(dining);
-  return useMemo(() => [...mapCards, ...diningCards, ...shuttle.cards], [mapCards, diningCards, shuttle.cards]);
+  const cards = useMemo(() => [...mapCards, ...diningCards, ...shuttle.cards], [mapCards, diningCards, shuttle.cards]);
+  return { cards, ready: data !== undefined };
 }
 
 // The shuttle's line under the walking route.
@@ -221,11 +232,13 @@ export function MainScreen(): ReactElement {
   const me = useMe(map);
   const stack = useLayerStack(inFront);
   const shuttle = useShuttle(stack.layers.shuttle);
-  const cards = useCards(stack.layers.dining, shuttle);
+  const { cards, ready } = useCards(stack.layers.dining, shuttle);
   const selection = useSelection(cards, inFront);
   const things = useThings(cards, map.detail, selection.selected?.id ?? null);
   const route = useRoute(map, me);
   const lines = useLines(shuttle, route);
+  const party = useActivePartyRoom();
+  useAskedPerson(ready ? cards : null, map, selection);
   const taken = takenBy(selection.selected, shuttle.serviceHours);
   const { room, setStage, setCardHeight } = useRoom(taken.bottomCard || taken.notice !== null);
   return (
@@ -242,20 +255,19 @@ export function MainScreen(): ReactElement {
         <OverMap onStage={setStage}>
           <Lists hidden={taken.topCard} map={map} room={room} selection={selection} />
           {taken.bottomCard || taken.notice !== null || stack.open ? null : <MainZoomControl map={map} me={me} />}
-          {selection.selected === null ? null : (
-            <SelectedCard
-              card={selection.selected}
-              map={map}
-              onClose={selection.close}
-              onHeight={setCardHeight}
-              route={route}
-              shuttleLine={shuttle.line}
-              top={taken.topCard}
-            />
-          )}
-          <MapBottom onMenus={openMenus} onNoticeHeight={setCardHeight} room={room} stack={stack} taken={taken} />
+          <SelectedCard
+            map={map}
+            onActiveParty={party.open}
+            onHeight={setCardHeight}
+            route={route}
+            selection={selection}
+            shuttleLine={shuttle.line}
+            top={taken.topCard}
+          />
+          <MapBottom onNoticeHeight={setCardHeight} onParty={party.open} room={room} stack={stack} taken={taken} />
         </OverMap>
       </View>
+      {party.sheet}
       <LocationExplanation blocked={me.blocked} onAllow={me.allow} onLater={me.later} visible={me.explaining} />
     </View>
   );

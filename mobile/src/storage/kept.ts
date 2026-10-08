@@ -22,6 +22,8 @@ export interface Kept {
   masterSwitch: boolean;
   backgroundChosen: boolean;
   backgroundRunning: boolean;
+  // The running Parties whose 활성화 the User declined on this phone, by id. The main server stores no decline.
+  declinedParties: string[];
 }
 
 const KEY = 'snunow.kept';
@@ -37,10 +39,17 @@ const FIRST_STATE: Kept = {
   masterSwitch: false,
   backgroundChosen: false,
   backgroundRunning: false,
+  declinedParties: [],
 };
 
 type Later =
-  'consented' | 'locationExplained' | 'inviteToken' | 'masterSwitch' | 'backgroundChosen' | 'backgroundRunning';
+  | 'consented'
+  | 'locationExplained'
+  | 'inviteToken'
+  | 'masterSwitch'
+  | 'backgroundChosen'
+  | 'backgroundRunning'
+  | 'declinedParties';
 
 // What an older version stored lacks the fields added later: the rest of it still counts.
 function isKept(value: unknown): value is Omit<Kept, Later> {
@@ -75,6 +84,10 @@ export async function readKept(): Promise<Kept> {
       masterSwitch: 'masterSwitch' in value && value.masterSwitch === true,
       backgroundChosen: 'backgroundChosen' in value && value.backgroundChosen === true,
       backgroundRunning: 'backgroundRunning' in value && value.backgroundRunning === true,
+      declinedParties:
+        'declinedParties' in value && Array.isArray(value.declinedParties)
+          ? value.declinedParties.filter((id): id is string => typeof id === 'string')
+          : [],
     };
   } catch {
     return FIRST_STATE;

@@ -1,7 +1,8 @@
 import { skipToken, useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { apiClient } from '@/api/client';
-import type { LatLng, WalkingRoute } from '@/api/types';
+import type { LatLng } from '@/api/types';
+import type { WalkingRoute } from '@/api/walking-route-types';
 
 export const WALKING_ROUTE_KEY = ['walking-route'] as const;
 

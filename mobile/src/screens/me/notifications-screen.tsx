@@ -26,16 +26,18 @@ const TONE: Record<NoticeKind, keyof typeof noticeTone> = {
   'join-requests': 'request',
 };
 
-// Where a row leads. The rooms of 파티 belong to another task and say that they are not ready.
+// Where a row leads.
 function usePress(): (notice: NoticeView) => void {
   const showNotReady = useNotReadyToast();
-  return ({ kind }) => {
+  return ({ kind, questId }) => {
     if (kind === 'invitation' || kind === 'meetup') {
       router.navigate({ pathname: '/party', params: { tab: 'invites' } });
     } else if (kind === 'friend-request') {
       router.push('/me/friends/requests');
-    } else {
+    } else if (questId === null) {
       showNotReady();
+    } else {
+      router.push(`/room/${questId}`);
     }
   };
 }

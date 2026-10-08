@@ -528,7 +528,8 @@ Ticket 12 connected every row that the demo's flows (P20) use and the main serve
 | Friends' positions | Connected | `GET /positions`, the socket's `position` and `position-removed` | Fetched when the connection opens and when the app returns to the front |
 | Friends' status, place, walk and photo (`listFriendStatuses`) | Mock | Nothing | No answer holds them; a Friend without a status is shown by `visible` alone: "공강" or "위치 꺼짐" |
 | Quests, Class Quests | Connected | `GET /quests`; fetched again on `quests-changed` and when the app returns to the front | |
-| Global Events (`listGlobalEvents`) | Mock | Nothing | No route lists the published events for a User: they reach a User only as the attending Sub Quest of a Quest the User holds, through `matching-requests` by id, and through `GET /quests/recruiting?globalEventId=`. A build that asks the main server still shows the mock's event "AI 커리어 설명회"; its signal `global-events-changed` already fetches the list again |
+| Global Events (`listGlobalEvents`) | Connected | `GET /global-events`; fetched again on `global-events-changed` and when the connection opens again | The map's markers and cards and the 행사 tab |
+| Matching (`requestMatching`, `listMatchingRequests`, `getMatchingRequest`, `withdrawMatchingRequest`) | Connected | `POST /matching-requests`, `GET /matching-requests`, `GET /matching-requests/:globalEventId`, `POST /matching-requests/:globalEventId/withdraw`; fetched again on `matching-changed` | The mock keeps the requests in memory and refuses as the main server does; it never matches |
 | Who announced a Global Event (`listGlobalEventAnnouncers`) | Mock | Nothing | No answer holds it |
 | The User's own id | Connected | The access token's `sub` | |
 | The app's time | Connected | The phone's clock | A Quest row's "23분 후" is worded when the Quests are fetched: on a signal, when the connection opens again and when the app returns to the front |
@@ -541,7 +542,22 @@ Ticket 12 connected every row that the demo's flows (P20) use and the main serve
 | Menus (`listMenus`) | Connected | `GET /menus?date=` | The 식당 layer and the menu panel (P15); the mock is a week of lines from the saved menu pages |
 | The shuttle's route (`getShuttle`) | Connected | `GET /shuttle` | The shuttle layer (P15); the mock is the main server's seed |
 | The shuttle's vehicles (`listShuttleVehicles`) | Connected | `GET /shuttle/vehicles`, the socket's `shuttle-vehicles-updated` | Fetched when the layer is turned on and when the connection opens again while it is on; the mock is three vehicles at stops |
-| The signal `matching-changed` | Not used | The socket | It names nothing these screens show |
+| A Quest's room: the Quest (`getQuest`) | Connected | `GET /quests/:questId`; fetched again on `quests-changed` | 404 `QUEST_NOT_FOUND` closes the room |
+| Dropping a Quest (`dropQuest`) | Connected | `DELETE /quests/:questId` | The room's 나가기 |
+| Sub Quests (`addSubQuest`, `editSubQuest`, `cancelSubQuest`, `markSubQuestDone`) | Connected | `POST /quests/:questId/sub-quests` with an `Idempotency-Key`, `PUT` and `DELETE /quests/:questId/sub-quests/:subQuestId`, `POST …/:subQuestId/done` | The room's 일정 |
+| The Leader's controls (`handOverQuest`, `removeHolder`, `endQuest`) | Connected | `PUT /quests/:questId/leader`, `DELETE /quests/:questId/holders/:userId`, `POST /quests/:questId/end` | |
+| Answering requests to join (`acceptJoinRequest`, `declineJoinRequest`) | Connected | `POST /quests/:questId/join-requests/:id/accept`, `/decline` | |
+| The Leader's invitations (`listSentInvitations`, `cancelInvitation`) | Connected | `GET /quests/:questId/invitations`, `DELETE /quests/:questId/invitations/:id`; fetched again on `quests-changed` | The room's 초대 중 |
+| 활성화 (`openParty`, `joinParty`, `leaveParty`, `setPartySharing`, `removePartyMember`, `endParty`) | Connected | `POST /parties`, `POST /parties/:partyId/join`, `POST /parties/mine/leave`, `PUT /parties/mine/sharing`, `DELETE /parties/mine/members/:userId`, `POST /parties/mine/end` | `거절` is the phone's own: the main server stores no decline |
+| The map view's place (`findPlaceAt`) | Connected | `GET /places/at` | The mock answers by the nearest of its Places |
+| Recruiting Quests (`listRecruitingQuests`) | Connected | `GET /quests/recruiting`, `?board=`, and `?globalEventId=` for one event's 파티 찾기/모집; fetched again on `quests-changed` and `matching-changed` | The mock has the `Party` frame's posts on the four boards and a Quest for the AI 커리어 설명회; the 행사 tab and the map count them by event |
+| Joining a Quest (`joinQuest`) | Connected | `POST /quests/:questId/join` | From the 파티 tab's posts and from 행사 › 파티 찾기/모집 |
+| The User's requests to join (`askToJoinQuest`, `listMyJoinRequests`, `withdrawJoinRequest`) | Connected | `POST /quest-join-requests`, `GET /quest-join-requests`, `POST /quest-join-requests/:id/withdraw`; fetched again on `quests-changed` | |
+| Making and changing a Quest (`makeQuest`, `changeQuest`) | Connected | `POST /quests/own` with an `Idempotency-Key`, `PATCH /quests/:questId` | |
+| Attending a Global Event (`attendGlobalEvent`) | Connected | `POST /quests` with `{ globalEventId }` | 파티 만들기 with `관련 행사` attends, then changes the Quest with `PATCH`; the mock makes the User's Quest for the event |
+| Inviting a Friend into a Quest (`inviteToQuest`) | Connected | `POST /quests/:questId/invitations` | |
+| Answering an invitation (`acceptInvitation`, `declineInvitation`) | Connected | `POST /quest-invitations/:id/accept`, `/decline` | |
+| The signal `matching-changed` | Connected | The socket | Fetches the requests, the Quests and the recruiting Quests again; a request that stopped waiting and was matched shows a toast |
 
 ## 4. Controls that say "준비 중이에요"
 
@@ -549,20 +565,12 @@ The control is there and only shows the toast. The last column is a proposal for
 
 | Where | Control | Opens | Proposed for |
 |---|---|---|---|
-| Quest list, on the map and on the whole screen | The row of a Party or of a Shared Quest: every row that is no class's | The party screen | P13 |
 | Friend panel | A Friend's calendar button, "{이름}님과 파티 만들기" | Proposing a Meetup to the Friend | P14 |
 | Above the navigation | 오늘의 발자국 | The story replay | In no Iteration 1 spec |
-| Above the navigation | 활성 파티 | The party screen | P13 |
 | Above the navigation | The AI input, which is a button with the input's look and takes no focus and no text, and its send button, read as disabled | The AI chat, with the real text field | In no Iteration 1 spec |
 | Bottom navigation | 올리기 | The story sheet | In no Iteration 1 spec |
-| 파티 | + 만들기, and the bodies of 찾기, 내 파티 and 초대 | 파티 만들기 and the lists of Quests | P13 |
-| 행사 | Its body | The list of Global Events | P13 |
 | 내 정보 | 이미지로 불러오기, 빈 시간 말하기 | Reading a timetable from an image or from words | In no Iteration 1 spec |
-| 알림 | A Party opened, and 참여 신청 | The Quest's room | P13 |
-| A Global Event's card | 같이 갈 사람 찾기 | The party screen | P13 |
-| A Party's card | 참여하기, 파티 열기 | The party screen | P13 |
 | A Friend's card | 파티 만들기 | Making a Party | P14 |
-| The card of a member of the User's Party | 파티 열기 | The party screen | P13 |
 
 ## 5. Development settings
 

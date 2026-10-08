@@ -14,7 +14,7 @@ import {
 } from './support/markers';
 import { startFresh } from './support/mocks';
 import { apiClient } from '@/api/client';
-import { PARTIES } from '@/api/mock/data/quests';
+import { CAREER_GATHERING } from '@/api/mock/data/quests';
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -78,9 +78,10 @@ describe('the map of the main screen, closer', () => {
     expect(wordsUnder(FRIEND, '민준')).toBeNull();
   });
 
-  it('counts the Parties on the pin of a Global Event that more than one goes to', async () => {
-    const [party] = PARTIES;
-    jest.spyOn(apiClient, 'listParties').mockResolvedValue(party === undefined ? [] : [party, { ...party, id: 'm2' }]);
+  it('counts the Quests gathering for a Global Event on its pin when they are more than one', async () => {
+    jest
+      .spyOn(apiClient, 'listRecruitingQuests')
+      .mockResolvedValue([CAREER_GATHERING, { ...CAREER_GATHERING, id: 'q-ai-other' }]);
     const user = await openMain();
 
     await zoomIn(user, 2);

@@ -19,6 +19,8 @@ interface FootprintsProps extends ButtonProps<FootprintsView> {
 
 interface BottomControlsProps {
   cardOpen: boolean;
+  // "활성 파티": the room of the User's Party's Quest.
+  onActiveParty: () => void;
   // The room the row of buttons has: "오늘의 발자국" gives way on a narrow screen.
   room: Room;
 }
@@ -87,10 +89,10 @@ function ActivePartyButton({ view, onPress }: ButtonProps<ActivePartyView>): Rea
 }
 
 // What the `Main` frame puts between the map and the navigation: the row of "오늘의 발자국" and "활성 파티", and the
-// AI input under them; the 편의기능 button at the row's right is `LayerControls`. Each belongs to another task and
-// says that it is not ready. "활성 파티" is shown only while the User is in a Party. While a card is open the row is
-// not shown, as in the frame; the AI input stays.
-export function BottomControls({ cardOpen, room }: BottomControlsProps): ReactElement {
+// AI input under them; the 편의기능 button at the row's right is `LayerControls`. "활성 파티", shown only while the
+// User is in a Party, opens its room; each of the others belongs to another task and says that it is not ready. While
+// a card is open the row is not shown, as in the frame; the AI input stays.
+export function BottomControls({ cardOpen, onActiveParty, room }: BottomControlsProps): ReactElement {
   const footprints = useFootprints();
   const party = useActiveParty();
   const showNotReady = useNotReadyToast();
@@ -100,7 +102,7 @@ export function BottomControls({ cardOpen, room }: BottomControlsProps): ReactEl
       {cardOpen ? null : (
         <View style={styles.row}>
           <FootprintsButton form={form} onPress={showNotReady} view={footprints} />
-          {party === null ? null : <ActivePartyButton onPress={showNotReady} view={party} />}
+          {party === null ? null : <ActivePartyButton onPress={onActiveParty} view={party} />}
         </View>
       )}
       <AiInput />

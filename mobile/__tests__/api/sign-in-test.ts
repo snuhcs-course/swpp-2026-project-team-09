@@ -35,6 +35,7 @@ const FIRST_STATE = {
   locationExplained: false,
   inviteToken: null,
   ...NO_BACKGROUND,
+  declinedParties: [],
 };
 
 describe('sign-in', () => {
@@ -54,6 +55,7 @@ describe('sign-in', () => {
       locationExplained: false,
       inviteToken: null,
       ...NO_BACKGROUND,
+      declinedParties: [],
     });
   });
 
@@ -89,6 +91,7 @@ describe('what the phone keeps', () => {
       locationExplained: false,
       inviteToken: null,
       ...NO_BACKGROUND,
+      declinedParties: [],
     });
   });
 
@@ -130,6 +133,7 @@ describe('what the phone keeps of the consent', () => {
       locationExplained: false,
       inviteToken: null,
       ...NO_BACKGROUND,
+      declinedParties: [],
     });
   });
 
@@ -137,9 +141,21 @@ describe('what the phone keeps of the consent', () => {
     const stored = { signedIn: true, consented: true, suggestion: null, onboardingCompleted: true, answers: ANSWERS };
     await AsyncStorage.setItem('snunow.kept', JSON.stringify(stored));
 
-    expect(await readKept()).toEqual({ ...stored, locationExplained: false, inviteToken: null, ...NO_BACKGROUND });
+    expect(await readKept()).toEqual({
+      ...stored,
+      locationExplained: false,
+      inviteToken: null,
+      ...NO_BACKGROUND,
+      declinedParties: [],
+    });
     expect((await keep({ locationExplained: true })).locationExplained).toBe(true);
-    expect(await readKept()).toEqual({ ...stored, locationExplained: true, inviteToken: null, ...NO_BACKGROUND });
+    expect(await readKept()).toEqual({
+      ...stored,
+      locationExplained: true,
+      inviteToken: null,
+      ...NO_BACKGROUND,
+      declinedParties: [],
+    });
   });
 
   it('remembers after a sign-out that the User agreed to the legal documents', async () => {

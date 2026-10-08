@@ -64,6 +64,14 @@ const ICONS = {
   // Not the design system's: the `Profile` frame draws it on the button that opens 알림.
   bell: [{ path: 'M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z' }, { path: 'M10 20.5a2 2 0 0 0 4 0' }],
   expand: [{ path: 'M14 4h6v6' }, { path: 'M10 20H4v-6' }, { path: 'M20 4l-7 7' }, { path: 'M4 20l7-7' }],
+  // Not the design system's: the `Party` frame draws them on a Sub Quest's edit button and on the Leader's Avatar.
+  edit: [{ path: 'M4 20h4L19 9l-4-4L4 16z' }, { path: 'M13.5 6.5l4 4' }],
+  crown: [{ path: 'M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z' }],
+  // Not the design system's: the `Events` frame draws it on `AI 매칭` and on the button of the requests.
+  sparkle: [
+    { path: 'M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z' },
+    { path: 'M18.5 14.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z' },
+  ],
 } as const satisfies Record<string, readonly Stroke[]>;
 
 export type IconName = keyof typeof ICONS;

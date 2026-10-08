@@ -20,9 +20,8 @@ const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 function lookOf({ mark, marker }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
   const far = detail === 'overview';
   if (mark.type === 'person') {
-    const { id, name, photo, presence } = mark;
-    const old = marker.minutesOld !== null;
-    return { kind: 'person', id, tone: presence ?? 'member', small: far, selected, old, name, photo };
+    const { id, name, photo, presence, stale } = mark;
+    return { kind: 'person', id, tone: presence ?? 'member', small: far, selected, stale, name, photo };
   }
   if (mark.place === 'dining') {
     return { kind: 'restaurant', selected };

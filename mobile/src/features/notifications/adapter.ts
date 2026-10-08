@@ -15,6 +15,8 @@ export interface NoticeView {
   title: string;
   // "산업공학과"
   sub: string;
+  // The Quest whose room the row opens: a running Party's, or the one others ask to join. Null for the others.
+  questId: string | null;
 }
 
 // The lists 알림 is composed from. A list that failed is null and gives no rows.
@@ -32,12 +34,13 @@ export interface NoticeSources {
 function partyNotices(parties: readonly Party[]): NoticeView[] {
   return parties
     .filter(({ holdsQuest }) => holdsQuest)
-    .map(({ id, title, leader }) => ({
+    .map(({ id, title, leader, quest }) => ({
       key: `party-${id}`,
       kind: 'party',
       icon: 'pin',
       title: leader === undefined ? '파티가 활성화됐어요' : `${leader.name}님이 파티를 활성화했어요`,
       sub: `${title} · 참여하면 위치를 공유해요`,
+      questId: quest?.id ?? null,
     }));
 }
 
@@ -48,6 +51,7 @@ function friendRequestNotices({ received }: FriendRequests): NoticeView[] {
     icon: 'user',
     title: `${sender.name}님의 친구 요청`,
     sub: sender.department,
+    questId: null,
   }));
 }
 
@@ -58,6 +62,7 @@ function invitationNotices(invitations: readonly QuestInvitation[]): NoticeView[
     icon: 'calendar',
     title: `${quest.leader.name}님의 파티 초대`,
     sub: quest.title,
+    questId: null,
   }));
 }
 
@@ -71,6 +76,7 @@ function meetupNotices({ received }: Meetups, now: Date): NoticeView[] {
       icon: 'calendar',
       title: `${proposer.name}님의 파티 초대`,
       sub: `${title} · ${koreaDay(startsAt, now)} ${koreaClock(startsAt)}`,
+      questId: null,
     }));
 }
 
@@ -83,6 +89,7 @@ function joinRequestNotices(joinRequests: NonNullable<NoticeSources['joinRequest
       icon: 'users',
       title: `참여 신청 ${requests.length}명`,
       sub: quest.title,
+      questId: quest.id,
     }));
 }
 

@@ -1,7 +1,8 @@
-import type { FriendRequests, JoinRequest, Meetup, Meetups, QuestInvitation } from '@/api/waiting-types';
+import type { FriendRequests, JoinRequest, Meetup, Meetups, QuestInvitation, QuestSummary } from '@/api/waiting-types';
 import {
   field,
   hasTexts,
+  isBoard,
   isEventName,
   isHolder,
   isJoinPolicy,
@@ -27,20 +28,24 @@ export function isFriendRequests(value: unknown): value is FriendRequests {
   return listOf(isReceivedRequest)(field(value, 'received')) && listOf(isSentRequest)(field(value, 'sent'));
 }
 
-function isQuestInvitation(value: unknown): value is QuestInvitation {
-  const quest = field(value, 'quest');
+export function isQuestSummary(value: unknown): value is QuestSummary {
   return (
-    hasTexts(value, ['id', 'sentAt']) &&
-    hasTexts(quest, ['id', 'title']) &&
-    isEventName(field(quest, 'globalEvent')) &&
-    isHolder(field(quest, 'leader')) &&
-    isNumber(field(quest, 'holderCount')) &&
-    isNumber(field(quest, 'capacity')) &&
-    isJoinPolicy(field(quest, 'joinPolicy'))
+    hasTexts(value, ['id', 'title', 'description', 'createdAt']) &&
+    isEventName(field(value, 'globalEvent')) &&
+    isHolder(field(value, 'leader')) &&
+    isNumber(field(value, 'holderCount')) &&
+    isNumber(field(value, 'capacity')) &&
+    isJoinPolicy(field(value, 'joinPolicy')) &&
+    isBoard(field(value, 'board'))
   );
 }
 
-export const isQuestInvitations = listOf(isQuestInvitation);
+// An invitation, and a request to join as its User lists it: the same shape.
+export function isQuestWaiting(value: unknown): value is QuestInvitation {
+  return hasTexts(value, ['id', 'sentAt']) && isQuestSummary(field(value, 'quest'));
+}
+
+export const isQuestInvitations = listOf(isQuestWaiting);
 
 const MEETUP_STATES = new Set(['proposed', 'accepted', 'declined', 'withdrawn', 'expired']);
 

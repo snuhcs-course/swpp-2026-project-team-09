@@ -78,3 +78,31 @@ export function koreaMinutes(instant: Date): number {
   const korea = inKorea(instant);
   return korea.getUTCHours() * 60 + korea.getUTCMinutes();
 }
+
+// The instant at a time of Korea's clock on the day `daysAhead` days of Korea's calendar after `now`.
+export function koreaInstant(now: Date, daysAhead: number, hour: number, minute: number): Date {
+  const dayStart = Math.floor(inKorea(now).getTime() / DAY_MS) * DAY_MS - KOREA_OFFSET_MS;
+  return new Date(dayStart + daysAhead * DAY_MS + (hour * 60 + minute) * 60_000);
+}
+
+// The hour and the minute of Korea's clock: [19, 30].
+export function koreaHourMinute(instant: Date): [number, number] {
+  const korea = inKorea(instant);
+  return [korea.getUTCHours(), korea.getUTCMinutes()];
+}
+
+// The day of the month in Korea: 8.
+export function koreaDayOfMonth(instant: Date): number {
+  return inKorea(instant).getUTCDate();
+}
+
+// "일", "월", …: the day of the week's name in Korea.
+export function koreaWeekdayName(instant: Date): string {
+  return WEEKDAYS[koreaWeekday(instant)] ?? '';
+}
+
+// "10/03 (토)"
+export function koreaShortDate(instant: Date): string {
+  const korea = inKorea(instant);
+  return `${twoDigits(korea.getUTCMonth() + 1)}/${twoDigits(korea.getUTCDate())} (${WEEKDAYS[korea.getUTCDay()]})`;
+}

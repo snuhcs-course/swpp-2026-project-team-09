@@ -35,8 +35,6 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-const NOT_READY = '준비 중이에요';
-
 const ROWS = [
   '김민준님이 파티를 활성화했어요 · 저녁 먹으러 가요 · 참여하면 위치를 공유해요',
   '한도경님의 친구 요청 · 산업공학과',
@@ -117,7 +115,7 @@ describe("a row of 알림's press", () => {
 
     await user.press(screen.getByRole('button', { name: row }));
 
-    expect(screen.getByRole('tab', { name: '초대' })).toBeSelected();
+    expect(screen.getByRole('tab', { name: /^초대/u })).toBeSelected();
     expect(shownAddress()).toBe('/party?tab=invites');
   });
 
@@ -130,12 +128,16 @@ describe("a row of 알림's press", () => {
     expect(shownAddress()).toBe('/me/friends/requests');
   });
 
-  it.each([ROWS[0], ROWS[4]])('says that the screen of "%s" is not ready', async (row) => {
+  it.each([
+    [ROWS[0], DINNER.id],
+    [ROWS[4], STUDY.id],
+  ])('opens the room of the Quest from "%s"', async (row, questId) => {
     const user = await openNotifications();
 
     await user.press(screen.getByRole('button', { name: row }));
+    await pass(500);
 
-    expect(screen.getByTestId('toast-layer')).toHaveTextContent(NOT_READY);
+    expect(shownAddress()).toBe(`/room/${questId}`);
   });
 });
 

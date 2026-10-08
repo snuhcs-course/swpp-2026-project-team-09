@@ -343,11 +343,13 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   badge.
 - 파티, 행사 and 내 정보 are a `TabScreen` (`src/screens/shell/tab-screen.tsx`): the tab's app bar on the grey ground.
   파티 has "+ 만들기" and the tabs 찾기, 내 파티 and 초대; its address names the tab (`/party?tab=invites`). 내 정보's
-  address can ask for its 위치 공유 card (`/me?show=sharing`). The bodies of 파티 and 행사 say "준비 중이에요" until
-  their tasks fill them; 내 정보 is described below.
+  address can ask for its 위치 공유 card (`/me?show=sharing`), and 행사's marks one Global Event (`/events?focus=<id>`).
+  파티, 행사 and 내 정보 are described below.
 - **Screens above the tabs** are routes of the stack: the Quest list on the whole screen (`/quests`), 알림
   (`/notifications`), 프로필 편집 (`/profile-edit`), 시간표 (`/me/timetable`) and its class form
-  (`/me/timetable/class`). Each is a
+  (`/me/timetable/class`), a Quest's room (`/room/<questId>`), the map view of the place picker (`/place-map`), 전체
+  파티 (`/boards`), a board (`/boards/meal`), 파티 모집글 (`/post/<questId>`), 파티 만들기 (`/party-form`, and
+  `/party-form?questId=<id>` for its edit mode) and the AI 매칭 신청 list (`/matching`). Each is a
   `FullScreenPanel` and slides in over 0.28 s, from the bottom for `/quests` and from the right for a pushed screen,
   or appears without sliding where the phone asks for less motion (`slideFrom` in the layout). The tabs lie under
   them also when the app opens at their address (`unstable_settings`).
@@ -402,11 +404,14 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   colour or the Party's: small while the whole campus is in view, at full size from the `pins` level, and with the
   given name under it from the `names` level. A Friend whose position is not known has no marker. The Global Event,
   the User's Party and a Shared Quest are dots while the whole campus is in view, pins from the `pins` level and pins
-  with a short name from the `names` level. A Party's pin counts its members; a Global Event's counts the Parties
-  that go to it when they are more than one. A short name is the title cut at a word's end within 8 characters,
+  with a short name from the `names` level. A Party's pin counts its members; a Global Event's counts the Quests
+  that gather for it (`GET /quests/recruiting`) when they are more than one. A short name is the title cut at a word's end within 8 characters,
   counted in whole characters, so that an emoji is never cut. A given name is the name without its first syllable for
   a Korean name of three syllables, and the whole name otherwise (`src/features/map/short-name.ts`). A marker is read as the wireframe reads it: "김민준 · 공강 · 중앙도서관 근처 · 15:00까지 비어 있어요", "공식 행사 · AI 커리어
   설명회". The selected marker has the selected look and is drawn above the others, the User's own Avatar included.
+  A Friend's or a member's Avatar whose position was measured 2 minutes ago or more is dimmed (the look `stale`,
+  a picture of its own), and its card's line says "마지막 위치 {n}분 전"; at 10 minutes it leaves the map, while the
+  Friend's row stays in the list. `useMapCards()` checks the age every 15 seconds and whenever a position arrives.
 - **Cards.** `useSelection(cards)` holds what is selected: `selected` (the open card), `open`, `select(id)` and
   `close()`. A press on a marker selects it and opens its card (`card.tsx`) in place of the one that was open; the
   card's X and Android's back button close it, the button only while the map is in front; a press beside the
@@ -414,7 +419,11 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   the map, such as a Friend who turns their location off, is closed for good: it does not open again on their return. The card shows the leading
   mark (a person's Avatar, or the place's icon on its kind's colour), the sub-label, the title, the lines and its
   button. "가까이 보기" is offered below the `names` level and brings the camera to the `close` level, keeping the
-  card. "같이 갈 사람 찾기", "참여하기", "파티 만들기" and "파티 열기" say "준비 중이에요". While a card is open the zoom
+  card. On the card of a Party that others may join, "파티 열기" and "참여하기" open the Quest's room; on a Party
+  member's card, "파티 열기" does what "활성 파티" does. "같이 갈 사람 찾기" opens 파티 만들기 with the Global Event
+  chosen, as `+ 파티 모집` of the 행사 tab does; "파티 만들기" says "준비 중이에요". The
+  room's member list shows a member by the main screen's address, `/main?person=<userId>`: the map goes to the
+  Friend's or the member's Avatar at the `close` level and opens its card. While a card is open the zoom
   control is not shown; a part that a card hides asks `selection.open`. A row of a list opens a card with
   `selection.selectOrWait(cardId.friend(id))` (`cardId` of `src/features/map/adapter.ts`) and moves the map with
   `map.goTo`. A row may be pressed before the map's cards came: `selectOrWait` waits for an id that no card has
@@ -478,14 +487,16 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     the rounds. The adapter says the row's `tone` and `icon`: a class is `clock` in grey; `open`, a Party that
     others may join, is `users` in blue; `closed`, a Party that takes nobody else and a Shared Quest, is `lock` in
     the Party's colour (`questTone`). A press on a class's row brings the map to its place at the `names` level,
-    closes an open card and says "<title> · <place>", "자료구조 · 301동 118호"; any other row says "준비 중이에요".
+    closes an open card and says "<title> · <place>", "자료구조 · 301동 118호"; any other row opens the Quest's
+    room.
     Without a Quest the list says "오늘 일정 없음".
   - While a list's data is loading, and after a failure, its pill has no number and the list has no rows.
 - **The controls above the navigation** (`bottom-controls.tsx`): "오늘의 발자국", with up to three faces and "친구
   5명의 오늘" from `useFootprints()`; "활성 파티", shown only while the User is in a Party, with "<n>명 공유 중" for
   the members who share their position, the User left out, or "응답 대기" when nobody else does
-  (`useActiveParty()`); the 편의기능 button (`layers.tsx`, below); and the AI input. Each but the 편의기능 button says
-  "준비 중이에요".
+  (`useActiveParty()`); the 편의기능 button (`layers.tsx`, below); and the AI input. "활성 파티" opens the room of the
+  Party's Quest, or, for a Party tied to no Quest, which has no room, asks "활성화에서 나갈까요?" and leaves it
+  (`use-active-party-room.tsx`). "오늘의 발자국" and the AI input say "준비 중이에요".
   - The AI input (`ai-input.tsx`) is not a text field yet. It is a button with the look of the wireframe's empty
     input, the placeholder "무엇이든 부탁해 보세요" and the grey send button: nothing takes the focus, no keyboard
     comes up and nothing can be typed. A press on it says "준비 중이에요"; so does a press on the send button, which
@@ -596,7 +607,7 @@ start of the Sub Quest each shows (`toQuestGroups` in the quest feature's adapte
 A Quest whose Sub Quests all ended or were cancelled is not shown. A row is 72 high: the round of 40 in its
 `questTone`, the kind ("강의", "공개 파티", "비공개 파티 · 김민준"), the title, the place and the time. A class's row
 closes the screen and goes back to the map by `/main?quest=<id>`, which the Quest list on the map carries out as a
-press of its own row; any other row says "준비 중이에요". Without a Quest it says "퀘스트가 없어요"; while the Quests
+press of its own row; any other row opens the Quest's room above it. Without a Quest it says "퀘스트가 없어요"; while the Quests
 load and after a failure it shows the shared states.
 
 **내 정보** (`src/screens/me/me-screen.tsx`, the `Profile` frame) has the bell, "알림" or "알림 {n}개" with the
@@ -644,8 +655,9 @@ waits for a name, a day, both times with the end after the start and a Place, an
 feature), in this order: a Party running for a Quest the User holds ("{name}님이 파티를 활성화했어요", or "파티가
 활성화됐어요" without its Leader), a Friend Request received, a Quest invitation, a Meetup proposed to the User and
 waiting ("{name}님의 파티 초대"), and the requests to join each Quest the User leads with Approval ("참여 신청
-{n}명"). An invitation's and a Meetup's row open 파티 at 초대, a Friend Request's 친구 요청; the others say "준비 중이에요". A list that failed is
-left out; when every one failed it shows the error state. Without rows it says "새 알림이 없어요".
+{n}명"). An invitation's and a Meetup's row open 파티 at 초대, a Friend Request's 친구 요청, and a running Party's
+and the requests' the Quest's room. A list that failed is left out; when every one failed it shows the error state.
+Without rows it says "새 알림이 없어요".
 
 **The menu panel** (`src/screens/menus/`, `/menus`) has no frame. It is a `FullScreenPanel` that comes up from the
 bottom: ✕ "닫기" and "메뉴"; under the app bar the 7 days from today as `DayTile`s ("오늘", "내일", then the weekday),
@@ -663,6 +675,119 @@ muted, any other line as written; a restaurant without lines for the meal says "
 credit, slide in from the right: "뒤로" and "지도 데이터 출처", a card for OpenStreetMap (ODbL, with its copyright
 page) and one for 국토지리정보원's 연속수치지형도 건물 under 공공누리 type 1 (with the VWorld page it is downloaded
 from). Each link opens the browser. The year in the second card is that of the files' renewal on the VWorld page.
+
+**A Quest's room** (`src/screens/room/`, the frame's `PartyDetail`, `/room/<questId>`) is the room of every Quest the
+User holds but a Class Quest: its `파티장` is the Quest's Leader, its `멤버` the Holders and its `일정` the Sub Quests.
+It reads the Quest (`GET /quests/:questId`), the User's Party and the listed Parties (`useRoom()` of the quests
+feature, `room-adapter.ts`), and closes with "파티에서 빠졌어요" once the main server no longer answers the Quest,
+after a removal, a drop on another phone or the Leader's end. From the top:
+
+- in the app bar, "모집글 보기" for an Open or Approval Quest, which opens its post, and "수정" for the Leader, which
+  opens 파티 만들기 in its edit mode;
+- the Badges, "파티 · {holders}/{capacity}명" or "파티 · {holders}명" for a Closed Quest, "내가 만든 파티", "비공개" and
+  the Global Event's title, the title, and the Quest's description in a quote box when it has one; for a Quest with a
+  Global Event, the event as the design system's `EventCard` (`room-event.tsx`) under the title, whose press opens the
+  행사 tab marked at it;
+- the box `파티 활성화` (`activation-box.tsx`). `활성화` is the domain Party opened for the Quest. While none runs,
+  any Holder opens it (`POST /parties`, closed, for 8, titled as the Quest) after the sheet "파티를 활성화할까요?",
+  which also says when the User leaves another Party for it and when the Master Switch is off; a Party another Holder
+  opened at the same moment (409 `PARTY_EXISTS_FOR_QUEST`) is entered instead. The User in it sees how many share,
+  the switch "내 위치 공유" (`PUT /parties/mine/sharing`, shown at once and turned back after a failure) and
+  "활성화 끄기" for its Leader (`POST /parties/mine/end`) or "활성화에서 나가기". A Party running without the User
+  names its Leader, with "거절" and "참여"; "거절" sends nothing and is kept on the phone by the Party's id
+  (`declinedParties` of `src/storage/kept.ts`), so the box then says "활성화 중인 파티예요" with "참여";
+- `일정` (`plan-section.tsx`): the Sub Quests by their start, the next one in the Party's colour, the ended ones dimmed;
+  "완료로 표시" for every Holder; "+ 추가", "일정 수정" and "일정 삭제" for the Leader alone. The rules of who edits
+  Sub Quests and who opens the Party are in one module, `src/features/quests/rules.ts`. The inline form
+  (`plan-form.tsx`) asks `내용`, `언제` through the date·time sheet and `어디서`, typed or chosen on the map view; it
+  waits for a point while the place has words of its own. A Place is sent as `{ placeId }`, a point as a point with
+  the words shown; an add carries an `Idempotency-Key` kept for its retries;
+- `신청 {n}` and `초대 중 {n}` for the Leader, and `멤버 {n}` with what the User sees of each Holder while in the
+  Party, "내보내기" and "파티장 넘기기" for the Leader, and a press that shows a seen member on the map;
+- the footer's "나가기" (`DELETE /quests/:questId`, after leaving the Party when it is the Quest's) or, for the Leader,
+  "파티 없애기" (`POST /quests/:questId/end`, after ending or leaving the Party).
+
+A refusal says why in the words of one table, `src/features/quests/refusals.ts`, and the room fetches what it shows
+again.
+
+**The 파티 tab** (`src/screens/party/`, the frames `Party`, `PartyPost`, `PartyJoin`, `PartyMine`, `PartyInvites`,
+`PartyCreate` and `PartyAppt`) reads its lists through `src/features/party/`: `posts.ts` makes a post of another's
+recruiting Quest (`GET /quests/recruiting`) or of the User's own, `mine.ts` the cards of 내 파티, `use-party.ts` the
+hooks. The tabs count the User's Quests but the Class Quests (`내 파티 {n}`) and the invitations (`초대 {n}`, red).
+
+- **찾기**: the search `파티 검색` over the titles and descriptions, and `모집 중인 파티`, the recruiting Quests the
+  newest first. A card has the Badges, the fill, the next Sub Quest's time and place ("시간 미정", "장소 미정"), the
+  Leader, `자세히 ›` to the post and `참여하기`, or `참여 신청` for an Approval Quest, which opens the join confirm
+  sheet (`join-sheet.tsx`). Joining (`POST /quests/:questId/join`) says "{title} 참여 완료" and shows 내 파티; asking
+  (`POST /quest-join-requests`) says "참여를 신청했어요". `전체 보기 ›` opens 전체 파티.
+- **전체 파티** lists the four boards (`src/features/party/boards.ts`) with their counts and `N` for a post of today in
+  Korea's time. **A board** (`GET /quests/recruiting?board=`) merges the others' posts with the User's own Open or
+  Approval Quests on it with a Sub Quest ahead, which the recruiting list leaves out, the newest first: "내 파티" for
+  the User's lead, "참여 중" for another's held Quest, the time posted ("13:21" today, "10/03 (토) 15:57" before). Its
+  own posts open the room, the others' the post.
+- **파티 모집글** shows the post and a footer by who reads it: `참여하기`, `참여 신청` or the waiting request with `신청
+취소` (`GET /quest-join-requests`, `POST /quest-join-requests/:id/withdraw`); for the Leader `없애기`, which ends the
+  Quest as the room's `파티 없애기` does, and `수정하기`; for another Holder "이미 참여 중인 파티예요".
+- **파티 만들기** (`form/`) asks `제목`, `본문` ({n}/200), `언제` through the date·time sheet, `인원` from 2 to 8 in
+  public, `어디서` as the room's 일정 form, `공개 범위` with `바로 참여` and `승인 후 참여` under 공개, `게시판` in public
+  through a sheet of the boards, and `친구 초대` from `GET /friends`. `파티 올리기` (public) sends `POST /quests/own`
+  with the board, the capacity and the Join Policy; `파티 만들기` (private) a Closed Quest for 8 without a board; both
+  with a fresh `Idempotency-Key`, then invite each chosen Friend and show 내 파티. The rules of the body and of what
+  changed are in `src/features/party/making.ts`. The edit mode leaves out `언제` and `어디서`, which the room's 일정
+  changes, sends `PATCH /quests/:questId` with what changed and invites the newly chosen Friends.
+- **관련 행사**, before `제목` in a new form (`event-field.tsx`): `행사 선택` opens the event picker, the 행사 list's
+  cards without their buttons under the search `행사 검색`. A chosen event shows in a navy box with its source, title,
+  time and place and ✕ `행사 빼기`, and gives the form its title, which cannot be changed, its start as `언제` and its
+  place as `어디서`. `/party-form?eventId=<id>` opens the form with the event chosen. Submitting attends the event
+  (`POST /quests` with `{ globalEventId }`, which gives the User's Quest for it, Closed and titled as the event), then
+  sends `PATCH /quests/:questId` with the description, the capacity, the Join Policy and the board, adds the Sub Quest
+  `모이기` when `언제` moved from the event's start, and invites (`form/use-send.ts`). When a step after attending is
+  refused, the Quest stays: the form says why and opens its room.
+- **내 파티**: the chips `전체`, `비공개` and `공개`, and the groups `활성화 중`, `활성화 알림`, then the next Sub Quest's
+  day (`오늘`, `내일`, `이번 주` to Sunday, `다음 주`, `그 이후`, `시간 미정`). A card has the kind, a Badge of its
+  members, its recruiting or its running Party, the next Sub Quest and the Holders; a Party running without the User
+  adds the strip "{name}님이 활성화했어요" with `참여`, which enters as the room's `참여` does.
+- **초대** lists `GET /quest-invitations` with `거절` and `수락`; a refused acceptance keeps the invitation.
+
+Every joining, asking, withdrawing and answer fetches the recruiting Quests, the User's Quests, requests and
+invitations again, as `quests-changed` does. Refusals take their words from the same table as the room's; where the
+User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
+
+**행사** (`src/screens/events/`, the `Events` frame, `/events`) lists the published Global Events (`GET
+/global-events`) by their start, with the data of `useEventSources()` and the words of `src/features/events/adapter.ts`:
+
+- The app bar (`events-bar.tsx`) has "행사", the sparkle "AI 매칭 신청 내역" with a navy count of the waiting
+  requests, which opens the AI 매칭 신청 list, and the search, which puts the field "행사 검색" and ✕ "검색 닫기" in
+  place of the title and keeps the events whose title, place or description holds the words.
+- The chips "전체", "오늘", "이번 주" (to Sunday in Korea's time) and "파티 모집 중" (an event with a recruiting Quest)
+  filter the list. Empty: "예정된 행사가 없어요" without any event, "검색 결과가 없어요" after a filter or a search.
+- A card (`event-item.tsx`) has "같이 갈 파티 {n}개" for the recruiting Quests of `GET /quests/recruiting`, "내 파티"
+  when the User holds a Quest for the event, the source from the app's own list of announcers, the title, the time
+  and the place, and "자세히", which opens `sourceUrl` in the browser and is left out without one, "파티 찾기/모집" and
+  "AI 매칭", or "매칭 중" while the User's request waits, which opens the list. At `/events?focus=<id>` the list shows
+  every event, scrolls to the card and marks it with a navy border and a glow for 2.6 s (`use-focus.ts`).
+- **파티 찾기/모집** (`recruiting-sheet.tsx`) lists the User's own Quest for the event ("내 파티" when the User leads it,
+  "참여 중" with its Leader otherwise), then the Quests gathering for it (`GET /quests/recruiting?globalEventId=`),
+  each with its fill and its next Sub Quest. The User's own opens its room; another's asks "‘{title}’에
+  참여할까요?" and joins an Open Quest (`POST /quests/:questId/join`, then its room) or asks to join an Approval one
+  (`POST /quest-join-requests`). "+ 파티 모집", like the map card's "같이 갈 사람 찾기", opens the room of a Quest the
+  User already holds with others for the event, with "이 행사에 함께 가는 파티가 이미 있어요", and 파티 만들기 with the
+  event chosen otherwise (`/party-form?eventId=<id>`, `use-party-create.ts`).
+- **AI 매칭** (`matching-sheet.tsx`) asks only the group size, "2명", "3명" or "4명", explains what Matching does and
+  sends `POST /matching-requests`. **The AI 매칭 신청 list** (`matching-screen.tsx`, `/matching`) shows each waiting
+  request with "매칭 중", when it was asked, the event and the size, and withdraws one after "매칭 신청을 취소할까요?"
+  (`POST /matching-requests/:globalEventId/withdraw`). The requests and their refusals are in `use-event-actions.ts`,
+  and the words of every refusal in `src/features/quests/refusals.ts`.
+- `MatchingWatch` (`src/features/events/matching-watch.tsx`), in the signed-in layout, watches the waiting requests
+  wherever the User is: a request that stops waiting is read again (`GET /matching-requests/:globalEventId`), and a
+  match says "{event} 파티가 만들어졌어요" and fetches the Quests again.
+
+**The date·time sheet** (`src/screens/date-time-sheet.tsx`) is shared: "언제" with the choice in words ("오늘 19:00"),
+21 days from today in Korea's time, the hours and the minutes by tens, and "확인". **The map view**
+(`src/screens/place-map/`, `/place-map`) is the frame's `PlacePickerMap`: the map under a teal pin fixed at its
+middle, which lifts while the map moves; when the camera stops it asks `GET /places/at` and the sheet says the Place
+("{name} {number}동", "건물 위치예요"), a point near one ("{name} 근처") or a point at none ("지도에서 고른 위치").
+"이 위치로 정하기" gives the choice back to the screen that opened it (`src/features/places/picked-place.ts`).
 
 The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and
 `/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
@@ -692,7 +817,8 @@ When an operation fails:
 - `listFriendStatuses`, `listGlobalEventAnnouncers` and `getFootprints`, the app's own, never fail a screen: it shows what it has without them.
 - The friend list and the Quest list have `isError` and no `data`.
 - The map has `isError` and keeps in `data` the cards that are still right: without the Global Events, the Friends'
-  cards still show.
+  cards still show; without the recruiting Quests, an event's card only lacks its line of them.
+- The 행사 tab waits for the Global Events and fails with them; a card lacks what another failed operation adds.
 
 The walking route is asked when the User asks, not as the User's position moves:
 
@@ -709,8 +835,8 @@ position. Its `kind` is `global-event`, `party`, `shared-quest`, `friend` or `pa
 Behind a hook are three layers:
 
 - **The API client** (`src/api/client.ts`): one operation per question to the main server. `src/api/types.ts` (with
-  `waiting-types.ts`, the lists of what waits for the User, `menu-types.ts`, the menus, and `shuttle-types.ts`, the
-  shuttle) holds the answers' shapes.
+  `waiting-types.ts`, the lists of what waits for the User, `menu-types.ts`, the menus, `shuttle-types.ts`, the
+  shuttle, and `walking-route-types.ts`, the way on foot) holds the answers' shapes.
   A shape marked "provisional" comes from an open pull request of the main server, and one marked "the app's own" is
   defined nowhere else yet.
 - **An adapter** per feature (`src/features/<feature>/adapter.ts`): turns answers into what the screens use, such as
@@ -718,43 +844,66 @@ Behind a hook are three layers:
 - **The main server's client** (`src/api/server/`): the operations the main server serves, in a build that asks it
   (`asksMainServer()`). `http.ts` is the one way to the main server: it attaches the access token, renews the Session
   once on a 401 and asks again, and ends the Session when that cannot mend it. `answers.ts` (with `waiting-answers.ts`,
-  `menu-answers.ts` and `shuttle-answers.ts`) checks each answer's shape before the app believes it; an answer of another shape fails as
-  no answer does.
+  `menu-answers.ts` and `shuttle-answers.ts`) checks each answer's shape before the app believes it; an answer of
+  another shape fails as no answer does.
 - **The mocks** (`src/api/mock/`): every other operation, and every operation where the app asks no main server, is
   answered inside the app, in the main server's shape, with what the `Main` wireframe shows. A mock answers after 0.3
-  seconds. The tests use the mocks, or a fake main server behind `fetch` (`__tests__/support/fake-server.ts`).
+  seconds. The tests use the mocks, or a fake main server behind `fetch` (`__tests__/support/fake-server.ts`). The
+  mocks of a Quest's room (`src/api/mock/room.ts`) and of the 파티 tab (`src/api/mock/party.ts`) answer as the main
+  server does and keep no change: the next read is the frame's again. The recruiting Quests are the posts of the
+  `Party` frame's boards (`src/api/mock/data/boards.ts`).
 
-| Operation                                                            | Answers                                            | Where it comes from with the main server                       |
-| -------------------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------- |
-| `signIn`, `signOut` (`src/auth/sign-in.ts`)                          | Whether the User signed in, and Onboarding's state | `POST /auth/google`, `/auth/sign-out`                          |
-| `completeOnboarding`                                                 | Nothing                                            | `POST /users/me/onboarding`                                    |
-| `enterLobby`                                                         | The User's profile and Master Switch               | `POST /lobby`                                                  |
-| `updateProfile`                                                      | The changed profile                                | `PATCH /users/me/profile`                                      |
-| `setMasterSwitch`                                                    | Nothing                                            | `PUT /users/me/master-switch`                                  |
-| `uploadPosition`                                                     | Whether the position was off campus                | `POST /positions`                                              |
-| `listFriends`                                                        | The Friends                                        | `GET /friends`                                                 |
-| `setFriendSharing`, `endFriendship`                                  | Nothing                                            | `PUT /friends/:userId/sharing`, `DELETE /friends/:userId`      |
-| `findFriendId`                                                       | The owner of a Friend ID                           | `GET /friend-ids/:friendId`                                    |
-| `sendFriendRequest`                                                  | Whether the request waits or made two Friends      | `POST /friend-requests`                                        |
-| `listFriendRequests`                                                 | The Friend Requests received and sent              | `GET /friend-requests`                                         |
-| `acceptFriendRequest`, `declineFriendRequest`, `cancelFriendRequest` | Nothing                                            | `POST /friend-requests/:id/accept`, `/decline`, `/cancel`      |
-| `createInviteLink`                                                   | A new Invite Link's address                        | `POST /invite-links`                                           |
-| `getInviteLink`, `acceptInviteLink`                                  | Who sent the link and its status; nothing          | `GET /invite-links/:token`, `POST /invite-links/:token/accept` |
-| `listPositions`                                                      | The positions the User may see                     | `GET /positions`, and the socket's `position`                  |
-| `listFriendStatuses`                                                 | Each Friend's status, place and photo              | The mock: the app's own                                        |
-| `listQuests`                                                         | The User's Quests and today's Class Quests         | `GET /quests`                                                  |
-| `listQuestInvitations`                                               | The invitations into a Quest                       | `GET /quest-invitations`                                       |
-| `listJoinRequests`                                                   | The requests to join a Quest the User leads        | `GET /quests/:questId/join-requests`                           |
-| `listMeetups`                                                        | The Meetups proposed to the User and by the User   | `GET /meetups`                                                 |
-| `listClasses`, `listPlaces`                                          | The User's classes, and the Places                 | `GET /timetable/classes`, `GET /places`                        |
-| `listGlobalEvents`                                                   | The published Global Events                        | The mock: no route lists them for a User yet                   |
-| `listGlobalEventAnnouncers`                                          | Who announced each Global Event                    | The mock: the app's own                                        |
-| `listParties`, `getMyParty`                                          | The Parties, and the one the User is in            | `GET /parties`, `/parties/mine`                                |
-| `getFootprints`                                                      | What "오늘의 발자국" shows: a number and faces     | The mock: the app's own                                        |
-| `findWalkingRoute`                                                   | The way on foot between two points                 | `GET /walking-route`                                           |
-| `listMenus`                                                          | One day's menus by restaurant                      | `GET /menus?date=`                                             |
-| `getShuttle`                                                         | The shuttle's route: hours, stops and line         | `GET /shuttle`                                                 |
-| `listShuttleVehicles`                                                | The shuttle's vehicles in service, at their stops  | `GET /shuttle/vehicles`, and the socket's set                  |
+| Operation                                                            | Answers                                                      | Where it comes from with the main server                                |
+| -------------------------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| `signIn`, `signOut` (`src/auth/sign-in.ts`)                          | Whether the User signed in, and Onboarding's state           | `POST /auth/google`, `/auth/sign-out`                                   |
+| `completeOnboarding`                                                 | Nothing                                                      | `POST /users/me/onboarding`                                             |
+| `enterLobby`                                                         | The User's profile and Master Switch                         | `POST /lobby`                                                           |
+| `updateProfile`                                                      | The changed profile                                          | `PATCH /users/me/profile`                                               |
+| `setMasterSwitch`                                                    | Nothing                                                      | `PUT /users/me/master-switch`                                           |
+| `uploadPosition`                                                     | Whether the position was off campus                          | `POST /positions`                                                       |
+| `listFriends`                                                        | The Friends                                                  | `GET /friends`                                                          |
+| `setFriendSharing`, `endFriendship`                                  | Nothing                                                      | `PUT /friends/:userId/sharing`, `DELETE /friends/:userId`               |
+| `findFriendId`                                                       | The owner of a Friend ID                                     | `GET /friend-ids/:friendId`                                             |
+| `sendFriendRequest`                                                  | Whether the request waits or made two Friends                | `POST /friend-requests`                                                 |
+| `listFriendRequests`                                                 | The Friend Requests received and sent                        | `GET /friend-requests`                                                  |
+| `acceptFriendRequest`, `declineFriendRequest`, `cancelFriendRequest` | Nothing                                                      | `POST /friend-requests/:id/accept`, `/decline`, `/cancel`               |
+| `createInviteLink`                                                   | A new Invite Link's address                                  | `POST /invite-links`                                                    |
+| `getInviteLink`, `acceptInviteLink`                                  | Who sent the link and its status; nothing                    | `GET /invite-links/:token`, `POST /invite-links/:token/accept`          |
+| `listPositions`                                                      | The positions the User may see                               | `GET /positions`, and the socket's `position`                           |
+| `listFriendStatuses`                                                 | Each Friend's status, place and photo                        | The mock: the app's own                                                 |
+| `listQuests`                                                         | The User's Quests and today's Class Quests                   | `GET /quests`                                                           |
+| `listQuestInvitations`                                               | The invitations into a Quest                                 | `GET /quest-invitations`                                                |
+| `listJoinRequests`                                                   | The requests to join a Quest the User leads                  | `GET /quests/:questId/join-requests`                                    |
+| `listMeetups`                                                        | The Meetups proposed to the User and by the User             | `GET /meetups`                                                          |
+| `listClasses`, `listPlaces`                                          | The User's classes, and the Places                           | `GET /timetable/classes`, `GET /places`                                 |
+| `listGlobalEvents`                                                   | The published Global Events                                  | The mock: no route lists them for a User yet                            |
+| `listGlobalEventAnnouncers`                                          | Who announced each Global Event                              | The mock: the app's own                                                 |
+| `listParties`, `getMyParty`                                          | The Parties, and the one the User is in                      | `GET /parties`, `/parties/mine`                                         |
+| `getFootprints`                                                      | What "오늘의 발자국" shows: a number and faces               | The mock: the app's own                                                 |
+| `findWalkingRoute`                                                   | The way on foot between two points                           | `GET /walking-route`                                                    |
+| `listMenus`                                                          | One day's menus by restaurant                                | `GET /menus?date=`                                                      |
+| `getShuttle`                                                         | The shuttle's route: hours, stops and line                   | `GET /shuttle`                                                          |
+| `listShuttleVehicles`                                                | The shuttle's vehicles in service, at their stops            | `GET /shuttle/vehicles`, and the socket's set                           |
+| `getQuest`, `dropQuest`                                              | One Quest, ended or not; nothing                             | `GET`, `DELETE /quests/:questId`                                        |
+| `addSubQuest`, `editSubQuest`                                        | The Sub Quest                                                | `POST /quests/:questId/sub-quests`, `PUT …/:subQuestId`                 |
+| `cancelSubQuest`, `markSubQuestDone`                                 | Nothing                                                      | `DELETE …/:subQuestId`, `POST …/:subQuestId/done`                       |
+| `handOverQuest`, `removeHolder`, `endQuest`                          | Nothing                                                      | `PUT /quests/:questId/leader`, `DELETE …/holders/:userId`, `POST …/end` |
+| `acceptJoinRequest`, `declineJoinRequest`                            | Nothing                                                      | `POST /quests/:questId/join-requests/:id/accept`, `/decline`            |
+| `listSentInvitations`, `cancelInvitation`                            | The Leader's invitations that wait; nothing                  | `GET`, `DELETE /quests/:questId/invitations…`                           |
+| `openParty`, `joinParty`                                             | The User's Party                                             | `POST /parties`, `POST /parties/:partyId/join`                          |
+| `leaveParty`, `setPartySharing`                                      | Nothing                                                      | `POST /parties/mine/leave`, `PUT /parties/mine/sharing`                 |
+| `removePartyMember`, `endParty`                                      | Nothing                                                      | `DELETE /parties/mine/members/:userId`, `POST /parties/mine/end`        |
+| `findPlaceAt`                                                        | The Place a point is inside or near, or none                 | `GET /places/at`                                                        |
+| `listRecruitingQuests`                                               | The recruiting Quests, of all, one board or one Global Event | `GET /quests/recruiting`, `?board=`, `?globalEventId=`                  |
+| `joinQuest`, `askToJoinQuest`                                        | The Quest; nothing                                           | `POST /quests/:questId/join`, `POST /quest-join-requests`               |
+| `listMyJoinRequests`, `withdrawJoinRequest`                          | The User's waiting requests; nothing                         | `GET /quest-join-requests`, `POST …/:id/withdraw`                       |
+| `makeQuest`, `changeQuest`                                           | The Quest                                                    | `POST /quests/own` with an `Idempotency-Key`, `PATCH /quests/:questId`  |
+| `attendGlobalEvent`                                                  | The User's Quest for the Global Event                        | `POST /quests` with `{ globalEventId }`                                 |
+| `inviteToQuest`                                                      | Nothing                                                      | `POST /quests/:questId/invitations`                                     |
+| `acceptInvitation`, `declineInvitation`                              | The Quest; nothing                                           | `POST /quest-invitations/:id/accept`, `/decline`                        |
+| `requestMatching`, `listMatchingRequests`                            | The request; the waiting requests                            | `POST`, `GET /matching-requests`                                        |
+| `getMatchingRequest`                                                 | The latest request for a Global Event                        | `GET /matching-requests/:globalEventId`                                 |
+| `withdrawMatchingRequest`                                            | Nothing                                                      | `POST /matching-requests/:globalEventId/withdraw`                       |
 
 The mock keeps the Friends, the Friend Requests and the Invite Links in memory while the app runs
 (`src/api/mock/friendships.ts`), with Friend IDs for the frame's people, and refuses as the main server does. The
@@ -777,8 +926,9 @@ that the screens read as the wireframe on any day.
 
 The phone keeps that the User signed in, that the User agreed to the legal documents, what the sign-in suggested for
 Onboarding, whether Onboarding is finished and its answers, that the User answered the explanation before the
-location prompt (`locationExplained`), and the token of an Invite Link until its accept screen shows it
-(`inviteToken`) (`src/storage/kept.ts`). A value stored by an older version, without a newer
+location prompt (`locationExplained`), the token of an Invite Link until its accept screen shows it (`inviteToken`),
+and the running Parties whose 활성화 the User declined (`declinedParties`) (`src/storage/kept.ts`). A value stored by
+an older version, without a newer
 field, reads as "not yet" for that field. `openKept()` is the read for the start of the app: it is the one that
 honours `EXPO_PUBLIC_FIRST_STATE`, which clears all of it.
 
@@ -869,14 +1019,17 @@ socket server's README describes:
   out. A position for a Friend or a member whom the answers call unseen fetches those answers again.
 - The positions are fetched when the connection opens, and everything it shows when it opens again after a drop. When
   the app returns to the front, the positions and the Quests are fetched again.
-- A person's position ages by the app's clock (`now()`), looked at again every 30 seconds. Measured more than 2 minutes
-  ago (`OLD_POSITION_MS`), it is old: the Avatar is drawn dimmed, a look of its own, its name reads "민준 · 3분 전" from
-  the `names` level, and the Friend's card, row in the friend list and row in the friend panel add "3분 전 위치".
-  Measured more than 10 minutes ago (`KEPT_POSITION_MS`, the main server's keep), it is no longer on the map. The rule
-  is the same for a Friend and for a member of the User's Party; the limits are beside `POSITION_EVERY_MS`.
+- A person's position ages by the app's clock (`now()`), looked at again every 15 seconds. Measured 2 minutes ago or
+  more (`OLD_POSITION_MS`), it is old: the Avatar is drawn dimmed, a look of its own (`stale`), its name reads "민준 ·
+  3분 전" from the `names` level, its card says "마지막 위치 3분 전", and the Friend's row in the friend list and in
+  the friend panel adds "3분 전 위치". Measured 10 minutes ago or more (`KEPT_POSITION_MS`, the main server's keep),
+  it is no longer on the map. The rule is the same for a Friend and for a member of the User's Party; the limits are
+  beside `POSITION_EVERY_MS`.
 - The signals fetch what they name again: `friends-changed` the Friends, the positions and the Friend Requests,
-  `quests-changed` the Quests, the invitations and the requests to join, `meetups-changed` the Meetups, `party-changed`
-  the Parties and the positions, `global-events-changed` the Global Events and the Quests. When the app returns to the
+  `quests-changed` the Quests (the open room's Quest among them), the invitations, the requests to join and the
+  Leader's invitations, the recruiting Quests and the User's requests to join, `meetups-changed` the Meetups,
+  `party-changed` the Parties and the positions, `global-events-changed` the Global Events and the Quests,
+  `matching-changed` the requests for Matching, the Quests and the recruiting Quests. When the app returns to the
   front, the lists of 알림, the Friend Requests among them, are fetched again too.
 - `shuttle-vehicles-updated` replaces the shuttle's vehicles in the cache of `GET /shuttle/vehicles` while the
   shuttle layer is on, which is while that query is in use; a set that comes while it is off is dropped. When the

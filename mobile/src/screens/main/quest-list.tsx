@@ -13,7 +13,6 @@ import {
   space,
   text,
   textHalo,
-  useNotReadyToast,
   useToast,
 } from '@/design-system';
 import type { QuestRowView } from '@/features/quests/adapter';
@@ -109,14 +108,12 @@ function QuestRow({ row, first, last, onPress }: QuestRowProps): ReactElement {
 }
 
 // What a press on a row does. A class's row brings the map to its place at the "names" level, closes an open card
-// as the frame does, and says the class and the place. Any other row would open its Party's page, which belongs to
-// another task.
+// as the frame does, and says the class and the place. Any other row opens the Quest's room.
 function usePress({ map, selection }: Pick<QuestListProps, 'map' | 'selection'>): (row: QuestRowView) => void {
   const showToast = useToast();
-  const showNotReady = useNotReadyToast();
   return (row) => {
     if (row.kind !== 'class') {
-      showNotReady();
+      router.push(`/room/${row.id}`);
       return;
     }
     if (row.position !== null) {

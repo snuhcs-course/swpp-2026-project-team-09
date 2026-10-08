@@ -1,7 +1,9 @@
 import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
 import { asksMainServer } from './servers';
+import type { MatchingRequest } from './matching-types';
 import type {
+  Board,
   ClassSave,
   Footprints,
   Friend,
@@ -22,13 +24,16 @@ import type {
   ProfileChange,
   Quest,
   SentFriendRequest,
+  SubQuest,
   TimetableClass,
   UserSummary,
-  WalkingRoute,
 } from './types';
 import type { RestaurantMenus } from './menu-types';
 import type { ShuttleRoute, ShuttleVehicle } from './shuttle-types';
-import type { FriendRequests, JoinRequest, Meetups, QuestInvitation } from './waiting-types';
+import type { PartyOpening, PlaceAt, SubQuestContent } from './room-types';
+import type { FriendRequests, JoinRequest, Meetups, MyJoinRequest, QuestInvitation } from './waiting-types';
+import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
+import type { WalkingRoute } from './walking-route-types';
 
 // Everything the screens ask of the main server. A refusal or no answer is thrown as an `ApiError`.
 export interface ApiClient {
@@ -78,6 +83,13 @@ export interface ApiClient {
   // Who announced each Global Event. The app's own: the stored event does not hold it.
   listGlobalEventAnnouncers: () => Promise<{ eventId: string; announcer: string }[]>;
   listParties: () => Promise<Party[]>;
+  // `size` is 2 to 4.
+  requestMatching: (globalEventId: string, size: number) => Promise<MatchingRequest>;
+  // The waiting requests, the oldest first.
+  listMatchingRequests: () => Promise<MatchingRequest[]>;
+  // The latest request for the Global Event, in whatever state.
+  getMatchingRequest: (globalEventId: string) => Promise<MatchingRequest>;
+  withdrawMatchingRequest: (globalEventId: string) => Promise<void>;
   // Null for a User who is in no Party. The main server says so with a refusal, 404 NOT_IN_PARTY: the operation turns
   // exactly that one into null, with `isRefusal`, and throws any other.
   getMyParty: () => Promise<MyParty | null>;
@@ -90,6 +102,46 @@ export interface ApiClient {
   getShuttle: () => Promise<ShuttleRoute>;
   // The vehicles in service, [] when none runs.
   listShuttleVehicles: () => Promise<ShuttleVehicle[]>;
+  // One of the User's Quests, ended or not; 404 QUEST_NOT_FOUND for one the User does not hold.
+  getQuest: (questId: string) => Promise<Quest>;
+  dropQuest: (questId: string) => Promise<void>;
+  // The key is kept for the retries of one add.
+  addSubQuest: (questId: string, content: SubQuestContent, idempotencyKey: string) => Promise<SubQuest>;
+  editSubQuest: (questId: string, subQuestId: string, content: SubQuestContent) => Promise<SubQuest>;
+  cancelSubQuest: (questId: string, subQuestId: string) => Promise<void>;
+  markSubQuestDone: (questId: string, subQuestId: string) => Promise<void>;
+  handOverQuest: (questId: string, userId: string) => Promise<void>;
+  removeHolder: (questId: string, userId: string) => Promise<void>;
+  // Ends the Quest for every Holder.
+  endQuest: (questId: string) => Promise<void>;
+  acceptJoinRequest: (questId: string, requestId: string) => Promise<void>;
+  declineJoinRequest: (questId: string, requestId: string) => Promise<void>;
+  // The Leader's invitations into the Quest that wait, in the shape of the requests to join.
+  listSentInvitations: (questId: string) => Promise<JoinRequest[]>;
+  cancelInvitation: (questId: string, invitationId: string) => Promise<void>;
+  openParty: (opening: PartyOpening) => Promise<MyParty>;
+  joinParty: (partyId: string) => Promise<MyParty>;
+  leaveParty: () => Promise<void>;
+  setPartySharing: (on: boolean) => Promise<void>;
+  removePartyMember: (userId: string) => Promise<void>;
+  // Ends the User's Party for every member.
+  endParty: () => Promise<void>;
+  findPlaceAt: (position: LatLng) => Promise<PlaceAt>;
+  // The newest first; every board and Global Event without a filter.
+  listRecruitingQuests: (filter?: { board?: Board; globalEventId?: string }) => Promise<RecruitingQuest[]>;
+  // An Open Quest, at once.
+  joinQuest: (questId: string) => Promise<Quest>;
+  // An Approval Quest: a request that the Leader answers.
+  askToJoinQuest: (questId: string) => Promise<void>;
+  listMyJoinRequests: () => Promise<MyJoinRequest[]>;
+  withdrawJoinRequest: (requestId: string) => Promise<void>;
+  makeQuest: (making: QuestMaking, idempotencyKey: string) => Promise<Quest>;
+  // The User's Quest for the Global Event, Closed and titled as the event, made the first time.
+  attendGlobalEvent: (globalEventId: string) => Promise<Quest>;
+  changeQuest: (questId: string, change: QuestChange) => Promise<Quest>;
+  inviteToQuest: (questId: string, userId: string) => Promise<void>;
+  acceptInvitation: (invitationId: string) => Promise<Quest>;
+  declineInvitation: (invitationId: string) => Promise<void>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`). Chosen at each
@@ -132,10 +184,45 @@ export const apiClient: ApiClient = {
   listGlobalEvents: () => chosen().listGlobalEvents(),
   listGlobalEventAnnouncers: () => chosen().listGlobalEventAnnouncers(),
   listParties: () => chosen().listParties(),
+  requestMatching: (globalEventId, size) => chosen().requestMatching(globalEventId, size),
+  listMatchingRequests: () => chosen().listMatchingRequests(),
+  getMatchingRequest: (globalEventId) => chosen().getMatchingRequest(globalEventId),
+  withdrawMatchingRequest: (globalEventId) => chosen().withdrawMatchingRequest(globalEventId),
   getMyParty: () => chosen().getMyParty(),
   getFootprints: () => chosen().getFootprints(),
   findWalkingRoute: (from, to) => chosen().findWalkingRoute(from, to),
   listMenus: (date) => chosen().listMenus(date),
   getShuttle: () => chosen().getShuttle(),
   listShuttleVehicles: () => chosen().listShuttleVehicles(),
+  getQuest: (questId) => chosen().getQuest(questId),
+  dropQuest: (questId) => chosen().dropQuest(questId),
+  addSubQuest: (questId, content, key) => chosen().addSubQuest(questId, content, key),
+  editSubQuest: (questId, subQuestId, content) => chosen().editSubQuest(questId, subQuestId, content),
+  cancelSubQuest: (questId, subQuestId) => chosen().cancelSubQuest(questId, subQuestId),
+  markSubQuestDone: (questId, subQuestId) => chosen().markSubQuestDone(questId, subQuestId),
+  handOverQuest: (questId, userId) => chosen().handOverQuest(questId, userId),
+  removeHolder: (questId, userId) => chosen().removeHolder(questId, userId),
+  endQuest: (questId) => chosen().endQuest(questId),
+  acceptJoinRequest: (questId, requestId) => chosen().acceptJoinRequest(questId, requestId),
+  declineJoinRequest: (questId, requestId) => chosen().declineJoinRequest(questId, requestId),
+  listSentInvitations: (questId) => chosen().listSentInvitations(questId),
+  cancelInvitation: (questId, invitationId) => chosen().cancelInvitation(questId, invitationId),
+  openParty: (opening) => chosen().openParty(opening),
+  joinParty: (partyId) => chosen().joinParty(partyId),
+  leaveParty: () => chosen().leaveParty(),
+  setPartySharing: (on) => chosen().setPartySharing(on),
+  removePartyMember: (userId) => chosen().removePartyMember(userId),
+  endParty: () => chosen().endParty(),
+  findPlaceAt: (position) => chosen().findPlaceAt(position),
+  listRecruitingQuests: (filter) => chosen().listRecruitingQuests(filter),
+  joinQuest: (questId) => chosen().joinQuest(questId),
+  askToJoinQuest: (questId) => chosen().askToJoinQuest(questId),
+  listMyJoinRequests: () => chosen().listMyJoinRequests(),
+  withdrawJoinRequest: (requestId) => chosen().withdrawJoinRequest(requestId),
+  makeQuest: (making, key) => chosen().makeQuest(making, key),
+  attendGlobalEvent: (globalEventId) => chosen().attendGlobalEvent(globalEventId),
+  changeQuest: (questId, change) => chosen().changeQuest(questId, change),
+  inviteToQuest: (questId, userId) => chosen().inviteToQuest(questId, userId),
+  acceptInvitation: (invitationId) => chosen().acceptInvitation(invitationId),
+  declineInvitation: (invitationId) => chosen().declineInvitation(invitationId),
 };

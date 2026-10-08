@@ -204,10 +204,10 @@ describe('Friends on the map', () => {
     });
     expect(screen.getByRole('button', { name: '김민준' })).toBeVisible();
     await zoomIn(user, 3);
-    expect(lookOf('김민준')).not.toMatch(/:old/u);
+    expect(lookOf('김민준')).not.toMatch(/:stale/u);
 
     await pass(150_000);
-    expect(lookOf('김민준')).toMatch(/:old/u);
+    expect(lookOf('김민준')).toMatch(/:stale/u);
     expect(wordsUnder('김민준', '민준 · 2분 전')).not.toBeNull();
     expect(screen.getByText('공강 · 2분 전 위치')).toBeVisible();
 

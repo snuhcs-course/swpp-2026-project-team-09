@@ -1,6 +1,6 @@
 import { BackHandler } from 'react-native';
 import { act, fireEvent } from '@testing-library/react-native';
-import { pass, screen } from './support/app';
+import { pass, screen, shownAddress } from './support/app';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { CLOSER, DINNER, EVENT, FRIEND, lookOf, MEMBER, NOT_READY, PARTY, press, wordsUnder } from './support/markers';
 import { startFresh } from './support/mocks';
@@ -167,16 +167,11 @@ describe('"가까이 보기"', () => {
 });
 
 describe("a card's button whose feature belongs to another task", () => {
-  it.each([
-    [FRIEND, '파티 만들기'],
-    [MEMBER, '파티 열기'],
-    [EVENT, '같이 갈 사람 찾기'],
-    [PARTY, '파티 열기'],
-  ] as const)('says that it is not ready: %s, %s', async (name, button) => {
+  it("says that it is not ready: a Friend's 파티 만들기", async () => {
     const user = await openMain();
-    await press(user, name);
+    await press(user, FRIEND);
 
-    await press(user, button);
+    await press(user, '파티 만들기');
 
     expect(screen.getByText(NOT_READY)).toBeVisible();
     expect(screen.getByTestId('map-card')).toBeVisible();
@@ -199,14 +194,30 @@ describe("a card's button whose feature belongs to another task", () => {
     await user.press(screen.getByRole('button', { name: '올리기' }));
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 158 });
   });
+});
 
-  it('says so for "참여하기", on the card of a Party the User is not in', async () => {
+describe("a card's button that opens a Quest's room", () => {
+  it.each([
+    [MEMBER, '파티 열기'],
+    [PARTY, '파티 열기'],
+  ] as const)("opens the room of the Party's Quest: %s, %s", async (name, button) => {
+    const user = await openMain();
+    await press(user, name);
+
+    await press(user, button);
+    await pass(500);
+
+    expect(shownAddress()).toBe('/room/q-ai');
+  });
+
+  it('opens it for "참여하기", on the card of a Party the User is not in', async () => {
     process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getMyParty';
     const user = await openMain();
     await press(user, PARTY);
 
     await press(user, '참여하기');
+    await pass(500);
 
-    expect(screen.getByText(NOT_READY)).toBeVisible();
+    expect(shownAddress()).toBe('/room/q-ai');
   });
 });

@@ -43,13 +43,13 @@ function ageOf({ measuredAt }: Position, now: Date): number {
 
 // The positions the main server still keeps at `now`: one measured longer ago is no longer answered.
 export function keptPositions(positions: readonly Position[], now: Date): Position[] {
-  return positions.filter((position) => ageOf(position, now) <= KEPT_POSITION_MS);
+  return positions.filter((position) => ageOf(position, now) < KEPT_POSITION_MS);
 }
 
 // How many whole minutes ago an old position was measured, or null for a recent one.
 export function minutesOld(position: Position, now: Date): number | null {
   const age = ageOf(position, now);
-  return age > OLD_POSITION_MS ? Math.floor(age / MINUTE_MS) : null;
+  return age >= OLD_POSITION_MS ? Math.floor(age / MINUTE_MS) : null;
 }
 
 // A line with the age of an old position after it: "공강 · 3분 전 위치".

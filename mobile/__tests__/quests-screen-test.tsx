@@ -1,6 +1,6 @@
 import { act, within } from '@testing-library/react-native';
 import { router } from 'expo-router';
-import { pass, screen } from './support/app';
+import { pass, screen, shownAddress } from './support/app';
 import { holdBackButton } from './support/back';
 import { FULL_SCREEN } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
@@ -15,7 +15,6 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotionSetting: (): boolean => true,
 }));
 
-const NOT_READY = '준비 중이에요';
 const CLASS = '강의 · 자료구조 · 301동 118호 · 14:00';
 const PARTY = '공개 파티 · AI 커리어 설명회 같이 가요 · 301동 앞 · 17:40';
 const DINNER = '비공개 파티 · 김민준 · 저녁 약속 · 학생회관 (63동) · 20:10';
@@ -115,15 +114,14 @@ describe('a press of a row of the Quest list on the whole screen', () => {
     expect(screen.getByText('자료구조 · 301동 118호')).toBeVisible();
   });
 
-  it("says that a Party's room is not ready for any other row", async () => {
+  it("opens a Quest's room above it for any other row", async () => {
     const user = await openQuests();
 
     await user.press(screen.getByRole('button', { name: DINNER }));
+    await pass(500);
 
-    expect(screen.getByText(NOT_READY)).toBeVisible();
-    expect(screen.getByRole('header', { name: '퀘스트 3' })).toBeVisible();
-    // Above the phone's own bar, which a test does not have, and no navigation.
-    expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 24 });
+    expect(shownAddress()).toBe('/room/q-dinner');
+    expect(screen.getByRole('header', { name: '저녁 약속' })).toBeVisible();
   });
 });
 

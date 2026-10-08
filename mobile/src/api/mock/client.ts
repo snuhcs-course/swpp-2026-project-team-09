@@ -10,9 +10,12 @@ import { MENUS } from './data/menus';
 import { PLACES } from './data/places';
 import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
 import { MEETUPS, QUEST_INVITATIONS } from './data/waiting';
+import { mockEvents } from './events';
 import { mockFriendships as friendships } from './friendships';
+import { mockParty } from './party';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
+import { mockRoom } from './room';
 import { mockWalkingRoute } from './walking-route';
 
 // The Master Switch, which the main server keeps on the User. The mock keeps it in memory: off at each start.
@@ -130,4 +133,7 @@ export const mockClient: ApiClient = {
   listMenus: (date) => answer('listMenus', () => MENUS[date] ?? [], []),
   getShuttle: () => answer('getShuttle', () => SHUTTLE),
   listShuttleVehicles: () => answer('listShuttleVehicles', () => SHUTTLE_VEHICLES, []),
+  ...mockRoom,
+  ...mockParty,
+  ...mockEvents,
 };
