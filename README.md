@@ -116,7 +116,7 @@ What the demo cannot show, and what is known not to work yet:
 
 - **No background sharing on iOS.** The prototype is an Android app. It also builds for iOS (see
   [mobile/README.md](mobile/README.md), "Build the app for iOS"), and the demo videos were recorded on an iPhone, but
-  iOS sends no position in the background.
+  Iteration 1 built sharing in the background for Android alone.
 - **ARM only.** Kakao's map SDK ships ARM libraries only, so the app is built for `arm64-v8a` alone. It runs on an
   ARM phone or an arm64 emulator (an Apple Silicon Mac), not on the x86_64 emulator of an Intel Mac or most Windows PCs:
   use a physical Android phone there.
