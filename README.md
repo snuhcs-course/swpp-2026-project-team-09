@@ -24,6 +24,7 @@ site for Administrators.
 - [Running the app](#running-the-app)
 - [Running the tests](#running-the-tests)
 - [Repository layout](#repository-layout)
+- [AI-generated code](#ai-generated-code)
 - [Data sources and attribution](#data-sources-and-attribution)
 - [Links](#links)
 
@@ -507,6 +508,22 @@ data alone: [flow-tests/README.md](flow-tests/README.md).
 | `.scratch/`      | Specs and tickets of each iteration's tasks, and research notes                               |
 | `.github/`       | The CI workflow, the pull request template and the code owners                                |
 | `.claude/`       | Shared skills for coding agents; `.agents/` links to them                                     |
+
+## AI-generated code
+
+Everything the team wrote in this repository is AI-generated: the code, the tests, the CI workflow, the specs and
+tickets in `.scratch/`, and the documents, this one among them. It was written with Claude Code (Claude Fable 5.1 and
+Claude Opus 5.5) between 2026-09-28 and 2026-10-09. This section marks all of it, in place of a comment in each file,
+and every commit of the team carries a `Co-Authored-By: Claude` trailer.
+
+The team decided what to build, reviewed the specs and the table schemas, and checked the result on phones. Where
+something was wrong, the agent rewrote it; no code was edited by hand.
+
+Not AI-generated is what came from elsewhere: the skills in `.claude/skills/`, the seed data in `main-server/seed/`,
+the saved pages that the worker's tests read, the images and the font in `mobile/assets/`, and the demo videos.
+
+The [AI Collaboration Report](https://github.com/snuhcs-course/swpp-2026-project-team-09/wiki/AI-Collaboration-Report-%E2%80%93-Iteration-1)
+on the Wiki tells how the work went, with the prompts.
 
 ## Data sources and attribution
 
