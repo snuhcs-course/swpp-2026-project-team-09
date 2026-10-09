@@ -10,6 +10,24 @@ defined in [GLOSSARY.md](GLOSSARY.md); the app's screens are in Korean.
 The system is an Android app, four servers (main, socket, worker and match) with PostgreSQL and Redis, and an admin
 site for Administrators.
 
+## Table of contents
+
+- [What the demo demonstrates](#what-the-demo-demonstrates)
+- [Demo video](#demo-video)
+- [Known limitations and todos](#known-limitations-and-todos)
+- [Development and execution environment](#development-and-execution-environment)
+- [Requirements](#requirements)
+- [Setup](#setup)
+- [Settings](#settings)
+- [Running the servers](#running-the-servers)
+- [Running the admin site](#running-the-admin-site)
+- [Running the app](#running-the-app)
+- [Running the tests](#running-the-tests)
+- [Repository layout](#repository-layout)
+- [AI-generated code](#ai-generated-code)
+- [Data sources and attribution](#data-sources-and-attribution)
+- [Links](#links)
+
 ## What the demo demonstrates
 
 ### Goal of Iteration 1
@@ -72,14 +90,34 @@ To run the demo yourself: [Setup](#setup), [Running the servers](#running-the-se
 
 ## Demo video
 
-_The link to the demo video is added here once it is recorded._
+The demo is eight short videos, in
+[this Google Drive folder](https://drive.google.com/drive/folders/1LnGPIOsQbjt4Or9v-cogjmvhMoUhx7y6) and in this
+repository under `docs/demo/iteration-1/`. What each one shows:
+
+- Sign-in with Google, where an account outside SNU is refused and an SNU account reaches the map:
+  [login.mp4](docs/demo/iteration-1/login.mp4)
+- The map, with the Friends and the Quests over it, a Global Event's card, the menus, and the dining and shuttle
+  layers: [map.mp4](docs/demo/iteration-1/map.mp4)
+- Global Events on the 행사 tab, with an event's source page, a request for Matching, and a request to join a Quest
+  that recruits for the event: [event.mp4](docs/demo/iteration-1/event.mp4)
+- Friends, with a Friend Request by Friend ID, the sharing switch of each Friend, the end of a friendship, and the
+  Master Switch: [friends.mp4](docs/demo/iteration-1/friends.mp4)
+- 내 정보, with the notifications, the profile, and a class added to the timetable and then corrected:
+  [my-page.mp4](docs/demo/iteration-1/my-page.mp4)
+- A Quest of the User's own for a Global Event, with its recruiting post corrected, a Sub Quest added to its plan,
+  and the Quest removed: [party.mp4](docs/demo/iteration-1/party.mp4)
+- Joining Quests on the 파티 tab, with an invitation accepted, the four Boards, and a recruiting Quest joined:
+  [party-invite.mp4](docs/demo/iteration-1/party-invite.mp4)
+- A Party, opened for a Quest and closed again, then one that another Holder opened, entered and left:
+  [party-management.mp4](docs/demo/iteration-1/party-management.mp4)
 
 ## Known limitations and todos
 
 What the demo cannot show, and what is known not to work yet:
 
-- **Android only.** The demo is an Android APK. The app also builds for iOS (see [mobile/README.md](mobile/README.md),
-  "Build the app for iOS"), but iOS sends no position in the background and was not part of the demo.
+- **No background sharing on iOS.** The prototype is an Android app. It also builds for iOS (see
+  [mobile/README.md](mobile/README.md), "Build the app for iOS"), and the demo videos were recorded on an iPhone, but
+  Iteration 1 built sharing in the background for Android alone.
 - **ARM only.** Kakao's map SDK ships ARM libraries only, so the app is built for `arm64-v8a` alone. It runs on an
   ARM phone or an arm64 emulator (an Apple Silicon Mac), not on the x86_64 emulator of an Intel Mac or most Windows PCs:
   use a physical Android phone there.
@@ -102,20 +140,24 @@ What the demo cannot show, and what is known not to work yet:
   "Development settings").
 - **No dashed lines on the native map.** Neither the Android nor the iOS map module draws dashes, so the walking
   route and the shuttle's line are solid in a build.
-- **Checks by hand on phones are not done yet.** The screens were tested with Jest against the mocks and a fake main
-  server, and the servers together by `flow-tests`, but these still wait for a person with phones: the Party room
-  and the members on the map, Friends and Invite Links opened from a messenger, the shuttle layer in a native build
-  (its line code for Android and iOS was not built when it was written), background sharing (the list of P17), and
-  Google sign-in on a phone. The P20 walk-through records them.
+- **Some checks by hand on phones are not done yet.** The Party room and its members on the map, Friends, the
+  shuttle layer in a native build, and Google sign-in were checked on an iPhone 14 Pro and a Galaxy S22. Two still
+  wait for a person with phones: Invite Links opened from a messenger, and background sharing (the list of P17). The
+  P20 walk-through records them.
 - **Registrations a person makes at Google and Kakao.** A build signed with any key other than the shared debug key
   needs that key registered: its SHA-1 in an Android OAuth client of the Google Cloud project, with the package name
   `com.bonnieandclaude.snunow`; its key hash at Kakao under the app's Android platform; and its SHA-256 in the main
   server's `ANDROID_CERTIFICATE_FINGERPRINTS` for Invite Links. Without the first, sign-in fails; without the second,
-  the map stays blank. The Android OAuth client for this package name still has to be confirmed. The admin site works
-  only on `http://localhost:3100`, the origin registered for its Google client and its Kakao key.
-- **Invite Links need a fixed https address.** Links are built from the main server's public address. If the tunnel's
-  address changes on restart, links made before stop working. A build without the link host opens links only through
-  `snunow://`.
+  the map stays blank. The admin site works only on `http://localhost:3100`, the origin registered for its Google
+  client and its Kakao key.
+- **Invite Links need a fixed https address.** Links are built from the main server's public address, and Android
+  opens the app only for links under the https host the build was made with. A link under a computer's own address
+  over http opens the browser, not the app, and a build without the link host opens links only through
+  `snunow://invite/<token>`. If a tunnel's address changes on restart, links made before stop working. Todo, once the
+  servers are deployed at a fixed https address: build the app with that host and check a link opened from a
+  messenger.
+- **Plain http is allowed in every build**, so that the demo APK reaches the servers on one's own computer. Todo, once
+  the servers are deployed behind https: remove `usesCleartextTraffic` from `mobile/app.json`.
 - **The walking route has a quota** of 1,000 routes a day for the team's Kakao app; a route is asked only when the
   User asks for one.
 - **Sample data in a build.** Friends' statuses (such as 공강), who announced a Global Event and "오늘의 발자국" are the
@@ -158,10 +200,15 @@ What the project was built and run with:
 - An ARM Android phone, or an arm64 emulator with Google Play, with a Google account signed in.
 - The team's Kakao keys (REST API, JavaScript and native app keys), which the Owner of the team's Kakao app shares
   privately, and an SNU Google account to sign in to the app.
+- About 30 GB of free disk space. On one Mac the Android build's Gradle cache took about 10 GB, Docker's images and
+  build cache about 15 to 20 GB, and an iOS build's Xcode cache about 3 GB. When the disk fills, Docker stops with
+  input/output errors.
 
 ## Setup
 
-From a clean clone, in this order. The project READMEs explain each step.
+From a clean clone, in this order. The project READMEs explain each step. On a Mac whose Desktop and Documents are
+synced to iCloud Drive, clone elsewhere, such as `~/Developer`: a checkout under them cannot be built for iOS
+([mobile/README.md](mobile/README.md), "Keep the checkout out of iCloud Drive").
 
 ```bash
 git clone https://github.com/snuhcs-course/swpp-2026-project-team-09.git
@@ -183,7 +230,9 @@ cd ..
 ```
 
 Then open `main-server/.env`, fill in `KAKAO_REST_API_KEY`, and replace the example address in
-`INITIAL_ADMINISTRATOR_EMAILS` with your Google account's address, so that you can sign in to the admin site.
+`INITIAL_ADMINISTRATOR_EMAILS` with your Google account's address, so that you can sign in to the admin site. The
+main server reads it only when it starts on a database that holds no Administrator: once the servers have run with
+the example address, a new address is not taken until the data is deleted with `docker compose down -v`.
 
 The other servers take the same public key and secrets from it:
 
@@ -307,14 +356,19 @@ docker compose up --build
 This starts PostgreSQL, Redis and the four servers. The main server brings its database up to date and loads the seed
 (the Places, the Campus Boundary and the shuttle's stops and line) before it starts. The main server answers on port
 3000 and the socket server on 3001, on the network too, so that a phone can reach them; the worker (3002), the match
-server (3003), PostgreSQL and Redis only on the loopback address. `http://localhost:3000/health/ready` answers 200
-once the main server can reach its stores.
+server (3003), PostgreSQL and Redis only on the loopback address. Anyone on the same network can reach the two ports
+over plain http, so on a public Wi-Fi run the servers only while you use them. `http://localhost:3000/health/ready`
+answers 200 once the main server can reach its stores.
 
-- `docker compose down` removes the containers and keeps the data; `docker compose down -v` deletes the data too.
+- `docker compose down` removes the containers and keeps the data; `docker compose down -v` deletes the data too,
+  with the collected Global Events, what Administrators did with them and the Administrators themselves.
 - A setting that is missing or wrong stops its server with the setting's name in the log, for example when
   `KAKAO_REST_API_KEY` is empty.
 - To fill the menus without waiting for the next Collection, at 05:00 or 10:00:
   `docker compose exec worker-server node dist/collect coop_menus dormitory_menus veterinary_menus`.
+- To fill the Global Events without waiting for the next Collection, at 00:00, 06:00, 12:00 or 18:00:
+  `docker compose exec worker-server node dist/collect snu_events`. Until then the admin site shows the Source as
+  never collected.
 - To run one server outside Docker while you work on it, see its README, "Run it".
 
 ### Demo data
@@ -374,8 +428,10 @@ pnpm android
 
 It generates `android/`, builds and installs the app and starts the development server. The first build takes 15 to
 30 minutes. After a change to `KAKAO_NATIVE_APP_KEY` or `INVITE_LINK_HOST`, generate the project again with
-`pnpm expo prebuild --platform android`. When the map stays blank, [mobile/README.md](mobile/README.md), "When the map
-does not appear", reads the log.
+`pnpm expo prebuild --platform android`. The two server addresses are read when the development server starts: after
+a change to them, such as when the computer's address on the network changes, restart it and reload the app, with no
+new build. When the map stays blank, [mobile/README.md](mobile/README.md), "When the map does not appear", reads the
+log.
 
 ### On a phone
 
@@ -384,12 +440,17 @@ Turn on Developer options and USB debugging, connect the phone, check that `adb 
 
 The phone must reach the main and socket servers:
 
-- A development build allows plain http, so on the same network as the computer the two addresses can be the
-  computer's address on that network, with ports 3000 and 3001.
-- Otherwise, and for any build that is not a debug build, such as the demo APK, Android refuses plain connections:
-  put the computer's ports 3000 and 3001 behind an https tunnel and use its two https addresses in `mobile/.env`. Set
-  the main server's `PUBLIC_URL` to the tunnel's address for the main server and `INVITE_LINK_HOST` to its host, so
-  that Invite Links open the app.
+- Every build allows plain http (`usesCleartextTraffic` in `mobile/app.json`), so on the same network as the computer
+  the two addresses can be the computer's address on that network, with ports 3000 and 3001. Invite Links do not open
+  the app there (see "Invite Links need a fixed https address" under
+  [Known limitations and todos](#known-limitations-and-todos)).
+- From anywhere else, put the computer's ports 3000 and 3001 behind an https tunnel and use its two https addresses
+  in `mobile/.env`. Set the main server's `PUBLIC_URL` to the tunnel's address for the main server and
+  `INVITE_LINK_HOST` to its host, so that Invite Links open the app.
+
+A debug build loads its JavaScript from the development server on the computer (port 8081), which `pnpm android`
+starts: keep its terminal open, and keep the phone on the cable or on the same network as the computer. Without it the
+app shows an error screen, on iOS "No script URL provided".
 
 Positions are shared only inside the Campus Boundary, so the flows are run on campus.
 
@@ -397,17 +458,35 @@ Positions are shared only inside the Campus Boundary, so the flows are run on ca
 
 Google and Kakao accept the app only when they know the key that signed it:
 
-- A development build is signed with the Expo template's debug key, which every checkout shares. Its key hash is
-  registered at Kakao, and its SHA-256 is already in the main server's `ANDROID_CERTIFICATE_FINGERPRINTS`. Google
-  sign-in needs an Android OAuth client in the Google Cloud project with the package name
-  `com.bonnieandclaude.snunow` and the key's SHA-1.
-- A build signed with another key, such as the demo APK's or one signed on EAS, needs the same three registrations
-  for its key: the SHA-1 at Google, the key hash at Kakao and the SHA-256 in `ANDROID_CERTIFICATE_FINGERPRINTS`.
+- A development build and the demo APK are signed with the Expo template's debug key, which every checkout shares.
+  Its key hash is registered at Kakao, and its SHA-256 is already in the main server's
+  `ANDROID_CERTIFICATE_FINGERPRINTS`. Google sign-in needs an Android OAuth client in the Google Cloud project with
+  the package name `com.bonnieandclaude.snunow` and the key's SHA-1.
+- A build signed with another key, such as one signed on EAS, needs the same three registrations for its key: the
+  SHA-1 at Google, the key hash at Kakao and the SHA-256 in `ANDROID_CERTIFICATE_FINGERPRINTS`.
   `.scratch/research/external-sources.md`, sections 7.2 and 8, has the commands that read them.
 
 ### The demo APK
 
-_The link to the demo APK, and the server address built into it, are added here when the demo build is made._
+`snu-now-iteration-1.apk`, attached to the
+[Iteration 1 release](https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/tag/iteration-1), is a
+release build of the app. It needs no build of the app and no development server: only the servers on your computer
+([Running the servers](#running-the-servers), with the [demo data](#demo-data)), Android's Platform-Tools for `adb`,
+and an ARM phone on its cable or an arm64 emulator, with an SNU Google account signed in.
+
+The APK reaches the main server at `http://localhost:3000` and the socket server at `http://localhost:3001`, on the
+phone itself, so forward both ports to the computer and install it:
+
+```bash
+adb reverse tcp:3000 tcp:3000
+adb reverse tcp:3001 tcp:3001
+adb install -r snu-now-iteration-1.apk
+```
+
+The forwarding ends when the phone is unplugged or the emulator stops: run the first two lines again then. The APK is
+signed with the shared debug key, so Google and Kakao accept it as they accept a development build. Invite Links
+open it only through `snunow://invite/<token>`. The development settings are off in it, so a User away from the
+campus is shown to nobody: on an emulator, set the location to a point on campus in the extended controls.
 
 ## Running the tests
 
@@ -445,10 +524,26 @@ data alone: [flow-tests/README.md](flow-tests/README.md).
 | `mobile/`        | The app, with the native map module for Android and iOS in `modules/`                         |
 | `flow-tests/`    | Tests of the three demo flows across the four servers                                         |
 | `infra/`         | The PostgreSQL image with PostGIS, and the script that creates each server's database         |
-| `docs/`          | Architecture decision records (`adr/`) and the agents' conventions (`agents/`)                |
+| `docs/`          | Decision records (`adr/`), the agents' conventions (`agents/`), and the demo videos (`demo/`) |
 | `.scratch/`      | Specs and tickets of each iteration's tasks, and research notes                               |
 | `.github/`       | The CI workflow, the pull request template and the code owners                                |
 | `.claude/`       | Shared skills for coding agents; `.agents/` links to them                                     |
+
+## AI-generated code
+
+Everything the team wrote in this repository is AI-generated: the code, the tests, the CI workflow, the specs and
+tickets in `.scratch/`, and the documents, this one among them. It was written with Claude Code (Claude Fable 5.1 and
+Claude Opus 5.5) between 2026-09-28 and 2026-10-09. This section marks all of it, in place of a comment in each file,
+and every commit of the team carries a `Co-Authored-By: Claude` trailer.
+
+The team decided what to build, reviewed the specs and the table schemas, and checked the result on phones. Where
+something was wrong, the agent rewrote it; no code was edited by hand.
+
+Not AI-generated is what came from elsewhere: the skills in `.claude/skills/`, the seed data in `main-server/seed/`,
+the saved pages that the worker's tests read, the images and the font in `mobile/assets/`, and the demo videos.
+
+The [AI Collaboration Report](https://github.com/snuhcs-course/swpp-2026-project-team-09/wiki/AI-Collaboration-Report-%E2%80%93-Iteration-1)
+on the Wiki tells how the work went, with the prompts.
 
 ## Data sources and attribution
 

@@ -46,7 +46,9 @@ docker compose up --build
 
 This starts PostgreSQL, Redis and every server. The main server takes its settings from `main-server/.env`, brings its
 database up to the current schema and loads the [seed](#seed-data) before it starts. `docker compose down` removes the
-containers and keeps the database; `docker compose down -v` deletes it too.
+containers and keeps the database; `docker compose down -v` deletes it too, with the collected Global Events, what
+Administrators did with them and the Administrators themselves. The worker collects nothing when it starts, so after
+that run `docker compose exec worker-server node dist/collect snu_events` to fill the Global Events again.
 
 While you work on the main server, start only the data stores in the repository root and run the server yourself in
 `main-server/`:
@@ -282,8 +284,8 @@ name, `com.bonnieandclaude.snunow`, and the SHA-256 fingerprints of the certific
 settings serve this:
 
 - `PUBLIC_URL`: the address the apps reach this server at from outside, such as `https://snunow.example`, without a
-  path. App Links need https; `http://localhost:3000` serves for development. A link made under one address stops
-  working when the address changes.
+  path. App Links need https; `http://localhost:3000` serves for development, where the app opens a link only
+  through `snunow://invite/<token>`. A link made under one address stops working when the address changes.
 - `ANDROID_CERTIFICATE_FINGERPRINTS`: the fingerprints separated by commas, so that a development build and the demo
   build both open the links. `.env.example` holds the one of the Expo template's debug key, which signs development
   builds.
@@ -1960,7 +1962,9 @@ the worker does not collect the operator's vehicles, it also sends two vehicles,
 and a stop further every 90 seconds, through `POST /shuttle/vehicles/collected` with `WORKER_TOKEN`. Within those hours
 the operator's vehicles are shown, since each set replaces the one before.
 
-**Starting again**: `docker compose --profile demo down -v` deletes the database with the demo data.
+**Starting again**: `docker compose --profile demo down -v` deletes the database with the demo data, and with
+everything else in it: the collected Global Events, what Administrators did with them and the Administrators
+themselves. To bring only the demo's times up to date, restart `demo-seed` as above instead.
 
 ## Checks
 
