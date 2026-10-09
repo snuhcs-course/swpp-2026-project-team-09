@@ -533,8 +533,10 @@ data alone: [flow-tests/README.md](flow-tests/README.md).
 
 Everything the team wrote in this repository is AI-generated: the code, the tests, the CI workflow, the specs and
 tickets in `.scratch/`, and the documents, this one among them. It was written with Claude Code (Claude Fable 5.1 and
-Claude Opus 5.5) between 2026-09-28 and 2026-10-09. This section marks all of it, in place of a comment in each file,
-and every commit of the team carries a `Co-Authored-By: Claude` trailer.
+Claude Opus 5.5) between 2026-09-28 and 2026-10-09. Each source file starts with a box comment headed
+`AI-generated with Claude`, with a row for each day an agent changed the file: the date, the Claude model, and the
+GitHub ID of the team member who prompted it. Markdown, JSON, lockfiles, Prisma migrations, and test fixtures carry no
+box and are marked by this section, and every commit of the team carries a `Co-Authored-By: Claude` trailer.
 
 The team decided what to build, reviewed the specs and the table schemas, and checked the result on phones. Where
 something was wrong, the agent rewrote it; no code was edited by hand.
