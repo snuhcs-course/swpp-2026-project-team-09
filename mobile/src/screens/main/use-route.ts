@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-06 to 2026-10-08, prompted by AhnJinYoung and fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef } from 'react';
 import type { LatLng } from '@/api/types';

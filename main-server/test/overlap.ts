@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-09-30 to 2026-10-05, prompted by fyoon46, reviewed by fyoon46 and TaeHyun79 in #9 #38
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-10-04  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import request from 'supertest';
 import { Prisma, PrismaClient } from '../src/generated/prisma/client.js';
 import { refreshTokenHash } from './sign-in.js';

@@ -1,4 +1,11 @@
-// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-08, prompted by AhnJinYoung, Jaehyun0320 and fyoon46, reviewed by Jaehyun0320 in #51
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { forgetMockSwitch } from '@/api/mock/client';
 import { resetMockFriendships } from '@/api/mock/friendships';

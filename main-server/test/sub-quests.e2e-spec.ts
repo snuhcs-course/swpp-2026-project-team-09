@@ -1,4 +1,11 @@
-// AI-generated with Claude Opus 5.5, 2026-10-06 to 2026-10-09, prompted by fyoon46 and Jaehyun0320, reviewed by TaeHyun79 and fyoon46 in #41 #74
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-05  Opus 5.5   prompted by fyoon46
+ * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import { INestApplication } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';

@@ -1,4 +1,9 @@
-// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import type { LatLng } from '@/api/types';
 
 // What the map view gives back to the screen that opened it: a Place of the list, or a point with the words it shows.

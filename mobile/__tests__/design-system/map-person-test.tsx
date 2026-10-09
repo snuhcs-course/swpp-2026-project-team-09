@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by AhnJinYoung
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import { render, screen } from '@testing-library/react-native';
 import { StyleSheet, type ViewStyle } from 'react-native';
 

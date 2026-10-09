@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { MatchingRequest, Prisma } from '../generated/prisma/client.js';

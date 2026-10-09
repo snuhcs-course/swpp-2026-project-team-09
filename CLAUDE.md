@@ -20,18 +20,26 @@ Keep `AGENTS.md` and `CLAUDE.md` synchronized. Whenever repository instructions 
 
 ## AI-generated code markers
 
-Every source file starts with one marker line, below a shebang if it has one. Markdown, JSON, lockfiles, Prisma migrations, test fixtures and third-party files get none. Names are GitHub IDs.
+Every source file starts with a box comment that records when an agent changed it, with which Claude model and for whom, below a shebang if it has one. Markdown, JSON, lockfiles, Prisma migrations, test fixtures and third-party files get none.
 
 ```
-// AI-generated with Claude Opus 5.5, 2026-09-28 to 2026-10-04, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #2 #4 #31
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-10-08  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
 ```
 
-- The line accumulates. When an agent changes a file in a PR, update its line in that PR: add the model and the person who prompted the agent if they are new, and move the end date. Never remove an earlier entry.
-- Every PR needs an approval from someone other than its author. When you open the PR, add its number and its reviewer after `reviewed by … in` on every file it changes; the approval confirms that line. If the reviewer changes, change the line before merging.
-- A file written wholly by hand gets no marker. A hand edit to a marked file leaves the marker as it is.
-- The marker summarises the file. For a single line, `git blame` gives the squash commit, whose `(#N)` names the PR and whose `Co-Authored-By: Claude …` trailer names the model.
+Files whose comments start with `#` (shell, YAML, Dockerfile) draw the same box with `#`, and Prisma schemas with `//`.
+
+- When an agent changes a file, it adds a row at the bottom of the box: today's date, its model and the GitHub ID of the person who prompted it (`gh api user --jq .login`). Skip the row if one with the same date, model and person is already there. A new file gets the box with its first row. Never change or remove a row.
+- A change made only by hand adds no row. A file written wholly by hand gets no box.
+- When two branches add rows to the same file, the merge keeps both, in date order.
+- For a single line, `git blame` gives the commit that last changed it; its `Co-Authored-By: Claude …` trailer names the model.
 - `git grep -l "AI-generated with Claude"` lists the marked files; the AI Collaboration Report points to it.
-- Markers added in Iteration 1 list only PRs that had an approval; files whose PRs had none show `prompted by` alone.
+- Rows for Iteration 1 were filled in from the commit history: each row is a day on which a person's commit carrying a `Co-Authored-By: Claude` trailer changed the file.
 
 ## Usage reporting
 

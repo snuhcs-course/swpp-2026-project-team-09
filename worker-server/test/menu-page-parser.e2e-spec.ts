@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5, 2026-10-02, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #26
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-02  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { type Meal, type MenuLine, type RestaurantMenu } from '../src/menu/dto/menus-collected.dto.js';
 import { parseMenuPage } from '../src/menu/menu-page.parser.js';
 import { blockPage, savedPage } from './pages.js';

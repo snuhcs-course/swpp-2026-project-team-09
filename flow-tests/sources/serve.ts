@@ -1,4 +1,9 @@
-// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 // Answers in place of the outside services, inside the test stack. Compose gives this container the services' host
 // names, and the servers trust its certificate, so they reach it as they would reach the real ones.
 // Run by Node in the container as it is, with the saved pages and answers of the servers' own tests mounted.

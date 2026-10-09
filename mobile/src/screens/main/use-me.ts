@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by AhnJinYoung
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import type { LatLng } from '@/api/types';
 import { useToast } from '@/design-system';
 import { CAMPUS_BOUNDS, isInside, type MapAvatar, type MarkerLook, useMarkerImages } from '@/map';

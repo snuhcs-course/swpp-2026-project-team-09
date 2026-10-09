@@ -1,4 +1,9 @@
-// AI-generated with Claude Fable 5.1, 2026-10-05, prompted by fyoon46, reviewed by TaeHyun79 in #38
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { userRoom } from '../common/rooms.js';

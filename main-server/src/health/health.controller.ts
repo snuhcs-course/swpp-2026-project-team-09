@@ -1,4 +1,11 @@
-// AI-generated with Claude Opus 5.5, 2026-09-28 to 2026-09-29, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #2 #4 #5
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-09-29  Opus 5.5   prompted by TaeHyun79
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Controller, Get } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {

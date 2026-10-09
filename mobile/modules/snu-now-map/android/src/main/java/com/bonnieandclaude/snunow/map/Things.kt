@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-08, prompted by Jaehyun0320 and fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-07  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 package com.bonnieandclaude.snunow.map
 
 import android.animation.ValueAnimator

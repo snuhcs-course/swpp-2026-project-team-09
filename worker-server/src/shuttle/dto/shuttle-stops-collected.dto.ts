@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5, 2026-10-04, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #31
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 // A stop of the route page, at its place on the operator's drawing of the route, in pixels.
 export interface RouteStop {
   name: string;

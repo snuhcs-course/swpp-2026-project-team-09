@@ -1,4 +1,9 @@
-// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { size, space } from '@/design-system';
 
 // The bottom navigation under the tabs, as the frames draw it: the bar's 64 and 16 under it, the room for the phone's

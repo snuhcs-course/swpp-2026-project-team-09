@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-08, prompted by fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { router, useLocalSearchParams } from 'expo-router';
 import { type ReactElement, type RefObject, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';

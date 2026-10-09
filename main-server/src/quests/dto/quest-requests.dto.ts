@@ -1,4 +1,12 @@
-// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-06 to 2026-10-09, prompted by fyoon46 and Jaehyun0320, reviewed by TaeHyun79 and fyoon46 in #41 #44 #74
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-05  Opus 5.5   prompted by fyoon46
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import { z } from 'zod';
 import { JoinPolicy, QuestBoard } from '../../generated/prisma/client.js';
 

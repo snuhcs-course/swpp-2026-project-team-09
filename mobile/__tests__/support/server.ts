@@ -1,4 +1,12 @@
-// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-08 to 2026-10-09, prompted by Jaehyun0320 and fyoon46, reviewed by fyoon46 in #74
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import type { Friend, Lobby, Party, Position, Quest } from '@/api/types';
 import type { FriendRequests, JoinRequest, Meetups, QuestInvitation } from '@/api/waiting-types';
 import { googleAvailable } from '@/auth/google';

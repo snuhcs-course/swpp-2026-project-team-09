@@ -1,4 +1,9 @@
-// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { readCampusBoundary } from '../src/common/campus-boundary.js';
 import { metresBetween } from '../src/common/geometry.js';
 import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';

@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-05 to 2026-10-06, prompted by AhnJinYoung, reviewed by Jaehyun0320 in #51
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 // Settings for development, given when the app is started as `EXPO_PUBLIC_` variables. A released app ignores them.
 //
 //   EXPO_PUBLIC_SIGN_IN_ENDING=cancelled        the sign-in is the mock and ends so: signed-in, cancelled, not-snu-account, failed

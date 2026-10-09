@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-06, prompted by AhnJinYoung and fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { captureRef } from 'react-native-view-shot';
 import { screen } from './support/app';
 import { givePhone, ME, ON_CAMPUS, openMain } from './support/main';

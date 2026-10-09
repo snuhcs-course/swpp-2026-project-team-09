@@ -1,4 +1,14 @@
-// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-09-29 to 2026-10-05, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 and TaeHyun79 in #5 #9 #18 #23 #38
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-29  Opus 5.5   prompted by TaeHyun79
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-09-30  Opus 5.5   prompted by fyoon46
+ * 2026-10-01  Opus 5.5   prompted by fyoon46
+ * 2026-10-04  Fable 5.1  prompted by fyoon46
+ * 2026-10-05  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { PrismaService } from '../common/prisma.service.js';

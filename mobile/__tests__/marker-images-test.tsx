@@ -1,4 +1,11 @@
-// AI-generated with Claude Opus 5.5, 2026-10-05 to 2026-10-06, prompted by AhnJinYoung and Jaehyun0320
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
 import { Text } from 'react-native';

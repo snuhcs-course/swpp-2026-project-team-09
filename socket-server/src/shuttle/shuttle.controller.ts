@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-04, prompted by TaeHyun79, reviewed by fyoon46 in #31
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ ******************************************************************************/
+
 import { Controller } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { type ShuttleVehicle } from './dto/shuttle-vehicles-updated.dto.js';

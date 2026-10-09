@@ -1,4 +1,9 @@
-// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import type { BadgeTone } from '@/design-system';
 import type { Meetup, MeetupState, Meetups } from '@/api/waiting-types';
 import { koreaClock, koreaDay } from '@/korea-time';

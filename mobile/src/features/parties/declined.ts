@@ -1,4 +1,9 @@
-// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { queryOptions, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { DECLINED_PARTIES_KEY } from '@/api/queries';

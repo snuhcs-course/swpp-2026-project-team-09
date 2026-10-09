@@ -1,4 +1,9 @@
-// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import type { ClassSave, ClassTime, Place, TimetableClass, Weekday } from '@/api/types';
 
 // The class form of the `TimetableClassForm` frame: one course name, a set of weekdays, one start and end, one Place

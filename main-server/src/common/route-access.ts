@@ -1,4 +1,11 @@
-// AI-generated with Claude Opus 5.5, 2026-09-29 to 2026-10-06, prompted by fyoon46, reviewed by TaeHyun79 and fyoon46 in #14 #31 #48
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-10-03  Opus 5.5   prompted by fyoon46
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 

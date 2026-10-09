@@ -1,4 +1,11 @@
-// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-06, prompted by fyoon46, reviewed by TaeHyun79 in #38 #42
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-04  Fable 5.1  prompted by fyoon46
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ClientProxy, ClientProxyFactory, Transport } from '@nestjs/microservices';

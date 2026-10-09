@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by fyoon46, reviewed by TaeHyun79 in #42
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { z } from 'zod';
 
 // Turns a switch of Location Sharing on or off: the Master Switch, or a relationship's at the User's end.

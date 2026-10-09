@@ -1,4 +1,12 @@
-// AI-generated with Claude Opus 5.5, 2026-10-05 to 2026-10-09, prompted by AhnJinYoung and Jaehyun0320, reviewed by Jaehyun0320 and fyoon46 in #51 #74
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import { ApiError } from '@/api/errors';
 import { MOCK_WAIT_MS } from '@/api/mock/answer';
 import { ME } from '@/api/mock/data/frame';

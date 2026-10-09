@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-08, prompted by Jaehyun0320
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import type * as SecureStoreFake from '../support/secure-store';
 import * as SecureStore from 'expo-secure-store';
 import { type Received, refusal, type Reply } from '../support/fake-server';

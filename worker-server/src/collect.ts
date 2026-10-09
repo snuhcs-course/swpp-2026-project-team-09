@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5, 2026-10-02 to 2026-10-04, prompted by fyoon46 and TaeHyun79, reviewed by fyoon46 in #26 #30
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by fyoon46
+ * 2026-10-04  Opus 5.5   prompted by TaeHyun79
+ ******************************************************************************/
+
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';

@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-06, prompted by fyoon46, reviewed by TaeHyun79 in #37
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Fable 5.1  prompted by fyoon46
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
 import { Idempotent } from '@nestjs/idempotency';
 import { z } from 'zod';

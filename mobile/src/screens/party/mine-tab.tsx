@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5, 2026-10-08 to 2026-10-09, prompted by fyoon46 and Jaehyun0320, reviewed by fyoon46 in #74
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { type ReactElement, useState } from 'react';

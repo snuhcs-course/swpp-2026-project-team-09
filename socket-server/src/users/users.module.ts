@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-09-29 to 2026-09-30, prompted by fyoon46, reviewed by TaeHyun79 and fyoon46 in #9 #11 #14
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';

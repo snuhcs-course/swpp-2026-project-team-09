@@ -1,4 +1,9 @@
-// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import type { Party, Quest } from '@/api/types';
 import type { FriendRequests, JoinRequest, Meetups, QuestInvitation } from '@/api/waiting-types';
 import { koreaClock, koreaDay } from '@/korea-time';

@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5, 2026-10-05 to 2026-10-06, prompted by Jaehyun0320
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import { AndroidConfig, type ConfigPlugin, withAndroidManifest, withInfoPlist } from 'expo/config-plugins';
 
 // The app's configuration hands the Kakao native app key to the map module at build time. The key is a setting a

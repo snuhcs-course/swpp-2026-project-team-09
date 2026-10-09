@@ -1,4 +1,12 @@
-// AI-generated with Claude Opus 5.5, 2026-09-29 to 2026-10-06, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 and TaeHyun79 in #4 #8 #10 #45 #48
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-09-29  Opus 5.5   prompted by TaeHyun79
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { PrismaPg } from '@prisma/adapter-pg';
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';

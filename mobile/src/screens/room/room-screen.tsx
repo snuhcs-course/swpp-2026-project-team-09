@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-08, prompted by fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { router, useIsFocused } from 'expo-router';
 import { type ReactElement, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';

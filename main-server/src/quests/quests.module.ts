@@ -1,4 +1,11 @@
-// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by fyoon46, reviewed by TaeHyun79 in #41 #43 #44 #45
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-05  Opus 5.5   prompted by fyoon46
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Module } from '@nestjs/common';
 import { FriendsModule } from '../friends/friends.module.js';
 import { TimetableModule } from '../timetable/timetable.module.js';

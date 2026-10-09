@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-04, prompted by TaeHyun79, reviewed by fyoon46 in #31
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ ******************************************************************************/
+
 import { load } from 'cheerio';
 import { type RouteStop } from './dto/shuttle-stops-collected.dto.js';
 

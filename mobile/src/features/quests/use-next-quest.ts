@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by AhnJinYoung
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import { useQuery } from '@tanstack/react-query';
 import { questsQuery } from '@/api/queries';
 import type { Quest } from '@/api/types';

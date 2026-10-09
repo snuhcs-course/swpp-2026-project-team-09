@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-04, prompted by fyoon46, reviewed by fyoon46 in #31
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-03  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';

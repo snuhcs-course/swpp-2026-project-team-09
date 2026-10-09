@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-01, prompted by fyoon46, reviewed by TaeHyun79 in #18
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-01  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { z } from 'zod';
 import { departmentSchema, nameSchema, updateProfileSchema } from './update-profile.dto.js';
 

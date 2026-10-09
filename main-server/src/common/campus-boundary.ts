@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-03, prompted by TaeHyun79, reviewed by fyoon46 in #29
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ ******************************************************************************/
+
 import { z } from 'zod';
 import { encloses, metresToRing, type Position } from './geometry.js';
 import { readSeedFile } from './seed-directory.js';

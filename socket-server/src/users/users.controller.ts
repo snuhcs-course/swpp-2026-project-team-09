@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5, 2026-09-30, prompted by fyoon46, reviewed by fyoon46 in #9
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-09-30  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Controller } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { type SessionEndedEvent } from './dto/session-ended.dto.js';

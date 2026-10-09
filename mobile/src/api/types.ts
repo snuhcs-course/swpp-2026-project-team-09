@@ -1,4 +1,14 @@
-// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-09, prompted by AhnJinYoung, Jaehyun0320 and fyoon46, reviewed by Jaehyun0320 and fyoon46 in #51 #74
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 // The answers of the main server, as the app reads them; `src/api/server/answers.ts` checks them. A shape marked "the
 // app's own" is defined nowhere else yet, and a mock answers it. All times are ISO 8601 instants and all positions a
 // latitude and a longitude in degrees.

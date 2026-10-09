@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5, 2026-10-02, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #26
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-02  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Meal, MenuLine, MenuLineKind, RestaurantDay } from '../../generated/prisma/client.js';
 
 export interface MenuLineDto {

@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5, 2026-10-08 to 2026-10-09, prompted by fyoon46 and Jaehyun0320, reviewed by fyoon46 in #74
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import type { MyParty, Party, Quest } from '@/api/types';
 import { koreaClock, koreaDaysAfter, koreaWeekday } from '@/korea-time';
 import { shownSubQuest, waitWords } from '@/features/quests/adapter';

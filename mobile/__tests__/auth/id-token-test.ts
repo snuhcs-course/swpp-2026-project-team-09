@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by AhnJinYoung
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import { idTokenOf } from '../support/id-token';
 import { isSnuAccount, readIdToken } from '@/auth/id-token';
 

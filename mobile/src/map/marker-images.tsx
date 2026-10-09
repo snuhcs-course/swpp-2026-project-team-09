@@ -1,4 +1,11 @@
-// AI-generated with Claude Opus 5.5, 2026-10-05 to 2026-10-06, prompted by AhnJinYoung and Jaehyun0320
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import { type ReactElement, type RefObject, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { captureView } from './capture';

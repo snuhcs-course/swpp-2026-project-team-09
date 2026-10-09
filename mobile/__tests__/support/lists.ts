@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5, 2026-10-06 to 2026-10-08, prompted by AhnJinYoung and fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { fireEvent, type screen as Screen } from '@testing-library/react-native';
 import { screen } from './app';
 

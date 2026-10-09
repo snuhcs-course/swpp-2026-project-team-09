@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by AhnJinYoung
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import { useCallback, useEffect, useState } from 'react';
 import type { PositionPermission } from '@/position';
 import { keep, readKept } from '@/storage/kept';

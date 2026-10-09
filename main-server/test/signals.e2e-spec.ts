@@ -1,4 +1,9 @@
-// AI-generated with Claude Fable 5.1, 2026-10-05, prompted by fyoon46, reviewed by TaeHyun79 in #38
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { INestApplication } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';

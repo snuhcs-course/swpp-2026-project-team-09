@@ -1,4 +1,9 @@
-// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import type { AdminUser } from '@/main-server';
 
 // The Users whose name, email address, department or Friend ID holds the text, whatever the case of Latin letters.

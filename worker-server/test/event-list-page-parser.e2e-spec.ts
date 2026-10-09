@@ -1,4 +1,11 @@
-// AI-generated with Claude Opus 5.5, 2026-10-04, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #30
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-03  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { parseEventListPage } from '../src/event/event-list-page.parser.js';
 import { blockPage, savedPage } from './pages.js';
 

@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by fyoon46, reviewed by TaeHyun79 in #36
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { z } from 'zod';
 import { latitudeQuerySchema, longitudeQuerySchema } from '../../common/degrees-query.js';
 import { PlaceDto } from './place.dto.js';

@@ -1,4 +1,10 @@
-// AI-generated with Claude Opus 5.5, 2026-10-02, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #26
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-02  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { type Meal, type MenuLine } from './dto/menus-collected.dto.js';
 
 // Anything written like an amount of won, typos included: "6,000원", "4,500 원", "8,3000 원", "5.900원".

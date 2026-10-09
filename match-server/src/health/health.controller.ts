@@ -1,4 +1,12 @@
-// AI-generated with Claude Opus 5.5, 2026-09-28 to 2026-10-06, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 and TaeHyun79 in #2 #4 #8 #45
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-09-29  Opus 5.5   prompted by TaeHyun79
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Controller, Get } from '@nestjs/common';
 import { HealthCheck, HealthCheckResult, HealthCheckService, PrismaHealthIndicator } from '@nestjs/terminus';
 import { PrismaService } from '../common/prisma.service.js';

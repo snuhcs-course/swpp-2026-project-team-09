@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-09-29, prompted by fyoon46, reviewed by TaeHyun79 in #14
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Module } from '@nestjs/common';
 import { AdministratorsController } from './administrators.controller.js';
 import { AdministratorsService } from './administrators.service.js';

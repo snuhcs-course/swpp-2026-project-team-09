@@ -1,4 +1,9 @@
-# AI-generated with Claude Opus 5.5, 2026-10-06, prompted by Jaehyun0320
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+################################################################################
+
 Pod::Spec.new do |s|
   s.name           = 'SnuNowMap'
   s.version        = '1.0.0'

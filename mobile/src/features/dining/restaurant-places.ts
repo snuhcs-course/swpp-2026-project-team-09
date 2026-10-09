@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-08, prompted by fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 // The Place of each restaurant whose menus are collected: the restaurant's name as `GET /menus` gives it, and the
 // number of its Place as `GET /places` gives it. From the Co-op's page of restaurant information and the wireframe,
 // checked against the seed's Places. A restaurant that is not here, or whose Place is not answered, has no pin and

@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-09-29, prompted by TaeHyun79, reviewed by fyoon46 in #5
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-29  Opus 5.5   prompted by TaeHyun79
+ ******************************************************************************/
+
 import { TokenPayload } from 'google-auth-library';
 
 // Checks that Google issued an ID token to one of the given OAuth clients: its signature, issuer, audience and expiry.

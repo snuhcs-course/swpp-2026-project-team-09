@@ -1,4 +1,9 @@
-// AI-generated with Claude Opus 5.5, 2026-10-08, prompted by fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import type { Place } from '@/api/types';
 
 function place(number: string, name: string, latitude: number, longitude: number): Place {

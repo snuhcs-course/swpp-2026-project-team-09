@@ -1,4 +1,13 @@
-// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-02 to 2026-10-08, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #26 #30 #31
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-02  Opus 5.5   prompted by fyoon46
+ * 2026-10-03  Opus 5.5   prompted by fyoon46
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { Collector, Collects } from '../common/collector.js';

@@ -1,4 +1,11 @@
-// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-01 to 2026-10-05, prompted by fyoon46, reviewed by TaeHyun79 in #18 #38
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-30  Opus 5.5   prompted by fyoon46
+ * 2026-10-01  Opus 5.5   prompted by fyoon46
+ * 2026-10-04  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import request from 'supertest';

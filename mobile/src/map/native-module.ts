@@ -1,4 +1,11 @@
-// AI-generated with Claude Opus 5.5, 2026-10-05 to 2026-10-06, prompted by AhnJinYoung and Jaehyun0320
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import { requireOptionalNativeModule } from 'expo';
 
 // The name the native map module registers under: `modules/snu-now-map`, Android in ticket 07 and iOS in ticket 11.

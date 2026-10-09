@@ -1,4 +1,9 @@
-// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { router, useLocalSearchParams } from 'expo-router';
 import { type ReactElement, useCallback } from 'react';
 import { EventsScreen } from '@/screens/events/events-screen';
