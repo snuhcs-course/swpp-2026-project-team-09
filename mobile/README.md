@@ -169,7 +169,7 @@ host the build declares no App Link, and a link opens the app only through `snun
 
 `pnpm android` generates the Android project in `android/` (not committed), builds the app, installs it on the
 running emulator, opens it and starts the development server. The first build takes 15 to 30 minutes; later ones a
-few minutes. Then press "지도 보기" on a placeholder screen, or open `/map-check`, to see the map.
+few minutes.
 
 On a phone: turn on Developer options and USB debugging, connect it with a cable, accept the prompt on the phone,
 check that `adb devices` lists it, and run `pnpm android --device` to choose it.
@@ -234,21 +234,21 @@ pnpm ios
 `pnpm ios` generates the iOS project in `ios/` (not committed), installs the pods, builds the app, installs it on a
 simulator, opens it and starts the development server. The first `pod install` downloads about 200 MB of React
 Native and Hermes builds; when it seems stuck, it is a slow download, which a second try takes from the cache. The build
-itself took 5 minutes on an Apple Silicon Mac. Then press "지도 보기" on a placeholder screen, or open `/map-check`, to
-see the map. A link that opens the app on the simulator asks "Open in “SNU Now”?" first.
+itself took 5 minutes on an Apple Silicon Mac. A link that opens the app on the simulator asks "Open in “SNU Now”?"
+first.
 
 On an iPhone: connect it with a cable, trust the Mac on the phone, and turn on Developer Mode under Settings > Privacy &
 Security. Open `ios/SNUNow.xcworkspace` in Xcode once and, under the target's Signing & Capabilities, choose a team.
-Then run `pnpm ios --device` and choose the phone, and on the phone trust the developer under Settings > General > VPN
-& Device Management. A personal team of a free Apple ID can sign the app, for 7 days at a time, if no other team has
-taken the bundle ID; otherwise the phone build needs the team's Apple Developer account.
+The choice is in the generated project, so after `ios/` is deleted or generated again with `--clean`, choose it
+again. Then run `pnpm ios --device` and choose the phone, and on the phone trust the developer under Settings >
+General > VPN & Device Management. A personal team of a free Apple ID can sign the app, for 7 days at a time, if no
+other team has taken the bundle ID; otherwise the phone build needs the team's Apple Developer account.
 
 - Signing asks for the login keychain's password once for each framework in the app. To be asked no more, run
   `security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k '<the Mac's password>'
 ~/Library/Keychains/login.keychain-db` once.
-- The map is only on the development screens, which a release build does not show, so check it with a debug build. A
-  debug build loads its JavaScript from the development server: the phone and the Mac must be on the same Wi-Fi, and
-  the phone must allow the app on the local network.
+- A debug build loads its JavaScript from the development server: the phone and the Mac must be on the same Wi-Fi,
+  and the phone must allow the app on the local network.
 
 Two things in the app's configuration exist for the iOS build alone:
 
@@ -1028,9 +1028,10 @@ alone.
 - The service ends with the app when the User swipes it away, and nothing restarts it while the app is closed. The
   next start of the app finds that it was running and the signed-in screens say "백그라운드 위치 공유가 멈췄어요"; it
   starts again while the app is open.
-- On a phone the main server's address (`EXPO_PUBLIC_MAIN_SERVER_URL`) must be https: Android refuses plain
-  connections outside a debug build, and a phone on campus reaches the servers only through the https tunnel they run
-  behind, whose address goes there. The emulator's `http://10.0.2.2` works only in a debug build.
+- The main server's address (`EXPO_PUBLIC_MAIN_SERVER_URL`) must be one the phone reaches. A debug build allows plain
+  http: from the emulator `http://10.0.2.2:3000`, and from a phone on the same Wi-Fi the computer's address on it. Any
+  other build, such as the demo APK, needs an https address, since Android refuses plain connections outside a debug
+  build.
 - What a person checks on a phone is in the P17 ticket (`.scratch/iteration-1/P17-background-sharing/`).
 
 ### The connection to the socket server

@@ -102,17 +102,15 @@ What the demo cannot show, and what is known not to work yet:
   "Development settings").
 - **No dashed lines on the native map.** Neither the Android nor the iOS map module draws dashes, so the walking
   route and the shuttle's line are solid in a build.
-- **Checks by hand on phones are not done yet.** The screens were tested with Jest against the mocks and a fake main
-  server, and the servers together by `flow-tests`, but these still wait for a person with phones: the Party room
-  and the members on the map, Friends and Invite Links opened from a messenger, the shuttle layer in a native build
-  (its line code for Android and iOS was not built when it was written), background sharing (the list of P17), and
-  Google sign-in on a phone. The P20 walk-through records them.
+- **Some checks by hand on phones are not done yet.** The Party room and its members on the map, the shuttle layer
+  in a native build and Google sign-in were checked on phones. Two still wait for a person with phones: Invite Links
+  opened from a messenger, and background sharing (the list of P17). The P20 walk-through records them.
 - **Registrations a person makes at Google and Kakao.** A build signed with any key other than the shared debug key
   needs that key registered: its SHA-1 in an Android OAuth client of the Google Cloud project, with the package name
   `com.bonnieandclaude.snunow`; its key hash at Kakao under the app's Android platform; and its SHA-256 in the main
   server's `ANDROID_CERTIFICATE_FINGERPRINTS` for Invite Links. Without the first, sign-in fails; without the second,
-  the map stays blank. The Android OAuth client for this package name still has to be confirmed. The admin site works
-  only on `http://localhost:3100`, the origin registered for its Google client and its Kakao key.
+  the map stays blank. The admin site works only on `http://localhost:3100`, the origin registered for its Google
+  client and its Kakao key.
 - **Invite Links need a fixed https address.** Links are built from the main server's public address. If the tunnel's
   address changes on restart, links made before stop working. A build without the link host opens links only through
   `snunow://`.
@@ -158,10 +156,15 @@ What the project was built and run with:
 - An ARM Android phone, or an arm64 emulator with Google Play, with a Google account signed in.
 - The team's Kakao keys (REST API, JavaScript and native app keys), which the Owner of the team's Kakao app shares
   privately, and an SNU Google account to sign in to the app.
+- About 30 GB of free disk space. On one Mac the Android build's Gradle cache took about 10 GB, Docker's images and
+  build cache about 15 to 20 GB, and an iOS build's Xcode cache about 3 GB. When the disk fills, Docker stops with
+  input/output errors.
 
 ## Setup
 
-From a clean clone, in this order. The project READMEs explain each step.
+From a clean clone, in this order. The project READMEs explain each step. On a Mac whose Desktop and Documents are
+synced to iCloud Drive, clone elsewhere, such as `~/Developer`: a checkout under them cannot be built for iOS
+([mobile/README.md](mobile/README.md), "Keep the checkout out of iCloud Drive").
 
 ```bash
 git clone https://github.com/snuhcs-course/swpp-2026-project-team-09.git
@@ -183,7 +186,9 @@ cd ..
 ```
 
 Then open `main-server/.env`, fill in `KAKAO_REST_API_KEY`, and replace the example address in
-`INITIAL_ADMINISTRATOR_EMAILS` with your Google account's address, so that you can sign in to the admin site.
+`INITIAL_ADMINISTRATOR_EMAILS` with your Google account's address, so that you can sign in to the admin site. The
+main server reads it only when it starts on a database that holds no Administrator: once the servers have run with
+the example address, a new address is not taken until the data is deleted with `docker compose down -v`.
 
 The other servers take the same public key and secrets from it:
 
@@ -307,14 +312,19 @@ docker compose up --build
 This starts PostgreSQL, Redis and the four servers. The main server brings its database up to date and loads the seed
 (the Places, the Campus Boundary and the shuttle's stops and line) before it starts. The main server answers on port
 3000 and the socket server on 3001, on the network too, so that a phone can reach them; the worker (3002), the match
-server (3003), PostgreSQL and Redis only on the loopback address. `http://localhost:3000/health/ready` answers 200
-once the main server can reach its stores.
+server (3003), PostgreSQL and Redis only on the loopback address. Anyone on the same network can reach the two ports
+over plain http, so on a public Wi-Fi run the servers only while you use them. `http://localhost:3000/health/ready`
+answers 200 once the main server can reach its stores.
 
-- `docker compose down` removes the containers and keeps the data; `docker compose down -v` deletes the data too.
+- `docker compose down` removes the containers and keeps the data; `docker compose down -v` deletes the data too,
+  with the collected Global Events, what Administrators did with them and the Administrators themselves.
 - A setting that is missing or wrong stops its server with the setting's name in the log, for example when
   `KAKAO_REST_API_KEY` is empty.
 - To fill the menus without waiting for the next Collection, at 05:00 or 10:00:
   `docker compose exec worker-server node dist/collect coop_menus dormitory_menus veterinary_menus`.
+- To fill the Global Events without waiting for the next Collection, at 00:00, 06:00, 12:00 or 18:00:
+  `docker compose exec worker-server node dist/collect snu_events`. Until then the admin site shows the Source as
+  never collected.
 - To run one server outside Docker while you work on it, see its README, "Run it".
 
 ### Demo data
@@ -329,7 +339,8 @@ It adds 8 demo Users and their friendships, 6 published Global Events today and 
 Board, a running Party, this week's menus and, outside the shuttle's hours, two shuttle vehicles, and keeps the demo
 Users' Avatars walking along the shuttle's line on campus. List your own SNU address in `DEMO_ACCOUNT_EMAILS` of
 `main-server/.env` before starting: once you have finished Onboarding, you receive demo Friends (the Party's members
-among them), two Friend Requests, a Quest invitation and a Meetup within 5 seconds.
+among them), two Friend Requests, a Quest invitation and a Meetup within 5 seconds. A `main-server/.env` made before
+the setting existed has no such line: add it, as in `.env.example`.
 `docker compose --profile demo restart demo-seed` brings the times up to date, and
 `docker compose --profile demo down -v` removes it all. The details are in
 [main-server/README.md](main-server/README.md#demo-data).
@@ -374,8 +385,10 @@ pnpm android
 
 It generates `android/`, builds and installs the app and starts the development server. The first build takes 15 to
 30 minutes. After a change to `KAKAO_NATIVE_APP_KEY` or `INVITE_LINK_HOST`, generate the project again with
-`pnpm expo prebuild --platform android`. When the map stays blank, [mobile/README.md](mobile/README.md), "When the map
-does not appear", reads the log.
+`pnpm expo prebuild --platform android`. The two server addresses are read when the development server starts: after
+a change to them, such as when the computer's address on the network changes, restart it and reload the app, with no
+new build. When the map stays blank, [mobile/README.md](mobile/README.md), "When the map does not appear", reads the
+log.
 
 ### On a phone
 
@@ -385,11 +398,17 @@ Turn on Developer options and USB debugging, connect the phone, check that `adb 
 The phone must reach the main and socket servers:
 
 - A development build allows plain http, so on the same network as the computer the two addresses can be the
-  computer's address on that network, with ports 3000 and 3001.
+  computer's address on that network, with ports 3000 and 3001. For an Invite Link to open on another phone there,
+  set the main server's `PUBLIC_URL` to `http://<that address>:3000` and restart the main server: a link built from
+  the default `http://localhost:3000` opens nothing on a phone.
 - Otherwise, and for any build that is not a debug build, such as the demo APK, Android refuses plain connections:
   put the computer's ports 3000 and 3001 behind an https tunnel and use its two https addresses in `mobile/.env`. Set
   the main server's `PUBLIC_URL` to the tunnel's address for the main server and `INVITE_LINK_HOST` to its host, so
   that Invite Links open the app.
+
+A debug build loads its JavaScript from the development server on the computer (port 8081), which `pnpm android`
+starts: keep its terminal open, and keep the phone on the cable or on the same network as the computer. Without it the
+app shows an error screen, on iOS "No script URL provided".
 
 Positions are shared only inside the Campus Boundary, so the flows are run on campus.
 
