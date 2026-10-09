@@ -84,7 +84,7 @@ The settings are a person's. Copy `.env.example` to `.env`, which is not committ
 The IDs are in the Google Cloud project's list of clients. The Web application client's ID is also the main server's
 `GOOGLE_APP_CLIENT_ID`. Without the web client's ID the sign-in stays the mock in every build. The servers run on the
 computer with `docker compose up --build` at the repository root (see the main server's README); the emulator reaches
-the computer as `10.0.2.2`, and a debug build allows plain HTTP. A phone needs an address it can reach.
+the computer as `10.0.2.2`, and every build allows plain HTTP. A phone needs an address it can reach.
 
 A development build on Android, with an emulator running or a phone attached:
 
@@ -1028,10 +1028,9 @@ alone.
 - The service ends with the app when the User swipes it away, and nothing restarts it while the app is closed. The
   next start of the app finds that it was running and the signed-in screens say "백그라운드 위치 공유가 멈췄어요"; it
   starts again while the app is open.
-- The main server's address (`EXPO_PUBLIC_MAIN_SERVER_URL`) must be one the phone reaches. A debug build allows plain
-  http: from the emulator `http://10.0.2.2:3000`, and from a phone on the same Wi-Fi the computer's address on it. Any
-  other build, such as the demo APK, needs an https address, since Android refuses plain connections outside a debug
-  build.
+- The main server's address (`EXPO_PUBLIC_MAIN_SERVER_URL`) must be one the phone reaches. Every build allows plain
+  http (`usesCleartextTraffic` in `app.json`): from the emulator `http://10.0.2.2:3000`, and from a phone on the same
+  Wi-Fi the computer's address on it.
 - What a person checks on a phone is in the P17 ticket (`.scratch/iteration-1/P17-background-sharing/`).
 
 ### The connection to the socket server

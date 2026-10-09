@@ -156,6 +156,8 @@ What the demo cannot show, and what is known not to work yet:
   `snunow://invite/<token>`. If a tunnel's address changes on restart, links made before stop working. Todo, once the
   servers are deployed at a fixed https address: build the app with that host and check a link opened from a
   messenger.
+- **Plain http is allowed in every build**, so that the demo APK reaches the servers on one's own computer. Todo, once
+  the servers are deployed behind https: remove `usesCleartextTraffic` from `mobile/app.json`.
 - **The walking route has a quota** of 1,000 routes a day for the team's Kakao app; a route is asked only when the
   User asks for one.
 - **Sample data in a build.** Friends' statuses (such as 공강), who announced a Global Event and "오늘의 발자국" are the
@@ -438,13 +440,13 @@ Turn on Developer options and USB debugging, connect the phone, check that `adb 
 
 The phone must reach the main and socket servers:
 
-- A development build allows plain http, so on the same network as the computer the two addresses can be the
-  computer's address on that network, with ports 3000 and 3001. Invite Links do not open the app there (see "Invite
-  Links need a fixed https address" under [Known limitations and todos](#known-limitations-and-todos)).
-- Otherwise, and for any build that is not a debug build, such as the demo APK, Android refuses plain connections:
-  put the computer's ports 3000 and 3001 behind an https tunnel and use its two https addresses in `mobile/.env`. Set
-  the main server's `PUBLIC_URL` to the tunnel's address for the main server and `INVITE_LINK_HOST` to its host, so
-  that Invite Links open the app.
+- Every build allows plain http (`usesCleartextTraffic` in `mobile/app.json`), so on the same network as the computer
+  the two addresses can be the computer's address on that network, with ports 3000 and 3001. Invite Links do not open
+  the app there (see "Invite Links need a fixed https address" under
+  [Known limitations and todos](#known-limitations-and-todos)).
+- From anywhere else, put the computer's ports 3000 and 3001 behind an https tunnel and use its two https addresses
+  in `mobile/.env`. Set the main server's `PUBLIC_URL` to the tunnel's address for the main server and
+  `INVITE_LINK_HOST` to its host, so that Invite Links open the app.
 
 A debug build loads its JavaScript from the development server on the computer (port 8081), which `pnpm android`
 starts: keep its terminal open, and keep the phone on the cable or on the same network as the computer. Without it the
@@ -456,17 +458,35 @@ Positions are shared only inside the Campus Boundary, so the flows are run on ca
 
 Google and Kakao accept the app only when they know the key that signed it:
 
-- A development build is signed with the Expo template's debug key, which every checkout shares. Its key hash is
-  registered at Kakao, and its SHA-256 is already in the main server's `ANDROID_CERTIFICATE_FINGERPRINTS`. Google
-  sign-in needs an Android OAuth client in the Google Cloud project with the package name
-  `com.bonnieandclaude.snunow` and the key's SHA-1.
-- A build signed with another key, such as the demo APK's or one signed on EAS, needs the same three registrations
-  for its key: the SHA-1 at Google, the key hash at Kakao and the SHA-256 in `ANDROID_CERTIFICATE_FINGERPRINTS`.
+- A development build and the demo APK are signed with the Expo template's debug key, which every checkout shares.
+  Its key hash is registered at Kakao, and its SHA-256 is already in the main server's
+  `ANDROID_CERTIFICATE_FINGERPRINTS`. Google sign-in needs an Android OAuth client in the Google Cloud project with
+  the package name `com.bonnieandclaude.snunow` and the key's SHA-1.
+- A build signed with another key, such as one signed on EAS, needs the same three registrations for its key: the
+  SHA-1 at Google, the key hash at Kakao and the SHA-256 in `ANDROID_CERTIFICATE_FINGERPRINTS`.
   `.scratch/research/external-sources.md`, sections 7.2 and 8, has the commands that read them.
 
 ### The demo APK
 
-_The link to the demo APK, and the server address built into it, are added here when the demo build is made._
+`snu-now-iteration-1.apk`, attached to the
+[Iteration 1 release](https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/tag/iteration-1), is a
+release build of the app. It needs no build of the app and no development server: only the servers on your computer
+([Running the servers](#running-the-servers), with the [demo data](#demo-data)), Android's Platform-Tools for `adb`,
+and an ARM phone on its cable or an arm64 emulator, with an SNU Google account signed in.
+
+The APK reaches the main server at `http://localhost:3000` and the socket server at `http://localhost:3001`, on the
+phone itself, so forward both ports to the computer and install it:
+
+```bash
+adb reverse tcp:3000 tcp:3000
+adb reverse tcp:3001 tcp:3001
+adb install -r snu-now-iteration-1.apk
+```
+
+The forwarding ends when the phone is unplugged or the emulator stops: run the first two lines again then. The APK is
+signed with the shared debug key, so Google and Kakao accept it as they accept a development build. Invite Links
+open it only through `snunow://invite/<token>`. The development settings are off in it, so a User away from the
+campus is shown to nobody: on an emulator, set the location to a point on campus in the extended controls.
 
 ## Running the tests
 
