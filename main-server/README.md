@@ -35,9 +35,8 @@ echo "MATCH_SERVER_TOKEN=$(openssl rand -hex 32)" >> .env
 [Sign-in](#sign-in)). Replace the example address in `INITIAL_ADMINISTRATOR_EMAILS` with your own (see
 [Administrators](#administrators)). Fill in `KAKAO_REST_API_KEY` with the REST API key that the Owner of the team's
 Kakao app shares with you (see [Walking route](#walking-route)); the server does not start without it.
-`PUBLIC_URL` and `ANDROID_CERTIFICATE_FINGERPRINTS` work as they are for development on one computer (see
-[Invite Links](#invite-links)); for an Invite Link to open on a phone, `PUBLIC_URL` must be an address the phone
-reaches.
+`PUBLIC_URL` and `ANDROID_CERTIFICATE_FINGERPRINTS` work as they are for development (see
+[Invite Links](#invite-links)).
 
 To run the whole system, in the repository root:
 
@@ -285,10 +284,8 @@ name, `com.bonnieandclaude.snunow`, and the SHA-256 fingerprints of the certific
 settings serve this:
 
 - `PUBLIC_URL`: the address the apps reach this server at from outside, such as `https://snunow.example`, without a
-  path. App Links need https; `http://localhost:3000` serves for development on one computer, such as with the
-  emulator. A link made under it opens nothing on a phone: for phones on the same Wi-Fi, use
-  `http://<the computer's address on it>:3000` and restart the server. A link made under one address stops working
-  when the address changes.
+  path. App Links need https; `http://localhost:3000` serves for development, where the app opens a link only
+  through `snunow://invite/<token>`. A link made under one address stops working when the address changes.
 - `ANDROID_CERTIFICATE_FINGERPRINTS`: the fingerprints separated by commas, so that a development build and the demo
   build both open the links. `.env.example` holds the one of the Expo template's debug key, which signs development
   builds.

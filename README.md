@@ -139,19 +139,22 @@ What the demo cannot show, and what is known not to work yet:
   "Development settings").
 - **No dashed lines on the native map.** Neither the Android nor the iOS map module draws dashes, so the walking
   route and the shuttle's line are solid in a build.
-- **Some checks by hand on phones are not done yet.** The Party room and its members on the map and the shuttle
-  layer in a native build and Google sign-in were checked on an iPhone 14 Pro and a Galaxy S22. Two still wait for a
-  person with phones: Invite Links opened from a messenger, and background sharing (the list of P17). The P20
-  walk-through records them.
+- **Some checks by hand on phones are not done yet.** The Party room and its members on the map, Friends, the
+  shuttle layer in a native build, and Google sign-in were checked on an iPhone 14 Pro and a Galaxy S22. Two still
+  wait for a person with phones: Invite Links opened from a messenger, and background sharing (the list of P17). The
+  P20 walk-through records them.
 - **Registrations a person makes at Google and Kakao.** A build signed with any key other than the shared debug key
   needs that key registered: its SHA-1 in an Android OAuth client of the Google Cloud project, with the package name
   `com.bonnieandclaude.snunow`; its key hash at Kakao under the app's Android platform; and its SHA-256 in the main
   server's `ANDROID_CERTIFICATE_FINGERPRINTS` for Invite Links. Without the first, sign-in fails; without the second,
   the map stays blank. The admin site works only on `http://localhost:3100`, the origin registered for its Google
   client and its Kakao key.
-- **Invite Links need a fixed https address.** Links are built from the main server's public address. If the tunnel's
-  address changes on restart, links made before stop working. A build without the link host opens links only through
-  `snunow://`.
+- **Invite Links need a fixed https address.** Links are built from the main server's public address, and Android
+  opens the app only for links under the https host the build was made with. A link under a computer's own address
+  over http opens the browser, not the app, and a build without the link host opens links only through
+  `snunow://invite/<token>`. If a tunnel's address changes on restart, links made before stop working. Todo, once the
+  servers are deployed at a fixed https address: build the app with that host and check a link opened from a
+  messenger.
 - **The walking route has a quota** of 1,000 routes a day for the team's Kakao app; a route is asked only when the
   User asks for one.
 - **Sample data in a build.** Friends' statuses (such as 공강), who announced a Global Event and "오늘의 발자국" are the
@@ -377,8 +380,7 @@ It adds 8 demo Users and their friendships, 6 published Global Events today and 
 Board, a running Party, this week's menus and, outside the shuttle's hours, two shuttle vehicles, and keeps the demo
 Users' Avatars walking along the shuttle's line on campus. List your own SNU address in `DEMO_ACCOUNT_EMAILS` of
 `main-server/.env` before starting: once you have finished Onboarding, you receive demo Friends (the Party's members
-among them), two Friend Requests, a Quest invitation and a Meetup within 5 seconds. A `main-server/.env` made before
-the setting existed has no such line: add it, as in `.env.example`.
+among them), two Friend Requests, a Quest invitation and a Meetup within 5 seconds.
 `docker compose --profile demo restart demo-seed` brings the times up to date, and
 `docker compose --profile demo down -v` removes it all. The details are in
 [main-server/README.md](main-server/README.md#demo-data).
@@ -436,9 +438,8 @@ Turn on Developer options and USB debugging, connect the phone, check that `adb 
 The phone must reach the main and socket servers:
 
 - A development build allows plain http, so on the same network as the computer the two addresses can be the
-  computer's address on that network, with ports 3000 and 3001. For an Invite Link to open on another phone there,
-  set the main server's `PUBLIC_URL` to `http://<that address>:3000` and restart the main server: a link built from
-  the default `http://localhost:3000` opens nothing on a phone.
+  computer's address on that network, with ports 3000 and 3001. Invite Links do not open the app there (see "Invite
+  Links need a fixed https address" under [Known limitations and todos](#known-limitations-and-todos)).
 - Otherwise, and for any build that is not a debug build, such as the demo APK, Android refuses plain connections:
   put the computer's ports 3000 and 3001 behind an https tunnel and use its two https addresses in `mobile/.env`. Set
   the main server's `PUBLIC_URL` to the tunnel's address for the main server and `INVITE_LINK_HOST` to its host, so
