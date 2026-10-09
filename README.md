@@ -102,9 +102,10 @@ What the demo cannot show, and what is known not to work yet:
   "Development settings").
 - **No dashed lines on the native map.** Neither the Android nor the iOS map module draws dashes, so the walking
   route and the shuttle's line are solid in a build.
-- **Some checks by hand on phones are not done yet.** The Party room and its members on the map, the shuttle layer
-  in a native build and Google sign-in were checked on phones. Two still wait for a person with phones: Invite Links
-  opened from a messenger, and background sharing (the list of P17). The P20 walk-through records them.
+- **Some checks by hand on phones are not done yet.** The Party room and its members on the map and the shuttle
+  layer in a native build were checked on an iPhone 14 Pro and a Galaxy S22, and Google sign-in on the Galaxy. Two
+  still wait for a person with phones: Invite Links opened from a messenger, and background sharing (the list of
+  P17). The P20 walk-through records them.
 - **Registrations a person makes at Google and Kakao.** A build signed with any key other than the shared debug key
   needs that key registered: its SHA-1 in an Android OAuth client of the Google Cloud project, with the package name
   `com.bonnieandclaude.snunow`; its key hash at Kakao under the app's Android platform; and its SHA-256 in the main
