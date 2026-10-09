@@ -72,7 +72,7 @@ To run the demo yourself: [Setup](#setup), [Running the servers](#running-the-se
 
 ## Demo video
 
-_The link to the demo video is added here once it is recorded._
+The demo video is in [this Google Drive folder](https://drive.google.com/drive/folders/1LnGPIOsQbjt4Or9v-cogjmvhMoUhx7y6).
 
 ## Known limitations and todos
 
