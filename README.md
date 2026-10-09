@@ -72,7 +72,26 @@ To run the demo yourself: [Setup](#setup), [Running the servers](#running-the-se
 
 ## Demo video
 
-The demo video is in [this Google Drive folder](https://drive.google.com/drive/folders/1LnGPIOsQbjt4Or9v-cogjmvhMoUhx7y6).
+The demo is eight short videos, in
+[this Google Drive folder](https://drive.google.com/drive/folders/1LnGPIOsQbjt4Or9v-cogjmvhMoUhx7y6) and in this
+repository under `docs/demo/iteration-1/`. What each one shows:
+
+- Sign-in with Google, where an account outside SNU is refused and an SNU account reaches the map:
+  [login.mp4](docs/demo/iteration-1/login.mp4)
+- The map, with the Friends and the Quests over it, a Global Event's card, the menus, and the dining and shuttle
+  layers: [map.mp4](docs/demo/iteration-1/map.mp4)
+- Global Events on the 행사 tab, with an event's source page, a request for Matching, and a request to join a Quest
+  that recruits for the event: [event.mp4](docs/demo/iteration-1/event.mp4)
+- Friends, with a Friend Request by Friend ID, the sharing switch of each Friend, the end of a friendship, and the
+  Master Switch: [friends.mp4](docs/demo/iteration-1/friends.mp4)
+- 내 정보, with the notifications, the profile, and a class added to the timetable and then corrected:
+  [my-page.mp4](docs/demo/iteration-1/my-page.mp4)
+- A Quest of the User's own for a Global Event, with its recruiting post corrected, a Sub Quest added to its plan,
+  and the Quest removed: [party.mp4](docs/demo/iteration-1/party.mp4)
+- Joining Quests on the 파티 tab, with an invitation accepted, the four Boards, and a recruiting Quest joined:
+  [party-invite.mp4](docs/demo/iteration-1/party-invite.mp4)
+- A Party, opened for a Quest and closed again, then one that another Holder opened, entered and left:
+  [party-management.mp4](docs/demo/iteration-1/party-management.mp4)
 
 ## Known limitations and todos
 
@@ -465,7 +484,7 @@ data alone: [flow-tests/README.md](flow-tests/README.md).
 | `mobile/`        | The app, with the native map module for Android and iOS in `modules/`                         |
 | `flow-tests/`    | Tests of the three demo flows across the four servers                                         |
 | `infra/`         | The PostgreSQL image with PostGIS, and the script that creates each server's database         |
-| `docs/`          | Architecture decision records (`adr/`) and the agents' conventions (`agents/`)                |
+| `docs/`          | Decision records (`adr/`), the agents' conventions (`agents/`), and the demo videos (`demo/`) |
 | `.scratch/`      | Specs and tickets of each iteration's tasks, and research notes                               |
 | `.github/`       | The CI workflow, the pull request template and the code owners                                |
 | `.claude/`       | Shared skills for coding agents; `.agents/` links to them                                     |
