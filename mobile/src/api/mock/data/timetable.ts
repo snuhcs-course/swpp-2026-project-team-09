@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import type { TimetableClass } from '@/api/types';
 
 // The `Profile` frame's four classes, in the order of their first time in the week.

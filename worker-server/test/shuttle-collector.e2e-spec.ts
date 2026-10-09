@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-03  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { inject } from 'vitest';
 import { MainServerStub } from './main-server.js';

@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import { render, screen } from '@testing-library/react-native';
 
 import { Button } from '@/design-system/button';

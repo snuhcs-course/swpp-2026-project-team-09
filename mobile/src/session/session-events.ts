@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import type { Suggestion } from '@/api/types';
 import { forgetTokens } from '@/auth/tokens';
 import { keep } from '@/storage/kept';

@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { z } from 'zod';
 
 // The parts of the main server's answers and of the socket's messages that the flows read (main-server/README.md).

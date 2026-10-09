@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-01  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { OnboardingDto } from '../../users/dto/onboarding.dto.js';
 import { TokensDto } from './tokens.dto.js';
 

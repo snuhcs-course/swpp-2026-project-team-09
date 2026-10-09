@@ -1,3 +1,11 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import type { MyParty } from '@/api/types';
 
 // The main screen's "활성 파티": the Party the User is in now.

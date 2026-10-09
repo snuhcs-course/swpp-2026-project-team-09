@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-09-29  Opus 5.5   prompted by TaeHyun79
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-10-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-01  Opus 5.5   prompted by fyoon46
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-03  Opus 5.5   prompted by fyoon46
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-04  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { Module, StandardSchemaValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';

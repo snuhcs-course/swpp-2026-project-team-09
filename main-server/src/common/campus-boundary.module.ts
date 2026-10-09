@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ ******************************************************************************/
+
 import { Global, Module } from '@nestjs/common';
 import { CampusBoundary, readCampusBoundary } from './campus-boundary.js';
 import { SEED_DIRECTORY } from './seed-directory.js';

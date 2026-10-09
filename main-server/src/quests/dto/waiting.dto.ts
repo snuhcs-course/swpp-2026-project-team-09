@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by fyoon46
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { z } from 'zod';
 import { Prisma, User } from '../../generated/prisma/client.js';
 import { HOLDER_SELECT, QUEST_SUMMARY_INCLUDE, QuestSummaryDto, toQuestSummaryDto } from './quest.dto.js';

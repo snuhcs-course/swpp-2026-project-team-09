@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ ******************************************************************************/
+
 import { parseVehiclePositions } from '../src/shuttle/vehicle-positions.parser.js';
 import { blockPage, savedAnswer } from './pages.js';
 

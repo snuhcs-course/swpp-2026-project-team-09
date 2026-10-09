@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { act, type userEvent } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import type { RecruitingQuest } from '@/api/party-types';

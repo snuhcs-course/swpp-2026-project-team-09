@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 // What the tests' notFound() throws, as Next.js's own throws to show the not-found page.
 export class NotFound extends Error {
   constructor() {

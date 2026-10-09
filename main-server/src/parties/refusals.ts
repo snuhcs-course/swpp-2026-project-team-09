@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { ConflictException, ForbiddenException, HttpStatus, NotFoundException } from '@nestjs/common';
 
 export const notFound = (code: string, message: string): NotFoundException =>

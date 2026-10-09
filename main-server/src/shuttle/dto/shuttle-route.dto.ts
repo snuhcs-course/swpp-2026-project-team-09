@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-03  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { z } from 'zod';
 import { type Position } from '../../common/geometry.js';
 import { ShuttleStop } from '../../generated/prisma/client.js';

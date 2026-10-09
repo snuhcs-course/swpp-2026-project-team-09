@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ ******************************************************************************/
+
 const HOUR = 60 * 60 * 1000;
 
 // The calendar day in Asia/Seoul, which is UTC+9 all year, `days` after `time`, as YYYY-MM-DD.

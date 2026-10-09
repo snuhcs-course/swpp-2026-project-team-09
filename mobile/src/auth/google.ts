@@ -1,3 +1,11 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import type { TurboModule } from 'react-native';
 import { Platform, TurboModuleRegistry } from 'react-native';
 import type { GoogleOneTapSignIn } from 'react-native-nitro-google-signin';

@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import type * as SecureStoreFake from '../support/secure-store';
 import { refusal } from '../support/fake-server';
 import { startFresh } from '../support/mocks';

@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import type { RecruitingQuest } from '@/api/party-types';
 import type { Board, JoinPolicy, Person, Quest, SubQuest } from '@/api/types';
 import type { MyJoinRequest } from '@/api/waiting-types';

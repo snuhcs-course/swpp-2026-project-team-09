@@ -1,3 +1,11 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-03  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Inject, Injectable, Scope } from '@nestjs/common';
 
 // Injection token of the HTTP call under PageFetcher. The tests replace it with saved pages.

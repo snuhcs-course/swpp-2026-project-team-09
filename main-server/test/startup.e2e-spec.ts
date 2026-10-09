@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { once } from 'node:events';
 import { createServer, Server, Socket } from 'node:net';
 import { inject } from 'vitest';

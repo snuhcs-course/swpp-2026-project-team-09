@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-03  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { encloses, metresToRing, type Position } from '../common/geometry.js';
 
 export interface Outline {

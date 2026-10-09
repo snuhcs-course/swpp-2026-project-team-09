@@ -1,3 +1,12 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 // Times are shown in Korea's time wherever the phone is: the campus is there. Korea is nine hours ahead of UTC all
 // year.
 const KOREA_OFFSET_MS = 9 * 60 * 60 * 1000;

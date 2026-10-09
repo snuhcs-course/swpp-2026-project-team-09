@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import type { ReactElement } from 'react';
 import { Image, type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 import { color, font, presence, radius, size as sizes } from './tokens';

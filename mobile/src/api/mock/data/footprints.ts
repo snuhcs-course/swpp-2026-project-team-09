@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import type { Footprints } from '@/api/types';
 
 // The app's own. The `Main` frame's "오늘의 발자국": five Friends left a story today, and the first three by time are

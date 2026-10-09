@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import { characters, givenName, shortTitle } from '@/features/map/short-name';
 
 const FAMILY = '👨‍👩‍👧‍👦';

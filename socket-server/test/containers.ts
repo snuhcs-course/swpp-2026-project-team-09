@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
 
 // The same Redis as compose.yaml at the repository root, started fresh for the tests.

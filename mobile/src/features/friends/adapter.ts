@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import type { Friend, FriendStatus, LatLng, Position, Presence } from '@/api/types';
 import type { FriendRequests } from '@/api/waiting-types';
 import { KEPT_POSITION_MS, OLD_POSITION_MS } from '@/position';

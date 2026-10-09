@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-03  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { loadSeed } from '../src/load-seed.js';

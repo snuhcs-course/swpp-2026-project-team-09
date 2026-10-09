@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by fyoon46
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { ConflictException, ForbiddenException, HttpStatus, NotFoundException } from '@nestjs/common';
 
 export const notFound = (code: string, message: string): NotFoundException =>

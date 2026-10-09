@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import type { ReactElement } from 'react';
 import { type ImageSourcePropType, StyleSheet, View, type ViewStyle } from 'react-native';
 import { Avatar } from './avatar';

@@ -1,3 +1,12 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-09-30  Opus 5.5   prompted by fyoon46
+ * 2026-10-01  Opus 5.5   prompted by fyoon46
+ * 2026-10-04  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayInit, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { DefaultEventsMap, Server, Socket } from 'socket.io';

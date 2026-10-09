@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { ConfigModule } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { Redis } from 'ioredis';

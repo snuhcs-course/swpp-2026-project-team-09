@@ -1,3 +1,12 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-09-29  Opus 5.5   prompted by TaeHyun79
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { TestProject } from 'vitest/node';
 import { Settings } from '../src/common/settings.js';
 import { matchDatabaseUrl, migrate, startPostgres } from './containers.js';

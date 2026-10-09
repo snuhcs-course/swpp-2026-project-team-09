@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import { Platform, TurboModuleRegistry } from 'react-native';
 import { askGoogle, forgetGoogle, googleAvailable } from '@/auth/google';
 

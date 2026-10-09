@@ -7,6 +7,7 @@
     "perf": "error"
   },
   "rules": {
+    "max-lines": ["error", { "skipComments": true }],
     "typescript/no-explicit-any": "error",
     "typescript/explicit-function-return-type": "error",
     "typescript/no-non-null-assertion": "error",

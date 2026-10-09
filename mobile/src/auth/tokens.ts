@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import * as SecureStore from 'expo-secure-store';
 
 // The main server's tokens, kept in the phone's secure storage: the Keychain on iOS and the Keystore on Android. The

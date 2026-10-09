@@ -1,3 +1,11 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import { pass, screen } from './support/app';
 import { EXPLANATION, givePhone, ME, NEAR_LIBRARY, OFF_CAMPUS, ON_CAMPUS, openMain, placeOf } from './support/main';
 import { startFresh } from './support/mocks';

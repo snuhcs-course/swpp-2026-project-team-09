@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { color, Icon, radius, space, text } from '@/design-system';

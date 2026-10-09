@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { useLocalSearchParams } from 'expo-router';
 import type { ReactElement } from 'react';
 import { InviteScreen } from '@/screens/friends/invite-screen';

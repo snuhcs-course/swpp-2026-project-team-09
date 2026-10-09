@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Body, Controller, Param, Post } from '@nestjs/common';
 import { z } from 'zod';
 import { MatchServerOnly } from '../common/match-server-only.decorator.js';

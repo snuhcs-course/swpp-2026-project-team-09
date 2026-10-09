@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import type { Footprints } from '@/api/types';
 
 // What the main screen's "오늘의 발자국" shows beside its name.

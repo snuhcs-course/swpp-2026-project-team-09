@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { BackHandler } from 'react-native';
 import { act, fireEvent } from '@testing-library/react-native';
 import { pass, screen, shownAddress } from './support/app';

@@ -1,3 +1,11 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-09-28  Opus 5.5   prompted by TaeHyun79
+# 2026-09-29  Opus 5.5   prompted by TaeHyun79
+# 2026-09-29  Opus 5.5   prompted by fyoon46
+################################################################################
+
 # The match server as compose.yaml at the repository root runs it.
 FROM node:24-slim
 WORKDIR /app

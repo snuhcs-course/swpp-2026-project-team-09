@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import { userEvent } from '@testing-library/react-native';
 import { pass, screen, startApp } from './support/app';
 import { startFresh } from './support/mocks';

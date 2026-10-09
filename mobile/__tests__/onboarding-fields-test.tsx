@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import { fireEvent } from '@testing-library/react-native';
 import { pass, screen } from './support/app';
 import { startFresh } from './support/mocks';

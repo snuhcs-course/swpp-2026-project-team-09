@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ ******************************************************************************/
+
 import { Controller, Get, Header, Query } from '@nestjs/common';
 import { type WalkingRouteQuery, walkingRouteQuerySchema } from './dto/walking-route-query.dto.js';
 import { WalkingRouteAnswerDto } from './dto/walking-route.dto.js';

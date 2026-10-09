@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { AppState } from 'react-native';
 import { apiClient } from '@/api/client';
 import { loadTokens } from '@/auth/tokens';

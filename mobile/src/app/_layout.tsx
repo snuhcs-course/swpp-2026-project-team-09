@@ -1,3 +1,11 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import '@/polyfills';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';

@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import type { QueryClient } from '@tanstack/react-query';
 import { ApiError, isRefusal } from '@/api/errors';
 import { lobbyQuery } from '@/api/queries';

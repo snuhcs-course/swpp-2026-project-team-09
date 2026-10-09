@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { skipToken, useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { apiClient } from '@/api/client';

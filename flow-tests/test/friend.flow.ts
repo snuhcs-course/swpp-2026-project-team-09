@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { z } from 'zod';
 import { inviteLink, meetup, quest } from './answers.js';
 import { ENGINEERING_BUILDING, hoursFromNow, JAHAYEON, NEW_MEDIA_INSTITUTE, SEOUL_STATION } from './campus.js';

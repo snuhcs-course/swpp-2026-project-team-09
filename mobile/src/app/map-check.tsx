@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { Redirect } from 'expo-router';
 import type { ReactElement } from 'react';
 import { MapCheckScreen } from '@/screens/map-check-screen';

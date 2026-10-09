@@ -1,3 +1,9 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-09-28  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
 # PostgreSQL 18 with PostGIS 3, built on the official image so it runs natively on Apple Silicon.
 FROM postgres:18
 

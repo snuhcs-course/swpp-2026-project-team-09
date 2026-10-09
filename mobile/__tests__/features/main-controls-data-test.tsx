@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import { renderHook } from '@testing-library/react-native';
 import { startFresh } from '../support/mocks';
 import { freshWrapper, settle } from '../support/queries';

@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { BadRequestException, ConflictException, HttpStatus, Injectable } from '@nestjs/common';
 import { CampusBoundary } from '../common/campus-boundary.js';
 import { PrismaService } from '../common/prisma.service.js';

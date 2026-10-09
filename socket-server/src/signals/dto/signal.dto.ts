@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 // Sent by the main server for each signal to the apps. It names the Users the signal is for, or none when it is for
 // every connection, the name the apps receive it under, and what it carries, if anything.
 export interface SignalEvent {

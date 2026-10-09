@@ -1,3 +1,12 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-03  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-04  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { load } from 'cheerio';

@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by fyoon46
+ * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma, SubQuest } from '../generated/prisma/client.js';
 import { CLOCK, type Clock } from './clock.js';

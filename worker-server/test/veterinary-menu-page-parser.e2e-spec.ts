@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-02  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { type RestaurantMenu } from '../src/menu/dto/menus-collected.dto.js';
 import { parseVeterinaryMenuPage } from '../src/menu/veterinary-menu-page.parser.js';
 import { blockPage, savedPage } from './pages.js';

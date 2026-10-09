@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-02  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { CollectionService } from '../collection/collection.service.js';

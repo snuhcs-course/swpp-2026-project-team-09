@@ -1,3 +1,9 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-06  Fable 5.1  prompted by fyoon46
+################################################################################
+
 # The flow tests' stack: compose.yaml at the repository root with this file over it, under a project name of its own
 # (flow-tests/README.md). Paths are relative to the repository root. The variables come from flow-tests/.stack/compose.env,
 # which the tests write for each run. No project's .env file is read, and only the main and socket servers are published,

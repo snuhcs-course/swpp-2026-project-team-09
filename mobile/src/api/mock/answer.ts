@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import type { ApiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import { mockBehaviour } from '@/dev-settings';

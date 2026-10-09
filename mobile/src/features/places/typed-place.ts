@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import { useQueryClient } from '@tanstack/react-query';
 import { placesQuery } from '@/api/queries';
 import type { SubQuestPlace } from '@/api/room-types';

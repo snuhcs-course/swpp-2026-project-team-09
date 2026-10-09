@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { z } from 'zod';
 import { MeetupState, Prisma } from '../../generated/prisma/client.js';
 import { placeSchema, subQuestContentSchema } from '../../quests/dto/quest-requests.dto.js';

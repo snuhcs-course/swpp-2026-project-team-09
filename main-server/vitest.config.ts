@@ -1,3 +1,11 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-09-30  Opus 5.5   prompted by fyoon46
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { configDefaults, defineConfig } from 'vitest/config';
 
 // Waits for Redis to expire records in real time with 150 ms to spare, which the other files' load can use up.

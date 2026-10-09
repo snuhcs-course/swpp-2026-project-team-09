@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import { useState } from 'react';
 import type { Gender, OnboardingAnswers, Suggestion } from '@/api/types';
 import { now } from '@/clock';

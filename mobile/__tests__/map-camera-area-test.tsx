@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import { act, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import type { ReactElement } from 'react';

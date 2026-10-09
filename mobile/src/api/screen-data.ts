@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 // What a hook of a feature tells a screen.
 export interface ScreenData<View> {
   // Undefined while it is loading, and where a failure leaves nothing to show.

@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import { type RefObject, useCallback, useRef } from 'react';
 import type { LatLng } from '@/api/types';
 import { type FitPadding, type MapHandle, MAX_ZOOM, MIN_ZOOM } from '@/map';

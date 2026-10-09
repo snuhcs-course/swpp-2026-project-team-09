@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import type { SubQuestContent } from './room-types';
 import type { Board, JoinPolicy, SubQuest } from './types';
 import type { QuestSummary } from './waiting-types';

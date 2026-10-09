@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
 import { CreatedInviteLinkDto, InviteLinkDto } from './dto/invite-links.dto.js';

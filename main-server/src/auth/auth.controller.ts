@@ -1,3 +1,12 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-29  Opus 5.5   prompted by TaeHyun79
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-09-30  Opus 5.5   prompted by fyoon46
+ * 2026-10-01  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AllowBeforeOnboarding } from '../common/allow-before-onboarding.decorator.js';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';

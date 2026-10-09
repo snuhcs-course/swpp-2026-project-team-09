@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import { type ConfigPlugin, withAppDelegate, withInfoPlist } from 'expo/config-plugins';
 
 // An app built with the iOS 27 SDK (Xcode 27) must adopt the scene life cycle, or it quits at launch with "UIScene

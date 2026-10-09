@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 package com.bonnieandclaude.snunow.map
 
 import kotlin.math.PI

@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-03  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { readCampusBoundary } from './common/campus-boundary.js';
 import { SEED_DIRECTORY } from './common/seed-directory.js';
 import { PrismaClient } from './generated/prisma/client.js';

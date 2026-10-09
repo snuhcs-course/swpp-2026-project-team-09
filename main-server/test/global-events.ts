@@ -1,3 +1,12 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-03  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-04  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 // Post numbers after `first`, one per call. Each test file takes numbers of its own, because the files share the
 // database and a post is stored once.
 export function postNumbersFrom(first: number): () => number {

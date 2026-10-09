@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { pass, screen } from './support/app';
 import { openFriendScreen } from './support/friends';
 import { givePhone, ON_CAMPUS } from './support/main';

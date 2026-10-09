@@ -12,7 +12,8 @@
     "typescript/no-non-null-assertion": "error",
     "typescript/consistent-type-imports": "off",
     "typescript/no-extraneous-class": ["error", { "allowWithDecorator": true }],
-    "typescript/prefer-readonly-parameter-types": "off"
+    "typescript/prefer-readonly-parameter-types": "off",
+    "max-lines": ["error", { "skipComments": true }]
   },
   "env": {
     "node": true

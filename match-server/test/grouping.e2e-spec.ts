@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { type Candidate } from '../src/matching/grouping.js';
 import { HashtagGrouping } from '../src/matching/hashtag-grouping.js';
 

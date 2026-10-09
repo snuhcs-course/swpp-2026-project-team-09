@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import type { MenuLine, RestaurantMenus } from '@/api/menu-types';
 import { field, hasTexts, isNumber, isText, isTextOrNull, listOf } from './answers';
 

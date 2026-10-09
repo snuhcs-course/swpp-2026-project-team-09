@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import type { ShuttleRoute, ShuttleStop, ShuttleVehicle } from '@/api/shuttle-types';
 import { field, hasTexts, isNumber, isPoint, isText, listOf } from './answers';
 

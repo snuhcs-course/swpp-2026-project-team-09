@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import type { MenuLine, RestaurantMenus } from '@/api/menu-types';
 import type { Place } from '@/api/types';
 import type { FakeServer } from './fake-server';

@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { io, type Socket } from 'socket.io-client';
 import { isShuttleVehicles } from '@/api/server/shuttle-answers';
 import type { ShuttleVehicle } from '@/api/shuttle-types';

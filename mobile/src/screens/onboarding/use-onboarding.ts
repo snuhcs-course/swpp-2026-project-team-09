@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import { useRef, useState } from 'react';
 import { apiClient } from '@/api/client';
 import { signOut } from '@/auth/sign-in';

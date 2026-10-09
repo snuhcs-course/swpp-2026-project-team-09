@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { CustomDecorator, SetMetadata } from '@nestjs/common';
 import { ROUTE_ACCESS, RouteAccess } from './route-access.js';
 

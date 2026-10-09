@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 // A main server behind `fetch`, as a test sets it up: each route answers what the test says, and every request is
 // remembered. A route the test did not set answers 404.
 

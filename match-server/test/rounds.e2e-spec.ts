@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { randomUUID } from 'node:crypto';
 import { type Candidate, type Grouping } from '../src/matching/grouping.js';
 import { MainServerStub, type Reply } from './main-server.js';

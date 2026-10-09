@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { type ReactElement, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Avatar, BottomSheet, Button, color, Dialog, space, text } from '@/design-system';

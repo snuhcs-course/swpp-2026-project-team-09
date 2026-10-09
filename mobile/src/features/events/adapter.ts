@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import type { MatchingRequest } from '@/api/matching-types';
 import type { GlobalEvent, Quest } from '@/api/types';
 import type { RecruitingQuest } from '@/api/party-types';

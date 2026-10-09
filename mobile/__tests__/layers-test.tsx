@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { screen as found } from '@testing-library/react-native';
 import { holdBackButton } from './support/back';
 import { pass, screen, shownAddress } from './support/app';

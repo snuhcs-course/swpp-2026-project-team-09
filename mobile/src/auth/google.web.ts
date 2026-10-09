@@ -1,3 +1,11 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import type { GoogleAnswer } from './google';
 
 // The web's `google.ts`. The web holds no native module, so this file names Google's library nowhere and the web's

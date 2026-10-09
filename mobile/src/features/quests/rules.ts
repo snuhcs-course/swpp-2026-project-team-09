@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import type { Quest } from '@/api/types';
 
 // Who may do what in a Quest's room, by decision 4. The main server's rules are wider; these may change, so every

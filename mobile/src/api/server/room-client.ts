@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import type { ApiClient } from '@/api/client';
 import type { PlaceAt } from '@/api/room-types';
 import { field, isCampusPlace, isMyParty, isNothing, isQuest, isSubQuest } from './answers';

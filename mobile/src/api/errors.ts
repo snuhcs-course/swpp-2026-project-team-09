@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 // A refusal of the main server, or no answer from it. `status` is the HTTP status, 0 when nothing answered, `code`
 // the main server's own word for the refusal where it gives one, such as ONBOARDING_REQUIRED, and `body` the whole
 // refusal as it came, null when there was none.

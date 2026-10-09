@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import 'server-only';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';

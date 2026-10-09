@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ ******************************************************************************/
+
 import { parseRoutePage } from '../src/shuttle/route-page.parser.js';
 import { blockPage, savedPage } from './pages.js';
 

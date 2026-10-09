@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-03  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { WorkerOnly } from '../common/worker-only.decorator.js';
 import { CollectionService } from './collection.service.js';

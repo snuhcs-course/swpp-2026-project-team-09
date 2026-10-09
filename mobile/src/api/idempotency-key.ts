@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 // A fresh Idempotency-Key: a random UUID of version 4. The phone has no crypto module for it, and the key needs only
 // to differ from the User's other keys.
 export function newIdempotencyKey(): string {

@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 // The moment the `Main` frame shows: 1 October 2026, 13:37 in Korea.
 export const FRAME_NOW = '2026-10-01T04:37:00.000Z';
 

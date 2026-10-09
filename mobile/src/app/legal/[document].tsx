@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import type { ReactElement } from 'react';
 import { isLegalDocument } from '@/screens/legal-documents';

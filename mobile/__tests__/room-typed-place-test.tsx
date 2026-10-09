@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import { within } from '@testing-library/react-native';
 import type { SubQuest } from '@/api/types';
 import type * as SecureStoreFake from './support/secure-store';

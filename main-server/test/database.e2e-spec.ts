@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-28  Opus 5.5   prompted by TaeHyun79
+ ******************************************************************************/
+
 import { PrismaPg } from '@prisma/adapter-pg';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';

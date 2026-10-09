@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import ExpoModulesCore
 
 // What `src/map/native-map.tsx` hands over. It flattens the interface of `src/map/types.ts` into these.

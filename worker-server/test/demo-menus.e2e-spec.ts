@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { parseVeterinaryMenuPage } from '../src/menu/veterinary-menu-page.parser.js';
 import { savedMenuMessages } from '../src/menu/saved-menus.js';
 import { savedPage } from './pages.js';

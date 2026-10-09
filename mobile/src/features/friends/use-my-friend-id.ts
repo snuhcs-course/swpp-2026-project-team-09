@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { useQuery } from '@tanstack/react-query';
 import { lobbyQuery } from '@/api/queries';
 

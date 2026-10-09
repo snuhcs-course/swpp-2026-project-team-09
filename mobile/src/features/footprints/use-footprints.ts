@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
 import { useQuery } from '@tanstack/react-query';
 import { footprintsQuery } from '@/api/queries';
 import { type FootprintsView, NO_FOOTPRINTS, toFootprintsView } from './adapter';

@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { within } from '@testing-library/react-native';
 import { pass, screen } from './support/app';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';

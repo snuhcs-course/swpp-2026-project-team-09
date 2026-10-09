@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-28  Opus 5.5   prompted by TaeHyun79
+ ******************************************************************************/
+
 import { existsSync } from 'node:fs';
 import { defineConfig } from 'prisma/config';
 

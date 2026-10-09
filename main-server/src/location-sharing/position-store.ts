@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-04  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { Inject, Injectable } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { z } from 'zod';

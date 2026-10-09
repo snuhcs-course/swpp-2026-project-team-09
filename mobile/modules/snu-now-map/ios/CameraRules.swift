@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ ******************************************************************************/
+
 import Foundation
 
 // The camera's rules of `src/map/types.ts`, worked out in Web Mercator as `src/map/projection.ts` does for the

@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-06  Fable 5.1  prompted by fyoon46
+ ******************************************************************************/
+
 import { answered, startFresh } from '../support/mocks';
 import { mockClient } from '@/api/mock/client';
 import type { OnboardingAnswers } from '@/api/types';

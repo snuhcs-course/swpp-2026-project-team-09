@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-01  Opus 5.5   prompted by TaeHyun79
+ ******************************************************************************/
+
 import { load } from 'cheerio';
 import { MEALS, type RestaurantMenu } from './dto/menus-collected.dto.js';
 import { readMenuLines } from './menu-line.js';

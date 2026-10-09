@@ -1,3 +1,9 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-09-29  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
 import { TestProject } from 'vitest/node';
 import { Settings } from '../src/common/settings.js';
 import { redisSettings, startRedis } from './containers.js';
