@@ -992,6 +992,9 @@ openLocationSettings(); // of `@/position`: the phone's settings of the app, for
 - With `EXPO_PUBLIC_CAMPUS_WALK=1` the hook answers the development walk instead and never asks the phone.
 - The words of the system's prompt on iOS are in `app.json`, with the library's config plugin, which also gives
   Android the background location and foreground service permissions. iOS asks for no position in the background.
+- `app.json` also gives Android `RECEIVE_BOOT_COMPLETED`. The task manager hands each background position to a job
+  that Android keeps across a restart of the phone, and Android refuses such a job from an app without the
+  permission: the app then stops at the first position.
 - `accuracy` is the radius in metres the phone places itself within, and `measuredAt` the time it measured the
   position. The walk gives an accuracy of 10 and the time it moves.
 - `ask()` gives the answer, so that the switch on 내 정보 knows whether to turn on.
