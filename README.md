@@ -10,6 +10,23 @@ defined in [GLOSSARY.md](GLOSSARY.md); the app's screens are in Korean.
 The system is an Android app, four servers (main, socket, worker and match) with PostgreSQL and Redis, and an admin
 site for Administrators.
 
+## Table of contents
+
+- [What the demo demonstrates](#what-the-demo-demonstrates)
+- [Demo video](#demo-video)
+- [Known limitations and todos](#known-limitations-and-todos)
+- [Development and execution environment](#development-and-execution-environment)
+- [Requirements](#requirements)
+- [Setup](#setup)
+- [Settings](#settings)
+- [Running the servers](#running-the-servers)
+- [Running the admin site](#running-the-admin-site)
+- [Running the app](#running-the-app)
+- [Running the tests](#running-the-tests)
+- [Repository layout](#repository-layout)
+- [Data sources and attribution](#data-sources-and-attribution)
+- [Links](#links)
+
 ## What the demo demonstrates
 
 ### Goal of Iteration 1
