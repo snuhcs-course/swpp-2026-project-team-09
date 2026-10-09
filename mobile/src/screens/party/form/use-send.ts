@@ -5,7 +5,7 @@ import { newIdempotencyKey } from '@/api/idempotency-key';
 import { QUESTS_KEY, RECRUITING_KEY, SENT_INVITATIONS_KEY } from '@/api/queries';
 import type { Quest } from '@/api/types';
 import { useToast } from '@/design-system';
-import { changeOf, makingOf, meetingOf, type PartyForm, recruitingOf } from '@/features/party/making';
+import { attendingTitleOf, changeOf, makingOf, meetingOf, type PartyForm, recruitingOf } from '@/features/party/making';
 import { refusalWords } from '@/features/quests/refusals';
 
 const NOT_SAVED = '저장하지 못했어요. 다시 시도해 주세요';
@@ -27,11 +27,11 @@ function toastOf(form: PartyForm, editing: boolean, invited: number, missed: num
 
 // With an event, the Quest is the one attending it gives, which the form then changes: the recruiting, and `모이기`
 // when the User meets before the event.
-async function recruitFor(questId: string, form: PartyForm): Promise<void> {
-  await apiClient.changeQuest(questId, recruitingOf(form));
+async function recruitFor(attended: Quest, form: PartyForm): Promise<void> {
+  await apiClient.changeQuest(attended.id, recruitingOf(attended, form));
   const meeting = meetingOf(form);
   if (meeting !== null) {
-    await apiClient.addSubQuest(questId, meeting, newIdempotencyKey());
+    await apiClient.addSubQuest(attended.id, meeting, newIdempotencyKey());
   }
 }
 
@@ -50,6 +50,7 @@ export function useSend(quest: Quest | null): (form: PartyForm, friends: string[
   };
   return async (form, friends) => {
     let questId: string;
+    let attended: Quest | null = null;
     try {
       if (quest !== null) {
         const change = changeOf(quest, form);
@@ -60,15 +61,16 @@ export function useSend(quest: Quest | null): (form: PartyForm, friends: string[
       } else if (form.event === null) {
         questId = (await apiClient.makeQuest(makingOf(form), newIdempotencyKey())).id;
       } else {
-        questId = (await apiClient.attendGlobalEvent(form.event.id)).id;
+        attended = await apiClient.attendGlobalEvent(form.event.id, attendingTitleOf(form));
+        questId = attended.id;
       }
     } catch (error) {
       showToast(refusalWords(error, {}, NOT_SAVED));
       return 'refused';
     }
-    if (quest === null && form.event !== null) {
+    if (attended !== null) {
       try {
-        await recruitFor(questId, form);
+        await recruitFor(attended, form);
       } catch (error) {
         showToast(refusalWords(error, {}, NOT_SAVED));
         refetch();

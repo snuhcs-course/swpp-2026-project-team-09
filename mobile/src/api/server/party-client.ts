@@ -53,7 +53,8 @@ export const partyClient: PartyClient = {
   },
   makeQuest: (making, idempotencyKey) =>
     call('POST', '/quests/own', isQuest, { body: making, headers: { 'Idempotency-Key': idempotencyKey } }),
-  attendGlobalEvent: (globalEventId) => call('POST', '/quests', isQuest, { body: { globalEventId } }),
+  attendGlobalEvent: (globalEventId, title) =>
+    call('POST', '/quests', isQuest, { body: { globalEventId, ...(title === undefined ? {} : { title }) } }),
   changeQuest: (questId, change) => call('PATCH', path('quests', questId), isQuest, { body: change }),
   inviteToQuest: async (questId, userId) => {
     await call('POST', path('quests', questId, 'invitations'), isNothing, { body: { userId } });

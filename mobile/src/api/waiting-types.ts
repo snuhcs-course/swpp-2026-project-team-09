@@ -1,4 +1,4 @@
-import type { SubQuestPlace } from './room-types';
+import type { MeetupPlace } from './room-types';
 import type { Board, JoinPolicy, Person, SubQuest, UserSummary } from './types';
 
 // The main server's lists of what waits for the User, which 알림 and the badge on 파티 are composed from.
@@ -56,7 +56,7 @@ export interface MeetupProposal {
   title: string;
   startsAt: string;
   endsAt?: string;
-  place: SubQuestPlace;
+  place: MeetupPlace;
 }
 
 // GET /meetups: those proposed to the User and those the User proposed, the newest first, every state included.

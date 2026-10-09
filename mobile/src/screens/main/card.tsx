@@ -14,6 +14,8 @@ interface CardProps {
   // The card's own button, where it has one: "길찾기", or one whose feature belongs to another task.
   onPrimary: () => void;
   onClose: () => void;
+  // A press on one of the card's choices, such as an event at a place, with the id of the card it opens.
+  onChoose?: (id: string) => void;
   // The card's height, once it is laid out and whenever it changes: a toast sits above it.
   onHeight?: (height: number) => void;
   // Its distance from the top, for a card that sits at the top of the map, as a 식당's does. Left out, at the bottom.
@@ -79,14 +81,49 @@ function Head({ card, onClose }: Pick<CardProps, 'card' | 'onClose'>): ReactElem
   );
 }
 
+// The choices of a card that stands for several things, such as the Global Events at one point: a row each, with its
+// title and its time, which opens the thing's own card.
+function Choices({ card, onChoose }: Pick<CardProps, 'card' | 'onChoose'>): ReactElement | null {
+  if (card.choices === undefined) {
+    return null;
+  }
+  return (
+    <View style={styles.choices}>
+      {card.choices.map(({ id, title, detail }) => (
+        <Pressable
+          accessibilityLabel={title}
+          accessibilityRole="button"
+          key={id}
+          onPress={() => {
+            onChoose?.(id);
+          }}
+          style={styles.choice}
+        >
+          <View style={styles.words}>
+            <Text numberOfLines={1} style={styles.choiceTitle}>
+              {title}
+            </Text>
+            <Text numberOfLines={1} style={styles.lineWords}>
+              {detail}
+            </Text>
+          </View>
+          <Icon color={color.inkMuted} name="chevronRight" size={18} />
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
 // The card of what was pressed on the map, as the `MapOverviewSelect` frame draws it: above the AI input's place,
-// with the leading mark, the sub-label, the title, the lines, "가까이 보기" where it is offered and the card's button.
+// with the leading mark, the sub-label, the title, the lines or the choices, "가까이 보기" where it is offered and the
+// card's button.
 export function Card({
   card,
   canLookCloser,
   onLookCloser,
   onPrimary,
   onClose,
+  onChoose,
   onHeight,
   top,
 }: CardProps): ReactElement {
@@ -109,6 +146,7 @@ export function Card({
           ))}
         </View>
       )}
+      <Choices card={card} onChoose={onChoose} />
       <View style={styles.buttons}>
         {canLookCloser ? (
           <Button icon="search" onPress={onLookCloser} variant="secondary">
@@ -166,6 +204,9 @@ const styles = StyleSheet.create({
   lines: { gap: space[1] },
   line: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   lineWords: { ...text.body, flexShrink: 1, color: color.inkMuted },
+  choices: { gap: space[1] },
+  choice: { flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: CLOSE, paddingVertical: space[1] },
+  choiceTitle: { ...text.body, fontFamily: font.semiBold, color: color.ink },
   buttons: { flexDirection: 'row', gap: space[2] },
   primary: { flexGrow: 1, flexShrink: 1 },
 });

@@ -1,6 +1,6 @@
 import type { ApiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
-import type { PlaceAt, SubQuestContent } from '@/api/room-types';
+import type { PlaceAt, SubQuestContent, SubQuestPlace } from '@/api/room-types';
 import type { LatLng, SubQuest } from '@/api/types';
 import { answer } from './answer';
 import { ME } from './data/frame';
@@ -27,21 +27,26 @@ function placeAt(position: LatLng): PlaceAt {
   return { place: nearest, relation: metresBetween(position, nearest) <= INSIDE_METRES ? 'inside' : 'near' };
 }
 
-function subQuestOf(content: SubQuestContent): SubQuest {
-  const place = content.place;
+// The place a Sub Quest is kept with, from the place sent: a Place of the list, a point with its words, or words alone
+// without a position.
+export function storedPlace(place: SubQuestPlace | undefined): SubQuest['place'] {
   const named = place !== undefined && 'placeId' in place ? PLACES.find(({ id }) => id === place.placeId) : undefined;
+  if (named !== undefined) {
+    return { placeId: named.id, label: named.name, latitude: named.latitude, longitude: named.longitude };
+  }
+  return place === undefined || 'placeId' in place
+    ? null
+    : { placeId: null, latitude: null, longitude: null, ...place };
+}
+
+function subQuestOf(content: SubQuestContent): SubQuest {
   return {
     id: `sub-quest-${content.startsAt}`,
     attending: false,
     title: content.title,
     startsAt: content.startsAt,
     endsAt: null,
-    place:
-      named === undefined
-        ? place === undefined || 'placeId' in place
-          ? null
-          : { placeId: null, ...place }
-        : { placeId: named.id, label: named.name, latitude: named.latitude, longitude: named.longitude },
+    place: storedPlace(content.place),
     completion: 'by_hand',
     cancelled: false,
     done: false,
@@ -61,6 +66,7 @@ type MockRoom = Pick<
   | 'editSubQuest'
   | 'cancelSubQuest'
   | 'markSubQuestDone'
+  | 'unmarkSubQuestDone'
   | 'handOverQuest'
   | 'removeHolder'
   | 'endQuest'
@@ -91,6 +97,7 @@ export const mockRoom: MockRoom = {
   editSubQuest: (_questId, _subQuestId, content) => answer('editSubQuest', () => subQuestOf(content)),
   cancelSubQuest: () => nothing('cancelSubQuest'),
   markSubQuestDone: () => nothing('markSubQuestDone'),
+  unmarkSubQuestDone: () => nothing('unmarkSubQuestDone'),
   handOverQuest: () => nothing('handOverQuest'),
   removeHolder: () => nothing('removeHolder'),
   endQuest: () => nothing('endQuest'),

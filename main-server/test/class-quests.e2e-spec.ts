@@ -96,6 +96,7 @@ describe('The Quest list on a day with a class', () => {
         },
       ],
       classQuest: true,
+      waitingJoinRequests: 0,
     });
   });
 });

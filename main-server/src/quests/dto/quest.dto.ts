@@ -8,13 +8,13 @@ import {
   SubQuest,
 } from '../../generated/prisma/client.js';
 
-// A Place from the list, with its id, or a point with the label the app showed. The attending Sub Quest's is the
-// Global Event's position and place text.
+// A Place from the list, with its id, a point with the label the app showed, or the label alone without a position.
+// The attending Sub Quest's is the Global Event's position and place text.
 export interface SubQuestPlaceDto {
   placeId: string | null;
   label: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export interface SubQuestDto {
@@ -59,6 +59,8 @@ export interface QuestDto {
   subQuests: SubQuestDto[];
   // Computed from the timetable and never stored (class-quests.service.ts).
   classQuest: boolean;
+  // The requests to join waiting for the Leader's answer, when the User who reads it leads it; 0 otherwise.
+  waitingJoinRequests: number;
 }
 
 // A Quest as a User who does not hold it reads it: in the list of recruiting Quests, in a request to join it and in an
@@ -101,6 +103,7 @@ export const QUEST_INCLUDE = {
   leader: { select: HOLDER_SELECT },
   holders: { include: { user: { select: HOLDER_SELECT } }, orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }] },
   subQuests: { include: SUB_QUEST_INCLUDE, orderBy: [{ attending: 'desc' }, { createdAt: 'asc' }, { id: 'asc' }] },
+  _count: { select: { joinRequests: true } },
 } satisfies Prisma.QuestInclude;
 
 type StoredSubQuest = Prisma.SubQuestGetPayload<{ include: typeof SUB_QUEST_INCLUDE }>;
@@ -134,7 +137,7 @@ function contentOf(
   };
 }
 
-// The stored Place, or the stored point with its label, or null when there is neither.
+// The stored Place, or the stored label with its point if it has one, or null when there is neither.
 export function toPlaceDto({
   place,
   latitude,
@@ -144,9 +147,7 @@ export function toPlaceDto({
   if (place !== null) {
     return { placeId: place.id, label: place.name, latitude: place.latitude, longitude: place.longitude };
   }
-  return latitude === null || longitude === null || placeLabel === null
-    ? null
-    : { placeId: null, label: placeLabel, latitude, longitude };
+  return placeLabel === null ? null : { placeId: null, label: placeLabel, latitude, longitude };
 }
 
 // Ended for every Holder alike: cancelled, or its end time has passed by `now`.
@@ -154,7 +155,7 @@ function passed({ cancelled, endsAt }: Pick<SubQuestDto, 'cancelled' | 'endsAt'>
   return cancelled || (endsAt !== null && new Date(endsAt) <= now);
 }
 
-// As `userId` reads it. Ended is computed at `now` and never stored.
+// As `userId` reads it. Ended is computed at `now` and never stored; the User's mark of done does not end it.
 export function toSubQuestDto(
   subQuest: StoredSubQuest,
   globalEvent: GlobalEvent | null,
@@ -169,7 +170,7 @@ export function toSubQuestDto(
     ...content,
     completion: content.endsAt === null ? 'by_hand' : 'by_time',
     done,
-    ended: done || passed(content, now),
+    ended: passed(content, now),
   };
 }
 
@@ -180,7 +181,7 @@ export function hasSubQuestsAhead(quest: StoredQuest, now: Date): boolean {
 }
 
 export function toQuestDto(quest: StoredQuest, userId: string, now: Date): QuestDto {
-  const { globalEvent } = quest;
+  const { globalEvent, _count } = quest;
   return {
     id: quest.id,
     title: quest.title,
@@ -194,6 +195,7 @@ export function toQuestDto(quest: StoredQuest, userId: string, now: Date): Quest
     holders: quest.holders.map(({ user }) => user),
     subQuests: quest.subQuests.map((subQuest) => toSubQuestDto(subQuest, globalEvent, userId, now)),
     classQuest: false,
+    waitingJoinRequests: quest.leaderId === userId ? _count.joinRequests : 0,
   };
 }
 

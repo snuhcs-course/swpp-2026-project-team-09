@@ -94,7 +94,7 @@ describe('the shuttle layer', () => {
     expect(dashes[0]).toHaveStyle({ width: 11, height: 3, backgroundColor: '#6B46C1' });
   });
 
-  it('puts a dot on each stop, in the shuttle\'s look, with the stop\'s name under it from the "names" level', async () => {
+  it("puts a dot on each stop, in the shuttle's look, without the stop's name under it at any level", async () => {
     const user = await openMain();
     await toggleShuttle(user);
     for (const stop of STOPS) {
@@ -104,7 +104,7 @@ describe('the shuttle layer', () => {
 
     await zoomIn(user, 3);
 
-    expect(wordsUnder(stopMarker(SCIENCE), '자연대')).toBeVisible();
+    expect(wordsUnder(stopMarker(SCIENCE), '자연대')).toBeNull();
   });
 });
 

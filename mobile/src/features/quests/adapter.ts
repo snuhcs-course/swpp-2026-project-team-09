@@ -53,9 +53,15 @@ export function shownSubQuest(quest: Quest): SubQuest | null {
   return open.find(({ attending }) => attending) ?? open[0] ?? null;
 }
 
+// Where a Sub Quest's place is on the map. Null without a place, and for words alone, which have no point.
+export function pointOf(place: SubQuest['place']): LatLng | null {
+  return place === null || place.latitude === null || place.longitude === null
+    ? null
+    : { latitude: place.latitude, longitude: place.longitude };
+}
+
 export function positionOf(subQuest: SubQuest | null): LatLng | null {
-  const place = subQuest?.place ?? null;
-  return place === null ? null : { latitude: place.latitude, longitude: place.longitude };
+  return pointOf(subQuest?.place ?? null);
 }
 
 function startOf(quest: Quest): number {

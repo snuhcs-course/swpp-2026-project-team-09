@@ -5,7 +5,7 @@ import type { Quest } from '@/api/types';
 import { EmptyState, ErrorState, IconButton, LoadingState, space } from '@/design-system';
 import { type EventFilter, type EventSources, type RecruitRowView, toEventViews } from '@/features/events/adapter';
 import { useEventSources } from '@/features/events/use-events';
-import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
+import { openPost } from '../party/post-card';
 import { TabScreen } from '../shell/tab-screen';
 import { EventItem } from './event-item';
 import { Filters, MatchingButton, SearchBar } from './events-bar';
@@ -62,14 +62,12 @@ function List({ sources, filter, search, focused, scroll, onCardAt, onRecruit, o
   );
 }
 
-// The sheets the cards open: 파티 찾기/모집 with the question before joining, and AI 매칭.
+// The sheets the cards open: 파티 찾기/모집, whose rows open the recruiting posts, and AI 매칭.
 interface Sheets {
   recruitEvent: Picked | null;
   matchEvent: Picked | null;
-  ask: Ask | null;
   setRecruitEvent: (event: Picked | null) => void;
   setMatchEvent: (event: Picked | null) => void;
-  setAsk: (ask: Ask | null) => void;
   onRow: (row: RecruitRowView) => void;
   onRecruit: (eventId: string) => void;
 }
@@ -77,30 +75,20 @@ interface Sheets {
 function useSheets(): Sheets {
   const [recruitEvent, setRecruitEvent] = useState<Picked | null>(null);
   const [matchEvent, setMatchEvent] = useState<Picked | null>(null);
-  const [ask, setAsk] = useState<Ask | null>(null);
-  const actions = useEventActions();
   const openPartyCreate = useOpenPartyCreate();
   return {
     recruitEvent,
     matchEvent,
-    ask,
     setRecruitEvent,
     setMatchEvent,
-    setAsk,
-    // A Quest the User holds opens its room; another's asks first, and joins or asks to.
+    // A Quest the User holds opens its room; another's opens its recruiting post, where the User joins or asks to.
     onRow: (row) => {
       setRecruitEvent(null);
       if (row.held) {
         router.push(`/room/${row.questId}`);
         return;
       }
-      setAsk({
-        title: `‘${row.title}’에 참여할까요?`,
-        body: '멤버가 파티를 활성화하면, 수락한 멤버끼리 위치를 공유해요.',
-        confirm: row.joinPolicy === 'open' ? '참여하기' : '참여 신청',
-        danger: false,
-        onConfirm: () => void actions.join(row),
-      });
+      openPost(row.questId);
     },
     // A User who holds the event's 파티 with others is led to it; anyone else recruits.
     onRecruit: (eventId) => {
@@ -131,13 +119,6 @@ function EventSheets({ sheets, quests }: { sheets: Sheets; quests: readonly Ques
         onSubmit={(globalEventId, groupSize) => {
           sheets.setMatchEvent(null);
           void actions.requestMatching(globalEventId, groupSize);
-        }}
-      />
-      <ConfirmSheet
-        ask={sheets.ask}
-        label="참여 확인"
-        onClose={() => {
-          sheets.setAsk(null);
         }}
       />
     </>

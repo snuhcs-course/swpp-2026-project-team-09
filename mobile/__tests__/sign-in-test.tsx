@@ -151,3 +151,79 @@ describe('a refused sign-in', () => {
     expect(screen.getByRole('header', { name: '약관에 동의해 주세요' })).toBeVisible();
   });
 });
+
+const ANOTHER_ACCOUNT = '다른 서울대 계정으로 로그인';
+
+async function pressAnotherAccount(user: User): Promise<void> {
+  await user.press(screen.getByRole('button', { name: ANOTHER_ACCOUNT }));
+}
+
+describe('the link to another SNU account', () => {
+  it('shows below the line in the default state', async () => {
+    await openSignIn();
+
+    expect(screen.getByRole('button', { name: ANOTHER_ACCOUNT })).toBeVisible();
+  });
+
+  it("asks Google's chooser, where the button asks the phone's accounts", async () => {
+    const signIn = jest.spyOn(auth, 'signIn');
+    const user = await openSignIn();
+
+    await pressAnotherAccount(user);
+    expect(signIn).toHaveBeenLastCalledWith('chooser');
+    await pass(400);
+    expect(screen.getByRole('header', { name: '약관에 동의해 주세요' })).toBeVisible();
+  });
+
+  it('hides while the account is checked, and a press on the button meanwhile does nothing', async () => {
+    const signIn = jest.spyOn(auth, 'signIn');
+    const user = await openSignIn();
+
+    await pressAnotherAccount(user);
+    expect(screen.getByRole('header', { name: '학교 계정 확인 중…' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: ANOTHER_ACCOUNT })).toBeNull();
+
+    await pressSignIn(user);
+    expect(signIn).toHaveBeenCalledTimes(1);
+  });
+
+  it('is gone while a press on the button signs in', async () => {
+    const signIn = jest.spyOn(auth, 'signIn');
+    const user = await openSignIn();
+
+    await pressSignIn(user);
+
+    expect(signIn).toHaveBeenLastCalledWith('phone-accounts');
+    expect(screen.queryByRole('button', { name: ANOTHER_ACCOUNT })).toBeNull();
+  });
+});
+
+describe('a sign-in through the link', () => {
+  it.each([
+    ['not-snu-account', '@snu.ac.kr 계정만 가능해요'],
+    ['failed', '잠시 후 다시 시도해 주세요'],
+  ])('shows after the refusal "%s" and signs in when pressed again', async (ending, line) => {
+    const user = await openSignIn(ending);
+    await pressAnotherAccount(user);
+    await pass(400);
+
+    expect(screen.getByRole('header', { name: '로그인하지 못했어요' })).toBeVisible();
+    expect(screen.getByRole('alert')).toHaveTextContent(line);
+    expect(screen.getByRole('button', { name: ANOTHER_ACCOUNT })).toBeVisible();
+
+    Reflect.deleteProperty(process.env, 'EXPO_PUBLIC_SIGN_IN_ENDING');
+    await pressAnotherAccount(user);
+    await pass(400);
+    expect(screen.getByRole('header', { name: '약관에 동의해 주세요' })).toBeVisible();
+  });
+
+  it('returns to the default state when the User closed the chooser', async () => {
+    const user = await openSignIn('cancelled');
+    await pressAnotherAccount(user);
+    await pass(400);
+
+    expect(screen.getByRole('header', { name: '서울대 계정으로 로그인' })).toBeVisible();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('button', { name: ANOTHER_ACCOUNT })).toBeVisible();
+  });
+});

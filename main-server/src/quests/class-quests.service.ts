@@ -60,6 +60,7 @@ function toClassQuestDto(
     holders: [holder],
     subQuests,
     classQuest: true,
+    waitingJoinRequests: 0,
   };
 }
 

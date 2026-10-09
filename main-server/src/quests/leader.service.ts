@@ -43,14 +43,10 @@ export class LeaderService {
     return this.ledBy(questId, userId, tx);
   }
 
-  // A capacity below the number of Holders is refused, and so is a title for a Quest with a Global Event, which keeps
-  // the event's. The Quest the changes lead to is on a board when it is Open or Approval, and on none when Closed: a
-  // change to Closed clears the board.
+  // A capacity below the number of Holders is refused. The Quest the changes lead to is on a board when it is Open or
+  // Approval, and on none when Closed: a change to Closed clears the board.
   async update(userId: string, questId: string, changes: UpdateQuestDto): Promise<QuestDto> {
     await this.changeAsLeader(userId, questId, async (tx, quest, holderIds) => {
-      if (changes.title !== undefined && quest.globalEventId !== null) {
-        throw conflict('QUEST_TITLE_FROM_GLOBAL_EVENT', 'A Quest for a Global Event keeps the title of the event.');
-      }
       if (changes.capacity !== undefined && changes.capacity < holderIds.length) {
         throw conflict('CAPACITY_BELOW_HOLDERS', 'The Quest has more Holders than this capacity.');
       }

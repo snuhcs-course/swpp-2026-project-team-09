@@ -70,3 +70,14 @@ export function givenName(name: string): string {
   const trimmed = name.trim();
   return /^[가-힣]{3}$/u.test(trimmed) ? trimmed.slice(1) : trimmed;
 }
+
+const HANGUL_FIRST = 0xac00;
+const HANGUL_LAST = 0xd7a3;
+const FINALS = 28;
+
+// "김민준과", "최유나와": the particle follows the last syllable's final consonant.
+export function withParticle(words: string): string {
+  const last = words.codePointAt(words.length - 1) ?? 0;
+  const open = last >= HANGUL_FIRST && last <= HANGUL_LAST && (last - HANGUL_FIRST) % FINALS === 0;
+  return `${words}${open ? '와' : '과'}`;
+}

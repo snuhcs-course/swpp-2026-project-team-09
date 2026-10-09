@@ -55,6 +55,7 @@ describe('Attending a Global Event', () => {
         },
       ],
       classQuest: false,
+      waitingJoinRequests: 0,
     });
   });
 
@@ -92,6 +93,30 @@ describe('Attending a Global Event the User holds a Quest for', () => {
     expect([first.status, second.status]).toEqual([201, 201]);
     expect(second.body).toEqual(first.body);
     expect((await getQuests(app, user)).body).toHaveLength(1);
+  });
+});
+
+describe('Attending a Global Event with a title', () => {
+  it('gives a Quest with that title, its attending Sub Quest and event still titled as the event', async () => {
+    const user = await signInUser(app);
+    const event = await storeEvent(prisma);
+
+    const response = await attend(app, user, event.id, { title: '설명회 같이 가요' });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({
+      title: '설명회 같이 가요',
+      globalEvent: { id: event.id, title: '지능형통신 연합전공 설명회' },
+      subQuests: [{ attending: true, title: '지능형통신 연합전공 설명회' }],
+    });
+  });
+
+  it.each(['', '   ', 'ㄱ'.repeat(51)])('is refused for the title %j', async (title) => {
+    const user = await signInUser(app);
+    const event = await storeEvent(prisma);
+
+    expect((await attend(app, user, event.id, { title })).status).toBe(400);
+    expect((await getQuests(app, user)).body).toEqual([]);
   });
 });
 

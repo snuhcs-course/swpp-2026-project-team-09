@@ -81,6 +81,22 @@ describe('The Leader changing the settings', () => {
   });
 });
 
+describe('The Leader of a Quest with a Global Event', () => {
+  it('changes its title, which still names the event', async () => {
+    const leader = await signInUser(app);
+    const { questId } = await questFor(app, leader, (await storeEvent(prisma)).id);
+
+    const response = await changeQuest(app, leader, questId, { title: '내 설명회' });
+
+    expect(response.status).toBe(200);
+    expect((await getQuest(app, leader, questId)).body).toMatchObject({
+      title: '내 설명회',
+      globalEvent: { title: '지능형통신 연합전공 설명회' },
+      subQuests: [{ attending: true, title: '지능형통신 연합전공 설명회' }],
+    });
+  });
+});
+
 describe('Changing the settings is refused', () => {
   it('for a capacity below the number of Holders', async () => {
     const [leader, first, second] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
@@ -92,17 +108,6 @@ describe('Changing the settings is refused', () => {
     expect(response.status).toBe(409);
     expect(response.body).toMatchObject(refused(409, 'CAPACITY_BELOW_HOLDERS'));
     expect((await changeQuest(app, leader, questId, { capacity: 3 })).status).toBe(200);
-  });
-
-  it('for a title of a Quest with a Global Event, which keeps the event’s', async () => {
-    const leader = await signInUser(app);
-    const { questId } = await questFor(app, leader, (await storeEvent(prisma)).id);
-
-    const response = await changeQuest(app, leader, questId, { title: '내 설명회' });
-
-    expect(response.status).toBe(409);
-    expect(response.body).toMatchObject(refused(409, 'QUEST_TITLE_FROM_GLOBAL_EVENT'));
-    expect((await getQuest(app, leader, questId)).body).toMatchObject({ title: '지능형통신 연합전공 설명회' });
   });
 
   it.each([{ capacity: 0 }, { capacity: 9 }, { title: '' }, { joinPolicy: 'secret' }, { leaderId: randomUUID() }])(

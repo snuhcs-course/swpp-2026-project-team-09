@@ -96,6 +96,7 @@ function sharedQuestOf(meetup: Meetup): Quest {
     holders,
     subQuests: [step],
     classQuest: false,
+    waitingJoinRequests: 0,
     board: null,
     description: '',
     createdAt: now().toISOString(),

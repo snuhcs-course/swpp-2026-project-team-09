@@ -5,6 +5,7 @@ import { EXPLANATION, givePhone, NEAR_LIBRARY, OFF_CAMPUS, ON_CAMPUS, openMain }
 import { DINNER, FRIEND, lookOf, press, ROUTE, wordsUnder } from './support/markers';
 import { startFresh } from './support/mocks';
 import { apiClient } from '@/api/client';
+import { QUESTS } from '@/api/mock/data/quests';
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -82,6 +83,27 @@ describe('the route when the main screen opens without a position on campus', ()
     await openMain({ locationExplained: true });
     await pass(500);
 
+    expect(findWalkingRoute).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText(ROUTE)).toBeNull();
+  });
+});
+
+describe('a Quest whose place is words alone', () => {
+  it('shows its words in the Quest list, has no marker on the map and no route', async () => {
+    const dinner = QUESTS.find(({ id }) => id === 'q-dinner');
+    const [step] = dinner?.subQuests ?? [];
+    if (dinner === undefined || step === undefined) {
+      throw new Error('No dinner in the mock');
+    }
+    const station = { placeId: null, label: '서울대입구역', latitude: null, longitude: null };
+    jest.spyOn(apiClient, 'listQuests').mockResolvedValue([{ ...dinner, subQuests: [{ ...step, place: station }] }]);
+    givePhone({ permission: 'granted', position: ON_CAMPUS });
+
+    await openMain();
+    await pass(500);
+
+    expect(screen.getByRole('button', { name: /저녁 약속 · 20:10 · 서울대입구역$/u })).toBeVisible();
+    expect(screen.queryByRole('button', { name: DINNER })).toBeNull();
     expect(findWalkingRoute).not.toHaveBeenCalled();
     expect(screen.queryByLabelText(ROUTE)).toBeNull();
   });

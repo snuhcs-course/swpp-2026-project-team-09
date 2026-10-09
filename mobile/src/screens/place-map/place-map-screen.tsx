@@ -6,7 +6,7 @@ import { color, font, Icon, radius, shadow, space } from '@/design-system';
 import { useInsets } from '@/design-system/insets';
 import { givePlace } from '@/features/places/picked-place';
 import { type PlaceAtView, usePlaceAt } from '@/features/places/use-place-at';
-import { CAMPUS_BOUNDS, isInside, Map, type MapHandle, MAX_ZOOM, MIN_ZOOM } from '@/map';
+import { CAMPUS_BOUNDS, CAMPUS_CAMERA, isInside, Map, type MapHandle } from '@/map';
 import { usePosition } from '@/position';
 
 // The floating back button and the pill over the map.
@@ -59,7 +59,8 @@ function Sheet({ at }: { at: PlaceAtView | undefined }): ReactElement {
 
 // The map view of the place picker, the frame's `PlacePickerMap`: the map moves under a pin fixed at the middle, which
 // lifts while it moves, and the sheet says what is under it once the camera stops. It opens on the User's position when
-// known, else on the campus. Its choice goes back to the screen that opened it.
+// known, else on the campus. The camera may move past the on-campus rectangle, but a point outside it is not a pick:
+// the sheet is empty and `이 위치로 정하기` is off. Its choice goes back to the screen that opened it.
 export function PlaceMapScreen(): ReactElement {
   const [point, setPoint] = useState<LatLng | null>(null);
   const [moving, setMoving] = useState(false);
@@ -77,10 +78,8 @@ export function PlaceMapScreen(): ReactElement {
       >
         <Map
           avatars={[]}
-          bounds={CAMPUS_BOUNDS}
+          {...CAMPUS_CAMERA}
           markers={[]}
-          maxZoom={MAX_ZOOM}
-          minZoom={MIN_ZOOM}
           onCameraIdle={({ centre }) => {
             if (!opened.current) {
               opened.current = true;
@@ -89,7 +88,7 @@ export function PlaceMapScreen(): ReactElement {
                 return;
               }
             }
-            setPoint(centre);
+            setPoint(isInside(centre, CAMPUS_BOUNDS) ? centre : null);
             setMoving(false);
           }}
           lines={[]}

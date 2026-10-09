@@ -8,7 +8,7 @@ import { useDiningCards } from '@/features/dining/use-dining';
 import type { CardView } from '@/features/map/adapter';
 import { useMapCards } from '@/features/map/use-map-cards';
 import { type ShuttleLayer, useShuttle } from '@/features/shuttle/use-shuttle';
-import { CAMPUS_BOUNDS, Map, type MapLine, MAX_ZOOM, MIN_ZOOM } from '@/map';
+import { CAMPUS_CAMERA, Map, type MapLine } from '@/map';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { Card } from './card';
 import { FriendList } from './friend-list';
@@ -75,7 +75,8 @@ function OverMap({ children, onStage }: OverMapProps): ReactElement {
 // and brings the camera to the "close" level, keeping the card. "길찾기" closes the card once the route is asked for.
 // "메뉴 보기" opens the menu panel at the restaurant. "노선 보기" brings the shuttle's whole line into view and closes
 // the card. "파티 열기" and "참여하기" open a Quest's room, "같이 갈 사람 찾기" 파티 만들기 for the Global Event, and a
-// Friend's "파티 만들기" the Meetup form. Every other button belongs to another task and says that it is not ready.
+// Friend's "파티 만들기" the Meetup form. Every other button belongs to another task and says that it is not ready. A
+// choice, such as an event at a place, opens its own card.
 function SelectedCard(props: SelectedCardProps): ReactElement | null {
   const { selection, map, route, shuttleLine, onActiveParty, onHeight, top } = props;
   const showNotReady = useNotReadyToast();
@@ -90,6 +91,7 @@ function SelectedCard(props: SelectedCardProps): ReactElement | null {
     <Card
       canLookCloser={map.detail !== 'names' && !top}
       card={card}
+      onChoose={selection.select}
       onClose={onClose}
       onHeight={onHeight}
       onLookCloser={() => {
@@ -160,11 +162,9 @@ function MainMapView({ map, me, things, lines, cardHeight, onPress }: MainMapVie
   return (
     <Map
       avatars={[...things.avatars, ...me.avatars]}
-      bounds={CAMPUS_BOUNDS}
+      {...CAMPUS_CAMERA}
       inset={mapInset(cardHeight)}
       markers={things.markers}
-      maxZoom={MAX_ZOOM}
-      minZoom={MIN_ZOOM}
       onCameraIdle={map.onCameraIdle}
       onCreditPress={() => {
         router.push('/map-sources');

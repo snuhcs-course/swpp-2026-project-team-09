@@ -146,8 +146,7 @@ export function isPlace(value: unknown): value is SubQuest['place'] {
     value === null ||
     (isTextOrNull(field(value, 'placeId')) &&
       isText(field(value, 'label')) &&
-      isNumber(field(value, 'latitude')) &&
-      isNumber(field(value, 'longitude')))
+      (isPoint(value) || (field(value, 'latitude') === null && field(value, 'longitude') === null)))
   );
 }
 
@@ -190,7 +189,8 @@ export function isQuest(value: unknown): value is Quest {
     isJoinPolicy(field(value, 'joinPolicy')) &&
     listOf(isHolder)(field(value, 'holders')) &&
     listOf(isSubQuest)(field(value, 'subQuests')) &&
-    typeof field(value, 'classQuest') === 'boolean'
+    typeof field(value, 'classQuest') === 'boolean' &&
+    isNumber(field(value, 'waitingJoinRequests'))
   );
 }
 

@@ -1,4 +1,5 @@
 import { within } from '@testing-library/react-native';
+import { Keyboard } from 'react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal } from './support/fake-server';
@@ -131,6 +132,23 @@ describe("the Leader's 일정 form, adding", () => {
   });
 });
 
+describe("the Leader's 일정 form, 언제", () => {
+  it('closes the keyboard before the time sheet of 언제 opens', async () => {
+    const sheetShownWhenDismissed: boolean[] = [];
+    jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {
+      sheetShownWhenDismissed.push(screen.queryByRole('button', { name: '확인' }) !== null);
+    });
+    const user = await openRoom();
+    await user.press(screen.getByRole('button', { name: '일정 추가' }));
+    await user.type(screen.getByLabelText('내용'), '카페에서 쉬기');
+
+    await user.press(screen.getByRole('button', { name: '언제 날짜·시간 선택' }));
+
+    expect(sheetShownWhenDismissed).toEqual([false]);
+    expect(screen.getByText('오늘 19:00')).toBeVisible();
+  });
+});
+
 describe('the map view', () => {
   it('names a point near a Place after it, and sends it as a point', async () => {
     server.on('GET /places/at', { status: 200, body: { place: ENGINEERING, relation: 'near' } });
@@ -156,22 +174,6 @@ describe('the map view', () => {
         place: { latitude: Number(query.latitude), longitude: Number(query.longitude), label: '제1공학관 근처' },
       },
     ]);
-  });
-});
-
-describe("the Leader's 일정 form, waiting", () => {
-  it('waits for a point while the place has words of its own', async () => {
-    const user = await openRoom();
-    await user.press(screen.getByRole('button', { name: '일정 추가' }));
-    await user.type(screen.getByLabelText('내용'), '모이기');
-    await user.press(screen.getByRole('button', { name: '언제 날짜·시간 선택' }));
-    await answer(user, '확인');
-    expect(screen.getByRole('button', { name: '추가' })).toBeEnabled();
-
-    await user.type(screen.getByLabelText('어디서'), '정문');
-
-    expect(screen.getByText('지도에서 위치를 골라 주세요')).toBeVisible();
-    expect(screen.getByRole('button', { name: '추가' })).toBeDisabled();
   });
 });
 

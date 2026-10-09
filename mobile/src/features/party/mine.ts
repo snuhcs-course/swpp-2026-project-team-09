@@ -25,6 +25,8 @@ export interface MineCardView {
   strip: { partyId: string; title: string; words: string } | null;
   group: string;
   start: number;
+  // The requests to join waiting for the User's answer, on a Quest the User leads.
+  waiting: number;
 }
 
 export interface MineGroup {
@@ -125,6 +127,7 @@ function cardOf(quest: Quest, { myParty, parties, meId, now }: MineSources): Min
           },
     group,
     start: start === null ? Number.POSITIVE_INFINITY : new Date(start).getTime(),
+    waiting: quest.waitingJoinRequests,
   };
 }
 

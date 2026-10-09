@@ -605,11 +605,11 @@ it. Android opens the https address in the app only through App Links (see "Invi
 chips "전체", "강의" and "파티", whose counts stay while one filters; and the rows grouped by the Korean day of the
 start of the Sub Quest each shows (`toQuestGroups` in the quest feature's adapter): "오늘 · 10월 1일 (목)", "내일 ·
 …", "이번 주" (2 to 4 days ahead), "다음 주" (5 to 11), "그 이후", and "시간 미정" last for a Quest without a start.
-A Quest whose Sub Quests all ended or were cancelled is not shown. A row is 72 high: the round of 40 in its
-`questTone`, the kind ("강의", "공개 파티", "비공개 파티 · 김민준"), the title, the place and the time. A class's row
-closes the screen and goes back to the map by `/main?quest=<id>`, which the Quest list on the map carries out as a
-press of its own row; any other row opens the Quest's room above it. Without a Quest it says "퀘스트가 없어요"; while the Quests
-load and after a failure it shows the shared states.
+A Quest whose Sub Quests all ended (past their end time) or were cancelled is not shown; marks of done do not count.
+A row is 72 high: the round of 40 in its `questTone`, the kind ("강의", "공개 파티", "비공개 파티 · 김민준"), the
+title, the place and the time. A class's row closes the screen and goes back to the map by `/main?quest=<id>`, which the
+Quest list on the map carries out as a press of its own row; any other row opens the Quest's room above it. Without a
+Quest it says "퀘스트가 없어요"; while the Quests load and after a failure it shows the shared states.
 
 **내 정보** (`src/screens/me/me-screen.tsx`, the `Profile` frame) has the bell, "알림" or "알림 {n}개" with the
 number of 알림's rows in red ("9+" above nine), and four cards from the top:
@@ -715,9 +715,10 @@ after a removal, a drop on another phone or the Leader's end. From the top:
   "활성화 끄기" for its Leader (`POST /parties/mine/end`) or "활성화에서 나가기". A Party running without the User
   names its Leader, with "거절" and "참여"; "거절" sends nothing and is kept on the phone by the Party's id
   (`declinedParties` of `src/storage/kept.ts`), so the box then says "활성화 중인 파티예요" with "참여";
-- `일정` (`plan-section.tsx`): the Sub Quests by their start, the next one in the Party's colour, the ended ones dimmed;
-  "완료로 표시" for every Holder; "+ 추가", "일정 수정" and "일정 삭제" for the Leader alone. The rules of who edits
-  Sub Quests and who opens the Party are in one module, `src/features/quests/rules.ts`. The inline form
+- `일정` (`plan-section.tsx`): the Sub Quests by their start, the next one in the Party's colour, the ended ones and
+  those done dimmed; "완료로 표시" for every Holder, and on one done "완료 취소", which unmarks it; "+ 추가",
+  "일정 수정" and "일정 삭제" for the Leader alone. The rules of who edits Sub Quests and who opens the Party are in
+  one module, `src/features/quests/rules.ts`. The inline form
   (`plan-form.tsx`) asks `내용`, `언제` through the date·time sheet and `어디서`, typed or chosen on the map view; it
   waits for a point while the place has words of its own. A Place is sent as `{ placeId }`, a point as a point with
   the words shown; an add carries an `Idempotency-Key` kept for its retries;
@@ -766,7 +767,9 @@ invitations and the Meetups proposed to the User (`초대 {n}`, red).
 - **내 파티**: the chips `전체`, `비공개` and `공개`, and the groups `활성화 중`, `활성화 알림`, then the next Sub Quest's
   day (`오늘`, `내일`, `이번 주` to Sunday, `다음 주`, `그 이후`, `시간 미정`). A card has the kind, a Badge of its
   members, its recruiting or its running Party, the next Sub Quest and the Holders; a Party running without the User
-  adds the strip "{name}님이 활성화했어요" with `참여`, which enters as the room's `참여` does.
+  adds the strip "{name}님이 활성화했어요" with `참여`, which enters as the room's `참여` does. A card of a Quest the User
+  leads has, at its top right, a red circle with the number of requests to join waiting (`waitingJoinRequests`), and
+  none at 0; `quests-changed` keeps it current.
 - **초대** lists `GET /quest-invitations` with `거절` and `수락` under `받은 초대`, above the Meetups proposed to the User
   (`MeetupInvites`, above); a refused acceptance keeps the invitation.
 
@@ -911,6 +914,7 @@ Behind a hook are three layers:
 | `getQuest`, `dropQuest`                                              | One Quest, ended or not; nothing                             | `GET`, `DELETE /quests/:questId`                                        |
 | `addSubQuest`, `editSubQuest`                                        | The Sub Quest                                                | `POST /quests/:questId/sub-quests`, `PUT …/:subQuestId`                 |
 | `cancelSubQuest`, `markSubQuestDone`                                 | Nothing                                                      | `DELETE …/:subQuestId`, `POST …/:subQuestId/done`                       |
+| `unmarkSubQuestDone`                                                 | Nothing                                                      | `DELETE …/:subQuestId/done`                                             |
 | `handOverQuest`, `removeHolder`, `endQuest`                          | Nothing                                                      | `PUT /quests/:questId/leader`, `DELETE …/holders/:userId`, `POST …/end` |
 | `acceptJoinRequest`, `declineJoinRequest`                            | Nothing                                                      | `POST /quests/:questId/join-requests/:id/accept`, `/decline`            |
 | `listSentInvitations`, `cancelInvitation`                            | The Leader's invitations that wait; nothing                  | `GET`, `DELETE /quests/:questId/invitations…`                           |
@@ -1165,8 +1169,10 @@ const map = useRef<MapHandle>(null);
 const [eventPin, myAvatar] = useMarkerImages([{ kind: 'official', form: 'pin' }, { kind: 'me' }]);
 
 <Map
-  bounds={CAMPUS_BOUNDS} // the visible area never leaves it
+  bounds={CAMERA_BOUNDS} // the visible area never leaves it
+  fitBounds={CAMPUS_BOUNDS} // the lowest zoom fits the view inside it; left out, bounds
   minZoom={MIN_ZOOM}
+  nativeMinLevel={NATIVE_MIN_LEVEL} // a native SDK holds a pinch out to this whole level
   maxZoom={MAX_ZOOM}
   markers={[{ id: 'event:e1', name: '공식 행사 · AI 커리어 설명회', position, image: eventPin, text: 'AI 커리어' }]}
   // passive: it takes no press, and a press on it reaches what is drawn under it
@@ -1188,11 +1194,11 @@ map.current?.fitTo([from, to], { padding: 48, maxZoom: 15.8 }); // and no closer
 - **Positions** are a latitude and a longitude in degrees. A **zoom** is the Web Mercator zoom level at the camera's
   centre, where the world is 256 × 2^zoom points wide. It may be a fraction. A native side converts it to its SDK's
   own scale.
-- **The camera stays inside `bounds`**: the visible area never leaves the rectangle. So the lowest zoom allowed is
-  the larger of `minZoom` and the zoom at which the view just fits inside the rectangle, which depends on the
-  view's size, and the centre is kept far enough from the edges. The highest zoom is `maxZoom`. The map opens on
-  the middle of the rectangle at the lowest zoom allowed. Whatever `moveCamera` or `fitTo` asks is first brought
-  inside these rules.
+- **The camera stays inside `bounds`**: the visible area never leaves the rectangle. The lowest zoom allowed is the
+  larger of `minZoom` and the zoom at which the view just fits inside `fitBounds` (`bounds` when left out), which
+  depends on the view's size, and the centre is kept far enough from the edges of `bounds`. The highest zoom is
+  `maxZoom`. The map opens on the middle of the rectangle at the lowest zoom allowed. Whatever `moveCamera` or `fitTo`
+  asks is first brought inside these rules.
 - **`onCameraIdle`** is sent once when the map is ready, and each time the camera comes to rest somewhere else:
   after a User's pan or zoom ends, and after `moveCamera` or `fitTo`. A call that changes nothing sends nothing.
 - **`onFitZoom`** gives the fit zoom: the lowest zoom allowed, at which the map opens. It is sent once when the map
@@ -1224,8 +1230,14 @@ map.current?.fitTo([from, to], { padding: 48, maxZoom: 15.8 }); // and no closer
 - **`fitTo`** takes its `padding` as one number for all four edges or as one for each edge. The points are fitted
   into what the padding leaves of the view, and their middle comes to the middle of that. With `maxZoom` the camera
   comes no closer than that zoom: points that are near each other are shown from there.
-- `CAMPUS_BOUNDS`, the campus rectangle, and the limits `MIN_ZOOM` and `MAX_ZOOM` are constants in
-  `src/map/campus.ts`. The rectangle is a little wider than the Campus Boundary, which stays the main server's.
+- **`nativeMinLevel`** is the lowest whole level of Kakao's SDK on Android and iOS (`setCameraMinLevel` /
+  `cameraMinLevel`): pinching out stops there instead of going below the lowest zoom and snapping back. The plain
+  map has no levels. The SDK cannot hold panning, so a drag past `bounds` still settles back when it ends.
+- `CAMPUS_BOUNDS`, the on-campus rectangle, `CAMERA_BOUNDS`, the camera's area, the limits `MIN_ZOOM` and
+  `MAX_ZOOM` and `NATIVE_MIN_LEVEL` (15) are constants in `src/map/campus.ts`. The on-campus rectangle is a little
+  wider than the Campus Boundary, which stays the main server's; it decides whether the User's own Avatar is shown,
+  and the lowest zoom fits it. The camera's area is it widened by half its height to the north and to the south and
+  by half its width to the east and to the west.
 - The credit "© OpenStreetMap · 국토지리정보원" is on every map, inside the component, drawn by the app over the map,
   so no native module draws it. With `onCreditPress` it is a button, "지도 데이터 출처 보기", and is still written.
 - **`inset`** says what a screen's controls cover of the map's edges, in points from each edge; a side left out is 0. The credit and a provider's logo are drawn inside what is left: the credit at its bottom left and the logo at

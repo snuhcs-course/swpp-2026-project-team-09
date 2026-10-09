@@ -32,6 +32,7 @@ type RoomClient = Pick<
   | 'editSubQuest'
   | 'cancelSubQuest'
   | 'markSubQuestDone'
+  | 'unmarkSubQuestDone'
   | 'handOverQuest'
   | 'removeHolder'
   | 'endQuest'
@@ -60,6 +61,7 @@ export const roomClient: RoomClient = {
     call('PUT', subQuestPath(questId, subQuestId), isSubQuest, { body: content }),
   cancelSubQuest: (questId, subQuestId) => send('DELETE', subQuestPath(questId, subQuestId)),
   markSubQuestDone: (questId, subQuestId) => send('POST', subQuestPath(questId, subQuestId, '/done')),
+  unmarkSubQuestDone: (questId, subQuestId) => send('DELETE', subQuestPath(questId, subQuestId, '/done')),
   handOverQuest: (questId, userId) => send('PUT', questPath(questId, '/leader'), { userId }),
   removeHolder: (questId, userId) => send('DELETE', questPath(questId, `/holders/${encodeURIComponent(userId)}`)),
   endQuest: (questId) => send('POST', questPath(questId, '/end')),

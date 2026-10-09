@@ -91,7 +91,7 @@ describe('the map of the main screen, closer', () => {
 });
 
 describe('the map of the main screen, closest', () => {
-  it('writes the given name under a person and a short name under a place', async () => {
+  it('writes the given name under a person and no words under a place', async () => {
     const user = await openMain();
 
     await press(user, FRIEND);
@@ -100,7 +100,7 @@ describe('the map of the main screen, closest', () => {
     expect(lookOf(FRIEND)).toBe('person:full:free:f1:selected');
     expect(lookOf(DINNER)).toBe('party:pin');
     expect(wordsUnder(FRIEND, '민준')).toBeVisible();
-    expect(wordsUnder(DINNER, '저녁 약속')).toBeVisible();
+    expect(wordsUnder(DINNER, '저녁 약속')).toBeNull();
   });
 
   it("writes the given name under a member of the User's Party too", async () => {
@@ -112,15 +112,17 @@ describe('the map of the main screen, closest', () => {
     expect(wordsUnder(MEMBER, '현우')).toBeVisible();
   });
 
-  it("cuts a place's name at a word's end within 8 characters", async () => {
+  it('writes no words under a Global Event or a Party, which keep their names for a screen reader', async () => {
     const user = await openMain();
 
     await press(user, EVENT);
     await press(user, '가까이 보기');
 
     // The Global Event "AI 커리어 설명회" and the Party "AI 커리어 설명회 같이 가요", which stand side by side.
-    expect(wordsUnder(EVENT, 'AI 커리어')).toBeVisible();
-    expect(wordsUnder(PARTY, 'AI 커리어')).toBeVisible();
+    expect(lookOf(EVENT)).toBe('official:pin:selected');
+    expect(lookOf(PARTY)).toBe('party:pin:4');
+    expect(wordsUnder(EVENT, 'AI 커리어')).toBeNull();
+    expect(wordsUnder(PARTY, 'AI 커리어')).toBeNull();
   });
 });
 

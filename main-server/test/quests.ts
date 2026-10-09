@@ -38,8 +38,16 @@ export function storeEvent(
   });
 }
 
-export function attend(app: INestApplication<Server>, user: TestUser, globalEventId: string): request.Test {
-  return withAccessToken(request(app.getHttpServer()).post('/quests'), user.accessToken).send({ globalEventId });
+export function attend(
+  app: INestApplication<Server>,
+  user: TestUser,
+  globalEventId: string,
+  body: object = {},
+): request.Test {
+  return withAccessToken(request(app.getHttpServer()).post('/quests'), user.accessToken).send({
+    globalEventId,
+    ...body,
+  });
 }
 
 export function makeQuest(
@@ -133,6 +141,13 @@ export function cancelSubQuest(app: INestApplication<Server>, user: TestUser, pa
 export function markDone(app: INestApplication<Server>, user: TestUser, path: SubQuestPath): request.Test {
   return withAccessToken(
     request(app.getHttpServer()).post(`/quests/${path.questId}/sub-quests/${path.subQuestId}/done`),
+    user.accessToken,
+  );
+}
+
+export function unmarkDone(app: INestApplication<Server>, user: TestUser, path: SubQuestPath): request.Test {
+  return withAccessToken(
+    request(app.getHttpServer()).delete(`/quests/${path.questId}/sub-quests/${path.subQuestId}/done`),
     user.accessToken,
   );
 }

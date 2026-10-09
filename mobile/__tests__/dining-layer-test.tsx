@@ -88,7 +88,7 @@ describe('the 식당 layer', () => {
     expect(pin('식당 · 수의대식당')).toBeNull();
   });
 
-  it('writes the restaurant under its pin from the "names" level', async () => {
+  it('writes no words under its pins, even from the "names" level', async () => {
     const user = await openMain();
     await toggleDining(user);
     expect(wordsUnder(STUDENT_CENTRE, '학생회관식당')).toBeNull();
@@ -96,8 +96,8 @@ describe('the 식당 layer', () => {
     // A Friend's row brings the map to the "close" level, by the library.
     await press(user, '김민준 지도에서 보기');
 
-    expect(wordsUnder(STUDENT_CENTRE, '학생회관식당')).toBeVisible();
-    expect(wordsUnder(JAHAYEON, '자하연식당 2층 외 1곳')).toBeVisible();
+    expect(wordsUnder(STUDENT_CENTRE, '학생회관식당')).toBeNull();
+    expect(wordsUnder(JAHAYEON, '자하연식당 2층 외 1곳')).toBeNull();
   });
 });
 

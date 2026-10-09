@@ -41,29 +41,35 @@ function everyLook(cards: readonly CardView[]): MarkerLook[] {
   return cards.flatMap((card) => DETAILS.map((detail) => lookOf(card, detail, false)));
 }
 
-// The words under a marker from the "names" level of detail: its short name, and for an old position its age, "민준 ·
-// 3분 전".
-function wordsOf({ marker }: CardView): string {
+// The words under a person's Avatar from the "names" level of detail: the given name, and for an old position its
+// age, "민준 · 3분 전". A place has none: words of places side by side overlap, and its card says what it is.
+function wordsOf({ mark, marker }: CardView, detail: ZoomDetail): string | undefined {
+  if (detail !== 'names' || mark.type !== 'person') {
+    return undefined;
+  }
   return marker.minutesOld === null ? marker.short : `${marker.short} · ${marker.minutesOld}분 전`;
 }
 
-// Turns the cards into what the map shows at a level of detail. From the "names" level each has its short name
-// under it, in the map's own text. The selected one is drawn selected and above the others.
+// Turns the cards into what the map shows at a level of detail. From the "names" level a person has their given name
+// under them, in the map's own text. The selected one is drawn selected and above the others. A Global Event within a
+// point has no marker: the point's stands for it, and is selected while the event is.
 export function useThings(cards: readonly CardView[], detail: ZoomDetail, selectedId: string | null): Things {
-  const shown = cards.map((card) => lookOf(card, detail, card.id === selectedId));
+  const selectedWithin = cards.find(({ id }) => id === selectedId)?.within ?? selectedId;
+  const isSelected = (card: CardView): boolean => card.id === selectedId || card.id === selectedWithin;
+  const shown = cards.map((card) => lookOf(card, detail, isSelected(card)));
   const images = useMarkerImages([...shown, ...everyLook(cards)]);
   const markers: MapMarker[] = [];
   const avatars: MapAvatar[] = [];
   for (const [index, card] of cards.entries()) {
     const image = images[index];
-    if (image !== undefined) {
+    if (image !== undefined && card.within === undefined) {
       const thing: MapMarker = {
         id: card.id,
         name: card.marker.name,
         position: card.position,
         image,
-        text: detail === 'names' ? wordsOf(card) : undefined,
-        order: card.id === selectedId ? SELECTED_ORDER : 0,
+        text: wordsOf(card, detail),
+        order: isSelected(card) ? SELECTED_ORDER : 0,
       };
       if (card.mark.type === 'person' || card.glideMs !== undefined) {
         avatars.push({ ...thing, glideMs: card.glideMs ?? POSITION_EVERY_MS });

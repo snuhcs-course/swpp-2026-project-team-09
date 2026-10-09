@@ -151,7 +151,8 @@ export interface SubQuest {
   title: string;
   startsAt: string | null;
   endsAt: string | null;
-  place: { placeId: string | null; label: string; latitude: number; longitude: number } | null;
+  // Words alone, which name no Place, have no position.
+  place: { placeId: string | null; label: string; latitude: number | null; longitude: number | null } | null;
   completion: 'by_time' | 'by_hand';
   cancelled: boolean;
   done: boolean;
@@ -182,6 +183,8 @@ export interface Quest {
   subQuests: SubQuest[];
   // True for a Class Quest, which the timetable makes for today.
   classQuest: boolean;
+  // The requests to join waiting for the Leader's answer, when the User leads the Quest; 0 otherwise.
+  waitingJoinRequests: number;
   // Null for a Closed Quest and a Class Quest.
   board: Board | null;
   // The recruiting post, 0 to 200 characters.

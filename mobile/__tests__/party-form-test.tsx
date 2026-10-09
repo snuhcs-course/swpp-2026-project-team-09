@@ -1,3 +1,4 @@
+import { Keyboard } from 'react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal, type Reply } from './support/fake-server';
@@ -115,6 +116,46 @@ describe('a public 파티', () => {
     ]);
     expect(toast()).toHaveTextContent('파티를 올렸어요 · 1명은 초대하지 못했어요');
     expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
+  });
+});
+
+describe('어디서, typed', () => {
+  const ENGINEERING = { id: 'p301', number: '301', name: '제1공학관', latitude: 37.45016, longitude: 126.95259 };
+
+  it.each([
+    ['301동', { placeId: 'p301' }],
+    ['제1공학관 (301동)', { placeId: 'p301' }],
+    ['서울대입구역', { label: '서울대입구역' }],
+  ])('posts %j as the Place it names, or as the words alone', async (words, place) => {
+    server.on('GET /places', { status: 200, body: [ENGINEERING] });
+    const user = await openForm();
+    await fillPublic(user);
+
+    await user.type(screen.getByLabelText('어디서'), words);
+    expect(screen.queryByText('지도에서 위치를 골라 주세요')).toBeNull();
+    expect(submit('파티 올리기')).toBeEnabled();
+    await user.press(submit('파티 올리기'));
+    await pass(500);
+
+    expect(server.received('POST /quests/own')[0]?.body).toMatchObject({
+      subQuest: { title: '보드게임 카페 가실 분', place },
+    });
+  });
+});
+
+describe('언제', () => {
+  it('closes the keyboard before the time sheet opens', async () => {
+    const sheetShownWhenDismissed: boolean[] = [];
+    jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {
+      sheetShownWhenDismissed.push(screen.queryByRole('button', { name: '확인' }) !== null);
+    });
+    const user = await openForm();
+    await user.type(screen.getByLabelText('제목'), '보드게임');
+
+    await user.press(screen.getByRole('button', { name: '언제 날짜·시간 선택' }));
+
+    expect(sheetShownWhenDismissed).toEqual([false]);
+    expect(screen.getByRole('button', { name: '확인' })).toBeVisible();
   });
 });
 

@@ -62,7 +62,7 @@ An activity a User sets out to do and what Users gather around, held by one or m
 _Avoid_: Mission, plan
 
 **Sub Quest**:
-One step of a Quest, such as attending the event or going to a café afterwards. It carries the step's time and place, and Sub Quests are one level deep.
+One step of a Quest, such as attending the event or going to a café afterwards. It carries the step's time and where it happens: a Place, a point on the map, or only the words the User wrote. Sub Quests are one level deep.
 _Avoid_: Objective, task
 
 **Holder**:
