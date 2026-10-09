@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-06 to 2026-10-08, prompted by AhnJinYoung and fyoon46
 import { createContext, type ReactElement, type ReactNode, use, useEffect, useMemo, useState } from 'react';
 import type { LatLng } from '@/api/types';
 import { walksOnCampus } from '@/dev-settings';

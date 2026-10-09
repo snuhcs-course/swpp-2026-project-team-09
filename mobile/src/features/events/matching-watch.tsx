@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { type QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { apiClient } from '@/api/client';

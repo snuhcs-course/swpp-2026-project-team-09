@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-29, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 and TaeHyun79 in #4 #6
 import { ConfigService } from '@nestjs/config';
 import { RedisOptions, Transport } from '@nestjs/microservices';
 import { Settings } from './settings.js';

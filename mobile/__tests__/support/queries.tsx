@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-08, prompted by AhnJinYoung and fyoon46, reviewed by Jaehyun0320 in #51
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act } from '@testing-library/react-native';
 import type { ReactElement, ReactNode } from 'react';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-08, prompted by AhnJinYoung and fyoon46, reviewed by Jaehyun0320 in #50
 // The team's design system "SNU Now", ported to React Native. A screen takes its colours, text styles and shared
 // components from here and writes no look of its own.
 export { AppBar, IconButton } from './app-bar';

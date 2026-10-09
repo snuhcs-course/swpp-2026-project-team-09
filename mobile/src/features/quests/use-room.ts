@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
 import { isRefusal } from '@/api/errors';
 import { friendsQuery, myPartyQuery, partiesQuery, questQuery } from '@/api/queries';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { ApiError, isRefusal } from '@/api/errors';
 import type { Place } from '@/api/types';
 import type { MeetupProposal } from '@/api/waiting-types';

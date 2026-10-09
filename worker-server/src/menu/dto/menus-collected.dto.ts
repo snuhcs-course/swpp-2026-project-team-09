@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-02 to 2026-10-04, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #26 #31
 export const MEALS = ['breakfast', 'lunch', 'dinner'] as const;
 
 export type Meal = (typeof MEALS)[number];

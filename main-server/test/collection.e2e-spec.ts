@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-02 to 2026-10-08, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #26 #30 #31
 import { INestApplication } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Server } from 'node:http';

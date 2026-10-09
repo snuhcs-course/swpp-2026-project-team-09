@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by fyoon46, reviewed by TaeHyun79 in #45
 import { INestApplication } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';

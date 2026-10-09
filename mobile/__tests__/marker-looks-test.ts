@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by AhnJinYoung
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
 

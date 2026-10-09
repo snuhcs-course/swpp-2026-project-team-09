@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by fyoon46, reviewed by TaeHyun79 in #48
 import { Injectable } from '@nestjs/common';
 import { type Candidate, Grouping } from './grouping.js';
 

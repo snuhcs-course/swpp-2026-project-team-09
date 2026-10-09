@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-04, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #30
 // When an event takes place, as one line of a post writes it. A bound is a time with its offset,
 // 2026-10-13T17:00:00+09:00, or a day, 2026-10-13, when the line gives no time of day.
 export interface EventTime {

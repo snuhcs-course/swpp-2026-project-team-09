@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { useState } from 'react';
 import { useToast } from '@/design-system';
 import { useMasterSwitch } from '@/features/sharing/use-master-switch';

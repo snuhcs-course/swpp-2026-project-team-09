@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by AhnJinYoung
 import { fireEvent } from '@testing-library/react-native';
 import { pass, screen } from './support/app';
 import { startFresh } from './support/mocks';

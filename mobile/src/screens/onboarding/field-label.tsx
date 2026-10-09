@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by AhnJinYoung
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { color, Icon, radius, space, text } from '@/design-system';

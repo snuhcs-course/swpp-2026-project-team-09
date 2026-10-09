@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-29 to 2026-10-01, prompted by fyoon46, reviewed by TaeHyun79 in #12
 /* oxlint-disable typescript/no-non-null-assertion, typescript/no-unsafe-type-assertion, typescript/no-unsafe-assignment
    -- The store as the documentation writes it, below. */
 import { Inject, Injectable } from '@nestjs/common';

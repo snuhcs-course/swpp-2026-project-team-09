@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-08, prompted by fyoon46
 import { useQuery } from '@tanstack/react-query';
 import { router, useIsFocused } from 'expo-router';
 import { type ReactElement, useState } from 'react';

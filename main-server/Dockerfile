@@ -1,3 +1,4 @@
+# AI-generated with Claude Opus 5.5, 2026-09-29 to 2026-10-03, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #4 #29
 # The main server as compose.yaml at the repository root runs it.
 FROM node:24-slim
 WORKDIR /app

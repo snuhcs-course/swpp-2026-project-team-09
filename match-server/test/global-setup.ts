@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-29 to 2026-10-06, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 and TaeHyun79 in #4 #8 #10 #45 #48
 import { TestProject } from 'vitest/node';
 import { Settings } from '../src/common/settings.js';
 import { matchDatabaseUrl, migrate, startPostgres } from './containers.js';

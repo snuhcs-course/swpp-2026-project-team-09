@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { answered, startFresh } from '../support/mocks';
 import { mockClient } from '@/api/mock/client';
 import type { OnboardingAnswers } from '@/api/types';

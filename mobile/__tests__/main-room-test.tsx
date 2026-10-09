@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-06 to 2026-10-08, prompted by AhnJinYoung and fyoon46
 import { fireEvent } from '@testing-library/react-native';
 import { CollapseButton } from '@/screens/main/list-parts';
 import { screen } from './support/app';

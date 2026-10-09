@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-09-29 to 2026-10-08, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 and TaeHyun79 in #5 #9 #10 #14 #18
 import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { TokenPayload } from 'google-auth-library';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-08, prompted by AhnJinYoung and fyoon46, reviewed by Jaehyun0320 in #51
 import type { Friend, FriendStatus, LatLng, Position, Presence } from '@/api/types';
 import type { FriendRequests } from '@/api/waiting-types';
 import { KEPT_POSITION_MS, OLD_POSITION_MS } from '@/position';

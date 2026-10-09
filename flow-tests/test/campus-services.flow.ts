@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { z } from 'zod';
 import { restaurant, vehicle } from './answers.js';
 import { seoulDay } from './campus.js';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-30 to 2026-10-06, prompted by fyoon46, reviewed by fyoon46 and TaeHyun79 in #9 #18 #42
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { MESSAGING_CLIENT } from '../common/messaging.module.js';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-03, prompted by TaeHyun79, reviewed by fyoon46 in #29
 // A type, not an interface, so that a list of positions is JSON that Prisma stores.
 export type Position = { latitude: number; longitude: number };
 

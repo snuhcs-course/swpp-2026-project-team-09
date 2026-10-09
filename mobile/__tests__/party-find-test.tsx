@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-08, prompted by fyoon46
 import { act, within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';

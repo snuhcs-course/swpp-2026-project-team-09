@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-09-29 to 2026-10-09, prompted by TaeHyun79, fyoon46 and Jaehyun0320, reviewed by fyoon46 and TaeHyun79 in #4 #5 #9 #14 #18 #26 #29 #30 #31 #32 #37 #38 #40 #41 #42 #44 #46 #47 #48 #74
 // The main database's schema. Change it, then record the change as a migration (see README.md).
 
 generator client {

@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-06 to 2026-10-09, prompted by fyoon46 and Jaehyun0320, reviewed by TaeHyun79 and fyoon46 in #43 #74
 import { INestApplication } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';

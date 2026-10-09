@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-06 to 2026-10-08, prompted by AhnJinYoung and fyoon46
 // The User's own position: the phone's, or the development walk on campus, and its sending to the main server.
 export { stopBackground } from './background';
 export { BackgroundSharingProvider, useBackgroundSharing } from './background-sharing';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by AhnJinYoung
 import * as Location from 'expo-location';
 import { Animated } from 'react-native';
 import { pass, screen } from './support/app';

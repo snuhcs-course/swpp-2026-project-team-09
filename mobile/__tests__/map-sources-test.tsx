@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-08, prompted by fyoon46
 import { Linking } from 'react-native';
 import { pass, screen, shownAddress } from './support/app';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';

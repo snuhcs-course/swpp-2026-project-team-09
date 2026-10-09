@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-29 to 2026-10-04, prompted by fyoon46, reviewed by TaeHyun79 and fyoon46 in #6 #7 #10 #31
 import { TestProject } from 'vitest/node';
 import { Settings } from '../src/common/settings.js';
 

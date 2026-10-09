@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-08 to 2026-10-09, prompted by fyoon46 and Jaehyun0320, reviewed by fyoon46 in #74
 import type { ApiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import type { PlaceAt, SubQuestContent, SubQuestPlace } from '@/api/room-types';

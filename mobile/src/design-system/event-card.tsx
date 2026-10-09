@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by AhnJinYoung, reviewed by Jaehyun0320 in #50
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Badge } from './badge';

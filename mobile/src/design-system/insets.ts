@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { use } from 'react';
 import { type EdgeInsets, SafeAreaInsetsContext } from 'react-native-safe-area-context';
 

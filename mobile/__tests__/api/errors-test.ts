@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by AhnJinYoung, reviewed by Jaehyun0320 in #51
 import { ApiError, isRefusal } from '@/api/errors';
 
 describe('a refusal of the main server', () => {

@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import * as Clipboard from 'expo-clipboard';
 import { Share } from 'react-native';
 import { pass, screen } from './support/app';

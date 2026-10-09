@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-29 to 2026-10-06, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 and TaeHyun79 in #4 #5 #10 #13 #14 #28 #29 #31 #40 #45
 import { TestProject } from 'vitest/node';
 import { Settings } from '../src/common/settings.js';
 import { mainDatabaseUrl, migrate, redisSettings, seed, startPostgres, startRedis } from './containers.js';

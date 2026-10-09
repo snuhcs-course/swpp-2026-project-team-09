@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05 to 2026-10-06, prompted by AhnJinYoung
 import { type ReactElement, type ReactNode, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Animated, Easing, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { LatLng } from '@/api/types';

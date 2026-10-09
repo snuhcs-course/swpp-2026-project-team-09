@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 

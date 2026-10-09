@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-08, prompted by fyoon46
 import type { MenuLine, RestaurantMenus } from '@/api/menu-types';
 import type { Place } from '@/api/types';
 import type { FakeServer } from './fake-server';

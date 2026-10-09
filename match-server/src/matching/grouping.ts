@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by fyoon46, reviewed by TaeHyun79 in #48
 // A waiting request as grouping sees it.
 export interface Candidate {
   id: string;

@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { ReactElement } from 'react';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-08, prompted by Jaehyun0320 and fyoon46
 import { io, type Socket } from 'socket.io-client';
 import { isShuttleVehicles } from '@/api/server/shuttle-answers';
 import type { ShuttleVehicle } from '@/api/shuttle-types';

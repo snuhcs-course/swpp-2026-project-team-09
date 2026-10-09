@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-08, prompted by AhnJinYoung and fyoon46, reviewed by Jaehyun0320 in #51
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { OnboardingAnswers, Suggestion } from '@/api/types';
 import { startsFromFirstState } from '@/dev-settings';

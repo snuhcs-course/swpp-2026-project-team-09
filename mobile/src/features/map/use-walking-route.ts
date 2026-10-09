@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05 to 2026-10-08, prompted by AhnJinYoung and fyoon46, reviewed by Jaehyun0320 in #51
 import { skipToken, useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { apiClient } from '@/api/client';

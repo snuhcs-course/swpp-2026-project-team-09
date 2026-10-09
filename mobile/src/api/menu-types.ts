@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-08, prompted by fyoon46
 // --- Menus (GET /menus?date=) ---
 
 export type Meal = 'breakfast' | 'lunch' | 'dinner';

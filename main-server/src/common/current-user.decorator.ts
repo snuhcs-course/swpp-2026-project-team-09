@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-29 to 2026-09-30, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 and TaeHyun79 in #5 #9 #10
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { Request } from 'express';
 

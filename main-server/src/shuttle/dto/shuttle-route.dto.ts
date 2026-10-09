@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-04, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #31
 import { z } from 'zod';
 import { type Position } from '../../common/geometry.js';
 import { ShuttleStop } from '../../generated/prisma/client.js';

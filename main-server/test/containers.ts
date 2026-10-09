@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-09-29 to 2026-10-08, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 and TaeHyun79 in #4 #10 #14 #29 #32
 import { PrismaPg } from '@prisma/adapter-pg';
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';

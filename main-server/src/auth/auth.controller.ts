@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-29 to 2026-10-01, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 and TaeHyun79 in #5 #9 #10 #18
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AllowBeforeOnboarding } from '../common/allow-before-onboarding.decorator.js';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';

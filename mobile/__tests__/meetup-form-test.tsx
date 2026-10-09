@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { pass, screen, shownAddress } from './support/app';
 import { FRIEND_PILL } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';

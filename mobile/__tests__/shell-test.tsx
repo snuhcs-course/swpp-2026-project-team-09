@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-08, prompted by fyoon46
 import { act } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { pass, screen, shownAddress, startApp } from './support/app';

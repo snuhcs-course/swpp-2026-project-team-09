@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-02, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #26
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import request from 'supertest';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by fyoon46, reviewed by TaeHyun79 in #45 #48
 import { z } from 'zod';
 
 // The size is checked by the service, so that a size outside 2 to 4 is refused with a code of its own.

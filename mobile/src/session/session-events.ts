@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-08, prompted by Jaehyun0320
 import type { Suggestion } from '@/api/types';
 import { forgetTokens } from '@/auth/tokens';
 import { keep } from '@/storage/kept';

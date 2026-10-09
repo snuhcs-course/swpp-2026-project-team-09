@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by AhnJinYoung
 import { type ReactElement, useEffect, useRef } from 'react';
 import { Animated, Easing, Platform, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import campusGate from '../../assets/images/campus-1.jpg';

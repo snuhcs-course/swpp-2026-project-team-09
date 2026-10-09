@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-28 to 2026-10-06, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 and TaeHyun79 in #2 #4 #19
 import { configDefaults, defineConfig } from 'vitest/config';
 
 // Waits for Redis to expire records in real time with 150 ms to spare, which the other files' load can use up.

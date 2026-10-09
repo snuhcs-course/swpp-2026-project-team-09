@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-04, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #30
 import { z } from 'zod';
 import { Source } from '../../generated/prisma/client.js';
 

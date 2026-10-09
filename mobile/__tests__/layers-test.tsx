@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-08, prompted by fyoon46
 import { screen as found } from '@testing-library/react-native';
 import { holdBackButton } from './support/back';
 import { pass, screen, shownAddress } from './support/app';

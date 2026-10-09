@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by fyoon46, reviewed by TaeHyun79 in #40
 import { UserSummaryDto } from '../../friends/dto/friends.dto.js';
 
 export interface CreatedInviteLinkDto {

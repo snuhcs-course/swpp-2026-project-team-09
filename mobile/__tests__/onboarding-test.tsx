@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05 to 2026-10-06, prompted by AhnJinYoung
 import { router } from 'expo-router';
 import { fireEvent, userEvent } from '@testing-library/react-native';
 import { pass, screen, startApp } from './support/app';

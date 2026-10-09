@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import type { ShuttleRoute, ShuttleStop, ShuttleVehicle } from '@/api/shuttle-types';
 import { type CardView, cardId } from '@/features/map/adapter';
 import { koreaCalendar, koreaMinutes } from '@/korea-time';

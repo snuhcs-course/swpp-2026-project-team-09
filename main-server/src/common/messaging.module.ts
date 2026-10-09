@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-29 to 2026-10-04, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #4 #31
 import { Global, Inject, Module, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ClientProxy, ClientsModule } from '@nestjs/microservices';

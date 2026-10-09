@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-01, prompted by fyoon46, reviewed by TaeHyun79 in #18
 import { Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
 import { LobbyDto } from './dto/lobby.dto.js';

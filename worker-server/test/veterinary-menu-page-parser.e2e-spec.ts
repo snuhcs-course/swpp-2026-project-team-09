@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-02, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #26
 import { type RestaurantMenu } from '../src/menu/dto/menus-collected.dto.js';
 import { parseVeterinaryMenuPage } from '../src/menu/veterinary-menu-page.parser.js';
 import { blockPage, savedPage } from './pages.js';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-08, prompted by Jaehyun0320
 // Socket.IO's client, as a test drives it. A test file puts it in place of `socket.io-client`:
 //
 //   jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));

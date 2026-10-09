@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import type { ClassTime, Place, TimetableClass, Weekday } from '@/api/types';
 
 // The hours the week on 내 정보 shows: from 09 to 18.

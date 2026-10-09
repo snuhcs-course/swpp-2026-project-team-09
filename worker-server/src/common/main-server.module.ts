@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-04, prompted by fyoon46, reviewed by fyoon46 in #31
 import { Global, Module } from '@nestjs/common';
 import { FETCH_MAIN_SERVER, MainServer } from './main-server.js';
 

@@ -1,4 +1,5 @@
 #!/bin/bash
+# AI-generated with Claude Opus 5.5, 2026-09-29, prompted by TaeHyun79, reviewed by fyoon46 in #4
 # Runs once, when the data volume is empty. Creates one database and one role for each server that keeps data.
 # A role owns only its own database and cannot connect to the other one.
 # CREATEDB lets Prisma create its temporary shadow database while it records a migration.

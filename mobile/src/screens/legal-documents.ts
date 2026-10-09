@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by AhnJinYoung
 // The three documents a User agrees to by signing in. Their texts are not written yet.
 export const LEGAL_DOCUMENTS = {
   terms: '이용약관',

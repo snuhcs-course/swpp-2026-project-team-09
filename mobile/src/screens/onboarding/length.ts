@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by AhnJinYoung
 // A text's length as the form counts it everywhere: in characters as Unicode numbers them, so that an emoji is one
 // and not the two units a phone's keyboard counts. The main server counts the same way.
 export function lengthOf(words: string): number {

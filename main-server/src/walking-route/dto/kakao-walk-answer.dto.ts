@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-02, prompted by TaeHyun79, reviewed by fyoon46 in #28
 import { z } from 'zod';
 
 // Kakao's statuses for a walking route it did not find.

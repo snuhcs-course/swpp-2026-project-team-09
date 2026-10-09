@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-09, prompted by AhnJinYoung, Jaehyun0320 and fyoon46, reviewed by Jaehyun0320 and fyoon46 in #51 #74
 import type { JoinPolicy, LatLng, MyParty, Party, Quest, SubQuest } from '@/api/types';
 import { koreaClock, koreaDate, koreaDaysAfter, koreaNextDay, sameKoreaDay } from '@/korea-time';
 

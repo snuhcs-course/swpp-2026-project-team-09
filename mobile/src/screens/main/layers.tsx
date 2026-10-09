@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-08, prompted by fyoon46
 import { type ReactElement, useCallback, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, font, Icon, type IconName, radius, shadow, useSlide } from '@/design-system';

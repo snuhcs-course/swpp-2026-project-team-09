@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { z } from 'zod';
 import { globalEvent, matchingRequest, party, quest, walkingRoute } from './answers.js';
 import { ENGINEERING_BUILDING, hoursFromNow, JAHAYEON, NEW_MEDIA_INSTITUTE } from './campus.js';

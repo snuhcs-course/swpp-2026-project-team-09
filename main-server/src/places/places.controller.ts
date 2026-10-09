@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-03 to 2026-10-05, prompted by fyoon46, reviewed by TaeHyun79 in #32 #36
 import { Controller, Get, Query } from '@nestjs/common';
 import { z } from 'zod';
 import { type Position } from '../common/geometry.js';

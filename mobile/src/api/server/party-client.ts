@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-08 to 2026-10-09, prompted by fyoon46 and Jaehyun0320, reviewed by fyoon46 in #74
 import type { ApiClient } from '@/api/client';
 import type { RecruitingQuest } from '@/api/party-types';
 import { field, isNothing, isPlace, isQuest, hasTexts, isTextOrNull, listOf } from './answers';

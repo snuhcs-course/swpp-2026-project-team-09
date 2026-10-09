@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import type { MyParty, Party, Quest, SubQuest } from '@/api/types';
 import { koreaClock } from '@/korea-time';
 import { editsSubQuests } from './rules';

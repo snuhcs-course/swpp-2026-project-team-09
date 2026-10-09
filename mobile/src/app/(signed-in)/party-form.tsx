@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-08, prompted by fyoon46
 import { useLocalSearchParams } from 'expo-router';
 import type { ReactElement } from 'react';
 import { PartyFormScreen } from '@/screens/party/form/party-form-screen';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-04, prompted by TaeHyun79, reviewed by fyoon46 in #30
 import { type CheerioAPI, load } from 'cheerio';
 import { type CollectedEvent } from './dto/events-collected.dto.js';
 import { readEventTime } from './event-time.js';

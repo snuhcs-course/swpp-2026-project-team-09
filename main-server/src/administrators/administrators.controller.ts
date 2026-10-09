@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-29, prompted by fyoon46, reviewed by TaeHyun79 in #14
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { z } from 'zod';
 import { AdministratorOnly } from '../common/administrator-only.decorator.js';

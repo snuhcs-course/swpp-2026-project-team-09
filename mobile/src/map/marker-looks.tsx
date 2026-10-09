@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-08, prompted by AhnJinYoung and fyoon46
 import type { ReactElement } from 'react';
 import { MapDot, MapPerson, MapPin, type MapPlaceKind, MapRestaurant, type PersonTone } from '@/design-system';
 

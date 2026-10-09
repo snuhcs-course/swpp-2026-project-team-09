@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-09, prompted by AhnJinYoung, Jaehyun0320 and fyoon46, reviewed by fyoon46 in #74
 import { type ReactElement, type RefObject, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-29, prompted by fyoon46 and TaeHyun79, reviewed by TaeHyun79 in #12 #14
 import { Body, Controller, INestApplication, InternalServerErrorException, Post } from '@nestjs/common';
 import { ApplicationConfig } from '@nestjs/core';
 import { Idempotent } from '@nestjs/idempotency';

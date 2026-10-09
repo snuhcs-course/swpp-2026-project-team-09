@@ -1,3 +1,4 @@
+# AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-09-29 to 2026-10-08, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 and TaeHyun79 in #4 #5 #6 #7 #8 #11 #13 #14 #23 #31 #45 #48
 # Starts the data stores and the servers on a developer's laptop: `docker compose up --build` in this folder.
 # The passwords are for local development only. Only the main and socket servers, which the app on a phone calls, are
 # published to the network. The rest are published on the loopback address alone: Redis has no password.

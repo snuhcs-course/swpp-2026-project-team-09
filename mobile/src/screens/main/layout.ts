@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-06 to 2026-10-08, prompted by AhnJinYoung and fyoon46
 import { space } from '@/design-system';
 import { CREDIT_ROOM } from '@/map';
 import { NAV_HEIGHT, navPaddingBottom } from '../shell/layout';

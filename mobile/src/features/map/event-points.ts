@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-09, prompted by Jaehyun0320, reviewed by fyoon46 in #74
 import type { LatLng } from '@/api/types';
 import type { CardView } from './adapter';
 import { shortTitle } from './short-name';

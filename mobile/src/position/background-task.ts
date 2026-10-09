@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import type { LocationObject } from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { listenToSession } from '@/session/session-events';

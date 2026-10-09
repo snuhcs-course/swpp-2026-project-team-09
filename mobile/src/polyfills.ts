@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-06 to 2026-10-08, prompted by Jaehyun0320 and fyoon46
 // Hermes, the JavaScript engine of the Android builds and of Expo Go, lacks the ES2023 array methods the app uses;
 // Node, where the tests run, has them. The app's entry (`index.ts`) imports this file before anything else, because the
 // mocks call `toSorted` while their modules load.

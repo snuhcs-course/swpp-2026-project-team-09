@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by AhnJinYoung
 import { act, renderHook } from '@testing-library/react-native';
 import type { LatLng } from '@/api/types';
 import { type CameraMove, CAMPUS_BOUNDS, centreOf, type FitOptions, ZOOM_OFFSET } from '@/map';

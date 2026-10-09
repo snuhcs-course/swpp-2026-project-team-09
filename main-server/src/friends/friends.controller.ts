@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-06, prompted by fyoon46, reviewed by TaeHyun79 in #38 #42
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
 import { z } from 'zod';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';

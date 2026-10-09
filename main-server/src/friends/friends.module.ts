@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-08, prompted by fyoon46, reviewed by TaeHyun79 in #38 #42
 import { Module } from '@nestjs/common';
 import { LocationSharingModule } from '../location-sharing/location-sharing.module.js';
 import { UsersModule } from '../users/users.module.js';

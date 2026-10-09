@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-09-29 to 2026-10-05, prompted by fyoon46, reviewed by TaeHyun79 and fyoon46 in #9 #11 #14 #38
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayInit, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { DefaultEventsMap, Server, Socket } from 'socket.io';

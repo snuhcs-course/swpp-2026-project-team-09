@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by AhnJinYoung and Jaehyun0320
 import { pass, screen } from './support/app';
 import { EXPLANATION, givePhone, ME, NEAR_LIBRARY, OFF_CAMPUS, ON_CAMPUS, openMain, placeOf } from './support/main';
 import { startFresh } from './support/mocks';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-03, prompted by fyoon46, reviewed by TaeHyun79 in #32
 import { encloses, metresToRing, type Position } from '../common/geometry.js';
 
 export interface Outline {

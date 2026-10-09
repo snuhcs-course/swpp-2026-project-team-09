@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-08, prompted by fyoon46
 import { act, type userEvent } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import type { RecruitingQuest } from '@/api/party-types';

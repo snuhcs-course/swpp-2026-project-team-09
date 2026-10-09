@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-28 to 2026-10-05, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 and TaeHyun79 in #2 #4 #5 #13 #14 #40
 import { inject } from 'vitest';
 import { es256KeyPair, rsaKeyPair } from './keys.js';
 import { startApp } from './start-app.js';

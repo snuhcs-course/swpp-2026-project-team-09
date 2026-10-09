@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import type * as SecureStoreFake from '../support/secure-store';
 import { refusal } from '../support/fake-server';
 import { startFresh } from '../support/mocks';

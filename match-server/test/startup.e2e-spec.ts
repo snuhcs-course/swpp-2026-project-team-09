@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-29 to 2026-10-06, prompted by fyoon46 and TaeHyun79, reviewed by fyoon46 and TaeHyun79 in #4 #8 #10 #45
 import { once } from 'node:events';
 import { createServer, Server, Socket } from 'node:net';
 import { inject } from 'vitest';

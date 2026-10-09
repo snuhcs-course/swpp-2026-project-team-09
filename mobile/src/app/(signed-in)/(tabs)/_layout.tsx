@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { Tabs } from 'expo-router';
 import type { ReactElement } from 'react';
 import { TabBar } from '@/screens/shell/tab-bar';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, type ReactElement, type ReactNode, use, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';

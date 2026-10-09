@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import type { ShuttleRoute, ShuttleVehicle } from '@/api/shuttle-types';
 import { FRAME_NOW } from './frame';
 

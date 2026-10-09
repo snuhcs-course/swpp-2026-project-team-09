@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { fireEvent, screen } from '@testing-library/react';
 
 import type { GlobalEvent } from '@/main-server';

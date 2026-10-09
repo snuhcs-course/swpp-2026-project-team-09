@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-08, prompted by Jaehyun0320 and fyoon46
 package com.bonnieandclaude.snunow.map
 
 import expo.modules.kotlin.records.Field

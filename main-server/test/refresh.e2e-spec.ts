@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-30, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #9
 import { INestApplication } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { randomBytes } from 'node:crypto';

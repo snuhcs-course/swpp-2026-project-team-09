@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-06, prompted by AhnJinYoung and fyoon46
 import { captureRef } from 'react-native-view-shot';
 import { screen } from './support/app';
 import { givePhone, ME, ON_CAMPUS, openMain } from './support/main';

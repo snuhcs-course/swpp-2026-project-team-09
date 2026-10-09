@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-09, prompted by Jaehyun0320, reviewed by fyoon46 in #74
 import { useQueryClient } from '@tanstack/react-query';
 import { placesQuery } from '@/api/queries';
 import type { SubQuestPlace } from '@/api/room-types';

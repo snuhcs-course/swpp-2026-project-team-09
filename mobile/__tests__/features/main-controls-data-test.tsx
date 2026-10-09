@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-06 to 2026-10-08, prompted by AhnJinYoung and Jaehyun0320
 import { renderHook } from '@testing-library/react-native';
 import { startFresh } from '../support/mocks';
 import { freshWrapper, settle } from '../support/queries';

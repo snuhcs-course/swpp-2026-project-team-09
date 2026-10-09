@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { randomInt } from 'node:crypto';
 import { io, type Socket } from 'socket.io-client';
 import { inject } from 'vitest';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import type { LatLng } from './types';
 
 // --- Shuttle (GET /shuttle, GET /shuttle/vehicles, the socket's shuttle-vehicles-updated) ---

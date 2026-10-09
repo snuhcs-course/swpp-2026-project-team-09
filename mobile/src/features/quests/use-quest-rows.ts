@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by AhnJinYoung, reviewed by Jaehyun0320 in #51
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
 import { myPartyQuery, partiesQuery, questsQuery } from '@/api/queries';
 import { type ScreenData, askAgain, someFailed, somePending } from '@/api/screen-data';

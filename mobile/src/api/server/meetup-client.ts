@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import type { ApiClient } from '@/api/client';
 import { isNothing } from './answers';
 import { call } from './http';

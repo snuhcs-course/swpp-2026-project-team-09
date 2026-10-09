@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by AhnJinYoung
 import type { ReactElement } from 'react';
 import { Animated, Easing, Image, Pressable, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 import emblem from '../../assets/images/sign-in-emblem.png';

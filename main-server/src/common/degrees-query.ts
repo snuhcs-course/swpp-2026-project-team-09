@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by fyoon46, reviewed by TaeHyun79 in #36
 import { z } from 'zod';
 
 // A query value is text, and Number('') is 0, so only text written as a decimal number is read as one.

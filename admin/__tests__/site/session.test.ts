@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { ACCESS_TOKEN, formOf, ID_TOKEN, startFakeMainServer, startSite } from './site';
 
 let mainServer: Awaited<ReturnType<typeof startFakeMainServer>>;

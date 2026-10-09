@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { readFile } from 'node:fs/promises';
 import { seoulDay } from '../common/seoul-day.js';
 import { type MenusCollectedMessage } from './dto/menus-collected.dto.js';

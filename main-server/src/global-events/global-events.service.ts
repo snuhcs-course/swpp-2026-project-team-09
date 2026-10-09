@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-04 to 2026-10-08, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 and TaeHyun79 in #30 #39
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CollectionService } from '../collection/collection.service.js';
 import { CampusBoundary } from '../common/campus-boundary.js';

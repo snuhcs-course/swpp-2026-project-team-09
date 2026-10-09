@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-02 to 2026-10-04, prompted by fyoon46 and TaeHyun79, reviewed by fyoon46 in #26 #30 #31
 import { INestApplicationContext, Logger } from '@nestjs/common';
 import { DiscoveryService } from '@nestjs/core';
 import { SchedulerRegistry } from '@nestjs/schedule';

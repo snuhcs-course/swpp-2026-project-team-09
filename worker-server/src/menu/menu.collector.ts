@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-02 to 2026-10-08, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #26 #30 #31
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { Collector, Collects } from '../common/collector.js';

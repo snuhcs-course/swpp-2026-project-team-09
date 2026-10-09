@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import type { GlobalEvent, GlobalEventChange, Missing, Refusal } from '@/main-server';
 import type * as MainServerModule from '@/main-server';
 

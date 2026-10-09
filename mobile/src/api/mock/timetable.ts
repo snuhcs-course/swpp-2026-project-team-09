@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { ApiError } from '@/api/errors';
 import type { ClassSave, ClassTime, Place, TimetableClass, Weekday } from '@/api/types';
 import { PLACES } from './data/places';

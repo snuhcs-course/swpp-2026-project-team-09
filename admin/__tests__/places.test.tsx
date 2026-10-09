@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { fireEvent, screen, within } from '@testing-library/react';
 
 import { fakeMainServer } from './support/fake-main-server';

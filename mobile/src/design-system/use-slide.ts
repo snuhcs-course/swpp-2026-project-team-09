@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { useEffect, useState } from 'react';
 import { Animated, Easing, Platform } from 'react-native';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-09-29 to 2026-10-08, prompted by fyoon46, reviewed by TaeHyun79 in #14
 import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AdministratorOnly } from '../common/administrator-only.decorator.js';
 import { CurrentAdministrator, type SignedInAdministrator } from '../common/current-administrator.decorator.js';

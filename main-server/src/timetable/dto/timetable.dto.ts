@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-06, prompted by fyoon46, reviewed by TaeHyun79 in #37
 import { Prisma, Weekday } from '../../generated/prisma/client.js';
 import { cross } from './save-class.dto.js';
 

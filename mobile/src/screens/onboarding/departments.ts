@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by AhnJinYoung
 import type { OnboardingAnswers } from '@/api/types';
 
 export type CourseLevel = OnboardingAnswers['courseLevel'];

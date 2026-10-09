@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { setTimeout as sleep } from 'node:timers/promises';

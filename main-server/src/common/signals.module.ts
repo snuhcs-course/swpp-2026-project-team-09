@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-05, prompted by fyoon46, reviewed by TaeHyun79 in #38
 import { Global, Module } from '@nestjs/common';
 import { SignalsService } from './signals.service.js';
 

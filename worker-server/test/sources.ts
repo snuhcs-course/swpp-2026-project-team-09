@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-02 to 2026-10-04, prompted by TaeHyun79, reviewed by fyoon46 in #26 #31
 export interface Sources {
   // Give it to startApp in place of fetch.
   fetch: typeof fetch;

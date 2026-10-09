@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 // What AI 매칭 sends and reads.
 
 // A request for Matching (`/matching-requests`). `questId` names the Quest of a matched request once it is made.

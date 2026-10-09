@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-06 to 2026-10-08, prompted by AhnJinYoung and fyoon46
 import type { MyParty } from '@/api/types';
 
 // The main screen's "활성 파티": the Party the User is in now.

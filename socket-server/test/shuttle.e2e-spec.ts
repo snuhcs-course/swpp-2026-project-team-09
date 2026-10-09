@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-04 to 2026-10-06, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #31
 import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ClientProxy, ClientProxyFactory, Transport } from '@nestjs/microservices';

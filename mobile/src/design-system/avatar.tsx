@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05 to 2026-10-06, prompted by AhnJinYoung, reviewed by Jaehyun0320 in #50
 import type { ReactElement } from 'react';
 import { Image, type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 import { color, font, presence, radius, size as sizes } from './tokens';

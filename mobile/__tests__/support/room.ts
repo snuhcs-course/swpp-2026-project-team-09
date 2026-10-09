@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-08 to 2026-10-09, prompted by fyoon46 and Jaehyun0320, reviewed by fyoon46 in #74
 import { act, type userEvent, within } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import type { MyParty, Party, Person, Quest } from '@/api/types';

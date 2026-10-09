@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-03 to 2026-10-08, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 and TaeHyun79 in #29 #32
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { Place } from '../generated/prisma/client.js';

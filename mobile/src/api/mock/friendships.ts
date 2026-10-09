@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { ApiError } from '@/api/errors';
 import type { Friend, InviteLink, OpenedInviteLink, Position, SentFriendRequest, UserSummary } from '@/api/types';
 import type { FriendRequests } from '@/api/waiting-types';

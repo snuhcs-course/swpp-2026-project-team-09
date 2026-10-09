@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-08 to 2026-10-09, prompted by fyoon46 and Jaehyun0320, reviewed by fyoon46 in #74
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';

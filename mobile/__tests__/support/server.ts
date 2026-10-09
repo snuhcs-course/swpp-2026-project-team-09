@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-08 to 2026-10-09, prompted by Jaehyun0320 and fyoon46, reviewed by fyoon46 in #74
 import type { Friend, Lobby, Party, Position, Quest } from '@/api/types';
 import type { FriendRequests, JoinRequest, Meetups, QuestInvitation } from '@/api/waiting-types';
 import { googleAvailable } from '@/auth/google';

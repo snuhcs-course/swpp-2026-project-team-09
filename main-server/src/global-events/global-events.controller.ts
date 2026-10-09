@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-04 to 2026-10-08, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #30
 import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { WorkerOnly } from '../common/worker-only.decorator.js';
 import { type EventsCollectedMessage, eventsCollectedSchema } from './dto/events-collected.dto.js';

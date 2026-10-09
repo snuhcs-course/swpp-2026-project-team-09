@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-06 to 2026-10-09, prompted by fyoon46 and Jaehyun0320, reviewed by TaeHyun79 and fyoon46 in #41 #74
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma, SubQuest } from '../generated/prisma/client.js';
 import { CLOCK, type Clock } from './clock.js';

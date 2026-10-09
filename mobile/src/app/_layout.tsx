@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-29 to 2026-10-06, prompted by fyoon46, AhnJinYoung and Jaehyun0320, reviewed by TaeHyun79 and Jaehyun0320 in #3 #50 #51
 import '@/polyfills';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';

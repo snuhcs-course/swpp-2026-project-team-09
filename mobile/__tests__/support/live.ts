@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-08, prompted by Jaehyun0320
 import { act } from '@testing-library/react-native';
 import { type FakeSocket, sockets } from './fake-socket';
 import { pass } from './app';

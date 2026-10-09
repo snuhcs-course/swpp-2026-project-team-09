@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-06 to 2026-10-08, prompted by Jaehyun0320 and fyoon46
 import ExpoModulesCore
 
 // What `src/map/native-map.tsx` hands over. It flattens the interface of `src/map/types.ts` into these.

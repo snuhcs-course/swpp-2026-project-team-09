@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-06, prompted by AhnJinYoung
 import { useQuery } from '@tanstack/react-query';
 import { footprintsQuery } from '@/api/queries';
 import { type FootprintsView, NO_FOOTPRINTS, toFootprintsView } from './adapter';

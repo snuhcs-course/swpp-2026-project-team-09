@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-06 to 2026-10-09, prompted by AhnJinYoung and Jaehyun0320, reviewed by fyoon46 in #74
 import { Animated } from 'react-native';
 import { pass, screen } from './support/app';
 import {

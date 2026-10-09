@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { now } from '@/clock';

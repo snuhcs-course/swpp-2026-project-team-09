@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 // Times are shown and entered in Asia/Seoul, whatever the browser's or the server's time zone. Korea has kept UTC+9
 // without daylight saving since 1988, so a fixed offset is exact.
 const OFFSET = 9 * 60 * 60 * 1000;

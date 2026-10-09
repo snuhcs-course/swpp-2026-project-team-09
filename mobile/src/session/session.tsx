@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05 to 2026-10-08, prompted by AhnJinYoung and Jaehyun0320
 import { useQueryClient } from '@tanstack/react-query';
 import { Redirect } from 'expo-router';
 import {

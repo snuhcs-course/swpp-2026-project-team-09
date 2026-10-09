@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import type { ReactElement, ReactNode } from 'react';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import { useBackToClose } from '@/hooks/use-back-to-close';

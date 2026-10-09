@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-09, prompted by AhnJinYoung, Jaehyun0320 and fyoon46, reviewed by Jaehyun0320 and fyoon46 in #51 #74
 import type { RecruitingQuest } from '@/api/party-types';
 import type { GlobalEvent, LatLng, MyParty, Party, Position, Presence, Quest } from '@/api/types';
 import { eventTime, recruitingCounts } from '@/features/events/adapter';

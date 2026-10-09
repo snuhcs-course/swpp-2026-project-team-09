@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback } from 'react';

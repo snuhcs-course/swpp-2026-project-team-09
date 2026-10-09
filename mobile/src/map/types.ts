@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-05 to 2026-10-09, prompted by AhnJinYoung, fyoon46 and Jaehyun0320, reviewed by fyoon46 in #74
 import type { Ref } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import type { LatLng } from '@/api/types';

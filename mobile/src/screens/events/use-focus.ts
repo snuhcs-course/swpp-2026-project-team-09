@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { type RefObject, useEffect, useRef, useState } from 'react';
 import type { ScrollView } from 'react-native';
 

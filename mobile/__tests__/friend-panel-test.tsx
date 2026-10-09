@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { screen, shownAddress } from './support/app';
 import { holdBackButton } from './support/back';
 import { FRIEND_PILL } from './support/lists';

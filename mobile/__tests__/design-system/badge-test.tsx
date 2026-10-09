@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by AhnJinYoung, reviewed by Jaehyun0320 in #50
 import { render, screen } from '@testing-library/react-native';
 
 import { Badge } from '@/design-system/badge';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5 and Fable 5.1, 2026-10-08, prompted by fyoon46
 import { ApiError } from '@/api/errors';
 
 // The words for the main server's refusals in 파티, by their code: one table, which the screens of 파티 and 행사 add

@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-02 to 2026-10-04, prompted by TaeHyun79 and fyoon46, reviewed by fyoon46 in #26 #31
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { WorkerOnly } from '../common/worker-only.decorator.js';
 import { CollectionService } from './collection.service.js';

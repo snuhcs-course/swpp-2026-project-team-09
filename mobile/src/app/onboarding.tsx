@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-10-05, prompted by AhnJinYoung
 import type { ReactElement } from 'react';
 import { OnboardingScreen } from '@/screens/onboarding/onboarding-screen';
 import { useOwnPlace } from '@/session/session';

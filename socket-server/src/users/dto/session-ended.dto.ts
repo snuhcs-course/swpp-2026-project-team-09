@@ -1,3 +1,4 @@
+// AI-generated with Claude Opus 5.5, 2026-09-30, prompted by fyoon46, reviewed by fyoon46 in #9
 // How a session ended: a sign-in on another phone replaced it, the User signed out, or a used refresh token came back
 // too late to be a retry.
 export type SessionEndReason = 'replaced' | 'signed_out' | 'refresh_token_reused';

@@ -1,3 +1,4 @@
+// AI-generated with Claude Fable 5.1, 2026-10-08, prompted by fyoon46
 import { metresBetween, type Position } from '../common/geometry.js';
 import { DEMO_USERS } from './demo-data.js';
 
