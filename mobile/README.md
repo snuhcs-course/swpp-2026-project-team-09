@@ -499,24 +499,28 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   Party's Quest, or, for a Party tied to no Quest, which has no room, asks "활성화에서 나갈까요?" and leaves it
   (`use-active-party-room.tsx`). The AI input opens the chat (below). "오늘의 발자국" says "준비 중이에요".
   - The AI input (`ai-input.tsx`) is a field with the placeholder "무엇이든 부탁해 보세요". Pressing or focusing it
-    opens the chat, whose own input takes the focus, so the bar brings no keyboard up and stays empty, and its send
-    button is disabled. Speech input and autocomplete would attach to it.
-- **The chat with the Assistant** (`chat-sheet.tsx`, `chat-bubbles.tsx`, the `MainChat` frame). It is a translucent
-  sheet (`color.surfaceGlass`) over the map, in place of the controls above the navigation, and the bottom tabs stay
-  in view. Its header has the round chat icon, "SNU Now AI" and 닫기; Android's back button closes it too.
-  - Empty, it says "무엇을 도와드릴까요?", the line "대화 내용은 AI 제공자에게 전송돼요", and three examples, 식사 메뉴
-    추천, 현재 통학/순환 셔틀 위치 and 파티 찾기, in place of the frame's library seats. A press sends its words as the
-    User's message.
-  - The input is the design system's `ChatInput`: it grows with its text up to four lines, Enter starts a new line,
-    and only the send button sends, which is disabled while the input is empty or the Assistant works.
-  - The User's bubbles are at the right in `snuBlue`, the Assistant's at the left, and "···" shows while the Assistant
-    works. The reply is shown whole. Each message sends the whole conversation (`askAssistant`); a failed answer shows
-    "지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요", which is left out of the conversation the next message sends.
-  - The conversation lives in memory in `useChat()` (`src/features/assistant/use-chat.ts`), held by the main screen,
-    so closing the sheet keeps it while the app runs. The server stores none of it.
+    opens the chat, and it stays at the bottom as the chat's input, with the focus ring as its border. It grows with
+    its text from 40 to 120 and then scrolls, its corners going from 28 to 22 once it holds more than a line; Enter
+    starts a new line, and only the send button sends. The send button is `snuBlue` while there is something to send,
+    and grey and disabled while the input is empty or the Assistant works. Speech input and autocomplete would attach
+    to it.
   - On a screen narrower than the wireframe's 390, "오늘의 발자국" gives way to "활성 파티", whose two lines stay
     whole (`footprintsForm` in `layout.ts`): it drops its second line and keeps one face, has no face under 360,
     and is the one button of the row that shrinks, its name cut with an ellipsis. Alone in the row it is whole.
+- **The chat with the Assistant** (`chat-sheet.tsx`, `chat-bubbles.tsx`, the `MainChat` frame). It is a translucent
+  sheet (`color.surfaceGlass`, white at 80%) from the top of the screen to the navigation, which stays in view. It
+  lies over the map and the lists, and hides the shuttle's notice, the row of buttons and the 편의기능 button; the
+  AI input lies over its bottom. Its header has the round chat icon, "SNU Now AI" and "대화 닫기"; Android's back
+  button closes it too.
+  - Empty, it says "무엇을 도와드릴까요?", the line "대화 내용은 AI 제공자에게 전송돼요", and three examples as rows
+    with an icon on their layer's colour: 식사 메뉴 추천 (식당), 현재 통학/순환 셔틀 위치 (셔틀버스) and 파티 찾기 (the
+    Party's), in place of the frame's library seats. A press sends its words as the User's message.
+  - The User's bubbles are at the right in `snuBlue`, the Assistant's at the left in `blue50`, and "···" shows while
+    the Assistant works. The reply is shown whole. Each message sends the whole conversation (`askAssistant`); a
+    failed answer shows "지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요", which is left out of the conversation the
+    next message sends.
+  - The conversation lives in memory in `useChat()` (`src/features/assistant/use-chat.ts`), held by the main screen,
+    so closing the sheet keeps it while the app runs. The server stores none of it.
 - While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
@@ -1108,8 +1112,7 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
   `line={false}` leaves out the line on top, for a screen that draws its own edge above the bar. A component of the design system that no screen uses yet is
   ported by the task that needs it. Where the web's differ from React Native's, the app's follow React Native: a press
   is `onPress`, and an image is a `source`. The design system's sizes do not count a border, so a size here adds it:
-  a pin's head is 36 and its border of 2 on each side. `ChatInput` grows with its text up to four lines, and Enter
-  starts a new line rather than sending.
+  a pin's head is 36 and its border of 2 on each side.
   Inside the design system the names are the design system's, also where the glossary prefers another word: its
   `Avatar` is a person's picture anywhere, its event kind is `official`, and a card's place is its `venue`.
 - **Dialog**: the design system has none and the frames ask questions with two answers. `Dialog` shows a title in

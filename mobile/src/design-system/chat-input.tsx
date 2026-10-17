@@ -2,7 +2,6 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
- * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -19,24 +18,17 @@ interface ChatInputProps {
   onSend?: (message: string) => void;
   // The map's entry point opens the chat when the input is touched.
   onFocus?: () => void;
-  // Takes the focus, and brings the keyboard up, when it appears.
-  autoFocus?: boolean;
 }
 
 const SEND_SIZE = 40;
 
-// The input grows with its text up to this many lines, and then scrolls.
-const MAX_LINES = 4;
-
-// The pill-shaped composer above the bottom navigation. The send button is its only fill in the key colour. The input
-// grows with its text, Enter starts a new line, and only the send button sends.
+// The pill-shaped composer above the bottom navigation. The send button is its only fill in the key colour.
 export function ChatInput({
   placeholder = '무엇이든 부탁해 보세요',
   suggestions = [],
   disabled = false,
   onSend,
   onFocus,
-  autoFocus = false,
 }: ChatInputProps): ReactElement {
   const [message, setMessage] = useState('');
   const [focused, setFocused] = useState(false);
@@ -51,8 +43,6 @@ export function ChatInput({
       <View style={[styles.bar, focused && styles.focused]}>
         <TextInput
           accessibilityLabel="메시지"
-          autoFocus={autoFocus}
-          multiline
           onBlur={() => {
             setFocused(false);
           }}
@@ -61,9 +51,10 @@ export function ChatInput({
             setFocused(true);
             onFocus?.();
           }}
+          onSubmitEditing={cannotSend ? undefined : send}
           placeholder={placeholder}
           placeholderTextColor={color.inkMuted}
-          submitBehavior="newline"
+          returnKeyType="send"
           style={styles.input}
           value={message}
         />
@@ -145,16 +136,14 @@ const styles = StyleSheet.create({
   },
   suggestionPressed: { backgroundColor: color.blue50 },
   suggestionText: { ...text.label, fontFamily: font.medium, color: color.blue600 },
-  // The send button stays at the bottom while the input grows.
   bar: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: space[2],
     paddingVertical: space[1],
     paddingRight: space[1],
     paddingLeft: space[4],
-    // A pill while it holds one line.
-    borderRadius: radius.xl,
+    borderRadius: radius.full,
     borderWidth: 1,
     borderColor: color.border,
     backgroundColor: color.surfaceSubtle,
@@ -165,9 +154,8 @@ const styles = StyleSheet.create({
     flex: 1,
     // Without it the web keeps the field at its own width and pushes the send button out of the bar.
     minWidth: 0,
-    minHeight: SEND_SIZE,
-    maxHeight: MAX_LINES * text.bodyLg.lineHeight + 2 * space[2],
-    paddingVertical: space[2],
+    height: SEND_SIZE,
+    paddingVertical: 0,
     color: color.ink,
   },
   send: {
