@@ -30,8 +30,11 @@ Ticket 04 calls the same "make a version and switch to it" for a screenshot.
 - [ ] `이 시간표 삭제` asks `‘{name}’ 시간표를 삭제할까요?`. It is disabled for the last version, and deleting switches to the first that remains.
 - [ ] `빈 시간표 추가` and `지금 시간표 복제` make and switch to `새 시간표 N` and `{name} 복사본` (cut to 20).
 - [ ] With 10 versions, adding shows `시간표는 10개까지 저장할 수 있어요`.
-- [ ] On first use, the existing classes become `2026-2학기`.
+- [ ] On first use, the existing classes become a version named after the current semester (`2026-2학기` in 2026-10).
+- [ ] The switch in progress is stored on the phone before the reset and after each post; at the next launch an unfinished switch is finished before anything else, and other version actions are refused until then.
+- [ ] Versions are kept per signed-in User; another account on the same phone sees only its own.
+- [ ] Before a switch, a server timetable that differs from what this phone last wrote is kept as a new version `다른 기기에서 바꾼 시간표`; nothing is overwritten.
 - [ ] The timetable screen, Class Quests and the map follow the switch, because the client's caches of classes and Quests are invalidated.
 - [ ] The spec and the PR say that other versions stay on one phone.
-- [ ] Jest against the mock client covers: switching, retrying after a failed post, rename, delete (not the last), add, duplicate, the 10-version limit, and first use.
+- [ ] Jest against the mock client covers: switching, retrying after a failed post, resuming an unfinished switch at launch, two Users on one phone, a server changed elsewhere, rename, delete (not the last), add, duplicate, the 10-version limit, and first use with the semester name.
 - [ ] Screenshots of the dropdown, opened and renaming, beside the `Profile` frame, under Test Results.

@@ -136,6 +136,14 @@ Nothing uncertain is written into the timetable, and nothing is marked for check
 
 The thresholds are set from the four reference screenshots in ticket 02, and `accuracy.md` reports what was left out as well as what was read wrongly.
 
+**Where the platform gives no confidence** (ticket 01 records what Android and iOS return), the confidence checks above cannot run, and stricter rules stand in, so that a phone without confidence leaves out at least as much as one with it:
+
+- a room is linked only when its building number also appears as a whole OCR element, the room line is a single element, and the building is one of the Places;
+- a time is kept only when its block's text holds at least one line that is not a room, and its day, start and end all come from the grid;
+- a class is kept only when its name has at least two characters.
+
+**A misread digit** (`301` read as `307`) can still match a real building. The timetable screen already shows each class's building (`제1공학관 301동 118호`), so the User can see it; `accuracy.md` counts wrong links, which must stay at 0 on the four screenshots.
+
 ### Importing
 
 - `이미지로 불러오기` opens the album (`expo-image-picker`, images only, no editing). Cancelling does nothing.
@@ -150,11 +158,16 @@ The thresholds are set from the four reference screenshots in ticket 02, and `ac
 - A version has an id, a name (1–20 characters) and its classes. At most 10 versions.
 - **The current version's classes live on the server** as today (`/timetable/classes`), so Class Quests, Friends' free time and the map need no change. The other versions are kept on the phone (AsyncStorage) in the class shape the server returns, places as ids.
 - **Switching** to a version: the current classes are read from the server and kept on the phone under the current version; the server's timetable is reset (`DELETE /timetable/classes`); the picked version's classes are posted one by one (`POST /timetable/classes`, each with its own `Idempotency-Key`); the picked version becomes current.
-- If a post fails midway, the switch stops, the screen says `시간표를 다 옮기지 못했어요` with `다시 시도`, and retrying posts only the classes not yet on the server. The kept copy is not deleted until every class is on the server.
+- **Before the reset**, the phone stores the switch in progress: the target version, each class still to post with its own `Idempotency-Key`, and whether the reset is done. It updates this after each post.
+- If a post fails midway, the switch stops, the screen says `시간표를 다 옮기지 못했어요` with `다시 시도`, and retrying posts only the classes not yet on the server, with the same keys. The kept copy is not deleted until every class is on the server.
+- **If the app is closed midway**, the switch in progress is found at the next launch and finished the same way, before anything else changes the timetable. Until it is finished, every other version action is refused.
+- **Versions are kept per User**, under the signed-in User's id. Another account on the same phone starts with its own versions, and signing out keeps them for when that User signs in again.
+- **The server may have changed** since this phone last wrote it, because the User switched or imported on another phone, or edited a class there. Before a switch, the phone compares the server's classes with what it last wrote. If they differ, the server's classes are kept as a new version named `다른 기기에서 바꾼 시간표` instead of overwriting the current version's copy. With 10 versions already, the switch is refused with `시간표는 10개까지 저장할 수 있어요`.
 - A new version from a screenshot, `빈 시간표 추가` (`새 시간표 N`) and `지금 시간표 복제` (`{name} 복사본`, cut to 20) are made and switched to the same way.
 - Deleting the current version switches to the first remaining one; the last version cannot be deleted.
-- On first use, the classes already on the server become a version named `2026-2학기`, as the wireframe's default.
+- On first use, the classes already on the server become a version named after the current semester: `{year}-1학기` from March to August and `{year}-2학기` from September to February (January and February counting as the previous year's 2학기). The frame's `2026-2학기` is the example of 2026-10.
 - These versions belong to one phone: another phone, or a reinstall, sees only the current one. The spec and the PR say so.
+- **While a switch runs**, the server's timetable is empty or partial for a few seconds, so Friends may briefly see wrong free time. Re-posting gives classes and times new ids, so a Class Quest of today has a new id after a switch; the Quest list is fetched again, and a screen opened on the old id falls back as it does for a deleted class.
 
 ### Dropdown (`Profile` week card)
 

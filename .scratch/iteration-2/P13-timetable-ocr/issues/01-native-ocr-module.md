@@ -18,7 +18,8 @@ Expo Go has no native module: there, nothing calls it, and `이미지로 불러�
 
 - [ ] A local Expo module beside the map module exposes one function: read an image URI, return lines, elements, boxes, confidences and the downscaled RGBA copy with its scale.
 - [ ] Android uses `com.google.mlkit:text-recognition-korean` with the bundled model, so no download is needed at first use.
-- [ ] iOS uses `GoogleMLKit/TextRecognitionKorean`; it builds on 함재현's Mac.
+- [ ] iOS uses `GoogleMLKit/TextRecognitionKorean`; it builds on 함재현's Mac. ML Kit's iOS pods have had no arm64 slice for the Apple-silicon simulator, so a device or a Rosetta simulator may be needed; the README says which worked.
+- [ ] What each platform returns as confidence (per line, per element, or none) is checked and written in the module's README, so that ticket 02 applies the right rule (the spec's "Where the platform gives no confidence").
 - [ ] The JS side has a typed wrapper, and an "unavailable" answer where the module is missing (Expo Go, web, Jest).
 - [ ] `expo-image-picker` is added: images only, no editing. The photo-library permission text is set in the app config.
 - [ ] The Android development build can add the `x86_64` ABI for the emulator through a development-only setting; release builds stay `arm64-v8a`.
