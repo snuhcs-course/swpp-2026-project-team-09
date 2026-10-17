@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -11,11 +12,15 @@ import { z } from 'zod';
 // its own system prompt and its own set of tools. A later AI feature is a new Feature that reuses tools, never more
 // tools on another feature, so that one feature cannot reach another's data. `adapter.ts` alone runs them.
 
-// One message of a conversation, as the app sends it.
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  text: string;
+// A card the Assistant showed: what it is and its id. The model is given only these, never the card's data from an
+// earlier message, and calls a tool again when it needs it.
+export interface CardReference {
+  kind: 'quest' | 'globalEvent';
+  id: string;
 }
+
+// One message of a conversation, as the app sends it: the User's text, or the Assistant's with the cards it showed.
+export type ChatMessage = { role: 'user'; text: string } | { role: 'assistant'; text: string; cards: CardReference[] };
 
 // Who asks and when. Every tool of a run is given it.
 export interface ToolContext {

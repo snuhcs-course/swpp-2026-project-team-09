@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { generateText, type LanguageModel, stepCountIs, tool, type ToolSet } from 'ai';
+import { APICallError, generateText, type LanguageModel, RetryError, stepCountIs, tool, type ToolSet } from 'ai';
 import { type ChatMessage, type Feature, type ToolContext } from './feature.js';
 
 // The one file that knows the model library, the Vercel AI SDK (ADR 0005): the model port and the loop that runs a
@@ -23,12 +23,24 @@ export function openRouterModel(apiKey: string, modelId: string): Model {
   return createOpenRouter({ apiKey }).chat(modelId);
 }
 
-// The model calls a message may take: each tool call is one, and so is the answer.
-const MAX_STEPS = 8;
+// What one message may take. Each tool call is one model call, and so is the answer. The time runs over every call
+// and tool of the message.
+export interface RunLimits {
+  maxSteps: number;
+  timeoutMs: number;
+  // The tokens the model may write in each call.
+  maxOutputTokens: number;
+}
 
 // A failed model call is not sent again: each retry is another call billed to the credit and more waiting for the
-// User, who can send the message again instead.
+// User, who can send the message again instead. Were it ever retried, the retries would stay within `timeoutMs`,
+// which also aborts them.
 const MAX_RETRIES = 0;
+
+// A run that used every step on tools and never answered.
+export class NoAnswerError extends Error {
+  override readonly name = 'NoAnswerError';
+}
 
 function toolSetOf({ tools }: Feature, context: ToolContext): ToolSet {
   return Object.fromEntries(
@@ -39,20 +51,56 @@ function toolSetOf({ tools }: Feature, context: ToolContext): ToolSet {
   );
 }
 
-// Runs the feature on the conversation, the User's new message last, and answers with the model's last text.
+// What the model reads of a message: an Assistant's carries a line naming the cards it showed.
+function contentOf(message: ChatMessage): string {
+  if (message.role === 'user' || message.cards.length === 0) {
+    return message.text;
+  }
+  const cards = message.cards.map(({ kind, id }) => `${kind} ${id}`).join(', ');
+  return `${message.text}\n\n[Cards shown: ${cards}]`;
+}
+
+// Runs the feature on the conversation, the User's new message last, and answers with the model's last text. It
+// throws NoAnswerError when the steps ran out on tools, and the SDK's errors when the model fails or the time runs out.
 export async function runFeature(
   model: Model,
   feature: Feature,
   context: ToolContext,
   messages: readonly ChatMessage[],
+  { maxSteps, timeoutMs, maxOutputTokens }: RunLimits,
 ): Promise<string> {
-  const { text } = await generateText({
+  const { text, finishReason } = await generateText({
     model,
     instructions: feature.instructions(context.now),
-    messages: messages.map(({ role, text: content }) => ({ role, content })),
+    messages: messages.map((message) => ({ role: message.role, content: contentOf(message) })),
     tools: toolSetOf(feature, context),
-    stopWhen: stepCountIs(MAX_STEPS),
+    stopWhen: stepCountIs(maxSteps),
     maxRetries: MAX_RETRIES,
+    maxOutputTokens,
+    timeout: { totalMs: timeoutMs },
   });
+  if (finishReason === 'tool-calls' || text.trim() === '') {
+    throw new NoAnswerError(`No answer within ${maxSteps} steps`);
+  }
   return text;
+}
+
+// Why a run failed, for the server's log: the error's name and, from the model's provider, the HTTP status. Never an
+// error's message or body, which can hold the request the SDK sent, and so what the User wrote.
+export function causeOf(error: unknown): string {
+  if (RetryError.isInstance(error)) {
+    return `${causeOf(error.lastError)} (RetryError: ${error.reason})`;
+  }
+  if (APICallError.isInstance(error)) {
+    // OpenRouter answers 402 once the credit is used up.
+    const credit = error.statusCode === 402 ? ', the OpenRouter credit is used up' : '';
+    return `APICallError: HTTP ${error.statusCode ?? 'none'}${credit}`;
+  }
+  if (error instanceof NoAnswerError) {
+    return `${error.name}: ${error.message}`;
+  }
+  if (error instanceof DOMException && error.name === 'TimeoutError') {
+    return 'TimeoutError: the time per message ran out';
+  }
+  return error instanceof Error ? error.name : typeof error;
 }
