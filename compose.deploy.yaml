@@ -1,0 +1,100 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-17  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# The Dev Server's stack: compose.yaml with this file over it, and the settings file as Compose's --env-file
+# (infra/deploy/snu-now.env.example). Each service takes its variables by the names of its own .env.example; no
+# project's .env file is read. The proxy is the only service that publishes a port.
+x-deployed: &deployed
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: '3'
+
+services:
+  postgres:
+    <<: *deployed
+    # Read only when the data volume is created.
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      MAIN_DB_PASSWORD: ${MAIN_DB_PASSWORD}
+      MATCH_DB_PASSWORD: ${MATCH_DB_PASSWORD}
+    ports: !reset []
+
+  redis:
+    <<: *deployed
+    ports: !reset []
+
+  main-server:
+    <<: *deployed
+    env_file: !reset []
+    environment:
+      DATABASE_URL: postgresql://main:${MAIN_DB_PASSWORD}@postgres:5432/main
+      ACCESS_TOKEN_PRIVATE_KEY: ${ACCESS_TOKEN_PRIVATE_KEY}
+      ACCESS_TOKEN_PUBLIC_KEY: ${ACCESS_TOKEN_PUBLIC_KEY}
+      GOOGLE_APP_CLIENT_ID: ${GOOGLE_APP_CLIENT_ID}
+      GOOGLE_ADMIN_CLIENT_ID: ${GOOGLE_ADMIN_CLIENT_ID}
+      INITIAL_ADMINISTRATOR_EMAILS: ${INITIAL_ADMINISTRATOR_EMAILS}
+      KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY}
+      WORKER_TOKEN: ${WORKER_TOKEN}
+      PUBLIC_URL: ${PUBLIC_URL}
+      ANDROID_CERTIFICATE_FINGERPRINTS: ${ANDROID_CERTIFICATE_FINGERPRINTS}
+      MATCH_SERVER_TOKEN: ${MATCH_SERVER_TOKEN}
+    ports: !reset []
+
+  socket-server:
+    <<: *deployed
+    env_file: !reset []
+    environment:
+      ACCESS_TOKEN_PUBLIC_KEY: ${ACCESS_TOKEN_PUBLIC_KEY}
+    ports: !reset []
+
+  worker-server:
+    <<: *deployed
+    env_file: !reset []
+    environment:
+      WORKER_TOKEN: ${WORKER_TOKEN}
+    ports: !reset []
+
+  match-server:
+    <<: *deployed
+    env_file: !reset []
+    environment:
+      DATABASE_URL: postgresql://match:${MATCH_DB_PASSWORD}@postgres:5432/match
+      MATCH_SERVER_TOKEN: ${MATCH_SERVER_TOKEN}
+      ROUND_INTERVAL_SECONDS: ${ROUND_INTERVAL_SECONDS}
+    ports: !reset []
+
+  demo-seed:
+    <<: *deployed
+    env_file: !reset []
+    environment:
+      DATABASE_URL: postgresql://main:${MAIN_DB_PASSWORD}@postgres:5432/main
+      DEMO_ACCOUNT_EMAILS: ${DEMO_ACCOUNT_EMAILS}
+
+  demo-walker:
+    <<: *deployed
+    env_file: !reset []
+    environment:
+      ACCESS_TOKEN_PRIVATE_KEY: ${ACCESS_TOKEN_PRIVATE_KEY}
+      WORKER_TOKEN: ${WORKER_TOKEN}
+
+  # The worker collects the real menus, and the two would write the same days of the same Sources. It runs only when
+  # its own profile is named.
+  demo-menus:
+    profiles: !override [demo-menus]
+
+  proxy:
+    <<: *deployed
+    build: infra/proxy
+    ports:
+      - '80:80'
+    # The folders, not the files, so that a file replaced by a rename is seen.
+    volumes:
+      - ${DEPLOY_STATUS_DIR}:/srv/deploy-status:ro
+      - ${DEPLOY_APK_DIR}:/srv/apk:ro
+    # No depends_on: the status and the APKs stay reachable while a server is down.
