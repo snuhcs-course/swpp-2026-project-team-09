@@ -3,7 +3,6 @@
  *
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
- * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // A main server behind `fetch`, as a test sets it up: each route answers what the test says, and every request is
@@ -23,9 +22,8 @@ export interface Received {
   body: unknown;
 }
 
-// A status with a body, or no answer at all, as when the network is down. `afterMs` holds the answer back that long,
-// by the test's clock, as a server that takes its time.
-export type Reply = { status: number; body?: unknown; afterMs?: number } | 'no-answer';
+// A status with a body, or no answer at all, as when the network is down.
+export type Reply = { status: number; body?: unknown } | 'no-answer';
 
 type Route = Reply | ((request: Received) => Reply);
 
@@ -79,15 +77,7 @@ export function startFakeServer(): FakeServer {
       return Promise.reject(new TypeError('Network request failed'));
     }
     const text = reply.body === undefined ? null : JSON.stringify(reply.body);
-    const response = new Response(text, { status: reply.status });
-    if (reply.afterMs === undefined) {
-      return Promise.resolve(response);
-    }
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(response);
-      }, reply.afterMs);
-    });
+    return Promise.resolve(new Response(text, { status: reply.status }));
   });
   return {
     on: (route, reply): void => {
