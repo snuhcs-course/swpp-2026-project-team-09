@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type UseQueryResult, useQueries, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ import { CLASSES_KEY, classesQuery, placesQuery, QUESTS_KEY } from '@/api/querie
 import { type ScreenData, askAgain, someFailed, somePending } from '@/api/screen-data';
 import type { Place, TimetableClass } from '@/api/types';
 import { type ClassDraft, saveOf } from './class-form';
+import { noteClassesWritten } from './versions';
 
 export interface Timetable {
   classes: TimetableClass[];
@@ -49,6 +51,8 @@ export function useClassChanges(): ClassChanges {
   const changed = useCallback((): void => {
     void queryClient.invalidateQueries({ queryKey: CLASSES_KEY });
     void queryClient.invalidateQueries({ queryKey: QUESTS_KEY });
+    // Not a change made elsewhere, for the timetable versions.
+    void noteClassesWritten().catch(() => null);
   }, [queryClient]);
   const save = useCallback(
     async (classId: string | null, draft: ClassDraft): Promise<TimetableClass> => {
