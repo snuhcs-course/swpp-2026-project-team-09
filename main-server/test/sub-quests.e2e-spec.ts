@@ -37,14 +37,13 @@ beforeAll(async () => {
   prisma = connectToDatabase();
 });
 
-// The morning of the Sub Quests' day, so that none of them has ended whenever the tests run.
-beforeEach(() => {
-  vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(new Date('2026-10-13T09:00:00.000Z'));
-});
-
 afterEach(() => {
   vi.restoreAllMocks();
 });
+
+function setClock(at: string): void {
+  vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(new Date(at));
+}
 
 afterAll(async () => {
   await prisma.$disconnect();
@@ -65,6 +64,19 @@ const cafe = {
   place: { latitude: 37.4601, longitude: 126.9512, label: '자하연 앞 카페' },
 };
 
+const cafeAdded = {
+  id: ANY_STRING,
+  attending: false,
+  title: '카페',
+  startsAt: cafe.startsAt,
+  endsAt: cafe.endsAt,
+  place: { placeId: null, label: '자하연 앞 카페', latitude: 37.4601, longitude: 126.9512 },
+  completion: 'by_time',
+  cancelled: false,
+  done: false,
+  ended: false,
+};
+
 async function attendingUser(): Promise<{ user: TestUser; questId: string; attendingId: string }> {
   const user = await signInUser(app);
   const event = await storeEvent(prisma);
@@ -73,25 +85,15 @@ async function attendingUser(): Promise<{ user: TestUser; questId: string; atten
 
 describe('Adding a Sub Quest', () => {
   it('adds it after the attending one, with a point on the map', async () => {
+    // The morning of the Sub Quest's day, so that it has not ended whenever the test runs.
+    setClock('2026-10-13T09:00:00.000Z');
     const { user, questId } = await attendingUser();
 
     const response = await addSubQuest(app, user, questId, cafe);
 
-    const added = {
-      id: ANY_STRING,
-      attending: false,
-      title: '카페',
-      startsAt: cafe.startsAt,
-      endsAt: cafe.endsAt,
-      place: { placeId: null, label: '자하연 앞 카페', latitude: 37.4601, longitude: 126.9512 },
-      completion: 'by_time',
-      cancelled: false,
-      done: false,
-      ended: false,
-    };
     expect(response.status).toBe(201);
-    expect(response.body).toEqual(added);
-    expect((await getQuest(app, user, questId)).body).toMatchObject({ subQuests: [{ attending: true }, added] });
+    expect(response.body).toEqual(cafeAdded);
+    expect((await getQuest(app, user, questId)).body).toMatchObject({ subQuests: [{ attending: true }, cafeAdded] });
   });
 
   it('takes a Place from the list, and needs only a title', async () => {
