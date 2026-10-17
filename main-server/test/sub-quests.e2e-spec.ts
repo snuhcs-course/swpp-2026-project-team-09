@@ -4,8 +4,6 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
- * 2026-10-17  Fable 5.1  prompted by TaeHyun79
- * 2026-10-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -14,7 +12,6 @@ import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { z } from 'zod';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { signInUser, TestUser } from './friends.js';
 import {
   addSubQuest,
@@ -38,14 +35,6 @@ beforeAll(async () => {
   prisma = connectToDatabase();
 });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
-function setClock(at: string): void {
-  vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(new Date(at));
-}
-
 afterAll(async () => {
   await prisma.$disconnect();
   await app.close();
@@ -65,19 +54,6 @@ const cafe = {
   place: { latitude: 37.4601, longitude: 126.9512, label: '자하연 앞 카페' },
 };
 
-const cafeAdded = {
-  id: ANY_STRING,
-  attending: false,
-  title: '카페',
-  startsAt: cafe.startsAt,
-  endsAt: cafe.endsAt,
-  place: { placeId: null, label: '자하연 앞 카페', latitude: 37.4601, longitude: 126.9512 },
-  completion: 'by_time',
-  cancelled: false,
-  done: false,
-  ended: false,
-};
-
 async function attendingUser(): Promise<{ user: TestUser; questId: string; attendingId: string }> {
   const user = await signInUser(app);
   const event = await storeEvent(prisma);
@@ -86,14 +62,25 @@ async function attendingUser(): Promise<{ user: TestUser; questId: string; atten
 
 describe('Adding a Sub Quest', () => {
   it('adds it after the attending one, with a point on the map', async () => {
-    setClock(cafe.startsAt);
     const { user, questId } = await attendingUser();
 
     const response = await addSubQuest(app, user, questId, cafe);
 
+    const added = {
+      id: ANY_STRING,
+      attending: false,
+      title: '카페',
+      startsAt: cafe.startsAt,
+      endsAt: cafe.endsAt,
+      place: { placeId: null, label: '자하연 앞 카페', latitude: 37.4601, longitude: 126.9512 },
+      completion: 'by_time',
+      cancelled: false,
+      done: false,
+      ended: false,
+    };
     expect(response.status).toBe(201);
-    expect(response.body).toEqual(cafeAdded);
-    expect((await getQuest(app, user, questId)).body).toMatchObject({ subQuests: [{ attending: true }, cafeAdded] });
+    expect(response.body).toEqual(added);
+    expect((await getQuest(app, user, questId)).body).toMatchObject({ subQuests: [{ attending: true }, added] });
   });
 
   it('takes a Place from the list, and needs only a title', async () => {
