@@ -162,6 +162,6 @@ Branches `2.0/P06-<NN>-<slug>`, each with its own PR to `2.0/Main`. The files ar
 ## Further Notes
 
 - 안진영 builds every ticket. 함재현 checks the screens on the shared Android phone and the Mac.
-- The server's owner, 윤유상, reviews the server part of ticket 01.
+- 함재현 reviews the server part of ticket 01.
 - Departures from the Iteration 1 documents: P14's Meetup is retired; P13's form made a private Quest with capacity 8 and showed 인원 for public ones only, and both change here.
 - The wireframe keeps changing; each ticket rereads its artboards before it starts.

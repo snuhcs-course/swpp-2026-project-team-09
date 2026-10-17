@@ -67,6 +67,7 @@ export const mockClient: ApiClient = {
       await keep({ answers });
       return profileOf(answers);
     }),
+  getProfile: () => answer('getProfile', async () => profileOf(await onboardingAnswers())),
   setMasterSwitch: (on) =>
     answer('setMasterSwitch', () => {
       masterSwitchOn = on;

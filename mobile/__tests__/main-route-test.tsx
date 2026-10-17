@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -13,6 +14,9 @@ import { DINNER, FRIEND, lookOf, press, ROUTE, wordsUnder } from './support/mark
 import { startFresh } from './support/mocks';
 import { apiClient } from '@/api/client';
 import { QUESTS } from '@/api/mock/data/quests';
+
+// A spied operation answers in the client's place, so its answers carry a Quest's mocked parts themselves.
+const NO_PARTS = { photo: null, tags: [], faces: [] };
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -103,7 +107,9 @@ describe('a Quest whose place is words alone', () => {
       throw new Error('No dinner in the mock');
     }
     const station = { placeId: null, label: '서울대입구역', latitude: null, longitude: null };
-    jest.spyOn(apiClient, 'listQuests').mockResolvedValue([{ ...dinner, subQuests: [{ ...step, place: station }] }]);
+    jest
+      .spyOn(apiClient, 'listQuests')
+      .mockResolvedValue([{ ...dinner, ...NO_PARTS, subQuests: [{ ...step, place: station }] }]);
     givePhone({ permission: 'granted', position: ON_CAMPUS });
 
     await openMain();
