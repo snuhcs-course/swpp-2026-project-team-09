@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { JoinPolicy, MyParty, Party, Person, Quest } from '@/api/types';
@@ -146,5 +147,23 @@ describe('a Quest without a time', () => {
     ]);
     expect(rows.map(({ id }) => id)).toEqual(['러닝']);
     expect(toQuestGroups(rows, NOW).map(({ title }) => title)).toEqual(['오늘 · 10월 6일 (화)']);
+  });
+
+  it('is not one when a later step has a time, and takes its time and place from that step', () => {
+    const gathering = quest('저녁', { startsAt: null });
+    const dinner = {
+      ...gathering.subQuests[0],
+      id: '저녁-2',
+      attending: false,
+      title: '저녁',
+      startsAt: '2026-10-06T19:00:00+09:00',
+      place: { ...PLACE, label: '녹두 식당' },
+    };
+    const rows = rowsOf([
+      { ...gathering, subQuests: [{ ...gathering.subQuests[0], title: '모이기' }, dinner] },
+      quest('러닝'),
+    ]);
+    expect(rows.map(({ id }) => id)).toEqual(['러닝', '저녁']);
+    expect(rows[1]).toMatchObject({ time: '19:00', place: '녹두 식당', meta: '19:00 · 녹두 식당' });
   });
 });

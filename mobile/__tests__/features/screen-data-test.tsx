@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { renderHook } from '@testing-library/react-native';
@@ -262,8 +263,9 @@ describe('the Quest list and the cards for Quests that no Party names', () => {
       joinPolicy: 'open',
       kicker: '공개 파티 · 4명',
     });
+    // Its card on the map words it as its row does.
     expect(cards.result.current.data?.find(({ id }) => id === 'party:q-ai')).toMatchObject({
-      subLabel: '비공개 파티 · 김민준, 오현우, 정하은과',
+      subLabel: '공개 파티 · 4명',
       primary: { label: '길찾기', action: 'route' },
     });
   });

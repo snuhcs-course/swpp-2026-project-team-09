@@ -8,6 +8,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { JoinPolicy, LatLng, MyParty, Party, Quest, SubQuest } from '@/api/types';
@@ -78,8 +79,18 @@ export function positionOf(subQuest: SubQuest | null): LatLng | null {
   return pointOf(subQuest?.place ?? null);
 }
 
+// The Sub Quest that gives a Quest its time: the one it shows when that has a start, or else the first still to come
+// that has one. A first step without a time, such as "모이기" before "저녁 19:00", does not leave the Quest untimed.
+function timedSubQuest(quest: Quest): SubQuest | null {
+  const shown = shownSubQuest(quest);
+  if (shown === null || shown.startsAt !== null) {
+    return shown;
+  }
+  return quest.subQuests.find(({ cancelled, ended, startsAt }) => !cancelled && !ended && startsAt !== null) ?? shown;
+}
+
 function startOf(quest: Quest): number {
-  const start = shownSubQuest(quest)?.startsAt ?? null;
+  const start = timedSubQuest(quest)?.startsAt ?? null;
   return start === null ? Number.POSITIVE_INFINITY : new Date(start).getTime();
 }
 
@@ -212,10 +223,10 @@ function toneOf(quest: Quest): QuestRowTone {
   return quest.joinPolicy === 'closed' ? 'closed' : 'open';
 }
 
-// Whether a Quest has a time: the Sub Quest it shows has a start, or, once every Sub Quest ended, one of them had. A
-// Party whose time is not set is no Quest yet, as `Main` has it, and is in neither the list nor its counts.
+// Whether a Quest has a time: one of its Sub Quests still to come has a start, or, once every Sub Quest ended, one of
+// them had. A Party whose time is not set is no Quest yet, as `Main` has it, and is in neither the list nor its counts.
 function timed(quest: Quest): boolean {
-  const subQuest = shownSubQuest(quest);
+  const subQuest = timedSubQuest(quest);
   return subQuest === null ? quest.subQuests.some(({ startsAt }) => startsAt !== null) : subQuest.startsAt !== null;
 }
 
@@ -225,7 +236,7 @@ export function toQuestRows(sources: QuestSources): QuestRowView[] {
   const byStart = quests.filter((quest) => timed(quest)).toSorted((first, second) => startOf(first) - startOf(second));
   const nextClass = byStart.find((quest) => quest.classQuest && startOf(quest) > now.getTime());
   return byStart.map((quest) => {
-    const subQuest = shownSubQuest(quest);
+    const subQuest = timedSubQuest(quest);
     const tone = toneOf(quest);
     const start = subQuest?.startsAt ?? null;
     return {
