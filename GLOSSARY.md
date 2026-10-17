@@ -70,7 +70,7 @@ A User who holds a Quest. Each Holder tracks their own progress through its Sub 
 _Avoid_: Participant, assignee
 
 **Shared Quest**:
-A Quest with two or more Holders, such as matched Users, the two Friends of an accepted Meetup or Users who joined another's Quest.
+A Quest with two or more Holders, such as matched Users or Users who joined another's Quest.
 _Avoid_: Common quest
 
 **Leader**:
@@ -81,6 +81,8 @@ _Avoid_: Owner, host
 The Leader's setting for how Users enter a Quest or a Party: Open (whoever can see it enters at once), Approval (the Leader accepts each request) or Closed (entry by the Leader's invitation only).
 _Avoid_: Visibility, privacy setting
 
+The screens call an Open or Approval Quest a "공개 파티" and a Closed Quest a "비공개 파티". A plan with a Friend is a 비공개 파티.
+
 **Board**:
 Where an Open or Approval Quest is listed for recruiting, one of four kinds: 식사, 진로, 취미 and 공연. A Closed Quest is on none.
 _Avoid_: Category
@@ -88,8 +90,8 @@ _Avoid_: Category
 **Class Quest**:
 A Quest for attending one of the User's own classes on a given day, derived from the User's timetable.
 
-**Meetup**:
-A proposal between Friends to meet. Accepting it creates a Shared Quest and does not open a Party.
+**Meetup** (retired in Iteration 2):
+A proposal between Friends to meet. Accepting it created a Shared Quest and did not open a Party. A 비공개 파티, a Closed Quest whose Leader invites the Friend, takes its place.
 _Avoid_: Appointment
 
 **Matching**:
