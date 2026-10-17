@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import type { ReactElement } from 'react';
+import { type ReactElement, useState } from 'react';
 import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import {
   cardStyles,
@@ -23,8 +24,11 @@ import {
 } from '@/design-system';
 import { now } from '@/clock';
 import { type ClassBlockView, DAY_LETTERS, FIRST_HOUR, LAST_HOUR } from '@/features/timetable/adapter';
+import { useTimetableVersions } from '@/features/timetable/use-versions';
 import { useWeek } from '@/features/timetable/use-week';
 import { koreaWeekday } from '@/korea-time';
+import { UnfinishedSwitch } from './unfinished-switch';
+import { VersionMenu } from './version-menu';
 
 // The `Profile` frame's week: 216 high from 09 to 18.
 const GRID_HEIGHT = 216;
@@ -102,15 +106,30 @@ function Grid({ blocks }: { blocks: readonly ClassBlockView[] }): ReactElement {
   );
 }
 
-// The 시간표 card: the User's week from the main server, and the three ways to fill it in.
+// The 시간표 card: the User's week from the main server, the version it is, and the three ways to fill it in.
 export function WeekCard(): ReactElement {
   const { data, isPending, refetch } = useWeek();
   const showNotReady = useNotReadyToast();
+  const versions = useTimetableVersions();
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <View style={[cardStyles.card, styles.card]}>
-      <Text accessibilityRole="header" style={styles.title}>
-        시간표
-      </Text>
+      {menuOpen ? (
+        <Pressable
+          accessibilityLabel="닫기"
+          onPress={() => {
+            setMenuOpen(false);
+          }}
+          style={styles.outside}
+        />
+      ) : null}
+      <View style={styles.head}>
+        <Text accessibilityRole="header" style={styles.title}>
+          시간표
+        </Text>
+        <VersionMenu onOpen={setMenuOpen} open={menuOpen} versions={versions} />
+      </View>
+      <UnfinishedSwitch versions={versions} />
       {data === undefined ? null : <Grid blocks={data} />}
       {data === undefined && isPending ? <LoadingState /> : null}
       {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
@@ -133,6 +152,9 @@ export function WeekCard(): ReactElement {
 
 const styles = StyleSheet.create({
   card: { gap: space[3] },
+  // Over the card below the open list, so that a press outside the list closes it.
+  outside: { ...StyleSheet.absoluteFill, zIndex: 1 },
+  head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space[2], zIndex: 2 },
   title: { ...text.title, color: color.ink },
   row: { flexDirection: 'row', gap: space[1] },
   labels: { width: LABEL_WIDTH },
