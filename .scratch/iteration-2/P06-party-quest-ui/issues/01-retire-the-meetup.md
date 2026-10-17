@@ -70,5 +70,13 @@ Found with `git grep -il meetup` on `2.0/Main` (migrations, generated code and `
 
 ### PR
 
-- [ ] The PR body names `2f4f201` as the commit to restore from.
+- [x] The PR body names `2f4f201` as the commit to restore from.
 - [ ] Screenshots of the form opened from the Friend's card, under Test Results.
+
+## Comments
+
+### Agent usage (2026-10-18)
+
+- Agent time: about 1 h 20 min of active work by one subagent in its own worktree, plus about 10 min in the main session for the PR. It is an estimate: the run lasted about 2 h 10 min from start to finish, with a session crash and restart in it. Most of the rest was spent waiting on Jest runs slowed by other agents' runs on the same machine.
+- Tokens, from the subagent's transcript: input 28,724,444, of which 26,550,236 cache reads, 2,173,876 cache writes and 332 uncached; output 17,173.
+- The figures leave out the main session's share and a helper subagent that rewrote `main-server/README.md`, whose transcript was not counted.
