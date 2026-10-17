@@ -363,8 +363,8 @@ has run.
 - A new setting: add it to the server's settings file by hand before the commit that needs it reaches `development`,
   since the bootstrap never rewrites an existing file. In the commit, add it to `compose.deploy.yaml`,
   `snu-now.env.example` and the settings the bootstrap writes.
-- The tests: `bats --recursive infra/deploy` and `shellcheck infra/deploy/*.sh` (CI's `deploy-scripts` job runs both),
-  and `pnpm test` in `flow-tests`, whose `test/deploy-stack.flow.ts` starts the deployment stack and calls it through
+- The tests: `bats --recursive infra/deploy` and `shellcheck` on every `*.sh` and `*.bats` under `infra/deploy`
+  (CI's `deploy-scripts` job runs both), and `pnpm test` in `flow-tests`, whose `test/deploy-stack.flow.ts` starts the deployment stack and calls it through
   the proxy.
 
 ## A production server on A

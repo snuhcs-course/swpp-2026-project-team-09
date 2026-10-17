@@ -5,7 +5,12 @@
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
-# The deploy script: its decisions given plain inputs, and whole runs with git, docker and curl faked on PATH.
+# Each test runs in a subshell of its own, so that its exports reach no other test, as meant.
+# shellcheck disable=SC2030,SC2031 source-path=SCRIPTDIR
+
+# The deploy script: its decisions given plain inputs, and whole runs with git, docker and curl faked on PATH. A [[ ]]
+# check ends in `|| false` because bash before 4.1, which macOS has, does not fail a test on a [[ ]] that is not its
+# last command.
 
 TIP=6b1f0c2a9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a
 NEXT_TIP=0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e
@@ -23,7 +28,7 @@ setup() {
 
   mkdir "$BATS_TEST_TMPDIR/bin"
   for command in git docker curl; do
-    ln -s "$BATS_TEST_DIRNAME/fake-command.sh" "$BATS_TEST_TMPDIR/bin/$command"
+    ln -s "$BATS_TEST_DIRNAME/deploy-fakes.sh" "$BATS_TEST_TMPDIR/bin/$command"
   done
   export PATH="$BATS_TEST_TMPDIR/bin:$PATH"
   export FAKE_CALLS="$BATS_TEST_TMPDIR/calls"
@@ -116,14 +121,15 @@ serve_check_runs() {
   [ "$(steps | tr '\n' ' ')" = "fetch check-runs dump reset clean compose-up ready handshake image-prune builder-prune " ]
   [ "$(field 'keys_unsorted | join(" ")')" = "trackedRef checkedAt result candidateCommit attempt deployedCommit deployedAt checks recreatedServices" ]
   [ "$(field '[.trackedRef, .result, .candidateCommit, .attempt, .deployedCommit] | join(" ")')" = "development deployed $TIP 1 $TIP" ]
-  [[ "$(field .checkedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]]
-  [[ "$(field .deployedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]]
-  [[ ! "$(field .deployedAt)" < "$(field .checkedAt)" ]]
+  [[ "$(field .checkedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]] || false
+  [[ "$(field .deployedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]] || false
+  [[ ! "$(field .deployedAt)" < "$(field .checkedAt)" ]] || false
   [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success match-server=success flow-tests=success" ]
   [ "$(field '.recreatedServices | join(" ")')" = "main-server socket-server proxy" ]
 }
 
 @test "the tip equal to the last deployed commit gives up-to-date and no other command runs" {
+  # shellcheck source=../deploy.sh
   source "$DEPLOY"
   [ "$(plan_run "$TIP" "$TIP" "$TIP" deployed 1 no)" = up-to-date ]
 
@@ -139,6 +145,7 @@ serve_check_runs() {
 }
 
 @test "all five required checks success gives deploy; one missing or in_progress gives waiting-for-ci; one failure gives ci-failed and the commit is not looked at again; a failed admin or mobile check alone still gives deploy" {
+  # shellcheck source=../deploy.sh
   source "$DEPLOY"
   [ "$(verdict "${PASSED[@]}")" = deploy ]
   [ "$(verdict "${PASSED[@]:0:4}")" = waiting-for-ci ]
@@ -162,12 +169,14 @@ serve_check_runs() {
 }
 
 @test "a required check that passed on one push of the commit counts as passed, though its run on another push failed" {
+  # shellcheck source=../deploy.sh
   source "$DEPLOY"
   [ "$(verdict "${PASSED[@]}" 'flow-tests completed failure')" = deploy ]
   [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests completed failure' 'flow-tests in_progress null')" = waiting-for-ci ]
 }
 
 @test "after a failed build, attempts 1 and 2 retry the same commit, attempt 3 gives held, and a new tip clears the hold" {
+  # shellcheck source=../deploy.sh
   source "$DEPLOY"
   [ "$(plan_run "$TIP" '' "$TIP" build-failed 1 no)" = 'retry 2' ]
   [ "$(plan_run "$TIP" '' "$TIP" build-failed 2 no)" = 'retry 3' ]
@@ -197,6 +206,7 @@ serve_check_runs() {
 }
 
 @test "nine dumps give the two oldest for deletion; no running database gives no dump" {
+  # shellcheck source=../deploy.sh
   source "$DEPLOY"
   run dumps_to_delete snu-now-20261014T091502Z.sql.gz snu-now-20261009T230011Z.sql.gz snu-now-20261016T120000Z.sql.gz \
     snu-now-20261011T080000Z.sql.gz snu-now-20261010T101500Z.sql.gz snu-now-20261017T030405Z.sql.gz \
