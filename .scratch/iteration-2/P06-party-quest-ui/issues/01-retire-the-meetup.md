@@ -27,8 +27,8 @@ Found with `git grep -il meetup` on `2.0/Main` (migrations, generated code and `
 - Server
   - `src/app.module.ts`: `MeetupsModule`.
   - `src/friends/friends.service.ts`: withdrawing proposed Meetups and sending `meetups-changed` when a friendship ends.
-  - `src/demo/demo-data.ts` and `src/demo/demo.seed.ts`: the demo Meetup (`DEMO_ACCOUNT_SHARE.meetup`, the `prisma.meetup` upsert); `.env.example`'s comment on it.
-  - `test/admin-friendship-ending.e2e-spec.ts`: the Meetup case. `test/demo-seed.e2e-spec.ts`: the `GET /meetups` call and the `prisma.meetup` count.
+  - `src/demo/demo-data.ts` and `src/demo/demo.seed.ts`: the demo Meetup (`DEMO_ACCOUNT_SHARE.meetup`, the `prisma.meetup` upsert, the `meetups-changed` signal it sends); `.env.example`'s comment on it.
+  - `test/admin-friendship-ending.e2e-spec.ts`: the Meetup case. `test/demo-seed.e2e-spec.ts`: the `GET /meetups` call, the `prisma.meetup` count, and the test titles and expectations that name the Meetup.
   - `src/quests/quests.service.ts` and `src/quests/clock.ts`: only comments name the Meetup; they are reworded. `createWithSubQuest`, `SubQuestColumns` and `CLOCK` live in `src/quests/` and stay.
 - Flow tests: `test/friend.flow.ts` drops its Meetup step and `test/answers.ts` its Meetup answer; `flow-tests/README.md` says so.
 - Admin: the friendship-ending confirm text in `src/app/(signed-in)/users/[id]/friendships.tsx` and `admin/README.md` no longer say that proposed Meetups are withdrawn.

@@ -10,7 +10,7 @@ A document for the server's owner, 윤유상: for each mock adapter of this task
 
 ## Acceptance criteria
 
-- [ ] One entry per mocked part: official recruiting; photos; tags (the User's and a Quest's); hiding a post; people looking for company; members' names and faces in summaries; an invitation's time, place and companions; a join request's note; 파티 채팅; past Quests; and a declined activation stored on the server.
+- [ ] One entry per mocked part: official recruiting; photos; tags (the User's and a Quest's); hiding a post; people looking for company; members' names and faces in summaries, an invitation's companions included; an invitation's time and place; a join request's note; 파티 채팅; past Quests; and a declined activation stored on the server.
 - [ ] Each entry gives the method and path proposed, the request and answer shapes as the app's adapter reads them, the screens that use it, and the signal that should announce a change.
 - [ ] The two rules the wireframe draws differently are listed for decision: capacity up to 12, and switching on by the Leader only.
 - [ ] `todo.md` section 2's last column points at each entry.

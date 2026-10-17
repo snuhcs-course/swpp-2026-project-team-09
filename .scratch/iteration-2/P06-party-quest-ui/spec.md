@@ -12,7 +12,7 @@ The wireframe also draws parts that the app has never had: official recruiting b
 
 The 파티 tab, the room, the form and the Quest list are brought to the wireframe, and the Meetup is retired: a plan with a Friend is a 비공개 파티, made with the same form, preset to 비공개 with that Friend invited.
 
-What the server cannot give yet is built against a mock adapter of its own until an endpoint exists. The build connected to the server shows the mocked parts too, except the ones that show people who do not exist. The last ticket lists the endpoints the server needs, so that each mock can be replaced by one change in the API client.
+What the server cannot give yet is built against a mock adapter of its own until an endpoint exists. The build connected to the server shows the mocked parts too, except the ones that would state something false about real people or real Quests (see Mocks). The last ticket lists the endpoints the server needs, so that each mock can be replaced by one change in the API client.
 
 The reference is the wireframe artifact `SNU Now 와이어프레임` (https://claude.ai/artifact/136sh65V4Trkv5KBM78Vgr), version `1792227848-fc09` of 2026-10-17. Its artboards for this task: `Party`, `PartyJoin`, `PartyMine`, `PartyInvites`, `PartyDetail`, `PartyLeave`, `PartyPost`, `PartyCreate`, `PartyAppt`, and in `Main` the Quest list, `MainQuests`, the Friend's card and the 활성 파티 button.
 
@@ -93,7 +93,7 @@ The reference is the wireframe artifact `SNU Now 와이어프레임` (https://cl
 ### Retiring the Meetup
 
 - Both entries open the form (`party-form`) preset to 비공개 with the Friend invited: the action `meetup` of a Friend's card on the map (`screens/main/main-screen.tsx`, built in `features/map/adapter.ts`) and the button of the Friend's panel (`screens/main/friend-panel.tsx`). Making it posts a Closed Quest and invites the Friend (`POST /quests/own`, `POST /quests/:questId/invitations`), as the form does now.
-- The Meetup code is **deleted** in the app and on the server. The last commit that holds it, `2f4f201` on `2.0/Main`, is recorded here and in ticket 01's PR, so that it can be brought back with git. Ticket 01 lists every file:
+- The Meetup code is **deleted** in the app and on the server. A commit that holds all of it, `2f4f201` on `2.0/Main`, is recorded here and in ticket 01's PR, so that it can be brought back with git. Ticket 01 lists every file:
   - app: the route `meetup/[friendId]`, `screens/meetup/*`, the Meetup cards and `보낸 초대` of `screens/party/invites-meetups.tsx`, `features/meetups/*`, the client's Meetup operations and their mock, the Meetup rows of 알림, the `meetups-changed` live key, and the Meetups in the count of `초대`;
   - server: `MeetupsModule`, the Meetup parts of the Friends service, the demo data and the demo seed, the Meetup e2e tests and the Meetup checks of other e2e tests;
   - elsewhere: the Meetup step of `flow-tests`, the admin's friendship-ending text, and the Meetup in the READMEs (root, `mobile`, `main-server`, `socket-server`, `admin`, `flow-tests`).
