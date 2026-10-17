@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -115,7 +116,7 @@ describe('the Quests from the main server', () => {
         id: DINNER.id,
         kind: 'party',
         tone: 'closed',
-        joinPolicy: null,
+        joinPolicy: 'closed',
         title: '저녁 약속',
         place: '학생회관 (63동)',
         position: { latitude: 37.45932, longitude: 126.95058 },

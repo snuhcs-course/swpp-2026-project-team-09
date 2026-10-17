@@ -8,6 +8,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { RecruitingQuest } from '@/api/party-types';
@@ -191,16 +192,22 @@ function partyCard(
   const subQuest = shownSubQuest(quest);
   const start = subQuest?.startsAt ?? null;
   const label = subQuest?.place?.label ?? '';
-  if (party !== null && party.joinPolicy !== 'closed') {
+  if (party !== null && quest.joinPolicy !== 'closed') {
     return openPartyCard(quest.id, party, start, label);
   }
   const alone = party === null && others === '';
+  // Worded as the Quest list words the same Quest, by its own Join Policy: "공개 파티 · 4명", or "비공개 파티" with
+  // whom the User holds it.
+  const kindWords =
+    quest.joinPolicy === 'closed'
+      ? `비공개 파티${others === '' ? '' : ` · ${withParticle(others)}`}`
+      : `공개 파티 · ${quest.holders.length}명`;
   const title = party?.title ?? quest.title;
   return {
     kind: party === null ? 'shared-quest' : 'party',
     mark: { type: 'place', place: alone ? 'quest' : 'party' },
     marker: { name: `${alone ? '퀘스트' : '파티'} · ${title}`, short: shortTitle(title), count: 0, minutesOld: null },
-    subLabel: alone ? '퀘스트' : `비공개 파티${others === '' ? '' : ` · ${withParticle(others)}`}`,
+    subLabel: kindWords,
     title,
     lines: [
       ...(start === null ? [] : [line('clock', `${koreaDay(start, now)} ${koreaClock(start)}`)]),

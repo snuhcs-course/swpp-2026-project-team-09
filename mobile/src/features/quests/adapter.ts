@@ -8,13 +8,15 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { JoinPolicy, LatLng, MyParty, Party, Quest, SubQuest } from '@/api/types';
 import { koreaClock, koreaDate, koreaDaysAfter, koreaNextDay, sameKoreaDay } from '@/korea-time';
 
-// What a row of the Quest list is drawn as, which gives its colour: a class; `open`, a Party that others may join;
-// `closed`, a Party that takes nobody else, and a Quest that no Party names, such as a dinner with a Friend.
+// What a row of the Quest list is drawn as, which gives its colour, by the Quest's own Join Policy: a class; `open`, a
+// 공개 파티, an Open or an Approval Quest; `closed`, a 비공개 파티, a Closed Quest. Whether its Party is switched on
+// changes neither.
 export type QuestRowTone = 'class' | 'open' | 'closed';
 
 // One row of the Quest list, on the map and on the whole screen.
@@ -26,9 +28,10 @@ export interface QuestRowView {
   // In the row's round, by its name in the design system: `clock` for a class, `users` for `open`, `lock` for
   // `closed`.
   icon: 'clock' | 'users' | 'lock';
-  // The Party's that is marked with the Quest. Null for a class and for a Quest that no Party names.
+  // The Quest's own. Null for a class.
   joinPolicy: JoinPolicy | null;
-  // "다음 강의 · 23분 후", the list on the map's.
+  // "다음 강의 · 23분 후", "공개 파티 · 4명", "비공개 파티 · 김민준 외 2명" or "공개 파티 · 활성화 중", the list on
+  // the map's.
   kicker: string;
   // The frames' word for its kind, the list on the whole screen's: "강의", "공개 파티" or "비공개 파티 · 김민준".
   label: string;
@@ -76,8 +79,18 @@ export function positionOf(subQuest: SubQuest | null): LatLng | null {
   return pointOf(subQuest?.place ?? null);
 }
 
+// The Sub Quest that gives a Quest its time: the one it shows when that has a start, or else the first still to come
+// that has one. A first step without a time, such as "모이기" before "저녁 19:00", does not leave the Quest untimed.
+function timedSubQuest(quest: Quest): SubQuest | null {
+  const shown = shownSubQuest(quest);
+  if (shown === null || shown.startsAt !== null) {
+    return shown;
+  }
+  return quest.subQuests.find(({ cancelled, ended, startsAt }) => !cancelled && !ended && startsAt !== null) ?? shown;
+}
+
 function startOf(quest: Quest): number {
-  const start = shownSubQuest(quest)?.startsAt ?? null;
+  const start = timedSubQuest(quest)?.startsAt ?? null;
   return start === null ? Number.POSITIVE_INFINITY : new Date(start).getTime();
 }
 
@@ -164,17 +177,22 @@ function classKicker(subQuest: SubQuest | null, next: boolean, now: Date): strin
   return next ? `다음 강의 · ${waitWords(Math.ceil(untilStart / MINUTE_MS))}` : '강의';
 }
 
-// The frames word a Shared Quest that is no Party's, such as a dinner with a Friend, as a "비공개 파티", and a Party
-// that takes requests as an open one. The words are the frames'; the kinds stay the glossary's.
-function sharedKicker(quest: Quest, party: QuestParty | null, meId: string): string {
-  const others = otherHolders(quest, meId);
-  if (party === null) {
-    return others === '' ? '퀘스트' : `비공개 파티 · ${others}`;
+// The frames' kicker of a Quest that is not a class, as `Main` draws it: while its Party is switched on, its kind and
+// "활성화 중"; otherwise a 공개 파티 with how many hold it, and a 비공개 파티 with the first other Holder and how many
+// more. The words are the frames'; the kinds stay the glossary's.
+function sharedKicker(quest: Quest, switchedOn: boolean, meId: string): string {
+  const kind = quest.joinPolicy === 'closed' ? '비공개 파티' : '공개 파티';
+  if (switchedOn) {
+    return `${kind} · 활성화 중`;
   }
-  if (party.joinPolicy === 'closed') {
-    return others === '' ? '비공개 파티' : `비공개 파티 · ${others}`;
+  if (quest.joinPolicy !== 'closed') {
+    return `${kind} · ${quest.holders.length}명`;
   }
-  return party.mine ? '공개 파티 · 활성화 중' : `공개 파티 · ${party.memberCount}명`;
+  const [first, ...more] = quest.holders.filter(({ id }) => id !== meId);
+  if (first === undefined) {
+    return kind;
+  }
+  return more.length === 0 ? `${kind} · ${first.name}` : `${kind} · ${first.name} 외 ${more.length}명`;
 }
 
 function meta(subQuest: SubQuest | null): string {
@@ -198,32 +216,40 @@ function kindLabel(tone: QuestRowTone, quest: Quest, meId: string): string {
 
 const ROW_ICON = { class: 'clock', open: 'users', closed: 'lock' } as const;
 
-function toneOf(quest: Quest, party: QuestParty | null): QuestRowTone {
+function toneOf(quest: Quest): QuestRowTone {
   if (quest.classQuest) {
     return 'class';
   }
-  return party === null || party.joinPolicy === 'closed' ? 'closed' : 'open';
+  return quest.joinPolicy === 'closed' ? 'closed' : 'open';
 }
 
-// The rows of the Quest list, the earliest first. A Quest without a time comes last.
+// Whether a Quest has a time: one of its Sub Quests still to come has a start, or, once every Sub Quest ended, one of
+// them had. A Party whose time is not set is no Quest yet, as `Main` has it, and is in neither the list nor its counts.
+function timed(quest: Quest): boolean {
+  const subQuest = timedSubQuest(quest);
+  return subQuest === null ? quest.subQuests.some(({ startsAt }) => startsAt !== null) : subQuest.startsAt !== null;
+}
+
+// The rows of the Quest list, the earliest first, without the Quests that have no time.
 export function toQuestRows(sources: QuestSources): QuestRowView[] {
   const { quests, myParty, parties, meId, now } = sources;
-  const byStart = quests.toSorted((first, second) => startOf(first) - startOf(second));
+  const byStart = quests.filter((quest) => timed(quest)).toSorted((first, second) => startOf(first) - startOf(second));
   const nextClass = byStart.find((quest) => quest.classQuest && startOf(quest) > now.getTime());
   return byStart.map((quest) => {
-    const subQuest = shownSubQuest(quest);
-    const party = quest.classQuest ? null : partyOf(quest, myParty, parties);
-    const tone = toneOf(quest, party);
+    const subQuest = timedSubQuest(quest);
+    const tone = toneOf(quest);
     const start = subQuest?.startsAt ?? null;
     return {
       id: quest.id,
       kind: quest.classQuest ? 'class' : 'party',
       tone,
       icon: ROW_ICON[tone],
-      joinPolicy: party?.joinPolicy ?? null,
-      kicker: quest.classQuest ? classKicker(subQuest, quest === nextClass, now) : sharedKicker(quest, party, meId),
+      joinPolicy: quest.classQuest ? null : quest.joinPolicy,
+      kicker: quest.classQuest
+        ? classKicker(subQuest, quest === nextClass, now)
+        : sharedKicker(quest, partyOf(quest, myParty, parties) !== null, meId),
       label: kindLabel(tone, quest, meId),
-      title: party?.title ?? quest.title,
+      title: quest.title,
       meta: meta(subQuest),
       place: subQuest?.place?.label ?? '',
       time: start === null ? '' : koreaClock(start),
@@ -241,7 +267,7 @@ export interface QuestGroup {
 }
 
 // The groups of the `MainQuests` frame by the days from today to a Quest's start, the last day of each first. Their
-// rows keep the list's order. Ended Quests are left out; a Quest without a start goes last, under "시간 미정".
+// rows keep the list's order. Ended Quests are left out, and the rows hold no Quest without a time.
 export function toQuestGroups(rows: readonly QuestRowView[], now: Date): QuestGroup[] {
   const tomorrow = koreaNextDay(now);
   const groups = [
@@ -252,13 +278,13 @@ export function toQuestGroups(rows: readonly QuestRowView[], now: Date): QuestGr
     { upTo: Number.POSITIVE_INFINITY, title: '그 이후' },
   ];
   const shown = rows.filter(({ ended }) => !ended);
-  const timed = groups.map(({ upTo, title }, index) => {
-    const from = index === 0 ? Number.NEGATIVE_INFINITY : (groups[index - 1]?.upTo ?? 0) + 1;
-    return {
-      title,
-      rows: shown.filter(({ daysAway }) => daysAway !== null && daysAway >= from && daysAway <= upTo),
-    };
-  });
-  const untimed = { title: '시간 미정', rows: shown.filter(({ daysAway }) => daysAway === null) };
-  return [...timed, untimed].filter((group) => group.rows.length > 0);
+  return groups
+    .map(({ upTo, title }, index) => {
+      const from = index === 0 ? Number.NEGATIVE_INFINITY : (groups[index - 1]?.upTo ?? 0) + 1;
+      return {
+        title,
+        rows: shown.filter(({ daysAway }) => daysAway !== null && daysAway >= from && daysAway <= upTo),
+      };
+    })
+    .filter((group) => group.rows.length > 0);
 }

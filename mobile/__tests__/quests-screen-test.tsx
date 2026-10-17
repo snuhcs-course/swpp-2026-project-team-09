@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -22,7 +23,7 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 }));
 
 const CLASS = '강의 · 자료구조 · 301동 118호 · 14:00';
-const PARTY = '공개 파티 · AI 커리어 설명회 같이 가요 · 301동 앞 · 17:40';
+const PARTY = '공개 파티 · AI 커리어 설명회 · 301동 앞 · 17:40';
 const DINNER = '비공개 파티 · 김민준 · 저녁 약속 · 학생회관 (63동) · 20:10';
 
 beforeEach(async () => {
