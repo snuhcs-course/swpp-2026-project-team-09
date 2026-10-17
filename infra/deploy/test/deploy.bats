@@ -175,6 +175,19 @@ serve_check_runs() {
   [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests completed failure' 'flow-tests in_progress null')" = waiting-for-ci ]
 }
 
+@test "a required check whose only run was cancelled, went stale or awaits an action gives waiting-for-ci, also beside a failed run; failure, timed_out, startup_failure, neutral and skipped give ci-failed" {
+  # shellcheck source=../deploy.sh
+  source "$DEPLOY"
+  local conclusion
+  for conclusion in cancelled stale action_required; do
+    [ "$(verdict "${PASSED[@]:0:4}" "flow-tests completed $conclusion")" = waiting-for-ci ]
+    [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests completed failure' "flow-tests completed $conclusion")" = waiting-for-ci ]
+  done
+  for conclusion in failure timed_out startup_failure neutral skipped; do
+    [ "$(verdict "${PASSED[@]:0:4}" "flow-tests completed $conclusion")" = ci-failed ]
+  done
+}
+
 @test "after a failed build, attempts 1 and 2 retry the same commit, attempt 3 gives held, and a new tip clears the hold" {
   # shellcheck source=../deploy.sh
   source "$DEPLOY"

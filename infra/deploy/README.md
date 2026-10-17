@@ -35,8 +35,9 @@ systemd never starts it while a run is going. The service runs `infra/deploy/dep
 1. Fetches `development`. When its tip is the deployed commit, the result is `up-to-date` and the run stops.
 2. Reads the tip's check runs from GitHub's public API, without a token. The CI checks `main-server`,
    `socket-server`, `worker-server`, `match-server` and `flow-tests` must have succeeded; `admin`, `mobile` and
-   `deploy-scripts` are not consulted. One missing or still running gives `waiting-for-ci`, asked again next run; one
-   failed gives `ci-failed`, and the commit is not asked about again.
+   `deploy-scripts` are not consulted. One success of each among its runs is enough. Otherwise a check missing, still
+   running, cancelled (as a newer push cancels it), stale or waiting for an action gives `waiting-for-ci`, asked again
+   next run; one failed, timed out, neutral or skipped gives `ci-failed`, and the commit is not asked about again.
 3. Dumps the databases with `pg_dumpall` into the backups folder and keeps the newest 7. No dump while no database
    runs.
 4. Resets the checkout to the tip with `git reset --hard` and `git clean -fdx`.
@@ -189,16 +190,16 @@ From any browser, `http://swpp26t09.147-46-242-174.sslip.io/deploy-status`. Its 
 | `checks`            | The name and conclusion of each required check of the candidate  |
 | `recreatedServices` | The services Compose created or recreated in the last deployment |
 
-| `result`          | What it means and what to do                                                                                               |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `up-to-date`      | The tip is deployed. Nothing to do.                                                                                        |
-| `deployed`        | This run deployed the tip.                                                                                                 |
-| `waiting-for-ci`  | A required check of the tip is missing or still running, or GitHub refused the request (60 an hour without a token). Wait. |
-| `ci-failed`       | A required check failed. Push a fix; after re-running the checks on GitHub, [start a run by hand](#redeploying-by-hand).   |
-| `build-failed`    | The dump, the checkout or the build failed; the old containers keep running. Read the journal.                             |
-| `unhealthy`       | The build started but the main server or the socket server did not answer through the proxy. Read `dc logs`.               |
-| `held`            | Three attempts at the tip failed. Push a fix, or start a run by hand once the cause is gone.                               |
-| `secrets-missing` | The settings file is missing or holds `CHANGE_ME`. [Fill it in](#filling-the-settings).                                    |
+| `result`          | What it means and what to do                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `up-to-date`      | The tip is deployed. Nothing to do.                                                                                                   |
+| `deployed`        | This run deployed the tip.                                                                                                            |
+| `waiting-for-ci`  | A required check of the tip is missing, still running or cancelled, or GitHub refused the request (60 an hour without a token). Wait. |
+| `ci-failed`       | A required check failed. Push a fix; after re-running the checks on GitHub, [start a run by hand](#redeploying-by-hand).              |
+| `build-failed`    | The dump, the checkout or the build failed; the old containers keep running. Read the journal.                                        |
+| `unhealthy`       | The build started but the main server or the socket server did not answer through the proxy. Read `dc logs`.                          |
+| `held`            | Three attempts at the tip failed. Push a fix, or start a run by hand once the cause is gone.                                          |
+| `secrets-missing` | The settings file is missing or holds `CHANGE_ME`. [Fill it in](#filling-the-settings).                                               |
 
 A `checkedAt` more than a few minutes old means no run has finished since: a build is going, the timer is stopped or
 a fetch failed, which leaves the file as it was. The journal says which.

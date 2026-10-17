@@ -101,19 +101,20 @@ check_runs_from_json() {
 }
 
 # Prints `name<TAB>outcome` for each required check, given the check runs as check_runs_from_json prints them.
-# A commit pushed to several branches has a run of each check per push; one success among them is enough.
-# The outcome is success, else the status of a run still going, else a failed run's conclusion, else missing.
+# A commit pushed to several branches has a run of each check per push; one success among them is enough. A run
+# cancelled by a newer push (ci.yml's concurrency) may still be run again, so it is waited for, not failed.
 summarize_checks() {
   awk -F '\t' -v required="$REQUIRED_CHECKS" '
     BEGIN { count = split(required, name, " ") }
     $3 == "success" { success[$1] = 1 }
-    $2 != "completed" && !($1 in running) { running[$1] = $2 }
+    $2 != "completed" && !($1 in unsettled) { unsettled[$1] = $2 }
+    $3 ~ /^(cancelled|stale|action_required)$/ && !($1 in unsettled) { unsettled[$1] = $3 }
     $2 == "completed" && $3 != "success" && !($1 in failed) { failed[$1] = $3 }
     END {
       for (i = 1; i <= count; i++) {
         n = name[i]
         if (n in success) outcome = "success"
-        else if (n in running) outcome = running[n]
+        else if (n in unsettled) outcome = unsettled[n]
         else if (n in failed) outcome = failed[n]
         else outcome = "missing"
         print n "\t" outcome
@@ -125,7 +126,7 @@ summarize_checks() {
 judge_checks() {
   awk -F '\t' '
     $2 == "success" { next }
-    $2 ~ /^(missing|queued|in_progress|requested|waiting|pending)$/ { waiting = 1; next }
+    $2 ~ /^(missing|queued|in_progress|requested|waiting|pending|cancelled|stale|action_required)$/ { waiting = 1; next }
     { failed = 1 }
     END { print failed ? "ci-failed" : waiting ? "waiting-for-ci" : "deploy" }'
 }
