@@ -179,7 +179,7 @@ describe("알림's count and signals", () => {
     const [request] = FRIEND_REQUESTS.received;
     server.on('GET /friend-requests', {
       status: 200,
-      body: { received: Array.from({ length: 6 }, (_, index) => ({ ...request, id: `r${index}` })), sent: [] },
+      body: { received: Array.from({ length: 7 }, (_, index) => ({ ...request, id: `r${index}` })), sent: [] },
     });
     const user = await openMain();
     await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
