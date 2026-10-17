@@ -1772,7 +1772,8 @@ its model through OpenRouter with the Vercel AI SDK
 
 - `OPENROUTER_API_KEY` is the OpenRouter key and `ASSISTANT_MODEL` the OpenRouter id of the model, such as
   `anthropic/claude-haiku-5.5`. Both may be empty, and the server starts without them; the endpoint then answers 500.
-  `.env.example` says how to set up a key.
+  `.env.example` says how to set up a key. The endpoint has no limit yet on the length of a message, the time of a
+  reply or the messages of a day, so set a key only on your own machine, never on a server others can reach.
 
 The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 

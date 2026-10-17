@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
@@ -25,6 +26,10 @@ export function openRouterModel(apiKey: string, modelId: string): Model {
 // The model calls a message may take: each tool call is one, and so is the answer.
 const MAX_STEPS = 8;
 
+// A failed model call is not sent again: each retry is another call billed to the credit and more waiting for the
+// User, who can send the message again instead.
+const MAX_RETRIES = 0;
+
 function toolSetOf({ tools }: Feature, context: ToolContext): ToolSet {
   return Object.fromEntries(
     Object.entries(tools).map(([name, { description, input, run }]) => [
@@ -47,6 +52,7 @@ export async function runFeature(
     messages: messages.map(({ role, text: content }) => ({ role, content })),
     tools: toolSetOf(feature, context),
     stopWhen: stepCountIs(MAX_STEPS),
+    maxRetries: MAX_RETRIES,
   });
   return text;
 }

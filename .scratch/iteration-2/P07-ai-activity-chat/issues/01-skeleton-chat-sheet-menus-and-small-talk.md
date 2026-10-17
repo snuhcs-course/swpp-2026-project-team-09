@@ -89,7 +89,7 @@ Where things are:
 Decisions:
 
 - The model port's value is the AI SDK's language model. The fake is built on the SDK's `MockLanguageModelV4`, so the tests run the real adapter loop, tool registration included.
-- `ai` is pinned to 7.0.142, the newest version that passes pnpm's minimum release age without exceptions.
+- `package.json` asks for `ai` `^7.0.137`, and the lockfile holds 7.0.142, the newest version that passed pnpm's minimum release age without exceptions.
 - `OPENROUTER_API_KEY` and `ASSISTANT_MODEL` default to empty, so a server without them still starts. The endpoint then answers 500 until ticket 02 adds the error reply.
 - The look follows the MainChat frame (checked on 2026-10-18):
   - The sheet runs from the top of the screen to the navigation, white at 80%.
@@ -106,7 +106,8 @@ Not checked or not confirmed:
 
 - Nothing ran on a phone or against a real model. Whether the keyboard covers the input bar on iOS is unseen; the main screen has no keyboard avoidance.
 - While the sheet is open, the friend and Quest lists and the zoom control are still mounted under it, covered but reachable by a screen reader.
-- `MAX_STEPS = 8` is a constant. Ticket 02 makes it configurable.
+- `MAX_STEPS = 8` is a constant, and a failed model call is not retried (`MAX_RETRIES = 0`, after the review of #84). Ticket 02 makes the limits configurable.
+- What ticket 02 takes over from 01 and from the review of #84 is listed in its `## Comments`.
 - The full app test suite timed out in `party-boards-test`, `events-tab-test` and `dining-layer-test` while the machine was under load. Run alone, all three pass.
 - `tsc` reports two errors in `menus-screen-test.tsx` and `support/party.ts` (typed routes). They fail the same way without these changes.
 
