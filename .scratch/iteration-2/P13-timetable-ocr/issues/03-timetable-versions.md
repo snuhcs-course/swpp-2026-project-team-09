@@ -34,7 +34,9 @@ Ticket 04 calls the same "make a version and switch to it" for a screenshot.
 - [ ] The switch in progress is stored on the phone before the reset and after each post; at the next launch an unfinished switch is finished before anything else, and other version actions are refused until then.
 - [ ] Versions are kept per signed-in User; another account on the same phone sees only its own.
 - [ ] Before a switch, a server timetable that differs from what this phone last wrote is kept as a new version `다른 기기에서 바꾼 시간표`; nothing is overwritten.
+- [ ] Every timetable write from this phone (the class form's add, edit and delete, an import, a switch) updates what this phone last wrote; after a manual edit, a switch makes no extra version.
+- [ ] Deleting the current version skips the check, so that a User with 10 versions can always make room.
 - [ ] The timetable screen, Class Quests and the map follow the switch, because the client's caches of classes and Quests are invalidated.
 - [ ] The spec and the PR say that other versions stay on one phone.
-- [ ] Jest against the mock client covers: switching, retrying after a failed post, resuming an unfinished switch at launch, two Users on one phone, a server changed elsewhere, rename, delete (not the last), add, duplicate, the 10-version limit, and first use with the semester name.
+- [ ] Jest against the mock client covers: switching, retrying after a failed post, resuming an unfinished switch at launch, two Users on one phone, a server changed elsewhere, a class edited in the form then a switch (no extra version), deleting with 10 versions and a changed server, rename, delete (not the last), add, duplicate, the 10-version limit, and first use with the semester name.
 - [ ] Screenshots of the dropdown, opened and renaming, beside the `Profile` frame, under Test Results.
