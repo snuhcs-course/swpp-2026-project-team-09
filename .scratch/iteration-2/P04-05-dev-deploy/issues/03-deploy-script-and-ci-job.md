@@ -47,3 +47,10 @@ Fixed here so that tickets 02 and 04 match without seeing this ticket: the deplo
 
 - Agent time: about 25 minutes, an estimate (one implementer subagent).
 - Tokens: input 10,703,000 in all (cache reads 10,416,000, cache writes 286,000, uncached 0), output 19,000. Measured just before this section was written.
+
+### Review round (2026-10-17)
+
+- By hand: systemd 255 hands every later start of the service the timer's stale `TRIGGER_UNIT`, so `deploy.sh` no longer reads it. A run is by hand when it finds the request file `redeploy` in the status folder (written by the new `snu-now-redeploy.service`, removed by the run) or runs outside systemd (`INVOCATION_ID` unset).
+- `compose build` runs before `compose up --detach`: a failed build is `build-failed` and stops nothing; a failed `up` is `unhealthy`, with the new containers running and `deployedCommit` unchanged.
+- A required check with no success whose run is cancelled, stale or `action_required` gives `waiting-for-ci`, not `ci-failed`.
+- The clean step logs on success too. The tests' `[[ ]]` checks end in `|| false` for bash 3.2, `deploy.bats` is shellcheck-clean and CI shellchecks the `*.bats` files, and `fake-command.sh` is now `deploy-fakes.sh`.

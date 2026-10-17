@@ -35,3 +35,8 @@ Fixed here so that tickets 02 and 03 match without seeing this ticket: the deplo
 
 - Agent time: about 22 minutes, an estimate (one implementer subagent).
 - Tokens: input 9,946,000 in all (cache reads 9,733,000, cache writes 213,000, uncached 0), output 29,000. Measured just before this section was written.
+
+### Review round (2026-10-17)
+
+- A fifth unit, `snu-now-redeploy.service`, asks for a deploy run by hand; the bootstrap installs it with the others and still enables only the two timers.
+- The backups folder is closed to others (2770), as the secrets folder is: the dumps hold Users' data and password hashes, and `/srv/team`'s default ACL overrides the umask.
