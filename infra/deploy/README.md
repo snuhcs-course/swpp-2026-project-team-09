@@ -52,7 +52,7 @@ systemd never starts it while a run is going. The service runs `infra/deploy/dep
 8. Writes `status.json`, which the proxy serves at `/deploy-status`.
 
 A commit whose dump, checkout or build fails (`build-failed`) or whose `up` or check in step 6 fails (`unhealthy`) is
-tried again on the next two runs, then `held` until a new commit arrives or a person starts a run by hand. A run that
+tried again on the next two runs, then `held` until a new commit arrives or a person asks for a run by hand. A run that
 finds `CHANGE_ME` in the settings file stops before Docker (`secrets-missing`). Every run logs to the journal.
 
 `snu-now-demo-refresh.timer` starts `snu-now-demo-refresh.service` every day at 19:00 UTC (04:00 in Seoul). It
@@ -67,21 +67,21 @@ restarts `demo-seed`, which rewrites the Demo Data's days around today.
 | `/srv/team/snu-now-backups`               | The dumps, `snu-now-YYYYMMDDTHHMMSSZ.sql.gz` in UTC                       |
 | `/srv/team/snu-now-status/status.json`    | The status file                                                           |
 | `/srv/team/snu-now-apk`                   | The dev APKs                                                              |
-| `/etc/systemd/system/snu-now-*`           | The four unit files, copied there from `infra/deploy` by the bootstrap    |
+| `/etc/systemd/system/snu-now-*`           | The five unit files, copied there from `infra/deploy` by the bootstrap    |
 | The Docker volume `snu-now_postgres-data` | PostgreSQL's data                                                         |
 
 The folders belong to the team group: every member reads them, and writes the settings file, the dumps and the APKs,
 without `sudo`. Docker and systemd need `sudo`.
 
-| In the repository                  | What it is                                                                         |
-| ---------------------------------- | ---------------------------------------------------------------------------------- |
-| `compose.deploy.yaml`              | The deployment override, laid over the laptop `compose.yaml`                       |
-| `infra/proxy/`                     | The proxy's `Caddyfile` and the `Dockerfile` that builds it into the proxy's image |
-| `infra/deploy/deploy.sh`           | One deploy run                                                                     |
-| `infra/deploy/bootstrap.sh`        | Readies a server for the deploy timer                                              |
-| `infra/deploy/snu-now-*.service`   | The deploy and demo-refresh services, with a `.timer` beside each                  |
-| `infra/deploy/snu-now.env.example` | The settings file as the bootstrap writes it, with what each value is              |
-| `infra/deploy/test/`               | The two scripts' bats tests                                                        |
+| In the repository                  | What it is                                                                           |
+| ---------------------------------- | ------------------------------------------------------------------------------------ |
+| `compose.deploy.yaml`              | The deployment override, laid over the laptop `compose.yaml`                         |
+| `infra/proxy/`                     | The proxy's `Caddyfile` and the `Dockerfile` that builds it into the proxy's image   |
+| `infra/deploy/deploy.sh`           | One deploy run                                                                       |
+| `infra/deploy/bootstrap.sh`        | Readies a server for the deploy timer                                                |
+| `infra/deploy/snu-now-*.service`   | The deploy and demo-refresh services, each with a `.timer`, and the redeploy service |
+| `infra/deploy/snu-now.env.example` | The settings file as the bootstrap writes it, with what each value is                |
+| `infra/deploy/test/`               | The two scripts' bats tests                                                          |
 
 ### Compose by hand
 
@@ -117,7 +117,7 @@ rm bootstrap.sh
 The bootstrap installs `docker.io`, `docker-compose-v2`, `docker-buildx`, `git` and `curl` from Ubuntu's archive,
 creates the five folders of [Where things are](#where-things-are), clones the repository on `development` into the
 checkout and marks it safe for git under root. It writes the settings file with the generated and fixed values and
-`CHANGE_ME` for the three a person fills in, copies the four unit files into systemd and runs
+`CHANGE_ME` for the three a person fills in, copies the five unit files into systemd and runs
 `systemctl enable --now` on the two timers. It never overwrites an existing settings file and never deploys.
 
 It takes the team group from `/srv/team`. If it stops saying that `/srv/team` belongs to root, name the team's group
@@ -197,10 +197,10 @@ From any browser, `http://swpp26t09.147-46-242-174.sslip.io/deploy-status`. Its 
 | `up-to-date`      | The tip is deployed. Nothing to do.                                                                                                                                      |
 | `deployed`        | This run deployed the tip.                                                                                                                                               |
 | `waiting-for-ci`  | A required check of the tip is missing, still running or cancelled, or GitHub refused the request (60 an hour without a token). Wait.                                    |
-| `ci-failed`       | A required check failed. Push a fix; after re-running the checks on GitHub, [start a run by hand](#redeploying-by-hand).                                                 |
+| `ci-failed`       | A required check failed. Push a fix; after re-running the checks on GitHub, [ask for a run by hand](#redeploying-by-hand).                                               |
 | `build-failed`    | The dump, the checkout or the build failed; the old containers keep running. Read the journal.                                                                           |
 | `unhealthy`       | The new containers run, but `up` failed or the main server or the socket server did not answer through the proxy; `deployedCommit` stays the one before. Read `dc logs`. |
-| `held`            | Three attempts at the tip failed. Push a fix, or start a run by hand once the cause is gone.                                                                             |
+| `held`            | Three attempts at the tip failed. Push a fix, or ask for a run by hand once the cause is gone.                                                                           |
 | `secrets-missing` | The settings file is missing or holds `CHANGE_ME`. [Fill it in](#filling-the-settings).                                                                                  |
 
 A `checkedAt` more than a few minutes old means no run has finished since: a build is going, the timer is stopped or
@@ -217,22 +217,26 @@ sudo journalctl -u snu-now-deploy --follow
 systemctl status snu-now-deploy
 ```
 
-Each run starts with `run: started by snu-now-deploy.timer` or `run: started by hand`, logs one line per step
-(`fetch:`, `ci:`, `dump:`, `checkout:`, Compose's own output, `smoke:`, `clean:`) and ends with `status:` and the
-result. A run that ends in `build-failed`, `unhealthy` or `secrets-missing` marks the service failed; the timer starts
-the next one all the same. The demo refresh logs under `sudo journalctl -u snu-now-demo-refresh`, and the servers'
-logs are `dc logs <service>`.
+Each run starts with `run: started by systemd` or `run: asked for by hand (snu-now-redeploy)`, logs one line per
+step (`fetch:`, `ci:`, `dump:`, `checkout:`, Compose's own output with `build:` or `start:` when that fails, `smoke:`,
+`clean:`) and ends with `status:` and the result. A run that ends in `build-failed`, `unhealthy` or `secrets-missing`
+marks the service failed; the timer starts the next one all the same. The demo refresh logs under
+`sudo journalctl -u snu-now-demo-refresh`, and the servers' logs are `dc logs <service>`.
 
 ## Redeploying by hand
 
 ```bash
-sudo systemctl start snu-now-deploy
+sudo systemctl start snu-now-redeploy
 ```
 
-It runs as the timer's runs do and returns when the run ends, with `--no-block` at once; follow it in the journal.
-Start it when no run is going (`systemctl is-active snu-now-deploy` says `inactive` or `failed`). A run started by hand
-asks GitHub again about a `held` or `ci-failed` commit and builds it from attempt 1. When the tip is already deployed
-it does nothing (`up-to-date`): to restart the running stack, `dc up --detach` or `dc restart <service>`.
+It writes a request file, `/srv/team/snu-now-status/redeploy`, starts a deploy run and returns at once; follow the run
+in the journal. The run that finds the file removes it, asks GitHub again about a `held` or `ci-failed` commit and
+builds it from attempt 1. While a run is going, the request waits for the next one, a minute after it ends. When the
+tip is already deployed the run does nothing (`up-to-date`): to restart the running stack, `dc up --detach` or
+`dc restart <service>`.
+
+`sudo systemctl start snu-now-deploy` also starts a run, but it behaves as a timer run: systemd hands it the timer's
+details, so the run cannot tell that a person started it, and a `held` or `ci-failed` commit stays as it is.
 
 To apply the demo refresh now: `sudo systemctl start snu-now-demo-refresh`.
 
@@ -396,8 +400,8 @@ hand on the server instead, in the operations tickets of [P04-05](../../.scratch
 - The bootstrap on the real server: the packages from Ubuntu's archive, the team folder's group and default ACL, the
   clone and `safe.directory`, and a second run that changes nothing. Ticket 06.
 - The systemd units: a first run on `enable --now`, a run a minute after each run, failed ones included, and two
-  minutes after boot; the `TRIGGER_UNIT` that systemd sets for the timer's runs and not for `systemctl start`, by which
-  a run tells a timer from a person; the demo refresh at 19:00 UTC. Ticket 06.
+  minutes after boot; `snu-now-redeploy` starting a run that takes its request file; the demo refresh at 19:00 UTC.
+  Ticket 06.
 - The course's ingress: the host reaching the proxy from a phone, and an APK downloaded whole through it. Tickets 06
   and 07; ticket 07 also checks [Adding an APK](#adding-an-apk) against what was done.
 - WebSocket through the ingress. Ticket 08, below.

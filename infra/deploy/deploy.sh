@@ -342,12 +342,17 @@ main() {
   local checked_at by_hand=no previous tip='' verdict checks='' attempt='' result
   local last_candidate last_result last_attempt deployed deployed_at services
   checked_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-  # systemd names the timer in TRIGGER_UNIT; a person's `systemctl start` sets none.
-  if [[ -n "${TRIGGER_UNIT:-}" ]]; then
-    log "run: started by $TRIGGER_UNIT"
-  else
+  # systemd hands a person's `systemctl start` the TRIGGER_UNIT of the timer's earlier starts, so a person asks for a
+  # run by hand through the request file that snu-now-redeploy.service writes.
+  if [[ -e "$DEPLOY_STATUS_DIR/redeploy" ]]; then
+    rm -f "$DEPLOY_STATUS_DIR/redeploy"
     by_hand=yes
-    log "run: started by hand"
+    log "run: asked for by hand (snu-now-redeploy)"
+  elif [[ -z "${INVOCATION_ID:-}" ]]; then
+    by_hand=yes
+    log "run: started by hand, outside systemd"
+  else
+    log "run: started by systemd"
   fi
 
   # The previous status file is the memory between runs.

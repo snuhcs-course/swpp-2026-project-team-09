@@ -1,0 +1,15 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-17  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# A deploy run asked for by hand (infra/deploy/README.md): `sudo systemctl start snu-now-redeploy`. systemd gives a
+# start of snu-now-deploy the timer's TRIGGER_UNIT, so the request goes through a file that deploy.sh removes.
+[Unit]
+Description=Ask for a deploy run by hand
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/touch /srv/team/snu-now-status/redeploy
+ExecStart=/usr/bin/systemctl --no-block start snu-now-deploy.service

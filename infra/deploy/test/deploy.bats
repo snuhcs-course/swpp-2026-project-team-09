@@ -54,8 +54,8 @@ setup() {
  Container snu-now-socket-server-1  Started
  Container snu-now-proxy-1  Started
 EOF
-  # A timer starts the unit unless a test says the run was started by hand.
-  export TRIGGER_UNIT=snu-now-deploy.timer
+  # Under systemd, as the timer starts a run, unless a test says otherwise.
+  export INVOCATION_ID=5f0c2b7e9a4d4c1e8b3a6d0f2e7c9a1b
 }
 
 field() {
@@ -352,25 +352,33 @@ outcome() {
   [ "$(field '[.result, .deployedCommit] | map(tostring) | join(" ")')" = "unhealthy null" ]
 }
 
-@test "a run a person starts by hand tries a held or ci-failed commit again" {
+@test "a held commit is tried again from attempt 1 by a run that finds the request file, which the run removes; without the file, a run under systemd, as systemctl start snu-now-deploy starts one, leaves it held" {
   export FAKE_BUILD_STATUS=1
   for _ in 1 2 3 4; do run "$DEPLOY"; done
   [ "$(field .result)" = held ]
-  : >"$FAKE_CALLS"
-
-  unset TRIGGER_UNIT
   export FAKE_BUILD_STATUS=0
   run "$DEPLOY"
+  [ "$(field '[.result, .attempt] | map(tostring) | join(" ")')" = "held 3" ]
+  : >"$FAKE_CALLS"
 
+  touch "$DEPLOY_STATUS_DIR/redeploy"
+  run "$DEPLOY"
+
+  [ "$status" -eq 0 ]
   [ "$(field '[.result, .attempt] | map(tostring) | join(" ")')" = "deployed 1" ]
   [ "$(steps | grep -c check-runs)" -eq 1 ]
+  [ ! -e "$DEPLOY_STATUS_DIR/redeploy" ]
+}
 
-  export FAKE_TIP=$NEXT_TIP TRIGGER_UNIT=snu-now-deploy.timer
+@test "a run outside systemd, as sudo bash deploy.sh starts one, asks GitHub again about a ci-failed commit" {
   serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed failure'
   run "$DEPLOY"
   [ "$(field .result)" = ci-failed ]
-  unset TRIGGER_UNIT
+
+  unset INVOCATION_ID
   serve_check_runs "${PASSED[@]}"
   run "$DEPLOY"
-  [ "$(field '[.result, .deployedCommit] | join(" ")')" = "deployed $NEXT_TIP" ]
+
+  [ "$status" -eq 0 ]
+  [ "$(field '[.result, .deployedCommit] | join(" ")')" = "deployed $TIP" ]
 }

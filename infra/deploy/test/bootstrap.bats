@@ -126,7 +126,7 @@ example_value_of() {
   cmp "$BATS_TEST_TMPDIR/filled" "$SETTINGS"
 }
 
-@test "with fakes for apt-get, git, systemctl and install, a first run installs the three packages, clones, installs and enables the two timers; a second run on a prepared machine installs nothing again and fails nothing" {
+@test "with fakes for apt-get, git, systemctl and install, a first run installs the three packages, clones, installs the five units and enables only the two timers; a second run on a prepared machine installs nothing again and fails nothing" {
   local calls=$FAKE_STATE/calls packages package unit
   bootstrap
 
@@ -138,7 +138,8 @@ example_value_of() {
   grep -qx "git clone --branch development https://github.com/snuhcs-course/swpp-2026-project-team-09.git $CHECKOUT" \
     "$calls"
   grep -qx "git config --system --add safe.directory $CHECKOUT" "$calls"
-  for unit in snu-now-deploy.service snu-now-deploy.timer snu-now-demo-refresh.service snu-now-demo-refresh.timer; do
+  for unit in snu-now-deploy.service snu-now-deploy.timer snu-now-demo-refresh.service snu-now-demo-refresh.timer \
+    snu-now-redeploy.service; do
     cmp "$REPOSITORY/infra/deploy/$unit" "$BOOTSTRAP_UNIT_DIR/$unit"
   done
   [ "$(grep '^systemctl ' "$calls")" = "$(printf '%s\n' 'systemctl daemon-reload' \
@@ -182,6 +183,19 @@ example_value_of() {
   grep -qx 'WorkingDirectory=/srv/team/snu-now' "$units/snu-now-demo-refresh.service"
   grep -qx 'ExecStart=/usr/bin/docker compose --env-file /srv/team/snu-now-secrets/snu-now.env --file compose.yaml --file compose.deploy.yaml --profile demo restart demo-seed' \
     "$units/snu-now-demo-refresh.service"
+}
+
+@test "the redeploy service writes the request file into the deploy service's status folder, then starts the deploy service without waiting for it, and nothing enables it" {
+  local units=$BOOTSTRAP_UNIT_DIR status_dir
+  bootstrap
+
+  status_dir=$(sed -n 's/^Environment=DEPLOY_STATUS_DIR=//p' "$units/snu-now-deploy.service")
+  [ "$(grep '^ExecStart=' "$units/snu-now-redeploy.service")" = "$(printf '%s\n' \
+    "ExecStart=/usr/bin/touch $status_dir/redeploy" \
+    'ExecStart=/usr/bin/systemctl --no-block start snu-now-deploy.service')" ]
+  grep -qx 'Type=oneshot' "$units/snu-now-redeploy.service"
+  run grep -x '\[Install\]' "$units/snu-now-redeploy.service"
+  [ "$status" -eq 1 ]
 }
 
 @test "the settings example names the variables of a fresh settings file, each under a comment of its own" {

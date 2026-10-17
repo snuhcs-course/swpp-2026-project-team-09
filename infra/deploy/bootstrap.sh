@@ -21,7 +21,8 @@ fi
 REPOSITORY=https://github.com/snuhcs-course/swpp-2026-project-team-09.git
 # git and curl for the clone and the deploy run, which a minimal image may lack.
 PACKAGES=(docker.io docker-compose-v2 docker-buildx git curl)
-UNITS=(snu-now-deploy.service snu-now-deploy.timer snu-now-demo-refresh.service snu-now-demo-refresh.timer)
+UNITS=(snu-now-deploy.service snu-now-deploy.timer snu-now-demo-refresh.service snu-now-demo-refresh.timer
+  snu-now-redeploy.service)
 
 CHECKOUT=$TEAM_DIR/snu-now
 SECRETS_DIR=$TEAM_DIR/snu-now-secrets
