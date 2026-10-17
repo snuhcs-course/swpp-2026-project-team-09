@@ -44,10 +44,14 @@ make_folder() {
 
 make_folders() {
   local folder
-  for folder in "$CHECKOUT" "$BACKUP_DIR" "$STATUS_DIR" "$APK_DIR"; do
+  # The dumps hold Users' data and password hashes, and /srv/team's default ACL overrides the umask, so their folder,
+  # like the secrets folder, is closed to others.
+  for folder in "$CHECKOUT" "$STATUS_DIR" "$APK_DIR"; do
     make_folder "$folder" 2775
   done
-  make_folder "$SECRETS_DIR" 2770
+  for folder in "$SECRETS_DIR" "$BACKUP_DIR"; do
+    make_folder "$folder" 2770
+  done
 }
 
 install_packages() {

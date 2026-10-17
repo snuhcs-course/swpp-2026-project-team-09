@@ -152,16 +152,19 @@ example_value_of() {
   [ "$status" -eq 1 ]
 }
 
-@test "the folders are created with the team group, the secrets folder closed to others, the rest group-writable" {
+@test "the folders are created with the team group, the secrets and backups folders closed to others, the rest group-writable and readable by others" {
   local folder
   bootstrap
 
-  for folder in snu-now snu-now-backups snu-now-status snu-now-apk; do
+  for folder in snu-now snu-now-status snu-now-apk; do
     [[ $(ls -ld "$BOOTSTRAP_TEAM_DIR/$folder") == drwxrwsr-x* ]] || false
     [ "$(group_of "$BOOTSTRAP_TEAM_DIR/$folder")" = "$BOOTSTRAP_TEAM_GROUP" ]
   done
-  [[ $(ls -ld "$BOOTSTRAP_TEAM_DIR/snu-now-secrets") == drwxrws---* ]] || false
-  [ "$(group_of "$BOOTSTRAP_TEAM_DIR/snu-now-secrets")" = "$BOOTSTRAP_TEAM_GROUP" ]
+  # The dumps hold Users' data and password hashes.
+  for folder in snu-now-secrets snu-now-backups; do
+    [[ $(ls -ld "$BOOTSTRAP_TEAM_DIR/$folder") == drwxrws---* ]] || false
+    [ "$(group_of "$BOOTSTRAP_TEAM_DIR/$folder")" = "$BOOTSTRAP_TEAM_GROUP" ]
+  done
 }
 
 @test "the unit files carry the schedule of the spec's \"Timers\" and the deploy service points its environment at the settings file, the status folder and the backups folder of the contract" {

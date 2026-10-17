@@ -64,7 +64,7 @@ restarts `demo-seed`, which rewrites the Demo Data's days around today.
 | ----------------------------------------- | ------------------------------------------------------------------------- |
 | `/srv/team/snu-now`                       | The checkout, reset to each deployed commit; nothing of value lives in it |
 | `/srv/team/snu-now-secrets/snu-now.env`   | The settings file, Compose's `--env-file`; its folder is closed to others |
-| `/srv/team/snu-now-backups`               | The dumps, `snu-now-YYYYMMDDTHHMMSSZ.sql.gz` in UTC                       |
+| `/srv/team/snu-now-backups`               | The dumps, `snu-now-YYYYMMDDTHHMMSSZ.sql.gz` in UTC; closed to others     |
 | `/srv/team/snu-now-status/status.json`    | The status file                                                           |
 | `/srv/team/snu-now-apk`                   | The dev APKs                                                              |
 | `/etc/systemd/system/snu-now-*`           | The five unit files, copied there from `infra/deploy` by the bootstrap    |
