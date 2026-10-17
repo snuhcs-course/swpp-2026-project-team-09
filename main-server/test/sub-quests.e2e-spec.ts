@@ -5,6 +5,7 @@
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Fable 5.1  prompted by TaeHyun79
+ * 2026-10-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -85,8 +86,7 @@ async function attendingUser(): Promise<{ user: TestUser; questId: string; atten
 
 describe('Adding a Sub Quest', () => {
   it('adds it after the attending one, with a point on the map', async () => {
-    // The morning of the Sub Quest's day, so that it has not ended whenever the test runs.
-    setClock('2026-10-13T09:00:00.000Z');
+    setClock(cafe.startsAt);
     const { user, questId } = await attendingUser();
 
     const response = await addSubQuest(app, user, questId, cafe);
