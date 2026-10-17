@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -98,16 +99,19 @@ export const serverClient: ApiClient = {
   listQuestInvitations: () => call('GET', '/quest-invitations', isQuestInvitations),
   listJoinRequests: (questId) => call('GET', `/quests/${encodeURIComponent(questId)}/join-requests`, isJoinRequests),
   listClasses: () => call('GET', '/timetable/classes', isTimetableClasses),
-  // Sent once for each press of 저장, so its key is new each time.
-  addClass: (save) =>
+  // Sent once for each press of 저장, so its key is new each time unless the caller keeps one to send again.
+  addClass: (save, key) =>
     call('POST', '/timetable/classes', isTimetableClass, {
       body: save,
-      headers: { 'Idempotency-Key': newIdempotencyKey() },
+      headers: { 'Idempotency-Key': key ?? newIdempotencyKey() },
     }),
   replaceClass: (classId, save) =>
     call('PUT', `/timetable/classes/${encodeURIComponent(classId)}`, isTimetableClass, { body: save }),
   deleteClass: async (classId) => {
     await call('DELETE', `/timetable/classes/${encodeURIComponent(classId)}`, isNothing);
+  },
+  resetTimetable: async () => {
+    await call('DELETE', '/timetable/classes', isNothing);
   },
   listPlaces: () => call('GET', '/places', isPlaces),
   searchPlaces: (words) => call('GET', '/places/search', isPlaces, { query: { q: words } }),

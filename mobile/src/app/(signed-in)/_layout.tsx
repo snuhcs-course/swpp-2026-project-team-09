@@ -4,11 +4,13 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type NativeStackNavigationOptions, router, Stack, useGlobalSearchParams, useSegments } from 'expo-router';
 import { type ReactElement, useEffect } from 'react';
 import { MatchingWatch } from '@/features/events/matching-watch';
+import { VersionsAtLaunch } from '@/features/timetable/use-versions';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { BackgroundSharingProvider, PositionProvider, PositionSending } from '@/position';
 import { useOwnPlace } from '@/session/session';
@@ -54,7 +56,7 @@ function useInviteLinks(here: boolean): void {
 // The signed-in place: a User who agreed to the legal documents and finished Onboarding. The tabs, and the screens
 // that cover them, which the stack's back closes. The User's position is watched here, once for all of them, and sent
 // from here while the Master Switch is on, in front and, where the User chose it, in the background. The User's requests
-// for Matching are watched here too.
+// for Matching are watched here too, and a switch of timetable versions left unfinished is finished from here.
 export default function SignedInLayout(): ReactElement {
   const reduceMotion = useReduceMotion();
   const away = useOwnPlace('ready');
@@ -67,6 +69,7 @@ export default function SignedInLayout(): ReactElement {
       <PositionSending>
         <BackgroundSharingProvider>
           <MatchingWatch />
+          <VersionsAtLaunch />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="quests" options={slideFrom('bottom', reduceMotion)} />
