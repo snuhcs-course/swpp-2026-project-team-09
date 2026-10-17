@@ -95,8 +95,9 @@ The reference is the wireframe artifact `SNU Now 와이어프레임` (https://cl
 - Both entries open the form (`party-form`) preset to 비공개 with the Friend invited: the action `meetup` of a Friend's card on the map (`screens/main/main-screen.tsx`, built in `features/map/adapter.ts`) and the button of the Friend's panel (`screens/main/friend-panel.tsx`). Making it posts a Closed Quest and invites the Friend (`POST /quests/own`, `POST /quests/:questId/invitations`), as the form does now.
 - The Meetup code is **deleted** in the app and on the server. The last commit that holds it, `2f4f201` on `2.0/Main`, is recorded here and in ticket 01's PR, so that it can be brought back with git. Ticket 01 lists every file:
   - app: the route `meetup/[friendId]`, `screens/meetup/*`, the Meetup cards and `보낸 초대` of `screens/party/invites-meetups.tsx`, `features/meetups/*`, the client's Meetup operations and their mock, the Meetup rows of 알림, the `meetups-changed` live key, and the Meetups in the count of `초대`;
-  - server: `MeetupsModule`, the Meetup parts of the Friends service and the demo data, the Meetup e2e tests and the Meetup checks of other e2e tests, README's `## Meetup` section and the signal `meetups-changed`.
-- Code named after the Meetup that other features use stays: `MeetupPlace` (renamed), the place picker, the server's Sub Quest helpers, and the mock's former Meetup Quest, which moves into the Quest mock data.
+  - server: `MeetupsModule`, the Meetup parts of the Friends service, the demo data and the demo seed, the Meetup e2e tests and the Meetup checks of other e2e tests;
+  - elsewhere: the Meetup step of `flow-tests`, the admin's friendship-ending text, and the Meetup in the READMEs (root, `mobile`, `main-server`, `socket-server`, `admin`, `flow-tests`).
+- Code named after the Meetup that other features use stays: `MeetupPlace` (renamed), the place picker (used by the timetable), and the mock's former Meetup Quest, which moves into the Quest mock data. The server's Sub Quest helpers live in `src/quests/` and are untouched.
 - The Prisma model, the enum and the table stay, and no migration is added. Rows already stored stay unread. A Meetup accepted before is a Closed Quest and keeps showing as a 비공개 파티.
 
 ### What changes, screen by screen
@@ -123,10 +124,10 @@ Every item is drawn in the wireframe; nothing is added beyond it. "Mock" marks a
 ### Mocks
 
 - Each part the server cannot give has a mock adapter of its own behind the API client. When an endpoint arrives, only the client changes.
-- The mock build (Expo Go, the web, tests) shows every mocked part. The build connected to the server shows the mocked photos, tags, hiding a post, a request's note, 파티 채팅 and past Quests, like the Friends' statuses and 오늘의 발자국 today, but **hides the parts that show people who do not exist**: members' names and faces in summaries, an invitation's companions, `같이 할 사람을 찾는 중` and official recruiting. A real member is never shown beside an invented one.
+- The mock build (Expo Go, the web, tests) shows every mocked part. The build connected to the server shows the mocked photos, tags, hiding a post, 파티 채팅 and past Quests, like the Friends' statuses and 오늘의 발자국 today, but **hides every mocked part that would state something false about real people or real Quests**: members' names and faces in summaries, an invitation's time, place and companions, a join request's note, `같이 할 사람을 찾는 중` and official recruiting. A real member is never shown beside an invented one, and a real request or invitation never carries invented words.
 - A server Quest gets its mocked photo and tags by a stable hash of its id, so that the same Quest always looks the same.
 - What a User enters into a mocked part (a photo, tags, a chat message, `관심 없음`) is kept on the phone only and is not seen by others. The spec and the to-do list say so, and ticket 08 lists the endpoints that would replace each mock.
-- The mocked parts: official recruiting; photos; tags (search, ordering, `관심사`); hiding a post; people looking for company; members' names and faces in the recruiting and invitation summaries; an invitation's time, place and companions; a request's note; 파티 채팅; past Quests.
+- The mocked parts: official recruiting; photos; tags (search, ordering, `관심사`); hiding a post; people looking for company; members' names and faces in the recruiting and invitation summaries, an invitation's companions included (ticket 02); an invitation's time and place (ticket 05); a request's note; 파티 채팅; past Quests.
 
 ### Tickets
 

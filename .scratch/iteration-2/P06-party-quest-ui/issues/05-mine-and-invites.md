@@ -8,7 +8,7 @@ Blocked by: 01 (Retire the Meetup), 02 (The mocked parts of a Quest)
 
 `내 파티` and `초대` follow `PartyMine` and `PartyInvites`. A User tells public and private Quests apart, sees how many invitations still wait and how the activation stands, declines an activation from the card and finds it again under `다른 활성 파티`, and looks back at past plans. An invitation shows when and where it is and who else comes.
 
-Declining is kept on the phone, as today. Past Quests and an invitation's time, place and companions have mock adapters, added here.
+Declining is kept on the phone, as today. Past Quests and an invitation's time and place have mock adapters, added here; the companions come from ticket 02.
 
 ## Acceptance criteria
 
@@ -22,7 +22,7 @@ Declining is kept on the phone, as today. Past Quests and an invitation's time, 
 
 ### 초대
 
-- [ ] Each card shows `{when} · {where} · {names} 함께`; the build connected to the server leaves out `{names} 함께` until the server gives the companions.
+- [ ] Each card shows `{when} · {where} · {names} 함께`; the build connected to the server leaves out the mocked parts (all three) until the server gives them.
 - [ ] The header is `받은 초대 · {n}` and there is no `보낸 초대`.
 
 ### Tests and PR
