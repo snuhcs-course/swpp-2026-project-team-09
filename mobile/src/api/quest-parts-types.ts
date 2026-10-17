@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from './client';
@@ -62,7 +63,8 @@ export type ShownClient = Omit<ApiClient, PartsOperation> & {
   joinQuest: (questId: string) => Promise<ShownQuest>;
   // The photo and the tags left out keep none.
   makeQuest: (making: QuestMaking & Partial<QuestEntries>, idempotencyKey: string) => Promise<ShownQuest>;
-  attendGlobalEvent: (globalEventId: string, title?: string) => Promise<ShownQuest>;
+  // As `makeQuest`: the photo and the tags left out keep none.
+  attendGlobalEvent: (globalEventId: string, title?: string, entries?: Partial<QuestEntries>) => Promise<ShownQuest>;
   // The photo or the tags left out stay as they were.
   changeQuest: (questId: string, change: QuestChange & Partial<QuestEntries>) => Promise<ShownQuest>;
   acceptInvitation: (invitationId: string) => Promise<ShownQuest>;

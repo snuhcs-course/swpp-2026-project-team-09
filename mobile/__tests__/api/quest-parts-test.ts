@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -128,7 +129,6 @@ describe('what the User enters in the build that asks the main server', () => {
     expect(made).toMatchObject({ photo: PICKED, tags: ['알고리즘', '스터디'] });
     expect(study).toMatchObject({ photo: PICKED, tags: ['알고리즘', '스터디'] });
   });
-
   it('keeps changed tags on the phone without asking the main server to change anything', async () => {
     const server = await askMainServer({ signedIn: true });
     server.on(`GET /quests/${STUDY.id}`, { status: 200, body: STUDY });
@@ -139,6 +139,20 @@ describe('what the User enters in the build that asks the main server', () => {
     expect(server.received(`PATCH /quests/${STUDY.id}`)).toEqual([]);
     expect(changed.tags).toEqual(['코딩테스트']);
     expect(again).toMatchObject({ photo: null, tags: ['코딩테스트'] });
+  });
+});
+
+describe('a Quest the User makes for an event, in the build that asks the main server', () => {
+  it('gets no mocked photo or tags, and keeps the ones given', async () => {
+    const server = await askMainServer({ signedIn: true });
+    server.on('POST /quests', { status: 201, body: STUDY });
+
+    const bare = await apiClient.attendGlobalEvent('event-1');
+    expect(bare).toMatchObject({ photo: null, tags: [] });
+
+    const given = await apiClient.attendGlobalEvent('event-1', undefined, { photo: PICKED, tags: ['공연'] });
+    expect(server.received('POST /quests')[1]?.body).toEqual({ globalEventId: 'event-1' });
+    expect(given).toMatchObject({ photo: PICKED, tags: ['공연'] });
   });
 });
 

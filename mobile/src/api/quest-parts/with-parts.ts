@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -48,6 +49,13 @@ function enteredOf({ photo, tags }: Partial<QuestEntries>): Partial<QuestEntries
   return { ...(photo === undefined ? {} : { photo }), ...(tags === undefined ? {} : { tags }) };
 }
 
+// A Quest the User has just made, on its own or for an event: its photo and tags are the ones the User gave, kept on the
+// phone even when none is given, so that it gets no mocked ones.
+async function ownQuest(quest: Quest, { photo, tags }: Partial<QuestEntries>): Promise<ShownQuest> {
+  await keepQuestEntries(quest.id, { photo: photo ?? null, tags: tags ?? [] });
+  return shown(quest);
+}
+
 export function withQuestParts(client: ApiClient, build: Build): ShownClient {
   return {
     ...client,
@@ -58,14 +66,10 @@ export function withQuestParts(client: ApiClient, build: Build): ShownClient {
     },
     getQuest: async (questId) => shown(await client.getQuest(questId)),
     joinQuest: async (questId) => shown(await client.joinQuest(questId)),
-    // The photo and the tags are kept on the phone even when none is given, so that the User's own Quest gets no
-    // mocked ones.
-    makeQuest: async ({ photo, tags, ...making }, idempotencyKey) => {
-      const quest = await client.makeQuest(making, idempotencyKey);
-      await keepQuestEntries(quest.id, { photo: photo ?? null, tags: tags ?? [] });
-      return shown(quest);
-    },
-    attendGlobalEvent: async (globalEventId, title) => shown(await client.attendGlobalEvent(globalEventId, title)),
+    makeQuest: async ({ photo, tags, ...making }, idempotencyKey) =>
+      ownQuest(await client.makeQuest(making, idempotencyKey), { photo, tags }),
+    attendGlobalEvent: async (globalEventId, title, entries = {}) =>
+      ownQuest(await client.attendGlobalEvent(globalEventId, title), entries),
     // A change of the photo or the tags alone is not sent: the main server has nothing to change.
     changeQuest: async (questId, { photo, tags, ...change }) => {
       const sent: QuestChange = change;
