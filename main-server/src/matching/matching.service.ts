@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
@@ -140,7 +141,6 @@ export class MatchingService {
       return { holderIds: entering, entered: true };
     });
     if (entered) {
-      this.signals.send([userId], 'matching-changed');
       this.signals.send(holderIds, 'quests-changed');
     }
     return { questId, holderIds };
@@ -193,9 +193,14 @@ export class MatchingService {
       };
     });
     if (created) {
-      this.signals.send(holderIds, 'matching-changed');
       this.signals.send(holderIds, 'quests-changed');
     }
     return { questId, holderIds };
+  }
+
+  // The match server stores what a placement or a match did to the requests only after this server answers it, so it
+  // asks for `matching-changed` once it has: sent earlier, an app could read the request before it changed.
+  announceChanges(userIds: readonly string[]): void {
+    this.signals.send(userIds, 'matching-changed');
   }
 }

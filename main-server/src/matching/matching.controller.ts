@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
@@ -13,6 +14,8 @@ import {
   EligibleAnswerDto,
   type EligibleQuestionDto,
   eligibleQuestionSchema,
+  type MatchingChangesDto,
+  matchingChangesSchema,
   MatchQuestDto,
   type PlacementDto,
   placementSchema,
@@ -56,6 +59,13 @@ export class MatchingController {
   @MatchServerOnly()
   place(@Body({ schema: placementSchema }) body: PlacementDto): Promise<MatchQuestDto> {
     return this.matching.place(body);
+  }
+
+  @Post('changes')
+  @MatchServerOnly()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  changes(@Body({ schema: matchingChangesSchema }) { userIds }: MatchingChangesDto): void {
+    this.matching.announceChanges(userIds);
   }
 
   @Get()

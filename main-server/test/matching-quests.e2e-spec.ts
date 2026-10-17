@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -252,8 +253,8 @@ describe('The signals of a Shared Quest from a match', () => {
 
     await vi.waitFor(() => {
       // Attending sent the first to the User who held the Quest alone.
-      expect(signalsTo(alone)).toEqual(['quests-changed', 'matching-changed', 'quests-changed']);
-      expect(signalsTo(other)).toEqual(['matching-changed', 'quests-changed']);
+      expect(signalsTo(alone)).toEqual(['quests-changed', 'quests-changed']);
+      expect(signalsTo(other)).toEqual(['quests-changed']);
     });
     expect(signalsTo(sharing)).toEqual([]);
   });

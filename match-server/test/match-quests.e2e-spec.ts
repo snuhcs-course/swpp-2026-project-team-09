@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -60,6 +61,52 @@ describe("A match's Quest that the main server has not answered", () => {
   });
 });
 
+describe("A match's Quest that the main server created", () => {
+  it('is announced to its Holders once their requests name it, so that an app reading them on the signal finds it', async () => {
+    const mainServer = new MainServerStub();
+    const app = await rounds.start(mainServer);
+    const globalEventId = randomUUID();
+    const [kept, other, leftOut] = [
+      await rounds.waiting(globalEventId, 3),
+      await rounds.waiting(globalEventId, 3),
+      await rounds.waiting(globalEventId, 3),
+    ];
+    mainServer.quest = (matchId): Reply => ({
+      status: 201,
+      body: { questId: mainServer.questIdOf(matchId), holderIds: [kept.userId, other.userId] },
+    });
+    const readOnTheWord: unknown[] = [];
+    mainServer.changed = async (): Promise<Reply> => {
+      readOnTheWord.push(await Promise.all([kept, other].map((request) => rounds.stateOf(app, request))));
+      return { status: 204 };
+    };
+
+    await rounds.run(app);
+
+    const [{ id }] = await rounds.matchesOf(globalEventId);
+    const matched = { state: 'matched', questId: mainServer.questIdOf(id) };
+    expect(mainServer.announced()).toEqual([[kept.userId, other.userId]]);
+    expect(readOnTheWord).toEqual([[matched, matched]]);
+    expect(await rounds.stateOf(app, leftOut)).toEqual({ state: 'expired', questId: null });
+  });
+
+  it('is stored all the same when the main server does not take the word', async () => {
+    const mainServer = new MainServerStub();
+    mainServer.changed = (): Reply => null;
+    const app = await rounds.start(mainServer);
+    const globalEventId = randomUUID();
+    const requests = [await rounds.waiting(globalEventId, 2), await rounds.waiting(globalEventId, 2)];
+
+    await rounds.run(app);
+
+    const [match] = await rounds.matchesOf(globalEventId);
+    expect(match.state).toBe('quest_created');
+    expect(mainServer.announced()).toHaveLength(1);
+    const questId = mainServer.questIdOf(match.id);
+    expect(await rounds.stateOf(app, requests[0])).toEqual({ state: 'matched', questId });
+  });
+});
+
 describe("A match's Quest without every matched User", () => {
   it('expires the request of the User the main server left out', async () => {
     const mainServer = new MainServerStub();
@@ -100,6 +147,7 @@ describe('A match the main server refuses', () => {
 
     expect((await rounds.matchesOf(globalEventId)).map(({ state }) => state)).toEqual(['closed']);
     expect(mainServer.questCalls()).toHaveLength(1);
+    expect(mainServer.announced()).toEqual([]);
     expect(await Promise.all(requests.map((request) => rounds.stateOf(app, request)))).toEqual([
       { state: 'expired', questId: null },
       { state: 'expired', questId: null },

@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -74,6 +75,41 @@ describe('The placements of a round', () => {
       WAITING,
       WAITING,
     ]);
+  });
+});
+
+describe('The placed requests of a round', () => {
+  it('are announced once the round stores them, so that an app reading them on the signal finds its Quest', async () => {
+    const mainServer = new MainServerStub();
+    const app = await rounds.start(mainServer);
+    const globalEventId = randomUUID();
+    const quest = openQuest(globalEventId, 2, { freePlaces: 2 });
+    mainServer.eligible = answering([quest]);
+    const placed = [await rounds.waiting(globalEventId, 2), await rounds.waiting(globalEventId, 2)];
+    const readOnTheWord: unknown[] = [];
+    mainServer.changed = async (): Promise<Reply> => {
+      readOnTheWord.push(await Promise.all(placed.map((request) => rounds.stateOf(app, request))));
+      return { status: 204 };
+    };
+
+    await rounds.run(app);
+
+    const matched = { state: 'matched', questId: quest.id };
+    expect(mainServer.announced()).toEqual([placed.map(({ userId }) => userId)]);
+    expect(readOnTheWord).toEqual([[matched, matched]]);
+  });
+
+  it('are announced to nobody when the main server refuses every placement', async () => {
+    const mainServer = new MainServerStub();
+    const app = await rounds.start(mainServer);
+    const globalEventId = randomUUID();
+    mainServer.eligible = answering([openQuest(globalEventId, 2)]);
+    mainServer.placement = (): Reply => refusal(409, 'QUEST_FULL');
+    await rounds.waiting(globalEventId, 2);
+
+    await rounds.run(app);
+
+    expect(mainServer.announced()).toEqual([]);
   });
 });
 

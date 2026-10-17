@@ -165,10 +165,12 @@ when the server starts.
 4. **Groups.** The requests the round did not try to place go to the grouping module (see [Grouping](#grouping)), a
    pool at a time once it holds at least one group's size, and each group it returns is stored as a match, its
    requests `matched`. The others wait for the next round.
-5. **Quests.** The transaction ends, and the round asks the main server for the Quest of every match that awaits one,
-   the oldest first, each in a transaction of its own that claims the match with `FOR UPDATE SKIP LOCKED`, so that no
-   two match servers ask for one match at the same moment. It names the match's Users in the order their requests
-   arrived, and the main server lets the earliest of them who is free lead the Quest.
+5. **Quests.** The transaction ends, and the round names the Users it placed to the main server (see below). It then
+   asks the main server for the Quest of every match that awaits one, the oldest first, each in a transaction of its
+   own that claims the match with `FOR UPDATE SKIP LOCKED`, so that no two match servers ask for one match at the same
+   moment. It names the match's Users in the order their requests arrived, and the main server lets the earliest of
+   them who is free lead the Quest. Once that transaction has stored the Quest, the round names its Holders to the main
+   server.
 
 A match is in one of three states, in `matches.state`:
 
@@ -184,15 +186,22 @@ A match is in one of three states, in `matches.state`:
 The main server creates a match's Quest once, by the match's id, so asking again is safe. This one request is repeated
 this way; there is no general outbox.
 
+An app learns of a changed request from the main server's signal `matching-changed`, which the round asks for with
+`POST /matching-requests/changes`, naming the Users, once the transaction that changed their requests has ended. The
+main server answers a placement or a match's Quest before this server stores what it did, so a signal sent with that
+answer could reach an app that then reads its request unchanged. The call is made once: without an answer, the app
+finds the change when it fetches again.
+
 The calls go through `MainServer` in `src/matching/main-server.ts`: HTTP requests to `MAIN_SERVER_URL`, each of which
 reaches one main server however many run, with `Authorization: Bearer <MATCH_SERVER_TOKEN>`. Any answer outside 2xx
 other than a refusal with a code, an answer of another shape, or none within 5 seconds counts as no answer. The main
-server's README describes its four routes, `POST /matching-requests/standing`, `POST /matching-requests/eligible-quests`,
-`POST /matching-requests/placements` and `POST /matches/:matchId/quest`.
+server's README describes its five routes, `POST /matching-requests/standing`, `POST /matching-requests/eligible-quests`,
+`POST /matching-requests/placements`, `POST /matches/:matchId/quest` and `POST /matching-requests/changes`.
 
 In a test, `MainServerStub` from `test/main-server.ts` answers in the main server's place: `startApp` takes it as
-`mainServer`. Its `standing`, `eligible`, `placement` and `quest` say how it answers, `null` for no answer, and it keeps
-each call in `calls`; `placements()` lists the placements asked for.
+`mainServer`. Its `standing`, `eligible`, `placement`, `quest` and `changed` say how it answers, `null` for no answer,
+and it keeps each call in `calls`; `placements()` lists the placements asked for, and `announced()` the Users of each
+`POST /matching-requests/changes`.
 A round never runs by itself in the tests, whose settings set an hour between rounds. `useRounds()` from
 `test/rounds.ts`, called at the top of a test file, gives the file a database of its own, since a round groups every
 waiting request, and `rounds.run(app)` runs a round, as `test/rounds.e2e-spec.ts` does:

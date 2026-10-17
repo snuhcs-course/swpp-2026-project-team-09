@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
@@ -59,20 +60,24 @@ export class RoundService implements OnApplicationBootstrap {
   // Places requests into Open Quests and forms the matches, then asks the main server for the Quest of every match that
   // awaits one. Skipped while another match server runs a round.
   async run(): Promise<void> {
-    if (await this.placeAndGroup()) {
-      await this.askForQuests();
+    const placed = await this.placeAndGroup();
+    if (placed === null) {
+      return;
     }
+    await this.announceChanges(placed);
+    await this.askForQuests();
   }
 
-  // The advisory lock is held until the transaction ends, and only by one match server at a time, so that no request is
-  // placed or grouped twice.
-  private placeAndGroup(): Promise<boolean> {
+  // Answers the Users it placed into Open Quests, or null when another match server runs a round. The advisory lock is
+  // held until the transaction ends, and only by one match server at a time, so that no request is placed or grouped
+  // twice.
+  private placeAndGroup(): Promise<string[] | null> {
     return this.prisma.$transaction(
       async (tx) => {
         const [{ locked }] = await tx.$queryRaw<[{ locked: boolean }]>`
           SELECT pg_try_advisory_xact_lock(hashtext('matching-round')) AS locked`;
         if (!locked) {
-          return false;
+          return null;
         }
         const waiting = await tx.matchingRequest.findMany({
           where: { state: 'waiting' },
@@ -80,7 +85,7 @@ export class RoundService implements OnApplicationBootstrap {
         });
         const standing = waiting.length === 0 ? null : await this.askWhichStand(waiting);
         if (standing === null) {
-          return true;
+          return [];
         }
         // A request withdrawn while the main server answered is left alone. The rest stay locked until the round ends.
         const locks = await tx.$queryRaw<{ id: string }[]>`
@@ -93,12 +98,12 @@ export class RoundService implements OnApplicationBootstrap {
           where: { id: { in: open.filter((request) => !standing.has(keyOf(request))).map(({ id }) => id) } },
           data: { state: 'expired' },
         });
-        const unplaced = await this.placement.place(
+        const { placed, unplaced } = await this.placement.place(
           open.filter((request) => standing.has(keyOf(request))),
           tx,
         );
         await this.group(unplaced, tx);
-        return true;
+        return placed.map(({ userId }) => userId);
       },
       { timeout: TRANSACTION_TIMEOUT_MS },
     );
@@ -160,12 +165,12 @@ export class RoundService implements OnApplicationBootstrap {
   // The match is claimed, so that no other match server asks for it at the same moment. Without an answer it awaits
   // its Quest still, and the next round asks again.
   private async askForQuest(matchId: string): Promise<void> {
-    await this.prisma.$transaction(
-      async (tx) => {
+    const holders = await this.prisma.$transaction(
+      async (tx): Promise<string[]> => {
         const claimed = await tx.$queryRaw<{ id: string }[]>`
           SELECT id FROM matches WHERE id = ${matchId}::uuid AND state = 'awaiting_quest' FOR UPDATE SKIP LOCKED`;
         if (claimed.length === 0) {
-          return;
+          return [];
         }
         const { globalEventId, requests } = await tx.match.findUniqueOrThrow({
           where: { id: matchId },
@@ -183,16 +188,32 @@ export class RoundService implements OnApplicationBootstrap {
             where: { matchId, userId: { notIn: holderIds } },
             data: { state: 'expired' },
           });
+          return holderIds;
         } catch (error) {
           if (error instanceof MainServerRefusal && CLOSING_REFUSALS.has(error.code)) {
             await tx.match.update({ where: { id: matchId }, data: { state: 'closed' } });
             await tx.matchingRequest.updateMany({ where: { matchId }, data: { state: 'expired' } });
-            return;
+            return [];
           }
           this.logger.warn(`The match ${matchId} awaits its Quest still: ${problemOf(error)}`);
+          return [];
         }
       },
       { timeout: TRANSACTION_TIMEOUT_MS },
     );
+    await this.announceChanges(holders);
+  }
+
+  // Asks the main server for `matching-changed` to the Users once their requests' change is stored, so that an app
+  // reading its request on the signal finds it changed. Without an answer the app finds it when it fetches again.
+  private async announceChanges(userIds: readonly string[]): Promise<void> {
+    if (userIds.length === 0) {
+      return;
+    }
+    try {
+      await this.mainServer.post('/matching-requests/changes', { userIds }, z.null());
+    } catch (error) {
+      this.logger.warn(`The changed requests of ${userIds.join(', ')} were not announced: ${problemOf(error)}`);
+    }
   }
 }

@@ -1078,7 +1078,7 @@ server's README describes its routes. Whether requests still stand is one questi
 
 **The match server's rounds.** Every minute the match server asks which of its waiting requests still stand, places
 some into Open Quests that are gathering, groups the rest and asks this server for one Shared Quest for each group, a
-match; its README describes the rounds. It calls four routes, marked `@MatchServerOnly()` from
+match; its README describes the rounds. It calls five routes, marked `@MatchServerOnly()` from
 `src/common/match-server-only.decorator.ts`. `MatchServerGuard` in `src/auth/match-server.guard.ts` answers 401 to any call without `Authorization: Bearer <MATCH_SERVER_TOKEN>`, a
 User's, an Administrator's and the worker's included. The bodies are checked as every body is.
 
@@ -1098,13 +1098,16 @@ User's, an Administrator's and the worker's included. The bodies are checked as 
   the match's Shared Quest and answers 201 with `{ "questId": "…", "holderIds": [...] }`. The match server repeats the
   request until it is answered, so the match identifier is stored with the Quest, `quests.match_id`, unique in the
   database, and a repeat answers the Quest created the first time, also after its Global Event has started.
+- `POST /matching-requests/changes` with `{ "userIds": ["…"] }` answers 204 and sends `matching-changed` to those Users.
+  The match server stores what a placement or a match's Quest did to its requests only after this server answers, so
+  it calls this once it has: a signal sent with the answer could reach an app that then reads its request unchanged.
 
 Creating the Quest locks the matched Users in id order first, as attending locks one, so that an attend or another
 match at the same moment runs before or after it. A matched User who holds a Quest for the Global Event alone becomes a
 Holder of the new one, and the Quest held alone is deleted with its Sub Quests and the User's progress. A matched User
 who holds a Shared Quest for it keeps that one and is left out, so `holderIds` names the Users who hold the new Quest.
-`matching-changed` and `quests-changed` go to them once the Quest is stored, and to nobody on a repeat. The match server
-expires the request of a User left out.
+`quests-changed` goes to them once the Quest is stored, and to nobody on a repeat; `matching-changed` waits for the match
+server's `POST /matching-requests/changes`. The match server expires the request of a User left out.
 
 The match server names the Users in the order their requests arrived, and the Holders enter in that order, so the free
 User whose request arrived earliest leads the Quest. It is `closed`, and its capacity is the match's size, the number
@@ -1123,7 +1126,8 @@ A refused request changes nothing: a Quest held alone is deleted only with the S
 A placement is a way into a Quest like joining, and goes through `RecruitingService.enter()` (see [Quests](#quests)):
 the User is locked first, the capacity is checked inside the transaction that adds the Holder, a Quest the User held
 alone for the Global Event is deleted with its Sub Quests and the User's progress, and the Holder enters last.
-`matching-changed` goes to the User and `quests-changed` to the Holders, the User included, once the Holder is stored.
+`quests-changed` goes to the Holders, the User included, once the Holder is stored, and `matching-changed` waits for the
+match server's `POST /matching-requests/changes`.
 A User who already holds the Quest, such as one who joined it after the match server read the eligible Quests, is
 answered as entered with the Holders as they are, and no signal goes out. The match server then names the Quest in the
 request. Each refusal leaves the request waiting in the match server, which decides it again in its next round:

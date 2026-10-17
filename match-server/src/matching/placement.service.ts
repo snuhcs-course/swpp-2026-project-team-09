@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable, Logger } from '@nestjs/common';
@@ -68,19 +69,26 @@ export class PlacementService {
 
   constructor(private readonly mainServer: MainServer) {}
 
-  // Places the standing requests, given in the order they arrived, and answers those it did not try to place, which
-  // the round groups. A request the main server refused or did not answer about waits for the next round.
-  async place(requests: readonly MatchingRequest[], tx: Prisma.TransactionClient): Promise<MatchingRequest[]> {
+  // Places the standing requests, given in the order they arrived, and answers those it placed and those it did not
+  // try to place, which the round groups. A request the main server refused or did not answer about waits for the next
+  // round.
+  async place(
+    requests: readonly MatchingRequest[],
+    tx: Prisma.TransactionClient,
+  ): Promise<{ placed: MatchingRequest[]; unplaced: MatchingRequest[] }> {
     if (requests.length === 0) {
-      return [];
+      return { placed: [], unplaced: [] };
     }
     const placements = assign(requests, await this.askForEligible(requests));
+    const placed: MatchingRequest[] = [];
     for (const placement of placements) {
       // oxlint-disable-next-line no-await-in-loop -- one transaction runs one query at a time
-      await this.placeOne(placement, tx);
+      if (await this.placeOne(placement, tx)) {
+        placed.push(placement.request);
+      }
     }
     const tried = new Set(placements.map(({ request }) => request.id));
-    return requests.filter(({ id }) => !tried.has(id));
+    return { placed, unplaced: requests.filter(({ id }) => !tried.has(id)) };
   }
 
   // The eligible Quests of each Global Event and size, or none when the main server does not answer.
@@ -101,7 +109,7 @@ export class PlacementService {
     }
   }
 
-  private async placeOne({ request, quest }: Placement, tx: Prisma.TransactionClient): Promise<void> {
+  private async placeOne({ request, quest }: Placement, tx: Prisma.TransactionClient): Promise<boolean> {
     try {
       await this.mainServer.post(
         '/matching-requests/placements',
@@ -115,8 +123,9 @@ export class PlacementService {
       } else {
         this.logger.warn(`The request ${request.id} waits: ${problemOf(error)}`);
       }
-      return;
+      return false;
     }
     await tx.matchingRequest.update({ where: { id: request.id }, data: { state: 'matched', questId: quest.id } });
+    return true;
   }
 }

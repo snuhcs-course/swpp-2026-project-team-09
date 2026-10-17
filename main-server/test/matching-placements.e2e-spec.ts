@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -259,7 +260,7 @@ describe('A placement and a User joining the last free place at the same moment'
 });
 
 describe('The signals of a placement', () => {
-  it('are matching-changed to the User and quests-changed to the Holders, once', async () => {
+  it('are quests-changed to the Holders, the User included, once, and matching-changed to nobody', async () => {
     const [leader, member, user] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
     const event = await storeEvent(prisma);
     const questId = await questWith(event, [leader, member]);
@@ -268,9 +269,24 @@ describe('The signals of a placement', () => {
     await place(questId, user);
 
     await vi.waitFor(() => {
-      expect(watcher.for(user).map(({ name }) => name)).toEqual(['matching-changed', 'quests-changed']);
+      expect(watcher.for(user).map(({ name }) => name)).toEqual(['quests-changed']);
       expect(watcher.for(leader).map(({ name }) => name)).toEqual(['quests-changed']);
     });
     expect(watcher.for(member).map(({ name }) => name)).toEqual(['quests-changed']);
+  });
+});
+
+describe("The match server's word that requests for Matching changed", () => {
+  it('sends matching-changed to those Users alone', async () => {
+    const [user, other, bystander] = await Promise.all([1, 2, 3].map(() => signInUser(app)));
+
+    const response = await postAsMatchServer(app, '/matching-requests/changes', { userIds: [user.id, other.id] });
+
+    expect(response.status).toBe(204);
+    await vi.waitFor(() => {
+      expect(watcher.for(user).map(({ name }) => name)).toEqual(['matching-changed']);
+      expect(watcher.for(other).map(({ name }) => name)).toEqual(['matching-changed']);
+    });
+    expect(watcher.for(bystander)).toEqual([]);
   });
 });

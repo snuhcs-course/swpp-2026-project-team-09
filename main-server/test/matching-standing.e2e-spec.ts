@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -74,6 +75,7 @@ describe("A call for the match server without the match server's token", () => {
     '/matching-requests/standing',
     '/matching-requests/eligible-quests',
     '/matching-requests/placements',
+    '/matching-requests/changes',
     `/matches/${randomUUID()}/quest`,
   ];
 

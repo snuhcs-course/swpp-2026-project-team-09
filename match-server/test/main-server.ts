@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -54,6 +55,7 @@ const standingQuestionSchema = z.object({ requests: z.array(candidateSchema) });
 const questRequestSchema = z.object({ globalEventId: z.string(), userIds: z.array(z.string()) });
 const eligibleQuestionSchema = z.object({ pools: z.array(z.object({ globalEventId: z.string(), size: z.number() })) });
 const placementSchema = z.object({ questId: z.string(), userId: z.string(), size: z.number() });
+const changesSchema = z.object({ userIds: z.array(z.string()) });
 
 export type Placement = z.infer<typeof placementSchema>;
 
@@ -67,8 +69,9 @@ export interface EligibleQuest {
   createdAt: string;
 }
 
-// An answer of the main server with its status, or none, as from a main server that is down.
-export type Reply = { status: number; body: object } | null;
+// An answer of the main server with its status and a body, none for 204, or no answer, as from a main server that is
+// down.
+export type Reply = { status: number; body?: object } | null;
 
 export interface MainServerCall {
   path: string;
@@ -106,6 +109,8 @@ export class MainServerStub {
     status: 201,
     body: { questId, holderIds: [userId] },
   });
+  // The answer to the word that requests changed: taken, unless a test says otherwise.
+  changed: (userIds: string[]) => Reply | Promise<Reply> = () => ({ status: 204 });
   private readonly questIds = new Map<string, string>();
 
   // The Quest the stub creates for the match.
@@ -127,6 +132,13 @@ export class MainServerStub {
       .map(({ body }) => placementSchema.parse(body));
   }
 
+  // The Users named by each word that requests changed, in order.
+  announced(): string[][] {
+    return this.calls
+      .filter(({ path }) => path === '/matching-requests/changes')
+      .map(({ body }) => changesSchema.parse(body).userIds);
+  }
+
   // Give it to startApp in place of the HTTP call to the main server.
   readonly fetch: typeof fetch = async (input, init) => {
     const { pathname } = new URL(input instanceof Request ? input.url : String(input));
@@ -140,12 +152,16 @@ export class MainServerStub {
       reply = this.eligible(eligibleQuestionSchema.parse(body).pools);
     } else if (pathname === '/matching-requests/placements') {
       reply = this.placement(placementSchema.parse(body));
+    } else if (pathname === '/matching-requests/changes') {
+      reply = await this.changed(changesSchema.parse(body).userIds);
     } else if (matchId !== undefined) {
       reply = this.quest(matchId, questRequestSchema.parse(body).userIds);
     }
     if (reply === null) {
       throw new Error('connect ECONNREFUSED');
     }
-    return Response.json(reply.body, { status: reply.status });
+    return reply.body === undefined
+      ? new Response(null, { status: reply.status })
+      : Response.json(reply.body, { status: reply.status });
   };
 }

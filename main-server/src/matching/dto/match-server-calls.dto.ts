@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -42,6 +43,11 @@ export interface EligibleAnswerDto {
 export const placementSchema = z.strictObject({ questId: z.uuid(), userId: z.uuid(), size: sizeSchema });
 
 export type PlacementDto = z.infer<typeof placementSchema>;
+
+// The Users whose requests the match server changed and stored.
+export const matchingChangesSchema = z.strictObject({ userIds: z.array(z.uuid()) });
+
+export type MatchingChangesDto = z.infer<typeof matchingChangesSchema>;
 
 // A match the match server formed, for which it asks for the Shared Quest.
 export const matchQuestRequestSchema = z.strictObject({
