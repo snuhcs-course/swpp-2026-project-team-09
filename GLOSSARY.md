@@ -134,8 +134,12 @@ What the app fetches to run, such as the User's profile.
 _Avoid_: Home, bootstrap
 
 **Assistant**:
-The AI a User chats with from the main screen's input bar. It answers about campus services and finds Global Events and recruiting Quests, and it drafts a Quest that the User then makes. The screens call it "SNU Now AI".
+The AI a User chats with from the main screen's input bar. It answers about campus services and finds Global Events and recruiting Quests, and it makes Proposals. The screens call it "SNU Now AI".
 _Avoid_: Chatbot, AI agent, bot
+
+**Proposal**:
+A Quest the Assistant filled in from what a User wrote, shown for the User to make or to edit first. Nothing exists until the User makes it.
+_Avoid_: Draft (a Draft is an unpublished Global Event), suggestion
 
 ### Campus services
 

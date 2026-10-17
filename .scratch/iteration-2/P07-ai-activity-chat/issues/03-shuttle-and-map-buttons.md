@@ -10,6 +10,8 @@ A User asks "셔틀 어디 있어?" and gets the vehicles the operator reports n
 
 This ticket adds the first presenter. A presenter is a tool through which the model puts something real into the reply, rather than describing it in prose.
 
+P06-07 (#81) changes the main screen's Quest list in the same screen this ticket changes. Whichever lands second rebases over the other.
+
 ## Acceptance criteria
 
 - [ ] **`getShuttle`.**

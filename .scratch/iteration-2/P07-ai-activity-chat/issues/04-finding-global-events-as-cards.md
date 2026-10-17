@@ -15,14 +15,18 @@ The search is a refining tool. The model turns the User's words into structured 
 
 The tool returns only published Global Events matching them, as compact candidates (id plus the few fields the model needs to judge). The model then picks which fit the User's meaning. There are no embeddings.
 
-This ticket also builds the guard every later presenter uses: a card id is accepted only if a lookup or resolver returned it in this message. The server fills cards from the database in the shape the app already draws, so the app makes no further requests and a hallucinated id never reaches the screen.
+This ticket also builds two things every later lookup and presenter uses:
+
+- **The presenter guard.** A card id is accepted only if a lookup or resolver returned it in this message. The server fills cards from the database in the shape the app already draws, so the app makes no further requests and a hallucinated id never reaches the screen.
+- **Delimiters around others' text.** Global Event text was collected from Sources or written by organizers. When a tool returns it to the model, it is wrapped in labelled delimiters, which the system prompt (ticket 01) marks as data, never instructions.
 
 ## Acceptance criteria
 
 - [ ] **`searchGlobalEvents`.**
   - It takes a period and optionally a Place and words.
-  - It returns only published Global Events in that period that match the other conditions, as compact candidates. Drafts and Private Events are never returned.
+  - It returns only published Global Events in that period that match the other conditions, as compact candidates. Drafts, cancelled and discarded Global Events are never returned.
   - With nothing matching it returns "none".
+- [ ] **Delimiters.** Text from a Global Event (title, description, place words) reaches the model inside labelled delimiters. The mechanism is shared, so ticket 05 uses it for Quest text.
 - [ ] **`showGlobalEvents`.**
   - It takes ids and adds those Global Events as cards to the reply, in the order given.
   - An id that no tool returned in this message is refused back to the model with an error, and no card is added for it.
@@ -34,8 +38,9 @@ This ticket also builds the guard every later presenter uses: a card id is accep
   - Pressing a card closes the sheet and opens the Events tab focused on that event.
 - [ ] **End-to-end tests with the scripted fake and seeded Global Events:**
   - a period returns only events in it
-  - a Draft and a Private Event are never returned
+  - a Draft, a cancelled and a discarded Global Event are never returned
   - no match returns "none"
+  - an event whose description reads "ignore previous instructions…" reaches the fake inside the delimiters
   - `showGlobalEvents` with returned ids puts filled cards in the reply
   - an id that no tool returned is refused
 - [ ] **Screen tests:**
