@@ -41,17 +41,19 @@ systemd never starts it while a run is going. The service runs `infra/deploy/dep
 3. Dumps the databases with `pg_dumpall` into the backups folder and keeps the newest 7. No dump while no database
    runs.
 4. Resets the checkout to the tip with `git reset --hard` and `git clean -fdx`.
-5. Runs `docker compose up --detach --build` with `compose.yaml` and `compose.deploy.yaml`. Compose recreates only the
-   services whose image or settings changed. If it fails, the containers that ran before keep running.
+5. Builds the images with `docker compose build`, with `compose.yaml` and `compose.deploy.yaml`, then starts them with
+   `docker compose up --detach`, which recreates only the services whose image or settings changed. A failed build
+   stops nothing: the containers that ran before keep running. A failed `up`, such as a migration that keeps the main
+   server from turning healthy, leaves the new containers running as they are.
 6. Checks, through the proxy on the server's loopback, that `/health/ready` answers 200 and
    `/socket.io/?EIO=4&transport=polling` an engine.io handshake, each within about two minutes. Nothing is rolled
    back when they do not.
 7. Removes dangling images and build cache older than 7 days.
 8. Writes `status.json`, which the proxy serves at `/deploy-status`.
 
-A commit whose dump, checkout or build fails (`build-failed`) or whose check in step 6 fails (`unhealthy`) is tried
-again on the next two runs, then `held` until a new commit arrives or a person starts a run by hand. A run that finds
-`CHANGE_ME` in the settings file stops before Docker (`secrets-missing`). Every run logs to the journal.
+A commit whose dump, checkout or build fails (`build-failed`) or whose `up` or check in step 6 fails (`unhealthy`) is
+tried again on the next two runs, then `held` until a new commit arrives or a person starts a run by hand. A run that
+finds `CHANGE_ME` in the settings file stops before Docker (`secrets-missing`). Every run logs to the journal.
 
 `snu-now-demo-refresh.timer` starts `snu-now-demo-refresh.service` every day at 19:00 UTC (04:00 in Seoul). It
 restarts `demo-seed`, which rewrites the Demo Data's days around today.
@@ -190,16 +192,16 @@ From any browser, `http://swpp26t09.147-46-242-174.sslip.io/deploy-status`. Its 
 | `checks`            | The name and conclusion of each required check of the candidate  |
 | `recreatedServices` | The services Compose created or recreated in the last deployment |
 
-| `result`          | What it means and what to do                                                                                                          |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `up-to-date`      | The tip is deployed. Nothing to do.                                                                                                   |
-| `deployed`        | This run deployed the tip.                                                                                                            |
-| `waiting-for-ci`  | A required check of the tip is missing, still running or cancelled, or GitHub refused the request (60 an hour without a token). Wait. |
-| `ci-failed`       | A required check failed. Push a fix; after re-running the checks on GitHub, [start a run by hand](#redeploying-by-hand).              |
-| `build-failed`    | The dump, the checkout or the build failed; the old containers keep running. Read the journal.                                        |
-| `unhealthy`       | The build started but the main server or the socket server did not answer through the proxy. Read `dc logs`.                          |
-| `held`            | Three attempts at the tip failed. Push a fix, or start a run by hand once the cause is gone.                                          |
-| `secrets-missing` | The settings file is missing or holds `CHANGE_ME`. [Fill it in](#filling-the-settings).                                               |
+| `result`          | What it means and what to do                                                                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `up-to-date`      | The tip is deployed. Nothing to do.                                                                                                                                      |
+| `deployed`        | This run deployed the tip.                                                                                                                                               |
+| `waiting-for-ci`  | A required check of the tip is missing, still running or cancelled, or GitHub refused the request (60 an hour without a token). Wait.                                    |
+| `ci-failed`       | A required check failed. Push a fix; after re-running the checks on GitHub, [start a run by hand](#redeploying-by-hand).                                                 |
+| `build-failed`    | The dump, the checkout or the build failed; the old containers keep running. Read the journal.                                                                           |
+| `unhealthy`       | The new containers run, but `up` failed or the main server or the socket server did not answer through the proxy; `deployedCommit` stays the one before. Read `dc logs`. |
+| `held`            | Three attempts at the tip failed. Push a fix, or start a run by hand once the cause is gone.                                                                             |
+| `secrets-missing` | The settings file is missing or holds `CHANGE_ME`. [Fill it in](#filling-the-settings).                                                                                  |
 
 A `checkedAt` more than a few minutes old means no run has finished since: a build is going, the timer is stopped or
 a fetch failed, which leaves the file as it was. The journal says which.

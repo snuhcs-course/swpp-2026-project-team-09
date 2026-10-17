@@ -252,7 +252,7 @@ clean_docker() {
 
 # Builds and starts the tip, then sets result, and services, deployed and deployed_at as far as the run got.
 deploy_tip() {
-  local output built=yes
+  local output
   log "deploy: $tip, attempt $attempt of $MAX_ATTEMPTS"
   result=build-failed
   # The services list gathers what the attempts at one commit recreated, so a retry that recreates nothing keeps it.
@@ -268,11 +268,12 @@ deploy_tip() {
   log "checkout: $tip"
 
   output=$(mktemp "${TMPDIR:-/tmp}/snu-now-deploy.XXXXXX")
-  compose up --detach --build 2>&1 | tee "$output" || built=no
-  services=$({ printf '%s\n' "$services" && recreated_services <"$output"; } | awk 'NF && !seen[$0]++')
-  rm -f "$output"
-  if [[ "$built" == no ]]; then
-    log "build: compose up failed; the containers that ran before keep running"
+  # Built before anything is stopped, so that a failed build leaves the running containers alone.
+  if ! compose build; then
+    log "build: failed; the containers that ran before keep running"
+  elif ! compose up --detach 2>&1 | tee "$output"; then
+    log "start: compose up failed; the new containers are what runs"
+    result=unhealthy
   elif smoke_check; then
     log "smoke: healthy"
     result=deployed
@@ -282,6 +283,8 @@ deploy_tip() {
     log "smoke: unhealthy"
     result=unhealthy
   fi
+  services=$({ printf '%s\n' "$services" && recreated_services <"$output"; } | awk 'NF && !seen[$0]++')
+  rm -f "$output"
   clean_docker
 }
 
