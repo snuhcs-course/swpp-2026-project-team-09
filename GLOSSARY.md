@@ -142,3 +142,17 @@ _Avoid_: Site, provider
 **Collection**:
 One run of the worker server reading a Source and handing what it read to the main server. A Source records its last successful Collection and its last failure.
 _Avoid_: Crawl, scrape, sync
+
+### Running the system
+
+**Dev Server**:
+The team's shared server that always runs the newest development work, which the app on a phone reaches at one fixed address instead of a laptop.
+_Avoid_: Staging, test server, dev environment
+
+**Demo Data**:
+The Users, Events, Quests, Party, menus and shuttle vehicles that fill a system so that every feature can be tried at once. The Dev Server carries it alongside the team's own accounts.
+_Avoid_: Fixtures, seed (the seed is the Places and other data every system needs)
+
+**Demo Account**:
+A team member's own account that Demo Data treats as a participant: it receives demo Friends, Friend Requests, a Quest invitation and a Meetup.
+_Avoid_: Test account
