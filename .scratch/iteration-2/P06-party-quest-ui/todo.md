@@ -32,12 +32,12 @@ What the app shows from its own mock. The build connected to the server hides th
 
 Ticket 02 adds the photos, the tags and the members' faces behind the API client (`mobile/src/api/quest-parts/`, one adapter for each, data in `mobile/src/api/mock/data/quest-parts.ts`). The screens read them as follows:
 
-| Part (field)                                                 | Read by                                                                         |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| A Quest's photo (`photo`)                                    | 찾기 card, 파티 모집글, the form                                                |
-| A Quest's tags (`tags`)                                      | 찾기 search and ordering, 파티 모집글 and 추천 이유 › 관심사, the room, the form |
-| Members' names and faces (`faces`; _leader only on server_)  | 찾기 card, 파티 모집글 members line, 초대 card (companions)                     |
-| The User's tags (`listMyTags`: the profile's hashtags)       | the form's `태그`, 찾기 ordering, 추천 이유 › 관심사                            |
+| Part (field)                                                | Read by                                                                          |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| A Quest's photo (`photo`)                                   | 찾기 card, 파티 모집글, the form                                                 |
+| A Quest's tags (`tags`)                                     | 찾기 search and ordering, 파티 모집글 and 추천 이유 › 관심사, the room, the form |
+| Members' names and faces (`faces`; _leader only on server_) | 찾기 card, 파티 모집글 members line, 초대 card (companions)                      |
+| The User's tags (`listMyTags`: the profile's hashtags)      | the form's `태그`, 찾기 ordering, 추천 이유 › 관심사                             |
 
 A server Quest's photo and tags are picked from the mock's sets by a stable hash of its id. The photo and tags the User enters for a Quest they make (`makeQuest`, `changeQuest`) are kept on the phone (`snunow.quest-entries`) and come back with that Quest. The mock build's User, whose profile has no hashtags, gets the frame's tags.
 
