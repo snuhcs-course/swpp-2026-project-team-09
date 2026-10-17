@@ -33,8 +33,9 @@ Fixed here so that tickets 02 and 03 match without seeing this ticket: the deplo
 
 ### Agent usage (2026-10-17)
 
-- Agent time: about 22 minutes, an estimate (one implementer subagent).
-- Tokens: input 9,946,000 in all (cache reads 9,733,000, cache writes 213,000, uncached 0), output 29,000. Measured just before this section was written.
+- Agent time: about 20 minutes, an estimate: the implementer subagent and the subagent that merged its branch.
+- Tokens: input 11,761,000 in all (cache reads 11,480,000, cache writes 281,000, uncached under 1,000); output about 40,000 (estimated from what the transcripts hold, which keep only partial output counts, so a lower bound).
+- The orchestrating session, the code review and its fix round are shared by tickets 01–05 and recorded once, under ticket 05.
 
 ### Review round (2026-10-17)
 

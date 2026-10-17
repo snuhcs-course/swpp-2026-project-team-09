@@ -44,5 +44,6 @@ Fixed here so that tickets 03 and 04 match without seeing this ticket: the overr
 
 ### Agent usage (2026-10-17)
 
-- Agent time: about 27 minutes, an estimate (one implementer subagent), including a 6.5-minute WebSocket hold run by the agent.
-- Tokens: input 16,125,000 in all (cache reads 15,934,000, cache writes 191,000, uncached under 1,000), output 12,000. Measured from the transcript a few steps before the end.
+- Agent time: about 25 minutes, an estimate: the implementer subagent and the subagent that merged its branch.
+- Tokens: input 18,270,000 in all (cache reads 18,010,000, cache writes 260,000, uncached under 1,000); output about 28,000 (estimated from what the transcripts hold, which keep only partial output counts, so a lower bound).
+- The orchestrating session, the code review and its fix round are shared by tickets 01–05 and recorded once, under ticket 05.

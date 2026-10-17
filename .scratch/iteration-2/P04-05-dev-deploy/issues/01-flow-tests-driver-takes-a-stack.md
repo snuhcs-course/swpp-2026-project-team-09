@@ -30,5 +30,6 @@ A test in `flow-tests` can start a Compose stack other than the flow stack: its 
 
 ### Agent usage (2026-10-17)
 
-- Agent time: about 13 minutes, an estimate (one implementer subagent).
-- Tokens: input 6,300,000 in all (cache reads 6,150,000, cache writes 150,000, uncached under 1,000), output 14,000. Estimated from the transcript a few steps before the end.
+- Agent time: about 11 minutes, an estimate: the implementer subagent and the subagent that merged its branch.
+- Tokens: input 6,322,000 in all (cache reads 6,115,000, cache writes 207,000, uncached under 1,000); output about 20,000 (estimated from what the transcripts hold, which keep only partial output counts, so a lower bound).
+- The orchestrating session, the code review and its fix round are shared by tickets 01–05 and recorded once, under ticket 05.

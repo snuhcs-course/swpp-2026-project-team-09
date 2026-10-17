@@ -38,5 +38,15 @@ A teammate with ssh and no memory of this spec can run the Dev Server from the r
 
 ### Agent usage (2026-10-17)
 
-- Agent time: about 17 minutes, an estimate (one implementer subagent).
-- Tokens: input 7,943,000 in all (cache reads 7,759,000, cache writes 184,000, uncached under 1,000), output 21,000. Measured just before this section was written.
+- Agent time: about 15 minutes, an estimate: the implementer subagent and the subagent that merged its branch.
+- Tokens: input 9,569,000 in all (cache reads 9,318,000, cache writes 251,000, uncached under 1,000); output about 30,000 (estimated from what the transcripts hold, which keep only partial output counts, so a lower bound).
+- The orchestrating session, the code review and its fix round are shared by tickets 01–05 and recorded once, under ticket 05.
+
+### Agent usage shared by tickets 01–05 (2026-10-17)
+
+Counted once, here, and not in the five sections above.
+
+- Code review: two reviewer subagents in parallel, 4 and 13 minutes. Tokens: input 6,050,000 in all (cache reads 5,783,000, cache writes 267,000, uncached under 1,000); output about 7,000.
+- Review fix round: one implementer subagent and the subagent that merged it, about 21 minutes. Tokens: input 18,358,000 in all (cache reads 18,060,000, cache writes 298,000, uncached under 1,000); output about 25,000.
+- Orchestrating session: about 1 hour 45 minutes of wall clock until this note was written, most of it waiting on the subagents, whose time is above. Tokens: input 13,057,000 in all (cache reads 12,857,000, cache writes 200,000, uncached under 1,000); output 92,000.
+- All of P04-05's code tickets, these and the five sections above: about 4 hours of agent time, an estimate that adds the subagents' time to the orchestrator's wall clock. Tokens: input about 96 million in all (cache reads about 94 million, cache writes about 2.1 million); output about 276,000.
