@@ -1,0 +1,18 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-17  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# systemd never starts the service while a run is going, which is the deploy's only lock.
+[Unit]
+Description=Start snu-now-deploy a minute after its previous run
+
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=1min
+# The default would let a run start up to a minute late.
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target
