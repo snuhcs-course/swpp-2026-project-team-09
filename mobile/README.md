@@ -497,12 +497,23 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   the members who share their position, the User left out, or "응답 대기" when nobody else does
   (`useActiveParty()`); the 편의기능 button (`layers.tsx`, below); and the AI input. "활성 파티" opens the room of the
   Party's Quest, or, for a Party tied to no Quest, which has no room, asks "활성화에서 나갈까요?" and leaves it
-  (`use-active-party-room.tsx`). "오늘의 발자국" and the AI input say "준비 중이에요".
-  - The AI input (`ai-input.tsx`) is not a text field yet. It is a button with the look of the wireframe's empty
-    input, the placeholder "무엇이든 부탁해 보세요" and the grey send button: nothing takes the focus, no keyboard
-    comes up and nothing can be typed. A press on it says "준비 중이에요"; so does a press on the send button, which
-    a screen reader reads as disabled. The field comes with the AI chat's own task; the design system's `ChatInput`
-    is that field and no screen uses it yet.
+  (`use-active-party-room.tsx`). The AI input opens the chat (below). "오늘의 발자국" says "준비 중이에요".
+  - The AI input (`ai-input.tsx`) is a field with the placeholder "무엇이든 부탁해 보세요". Pressing or focusing it
+    opens the chat, whose own input takes the focus, so the bar brings no keyboard up and stays empty, and its send
+    button is disabled. Speech input and autocomplete would attach to it.
+- **The chat with the Assistant** (`chat-sheet.tsx`, `chat-bubbles.tsx`, the `MainChat` frame). It is a translucent
+  sheet (`color.surfaceGlass`) over the map, in place of the controls above the navigation, and the bottom tabs stay
+  in view. Its header has the round chat icon, "SNU Now AI" and 닫기; Android's back button closes it too.
+  - Empty, it says "무엇을 도와드릴까요?", the line "대화 내용은 AI 제공자에게 전송돼요", and three examples, 식사 메뉴
+    추천, 현재 통학/순환 셔틀 위치 and 파티 찾기, in place of the frame's library seats. A press sends its words as the
+    User's message.
+  - The input is the design system's `ChatInput`: it grows with its text up to four lines, Enter starts a new line,
+    and only the send button sends, which is disabled while the input is empty or the Assistant works.
+  - The User's bubbles are at the right in `snuBlue`, the Assistant's at the left, and "···" shows while the Assistant
+    works. The reply is shown whole. Each message sends the whole conversation (`askAssistant`); a failed answer shows
+    "지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요", which is left out of the conversation the next message sends.
+  - The conversation lives in memory in `useChat()` (`src/features/assistant/use-chat.ts`), held by the main screen,
+    so closing the sheet keeps it while the app runs. The server stores none of it.
   - On a screen narrower than the wireframe's 390, "오늘의 발자국" gives way to "활성 파티", whose two lines stay
     whole (`footprintsForm` in `layout.ts`): it drops its second line and keeps one face, has no face under 360,
     and is the one button of the row that shrinks, its name cut with an ellipsis. Alone in the row it is whole.
@@ -932,6 +943,7 @@ Behind a hook are three layers:
 | `requestMatching`, `listMatchingRequests`                            | The request; the waiting requests                            | `POST`, `GET /matching-requests`                                        |
 | `getMatchingRequest`                                                 | The latest request for a Global Event                        | `GET /matching-requests/:globalEventId`                                 |
 | `withdrawMatchingRequest`                                            | Nothing                                                      | `POST /matching-requests/:globalEventId/withdraw`                       |
+| `askAssistant`                                                       | The Assistant's reply to the conversation                    | `POST /assistant/messages`                                              |
 
 The mock keeps the Friends, the Friend Requests and the Invite Links in memory while the app runs
 (`src/api/mock/friendships.ts`), with Friend IDs for the frame's people, and refuses as the main server does. The
@@ -1096,7 +1108,8 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
   `line={false}` leaves out the line on top, for a screen that draws its own edge above the bar. A component of the design system that no screen uses yet is
   ported by the task that needs it. Where the web's differ from React Native's, the app's follow React Native: a press
   is `onPress`, and an image is a `source`. The design system's sizes do not count a border, so a size here adds it:
-  a pin's head is 36 and its border of 2 on each side.
+  a pin's head is 36 and its border of 2 on each side. `ChatInput` grows with its text up to four lines, and Enter
+  starts a new line rather than sending.
   Inside the design system the names are the design system's, also where the glossary prefers another word: its
   `Avatar` is a person's picture anywhere, its event kind is `official`, and a card's place is its `venue`.
 - **Dialog**: the design system has none and the frames ask questions with two answers. `Dialog` shows a title in

@@ -1,7 +1,7 @@
 # 01: Skeleton: the input bar opens the chat, and the Assistant answers menus and small talk
 
 Parent: [P07 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human
 Blocked by: None (can start immediately)
 
 ## What to build
@@ -75,3 +75,43 @@ P06-07 (#81) changes the main screen's Quest list in the same screen this ticket
   - a canned reply appears as the Assistant's bubble after "···"
   - the send button is disabled on empty input
 - [ ] The app's mock client, used when no server is chosen, answers the endpoint as the other features' mock clients do.
+
+## Comments
+
+### Result (2026-10-17)
+
+Where things are:
+
+- Server: `main-server/src/assistant/`. `adapter.ts` is the one file that imports the AI SDK. It holds the model port (`MODEL_PORT`), the OpenRouter binding and `runFeature`. `feature.ts` has the `Tool` and `Feature` shapes and `noneFound`, `tools/get-menus.ts` is the first refining tool, and `chat/chat-assistant.ts` is the chat Assistant's definition and system prompt. The endpoint is `POST /assistant/messages`, which takes `{ messages: [{ role, text }] }` and answers `{ text }`.
+- Server tests: `main-server/test/assistant.e2e-spec.ts`, with the scripted fake in `test/scripted-model.ts`. `startApp` takes the fake as its fifth argument. The main server's README has an Assistant section that says how a test writes a script.
+- App: `askAssistant` in the API client (`src/api/server/assistant-client.ts`, `src/api/mock/assistant.ts`), `useChat()` in `src/features/assistant/`, and the sheet in `src/screens/main/chat-sheet.tsx` and `chat-bubbles.tsx`. The tests are `__tests__/main-chat-test.tsx` and the AI input part of `__tests__/main-controls-test.tsx`.
+
+Decisions:
+
+- The model port's value is the AI SDK's language model. The fake is built on the SDK's `MockLanguageModelV4`, so the tests run the real adapter loop, tool registration included.
+- `ai` is pinned to 7.0.142, the newest version that passes pnpm's minimum release age without exceptions.
+- `OPENROUTER_API_KEY` and `ASSISTANT_MODEL` default to empty, so a server without them still starts. The endpoint then answers 500 until ticket 02 adds the error reply.
+- The design system's `ChatInput` now grows up to four lines, and Enter starts a new line. The sheet's input is a `ChatInput`.
+- While the sheet is open it takes the place of the controls above the navigation. The bar's own disabled send button would otherwise sit under it.
+- A failed answer shows ticket 02's wording as a plain bubble so that "···" does not hang. It has no 다시 시도 yet, and it is left out of the next request. Ticket 02 replaces it.
+- Some of this already does ticket 02's work:
+  - The conversation lives in `MapBottom`, so closing the sheet keeps it.
+  - The request schema refuses an empty conversation, or one that does not end with the User's message.
+  - Android's back button closes the sheet.
+
+Not checked or not confirmed:
+
+- The MainChat frame was not available to the agent, so the look comes from the ticket's words and the design system. Four things should be checked against the frame:
+  - the input's limit of four lines
+  - the sheet's top (8 under the status bar)
+  - its translucency (`color.surfaceGlass`, white at 94%)
+  - the bubbles' colours and corners
+- Nothing ran on a phone or against a real model. The keyboard over the sheet (KeyboardAvoidingView on iOS only) is unseen.
+- `MAX_STEPS = 8` is a constant. Ticket 02 makes it configurable.
+- The full app test suite timed out in `party-boards-test`, `events-tab-test` and `dining-layer-test` while the machine was under load. Run alone, all three pass.
+- `tsc` reports two errors in `menus-screen-test.tsx` and `support/party.ts` (typed routes). They fail the same way without these changes.
+
+### Agent usage (2026-10-17)
+
+- Agent time: about 1 hour 30 minutes in one session (an estimate).
+- Tokens: about 320k input, most of them cache reads, and about 45k output in the main session (an estimate, since exact counts were not available to the agent). The two review subagents took 80k and 90k tokens in total.

@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -20,6 +21,8 @@ export const color = {
   surface: '#FFFFFF',
   surfaceSubtle: '#F5F6F9',
   surfaceSunken: '#ECEEF3',
+  // A sheet over the map that lets the map show through, such as the AI chat.
+  surfaceGlass: 'rgba(255, 255, 255, 0.94)',
   scrim: 'rgba(14, 19, 48, 0.40)',
   border: '#E2E5EC',
   borderStrong: '#858CA0',

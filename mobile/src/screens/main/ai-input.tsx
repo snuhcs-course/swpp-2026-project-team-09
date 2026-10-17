@@ -2,45 +2,39 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { color, Icon, radius, shadow, space, text, useNotReadyToast } from '@/design-system';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { color, Icon, radius, shadow, space, text } from '@/design-system';
 import { AI_INPUT } from './layout';
 
-// The AI input of the `Main` frame, as it looks while it is empty: the white bar with the placeholder and the grey
-// send button. It is not a text field. The chat it opens belongs to another task, and a field that takes the focus
-// brings the keyboard up over the map and, on Android, changes the screen's size as it leaves. So the bar is a
-// button that says that the chat is not ready, and so does a press on the send button, which a screen reader reads
-// as disabled. The field itself comes with the chat.
-export function AiInput(): ReactElement {
-  const showNotReady = useNotReadyToast();
+// The AI input of the `Main` frame: the white bar with the placeholder and the send button. It is a field, and
+// focusing it opens the chat, whose own input takes the focus and the typing; so this one stays empty, and its send
+// button is disabled. Speech input and autocomplete would attach here.
+export function AiInput({ onOpen }: { onOpen: () => void }): ReactElement {
   return (
     <View style={styles.bar} testID="ai-input">
-      <Pressable
+      <TextInput
         accessibilityLabel="AI에게 메시지"
-        accessibilityRole="button"
-        onPress={showNotReady}
+        onFocus={onOpen}
+        onPressIn={onOpen}
+        placeholder="무엇이든 부탁해 보세요"
+        placeholderTextColor={color.inkMuted}
+        showSoftInputOnFocus={false}
         style={styles.field}
+        value=""
+      />
+      <Pressable
+        accessibilityLabel="보내기"
+        accessibilityRole="button"
+        accessibilityState={{ disabled: true }}
+        disabled
+        hitSlop={space[1]}
+        style={styles.send}
       >
-        <Text numberOfLines={1} style={styles.placeholder}>
-          무엇이든 부탁해 보세요
-        </Text>
-      </Pressable>
-      {/* The web's Pressable says "disabled" only for one that takes no press, so the press is taken by the box and
-          the button inside it is what a screen reader reads. */}
-      <Pressable accessible={false} hitSlop={space[1]} onPress={showNotReady} tabIndex={-1}>
-        <View
-          accessibilityLabel="보내기"
-          accessibilityRole="button"
-          accessibilityState={{ disabled: true }}
-          accessible
-          aria-disabled
-          style={styles.send}
-        >
-          <Icon color={color.inkMuted} name="send" size={18} />
-        </View>
+        <Icon color={color.inkMuted} name="send" size={18} />
       </Pressable>
     </View>
   );
@@ -68,8 +62,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.float,
   },
-  field: { flex: 1, justifyContent: 'center', minWidth: 0, height: FIELD },
-  placeholder: { ...text.bodyLg, color: color.inkMuted },
+  field: { ...text.bodyLg, flex: 1, minWidth: 0, height: FIELD, paddingVertical: 0, color: color.ink },
   send: {
     alignItems: 'center',
     justifyContent: 'center',
