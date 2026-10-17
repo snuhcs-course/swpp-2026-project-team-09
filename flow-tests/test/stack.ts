@@ -11,9 +11,8 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
-// A Compose stack the tests start: a project name of its own, so that a developer's stack, its ports and its volumes are
-// left alone; its Compose files, relative to the repository root, each over the ones before; and the folder of its
-// settings (settings.ts), whose compose.env is the stack's --env-file.
+// A Compose stack the tests start, under a project name of its own so that a developer's stack is left alone. Its
+// settings folder (settings.ts) holds the compose.env that is its --env-file.
 export interface Stack {
   project: string;
   files: string[];

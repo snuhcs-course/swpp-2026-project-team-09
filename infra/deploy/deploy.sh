@@ -203,8 +203,7 @@ compose() {
     --file compose.yaml --file compose.deploy.yaml "$@"
 }
 
-# Sets checks and verdict from the check runs of the tip on GitHub. Without a token, GitHub answers 60 requests an
-# hour from one address; a refused request is asked again next run.
+# Without a token, GitHub answers 60 requests an hour from one address; a refused request is asked again next run.
 gate_on_ci() {
   local answer
   if ! answer=$("$CURL" --fail --silent --show-error --location --max-time 30 \
@@ -258,7 +257,6 @@ clean_docker() {
   fi
 }
 
-# Builds and starts the tip, then sets result, and services, deployed and deployed_at as far as the run got.
 deploy_tip() {
   local output
   log "deploy: $tip, attempt $attempt of $MAX_ATTEMPTS"
@@ -303,7 +301,6 @@ write_status() {
   log "status: $result"
 }
 
-# Fetches the tip and does what plan_run says with it, setting result and what the status file reports.
 take_tip() {
   local plan
   cd "$DEPLOY_CHECKOUT"
