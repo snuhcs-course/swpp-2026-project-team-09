@@ -500,7 +500,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   - The AI input (`ai-input.tsx`) is a field with the placeholder "무엇이든 부탁해 보세요". Pressing or focusing it
     opens the chat, and it stays at the bottom as the chat's input, with the focus ring as its border. It grows with
     its text from 40 to 120 and then scrolls, its corners going from 28 to 22 once it holds more than a line; Enter
-    starts a new line, and only the send button sends. The send button is `snuBlue` while there is something to send,
+    starts a new line, and only the send button sends. It takes at most 1,000 characters, as much as the main server
+    takes in a message. The send button is `snuBlue` while there is something to send,
     and grey and disabled while the input is empty or the Assistant works. Speech input and autocomplete would attach
     to it.
   - On a screen narrower than the wireframe's 390, "오늘의 발자국" gives way to "활성 파티", whose two lines stay
@@ -509,17 +510,22 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
 - **The chat with the Assistant** (`chat-sheet.tsx`, `chat-bubbles.tsx`, the `MainChat` frame). It is a translucent
   sheet (`color.surfaceGlass`, white at 80%) from the top of the screen to the navigation, which stays in view. It
   lies over the map and the lists, and hides the shuttle's notice, the row of buttons and the 편의기능 button; the
-  AI input lies over its bottom. Its header has the round chat icon, "SNU Now AI" and "대화 닫기"; Android's back
-  button closes it too.
+  AI input lies over its bottom. Its header has the round chat icon, "SNU Now AI", "새 대화", which discards the
+  conversation and shows the empty chat again, and "대화 닫기"; Android's back button closes it too.
   - Empty, it says "무엇을 도와드릴까요?", the line "대화 내용은 AI 제공자에게 전송돼요", and three examples as rows
     with an icon on their layer's colour: 식사 메뉴 추천 (식당), 현재 통학/순환 셔틀 위치 (셔틀버스) and 파티 찾기 (the
     Party's), in place of the frame's library seats. A press sends its words as the User's message.
   - The User's bubbles are at the right in `snuBlue`, the Assistant's at the left in `blue50`, and "···" shows while
-    the Assistant works. The reply is shown whole. Each message sends the whole conversation (`askAssistant`); a
-    failed answer shows "지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요", which is left out of the conversation the
-    next message sends.
+    the Assistant works. The reply is shown whole. Each message sends the latest 20 messages of the conversation
+    (`askAssistant`, `messagesToSend`), the Assistant's with the cards they showed, and fewer while they hold more
+    than 24,000 characters.
+  - A failure is the Assistant's bubble, and is left out of what the next message sends. When the server cannot
+    answer, it says "지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요" with "다시 시도", while it is the last bubble,
+    which sends the User's message again in its place. Once the User's messages of the day are used up (429), it says
+    "오늘은 여기까지 답할 수 있어요. 내일 다시 물어봐 주세요", without "다시 시도".
   - The conversation lives in memory in `useChat()` (`src/features/assistant/use-chat.ts`), held by the main screen,
-    so closing the sheet keeps it while the app runs. The server stores none of it.
+    so closing the sheet keeps it while the app runs and restarting the app loses it. "새 대화" also drops a reply
+    still on its way. The server stores none of it.
 - While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
