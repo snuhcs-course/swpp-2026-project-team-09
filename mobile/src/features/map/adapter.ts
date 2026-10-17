@@ -7,6 +7,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { RecruitingQuest } from '@/api/party-types';
@@ -70,15 +71,15 @@ export interface CardView {
   title: string;
   lines: { icon: CardIcon; text: string }[];
   // `route` draws the way there; `room` opens the Quest's room; `active-party` opens the room of the User's Party's
-  // Quest; `recruit` opens 파티 만들기 for the Global Event; `meetup` opens the Meetup form for the Friend. `menu` opens
-  // the menu panel at the restaurant. `shuttle-line` shows the shuttle's whole line. `not-ready` says "준비 중이에요":
+  // Quest; `recruit` opens 파티 만들기 for the Global Event; `private-party` opens it as 비공개 with the Friend invited.
+  // `menu` opens the menu panel at the restaurant. `shuttle-line` shows the shuttle's whole line. `not-ready` says "준비 중이에요":
   // the feature belongs to another task. Null for a card without one.
   primary:
     | { label: string; action: 'route' | 'active-party' | 'not-ready' | 'shuttle-line' }
     | { label: string; action: 'menu'; restaurant: string }
     | { label: string; action: 'room'; questId: string }
     | { label: string; action: 'recruit'; eventId: string }
-    | { label: string; action: 'meetup'; userId: string; name: string }
+    | { label: string; action: 'private-party'; userId: string }
     | null;
   secondary: { label: string; action: 'not-ready' } | null;
   position: LatLng;
@@ -260,7 +261,7 @@ function friendCards(sources: MapSources): CardView[] {
         subLabel: department,
         title: name,
         lines: [...info, ...(walk === '' ? [] : [line('route', walk)])],
-        primary: { label: '파티 만들기', action: 'meetup', userId: id, name },
+        primary: { label: '파티 만들기', action: 'private-party', userId: id },
         secondary: null,
         position,
       },

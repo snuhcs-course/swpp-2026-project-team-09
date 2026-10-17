@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -28,7 +29,6 @@ const TONE: Record<NoticeKind, keyof typeof noticeTone> = {
   party: 'navy',
   'friend-request': 'navy',
   invitation: 'invitation',
-  meetup: 'invitation',
   'join-requests': 'request',
 };
 
@@ -36,7 +36,7 @@ const TONE: Record<NoticeKind, keyof typeof noticeTone> = {
 function usePress(): (notice: NoticeView) => void {
   const showNotReady = useNotReadyToast();
   return ({ kind, questId }) => {
-    if (kind === 'invitation' || kind === 'meetup') {
+    if (kind === 'invitation') {
       router.navigate({ pathname: '/party', params: { tab: 'invites' } });
     } else if (kind === 'friend-request') {
       router.push('/me/friends/requests');

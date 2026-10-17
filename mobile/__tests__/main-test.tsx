@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { pass, screen } from './support/app';
@@ -62,15 +63,15 @@ describe("the main screen's bottom navigation", () => {
     expect(screen.getByRole('tab', { name: '내 정보' })).toBeVisible();
   });
 
-  it('counts on 파티 what waits for the User in Parties: a Party opened, an invitation and a Meetup', async () => {
+  it('counts on 파티 what waits for the User in Parties: a Party opened and an invitation', async () => {
     givePhone({ permission: 'granted' });
     await openMain();
 
-    expect(screen.getByRole('tab', { name: '파티, 새 소식 3개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '파티, 새 소식 2개' })).toBeVisible();
   });
 
   it('shows no count when the lists cannot be read', async () => {
-    process.env.EXPO_PUBLIC_MOCK_FAIL = 'listParties,listFriendRequests,listQuestInvitations,listMeetups,listQuests';
+    process.env.EXPO_PUBLIC_MOCK_FAIL = 'listParties,listFriendRequests,listQuestInvitations,listQuests';
     givePhone({ permission: 'granted' });
     await openMain();
     await pass(3000);

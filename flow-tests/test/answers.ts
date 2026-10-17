@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -35,8 +36,6 @@ export const party = z.object({ id: z.string(), members: z.array(someone) });
 export const walkingRoute = z.object({ status: z.string(), route: z.object({ line: z.array(position) }).nullable() });
 
 export const inviteLink = z.object({ url: z.string() });
-
-export const meetup = z.object({ id: z.string() });
 
 export const restaurant = z.object({ name: z.string(), meals: z.array(z.object({ meal: z.string() })) });
 

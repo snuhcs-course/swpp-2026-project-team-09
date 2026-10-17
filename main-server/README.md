@@ -182,8 +182,7 @@ Request to it. The routes, all a User's:
   `[{ "id", "name", "department", "sharing", "visible" }]`, where `id` is the Friend's User id, `sharing` the User's own
   switch for the friendship and `visible` whether the User can see the Friend on the map now, never why not (see
   [Location Sharing](#location-sharing)).
-- `DELETE /friends/:userId` ends the friendship for both and answers 204. It withdraws the Meetups still proposed
-  between the two; the Quests of accepted ones stay (see [Meetup](#meetup)).
+- `DELETE /friends/:userId` ends the friendship for both and answers 204.
 - `PUT /friends/:userId/sharing` with `{ "on": false }` turns the User's switch for the friendship off, `{ "on": true }`
   on, and answers 204. It changes the User's own end only.
 
@@ -231,8 +230,7 @@ there:
   keeps its sender, as accepting an Invite Link does; otherwise the sender is `userAId`. A repeat is refused as already
   Friends, so it takes no `Idempotency-Key`.
 - `DELETE /admin/friendships/:userAId/:userBId`, in either order, ends the friendship as `DELETE /friends/:userId`
-  does, and answers 204: `friends-changed` to both, `position-removed` to each who saw the other, and the Meetups still
-  proposed between them withdrawn with `meetups-changed`.
+  does, and answers 204: `friends-changed` to both and `position-removed` to each who saw the other.
 
 Both changes go through `FriendsService`, so a change by an Administrator and one by either User lock the two Users
 alike and run one after the other. The refusals each have a `code`, checked in the order of the table, and a refusal
@@ -671,8 +669,8 @@ capacity, a Join Policy, an optional Global Event and one or more Sub Quests, wh
 with two or more Holders is a Shared Quest; nothing else tells it apart. The plan is shared and progress is personal: a
 Sub Quest is one record for all Holders, and whether it is done is kept for each Holder. A User gets a Quest by
 attending a published Global Event or by making one of their own, and enters another's by joining it, by a request to
-join that the Leader accepts or by the Leader's invitation; Meetups and Matching add the Quests with several Holders.
-The routes, all a User's:
+join that the Leader accepts or by the Leader's invitation; Matching adds the Quests with several Holders. A plan with a
+Friend is a Closed Quest the User makes and invites the Friend into. The routes, all a User's:
 
 - `POST /quests` with `{ "globalEventId": "...", "title"? }` attends the Global Event and answers 201 with the User's
   Quest for it. The first time it creates the Quest, with the `title` given (1 to 50 characters once trimmed) or else
@@ -830,7 +828,6 @@ they ask and the Leader decides; `closed`, only by the Leader's invitation. A Qu
 - from attending a Global Event: led by the User, `closed`, capacity 4. The Leader opens it to others by changing the
   Join Policy.
 - made by a User: led by the User, with the capacity and the Join Policy given, 4 and `closed` when left out.
-- from an accepted Meetup: led by the proposer, `closed`, capacity 4 (see [Meetup](#meetup)).
 
 When the Leader drops the Quest, the Holder who entered earliest leads it. `quest_holders.joined_at` keeps when each
 Holder entered. The Leader changes the settings, hands the role over and removes Holders (see below).
@@ -838,7 +835,7 @@ Holder entered. The Leader changes the settings, hands the role over and removes
 **Boards and the description.** An `open` or `approval` Quest is posted on a board, where the list of recruiting Quests
 shows it: `meal` (식사), `career` (진로), `hobby` (취미) or `show` (공연). A `closed` Quest is on none. Every Quest,
 under any Join Policy, carries a `description` of 0 to 200 characters, its recruiting post, empty by default. A Quest
-from attending, from a Meetup or from a match starts Closed, on no board and with an empty description. The Leader sets
+from attending or from a match starts Closed, on no board and with an empty description. The Leader sets
 both when making the Quest (`POST /quests/own`, which refuses with 400 naming `board` a recruiting Quest without one
 and a Closed Quest with one, and naming `description` one over 200 characters) and changes them with
 `PATCH /quests/:questId` (below), also for a Quest with a Global Event. The migration checks both rules, so no way of
@@ -1150,76 +1147,6 @@ matchServer.refuses('POST', `/users/${user.id}/matching-requests`, 409, 'MATCHIN
 The stub keeps each call in `calls`, with its method, path, body and `Authorization` header. A call it was given no
 answer for fails, as one to a match server that is down, and `hangs()` never answers. A route for the match server is
 called with its token by `postAsMatchServer(app, path, body)`, as `test/matching-quests.e2e-spec.ts` does.
-
-## Meetup
-
-A Meetup is a proposal from one Friend to another to meet. Accepting it gives both a Shared Quest. The routes, all a
-User's:
-
-- `POST /meetups` proposes a Meetup and answers 201 with it. It requires an `Idempotency-Key` (see
-  [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)). The body:
-  `{ "receiverId": "...", "title": "점심", "startsAt": "...", "endsAt": "...", "place": ... }`. `receiverId` is the
-  Friend's User id, as `GET /friends` gives it. The title, the times and the place are those of a Sub Quest (see
-  [Quests](#quests)), except that the start and the place are required and the start must be in the future. `endsAt`
-  is optional.
-- `GET /meetups` answers the Meetups proposed to the User and those the User proposed, the newest first:
-  `{ "received": [...], "sent": [...] }`, every state included.
-- `POST /meetups/:id/accept` and `POST /meetups/:id/decline` answer a Meetup proposed to the User, and
-  `POST /meetups/:id/withdraw` withdraws one the User proposed. Each answers 204 and takes a Meetup only while it is
-  proposed.
-
-No route edits a Meetup: the proposer withdraws it and proposes another. A Meetup reads:
-
-```json
-{
-  "id": "…",
-  "title": "점심",
-  "startsAt": "2026-10-13T03:00:00.000Z",
-  "endsAt": "2026-10-13T04:00:00.000Z",
-  "place": { "placeId": null, "label": "자하연 앞", "latitude": 37.4601, "longitude": 126.9512 },
-  "state": "proposed",
-  "proposer": { "id": "…", "name": "홍길동", "department": "컴퓨터공학부" },
-  "receiver": { "id": "…", "name": "김철수", "department": "경제학부" }
-}
-```
-
-`place` reads as a Sub Quest's does. `state` is one of:
-
-| State       | When                                                                    |
-| ----------- | ----------------------------------------------------------------------- |
-| `proposed`  | Proposed, and its start has not passed                                  |
-| `accepted`  | The receiver accepted it                                                |
-| `declined`  | The receiver declined it                                                |
-| `withdrawn` | The proposer withdrew it, or the friendship ended while it was proposed |
-| `expired`   | Proposed, and its start has passed                                      |
-
-**Expiry** is computed when a Meetup is read, at `now()` of `CLOCK` (see [Quests](#quests)), and nothing is written:
-the stored state stays `proposed`.
-
-**Accepting** creates one Quest held by both Friends, without a Global Event and without a Party, titled as the Meetup,
-with one Sub Quest that has the Meetup's title, start, end and place. The proposer leads it, and it is `closed` with
-capacity 4. From then on it is a Quest like any other: either Holder adds, edits or cancels Sub Quests, marks them done
-for themselves alone, and drops it. The Meetup only records that it was accepted.
-
-The refusals each have a `code`:
-
-| Refusal                                                                                                 | Status | `code`                |
-| ------------------------------------------------------------------------------------------------------- | ------ | --------------------- |
-| Proposing to a User who is not a Friend, or to oneself                                                  | 404    | `FRIEND_NOT_FOUND`    |
-| Proposing with a start that has passed                                                                  | 400    | `MEETUP_START_PASSED` |
-| A `placeId` that is not a Place of the list                                                             | 404    | `PLACE_NOT_FOUND`     |
-| An answer to a Meetup that is not proposed to the User, or a withdrawal of one the User did not propose | 404    | `MEETUP_NOT_FOUND`    |
-| An answer or a withdrawal once the Meetup is no longer proposed, expired included                       | 409    | `MEETUP_NOT_PROPOSED` |
-
-How they are stored: `meetups` holds one row for each Meetup, with the proposer, the receiver, its content and one of
-the four states that are stored. A check in the migration keeps the place a Place or a point with its label. Every
-change locks both Users' rows in the order of their ids first, as a change to a friendship does, and a Meetup leaves
-`proposed` only once, so two accepts at the same moment create one Quest, and no Meetup stays proposed between two
-Users who are no longer Friends.
-
-`meetups-changed` goes to both Friends when a Meetup is proposed, accepted, declined or withdrawn, and when ending the
-friendship withdraws one. On accepting, `quests-changed` goes to both too. The signals carry nothing, and the app
-fetches `GET /meetups` again (see [Signals](#signals)).
 
 ## Party
 
@@ -1568,8 +1495,8 @@ typing coordinates:
   ```
 
   The Places with a number come first, by number (`25`, `25-1`, `26`), then those without one, such as `자하연`, in the
-  Korean order of their names. `id` is the same in every database and never changes, so a class's time or a Meetup
-  can point at it (`docs/adr/0002-place-ids-computed-from-the-source.md`).
+  Korean order of their names. `id` is the same in every database and never changes, so a class's time can point at it
+  (`docs/adr/0002-place-ids-computed-from-the-source.md`).
 
 - An Administrator reads the same list at `GET /admin/places`, each Place with two more fields, so that the admin site
   can show how the seed placed and outlined it: `origin`, `campus_map`, `openstreetmap` or `national_map`, and
@@ -1608,8 +1535,8 @@ const found = this.placeLookup.at({ latitude, longitude });
 - It does not check the [Campus Boundary](#campus-boundary): a feature that hides a User outside it checks that first.
 - The Places are read once, when the server starts, after the seed was loaded.
 
-The app asks the same lookup for a point a User picks on the map, so that a Meetup or a Sub Quest shows a name instead
-of coordinates:
+The app asks the same lookup for a point a User picks on the map, so that a Sub Quest shows a name instead of
+coordinates:
 
 - `GET /places/at?latitude=37.45016&longitude=126.95259` with a User's access token answers the Place at the position,
   in the form of the list, and its `relation`, `inside` or `near` as above:
@@ -1945,13 +1872,12 @@ commas, in any case. A User with one of them who has finished Onboarding is give
   and 정예준, whose Avatar never shows;
 - Friend Requests from 강하은 and 윤도윤;
 - an invitation into `체육관 배드민턴`, an Approval Quest led by 박지호;
-- a Meetup proposed by 최수아, in two hours at 학생회관;
 
-and then `friends-changed`, `quests-changed`, `meetups-changed` and `party-changed`. What already lies between the
-account and a demo User, such as a friendship the person ended, is left as it is. `demo-seed` looks for such Users every
-5 seconds and prepares each once per run, so that a request the person declined does not come back until the service
-starts again. The main server itself has no demo code or setting: the seed writes through Prisma and sends the signals
-over Redis as `SignalsService` does.
+and then `friends-changed`, `quests-changed` and `party-changed`. What already lies between the account and a demo User,
+such as a friendship the person ended, is left as it is. `demo-seed` looks for such Users every 5 seconds and prepares
+each once per run, so that a request the person declined does not come back until the service starts again. The main
+server itself has no demo code or setting: the seed writes through Prisma and sends the signals over Redis as
+`SignalsService` does.
 
 **The walker** signs each demo User's access token with `ACCESS_TOKEN_PRIVATE_KEY`, for the User's Session, as a
 sign-in does, and uploads a position through `POST /positions` every 5 seconds, so that the positions take a phone's
@@ -2033,7 +1959,6 @@ src/
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
 ├── parties/                         a feature: Parties, who sees, enters and leaves them, the Leader's controls and the switches
 ├── quests/                          a feature: Quests, their Holders, Sub Quests, each Holder's progress and joining
-├── meetups/                         a feature: Meetups between Friends, and the Shared Quest an accepted one gives
 ├── matching/                        a feature: requests for Matching, checked and passed on to the match server, and
 │                                    the Shared Quests of its matches
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
@@ -2072,6 +1997,9 @@ To change the schema, with the data stores running and `.env` in place:
 `pnpm db:migrate` brings any database up to the current schema by applying the migrations it has not seen yet.
 
 Prisma is pinned at 7.10.0. Ignore the message that suggests updating to Prisma 8.
+
+The model `Meetup`, its enum `MeetupState` and the table `meetups` stay in the schema, unread, since the Meetup was
+retired in Iteration 2. Its code can be restored from commit `2f4f201`.
 
 ## Adding a feature module
 

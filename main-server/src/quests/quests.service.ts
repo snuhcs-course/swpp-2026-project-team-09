@@ -7,6 +7,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -28,7 +29,7 @@ import { type MakeQuestDto, type SubQuestContentDto } from './dto/quest-requests
 import { hasSubQuestsAhead, QUEST_INCLUDE, QuestDto, toQuestDto } from './dto/quest.dto.js';
 import { notFound, questNotFound } from './refusals.js';
 
-// What a Sub Quest that a Holder or a Meetup writes stores.
+// What a Sub Quest that a Holder writes stores.
 export type SubQuestColumns = Pick<
   SubQuest,
   'startsAt' | 'endsAt' | 'placeId' | 'latitude' | 'longitude' | 'placeLabel'

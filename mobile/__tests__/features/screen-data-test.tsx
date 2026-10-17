@@ -231,7 +231,7 @@ describe('the cards of people and Parties', () => {
         { icon: 'info', text: '공강 · 중앙도서관 근처 · 15:00까지 비어 있어요' },
         { icon: 'route', text: '도보 4분' },
       ],
-      primary: { label: '파티 만들기', action: 'meetup', userId: 'f1', name: '김민준' },
+      primary: { label: '파티 만들기', action: 'private-party', userId: 'f1' },
     });
     expect(cards.find(({ id }) => id === 'party-member:pm1')).toMatchObject({
       mark: { type: 'person', id: 'pm1', name: '오현우', photo: null, presence: null },

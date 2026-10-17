@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type Place, PrismaClient, type User } from '../generated/prisma/client.js';
@@ -213,7 +214,7 @@ export async function seedDemo(prisma: PrismaClient, signals: DemoSignals, now =
 }
 
 // Leaves what already lies between the account and a demo User as it is.
-async function prepareAccount(prisma: PrismaClient, place: PlaceOf, now: Date, account: User): Promise<void> {
+async function prepareAccount(prisma: PrismaClient, now: Date, account: User): Promise<void> {
   const befriend = (key: string, accepted: boolean): Promise<unknown> => {
     const users = pair(account.id, demoUserId(key));
     return prisma.friendship.upsert({
@@ -231,21 +232,6 @@ async function prepareAccount(prisma: PrismaClient, place: PlaceOf, now: Date, a
   if ((await prisma.questHolder.findUnique({ where })) === null) {
     await prisma.questInvitation.upsert({ where, create: { questId, userId: account.id }, update: {} });
   }
-  const { meetup } = DEMO_ACCOUNT_SHARE;
-  const meetupId = demoId(`meetup:${account.id}`);
-  await prisma.meetup.upsert({
-    where: { id: meetupId },
-    create: {
-      id: meetupId,
-      proposerId: demoUserId(meetup.proposer),
-      receiverId: account.id,
-      title: meetup.title,
-      startsAt: at(now, meetup.startsAt),
-      endsAt: at(now, meetup.endsAt),
-      placeId: place(meetup.place).id,
-    },
-    update: {},
-  });
 }
 
 // Gives each onboarded User named by `emails`, but those `except`, their share of the demo (README.md: Demo data), and
@@ -266,11 +252,10 @@ export async function prepareDemoAccounts(
       OR: emails.map((email) => ({ email: { equals: email, mode: 'insensitive' as const } })),
     },
   });
-  const place = await placesByNumber(prisma);
   for (const account of accounts) {
     // oxlint-disable-next-line no-await-in-loop -- one account at a time
-    await prepareAccount(prisma, place, now, account);
-    for (const name of ['friends-changed', 'quests-changed', 'meetups-changed', 'party-changed']) {
+    await prepareAccount(prisma, now, account);
+    for (const name of ['friends-changed', 'quests-changed', 'party-changed']) {
       signals.send([account.id], name);
     }
   }

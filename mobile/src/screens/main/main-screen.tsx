@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -35,7 +36,6 @@ import { type MainRoute, useRoute } from './use-route';
 import { type Selection, useSelection } from './use-selection';
 import { type Things, useThings } from './use-things';
 import { ZoomControl } from './zoom-control';
-import { openMeetupForm } from '../meetup/open-meetup-form';
 
 const NO_CARDS: readonly CardView[] = [];
 
@@ -85,7 +85,7 @@ function OverMap({ children, onStage }: OverMapProps): ReactElement {
 // and brings the camera to the "close" level, keeping the card. "길찾기" closes the card once the route is asked for.
 // "메뉴 보기" opens the menu panel at the restaurant. "노선 보기" brings the shuttle's whole line into view and closes
 // the card. "파티 열기" and "참여하기" open a Quest's room, "같이 갈 사람 찾기" 파티 만들기 for the Global Event, and a
-// Friend's "파티 만들기" the Meetup form. Every other button belongs to another task and says that it is not ready. A
+// Friend's "파티 만들기" 파티 만들기 as 비공개 with the Friend invited. Every other button belongs to another task and says that it is not ready. A
 // choice, such as an event at a place, opens its own card.
 function SelectedCard(props: SelectedCardProps): ReactElement | null {
   const { selection, map, route, shuttleLine, onActiveParty, onHeight, top } = props;
@@ -122,8 +122,8 @@ function SelectedCard(props: SelectedCardProps): ReactElement | null {
           onActiveParty();
         } else if (primary.action === 'recruit') {
           openPartyCreate(primary.eventId);
-        } else if (primary.action === 'meetup') {
-          openMeetupForm(primary.userId, primary.name);
+        } else if (primary.action === 'private-party') {
+          router.push({ pathname: '/party-form', params: { friendId: primary.userId } });
         } else if (primary.action !== 'route') {
           showNotReady();
         } else if (route.routeTo(card)) {

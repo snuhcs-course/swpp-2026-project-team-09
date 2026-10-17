@@ -118,7 +118,7 @@ export function toNextQuest(quests: readonly Quest[], now: Date): NextQuestView 
 }
 
 // The Party that is marked with a Quest: the User's own or a listed one. Null for a Quest that no Party names, which
-// is a Shared Quest, such as an accepted Meetup with a Friend, or a Quest the User holds alone.
+// is a Shared Quest, such as a 비공개 파티 with a Friend, or a Quest the User holds alone.
 export interface QuestParty {
   title: string;
   joinPolicy: JoinPolicy;
