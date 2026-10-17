@@ -65,6 +65,7 @@ export const serverClient: ApiClient = {
     return lobby;
   },
   updateProfile: (change) => call('PATCH', '/users/me/profile', isProfile, { body: change }),
+  getProfile: () => call('GET', '/users/me/profile', isProfile),
   setMasterSwitch: async (on) => {
     await call('PUT', '/users/me/master-switch', isNothing, { body: { on } });
   },

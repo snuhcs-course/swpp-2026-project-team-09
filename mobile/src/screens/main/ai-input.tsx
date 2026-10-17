@@ -8,6 +8,7 @@
 
 import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { USER_MESSAGE_MAX } from '@/api/assistant-types';
 import { color, Icon, radius, shadow, space, text } from '@/design-system';
 import { AI_INPUT } from './layout';
 
@@ -34,8 +35,9 @@ const BAR_RADIUS = 28;
 const BAR_RADIUS_TALL = 22;
 
 // The AI input of the `Main` frame: the white bar with the placeholder and the send button. Focusing it opens the
-// chat, and it stays at the bottom as the chat's input. It grows with its text up to 120, Enter starts a new line,
-// and only the send button sends, in the key colour while there is something to send.
+// chat, and it stays at the bottom as the chat's input. It grows with its text up to 120, takes at most the characters
+// the Assistant takes in a message, Enter starts a new line, and only the send button sends, in the key colour while
+// there is something to send.
 export function AiInput({ chatOpen, onOpen, waiting, onSend, onHeight }: AiInputProps): ReactElement {
   const [message, setMessage] = useState('');
   const [height, setHeight] = useState(AI_FIELD);
@@ -56,6 +58,7 @@ export function AiInput({ chatOpen, onOpen, waiting, onSend, onHeight }: AiInput
     >
       <TextInput
         accessibilityLabel="AI에게 메시지"
+        maxLength={USER_MESSAGE_MAX}
         multiline
         onChangeText={setMessage}
         onContentSizeChange={({ nativeEvent }) => {

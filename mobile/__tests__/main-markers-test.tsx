@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { screen } from './support/app';
@@ -23,6 +24,9 @@ import {
 import { startFresh } from './support/mocks';
 import { apiClient } from '@/api/client';
 import { CAREER_GATHERING } from '@/api/mock/data/quests';
+
+// A spied operation answers in the client's place, so its answers carry a Quest's mocked parts themselves.
+const NO_PARTS = { photo: null, tags: [], faces: [] };
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -87,9 +91,10 @@ describe('the map of the main screen, closer', () => {
   });
 
   it('counts the Quests gathering for a Global Event on its pin when they are more than one', async () => {
-    jest
-      .spyOn(apiClient, 'listRecruitingQuests')
-      .mockResolvedValue([CAREER_GATHERING, { ...CAREER_GATHERING, id: 'q-ai-other' }]);
+    jest.spyOn(apiClient, 'listRecruitingQuests').mockResolvedValue([
+      { ...CAREER_GATHERING, ...NO_PARTS },
+      { ...CAREER_GATHERING, ...NO_PARTS, id: 'q-ai-other' },
+    ]);
     const user = await openMain();
 
     await zoomIn(user, 2);

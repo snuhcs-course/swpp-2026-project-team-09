@@ -1766,14 +1766,30 @@ its model through OpenRouter with the Vercel AI SDK
   }
   ```
 
-  answers `200 { "text": "…" }`, the Assistant's reply whole, not streamed. A message is a `role`, `user` or
-  `assistant`, and a `text` that is not empty. A conversation without messages, or one whose last message is not the
-  User's, gets 400 before the model is called. Nothing of a conversation is stored: the app keeps it.
+  answers `200 { "text": "…" }`, the Assistant's reply whole, not streamed. Nothing of a conversation is stored: the
+  app keeps it.
+
+  - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
+    `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
+    (`quest` or `globalEvent`, by id; `cards` may be left out). The model gets only the latest 20 messages, and of an
+    Assistant's message its text and a line naming its cards, never an earlier message's tool results.
+  - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
+    the User's, a message of another shape, a User's message over 1,000 characters, an Assistant's over 4,000, or
+    messages over 24,000 characters together (`dto/assistant-messages.dto.ts`).
+  - **429 `{ "message": "Today's messages are used up" }`** once a User has sent `ASSISTANT_DAILY_MESSAGES` messages
+    (50) that day in Korea, without calling the model. Redis counts them under `assistant:messages:<userId>:<date>`.
+  - **503 `{ "message": "The Assistant cannot answer now" }`**, the one error reply, whatever failed: no key configured,
+    a model error, exhausted credit (OpenRouter's 402), the time running out, or the step cap reached without an
+    answer. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
+    message's text, the model's answer or an error's message or body, which can hold the request sent to the model.
 
 - `OPENROUTER_API_KEY` is the OpenRouter key and `ASSISTANT_MODEL` the OpenRouter id of the model, such as
-  `anthropic/claude-haiku-5.5`. Both may be empty, and the server starts without them; the endpoint then answers 500.
-  `.env.example` says how to set up a key. The endpoint has no limit yet on the length of a message, the time of a
-  reply or the messages of a day, so set a key only on your own machine, never on a server others can reach.
+  `anthropic/claude-haiku-5.5`. Both may be empty, and the server starts without them; the endpoint then answers 503.
+  `.env.example` says how to set up a key. Give each key a credit limit on OpenRouter as well: the daily limit bounds
+  what one User spends, not what all of them do.
+- **Limits per message**, each a setting with its default: at most `ASSISTANT_MAX_STEPS` model calls (8; each tool
+  call is one, and so is the answer), `ASSISTANT_TIMEOUT_MS` over all of them (30,000) and `ASSISTANT_MAX_OUTPUT_TOKENS`
+  written in each call (1,000). A failed model call is not retried.
 
 The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 
@@ -1789,13 +1805,14 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
   each request. A later AI feature gets a definition of its own that reuses tools, never more tools on this one, so
   that one feature cannot reach another's data.
 - **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
-  call, tool call and answer, at most 8 model calls a message.
+  call, tool call and answer within the limits per message. `causeOf` names why a run failed for the log.
 
 ### Testing with the scripted model
 
 The tests never call a real model. `test/scripted-model.ts` stands for it: a `ScriptedModel` whose `model` goes to
 `startApp` in the model port's place. Each call to the model takes the next step of its script, and every call is
-kept. A step is a tool to call with its arguments, `{ tool, input }`, or the text to answer, `{ text }`. A call past
+kept. A step is a tool to call with its arguments, `{ tool, input }`, the text to answer, `{ text }`, an error to throw
+as the provider would, `{ error }`, or no answer until the time per message runs out, `{ stall: true }`. A call past
 the end of the script fails, and so does the model `startApp` binds by default, so a test that forgot a script cannot
 reach OpenRouter. `test/assistant.e2e-spec.ts` does it this way:
 
