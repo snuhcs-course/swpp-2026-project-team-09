@@ -49,7 +49,7 @@ Server B becomes the **Dev Server** (`GLOSSARY.md`). It runs the four servers, P
 - Server B of the course's pair, reached as `ssh swpp-b` by every team member with their own key. Server A stays empty.
 - Public address `http://swpp26t09.147-46-242-174.sslip.io`, plain HTTP, port 80 only. The course's ingress routes only this exact host name to the server; sub-domains and the bare IP do not reach it. The ingress ends requests over 120 seconds; whether it passes WebSocket connections and whether it ends them at 120 seconds is unknown until tried (Further Notes).
 - The server is an unprivileged Incus (LXC) container: Ubuntu 24.04, 8 cores (`nproc` says 38), 16 GiB, 40 GB, UTC. Docker works in it; Kubernetes does not (ADR 0004). Time comes from the host; the server cannot set its own clock, and the worker's schedules already name `Asia/Seoul`.
-- The Dev Server follows `development` and nothing else. There is no setting to point it elsewhere.
+- The Dev Server follows `development` and nothing else. There is no setting to point it elsewhere. No pull request ever targets `development`: it only receives the iteration branch, `2.0/Main`, by a fast-forward merge pushed from a checkout (Further Notes).
 
 ### What runs
 
@@ -120,7 +120,7 @@ One idempotent script, run with sudo on a fresh server and safe to run again: in
 
 - The deployment override beside the laptop Compose file; the proxy's configuration; a deploy folder with the bootstrap script, the deploy script, the four unit files, an example of the settings file with its placeholders, and the runbook; shell tests and lint for the two scripts; a CI job for them; a test of the deployment stack in `flow-tests`; a short "Deployment" section in the root README that points to the runbook; the comment in the app's example settings.
 - The deploy script separates deciding from doing. Its decisions (compare the commits, judge the check runs, count the attempt, choose the dumps to delete, compose the status) are functions that take plain inputs and print a verdict. The commands with side effects (`git`, `docker`, `curl`, `pg_dumpall`) are reached through variables, so a test replaces them.
-- The runbook covers: first setup, filling the secrets, reading the status and the journal, redeploying by hand, restoring a dump, emptying the data and starting again, adding an APK, backing the secrets up before the course deletes the servers, and what changes for a production server on A (tag instead of branch, no demo refresh).
+- The runbook covers: first setup, filling the secrets, reading the status and the journal, redeploying by hand, bringing `2.0/Main` into `development` so that the Dev Server takes it, restoring a dump, emptying the data and starting again, adding an APK, backing the secrets up before the course deletes the servers, and what changes for a production server on A (tag instead of branch, no demo refresh).
 
 ### Repository rules
 
@@ -137,7 +137,7 @@ One idempotent script, run with sudo on a fresh server and safe to run again: in
 ## Out of Scope
 
 - Server A, and any production deployment: tags (`v*`), a second environment, a registry (GHCR).
-- Pointing the Dev Server at another branch or ref, and the `2.0/Main` branch. The Dev Server follows `development`; pull requests of Iteration 2 go to `development`.
+- Pointing the Dev Server at another branch or ref. The Dev Server follows `development`; pull requests of Iteration 2 go to `2.0/Main`, never to `development`.
 - The admin site. Without HTTPS, Google's sign-in on it cannot be allowed for this host, and the host name cannot carry a second site. The admin site runs on a laptop with its main-server address set to the Dev Server.
 - HTTPS, App Links (an Invite Link opens through the `snunow://` scheme only), and a custom domain.
 - Notifications of a deployment to Slack or as a GitHub commit status.
@@ -147,8 +147,9 @@ One idempotent script, run with sudo on a fresh server and safe to run again: in
 
 ## Further Notes
 
-- **Operations tickets.** The steps on the server happen after the pull request is merged into `development`, as tickets apart from the code tickets, so that the review of the code does not depend on the state of the server: run the bootstrap over ssh (an agent can do this); fill in the person-held values; watch the first deploy run through to `deployed` and open `/health/ready` and `/deploy-status` from a phone; build the dev APK, copy it to the APK folder and install it from `/apk/`; hold a WebSocket open from a phone off the campus network for more than three minutes and record in the runbook whether the ingress passes WebSockets and whether it ends them at 120 seconds. If it ends them, a follow-up ticket shortens socket.io's ping interval or allows the polling transport.
-- **Branch and pull request.** One integration branch `2.0/P04-05-dev-deploy` from `development`, worked with `/implement-spec`, one pull request into `development`, reviewed by 윤유상. The schedule's P4 and P5 rows get the same final commit.
+- **Operations tickets.** The steps on the server happen after the pull request is merged into `2.0/Main` and `development` is fast-forwarded to it, as tickets apart from the code tickets, so that the review of the code does not depend on the state of the server: run the bootstrap over ssh (an agent can do this); fill in the person-held values; watch the first deploy run through to `deployed` and open `/health/ready` and `/deploy-status` from a phone; build the dev APK, copy it to the APK folder and install it from `/apk/`; hold a WebSocket open from a phone off the campus network for more than three minutes and record in the runbook whether the ingress passes WebSockets and whether it ends them at 120 seconds. If it ends them, a follow-up ticket shortens socket.io's ping interval or allows the polling transport.
+- **Branch and pull request.** One integration branch `2.0/P04-05-dev-deploy` from `2.0/Main`, worked with `/implement-spec`, one pull request into `2.0/Main`, reviewed by 윤유상. The schedule's P4 and P5 rows get the same final commit.
+- **How `development` moves.** `2.0/Main` is the reviewed iteration branch; `development` is the Dev Server's input and nothing else. No pull request ever targets `development`. After a merge into `2.0/Main`, a team member brings `development` up to it with a fast-forward merge from a checkout and pushes; the repository allows only squash merges for pull requests, which would give `development` commits of its own and let the two branches drift. The runbook has the three commands.
 - **Later**, in the order they will likely come: Slack or GitHub status notifications of a deploy run (fifteen minutes once a webhook or token exists); images built in CI and pushed to GHCR, pulled by the server; server A as production, following `v*` tags with the same scripts and no demo refresh; HTTPS if the course opens 443 or a domain appears; `flow-tests` against the Dev Server (P11).
 - **Facts that shaped the design**, found on 2026-10-17: ssh to the servers works only from the university's network, so GitHub's runners cannot push to them (ADR 0003); the team's GitHub role is `maintain`, and the repository's runner API refuses the team, so a self-hosted runner was not an option; outbound to GitHub, GHCR, Docker Hub and Ubuntu's archive is open; the ingress answers 503 for the host while nothing listens on 80, 404 for sub-domains and the guide page for the bare IP.
 - The cost of the first deployment is a few minutes of building four Node images on 8 cores; later runs rebuild only the layers that changed.

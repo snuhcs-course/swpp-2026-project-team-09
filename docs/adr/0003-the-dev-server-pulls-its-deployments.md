@@ -11,5 +11,5 @@ We chose this over pushing from GitHub Actions through a lab computer on the uni
 ## Consequences
 
 - A deployment appears up to a minute after CI finishes, and nothing of it shows in GitHub's Actions tab. The result is read on the server (`journalctl`) or at the Dev Server's status address.
-- Pushing straight to `development` deploys it; the branch has no protection rule. A commit whose CI fails is skipped, not deployed.
+- Whatever reaches `development` deploys; the branch has no protection rule. It is only ever brought up to the iteration branch (`2.0/Main` in Iteration 2) by a fast-forward merge from a checkout, never by a pull request. A commit whose CI fails is skipped, not deployed.
 - The production server, when it comes, follows the same model with tags in place of a branch.

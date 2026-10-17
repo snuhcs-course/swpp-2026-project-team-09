@@ -3,9 +3,9 @@
 Parent: [P04-05 spec](../spec.md)
 Status: ready-for-human
 Owner: 김태현
-Blocked by: 01, 02, 03, 04, 05, and the pull request merged into `development`
+Blocked by: 01, 02, 03, 04, 05, the pull request merged into `2.0/Main`, and `development` fast-forwarded to it
 
-Starts after the pull request is merged into `development`. Outside the scope of agent implementation; an agent may drive the ssh steps with the owner present.
+Starts after the pull request is merged into `2.0/Main` and `development` is fast-forwarded to it. Outside the scope of agent implementation; an agent may drive the ssh steps with the owner present.
 
 ## What to do
 

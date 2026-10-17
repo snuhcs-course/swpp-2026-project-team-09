@@ -5,7 +5,7 @@ Status: ready-for-human
 Owner: 김태현
 Blocked by: 06
 
-Starts after the pull request is merged into `development` and ticket 06 is done. Outside the scope of agent implementation.
+Starts after ticket 06 is done. Outside the scope of agent implementation.
 
 ## What to do
 
