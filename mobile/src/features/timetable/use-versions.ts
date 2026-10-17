@@ -14,6 +14,7 @@ import {
   addEmptyVersion,
   deleteCurrentVersion,
   duplicateCurrentVersion,
+  type MadeVersion,
   makeVersion,
   readVersions,
   renameCurrentVersion,
@@ -29,6 +30,10 @@ export const VERSIONS_KEY = ['timetable-versions'] as const;
 const TOO_MANY = '시간표는 10개까지 저장할 수 있어요';
 export const NOT_MOVED = '시간표를 다 옮기지 못했어요';
 const NOT_SAVED = '저장하지 못했어요. 다시 시도해 주세요';
+
+function refusedWords(count: number): string {
+  return `수업 ${count}개는 넣지 못했어요`;
+}
 
 function versionsQuery(): { queryKey: readonly string[]; queryFn: () => Promise<VersionsView> } {
   return { queryKey: [...VERSIONS_KEY, myUserId()], queryFn: readVersions };
@@ -75,21 +80,23 @@ export interface TimetableVersions {
   addEmpty: () => void;
   duplicate: () => void;
   retry: () => void;
-  // For a version made elsewhere, such as from a screenshot. Resolves to whether the switch finished.
-  make: (name: string, classes: ClassSave[]) => Promise<boolean>;
+  // For a version made elsewhere, such as from a screenshot. Resolves to what was left out once the switch finished, or
+  // null when it did not.
+  make: (name: string, classes: ClassSave[]) => Promise<MadeVersion | null>;
 }
 
-// The versions for the week card. After a switch the classes and the Quests are fetched again, so that the timetable,
-// the map, the Class Quests and the free time Friends see follow the version picked.
-export function useTimetableVersions(): TimetableVersions {
+type Run = (change: () => Promise<number>, switches?: boolean) => Promise<boolean>;
+
+// Runs one change at a time and says how it went. Resolves to whether it was done.
+function useRun(): { busy: boolean; run: Run } {
   const queryClient = useQueryClient();
   const show = useToast();
-  const { data } = useQuery(versionsQuery());
   const running = useRef(false);
   const [busy, setBusy] = useState(false);
 
   const run = useCallback(
-    async (change: () => Promise<void>, switches = true): Promise<boolean> => {
+    // `change` gives how many classes the main server refused for good, which the toast says.
+    async (change: () => Promise<number>, switches = true): Promise<boolean> => {
       if (running.current) {
         return false;
       }
@@ -97,8 +104,11 @@ export function useTimetableVersions(): TimetableVersions {
       setBusy(true);
       let done = false;
       try {
-        await change();
+        const refused = await change();
         done = true;
+        if (refused > 0) {
+          show(refusedWords(refused), undefined, 'alert');
+        }
       } catch (error) {
         show(await failureWords(error), undefined, 'alert');
       } finally {
@@ -114,16 +124,41 @@ export function useTimetableVersions(): TimetableVersions {
     },
     [queryClient, show],
   );
+  return { busy, run };
+}
+
+// The versions for the week card. After a switch the classes and the Quests are fetched again, so that the timetable,
+// the map, the Class Quests and the free time Friends see follow the version picked.
+export function useTimetableVersions(): TimetableVersions {
+  const { data } = useQuery(versionsQuery());
+  const { busy, run } = useRun();
 
   return {
     view: data,
     busy,
     pick: useCallback((id: string) => void run(() => switchVersion(id)), [run]),
-    rename: useCallback((name: string) => void run(() => renameCurrentVersion(name), false), [run]),
+    rename: useCallback(
+      (name: string) =>
+        void run(async () => {
+          await renameCurrentVersion(name);
+          return 0;
+        }, false),
+      [run],
+    ),
     remove: useCallback(() => void run(deleteCurrentVersion), [run]),
     addEmpty: useCallback(() => void run(addEmptyVersion), [run]),
     duplicate: useCallback(() => void run(duplicateCurrentVersion), [run]),
     retry: useCallback(() => void run(retrySwitch), [run]),
-    make: useCallback((name: string, classes: ClassSave[]) => run(() => makeVersion(name, classes)), [run]),
+    make: useCallback(
+      async (name: string, classes: ClassSave[]): Promise<MadeVersion | null> => {
+        let made: MadeVersion | null = null;
+        const done = await run(async () => {
+          made = await makeVersion(name, classes);
+          return made.refused;
+        });
+        return done ? made : null;
+      },
+      [run],
+    ),
   };
 }

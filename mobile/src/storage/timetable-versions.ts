@@ -13,6 +13,8 @@ export interface KeptVersion {
   id: string;
   name: string;
   classes: ClassSave[];
+  // The classes the main server refused for good the last time the version was switched to, by name.
+  refused?: string[];
 }
 
 // A switch that stopped before every class of the version switched to was on the main server: whether the main
@@ -20,6 +22,8 @@ export interface KeptVersion {
 export interface UnfinishedSwitch {
   reset: boolean;
   missing: { key: string; save: ClassSave }[];
+  // The classes the main server refused for good so far, by name: they are left out, not sent again.
+  refused?: string[];
 }
 
 export interface KeptVersions {

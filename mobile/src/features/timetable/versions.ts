@@ -9,6 +9,7 @@ import { newIdempotencyKey } from '@/api/idempotency-key';
 import type { ClassSave } from '@/api/types';
 import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
+import { checkedClasses, type Dropped, refusedForGood } from './version-checks';
 import { fingerprint, saveOf, semesterName } from './version-parts';
 import { type KeptVersion, type KeptVersions, keepVersions, readKeptVersions } from '@/storage/timetable-versions';
 
@@ -23,6 +24,11 @@ import { type KeptVersion, type KeptVersions, keepVersions, readKeptVersions } f
 //
 // Classes on the main server that differ from what this phone last wrote were changed elsewhere, such as on another
 // phone: before a switch they are kept as a version of their own rather than written over.
+//
+// A class the main server refuses for good (a 4xx but 401, 408 and 429) is left out, so that it cannot hold the switch
+// unfinished; the switch finishes without it, says how many, and the version keeps their names as `refused`. A new
+// version's classes are checked against the main server's rules before anything on it changes: what breaks them is
+// left out and counted, not refused, so that an import from a screenshot keeps what it can.
 
 export const MOST_VERSIONS = 10;
 export const NAME_LENGTH = 20;
@@ -95,12 +101,12 @@ async function load(): Promise<KeptVersions> {
 }
 
 // Resets the main server's timetable unless that was done, and adds the missing classes, keeping after each step what
-// is left.
-async function finish(start: KeptVersions): Promise<void> {
+// is left. Gives how many classes the main server refused for good.
+async function finish(start: KeptVersions): Promise<number> {
   let kept = start;
   const { unfinished } = kept;
   if (unfinished === null) {
-    return;
+    return 0;
   }
   if (!unfinished.reset) {
     await apiClient.resetTimetable();
@@ -108,16 +114,26 @@ async function finish(start: KeptVersions): Promise<void> {
     await keepVersions(kept);
   }
   let missing = unfinished.missing;
+  const refused = [...(unfinished.refused ?? [])];
   for (const { key, save } of unfinished.missing) {
-    // oxlint-disable-next-line no-await-in-loop -- one by one, so that what is left is known after each
-    await apiClient.addClass(save, key);
+    try {
+      // oxlint-disable-next-line no-await-in-loop -- one by one, so that what is left is known after each
+      await apiClient.addClass(save, key);
+    } catch (error) {
+      if (!refusedForGood(error)) {
+        throw error;
+      }
+      refused.push(save.courseName);
+    }
     missing = missing.slice(1);
-    kept = { ...kept, unfinished: { ...unfinished, reset: true, missing } };
+    kept = { ...kept, unfinished: { reset: true, missing, refused } };
     // oxlint-disable-next-line no-await-in-loop -- kept after each class, so that a stop loses none
     await keepVersions(kept);
   }
   // What the main server holds now, read back, rather than what was sent.
-  await keepVersions({ ...kept, unfinished: null, written: fingerprint(await serverClasses()) });
+  const written = fingerprint(await serverClasses());
+  await keepVersions({ ...kept, versions: withCurrent(kept, { refused }), unfinished: null, written });
+  return refused.length;
 }
 
 // The versions as the first use after the app starts finds them: a switch left unfinished is finished first. One that
@@ -171,11 +187,11 @@ function stashed(kept: KeptVersions, server: ClassSave[] | null): KeptVersion[] 
 
 // `kept.versions` holds the version switched to; `server` is the main server's classes as read just before, or null
 // when the current version is being deleted.
-async function switchTo(kept: KeptVersions, id: string, server: ClassSave[] | null): Promise<void> {
+async function switchTo(kept: KeptVersions, id: string, server: ClassSave[] | null): Promise<number> {
   const versions = stashed(kept, server);
   const picked = versions.find((version) => version.id === id);
   if (picked === undefined) {
-    return;
+    return 0;
   }
   const switching: KeptVersions = {
     ...kept,
@@ -187,10 +203,10 @@ async function switchTo(kept: KeptVersions, id: string, server: ClassSave[] | nu
     },
   };
   await keepVersions(switching);
-  await finish(switching);
+  return finish(switching);
 }
 
-async function make(name: (kept: KeptVersions) => string, classes: ClassSave[] | null): Promise<void> {
+async function make(name: (kept: KeptVersions) => string, classes: ClassSave[] | null): Promise<number> {
   const kept = await settled();
   if (kept.versions.length >= MOST_VERSIONS) {
     throw new VersionsRefusal('too-many');
@@ -198,37 +214,47 @@ async function make(name: (kept: KeptVersions) => string, classes: ClassSave[] |
   const server = await serverClasses();
   const id = newId();
   const made = { id, name: cut(name(kept)), classes: classes ?? server };
-  await switchTo({ ...kept, versions: [...kept.versions, made] }, id, server);
+  return switchTo({ ...kept, versions: [...kept.versions, made] }, id, server);
 }
 
 export function readVersions(): Promise<VersionsView> {
   return queued(async () => view(await ready()));
 }
 
-// Makes a version of the classes and switches to it. Throws VersionsRefusal `too-many` with 10 already, and what the
-// main server refused when the switch stops; the switch is then unfinished.
-export function makeVersion(name: string, classes: ClassSave[]): Promise<void> {
-  return queued(() => make(() => name, classes));
+// What making a version left out: classes and times that break the main server's rules, and classes it refused.
+export interface MadeVersion {
+  dropped: Dropped;
+  refused: number;
 }
 
+// Makes a version of the classes and switches to it. Classes and times the main server would refuse are left out first
+// and counted. Throws VersionsRefusal `too-many` with 10 already, and what the main server answered when the switch
+// stops; the switch is then unfinished.
+export function makeVersion(name: string, classes: ClassSave[]): Promise<MadeVersion> {
+  return queued(async () => {
+    const checked = checkedClasses(classes);
+    return { dropped: checked.dropped, refused: await make(() => name, checked.classes) };
+  });
+}
+
+// The switches below give how many classes the main server refused for good.
+
 // `새 시간표 N`, N one more than the versions.
-export function addEmptyVersion(): Promise<void> {
+export function addEmptyVersion(): Promise<number> {
   return queued(() => make((kept) => `새 시간표 ${kept.versions.length + 1}`, []));
 }
 
 // `{name} 복사본` with the current classes.
-export function duplicateCurrentVersion(): Promise<void> {
+export function duplicateCurrentVersion(): Promise<number> {
   return queued(() =>
     make((kept) => `${kept.versions.find((version) => version.id === kept.currentId)?.name ?? ''} 복사본`, null),
   );
 }
 
-export function switchVersion(id: string): Promise<void> {
+export function switchVersion(id: string): Promise<number> {
   return queued(async () => {
     const kept = await settled();
-    if (id !== kept.currentId) {
-      await switchTo(kept, id, await serverClasses());
-    }
+    return id === kept.currentId ? 0 : switchTo(kept, id, await serverClasses());
   });
 }
 
@@ -245,22 +271,18 @@ export function renameCurrentVersion(name: string): Promise<void> {
 
 // Switches to the first version that remains, without asking whether the classes were changed elsewhere, so that a
 // delete is always possible. The last version is never deleted.
-export function deleteCurrentVersion(): Promise<void> {
+export function deleteCurrentVersion(): Promise<number> {
   return queued(async () => {
     const kept = await settled();
     const rest = kept.versions.filter((version) => version.id !== kept.currentId);
     const [first] = rest;
-    if (first !== undefined) {
-      await switchTo({ ...kept, versions: rest }, first.id, null);
-    }
+    return first === undefined ? 0 : switchTo({ ...kept, versions: rest }, first.id, null);
   });
 }
 
 // Goes on with an unfinished switch: adds only the classes still missing.
-export function retrySwitch(): Promise<void> {
-  return queued(async () => {
-    await finish(await ready());
-  });
+export function retrySwitch(): Promise<number> {
+  return queued(async () => finish(await ready()));
 }
 
 // Before the class form writes: refused while a switch is unfinished, which it would mix with.

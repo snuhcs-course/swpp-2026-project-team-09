@@ -223,3 +223,25 @@ describe('at launch', () => {
     expect(names.toSorted()).toEqual(['데이터베이스', '컴파일러']);
   });
 });
+
+describe('a class the main server refuses for good', () => {
+  it('says how many classes were left out, and the switch finishes', async () => {
+    const add = mockClient.addClass;
+    jest
+      .spyOn(mockClient, 'addClass')
+      .mockImplementation((save, key) =>
+        save.courseName === '알고리즘' ? Promise.reject(new ApiError(400)) : add(save, key),
+      );
+    const user = await openMe();
+    await openMenu(user, '2026-2학기');
+    await user.press(screen.getByRole('button', { name: '빈 시간표 추가' }));
+    await pass(3000);
+    await openMenu(user, '새 시간표 2');
+    await user.press(within(menu()).getByRole('option', { name: '2026-2학기' }));
+    await pass(3000);
+
+    expect(screen.getByTestId('toast-layer')).toHaveTextContent('수업 1개는 넣지 못했어요');
+    expect(screen.queryByTestId('unfinished-switch')).toBeNull();
+    expect(screen.getAllByTestId('class-block')).toHaveLength(5);
+  });
+});
