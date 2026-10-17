@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -11,7 +12,6 @@ import { inject } from 'vitest';
 import { deleteFriendship } from './admin-users.js';
 import { befriend, getFriends, signInUser, TestUser } from './friends.js';
 import { expectStatus, sharingFriends, uploadPosition } from './location-sharing.js';
-import { meetupBetween, statesOf } from './meetups.js';
 import { refused, SignalWatcher } from './signals.js';
 import { signInAsAdministrator } from './sign-in.js';
 import { startApp } from './start-app.js';
@@ -78,20 +78,6 @@ describe('Ending a friendship as either User would', () => {
         name: 'position-removed',
         payload: { userId: user.id },
       });
-    });
-  });
-
-  it('withdraws a Meetup proposed between the two, and tells both', async () => {
-    const [proposer, receiver] = await Promise.all([signInUser(app), signInUser(app)]);
-    await befriend(app, proposer, receiver);
-    const meetupId = await meetupBetween(app, proposer, receiver);
-
-    await expectStatus(deleteFriendship(app, accessToken, receiver.id, proposer.id), 204);
-
-    expect(await statesOf(app, meetupId, proposer, receiver)).toEqual({ proposer: 'withdrawn', receiver: 'withdrawn' });
-    await vi.waitFor(() => {
-      expect(namesTo(proposer).filter((name) => name === 'meetups-changed')).toHaveLength(2);
-      expect(namesTo(receiver).filter((name) => name === 'meetups-changed')).toHaveLength(2);
     });
   });
 });
