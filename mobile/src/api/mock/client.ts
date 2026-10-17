@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -65,6 +66,7 @@ export const mockClient: ApiClient = {
       await keep({ answers });
       return profileOf(answers);
     }),
+  getProfile: () => answer('getProfile', async () => profileOf(await onboardingAnswers())),
   setMasterSwitch: (on) =>
     answer('setMasterSwitch', () => {
       masterSwitchOn = on;

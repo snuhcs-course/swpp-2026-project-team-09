@@ -7,10 +7,13 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
+import type { ShownClient } from './quest-parts-types';
+import { withQuestParts } from './quest-parts/with-parts';
 import { asksMainServer } from './servers';
 import type { MatchingRequest } from './matching-types';
 import type {
@@ -60,6 +63,7 @@ export interface ApiClient {
   // Refused with 403 ONBOARDING_REQUIRED until Onboarding is finished.
   enterLobby: () => Promise<Lobby>;
   updateProfile: (change: ProfileChange) => Promise<Profile>;
+  getProfile: () => Promise<Profile>;
   setMasterSwitch: (on: boolean) => Promise<void>;
   // Refused with 409 MASTER_SWITCH_OFF while the Master Switch is off.
   uploadPosition: (position: PositionUpload) => Promise<PositionKept>;
@@ -173,17 +177,23 @@ export interface ApiClient {
   declineInvitation: (invitationId: string) => Promise<void>;
 }
 
+// Each with the mocked parts of a Quest added (`./quest-parts/`): every part in the mock build, and no invented people
+// in the build that asks the main server.
+const shownServerClient = withQuestParts(serverClient, 'server');
+const shownMockClient = withQuestParts(mockClient, 'mock');
+
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`). Chosen at each
 // call, so that a test can choose by its settings.
-function chosen(): ApiClient {
-  return asksMainServer() ? serverClient : mockClient;
+function chosen(): ShownClient {
+  return asksMainServer() ? shownServerClient : shownMockClient;
 }
 
 // The one client of the app. The screens ask it and never know which of the two answers.
-export const apiClient: ApiClient = {
+export const apiClient: ShownClient = {
   completeOnboarding: (answers) => chosen().completeOnboarding(answers),
   enterLobby: () => chosen().enterLobby(),
   updateProfile: (change) => chosen().updateProfile(change),
+  getProfile: () => chosen().getProfile(),
   setMasterSwitch: (on) => chosen().setMasterSwitch(on),
   uploadPosition: (position) => chosen().uploadPosition(position),
   listFriends: () => chosen().listFriends(),
@@ -259,4 +269,5 @@ export const apiClient: ApiClient = {
   inviteToQuest: (questId, userId) => chosen().inviteToQuest(questId, userId),
   acceptInvitation: (invitationId) => chosen().acceptInvitation(invitationId),
   declineInvitation: (invitationId) => chosen().declineInvitation(invitationId),
+  listMyTags: () => chosen().listMyTags(),
 };

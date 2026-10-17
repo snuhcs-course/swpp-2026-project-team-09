@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -62,6 +63,7 @@ export const serverClient: ApiClient = {
     return lobby;
   },
   updateProfile: (change) => call('PATCH', '/users/me/profile', isProfile, { body: change }),
+  getProfile: () => call('GET', '/users/me/profile', isProfile),
   setMasterSwitch: async (on) => {
     await call('PUT', '/users/me/master-switch', isNothing, { body: { on } });
   },
