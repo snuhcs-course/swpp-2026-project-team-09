@@ -7,8 +7,10 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import type { AssistantReply, ChatMessage } from './assistant-types';
 import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
 import { asksMainServer } from './servers';
@@ -171,6 +173,8 @@ export interface ApiClient {
   inviteToQuest: (questId: string, userId: string) => Promise<void>;
   acceptInvitation: (invitationId: string) => Promise<Quest>;
   declineInvitation: (invitationId: string) => Promise<void>;
+  // The chat Assistant's reply to the conversation, the User's new message last.
+  askAssistant: (messages: ChatMessage[]) => Promise<AssistantReply>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`). Chosen at each
@@ -259,4 +263,5 @@ export const apiClient: ApiClient = {
   inviteToQuest: (questId, userId) => chosen().inviteToQuest(questId, userId),
   acceptInvitation: (invitationId) => chosen().acceptInvitation(invitationId),
   declineInvitation: (invitationId) => chosen().declineInvitation(invitationId),
+  askAssistant: (messages) => chosen().askAssistant(messages),
 };

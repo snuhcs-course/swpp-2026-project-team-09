@@ -2,53 +2,88 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { color, Icon, radius, shadow, space, text, useNotReadyToast } from '@/design-system';
+import { type ReactElement, useState } from 'react';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { color, Icon, radius, shadow, space, text } from '@/design-system';
 import { AI_INPUT } from './layout';
 
-// The AI input of the `Main` frame, as it looks while it is empty: the white bar with the placeholder and the grey
-// send button. It is not a text field. The chat it opens belongs to another task, and a field that takes the focus
-// brings the keyboard up over the map and, on Android, changes the screen's size as it leaves. So the bar is a
-// button that says that the chat is not ready, and so does a press on the send button, which a screen reader reads
-// as disabled. The field itself comes with the chat.
-export function AiInput(): ReactElement {
-  const showNotReady = useNotReadyToast();
+interface AiInputProps {
+  // Whether the chat is open: the bar is its input then, and its border is the focus ring.
+  chatOpen: boolean;
+  // Focusing the bar opens the chat.
+  onOpen: () => void;
+  // Nothing is sent while the Assistant works on the message before.
+  waiting: boolean;
+  onSend: (text: string) => void;
+  // The field's height, from 40 to 120, so that the chat keeps its last bubble clear of the bar.
+  onHeight: (height: number) => void;
+}
+
+// The field's height for one line, and the most it grows to before it scrolls.
+export const AI_FIELD = 40;
+const FIELD_MAX = 120;
+// Above and below the text.
+const FIELD_PADDING = space[2];
+
+// The frame's: a bar of radius 28 around a field and a send button of 40, 22 once the field holds more than a line.
+const BAR_RADIUS = 28;
+const BAR_RADIUS_TALL = 22;
+
+// The AI input of the `Main` frame: the white bar with the placeholder and the send button. Focusing it opens the
+// chat, and it stays at the bottom as the chat's input. It grows with its text up to 120, Enter starts a new line,
+// and only the send button sends, in the key colour while there is something to send.
+export function AiInput({ chatOpen, onOpen, waiting, onSend, onHeight }: AiInputProps): ReactElement {
+  const [message, setMessage] = useState('');
+  const [height, setHeight] = useState(AI_FIELD);
+  const canSend = message.trim() !== '' && !waiting;
+  const grow = (next: number): void => {
+    setHeight(next);
+    onHeight(next);
+  };
+  const send = (): void => {
+    onSend(message.trim());
+    setMessage('');
+    grow(AI_FIELD);
+  };
   return (
-    <View style={styles.bar} testID="ai-input">
-      <Pressable
+    <View
+      style={[styles.bar, chatOpen && styles.open, height > AI_FIELD && { borderRadius: BAR_RADIUS_TALL }]}
+      testID="ai-input"
+    >
+      <TextInput
         accessibilityLabel="AI에게 메시지"
+        multiline
+        onChangeText={setMessage}
+        onContentSizeChange={({ nativeEvent }) => {
+          grow(Math.max(AI_FIELD, Math.min(FIELD_MAX, nativeEvent.contentSize.height + 2 * FIELD_PADDING)));
+        }}
+        onFocus={onOpen}
+        onPressIn={onOpen}
+        placeholder="무엇이든 부탁해 보세요"
+        placeholderTextColor={color.inkMuted}
+        scrollEnabled={height >= FIELD_MAX}
+        style={[styles.field, { height }]}
+        submitBehavior="newline"
+        value={message}
+      />
+      <Pressable
+        accessibilityLabel="보내기"
         accessibilityRole="button"
-        onPress={showNotReady}
-        style={styles.field}
+        accessibilityState={{ disabled: !canSend }}
+        disabled={!canSend}
+        hitSlop={space[1]}
+        onPress={send}
+        style={[styles.send, canSend && styles.sendReady]}
       >
-        <Text numberOfLines={1} style={styles.placeholder}>
-          무엇이든 부탁해 보세요
-        </Text>
-      </Pressable>
-      {/* The web's Pressable says "disabled" only for one that takes no press, so the press is taken by the box and
-          the button inside it is what a screen reader reads. */}
-      <Pressable accessible={false} hitSlop={space[1]} onPress={showNotReady} tabIndex={-1}>
-        <View
-          accessibilityLabel="보내기"
-          accessibilityRole="button"
-          accessibilityState={{ disabled: true }}
-          accessible
-          aria-disabled
-          style={styles.send}
-        >
-          <Icon color={color.inkMuted} name="send" size={18} />
-        </View>
+        <Icon color={canSend ? color.onPrimary : color.inkMuted} name="send" size={18} />
       </Pressable>
     </View>
   );
 }
-
-// The frame's: a bar of radius 28 around a field and a send button of 40.
-const BAR_RADIUS = 28;
-const FIELD = 40;
 
 const styles = StyleSheet.create({
   bar: {
@@ -57,7 +92,7 @@ const styles = StyleSheet.create({
     bottom: AI_INPUT.bottom,
     left: AI_INPUT.side,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     gap: space[2],
     paddingVertical: space[1],
     paddingRight: space[1],
@@ -68,14 +103,22 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.float,
   },
-  field: { flex: 1, justifyContent: 'center', minWidth: 0, height: FIELD },
-  placeholder: { ...text.bodyLg, color: color.inkMuted },
+  open: { borderColor: color.focusRing },
+  field: {
+    ...text.bodyLg,
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: FIELD_PADDING,
+    color: color.ink,
+    textAlignVertical: 'top',
+  },
   send: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: FIELD,
-    height: FIELD,
+    width: AI_FIELD,
+    height: AI_FIELD,
     borderRadius: radius.full,
     backgroundColor: color.surfaceSunken,
   },
+  sendReady: { backgroundColor: color.snuBlue },
 });

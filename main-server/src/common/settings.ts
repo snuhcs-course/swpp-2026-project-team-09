@@ -7,6 +7,7 @@
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -63,6 +64,10 @@ export const settingsSchema = z
     MATCH_SERVER_URL: z.url(),
     // The secret that this server and the match server send with each call to the other.
     MATCH_SERVER_TOKEN: z.string().min(32),
+    // The Assistant's (README.md: Assistant): the OpenRouter key, empty when there is none, and the OpenRouter id of
+    // the model, such as anthropic/claude-haiku-5.5.
+    OPENROUTER_API_KEY: z.string().default(''),
+    ASSISTANT_MODEL: z.string().default(''),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),
