@@ -1,7 +1,7 @@
 # 01: The flow-tests stack driver can start a second stack
 
 Parent: [P04-05 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: None (can start immediately)
 Touches: flow-tests' shared test modules (the stack driver and the global setup). Nothing else.
 
@@ -11,9 +11,24 @@ A test in `flow-tests` can start a Compose stack other than the flow stack: its 
 
 ## Acceptance criteria
 
-- [ ] `pnpm test` in `flow-tests` passes with every existing flow unchanged, and `pnpm lint`, `pnpm format:check` and `pnpm typecheck` pass.
-- [ ] A caller can run `docker compose` against a project of another name, with other Compose files and another settings file, through the driver; the flow stack remains the default when nothing is passed.
-- [ ] A caller can write a complete settings file for a new stack into a folder it names, with the same generated values the flow stack gets.
-- [ ] The flow stack's Compose test override and its project name are unchanged.
-- [ ] Each changed source file gets a new row in its AI-generated box (`CLAUDE.md`).
-- [ ] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+- [x] `pnpm test` in `flow-tests` passes with every existing flow unchanged, and `pnpm lint`, `pnpm format:check` and `pnpm typecheck` pass.
+- [x] A caller can run `docker compose` against a project of another name, with other Compose files and another settings file, through the driver; the flow stack remains the default when nothing is passed.
+- [x] A caller can write a complete settings file for a new stack into a folder it names, with the same generated values the flow stack gets.
+- [x] The flow stack's Compose test override and its project name are unchanged.
+- [x] Each changed source file gets a new row in its AI-generated box (`CLAUDE.md`).
+- [x] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+
+## Comments
+
+### What ticket 02 builds on (2026-10-17)
+
+- `test/stack.ts`: a `Stack` is `{ project, files, settings }`, where `files` are relative to the repository root and `settings` is the folder whose `compose.env` is the `--env-file`. `compose(stack, ...args)` runs on that stack, and `compose(...args)` on `FLOW_STACK`. `startStack(stack)` removes what an interrupted run left, runs `up --build --wait` (printing the logs on failure) and answers the function that takes the stack down with its volumes. `published(stack, service, port)` answers the loopback address of a published port.
+- `test/settings.ts`: `writeSettings(folder, values)` writes `compose.env` (the ES256 key pair and the two tokens, then the caller's values, which win on a shared name) and `tls/` (the sources container's certificate and Google's public key), and answers Google's private key. It does not empty the folder first.
+- The current global setup makes no passwords: the base `compose.yaml` fixes the laptop ones. The deploy-only values (`POSTGRES_PASSWORD`, `MAIN_DB_PASSWORD`, `MATCH_DB_PASSWORD`, `DEPLOY_STATUS_DIR`, `DEPLOY_APK_DIR`, `COMPOSE_PROFILES`, …) are the caller's `values`.
+- `test/stack.flow.ts` checks both through `docker compose config` on a one-service probe project, without starting a second stack. It is named `.flow.ts` because the vitest config runs only that pattern.
+- `flow-tests/README.md`'s folder layout still describes `global-setup.ts` as making the keys and lists neither `settings.ts` nor `stack.flow.ts`; the README was outside this ticket's files.
+
+### Agent usage (2026-10-17)
+
+- Agent time: about 13 minutes, an estimate (one implementer subagent).
+- Tokens: input 6,300,000 in all (cache reads 6,150,000, cache writes 150,000, uncached under 1,000), output 14,000. Estimated from the transcript a few steps before the end.
