@@ -17,3 +17,10 @@ The Quest list on the map and its full screen follow `Main` and `MainQuests`. A 
 - [x] Quests without a time are left out of the list on the map, `MainQuests` and their counts; the group `시간 미정` goes from these two. `내 파티` keeps its own `시간 미정` group.
 - [x] Jest covers each row kind and the leaving out.
 - [ ] Screenshots beside `Main` and `MainQuests`, under Test Results.
+
+## Comments
+
+### Agent usage (2026-10-18)
+
+- Agent time: about 1 h of active work by one subagent in its own worktree, plus about 15 min in the main session to merge `2.0/Main`, resolve one conflict and open the PR. It is an estimate: the run lasted about 2 h 15 min with a session crash in it, and the rest went to waiting on Jest runs slowed by other agents.
+- Tokens, from the subagent's transcript: input 12,092,627, of which 10,799,384 cache reads, 1,293,037 cache writes and 206 uncached; output 12,160. The main session's share is not counted.
