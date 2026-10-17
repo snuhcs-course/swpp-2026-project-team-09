@@ -7,6 +7,7 @@
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -50,6 +51,9 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     // Not reached: the tests give startApp a MatchServerStub from test/match-server.ts in the match server's place.
     MATCH_SERVER_URL: 'http://match-server:3003',
     MATCH_SERVER_TOKEN: 'test-match-server-token-of-32-characters',
+    // Not a key: the tests give startApp a ScriptedModel from test/scripted-model.ts in the model's place.
+    OPENROUTER_API_KEY: 'test-openrouter-api-key',
+    ASSISTANT_MODEL: 'test/model',
   };
   migrate(settings.DATABASE_URL);
   await seed(settings.DATABASE_URL);

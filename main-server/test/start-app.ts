@@ -7,29 +7,34 @@
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication, Type } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { Server } from 'node:http';
+import { MODEL_PORT, type Model } from '../src/assistant/adapter.js';
 import { JSON_BODY_LIMIT } from '../src/common/json-body-limit.js';
 import { Settings } from '../src/common/settings.js';
 import { FETCH_MATCH_SERVER } from '../src/matching/match-server.js';
 import { FETCH_KAKAO } from '../src/walking-route/walking-route.service.js';
 import { TestGoogleIdTokenVerifier } from './google.js';
 import { refuseMatchServer } from './match-server.js';
+import { ScriptedModel } from './scripted-model.js';
 import { refuseKakao } from './walking-route.js';
 
 // AppModule validates the settings when it is imported, so it is imported afresh after the environment is set.
-// The test verifier accepts ID tokens from test/google.ts, `fetchKakao` answers in Kakao's place and `fetchMatchServer`
-// in the match server's.
+// The test verifier accepts ID tokens from test/google.ts, `fetchKakao` answers in Kakao's place, `fetchMatchServer`
+// in the match server's and `model` in the Assistant's model's: by default a ScriptedModel without a script, which
+// fails every call.
 // `controllers` adds controllers that exist only in the tests, such as handlers that no feature has yet.
 export async function startApp(
   settings: Partial<Record<keyof Settings, string | undefined>>,
   controllers: Type[] = [],
   fetchKakao: typeof fetch = refuseKakao,
   fetchMatchServer: typeof fetch = refuseMatchServer,
+  model: Model = new ScriptedModel().model,
 ): Promise<INestApplication<Server>> {
   for (const [name, value] of Object.entries(settings)) {
     vi.stubEnv(name, value);
@@ -45,6 +50,8 @@ export async function startApp(
     .useValue(fetchKakao)
     .overrideProvider(FETCH_MATCH_SERVER)
     .useValue(fetchMatchServer)
+    .overrideProvider(MODEL_PORT)
+    .useValue(model)
     .compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>();
   // As src/main.ts does.

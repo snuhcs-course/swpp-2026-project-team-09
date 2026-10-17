@@ -11,6 +11,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Module, StandardSchemaValidationPipe } from '@nestjs/common';
@@ -18,6 +19,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';
 import { IdempotencyModule } from '@nestjs/idempotency';
 import { AdministratorsModule } from './administrators/administrators.module.js';
+import { AssistantModule } from './assistant/assistant.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { CollectionModule } from './collection/collection.module.js';
 import { CampusBoundaryModule } from './common/campus-boundary.module.js';
@@ -85,6 +87,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     MatchingModule,
     PartiesModule,
     TimetableModule,
+    AssistantModule,
   ],
   providers: [
     // Validates a handler parameter against the schema given in its decorator: @Body({ schema: signInSchema }).

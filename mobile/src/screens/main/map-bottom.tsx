@@ -2,15 +2,17 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { router } from 'expo-router';
+import { router, useIsFocused } from 'expo-router';
 import type { ReactElement } from 'react';
 import { now } from '@/clock';
 import { space } from '@/design-system';
 import { nextMeal } from '@/features/dining/adapter';
 import type { CardView } from '@/features/map/adapter';
 import { BottomControls } from './bottom-controls';
+import { useChatSheet } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
 import { CARD, LAYERS_BUTTON, type Room } from './layout';
 import { ShuttleNotice } from './shuttle-notice';
@@ -50,14 +52,19 @@ interface MapBottomProps {
 }
 
 // What is at the bottom of the map: the shuttle's notice, the row of buttons and the 편의기능 button. A card at the
-// bottom hides the row and the button; the notice hides the row, and the button stands above it.
+// bottom hides the row and the button; the notice hides the row, and the button stands above it. The AI input opens
+// the chat's sheet, which takes their place over the map; the conversation is kept while the app runs.
 export function MapBottom(props: MapBottomProps): ReactElement {
   const { taken, onParty, onNoticeHeight, room, stack } = props;
+  const chat = useChatSheet(useIsFocused());
   const { bottomCard, notice } = taken;
+  if (chat.sheet !== null) {
+    return chat.sheet;
+  }
   return (
     <>
       {notice === null ? null : <ShuttleNotice onHeight={onNoticeHeight} serviceHours={notice} />}
-      <BottomControls cardOpen={bottomCard || notice !== null} onActiveParty={onParty} room={room} />
+      <BottomControls cardOpen={bottomCard || notice !== null} onActiveParty={onParty} onChat={chat.open} room={room} />
       {bottomCard ? null : (
         <LayerControls lift={notice === null ? 0 : liftOver(room.cardHeight)} onMenus={openMenus} stack={stack} />
       )}
