@@ -58,6 +58,14 @@
           }
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "파티 사진을 고르려면 사진 보관함에 접근해야 해요.",
+          "cameraPermission": "파티 사진을 찍으려면 카메라에 접근해야 해요.",
+          "microphonePermission": false
+        }
+      ],
       "./modules/snu-now-map/app.plugin.ts",
       "./plugins/ios-scene-life-cycle.ts"
     ],

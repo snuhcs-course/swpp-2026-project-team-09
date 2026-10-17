@@ -5,155 +5,24 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { router, useIsFocused } from 'expo-router';
-import { type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { friendsQuery, globalEventAnnouncersQuery, globalEventsQuery, questQuery } from '@/api/queries';
-import type { Friend, Quest } from '@/api/types';
+import { globalEventAnnouncersQuery, globalEventsQuery, questQuery } from '@/api/queries';
 import { Button, ErrorState, FullScreenPanel, LoadingState, space, TextField, useToastAbove } from '@/design-system';
-import type { PickedPlace } from '@/features/places/picked-place';
-import { usePlaceToSend } from '@/features/places/typed-place';
-import {
-  emptyForm,
-  type FormEvent,
-  formOf,
-  invitable,
-  isReady,
-  type PartyForm,
-  withEvent,
-} from '@/features/party/making';
 import { WhenField, WhereField } from '../../room/plan-form';
-import { showMine } from '../use-party-actions';
 import { EventField, EventPicker } from './event-field';
 import { FriendPicker } from './friend-picker';
 import { BoardField, CapacityField, DescriptionField, VisibilityField } from './party-form-fields';
-import { useSend } from './use-send';
+import { PhotoField } from './photo-field';
+import { TagField } from './tag-field';
+import { eventOfQuest, type FormProps, type FormState, friendsHint, useFormState } from './use-form-state';
 
 const FOOTER = 81;
-
-interface FormProps {
-  // The Quest edited, or null for a new one.
-  quest: Quest | null;
-  // A new one's Global Event, chosen at the start.
-  eventId: string | null;
-  // A new one's Friend, invited at the start: the form opens as 비공개.
-  friendId: string | null;
-}
-
-function friendsHint(form: PartyForm, chosen: number): string {
-  if (chosen > 0) {
-    return `${String(chosen)}명에게 요청`;
-  }
-  return form.visibility === 'private' ? '1명 이상' : '선택';
-}
-
-interface FormState {
-  form: PartyForm;
-  change: (next: Partial<PartyForm>) => void;
-  friends: Friend[];
-  chosen: string[];
-  setChosen: (ids: string[]) => void;
-  most: number;
-  words: string;
-  setWords: (words: string) => void;
-  picked: PickedPlace | null;
-  setPicked: (place: PickedPlace | null) => void;
-  ready: boolean;
-  submit: () => void;
-  pickEvent: (event: FormEvent | null) => void;
-}
-
-// The event of `/party-form?eventId=`, chosen once the Global Events are there.
-function usePreselected(eventId: string | null, pick: (event: FormEvent) => void): void {
-  const events = useQuery(globalEventsQuery).data;
-  const announcers = useQuery(globalEventAnnouncersQuery).data;
-  const done = useRef(false);
-  useEffect(() => {
-    const event = events?.find(({ id }) => id === eventId);
-    if (done.current || event === undefined) {
-      return;
-    }
-    done.current = true;
-    pick({ ...event, source: announcers?.find((one) => one.eventId === event.id)?.announcer ?? null });
-  }, [events, announcers, eventId, pick]);
-}
-
-// Choosing an event gives the form its title and time, and `어디서` its place; `행사 빼기` clears the time and place and
-// leaves the title.
-function useEventPick(
-  setForm: (change: (held: PartyForm) => PartyForm) => void,
-  setWords: (words: string) => void,
-  setPicked: (place: PickedPlace | null) => void,
-  eventId: string | null,
-): (event: FormEvent | null) => void {
-  const pickEvent = useCallback(
-    (event: FormEvent | null) => {
-      setForm((held) => withEvent(held, event));
-      const place = event?.place ?? null;
-      setWords(place ?? '');
-      setPicked(
-        event === null || place === null
-          ? null
-          : { placeId: null, position: { latitude: event.latitude, longitude: event.longitude }, words: place },
-      );
-    },
-    [setForm, setWords, setPicked],
-  );
-  usePreselected(eventId, pickEvent);
-  return pickEvent;
-}
-
-// What the form holds, and its sending: back to the room or the post after an edit, to 내 파티 after making one.
-function useFormState(quest: Quest | null, eventId: string | null, friendId: string | null): FormState {
-  const editing = quest !== null;
-  const send = useSend(quest);
-  const holders = quest?.holders ?? [];
-  const friends = (useQuery(friendsQuery).data ?? []).filter(({ id }) => !holders.some((holder) => holder.id === id));
-  const [form, setForm] = useState<PartyForm>(() => {
-    if (quest !== null) {
-      return formOf(quest);
-    }
-    return friendId === null ? emptyForm() : { ...emptyForm(), visibility: 'private' };
-  });
-  const [chosen, setChosen] = useState<string[]>(() => (quest === null && friendId !== null ? [friendId] : []));
-  const [words, setWords] = useState('');
-  const [picked, setPicked] = useState<PickedPlace | null>(null);
-  const [saving, setSaving] = useState(false);
-  const placeToSend = usePlaceToSend();
-  const pickEvent = useEventPick(setForm, setWords, setPicked, editing ? null : eventId);
-  const most = invitable(form, Math.max(holders.length, 1));
-  const shownChosen = chosen.slice(0, most);
-  return {
-    form,
-    change: (next) => {
-      setForm((held) => ({ ...held, ...next }));
-    },
-    friends,
-    chosen: shownChosen,
-    setChosen,
-    most,
-    words,
-    setWords,
-    picked,
-    setPicked,
-    ready: isReady(form, shownChosen.length, editing) && !saving,
-    submit: () => {
-      setSaving(true);
-      void placeToSend(words, picked)
-        .then((place) => send({ ...form, place }, shownChosen))
-        .then((sent) => {
-          setSaving(false);
-          if (sent === 'taken') {
-            (editing ? router.back : showMine)();
-          }
-        });
-    },
-    pickEvent,
-  };
-}
 
 function When({ state }: { state: FormState }): ReactElement {
   return (
@@ -172,24 +41,27 @@ function Where({ state }: { state: FormState }): ReactElement {
 
 interface FieldsProps {
   state: FormState;
-  editing: boolean;
   onChooseEvent: () => void;
 }
 
-function Fields({ state, editing, onChooseEvent }: FieldsProps): ReactElement {
+// The frame's order: 사진, 관련 행사, 제목, 본문, 언제, 인원, 어디서, 공개 범위, 게시판, 친구 초대, 태그.
+function Fields({ state, onChooseEvent }: FieldsProps): ReactElement {
   const { form, change } = state;
-  const open = form.visibility === 'public';
   return (
     <View style={styles.body}>
-      {editing ? null : (
-        <EventField
-          event={form.event}
-          onChoose={onChooseEvent}
-          onClear={() => {
-            state.pickEvent(null);
-          }}
-        />
-      )}
+      <PhotoField
+        onChange={(photo) => {
+          change({ photo });
+        }}
+        photo={form.photo}
+      />
+      <EventField
+        event={form.event}
+        onChoose={onChooseEvent}
+        onClear={() => {
+          state.pickEvent(null);
+        }}
+      />
       <TextField
         label="제목"
         maxLength={30}
@@ -200,11 +72,11 @@ function Fields({ state, editing, onChooseEvent }: FieldsProps): ReactElement {
         value={form.title}
       />
       <DescriptionField form={form} onChange={change} />
-      {editing ? null : <When state={state} />}
-      {open ? <CapacityField form={form} onChange={change} /> : null}
-      {editing ? null : <Where state={state} />}
+      <When state={state} />
+      <CapacityField form={form} least={state.least} onChange={change} />
+      <Where state={state} />
       <VisibilityField form={form} onChange={change} />
-      {open ? <BoardField form={form} onChange={change} /> : null}
+      {form.visibility === 'public' ? <BoardField form={form} onChange={change} /> : null}
       <FriendPicker
         chosen={state.chosen}
         friends={state.friends}
@@ -212,14 +84,21 @@ function Fields({ state, editing, onChooseEvent }: FieldsProps): ReactElement {
         most={state.most}
         onChosen={state.setChosen}
       />
+      <TagField
+        onChange={(tags) => {
+          change({ tags });
+        }}
+        tags={form.tags}
+      />
     </View>
   );
 }
 
-function Form({ quest, eventId, friendId }: FormProps): ReactElement {
-  const state = useFormState(quest, eventId, friendId);
+function Form(props: FormProps): ReactElement {
+  const state = useFormState(props);
   const [picking, setPicking] = useState(false);
   useToastAbove(FOOTER, useIsFocused());
+  const { quest } = props;
   const editing = quest !== null;
   if (picking) {
     const back = (): void => {
@@ -227,6 +106,7 @@ function Form({ quest, eventId, friendId }: FormProps): ReactElement {
     };
     return (
       <EventPicker
+        chosen={state.form.event}
         onBack={back}
         onPick={(event) => {
           state.pickEvent(event);
@@ -249,7 +129,6 @@ function Form({ quest, eventId, friendId }: FormProps): ReactElement {
       title={title}
     >
       <Fields
-        editing={editing}
         onChooseEvent={() => {
           setPicking(true);
         }}
@@ -270,19 +149,22 @@ export function PartyFormScreen({
   friendId: string | null;
 }): ReactElement {
   if (questId === null) {
-    return <Form eventId={eventId} friendId={friendId} quest={null} />;
+    return <Form eventId={eventId} friendId={friendId} quest={null} questEvent={null} />;
   }
   return <EditedForm questId={questId} />;
 }
 
 function EditedForm({ questId }: { questId: string }): ReactElement {
   const { data: quest, isPending, refetch } = useQuery(questQuery(questId));
-  if (quest !== undefined) {
-    return <Form eventId={null} friendId={null} quest={quest} />;
+  const events = useQuery(globalEventsQuery);
+  const announcers = useQuery(globalEventAnnouncersQuery).data ?? [];
+  if (quest !== undefined && !events.isPending) {
+    const questEvent = eventOfQuest(quest, events.data, announcers);
+    return <Form eventId={null} friendId={null} quest={quest} questEvent={questEvent} />;
   }
   return (
     <FullScreenPanel leave={{ kind: 'back', onPress: router.back }} title="모집글 수정">
-      {isPending ? <LoadingState /> : <ErrorState onRetry={() => void refetch()} />}
+      {isPending || events.isPending ? <LoadingState /> : <ErrorState onRetry={() => void refetch()} />}
     </FullScreenPanel>
   );
 }

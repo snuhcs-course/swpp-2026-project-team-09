@@ -7,7 +7,7 @@
 
 import type { ApiClient } from '@/api/client';
 import type { QuestChange } from '@/api/party-types';
-import type { QuestEntries, QuestParts, ShownClient, ShownQuest } from '@/api/quest-parts-types';
+import type { MadeEntries, QuestEntries, QuestParts, ShownClient, ShownQuest } from '@/api/quest-parts-types';
 import type { Quest } from '@/api/types';
 import type { QuestSummary } from '@/api/waiting-types';
 import { keepQuestEntries, readQuestEntries } from '@/storage/quest-entries';
@@ -21,9 +21,20 @@ import { myTagsOf, tagsOf } from './tags';
 
 type Entered = Partial<Record<string, QuestEntries>>;
 
+// The 관련 행사 the User chose for the Quest when editing it, else its own.
+function eventOf(quest: Pick<Quest, 'globalEvent'>, entries: QuestEntries | undefined): Quest['globalEvent'] {
+  return entries?.event === undefined ? quest.globalEvent : entries.event;
+}
+
 function questWithParts(quest: Quest, entered: Entered): ShownQuest {
   const entries = entered[quest.id];
-  return { ...quest, photo: photoOf(quest, entries), tags: tagsOf(quest, entries), faces: facesOfQuest(quest) };
+  return {
+    ...quest,
+    globalEvent: eventOf(quest, entries),
+    photo: photoOf(quest, entries),
+    tags: tagsOf(quest, entries),
+    faces: facesOfQuest(quest),
+  };
 }
 
 function summaryWithParts<Summary extends QuestSummary>(
@@ -34,6 +45,7 @@ function summaryWithParts<Summary extends QuestSummary>(
   const entries = entered[summary.id];
   return {
     ...summary,
+    globalEvent: eventOf(summary, entries),
     photo: photoOf(summary, entries),
     tags: tagsOf(summary, entries),
     faces: facesOfSummary(summary, build),
@@ -45,13 +57,17 @@ async function shown(quest: Quest): Promise<ShownQuest> {
 }
 
 // What the User entered, without what was left out.
-function enteredOf({ photo, tags }: Partial<QuestEntries>): Partial<QuestEntries> {
-  return { ...(photo === undefined ? {} : { photo }), ...(tags === undefined ? {} : { tags }) };
+function enteredOf({ photo, tags, event }: Partial<QuestEntries>): Partial<QuestEntries> {
+  return {
+    ...(photo === undefined ? {} : { photo }),
+    ...(tags === undefined ? {} : { tags }),
+    ...(event === undefined ? {} : { event }),
+  };
 }
 
 // A Quest the User has just made, on its own or for an event: its photo and tags are the ones the User gave, kept on the
 // phone even when none is given, so that it gets no mocked ones.
-async function ownQuest(quest: Quest, { photo, tags }: Partial<QuestEntries>): Promise<ShownQuest> {
+async function ownQuest(quest: Quest, { photo, tags }: Partial<MadeEntries>): Promise<ShownQuest> {
   await keepQuestEntries(quest.id, { photo: photo ?? null, tags: tags ?? [] });
   return shown(quest);
 }
@@ -70,12 +86,12 @@ export function withQuestParts(client: ApiClient, build: Build): ShownClient {
       ownQuest(await client.makeQuest(making, idempotencyKey), { photo, tags }),
     attendGlobalEvent: async (globalEventId, title, entries = {}) =>
       ownQuest(await client.attendGlobalEvent(globalEventId, title), entries),
-    // A change of the photo or the tags alone is not sent: the main server has nothing to change.
-    changeQuest: async (questId, { photo, tags, ...change }) => {
+    // A change of the photo, the tags or the event alone is not sent: the main server has nothing to change.
+    changeQuest: async (questId, { photo, tags, event, ...change }) => {
       const sent: QuestChange = change;
       const quest =
         Object.keys(sent).length === 0 ? await client.getQuest(questId) : await client.changeQuest(questId, sent);
-      const entries = enteredOf({ photo, tags });
+      const entries = enteredOf({ photo, tags, event });
       if (Object.keys(entries).length > 0) {
         await keepQuestEntries(questId, entries);
       }

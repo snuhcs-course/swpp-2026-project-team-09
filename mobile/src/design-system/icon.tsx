@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -38,6 +39,8 @@ const ICONS = {
   check: [{ path: 'M5 12l5 5 9-10' }],
   bus: [{ rect: [5, 4, 14, 13, 2] }, { path: 'M5 11h14' }, { path: 'M8 20v-3' }, { path: 'M16 20v-3' }],
   calendar: [{ rect: [4, 5, 16, 16, 2] }, { path: 'M4 10h16' }, { path: 'M9 3v4' }, { path: 'M15 3v4' }],
+  camera: [{ path: 'M4 8h3l2-3h6l2 3h3v11H4z' }, { circle: [12, 13, 3.5] }],
+  image: [{ rect: [3, 4, 18, 16, 3] }, { circle: [9, 10, 1.8] }, { path: 'M21 16l-5-5-9 9' }],
   search: [{ circle: [11, 11, 7] }, { path: 'M20 20l-4-4' }],
   route: [{ path: 'M12 3 20 20l-8-4-8 4z' }],
   book: [{ path: 'M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2z' }, { path: 'M4 19V5' }],

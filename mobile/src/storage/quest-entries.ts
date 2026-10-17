@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { QuestEntries, QuestPhoto } from '@/api/quest-parts-types';
 
-// The photo and the tags the User entered for the Quests they made, by Quest id. The main server stores neither, so the
-// phone keeps them and nobody else sees them (P06 spec, Mocks).
+// The photo, the tags and the event the User entered for the Quests they made, by Quest id. The main server stores none
+// of them, so the phone keeps them and nobody else sees them (P06 spec, Mocks).
 
 const KEY = 'snunow.quest-entries';
 const NONE: QuestEntries = { photo: null, tags: [] };
@@ -32,6 +33,18 @@ function isPhoto(value: unknown): value is QuestPhoto {
   );
 }
 
+function isEvent(value: unknown): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    (typeof value === 'object' &&
+      'id' in value &&
+      typeof value.id === 'string' &&
+      'title' in value &&
+      typeof value.title === 'string')
+  );
+}
+
 function isEntries(value: unknown): value is QuestEntries {
   return (
     typeof value === 'object' &&
@@ -40,7 +53,8 @@ function isEntries(value: unknown): value is QuestEntries {
     (value.photo === null || isPhoto(value.photo)) &&
     'tags' in value &&
     Array.isArray(value.tags) &&
-    value.tags.every((tag) => typeof tag === 'string')
+    value.tags.every((tag) => typeof tag === 'string') &&
+    isEvent('event' in value ? value.event : undefined)
   );
 }
 

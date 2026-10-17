@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -59,7 +60,7 @@ afterEach(() => {
 });
 
 describe('관련 행사', () => {
-  it('chooses an event in the picker, which fills the form with its title, time and place, and 행사 빼기 leaves the title', async () => {
+  it('chooses an event in the picker, which fills the form with its title, time, place and tags, and 행사 빼기 leaves the title', async () => {
     const user = await openAt('/party-form');
 
     await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
@@ -69,16 +70,31 @@ describe('관련 행사', () => {
     expect(screen.getByTestId('chosen-event')).toHaveTextContent(`${CAREER.title}오늘 18:00–20:00 · 301동 대강당`, {
       exact: false,
     });
-    expect(screen.getByLabelText('제목')).toHaveDisplayValue(CAREER.title);
+    expect(screen.getByLabelText('제목')).toHaveDisplayValue('AI 커리어 설명회 같이 가요');
     expect(screen.getByLabelText('제목')).toBeEnabled();
     expect(screen.getByLabelText('어디서')).toHaveDisplayValue('301동 대강당');
+    expect(screen.getByRole('button', { name: '언제 오늘 18:00' })).toBeVisible();
+    for (const tag of ['#진로', '#AI', '#커리어']) {
+      expect(screen.getByRole('button', { name: tag })).toBeSelected();
+    }
 
     await user.press(screen.getByRole('button', { name: '행사 빼기' }));
     expect(screen.getByRole('button', { name: '관련 행사 선택' })).toBeVisible();
-    expect(screen.getByLabelText('제목')).toHaveDisplayValue(CAREER.title);
+    expect(screen.getByLabelText('제목')).toHaveDisplayValue('AI 커리어 설명회 같이 가요');
   });
 
-  it('lets the User change the filled-in title, which choosing another event replaces again', async () => {
+  it('replaces the title an event gave when another is chosen', async () => {
+    const user = await openAt('/party-form');
+    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    await user.press(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
+
+    await user.press(screen.getByRole('button', { name: /^관련 행사 AI 커리어 설명회/u }));
+    await user.press(screen.getByRole('button', { name: `행사 · ${MAJOR.title}` }));
+
+    expect(screen.getByLabelText('제목')).toHaveDisplayValue(`${MAJOR.title} 같이 가요`);
+  });
+
+  it('keeps a title of the User’s when another event is chosen', async () => {
     const user = await openAt('/party-form');
     await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
     await user.press(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
@@ -90,21 +106,24 @@ describe('관련 행사', () => {
 
     await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
     await user.press(screen.getByRole('button', { name: `행사 · ${MAJOR.title}` }));
-    expect(screen.getByLabelText('제목')).toHaveDisplayValue(MAJOR.title);
+    expect(screen.getByLabelText('제목')).toHaveDisplayValue('설명회 같이 가요');
   });
 });
 
 describe('recruiting for an event', () => {
   it('attends the event, then changes the Quest into the recruiting, and shows 내 파티', async () => {
-    server.on('POST /quests', { status: 201, body: MY_CAREER });
-    server.on(`PATCH /quests/${MY_CAREER.id}`, { status: 200, body: MY_CAREER });
+    const titled = { ...MY_CAREER, title: 'AI 커리어 설명회 같이 가요' };
+    server.on('POST /quests', { status: 201, body: titled });
+    server.on(`PATCH /quests/${MY_CAREER.id}`, { status: 200, body: titled });
     const user = await openAt(`/party-form?eventId=${CAREER.id}`);
     await fillRecruiting(user);
 
     await user.press(screen.getByRole('button', { name: '파티 올리기' }));
     await pass(500);
 
-    expect(server.received('POST /quests').map(({ body }) => body)).toEqual([{ globalEventId: CAREER.id }]);
+    expect(server.received('POST /quests').map(({ body }) => body)).toEqual([
+      { globalEventId: CAREER.id, title: 'AI 커리어 설명회 같이 가요' },
+    ]);
     expect(server.received(`PATCH /quests/${MY_CAREER.id}`).map(({ body }) => body)).toEqual([
       { description: '설명회 끝나고 저녁도 같이 먹어요', capacity: 4, joinPolicy: 'open', board: 'career' },
     ]);
