@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-07  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -214,7 +215,7 @@ describe('the Shared Quest', () => {
     });
     await pass(100);
 
-    expect(screen.getByRole('button', { name: '퀘스트 · 학관 점심 · 18:00 · 학생회관' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '비공개 파티 · 학관 점심 · 18:00 · 학생회관' })).toBeVisible();
   });
 
   it("is dropped by this User through the room's footer", async () => {
