@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
@@ -31,16 +32,12 @@ afterEach(() => {
 });
 
 describe('the mock of what waits for the User', () => {
-  it("lists the `Profile` frame's Friend Requests, an invitation and a Meetup, and no request to join", async () => {
+  it("lists the `Profile` frame's Friend Requests and an invitation, and no request to join", async () => {
     const requests = await answered(mockClient.listFriendRequests());
     const invitations = await answered(mockClient.listQuestInvitations());
-    const meetups = await answered(mockClient.listMeetups());
 
     expect(requests.received.map(({ sender }) => sender.name)).toEqual(['한도경', '김하늘', '박서준']);
     expect(invitations.map(({ quest }) => [quest.leader.name, quest.title])).toEqual([['윤태오', '물리 실험 보고서']]);
-    expect(meetups.received.map(({ proposer, title, state }) => [proposer.name, title, state])).toEqual([
-      ['이서연', '학관 점심', 'proposed'],
-    ]);
     expect(await answered(mockClient.listJoinRequests('q-ai'))).toEqual([]);
   });
 });

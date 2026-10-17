@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -13,7 +14,6 @@ import { answer } from './answer';
 import { ME } from './data/frame';
 import { MY_PARTY, QUESTS } from './data/quests';
 import { PLACES } from './data/places';
-import { mockMeetups } from './meetups';
 
 // The room's operations as the main server answers them. The mock keeps no change: the next read is the frame's again.
 
@@ -93,7 +93,7 @@ type MockRoom = Pick<
 export const mockRoom: MockRoom = {
   getQuest: (questId) =>
     answer('getQuest', () => {
-      const quest = [...QUESTS, ...mockMeetups.sharedQuests()].find(({ id }) => id === questId);
+      const quest = QUESTS.find(({ id }) => id === questId);
       if (quest === undefined) {
         throw new ApiError(404, 'QUEST_NOT_FOUND');
       }

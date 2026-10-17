@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -267,7 +268,6 @@ function ClassForm({ lesson, timetable }: { lesson: TimetableClass | null; timet
       </FullScreenPanel>
       {picking ? (
         <PlacePicker
-          mode="class"
           onClose={closePicker}
           onPick={(place) => {
             change({ place });

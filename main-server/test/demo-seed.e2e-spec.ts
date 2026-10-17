@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -37,7 +38,6 @@ function rowCounts(): Promise<number[]> {
     prisma.party.count(),
     prisma.partyMember.count(),
     prisma.questInvitation.count(),
-    prisma.meetup.count(),
   ]);
 }
 
@@ -46,13 +46,12 @@ function get(path: string, accessToken: string): request.Test {
 }
 
 const senders = z.object({ received: z.array(z.object({ sender: z.object({ name: z.string() }) })) });
-const meetups = z.object({ received: z.array(z.object({ state: z.string() })) });
 const parties = z.array(z.object({ title: z.string(), joinPolicy: z.string(), memberCount: z.number() }));
 
 // What the account reads of its share, as the app reads it.
 async function shareOf(accessToken: string): Promise<object> {
-  const [friends, requests, invitations, meetupList, partyList] = await Promise.all(
-    ['/friends', '/friend-requests', '/quest-invitations', '/meetups', '/parties'].map(
+  const [friends, requests, invitations, partyList] = await Promise.all(
+    ['/friends', '/friend-requests', '/quest-invitations', '/parties'].map(
       async (path) => (await get(path, accessToken)).body as unknown,
     ),
   );
@@ -67,7 +66,6 @@ async function shareOf(accessToken: string): Promise<object> {
       .received.map(({ sender }) => sender.name)
       .toSorted(),
     invitations: z.array(z.unknown()).parse(invitations).length,
-    meetups: meetups.parse(meetupList).received.map(({ state }) => state),
     parties: parties.parse(partyList),
   };
 }
@@ -95,7 +93,7 @@ it('leaves the same rows when the demo seed runs again', async () => {
   expect(once.slice(0, 9)).toStrictEqual([8, 8, 8, 6, 8, 12, 11, 1, 2]);
 });
 
-it('gives an onboarded account named in the list its Friends, requests, invitation and Meetup, once', async () => {
+it('gives an onboarded account named in the list its Friends, requests and invitation, once', async () => {
   await seedDemo(prisma, signals);
   const { accessToken } = await signIn(app, { email: ACCOUNT_EMAIL });
   await signInBeforeOnboarding(app, { email: 'not-yet@snu.ac.kr' });
@@ -111,12 +109,11 @@ it('gives an onboarded account named in the list its Friends, requests, invitati
     friends: ['김민준', '박지호', '이서연', '정예준', '최수아'],
     requestsFrom: ['강하은', '윤도윤'],
     invitations: 1,
-    meetups: ['proposed'],
     parties: [{ title: '중도 스터디 중', joinPolicy: 'open', memberCount: 2 }],
   });
   await vi.waitFor(() => {
     expect(watcher.for({ id: prepared[0] ?? '' }).map(({ name }) => name)).toStrictEqual(
-      expect.arrayContaining(['friends-changed', 'quests-changed', 'meetups-changed', 'party-changed']),
+      expect.arrayContaining(['friends-changed', 'quests-changed', 'party-changed']),
     );
   });
   await watcher.stop();

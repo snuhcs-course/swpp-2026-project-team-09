@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { v5 as uuidv5 } from 'uuid';
@@ -187,11 +188,4 @@ export const DEMO_ACCOUNT_SHARE = {
   friendRequestsFrom: ['haeun', 'doyun'],
   // The Leader of this Quest is one of the account's Friends.
   invitedInto: 'hobby-approval',
-  meetup: {
-    proposer: 'sua',
-    title: '학관 앞에서 커피',
-    place: '63',
-    startsAt: { hours: 2 } as DemoTime,
-    endsAt: { hours: 3 } as DemoTime,
-  },
 };

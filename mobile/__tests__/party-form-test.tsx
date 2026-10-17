@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Keyboard } from 'react-native';
@@ -207,6 +208,22 @@ describe('a private 파티', () => {
       joinPolicy: 'closed',
       subQuest: { title: '저녁 같이' },
     });
+    expect(toast()).toHaveTextContent('비공개 파티를 만들었어요 · 1명에게 초대 요청');
+  });
+
+  it('opens from a Friend as 비공개 with the Friend chosen, and invites the Friend once made', async () => {
+    const user = await openAt(`/party-form?friendId=${MIN_JUN_HOLDER.id}`);
+    expect(screen.getByRole('radio', { name: '비공개' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: MIN_JUN_HOLDER.name })).toBeChecked();
+    await user.type(screen.getByLabelText('제목'), '저녁 같이');
+
+    await user.press(submit('파티 만들기'));
+    await pass(500);
+
+    expect(server.received('POST /quests/own')[0]?.body).toMatchObject({ joinPolicy: 'closed' });
+    expect(server.received(`POST /quests/${MY_HIKE.id}/invitations`).map(({ body }) => body)).toEqual([
+      { userId: MIN_JUN_HOLDER.id },
+    ]);
     expect(toast()).toHaveTextContent('비공개 파티를 만들었어요 · 1명에게 초대 요청');
   });
 });

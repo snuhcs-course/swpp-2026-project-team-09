@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -142,7 +143,6 @@ describe('signals over the connection', () => {
   it.each([
     ['friends-changed', ['GET /friends', 'GET /positions', 'GET /friend-requests']],
     ['quests-changed', ['GET /quests', 'GET /quest-invitations']],
-    ['meetups-changed', ['GET /meetups']],
     ['party-changed', ['GET /parties/mine', 'GET /parties', 'GET /positions']],
   ])('fetches what changed again on the signal %s', async (signal, routes) => {
     const socket = await openLive();

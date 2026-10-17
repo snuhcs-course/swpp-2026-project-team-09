@@ -3,9 +3,10 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import type { FriendRequests, JoinRequest, Meetup, Meetups, QuestInvitation, QuestSummary } from '@/api/waiting-types';
+import type { FriendRequests, JoinRequest, QuestInvitation, QuestSummary } from '@/api/waiting-types';
 import {
   field,
   hasTexts,
@@ -14,9 +15,6 @@ import {
   isHolder,
   isJoinPolicy,
   isNumber,
-  isPlace,
-  isText,
-  isTextOrNull,
   isUserSummary,
   listOf,
 } from './answers';
@@ -53,25 +51,6 @@ export function isQuestWaiting(value: unknown): value is QuestInvitation {
 }
 
 export const isQuestInvitations = listOf(isQuestWaiting);
-
-const MEETUP_STATES = new Set(['proposed', 'accepted', 'declined', 'withdrawn', 'expired']);
-
-export function isMeetup(value: unknown): value is Meetup {
-  const state = field(value, 'state');
-  return (
-    hasTexts(value, ['id', 'title', 'startsAt']) &&
-    isTextOrNull(field(value, 'endsAt')) &&
-    isPlace(field(value, 'place')) &&
-    isText(state) &&
-    MEETUP_STATES.has(state) &&
-    isHolder(field(value, 'proposer')) &&
-    isHolder(field(value, 'receiver'))
-  );
-}
-
-export function isMeetups(value: unknown): value is Meetups {
-  return listOf(isMeetup)(field(value, 'received')) && listOf(isMeetup)(field(value, 'sent'));
-}
 
 function isJoinRequest(value: unknown): value is JoinRequest {
   return hasTexts(value, ['id', 'sentAt']) && isHolder(field(value, 'user'));

@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQueries, useQuery } from '@tanstack/react-query';
@@ -19,7 +20,6 @@ import type { Board } from '@/api/types';
 import type { QuestInvitation } from '@/api/waiting-types';
 import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
-import { useMeetupInvites } from '@/features/meetups/use-meetups';
 import { sameKoreaDay } from '@/korea-time';
 import { BOARDS } from './boards';
 import { type MineCardView, toMineCards } from './mine';
@@ -113,14 +113,13 @@ export function useInvitations(): ScreenData<QuestInvitation[]> {
   return combined([invitations], () => invitations.data ?? []);
 }
 
-// The tabs' counts: the User's Quests but the Class Quests, and what waits under 초대, the Quest invitations and the
-// Meetups proposed to the User. 0 while they load.
+// The tabs' counts: the User's Quests but the Class Quests, and what waits under 초대, the Quest invitations. 0 while
+// they load.
 export function usePartyCounts(): { mine: number; invites: number } {
   const quests = useQuery(questsQuery);
   const invitations = useQuery(questInvitationsQuery);
-  const meetups = useMeetupInvites();
   return {
     mine: (quests.data ?? []).filter(({ classQuest }) => !classQuest).length,
-    invites: (invitations.data?.length ?? 0) + (meetups.data?.received.length ?? 0),
+    invites: invitations.data?.length ?? 0,
   };
 }

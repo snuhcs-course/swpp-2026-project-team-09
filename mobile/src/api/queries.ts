@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
@@ -29,7 +30,6 @@ export const QUEST_INVITATIONS_KEY = ['quest-invitations'] as const;
 export const JOIN_REQUESTS_KEY = ['join-requests'] as const;
 export const SENT_INVITATIONS_KEY = ['sent-invitations'] as const;
 export const DECLINED_PARTIES_KEY = ['declined-parties'] as const;
-export const MEETUPS_KEY = ['meetups'] as const;
 export const CLASSES_KEY = ['timetable-classes'] as const;
 export const PLACES_KEY = ['places'] as const;
 export const FOOTPRINTS_KEY = ['footprints'] as const;
@@ -80,7 +80,6 @@ export function questQuery(questId: string): UseQueryOptions<Quest, Error, Quest
 export function sentInvitationsQuery(questId: string): UseQueryOptions<JoinRequest[], Error, JoinRequest[], string[]> {
   return { queryKey: [...SENT_INVITATIONS_KEY, questId], queryFn: () => apiClient.listSentInvitations(questId) };
 }
-export const meetupsQuery = queryOptions({ queryKey: MEETUPS_KEY, queryFn: () => apiClient.listMeetups() });
 export const classesQuery = queryOptions({ queryKey: CLASSES_KEY, queryFn: () => apiClient.listClasses() });
 export const footprintsQuery = queryOptions({ queryKey: FOOTPRINTS_KEY, queryFn: () => apiClient.getFootprints() });
 export const globalEventsQuery = queryOptions({

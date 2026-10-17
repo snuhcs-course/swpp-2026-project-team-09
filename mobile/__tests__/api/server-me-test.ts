@@ -15,7 +15,6 @@ import {
   INVITATION,
   JOIN_REQUESTS,
   LOBBY,
-  MEETUPS,
   PHONE_NOW,
   STUDY,
   TOKENS,
@@ -175,13 +174,6 @@ describe('what waits for the User', () => {
 
     // The client adds a Quest's mocked parts to the answer (quest-parts-test).
     expect(await apiClient.listQuestInvitations()).toMatchObject([INVITATION]);
-  });
-
-  it('gives the Meetups', async () => {
-    const server = await askMainServer({ signedIn: true });
-    server.on('GET /meetups', { status: 200, body: MEETUPS });
-
-    expect(await apiClient.listMeetups()).toEqual(MEETUPS);
   });
 
   it("gives the requests to join one of the User's Quests", async () => {

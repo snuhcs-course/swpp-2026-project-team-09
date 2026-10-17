@@ -8,8 +8,10 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import type { AssistantReply, ChatMessage } from './assistant-types';
 import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
 import type { ShownClient } from './quest-parts-types';
@@ -45,15 +47,7 @@ import type {
 import type { RestaurantMenus } from './menu-types';
 import type { ShuttleRoute, ShuttleVehicle } from './shuttle-types';
 import type { PartyOpening, PlaceAt, SubQuestContent } from './room-types';
-import type {
-  FriendRequests,
-  JoinRequest,
-  Meetup,
-  MeetupProposal,
-  Meetups,
-  MyJoinRequest,
-  QuestInvitation,
-} from './waiting-types';
+import type { FriendRequests, JoinRequest, MyJoinRequest, QuestInvitation } from './waiting-types';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
 import type { WalkingRoute } from './walking-route-types';
 
@@ -91,14 +85,6 @@ export interface ApiClient {
   listQuestInvitations: () => Promise<QuestInvitation[]>;
   // Only for a Quest the User leads.
   listJoinRequests: (questId: string) => Promise<JoinRequest[]>;
-  listMeetups: () => Promise<Meetups>;
-  // The key is kept for the retries of one proposal. Refused with 404 FRIEND_NOT_FOUND, 400 MEETUP_START_PASSED and
-  // 404 PLACE_NOT_FOUND.
-  proposeMeetup: (proposal: MeetupProposal, idempotencyKey: string) => Promise<Meetup>;
-  // Each refused with 404 MEETUP_NOT_FOUND, and with 409 MEETUP_NOT_PROPOSED once the Meetup is no longer proposed.
-  acceptMeetup: (meetupId: string) => Promise<void>;
-  declineMeetup: (meetupId: string) => Promise<void>;
-  withdrawMeetup: (meetupId: string) => Promise<void>;
   listClasses: () => Promise<TimetableClass[]>;
   // A class without its identifiers and overlaps. Each refused with 404 PLACE_NOT_FOUND for a Place not in the list; an add also with 409 TIMETABLE_FULL at 15
   // classes, and a replacement with 404 CLASS_NOT_FOUND.
@@ -175,6 +161,8 @@ export interface ApiClient {
   inviteToQuest: (questId: string, userId: string) => Promise<void>;
   acceptInvitation: (invitationId: string) => Promise<Quest>;
   declineInvitation: (invitationId: string) => Promise<void>;
+  // The chat Assistant's reply to the conversation, the User's new message last.
+  askAssistant: (messages: ChatMessage[]) => Promise<AssistantReply>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`), each with the
@@ -209,11 +197,6 @@ export const apiClient: ShownClient = {
   listQuests: () => chosen().listQuests(),
   listQuestInvitations: () => chosen().listQuestInvitations(),
   listJoinRequests: (questId) => chosen().listJoinRequests(questId),
-  listMeetups: () => chosen().listMeetups(),
-  proposeMeetup: (proposal, key) => chosen().proposeMeetup(proposal, key),
-  acceptMeetup: (meetupId) => chosen().acceptMeetup(meetupId),
-  declineMeetup: (meetupId) => chosen().declineMeetup(meetupId),
-  withdrawMeetup: (meetupId) => chosen().withdrawMeetup(meetupId),
   listClasses: () => chosen().listClasses(),
   addClass: (save) => chosen().addClass(save),
   replaceClass: (classId, save) => chosen().replaceClass(classId, save),
@@ -266,4 +249,5 @@ export const apiClient: ShownClient = {
   acceptInvitation: (invitationId) => chosen().acceptInvitation(invitationId),
   declineInvitation: (invitationId) => chosen().declineInvitation(invitationId),
   listMyTags: () => chosen().listMyTags(),
+  askAssistant: (messages) => chosen().askAssistant(messages),
 };

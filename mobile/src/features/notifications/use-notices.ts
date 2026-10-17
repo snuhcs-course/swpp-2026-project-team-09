@@ -2,13 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
 import {
   friendRequestsQuery,
   joinRequestsQuery,
-  meetupsQuery,
   partiesQuery,
   questInvitationsQuery,
   questsQuery,
@@ -16,7 +16,6 @@ import {
 import { type ScreenData, askAgain, somePending } from '@/api/screen-data';
 import type { JoinRequest } from '@/api/waiting-types';
 import { myUserId } from '@/auth/sign-in';
-import { now } from '@/clock';
 import { type NoticeView, takesJoinRequests, toNotices } from './adapter';
 
 function answerOf<Answer>(result: UseQueryResult<Answer>): Answer | null {
@@ -27,9 +26,9 @@ function answerOf<Answer>(result: UseQueryResult<Answer>): Answer | null {
 // list failed has 알림 failed.
 export function useNotices(): ScreenData<NoticeView[]> {
   const lists = useQueries({
-    queries: [partiesQuery, friendRequestsQuery, questInvitationsQuery, meetupsQuery, questsQuery],
+    queries: [partiesQuery, friendRequestsQuery, questInvitationsQuery, questsQuery],
   });
-  const [parties, friendRequests, invitations, meetups, quests] = lists;
+  const [parties, friendRequests, invitations, quests] = lists;
   const meId = myUserId();
   const leading = (quests.data ?? []).filter((quest) => takesJoinRequests(quest, meId));
   const requests = useQueries({ queries: leading.map((quest) => joinRequestsQuery(quest.id)) });
@@ -44,7 +43,6 @@ export function useNotices(): ScreenData<NoticeView[]> {
             parties: answerOf(parties),
             friendRequests: answerOf(friendRequests),
             invitations: answerOf(invitations),
-            meetups: answerOf(meetups),
             joinRequests:
               quests.data === undefined
                 ? null
@@ -52,7 +50,6 @@ export function useNotices(): ScreenData<NoticeView[]> {
                     const answered: JoinRequest[] | undefined = requests[index]?.data;
                     return answered === undefined ? [] : [{ quest, requests: answered }];
                   }),
-            now: now(),
           }),
     isPending,
     isError,
