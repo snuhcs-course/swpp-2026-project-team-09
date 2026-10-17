@@ -5,7 +5,12 @@
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
-# The deploy script: its decisions given plain inputs, and whole runs with git, docker and curl faked on PATH.
+# Each test runs in a subshell of its own, so that its exports reach no other test, as meant.
+# shellcheck disable=SC2030,SC2031 source-path=SCRIPTDIR
+
+# The deploy script: its decisions given plain inputs, and whole runs with git, docker and curl faked on PATH. A [[ ]]
+# check ends in `|| false` because bash before 4.1, which macOS has, does not fail a test on a [[ ]] that is not its
+# last command.
 
 TIP=6b1f0c2a9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a
 NEXT_TIP=0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e
@@ -23,7 +28,7 @@ setup() {
 
   mkdir "$BATS_TEST_TMPDIR/bin"
   for command in git docker curl; do
-    ln -s "$BATS_TEST_DIRNAME/fake-command.sh" "$BATS_TEST_TMPDIR/bin/$command"
+    ln -s "$BATS_TEST_DIRNAME/deploy-fakes.sh" "$BATS_TEST_TMPDIR/bin/$command"
   done
   export PATH="$BATS_TEST_TMPDIR/bin:$PATH"
   export FAKE_CALLS="$BATS_TEST_TMPDIR/calls"
@@ -33,13 +38,6 @@ setup() {
   export FAKE_HANDSHAKE='0{"sid":"lv_VI97HAXpY6yYWAAAC","upgrades":["websocket"],"pingInterval":25000,"pingTimeout":20000,"maxPayload":1000000}'
   export FAKE_COMPOSE_OUTPUT="$BATS_TEST_TMPDIR/compose-up.txt"
   cat >"$FAKE_COMPOSE_OUTPUT" <<'EOF'
-#1 [main-server internal] load build definition from Dockerfile
-#1 transferring dockerfile: 1.02kB done
-#1 DONE 0.0s
-#14 [main-server 7/7] RUN pnpm build
-#14 DONE 9.8s
- main-server  Built
- socket-server  Built
  Container snu-now-redis-1  Running
  Container snu-now-postgres-1  Running
  Container snu-now-main-server-1  Recreate
@@ -56,8 +54,8 @@ setup() {
  Container snu-now-socket-server-1  Started
  Container snu-now-proxy-1  Started
 EOF
-  # A timer starts the unit unless a test says the run was started by hand.
-  export TRIGGER_UNIT=snu-now-deploy.timer
+  # Under systemd, as the timer starts a run, unless a test says otherwise.
+  export INVOCATION_ID=5f0c2b7e9a4d4c1e8b3a6d0f2e7c9a1b
 }
 
 field() {
@@ -72,6 +70,7 @@ steps() {
     /^docker .* exec .*pg_dumpall/ { print "dump" }
     /^git reset .*--hard /         { print "reset" }
     /^git clean /                  { print "clean" }
+    /^docker compose .* build$/    { print "compose-build" }
     /^docker compose .* up /       { print "compose-up" }
     /^curl .*\/health\/ready/      { print "ready" }
     /^curl .*\/socket\.io\//       { print "handshake" }
@@ -107,23 +106,33 @@ serve_check_runs() {
   export FAKE_CHECK_RUNS="$BATS_TEST_TMPDIR/check-runs.json"
 }
 
-@test "with the fakes, a successful run calls fetch, the check-runs request, the dump, reset and clean, compose up, the two smoke requests, the prunes, in that order, and writes a status file with every field of the spec's \"The status file\" and recreatedServices taken from Compose's output" {
+@test "with the fakes, a successful run calls fetch, the check-runs request, the dump, reset and clean, compose build, compose up, the two smoke requests, the prunes, in that order, and writes a status file with every field of the spec's \"The status file\" and recreatedServices taken from Compose's output" {
   export FAKE_DB_RUNNING=yes
 
   run "$DEPLOY"
 
   [ "$status" -eq 0 ]
-  [ "$(steps | tr '\n' ' ')" = "fetch check-runs dump reset clean compose-up ready handshake image-prune builder-prune " ]
+  [ "$(steps | tr '\n' ' ')" = "fetch check-runs dump reset clean compose-build compose-up ready handshake image-prune builder-prune " ]
   [ "$(field 'keys_unsorted | join(" ")')" = "trackedRef checkedAt result candidateCommit attempt deployedCommit deployedAt checks recreatedServices" ]
   [ "$(field '[.trackedRef, .result, .candidateCommit, .attempt, .deployedCommit] | join(" ")')" = "development deployed $TIP 1 $TIP" ]
-  [[ "$(field .checkedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]]
-  [[ "$(field .deployedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]]
-  [[ ! "$(field .deployedAt)" < "$(field .checkedAt)" ]]
+  [[ "$(field .checkedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]] || false
+  [[ "$(field .deployedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]] || false
+  [[ ! "$(field .deployedAt)" < "$(field .checkedAt)" ]] || false
   [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success match-server=success flow-tests=success" ]
   [ "$(field '.recreatedServices | join(" ")')" = "main-server socket-server proxy" ]
 }
 
+@test "a run that deploys logs a line for each of the eight steps, the clean among them, in their order" {
+  export FAKE_DB_RUNNING=yes
+
+  run "$DEPLOY"
+
+  [ "$status" -eq 0 ]
+  [ "$(grep -oE '^[a-z]+:' <<<"$output" | uniq | tr '\n' ' ')" = "run: fetch: ci: deploy: dump: checkout: smoke: clean: status: " ]
+}
+
 @test "the tip equal to the last deployed commit gives up-to-date and no other command runs" {
+  # shellcheck source=../deploy.sh
   source "$DEPLOY"
   [ "$(plan_run "$TIP" "$TIP" "$TIP" deployed 1 no)" = up-to-date ]
 
@@ -139,6 +148,7 @@ serve_check_runs() {
 }
 
 @test "all five required checks success gives deploy; one missing or in_progress gives waiting-for-ci; one failure gives ci-failed and the commit is not looked at again; a failed admin or mobile check alone still gives deploy" {
+  # shellcheck source=../deploy.sh
   source "$DEPLOY"
   [ "$(verdict "${PASSED[@]}")" = deploy ]
   [ "$(verdict "${PASSED[@]:0:4}")" = waiting-for-ci ]
@@ -162,41 +172,88 @@ serve_check_runs() {
 }
 
 @test "a required check that passed on one push of the commit counts as passed, though its run on another push failed" {
+  # shellcheck source=../deploy.sh
   source "$DEPLOY"
   [ "$(verdict "${PASSED[@]}" 'flow-tests completed failure')" = deploy ]
   [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests completed failure' 'flow-tests in_progress null')" = waiting-for-ci ]
 }
 
+@test "a required check whose only run was cancelled, went stale or awaits an action gives waiting-for-ci, also beside a failed run; failure, timed_out, startup_failure, neutral and skipped give ci-failed" {
+  # shellcheck source=../deploy.sh
+  source "$DEPLOY"
+  local conclusion
+  for conclusion in cancelled stale action_required; do
+    [ "$(verdict "${PASSED[@]:0:4}" "flow-tests completed $conclusion")" = waiting-for-ci ]
+    [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests completed failure' "flow-tests completed $conclusion")" = waiting-for-ci ]
+  done
+  for conclusion in failure timed_out startup_failure neutral skipped; do
+    [ "$(verdict "${PASSED[@]:0:4}" "flow-tests completed $conclusion")" = ci-failed ]
+  done
+}
+
 @test "after a failed build, attempts 1 and 2 retry the same commit, attempt 3 gives held, and a new tip clears the hold" {
+  # shellcheck source=../deploy.sh
   source "$DEPLOY"
   [ "$(plan_run "$TIP" '' "$TIP" build-failed 1 no)" = 'retry 2' ]
   [ "$(plan_run "$TIP" '' "$TIP" build-failed 2 no)" = 'retry 3' ]
   [ "$(plan_run "$TIP" '' "$TIP" build-failed 3 no)" = held ]
   [ "$(plan_run "$NEXT_TIP" '' "$TIP" held 3 no)" = gate ]
 
-  export FAKE_UP_STATUS=1
+  export FAKE_BUILD_STATUS=1
   for attempt in 1 2 3; do
     : >"$FAKE_CALLS"
     run "$DEPLOY"
     [ "$status" -ne 0 ]
     [ "$(field '[.result, .candidateCommit, .attempt] | map(tostring) | join(" ")')" = "build-failed $TIP $attempt" ]
-    [ "$(steps | grep -c compose-up)" -eq 1 ]
+    [ "$(steps | grep "^compose-" | tr '\n' ' ')" = "compose-build " ]
     [ "$attempt" -eq 1 ] || [ "$(steps | grep -c check-runs)" -eq 0 ]
   done
   : >"$FAKE_CALLS"
   run "$DEPLOY"
   [ "$status" -eq 0 ]
   [ "$(field '[.result, .candidateCommit, .attempt] | map(tostring) | join(" ")')" = "held $TIP 3" ]
-  [ "$(steps | grep -c compose-up)" -eq 0 ]
+  [ "$(steps | grep -c "^compose-")" -eq 0 ]
 
-  export FAKE_TIP=$NEXT_TIP FAKE_UP_STATUS=0
+  export FAKE_TIP=$NEXT_TIP FAKE_BUILD_STATUS=0
   run "$DEPLOY"
 
   [ "$status" -eq 0 ]
   [ "$(field '[.result, .candidateCommit, .attempt, .deployedCommit] | map(tostring) | join(" ")')" = "deployed $NEXT_TIP 1 $NEXT_TIP" ]
 }
 
+@test "a build that fails runs no compose up, so the containers that ran before keep running; a compose up that fails after the build gives unhealthy, deployedCommit stays the commit deployed before, recreatedServices comes from that compose up, and the commit is retried and held as after a failed build" {
+  run "$DEPLOY"
+  export FAKE_TIP=$NEXT_TIP FAKE_BUILD_STATUS=1
+  : >"$FAKE_CALLS"
+  run "$DEPLOY"
+  [ "$(field '[.result, .deployedCommit] | join(" ")')" = "build-failed $TIP" ]
+  [ "$(steps | grep -c compose-up)" -eq 0 ]
+
+  # As when the main server's migration fails and its health check keeps it from starting.
+  cat >"$FAKE_COMPOSE_OUTPUT" <<'EOF'
+ Container snu-now-main-server-1  Recreate
+ Container snu-now-main-server-1  Recreated
+ Container snu-now-main-server-1  Starting
+ Container snu-now-main-server-1  Started
+ Container snu-now-main-server-1  Waiting
+ Container snu-now-main-server-1  Error
+dependency failed to start: container snu-now-main-server-1 is unhealthy
+EOF
+  export FAKE_BUILD_STATUS=0 FAKE_UP_STATUS=1
+  for attempt in 2 3; do
+    : >"$FAKE_CALLS"
+    run "$DEPLOY"
+    [ "$status" -ne 0 ]
+    [ "$(field '[.result, .candidateCommit, .attempt, .deployedCommit] | map(tostring) | join(" ")')" = "unhealthy $NEXT_TIP $attempt $TIP" ]
+    [ "$(steps | grep -E '^(compose-|ready|handshake)' | tr '\n' ' ')" = "compose-build compose-up " ]
+  done
+  [ "$(field '.recreatedServices | join(" ")')" = "main-server" ]
+  run "$DEPLOY"
+  [ "$(field '[.result, .attempt] | map(tostring) | join(" ")')" = "held 3" ]
+}
+
 @test "nine dumps give the two oldest for deletion; no running database gives no dump" {
+  # shellcheck source=../deploy.sh
   source "$DEPLOY"
   run dumps_to_delete snu-now-20261014T091502Z.sql.gz snu-now-20261009T230011Z.sql.gz snu-now-20261016T120000Z.sql.gz \
     snu-now-20261011T080000Z.sql.gz snu-now-20261010T101500Z.sql.gz snu-now-20261017T030405Z.sql.gz \
@@ -251,14 +308,14 @@ outcome() {
   serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed failure'
   [ "$(outcome)" = "ci-failed zero" ]
 
-  export FAKE_TIP=$THIRD_TIP FAKE_UP_STATUS=1
+  export FAKE_TIP=$THIRD_TIP FAKE_BUILD_STATUS=1
   serve_check_runs "${PASSED[@]}"
   [ "$(outcome)" = "build-failed non-zero" ]
   [ "$(outcome)" = "build-failed non-zero" ]
   [ "$(outcome)" = "build-failed non-zero" ]
   [ "$(outcome)" = "held zero" ]
 
-  export FAKE_TIP=$FOURTH_TIP FAKE_UP_STATUS=0 FAKE_READY_STATUS=22
+  export FAKE_TIP=$FOURTH_TIP FAKE_BUILD_STATUS=0 FAKE_READY_STATUS=22
   [ "$(outcome)" = "unhealthy non-zero" ]
 
   printf 'KAKAO_REST_API_KEY=CHANGE_ME\n' >"$DEPLOY_ENV_FILE"
@@ -295,25 +352,33 @@ outcome() {
   [ "$(field '[.result, .deployedCommit] | map(tostring) | join(" ")')" = "unhealthy null" ]
 }
 
-@test "a run a person starts by hand tries a held or ci-failed commit again" {
-  export FAKE_UP_STATUS=1
+@test "a held commit is tried again from attempt 1 by a run that finds the request file, which the run removes; without the file, a run under systemd, as systemctl start snu-now-deploy starts one, leaves it held" {
+  export FAKE_BUILD_STATUS=1
   for _ in 1 2 3 4; do run "$DEPLOY"; done
   [ "$(field .result)" = held ]
+  export FAKE_BUILD_STATUS=0
+  run "$DEPLOY"
+  [ "$(field '[.result, .attempt] | map(tostring) | join(" ")')" = "held 3" ]
   : >"$FAKE_CALLS"
 
-  unset TRIGGER_UNIT
-  export FAKE_UP_STATUS=0
+  touch "$DEPLOY_STATUS_DIR/redeploy"
   run "$DEPLOY"
 
+  [ "$status" -eq 0 ]
   [ "$(field '[.result, .attempt] | map(tostring) | join(" ")')" = "deployed 1" ]
   [ "$(steps | grep -c check-runs)" -eq 1 ]
+  [ ! -e "$DEPLOY_STATUS_DIR/redeploy" ]
+}
 
-  export FAKE_TIP=$NEXT_TIP TRIGGER_UNIT=snu-now-deploy.timer
+@test "a run outside systemd, as sudo bash deploy.sh starts one, asks GitHub again about a ci-failed commit" {
   serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed failure'
   run "$DEPLOY"
   [ "$(field .result)" = ci-failed ]
-  unset TRIGGER_UNIT
+
+  unset INVOCATION_ID
   serve_check_runs "${PASSED[@]}"
   run "$DEPLOY"
-  [ "$(field '[.result, .deployedCommit] | join(" ")')" = "deployed $NEXT_TIP" ]
+
+  [ "$status" -eq 0 ]
+  [ "$(field '[.result, .deployedCommit] | join(" ")')" = "deployed $TIP" ]
 }

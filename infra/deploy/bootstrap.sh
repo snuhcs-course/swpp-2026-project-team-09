@@ -21,7 +21,8 @@ fi
 REPOSITORY=https://github.com/snuhcs-course/swpp-2026-project-team-09.git
 # git and curl for the clone and the deploy run, which a minimal image may lack.
 PACKAGES=(docker.io docker-compose-v2 docker-buildx git curl)
-UNITS=(snu-now-deploy.service snu-now-deploy.timer snu-now-demo-refresh.service snu-now-demo-refresh.timer)
+UNITS=(snu-now-deploy.service snu-now-deploy.timer snu-now-demo-refresh.service snu-now-demo-refresh.timer
+  snu-now-redeploy.service)
 
 CHECKOUT=$TEAM_DIR/snu-now
 SECRETS_DIR=$TEAM_DIR/snu-now-secrets
@@ -43,10 +44,14 @@ make_folder() {
 
 make_folders() {
   local folder
-  for folder in "$CHECKOUT" "$BACKUP_DIR" "$STATUS_DIR" "$APK_DIR"; do
+  # The dumps hold Users' data and password hashes, and /srv/team's default ACL overrides the umask, so their folder,
+  # like the secrets folder, is closed to others.
+  for folder in "$CHECKOUT" "$STATUS_DIR" "$APK_DIR"; do
     make_folder "$folder" 2775
   done
-  make_folder "$SECRETS_DIR" 2770
+  for folder in "$SECRETS_DIR" "$BACKUP_DIR"; do
+    make_folder "$folder" 2770
+  done
 }
 
 install_packages() {

@@ -4,8 +4,8 @@
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
-# One deploy run (infra/deploy/README.md), started by snu-now-deploy.timer or by hand. Its log is
-# `journalctl -u snu-now-deploy`.
+# One deploy run (infra/deploy/README.md), started by snu-now-deploy.timer, or by snu-now-redeploy.service when a person
+# asks for one. Its log is `journalctl -u snu-now-deploy`.
 [Unit]
 Description=Deploy the tip of development to the Dev Server
 Wants=network-online.target

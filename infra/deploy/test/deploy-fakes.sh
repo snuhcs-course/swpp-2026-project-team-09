@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ################################################################################
 # AI-generated with Claude
 #
@@ -34,6 +34,7 @@ case "$(basename "$0")" in
     case " $* " in
       *" ps "*) if [[ -n "${FAKE_DB_RUNNING:-}" ]]; then echo 4f2c9d1e7a3b; fi ;;
       *" pg_dumpall "*) echo '-- PostgreSQL database cluster dump' ;;
+      *" build ") exit "${FAKE_BUILD_STATUS:-0}" ;;
       *" up "*)
         cat "$FAKE_COMPOSE_OUTPUT" >&2
         exit "${FAKE_UP_STATUS:-0}"

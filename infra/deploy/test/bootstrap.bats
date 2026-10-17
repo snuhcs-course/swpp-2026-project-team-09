@@ -25,9 +25,14 @@ group_of() {
 
 # A group of the current user other than the one new files get anyway, so that a test sees the bootstrap set it.
 other_group() {
-  local default group
+  local default group candidates
   default=$(group_of "$BATS_TEST_TMPDIR")
-  for group in $(id -Gn); do
+  candidates=$(id -Gn)
+  # root, as in a container, belongs to root alone but may hand a file to any group.
+  if [[ $(id -u) == 0 ]]; then
+    candidates+=" $(cut -d : -f 1 /etc/group)"
+  fi
+  for group in $candidates; do
     if [[ $group != "$default" ]]; then
       echo "$group"
       return
@@ -126,7 +131,7 @@ example_value_of() {
   cmp "$BATS_TEST_TMPDIR/filled" "$SETTINGS"
 }
 
-@test "with fakes for apt-get, git, systemctl and install, a first run installs the three packages, clones, installs and enables the two timers; a second run on a prepared machine installs nothing again and fails nothing" {
+@test "with fakes for apt-get, git, systemctl and install, a first run installs the three packages, clones, installs the five units and enables only the two timers; a second run on a prepared machine installs nothing again and fails nothing" {
   local calls=$FAKE_STATE/calls packages package unit
   bootstrap
 
@@ -138,7 +143,8 @@ example_value_of() {
   grep -qx "git clone --branch development https://github.com/snuhcs-course/swpp-2026-project-team-09.git $CHECKOUT" \
     "$calls"
   grep -qx "git config --system --add safe.directory $CHECKOUT" "$calls"
-  for unit in snu-now-deploy.service snu-now-deploy.timer snu-now-demo-refresh.service snu-now-demo-refresh.timer; do
+  for unit in snu-now-deploy.service snu-now-deploy.timer snu-now-demo-refresh.service snu-now-demo-refresh.timer \
+    snu-now-redeploy.service; do
     cmp "$REPOSITORY/infra/deploy/$unit" "$BOOTSTRAP_UNIT_DIR/$unit"
   done
   [ "$(grep '^systemctl ' "$calls")" = "$(printf '%s\n' 'systemctl daemon-reload' \
@@ -151,16 +157,19 @@ example_value_of() {
   [ "$status" -eq 1 ]
 }
 
-@test "the folders are created with the team group, the secrets folder closed to others, the rest group-writable" {
+@test "the folders are created with the team group, the secrets and backups folders closed to others, the rest group-writable and readable by others" {
   local folder
   bootstrap
 
-  for folder in snu-now snu-now-backups snu-now-status snu-now-apk; do
+  for folder in snu-now snu-now-status snu-now-apk; do
     [[ $(ls -ld "$BOOTSTRAP_TEAM_DIR/$folder") == drwxrwsr-x* ]] || false
     [ "$(group_of "$BOOTSTRAP_TEAM_DIR/$folder")" = "$BOOTSTRAP_TEAM_GROUP" ]
   done
-  [[ $(ls -ld "$BOOTSTRAP_TEAM_DIR/snu-now-secrets") == drwxrws---* ]] || false
-  [ "$(group_of "$BOOTSTRAP_TEAM_DIR/snu-now-secrets")" = "$BOOTSTRAP_TEAM_GROUP" ]
+  # The dumps hold Users' data and password hashes.
+  for folder in snu-now-secrets snu-now-backups; do
+    [[ $(ls -ld "$BOOTSTRAP_TEAM_DIR/$folder") == drwxrws---* ]] || false
+    [ "$(group_of "$BOOTSTRAP_TEAM_DIR/$folder")" = "$BOOTSTRAP_TEAM_GROUP" ]
+  done
 }
 
 @test "the unit files carry the schedule of the spec's \"Timers\" and the deploy service points its environment at the settings file, the status folder and the backups folder of the contract" {
@@ -182,6 +191,19 @@ example_value_of() {
   grep -qx 'WorkingDirectory=/srv/team/snu-now' "$units/snu-now-demo-refresh.service"
   grep -qx 'ExecStart=/usr/bin/docker compose --env-file /srv/team/snu-now-secrets/snu-now.env --file compose.yaml --file compose.deploy.yaml --profile demo restart demo-seed' \
     "$units/snu-now-demo-refresh.service"
+}
+
+@test "the redeploy service writes the request file into the deploy service's status folder, then starts the deploy service without waiting for it, and nothing enables it" {
+  local units=$BOOTSTRAP_UNIT_DIR status_dir
+  bootstrap
+
+  status_dir=$(sed -n 's/^Environment=DEPLOY_STATUS_DIR=//p' "$units/snu-now-deploy.service")
+  [ "$(grep '^ExecStart=' "$units/snu-now-redeploy.service")" = "$(printf '%s\n' \
+    "ExecStart=/usr/bin/touch $status_dir/redeploy" \
+    'ExecStart=/usr/bin/systemctl --no-block start snu-now-deploy.service')" ]
+  grep -qx 'Type=oneshot' "$units/snu-now-redeploy.service"
+  run grep -x '\[Install\]' "$units/snu-now-redeploy.service"
+  [ "$status" -eq 1 ]
 }
 
 @test "the settings example names the variables of a fresh settings file, each under a comment of its own" {

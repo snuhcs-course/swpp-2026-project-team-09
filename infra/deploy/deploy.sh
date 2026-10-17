@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ################################################################################
 # AI-generated with Claude
 #
@@ -101,19 +101,20 @@ check_runs_from_json() {
 }
 
 # Prints `name<TAB>outcome` for each required check, given the check runs as check_runs_from_json prints them.
-# A commit pushed to several branches has a run of each check per push; one success among them is enough.
-# The outcome is success, else the status of a run still going, else a failed run's conclusion, else missing.
+# A commit pushed to several branches has a run of each check per push; one success among them is enough. A run
+# cancelled by a newer push (ci.yml's concurrency) may still be run again, so it is waited for, not failed.
 summarize_checks() {
   awk -F '\t' -v required="$REQUIRED_CHECKS" '
     BEGIN { count = split(required, name, " ") }
     $3 == "success" { success[$1] = 1 }
-    $2 != "completed" && !($1 in running) { running[$1] = $2 }
+    $2 != "completed" && !($1 in unsettled) { unsettled[$1] = $2 }
+    $3 ~ /^(cancelled|stale|action_required)$/ && !($1 in unsettled) { unsettled[$1] = $3 }
     $2 == "completed" && $3 != "success" && !($1 in failed) { failed[$1] = $3 }
     END {
       for (i = 1; i <= count; i++) {
         n = name[i]
         if (n in success) outcome = "success"
-        else if (n in running) outcome = running[n]
+        else if (n in unsettled) outcome = unsettled[n]
         else if (n in failed) outcome = failed[n]
         else outcome = "missing"
         print n "\t" outcome
@@ -125,7 +126,7 @@ summarize_checks() {
 judge_checks() {
   awk -F '\t' '
     $2 == "success" { next }
-    $2 ~ /^(missing|queued|in_progress|requested|waiting|pending)$/ { waiting = 1; next }
+    $2 ~ /^(missing|queued|in_progress|requested|waiting|pending|cancelled|stale|action_required)$/ { waiting = 1; next }
     { failed = 1 }
     END { print failed ? "ci-failed" : waiting ? "waiting-for-ci" : "deploy" }'
 }
@@ -202,8 +203,7 @@ compose() {
     --file compose.yaml --file compose.deploy.yaml "$@"
 }
 
-# Sets checks and verdict from the check runs of the tip on GitHub. Without a token, GitHub answers 60 requests an
-# hour from one address; a refused request is asked again next run.
+# Without a token, GitHub answers 60 requests an hour from one address; a refused request is asked again next run.
 gate_on_ci() {
   local answer
   if ! answer=$("$CURL" --fail --silent --show-error --location --max-time 30 \
@@ -245,13 +245,20 @@ smoke_check() {
 }
 
 clean_docker() {
-  "$DOCKER" image prune --force || log "clean: removing dangling images failed"
-  "$DOCKER" builder prune --force --filter until=168h || log "clean: removing old build cache failed"
+  if "$DOCKER" image prune --force; then
+    log "clean: removed the dangling images"
+  else
+    log "clean: removing the dangling images failed"
+  fi
+  if "$DOCKER" builder prune --force --filter until=168h; then
+    log "clean: removed the build cache older than 7 days"
+  else
+    log "clean: removing the old build cache failed"
+  fi
 }
 
-# Builds and starts the tip, then sets result, and services, deployed and deployed_at as far as the run got.
 deploy_tip() {
-  local output built=yes
+  local output
   log "deploy: $tip, attempt $attempt of $MAX_ATTEMPTS"
   result=build-failed
   # The services list gathers what the attempts at one commit recreated, so a retry that recreates nothing keeps it.
@@ -267,11 +274,12 @@ deploy_tip() {
   log "checkout: $tip"
 
   output=$(mktemp "${TMPDIR:-/tmp}/snu-now-deploy.XXXXXX")
-  compose up --detach --build 2>&1 | tee "$output" || built=no
-  services=$({ printf '%s\n' "$services" && recreated_services <"$output"; } | awk 'NF && !seen[$0]++')
-  rm -f "$output"
-  if [[ "$built" == no ]]; then
-    log "build: compose up failed; the containers that ran before keep running"
+  # Built before anything is stopped, so that a failed build leaves the running containers alone.
+  if ! compose build; then
+    log "build: failed; the containers that ran before keep running"
+  elif ! compose up --detach 2>&1 | tee "$output"; then
+    log "start: compose up failed; the new containers are what runs"
+    result=unhealthy
   elif smoke_check; then
     log "smoke: healthy"
     result=deployed
@@ -281,6 +289,8 @@ deploy_tip() {
     log "smoke: unhealthy"
     result=unhealthy
   fi
+  services=$({ printf '%s\n' "$services" && recreated_services <"$output"; } | awk 'NF && !seen[$0]++')
+  rm -f "$output"
   clean_docker
 }
 
@@ -291,7 +301,6 @@ write_status() {
   log "status: $result"
 }
 
-# Fetches the tip and does what plan_run says with it, setting result and what the status file reports.
 take_tip() {
   local plan
   cd "$DEPLOY_CHECKOUT"
@@ -330,12 +339,17 @@ main() {
   local checked_at by_hand=no previous tip='' verdict checks='' attempt='' result
   local last_candidate last_result last_attempt deployed deployed_at services
   checked_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-  # systemd names the timer in TRIGGER_UNIT; a person's `systemctl start` sets none.
-  if [[ -n "${TRIGGER_UNIT:-}" ]]; then
-    log "run: started by $TRIGGER_UNIT"
-  else
+  # systemd hands a person's `systemctl start` the TRIGGER_UNIT of the timer's earlier starts, so a person asks for a
+  # run by hand through the request file that snu-now-redeploy.service writes.
+  if [[ -e "$DEPLOY_STATUS_DIR/redeploy" ]]; then
+    rm -f "$DEPLOY_STATUS_DIR/redeploy"
     by_hand=yes
-    log "run: started by hand"
+    log "run: asked for by hand (snu-now-redeploy)"
+  elif [[ -z "${INVOCATION_ID:-}" ]]; then
+    by_hand=yes
+    log "run: started by hand, outside systemd"
+  else
+    log "run: started by systemd"
   fi
 
   # The previous status file is the memory between runs.
