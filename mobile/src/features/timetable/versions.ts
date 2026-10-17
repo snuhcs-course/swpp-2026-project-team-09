@@ -6,10 +6,10 @@
 
 import { apiClient } from '@/api/client';
 import { newIdempotencyKey } from '@/api/idempotency-key';
-import type { ClassSave, TimetableClass } from '@/api/types';
+import type { ClassSave } from '@/api/types';
 import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
-import { koreaCalendar, koreaYear } from '@/korea-time';
+import { fingerprint, saveOf, semesterName } from './version-parts';
 import { type KeptVersion, type KeptVersions, keepVersions, readKeptVersions } from '@/storage/timetable-versions';
 
 // The User's timetable versions, until the main server keeps them (P13 spec, "Versions"). The main server keeps one
@@ -28,9 +28,10 @@ export const MOST_VERSIONS = 10;
 export const NAME_LENGTH = 20;
 export const DRIFTED_NAME = '다른 기기에서 바꾼 시간표';
 
-// A change the versions refuse: an 11th version (`too-many`), or anything but `retry` while a switch is unfinished.
+// A change the versions refuse: an 11th version (`too-many`), anything but `retry` while a switch is unfinished, or
+// anything at all without a signed-in User (`no-user`).
 export class VersionsRefusal extends Error {
-  constructor(readonly reason: 'too-many' | 'unfinished') {
+  constructor(readonly reason: 'too-many' | 'unfinished' | 'no-user') {
     super(reason);
   }
 }
@@ -40,17 +41,6 @@ export interface VersionsView {
   currentId: string;
   // A switch stopped before every class was on the main server.
   unfinished: boolean;
-}
-
-// The semester of the day, which names the first version: `{year}-1학기` from March to August, `{year}-2학기` from
-// September to February, January and February counting as the year before.
-export function semesterName(at: Date): string {
-  const year = koreaYear(at);
-  const { month } = koreaCalendar(at);
-  if (month >= 3 && month <= 8) {
-    return `${year}-1학기`;
-  }
-  return `${month >= 9 ? year : year - 1}-2학기`;
 }
 
 // One change at a time, so that two do not each write over what the other kept.
@@ -78,31 +68,6 @@ function cut(name: string): string {
   return name.trim().slice(0, NAME_LENGTH);
 }
 
-function saveOf({ courseName, times }: TimetableClass): ClassSave {
-  return {
-    courseName,
-    times: times.map(({ weekday, startTime, endTime, placeId, room }) => ({
-      weekday,
-      startTime,
-      endTime,
-      placeId,
-      room,
-    })),
-  };
-}
-
-function timeOf({ weekday, startTime, endTime, placeId, room }: ClassSave['times'][number]): string {
-  return [weekday, startTime, endTime, placeId ?? '', room ?? ''].join(' ');
-}
-
-// The same for the same classes in any order, whatever their ids.
-function fingerprint(classes: readonly ClassSave[]): string {
-  const lessons = classes.map(({ courseName, times }) =>
-    [courseName, ...times.map((time) => timeOf(time)).toSorted()].join('|'),
-  );
-  return JSON.stringify(lessons.toSorted());
-}
-
 async function serverClasses(): Promise<ClassSave[]> {
   return (await apiClient.listClasses()).map((lesson) => saveOf(lesson));
 }
@@ -110,6 +75,9 @@ async function serverClasses(): Promise<ClassSave[]> {
 // The versions kept for the signed-in User. The first time, the classes on the main server become the first version.
 async function load(): Promise<KeptVersions> {
   const owner = myUserId();
+  if (owner === '') {
+    throw new VersionsRefusal('no-user');
+  }
   const kept = await readKeptVersions(owner);
   if (kept !== null) {
     return kept;
@@ -148,7 +116,8 @@ async function finish(start: KeptVersions): Promise<void> {
     // oxlint-disable-next-line no-await-in-loop -- kept after each class, so that a stop loses none
     await keepVersions(kept);
   }
-  await keepVersions({ ...kept, unfinished: null, written: unfinished.written });
+  // What the main server holds now, read back, rather than what was sent.
+  await keepVersions({ ...kept, unfinished: null, written: fingerprint(await serverClasses()) });
 }
 
 // The versions as the first use after the app starts finds them: a switch left unfinished is finished first. One that
@@ -215,7 +184,6 @@ async function switchTo(kept: KeptVersions, id: string, server: ClassSave[] | nu
     unfinished: {
       reset: false,
       missing: picked.classes.map((save) => ({ key: newIdempotencyKey(), save })),
-      written: fingerprint(picked.classes),
     },
   };
   await keepVersions(switching);
@@ -295,12 +263,30 @@ export function retrySwitch(): Promise<void> {
   });
 }
 
-// This phone changed a class itself, from the timetable: what it last wrote is the main server's classes now.
+// Before the class form writes: refused while a switch is unfinished, which it would mix with.
+export function settledForWrite(): Promise<void> {
+  return queued(async () => {
+    if (myUserId() !== '') {
+      await settled();
+    }
+  });
+}
+
+// This phone changed a class itself, from the timetable: what it last wrote is the main server's classes now. When
+// they cannot be read, what it wrote is unknown, and the next switch counts nothing as changed elsewhere.
 export function noteClassesWritten(): Promise<void> {
   return queued(async () => {
-    const kept = await readKeptVersions(myUserId());
-    if (kept !== null && kept.unfinished === null) {
-      await keepVersions({ ...kept, written: fingerprint(await serverClasses()) });
+    const owner = myUserId();
+    const kept = owner === '' ? null : await readKeptVersions(owner);
+    if (kept === null || kept.unfinished !== null) {
+      return;
     }
+    let written: string | null = null;
+    try {
+      written = fingerprint(await serverClasses());
+    } catch {
+      // Unknown.
+    }
+    await keepVersions({ ...kept, written });
   });
 }

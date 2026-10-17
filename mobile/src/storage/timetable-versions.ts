@@ -16,12 +16,10 @@ export interface KeptVersion {
 }
 
 // A switch that stopped before every class of the version switched to was on the main server: whether the main
-// server's timetable was reset, the classes still to add, each with the Idempotency-Key it is sent with every time,
-// and the fingerprint of the whole version once it is there.
+// server's timetable was reset, and the classes still to add, each with the Idempotency-Key it is sent with every time.
 export interface UnfinishedSwitch {
   reset: boolean;
   missing: { key: string; save: ClassSave }[];
-  written: string;
 }
 
 export interface KeptVersions {
@@ -30,7 +28,8 @@ export interface KeptVersions {
   currentId: string;
   versions: KeptVersion[];
   unfinished: UnfinishedSwitch | null;
-  // The fingerprint of the classes this phone last wrote to the main server, or null before it wrote any.
+  // The fingerprint of the classes this phone last wrote to the main server, or null before it wrote any or when it
+  // could not read them back: then nothing counts as changed elsewhere.
   written: string | null;
 }
 

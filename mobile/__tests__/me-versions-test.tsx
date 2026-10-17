@@ -10,7 +10,8 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { answered, startFresh } from './support/mocks';
 import { ApiError } from '@/api/errors';
 import { mockClient } from '@/api/mock/client';
-import { addEmptyVersion } from '@/features/timetable/versions';
+import { apiClient } from '@/api/client';
+import { addEmptyVersion, forgetLaunch, makeVersion, readVersions } from '@/features/timetable/versions';
 
 // The timetable versions' dropdown on 내 정보's week card, the `Profile` frame, against the mocks, which start from the
 // frame's four classes (seven blocks in the week).
@@ -180,5 +181,45 @@ describe('what the card says', () => {
 
     expect(screen.queryByTestId('unfinished-switch')).toBeNull();
     expect(screen.getAllByTestId('class-block')).toHaveLength(7);
+  });
+});
+
+describe('a failure before anything was written', () => {
+  it('says that it was not saved', async () => {
+    const user = await openMe();
+    await openMenu(user, '2026-2학기');
+    jest.spyOn(mockClient, 'listClasses').mockRejectedValueOnce(new ApiError(500));
+
+    await user.press(screen.getByRole('button', { name: '빈 시간표 추가' }));
+    await pass(1000);
+
+    expect(screen.getByTestId('toast-layer')).toHaveTextContent('저장하지 못했어요. 다시 시도해 주세요');
+    expect(screen.queryByTestId('unfinished-switch')).toBeNull();
+  });
+});
+
+describe('at launch', () => {
+  it('finishes a switch the app left unfinished, whatever tab opens first', async () => {
+    const add = mockClient.addClass;
+    let failing = true;
+    let calls = 0;
+    jest.spyOn(mockClient, 'addClass').mockImplementation((save, key) => {
+      calls += 1;
+      return failing && calls >= 2 ? Promise.reject(new ApiError(500)) : add(save, key);
+    });
+    const classes = ['컴파일러', '데이터베이스'].map((courseName) => ({
+      courseName,
+      times: [{ weekday: 'monday' as const, startTime: '09:00', endTime: '10:15', placeId: null, room: null }],
+    }));
+    await expect(answered(makeVersion('스크린샷', classes))).rejects.toMatchObject({ status: 500 });
+    failing = false;
+    forgetLaunch();
+
+    await openMain();
+    await pass(3000);
+
+    expect((await answered(readVersions())).unfinished).toBe(false);
+    const names = (await answered(apiClient.listClasses())).map(({ courseName }) => courseName);
+    expect(names.toSorted()).toEqual(['데이터베이스', '컴파일러']);
   });
 });

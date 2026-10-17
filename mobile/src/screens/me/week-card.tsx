@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import { type ReactElement, useState } from 'react';
+import type { ReactElement } from 'react';
 import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import {
   cardStyles,
@@ -111,23 +111,13 @@ export function WeekCard(): ReactElement {
   const { data, isPending, refetch } = useWeek();
   const showNotReady = useNotReadyToast();
   const versions = useTimetableVersions();
-  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <View style={[cardStyles.card, styles.card]}>
-      {menuOpen ? (
-        <Pressable
-          accessibilityLabel="닫기"
-          onPress={() => {
-            setMenuOpen(false);
-          }}
-          style={styles.outside}
-        />
-      ) : null}
       <View style={styles.head}>
         <Text accessibilityRole="header" style={styles.title}>
           시간표
         </Text>
-        <VersionMenu onOpen={setMenuOpen} open={menuOpen} versions={versions} />
+        <VersionMenu versions={versions} />
       </View>
       <UnfinishedSwitch versions={versions} />
       {data === undefined ? null : <Grid blocks={data} />}
@@ -152,9 +142,7 @@ export function WeekCard(): ReactElement {
 
 const styles = StyleSheet.create({
   card: { gap: space[3] },
-  // Over the card below the open list, so that a press outside the list closes it.
-  outside: { ...StyleSheet.absoluteFill, zIndex: 1 },
-  head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space[2], zIndex: 2 },
+  head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space[2] },
   title: { ...text.title, color: color.ink },
   row: { flexDirection: 'row', gap: space[1] },
   labels: { width: LABEL_WIDTH },

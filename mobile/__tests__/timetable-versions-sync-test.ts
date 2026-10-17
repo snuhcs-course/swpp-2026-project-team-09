@@ -15,6 +15,7 @@ import type { ClassSave } from '@/api/types';
 import * as signIn from '@/auth/sign-in';
 import * as clock from '@/clock';
 import { EMPTY_DRAFT } from '@/features/timetable/class-form';
+import { semesterName } from '@/features/timetable/version-parts';
 import { useClassChanges } from '@/features/timetable/use-timetable';
 import {
   addEmptyVersion,
@@ -24,7 +25,6 @@ import {
   noteClassesWritten,
   readVersions,
   renameCurrentVersion,
-  semesterName,
   switchVersion,
   type VersionsView,
   VersionsRefusal,
@@ -95,6 +95,17 @@ function failSecondAdd(): { heal: () => void } {
   };
 }
 
+const draft = { ...EMPTY_DRAFT, name: '창의공학설계', days: [4], start: '09:00', end: '10:15' };
+
+// The class form's changes, as the timetable screens use them.
+async function classChanges(): Promise<{ current: ReturnType<typeof useClassChanges> }> {
+  const queryClient = new QueryClient();
+  const wrapper = ({ children }: { children: ReactNode }): ReactNode =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+  const { result } = await renderHook(() => useClassChanges(), { wrapper });
+  return result;
+}
+
 describe('a switch left unfinished when the app closed', () => {
   it('is finished at the next launch before anything else', async () => {
     const posts = failSecondAdd();
@@ -157,11 +168,7 @@ describe('classes changed elsewhere', () => {
 describe('classes this phone changed itself', () => {
   it('are not counted after this phone edits and deletes classes in the class form', async () => {
     await answered(makeVersion('스크린샷', screenshot()));
-    const queryClient = new QueryClient();
-    const wrapper = ({ children }: { children: ReactNode }): ReactNode =>
-      createElement(QueryClientProvider, { client: queryClient }, children);
-    const { result } = await renderHook(() => useClassChanges(), { wrapper });
-    const draft = { ...EMPTY_DRAFT, name: '창의공학설계', days: [4], start: '09:00', end: '10:15' };
+    const result = await classChanges();
 
     const added = await answered(result.current.save(null, draft));
     await answered(result.current.save(added.id, { ...draft, name: '창의설계' }));
@@ -173,7 +180,27 @@ describe('classes this phone changed itself', () => {
     await answered(switchVersion(idOf(await versions(), '스크린샷')));
     expect(await classNames()).toHaveLength(3);
     expect(await classNames()).toContain('창의설계');
-    queryClient.clear();
+  });
+
+  it('are refused in the class form while a switch is unfinished', async () => {
+    failSecondAdd();
+    await expect(answered(makeVersion('스크린샷', screenshot()))).rejects.toMatchObject({ status: 500 });
+    const result = await classChanges();
+
+    const refused = new VersionsRefusal('unfinished');
+    await expect(answered(result.current.save(null, draft))).rejects.toMatchObject(refused);
+    await expect(answered(result.current.remove('class-1'))).rejects.toMatchObject(refused);
+  });
+
+  it('count nothing as changed elsewhere when they cannot be read back', async () => {
+    await answered(makeVersion('스크린샷', screenshot()));
+    await answered(apiClient.addClass(lesson('창의공학설계')));
+    jest.spyOn(mockClient, 'listClasses').mockRejectedValueOnce(new ApiError(500));
+    await answered(noteClassesWritten());
+
+    await answered(switchVersion(idOf(await versions(), '2026-2학기')));
+
+    expect(names(await versions())).toEqual(['2026-2학기', '스크린샷']);
   });
 });
 

@@ -4,8 +4,19 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { type ReactElement, useState } from 'react';
-import { ActivityIndicator, Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { type ReactElement, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  type StyleProp,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+  type ViewProps,
+  type ViewStyle,
+} from 'react-native';
 import { color, Dialog, font, Icon, type IconName, shadow, space, text } from '@/design-system';
 import type { VersionsView } from '@/features/timetable/versions';
 import type { TimetableVersions } from '@/features/timetable/use-versions';
@@ -21,10 +32,14 @@ const DELETE_OFF = '#D5D8E0';
 const CHEVRON = '#9AA0B2';
 const DIVIDER = '#F0F1F5';
 
-interface MenuProps {
-  versions: TimetableVersions;
-  open: boolean;
-  onOpen: (open: boolean) => void;
+// React Native's roles lack the frame's `listbox`; the web takes it as it is.
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- a role React Native's types lack
+const LISTBOX = { role: 'listbox' } as unknown as Pick<ViewProps, 'role'>;
+
+// Where the list stands on the screen: under the trigger, its right edge on the trigger's.
+interface Place {
+  top: number;
+  right: number;
 }
 
 function Action({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }): ReactElement {
@@ -97,10 +112,11 @@ interface ListProps {
   view: VersionsView;
   onClose: () => void;
   onDelete: (name: string) => void;
+  place: Place;
 }
 
 // The list `시간표 버전`. Every choice closes it, except 이름 바꾸기, which turns the current row into a field.
-function VersionList({ versions, view, onClose, onDelete }: ListProps): ReactElement {
+function VersionList({ versions, view, onClose, onDelete, place }: ListProps): ReactElement {
   const [renaming, setRenaming] = useState(false);
   const then = (change: () => void) => (): void => {
     onClose();
@@ -113,7 +129,7 @@ function VersionList({ versions, view, onClose, onDelete }: ListProps): ReactEle
     }
   };
   return (
-    <View aria-label="시간표 버전" role="list" style={styles.menu}>
+    <View aria-label="시간표 버전" {...LISTBOX} style={[styles.menu, place]}>
       {view.versions.map(({ id, name }) => {
         const on = id === view.currentId;
         return on && renaming ? (
@@ -179,35 +195,35 @@ function Trigger({
   );
 }
 
-// The trigger and, while open, the list. The card closes it on a press outside. While a change is on its way the
-// trigger turns into a spinner and takes no press.
-export function VersionMenu({ versions, open, onOpen }: MenuProps): ReactElement | null {
+// The trigger and, while open, the list, over the whole screen, so that a press anywhere outside it closes it. While a
+// change is on its way the trigger turns into a spinner and takes no press.
+export function VersionMenu({ versions }: { versions: TimetableVersions }): ReactElement | null {
+  const [open, setOpen] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [place, setPlace] = useState<Place>({ top: 0, right: space[4] });
+  const anchor = useRef<View>(null);
+  const { width } = useWindowDimensions();
   const { view } = versions;
   if (view === undefined) {
     return null;
   }
   const name = view.versions.find(({ id }) => id === view.currentId)?.name ?? '';
+  const close = (): void => {
+    setOpen(false);
+  };
+  const toggle = (): void => {
+    anchor.current?.measureInWindow((x, y, anchorWidth, height) => {
+      setPlace({ top: y + height, right: Math.max(width - x - anchorWidth, 0) });
+    });
+    setOpen(!open);
+  };
   return (
-    <View style={styles.anchor}>
-      <Trigger
-        busy={versions.busy}
-        name={name}
-        onPress={() => {
-          onOpen(!open);
-        }}
-        open={open}
-      />
-      {open ? (
-        <VersionList
-          onClose={() => {
-            onOpen(false);
-          }}
-          onDelete={setDeleting}
-          versions={versions}
-          view={view}
-        />
-      ) : null}
+    <View ref={anchor} style={styles.anchor}>
+      <Trigger busy={versions.busy} name={name} onPress={toggle} open={open} />
+      <Modal animationType="none" onRequestClose={close} statusBarTranslucent transparent visible={open}>
+        <Pressable accessibilityLabel="닫기" onPress={close} style={StyleSheet.absoluteFill} />
+        <VersionList onClose={close} onDelete={setDeleting} place={place} versions={versions} view={view} />
+      </Modal>
       <Dialog
         cancelLabel="취소"
         confirmLabel="삭제"
@@ -239,8 +255,7 @@ const styles = StyleSheet.create({
   triggerWords: { ...text.caption, color: color.inkMuted, flexShrink: 1 },
   menu: {
     position: 'absolute',
-    top: 24,
-    right: 0,
+    marginTop: 2,
     width: MENU_WIDTH,
     paddingVertical: 6,
     borderWidth: 1,
@@ -248,7 +263,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: color.surface,
     boxShadow: shadow.float,
-    zIndex: 31,
     elevation: 8,
   },
   optionRow: { flexDirection: 'row', alignItems: 'center' },
