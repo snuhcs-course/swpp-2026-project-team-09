@@ -12,7 +12,7 @@ The wireframe also draws parts that the app has never had: official recruiting b
 
 The 파티 tab, the room, the form and the Quest list are brought to the wireframe, and the Meetup is retired: a plan with a Friend is a 비공개 파티, made with the same form, preset to 비공개 with that Friend invited.
 
-What the server cannot give yet is built against a mock adapter of its own, which the app uses in every build, the one connected to the server included, until an endpoint exists. The last ticket lists the endpoints the server needs, so that each mock can be replaced by one change in the API client.
+What the server cannot give yet is built against a mock adapter of its own until an endpoint exists. The build connected to the server shows the mocked parts too, except the ones that show people who do not exist. The last ticket lists the endpoints the server needs, so that each mock can be replaced by one change in the API client.
 
 The reference is the wireframe artifact `SNU Now 와이어프레임` (https://claude.ai/artifact/136sh65V4Trkv5KBM78Vgr), version `1792227848-fc09` of 2026-10-17. Its artboards for this task: `Party`, `PartyJoin`, `PartyMine`, `PartyInvites`, `PartyDetail`, `PartyLeave`, `PartyPost`, `PartyCreate`, `PartyAppt`, and in `Main` the Quest list, `MainQuests`, the Friend's card and the 활성 파티 button.
 
@@ -93,9 +93,10 @@ The reference is the wireframe artifact `SNU Now 와이어프레임` (https://cl
 ### Retiring the Meetup
 
 - Both entries open the form (`party-form`) preset to 비공개 with the Friend invited: the action `meetup` of a Friend's card on the map (`screens/main/main-screen.tsx`, built in `features/map/adapter.ts`) and the button of the Friend's panel (`screens/main/friend-panel.tsx`). Making it posts a Closed Quest and invites the Friend (`POST /quests/own`, `POST /quests/:questId/invitations`), as the form does now.
-- The Meetup code is **commented out, not deleted**, in the app and on the server, so that it can come back:
+- The Meetup code is **deleted** in the app and on the server. The last commit that holds it, `2f4f201` on `2.0/Main`, is recorded here and in ticket 01's PR, so that it can be brought back with git. Ticket 01 lists every file:
   - app: the route `meetup/[friendId]`, `screens/meetup/*`, the Meetup cards and `보낸 초대` of `screens/party/invites-meetups.tsx`, `features/meetups/*`, the client's Meetup operations and their mock, the Meetup rows of 알림, the `meetups-changed` live key, and the Meetups in the count of `초대`;
-  - server: `MeetupsModule` is taken out of `app.module.ts` and the module's code, the Meetup parts of `friends.service.ts` and `quests.service.ts`, the demo seed's Meetups and `test/meetup-answers.e2e-spec.ts` are commented out; README's `## Meetup` section and the signal `meetups-changed` are marked retired.
+  - server: `MeetupsModule`, the Meetup parts of the Friends service and the demo data, the Meetup e2e tests and the Meetup checks of other e2e tests, README's `## Meetup` section and the signal `meetups-changed`.
+- Code named after the Meetup that other features use stays: `MeetupPlace` (renamed), the place picker, the server's Sub Quest helpers, and the mock's former Meetup Quest, which moves into the Quest mock data.
 - The Prisma model, the enum and the table stay, and no migration is added. Rows already stored stay unread. A Meetup accepted before is a Closed Quest and keeps showing as a 비공개 파티.
 
 ### What changes, screen by screen
@@ -111,17 +112,19 @@ Every item is drawn in the wireframe; nothing is added beyond it. "Mock" marks a
 - **초대**: each card shows `{when} · {where} · {names} 함께` — mock until the invitation carries them.
 - **The room**: `모집글 보기` only for a public Quest; the text only for a private one; tags — mock; the event card below the activation box; a member's `위치 공유 중 · {place}까지 도보 {n}분` or `{place}에 있어요`, from the members' positions and the walking route; a request's note — mock; an invited Friend as `응답 대기`; a step deleted at once, without the confirm sheet; the Leader's ending sheet `파티가 사라져요.` for a private Quest, and `활성화 중이라 위치 공유도 바로 멈춰요.` added while switched on; the text of the sheet that switches to another Party; `파티 채팅` with `파티에 메시지 보내기` — mock.
 - **The form**: `사진` (카메라, 앨범, remove) — mock storage; the event picker's tabs 진로, 이벤트, 축제, and a picked event fills the title `{event} 같이 가요`, its place and time (tags mock); `태그` with the User's tags and `직접 입력` — mock; `인원` for 비공개 too; `언제`, `어디서` and `관련 행사` when editing; the board sheet's search and `모집글 {n}`; the toast `파티를 올렸어요 · {n}명에게 초대 요청`.
-- **Quests** (the list on the map and `MainQuests`): tone and icon from the Quest's Join Policy, not its Party's; the Quest's own title; `공개 파티 · {n}명` counts the Holders; `· 활성화 중` for public and private; Quests without a time left out of the list and its counts.
+- **Quests** (the list on the map and `MainQuests`): tone and icon from the Quest's Join Policy, not its Party's; the Quest's own title; `공개 파티 · {n}명` counts the Holders; `· 활성화 중` for public and private; Quests without a time left out of the list and its counts. `내 파티` keeps its own group `시간 미정`, as `PartyMine` draws it.
 
 ### Rules
 
-- **Capacity** stays as the server has it, 1 to 8, for public and private alike. The wireframe's 2 to 12 is not followed. The form's lower bound moves from 2 to 1.
+- **Capacity** stays within the server's 1 to 8, for public and private alike. The wireframe's 2 to 12 is not followed. The form's lower bound is the Quest's current Holders plus the Friends invited in the form, and at least 1, so that a form opened from a Friend's card can always be sent.
 - **Activation**: any Holder switches a Quest's Party on, and any member leaves it or comes back. Ending it for everyone (`활성화 끄기`) stays with the Leader, as the server has it. The wireframe gives switching on to the Leader only; the app's wording says "멤버가" where the wireframe says "파티장이".
 - **Kept although the wireframe does not draw them**, because each uses a server feature: the chips `바로 참여` and `승인 후 참여` of a public Quest; asking to join and withdrawing the request; the room's `수정`; the switch `내 위치 공유`; marking a step done; handing over the Leader's role; tapping a member to move the map to them; the count of join requests on a card of 내 파티.
 
 ### Mocks
 
-- Each part the server cannot give has a mock adapter of its own behind the API client, used in every build, the one connected to the server included, like the Friends' statuses and 오늘의 발자국 today. When an endpoint arrives, only the client changes.
+- Each part the server cannot give has a mock adapter of its own behind the API client. When an endpoint arrives, only the client changes.
+- The mock build (Expo Go, the web, tests) shows every mocked part. The build connected to the server shows the mocked photos, tags, hiding a post, a request's note, 파티 채팅 and past Quests, like the Friends' statuses and 오늘의 발자국 today, but **hides the parts that show people who do not exist**: members' names and faces in summaries, an invitation's companions, `같이 할 사람을 찾는 중` and official recruiting. A real member is never shown beside an invented one.
+- A server Quest gets its mocked photo and tags by a stable hash of its id, so that the same Quest always looks the same.
 - What a User enters into a mocked part (a photo, tags, a chat message, `관심 없음`) is kept on the phone only and is not seen by others. The spec and the to-do list say so, and ticket 08 lists the endpoints that would replace each mock.
 - The mocked parts: official recruiting; photos; tags (search, ordering, `관심사`); hiding a post; people looking for company; members' names and faces in the recruiting and invitation summaries; an invitation's time, place and companions; a request's note; 파티 채팅; past Quests.
 
@@ -151,7 +154,7 @@ Branches `2.0/P06-<NN>-<slug>`, each with its own PR to `2.0/Main`. The files ar
 - New server endpoints. Ticket 08 lists them for the server's owner.
 - Capacity above 8.
 - Switching on limited to the Leader.
-- Deleting the Meetup's table or its stored rows.
+- Deleting the Meetup's table or its stored rows. The table's foreign keys to `users` are `ON DELETE RESTRICT`; when deleting an account arrives, the table has to be dropped or its keys changed.
 - Shared Quest updates (Iteration 3, P6).
 - The wireframe's `(비활성)` artboards: `MainPrivatePin`, `MainLongPress` and the `PrivateEvent` ones.
 

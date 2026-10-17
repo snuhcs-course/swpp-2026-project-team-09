@@ -4,7 +4,7 @@ Updated 2026-10-17. Spec: [spec.md](spec.md). Wireframe version `1792227848-fc09
 
 ## 1. The work, in order (frontend: 안진영)
 
-- [ ] 01 Retire the Meetup (app and server, commented out); both Friend entries open the 비공개 form
+- [ ] 01 Retire the Meetup (app and server, deleted; restore from `2f4f201`); both Friend entries open the 비공개 form
 - [ ] 02 The mocked parts of a Quest: photos, tags, members' faces
 - [ ] 03 찾기, 전체 파티, the boards and 파티 모집글
 - [ ] 04 The form for making and editing
@@ -15,20 +15,20 @@ Updated 2026-10-17. Spec: [spec.md](spec.md). Wireframe version `1792227848-fc09
 
 ## 2. Mock now, server later
 
-What the app shows from its own mock in every build. Anything a User enters here stays on the phone.
+What the app shows from its own mock. The build connected to the server hides the rows marked _hidden on server_, which show people or organisations that do not exist. Anything a User enters here stays on the phone.
 
-| Part                                    | Screens                                                | Replaced by (ticket 08) |
-| --------------------------------------- | ------------------------------------------------------ | ----------------------- |
-| Official recruiting                     | 찾기 banner, 전체 파티 › 공식                          |                         |
-| Photos                                  | card, post, form                                       |                         |
-| Tags                                    | search, ordering, post, room, form, 추천 이유 › 관심사 |                         |
-| Hiding a post (`관심 없음`)             | 찾기, post                                             |                         |
-| People looking for company              | 찾기                                                   |                         |
-| Members' names and faces in summaries   | 찾기 card, post                                        |                         |
-| An invitation's time, place, companions | 초대                                                   |                         |
-| A join request's note                   | room › 신청                                            |                         |
-| 파티 채팅                               | room                                                   |                         |
-| Past Quests (`지난 일정`)               | 내 파티                                                |                         |
+| Part                                                                            | Screens                                                | Replaced by (ticket 08) |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------- |
+| Official recruiting (_hidden on server_)                                        | 찾기 banner, 전체 파티 › 공식                          |                         |
+| Photos                                                                          | card, post, form                                       |                         |
+| Tags                                                                            | search, ordering, post, room, form, 추천 이유 › 관심사 |                         |
+| Hiding a post (`관심 없음`)                                                     | 찾기, post                                             |                         |
+| People looking for company (_hidden on server_)                                 | 찾기                                                   |                         |
+| Members' names and faces in summaries (_hidden on server_)                      | 찾기 card, post                                        |                         |
+| An invitation's time, place, companions (_hidden on server_ for the companions) | 초대                                                   |                         |
+| A join request's note                                                           | room › 신청                                            |                         |
+| 파티 채팅                                                                       | room                                                   |                         |
+| Past Quests (`지난 일정`)                                                       | 내 파티                                                |                         |
 
 Kept on the phone and not mocked: declining an activation (`다른 활성 파티`).
 

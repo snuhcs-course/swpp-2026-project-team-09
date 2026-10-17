@@ -14,6 +14,6 @@ The Quest list on the map and its full screen follow `Main` and `MainQuests`. A 
 - [ ] The title is the Quest's, not its Party's.
 - [ ] `공개 파티 · {n}명` counts the Quest's Holders; a private one reads `비공개 파티 · {name}` or `{name} 외 {n}명`.
 - [ ] `· 활성화 중` is added for public and private while the Quest's Party is switched on.
-- [ ] Quests without a time are left out of the list on the map, `MainQuests` and their counts; the group `시간 미정` goes.
+- [ ] Quests without a time are left out of the list on the map, `MainQuests` and their counts; the group `시간 미정` goes from these two. `내 파티` keeps its own `시간 미정` group.
 - [ ] Jest covers each row kind and the leaving out.
 - [ ] Screenshots beside `Main` and `MainQuests`, under Test Results.

@@ -8,7 +8,7 @@ Blocked by: 02 (The mocked parts of a Quest)
 
 `찾기` and what opens from it follow the wireframe's `Party` and `PartyPost`. A User sees official recruiting in a banner, searches and reads posts ordered by their tags, hides the ones they do not want, finds people looking for company, and reads why a post is recommended.
 
-Official recruiting, hiding a post and people looking for company have a mock adapter each, added here. `추천 이유`'s `시간대` comes from the User's timetable and `친구` from the Friends; `관심사` from the mocked tags.
+Official recruiting, hiding a post and people looking for company have a mock adapter each, added here. The build connected to the server hides official recruiting (the banner and `공식`), `같이 할 사람을 찾는 중` and the invented faces, since they show people and organisations that do not exist. `추천 이유`'s `시간대` comes from the User's timetable and `친구` from the Friends; `관심사` from the mocked tags.
 
 ## Acceptance criteria
 
@@ -39,5 +39,5 @@ Official recruiting, hiding a post and people looking for company have a mock ad
 
 ### Tests and PR
 
-- [ ] Jest covers each state above against the mocks.
+- [ ] Jest covers each state above against the mocks, and that the server build hides the banner, `공식`, `같이 할 사람을 찾는 중` and invented faces.
 - [ ] Screenshots of each screen beside its frame, under Test Results.

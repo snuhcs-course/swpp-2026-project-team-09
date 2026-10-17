@@ -22,7 +22,7 @@ Declining is kept on the phone, as today. Past Quests and an invitation's time, 
 
 ### 초대
 
-- [ ] Each card shows `{when} · {where} · {names} 함께`.
+- [ ] Each card shows `{when} · {where} · {names} 함께`; the build connected to the server leaves out `{names} 함께` until the server gives the companions.
 - [ ] The header is `받은 초대 · {n}` and there is no `보낸 초대`.
 
 ### Tests and PR
