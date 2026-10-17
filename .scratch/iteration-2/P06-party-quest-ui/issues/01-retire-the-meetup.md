@@ -55,20 +55,28 @@ Found with `git grep -il meetup` on `2.0/Main` (migrations, generated code and `
 
 ### App
 
-- [ ] `파티 만들기` on a Friend's card opens the form as 비공개 with that Friend selected under `친구 초대`.
-- [ ] The Friend panel's `{name}님과 파티 만들기` does the same.
-- [ ] Making it creates a Closed Quest and invites the Friend, as the form does today; the toast is `비공개 파티를 만들었어요 · 1명에게 초대 요청`.
-- [ ] Every app file above is deleted or edited as listed; `git grep -il meetup` in `mobile/` finds nothing but comments that say the Meetup was retired.
-- [ ] The count of `초대` counts Quest invitations only.
-- [ ] Jest: both entries open the form preset to 비공개 with the Friend; making it invites the Friend; `초대` and 알림 show no Meetup; the mock build still opens the former Meetup's room.
+- [x] `파티 만들기` on a Friend's card opens the form as 비공개 with that Friend selected under `친구 초대`.
+- [x] The Friend panel's `{name}님과 파티 만들기` does the same.
+- [x] Making it creates a Closed Quest and invites the Friend, as the form does today; the toast is `비공개 파티를 만들었어요 · 1명에게 초대 요청`.
+- [x] Every app file above is deleted or edited as listed; `git grep -il meetup` in `mobile/` finds nothing but comments that say the Meetup was retired.
+- [x] The count of `초대` counts Quest invitations only.
+- [x] Jest: both entries open the form preset to 비공개 with the Friend; making it invites the Friend; `초대` and 알림 show no Meetup; the mock build still opens the former Meetup's room.
 
 ### Server
 
-- [ ] Every server, flow-test, admin and document file above is deleted or edited as listed; no Prisma change and no migration.
+- [x] Every server, flow-test, admin and document file above is deleted or edited as listed; no Prisma change and no migration.
 - [ ] Lint, type checks, the server's unit and e2e suites (`demo-seed` included), the app's Jest suite, the admin build and `flow-tests` pass.
 - [ ] 윤유상 reviews the server part.
 
 ### PR
 
-- [ ] The PR body names `2f4f201` as the commit to restore from.
+- [x] The PR body names `2f4f201` as the commit to restore from.
 - [ ] Screenshots of the form opened from the Friend's card, under Test Results.
+
+## Comments
+
+### Agent usage (2026-10-18)
+
+- Agent time: about 1 h 20 min of active work by one subagent in its own worktree, plus about 10 min in the main session for the PR. It is an estimate: the run lasted about 2 h 10 min from start to finish, with a session crash and restart in it. Most of the rest was spent waiting on Jest runs slowed by other agents' runs on the same machine.
+- Tokens, from the subagent's transcript: input 28,724,444, of which 26,550,236 cache reads, 2,173,876 cache writes and 332 uncached; output 17,173.
+- The figures leave out the main session's share and a helper subagent that rewrote `main-server/README.md`, whose transcript was not counted.

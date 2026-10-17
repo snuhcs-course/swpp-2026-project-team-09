@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -31,7 +32,6 @@ import {
 } from '@/design-system';
 import { type FriendView, PRESENCE_LABEL, withAge } from '@/features/friends/adapter';
 import { useFriends } from '@/features/friends/use-friends';
-import { openMeetupForm } from '../meetup/open-meetup-form';
 
 type Filter = Presence | 'all';
 
@@ -131,14 +131,14 @@ function Footer({ seen, onLeave }: { seen: number; onLeave: () => void }): React
 
 // The friend panel, the `MainFriends` frame: every Friend by what they are doing, with a search and chips, how many
 // the User sees now, the way to the 위치 공유 card of 내 정보 and to 친구 추가. A Friend's calendar button closes the
-// panel and opens the Meetup form for that Friend.
+// panel and opens 파티 만들기 as 비공개 with that Friend invited.
 export function FriendPanel({ open, onClose }: FriendPanelProps): ReactElement {
   const { data: friends, isPending, refetch } = useFriends();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
-  const onMeet = ({ id, name }: FriendView): void => {
+  const onMeet = ({ id }: FriendView): void => {
     onClose();
-    openMeetupForm(id, name);
+    router.push({ pathname: '/party-form', params: { friendId: id } });
   };
   const shown = friends?.filter((friend) => (filter === 'all' || friend.presence === filter) && found(friend, query));
   return (

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 'use client';
@@ -55,7 +56,7 @@ function FriendList(props: { user: AdminUser; friends: AdminFriend[]; run: Run; 
                   disabled={pending}
                   className="button button-danger"
                   onClick={() => {
-                    const question = `End the friendship of ${nameOf(user)} and ${friend.name}? Location Sharing between the two stops at once, and the Meetups still proposed between them are withdrawn.`;
+                    const question = `End the friendship of ${nameOf(user)} and ${friend.name}? Location Sharing between the two stops at once.`;
                     if (window.confirm(question)) {
                       run(() => changeFriendship('end', { user: named(user), other: named(friend) }));
                     }

@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type NativeStackNavigationOptions, router, Stack, useGlobalSearchParams, useSegments } from 'expo-router';
@@ -86,7 +87,6 @@ export default function SignedInLayout(): ReactElement {
             <Stack.Screen name="post/[questId]" options={slideFrom('right', reduceMotion)} />
             <Stack.Screen name="party-form" options={slideFrom('right', reduceMotion)} />
             <Stack.Screen name="matching" options={slideFrom('right', reduceMotion)} />
-            <Stack.Screen name="meetup/[friendId]" options={slideFrom('bottom', reduceMotion)} />
           </Stack>
         </BackgroundSharingProvider>
       </PositionSending>

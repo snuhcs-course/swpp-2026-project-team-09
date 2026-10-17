@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -14,7 +15,6 @@ import {
   INVITATION,
   JOIN_REQUESTS,
   LOBBY,
-  MEETUPS,
   PHONE_NOW,
   STUDY,
   TOKENS,
@@ -173,13 +173,6 @@ describe('what waits for the User', () => {
     server.on('GET /quest-invitations', { status: 200, body: [INVITATION] });
 
     expect(await apiClient.listQuestInvitations()).toEqual([INVITATION]);
-  });
-
-  it('gives the Meetups', async () => {
-    const server = await askMainServer({ signedIn: true });
-    server.on('GET /meetups', { status: 200, body: MEETUPS });
-
-    expect(await apiClient.listMeetups()).toEqual(MEETUPS);
   });
 
   it("gives the requests to join one of the User's Quests", async () => {
