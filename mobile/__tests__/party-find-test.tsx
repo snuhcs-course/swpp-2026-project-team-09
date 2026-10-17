@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -64,7 +65,7 @@ describe('모집 중인 파티', () => {
     expect(run.getByText(RUN.description)).toBeVisible();
     expect(run.getByText('오늘 19:30')).toBeVisible();
     expect(run.getByText('버들골 (100동) 입구')).toBeVisible();
-    expect(run.getByText('최유나 외 2명')).toBeVisible();
+    expect(run.getByText('최유나 외 2명 · 친구 1명 포함')).toBeVisible();
     expect(run.getByRole('button', { name: '참여하기' })).toBeVisible();
     expect(card(CODING.title).getByRole('button', { name: '참여 신청' })).toBeVisible();
     expect(card(CODING.title).getByText('장소 미정')).toBeVisible();
@@ -104,7 +105,7 @@ describe('joining through the confirm sheet', () => {
 
     await user.press(card(RUN.title).getByRole('button', { name: '참여하기' }));
     expect(screen.getByText(`‘${RUN.title}’에 참여할까요?`)).toBeVisible();
-    expect(screen.getByText('최유나 외 2명 (3/8명)')).toBeVisible();
+    expect(screen.getByText('최유나 외 2명 · 친구 1명 포함 (3/8명)')).toBeVisible();
     expect(screen.getByText('멤버가 파티를 활성화하면, 수락한 멤버끼리 위치를 공유해요.')).toBeVisible();
     await answer(user, '참여하기');
 
@@ -157,6 +158,45 @@ describe('a refused joining', () => {
     await answer(user, '참여 신청');
 
     expect(toast()).toHaveTextContent(words);
+  });
+});
+
+describe('the mocked parts in the build that asks the main server', () => {
+  it('hides official recruiting, the people looking for company and invented faces in 찾기', async () => {
+    const user = await openAt('/party');
+
+    expect(screen.queryByLabelText('공식 모집')).toBeNull();
+    expect(screen.queryByText(/^공식 · /u)).toBeNull();
+    expect(screen.queryByText('같이 할 사람을 찾는 중')).toBeNull();
+    expect(card(RUN.title).getAllByRole('image', { name: /^[가-힣]{3}$/u })).toEqual([
+      card(RUN.title).getByRole('image', { name: '최유나' }),
+    ]);
+
+    await user.press(card(RUN.title).getByRole('button', { name: '관심 없음' }));
+    await pass(500);
+    expect(screen.queryByText(RUN.title)).toBeNull();
+    expect(screen.getByText('숨긴 파티 1개 · 다음 추천에 반영할게요')).toBeVisible();
+  });
+
+  it('shows 전체 파티 without 공식', async () => {
+    const user = await openAt('/party');
+
+    await user.press(screen.getByRole('button', { name: '전체 보기' }));
+    await pass(500);
+
+    expect(screen.queryByRole('tab', { name: '공식' })).toBeNull();
+    expect(screen.getByRole('button', { name: /^취미 게시판 · 모집글/u })).toBeVisible();
+  });
+
+  it('shows the post’s Leader alone among its faces', async () => {
+    await openAt(`/post/${RUN.id}`);
+
+    // The Leader's Avatar beside the name, and the one face of the members line.
+    expect(screen.getAllByRole('image', { name: /^[가-힣]{3}$/u })).toEqual(
+      screen.getAllByRole('image', { name: '최유나' }),
+    );
+    expect(screen.getAllByRole('image', { name: '최유나' })).toHaveLength(2);
+    expect(within(screen.getByLabelText('추천 이유')).getByText('친구 최유나님이 모집했어요.')).toBeVisible();
   });
 });
 

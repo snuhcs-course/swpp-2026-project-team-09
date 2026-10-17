@@ -250,5 +250,11 @@ export const apiClient: ShownClient = {
   acceptInvitation: (invitationId) => chosen().acceptInvitation(invitationId),
   declineInvitation: (invitationId) => chosen().declineInvitation(invitationId),
   listMyTags: () => chosen().listMyTags(),
+  listOfficialRecruiting: () => chosen().listOfficialRecruiting(),
+  joinOfficialRecruiting: (recruitingId) => chosen().joinOfficialRecruiting(recruitingId),
+  listHiddenPosts: () => chosen().listHiddenPosts(),
+  hidePost: (questId) => chosen().hidePost(questId),
+  listCompanionSeekers: () => chosen().listCompanionSeekers(),
+  askCompanionSeeker: (seekerId) => chosen().askCompanionSeeker(seekerId),
   askAssistant: (messages) => chosen().askAssistant(messages),
 };

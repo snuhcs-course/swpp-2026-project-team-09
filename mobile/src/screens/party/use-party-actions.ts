@@ -2,13 +2,23 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type QueryKey, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { apiClient } from '@/api/client';
-import { MY_JOIN_REQUESTS_KEY, QUEST_INVITATIONS_KEY, QUESTS_KEY, RECRUITING_KEY } from '@/api/queries';
+import {
+  COMPANION_SEEKERS_KEY,
+  HIDDEN_POSTS_KEY,
+  MY_JOIN_REQUESTS_KEY,
+  OFFICIAL_RECRUITING_KEY,
+  QUEST_INVITATIONS_KEY,
+  QUESTS_KEY,
+  RECRUITING_KEY,
+} from '@/api/queries';
+import type { CompanionSeeker, OfficialRecruiting } from '@/api/quest-parts-types';
 import type { QuestInvitation } from '@/api/waiting-types';
 import { useToast } from '@/design-system';
 import type { PostView } from '@/features/party/posts';
@@ -75,4 +85,36 @@ export function usePartyActions(): PartyActions {
       },
     };
   }, [queryClient, showToast]);
+}
+
+export interface FindActions {
+  // `관심 없음`: hides the post from 찾기.
+  hide: (questId: string) => Promise<void>;
+  joinOfficial: (recruiting: OfficialRecruiting) => Promise<void>;
+  askSeeker: (seeker: CompanionSeeker) => Promise<void>;
+}
+
+// What 찾기 does with its mocked parts. The phone keeps each, and nobody else sees it (P06 spec, Mocks).
+export function useFindActions(): FindActions {
+  const queryClient = useQueryClient();
+  const showToast = useToast();
+  return useMemo(
+    () => ({
+      hide: async (questId) => {
+        await apiClient.hidePost(questId);
+        await queryClient.invalidateQueries({ queryKey: HIDDEN_POSTS_KEY });
+      },
+      joinOfficial: async ({ id, title }) => {
+        await apiClient.joinOfficialRecruiting(id);
+        await queryClient.invalidateQueries({ queryKey: OFFICIAL_RECRUITING_KEY });
+        showToast(`${title.replaceAll('\n', ' ')} 참여 완료`);
+      },
+      askSeeker: async ({ id, name }) => {
+        await apiClient.askCompanionSeeker(id);
+        await queryClient.invalidateQueries({ queryKey: COMPANION_SEEKERS_KEY });
+        showToast(`${name}님에게 같이 하자고 했어요`);
+      },
+    }),
+    [queryClient, showToast],
+  );
 }

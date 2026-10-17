@@ -41,6 +41,8 @@ Ticket 02 adds the photos, the tags and the members' faces behind the API client
 
 A server Quest's photo and tags are picked from the mock's sets by a stable hash of its id. The photo and tags the User enters for a Quest they make (`makeQuest`, `changeQuest`) are kept on the phone (`snunow.quest-entries`) and come back with that Quest. The mock build's User, whose profile has no hashtags, gets the frame's tags.
 
+Ticket 03 adds one adapter each for official recruiting (`official.ts`: `listOfficialRecruiting`, `joinOfficialRecruiting`), hiding a post (`hidden-posts.ts`: `listHiddenPosts`, `hidePost`) and the people looking for company (`seekers.ts`: `listCompanionSeekers`, `askCompanionSeeker`), data in `mobile/src/api/mock/data/finding.ts`. The build that asks the main server gets no official recruiting and nobody looking for company. Joining, hiding and asking are kept on the phone (`snunow.joined-official`, `snunow.hidden-posts`, `snunow.asked-seekers`). `추천 이유` reads the User's tags (`관심사`), the timetable (`시간대`) and the Friends (`친구`).
+
 Kept on the phone and not mocked: declining an activation (`다른 활성 파티`).
 
 ## 3. Device checks (함재현)
