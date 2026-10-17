@@ -58,6 +58,14 @@
           }
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "시간표 사진을 읽으려면 사진 보관함에 접근해야 해요.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
       "./modules/snu-now-map/app.plugin.ts",
       "./plugins/ios-scene-life-cycle.ts"
     ],
