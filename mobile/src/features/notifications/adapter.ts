@@ -2,14 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Party, Quest } from '@/api/types';
-import type { FriendRequests, JoinRequest, Meetups, QuestInvitation } from '@/api/waiting-types';
-import { koreaClock, koreaDay } from '@/korea-time';
+import type { FriendRequests, JoinRequest, QuestInvitation } from '@/api/waiting-types';
 
 // What a row of 알림 is about. Every kind but `friend-request` concerns 파티.
-export type NoticeKind = 'party' | 'friend-request' | 'invitation' | 'meetup' | 'join-requests';
+export type NoticeKind = 'party' | 'friend-request' | 'invitation' | 'join-requests';
 
 // One row of 알림.
 export interface NoticeView {
@@ -30,10 +30,8 @@ export interface NoticeSources {
   parties: readonly Party[] | null;
   friendRequests: FriendRequests | null;
   invitations: readonly QuestInvitation[] | null;
-  meetups: Meetups | null;
   // Each Quest the User leads that others ask to join, with its requests.
   joinRequests: readonly { quest: Quest; requests: readonly JoinRequest[] }[] | null;
-  now: Date;
 }
 
 // A Party running for a Quest the User holds, which the User is not in: `GET /parties` lists no Party of the User's.
@@ -72,20 +70,6 @@ function invitationNotices(invitations: readonly QuestInvitation[]): NoticeView[
   }));
 }
 
-// "학관 점심 · 내일 12:10"
-function meetupNotices({ received }: Meetups, now: Date): NoticeView[] {
-  return received
-    .filter(({ state }) => state === 'proposed')
-    .map(({ id, title, startsAt, proposer }) => ({
-      key: `meetup-${id}`,
-      kind: 'meetup',
-      icon: 'calendar',
-      title: `${proposer.name}님의 파티 초대`,
-      sub: `${title} · ${koreaDay(startsAt, now)} ${koreaClock(startsAt)}`,
-      questId: null,
-    }));
-}
-
 function joinRequestNotices(joinRequests: NonNullable<NoticeSources['joinRequests']>): NoticeView[] {
   return joinRequests
     .filter(({ requests }) => requests.length > 0)
@@ -101,19 +85,11 @@ function joinRequestNotices(joinRequests: NonNullable<NoticeSources['joinRequest
 
 // The rows of 알림, in the `Profile` frame's order: the Parties opened, the Friend Requests, the invitations to 파티,
 // and the requests to join.
-export function toNotices({
-  parties,
-  friendRequests,
-  invitations,
-  meetups,
-  joinRequests,
-  now,
-}: NoticeSources): NoticeView[] {
+export function toNotices({ parties, friendRequests, invitations, joinRequests }: NoticeSources): NoticeView[] {
   return [
     ...(parties === null ? [] : partyNotices(parties)),
     ...(friendRequests === null ? [] : friendRequestNotices(friendRequests)),
     ...(invitations === null ? [] : invitationNotices(invitations)),
-    ...(meetups === null ? [] : meetupNotices(meetups, now)),
     ...(joinRequests === null ? [] : joinRequestNotices(joinRequests)),
   ];
 }

@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -34,7 +35,6 @@ import ClassFormScreen from '@/app/(signed-in)/me/timetable/class';
 import TimetableScreen from '@/app/(signed-in)/me/timetable/index';
 import QuestsScreen from '@/app/(signed-in)/quests';
 import RoomScreen from '@/app/(signed-in)/room/[questId]';
-import MeetupScreen from '@/app/(signed-in)/meetup/[friendId]';
 import ConsentScreen from '@/app/consent';
 import StartScreen from '@/app/index';
 import LegalScreen from '@/app/legal/[document]';
@@ -89,7 +89,6 @@ export async function startApp(initialUrl = '/', more: Record<string, ComponentT
       '(signed-in)/post/[questId]': PostScreen,
       '(signed-in)/party-form': PartyFormScreen,
       '(signed-in)/matching': MatchingScreen,
-      '(signed-in)/meetup/[friendId]': MeetupScreen,
       ...more,
     },
     { initialUrl },

@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -33,10 +34,9 @@ import {
 } from './answers';
 import { isMenus } from './menu-answers';
 import { isShuttleRoute, isShuttleVehicles } from './shuttle-answers';
-import { isFriendRequests, isJoinRequests, isMeetups, isQuestInvitations } from './waiting-answers';
+import { isFriendRequests, isJoinRequests, isQuestInvitations } from './waiting-answers';
 import { eventClient } from './event-client';
 import { call } from './http';
-import { meetupClient } from './meetup-client';
 import { partyClient } from './party-client';
 import { roomClient } from './room-client';
 
@@ -47,7 +47,6 @@ export const serverClient: ApiClient = {
   ...roomClient,
   ...partyClient,
   ...eventClient,
-  ...meetupClient,
   // The main server stores four of the answers. The course level and the gender have no place there, so the phone
   // keeps them with the rest, once the main server has saved its part.
   completeOnboarding: async (answers: OnboardingAnswers) => {
@@ -94,7 +93,6 @@ export const serverClient: ApiClient = {
   listQuests: () => call('GET', '/quests', isQuests),
   listQuestInvitations: () => call('GET', '/quest-invitations', isQuestInvitations),
   listJoinRequests: (questId) => call('GET', `/quests/${encodeURIComponent(questId)}/join-requests`, isJoinRequests),
-  listMeetups: () => call('GET', '/meetups', isMeetups),
   listClasses: () => call('GET', '/timetable/classes', isTimetableClasses),
   // Sent once for each press of 저장, so its key is new each time.
   addClass: (save) =>

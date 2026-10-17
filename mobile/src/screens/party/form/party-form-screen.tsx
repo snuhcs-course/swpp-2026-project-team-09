@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -38,6 +39,8 @@ interface FormProps {
   quest: Quest | null;
   // A new one's Global Event, chosen at the start.
   eventId: string | null;
+  // A new one's Friend, invited at the start: the form opens as 비공개.
+  friendId: string | null;
 }
 
 function friendsHint(form: PartyForm, chosen: number): string {
@@ -104,13 +107,18 @@ function useEventPick(
 }
 
 // What the form holds, and its sending: back to the room or the post after an edit, to 내 파티 after making one.
-function useFormState(quest: Quest | null, eventId: string | null): FormState {
+function useFormState(quest: Quest | null, eventId: string | null, friendId: string | null): FormState {
   const editing = quest !== null;
   const send = useSend(quest);
   const holders = quest?.holders ?? [];
   const friends = (useQuery(friendsQuery).data ?? []).filter(({ id }) => !holders.some((holder) => holder.id === id));
-  const [form, setForm] = useState<PartyForm>(() => (quest === null ? emptyForm() : formOf(quest)));
-  const [chosen, setChosen] = useState<string[]>([]);
+  const [form, setForm] = useState<PartyForm>(() => {
+    if (quest !== null) {
+      return formOf(quest);
+    }
+    return friendId === null ? emptyForm() : { ...emptyForm(), visibility: 'private' };
+  });
+  const [chosen, setChosen] = useState<string[]>(() => (quest === null && friendId !== null ? [friendId] : []));
   const [words, setWords] = useState('');
   const [picked, setPicked] = useState<PickedPlace | null>(null);
   const [saving, setSaving] = useState(false);
@@ -208,8 +216,8 @@ function Fields({ state, editing, onChooseEvent }: FieldsProps): ReactElement {
   );
 }
 
-function Form({ quest, eventId }: FormProps): ReactElement {
-  const state = useFormState(quest, eventId);
+function Form({ quest, eventId, friendId }: FormProps): ReactElement {
+  const state = useFormState(quest, eventId, friendId);
   const [picking, setPicking] = useState(false);
   useToastAbove(FOOTER, useIsFocused());
   const editing = quest !== null;
@@ -251,16 +259,18 @@ function Form({ quest, eventId }: FormProps): ReactElement {
   );
 }
 
-// 파티 만들기, the frames `PartyCreate` and `PartyAppt`; with a Quest, its edit mode.
+// 파티 만들기, the frames `PartyCreate` and `PartyAppt`, the latter opened from a Friend; with a Quest, its edit mode.
 export function PartyFormScreen({
   questId,
   eventId,
+  friendId,
 }: {
   questId: string | null;
   eventId: string | null;
+  friendId: string | null;
 }): ReactElement {
   if (questId === null) {
-    return <Form eventId={eventId} quest={null} />;
+    return <Form eventId={eventId} friendId={friendId} quest={null} />;
   }
   return <EditedForm questId={questId} />;
 }
@@ -268,7 +278,7 @@ export function PartyFormScreen({
 function EditedForm({ questId }: { questId: string }): ReactElement {
   const { data: quest, isPending, refetch } = useQuery(questQuery(questId));
   if (quest !== undefined) {
-    return <Form eventId={null} quest={quest} />;
+    return <Form eventId={null} friendId={null} quest={quest} />;
   }
   return (
     <FullScreenPanel leave={{ kind: 'back', onPress: router.back }} title="모집글 수정">

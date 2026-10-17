@@ -5,10 +5,11 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Friend, Lobby, Party, Position, Quest } from '@/api/types';
-import type { FriendRequests, JoinRequest, Meetups, QuestInvitation } from '@/api/waiting-types';
+import type { FriendRequests, JoinRequest, QuestInvitation } from '@/api/waiting-types';
 import { googleAvailable } from '@/auth/google';
 import { dropHeldTokens, forgetTokens, keepTokens, type Tokens } from '@/auth/tokens';
 import { type FakeServer, MAIN_SERVER, SOCKET_SERVER, startFakeServer } from './fake-server';
@@ -130,7 +131,6 @@ export function answerMainScreen(server: FakeServer): void {
   server.on('GET /walking-route', { status: 200, body: { status: 'ROUTE_RESULT_NOT_FOUND', route: null } });
   server.on('GET /friend-requests', { status: 200, body: { received: [], sent: [] } });
   server.on('GET /quest-invitations', { status: 200, body: [] });
-  server.on('GET /meetups', { status: 200, body: { received: [], sent: [] } });
   server.on('GET /global-events', { status: 200, body: [] });
   server.on('GET /quests/recruiting', { status: 200, body: [] });
   server.on('GET /matching-requests', { status: 200, body: [] });
@@ -161,23 +161,6 @@ export const INVITATION: QuestInvitation = {
     createdAt: '2026-10-06T03:20:00.000Z',
   },
   sentAt: '2026-10-06T03:30:00.000Z',
-};
-
-// A Meetup proposed to the User for tomorrow at 12:10, and one the User proposed.
-export const MEETUPS: Meetups = {
-  received: [
-    {
-      id: 'mu1',
-      title: '학관 점심',
-      startsAt: '2026-10-07T03:10:00.000Z',
-      endsAt: null,
-      place: { placeId: null, label: '학생회관', latitude: 37.45932, longitude: 126.95058 },
-      state: 'proposed',
-      proposer: SEO_YEON,
-      receiver: { id: ME_ID, name: '홍길동', department: '컴퓨터공학부' },
-    },
-  ],
-  sent: [],
 };
 
 // The Party opened for the dinner by 김민준, which the User has not entered.
