@@ -37,7 +37,7 @@ Ticket 04 calls the same "make a version and switch to it" for a screenshot.
 - [x] Every timetable write from this phone (the class form's add, edit and delete, an import, a switch) updates what this phone last wrote; after a manual edit, a switch makes no extra version.
 - [x] Deleting the current version skips the check, so that a User with 10 versions can always make room.
 - [x] The timetable screen, Class Quests and the map follow the switch, because the client's caches of classes and Quests are invalidated.
-- [ ] The spec and the PR say that other versions stay on one phone.
+- [x] The spec and the PR say that other versions stay on one phone.
 - [x] Jest against the mock client covers: switching, retrying after a failed post, resuming an unfinished switch at launch, two Users on one phone, a server changed elsewhere, a class edited in the form then a switch (no extra version), deleting with 10 versions and a changed server, rename, delete (not the last), add, duplicate, the 10-version limit, and first use with the semester name.
 - [ ] Screenshots of the dropdown, opened and renaming, beside the `Profile` frame, under Test Results.
 
@@ -46,5 +46,5 @@ Ticket 04 calls the same "make a version and switch to it" for a screenshot.
 ### Agent usage (2026-10-18)
 
 - Agent time: about 60 minutes, an estimate: one implementing agent on branch `2.0/P13-03-timetable-versions`, over three rounds (the first build, the review's resume, drift and semester criteria, and the self-review's fixes). The coordinating session is not counted here.
-- Tokens: recorded by the main session.
+- Tokens, from the transcripts of the implementing agent and of one review agent: input 18,251,504, of which 17,206,155 cache reads, 1,045,083 cache writes and 266 uncached; output 33,875. The main session's tokens are not split per ticket and are not included; its time on this ticket, about 30 minutes of reviewing and relaying, is.
 - Not done here: the screenshots (the disk was full) and the PR's sentence that other versions stay on one phone, which belongs to the PR.
