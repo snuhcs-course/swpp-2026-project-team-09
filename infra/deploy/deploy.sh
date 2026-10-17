@@ -246,8 +246,16 @@ smoke_check() {
 }
 
 clean_docker() {
-  "$DOCKER" image prune --force || log "clean: removing dangling images failed"
-  "$DOCKER" builder prune --force --filter until=168h || log "clean: removing old build cache failed"
+  if "$DOCKER" image prune --force; then
+    log "clean: removed the dangling images"
+  else
+    log "clean: removing the dangling images failed"
+  fi
+  if "$DOCKER" builder prune --force --filter until=168h; then
+    log "clean: removed the build cache older than 7 days"
+  else
+    log "clean: removing the old build cache failed"
+  fi
 }
 
 # Builds and starts the tip, then sets result, and services, deployed and deployed_at as far as the run got.

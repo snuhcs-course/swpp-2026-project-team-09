@@ -122,6 +122,15 @@ serve_check_runs() {
   [ "$(field '.recreatedServices | join(" ")')" = "main-server socket-server proxy" ]
 }
 
+@test "a run that deploys logs a line for each of the eight steps, the clean among them, in their order" {
+  export FAKE_DB_RUNNING=yes
+
+  run "$DEPLOY"
+
+  [ "$status" -eq 0 ]
+  [ "$(grep -oE '^[a-z]+:' <<<"$output" | uniq | tr '\n' ' ')" = "run: fetch: ci: deploy: dump: checkout: smoke: clean: status: " ]
+}
+
 @test "the tip equal to the last deployed commit gives up-to-date and no other command runs" {
   # shellcheck source=../deploy.sh
   source "$DEPLOY"
