@@ -66,7 +66,7 @@ Found with `git grep -il meetup` on `2.0/Main` (migrations, generated code and `
 
 - [x] Every server, flow-test, admin and document file above is deleted or edited as listed; no Prisma change and no migration.
 - [ ] Lint, type checks, the server's unit and e2e suites (`demo-seed` included), the app's Jest suite, the admin build and `flow-tests` pass.
-- [ ] 윤유상 reviews the server part.
+- [ ] 함재현 reviews the server part.
 
 ### PR
 

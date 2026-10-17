@@ -50,7 +50,7 @@ Kept on the phone and not mocked: declining an activation (`다른 활성 파티
 
 ## 4. People
 
-- [ ] 윤유상 reviews the server part of ticket 01
+- [ ] 함재현 reviews the server part of ticket 01
 - [ ] 윤유상 receives ticket 08's list of endpoints
 
 ## 5. Design: to settle
