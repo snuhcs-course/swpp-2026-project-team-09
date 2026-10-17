@@ -374,6 +374,17 @@ has run.
   (CI's `deploy-scripts` job runs both), and `pnpm test` in `flow-tests`, whose `test/deploy-stack.flow.ts` starts
   the deployment stack and calls it through the proxy.
 
+A deploy run waits only for the five server checks, not for `deploy-scripts`, so a commit that breaks `deploy.sh`
+itself deploys like any other. Every later run is then the broken script's and fails, until a fixed commit reaches
+`development`, and a script that no longer fetches never takes the fix by itself. To get back quickly, revert the
+commit on `2.0/Main` in a pull request, [move `development`](#moving-development-to-20main), and put the checkout on
+the new tip by hand, so that the next run is the fixed script's and deploys the tip once its checks pass:
+
+```bash
+sudo git -C /srv/team/snu-now fetch origin development
+sudo git -C /srv/team/snu-now reset --hard FETCH_HEAD
+```
+
 ## A production server on A
 
 Server A (`ssh swpp-a`, `http://swpp26t09.147-46-242-169.sslip.io`) stays empty. A production server there would be a

@@ -93,7 +93,7 @@ flow-tests/
 ├── compose.deploy.test.yaml  # the deployment stack's proxy on a free loopback port
 ├── sources/serve.ts          # Google, the Sources and Kakao, from saved pages
 └── test/
-    ├── *.flow.ts             # the three flows of the table above
+    ├── *.flow.ts             # the tests: the three flows of the table above, and the two below
     ├── stack.flow.ts         # a stack of its own project, Compose files and settings
     ├── deploy-stack.flow.ts  # the Dev Server's stack, called through its proxy
     ├── global-setup.ts       # writes the settings, starts and removes the test stack

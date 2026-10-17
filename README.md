@@ -516,7 +516,7 @@ data alone: [flow-tests/README.md](flow-tests/README.md).
 ## Deployment
 
 The **Dev Server** is the team's shared server, server B of the two the course lends the team. It runs the four
-servers, PostgreSQL, Redis and the [demo data](#demo-data) under Docker Compose, behind a Caddy proxy, at
+servers, PostgreSQL, Redis and the [Demo Data](#demo-data) under Docker Compose, behind a Caddy proxy, at
 `http://swpp26t09.147-46-242-174.sslip.io`. The stack is `compose.yaml` with `compose.deploy.yaml` over it.
 
 It follows the `development` branch by itself: every minute it fetches the branch and, once a new commit's server
@@ -554,10 +554,10 @@ journal, redeploy by hand, move `development`, restore a dump and add an APK.
 
 Everything the team wrote in this repository is AI-generated: the code, the tests, the CI workflow, the specs and
 tickets in `.scratch/`, and the documents, this one among them. It was written with Claude Code (Claude Fable 5.1 and
-Claude Opus 5.5) between 2026-09-28 and 2026-10-09. Each source file starts with a box comment headed
-`AI-generated with Claude`, with a row for each day an agent changed the file: the date, the Claude model, and the
-GitHub ID of the team member who prompted it. Markdown, JSON, lockfiles, Prisma migrations, and test fixtures carry no
-box and are marked by this section, and every commit of the team carries a `Co-Authored-By: Claude` trailer.
+Claude Opus 5.5) from 2026-09-28 on. Each source file starts with a box comment headed `AI-generated with Claude`,
+with a row for each day an agent changed the file: the date, the Claude model, and the GitHub ID of the team member
+who prompted it. Markdown, JSON, lockfiles, Prisma migrations, and test fixtures carry no box and are marked by this
+section, and every commit of the team carries a `Co-Authored-By: Claude` trailer.
 
 The team decided what to build, reviewed the specs and the table schemas, and checked the result on phones. Where
 something was wrong, the agent rewrote it; no code was edited by hand.
