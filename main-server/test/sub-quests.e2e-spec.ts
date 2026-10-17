@@ -4,6 +4,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-17  Fable 5.1  prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -12,6 +13,7 @@ import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { z } from 'zod';
 import { PrismaClient } from '../src/generated/prisma/client.js';
+import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { signInUser, TestUser } from './friends.js';
 import {
   addSubQuest,
@@ -33,6 +35,15 @@ let prisma: PrismaClient;
 beforeAll(async () => {
   app = await startApp(inject('settings'));
   prisma = connectToDatabase();
+});
+
+// The morning of the Sub Quests' day, so that none of them has ended whenever the tests run.
+beforeEach(() => {
+  vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(new Date('2026-10-13T09:00:00.000Z'));
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 afterAll(async () => {
