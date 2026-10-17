@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -35,6 +36,7 @@ import {
 import { isMenus } from './menu-answers';
 import { isShuttleRoute, isShuttleVehicles } from './shuttle-answers';
 import { isFriendRequests, isJoinRequests, isQuestInvitations } from './waiting-answers';
+import { assistantClient } from './assistant-client';
 import { eventClient } from './event-client';
 import { call } from './http';
 import { partyClient } from './party-client';
@@ -47,6 +49,7 @@ export const serverClient: ApiClient = {
   ...roomClient,
   ...partyClient,
   ...eventClient,
+  ...assistantClient,
   // The main server stores four of the answers. The course level and the gender have no place there, so the phone
   // keeps them with the rest, once the main server has saved its part.
   completeOnboarding: async (answers: OnboardingAnswers) => {

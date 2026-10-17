@@ -2,15 +2,19 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { router } from 'expo-router';
-import type { ReactElement } from 'react';
+import { router, useIsFocused } from 'expo-router';
+import { type ReactElement, useState } from 'react';
 import { now } from '@/clock';
 import { space } from '@/design-system';
 import { nextMeal } from '@/features/dining/adapter';
 import type { CardView } from '@/features/map/adapter';
+import { AI_FIELD, AiInput } from './ai-input';
 import { BottomControls } from './bottom-controls';
+import { useChatSheet } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
 import { CARD, LAYERS_BUTTON, type Room } from './layout';
 import { ShuttleNotice } from './shuttle-notice';
@@ -49,18 +53,31 @@ interface MapBottomProps {
   stack: LayerStack;
 }
 
-// What is at the bottom of the map: the shuttle's notice, the row of buttons and the 편의기능 button. A card at the
-// bottom hides the row and the button; the notice hides the row, and the button stands above it.
+// What is at the bottom of the map: the shuttle's notice, the row of buttons, the 편의기능 button and the AI input. A
+// card at the bottom hides the row and the button; the notice hides the row, and the button stands above it. The AI
+// input opens the chat's sheet, which hides the rest and lies under the input: the input stays, as the chat's own,
+// in the same place in the tree, so that it keeps the focus. The conversation is kept while the app runs.
 export function MapBottom(props: MapBottomProps): ReactElement {
   const { taken, onParty, onNoticeHeight, room, stack } = props;
+  const chat = useChatSheet(useIsFocused());
+  const [inputHeight, setInputHeight] = useState(AI_FIELD);
   const { bottomCard, notice } = taken;
+  const under = !chat.shown;
   return (
     <>
-      {notice === null ? null : <ShuttleNotice onHeight={onNoticeHeight} serviceHours={notice} />}
-      <BottomControls cardOpen={bottomCard || notice !== null} onActiveParty={onParty} room={room} />
-      {bottomCard ? null : (
+      {under && notice !== null ? <ShuttleNotice onHeight={onNoticeHeight} serviceHours={notice} /> : null}
+      {under ? <BottomControls cardOpen={bottomCard || notice !== null} onActiveParty={onParty} room={room} /> : null}
+      {under && !bottomCard ? (
         <LayerControls lift={notice === null ? 0 : liftOver(room.cardHeight)} onMenus={openMenus} stack={stack} />
-      )}
+      ) : null}
+      {chat.sheet(inputHeight)}
+      <AiInput
+        chatOpen={chat.shown}
+        onHeight={setInputHeight}
+        onOpen={chat.open}
+        onSend={chat.chat.send}
+        waiting={chat.chat.waiting}
+      />
     </>
   );
 }

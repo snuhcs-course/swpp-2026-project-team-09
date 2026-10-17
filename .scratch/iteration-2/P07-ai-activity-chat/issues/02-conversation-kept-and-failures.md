@@ -60,3 +60,32 @@ When anything goes wrong, the User sees one ordinary failure and can try again. 
   - 새 대화 empties the chat
   - a failure shows 다시 시도, which resends
   - the daily limit reply appears as the Assistant's bubble
+
+## Comments
+
+### Handed over from 01 (2026-10-18)
+
+01 (#84) already does part of this ticket. Build on it rather than adding a second version:
+
+- **The conversation kept.** `useChat()` (`mobile/src/features/assistant/use-chat.ts`) lives in `MapBottom` through `useChatSheet`, so closing the sheet already keeps the conversation. Still to do here: 새 대화 and the test for closing and reopening.
+- **The request's shape.** `assistantMessagesSchema` (`main-server/src/assistant/dto/assistant-messages.dto.ts`) answers 400 before the model is called when a conversation is empty or does not end with the User's message. Extend that schema with the card references and the length caps.
+- **The failure bubble.**
+  - `use-chat.ts` already shows this ticket's wording, "지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요", as a plain bubble.
+  - The bubble is marked `failed` and left out of the next request.
+  - Still to do here: 다시 시도, which sends the same message again, and the server's error reply.
+- **Limits per message.**
+  - `MAX_STEPS = 8` is a constant in `main-server/src/assistant/adapter.ts`.
+  - Model calls are not retried: `MAX_RETRIES = 0`, set after the review of #84, because each retry is another billed call and more waiting.
+  - Still to do here: make the steps, the 30 seconds and the output token cap configuration, and keep any retry inside the 30 seconds.
+
+From the review of #84, which this ticket must also settle:
+
+- **No key yet on a reachable server.** Until these limits exist, the main server's README ("Assistant") says to set `OPENROUTER_API_KEY` only on your own machine. Reword that line once the caps, the timeout and the daily limit are in.
+- **No key configured.**
+  - Today the endpoint answers 500: an OpenRouter model is still built from the empty settings.
+  - `main-server/.env.example` already says the Assistant "answers that it is unavailable". Make that true with the error reply, and update the README's "the endpoint then answers 500".
+- **Error logs.**
+  - A model error reaches Nest's default exception handler with the AI SDK's message and stack.
+  - The SDK's `APICallError` can carry the request it sent, which holds the User's messages, and `RetryError` wraps such errors.
+  - Catch them in the service and log only the cause, such as the error's name and the HTTP status, never its message or body.
+  - The test "a run's logs contain none of the message text" should include a model that fails this way.

@@ -1748,6 +1748,74 @@ answers the User's classes, each with its times in the order of the week and eac
 `isClassOf(userId, classId, db?)` whether an identifier is one of the User's classes. The Quest list shows each class
 held today as a Class Quest, computed from these and never stored (see [Quests](#quests), Class Quests).
 
+## Assistant
+
+The Assistant ("SNU Now AI") is the chat that the main screen's input bar opens (P07). It runs in this server and calls
+its model through OpenRouter with the Vercel AI SDK
+([ADR 0005](../docs/adr/0005-assistant-in-the-main-server-without-an-agent-framework.md)).
+
+- `POST /assistant/messages` with a User's access token and the conversation so far, the User's new message last:
+
+  ```json
+  {
+    "messages": [
+      { "role": "user", "text": "점메추" },
+      { "role": "assistant", "text": "어떤 게 당기세요? 한식, 일식, 양식 …" },
+      { "role": "user", "text": "한식" }
+    ]
+  }
+  ```
+
+  answers `200 { "text": "…" }`, the Assistant's reply whole, not streamed. A message is a `role`, `user` or
+  `assistant`, and a `text` that is not empty. A conversation without messages, or one whose last message is not the
+  User's, gets 400 before the model is called. Nothing of a conversation is stored: the app keeps it.
+
+- `OPENROUTER_API_KEY` is the OpenRouter key and `ASSISTANT_MODEL` the OpenRouter id of the model, such as
+  `anthropic/claude-haiku-5.5`. Both may be empty, and the server starts without them; the endpoint then answers 500.
+  `.env.example` says how to set up a key. The endpoint has no limit yet on the length of a message, the time of a
+  reply or the messages of a day, so set a key only on your own machine, never on a server others can reach.
+
+The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
+
+- **The model port** (`MODEL_PORT` in `adapter.ts`): the one place that talks to the model. The server binds it to
+  OpenRouter (`openRouterModel`); the tests bind the scripted fake below.
+- **Tools** (`tools/`): each is a zod schema of its input and a plain function calling this server's services, made
+  with `defineTool` (`feature.ts`). It is given the signed-in User's id and the time of the request. A tool answers only
+  what matches what the model passed, or `{ "result": "none", "reason": "…" }` (`noneFound`), so that the model says
+  there is none instead of answering from elsewhere. `getMenus(date, meal?, restaurant?)` answers the menus of that day
+  only, each restaurant with `collectedAt` in Korean time, and the lines' text.
+- **Feature definitions**: an entry point with its own system prompt and its own tools (`Feature` in `feature.ts`). The
+  chat Assistant is `chat/chat-assistant.ts`. Its system prompt carries the date, the weekday and the time in Korea of
+  each request. A later AI feature gets a definition of its own that reuses tools, never more tools on this one, so
+  that one feature cannot reach another's data.
+- **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
+  call, tool call and answer, at most 8 model calls a message.
+
+### Testing with the scripted model
+
+The tests never call a real model. `test/scripted-model.ts` stands for it: a `ScriptedModel` whose `model` goes to
+`startApp` in the model port's place. Each call to the model takes the next step of its script, and every call is
+kept. A step is a tool to call with its arguments, `{ tool, input }`, or the text to answer, `{ text }`. A call past
+the end of the script fails, and so does the model `startApp` binds by default, so a test that forgot a script cannot
+reach OpenRouter. `test/assistant.e2e-spec.ts` does it this way:
+
+```ts
+const model = new ScriptedModel();
+app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model.model);
+
+// The model calls getMenus, then answers from what it got.
+model.script({ tool: 'getMenus', input: { date: '2027-01-01' } }, { text: '학생회관식당은 제육볶음이에요.' });
+const response = await postAssistantMessages(app, accessToken, ask('오늘 점심 뭐 나와?'));
+
+expect(response.body).toEqual({ text: '학생회관식당은 제육볶음이에요.' });
+model.toolResults(); // what each tool returned, as the model's last call received it
+model.system(); // the system prompt of the first call
+model.received(); // every call: its prompt (system prompt, messages, tool calls and results) and its tools
+```
+
+`script()` also forgets the calls before, so a file can share one model between its tests. A test checks what the
+User or the model receives, never the prompt's wording or a real model's prose.
+
 ## Seed data
 
 Seed data comes from outside the project once, rather than by Collection: a file in `seed/` that one command loads
@@ -1967,7 +2035,9 @@ src/
 │                                    position
 ├── shuttle/                         a feature: the shuttle's stops and line of the seed, the route page's places and
 │                                    hours, and the vehicles the worker collects, served and sent to the socket server
-└── timetable/                       a feature: a User's timetable, the classes and their times
+├── timetable/                       a feature: a User's timetable, the classes and their times
+└── assistant/                       a feature: the Assistant, its model port, tools, feature definitions and the
+                                     adapter that runs them
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
 test/                                tests, run against PostgreSQL and Redis in containers
 ```
