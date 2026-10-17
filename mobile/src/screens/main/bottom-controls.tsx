@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -14,7 +15,6 @@ import type { FootprintsView } from '@/features/footprints/adapter';
 import { useFootprints } from '@/features/footprints/use-footprints';
 import type { ActivePartyView } from '@/features/parties/adapter';
 import { useActiveParty } from '@/features/parties/use-active-party';
-import { AiInput } from './ai-input';
 import { BUTTON_ROW, footprintsForm, type Room } from './layout';
 
 interface ButtonProps<Shown> {
@@ -32,8 +32,6 @@ interface BottomControlsProps {
   onActiveParty: () => void;
   // The room the row of buttons has: "오늘의 발자국" gives way on a narrow screen.
   room: Room;
-  // The AI input opens the chat.
-  onChat: () => void;
 }
 
 // "오늘의 발자국": the faces of up to three Friends who left a story today, the name, how many Friends did, and the
@@ -99,25 +97,22 @@ function ActivePartyButton({ view, onPress }: ButtonProps<ActivePartyView>): Rea
   );
 }
 
-// What the `Main` frame puts between the map and the navigation: the row of "오늘의 발자국" and "활성 파티", and the
-// AI input under them; the 편의기능 button at the row's right is `LayerControls`. "활성 파티", shown only while the
-// User is in a Party, opens its room, and the AI input the chat; "오늘의 발자국" belongs to another task and says that
-// it is not ready. While a card is open the row is not shown, as in the frame; the AI input stays.
-export function BottomControls({ cardOpen, onActiveParty, room, onChat }: BottomControlsProps): ReactElement {
+// The row of "오늘의 발자국" and "활성 파티" above the AI input (`MapBottom`); the 편의기능 button at the row's right
+// is `LayerControls`. "활성 파티", shown only while the User is in a Party, opens its room; "오늘의 발자국" belongs to
+// another task and says that it is not ready. While a card is open the row is not shown, as in the frame.
+export function BottomControls({ cardOpen, onActiveParty, room }: BottomControlsProps): ReactElement | null {
   const footprints = useFootprints();
   const party = useActiveParty();
   const showNotReady = useNotReadyToast();
   const form = footprintsForm(room, party !== null);
+  if (cardOpen) {
+    return null;
+  }
   return (
-    <>
-      {cardOpen ? null : (
-        <View style={styles.row}>
-          <FootprintsButton form={form} onPress={showNotReady} view={footprints} />
-          {party === null ? null : <ActivePartyButton onPress={onActiveParty} view={party} />}
-        </View>
-      )}
-      <AiInput onOpen={onChat} />
-    </>
+    <View style={styles.row}>
+      <FootprintsButton form={form} onPress={showNotReady} view={footprints} />
+      {party === null ? null : <ActivePartyButton onPress={onActiveParty} view={party} />}
+    </View>
   );
 }
 

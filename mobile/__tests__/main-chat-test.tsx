@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -85,10 +86,18 @@ describe('the chat with the Assistant', () => {
     }
   });
 
+  it('keeps the input bar at the bottom as its input, and hides the controls above it', async () => {
+    await openChat();
+
+    expect(screen.getByTestId('ai-input')).toBeVisible();
+    expect(screen.queryByRole('button', { name: /^오늘의 발자국/u })).toBeNull();
+    expect(screen.queryByRole('button', { name: '편의기능 (식당 · 셔틀버스)' })).toBeNull();
+  });
+
   it('closes with its close button', async () => {
     const user = await openChat();
 
-    await user.press(screen.getByRole('button', { name: '닫기' }));
+    await user.press(screen.getByRole('button', { name: '대화 닫기' }));
 
     expect(screen.queryByTestId('chat-sheet')).toBeNull();
   });
@@ -110,7 +119,7 @@ describe("the chat's input and bubbles", () => {
     const user = await openChat();
     expect(sendButton()).toBeDisabled();
 
-    await user.type(screen.getByLabelText('메시지'), '   ');
+    await user.type(screen.getByLabelText(AI_INPUT), '   ');
 
     expect(sendButton()).toBeDisabled();
   });
@@ -118,12 +127,12 @@ describe("the chat's input and bubbles", () => {
   it('shows "···" while the Assistant works, then its reply at the left of the User\'s message', async () => {
     const user = await openChat();
 
-    await user.type(screen.getByLabelText('메시지'), '오늘 점심 뭐 나와?');
+    await user.type(screen.getByLabelText(AI_INPUT), '오늘 점심 뭐 나와?');
     await user.press(sendButton());
 
     expect(screen.getByTestId('user-bubble')).toHaveTextContent('오늘 점심 뭐 나와?');
     expect(screen.getByTestId('waiting-bubble')).toHaveTextContent('···');
-    expect(screen.getByLabelText('메시지')).toHaveDisplayValue('');
+    expect(screen.getByLabelText(AI_INPUT)).toHaveDisplayValue('');
 
     await pass(1000);
 
@@ -138,7 +147,7 @@ describe("the chat's input and bubbles", () => {
     await user.press(screen.getByRole('button', { name: '식사 메뉴 추천' }));
     await pass(1000);
 
-    await user.type(screen.getByLabelText('메시지'), '한식');
+    await user.type(screen.getByLabelText(AI_INPUT), '한식');
     await user.press(sendButton());
 
     expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual({

@@ -91,8 +91,11 @@ Decisions:
 - The model port's value is the AI SDK's language model. The fake is built on the SDK's `MockLanguageModelV4`, so the tests run the real adapter loop, tool registration included.
 - `ai` is pinned to 7.0.142, the newest version that passes pnpm's minimum release age without exceptions.
 - `OPENROUTER_API_KEY` and `ASSISTANT_MODEL` default to empty, so a server without them still starts. The endpoint then answers 500 until ticket 02 adds the error reply.
-- The design system's `ChatInput` now grows up to four lines, and Enter starts a new line. The sheet's input is a `ChatInput`.
-- While the sheet is open it takes the place of the controls above the navigation. The bar's own disabled send button would otherwise sit under it.
+- The look follows the MainChat frame (checked on 2026-10-18):
+  - The sheet runs from the top of the screen to the navigation, white at 80%.
+  - The main screen's input bar stays at the bottom as the chat's input. It grows from 40 to 120.
+  - The examples are rows with an icon on their layer's colour. 파티 찾기, which the frame does not have, takes the Party's colour with the `users` icon.
+  - The design system's `ChatInput` is left as it was.
 - A failed answer shows ticket 02's wording as a plain bubble so that "···" does not hang. It has no 다시 시도 yet, and it is left out of the next request. Ticket 02 replaces it.
 - Some of this already does ticket 02's work:
   - The conversation lives in `MapBottom`, so closing the sheet keeps it.
@@ -101,12 +104,8 @@ Decisions:
 
 Not checked or not confirmed:
 
-- The MainChat frame was not available to the agent, so the look comes from the ticket's words and the design system. Four things should be checked against the frame:
-  - the input's limit of four lines
-  - the sheet's top (8 under the status bar)
-  - its translucency (`color.surfaceGlass`, white at 94%)
-  - the bubbles' colours and corners
-- Nothing ran on a phone or against a real model. The keyboard over the sheet (KeyboardAvoidingView on iOS only) is unseen.
+- Nothing ran on a phone or against a real model. Whether the keyboard covers the input bar on iOS is unseen; the main screen has no keyboard avoidance.
+- While the sheet is open, the friend and Quest lists and the zoom control are still mounted under it, covered but reachable by a screen reader.
 - `MAX_STEPS = 8` is a constant. Ticket 02 makes it configurable.
 - The full app test suite timed out in `party-boards-test`, `events-tab-test` and `dining-layer-test` while the machine was under load. Run alone, all three pass.
 - `tsc` reports two errors in `menus-screen-test.tsx` and `support/party.ts` (typed routes). They fail the same way without these changes.
