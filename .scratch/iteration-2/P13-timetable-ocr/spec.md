@@ -210,5 +210,5 @@ Branches `2.0/P13-<NN>-<slug>`, each with its own PR to `2.0/Main`.
 
 - The schedule's P13 is planned at 4 hours with a deadline of 2026-10-18; this scope is larger and the schedule is not changed.
 - 안진영 builds every ticket. 함재현 checks the native module on a phone and the Mac, and reviews the PRs.
-- The four reference screenshots show a person's real timetable. They are committed as test fixtures only with their owner's consent; otherwise the fixtures keep only the OCR outputs and the downscaled pixel copies, and the images stay out of the repository.
+- The four reference screenshots show a person's real timetable. Their owner agreed on 2026-10-18 that they be committed as test fixtures.
 - P06's ticket 04 also adds `expo-image-picker`; whichever lands first adds it, and the other reuses it.

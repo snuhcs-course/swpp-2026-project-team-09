@@ -24,6 +24,6 @@ Expo Go has no native module: there, nothing calls it, and `이미지로 불러�
 - [ ] The Android development build can add the `x86_64` ABI for the emulator through a development-only setting; release builds stay `arm64-v8a`.
 - [ ] The development-only screen picks an image, runs the module and saves the output as JSON. It is reachable only in development builds.
 - [ ] The outputs of the four reference screenshots are saved from the emulator, with the device and ML Kit version noted.
-- [ ] The four screenshots are not committed unless their owner agrees. The saved outputs hold no image other than the downscaled pixel copy, and that copy is committed only with the same consent; otherwise it stays local and the tests that need it are skipped when it is missing.
+- [ ] The four screenshots, their saved outputs and pixel copies are committed as test fixtures; their owner agreed on 2026-10-18.
 - [ ] A Jest test covers the wrapper's "unavailable" answer.
 - [ ] A device check by 함재현 on the shared Android phone and on iOS: the module reads one screenshot.

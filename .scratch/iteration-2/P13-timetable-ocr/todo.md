@@ -26,7 +26,7 @@ No server change is needed in this task.
 
 ## 4. People
 
-- [ ] Ask the owner of the four reference screenshots whether they may be committed as test fixtures (01)
+- [x] The owner of the four reference screenshots agreed that they be committed as test fixtures (2026-10-18)
 - [ ] 함재현 reviews each PR
 
 ## 5. Left for Iteration 3
