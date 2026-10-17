@@ -1,0 +1,23 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-17  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# One deploy run (infra/deploy/README.md), started by snu-now-deploy.timer or by hand. Its log is
+# `journalctl -u snu-now-deploy`.
+[Unit]
+Description=Deploy the tip of development to the Dev Server
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/team/snu-now
+Environment=DEPLOY_CHECKOUT=/srv/team/snu-now
+Environment=DEPLOY_ENV_FILE=/srv/team/snu-now-secrets/snu-now.env
+Environment=DEPLOY_STATUS_DIR=/srv/team/snu-now-status
+Environment=DEPLOY_BACKUP_DIR=/srv/team/snu-now-backups
+ExecStart=/bin/bash /srv/team/snu-now/infra/deploy/deploy.sh
+# A run that hangs would otherwise hold back every later one.
+TimeoutStartSec=30min
