@@ -133,6 +133,10 @@ _Avoid_: Sign-up, registration
 What the app fetches to run, such as the User's profile.
 _Avoid_: Home, bootstrap
 
+**Assistant**:
+The AI a User chats with from the main screen's input bar. It answers about campus services and finds Global Events and recruiting Quests, and it drafts a Quest that the User then makes. The screens call it "SNU Now AI".
+_Avoid_: Chatbot, AI agent, bot
+
 ### Campus services
 
 **Source**:
