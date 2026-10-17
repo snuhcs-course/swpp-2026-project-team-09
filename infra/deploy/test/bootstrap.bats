@@ -25,9 +25,14 @@ group_of() {
 
 # A group of the current user other than the one new files get anyway, so that a test sees the bootstrap set it.
 other_group() {
-  local default group
+  local default group candidates
   default=$(group_of "$BATS_TEST_TMPDIR")
-  for group in $(id -Gn); do
+  candidates=$(id -Gn)
+  # root, as in a container, belongs to root alone but may hand a file to any group.
+  if [[ $(id -u) == 0 ]]; then
+    candidates+=" $(cut -d : -f 1 /etc/group)"
+  fi
+  for group in $candidates; do
     if [[ $group != "$default" ]]; then
       echo "$group"
       return
