@@ -21,6 +21,10 @@ then removes the stack with its volumes. A developer's own stack, its ports and 
 has its own name and volumes, and publishes only the main and socket servers, on free ports of the loopback address.
 The first run builds the images, which takes some minutes; later runs reuse Docker's cache.
 
+`test/deploy-stack.flow.ts` starts a second stack, the Dev Server's: `compose.yaml` with `compose.deploy.yaml` and
+`compose.deploy.test.yaml` over it, as the project `snu-now-deploy-test`. It calls the servers through the proxy, on a
+free port of the loopback address, and removes the stack with its volumes when it is done.
+
 The stack reads no `.env` file of the projects. Its keys and secrets are made afresh for each run in `.stack/`, which
 git ignores, and the rest of its settings are in `compose.test.yaml`. The match server runs a round every second.
 
@@ -86,12 +90,16 @@ or Redis, through `docker compose exec`.
 ```
 flow-tests/
 ├── compose.test.yaml         # the test stack over compose.yaml
+├── compose.deploy.test.yaml  # the deployment stack's proxy on a free loopback port
 ├── sources/serve.ts          # Google, the Sources and Kakao, from saved pages
 └── test/
-    ├── *.flow.ts             # the three flows
-    ├── global-setup.ts       # makes the keys, starts and removes the stack
+    ├── *.flow.ts             # the three flows of the table above
+    ├── stack.flow.ts         # a stack of its own project, Compose files and settings
+    ├── deploy-stack.flow.ts  # the Dev Server's stack, called through its proxy
+    ├── global-setup.ts       # writes the settings, starts and removes the test stack
     ├── setup.ts              # empties the state before each test
-    ├── stack.ts              # docker compose, the empty state and a Collection by hand
+    ├── settings.ts           # a stack's settings file, with keys and tokens made afresh
+    ├── stack.ts              # docker compose on a stack, the empty state and a Collection by hand
     ├── people.ts             # Users with the app open, and the Administrator
     ├── caller.ts             # calls to the main server and Google ID tokens
     ├── inbox.ts              # what the socket pushes, and bounded waits for it
