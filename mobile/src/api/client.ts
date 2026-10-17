@@ -177,15 +177,11 @@ export interface ApiClient {
   declineInvitation: (invitationId: string) => Promise<void>;
 }
 
-// Each with the mocked parts of a Quest added (`./quest-parts/`): every part in the mock build, and no invented people
-// in the build that asks the main server.
-const shownServerClient = withQuestParts(serverClient, 'server');
-const shownMockClient = withQuestParts(mockClient, 'mock');
-
-// The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`). Chosen at each
-// call, so that a test can choose by its settings.
+// The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`), each with the
+// mocked parts of a Quest added (`./quest-parts/`): every part in the mock build, and no invented people in the build
+// that asks the main server. Chosen at each call, so that a test can choose by its settings and replace an operation.
 function chosen(): ShownClient {
-  return asksMainServer() ? shownServerClient : shownMockClient;
+  return asksMainServer() ? withQuestParts(serverClient, 'server') : withQuestParts(mockClient, 'mock');
 }
 
 // The one client of the app. The screens ask it and never know which of the two answers.
