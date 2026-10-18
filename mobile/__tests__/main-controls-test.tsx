@@ -5,9 +5,11 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { within } from '@testing-library/react-native';
+import { act, within } from '@testing-library/react-native';
+import { BackHandler } from 'react-native';
 import { pass, screen, shownAddress } from './support/app';
 import {
   ACTIVE_PARTY,
@@ -25,6 +27,7 @@ import {
   PARTY_ROW,
   SEND,
 } from './support/lists';
+import { expectContentUnder, hideKeyboard, KEYBOARD, LIFT, quietDismiss, showKeyboard } from './support/keyboard';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { FRIEND, NOT_READY, press } from './support/markers';
 import { startFresh } from './support/mocks';
@@ -131,6 +134,69 @@ describe("the main screen's AI input", () => {
   });
 });
 
+describe("the main screen's AI input over the keyboard", () => {
+  it("rises by the keyboard less the navigation under it, with the chat's room, and comes back when it hides", async () => {
+    const user = await openMain();
+    await user.press(screen.getByLabelText(AI_INPUT));
+    // The bar is 12 above the navigation and 50 high; the chat keeps 32 above it.
+    expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 });
+    expectContentUnder('chat-empty', 94);
+
+    await showKeyboard(KEYBOARD);
+    expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 + LIFT });
+    expectContentUnder('chat-empty', 94 + LIFT);
+
+    await hideKeyboard();
+    expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 });
+    expectContentUnder('chat-empty', 94);
+  });
+
+  it('keeps the last bubble clear of it, and sends an example with its first press', async () => {
+    const dismiss = quietDismiss();
+    const user = await openMain();
+    await user.press(screen.getByLabelText(AI_INPUT));
+    await showKeyboard(KEYBOARD);
+
+    await press(user, '식사 메뉴 추천');
+    await pass(300);
+
+    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent(/^오늘 메뉴예요\./u);
+    expectContentUnder('chat-bubbles', 94 + LIFT);
+    expect(dismiss).not.toHaveBeenCalled();
+  });
+});
+
+describe('what puts the keyboard down on the main screen', () => {
+  it("puts the keyboard down when Android's back button closes the chat", async () => {
+    const dismiss = quietDismiss();
+    const listen = jest.spyOn(BackHandler, 'addEventListener');
+    const user = await openMain();
+    await user.press(screen.getByLabelText(AI_INPUT));
+
+    await act(() => {
+      listen.mock.lastCall?.[1]({ type: 'hardwareBackPress', timeStamp: 0 });
+    });
+
+    expect(screen.queryByTestId('chat-sheet')).toBeNull();
+    expect(dismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets a drag of the conversation put the keyboard down, and an answer's map button too", async () => {
+    const dismiss = quietDismiss();
+    const user = await openMain();
+    await user.press(screen.getByLabelText(AI_INPUT));
+    expect(screen.getByTestId('chat-empty')).toHaveProp('keyboardDismissMode', 'on-drag');
+
+    await press(user, '식사 메뉴 추천');
+    await pass(300);
+    expect(screen.getByTestId('chat-bubbles')).toHaveProp('keyboardDismissMode', 'on-drag');
+
+    await press(user, '지도에서 식당 보기');
+    expect(screen.queryByTestId('chat-sheet')).toBeNull();
+    expect(dismiss).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('the main screen while a card is open', () => {
   it('hides "오늘의 발자국", "활성 파티" and the 편의기능 button, and keeps the lists, the AI input and the navigation', async () => {
     const user = await openMain();
@@ -176,7 +242,7 @@ describe("the map's credit on the main screen", () => {
 
     // The card's bottom is 72 above the navigation. The input's is 12 and it is 50 high: its top is 10 under the card.
     expect(screen.getByTestId('map-card')).toHaveStyle({ bottom: 72 });
-    expect(screen.getByLabelText(AI_INPUT)).toHaveStyle({ height: 40 });
+    expect(screen.getByLabelText(AI_INPUT)).toHaveStyle({ minHeight: 40 });
     expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 });
   });
 });

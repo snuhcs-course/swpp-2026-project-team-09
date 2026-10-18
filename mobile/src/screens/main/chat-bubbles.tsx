@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useRef } from 'react';
@@ -29,10 +30,16 @@ interface ChatEmptyProps {
   under: number;
 }
 
-// The empty chat: the greeting, where what the User writes goes, and the examples as rows.
+// The empty chat: the greeting, where what the User writes goes, and the examples as rows. A drag puts the keyboard
+// down; a press on an example sends it at once, keyboard up or not.
 export function ChatEmpty({ onSend, under }: ChatEmptyProps): ReactElement {
   return (
-    <ScrollView contentContainerStyle={[styles.empty, { paddingBottom: under }]} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      contentContainerStyle={[styles.empty, { paddingBottom: under }]}
+      keyboardDismissMode="on-drag"
+      keyboardShouldPersistTaps="handled"
+      testID="chat-empty"
+    >
       <Text accessibilityRole="header" style={styles.greeting}>
         무엇을 도와드릴까요?
       </Text>
@@ -204,18 +211,21 @@ interface ChatBubblesProps {
 }
 
 // The conversation: the User's bubbles at the right, the Assistant's at the left, and "···" while the Assistant
-// works. It keeps the latest in view.
+// works. It keeps the latest in view. A drag puts the keyboard down; a press on a button sends it at once, keyboard up
+// or not.
 export function ChatBubbles(props: ChatBubblesProps): ReactElement {
   const { bubbles, waiting, onRetry, onShowLayer, cardActions, under } = props;
   const scroller = useRef<ScrollView>(null);
   return (
     <ScrollView
       contentContainerStyle={[styles.bubbles, { paddingBottom: under }]}
+      keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
       onContentSizeChange={() => {
         scroller.current?.scrollToEnd({ animated: true });
       }}
       ref={scroller}
+      testID="chat-bubbles"
     >
       {bubbles.map((bubble, index) => (
         <Bubble
