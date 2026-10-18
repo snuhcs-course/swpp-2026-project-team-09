@@ -1,0 +1,125 @@
+{
+  "screenshot": "snutt-2.png",
+  "app": "SNUTT",
+  "title": "연습1",
+  "times": [
+    {
+      "weekday": "monday",
+      "start": "10:00",
+      "end": "10:50",
+      "name": "수학 1",
+      "roomLine": "25-105",
+      "building": "25",
+      "room": "105"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "10:00",
+      "end": "10:50",
+      "name": "수학 1",
+      "roomLine": "25-105",
+      "building": "25",
+      "room": "105"
+    },
+    {
+      "weekday": "monday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "생물학 1",
+      "roomLine": "500-L308",
+      "building": "500",
+      "room": "L308"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "생물학 1",
+      "roomLine": "500-L308",
+      "building": "500",
+      "room": "L308"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "대학영어 2: 말하기",
+      "roomLine": "8-408",
+      "building": "8",
+      "room": "408"
+    },
+    {
+      "weekday": "thursday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "대학영어 2: 말하기",
+      "roomLine": "8-408",
+      "building": "8",
+      "room": "408"
+    },
+    {
+      "weekday": "friday",
+      "start": "11:00",
+      "end": "12:50",
+      "name": "수학연습 1",
+      "roomLine": "43-1-304",
+      "building": "43-1",
+      "room": "304"
+    },
+    {
+      "weekday": "friday",
+      "start": "13:00",
+      "end": "14:50",
+      "name": "생물학실험 1",
+      "roomLine": "26-404",
+      "building": "26",
+      "room": "404"
+    },
+    {
+      "weekday": "monday",
+      "start": "14:00",
+      "end": "15:50",
+      "name": "컴퓨터의 개념 및 실습",
+      "roomLine": "302-311-1",
+      "building": "302",
+      "room": "311-1"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "14:00",
+      "end": "15:50",
+      "name": "컴퓨터의 개념 및 실습",
+      "roomLine": "302-311-1",
+      "building": "302",
+      "room": "311-1"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "물리학 1",
+      "roomLine": "56-105",
+      "building": "56",
+      "room": "105"
+    },
+    {
+      "weekday": "thursday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "물리학 1",
+      "roomLine": "56-105",
+      "building": "56",
+      "room": "105"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "16:00",
+      "end": "17:50",
+      "name": "물리학실험 1",
+      "roomLine": "26-302",
+      "building": "26",
+      "room": "302",
+      "note": "fades out behind the floating tab bar's blur; the end is read by eye"
+    }
+  ]
+}

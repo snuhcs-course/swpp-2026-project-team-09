@@ -20,22 +20,34 @@ The four reference screenshots get a hand-written ground truth. Jest runs the pi
 
 ## Acceptance criteria
 
-- [ ] The pipeline's output has the spec's `ReadClass` shape: a name and, for each time, weekday, start, end, room or null, and placeId or null.
-- [ ] 12-hour and 24-hour hour labels give the same fit; a single misread label does not move the fit by more than 5 minutes.
-- [ ] Columns come from the day header, `월`–`금` or `월`–`토`, with grid lines as the fallback when the header is missing.
-- [ ] Two same-coloured blocks side by side become two blocks, as 근장 on 수 and 목 does.
-- [ ] A block that runs under the tab bar or fades out at the bottom is left out, as the 수 19–20 block of the first screenshot is.
-- [ ] Rooms such as `302-311-1`, `43-2-B101`, `500-L308`, `43-1` and `26-404` are read as rooms; `43-1-304` links to building `43-1` with room `304`. A cut or messy room line links nothing.
-- [ ] No time is linked to a wrong building on the four screenshots.
-- [ ] A name cut with `…` is kept as read, without the `…`.
-- [ ] Each step has unit tests: unfolding, RANSAC with a wrong label, cutting at a column edge, splitting stacked blocks, the room pattern, the building lookup, merging a class's times, the title.
-- [ ] One Jest test per reference screenshot compares the result with its ground truth.
-- [ ] `accuracy.md` reports per screenshot and in total:
+- [x] The pipeline's output has the spec's `ReadClass` shape: a name and, for each time, weekday, start, end, room or null, and placeId or null.
+- [x] 12-hour and 24-hour hour labels give the same fit; a single misread label does not move the fit by more than 5 minutes.
+- [x] Columns come from the day header, `월`–`금` or `월`–`토`, with grid lines as the fallback when the header is missing.
+- [x] Two same-coloured blocks side by side become two blocks, as 근장 on 수 and 목 does.
+- [x] A block that runs under the tab bar or fades out at the bottom is left out, as the 수 19–20 block of the first screenshot is.
+- [x] Rooms such as `302-311-1`, `43-2-B101`, `500-L308`, `43-1` and `26-404` are read as rooms; `43-1-304` links to building `43-1` with room `304`. A cut or messy room line links nothing.
+- [x] No time is linked to a wrong building on the four screenshots.
+- [x] A name cut with `…` is kept as read, without the `…`.
+- [x] Each step has unit tests: unfolding, RANSAC with a wrong label, cutting at a column edge, splitting stacked blocks, the room pattern, the building lookup, merging a class's times, the title.
+- [x] One Jest test per reference screenshot compares the result with its ground truth.
+- [x] `accuracy.md` reports per screenshot and in total:
   - classes found (recall) and classes found that are real (precision);
   - the day, and the start and end within 5 minutes;
   - the name's character error rate;
   - the room exact;
   - buildings linked correctly, linked wrongly and left unlinked;
   - what was left out and why.
-- [ ] The confidence thresholds are chosen from the four screenshots and named in `accuracy.md`.
+- [x] The confidence thresholds are chosen from the four screenshots and named in `accuracy.md`.
 - [ ] Running the whole pipeline on one screenshot takes under 2 seconds on the emulator.
+
+## Comments
+
+### Agent usage (2026-10-18)
+
+- Agent time: about 45 min, an estimate: one implementing agent on branch `2.0/P13-02-reading-pipeline`, from reading
+  the spec and the fixtures through the ground truth, the pipeline, the tests, `accuracy.md` and the self-review. The
+  coordinating session is not counted here.
+- Tokens, from the transcripts of the implementing subagent and one review subagent: input 36,390,469, of which 35,309,577 cache reads, 1,080,560 cache writes and 332 uncached; output 77,455. The main session's tokens are not split per ticket and are not included.
+- Not done here: the run time on the emulator. In Node the pipeline takes about 30–70 ms per screenshot (see
+  `accuracy.md`); the emulator's number comes with ticket 04, which calls the pipeline from the app, so the last box
+  stays open.
