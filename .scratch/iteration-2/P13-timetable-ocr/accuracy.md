@@ -28,9 +28,9 @@ as `GET /places` lists them.
 | ------------ | ----------------- | -------- | --------- | -------------------- | ----- | -------- | ------ | ----------------------------- | ---------- | ---------------------------------- |
 | everytime-1  | 14 / 14           | 100 %    | 100 %     | 7 / 7                | 14/14 | 14/14    | 14/14  | 0 % / 0.9 %                   | 2/2        | 2 / 0 / 0                          |
 | snutt-1      | 16 / 16           | 100 %    | 100 %     | 10 / 10              | 16/16 | 16/16    | 16/16  | 0 % / 2.0 %                   | 9/9        | 9 / 0 / 0                          |
-| snutt-2      | 12 / 13           | 92 %     | 100 %     | 7 / 8                | 12/12 | 12/12    | 12/12  | 2.9 % / 6.9 %                 | 12/12      | 12 / 0 / 0                         |
+| snutt-2      | 12 / 13           | 92 %     | 100 %     | 7 / 8                | 12/12 | 12/12    | 12/12  | 2.9 % / 4.6 %                 | 12/12      | 12 / 0 / 0                         |
 | snutt-3      | 6 / 7             | 86 %     | 100 %     | 3 / 3                | 6/6   | 6/6      | 6/6    | 0 % / 9.4 %                   | 6/6        | 6 / 0 / 0                          |
-| **All four** | **48 / 50**       | **96 %** | **100 %** | **27 / 28**          | 48/48 | 48/48    | 48/48  | **0.6 % / 4.2 %**             | **29/29**  | **29 / 0 / 0**                     |
+| **All four** | **48 / 50**       | **96 %** | **100 %** | **27 / 28**          | 48/48 | 48/48    | 48/48  | **0.6 % / 3.6 %**             | **29/29**  | **29 / 0 / 0**                     |
 
 Classes read are all real (27 of 27). The titles are read as the screenshots show them: `2025년 여름학기`, `hi`,
 `연습1`, and none for snutt-3, whose title is drawn as two circles that ML Kit reads as nothing (the version is then
@@ -53,12 +53,14 @@ last class's end (21:00); there is no tab bar or fade there, so their end is cer
 ### What was read wrongly
 
 - **snutt-2, 대학영어 2: 말하기** (화, 목): ML Kit reads `말하가` (0.67), above the name threshold, so the name is
-  `대학영어2: 말하가`. This is the only character read wrongly over the four screenshots (the 2 edits of the CER).
-- **Spaces at a line wrap**: the spec joins a name's Korean lines without a space, which suits a word broken inside
-  (`하드웨어시스` + `템설계`) but loses the space where SNUTT or 에브리타임 wrapped between words: `인공지능 이론및 응용
-세미나`, `정보 보호 및블록체인 개론`, `(공유)학부생연구 인턴`, `컴퓨터신기술 특강`, `소프트웨어개발의 원리와실습`,
-  `컴퓨터의 개념및 실습`. That is the gap between the two CERs; the letters themselves are right. Telling the two kinds
-  of wrap apart needs the line's width against the block's, which the four screenshots do not pin down well enough.
+  `대학영어 2: 말하가`. This is the only character read wrongly over the four screenshots (the 2 edits of the CER).
+- **Spaces at a line wrap**: wrapped lines join with a space when either side of the join is a Latin letter or a
+  digit (`대학영어` + `2: 말하기`), and Korean to Korean without one, which suits a word broken inside (`하드웨어시스`
+  - `템설계`) but loses the space where SNUTT or 에브리타임 wrapped between Korean words: `인공지능 이론및 응용 세미나`,
+    `정보 보호 및블록체인 개론`, `(공유)학부생연구 인턴`, `컴퓨터신기술 특강`, `소프트웨어개발의 원리와실습`, `컴퓨터의
+개념및 실습`. That is the gap between the two CERs; the letters themselves are right. Telling the two kinds of
+    Korean wrap apart needs the line's width against the block's, which the four screenshots do not pin down well
+    enough.
 - **Names cut with `…`** are kept as read, as the spec asks: `컴퓨팅 살펴` (snutt-1). The ground truth holds the part
   shown, since the screenshot does not show the rest.
 
@@ -85,15 +87,23 @@ name and a room split over two elements are left out without confidence.
 
 Chosen on the four screenshots; each is named in the code.
 
-| Threshold                                                                                 | Value                          | On the four screenshots                                                                                                   |
-| ----------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| `ROOM_CONFIDENCE` (`building.ts`): a room line is linked                                  | ≥ 0.80                         | Room lines read 0.82–0.95; all 29 linked, none wrongly. The margin is small: 0.82 is `302-311-1` and `8-408`              |
-| `NAME_CONFIDENCE` (`read-timetable.ts`): a block's name, for its time and its class       | ≥ 0.50                         | Names read 0.56 (`근장`) and up, weighted by characters, so a wrapped syllable read at 0.20 (`밍`) does not sink its name |
-| Title words (`title.ts`)                                                                  | ≥ 0.30                         | Leaves out the chevron read as `<` (0.06) next to `시간표`                                                                |
-| `FADE_DISTANCE` (`blocks.ts`): the rows above a block's bottom edge drift from its colour | > 12 (RGB)                     | The two faded SNUTT blocks drift 20 and 27; every other block less than 1                                                 |
-| Block pixel (`mask.ts`)                                                                   | saturation ≥ 0.25, value ≥ 80  | Block colours are 0.40–0.62 saturated; white, the grid and the grey background are below 0.1                              |
-| Hour labels' RANSAC (`hours.ts`)                                                          | within 0.2 h; ≥ 3 labels agree | 7 to 14 labels per screenshot, all agree                                                                                  |
-| `SHORT_NAME` (`classes.ts`): a name read short joins its whole name                       | ≥ 6 characters                 | `컴퓨터프로그래` (목, its `밍` not read by ML Kit) joins `컴퓨터프로그래밍`                                               |
+| Threshold                                                                                 | Value                          | On the four screenshots                                                                                                                                                              |
+| ----------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ROOM_CONFIDENCE` (`building.ts`): a room line is linked                                  | ≥ 0.80                         | Room lines read 0.82–0.95; all 29 linked, none wrongly. The margin is thin: 0.82 is `302-311-1` and `8-408` (see below)                                                              |
+| `NAME_CONFIDENCE` (`read-timetable.ts`): a block's name, for its time and its class       | ≥ 0.50                         | Names read 0.56 (`근장`) and up, weighted by characters, so a wrapped syllable read at 0.20 (`밍`) does not sink its name                                                            |
+| Title words (`title.ts`)                                                                  | ≥ 0.30                         | Leaves out the chevron read as `<` (0.06) next to `시간표`                                                                                                                           |
+| `FADE_DISTANCE` (`blocks.ts`): the rows above a block's bottom edge drift from its colour | > 12 (RGB)                     | The two faded SNUTT blocks drift 20 and 27; every other block less than 1                                                                                                            |
+| Block pixel (`mask.ts`)                                                                   | saturation ≥ 0.25, value ≥ 80  | Block colours are 0.40–0.62 saturated; white, the grid and the grey background are below 0.1                                                                                         |
+| Hour labels' RANSAC (`hours.ts`)                                                          | within 0.2 h; ≥ 3 labels agree | 7 to 14 labels per screenshot, all agree                                                                                                                                             |
+| `SHORT_NAME` (`classes.ts`): a name cut short joins its whole name                        | ≥ 6 characters, and cut        | `컴퓨터프로그래` (목, its `밍` not read by ML Kit; its line runs to the block's right edge) joins `컴퓨터프로그래밍`. A whole name that starts another (`…` and `…연습`) stays apart |
+
+### To recheck on a device
+
+- **The room threshold's margin is thin**: the lowest room line read 0.82 against `ROOM_CONFIDENCE` 0.80. Another
+  phone, another ML Kit build or another screenshot scale may read rooms lower, and a room under the threshold is
+  left unlinked (never linked wrongly). The threshold must be rechecked on 함재현's device run before P13-04 ships.
+- **The 2-second run time on the emulator** (ticket 02's last criterion) stays open until a device run measures it;
+  only the Node time below is measured.
 
 ## Run time
 

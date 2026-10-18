@@ -117,6 +117,7 @@ function splitByText(block: Block, lines: readonly BlockLine[], hourHeight: numb
 
 interface ReadBlock {
   name: string;
+  cut: boolean;
   confidence: number | null;
   time: ReadTime;
 }
@@ -129,7 +130,7 @@ function readBlock(
   places: readonly Place[],
   uncertainEnd: boolean,
 ): ReadBlock | LeftOut {
-  const text = blockText(linesIn(words, block));
+  const text = blockText(linesIn(words, block), block);
   const start = clock(hoursAt(grid.line, block.y0));
   const end = clock(hoursAt(grid.line, block.y1));
   const leftOut = (reason: LeftOutReason): LeftOut => ({
@@ -158,6 +159,7 @@ function readBlock(
   const link = linkRoom(text.room, places);
   return {
     name: text.name,
+    cut: text.cut,
     confidence: text.nameConfidence,
     time: { weekday: block.column.weekday, start, end, room: link?.room ?? null, placeId: link?.placeId ?? null },
   };
