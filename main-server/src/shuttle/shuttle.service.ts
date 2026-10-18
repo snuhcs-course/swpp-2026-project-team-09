@@ -4,6 +4,7 @@
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { ConflictException, Inject, Injectable, Logger } from '@nestjs/common';
@@ -65,8 +66,14 @@ export class ShuttleService {
   }
 
   async vehicles(): Promise<ShuttleVehicleDto[]> {
+    return (await this.reportedVehicles()) ?? [];
+  }
+
+  // The vehicles of the set stored last, or null when no set was stored in the last minute: the worker collects none
+  // outside the service hours, or has stopped. An empty set is the operator reporting no vehicle.
+  async reportedVehicles(): Promise<ShuttleVehicleDto[] | null> {
     const stored = await this.redis.get(VEHICLES_KEY);
-    return stored === null ? [] : z.array(shuttleVehicleSchema).parse(JSON.parse(stored));
+    return stored === null ? null : z.array(shuttleVehicleSchema).parse(JSON.parse(stored));
   }
 
   // The stops of the page must be those of the seed, in its loop order. Any other list means that the page changed,

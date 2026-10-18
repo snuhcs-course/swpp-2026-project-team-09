@@ -8,6 +8,7 @@
 import { type ReactElement, useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { MapLayer } from '@/api/assistant-types';
 import { Button, color, font, Icon, space } from '@/design-system';
 import { type Chat, useChat } from '@/features/assistant/use-chat';
 import { useBackToClose } from '@/hooks/use-back-to-close';
@@ -19,6 +20,8 @@ interface ChatSheetProps {
   // While the main screen is in front: Android's back button closes the sheet only then.
   inFront: boolean;
   onClose: () => void;
+  // A map button of an answer: closes the sheet and turns that layer on.
+  onShowLayer: (layer: MapLayer) => void;
   // The AI input's field, which lies over the sheet's bottom.
   inputHeight: number;
 }
@@ -58,7 +61,7 @@ function ChatHeader({ onReset, onClose }: ChatHeaderProps): ReactElement {
 // The chat with the Assistant, the `MainChat` frame: a translucent sheet from the top of the screen to the
 // navigation, over the map and the lists. The AI input stays at the bottom over it as the chat's input. The
 // conversation is the main screen's, so that the sheet only shows it.
-export function ChatSheet({ chat, inFront, onClose, inputHeight }: ChatSheetProps): ReactElement {
+export function ChatSheet({ chat, inFront, onClose, onShowLayer, inputHeight }: ChatSheetProps): ReactElement {
   const { top } = useSafeAreaInsets();
   useBackToClose(inFront, onClose);
   const { bubbles, waiting, send, retry, reset } = chat;
@@ -70,7 +73,7 @@ export function ChatSheet({ chat, inFront, onClose, inputHeight }: ChatSheetProp
       {bubbles.length === 0 && !waiting ? (
         <ChatEmpty onSend={send} under={under} />
       ) : (
-        <ChatBubbles bubbles={bubbles} onRetry={retry} under={under} waiting={waiting} />
+        <ChatBubbles bubbles={bubbles} onRetry={retry} onShowLayer={onShowLayer} under={under} waiting={waiting} />
       )}
     </View>
   );
@@ -84,8 +87,9 @@ export interface ChatSheetControl {
   sheet: (inputHeight: number) => ReactElement | null;
 }
 
-// The chat's sheet and how to open it. The conversation is kept while the sheet is closed.
-export function useChatSheet(inFront: boolean): ChatSheetControl {
+// The chat's sheet and how to open it. The conversation is kept while the sheet is closed. A map button closes the
+// sheet and turns its layer on with `turnOn`, the map's own layers.
+export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void): ChatSheetControl {
   const chat = useChat();
   const [shown, setShown] = useState(false);
   const open = useCallback((): void => {
@@ -94,12 +98,21 @@ export function useChatSheet(inFront: boolean): ChatSheetControl {
   const close = useCallback((): void => {
     setShown(false);
   }, []);
+  const showLayer = useCallback(
+    (layer: MapLayer): void => {
+      setShown(false);
+      turnOn(layer);
+    },
+    [turnOn],
+  );
   return {
     chat,
     shown,
     open,
     sheet: (inputHeight) =>
-      shown ? <ChatSheet chat={chat} inFront={inFront} inputHeight={inputHeight} onClose={close} /> : null,
+      shown ? (
+        <ChatSheet chat={chat} inFront={inFront} inputHeight={inputHeight} onClose={close} onShowLayer={showLayer} />
+      ) : null,
   };
 }
 

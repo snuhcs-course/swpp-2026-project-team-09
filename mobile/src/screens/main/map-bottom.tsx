@@ -59,7 +59,7 @@ interface MapBottomProps {
 // in the same place in the tree, so that it keeps the focus. The conversation is kept while the app runs.
 export function MapBottom(props: MapBottomProps): ReactElement {
   const { taken, onParty, onNoticeHeight, room, stack } = props;
-  const chat = useChatSheet(useIsFocused());
+  const chat = useChatSheet(useIsFocused(), stack.turnOn);
   const [inputHeight, setInputHeight] = useState(AI_FIELD);
   const { bottomCard, notice } = taken;
   const under = !chat.shown;

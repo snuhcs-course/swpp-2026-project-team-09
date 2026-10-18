@@ -1766,8 +1766,9 @@ its model through OpenRouter with the Vercel AI SDK
   }
   ```
 
-  answers `200 { "text": "…" }`, the Assistant's reply whole, not streamed. Nothing of a conversation is stored: the
-  app keeps it.
+  answers `200 { "text": "…", "mapButtons": ["shuttle"] }`, the Assistant's reply whole, not streamed. `mapButtons`
+  are the buttons under the reply that show a layer of the map, `dining` or `shuttle`, each once; the app does not send
+  them back. Nothing of a conversation is stored: the app keeps it.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
@@ -1798,8 +1799,13 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 - **Tools** (`tools/`): each is a zod schema of its input and a plain function calling this server's services, made
   with `defineTool` (`feature.ts`). It is given the signed-in User's id and the time of the request. A tool answers only
   what matches what the model passed, or `{ "result": "none", "reason": "…" }` (`noneFound`), so that the model says
-  there is none instead of answering from elsewhere. `getMenus(date, meal?, restaurant?)` answers the menus of that day
-  only, each restaurant with `collectedAt` in Korean time, and the lines' text.
+  there is none instead of answering from elsewhere.
+  - `getMenus(date, meal?, restaurant?)` answers the menus of that day only, each restaurant with `collectedAt` in
+    Korean time, and the lines' text.
+  - `getShuttle()` answers the vehicles of the set the worker stored last, each at its stop, with `collectedAt`; or
+    "none" when the operator reports no vehicle, or when no set was stored in the last minute.
+  - A **presenter** puts something real into the reply rather than the model describing it.
+    `showOnMap(dining | shuttle)` adds that map button; any other layer goes back to the model as an error.
 - **Feature definitions**: an entry point with its own system prompt and its own tools (`Feature` in `feature.ts`). The
   chat Assistant is `chat/chat-assistant.ts`. Its system prompt carries the date, the weekday and the time in Korea of
   each request. A later AI feature gets a definition of its own that reuses tools, never more tools on this one, so
@@ -1824,7 +1830,7 @@ app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, mod
 model.script({ tool: 'getMenus', input: { date: '2027-01-01' } }, { text: '학생회관식당은 제육볶음이에요.' });
 const response = await postAssistantMessages(app, accessToken, ask('오늘 점심 뭐 나와?'));
 
-expect(response.body).toEqual({ text: '학생회관식당은 제육볶음이에요.' });
+expect(response.body).toEqual({ text: '학생회관식당은 제육볶음이에요.', mapButtons: [] });
 model.toolResults(); // what each tool returned, as the model's last call received it
 model.system(); // the system prompt of the first call
 model.received(); // every call: its prompt (system prompt, messages, tool calls and results) and its tools
