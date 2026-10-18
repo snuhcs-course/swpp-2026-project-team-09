@@ -2,12 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ClassSave, ClassTime, Place, TimetableClass, Weekday } from '@/api/types';
 
 // The class form of the `TimetableClassForm` frame: one course name, a set of weekdays, one start and end, one Place
-// and one room. The main server's class has one or more times; the form's is saved as one time per chosen weekday.
+// and one room, the Place and the room optional as on the main server (a class read from a screenshot often has none). The main server's class has one or more times; the form's is saved as one time per chosen weekday.
 
 export const DAY_NAMES = ['월', '화', '수', '목', '금', '토', '일'] as const;
 const WEEK: readonly Weekday[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -48,8 +49,7 @@ export function isReady(draft: ClassDraft): boolean {
     draft.days.length > 0 &&
     draft.start !== '' &&
     draft.end !== '' &&
-    !endNotAfterStart(draft) &&
-    draft.place !== null
+    !endNotAfterStart(draft)
   );
 }
 

@@ -7,8 +7,9 @@
 
 import { router } from 'expo-router';
 import type { ReactElement } from 'react';
-import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import {
+  BottomSheet,
   cardStyles,
   classColors,
   color,
@@ -25,6 +26,7 @@ import {
 import { now } from '@/clock';
 import { type ClassBlockView, DAY_LETTERS, FIRST_HOUR, LAST_HOUR } from '@/features/timetable/adapter';
 import { useTimetableVersions } from '@/features/timetable/use-versions';
+import { READING, useImportFromImage } from '@/features/timetable-ocr/use-import-from-image';
 import { useWeek } from '@/features/timetable/use-week';
 import { koreaWeekday } from '@/korea-time';
 import { UnfinishedSwitch } from './unfinished-switch';
@@ -36,11 +38,13 @@ const HOUR_HEIGHT = GRID_HEIGHT / (LAST_HOUR - FIRST_HOUR);
 const HOUR_LABELS = [9, 11, 13, 15, 17] as const;
 const LABEL_WIDTH = 28;
 
-// `직접 입력` opens the timetable; the other two say that they are not ready.
-const TILES: readonly { icon: IconName; label: string; opens: boolean }[] = [
-  { icon: 'calendar', label: '직접 입력', opens: true },
-  { icon: 'plus', label: '이미지로 불러오기', opens: false },
-  { icon: 'chat', label: '빈 시간 말하기', opens: false },
+// `직접 입력` opens the timetable, `이미지로 불러오기` reads a screenshot (or says that it is not ready where the build
+// cannot read one), and `빈 시간 말하기` says that it is not ready.
+type TileAction = 'open' | 'import' | 'not-ready';
+const TILES: readonly { icon: IconName; label: string; action: TileAction }[] = [
+  { icon: 'calendar', label: '직접 입력', action: 'open' },
+  { icon: 'plus', label: '이미지로 불러오기', action: 'import' },
+  { icon: 'chat', label: '빈 시간 말하기', action: 'not-ready' },
 ];
 
 function openTimetable(): void {
@@ -111,6 +115,12 @@ export function WeekCard(): ReactElement {
   const { data, isPending, refetch } = useWeek();
   const showNotReady = useNotReadyToast();
   const versions = useTimetableVersions();
+  const importing = useImportFromImage(versions);
+  const actions: Record<TileAction, () => void> = {
+    open: openTimetable,
+    import: importing.start,
+    'not-ready': showNotReady,
+  };
   return (
     <View style={[cardStyles.card, styles.card]}>
       <View style={styles.head}>
@@ -124,11 +134,12 @@ export function WeekCard(): ReactElement {
       {data === undefined && isPending ? <LoadingState /> : null}
       {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
       <View style={styles.tiles}>
-        {TILES.map(({ icon, label, opens }) => (
+        {TILES.map(({ icon, label, action }) => (
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{ busy: action === 'import' && importing.reading }}
             key={label}
-            onPress={opens ? openTimetable : showNotReady}
+            onPress={actions[action]}
             style={({ pressed }): StyleProp<ViewStyle> => [styles.tile, pressed && styles.pressed]}
           >
             <Icon color={color.snuBlue} name={icon} size={20} />
@@ -136,8 +147,19 @@ export function WeekCard(): ReactElement {
           </Pressable>
         ))}
       </View>
+      <BottomSheet label="시간표 읽기" onClose={ignore} open={importing.reading}>
+        <View style={styles.reading} testID="timetable-reading">
+          <ActivityIndicator color={color.snuBlue} />
+          <Text style={styles.readingWords}>{READING}</Text>
+        </View>
+      </BottomSheet>
     </View>
   );
+}
+
+// The reading cannot be stopped halfway: the sheet stays until it is done.
+function ignore(): void {
+  // Nothing.
 }
 
 const styles = StyleSheet.create({
@@ -182,4 +204,6 @@ const styles = StyleSheet.create({
   },
   pressed: { backgroundColor: color.blue50 },
   tileWords: { ...text.caption, fontFamily: font.semiBold, textAlign: 'center', color: color.snuBlue },
+  reading: { alignItems: 'center', gap: space[3], paddingVertical: space[6] },
+  readingWords: { ...text.bodyLg, fontFamily: font.semiBold, color: color.ink },
 });

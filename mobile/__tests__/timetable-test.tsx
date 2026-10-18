@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -114,7 +115,7 @@ describe('the timetable', () => {
 });
 
 describe('the class form', () => {
-  it('keeps 저장 disabled until the name, a day, both hours and a Place are there', async () => {
+  it('keeps 저장 disabled until the name, a day and both hours are there; a Place is not needed', async () => {
     const user = await openTimetable();
 
     await user.press(screen.getByRole('button', { name: '수업 추가' }));
@@ -124,12 +125,30 @@ describe('the class form', () => {
     await user.type(screen.getByLabelText('과목명'), '선형대수');
     await user.press(screen.getByRole('togglebutton', { name: '토' }));
     await choose(user, '시작 시각 · 시', '13');
-    await choose(user, '종료 시각 · 시', '14');
     expect(screen.getByRole('button', { name: '저장' })).toBeDisabled();
+    await choose(user, '종료 시각 · 시', '14');
+    expect(screen.getByRole('button', { name: '저장' })).toBeEnabled();
     await pickPlace(user, '302', '제2공학관 302동');
 
     expect(screen.getByRole('button', { name: '장소 선택' })).toHaveTextContent('제2공학관 302동');
     expect(screen.getByRole('button', { name: '저장' })).toBeEnabled();
+  });
+
+  it('saves a class without a building or a room', async () => {
+    const user = await openTimetable();
+
+    await user.press(screen.getByRole('button', { name: '수업 추가' }));
+    await pass(500);
+    await user.type(screen.getByLabelText('과목명'), '선형대수');
+    await user.press(screen.getByRole('togglebutton', { name: '토' }));
+    await choose(user, '시작 시각 · 시', '13');
+    await choose(user, '종료 시각 · 시', '14');
+    await user.press(screen.getByRole('button', { name: '저장' }));
+    await pass(1000);
+
+    expect(screen.getByTestId('toast-layer')).toHaveTextContent('수업을 추가했어요');
+    const added = within(screen.getByRole('button', { name: '선형대수 수정' }));
+    expect(added.getByText('장소 미정')).toBeVisible();
   });
 
   it('says that the end must be after the start', async () => {

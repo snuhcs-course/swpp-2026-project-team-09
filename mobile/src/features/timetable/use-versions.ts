@@ -81,7 +81,7 @@ export interface TimetableVersions {
   duplicate: () => void;
   retry: () => void;
   // For a version made elsewhere, such as from a screenshot. Resolves to what was left out once the switch finished, or
-  // null when it did not.
+  // null when it did not, whose toast it shows. The caller's toast says what was left out.
   make: (name: string, classes: ClassSave[]) => Promise<MadeVersion | null>;
 }
 
@@ -154,7 +154,7 @@ export function useTimetableVersions(): TimetableVersions {
         let made: MadeVersion | null = null;
         const done = await run(async () => {
           made = await makeVersion(name, classes);
-          return made.refused;
+          return 0;
         });
         return done ? made : null;
       },
