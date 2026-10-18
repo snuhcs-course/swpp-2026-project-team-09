@@ -29,6 +29,6 @@ What was uncertain was left out by the pipeline. The User adds or fixes the rest
 
 ### Agent usage (2026-10-18)
 
-- Agent time: about 25 minutes in one session (an estimate), building the import, the class form change and the Jest cases.
+- Agent time: about 40 minutes over one session (an estimate): the import, the class form change and the Jest cases, then the merge of ticket 02 and the review's fixes.
 - Tokens: recorded by the main session.
-- The reading pipeline (ticket 02) is not merged yet: `mobile/src/features/timetable-ocr/read-timetable.ts` holds the `ReadTimetable` interface and a placeholder `readTimetable` that reads no class, so until ticket 02 replaces it the tile says `시간표를 찾지 못했어요` after reading.
+- The import reads with ticket 02's `readScreenshot` (`read-timetable.ts`), whose `none` reading and `leftOut` blocks it uses; `__tests__/timetable-import-pipeline-test.tsx` runs it end to end on snutt-2's saved OCR output.

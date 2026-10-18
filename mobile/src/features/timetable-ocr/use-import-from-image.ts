@@ -15,8 +15,8 @@ import { useNotReadyToast, useToast } from '@/design-system';
 import type { TimetableVersions } from '@/features/timetable/use-versions';
 import { MOST_VERSIONS, readVersions } from '@/features/timetable/versions';
 import { importPlan } from './import-plan';
-import { hasNativeOcr, readImageText } from './native-ocr';
-import { type ReadTimetable, readTimetable } from './read-timetable';
+import { hasNativeOcr, type NativeOcrResult, readImageText } from './native-ocr';
+import { type Reading, readScreenshot } from './read-timetable';
 
 // `이미지로 불러오기` (P13 spec, "Importing"): a screenshot of a timetable picked from the album is read on the phone
 // and becomes a new version, which is switched to; the timetable screen then opens. The image never leaves the phone,
@@ -27,6 +27,12 @@ export const NOTHING_READ = '시간표를 찾지 못했어요';
 export const CUT = '수업은 15개까지만 넣었어요';
 export const MADE = '시간표를 만들었어요';
 const TOO_MANY = '시간표는 10개까지 저장할 수 있어요';
+// Anything but the reading failed, such as the album's permission or the phone's storage, or another change of the
+// versions is on its way.
+export const NOT_SAVED = '저장하지 못했어요. 다시 시도해 주세요';
+
+// The reading pipeline (ticket 02): a test may pass a fake one.
+export type ReadImage = (ocr: NativeOcrResult, places: readonly Place[]) => Reading;
 
 export interface ImportFromImage {
   // The import is on its way; further presses are ignored.
@@ -56,7 +62,7 @@ function madeWords(cut: boolean, leftOut: number): string {
 
 interface Steps {
   versions: TimetableVersions;
-  read: ReadTimetable;
+  read: ReadImage;
   places: () => Promise<Place[]>;
   show: (message: string, shownMs?: number, icon?: 'alert') => void;
   showNotReady: () => void;
@@ -81,21 +87,24 @@ async function importImage({ versions, read, places, show, showNotReady, picked 
     showNotReady();
     return;
   }
-  const table = ocr.kind === 'read' ? read(ocr.result, await places()) : { title: null, classes: [] };
-  const plan = importPlan(table, await versionCount(versions));
+  if (ocr.kind === 'failed') {
+    show(NOTHING_READ, undefined, 'alert');
+    return;
+  }
+  const plan = importPlan(read(ocr.result, await places()), await versionCount(versions));
   if (plan === null) {
     show(NOTHING_READ, undefined, 'alert');
     return;
   }
   const made = await versions.make(plan.name, plan.classes);
+  // Null: the versions' own toast said why.
   if (made !== null) {
     router.push('/me/timetable');
-    show(madeWords(plan.cut, made.dropped.classes + made.refused));
+    show(madeWords(plan.cut, plan.leftOut + made.dropped.classes + made.dropped.times + made.refused));
   }
 }
 
-// `read` is the reading pipeline; a test may pass a fake one.
-export function useImportFromImage(versions: TimetableVersions, read: ReadTimetable = readTimetable): ImportFromImage {
+export function useImportFromImage(versions: TimetableVersions, read: ReadImage = readScreenshot): ImportFromImage {
   const queryClient = useQueryClient();
   const show = useToast();
   const showNotReady = useNotReadyToast();
@@ -108,6 +117,10 @@ export function useImportFromImage(versions: TimetableVersions, read: ReadTimeta
       return;
     }
     if (running.current) {
+      return;
+    }
+    if (versions.busy) {
+      show(NOT_SAVED, undefined, 'alert');
       return;
     }
     running.current = true;
@@ -124,7 +137,7 @@ export function useImportFromImage(versions: TimetableVersions, read: ReadTimeta
       },
     })
       .catch(() => {
-        show(NOTHING_READ, undefined, 'alert');
+        show(NOT_SAVED, undefined, 'alert');
       })
       .finally(() => {
         running.current = false;

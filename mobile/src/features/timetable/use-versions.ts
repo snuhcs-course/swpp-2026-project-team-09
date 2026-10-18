@@ -80,12 +80,13 @@ export interface TimetableVersions {
   addEmpty: () => void;
   duplicate: () => void;
   retry: () => void;
-  // For a version made elsewhere, such as from a screenshot. Resolves to what was left out once the switch finished, or
-  // null when it did not, whose toast it shows. The caller's toast says what was left out.
+  // For a version made elsewhere, such as from a screenshot. Resolves to what was left out once the switch finished,
+  // for the caller's toast to say. Resolves to null when it did not finish, or when another change was on its way, and
+  // then shows the toast that says so.
   make: (name: string, classes: ClassSave[]) => Promise<MadeVersion | null>;
 }
 
-type Run = (change: () => Promise<number>, switches?: boolean) => Promise<boolean>;
+type Run = (change: () => Promise<number>, switches?: boolean, sayBusy?: boolean) => Promise<boolean>;
 
 // Runs one change at a time and says how it went. Resolves to whether it was done.
 function useRun(): { busy: boolean; run: Run } {
@@ -95,9 +96,13 @@ function useRun(): { busy: boolean; run: Run } {
   const [busy, setBusy] = useState(false);
 
   const run = useCallback(
-    // `change` gives how many classes the main server refused for good, which the toast says.
-    async (change: () => Promise<number>, switches = true): Promise<boolean> => {
+    // `change` gives how many classes the main server refused for good, which the toast says. With `sayBusy`, a change
+    // asked for while another is on its way says that it was not saved.
+    async (change: () => Promise<number>, switches = true, sayBusy = false): Promise<boolean> => {
       if (running.current) {
+        if (sayBusy) {
+          show(NOT_SAVED, undefined, 'alert');
+        }
         return false;
       }
       running.current = true;
@@ -152,10 +157,14 @@ export function useTimetableVersions(): TimetableVersions {
     make: useCallback(
       async (name: string, classes: ClassSave[]): Promise<MadeVersion | null> => {
         let made: MadeVersion | null = null;
-        const done = await run(async () => {
-          made = await makeVersion(name, classes);
-          return 0;
-        });
+        const done = await run(
+          async () => {
+            made = await makeVersion(name, classes);
+            return 0;
+          },
+          true,
+          true,
+        );
         return done ? made : null;
       },
       [run],
