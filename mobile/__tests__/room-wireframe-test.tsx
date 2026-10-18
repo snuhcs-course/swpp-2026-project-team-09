@@ -7,7 +7,7 @@
 import { within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import type { FakeServer } from './support/fake-server';
+import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
@@ -22,6 +22,7 @@ import {
   openRoom,
   PICNIC,
   PICNIC_PARTY,
+  toast,
 } from './support/room';
 import { askMainServer, JOIN_REQUESTS, ME_ID, PHONE_NOW } from './support/server';
 import { apiClient } from '@/api/client';
@@ -231,6 +232,43 @@ describe('switching from another Party', () => {
     expect(asked.indexOf('POST /parties/mine/end')).toBeLessThan(
       asked.indexOf(`POST /parties/${PICNIC_PARTY.id}/join`),
     );
+  });
+});
+
+describe('switching from another Party that ended, into one that refuses', () => {
+  it('says that the ended Party is off, and shows the User in no Party at once', async () => {
+    answerMyParty(server, MINE_TO_END);
+    server.on('GET /parties', { status: 200, body: [PICNIC_PARTY] });
+    server.on('POST /parties/mine/end', () => {
+      answerMyParty(server, null);
+      return { status: 204 };
+    });
+    server.on(`POST /parties/${PICNIC_PARTY.id}/join`, refusal(409, 'PARTY_FULL'));
+    const user = await openRoom();
+    const asked = (): number[] =>
+      ['GET /parties/mine', 'GET /parties', 'GET /quests'].map((route) => server.received(route).length);
+    const [mine = 0, parties = 0, quests = 0] = asked();
+
+    await user.press(screen.getByRole('button', { name: '참여' }));
+    await answer(user, '나가고 참여');
+
+    expect(toast()).toHaveTextContent('‘저녁 먹으러 가요’ 활성화는 꺼졌지만 새 파티에 들어가지 못했어요');
+    expect(asked()).toEqual([mine + 1, parties + 1, quests + 1]);
+    // The room no longer names the ended Party as the one the User is in.
+    await user.press(screen.getByRole('button', { name: '참여' }));
+    expect(screen.queryByText(/한 번에 한 파티에만/u)).toBeNull();
+  });
+
+  it('says so too when opening the Quest’s own Party is refused after the end', async () => {
+    answerMyParty(server, MINE_TO_END);
+    server.on('POST /parties/mine/end', { status: 204 });
+    server.on('POST /parties', refusal(409, 'QUEST_ENDED'));
+    const user = await openRoom();
+
+    await user.press(screen.getByRole('button', { name: '파티 활성화' }));
+    await answer(user, '활성화');
+
+    expect(toast()).toHaveTextContent('‘저녁 먹으러 가요’ 활성화는 꺼졌지만 새 파티에 들어가지 못했어요');
   });
 });
 
