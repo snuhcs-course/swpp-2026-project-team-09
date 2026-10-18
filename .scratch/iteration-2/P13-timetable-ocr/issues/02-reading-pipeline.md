@@ -47,7 +47,7 @@ The four reference screenshots get a hand-written ground truth. Jest runs the pi
 - Agent time: about 45 min, an estimate: one implementing agent on branch `2.0/P13-02-reading-pipeline`, from reading
   the spec and the fixtures through the ground truth, the pipeline, the tests, `accuracy.md` and the self-review. The
   coordinating session is not counted here.
-- Tokens: recorded by the main session.
+- Tokens, from the transcripts of the implementing subagent and one review subagent: input 36,390,469, of which 35,309,577 cache reads, 1,080,560 cache writes and 332 uncached; output 77,455. The main session's tokens are not split per ticket and are not included.
 - Not done here: the run time on the emulator. In Node the pipeline takes about 30–70 ms per screenshot (see
   `accuracy.md`); the emulator's number comes with ticket 04, which calls the pipeline from the app, so the last box
   stays open.

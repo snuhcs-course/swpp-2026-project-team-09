@@ -28,7 +28,7 @@ function place(number: string): Place {
 }
 
 function roomLine(text: string, confidence: number | null, elements = 1): Parameters<typeof linkRoom>[0] {
-  return { text, y: 0, confidence, elements, wholeElement: elements === 1 };
+  return { text, y: 0, confidence, elements, wholeElement: elements === 1, unclipped: true };
 }
 
 function time(weekday: ReadTime['weekday'], start: string, end: string): ReadTime {
@@ -65,17 +65,6 @@ describe('a block’s text', () => {
     expect(joinName(['컴퓨팅 살펴...'])).toBe('컴퓨팅 살펴');
     expect(Array.from(joinName(['가'.repeat(40)]))).toHaveLength(30);
   });
-
-  it('takes a room only below the first line', () => {
-    const lines = linesIn([word('43-1', 25, 45, 40, 1), word('영상예술의', 25, 70, 30, 2)], {
-      x0: 22,
-      x1: 82,
-      y0: 20,
-      y1: 80,
-    });
-    expect(blockText(lines)).toMatchObject({ name: '영상예술의', room: { text: '43-1' } });
-    expect(blockText(linesIn([word('302', 25, 45, 30)], { x0: 22, x1: 82, y0: 20, y1: 80 })).room).toBeNull();
-  });
 });
 
 describe('the building of a room', () => {
@@ -98,11 +87,15 @@ describe('the building of a room', () => {
   });
 
   it('without confidence (iOS) is linked only from a room read as one whole element', () => {
-    expect(linkRoom({ text: '302-311-1', y: 0, confidence: null, elements: 1, wholeElement: true }, places)?.room).toBe(
-      '311-1',
-    );
     expect(
-      linkRoom({ text: '302 -311-1', y: 0, confidence: null, elements: 2, wholeElement: false }, places),
+      linkRoom({ text: '302-311-1', y: 0, confidence: null, elements: 1, wholeElement: true, unclipped: true }, places)
+        ?.room,
+    ).toBe('311-1');
+    expect(
+      linkRoom(
+        { text: '302 -311-1', y: 0, confidence: null, elements: 2, wholeElement: false, unclipped: true },
+        places,
+      ),
     ).toBeNull();
   });
 });
@@ -201,5 +194,55 @@ describe('the whole pipeline on a drawn timetable', () => {
       'too-little-text',
       'no-name',
     ]);
+  });
+});
+
+describe('a room cut or alone', () => {
+  it('takes a room only below the first line', () => {
+    const lines = linesIn([word('43-1', 25, 45, 40, 1), word('영상예술의', 25, 70, 30, 2)], {
+      x0: 22,
+      x1: 82,
+      y0: 20,
+      y1: 80,
+    });
+    expect(blockText(lines)).toMatchObject({ name: '영상예술의', room: { text: '43-1' } });
+    // A first line that reads like a room is the name when a line follows ("2" in "공학수학" / "2" is no room).
+    const first = linesIn([word('2', 25, 30, 30, 1), word('공학수학', 25, 60, 45, 2)], {
+      x0: 22,
+      x1: 82,
+      y0: 20,
+      y1: 80,
+    });
+    expect(blockText(first)).toMatchObject({ name: '2공학수학', room: null });
+    // A block of nothing but a room has no name.
+    expect(blockText(linesIn([word('302', 25, 45, 30)], { x0: 22, x1: 82, y0: 20, y1: 80 }))).toMatchObject({
+      name: '',
+      nameLines: 0,
+    });
+  });
+
+  it('is not linked when a word was cut at the block’s side, even read with confidence (Android)', () => {
+    // `43-1-304` running over the block's left edge reads `3-1-304` inside it, which still looks like a room.
+    const lines = linesIn([word('수학연습', 20, 50, 30, 1), word('43-1-304', 10, 60, 45, 2)], {
+      x0: 15,
+      x1: 80,
+      y0: 20,
+      y1: 80,
+    });
+    const text = blockText(lines);
+    expect(text.room).toMatchObject({ text: '3-1-304', confidence: 0.9, unclipped: false });
+    expect(
+      linkRoom(
+        text.room,
+        ['3', '43-1'].map((number) => place(number)),
+      ),
+    ).toBeNull();
+  });
+
+  it('makes no class of a block that holds only a room: it is left out without a name', () => {
+    const reading = readTimetable(screenshot([{ day: 0, start: 10, end: 11, colour: BLUE, text: ['302-311-1'] }]), [
+      place('302'),
+    ]);
+    expect(reading).toMatchObject({ kind: 'read', classes: [], leftOut: [{ weekday: 'monday', reason: 'no-name' }] });
   });
 });

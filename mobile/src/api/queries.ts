@@ -13,7 +13,7 @@ import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { apiClient } from './client';
 import type { RestaurantMenus } from './menu-types';
 import type { ShownQuest, ShownRecruitingQuest } from './quest-parts-types';
-import type { Board, Place } from './types';
+import type { Board, Person, Place } from './types';
 import type { JoinRequest } from './waiting-types';
 
 // One entry of the cache per operation, each under its own key. The hooks of the features combine them, so that an
@@ -42,6 +42,7 @@ type MenusKey = readonly ['menus', string];
 export const RECRUITING_KEY = ['recruiting'] as const;
 export const MY_JOIN_REQUESTS_KEY = ['my-join-requests'] as const;
 export const MATCHING_REQUESTS_KEY = ['matching-requests'] as const;
+export const PAST_QUESTS_KEY = ['past-quests'] as const;
 export const MY_TAGS_KEY = ['my-tags'] as const;
 export const OFFICIAL_RECRUITING_KEY = ['official-recruiting'] as const;
 export const HIDDEN_POSTS_KEY = ['hidden-posts'] as const;
@@ -145,6 +146,11 @@ export const matchingRequestsQuery = queryOptions({
 });
 // The User's tags, and the mocked parts of 찾기 (`./quest-parts/`).
 export const myTagsQuery = queryOptions({ queryKey: MY_TAGS_KEY, queryFn: () => apiClient.listMyTags() });
+
+// The User's past Quests, which `me` held: a mock, none in the server build (`./quest-parts/past-quests.ts`).
+export function pastQuestsQuery(me: Person): UseQueryOptions<ShownQuest[], Error, ShownQuest[], string[]> {
+  return { queryKey: [...PAST_QUESTS_KEY, me.id], queryFn: () => apiClient.listPastQuests(me) };
+}
 export const officialRecruitingQuery = queryOptions({
   queryKey: OFFICIAL_RECRUITING_KEY,
   queryFn: () => apiClient.listOfficialRecruiting(),

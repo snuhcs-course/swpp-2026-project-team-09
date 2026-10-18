@@ -7,6 +7,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { RecruitingQuest } from '@/api/party-types';
@@ -82,8 +83,8 @@ export const QUESTS: Quest[] = [
     id: 'q-dinner',
     title: '저녁 약속',
     globalEvent: null,
-    // A 비공개 파티 that 김민준 made with the User.
-    leader: MIN_JUN,
+    // A 비공개 파티 that the User made with 김민준, with an invitation still waiting (`../room.ts`).
+    leader: ME,
     capacity: 4,
     joinPolicy: 'closed',
     holders: [MIN_JUN, ME],

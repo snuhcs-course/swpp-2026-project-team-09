@@ -6,7 +6,13 @@
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
-import { type CardReference, CHAT_HISTORY_MAX, type ChatMessage, MESSAGES_TOTAL_MAX } from '@/api/assistant-types';
+import {
+  type CardReference,
+  CHAT_HISTORY_MAX,
+  type ChatMessage,
+  type MapLayer,
+  MESSAGES_TOTAL_MAX,
+} from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 
@@ -21,6 +27,8 @@ export interface ChatBubble {
   text: string;
   // The cards an Assistant's bubble showed.
   cards: readonly CardReference[];
+  // The buttons under an Assistant's answer that show a layer of the map. They are not sent back.
+  mapButtons: readonly MapLayer[];
   failure: ChatFailure | null;
 }
 
@@ -63,10 +71,10 @@ type NewBubble = Omit<ChatBubble, 'id'>;
 async function answerTo(messages: ChatMessage[]): Promise<NewBubble> {
   try {
     const reply = await apiClient.askAssistant(messages);
-    return { role: 'assistant', text: reply.text, cards: [], failure: null };
+    return { role: 'assistant', text: reply.text, cards: [], mapButtons: reply.mapButtons, failure: null };
   } catch (error) {
     const failure = error instanceof ApiError && error.status === 429 ? 'usedUp' : 'unavailable';
-    return { role: 'assistant', text: FAILURE_TEXT[failure], cards: [], failure };
+    return { role: 'assistant', text: FAILURE_TEXT[failure], cards: [], mapButtons: [], failure };
   }
 }
 
@@ -118,7 +126,7 @@ export function useChat(): Chat {
 
   const send = useCallback(
     (text: string): void => {
-      add({ role: 'user', text, cards: [], failure: null });
+      add({ role: 'user', text, cards: [], mapButtons: [], failure: null });
       ask();
     },
     [add, ask],
