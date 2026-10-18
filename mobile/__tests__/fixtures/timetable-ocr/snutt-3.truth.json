@@ -1,0 +1,72 @@
+{
+  "screenshot": "snutt-3.png",
+  "app": "SNUTT",
+  "title": null,
+  "titleNote": "the title is drawn as two circles (○○), not text; ML Kit reads nothing there",
+  "times": [
+    {
+      "weekday": "tuesday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "컴퓨터 신기술 특강",
+      "roomLine": "302-209",
+      "building": "302",
+      "room": "209"
+    },
+    {
+      "weekday": "thursday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "컴퓨터 신기술 특강",
+      "roomLine": "302-209",
+      "building": "302",
+      "room": "209"
+    },
+    {
+      "weekday": "monday",
+      "start": "13:00",
+      "end": "14:15",
+      "name": "음악과 사회",
+      "roomLine": "220-203",
+      "building": "220",
+      "room": "203"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "13:00",
+      "end": "14:15",
+      "name": "음악과 사회",
+      "roomLine": "220-203",
+      "building": "220",
+      "room": "203"
+    },
+    {
+      "weekday": "monday",
+      "start": "15:30",
+      "end": "16:45",
+      "name": "소프트웨어 개발의 원리와 실습",
+      "roomLine": "302-311-1",
+      "building": "302",
+      "room": "311-1"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "15:30",
+      "end": "16:45",
+      "name": "소프트웨어 개발의 원리와 실습",
+      "roomLine": "302-311-1",
+      "building": "302",
+      "room": "311-1"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "19:00",
+      "end": "20:50",
+      "name": "소프트웨어 개발의 원리와 실습",
+      "roomLine": "302-311-1",
+      "building": "302",
+      "room": "311-1",
+      "note": "fades out behind the floating tab bar's blur; the end is read by eye"
+    }
+  ]
+}
