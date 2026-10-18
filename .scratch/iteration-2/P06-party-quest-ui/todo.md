@@ -17,20 +17,20 @@ Updated 2026-10-17. Spec: [spec.md](spec.md). Wireframe version `1792227848-fc09
 
 What the app shows from its own mock. The build connected to the server hides the rows marked _hidden on server_, which would state something false about real people or real Quests. Anything a User enters here stays on the phone.
 
-| Part                                                                              | Screens                                                | Replaced by (ticket 08) |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------- |
-| Official recruiting (_hidden on server_)                                          | 찾기 banner, 전체 파티 › 공식                          |                         |
-| Photos                                                                            | card, post, form                                       |                         |
-| Tags                                                                              | search, ordering, post, room, form, 추천 이유 › 관심사 |                         |
-| Hiding a post (`관심 없음`)                                                       | 찾기, post                                             |                         |
-| People looking for company (_hidden on server_)                                   | 찾기                                                   |                         |
-| Members' names and faces in summaries (_hidden on server_)                        | 찾기 card, post, 초대                                  |                         |
-| An invitation's time and place (_hidden on server_; companions are the row above) | 초대                                                   |                         |
-| A join request's note (_hidden on server_)                                        | room › 신청                                            |                         |
-| 파티 채팅                                                                         | room                                                   |                         |
-| Past Quests (`지난 일정`, _hidden on server_)                                     | 내 파티                                                |                         |
-| An event's kind (진로, 이벤트, 축제) and tags, read from its words                | form › 관련 행사                                       |                         |
-| Changing a Quest's 관련 행사 (_not possible yet_: locked in the form)             | form                                                   |                         |
+| Part                                                                              | Screens                                                | Replaced by ([ticket 08](server-endpoints.md))                                                         |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Official recruiting (_hidden on server_)                                          | 찾기 banner, 전체 파티 › 공식                          | [1. Official recruiting](server-endpoints.md#1-official-recruiting)                                    |
+| Photos                                                                            | card, post, form                                       | [2. Photos](server-endpoints.md#2-photos)                                                              |
+| Tags                                                                              | search, ordering, post, room, form, 추천 이유 › 관심사 | [3. Tags](server-endpoints.md#3-tags-the-users-and-a-quests)                                           |
+| Hiding a post (`관심 없음`)                                                       | 찾기, post                                             | [4. Hiding a post](server-endpoints.md#4-hiding-a-post)                                                |
+| People looking for company (_hidden on server_)                                   | 찾기                                                   | [5. People looking for company](server-endpoints.md#5-people-looking-for-company)                      |
+| Members' names and faces in summaries (_hidden on server_)                        | 찾기 card, post, 초대                                  | [6. Members' names and faces in summaries](server-endpoints.md#6-members-names-and-faces-in-summaries) |
+| An invitation's time and place (_hidden on server_; companions are the row above) | 초대                                                   | [7. An invitation's time and place](server-endpoints.md#7-an-invitations-time-and-place)               |
+| A join request's note (_hidden on server_)                                        | room › 신청                                            | [8. A join request's note](server-endpoints.md#8-a-join-requests-note)                                 |
+| 파티 채팅                                                                         | room                                                   | [9. 파티 채팅](server-endpoints.md#9-파티-채팅)                                                        |
+| Past Quests (`지난 일정`, _hidden on server_)                                     | 내 파티                                                | [10. Past Quests](server-endpoints.md#10-past-quests)                                                  |
+| An event's kind (진로, 이벤트, 축제) and tags, read from its words                | form › 관련 행사                                       | [13. An event's kind](server-endpoints.md#13-a-global-events-kind-and-tags)                            |
+| Changing a Quest's 관련 행사 (_not possible yet_: locked in the form)             | form                                                   | [12. Changing a Quest's 관련 행사](server-endpoints.md#12-changing-a-quests-global-event)              |
 
 Ticket 02 adds the photos, the tags and the members' faces behind the API client (`mobile/src/api/quest-parts/`, one adapter for each, data in `mobile/src/api/mock/data/quest-parts.ts`). The screens read them as follows:
 
@@ -51,7 +51,7 @@ Ticket 04 adds two more. The main server's Global Event has no kind and no tags,
 
 Ticket 06 adds the room's two parts the same way (`notes.ts` and `chat.ts` in `mobile/src/api/quest-parts/`, data in `mobile/src/api/mock/data/room-parts.ts`): `listJoinRequests` carries a `note`, one of the mock's by the request's id in the mock build and null on server; `listPartyChat` and `sendPartyChat` give the room's 파티 채팅, the frame's conversation for the mock's `q-ai` in the mock build and an empty room on server. What the User sends is kept on the phone for the signed-in User (`snunow.party-chat.<userId>`), and nothing while no User is signed in.
 
-Kept on the phone and not mocked: declining an activation (`다른 활성 파티`).
+Kept on the phone and not mocked: declining an activation (`다른 활성 파티`); [11. A declined activation](server-endpoints.md#11-a-declined-activation-stored-on-the-server) stores it on the server.
 
 ## 3. Device checks (함재현)
 
