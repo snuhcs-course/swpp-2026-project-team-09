@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
@@ -47,6 +48,29 @@ function combine(results: Results): ScreenData<EventSources> {
     isError: events.isError,
     refetch: askAgain(results),
   };
+}
+
+type ExtraResults = [
+  UseQueryResult<{ eventId: string; announcer: string }[]>,
+  UseQueryResult<RecruitingQuest[]>,
+  UseQueryResult<Quest[]>,
+  UseQueryResult<MatchingRequest[]>,
+];
+
+// What the cards add to Global Events that came from elsewhere, such as the Assistant's cards, which the server filled:
+// the list of events is not fetched again, and what is missing is left out as on the tab.
+export function useSourcesFor(events: readonly GlobalEvent[]): EventSources {
+  return useQueries({
+    queries: [globalEventAnnouncersQuery, recruitingQuestsQuery, questsQuery, matchingRequestsQuery],
+    combine: ([announcers, recruiting, quests, matching]: ExtraResults): EventSources => ({
+      events,
+      announcers: announcers.data ?? [],
+      recruiting: recruiting.data ?? [],
+      quests: quests.data ?? [],
+      matching: matching.data ?? [],
+      now: now(),
+    }),
+  });
 }
 
 export function useEventSources(): ScreenData<EventSources> {

@@ -8,6 +8,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { type Settings } from '../common/settings.js';
+import { GlobalEventsModule } from '../global-events/global-events.module.js';
 import { MenusModule } from '../menus/menus.module.js';
 import { QuestsModule } from '../quests/quests.module.js';
 import { ShuttleModule } from '../shuttle/shuttle.module.js';
@@ -17,7 +18,7 @@ import { AssistantService } from './assistant.service.js';
 
 @Module({
   // QuestsModule gives the clock, by which a message falls in its day.
-  imports: [MenusModule, QuestsModule, ShuttleModule],
+  imports: [GlobalEventsModule, MenusModule, QuestsModule, ShuttleModule],
   controllers: [AssistantController],
   providers: [
     AssistantService,

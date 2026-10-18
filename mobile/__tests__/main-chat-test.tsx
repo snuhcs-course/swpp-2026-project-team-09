@@ -45,7 +45,11 @@ beforeEach(async () => {
   sockets.length = 0;
   server = await askMainServer({ signedIn: true });
   answerMainScreen(server);
-  server.on('POST /assistant/messages', { status: 200, body: { text: REPLY, mapButtons: [] }, afterMs: 1000 });
+  server.on('POST /assistant/messages', {
+    status: 200,
+    body: { text: REPLY, mapButtons: [], cards: [] },
+    afterMs: 1000,
+  });
   givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
 
@@ -238,7 +242,11 @@ describe("the chat's failures", () => {
     await say(user, '오늘 점심 뭐 나와?');
 
     expect(screen.getByText(FAILED)).toBeVisible();
-    server.on('POST /assistant/messages', { status: 200, body: { text: REPLY, mapButtons: [] }, afterMs: 1000 });
+    server.on('POST /assistant/messages', {
+      status: 200,
+      body: { text: REPLY, mapButtons: [], cards: [] },
+      afterMs: 1000,
+    });
     await user.press(screen.getByRole('button', { name: '다시 시도' }));
     await pass(1000);
 
@@ -264,7 +272,7 @@ describe("the chat's failures", () => {
     server.on('POST /assistant/messages', refusal(503));
     const user = await openChat();
     await say(user, '오늘 점심 뭐 나와?');
-    server.on('POST /assistant/messages', { status: 200, body: { text: REPLY, mapButtons: [] } });
+    server.on('POST /assistant/messages', { status: 200, body: { text: REPLY, mapButtons: [], cards: [] } });
 
     await say(user, '한식');
 

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -12,7 +13,8 @@ import { call } from './http';
 
 // The operations of the 행사 tab: the Global Events and Matching. The recruiting Quests and joining are the 파티 tab's.
 
-function isGlobalEvent(value: unknown): value is GlobalEvent {
+// A published Global Event, as the 행사 tab's list and the Assistant's cards carry it.
+export function isGlobalEvent(value: unknown): value is GlobalEvent {
   return (
     hasTexts(value, ['id', 'title', 'description', 'startsAt']) &&
     isTextOrNull(field(value, 'endsAt')) &&

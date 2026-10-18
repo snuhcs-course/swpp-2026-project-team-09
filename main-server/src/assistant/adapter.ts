@@ -8,6 +8,7 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { APICallError, generateText, type LanguageModel, RetryError, stepCountIs, tool, type ToolSet } from 'ai';
 import { type Asker, type ChatMessage, type Feature, type FeatureReply, type ToolContext } from './feature.js';
+import { FoundIds } from './found-ids.js';
 
 // The one file that knows the model library, the Vercel AI SDK (ADR 0005): the model port and the loop that runs a
 // feature over it. Tools and features do not import the SDK, so that moving to another library replaces this file.
@@ -70,7 +71,7 @@ export async function runFeature(
   messages: readonly ChatMessage[],
   { maxSteps, timeoutMs, maxOutputTokens }: RunLimits,
 ): Promise<FeatureReply> {
-  const context: ToolContext = { ...asker, presented: { mapButtons: [] } };
+  const context: ToolContext = { ...asker, found: new FoundIds(), presented: { mapButtons: [], cards: [] } };
   const { text, finishReason } = await generateText({
     model,
     instructions: feature.instructions(asker.now),

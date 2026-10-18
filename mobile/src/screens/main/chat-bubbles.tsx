@@ -10,6 +10,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { MapLayer } from '@/api/assistant-types';
 import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
 import type { ChatBubble } from '@/features/assistant/use-chat';
+import { ChatEventCards, type EventCardActions } from './chat-event-cards';
 
 // The examples of the empty chat, each with its icon on its layer's colour. They replace the frame's library seats,
 // and 파티 찾기 takes the Party's colour. A press sends the words.
@@ -67,22 +68,26 @@ interface BubbleProps {
   // 다시 시도 under a failure the Assistant may get over, while it is the last bubble.
   onRetry: (() => void) | null;
   onShowLayer: (layer: MapLayer) => void;
+  eventActions: EventCardActions;
 }
 
 function Bubble({
-  bubble: { role, text: words, mapButtons, failure },
+  bubble: { role, text: words, cards, mapButtons, failure },
   onRetry,
   onShowLayer,
+  eventActions,
 }: BubbleProps): ReactElement {
   const mine = role === 'user';
   // Only under an answer: a failure has none.
   const layers = failure === null ? mapButtons : [];
+  const events = failure === null ? cards.filter(({ kind }) => kind === 'globalEvent') : [];
   return (
     <View
       style={[styles.bubble, mine ? styles.mine : styles.theirs]}
       testID={mine ? 'user-bubble' : 'assistant-bubble'}
     >
       <Text style={[styles.words, mine && styles.mineWords]}>{words}</Text>
+      {events.length === 0 ? null : <ChatEventCards actions={eventActions} cards={events} />}
       {layers.map((layer) => (
         <View key={layer} style={styles.below}>
           <Button
@@ -113,13 +118,16 @@ interface ChatBubblesProps {
   onRetry: () => void;
   // A map button: shows that layer on the map.
   onShowLayer: (layer: MapLayer) => void;
+  // What the event cards of the answers do.
+  eventActions: EventCardActions;
   // How far from the sheet's bottom the last bubble ends, clear of the AI input.
   under: number;
 }
 
 // The conversation: the User's bubbles at the right, the Assistant's at the left, and "···" while the Assistant
 // works. It keeps the latest in view.
-export function ChatBubbles({ bubbles, waiting, onRetry, onShowLayer, under }: ChatBubblesProps): ReactElement {
+export function ChatBubbles(props: ChatBubblesProps): ReactElement {
+  const { bubbles, waiting, onRetry, onShowLayer, eventActions, under } = props;
   const scroller = useRef<ScrollView>(null);
   return (
     <ScrollView
@@ -133,6 +141,7 @@ export function ChatBubbles({ bubbles, waiting, onRetry, onShowLayer, under }: C
       {bubbles.map((bubble, index) => (
         <Bubble
           bubble={bubble}
+          eventActions={eventActions}
           key={bubble.id}
           onRetry={bubble.failure === 'unavailable' && index === bubbles.length - 1 && !waiting ? onRetry : null}
           onShowLayer={onShowLayer}

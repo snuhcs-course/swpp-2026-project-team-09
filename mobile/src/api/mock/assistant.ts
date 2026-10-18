@@ -9,13 +9,17 @@ import type { AssistantReply, ChatMessage } from '@/api/assistant-types';
 import { now } from '@/clock';
 import { koreaDateKey } from '@/korea-time';
 import { MENUS } from './data/menus';
+import { GLOBAL_EVENTS } from './data/quests';
 
 // The Assistant without a model: a question about the menus is answered from the mocks' menus of the day, one about
-// the shuttle with its layer's button, and anything else with a short reply, so that the chat can be seen and tried
-// where the app asks no main server.
+// the shuttle with its layer's button, one about events with the mocks' Global Events as cards, and anything else with
+// a short reply, so that the chat can be seen and tried where the app asks no main server.
 
 const MENU_WORDS = ['메뉴', '학식', '점심', '저녁', '아침', '밥'];
 const SHUTTLE_WORDS = ['셔틀', '버스'];
+const EVENT_WORDS = ['행사', '공연', '축제', '설명회'];
+// The most events the mock shows as cards.
+const EVENT_CARDS = 3;
 
 function menusReply(): string {
   const restaurants = (MENUS[koreaDateKey(now())] ?? []).filter(({ meals }) => meals.length > 0);
@@ -36,13 +40,21 @@ function menusReply(): string {
 export function mockAssistantReply(messages: readonly ChatMessage[]): AssistantReply {
   const last = messages.at(-1)?.text ?? '';
   if (SHUTTLE_WORDS.some((word) => last.includes(word))) {
-    return { text: '셔틀이 어디 있는지 지도에서 볼 수 있어요.', mapButtons: ['shuttle'] };
+    return { text: '셔틀이 어디 있는지 지도에서 볼 수 있어요.', mapButtons: ['shuttle'], cards: [] };
+  }
+  if (EVENT_WORDS.some((word) => last.includes(word))) {
+    const cards = GLOBAL_EVENTS.slice(0, EVENT_CARDS).map((globalEvent) => ({
+      kind: 'globalEvent' as const,
+      globalEvent,
+    }));
+    return { text: '다가오는 행사예요.', mapButtons: [], cards };
   }
   if (MENU_WORDS.some((word) => last.includes(word))) {
-    return { text: menusReply(), mapButtons: ['dining'] };
+    return { text: menusReply(), mapButtons: ['dining'], cards: [] };
   }
   return {
-    text: '데모에서는 오늘 메뉴와 셔틀만 답할 수 있어요. "오늘 점심 뭐 나와?"처럼 물어봐 주세요.',
+    text: '데모에서는 오늘 메뉴와 셔틀, 행사만 답할 수 있어요. "오늘 점심 뭐 나와?"처럼 물어봐 주세요.',
     mapButtons: [],
+    cards: [],
   };
 }
