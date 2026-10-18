@@ -28,7 +28,7 @@ What the app shows from its own mock. The build connected to the server hides th
 | An invitation's time and place (_hidden on server_; companions are the row above) | 초대                                                   | [7. An invitation's time and place](server-endpoints.md#7-an-invitations-time-and-place)               |
 | A join request's note (_hidden on server_)                                        | room › 신청                                            | [8. A join request's note](server-endpoints.md#8-a-join-requests-note)                                 |
 | 파티 채팅                                                                         | room                                                   | [9. 파티 채팅](server-endpoints.md#9-파티-채팅)                                                        |
-| Past Quests (`지난 일정`)                                                         | 내 파티                                                | [10. Past Quests](server-endpoints.md#10-past-quests)                                                  |
+| Past Quests (`지난 일정`, _hidden on server_)                                     | 내 파티                                                | [10. Past Quests](server-endpoints.md#10-past-quests)                                                  |
 | An event's kind (진로, 이벤트, 축제) and tags, read from its words                | form › 관련 행사                                       | [13. An event's kind](server-endpoints.md#13-a-global-events-kind-and-tags)                            |
 | Changing a Quest's 관련 행사 (_not possible yet_: locked in the form)             | form                                                   | [12. Changing a Quest's 관련 행사](server-endpoints.md#12-changing-a-quests-global-event)              |
 
@@ -40,6 +40,8 @@ Ticket 02 adds the photos, the tags and the members' faces behind the API client
 | A Quest's tags (`tags`)                                     | 찾기 search and ordering, 파티 모집글 and 추천 이유 › 관심사, the room, the form |
 | Members' names and faces (`faces`; _leader only on server_) | 찾기 card, 파티 모집글 members line, 초대 card (companions)                      |
 | The User's tags (`listMyTags`: the profile's hashtags)      | the form's `태그`, 찾기 ordering, 추천 이유 › 관심사                             |
+
+Ticket 05 adds three more adapters in the same folder: `invitation-times.ts` and `invitation-places.ts` give an invitation's `startsAt` and `place` (null on server), and `past-quests.ts` gives `listPastQuests` (data in `mobile/src/api/mock/data/past-quests.ts`; none on server). 초대's card reads all three invitation parts; 내 파티 reads the past Quests under `지난 일정`.
 
 A server Quest's photo and tags are picked from the mock's sets by a stable hash of its id. The photo and tags the User enters for a Quest they make (`makeQuest`, `changeQuest`) are kept on the phone (`snunow.quest-entries`) and come back with that Quest. The mock build's User, whose profile has no hashtags, gets the frame's tags.
 

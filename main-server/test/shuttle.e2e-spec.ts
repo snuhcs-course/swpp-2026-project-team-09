@@ -5,6 +5,7 @@
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -17,6 +18,9 @@ import { inject } from 'vitest';
 import { REDIS } from '../src/common/redis.module.js';
 import { Settings } from '../src/common/settings.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
+import { ask, postAssistantMessages } from './assistant.js';
+import { refuseMatchServer } from './match-server.js';
+import { ScriptedModel } from './scripted-model.js';
 import {
   getAsUser,
   invalidMessages,
@@ -29,10 +33,12 @@ import {
 } from './shuttle.js';
 import { signIn } from './sign-in.js';
 import { startApp } from './start-app.js';
+import { refuseKakao } from './walking-route.js';
 import { refusal, sendAsWorker } from './worker.js';
 
 // The shuttle's stops and route are one set of records in the shared database and its vehicles one key in Redis, so
-// only this file sends shuttle messages, one test after the other.
+// only this file sends shuttle messages, one test after the other. The Assistant's getShuttle, which reads them, is
+// tested here for the same reason, with the scripted model in the model's place.
 let app: INestApplication<Server>;
 let accessToken: string;
 // The tests read the status of one Source with a connection of their own.
@@ -40,9 +46,10 @@ let prisma: PrismaClient;
 // Stands for the socket server: NestJS messaging publishes each event on a Redis channel named after it.
 let socketServer: Redis;
 const events: unknown[] = [];
+const model = new ScriptedModel();
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'));
+  app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model.model);
   ({ accessToken } = await signIn(app));
   prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: inject('settings').DATABASE_URL }) });
   const settings = app.get<ConfigService<Settings, true>>(ConfigService);
@@ -268,5 +275,44 @@ describe('An invalid shuttle message', () => {
     await refusal(app, '/shuttle/vehicles/collected', vehiclesMessage([{ carId: '4520', x: '157', y: 40 }]));
 
     expect(await carsAtStops()).toEqual([['4522', '정문']]);
+  });
+});
+
+// What getShuttle gave the model when it was asked where the shuttle is.
+async function shuttleForModel(): Promise<unknown[]> {
+  model.script({ tool: 'getShuttle', input: {} }, { text: '셔틀은 정문에 있어요.' });
+  expect((await postAssistantMessages(app, accessToken, ask('셔틀 어디 있어?'))).status).toBe(200);
+  return model.toolResults();
+}
+
+describe("The Assistant's getShuttle", () => {
+  it('gives the model the vehicles reported now, each at its stop, with when they were collected', async () => {
+    await sendVehicles([{ carId: '4521', x: 195, y: 294 }], { collectedAt: '2026-10-02T06:40:07.000Z' });
+
+    expect(await shuttleForModel()).toEqual([
+      {
+        result: 'found',
+        collectedAt: '2026-10-02T15:40:07+09:00',
+        vehicles: [{ vehicle: '4521', stop: '신소재공동연구소' }],
+      },
+    ]);
+  });
+
+  it('says "none" when the operator reports no shuttle running', async () => {
+    await sendVehicles([]);
+
+    expect(await shuttleForModel()).toEqual([
+      { result: 'none', reason: 'The operator reports no shuttle running now.' },
+    ]);
+  });
+
+  it('says "none" when no position was collected in the last minute', async () => {
+    await sendVehicles([{ carId: '4522', x: 157, y: 40 }]);
+    // As Redis does a minute after the set was stored.
+    await app.get<Redis>(REDIS).del('shuttle:vehicles');
+
+    const [none] = await shuttleForModel();
+    expect(none).toMatchObject({ result: 'none' });
+    expect(JSON.stringify(none)).toContain('No position of the shuttle was collected in the last minute');
   });
 });
