@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
@@ -19,11 +20,14 @@ type Kept = Omit<TimetableClass, 'overlaps'>;
 
 let classes: Kept[] = [];
 let made = 0;
+// The Idempotency-Keys of the adds, each with the class it added, as the main server keeps them.
+let added = new Map<string, string>();
 
 // Back to the frame's four classes, for a test.
 export function resetMockTimetable(): void {
   classes = CLASSES.map(({ id, courseName, times }) => ({ id, courseName, times }));
   made = 0;
+  added = new Map();
 }
 
 resetMockTimetable();
@@ -83,11 +87,19 @@ function matches(place: Place, words: string): boolean {
 
 export const mockTimetable = {
   listClasses: (): TimetableClass[] => classes.map((lesson) => withOverlaps(lesson)),
-  addClass: (save: ClassSave): TimetableClass => {
+  addClass: (save: ClassSave, key?: string): TimetableClass => {
+    const before = key === undefined ? undefined : classes.find(({ id }) => id === added.get(key));
+    if (before !== undefined) {
+      return withOverlaps(before);
+    }
     if (classes.length >= MOST_CLASSES) {
       throw new ApiError(409, 'TIMETABLE_FULL');
     }
-    return put(keptOf(`class-${made + 1}`, save));
+    const lesson = put(keptOf(`class-${made + 1}`, save));
+    if (key !== undefined) {
+      added.set(key, lesson.id);
+    }
+    return lesson;
   },
   replaceClass: (classId: string, save: ClassSave): TimetableClass => {
     knownOrRefuse(classId);
@@ -96,6 +108,9 @@ export const mockTimetable = {
   deleteClass: (classId: string): void => {
     knownOrRefuse(classId);
     classes = classes.filter(({ id }) => id !== classId);
+  },
+  resetTimetable: (): void => {
+    classes = [];
   },
   searchPlaces: (words: string): Place[] => PLACES.filter((place) => matches(place, words.trim())),
 };

@@ -12,8 +12,8 @@
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { apiClient } from './client';
 import type { RestaurantMenus } from './menu-types';
-import type { ShownRecruitingQuest } from './quest-parts-types';
-import type { Board, Place, Quest } from './types';
+import type { ShownQuest, ShownRecruitingQuest } from './quest-parts-types';
+import type { Board, Place } from './types';
 import type { JoinRequest } from './waiting-types';
 
 // One entry of the cache per operation, each under its own key. The hooks of the features combine them, so that an
@@ -78,7 +78,7 @@ export function joinRequestsQuery(questId: string): UseQueryOptions<JoinRequest[
   return { queryKey: [...JOIN_REQUESTS_KEY, questId], queryFn: () => apiClient.listJoinRequests(questId) };
 }
 // One Quest, for its room. Under the key of the Quests, so that whatever fetches them again fetches it too.
-export function questQuery(questId: string): UseQueryOptions<Quest, Error, Quest, string[]> {
+export function questQuery(questId: string): UseQueryOptions<ShownQuest, Error, ShownQuest, string[]> {
   return { queryKey: [...QUESTS_KEY, questId], queryFn: () => apiClient.getQuest(questId) };
 }
 // The Leader's invitations into one Quest.
