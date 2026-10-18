@@ -13,11 +13,15 @@ import type { QuestSummary } from '@/api/waiting-types';
 import { keepQuestEntries, readQuestEntries } from '@/storage/quest-entries';
 import type { Build } from './build';
 import { facesOfQuest, facesOfSummary } from './faces';
+import { hidePost, listHiddenPosts } from './hidden-posts';
+import { joinOfficialRecruiting, listOfficialRecruiting } from './official';
 import { photoOf } from './photos';
+import { askCompanionSeeker, listCompanionSeekers } from './seekers';
 import { myTagsOf, tagsOf } from './tags';
 
 // Adds the mocked parts of a Quest to a client's answers: its photo, its tags and its members' faces, each from its
-// own adapter. When the main server gives one of them, its adapter is dropped here and the server client reads it.
+// own adapter; and the mocked parts of 찾기, official recruiting, hiding a post and the people looking for company.
+// When the main server gives one of them, its adapter is dropped here and the server client reads it.
 
 type Entered = Partial<Record<string, QuestEntries>>;
 
@@ -97,5 +101,11 @@ export function withQuestParts(client: ApiClient, build: Build): ShownClient {
       }));
     },
     listMyTags: async () => myTagsOf(await client.getProfile(), build),
+    listOfficialRecruiting: () => listOfficialRecruiting(build),
+    joinOfficialRecruiting,
+    listHiddenPosts,
+    hidePost,
+    listCompanionSeekers: () => listCompanionSeekers(build),
+    askCompanionSeeker,
   };
 }

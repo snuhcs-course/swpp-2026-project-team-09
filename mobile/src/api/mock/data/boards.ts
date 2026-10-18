@@ -3,11 +3,13 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { RecruitingQuest } from '@/api/party-types';
 import type { Board } from '@/api/types';
 import { frameTime } from './frame';
+import { FRIENDS } from './friends';
 import { CAREER_GATHERING } from './quests';
 
 // The posts of the `Party` frame's boards and its three recommended 파티, as the list of recruiting Quests answers
@@ -70,6 +72,11 @@ function at(day: string, clock: string): string {
   return new Date(midnight + Number(day) * DAY_MS + (hour * 60 + minute) * MINUTE_MS).toISOString();
 }
 
+// A Leader who is one of the mock's Friends is that Friend, as the frame's 최유나, 김민준 and 이서연 are.
+function friendIdOf(name: string): string | undefined {
+  return FRIENDS.find((friend) => friend.name === name)?.id;
+}
+
 function entryOf(row: string, index: number): RecruitingQuest {
   const [board, title, description, day, clock, place, holders, capacity, leader, department, posted, postedClock] = row
     .split('|')
@@ -79,7 +86,7 @@ function entryOf(row: string, index: number): RecruitingQuest {
     id,
     title,
     globalEvent: index === 2 ? { id: 'e-jazz', title: '재즈 정기공연' } : null,
-    leader: { id: `${id}-leader`, name: leader, department },
+    leader: { id: friendIdOf(leader) ?? `${id}-leader`, name: leader, department },
     holderCount: Number(holders),
     capacity: Number(capacity),
     joinPolicy: index % 3 === 1 ? 'approval' : 'open',

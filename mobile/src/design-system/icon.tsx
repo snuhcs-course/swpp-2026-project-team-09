@@ -39,6 +39,8 @@ const ICONS = {
   check: [{ path: 'M5 12l5 5 9-10' }],
   bus: [{ rect: [5, 4, 14, 13, 2] }, { path: 'M5 11h14' }, { path: 'M8 20v-3' }, { path: 'M16 20v-3' }],
   calendar: [{ rect: [4, 5, 16, 16, 2] }, { path: 'M4 10h16' }, { path: 'M9 3v4' }, { path: 'M15 3v4' }],
+  camera: [{ path: 'M4 8h3l2-3h6l2 3h3v11H4z' }, { circle: [12, 13, 3.5] }],
+  image: [{ rect: [3, 4, 18, 16, 3] }, { circle: [9, 10, 1.8] }, { path: 'M21 16l-5-5-9 9' }],
   search: [{ circle: [11, 11, 7] }, { path: 'M20 20l-4-4' }],
   route: [{ path: 'M12 3 20 20l-8-4-8 4z' }],
   book: [{ path: 'M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2z' }, { path: 'M4 19V5' }],
@@ -84,6 +86,9 @@ const ICONS = {
     { path: 'M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z' },
     { path: 'M18.5 14.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z' },
   ],
+  // Not the design system's: the `Party` frame draws them on the button that pauses and plays the official banner.
+  pause: [{ path: 'M9 5v14' }, { path: 'M15 5v14' }],
+  play: [{ path: 'M7 5l12 7-12 7z' }],
 } as const satisfies Record<string, readonly Stroke[]>;
 
 export type IconName = keyof typeof ICONS;

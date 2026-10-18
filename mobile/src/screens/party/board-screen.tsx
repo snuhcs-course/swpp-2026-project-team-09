@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -15,15 +16,7 @@ import { type PostView, postedWords } from '@/features/party/posts';
 import { useBoardPosts } from '@/features/party/use-party';
 import { Fill, openPost } from './post-card';
 
-// A press opens the room of the User's own Quest and the post of another's.
-function openFromBoard({ questId, role }: PostView): void {
-  if (role.kind === 'leader' || role.kind === 'holder') {
-    router.push(`/room/${questId}`);
-  } else {
-    openPost(questId);
-  }
-}
-
+// A post, the User's own and the others' alike, opens 파티 모집글, with `내 파티` or `참여 중` before the title.
 function BoardPost({ post }: { post: PostView }): ReactElement {
   const mark = post.role.kind === 'leader' ? '내 파티' : post.role.kind === 'holder' ? '참여 중' : null;
   return (
@@ -31,7 +24,7 @@ function BoardPost({ post }: { post: PostView }): ReactElement {
       accessibilityLabel={post.title}
       accessibilityRole="button"
       onPress={() => {
-        openFromBoard(post);
+        openPost(post.questId);
       }}
       style={({ pressed }) => [styles.post, pressed && styles.pressed]}
     >
@@ -42,12 +35,14 @@ function BoardPost({ post }: { post: PostView }): ReactElement {
         </Text>
         <Text style={styles.posted}>{postedWords(post.createdAt, now())}</Text>
       </View>
-      {mark === null ? null : (
-        <Badge icon={false} tone="live">
-          {mark}
-        </Badge>
-      )}
-      <Text style={styles.title}>{post.title}</Text>
+      <View style={styles.titleRow}>
+        {mark === null ? null : (
+          <Badge icon={false} tone="live">
+            {mark}
+          </Badge>
+        )}
+        <Text style={styles.title}>{post.title}</Text>
+      </View>
       {post.description === '' ? null : (
         <Text numberOfLines={2} style={styles.description}>
           {post.description}
@@ -94,7 +89,8 @@ const styles = StyleSheet.create({
   hostWords: { flex: 1, fontFamily: font.medium, fontSize: 12, lineHeight: 16, color: color.inkMuted },
   hostName: { fontFamily: font.semiBold, color: color.ink },
   posted: { fontFamily: font.medium, fontSize: 12, lineHeight: 16, color: color.inkMuted },
-  title: { fontFamily: font.semiBold, fontSize: 17, lineHeight: 24, color: color.ink },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  title: { flexShrink: 1, fontFamily: font.semiBold, fontSize: 17, lineHeight: 24, color: color.ink },
   description: { fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: color.inkMuted },
   foot: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   meta: { flex: 1, fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.inkMuted },
