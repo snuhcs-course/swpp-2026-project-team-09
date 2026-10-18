@@ -3,7 +3,7 @@
 SNU Now is a social map for Seoul National University's Gwanak campus. A student signs in with an SNU Google account
 and sees, on Kakao's map of the campus, the Global Events of the university, their Friends and the members of their
 Party moving as Avatars, today's menus and the shuttle. Around an event or a plan of their own, a User makes a Quest
-and finds companions for it: by recruiting on a Board, by asking for Matching or by proposing a Meetup to a Friend.
+and finds companions for it: by recruiting on a Board, by asking for Matching or by inviting Friends to a 비공개 파티.
 When the time comes, they open a Party and see each other on the map until they meet. The words used here are
 defined in [GLOSSARY.md](GLOSSARY.md); the app's screens are in Korean.
 
@@ -58,7 +58,8 @@ The prototype was meant to validate that:
   position and removed after 10; nobody shown outside the Campus Boundary.
 - **Quests and Matching**: Quests for a Global Event or a plan of the User's own, with Sub Quests; recruiting on the
   식사, 진로, 취미 and 공연 Boards with a Join Policy; join requests and invitations; Matching for a Global Event in
-  groups of 2 to 4, run in rounds every minute; Meetups between Friends that become Shared Quests.
+  groups of 2 to 4, run in rounds every minute. The Meetup between Friends was retired in Iteration 2: a plan with
+  a Friend is a 비공개 파티, a Closed Quest.
 - **Parties**: a Party opened for a Quest, entered by its Holders, with its plan, its members on the map and the
   Leader's controls.
 - **Timetable**: classes entered with their times and Places; today's classes appear as Class Quests.
@@ -81,7 +82,8 @@ Each flow is what a User does with the app on campus, on two phones, or on one p
    Party and the other enters it. Each sees the other's Avatar move on the map. One taps the Quest and sees the
    walking route to the event.
 2. **Friend**: one User sends an Invite Link through a messenger. The other opens it and accepts. Both see each
-   other's Avatar. One proposes a Meetup and the other accepts it. Both see the Shared Quest it made.
+   other's Avatar. One proposes a Meetup and the other accepts it. Both see the Shared Quest it made. (The Meetup was
+   retired in Iteration 2.)
 3. **Campus services**: a User turns on the dining layer and reads today's menus. The User turns on the shuttle layer
    and watches a vehicle move along the route (weekdays from 08:00 to 21:00, or at any time with the demo data).
 
@@ -294,7 +296,7 @@ file's.
 | `ANDROID_CERTIFICATE_FINGERPRINTS` | The SHA-256 fingerprints of the app's signing certificates, for Invite Links' App Links.           |
 | `MATCH_SERVER_URL`                 | Where the match server is reached.                                                                 |
 | `MATCH_SERVER_TOKEN`               | The secret the main and match servers send each other; generated in [Setup](#setup).               |
-| `DEMO_ACCOUNT_EMAILS`              | Read by the demo profile only: real SNU addresses that get demo Friends, requests and a Meetup.    |
+| `DEMO_ACCOUNT_EMAILS`              | Read by the demo profile only: real SNU addresses that get demo Friends, requests, an invitation.  |
 
 ### socket-server
 
@@ -384,7 +386,7 @@ It adds 8 demo Users and their friendships, 6 published Global Events today and 
 Board, a running Party, this week's menus and, outside the shuttle's hours, two shuttle vehicles, and keeps the demo
 Users' Avatars walking along the shuttle's line on campus. List your own SNU address in `DEMO_ACCOUNT_EMAILS` of
 `main-server/.env` before starting: once you have finished Onboarding, you receive demo Friends (the Party's members
-among them), two Friend Requests, a Quest invitation and a Meetup within 5 seconds.
+among them), two Friend Requests and a Quest invitation within 5 seconds.
 `docker compose --profile demo restart demo-seed` brings the times up to date, and
 `docker compose --profile demo down -v` removes it all. The details are in
 [main-server/README.md](main-server/README.md#demo-data).

@@ -3,15 +3,15 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import type { Meetups, QuestInvitation } from '@/api/waiting-types';
-import { frameTime, ME } from './frame';
+import type { QuestInvitation } from '@/api/waiting-types';
+import { frameTime } from './frame';
 
 // What waits for the User in the `Profile` frame's 알림 besides the Friend Requests, which `../friendships.ts` keeps:
-// two invitations to 파티, one a Quest's and one a Meetup's.
+// an invitation to a 파티.
 
-const SEO_YEON = { id: 'f2', name: '이서연', department: '경영학과' };
 const TAE_O = { id: 'f8', name: '윤태오', department: '물리천문학부' };
 
 export const QUEST_INVITATIONS: QuestInvitation[] = [
@@ -32,20 +32,3 @@ export const QUEST_INVITATIONS: QuestInvitation[] = [
     sentAt: frameTime('10:15'),
   },
 ];
-
-// Proposed for the next day at 12:10.
-export const MEETUPS: Meetups = {
-  received: [
-    {
-      id: 'mu-1',
-      title: '학관 점심',
-      startsAt: new Date(new Date(frameTime('12:10')).getTime() + 24 * 60 * 60 * 1000).toISOString(),
-      endsAt: null,
-      place: { placeId: null, label: '학생회관 (63동)', latitude: 37.45907, longitude: 126.95023 },
-      state: 'proposed',
-      proposer: SEO_YEON,
-      receiver: ME,
-    },
-  ],
-  sent: [],
-};

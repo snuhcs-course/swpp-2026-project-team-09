@@ -3,13 +3,14 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { newIdempotencyKey } from '@/api/idempotency-key';
 import type { SubQuest } from '@/api/types';
-import { color, Dialog, font, Icon, type IconName, radius, space } from '@/design-system';
+import { color, font, Icon, type IconName, radius, space } from '@/design-system';
 import type { PlanStepView, RoomView } from '@/features/quests/room-adapter';
 import { PlanForm } from './plan-form';
 import type { RoomActions } from './use-room-actions';
@@ -145,34 +146,11 @@ function Form({ room, actions, editing, onClose }: FormProps): ReactElement {
   );
 }
 
-interface CancelDialogProps {
-  visible: boolean;
-  onConfirm: () => void;
-  onClose: () => void;
-}
-
-function CancelDialog({ visible, onConfirm, onClose }: CancelDialogProps): ReactElement {
-  return (
-    <Dialog
-      cancelLabel="취소"
-      confirmLabel="삭제"
-      onCancel={onClose}
-      onConfirm={() => {
-        onConfirm();
-        onClose();
-      }}
-      title="일정을 삭제할까요?"
-      tone="danger"
-      visible={visible}
-    />
-  );
-}
-
-// The room's `일정`: the Sub Quests on a timeline, the Leader's controls and the inline form.
+// The room's `일정`: the Sub Quests on a timeline, the Leader's controls and the inline form. A step is deleted at once,
+// without a question and without an undo, as `PartyDetail` draws it.
 export function PlanSection({ room, actions }: PlanSectionProps): ReactElement {
   const { quest, editsPlan } = room;
   const [editing, setEditing] = useState<Editing>(null);
-  const [cancelling, setCancelling] = useState<SubQuest | null>(null);
   return (
     <View accessibilityLabel="일정" style={styles.section}>
       <View style={styles.header}>
@@ -189,7 +167,7 @@ export function PlanSection({ room, actions }: PlanSectionProps): ReactElement {
       </View>
       <Steps
         actions={actions}
-        onCancel={setCancelling}
+        onCancel={(subQuest) => void actions.cancelSubQuest(quest.id, subQuest)}
         onEdit={(subQuest) => {
           setEditing({ kind: 'edit', subQuest });
         }}
@@ -205,17 +183,6 @@ export function PlanSection({ room, actions }: PlanSectionProps): ReactElement {
           room={room}
         />
       ) : null}
-      <CancelDialog
-        onClose={() => {
-          setCancelling(null);
-        }}
-        onConfirm={() => {
-          if (cancelling !== null) {
-            void actions.cancelSubQuest(quest.id, cancelling);
-          }
-        }}
-        visible={cancelling !== null}
-      />
     </View>
   );
 }

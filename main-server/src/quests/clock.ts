@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-// The time by which a Sub Quest is ended and a Meetup expires. A test replaces `now` to move it:
+// The time by which a Sub Quest is ended. A test replaces `now` to move it:
 // `vi.spyOn(app.get(CLOCK), 'now')`.
 export const CLOCK = 'CLOCK';
 

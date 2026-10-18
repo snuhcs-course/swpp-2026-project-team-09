@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -31,6 +33,8 @@ import {
   placeText,
 } from '@/features/timetable/class-form';
 import { type Timetable, useClassChanges, useTimetable } from '@/features/timetable/use-timetable';
+import { NOT_MOVED } from '@/features/timetable/use-versions';
+import { VersionsRefusal } from '@/features/timetable/versions';
 import { PlacePicker } from '../places/place-picker';
 import { CrossingWarning, DayToggles, PlaceButton, TimeRow } from './class-fields';
 
@@ -40,6 +44,9 @@ function titleOf(classId: string | null): string {
 
 // Words that no frame draws.
 function refusalWords(error: unknown): string {
+  if (error instanceof VersionsRefusal) {
+    return NOT_MOVED;
+  }
   if (isRefusal(error, 409, 'TIMETABLE_FULL')) {
     return '수업은 15개까지 넣을 수 있어요';
   }
@@ -83,9 +90,9 @@ function useFormActions(classId: string | null): {
         router.back();
         showToast('수업을 삭제했어요');
       },
-      () => {
+      (error: unknown) => {
         setWorking(false);
-        showToast('삭제하지 못했어요. 다시 시도해 주세요');
+        showToast(error instanceof VersionsRefusal ? NOT_MOVED : '삭제하지 못했어요. 다시 시도해 주세요');
       },
     );
   };
@@ -267,7 +274,6 @@ function ClassForm({ lesson, timetable }: { lesson: TimetableClass | null; timet
       </FullScreenPanel>
       {picking ? (
         <PlacePicker
-          mode="class"
           onClose={closePicker}
           onPick={(place) => {
             change({ place });

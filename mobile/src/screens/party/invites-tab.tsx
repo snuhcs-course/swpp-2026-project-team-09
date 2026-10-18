@@ -3,19 +3,39 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import type { QuestInvitation } from '@/api/waiting-types';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { ShownQuestInvitation } from '@/api/quest-parts-types';
 import { now } from '@/clock';
-import { Avatar, Button, cardStyles, color, ErrorState, font, LoadingState, space } from '@/design-system';
+import { Avatar, Button, cardStyles, color, EmptyState, ErrorState, font, LoadingState, space } from '@/design-system';
+import { whenOf } from '@/features/party/posts';
 import { useInvitations } from '@/features/party/use-party';
 import { agoWords } from '@/features/quests/room-adapter';
-import { MeetupInvites } from './invites-meetups';
 import { type PartyActions, usePartyActions } from './use-party-actions';
 
-function InvitationCard({ invitation, actions }: { invitation: QuestInvitation; actions: PartyActions }): ReactElement {
+// `{when} · {where} · {names} 함께`, of what the invitation carries: the server build has none of the three yet, and
+// then the card counts the Holders.
+function metaOf({ quest, startsAt, place }: ShownQuestInvitation): string {
+  const companions = quest.faces.slice(1).map(({ name }) => name);
+  const parts = [
+    ...(startsAt === null ? [] : [whenOf(startsAt)]),
+    ...(place === null ? [] : [place]),
+    ...(companions.length === 0 ? [] : [`${companions.join(', ')} 함께`]),
+  ];
+  return parts.length === 0 ? `${quest.holderCount}명 참여 중` : parts.join(' · ');
+}
+
+function InvitationCard({
+  invitation,
+  actions,
+}: {
+  invitation: ShownQuestInvitation;
+  actions: PartyActions;
+}): ReactElement {
   const { quest, sentAt } = invitation;
   const kind = quest.joinPolicy === 'closed' ? '비공개 파티에' : '파티에';
   return (
@@ -31,7 +51,7 @@ function InvitationCard({ invitation, actions }: { invitation: QuestInvitation; 
           {quest.description}
         </Text>
       )}
-      <Text style={styles.meta}>{`${quest.holderCount}명 참여 중`}</Text>
+      <Text style={styles.meta}>{metaOf(invitation)}</Text>
       <View style={styles.buttons}>
         <View style={styles.button}>
           <Button full onPress={() => void actions.decline(invitation)} variant="secondary">
@@ -48,7 +68,7 @@ function InvitationCard({ invitation, actions }: { invitation: QuestInvitation; 
   );
 }
 
-// 초대, the frame's `PartyInvites`: the invitations into Quests, the newest first, and then the Meetups.
+// 초대, the frame's `PartyInvites`: the invitations into Quests under `받은 초대`, the newest first.
 export function InvitesTab(): ReactElement {
   const { data: invitations, isPending, refetch } = useInvitations();
   const actions = usePartyActions();
@@ -56,16 +76,24 @@ export function InvitesTab(): ReactElement {
     return isPending ? <LoadingState /> : <ErrorState onRetry={refetch} />;
   }
   return (
-    <MeetupInvites
-      before={invitations.map((invitation) => (
-        <InvitationCard actions={actions} invitation={invitation} key={invitation.id} />
-      ))}
-      beforeCount={invitations.length}
-    />
+    <ScrollView contentContainerStyle={styles.body}>
+      <View style={styles.section}>
+        <Text accessibilityRole="header" style={styles.sectionTitle}>
+          {`받은 초대 · ${invitations.length}`}
+        </Text>
+        {invitations.length === 0 ? <EmptyState icon="users" words="받은 초대가 없어요" /> : null}
+        {invitations.map((invitation) => (
+          <InvitationCard actions={actions} invitation={invitation} key={invitation.id} />
+        ))}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  body: { gap: space[6], padding: space[4], paddingBottom: space[6] },
+  section: { gap: space[3] },
+  sectionTitle: { fontFamily: font.semiBold, fontSize: 12, lineHeight: 16, color: color.inkMuted },
   card: { gap: space[2] },
   from: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   fromWords: { flex: 1, fontFamily: font.semiBold, fontSize: 13, lineHeight: 18, color: color.ink },

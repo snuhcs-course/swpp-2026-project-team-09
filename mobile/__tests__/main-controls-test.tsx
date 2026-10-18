@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -55,7 +56,7 @@ describe('the controls above the navigation of the main screen', () => {
     expect(button(FOOTPRINTS)).toHaveTextContent('민준서연지호오늘의 발자국친구 5명의 오늘');
     expect(button(ACTIVE_PARTY)).toHaveTextContent('활성 파티3명 공유 중');
     expect(button(LAYERS)).toBeVisible();
-    expect(button(AI_INPUT)).toHaveTextContent('무엇이든 부탁해 보세요');
+    expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', '무엇이든 부탁해 보세요');
   });
 
   it('draws the three faces of "오늘의 발자국" as decoration, hidden from a screen reader', async () => {
@@ -112,29 +113,21 @@ describe('a control of the main screen whose feature belongs to another task', (
 });
 
 describe("the main screen's AI input", () => {
-  it('is a button with the look of the empty input, not a field: nothing takes the focus or a letter', async () => {
+  it('is a field with the placeholder, whose send button is disabled', async () => {
     await openMain();
 
-    expect(button(AI_INPUT)).toBeVisible();
-    expect(screen.queryByPlaceholderText('무엇이든 부탁해 보세요')).toBeNull();
-    expect(screen.queryByDisplayValue('')).toBeNull();
-  });
-
-  it('says that it is not ready when it is pressed', async () => {
-    const user = await openMain();
-
-    await press(user, AI_INPUT);
-
-    expect(screen.getByText(NOT_READY)).toBeVisible();
-  });
-
-  it('reads its send button as disabled, and says that it is not ready when that is pressed', async () => {
-    const user = await openMain();
+    expect(screen.getByPlaceholderText('무엇이든 부탁해 보세요')).toBe(screen.getByLabelText(AI_INPUT));
     expect(button(SEND)).toBeDisabled();
+  });
 
-    await press(user, SEND);
+  it('opens the chat, which the mocks answer where the app asks no main server', async () => {
+    const user = await openMain();
 
-    expect(screen.getByText(NOT_READY)).toBeVisible();
+    await user.press(screen.getByLabelText(AI_INPUT));
+    await press(user, '식사 메뉴 추천');
+    await pass(300);
+
+    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent(/^오늘 메뉴예요\./u);
   });
 });
 

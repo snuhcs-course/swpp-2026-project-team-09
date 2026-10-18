@@ -7,12 +7,19 @@
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
 import { z } from 'zod';
 
 const port = z.string().pipe(z.coerce.number<string>().int().min(1).max(65535));
+
+// A count from the environment, or `fallback` when it is not set.
+function count(fallback: number): z.ZodType<number> {
+  return z.string().default(String(fallback)).pipe(z.coerce.number<string>().int().min(1));
+}
 
 const googleClientId = z.string().endsWith('.apps.googleusercontent.com');
 
@@ -63,6 +70,16 @@ export const settingsSchema = z
     MATCH_SERVER_URL: z.url(),
     // The secret that this server and the match server send with each call to the other.
     MATCH_SERVER_TOKEN: z.string().min(32),
+    // The Assistant's (README.md: Assistant): the OpenRouter key, empty when there is none, and the OpenRouter id of
+    // the model, such as anthropic/claude-haiku-5.5.
+    OPENROUTER_API_KEY: z.string().default(''),
+    ASSISTANT_MODEL: z.string().default(''),
+    // The Assistant's limits: the messages a User may send in a day in Korea, and per message the model calls, the
+    // time in milliseconds and the tokens the model may write in each call.
+    ASSISTANT_DAILY_MESSAGES: count(50),
+    ASSISTANT_MAX_STEPS: count(8),
+    ASSISTANT_TIMEOUT_MS: count(30_000),
+    ASSISTANT_MAX_OUTPUT_TOKENS: count(1000),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),

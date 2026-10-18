@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 package com.bonnieandclaude.snunow.map
@@ -41,7 +42,15 @@ class SnuNowMapModule : Module() {
       if (key.isEmpty()) {
         Log.e(TAG, "KAKAO_NATIVE_APP_KEY was empty when the app was built: the map will not start")
       }
-      KakaoMapSdk.init(context, key)
+      // On an x86_64 emulator Kakao's ARM-only library is missing and the SDK fails to link
+      // (UnsatisfiedLinkError, NoClassDefFoundError or ExceptionInInitializerError, all LinkageErrors). The rest of the
+      // app must still start there: the map stays blank and the log says why. Any other failure, such as an empty key,
+      // still surfaces.
+      try {
+        KakaoMapSdk.init(context, key)
+      } catch (error: LinkageError) {
+        Log.e(TAG, "Kakao's map SDK could not be loaded on this device: the map will not appear", error)
+      }
     }
 
     OnActivityEntersForeground {

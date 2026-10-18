@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useState } from 'react';
@@ -25,6 +26,8 @@ export interface LayerStack {
   close: () => void;
   toggleDining: () => void;
   toggleShuttle: () => void;
+  // Turns the layer on, and leaves it on if it is: a map button of the chat.
+  turnOn: (layer: keyof Layers) => void;
 }
 
 // The stack's state. Android's back button closes the stack while the map is `inFront`, before a card under it.
@@ -33,6 +36,9 @@ export function useLayerStack(inFront: boolean): LayerStack {
   const [layers, setLayers] = useState<Layers>({ dining: false, shuttle: false });
   const close = useCallback(() => {
     setOpen(false);
+  }, []);
+  const turnOn = useCallback((layer: keyof Layers) => {
+    setLayers((now) => ({ ...now, [layer]: true }));
   }, []);
   useBackToClose(open && inFront, close);
   return {
@@ -48,6 +54,7 @@ export function useLayerStack(inFront: boolean): LayerStack {
     toggleShuttle: () => {
       setLayers((now) => ({ ...now, shuttle: !now.shuttle }));
     },
+    turnOn,
   };
 }
 

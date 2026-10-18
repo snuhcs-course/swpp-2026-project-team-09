@@ -3,13 +3,14 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button, color, font, Icon, radius, space, SwitchRow } from '@/design-system';
 import { useMasterSwitch } from '@/features/sharing/use-master-switch';
-import type { RoomView } from '@/features/quests/room-adapter';
+import type { OtherParty, RoomView } from '@/features/quests/room-adapter';
 import { opensParty } from '@/features/quests/rules';
 import { myUserId } from '@/auth/sign-in';
 import type { Ask } from './confirm-sheet';
@@ -32,14 +33,29 @@ export function leaveAsk(onConfirm: () => void): Ask {
   };
 }
 
-function switchLine(otherParty: string | null): string {
-  return otherParty === null
-    ? ''
-    : `\n한 번에 한 파티에만 참여할 수 있어요. 지금 참여 중인 ‘${otherParty}’ 활성화에서는 나가게 돼요.`;
+// The frame's words for the other Party: the User leaves it, or ends the one the User switched on (leads).
+function switchLine(otherParty: OtherParty | null): string {
+  if (otherParty === null) {
+    return '';
+  }
+  const { title, leads } = otherParty;
+  return `\n한 번에 한 파티에만 참여할 수 있어요. ${
+    leads ? `내가 켠 ‘${title}’ 활성화는 꺼져요.` : `지금 참여 중인 ‘${title}’ 활성화에서는 나가게 돼요.`
+  }`;
 }
 
-// The question before entering a Party while the User is in another, also asked from 내 파티.
-export function joinAsk(title: string, otherParty: string, onConfirm: () => void): Ask {
+// How the User gets out of the other Party first: `end` for one the User leads, as the sheet says.
+export function leavingOf(otherParty: OtherParty | null): boolean | 'end' {
+  if (otherParty === null) {
+    return false;
+  }
+  return otherParty.leads ? 'end' : true;
+}
+
+// The question before entering a Party while the User is in another, also asked from 내 파티, which names the other
+// Party by its title alone.
+export function joinAsk(title: string, other: string | OtherParty, onConfirm: () => void): Ask {
+  const otherParty = typeof other === 'string' ? { title: other, leads: false } : other;
   return {
     title: `‘${title}’ 활성화에 참여할까요?`,
     body: `참여한 멤버끼리 서로 위치를 볼 수 있어요.${switchLine(otherParty)}`,
@@ -79,7 +95,7 @@ function openButton({ room, actions, onAsk }: ActivationBoxProps, masterSwitch: 
         body: `${notice}수락한 멤버끼리만 서로 위치를 볼 수 있어요.${switchLine(otherParty)}${masterSwitch ? '' : SWITCH_OFF_LINE}`,
         confirm: '활성화',
         danger: false,
-        onConfirm: () => void actions.openParty(quest, others, otherParty !== null),
+        onConfirm: () => void actions.openParty(quest, others, leavingOf(otherParty)),
       });
     },
   };
@@ -122,7 +138,7 @@ function joinButton({ room, actions, onAsk }: ActivationBoxProps, partyId: strin
         void actions.joinParty(partyId, false);
         return;
       }
-      onAsk(joinAsk(title, otherParty, () => void actions.joinParty(partyId, true)));
+      onAsk(joinAsk(title, otherParty, () => void actions.joinParty(partyId, leavingOf(otherParty))));
     },
   };
 }

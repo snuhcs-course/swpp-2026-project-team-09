@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Animated } from 'react-native';
@@ -206,7 +207,7 @@ describe("the main screen's Quest list", () => {
     expect(screen.getByText('퀘스트')).toBeVisible();
     expect(screen.getByTestId('quest-count')).toHaveTextContent('3');
     expect(button(CLASS_ROW)).toHaveTextContent('다음 강의 · 23분 후자료구조14:00 · 301동 118호');
-    expect(button(PARTY_ROW)).toHaveTextContent('공개 파티 · 활성화 중AI 커리어 설명회 같이 가요17:40 · 301동 앞');
+    expect(button(PARTY_ROW)).toHaveTextContent('공개 파티 · 활성화 중AI 커리어 설명회17:40 · 301동 앞');
     expect(button(DINNER_ROW)).toHaveTextContent('비공개 파티 · 김민준저녁 약속20:10 · 학생회관 (63동)');
   });
 

@@ -5,6 +5,9 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -13,6 +16,7 @@ import type { OnboardingAnswers, Profile } from '@/api/types';
 import { CAMPUS_BOUNDS, isInside } from '@/map/campus';
 import { keep, readKept } from '@/storage/kept';
 import { answer } from './answer';
+import { mockAssistantReply } from './assistant';
 import { FOOTPRINTS } from './data/footprints';
 import { FRIEND_STATUSES, MY_FRIEND_ID } from './data/friends';
 import { MENUS } from './data/menus';
@@ -21,7 +25,6 @@ import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, QUESTS } fro
 import { QUEST_INVITATIONS } from './data/waiting';
 import { mockEvents } from './events';
 import { mockFriendships as friendships } from './friendships';
-import { mockMeetups as meetups } from './meetups';
 import { mockParty } from './party';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
@@ -65,6 +68,7 @@ export const mockClient: ApiClient = {
       await keep({ answers });
       return profileOf(answers);
     }),
+  getProfile: () => answer('getProfile', async () => profileOf(await onboardingAnswers())),
   setMasterSwitch: (on) =>
     answer('setMasterSwitch', () => {
       masterSwitchOn = on;
@@ -115,33 +119,21 @@ export const mockClient: ApiClient = {
   },
   listPositions: () => answer('listPositions', friendships.listPositions, []),
   listFriendStatuses: () => answer('listFriendStatuses', () => FRIEND_STATUSES, []),
-  listQuests: () => answer('listQuests', () => [...QUESTS, ...meetups.sharedQuests()], []),
+  listQuests: () => answer('listQuests', () => QUESTS, []),
   listQuestInvitations: () => answer('listQuestInvitations', () => QUEST_INVITATIONS, []),
   // The User leads no Quest of the mock's.
   listJoinRequests: () => answer('listJoinRequests', () => [], []),
-  listMeetups: () => answer('listMeetups', meetups.listMeetups, { received: [], sent: [] }),
-  proposeMeetup: (proposal, key) => answer('proposeMeetup', () => meetups.propose(proposal, key)),
-  acceptMeetup: async (meetupId) => {
-    await answer('acceptMeetup', () => {
-      meetups.accept(meetupId);
-    });
-  },
-  declineMeetup: async (meetupId) => {
-    await answer('declineMeetup', () => {
-      meetups.decline(meetupId);
-    });
-  },
-  withdrawMeetup: async (meetupId) => {
-    await answer('withdrawMeetup', () => {
-      meetups.withdraw(meetupId);
-    });
-  },
   listClasses: () => answer('listClasses', timetable.listClasses, []),
-  addClass: (save) => answer('addClass', () => timetable.addClass(save)),
+  addClass: (save, key) => answer('addClass', () => timetable.addClass(save, key)),
   replaceClass: (classId, save) => answer('replaceClass', () => timetable.replaceClass(classId, save)),
   deleteClass: async (classId) => {
     await answer('deleteClass', () => {
       timetable.deleteClass(classId);
+    });
+  },
+  resetTimetable: async () => {
+    await answer('resetTimetable', () => {
+      timetable.resetTimetable();
     });
   },
   listPlaces: () => answer('listPlaces', () => PLACES, []),
@@ -159,6 +151,7 @@ export const mockClient: ApiClient = {
   listMenus: (date) => answer('listMenus', () => MENUS[date] ?? [], []),
   getShuttle: () => answer('getShuttle', () => SHUTTLE),
   listShuttleVehicles: () => answer('listShuttleVehicles', () => SHUTTLE_VEHICLES, []),
+  askAssistant: (messages) => answer('askAssistant', () => mockAssistantReply(messages)),
   ...mockRoom,
   ...mockParty,
   ...mockEvents,

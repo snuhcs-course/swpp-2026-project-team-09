@@ -3,6 +3,8 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Keyboard } from 'react-native';
@@ -121,7 +123,7 @@ describe('a public 파티', () => {
       { userId: MIN_JUN_HOLDER.id },
       { userId: SEO_YEON_HOLDER.id },
     ]);
-    expect(toast()).toHaveTextContent('파티를 올렸어요 · 1명은 초대하지 못했어요');
+    expect(toast()).toHaveTextContent('파티를 올렸어요 · 1명에게 초대 요청 · 1명은 초대하지 못했어요');
     expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
   });
 });
@@ -187,15 +189,15 @@ describe('a refused 파티 올리기', () => {
 });
 
 describe('a private 파티', () => {
-  it('waits for a title and a Friend, and is made Closed for 8 without a board', async () => {
+  it('waits for a title and a Friend, and is made Closed for its 인원 without a board', async () => {
     const user = await openForm();
     await user.press(screen.getByRole('radio', { name: '비공개' }));
     expect(screen.getByText('초대한 친구만 볼 수 있어요')).toBeVisible();
     expect(screen.getByText('1명 이상')).toBeVisible();
-    expect(screen.queryByLabelText('인원 늘리기')).toBeNull();
     await user.type(screen.getByLabelText('제목'), '저녁 같이');
     expect(submit('파티 만들기')).toBeDisabled();
     await user.press(screen.getByRole('checkbox', { name: MIN_JUN_HOLDER.name }));
+    await user.press(screen.getByRole('button', { name: '인원 늘리기' }));
 
     await user.press(submit('파티 만들기'));
     await pass(500);
@@ -203,10 +205,26 @@ describe('a private 파티', () => {
     expect(server.received('POST /quests/own')[0]?.body).toEqual({
       title: '저녁 같이',
       description: '',
-      capacity: 8,
+      capacity: 5,
       joinPolicy: 'closed',
       subQuest: { title: '저녁 같이' },
     });
+    expect(toast()).toHaveTextContent('비공개 파티를 만들었어요 · 1명에게 초대 요청');
+  });
+
+  it('opens from a Friend as 비공개 with the Friend chosen, and invites the Friend once made', async () => {
+    const user = await openAt(`/party-form?friendId=${MIN_JUN_HOLDER.id}`);
+    expect(screen.getByRole('radio', { name: '비공개' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: MIN_JUN_HOLDER.name })).toBeChecked();
+    await user.type(screen.getByLabelText('제목'), '저녁 같이');
+
+    await user.press(submit('파티 만들기'));
+    await pass(500);
+
+    expect(server.received('POST /quests/own')[0]?.body).toMatchObject({ joinPolicy: 'closed' });
+    expect(server.received(`POST /quests/${MY_HIKE.id}/invitations`).map(({ body }) => body)).toEqual([
+      { userId: MIN_JUN_HOLDER.id },
+    ]);
     expect(toast()).toHaveTextContent('비공개 파티를 만들었어요 · 1명에게 초대 요청');
   });
 });
@@ -218,8 +236,6 @@ describe('the edit mode', () => {
     const user = await openAt(`/party-form?questId=${MY_HIKE.id}`);
 
     expect(screen.getByRole('header', { name: '모집글 수정' })).toBeVisible();
-    expect(screen.queryByRole('button', { name: '언제 날짜·시간 선택' })).toBeNull();
-    expect(screen.queryByLabelText('어디서')).toBeNull();
     await user.clear(screen.getByLabelText('제목'));
     await user.type(screen.getByLabelText('제목'), '관악산 등산');
     await user.press(screen.getByText('승인 후 참여'));

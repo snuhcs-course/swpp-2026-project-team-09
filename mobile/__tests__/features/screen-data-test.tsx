@@ -4,6 +4,8 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { renderHook } from '@testing-library/react-native';
@@ -110,7 +112,7 @@ describe('the Quest list', () => {
         icon: 'users',
         joinPolicy: 'open',
         kicker: '공개 파티 · 활성화 중',
-        title: 'AI 커리어 설명회 같이 가요',
+        title: 'AI 커리어 설명회',
         meta: '17:40 · 301동 앞',
         place: '301동 앞',
         position: { latitude: 37.45091, longitude: 126.95289 },
@@ -120,7 +122,7 @@ describe('the Quest list', () => {
         kind: 'party',
         tone: 'closed',
         icon: 'lock',
-        joinPolicy: null,
+        joinPolicy: 'closed',
         kicker: '비공개 파티 · 김민준',
         title: '저녁 약속',
         meta: '20:10 · 학생회관 (63동)',
@@ -146,7 +148,7 @@ describe('the Quest list on the whole screen', () => {
 });
 
 describe('the Quest list of a User in no Party', () => {
-  it('is complete, and words a Party by its members', async () => {
+  it('is complete, and still says 활성화 중 for a Quest whose Party is switched on', async () => {
     process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getMyParty';
     const { result } = await renderHook(useQuestRows, { wrapper });
 
@@ -154,7 +156,7 @@ describe('the Quest list of a User in no Party', () => {
 
     expect(result.current.isError).toBe(false);
     expect(result.current.data).toHaveLength(3);
-    expect(result.current.data?.find(({ id }) => id === 'q-ai')).toMatchObject({ kicker: '공개 파티 · 4명' });
+    expect(result.current.data?.find(({ id }) => id === 'q-ai')).toMatchObject({ kicker: '공개 파티 · 활성화 중' });
   });
 });
 
@@ -230,7 +232,7 @@ describe('the cards of people and Parties', () => {
         { icon: 'info', text: '공강 · 중앙도서관 근처 · 15:00까지 비어 있어요' },
         { icon: 'route', text: '도보 4분' },
       ],
-      primary: { label: '파티 만들기', action: 'meetup', userId: 'f1', name: '김민준' },
+      primary: { label: '파티 만들기', action: 'private-party', userId: 'f1' },
     });
     expect(cards.find(({ id }) => id === 'party-member:pm1')).toMatchObject({
       mark: { type: 'person', id: 'pm1', name: '오현우', photo: null, presence: null },
@@ -244,7 +246,7 @@ describe('the cards of people and Parties', () => {
 });
 
 describe('the Quest list and the cards for Quests that no Party names', () => {
-  it('words a Quest shared with a Friend as the frame does, and one held alone as a Quest', async () => {
+  it('words a Quest by its own Join Policy: a Closed one with the Friend, an Open one with its Holders', async () => {
     process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getMyParty,listParties';
     const rows = await renderHook(useQuestRows, { wrapper });
     const cards = await renderHook(useMapCards, { wrapper });
@@ -253,15 +255,17 @@ describe('the Quest list and the cards for Quests that no Party names', () => {
 
     expect(rows.result.current.data?.find(({ id }) => id === 'q-dinner')).toMatchObject({
       kind: 'party',
-      joinPolicy: null,
+      joinPolicy: 'closed',
       kicker: '비공개 파티 · 김민준',
     });
     expect(rows.result.current.data?.find(({ id }) => id === 'q-ai')).toMatchObject({
-      joinPolicy: null,
-      kicker: '비공개 파티 · 김민준, 오현우, 정하은',
+      tone: 'open',
+      joinPolicy: 'open',
+      kicker: '공개 파티 · 4명',
     });
+    // Its card on the map words it as its row does.
     expect(cards.result.current.data?.find(({ id }) => id === 'party:q-ai')).toMatchObject({
-      subLabel: '비공개 파티 · 김민준, 오현우, 정하은과',
+      subLabel: '공개 파티 · 4명',
       primary: { label: '길찾기', action: 'route' },
     });
   });

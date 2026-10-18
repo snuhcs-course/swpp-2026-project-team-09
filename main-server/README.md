@@ -182,8 +182,7 @@ Request to it. The routes, all a User's:
   `[{ "id", "name", "department", "sharing", "visible" }]`, where `id` is the Friend's User id, `sharing` the User's own
   switch for the friendship and `visible` whether the User can see the Friend on the map now, never why not (see
   [Location Sharing](#location-sharing)).
-- `DELETE /friends/:userId` ends the friendship for both and answers 204. It withdraws the Meetups still proposed
-  between the two; the Quests of accepted ones stay (see [Meetup](#meetup)).
+- `DELETE /friends/:userId` ends the friendship for both and answers 204.
 - `PUT /friends/:userId/sharing` with `{ "on": false }` turns the User's switch for the friendship off, `{ "on": true }`
   on, and answers 204. It changes the User's own end only.
 
@@ -231,8 +230,7 @@ there:
   keeps its sender, as accepting an Invite Link does; otherwise the sender is `userAId`. A repeat is refused as already
   Friends, so it takes no `Idempotency-Key`.
 - `DELETE /admin/friendships/:userAId/:userBId`, in either order, ends the friendship as `DELETE /friends/:userId`
-  does, and answers 204: `friends-changed` to both, `position-removed` to each who saw the other, and the Meetups still
-  proposed between them withdrawn with `meetups-changed`.
+  does, and answers 204: `friends-changed` to both and `position-removed` to each who saw the other.
 
 Both changes go through `FriendsService`, so a change by an Administrator and one by either User lock the two Users
 alike and run one after the other. The refusals each have a `code`, checked in the order of the table, and a refusal
@@ -671,8 +669,8 @@ capacity, a Join Policy, an optional Global Event and one or more Sub Quests, wh
 with two or more Holders is a Shared Quest; nothing else tells it apart. The plan is shared and progress is personal: a
 Sub Quest is one record for all Holders, and whether it is done is kept for each Holder. A User gets a Quest by
 attending a published Global Event or by making one of their own, and enters another's by joining it, by a request to
-join that the Leader accepts or by the Leader's invitation; Meetups and Matching add the Quests with several Holders.
-The routes, all a User's:
+join that the Leader accepts or by the Leader's invitation; Matching adds the Quests with several Holders. A plan with a
+Friend is a Closed Quest the User makes and invites the Friend into. The routes, all a User's:
 
 - `POST /quests` with `{ "globalEventId": "...", "title"? }` attends the Global Event and answers 201 with the User's
   Quest for it. The first time it creates the Quest, with the `title` given (1 to 50 characters once trimmed) or else
@@ -830,7 +828,6 @@ they ask and the Leader decides; `closed`, only by the Leader's invitation. A Qu
 - from attending a Global Event: led by the User, `closed`, capacity 4. The Leader opens it to others by changing the
   Join Policy.
 - made by a User: led by the User, with the capacity and the Join Policy given, 4 and `closed` when left out.
-- from an accepted Meetup: led by the proposer, `closed`, capacity 4 (see [Meetup](#meetup)).
 
 When the Leader drops the Quest, the Holder who entered earliest leads it. `quest_holders.joined_at` keeps when each
 Holder entered. The Leader changes the settings, hands the role over and removes Holders (see below).
@@ -838,7 +835,7 @@ Holder entered. The Leader changes the settings, hands the role over and removes
 **Boards and the description.** An `open` or `approval` Quest is posted on a board, where the list of recruiting Quests
 shows it: `meal` (식사), `career` (진로), `hobby` (취미) or `show` (공연). A `closed` Quest is on none. Every Quest,
 under any Join Policy, carries a `description` of 0 to 200 characters, its recruiting post, empty by default. A Quest
-from attending, from a Meetup or from a match starts Closed, on no board and with an empty description. The Leader sets
+from attending or from a match starts Closed, on no board and with an empty description. The Leader sets
 both when making the Quest (`POST /quests/own`, which refuses with 400 naming `board` a recruiting Quest without one
 and a Closed Quest with one, and naming `description` one over 200 characters) and changes them with
 `PATCH /quests/:questId` (below), also for a Quest with a Global Event. The migration checks both rules, so no way of
@@ -1150,76 +1147,6 @@ matchServer.refuses('POST', `/users/${user.id}/matching-requests`, 409, 'MATCHIN
 The stub keeps each call in `calls`, with its method, path, body and `Authorization` header. A call it was given no
 answer for fails, as one to a match server that is down, and `hangs()` never answers. A route for the match server is
 called with its token by `postAsMatchServer(app, path, body)`, as `test/matching-quests.e2e-spec.ts` does.
-
-## Meetup
-
-A Meetup is a proposal from one Friend to another to meet. Accepting it gives both a Shared Quest. The routes, all a
-User's:
-
-- `POST /meetups` proposes a Meetup and answers 201 with it. It requires an `Idempotency-Key` (see
-  [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)). The body:
-  `{ "receiverId": "...", "title": "점심", "startsAt": "...", "endsAt": "...", "place": ... }`. `receiverId` is the
-  Friend's User id, as `GET /friends` gives it. The title, the times and the place are those of a Sub Quest (see
-  [Quests](#quests)), except that the start and the place are required and the start must be in the future. `endsAt`
-  is optional.
-- `GET /meetups` answers the Meetups proposed to the User and those the User proposed, the newest first:
-  `{ "received": [...], "sent": [...] }`, every state included.
-- `POST /meetups/:id/accept` and `POST /meetups/:id/decline` answer a Meetup proposed to the User, and
-  `POST /meetups/:id/withdraw` withdraws one the User proposed. Each answers 204 and takes a Meetup only while it is
-  proposed.
-
-No route edits a Meetup: the proposer withdraws it and proposes another. A Meetup reads:
-
-```json
-{
-  "id": "…",
-  "title": "점심",
-  "startsAt": "2026-10-13T03:00:00.000Z",
-  "endsAt": "2026-10-13T04:00:00.000Z",
-  "place": { "placeId": null, "label": "자하연 앞", "latitude": 37.4601, "longitude": 126.9512 },
-  "state": "proposed",
-  "proposer": { "id": "…", "name": "홍길동", "department": "컴퓨터공학부" },
-  "receiver": { "id": "…", "name": "김철수", "department": "경제학부" }
-}
-```
-
-`place` reads as a Sub Quest's does. `state` is one of:
-
-| State       | When                                                                    |
-| ----------- | ----------------------------------------------------------------------- |
-| `proposed`  | Proposed, and its start has not passed                                  |
-| `accepted`  | The receiver accepted it                                                |
-| `declined`  | The receiver declined it                                                |
-| `withdrawn` | The proposer withdrew it, or the friendship ended while it was proposed |
-| `expired`   | Proposed, and its start has passed                                      |
-
-**Expiry** is computed when a Meetup is read, at `now()` of `CLOCK` (see [Quests](#quests)), and nothing is written:
-the stored state stays `proposed`.
-
-**Accepting** creates one Quest held by both Friends, without a Global Event and without a Party, titled as the Meetup,
-with one Sub Quest that has the Meetup's title, start, end and place. The proposer leads it, and it is `closed` with
-capacity 4. From then on it is a Quest like any other: either Holder adds, edits or cancels Sub Quests, marks them done
-for themselves alone, and drops it. The Meetup only records that it was accepted.
-
-The refusals each have a `code`:
-
-| Refusal                                                                                                 | Status | `code`                |
-| ------------------------------------------------------------------------------------------------------- | ------ | --------------------- |
-| Proposing to a User who is not a Friend, or to oneself                                                  | 404    | `FRIEND_NOT_FOUND`    |
-| Proposing with a start that has passed                                                                  | 400    | `MEETUP_START_PASSED` |
-| A `placeId` that is not a Place of the list                                                             | 404    | `PLACE_NOT_FOUND`     |
-| An answer to a Meetup that is not proposed to the User, or a withdrawal of one the User did not propose | 404    | `MEETUP_NOT_FOUND`    |
-| An answer or a withdrawal once the Meetup is no longer proposed, expired included                       | 409    | `MEETUP_NOT_PROPOSED` |
-
-How they are stored: `meetups` holds one row for each Meetup, with the proposer, the receiver, its content and one of
-the four states that are stored. A check in the migration keeps the place a Place or a point with its label. Every
-change locks both Users' rows in the order of their ids first, as a change to a friendship does, and a Meetup leaves
-`proposed` only once, so two accepts at the same moment create one Quest, and no Meetup stays proposed between two
-Users who are no longer Friends.
-
-`meetups-changed` goes to both Friends when a Meetup is proposed, accepted, declined or withdrawn, and when ending the
-friendship withdraws one. On accepting, `quests-changed` goes to both too. The signals carry nothing, and the app
-fetches `GET /meetups` again (see [Signals](#signals)).
 
 ## Party
 
@@ -1568,8 +1495,8 @@ typing coordinates:
   ```
 
   The Places with a number come first, by number (`25`, `25-1`, `26`), then those without one, such as `자하연`, in the
-  Korean order of their names. `id` is the same in every database and never changes, so a class's time or a Meetup
-  can point at it (`docs/adr/0002-place-ids-computed-from-the-source.md`).
+  Korean order of their names. `id` is the same in every database and never changes, so a class's time can point at it
+  (`docs/adr/0002-place-ids-computed-from-the-source.md`).
 
 - An Administrator reads the same list at `GET /admin/places`, each Place with two more fields, so that the admin site
   can show how the seed placed and outlined it: `origin`, `campus_map`, `openstreetmap` or `national_map`, and
@@ -1608,8 +1535,8 @@ const found = this.placeLookup.at({ latitude, longitude });
 - It does not check the [Campus Boundary](#campus-boundary): a feature that hides a User outside it checks that first.
 - The Places are read once, when the server starts, after the seed was loaded.
 
-The app asks the same lookup for a point a User picks on the map, so that a Meetup or a Sub Quest shows a name instead
-of coordinates:
+The app asks the same lookup for a point a User picks on the map, so that a Sub Quest shows a name instead of
+coordinates:
 
 - `GET /places/at?latitude=37.45016&longitude=126.95259` with a User's access token answers the Place at the position,
   in the form of the list, and its `relation`, `inside` or `near` as above:
@@ -1821,6 +1748,152 @@ answers the User's classes, each with its times in the order of the week and eac
 `isClassOf(userId, classId, db?)` whether an identifier is one of the User's classes. The Quest list shows each class
 held today as a Class Quest, computed from these and never stored (see [Quests](#quests), Class Quests).
 
+## Assistant
+
+The Assistant ("SNU Now AI") is the chat that the main screen's input bar opens (P07). It runs in this server and calls
+its model through OpenRouter with the Vercel AI SDK
+([ADR 0005](../docs/adr/0005-assistant-in-the-main-server-without-an-agent-framework.md)).
+
+- `POST /assistant/messages` with a User's access token and the conversation so far, the User's new message last:
+
+  ```json
+  {
+    "messages": [
+      { "role": "user", "text": "점메추" },
+      { "role": "assistant", "text": "어떤 게 당기세요? 한식, 일식, 양식 …" },
+      { "role": "user", "text": "한식" }
+    ]
+  }
+  ```
+
+  answers `200 { "text": "…", "mapButtons": ["shuttle"], "cards": [{ "kind": "globalEvent", "globalEvent": { … } }] }`,
+  the Assistant's reply whole, not streamed. `mapButtons` are the buttons under the reply that show a layer of the map,
+  `dining` or `shuttle`, each once. `cards` are the cards it showed, in order, each filled from the database in the
+  shape of the list the app draws it from: a `globalEvent` as `GET /global-events` serves it, and a `quest`
+  (`{ "kind": "quest", "quest": { … } }`) as `GET /quests/recruiting` serves it to the User. Both are always there,
+  `[]` when there are none. `proposal` is the Proposal the reply made, or `null`: a Quest the Assistant filled in,
+  which does not exist until the User makes it from its card,
+  `{ "title", "description", "joinPolicy": "open" | "approval" | "closed", "board", "capacity", "startsAt",`
+  `"place", "globalEvent", "invitees" }` with `startsAt` in Korea time, `board` null for a Closed Quest, `place` as
+  `{ "id", "name" }` or null, `globalEvent` whole as `GET /global-events` serves it or null, and `invitees`, the Friends
+  to invite, as `[{ "id", "name" }]`, never where they are (`src/assistant/proposal.ts`). The app sends a card back only
+  as its reference, `{ "kind", "id" }`, the last Proposal with its values and its `globalEvent` as `{ "id", "title" }`,
+  and never the map buttons. Nothing of a conversation is stored: the app keeps it.
+
+  - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
+    `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
+    (`quest` or `globalEvent`, by id; `cards` may be left out) and the Proposal it made (`proposal`, which may be left
+    out, on one message at most). The model gets only the latest 20 messages, and of an Assistant's message its text,
+    a line naming its cards and a line with its Proposal's values, never an earlier message's tool results.
+  - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
+    the User's, a message of another shape, a User's message over 1,000 characters, an Assistant's over 4,000, more
+    than one Proposal, or messages over 24,000 characters together, a Proposal's title, description and names included
+    (`dto/assistant-messages.dto.ts`).
+  - **429 `{ "message": "Today's messages are used up" }`** once a User has sent `ASSISTANT_DAILY_MESSAGES` messages
+    (50) that day in Korea, without calling the model. Redis counts them under `assistant:messages:<userId>:<date>`.
+  - **503 `{ "message": "The Assistant cannot answer now" }`**, the one error reply, whatever failed: no key configured,
+    a model error, exhausted credit (OpenRouter's 402), the time running out, or the step cap reached without an
+    answer. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
+    message's text, the model's answer or an error's message or body, which can hold the request sent to the model.
+
+- `OPENROUTER_API_KEY` is the OpenRouter key and `ASSISTANT_MODEL` the OpenRouter id of the model, such as
+  `anthropic/claude-haiku-5.5`. Both may be empty, and the server starts without them; the endpoint then answers 503.
+  `.env.example` says how to set up a key. Give each key a credit limit on OpenRouter as well: the daily limit bounds
+  what one User spends, not what all of them do.
+- **Limits per message**, each a setting with its default: at most `ASSISTANT_MAX_STEPS` model calls (8; each tool
+  call is one, and so is the answer), `ASSISTANT_TIMEOUT_MS` over all of them (30,000) and `ASSISTANT_MAX_OUTPUT_TOKENS`
+  written in each call (1,000). A failed model call is not retried.
+
+The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
+
+- **The model port** (`MODEL_PORT` in `adapter.ts`): the one place that talks to the model. The server binds it to
+  OpenRouter (`openRouterModel`); the tests bind the scripted fake below.
+- **Tools** (`tools/`): each is a zod schema of its input and a plain function calling this server's services, made
+  with `defineTool` (`feature.ts`). It is given the signed-in User's id and the time of the request. A tool answers only
+  what matches what the model passed, or `{ "result": "none", "reason": "…" }` (`noneFound`), so that the model says
+  there is none instead of answering from elsewhere.
+  - `getMenus(date, meal?, restaurant?)` answers the menus of that day only, each restaurant with `collectedAt` in
+    Korean time, and the lines' text.
+  - `getShuttle()` answers the vehicles of the set the worker stored last, each at its stop, with `collectedAt`; or
+    "none" when the operator reports no vehicle, or when no set was stored in the last minute.
+  - `searchGlobalEvents(from, to, place?, words?)` answers, as candidates, the published Global Events that have not
+    ended and take place between the two days in Korea, whose place holds `place` and whose title or description holds
+    any of `words` (ignoring case), the earliest 20 first, with `more` when there were more. An event without an end
+    falls on the day of its start, and one without a start falls in no period, so it is never a candidate. Drafts,
+    cancelled and discarded events are never given.
+  - `searchRecruitingQuests(board?, from?, to?, globalEventId?)` answers, as candidates, the Quests that
+    `GET /quests/recruiting` lists for the User (Open and Approval Quests with a Sub Quest ahead that the User does not
+    hold; never a Closed one), of that Board and for that Global Event, whose next Sub Quest falls between the two days
+    in Korea. The next Sub Quest falls in the period as an event does: it overlaps it, one without an end falls on its
+    start, and one without a start falls in no period. Without a period every such Quest is a candidate, those without
+    a start last. The soonest 20 come first, with `more` when there were more. Each carries its title, Board, Global
+    Event, Join Policy, the places left, the next Sub Quest's start, end and place, and the first 300 characters of its
+    description.
+  - **Resolvers** take the User's words as written and answer `{ "result": "one", "candidate" }`,
+    `{ "result": "several", "candidates", "more" }` (at most 10) or "none", never a guess; the system prompt tells the
+    model to ask on several and say so on none. Each adds the ids it answered to `FoundIds`.
+    `resolveFriend(name)` answers the User's Friends whose name holds the words, ignoring spaces, by id and name only
+    (`friend.name` in delimiters), never another User and never a location. `resolvePlace(words)` answers the Places
+    whose name holds the words or whose building number they are (`301동`), as `GET /places/search` does.
+    `resolveGlobalEvent(words, from?, to?)` answers the published events still to come whose title holds the words,
+    within the period when one is given.
+  - `proposeQuest(title, description, joinPolicy, board, capacity, startsAt, placeId, globalEventId, inviteeIds)` is
+    the proposer. It checks the values against the main server's rules for making a Quest (`makeQuestSchema`, so a
+    changed limit reaches it by itself), the party form's readiness rules (공개: a Board and a description; 비공개: no
+    Board and at least one invited Friend, which the app's `isReady` also holds), a start after now, and that the
+    User and the invitees fit the capacity. It takes an id only when a resolver returned it in this message or it is
+    in the last Proposal sent back, and checks it again every time: the Place exists, the event is published, each
+    invitee is a Friend. With a Global Event and no time it starts at the event's start; a time before is a meeting
+    before the event, as the form's `모이기`, and one after its start is refused. It answers
+    `{ "result": "refused", "fields": { "board": "…" } }` with what is missing or wrong by field, which the model asks
+    the User for, or `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when
+    it is called twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
+    the change.
+  - A **presenter** puts something real into the reply rather than the model describing it.
+    `showOnMap(dining | shuttle)` adds that map button; any other layer goes back to the model as an error.
+    `showGlobalEvents(ids)` adds those events as cards, in the order given, and `showQuests(ids)` those Quests. Cards
+    of both kinds lie in one list in the order shown, at most 20 in a reply.
+  - **The presenters' guard** (`found-ids.ts`): a presenter accepts only ids that a lookup or a resolver returned in
+    this message. Its kinds are the cards' (`quest`, `globalEvent`) and the resolvers' `friend` and `place`, which
+    are never cards. Each run has its own `FoundIds` in the tools' context, which the lookups add to. Any other id, one
+    from an earlier message too, goes back to the model as an error, and nothing of that call is shown.
+  - **Text by others** (`others-text.ts`): text written by other people or collected from a Source, such as a Global
+    Event's title, description and place, or a Quest's (`quest.title`, …), reaches the model as
+    `<data label="globalEvent.title">…</data>`, which the system prompt marks as data, never instructions.
+    `othersText` breaks a tag of the delimiters inside the text, so that it cannot close them.
+- **Feature definitions**: an entry point with its own system prompt and its own tools (`Feature` in `feature.ts`). The
+  chat Assistant is `chat/chat-assistant.ts`. Its system prompt carries the date, the weekday and the time in Korea of
+  each request. A later AI feature gets a definition of its own that reuses tools, never more tools on this one, so
+  that one feature cannot reach another's data.
+- **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
+  call, tool call and answer within the limits per message. `causeOf` names why a run failed for the log.
+
+### Testing with the scripted model
+
+The tests never call a real model. `test/scripted-model.ts` stands for it: a `ScriptedModel` whose `model` goes to
+`startApp` in the model port's place. Each call to the model takes the next step of its script, and every call is
+kept. A step is a tool to call with its arguments, `{ tool, input }`, the text to answer, `{ text }`, an error to throw
+as the provider would, `{ error }`, or no answer until the time per message runs out, `{ stall: true }`. A call past
+the end of the script fails, and so does the model `startApp` binds by default, so a test that forgot a script cannot
+reach OpenRouter. `test/assistant.e2e-spec.ts` does it this way:
+
+```ts
+const model = new ScriptedModel();
+app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model.model);
+
+// The model calls getMenus, then answers from what it got.
+model.script({ tool: 'getMenus', input: { date: '2027-01-01' } }, { text: '학생회관식당은 제육볶음이에요.' });
+const response = await postAssistantMessages(app, accessToken, ask('오늘 점심 뭐 나와?'));
+
+expect(response.body).toEqual({ text: '학생회관식당은 제육볶음이에요.', mapButtons: [], cards: [] });
+model.toolResults(); // what each tool returned, as the model's last call received it
+model.system(); // the system prompt of the first call
+model.received(); // every call: its prompt (system prompt, messages, tool calls and results) and its tools
+```
+
+`script()` also forgets the calls before, so a file can share one model between its tests. A test checks what the
+User or the model receives, never the prompt's wording or a real model's prose.
+
 ## Seed data
 
 Seed data comes from outside the project once, rather than by Collection: a file in `seed/` that one command loads
@@ -1945,13 +2018,12 @@ commas, in any case. A User with one of them who has finished Onboarding is give
   and 정예준, whose Avatar never shows;
 - Friend Requests from 강하은 and 윤도윤;
 - an invitation into `체육관 배드민턴`, an Approval Quest led by 박지호;
-- a Meetup proposed by 최수아, in two hours at 학생회관;
 
-and then `friends-changed`, `quests-changed`, `meetups-changed` and `party-changed`. What already lies between the
-account and a demo User, such as a friendship the person ended, is left as it is. `demo-seed` looks for such Users every
-5 seconds and prepares each once per run, so that a request the person declined does not come back until the service
-starts again. The main server itself has no demo code or setting: the seed writes through Prisma and sends the signals
-over Redis as `SignalsService` does.
+and then `friends-changed`, `quests-changed` and `party-changed`. What already lies between the account and a demo User,
+such as a friendship the person ended, is left as it is. `demo-seed` looks for such Users every 5 seconds and prepares
+each once per run, so that a request the person declined does not come back until the service starts again. The main
+server itself has no demo code or setting: the seed writes through Prisma and sends the signals over Redis as
+`SignalsService` does.
 
 **The walker** signs each demo User's access token with `ACCESS_TOKEN_PRIVATE_KEY`, for the User's Session, as a
 sign-in does, and uploads a position through `POST /positions` every 5 seconds, so that the positions take a phone's
@@ -2033,7 +2105,6 @@ src/
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
 ├── parties/                         a feature: Parties, who sees, enters and leaves them, the Leader's controls and the switches
 ├── quests/                          a feature: Quests, their Holders, Sub Quests, each Holder's progress and joining
-├── meetups/                         a feature: Meetups between Friends, and the Shared Quest an accepted one gives
 ├── matching/                        a feature: requests for Matching, checked and passed on to the match server, and
 │                                    the Shared Quests of its matches
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
@@ -2042,7 +2113,9 @@ src/
 │                                    position
 ├── shuttle/                         a feature: the shuttle's stops and line of the seed, the route page's places and
 │                                    hours, and the vehicles the worker collects, served and sent to the socket server
-└── timetable/                       a feature: a User's timetable, the classes and their times
+├── timetable/                       a feature: a User's timetable, the classes and their times
+└── assistant/                       a feature: the Assistant, its model port, tools, feature definitions and the
+                                     adapter that runs them
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
 test/                                tests, run against PostgreSQL and Redis in containers
 ```
@@ -2072,6 +2145,9 @@ To change the schema, with the data stores running and `.env` in place:
 `pnpm db:migrate` brings any database up to the current schema by applying the migrations it has not seen yet.
 
 Prisma is pinned at 7.10.0. Ignore the message that suggests updating to Prisma 8.
+
+The model `Meetup`, its enum `MeetupState` and the table `meetups` stay in the schema, unread, since the Meetup was
+retired in Iteration 2. Its code can be restored from commit `2f4f201`.
 
 ## Adding a feature module
 

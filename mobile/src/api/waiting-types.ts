@@ -4,10 +4,10 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import type { MeetupPlace } from './room-types';
-import type { Board, JoinPolicy, Person, SubQuest, UserSummary } from './types';
+import type { Board, JoinPolicy, Person, UserSummary } from './types';
 
 // The main server's lists of what waits for the User, which 알림 and the badge on 파티 are composed from.
 
@@ -43,34 +43,6 @@ export interface MyJoinRequest {
   id: string;
   quest: QuestSummary;
   sentAt: string;
-}
-
-export type MeetupState = 'proposed' | 'accepted' | 'declined' | 'withdrawn' | 'expired';
-
-export interface Meetup {
-  id: string;
-  title: string;
-  startsAt: string;
-  endsAt: string | null;
-  place: SubQuest['place'];
-  state: MeetupState;
-  proposer: Person;
-  receiver: Person;
-}
-
-// POST /meetups: a proposal to one Friend. The place is a Place of the list or a point with its words.
-export interface MeetupProposal {
-  receiverId: string;
-  title: string;
-  startsAt: string;
-  endsAt?: string;
-  place: MeetupPlace;
-}
-
-// GET /meetups: those proposed to the User and those the User proposed, the newest first, every state included.
-export interface Meetups {
-  received: Meetup[];
-  sent: Meetup[];
 }
 
 // GET /quests/:questId/join-requests: the requests to join a Quest the User leads.

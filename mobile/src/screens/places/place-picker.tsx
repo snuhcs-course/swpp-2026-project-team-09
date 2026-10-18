@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -23,21 +24,14 @@ import {
 } from '@/design-system';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 
-// What the picker is for. `class` is the timetable's: the list only. `event`, a Meetup's or a Sub Quest's, also offers
-// `지도에서 직접 찍기`, which opens the map view of the `PlacePickerMap` frame.
-export type PlacePickerMode = 'class' | 'event';
-
 const SEARCH_AFTER_MS = 300;
 
 interface PlacePickerProps {
-  mode: PlacePickerMode;
   // The id of the Place chosen before, which the list checks.
   picked: string | null;
   // A press on a row: the caller closes the picker.
   onPick: (place: Place) => void;
   onClose: () => void;
-  // `지도에서 직접 찍기`, in the `event` mode.
-  onMap?: () => void;
 }
 
 // The words once they have not changed for a while.
@@ -52,10 +46,7 @@ function useSettled(words: string): string {
   return settled;
 }
 
-const NO_MATCH_HINT: Record<PlacePickerMode, string> = {
-  class: '건물 이름이나 동 번호로 다시 찾아 보세요',
-  event: '건물 이름이나 동 번호로 다시 찾거나, 지도에서 직접 찍어 보세요',
-};
+const NO_MATCH_HINT = '건물 이름이나 동 번호로 다시 찾아 보세요';
 
 // The list of Places, or the search's once the User stopped typing. The previous list stays while the next is asked.
 function usePlaces(words: string): { places: Place[] | undefined; asked: string; isError: boolean; retry: () => void } {
@@ -95,53 +86,29 @@ function PlaceRow({ place, chosen, onPress }: { place: Place; chosen: boolean; o
   );
 }
 
-// The first row of the `event` mode's list, while nothing is searched.
-function MapRow({ onPress }: { onPress: () => void }): ReactElement {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }): StyleProp<ViewStyle> => [styles.mapRow, pressed && styles.pressed]}
-    >
-      <View style={styles.mapRound}>
-        <Icon color={color.private} name="map" size={20} />
-      </View>
-      <Text style={styles.mapWords}>지도에서 직접 찍기</Text>
-      <Icon color={color.private} name="chevronRight" size={16} />
-    </Pressable>
-  );
-}
-
-function NoMatch({ words, hint, onMap }: { words: string; hint: string; onMap?: () => void }): ReactElement {
+function NoMatch({ words }: { words: string }): ReactElement {
   return (
     <View style={styles.none}>
       <View style={styles.noneIcon}>
         <Icon color={color.inkFaint} name="search" size={26} />
       </View>
       <Text style={styles.noneTitle}>{`‘${words}’에 맞는 장소가 없어요`}</Text>
-      <Text style={styles.noneHint}>{hint}</Text>
-      {onMap === undefined ? null : (
-        <Pressable accessibilityRole="button" onPress={onMap} style={styles.mapButton}>
-          <Icon color={color.private} name="map" size={18} />
-          <Text style={styles.mapButtonWords}>지도에서 직접 찍기</Text>
-        </Pressable>
-      )}
+      <Text style={styles.noneHint}>{NO_MATCH_HINT}</Text>
     </View>
   );
 }
 
-// 장소 선택, the `PlacePicker` and `PlacePickerClass` frames: a screen over the one that opened it, with the Places of
-// the campus and a search. Android's back closes it.
-export function PlacePicker({ mode, picked, onPick, onClose, onMap }: PlacePickerProps): ReactElement {
+// 장소 선택, the `PlacePickerClass` frame: a screen over the timetable's class form, with the Places of the campus and a
+// search. Android's back closes it.
+export function PlacePicker({ picked, onPick, onClose }: PlacePickerProps): ReactElement {
   const [words, setWords] = useState('');
   const { places, asked, isError, retry } = usePlaces(words);
-  const toMap = mode === 'event' ? onMap : undefined;
   useBackToClose(true, onClose);
   let body: ReactElement;
   if (places === undefined) {
     body = isError ? <ErrorState onRetry={retry} /> : <LoadingState />;
   } else if (places.length === 0 && asked !== '') {
-    body = <NoMatch hint={NO_MATCH_HINT[mode]} onMap={toMap} words={asked} />;
+    body = <NoMatch words={asked} />;
   } else {
     body = (
       <View accessibilityLabel="장소 목록" style={styles.list}>
@@ -175,7 +142,6 @@ export function PlacePicker({ mode, picked, onPick, onClose, onMap }: PlacePicke
           </View>
         }
       >
-        {toMap === undefined || words.trim() !== '' ? null : <MapRow onPress={toMap} />}
         {body}
       </FullScreenPanel>
     </View>
@@ -192,37 +158,6 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
   },
   list: { paddingHorizontal: space[4] },
-  mapRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    minHeight: 64,
-    paddingHorizontal: space[4],
-    borderBottomWidth: space[2],
-    borderBottomColor: color.surfaceSubtle,
-  },
-  mapRound: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 40,
-    height: 40,
-    borderRadius: radius.full,
-    backgroundColor: color.privateSoft,
-  },
-  mapWords: { flex: 1, fontFamily: font.semiBold, fontSize: 16, lineHeight: 22, color: color.private },
-  mapButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    height: 44,
-    marginTop: space[2],
-    paddingHorizontal: 18,
-    borderWidth: 1,
-    borderColor: color.private,
-    borderRadius: radius.md,
-    backgroundColor: color.surface,
-  },
-  mapButtonWords: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 22, color: color.private },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

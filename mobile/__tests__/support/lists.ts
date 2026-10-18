@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fireEvent, type screen as Screen } from '@testing-library/react-native';
@@ -25,7 +26,7 @@ export const SEND = '보내기';
 export const FRIEND_ROW = '김민준 지도에서 보기';
 export const FRIEND_ROW_OFF = '서지우 지도에서 보기';
 export const CLASS_ROW = '다음 강의 · 23분 후 · 자료구조 · 14:00 · 301동 118호';
-export const PARTY_ROW = '공개 파티 · 활성화 중 · AI 커리어 설명회 같이 가요 · 17:40 · 301동 앞';
+export const PARTY_ROW = '공개 파티 · 활성화 중 · AI 커리어 설명회 · 17:40 · 301동 앞';
 export const DINNER_ROW = '비공개 파티 · 김민준 · 저녁 약속 · 20:10 · 학생회관 (63동)';
 
 export function button(name: string): ReturnType<typeof screen.getByRole> {

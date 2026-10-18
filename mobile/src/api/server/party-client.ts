@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -23,7 +24,7 @@ function isNextSubQuest(value: unknown): value is RecruitingQuest['nextSubQuest'
   );
 }
 
-function isRecruitingQuest(value: unknown): value is RecruitingQuest {
+export function isRecruitingQuest(value: unknown): value is RecruitingQuest {
   return isQuestSummary(value) && isNextSubQuest(field(value, 'nextSubQuest'));
 }
 

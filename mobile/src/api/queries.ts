@@ -5,13 +5,15 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { apiClient } from './client';
 import type { RestaurantMenus } from './menu-types';
-import type { RecruitingQuest } from './party-types';
-import type { Board, Place, Quest } from './types';
+import type { PartyMessage, ShownJoinRequest, ShownQuest, ShownRecruitingQuest } from './quest-parts-types';
+import type { Board, Person, Place } from './types';
 import type { JoinRequest } from './waiting-types';
 
 // One entry of the cache per operation, each under its own key. The hooks of the features combine them, so that an
@@ -29,7 +31,6 @@ export const QUEST_INVITATIONS_KEY = ['quest-invitations'] as const;
 export const JOIN_REQUESTS_KEY = ['join-requests'] as const;
 export const SENT_INVITATIONS_KEY = ['sent-invitations'] as const;
 export const DECLINED_PARTIES_KEY = ['declined-parties'] as const;
-export const MEETUPS_KEY = ['meetups'] as const;
 export const CLASSES_KEY = ['timetable-classes'] as const;
 export const PLACES_KEY = ['places'] as const;
 export const FOOTPRINTS_KEY = ['footprints'] as const;
@@ -41,6 +42,12 @@ type MenusKey = readonly ['menus', string];
 export const RECRUITING_KEY = ['recruiting'] as const;
 export const MY_JOIN_REQUESTS_KEY = ['my-join-requests'] as const;
 export const MATCHING_REQUESTS_KEY = ['matching-requests'] as const;
+export const PARTY_CHAT_KEY = ['party-chat'] as const;
+export const PAST_QUESTS_KEY = ['past-quests'] as const;
+export const MY_TAGS_KEY = ['my-tags'] as const;
+export const OFFICIAL_RECRUITING_KEY = ['official-recruiting'] as const;
+export const HIDDEN_POSTS_KEY = ['hidden-posts'] as const;
+export const COMPANION_SEEKERS_KEY = ['companion-seekers'] as const;
 
 // Ask it only for a User who finished Onboarding: the main server refuses it before.
 // Entering the Lobby is done once, by the loading screen or after a sign-in, and its answer is not asked again by a
@@ -69,18 +76,23 @@ export const questInvitationsQuery = queryOptions({
   queryFn: () => apiClient.listQuestInvitations(),
 });
 // One entry for each Quest the User leads, all under one key, so that a signal fetches them all again.
-export function joinRequestsQuery(questId: string): UseQueryOptions<JoinRequest[], Error, JoinRequest[], string[]> {
+export function joinRequestsQuery(
+  questId: string,
+): UseQueryOptions<ShownJoinRequest[], Error, ShownJoinRequest[], string[]> {
   return { queryKey: [...JOIN_REQUESTS_KEY, questId], queryFn: () => apiClient.listJoinRequests(questId) };
 }
 // One Quest, for its room. Under the key of the Quests, so that whatever fetches them again fetches it too.
-export function questQuery(questId: string): UseQueryOptions<Quest, Error, Quest, string[]> {
+export function questQuery(questId: string): UseQueryOptions<ShownQuest, Error, ShownQuest, string[]> {
   return { queryKey: [...QUESTS_KEY, questId], queryFn: () => apiClient.getQuest(questId) };
+}
+// A room's 파티 채팅.
+export function partyChatQuery(questId: string): UseQueryOptions<PartyMessage[], Error, PartyMessage[], string[]> {
+  return { queryKey: [...PARTY_CHAT_KEY, questId], queryFn: () => apiClient.listPartyChat(questId) };
 }
 // The Leader's invitations into one Quest.
 export function sentInvitationsQuery(questId: string): UseQueryOptions<JoinRequest[], Error, JoinRequest[], string[]> {
   return { queryKey: [...SENT_INVITATIONS_KEY, questId], queryFn: () => apiClient.listSentInvitations(questId) };
 }
-export const meetupsQuery = queryOptions({ queryKey: MEETUPS_KEY, queryFn: () => apiClient.listMeetups() });
 export const classesQuery = queryOptions({ queryKey: CLASSES_KEY, queryFn: () => apiClient.listClasses() });
 export const footprintsQuery = queryOptions({ queryKey: FOOTPRINTS_KEY, queryFn: () => apiClient.getFootprints() });
 export const globalEventsQuery = queryOptions({
@@ -114,7 +126,7 @@ export const shuttleVehiclesQuery = queryOptions({
 // The recruiting Quests of one board, or of all under 'all', each under the one key.
 export function recruitingQuery(
   board: Board | 'all',
-): UseQueryOptions<RecruitingQuest[], Error, RecruitingQuest[], string[]> {
+): UseQueryOptions<ShownRecruitingQuest[], Error, ShownRecruitingQuest[], string[]> {
   return {
     queryKey: [...RECRUITING_KEY, board],
     queryFn: () => apiClient.listRecruitingQuests(board === 'all' ? {} : { board }),
@@ -125,7 +137,7 @@ export const recruitingQuestsQuery = recruitingQuery('all');
 // One Global Event's, under the same key, so that a signal fetches it with the boards'.
 export function eventRecruitingQuery(
   globalEventId: string,
-): UseQueryOptions<RecruitingQuest[], Error, RecruitingQuest[], string[]> {
+): UseQueryOptions<ShownRecruitingQuest[], Error, ShownRecruitingQuest[], string[]> {
   return {
     queryKey: [...RECRUITING_KEY, 'event', globalEventId],
     queryFn: () => apiClient.listRecruitingQuests({ globalEventId }),
@@ -138,4 +150,23 @@ export const myJoinRequestsQuery = queryOptions({
 export const matchingRequestsQuery = queryOptions({
   queryKey: MATCHING_REQUESTS_KEY,
   queryFn: () => apiClient.listMatchingRequests(),
+});
+// The User's tags, and the mocked parts of 찾기 (`./quest-parts/`).
+export const myTagsQuery = queryOptions({ queryKey: MY_TAGS_KEY, queryFn: () => apiClient.listMyTags() });
+
+// The User's past Quests, which `me` held: a mock, none in the server build (`./quest-parts/past-quests.ts`).
+export function pastQuestsQuery(me: Person): UseQueryOptions<ShownQuest[], Error, ShownQuest[], string[]> {
+  return { queryKey: [...PAST_QUESTS_KEY, me.id], queryFn: () => apiClient.listPastQuests(me) };
+}
+export const officialRecruitingQuery = queryOptions({
+  queryKey: OFFICIAL_RECRUITING_KEY,
+  queryFn: () => apiClient.listOfficialRecruiting(),
+});
+export const hiddenPostsQuery = queryOptions({
+  queryKey: HIDDEN_POSTS_KEY,
+  queryFn: () => apiClient.listHiddenPosts(),
+});
+export const companionSeekersQuery = queryOptions({
+  queryKey: COMPANION_SEEKERS_KEY,
+  queryFn: () => apiClient.listCompanionSeekers(),
 });

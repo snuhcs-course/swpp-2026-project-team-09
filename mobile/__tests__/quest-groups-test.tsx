@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -70,7 +71,7 @@ async function openQuests(quests: Quest[]): Promise<void> {
 }
 
 describe("the Quest list on the whole screen's groups", () => {
-  it('puts each Quest under the days to its start, a Quest without one last, and leaves out ended ones', async () => {
+  it('puts each Quest under the days to its start, and leaves out ended ones and those without a time', async () => {
     await openQuests([
       dinner('later', 'MT', '2026-10-26T01:00:00.000Z'),
       dinner('untimed', '보드게임', null),
@@ -81,16 +82,11 @@ describe("the Quest list on the whole screen's groups", () => {
       dinner('over', '지난 모임', '2026-10-05T09:00:00.000Z', true),
     ]);
 
-    expect(screen.getByRole('header', { name: '퀘스트 6' })).toBeVisible();
+    expect(screen.getByRole('header', { name: '퀘스트 5' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '전체 5' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '파티 5' })).toBeVisible();
     const headers = screen.getAllByRole('header').map((header) => header.props.children as unknown);
-    expect(headers.slice(1)).toEqual([
-      '오늘 · 10월 6일 (화)',
-      '내일 · 10월 7일 (수)',
-      '이번 주',
-      '다음 주',
-      '그 이후',
-      '시간 미정',
-    ]);
+    expect(headers.slice(1)).toEqual(['오늘 · 10월 6일 (화)', '내일 · 10월 7일 (수)', '이번 주', '다음 주', '그 이후']);
     const rows = screen.getAllByRole('button', { name: /^비공개 파티 · 김민준 · /u });
     expect(rows.map((row) => String(row.props.accessibilityLabel))).toEqual([
       '비공개 파티 · 김민준 · 저녁 약속 · 학생회관 (63동) · 20:10',
@@ -98,8 +94,8 @@ describe("the Quest list on the whole screen's groups", () => {
       '비공개 파티 · 김민준 · 스터디 · 학생회관 (63동) · 14:00',
       '비공개 파티 · 김민준 · 축제 · 학생회관 (63동) · 18:00',
       '비공개 파티 · 김민준 · MT · 학생회관 (63동) · 10:00',
-      '비공개 파티 · 김민준 · 보드게임 · 학생회관 (63동)',
     ]);
     expect(screen.queryByText('지난 모임')).toBeNull();
+    expect(screen.queryByText('보드게임')).toBeNull();
   });
 });

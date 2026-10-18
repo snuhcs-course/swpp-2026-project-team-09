@@ -3,37 +3,27 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { router } from 'expo-router';
 import { type ReactElement, useCallback, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
-import type { Quest } from '@/api/types';
 import { EmptyState, ErrorState, IconButton, LoadingState, space } from '@/design-system';
-import { type EventFilter, type EventSources, type RecruitRowView, toEventViews } from '@/features/events/adapter';
+import { type EventFilter, type EventSources, toEventViews } from '@/features/events/adapter';
 import { useEventSources } from '@/features/events/use-events';
-import { openPost } from '../party/post-card';
 import { TabScreen } from '../shell/tab-screen';
 import { EventItem } from './event-item';
 import { Filters, MatchingButton, SearchBar } from './events-bar';
-import { MatchingSheet } from './matching-sheet';
-import { RecruitingSheet } from './recruiting-sheet';
-import { useEventActions } from './use-event-actions';
+import { EventSheets, openMatchingRequests, type PickedEvent, useEventSheets } from './event-sheets';
 import { type Focus, useFocus } from './use-focus';
-import { useOpenPartyCreate } from './use-party-create';
-
-interface Picked {
-  id: string;
-  title: string;
-}
 
 interface ListProps extends Omit<Focus, 'focused'> {
   sources: EventSources;
   filter: EventFilter;
   search: string;
   focused: string | null;
-  onRecruit: (event: Picked) => void;
-  onMatch: (event: Picked) => void;
+  onRecruit: (event: PickedEvent) => void;
+  onMatch: (event: PickedEvent) => void;
 }
 
 function List({ sources, filter, search, focused, scroll, onCardAt, onRecruit, onMatch }: ListProps): ReactElement {
@@ -57,78 +47,13 @@ function List({ sources, filter, search, focused, scroll, onCardAt, onRecruit, o
           onMatch={() => {
             onMatch(event);
           }}
-          onMatching={() => {
-            router.push('/matching');
-          }}
+          onMatching={openMatchingRequests}
           onRecruit={() => {
             onRecruit(event);
           }}
         />
       ))}
     </ScrollView>
-  );
-}
-
-// The sheets the cards open: 파티 찾기/모집, whose rows open the recruiting posts, and AI 매칭.
-interface Sheets {
-  recruitEvent: Picked | null;
-  matchEvent: Picked | null;
-  setRecruitEvent: (event: Picked | null) => void;
-  setMatchEvent: (event: Picked | null) => void;
-  onRow: (row: RecruitRowView) => void;
-  onRecruit: (eventId: string) => void;
-}
-
-function useSheets(): Sheets {
-  const [recruitEvent, setRecruitEvent] = useState<Picked | null>(null);
-  const [matchEvent, setMatchEvent] = useState<Picked | null>(null);
-  const openPartyCreate = useOpenPartyCreate();
-  return {
-    recruitEvent,
-    matchEvent,
-    setRecruitEvent,
-    setMatchEvent,
-    // A Quest the User holds opens its room; another's opens its recruiting post, where the User joins or asks to.
-    onRow: (row) => {
-      setRecruitEvent(null);
-      if (row.held) {
-        router.push(`/room/${row.questId}`);
-        return;
-      }
-      openPost(row.questId);
-    },
-    // A User who holds the event's 파티 with others is led to it; anyone else recruits.
-    onRecruit: (eventId) => {
-      setRecruitEvent(null);
-      openPartyCreate(eventId);
-    },
-  };
-}
-
-function EventSheets({ sheets, quests }: { sheets: Sheets; quests: readonly Quest[] }): ReactElement {
-  const actions = useEventActions();
-  return (
-    <>
-      <RecruitingSheet
-        event={sheets.recruitEvent}
-        onClose={() => {
-          sheets.setRecruitEvent(null);
-        }}
-        onRecruit={sheets.onRecruit}
-        onRow={sheets.onRow}
-        quests={quests}
-      />
-      <MatchingSheet
-        event={sheets.matchEvent}
-        onClose={() => {
-          sheets.setMatchEvent(null);
-        }}
-        onSubmit={(globalEventId, groupSize) => {
-          sheets.setMatchEvent(null);
-          void actions.requestMatching(globalEventId, groupSize);
-        }}
-      />
-    </>
   );
 }
 
@@ -151,7 +76,7 @@ export function EventsScreen({ focus, onFocused }: EventsScreenProps): ReactElem
   }, []);
   const focusing = useFocus(focus, data !== undefined, onFocused, showAll);
   const quests = data?.quests ?? [];
-  const sheets = useSheets();
+  const sheets = useEventSheets();
   return (
     <TabScreen
       actions={

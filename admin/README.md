@@ -161,8 +161,8 @@ national map's 공공누리 type 1 ask for. Without the Kakao key the page says 
 The Users page reads `GET /admin/users`; its search keeps the Users whose name, email, department or Friend ID holds
 the text. A User's page reads the same list and `GET /admin/users/:id/friends`. "친구 맺기" offers the onboarded Users
 who are neither the User nor their Friends, searchable in the same way, and choosing one sends
-`POST /admin/friendships`. "친구 끊기" asks first, saying that Location Sharing between the two stops and that their
-proposed Meetups are withdrawn, then sends `DELETE /admin/friendships/:userAId/:userBId`. Both are the Server Action
+`POST /admin/friendships`. "친구 끊기" asks first, saying that Location Sharing between the two stops, then sends
+`DELETE /admin/friendships/:userAId/:userBId`. Both are the Server Action
 `changeFriendship` in `src/app/(signed-in)/users/[id]/actions.ts`. After a change, and after a refusal, the page says
 what happened and reads the lists again; the refusals `ALREADY_FRIENDS`, `USER_NOT_ONBOARDED`, `USER_NOT_FOUND` and
 `FRIEND_NOT_FOUND` each have their message. Nothing else about a User is read or changed.
