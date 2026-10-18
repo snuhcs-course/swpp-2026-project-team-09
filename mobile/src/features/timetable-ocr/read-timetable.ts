@@ -164,8 +164,8 @@ function readBlock(
 }
 
 // Reads a screenshot's timetable, with what was left out and why. `places` are the campus Places (`GET /places`),
-// for linking rooms to buildings.
-export function readScreenshot(result: NativeOcrResult, places: readonly Place[]): Reading {
+// for linking rooms to buildings. The import (ticket 04) calls this.
+export function readTimetable(result: NativeOcrResult, places: readonly Place[]): Reading {
   const image = decodePixels(result.pixels);
   const words = wordsOf(result);
   const grid = readGrid(words, image);
@@ -190,24 +190,3 @@ export function readScreenshot(result: NativeOcrResult, places: readonly Place[]
   const title = findTitle(result.lines, result.height, grid.headerTop * result.pixels.scale);
   return { kind: 'read', title, classes: mergeClasses(read), leftOut };
 }
-
-// The seam with the import (ticket 04): what one image's OCR becomes, in the spec's shape ("Reading pipeline",
-// "Output"). Pure: the same OCR and Places give the same classes on Android and iOS. What is uncertain is left out;
-// a picture without a timetable gives no classes.
-
-export type OcrResult = NativeOcrResult;
-
-export type { ReadClass, ReadTime };
-
-export interface ReadTable {
-  // The screenshot's title, which names the new version, or null.
-  title: string | null;
-  classes: ReadClass[];
-}
-
-export type ReadTimetable = (ocr: OcrResult, places: readonly Place[]) => ReadTable;
-
-export const readTimetable: ReadTimetable = (ocr, places) => {
-  const reading = readScreenshot(ocr, places);
-  return reading.kind === 'read' ? { title: reading.title, classes: reading.classes } : { title: null, classes: [] };
-};

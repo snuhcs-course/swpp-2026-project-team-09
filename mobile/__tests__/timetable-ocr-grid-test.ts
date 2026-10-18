@@ -7,7 +7,7 @@
 import { endIsUncertain, findBlocks, splitAtLightLines } from '@/features/timetable-ocr/blocks';
 import { columnsFromGridLines, findHeader } from '@/features/timetable-ocr/grid';
 import { fitHourLabels, type HourLabel, hoursAt, unfoldHours, wrapCandidates } from '@/features/timetable-ocr/hours';
-import { readScreenshot } from '@/features/timetable-ocr/read-timetable';
+import { readTimetable } from '@/features/timetable-ocr/read-timetable';
 import { wordsOf } from '@/features/timetable-ocr/words';
 
 import {
@@ -116,7 +116,7 @@ describe('the columns', () => {
   });
 
   it('and a picture without a timetable has none', () => {
-    expect(readScreenshot(screenshot([], [line('안녕하세요', 40, 300)], new Canvas()), []).kind).toBe('none');
+    expect(readTimetable(screenshot([], [line('안녕하세요', 40, 300)], new Canvas()), []).kind).toBe('none');
   });
 });
 
@@ -152,7 +152,7 @@ describe('stacked blocks and a block’s end', () => {
   it('stacked in one colour with no line are split where their text falls into two groups of one name', () => {
     const result = screenshot([{ day: 0, start: 10, end: 13, colour: BLUE, text: [] }]);
     result.lines.push(line('수학 1', LEFT + 4, rowOf(10) + 3), line('수학 1', LEFT + 4, rowOf(11.5) + 3));
-    const reading = readScreenshot(result, []);
+    const reading = readTimetable(result, []);
     expect(reading.kind === 'read' ? reading.classes : []).toEqual([
       {
         name: '수학 1',
