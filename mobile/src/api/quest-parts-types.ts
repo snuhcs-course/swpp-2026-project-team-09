@@ -8,7 +8,7 @@
 import type { ApiClient } from './client';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
 import type { Person, Quest } from './types';
-import type { QuestInvitation, QuestSummary } from './waiting-types';
+import type { JoinRequest, QuestInvitation, QuestSummary } from './waiting-types';
 
 // The parts of a Quest that the wireframe draws and the main server does not give yet. The app adds them to the
 // client's answers from mock adapters of its own (`./quest-parts/`), in the mock build and the server build alike.
@@ -89,6 +89,17 @@ export type ShownQuestInvitation = Omit<QuestInvitation, 'quest'> & {
   quest: QuestSummary & QuestParts;
 } & InvitationPlan;
 
+// A request to join with the note its User wrote, which the Leader reads in the room; null where none is known.
+export type ShownJoinRequest = JoinRequest & { note: string | null };
+
+// One message of a room's 파티 채팅. `from` is null for the User's own.
+export interface PartyMessage {
+  id: string;
+  from: { id: string; name: string } | null;
+  words: string;
+  sentAt: string;
+}
+
 // The operations whose answers carry the parts, or that take what the User enters.
 export type PartsOperation =
   | 'listQuests'
@@ -99,7 +110,8 @@ export type PartsOperation =
   | 'changeQuest'
   | 'acceptInvitation'
   | 'listRecruitingQuests'
-  | 'listQuestInvitations';
+  | 'listQuestInvitations'
+  | 'listJoinRequests';
 
 // The client the screens ask: the main server's answers, or the mock's, with the parts added, and the User's tags.
 export type ShownClient = Omit<ApiClient, PartsOperation> & {
@@ -117,6 +129,10 @@ export type ShownClient = Omit<ApiClient, PartsOperation> & {
   listQuestInvitations: () => Promise<ShownQuestInvitation[]>;
   // The User's own tags, without '#', which the form offers and 찾기 orders the posts by.
   listMyTags: () => Promise<string[]>;
+  listJoinRequests: (questId: string) => Promise<ShownJoinRequest[]>;
+  // The room's 파티 채팅, the oldest first, and sending to it. The phone keeps what the User sends.
+  listPartyChat: (questId: string) => Promise<PartyMessage[]>;
+  sendPartyChat: (questId: string, words: string) => Promise<PartyMessage>;
   // The User's past Quests, which 내 파티 shows under `지난 일정`: the main server keeps no ended Quest yet. `me` is the
   // User, who holds each of them.
   listPastQuests: (me: Person) => Promise<ShownQuest[]>;

@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -37,10 +38,14 @@ const ROOM_KEYS: readonly QueryKey[] = [
   SENT_INVITATIONS_KEY,
 ];
 
+// How the User gets out of another Party first: not at all, leaving it (true), or ending it ('end'), the one the User
+// leads.
+export type LeaveFirst = boolean | 'end';
+
 export interface RoomActions {
-  // `others` are the other Holders, told of it; `leaveFirst` leaves the User's other Party first.
-  openParty: (quest: Quest, others: number, leaveFirst: boolean) => Promise<void>;
-  joinParty: (partyId: string, leaveFirst: boolean) => Promise<void>;
+  // `others` are the other Holders, told of it; `leaveFirst` gets the User out of the other Party first.
+  openParty: (quest: Quest, others: number, leaveFirst: LeaveFirst) => Promise<void>;
+  joinParty: (partyId: string, leaveFirst: LeaveFirst) => Promise<void>;
   declineParty: (partyId: string) => void;
   leaveParty: () => Promise<void>;
   endParty: () => Promise<void>;
@@ -71,11 +76,24 @@ function runningPartyOf(error: unknown): string | null {
   return typeof partyId === 'string' ? partyId : null;
 }
 
-// Leaves the Party the User is in, if `first`, before entering another.
-async function leaveIf(first: boolean): Promise<void> {
+// Leaves the Party the User is in, or ends it, before entering another. Gives the title of a Party it ended, which
+// the room then no longer shows as the User's, or null.
+async function leaveIf(queryClient: QueryClient, first: LeaveFirst): Promise<string | null> {
+  if (first === 'end') {
+    const title = queryClient.getQueryData<MyParty | null>(MY_PARTY_KEY)?.title ?? '';
+    await apiClient.endParty();
+    queryClient.setQueryData<MyParty | null>(MY_PARTY_KEY, null);
+    return title;
+  }
   if (first) {
     await apiClient.leaveParty();
   }
+  return null;
+}
+
+// Why entering the other Party failed: after ending the User's own, that it is off although the User is in no Party.
+function enteringWords(ended: string | null, error: unknown): string {
+  return ended === null ? refusalWords(error) : `‘${ended}’ 활성화는 꺼졌지만 새 파티에 들어가지 못했어요`;
 }
 
 // How the User leaves the Quest's Party before the Quest: the Leader of the Party ends it, a member leaves it.
@@ -130,8 +148,9 @@ function showSharing(queryClient: QueryClient, on: boolean): void {
 // Opens the Quest's Party, or enters the one another Holder opened at the same moment.
 function openPartyWith({ queryClient, showToast, refetch, run }: Tools): RoomActions['openParty'] {
   return async (quest, others, leaveFirst) => {
+    let ended: string | null = null;
     try {
-      await leaveIf(leaveFirst);
+      ended = await leaveIf(queryClient, leaveFirst);
       enter(
         queryClient,
         await apiClient.openParty({ title: quest.title, capacity: 8, joinPolicy: 'closed', questId: quest.id }),
@@ -140,7 +159,7 @@ function openPartyWith({ queryClient, showToast, refetch, run }: Tools): RoomAct
     } catch (error) {
       const running = runningPartyOf(error);
       if (running === null) {
-        showToast(refusalWords(error));
+        showToast(enteringWords(ended, error));
       } else {
         await run(async () => {
           enter(queryClient, await apiClient.joinParty(running));
@@ -155,13 +174,19 @@ function openPartyWith({ queryClient, showToast, refetch, run }: Tools): RoomAct
 type PartyActions = Pick<RoomActions, 'joinParty' | 'leaveParty' | 'endParty' | 'setSharing'>;
 
 function partyActions(tools: Tools): PartyActions {
-  const { queryClient, run } = tools;
+  const { queryClient, showToast, refetch, run } = tools;
   return {
     joinParty: async (partyId, leaveFirst) => {
-      await run(async () => {
-        await leaveIf(leaveFirst);
+      let ended: string | null = null;
+      try {
+        ended = await leaveIf(queryClient, leaveFirst);
         enter(queryClient, await apiClient.joinParty(partyId));
-      }, '활성화에 참여했어요 · 위치 공유 시작');
+        showToast('활성화에 참여했어요 · 위치 공유 시작');
+      } catch (error) {
+        showToast(enteringWords(ended, error));
+      } finally {
+        refetch();
+      }
     },
     leaveParty: async () => {
       await run(() => apiClient.leaveParty(), '활성화에서 나왔어요 · 위치 공유 멈춤');

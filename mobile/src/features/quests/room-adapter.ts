@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import type { MyParty, Party, Quest, SubQuest } from '@/api/types';
+import type { ShownQuest } from '@/api/quest-parts-types';
+import type { LatLng, MyParty, Party, SubQuest } from '@/api/types';
 import { koreaClock } from '@/korea-time';
 import { editsSubQuests } from './rules';
 
@@ -50,14 +52,34 @@ export interface MemberView {
   seen: boolean;
 }
 
-export interface RoomView {
-  quest: Quest;
+// Where the members walk to: the place of the first Sub Quest ahead that has a position.
+export interface RoomDestination {
+  // "301동 앞"
+  label: string;
+  at: LatLng;
+}
+
+// The other Party the User is in: switching to this Quest's leaves it, or ends it when the User leads it.
+export interface OtherParty {
+  title: string;
   leads: boolean;
+}
+
+export interface RoomView {
+  quest: ShownQuest;
+  leads: boolean;
+  // `모집글 보기` for an Open or Approval Quest, which has a post.
+  hasPost: boolean;
+  // The text in the room, for a Closed Quest only: an Open or Approval Quest's is on its post. "" for none.
+  text: string;
+  // "#AI커리어"
+  tags: string[];
+  destination: RoomDestination | null;
   editsPlan: boolean;
   badges: BadgeView[];
   activation: ActivationView;
-  // The title of the other Party the User is in, or null.
-  otherParty: string | null;
+  // The other Party the User is in, or null.
+  otherParty: OtherParty | null;
   plan: PlanStepView[];
   members: MemberView[];
   // "2자리 남음" for an Open or Approval Quest, or null.
@@ -65,7 +87,7 @@ export interface RoomView {
 }
 
 export interface RoomSources {
-  quest: Quest;
+  quest: ShownQuest;
   myParty: MyParty | null;
   parties: readonly Party[];
   declined: readonly string[];
@@ -90,7 +112,7 @@ function activationOf({ quest, myParty, parties, declined, meId }: RoomSources):
     : { state: 'waiting', partyId: id, title, leader: running.leader?.name ?? null };
 }
 
-function badgesOf(quest: Quest, leads: boolean): BadgeView[] {
+function badgesOf(quest: ShownQuest, leads: boolean): BadgeView[] {
   const closed = quest.joinPolicy === 'closed';
   const holders = quest.holders.length;
   return [
@@ -113,7 +135,7 @@ function startOf({ startsAt }: SubQuest): number {
 }
 
 // By their start, those without one last.
-function planOf(quest: Quest): PlanStepView[] {
+function planOf(quest: ShownQuest): PlanStepView[] {
   const steps = quest.subQuests.toSorted((one, other) => startOf(one) - startOf(other));
   const next = steps.find(({ done, ended, cancelled }) => !done && !ended && !cancelled);
   return steps.map((subQuest) => ({
@@ -154,19 +176,42 @@ function membersOf(sources: RoomSources, inParty: boolean): MemberView[] {
   }));
 }
 
+function destinationOf(plan: readonly PlanStepView[]): RoomDestination | null {
+  const ahead = plan.find(
+    ({ over, subQuest: { place } }) => !over && place !== null && place.latitude !== null && place.longitude !== null,
+  )?.subQuest.place;
+  if (ahead === undefined || ahead === null || ahead.latitude === null || ahead.longitude === null) {
+    return null;
+  }
+  return { label: ahead.label, at: { latitude: ahead.latitude, longitude: ahead.longitude } };
+}
+
+function otherPartyOf(myParty: MyParty | null, inParty: boolean, meId: string): OtherParty | null {
+  if (myParty === null || inParty) {
+    return null;
+  }
+  return { title: myParty.title, leads: myParty.members.some(({ id, leader }) => id === meId && leader) };
+}
+
 export function toRoom(sources: RoomSources): RoomView {
   const { quest, myParty, meId } = sources;
   const leads = quest.leader?.id === meId;
   const activation = activationOf(sources);
   const inParty = activation.state === 'in';
+  const closed = quest.joinPolicy === 'closed';
+  const plan = planOf(quest);
   return {
     quest,
     leads,
+    hasPost: !closed,
+    text: closed ? quest.description : '',
+    tags: quest.tags.map((tag) => `#${tag}`),
+    destination: destinationOf(plan),
     editsPlan: editsSubQuests(quest, meId),
     badges: badgesOf(quest, leads),
     activation,
-    otherParty: myParty !== null && !inParty ? myParty.title : null,
-    plan: planOf(quest),
+    otherParty: otherPartyOf(myParty, inParty, meId),
+    plan,
     members: membersOf(sources, inParty),
     left: quest.joinPolicy === 'closed' ? null : `${quest.capacity - quest.holders.length}자리 남음`,
   };

@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -204,14 +205,16 @@ describe("the Leader's 일정 form, editing and cancelling", () => {
     ]);
   });
 
-  it('cancels a Sub Quest after the dialog', async () => {
+  it('deletes a Sub Quest at once, without a question and without an undo, as PartyDetail draws it', async () => {
     server.on(`DELETE ${STEPS}/${PICNIC_STEP?.id}`, { status: 204 });
     const user = await openRoom();
 
     await user.press(screen.getAllByRole('button', { name: '일정 삭제' })[1]);
-    expect(screen.getByRole('header', { name: '일정을 삭제할까요?' })).toBeVisible();
-    await answer(user, '삭제');
+    await pass(500);
 
+    expect(screen.queryByRole('header', { name: '일정을 삭제할까요?' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '삭제' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '실행 취소' })).toBeNull();
     expect(server.received(`DELETE ${STEPS}/${PICNIC_STEP?.id}`)).toHaveLength(1);
   });
 });
@@ -228,7 +231,7 @@ describe('a refused change of 일정', () => {
     const before = server.received(`GET /quests/${PICNIC.id}`).length;
 
     await user.press(screen.getAllByRole('button', { name: '일정 삭제' })[0]);
-    await answer(user, '삭제');
+    await pass(500);
 
     expect(toast()).toHaveTextContent(words);
     expect(server.received(`GET /quests/${PICNIC.id}`).length).toBeGreaterThan(before);

@@ -12,7 +12,7 @@
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { apiClient } from './client';
 import type { RestaurantMenus } from './menu-types';
-import type { ShownQuest, ShownRecruitingQuest } from './quest-parts-types';
+import type { PartyMessage, ShownJoinRequest, ShownQuest, ShownRecruitingQuest } from './quest-parts-types';
 import type { Board, Person, Place } from './types';
 import type { JoinRequest } from './waiting-types';
 
@@ -42,6 +42,7 @@ type MenusKey = readonly ['menus', string];
 export const RECRUITING_KEY = ['recruiting'] as const;
 export const MY_JOIN_REQUESTS_KEY = ['my-join-requests'] as const;
 export const MATCHING_REQUESTS_KEY = ['matching-requests'] as const;
+export const PARTY_CHAT_KEY = ['party-chat'] as const;
 export const PAST_QUESTS_KEY = ['past-quests'] as const;
 export const MY_TAGS_KEY = ['my-tags'] as const;
 export const OFFICIAL_RECRUITING_KEY = ['official-recruiting'] as const;
@@ -75,12 +76,18 @@ export const questInvitationsQuery = queryOptions({
   queryFn: () => apiClient.listQuestInvitations(),
 });
 // One entry for each Quest the User leads, all under one key, so that a signal fetches them all again.
-export function joinRequestsQuery(questId: string): UseQueryOptions<JoinRequest[], Error, JoinRequest[], string[]> {
+export function joinRequestsQuery(
+  questId: string,
+): UseQueryOptions<ShownJoinRequest[], Error, ShownJoinRequest[], string[]> {
   return { queryKey: [...JOIN_REQUESTS_KEY, questId], queryFn: () => apiClient.listJoinRequests(questId) };
 }
 // One Quest, for its room. Under the key of the Quests, so that whatever fetches them again fetches it too.
 export function questQuery(questId: string): UseQueryOptions<ShownQuest, Error, ShownQuest, string[]> {
   return { queryKey: [...QUESTS_KEY, questId], queryFn: () => apiClient.getQuest(questId) };
+}
+// A room's 파티 채팅.
+export function partyChatQuery(questId: string): UseQueryOptions<PartyMessage[], Error, PartyMessage[], string[]> {
+  return { queryKey: [...PARTY_CHAT_KEY, questId], queryFn: () => apiClient.listPartyChat(questId) };
 }
 // The Leader's invitations into one Quest.
 export function sentInvitationsQuery(questId: string): UseQueryOptions<JoinRequest[], Error, JoinRequest[], string[]> {

@@ -49,6 +49,8 @@ Ticket 03 adds one adapter each for official recruiting (`official.ts`: `listOff
 
 Ticket 04 adds two more. The main server's Global Event has no kind and no tags, so the form's event picker reads both from the event's title and description (`mobile/src/features/party/event-kinds.ts`). The main server cannot change a Quest's Global Event, so editing shows a Quest's own event locked, and for a Quest without one an event picked only fills the time, the place and the tags; ticket 08 lists the endpoint that would change it.
 
+Ticket 06 adds the room's two parts the same way (`notes.ts` and `chat.ts` in `mobile/src/api/quest-parts/`, data in `mobile/src/api/mock/data/room-parts.ts`): `listJoinRequests` carries a `note`, one of the mock's by the request's id in the mock build and null on server; `listPartyChat` and `sendPartyChat` give the room's 파티 채팅, the frame's conversation for the mock's `q-ai` in the mock build and an empty room on server. What the User sends is kept on the phone for the signed-in User (`snunow.party-chat.<userId>`), and nothing while no User is signed in.
+
 Kept on the phone and not mocked: declining an activation (`다른 활성 파티`); [11. A declined activation](server-endpoints.md#11-a-declined-activation-stored-on-the-server) stores it on the server.
 
 ## 3. Device checks (함재현)

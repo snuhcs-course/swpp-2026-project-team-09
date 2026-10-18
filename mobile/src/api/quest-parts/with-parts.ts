@@ -13,19 +13,22 @@ import type { QuestSummary } from '@/api/waiting-types';
 import { now } from '@/clock';
 import { keepQuestEntries, readQuestEntries } from '@/storage/quest-entries';
 import type { Build } from './build';
+import { chatOf, sendChat } from './chat';
 import { facesOfQuest, facesOfSummary } from './faces';
 import { invitationPlaceOf } from './invitation-places';
 import { invitationStartOf } from './invitation-times';
 import { pastQuestsOf } from './past-quests';
 import { hidePost, listHiddenPosts } from './hidden-posts';
 import { joinOfficialRecruiting, listOfficialRecruiting } from './official';
+import { noteOf } from './notes';
 import { photoOf } from './photos';
 import { askCompanionSeeker, listCompanionSeekers } from './seekers';
 import { myTagsOf, tagsOf } from './tags';
 
 // Adds the mocked parts of a Quest to a client's answers: its photo, its tags and its members' faces, each from its
-// own adapter; and the mocked parts of 찾기, official recruiting, hiding a post and the people looking for company.
-// When the main server gives one of them, its adapter is dropped here and the server client reads it.
+// own adapter; the mocked parts of 찾기, official recruiting, hiding a post and the people looking for company; and
+// the room's, a request's note and the 파티 채팅. When the main server gives one of them, its adapter is dropped
+// here and the server client reads it.
 
 type Entered = Partial<Record<string, QuestEntries>>;
 
@@ -57,11 +60,24 @@ function enteredOf({ photo, tags }: Partial<QuestEntries>): Partial<QuestEntries
   return { ...(photo === undefined ? {} : { photo }), ...(tags === undefined ? {} : { tags }) };
 }
 
-// A Quest the User has just made, on its own or for an event: its photo and tags are the ones the User gave, kept on the
-// phone even when none is given, so that it gets no mocked ones.
+// A Quest the User has just made, on its own or for an event: its photo and tags are the ones the User gave, kept on
+// the phone even when none is given, so that it gets no mocked ones.
 async function ownQuest(quest: Quest, { photo, tags }: Partial<QuestEntries>): Promise<ShownQuest> {
   await keepQuestEntries(quest.id, { photo: photo ?? null, tags: tags ?? [] });
   return shown(quest);
+}
+
+// The requests to join a Quest, each with its note.
+function withNotes(client: ApiClient, build: Build): Pick<ShownClient, 'listJoinRequests'> {
+  return {
+    listJoinRequests: async (questId) =>
+      (await client.listJoinRequests(questId)).map(({ id, user, sentAt }) => ({
+        id,
+        user,
+        sentAt,
+        note: noteOf(id, build),
+      })),
+  };
 }
 
 export function withQuestParts(client: ApiClient, build: Build): ShownClient {
@@ -109,6 +125,7 @@ export function withQuestParts(client: ApiClient, build: Build): ShownClient {
     },
     listMyTags: async () => myTagsOf(await client.getProfile(), build),
     ...mockedOnly(build),
+    ...withNotes(client, build),
   };
 }
 
@@ -125,6 +142,8 @@ function mockedOnly(build: Build): Pick<ShownClient, MockedOnly> {
     hidePost,
     listCompanionSeekers: () => listCompanionSeekers(build),
     askCompanionSeeker,
+    listPartyChat: (questId) => chatOf(questId, build),
+    sendPartyChat: (questId, words) => sendChat(questId, words),
   };
 }
 
@@ -135,4 +154,6 @@ type MockedOnly =
   | 'listHiddenPosts'
   | 'hidePost'
   | 'listCompanionSeekers'
-  | 'askCompanionSeeker';
+  | 'askCompanionSeeker'
+  | 'listPartyChat'
+  | 'sendPartyChat';
