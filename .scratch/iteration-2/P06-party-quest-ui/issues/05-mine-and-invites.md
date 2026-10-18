@@ -44,4 +44,4 @@ Decisions taken while building it:
 ### Agent usage (2026-10-18)
 
 - Agent time: about 1 h 30 min of active work by one subagent in its own worktree, over two sessions (the machine powered off mid-work). It is an estimate; time waiting on Jest under other agents' load is not counted.
-- Tokens: recorded by the main session.
+- Tokens, from the transcripts of the implementing subagent and one review subagent: input 25,328,496, of which 24,173,909 cache reads, 1,154,269 cache writes and 318 uncached; output 34,241. The main session's tokens are not split per ticket and are not included; its time on this ticket, about 20 minutes, is not in the agent time above.
