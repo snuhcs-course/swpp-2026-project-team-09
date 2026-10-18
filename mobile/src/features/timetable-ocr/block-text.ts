@@ -22,6 +22,9 @@ export interface BlockLine {
   elements: number;
   // Whether one of its elements is exactly the whole line, as a room read as one word is.
   wholeElement: boolean;
+  // Whether no element was cut at the block's sides: a room cut at a column edge (`43-1-304` → `3-1-304`) can still
+  // match the room pattern, and must not be linked.
+  unclipped: boolean;
 }
 
 export interface BlockText {
@@ -64,6 +67,7 @@ export function linesIn(words: readonly Word[], box: { x0: number; x1: number; y
         confidence: meanConfidence(pieces),
         elements: pieces.length,
         wholeElement: pieces.length === 1 && (pieces[0]?.whole ?? false),
+        unclipped: pieces.every((piece) => piece.whole),
       };
     })
     .toSorted((one, other) => one.y - other.y);
@@ -88,8 +92,12 @@ export function joinName(lines: readonly string[]): string {
 }
 
 // A block's name and room: a line below the first that matches the room pattern is the room (the last such line);
-// the others are the name. Bold or small type is not used: SNUTT draws the room bold, 에브리타임 small.
+// the others are the name. Bold or small type is not used: SNUTT draws the room bold, 에브리타임 small. A block whose
+// every line is a room has no name: it is not a class named after its room.
 export function blockText(lines: readonly BlockLine[]): BlockText {
+  if (lines.length > 0 && lines.every((line) => roomOf(line.text) !== null)) {
+    return { name: '', nameConfidence: null, room: lines.at(-1) ?? null, nameLines: 0 };
+  }
   let roomIndex = -1;
   lines.forEach((line, index) => {
     if (index > 0 && roomOf(line.text) !== null) {

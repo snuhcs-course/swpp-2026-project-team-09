@@ -40,8 +40,8 @@ export function buildingOf(room: string, places: readonly Place[]): Link | null 
 // room lines read 0.82–0.95: see accuracy.md.
 export const ROOM_CONFIDENCE = 0.8;
 
-// The link of a block's room line, when the line passes the rules: it matches the room pattern on its whole length
-// and is read with enough confidence. Without a confidence (iOS) the stricter rule stands in: the line is a single OCR
+// The link of a block's room line, when the line passes the rules: it matches the room pattern on its whole length,
+// none of its words was cut at the block's sides, and it is read with enough confidence. Without a confidence (iOS) the stricter rule stands in: the line is a single OCR
 // element, read whole. Either way the building must be a Place.
 export function linkRoom(line: BlockLine | null, places: readonly Place[]): Link | null {
   if (line === null) {
@@ -52,6 +52,7 @@ export function linkRoom(line: BlockLine | null, places: readonly Place[]): Link
     return null;
   }
   const trusted =
-    line.confidence === null ? line.wholeElement && line.elements === 1 : line.confidence >= ROOM_CONFIDENCE;
+    line.unclipped &&
+    (line.confidence === null ? line.wholeElement && line.elements === 1 : line.confidence >= ROOM_CONFIDENCE);
   return trusted ? buildingOf(room, places) : null;
 }
