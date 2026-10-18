@@ -13,9 +13,9 @@ import { FieldHead } from './field-head';
 
 const TAG_MOST = 30;
 
-// A typed tag without its spaces and leading '#'.
+// A typed tag without its spaces and any '#'.
 export function typedTag(words: string): string {
-  return words.replaceAll(/\s/gu, '').replace(/^#+/u, '').slice(0, TAG_MOST);
+  return words.replaceAll(/[\s#]/gu, '').slice(0, TAG_MOST);
 }
 
 interface TagFieldProps {

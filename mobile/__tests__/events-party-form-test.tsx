@@ -132,6 +132,20 @@ describe('recruiting for an event', () => {
     expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
   });
 
+  it('gives a Quest the User already shared for the event room for its Holders', async () => {
+    const people = ['a', 'b', 'c', 'd', 'e'].map((id) => ({ id, name: id, department: '' }));
+    const shared = { ...MY_CAREER, title: 'AI 커리어 설명회 같이 가요', holders: people, capacity: 5 };
+    server.on('POST /quests', { status: 201, body: shared });
+    server.on(`PATCH /quests/${MY_CAREER.id}`, { status: 200, body: shared });
+    const user = await openAt(`/party-form?eventId=${CAREER.id}`);
+    await fillRecruiting(user);
+
+    await user.press(screen.getByRole('button', { name: '파티 올리기' }));
+    await pass(500);
+
+    expect(server.received(`PATCH /quests/${MY_CAREER.id}`)[0]?.body).toMatchObject({ capacity: 5 });
+  });
+
   it('opens the room of the attended Quest when changing it is refused', async () => {
     server.on('POST /quests', { status: 201, body: MY_CAREER });
     server.on(`PATCH /quests/${MY_CAREER.id}`, refusal(409, 'NOT_QUEST_LEADER'));

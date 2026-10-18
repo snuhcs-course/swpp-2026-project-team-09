@@ -62,13 +62,14 @@ export function eventTitle(event: Pick<GlobalEvent, 'title'>): string {
 }
 
 // A chosen event gives its title, unless the User wrote one of their own, its start, which `언제` may move to a meeting
-// before it, and its tags. Taking the event away leaves the title and the tags.
-export function withEvent(form: PartyForm, event: FormEvent | null): PartyForm {
+// before it, and its tags. An edit keeps its title: the event only fills the time, the place and the tags. Taking the
+// event away leaves the title and the tags.
+export function withEvent(form: PartyForm, event: FormEvent | null, editing = false): PartyForm {
   if (event === null) {
-    return { ...form, event, startsAt: null };
+    return { ...form, event, startsAt: editing ? form.startsAt : null };
   }
   const title = form.title.trim();
-  const given = title === '' || (form.event !== null && title === eventTitle(form.event));
+  const given = !editing && (title === '' || (form.event !== null && title === eventTitle(form.event)));
   return {
     ...form,
     event,
@@ -78,9 +79,19 @@ export function withEvent(form: PartyForm, event: FormEvent | null): PartyForm {
   };
 }
 
-// The Sub Quest that editing changes the time and place of: the first still to come.
+function upcoming({ cancelled, ended, done }: SubQuest): boolean {
+  return !cancelled && !ended && !done;
+}
+
+// The Sub Quest that editing changes the time and place of: the first still to come that is not the event itself, whose
+// time and place the main server keeps as the event's.
 export function editedSubQuest(quest: Quest): SubQuest | null {
-  return quest.subQuests.find(({ cancelled, ended, done }) => !cancelled && !ended && !done) ?? null;
+  return quest.subQuests.find((subQuest) => upcoming(subQuest) && !subQuest.attending) ?? null;
+}
+
+// The time and place `언제` and `어디서` show when editing: the edited Sub Quest's, else the event's.
+export function shownSubQuest(quest: Quest): SubQuest | null {
+  return editedSubQuest(quest) ?? quest.subQuests.find((subQuest) => upcoming(subQuest)) ?? null;
 }
 
 // The form of a Quest the Leader edits, with its event as the picker knows it when it does.
@@ -94,7 +105,7 @@ export function formOf(quest: ShownQuest, event: FormEvent | null): PartyForm {
     visibility: closed ? 'private' : 'public',
     policy: quest.joinPolicy === 'approval' ? 'approval' : 'open',
     board: quest.board,
-    startsAt: editedSubQuest(quest)?.startsAt ?? null,
+    startsAt: shownSubQuest(quest)?.startsAt ?? null,
     event,
     photo: quest.photo,
     tags: quest.tags,
@@ -166,13 +177,11 @@ function samePhoto(one: QuestPhoto | null, other: QuestPhoto | null): boolean {
   return JSON.stringify(one) === JSON.stringify(other);
 }
 
-// What the phone keeps that changed against the Quest: the photo, the tags and the event.
+// What the phone keeps that changed against the Quest: the photo and the tags.
 export function entriesChangeOf(quest: ShownQuest, form: PartyForm): Partial<QuestEntries> {
-  const event = form.event === null ? null : { id: form.event.id, title: form.event.title };
   return {
     ...(samePhoto(quest.photo, form.photo) ? {} : { photo: form.photo }),
     ...(quest.tags.join(' ') === form.tags.join(' ') ? {} : { tags: form.tags }),
-    ...(quest.globalEvent?.id === event?.id ? {} : { event }),
   };
 }
 
@@ -188,10 +197,11 @@ export function attendingTitleOf(form: PartyForm): string | undefined {
 }
 
 // The PATCH after attending the event: everything the form sets, and the title when the attended Quest has another,
-// as a Quest the User already held for the event does.
+// as a Quest the User already held for the event does. Its 인원 takes at least the Holders it already has.
 export function recruitingOf(attended: Quest, form: PartyForm): QuestChange {
   const { title, subQuest: _subQuest, ...change } = makingOf(form);
-  return title === attended.title ? change : { title, ...change };
+  const capacity = Math.min(Math.max(change.capacity, attended.holders.length), MAX_CAPACITY);
+  return title === attended.title ? { ...change, capacity } : { title, ...change, capacity };
 }
 
 // The Sub Quest `모이기`, when `언제` moved from the event's start to a meeting before it.
@@ -208,16 +218,19 @@ export interface PlanChange {
   content: SubQuestContent;
 }
 
-// What editing `언제` and `어디서` changes, or null when neither changed or there is no time to give.
+// What editing `언제` and `어디서` changes, or null when neither changed or there is no time to give. A Quest whose
+// only step is its event gets `모이기` before it, as making one does: the event's own time is the main server's.
 export function planChangeOf(quest: Quest, form: PartyForm, placeChanged: boolean): PlanChange | null {
-  const subQuest = editedSubQuest(quest);
-  if (form.startsAt === null || (form.startsAt === (subQuest?.startsAt ?? null) && !placeChanged)) {
+  const shown = shownSubQuest(quest);
+  if (form.startsAt === null || (form.startsAt === (shown?.startsAt ?? null) && !placeChanged)) {
     return null;
   }
+  const edited = editedSubQuest(quest);
+  const title = edited?.title ?? (shown === null ? form.title.trim() : '모이기');
   const content = {
-    title: subQuest?.title ?? form.title.trim(),
+    title,
     startsAt: form.startsAt,
     ...(form.place === undefined ? {} : { place: form.place }),
   };
-  return { subQuestId: subQuest?.id ?? null, content };
+  return { subQuestId: edited?.id ?? null, content };
 }

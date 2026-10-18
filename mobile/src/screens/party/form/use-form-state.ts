@@ -17,7 +17,6 @@ import type { Friend, GlobalEvent } from '@/api/types';
 import type { PickedPlace } from '@/features/places/picked-place';
 import { usePlaceToSend } from '@/features/places/typed-place';
 import {
-  editedSubQuest,
   emptyForm,
   type FormEvent,
   formOf,
@@ -26,6 +25,7 @@ import {
   leastCapacity,
   type PartyForm,
   planChangeOf,
+  shownSubQuest,
   withEvent,
 } from '@/features/party/making';
 import { pickedOf } from '../../room/plan-form';
@@ -68,6 +68,8 @@ export interface FormState {
   ready: boolean;
   submit: () => void;
   pickEvent: (event: FormEvent | null) => void;
+  // The edited Quest is made for an event, which the main server cannot change.
+  eventLocked: boolean;
 }
 
 // The event of `/party-form?eventId=`, chosen once the Global Events are there.
@@ -86,16 +88,20 @@ function usePreselected(eventId: string | null, pick: (event: FormEvent) => void
 }
 
 // Choosing an event gives the form its title, time and tags, and `어디서` its place; `행사 빼기` clears the time and
-// place and leaves the title and the tags.
+// place and leaves the title and the tags. In an edit, the event fills the time, the place and the tags only, and
+// `행사 빼기` leaves them: the main server cannot change a Quest's event.
 function useEventPick(
   setForm: (change: (held: PartyForm) => PartyForm) => void,
   setWords: (words: string) => void,
   setPicked: (place: PickedPlace | null) => void,
-  eventId: string | null,
+  { eventId, editing }: { eventId: string | null; editing: boolean },
 ): (event: FormEvent | null) => void {
   const pickEvent = useCallback(
     (event: FormEvent | null) => {
-      setForm((held) => withEvent(held, event));
+      setForm((held) => withEvent(held, event, editing));
+      if (editing && event === null) {
+        return;
+      }
       const place = event?.place ?? null;
       setWords(place ?? '');
       setPicked(
@@ -104,7 +110,7 @@ function useEventPick(
           : { placeId: null, position: { latitude: event.latitude, longitude: event.longitude }, words: place },
       );
     },
-    [setForm, setWords, setPicked],
+    [setForm, setWords, setPicked, editing],
   );
   usePreselected(eventId, pickEvent);
   return pickEvent;
@@ -119,7 +125,7 @@ function useWhere(quest: ShownQuest | null): {
   changed: boolean;
 } {
   const [start] = useState(() => {
-    const subQuest = quest === null ? null : editedSubQuest(quest);
+    const subQuest = quest === null ? null : shownSubQuest(quest);
     return { words: subQuest?.place?.label ?? '', picked: pickedOf(subQuest) };
   });
   const [words, setWords] = useState(start.words);
@@ -168,7 +174,10 @@ export function useFormState({ quest, questEvent, eventId, friendId }: FormProps
   const where = useWhere(quest);
   const [saving, setSaving] = useState(false);
   const submit = useSubmit(quest, where, setSaving);
-  const pickEvent = useEventPick(setForm, where.setWords, where.setPicked, editing ? null : eventId);
+  const pickEvent = useEventPick(setForm, where.setWords, where.setPicked, {
+    eventId: editing ? null : eventId,
+    editing,
+  });
   const holderCount = Math.max(holders.length, 1);
   const most = invitable(form, holderCount);
   const shownChosen = chosen.slice(0, most);
@@ -190,14 +199,8 @@ export function useFormState({ quest, questEvent, eventId, friendId }: FormProps
     submit: () => {
       submit(form, shownChosen);
     },
-    // An edit's `행사 빼기` leaves the plan's time and place: they are the Quest's, not the event's.
-    pickEvent: (event) => {
-      if (editing && event === null) {
-        setForm((held) => ({ ...held, event: null }));
-      } else {
-        pickEvent(event);
-      }
-    },
+    pickEvent,
+    eventLocked: (quest?.globalEvent ?? null) !== null,
   };
 }
 

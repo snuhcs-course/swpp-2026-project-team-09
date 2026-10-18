@@ -30,7 +30,7 @@ What the app shows from its own mock. The build connected to the server hides th
 | 파티 채팅                                                                         | room                                                   |                         |
 | Past Quests (`지난 일정`)                                                         | 내 파티                                                |                         |
 | An event's kind (진로, 이벤트, 축제) and tags, read from its words                | form › 관련 행사                                       |                         |
-| A Quest's 관련 행사 changed when editing (_kept on the phone_)                    | form, room, 찾기                                       |                         |
+| Changing a Quest's 관련 행사 (_not possible yet_: locked in the form)             | form                                                   |                         |
 
 Ticket 02 adds the photos, the tags and the members' faces behind the API client (`mobile/src/api/quest-parts/`, one adapter for each, data in `mobile/src/api/mock/data/quest-parts.ts`). The screens read them as follows:
 
@@ -43,7 +43,7 @@ Ticket 02 adds the photos, the tags and the members' faces behind the API client
 
 A server Quest's photo and tags are picked from the mock's sets by a stable hash of its id. The photo and tags the User enters for a Quest they make (`makeQuest`, `changeQuest`) are kept on the phone (`snunow.quest-entries`) and come back with that Quest. The mock build's User, whose profile has no hashtags, gets the frame's tags.
 
-Ticket 04 adds two more. The main server's Global Event has no kind and no tags, so the form's event picker reads both from the event's title and description (`mobile/src/features/party/event-kinds.ts`). The main server cannot change a Quest's Global Event, so the 관련 행사 chosen when editing is kept on the phone with the photo and the tags (`changeQuest`'s `event`) and shows instead of the Quest's own.
+Ticket 04 adds two more. The main server's Global Event has no kind and no tags, so the form's event picker reads both from the event's title and description (`mobile/src/features/party/event-kinds.ts`). The main server cannot change a Quest's Global Event, so editing shows a Quest's own event locked, and for a Quest without one an event picked only fills the time, the place and the tags; ticket 08 lists the endpoint that would change it.
 
 Kept on the phone and not mocked: declining an activation (`다른 활성 파티`).
 

@@ -67,7 +67,7 @@ export function CapacityField({ form, least, onChange }: CapacityFieldProps): Re
   const { capacity } = form;
   return (
     <View style={styles.field}>
-      <FieldHead hint={`최대 ${String(MAX_CAPACITY)}명`} label="인원" />
+      <FieldHead label="인원" />
       <View style={styles.stepper}>
         <StepButton
           disabled={capacity <= least}

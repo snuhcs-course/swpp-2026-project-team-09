@@ -125,12 +125,15 @@ export function EventPicker({ chosen, onPick, onBack }: PickerProps): ReactEleme
 
 interface FieldProps {
   event: FormEvent | null;
+  // The edited Quest's own event, which stays.
+  locked: boolean;
   onChoose: () => void;
   onClear: () => void;
 }
 
-// `관련 행사`: `행사 선택`, or the chosen event in a navy box, which opens the picker again, with ✕ `행사 빼기`.
-export function EventField({ event, onChoose, onClear }: FieldProps): ReactElement {
+// `관련 행사`: `행사 선택`, or the chosen event in a navy box, which opens the picker again, with ✕ `행사 빼기`. An
+// edited Quest's own event is shown alone: the main server cannot change it.
+export function EventField({ event, locked, onChoose, onClear }: FieldProps): ReactElement {
   return (
     <View style={styles.field}>
       <FieldHead label="관련 행사" />
@@ -145,10 +148,11 @@ export function EventField({ event, onChoose, onClear }: FieldProps): ReactEleme
           <Icon color={color.inkMuted} name="chevronRight" size={18} />
         </Pressable>
       ) : (
-        <View style={styles.chosen} testID="chosen-event">
+        <View style={[styles.chosen, locked && styles.locked]} testID="chosen-event">
           <Pressable
-            accessibilityLabel={`관련 행사 ${event.title}, 다른 행사 선택`}
-            accessibilityRole="button"
+            accessibilityLabel={locked ? `관련 행사 ${event.title}` : `관련 행사 ${event.title}, 다른 행사 선택`}
+            accessibilityRole={locked ? 'text' : 'button'}
+            disabled={locked}
             onPress={onChoose}
             style={styles.chosenWords}
           >
@@ -156,7 +160,13 @@ export function EventField({ event, onChoose, onClear }: FieldProps): ReactEleme
             <Text style={styles.title}>{event.title}</Text>
             <Text style={styles.line}>{lineOf(event)}</Text>
           </Pressable>
-          <IconButton icon="x" label="행사 빼기" onPress={onClear} />
+          {locked ? (
+            <View style={styles.lock}>
+              <Icon color={color.inkMuted} label="바꿀 수 없어요" name="lock" size={18} />
+            </View>
+          ) : (
+            <IconButton icon="x" label="행사 빼기" onPress={onClear} />
+          )}
         </View>
       )}
     </View>
@@ -190,6 +200,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: color.surface,
   },
+  locked: { borderWidth: 1, borderColor: color.border, backgroundColor: color.surfaceSubtle },
+  lock: { alignItems: 'center', justifyContent: 'center', width: 48, height: 48 },
   chosenWords: { flex: 1, gap: 2 },
   source: { fontFamily: font.medium, fontSize: 12, lineHeight: 16, color: color.inkMuted },
   title: { fontFamily: font.semiBold, fontSize: 16, lineHeight: 22, color: color.ink },

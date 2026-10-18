@@ -38,13 +38,7 @@ export interface QuestParts {
 export interface QuestEntries {
   photo: QuestPhoto | null;
   tags: string[];
-  // The 관련 행사 chosen when editing, which the main server cannot change: it then shows instead of the Quest's own.
-  // Left out, the Quest's own shows.
-  event?: { id: string; title: string } | null;
 }
-
-// What making a Quest takes: its event is the one it is made for.
-export type MadeEntries = Pick<QuestEntries, 'photo' | 'tags'>;
 
 export type ShownQuest = Quest & QuestParts;
 export type ShownRecruitingQuest = RecruitingQuest & QuestParts;
@@ -68,10 +62,10 @@ export type ShownClient = Omit<ApiClient, PartsOperation> & {
   getQuest: (questId: string) => Promise<ShownQuest>;
   joinQuest: (questId: string) => Promise<ShownQuest>;
   // The photo and the tags left out keep none.
-  makeQuest: (making: QuestMaking & Partial<MadeEntries>, idempotencyKey: string) => Promise<ShownQuest>;
+  makeQuest: (making: QuestMaking & Partial<QuestEntries>, idempotencyKey: string) => Promise<ShownQuest>;
   // As `makeQuest`: the photo and the tags left out keep none.
-  attendGlobalEvent: (globalEventId: string, title?: string, entries?: Partial<MadeEntries>) => Promise<ShownQuest>;
-  // The photo, the tags or the event left out stay as they were.
+  attendGlobalEvent: (globalEventId: string, title?: string, entries?: Partial<QuestEntries>) => Promise<ShownQuest>;
+  // The photo or the tags left out stay as they were.
   changeQuest: (questId: string, change: QuestChange & Partial<QuestEntries>) => Promise<ShownQuest>;
   acceptInvitation: (invitationId: string) => Promise<ShownQuest>;
   listRecruitingQuests: (filter?: Parameters<ApiClient['listRecruitingQuests']>[0]) => Promise<ShownRecruitingQuest[]>;

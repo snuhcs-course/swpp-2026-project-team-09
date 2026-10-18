@@ -30,6 +30,10 @@ jest.mock('expo-image-picker', () => ({
   launchCameraAsync: jest.fn(),
   launchImageLibraryAsync: jest.fn(),
 }));
+// The app keeps a picked photo in its documents, here under its own name.
+jest.mock('@/storage/kept-photo', () => ({
+  keepPhoto: jest.fn((uri: string) => Promise.resolve(uri.replace('/photos/', '/documents/quest-photos/'))),
+}));
 jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotion: (): boolean => true,
   useMotionAllowed: (): boolean => false,
@@ -44,6 +48,8 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 let server: FakeServer;
+
+const KEPT_URI = PHOTO_URI.replace('/photos/', '/documents/quest-photos/');
 
 beforeEach(async () => {
   jest.useFakeTimers({ now: PHONE_NOW });
@@ -73,7 +79,7 @@ describe('사진', () => {
     await pass(0);
 
     expect(ImagePicker.requestCameraPermissionsAsync).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('photo-preview')).toHaveProp('source', { uri: PHOTO_URI });
+    expect(screen.getByTestId('photo-preview')).toHaveProp('source', { uri: KEPT_URI });
     expect(screen.queryByRole('button', { name: '앨범' })).toBeNull();
 
     await user.press(screen.getByRole('button', { name: '사진 빼기' }));
@@ -81,11 +87,11 @@ describe('사진', () => {
     expect(screen.getByRole('button', { name: '카메라' })).toBeVisible();
   });
 
-  it('keeps the album’s photo on the phone with the Quest, and sends the main server none', async () => {
+  it('keeps the album’s photo on the phone with the Quest, asking for no permission, and sends the main server none', async () => {
     const user = await openAt('/party-form');
     await user.press(screen.getByRole('button', { name: '앨범' }));
     await pass(0);
-    expect(ImagePicker.requestMediaLibraryPermissionsAsync).toHaveBeenCalledTimes(1);
+    expect(ImagePicker.requestMediaLibraryPermissionsAsync).not.toHaveBeenCalled();
     await fillPublic(user);
 
     await user.press(submit('파티 올리기'));
@@ -94,20 +100,33 @@ describe('사진', () => {
     expect(server.received('POST /quests/own')[0]?.body).not.toHaveProperty('photo');
     expect((await readQuestEntries())[MY_HIKE.id]?.photo).toEqual({
       kind: 'picked',
-      uri: PHOTO_URI,
+      uri: KEPT_URI,
       caption: '내가 첨부한 사진',
     });
   });
+});
 
-  it('says what to allow when the album is refused, and opens nothing', async () => {
-    jest.mocked(ImagePicker.requestMediaLibraryPermissionsAsync).mockResolvedValue(permission(false));
+describe('사진 not taken', () => {
+  it('says what to allow when the camera is refused, and opens nothing', async () => {
+    jest.mocked(ImagePicker.requestCameraPermissionsAsync).mockResolvedValue(permission(false));
+    const user = await openAt('/party-form');
+
+    await user.press(screen.getByRole('button', { name: '카메라' }));
+    await pass(0);
+
+    expect(toast()).toHaveTextContent('카메라를 쓸 수 있게 해 주세요');
+    expect(ImagePicker.launchCameraAsync).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('photo-preview')).toBeNull();
+  });
+
+  it('says so when the photo cannot be taken from the album', async () => {
+    jest.mocked(ImagePicker.launchImageLibraryAsync).mockRejectedValue(new Error('No picker'));
     const user = await openAt('/party-form');
 
     await user.press(screen.getByRole('button', { name: '앨범' }));
     await pass(0);
 
-    expect(toast()).toHaveTextContent('사진 보관함을 볼 수 있게 해 주세요');
-    expect(ImagePicker.launchImageLibraryAsync).not.toHaveBeenCalled();
+    expect(toast()).toHaveTextContent('사진을 가져오지 못했어요. 다시 시도해 주세요');
     expect(screen.queryByTestId('photo-preview')).toBeNull();
   });
 });

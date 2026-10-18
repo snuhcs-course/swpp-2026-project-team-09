@@ -57,6 +57,7 @@ function Fields({ state, onChooseEvent }: FieldsProps): ReactElement {
       />
       <EventField
         event={form.event}
+        locked={state.eventLocked}
         onChoose={onChooseEvent}
         onClear={() => {
           state.pickEvent(null);

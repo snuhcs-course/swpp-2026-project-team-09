@@ -97,7 +97,7 @@ describe('인원', () => {
 });
 
 describe('editing', () => {
-  it('shows 언제, 어디서 and 관련 행사, and saves the time and place to the plan and the event on the phone', async () => {
+  it('shows 언제, 어디서 and 관련 행사, and an event picked fills the plan’s time and place and its tags, not its title', async () => {
     const hike = { ...MY_HIKE, holders: [...MY_HIKE.holders] };
     const [step] = hike.subQuests;
     server.on(`GET /quests/${hike.id}`, { status: 200, body: hike });
@@ -120,24 +120,44 @@ describe('editing', () => {
       },
     ]);
     expect(server.received(`PATCH /quests/${hike.id}`)).toEqual([]);
-    const kept = (await readQuestEntries())[hike.id];
-    expect(kept?.event).toEqual({ id: CAREER.id, title: CAREER.title });
-    expect(kept?.tags).toEqual(expect.arrayContaining(['진로', 'AI', '커리어']));
+    expect((await readQuestEntries())[hike.id]?.tags).toEqual(expect.arrayContaining(['진로', 'AI', '커리어']));
     expect(toast()).toHaveTextContent('모집글을 수정했어요');
   });
+});
 
-  it('shows the event of a Quest made for one, and 행사 빼기 leaves its time and place', async () => {
-    server.on(`GET /quests/${MY_CAREER.id}`, { status: 200, body: { ...MY_CAREER, board: 'career' } });
-    const user = await openAt(`/party-form?questId=${MY_CAREER.id}`);
+describe('editing a Quest for an event', () => {
+  it('shows the event, which stays', async () => {
+    server.on(`GET /quests/${MY_CAREER.id}`, { status: 200, body: MY_CAREER });
+    await openAt(`/party-form?questId=${MY_CAREER.id}`);
 
     expect(screen.getByTestId('chosen-event')).toHaveTextContent(CAREER.title, { exact: false });
+    expect(screen.queryByRole('button', { name: '행사 빼기' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^관련 행사/u })).toBeNull();
     expect(screen.getByRole('button', { name: '언제 오늘 18:00' })).toBeVisible();
     expect(screen.getByLabelText('어디서')).toHaveDisplayValue('301동 대강당');
+  });
 
-    await user.press(screen.getByRole('button', { name: '행사 빼기' }));
-    expect(screen.getByRole('button', { name: '관련 행사 선택' })).toBeVisible();
-    expect(screen.getByRole('button', { name: '언제 오늘 18:00' })).toBeVisible();
-    expect(screen.getByLabelText('어디서')).toHaveDisplayValue('301동 대강당');
+  it('meets before the event with 모이기 when the time of a Quest for an event changes, and leaves the event as it is', async () => {
+    const [attending] = MY_CAREER.subQuests;
+    const meeting = { ...attending, id: 'sq-meet', attending: false, title: '모이기' };
+    server.on(`GET /quests/${MY_CAREER.id}`, { status: 200, body: MY_CAREER });
+    server.on(`POST /quests/${MY_CAREER.id}/sub-quests`, { status: 201, body: meeting });
+    const user = await openAt(`/party-form?questId=${MY_CAREER.id}`);
+
+    await user.press(screen.getByRole('button', { name: '언제 오늘 18:00' }));
+    await user.press(screen.getByRole('button', { name: '17시' }));
+    await user.press(screen.getByRole('button', { name: '확인' }));
+    await answer(user, '수정 완료');
+
+    expect(server.received(`POST /quests/${MY_CAREER.id}/sub-quests`).map(({ body }) => body)).toEqual([
+      {
+        title: '모이기',
+        startsAt: '2026-10-06T08:00:00.000Z',
+        place: { latitude: 37.45016, longitude: 126.95259, label: '301동 대강당' },
+      },
+    ]);
+    expect(server.received(`PUT /quests/${MY_CAREER.id}/sub-quests/${attending?.id ?? ''}`)).toEqual([]);
+    expect(server.received(`PATCH /quests/${MY_CAREER.id}`)).toEqual([]);
   });
 });
 

@@ -9,6 +9,7 @@ import type { ReactElement } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { QuestPhoto } from '@/api/quest-parts-types';
 import { color, font, Icon, type IconName, radius, space, useToast } from '@/design-system';
+import { keepPhoto } from '@/storage/kept-photo';
 import { FieldHead } from './field-head';
 
 // The caption of a photo the User attached, as the frame writes it.
@@ -16,19 +17,18 @@ const PICKED_CAPTION = '내가 첨부한 사진';
 
 type Source = 'camera' | 'album';
 
-const SOURCES: Record<Source, { label: string; icon: IconName; refused: string }> = {
-  camera: { label: '카메라', icon: 'camera', refused: '카메라를 쓸 수 있게 해 주세요' },
-  album: { label: '앨범', icon: 'image', refused: '사진 보관함을 볼 수 있게 해 주세요' },
+const SOURCES: Record<Source, { label: string; icon: IconName }> = {
+  camera: { label: '카메라', icon: 'camera' },
+  album: { label: '앨범', icon: 'image' },
 };
 
-// Asks for the permission when the User first uses the camera or the album, then opens it: what the User picked, or
-// no address when they refused or picked nothing.
+const CAMERA_REFUSED = '카메라를 쓸 수 있게 해 주세요';
+const NOT_PICKED = '사진을 가져오지 못했어요. 다시 시도해 주세요';
+
+// Opens the camera, asking for its permission when the User first uses it, or the system's photo picker, which needs
+// none: what the User picked, kept in the app's documents, or no address when they refused or picked nothing.
 async function pick(source: Source): Promise<{ refused: boolean; uri: string | null }> {
-  const asked =
-    source === 'camera'
-      ? await ImagePicker.requestCameraPermissionsAsync()
-      : await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!asked.granted) {
+  if (source === 'camera' && !(await ImagePicker.requestCameraPermissionsAsync()).granted) {
     return { refused: true, uri: null };
   }
   const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], allowsEditing: true, quality: 0.7 };
@@ -36,7 +36,8 @@ async function pick(source: Source): Promise<{ refused: boolean; uri: string | n
     source === 'camera'
       ? await ImagePicker.launchCameraAsync(options)
       : await ImagePicker.launchImageLibraryAsync(options);
-  return { refused: false, uri: result.canceled ? null : (result.assets[0]?.uri ?? null) };
+  const uri = result.canceled ? null : (result.assets[0]?.uri ?? null);
+  return { refused: false, uri: uri === null ? null : await keepPhoto(uri) };
 }
 
 function SourceButton({ source, onPress }: { source: Source; onPress: () => void }): ReactElement {
@@ -88,18 +89,27 @@ interface PhotoFieldProps {
   onChange: (photo: QuestPhoto | null) => void;
 }
 
+// Takes a photo from the camera or the album into the form, or says why it could not.
+function useTake(onChange: (photo: QuestPhoto) => void): (source: Source) => void {
+  const showToast = useToast();
+  return (source) => {
+    void pick(source)
+      .then(({ refused, uri }) => {
+        if (refused) {
+          showToast(CAMERA_REFUSED);
+        } else if (uri !== null) {
+          onChange({ kind: 'picked', uri, caption: PICKED_CAPTION });
+        }
+      })
+      .catch(() => {
+        showToast(NOT_PICKED);
+      });
+  };
+}
+
 // `사진`: 카메라 and 앨범, then the photo with ✕ `사진 빼기`. The phone keeps it; the main server does not store one yet.
 export function PhotoField({ photo, onChange }: PhotoFieldProps): ReactElement {
-  const showToast = useToast();
-  const take = (source: Source): void => {
-    void pick(source).then(({ refused, uri }) => {
-      if (refused) {
-        showToast(SOURCES[source].refused);
-      } else if (uri !== null) {
-        onChange({ kind: 'picked', uri, caption: PICKED_CAPTION });
-      }
-    });
-  };
+  const take = useTake(onChange);
   return (
     <View style={styles.field}>
       <FieldHead label="사진" />
