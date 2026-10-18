@@ -16,7 +16,7 @@ import type { TimetableVersions } from '@/features/timetable/use-versions';
 import { MOST_VERSIONS, readVersions } from '@/features/timetable/versions';
 import { importPlan } from './import-plan';
 import { hasNativeOcr, type NativeOcrResult, readImageText } from './native-ocr';
-import { type Reading, readScreenshot } from './read-timetable';
+import { type Reading, readTimetable } from './read-timetable';
 
 // `이미지로 불러오기` (P13 spec, "Importing"): a screenshot of a timetable picked from the album is read on the phone
 // and becomes a new version, which is switched to; the timetable screen then opens. The image never leaves the phone,
@@ -104,7 +104,7 @@ async function importImage({ versions, read, places, show, showNotReady, picked 
   }
 }
 
-export function useImportFromImage(versions: TimetableVersions, read: ReadImage = readScreenshot): ImportFromImage {
+export function useImportFromImage(versions: TimetableVersions, read: ReadImage = readTimetable): ImportFromImage {
   const queryClient = useQueryClient();
   const show = useToast();
   const showNotReady = useNotReadyToast();

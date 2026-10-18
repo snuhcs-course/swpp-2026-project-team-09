@@ -49,7 +49,7 @@ jest.mock('@/features/timetable-ocr/native-ocr', () => ({
 
 let mockRead: (places: readonly Place[]) => Reading = () => read(null, []);
 jest.mock('@/features/timetable-ocr/read-timetable', () => ({
-  readScreenshot: (_ocr: unknown, places: readonly Place[]): Reading => mockRead(places),
+  readTimetable: (_ocr: unknown, places: readonly Place[]): Reading => mockRead(places),
 }));
 
 const pick = jest.mocked(launchImageLibraryAsync);
