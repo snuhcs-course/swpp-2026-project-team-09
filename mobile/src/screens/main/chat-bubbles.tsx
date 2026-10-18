@@ -66,10 +66,11 @@ const MAP_BUTTONS: Record<MapLayer, { label: string; icon: IconName }> = {
   shuttle: { label: '지도에서 셔틀 보기', icon: 'bus' },
 };
 
-// What the Proposal card of an answer does, by the answer's bubble: how its making stands, and 만들기.
+// What the Proposal card of an answer does, by the answer's bubble: how its making stands, 만들기 and 수정.
 export interface ProposalActions {
   makingOf: (bubbleId: number) => ProposalMaking;
   make: (bubbleId: number, proposal: QuestProposal) => void;
+  edit: (bubbleId: number, proposal: QuestProposal) => void;
 }
 
 // What the cards of the answers do.
@@ -115,6 +116,30 @@ function Cards({ cards, actions }: { cards: readonly ShownChatCard[]; actions: C
   );
 }
 
+// The Proposal card of the answer in this bubble.
+function Proposal({
+  bubbleId,
+  proposal,
+  actions,
+}: {
+  bubbleId: number;
+  proposal: QuestProposal;
+  actions: ProposalActions;
+}): ReactElement {
+  return (
+    <ChatProposalCard
+      making={actions.makingOf(bubbleId)}
+      onEdit={() => {
+        actions.edit(bubbleId, proposal);
+      }}
+      onMake={() => {
+        actions.make(bubbleId, proposal);
+      }}
+      proposal={proposal}
+    />
+  );
+}
+
 interface BubbleProps {
   bubble: ChatBubble;
   // 다시 시도 under a failure the Assistant may get over, while it is the last bubble.
@@ -141,15 +166,7 @@ function Bubble({
     >
       <Text style={[styles.words, mine && styles.mineWords]}>{words}</Text>
       {shown.length === 0 ? null : <Cards actions={cardActions} cards={shown} />}
-      {proposed === null ? null : (
-        <ChatProposalCard
-          making={cardActions.proposals.makingOf(id)}
-          onMake={() => {
-            cardActions.proposals.make(id, proposed);
-          }}
-          proposal={proposed}
-        />
-      )}
+      {proposed === null ? null : <Proposal actions={cardActions.proposals} bubbleId={id} proposal={proposed} />}
       {layers.map((layer) => (
         <View key={layer} style={styles.below}>
           <Button

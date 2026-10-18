@@ -16,6 +16,7 @@ import { now } from '@/clock';
 import { Button, color, font, Icon, space, useToast } from '@/design-system';
 import { type Chat, useChat } from '@/features/assistant/use-chat';
 import { useBackToClose } from '@/hooks/use-back-to-close';
+import { holdProposal } from '@/features/party/held-proposal';
 import { isReady, type PartyForm, proposalForm } from '@/features/party/making';
 import type { PostView } from '@/features/party/posts';
 import { EventSheets, useEventSheets } from '../events/event-sheets';
@@ -164,11 +165,21 @@ function blockOf(proposal: QuestProposal, form: PartyForm): string | null {
   return form.startsAt !== null && new Date(form.startsAt) <= now() ? STARTED : null;
 }
 
+// 수정 on a Proposal card: closes the sheet and opens the party form filled with the Proposal, which tells `made` once
+// it made the Quest.
+function openProposalForm(proposal: QuestProposal, made: () => void, close: () => void): void {
+  holdProposal({ proposal, made });
+  close();
+  router.push({ pathname: '/party-form', params: { fromProposal: '1' } });
+}
+
 // 만들기 on a Proposal card: makes the Quest the way the party form does, attending its event and inviting its Friends,
 // and shows the form's toast. Made, it closes the sheet and goes where the form goes after making, 내 파티, or to the
 // room when a step after attending the event failed; refused, the sheet stays and the card can be pressed again. A
 // Proposal is made once: its card then says so, and a second press while it is on its way does nothing. The state
 // lives with the conversation, so that closing the sheet keeps it.
+// A Quest made in the form 수정 opens counts as made here too, so that the card does not make it again; coming back
+// without making leaves the card as it was.
 function useProposalMaking(close: () => void): ProposalActions {
   const sendParty = useSendParty(null);
   const showToast = useToast();
@@ -208,7 +219,16 @@ function useProposalMaking(close: () => void): ProposalActions {
       }
     });
   };
-  return { makingOf: (bubbleId) => making.get(bubbleId) ?? 'ready', make };
+  const edit = (bubbleId: number, proposal: QuestProposal): void => {
+    openProposalForm(
+      proposal,
+      () => {
+        mark(bubbleId, 'made');
+      },
+      close,
+    );
+  };
+  return { makingOf: (bubbleId) => making.get(bubbleId) ?? 'ready', make, edit };
 }
 
 export interface ChatSheetControl {
@@ -222,7 +242,7 @@ export interface ChatSheetControl {
 // The chat's sheet and how to open it. The conversation is kept while the sheet is closed. A map button closes the
 // sheet and turns its layer on with `turnOn`, the map's own layers; an event card closes it and opens the 행사 tab at
 // the event, as the room's event does; a Quest card closes it and opens the post, as 찾기's card does; a Proposal,
-// once made, closes it and shows 내 파티, as the party form does.
+// once made, closes it and shows 내 파티, as the party form does, and its 수정 closes it and opens that form.
 export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void): ChatSheetControl {
   const chat = useChat();
   const [shown, setShown] = useState(false);
