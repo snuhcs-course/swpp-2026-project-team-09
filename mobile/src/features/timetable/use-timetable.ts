@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type UseQueryResult, useQueries, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ import { CLASSES_KEY, classesQuery, placesQuery, QUESTS_KEY } from '@/api/querie
 import { type ScreenData, askAgain, someFailed, somePending } from '@/api/screen-data';
 import type { Place, TimetableClass } from '@/api/types';
 import { type ClassDraft, saveOf } from './class-form';
+import { noteClassesWritten, settledForWrite } from './versions';
 
 export interface Timetable {
   classes: TimetableClass[];
@@ -42,17 +44,21 @@ interface ClassChanges {
   remove: (classId: string) => Promise<void>;
 }
 
-// The changes to the timetable. After each, the classes and the Quests are fetched again, so that the timetable,
+// The changes to the timetable, refused with VersionsRefusal `unfinished` while a switch of versions is unfinished.
+// After each, the classes and the Quests are fetched again, so that the timetable,
 // 내 정보's week and today's Class Quests follow. The answer does not wait for them.
 export function useClassChanges(): ClassChanges {
   const queryClient = useQueryClient();
   const changed = useCallback((): void => {
     void queryClient.invalidateQueries({ queryKey: CLASSES_KEY });
     void queryClient.invalidateQueries({ queryKey: QUESTS_KEY });
+    // Not a change made elsewhere, for the timetable versions.
+    void noteClassesWritten().catch(() => null);
   }, [queryClient]);
   const save = useCallback(
     async (classId: string | null, draft: ClassDraft): Promise<TimetableClass> => {
       const body = saveOf(draft);
+      await settledForWrite();
       const saved = await (classId === null ? apiClient.addClass(body) : apiClient.replaceClass(classId, body));
       changed();
       return saved;
@@ -61,6 +67,7 @@ export function useClassChanges(): ClassChanges {
   );
   const remove = useCallback(
     async (classId: string): Promise<void> => {
+      await settledForWrite();
       await apiClient.deleteClass(classId);
       changed();
     },

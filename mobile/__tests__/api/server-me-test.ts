@@ -172,7 +172,8 @@ describe('what waits for the User', () => {
     const server = await askMainServer({ signedIn: true });
     server.on('GET /quest-invitations', { status: 200, body: [INVITATION] });
 
-    expect(await apiClient.listQuestInvitations()).toEqual([INVITATION]);
+    // The client adds a Quest's mocked parts to the answer (quest-parts-test).
+    expect(await apiClient.listQuestInvitations()).toMatchObject([INVITATION]);
   });
 
   it("gives the requests to join one of the User's Quests", async () => {
@@ -188,7 +189,7 @@ describe('what waits for the User', () => {
     server.on('GET /quests', { status: 200, body: [STUDY] });
     server.on('GET /parties', { status: 200, body: [DINNER_PARTY, withoutLeader] });
 
-    expect(await apiClient.listQuests()).toEqual([STUDY]);
+    expect(await apiClient.listQuests()).toMatchObject([STUDY]);
     expect(await apiClient.listParties()).toEqual([DINNER_PARTY, withoutLeader]);
   });
 });

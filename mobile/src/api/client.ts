@@ -9,11 +9,14 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { AssistantReply, ChatMessage } from './assistant-types';
 import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
+import type { ShownClient } from './quest-parts-types';
+import { withQuestParts } from './quest-parts/with-parts';
 import { asksMainServer } from './servers';
 import type { MatchingRequest } from './matching-types';
 import type {
@@ -55,6 +58,7 @@ export interface ApiClient {
   // Refused with 403 ONBOARDING_REQUIRED until Onboarding is finished.
   enterLobby: () => Promise<Lobby>;
   updateProfile: (change: ProfileChange) => Promise<Profile>;
+  getProfile: () => Promise<Profile>;
   setMasterSwitch: (on: boolean) => Promise<void>;
   // Refused with 409 MASTER_SWITCH_OFF while the Master Switch is off.
   uploadPosition: (position: PositionUpload) => Promise<PositionKept>;
@@ -85,10 +89,13 @@ export interface ApiClient {
   listClasses: () => Promise<TimetableClass[]>;
   // A class without its identifiers and overlaps. Each refused with 404 PLACE_NOT_FOUND for a Place not in the list; an add also with 409 TIMETABLE_FULL at 15
   // classes, and a replacement with 404 CLASS_NOT_FOUND.
-  addClass: (save: ClassSave) => Promise<TimetableClass>;
+  // `idempotencyKey` is new for each call unless given: a class sent again with the same key is added once.
+  addClass: (save: ClassSave, idempotencyKey?: string) => Promise<TimetableClass>;
   replaceClass: (classId: string, save: ClassSave) => Promise<TimetableClass>;
   // Refused with 404 CLASS_NOT_FOUND.
   deleteClass: (classId: string) => Promise<void>;
+  // Deletes every class of the User, also when there are none.
+  resetTimetable: () => Promise<void>;
   listPlaces: () => Promise<Place[]>;
   // The Places whose name holds the words, or whose number they are, with or without 동.
   searchPlaces: (words: string) => Promise<Place[]>;
@@ -162,17 +169,19 @@ export interface ApiClient {
   askAssistant: (messages: ChatMessage[]) => Promise<AssistantReply>;
 }
 
-// The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`). Chosen at each
-// call, so that a test can choose by its settings.
-function chosen(): ApiClient {
-  return asksMainServer() ? serverClient : mockClient;
+// The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`), each with the
+// mocked parts of a Quest added (`./quest-parts/`): every part in the mock build, and no invented people in the build
+// that asks the main server. Chosen at each call, so that a test can choose by its settings and replace an operation.
+function chosen(): ShownClient {
+  return asksMainServer() ? withQuestParts(serverClient, 'server') : withQuestParts(mockClient, 'mock');
 }
 
 // The one client of the app. The screens ask it and never know which of the two answers.
-export const apiClient: ApiClient = {
+export const apiClient: ShownClient = {
   completeOnboarding: (answers) => chosen().completeOnboarding(answers),
   enterLobby: () => chosen().enterLobby(),
   updateProfile: (change) => chosen().updateProfile(change),
+  getProfile: () => chosen().getProfile(),
   setMasterSwitch: (on) => chosen().setMasterSwitch(on),
   uploadPosition: (position) => chosen().uploadPosition(position),
   listFriends: () => chosen().listFriends(),
@@ -193,9 +202,10 @@ export const apiClient: ApiClient = {
   listQuestInvitations: () => chosen().listQuestInvitations(),
   listJoinRequests: (questId) => chosen().listJoinRequests(questId),
   listClasses: () => chosen().listClasses(),
-  addClass: (save) => chosen().addClass(save),
+  addClass: (save, key) => chosen().addClass(save, key),
   replaceClass: (classId, save) => chosen().replaceClass(classId, save),
   deleteClass: (classId) => chosen().deleteClass(classId),
+  resetTimetable: () => chosen().resetTimetable(),
   listPlaces: () => chosen().listPlaces(),
   searchPlaces: (words) => chosen().searchPlaces(words),
   listGlobalEvents: () => chosen().listGlobalEvents(),
@@ -238,10 +248,11 @@ export const apiClient: ApiClient = {
   listMyJoinRequests: () => chosen().listMyJoinRequests(),
   withdrawJoinRequest: (requestId) => chosen().withdrawJoinRequest(requestId),
   makeQuest: (making, key) => chosen().makeQuest(making, key),
-  attendGlobalEvent: (globalEventId, title) => chosen().attendGlobalEvent(globalEventId, title),
+  attendGlobalEvent: (globalEventId, title, entries) => chosen().attendGlobalEvent(globalEventId, title, entries),
   changeQuest: (questId, change) => chosen().changeQuest(questId, change),
   inviteToQuest: (questId, userId) => chosen().inviteToQuest(questId, userId),
   acceptInvitation: (invitationId) => chosen().acceptInvitation(invitationId),
   declineInvitation: (invitationId) => chosen().declineInvitation(invitationId),
+  listMyTags: () => chosen().listMyTags(),
   askAssistant: (messages) => chosen().askAssistant(messages),
 };

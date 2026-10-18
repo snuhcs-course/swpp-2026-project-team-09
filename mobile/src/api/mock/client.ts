@@ -7,6 +7,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -67,6 +68,7 @@ export const mockClient: ApiClient = {
       await keep({ answers });
       return profileOf(answers);
     }),
+  getProfile: () => answer('getProfile', async () => profileOf(await onboardingAnswers())),
   setMasterSwitch: (on) =>
     answer('setMasterSwitch', () => {
       masterSwitchOn = on;
@@ -122,11 +124,16 @@ export const mockClient: ApiClient = {
   // The User leads no Quest of the mock's.
   listJoinRequests: () => answer('listJoinRequests', () => [], []),
   listClasses: () => answer('listClasses', timetable.listClasses, []),
-  addClass: (save) => answer('addClass', () => timetable.addClass(save)),
+  addClass: (save, key) => answer('addClass', () => timetable.addClass(save, key)),
   replaceClass: (classId, save) => answer('replaceClass', () => timetable.replaceClass(classId, save)),
   deleteClass: async (classId) => {
     await answer('deleteClass', () => {
       timetable.deleteClass(classId);
+    });
+  },
+  resetTimetable: async () => {
+    await answer('resetTimetable', () => {
+      timetable.resetTimetable();
     });
   },
   listPlaces: () => answer('listPlaces', () => PLACES, []),

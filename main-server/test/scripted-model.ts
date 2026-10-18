@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { MockLanguageModelV4 } from 'ai/test';
 
-// One step of the model: a tool to call with its arguments, or the text to answer.
-export type Step = { tool: string; input: object } | { text: string };
+// One step of the model: a tool to call with its arguments, the text to answer, an error to throw as the provider
+// would, or no answer until the call is aborted, as the provider's request is when the time runs out.
+export type Step = { tool: string; input: object } | { text: string } | { error: Error } | { stall: true };
 
 type CallOptions = MockLanguageModelV4['doGenerateCalls'][number];
 type Result = Awaited<ReturnType<MockLanguageModelV4['doGenerate']>>;
@@ -17,7 +19,7 @@ const NO_USAGE: Result['usage'] = {
   outputTokens: { total: undefined, text: undefined, reasoning: undefined },
 };
 
-function resultOf(step: Step, index: number): Result {
+function resultOf(step: { tool: string; input: object } | { text: string }, index: number): Result {
   if ('text' in step) {
     return {
       content: [{ type: 'text', text: step.text }],
@@ -47,7 +49,7 @@ export class ScriptedModel {
     provider: 'scripted',
     modelId: 'scripted',
     // It keeps each call before it asks for the step.
-    doGenerate: (): Promise<Result> => this.next(),
+    doGenerate: ({ abortSignal }): Promise<Result> => this.next(abortSignal),
   });
 
   // Replaces the script and forgets the calls before.
@@ -83,12 +85,23 @@ export class ScriptedModel {
     );
   }
 
-  private next(): Promise<Result> {
+  private next(abortSignal: AbortSignal | undefined): Promise<Result> {
     const step = this.steps[this.taken];
     if (step === undefined) {
       return Promise.reject(new Error(`The script has no step ${this.taken + 1}`));
     }
     this.taken += 1;
+    if ('error' in step) {
+      return Promise.reject(step.error);
+    }
+    if ('stall' in step) {
+      return new Promise((_, reject) => {
+        abortSignal?.addEventListener('abort', () => {
+          const reason: unknown = abortSignal.reason;
+          reject(reason instanceof Error ? reason : new Error('Aborted'));
+        });
+      });
+    }
     return Promise.resolve(resultOf(step, this.taken));
   }
 }

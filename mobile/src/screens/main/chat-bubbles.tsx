@@ -7,7 +7,7 @@
 
 import { type ReactElement, useRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { color, font, Icon, type IconName, radius, space, text } from '@/design-system';
+import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 
 // The examples of the empty chat, each with its icon on its layer's colour. They replace the frame's library seats,
@@ -55,7 +55,13 @@ export function ChatEmpty({ onSend, under }: ChatEmptyProps): ReactElement {
   );
 }
 
-function Bubble({ role, text: words }: Pick<ChatBubble, 'role' | 'text'>): ReactElement {
+interface BubbleProps {
+  bubble: ChatBubble;
+  // 다시 시도 under a failure the Assistant may get over, while it is the last bubble.
+  onRetry: (() => void) | null;
+}
+
+function Bubble({ bubble: { role, text: words }, onRetry }: BubbleProps): ReactElement {
   const mine = role === 'user';
   return (
     <View
@@ -63,6 +69,13 @@ function Bubble({ role, text: words }: Pick<ChatBubble, 'role' | 'text'>): React
       testID={mine ? 'user-bubble' : 'assistant-bubble'}
     >
       <Text style={[styles.words, mine && styles.mineWords]}>{words}</Text>
+      {onRetry === null ? null : (
+        <View style={styles.retry}>
+          <Button onPress={onRetry} variant="secondary">
+            다시 시도
+          </Button>
+        </View>
+      )}
     </View>
   );
 }
@@ -70,13 +83,14 @@ function Bubble({ role, text: words }: Pick<ChatBubble, 'role' | 'text'>): React
 interface ChatBubblesProps {
   bubbles: readonly ChatBubble[];
   waiting: boolean;
+  onRetry: () => void;
   // How far from the sheet's bottom the last bubble ends, clear of the AI input.
   under: number;
 }
 
 // The conversation: the User's bubbles at the right, the Assistant's at the left, and "···" while the Assistant
 // works. It keeps the latest in view.
-export function ChatBubbles({ bubbles, waiting, under }: ChatBubblesProps): ReactElement {
+export function ChatBubbles({ bubbles, waiting, onRetry, under }: ChatBubblesProps): ReactElement {
   const scroller = useRef<ScrollView>(null);
   return (
     <ScrollView
@@ -87,8 +101,12 @@ export function ChatBubbles({ bubbles, waiting, under }: ChatBubblesProps): Reac
       }}
       ref={scroller}
     >
-      {bubbles.map(({ id, role, text: words }) => (
-        <Bubble key={id} role={role} text={words} />
+      {bubbles.map((bubble, index) => (
+        <Bubble
+          bubble={bubble}
+          key={bubble.id}
+          onRetry={bubble.failure === 'unavailable' && index === bubbles.length - 1 && !waiting ? onRetry : null}
+        />
       ))}
       {waiting ? (
         <View accessibilityLabel="답변을 기다리는 중" style={[styles.bubble, styles.theirs]} testID="waiting-bubble">
@@ -147,5 +165,6 @@ const styles = StyleSheet.create({
   },
   words: { ...text.bodyLg, color: color.ink },
   mineWords: { color: color.onPrimary },
+  retry: { marginTop: space[2] },
   waiting: { ...text.bodyLg, fontFamily: font.bold, letterSpacing: 3.2, color: color.inkMuted },
 });

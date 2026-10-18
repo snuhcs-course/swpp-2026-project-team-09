@@ -8,7 +8,7 @@
 import { type ReactElement, useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { color, font, Icon, space } from '@/design-system';
+import { Button, color, font, Icon, space } from '@/design-system';
 import { type Chat, useChat } from '@/features/assistant/use-chat';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { ChatBubbles, ChatEmpty } from './chat-bubbles';
@@ -29,8 +29,13 @@ const CLOSE = 48;
 // Between the last bubble and the AI input's top.
 const OVER_INPUT = 32;
 
-// The round chat icon, "SNU Now AI" and the close button, under the phone's status bar.
-function ChatHeader({ onClose }: { onClose: () => void }): ReactElement {
+interface ChatHeaderProps {
+  onReset: () => void;
+  onClose: () => void;
+}
+
+// The round chat icon, "SNU Now AI", 새 대화 and the close button, under the phone's status bar.
+function ChatHeader({ onReset, onClose }: ChatHeaderProps): ReactElement {
   const { top } = useSafeAreaInsets();
   return (
     <View style={[styles.header, { height: HEADER + top, paddingTop: top }]}>
@@ -40,6 +45,9 @@ function ChatHeader({ onClose }: { onClose: () => void }): ReactElement {
       <Text accessibilityRole="header" style={styles.title}>
         SNU Now AI
       </Text>
+      <Button icon="plus" onPress={onReset} variant="ghost">
+        새 대화
+      </Button>
       <Pressable accessibilityLabel="대화 닫기" accessibilityRole="button" onPress={onClose} style={styles.close}>
         <Icon color={color.ink} name="x" size={22} />
       </Pressable>
@@ -53,16 +61,16 @@ function ChatHeader({ onClose }: { onClose: () => void }): ReactElement {
 export function ChatSheet({ chat, inFront, onClose, inputHeight }: ChatSheetProps): ReactElement {
   const { top } = useSafeAreaInsets();
   useBackToClose(inFront, onClose);
-  const { bubbles, waiting, send } = chat;
+  const { bubbles, waiting, send, retry, reset } = chat;
   // From the sheet's bottom to the AI input's top, and the room above it.
   const under = AI_INPUT.bottom + inputHeight + 2 * space[1] + OVER_INPUT;
   return (
     <View style={[styles.sheet, { top: -top }]} testID="chat-sheet">
-      <ChatHeader onClose={onClose} />
+      <ChatHeader onClose={onClose} onReset={reset} />
       {bubbles.length === 0 && !waiting ? (
         <ChatEmpty onSend={send} under={under} />
       ) : (
-        <ChatBubbles bubbles={bubbles} under={under} waiting={waiting} />
+        <ChatBubbles bubbles={bubbles} onRetry={retry} under={under} waiting={waiting} />
       )}
     </View>
   );
