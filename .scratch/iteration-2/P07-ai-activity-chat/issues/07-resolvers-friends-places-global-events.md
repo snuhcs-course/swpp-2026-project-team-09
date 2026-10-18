@@ -131,7 +131,7 @@ Not checked or not confirmed:
   - The full app suite, run with 3 workers, failed 6 of 142 suites (47 tests), each taking 65 to 421 seconds while the machine was under load. Run again alone with one worker, all 6 pass (71 tests): `shuttle-vehicles`, `timetable-import`, `main-card`, `timetable`, `quests-screen` and `me-versions`. None of them touch the chat or the party form.
   - `chat-closed-proposal-test.tsx` (8 tests) and 06's `chat-proposal-card-test.tsx` (6 tests) pass.
   - The double-press test was also run with the ref check turned off. It then makes two POSTs and fails, so it does test the guard.
-  - `oxlint` and `prettier` are clean in both packages.
+  - `pnpm lint` (`oxlint --type-aware`), `format:check` and the server's `typecheck` are clean in both packages. The first push failed CI on 5 type-aware lint errors in the new test files, which plain `oxlint` had not reported, and a second commit fixed them.
 
 ### Agent usage (2026-10-18)
 

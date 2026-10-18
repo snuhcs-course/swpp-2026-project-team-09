@@ -107,7 +107,7 @@ function pressOf(button: ReturnType<typeof make>): () => void {
     throw new TypeError('The button takes no click');
   }
   return () => {
-    onClick({ nativeEvent: {}, target: button, currentTarget: button });
+    Reflect.apply(onClick, undefined, [{ nativeEvent: {}, target: button, currentTarget: button }]);
   };
 }
 

@@ -7,6 +7,7 @@
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
+import { z } from 'zod';
 import { GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { ask, postAssistantMessages } from './assistant.js';
@@ -126,7 +127,7 @@ describe('resolvePlace', () => {
     const answer = await resolve('resolvePlace', { words: '공학관' });
 
     expect(answer).toMatchObject({ result: 'several', more: true });
-    expect((answer as { candidates: unknown[] }).candidates).toHaveLength(10);
+    expect(z.object({ candidates: z.array(z.unknown()) }).parse(answer).candidates).toHaveLength(10);
   });
 
   it('answers none for words no Place has', async () => {

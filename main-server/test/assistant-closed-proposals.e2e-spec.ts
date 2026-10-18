@@ -77,16 +77,14 @@ function dinner(changes: object = {}): object {
   return { ...DINNER, ...changes };
 }
 
-const resolveFriends: Step[] = [
-  { tool: 'resolveFriend', input: { name: '육칠하늘' } },
-  { tool: 'resolveFriend', input: { name: '육칠바다' } },
-];
+const resolveHaneul: Step = { tool: 'resolveFriend', input: { name: '육칠하늘' } };
+const resolveFriends: Step[] = [resolveHaneul, { tool: 'resolveFriend', input: { name: '육칠바다' } }];
 
 async function send(steps: Step[], messages: readonly object[] = ask('…')): Promise<{ proposal: unknown }> {
   model.script(...steps, { text: '만들기를 누르면 파티가 만들어져요.' });
   const response = await postAssistantMessages(app, user.accessToken, messages);
   expect(response.status).toBe(200);
-  return response.body as { proposal: unknown };
+  return z.object({ proposal: z.unknown() }).parse(response.body);
 }
 
 // The fields proposeQuest, the last tool called, refused.
@@ -127,7 +125,7 @@ describe('a Closed Proposal with Friends, a Place and a Global Event', () => {
 
   it('keeps a meeting time before the event, and refuses one after its start', async () => {
     const steps = (startsAt: string): Step[] => [
-      resolveFriends[0] as Step,
+      resolveHaneul,
       { tool: 'resolveGlobalEvent', input: { words: '초여름 축제' } },
       { tool: 'proposeQuest', input: dinner({ startsAt, inviteeIds: [haneul.id], globalEventId: festival.id }) },
     ];
@@ -149,10 +147,7 @@ describe('proposeQuest refusing a Closed Proposal', () => {
   });
 
   it('with a Board', async () => {
-    await send([
-      resolveFriends[0] as Step,
-      { tool: 'proposeQuest', input: dinner({ board: 'meal', inviteeIds: [haneul.id] }) },
-    ]);
+    await send([resolveHaneul, { tool: 'proposeQuest', input: dinner({ board: 'meal', inviteeIds: [haneul.id] }) }]);
 
     expect(refusedFields()).toEqual(['board']);
   });
