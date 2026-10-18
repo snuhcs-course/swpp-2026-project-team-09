@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -26,13 +27,15 @@ import {
   useToastAbove,
 } from '@/design-system';
 import type { PostView } from '@/features/party/posts';
-import { usePost } from '@/features/party/use-party';
+import { type PostDetailView, usePost } from '@/features/party/use-party';
 import { agoWords } from '@/features/quests/room-adapter';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
 import { useRoomActions } from '../room/use-room-actions';
 import { JoinSheet } from './join-sheet';
 import { Fill, Line } from './post-card';
-import { usePartyActions } from './use-party-actions';
+import { PostReasons } from './post-reasons';
+import { Faces, PhotoView, TagBadges } from './quest-photo';
+import { useFindActions, usePartyActions } from './use-party-actions';
 
 const FOOTER = 81;
 
@@ -47,6 +50,7 @@ function partyOf(questId: string, myParty: MyParty | null): 'leads' | 'member' |
 interface FooterProps {
   post: PostView;
   onJoin: () => void;
+  onHide: () => void;
   onWithdraw: (requestId: string) => void;
   onEnd: () => void;
 }
@@ -55,33 +59,39 @@ function Note({ children }: { children: string }): ReactElement {
   return <Text style={styles.note}>{children}</Text>;
 }
 
-// What the reader can do: join or ask, wait on a request, end or edit the post, or nothing.
-function Footer({ post, onJoin, onWithdraw, onEnd }: FooterProps): ReactElement {
+// The Leader's: end the Quest, or edit the post.
+function OwnButtons({ questId, onEnd }: { questId: string; onEnd: () => void }): ReactElement {
+  return (
+    <View style={styles.buttons}>
+      <View style={styles.button}>
+        <Button full onPress={onEnd} size="lg" variant="danger">
+          없애기
+        </Button>
+      </View>
+      <View style={styles.button}>
+        <Button
+          full
+          onPress={() => {
+            router.push({ pathname: '/party-form', params: { questId } });
+          }}
+          size="lg"
+        >
+          수정하기
+        </Button>
+      </View>
+    </View>
+  );
+}
+
+// What the reader can do: join or ask, or hide another's post with `관심 없음`; wait on a request; end or edit the
+// post; or nothing.
+function Footer({ post, onJoin, onHide, onWithdraw, onEnd }: FooterProps): ReactElement {
   const { role } = post;
   if (role.kind === 'holder') {
     return <Note>이미 참여 중인 파티예요</Note>;
   }
   if (role.kind === 'leader') {
-    return (
-      <View style={styles.buttons}>
-        <View style={styles.button}>
-          <Button full onPress={onEnd} size="lg" variant="danger">
-            없애기
-          </Button>
-        </View>
-        <View style={styles.button}>
-          <Button
-            full
-            onPress={() => {
-              router.push({ pathname: '/party-form', params: { questId: post.questId } });
-            }}
-            size="lg"
-          >
-            수정하기
-          </Button>
-        </View>
-      </View>
-    );
+    return <OwnButtons onEnd={onEnd} questId={post.questId} />;
   }
   if (role.kind === 'approval' && role.requestId !== null) {
     const { requestId } = role;
@@ -100,13 +110,20 @@ function Footer({ post, onJoin, onWithdraw, onEnd }: FooterProps): ReactElement 
     );
   }
   return (
-    <Button full onPress={onJoin} size="lg">
-      {role.kind === 'approval' ? '참여 신청' : '참여하기'}
-    </Button>
+    <View style={styles.buttons}>
+      <Button onPress={onHide} size="lg" variant="secondary">
+        관심 없음
+      </Button>
+      <View style={styles.button}>
+        <Button full onPress={onJoin} size="lg">
+          {role.kind === 'approval' ? '참여 신청' : '참여하기'}
+        </Button>
+      </View>
+    </View>
   );
 }
 
-function Body({ post }: { post: PostView }): ReactElement {
+function Body({ post, reasons }: PostDetailView): ReactElement {
   return (
     <View style={styles.body}>
       <View style={[cardStyles.card, styles.card]}>
@@ -122,12 +139,16 @@ function Body({ post }: { post: PostView }): ReactElement {
           {post.title}
         </Text>
         {post.description === '' ? null : <Text style={styles.description}>{post.description}</Text>}
+        {post.photo === null ? null : <PhotoView photo={post.photo} size="full" />}
+        <TagBadges tags={post.tags} />
       </View>
       <View style={[cardStyles.card, styles.lines]}>
         <Line icon="clock">{post.time}</Line>
         <Line icon="pin">{post.place}</Line>
         <Line icon="users">{post.members}</Line>
+        <Faces faces={post.faces} />
       </View>
+      {reasons === null ? null : <PostReasons reasons={reasons} />}
     </View>
   );
 }
@@ -150,11 +171,48 @@ function useEndAsk(questId: string): () => Ask {
   });
 }
 
+// The footer with what it does: `관심 없음` hides the post and goes back.
+function PostFooter({
+  post,
+  onJoin,
+  onAsk,
+}: {
+  post: PostView;
+  onJoin: () => void;
+  onAsk: (ask: Ask) => void;
+}): ReactElement {
+  const actions = usePartyActions();
+  const findActions = useFindActions();
+  const endAsk = useEndAsk(post.questId);
+  return (
+    <Footer
+      onEnd={() => {
+        onAsk(endAsk());
+      }}
+      onHide={() =>
+        void findActions.hide(post.questId).then((hidden) => {
+          if (!hidden) {
+            return;
+          }
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace('/party');
+          }
+        })
+      }
+      onJoin={onJoin}
+      onWithdraw={(requestId) => void actions.withdraw(requestId)}
+      post={post}
+    />
+  );
+}
+
 // 파티 모집글, the frame's `PartyPost`: a recruiting post, and what its reader can do with it.
 export function PostScreen({ questId }: { questId: string }): ReactElement {
-  const { data: post, isPending, refetch } = usePost(questId);
+  const { data: detail, isPending, refetch } = usePost(questId);
+  const post = detail === undefined || detail === null ? detail : detail.post;
   const actions = usePartyActions();
-  const endAsk = useEndAsk(questId);
   const [joining, setJoining] = useState<PostView | null>(null);
   const [ask, setAsk] = useState<Ask | null>(null);
   useToastAbove(FOOTER, useIsFocused());
@@ -162,14 +220,11 @@ export function PostScreen({ questId }: { questId: string }): ReactElement {
     <FullScreenPanel
       footer={
         post === undefined || post === null ? undefined : (
-          <Footer
-            onEnd={() => {
-              setAsk(endAsk());
-            }}
+          <PostFooter
+            onAsk={setAsk}
             onJoin={() => {
               setJoining(post);
             }}
-            onWithdraw={(requestId) => void actions.withdraw(requestId)}
             post={post}
           />
         )
@@ -181,7 +236,7 @@ export function PostScreen({ questId }: { questId: string }): ReactElement {
       {post === undefined && isPending ? <LoadingState /> : null}
       {post === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
       {post === null ? <EmptyState words="파티를 찾을 수 없어요" /> : null}
-      {post === undefined || post === null ? null : <Body post={post} />}
+      {detail === undefined || detail === null ? null : <Body post={detail.post} reasons={detail.reasons} />}
       <JoinSheet
         onClose={() => {
           setJoining(null);

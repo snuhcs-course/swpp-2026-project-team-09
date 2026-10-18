@@ -12,8 +12,7 @@
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
 import { apiClient } from './client';
 import type { RestaurantMenus } from './menu-types';
-import type { RecruitingQuest } from './party-types';
-import type { ShownQuest } from './quest-parts-types';
+import type { ShownQuest, ShownRecruitingQuest } from './quest-parts-types';
 import type { Board, Place } from './types';
 import type { JoinRequest } from './waiting-types';
 
@@ -44,6 +43,9 @@ export const RECRUITING_KEY = ['recruiting'] as const;
 export const MY_JOIN_REQUESTS_KEY = ['my-join-requests'] as const;
 export const MATCHING_REQUESTS_KEY = ['matching-requests'] as const;
 export const MY_TAGS_KEY = ['my-tags'] as const;
+export const OFFICIAL_RECRUITING_KEY = ['official-recruiting'] as const;
+export const HIDDEN_POSTS_KEY = ['hidden-posts'] as const;
+export const COMPANION_SEEKERS_KEY = ['companion-seekers'] as const;
 
 // Ask it only for a User who finished Onboarding: the main server refuses it before.
 // Entering the Lobby is done once, by the loading screen or after a sign-in, and its answer is not asked again by a
@@ -116,7 +118,7 @@ export const shuttleVehiclesQuery = queryOptions({
 // The recruiting Quests of one board, or of all under 'all', each under the one key.
 export function recruitingQuery(
   board: Board | 'all',
-): UseQueryOptions<RecruitingQuest[], Error, RecruitingQuest[], string[]> {
+): UseQueryOptions<ShownRecruitingQuest[], Error, ShownRecruitingQuest[], string[]> {
   return {
     queryKey: [...RECRUITING_KEY, board],
     queryFn: () => apiClient.listRecruitingQuests(board === 'all' ? {} : { board }),
@@ -127,7 +129,7 @@ export const recruitingQuestsQuery = recruitingQuery('all');
 // One Global Event's, under the same key, so that a signal fetches it with the boards'.
 export function eventRecruitingQuery(
   globalEventId: string,
-): UseQueryOptions<RecruitingQuest[], Error, RecruitingQuest[], string[]> {
+): UseQueryOptions<ShownRecruitingQuest[], Error, ShownRecruitingQuest[], string[]> {
   return {
     queryKey: [...RECRUITING_KEY, 'event', globalEventId],
     queryFn: () => apiClient.listRecruitingQuests({ globalEventId }),
@@ -141,5 +143,17 @@ export const matchingRequestsQuery = queryOptions({
   queryKey: MATCHING_REQUESTS_KEY,
   queryFn: () => apiClient.listMatchingRequests(),
 });
-// The User's own tags, which 파티 만들기 offers.
+// The User's tags, and the mocked parts of 찾기 (`./quest-parts/`).
 export const myTagsQuery = queryOptions({ queryKey: MY_TAGS_KEY, queryFn: () => apiClient.listMyTags() });
+export const officialRecruitingQuery = queryOptions({
+  queryKey: OFFICIAL_RECRUITING_KEY,
+  queryFn: () => apiClient.listOfficialRecruiting(),
+});
+export const hiddenPostsQuery = queryOptions({
+  queryKey: HIDDEN_POSTS_KEY,
+  queryFn: () => apiClient.listHiddenPosts(),
+});
+export const companionSeekersQuery = queryOptions({
+  queryKey: COMPANION_SEEKERS_KEY,
+  queryFn: () => apiClient.listCompanionSeekers(),
+});
