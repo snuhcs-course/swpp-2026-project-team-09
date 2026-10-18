@@ -71,8 +71,8 @@ export class AssistantService {
     }
     const latest = messages.slice(-HISTORY_MAX);
     try {
-      const { text, mapButtons, cards } = await runFeature(this.model, this.chat, { userId, now }, latest, this.limits);
-      return { text, mapButtons, cards };
+      const reply = await runFeature(this.model, this.chat, { userId, now }, latest, this.limits);
+      return { text: reply.text, mapButtons: reply.mapButtons, cards: reply.cards, proposal: reply.proposal };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();

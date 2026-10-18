@@ -62,7 +62,7 @@ type User = Awaited<ReturnType<typeof openMain>>;
 
 // Opens the chat, sends 파티 찾기 and lets the Assistant answer with these cards.
 async function answered(cards: object[]): Promise<User> {
-  server.on('POST /assistant/messages', { status: 200, body: { text: REPLY, mapButtons: [], cards } });
+  server.on('POST /assistant/messages', { status: 200, body: { text: REPLY, mapButtons: [], cards, proposal: null } });
   const user = await openMain();
   await user.press(screen.getByLabelText(AI_INPUT));
   await user.type(screen.getByLabelText(AI_INPUT), '파티 찾기');

@@ -52,13 +52,20 @@ function toolSetOf({ tools }: Feature, context: ToolContext): ToolSet {
   );
 }
 
-// What the model reads of a message: an Assistant's carries a line naming the cards it showed.
+// What the model reads of a message: an Assistant's carries a line naming the cards it showed, and one with the values
+// of the Proposal it made, which proposeQuest is given again to change it.
 function contentOf(message: ChatMessage): string {
-  if (message.role === 'user' || message.cards.length === 0) {
+  if (message.role === 'user') {
     return message.text;
   }
-  const cards = message.cards.map(({ kind, id }) => `${kind} ${id}`).join(', ');
-  return `${message.text}\n\n[Cards shown: ${cards}]`;
+  const lines = [message.text];
+  if (message.cards.length > 0) {
+    lines.push(`[Cards shown: ${message.cards.map(({ kind, id }) => `${kind} ${id}`).join(', ')}]`);
+  }
+  if (message.proposal !== null) {
+    lines.push(`[Proposal shown: ${JSON.stringify(message.proposal)}]`);
+  }
+  return lines.join('\n\n');
 }
 
 // Runs the feature on the conversation, the User's new message last, and answers with the model's last text and what
@@ -71,7 +78,11 @@ export async function runFeature(
   messages: readonly ChatMessage[],
   { maxSteps, timeoutMs, maxOutputTokens }: RunLimits,
 ): Promise<FeatureReply> {
-  const context: ToolContext = { ...asker, found: new FoundIds(), presented: { mapButtons: [], cards: [] } };
+  const context: ToolContext = {
+    ...asker,
+    found: new FoundIds(),
+    presented: { mapButtons: [], cards: [], proposal: null },
+  };
   const { text, finishReason } = await generateText({
     model,
     instructions: feature.instructions(asker.now),

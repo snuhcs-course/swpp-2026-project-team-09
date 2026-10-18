@@ -90,9 +90,9 @@ function cardWithParts(card: ChatCard, entered: Entered, build: Build): ShownCha
 function withShownCards(client: ApiClient, build: Build): Pick<ShownClient, 'askAssistant'> {
   return {
     askAssistant: async (messages) => {
-      const { text, mapButtons, cards } = await client.askAssistant(messages);
+      const { cards, ...reply } = await client.askAssistant(messages);
       const entered = await readQuestEntries();
-      return { text, mapButtons, cards: cards.map((card) => cardWithParts(card, entered, build)) };
+      return { ...reply, cards: cards.map((card) => cardWithParts(card, entered, build)) };
     },
   };
 }

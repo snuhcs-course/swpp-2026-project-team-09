@@ -7,11 +7,12 @@
 
 import { type ReactElement, useRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { GlobalEventCard, MapLayer } from '@/api/assistant-types';
+import type { GlobalEventCard, MapLayer, QuestProposal } from '@/api/assistant-types';
 import type { ShownChatCard, ShownRecruitingQuest } from '@/api/quest-parts-types';
 import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { ChatEventCards, type EventCardActions } from './chat-event-cards';
+import { ChatProposalCard, type ProposalMaking } from './chat-proposal-card';
 import { ChatQuestCards, type QuestCardActions } from './chat-quest-cards';
 
 // The examples of the empty chat, each with its icon on its layer's colour. They replace the frame's library seats,
@@ -65,10 +66,17 @@ const MAP_BUTTONS: Record<MapLayer, { label: string; icon: IconName }> = {
   shuttle: { label: '지도에서 셔틀 보기', icon: 'bus' },
 };
 
+// What the Proposal card of an answer does, by the answer's bubble: how its making stands, and 만들기.
+export interface ProposalActions {
+  makingOf: (bubbleId: number) => ProposalMaking;
+  make: (bubbleId: number, proposal: QuestProposal) => void;
+}
+
 // What the cards of the answers do.
 export interface CardActions {
   events: EventCardActions;
   quests: QuestCardActions;
+  proposals: ProposalActions;
 }
 
 // The cards of an answer in the order the Assistant showed them, the cards of one kind next to each other together.
@@ -116,7 +124,7 @@ interface BubbleProps {
 }
 
 function Bubble({
-  bubble: { role, text: words, cards, mapButtons, failure },
+  bubble: { id, role, text: words, cards, mapButtons, proposal, failure },
   onRetry,
   onShowLayer,
   cardActions,
@@ -125,6 +133,7 @@ function Bubble({
   // Only under an answer: a failure has none.
   const layers = failure === null ? mapButtons : [];
   const shown = failure === null ? cards : [];
+  const proposed = failure === null ? proposal : null;
   return (
     <View
       style={[styles.bubble, mine ? styles.mine : styles.theirs]}
@@ -132,6 +141,15 @@ function Bubble({
     >
       <Text style={[styles.words, mine && styles.mineWords]}>{words}</Text>
       {shown.length === 0 ? null : <Cards actions={cardActions} cards={shown} />}
+      {proposed === null ? null : (
+        <ChatProposalCard
+          making={cardActions.proposals.makingOf(id)}
+          onMake={() => {
+            cardActions.proposals.make(id, proposed);
+          }}
+          proposal={proposed}
+        />
+      )}
       {layers.map((layer) => (
         <View key={layer} style={styles.below}>
           <Button

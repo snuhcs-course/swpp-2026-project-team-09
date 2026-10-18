@@ -176,6 +176,7 @@ describe('showQuests', () => {
         { kind: 'quest', quest: listedOf(second) },
         { kind: 'quest', quest: listedOf(first) },
       ],
+      proposal: null,
     });
     expect(listedOf(first)).toBeDefined();
     expect(model.toolResults().at(-1)).toEqual({ result: 'shown', ids: [second, first] });
@@ -197,7 +198,7 @@ describe('showQuests', () => {
       { role: 'user', text: '7월 5일은?' },
     ]);
 
-    expect(response.body).toEqual({ text: '…', mapButtons: [], cards: [] });
+    expect(response.body).toEqual({ text: '…', mapButtons: [], cards: [], proposal: null });
     expect(model.toolResults().at(-1)).toEqual(
       expect.stringContaining(`No tool returned these ids in this message: ${other}`),
     );

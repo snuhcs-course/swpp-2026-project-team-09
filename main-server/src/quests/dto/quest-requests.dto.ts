@@ -5,17 +5,18 @@
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
 import { JoinPolicy, QuestBoard } from '../../generated/prisma/client.js';
 
-const titleSchema = z.string().trim().min(1).max(50);
+export const titleSchema = z.string().trim().min(1).max(50);
 
 const capacitySchema = z.int().min(1).max(8);
 
 // The recruiting post. Empty is none.
-const descriptionSchema = z.string().trim().max(200);
+export const descriptionSchema = z.string().trim().max(200);
 
 // Left out, the title is the Global Event's.
 export const attendSchema = z.strictObject({ globalEventId: z.uuid(), title: titleSchema.optional() });
