@@ -10,9 +10,13 @@ import type { QuestChange } from '@/api/party-types';
 import type { QuestEntries, QuestParts, ShownClient, ShownQuest } from '@/api/quest-parts-types';
 import type { Quest } from '@/api/types';
 import type { QuestSummary } from '@/api/waiting-types';
+import { now } from '@/clock';
 import { keepQuestEntries, readQuestEntries } from '@/storage/quest-entries';
 import type { Build } from './build';
 import { facesOfQuest, facesOfSummary } from './faces';
+import { invitationPlaceOf } from './invitation-places';
+import { invitationStartOf } from './invitation-times';
+import { pastQuestsOf } from './past-quests';
 import { photoOf } from './photos';
 import { myTagsOf, tagsOf } from './tags';
 
@@ -90,12 +94,19 @@ export function withQuestParts(client: ApiClient, build: Build): ShownClient {
     listQuestInvitations: async () => {
       const invitations = await client.listQuestInvitations();
       const entered = await readQuestEntries();
+      const at = now();
       return invitations.map(({ id, quest, sentAt }) => ({
         id,
         quest: summaryWithParts(quest, entered, build),
         sentAt,
+        startsAt: invitationStartOf(quest, build, at),
+        place: invitationPlaceOf(quest, build),
       }));
     },
     listMyTags: async () => myTagsOf(await client.getProfile(), build),
+    listPastQuests: async (me) => {
+      const entered = await readQuestEntries();
+      return pastQuestsOf(me, now()).map((quest) => questWithParts(quest, entered));
+    },
   };
 }

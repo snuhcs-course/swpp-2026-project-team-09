@@ -189,3 +189,41 @@ describe('in the mock build', () => {
     expect(quests.find(({ classQuest }) => classQuest)).toMatchObject({ photo: null, tags: [] });
   });
 });
+
+describe("an invitation's time and place, and the past Quests", () => {
+  const ME = { id: 'me', name: '안진영', department: '컴퓨터공학부' };
+
+  it("gives in the mock build the frame's time and place: two days ahead at 14:00, at the library", async () => {
+    const [invitation] = await answered(apiClient.listQuestInvitations());
+
+    expect(invitation).toMatchObject({ startsAt: '2026-10-03T05:00:00.000Z', place: '중앙도서관 (62동)' });
+  });
+
+  it('leaves out the time, the place and the companions in the build that asks the main server', async () => {
+    const server = await askMainServer({ signedIn: true });
+    server.on('GET /quest-invitations', {
+      status: 200,
+      body: [{ ...INVITATION, quest: { ...INVITATION.quest, holderCount: 3 } }],
+    });
+
+    const [invitation] = await apiClient.listQuestInvitations();
+
+    expect(invitation).toMatchObject({ startsAt: null, place: null });
+    expect(invitation?.quest.faces).toEqual([{ name: '윤태오', photo: null }]);
+  });
+
+  it('gives the past Quests, held by the User and started before today, in both builds', async () => {
+    const mock = await answered(apiClient.listPastQuests(ME));
+    await askMainServer({ signedIn: true });
+    const server = await apiClient.listPastQuests(ME);
+
+    for (const past of [mock, server]) {
+      expect(past.map(({ title }) => title)).toEqual(['자료구조 중간고사 스터디', '버들골 저녁 러닝']);
+      for (const quest of past) {
+        expect(quest.holders).toContainEqual(ME);
+        expect(new Date(quest.subQuests[0]?.startsAt ?? '').getTime()).toBeLessThan(PHONE_NOW.getTime());
+        expect(TAG_SET).toContainEqual(quest.tags);
+      }
+    }
+  });
+});

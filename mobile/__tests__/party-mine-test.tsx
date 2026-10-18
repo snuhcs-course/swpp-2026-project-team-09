@@ -3,13 +3,14 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
 import type { Quest } from '@/api/types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { type FakeServer, refusal, type Reply } from './support/fake-server';
+import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { socketServer } from './support/live';
 import { pass, screen, shownAddress } from './support/app';
@@ -17,9 +18,10 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMyParty, DINNER_PARTY_MINE, myPicnicParty, PICNIC, toast } from './support/room';
 import { answerParty, MY_HIKE, openAt } from './support/party';
-import { askMainServer, DINNER, DINNER_PARTY, INVITATION, PHONE_NOW } from './support/server';
+import { askMainServer, DINNER, DINNER_PARTY, PHONE_NOW } from './support/server';
 
-// 내 파티 and 초대, against the fake main server, on Tuesday 6 October 2026 at 13:00 in Korea.
+// 내 파티, against the fake main server, on Tuesday 6 October 2026 at 13:00 in Korea. 초대 is in
+// `party-invites-test.tsx`, a card's status and activation strip in `party-mine-activation-test.tsx`.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -57,7 +59,18 @@ function card(title: string): ReturnType<typeof within> {
 }
 
 function groups(): string[] {
-  const names = new Set(['활성화 중', '활성화 알림', '오늘', '내일', '이번 주', '다음 주', '그 이후', '시간 미정']);
+  const names = new Set([
+    '활성화 중',
+    '활성화 알림',
+    '다른 활성 파티',
+    '오늘',
+    '내일',
+    '이번 주',
+    '다음 주',
+    '그 이후',
+    '시간 미정',
+    '지난 일정',
+  ]);
   return screen
     .getAllByRole('header')
     .map(({ props }) => String(props.children))
@@ -79,7 +92,7 @@ afterEach(() => {
 });
 
 describe('내 파티', () => {
-  it('groups the Quests, the running Parties first, then by the next Sub Quest’s day', async () => {
+  it('groups the Quests, the running Parties first, then by the next Sub Quest’s day, and the past ones last', async () => {
     setAnswers({ quests: [DINNER, MY_HIKE, PICNIC, ...TIMED] });
     answerMyParty(server, myPicnicParty());
     server.on('GET /parties', { status: 200, body: [DINNER_PARTY] });
@@ -94,12 +107,13 @@ describe('내 파티', () => {
       '다음 주',
       '그 이후',
       '시간 미정',
+      '지난 일정',
     ]);
     expect(card(PICNIC.title).getByText('활성화 중 · 2명 위치 공유')).toBeVisible();
-    expect(card(DINNER.title).getByText('🔒 비공개 파티')).toBeVisible();
-    expect(card(DINNER.title).getByText('멤버 2명')).toBeVisible();
+    expect(card(DINNER.title).getByText('비공개 파티')).toBeVisible();
+    expect(card(DINNER.title).getByText('2명')).toBeVisible();
     expect(card(DINNER.title).getByText('나, 김민준')).toBeVisible();
-    expect(card(MY_HIKE.title).getByText('👥 공개 파티')).toBeVisible();
+    expect(card(MY_HIKE.title).getByText('공개 파티')).toBeVisible();
     expect(card(MY_HIKE.title).getByText('모집 중 · 1/6명')).toBeVisible();
     expect(card(MY_HIKE.title).getByText('20:10 · 7시간 후')).toBeVisible();
     expect(card(MY_HIKE.title).getByText('저녁 약속 · 학생회관 (63동)')).toBeVisible();
@@ -158,6 +172,35 @@ describe('a card of 내 파티', () => {
   });
 });
 
+describe('지난 일정 in 내 파티', () => {
+  it('lists the past Quests last, the latest first, without a room to open', async () => {
+    const user = await openAt('/party?tab=mine');
+
+    expect(groups().at(-1)).toBe('지난 일정');
+    expect(
+      screen.getAllByText(/^(자료구조 중간고사 스터디|버들골 저녁 러닝)$/u).map(({ props }) => String(props.children)),
+    ).toEqual(['자료구조 중간고사 스터디', '버들골 저녁 러닝']);
+    const study = within(screen.getByLabelText('자료구조 중간고사 스터디'));
+    expect(study.getByText('비공개 파티')).toBeVisible();
+    expect(study.getByText('멤버 3명')).toBeVisible();
+    expect(study.getByText('10월 3일 (토) 19:00')).toBeVisible();
+    expect(study.getByText('나, 정하은 외 1명')).toBeVisible();
+    expect(screen.queryByRole('button', { name: '자료구조 중간고사 스터디' })).toBeNull();
+
+    await user.press(screen.getByLabelText('자료구조 중간고사 스터디'));
+    expect(shownAddress()).toBe('/party?tab=mine');
+  });
+
+  it('counts no past Quest in the chips', async () => {
+    setAnswers({ quests: [] });
+    await openAt('/party?tab=mine');
+
+    expect(screen.getByText('전체 0')).toBeVisible();
+    expect(screen.getByText('참여 중인 파티가 없어요')).toBeVisible();
+    expect(screen.getByLabelText('버들골 저녁 러닝')).toBeVisible();
+  });
+});
+
 describe('the requests to join waiting on a card of 내 파티', () => {
   it('shows their number on a Quest the User leads, and nothing when none waits', async () => {
     setAnswers({ quests: [DINNER, { ...MY_HIKE, waitingJoinRequests: 2 }] });
@@ -188,72 +231,5 @@ describe('the requests to join waiting on a card of 내 파티', () => {
     });
     await pass(500);
     expect(card(MY_HIKE.title).queryByLabelText(/기다리는 참여 신청/u)).toBeNull();
-  });
-});
-
-describe('초대', () => {
-  beforeEach(() => {
-    setAnswers({ invitations: [INVITATION] });
-  });
-
-  it('shows an invitation, which 수락 accepts', async () => {
-    server.on(`POST /quest-invitations/${INVITATION.id}/accept`, { status: 201, body: DINNER });
-    const user = await openAt('/party?tab=invites');
-
-    expect(screen.getByText('받은 초대 · 1')).toBeVisible();
-    const invitation = within(screen.getByLabelText(INVITATION.quest.title));
-    expect(invitation.getByText('윤태오님이 비공개 파티에 초대했어요')).toBeVisible();
-    expect(invitation.getByText('30분 전')).toBeVisible();
-    expect(invitation.getByText(INVITATION.quest.description)).toBeVisible();
-    expect(invitation.getByText('1명 참여 중')).toBeVisible();
-    await user.press(invitation.getByRole('button', { name: '수락' }));
-    await pass(500);
-
-    expect(server.received(`POST /quest-invitations/${INVITATION.id}/accept`)).toHaveLength(1);
-    expect(toast()).toHaveTextContent('파티에 참여했어요');
-  });
-
-  it('declines with 거절, which removes the card', async () => {
-    server.on(`POST /quest-invitations/${INVITATION.id}/decline`, { status: 204 });
-    const user = await openAt('/party?tab=invites');
-
-    setAnswers({ invitations: [] });
-    await user.press(screen.getByRole('button', { name: '거절' }));
-    await pass(500);
-
-    expect(server.received(`POST /quest-invitations/${INVITATION.id}/decline`)).toHaveLength(1);
-    expect(screen.getByText('받은 초대가 없어요')).toBeVisible();
-  });
-});
-
-describe('a refused acceptance', () => {
-  beforeEach(() => {
-    setAnswers({ invitations: [INVITATION] });
-  });
-
-  it.each([
-    [refusal(404, 'QUEST_INVITATION_NOT_FOUND'), '이미 끝난 초대예요'],
-    [refusal(409, 'QUEST_FULL'), '자리가 다 찼어요'],
-    [refusal(409, 'QUEST_ENDED'), '이미 끝난 파티예요'],
-    [refusal(409, 'SHARED_QUEST_HELD'), '이 행사에 함께 가는 파티가 이미 있어요'],
-  ] as [Reply, string][])('says why an acceptance was refused and keeps the invitation: %j', async (reply, words) => {
-    server.on(`POST /quest-invitations/${INVITATION.id}/accept`, reply);
-    const user = await openAt('/party?tab=invites');
-
-    await user.press(screen.getByRole('button', { name: '수락' }));
-    await pass(500);
-
-    expect(toast()).toHaveTextContent(words);
-    expect(screen.getByText(INVITATION.quest.title)).toBeVisible();
-  });
-});
-
-describe('초대 without an invitation', () => {
-  it('says when no invitation waits', async () => {
-    setAnswers({ invitations: [] });
-    await openAt('/party?tab=invites');
-
-    expect(screen.getByText('받은 초대 · 0')).toBeVisible();
-    expect(screen.getByText('받은 초대가 없어요')).toBeVisible();
   });
 });
