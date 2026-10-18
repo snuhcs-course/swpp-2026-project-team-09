@@ -14,7 +14,7 @@ import { apiClient } from './client';
 import type { RestaurantMenus } from './menu-types';
 import type { RecruitingQuest } from './party-types';
 import type { ShownQuest } from './quest-parts-types';
-import type { Board, Person, Place, Quest } from './types';
+import type { Board, Person, Place } from './types';
 import type { JoinRequest } from './waiting-types';
 
 // One entry of the cache per operation, each under its own key. The hooks of the features combine them, so that an
@@ -44,6 +44,7 @@ export const RECRUITING_KEY = ['recruiting'] as const;
 export const MY_JOIN_REQUESTS_KEY = ['my-join-requests'] as const;
 export const MATCHING_REQUESTS_KEY = ['matching-requests'] as const;
 export const PAST_QUESTS_KEY = ['past-quests'] as const;
+export const MY_TAGS_KEY = ['my-tags'] as const;
 
 // Ask it only for a User who finished Onboarding: the main server refuses it before.
 // Entering the Lobby is done once, by the loading screen or after a sign-in, and its answer is not asked again by a
@@ -76,7 +77,7 @@ export function joinRequestsQuery(questId: string): UseQueryOptions<JoinRequest[
   return { queryKey: [...JOIN_REQUESTS_KEY, questId], queryFn: () => apiClient.listJoinRequests(questId) };
 }
 // One Quest, for its room. Under the key of the Quests, so that whatever fetches them again fetches it too.
-export function questQuery(questId: string): UseQueryOptions<Quest, Error, Quest, string[]> {
+export function questQuery(questId: string): UseQueryOptions<ShownQuest, Error, ShownQuest, string[]> {
   return { queryKey: [...QUESTS_KEY, questId], queryFn: () => apiClient.getQuest(questId) };
 }
 // The Leader's invitations into one Quest.
@@ -141,6 +142,8 @@ export const matchingRequestsQuery = queryOptions({
   queryKey: MATCHING_REQUESTS_KEY,
   queryFn: () => apiClient.listMatchingRequests(),
 });
+// The User's own tags, which 파티 만들기 offers.
+export const myTagsQuery = queryOptions({ queryKey: MY_TAGS_KEY, queryFn: () => apiClient.listMyTags() });
 
 // The User's past Quests, which `me` held: a mock, none in the server build (`./quest-parts/past-quests.ts`).
 export function pastQuestsQuery(me: Person): UseQueryOptions<ShownQuest[], Error, ShownQuest[], string[]> {
