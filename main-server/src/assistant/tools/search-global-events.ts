@@ -59,7 +59,7 @@ export function searchGlobalEvents(globalEvents: GlobalEventsService): Tool {
       const start = new Date(`${from}T00:00:00+09:00`);
       const end = new Date(new Date(`${to}T00:00:00+09:00`).getTime() + DAY_MS);
       const events = await globalEvents.searchPublished(
-        { from: start, to: end, place, words, take: CANDIDATES_MAX + 1 },
+        { period: { from: start, to: end }, place, words, take: CANDIDATES_MAX + 1 },
         now,
       );
       if (events.length === 0) {

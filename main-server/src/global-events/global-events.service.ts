@@ -64,13 +64,14 @@ function notEnded(now: Date): Prisma.GlobalEventWhereInput {
   return { OR: [{ endsAt: { gt: now } }, { endsAt: null, startsAt: { gte: startOfSeoulDay(now) } }] };
 }
 
-// What the Assistant's searchGlobalEvents asks for: the events that fall in [from, to), whose place holds `place` and
-// whose title or description holds any of `words`, ignoring case. An event without an end falls on the day of its
-// start, and one without a start falls in no period.
+// What the Assistant's searchGlobalEvents and resolveGlobalEvent ask for: the events that fall in the period
+// [from, to), whose place holds `place`, whose title holds `title` and whose title or description holds any of
+// `words`, ignoring case. An event without an end falls on the day of its start, and one without a start falls in no
+// period. Without a period, any event that has not ended.
 export interface PublishedSearch {
-  from: Date;
-  to: Date;
+  period?: { from: Date; to: Date };
   place?: string;
+  title?: string;
   words?: readonly string[];
   // The most events answered.
   take: number;
@@ -80,10 +81,18 @@ function holding(text: string): Prisma.StringFilter {
   return { contains: text, mode: 'insensitive' };
 }
 
-function searched({ from, to, place, words }: PublishedSearch): Prisma.GlobalEventWhereInput[] {
+function searched({ period, place, title, words }: PublishedSearch): Prisma.GlobalEventWhereInput[] {
   return [
-    { startsAt: { lt: to }, OR: [{ endsAt: { gt: from } }, { endsAt: null, startsAt: { gte: from } }] },
+    ...(period === undefined
+      ? []
+      : [
+          {
+            startsAt: { lt: period.to },
+            OR: [{ endsAt: { gt: period.from } }, { endsAt: null, startsAt: { gte: period.from } }],
+          },
+        ]),
     ...(place === undefined ? [] : [{ place: holding(place) }]),
+    ...(title === undefined ? [] : [{ title: holding(title) }]),
     ...(words === undefined || words.length === 0
       ? []
       : [{ OR: words.flatMap((word) => [{ title: holding(word) }, { description: holding(word) }]) }]),

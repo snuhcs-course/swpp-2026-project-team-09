@@ -10,8 +10,10 @@ import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
 import { REDIS } from '../common/redis.module.js';
 import { type Settings } from '../common/settings.js';
+import { FriendsService } from '../friends/friends.service.js';
 import { MenusService } from '../menus/menus.service.js';
 import { GlobalEventsService } from '../global-events/global-events.service.js';
+import { PlacesService } from '../places/places.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { RecruitingService } from '../quests/recruiting.service.js';
 import { ShuttleService } from '../shuttle/shuttle.service.js';
@@ -45,8 +47,10 @@ export class AssistantService {
     shuttle: ShuttleService,
     globalEvents: GlobalEventsService,
     recruiting: RecruitingService,
+    friends: FriendsService,
+    places: PlacesService,
   ) {
-    this.chat = chatAssistant({ menus, shuttle, globalEvents, recruiting });
+    this.chat = chatAssistant({ menus, shuttle, globalEvents, recruiting, friends, places });
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
     this.dailyMessages = settings.get('ASSISTANT_DAILY_MESSAGES', { infer: true });
     this.limits = {

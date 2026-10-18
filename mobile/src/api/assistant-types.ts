@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 import type { RecruitingQuest } from './party-types';
-import type { Board, GlobalEvent } from './types';
+import type { Board, GlobalEvent, JoinPolicy } from './types';
 
 // --- The Assistant (POST /assistant/messages) ---
 
@@ -16,26 +16,49 @@ export interface CardReference {
   id: string;
 }
 
-// A Proposal: a 공개 파티 the Assistant filled in from what the User wrote, which does not exist until the User makes
-// it with the card's 만들기. An Open Quest is the form's 바로 참여, an Approval one its 승인 후 참여. `startsAt` is in
-// Korea time with its offset.
+// A Place or a Friend of a Proposal, by id and the words the card shows: the Place's name, the Friend's name. Never
+// where a Friend is.
+export interface ProposalPlace {
+  id: string;
+  name: string;
+}
+
+export interface ProposalFriend {
+  id: string;
+  name: string;
+}
+
+// A Proposal: a 파티 the Assistant filled in from what the User wrote, which does not exist until the User makes it
+// with the card's 만들기. An Open Quest is the form's 공개 · 바로 참여, an Approval one its 공개 · 승인 후 참여, on a
+// Board, and a Closed one its 비공개, on none. `startsAt` is in Korea time with its offset. The Global Event is whole,
+// as the 행사 tab lists it, and the Friends are those to invite.
 export interface QuestProposal {
   title: string;
   description: string;
-  joinPolicy: 'open' | 'approval';
-  board: Board;
+  joinPolicy: JoinPolicy;
+  board: Board | null;
   capacity: number;
   startsAt: string;
+  place: ProposalPlace | null;
+  globalEvent: GlobalEvent | null;
+  invitees: ProposalFriend[];
+}
+
+// A Proposal as it is sent back: its Global Event by id and title, as a card goes back by reference.
+export type SentProposal = Omit<QuestProposal, 'globalEvent'> & { globalEvent: { id: string; title: string } | null };
+
+export function sentProposalOf(proposal: QuestProposal): SentProposal {
+  const { globalEvent } = proposal;
+  return { ...proposal, globalEvent: globalEvent === null ? null : { id: globalEvent.id, title: globalEvent.title } };
 }
 
 // One message of the conversation, as the app sends it: the User's text, or the Assistant's with the cards it showed
 // and, on the last that made one, its Proposal by its values.
 export type ChatMessage =
-  | { role: 'user'; text: string }
-  | { role: 'assistant'; text: string; cards: CardReference[]; proposal?: QuestProposal };
+  { role: 'user'; text: string } | { role: 'assistant'; text: string; cards: CardReference[]; proposal?: SentProposal };
 
 // What the main server takes (main-server README: Assistant): the latest 20 messages, a User's of at most 1,000
-// characters, and at most 24,000 characters together, a Proposal's title and description included.
+// characters, and at most 24,000 characters together, a Proposal's text and names included.
 export const CHAT_HISTORY_MAX = 20;
 export const USER_MESSAGE_MAX = 1000;
 export const MESSAGES_TOTAL_MAX = 24_000;
@@ -59,10 +82,17 @@ export interface QuestCard {
 
 export type ChatCard = GlobalEventCard | QuestCard;
 
-// The characters a message counts for against MESSAGES_TOTAL_MAX: its text, and its Proposal's title and description.
+// The characters a Proposal counts for, as the main server counts them (proposalLength): its title, its description,
+// and the names of its Place, its event and its Friends.
+function proposalLength({ title, description, place, globalEvent, invitees }: SentProposal): number {
+  const names = [place?.name ?? '', globalEvent?.title ?? '', ...invitees.map(({ name }) => name)];
+  return [title, description, ...names].reduce((total, words) => total + words.length, 0);
+}
+
+// The characters a message counts for against MESSAGES_TOTAL_MAX: its text, and its Proposal's.
 export function lengthOf(message: ChatMessage): number {
   const proposal = message.role === 'assistant' ? message.proposal : undefined;
-  return message.text.length + (proposal === undefined ? 0 : proposal.title.length + proposal.description.length);
+  return message.text.length + (proposal === undefined ? 0 : proposalLength(proposal));
 }
 
 // What a later request sends of a card: what it is and its id, never its data.

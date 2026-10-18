@@ -1773,9 +1773,12 @@ its model through OpenRouter with the Vercel AI SDK
   (`{ "kind": "quest", "quest": { … } }`) as `GET /quests/recruiting` serves it to the User. Both are always there,
   `[]` when there are none. `proposal` is the Proposal the reply made, or `null`: a Quest the Assistant filled in,
   which does not exist until the User makes it from its card,
-  `{ "title", "description", "joinPolicy": "open" | "approval", "board", "capacity", "startsAt" }` with `startsAt` in
-  Korea time (`src/assistant/proposal.ts`). The app sends a card back only as its reference, `{ "kind", "id" }`, the
-  last Proposal with its values, and never the map buttons. Nothing of a conversation is stored: the app keeps it.
+  `{ "title", "description", "joinPolicy": "open" | "approval" | "closed", "board", "capacity", "startsAt",`
+  `"place", "globalEvent", "invitees" }` with `startsAt` in Korea time, `board` null for a Closed Quest, `place` as
+  `{ "id", "name" }` or null, `globalEvent` whole as `GET /global-events` serves it or null, and `invitees`, the Friends
+  to invite, as `[{ "id", "name" }]`, never where they are (`src/assistant/proposal.ts`). The app sends a card back only
+  as its reference, `{ "kind", "id" }`, the last Proposal with its values and its `globalEvent` as `{ "id", "title" }`,
+  and never the map buttons. Nothing of a conversation is stored: the app keeps it.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
@@ -1784,7 +1787,7 @@ its model through OpenRouter with the Vercel AI SDK
     a line naming its cards and a line with its Proposal's values, never an earlier message's tool results.
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
     the User's, a message of another shape, a User's message over 1,000 characters, an Assistant's over 4,000, more
-    than one Proposal, or messages over 24,000 characters together, a Proposal's title and description included
+    than one Proposal, or messages over 24,000 characters together, a Proposal's title, description and names included
     (`dto/assistant-messages.dto.ts`).
   - **429 `{ "message": "Today's messages are used up" }`** once a User has sent `ASSISTANT_DAILY_MESSAGES` messages
     (50) that day in Korea, without calling the model. Redis counts them under `assistant:messages:<userId>:<date>`.
@@ -1826,10 +1829,22 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     a start last. The soonest 20 come first, with `more` when there were more. Each carries its title, Board, Global
     Event, Join Policy, the places left, the next Sub Quest's start, end and place, and the first 300 characters of its
     description.
-  - `proposeQuest(title, description, joinPolicy, board, capacity, startsAt)` is the proposer, for an Open or Approval
-    Quest (the form's 공개). It checks the values against the main server's rules for making a Quest
-    (`makeQuestSchema`, so a changed limit reaches it by itself), the party form's readiness rule (a Board and a
-    description, which the app's `isReady` also holds) and a start after now. It answers
+  - **Resolvers** take the User's words as written and answer `{ "result": "one", "candidate" }`,
+    `{ "result": "several", "candidates", "more" }` (at most 10) or "none", never a guess; the system prompt tells the
+    model to ask on several and say so on none. Each adds the ids it answered to `FoundIds`.
+    `resolveFriend(name)` answers the User's Friends whose name holds the words, ignoring spaces, by id and name only
+    (`friend.name` in delimiters), never another User and never a location. `resolvePlace(words)` answers the Places
+    whose name holds the words or whose building number they are (`301동`), as `GET /places/search` does.
+    `resolveGlobalEvent(words, from?, to?)` answers the published events still to come whose title holds the words,
+    within the period when one is given.
+  - `proposeQuest(title, description, joinPolicy, board, capacity, startsAt, placeId, globalEventId, inviteeIds)` is
+    the proposer. It checks the values against the main server's rules for making a Quest (`makeQuestSchema`, so a
+    changed limit reaches it by itself), the party form's readiness rules (공개: a Board and a description; 비공개: no
+    Board and at least one invited Friend, which the app's `isReady` also holds), a start after now, and that the
+    User and the invitees fit the capacity. It takes an id only when a resolver returned it in this message or it is
+    in the last Proposal sent back, and checks it again every time: the Place exists, the event is published, each
+    invitee is a Friend. With a Global Event and no time it starts at the event's start; a time before is a meeting
+    before the event, as the form's `모이기`, and one after its start is refused. It answers
     `{ "result": "refused", "fields": { "board": "…" } }` with what is missing or wrong by field, which the model asks
     the User for, or `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when
     it is called twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
@@ -1839,7 +1854,8 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     `showGlobalEvents(ids)` adds those events as cards, in the order given, and `showQuests(ids)` those Quests. Cards
     of both kinds lie in one list in the order shown, at most 20 in a reply.
   - **The presenters' guard** (`found-ids.ts`): a presenter accepts only ids that a lookup or a resolver returned in
-    this message. Each run has its own `FoundIds` in the tools' context, which the lookups add to. Any other id, one
+    this message. Its kinds are the cards' (`quest`, `globalEvent`) and the resolvers' `friend` and `place`, which
+    are never cards. Each run has its own `FoundIds` in the tools' context, which the lookups add to. Any other id, one
     from an earlier message too, goes back to the model as an error, and nothing of that call is shown.
   - **Text by others** (`others-text.ts`): text written by other people or collected from a Source, such as a Global
     Event's title, description and place, or a Quest's (`quest.title`, …), reaches the model as

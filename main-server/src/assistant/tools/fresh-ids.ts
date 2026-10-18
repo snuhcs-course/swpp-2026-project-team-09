@@ -4,8 +4,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { type Card, CARDS_MAX, type Presented } from '../feature.js';
-import { type CardKind } from '../found-ids.js';
+import { type Card, type CardKind, CARDS_MAX, type Presented } from '../feature.js';
 
 function idOf(card: Card): string {
   return card.kind === 'quest' ? card.quest.id : card.globalEvent.id;

@@ -14,6 +14,7 @@ import {
   MESSAGES_TOTAL_MAX,
   type QuestProposal,
   referenceOf,
+  sentProposalOf,
 } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
@@ -72,7 +73,7 @@ export function messagesToSend(bubbles: readonly ChatBubble[]): ChatMessage[] {
       }
       const references = cards.map((card) => referenceOf(card));
       return bubble === proposing && proposal !== null
-        ? { role, text, cards: references, proposal }
+        ? { role, text, cards: references, proposal: sentProposalOf(proposal) }
         : { role, text, cards: references };
     })
     .slice(-CHAT_HISTORY_MAX);
