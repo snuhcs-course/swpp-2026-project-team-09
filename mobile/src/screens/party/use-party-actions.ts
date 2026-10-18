@@ -2,13 +2,23 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type QueryKey, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { apiClient } from '@/api/client';
-import { MY_JOIN_REQUESTS_KEY, QUEST_INVITATIONS_KEY, QUESTS_KEY, RECRUITING_KEY } from '@/api/queries';
+import {
+  COMPANION_SEEKERS_KEY,
+  HIDDEN_POSTS_KEY,
+  MY_JOIN_REQUESTS_KEY,
+  OFFICIAL_RECRUITING_KEY,
+  QUEST_INVITATIONS_KEY,
+  QUESTS_KEY,
+  RECRUITING_KEY,
+} from '@/api/queries';
+import type { CompanionSeeker, OfficialRecruiting } from '@/api/quest-parts-types';
 import type { QuestInvitation } from '@/api/waiting-types';
 import { useToast } from '@/design-system';
 import type { PostView } from '@/features/party/posts';
@@ -72,6 +82,50 @@ export function usePartyActions(): PartyActions {
       },
       decline: async ({ id }) => {
         await run(() => apiClient.declineInvitation(id), null);
+      },
+    };
+  }, [queryClient, showToast]);
+}
+
+export interface FindActions {
+  // `관심 없음`: hides the post from 찾기. False when the phone could not keep it.
+  hide: (questId: string) => Promise<boolean>;
+  joinOfficial: (recruiting: OfficialRecruiting) => Promise<void>;
+  askSeeker: (seeker: CompanionSeeker) => Promise<void>;
+}
+
+const NOT_KEPT = '저장하지 못했어요. 다시 시도해 주세요';
+
+// What 찾기 does with its mocked parts. The phone keeps each, and nobody else sees it (P06 spec, Mocks).
+export function useFindActions(): FindActions {
+  const queryClient = useQueryClient();
+  const showToast = useToast();
+  return useMemo(() => {
+    // Keeps it on the phone and fetches the list again; a failure to keep it says so.
+    const keep = async (saving: () => Promise<void>, queryKey: QueryKey, done: string | null): Promise<boolean> => {
+      try {
+        await saving();
+      } catch {
+        showToast(NOT_KEPT);
+        return false;
+      }
+      await queryClient.invalidateQueries({ queryKey });
+      if (done !== null) {
+        showToast(done);
+      }
+      return true;
+    };
+    return {
+      hide: (questId) => keep(() => apiClient.hidePost(questId), HIDDEN_POSTS_KEY, null),
+      joinOfficial: async ({ id, title }) => {
+        await keep(
+          () => apiClient.joinOfficialRecruiting(id),
+          OFFICIAL_RECRUITING_KEY,
+          `${title.replaceAll('\n', ' ')} 참여 완료`,
+        );
+      },
+      askSeeker: async ({ id, name }) => {
+        await keep(() => apiClient.askCompanionSeeker(id), COMPANION_SEEKERS_KEY, `${name}님에게 같이 하자고 했어요`);
       },
     };
   }, [queryClient, showToast]);

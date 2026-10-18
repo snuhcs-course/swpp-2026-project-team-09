@@ -28,7 +28,9 @@ What the app shows from its own mock. The build connected to the server hides th
 | An invitation's time and place (_hidden on server_; companions are the row above) | 초대                                                   |                         |
 | A join request's note (_hidden on server_)                                        | room › 신청                                            |                         |
 | 파티 채팅                                                                         | room                                                   |                         |
-| Past Quests (`지난 일정`)                                                         | 내 파티                                                |                         |
+| Past Quests (`지난 일정`, _hidden on server_)                                     | 내 파티                                                |                         |
+| An event's kind (진로, 이벤트, 축제) and tags, read from its words                | form › 관련 행사                                       |                         |
+| Changing a Quest's 관련 행사 (_not possible yet_: locked in the form)             | form                                                   |                         |
 
 Ticket 02 adds the photos, the tags and the members' faces behind the API client (`mobile/src/api/quest-parts/`, one adapter for each, data in `mobile/src/api/mock/data/quest-parts.ts`). The screens read them as follows:
 
@@ -39,7 +41,13 @@ Ticket 02 adds the photos, the tags and the members' faces behind the API client
 | Members' names and faces (`faces`; _leader only on server_) | 찾기 card, 파티 모집글 members line, 초대 card (companions)                      |
 | The User's tags (`listMyTags`: the profile's hashtags)      | the form's `태그`, 찾기 ordering, 추천 이유 › 관심사                             |
 
+Ticket 05 adds three more adapters in the same folder: `invitation-times.ts` and `invitation-places.ts` give an invitation's `startsAt` and `place` (null on server), and `past-quests.ts` gives `listPastQuests` (data in `mobile/src/api/mock/data/past-quests.ts`; none on server). 초대's card reads all three invitation parts; 내 파티 reads the past Quests under `지난 일정`.
+
 A server Quest's photo and tags are picked from the mock's sets by a stable hash of its id. The photo and tags the User enters for a Quest they make (`makeQuest`, `changeQuest`) are kept on the phone (`snunow.quest-entries`) and come back with that Quest. The mock build's User, whose profile has no hashtags, gets the frame's tags.
+
+Ticket 03 adds one adapter each for official recruiting (`official.ts`: `listOfficialRecruiting`, `joinOfficialRecruiting`), hiding a post (`hidden-posts.ts`: `listHiddenPosts`, `hidePost`) and the people looking for company (`seekers.ts`: `listCompanionSeekers`, `askCompanionSeeker`), data in `mobile/src/api/mock/data/finding.ts`. The build that asks the main server gets no official recruiting and nobody looking for company. Joining, hiding and asking are kept on the phone (`snunow.joined-official`, `snunow.hidden-posts`, `snunow.asked-seekers`, each keyed by the User's id). `추천 이유` reads the User's tags (`관심사`), the timetable (`시간대`) and the Friends (`친구`).
+
+Ticket 04 adds two more. The main server's Global Event has no kind and no tags, so the form's event picker reads both from the event's title and description (`mobile/src/features/party/event-kinds.ts`). The main server cannot change a Quest's Global Event, so editing shows a Quest's own event locked, and for a Quest without one an event picked only fills the time, the place and the tags; ticket 08 lists the endpoint that would change it.
 
 Ticket 06 adds the room's two parts the same way (`notes.ts` and `chat.ts` in `mobile/src/api/quest-parts/`, data in `mobile/src/api/mock/data/room-parts.ts`): `listJoinRequests` carries a `note`, one of the mock's by the request's id in the mock build and null on server; `listPartyChat` and `sendPartyChat` give the room's 파티 채팅, the frame's conversation for the mock's `q-ai` in the mock build and an empty room on server. What the User sends is kept on the phone for the signed-in User (`snunow.party-chat.<userId>`), and nothing while no User is signed in.
 

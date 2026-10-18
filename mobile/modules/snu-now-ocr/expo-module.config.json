@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["SnuNowOcrModule"]
+  },
+  "android": {
+    "modules": ["com.bonnieandclaude.snunow.ocr.SnuNowOcrModule"]
+  }
+}

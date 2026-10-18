@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -16,7 +17,8 @@ import { refuseKakao } from './walking-route.js';
 import { refuseMatchServer } from './match-server.js';
 import { sendAsWorker } from './worker.js';
 
-// The chat Assistant's endpoint and its getMenus tool, with the scripted model in the model's place.
+// The chat Assistant's endpoint, its getMenus tool and its showOnMap presenter, with the scripted model in the model's
+// place. getShuttle is tested in shuttle.e2e-spec.ts, the one file that sends shuttle messages.
 
 let app: INestApplication<Server>;
 let accessToken: string;
@@ -48,7 +50,7 @@ describe('The chat Assistant', () => {
     const response = await postAssistantMessages(app, accessToken, ask('안녕'));
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ text: '안녕하세요! 무엇을 도와드릴까요?' });
+    expect(response.body).toEqual({ text: '안녕하세요! 무엇을 도와드릴까요?', mapButtons: [] });
   });
 
   it("gives the model the conversation, the User's new message last", async () => {
@@ -117,7 +119,7 @@ describe('getMenus', () => {
 
     const response = await postAssistantMessages(app, accessToken, ask('오늘 점심 뭐 나와?'));
 
-    expect(response.body).toEqual({ text: '학생회관식당은 제육볶음이에요.' });
+    expect(response.body).toEqual({ text: '학생회관식당은 제육볶음이에요.', mapButtons: [] });
     expect(model.toolResults()).toEqual([{ result: 'found', date, restaurants: [studentCentre] }]);
   });
 });
@@ -181,6 +183,39 @@ describe('getMenus, by restaurant', () => {
     expect(model.toolResults()).toEqual([
       { result: 'found', date, restaurants: [{ ...studentCentre, name: '자하연식당 2층' }] },
     ]);
+  });
+});
+
+describe('showOnMap', () => {
+  it('puts the map button under the reply', async () => {
+    model.script({ tool: 'showOnMap', input: { layer: 'dining' } }, { text: '오늘 메뉴예요.' });
+
+    const response = await postAssistantMessages(app, accessToken, ask('오늘 점심 뭐 나와?'));
+
+    expect(response.body).toEqual({ text: '오늘 메뉴예요.', mapButtons: ['dining'] });
+    expect(model.toolResults()).toEqual([{ result: 'shown', layer: 'dining' }]);
+  });
+
+  it('puts each layer once, in the order first shown', async () => {
+    model.script(
+      { tool: 'showOnMap', input: { layer: 'shuttle' } },
+      { tool: 'showOnMap', input: { layer: 'dining' } },
+      { tool: 'showOnMap', input: { layer: 'shuttle' } },
+      { text: '…' },
+    );
+
+    const response = await postAssistantMessages(app, accessToken, ask('셔틀이랑 식당 지도에서 보여줘'));
+
+    expect(response.body).toMatchObject({ mapButtons: ['shuttle', 'dining'] });
+  });
+
+  it('refuses an unknown layer back to the model, and puts no button', async () => {
+    model.script({ tool: 'showOnMap', input: { layer: 'library' } }, { text: '열람실은 아직 지원하지 않아요.' });
+
+    const response = await postAssistantMessages(app, accessToken, ask('도서관 지도에서 보여줘'));
+
+    expect(response.body).toEqual({ text: '열람실은 아직 지원하지 않아요.', mapButtons: [] });
+    expect(model.toolResults()).toEqual([expect.stringContaining('layer')]);
   });
 });
 

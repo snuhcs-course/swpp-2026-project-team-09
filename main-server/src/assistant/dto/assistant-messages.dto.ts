@@ -6,6 +6,7 @@
  ******************************************************************************/
 
 import { z } from 'zod';
+import { type MapLayer } from '../feature.js';
 
 // The most characters of a User's message, which the app's input also keeps to.
 export const USER_MESSAGE_MAX = 1000;
@@ -45,7 +46,8 @@ export const assistantMessagesSchema = z.strictObject({
 
 export type AssistantMessages = z.infer<typeof assistantMessagesSchema>;
 
-// The Assistant's reply, whole.
+// The Assistant's reply, whole: its text, and the buttons under it that show a layer of the map, each layer once.
 export interface AssistantReplyDto {
   text: string;
+  mapButtons: MapLayer[];
 }

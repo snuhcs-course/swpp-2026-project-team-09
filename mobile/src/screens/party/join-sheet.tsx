@@ -2,18 +2,42 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import type { OfficialRecruiting } from '@/api/quest-parts-types';
+import type { JoinPolicy } from '@/api/types';
 import { BottomSheet, Button, color, font, Icon, RoundIcon, space, text } from '@/design-system';
-import type { PostView } from '@/features/party/posts';
 import { joinLabel } from './post-card';
 
-interface JoinSheetProps {
-  post: PostView | null;
+// What the sheet asks the User to join: a post, or official recruiting.
+export interface JoinSubject {
+  title: string;
+  time: string;
+  place: string;
+  members: string;
+  fill: string;
+  joinPolicy: JoinPolicy;
+}
+
+// Official recruiting as the sheet asks about it: its host in place of its members.
+export function officialSubject(recruiting: OfficialRecruiting): JoinSubject {
+  return {
+    title: recruiting.title.replaceAll('\n', ' '),
+    time: recruiting.time,
+    place: recruiting.place,
+    members: recruiting.host,
+    fill: recruiting.fill,
+    joinPolicy: 'open',
+  };
+}
+
+interface JoinSheetProps<Subject extends JoinSubject> {
+  post: Subject | null;
   onClose: () => void;
-  onJoin: (post: PostView) => void;
+  onJoin: (post: Subject) => void;
 }
 
 function Row({ label, words }: { label: string; words: string }): ReactElement {
@@ -25,8 +49,13 @@ function Row({ label, words }: { label: string; words: string }): ReactElement {
   );
 }
 
-// The join confirm sheet, the frame's `PartyJoin`.
-export function JoinSheet({ post, onClose, onJoin }: JoinSheetProps): ReactElement {
+// The join confirm sheet, the frame's `PartyJoin`. Its note says that any member may switch the Party on, as the
+// app has it (P06 spec, Rules), where the frame says the 파티장.
+export function JoinSheet<Subject extends JoinSubject>({
+  post,
+  onClose,
+  onJoin,
+}: JoinSheetProps<Subject>): ReactElement {
   return (
     <BottomSheet label="참여 확인" onClose={onClose} open={post !== null}>
       {post === null ? null : (

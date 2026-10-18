@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -69,6 +70,7 @@ const SHOWN: readonly QueryKey[] = [
   RECRUITING_KEY,
   MY_JOIN_REQUESTS_KEY,
   MATCHING_REQUESTS_KEY,
+  SENT_INVITATIONS_KEY,
   ...WAITING,
 ];
 

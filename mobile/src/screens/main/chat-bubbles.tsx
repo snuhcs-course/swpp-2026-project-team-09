@@ -7,6 +7,7 @@
 
 import { type ReactElement, useRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { MapLayer } from '@/api/assistant-types';
 import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 
@@ -55,22 +56,48 @@ export function ChatEmpty({ onSend, under }: ChatEmptyProps): ReactElement {
   );
 }
 
+// The map button of each layer, with the layer's own icon.
+const MAP_BUTTONS: Record<MapLayer, { label: string; icon: IconName }> = {
+  dining: { label: '지도에서 식당 보기', icon: 'meal' },
+  shuttle: { label: '지도에서 셔틀 보기', icon: 'bus' },
+};
+
 interface BubbleProps {
   bubble: ChatBubble;
   // 다시 시도 under a failure the Assistant may get over, while it is the last bubble.
   onRetry: (() => void) | null;
+  onShowLayer: (layer: MapLayer) => void;
 }
 
-function Bubble({ bubble: { role, text: words }, onRetry }: BubbleProps): ReactElement {
+function Bubble({
+  bubble: { role, text: words, mapButtons, failure },
+  onRetry,
+  onShowLayer,
+}: BubbleProps): ReactElement {
   const mine = role === 'user';
+  // Only under an answer: a failure has none.
+  const layers = failure === null ? mapButtons : [];
   return (
     <View
       style={[styles.bubble, mine ? styles.mine : styles.theirs]}
       testID={mine ? 'user-bubble' : 'assistant-bubble'}
     >
       <Text style={[styles.words, mine && styles.mineWords]}>{words}</Text>
+      {layers.map((layer) => (
+        <View key={layer} style={styles.below}>
+          <Button
+            icon={MAP_BUTTONS[layer].icon}
+            onPress={() => {
+              onShowLayer(layer);
+            }}
+            variant="secondary"
+          >
+            {MAP_BUTTONS[layer].label}
+          </Button>
+        </View>
+      ))}
       {onRetry === null ? null : (
-        <View style={styles.retry}>
+        <View style={styles.below}>
           <Button onPress={onRetry} variant="secondary">
             다시 시도
           </Button>
@@ -84,13 +111,15 @@ interface ChatBubblesProps {
   bubbles: readonly ChatBubble[];
   waiting: boolean;
   onRetry: () => void;
+  // A map button: shows that layer on the map.
+  onShowLayer: (layer: MapLayer) => void;
   // How far from the sheet's bottom the last bubble ends, clear of the AI input.
   under: number;
 }
 
 // The conversation: the User's bubbles at the right, the Assistant's at the left, and "···" while the Assistant
 // works. It keeps the latest in view.
-export function ChatBubbles({ bubbles, waiting, onRetry, under }: ChatBubblesProps): ReactElement {
+export function ChatBubbles({ bubbles, waiting, onRetry, onShowLayer, under }: ChatBubblesProps): ReactElement {
   const scroller = useRef<ScrollView>(null);
   return (
     <ScrollView
@@ -106,6 +135,7 @@ export function ChatBubbles({ bubbles, waiting, onRetry, under }: ChatBubblesPro
           bubble={bubble}
           key={bubble.id}
           onRetry={bubble.failure === 'unavailable' && index === bubbles.length - 1 && !waiting ? onRetry : null}
+          onShowLayer={onShowLayer}
         />
       ))}
       {waiting ? (
@@ -165,6 +195,7 @@ const styles = StyleSheet.create({
   },
   words: { ...text.bodyLg, color: color.ink },
   mineWords: { color: color.onPrimary },
-  retry: { marginTop: space[2] },
+  // 다시 시도 and the map buttons.
+  below: { marginTop: space[2] },
   waiting: { ...text.bodyLg, fontFamily: font.bold, letterSpacing: 3.2, color: color.inkMuted },
 });

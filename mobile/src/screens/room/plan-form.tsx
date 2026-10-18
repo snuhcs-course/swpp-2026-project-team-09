@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -26,7 +27,7 @@ interface PlanFormProps {
 }
 
 // The Sub Quest's place as if picked on the map. Words alone were typed, and are named again when sent.
-function pickedOf(subQuest: SubQuest | null): PickedPlace | null {
+export function pickedOf(subQuest: SubQuest | null): PickedPlace | null {
   const place = subQuest?.place ?? null;
   const position = pointOf(place);
   return place === null || position === null ? null : { placeId: place.placeId, position, words: place.label };

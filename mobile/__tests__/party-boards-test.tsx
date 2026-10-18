@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -87,12 +88,12 @@ describe('a board', () => {
     expect(shownAddress()).toBe(`/post/${RUN.id}`);
   });
 
-  it('opens the room for the User’s own post', async () => {
+  it('opens the post for the User’s own post', async () => {
     const user = await openAt('/boards/hobby');
 
     await user.press(screen.getByRole('button', { name: MY_HIKE.title }));
 
-    expect(shownAddress()).toBe(`/room/${MY_HIKE.id}`);
+    expect(shownAddress()).toBe(`/post/${MY_HIKE.id}`);
   });
 
   it('says when it has no post', async () => {
@@ -109,7 +110,7 @@ describe('파티 모집글', () => {
     expect(screen.getByText('최유나 · 모집자')).toBeVisible();
     expect(screen.getByText('디자인학부 · 30분 전')).toBeVisible();
     expect(screen.getByRole('header', { name: RUN.title })).toBeVisible();
-    expect(screen.getByText('최유나 외 2명')).toBeVisible();
+    expect(screen.getByText('최유나 외 2명 · 친구 1명 포함')).toBeVisible();
     expect(screen.getByRole('button', { name: '참여하기' })).toBeVisible();
   });
 
