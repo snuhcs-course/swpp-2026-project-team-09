@@ -55,3 +55,10 @@ Fixed here so that tickets 02 and 04 match without seeing this ticket: the deplo
 - `compose build` runs before `compose up --detach`: a failed build is `build-failed` and stops nothing; a failed `up` is `unhealthy`, with the new containers running and `deployedCommit` unchanged.
 - A required check with no success whose run is cancelled, stale or `action_required` gives `waiting-for-ci`, not `ci-failed`.
 - The clean step logs on success too. The tests' `[[ ]]` checks end in `|| false` for bash 3.2, `deploy.bats` is shellcheck-clean and CI shellchecks the `*.bats` files, and `fake-command.sh` is now `deploy-fakes.sh`.
+
+### Review round (2026-10-18)
+
+- As fyoon46 suggested on #82, `deploy.sh` reads `status.json` and GitHub's check-runs answer with `jq` instead of `json_flatten`, `json_value` and `json_array`, and the bootstrap installs `jq`. The status file is still written by `status_json`. The deploy tests pass unchanged; the bootstrap test expects `jq` among the packages.
+- From `2.0/Main`: the deployment hands main-server `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`. The bootstrap writes the model and an empty key, which turns only the Assistant off.
+- Agent time: about 10 minutes, an estimate: one subagent, measured just before its commits.
+- Tokens: input 7,216,000 in all (cache reads 7,033,000, cache writes 183,000, uncached under 1,000); output 531 as recorded, a lower bound, since the transcript keeps only partial output counts.
