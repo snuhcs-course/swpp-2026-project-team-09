@@ -71,9 +71,34 @@ interface Look {
   set: (userId: string, time: WalkingTime | null) => void;
 }
 
-// One look at the members: who is at the place, and whose route is asked again under the limits.
-function lookAt({ wheres, at, to, asked, shown, set }: Look): void {
+// Asks the member's route and shows what it says; a route that found none, or failed, is marked for its one retry.
+function askRoute({ at, to, asked, set }: Look, userId: string, from: LatLng, entry: AskedRoute): void {
+  asked.set(userId, entry);
+  const failed = (): void => {
+    asked.set(userId, { ...entry, failed: true });
+    set(userId, null);
+  };
+  apiClient.findWalkingRoute(from, at).then((route) => {
+    const time = timeOf(route, to);
+    if (time === null) {
+      failed();
+    } else {
+      set(userId, time);
+    }
+  }, failed);
+}
+
+// One look at the members: who is at the place, and whose route is asked again under the limits. A member who no
+// longer shares, or whose position is gone, loses the time shown.
+function lookAt(look: Look): void {
+  const { wheres, at, to, asked, shown, set } = look;
   const nowMs = Date.now();
+  const sharing = new Set(wheres.map(([userId]) => userId));
+  for (const userId of Object.keys(shown)) {
+    if (!sharing.has(userId) && shown[userId] !== undefined) {
+      set(userId, null);
+    }
+  }
   for (const [userId, from] of wheres) {
     const before = shown[userId];
     if (metresBetween(from, at) <= THERE_METRES) {
@@ -83,21 +108,14 @@ function lookAt({ wheres, at, to, asked, shown, set }: Look): void {
       continue;
     }
     const stale = before?.there === true;
-    if (!asksRoute(asked.get(userId), { from, to, nowMs, stale })) {
+    const asks = asksRoute(asked.get(userId), { from, to, nowMs, stale });
+    if (asks === false) {
       if (stale) {
         set(userId, null);
       }
       continue;
     }
-    asked.set(userId, { from, at: nowMs, to });
-    apiClient.findWalkingRoute(from, at).then(
-      (route) => {
-        set(userId, timeOf(route, to));
-      },
-      () => {
-        // No time is shown until the next route.
-      },
-    );
+    askRoute(look, userId, from, { from, at: nowMs, to, failed: false, retry: asks === 'retry' });
   }
 }
 

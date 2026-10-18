@@ -16,11 +16,14 @@ export const ROUTE_EVERY_MS = 60_000;
 // Within this of the place, the member is there, and no route is asked.
 export const THERE_METRES = 50;
 
-// The last route asked for a member: from where, when, and to which place.
+// The last route asked for a member: from where, when, and to which place; whether it found no way (`failed`), and
+// whether it was itself the one retry of a route that found none (`retry`).
 export interface AskedRoute {
   from: LatLng;
   at: number;
   to: string;
+  failed: boolean;
+  retry: boolean;
 }
 
 // What the member's line adds: `{place}까지 도보 {n}분` or `{place}에 있어요`.
@@ -48,18 +51,22 @@ export function placeKey(at: LatLng): string {
 
 // Whether a route is asked for the member now: the first time, and after that at most once a minute, when the place
 // changed, the member moved more than 100 m since the last one, or what was shown no longer holds (`stale`: the member
-// was at the place and has left it).
+// was at the place and has left it). A route that found no way is tried once more after the minute for a member who
+// stays put (`retry`), and not again until the member moves.
 export function asksRoute(
   last: AskedRoute | undefined,
   { from, to, nowMs, stale }: { from: LatLng; to: string; nowMs: number; stale: boolean },
-): boolean {
+): false | 'route' | 'retry' {
   if (last === undefined) {
-    return true;
+    return 'route';
   }
   if (nowMs - last.at < ROUTE_EVERY_MS) {
     return false;
   }
-  return stale || last.to !== to || metresBetween(last.from, from) > MOVED_METRES;
+  if (stale || last.to !== to || metresBetween(last.from, from) > MOVED_METRES) {
+    return 'route';
+  }
+  return last.failed && !last.retry ? 'retry' : false;
 }
 
 // What a route says: the member is there, so many minutes away (at least 1), or nothing for no route.

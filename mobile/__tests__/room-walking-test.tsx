@@ -169,6 +169,61 @@ describe('the limits on asking a route again', () => {
   });
 });
 
+describe('a member who stops sharing', () => {
+  it('drops the walking time of a member who pauses or turns the location off', async () => {
+    const party = answerMyParty(server, myPicnicParty(ME_ID));
+    await openSharedRoom();
+    expect(hisLine()).toBe('김민준 · 위치 공유 중 · 301동 앞까지 도보 15분');
+
+    const paused = myPicnicParty(ME_ID);
+    party.set({
+      ...paused,
+      sharing: false,
+      members: paused.members.map(({ id, name, department, leader }) => ({
+        id,
+        name,
+        department,
+        leader,
+        visible: id === ME_ID,
+      })),
+    });
+    await socketServer((socket) => {
+      socket.send('party-changed');
+    });
+    await pass(500);
+
+    expect(hisLine()).toBe('김민준 · 위치 꺼짐');
+    expect(within(screen.getByLabelText('멤버')).getByText('공유 일시정지')).toBeVisible();
+    expect(within(screen.getByLabelText('멤버')).queryByText(/도보/u)).toBeNull();
+  });
+});
+
+describe('a route that finds no way', () => {
+  it('tries a route that found no way once more after a minute for a member who stays put, and no more', async () => {
+    server.on('GET /walking-route', { status: 200, body: { status: 'ROUTE_RESULT_NOT_FOUND', route: null } });
+    await openSharedRoom();
+    expect(hisRoutes()).toHaveLength(1);
+    expect(hisLine()).toBe('김민준 · 위치 공유 중');
+
+    await pass(30_000);
+    expect(hisRoutes()).toHaveLength(1);
+    server.on('GET /walking-route', routeFor);
+    await pass(45_000);
+    expect(hisRoutes()).toHaveLength(2);
+    expect(hisLine()).toBe('김민준 · 위치 공유 중 · 301동 앞까지 도보 15분');
+  });
+
+  it('stops after the one retry when the way is still not found', async () => {
+    server.on('GET /walking-route', { status: 200, body: { status: 'ROUTE_RESULT_NOT_FOUND', route: null } });
+    await openSharedRoom();
+
+    await pass(5 * 60_000);
+
+    expect(hisRoutes()).toHaveLength(2);
+    expect(myRoutes()).toHaveLength(2);
+  });
+});
+
 describe('the room that is not open', () => {
   it('asks nothing once the room is left', async () => {
     await openSharedRoom();

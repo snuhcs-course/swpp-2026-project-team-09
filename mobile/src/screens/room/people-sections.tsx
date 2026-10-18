@@ -228,7 +228,7 @@ export function MembersSection({
           actions={actions}
           key={member.id}
           member={member}
-          walk={walks[member.id]}
+          walk={member.state?.tone === 'live' ? walks[member.id] : undefined}
           onHandOver={() => {
             setHanding(member);
           }}
