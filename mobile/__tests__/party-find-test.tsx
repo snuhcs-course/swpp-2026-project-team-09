@@ -172,7 +172,7 @@ describe('the mocked parts in the build that asks the main server', () => {
       card(RUN.title).getByRole('image', { name: '최유나' }),
     ]);
 
-    await user.press(card(RUN.title).getByRole('button', { name: '관심 없음' }));
+    await user.press(card(RUN.title).getByRole('button', { name: `${RUN.title} 관심 없음` }));
     await pass(500);
     expect(screen.queryByText(RUN.title)).toBeNull();
     expect(screen.getByText('숨긴 파티 1개 · 다음 추천에 반영할게요')).toBeVisible();

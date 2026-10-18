@@ -14,9 +14,9 @@ function squeezed(words: string): string {
   return words.replaceAll(/\s/gu, '');
 }
 
-// Whether the post's title, text, place or tags hold the words, spaces left out.
+// Whether the post's title, text, place or tags hold the words, spaces and every '#' left out.
 export function matchesSearch(post: PostView, search: string): boolean {
-  const words = squeezed(search).replace(/^#/u, '');
+  const words = squeezed(search).replaceAll('#', '');
   const where = squeezed(`${post.title}${post.description}${post.place}${post.tags.join('')}`);
   return words === '' || where.includes(words);
 }

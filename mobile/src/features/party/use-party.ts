@@ -61,7 +61,7 @@ function combined<View>(
 
 export interface FindView {
   posts: PostView[];
-  // How many posts the User hid with `관심 없음`.
+  // How many of the recruiting posts listed now the User hid with `관심 없음`.
   hidden: number;
 }
 
@@ -78,7 +78,7 @@ export function useFindPosts(search: string): ScreenData<FindView> {
       const hiddenIds = hidden.data ?? [];
       return {
         posts: findPosts(posts, { search, myTags: myTags.data ?? [], hidden: hiddenIds }),
-        hidden: hiddenIds.length,
+        hidden: posts.filter(({ questId }) => hiddenIds.includes(questId)).length,
       };
     },
     [friends, myTags, hidden],

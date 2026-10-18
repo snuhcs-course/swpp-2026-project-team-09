@@ -44,6 +44,8 @@ Official recruiting, hiding a post and people looking for company have a mock ad
 
 ## Comments
 
+- The room is now reached from `내 파티` only: a board opens 파티 모집글 for every post, the User's own included, and the post has no link to the room, as `PartyPost` draws it.
+
 ### Agent usage (2026-10-18)
 
 - Agent time: about 1 h of active work by one subagent in its own worktree (2.0/P06-03-find-boards-and-posts). It is an estimate: the run lasted about 1 h 10 min, of which some went to waiting on Jest under the load of other sessions.

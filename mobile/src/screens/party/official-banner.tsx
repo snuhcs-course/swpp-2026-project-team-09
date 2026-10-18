@@ -4,8 +4,9 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
+import { useIsFocused } from 'expo-router';
 import { type ReactElement, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, type AppStateStatus, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { OfficialRecruiting } from '@/api/quest-parts-types';
 import { color, font, Icon, type IconName, radius, space } from '@/design-system';
 import { PhotoView } from './quest-photo';
@@ -44,13 +45,36 @@ interface Turning {
   togglePlaying: () => void;
 }
 
-// Which one shows: the next every 4 seconds while playing, or the one the User turned to.
+function inFront(state: AppStateStatus | null): boolean {
+  return state !== 'background' && state !== 'inactive';
+}
+
+// Whether the app is in front: neither in the background nor inactive, as AppState says. A state not known yet counts
+// as in front.
+function useAppActive(): boolean {
+  const [active, setActive] = useState(inFront(AppState.currentState));
+  useEffect(() => {
+    const watch = AppState.addEventListener('change', (state) => {
+      setActive(inFront(state));
+    });
+    return (): void => {
+      watch.remove();
+    };
+  }, []);
+  return active;
+}
+
+// Which one shows: the next every 4 seconds while playing, or the one the User turned to. It turns only while 찾기 is
+// on screen and the app in front, so that it does not run where nobody sees it.
 function useTurning(count: number): Turning {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
+  const focused = useIsFocused();
+  const active = useAppActive();
+  const seen = focused && active;
   useEffect(() => {
     const timer =
-      playing && count > 1
+      playing && seen && count > 1
         ? setInterval(() => {
             setIndex((shown) => (shown + 1) % count);
           }, TURN_MS)
@@ -60,7 +84,7 @@ function useTurning(count: number): Turning {
         clearInterval(timer);
       }
     };
-  }, [playing, count]);
+  }, [playing, seen, count]);
   return {
     index: count === 0 ? 0 : index % count,
     playing,

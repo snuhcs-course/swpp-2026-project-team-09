@@ -5,7 +5,9 @@
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { within } from '@testing-library/react-native';
+import { act, within } from '@testing-library/react-native';
+import { router } from 'expo-router';
+
 import { pass, screen, shownAddress } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
@@ -80,7 +82,7 @@ describe('the banner of official recruiting', () => {
     await answer(user, '참여하기');
 
     expect(toast()).toHaveTextContent('서울대 중앙 러닝 동아리 경찰과 도둑 파티 모집! 참여 완료');
-    expect(await AsyncStorage.getItem('snunow.joined-official')).toBe('["official-running"]');
+    expect(await AsyncStorage.getItem('snunow.joined-official:me')).toBe('["official-running"]');
   });
 });
 
@@ -97,6 +99,35 @@ describe('+ on the banner', () => {
     expect(list.getByText('[N]명 모집')).toBeVisible();
     expect(list.getByText('2인 1팀')).toBeVisible();
     expect(list.getByText('[일시] · 행정관 (60동) 앞 잔디광장')).toBeVisible();
+  });
+});
+
+describe('the banner where nobody sees it', () => {
+  it('stops turning while another screen stands above 찾기', async () => {
+    const user = await openAt('/party');
+
+    await user.press(screen.getByRole('button', { name: '공식 모집 전체 보기' }));
+    await pass(4500);
+    await act(() => {
+      router.back();
+    });
+    await pass(500);
+
+    expect(within(screen.getByLabelText('공식 모집')).getByLabelText('1 / 2')).toBeVisible();
+  });
+
+  it('stops turning while the app is in the background', async () => {
+    const phone = givePhone({ permission: 'granted', position: ON_CAMPUS });
+    await openAt('/party');
+    const banner = within(screen.getByLabelText('공식 모집'));
+
+    await phone.goToBackground();
+    await pass(4500);
+    expect(banner.getByLabelText('1 / 2')).toBeVisible();
+
+    await phone.comeToFront();
+    await pass(4000);
+    expect(banner.getByLabelText('2 / 2')).toBeVisible();
   });
 });
 
@@ -139,12 +170,12 @@ describe('모집 중인 파티', () => {
     const user = await openAt('/party');
     expect(screen.queryByText(/^숨긴 파티/u)).toBeNull();
 
-    await user.press(card(RUN).getByRole('button', { name: '관심 없음' }));
+    await user.press(card(RUN).getByRole('button', { name: `${RUN} 관심 없음` }));
     await pass(500);
 
     expect(screen.queryByText(RUN)).toBeNull();
     expect(screen.getByText('숨긴 파티 1개 · 다음 추천에 반영할게요')).toBeVisible();
-    expect(await AsyncStorage.getItem('snunow.hidden-posts')).toBe('["post-0"]');
+    expect(await AsyncStorage.getItem('snunow.hidden-posts:me')).toBe('["post-0"]');
   });
 });
 

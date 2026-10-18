@@ -88,33 +88,45 @@ export function usePartyActions(): PartyActions {
 }
 
 export interface FindActions {
-  // `관심 없음`: hides the post from 찾기.
-  hide: (questId: string) => Promise<void>;
+  // `관심 없음`: hides the post from 찾기. False when the phone could not keep it.
+  hide: (questId: string) => Promise<boolean>;
   joinOfficial: (recruiting: OfficialRecruiting) => Promise<void>;
   askSeeker: (seeker: CompanionSeeker) => Promise<void>;
 }
+
+const NOT_KEPT = '저장하지 못했어요. 다시 시도해 주세요';
 
 // What 찾기 does with its mocked parts. The phone keeps each, and nobody else sees it (P06 spec, Mocks).
 export function useFindActions(): FindActions {
   const queryClient = useQueryClient();
   const showToast = useToast();
-  return useMemo(
-    () => ({
-      hide: async (questId) => {
-        await apiClient.hidePost(questId);
-        await queryClient.invalidateQueries({ queryKey: HIDDEN_POSTS_KEY });
-      },
+  return useMemo(() => {
+    // Keeps it on the phone and fetches the list again; a failure to keep it says so.
+    const keep = async (saving: () => Promise<void>, queryKey: QueryKey, done: string | null): Promise<boolean> => {
+      try {
+        await saving();
+      } catch {
+        showToast(NOT_KEPT);
+        return false;
+      }
+      await queryClient.invalidateQueries({ queryKey });
+      if (done !== null) {
+        showToast(done);
+      }
+      return true;
+    };
+    return {
+      hide: (questId) => keep(() => apiClient.hidePost(questId), HIDDEN_POSTS_KEY, null),
       joinOfficial: async ({ id, title }) => {
-        await apiClient.joinOfficialRecruiting(id);
-        await queryClient.invalidateQueries({ queryKey: OFFICIAL_RECRUITING_KEY });
-        showToast(`${title.replaceAll('\n', ' ')} 참여 완료`);
+        await keep(
+          () => apiClient.joinOfficialRecruiting(id),
+          OFFICIAL_RECRUITING_KEY,
+          `${title.replaceAll('\n', ' ')} 참여 완료`,
+        );
       },
       askSeeker: async ({ id, name }) => {
-        await apiClient.askCompanionSeeker(id);
-        await queryClient.invalidateQueries({ queryKey: COMPANION_SEEKERS_KEY });
-        showToast(`${name}님에게 같이 하자고 했어요`);
+        await keep(() => apiClient.askCompanionSeeker(id), COMPANION_SEEKERS_KEY, `${name}님에게 같이 하자고 했어요`);
       },
-    }),
-    [queryClient, showToast],
-  );
+    };
+  }, [queryClient, showToast]);
 }

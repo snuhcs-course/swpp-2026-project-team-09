@@ -189,10 +189,18 @@ function PostFooter({
       onEnd={() => {
         onAsk(endAsk());
       }}
-      onHide={() => {
-        void findActions.hide(post.questId);
-        router.back();
-      }}
+      onHide={() =>
+        void findActions.hide(post.questId).then((hidden) => {
+          if (!hidden) {
+            return;
+          }
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace('/party');
+          }
+        })
+      }
       onJoin={onJoin}
       onWithdraw={(requestId) => void actions.withdraw(requestId)}
       post={post}

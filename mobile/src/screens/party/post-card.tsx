@@ -102,6 +102,7 @@ function CardButtons({ post, onJoin, onHide }: PostCardProps): ReactElement {
   return (
     <View style={styles.buttons}>
       <Button
+        label={`${post.title} 관심 없음`}
         onPress={() => {
           onHide(post);
         }}
