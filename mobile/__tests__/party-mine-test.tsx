@@ -180,6 +180,15 @@ describe('지난 일정 in the build that asks the main server', () => {
     expect(screen.queryByText('자료구조 중간고사 스터디')).toBeNull();
     expect(screen.queryByText('버들골 저녁 러닝')).toBeNull();
   });
+
+  it('keeps under 오늘 a Quest the User holds whose step started yesterday', async () => {
+    setAnswers({ quests: [plannedAt('어제 시작한 여행', '2026-10-05T10:00:00.000Z')] });
+    await openAt('/party?tab=mine');
+    await pass(500);
+
+    expect(groups()).toEqual(['오늘']);
+    expect(card('어제 시작한 여행').getByText('10월 5일 (월) 19:00')).toBeVisible();
+  });
 });
 
 describe('the requests to join waiting on a card of 내 파티', () => {

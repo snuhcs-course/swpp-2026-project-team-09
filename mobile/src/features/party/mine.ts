@@ -67,17 +67,16 @@ const GROUPS = [
 ] as const;
 const MINUTE_MS = 60_000;
 
-// By the days to the start in Korea's time: this week runs to Sunday, the next week to the Sunday after.
+// By the days to the start in Korea's time: this week runs to Sunday, the next week to the Sunday after. A Quest the
+// User holds now is still going even when its step started before today, so it stays under `오늘`; only the past
+// Quests of `listPastQuests` go under `지난 일정`.
 function dayGroup(start: string | null, now: Date): string {
   if (start === null) {
     return '시간 미정';
   }
   const days = koreaDaysAfter(now, new Date(start));
   const toSunday = (7 - koreaWeekday(now)) % 7;
-  if (days < 0) {
-    return PAST;
-  }
-  if (days === 0) {
+  if (days <= 0) {
     return '오늘';
   }
   if (days === 1) {
