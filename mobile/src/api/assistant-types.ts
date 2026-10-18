@@ -22,7 +22,13 @@ export const CHAT_HISTORY_MAX = 20;
 export const USER_MESSAGE_MAX = 1000;
 export const MESSAGES_TOTAL_MAX = 24_000;
 
-// The Assistant's reply, whole.
+// The layers of the map a reply can show with a button: the restaurants and the shuttle.
+export const MAP_LAYERS = ['dining', 'shuttle'] as const;
+
+export type MapLayer = (typeof MAP_LAYERS)[number];
+
+// The Assistant's reply, whole: its text, and the buttons under it that show a layer of the map, each layer once.
 export interface AssistantReply {
   text: string;
+  mapButtons: MapLayer[];
 }

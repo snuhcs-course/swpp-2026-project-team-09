@@ -12,6 +12,7 @@ import { REDIS } from '../common/redis.module.js';
 import { type Settings } from '../common/settings.js';
 import { MenusService } from '../menus/menus.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
+import { ShuttleService } from '../shuttle/shuttle.service.js';
 import { causeOf, type Model, MODEL_PORT, runFeature, type RunLimits } from './adapter.js';
 import { chatAssistant } from './chat/chat-assistant.js';
 import { type AssistantReplyDto } from './dto/assistant-messages.dto.js';
@@ -39,8 +40,9 @@ export class AssistantService {
     @Inject(CLOCK) private readonly clock: Clock,
     settings: ConfigService<Settings, true>,
     menus: MenusService,
+    shuttle: ShuttleService,
   ) {
-    this.chat = chatAssistant({ menus });
+    this.chat = chatAssistant({ menus, shuttle });
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
     this.dailyMessages = settings.get('ASSISTANT_DAILY_MESSAGES', { infer: true });
     this.limits = {
@@ -65,8 +67,8 @@ export class AssistantService {
     }
     const latest = messages.slice(-HISTORY_MAX);
     try {
-      const text = await runFeature(this.model, this.chat, { userId, now }, latest, this.limits);
-      return { text };
+      const { text, mapButtons } = await runFeature(this.model, this.chat, { userId, now }, latest, this.limits);
+      return { text, mapButtons };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();

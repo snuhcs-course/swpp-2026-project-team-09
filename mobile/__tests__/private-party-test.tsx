@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { pass, screen, shownAddress } from './support/app';
@@ -89,6 +90,8 @@ describe('what waits for the User', () => {
 
     expect(screen.getByText('받은 초대 · 1')).toBeVisible();
     expect(screen.getByText('물리 실험 보고서')).toBeVisible();
+    // The mocked time and place, as `PartyInvites` draws them; the frame's invitation names no companion.
+    expect(screen.getByText('10월 3일 (토) 14:00 · 중앙도서관 (62동)')).toBeVisible();
     expect(screen.queryByText('학관 점심')).toBeNull();
     expect(screen.queryByText(/보낸 초대/u)).toBeNull();
   });

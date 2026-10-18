@@ -22,10 +22,31 @@ export interface CardReference {
 // One message of a conversation, as the app sends it: the User's text, or the Assistant's with the cards it showed.
 export type ChatMessage = { role: 'user'; text: string } | { role: 'assistant'; text: string; cards: CardReference[] };
 
-// Who asks and when. Every tool of a run is given it.
-export interface ToolContext {
+// The map layers a reply can show with a button: the restaurants and the shuttle.
+export const MAP_LAYERS = ['dining', 'shuttle'] as const;
+
+export type MapLayer = (typeof MAP_LAYERS)[number];
+
+// What the presenters put in the reply beside its text, gathered over one run.
+export interface Presented {
+  // Each layer once, in the order first shown.
+  readonly mapButtons: MapLayer[];
+}
+
+// Who asks and when.
+export interface Asker {
   readonly userId: string;
   readonly now: Date;
+}
+
+// What every tool of a run is given: who asks and when, and what the run's presenters have put in the reply.
+export interface ToolContext extends Asker {
+  readonly presented: Presented;
+}
+
+// A feature's reply: the model's last text, and what the presenters put beside it.
+export interface FeatureReply extends Presented {
+  readonly text: string;
 }
 
 export interface Tool {

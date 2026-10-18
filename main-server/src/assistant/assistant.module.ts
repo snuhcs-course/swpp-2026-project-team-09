@@ -10,13 +10,14 @@ import { ConfigService } from '@nestjs/config';
 import { type Settings } from '../common/settings.js';
 import { MenusModule } from '../menus/menus.module.js';
 import { QuestsModule } from '../quests/quests.module.js';
+import { ShuttleModule } from '../shuttle/shuttle.module.js';
 import { type Model, MODEL_PORT, openRouterModel } from './adapter.js';
 import { AssistantController } from './assistant.controller.js';
 import { AssistantService } from './assistant.service.js';
 
 @Module({
   // QuestsModule gives the clock, by which a message falls in its day.
-  imports: [MenusModule, QuestsModule],
+  imports: [MenusModule, QuestsModule, ShuttleModule],
   controllers: [AssistantController],
   providers: [
     AssistantService,

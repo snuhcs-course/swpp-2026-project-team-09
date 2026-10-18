@@ -7,7 +7,7 @@
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { APICallError, generateText, type LanguageModel, RetryError, stepCountIs, tool, type ToolSet } from 'ai';
-import { type ChatMessage, type Feature, type ToolContext } from './feature.js';
+import { type Asker, type ChatMessage, type Feature, type FeatureReply, type ToolContext } from './feature.js';
 
 // The one file that knows the model library, the Vercel AI SDK (ADR 0005): the model port and the loop that runs a
 // feature over it. Tools and features do not import the SDK, so that moving to another library replaces this file.
@@ -60,18 +60,20 @@ function contentOf(message: ChatMessage): string {
   return `${message.text}\n\n[Cards shown: ${cards}]`;
 }
 
-// Runs the feature on the conversation, the User's new message last, and answers with the model's last text. It
-// throws NoAnswerError when the steps ran out on tools, and the SDK's errors when the model fails or the time runs out.
+// Runs the feature on the conversation, the User's new message last, and answers with the model's last text and what
+// the presenters put beside it. It throws NoAnswerError when the steps ran out on tools, and the SDK's errors when the
+// model fails or the time runs out.
 export async function runFeature(
   model: Model,
   feature: Feature,
-  context: ToolContext,
+  asker: Asker,
   messages: readonly ChatMessage[],
   { maxSteps, timeoutMs, maxOutputTokens }: RunLimits,
-): Promise<string> {
+): Promise<FeatureReply> {
+  const context: ToolContext = { ...asker, presented: { mapButtons: [] } };
   const { text, finishReason } = await generateText({
     model,
-    instructions: feature.instructions(context.now),
+    instructions: feature.instructions(asker.now),
     messages: messages.map((message) => ({ role: message.role, content: contentOf(message) })),
     tools: toolSetOf(feature, context),
     stopWhen: stepCountIs(maxSteps),
@@ -82,7 +84,7 @@ export async function runFeature(
   if (finishReason === 'tool-calls' || text.trim() === '') {
     throw new NoAnswerError(`No answer within ${maxSteps} steps`);
   }
-  return text;
+  return { text, ...context.presented };
 }
 
 // Why a run failed, for the server's log: the error's name and, from the model's provider, the HTTP status. Never an
