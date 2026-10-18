@@ -5,9 +5,10 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { type AssistantReply, MAP_LAYERS, type MapLayer } from '@/api/assistant-types';
+import { type AssistantReply, type ChatCard, MAP_LAYERS, type MapLayer } from '@/api/assistant-types';
 import type { ApiClient } from '@/api/client';
 import { field, hasTexts, listOf } from './answers';
+import { isGlobalEvent } from './event-client';
 import { call } from './http';
 
 // The operation of the AI chat: the conversation goes to the main server, which asks the model.
@@ -16,8 +17,16 @@ function isMapLayer(value: unknown): value is MapLayer {
   return MAP_LAYERS.some((layer) => layer === value);
 }
 
+function isChatCard(value: unknown): value is ChatCard {
+  return field(value, 'kind') === 'globalEvent' && isGlobalEvent(field(value, 'globalEvent'));
+}
+
 function isAssistantReply(value: unknown): value is AssistantReply {
-  return hasTexts(value, ['text']) && listOf(isMapLayer)(field(value, 'mapButtons'));
+  return (
+    hasTexts(value, ['text']) &&
+    listOf(isMapLayer)(field(value, 'mapButtons')) &&
+    listOf(isChatCard)(field(value, 'cards'))
+  );
 }
 
 export const assistantClient: Pick<ApiClient, 'askAssistant'> = {

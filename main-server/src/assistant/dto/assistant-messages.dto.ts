@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 import { z } from 'zod';
-import { type MapLayer } from '../feature.js';
+import { type Card, CARDS_MAX, type MapLayer } from '../feature.js';
 
 // The most characters of a User's message, which the app's input also keeps to.
 export const USER_MESSAGE_MAX = 1000;
@@ -14,8 +14,6 @@ export const USER_MESSAGE_MAX = 1000;
 export const ASSISTANT_MESSAGE_MAX = 4000;
 // The most characters of a request's messages together. The app drops its oldest messages to stay within it.
 export const MESSAGES_TOTAL_MAX = 24_000;
-// The most cards one reply shows.
-const CARDS_MAX = 20;
 
 const userMessage = z.strictObject({
   role: z.literal('user'),
@@ -46,8 +44,10 @@ export const assistantMessagesSchema = z.strictObject({
 
 export type AssistantMessages = z.infer<typeof assistantMessagesSchema>;
 
-// The Assistant's reply, whole: its text, and the buttons under it that show a layer of the map, each layer once.
+// The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, and its
+// cards in the order shown, filled from the database. Both lists are always there, empty when there are none.
 export interface AssistantReplyDto {
   text: string;
   mapButtons: MapLayer[];
+  cards: Card[];
 }

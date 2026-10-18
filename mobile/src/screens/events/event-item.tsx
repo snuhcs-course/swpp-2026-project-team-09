@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { type LayoutChangeEvent, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge, Button, cardStyles, color, Icon, type IconName, radius, space, text } from '@/design-system';
 import type { EventView } from '@/features/events/adapter';
@@ -17,6 +18,8 @@ interface EventItemProps {
   onRecruit: () => void;
   onMatch: () => void;
   onMatching: () => void;
+  // Where the card is drawn outside the 행사 tab, as in the chat: a press on it opens the tab at this event.
+  onPress?: () => void;
 }
 
 function Line({ icon, label, words }: { icon: IconName; label: string; words: string }): ReactElement {
@@ -44,17 +47,39 @@ function MatchButton({ waiting, onPress }: { waiting: boolean; onPress: () => vo
   );
 }
 
+interface CardProps {
+  id: string;
+  focused: boolean;
+  onLayout: (y: number) => void;
+  onPress: (() => void) | undefined;
+  children: ReactNode;
+}
+
+// The card, which a press opens where it is drawn outside the tab. Its buttons stay buttons of their own: the card is
+// not one control for a screen reader, and its title is the link that opens it.
+function Card({ id, focused, onLayout, onPress, children }: CardProps): ReactElement {
+  const shared = {
+    onLayout: ({ nativeEvent }: LayoutChangeEvent): void => {
+      onLayout(nativeEvent.layout.y);
+    },
+    style: [cardStyles.card, styles.card, focused && styles.focused],
+    testID: `event-${id}`,
+  };
+  return onPress === undefined ? (
+    <View {...shared}>{children}</View>
+  ) : (
+    <Pressable {...shared} accessible={false} onPress={onPress}>
+      {children}
+    </Pressable>
+  );
+}
+
 // An event's card on the 행사 tab, the `Events` frame's.
-export function EventItem({ event, focused, onLayout, onRecruit, onMatch, onMatching }: EventItemProps): ReactElement {
+export function EventItem(props: EventItemProps): ReactElement {
+  const { event, focused, onLayout, onRecruit, onMatch, onMatching, onPress } = props;
   const { sourceUrl } = event;
   return (
-    <View
-      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-        onLayout(nativeEvent.layout.y);
-      }}
-      style={[cardStyles.card, styles.card, focused && styles.focused]}
-      testID={`event-${event.id}`}
-    >
+    <Card focused={focused} id={event.id} onLayout={onLayout} onPress={onPress}>
       <View style={styles.top}>
         <View style={styles.badges}>
           {event.recruiting === 0 ? null : <Badge tone="party">{`같이 갈 파티 ${event.recruiting}개`}</Badge>}
@@ -66,7 +91,7 @@ export function EventItem({ event, focused, onLayout, onRecruit, onMatch, onMatc
         </View>
         {event.source === null ? null : <Text style={styles.source}>{event.source}</Text>}
       </View>
-      <Text accessibilityRole="header" style={styles.title}>
+      <Text accessibilityRole={onPress === undefined ? 'header' : 'link'} onPress={onPress} style={styles.title}>
         {event.title}
       </Text>
       <View style={styles.lines}>
@@ -91,7 +116,7 @@ export function EventItem({ event, focused, onLayout, onRecruit, onMatch, onMatc
         </View>
         <MatchButton onPress={event.matching ? onMatching : onMatch} waiting={event.matching} />
       </View>
-    </View>
+    </Card>
   );
 }
 

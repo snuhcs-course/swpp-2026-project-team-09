@@ -6,6 +6,8 @@
  ******************************************************************************/
 
 import { z } from 'zod';
+import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
+import { type CardKind, type FoundIds } from './found-ids.js';
 
 // The parts of an AI feature that know nothing of the model library (ADR 0005). A tool is a zod schema of its input
 // and a plain function that calls the main server's services as the signed-in User. A feature is an entry point with
@@ -15,7 +17,7 @@ import { z } from 'zod';
 // A card the Assistant showed: what it is and its id. The model is given only these, never the card's data from an
 // earlier message, and calls a tool again when it needs it.
 export interface CardReference {
-  kind: 'quest' | 'globalEvent';
+  kind: CardKind;
   id: string;
 }
 
@@ -27,10 +29,24 @@ export const MAP_LAYERS = ['dining', 'shuttle'] as const;
 
 export type MapLayer = (typeof MAP_LAYERS)[number];
 
+// The most cards one reply shows, which is also the most an Assistant's message may send back.
+export const CARDS_MAX = 20;
+
+// A card of the reply, filled by the server in the shape of the list the app already draws it from: a Global Event as
+// the 행사 tab's published list serves it.
+export interface GlobalEventCard {
+  kind: 'globalEvent';
+  globalEvent: PublishedGlobalEventDto;
+}
+
+export type Card = GlobalEventCard;
+
 // What the presenters put in the reply beside its text, gathered over one run.
 export interface Presented {
   // Each layer once, in the order first shown.
   readonly mapButtons: MapLayer[];
+  // Each card once, in the order shown.
+  readonly cards: Card[];
 }
 
 // Who asks and when.
@@ -39,8 +55,10 @@ export interface Asker {
   readonly now: Date;
 }
 
-// What every tool of a run is given: who asks and when, and what the run's presenters have put in the reply.
+// What every tool of a run is given: who asks and when, the ids the run's lookups and resolvers returned, which are
+// all its presenters accept, and what the presenters have put in the reply.
 export interface ToolContext extends Asker {
+  readonly found: FoundIds;
   readonly presented: Presented;
 }
 

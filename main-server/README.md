@@ -1766,9 +1766,12 @@ its model through OpenRouter with the Vercel AI SDK
   }
   ```
 
-  answers `200 { "text": "…", "mapButtons": ["shuttle"] }`, the Assistant's reply whole, not streamed. `mapButtons`
-  are the buttons under the reply that show a layer of the map, `dining` or `shuttle`, each once; the app does not send
-  them back. Nothing of a conversation is stored: the app keeps it.
+  answers `200 { "text": "…", "mapButtons": ["shuttle"], "cards": [{ "kind": "globalEvent", "globalEvent": { … } }] }`,
+  the Assistant's reply whole, not streamed. `mapButtons` are the buttons under the reply that show a layer of the map,
+  `dining` or `shuttle`, each once. `cards` are the cards it showed, in order, each filled from the database in the
+  shape of the list the app draws it from: a `globalEvent` as `GET /global-events` serves it. Both are always there,
+  `[]` when there are none. The app sends a card back only as its reference, `{ "kind", "id" }`, and never the map
+  buttons. Nothing of a conversation is stored: the app keeps it.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
@@ -1804,8 +1807,21 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     Korean time, and the lines' text.
   - `getShuttle()` answers the vehicles of the set the worker stored last, each at its stop, with `collectedAt`; or
     "none" when the operator reports no vehicle, or when no set was stored in the last minute.
+  - `searchGlobalEvents(from, to, place?, words?)` answers, as candidates, the published Global Events that have not
+    ended and take place between the two days in Korea, whose place holds `place` and whose title or description holds
+    any of `words` (ignoring case), the earliest 20 first, with `more` when there were more. An event without an end
+    falls on the day of its start, and one without a start falls in no period, so it is never a candidate. Drafts,
+    cancelled and discarded events are never given.
   - A **presenter** puts something real into the reply rather than the model describing it.
     `showOnMap(dining | shuttle)` adds that map button; any other layer goes back to the model as an error.
+    `showGlobalEvents(ids)` adds those events as cards, in the order given.
+  - **The presenters' guard** (`found-ids.ts`): a presenter accepts only ids that a lookup or a resolver returned in
+    this message. Each run has its own `FoundIds` in the tools' context, which the lookups add to. Any other id, one
+    from an earlier message too, goes back to the model as an error, and nothing of that call is shown.
+  - **Text by others** (`others-text.ts`): text written by other people or collected from a Source, such as a Global
+    Event's title, description and place, reaches the model as `<data label="globalEvent.title">…</data>`, which the
+    system prompt marks as data, never instructions. `othersText` breaks a tag of the delimiters inside the text, so
+    that it cannot close them.
 - **Feature definitions**: an entry point with its own system prompt and its own tools (`Feature` in `feature.ts`). The
   chat Assistant is `chat/chat-assistant.ts`. Its system prompt carries the date, the weekday and the time in Korea of
   each request. A later AI feature gets a definition of its own that reuses tools, never more tools on this one, so
@@ -1830,7 +1846,7 @@ app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, mod
 model.script({ tool: 'getMenus', input: { date: '2027-01-01' } }, { text: '학생회관식당은 제육볶음이에요.' });
 const response = await postAssistantMessages(app, accessToken, ask('오늘 점심 뭐 나와?'));
 
-expect(response.body).toEqual({ text: '학생회관식당은 제육볶음이에요.', mapButtons: [] });
+expect(response.body).toEqual({ text: '학생회관식당은 제육볶음이에요.', mapButtons: [], cards: [] });
 model.toolResults(); // what each tool returned, as the model's last call received it
 model.system(); // the system prompt of the first call
 model.received(); // every call: its prompt (system prompt, messages, tool calls and results) and its tools

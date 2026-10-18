@@ -7,11 +7,12 @@
 
 import { useCallback, useRef, useState } from 'react';
 import {
-  type CardReference,
   CHAT_HISTORY_MAX,
+  type ChatCard,
   type ChatMessage,
   type MapLayer,
   MESSAGES_TOTAL_MAX,
+  referenceOf,
 } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
@@ -25,8 +26,9 @@ export interface ChatBubble {
   id: number;
   role: ChatMessage['role'];
   text: string;
-  // The cards an Assistant's bubble showed.
-  cards: readonly CardReference[];
+  // The cards an Assistant's answer showed, with the data the server filled them with. Only their references are sent
+  // back.
+  cards: readonly ChatCard[];
   // The buttons under an Assistant's answer that show a layer of the map. They are not sent back.
   mapButtons: readonly MapLayer[];
   failure: ChatFailure | null;
@@ -57,7 +59,9 @@ function textLength(messages: readonly ChatMessage[]): number {
 export function messagesToSend(bubbles: readonly ChatBubble[]): ChatMessage[] {
   let messages = bubbles
     .filter(({ failure }) => failure === null)
-    .map(({ role, text, cards }): ChatMessage => (role === 'user' ? { role, text } : { role, text, cards: [...cards] }))
+    .map(({ role, text, cards }): ChatMessage =>
+      role === 'user' ? { role, text } : { role, text, cards: cards.map((card) => referenceOf(card)) },
+    )
     .slice(-CHAT_HISTORY_MAX);
   while (messages.length > 1 && textLength(messages) > MESSAGES_TOTAL_MAX) {
     messages = messages.slice(1);
@@ -71,7 +75,7 @@ type NewBubble = Omit<ChatBubble, 'id'>;
 async function answerTo(messages: ChatMessage[]): Promise<NewBubble> {
   try {
     const reply = await apiClient.askAssistant(messages);
-    return { role: 'assistant', text: reply.text, cards: [], mapButtons: reply.mapButtons, failure: null };
+    return { role: 'assistant', text: reply.text, cards: reply.cards, mapButtons: reply.mapButtons, failure: null };
   } catch (error) {
     const failure = error instanceof ApiError && error.status === 429 ? 'usedUp' : 'unavailable';
     return { role: 'assistant', text: FAILURE_TEXT[failure], cards: [], mapButtons: [], failure };

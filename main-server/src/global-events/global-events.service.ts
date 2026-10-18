@@ -6,6 +6,7 @@
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
@@ -61,6 +62,32 @@ function startOfSeoulDay(now: Date): Date {
 // An event has ended once its end has passed or, without an end, once the day of its start has passed in Asia/Seoul.
 function notEnded(now: Date): Prisma.GlobalEventWhereInput {
   return { OR: [{ endsAt: { gt: now } }, { endsAt: null, startsAt: { gte: startOfSeoulDay(now) } }] };
+}
+
+// What the Assistant's searchGlobalEvents asks for: the events that fall in [from, to), whose place holds `place` and
+// whose title or description holds any of `words`, ignoring case. An event without an end falls on the day of its
+// start, and one without a start falls in no period.
+export interface PublishedSearch {
+  from: Date;
+  to: Date;
+  place?: string;
+  words?: readonly string[];
+  // The most events answered.
+  take: number;
+}
+
+function holding(text: string): Prisma.StringFilter {
+  return { contains: text, mode: 'insensitive' };
+}
+
+function searched({ from, to, place, words }: PublishedSearch): Prisma.GlobalEventWhereInput[] {
+  return [
+    { startsAt: { lt: to }, OR: [{ endsAt: { gt: from } }, { endsAt: null, startsAt: { gte: from } }] },
+    ...(place === undefined ? [] : [{ place: holding(place) }]),
+    ...(words === undefined || words.length === 0
+      ? []
+      : [{ OR: words.flatMap((word) => [{ title: holding(word) }, { description: holding(word) }]) }]),
+  ];
 }
 
 // What an edit or a change of state writes besides the version.
@@ -147,6 +174,27 @@ export class GlobalEventsService {
 
   async listPublished(): Promise<PublishedGlobalEventDto[]> {
     return (await this.findListed(GlobalEventState.published)).map((event) => toPublishedGlobalEventDto(event));
+  }
+
+  // The published events of the search that have not ended at `now`, as the User's list serves them and in its order.
+  async searchPublished(search: PublishedSearch, now: Date): Promise<PublishedGlobalEventDto[]> {
+    const events = await this.prisma.globalEvent.findMany({
+      where: { state: GlobalEventState.published, AND: [notEnded(now), ...searched(search)] },
+      orderBy: BY_START,
+      take: search.take,
+    });
+    return events.map((event) => toPublishedGlobalEventDto(event));
+  }
+
+  // The events among `ids` that are published, as the User's list serves them, in the order of `ids`.
+  async publishedAmong(ids: readonly string[]): Promise<PublishedGlobalEventDto[]> {
+    const events = await this.prisma.globalEvent.findMany({
+      where: { id: { in: [...ids] }, state: GlobalEventState.published },
+    });
+    return ids.flatMap((id) => {
+      const event = events.find((each) => each.id === id);
+      return event === undefined ? [] : [toPublishedGlobalEventDto(event)];
+    });
   }
 
   async listForAdministrators(state: ListedState): Promise<ListedGlobalEventDto[]> {
