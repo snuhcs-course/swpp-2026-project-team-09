@@ -36,7 +36,7 @@ Fixed here so that tickets 02 and 04 match without seeing this ticket: the deplo
 ### Decisions the spec left open
 
 - The previous `status.json` is the memory between runs (the deployed commit, the candidate, its attempt, held, a skipped `ci-failed`). There is no other state file.
-- JSON is read with `grep` and `awk`, so the server needs no `jq`.
+- JSON is read with `jq`, which the bootstrap installs.
 - A commit pushed to several branches has one run of each check per push. One `success` per required check is enough.
 - `unhealthy` counts as a failed attempt, as `build-failed` does: retried on the next two runs, then `held`.
 - A run started by hand (systemd sets no `TRIGGER_UNIT`) asks GitHub again about a `held` or `ci-failed` commit and starts again at attempt 1.

@@ -114,7 +114,7 @@ sudo bash bootstrap.sh
 rm bootstrap.sh
 ```
 
-The bootstrap installs `docker.io`, `docker-compose-v2`, `docker-buildx`, `git` and `curl` from Ubuntu's archive,
+The bootstrap installs `docker.io`, `docker-compose-v2`, `docker-buildx`, `git`, `curl` and `jq` from Ubuntu's archive,
 creates the five folders of [Where things are](#where-things-are), clones the repository on `development` into the
 checkout and marks it safe for git under root. It writes the settings file with the generated and fixed values and
 `CHANGE_ME` for the three a person fills in, copies the five unit files into systemd and runs

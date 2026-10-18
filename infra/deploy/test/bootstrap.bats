@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
+# 2026-10-18  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # Runs bootstrap.sh on a pretend machine under $BATS_TEST_TMPDIR: the team folder, systemd's unit folder and, through
@@ -131,13 +132,13 @@ example_value_of() {
   cmp "$BATS_TEST_TMPDIR/filled" "$SETTINGS"
 }
 
-@test "with fakes for apt-get, git, systemctl and install, a first run installs the three packages, clones, installs the five units and enables only the two timers; a second run on a prepared machine installs nothing again and fails nothing" {
+@test "with fakes for apt-get, git, systemctl and install, a first run installs the three packages and jq, clones, installs the five units and enables only the two timers; a second run on a prepared machine installs nothing again and fails nothing" {
   local calls=$FAKE_STATE/calls packages package unit
   bootstrap
 
   grep -qx 'apt-get update' "$calls"
   packages=" $(grep '^apt-get install ' "$calls") "
-  for package in docker.io docker-compose-v2 docker-buildx; do
+  for package in docker.io docker-compose-v2 docker-buildx jq; do
     [[ $packages == *" $package "* ]] || false
   done
   grep -qx "git clone --branch development https://github.com/snuhcs-course/swpp-2026-project-team-09.git $CHECKOUT" \

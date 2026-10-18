@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
+# 2026-10-18  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # Readies a course server for the deploy timer. Run as root, once and again whenever: it never overwrites the settings
@@ -19,8 +20,8 @@ if [[ $TEAM_GROUP == root ]]; then
 fi
 
 REPOSITORY=https://github.com/snuhcs-course/swpp-2026-project-team-09.git
-# git and curl for the clone and the deploy run, which a minimal image may lack.
-PACKAGES=(docker.io docker-compose-v2 docker-buildx git curl)
+# git, curl and jq for the clone and the deploy run, which a minimal image may lack.
+PACKAGES=(docker.io docker-compose-v2 docker-buildx git curl jq)
 UNITS=(snu-now-deploy.service snu-now-deploy.timer snu-now-demo-refresh.service snu-now-demo-refresh.timer
   snu-now-redeploy.service)
 

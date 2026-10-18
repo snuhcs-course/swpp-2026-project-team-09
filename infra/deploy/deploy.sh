@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
+# 2026-10-18  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # One run of the Dev Server's deployment, started by snu-now-deploy.timer: brings the stack up to the tip of
@@ -48,56 +49,9 @@ plan_run() {
   fi
 }
 
-# Prints each value of a JSON document read from stdin as `path<TAB>value`, the path's parts joined by dots, so that
-# the script reads GitHub's answer and its own status file without jq, which the server does not have.
-json_flatten() {
-  { LC_ALL=C grep -oE '"([^"\\]|\\.)*"|[][{}:,]|-?[0-9][0-9.eE+-]*|true|false|null' || true; } | awk '
-    function emit(value,   path, i) {
-      for (i = 1; i <= depth; i++) path = path (i > 1 ? "." : "") key[i]
-      print path "\t" value
-    }
-    $0 == "{" { depth++; in_array[depth] = 0; want_key = 1; next }
-    $0 == "[" { depth++; in_array[depth] = 1; key[depth] = 0; want_key = 0; next }
-    $0 == "}" || $0 == "]" { depth--; want_key = 0; next }
-    $0 == ":" { next }
-    $0 == "," { if (in_array[depth]) key[depth]++; else want_key = 1; next }
-    {
-      value = $0
-      if (value ~ /^"/) value = substr(value, 2, length(value) - 2)
-      if (want_key) { key[depth] = value; want_key = 0 } else emit(value)
-    }'
-}
-
-# Prints the value at a path of json_flatten's output on stdin, or nothing when it is absent or null.
-json_value() {
-  awk -F '\t' -v path="$1" '$1 == path && $2 != "null" { print $2 }'
-}
-
-# Prints one line per element of the array at a path of json_flatten's output on stdin: the named fields of the
-# element, tab-separated, or the element itself when no field is named.
-json_array() {
-  awk -F '\t' -v path="$1" -v names="${*:2}" '
-    BEGIN { fields = split(names, field, " ") }
-    index($1, path ".") == 1 {
-      rest = substr($1, length(path) + 2)
-      element = rest; sub(/\..*/, "", element)
-      name = (rest ~ /\./) ? substr(rest, length(element) + 2) : ""
-      if (!(element in seen)) { seen[element] = 1; order[++count] = element }
-      value[element, name] = $2
-    }
-    END {
-      for (c = 1; c <= count; c++) {
-        line = ""
-        if (fields == 0) line = value[order[c], ""]
-        for (f = 1; f <= fields; f++) line = line (f > 1 ? "\t" : "") value[order[c], field[f]]
-        print line
-      }
-    }'
-}
-
 # Prints `name<TAB>status<TAB>conclusion` for each check run of GitHub's check-runs answer on stdin.
 check_runs_from_json() {
-  json_flatten | json_array check_runs name status conclusion
+  jq -r '.check_runs[]? | [.name, .status, .conclusion] | @tsv'
 }
 
 # Prints `name<TAB>outcome` for each required check, given the check runs as check_runs_from_json prints them.
@@ -294,6 +248,11 @@ deploy_tip() {
   clean_docker
 }
 
+# Prints what a jq filter selects from the previous status file, or nothing when there is none.
+read_status() {
+  [[ ! -f "$DEPLOY_STATUS_DIR/status.json" ]] || jq -r "$1" "$DEPLOY_STATUS_DIR/status.json"
+}
+
 write_status() {
   status_json "$checked_at" "$result" "$tip" "$attempt" "$deployed" "$deployed_at" "$checks" "$services" \
     >"$DEPLOY_STATUS_DIR/status.json.partial"
@@ -310,7 +269,7 @@ take_tip() {
   fi
   tip=$("$GIT" rev-parse FETCH_HEAD)
   log "fetch: $TRACKED_REF is at $tip"
-  [[ "$tip" != "$last_candidate" ]] || checks=$(json_array checks name conclusion <<<"$previous")
+  [[ "$tip" != "$last_candidate" ]] || checks=$(read_status '.checks[]? | [.name, .conclusion] | @tsv')
 
   plan=$(plan_run "$tip" "$deployed" "$last_candidate" "$last_result" "$last_attempt" "$by_hand")
   case $plan in
@@ -336,7 +295,7 @@ take_tip() {
 }
 
 main() {
-  local checked_at by_hand=no previous tip='' verdict checks='' attempt='' result
+  local checked_at by_hand=no tip='' verdict checks='' attempt='' result
   local last_candidate last_result last_attempt deployed deployed_at services
   checked_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   # systemd hands a person's `systemctl start` the TRIGGER_UNIT of the timer's earlier starts, so a person asks for a
@@ -353,14 +312,12 @@ main() {
   fi
 
   # The previous status file is the memory between runs.
-  previous=''
-  [[ ! -f "$DEPLOY_STATUS_DIR/status.json" ]] || previous=$(json_flatten <"$DEPLOY_STATUS_DIR/status.json")
-  last_candidate=$(json_value candidateCommit <<<"$previous")
-  last_result=$(json_value result <<<"$previous")
-  last_attempt=$(json_value attempt <<<"$previous")
-  deployed=$(json_value deployedCommit <<<"$previous")
-  deployed_at=$(json_value deployedAt <<<"$previous")
-  services=$(json_array recreatedServices <<<"$previous")
+  last_candidate=$(read_status '.candidateCommit // empty')
+  last_result=$(read_status '.result // empty')
+  last_attempt=$(read_status '.attempt // empty')
+  deployed=$(read_status '.deployedCommit // empty')
+  deployed_at=$(read_status '.deployedAt // empty')
+  services=$(read_status '.recreatedServices[]?')
 
   if secrets_missing "$DEPLOY_ENV_FILE"; then
     log "settings: $DEPLOY_ENV_FILE is missing or still holds CHANGE_ME; stopping before Docker"
