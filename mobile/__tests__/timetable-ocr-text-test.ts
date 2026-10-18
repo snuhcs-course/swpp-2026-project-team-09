@@ -8,7 +8,7 @@ import type { Place } from '@/api/types';
 import { blockText, joinName, linesIn, roomOf } from '@/features/timetable-ocr/block-text';
 import { buildingOf, linkRoom } from '@/features/timetable-ocr/building';
 import { mergeClasses, type ReadTime } from '@/features/timetable-ocr/classes';
-import { readTimetable } from '@/features/timetable-ocr/read-timetable';
+import { readScreenshot } from '@/features/timetable-ocr/read-timetable';
 import { findTitle } from '@/features/timetable-ocr/title';
 import { clipWord, type Word } from '@/features/timetable-ocr/words';
 
@@ -172,7 +172,7 @@ describe('the whole pipeline on a drawn timetable', () => {
   it('reads 12-hour labels like 24-hour ones and gives the spec’s shape', () => {
     const blocks = [{ day: 1, start: 13, end: 14.25, colour: BLUE, text: ['자료구조', '302-311-1'] }];
     const read = (twelve: boolean): unknown =>
-      readTimetable(screenshot(blocks, headerLines().concat(labelLines(9, 20, twelve))), [place('302')]);
+      readScreenshot(screenshot(blocks, headerLines().concat(labelLines(9, 20, twelve))), [place('302')]);
     expect(read(true)).toEqual(read(false));
     expect(read(false)).toEqual({
       kind: 'read',
@@ -188,7 +188,7 @@ describe('the whole pipeline on a drawn timetable', () => {
   });
 
   it('leaves out a block read with too little confidence, and without confidence a one-letter name', () => {
-    const reading = readTimetable(
+    const reading = readScreenshot(
       screenshot([
         { day: 0, start: 10, end: 11, colour: BLUE, text: ['밍'], confidence: 0.2 },
         { day: 1, start: 10, end: 11, colour: BLUE, text: ['국'], confidence: null },

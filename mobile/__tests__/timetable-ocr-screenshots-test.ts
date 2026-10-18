@@ -8,7 +8,7 @@ import { classSaves } from '@/features/timetable-ocr/classes';
 import { columnsFromGridLines, findHeader } from '@/features/timetable-ocr/grid';
 import type { NativeOcrResult } from '@/features/timetable-ocr/native-ocr';
 import { decodePixels } from '@/features/timetable-ocr/pixels';
-import { readTimetable } from '@/features/timetable-ocr/read-timetable';
+import { readScreenshot, readTimetable } from '@/features/timetable-ocr/read-timetable';
 import { wordsOf } from '@/features/timetable-ocr/words';
 import { checkedClasses } from '@/features/timetable/version-checks';
 
@@ -35,7 +35,7 @@ function withoutHeader(result: NativeOcrResult): NativeOcrResult {
 }
 
 function run(name: Screenshot, output: NativeOcrResult, label: string): Score {
-  const reading = readTimetable(output, PLACES);
+  const reading = readScreenshot(output, PLACES);
   if (reading.kind !== 'read') {
     throw new Error(`${name}: no timetable (${reading.reason})`);
   }
@@ -100,11 +100,11 @@ describe.each(SCREENSHOTS)('the screenshot %s, without its header or timed', (na
 
   it('is read in well under 2 seconds in Node (the emulator is the target; Node is the proxy)', () => {
     const output = ocrOutput(name);
-    readTimetable(output, PLACES);
+    readScreenshot(output, PLACES);
     const times: number[] = [];
     for (let round = 0; round < 5; round += 1) {
       const started = performance.now();
-      readTimetable(output, PLACES);
+      readScreenshot(output, PLACES);
       times.push(performance.now() - started);
     }
     const median = times.toSorted((one, other) => one - other)[2] ?? 0;
@@ -117,7 +117,7 @@ describe.each(SCREENSHOTS)('the screenshot %s, without its header or timed', (na
 });
 
 function readOf(name: Screenshot): Score {
-  const reading = readTimetable(ocrOutput(name), PLACES);
+  const reading = readScreenshot(ocrOutput(name), PLACES);
   return reading.kind === 'read' ? score(reading.classes, reading.leftOut, truth(name)) : score([], [], truth(name));
 }
 
@@ -127,4 +127,14 @@ it('reads 48 of the 50 true times over the four screenshots, with nothing read t
   expect(total('truthTimes')).toBe(50);
   expect(total('matched')).toBe(48);
   expect(total('readTimes')).toBe(48);
+});
+
+it('gives the import (ticket 04) the title and the classes, and nothing for a picture without a timetable', () => {
+  const reading = readScreenshot(ocrOutput('snutt-2'), PLACES);
+  expect(readTimetable(ocrOutput('snutt-2'), PLACES)).toEqual({
+    title: '연습1',
+    classes: reading.kind === 'read' ? reading.classes : [],
+  });
+  const empty = { ...ocrOutput('snutt-2'), lines: [] };
+  expect(readTimetable(empty, PLACES)).toEqual({ title: null, classes: [] });
 });
