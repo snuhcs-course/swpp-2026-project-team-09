@@ -34,5 +34,5 @@ Expo Go has no native module: there, nothing calls it, and `이미지로 불러�
 ### Agent usage (2026-10-18)
 
 - Agent time: about 2 h 25 min, an estimate: one implementing agent on branch `2.0/P13-01-native-ocr-module`, most of it waiting on the Android builds (a full build of both ABIs, then an x86_64 build after the machine powered off) and the emulator run; the self-review's fixes are included. The coordinating session is not counted here.
-- Tokens: recorded by the main session.
+- Tokens, from the transcripts of the implementing subagent and one review subagent: input 30,199,168, of which 28,405,987 cache reads, 1,792,803 cache writes and 378 uncached; output 29,421. The main session's tokens are not split per ticket and are not included.
 - Not done here: the iOS build on 함재현's Mac (the podspec and Swift code are written but never compiled) and the device check on the shared Android phone and on iOS.
