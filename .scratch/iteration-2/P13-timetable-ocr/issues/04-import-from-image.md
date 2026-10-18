@@ -30,5 +30,5 @@ What was uncertain was left out by the pipeline. The User adds or fixes the rest
 ### Agent usage (2026-10-18)
 
 - Agent time: about 40 minutes over one session (an estimate): the import, the class form change and the Jest cases, then the merge of ticket 02 and the review's fixes.
-- Tokens: recorded by the main session.
+- Tokens, from the transcripts of the implementing subagent and one review subagent: input 13,334,319, of which 13,092,121 cache reads, 241,968 cache writes and 230 uncached; output 14,521. The main session's tokens are not split per ticket and are not included.
 - The import reads with ticket 02's `readScreenshot` (`read-timetable.ts`), whose `none` reading and `leftOut` blocks it uses; `__tests__/timetable-import-pipeline-test.tsx` runs it end to end on snutt-2's saved OCR output.
