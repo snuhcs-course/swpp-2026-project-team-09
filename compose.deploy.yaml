@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
+# 2026-10-18  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # The Dev Server's stack: compose.yaml with this file over it, and the settings file as Compose's --env-file
@@ -44,6 +45,9 @@ services:
       PUBLIC_URL: ${PUBLIC_URL}
       ANDROID_CERTIFICATE_FINGERPRINTS: ${ANDROID_CERTIFICATE_FINGERPRINTS}
       MATCH_SERVER_TOKEN: ${MATCH_SERVER_TOKEN}
+      # May be absent from a settings file written before the Assistant, which is then off.
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      ASSISTANT_MODEL: ${ASSISTANT_MODEL:-}
     ports: !reset []
 
   socket-server:

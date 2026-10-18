@@ -150,7 +150,7 @@ servers' own `.env.example` files.
 `MATCH_DB_PASSWORD`, the access-token key pair `ACCESS_TOKEN_PRIVATE_KEY` and `ACCESS_TOKEN_PUBLIC_KEY`, `WORKER_TOKEN`
 and `MATCH_SERVER_TOKEN`. The fixed values: `COMPOSE_PROFILES=demo`, `DEPLOY_STATUS_DIR`, `DEPLOY_APK_DIR`,
 `PUBLIC_URL` (the Dev Server's address), the two Google client IDs, `ANDROID_CERTIFICATE_FINGERPRINTS` (the debug
-key's, which signs the dev APK) and `ROUND_INTERVAL_SECONDS`.
+key's, which signs the dev APK), `ASSISTANT_MODEL` and `ROUND_INTERVAL_SECONDS`.
 
 **Filled in by a person**, `CHANGE_ME` until then:
 
@@ -159,6 +159,11 @@ key's, which signs the dev APK) and `ROUND_INTERVAL_SECONDS`.
 | `KAKAO_REST_API_KEY`           | The REST API key of the team's Kakao app                                   | The Owner of the Kakao app, privately |
 | `INITIAL_ADMINISTRATOR_EMAILS` | The four members' addresses they sign in to the admin site with, by commas | The members                           |
 | `DEMO_ACCOUNT_EMAILS`          | The four members' SNU addresses, separated by commas                       | The members                           |
+
+`OPENROUTER_API_KEY`, the Assistant's OpenRouter key (`main-server/.env.example` says how to make one), is left empty
+rather than `CHANGE_ME`: while it is empty, the Assistant answers that it is unavailable and everything else runs. A
+settings file written before the Assistant lacks it and `ASSISTANT_MODEL`: copy both lines from
+[`snu-now.env.example`](snu-now.env.example) and apply them as in [Changing a setting later](#changing-a-setting-later).
 
 The file belongs to the team group, so any member edits it without `sudo`, for example with
 `nano /srv/team/snu-now-secrets/snu-now.env`. `grep CHANGE_ME /srv/team/snu-now-secrets/snu-now.env` prints nothing
