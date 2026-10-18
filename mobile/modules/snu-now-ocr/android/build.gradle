@@ -24,4 +24,6 @@ dependencies {
   // ML Kit Text Recognition v2 with the Korean recogniser. This artifact bundles the model in the app, so the first
   // reading needs no download from Google Play services. It reads Latin letters and digits too, as rooms need.
   implementation 'com.google.mlkit:text-recognition-korean:16.0.1'
+  // The EXIF orientation of a photo, which is turned upright before it is read. expo-image-picker uses the same.
+  implementation 'androidx.exifinterface:exifinterface:1.4.1'
 }

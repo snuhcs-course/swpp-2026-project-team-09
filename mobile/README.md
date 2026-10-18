@@ -139,8 +139,10 @@ and start it.
 
 On a computer without an ARM emulator, such as an x86_64 Linux machine, a development build can add `x86_64` for an
 x86_64 emulator: generate the project with `ANDROID_X86_64=1` (`app.config.ts` adds the ABI beside `arm64-v8a`).
-Everything but Kakao's map runs there, which is how the text recognition below was checked. It is a development
-setting: generate the project again without it before a release build.
+Everything but Kakao's map runs there, which is how the text recognition below was checked: Kakao's library has no
+x86_64 build, so the map module logs that it could not be loaded and the map stays blank. `KAKAO_NATIVE_APP_KEY`
+must still be set, to any value, or the SDK refuses to start and the app with it. It is a development setting:
+generate the project again without it before a release build.
 
 ```bash
 ANDROID_X86_64=1 pnpm expo prebuild --platform android --clean

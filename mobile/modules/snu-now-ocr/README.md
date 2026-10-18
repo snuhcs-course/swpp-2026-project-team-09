@@ -7,7 +7,7 @@ it; the mobile README's "Text recognition (OCR)" section describes the answer an
 | Platform | Library                                                                    | Model                           |
 | -------- | -------------------------------------------------------------------------- | ------------------------------- |
 | Android  | `com.google.mlkit:text-recognition-korean:16.0.1` (`android/build.gradle`) | Bundled in the app; no download |
-| iOS      | `GoogleMLKit/TextRecognitionKorean` `>= 7.0.0` (`ios/SnuNowOcr.podspec`)   | Bundled in the pod              |
+| iOS      | `GoogleMLKit/TextRecognitionKorean` `~> 9.0` (`ios/SnuNowOcr.podspec`)     | Bundled in the pod              |
 
 ## Confidence
 
@@ -27,15 +27,25 @@ can only apply on Android.
 
 ## Boxes and the small copy
 
-- Boxes are `{ x, y, w, h }` in the original image's pixels, from its top-left corner. Android decodes the image to an
-  ARGB_8888 bitmap (a 16-bit PNG too) and gives ML Kit the bitmap, so its boxes are in the file's pixels; iOS redraws
-  the image upright at scale 1 first. EXIF orientation is not applied on Android: screenshots have none.
+- Boxes are `{ x, y, w, h }` in the original image's pixels, upright, from its top-left corner. `width` and `height`
+  are the original's, upright.
+- Android decodes the image to an ARGB_8888 bitmap (a 16-bit PNG too) and turns it upright by its EXIF orientation
+  (`androidx.exifinterface`). An image whose longer side is above 4096 pixels is decoded at a power-of-two fraction of
+  its size, and the boxes are scaled back to the original's pixels; a phone's screenshot is read whole. The answer is
+  built off the main thread and the bitmaps are recycled once it is.
+- iOS redraws the image upright at scale 1 first, so its points are its pixels.
 - `pixels` is the image scaled to 330 pixels wide (never up), the aspect kept, as RGBA bytes row by row from the top,
   in base64. `scale` is the original's width over the copy's: a pixel (x, y) of the copy is (x × scale, y × scale) in
-  the original.
+  the original. The copy's height is rounded to whole pixels, so the vertical ratio differs from `scale` by less than
+  half a pixel of the copy over its height: none for a 1320 × 2868 screenshot (717 rows, 4 exactly), at most about
+  0.07 % for others. There is no separate vertical scale.
 
 ## Building
 
-Android builds with the app (`pnpm android`); for an x86_64 emulator, see "The emulator" in the mobile README. iOS
-has not been built yet: the first `pod install` on a Mac fetches ML Kit's pods. ML Kit's iOS frameworks have long had
-no arm64 slice for the simulator on Apple Silicon, so the simulator build may need a Rosetta simulator or a phone.
+Android builds with the app (`pnpm android`); for an x86_64 emulator, see "The emulator" in the mobile README.
+
+iOS has not been built yet: the first `pod install` on a Mac fetches ML Kit's pods (`GoogleMLKit` 9.x). At that
+install, check the versions CocoaPods settles on for `GoogleUtilities` and `GTMSessionFetcher`, which ML Kit and
+Google's sign-in (`GoogleSignIn`, through `react-native-nitro-google-signin`) both depend on: if their ranges do not
+meet, `pod install` fails, and one of the two has to move to a version that agrees. ML Kit's iOS frameworks have long
+had no arm64 slice for the simulator on Apple Silicon, so the simulator build may need a Rosetta simulator or a phone.

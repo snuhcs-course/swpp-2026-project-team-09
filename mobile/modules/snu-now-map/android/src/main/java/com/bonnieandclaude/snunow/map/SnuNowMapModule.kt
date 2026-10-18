@@ -42,12 +42,14 @@ class SnuNowMapModule : Module() {
       if (key.isEmpty()) {
         Log.e(TAG, "KAKAO_NATIVE_APP_KEY was empty when the app was built: the map will not start")
       }
-      // Without a key, or on an x86_64 emulator, where Kakao's ARM-only library is missing, the SDK throws. The rest of
-      // the app must still start: the map stays blank and the log says why.
+      // On an x86_64 emulator Kakao's ARM-only library is missing and the SDK fails to link
+      // (UnsatisfiedLinkError, NoClassDefFoundError or ExceptionInInitializerError, all LinkageErrors). The rest of the
+      // app must still start there: the map stays blank and the log says why. Any other failure, such as an empty key,
+      // still surfaces.
       try {
         KakaoMapSdk.init(context, key)
-      } catch (error: Throwable) {
-        Log.e(TAG, "Kakao's map SDK could not start: the map will not appear", error)
+      } catch (error: LinkageError) {
+        Log.e(TAG, "Kakao's map SDK could not be loaded on this device: the map will not appear", error)
       }
     }
 

@@ -24,6 +24,8 @@ them.
 - A development build of the app with `x86_64` (`ANDROID_X86_64=1`), React Native 0.86.3, Expo SDK 57.
 - ML Kit: `com.google.mlkit:text-recognition-korean` 16.0.1 with its bundled model, which brings in
   `play-services-mlkit-text-recognition-common` 19.1.0.
+- The module as of commit `86b8171`, before it applied EXIF orientation and sampled very large images. Neither
+  changes a 1320 × 2868 PNG screenshot, so the answer would be the same today.
 - Every confidence is a number: Android's ML Kit gives one for every line and word. On iOS the same answer would have
   `confidence: null` everywhere (see `modules/snu-now-ocr/README.md`).
 
@@ -49,4 +51,5 @@ pnpm prettier --write $F
 
 Open the app once before the first link, so that the bundle is loaded. The same screen can pick a screenshot from the
 album instead (`snunow://ocr-check`, "사진 고르기"). Kakao's map has no x86_64 library, so on the emulator the map
-stays blank; the rest of the app runs.
+stays blank; the rest of the app runs. The build needs `KAKAO_NATIVE_APP_KEY` set to some value (these were made with
+a placeholder), or Kakao's SDK stops the app at its start.

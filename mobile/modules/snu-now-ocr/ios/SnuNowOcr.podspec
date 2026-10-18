@@ -19,7 +19,7 @@ Pod::Spec.new do |s|
 
   s.dependency 'ExpoModulesCore'
   # ML Kit's Korean recogniser, from CocoaPods, with its model bundled in the pod. ML Kit's frameworks are static.
-  s.dependency 'GoogleMLKit/TextRecognitionKorean', '>= 7.0.0'
+  s.dependency 'GoogleMLKit/TextRecognitionKorean', '~> 9.0'
 
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',

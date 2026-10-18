@@ -15,7 +15,7 @@ private let pixelsWidth = 330
 
 // The native OCR module, under the name `src/features/timetable-ocr/native-ocr.ts` asks for. One function reads an
 // image's text with ML Kit's Korean recogniser and returns it with a small RGBA copy of the image. iOS's ML Kit gives
-// no confidence, so every `confidence` is null here.
+// no confidence, so every `confidence` is null here. Not yet built: the first build is on a Mac.
 public class SnuNowOcrModule: Module {
   private lazy var recognizer = TextRecognizer.textRecognizer(options: KoreanTextRecognizerOptions())
 
@@ -39,12 +39,13 @@ public class SnuNowOcrModule: Module {
           promise.reject("ERR_OCR_IMAGE", "The image could not be scaled: \(uri)")
           return
         }
-        promise.resolve([
+        let answer: [String: Any] = [
           "width": Int(image.size.width),
           "height": Int(image.size.height),
           "lines": Self.lines(text),
           "pixels": pixels,
-        ])
+        ]
+        promise.resolve(answer)
       }
     }
   }
@@ -67,16 +68,17 @@ public class SnuNowOcrModule: Module {
     }
   }
 
-  // Lines in reading order, each with its elements (words).
-  private static func lines(_ text: MLKitTextRecognitionCommon.Text) -> [[String: Any?]] {
-    text.blocks.flatMap { $0.lines }.map { line in
-      [
+  // Lines in reading order, each with its elements (words). iOS's ML Kit gives no confidence, which reaches JS as null.
+  private static func lines(_ text: MLKitTextRecognitionCommon.Text) -> [[String: Any]] {
+    text.blocks.flatMap { $0.lines }.map { line -> [String: Any] in
+      let elements: [[String: Any]] = line.elements.map { element -> [String: Any] in
+        ["text": element.text, "box": box(element.frame), "confidence": NSNull()]
+      }
+      return [
         "text": line.text,
         "box": box(line.frame),
-        "confidence": nil,
-        "elements": line.elements.map { element in
-          ["text": element.text, "box": box(element.frame), "confidence": nil] as [String: Any?]
-        },
+        "confidence": NSNull(),
+        "elements": elements,
       ]
     }
   }
