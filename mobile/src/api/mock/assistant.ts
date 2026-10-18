@@ -10,11 +10,13 @@ import type { RecruitingQuest } from '@/api/party-types';
 import { now } from '@/clock';
 import { koreaDateKey, koreaNextDay } from '@/korea-time';
 import { RECRUITING_QUESTS } from './data/boards';
+import { FRIENDS } from './data/friends';
 import { MENUS } from './data/menus';
 import { GLOBAL_EVENTS } from './data/quests';
 
 // The Assistant without a model: a question about the menus is answered from the mocks' menus of the day, one about
 // the shuttle with its layer's button, a request to make or recruit for a 파티 with a Proposal for tomorrow's lunch,
+// or, 비공개, a Closed one for the mocks' first Global Event inviting their first Friend,
 // one about 파티 with the mocks' recruiting Quests that meet soonest as cards, one about events with the mocks' Global
 // Events as cards, and anything else with a short reply, so that the chat can be seen and tried where the app asks no
 // main server.
@@ -49,6 +51,26 @@ function lunchProposal(): QuestProposal {
     board: 'meal',
     capacity: 4,
     startsAt: `${tomorrow}T12:00:00+09:00`,
+    place: null,
+    globalEvent: null,
+    invitees: [],
+  };
+}
+
+// A 비공개 파티 for the mocks' first Global Event, at its start, inviting their first Friend.
+function closedProposal(): QuestProposal {
+  const event = GLOBAL_EVENTS[0] ?? null;
+  const friend = FRIENDS[0];
+  return {
+    title: event === null ? '같이 가요' : `${event.title} 같이 가요`,
+    description: '',
+    joinPolicy: 'closed',
+    board: null,
+    capacity: 4,
+    startsAt: event?.startsAt ?? lunchProposal().startsAt,
+    place: null,
+    globalEvent: event,
+    invitees: friend === undefined ? [] : [{ id: friend.id, name: friend.name }],
   };
 }
 
@@ -78,7 +100,7 @@ export function mockAssistantReply(messages: readonly ChatMessage[]): AssistantR
       text: '이렇게 만들까요? 만들기를 누르기 전에는 아무것도 만들지 않아요.',
       mapButtons: [],
       cards: [],
-      proposal: lunchProposal(),
+      proposal: last.includes('비공개') ? closedProposal() : lunchProposal(),
     };
   }
   if (QUEST_WORDS.some((word) => last.includes(word))) {

@@ -30,22 +30,31 @@ interface Row {
   value: string;
 }
 
-// The party form's fields, as the form the Proposal fills holds them. Those a Proposal does not fill yet (where, the
-// related event, the Friends to invite) show as empty; the photo and the tags are not shown.
-function rowsOf(form: PartyForm): Row[] {
+// Where it meets: the Proposal's Place by name, else the event's place the form takes.
+function whereOf({ place }: QuestProposal, form: PartyForm): string {
+  if (place !== null) {
+    return place.name;
+  }
+  return form.place !== undefined && 'label' in form.place ? form.place.label : EMPTY;
+}
+
+// The party form's fields, as the form the Proposal fills holds them, empty where it gives none. A 비공개 파티 has no
+// Board, so no 게시판 row; the photo and the tags are not shown.
+function rowsOf(proposal: QuestProposal, form: PartyForm): Row[] {
   const policy = form.policy === 'open' ? '바로 참여' : '승인 후 참여';
+  const shared = form.visibility === 'public';
+  const invitees = proposal.invitees.map(({ name }) => name).join(', ');
+  const board: Row[] = shared
+    ? [{ icon: 'layers', label: '게시판', value: form.board === null ? EMPTY : boardName(form.board) }]
+    : [];
   return [
     { icon: 'edit', label: '제목', value: form.title },
-    { icon: 'lock', label: '공개 범위', value: form.visibility === 'public' ? `공개 · ${policy}` : '비공개' },
-    { icon: 'layers', label: '게시판', value: form.board === null ? EMPTY : boardName(form.board) },
+    { icon: 'lock', label: '공개 범위', value: shared ? `공개 · ${policy}` : '비공개' },
+    ...board,
     { icon: 'clock', label: '언제', value: form.startsAt === null ? EMPTY : whenOf(form.startsAt) },
-    {
-      icon: 'pin',
-      label: '어디서',
-      value: form.place !== undefined && 'label' in form.place ? form.place.label : EMPTY,
-    },
+    { icon: 'pin', label: '어디서', value: whereOf(proposal, form) },
     { icon: 'calendar', label: '관련 행사', value: form.event?.title ?? EMPTY },
-    { icon: 'user', label: '친구 초대', value: EMPTY },
+    { icon: 'user', label: '친구 초대', value: invitees === '' ? EMPTY : invitees },
     { icon: 'users', label: '인원', value: `${String(form.capacity)}명` },
   ];
 }
@@ -63,7 +72,7 @@ export function ChatProposalCard({ proposal, making, onMake }: ChatProposalCardP
         새 파티
       </Text>
       <View>
-        {rowsOf(form).map(({ icon, label, value }) => (
+        {rowsOf(proposal, form).map(({ icon, label, value }) => (
           <View accessibilityLabel={`${label} ${value}`} accessible key={label} style={styles.row}>
             <Icon color={color.inkMuted} name={icon} size={16} />
             <Text style={styles.label}>{label}</Text>
@@ -71,7 +80,7 @@ export function ChatProposalCard({ proposal, making, onMake }: ChatProposalCardP
           </View>
         ))}
       </View>
-      <Text style={styles.description}>{form.description}</Text>
+      {form.description === '' ? null : <Text style={styles.description}>{form.description}</Text>}
       <View style={styles.buttons}>
         <View style={styles.button}>
           <Button disabled full variant="secondary">

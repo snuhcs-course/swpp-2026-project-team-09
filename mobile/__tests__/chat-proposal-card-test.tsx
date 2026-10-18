@@ -45,6 +45,9 @@ const LUNCH: QuestProposal = {
   board: 'meal',
   capacity: 4,
   startsAt: '2026-10-07T12:00:00+09:00',
+  place: null,
+  globalEvent: null,
+  invitees: [],
 };
 
 let server: FakeServer;

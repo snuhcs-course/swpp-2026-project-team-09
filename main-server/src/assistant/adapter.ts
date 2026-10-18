@@ -9,6 +9,7 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { APICallError, generateText, type LanguageModel, RetryError, stepCountIs, tool, type ToolSet } from 'ai';
 import { type Asker, type ChatMessage, type Feature, type FeatureReply, type ToolContext } from './feature.js';
 import { FoundIds } from './found-ids.js';
+import { proposalForModel, type SentProposal } from './proposal.js';
 
 // The one file that knows the model library, the Vercel AI SDK (ADR 0005): the model port and the loop that runs a
 // feature over it. Tools and features do not import the SDK, so that moving to another library replaces this file.
@@ -63,9 +64,15 @@ function contentOf(message: ChatMessage): string {
     lines.push(`[Cards shown: ${message.cards.map(({ kind, id }) => `${kind} ${id}`).join(', ')}]`);
   }
   if (message.proposal !== null) {
-    lines.push(`[Proposal shown: ${JSON.stringify(message.proposal)}]`);
+    lines.push(`[Proposal shown: ${JSON.stringify(proposalForModel(message.proposal))}]`);
   }
   return lines.join('\n\n');
+}
+
+// The last Proposal of the conversation, which the app sends back on one message at most.
+function lastShown(messages: readonly ChatMessage[]): SentProposal | null {
+  const proposals = messages.map((message) => (message.role === 'assistant' ? message.proposal : null));
+  return proposals.findLast((proposal) => proposal !== null) ?? null;
 }
 
 // Runs the feature on the conversation, the User's new message last, and answers with the model's last text and what
@@ -81,6 +88,7 @@ export async function runFeature(
   const context: ToolContext = {
     ...asker,
     found: new FoundIds(),
+    shown: lastShown(messages),
     presented: { mapButtons: [], cards: [], proposal: null },
   };
   const { text, finishReason } = await generateText({

@@ -58,10 +58,41 @@ export function emptyForm(): PartyForm {
   };
 }
 
-// The form a Proposal of the Assistant's fills: a 공개 파티, 바로 참여 for an Open Quest and 승인 후 참여 for an Approval
-// one, without a place, an event, a photo or tags.
-export function proposalForm({ title, description, joinPolicy, board, capacity, startsAt }: QuestProposal): PartyForm {
-  return { ...emptyForm(), title, description, capacity, visibility: 'public', policy: joinPolicy, board, startsAt };
+// Who announced each Global Event, as the app lists them.
+export interface Announcer {
+  eventId: string;
+  announcer: string;
+}
+
+// `어디서` with an event chosen and no place given: the event's place, as choosing it in the form fills it.
+function eventPlace(event: GlobalEvent): SubQuestPlace | undefined {
+  return event.place === null
+    ? undefined
+    : { latitude: event.latitude, longitude: event.longitude, label: event.place };
+}
+
+// The form a Proposal of the Assistant's fills: 공개 with 바로 참여 for an Open Quest and 승인 후 참여 for an Approval
+// one, 비공개 for a Closed one, with its Place, else its event's place, and its event with who announced it, as the
+// form's picker gives it. The time is the Proposal's: the event's start, or a meeting before it. The Friends to invite
+// are the Proposal's `invitees`, which the form keeps apart; it has no photo or tags.
+export function proposalForm(proposal: QuestProposal, announcers: readonly Announcer[] = []): PartyForm {
+  const { title, description, joinPolicy, board, capacity, startsAt, place, globalEvent } = proposal;
+  const event =
+    globalEvent === null
+      ? null
+      : { ...globalEvent, source: announcers.find(({ eventId }) => eventId === globalEvent.id)?.announcer ?? null };
+  return {
+    ...emptyForm(),
+    title,
+    description,
+    capacity,
+    visibility: joinPolicy === 'closed' ? 'private' : 'public',
+    policy: joinPolicy === 'approval' ? 'approval' : 'open',
+    board,
+    startsAt,
+    place: place === null ? (event === null ? undefined : eventPlace(event)) : { placeId: place.id },
+    event,
+  };
 }
 
 // "AI 커리어 설명회 같이 가요": the title an event gives.

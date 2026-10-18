@@ -13,7 +13,7 @@ import {
   type QuestProposal,
 } from '@/api/assistant-types';
 import type { ApiClient } from '@/api/client';
-import { field, hasTexts, isBoard, isNothing, isNumber, listOf } from './answers';
+import { field, hasTexts, isBoard, isJoinPolicy, isNothing, isNumber, listOf } from './answers';
 import { isGlobalEvent } from './event-client';
 import { call } from './http';
 import { isRecruitingQuest } from './party-client';
@@ -35,15 +35,22 @@ function isChatCard(value: unknown): value is ChatCard {
   }
 }
 
+// A Place or a Friend of a Proposal: an id and a name.
+function isNamed(value: unknown): value is { id: string; name: string } {
+  return hasTexts(value, ['id', 'name']);
+}
+
 function isQuestProposal(value: unknown): value is QuestProposal {
-  const joinPolicy = field(value, 'joinPolicy');
-  const board = field(value, 'board');
+  const place = field(value, 'place');
+  const globalEvent = field(value, 'globalEvent');
   return (
     hasTexts(value, ['title', 'description', 'startsAt']) &&
-    (joinPolicy === 'open' || joinPolicy === 'approval') &&
-    board !== null &&
-    isBoard(board) &&
-    isNumber(field(value, 'capacity'))
+    isJoinPolicy(field(value, 'joinPolicy')) &&
+    isBoard(field(value, 'board')) &&
+    isNumber(field(value, 'capacity')) &&
+    (isNothing(place) || isNamed(place)) &&
+    (isNothing(globalEvent) || isGlobalEvent(globalEvent)) &&
+    listOf(isNamed)(field(value, 'invitees'))
   );
 }
 

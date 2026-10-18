@@ -7,15 +7,16 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { type ReactElement, useCallback, useMemo, useState } from 'react';
+import { type ReactElement, useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapLayer, QuestProposal } from '@/api/assistant-types';
-import { questsQuery } from '@/api/queries';
+import { globalEventAnnouncersQuery, questsQuery } from '@/api/queries';
+import { now } from '@/clock';
 import { Button, color, font, Icon, space, useToast } from '@/design-system';
 import { type Chat, useChat } from '@/features/assistant/use-chat';
 import { useBackToClose } from '@/hooks/use-back-to-close';
-import { proposalForm } from '@/features/party/making';
+import { isReady, type PartyForm, proposalForm } from '@/features/party/making';
 import type { PostView } from '@/features/party/posts';
 import { EventSheets, useEventSheets } from '../events/event-sheets';
 import { JoinSheet } from '../party/join-sheet';
@@ -151,29 +152,57 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
   );
 }
 
-// 만들기 on a Proposal card: makes the Quest the way the party form does and shows the form's toast. Made, it closes
-// the sheet and goes where the form goes after making, 내 파티; refused, the sheet stays and the card can be pressed
-// again. A Proposal is made once: its card then says so. The state lives with the conversation, so that closing the
-// sheet keeps it.
+const NOT_READY = '빠진 내용이 있어요. 채팅으로 알려 주세요';
+const STARTED = '시작 시간이 지났어요. 새 시간을 채팅으로 알려 주세요';
+
+// Why a Proposal cannot be sent as it stands, checked again on the phone before 만들기: the form's own readiness, and a
+// start that has passed since the Assistant proposed it, which the main server would take.
+function blockOf(proposal: QuestProposal, form: PartyForm): string | null {
+  if (!isReady(form, proposal.invitees.length, false)) {
+    return NOT_READY;
+  }
+  return form.startsAt !== null && new Date(form.startsAt) <= now() ? STARTED : null;
+}
+
+// 만들기 on a Proposal card: makes the Quest the way the party form does, attending its event and inviting its Friends,
+// and shows the form's toast. Made, it closes the sheet and goes where the form goes after making, 내 파티, or to the
+// room when a step after attending the event failed; refused, the sheet stays and the card can be pressed again. A
+// Proposal is made once: its card then says so, and a second press while it is on its way does nothing. The state
+// lives with the conversation, so that closing the sheet keeps it.
 function useProposalMaking(close: () => void): ProposalActions {
   const sendParty = useSendParty(null);
   const showToast = useToast();
+  const announcers = useQuery(globalEventAnnouncersQuery).data;
   const [making, setMaking] = useState<ReadonlyMap<number, ProposalMaking>>(new Map());
+  // The bubbles whose 만들기 is on its way, before a render disables their button.
+  const sending = useRef(new Set<number>());
   const mark = useCallback((bubbleId: number, state: ProposalMaking): void => {
     setMaking((held) => new Map(held).set(bubbleId, state));
   }, []);
   const make = (bubbleId: number, proposal: QuestProposal): void => {
+    if (sending.current.has(bubbleId)) {
+      return;
+    }
+    const form = proposalForm(proposal, announcers);
+    const blocked = blockOf(proposal, form);
+    if (blocked !== null) {
+      showToast(blocked);
+      return;
+    }
+    sending.current.add(bubbleId);
     mark(bubbleId, 'making');
-    void sendParty(proposalForm(proposal), [], null).then((sending) => {
-      showToast(sending.toast);
-      if (sending.sent === 'refused') {
+    const invitees = proposal.invitees.map(({ id }) => id);
+    void sendParty(form, invitees, null).then((sent) => {
+      showToast(sent.toast);
+      if (sent.sent === 'refused') {
+        sending.current.delete(bubbleId);
         mark(bubbleId, 'ready');
         return;
       }
       mark(bubbleId, 'made');
       close();
-      if (sending.sent === 'room') {
-        router.navigate(`/room/${sending.questId}`);
+      if (sent.sent === 'room') {
+        router.navigate(`/room/${sent.questId}`);
       } else {
         showMine();
       }

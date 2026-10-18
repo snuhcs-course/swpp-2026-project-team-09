@@ -50,6 +50,9 @@ const LUNCH: QuestProposal = {
   board: 'meal',
   capacity: 4,
   startsAt: '2096-05-08T12:00:00+09:00',
+  place: null,
+  globalEvent: null,
+  invitees: [],
 };
 
 // LUNCH with `changes` applied.
@@ -188,7 +191,7 @@ describe('a Proposal over several messages', () => {
     const assistant = model.received()[0]?.prompt.find(({ role }) => role === 'assistant');
     const said = assistant?.role === 'assistant' ? assistant.content.map((part) => JSON.stringify(part)).join('') : '';
     for (const value of Object.values(LUNCH)) {
-      expect(said).toContain(String(value));
+      expect(said).toContain(JSON.stringify(value).replaceAll('"', '\\"'));
     }
     expect(response.body).toMatchObject({ proposal: lunch({ startsAt: '2096-05-08T13:00:00+09:00' }) });
   });
@@ -213,7 +216,7 @@ describe('a Proposal over several messages', () => {
   it('refuses with 400 a Proposal of another shape', async () => {
     model.script();
 
-    const response = await send([first, { ...proposed, proposal: lunch({ joinPolicy: 'closed' }) }, last]);
+    const response = await send([first, { ...proposed, proposal: lunch({ joinPolicy: 'secret' }) }, last]);
 
     expect(response.status).toBe(400);
   });

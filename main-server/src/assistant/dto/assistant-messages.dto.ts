@@ -6,14 +6,14 @@
  ******************************************************************************/
 
 import { z } from 'zod';
-import { type Card, CARDS_MAX, type MapLayer } from '../feature.js';
+import { type Card, type CardKind, CARDS_MAX, type MapLayer } from '../feature.js';
 import { proposalLength, type QuestProposal, questProposalSchema } from '../proposal.js';
 
 // The most characters of a User's message, which the app's input also keeps to.
 export const USER_MESSAGE_MAX = 1000;
 // The most characters of an Assistant's message sent back: more than a reply within its output tokens comes to.
 export const ASSISTANT_MESSAGE_MAX = 4000;
-// The most characters of a request's messages together, a Proposal's title and description included. The app drops its
+// The most characters of a request's messages together, a Proposal's text and names included. The app drops its
 // oldest messages to stay within it.
 export const MESSAGES_TOTAL_MAX = 24_000;
 
@@ -26,7 +26,7 @@ const assistantMessage = z.strictObject({
   role: z.literal('assistant'),
   text: z.string().trim().min(1).max(ASSISTANT_MESSAGE_MAX),
   cards: z
-    .array(z.strictObject({ kind: z.enum(['quest', 'globalEvent']), id: z.uuid() }))
+    .array(z.strictObject({ kind: z.enum(['quest', 'globalEvent'] satisfies CardKind[]), id: z.uuid() }))
     .max(CARDS_MAX)
     .default([]),
   proposal: questProposalSchema.nullable().default(null),

@@ -8,13 +8,16 @@
 import { z } from 'zod';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
 import { type RecruitingQuestDto } from '../quests/dto/quest.dto.js';
-import { type CardKind, type FoundIds } from './found-ids.js';
-import { type QuestProposal } from './proposal.js';
+import { type FoundIds } from './found-ids.js';
+import { type QuestProposal, type SentProposal } from './proposal.js';
 
 // The parts of an AI feature that know nothing of the model library (ADR 0005). A tool is a zod schema of its input
 // and a plain function that calls the main server's services as the signed-in User. A feature is an entry point with
 // its own system prompt and its own set of tools. A later AI feature is a new Feature that reuses tools, never more
 // tools on another feature, so that one feature cannot reach another's data. `adapter.ts` alone runs them.
+
+// What a card shows: a Quest or a Global Event.
+export type CardKind = 'quest' | 'globalEvent';
 
 // A card the Assistant showed: what it is and its id. The model is given only these, never the card's data from an
 // earlier message, and calls a tool again when it needs it.
@@ -27,7 +30,7 @@ export interface CardReference {
 // the Proposal it made, by its values. Only the last Proposal is sent back.
 export type ChatMessage =
   | { role: 'user'; text: string }
-  | { role: 'assistant'; text: string; cards: CardReference[]; proposal: QuestProposal | null };
+  | { role: 'assistant'; text: string; cards: CardReference[]; proposal: SentProposal | null };
 
 // The map layers a reply can show with a button: the restaurants and the shuttle.
 export const MAP_LAYERS = ['dining', 'shuttle'] as const;
@@ -68,9 +71,11 @@ export interface Asker {
 }
 
 // What every tool of a run is given: who asks and when, the ids the run's lookups and resolvers returned, which are
-// all its presenters accept, and what the presenters have put in the reply.
+// all its presenters accept, the last Proposal sent back with the conversation, whose ids proposeQuest also accepts,
+// and what the presenters have put in the reply.
 export interface ToolContext extends Asker {
   readonly found: FoundIds;
+  readonly shown: SentProposal | null;
   readonly presented: Presented;
 }
 
