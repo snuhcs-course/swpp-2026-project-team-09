@@ -1,0 +1,136 @@
+{
+  "screenshot": "everytime-1.png",
+  "app": "에브리타임",
+  "title": "2025년 여름학기",
+  "times": [
+    {
+      "weekday": "tuesday",
+      "start": "09:30",
+      "end": "10:45",
+      "name": "공학수학 2",
+      "roomLine": null,
+      "building": null,
+      "room": null
+    },
+    {
+      "weekday": "thursday",
+      "start": "09:30",
+      "end": "10:45",
+      "name": "공학수학 2",
+      "roomLine": null,
+      "building": null,
+      "room": null
+    },
+    {
+      "weekday": "monday",
+      "start": "12:30",
+      "end": "13:45",
+      "name": "영상예술의 이해",
+      "roomLine": "43-1",
+      "building": "43-1",
+      "room": null
+    },
+    {
+      "weekday": "wednesday",
+      "start": "12:30",
+      "end": "13:45",
+      "name": "영상예술의 이해",
+      "roomLine": "43-1",
+      "building": "43-1",
+      "room": null
+    },
+    {
+      "weekday": "thursday",
+      "start": "13:00",
+      "end": "13:50",
+      "name": "인공지능 이론 및 응용 세미나",
+      "roomLine": null,
+      "building": null,
+      "room": null
+    },
+    {
+      "weekday": "monday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "자료구조",
+      "roomLine": null,
+      "building": null,
+      "room": null
+    },
+    {
+      "weekday": "wednesday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "자료구조",
+      "roomLine": null,
+      "building": null,
+      "room": null
+    },
+    {
+      "weekday": "thursday",
+      "start": "14:00",
+      "end": "15:50",
+      "name": "컴퓨터프로그래밍",
+      "roomLine": null,
+      "building": null,
+      "room": null
+    },
+    {
+      "weekday": "thursday",
+      "start": "16:00",
+      "end": "18:00",
+      "name": "시스템프로그래밍",
+      "roomLine": null,
+      "building": null,
+      "room": null
+    },
+    {
+      "weekday": "monday",
+      "start": "17:00",
+      "end": "18:15",
+      "name": "자연언어처리 개론",
+      "roomLine": null,
+      "building": null,
+      "room": null
+    },
+    {
+      "weekday": "wednesday",
+      "start": "17:00",
+      "end": "18:15",
+      "name": "자연언어처리 개론",
+      "roomLine": null,
+      "building": null,
+      "room": null
+    },
+    {
+      "weekday": "monday",
+      "start": "19:00",
+      "end": "21:00",
+      "name": "컴퓨터프로그래밍",
+      "roomLine": null,
+      "building": null,
+      "room": null,
+      "note": "ends on the grid card's bottom edge, which 에브리타임 draws at the last class's end"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "19:00",
+      "end": "21:00",
+      "name": "시스템프로그래밍",
+      "roomLine": null,
+      "building": null,
+      "room": null,
+      "note": "ends on the grid card's bottom edge, which 에브리타임 draws at the last class's end"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "19:00",
+      "end": "21:00",
+      "name": "컴퓨터프로그래밍",
+      "roomLine": null,
+      "building": null,
+      "room": null,
+      "note": "ends on the grid card's bottom edge, which 에브리타임 draws at the last class's end"
+    }
+  ]
+}

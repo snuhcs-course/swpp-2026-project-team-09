@@ -16,6 +16,14 @@ Each screenshot is 1320 × 2868 pixels from an iPhone. `<name>.json` is the modu
 screenshot's pixels and their confidences, and `pixels`, a 330 × 717 copy with `scale` 4. Prettier formatted the JSON; the values are as the module returned
 them.
 
+## Ground truth
+
+`<name>.truth.json` is written by hand from the screenshot, block by block: the day, start and end, the class's name and
+the room as printed (`roomLine`), with the building it should link to and the rest (`building`, `room`), and the title.
+Starts and ends were read off the picture's pixels against its hour lines. A `note` says where the truth is uncertain:
+a block that fades out behind SNUTT's tab bar, or a name cut with `…`. `__tests__/support/timetable-ocr.ts` compares
+the pipeline's output with them; `.scratch/iteration-2/P13-timetable-ocr/accuracy.md` reports the result.
+
 ## Where they were made
 
 - Saved on 2026-10-18.
