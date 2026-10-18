@@ -29,5 +29,5 @@ The walking time comes from the members' positions and the walking route the app
 
 ### Agent usage (2026-10-18)
 
-- Agent time: about 1 h of active work by one subagent in its own worktree: building, the Jest tests, and two web screenshots of the mock build. It is an estimate; about 20 more minutes went to waiting for other agents' Jest and Gradle runs, which is not counted, and the full Jest suite was not run because those runs did not end.
-- Tokens: recorded by the main session.
+- Agent time: about 1 h 20 min of active work by one subagent in its own worktree over two rounds (building, the Jest tests and two web screenshots of the mock build; then the self-review's fixes and a merge of `2.0/Main`), plus about 15 minutes of a review subagent and the main session. It is an estimate; about 20 more minutes went to waiting for other agents' Jest and Gradle runs, which is not counted, and the full Jest suite was not run because those runs did not end.
+- Tokens, from the transcripts of the implementing subagent and one review subagent: input 37,852,775, of which 36,198,920 cache reads, 1,653,495 cache writes and 360 uncached; output 15,101. The main session's tokens are not split per ticket and are not included.
