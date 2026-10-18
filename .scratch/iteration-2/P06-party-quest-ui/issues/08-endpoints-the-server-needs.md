@@ -23,4 +23,4 @@ The document: [server-endpoints.md](../server-endpoints.md). Sections 8 (a join 
 ### Agent usage (2026-10-18)
 
 - Agent time: about 20 minutes, one session (an estimate).
-- Tokens: recorded by the main session.
+- Tokens, from the subagent's transcript: input 3,964,341, of which 3,836,772 cache reads, 127,493 cache writes and 76 uncached; output 17,425. The main session's tokens are not split per ticket and are not included.
