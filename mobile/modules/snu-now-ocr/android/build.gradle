@@ -1,0 +1,29 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ ******************************************************************************/
+
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.bonnieandclaude.snunow'
+version = '1.0.0'
+
+android {
+  namespace 'com.bonnieandclaude.snunow.ocr'
+  defaultConfig {
+    versionCode 1
+    versionName '1.0.0'
+  }
+}
+
+dependencies {
+  // ML Kit Text Recognition v2 with the Korean recogniser. This artifact bundles the model in the app, so the first
+  // reading needs no download from Google Play services. It reads Latin letters and digits too, as rooms need.
+  implementation 'com.google.mlkit:text-recognition-korean:16.0.1'
+  // The EXIF orientation of a photo, which is turned upright before it is read. expo-image-picker uses the same.
+  implementation 'androidx.exifinterface:exifinterface:1.4.1'
+}

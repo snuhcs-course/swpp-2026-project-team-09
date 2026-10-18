@@ -137,6 +137,18 @@ emulator or a phone, not on an x86_64 emulator. In Android Studio's Device Manag
 image **Android 16.0 (API 36), Google Play, arm64-v8a** (`system-images;android-36;google_apis_playstore;arm64-v8a`)
 and start it.
 
+On a computer without an ARM emulator, such as an x86_64 Linux machine, a development build can add `x86_64` for an
+x86_64 emulator: generate the project with `ANDROID_X86_64=1` (`app.config.ts` adds the ABI beside `arm64-v8a`).
+Everything but Kakao's map runs there, which is how the text recognition below was checked: Kakao's library has no
+x86_64 build, so the map module logs that it could not be loaded and the map stays blank. `KAKAO_NATIVE_APP_KEY`
+must still be set, to any value, or the SDK refuses to start and the app with it. It is a development setting:
+generate the project again without it before a release build.
+
+```bash
+ANDROID_X86_64=1 pnpm expo prebuild --platform android --clean
+pnpm android
+```
+
 ### The settings
 
 ```bash
@@ -304,7 +316,7 @@ src/position/       the User's own position: the phone's, or the development wal
 src/storage/        what the phone keeps between two starts of the app
 src/session/        where the User is in the flow between the screens, and the work of the start
 src/screens/        the screens that the routes show; a screen of several files has a folder
-modules/            the native map module, a local Expo module
+modules/            the native modules, local Expo modules: the map (snu-now-map) and text recognition (snu-now-ocr)
 __tests__/          Jest tests
 assets/             app icons, the splash image, the fonts, the loading screen's photos and the sign-in screen's pictures
 ```
@@ -1395,3 +1407,33 @@ lines under them. What is different:
 Avatars and buttons that move the User's Avatar, draw and clear two lines, one of them dashed, fit the camera to the solid one, zoom in
 and show the whole campus. It says what was pressed and where the camera stopped. It is for developers: a released
 app does not show it. The native modules are checked on it.
+
+## Text recognition (OCR)
+
+`modules/snu-now-ocr` is a local Expo module around Google ML Kit Text Recognition v2 with the Korean recogniser, for
+reading a timetable screenshot on the phone (P13). Android uses `com.google.mlkit:text-recognition-korean`, whose
+model is bundled in the app, so no download is needed at first use; iOS uses the pod `GoogleMLKit/TextRecognitionKorean`.
+
+`src/features/timetable-ocr/native-ocr.ts` is the one file that touches it. `readImageText(uri)` takes a `file://` or
+`content://` URI, such as the image picker gives, and answers one of:
+
+- `read`, with the image's `width` and `height`, its `lines` (each with its `text`, its `box` `{x, y, w, h}` in the
+  image's pixels, its `confidence` and its `elements`, the words, alike) and `pixels`: a copy about 330 pixels wide, the
+  aspect kept, as RGBA bytes in base64, with the `scale` back to the original (original = copy × scale);
+- `unavailable` where the build has no module: Expo Go, the web and the tests;
+- `failed`, with a message, when the image could not be opened or ML Kit failed.
+
+ML Kit gives a confidence on Android only; on iOS every `confidence` is null.
+
+`/ocr-check` (`snunow://ocr-check` in a development build) picks an image from the album (`expo-image-picker`, images
+only, no editing), reads it, lists the lines and saves the module's whole answer as JSON in the app's documents folder.
+It is for developers: a released app does not show it. The address can name the image and the file, which is how the
+fixtures in `__tests__/fixtures/timetable-ocr/` were made on the emulator (see their README):
+
+```bash
+adb push snutt-1.png /data/local/tmp/
+adb shell run-as com.bonnieandclaude.snunow cp /data/local/tmp/snutt-1.png files/
+adb shell am start -a android.intent.action.VIEW \
+  -d "'snunow://ocr-check?uri=file:///data/data/com.bonnieandclaude.snunow/files/snutt-1.png&name=snutt-1'"
+adb exec-out run-as com.bonnieandclaude.snunow cat files/snutt-1.json > snutt-1.json
+```
