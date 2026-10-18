@@ -10,18 +10,21 @@ import { router } from 'expo-router';
 import { type ReactElement, useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { MapLayer } from '@/api/assistant-types';
+import type { MapLayer, QuestProposal } from '@/api/assistant-types';
 import { questsQuery } from '@/api/queries';
-import { Button, color, font, Icon, space } from '@/design-system';
+import { Button, color, font, Icon, space, useToast } from '@/design-system';
 import { type Chat, useChat } from '@/features/assistant/use-chat';
 import { useBackToClose } from '@/hooks/use-back-to-close';
+import { proposalForm } from '@/features/party/making';
 import type { PostView } from '@/features/party/posts';
 import { EventSheets, useEventSheets } from '../events/event-sheets';
 import { JoinSheet } from '../party/join-sheet';
+import { useSendParty } from '../party/form/use-send';
 import { openPost } from '../party/post-card';
-import { usePartyActions } from '../party/use-party-actions';
-import { type CardActions, ChatBubbles, ChatEmpty } from './chat-bubbles';
+import { showMine, usePartyActions } from '../party/use-party-actions';
+import { type CardActions, ChatBubbles, ChatEmpty, type ProposalActions } from './chat-bubbles';
 import type { EventCardActions } from './chat-event-cards';
+import type { ProposalMaking } from './chat-proposal-card';
 import type { QuestCardActions } from './chat-quest-cards';
 import { AI_INPUT } from './layout';
 
@@ -36,6 +39,8 @@ interface ChatSheetProps {
   onOpenEvent: (globalEventId: string) => void;
   // A Quest card of an answer: closes the sheet and opens its post.
   onOpenPost: (questId: string) => void;
+  // The Proposal card of an answer: 만들기, and how it stands.
+  proposals: ProposalActions;
   // The AI input's field, which lies over the sheet's bottom.
   inputHeight: number;
 }
@@ -113,14 +118,14 @@ function useQuestCards(onOpenPost: (questId: string) => void): {
 // navigation, over the map and the lists. The AI input stays at the bottom over it as the chat's input. The
 // conversation is the main screen's, so that the sheet only shows it.
 export function ChatSheet(props: ChatSheetProps): ReactElement {
-  const { chat, inFront, onClose, onShowLayer, onOpenEvent, onOpenPost, inputHeight } = props;
+  const { chat, inFront, onClose, onShowLayer, onOpenEvent, onOpenPost, proposals, inputHeight } = props;
   const { top } = useSafeAreaInsets();
   useBackToClose(inFront, onClose);
   const eventCards = useEventCards(onOpenEvent);
   const questCards = useQuestCards(onOpenPost);
   const cardActions: CardActions = useMemo(
-    () => ({ events: eventCards.actions, quests: questCards.actions }),
-    [eventCards.actions, questCards.actions],
+    () => ({ events: eventCards.actions, quests: questCards.actions, proposals }),
+    [eventCards.actions, questCards.actions, proposals],
   );
   const { bubbles, waiting, send, retry, reset } = chat;
   // From the sheet's bottom to the AI input's top, and the room above it.
@@ -146,6 +151,37 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
   );
 }
 
+// 만들기 on a Proposal card: makes the Quest the way the party form does and shows the form's toast. Made, it closes
+// the sheet and goes where the form goes after making, 내 파티; refused, the sheet stays and the card can be pressed
+// again. A Proposal is made once: its card then says so. The state lives with the conversation, so that closing the
+// sheet keeps it.
+function useProposalMaking(close: () => void): ProposalActions {
+  const sendParty = useSendParty(null);
+  const showToast = useToast();
+  const [making, setMaking] = useState<ReadonlyMap<number, ProposalMaking>>(new Map());
+  const mark = useCallback((bubbleId: number, state: ProposalMaking): void => {
+    setMaking((held) => new Map(held).set(bubbleId, state));
+  }, []);
+  const make = (bubbleId: number, proposal: QuestProposal): void => {
+    mark(bubbleId, 'making');
+    void sendParty(proposalForm(proposal), [], null).then((sending) => {
+      showToast(sending.toast);
+      if (sending.sent === 'refused') {
+        mark(bubbleId, 'ready');
+        return;
+      }
+      mark(bubbleId, 'made');
+      close();
+      if (sending.sent === 'room') {
+        router.navigate(`/room/${sending.questId}`);
+      } else {
+        showMine();
+      }
+    });
+  };
+  return { makingOf: (bubbleId) => making.get(bubbleId) ?? 'ready', make };
+}
+
 export interface ChatSheetControl {
   chat: Chat;
   shown: boolean;
@@ -156,7 +192,8 @@ export interface ChatSheetControl {
 
 // The chat's sheet and how to open it. The conversation is kept while the sheet is closed. A map button closes the
 // sheet and turns its layer on with `turnOn`, the map's own layers; an event card closes it and opens the 행사 tab at
-// the event, as the room's event does; a Quest card closes it and opens the post, as 찾기's card does.
+// the event, as the room's event does; a Quest card closes it and opens the post, as 찾기's card does; a Proposal,
+// once made, closes it and shows 내 파티, as the party form does.
 export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void): ChatSheetControl {
   const chat = useChat();
   const [shown, setShown] = useState(false);
@@ -181,6 +218,7 @@ export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void
     setShown(false);
     openPost(questId);
   }, []);
+  const proposals = useProposalMaking(close);
   return {
     chat,
     shown,
@@ -195,6 +233,7 @@ export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void
           onOpenEvent={openEvent}
           onOpenPost={openQuestPost}
           onShowLayer={showLayer}
+          proposals={proposals}
         />
       ) : null,
   };

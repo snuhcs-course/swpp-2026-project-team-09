@@ -34,6 +34,8 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 const GREETING = '무엇을 도와드릴까요?';
 const NOTICE = '대화 내용은 AI 제공자에게 전송돼요';
 const REPLY = '오늘 학생회관식당 점심은 제육볶음이에요.';
+// The Assistant's answer, with nothing beside its text.
+const ANSWERED = { status: 200, body: { text: REPLY, mapButtons: [], cards: [], proposal: null } };
 const FAILED = '지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요';
 const USED_UP = '오늘은 여기까지 답할 수 있어요. 내일 다시 물어봐 주세요';
 
@@ -45,11 +47,7 @@ beforeEach(async () => {
   sockets.length = 0;
   server = await askMainServer({ signedIn: true });
   answerMainScreen(server);
-  server.on('POST /assistant/messages', {
-    status: 200,
-    body: { text: REPLY, mapButtons: [], cards: [] },
-    afterMs: 1000,
-  });
+  server.on('POST /assistant/messages', { ...ANSWERED, afterMs: 1000 });
   givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
 
@@ -242,11 +240,7 @@ describe("the chat's failures", () => {
     await say(user, '오늘 점심 뭐 나와?');
 
     expect(screen.getByText(FAILED)).toBeVisible();
-    server.on('POST /assistant/messages', {
-      status: 200,
-      body: { text: REPLY, mapButtons: [], cards: [] },
-      afterMs: 1000,
-    });
+    server.on('POST /assistant/messages', { ...ANSWERED, afterMs: 1000 });
     await user.press(screen.getByRole('button', { name: '다시 시도' }));
     await pass(1000);
 
@@ -272,7 +266,7 @@ describe("the chat's failures", () => {
     server.on('POST /assistant/messages', refusal(503));
     const user = await openChat();
     await say(user, '오늘 점심 뭐 나와?');
-    server.on('POST /assistant/messages', { status: 200, body: { text: REPLY, mapButtons: [], cards: [] } });
+    server.on('POST /assistant/messages', ANSWERED);
 
     await say(user, '한식');
 

@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
 import { type RecruitingQuestDto } from '../quests/dto/quest.dto.js';
 import { type CardKind, type FoundIds } from './found-ids.js';
+import { type QuestProposal } from './proposal.js';
 
 // The parts of an AI feature that know nothing of the model library (ADR 0005). A tool is a zod schema of its input
 // and a plain function that calls the main server's services as the signed-in User. A feature is an entry point with
@@ -22,8 +23,11 @@ export interface CardReference {
   id: string;
 }
 
-// One message of a conversation, as the app sends it: the User's text, or the Assistant's with the cards it showed.
-export type ChatMessage = { role: 'user'; text: string } | { role: 'assistant'; text: string; cards: CardReference[] };
+// One message of a conversation, as the app sends it: the User's text, or the Assistant's with the cards it showed and
+// the Proposal it made, by its values. Only the last Proposal is sent back.
+export type ChatMessage =
+  | { role: 'user'; text: string }
+  | { role: 'assistant'; text: string; cards: CardReference[]; proposal: QuestProposal | null };
 
 // The map layers a reply can show with a button: the restaurants and the shuttle.
 export const MAP_LAYERS = ['dining', 'shuttle'] as const;
@@ -53,6 +57,8 @@ export interface Presented {
   readonly mapButtons: MapLayer[];
   // Each card once, in the order shown.
   readonly cards: Card[];
+  // At most one Proposal: the last that passed proposeQuest.
+  proposal: QuestProposal | null;
 }
 
 // Who asks and when.

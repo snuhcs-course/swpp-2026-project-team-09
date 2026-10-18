@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -73,13 +74,16 @@ async function recruitFor(attended: Quest, form: PartyForm): Promise<void> {
 // the Quest stays, which its room finishes.
 export type Sent = 'taken' | 'refused' | 'room';
 
+// What sending did, with the Quest it made or changed and the words of its toast. Whoever sends shows the toast and
+// moves on: the form, or the chat's Proposal card.
+export type Sending = { sent: 'refused'; toast: string } | { sent: 'taken' | 'room'; questId: string; toast: string };
+
 // Sends the form: makes the Quest, for an event by attending it, or changes it, then invites the chosen Friends. The
-// photo and the tags go with it, and the phone keeps them.
-export function useSend(
+// photo and the tags go with it, and the phone keeps them. It shows nothing and goes nowhere.
+export function useSendParty(
   quest: ShownQuest | null,
-): (form: PartyForm, friends: string[], plan: PlanChange | null) => Promise<Sent> {
+): (form: PartyForm, friends: readonly string[], plan: PlanChange | null) => Promise<Sending> {
   const queryClient = useQueryClient();
-  const showToast = useToast();
   const refetch = (): void => {
     for (const queryKey of [QUESTS_KEY, RECRUITING_KEY, SENT_INVITATIONS_KEY]) {
       void queryClient.invalidateQueries({ queryKey });
@@ -100,22 +104,34 @@ export function useSend(
         questId = attended.id;
       }
     } catch (error) {
-      showToast(refusalWords(error, {}, NOT_SAVED));
-      return 'refused';
+      return { sent: 'refused', toast: refusalWords(error, {}, NOT_SAVED) };
     }
     if (attended !== null) {
       try {
         await recruitFor(attended, form);
       } catch (error) {
-        showToast(refusalWords(error, {}, NOT_SAVED));
         refetch();
-        router.replace(`/room/${questId}`);
-        return 'room';
+        return { sent: 'room', questId, toast: refusalWords(error, {}, NOT_SAVED) };
       }
     }
     const missed = await invite(questId, friends);
-    showToast(toastOf(form, quest !== null, friends.length - missed, missed));
     refetch();
-    return 'taken';
+    return { sent: 'taken', questId, toast: toastOf(form, quest !== null, friends.length - missed, missed) };
+  };
+}
+
+// The form's sending: its toast, and the room when the Quest stays after a failed step.
+export function useSend(
+  quest: ShownQuest | null,
+): (form: PartyForm, friends: string[], plan: PlanChange | null) => Promise<Sent> {
+  const sendParty = useSendParty(quest);
+  const showToast = useToast();
+  return async (form, friends, plan) => {
+    const sending = await sendParty(form, friends, plan);
+    showToast(sending.toast);
+    if (sending.sent === 'room') {
+      router.replace(`/room/${sending.questId}`);
+    }
+    return sending.sent;
   };
 }

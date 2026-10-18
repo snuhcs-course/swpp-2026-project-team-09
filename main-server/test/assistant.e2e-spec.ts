@@ -50,7 +50,12 @@ describe('The chat Assistant', () => {
     const response = await postAssistantMessages(app, accessToken, ask('안녕'));
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ text: '안녕하세요! 무엇을 도와드릴까요?', mapButtons: [], cards: [] });
+    expect(response.body).toEqual({
+      text: '안녕하세요! 무엇을 도와드릴까요?',
+      mapButtons: [],
+      cards: [],
+      proposal: null,
+    });
   });
 
   it("gives the model the conversation, the User's new message last", async () => {
@@ -119,7 +124,12 @@ describe('getMenus', () => {
 
     const response = await postAssistantMessages(app, accessToken, ask('오늘 점심 뭐 나와?'));
 
-    expect(response.body).toEqual({ text: '학생회관식당은 제육볶음이에요.', mapButtons: [], cards: [] });
+    expect(response.body).toEqual({
+      text: '학생회관식당은 제육볶음이에요.',
+      mapButtons: [],
+      cards: [],
+      proposal: null,
+    });
     expect(model.toolResults()).toEqual([{ result: 'found', date, restaurants: [studentCentre] }]);
   });
 });
@@ -192,7 +202,7 @@ describe('showOnMap', () => {
 
     const response = await postAssistantMessages(app, accessToken, ask('오늘 점심 뭐 나와?'));
 
-    expect(response.body).toEqual({ text: '오늘 메뉴예요.', mapButtons: ['dining'], cards: [] });
+    expect(response.body).toEqual({ text: '오늘 메뉴예요.', mapButtons: ['dining'], cards: [], proposal: null });
     expect(model.toolResults()).toEqual([{ result: 'shown', layer: 'dining' }]);
   });
 
@@ -214,7 +224,12 @@ describe('showOnMap', () => {
 
     const response = await postAssistantMessages(app, accessToken, ask('도서관 지도에서 보여줘'));
 
-    expect(response.body).toEqual({ text: '열람실은 아직 지원하지 않아요.', mapButtons: [], cards: [] });
+    expect(response.body).toEqual({
+      text: '열람실은 아직 지원하지 않아요.',
+      mapButtons: [],
+      cards: [],
+      proposal: null,
+    });
     expect(model.toolResults()).toEqual([expect.stringContaining('layer')]);
   });
 });

@@ -5,8 +5,10 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import type { QuestProposal } from '@/api/assistant-types';
 import type { QuestChange, QuestMaking } from '@/api/party-types';
 import type { QuestEntries, QuestPhoto, ShownQuest } from '@/api/quest-parts-types';
 import type { SubQuestContent, SubQuestPlace } from '@/api/room-types';
@@ -54,6 +56,12 @@ export function emptyForm(): PartyForm {
     photo: null,
     tags: [],
   };
+}
+
+// The form a Proposal of the Assistant's fills: a 공개 파티, 바로 참여 for an Open Quest and 승인 후 참여 for an Approval
+// one, without a place, an event, a photo or tags.
+export function proposalForm({ title, description, joinPolicy, board, capacity, startsAt }: QuestProposal): PartyForm {
+  return { ...emptyForm(), title, description, capacity, visibility: 'public', policy: joinPolicy, board, startsAt };
 }
 
 // "AI 커리어 설명회 같이 가요": the title an event gives.

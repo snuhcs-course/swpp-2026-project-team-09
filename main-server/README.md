@@ -1771,16 +1771,21 @@ its model through OpenRouter with the Vercel AI SDK
   `dining` or `shuttle`, each once. `cards` are the cards it showed, in order, each filled from the database in the
   shape of the list the app draws it from: a `globalEvent` as `GET /global-events` serves it, and a `quest`
   (`{ "kind": "quest", "quest": { … } }`) as `GET /quests/recruiting` serves it to the User. Both are always there,
-  `[]` when there are none. The app sends a card back only as its reference, `{ "kind", "id" }`, and never the map
-  buttons. Nothing of a conversation is stored: the app keeps it.
+  `[]` when there are none. `proposal` is the Proposal the reply made, or `null`: a Quest the Assistant filled in,
+  which does not exist until the User makes it from its card,
+  `{ "title", "description", "joinPolicy": "open" | "approval", "board", "capacity", "startsAt" }` with `startsAt` in
+  Korea time (`src/assistant/proposal.ts`). The app sends a card back only as its reference, `{ "kind", "id" }`, the
+  last Proposal with its values, and never the map buttons. Nothing of a conversation is stored: the app keeps it.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
-    (`quest` or `globalEvent`, by id; `cards` may be left out). The model gets only the latest 20 messages, and of an
-    Assistant's message its text and a line naming its cards, never an earlier message's tool results.
+    (`quest` or `globalEvent`, by id; `cards` may be left out) and the Proposal it made (`proposal`, which may be left
+    out, on one message at most). The model gets only the latest 20 messages, and of an Assistant's message its text,
+    a line naming its cards and a line with its Proposal's values, never an earlier message's tool results.
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
-    the User's, a message of another shape, a User's message over 1,000 characters, an Assistant's over 4,000, or
-    messages over 24,000 characters together (`dto/assistant-messages.dto.ts`).
+    the User's, a message of another shape, a User's message over 1,000 characters, an Assistant's over 4,000, more
+    than one Proposal, or messages over 24,000 characters together, a Proposal's title and description included
+    (`dto/assistant-messages.dto.ts`).
   - **429 `{ "message": "Today's messages are used up" }`** once a User has sent `ASSISTANT_DAILY_MESSAGES` messages
     (50) that day in Korea, without calling the model. Redis counts them under `assistant:messages:<userId>:<date>`.
   - **503 `{ "message": "The Assistant cannot answer now" }`**, the one error reply, whatever failed: no key configured,
@@ -1821,6 +1826,14 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     a start last. The soonest 20 come first, with `more` when there were more. Each carries its title, Board, Global
     Event, Join Policy, the places left, the next Sub Quest's start, end and place, and the first 300 characters of its
     description.
+  - `proposeQuest(title, description, joinPolicy, board, capacity, startsAt)` is the proposer, for an Open or Approval
+    Quest (the form's 공개). It checks the values against the main server's rules for making a Quest
+    (`makeQuestSchema`, so a changed limit reaches it by itself), the party form's readiness rule (a Board and a
+    description, which the app's `isReady` also holds) and a start after now. It answers
+    `{ "result": "refused", "fields": { "board": "…" } }` with what is missing or wrong by field, which the model asks
+    the User for, or `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when
+    it is called twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
+    the change.
   - A **presenter** puts something real into the reply rather than the model describing it.
     `showOnMap(dining | shuttle)` adds that map button; any other layer goes back to the model as an error.
     `showGlobalEvents(ids)` adds those events as cards, in the order given, and `showQuests(ids)` those Quests. Cards

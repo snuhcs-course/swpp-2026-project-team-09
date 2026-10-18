@@ -55,7 +55,7 @@ type User = Awaited<ReturnType<typeof openMain>>;
 // Opens the chat, sends a question and lets the Assistant answer with the cards of MAJOR, then CAREER.
 async function answered(): Promise<User> {
   const cards = [MAJOR, CAREER].map((globalEvent) => ({ kind: 'globalEvent', globalEvent }));
-  server.on('POST /assistant/messages', { status: 200, body: { text: REPLY, mapButtons: [], cards } });
+  server.on('POST /assistant/messages', { status: 200, body: { text: REPLY, mapButtons: [], cards, proposal: null } });
   const user = await openMain();
   await user.press(screen.getByLabelText(AI_INPUT));
   await user.type(screen.getByLabelText(AI_INPUT), '이번 주에 설명회 있어?');

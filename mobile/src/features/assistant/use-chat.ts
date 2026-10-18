@@ -9,8 +9,10 @@ import { useCallback, useRef, useState } from 'react';
 import {
   CHAT_HISTORY_MAX,
   type ChatMessage,
+  lengthOf,
   type MapLayer,
   MESSAGES_TOTAL_MAX,
+  type QuestProposal,
   referenceOf,
 } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
@@ -31,6 +33,8 @@ export interface ChatBubble {
   cards: readonly ShownChatCard[];
   // The buttons under an Assistant's answer that show a layer of the map. They are not sent back.
   mapButtons: readonly MapLayer[];
+  // The Proposal an Assistant's answer made. The last one is sent back with its values.
+  proposal: QuestProposal | null;
   failure: ChatFailure | null;
 }
 
@@ -51,17 +55,26 @@ export const CHAT_USED_UP = '오늘은 여기까지 답할 수 있어요. 내일
 const FAILURE_TEXT: Record<ChatFailure, string> = { unavailable: CHAT_FAILED, usedUp: CHAT_USED_UP };
 
 function textLength(messages: readonly ChatMessage[]): number {
-  return messages.reduce((total, { text }) => total + text.length, 0);
+  return messages.reduce((total, message) => total + lengthOf(message), 0);
 }
 
 // What a request sends of the conversation: the latest 20 messages without the failures, fewer while they hold more
-// characters than the main server takes.
+// characters than the main server takes. The last Proposal goes with its message, by its values, so that the
+// Assistant can change one of its fields and keep the others.
 export function messagesToSend(bubbles: readonly ChatBubble[]): ChatMessage[] {
-  let messages = bubbles
-    .filter(({ failure }) => failure === null)
-    .map(({ role, text, cards }): ChatMessage =>
-      role === 'user' ? { role, text } : { role, text, cards: cards.map((card) => referenceOf(card)) },
-    )
+  const said = bubbles.filter(({ failure }) => failure === null);
+  const proposing = said.findLast(({ proposal }) => proposal !== null);
+  let messages = said
+    .map((bubble): ChatMessage => {
+      const { role, text, cards, proposal } = bubble;
+      if (role === 'user') {
+        return { role, text };
+      }
+      const references = cards.map((card) => referenceOf(card));
+      return bubble === proposing && proposal !== null
+        ? { role, text, cards: references, proposal }
+        : { role, text, cards: references };
+    })
     .slice(-CHAT_HISTORY_MAX);
   while (messages.length > 1 && textLength(messages) > MESSAGES_TOTAL_MAX) {
     messages = messages.slice(1);
@@ -75,10 +88,11 @@ type NewBubble = Omit<ChatBubble, 'id'>;
 async function answerTo(messages: ChatMessage[]): Promise<NewBubble> {
   try {
     const reply = await apiClient.askAssistant(messages);
-    return { role: 'assistant', text: reply.text, cards: reply.cards, mapButtons: reply.mapButtons, failure: null };
+    const { text, cards, mapButtons, proposal } = reply;
+    return { role: 'assistant', text, cards, mapButtons, proposal, failure: null };
   } catch (error) {
     const failure = error instanceof ApiError && error.status === 429 ? 'usedUp' : 'unavailable';
-    return { role: 'assistant', text: FAILURE_TEXT[failure], cards: [], mapButtons: [], failure };
+    return { role: 'assistant', text: FAILURE_TEXT[failure], cards: [], mapButtons: [], proposal: null, failure };
   }
 }
 
@@ -130,7 +144,7 @@ export function useChat(): Chat {
 
   const send = useCallback(
     (text: string): void => {
-      add({ role: 'user', text, cards: [], mapButtons: [], failure: null });
+      add({ role: 'user', text, cards: [], mapButtons: [], proposal: null, failure: null });
       ask();
     },
     [add, ask],
