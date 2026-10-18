@@ -7,6 +7,7 @@
 import { z } from 'zod';
 import { GlobalEventsService } from '../../global-events/global-events.service.js';
 import { CARDS_MAX, defineTool, type Tool } from '../feature.js';
+import { freshIds } from './fresh-ids.js';
 
 const input = z.object({
   ids: z
@@ -26,11 +27,7 @@ export function showGlobalEvents(globalEvents: GlobalEventsService): Tool {
     input,
     run: async ({ ids }, { found, presented }) => {
       found.refuseUnfound('globalEvent', ids);
-      const shown = new Set(presented.cards.map(({ globalEvent }) => globalEvent.id));
-      const fresh = [...new Set(ids)].filter((id) => !shown.has(id));
-      if (presented.cards.length + fresh.length > CARDS_MAX) {
-        throw new Error(`A reply shows at most ${CARDS_MAX} cards, and nothing was shown.`);
-      }
+      const fresh = freshIds(presented, 'globalEvent', ids);
       const events = await globalEvents.publishedAmong(fresh);
       presented.cards.push(...events.map((globalEvent) => ({ kind: 'globalEvent' as const, globalEvent })));
       return { result: 'shown', ids: events.map(({ id }) => id) };

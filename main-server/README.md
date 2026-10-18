@@ -1769,7 +1769,8 @@ its model through OpenRouter with the Vercel AI SDK
   answers `200 { "text": "…", "mapButtons": ["shuttle"], "cards": [{ "kind": "globalEvent", "globalEvent": { … } }] }`,
   the Assistant's reply whole, not streamed. `mapButtons` are the buttons under the reply that show a layer of the map,
   `dining` or `shuttle`, each once. `cards` are the cards it showed, in order, each filled from the database in the
-  shape of the list the app draws it from: a `globalEvent` as `GET /global-events` serves it. Both are always there,
+  shape of the list the app draws it from: a `globalEvent` as `GET /global-events` serves it, and a `quest`
+  (`{ "kind": "quest", "quest": { … } }`) as `GET /quests/recruiting` serves it to the User. Both are always there,
   `[]` when there are none. The app sends a card back only as its reference, `{ "kind", "id" }`, and never the map
   buttons. Nothing of a conversation is stored: the app keeps it.
 
@@ -1812,16 +1813,25 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     any of `words` (ignoring case), the earliest 20 first, with `more` when there were more. An event without an end
     falls on the day of its start, and one without a start falls in no period, so it is never a candidate. Drafts,
     cancelled and discarded events are never given.
+  - `searchRecruitingQuests(board?, from?, to?, globalEventId?)` answers, as candidates, the Quests that
+    `GET /quests/recruiting` lists for the User (Open and Approval Quests with a Sub Quest ahead that the User does not
+    hold; never a Closed one), of that Board and for that Global Event, whose next Sub Quest falls between the two days
+    in Korea. The next Sub Quest falls in the period as an event does: it overlaps it, one without an end falls on its
+    start, and one without a start falls in no period. Without a period every such Quest is a candidate, those without
+    a start last. The soonest 20 come first, with `more` when there were more. Each carries its title, Board, Global
+    Event, Join Policy, the places left, the next Sub Quest's start, end and place, and the first 300 characters of its
+    description.
   - A **presenter** puts something real into the reply rather than the model describing it.
     `showOnMap(dining | shuttle)` adds that map button; any other layer goes back to the model as an error.
-    `showGlobalEvents(ids)` adds those events as cards, in the order given.
+    `showGlobalEvents(ids)` adds those events as cards, in the order given, and `showQuests(ids)` those Quests. Cards
+    of both kinds lie in one list in the order shown, at most 20 in a reply.
   - **The presenters' guard** (`found-ids.ts`): a presenter accepts only ids that a lookup or a resolver returned in
     this message. Each run has its own `FoundIds` in the tools' context, which the lookups add to. Any other id, one
     from an earlier message too, goes back to the model as an error, and nothing of that call is shown.
   - **Text by others** (`others-text.ts`): text written by other people or collected from a Source, such as a Global
-    Event's title, description and place, reaches the model as `<data label="globalEvent.title">…</data>`, which the
-    system prompt marks as data, never instructions. `othersText` breaks a tag of the delimiters inside the text, so
-    that it cannot close them.
+    Event's title, description and place, or a Quest's (`quest.title`, …), reaches the model as
+    `<data label="globalEvent.title">…</data>`, which the system prompt marks as data, never instructions.
+    `othersText` breaks a tag of the delimiters inside the text, so that it cannot close them.
 - **Feature definitions**: an entry point with its own system prompt and its own tools (`Feature` in `feature.ts`). The
   chat Assistant is `chat/chat-assistant.ts`. Its system prompt carries the date, the weekday and the time in Korea of
   each request. A later AI feature gets a definition of its own that reuses tools, never more tools on this one, so

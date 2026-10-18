@@ -8,7 +8,6 @@
 import { useCallback, useRef, useState } from 'react';
 import {
   CHAT_HISTORY_MAX,
-  type ChatCard,
   type ChatMessage,
   type MapLayer,
   MESSAGES_TOTAL_MAX,
@@ -16,6 +15,7 @@ import {
 } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
+import type { ShownChatCard } from '@/api/quest-parts-types';
 
 // Why the Assistant gave no answer: it could not answer now, which 다시 시도 sends again, or the User's messages of
 // the day are used up.
@@ -26,9 +26,9 @@ export interface ChatBubble {
   id: number;
   role: ChatMessage['role'];
   text: string;
-  // The cards an Assistant's answer showed, with the data the server filled them with. Only their references are sent
-  // back.
-  cards: readonly ChatCard[];
+  // The cards an Assistant's answer showed, with the data the server filled them with and a Quest's parts. Only their
+  // references are sent back.
+  cards: readonly ShownChatCard[];
   // The buttons under an Assistant's answer that show a layer of the map. They are not sent back.
   mapButtons: readonly MapLayer[];
   failure: ChatFailure | null;

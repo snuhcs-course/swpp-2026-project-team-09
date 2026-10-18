@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -30,16 +31,25 @@ export class RecruitingService {
   ) {}
 
   // The Open and Approval Quests the reader does not hold that have a Sub Quest ahead, the newest first.
-  async list(
+  list(
     readerId: string,
     globalEventId: string | undefined,
     board: QuestBoard | undefined,
   ): Promise<RecruitingQuestDto[]> {
+    return this.listWhere(readerId, { globalEventId, board });
+  }
+
+  // The Quests among `ids` that the list gives the reader, as it gives them, in the order of `ids`.
+  async listedAmong(readerId: string, ids: readonly string[]): Promise<RecruitingQuestDto[]> {
+    const listed = await this.listWhere(readerId, { id: { in: [...ids] } });
+    return ids.flatMap((id) => listed.find((quest) => quest.id === id) ?? []);
+  }
+
+  private async listWhere(readerId: string, where: Prisma.QuestWhereInput): Promise<RecruitingQuestDto[]> {
     const quests = await this.prisma.quest.findMany({
       where: {
+        ...where,
         joinPolicy: { in: [JoinPolicy.open, JoinPolicy.approval] },
-        globalEventId,
-        board,
         holders: { none: { userId: readerId } },
       },
       include: QUEST_INCLUDE,
