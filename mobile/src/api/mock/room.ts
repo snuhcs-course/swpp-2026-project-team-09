@@ -4,18 +4,24 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import type { PlaceAt, SubQuestContent, SubQuestPlace } from '@/api/room-types';
 import type { LatLng, SubQuest } from '@/api/types';
+import type { JoinRequest } from '@/api/waiting-types';
 import { answer } from './answer';
-import { ME } from './data/frame';
+import { frameTime, ME } from './data/frame';
 import { MY_PARTY, QUESTS } from './data/quests';
 import { PLACES } from './data/places';
 
 // The room's operations as the main server answers them. The mock keeps no change: the next read is the frame's again.
+
+const SENT_INVITATIONS: JoinRequest[] = [
+  { id: 'si-1', user: { id: 'f7', name: '이서연', department: '경영학과' }, sentAt: frameTime('10:45') },
+];
 
 const INSIDE_METRES = 60;
 const NEAR_METRES = 400;
@@ -110,8 +116,13 @@ export const mockRoom: MockRoom = {
   endQuest: () => nothing('endQuest'),
   acceptJoinRequest: () => nothing('acceptJoinRequest'),
   declineJoinRequest: () => nothing('declineJoinRequest'),
-  // The mock leads no Quest, so it invited nobody.
-  listSentInvitations: () => answer('listSentInvitations', () => [], []),
+  // The invitations still waiting on a Quest the User leads: one to 이서연 on the 비공개 파티 with 김민준.
+  listSentInvitations: (questId) =>
+    answer(
+      'listSentInvitations',
+      () => (QUESTS.find(({ id }) => id === questId)?.leader?.id === ME.id ? SENT_INVITATIONS : []),
+      [],
+    ),
   cancelInvitation: () => nothing('cancelInvitation'),
   openParty: ({ title, capacity, joinPolicy, questId }) =>
     answer('openParty', () => {

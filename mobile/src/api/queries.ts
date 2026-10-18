@@ -142,7 +142,7 @@ export const matchingRequestsQuery = queryOptions({
   queryFn: () => apiClient.listMatchingRequests(),
 });
 
-// The User's past Quests, which `me` held: a mock in both builds (`./quest-parts/past-quests.ts`).
+// The User's past Quests, which `me` held: a mock, none in the server build (`./quest-parts/past-quests.ts`).
 export function pastQuestsQuery(me: Person): UseQueryOptions<ShownQuest[], Error, ShownQuest[], string[]> {
   return { queryKey: [...PAST_QUESTS_KEY, me.id], queryFn: () => apiClient.listPastQuests(me) };
 }

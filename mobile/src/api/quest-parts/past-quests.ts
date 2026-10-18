@@ -7,10 +7,12 @@
 import { PAST_PLANS, type PastPlan } from '@/api/mock/data/past-quests';
 import type { Person, Quest } from '@/api/types';
 import { koreaInstant } from '@/korea-time';
+import type { Build } from './build';
 
-// The mock adapter for the User's past Quests, in both builds: the main server keeps no ended Quest, and these state
-// nothing about a real Quest (P06 spec, Mocks). Dated back from `now`, so that they stay past. Replaced once the main
-// server lists the User's ended Quests.
+// The mock adapter for the User's past Quests: the main server keeps no ended Quest. The mock build gives the mock's,
+// dated back from `now` so that they stay past; the server build gives none, since an invented past Quest beside the
+// real User would state something false about them (P06 spec, Mocks). Replaced once the main server lists the User's
+// ended Quests.
 
 function questOf(plan: PastPlan, me: Person, now: Date): Quest {
   const startsAt = koreaInstant(now, -plan.daysAgo, plan.hour, plan.minute).toISOString();
@@ -45,6 +47,6 @@ function questOf(plan: PastPlan, me: Person, now: Date): Quest {
   };
 }
 
-export function pastQuestsOf(me: Person, now: Date): Quest[] {
-  return PAST_PLANS.map((plan) => questOf(plan, me, now));
+export function pastQuestsOf(me: Person, now: Date, build: Build): Quest[] {
+  return build === 'server' ? [] : PAST_PLANS.map((plan) => questOf(plan, me, now));
 }

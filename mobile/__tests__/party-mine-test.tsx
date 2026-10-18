@@ -92,7 +92,7 @@ afterEach(() => {
 });
 
 describe('내 파티', () => {
-  it('groups the Quests, the running Parties first, then by the next Sub Quest’s day, and the past ones last', async () => {
+  it('groups the Quests, the running Parties first, then by the next Sub Quest’s day', async () => {
     setAnswers({ quests: [DINNER, MY_HIKE, PICNIC, ...TIMED] });
     answerMyParty(server, myPicnicParty());
     server.on('GET /parties', { status: 200, body: [DINNER_PARTY] });
@@ -107,7 +107,6 @@ describe('내 파티', () => {
       '다음 주',
       '그 이후',
       '시간 미정',
-      '지난 일정',
     ]);
     expect(card(PICNIC.title).getByText('활성화 중 · 2명 위치 공유')).toBeVisible();
     expect(card(DINNER.title).getByText('비공개 파티')).toBeVisible();
@@ -172,32 +171,14 @@ describe('a card of 내 파티', () => {
   });
 });
 
-describe('지난 일정 in 내 파티', () => {
-  it('lists the past Quests last, the latest first, without a room to open', async () => {
-    const user = await openAt('/party?tab=mine');
-
-    expect(groups().at(-1)).toBe('지난 일정');
-    expect(
-      screen.getAllByText(/^(자료구조 중간고사 스터디|버들골 저녁 러닝)$/u).map(({ props }) => String(props.children)),
-    ).toEqual(['자료구조 중간고사 스터디', '버들골 저녁 러닝']);
-    const study = within(screen.getByLabelText('자료구조 중간고사 스터디'));
-    expect(study.getByText('비공개 파티')).toBeVisible();
-    expect(study.getByText('멤버 3명')).toBeVisible();
-    expect(study.getByText('10월 3일 (토) 19:00')).toBeVisible();
-    expect(study.getByText('나, 정하은 외 1명')).toBeVisible();
-    expect(screen.queryByRole('button', { name: '자료구조 중간고사 스터디' })).toBeNull();
-
-    await user.press(screen.getByLabelText('자료구조 중간고사 스터디'));
-    expect(shownAddress()).toBe('/party?tab=mine');
-  });
-
-  it('counts no past Quest in the chips', async () => {
-    setAnswers({ quests: [] });
+describe('지난 일정 in the build that asks the main server', () => {
+  it("shows none of the mock's past Quests beside the real User", async () => {
     await openAt('/party?tab=mine');
+    await pass(500);
 
-    expect(screen.getByText('전체 0')).toBeVisible();
-    expect(screen.getByText('참여 중인 파티가 없어요')).toBeVisible();
-    expect(screen.getByLabelText('버들골 저녁 러닝')).toBeVisible();
+    expect(groups()).not.toContain('지난 일정');
+    expect(screen.queryByText('자료구조 중간고사 스터디')).toBeNull();
+    expect(screen.queryByText('버들골 저녁 러닝')).toBeNull();
   });
 });
 

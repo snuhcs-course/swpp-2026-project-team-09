@@ -212,18 +212,20 @@ describe("an invitation's time and place, and the past Quests", () => {
     expect(invitation?.quest.faces).toEqual([{ name: '윤태오', photo: null }]);
   });
 
-  it('gives the past Quests, held by the User and started before today, in both builds', async () => {
-    const mock = await answered(apiClient.listPastQuests(ME));
-    await askMainServer({ signedIn: true });
-    const server = await apiClient.listPastQuests(ME);
+  it('gives in the mock build the past Quests, held by the User and started before today', async () => {
+    const past = await answered(apiClient.listPastQuests(ME));
 
-    for (const past of [mock, server]) {
-      expect(past.map(({ title }) => title)).toEqual(['자료구조 중간고사 스터디', '버들골 저녁 러닝']);
-      for (const quest of past) {
-        expect(quest.holders).toContainEqual(ME);
-        expect(new Date(quest.subQuests[0]?.startsAt ?? '').getTime()).toBeLessThan(PHONE_NOW.getTime());
-        expect(TAG_SET).toContainEqual(quest.tags);
-      }
+    expect(past.map(({ title }) => title)).toEqual(['자료구조 중간고사 스터디', '버들골 저녁 러닝']);
+    for (const quest of past) {
+      expect(quest.holders).toContainEqual(ME);
+      expect(new Date(quest.subQuests[0]?.startsAt ?? '').getTime()).toBeLessThan(PHONE_NOW.getTime());
+      expect(TAG_SET).toContainEqual(quest.tags);
     }
+  });
+
+  it('gives no past Quest in the build that asks the main server', async () => {
+    await askMainServer({ signedIn: true });
+
+    await expect(apiClient.listPastQuests(ME)).resolves.toEqual([]);
   });
 });

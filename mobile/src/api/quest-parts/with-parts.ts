@@ -106,7 +106,7 @@ export function withQuestParts(client: ApiClient, build: Build): ShownClient {
     listMyTags: async () => myTagsOf(await client.getProfile(), build),
     listPastQuests: async (me) => {
       const entered = await readQuestEntries();
-      return pastQuestsOf(me, now()).map((quest) => questWithParts(quest, entered));
+      return pastQuestsOf(me, now(), build).map((quest) => questWithParts(quest, entered));
     },
   };
 }
