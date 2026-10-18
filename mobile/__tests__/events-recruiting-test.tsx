@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -195,7 +196,7 @@ describe('+ 파티 모집', () => {
 
     expect(shownAddress()).toBe(`/party-form?eventId=${CAREER.id}`);
     expect(screen.getByTestId('chosen-event')).toHaveTextContent(CAREER.title, { exact: false });
-    expect(screen.getByLabelText('제목')).toHaveDisplayValue(CAREER.title);
+    expect(screen.getByLabelText('제목')).toHaveDisplayValue(`${CAREER.title} 같이 가요`);
   });
 
   it('opens the room of the Quest the User already shares for the event', async () => {
