@@ -41,6 +41,8 @@ Ticket 02 adds the photos, the tags and the members' faces behind the API client
 
 A server Quest's photo and tags are picked from the mock's sets by a stable hash of its id. The photo and tags the User enters for a Quest they make (`makeQuest`, `changeQuest`) are kept on the phone (`snunow.quest-entries`) and come back with that Quest. The mock build's User, whose profile has no hashtags, gets the frame's tags.
 
+Ticket 06 adds the room's two parts the same way (`notes.ts` and `chat.ts` in `mobile/src/api/quest-parts/`, data in `mobile/src/api/mock/data/room-parts.ts`): `listJoinRequests` carries a `note`, one of the mock's by the request's id in the mock build and null on server; `listPartyChat` and `sendPartyChat` give the room's 파티 채팅, the frame's conversation for the mock's `q-ai` in the mock build and an empty room on server. What the User sends is kept on the phone for the signed-in User (`snunow.party-chat.<userId>`), and nothing while no User is signed in.
+
 Kept on the phone and not mocked: declining an activation (`다른 활성 파티`).
 
 ## 3. Device checks (함재현)

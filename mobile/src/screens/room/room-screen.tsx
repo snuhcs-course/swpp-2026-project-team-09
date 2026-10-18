@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -11,6 +12,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import {
   Badge,
   Button,
+  Chip,
   color,
   ErrorState,
   font,
@@ -23,8 +25,10 @@ import {
 } from '@/design-system';
 import type { RoomView } from '@/features/quests/room-adapter';
 import { useRoom } from '@/features/quests/use-room';
+import { useWalkingTimes } from '@/features/quests/use-walking-times';
 import { ActivationBox } from './activation-box';
 import { type Ask, ConfirmSheet } from './confirm-sheet';
+import { PartyChat } from './party-chat';
 import { InvitationsSection, MembersSection, RequestsSection } from './people-sections';
 import { PlanSection } from './plan-section';
 import { RoomEvent } from './room-event';
@@ -42,8 +46,9 @@ function leaveRoom(): void {
   }
 }
 
+// The badges, the title, a Closed Quest's text, and the tags under it.
 function Head({ room }: { room: RoomView }): ReactElement {
-  const { description } = room.quest;
+  const { text: description, tags } = room;
   return (
     <View style={styles.head}>
       <View style={styles.badges}>
@@ -56,22 +61,28 @@ function Head({ room }: { room: RoomView }): ReactElement {
       <Text accessibilityRole="header" style={styles.title}>
         {room.quest.title}
       </Text>
-      {room.quest.globalEvent === null ? null : <RoomEvent event={room.quest.globalEvent} />}
       {description === '' ? null : (
         <View style={styles.quote}>
           <Text style={styles.quoteWords}>{description}</Text>
+        </View>
+      )}
+      {tags.length === 0 ? null : (
+        <View accessibilityLabel="태그" style={styles.tags}>
+          {tags.map((tag) => (
+            <Chip key={tag}>{tag}</Chip>
+          ))}
         </View>
       )}
     </View>
   );
 }
 
-// The app bar's `모집글 보기` for an Open or Approval Quest, and `수정` for its Leader.
+// The app bar's `모집글 보기` for an Open or Approval Quest, never for a Closed one, and `수정` for its Leader.
 function RecruitingActions({ room }: { room: RoomView }): ReactElement {
-  const { quest, leads } = room;
+  const { quest, leads, hasPost } = room;
   return (
     <View style={styles.actions}>
-      {quest.joinPolicy === 'closed' ? null : (
+      {hasPost ? (
         <Button
           onPress={() => {
             router.push(`/post/${quest.id}`);
@@ -80,7 +91,7 @@ function RecruitingActions({ room }: { room: RoomView }): ReactElement {
         >
           모집글 보기
         </Button>
-      )}
+      ) : null}
       {leads ? (
         <Button
           onPress={() => {
@@ -102,10 +113,12 @@ function partyOf(room: RoomView): 'leads' | 'member' | 'none' {
   return room.activation.leadsParty ? 'leads' : 'member';
 }
 
-// The question before `나가기` or `파티 없애기`.
+// The question before `나가기` or `파티 없애기`. The Leader's says that a Closed Quest only disappears and that a posted
+// one also takes its post down, and either adds that sharing stops while the Quest's Party is switched on.
 function goingAsk(room: RoomView, actions: RoomActions, onLeft: () => void): Ask {
   const party = partyOf(room);
-  const live = party === 'none' ? '' : ' 활성화 중이라 위치 공유도 바로 멈춰요.';
+  const switchedOn = room.leads ? room.activation.state !== 'none' : party !== 'none';
+  const live = switchedOn ? ' 활성화 중이라 위치 공유도 바로 멈춰요.' : '';
   const leave = (left: boolean): void => {
     if (left) {
       onLeft();
@@ -114,7 +127,7 @@ function goingAsk(room: RoomView, actions: RoomActions, onLeft: () => void): Ask
   return room.leads
     ? {
         title: '파티를 없앨까요?',
-        body: `파티가 사라지고 모집글도 내려가요.${live}`,
+        body: `${room.hasPost ? '파티가 사라지고 모집글도 내려가요.' : '파티가 사라져요.'}${live}`,
         confirm: '파티 없애기',
         danger: true,
         onConfirm: () => void actions.endQuest(room.quest.id, party).then(leave),
@@ -149,14 +162,40 @@ function Footer({ room, onPress }: { room: RoomView; onPress: () => void }): Rea
   );
 }
 
+interface BodyProps {
+  room: RoomView;
+  actions: RoomActions;
+  onAsk: (ask: Ask) => void;
+  // The room is in front: only then are the members' walking routes asked.
+  open: boolean;
+}
+
+// The frame's order: the head, the activation, the event card, 일정, 신청, 멤버, 초대 중 and 파티 채팅.
+function Body({ room, actions, onAsk, open }: BodyProps): ReactElement {
+  const walks = useWalkingTimes(room, open);
+  return (
+    <View style={styles.body}>
+      <Head room={room} />
+      <ActivationBox actions={actions} onAsk={onAsk} room={room} />
+      {room.quest.globalEvent === null ? null : <RoomEvent event={room.quest.globalEvent} />}
+      <PlanSection actions={actions} room={room} />
+      <RequestsSection actions={actions} room={room} />
+      <MembersSection actions={actions} room={room} walks={walks} />
+      <InvitationsSection actions={actions} room={room} />
+      <PartyChat questId={room.quest.id} />
+    </View>
+  );
+}
+
 // A Quest's room, the frame's `PartyDetail`: what the Holders plan, who comes and whether the Quest's Party runs.
 export function RoomScreen({ questId }: { questId: string }): ReactElement {
   const { data: room, isPending, refetch, gone } = useRoom(questId);
   const actions = useRoomActions();
   const [ask, setAsk] = useState<Ask | null>(null);
   const left = useRef(false);
+  const open = useIsFocused();
   useCloseWhenGone(gone, left);
-  useToastAbove(FOOTER, useIsFocused());
+  useToastAbove(FOOTER, open);
   const onLeft = (): void => {
     left.current = true;
     leaveRoom();
@@ -177,16 +216,7 @@ export function RoomScreen({ questId }: { questId: string }): ReactElement {
       leave={{ kind: 'back', onPress: leaveRoom }}
       title="파티"
     >
-      {room === undefined ? null : (
-        <View style={styles.body}>
-          <Head room={room} />
-          <ActivationBox actions={actions} onAsk={setAsk} room={room} />
-          <PlanSection actions={actions} room={room} />
-          <RequestsSection actions={actions} room={room} />
-          <MembersSection actions={actions} room={room} />
-          <InvitationsSection actions={actions} room={room} />
-        </View>
-      )}
+      {room === undefined ? null : <Body actions={actions} onAsk={setAsk} open={open} room={room} />}
       {room === undefined && isPending ? <LoadingState /> : null}
       {room === undefined && !isPending && !gone ? <ErrorState onRetry={refetch} /> : null}
       <ConfirmSheet
@@ -214,5 +244,6 @@ const styles = StyleSheet.create({
     backgroundColor: color.surfaceSubtle,
   },
   quoteWords: { fontFamily: font.regular, fontSize: 15, lineHeight: 22, color: color.ink },
+  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
 });

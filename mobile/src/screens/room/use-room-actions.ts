@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -37,10 +38,14 @@ const ROOM_KEYS: readonly QueryKey[] = [
   SENT_INVITATIONS_KEY,
 ];
 
+// How the User gets out of another Party first: not at all, leaving it (true), or ending it ('end'), the one the User
+// leads.
+export type LeaveFirst = boolean | 'end';
+
 export interface RoomActions {
-  // `others` are the other Holders, told of it; `leaveFirst` leaves the User's other Party first.
-  openParty: (quest: Quest, others: number, leaveFirst: boolean) => Promise<void>;
-  joinParty: (partyId: string, leaveFirst: boolean) => Promise<void>;
+  // `others` are the other Holders, told of it; `leaveFirst` gets the User out of the other Party first.
+  openParty: (quest: Quest, others: number, leaveFirst: LeaveFirst) => Promise<void>;
+  joinParty: (partyId: string, leaveFirst: LeaveFirst) => Promise<void>;
   declineParty: (partyId: string) => void;
   leaveParty: () => Promise<void>;
   endParty: () => Promise<void>;
@@ -71,9 +76,11 @@ function runningPartyOf(error: unknown): string | null {
   return typeof partyId === 'string' ? partyId : null;
 }
 
-// Leaves the Party the User is in, if `first`, before entering another.
-async function leaveIf(first: boolean): Promise<void> {
-  if (first) {
+// Leaves the Party the User is in, or ends it, before entering another.
+async function leaveIf(first: LeaveFirst): Promise<void> {
+  if (first === 'end') {
+    await apiClient.endParty();
+  } else if (first) {
     await apiClient.leaveParty();
   }
 }

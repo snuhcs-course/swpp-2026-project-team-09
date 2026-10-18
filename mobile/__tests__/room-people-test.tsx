@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -110,13 +111,13 @@ describe('신청', () => {
 });
 
 describe('초대 중', () => {
-  it("lists the Leader's invitations and cancels one", async () => {
+  it("lists the Leader's invitations as 응답 대기 and cancels one", async () => {
     server.on(`GET ${QUEST}/invitations`, { status: 200, body: [INVITATION] });
     server.on(`DELETE ${QUEST}/invitations/qi9`, { status: 204 });
     const user = await openRoom();
 
     expect(section('초대 중').getByRole('header', { name: '초대 중 1' })).toBeVisible();
-    expect(section('초대 중').getByText('10분 전')).toBeVisible();
+    expect(section('초대 중').getByText('응답 대기')).toBeVisible();
     await user.press(section('초대 중').getByRole('button', { name: '초대 취소' }));
     await pass(500);
 

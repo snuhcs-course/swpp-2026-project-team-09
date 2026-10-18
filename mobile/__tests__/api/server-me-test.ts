@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -176,11 +177,13 @@ describe('what waits for the User', () => {
     expect(await apiClient.listQuestInvitations()).toMatchObject([INVITATION]);
   });
 
-  it("gives the requests to join one of the User's Quests", async () => {
+  it("gives the requests to join one of the User's Quests, without a note, which the main server keeps none of", async () => {
     const server = await askMainServer({ signedIn: true });
     server.on(`GET /quests/${STUDY.id}/join-requests`, { status: 200, body: JOIN_REQUESTS });
 
-    expect(await apiClient.listJoinRequests(STUDY.id)).toEqual(JOIN_REQUESTS);
+    expect(await apiClient.listJoinRequests(STUDY.id)).toEqual(
+      JOIN_REQUESTS.map(({ id, user, sentAt }) => ({ id, user, sentAt, note: null })),
+    );
   });
 
   it("gives the Quests with their Leader, capacity and Join Policy, and a Party's Leader where it is told", async () => {

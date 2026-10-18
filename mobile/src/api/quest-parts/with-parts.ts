@@ -12,12 +12,14 @@ import type { Quest } from '@/api/types';
 import type { QuestSummary } from '@/api/waiting-types';
 import { keepQuestEntries, readQuestEntries } from '@/storage/quest-entries';
 import type { Build } from './build';
+import { chatOf, sendChat } from './chat';
 import { facesOfQuest, facesOfSummary } from './faces';
+import { noteOf } from './notes';
 import { photoOf } from './photos';
 import { myTagsOf, tagsOf } from './tags';
 
-// Adds the mocked parts of a Quest to a client's answers: its photo, its tags and its members' faces, each from its
-// own adapter. When the main server gives one of them, its adapter is dropped here and the server client reads it.
+// Adds the mocked parts of a Quest to a client's answers: its photo, its tags, its members' faces, a request's note and
+// the room's 파티 채팅, each from its own adapter. When the main server gives one of them, its adapter is dropped here and the server client reads it.
 
 type Entered = Partial<Record<string, QuestEntries>>;
 
@@ -54,6 +56,24 @@ function enteredOf({ photo, tags }: Partial<QuestEntries>): Partial<QuestEntries
 async function ownQuest(quest: Quest, { photo, tags }: Partial<QuestEntries>): Promise<ShownQuest> {
   await keepQuestEntries(quest.id, { photo: photo ?? null, tags: tags ?? [] });
   return shown(quest);
+}
+
+// What a room adds: a request's note and the 파티 채팅.
+function roomParts(
+  client: ApiClient,
+  build: Build,
+): Pick<ShownClient, 'listJoinRequests' | 'listPartyChat' | 'sendPartyChat'> {
+  return {
+    listJoinRequests: async (questId) =>
+      (await client.listJoinRequests(questId)).map(({ id, user, sentAt }) => ({
+        id,
+        user,
+        sentAt,
+        note: noteOf(id, build),
+      })),
+    listPartyChat: (questId) => chatOf(questId, build),
+    sendPartyChat: (questId, words) => sendChat(questId, words),
+  };
 }
 
 export function withQuestParts(client: ApiClient, build: Build): ShownClient {
@@ -97,5 +117,6 @@ export function withQuestParts(client: ApiClient, build: Build): ShownClient {
       }));
     },
     listMyTags: async () => myTagsOf(await client.getProfile(), build),
+    ...roomParts(client, build),
   };
 }

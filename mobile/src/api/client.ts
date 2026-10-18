@@ -254,5 +254,7 @@ export const apiClient: ShownClient = {
   acceptInvitation: (invitationId) => chosen().acceptInvitation(invitationId),
   declineInvitation: (invitationId) => chosen().declineInvitation(invitationId),
   listMyTags: () => chosen().listMyTags(),
+  listPartyChat: (questId) => chosen().listPartyChat(questId),
+  sendPartyChat: (questId, words) => chosen().sendPartyChat(questId, words),
   askAssistant: (messages) => chosen().askAssistant(messages),
 };

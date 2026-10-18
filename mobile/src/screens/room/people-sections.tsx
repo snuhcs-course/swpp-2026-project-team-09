@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -93,7 +94,8 @@ function PersonRow({
   );
 }
 
-// `신청 {n}`: the requests to join an Approval Quest, for its Leader.
+// `신청 {n}`: the requests to join an Approval Quest, for its Leader, each with the note its User wrote, or when it
+// came where no note is known.
 export function RequestsSection({ room, actions }: SectionProps): ReactElement | null {
   const { quest, leads } = room;
   const asks = leads && quest.joinPolicy === 'approval';
@@ -108,7 +110,7 @@ export function RequestsSection({ room, actions }: SectionProps): ReactElement |
         <PersonRow
           department={request.user.department}
           key={request.id}
-          line={agoWords(request.sentAt, now())}
+          line={request.note ?? agoWords(request.sentAt, now())}
           name={request.user.name}
         >
           <Button onPress={() => void actions.decline(quest.id, request)} variant="secondary">
@@ -121,7 +123,7 @@ export function RequestsSection({ room, actions }: SectionProps): ReactElement |
   );
 }
 
-// `초대 중 {n}`: the invitations the Leader sent into the Quest, which wait.
+// `초대 중 {n}`: the invitations the Leader sent into the Quest, each `응답 대기` until the Friend answers.
 export function InvitationsSection({ room, actions }: SectionProps): ReactElement | null {
   const { quest, leads } = room;
   const invitations: JoinRequest[] = useQuery({ ...sentInvitationsQuery(quest.id), enabled: leads }).data ?? [];
@@ -136,7 +138,8 @@ export function InvitationsSection({ room, actions }: SectionProps): ReactElemen
           department={invitation.user.department}
           dimmed
           key={invitation.id}
-          line={agoWords(invitation.sentAt, now())}
+          line="응답 대기"
+          lineInk={STATE_INK.waiting}
           name={invitation.user.name}
         >
           <Button onPress={() => void actions.cancelInvitation(quest.id, invitation)} variant="secondary">
@@ -162,11 +165,13 @@ function useShowMember(): (member: MemberView) => void {
 
 interface MemberRowProps extends SectionProps {
   member: MemberView;
+  // `301동 앞까지 도보 8분` or `301동 앞에 있어요`, after the state of a member who shares.
+  walk: string | undefined;
   onHandOver: () => void;
 }
 
 // A Holder, with the Leader's controls on every other row.
-function MemberRow({ room, actions, member, onHandOver }: MemberRowProps): ReactElement {
+function MemberRow({ room, actions, member, walk, onHandOver }: MemberRowProps): ReactElement {
   const { quest, leads, activation } = room;
   const show = useShowMember();
   // The Leader of the Party also takes the Holder out of it.
@@ -175,7 +180,7 @@ function MemberRow({ room, actions, member, onHandOver }: MemberRowProps): React
     <PersonRow
       department={member.department}
       leader={member.leader}
-      line={member.state?.words ?? null}
+      line={member.state === null ? null : [member.state.words, ...(walk === undefined ? [] : [walk])].join(' · ')}
       lineInk={member.state === null ? undefined : STATE_INK[member.state.tone]}
       name={member.name}
       onPress={
@@ -200,9 +205,13 @@ function MemberRow({ room, actions, member, onHandOver }: MemberRowProps): React
   );
 }
 
-// `멤버 {n}`: the Holders, the Leader marked, with what the User sees of each while in the Party, and the Leader's
-// controls.
-export function MembersSection({ room, actions }: SectionProps): ReactElement {
+// `멤버 {n}`: the Holders, the Leader marked, with what the User sees of each while in the Party and how far each who
+// shares is on foot (`walks`, by id), and the Leader's controls.
+export function MembersSection({
+  room,
+  actions,
+  walks,
+}: SectionProps & { walks: Partial<Record<string, string>> }): ReactElement {
   const { quest, members, left, activation } = room;
   const [handing, setHanding] = useState<MemberView | null>(null);
   return (
@@ -219,6 +228,7 @@ export function MembersSection({ room, actions }: SectionProps): ReactElement {
           actions={actions}
           key={member.id}
           member={member}
+          walk={walks[member.id]}
           onHandOver={() => {
             setHanding(member);
           }}

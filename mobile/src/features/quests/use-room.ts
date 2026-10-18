@@ -2,13 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
 import { isRefusal } from '@/api/errors';
 import { friendsQuery, myPartyQuery, partiesQuery, questQuery } from '@/api/queries';
 import { type ScreenData, askAgain, someFailed, somePending } from '@/api/screen-data';
-import type { Friend, MyParty, Party, Quest } from '@/api/types';
+import type { ShownQuest } from '@/api/quest-parts-types';
+import type { Friend, MyParty, Party } from '@/api/types';
 import { myUserId } from '@/auth/sign-in';
 import { declinedPartiesQuery } from '@/features/parties/declined';
 import { type RoomView, toRoom } from './room-adapter';
@@ -19,7 +21,7 @@ export interface RoomData extends ScreenData<RoomView> {
 }
 
 type Results = [
-  UseQueryResult<Quest>,
+  UseQueryResult<ShownQuest>,
   UseQueryResult<MyParty | null>,
   UseQueryResult<Party[]>,
   UseQueryResult<string[]>,
