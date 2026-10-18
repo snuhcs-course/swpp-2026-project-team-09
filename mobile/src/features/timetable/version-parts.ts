@@ -37,6 +37,16 @@ function timeOf({ weekday, startTime, endTime, placeId, room }: ClassSave['times
   return [weekday, startTime, endTime, placeId ?? '', room ?? ''].join(' ');
 }
 
+// `새 시간표 N` with the smallest N from 1 that no version's name already uses.
+export function newVersionName(names: readonly string[]): string {
+  const taken = new Set(names);
+  let number = 1;
+  while (taken.has(`새 시간표 ${number}`)) {
+    number += 1;
+  }
+  return `새 시간표 ${number}`;
+}
+
 // The same for the same classes in any order, whatever their ids.
 export function fingerprint(classes: readonly ClassSave[]): string {
   const lessons = classes.map(({ courseName, times }) =>

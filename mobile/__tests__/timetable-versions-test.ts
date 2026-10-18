@@ -193,9 +193,23 @@ describe('new versions', () => {
     await answered(addEmptyVersion());
 
     const view = await versions();
-    expect(names(view)).toEqual(['2026-2학기', '새 시간표 2']);
-    expect(current(view)).toBe('새 시간표 2');
+    expect(names(view)).toEqual(['2026-2학기', '새 시간표 1']);
+    expect(current(view)).toBe('새 시간표 1');
     expect(await classNames()).toEqual([]);
+  });
+
+  it('names it with the smallest N no version uses', async () => {
+    for (let made = 1; made <= 3; made += 1) {
+      // oxlint-disable-next-line no-await-in-loop -- one version after another
+      await answered(addEmptyVersion());
+    }
+    await answered(switchVersion(idOf(await versions(), '새 시간표 2')));
+    await answered(deleteCurrentVersion());
+    expect(names(await versions())).toEqual(['2026-2학기', '새 시간표 1', '새 시간표 3']);
+
+    await answered(addEmptyVersion());
+
+    expect(current(await versions())).toBe('새 시간표 2');
   });
 
   it('duplicates the current one as {name} 복사본, cut to 20', async () => {

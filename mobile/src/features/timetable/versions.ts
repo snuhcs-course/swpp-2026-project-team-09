@@ -10,7 +10,7 @@ import type { ClassSave } from '@/api/types';
 import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
 import { checkedClasses, type Dropped, refusedForGood } from './version-checks';
-import { fingerprint, saveOf, semesterName } from './version-parts';
+import { fingerprint, newVersionName, saveOf, semesterName } from './version-parts';
 import { type KeptVersion, type KeptVersions, keepVersions, readKeptVersions } from '@/storage/timetable-versions';
 
 // The User's timetable versions, until the main server keeps them (P13 spec, "Versions"). The main server keeps one
@@ -239,9 +239,9 @@ export function makeVersion(name: string, classes: ClassSave[]): Promise<MadeVer
 
 // The switches below give how many classes the main server refused for good.
 
-// `새 시간표 N`, N one more than the versions.
+// `새 시간표 N`, the smallest N that no version uses.
 export function addEmptyVersion(): Promise<number> {
-  return queued(() => make((kept) => `새 시간표 ${kept.versions.length + 1}`, []));
+  return queued(() => make((kept) => newVersionName(kept.versions.map((version) => version.name)), []));
 }
 
 // `{name} 복사본` with the current classes.

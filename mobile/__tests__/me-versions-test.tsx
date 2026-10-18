@@ -84,8 +84,8 @@ describe('new versions', () => {
     await pass(3000);
 
     expect(screen.queryAllByTestId('class-block')).toHaveLength(0);
-    await openMenu(user, '새 시간표 2');
-    expect(within(menu()).getByRole('option', { name: '새 시간표 2' })).toBeSelected();
+    await openMenu(user, '새 시간표 1');
+    expect(within(menu()).getByRole('option', { name: '새 시간표 1' })).toBeSelected();
     await user.press(within(menu()).getByRole('option', { name: '2026-2학기' }));
     await pass(5000);
 
@@ -131,10 +131,10 @@ describe('rename and delete', () => {
     await openMenu(user, '2026-2학기');
     await user.press(screen.getByRole('button', { name: '빈 시간표 추가' }));
     await pass(3000);
-    await openMenu(user, '새 시간표 2');
+    await openMenu(user, '새 시간표 1');
 
     await user.press(screen.getByRole('button', { name: '이 시간표 삭제' }));
-    expect(screen.getByText('‘새 시간표 2’ 시간표를 삭제할까요?')).toBeVisible();
+    expect(screen.getByText('‘새 시간표 1’ 시간표를 삭제할까요?')).toBeVisible();
     await user.press(screen.getAllByRole('button', { name: '삭제' }).at(-1) ?? trigger(''));
     await pass(5000);
 
@@ -150,7 +150,7 @@ describe('what the card says', () => {
       await answered(addEmptyVersion());
     }
     const user = await openMe();
-    await openMenu(user, '새 시간표 10');
+    await openMenu(user, '새 시간표 9');
 
     await user.press(screen.getByRole('button', { name: '빈 시간표 추가' }));
     await pass(500);
@@ -170,7 +170,7 @@ describe('what the card says', () => {
     await openMenu(user, '2026-2학기');
     await user.press(screen.getByRole('button', { name: '빈 시간표 추가' }));
     await pass(3000);
-    await openMenu(user, '새 시간표 2');
+    await openMenu(user, '새 시간표 1');
     await user.press(within(menu()).getByRole('option', { name: '2026-2학기' }));
     await pass(5000);
 
@@ -236,7 +236,7 @@ describe('a class the main server refuses for good', () => {
     await openMenu(user, '2026-2학기');
     await user.press(screen.getByRole('button', { name: '빈 시간표 추가' }));
     await pass(3000);
-    await openMenu(user, '새 시간표 2');
+    await openMenu(user, '새 시간표 1');
     await user.press(within(menu()).getByRole('option', { name: '2026-2학기' }));
     await pass(3000);
 
