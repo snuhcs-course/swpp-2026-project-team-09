@@ -6,6 +6,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -30,6 +31,7 @@ import {
 } from '@/features/party/making';
 import { pickedOf } from '../../room/plan-form';
 import { showMine } from '../use-party-actions';
+import { eventWhere, type ProposalStart, type WhereStart } from './proposal-start';
 import { useSend } from './use-send';
 
 // What 파티 만들기 holds while the User fills it in, and its sending.
@@ -43,6 +45,8 @@ export interface FormProps {
   eventId: string | null;
   // A new one's Friend, invited at the start: the form opens as 비공개.
   friendId: string | null;
+  // A new one filled from the chat's Proposal, whose 수정 opened the form.
+  proposal: ProposalStart | null;
 }
 
 export function friendsHint(form: PartyForm, chosen: number): string {
@@ -102,13 +106,9 @@ function useEventPick(
       if (editing && event === null) {
         return;
       }
-      const place = event?.place ?? null;
-      setWords(place ?? '');
-      setPicked(
-        event === null || place === null
-          ? null
-          : { placeId: null, position: { latitude: event.latitude, longitude: event.longitude }, words: place },
-      );
+      const where = eventWhere(event);
+      setWords(where.words);
+      setPicked(where.picked);
     },
     [setForm, setWords, setPicked, editing],
   );
@@ -116,15 +116,21 @@ function useEventPick(
   return pickEvent;
 }
 
-// Where the edited Quest is, as `어디서` shows it at the start.
-function useWhere(quest: ShownQuest | null): {
+// Where the edited Quest or the Proposal is, as `어디서` shows it at the start.
+function useWhere(
+  quest: ShownQuest | null,
+  proposal: WhereStart | null,
+): {
   words: string;
   setWords: (words: string) => void;
   picked: PickedPlace | null;
   setPicked: (place: PickedPlace | null) => void;
   changed: boolean;
 } {
-  const [start] = useState(() => {
+  const [start] = useState((): WhereStart => {
+    if (proposal !== null) {
+      return { words: proposal.words, picked: proposal.picked };
+    }
     const subQuest = quest === null ? null : shownSubQuest(quest);
     return { words: subQuest?.place?.label ?? '', picked: pickedOf(subQuest) };
   });
@@ -135,9 +141,10 @@ function useWhere(quest: ShownQuest | null): {
 
 type Where = ReturnType<typeof useWhere>;
 
-// Sends the form with its place named: back to the room or the post after an edit, to 내 파티 after making one.
+// Sends the form with its place named: back to the room or the post after an edit, to 내 파티 after making one. A
+// Quest made from a Proposal is told to the chat, after which its card makes nothing more.
 function useSubmit(
-  quest: ShownQuest | null,
+  { quest, proposal }: Pick<FormProps, 'quest' | 'proposal'>,
   where: Where,
   setSaving: (saving: boolean) => void,
 ): (form: PartyForm, friends: string[]) => void {
@@ -152,6 +159,9 @@ function useSubmit(
       })
       .then((sent) => {
         setSaving(false);
+        if (sent !== 'refused') {
+          proposal?.made();
+        }
         if (sent === 'taken') {
           (quest === null ? showMine : router.back)();
         }
@@ -159,21 +169,39 @@ function useSubmit(
   };
 }
 
+// The form at the start: the edited Quest's, the Proposal's, or a new one's, 비공개 when opened from a Friend.
+function startForm({ quest, questEvent, friendId, proposal }: FormProps): PartyForm {
+  if (quest !== null) {
+    return formOf(quest, questEvent);
+  }
+  if (proposal !== null) {
+    return proposal.form;
+  }
+  return friendId === null ? emptyForm() : { ...emptyForm(), visibility: 'private' };
+}
+
+// The Friends chosen at the start: the Proposal's, or the Friend a new one was opened from.
+function startChosen({ quest, friendId, proposal }: FormProps): string[] {
+  if (quest !== null) {
+    return [];
+  }
+  if (proposal !== null) {
+    return proposal.chosen;
+  }
+  return friendId === null ? [] : [friendId];
+}
+
 // What the form holds, and its sending.
-export function useFormState({ quest, questEvent, eventId, friendId }: FormProps): FormState {
+export function useFormState(props: FormProps): FormState {
+  const { quest, eventId } = props;
   const editing = quest !== null;
   const holders = quest?.holders ?? [];
   const friends = (useQuery(friendsQuery).data ?? []).filter(({ id }) => !holders.some((holder) => holder.id === id));
-  const [form, setForm] = useState<PartyForm>(() => {
-    if (quest !== null) {
-      return formOf(quest, questEvent);
-    }
-    return friendId === null ? emptyForm() : { ...emptyForm(), visibility: 'private' };
-  });
-  const [chosen, setChosen] = useState<string[]>(() => (quest === null && friendId !== null ? [friendId] : []));
-  const where = useWhere(quest);
+  const [form, setForm] = useState<PartyForm>(() => startForm(props));
+  const [chosen, setChosen] = useState<string[]>(() => startChosen(props));
+  const where = useWhere(quest, props.proposal);
   const [saving, setSaving] = useState(false);
-  const submit = useSubmit(quest, where, setSaving);
+  const submit = useSubmit(props, where, setSaving);
   const pickEvent = useEventPick(setForm, where.setWords, where.setPicked, {
     eventId: editing ? null : eventId,
     editing,

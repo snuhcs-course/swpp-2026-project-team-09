@@ -116,7 +116,7 @@ describe('the Proposal card of an answer', () => {
     expect(card().getByText(LUNCH.description)).toBeVisible();
     expect(card().queryByText(/사진|태그/u)).toBeNull();
     expect(make()).toBeEnabled();
-    expect(card().getByRole('button', { name: '수정' })).toBeDisabled();
+    expect(card().getByRole('button', { name: '수정' })).toBeEnabled();
   });
 
   it('shows an Approval Quest as 공개 with 승인 후 참여', async () => {

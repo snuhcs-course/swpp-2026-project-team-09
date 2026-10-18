@@ -6,19 +6,22 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { router, useIsFocused } from 'expo-router';
 import { type ReactElement, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { globalEventAnnouncersQuery, globalEventsQuery, questQuery } from '@/api/queries';
+import { friendsQuery, globalEventAnnouncersQuery, globalEventsQuery, placesQuery, questQuery } from '@/api/queries';
 import { Button, ErrorState, FullScreenPanel, LoadingState, space, TextField, useToastAbove } from '@/design-system';
+import { type HeldProposal, heldProposal } from '@/features/party/held-proposal';
 import { WhenField, WhereField } from '../../room/plan-form';
 import { EventField, EventPicker } from './event-field';
 import { FriendPicker } from './friend-picker';
 import { BoardField, CapacityField, DescriptionField, VisibilityField } from './party-form-fields';
 import { PhotoField } from './photo-field';
+import { proposalStart } from './proposal-start';
 import { TagField } from './tag-field';
 import { eventOfQuest, type FormProps, type FormState, friendsHint, useFormState } from './use-form-state';
 
@@ -139,20 +142,49 @@ function Form(props: FormProps): ReactElement {
   );
 }
 
-// 파티 만들기, the frames `PartyCreate` and `PartyAppt`, the latter opened from a Friend; with a Quest, its edit mode.
+// 파티 만들기, the frames `PartyCreate` and `PartyAppt`, the latter opened from a Friend; with a Quest, its edit mode;
+// from the chat, filled with the Proposal held.
 export function PartyFormScreen({
   questId,
   eventId,
   friendId,
+  fromProposal,
 }: {
   questId: string | null;
   eventId: string | null;
   friendId: string | null;
+  fromProposal: boolean;
 }): ReactElement {
-  if (questId === null) {
-    return <Form eventId={eventId} friendId={friendId} quest={null} questEvent={null} />;
+  if (questId !== null) {
+    return <EditedForm questId={questId} />;
   }
-  return <EditedForm questId={questId} />;
+  const held = fromProposal ? heldProposal() : null;
+  if (held !== null) {
+    return <ProposalForm held={held} />;
+  }
+  return <Form eventId={eventId} friendId={friendId} proposal={null} quest={null} questEvent={null} />;
+}
+
+// The form filled with a Proposal, once who announced its event, the Places and the Friends are there to fill it.
+function ProposalForm({ held }: { held: HeldProposal }): ReactElement {
+  const announcers = useQuery(globalEventAnnouncersQuery);
+  const places = useQuery(placesQuery);
+  const friends = useQuery(friendsQuery);
+  if (announcers.isPending || places.isPending || friends.isPending) {
+    return (
+      <FullScreenPanel leave={{ kind: 'back', onPress: router.back }} title="파티 만들기">
+        <LoadingState />
+      </FullScreenPanel>
+    );
+  }
+  const start = proposalStart(held.proposal, {
+    announcers: announcers.data ?? [],
+    places: places.data ?? [],
+    friends: friends.data ?? [],
+  });
+  return (
+    <Form eventId={null} friendId={null} proposal={{ ...start, made: held.made }} quest={null} questEvent={null} />
+  );
 }
 
 function EditedForm({ questId }: { questId: string }): ReactElement {
@@ -161,7 +193,7 @@ function EditedForm({ questId }: { questId: string }): ReactElement {
   const announcers = useQuery(globalEventAnnouncersQuery).data ?? [];
   if (quest !== undefined && !events.isPending) {
     const questEvent = eventOfQuest(quest, events.data, announcers);
-    return <Form eventId={null} friendId={null} quest={quest} questEvent={questEvent} />;
+    return <Form eventId={null} friendId={null} proposal={null} quest={quest} questEvent={questEvent} />;
   }
   return (
     <FullScreenPanel leave={{ kind: 'back', onPress: router.back }} title="모집글 수정">

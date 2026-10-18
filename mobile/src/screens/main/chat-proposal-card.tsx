@@ -20,6 +20,8 @@ interface ChatProposalCardProps {
   making: ProposalMaking;
   // 만들기: makes the Quest as the party form does.
   onMake: () => void;
+  // 수정: opens the party form filled with it.
+  onEdit: () => void;
 }
 
 const EMPTY = '없음';
@@ -62,9 +64,9 @@ function rowsOf(proposal: QuestProposal, form: PartyForm): Row[] {
 const MAKE_WORDS: Record<ProposalMaking, string> = { ready: '만들기', making: '만드는 중', made: '만들었어요' };
 
 // The Proposal of an answer: the 파티 the Assistant filled in, as rows of the form's fields and its recruiting text
-// under them, which the Assistant may have written, with 만들기. Nothing is
-// made until it is pressed. 수정, which opens the form filled with it, comes with P07-08 and is disabled until then.
-export function ChatProposalCard({ proposal, making, onMake }: ChatProposalCardProps): ReactElement {
+// under them, which the Assistant may have written, with 수정 and 만들기. Nothing is made until 만들기 is pressed, or
+// until the form 수정 opens is sent. Once on its way or made, neither does anything more.
+export function ChatProposalCard({ proposal, making, onMake, onEdit }: ChatProposalCardProps): ReactElement {
   const form = proposalForm(proposal);
   return (
     <View style={[cardStyles.card, styles.card]} testID="proposal-card">
@@ -83,7 +85,7 @@ export function ChatProposalCard({ proposal, making, onMake }: ChatProposalCardP
       {form.description === '' ? null : <Text style={styles.description}>{form.description}</Text>}
       <View style={styles.buttons}>
         <View style={styles.button}>
-          <Button disabled full variant="secondary">
+          <Button disabled={making !== 'ready'} full onPress={onEdit} variant="secondary">
             수정
           </Button>
         </View>
