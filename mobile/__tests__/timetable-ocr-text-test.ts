@@ -28,7 +28,7 @@ function place(number: string): Place {
 }
 
 function roomLine(text: string, confidence: number | null, elements = 1): Parameters<typeof linkRoom>[0] {
-  return { text, y: 0, confidence, elements, wholeElement: elements === 1, unclipped: true };
+  return { text, y: 0, confidence, elements, wholeElement: elements === 1, unclipped: true, x0: 0, x1: 0, y1: 0 };
 }
 
 function time(weekday: ReadTime['weekday'], start: string, end: string): ReadTime {
@@ -57,6 +57,8 @@ describe('a block’s text', () => {
     expect(joinName(['하드웨어시스', '템설계'])).toBe('하드웨어시스템설계');
     expect(joinName(['창의적통합설', '계2'])).toBe('창의적통합설계2');
     expect(joinName(['Data', 'Science'])).toBe('Data Science');
+    expect(joinName(['공학수학', '2'])).toBe('공학수학 2');
+    expect(joinName(['대학영어', '2: 말하기'])).toBe('대학영어 2: 말하기');
     expect(joinName(['|인공지능 이론', '|및 응용 세미나'])).toBe('인공지능 이론및 응용 세미나');
   });
 
@@ -85,15 +87,41 @@ describe('the building of a room', () => {
     expect(linkRoom(roomLine('302 - …', 0.95), places)).toBeNull();
     expect(linkRoom(null, places)).toBeNull();
   });
+});
 
-  it('without confidence (iOS) is linked only from a room read as one whole element', () => {
+describe('the building of a room without confidence (iOS)', () => {
+  const places = ['301', '302'].map((number) => place(number));
+
+  it('is linked only from a room read as one whole element', () => {
     expect(
-      linkRoom({ text: '302-311-1', y: 0, confidence: null, elements: 1, wholeElement: true, unclipped: true }, places)
-        ?.room,
+      linkRoom(
+        {
+          text: '302-311-1',
+          y: 0,
+          confidence: null,
+          elements: 1,
+          wholeElement: true,
+          unclipped: true,
+          x0: 0,
+          x1: 0,
+          y1: 0,
+        },
+        places,
+      )?.room,
     ).toBe('311-1');
     expect(
       linkRoom(
-        { text: '302 -311-1', y: 0, confidence: null, elements: 2, wholeElement: false, unclipped: true },
+        {
+          text: '302 -311-1',
+          y: 0,
+          confidence: null,
+          elements: 2,
+          wholeElement: false,
+          unclipped: true,
+          x0: 0,
+          x1: 0,
+          y1: 0,
+        },
         places,
       ),
     ).toBeNull();
@@ -125,14 +153,28 @@ describe('the classes', () => {
     expect(classes.map((lesson) => lesson.times.length)).toEqual([2, 1]);
   });
 
-  it('join a name read short to its whole name', () => {
-    const classes = mergeClasses([
-      { name: '컴퓨터프로그래밍', time: time('monday', '19:00', '21:00') },
-      { name: '컴퓨터프로그래', time: time('thursday', '14:00', '15:50') },
-    ]);
-    expect(classes).toEqual([
+  it('join a name cut short to its whole name, but keep a course and its 연습 section apart', () => {
+    expect(
+      mergeClasses([
+        { name: '컴퓨터프로그래밍', time: time('monday', '19:00', '21:00') },
+        { name: '컴퓨터프로그래', time: time('thursday', '14:00', '15:50'), cut: true },
+      ]),
+    ).toEqual([
       { name: '컴퓨터프로그래밍', times: [time('monday', '19:00', '21:00'), time('thursday', '14:00', '15:50')] },
     ]);
+    // The same short name without a sign of being cut is a class of its own.
+    expect(
+      mergeClasses([
+        { name: '컴퓨터프로그래밍', time: time('monday', '19:00', '21:00') },
+        { name: '컴퓨터프로그래', time: time('thursday', '14:00', '15:50') },
+      ]),
+    ).toHaveLength(2);
+    expect(
+      mergeClasses([
+        { name: '컴퓨터프로그래밍', time: time('tuesday', '09:30', '10:45') },
+        { name: '컴퓨터프로그래밍연습', time: time('friday', '14:00', '15:50') },
+      ]).map((lesson) => lesson.name),
+    ).toEqual(['컴퓨터프로그래밍', '컴퓨터프로그래밍연습']);
   });
 });
 
@@ -213,7 +255,7 @@ describe('a room cut or alone', () => {
       y0: 20,
       y1: 80,
     });
-    expect(blockText(first)).toMatchObject({ name: '2공학수학', room: null });
+    expect(blockText(first)).toMatchObject({ name: '2 공학수학', room: null });
     // A block of nothing but a room has no name.
     expect(blockText(linesIn([word('302', 25, 45, 30)], { x0: 22, x1: 82, y0: 20, y1: 80 }))).toMatchObject({
       name: '',
