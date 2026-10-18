@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -29,6 +30,8 @@ interface ButtonProps {
   icon?: IconName;
   disabled?: boolean;
   onPress?: () => void;
+  // A fuller accessible name where the label alone is ambiguous, such as one of many cards' "관심 없음".
+  label?: string;
 }
 
 const LABEL_COLOR: Record<Variant, string> = {
@@ -52,10 +55,12 @@ export function Button({
   icon,
   disabled = false,
   onPress,
+  label,
 }: ButtonProps): ReactElement {
   const labelColor = disabled ? color.inkMuted : LABEL_COLOR[variant];
   return (
     <Pressable
+      accessibilityLabel={label}
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}

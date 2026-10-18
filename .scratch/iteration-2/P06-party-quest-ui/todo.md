@@ -45,6 +45,8 @@ Ticket 05 adds three more adapters in the same folder: `invitation-times.ts` and
 
 A server Quest's photo and tags are picked from the mock's sets by a stable hash of its id. The photo and tags the User enters for a Quest they make (`makeQuest`, `changeQuest`) are kept on the phone (`snunow.quest-entries`) and come back with that Quest. The mock build's User, whose profile has no hashtags, gets the frame's tags.
 
+Ticket 03 adds one adapter each for official recruiting (`official.ts`: `listOfficialRecruiting`, `joinOfficialRecruiting`), hiding a post (`hidden-posts.ts`: `listHiddenPosts`, `hidePost`) and the people looking for company (`seekers.ts`: `listCompanionSeekers`, `askCompanionSeeker`), data in `mobile/src/api/mock/data/finding.ts`. The build that asks the main server gets no official recruiting and nobody looking for company. Joining, hiding and asking are kept on the phone (`snunow.joined-official`, `snunow.hidden-posts`, `snunow.asked-seekers`, each keyed by the User's id). `추천 이유` reads the User's tags (`관심사`), the timetable (`시간대`) and the Friends (`친구`).
+
 Ticket 04 adds two more. The main server's Global Event has no kind and no tags, so the form's event picker reads both from the event's title and description (`mobile/src/features/party/event-kinds.ts`). The main server cannot change a Quest's Global Event, so editing shows a Quest's own event locked, and for a Quest without one an event picked only fills the time, the place and the tags; ticket 08 lists the endpoint that would change it.
 
 Kept on the phone and not mocked: declining an activation (`다른 활성 파티`).

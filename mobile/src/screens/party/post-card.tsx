@@ -2,20 +2,22 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Avatar, Badge, Button, cardStyles, color, font, Icon, type IconName, space } from '@/design-system';
+import { Badge, Button, cardStyles, color, font, Icon, type IconName, space } from '@/design-system';
 import type { PostView } from '@/features/party/posts';
+import { Faces, PhotoView } from './quest-photo';
 
 export function openPost(questId: string): void {
   router.push(`/post/${questId}`);
 }
 
 // "참여하기", or "참여 신청" for an Approval Quest.
-export function joinLabel(post: PostView): string {
+export function joinLabel(post: Pick<PostView, 'joinPolicy'>): string {
   return post.joinPolicy === 'approval' ? '참여 신청' : '참여하기';
 }
 
@@ -49,23 +51,34 @@ export function PostBadges({ post, fill = true }: { post: PostView; fill?: boole
   );
 }
 
-// A card of 찾기's 모집 중인 파티.
-export function PostCard({ post, onJoin }: { post: PostView; onJoin: (post: PostView) => void }): ReactElement {
+interface PostCardProps {
+  post: PostView;
+  onJoin: (post: PostView) => void;
+  onHide: (post: PostView) => void;
+}
+
+// A card of 찾기's 모집 중인 파티: its photo beside the title, the members' faces, `관심 없음` and `참여하기`.
+export function PostCard({ post, onJoin, onHide }: PostCardProps): ReactElement {
   return (
     <View accessibilityLabel={post.title} style={[cardStyles.card, styles.card]}>
       <PostBadges post={post} />
-      <Text style={styles.title}>{post.title}</Text>
-      {post.description === '' ? null : (
-        <Text numberOfLines={2} style={styles.description}>
-          {post.description}
-        </Text>
-      )}
+      <View style={styles.head}>
+        <View style={styles.headWords}>
+          <Text style={styles.title}>{post.title}</Text>
+          {post.description === '' ? null : (
+            <Text numberOfLines={2} style={styles.description}>
+              {post.description}
+            </Text>
+          )}
+        </View>
+        {post.photo === null ? null : <PhotoView photo={post.photo} size="thumb" />}
+      </View>
       <View style={styles.lines}>
         <Line icon="clock">{post.time}</Line>
         <Line icon="pin">{post.place}</Line>
       </View>
       <View style={styles.people}>
-        <Avatar name={post.leader.name} size="sm" />
+        <Faces faces={post.faces} />
         <Text numberOfLines={1} style={styles.members}>
           {post.members}
         </Text>
@@ -80,14 +93,33 @@ export function PostCard({ post, onJoin }: { post: PostView; onJoin: (post: Post
           <Text style={styles.more}>자세히 ›</Text>
         </Pressable>
       </View>
+      <CardButtons onHide={onHide} onJoin={onJoin} post={post} />
+    </View>
+  );
+}
+
+function CardButtons({ post, onJoin, onHide }: PostCardProps): ReactElement {
+  return (
+    <View style={styles.buttons}>
       <Button
-        full
+        label={`${post.title} 관심 없음`}
         onPress={() => {
-          onJoin(post);
+          onHide(post);
         }}
+        variant="ghost"
       >
-        {joinLabel(post)}
+        관심 없음
       </Button>
+      <View style={styles.join}>
+        <Button
+          full
+          onPress={() => {
+            onJoin(post);
+          }}
+        >
+          {joinLabel(post)}
+        </Button>
+      </View>
     </View>
   );
 }
@@ -97,6 +129,10 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, flexShrink: 1 },
   fill: { fontFamily: font.semiBold, fontSize: 12, lineHeight: 16, color: color.party },
+  head: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
+  headWords: { flex: 1, gap: space[1] },
+  buttons: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  join: { flex: 1 },
   title: { fontFamily: font.semiBold, fontSize: 18, lineHeight: 26, letterSpacing: -0.18, color: color.ink },
   description: { fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: color.inkMuted },
   lines: { gap: space[1] },

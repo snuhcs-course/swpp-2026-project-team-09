@@ -10,8 +10,14 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   lobbyQuery,
+  classesQuery,
+  companionSeekersQuery,
+  friendsQuery,
+  hiddenPostsQuery,
   myJoinRequestsQuery,
   myPartyQuery,
+  myTagsQuery,
+  officialRecruitingQuery,
   partiesQuery,
   pastQuestsQuery,
   questInvitationsQuery,
@@ -19,7 +25,7 @@ import {
   recruitingQuery,
   sentInvitationsQuery,
 } from '@/api/queries';
-import type { ShownQuestInvitation } from '@/api/quest-parts-types';
+import type { CompanionSeeker, OfficialRecruiting, ShownQuestInvitation } from '@/api/quest-parts-types';
 import { type ScreenData, askAgain, someFailed, somePending } from '@/api/screen-data';
 import type { Board, Quest } from '@/api/types';
 import { myUserId } from '@/auth/sign-in';
@@ -27,6 +33,7 @@ import { now } from '@/clock';
 import { declinedPartiesQuery } from '@/features/parties/declined';
 import { sameKoreaDay } from '@/korea-time';
 import { BOARDS } from './boards';
+import { findPosts, type Reasons, reasonsFor } from './finding';
 import { type MineCardView, toMineCards } from './mine';
 import { boardPosts, entryPost, type PostView, questPost } from './posts';
 
@@ -37,19 +44,60 @@ interface Asked<Data> {
   refetch: () => unknown;
 }
 
-// Combines the answers a view needs: shown once all have answered.
-function combined<View>(asked: readonly Asked<unknown>[], view: () => View): ScreenData<View> {
-  const isPending = somePending(asked);
+// Combines the answers a view needs: shown once all have answered. An answer that only adds to the view, such as the
+// Friends a post counts or the User's tags it is ordered by, is waited for too, but the view is shown without it when
+// it fails.
+function combined<View>(
+  asked: readonly Asked<unknown>[],
+  view: () => View,
+  adding: readonly Asked<unknown>[] = [],
+): ScreenData<View> {
+  const isPending = somePending([...asked, ...adding]);
   const isError = someFailed(asked);
-  return { data: isPending || isError ? undefined : view(), isPending, isError, refetch: askAgain(asked) };
+  return {
+    data: isPending || isError ? undefined : view(),
+    isPending,
+    isError,
+    refetch: askAgain([...asked, ...adding]),
+  };
 }
 
-// 찾기's 모집 중인 파티: the recruiting Quests, the newest first as the list holds them.
-export function useRecruitingPosts(): ScreenData<PostView[]> {
-  const [entries, requests] = useQueries({ queries: [recruitingQuery('all'), myJoinRequestsQuery] });
-  return combined([entries, requests], () =>
-    (entries.data ?? []).map((entry) => entryPost(entry, requests.data ?? [])),
+export interface FindView {
+  posts: PostView[];
+  // How many of the recruiting posts listed now the User hid with `관심 없음`.
+  hidden: number;
+}
+
+// 찾기's 모집 중인 파티: the recruiting Quests that match the search and that the User did not hide, those sharing more
+// tags with the User first, and otherwise the newest first as the list holds them.
+export function useFindPosts(search: string): ScreenData<FindView> {
+  const [entries, requests, friends, myTags, hidden] = useQueries({
+    queries: [recruitingQuery('all'), myJoinRequestsQuery, friendsQuery, myTagsQuery, hiddenPostsQuery],
+  });
+  return combined(
+    [entries, requests],
+    () => {
+      const posts = (entries.data ?? []).map((entry) => entryPost(entry, requests.data ?? [], friends.data ?? []));
+      const hiddenIds = hidden.data ?? [];
+      return {
+        posts: findPosts(posts, { search, myTags: myTags.data ?? [], hidden: hiddenIds }),
+        hidden: posts.filter(({ questId }) => hiddenIds.includes(questId)).length,
+      };
+    },
+    [friends, myTags, hidden],
   );
+}
+
+// Official recruiting, for 찾기's banner and 전체 파티's `공식`. None in the build that asks the main server.
+export function useOfficialRecruiting(): ScreenData<OfficialRecruiting[]> {
+  const official = useQuery(officialRecruitingQuery);
+  return combined([official], () => official.data ?? []);
+}
+
+// 같이 할 사람을 찾는 중. None in the build that asks the main server.
+export function useCompanionSeekers(): ScreenData<CompanionSeeker[]> {
+  const seekers = useQuery(companionSeekersQuery);
+  return combined([seekers], () => seekers.data ?? []);
 }
 
 export interface BoardRowView {
@@ -85,19 +133,40 @@ export function useBoardPosts(board: Board): ScreenData<PostView[]> {
   );
 }
 
-// 파티 모집글: a Quest the User holds, or a recruiting one. Null when neither list holds it.
-export function usePost(questId: string): ScreenData<PostView | null> {
-  const [quests, entries, requests] = useQueries({
-    queries: [questsQuery, recruitingQuery('all'), myJoinRequestsQuery],
+export interface PostDetailView {
+  post: PostView;
+  // 추천 이유, for a post the User may join; null for one they hold.
+  reasons: Reasons | null;
+}
+
+// 파티 모집글: a Quest the User holds, or a recruiting one, with the reasons it is recommended. Null when neither list
+// holds it.
+export function usePost(questId: string): ScreenData<PostDetailView | null> {
+  const [quests, entries, requests, friends, myTags, classes] = useQueries({
+    queries: [questsQuery, recruitingQuery('all'), myJoinRequestsQuery, friendsQuery, myTagsQuery, classesQuery],
   });
-  return combined([quests, entries, requests], () => {
-    const held = quests.data?.find(({ id }) => id === questId);
-    if (held !== undefined) {
-      return questPost(held, myUserId());
-    }
-    const entry = entries.data?.find(({ id }) => id === questId);
-    return entry === undefined ? null : entryPost(entry, requests.data ?? []);
-  });
+  return combined(
+    [quests, entries, requests],
+    () => {
+      const held = quests.data?.find(({ id }) => id === questId);
+      const entry = entries.data?.find(({ id }) => id === questId);
+      let post: PostView | null = null;
+      if (held !== undefined) {
+        post = questPost(held, myUserId(), friends.data ?? []);
+      } else if (entry !== undefined) {
+        post = entryPost(entry, requests.data ?? [], friends.data ?? []);
+      }
+      if (post === null) {
+        return null;
+      }
+      const mayJoin = post.role.kind === 'open' || post.role.kind === 'approval';
+      const reasons = mayJoin
+        ? reasonsFor(post, { myTags: myTags.data ?? [], classes: classes.data ?? null, today: now() })
+        : null;
+      return { post, reasons };
+    },
+    [friends, myTags, classes],
+  );
 }
 
 // The invitations still waiting, by the id of each Quest the User leads. A list not yet answered, or refused, counts

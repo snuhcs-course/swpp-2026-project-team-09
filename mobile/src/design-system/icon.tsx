@@ -86,6 +86,9 @@ const ICONS = {
     { path: 'M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z' },
     { path: 'M18.5 14.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z' },
   ],
+  // Not the design system's: the `Party` frame draws them on the button that pauses and plays the official banner.
+  pause: [{ path: 'M9 5v14' }, { path: 'M15 5v14' }],
+  play: [{ path: 'M7 5l12 7-12 7z' }],
 } as const satisfies Record<string, readonly Stroke[]>;
 
 export type IconName = keyof typeof ICONS;
