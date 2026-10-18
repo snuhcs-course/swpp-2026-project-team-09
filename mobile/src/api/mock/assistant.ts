@@ -6,20 +6,36 @@
  ******************************************************************************/
 
 import type { AssistantReply, ChatMessage } from '@/api/assistant-types';
+import type { RecruitingQuest } from '@/api/party-types';
 import { now } from '@/clock';
 import { koreaDateKey } from '@/korea-time';
+import { RECRUITING_QUESTS } from './data/boards';
 import { MENUS } from './data/menus';
 import { GLOBAL_EVENTS } from './data/quests';
 
 // The Assistant without a model: a question about the menus is answered from the mocks' menus of the day, one about
-// the shuttle with its layer's button, one about events with the mocks' Global Events as cards, and anything else with
-// a short reply, so that the chat can be seen and tried where the app asks no main server.
+// the shuttle with its layer's button, one about 파티 with the mocks' recruiting Quests that meet soonest as cards, one
+// about events with the mocks' Global Events as cards, and anything else with a short reply, so that the chat can be
+// seen and tried where the app asks no main server.
 
 const MENU_WORDS = ['메뉴', '학식', '점심', '저녁', '아침', '밥'];
 const SHUTTLE_WORDS = ['셔틀', '버스'];
 const EVENT_WORDS = ['행사', '공연', '축제', '설명회'];
-// The most events the mock shows as cards.
+const QUEST_WORDS = ['파티', '같이 할', '모임'];
+// The most events, and the most Quests, the mock shows as cards.
 const EVENT_CARDS = 3;
+const QUEST_CARDS = 3;
+
+function startOf({ nextSubQuest }: RecruitingQuest): number {
+  return nextSubQuest.startsAt === null ? Number.POSITIVE_INFINITY : new Date(nextSubQuest.startsAt).getTime();
+}
+
+// The recruiting Quests that meet soonest, as the Assistant answers 파티 찾기.
+function questCards(): AssistantReply['cards'] {
+  return RECRUITING_QUESTS.toSorted((a, b) => startOf(a) - startOf(b))
+    .slice(0, QUEST_CARDS)
+    .map((quest) => ({ kind: 'quest' as const, quest }));
+}
 
 function menusReply(): string {
   const restaurants = (MENUS[koreaDateKey(now())] ?? []).filter(({ meals }) => meals.length > 0);
@@ -42,6 +58,13 @@ export function mockAssistantReply(messages: readonly ChatMessage[]): AssistantR
   if (SHUTTLE_WORDS.some((word) => last.includes(word))) {
     return { text: '셔틀이 어디 있는지 지도에서 볼 수 있어요.', mapButtons: ['shuttle'], cards: [] };
   }
+  if (QUEST_WORDS.some((word) => last.includes(word))) {
+    return {
+      text: '곧 모이는 파티예요. 운동, 식사처럼 원하는 걸 말해 주시면 좁혀 드릴게요.',
+      mapButtons: [],
+      cards: questCards(),
+    };
+  }
   if (EVENT_WORDS.some((word) => last.includes(word))) {
     const cards = GLOBAL_EVENTS.slice(0, EVENT_CARDS).map((globalEvent) => ({
       kind: 'globalEvent' as const,
@@ -53,7 +76,7 @@ export function mockAssistantReply(messages: readonly ChatMessage[]): AssistantR
     return { text: menusReply(), mapButtons: ['dining'], cards: [] };
   }
   return {
-    text: '데모에서는 오늘 메뉴와 셔틀, 행사만 답할 수 있어요. "오늘 점심 뭐 나와?"처럼 물어봐 주세요.',
+    text: '데모에서는 오늘 메뉴와 셔틀, 행사, 파티만 답할 수 있어요. "오늘 점심 뭐 나와?"처럼 물어봐 주세요.',
     mapButtons: [],
     cards: [],
   };

@@ -15,9 +15,14 @@ import { questsQuery } from '@/api/queries';
 import { Button, color, font, Icon, space } from '@/design-system';
 import { type Chat, useChat } from '@/features/assistant/use-chat';
 import { useBackToClose } from '@/hooks/use-back-to-close';
+import type { PostView } from '@/features/party/posts';
 import { EventSheets, useEventSheets } from '../events/event-sheets';
-import { ChatBubbles, ChatEmpty } from './chat-bubbles';
+import { JoinSheet } from '../party/join-sheet';
+import { openPost } from '../party/post-card';
+import { usePartyActions } from '../party/use-party-actions';
+import { type CardActions, ChatBubbles, ChatEmpty } from './chat-bubbles';
 import type { EventCardActions } from './chat-event-cards';
+import type { QuestCardActions } from './chat-quest-cards';
 import { AI_INPUT } from './layout';
 
 interface ChatSheetProps {
@@ -29,6 +34,8 @@ interface ChatSheetProps {
   onShowLayer: (layer: MapLayer) => void;
   // An event card of an answer: closes the sheet and opens the 행사 tab at that event.
   onOpenEvent: (globalEventId: string) => void;
+  // A Quest card of an answer: closes the sheet and opens its post.
+  onOpenPost: (questId: string) => void;
   // The AI input's field, which lies over the sheet's bottom.
   inputHeight: number;
 }
@@ -81,14 +88,40 @@ function useEventCards(onOpenEvent: (globalEventId: string) => void): {
   return { actions, sheets: <EventSheets quests={quests} sheets={sheets} /> };
 }
 
+// What the Quest cards of the answers do. Their join button opens 찾기's join confirmation over the chat, which stays
+// open under it, and joining an Open Quest shows 내 파티 over the main screen, as it does from 찾기.
+function useQuestCards(onOpenPost: (questId: string) => void): {
+  actions: QuestCardActions;
+  sheet: ReactElement;
+} {
+  const [joining, setJoining] = useState<PostView | null>(null);
+  const partyActions = usePartyActions();
+  const actions = useMemo(() => ({ open: onOpenPost, join: setJoining }), [onOpenPost]);
+  const sheet = (
+    <JoinSheet
+      onClose={() => {
+        setJoining(null);
+      }}
+      onJoin={(chosen) => void partyActions.join(chosen)}
+      post={joining}
+    />
+  );
+  return { actions, sheet };
+}
+
 // The chat with the Assistant, the `MainChat` frame: a translucent sheet from the top of the screen to the
 // navigation, over the map and the lists. The AI input stays at the bottom over it as the chat's input. The
 // conversation is the main screen's, so that the sheet only shows it.
 export function ChatSheet(props: ChatSheetProps): ReactElement {
-  const { chat, inFront, onClose, onShowLayer, onOpenEvent, inputHeight } = props;
+  const { chat, inFront, onClose, onShowLayer, onOpenEvent, onOpenPost, inputHeight } = props;
   const { top } = useSafeAreaInsets();
   useBackToClose(inFront, onClose);
   const eventCards = useEventCards(onOpenEvent);
+  const questCards = useQuestCards(onOpenPost);
+  const cardActions: CardActions = useMemo(
+    () => ({ events: eventCards.actions, quests: questCards.actions }),
+    [eventCards.actions, questCards.actions],
+  );
   const { bubbles, waiting, send, retry, reset } = chat;
   // From the sheet's bottom to the AI input's top, and the room above it.
   const under = AI_INPUT.bottom + inputHeight + 2 * space[1] + OVER_INPUT;
@@ -100,7 +133,7 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
       ) : (
         <ChatBubbles
           bubbles={bubbles}
-          eventActions={eventCards.actions}
+          cardActions={cardActions}
           onRetry={retry}
           onShowLayer={onShowLayer}
           under={under}
@@ -108,6 +141,7 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
         />
       )}
       {eventCards.sheets}
+      {questCards.sheet}
     </View>
   );
 }
@@ -122,7 +156,7 @@ export interface ChatSheetControl {
 
 // The chat's sheet and how to open it. The conversation is kept while the sheet is closed. A map button closes the
 // sheet and turns its layer on with `turnOn`, the map's own layers; an event card closes it and opens the 행사 tab at
-// the event, as the room's event does.
+// the event, as the room's event does; a Quest card closes it and opens the post, as 찾기's card does.
 export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void): ChatSheetControl {
   const chat = useChat();
   const [shown, setShown] = useState(false);
@@ -143,6 +177,10 @@ export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void
     setShown(false);
     router.navigate({ pathname: '/events', params: { focus: globalEventId } });
   }, []);
+  const openQuestPost = useCallback((questId: string): void => {
+    setShown(false);
+    openPost(questId);
+  }, []);
   return {
     chat,
     shown,
@@ -155,6 +193,7 @@ export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void
           inputHeight={inputHeight}
           onClose={close}
           onOpenEvent={openEvent}
+          onOpenPost={openQuestPost}
           onShowLayer={showLayer}
         />
       ) : null,

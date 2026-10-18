@@ -13,6 +13,7 @@ import { type Settings } from '../common/settings.js';
 import { MenusService } from '../menus/menus.service.js';
 import { GlobalEventsService } from '../global-events/global-events.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
+import { RecruitingService } from '../quests/recruiting.service.js';
 import { ShuttleService } from '../shuttle/shuttle.service.js';
 import { causeOf, type Model, MODEL_PORT, runFeature, type RunLimits } from './adapter.js';
 import { chatAssistant } from './chat/chat-assistant.js';
@@ -43,8 +44,9 @@ export class AssistantService {
     menus: MenusService,
     shuttle: ShuttleService,
     globalEvents: GlobalEventsService,
+    recruiting: RecruitingService,
   ) {
-    this.chat = chatAssistant({ menus, shuttle, globalEvents });
+    this.chat = chatAssistant({ menus, shuttle, globalEvents, recruiting });
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
     this.dailyMessages = settings.get('ASSISTANT_DAILY_MESSAGES', { infer: true });
     this.limits = {

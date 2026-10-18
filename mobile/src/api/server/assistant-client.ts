@@ -10,6 +10,7 @@ import type { ApiClient } from '@/api/client';
 import { field, hasTexts, listOf } from './answers';
 import { isGlobalEvent } from './event-client';
 import { call } from './http';
+import { isRecruitingQuest } from './party-client';
 
 // The operation of the AI chat: the conversation goes to the main server, which asks the model.
 
@@ -18,7 +19,14 @@ function isMapLayer(value: unknown): value is MapLayer {
 }
 
 function isChatCard(value: unknown): value is ChatCard {
-  return field(value, 'kind') === 'globalEvent' && isGlobalEvent(field(value, 'globalEvent'));
+  switch (field(value, 'kind')) {
+    case 'globalEvent':
+      return isGlobalEvent(field(value, 'globalEvent'));
+    case 'quest':
+      return isRecruitingQuest(field(value, 'quest'));
+    default:
+      return false;
+  }
 }
 
 function isAssistantReply(value: unknown): value is AssistantReply {

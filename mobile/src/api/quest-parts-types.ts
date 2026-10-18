@@ -3,8 +3,10 @@
  *
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import type { AssistantReply, GlobalEventCard } from './assistant-types';
 import type { ApiClient } from './client';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
 import type { Person, Quest } from './types';
@@ -78,6 +80,9 @@ export interface CompanionSeeker {
 
 export type ShownQuest = Quest & QuestParts;
 export type ShownRecruitingQuest = RecruitingQuest & QuestParts;
+// The Assistant's reply, its Quest cards with their parts as the Boards draw them.
+export type ShownChatCard = GlobalEventCard | { kind: 'quest'; quest: ShownRecruitingQuest };
+export type ShownAssistantReply = Omit<AssistantReply, 'cards'> & { cards: ShownChatCard[] };
 // What an invitation's card says of the plan besides its Quest, which the main server's invitation does not carry yet:
 // when the Quest's next Sub Quest starts and where. Null where the build leaves it out (the server build, always).
 export interface InvitationPlan {
@@ -111,7 +116,8 @@ export type PartsOperation =
   | 'acceptInvitation'
   | 'listRecruitingQuests'
   | 'listQuestInvitations'
-  | 'listJoinRequests';
+  | 'listJoinRequests'
+  | 'askAssistant';
 
 // The client the screens ask: the main server's answers, or the mock's, with the parts added, and the User's tags.
 export type ShownClient = Omit<ApiClient, PartsOperation> & {
@@ -130,6 +136,7 @@ export type ShownClient = Omit<ApiClient, PartsOperation> & {
   // The User's own tags, without '#', which the form offers and 찾기 orders the posts by.
   listMyTags: () => Promise<string[]>;
   listJoinRequests: (questId: string) => Promise<ShownJoinRequest[]>;
+  askAssistant: (...args: Parameters<ApiClient['askAssistant']>) => Promise<ShownAssistantReply>;
   // The room's 파티 채팅, the oldest first, and sending to it. The phone keeps what the User sends.
   listPartyChat: (questId: string) => Promise<PartyMessage[]>;
   sendPartyChat: (questId: string, words: string) => Promise<PartyMessage>;

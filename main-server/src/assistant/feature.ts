@@ -7,6 +7,7 @@
 
 import { z } from 'zod';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
+import { type RecruitingQuestDto } from '../quests/dto/quest.dto.js';
 import { type CardKind, type FoundIds } from './found-ids.js';
 
 // The parts of an AI feature that know nothing of the model library (ADR 0005). A tool is a zod schema of its input
@@ -33,13 +34,18 @@ export type MapLayer = (typeof MAP_LAYERS)[number];
 export const CARDS_MAX = 20;
 
 // A card of the reply, filled by the server in the shape of the list the app already draws it from: a Global Event as
-// the 행사 tab's published list serves it.
+// the 행사 tab's published list serves it, and a Quest as the Boards' recruiting list does.
 export interface GlobalEventCard {
   kind: 'globalEvent';
   globalEvent: PublishedGlobalEventDto;
 }
 
-export type Card = GlobalEventCard;
+export interface QuestCard {
+  kind: 'quest';
+  quest: RecruitingQuestDto;
+}
+
+export type Card = GlobalEventCard | QuestCard;
 
 // What the presenters put in the reply beside its text, gathered over one run.
 export interface Presented {

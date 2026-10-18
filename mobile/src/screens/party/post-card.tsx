@@ -3,10 +3,11 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge, Button, cardStyles, color, font, Icon, type IconName, space } from '@/design-system';
 import type { PostView } from '@/features/party/posts';
@@ -54,13 +55,42 @@ export function PostBadges({ post, fill = true }: { post: PostView; fill?: boole
 interface PostCardProps {
   post: PostView;
   onJoin: (post: PostView) => void;
-  onHide: (post: PostView) => void;
+  // `관심 없음`; left out, the card has no such button.
+  onHide?: (post: PostView) => void;
+  // Opens the post, from a press of the card or of `자세히 ›`. Left out, `자세히 ›` alone opens it with `openPost`.
+  onOpen?: (post: PostView) => void;
+}
+
+interface CardProps {
+  post: PostView;
+  onOpen: ((post: PostView) => void) | undefined;
+  children: ReactNode;
+}
+
+// The card, which a press opens where it is drawn outside 찾기. Its buttons stay buttons of their own: the card is not
+// one control for a screen reader, and `자세히 ›` is the button that opens it.
+function Card({ post, onOpen, children }: CardProps): ReactElement {
+  const shared = { accessibilityLabel: post.title, style: [cardStyles.card, styles.card] };
+  return onOpen === undefined ? (
+    <View {...shared}>{children}</View>
+  ) : (
+    <Pressable
+      {...shared}
+      accessible={false}
+      onPress={() => {
+        onOpen(post);
+      }}
+      testID={`post-${post.questId}`}
+    >
+      {children}
+    </Pressable>
+  );
 }
 
 // A card of 찾기's 모집 중인 파티: its photo beside the title, the members' faces, `관심 없음` and `참여하기`.
-export function PostCard({ post, onJoin, onHide }: PostCardProps): ReactElement {
+export function PostCard({ post, onJoin, onHide, onOpen }: PostCardProps): ReactElement {
   return (
-    <View accessibilityLabel={post.title} style={[cardStyles.card, styles.card]}>
+    <Card onOpen={onOpen} post={post}>
       <PostBadges post={post} />
       <View style={styles.head}>
         <View style={styles.headWords}>
@@ -87,29 +117,35 @@ export function PostCard({ post, onJoin, onHide }: PostCardProps): ReactElement 
           accessibilityRole="button"
           hitSlop={space[3]}
           onPress={() => {
-            openPost(post.questId);
+            if (onOpen === undefined) {
+              openPost(post.questId);
+            } else {
+              onOpen(post);
+            }
           }}
         >
           <Text style={styles.more}>자세히 ›</Text>
         </Pressable>
       </View>
       <CardButtons onHide={onHide} onJoin={onJoin} post={post} />
-    </View>
+    </Card>
   );
 }
 
-function CardButtons({ post, onJoin, onHide }: PostCardProps): ReactElement {
+function CardButtons({ post, onJoin, onHide }: Omit<PostCardProps, 'onOpen'>): ReactElement {
   return (
     <View style={styles.buttons}>
-      <Button
-        label={`${post.title} 관심 없음`}
-        onPress={() => {
-          onHide(post);
-        }}
-        variant="ghost"
-      >
-        관심 없음
-      </Button>
+      {onHide === undefined ? null : (
+        <Button
+          label={`${post.title} 관심 없음`}
+          onPress={() => {
+            onHide(post);
+          }}
+          variant="ghost"
+        >
+          관심 없음
+        </Button>
+      )}
       <View style={styles.join}>
         <Button
           full

@@ -3,11 +3,13 @@
  *
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import type { ChatCard } from '@/api/assistant-types';
 import type { ApiClient } from '@/api/client';
 import type { QuestChange } from '@/api/party-types';
-import type { QuestEntries, QuestParts, ShownClient, ShownQuest } from '@/api/quest-parts-types';
+import type { QuestEntries, QuestParts, ShownChatCard, ShownClient, ShownQuest } from '@/api/quest-parts-types';
 import type { Quest } from '@/api/types';
 import type { QuestSummary } from '@/api/waiting-types';
 import { now } from '@/clock';
@@ -26,9 +28,9 @@ import { askCompanionSeeker, listCompanionSeekers } from './seekers';
 import { myTagsOf, tagsOf } from './tags';
 
 // Adds the mocked parts of a Quest to a client's answers: its photo, its tags and its members' faces, each from its
-// own adapter; the mocked parts of 찾기, official recruiting, hiding a post and the people looking for company; and
-// the room's, a request's note and the 파티 채팅. When the main server gives one of them, its adapter is dropped
-// here and the server client reads it.
+// own adapter, in every answer that carries a Quest, the Assistant's cards among them; the mocked parts of 찾기,
+// official recruiting, hiding a post and the people looking for company; and the room's, a request's note and the 파티
+// 채팅. When the main server gives one of them, its adapter is dropped here and the server client reads it.
 
 type Entered = Partial<Record<string, QuestEntries>>;
 
@@ -80,6 +82,21 @@ function withNotes(client: ApiClient, build: Build): Pick<ShownClient, 'listJoin
   };
 }
 
+function cardWithParts(card: ChatCard, entered: Entered, build: Build): ShownChatCard {
+  return card.kind === 'quest' ? { kind: 'quest', quest: summaryWithParts(card.quest, entered, build) } : card;
+}
+
+// The Assistant's reply, its Quest cards with the parts the Boards' post card draws, as the Boards' list has them.
+function withShownCards(client: ApiClient, build: Build): Pick<ShownClient, 'askAssistant'> {
+  return {
+    askAssistant: async (messages) => {
+      const { text, mapButtons, cards } = await client.askAssistant(messages);
+      const entered = await readQuestEntries();
+      return { text, mapButtons, cards: cards.map((card) => cardWithParts(card, entered, build)) };
+    },
+  };
+}
+
 export function withQuestParts(client: ApiClient, build: Build): ShownClient {
   return {
     ...client,
@@ -126,6 +143,7 @@ export function withQuestParts(client: ApiClient, build: Build): ShownClient {
     listMyTags: async () => myTagsOf(await client.getProfile(), build),
     ...mockedOnly(build),
     ...withNotes(client, build),
+    ...withShownCards(client, build),
   };
 }
 

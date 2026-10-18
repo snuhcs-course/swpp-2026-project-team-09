@@ -17,7 +17,7 @@ import { AssistantController } from './assistant.controller.js';
 import { AssistantService } from './assistant.service.js';
 
 @Module({
-  // QuestsModule gives the clock, by which a message falls in its day.
+  // QuestsModule gives the clock, by which a message falls in its day, and the recruiting list.
   imports: [GlobalEventsModule, MenusModule, QuestsModule, ShuttleModule],
   controllers: [AssistantController],
   providers: [
