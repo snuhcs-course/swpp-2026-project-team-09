@@ -440,7 +440,7 @@ An 초대 card reads `{when} · {where} · {names} 함께`. The invitation's `qu
 
 ## 8. A join request's note
 
-> Shape from the ticket; check against P06-06 (the room is being built on `2.0/P06-06-the-room`, not pushed when this was written).
+> Checked against P06-06 (`2.0/P06-06-the-room`): the app reads a request as `ShownJoinRequest = JoinRequest & { note: string | null }`.
 
 A User who asks to join an Approval Quest writes a short note; the Leader sees it under the request in the room's `신청`.
 
@@ -480,7 +480,7 @@ model QuestJoinRequest {
 
 **Signal**: `quests-changed` to the Leader when a request arrives, as today.
 
-**Replaces** (expected, from ticket 06): a mock adapter for the note in `mobile/src/api/quest-parts/` (likely `join-request-notes.ts`, adding `note` to `listJoinRequests`' answer in `withQuestParts`), and the join sheet's note sent with `askToJoinQuest`. The server build shows no note today.
+**Replaces**: `noteOf(requestId, build)` in `mobile/src/api/quest-parts/notes.ts`, which adds `note` to `listJoinRequests`' answer in `withQuestParts` (a mock note picked by request id; null in the server build). Once the server keeps a note, the join sheet sends it with `askToJoinQuest`.
 
 **Screens**: room › `신청` (the Leader); the join sheet (the asking User, if it gets a note field).
 
@@ -488,7 +488,7 @@ model QuestJoinRequest {
 
 ## 9. 파티 채팅
 
-> Shape from the ticket; check against P06-06.
+> Checked against P06-06: `PartyMessage` in `quest-parts-types.ts`; `from` is null for the User's own message.
 
 The room's `파티 채팅`: the members of a Quest talk, with `파티에 메시지 보내기`. It is the **Quest's** chat (the room is the Quest's), so its members are the Holders, whether or not the Party is switched on.
 
@@ -535,7 +535,7 @@ Messages go with the Quest when it is deleted (last Holder drops it, the Leader 
 
 **Socket signal**: `quest-message`, to the Holders other than the sender, **with a payload** (like `position`): `{ "questId": "…", "message": { …the message above… } }`. The app appends it to an open room and marks the room unread otherwise. A lost signal is caught up by `GET …/messages` when the room opens or the app reconnects. The socket server needs no change; add the row to its README's table.
 
-**Replaces** (expected, from ticket 06): a mock adapter in `mobile/src/api/quest-parts/` (likely `party-chat.ts` with `listPartyMessages(questId)` and `sendPartyMessage(questId, body)`), whose messages stay on the phone today.
+**Replaces**: `chatOf(questId, build)` and `sendChat(questId, words)` in `mobile/src/api/quest-parts/chat.ts`, behind the client's `listPartyChat(questId)` and `sendPartyChat(questId, words)`; sent messages are kept on the phone under `snunow.party-chat.<userId>` today.
 
 **Screens**: the room (`파티 채팅`).
 
