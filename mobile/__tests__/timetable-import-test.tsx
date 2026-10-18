@@ -133,7 +133,7 @@ describe('importing a screenshot', () => {
     await untilToast();
 
     expect(toast()).toHaveTextContent('시간표를 만들었어요 · 1개는 넣지 못했어요');
-    expect((await answered(readVersions())).versions.map(({ name }) => name)).toEqual(['2026-2학기', '새 시간표 2']);
+    expect((await answered(readVersions())).versions.map(({ name }) => name)).toEqual(['2026-2학기', '새 시간표 1']);
   });
 });
 
@@ -145,7 +145,7 @@ describe('more than 15 classes', () => {
     await user.press(tile());
     await untilToast();
 
-    expect(toast()).toHaveTextContent('수업은 15개까지만 넣었어요');
+    expect(toast()).toHaveTextContent(/^16개 중 15개만 넣었어요$/u);
     await pass(1000);
     expect(screen.getAllByRole('button', { name: / 수정$/u })).toHaveLength(15);
     expect(screen.queryByRole('button', { name: 'friday 16 수정' })).toBeNull();
@@ -159,7 +159,7 @@ describe('more than 15 classes', () => {
     await user.press(tile());
     await untilToast();
 
-    expect(toast()).toHaveTextContent('수업은 15개까지만 넣었어요 · 2개는 넣지 못했어요');
+    expect(toast()).toHaveTextContent('16개 중 15개만 넣었어요 · 2개는 넣지 못했어요');
   });
 });
 

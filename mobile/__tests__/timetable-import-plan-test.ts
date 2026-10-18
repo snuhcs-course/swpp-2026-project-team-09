@@ -19,9 +19,10 @@ describe('the import plan', () => {
         times: [{ weekday: 'monday' as const, start: '08:00', end: '09:00', room: '311', placeId: null }],
       },
     ];
-    const plan = importPlan(read(' 아주 긴 시간표 이름이 스무 글자를 넘어가요 ', classes, 1), 3);
+    const plan = importPlan(read(' 아주 긴 시간표 이름이 스무 글자를 넘어가요 ', classes, 1), []);
 
     expect(plan?.cut).toBe(true);
+    expect(plan?.found).toBe(17);
     expect(plan?.leftOut).toBe(1);
     expect(plan?.classes).toHaveLength(15);
     expect(plan?.classes[0]).toEqual({
@@ -37,7 +38,7 @@ describe('the import plan', () => {
     const valid = Array.from({ length: 15 }, (_, index) =>
       lesson(`v${index}`, 'tuesday', `${String(index + 8).padStart(2, '0')}:00`, '23:00'),
     );
-    const plan = importPlan(read(null, [...broken, ...valid]), 1);
+    const plan = importPlan(read(null, [...broken, ...valid]), []);
 
     expect(plan?.classes).toHaveLength(15);
     expect(plan?.cut).toBe(false);
@@ -45,8 +46,13 @@ describe('the import plan', () => {
   });
 
   it('names 새 시간표 N without a title, and plans nothing without classes', () => {
-    expect(importPlan(read('   ', [lesson('a', 'monday', '09:00', '10:00')]), 3)?.name).toBe('새 시간표 4');
-    expect(importPlan(read('x', []), 3)).toBeNull();
-    expect(importPlan({ kind: 'none', reason: 'no-hours' }, 3)).toBeNull();
+    expect(importPlan(read('   ', [lesson('a', 'monday', '09:00', '10:00')]), ['2026-2학기'])?.name).toBe(
+      '새 시간표 1',
+    );
+    expect(
+      importPlan(read(null, [lesson('a', 'monday', '09:00', '10:00')]), ['새 시간표 1', '새 시간표 3'])?.name,
+    ).toBe('새 시간표 2');
+    expect(importPlan(read('x', []), [])).toBeNull();
+    expect(importPlan({ kind: 'none', reason: 'no-hours' }, [])).toBeNull();
   });
 });

@@ -14,7 +14,7 @@ import type { Place } from '@/api/types';
 import { useNotReadyToast, useToast } from '@/design-system';
 import type { TimetableVersions } from '@/features/timetable/use-versions';
 import { MOST_VERSIONS, readVersions } from '@/features/timetable/versions';
-import { importPlan } from './import-plan';
+import { type ImportPlan, importPlan, MOST_IMPORTED } from './import-plan';
 import { hasNativeOcr, type NativeOcrResult, readImageText } from './native-ocr';
 import { type Reading, readTimetable } from './read-timetable';
 
@@ -24,7 +24,6 @@ import { type Reading, readTimetable } from './read-timetable';
 
 export const READING = '시간표를 읽고 있어요';
 export const NOTHING_READ = '시간표를 찾지 못했어요';
-export const CUT = '수업은 15개까지만 넣었어요';
 export const MADE = '시간표를 만들었어요';
 const TOO_MANY = '시간표는 10개까지 저장할 수 있어요';
 // Anything but the reading failed, such as the album's permission or the phone's storage, or another change of the
@@ -40,8 +39,8 @@ export interface ImportFromImage {
   start: () => void;
 }
 
-async function versionCount(versions: TimetableVersions): Promise<number> {
-  return (versions.view ?? (await readVersions())).versions.length;
+async function versionNames(versions: TimetableVersions): Promise<string[]> {
+  return (versions.view ?? (await readVersions())).versions.map(({ name }) => name);
 }
 
 // The picker copies the picked image into the app's cache on Android: that copy is not kept.
@@ -55,8 +54,9 @@ function forgetImage(uri: string): void {
   }
 }
 
-function madeWords(cut: boolean, leftOut: number): string {
-  const words = cut ? CUT : MADE;
+// `18개 중 15개만 넣었어요` when the cut to 15 applied; what was left out for other reasons follows.
+function madeWords({ cut, found }: ImportPlan, leftOut: number): string {
+  const words = cut ? `${found}개 중 ${MOST_IMPORTED}개만 넣었어요` : MADE;
   return leftOut > 0 ? `${words} · ${leftOut}개는 넣지 못했어요` : words;
 }
 
@@ -71,7 +71,7 @@ interface Steps {
 }
 
 async function importImage({ versions, read, places, show, showNotReady, picked }: Steps): Promise<void> {
-  if ((await versionCount(versions)) >= MOST_VERSIONS) {
+  if ((await versionNames(versions)).length >= MOST_VERSIONS) {
     show(TOO_MANY, undefined, 'alert');
     return;
   }
@@ -91,7 +91,7 @@ async function importImage({ versions, read, places, show, showNotReady, picked 
     show(NOTHING_READ, undefined, 'alert');
     return;
   }
-  const plan = importPlan(read(ocr.result, await places()), await versionCount(versions));
+  const plan = importPlan(read(ocr.result, await places()), await versionNames(versions));
   if (plan === null) {
     show(NOTHING_READ, undefined, 'alert');
     return;
@@ -100,7 +100,7 @@ async function importImage({ versions, read, places, show, showNotReady, picked 
   // Null: the versions' own toast said why.
   if (made !== null) {
     router.push('/me/timetable');
-    show(madeWords(plan.cut, plan.leftOut + made.dropped.classes + made.dropped.times + made.refused));
+    show(madeWords(plan, plan.leftOut + made.dropped.classes + made.dropped.times + made.refused));
   }
 }
 

@@ -6,6 +6,7 @@
 
 import type { ClassSave } from '@/api/types';
 import { checkedClasses } from '@/features/timetable/version-checks';
+import { newVersionName } from '@/features/timetable/version-parts';
 import { classSaves, compareTimes, type ReadClass } from './classes';
 import type { Reading } from './read-timetable';
 
@@ -20,6 +21,8 @@ export interface ImportPlan {
   classes: ClassSave[];
   // More than 15 classes were left after the main server's rules, and only the first 15 are kept.
   cut: boolean;
+  // How many classes the main server's rules left, before the cut to 15.
+  found: number;
   // Blocks the pipeline left out, and classes and times that break the main server's rules.
   leftOut: number;
 }
@@ -33,10 +36,10 @@ function byFirstTime(one: ReadClass, other: ReadClass): number {
   return compareTimes(first, second);
 }
 
-// The plan for a reading, or null when it holds no class. `versionCount` names `새 시간표 N` without a title. The
+// The plan for a reading, or null when it holds no class. Without a title, the versions' `names` give `새 시간표 N`. The
 // main server's rules are checked class by class before the cut to 15, so that a class they refuse leaves room for a
 // later one.
-export function importPlan(reading: Reading, versionCount: number): ImportPlan | null {
+export function importPlan(reading: Reading, names: readonly string[]): ImportPlan | null {
   if (reading.kind === 'none' || reading.classes.length === 0) {
     return null;
   }
@@ -52,9 +55,10 @@ export function importPlan(reading: Reading, versionCount: number): ImportPlan |
   }
   const named = reading.title?.trim().slice(0, NAME_LENGTH) ?? '';
   return {
-    name: named === '' ? `새 시간표 ${versionCount + 1}` : named,
+    name: named === '' ? newVersionName(names) : named,
     classes: valid.slice(0, MOST_IMPORTED),
     cut: valid.length > MOST_IMPORTED,
+    found: valid.length,
     leftOut,
   };
 }
