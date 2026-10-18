@@ -48,5 +48,5 @@ Official recruiting, hiding a post and people looking for company have a mock ad
 
 ### Agent usage (2026-10-18)
 
-- Agent time: about 1 h of active work by one subagent in its own worktree (2.0/P06-03-find-boards-and-posts). It is an estimate: the run lasted about 1 h 10 min, of which some went to waiting on Jest under the load of other sessions.
-- Tokens: recorded by the main session.
+- Agent time: about 1 h 30 min of active work by one subagent in its own worktree over two rounds (the build, then the self-review's fixes), plus about 30 min of a review subagent and the main session (the review, merging #92 with its two conflicts, the PR). It is an estimate: the runs lasted about 2 h 30 min, with a machine restart in between, and the rest went to waiting on Jest under load.
+- Tokens, from the transcripts of the implementing subagent and the review subagent: input 52,694,596, of which 51,081,249 cache reads, 1,612,889 cache writes and 458 uncached; output 62,855. The main session's tokens are not split per ticket and are not included.
