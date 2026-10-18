@@ -4,18 +4,38 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { QuestInvitation } from '@/api/waiting-types';
+import type { ShownQuestInvitation } from '@/api/quest-parts-types';
 import { now } from '@/clock';
 import { Avatar, Button, cardStyles, color, EmptyState, ErrorState, font, LoadingState, space } from '@/design-system';
+import { whenOf } from '@/features/party/posts';
 import { useInvitations } from '@/features/party/use-party';
 import { agoWords } from '@/features/quests/room-adapter';
 import { type PartyActions, usePartyActions } from './use-party-actions';
 
-function InvitationCard({ invitation, actions }: { invitation: QuestInvitation; actions: PartyActions }): ReactElement {
+// `{when} · {where} · {names} 함께`, of what the invitation carries: the server build has none of the three yet, and
+// then the card counts the Holders.
+function metaOf({ quest, startsAt, place }: ShownQuestInvitation): string {
+  const companions = quest.faces.slice(1).map(({ name }) => name);
+  const parts = [
+    ...(startsAt === null ? [] : [whenOf(startsAt)]),
+    ...(place === null ? [] : [place]),
+    ...(companions.length === 0 ? [] : [`${companions.join(', ')} 함께`]),
+  ];
+  return parts.length === 0 ? `${quest.holderCount}명 참여 중` : parts.join(' · ');
+}
+
+function InvitationCard({
+  invitation,
+  actions,
+}: {
+  invitation: ShownQuestInvitation;
+  actions: PartyActions;
+}): ReactElement {
   const { quest, sentAt } = invitation;
   const kind = quest.joinPolicy === 'closed' ? '비공개 파티에' : '파티에';
   return (
@@ -31,7 +51,7 @@ function InvitationCard({ invitation, actions }: { invitation: QuestInvitation; 
           {quest.description}
         </Text>
       )}
-      <Text style={styles.meta}>{`${quest.holderCount}명 참여 중`}</Text>
+      <Text style={styles.meta}>{metaOf(invitation)}</Text>
       <View style={styles.buttons}>
         <View style={styles.button}>
           <Button full onPress={() => void actions.decline(invitation)} variant="secondary">

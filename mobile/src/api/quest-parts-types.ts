@@ -7,7 +7,7 @@
 
 import type { ApiClient } from './client';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
-import type { Quest } from './types';
+import type { Person, Quest } from './types';
 import type { QuestInvitation, QuestSummary } from './waiting-types';
 
 // The parts of a Quest that the wireframe draws and the main server does not give yet. The app adds them to the
@@ -78,7 +78,16 @@ export interface CompanionSeeker {
 
 export type ShownQuest = Quest & QuestParts;
 export type ShownRecruitingQuest = RecruitingQuest & QuestParts;
-export type ShownQuestInvitation = Omit<QuestInvitation, 'quest'> & { quest: QuestSummary & QuestParts };
+// What an invitation's card says of the plan besides its Quest, which the main server's invitation does not carry yet:
+// when the Quest's next Sub Quest starts and where. Null where the build leaves it out (the server build, always).
+export interface InvitationPlan {
+  startsAt: string | null;
+  place: string | null;
+}
+
+export type ShownQuestInvitation = Omit<QuestInvitation, 'quest'> & {
+  quest: QuestSummary & QuestParts;
+} & InvitationPlan;
 
 // The operations whose answers carry the parts, or that take what the User enters.
 export type PartsOperation =
@@ -108,6 +117,9 @@ export type ShownClient = Omit<ApiClient, PartsOperation> & {
   listQuestInvitations: () => Promise<ShownQuestInvitation[]>;
   // The User's own tags, without '#', which the form offers and 찾기 orders the posts by.
   listMyTags: () => Promise<string[]>;
+  // The User's past Quests, which 내 파티 shows under `지난 일정`: the main server keeps no ended Quest yet. `me` is the
+  // User, who holds each of them.
+  listPastQuests: (me: Person) => Promise<ShownQuest[]>;
   // Official recruiting; none in the build that asks the main server, since it would name organisations that gather
   // nobody.
   listOfficialRecruiting: () => Promise<OfficialRecruiting[]>;

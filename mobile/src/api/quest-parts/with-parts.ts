@@ -10,9 +10,13 @@ import type { QuestChange } from '@/api/party-types';
 import type { QuestEntries, QuestParts, ShownClient, ShownQuest } from '@/api/quest-parts-types';
 import type { Quest } from '@/api/types';
 import type { QuestSummary } from '@/api/waiting-types';
+import { now } from '@/clock';
 import { keepQuestEntries, readQuestEntries } from '@/storage/quest-entries';
 import type { Build } from './build';
 import { facesOfQuest, facesOfSummary } from './faces';
+import { invitationPlaceOf } from './invitation-places';
+import { invitationStartOf } from './invitation-times';
+import { pastQuestsOf } from './past-quests';
 import { hidePost, listHiddenPosts } from './hidden-posts';
 import { joinOfficialRecruiting, listOfficialRecruiting } from './official';
 import { photoOf } from './photos';
@@ -94,13 +98,27 @@ export function withQuestParts(client: ApiClient, build: Build): ShownClient {
     listQuestInvitations: async () => {
       const invitations = await client.listQuestInvitations();
       const entered = await readQuestEntries();
+      const at = now();
       return invitations.map(({ id, quest, sentAt }) => ({
         id,
         quest: summaryWithParts(quest, entered, build),
         sentAt,
+        startsAt: invitationStartOf(quest, build, at),
+        place: invitationPlaceOf(quest, build),
       }));
     },
     listMyTags: async () => myTagsOf(await client.getProfile(), build),
+    ...mockedOnly(build),
+  };
+}
+
+// The operations the main server has no counterpart for at all: each is its adapter alone.
+function mockedOnly(build: Build): Pick<ShownClient, MockedOnly> {
+  return {
+    listPastQuests: async (me) => {
+      const entered = await readQuestEntries();
+      return pastQuestsOf(me, now(), build).map((quest) => questWithParts(quest, entered));
+    },
     listOfficialRecruiting: () => listOfficialRecruiting(build),
     joinOfficialRecruiting,
     listHiddenPosts,
@@ -109,3 +127,12 @@ export function withQuestParts(client: ApiClient, build: Build): ShownClient {
     askCompanionSeeker,
   };
 }
+
+type MockedOnly =
+  | 'listPastQuests'
+  | 'listOfficialRecruiting'
+  | 'joinOfficialRecruiting'
+  | 'listHiddenPosts'
+  | 'hidePost'
+  | 'listCompanionSeekers'
+  | 'askCompanionSeeker';
