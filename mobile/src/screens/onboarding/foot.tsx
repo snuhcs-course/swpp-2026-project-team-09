@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, color, radius, shadow, size, space, text, useToastAbove } from '@/design-system';
-import { useKeyboardShown } from './reveal';
+import { useKeyboardShown } from '@/hooks/use-keyboard-height';
 
 interface FootProps {
   // A name and a department are there.

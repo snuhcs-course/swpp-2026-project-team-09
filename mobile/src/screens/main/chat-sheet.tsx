@@ -3,12 +3,13 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { type ReactElement, useCallback, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapLayer, QuestProposal } from '@/api/assistant-types';
 import { globalEventAnnouncersQuery, questsQuery } from '@/api/queries';
@@ -28,7 +29,6 @@ import { type CardActions, ChatBubbles, ChatEmpty, type ProposalActions } from '
 import type { EventCardActions } from './chat-event-cards';
 import type { ProposalMaking } from './chat-proposal-card';
 import type { QuestCardActions } from './chat-quest-cards';
-import { AI_INPUT } from './layout';
 
 interface ChatSheetProps {
   chat: Chat;
@@ -43,8 +43,8 @@ interface ChatSheetProps {
   onOpenPost: (questId: string) => void;
   // The Proposal card of an answer: 만들기, and how it stands.
   proposals: ProposalActions;
-  // The AI input's field, which lies over the sheet's bottom.
-  inputHeight: number;
+  // How high the AI input's top stands above the sheet's bottom: the input lies over it.
+  inputTop: number;
 }
 
 const HEADER = 56;
@@ -118,9 +118,10 @@ function useQuestCards(onOpenPost: (questId: string) => void): {
 
 // The chat with the Assistant, the `MainChat` frame: a translucent sheet from the top of the screen to the
 // navigation, over the map and the lists. The AI input stays at the bottom over it as the chat's input. The
-// conversation is the main screen's, so that the sheet only shows it.
+// conversation is the main screen's, so that the sheet only shows it. A press on the sheet that nothing in it takes
+// puts the keyboard down, and the sheet stays.
 export function ChatSheet(props: ChatSheetProps): ReactElement {
-  const { chat, inFront, onClose, onShowLayer, onOpenEvent, onOpenPost, proposals, inputHeight } = props;
+  const { chat, inFront, onClose, onShowLayer, onOpenEvent, onOpenPost, proposals, inputTop } = props;
   const { top } = useSafeAreaInsets();
   useBackToClose(inFront, onClose);
   const eventCards = useEventCards(onOpenEvent);
@@ -131,9 +132,16 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
   );
   const { bubbles, waiting, send, retry, reset } = chat;
   // From the sheet's bottom to the AI input's top, and the room above it.
-  const under = AI_INPUT.bottom + inputHeight + 2 * space[1] + OVER_INPUT;
+  const under = inputTop + OVER_INPUT;
   return (
-    <View style={[styles.sheet, { top: -top }]} testID="chat-sheet">
+    <Pressable
+      accessible={false}
+      onPress={() => {
+        Keyboard.dismiss();
+      }}
+      style={[styles.sheet, { top: -top }]}
+      testID="chat-sheet"
+    >
       <ChatHeader onClose={onClose} onReset={reset} />
       {bubbles.length === 0 && !waiting ? (
         <ChatEmpty onSend={send} under={under} />
@@ -149,7 +157,7 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
       )}
       {eventCards.sheets}
       {questCards.sheet}
-    </View>
+    </Pressable>
   );
 }
 
@@ -231,18 +239,53 @@ function useProposalMaking(close: () => void): ProposalActions {
   return { makingOf: (bubbleId) => making.get(bubbleId) ?? 'ready', make, edit };
 }
 
+// What closes the sheet and goes elsewhere: a map button to its layer, an event card to the 행사 tab, a Quest card to
+// its post.
+function useLeaving(
+  close: () => void,
+  turnOn: (layer: MapLayer) => void,
+): {
+  showLayer: (layer: MapLayer) => void;
+  openEvent: (globalEventId: string) => void;
+  openQuestPost: (questId: string) => void;
+} {
+  const showLayer = useCallback(
+    (layer: MapLayer): void => {
+      close();
+      turnOn(layer);
+    },
+    [close, turnOn],
+  );
+  const openEvent = useCallback(
+    (globalEventId: string): void => {
+      close();
+      router.navigate({ pathname: '/events', params: { focus: globalEventId } });
+    },
+    [close],
+  );
+  const openQuestPost = useCallback(
+    (questId: string): void => {
+      close();
+      openPost(questId);
+    },
+    [close],
+  );
+  return { showLayer, openEvent, openQuestPost };
+}
+
 export interface ChatSheetControl {
   chat: Chat;
   shown: boolean;
   open: () => void;
-  // The sheet while it is open, for an AI input of that height.
-  sheet: (inputHeight: number) => ReactElement | null;
+  // The sheet while it is open, under an AI input whose top stands that high above the sheet's bottom.
+  sheet: (inputTop: number) => ReactElement | null;
 }
 
 // The chat's sheet and how to open it. The conversation is kept while the sheet is closed. A map button closes the
 // sheet and turns its layer on with `turnOn`, the map's own layers; an event card closes it and opens the 행사 tab at
 // the event, as the room's event does; a Quest card closes it and opens the post, as 찾기's card does; a Proposal,
-// once made, closes it and shows 내 파티, as the party form does, and its 수정 closes it and opens that form.
+// once made, closes it and shows 내 파티, as the party form does, and its 수정 closes it and opens that form. However
+// the sheet closes, the keyboard goes down with it: the AI input would keep the focus otherwise.
 export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void): ChatSheetControl {
   const chat = useChat();
   const [shown, setShown] = useState(false);
@@ -250,34 +293,21 @@ export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void
     setShown(true);
   }, []);
   const close = useCallback((): void => {
+    Keyboard.dismiss();
     setShown(false);
   }, []);
-  const showLayer = useCallback(
-    (layer: MapLayer): void => {
-      setShown(false);
-      turnOn(layer);
-    },
-    [turnOn],
-  );
-  const openEvent = useCallback((globalEventId: string): void => {
-    setShown(false);
-    router.navigate({ pathname: '/events', params: { focus: globalEventId } });
-  }, []);
-  const openQuestPost = useCallback((questId: string): void => {
-    setShown(false);
-    openPost(questId);
-  }, []);
+  const { showLayer, openEvent, openQuestPost } = useLeaving(close, turnOn);
   const proposals = useProposalMaking(close);
   return {
     chat,
     shown,
     open,
-    sheet: (inputHeight) =>
+    sheet: (inputTop) =>
       shown ? (
         <ChatSheet
           chat={chat}
           inFront={inFront}
-          inputHeight={inputHeight}
+          inputTop={inputTop}
           onClose={close}
           onOpenEvent={openEvent}
           onOpenPost={openQuestPost}

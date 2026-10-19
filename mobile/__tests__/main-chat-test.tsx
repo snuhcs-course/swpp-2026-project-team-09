@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -11,6 +12,7 @@ import { pass, screen } from './support/app';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT } from './support/lists';
+import { KEYBOARD, quietDismiss, showKeyboard } from './support/keyboard';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
@@ -122,6 +124,28 @@ describe('the chat with the Assistant', () => {
       { messages: [{ role: 'user', text: '식사 메뉴 추천' }] },
     ]);
     expect(screen.queryByText(GREETING)).toBeNull();
+  });
+});
+
+describe('the chat and the keyboard', () => {
+  it('puts the keyboard down when it closes with its close button', async () => {
+    const dismiss = quietDismiss();
+    const user = await openChat();
+
+    await user.press(screen.getByRole('button', { name: '대화 닫기' }));
+
+    expect(dismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('puts the keyboard down with a press on the sheet that nothing in it takes, and stays open', async () => {
+    const dismiss = quietDismiss();
+    const user = await openChat();
+    await showKeyboard(KEYBOARD);
+
+    await user.press(screen.getByTestId('chat-sheet'));
+
+    expect(dismiss).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('chat-sheet')).toBeVisible();
   });
 });
 

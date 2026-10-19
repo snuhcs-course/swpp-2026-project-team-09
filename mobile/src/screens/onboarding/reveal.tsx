@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { createContext, type RefObject, use, useEffect, useRef, useState } from 'react';
-import { Keyboard, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollView, type View } from 'react-native';
+import { createContext, type RefObject, use, useEffect, useRef } from 'react';
+import { type NativeScrollEvent, type NativeSyntheticEvent, type ScrollView, type View } from 'react-native';
 import { space } from '@/design-system';
 
 interface Edges {
@@ -98,22 +99,4 @@ export function useRevealed(open: boolean): { block: RefObject<View | null>; onL
       }
     },
   };
-}
-
-// Whether the phone's keyboard is up. The web tells nothing of it and stays false.
-export function useKeyboardShown(): boolean {
-  const [shown, setShown] = useState(false);
-  useEffect(() => {
-    const came = Keyboard.addListener('keyboardDidShow', () => {
-      setShown(true);
-    });
-    const left = Keyboard.addListener('keyboardDidHide', () => {
-      setShown(false);
-    });
-    return (): void => {
-      came.remove();
-      left.remove();
-    };
-  }, []);
-  return shown;
 }
