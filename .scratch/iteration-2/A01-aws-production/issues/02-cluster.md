@@ -22,7 +22,7 @@ The steady state must fit the spec's pod budget on two `t4g.small` nodes (18 slo
 
 ## Acceptance criteria
 
-- [x] `terraform fmt -check` and `terraform validate` pass, locally and in the `terraform` CI job.
+- [ ] `terraform fmt -check` and `terraform validate` pass, locally and in the `terraform` CI job.
 - [x] The cluster's version is 1.36 or newer and under standard support, its endpoint is public, its authentication mode is access entries, and logging and the KMS key are off.
 - [x] The node group is as above, and raising the node size is a change to the one variable.
 - [x] The four add-ons are installed, and no Pod Identity agent or other per-node daemon is added.

@@ -4,8 +4,8 @@
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 ################################################################################
 
-# Each account sets the variables that account.tfvars.example lists in its variables file, <account>.tfvars, which git
-# ignores because it names people.
+# Each account sets, in its own variables file <account>.tfvars, the variables that account.tfvars.example lists. Git
+# ignores that file because it names people.
 
 variable "team_member_iam_users" {
   description = "The names of the team members' IAM users in this account, each of which administers the cluster"
