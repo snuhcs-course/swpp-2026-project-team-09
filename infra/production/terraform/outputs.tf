@@ -34,3 +34,19 @@ output "cluster_name" {
   description = "The EKS cluster's name, for the repository variable the Release workflow reads and for aws eks update-kubeconfig"
   value       = module.eks.cluster_name
 }
+
+output "database_endpoint" {
+  description = "The database's host name, for the repository variable the Release workflow reads and for the database Job"
+  value       = aws_db_instance.database.address
+}
+
+output "database_master_username" {
+  description = "The database's master user, as which the database Job runs"
+  value       = aws_db_instance.database.username
+}
+
+output "database_master_password" {
+  description = "The master user's password, for the database Job"
+  value       = random_password.database_master.result
+  sensitive   = true
+}
