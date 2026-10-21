@@ -17,7 +17,7 @@ resource "time_static" "database_created" {}
 
 resource "aws_security_group" "database" {
   name        = "${local.name}-database"
-  description = "PostgreSQL from the cluster's nodes"
+  description = "PostgreSQL from the cluster nodes"
   vpc_id      = module.vpc.vpc_id
 }
 
@@ -28,7 +28,7 @@ resource "aws_vpc_security_group_ingress_rule" "database_from_nodes" {
   ip_protocol                  = "tcp"
   from_port                    = 5432
   to_port                      = 5432
-  description                  = "PostgreSQL from the cluster's nodes"
+  description                  = "PostgreSQL from the cluster nodes"
 }
 
 resource "aws_db_instance" "database" {
