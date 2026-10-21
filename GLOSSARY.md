@@ -159,6 +159,14 @@ _Avoid_: Crawl, scrape, sync
 The team's shared server that always runs the newest development work, which the app on a phone reaches at one fixed address instead of a laptop.
 _Avoid_: Staging, test server, dev environment
 
+**Production**:
+The system that real Users' phones reach during user testing, the beta test, and the final demo. New work reaches it only through a Release.
+_Avoid_: Prod server, AWS server, live server
+
+**Release**:
+A reviewed state of the code that the team puts on Production, named for the day it ships in Korea and its place among that day's Releases.
+_Avoid_: Deployment (the Dev Server deploys without Releases), version, build
+
 **Demo Data**:
 The Users, Events, Quests, Party, menus and shuttle vehicles that fill a system so that every feature can be tried at once. The Dev Server carries it alongside the team's own accounts.
 _Avoid_: Fixtures, seed (the seed is the Places and other data every system needs)
