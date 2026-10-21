@@ -1,7 +1,7 @@
 # 04: The manifests, the admin site's image and health routes, and case-sensitive routing
 
 Parent: [A01 spec](../spec.md)
-Status: ready-for-agent
+Status: resolved
 Blocked by: None (can start immediately)
 Touches: the Kustomize base in `infra/production/k8s/`, the admin site (its Dockerfile, `.dockerignore`, Next.js configuration, two health routes, and their tests), the main server's routing setup and one test, and one new job in the CI workflow. Not the database Job in `infra/production/k8s/` (ticket 03), not the main-server and match-server Dockerfiles (ticket 03), not `admin/README.md` (ticket 07).
 
@@ -36,7 +36,7 @@ Fixed here so that tickets 02, 03, and 06 match without seeing this ticket: ever
 - [x] All five images build for `linux/arm64` and start there; `## Comments` lists the native dependencies checked.
 - [x] The laptop Compose file and the Dev Server's files are unchanged.
 - [x] Every new or changed source file (the manifests, the Dockerfile, the routes, the tests, the Next.js configuration, the main server's file, the CI workflow) carries the AI-generated box with a row for this change (`CLAUDE.md`).
-- [ ] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+- [x] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
 
 ## Comments
 
@@ -119,3 +119,8 @@ The requests come to 1,312 Mi at steady state, and 1,824 Mi during a Release wit
 `socket-server`, and `admin`. With about 540 Mi requested by `coredns` and `metrics-server`, that is about 2,360 Mi
 against roughly 2,900 Mi allocatable on two `t4g.small` nodes (about 1,900 Mi each, less 376 Mi reserved for 11 pods and
 100 Mi for eviction). The first week's `kubectl top` decides whether to raise them or the node size.
+
+### Agent usage (2026-10-22)
+
+- Agent time: about 50 minutes, an estimate, summed over its implementer and its reviewer, plus an even share of the session that orchestrated the tickets.
+- Tokens, with the same shares and the subagents included: input 362 new, 34.2 million read from the cache, and 465 thousand written to the cache; output 24 thousand.

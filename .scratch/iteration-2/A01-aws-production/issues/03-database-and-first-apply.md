@@ -1,7 +1,7 @@
 # 03: The database and its setup Job, confirmed on a first apply in account A
 
 Parent: [A01 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human
 Blocked by: 02 (the cluster and the `snunow` namespace that the Job and the check pod run in)
 Touches: `infra/production/terraform/` (the database), `infra/production/k8s/` outside the Kustomize base (the Job), the main-server and match-server Dockerfiles (the CA bundle), and the runbook's database section. Not the Kustomize base, which ticket 04 owns.
 
@@ -31,7 +31,7 @@ The database, the Job that prepares it, and the TLS form the servers use with it
 
 ## Acceptance criteria
 
-- [ ] `terraform fmt -check` and `terraform validate` pass, locally and in the `terraform` CI job.
+- [x] `terraform fmt -check` and `terraform validate` pass, locally and in the `terraform` CI job.
 - [x] The instance, its backups, its final snapshot, and its security group are as above, and it is not publicly accessible.
 - [x] The main-server and match-server images carry the CA bundle and set `NODE_EXTRA_CA_CERTS`; both projects' checks and the flow tests pass, and the laptop Compose stack starts as before.
 - [ ] By hand: the four items before the first apply are done.
@@ -54,5 +54,11 @@ The database, the Job that prepares it, and the TLS form the servers use with it
 - **TLS.** The bundle sits at `/etc/ssl/certs/rds-global-bundle.pem` in both images (114 RDS CAs, read by Node through `tls.getCACertificates('extra')`), and `NODE_EXTRA_CA_CERTS` points at it. Both lines come after `pnpm install` and `pnpm build`: with `NODE_EXTRA_CA_CERTS` set, pnpm 12 trusts only that file and fails every registry download with `invalid peer certificate: UnknownIssuer`. Starting a command with pnpm at run time (`pnpm db:migrate`, `pnpm prisma …`) is unaffected.
 - **The `DATABASE_URL` form, checked locally** (not yet against RDS): with `postgresql://main:<password>@database:5432/main?sslmode=verify-full` and the local CA mounted over the bundle, the main-server image migrated all 17 migrations, loaded the seed, and answered ready on `/health/ready`; the match-server image migrated and answered ready. With the image's own bundle, the main server's seed refused the local certificate (`unable to verify the first certificate`), so node-postgres does verify. A plain-TCP connection was refused. The check against the real instance stays with the check pod above.
 - **P3009, checked locally.** With the last migration marked unfinished in `_prisma_migrations`, the main server exited with P3009; in a shell of the same image and settings, `pnpm prisma migrate status` named it and `pnpm prisma migrate resolve --applied <migration>` cleared it in 3 seconds, and the server started again. The runbook gets that shell with `kubectl debug <pod> --copy-to=prisma --container=main-server -- bash`, which keeps the pod's settings and drops its labels and probes.
-- **Checks.** `terraform fmt -check`, `terraform init -backend=false -lockfile=readonly`, and `terraform validate` pass with Terraform 1.16.6 on macOS and in the `hashicorp/terraform:1.16.6` image on `linux/amd64`; the lock file adds `random` 3.9.1 for five platforms. The `terraform` CI job runs once the branch is pushed. `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, and `pnpm test` pass in `main-server` (1521 tests) and `match-server` (73 tests), and in `flow-tests` (11 tests, which build both images and run the Dev Server's stack too). The laptop Compose stack, started under a project name of its own with settings from the `.env.example` files, came up with every server answering 200 on `/health/ready`; there the bundle goes unused, since the laptop's `DATABASE_URL` has no `sslmode`.
+- **Checks.** `terraform fmt -check`, `terraform init -backend=false -lockfile=readonly`, and `terraform validate` pass with Terraform 1.16.6 on macOS and in the `hashicorp/terraform:1.16.6` image on `linux/amd64`; the lock file adds `random` 3.9.1 for five platforms. The `terraform` CI job passes on GitHub too. `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, and `pnpm test` pass in `main-server` (1521 tests) and `match-server` (73 tests), and in `flow-tests` (11 tests, which build both images and run the Dev Server's stack too). The laptop Compose stack, started under a project name of its own with settings from the `.env.example` files, came up with every server answering 200 on `/health/ready`; there the bundle goes unused, since the laptop's `DATABASE_URL` has no `sslmode`.
 - **Fixed before the first apply.** The final snapshot's name comes from `timestamp()` with `final_snapshot_identifier` in `ignore_changes`, not from `time_static`, so an instance replaced in the same state also gets a new name. The runbook's `kubectl debug` adds `--profile=baseline`, because kubectl's default profile adds `SYS_PTRACE`, which the namespace's Pod Security baseline level refuses.
+
+### Agent usage (2026-10-22)
+
+- Agent time: about 1 hour 15 minutes for the code, an estimate, summed over its implementer and its reviewer, plus an even share of the Terraform research, the review before the first apply, and the session that orchestrated the tickets.
+- Tokens, with the same shares and the subagents included: input 542 new, 46.7 million read from the cache, and 1.55 million written to the cache; output 32 thousand.
+- The steps by hand are not done yet; their time goes here when they are.
