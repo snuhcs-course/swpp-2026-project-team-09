@@ -61,6 +61,13 @@ data "aws_iam_policy_document" "deploy" {
     ]
     resources = [for repository in aws_ecr_repository.image : repository.arn]
   }
+
+  # For aws eks update-kubeconfig. What the role may do inside the cluster comes from its access entry.
+  statement {
+    sid       = "EksCluster"
+    actions   = ["eks:DescribeCluster"]
+    resources = [module.eks.cluster_arn]
+  }
 }
 
 resource "aws_iam_role_policy" "deploy" {

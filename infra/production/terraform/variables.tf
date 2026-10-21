@@ -4,7 +4,8 @@
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 ################################################################################
 
-# Each account sets these in its variables file, <account>.tfvars, which git ignores because it names people.
+# Each account sets, in its own variables file <account>.tfvars, the variables that account.tfvars.example lists. Git
+# ignores that file because it names people.
 
 variable "team_member_iam_users" {
   description = "The names of the team members' IAM users in this account, each of which administers the cluster"
@@ -36,4 +37,12 @@ variable "enable_dns_records" {
     condition     = !var.enable_dns_records || var.holds_zone
     error_message = "The records go in the hosted zone, so only the account that holds it turns them on."
   }
+}
+
+# Changed here, not in an account's variables file. EKS cannot change a node group's instance type in place, so a change
+# replaces the node group: the new one is created before the old one is deleted.
+variable "node_instance_type" {
+  description = "The EC2 instance type of the cluster's two nodes"
+  type        = string
+  default     = "t4g.small"
 }

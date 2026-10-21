@@ -29,3 +29,8 @@ output "certificate_validation_records" {
     }
   }
 }
+
+output "cluster_name" {
+  description = "The EKS cluster's name, for the repository variable the Release workflow reads and for aws eks update-kubeconfig"
+  value       = module.eks.cluster_name
+}
