@@ -3,9 +3,18 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { HttpException, HttpStatus, Inject, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+  Optional,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
 import { REDIS } from '../common/redis.module.js';
@@ -17,7 +26,15 @@ import { PlacesService } from '../places/places.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { RecruitingService } from '../quests/recruiting.service.js';
 import { ShuttleService } from '../shuttle/shuttle.service.js';
-import { causeOf, type Model, MODEL_PORT, runFeature, type RunLimits } from './adapter.js';
+import {
+  causeOf,
+  type Model,
+  MODEL_PORT,
+  RUN_OBSERVER,
+  runFeature,
+  type RunLimits,
+  type RunObserver,
+} from './adapter.js';
 import { chatAssistant } from './chat/chat-assistant.js';
 import { type AssistantReplyDto } from './dto/assistant-messages.dto.js';
 import { type ChatMessage, type Feature } from './feature.js';
@@ -49,6 +66,8 @@ export class AssistantService {
     recruiting: RecruitingService,
     friends: FriendsService,
     places: PlacesService,
+    // Only the benchmark binds one (main-server/eval).
+    @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
     this.chat = chatAssistant({ menus, shuttle, globalEvents, recruiting, friends, places });
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
@@ -75,7 +94,7 @@ export class AssistantService {
     }
     const latest = messages.slice(-HISTORY_MAX);
     try {
-      const reply = await runFeature(this.model, this.chat, { userId, now }, latest, this.limits);
+      const reply = await runFeature(this.model, this.chat, { userId, now }, latest, this.limits, this.observer);
       return { text: reply.text, mapButtons: reply.mapButtons, cards: reply.cards, proposal: reply.proposal };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);

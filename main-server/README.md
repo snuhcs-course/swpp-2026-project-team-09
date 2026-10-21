@@ -1894,6 +1894,49 @@ model.received(); // every call: its prompt (system prompt, messages, tool calls
 `script()` also forgets the calls before, so a file can share one model between its tests. A test checks what the
 User or the model receives, never the prompt's wording or a real model's prose.
 
+### Benchmark
+
+`pnpm eval` puts the cases of `eval/cases/` to the real model through the real server code and records what the model
+did (P19). It calls OpenRouter with the team's key in `.env`, so it costs credit: it never runs in `pnpm test` or CI,
+which leave `eval/` out. It is a Vitest project of its own (`eval/vitest.config.ts`) on the e2e machinery: Docker,
+fresh PostgreSQL and Redis, `startApp`, a fixed world (`eval/world.ts`) and the clock fixed at 2026-10-21 (수) 14:05
+in Korea. Each case's turns go to `POST /assistant/messages` as one seeded User, with the daily limit raised.
+
+```sh
+pnpm eval                                    # every case, at the branch's settings
+pnpm eval --category menus --case menus-today-lunch --yes
+pnpm eval --model anthropic/claude-haiku-5.5 --temperature 0 --max-steps 30 --timeout 60000
+```
+
+| Flag                                                   | Left out                                                                          |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| `--model <OpenRouter id>`                              | `ASSISTANT_MODEL` in `.env`                                                       |
+| `--temperature`, `--top-p`                             | the provider's default (the server passes none)                                   |
+| `--max-steps`, `--timeout <ms>`, `--max-output-tokens` | its `ASSISTANT_*` setting in `.env`, else its default in `src/common/settings.ts` |
+| `--repeat <n>`                                         | the cases marked `repeat` run their own count (3)                                 |
+| `--category`, `--case`                                 | every case; both take several values, comma-separated or again                    |
+| `--budget <USD>`                                       | 5                                                                                 |
+| `--yes`                                                | asks before it starts                                                             |
+
+`eval/cli.ts` reads the flags, prints the estimated cost from the number of turns, the tokens a turn took in the last
+saved run and OpenRouter's listed prices, and asks before it starts. It then starts the Vitest project with the
+options as JSON in `EVAL_RUN`. The sampling settings are applied by the recorder's model wrapper, and the limits are
+the settings given to `startApp`. During the run the tokens the model reported are summed, and the run stops past the
+budget. The budget is an estimate; a credit limit on the OpenRouter key is the hard stop.
+
+The recorder (`eval/recorder.ts`) wraps the model and records each step: its tool calls and inputs, its finish
+reason and its usage with cache reads and writes. The tool results come through the run observer, the one seam in the
+server: `runFeature` takes an optional `RunObserver` (`adapter.ts`) that it tells of each tool's result or error and
+each step's end. `AssistantService` passes the one bound to `RUN_OBSERVER`, which only the benchmark binds, so
+production runs as before. A turn's trace ends with the reply (its text and length, cards, map buttons, Proposal) or
+the failure: STEP_LIMIT, TIMEOUT or ERROR.
+
+A case is a single turn, a fixed history (the earlier turns written out, the Assistant's with cards and a Proposal by
+seed name; only the last turn is sent) or live (`live: true`: each User's message sent with the real replies before
+it). A run is saved as `eval/results/<date>-<commit>-<model>-<settings>.json`, every turn's trace with it. `results/`
+is ignored by git; commit a run worth keeping with `git add -f`. `test/eval-runner.e2e-spec.ts` and
+`test/eval-options.e2e-spec.ts` test the runner with the scripted model in `pnpm test`.
+
 ## Seed data
 
 Seed data comes from outside the project once, rather than by Collection: a file in `seed/` that one command loads
@@ -2117,6 +2160,7 @@ src/
 └── assistant/                       a feature: the Assistant, its model port, tools, feature definitions and the
                                      adapter that runs them
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
+eval/                                the benchmark of the Assistant, `pnpm eval`: its runner, recorder, world and cases
 test/                                tests, run against PostgreSQL and Redis in containers
 ```
 
