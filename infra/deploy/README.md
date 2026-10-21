@@ -390,21 +390,10 @@ sudo git -C /srv/team/snu-now fetch origin development
 sudo git -C /srv/team/snu-now reset --hard FETCH_HEAD
 ```
 
-## A production server on A
+## Server A
 
-Server A (`ssh swpp-a`, `http://swpp26t09.147-46-242-169.sslip.io`) stays empty. A production server there would be a
-copy of the Dev Server with these differences:
-
-- It follows the newest `v*` tag instead of `development`. `deploy.sh` fixes `TRACKED_REF=development` and fetches a
-  branch; it would fetch the tags and take the newest instead, and gate on that commit's checks in the same way.
-- It carries no Demo Data: no `COMPOSE_PROFILES=demo` and no `DEMO_ACCOUNT_EMAILS` in its settings, and no
-  `snu-now-demo-refresh` units.
-- Its settings file has secrets of its own, never the Dev Server's, and `PUBLIC_URL` is A's address. The bootstrap
-  writes B's address, clones `development` and enables the demo refresh, so these three become choices of the
-  bootstrap.
-- Its APK is built against A's address.
-
-The layout under `/srv/team`, the override, the proxy, the dumps and the status file stay as they are.
+Server A (`ssh swpp-a`, `http://swpp26t09.147-46-242-169.sslip.io`) stays empty. Production runs on AWS
+([ADR 0006](../../docs/adr/0006-production-runs-on-eks-and-releases-are-pushed.md)).
 
 ## Not covered by tests
 
