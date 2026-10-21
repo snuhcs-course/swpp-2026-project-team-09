@@ -23,13 +23,18 @@ IAM users stay out of Terraform, so that no password or key lands in the state.
 
 ## Acceptance criteria
 
-- [ ] `terraform fmt -check` and `terraform validate` pass locally without a backend or AWS credentials, and the `terraform` CI job runs them on every push.
-- [ ] The VPC has the two public and two database subnets of the spec, the public ones tagged for the controller and giving instances a public IPv4 address, the database ones with no internet route, and no NAT gateway.
-- [ ] The five ECR repositories exist, each keeping its newest 10 images.
-- [ ] The deploy role's trust admits only the `aud` and `sub` above (`StringLike` on `sub`). Its policy allows `ecr:GetAuthorizationToken` and, on the five repositories only, the actions to describe and push images.
-- [ ] The budget counts gross spend, does not reset monthly, keeps its start date on later applies, and alerts at each of the six amounts. If the API refuses six notifications on one budget (AWS's pages give five in some places and ten in others), two budgets over the same period carry them.
-- [ ] No IAM user, password, or access key is in the configuration or its state.
-- [ ] The variables file is ignored by git, and its committed example lists every variable with a placeholder that names nobody.
-- [ ] The runbook's first section gives the bootstrap and the init, plan, and apply commands, naming the real backend file and variables.
-- [ ] Every new `.tf` file starts with the `#` AI-generated box, and the CI workflow gets a new row (`CLAUDE.md`). The lock file and Markdown get none.
+- [x] `terraform fmt -check` and `terraform validate` pass locally without a backend or AWS credentials, and the `terraform` CI job runs them on every push.
+- [x] The VPC has the two public and two database subnets of the spec, the public ones tagged for the controller and giving instances a public IPv4 address, the database ones with no internet route, and no NAT gateway.
+- [x] The five ECR repositories exist, each keeping its newest 10 images.
+- [x] The deploy role's trust admits only the `aud` and `sub` above (`StringLike` on `sub`). Its policy allows `ecr:GetAuthorizationToken` and, on the five repositories only, the actions to describe and push images.
+- [x] The budget counts gross spend, does not reset monthly, keeps its start date on later applies, and alerts at each of the six amounts. If the API refuses six notifications on one budget (AWS's pages give five in some places and ten in others), two budgets over the same period carry them.
+- [x] No IAM user, password, or access key is in the configuration or its state.
+- [x] The variables file is ignored by git, and its committed example lists every variable with a placeholder that names nobody.
+- [x] The runbook's first section gives the bootstrap and the init, plan, and apply commands, naming the real backend file and variables.
+- [x] Every new `.tf` file starts with the `#` AI-generated box, and the CI workflow gets a new row (`CLAUDE.md`). The lock file and Markdown get none.
 - [ ] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+
+## Comments
+
+- The budget carries all six alerts. AWS's `Notification` and CloudFormation pages allow up to ten notifications per budget, and `CreateBudget` accepts up to ten, though its prose says five. If the first apply in ticket 03 is refused, two budgets over the same period carry them.
+- The budget's period uses the `CUSTOM` time unit, which the Budgets API and the provider accept. It starts at 00:00 UTC on the first apply's day, held by `time_static`; the first apply confirms that AWS keeps it as written.
