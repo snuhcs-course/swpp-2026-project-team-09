@@ -26,3 +26,14 @@ variable "holds_zone" {
   type        = bool
   default     = true
 }
+
+variable "enable_dns_records" {
+  description = "Whether api and admin point at the load balancer of the IngressGroup snunow; off until the first Release has made it"
+  type        = bool
+  default     = false
+
+  validation {
+    condition     = !var.enable_dns_records || var.holds_zone
+    error_message = "The records go in the hosted zone, so only the account that holds it turns them on."
+  }
+}

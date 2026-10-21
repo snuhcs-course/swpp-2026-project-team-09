@@ -47,3 +47,27 @@ resource "aws_acm_certificate_validation" "hosts" {
   certificate_arn         = aws_acm_certificate.hosts.arn
   validation_record_fqdns = [for record in aws_route53_record.certificate_validation : record.fqdn]
 }
+
+# The load balancer controller makes this ALB at the first Release, and a new one when the Ingresses are made again,
+# so it is looked up by the tag it gives the IngressGroup, which infra/production/k8s names snunow.
+data "aws_lb" "ingress" {
+  count = var.enable_dns_records ? 1 : 0
+
+  tags = {
+    "ingress.k8s.aws/stack" = "snunow"
+  }
+}
+
+resource "aws_route53_record" "ingress" {
+  for_each = var.enable_dns_records ? toset(["api", "admin"]) : toset([])
+
+  zone_id = data.aws_route53_zone.snunow[0].zone_id
+  name    = "${each.key}.${local.domain}"
+  type    = "A"
+
+  alias {
+    name                   = data.aws_lb.ingress[0].dns_name
+    zone_id                = data.aws_lb.ingress[0].zone_id
+    evaluate_target_health = true
+  }
+}
