@@ -65,7 +65,14 @@ for (const { evalCase, repetition, name } of runs) {
       if (log.overBudget()) {
         skip(`The budget of USD ${options.budgetUsd} is spent`);
       }
-      log.add(await runCase(evalApp, world, evalCase, repetition, options, { stop: () => log.overBudget() }));
+      log.add(
+        await runCase(evalApp, world, evalCase, repetition, options, {
+          turnEnded: (turn) => {
+            log.countTurn(turn);
+          },
+          stop: () => log.overBudget(),
+        }),
+      );
     },
     // Each turn may take its whole time, and the database a little more.
     sentTurnsOf(evalCase) * (options.timeoutMs + 30_000),

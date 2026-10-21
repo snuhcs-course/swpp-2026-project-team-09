@@ -51,6 +51,7 @@ under `eval/results/`.
 
 ### Agent usage (2026-10-22)
 
-- Agent time: about 1 hour (estimate), the runner subagent's session in its worktree.
-- Tokens (estimate, this session only): about 7.5M input, of which about 7.2M cache reads and 0.25M cache writes,
-  and about 60k output. No subagents.
+- Agent time: about 1 hour 20 minutes (estimate), the runner subagent's session in its worktree, the review fixes
+  included.
+- Tokens (estimate, this session only): about 10M input, of which about 9.6M cache reads and 0.3M cache writes, and
+  about 75k output. No subagents.

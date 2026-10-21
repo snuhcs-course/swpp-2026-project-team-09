@@ -10,7 +10,7 @@ import { inject } from 'vitest';
 import { caseSchema, type EvalCase, loadCases } from '../eval/cases.ts';
 import { FALLBACK_PRICES } from '../eval/cost.ts';
 import { type RunOptions } from '../eval/options.ts';
-import { type EvalApp, runCase, startEvalApp } from '../eval/runner.ts';
+import { type EvalApp, runCase, RunLog, startEvalApp } from '../eval/runner.ts';
 import { seedWorld, type World } from '../eval/world.ts';
 import { ScriptedModel } from './scripted-model.js';
 
@@ -235,14 +235,14 @@ describe('A case with a fixed history', () => {
   });
 });
 
-describe('A live case', () => {
-  const live = caseSchema.parse({
-    id: 'live-sample',
-    category: 'live',
-    live: true,
-    turns: [{ user: '안녕' }, { user: '오늘 점심 뭐야?' }],
-  });
+const live = caseSchema.parse({
+  id: 'live-sample',
+  category: 'live',
+  live: true,
+  turns: [{ user: '안녕' }, { user: '오늘 점심 뭐야?' }],
+});
 
+describe('A live case', () => {
   it('sends every turn to the model, each with the real replies before it', async () => {
     model.script({ text: '안녕하세요!' }, { text: '제육볶음이에요.' });
 
@@ -274,5 +274,23 @@ describe('A live case', () => {
     const run = await runCase(evalApp, world, live, 1, OPTIONS, { passed: () => false });
 
     expect(run.turns).toHaveLength(1);
+  });
+});
+
+describe('A live case and the budget', () => {
+  it('stops between its turns once they spent the budget', async () => {
+    // One call of the reporting model costs USD 0.00075 at the fallback prices.
+    const log = new RunLog({ ...OPTIONS, budgetUsd: 0.0005 });
+    model.script({ text: '안녕하세요!' }, { text: '제육볶음이에요.' });
+
+    const run = await runCase(evalApp, world, live, 1, OPTIONS, {
+      turnEnded: (turn) => {
+        log.countTurn(turn);
+      },
+      stop: () => log.overBudget(),
+    });
+
+    expect(run.turns).toHaveLength(1);
+    expect(model.received()).toHaveLength(1);
   });
 });

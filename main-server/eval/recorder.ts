@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { APICallError, type LanguageModelMiddleware, wrapLanguageModel } from 'ai';
-import { type Model, type RunObserver, type StepEnd, type ToolCallEnd } from '../src/assistant/adapter.js';
+import { type Model, type RunObserver, type ToolCallEnd } from '../src/assistant/adapter.js';
 import { type StepTrace } from './trace.ts';
 
 // The recorder (spec P19, "The recorder"): a wrapper around the model that records each model call, the tools the
@@ -63,21 +63,20 @@ export class Recorder implements RunObserver {
     return steps;
   }
 
+  // A call this turn's steps did not record, such as one of an earlier turn whose tool ended after its time ran out,
+  // is dropped, so that it never lands in another turn.
   toolEnded(call: ToolCallEnd): void {
-    const outcome = 'result' in call ? { result: call.result } : { error: toolErrorOf(call.error) };
     const recorded = this.steps.flatMap(({ toolCalls }) => toolCalls).findLast(({ id }) => id === call.callId);
-    if (recorded === undefined) {
-      this.steps.at(-1)?.toolCalls.push({ id: call.callId, name: call.name, input: call.input, ...outcome });
-    } else {
-      Object.assign(recorded, outcome);
+    if (recorded !== undefined) {
+      Object.assign(recorded, 'result' in call ? { result: call.result } : { error: toolErrorOf(call.error) });
     }
   }
 
-  stepEnded({ finishReason }: StepEnd): void {
+  // The finish reason and the usage are the provider's, recorded by the wrapper; the run only says the step ended.
+  stepEnded(): void {
     const step = this.steps.at(-1);
     if (step !== undefined) {
       step.ended = true;
-      step.finishReason ??= finishReason;
     }
   }
 

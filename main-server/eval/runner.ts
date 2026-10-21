@@ -163,8 +163,22 @@ export interface CaseRun {
 export interface CaseRunControls {
   // Whether to go on after a live case's turn; the scorer (ticket 02) answers whether the turn passed.
   passed?: (turn: TurnTrace, expect: unknown) => boolean;
+  // Told of each turn as it ends, such as to count its tokens toward the budget.
+  turnEnded?: (turn: TurnTrace) => void;
   // Whether to stop before the next turn, such as when the budget is spent.
   stop?: () => boolean;
+}
+
+// Adds the reply to the conversation as the app does, which sends only the last Proposal back.
+function sendBack(messages: SentMessage[], reply: AssistantReplyDto): void {
+  if (reply.proposal !== null) {
+    for (const message of messages) {
+      if (message.role === 'assistant') {
+        message.proposal = null;
+      }
+    }
+  }
+  messages.push(sentBack(reply));
 }
 
 // Runs a case: its one message, or a live case's messages one by one, each with the replies before it, stopping at a
@@ -175,7 +189,7 @@ export async function runCase(
   evalCase: EvalCase,
   repetition: number,
   options: RunOptions,
-  { passed = (): boolean => true, stop = (): boolean => false }: CaseRunControls = {},
+  { passed = (): boolean => true, turnEnded = (): void => {}, stop = (): boolean => false }: CaseRunControls = {},
 ): Promise<CaseRun> {
   const kind = kindOf(evalCase);
   const userTurns = evalCase.turns.flatMap((turn) => ('user' in turn ? [turn] : []));
@@ -190,7 +204,9 @@ export async function runCase(
     turns: [],
   };
   if (kind !== 'live') {
-    run.turns.push((await sendTurn(evalApp, world, requestMessages(evalCase.turns, world), options)).trace);
+    const { trace } = await sendTurn(evalApp, world, requestMessages(evalCase.turns, world), options);
+    run.turns.push(trace);
+    turnEnded(trace);
     return run;
   }
   const messages: SentMessage[] = [];
@@ -202,18 +218,11 @@ export async function runCase(
     // oxlint-disable-next-line no-await-in-loop -- each turn is sent with the replies before it
     const { trace, body } = await sendTurn(evalApp, world, messages, options);
     run.turns.push(trace);
+    turnEnded(trace);
     if (body === null || !passed(trace, turn.expect ?? null)) {
       break;
     }
-    // Only the last Proposal is sent back.
-    if (body.proposal !== null) {
-      for (const message of messages) {
-        if (message.role === 'assistant') {
-          message.proposal = null;
-        }
-      }
-    }
-    messages.push(sentBack(body));
+    sendBack(messages, body);
   }
   return run;
 }
@@ -227,11 +236,14 @@ export class RunLog {
 
   constructor(private readonly options: RunOptions) {}
 
+  // Counts a turn's tokens as soon as it ends, so that the budget stops a live case between its turns.
+  countTurn(turn: TurnTrace): void {
+    this.tokens = addTokens(this.tokens, usageOf(turn.steps));
+  }
+
+  // Keeps a case run, whose turns were counted as they ended.
   add(caseRun: CaseRun): void {
     this.cases.push(caseRun);
-    for (const turn of caseRun.turns) {
-      this.tokens = addTokens(this.tokens, usageOf(turn.steps));
-    }
   }
 
   costUsd(): number {

@@ -71,7 +71,8 @@ export interface TurnLimits {
 
 const TIME_ERRORS = new Set(['TimeoutError', 'AbortError']);
 
-// Why a turn failed, read from its status and its steps, since the endpoint answers every failure with one 503.
+// Why a turn failed, read from its status and its steps, since the endpoint answers every failure with one 503. The
+// step cap is STEP_LIMIT only once its last step ended, its tools having returned.
 export function failureOf(
   status: number,
   steps: readonly StepTrace[],
@@ -85,7 +86,7 @@ export function failureOf(
     return 'ERROR';
   }
   const last = steps.at(-1);
-  if (steps.length >= limits.maxSteps && last?.error === undefined && last?.finishReason === 'tool-calls') {
+  if (steps.length >= limits.maxSteps && last?.ended === true && last.finishReason === 'tool-calls') {
     return 'STEP_LIMIT';
   }
   const timedOut = steps.some(({ error }) => error !== undefined && TIME_ERRORS.has(error));

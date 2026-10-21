@@ -145,6 +145,13 @@ describe('A failed turn is classified', () => {
       100,
       'STEP_LIMIT',
     ],
+    [
+      'the step cap ended on tool calls that never returned, the time running out',
+      503,
+      [step('tool-calls'), step('tool-calls'), { ...step('tool-calls'), ended: false }],
+      1000,
+      'TIMEOUT',
+    ],
     ['a call was aborted by the time', 503, [step('tool-calls'), step(null, 'TimeoutError')], 1000, 'TIMEOUT'],
     ['the time ran out between calls', 503, [step('tool-calls')], 1200, 'TIMEOUT'],
     ['the provider failed', 503, [step(null, 'APICallError: HTTP 500')], 100, 'ERROR'],
@@ -193,6 +200,14 @@ function caseRun(inputTokens: number, outputTokens: number): CaseRun {
   };
 }
 
+// Keeps a case run as the benchmark does, its turns counted first.
+function record(log: RunLog, run: CaseRun): void {
+  for (const turn of run.turns) {
+    log.countTurn(turn);
+  }
+  log.add(run);
+}
+
 describe('A run', () => {
   it('costs its tokens at the prices, cache reads and writes at their own', () => {
     const prices = { input: 1, output: 10, cacheRead: 0.1, cacheWrite: 2, source: 'fallback' } as const;
@@ -205,16 +220,16 @@ describe('A run', () => {
   it('stops once its estimated cost passes the budget', () => {
     const log = new RunLog(OPTIONS);
 
-    log.add(caseRun(1000, 100));
+    record(log, caseRun(1000, 100));
     expect(log.overBudget()).toBe(false);
-    log.add(caseRun(1000, 100));
+    record(log, caseRun(1000, 100));
     expect(log.overBudget()).toBe(true);
   });
 
   it('is saved as JSON named by date, commit, model and settings, with every turn', () => {
     const directory = pathToFileURL(`${mkdtempSync(join(tmpdir(), 'eval-'))}/`);
     const log = new RunLog(OPTIONS);
-    log.add(caseRun(1000, 100));
+    record(log, caseRun(1000, 100));
 
     const [first, second] = [log.save(directory), log.save(directory)];
 
