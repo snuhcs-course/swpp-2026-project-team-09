@@ -12,7 +12,7 @@ The team also has a list of improvements to the Assistant (`references/ai-chat-i
 
 A benchmark that puts a fixed set of about 60 cases to the real model, through the real server code, and scores what the model did with fixed rules. One manual command runs it and prints a scorecard: how often the model took the right kind of action (look something up, ask back, propose, refuse, chat), whether it called the right tools with the right arguments, how often it called too many or too few, how often a run failed and why, and what it cost. A change to the prompt, a tool or the model is kept when the scorecard says it helped.
 
-It runs inside `main-server/eval/` on the same machinery as the e2e tests: the app started in-process with `startApp`, a fresh Postgres and Redis, a fixed world seeded into them, the clock fixed at 2026-10-21 (수) 14:05 KST, and the OpenRouter model in place of the ScriptedModel. A recording wrapper around the model sees every step, so the server's code and replies stay as they are.
+It runs inside `main-server/eval/` on the same machinery as the e2e tests: the app started in-process with `startApp`, a fresh Postgres and Redis, a fixed world seeded into them, the clock fixed at 2026-10-21 (수) 14:05 KST, and the OpenRouter model in place of the ScriptedModel. A recording wrapper around the model sees every step, and one small seam in the server (an optional run observer) reports each tool's result; the server's replies stay as they are.
 
 The benchmark measures the Assistant as it is built today (`2.0/Main`), and is built so that the improvements in `references/ai-chat-improvement.md` need only small edits to it (see "Staying valid when the Assistant changes").
 
@@ -60,14 +60,15 @@ Words: a **case** is one scenario with its expected behaviour; a **turn** is one
 ### Where it lives and how it runs
 
 - `main-server/eval/`, its own Vitest project (`eval`) excluded from `pnpm test`, started by a `pnpm eval` script that passes the options on. It reuses `test/global-setup.ts` (containers, migrations, the Places seed) and `test/start-app.ts`.
-- `startApp(settings, …, model)` receives the real model: `openRouterModel(OPENROUTER_API_KEY, model)` from `src/assistant/adapter.ts`, wrapped by the recorder (below). Settings: the team's current OpenRouter key from `main-server/.env` (decided: no separate key), `ASSISTANT_DAILY_MESSAGES` raised high enough for a run, the other limits taken from the settings of the branch being measured (`2.0/Main` has 8 steps and 30 s; `development` has 30 steps and 60 s since `66c96cd`), never hard-coded.
+- `startApp(settings, …, model)` receives the real model: `openRouterModel(OPENROUTER_API_KEY, model)` from `src/assistant/adapter.ts`, wrapped by the recorder (below). Settings: the team's current OpenRouter key from `main-server/.env` (decided: no separate key), `ASSISTANT_DAILY_MESSAGES` raised high enough for a run, the other limits taken from the settings of the branch being measured, never hard-coded. The benchmark lives on `2.0/Main` (8 steps, 30 s); `development` has diverged (30 steps and 60 s since `66c96cd`, and the run log of `3bb685b`), so its limits are measured on `2.0/Main` with `--max-steps 30 --timeout 60000`, and a run's recorded settings are read with that in mind.
 - The clock: `CLOCK.now` fixed to 2026-10-21T14:05+09:00 for the whole run.
 - Requests go through `POST /assistant/messages` as the app sends them, as one seeded User.
-- Hyperparameters come from the command line and change nothing in the server: the model id and sampling settings (`--temperature`, `--top-p`) are applied by the model wrapper, and the run limits (`--max-steps`, `--timeout`, `--max-output-tokens`) by the settings given to `startApp`. Left out, each takes the value of the measured branch's settings: the model in `ASSISTANT_MODEL`, the provider's default sampling (the server passes none, so 1.0), and the branch's step, time and token limits. Every run records the values it used. Changing production's values is a separate decision, taken from what the experiments show. Whether Haiku 5.5 accepts a temperature in every mode is checked against Anthropic's documentation when it is built.
+- Hyperparameters come from the command line and need no server change: the model id and sampling settings (`--temperature`, `--top-p`) are applied by the model wrapper, and the run limits (`--max-steps`, `--timeout`, `--max-output-tokens`) by the settings given to `startApp`. Left out, each takes the value of the measured branch's settings: the model in `ASSISTANT_MODEL`, the provider's default sampling (the server passes none, so 1.0), and the branch's step, time and token limits. Every run records the values it used. Changing production's values is a separate decision, taken from what the experiments show. Whether Haiku 5.5 accepts a temperature in every mode is checked against Anthropic's documentation when it is built.
 
 ### The recorder (the trace)
 
-- The server keeps only the final text and what the presenters added (`adapter.ts`), and the reply carries no trace. The benchmark does not change that. It wraps the model (an AI SDK language-model middleware, the way `ScriptedModel` records `doGenerateCalls`) and records, per step: the tool calls with their inputs, the finish reason and the usage (input, output, cache read and cache write tokens). Tool results are recorded where they are produced — by wrapping each tool's `execute` in the eval's app, together with the AI SDK's step callback for tool errors raised before `execute` — not read from the next step's prompt, which a run stopped at the step cap never has. A STEP_LIMIT trace therefore keeps its last step's results, which is what explains the failure.
+- The server keeps only the final text and what the presenters added (`adapter.ts`), and the reply carries no trace. The benchmark does not change that. It wraps the model (an AI SDK language-model middleware, the way `ScriptedModel` records `doGenerateCalls`) and records, per step: the tool calls with their inputs, the finish reason and the usage (input, output, cache read and cache write tokens). Tool results are recorded where they are produced, not read from the next step's prompt, which a run stopped at the step cap never has. A STEP_LIMIT trace therefore keeps its last step's results, which is what explains the failure.
+- The tools are built inside `AssistantService` and the step callback lives inside `runFeature`, so the eval cannot reach them without reaching into private fields or `vi.mock`, both of which break quietly when the Assistant changes. Instead the server gets one small seam: an optional run observer that `runFeature` calls with each tool's name, input, and result or error, and with each step's end (finish reason, usage). Production passes none. The eval provides it through Nest's injection when it starts the app. On `development`, `runFeature` already takes a `RunTrace` for the run log (`3bb685b`); when the two meet, the observer widens that one parameter rather than adding a second.
 - A turn's trace ends with the HTTP status and the reply body (`text`, `cards`, `mapButtons`, `proposal`), or the failure: 503 is classified by the recorded steps as STEP_LIMIT (the last step ended on tool calls at the step cap), TIMEOUT or ERROR.
 
 ### The fixed world
@@ -92,7 +93,7 @@ Words: a **case** is one scenario with its expected behaviour; a **turn** is one
   - `actions`: the accepted behaviours, one or more of TOOL, ASK, PROPOSE, REFUSE, CHAT, or a combination: `TOOL+ASK` or `PROPOSE+ASK`;
   - `tools.required`: tools that must be called at least once; `tools.allowed`: tools that may also be called; `tools.forbidden`: tools that must not be (`"*"` for none);
   - `args`: expected normalised arguments of named tools;
-  - outcome checks: `proposal` fields, `cards` (kind and seed names, count limits), `mapButtons`, `text.mentions` (words the text must hold, such as both candidates' names or that nothing was found);
+  - outcome checks: `proposal` fields, `cards` (kind and seed names, count limits), `mapButtons`, `text.mentions` (what the text must hold, such as both candidates' names or that nothing was found; each mention is a word or a list of words of which any one counts, since Korean asks the same thing many ways: `[몇 명, 인원, 몇 분]`, `[오전, 아침]`);
   - `knownFailure`: a short reason, on a case that states the intended behaviour the Assistant does not have yet (it is scored as usual and reported apart, never as a regression).
 - Categories and rough counts for the first version (62 in all):
 
@@ -113,10 +114,10 @@ Words: a **case** is one scenario with its expected behaviour; a **turn** is one
 | Compound requests | several tools in one request: menus and the shuttle; this week's menus; a festival and a 파티 to it; a Proposal with two Friends, a Place and an event; "운동 파티 있으면 보여주고 없으면 하나 만들어줘" | 5 |
 
 - The P07 open questions each get at least one case: map buttons after menus and shuttle; picking among event candidates; 운동 → hobby Board and at most 3 cards; 08/12/18 defaults; every resolver before `proposeQuest`, asking on `several`.
-- Ambiguous intent ("내일 학관에서 점심": menus, or a meal with someone?): TOOL+ASK only, from the first run — answer one reading at once and ask about the other in the same reply (tomorrow's lunch menus, then "혹시 내일 점심 약속을 잡아 드릴까요?"). The prompt has no such rule yet, so these cases are known failures until improvement 3-1; one right answer from the start makes the before/after comparison of 3-1 meaningful.
+- Ambiguous intent ("내일 학생회관에서 점심": menus, or a meal with someone?): TOOL+ASK only, from the first run — answer one reading at once and ask about the other in the same reply (tomorrow's lunch menus, then "혹시 내일 점심 약속을 잡아 드릴까요?"). The prompt has no such rule yet, so these cases are known failures until improvement 3-1; one right answer from the start makes the before/after comparison of 3-1 meaningful. These cases name Places in full ("학생회관"), never "학관", so that each known failure has one cause.
 - Known failures in the first version, each stating the intended behaviour:
   - abbreviations such as "학관": the right answer is 학생회관 (63동), but Place search matches substrings and "학생회관" does not contain "학관";
-  - Friends with the same name: the first turn should ASK telling the two apart by something other than the name, and the follow-up "두 번째 거" should PROPOSE with that Friend; today resolving the same name returns `several` again (until improvement 3-4);
+  - Friends with the same name: the first turn should ASK telling the two apart by something other than the name, and the follow-up "두 번째 거" should PROPOSE with that Friend; today resolving the same name returns `several` again (until improvement 3-4), and `resolveFriend` returns only names and ids, so nothing tells the two apart until the tool also returns something distinguishing (see Further Notes);
   - ambiguous intent, as above.
 - Compound requests are run at both limit settings (8 steps / 30 s and 30 steps / 60 s); the STEP_LIMIT and TIMEOUT counts between the two are the number the check-in lacked.
 - Prompt injection and other security cases are out of this benchmark (they are handled separately).
@@ -141,7 +142,7 @@ Words: a **case** is one scenario with its expected behaviour; a **turn** is one
 - `main-server/eval/results/<YYYY-MM-DD>-<commit>-<model>-<settings>.json` (every turn's trace, the checks and their results) and a `.md` beside it with:
   - action recall per kind (TOOL, ASK, PROPOSE, REFUSE, CHAT), the headline;
   - tool selection accuracy, argument accuracy, over-calling and under-calling rates;
-  - pass rate per category, with known failures shown apart;
+  - pass rate per category, with known failures shown apart, and any known failure that now passes listed so its `knownFailure` mark is removed rather than left stale;
   - failure kinds (STEP_LIMIT, TIMEOUT, ERROR) per category;
   - pass^3 on the repeated set;
   - average steps, average latency, tokens in (cache reads, cache writes) and out, and the estimated cost;
@@ -169,7 +170,8 @@ The improvements in `references/ai-chat-improvement.md` change the Assistant's b
 | 3-1. Ambiguous intent: show one side, ask the other | none; those cases already expect TOOL+ASK and stop being known failures |
 | 3-2. Prompt caching, time at the end | none; cache tokens are already reported |
 | 3-3. Map buttons added by the server, `showOnMap` removed | none, since map buttons are checked as an outcome; drop `showOnMap` from any `required` |
-| 3-4. Confirmed ids reused on the next turn | drop resolvers from `required` on those follow-ups; the same-name cases stop being known failures |
+| 3-4. Confirmed ids reused on the next turn | drop resolvers from `required` on those follow-ups |
+| (proposed for P20) `resolveFriend` returns something telling same-name Friends apart | with 3-4, the same-name cases stop being known failures |
 | 3-5. Times as structured values | one edit to the normalisers |
 | 3-7. Search by words and Places | one edit to the normalisers; new cases if wanted |
 | 3-8. Menus over a range | none, checked as an outcome |
@@ -200,6 +202,8 @@ Running the experiments (models, temperatures, limits) is left to the team.
 - Production logging of tool calls (improvement 2).
 
 ## Further Notes
+
+- Proposed for P20's plan, from the review of this spec: `resolveFriend` returns only names and ids, so two Friends with the same name cannot be told apart in an ASK. The tool should also return something distinguishing (the Friend ID, for example). Plan 3-4 covers reusing confirmed ids, not this.
 
 - References: `references/eval-harness-plan.md` (the plan this spec settles, copied from the team's documents on 2026-10-21) and `references/ai-chat-improvement.md` (the improvements it will measure: the reviewed English plan of P20, which supersedes the Korean draft, taken from the review of this spec on 2026-10-21). The cases encode what that plan means by "the Assistant works well": ask on `several` and never pick, show one reading and ask about the other, state a computed date with its weekday, use what was settled on the next turn.
 - Grounding for the method: τ-bench (Yao et al., 2024) reports pass^k for consistency, measured by repeating a task with only the model's sampling varying; BFCL (Berkeley Function Calling Leaderboard) scores multi-turn calls by whether the essential calls are present, allowing extra ones. Zhao et al., *Calibration is the Bottleneck: An Action-Class Diagnostic of Multi-Turn Tool-Calling* (arXiv 2609.00949, Findings of EMNLP 2026), splits each turn into TOOL_CALL / ASK / REFUSE / CONFIRM, shows that outcome-only grading hides choosing the wrong kind of action, and bounds accuracy by Gold Action Recall; it is why this benchmark's headline is action recall by kind.
