@@ -4,20 +4,8 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { KINDS } from './expect.ts';
-import { type RunScore } from './run-score.ts';
-import {
-  allCategories,
-  averages,
-  cost,
-  count,
-  FAILURE_KINDS,
-  passedById,
-  ratio,
-  settingsOf,
-  table,
-  totalFailures,
-} from './scorecard.ts';
+import { allCategories, averagesOf, passedById, type RunScore, settingsOf, totalFailures } from './run-score.ts';
+import { averages, cost, count, FAILURE_KINDS, ratio, table } from './scorecard.ts';
 
 // Two scored runs side by side (spec P19, "The scorecard"): the scorecard's measures with their differences, the
 // settings that differ and the cases that changed. With about 60 cases one case is about 2 points of the whole set,
@@ -42,10 +30,11 @@ function amount(label: string, value: number | null, shown = value === null ? 'â
 
 function measuresOf(score: RunScore): Measure[] {
   const all = allCategories(score);
-  const { turns, steps, latencyMs, tokens, costUsd } = score.usage;
-  const { steps: averageSteps, latency } = averages(score);
+  const { tokens, costUsd } = score.usage;
+  const average = averagesOf(score);
+  const shown = averages(score);
   return [
-    ...KINDS.map((kind) => rate(`Action recall, ${kind}`, score.recall[kind].recalled, score.recall[kind].expected)),
+    ...score.recall.map(({ kind, expected, recalled }) => rate(`Action recall, ${kind}`, recalled, expected)),
     rate('Tool selection accuracy', score.toolSelection.correct, score.toolSelection.turns),
     rate('Argument accuracy', score.args.matched, score.args.expected),
     rate('Over-calling', score.overCalling.withOver, score.overCalling.turns),
@@ -55,8 +44,8 @@ function measuresOf(score: RunScore): Measure[] {
     rate('Known failures passed', all.knownPassed, all.knownRuns),
     ...FAILURE_KINDS.map((kind) => amount(kind, totalFailures(score, kind))),
     rate(`pass^${score.passK.k === 0 ? 'k' : score.passK.k}`, score.passK.passedAll, score.passK.cases.length),
-    amount('Average steps', turns === 0 ? null : steps / turns, averageSteps),
-    amount('Average latency', turns === 0 ? null : latencyMs / turns / 1000, latency),
+    amount('Average steps', average.steps, shown.steps),
+    amount('Average latency', average.latencySeconds, shown.latency),
     amount('Tokens in', tokens.inputTokens),
     amount('Cache read', tokens.cacheReadTokens),
     amount('Cache write', tokens.cacheWriteTokens),

@@ -29,6 +29,10 @@ function failedChecks(trace: TurnTrace, written: unknown): string[] {
     .map(({ name }) => name);
 }
 
+function shuttleCall(): ReturnType<typeof call> {
+  return call('getShuttle', {}, { result: 'found' });
+}
+
 describe('The tools called', () => {
   it('fail on a required tool not called, counted as under-calling', () => {
     const score = scoreTurn(turn({ steps: [[menusFound]], text: '제육볶음' }), menusExpect, names);
@@ -49,6 +53,26 @@ describe('The tools called', () => {
     expect(score.passed).toBe(true);
   });
 
+  it('count every call outside required and allowed, not each tool once', () => {
+    const score = scoreTurn(
+      turn({
+        steps: [
+          [menusFound, shuttleCall()],
+          [shuttleCall(), diningShown],
+        ],
+        text: '제육볶음',
+        mapButtons: ['dining'],
+      }),
+      menusExpect,
+      names,
+    );
+
+    // Each call once: the second is outside and a repeat, counted as outside.
+    expect(score.overCalls).toEqual(['getShuttle', 'getShuttle']);
+  });
+});
+
+describe('The tools forbidden or repeated', () => {
   it('fail on a forbidden tool, which is over-calling too', () => {
     const refused = call('proposeQuest', {}, { result: 'refused' });
     const score = scoreTurn(

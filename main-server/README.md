@@ -1957,23 +1957,25 @@ The scorer (`eval/score.ts`) reads each scored turn's action from its trace and 
 | Action      | When                                                                                                                                          |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | PROPOSE     | the reply carries a Proposal                                                                                                                  |
-| TOOL        | the reply shows cards or map buttons, or a lookup answered and, in a case with no ASK, the text holds the mentions                            |
+| TOOL        | the reply shows cards or map buttons, or a lookup answered `none`, the case gives mentions and the text holds them                            |
 | ASK         | nothing shown, and a resolver answered `several`/`none` or proposeQuest `refused`, or the case accepts an ASK and the text holds its mentions |
 | …+ASK       | TOOL or PROPOSE, in a case that accepts an ASK, with the text holding its mentions                                                            |
 | REFUSE/CHAT | no tool called: REFUSE when the case accepts it, else CHAT                                                                                    |
 
-A question mark never counts. A turn passes when its action is accepted and every check passes; a case when all its
+A question mark never counts. An ASK read from the trace alone is still ASK, so that a wrong one shows, but it is
+right (and recalled) only when the text holds the case's mentions. A turn passes when its action is right and every
+check passes; a case when all its
 scored turns pass, a live case stopping at its first failed turn, the later ones not run. Calls outside
-`required ∪ allowed`, forbidden ones and the same call repeated count as over-calling (only a forbidden one fails the
-turn); a required tool not called as under-calling. Arguments, results, cards and Proposals are read through one
+`required ∪ allowed`, forbidden ones and the same call repeated count as over-calling, call by call (only a forbidden
+one fails the turn); a required tool not called as under-calling. Arguments, results, cards and Proposals are read through one
 normaliser per tool (`eval/normalise.ts`): days as `YYYY-MM-DD` and starts as `YYYY-MM-DD HH:MM` in Korea, words
 trimmed, Boards by name, ids by seed name.
 
 The scorecard (`eval/run-score.ts`, `eval/scorecard.ts`) gives action recall per kind first, then tool selection and
 argument accuracy, over- and under-calling, the pass rate per category with known failures apart and those now
-passing listed, STEP_LIMIT/TIMEOUT/ERROR per category, pass^k of the cases run more than once, average steps and
+passing listed, STEP_LIMIT/TIMEOUT/ERROR per category over every turn that ran, pass^k of the cases run more than once, average steps and
 latency, tokens with cache reads and writes and the estimated cost, the settings, each failed case with its trace and
-the full text and length of every reply of a REFUSE, CHAT or TOOL+ASK case. The comparison (`eval/compare.ts`) lists
+the full text and length of every reply of a case that accepts REFUSE or CHAT and of the `ambiguous-intent` category. The comparison (`eval/compare.ts`) lists
 regressions apart from known failures, which never count as one. `test/eval-*.e2e-spec.ts` test the scorer with
 hand-made traces (`test/eval-traces.ts`) in `pnpm test`.
 

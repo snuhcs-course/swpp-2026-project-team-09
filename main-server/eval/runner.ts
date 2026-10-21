@@ -233,7 +233,7 @@ export class RunLog {
   private tokens: Tokens = NO_TOKENS;
   private stoppedBy: 'budget' | null = null;
   // The world's seeds by name, which the scorer reads a run's ids by.
-  seeds: Record<string, Seeded> = {};
+  private seeds: Record<string, Seeded> = {};
   private readonly startedAt = new Date();
 
   constructor(private readonly options: RunOptions) {}
@@ -241,6 +241,11 @@ export class RunLog {
   // Counts a turn's tokens as soon as it ends, so that the budget stops a live case between its turns.
   countTurn(turn: TurnTrace): void {
     this.tokens = addTokens(this.tokens, usageOf(turn.steps));
+  }
+
+  // Keeps the world's seeds with the run, once the world is seeded.
+  keepSeeds(seeds: Record<string, Seeded>): void {
+    this.seeds = seeds;
   }
 
   // Keeps a case run, whose turns were counted as they ended.

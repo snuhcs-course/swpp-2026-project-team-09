@@ -9,7 +9,7 @@ import {
   cardsOf,
   normaliseArgs,
   outcomeOf,
-  proposalMatches,
+  proposalMismatches,
   proposalOf,
   roleOf,
 } from '../eval/normalise.ts';
@@ -159,9 +159,9 @@ describe("The reply's Proposal", () => {
     const proposal = proposalOf({ ...open, place: null, globalEvent: { id: EVENT, title: '가을 축제' } }, withEvent);
 
     expect(
-      proposalMatches({ startsAt: '2026-10-22T10:00:00Z', board: '식사', globalEvent: '가을축제' }, proposal),
+      proposalMismatches({ startsAt: '2026-10-22T10:00:00Z', board: '식사', globalEvent: '가을축제' }, proposal),
     ).toEqual([]);
-    expect(proposalMatches({ capacity: 3, place: '학생회관' }, proposal)).toEqual(['capacity', 'place']);
-    expect(proposalMatches({ capacity: 3 }, null)).toEqual(['capacity']);
+    expect(proposalMismatches({ capacity: 3, place: '학생회관' }, proposal)).toEqual(['capacity', 'place']);
+    expect(proposalMismatches({ capacity: 3 }, null)).toEqual(['capacity']);
   });
 });

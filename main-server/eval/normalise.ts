@@ -17,7 +17,9 @@ import { type ToolCallTrace } from './trace.ts';
 export type ToolRole = 'lookup' | 'presenter' | 'resolver' | 'proposer';
 
 // What a call answered: its `result`, a thrown error, or nothing, when the run ended before the tool did.
-export type Outcome = 'found' | 'none' | 'one' | 'several' | 'shown' | 'proposed' | 'refused' | 'error' | 'unfinished';
+const OUTCOMES = ['found', 'none', 'one', 'several', 'shown', 'proposed', 'refused', 'error', 'unfinished'] as const;
+
+export type Outcome = (typeof OUTCOMES)[number];
 
 // The seed name of an id, or undefined for an id no seed has.
 export type Names = (id: string) => string | undefined;
@@ -143,7 +145,7 @@ function nameOf(input: unknown, names: Names): unknown {
 }
 
 // Lists compared as sets are sorted first.
-function sorted(values: readonly unknown[]): unknown[] {
+function sorted<T>(values: readonly T[]): T[] {
   return values
     .map((item) => ({ item, key: JSON.stringify(item) }))
     .toSorted((x, y) => (x.key < y.key ? -1 : Number(x.key > y.key)))
@@ -214,10 +216,10 @@ export function callKey(tool: string, args: Readonly<Record<string, unknown>>): 
   return `${tool} ${JSON.stringify(ordered)}`;
 }
 
-const OUTCOMES = new Set<unknown>(['found', 'none', 'one', 'several', 'shown', 'proposed', 'refused']);
+const OUTCOME_SET = new Set<unknown>(OUTCOMES);
 
 function isOutcome(answered: unknown): answered is Outcome {
-  return OUTCOMES.has(answered);
+  return OUTCOME_SET.has(answered);
 }
 
 // What a call answered. A result of another shape counts as an error, since no tool answers one.
@@ -262,10 +264,6 @@ export function cardsOf(cards: readonly unknown[], names: Names): CardSeen[] {
     });
 }
 
-function sortedNames(values: readonly string[]): string[] {
-  return values.toSorted((x, y) => (x < y ? -1 : Number(x > y)));
-}
-
 // A Proposal of the reply as the scorer reads it.
 export interface ProposalSeen {
   joinPolicy: unknown;
@@ -289,7 +287,7 @@ export function proposalOf(proposal: unknown, names: Names): ProposalSeen | null
     startsAt: momentOf(startsAt),
     place: isRecord(place) ? titled(place, names) : null,
     globalEvent: isRecord(globalEvent) ? titled(globalEvent, names) : null,
-    invitees: Array.isArray(invitees) ? sortedNames(invitees.map((invitee) => titled(invitee, names))) : [],
+    invitees: Array.isArray(invitees) ? sorted(invitees.map((invitee) => titled(invitee, names))) : [],
   };
 }
 
@@ -308,7 +306,10 @@ function isProposalField(name: string): name is keyof ProposalSeen {
 }
 
 // The expected fields the Proposal does not hold, all of them when there is no Proposal.
-export function proposalMatches(expected: Readonly<Record<string, unknown>>, proposal: ProposalSeen | null): string[] {
+export function proposalMismatches(
+  expected: Readonly<Record<string, unknown>>,
+  proposal: ProposalSeen | null,
+): string[] {
   return Object.entries(expected)
     .filter(
       ([name, given]) =>

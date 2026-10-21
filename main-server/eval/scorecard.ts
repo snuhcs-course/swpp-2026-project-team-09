@@ -5,9 +5,16 @@
  ******************************************************************************/
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { KINDS } from './expect.ts';
 import { outcomeOf } from './normalise.ts';
-import { type RunScore, runsById, scoreRun } from './run-score.ts';
+import {
+  allCategories,
+  averagesOf,
+  passedById,
+  type RunScore,
+  scoreRun,
+  settingsOf,
+  totalFailures,
+} from './run-score.ts';
 import { type CaseScore } from './score.ts';
 import { type FailureKind, type TurnTrace } from './trace.ts';
 
@@ -16,9 +23,10 @@ import { type FailureKind, type TurnTrace } from './trace.ts';
 
 export const FAILURE_KINDS: FailureKind[] = ['STEP_LIMIT', 'TIMEOUT', 'ERROR'];
 
-// The kinds of action whose replies are listed in full for review: REFUSE and CHAT, decided by the case's label, and
-// TOOL+ASK, the ambiguous-intent cases' one right answer.
-const REVIEWED = new Set(['REFUSE', 'CHAT', 'TOOL+ASK']);
+// The replies listed in full for review: those of cases that accept REFUSE or CHAT, which the case's label decides,
+// and those of the ambiguous-intent category, by its name in the case files.
+const REVIEWED_ACTIONS = new Set(['REFUSE', 'CHAT']);
+const REVIEWED_CATEGORIES = new Set(['ambiguous-intent']);
 
 // The characters of a tool's input or result shown in a failed case's trace; the raw JSON keeps them whole.
 const SHOWN_MAX = 300;
@@ -43,62 +51,16 @@ export function table(header: string[], rows: string[][]): string {
   return [header, header.map(() => '---'), ...rows].map((row) => `| ${row.join(' | ')} |`).join('\n');
 }
 
-// Each case by id, passing only when every run of it passed.
-export function passedById(score: RunScore): Map<string, { passed: boolean; knownFailure: string | null }> {
-  return new Map(
-    [...runsById(score.cases)].map(([id, runs]) => [
-      id,
-      { passed: runs.every(({ passed }) => passed), knownFailure: runs[0]?.run.knownFailure ?? null },
-    ]),
-  );
-}
-
-export function totalFailures(score: RunScore, kind: FailureKind): number {
-  return Object.values(score.categories).reduce((total, { failures }) => total + failures[kind], 0);
-}
-
-export function allCategories(score: RunScore): {
-  runs: number;
-  passed: number;
-  knownRuns: number;
-  knownPassed: number;
-} {
-  return Object.values(score.categories).reduce(
-    (total, category) => ({
-      runs: total.runs + category.runs,
-      passed: total.passed + category.passed,
-      knownRuns: total.knownRuns + category.knownRuns,
-      knownPassed: total.knownPassed + category.knownPassed,
-    }),
-    { runs: 0, passed: 0, knownRuns: 0, knownPassed: 0 },
-  );
-}
-
-function shownSetting(value: unknown): string {
-  if (value === null || value === undefined) {
-    return 'default';
-  }
-  if (Array.isArray(value)) {
-    return value.length === 0 ? 'all' : value.join(', ');
-  }
-  return typeof value === 'string' ? value : JSON.stringify(value);
-}
-
-// The run's options but its prices, as the scorecard shows them.
-export function settingsOf(score: RunScore): [string, string][] {
-  return Object.entries(score.saved.options)
-    .filter(([name]) => name !== 'prices')
-    .map(([name, value]) => [name, shownSetting(value)]);
-}
-
+// Steps and latency per turn, as the scorecard shows them.
 export function averages(score: RunScore): { steps: string; latency: string } {
-  const { turns, steps, latencyMs } = score.usage;
+  const { steps, latencySeconds } = averagesOf(score);
   return {
-    steps: turns === 0 ? '—' : (steps / turns).toFixed(2),
-    latency: turns === 0 ? '—' : `${(latencyMs / turns / 1000).toFixed(1)} s`,
+    steps: steps === null ? '—' : steps.toFixed(2),
+    latency: latencySeconds === null ? '—' : `${latencySeconds.toFixed(1)} s`,
   };
 }
 
+// The estimated cost as the scorecard shows it; run-score.ts computes it.
 export function cost(score: RunScore): string {
   const { costUsd } = score.usage;
   return costUsd === null ? '—' : `USD ${costUsd.toFixed(4)}`;
@@ -151,11 +113,15 @@ function failedCase(scored: CaseScore): string {
   return lines.join('\n');
 }
 
+function isReviewed({ run }: CaseScore, accepted: readonly string[]): boolean {
+  return REVIEWED_CATEGORIES.has(run.category) || accepted.some((action) => REVIEWED_ACTIONS.has(action));
+}
+
 function reviewedReplies(score: RunScore): string[] {
   return score.cases.flatMap((scored) =>
     scored.turns.flatMap(({ index, trace, score: turn }) => {
       const reply = trace?.reply ?? null;
-      if (trace === null || reply === null || turn === null || !turn.accepted.some((action) => REVIEWED.has(action))) {
+      if (trace === null || reply === null || turn === null || !isReviewed(scored, turn.accepted)) {
         return [];
       }
       const verdict = `Accepted ${turn.accepted.join(' or ')}, took ${turn.action ?? 'none'}, ${turn.passed ? 'passed' : 'failed'}.`;
@@ -176,13 +142,16 @@ function recallSection(score: RunScore): string[] {
   return [
     '## Action recall',
     'A turn counts toward the kinds of the action it took when the case accepts it, else of the first action the ' +
-      'case accepts; it is recalled when the action it took is accepted. Known failures are included.',
+      'case accepts; it is recalled when the action it took is accepted and, when it asks, the text holds the ' +
+      "case's mentions. Known failures are included.",
     table(
       ['Kind', 'Expected', 'Recalled', 'Recall'],
-      KINDS.map((kind) => {
-        const { expected, recalled } = score.recall[kind];
-        return [kind, String(expected), String(recalled), percent(recalled, expected)];
-      }),
+      score.recall.map(({ kind, expected, recalled }) => [
+        kind,
+        String(expected),
+        String(recalled),
+        percent(recalled, expected),
+      ]),
     ),
   ];
 }
@@ -293,7 +262,7 @@ export function scorecard(score: RunScore): string {
     '## Failed cases',
     failed.length === 0 ? 'None.' : failed.map((scored) => failedCase(scored)).join('\n\n'),
     '## Replies to review',
-    'Every reply of a case that accepts REFUSE, CHAT or TOOL+ASK (ambiguous intent), in full.',
+    'Every reply of a case that accepts REFUSE or CHAT, and of the ambiguous-intent category, in full.',
     reviewed.length === 0 ? 'None.' : reviewed.join('\n'),
   ];
   return `${sections.filter((section) => section !== '').join('\n\n')}\n`;

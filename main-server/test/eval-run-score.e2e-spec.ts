@@ -90,6 +90,12 @@ describe('Known failures and failure kinds', () => {
     expect(run.categories.menus?.failures).toEqual({ STEP_LIMIT: 1, TIMEOUT: 1, ERROR: 0 });
     expect(run.categories.shuttle?.failures).toEqual({ STEP_LIMIT: 0, TIMEOUT: 0, ERROR: 1 });
   });
+
+  it("count a failed turn that is not scored, such as a live case's turn with no expectation", () => {
+    const live = caseRun({ kind: 'live', turnExpects: [null, menusExpect], turns: [turn({ failure: 'TIMEOUT' })] });
+
+    expect(scoreRun(savedRun([live])).categories.menus?.failures).toEqual({ STEP_LIMIT: 0, TIMEOUT: 1, ERROR: 0 });
+  });
 });
 
 describe('pass^k', () => {
@@ -127,19 +133,27 @@ describe("A run's measures", () => {
         expect: ask,
         turns: [turn({ steps: [[minsuSeveral]], text: '이민수, 김민수 중 누구요' })],
       }),
+      // ASK from the trace alone, without the candidates' names.
+      caseRun({ id: 'd', category: 'ask', expect: ask, turns: [turn({ steps: [[minsuSeveral]], text: '누구요?' })] }),
     ]),
   );
 
   it('give action recall per kind, a turn counting toward the action it took when accepted, else the first accepted', () => {
-    expect(run.recall).toMatchObject({ TOOL: { expected: 2, recalled: 2 }, ASK: { expected: 1, recalled: 1 } });
-    expect(run.recall.PROPOSE).toEqual({ expected: 0, recalled: 0 });
+    // b took no action: its lookup showed nothing. d asked without the mentions, so it is not recalled.
+    expect(run.recall).toEqual([
+      { kind: 'TOOL', expected: 2, recalled: 1 },
+      { kind: 'ASK', expected: 2, recalled: 1 },
+      { kind: 'PROPOSE', expected: 0, recalled: 0 },
+      { kind: 'REFUSE', expected: 0, recalled: 0 },
+      { kind: 'CHAT', expected: 0, recalled: 0 },
+    ]);
   });
 
   it('give tool selection, argument accuracy, over- and under-calling', () => {
-    expect(run.toolSelection).toEqual({ turns: 3, correct: 2 });
+    expect(run.toolSelection).toEqual({ turns: 4, correct: 3 });
     expect(run.args).toEqual({ expected: 2, matched: 2 });
-    expect(run.overCalling).toEqual({ turns: 3, withOver: 1, calls: 1 });
-    expect(run.underCalling).toEqual({ turns: 3, withUnder: 1, calls: 1 });
+    expect(run.overCalling).toEqual({ turns: 4, withOver: 2, calls: 2 });
+    expect(run.underCalling).toEqual({ turns: 4, withUnder: 1, calls: 1 });
   });
 
   it('sum steps, latency and tokens, and price them', () => {

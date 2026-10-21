@@ -59,6 +59,23 @@ describe('A TOOL turn', () => {
   });
 });
 
+describe('A turn that is not TOOL', () => {
+  it('is one where a lookup found nothing in a case that gives no mentions', () => {
+    const none = call('getMenus', { date: '2026-10-25' }, { result: 'none', reason: 'No menu' });
+    const silent = expectOf({ actions: ['TOOL'], tools: { required: ['getMenus'] } });
+
+    expect(scoreTurn(turn({ steps: [[none]], text: '그날 메뉴는 없어요.' }), silent, names).action).toBeNull();
+  });
+
+  it('is one where a lookup found something and the reply shows nothing, only asks', () => {
+    const lookup = expectOf({ actions: ['TOOL'], tools: { required: ['getMenus'] } });
+
+    const score = scoreTurn(turn({ steps: [[menusFound]], text: '어느 식당 메뉴를 알려 드릴까요?' }), lookup, names);
+
+    expect(score).toMatchObject({ action: null, passed: false });
+  });
+});
+
 describe('An ASK turn', () => {
   it('is one where a resolver answered several and the text names the candidates, with no question mark', () => {
     const ask = expectOf({
@@ -98,9 +115,29 @@ describe('An ASK turn', () => {
     expect(score.action).not.toBe('ASK');
     expect(score.passed).toBe(false);
   });
+});
 
+describe('An ASK the case did not expect', () => {
   it('is the wrong action of a TOOL case answered with a question the trace called for', () => {
     expect(scoreTurn(turn({ steps: [[minsuSeveral]], text: '어느 민수요?' }), menusExpect, names).action).toBe('ASK');
+  });
+});
+
+describe('An ASK read from the trace', () => {
+  it('is still ASK without the mentions, but fails and is not recalled', () => {
+    const ask = expectOf({ actions: ['ASK'], text: { mentions: ['이민수', '김민수'] } });
+
+    const score = scoreTurn(turn({ steps: [[minsuSeveral]], text: '어느 민수요?' }), ask, names);
+
+    expect(score).toMatchObject({ action: 'ASK', passed: false, recalled: false });
+  });
+
+  it('is recalled when the mentions hold', () => {
+    const ask = expectOf({ actions: ['ASK'], text: { mentions: ['이민수', '김민수'] } });
+
+    expect(scoreTurn(turn({ steps: [[minsuSeveral]], text: '이민수, 김민수 중 누구요' }), ask, names).recalled).toBe(
+      true,
+    );
   });
 });
 

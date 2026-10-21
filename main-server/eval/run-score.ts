@@ -6,10 +6,10 @@
 
 import { z } from 'zod';
 import { addTokens, costOf, NO_TOKENS, pricesSchema, type Tokens } from './cost.ts';
-import { type Kind, kindsOf } from './expect.ts';
+import { KINDS, type Kind, kindsOf } from './expect.ts';
 import { namesOf } from './normalise.ts';
 import type { CaseRun } from './runner.ts';
-import { type CaseScore, scoreCase, type TurnScore } from './score.ts';
+import { type CaseScore, type Check, scoreCase, type TurnScore } from './score.ts';
 import { type FailureKind, usageOf } from './trace.ts';
 
 // A run scored (spec P19, "The scorecard"): its cases by the scorer's rules (eval/score.ts), summed into the
@@ -41,7 +41,8 @@ export interface CategoryScore {
 export interface RunScore {
   saved: SavedRun;
   cases: CaseScore[];
-  recall: Record<Kind, { expected: number; recalled: number }>;
+  // Per kind, in the order of KINDS.
+  recall: { kind: Kind; expected: number; recalled: number }[];
   // Turns that called every required tool and no forbidden one.
   toolSelection: { turns: number; correct: number };
   args: { expected: number; matched: number };
@@ -65,30 +66,20 @@ function sumOf<T>(items: readonly T[], value: (item: T) => number): number {
 }
 
 // A turn counts toward the kinds of the action it took when the case accepts it, else toward those of the first action
-// the case accepts, and is recalled when the action it took is accepted.
+// the case accepts, and is recalled when the action is accepted and, when it asks, the text holds the mentions.
 function recallOf(turns: readonly TurnScore[]): RunScore['recall'] {
-  const recallFor = (kind: Kind): { expected: number; recalled: number } => {
+  return KINDS.map((kind) => {
     const counted = turns.filter(({ action, accepted }) => {
       const gold = action !== null && accepted.includes(action) ? action : accepted[0];
       return gold !== undefined && kindsOf(gold).includes(kind);
     });
-    return {
-      expected: counted.length,
-      recalled: countOf(counted, ({ action, accepted }) => action !== null && accepted.includes(action)),
-    };
-  };
-  return {
-    TOOL: recallFor('TOOL'),
-    ASK: recallFor('ASK'),
-    PROPOSE: recallFor('PROPOSE'),
-    REFUSE: recallFor('REFUSE'),
-    CHAT: recallFor('CHAT'),
-  };
+    return { kind, expected: counted.length, recalled: countOf(counted, ({ recalled }) => recalled) };
+  });
 }
 
 function categoriesOf(cases: readonly CaseScore[]): Record<string, CategoryScore> {
   const categories: Record<string, CategoryScore> = {};
-  for (const { run, passed, turns } of cases) {
+  for (const { run, passed } of cases) {
     const category = (categories[run.category] ??= {
       runs: 0,
       passed: 0,
@@ -103,9 +94,10 @@ function categoriesOf(cases: readonly CaseScore[]): Record<string, CategoryScore
       category.knownRuns += 1;
       category.knownPassed += passed ? 1 : 0;
     }
-    for (const { score } of turns) {
-      if (score !== null && score.failure !== null) {
-        category.failures[score.failure] += 1;
+    // Every turn that ran, scored or not.
+    for (const { failure } of run.turns) {
+      if (failure !== null) {
+        category.failures[failure] += 1;
       }
     }
   }
@@ -148,7 +140,7 @@ function usageOfRun(saved: SavedRun): RunScore['usage'] {
 function toolsOf(
   turns: readonly TurnScore[],
 ): Pick<RunScore, 'toolSelection' | 'args' | 'overCalling' | 'underCalling'> {
-  const toolChecks = new Set(['tools.required', 'tools.forbidden']);
+  const toolChecks = new Set<Check['name']>(['tools.required', 'tools.forbidden']);
   return {
     toolSelection: {
       turns: turns.length,
@@ -187,4 +179,56 @@ export function scoreRun(written: unknown): RunScore {
     passK: passKOf(cases),
     usage: usageOfRun(saved),
   };
+}
+
+// Each case by id, passing only when every run of it passed.
+export function passedById(score: RunScore): Map<string, { passed: boolean; knownFailure: string | null }> {
+  return new Map(
+    [...runsById(score.cases)].map(([id, runs]) => [
+      id,
+      { passed: runs.every(({ passed }) => passed), knownFailure: runs[0]?.run.knownFailure ?? null },
+    ]),
+  );
+}
+
+export function totalFailures(score: RunScore, kind: FailureKind): number {
+  return Object.values(score.categories).reduce((total, { failures }) => total + failures[kind], 0);
+}
+
+// The categories summed.
+export function allCategories(score: RunScore): Omit<CategoryScore, 'failures'> {
+  return Object.values(score.categories).reduce(
+    (total, category) => ({
+      runs: total.runs + category.runs,
+      passed: total.passed + category.passed,
+      knownRuns: total.knownRuns + category.knownRuns,
+      knownPassed: total.knownPassed + category.knownPassed,
+    }),
+    { runs: 0, passed: 0, knownRuns: 0, knownPassed: 0 },
+  );
+}
+
+// Steps and seconds per turn sent, or null when none was.
+export function averagesOf(score: RunScore): { steps: number | null; latencySeconds: number | null } {
+  const { turns, steps, latencyMs } = score.usage;
+  return turns === 0
+    ? { steps: null, latencySeconds: null }
+    : { steps: steps / turns, latencySeconds: latencyMs / turns / 1000 };
+}
+
+function shownSetting(value: unknown): string {
+  if (value === null || value === undefined) {
+    return 'default';
+  }
+  if (Array.isArray(value)) {
+    return value.length === 0 ? 'all' : value.join(', ');
+  }
+  return typeof value === 'string' ? value : JSON.stringify(value);
+}
+
+// The run's options but its prices, each as text.
+export function settingsOf(score: RunScore): [string, string][] {
+  return Object.entries(score.saved.options)
+    .filter(([name]) => name !== 'prices')
+    .map(([name, value]) => [name, shownSetting(value)]);
 }

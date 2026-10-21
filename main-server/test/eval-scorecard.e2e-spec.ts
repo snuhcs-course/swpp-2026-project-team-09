@@ -146,6 +146,26 @@ describe('The scorecard', () => {
   });
 });
 
+describe('The replies to review', () => {
+  it('are those of the ambiguous-intent category, by category, and of cases accepting REFUSE or CHAT', () => {
+    const ambiguous = expectSchema.parse({ actions: ['TOOL+ASK'], text: { mentions: ['약속'] } });
+    const card = scorecard(
+      scoreRun(
+        savedRun('review', [
+          caseRun('ambiguous-a', 'ambiguous-intent', ambiguous, [trace('약속 잡아 드릴까요', [menusCall], ['dining'])]),
+          caseRun('menus-c', 'menus', ambiguous, [trace('약속도 잡을까요', [menusCall], ['dining'])]),
+          caseRun('chat-b', 'small-talk', chat, [trace('안녕하세요!')]),
+        ]),
+      ),
+    );
+    const replies = card.slice(card.indexOf('## Replies to review'));
+
+    expect(replies).toContain('### ambiguous-a');
+    expect(replies).toContain('### chat-b');
+    expect(replies).not.toContain('menus-c');
+  });
+});
+
 describe('A saved run', () => {
   it('is scored again on its own, the scorecard written beside it', () => {
     const directory = mkdtempSync(join(tmpdir(), 'eval-score-'));

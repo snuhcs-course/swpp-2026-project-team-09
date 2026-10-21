@@ -10,7 +10,7 @@ import { openRouterModel } from '../src/assistant/adapter.js';
 import { loadCases, repetitionsOf, selectCases, sentTurnsOf } from './cases.ts';
 import { dotEnv, runOptionsFromEnv } from './options.ts';
 import { expectSchema } from './expect.ts';
-import { namesOf } from './normalise.ts';
+import { type Names, namesOf } from './normalise.ts';
 import { type EvalApp, runCase, RunLog, startEvalApp } from './runner.ts';
 import { scoreTurn } from './score.ts';
 import { saveScorecard } from './scorecard.ts';
@@ -24,8 +24,8 @@ import { seedWorld, type World } from './world.ts';
 const options = runOptionsFromEnv();
 const cases = selectCases(loadCases(), options.categories, options.caseIds);
 const log = new RunLog(options);
-// The app and its world, once started.
-const started: { evalApp?: EvalApp; world?: World } = {};
+// The app and its world, once started, and the world's ids by seed name for the scorer.
+const started: { evalApp?: EvalApp; world?: World; names?: Names } = {};
 
 beforeAll(async () => {
   // The team's OpenRouter key, from main-server/.env. Never printed.
@@ -39,7 +39,8 @@ beforeAll(async () => {
     options,
   );
   started.world = await seedWorld(started.evalApp.app);
-  log.seeds = started.world.seeds;
+  started.names = namesOf(started.world.seeds);
+  log.keepSeeds(started.world.seeds);
 });
 
 afterAll(async () => {
@@ -65,8 +66,8 @@ for (const { evalCase, repetition, name } of runs) {
   it(
     name,
     async ({ skip }) => {
-      const { evalApp, world } = started;
-      if (evalApp === undefined || world === undefined) {
+      const { evalApp, world, names } = started;
+      if (evalApp === undefined || world === undefined || names === undefined) {
         throw new Error('The app did not start');
       }
       if (log.overBudget()) {
@@ -75,8 +76,7 @@ for (const { evalCase, repetition, name } of runs) {
       log.add(
         await runCase(evalApp, world, evalCase, repetition, options, {
           // A live turn with no expectation of its own goes on.
-          passed: (turn, expect) =>
-            expect === null || scoreTurn(turn, expectSchema.parse(expect), namesOf(world.seeds)).passed,
+          passed: (turn, expect) => expect === null || scoreTurn(turn, expectSchema.parse(expect), names).passed,
           turnEnded: (turn) => {
             log.countTurn(turn);
           },

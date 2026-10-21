@@ -56,8 +56,29 @@ Built on `2.0/P19-02-scorer`, from `2.0/P19-01-runner` (PR #108, not merged yet)
   - In a live case, a turn with its own `expect` is scored; the last turn falls back to the case's `expect`.
 - The real-model run of ticket 01 is still open; no run of the scorer against real traces yet.
 
+### Review fixes (2026-10-22)
+
+After the two-axis review of 7b356f2; these replace the matching decisions above.
+
+- TOOL follows the spec: cards or map buttons shown, or a lookup answered `none` and the case gives mentions that
+  the text holds. A lookup that found something and showed nothing is no action.
+- An ASK read from the trace alone (a resolver's `several`/`none`, proposeQuest's `refused`) is still classified ASK,
+  so a wrong one shows, but it counts as right and recalled only when the case's mentions hold (`TurnScore.recalled`,
+  which the action check uses too). The same holds for the ASK part of TOOL+ASK and PROPOSE+ASK.
+- Failure kinds per category count every turn that ran, scored or not.
+- Over-calling is counted call by call: each call outside `required ∪ allowed` or forbidden, else each repeat of an
+  earlier identical call.
+- The replies to review are those of cases that accept REFUSE or CHAT and of the category `ambiguous-intent` (the
+  name ticket 03 is to use; `REVIEWED_CATEGORIES` in `eval/scorecard.ts`).
+- Left as is, as agreed: a case that accepts only PROPOSE reads a Proposal with a question as PROPOSE; cards alone
+  mean TOOL.
+- Standards: the arithmetic over a scored run moved to `eval/run-score.ts` (one `averagesOf` for the scorecard and the
+  comparison); `recall` is a list over `KINDS`; `Outcome` comes from one `as const` list; `proposalMismatches`;
+  `RunLog.keepSeeds`. The `expect` schema is unchanged.
+
 ### Agent usage (2026-10-22)
 
-- Agent time: about 1 hour (estimate), the scorer subagent's session in its worktree.
-- Tokens (estimate, this session only): about 10M input, of which about 9.6M cache reads and 0.3M cache writes, and
-  about 70k output. No subagents.
+- Agent time: about 1 hour 30 minutes (estimate), the scorer subagent's session in its worktree, the review fixes
+  included.
+- Tokens (estimate, this session only): about 17M input, of which about 16.4M cache reads and 0.4M cache writes, and
+  about 100k output. No subagents.
