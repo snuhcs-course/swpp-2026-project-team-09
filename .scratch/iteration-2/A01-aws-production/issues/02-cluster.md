@@ -1,6 +1,6 @@
 # 02: The cluster: nodes, add-ons, load balancer controller, namespace, and access
 
-Parent: [spec](../spec.md)
+Parent: [A01 spec](../spec.md)
 Status: ready-for-agent
 Blocked by: 01 (the root configuration, the VPC, and the deploy role)
 Touches: `infra/production/terraform/` only.

@@ -1,6 +1,6 @@
 # 04: The manifests, the admin site's image and health routes, and case-sensitive routing
 
-Parent: [spec](../spec.md)
+Parent: [A01 spec](../spec.md)
 Status: ready-for-agent
 Blocked by: None (can start immediately)
 Touches: the Kustomize base in `infra/production/k8s/`, the admin site (its Dockerfile, `.dockerignore`, Next.js configuration, two health routes, and their tests), the main server's routing setup and one test, and one new job in the CI workflow. Not the database Job in `infra/production/k8s/` (ticket 03), not the main-server and match-server Dockerfiles (ticket 03), not `admin/README.md` (ticket 07).

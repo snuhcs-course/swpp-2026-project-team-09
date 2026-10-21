@@ -2,7 +2,7 @@
 
 All sources were accessed on 2026-10-21 or 2026-10-22. Prices are in USD, on-demand, in Seoul (`ap-northeast-2`). Thirty days count as 720 hours. `[S1]`-style links point to the Sources list at the end.
 
-This note holds only the facts. The design built on them is in `.scratch/iteration-3/aws-production/spec.md`, and ADR 0006 records why.
+This note holds only the facts. The design built on them is in `.scratch/iteration-2/A01-aws-production/spec.md`, and ADR 0006 records why.
 
 ## 1. AWS accounts and credits
 

@@ -1,6 +1,6 @@
 # 01: The Terraform base: state, network, image registries, deploy role, and budget
 
-Parent: [spec](../spec.md)
+Parent: [A01 spec](../spec.md)
 Status: ready-for-agent
 Blocked by: None (can start immediately)
 Touches: `infra/production/terraform/` (new), the first section of `infra/production/README.md` (new), and one new job in the CI workflow. Not `infra/production/k8s/`, which ticket 04 owns.

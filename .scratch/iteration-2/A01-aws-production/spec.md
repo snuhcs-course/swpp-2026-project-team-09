@@ -408,7 +408,7 @@ The first apply, real Releases, and the console settings happen against AWS, whi
 
 ## Further Notes
 
-- **Schedule.** The schedule has no row for this yet. The Iteration 3 kickoff on 10/24 adds one, such as "Deploy to production on AWS" with deadline 11/06, and this folder takes its Task ID then. The schedule will name 윤유상 and 김태현 as the workers. Production must answer before the user-testing submission on 11/13.
+- **Schedule.** This is Iteration 2's unexpected task A1 (folder `A01`), and its implementation continues into Iteration 3. The workers are 윤유상 and 김태현. Production must answer before the user-testing submission on 11/13.
 - **Suggested tickets**, each one pull request:
   1. The Terraform base: the state bucket bootstrap, the VPC, ECR, the deploy role, and the budget.
   2. The cluster: the node group, the add-ons, the load balancer controller, the namespace, and the access entries.

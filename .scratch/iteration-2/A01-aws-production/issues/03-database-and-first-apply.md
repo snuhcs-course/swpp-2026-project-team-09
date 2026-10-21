@@ -1,6 +1,6 @@
 # 03: The database and its setup Job, confirmed on a first apply in account A
 
-Parent: [spec](../spec.md)
+Parent: [A01 spec](../spec.md)
 Status: ready-for-agent
 Blocked by: 02 (the cluster and the `snunow` namespace that the Job and the check pod run in)
 Touches: `infra/production/terraform/` (the database), `infra/production/k8s/` outside the Kustomize base (the Job), the main-server and match-server Dockerfiles (the CA bundle), and the runbook's database section. Not the Kustomize base, which ticket 04 owns.

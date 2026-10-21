@@ -1,6 +1,6 @@
 # 06: The certificate and the DNS records
 
-Parent: [spec](../spec.md)
+Parent: [A01 spec](../spec.md)
 Status: ready-for-agent
 Blocked by: 01 (the root configuration)
 Touches: `infra/production/terraform/` only, in files of its own beside the variables and outputs it adds.

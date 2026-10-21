@@ -1,6 +1,6 @@
 # 08: The rest of the first setup, and the checks by hand
 
-Parent: [spec](../spec.md)
+Parent: [A01 spec](../spec.md)
 Status: ready-for-human
 Blocked by: 01, 02, 03, 04, 05, 06, 07, all merged into the iteration branch
 

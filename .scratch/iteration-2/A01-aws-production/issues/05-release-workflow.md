@@ -1,6 +1,6 @@
 # 05: The Release workflow and CI's call for it
 
-Parent: [spec](../spec.md)
+Parent: [A01 spec](../spec.md)
 Status: ready-for-agent
 Blocked by: 03 (the confirmed `DATABASE_URL` form and the database output), 04 (the manifests and the admin image). Tickets 01 and 02 come before 03.
 Touches: `.github/workflows/release.yml` (new) and `.github/workflows/ci.yml` (its trigger, its input, and which jobs run when called). Nothing else.

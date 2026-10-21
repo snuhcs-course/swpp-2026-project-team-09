@@ -1,6 +1,6 @@
 # 07: The runbook, the tool guide, and the README changes
 
-Parent: [spec](../spec.md)
+Parent: [A01 spec](../spec.md)
 Status: ready-for-agent
 Blocked by: 01, 02, 03, 04, 05, 06 (the names and commands the runbook describes)
 Touches: `infra/production/README.md` (beyond ticket 01's and ticket 03's sections), the root `README.md`, and `admin/README.md`.
