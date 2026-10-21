@@ -4,13 +4,77 @@
 # 2026-10-22  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
-# Menus: a lookup with the right day and meal, and the dining button. The sample case of ticket 01; ticket 03 writes
-# the rest. `expect` is in the spec's format (P19 spec, "Cases"), which the scorer of ticket 02 reads.
+# Menus: a lookup with the right day and meal, and the dining button (P07's open question: the map button after a menu
+# answer). The run's clock stands at 2026-10-21 (수) 14:05; the menus are those of eval/world.ts.
 
 - id: menus-today-lunch
   category: menus
+  repeat: 3
   turns:
     - user: 오늘 점심 학식 뭐 나와?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getMenus, showOnMap]
+      forbidden: [proposeQuest]
+    args:
+      getMenus: { date: '2026-10-21', meal: lunch }
+    mapButtons: [dining]
+    text:
+      mentions: [제육볶음]
+
+- id: menus-tomorrow-breakfast
+  category: menus
+  turns:
+    - user: 내일 아침 학식 메뉴 알려줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getMenus, showOnMap]
+      forbidden: [proposeQuest]
+    args:
+      getMenus: { date: '2026-10-22', meal: breakfast }
+    mapButtons: [dining]
+    text:
+      mentions: [토스트]
+
+- id: menus-today-dinner-restaurant
+  category: menus
+  turns:
+    - user: 오늘 저녁 자하연식당 뭐 나와?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getMenus, showOnMap]
+      forbidden: [proposeQuest]
+    args:
+      getMenus: { date: '2026-10-21', meal: dinner }
+    mapButtons: [dining]
+    text:
+      mentions: [순두부찌개]
+
+- id: menus-tomorrow-whole-day
+  category: menus
+  turns:
+    - user: 내일 학식 하루치 전부 보여줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getMenus, showOnMap]
+      forbidden: [proposeQuest]
+    args:
+      getMenus: { date: '2026-10-22' }
+    mapButtons: [dining]
+    text:
+      mentions: [토스트, 닭갈비덮밥, 카레라이스]
+
+# "학관" is what students call 학생회관 (63동), but the restaurant filter matches substrings, and 학생회관식당 does not
+# hold 학관: a getMenus with restaurant 학관 answers none.
+- id: menus-abbreviation-hakgwan
+  category: menus
+  knownFailure: '"학관" is not read as 학생회관: names are matched as substrings, and 학생회관식당 does not hold 학관'
+  turns:
+    - user: 학관 점심 뭐야?
   expect:
     actions: [TOOL]
     tools:

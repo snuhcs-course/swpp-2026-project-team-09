@@ -1,0 +1,36 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Small talk: CHAT, short, with no tool called. To recommend a meal the Assistant first asks what the User feels like.
+
+- id: small-talk-greeting
+  category: small-talk
+  turns:
+    - user: 안녕! 넌 누구야?
+  expect:
+    actions: [CHAT]
+    tools:
+      forbidden: '*'
+
+- id: small-talk-tired
+  category: small-talk
+  turns:
+    - user: 아 오늘 수업 너무 많아서 피곤하다
+  expect:
+    actions: [CHAT]
+    tools:
+      forbidden: '*'
+
+- id: small-talk-meal-recommendation-asks-taste
+  category: small-talk
+  turns:
+    - user: 저녁 뭐 먹을지 추천해줘
+  expect:
+    actions: [CHAT]
+    tools:
+      forbidden: '*'
+    text:
+      mentions: [[한식, 일식, 양식, 중식, 어떤, 당기, 땡기]]

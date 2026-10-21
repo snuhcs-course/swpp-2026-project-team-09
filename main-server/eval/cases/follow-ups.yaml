@@ -1,0 +1,142 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Follow-ups with a fixed history: the earlier turns are written as the app sends them back, and only the last is
+# scored. The Assistant keeps no record of its tool calls between turns (P20's plan, 1), so today it resolves again
+# what an earlier turn settled; resolvers are allowed here, not required, so that improvement 3-4 needs no edit.
+
+- id: follow-up-chosen-minsu
+  category: follow-ups
+  turns:
+    - user: 내일 점심에 학생회관에서 민수랑 밥 약속 잡아줘
+    - assistant:
+        text: 민수라는 친구가 두 명 있어요. 이민수, 김민수 중 누구와 약속을 잡을까요?
+    - user: 이민수
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+      allowed: [resolveFriend, resolvePlace]
+    proposal:
+      joinPolicy: closed
+      capacity: 2
+      startsAt: '2026-10-22 12:00'
+      place: 학생회관
+      invitees: [이민수]
+
+# The ideal first turn told the two 박서준 apart; "두 번째 거" is the one of 물리천문학부.
+- id: follow-up-second-same-name-friend
+  category: follow-ups
+  knownFailure: 'Resolving 박서준 again answers both, and nothing tells them apart, until improvement 3-4 and a resolveFriend that returns something distinguishing'
+  turns:
+    - user: 내일 저녁 6시에 서준이랑 학생회관에서 밥 약속 잡아줘
+    - assistant:
+        text: 박서준이라는 친구가 두 명 있어요. 1. 박서준 (경영학과) 2. 박서준 (물리천문학부) 중 누구와 약속을 잡을까요?
+    - user: 두 번째 거
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+      allowed: [resolveFriend, resolvePlace]
+    proposal:
+      joinPolicy: closed
+      capacity: 2
+      startsAt: '2026-10-22 18:00'
+      place: 학생회관
+      invitees: [박서준 (물리천문학부)]
+
+# "7시" after a lunch Proposal most likely means 19:00; propose that, and ask whether 07:00 was meant.
+- id: follow-up-seven-oclock
+  category: follow-ups
+  turns:
+    - user: 내일 점심 학생회관에서 이민수랑 밥 약속 잡아줘
+    - assistant:
+        text: 내일 점심 약속을 제안했어요. 만들기를 누르기 전에는 아무것도 만들어지지 않아요.
+        proposal:
+          title: 이민수와 점심
+          description: 학생회관에서 점심 먹기
+          joinPolicy: closed
+          board: null
+          capacity: 2
+          startsAt: '2026-10-22T12:00:00+09:00'
+          place: 학생회관
+          globalEvent: null
+          invitees: [이민수]
+    - user: 7시로 바꿔줘
+  expect:
+    actions: [PROPOSE+ASK]
+    tools:
+      required: [proposeQuest]
+      allowed: [resolveFriend, resolvePlace]
+    proposal:
+      joinPolicy: closed
+      capacity: 2
+      startsAt: '2026-10-22 19:00'
+      place: 학생회관
+      invitees: [이민수]
+    text:
+      mentions: [[오전 7시, 아침 7시, 오전, 아침, '07:00', '7:00']]
+
+# Cards are shown only from a search in this message, so narrowing searches again.
+- id: follow-up-narrow-to-weekend
+  category: follow-ups
+  turns:
+    - user: 운동 파티 있어?
+    - assistant:
+        text: 운동 파티를 찾았어요.
+        cards:
+          - { kind: quest, seed: 저녁 농구 한 판 }
+          - { kind: quest, seed: 아침 러닝 크루 }
+          - { kind: quest, seed: 주말 배드민턴 }
+    - user: 그중에 주말 거만 보여줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      forbidden: [proposeQuest]
+    cards:
+      - kind: quest
+        seeds: [주말 배드민턴]
+        max: 1
+
+- id: follow-up-make-instead
+  category: follow-ups
+  turns:
+    - user: 내일 저녁에 농구하는 파티 있어?
+    - assistant:
+        text: 내일 저녁 7시 농구 파티가 하나 있어요.
+        cards:
+          - { kind: quest, seed: 저녁 농구 한 판 }
+    - user: 이거 말고 내가 새로 하나 만들래. 내일 저녁 8시, 나 포함 6명, 공개로
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 6
+      startsAt: '2026-10-22 20:00'
+
+# After the ambiguous-intent answer of 3-1, the User takes up the other reading.
+- id: follow-up-yes-after-menus
+  category: follow-ups
+  turns:
+    - user: 내일 학생회관에서 점심
+    - assistant:
+        text: 내일 학생회관식당 점심은 닭갈비덮밥(6,000원)이에요. 혹시 내일 점심 약속을 잡아 드릴까요? 같이 갈 친구를 알려 주세요.
+    - user: 응 김지은이랑
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+      allowed: [resolveFriend, resolvePlace]
+    proposal:
+      joinPolicy: closed
+      capacity: 2
+      startsAt: '2026-10-22 12:00'
+      place: 학생회관
+      invitees: [김지은]

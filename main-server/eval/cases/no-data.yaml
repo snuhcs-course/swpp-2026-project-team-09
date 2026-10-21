@@ -1,0 +1,66 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# No data: the lookup answers none, and the text says plainly that there is none. 2026-10-23 (금, 모레) has no menus, no
+# Global Event and no 식사 파티 in eval/world.ts, and 자하연식당 serves no breakfast.
+
+- id: no-data-menus-day-after-tomorrow
+  category: no-data
+  turns:
+    - user: 모레 학식 뭐 나와?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getMenus]
+      allowed: [showOnMap]
+      forbidden: [proposeQuest]
+    args:
+      getMenus: { date: '2026-10-23' }
+    text:
+      mentions: [[없, 않]]
+
+- id: no-data-restaurant-breakfast
+  category: no-data
+  turns:
+    - user: 내일 자하연식당 아침 메뉴 뭐야?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getMenus]
+      allowed: [showOnMap]
+      forbidden: [proposeQuest]
+    args:
+      getMenus: { date: '2026-10-22' }
+    text:
+      mentions: [[없, 않]]
+
+- id: no-data-events-day-after-tomorrow
+  category: no-data
+  turns:
+    - user: 모레 학교에서 열리는 행사 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents]
+      forbidden: [proposeQuest, showGlobalEvents]
+    args:
+      searchGlobalEvents: { from: '2026-10-23', to: '2026-10-23' }
+    text:
+      mentions: [[없, 않]]
+
+- id: no-data-meal-parties-day-after-tomorrow
+  category: no-data
+  turns:
+    - user: 모레 같이 밥 먹는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests]
+      forbidden: [proposeQuest, showQuests]
+    args:
+      searchRecruitingQuests: { board: meal, from: '2026-10-23', to: '2026-10-23' }
+    text:
+      mentions: [[없, 않]]

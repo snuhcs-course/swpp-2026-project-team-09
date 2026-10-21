@@ -1938,6 +1938,19 @@ it). A run is saved as `eval/results/<date>-<commit>-<model>-<settings>.json`, e
 is ignored by git; commit a run worth keeping with `git add -f`. `test/eval-runner.e2e-spec.ts` and
 `test/eval-options.e2e-spec.ts` test the runner with the scripted model in `pnpm test`.
 
+#### The world and the cases
+
+The 62 cases are one YAML file per category under `eval/cases/` (menus, shuttle, global-events, finding-parties,
+making-parties, missing-or-ambiguous-target, ambiguous-intent, no-data, out-of-scope, small-talk, follow-ups, live,
+compound). They name the world by seed name: what the world holds is in `eval/world-data.ts` (the asking User, the
+Friends, the Places of the shared seed, the Global Events, the 파티, the menus and the shuttle's vehicles), and
+`eval/world.ts` seeds it with the e2e helpers into the run's fresh database. The shuttle's vehicles are stored anew
+before each case, since the server forgets them after a minute. The world and the cases change together:
+`test/eval-cases.e2e-spec.ts` checks in `pnpm test` that every case fits the schema, that the set has the spec's
+categories and counts, that every seed name a case gives is in the world as that kind of thing, and that the tools
+answer in the world what the cases expect (for example that 민수 names two Friends and that 2026-10-23 has no menus).
+It seeds the world into a database of its own, as `test/eval-runner.e2e-spec.ts` does.
+
 #### Scoring
 
 `pnpm eval` writes the scorecard beside the raw JSON, as `<run>.md`. Scoring never calls the model:

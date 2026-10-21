@@ -73,6 +73,7 @@ for (const { evalCase, repetition, name } of runs) {
       if (log.overBudget()) {
         skip(`The budget of USD ${options.budgetUsd} is spent`);
       }
+      await world.refresh();
       log.add(
         await runCase(evalApp, world, evalCase, repetition, options, {
           // A live turn with no expectation of its own goes on.

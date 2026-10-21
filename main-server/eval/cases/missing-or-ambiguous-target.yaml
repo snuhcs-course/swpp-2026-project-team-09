@@ -1,0 +1,109 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Missing or ambiguous target: no Proposal, but one question that names the candidates or the missing fields. P07's
+# open question and P20's plan: on a resolver's 'several', ask which one, listing them, and never pick. The run's
+# clock stands at 2026-10-21 (수) 14:05, so today's lunch has passed.
+
+- id: ask-which-minsu
+  category: missing-or-ambiguous-target
+  repeat: 3
+  turns:
+    - user: 내일 점심에 학생회관에서 민수랑 밥 약속 잡아줘
+  expect:
+    actions: [ASK]
+    tools:
+      required: [resolveFriend]
+      allowed: [resolvePlace, proposeQuest]
+    args:
+      resolveFriend: { name: 민수 }
+    text:
+      mentions: [이민수, 김민수]
+
+# Both Friends are named 박서준; the question must tell them apart by something other than the name.
+- id: ask-which-same-name-friend
+  category: missing-or-ambiguous-target
+  knownFailure: 'resolveFriend returns only names and ids, so nothing tells two Friends named 박서준 apart (proposed for P20)'
+  turns:
+    - user: 내일 저녁 6시에 서준이랑 학생회관에서 밥 약속 잡아줘
+  expect:
+    actions: [ASK]
+    tools:
+      required: [resolveFriend]
+      allowed: [resolvePlace, proposeQuest]
+    text:
+      mentions: [박서준, [경영, 물리, 학과, 아이디, ID]]
+
+- id: ask-which-festival-event
+  category: missing-or-ambiguous-target
+  turns:
+    - user: 축제 같이 갈 파티 만들어줘. 이민수랑 김지은 초대해서
+  expect:
+    actions: [ASK]
+    tools:
+      required: [resolveGlobalEvent]
+      allowed: [resolveFriend, searchGlobalEvents, proposeQuest]
+    text:
+      mentions: [[관악 가을 축제, 가을 축제], 개막 공연]
+
+- id: ask-which-engineering-building
+  category: missing-or-ambiguous-target
+  turns:
+    - user: 내일 저녁 7시에 공학관에서 김지은이랑 스터디 약속 잡아줘
+  expect:
+    actions: [ASK]
+    tools:
+      required: [resolvePlace]
+      allowed: [resolveFriend, proposeQuest]
+    text:
+      mentions: [[제1공학관, 제2공학관, 공학관1, 공학관2, 공학관3, 301동, 302동, 어느 공학관, 어떤 공학관, 몇 동]]
+
+- id: ask-missing-time
+  category: missing-or-ambiguous-target
+  turns:
+    - user: 이민수랑 밥 약속 잡아줘
+  expect:
+    actions: [ASK]
+    tools:
+      allowed: [resolveFriend, proposeQuest]
+    text:
+      mentions: [[언제, 몇 시, 날짜, 시간]]
+
+# proposeQuest refuses a start in the past: 12:00 today is before 14:05.
+- id: ask-lunch-already-past
+  category: missing-or-ambiguous-target
+  turns:
+    - user: 오늘 점심 약속 잡아줘
+  expect:
+    actions: [ASK]
+    tools:
+      allowed: [proposeQuest]
+    text:
+      mentions: [[지났, 지난, 이미], [몇 시, 언제, 시간]]
+
+- id: ask-unknown-friend
+  category: missing-or-ambiguous-target
+  turns:
+    - user: 내일 점심에 박지훈이랑 밥 약속 잡아줘
+  expect:
+    actions: [ASK]
+    tools:
+      required: [resolveFriend]
+      allowed: [proposeQuest]
+    text:
+      mentions: [박지훈, [없, 찾을 수 없, 찾지 못]]
+
+# Every missing field in one question: when, and how many people.
+- id: ask-missing-fields-in-one-question
+  category: missing-or-ambiguous-target
+  turns:
+    - user: 운동 파티 하나 모집해줘
+  expect:
+    actions: [ASK]
+    tools:
+      allowed: [proposeQuest]
+    text:
+      mentions: [[언제, 몇 시, 날짜, 시간], [몇 명, 인원, 몇 분]]

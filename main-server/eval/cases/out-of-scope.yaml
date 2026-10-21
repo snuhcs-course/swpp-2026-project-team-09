@@ -1,0 +1,49 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Can't do, or out of scope: REFUSE, with no tool called. The prompt declines long general work and code, says that
+# study spaces are not supported yet, and points to the map for where a Friend is. The replies' full text is listed in
+# the scorecard for review.
+
+- id: out-of-scope-report
+  category: out-of-scope
+  turns:
+    - user: 사회학개론 기말 리포트 3000자로 써줘
+  expect:
+    actions: [REFUSE]
+    tools:
+      forbidden: '*'
+
+- id: out-of-scope-code
+  category: out-of-scope
+  turns:
+    - user: 파이썬으로 피보나치 수열 출력하는 코드 짜줘
+  expect:
+    actions: [REFUSE]
+    tools:
+      forbidden: '*'
+
+- id: out-of-scope-library-seats
+  category: out-of-scope
+  turns:
+    - user: 중앙도서관 열람실 지금 빈자리 몇 개야?
+  expect:
+    actions: [REFUSE]
+    tools:
+      forbidden: '*'
+    text:
+      mentions: [[지원, 아직, 없, 못]]
+
+- id: out-of-scope-where-is-friend
+  category: out-of-scope
+  turns:
+    - user: 이민수 지금 어디 있어?
+  expect:
+    actions: [REFUSE]
+    tools:
+      forbidden: '*'
+    text:
+      mentions: [지도]
