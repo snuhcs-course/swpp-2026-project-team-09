@@ -110,7 +110,7 @@ Under the team folder `/srv/team`, which the course gives the team group with a 
 
 ### The bootstrap
 
-One idempotent script, run with sudo on a fresh server and safe to run again: installs `docker.io`, `docker-compose-v2` and `docker-buildx` from Ubuntu's archive (Docker 29, Compose 2.40), and `git` and `curl` if they are missing; creates the folders with the team folder's group; clones the repository on `development` (public, no key); marks the checkout safe for git under root; writes the settings file with generated values and placeholders if it does not exist; installs the five units and enables and starts the two timers. It does not fill in the person-held values and does not deploy: until a person fills them in, every deploy run stops at `secrets-missing`.
+One idempotent script, run with sudo on a fresh server and safe to run again: installs `docker.io`, `docker-compose-v2` and `docker-buildx` from Ubuntu's archive (Docker 29, Compose 2.40), and `git`, `curl` and `jq` if they are missing; creates the folders with the team folder's group; clones the repository on `development` (public, no key); marks the checkout safe for git under root; writes the settings file with generated values and placeholders if it does not exist; installs the five units and enables and starts the two timers. It does not fill in the person-held values and does not deploy: until a person fills them in, every deploy run stops at `secrets-missing`.
 
 ### The APK
 

@@ -3,6 +3,7 @@
 #
 # 2026-10-01  Opus 5.5   prompted by fyoon46
 # 2026-10-06  Fable 5.1  prompted by fyoon46
+# 2026-10-17  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 name: CI
@@ -49,3 +50,14 @@ jobs:
       - run: pnpm format:check
       - run: pnpm typecheck
       - run: pnpm test
+
+  # The Dev Server's shell scripts and their tests. The deploy script does not wait for this check.
+  deploy-scripts:
+    name: deploy-scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends bats shellcheck jq
+      - run: find infra/deploy \( -name '*.sh' -o -name '*.bats' \) -print0 | xargs -0 shellcheck
+      - run: bats --recursive infra/deploy

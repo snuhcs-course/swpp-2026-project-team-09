@@ -1,0 +1,34 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-17  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# The deployment stack of test/deploy-stack.flow.ts: compose.yaml and compose.deploy.yaml at the repository root with
+# this file over them. Only the proxy is published, on a free port of the loopback address instead of 80.
+services:
+  proxy:
+    ports: !override
+      - '127.0.0.1::80'
+
+  # Ready before the tests call it through the proxy.
+  socket-server:
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3001/health/ready').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 2s
+      retries: 60
+
+  # A Collection that the worker's schedule starts during the test is refused at once instead of calling the real sites.
+  worker-server:
+    extra_hosts:
+      - snuco.snu.ac.kr:127.0.0.1
+      - snudorm.snu.ac.kr:127.0.0.1
+      - vet.snu.ac.kr:127.0.0.1
+      - www.snu.ac.kr:127.0.0.1
+      - web.busin.co.kr:127.0.0.1

@@ -1,0 +1,14 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-17  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+[Unit]
+Description=Start snu-now-demo-refresh daily at 04:00 in Seoul
+
+[Timer]
+OnCalendar=*-*-* 19:00:00 UTC
+
+[Install]
+WantedBy=timers.target

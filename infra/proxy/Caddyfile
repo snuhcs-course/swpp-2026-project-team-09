@@ -1,0 +1,31 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-17  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# The Dev Server's one address (compose.deploy.yaml), in plain HTTP. The main server defines no route under /apk/ or
+# /deploy-status: this proxy answers those two itself, and a route there would never be reached.
+:80 {
+	# WebSocket upgrades included. Caddy puts no time limit on an upgraded connection, so a WebSocket lives until the
+	# ingress or one of its ends closes it.
+	handle /socket.io/* {
+		reverse_proxy socket-server:3001
+	}
+
+	# The deploy run's status file (infra/deploy).
+	handle /deploy-status {
+		root * /srv/deploy-status
+		rewrite * /status.json
+		file_server
+	}
+
+	handle /apk/* {
+		root * /srv
+		file_server browse
+	}
+
+	handle {
+		reverse_proxy main-server:3000
+	}
+}

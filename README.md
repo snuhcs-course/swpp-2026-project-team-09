@@ -23,6 +23,7 @@ site for Administrators.
 - [Running the admin site](#running-the-admin-site)
 - [Running the app](#running-the-app)
 - [Running the tests](#running-the-tests)
+- [Deployment](#deployment)
 - [Repository layout](#repository-layout)
 - [AI-generated code](#ai-generated-code)
 - [Data sources and attribution](#data-sources-and-attribution)
@@ -514,6 +515,26 @@ pnpm test
 `flow-tests` builds the servers' images the first time, which takes some minutes, and leaves a running stack and its
 data alone: [flow-tests/README.md](flow-tests/README.md).
 
+## Deployment
+
+The **Dev Server** is the team's shared server, server B of the two the course lends the team. It runs the four
+servers, PostgreSQL, Redis and the [Demo Data](#demo-data) under Docker Compose, behind a Caddy proxy, at
+`http://swpp26t09.147-46-242-174.sslip.io`. The stack is `compose.yaml` with `compose.deploy.yaml` over it.
+
+It follows the `development` branch by itself: every minute it fetches the branch and, once a new commit's server
+checks have passed in CI, rebuilds and restarts what changed. Nothing pushes to it
+([ADR 0003](docs/adr/0003-the-dev-server-pulls-its-deployments.md)). No pull request targets `development`: a team
+member fast-forwards it to `2.0/Main` from a checkout.
+
+- `/deploy-status` shows the deployed commit and the last run's result, and `/apk/` lists the dev APKs for a
+  phone's browser.
+- To build the app against it, copy the two commented lines of `mobile/.env.example` into `mobile/.env`.
+- The admin site is not deployed: run it on a laptop with `MAIN_SERVER_URL` in `admin/.env` set to the Dev Server's
+  address.
+
+The runbook, [infra/deploy/README.md](infra/deploy/README.md), says how to set up a server, read the status and the
+journal, redeploy by hand, move `development`, restore a dump and add an APK.
+
 ## Repository layout
 
 | Folder           | What it holds                                                                                 |
@@ -525,7 +546,7 @@ data alone: [flow-tests/README.md](flow-tests/README.md).
 | `admin/`         | The admin site for Administrators                                                             |
 | `mobile/`        | The app, with the native map module for Android and iOS in `modules/`                         |
 | `flow-tests/`    | Tests of the three demo flows across the four servers                                         |
-| `infra/`         | The PostgreSQL image with PostGIS, and the script that creates each server's database         |
+| `infra/`         | The PostgreSQL image with PostGIS, and the Dev Server's proxy and deployment (`deploy/`)      |
 | `docs/`          | Decision records (`adr/`), the agents' conventions (`agents/`), and the demo videos (`demo/`) |
 | `.scratch/`      | Specs and tickets of each iteration's tasks, and research notes                               |
 | `.github/`       | The CI workflow, the pull request template and the code owners                                |
@@ -535,10 +556,10 @@ data alone: [flow-tests/README.md](flow-tests/README.md).
 
 Everything the team wrote in this repository is AI-generated: the code, the tests, the CI workflow, the specs and
 tickets in `.scratch/`, and the documents, this one among them. It was written with Claude Code (Claude Fable 5.1 and
-Claude Opus 5.5) between 2026-09-28 and 2026-10-09. Each source file starts with a box comment headed
-`AI-generated with Claude`, with a row for each day an agent changed the file: the date, the Claude model, and the
-GitHub ID of the team member who prompted it. Markdown, JSON, lockfiles, Prisma migrations, and test fixtures carry no
-box and are marked by this section, and every commit of the team carries a `Co-Authored-By: Claude` trailer.
+Claude Opus 5.5) from 2026-09-28 on. Each source file starts with a box comment headed `AI-generated with Claude`,
+with a row for each day an agent changed the file: the date, the Claude model, and the GitHub ID of the team member
+who prompted it. Markdown, JSON, lockfiles, Prisma migrations, and test fixtures carry no box and are marked by this
+section, and every commit of the team carries a `Co-Authored-By: Claude` trailer.
 
 The team decided what to build, reviewed the specs and the table schemas, and checked the result on phones. Where
 something was wrong, the agent rewrote it; no code was edited by hand.

@@ -1,7 +1,7 @@
 # 03: The deploy script, its tests, and the CI job for shell
 
 Parent: [P04-05 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: None (can start immediately)
 Touches: the deploy folder (the deploy script and its tests) and the CI workflow. Not the bootstrap, the unit files or the settings example, which ticket 04 owns in the same folder.
 
@@ -19,14 +19,46 @@ Fixed here so that tickets 02 and 04 match without seeing this ticket: the deplo
 
 ## Acceptance criteria
 
-- [ ] bats: the tip equal to the last deployed commit gives `up-to-date` and no other command runs.
-- [ ] bats: all five required checks `success` gives `deploy`; one missing or `in_progress` gives `waiting-for-ci`; one `failure` gives `ci-failed` and the commit is not looked at again; a failed `admin` or `mobile` check alone still gives `deploy`.
-- [ ] bats: after a failed build, attempts 1 and 2 retry the same commit, attempt 3 gives `held`, and a new tip clears the hold.
-- [ ] bats: nine dumps give the two oldest for deletion; no running database gives no dump.
-- [ ] bats: `CHANGE_ME` in the settings file gives `secrets-missing` and no `docker` call.
-- [ ] bats: with the fakes, a successful run calls fetch, the check-runs request, the dump, reset and clean, `compose up`, the two smoke requests, the prunes, in that order, and writes a status file with every field of the spec's "The status file" and `recreatedServices` taken from Compose's output.
-- [ ] bats: the exit status is non-zero for `build-failed`, `unhealthy` and `secrets-missing`, zero otherwise.
-- [ ] `shellcheck` reports nothing on the script and the tests run green locally with `bats`.
-- [ ] The CI job runs on push beside the matrix, installs `bats` and `shellcheck` from apt, and runs them over the whole deploy folder.
-- [ ] Every new source file (the script, the tests) starts with the AI-generated box below its shebang, and the workflow file gets a new row (`CLAUDE.md`).
-- [ ] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+- [x] bats: the tip equal to the last deployed commit gives `up-to-date` and no other command runs.
+- [x] bats: all five required checks `success` gives `deploy`; one missing or `in_progress` gives `waiting-for-ci`; one `failure` gives `ci-failed` and the commit is not looked at again; a failed `admin` or `mobile` check alone still gives `deploy`.
+- [x] bats: after a failed build, attempts 1 and 2 retry the same commit, attempt 3 gives `held`, and a new tip clears the hold.
+- [x] bats: nine dumps give the two oldest for deletion; no running database gives no dump.
+- [x] bats: `CHANGE_ME` in the settings file gives `secrets-missing` and no `docker` call.
+- [x] bats: with the fakes, a successful run calls fetch, the check-runs request, the dump, reset and clean, `compose up`, the two smoke requests, the prunes, in that order, and writes a status file with every field of the spec's "The status file" and `recreatedServices` taken from Compose's output.
+- [x] bats: the exit status is non-zero for `build-failed`, `unhealthy` and `secrets-missing`, zero otherwise.
+- [x] `shellcheck` reports nothing on the script and the tests run green locally with `bats`.
+- [x] The CI job runs on push beside the matrix, installs `bats` and `shellcheck` from apt, and runs them over the whole deploy folder.
+- [x] Every new source file (the script, the tests) starts with the AI-generated box below its shebang, and the workflow file gets a new row (`CLAUDE.md`).
+- [x] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+
+## Comments
+
+### Decisions the spec left open
+
+- The previous `status.json` is the memory between runs (the deployed commit, the candidate, its attempt, held, a skipped `ci-failed`). There is no other state file.
+- JSON is read with `jq`, which the bootstrap installs.
+- A commit pushed to several branches has one run of each check per push. One `success` per required check is enough.
+- `unhealthy` counts as a failed attempt, as `build-failed` does: retried on the next two runs, then `held`.
+- A run started by hand (systemd sets no `TRIGGER_UNIT`) asks GitHub again about a `held` or `ci-failed` commit and starts again at attempt 1.
+- A refused check-runs request, such as one past GitHub's 60 an hour without a token, gives `waiting-for-ci`. A failed fetch exits non-zero and leaves the status file as it was.
+- `recreatedServices` lists the services Compose created or recreated, gathered over the attempts at one commit.
+
+### Agent usage (2026-10-17)
+
+- Agent time: about 24 minutes, an estimate: the implementer subagent and the subagent that merged its branch.
+- Tokens: input 12,509,000 in all (cache reads 12,192,000, cache writes 317,000, uncached under 1,000); output about 34,000 (estimated from what the transcripts hold, which keep only partial output counts, so a lower bound).
+- The orchestrating session, the code review and its fix round are shared by tickets 01–05 and recorded once, under ticket 05.
+
+### Review round (2026-10-17)
+
+- By hand: systemd 255 hands every later start of the service the timer's stale `TRIGGER_UNIT`, so `deploy.sh` no longer reads it. A run is by hand when it finds the request file `redeploy` in the status folder (written by the new `snu-now-redeploy.service`, removed by the run) or runs outside systemd (`INVOCATION_ID` unset).
+- `compose build` runs before `compose up --detach`: a failed build is `build-failed` and stops nothing; a failed `up` is `unhealthy`, with the new containers running and `deployedCommit` unchanged.
+- A required check with no success whose run is cancelled, stale or `action_required` gives `waiting-for-ci`, not `ci-failed`.
+- The clean step logs on success too. The tests' `[[ ]]` checks end in `|| false` for bash 3.2, `deploy.bats` is shellcheck-clean and CI shellchecks the `*.bats` files, and `fake-command.sh` is now `deploy-fakes.sh`.
+
+### Review round (2026-10-18)
+
+- As fyoon46 suggested on #82, `deploy.sh` reads `status.json` and GitHub's check-runs answer with `jq` instead of `json_flatten`, `json_value` and `json_array`, and the bootstrap installs `jq`. The status file is still written by `status_json`. The deploy tests pass unchanged; the bootstrap test expects `jq` among the packages.
+- From `2.0/Main`: the deployment hands main-server `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`. The bootstrap writes the model and an empty key, which turns only the Assistant off.
+- Agent time: about 10 minutes, an estimate: one subagent, measured just before its commits.
+- Tokens: input 7,216,000 in all (cache reads 7,033,000, cache writes 183,000, uncached under 1,000); output 531 as recorded, a lower bound, since the transcript keeps only partial output counts.
