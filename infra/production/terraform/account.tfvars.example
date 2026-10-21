@@ -12,3 +12,7 @@ team_member_iam_users = ["first-member", "second-member"]
 
 # Where the budget's alerts go, one address per team member
 budget_alert_emails = ["first-member@example.com", "second-member@example.com"]
+
+# Whether this account holds the snunow.com hosted zone: true in account A, where the domain was registered, and false
+# in account B
+holds_zone = true
