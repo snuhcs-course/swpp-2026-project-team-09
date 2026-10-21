@@ -13,7 +13,7 @@ resource "aws_budgets_budget" "spend" {
   limit_amount = "300"
   limit_unit   = "USD"
 
-  # One period that never resets. AWS excludes the end date, so the period covers 2026-12-31.
+  # One period that never resets. It ends as 2027 begins, so it covers all of 2026-12-31.
   time_unit         = "CUSTOM"
   time_period_start = formatdate("YYYY-MM-DD_00:00", time_static.budget_start.rfc3339)
   time_period_end   = "2027-01-01_00:00"

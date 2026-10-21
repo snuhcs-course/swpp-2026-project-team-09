@@ -1,8 +1,8 @@
 # production
 
 Production's infrastructure and its runbook. Production runs on Amazon EKS in AWS's Seoul Region, `ap-northeast-2`, in
-account A. Terraform builds its infrastructure, and each Release deploys the app to it
-([ADR 0006](../../docs/adr/0006-production-runs-on-eks-and-releases-are-pushed.md)).
+account A, a team member's AWS account on the Paid plan. Terraform builds its infrastructure, and each Release deploys
+the app to it ([ADR 0006](../../docs/adr/0006-production-runs-on-eks-and-releases-are-pushed.md)).
 
 ## Terraform
 
