@@ -44,6 +44,7 @@ resource "helm_release" "load_balancer_controller" {
     enableServiceMutatorWebhook = false
   })]
 
-  # The controller needs the nodes to run on, and the add-ons wait for the nodes.
-  depends_on = [module.eks]
+  # The controller needs the nodes to run on, and the add-ons wait for the nodes. On destroy, it keeps its IAM policy
+  # and its route to the AWS APIs until the namespace's Ingresses are gone.
+  depends_on = [module.eks, module.vpc, module.load_balancer_controller_irsa]
 }

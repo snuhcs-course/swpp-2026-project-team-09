@@ -49,6 +49,10 @@ module "eks" {
       instance_types = [var.node_instance_type]
       capacity_type  = "ON_DEMAND"
 
+      # Otherwise every plan reads the newest AMI release, and any apply rolls both nodes onto it. Without a release
+      # set, EKS takes the newest one whenever it creates the node group.
+      use_latest_ami_release_version = false
+
       # The module ignores later changes to desired_size, so min_size and max_size hold the count.
       min_size     = 2
       max_size     = 2

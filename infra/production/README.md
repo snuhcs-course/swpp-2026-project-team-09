@@ -74,6 +74,10 @@ terraform apply -var-file=account-a.tfvars
 Run `init` again after pulling a change that adds a provider or a module. `apply` shows the plan once more and changes
 nothing until you answer `yes`.
 
+The nodes keep the AMI release they were created with; setting `ami_release_version` in `cluster.tf` moves them to
+another. A plan that shows `release_version` or `version` changing on the node group replaces both nodes one after the
+other, which restarts every pod and empties Redis, so apply it at a quiet time.
+
 The first apply starts the budget's period, which runs to the end of 2026 without resetting each month; later applies
 keep its start. The budget counts gross spend, so what credits pay counts too, and it emails every address at $50,
 $100, $150, $200, $250, and $300 actually spent.
@@ -175,12 +179,13 @@ restarting. A team member resolves it once by hand. The commands are for the mai
 `match-server` for `main-server`, and `match` for `main`.
 
 1. Open a shell in a copy of one of the server's pods. The copy has the pod's image and `DATABASE_URL`, but runs the
-   shell instead of the server, and no Service sends to it:
+   shell instead of the server, and no Service sends to it. `--profile=baseline` keeps the copy within the namespace's
+   Pod Security level, which refuses the capability that kubectl's default profile adds:
 
    ```bash
    kubectl --namespace snunow debug \
      "$(kubectl --namespace snunow get pod --selector app=main-server --output name | head -n 1)" \
-     --copy-to=prisma --container=main-server -it -- bash
+     --copy-to=prisma --container=main-server --profile=baseline -it -- bash
    ```
 
 2. In that shell, `pnpm prisma migrate status` names the failed migration. Its SQL is in

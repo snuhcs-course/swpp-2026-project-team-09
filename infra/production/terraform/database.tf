@@ -11,10 +11,6 @@ resource "random_password" "database_master" {
   special = false
 }
 
-# Names the final snapshot after the instance's creation, so that destroying a later instance in the same account does
-# not collide with an earlier one's snapshot.
-resource "time_static" "database_created" {}
-
 resource "aws_security_group" "database" {
   name        = "${local.name}-database"
   description = "PostgreSQL from the cluster nodes"
@@ -51,12 +47,14 @@ resource "aws_db_instance" "database" {
   publicly_accessible    = false
 
   # Also turns on point-in-time restore over the same 7 days. The API's default keeps 1 day.
-  backup_retention_period   = 7
-  skip_final_snapshot       = false
-  final_snapshot_identifier = "${local.name}-final-${formatdate("YYYYMMDDhhmmss", time_static.database_created.rfc3339)}"
+  backup_retention_period = 7
+  skip_final_snapshot     = false
+  # Named after each instance's creation, so that a replaced or rebuilt instance never reuses an earlier snapshot's
+  # name. ignore_changes keeps the name on later plans, but not when Terraform creates the instance.
+  final_snapshot_identifier = "${local.name}-final-${formatdate("YYYYMMDDhhmmss", timestamp())}"
 
   lifecycle {
     # RDS upgrades the minor version by itself, and the plan would otherwise try to go back to this one.
-    ignore_changes = [engine_version]
+    ignore_changes = [engine_version, final_snapshot_identifier]
   }
 }
