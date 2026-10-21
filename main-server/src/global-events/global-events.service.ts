@@ -7,9 +7,10 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CollectionService } from '../collection/collection.service.js';
 import { CampusBoundary } from '../common/campus-boundary.js';
 import { PrismaService } from '../common/prisma.service.js';
@@ -17,6 +18,7 @@ import { SignalsService } from '../common/signals.service.js';
 import { GlobalEvent, GlobalEventState, Prisma } from '../generated/prisma/client.js';
 import { PlaceDto } from '../places/dto/place.dto.js';
 import { PlacesService } from '../places/places.service.js';
+import { CLOCK, type Clock } from '../quests/clock.js';
 import { QuestsService } from '../quests/quests.service.js';
 import { conflict, notFound } from '../quests/refusals.js';
 import { type CreateGlobalEventDto, type EditGlobalEventDto } from './dto/change-global-event.dto.js';
@@ -142,6 +144,7 @@ export class GlobalEventsService {
     private readonly signals: SignalsService,
     private readonly campusBoundary: CampusBoundary,
     private readonly quests: QuestsService,
+    @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
   // A post already stored is left as it is, in whatever state, so that an Administrator's edits stay and a discarded
@@ -294,7 +297,7 @@ export class GlobalEventsService {
   // Every Draft, or the published events that have not ended.
   private findListed(state: ListedState): Promise<GlobalEvent[]> {
     return this.prisma.globalEvent.findMany({
-      where: state === GlobalEventState.published ? { state, ...notEnded(new Date()) } : { state },
+      where: state === GlobalEventState.published ? { state, ...notEnded(this.clock.now()) } : { state },
       orderBy: BY_START,
     });
   }

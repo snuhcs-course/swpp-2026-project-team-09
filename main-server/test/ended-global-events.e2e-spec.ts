@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
+import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { listedAmong, publishedAmong } from './global-event-lists.js';
 import { connectToDatabase, storeEvent } from './quests.js';
 import { signIn, signInAsAdministrator } from './sign-in.js';
@@ -23,6 +25,10 @@ beforeAll(async () => {
   prisma = connectToDatabase();
   ({ accessToken: userToken } = await signIn(app));
   ({ accessToken: administratorToken } = await signInAsAdministrator(app));
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 afterAll(async () => {
@@ -67,5 +73,14 @@ describe.each([
     const event = await storeEvent(prisma, times());
 
     expect((await listed(event.id)).length).toBe(outcome === 'shows' ? 1 : 0);
+  });
+
+  it('leaves out an event once the clock reaches its end', async () => {
+    const endsAt = ago(-HOUR_MS);
+    const event = await storeEvent(prisma, { startsAt: ago(HOUR_MS), endsAt });
+
+    vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(endsAt);
+
+    expect(await listed(event.id)).toEqual([]);
   });
 });
