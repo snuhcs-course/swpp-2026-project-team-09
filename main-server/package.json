@@ -45,6 +45,7 @@
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
     "ai": "^7.0.137",
+    "express": "^5.2.1",
     "google-auth-library": "^11.1.0",
     "ioredis": "^6.0.0",
     "reflect-metadata": "^0.2.2",

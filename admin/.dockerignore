@@ -1,0 +1,8 @@
+node_modules
+.next
+.next-test
+coverage
+.env*
+next-env.d.ts
+*.tsbuildinfo
+*.pem

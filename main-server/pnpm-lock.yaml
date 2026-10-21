@@ -202,6 +202,9 @@ importers:
       ai:
         specifier: ^7.0.137
         version: 7.0.142(zod@4.6.5)
+      express:
+        specifier: ^5.2.1
+        version: 5.2.1(supports-color@7.2.0)
       google-auth-library:
         specifier: ^11.1.0
         version: 11.1.0(supports-color@7.2.0)

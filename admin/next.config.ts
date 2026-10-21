@@ -3,6 +3,7 @@
  *
  * 2026-09-29  Opus 5.5   prompted by TaeHyun79
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { NextConfig } from 'next';
@@ -12,6 +13,8 @@ const nextConfig: NextConfig = {
   agentRules: false,
   // The tests build the site with their own settings into another folder, so that they never replace a real build.
   distDir: process.env.NEXT_DIST_DIR ?? '.next',
+  // The image runs the minimal server.js that this output holds, without installing node_modules (Dockerfile).
+  output: 'standalone',
   // Google's button on plain http needs the full referrer.
   headers: () =>
     Promise.resolve([
