@@ -22,7 +22,7 @@ import { type RunOptions, runName } from './options.ts';
 import { Recorder } from './recorder.ts';
 import { runObserverModule } from './run-observer.module.ts';
 import { failureOf, type ReplyTrace, type TurnTrace, usageOf } from './trace.ts';
-import { type World } from './world.ts';
+import { type Seeded, type World } from './world.ts';
 
 // The runner (spec P19, ticket 01): the app started as the e2e tests start it, with the model behind the recorder and
 // the clock fixed, each case's turns sent to POST /assistant/messages as the app sends them, and the run saved as
@@ -198,7 +198,7 @@ export async function runCase(
     category: evalCase.category,
     kind,
     repetition,
-    knownFailure: evalCase.knownFailure ?? null,
+    knownFailure: evalCase.knownFailure ?? evalCase.expect?.knownFailure ?? null,
     expect: evalCase.expect ?? null,
     turnExpects: userTurns.map(({ expect }) => expect ?? null),
     turns: [],
@@ -232,6 +232,8 @@ export class RunLog {
   readonly cases: CaseRun[] = [];
   private tokens: Tokens = NO_TOKENS;
   private stoppedBy: 'budget' | null = null;
+  // The world's seeds by name, which the scorer reads a run's ids by.
+  seeds: Record<string, Seeded> = {};
   private readonly startedAt = new Date();
 
   constructor(private readonly options: RunOptions) {}
@@ -266,6 +268,7 @@ export class RunLog {
       now: NOW,
       options: this.options,
       stoppedBy: this.stoppedBy,
+      seeds: this.seeds,
       totals: {
         cases: this.cases.length,
         turns: this.cases.reduce((total, { turns }) => total + turns.length, 0),

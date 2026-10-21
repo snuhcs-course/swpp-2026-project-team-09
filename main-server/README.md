@@ -1937,6 +1937,46 @@ it). A run is saved as `eval/results/<date>-<commit>-<model>-<settings>.json`, e
 is ignored by git; commit a run worth keeping with `git add -f`. `test/eval-runner.e2e-spec.ts` and
 `test/eval-options.e2e-spec.ts` test the runner with the scripted model in `pnpm test`.
 
+#### Scoring
+
+`pnpm eval` writes the scorecard beside the raw JSON, as `<run>.md`. Scoring never calls the model:
+
+```sh
+pnpm eval:score eval/results/<run>.json             # score a saved run again, writing <run>.md beside it
+pnpm eval:compare eval/results/<a>.json eval/results/<b>.json   # two runs side by side, with the differences
+```
+
+A case's `expect` (`eval/expect.ts`) holds the accepted `actions` (TOOL, ASK, PROPOSE, REFUSE, CHAT, TOOL+ASK,
+PROPOSE+ASK), `tools` (`required`, `allowed`, `forbidden`, `"*"` for none), `args` of required tools (a list for one
+call each), and the outcome: `proposal` fields, `cards` (`kind`, `seeds`, `min`, `max`), `mapButtons` and
+`text.mentions` (each a word, or a list of which any one counts, spaces ignored). `knownFailure` goes on the case or
+in its `expect`. Values that name the world are seed names; the run file keeps the world's seeds to read ids by.
+
+The scorer (`eval/score.ts`) reads each scored turn's action from its trace and reply:
+
+| Action      | When                                                                                                                                          |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| PROPOSE     | the reply carries a Proposal                                                                                                                  |
+| TOOL        | the reply shows cards or map buttons, or a lookup answered and, in a case with no ASK, the text holds the mentions                            |
+| ASK         | nothing shown, and a resolver answered `several`/`none` or proposeQuest `refused`, or the case accepts an ASK and the text holds its mentions |
+| …+ASK       | TOOL or PROPOSE, in a case that accepts an ASK, with the text holding its mentions                                                            |
+| REFUSE/CHAT | no tool called: REFUSE when the case accepts it, else CHAT                                                                                    |
+
+A question mark never counts. A turn passes when its action is accepted and every check passes; a case when all its
+scored turns pass, a live case stopping at its first failed turn, the later ones not run. Calls outside
+`required ∪ allowed`, forbidden ones and the same call repeated count as over-calling (only a forbidden one fails the
+turn); a required tool not called as under-calling. Arguments, results, cards and Proposals are read through one
+normaliser per tool (`eval/normalise.ts`): days as `YYYY-MM-DD` and starts as `YYYY-MM-DD HH:MM` in Korea, words
+trimmed, Boards by name, ids by seed name.
+
+The scorecard (`eval/run-score.ts`, `eval/scorecard.ts`) gives action recall per kind first, then tool selection and
+argument accuracy, over- and under-calling, the pass rate per category with known failures apart and those now
+passing listed, STEP_LIMIT/TIMEOUT/ERROR per category, pass^k of the cases run more than once, average steps and
+latency, tokens with cache reads and writes and the estimated cost, the settings, each failed case with its trace and
+the full text and length of every reply of a REFUSE, CHAT or TOOL+ASK case. The comparison (`eval/compare.ts`) lists
+regressions apart from known failures, which never count as one. `test/eval-*.e2e-spec.ts` test the scorer with
+hand-made traces (`test/eval-traces.ts`) in `pnpm test`.
+
 ## Seed data
 
 Seed data comes from outside the project once, rather than by Collection: a file in `seed/` that one command loads
