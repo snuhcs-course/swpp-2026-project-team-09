@@ -1,0 +1,70 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# One worker at a time, as its README requires, so a Release stops the old pod before it starts the new one.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-server
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: worker-server
+  template:
+    metadata:
+      labels:
+        app: worker-server
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: worker-server
+          image: worker-server
+          ports:
+            - name: http
+              containerPort: 3002
+          env:
+            - name: PORT
+              value: '3002'
+            - name: MAIN_SERVER_URL
+              valueFrom: { configMapKeyRef: { name: settings, key: MAIN_SERVER_URL } }
+            - name: WORKER_TOKEN
+              valueFrom: { secretKeyRef: { name: secrets, key: WORKER_TOKEN } }
+          resources:
+            requests:
+              memory: 160Mi
+            limits:
+              memory: 320Mi
+          startupProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet: { path: /health/ready, port: http }
+            periodSeconds: 5
+            timeoutSeconds: 3
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker-server
+spec:
+  selector:
+    app: worker-server
+  ports:
+    - name: http
+      port: 3002
+      targetPort: http
