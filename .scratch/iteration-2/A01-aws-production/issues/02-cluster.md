@@ -22,12 +22,20 @@ The steady state must fit the spec's pod budget on two `t4g.small` nodes (18 slo
 
 ## Acceptance criteria
 
-- [ ] `terraform fmt -check` and `terraform validate` pass, locally and in the `terraform` CI job.
-- [ ] The cluster's version is 1.36 or newer and under standard support, its endpoint is public, its authentication mode is access entries, and logging and the KMS key are off.
-- [ ] The node group is as above, and raising the node size is a change to the one variable.
-- [ ] The four add-ons are installed, and no Pod Identity agent or other per-node daemon is added.
-- [ ] The controller runs one replica and reaches AWS through an IRSA role.
-- [ ] The `snunow` namespace carries the readiness-gate label from its creation.
-- [ ] Every IAM user in the variables file has a cluster-wide admin entry; the deploy role's entry is limited to `snunow`; adding or removing a team member is one change to the variables file.
-- [ ] Every new or changed `.tf` file carries the `#` AI-generated box with a row for this change (`CLAUDE.md`).
+- [x] `terraform fmt -check` and `terraform validate` pass, locally and in the `terraform` CI job.
+- [x] The cluster's version is 1.36 or newer and under standard support, its endpoint is public, its authentication mode is access entries, and logging and the KMS key are off.
+- [x] The node group is as above, and raising the node size is a change to the one variable.
+- [x] The four add-ons are installed, and no Pod Identity agent or other per-node daemon is added.
+- [x] The controller runs one replica and reaches AWS through an IRSA role.
+- [x] The `snunow` namespace carries the readiness-gate label from its creation.
+- [x] Every IAM user in the variables file has a cluster-wide admin entry; the deploy role's entry is limited to `snunow`; adding or removing a team member is one change to the variables file.
+- [x] Every new or changed `.tf` file carries the `#` AI-generated box with a row for this change (`CLAUDE.md`).
 - [ ] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+
+## Comments
+
+- **Kubernetes 1.37**, under standard support until 2027-12-01, with the upgrade policy `STANDARD`. No AWS page lists the `metrics-server` community add-on's versions for 1.37. Before the first apply, `aws eks describe-addon-versions --addon-name metrics-server --kubernetes-version 1.37` must list one; if it lists none, `kubernetes_version` in `cluster.tf` becomes `"1.36"`. A plan without that version fails at the module's version lookup, before anything is created.
+- **Checks.** `terraform fmt -check`, `terraform init -backend=false -lockfile=readonly`, and `terraform validate` pass with Terraform 1.16.6. The CI job's same three steps pass in the `hashicorp/terraform:1.16.6` image on `linux/amd64`. The job itself runs once the branch is pushed. The lock file holds all seven providers for five platforms.
+- **The controller's values.** `helm template` of chart 3.6.0 with the release's values renders one replica, the IRSA role annotation on the service account `kube-system/aws-load-balancer-controller`, the IngressClass `alb` that the Ingresses name, and no Service mutator webhook.
+- **Team members.** Their entries come from `data.aws_iam_user`, so a name in the variables file without an IAM user fails the plan. Whoever applies must be in the list, because the module never adds the applying identity, and needs the AWS CLI on the PATH, which the Helm and Kubernetes providers run for their token.
+- **Changing the instance type** runs four nodes for a few minutes while the new node group replaces the old one, which the quota check before the first apply covers.
