@@ -1,0 +1,14 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# Copy this file to the account's variables file, such as account-a.tfvars, and fill in the values. Git ignores it,
+# and the runbook keeps a copy in the account's state bucket.
+
+# The IAM user names of the team members, as the account's owner created them
+team_member_iam_users = ["first-member", "second-member"]
+
+# Where the budget's alerts go, one address per team member
+budget_alert_emails = ["first-member@example.com", "second-member@example.com"]
