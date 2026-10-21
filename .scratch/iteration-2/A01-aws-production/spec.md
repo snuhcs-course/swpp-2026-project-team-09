@@ -409,15 +409,7 @@ The first apply, real Releases, and the console settings happen against AWS, whi
 ## Further Notes
 
 - **Schedule.** This is Iteration 2's unexpected task A1 (folder `A01`), and its implementation continues into Iteration 3. The workers are 윤유상 and 김태현. Production must answer before the user-testing submission on 11/13.
-- **Suggested tickets**, each one pull request:
-  1. The Terraform base: the state bucket bootstrap, the VPC, ECR, the deploy role, and the budget.
-  2. The cluster: the node group, the add-ons, the load balancer controller, the namespace, and the access entries.
-  3. The database and its Job, with the TLS form confirmed against the real instance.
-  4. The manifests, the admin site's Dockerfile and health routes, and the main server's case-sensitive routing.
-  5. The Release workflow and its CI checks.
-  6. The certificate and the DNS records.
-  7. The runbook, the tool guide, and the README changes.
-  8. An operations ticket for the quotas, the first apply, the first Release, and the checks by hand.
+- **Tickets.** The eight tickets in `issues/` are built together on one integration branch with `/implement-spec` and merged as one pull request. Ticket 03's steps by hand (the first apply and the database check in account A) come before ticket 05, and ticket 08 is the operations ticket after the merge; both need a team member with account A's access.
 - **Later, when wanted:**
   - lower the cost after the beta by scaling the nodes to zero and stopping the database until the final demo;
   - raise the node size if memory runs short, or if a lost node stops the app for too long;
