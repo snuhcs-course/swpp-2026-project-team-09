@@ -20,3 +20,20 @@ variable "budget_alert_emails" {
     error_message = "A budget alert reaches between 1 and 10 email addresses."
   }
 }
+
+variable "holds_zone" {
+  description = "Whether this account holds the snunow.com hosted zone, so that the apply validates the certificate in it and waits until it is issued"
+  type        = bool
+  default     = true
+}
+
+variable "enable_dns_records" {
+  description = "Whether api and admin point at the load balancer of the IngressGroup snunow; off until the first Release has made it"
+  type        = bool
+  default     = false
+
+  validation {
+    condition     = !var.enable_dns_records || var.holds_zone
+    error_message = "The records go in the hosted zone, so only the account that holds it turns them on."
+  }
+}
