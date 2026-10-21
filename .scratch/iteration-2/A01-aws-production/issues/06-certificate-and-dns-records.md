@@ -18,9 +18,16 @@ The controller finds the certificate from the Ingress hosts, so the manifests ca
 ## Acceptance criteria
 
 - [ ] `terraform fmt -check` and `terraform validate` pass, locally and in the `terraform` CI job.
-- [ ] With the records variable off, the configuration looks up no load balancer, so an apply works before any Ingress exists.
-- [ ] In the account that holds the zone, the apply validates the certificate in the zone and waits for it; in the other account, it does not wait and outputs the validation record.
-- [ ] The ALB is found by the IngressGroup's tag, never by a name or ARN written into the configuration.
-- [ ] The hosted zone is only read.
-- [ ] Every new or changed `.tf` file carries the `#` AI-generated box with a row for this change (`CLAUDE.md`).
+- [x] With the records variable off, the configuration looks up no load balancer, so an apply works before any Ingress exists.
+- [x] In the account that holds the zone, the apply validates the certificate in the zone and waits for it; in the other account, it does not wait and outputs the validation record.
+- [x] The ALB is found by the IngressGroup's tag, never by a name or ARN written into the configuration.
+- [x] The hosted zone is only read.
+- [x] Every new or changed `.tf` file carries the `#` AI-generated box with a row for this change (`CLAUDE.md`).
 - [ ] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+
+## Comments
+
+- The variables are `holds_zone` (default true; account B sets false) and `enable_dns_records` (default false). The second is refused while the first is false, because the records go in the zone. The output `certificate_validation_records` gives each domain's validation record.
+- The certificate has two validation CNAMEs, one for `api` and one for `admin`, because ACM's record differs per domain name and per account. So the move to account B adds two validation records to A's zone by hand, besides the two alias records.
+- `terraform fmt -check`, `terraform init -backend=false -input=false -lockfile=readonly`, and `terraform validate`, the `terraform` CI job's three steps, pass locally on Terraform 1.16.6. The job itself runs at the first push. No provider was added, so the lock file is unchanged.
+- The gating was checked by reading the configuration, since no plan runs without AWS: the load balancer lookup's `count` and the alias records' `for_each` depend only on the records variable, and nothing else refers to the lookup. The first apply that waits for the certificate, and the second apply that adds the records, are ticket 08's.
