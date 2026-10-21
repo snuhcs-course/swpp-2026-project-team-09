@@ -5,7 +5,8 @@
 ################################################################################
 
 locals {
-  name   = "snunow"
-  region = "ap-northeast-2"
-  azs    = ["${local.region}a", "${local.region}c"]
+  name      = "snunow"
+  region    = "ap-northeast-2"
+  azs       = ["${local.region}a", "${local.region}c"]
+  namespace = "snunow"
 }

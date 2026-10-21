@@ -18,3 +18,8 @@ output "deploy_role_arn" {
   description = "The role the Release workflow assumes, for the repository variable it reads"
   value       = aws_iam_role.deploy.arn
 }
+
+output "cluster_name" {
+  description = "The EKS cluster's name, for the repository variable the Release workflow reads and for aws eks update-kubeconfig"
+  value       = module.eks.cluster_name
+}
