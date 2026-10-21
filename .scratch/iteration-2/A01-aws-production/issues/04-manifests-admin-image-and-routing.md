@@ -61,7 +61,9 @@ Fixed here so that tickets 02, 03, and 06 match without seeing this ticket: ever
 - **Stopping.** Each server sleeps 10 seconds in a `preStop` `sleep` action (no `sleep` binary needed). The admin site
   sleeps too, since the load balancer sends to it as well.
 - **Ingress.** `ingressClassName: alb`, the IngressClass that the controller's Helm chart creates by default (ticket
-  02). The `/admin` rule is a fixed-response action that answers 404 with a JSON body.
+  02). The `/admin` rule is a fixed-response action that answers 404 with a JSON body. The controller (v3.6.0) turns a
+  Prefix path `/p` into the patterns `/p` and `/p/*` and puts longer Prefix paths first, whatever their order in the
+  Ingress, which gives the spec's order: `/socket.io`, `/admin`, then `/`.
 - **The admin image.** The site has no `public` folder, so the build stage creates an empty one; the image copies it
   and `.next/static` beside `server.js`, so that a folder added later is served. Only `sharp` (for image optimization)
   is a native module in the standalone output. `pnpm start` still serves, but Next.js now warns that `next start` does
