@@ -67,6 +67,9 @@
   },
   "jest": {
     "preset": "jest-expo",
+    "setupFiles": [
+      "react-native-gesture-handler/jestSetup"
+    ],
     "moduleNameMapper": {
       "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock"
     },

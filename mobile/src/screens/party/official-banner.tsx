@@ -2,17 +2,21 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
 import { type ReactElement, useEffect, useState } from 'react';
 import { AppState, type AppStateStatus, Pressable, StyleSheet, Text, View } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
 import type { OfficialRecruiting } from '@/api/quest-parts-types';
 import { color, font, Icon, type IconName, radius, space } from '@/design-system';
+import { sidewaysSwipe, swipeStep, TURN_SWIPE } from '@/navigation/swipe-rule';
 import { PhotoView } from './quest-photo';
 
 // 찾기's banner of official recruiting, the `Party` frame's carousel: one at a time, turning every 4 seconds until the
-// User pauses it, with ‹ ›, `n / N` and `+` for 전체 파티's `공식`.
+// User pauses it, with ‹ ›, `n / N` and `+` for 전체 파티's `공식`. A swipe left or right over it turns it as ‹ › do,
+// in place of the 파티 tab's swipe.
 
 export const TURN_MS = 4000;
 const HEIGHT = 156;
@@ -167,16 +171,24 @@ export function OfficialBanner({ recruiting, onOpen, onAll }: OfficialBannerProp
   if (shown === undefined) {
     return null;
   }
+  const swipe = sidewaysSwipe('official-banner-swipe', TURN_SWIPE).onEnd(({ translationX, velocityX }) => {
+    const step = swipeStep(translationX, velocityX, TURN_SWIPE);
+    if (step !== 0) {
+      turning.turn(step);
+    }
+  });
   return (
-    <View accessibilityLabel="공식 모집" style={styles.banner}>
-      <Slide
-        onOpen={() => {
-          onOpen(shown);
-        }}
-        shown={shown}
-      />
-      <Controls count={recruiting.length} onAll={onAll} turning={turning} />
-    </View>
+    <GestureDetector gesture={swipe}>
+      <View accessibilityLabel="공식 모집" collapsable={false} style={styles.banner}>
+        <Slide
+          onOpen={() => {
+            onOpen(shown);
+          }}
+          shown={shown}
+        />
+        <Controls count={recruiting.length} onAll={onAll} turning={turning} />
+      </View>
+    </GestureDetector>
   );
 }
 

@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useCallback, useState } from 'react';
@@ -77,6 +78,6 @@ export function useSelection(cards: readonly CardView[], inFront: boolean): Sele
     setSelectedId(null);
     setWait(null);
   }, []);
-  useBackToClose(open && inFront, close);
+  useBackToClose(open && inFront, close, { edge: false });
   return { selected, open, select, selectOrWait, close };
 }
