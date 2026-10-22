@@ -55,6 +55,44 @@ Not covered: the match server asking again for a Quest after the main server was
 main server which requests still stand before it forms a match, so the main server would have to stop between that
 question and the request for the Quest, which a test cannot time. The match server's own tests cover the repeat.
 
+## The admin site in a browser
+
+`pnpm test:admin-ui` runs two end-to-end journeys through a screen, the admin site in Playwright's headless Chromium,
+both in `test/admin-ui/global-events.e2e.test.ts`:
+
+| Journey | What the Administrator does and what is checked                                                                                                                                                                         |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W1      | US-ADMIN-01 scenario 1. The Administrator signs in, creates a Draft and publishes it. A connected User is told, and lists the event with the title, place and position typed and the instants of the Seoul times typed. |
+| W2      | US-ADMIN-01 scenario 2. A Draft with only a title cannot be published: its page and the Events list name a start and a position as missing, and after a start is saved, the position alone. No User is told.            |
+
+The site is the image `admin/Dockerfile` builds for Production, with the build arguments of the release and the main
+server of the stack. `compose.admin-ui.test.yaml` adds it over `compose.yaml` and `compose.test.yaml`, under the same
+project name, `snu-now-flow-tests`, so run `pnpm test` and `pnpm test:admin-ui` one after the other, never at once. The
+journeys use the flows' Users, socket waits and empty state. The browser opens the site at `http://localhost:<port>`,
+whose `Secure` cookies Chromium keeps over plain HTTP, in the time zone `America/Los_Angeles`, so that a time read in
+the browser's zone instead of Seoul's fails. It accepts the site's `window.confirm` questions.
+
+Install the browser once, after `pnpm install`, which downloads none:
+
+```bash
+pnpm exec playwright install chromium
+pnpm test:admin-ui
+```
+
+Neither `pnpm test` nor CI runs these journeys, so neither builds the admin image or needs a browser. Run them after
+changing the admin site, its Server Actions or the main server's Administrator routes.
+
+Google's sign-in is replaced only in the browser: a route handler answers `https://accounts.google.com/gsi/client` with
+the stand-in of `test/admin-ui/google.ts`, which defines `google.accounts.id.initialize` and `renderButton` as the
+sign-in page uses them. Its button hands the page an ID token of the stack's Administrator, `admin@flow-tests.example`,
+signed with the run's key, so the sign-in page, its Server Action, the cookie and the main server's check of the token
+run as they do for a person. Every other request the browser makes to a host other than the site's is aborted and fails
+the test.
+
+A run writes Vitest's JUnit report to `admin-ui-results/junit.xml`, and for a failed test a screenshot and a Playwright
+trace (`pnpm exec playwright show-trace <file>`) to `admin-ui-results/failures/`, which the next run empties. Git
+ignores `admin-ui-results/`.
+
 ## What is replaced
 
 Nothing outside the repository is called. The `sources` container of `compose.test.yaml` runs `sources/serve.ts` and
@@ -72,6 +110,9 @@ code names, unchanged:
 The veterinary college's page and the university's events list answer 404: no flow collects them, and the worker's own
 schedule, which keeps running in the stack, then records a failed Collection instead of calling the real sites.
 
+Google Identity Services, the script of the admin site's sign-in page, is loaded by the browser, not on the stack's
+network. In `pnpm test:admin-ui` the browser's route handler answers it with the stand-in described above.
+
 ## Empty state
 
 Before each test, the main and match databases are emptied of everything but the seed (Places, the shuttle's route and
@@ -80,12 +121,13 @@ or Redis, through `docker compose exec`.
 
 ## Checks
 
-| Command             | Checks                                       |
-| ------------------- | -------------------------------------------- |
-| `pnpm lint`         | oxlint with type-aware rules                 |
-| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it) |
-| `pnpm typecheck`    | TypeScript in strict mode                    |
-| `pnpm test`         | The flows, on the test stack                 |
+| Command              | Checks                                                                     |
+| -------------------- | -------------------------------------------------------------------------- |
+| `pnpm lint`          | oxlint with type-aware rules                                               |
+| `pnpm format:check`  | Prettier formatting (`pnpm format` fixes it)                               |
+| `pnpm typecheck`     | TypeScript in strict mode                                                  |
+| `pnpm test`          | The flows, on the test stack                                               |
+| `pnpm test:admin-ui` | The admin site in a browser, on the test stack with the admin site over it |
 
 ## Folder layout
 
@@ -93,8 +135,11 @@ or Redis, through `docker compose exec`.
 flow-tests/
 ├── compose.test.yaml              # the test stack over compose.yaml
 ├── compose.deploy.test.yaml       # the deployment stack's proxy on a free loopback port
+├── compose.admin-ui.test.yaml     # the admin site over the test stack, for pnpm test:admin-ui
 ├── sources/serve.ts               # Google, the Sources and Kakao, from saved pages
 └── test/
+    ├── admin-ui/                  # pnpm test:admin-ui: its Vitest configuration, global setup, browser and journeys
+    │   └── google.ts              # the stand-in for Google's sign-in script
     ├── *.e2e.test.ts              # the end-to-end tests: the flows of the table above, and the one below
     ├── deploy-stack.e2e.test.ts   # the Dev Server's stack, called through its proxy
     ├── stack.integration.test.ts  # tests the harness: a stack of its own project, Compose files and settings

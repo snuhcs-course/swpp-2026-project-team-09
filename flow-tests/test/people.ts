@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { randomInt } from 'node:crypto';
@@ -133,9 +134,14 @@ export async function signIn(name: string): Promise<Student> {
   return openTheApp(name, googleAccount, accessToken);
 }
 
+// The ID token Google hands the admin site when the test stack's Administrator signs in.
+export function administratorIdToken(): string {
+  return googleIdToken({ aud: ADMIN_CLIENT_ID, ...ADMINISTRATOR });
+}
+
 // The Administrator of the test stack, signed in to the admin site.
 export async function signInAsAdministrator(): Promise<Caller> {
-  const idToken = googleIdToken({ aud: ADMIN_CLIENT_ID, ...ADMINISTRATOR });
+  const idToken = administratorIdToken();
   const { accessToken } = await new Caller('Administrator').post('/admin/auth/google', { idToken }, tokens);
   return new Caller('Administrator', accessToken);
 }
