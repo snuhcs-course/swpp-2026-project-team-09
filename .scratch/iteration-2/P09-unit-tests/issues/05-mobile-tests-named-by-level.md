@@ -131,3 +131,8 @@ Other pure modules, chosen by their imports (no hook, storage, API client, socke
 | `src/features/dining/restaurant-places.ts` | 100.0 % (1/1) | 100.0 % (1/1) |
 | `src/map/projection.ts` | 100.0 % (44/44) | 100.0 % (41/41) |
 | **Total** | 34.1 % (204/598) | 35.7 % (199/558) |
+
+### Agent usage (2026-10-22)
+
+- Agent time: about 70 minutes, an estimate: the implementer subagent, measured just before its last commit. Most of it went to waiting for the Jest runs on a heavily loaded machine.
+- Tokens: input 31,442 thousand in all (cache reads 30,460 thousand, cache writes 981 thousand, uncached under 1 thousand); output 9 thousand, a lower bound, since the transcript keeps only partial output counts.
