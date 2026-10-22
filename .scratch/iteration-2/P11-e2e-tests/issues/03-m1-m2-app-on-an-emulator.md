@@ -24,7 +24,7 @@ Neither command is part of `pnpm test` or CI; both are run by hand.
 - [x] Each flow starts with a launch that clears the app's state, and a later launch keeps it only where the journey is about what the phone kept; no `retry`, no fixed sleep, `extendedWaitUntil` with a timeout for the first screen after a launch; screenshots at each checkpoint; no step asserts on the map.
 - [x] `pnpm test:device` checks that exactly one device is connected, with ABI `arm64-v8a` and API 36, and that `maestro --version` prints 2.11.0; sets the window, transition and animator scales to 0; reinstalls the mock APK; and runs `maestro test --format junit --output <run>/report.xml --test-output-dir <run> maestro/integration` from `mobile/`.
 - [x] Each run's folder is named by date and commit and sits in a results folder that `mobile/.gitignore` ignores.
-- [ ] `pnpm test`, `pnpm lint`, `pnpm format:check` and `pnpm typecheck` in `mobile/` pass, and `pnpm test` runs neither new command; no app code, Jest test or CI workflow changes.
+- [x] `pnpm test`, `pnpm lint`, `pnpm format:check` and `pnpm typecheck` in `mobile/` pass, and `pnpm test` runs neither new command; no app code, Jest test or CI workflow changes.
 - [x] `mobile/README.md` gains a section on device runs: the APK build, the emulator, the Maestro install, `pnpm test:device` and where the results go.
 - [x] Every new source file (the Maestro flows and the shell scripts) starts with the `#` AI-generated box, each changed source file gets a new row (`CLAUDE.md`), and the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
 
@@ -108,7 +108,8 @@ fails until a follow-up ticket fixes the app. The M2 criterion is left unticked 
 
 - `pnpm test:unit` (one slot, `--maxWorkers=4`): 48 suites, 282 tests: 281 passed, 1 todo. `jest --listTests` lists the
   147 files P09-05 counted, none under `maestro/` or `scripts/`: `pnpm test` is `jest` and runs neither new command.
-  Full `pnpm test`: left to CI on the merge push; the orchestrator records the run.
+  Full `pnpm test`: CI run 39808477203 at P11-03's merge, fd492a03, passed; every package's `pnpm test` is a job of
+  the CI workflow.
 - `pnpm lint` (`147 test file(s), each named by its test level.`), `pnpm format:check` (which checks the flows' YAML
   and the README) and `pnpm typecheck` pass. No file under `src/`, `__tests__/` or `.github/` changed.
 - Seen in the screenshots, outside this ticket: on Onboarding the chosen department's name starts under the field's

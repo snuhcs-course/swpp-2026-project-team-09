@@ -22,7 +22,7 @@ Both moves are made under P10-02's tests, which fail if behaviour changes: no ot
 - [x] The token check's unit tests use a real `JwtService` with keys made in the test: a good token gives the User, the Session and the expiry, and each refused token differs from the valid one in exactly one property: an expiry in the past (signed so, not waited for), another key, HS256, the admin site's audience `snu-now-admin`, no `sid`, no `sub`; a value that is not a string is refused too.
 - [x] P10-02's tests pass unchanged before and after the moves, as do match-server's rounds, placements and matching-withdrawal integration tests and socket-server's connection tests.
 - [x] Every new test file is named `.unit.test.ts`, has a one- or two-line testing strategy comment below its box comment, names its tests `describe(subject)` with `it('condition → result')` in GLOSSARY terms, and uses no real-time wait.
-- [ ] `pnpm test:unit` passes in both servers with Docker stopped, and in each `test:unit` and `test:integration` together run exactly the tests `test` runs.
+- [x] `pnpm test:unit` passes in both servers with Docker stopped, and in each `test:unit` and `test:integration` together run exactly the tests `test` runs.
 - [x] `pnpm test`, `pnpm lint` (with the level check), `pnpm format:check` and `pnpm typecheck` pass in both servers.
 - [x] Every new source file starts with the AI-generated box, and each changed one gets a new row (`CLAUDE.md`).
 - [x] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
@@ -74,7 +74,7 @@ P10-02's two files (`match-server/test/rounds.integration.test.ts`, `socket-serv
 
 **New unit tests**: `rounds.unit.test.ts` 6, `placements.unit.test.ts` 10, `access-token.unit.test.ts` 12, all passing.
 
-**`pnpm test:unit`**, after merging the integration tip: match-server 3 files, 22 passed (`grouping` 6, `placements` 10, `rounds` 6); socket-server 1 file, 12 passed. `docker ps -a` listed the same 4 containers before and after both runs; neither `unit` project has a global setup, and no new unit test imports `testcontainers` or calls `inject`. Run with Docker stopped: pending, made by the orchestrator once all tickets have merged; that criterion stays unticked until then.
+**`pnpm test:unit`**, after merging the integration tip: match-server 3 files, 22 passed (`grouping` 6, `placements` 10, `rounds` 6); socket-server 1 file, 12 passed. `docker ps -a` listed the same 4 containers before and after both runs; neither `unit` project has a global setup, and no new unit test imports `testcontainers` or calls `inject`. Run with Docker stopped: the orchestrator ran it on 2026-10-23 at 00:59 KST at 7803d4e8 (`docker desktop stop`, then `docker info` failed to connect; Docker started again at 01:00:53), and `pnpm test:unit` passed: match-server 4 files, 39 tests; socket-server 2 files, 32 tests. The log is `docker-stopped-unit.log` in the orchestrator's helpers folder.
 
 **Full `pnpm test`** (in a slot, `--maxWorkers=4`, with a JSON report), after merging the integration tip:
 

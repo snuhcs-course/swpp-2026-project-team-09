@@ -20,7 +20,7 @@ An adapter is pure when its functions take data and return data, with no I/O, ho
 - [x] The events, dining and room adapters have unit tests, then the other pure adapters in order of unit-only coverage in P09-05's first report, and `## Comments` records that order.
 - [x] The tests stub `fetch`, never reach the network, and use fake timers instead of real-time waits.
 - [x] Every new test file is named `.unit.test.ts(x)`, has a one- or two-line testing strategy comment below its box comment naming its partitions and where its expected values come from, and names its tests `describe(subject)` with `it('condition → result')` in GLOSSARY terms.
-- [ ] `pnpm test:unit` in mobile runs these tests, `test:unit` and `test:integration` together run exactly the tests `test` runs, and `pnpm test`, `pnpm lint` (with the level check), `pnpm format:check` and `pnpm typecheck` pass.
+- [x] `pnpm test:unit` in mobile runs these tests, `test:unit` and `test:integration` together run exactly the tests `test` runs, and `pnpm test`, `pnpm lint` (with the level check), `pnpm format:check` and `pnpm typecheck` pass.
 - [x] Every new source file starts with the AI-generated box (`CLAUDE.md`).
 - [x] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
 
@@ -131,8 +131,8 @@ is not JSON.
 Checks in `mobile/`: `pnpm lint` passes (`161 test file(s), each named by its test level.`), and so do
 `pnpm format:check` and `pnpm typecheck`. The coverage run leaves the working tree clean.
 
-Full `pnpm test`: left to CI on the merge push; the orchestrator records the run. That criterion stays unticked until
-then.
+Full `pnpm test`: CI run 39809527412 at P09-10's merge, 7803d4e8, passed; every package's `pnpm test` is a job of the
+CI workflow.
 
 After merging the integration tip (`fd492a03`, which changes in `mobile/` only the Maestro flows, two scripts and
 their `package.json` entries): `pnpm test:unit` 62 files, 837 tests, 836 passed and 1 todo; `--listTests` as above;

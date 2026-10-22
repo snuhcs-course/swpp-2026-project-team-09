@@ -17,7 +17,7 @@ The README keeps `--no-spec` in its "add a module" steps, but "because this proj
 
 - [x] Every test file in `main-server/test/` has a level suffix under ADR 0007, and none is named `*.e2e-spec.ts`. Each was renamed with `git mv`, no import changed, and `git log --follow` shows a renamed file's history.
 - [x] `pnpm test` passes the same number of tests before and after the rename, and `pnpm test:unit` and `pnpm test:integration` together run exactly the tests that `pnpm test` runs. The counts are recorded in `## Comments`.
-- [ ] `pnpm test:unit` passes with Docker stopped.
+- [x] `pnpm test:unit` passes with Docker stopped.
 - [x] The projects are `unit`, `integration` and `integration-store-contract`. Only the integration projects start containers, and `integration-store-contract` still runs after the others, against a Redis container it starts itself.
 - [x] `test`, `test:unit`, `test:integration`, `test:cov:unit` and `test:cov` each run what the spec's table says.
 - [x] The coverage block is the spec's, with no thresholds, and a file under `src/` that no test loads shows 0%.
@@ -53,7 +53,7 @@ The README keeps `--no-spec` in its "add a module" steps, but "because this proj
 
 **Renames.** The rename commit (135e0389) has 127 renames at 100% similarity and nothing else; no import names a test file. `git log --follow -- main-server/test/quests.integration.test.ts` shows its history through 1bbe7a1f, 9ecafa21 and fa04f0d9.
 
-**No container in `test:unit`.** The `unit` project has no global setup, and no unit test file imports `testcontainers` or calls `inject`. `docker ps -a` before and after `pnpm test:unit`: the same four containers, none added. Run with Docker stopped: pending, made by the orchestrator once all tickets have merged.
+**No container in `test:unit`.** The `unit` project has no global setup, and no unit test file imports `testcontainers` or calls `inject`. `docker ps -a` before and after `pnpm test:unit`: the same four containers, none added. Run with Docker stopped: the orchestrator ran it on 2026-10-23 at 00:59 KST at 7803d4e8 (`docker desktop stop`, then `docker info` failed to connect; Docker started again at 01:00:53), and `pnpm test:unit` passed: 9 files, 195 tests. The log is `docker-stopped-unit.log` in the orchestrator's helpers folder.
 
 **Coverage.** `coverage-summary.json` holds 200 files, all under `src/`, none of `src/generated/`.
 

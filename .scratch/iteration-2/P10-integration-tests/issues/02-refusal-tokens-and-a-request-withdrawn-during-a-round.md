@@ -25,7 +25,7 @@ Each changed or new test gets a break check (spec: "Break checks"). This ticket 
 - [x] Each of the four break checks in the spec's table is made in a working copy of the branch tip, never committed: the named test fails on its own assertion with the table's expected failure (the connection accepted, or the withdrawn request reading `matched`), not on a setup error, and the file passes after restoring.
 - [x] `## Comments` records each break check: the commit, the check removed, the failing test's name and message, and the green run after restoring.
 - [x] No server code, other integration test, test double or CI workflow changes.
-- [ ] socket-server's and match-server's `pnpm test`, `pnpm lint`, `pnpm format:check` and `pnpm typecheck` pass.
+- [x] socket-server's and match-server's `pnpm test`, `pnpm lint`, `pnpm format:check` and `pnpm typecheck` pass.
 - [x] The pull request merges before P09-08 (match-server's round split and assign, and socket-server's token check, as units).
 - [x] Each changed source file gets a new row in its AI-generated box (`CLAUDE.md`).
 - [x] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
@@ -57,7 +57,7 @@ The expired token's message says `connected: false` because the gateway's expiry
 - `socket-server/test/users.integration.test.ts`: 11 passed. `match-server/test/rounds.integration.test.ts`: 7 passed (6 before).
 - `pnpm test:unit`: match-server 1 file, 6 passed; socket-server `No test files found, exiting with code 0`.
 - `pnpm lint` (`11 test file(s), each named by its test level.` in match-server, `6 test file(s), …` in socket-server), `pnpm format:check` and `pnpm typecheck` pass in both servers.
-- Full `pnpm test`: left to CI on the merge push; the orchestrator records the run. That criterion stays unticked until then.
+- Full `pnpm test`: CI run 39800045794 at P10-02's merge, bed2e93a, passed; every package's `pnpm test` is a job of the CI workflow.
 - Changed files: the two test files only, each with the row `2026-10-22  Opus 5.5   prompted by TaeHyun79`. No file under `src/`, no other test or test double, no CI workflow.
 
 ### Agent usage (2026-10-22)
