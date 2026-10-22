@@ -87,6 +87,15 @@ jobs:
         run: |
           aws ssm get-parameters-by-path --path /snunow/production --with-decryption --output json |
             .github/release/release.sh write-secrets infra/production/k8s/parts/shared/secrets "$DATABASE_ENDPOINT"
+      # The runner's own kubectl is two minor versions behind the cluster, outside kubectl's supported skew of one.
+      - name: Install kubectl 1.37
+        run: |
+          curl --fail --silent --show-error --location --remote-name https://dl.k8s.io/release/v1.37.1/bin/linux/arm64/kubectl
+          curl --fail --silent --show-error --location --remote-name https://dl.k8s.io/release/v1.37.1/bin/linux/arm64/kubectl.sha256
+          echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+          sudo install --mode 0755 kubectl /usr/local/bin/kubectl
+          rm kubectl kubectl.sha256
+          kubectl version --client
       - name: Deploy
         env:
           CLUSTER_NAME: ${{ vars.PRODUCTION_CLUSTER_NAME }}
