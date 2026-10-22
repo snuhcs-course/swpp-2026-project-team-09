@@ -12,6 +12,8 @@ import { openingHour, toWeekBlocks, weekDays, weekHours } from '@/features/timet
 
 // Wednesday, 2 for the week's index, at a time of day in hours.
 const WEDNESDAY_AT = (hours: number): { day: number; hours: number } => ({ day: 2, hours });
+// The hours the card shows at a time.
+const WINDOW = 8;
 
 function lesson(id: string, weekday: Weekday, startTime: string, endTime: string): TimetableClass {
   const time: ClassTime = { id: `${id}-1`, weekday, startTime, endTime, placeId: null, room: null };
@@ -21,7 +23,7 @@ function lesson(id: string, weekday: Weekday, startTime: string, endTime: string
 describe('the week', () => {
   it('runs from 09 to 22 and opens at 09 without classes', () => {
     expect(weekHours([])).toEqual({ first: 9, last: 22 });
-    expect(openingHour([], 9, WEDNESDAY_AT(15))).toBe(9);
+    expect(openingHour([], 9, WEDNESDAY_AT(15), WINDOW)).toBe(9);
     expect(weekDays([])).toBe(5);
   });
 
@@ -36,7 +38,7 @@ describe('the week', () => {
       { day: 0, start: 13.5, end: 15 },
     ]);
     expect(weekHours(blocks)).toEqual({ first: 9, last: 22 });
-    expect(openingHour(blocks, 9, WEDNESDAY_AT(15))).toBe(13);
+    expect(openingHour(blocks, 9, WEDNESDAY_AT(15), WINDOW)).toBe(13);
   });
 
   it('widens the start to 08 for a class at 08:00, and the end to 23 for one ending at 22:30', () => {
@@ -48,7 +50,7 @@ describe('the week', () => {
     expect(blocks[0]).toMatchObject({ start: 21, end: 22.5 });
     expect(blocks[1]).toMatchObject({ start: 8, end: 9.25 });
     expect(weekHours(blocks)).toEqual({ first: 8, last: 23 });
-    expect(openingHour(blocks, 8, WEDNESDAY_AT(15))).toBe(8);
+    expect(openingHour(blocks, 8, WEDNESDAY_AT(15), WINDOW)).toBe(8);
   });
 });
 
@@ -89,19 +91,35 @@ describe('where the week opens', () => {
   );
 
   it('opens at the current hour when today has a class still to come', () => {
-    expect(openingHour(blocks, 9, WEDNESDAY_AT(16.5))).toBe(16);
+    expect(openingHour(blocks, 9, WEDNESDAY_AT(16.5), WINDOW)).toBe(16);
+  });
+
+  it("opens late enough to show today's next class whole when it ends past the window", () => {
+    const evening = toWeekBlocks([lesson('저녁', 'wednesday', '19:00', '21:00')], []);
+    const half = toWeekBlocks([lesson('저녁', 'wednesday', '19:00', '21:30')], []);
+
+    // At 10:00 the window would be 10–18; it opens at 13, for 13–21.
+    expect(openingHour(evening, 9, WEDNESDAY_AT(10), WINDOW)).toBe(13);
+    // A class ending at 21:30 needs 14–22.
+    expect(openingHour(half, 9, WEDNESDAY_AT(10), WINDOW)).toBe(14);
+  });
+
+  it("opens at the next class's start when the class is longer than the window", () => {
+    const long = toWeekBlocks([lesson('긴 실습', 'wednesday', '12:00', '22:00')], []);
+
+    expect(openingHour(long, 9, WEDNESDAY_AT(10), WINDOW)).toBe(12);
   });
 
   it("opens at the running class's start", () => {
-    expect(openingHour(blocks, 9, WEDNESDAY_AT(20.25))).toBe(19);
+    expect(openingHour(blocks, 9, WEDNESDAY_AT(20.25), WINDOW)).toBe(19);
   });
 
   it("opens at the week's earliest class when today's classes are over or there are none today", () => {
-    expect(openingHour(blocks, 9, WEDNESDAY_AT(21.5))).toBe(10);
-    expect(openingHour(blocks, 9, { day: 3, hours: 12 })).toBe(10);
+    expect(openingHour(blocks, 9, WEDNESDAY_AT(21.5), WINDOW)).toBe(10);
+    expect(openingHour(blocks, 9, { day: 3, hours: 12 }, WINDOW)).toBe(10);
   });
 
   it('opens no earlier than the first hour', () => {
-    expect(openingHour(blocks, 9, WEDNESDAY_AT(7))).toBe(9);
+    expect(openingHour(blocks, 9, WEDNESDAY_AT(7), WINDOW)).toBe(9);
   });
 });
