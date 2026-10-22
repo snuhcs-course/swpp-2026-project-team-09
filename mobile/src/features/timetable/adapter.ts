@@ -55,6 +55,8 @@ export function toWeekBlocks(classes: readonly TimetableClass[], places: readonl
       const day = WEEKDAYS.indexOf(time.weekday);
       const start = hoursOf(time.startTime);
       const end = hoursOf(time.endTime);
+      // The main server keeps only times that end after they start on the same day (00:00 to 23:59), so a time
+      // across midnight cannot come; one that did would be left out rather than drawn wrong.
       if (day < 0 || end <= start) {
         return [];
       }
