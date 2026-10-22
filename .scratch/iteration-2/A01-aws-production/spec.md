@@ -278,8 +278,8 @@ The manifests live in `infra/production/k8s/`, written for Kustomize in parts:
 - **The gate.** The workflow does not run or call CI. Before any AWS step, it reads the results that CI produced for the tagged commit, as the Dev Server's deploy does (`infra/deploy/deploy.sh`):
   - Every CI job counts: the server projects, `admin`, `mobile`, `flow-tests`, and the rest of `ci.yml`'s jobs.
   - One successful run of a job is enough, since a commit pushed to a branch and then tagged has a CI run for each push.
-  - While a job is still queued or running, the gate waits.
-  - A job that failed with no successful run, or no result within a time limit, fails the run.
+  - While a job without a successful run still has a run queued or running, or one cancelled by a newer push to its branch (`ci.yml`'s concurrency), the gate waits.
+  - A job whose runs all failed, or no successful run of a job within a time limit, fails the run.
 
   CI runs on the tag push too, because its `on: push` takes tags, so a tagged commit always gets results. CI gains no trigger and no input for Releases.
 - **AWS access.**

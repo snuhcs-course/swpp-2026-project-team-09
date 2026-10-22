@@ -14,7 +14,7 @@ Ticket 04's Kustomize base becomes a shared part and five server parts, so that 
 - **Six targets.** `kubectl kustomize` renders each of them. A server's target renders the shared part and that server's part, and nothing else. `all` renders everything, the same objects as the base renders today. Kustomize refuses one object twice in a render, so `all` cannot simply list the five server targets, which each hold the shared part.
 - **Images.** In each target, Kustomize sets the registry and tag of its servers' images (`kustomize edit set image`), so that ticket 05 sets the commit SHA on the target it deploys. `redis` stays `redis:8`.
 - **Generated names.** The ConfigMap's and the Secret's names keep their content hash. Within a render, every reference uses the hashed name. The same inputs give the same names in every target, so the jobs of an `all` Release apply one ConfigMap and one Secret between them, not five of each.
-- **The secrets folder.** The `secretGenerator` still reads its three files from one `secrets/` folder that git ignores. `## Comments` names its path for ticket 05.
+- **The secrets folder.** The `secretGenerator` still reads its three files from one `secrets/` folder that git ignores. `## Comments` names its path and each target's folder for tickets 05 and 07.
 - **The database Job** stays at `infra/production/k8s/database-setup.yaml`, outside every kustomization, so the runbook's commands for it do not change.
 - **CI.** The `manifests` job writes the stand-in secrets and renders every target.
 
