@@ -32,7 +32,7 @@ const ENGLISH: Record<string, Weekday> = {
   SUN: 'sunday',
 };
 
-// The day a header word names: `월`, `월요일`, `Mon`, `MON`, `Monday`.
+// The day a header word names: `월`, `월요일`, `Mon`, `MON`, `Monday`, `Tues`, `Thurs`.
 export function dayOf(text: string): Weekday | undefined {
   const word = text.trim().replace(/\.$/u, '');
   const korean = /^([월화수목금토일])(?:요일)?$/u.exec(word)?.[1];
@@ -42,7 +42,8 @@ export function dayOf(text: string): Weekday | undefined {
   const upper = word.toUpperCase();
   const abbreviation = upper.slice(0, 3);
   const full = (ENGLISH[abbreviation] ?? '').toUpperCase();
-  return upper === abbreviation || upper === full ? ENGLISH[abbreviation] : undefined;
+  const known = upper === abbreviation || upper === full || upper === 'TUES' || upper === 'THURS';
+  return known ? ENGLISH[abbreviation] : undefined;
 }
 
 export interface Column {

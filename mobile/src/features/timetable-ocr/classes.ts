@@ -69,11 +69,12 @@ function belongs(candidate: Building, key: string, cut: boolean, time: ReadTime)
 }
 
 // A name printed cut with `…` is the whole name it starts when exactly one whole name in the timetable starts with it
-// (`스튜디오…` and `스튜디오 뮤직 메이킹`); with two or none (`물리…` beside 물리학 and 물리학실험) it stays as read.
+// (`스튜디오…` and `스튜디오 뮤직 메이킹`); with two or none (`물리…` beside 물리학 and 물리학실험) it stays as read. A
+// name that is itself cut, by `…` or by the block's edge, is no whole name.
 function completeMarked(blocks: readonly NamedTime[]): NamedTime[] {
   const whole = new Map<string, string>();
   for (const block of blocks) {
-    if (block.marked !== true) {
+    if (block.marked !== true && block.cut !== true) {
       whole.set(block.name.replaceAll(/\s+/gu, ''), block.name);
     }
   }

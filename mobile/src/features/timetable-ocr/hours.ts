@@ -62,6 +62,9 @@ export function labelHour(text: string): { hour: number; length: number } | null
   let hour = Number(digits) + (minutes === '' ? 0 : Number(minutes.slice(1)) / 60);
   if ((mark === '오후' || mark === 'PM') && hour < 12) {
     hour += 12;
+  } else if ((mark === '오전' || mark === 'AM') && hour >= 12 && hour < 13) {
+    // 오전 12시 and 12 AM are midnight.
+    hour -= 12;
   }
   return hour > 24 ? null : { hour, length: Array.from(prefix).length + digits.length + minutes.length };
 }

@@ -8,8 +8,8 @@ import type { Place } from '@/api/types';
 import { blockText, linesIn } from '@/features/timetable-ocr/block-text';
 import { linkRoom } from '@/features/timetable-ocr/building';
 import { mergeClasses, type ReadTime } from '@/features/timetable-ocr/classes';
-import { findHeader } from '@/features/timetable-ocr/grid';
-import { fitHourLabels } from '@/features/timetable-ocr/hours';
+import { dayOf, findHeader } from '@/features/timetable-ocr/grid';
+import { fitHourLabels, labelHour } from '@/features/timetable-ocr/hours';
 import { readTimetable } from '@/features/timetable-ocr/read-timetable';
 import { type Word, wordsOf } from '@/features/timetable-ocr/words';
 
@@ -130,6 +130,15 @@ describe('a name printed cut with `…`', () => {
       ),
     ).toEqual(['화학']);
   });
+
+  it('takes as whole names only those not cut themselves, by `…` or by the block’s edge', () => {
+    expect(
+      mergeClasses([
+        { name: '스튜디오', marked: true, time: time('friday', '13:00', '13:50') },
+        { name: '스튜디오 뮤직 메이', cut: true, time: time('friday', '14:00', '15:50') },
+      ]).map((lesson) => lesson.name),
+    ).toEqual(['스튜디오', '스튜디오 뮤직 메이']);
+  });
 });
 
 describe('the hour labels in other forms', () => {
@@ -152,7 +161,25 @@ describe('the hour labels in other forms', () => {
   });
 });
 
+describe('midnight', () => {
+  it('is 0 when written 오전 12시 or 12 AM, and noon 12 as 오후 12시 or 12 PM', () => {
+    expect(['오전 12시', '12 AM', '오후 12시', '12 PM', '12'].map((text) => labelHour(text)?.hour)).toEqual([
+      0, 0, 12, 12, 12,
+    ]);
+  });
+});
+
 describe('the day header in other forms', () => {
+  it('reads Tues and Thurs as well as Tue and Thu', () => {
+    expect(['Tues', 'Thurs', 'TUES', 'THURS', 'Tuesday'].map((text) => dayOf(text))).toEqual([
+      'tuesday',
+      'thursday',
+      'tuesday',
+      'thursday',
+      'tuesday',
+    ]);
+  });
+
   it.each([
     [['월요일', '화요일', '수요일', '목요일', '금요일']],
     [['Mon', 'Tue', 'Wed', 'Thu', 'Fri']],
