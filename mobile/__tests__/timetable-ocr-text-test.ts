@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 import type { Place } from '@/api/types';
-import { blockText, joinName, linesIn, roomOf } from '@/features/timetable-ocr/block-text';
+import { blockText, joinName, linesIn, roomOf, type RoomText } from '@/features/timetable-ocr/block-text';
 import { buildingOf, linkRoom } from '@/features/timetable-ocr/building';
 import { mergeClasses, type ReadTime } from '@/features/timetable-ocr/classes';
 import { readTimetable } from '@/features/timetable-ocr/read-timetable';
@@ -21,15 +21,18 @@ import { headerLines, labelLines, line, screenshot } from './support/timetable-o
 const BLUE: [number, number, number] = [73, 150, 225];
 
 function word(text: string, x0: number, x1: number, y = 50, lineIndex = 0): Word {
-  return { text, x0, x1, y0: y - 5, y1: y + 5, line: lineIndex };
+  return { text, x0, x1, y0: y - 5, y1: y + 5, confidence: 0.9, line: lineIndex };
 }
 
 function place(number: string): Place {
   return { id: `place-${number}`, number, name: number, latitude: 37.45, longitude: 126.95 };
 }
 
-function roomLine(text: string, unclipped = true): Parameters<typeof linkRoom>[0] {
-  return { text, y: 0, unclipped, x0: 0, x1: 0, y1: 0 };
+function roomLine(
+  text: string,
+  { unclipped = true, confidence = 0.9, oneElement = true }: Partial<RoomText> = {},
+): RoomText {
+  return { text, unclipped, confidence, oneElement };
 }
 
 // A one-letter name, a name with a room, an empty block and a block of a mark only, each read with `confidence`.
@@ -40,6 +43,32 @@ function confidenceBlocks(confidence: number | null): Parameters<typeof screensh
     { day: 2, start: 10, end: 11, colour: BLUE, text: [] },
     { day: 3, start: 10, end: 11, colour: BLUE, text: ['<'], confidence },
   ];
+}
+
+// What the blocks of `confidenceBlocks` read: the room linked or not.
+function expectedReading(linked: boolean): object {
+  return {
+    kind: 'read',
+    classes: [
+      { name: '밍', times: [{ weekday: 'monday', start: '10:00', end: '11:00', room: null, placeId: null }] },
+      {
+        name: '자료구조',
+        times: [
+          {
+            weekday: 'tuesday',
+            start: '10:00',
+            end: '11:00',
+            room: linked ? '311-1' : null,
+            placeId: linked ? 'place-302' : null,
+          },
+        ],
+      },
+    ],
+    leftOut: [
+      { weekday: 'wednesday', reason: 'no-name' },
+      { weekday: 'thursday', reason: 'no-name' },
+    ],
+  };
 }
 
 function time(weekday: ReadTime['weekday'], start: string, end: string): ReadTime {
@@ -92,13 +121,18 @@ describe('the building of a room', () => {
     expect(buildingOf('999-101', places)).toBeNull();
   });
 
-  it('is linked from a whole room line that no block side cut, its confidence aside', () => {
+  it('is linked from a whole room that no block side cut, read with at least 0.5 confidence (Android)', () => {
     expect(linkRoom(roomLine('302-311-1'), places)?.building).toBe('302');
-    // Two OCR elements, as ML Kit may split `302 -311-1`, are one room once the spaces round the hyphen go.
-    expect(linkRoom(roomLine('302 -311-1'), places)?.room).toBe('311-1');
+    expect(linkRoom(roomLine('302-311-1', { confidence: 0.55 }), places)?.building).toBe('302');
+    expect(linkRoom(roomLine('302-311-1', { confidence: 0.45 }), places)).toBeNull();
     expect(linkRoom(roomLine('302 - …'), places)).toBeNull();
-    expect(linkRoom(roomLine('302-311-1', false), places)).toBeNull();
+    expect(linkRoom(roomLine('302-311-1', { unclipped: false }), places)).toBeNull();
     expect(linkRoom(null, places)).toBeNull();
+  });
+
+  it('is linked without confidence (iOS) only when read inside one whole OCR element', () => {
+    expect(linkRoom(roomLine('302-311-1', { confidence: null }), places)?.room).toBe('311-1');
+    expect(linkRoom(roomLine('302 -311-1', { confidence: null, oneElement: false }), places)).toBeNull();
   });
 });
 
@@ -209,22 +243,15 @@ describe('the whole pipeline on a drawn timetable', () => {
   });
 
   it('keeps a block with a name whatever its confidence, on Android and iOS alike, and leaves out a block without one', () => {
-    const expected = {
-      kind: 'read',
-      classes: [
-        { name: '밍', times: [{ weekday: 'monday', start: '10:00', end: '11:00', room: null, placeId: null }] },
-        {
-          name: '자료구조',
-          times: [{ weekday: 'tuesday', start: '10:00', end: '11:00', room: '311-1', placeId: 'place-302' }],
-        },
-      ],
-      leftOut: [
-        { weekday: 'wednesday', reason: 'no-name' },
-        { weekday: 'thursday', reason: 'no-name' },
-      ],
-    };
-    for (const confidence of [0.05, 0.9, null]) {
-      expect(readTimetable(screenshot(confidenceBlocks(confidence)), [place('302')])).toMatchObject(expected);
+    // Only the room's link asks for confidence: a room read at 0.05 is not linked; its class is kept all the same.
+    for (const [confidence, linked] of [
+      [0.05, false],
+      [0.9, true],
+      [null, true],
+    ] as const) {
+      expect(readTimetable(screenshot(confidenceBlocks(confidence)), [place('302')])).toMatchObject(
+        expectedReading(linked),
+      );
     }
   });
 });

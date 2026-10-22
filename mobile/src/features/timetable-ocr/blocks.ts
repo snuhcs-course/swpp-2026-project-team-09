@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Column } from './grid';
-import { BLOCK_SATURATION, BLOCK_VALUE, blockMask, closeMask, components } from './mask';
-import { colourDistance, type PixelImage, rowColour } from './pixels';
+import { blockMask, closeMask, components } from './mask';
+import { BLOCK, type Colour, colourDistance, INK, isPlain, type PixelImage, rowColour } from './pixels';
 
 // ② The coloured blocks, in the small copy's pixels: x1 and y1 are exclusive.
 
@@ -97,15 +98,7 @@ function rowColours(
 ): ([number, number, number] | null)[] {
   const colours: ([number, number, number] | null)[] = [];
   for (let y = part.y0; y < part.y1; y += 1) {
-    colours.push(
-      rowColour(
-        image,
-        y,
-        part.x0,
-        part.x1,
-        (index) => (image.saturation[index] ?? 0) >= BLOCK_SATURATION && (image.value[index] ?? 0) >= BLOCK_VALUE,
-      ),
-    );
+    colours.push(rowColour(image, y, part.x0, part.x1, (index) => image.kind[index] === BLOCK));
   }
   return colours;
 }
@@ -155,21 +148,32 @@ function splitByColour(image: PixelImage, part: Part): Part[] {
   }));
 }
 
-// Splits two same-coloured blocks stacked with no gap where a thin lighter line runs across them: one or two rows in
-// which nearly every pixel is lighter than the block, with the block's colour above and below.
-export function splitAtLightLines(
+// How far a pixel leans from a block's colour towards the background's, 0 at the block's colour and 1 at the
+// background's: its offset from the block projected on the line between the two.
+function towardsBackground(image: PixelImage, index: number, colour: readonly number[]): number {
+  let along = 0;
+  let length = 0;
+  for (let channel = 0; channel < 3; channel += 1) {
+    const toBackground = (image.background[channel] ?? 0) - (colour[channel] ?? 0);
+    along += ((image.rgba[index * 4 + channel] ?? 0) - (colour[channel] ?? 0)) * toBackground;
+    length += toBackground * toBackground;
+  }
+  return length === 0 ? 0 : along / length;
+}
+
+// Splits two same-coloured blocks stacked with no gap where a thin separator runs across them: one or two rows in
+// which nearly every pixel leans from the block's colour towards the background's (lighter on a light picture, darker
+// on a dark one), with the block's colour above and below. Letters cover only part of a row, so they are no separator.
+export function splitAtSeparators(
   image: PixelImage,
   part: { x0: number; x1: number; y0: number; y1: number },
 ): number[] {
   const colours = rowColours(image, part);
   const colour = medianColour(colours);
-  const blockValue = Math.max(...colour);
-  const blockSaturation = blockValue === 0 ? 0 : (blockValue - Math.min(...colour)) / blockValue;
-  const lighter = (y: number): boolean => {
+  const separating = (y: number): boolean => {
     let count = 0;
     for (let x = part.x0; x < part.x1; x += 1) {
-      const index = y * image.width + x;
-      if ((image.saturation[index] ?? 0) <= blockSaturation * 0.85 || (image.value[index] ?? 0) >= blockValue + 25) {
+      if (towardsBackground(image, y * image.width + x, colour) >= 0.15) {
         count += 1;
       }
     }
@@ -181,8 +185,8 @@ export function splitAtLightLines(
   };
   const cuts: number[] = [];
   for (let y = part.y0 + 3; y < part.y1 - 3; y += 1) {
-    const thickness = lighter(y) ? (lighter(y + 1) ? 2 : 1) : 0;
-    if (thickness > 0 && !lighter(y - 1) && !lighter(y + thickness) && plain(y - 2) && plain(y + thickness + 1)) {
+    const thickness = separating(y) ? (separating(y + 1) ? 2 : 1) : 0;
+    if (thickness > 0 && !separating(y - 1) && !separating(y + thickness) && plain(y - 2) && plain(y + thickness + 1)) {
       cuts.push(y);
       y += thickness;
     }
@@ -208,8 +212,8 @@ function isBlock(mask: Uint8Array, width: number, part: Part, hourHeight: number
   );
 }
 
-// The blocks of the picture: the saturated pixels, closed, as connected components cut at the column edges, split
-// where their colour changes or a light line runs across, without what is above the header's bottom or too small.
+// The blocks of the picture: the coloured pixels, closed, as connected components cut at the column edges, split
+// where their colour changes or a separator runs across, without what is above the header's bottom or too small.
 // The label strip and the tab bar lie outside every column or hold nothing as wide as one.
 export function findBlocks(
   image: PixelImage,
@@ -224,7 +228,7 @@ export function findBlocks(
   const blocks: Block[] = [];
   for (const part of cutAtColumns(labels, count, width, height, columns)) {
     for (const piece of splitByColour(image, part)) {
-      const cuts = splitAtLightLines(image, piece);
+      const cuts = splitAtSeparators(image, piece);
       const edges = [piece.y0, ...cuts, piece.y1];
       edges.slice(1).forEach((y1, index) => {
         const y0 = (edges[index] ?? piece.y0) + (index > 0 ? 1 : 0);
@@ -245,28 +249,83 @@ export function findBlocks(
   return blocks;
 }
 
+// Whether another block of the same column meets `block` at row `y` (its top there when `y` is the block's bottom, and
+// the other way round): two classes back to back, whose shared edge is real.
+function meetsAnother(block: Block, blocks: readonly Block[], y: number, side: 'above' | 'below'): boolean {
+  return blocks.some(
+    (other) =>
+      other !== block && other.column === block.column && Math.abs((side === 'below' ? other.y0 : other.y1) - y) <= 2,
+  );
+}
+
+// Whether the rows of a block next to one edge drift from the block's colour: it fades out there (the blur behind a
+// floating bar). The edge row itself, blended with what is next to it, is not looked at.
+function fades(image: PixelImage, block: Block, side: 'top' | 'bottom'): boolean {
+  const colours = rowColours(image, block);
+  const edge = (side === 'bottom' ? colours.slice(-3, -1) : colours.slice(1, 3)).filter((colour) => colour !== null);
+  return edge.every((colour) => colourDistance(colour, block.colour) > FADE_DISTANCE);
+}
+
+// Whether one of the three rows beyond an edge is plain: the background or a grid line, measured from the picture,
+// or the header's band (`headerBand`), which sits right above the first hour.
+function plainBeyond(image: PixelImage, block: Block, side: 'top' | 'bottom', headerBand: Colour | null): boolean {
+  return [0, 1, 2].some((step) => {
+    const y = side === 'bottom' ? block.y1 + step : block.y0 - 1 - step;
+    const colour = y >= 0 && y < image.height ? rowColour(image, y, block.x0, block.x1, () => true) : null;
+    return (
+      colour !== null &&
+      (isPlain(image, colour) || (headerBand !== null && colourDistance(colour, headerBand) <= FADE_DISTANCE))
+    );
+  });
+}
+
+// The colour of the day header's band: its row's mean without the letters, between x0 and x1. Null when the row is
+// outside the picture.
+export function headerBandOf(image: PixelImage, y: number, x0: number, x1: number): Colour | null {
+  const row = Math.round(y);
+  return row < 0 || row >= image.height
+    ? null
+    : rowColour(
+        image,
+        row,
+        Math.max(0, Math.round(x0)),
+        Math.min(image.width, Math.round(x1)),
+        (index) => image.kind[index] !== INK,
+      );
+}
+
 // ③ Whether a block's end can be trusted. It cannot when the block reaches the picture's bottom, when what is right
-// below it is neither background nor grid (it runs under a tab bar), or when it fades out towards the bottom (the blur
-// behind a floating tab bar).
-// The edge row of a block, blended with what is next to it, is not looked at.
-export function endIsUncertain(image: PixelImage, block: Block): boolean {
+// below it is neither the background, a grid line nor another block (it runs under a tab bar), or when it fades out
+// towards the bottom (the blur behind a floating tab bar).
+export function endIsUncertain(image: PixelImage, block: Block, blocks: readonly Block[] = []): boolean {
   if (block.y1 + 2 >= image.height) {
     return true;
   }
-  const plainBelow = [0, 1, 2].some((step) => {
-    const below = rowColour(image, block.y1 + step, block.x0, block.x1, () => true) ?? [0, 0, 0];
-    const value = Math.max(...below);
-    return value >= 200 && (value - Math.min(...below)) / value <= 0.12;
-  });
-  if (!plainBelow) {
+  if (!meetsAnother(block, blocks, block.y1, 'below') && !plainBeyond(image, block, 'bottom', null)) {
     return true;
   }
-  const colours = rowColours(image, block);
-  const bottom = colours.slice(-3, -1).filter((colour) => colour !== null);
-  return bottom.every((colour) => colourDistance(colour, block.colour) > FADE_DISTANCE);
+  return fades(image, block, 'bottom');
 }
 
-// How far, in RGB, the colour of the rows just above a block's bottom edge may drift from the block's before the
-// block counts as fading out. Chosen on the four reference screenshots: SNUTT's two faded blocks drift 20 and 27,
-// every other block less than 1.
+// The same for a block's start: a timetable scrolled down cuts the blocks at the picture's top or under a bar. A block
+// at the first hour, right under a shaded day header, has the header's band above it: that is no bar.
+export function startIsUncertain(
+  image: PixelImage,
+  block: Block,
+  blocks: readonly Block[] = [],
+  headerBand: Colour | null = null,
+): boolean {
+  if (block.y0 <= 2) {
+    return true;
+  }
+  if (!meetsAnother(block, blocks, block.y0, 'above') && !plainBeyond(image, block, 'top', headerBand)) {
+    return true;
+  }
+  return fades(image, block, 'top');
+}
+
+// How far, in RGB, the colour of the rows next to a block's edge may drift from the block's before the block counts as
+// fading out. Apps draw a block in one flat colour, so any steady drift is a gradient; 12 is about 3 % of the RGB
+// cube's diagonal, above rounding and blending at the small copy's scale. (On the four reference screenshots the two
+// faded blocks drift 20 and 27, the others less than 1.)
 export const FADE_DISTANCE = 12;

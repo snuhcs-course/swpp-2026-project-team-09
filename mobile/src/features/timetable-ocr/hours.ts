@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { centreY, characterCentres, type Word } from './words';
@@ -46,22 +47,40 @@ function median(values: readonly number[]): number {
   return sorted.length % 2 === 1 ? (sorted[middle] ?? 0) : ((sorted[middle - 1] ?? 0) + (sorted[middle] ?? 0)) / 2;
 }
 
-// The hour labels: numbers in the narrow strip left of the first column and below the header. A number glued to a
-// class's name ("2자료구조") counts when its digits sit in the strip.
+// An hour label as apps write it: `9`, `09:00`, `9:30`, `오전 9시`, `오후 1시`, `9 AM`, `1 PM`. A morning or
+// afternoon mark gives the 24-hour value; without one, 12-hour labels are unfolded later.
+const LABEL = /^((?:오전|오후|AM|PM)\s*)?(\d{1,2})(:\d{2})?(?!\d)\s*(?:시|(AM|PM)\b)?/iu;
+
+// The hour a label reads, and how many of its characters, from its start, the number takes; null when it is none.
+export function labelHour(text: string): { hour: number; length: number } | null {
+  const match = LABEL.exec(text);
+  if (match === null) {
+    return null;
+  }
+  const [, prefix = '', digits = '', minutes = '', suffix = ''] = match;
+  const mark = (prefix.trim() || suffix).toUpperCase();
+  let hour = Number(digits) + (minutes === '' ? 0 : Number(minutes.slice(1)) / 60);
+  if ((mark === '오후' || mark === 'PM') && hour < 12) {
+    hour += 12;
+  }
+  return hour > 24 ? null : { hour, length: Array.from(prefix).length + digits.length + minutes.length };
+}
+
+// The hour labels: in the narrow strip left of the first column and below the header. A number glued to a class's
+// name ("2자료구조") counts when its digits sit in the strip.
 export function hourLabels(words: readonly Word[], stripRight: number, headerBottom: number): HourLabel[] {
   const labels: HourLabel[] = [];
   for (const word of words) {
-    const digits = /^(\d{1,2})(?!\d)/u.exec(word.text.trim())?.[1];
-    const lastDigit = digits === undefined ? undefined : characterCentres(word)[digits.length - 1];
+    const read = labelHour(word.text);
+    const lastDigit = read === null ? undefined : characterCentres(word)[read.length - 1];
     if (
-      digits !== undefined &&
+      read !== null &&
       lastDigit !== undefined &&
       word.x0 < stripRight &&
       lastDigit.x < stripRight &&
-      centreY(word) > headerBottom &&
-      Number(digits) <= 24
+      centreY(word) > headerBottom
     ) {
-      labels.push({ hour: Number(digits), y: centreY(word), top: word.y0 });
+      labels.push({ hour: read.hour, y: centreY(word), top: word.y0 });
     }
   }
   return labels.toSorted((one, other) => one.y - other.y);
@@ -128,14 +147,15 @@ export function ransacLine(points: readonly Point[], minA: number, maxA: number)
 }
 
 // The labels' line: every way of unfolding them is fitted, and the one most labels agree with is kept. At least 3
-// labels must agree.
+// labels must agree, so an hour is at most a third of the picture tall (a zoomed timetable showing 3 hours); at least
+// a fiftieth (25 hours would not fit).
 export function fitHourLabels(labels: readonly HourLabel[], imageHeight: number): { fit: Fit; hours: number[] } | null {
   const raw = labels.map((label) => label.hour);
   let best: { fit: Fit; hours: number[] } | null = null;
   for (const wrap of [null, ...wrapCandidates(raw)]) {
     const hours = unfoldHours(raw, wrap);
     const points = labels.map((label, index) => ({ t: hours[index] ?? 0, y: label.y }));
-    const fit = ransacLine(points, imageHeight / 50, imageHeight / 5);
+    const fit = ransacLine(points, imageHeight / 50, imageHeight / 3);
     if (fit !== null && better(fit, best?.fit ?? null)) {
       best = { fit, hours };
     }

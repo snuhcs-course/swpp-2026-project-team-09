@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ClassSave, Weekday } from '@/api/types';
@@ -45,6 +46,8 @@ export interface NamedTime {
   time: ReadTime;
   // Whether the block's name shows a sign of being cut short.
   cut?: boolean;
+  // Whether the name was printed cut, with `…`.
+  marked?: boolean;
 }
 
 interface Building {
@@ -65,12 +68,31 @@ function belongs(candidate: Building, key: string, cut: boolean, time: ReadTime)
   );
 }
 
+// A name printed cut with `…` is the whole name it starts when exactly one whole name in the timetable starts with it
+// (`스튜디오…` and `스튜디오 뮤직 메이킹`); with two or none (`물리…` beside 물리학 and 물리학실험) it stays as read.
+function completeMarked(blocks: readonly NamedTime[]): NamedTime[] {
+  const whole = new Map<string, string>();
+  for (const block of blocks) {
+    if (block.marked !== true) {
+      whole.set(block.name.replaceAll(/\s+/gu, ''), block.name);
+    }
+  }
+  return blocks.map((block) => {
+    const key = block.name.replaceAll(/\s+/gu, '');
+    const starts = [...whole.keys()].filter((name) => name !== key && name.startsWith(key));
+    const [only] = starts;
+    return block.marked === true && starts.length === 1 && only !== undefined
+      ? { ...block, name: whole.get(only) ?? block.name, marked: false }
+      : block;
+  });
+}
+
 // Blocks whose names are the same once spaces are removed become one class with a time per block, in the order of
 // the week; a name cut short joins its whole name, which the class keeps. A time that would cross one already in the
 // class (same day) starts another class of the same name, since the server refuses a class whose own times cross;
 // so does an eleventh time.
 export function mergeClasses(blocks: readonly NamedTime[]): ReadClass[] {
-  const sorted = blocks.toSorted((one, other) => compareTimes(one.time, other.time));
+  const sorted = completeMarked(blocks).toSorted((one, other) => compareTimes(one.time, other.time));
   const classes: Building[] = [];
   for (const { name, time, cut = false } of sorted) {
     const key = name.replaceAll(/\s+/gu, '');

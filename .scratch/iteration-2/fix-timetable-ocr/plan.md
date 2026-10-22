@@ -15,6 +15,29 @@ the plan, written after reading the pipeline end to end and before any code chan
 4. No rules tuned to particular screenshots. Measure the background, the grid and the blocks from the image itself;
    keep a constant only when it has a reason that does not come from the four reference screenshots.
 
+## Review decisions (함재현 on PR #113, 2026-10-22)
+
+These override the plan below where they differ.
+
+1. **Confidence.** Dropped for classes and titles as planned (`NAME_CONFIDENCE`, the title's 0.3 filter, the
+   two-character rule). **Kept for linking a room to a building**, as a low floor: `ROOM_CONFIDENCE` 0.5 on Android,
+   since a misread digit can land on another real building (301 → 307) and the spec's story 11 is "never sent to the
+   wrong place", while an unlinked room is harmless. The four reference screenshots' rooms read 0.82–0.95, so 0.5
+   refuses none of them. On iOS (no confidence) the room must be read inside one whole OCR element, for rooms only.
+   `meanConfidence` and a line's confidence stay only for this.
+2. **Dark-mode fixture.** The real screenshot and its ML Kit output are not available yet (no image file, no device
+   run). The synthetic case stays; the screenshots test lists `dark-1` as to do and runs it, held to the same hard bars,
+   once its output and ground truth are saved (`PENDING_SCREENSHOTS` in `__tests__/support/timetable-ocr.ts`).
+3. **Out of scope:** photos of a screen (#22), a professor's name inside the block (#26), half-width overlapping
+   classes (#20). Stated here and in `accuracy.md`.
+4. **The P13 spec** (`.scratch/iteration-2/P13-timetable-ocr/spec.md`) is updated to match decision 1.
+5. **`…` joining (#6).** A name printed cut with `…` joins a whole name only when exactly one whole name in the
+   timetable starts with it; otherwise it stays a class of its own (`물리…` beside 물리학 and 물리학실험 stays apart).
+6. **Start-uncertain (#10).** The day header's band, measured on the header row, counts as plain above a block, so a
+   block at the first hour right under a shaded header is not dropped.
+7. **Reference screenshots.** "No building linked wrongly" stays a hard bar beside at least 48 of 50 times; the room-link
+   numbers with the 0.5 floor are reported in `accuracy.md`.
+
 ## Confidence: what goes and what replaces it
 
 | Today                                                                                                                     | Plan                                                                                                                                                                                                                                                                                                                |

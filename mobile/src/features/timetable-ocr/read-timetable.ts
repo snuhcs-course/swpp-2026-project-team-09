@@ -7,7 +7,7 @@
 
 import type { Place, Weekday } from '@/api/types';
 
-import { type Block, endIsUncertain, findBlocks } from './blocks';
+import { type Block, endIsUncertain, findBlocks, headerBandOf, startIsUncertain } from './blocks';
 import { type BlockLine, blockText, linesIn } from './block-text';
 import { linkRoom } from './building';
 import { mergeClasses, type ReadClass, type ReadTime } from './classes';
@@ -26,6 +26,8 @@ import { type Word, wordsOf } from './words';
 export type LeftOutReason =
   // The block's bottom runs under the tab bar, reaches the picture's end or fades out.
   | 'end-uncertain'
+  // The block's top is cut by the picture's top or a bar over it, or fades in: the timetable was scrolled.
+  | 'start-uncertain'
   // The block's top or bottom is outside the day.
   | 'outside-day'
   // No name was read in the block: no text, only a room, or only marks without a letter or digit.
@@ -113,6 +115,7 @@ function splitByText(block: Block, lines: readonly BlockLine[], hourHeight: numb
 interface ReadBlock {
   name: string;
   cut: boolean;
+  marked: boolean;
   time: ReadTime;
 }
 
@@ -122,7 +125,7 @@ function readBlock(
   words: readonly Word[],
   grid: Grid,
   places: readonly Place[],
-  uncertainEnd: boolean,
+  uncertain: 'start-uncertain' | 'end-uncertain' | null,
 ): ReadBlock | LeftOut {
   const text = blockText(linesIn(words, block), block);
   const start = clock(hoursAt(grid.line, block.y0));
@@ -140,13 +143,14 @@ function readBlock(
   if (start === null || end === null || start >= end) {
     return leftOut('outside-day');
   }
-  if (uncertainEnd) {
-    return leftOut('end-uncertain');
+  if (uncertain !== null) {
+    return leftOut(uncertain);
   }
   const link = linkRoom(text.room, places);
   return {
     name: text.name,
     cut: text.cut,
+    marked: text.marked,
     time: { weekday: block.column.weekday, start, end, room: link?.room ?? null, placeId: link?.placeId ?? null },
   };
 }
@@ -162,12 +166,26 @@ export function readTimetable(result: NativeOcrResult, places: readonly Place[])
   }
   const read: ReadBlock[] = [];
   const leftOut: LeftOut[] = [];
-  for (const found of findBlocks(image, grid.columns, grid.line.a, grid.headerBottom)) {
-    const uncertainEnd = endIsUncertain(image, found);
+  const blocks = findBlocks(image, grid.columns, grid.line.a, grid.headerBottom);
+  const headerBand = headerBandOf(
+    image,
+    (grid.headerTop + grid.headerBottom) / 2,
+    grid.columns[0]?.left ?? 0,
+    grid.columns.at(-1)?.right ?? image.width,
+  );
+  for (const found of blocks) {
+    const uncertainStart = startIsUncertain(image, found, blocks, headerBand);
+    const uncertainEnd = endIsUncertain(image, found, blocks);
     const pieces = splitByText(found, linesIn(words, found), grid.line.a);
     pieces.forEach((block, index) => {
-      // Only the last piece reaches the found block's bottom.
-      const outcome = readBlock(block, words, grid, places, uncertainEnd && index === pieces.length - 1);
+      // Only the first piece reaches the found block's top, and only the last its bottom.
+      const uncertain =
+        uncertainStart && index === 0
+          ? 'start-uncertain'
+          : uncertainEnd && index === pieces.length - 1
+            ? 'end-uncertain'
+            : null;
+      const outcome = readBlock(block, words, grid, places, uncertain);
       if ('reason' in outcome) {
         leftOut.push(outcome);
       } else {

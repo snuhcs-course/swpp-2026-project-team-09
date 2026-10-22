@@ -2,20 +2,19 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import type { PixelImage } from './pixels';
+import { BLOCK, type PixelImage } from './pixels';
 
 // ② The mask of the coloured blocks' pixels, closed, and its connected components.
 
-// A block's pixel: saturated, and not too dark. White, light grey and the grey grid lines fall out.
-export const BLOCK_SATURATION = 0.25;
-export const BLOCK_VALUE = 80;
-
+// A block's pixel: more coloured than the background (`pixels.ts`). The background, the grid lines and text fall out,
+// on a light or a dark picture alike.
 export function blockMask(image: PixelImage): Uint8Array {
   const mask = new Uint8Array(image.width * image.height);
   for (let index = 0; index < mask.length; index += 1) {
-    if ((image.saturation[index] ?? 0) >= BLOCK_SATURATION && (image.value[index] ?? 0) >= BLOCK_VALUE) {
+    if (image.kind[index] === BLOCK) {
       mask[index] = 1;
     }
   }

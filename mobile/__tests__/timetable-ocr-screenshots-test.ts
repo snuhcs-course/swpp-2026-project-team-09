@@ -16,6 +16,7 @@ import { checkedClasses } from '@/features/timetable/version-checks';
 import {
   campusPlaces,
   ocrOutput,
+  PENDING_SCREENSHOTS,
   SCREENSHOTS,
   type Score,
   score,
@@ -112,6 +113,25 @@ describe.each(SCREENSHOTS)('the screenshot %s, without its header or timed', (na
       console.log(`${name}: ${median.toFixed(1)} ms (median of 5)`);
     }
     expect(median).toBeLessThan(500);
+  });
+});
+
+// A screenshot whose fixture is still to come (the user's dark-mode one) is held to the same hard bars once it is
+// saved: nothing read that is not there, and no building linked wrongly, with confidence and without.
+describe.each(Object.entries(PENDING_SCREENSHOTS))('the screenshot %s', (name, saved) => {
+  if (saved === null) {
+    it.todo(`is read once its ML Kit output and ground truth are saved in fixtures/timetable-ocr/${name}.*`);
+    return;
+  }
+  it('is read with nothing that is not there and no building linked wrongly', () => {
+    for (const output of [saved.output, withoutConfidence(saved.output)]) {
+      const reading = readTimetable(output, PLACES);
+      expect(reading.kind).toBe('read');
+      const result =
+        reading.kind === 'read' ? score(reading.classes, reading.leftOut, saved.truth) : score([], [], saved.truth);
+      expect(result.readTimes).toBe(result.matched);
+      expect(result.buildingsWrong).toBe(0);
+    }
   });
 });
 
