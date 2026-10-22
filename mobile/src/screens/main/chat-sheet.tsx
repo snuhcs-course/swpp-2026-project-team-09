@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -58,11 +59,19 @@ interface ChatHeaderProps {
   onClose: () => void;
 }
 
-// The round chat icon, "SNU Now AI", 새 대화 and the close button, under the phone's status bar.
+// The round chat icon, "SNU Now AI", 새 대화 and the close button, under the phone's status bar. A press on it that
+// neither button takes puts the keyboard down.
 function ChatHeader({ onReset, onClose }: ChatHeaderProps): ReactElement {
   const { top } = useSafeAreaInsets();
   return (
-    <View style={[styles.header, { height: HEADER + top, paddingTop: top }]}>
+    <Pressable
+      accessible={false}
+      onPress={() => {
+        Keyboard.dismiss();
+      }}
+      style={[styles.header, { height: HEADER + top, paddingTop: top }]}
+      testID="chat-header"
+    >
       <View style={styles.icon}>
         <Icon color={color.onPrimary} name="chat" size={18} />
       </View>
@@ -75,7 +84,7 @@ function ChatHeader({ onReset, onClose }: ChatHeaderProps): ReactElement {
       <Pressable accessibilityLabel="대화 닫기" accessibilityRole="button" onPress={onClose} style={styles.close}>
         <Icon color={color.ink} name="x" size={22} />
       </Pressable>
-    </View>
+    </Pressable>
   );
 }
 
@@ -119,7 +128,9 @@ function useQuestCards(onOpenPost: (questId: string) => void): {
 // The chat with the Assistant, the `MainChat` frame: a translucent sheet from the top of the screen to the
 // navigation, over the map and the lists. The AI input stays at the bottom over it as the chat's input. The
 // conversation is the main screen's, so that the sheet only shows it. A press on the sheet that nothing in it takes
-// puts the keyboard down, and the sheet stays.
+// puts the keyboard down, and the sheet stays: the header and the conversation each see to it. The sheet itself takes
+// no touch: on Android a JS responder around the conversation's scroll view takes the drag from it, and the
+// conversation stopped scrolling while the keyboard was down.
 export function ChatSheet(props: ChatSheetProps): ReactElement {
   const { chat, inFront, onClose, onShowLayer, onOpenEvent, onOpenPost, proposals, inputTop } = props;
   const { top } = useSafeAreaInsets();
@@ -134,14 +145,7 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
   // From the sheet's bottom to the AI input's top, and the room above it.
   const under = inputTop + OVER_INPUT;
   return (
-    <Pressable
-      accessible={false}
-      onPress={() => {
-        Keyboard.dismiss();
-      }}
-      style={[styles.sheet, { top: -top }]}
-      testID="chat-sheet"
-    >
+    <View style={[styles.sheet, { top: -top }]} testID="chat-sheet">
       <ChatHeader onClose={onClose} onReset={reset} />
       {bubbles.length === 0 && !waiting ? (
         <ChatEmpty onSend={send} under={under} />
@@ -157,7 +161,7 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
       )}
       {eventCards.sheets}
       {questCards.sheet}
-    </Pressable>
+    </View>
   );
 }
 
