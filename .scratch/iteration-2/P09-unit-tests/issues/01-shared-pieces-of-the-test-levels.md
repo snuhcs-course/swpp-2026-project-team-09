@@ -26,7 +26,7 @@ The three pieces every rename ticket (P09-02 to P09-06) relies on. They land onc
 - [x] `.nvmrc` holds the one exact `24.x.y` that `node --version` prints on the measurement Mac, and no CI workflow file changes.
 - [x] `CLAUDE.md` and `AGENTS.md` each have the new line word for word under "AI-generated code markers", and the two files are still identical.
 - [x] The new script starts with the AI-generated box and its first row (`CLAUDE.md`).
-- [ ] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+- [x] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
 
 ## Comments
 
@@ -81,3 +81,8 @@ exit 1
 ```
 
 **Node pin.** `node --version` on the measurement Mac prints `v24.14.0`; `.nvmrc` holds `24.14.0`. `.github/workflows/` and every package's `package.json` are unchanged.
+
+### Agent usage (2026-10-22)
+
+- Agent time: about 11 minutes, an estimate: the implementer subagent, measured just before its last commit.
+- Tokens: input 7,260 thousand in all (cache reads 7,110 thousand, cache writes 149 thousand, uncached under 1 thousand); output 5 thousand, a lower bound, since the transcript keeps only partial output counts.
