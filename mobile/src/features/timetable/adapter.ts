@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ClassTime, Place, TimetableClass, Weekday } from '@/api/types';
 
-// The hours the week on 내 정보 shows: from 09 to 18.
+// The hours the week on 내 정보 shows at least: from 09 to 22. A class outside them widens the week (see `weekHours`).
 export const FIRST_HOUR = 9;
-export const LAST_HOUR = 18;
+export const LAST_HOUR = 22;
 
 const WEEKDAYS: readonly Weekday[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 export const DAY_LETTERS = ['월', '화', '수', '목', '금'] as const;
@@ -18,7 +19,7 @@ export interface ClassBlockView {
   key: string;
   // 0 for Monday to 4 for Friday.
   day: number;
-  // In hours of the day, held between 09 and 18: 10.5 for 10:30.
+  // In hours of the day: 10.5 for 10:30.
   start: number;
   end: number;
   // "운영체제"
@@ -45,14 +46,13 @@ function whereOf(time: ClassTime, places: readonly Place[]): string {
   return number === null ? (room ?? '') : `${number}동`;
 }
 
-// The blocks of the week, Monday to Friday from 09 to 18. A time on Saturday or Sunday is not drawn, and neither are
-// its hours outside 09–18.
+// The blocks of the week, Monday to Friday, each whole. A time on Saturday or Sunday is not drawn.
 export function toWeekBlocks(classes: readonly TimetableClass[], places: readonly Place[]): ClassBlockView[] {
   return classes.flatMap((lesson, order) =>
     lesson.times.flatMap((time) => {
       const day = WEEKDAYS.indexOf(time.weekday);
-      const start = Math.max(hoursOf(time.startTime), FIRST_HOUR);
-      const end = Math.min(hoursOf(time.endTime), LAST_HOUR);
+      const start = hoursOf(time.startTime);
+      const end = hoursOf(time.endTime);
       if (day < 0 || end <= start) {
         return [];
       }
@@ -70,4 +70,17 @@ export function toWeekBlocks(classes: readonly TimetableClass[], places: readonl
       ];
     }),
   );
+}
+
+// The whole hours the week shows: 09 to 22, widened to the hour before the earliest block and after the latest, so
+// that every block is drawn whole.
+export function weekHours(blocks: readonly ClassBlockView[]): { first: number; last: number } {
+  const first = Math.min(FIRST_HOUR, ...blocks.map(({ start }) => Math.floor(start)));
+  const last = Math.max(LAST_HOUR, ...blocks.map(({ end }) => Math.ceil(end)));
+  return { first: Math.max(0, first), last: Math.min(24, last) };
+}
+
+// The hour the week opens at: that of the earliest block, or the first hour when there is none.
+export function openingHour(blocks: readonly ClassBlockView[], first: number): number {
+  return blocks.length === 0 ? first : Math.max(first, Math.floor(Math.min(...blocks.map(({ start }) => start))));
 }
