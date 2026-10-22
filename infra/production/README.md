@@ -393,15 +393,24 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
    **Variables**, set the Release workflow's variables from `terraform output -raw <output>`, and the admin site's two
    public build arguments:
 
-   | From                           | What it is                                                           |
-   | ------------------------------ | -------------------------------------------------------------------- |
-   | `region`                       | The Region, `ap-northeast-2`                                         |
-   | `deploy_role_arn`              | The role the workflow assumes                                        |
-   | `cluster_name`                 | The cluster, `snunow`                                                |
-   | `ecr_registry`                 | The account's ECR registry host                                      |
-   | `database_endpoint`            | The database's host name, for the servers' `DATABASE_URL`            |
-   | The admin Google client's ID   | `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, the same as `GOOGLE_ADMIN_CLIENT_ID` |
-   | The Kakao app's JavaScript key | `NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY`, for the admin site's maps        |
+   | Repository variable                | Value                                                         |
+   | ---------------------------------- | ------------------------------------------------------------- |
+   | `PRODUCTION_REGION`                | `terraform output -raw region`, `ap-northeast-2`              |
+   | `PRODUCTION_DEPLOY_ROLE_ARN`       | `terraform output -raw deploy_role_arn`, the role it assumes  |
+   | `PRODUCTION_CLUSTER_NAME`          | `terraform output -raw cluster_name`, `snunow`                |
+   | `PRODUCTION_ECR_REGISTRY`          | `terraform output -raw ecr_registry`, the registry host       |
+   | `PRODUCTION_DATABASE_ENDPOINT`     | `terraform output -raw database_endpoint`, for `DATABASE_URL` |
+   | `NEXT_PUBLIC_GOOGLE_CLIENT_ID`     | The admin Google client's ID, as `GOOGLE_ADMIN_CLIENT_ID`     |
+   | `NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY` | The Kakao app's JavaScript key, for the admin site's maps     |
+
+   With the GitHub CLI, from this folder:
+
+   ```bash
+   for output in region deploy_role_arn cluster_name ecr_registry database_endpoint; do
+     name=$(echo "$output" | tr '[:lower:]' '[:upper:]')
+     gh variable set "PRODUCTION_${name}" --body "$(terraform output -raw "$output")"
+   done
+   ```
 
 5. **The other parameters.** Put the seven parameters under `/snunow/production/` that the database's steps did not,
    with Production's own values, never the Dev Server's. The key pair is stored as PEM with real line breaks. A PEM
@@ -683,6 +692,7 @@ aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-p
    kubectl --context snunow-production --namespace snunow scale deployment \
      main-server socket-server worker-server match-server admin --replicas=0
    kubectl --context snunow-production --namespace snunow run dump --restart=Never --image=postgres:18 \
+     --labels=database-client=true \
      --env=PGHOST="$(terraform output -raw database_endpoint)" \
      --env=PGUSER="$(terraform output -raw database_master_username)" \
      --env=PGPASSWORD="$(terraform output -raw database_master_password)" \
@@ -702,6 +712,7 @@ aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-p
    export AWS_PROFILE=account-b
    terraform init -reconfigure -backend-config=account-b.s3.tfbackend
    kubectl --context snunow-production-b --namespace snunow run restore --restart=Never --image=postgres:18 \
+     --labels=database-client=true \
      --env=PGHOST="$(terraform output -raw database_endpoint)" \
      --env=PGUSER="$(terraform output -raw database_master_username)" \
      --env=PGPASSWORD="$(terraform output -raw database_master_password)" \
@@ -811,6 +822,8 @@ reaches AWS is checked by hand instead, in
   and the admin site signing an Administrator in and publishing a Global Event.
 - Every Source's Collection from AWS's addresses.
 - Each team member's access, with kubectl and with Freelens or Lens.
+- The NetworkPolicies: every server, Redis, and the database Job working under them, and a pod without the
+  `database-client` label failing to reach the database.
 - Releases: one server's Release without a failed request and without touching the others, a commit whose CI fails
   not deploying, a malformed name failing at the name check, and an app tag starting no Release.
 - Memory after the first week, from `kubectl top`.
