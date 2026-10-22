@@ -117,9 +117,11 @@ describe('nextTravels', () => {
     expect(nextTravels([placed('car', 0)], [at('car', 1)], VIEW, false)).toEqual([placed('car', 1)]);
   });
 
-  it('a vehicle missing from the set, and one at a stop not on the route → gone', () => {
-    const elsewhere = { carId: 'lost', stop: stop('외부', 37.5, 127.5), receivedAt: '2026-10-06T03:00:00Z' };
-    expect(nextTravels([placed('car', 0)], [elsewhere], VIEW, true)).toEqual([]);
+  it.each([
+    ['missing from the set', []],
+    ['now at a stop not on the route', [{ ...at('car', 0), stop: stop('외부', 37.5, 127.5) }]],
+  ])('a vehicle %s → gone', (_, vehicles) => {
+    expect(nextTravels([placed('car', 0)], vehicles, VIEW, true)).toEqual([]);
   });
 });
 

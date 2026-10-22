@@ -107,11 +107,14 @@ describe("toCards of the User's Quests without a Party", () => {
     expect(card).toMatchObject({ kind: 'shared-quest', subLabel: '공개 파티 · 2명' });
   });
 
-  it('a Class Quest, and a Quest whose place is words alone → no card', () => {
-    const [step] = quest('q2').subQuests;
-    const words = step === undefined ? [] : [{ ...step, place: { ...GATE, latitude: null, longitude: null } }];
-    const quests = [quest('q1', { classQuest: true, leader: null }), quest('q2', { subQuests: words })];
-    expect(toCards(sources({ quests }))).toEqual([]);
+  const [step] = quest('q2').subQuests;
+  const words = step === undefined ? [] : [{ ...step, place: { ...GATE, latitude: null, longitude: null } }];
+
+  it.each([
+    ['a Class Quest', quest('q1', { classQuest: true, leader: null })],
+    ['a Quest whose place is words alone', quest('q2', { subQuests: words })],
+  ])('%s → no card', (_, one) => {
+    expect(toCards(sources({ quests: [one] }))).toEqual([]);
   });
 });
 

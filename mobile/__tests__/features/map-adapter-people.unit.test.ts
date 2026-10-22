@@ -50,9 +50,11 @@ describe('toCards of Friends', () => {
     expect(card?.lines).toEqual([{ icon: 'info', text: '마지막 위치 5분 전' }]);
   });
 
-  it('a Friend whose position is 10 minutes old, and one without a position → no card', () => {
-    const friends = [friendView(MIN_JUN), friendView(SEO_YEON, { position: null })];
-    expect(toCards(sources({ friends, positions: [measured('min-jun', 10 * MINUTE)] }))).toEqual([]);
+  it.each([
+    ['whose position is 10 minutes old', friendView(MIN_JUN), 10 * MINUTE],
+    ['without a position', friendView(MIN_JUN, { position: null }), MINUTE],
+  ])('a Friend %s → no card', (_, friend, ago) => {
+    expect(toCards(sources({ friends: [friend], positions: [measured('min-jun', ago)] }))).toEqual([]);
   });
 });
 
@@ -77,11 +79,12 @@ describe("toCards of the User's Party", () => {
     expect(card?.lines).toEqual([{ icon: 'info', text: '마지막 위치 3분 전' }]);
   });
 
-  it('a member the User does not see, one without a position and one too old → no card', () => {
-    const old = { id: 'old', name: '윤태오', department: '물리천문학부' };
-    const party = myParty(null, [member(SEO_YEON, false), member(MIN_JUN, true), member(old, true)]);
-    const positions = [measured('seo-yeon', MINUTE), measured('old', 10 * MINUTE)];
-    expect(toCards(sources({ myParty: party, positions }))).toEqual([]);
+  it.each([
+    ['the User does not see', member(SEO_YEON, false), [measured('seo-yeon', MINUTE)]],
+    ['without a position', member(SEO_YEON, true), []],
+    ['whose position is 10 minutes old', member(SEO_YEON, true), [measured('seo-yeon', 10 * MINUTE)]],
+  ])('a member %s → no card', (_, one, positions) => {
+    expect(toCards(sources({ myParty: myParty(null, [one]), positions }))).toEqual([]);
   });
 });
 

@@ -136,6 +136,9 @@ describe('toRoom 활성화', () => {
   it("the User in another Quest's Party → that Party as the other one, which the User leads", () => {
     const view = room({ myParty: myParty('q9', [member(ME, true, true)]) });
     expect(view.otherParty).toEqual({ title: '저녁 파티', leads: true });
+  });
+
+  it("the User in the Quest's own Party → no other one", () => {
     expect(room({ myParty: myParty('q1', [member(ME, true, true)]) }).otherParty).toBeNull();
   });
 });
@@ -151,20 +154,29 @@ describe('toRoom members', () => {
     ]);
   });
 
-  it('a member the User does not see, and the User sharing → 위치 꺼짐, and 위치 공유 중', () => {
+  it.each([
+    ['the User, sharing', '위치 공유 중', 'me'],
+    ['a member the User does not see', '위치 꺼짐', 'min-jun'],
+  ])('%s → %s', (_, words, id) => {
     const party = myParty('q1', [member(ME, true, true), member(MIN_JUN, false, false)]);
-    const words = room({ myParty: party }).members.map(({ state }) => state?.words);
-    expect(words.slice(0, 2)).toEqual(['위치 공유 중', '위치 꺼짐']);
+    expect(room({ myParty: party }).members.find((one) => one.id === id)?.state?.words).toBe(words);
   });
 
-  it('a Friend the User sees, or a member in the Party the User sees → seen; the User never', () => {
-    const seenAsFriend = room({ seenFriends: ['seo-yeon', 'me'] }).members.map(({ seen }) => seen);
-    const party = myParty('q1', [member(ME, true, true), member(MIN_JUN, false, true)]);
-    const seenInParty = room({ myParty: party }).members.map(({ seen }) => seen);
-    expect([seenAsFriend, seenInParty]).toEqual([
-      [false, false, true],
-      [false, true, false],
-    ]);
+  const seenParty = myParty('q1', [member(ME, true, true), member(MIN_JUN, false, true)]);
+
+  it.each([
+    ['a Friend the User sees', { seenFriends: ['seo-yeon'] }, 'seo-yeon'],
+    ['a member of the Party the User sees', { myParty: seenParty }, 'min-jun'],
+  ])('%s → seen', (_, sources, id) => {
+    expect(room(sources).members.find((one) => one.id === id)?.seen).toBe(true);
+  });
+
+  it.each([
+    ['a Holder the User does not see', {}, 'min-jun'],
+    ['the User, among the Friends seen', { seenFriends: ['me'] }, 'me'],
+    ['the User, seen in the Party', { myParty: seenParty }, 'me'],
+  ])('%s → not seen', (_, sources, id) => {
+    expect(room(sources).members.find((one) => one.id === id)?.seen).toBe(false);
   });
 
   it("the Quest's Leader and the User → marked so", () => {
@@ -198,14 +210,13 @@ describe('toRoom plan', () => {
     ]);
   });
 
-  it('a step done → over; the first step not done, ended or cancelled → next', () => {
+  it.each([
+    ['a step done', 'over, and not next', '모이기', { over: true, next: false }],
+    ['the first step not done, ended or cancelled', 'next, and not over', '설명회', { over: false, next: true }],
+    ['a step after the next one', 'neither', '카페', { over: false, next: false }],
+  ])('%s → %s', (_, _result, id, expected) => {
     const view = room({ quest: quest({ subQuests: plan }) });
-    expect(view.plan.map(({ next, over }) => [next, over])).toEqual([
-      [false, true],
-      [true, false],
-      [false, false],
-      [false, false],
-    ]);
+    expect(view.plan.find(({ subQuest }) => subQuest.id === id)).toMatchObject(expected);
   });
 
   it('the first step ahead with a point → the destination; one done or with words alone → passed over', () => {
