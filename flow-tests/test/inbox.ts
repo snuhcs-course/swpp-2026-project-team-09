@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { Socket } from 'socket.io-client';
@@ -20,6 +21,7 @@ const QUIET_MS = 1500;
 // What a User's app receives over the socket, kept in the order it arrived until a test takes it.
 export class Inbox {
   private messages: Message[] = [];
+  private closedBecause: Socket.DisconnectReason | undefined;
   private readonly listeners = new Set<() => void>();
 
   constructor(
@@ -28,10 +30,21 @@ export class Inbox {
   ) {
     socket.onAny((name: string, payload: unknown) => {
       this.messages.push({ name, payload });
-      for (const listener of this.listeners) {
-        listener();
-      }
+      this.notify();
     });
+    socket.on('disconnect', (reason) => {
+      this.closedBecause = reason;
+      this.notify();
+    });
+  }
+
+  // The server closes the connection, as the socket server does when the Session ends.
+  async isDisconnectedByServer(waitMs = WAIT_MS): Promise<void> {
+    const closed = (): true | undefined => (this.closedBecause === 'io server disconnect' ? true : undefined);
+    if ((closed() ?? (await this.until(closed, waitMs))) === undefined) {
+      const state = this.closedBecause === undefined ? 'still connected' : `closed by ${this.closedBecause}`;
+      throw new Error(`${this.owner} was not disconnected by the server within ${waitMs} ms; ${state}`);
+    }
   }
 
   // A signal that carries nothing, such as `quests-changed`.
@@ -101,6 +114,12 @@ export class Inbox {
       const timer = setTimeout(done, waitMs);
       this.listeners.add(listener);
     });
+  }
+
+  private notify(): void {
+    for (const listener of this.listeners) {
+      listener();
+    }
   }
 
   private names(): string {

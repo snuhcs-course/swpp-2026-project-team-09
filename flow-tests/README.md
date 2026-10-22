@@ -46,6 +46,8 @@ what it waited for.
 | `test/event.e2e.test.ts`           | An account outside SNU is refused. An Administrator publishes a Global Event. Two Users ask for Matching in a group of two and, after the match server's round, hold the same Shared Quest. One opens its Party; a second Party for the Quest is refused; the other enters. Each receives the other's position, and a walking route to the event is returned. A Master Switch turned off removes the User at once and stops delivery. |
 | `test/friend.e2e.test.ts`          | A User accepts another's Invite Link, and each receives the other's position. A position off campus is not delivered and removes the Avatar. A friendship's switch turned off stops delivery until it is on again. The friendship ends, and positions stop. (Its Meetup step went with the Meetup, retired in Iteration 2.)                                                                                                           |
 | `test/campus-services.e2e.test.ts` | The worker collects the Co-op's and the dormitory's menus and the shuttle's stops and vehicles, by hand as `pnpm collect` does. Today's menus are served, and a shuttle vehicle is at its stop, pushed to the app and through the route.                                                                                                                                                                                              |
+| `test/session.e2e.test.ts`         | A1 (US-AUTH-02 scenario 1, NFR-07). Two Friends see each other, and one signs in on a second phone. The first phone is told its Session ended and is disconnected; its next upload is refused, and no position of it reaches the Friend. The second phone's upload does.                                                                                                                                                              |
+| `test/quest-group.e2e.test.ts`     | A2 (US-QUEST-03 scenarios 1 and 2). A User who only reads a Board finds an Approval Quest on it. Its Leader accepts two Users' requests to join, and each time every Holder is told and reads the new Holder. The Holders enter the Quest's Party; the Leader ends the Party and then the Quest, and the others are told. The Quest is refused as not found, nobody is in a Party, and the Board lists nothing.                       |
 
 A message that must not arrive is waited for 1.5 seconds; one that is delivered takes milliseconds.
 
@@ -93,7 +95,7 @@ flow-tests/
 ├── compose.deploy.test.yaml       # the deployment stack's proxy on a free loopback port
 ├── sources/serve.ts               # Google, the Sources and Kakao, from saved pages
 └── test/
-    ├── *.e2e.test.ts              # the end-to-end tests: the three flows of the table above, and the one below
+    ├── *.e2e.test.ts              # the end-to-end tests: the flows of the table above, and the one below
     ├── deploy-stack.e2e.test.ts   # the Dev Server's stack, called through its proxy
     ├── stack.integration.test.ts  # tests the harness: a stack of its own project, Compose files and settings
     ├── global-setup.ts            # writes the settings, starts and removes the test stack
