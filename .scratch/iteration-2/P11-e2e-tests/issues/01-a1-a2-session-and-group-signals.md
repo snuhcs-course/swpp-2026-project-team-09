@@ -1,7 +1,7 @@
 # 01: A1 and A2: a Session replaced, and a Leader running a group, in flow-tests
 
 Parent: [P11 spec](../spec.md)
-Status: ready-for-agent
+Status: resolved
 Blocked by: P09-06 (flow-tests: flows named by level)
 Touches: flow-tests only: two new flow files in `test/`, the harness's `people.ts` and `inbox.ts`, and the README's table of flows. Not the stack, the Compose files or any server.
 
@@ -15,15 +15,66 @@ The harness gains the two additions these flows need (spec: "The harness"): a `S
 
 ## Acceptance criteria
 
-- [ ] A `Student` keeps the Google account it signed in with and can sign in again on another phone, answering a second `Student` for the same User with its own token and socket and skipping Onboarding.
-- [ ] An `Inbox` can wait for its connection to be closed by the server (`io server disconnect`), with the same bounded wait as a message.
-- [ ] A1 is one test in a new `flow-tests/test/*.e2e.test.ts` file following the spec's five steps: phone 1 receives `session-ended` with `{ code: 'SESSION_REPLACED' }` and is then disconnected; its `POST /positions` answers 401 with `code: 'SESSION_REPLACED'`; B receives no position of A within the quiet window; phone 2's upload on campus reaches B.
-- [ ] A2 is one test in a new `flow-tests/test/*.e2e.test.ts` file with four Users following the spec's five steps: D finds the Approval Quest on the Board's list; A is told of B's join request and B of its acceptance; after C is accepted, A, B and C each receive `quests-changed` and B's and C's reads list A, B and C as Holders.
-- [ ] In A2, after `POST /parties/mine/end` then `POST /quests/:questId/end`, B and C each receive `party-changed` and `quests-changed`; B's read of the Quest is refused as not found, B and C are in no Party, and D's Board no longer lists the Quest.
-- [ ] Waits are the harness's (10 s for a message that must come, 1.5 s for one that must not); nothing sleeps for a fixed time or is retried.
-- [ ] Every expected value comes from the scenario or from the test's own input; the flows read no database and no server's internal state beyond the existing empty state between tests.
-- [ ] `pnpm test` in `flow-tests` passes with A1, A2 and every existing flow unchanged, and `pnpm lint` (with the level check), `pnpm format:check` and `pnpm typecheck` pass.
-- [ ] No product code, CI workflow or other test changes.
-- [ ] `flow-tests/README.md`'s table of flows lists A1 and A2.
-- [ ] Every new source file starts with the AI-generated box, and each changed source file gets a new row (`CLAUDE.md`).
-- [ ] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+- [x] A `Student` keeps the Google account it signed in with and can sign in again on another phone, answering a second `Student` for the same User with its own token and socket and skipping Onboarding.
+- [x] An `Inbox` can wait for its connection to be closed by the server (`io server disconnect`), with the same bounded wait as a message.
+- [x] A1 is one test in a new `flow-tests/test/*.e2e.test.ts` file following the spec's five steps: phone 1 receives `session-ended` with `{ code: 'SESSION_REPLACED' }` and is then disconnected; its `POST /positions` answers 401 with `code: 'SESSION_REPLACED'`; B receives no position of A within the quiet window; phone 2's upload on campus reaches B.
+- [x] A2 is one test in a new `flow-tests/test/*.e2e.test.ts` file with four Users following the spec's five steps: D finds the Approval Quest on the Board's list; A is told of B's join request and B of its acceptance; after C is accepted, A, B and C each receive `quests-changed` and B's and C's reads list A, B and C as Holders.
+- [x] In A2, after `POST /parties/mine/end` then `POST /quests/:questId/end`, B and C each receive `party-changed` and `quests-changed`; B's read of the Quest is refused as not found, B and C are in no Party, and D's Board no longer lists the Quest.
+- [x] Waits are the harness's (10 s for a message that must come, 1.5 s for one that must not); nothing sleeps for a fixed time or is retried.
+- [x] Every expected value comes from the scenario or from the test's own input; the flows read no database and no server's internal state beyond the existing empty state between tests.
+- [x] `pnpm test` in `flow-tests` passes with A1, A2 and every existing flow unchanged, and `pnpm lint` (with the level check), `pnpm format:check` and `pnpm typecheck` pass.
+- [x] No product code, CI workflow or other test changes.
+- [x] `flow-tests/README.md`'s table of flows lists A1 and A2.
+- [x] Every new source file starts with the AI-generated box, and each changed source file gets a new row (`CLAUDE.md`).
+- [x] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+
+## Comments
+
+### Decisions (2026-10-22)
+
+- **Files.** A1 is `flow-tests/test/session.e2e.test.ts` and A2 is `flow-tests/test/quest-group.e2e.test.ts`, at the top
+  of `test/`, so `pnpm test` picks them up with no config change.
+- **The harness.** `Student.signsInOnAnotherPhone()` signs in again with the Google account the Student kept (a fresh
+  ID token), skips Onboarding, reads `GET /users/me` and opens a new socket. The new Student is named
+  `<name> on another phone`, so a failure says which phone. `Inbox.isDisconnectedByServer(waitMs = 10 s)` waits until
+  the socket's `disconnect` reason is `io server disconnect`, and otherwise names the owner and whether the connection
+  is still open or closed for another reason. `signIn()` now shares the sign-in and the connection with the new method;
+  its behaviour is unchanged. `administratorIdToken()` is left to P11-02.
+- **A1.** Phone 1's refused upload goes through `call()`, since `uploadsPosition()` throws on any refusal; its body is
+  the one the app uploads. The flow also checks that phone 2 answers the same User id. A `session-ended` that
+  reached the Inbox came before the disconnect, since Socket.IO's client hands on no event once its socket is
+  disconnected, so the flow checks no order.
+- **A2.** The Leader accepts the request she finds in her own list (`GET /quests/:questId/join-requests`), as the app
+  does, not the id from the asker's answer. The Quest is on the `hobby` Board with a Sub Quest 24 to 26 hours ahead.
+  A signal carries nothing, and a wait takes the first one that came, so the flow takes every signal the server sends
+  on the way: `quests-changed` to the Leader when she makes the Quest, and `party-changed` to all three Holders when the
+  Party opens and when each enters. Only the end's signals can then meet the waits after the end. The refusals are
+  checked by status and code, 404 `QUEST_NOT_FOUND` and `NOT_IN_PARTY`, as main-server's README lists them.
+- **Parallel waits.** oxlint refuses `await` in a loop, so A2 waits for several Users' signals with `Promise.all`. Each
+  User's own waits stay in order.
+- **README.** Besides the two rows, the folder layout's comment said "the three flows of the table above"; it now says
+  "the flows of the table above".
+
+### Evidence (2026-10-22)
+
+Each run went through `heavy.sh`.
+
+- **Red first.** With A1 written and the harness unchanged, `pnpm typecheck` failed on
+  `Property 'isDisconnectedByServer' does not exist on type 'Inbox'` and
+  `Property 'signsInOnAnotherPhone' does not exist on type 'Student'`.
+- **A1 alone**, after the harness additions: `Tests  1 passed (1)`, the test 1.9 s.
+- **A2 alone**, beside a planted copy of A1 whose second phone was a new User (`signIn()` instead of
+  `signsInOnAnotherPhone()`): A2 passed, and the plant failed after the bounded wait, naming the User and the message:
+
+  ```
+  Error: 김민지 did not receive session-ended within 10000 ms; received nothing else
+  ```
+
+  The plant was removed before the commit.
+- **`pnpm test --reporter=verbose`** at `a4c83ccc`: `Test Files  7 passed (7)`, `Tests  13 passed (13)`, 130 s. That is
+  P09-06's 11 tests in 5 files plus A1 (3.1 s) and A2 (1.9 s); every existing test passed as before.
+- `pnpm lint` printed `7 test file(s), each named by its test level.`, and `pnpm format:check` and `pnpm typecheck`
+  pass.
+- The branch changes only `flow-tests/README.md`, `test/inbox.ts`, `test/people.ts` and the two new flows: no product
+  code, CI workflow or other test. Both new files carry the box, and `inbox.ts` and `people.ts` got the row
+  `2026-10-22  Opus 5.5   prompted by TaeHyun79`.
