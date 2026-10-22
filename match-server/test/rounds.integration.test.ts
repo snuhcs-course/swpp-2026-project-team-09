@@ -3,11 +3,12 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
 import { type Candidate, type Grouping } from '../src/matching/grouping.js';
-import { MainServerStub, type Reply } from './main-server.js';
+import { MainServerStub, type Reply, withdraw } from './main-server.js';
 import { useRounds } from './rounds.js';
 
 const rounds = useRounds();
@@ -93,6 +94,35 @@ describe('The groups of a round', () => {
       { state: 'waiting', questId: null },
       { state: 'waiting', questId: null },
     ]);
+  });
+});
+
+describe('A withdrawal during a round', () => {
+  it('a request withdrawn while the main server answers which requests stand is left withdrawn, and the other is grouped with no one', async () => {
+    let answer: (() => void) | undefined;
+    const mainServer = new MainServerStub();
+    // Answers that both requests stand once the test says so, which holds the round until then.
+    mainServer.standing = (requests): Promise<Reply> =>
+      new Promise((resolve) => {
+        answer = (): void => {
+          resolve({ status: 200, body: { standing: requests } });
+        };
+      });
+    const app = await rounds.start(mainServer);
+    const globalEventId = randomUUID();
+    const [other, withdrawn] = [await rounds.waiting(globalEventId, 2), await rounds.waiting(globalEventId, 2)];
+
+    const round = rounds.run(app);
+    await vi.waitFor(() => {
+      expect(mainServer.calls).toHaveLength(1);
+    });
+    expect((await withdraw(app, withdrawn.userId, globalEventId)).status).toBe(204);
+    answer?.();
+    await round;
+
+    expect(await rounds.stateOf(app, withdrawn)).toEqual({ state: 'withdrawn', questId: null });
+    expect(await rounds.stateOf(app, other)).toEqual({ state: 'waiting', questId: null });
+    expect(await rounds.matchesOf(globalEventId)).toEqual([]);
   });
 });
 
