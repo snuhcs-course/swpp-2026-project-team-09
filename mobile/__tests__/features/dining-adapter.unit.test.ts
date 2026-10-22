@@ -7,7 +7,8 @@
 // Partitions: each side of the next meal's four times; a pin for one restaurant, two at a Place and none; each
 // menu line; the 7 days. Expected values: P15-01's criteria (iteration 1) and the restaurant table, in Korea's time.
 
-import type { MenuLine, RestaurantMenus } from '@/api/menu-types';
+import { restaurant } from '../support/dining';
+import type { MenuLine } from '@/api/menu-types';
 import type { Place } from '@/api/types';
 import { menuDays, nextMeal, toDiningCards, toMenuDay } from '@/features/dining/adapter';
 
@@ -16,14 +17,6 @@ const JAHAYEON: Place = { id: 'p109', number: '109', name: '자하연식당', la
 
 function dish(text: string): MenuLine {
   return { text, kind: 'dish', name: null, price: null };
-}
-
-function restaurant(
-  name: string,
-  meals: RestaurantMenus['meals'],
-  collectedAt = '2026-10-05T20:00:00Z',
-): RestaurantMenus {
-  return { name, collectedAt, meals };
 }
 
 const LUNCH = [{ meal: 'lunch' as const, lines: [dish('카레')] }];
