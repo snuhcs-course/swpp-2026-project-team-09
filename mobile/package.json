@@ -67,7 +67,9 @@
     "test:unit": "jest --selectProjects unit",
     "test:integration": "jest --selectProjects integration",
     "test:cov:unit": "jest --selectProjects unit --coverage",
-    "test:cov": "jest --coverage"
+    "test:cov": "jest --coverage",
+    "build:mock-apk": "./scripts/build-mock-apk.sh",
+    "test:device": "./scripts/test-device.sh"
   },
   "jest": {
     "projects": [
