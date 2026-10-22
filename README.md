@@ -508,7 +508,7 @@ pnpm test
 | `socket-server` | Vitest against a Redis container it starts itself; Docker running; `pnpm test:unit` needs no Docker          |
 | `worker-server` | Vitest on saved pages of each Source; neither it nor `pnpm test:unit` needs Docker                           |
 | `match-server`  | Vitest against a PostgreSQL container it starts itself; Docker running; `pnpm test:unit` needs no Docker     |
-| `admin`         | Vitest: page tests in jsdom, and tests against a build of the site with a fake main server                   |
+| `admin`         | Vitest: `unit`, `integration-pages`, `integration-site`; neither it nor `pnpm test:unit` needs Docker        |
 | `mobile`        | Jest, against the mocks and a fake main server and socket; neither it nor `pnpm test:unit` needs Docker      |
 | `flow-tests`    | The three demo flows across the four built servers, under a Compose project of its own; Docker and `openssl` |
 
