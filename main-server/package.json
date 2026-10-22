@@ -30,6 +30,7 @@
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
+    "eval": "node eval/cli.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -73,6 +74,7 @@
     "testcontainers": "^12.1.0",
     "typescript": "~6.0.3",
     "vitest": "~4.1.11",
+    "yaml": "^2.9.1",
     "yauzl": "^3.4.0"
   }
 }

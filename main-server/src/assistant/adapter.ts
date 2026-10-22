@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
@@ -44,12 +45,58 @@ export class NoAnswerError extends Error {
   override readonly name = 'NoAnswerError';
 }
 
-function toolSetOf({ tools }: Feature, context: ToolContext): ToolSet {
+// Injection token of the run observer, which only the benchmark (main-server/eval) binds. The server binds none.
+export const RUN_OBSERVER = 'RUN_OBSERVER';
+
+// What a run tells its observer: each tool's call with what it returned or threw, and the end of each step, which is
+// one model call. The benchmark records the tool results here, where they are produced, so that a run stopped at the
+// step cap still has its last step's. Production passes none, and a run without one does as it did before.
+export interface RunObserver {
+  toolEnded(call: ToolCallEnd): void;
+  stepEnded(step: StepEnd): void;
+}
+
+export type ToolCallEnd = { callId: string; name: string; input: unknown } & ({ result: unknown } | { error: unknown });
+
+export interface StepEnd {
+  finishReason: string;
+  inputTokens: number | undefined;
+  outputTokens: number | undefined;
+  cacheReadTokens: number | undefined;
+  cacheWriteTokens: number | undefined;
+}
+
+// The tool's function, telling the observer what it returned or threw.
+function observed(
+  name: string,
+  run: (input: unknown) => Promise<unknown>,
+  observer: RunObserver,
+): (input: unknown, options: { toolCallId: string }) => Promise<unknown> {
+  return async (input: unknown, { toolCallId }: { toolCallId: string }): Promise<unknown> => {
+    try {
+      const result = await run(input);
+      observer.toolEnded({ callId: toolCallId, name, input, result });
+      return result;
+    } catch (error) {
+      observer.toolEnded({ callId: toolCallId, name, input, error });
+      throw error;
+    }
+  };
+}
+
+function toolSetOf({ tools }: Feature, context: ToolContext, observer: RunObserver | undefined): ToolSet {
   return Object.fromEntries(
-    Object.entries(tools).map(([name, { description, input, run }]) => [
-      name,
-      tool({ description, inputSchema: input, execute: (value: unknown) => run(value, context) }),
-    ]),
+    Object.entries(tools).map(([name, { description, input, run }]) => {
+      const execute = (value: unknown): Promise<unknown> => run(value, context);
+      return [
+        name,
+        tool({
+          description,
+          inputSchema: input,
+          execute: observer === undefined ? execute : observed(name, execute, observer),
+        }),
+      ];
+    }),
   );
 }
 
@@ -77,13 +124,14 @@ function lastShown(messages: readonly ChatMessage[]): SentProposal | null {
 
 // Runs the feature on the conversation, the User's new message last, and answers with the model's last text and what
 // the presenters put beside it. It throws NoAnswerError when the steps ran out on tools, and the SDK's errors when the
-// model fails or the time runs out.
+// model fails or the time runs out. An observer, if given, is told of each tool call and each step's end.
 export async function runFeature(
   model: Model,
   feature: Feature,
   asker: Asker,
   messages: readonly ChatMessage[],
   { maxSteps, timeoutMs, maxOutputTokens }: RunLimits,
+  observer?: RunObserver,
 ): Promise<FeatureReply> {
   const context: ToolContext = {
     ...asker,
@@ -95,11 +143,24 @@ export async function runFeature(
     model,
     instructions: feature.instructions(asker.now),
     messages: messages.map((message) => ({ role: message.role, content: contentOf(message) })),
-    tools: toolSetOf(feature, context),
+    tools: toolSetOf(feature, context, observer),
     stopWhen: stepCountIs(maxSteps),
     maxRetries: MAX_RETRIES,
     maxOutputTokens,
     timeout: { totalMs: timeoutMs },
+    onStepEnd:
+      observer === undefined
+        ? undefined
+        : (step): void => {
+            const { usage } = step;
+            observer.stepEnded({
+              finishReason: step.finishReason,
+              inputTokens: usage.inputTokens,
+              outputTokens: usage.outputTokens,
+              cacheReadTokens: usage.inputTokenDetails.cacheReadTokens,
+              cacheWriteTokens: usage.inputTokenDetails.cacheWriteTokens,
+            });
+          },
   });
   if (finishReason === 'tool-calls' || text.trim() === '') {
     throw new NoAnswerError(`No answer within ${maxSteps} steps`);

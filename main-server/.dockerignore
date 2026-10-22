@@ -6,3 +6,4 @@ src/generated
 *.tsbuildinfo
 *.pem
 *.key
+eval/results
