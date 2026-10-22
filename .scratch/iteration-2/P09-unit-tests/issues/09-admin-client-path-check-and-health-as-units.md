@@ -94,3 +94,9 @@ not call `fetch` at all.
 
 **Box rows.** The three test files and `src/app/sign-in/site-path.ts` are new and carry the box with
 `2026-10-23  Opus 5.5   prompted by TaeHyun79`; `src/app/sign-in/actions.ts` gained that row.
+
+### Agent usage (2026-10-23)
+
+- Agent time: about 12 minutes, an estimate: the implementer subagent, measured just before its last commit.
+- Tokens: input 10,315 thousand in all (cache reads 10,172 thousand, cache writes 143 thousand, uncached under 1
+  thousand); output 22 thousand, a lower bound, since the transcript keeps only partial output counts.
