@@ -5,6 +5,7 @@
  * 2026-09-30  Opus 5.5   prompted by fyoon46
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -49,12 +50,15 @@ afterAll(async () => {
   await app.close();
 });
 
-// An access token as the main server signs it: ES256, the User's id as the subject, the session, valid for 1 hour
-// unless `expiresIn` (in seconds) says otherwise.
-function accessToken(userId: string, sessionId = randomUUID(), expiresIn = HOUR): string {
+// An access token as the main server signs it: ES256 with the test run's key, the User's id as the subject, the
+// session, the app's audience, valid for 1 hour (`expiresIn`, in seconds). Each refusal test changes one of these.
+function accessToken(
+  userId: string,
+  { sessionId = randomUUID(), expiresIn = HOUR, key = privateKey, audience = 'snu-now-app' } = {},
+): string {
   return new JwtService().sign(
     { sub: userId, sid: sessionId },
-    { privateKey, algorithm: 'ES256', audience: 'snu-now-app', expiresIn },
+    { privateKey: key, algorithm: 'ES256', audience, expiresIn },
   );
 }
 
@@ -103,11 +107,7 @@ describe('A socket connection', () => {
   });
 
   it('is refused with an expired access token', async () => {
-    const now = Math.floor(Date.now() / 1000);
-    const expired = new JwtService().sign(
-      { sub: randomUUID(), aud: 'snu-now-app', iat: now - 2 * HOUR, exp: now - HOUR },
-      { privateKey, algorithm: 'ES256' },
-    );
+    const expired = accessToken(randomUUID(), { expiresIn: -HOUR });
 
     await expect(connect({ token: expired })).rejects.toThrow('Unauthorized');
   });
@@ -121,21 +121,15 @@ describe('A socket connection', () => {
   });
 
   it('is refused with an access token signed with another key', async () => {
-    const forged = new JwtService().sign(
-      { sub: randomUUID() },
-      { privateKey: es256KeyPair().privateKey, algorithm: 'ES256', audience: 'snu-now-app', expiresIn: '1h' },
-    );
+    const forged = accessToken(randomUUID(), { key: es256KeyPair().privateKey });
 
     await expect(connect({ token: forged })).rejects.toThrow('Unauthorized');
   });
 
-  it("is refused with an Administrator's access token", async () => {
-    const administratorToken = new JwtService().sign(
-      { sub: randomUUID() },
-      { privateKey, algorithm: 'ES256', audience: 'snu-now-admin', expiresIn: '8h' },
-    );
+  it("is refused with an access token for the admin site's audience", async () => {
+    const forAdminSite = accessToken(randomUUID(), { audience: 'snu-now-admin' });
 
-    await expect(connect({ token: administratorToken })).rejects.toThrow('Unauthorized');
+    await expect(connect({ token: forAdminSite })).rejects.toThrow('Unauthorized');
   });
 });
 
@@ -153,7 +147,7 @@ describe('A connection with an access token without a session', () => {
 describe('An open connection whose session ends', () => {
   it('is told that a sign-in on another phone replaced the session and disconnected', async () => {
     const sessionId = randomUUID();
-    const socket = await connect({ token: accessToken(randomUUID(), sessionId) });
+    const socket = await connect({ token: accessToken(randomUUID(), { sessionId }) });
     const told = nextEvent(socket, 'session-ended');
     const disconnected = nextEvent(socket, 'disconnect');
 
@@ -165,7 +159,7 @@ describe('An open connection whose session ends', () => {
 
   it('is told without a code when the session ended otherwise', async () => {
     const sessionId = randomUUID();
-    const socket = await connect({ token: accessToken(randomUUID(), sessionId) });
+    const socket = await connect({ token: accessToken(randomUUID(), { sessionId }) });
     const told = nextEvent(socket, 'session-ended');
     const disconnected = nextEvent(socket, 'disconnect');
 
@@ -178,7 +172,7 @@ describe('An open connection whose session ends', () => {
   it('leaves the connections of other sessions open', async () => {
     const sessionId = randomUUID();
     const other = await connect({ token: accessToken(randomUUID()) });
-    const disconnected = nextEvent(await connect({ token: accessToken(randomUUID(), sessionId) }), 'disconnect');
+    const disconnected = nextEvent(await connect({ token: accessToken(randomUUID(), { sessionId }) }), 'disconnect');
 
     await endSession(sessionId, 'signed_out');
 
@@ -189,7 +183,7 @@ describe('An open connection whose session ends', () => {
 
 describe('A connection whose access token expires', () => {
   it('is disconnected by the server at the expiry, so that the app connects again with a new token', async () => {
-    const socket = await connect({ token: accessToken(randomUUID(), randomUUID(), 2) });
+    const socket = await connect({ token: accessToken(randomUUID(), { expiresIn: 2 }) });
     const connectedAt = Date.now();
 
     expect(await nextEvent(socket, 'disconnect')).toBe('io server disconnect');
