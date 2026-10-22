@@ -224,8 +224,8 @@ src/main-server.ts       the only way the site calls the main server; server-onl
 src/session.ts           the cookie, and asAdministrator(), which sends the person to sign-in on a missing cookie or a 401
 src/seoul-time.ts        times in Asia/Seoul
 src/kakao-maps.ts        loads Kakao's JavaScript SDK in the browser, and the types of the parts the site uses
-__tests__/               page tests, named *.integration.test.tsx, and their support/
-__tests__/site/          tests against the built site
+__tests__/               unit tests (*.unit.test.ts), page tests (*.integration.test.tsx) and their support/
+__tests__/site/          integration tests against the built site (*.integration.test.ts)
 Dockerfile               Production's image: the standalone build (next.config.ts) on port 3100
 ```
 
