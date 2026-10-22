@@ -504,7 +504,7 @@ pnpm test
 
 | Project         | What `pnpm test` runs and needs                                                                              |
 | --------------- | ------------------------------------------------------------------------------------------------------------ |
-| `main-server`   | Vitest against PostgreSQL and Redis containers it starts itself; Docker running                              |
+| `main-server`   | Vitest against PostgreSQL and Redis containers it starts; Docker running; `pnpm test:unit` needs no Docker   |
 | `socket-server` | Vitest against a Redis container it starts itself; Docker running                                            |
 | `worker-server` | Vitest on saved pages of each Source; no Docker                                                              |
 | `match-server`  | Vitest against a PostgreSQL container it starts itself; Docker running                                       |

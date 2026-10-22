@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -30,10 +31,10 @@ import {
   VEHICLES_COLLECTED_AT,
 } from './world-data.ts';
 
-// The fixed world of the benchmark (spec P19, "The fixed world"), seeded with the e2e helpers into a fresh database
+// The fixed world of the benchmark (spec P19, "The fixed world"), seeded with the test helpers into a fresh database
 // beside the shared Places seed, never the demo seed, which may change for demos. Every right answer of the cases
-// refers to it, so the seed and the cases change together: test/eval-cases.e2e-spec.ts checks that every seed name a
-// case gives is one of `seeds`.
+// refers to it, so the seed and the cases change together: test/eval-cases.integration.test.ts checks that every seed
+// name a case gives is one of `seeds`.
 //
 // The run's clock stands at 2026-10-21 (수) 14:05 in Korea (eval/runner.ts). The week of the cases is Monday 10-19 to
 // Sunday 10-25:
