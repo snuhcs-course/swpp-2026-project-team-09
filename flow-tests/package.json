@@ -11,7 +11,7 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "oxlint --type-aware",
+    "lint": "oxlint --type-aware && node ../scripts/check-test-levels.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
