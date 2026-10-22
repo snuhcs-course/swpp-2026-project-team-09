@@ -1,0 +1,83 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# Prepares a new database once, as infra/postgres/init-databases.sh does on laptops. A team member runs it by hand as
+# the master user (infra/production/README.md, The database); the Release never applies it. Its settings come from the
+# Secret database-setup, which the runbook creates before it and deletes after it: PGHOST, PGUSER, and PGPASSWORD for
+# the master user, and MAIN_DB_PASSWORD and MATCH_DB_PASSWORD for the two new roles.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-setup
+  namespace: snunow
+spec:
+  # Its statements are not repeatable, so a failure stops at the first pod, whose log shows why.
+  backoffLimit: 0
+  template:
+    metadata:
+      # The labels that the NetworkPolicies database-setup and database-client allow.
+      labels:
+        app: database-setup
+        database-client: 'true'
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: certificates
+          emptyDir: {}
+      initContainers:
+        - name: certificates
+          image: curlimages/curl:8.23.0
+          args:
+            - --fail
+            - --silent
+            - --show-error
+            - --output
+            - /certificates/rds-global-bundle.pem
+            - https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+          volumeMounts:
+            - name: certificates
+              mountPath: /certificates
+      containers:
+        - name: database-setup
+          image: postgres:18
+          envFrom:
+            - secretRef:
+                name: database-setup
+          env:
+            - name: PGDATABASE
+              value: postgres
+            - name: PGSSLMODE
+              value: verify-full
+            - name: PGSSLROOTCERT
+              value: /certificates/rds-global-bundle.pem
+          volumeMounts:
+            - name: certificates
+              mountPath: /certificates
+              readOnly: true
+          # The master user on RDS is not a superuser: PostgreSQL 16 and later let it create a database for a new role
+          # only once it is a member of that role. Only it can create PostGIS, which needs rds_superuser. The roles get
+          # no CREATEDB, which only recording a migration needs.
+          command:
+            - bash
+            - -c
+            - |
+              set -euo pipefail
+              psql -v ON_ERROR_STOP=1 \
+                -v main_password="$MAIN_DB_PASSWORD" \
+                -v match_password="$MATCH_DB_PASSWORD" <<'SQL'
+              CREATE ROLE main LOGIN PASSWORD :'main_password';
+              GRANT main TO CURRENT_USER;
+              CREATE DATABASE main OWNER main;
+              REVOKE ALL ON DATABASE main FROM PUBLIC;
+
+              CREATE ROLE match LOGIN PASSWORD :'match_password';
+              GRANT match TO CURRENT_USER;
+              CREATE DATABASE match OWNER match;
+              REVOKE ALL ON DATABASE match FROM PUBLIC;
+
+              \connect main
+              CREATE EXTENSION postgis;
+              SQL

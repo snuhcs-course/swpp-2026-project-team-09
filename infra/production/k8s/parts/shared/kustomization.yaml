@@ -1,0 +1,42 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# What every target in targets/ applies besides its servers' parts. A target holds only namespaced objects, since the
+# deploy role's rights stop at the namespace, which Terraform creates. The database Job in k8s/ is run by hand and is
+# in no target.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - redis.yaml
+  - ingress.yaml
+  - network-policies.yaml
+
+# The generated names end in a hash of the values, so a server takes up a changed value when it is next deployed.
+configMapGenerator:
+  - name: settings
+    literals:
+      - PUBLIC_URL=https://api.snunow.com
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MAIN_SERVER_URL=http://main-server:3000
+      - MATCH_SERVER_URL=http://match-server:3003
+      - ROUND_INTERVAL_SECONDS=60
+      - ASSISTANT_MODEL=anthropic/claude-haiku-5.5
+      - GOOGLE_APP_CLIENT_ID=1021723676612-aria1ohmdms787sqbvldtt8484fnf04c.apps.googleusercontent.com
+      - GOOGLE_ADMIN_CLIENT_ID=1021723676612-23lpoe5ue36rr2a07uora5ai4qckoe87.apps.googleusercontent.com
+      # The Expo template's debug key, which signs the APK.
+      - ANDROID_CERTIFICATE_FINGERPRINTS=FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C
+
+# The Release workflow writes the secrets/ folder from Parameter Store, and git ignores it. An env file holds one line
+# per value, so the key pair comes as two PEM files, which keep their line breaks.
+secretGenerator:
+  - name: secrets
+    envs:
+      - secrets/secrets.env
+    files:
+      - ACCESS_TOKEN_PRIVATE_KEY=secrets/access-token-private-key.pem
+      - ACCESS_TOKEN_PUBLIC_KEY=secrets/access-token-public-key.pem

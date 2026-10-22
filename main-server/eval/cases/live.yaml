@@ -1,0 +1,90 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Live multi-turn: every turn is sent to the model with its own earlier replies, each User message fixed, and the case
+# stops at the first turn that fails. Only conversations whose first reply leaves one right path.
+
+- id: live-lunch-then-seven
+  category: live
+  live: true
+  turns:
+    - user: 내일 점심 학생회관에서 이민수랑 밥 약속 잡아줘
+      expect:
+        actions: [PROPOSE]
+        tools:
+          required: [resolveFriend, resolvePlace, proposeQuest]
+        proposal:
+          joinPolicy: closed
+          capacity: 2
+          startsAt: '2026-10-22 12:00'
+          place: 학생회관
+          invitees: [이민수]
+    - user: 7시로 바꿔줘
+      expect:
+        actions: [PROPOSE+ASK]
+        tools:
+          required: [proposeQuest]
+          allowed: [resolveFriend, resolvePlace]
+        proposal:
+          joinPolicy: closed
+          capacity: 2
+          startsAt: '2026-10-22 19:00'
+          place: 학생회관
+          invitees: [이민수]
+        text:
+          mentions: [[오전 7시, 아침 7시, 오전, 아침, '07:00', '7:00']]
+
+- id: live-which-minsu
+  category: live
+  live: true
+  turns:
+    - user: 내일 점심에 학생회관에서 민수랑 밥 약속 잡아줘
+      expect:
+        actions: [ASK]
+        tools:
+          required: [resolveFriend]
+          allowed: [resolvePlace, proposeQuest]
+        text:
+          mentions: [이민수, 김민수]
+    - user: 이민수
+      expect:
+        actions: [PROPOSE]
+        tools:
+          required: [proposeQuest]
+          allowed: [resolveFriend, resolvePlace]
+        proposal:
+          joinPolicy: closed
+          capacity: 2
+          startsAt: '2026-10-22 12:00'
+          place: 학생회관
+          invitees: [이민수]
+
+- id: live-menus-then-tomorrow
+  category: live
+  live: true
+  turns:
+    - user: 오늘 점심 학식 뭐야?
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [getMenus, showOnMap]
+          forbidden: [proposeQuest]
+        args:
+          getMenus: { date: '2026-10-21', meal: lunch }
+        mapButtons: [dining]
+        text:
+          mentions: [제육볶음]
+    - user: 내일은?
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [getMenus, showOnMap]
+          forbidden: [proposeQuest]
+        args:
+          getMenus: { date: '2026-10-22', meal: lunch }
+        mapButtons: [dining]
+        text:
+          mentions: [닭갈비덮밥]

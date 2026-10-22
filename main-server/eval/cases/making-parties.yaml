@@ -1,0 +1,128 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Making a Quest: a Proposal with the right fields. P07's open questions: 아침, 점심 and 저녁 start at 08:00, 12:00 and
+# 18:00; every Friend, Place and event is resolved before proposeQuest. A Quest with named Friends only is closed (비공개),
+# on no Board, and its capacity counts the User. Starts are written in Korea's time.
+
+- id: making-parties-lunch-with-friend
+  category: making-parties
+  repeat: 3
+  turns:
+    - user: 내일 점심 학생회관에서 이민수랑 밥 약속 잡아줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [resolveFriend, resolvePlace, proposeQuest]
+    args:
+      resolveFriend: { name: 이민수 }
+      resolvePlace: { words: 학생회관 }
+    proposal:
+      joinPolicy: closed
+      board: null
+      capacity: 2
+      startsAt: '2026-10-22 12:00'
+      place: 학생회관
+      invitees: [이민수]
+
+- id: making-parties-breakfast-by-building-number
+  category: making-parties
+  turns:
+    - user: 모레 아침에 301동에서 김지은이랑 같이 공부하기로 했어. 약속 잡아줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [resolveFriend, resolvePlace, proposeQuest]
+    args:
+      resolveFriend: { name: 김지은 }
+      resolvePlace: { words: 301동 }
+    proposal:
+      joinPolicy: closed
+      board: null
+      capacity: 2
+      startsAt: '2026-10-23 08:00'
+      place: 제1공학관
+      invitees: [김지은]
+
+- id: making-parties-open-dinner
+  category: making-parties
+  turns:
+    - user: 내일 저녁에 같이 고기 먹을 사람 나 포함 4명 모집해줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+    proposal:
+      joinPolicy: open
+      board: meal
+      capacity: 4
+      startsAt: '2026-10-22 18:00'
+      invitees: []
+
+- id: making-parties-approval-tennis
+  category: making-parties
+  turns:
+    - user: 토요일 오전 10시에 테니스 칠 사람 나까지 6명 모집해줘. 신청 오면 내가 승인하고 받을게
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+    proposal:
+      joinPolicy: approval
+      board: hobby
+      capacity: 6
+      startsAt: '2026-10-24 10:00'
+
+# With a related event and no time, the Quest starts with the event.
+- id: making-parties-for-event
+  category: making-parties
+  turns:
+    - user: 가을 재즈 콘서트 같이 갈 사람 나 포함 3명, 공개로 모집해줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+      allowed: [resolveGlobalEvent, searchGlobalEvents]
+    proposal:
+      joinPolicy: open
+      board: show
+      capacity: 3
+      startsAt: '2026-10-22 19:00'
+      globalEvent: 가을 재즈 콘서트
+
+# "학관" is 학생회관 (63동) to students, but resolvePlace matches substrings: 학관 names 약학관, 공학관, 법학관 and more,
+# and not 학생회관.
+- id: making-parties-abbreviation-hakgwan
+  category: making-parties
+  knownFailure: '"학관" is not read as 학생회관 (63동): resolvePlace matches substrings, and 학생회관 does not hold 학관'
+  turns:
+    - user: 내일 점심 학관에서 이민수랑 밥 약속 잡아줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [resolveFriend, resolvePlace, proposeQuest]
+    proposal:
+      joinPolicy: closed
+      capacity: 2
+      startsAt: '2026-10-22 12:00'
+      place: 학생회관
+      invitees: [이민수]
+
+# A weekday read against now: this Friday is 2026-10-23. (That the reply states the date with its weekday waits for
+# P20's 3-5, since the prompt now says not to repeat a Proposal's fields.)
+- id: making-parties-friday-dinner
+  category: making-parties
+  turns:
+    - user: 금요일 저녁 7시에 김지은이랑 저녁 약속 잡아줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [resolveFriend, proposeQuest]
+    proposal:
+      joinPolicy: closed
+      capacity: 2
+      startsAt: '2026-10-23 19:00'
+      invitees: [김지은]

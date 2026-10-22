@@ -1,0 +1,48 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Shuttle: a lookup of where the vehicles are, and the shuttle button (P07's open question: the map button after a
+# shuttle answer). eval/world.ts reports two vehicles, at 정문 and at 301동.
+
+- id: shuttle-where-now
+  category: shuttle
+  repeat: 3
+  turns:
+    - user: 셔틀 지금 어디쯤 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getShuttle, showOnMap]
+      forbidden: [proposeQuest]
+    mapButtons: [shuttle]
+    text:
+      mentions: [정문, 301동]
+
+- id: shuttle-near-stop
+  category: shuttle
+  turns:
+    - user: 순환셔틀 301동 쪽에 와 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getShuttle, showOnMap]
+      forbidden: [proposeQuest]
+    mapButtons: [shuttle]
+    text:
+      mentions: [301동]
+
+- id: shuttle-how-many
+  category: shuttle
+  turns:
+    - user: 교내 셔틀 지금 몇 대 운행 중이야?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getShuttle, showOnMap]
+      forbidden: [proposeQuest]
+    mapButtons: [shuttle]
+    text:
+      mentions: [[2대, 두 대, 2 대]]

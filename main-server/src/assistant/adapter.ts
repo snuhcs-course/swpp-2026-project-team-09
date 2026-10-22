@@ -60,6 +60,9 @@ export type ToolCallEnd = { callId: string; name: string; input: unknown } & ({ 
 
 export interface StepEnd {
   finishReason: string;
+  // The step's tool calls that failed, those whose input the tool's schema refused before it ran among them, which
+  // toolEnded never hears of.
+  toolErrors: { callId: string; name: string; error: unknown }[];
   inputTokens: number | undefined;
   outputTokens: number | undefined;
   cacheReadTokens: number | undefined;
@@ -155,6 +158,9 @@ export async function runFeature(
             const { usage } = step;
             observer.stepEnded({
               finishReason: step.finishReason,
+              toolErrors: step.content.flatMap((part) =>
+                part.type === 'tool-error' ? [{ callId: part.toolCallId, name: part.toolName, error: part.error }] : [],
+              ),
               inputTokens: usage.inputTokens,
               outputTokens: usage.outputTokens,
               cacheReadTokens: usage.inputTokenDetails.cacheReadTokens,

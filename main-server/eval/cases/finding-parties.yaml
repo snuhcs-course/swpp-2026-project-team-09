@@ -1,0 +1,86 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Finding recruiting Quests: searchRecruitingQuests on the right Board and period, then the cards of those that fit (P07's open
+# questions: 운동 is on the hobby Board; "파티 찾기" shows at most 3). The Quests are those of eval/world-data.ts: on hobby 저녁
+# 농구 한 판, 주말 배드민턴, 아침 러닝 크루 (full) and 보드게임 모임; on meal 내일 점심 학식 같이 and 오늘 저녁 고기 먹을
+# 사람; on career 알고리즘 스터디 and 토익 스터디; on show the two going to events.
+
+- id: finding-parties-no-condition
+  category: finding-parties
+  repeat: 3
+  turns:
+    - user: 파티 찾기
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      forbidden: [proposeQuest]
+    cards:
+      - kind: quest
+        min: 1
+        max: 3
+
+- id: finding-parties-exercise
+  category: finding-parties
+  turns:
+    - user: 같이 운동할 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      forbidden: [proposeQuest]
+    args:
+      searchRecruitingQuests: { board: hobby }
+    cards:
+      - kind: quest
+        seeds: [저녁 농구 한 판, 주말 배드민턴]
+        max: 3
+
+- id: finding-parties-tomorrow-meal
+  category: finding-parties
+  turns:
+    - user: 내일 같이 밥 먹을 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      forbidden: [proposeQuest]
+    args:
+      searchRecruitingQuests: { board: meal }
+    cards:
+      - kind: quest
+        seeds: [내일 점심 학식 같이]
+        max: 1
+
+- id: finding-parties-study
+  category: finding-parties
+  turns:
+    - user: 스터디 모집하는 파티 찾아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      forbidden: [proposeQuest]
+    cards:
+      - kind: quest
+        seeds: [알고리즘 스터디, 토익 스터디]
+        max: 2
+
+- id: finding-parties-for-event
+  category: finding-parties
+  turns:
+    - user: 재즈 콘서트 같이 갈 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, showGlobalEvents]
+      forbidden: [proposeQuest]
+    cards:
+      - kind: quest
+        seeds: [재즈 콘서트 같이 가요]
+        max: 1

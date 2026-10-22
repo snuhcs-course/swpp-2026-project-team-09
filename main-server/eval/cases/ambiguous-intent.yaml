@@ -1,0 +1,79 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Ambiguous intent: one sentence that reads as two requests, one of them a lookup. The one right answer (P20's plan,
+# 3-1) is TOOL+ASK: the lookup at once, and in the same reply one question about the other reading. The prompt has no
+# such rule yet, so every case here is a known failure until 3-1. Places are named in full (학생회관, never 학관), so
+# that each known failure has one cause.
+
+- id: ambiguous-intent-lunch-at-student-center
+  category: ambiguous-intent
+  knownFailure: No rule for ambiguous intent until improvement 3-1 (show one reading, ask about the other)
+  turns:
+    - user: 내일 학생회관에서 점심
+  expect:
+    actions: [TOOL+ASK]
+    tools:
+      required: [getMenus, showOnMap]
+      allowed: [resolvePlace]
+      forbidden: [proposeQuest]
+    args:
+      getMenus: { date: '2026-10-22', meal: lunch }
+    mapButtons: [dining]
+    text:
+      mentions: [[잡아 드릴까, 약속을 잡을까, 만들어 드릴까, 모집해 드릴까, 만들까요]]
+
+# Find a Quest going to the festival, or make one: show the one there is, and ask whether to make one.
+- id: ambiguous-intent-festival-company
+  category: ambiguous-intent
+  knownFailure: No rule for ambiguous intent until improvement 3-1 (show one reading, ask about the other)
+  turns:
+    - user: 이번 주 토요일 축제 같이 갈 사람
+  expect:
+    actions: [TOOL+ASK]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, showGlobalEvents]
+      forbidden: [proposeQuest]
+    cards:
+      - kind: quest
+        seeds: [축제 같이 즐겨요]
+    text:
+      mentions: [[만들어 드릴까, 모집해 드릴까, 열어 드릴까, 만들까요, 모집할까요]]
+
+- id: ambiguous-intent-basketball-tomorrow
+  category: ambiguous-intent
+  knownFailure: No rule for ambiguous intent until improvement 3-1 (show one reading, ask about the other)
+  turns:
+    - user: 내일 저녁 농구
+  expect:
+    actions: [TOOL+ASK]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      forbidden: [proposeQuest]
+    cards:
+      - kind: quest
+        seeds: [저녁 농구 한 판]
+    text:
+      mentions: [[만들어 드릴까, 모집해 드릴까, 열어 드릴까, 만들까요, 모집할까요]]
+
+# The concert itself, or a Quest going to it.
+- id: ambiguous-intent-jazz-concert
+  category: ambiguous-intent
+  knownFailure: No rule for ambiguous intent until improvement 3-1 (show one reading, ask about the other)
+  turns:
+    - user: 목요일 재즈 콘서트
+  expect:
+    actions: [TOOL+ASK]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      allowed: [resolveGlobalEvent, searchRecruitingQuests, showQuests]
+      forbidden: [proposeQuest]
+    cards:
+      - kind: globalEvent
+        seeds: [가을 재즈 콘서트]
+    text:
+      mentions: [[찾아 드릴까, 만들어 드릴까, 모집해 드릴까, 찾아볼까요, 만들까요]]

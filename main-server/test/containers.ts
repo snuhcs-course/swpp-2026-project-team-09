@@ -6,6 +6,7 @@
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -66,6 +67,22 @@ export async function createDatabase(
       await sharedDatabase.$disconnect();
     },
   };
+}
+
+// A database of its own (createDatabase) with the seed loaded, and `settings` pointed at it, for a test file whose data
+// should reach no other test, such as the benchmark's world. `drop()` removes it.
+export interface SeededDatabase<Values> {
+  url: string;
+  settings: Values;
+  drop: () => Promise<void>;
+}
+
+export async function seededDatabase<Values extends { DATABASE_URL: string }>(
+  settings: Values,
+): Promise<SeededDatabase<Values>> {
+  const { url, drop } = await createDatabase(settings.DATABASE_URL);
+  await seed(url);
+  return { url, settings: { ...settings, DATABASE_URL: url }, drop };
 }
 
 // What `pnpm db:seed` does, without building the server first.

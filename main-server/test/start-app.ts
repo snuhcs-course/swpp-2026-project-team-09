@@ -9,6 +9,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { DynamicModule, INestApplication, Type } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { Server } from 'node:http';
 import { MODEL_PORT, type Model } from '../src/assistant/adapter.js';
+import { httpAdapter } from '../src/common/http-adapter.js';
 import { JSON_BODY_LIMIT } from '../src/common/json-body-limit.js';
 import { Settings } from '../src/common/settings.js';
 import { FETCH_MATCH_SERVER } from '../src/matching/match-server.js';
@@ -56,8 +58,8 @@ export async function startApp(
     .overrideProvider(MODEL_PORT)
     .useValue(model)
     .compile();
-  const app = moduleRef.createNestApplication<NestExpressApplication>();
   // As src/main.ts does.
+  const app = moduleRef.createNestApplication<NestExpressApplication>(httpAdapter());
   app.useBodyParser('json', { limit: JSON_BODY_LIMIT });
   try {
     // On a free port, once. A server that does not listen is started and closed by supertest around each group of

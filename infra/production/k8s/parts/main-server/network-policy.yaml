@@ -1,0 +1,49 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# Phones reach it through the load balancer, whose addresses are in the public subnets (network.tf); the admin site, the
+# worker, and the match server call it inside the cluster. It calls Redis, the match server, the database, and, on 443,
+# Kakao, Google's sign-in keys, and OpenRouter.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: main-server
+spec:
+  podSelector:
+    matchLabels:
+      app: main-server
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - ipBlock: { cidr: 10.0.0.0/20 }
+        - ipBlock: { cidr: 10.0.16.0/20 }
+        - podSelector:
+            matchExpressions:
+              - { key: app, operator: In, values: [admin, worker-server, match-server] }
+      ports:
+        - { protocol: TCP, port: 3000 }
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - { protocol: TCP, port: 6379 }
+    - to:
+        - podSelector:
+            matchLabels:
+              app: match-server
+      ports:
+        - { protocol: TCP, port: 3003 }
+    - to:
+        - ipBlock: { cidr: 10.0.128.0/24 }
+        - ipBlock: { cidr: 10.0.129.0/24 }
+      ports:
+        - { protocol: TCP, port: 5432 }
+    - to:
+        - ipBlock: { cidr: 0.0.0.0/0, except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16] }
+      ports:
+        - { protocol: TCP, port: 443 }

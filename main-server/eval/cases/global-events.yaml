@@ -1,0 +1,86 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Global Events: searchGlobalEvents with the right period (and words), then the cards of the events that fit (P07's
+# open question: picking among the event candidates). 이번 주 is today, 2026-10-21 (수), to Sunday 10-25.
+
+- id: global-events-this-week-shows
+  category: global-events
+  turns:
+    - user: 이번 주에 공연 뭐 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      forbidden: [proposeQuest]
+    cards:
+      - kind: globalEvent
+        seeds: [가을 재즈 콘서트, 축제 개막 공연]
+        max: 3
+
+# A search of today without words answers both the talk and the exhibition still on; only the talk fits.
+- id: global-events-tonight-talk
+  category: global-events
+  turns:
+    - user: 오늘 저녁에 들을 만한 강연 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      forbidden: [proposeQuest]
+    args:
+      searchGlobalEvents: { from: '2026-10-21', to: '2026-10-21' }
+    cards:
+      - kind: globalEvent
+        seeds: [AI 시대의 진로 특강]
+        max: 1
+
+- id: global-events-weekend-festival
+  category: global-events
+  turns:
+    - user: 이번 주말에 축제 해?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      forbidden: [proposeQuest]
+    args:
+      searchGlobalEvents: { from: '2026-10-24', to: '2026-10-25' }
+    cards:
+      - kind: globalEvent
+        seeds: [관악 가을 축제]
+        max: 2
+
+- id: global-events-thursday
+  category: global-events
+  turns:
+    - user: 목요일에 하는 행사 다 알려줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      forbidden: [proposeQuest]
+    args:
+      searchGlobalEvents: { from: '2026-10-22', to: '2026-10-22' }
+    cards:
+      - kind: globalEvent
+        seeds: [가을 재즈 콘서트, 미술대학 졸업 전시]
+        max: 2
+
+# 취업 박람회 ended yesterday, so the one career event of the week is the talk.
+- id: global-events-career-this-week
+  category: global-events
+  turns:
+    - user: 이번 주에 진로나 취업 관련 행사 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      forbidden: [proposeQuest]
+    cards:
+      - kind: globalEvent
+        seeds: [AI 시대의 진로 특강]
+        max: 1
