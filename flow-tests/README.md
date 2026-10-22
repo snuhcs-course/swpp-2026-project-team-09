@@ -1,9 +1,10 @@
 # flow-tests
 
-The SNU Now flow tests. They start the four servers as built, with PostgreSQL and Redis, and run the three flows of the
-demo from end to end through the servers' public interfaces, as the app would: HTTP to the main server and a Socket.IO
-connection to the socket server. Each server's own rules are tested in that server's project; these tests check that
-the servers work together, where one hands over to the next.
+The SNU Now flow tests. They start the four servers as built, with PostgreSQL and Redis, and run the demo's flows and
+the A1 and A2 journeys from end to end through the servers' public interfaces, as the app would: HTTP to the main server
+and a Socket.IO connection to the socket server. `pnpm test` also checks the stacks themselves: the Dev Server's,
+through its proxy, and the harness that starts them. Each server's own rules are tested in that server's project; these
+tests check that the servers work together, where one hands over to the next.
 
 ## Run it
 
@@ -123,7 +124,7 @@ or Redis, through `docker compose exec`.
 
 | Command              | Checks                                                                     |
 | -------------------- | -------------------------------------------------------------------------- |
-| `pnpm lint`          | oxlint with type-aware rules                                               |
+| `pnpm lint`          | oxlint with type-aware rules, and that each test file names its level      |
 | `pnpm format:check`  | Prettier formatting (`pnpm format` fixes it)                               |
 | `pnpm typecheck`     | TypeScript in strict mode                                                  |
 | `pnpm test`          | The flows, on the test stack                                               |
