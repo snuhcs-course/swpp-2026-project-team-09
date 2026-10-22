@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Place, Weekday } from '@/api/types';
@@ -67,6 +68,14 @@ const TRUTHS: Record<Screenshot, Truth> = {
   'snutt-1': truthOf(snutt1Truth),
   'snutt-2': truthOf(snutt2Truth),
   'snutt-3': truthOf(snutt3Truth),
+};
+
+// Screenshots whose fixtures are still to be saved from a device run: the user's dark-mode SNU timetable (1179 px wide,
+// iPhone). To add one, save `<name>.json` (the module's output, as the README says) and `<name>.truth.json` in the
+// fixtures folder, import them above and put `{ output, truth: truthOf(truth) }` in place of null. Until then the
+// screenshots test lists it as to do.
+export const PENDING_SCREENSHOTS: Record<string, { output: NativeOcrResult; truth: Truth } | null> = {
+  'dark-1': null,
 };
 
 export function ocrOutput(name: Screenshot): NativeOcrResult {

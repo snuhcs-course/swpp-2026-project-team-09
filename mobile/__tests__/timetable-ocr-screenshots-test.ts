@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { classSaves } from '@/features/timetable-ocr/classes';
@@ -15,6 +16,7 @@ import { checkedClasses } from '@/features/timetable/version-checks';
 import {
   campusPlaces,
   ocrOutput,
+  PENDING_SCREENSHOTS,
   SCREENSHOTS,
   type Score,
   score,
@@ -57,7 +59,7 @@ function run(name: Screenshot, output: NativeOcrResult, label: string): Score {
   return result;
 }
 
-// What each screenshot reaches with Android's confidences: the times read and matched to a true one, of those read.
+// What each screenshot reaches: the times read and matched to a true one, of those read.
 const REACHED: Record<Screenshot, number> = { 'everytime-1': 14, 'snutt-1': 16, 'snutt-2': 12, 'snutt-3': 6 };
 
 describe.each(SCREENSHOTS)('the screenshot %s', (name) => {
@@ -73,12 +75,10 @@ describe.each(SCREENSHOTS)('the screenshot %s', (name) => {
     expect(result.nameEdits / result.nameCharacters).toBeLessThanOrEqual(0.03);
   });
 
-  it('is read without confidence (iOS) leaving out at least as much, and linking no building wrongly', () => {
-    const android = run(name, ocrOutput(name), 'android');
-    const ios = run(name, withoutConfidence(ocrOutput(name)), 'no confidence');
-    expect(ios.buildingsWrong).toBe(0);
-    expect(ios.readTimes).toBeLessThanOrEqual(android.readTimes);
-    expect(ios.readTimes - ios.matched).toBe(0);
+  it('is read the same without confidence (iOS): confidence decides nothing', () => {
+    const android = readTimetable(ocrOutput(name), PLACES);
+    const ios = readTimetable(withoutConfidence(ocrOutput(name)), PLACES);
+    expect(ios).toEqual(android);
   });
 });
 
@@ -116,6 +116,25 @@ describe.each(SCREENSHOTS)('the screenshot %s, without its header or timed', (na
   });
 });
 
+// A screenshot whose fixture is still to come (the user's dark-mode one) is held to the same hard bars once it is
+// saved: nothing read that is not there, and no building linked wrongly, with confidence and without.
+describe.each(Object.entries(PENDING_SCREENSHOTS))('the screenshot %s', (name, saved) => {
+  if (saved === null) {
+    it.todo(`is read once its ML Kit output and ground truth are saved in fixtures/timetable-ocr/${name}.*`);
+    return;
+  }
+  it('is read with nothing that is not there and no building linked wrongly', () => {
+    for (const output of [saved.output, withoutConfidence(saved.output)]) {
+      const reading = readTimetable(output, PLACES);
+      expect(reading.kind).toBe('read');
+      const result =
+        reading.kind === 'read' ? score(reading.classes, reading.leftOut, saved.truth) : score([], [], saved.truth);
+      expect(result.readTimes).toBe(result.matched);
+      expect(result.buildingsWrong).toBe(0);
+    }
+  });
+});
+
 function readOf(name: Screenshot): Score {
   const reading = readTimetable(ocrOutput(name), PLACES);
   return reading.kind === 'read' ? score(reading.classes, reading.leftOut, truth(name)) : score([], [], truth(name));
@@ -127,4 +146,10 @@ it('reads 48 of the 50 true times over the four screenshots, with nothing read t
   expect(total('truthTimes')).toBe(50);
   expect(total('matched')).toBe(48);
   expect(total('readTimes')).toBe(48);
+  // Reported as left out: only the two faded blocks, so the import's "N개는 넣지 못했어요" counts nothing else.
+  const leftOut = SCREENSHOTS.flatMap((name) => {
+    const reading = readTimetable(ocrOutput(name), PLACES);
+    return reading.kind === 'read' ? reading.leftOut.map((out) => `${name} ${out.reason}`) : [];
+  });
+  expect(leftOut).toEqual(['snutt-2 end-uncertain', 'snutt-3 end-uncertain']);
 });

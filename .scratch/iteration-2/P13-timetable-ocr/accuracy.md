@@ -6,6 +6,32 @@ Android emulator in ticket 01) against the hand-written ground truth beside them
 the main server's seed of campus buildings (`main-server/seed/campus-map-places.json`, 250 rows from map.snu.ac.kr),
 as `GET /places` lists them.
 
+## Update of 2026-10-22 (`2.0/fix-timetable-ocr`)
+
+The pipeline no longer uses ML Kit's confidence to keep or drop a class, a time, a name or a title, and it measures
+the picture's background and grid instead of assuming a white screenshot (dark mode, pale blocks). The plan, with the
+inventory of failure modes, is `.scratch/iteration-2/fix-timetable-ocr/plan.md`.
+
+- **The four screenshots read the same: 48 of 50 times, 27 of 28 classes, nothing read that is not there, 29 rooms
+  linked right, 0 wrong, 0 unlinked** — with Android's confidences and without them (iOS), which now give the same
+  reading. Confidence had dropped nothing on these four, so the count could not rise; the two times left out are the
+  faded blocks below, left out on purpose.
+- **Room links keep one confidence floor**, `ROOM_CONFIDENCE` 0.5 (was 0.8), on Android only: the rooms read
+  0.82–0.95, so the floor now has a margin of 0.32 instead of 0.02. On iOS a room must be read inside one whole OCR
+  element. No building is linked wrongly, which stays a hard bar in the tests.
+- **Dark mode** is covered by a synthetic copy of the user's dark-mode SNU timetable (1179 px wide), in
+  `__tests__/timetable-ocr-pixels-test.ts`: 13 of its 14 times read with their times and rooms, the 14th (running off
+  the picture's bottom) left out. **Pending:** the real screenshot and its ML Kit output as fixture `dark-1`, once a
+  device run saves them; the screenshots test lists it as to do.
+- **Out of scope:** photos of a screen (skew, perspective, moiré, glare), a professor's name printed inside a block
+  (joined into the name), two classes overlapping in time drawn side by side at half width (not read: both are
+  reported as left out, `too-narrow`, with their names, so the import's "N개는 넣지 못했어요" counts them).
+- **Left out on the four:** only the two faded blocks below (`end-uncertain`); the tests hold this, so that nothing
+  else (a widget below the grid, a header band) is counted as a class left out.
+- **Run time** in Node: about 30–40 ms per screenshot (median of 5), as before.
+
+The tables below are from 2026-10-18; their numbers hold, except where the thresholds table says otherwise.
+
 ## How it is counted
 
 - The unit is a **class time**: one coloured block, one day, one start and end. The ground truth has 50 of them in 28
@@ -89,19 +115,18 @@ Chosen on the four screenshots; each is named in the code.
 
 | Threshold                                                                                 | Value                          | On the four screenshots                                                                                                                                                              |
 | ----------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ROOM_CONFIDENCE` (`building.ts`): a room line is linked                                  | ≥ 0.80                         | Room lines read 0.82–0.95; all 29 linked, none wrongly. The margin is thin: 0.82 is `302-311-1` and `8-408` (see below)                                                              |
-| `NAME_CONFIDENCE` (`read-timetable.ts`): a block's name, for its time and its class       | ≥ 0.50                         | Names read 0.56 (`근장`) and up, weighted by characters, so a wrapped syllable read at 0.20 (`밍`) does not sink its name                                                            |
-| Title words (`title.ts`)                                                                  | ≥ 0.30                         | Leaves out the chevron read as `<` (0.06) next to `시간표`                                                                                                                           |
+| `ROOM_CONFIDENCE` (`building.ts`): a room is linked (Android)                             | ≥ 0.50 (0.80 until 2026-10-22) | Room lines read 0.82–0.95; all 29 linked, none wrongly. The only confidence check left                                                                                               |
+| ~~`NAME_CONFIDENCE`~~                                                                     | removed 2026-10-22             | A class is kept when its name holds a letter or digit, whatever its confidence                                                                                                       |
+| ~~Title words' confidence~~                                                               | removed 2026-10-22             | The chevron read as `<` falls out by the title's character filter                                                                                                                    |
 | `FADE_DISTANCE` (`blocks.ts`): the rows above a block's bottom edge drift from its colour | > 12 (RGB)                     | The two faded SNUTT blocks drift 20 and 27; every other block less than 1                                                                                                            |
-| Block pixel (`mask.ts`)                                                                   | saturation ≥ 0.25, value ≥ 80  | Block colours are 0.40–0.62 saturated; white, the grid and the grey background are below 0.1                                                                                         |
+| Block pixel (`pixels.ts`, since 2026-10-22)                                               | chroma ≥ background's + 24     | The background is measured. Block chroma is 80 and up on the four; greys stay under 10                                                                                               |
 | Hour labels' RANSAC (`hours.ts`)                                                          | within 0.2 h; ≥ 3 labels agree | 7 to 14 labels per screenshot, all agree                                                                                                                                             |
 | `SHORT_NAME` (`classes.ts`): a name cut short joins its whole name                        | ≥ 6 characters, and cut        | `컴퓨터프로그래` (목, its `밍` not read by ML Kit; its line runs to the block's right edge) joins `컴퓨터프로그래밍`. A whole name that starts another (`…` and `…연습`) stays apart |
 
 ### To recheck on a device
 
-- **The room threshold's margin is thin**: the lowest room line read 0.82 against `ROOM_CONFIDENCE` 0.80. Another
-  phone, another ML Kit build or another screenshot scale may read rooms lower, and a room under the threshold is
-  left unlinked (never linked wrongly). The threshold must be rechecked on 함재현's device run before P13-04 ships.
+- **The room floor** (0.5 since 2026-10-22) is far below the lowest room read (0.82); a device run should still confirm
+  that rooms read well above it.
 - **The 2-second run time on the emulator** (ticket 02's last criterion) stays open until a device run measures it;
   only the Node time below is measured.
 

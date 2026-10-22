@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Place, Weekday } from '@/api/types';
 
-import { type Block, endIsUncertain, findBlocks } from './blocks';
+import { type Block, endIsUncertain, findBlocks, type HeaderBand, headerBandOf, startIsUncertain } from './blocks';
 import { type BlockLine, blockText, linesIn } from './block-text';
 import { linkRoom } from './building';
 import { mergeClasses, type ReadClass, type ReadTime } from './classes';
@@ -18,23 +19,21 @@ import { findTitle } from './title';
 import { type Word, wordsOf } from './words';
 
 // The reading pipeline: what the native OCR module returned for a screenshot of SNUTT or 에브리타임, turned into
-// classes. Whatever is uncertain is left out, with the reason, rather than guessed.
-
-// The confidence a block's name needs for its time and its class to be kept (Android). Chosen on the four reference
-// screenshots, whose names read 0.56 and above: see accuracy.md.
-export const NAME_CONFIDENCE = 0.5;
+// classes. Whatever is uncertain is left out, with the reason, rather than guessed. What is kept is decided by the
+// grid, the blocks' geometry and whether text is there, never by ML Kit's confidence, so that Android and iOS (which
+// gives none) follow the same rules.
 
 export type LeftOutReason =
   // The block's bottom runs under the tab bar, reaches the picture's end or fades out.
   | 'end-uncertain'
+  // The block's top is cut by the picture's top or a bar over it, or fades in: the timetable was scrolled.
+  | 'start-uncertain'
+  // The block is one of two classes drawn side by side in one column, each narrower than it: they overlap in time.
+  | 'too-narrow'
   // The block's top or bottom is outside the day.
   | 'outside-day'
-  // No name was read in the block.
-  | 'no-name'
-  // The name was read with too little confidence (Android).
-  | 'low-confidence'
-  // Without confidence (iOS): the block holds only a room, or the name is a single character.
-  | 'too-little-text';
+  // No name was read in the block: no text, only a room, or only marks without a letter or digit.
+  | 'no-name';
 
 export interface LeftOut {
   weekday: Weekday;
@@ -61,9 +60,13 @@ function clock(hours: number): string | null {
 
 interface Grid {
   columns: Column[];
+  // Whether the day header was read; without it the header's place is a guess.
+  header: boolean;
   headerTop: number;
   headerBottom: number;
   line: TimeLine;
+  // The first hour whose label fits the line.
+  firstHour: number;
 }
 
 // ① The grid: the header's columns, or the grid lines' when no header was read; the hour labels' fitted line.
@@ -87,9 +90,11 @@ function readGrid(words: readonly Word[], image: ReturnType<typeof decodePixels>
   const headerBottom = header?.bottom ?? rowAt(shifted, firstHour - 1);
   return {
     columns,
+    header: header !== null,
     headerTop: header?.top ?? headerBottom - shifted.a / 2,
     headerBottom,
     line: refineWithGridLines(shifted, gridLines, headerBottom),
+    firstHour,
   };
 }
 
@@ -118,7 +123,7 @@ function splitByText(block: Block, lines: readonly BlockLine[], hourHeight: numb
 interface ReadBlock {
   name: string;
   cut: boolean;
-  confidence: number | null;
+  marked: boolean;
   time: ReadTime;
 }
 
@@ -128,7 +133,7 @@ function readBlock(
   words: readonly Word[],
   grid: Grid,
   places: readonly Place[],
-  uncertainEnd: boolean,
+  uncertain: 'start-uncertain' | 'end-uncertain' | 'too-narrow' | null,
 ): ReadBlock | LeftOut {
   const text = blockText(linesIn(words, block), block);
   const start = clock(hoursAt(grid.line, block.y0));
@@ -140,29 +145,36 @@ function readBlock(
     end,
     reason,
   });
-  if (text.name === '') {
+  if (!/[\p{L}\p{N}]/u.test(text.name)) {
     return leftOut('no-name');
   }
   if (start === null || end === null || start >= end) {
     return leftOut('outside-day');
   }
-  if (uncertainEnd) {
-    return leftOut('end-uncertain');
-  }
-  if (text.nameConfidence === null) {
-    if (text.nameLines === 0 || Array.from(text.name.replaceAll(/\s+/gu, '')).length < 2) {
-      return leftOut('too-little-text');
-    }
-  } else if (text.nameConfidence < NAME_CONFIDENCE) {
-    return leftOut('low-confidence');
+  if (uncertain !== null) {
+    return leftOut(uncertain);
   }
   const link = linkRoom(text.room, places);
   return {
     name: text.name,
     cut: text.cut,
-    confidence: text.nameConfidence,
+    marked: text.marked,
     time: { weekday: block.column.weekday, start, end, room: link?.room ?? null, placeId: link?.placeId ?? null },
   };
+}
+
+// The day header's band, sampled on its letters' row, and the first hour's row below it; null when no header was read,
+// since its place is then a guess.
+function bandOf(image: ReturnType<typeof decodePixels>, grid: Grid): HeaderBand | null {
+  const colour = grid.header
+    ? headerBandOf(
+        image,
+        (grid.headerTop + grid.headerBottom) / 2,
+        grid.columns[0]?.left ?? 0,
+        grid.columns.at(-1)?.right ?? image.width,
+      )
+    : null;
+  return colour === null ? null : { colour, firstHourRow: rowAt(grid.line, grid.firstHour) };
 }
 
 // Reads a screenshot's timetable, with what was left out and why. `places` are the campus Places (`GET /places`),
@@ -176,12 +188,33 @@ export function readTimetable(result: NativeOcrResult, places: readonly Place[])
   }
   const read: ReadBlock[] = [];
   const leftOut: LeftOut[] = [];
-  for (const found of findBlocks(image, grid.columns, grid.line.a, grid.headerBottom)) {
-    const uncertainEnd = endIsUncertain(image, found);
+  // A nameless piece cut at the header's bottom is the header's tinted band reaching below its letters: no class, and
+  // no block for another's edge to meet.
+  const blocks = findBlocks(image, grid.columns, grid.line.a, grid.headerBottom).filter(
+    (found) => found.clippedTop !== true || blockText(linesIn(words, found)).name !== '',
+  );
+  const headerBand = bandOf(image, grid);
+  for (const found of blocks) {
+    if (found.narrow === true) {
+      // Reported with its name; a narrow coloured shape without text (an icon) is no class.
+      const outcome = readBlock(found, words, grid, places, 'too-narrow');
+      if ('reason' in outcome && outcome.reason !== 'no-name') {
+        leftOut.push(outcome);
+      }
+      continue;
+    }
+    const uncertainStart = startIsUncertain(image, found, blocks, headerBand);
+    const uncertainEnd = endIsUncertain(image, found, blocks);
     const pieces = splitByText(found, linesIn(words, found), grid.line.a);
     pieces.forEach((block, index) => {
-      // Only the last piece reaches the found block's bottom.
-      const outcome = readBlock(block, words, grid, places, uncertainEnd && index === pieces.length - 1);
+      // Only the first piece reaches the found block's top, and only the last its bottom.
+      const uncertain =
+        uncertainStart && index === 0
+          ? 'start-uncertain'
+          : uncertainEnd && index === pieces.length - 1
+            ? 'end-uncertain'
+            : null;
+      const outcome = readBlock(block, words, grid, places, uncertain);
       if ('reason' in outcome) {
         leftOut.push(outcome);
       } else {
