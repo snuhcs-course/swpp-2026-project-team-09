@@ -1,7 +1,7 @@
 # 09: The manifests split into a shared part and one part per server
 
 Parent: [A01 spec](../spec.md)
-Status: ready-for-agent
+Status: resolved
 Blocked by: None (can start immediately)
 Touches: `infra/production/k8s/` except `database-setup.yaml`, and the `manifests` job in `.github/workflows/ci.yml`. Not the Release workflow (ticket 05), not the runbook (ticket 07), and not what the objects say: the Deployments, Services, settings, and Ingresses render as ticket 04 built them.
 
@@ -29,7 +29,7 @@ Ticket 04's Kustomize base becomes a shared part and five server parts, so that 
 - [x] The database Job is in no kustomization, and `secrets/` is ignored by git (`git check-ignore`).
 - [x] The checks drive the render the way the cluster would receive it, as the objects that `kubectl kustomize` prints, parsed, never a file's text; `## Comments` says how each criterion was checked.
 - [x] Every new or changed source file (the kustomizations, the manifests, and the CI workflow) carries the `#` AI-generated box with a row for this change (`CLAUDE.md`).
-- [ ] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+- [x] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
 
 ## Comments
 
@@ -79,3 +79,8 @@ Ticket 04's Kustomize base becomes a shared part and five server parts, so that 
 - **Boxes.** The new kustomizations and the test carry the box with this change's row. The moved manifests are
   unchanged and keep theirs; `ci.yml` and the shared kustomization already had today's row. The `.gitignore` has no
   box, like the repository's other `.gitignore` files.
+
+### Agent usage (2026-10-22)
+
+- Agent time: about 15 minutes, an estimate, summed over its implementer and its reviewer.
+- Tokens, subagents included: input 140 new, 8.3 million read from the cache, and 222 thousand written to the cache; output 7 thousand.
