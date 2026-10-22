@@ -6,6 +6,10 @@
 
 # The role the Release workflow assumes through GitHub's OIDC provider, so that no AWS key is stored in GitHub.
 
+locals {
+  secret_parameter_path_arn = "arn:aws:ssm:${local.region}:${data.aws_caller_identity.current.account_id}:parameter/snunow/production"
+}
+
 resource "aws_iam_openid_connect_provider" "github" {
   url            = "https://token.actions.githubusercontent.com"
   client_id_list = ["sts.amazonaws.com"]
@@ -67,6 +71,20 @@ data "aws_iam_policy_document" "deploy" {
     sid       = "EksCluster"
     actions   = ["eks:DescribeCluster"]
     resources = [module.eks.cluster_arn]
+  }
+
+  # Production's secret values. GetParametersByPath is authorized against the requested path, the others against each
+  # parameter. The AWS managed key aws/ssm lets every principal in the account decrypt, so no KMS permission is needed.
+  statement {
+    sid       = "SecretParameterPath"
+    actions   = ["ssm:GetParametersByPath"]
+    resources = [local.secret_parameter_path_arn]
+  }
+
+  statement {
+    sid       = "SecretParameters"
+    actions   = ["ssm:GetParameters", "ssm:GetParameter"]
+    resources = ["${local.secret_parameter_path_arn}/*"]
   }
 }
 
