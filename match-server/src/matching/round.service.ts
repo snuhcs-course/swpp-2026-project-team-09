@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
@@ -19,6 +20,8 @@ import { PlacementService } from './placement.service.js';
 
 const standingSchema = z.object({ standing: z.array(z.object({ userId: z.string(), globalEventId: z.string() })) });
 
+type Standing = z.infer<typeof standingSchema>['standing'];
+
 const questSchema = z.object({ questId: z.uuid(), holderIds: z.array(z.string()) });
 
 // The main server's answers that it creates no Quest for the match, however often it is asked.
@@ -29,6 +32,22 @@ const TRANSACTION_TIMEOUT_MS = 30_000;
 
 function keyOf({ userId, globalEventId }: { userId: string; globalEventId: string }): string {
   return `${userId} ${globalEventId}`;
+}
+
+// The waiting requests a round read, once the main server answered which stand and those still waiting were locked.
+// A request withdrawn while the main server answered is in neither part, so it is left as it is.
+export function splitRound<R extends { id: string; userId: string; globalEventId: string }>(
+  waiting: readonly R[],
+  stillWaitingIds: readonly string[],
+  standing: Standing,
+): { toExpire: R[]; toPlace: R[] } {
+  const stillWaiting = new Set(stillWaitingIds);
+  const stands = new Set(standing.map((request) => keyOf(request)));
+  const open = waiting.filter(({ id }) => stillWaiting.has(id));
+  return {
+    toExpire: open.filter((request) => !stands.has(keyOf(request))),
+    toPlace: open.filter((request) => stands.has(keyOf(request))),
+  };
 }
 
 // The rounds that place waiting requests into Open Quests, turn the rest into matches and matches into Shared Quests
@@ -87,16 +106,16 @@ export class RoundService implements OnApplicationBootstrap {
           SELECT id FROM matching_requests
           WHERE id = ANY(${waiting.map(({ id }) => id)}::uuid[]) AND state = 'waiting'
           FOR UPDATE`;
-        const stillWaiting = new Set(locks.map(({ id }) => id));
-        const open = waiting.filter(({ id }) => stillWaiting.has(id));
+        const { toExpire, toPlace } = splitRound(
+          waiting,
+          locks.map(({ id }) => id),
+          standing,
+        );
         await tx.matchingRequest.updateMany({
-          where: { id: { in: open.filter((request) => !standing.has(keyOf(request))).map(({ id }) => id) } },
+          where: { id: { in: toExpire.map(({ id }) => id) } },
           data: { state: 'expired' },
         });
-        const unplaced = await this.placement.place(
-          open.filter((request) => standing.has(keyOf(request))),
-          tx,
-        );
+        const unplaced = await this.placement.place(toPlace, tx);
         await this.group(unplaced, tx);
         return true;
       },
@@ -104,15 +123,15 @@ export class RoundService implements OnApplicationBootstrap {
     );
   }
 
-  // The keys of the requests that still stand, or null when the main server does not answer.
-  private async askWhichStand(waiting: readonly MatchingRequest[]): Promise<Set<string> | null> {
+  // The requests that still stand, or null when the main server does not answer.
+  private async askWhichStand(waiting: readonly MatchingRequest[]): Promise<Standing | null> {
     try {
       const { standing } = await this.mainServer.post(
         '/matching-requests/standing',
         { requests: waiting.map(({ userId, globalEventId }) => ({ userId, globalEventId })) },
         standingSchema,
       );
-      return new Set(standing.map((request) => keyOf(request)));
+      return standing;
     } catch (error) {
       this.logger.warn(`The round groups nothing: ${problemOf(error)}`);
       return null;

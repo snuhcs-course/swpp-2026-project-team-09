@@ -1,0 +1,35 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-23  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# The admin site of test/admin-ui/, over compose.yaml and compose.test.yaml: the image admin/Dockerfile builds for
+# Production, calling the stack's main server by its service name. Published on a free port of the loopback address.
+services:
+  admin:
+    build:
+      context: ./admin
+      # The build arguments release.sh passes: the stack's GOOGLE_ADMIN_CLIENT_ID, and no Kakao key, so that the event
+      # form takes the position as two numbers and no Kakao script loads.
+      args:
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: flow-tests-admin.apps.googleusercontent.com
+        NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY: ''
+    init: true
+    environment:
+      MAIN_SERVER_URL: http://main-server:3000
+    ports:
+      - '127.0.0.1::3100'
+    depends_on:
+      main-server:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3100/health/ready').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 2s
+      retries: 60

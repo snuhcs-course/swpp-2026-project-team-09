@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Injectable, Logger } from '@nestjs/common';
@@ -37,7 +38,7 @@ function poolOf({ globalEventId, size }: { globalEventId: string; size: number }
 }
 
 // The earliest Quest takes the earliest requests of its pool whose Users do not hold it, until it is full.
-function assign(requests: readonly MatchingRequest[], quests: readonly EligibleQuest[]): Placement[] {
+export function assign(requests: readonly MatchingRequest[], quests: readonly EligibleQuest[]): Placement[] {
   const pools = new Map<string, MatchingRequest[]>();
   for (const request of requests) {
     pools.set(poolOf(request), [...(pools.get(poolOf(request)) ?? []), request]);
