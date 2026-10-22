@@ -38,7 +38,7 @@ beforeAll(async () => {
     openRouterModel(key, options.model),
     options,
   );
-  started.world = await seedWorld(started.evalApp.app);
+  started.world = await seedWorld(started.evalApp.app, inject('settings').DATABASE_URL);
   started.names = namesOf(started.world.seeds);
   log.keepSeeds(started.world.seeds);
 });
@@ -73,6 +73,7 @@ for (const { evalCase, repetition, name } of runs) {
       if (log.overBudget()) {
         skip(`The budget of USD ${options.budgetUsd} is spent`);
       }
+      await world.refresh();
       log.add(
         await runCase(evalApp, world, evalCase, repetition, options, {
           // A live turn with no expectation of its own goes on.

@@ -4,12 +4,13 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { inject } from 'vitest';
+import { inject, type ProvidedContext } from 'vitest';
 import { loadCases } from '../eval/cases.ts';
 import { FALLBACK_PRICES } from '../eval/cost.ts';
 import { type RunOptions } from '../eval/options.ts';
 import { type EvalApp, runCase, startEvalApp } from '../eval/runner.ts';
 import { seedWorld, type World } from '../eval/world.ts';
+import { type SeededDatabase, seededDatabase } from './containers.js';
 import { ScriptedModel } from './scripted-model.js';
 
 // A tool call that its input schema refuses before the tool runs (P19 ticket 02, review of #108): the run observer
@@ -35,14 +36,18 @@ const OPTIONS: RunOptions = {
 
 let evalApp: EvalApp;
 let world: World;
+// The world lives in a database of its own, so that its Global Events, Quests and menus reach no other test.
+let database: SeededDatabase<ProvidedContext['settings']>;
 
 beforeAll(async () => {
-  evalApp = await startEvalApp(inject('settings'), model.model, OPTIONS);
-  world = await seedWorld(evalApp.app);
+  database = await seededDatabase(inject('settings'));
+  evalApp = await startEvalApp(database.settings, model.model, OPTIONS);
+  world = await seedWorld(evalApp.app, database.url);
 });
 
 afterAll(async () => {
   await evalApp.app.close();
+  await database.drop();
 });
 
 describe('A tool call its input schema refuses', () => {

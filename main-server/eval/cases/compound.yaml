@@ -1,0 +1,97 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Compound requests: several tools in one request, which exercise the step and time limits on purpose. Run them at
+# both 8 steps / 30 s and 30 steps / 60 s (`--max-steps 30 --timeout 60000`); their STEP_LIMIT and TIMEOUT counts are
+# the number the mid-iteration check-in lacked.
+
+- id: compound-menus-and-shuttle
+  category: compound
+  turns:
+    - user: 오늘 저녁 학식 메뉴랑 지금 셔틀 어디 있는지 같이 알려줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getMenus, getShuttle, showOnMap]
+      forbidden: [proposeQuest]
+    args:
+      getMenus: { date: '2026-10-21', meal: dinner }
+    mapButtons: [dining, shuttle]
+    text:
+      mentions: [돈까스, [정문, 301동]]
+
+# getMenus takes one day: today to Sunday is five calls, two of which find menus (P20's 3-8 takes a range).
+- id: compound-this-week-menus
+  category: compound
+  turns:
+    - user: 이번 주 학식 메뉴 전부 알려줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getMenus, showOnMap]
+      forbidden: [proposeQuest]
+    args:
+      getMenus:
+        - { date: '2026-10-21' }
+        - { date: '2026-10-22' }
+    mapButtons: [dining]
+    text:
+      mentions: [제육볶음, 닭갈비덮밥]
+
+- id: compound-festival-and-party
+  category: compound
+  turns:
+    - user: 이번 주말 축제 뭐 있는지 보여주고, 같이 갈 파티도 찾아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents, searchRecruitingQuests, showQuests]
+      allowed: [resolveGlobalEvent]
+      forbidden: [proposeQuest]
+    cards:
+      - kind: globalEvent
+        seeds: [관악 가을 축제]
+      - kind: quest
+        seeds: [축제 같이 즐겨요]
+
+- id: compound-proposal-two-friends-place-event
+  category: compound
+  turns:
+    - user: 토요일 축제 개막 공연 이민수, 김지은이랑 보러 갈래. 5시에 학생회관에서 모여서 가는 걸로 파티 만들어줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [resolveFriend, resolvePlace, proposeQuest]
+      allowed: [resolveGlobalEvent, searchGlobalEvents]
+    args:
+      resolveFriend:
+        - { name: 이민수 }
+        - { name: 김지은 }
+    proposal:
+      joinPolicy: closed
+      board: null
+      capacity: 3
+      startsAt: '2026-10-24 17:00'
+      place: 학생회관
+      globalEvent: 축제 개막 공연
+      invitees: [이민수, 김지은]
+
+# There are recruiting Quests for 운동, so the right answer shows them and makes nothing.
+- id: compound-exercise-or-make
+  category: compound
+  turns:
+    - user: 운동 파티 있으면 보여주고 없으면 하나 만들어줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      forbidden: [proposeQuest]
+    args:
+      searchRecruitingQuests: { board: hobby }
+    cards:
+      - kind: quest
+        seeds: [저녁 농구 한 판, 주말 배드민턴]
+        max: 3
