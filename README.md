@@ -515,6 +515,12 @@ pnpm test
 `flow-tests` builds the servers' images the first time, which takes some minutes, and leaves a running stack and its
 data alone: [flow-tests/README.md](flow-tests/README.md).
 
+The level check of `scripts/` has a test of its own, which no project runs. From the repository root:
+
+```bash
+node --test scripts/test/check-test-levels.integration.test.ts
+```
+
 ## Deployment
 
 The **Dev Server** is the team's shared server, server B of the two the course lends the team. It runs the four
@@ -556,6 +562,7 @@ Release again, rotate a secret, and move Production to another AWS account.
 | `admin/`         | The admin site for Administrators                                                             |
 | `mobile/`        | The app, with the native map module for Android and iOS in `modules/`                         |
 | `flow-tests/`    | Tests of the three demo flows across the four servers                                         |
+| `scripts/`       | The level check every project's `pnpm lint` runs (ADR 0007), and its test                     |
 | `infra/`         | The PostgreSQL image, the Dev Server (`deploy/`, `proxy/`), and Production (`production/`)    |
 | `docs/`          | Decision records (`adr/`), the agents' conventions (`agents/`), and the demo videos (`demo/`) |
 | `.scratch/`      | Specs and tickets of each iteration's tasks, and research notes                               |
