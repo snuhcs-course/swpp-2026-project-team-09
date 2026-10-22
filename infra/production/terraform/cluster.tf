@@ -37,6 +37,8 @@ module "eks" {
   addons = {
     vpc-cni = {
       before_compute = true
+      # Enforces the NetworkPolicies in infra/production/k8s; the agent runs inside aws-node, so it adds no pod.
+      configuration_values = jsonencode({ enableNetworkPolicy = "true" })
     }
     coredns        = {}
     kube-proxy     = {}
