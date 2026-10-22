@@ -4,8 +4,8 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-// The main-server client through mainServer's calls, fetch stubbed: its setting, the headers each call sends, and each
-// kind of answer. Paths, statuses and refusal bodies from main-server's README (Administrators, Global Events).
+// The main-server client through mainServer's calls, fetch stubbed: its setting, each call's headers and body, and
+// each kind of answer. Paths, statuses and refusal bodies from main-server's README (Administrators, Global Events).
 
 import { type GlobalEventChange, mainServer, MainServerError } from '@/main-server';
 
@@ -97,8 +97,8 @@ describe("The main-server client's address", () => {
   });
 });
 
-describe('The headers the main-server client sends', () => {
-  it.each<[string, () => Promise<unknown>, Record<string, string>, unknown]>([
+describe('The headers and body the main-server client sends', () => {
+  const calls: [string, () => Promise<unknown>, Record<string, string>, unknown][] = [
     [
       'signing in, with a body and no token',
       (): Promise<unknown> => mainServer.signIn('id-token'),
@@ -123,14 +123,22 @@ describe('The headers the main-server client sends', () => {
       { authorization: `Bearer ${TOKEN}`, 'content-type': 'application/json', 'idempotency-key': KEY },
       DRAFT,
     ],
-  ])('%s → only the headers it was given', async (_, call, headers, body) => {
+  ];
+
+  it.each(calls)('%s → only the headers it was given', async (_, call, headers) => {
     answer(new Response(null, { status: 204 }));
 
     await call();
 
-    const request = sent();
-    expect(request.headers).toEqual(headers);
-    expect(request.body).toEqual(body);
+    expect(sent().headers).toEqual(headers);
+  });
+
+  it.each(calls)('%s → the body it was given, or none', async (_, call, _headers, body) => {
+    answer(new Response(null, { status: 204 }));
+
+    await call();
+
+    expect(sent().body).toEqual(body);
   });
 });
 
