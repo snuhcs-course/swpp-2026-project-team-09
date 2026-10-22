@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -96,15 +97,14 @@ describe('알림', () => {
     expect(shownRows()).toEqual(ROWS);
   });
 
-  it("names nobody in a Party's row when the main server does not tell its Leader", async () => {
+  it('leaves out the Parties when the main server sends one without its Leader', async () => {
     const { leader: _leader, ...withoutLeader } = DINNER_PARTY;
     server.on('GET /parties', { status: 200, body: [withoutLeader] });
+    // The bell counts nothing until the malformed answer is asked for once more and fails.
+    await openNotifications('알림');
+    await pass(5000);
 
-    await openNotifications();
-
-    expect(
-      screen.getByRole('button', { name: '파티가 활성화됐어요 · 저녁 먹으러 가요 · 참여하면 위치를 공유해요' }),
-    ).toBeVisible();
+    expect(shownRows()).toEqual(ROWS.slice(1));
   });
 });
 

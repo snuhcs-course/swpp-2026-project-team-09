@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -186,13 +187,20 @@ describe('what waits for the User', () => {
     );
   });
 
-  it("gives the Quests with their Leader, capacity and Join Policy, and a Party's Leader where it is told", async () => {
+  it('gives the Quests with their Leader, capacity and Join Policy, and the Parties with their Leader', async () => {
     const server = await askMainServer({ signedIn: true });
-    const { leader: _leader, ...withoutLeader } = DINNER_PARTY;
     server.on('GET /quests', { status: 200, body: [STUDY] });
-    server.on('GET /parties', { status: 200, body: [DINNER_PARTY, withoutLeader] });
+    server.on('GET /parties', { status: 200, body: [DINNER_PARTY] });
 
     expect(await apiClient.listQuests()).toMatchObject([STUDY]);
-    expect(await apiClient.listParties()).toEqual([DINNER_PARTY, withoutLeader]);
+    expect(await apiClient.listParties()).toEqual([DINNER_PARTY]);
+  });
+
+  it('refuses the Parties when one comes without its Leader', async () => {
+    const server = await askMainServer({ signedIn: true });
+    const { leader: _leader, ...withoutLeader } = DINNER_PARTY;
+    server.on('GET /parties', { status: 200, body: [DINNER_PARTY, withoutLeader] });
+
+    await expect(apiClient.listParties()).rejects.toMatchObject({ status: 0, code: 'UNEXPECTED_ANSWER' });
   });
 });

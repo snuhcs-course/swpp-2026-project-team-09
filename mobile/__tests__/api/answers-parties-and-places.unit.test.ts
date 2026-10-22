@@ -77,7 +77,6 @@ describe('isParties', () => {
       ['no Party', []],
       ['a Party tied to no Quest', [{ ...PARTY, quest: null }]],
       ['a Party whose Quest has no Global Event', [{ ...PARTY, quest: { ...PARTY_QUEST, globalEvent: null } }]],
-      ['a Party without its provisional leader', [omit(PARTY, 'leader')]],
     ],
     inList(PARTY, [
       ...wrongFields(
@@ -94,6 +93,7 @@ describe('isParties', () => {
         },
         ['quest'],
       ),
+      ['no Leader', omit(PARTY, 'leader')],
       ['leader null', { ...PARTY, leader: null }],
       ['a leader without a name', { ...PARTY, leader: { id: 'u1' } }],
       ...inside(
