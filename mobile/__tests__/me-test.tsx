@@ -3,12 +3,14 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { pass, screen, shownAddress } from './support/app';
 import { FRIEND_PILL } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
-import { startFresh } from './support/mocks';
+import { answered, startFresh } from './support/mocks';
+import { apiClient } from '@/api/client';
 import { readKept } from '@/storage/kept';
 
 // 내 정보, the `Profile` frame, against the mocks: the profile Onboarding saved, the frame's four classes on Thursday
@@ -75,6 +77,50 @@ describe('the profile card', () => {
 
     expect(screen.getByText('컴퓨터공학부')).toBeVisible();
     expect(screen.queryByText(/학번/u)).toBeNull();
+  });
+});
+
+describe("the week's hours and days", () => {
+  it('draws an evening class whole, and a 토 column for a Saturday class', async () => {
+    const added = [
+      ['창의적사고', 'thursday', '19:00', '21:00'],
+      ['토요 세미나', 'saturday', '10:00', '13:00'],
+    ] as const;
+    await Promise.all(
+      added.map(([courseName, weekday, startTime, endTime]) =>
+        answered(
+          apiClient.addClass({ courseName, times: [{ weekday, startTime, endTime, placeId: null, room: null }] }),
+        ),
+      ),
+    );
+    await openMe();
+
+    expect(screen.getAllByTestId('class-block')).toHaveLength(9);
+    expect(screen.getByLabelText('목요일 19:00–21:00 창의적사고')).toBeVisible();
+    expect(screen.getByLabelText('토요일 10:00–13:00 토요 세미나')).toBeVisible();
+    expect(screen.getByText('토')).toBeVisible();
+    expect(screen.queryByText('일')).toBeNull();
+  });
+
+  it('adds 토 and 일 for a Sunday class', async () => {
+    await answered(
+      apiClient.addClass({
+        courseName: '일요 스터디',
+        times: [{ weekday: 'sunday', startTime: '14:00', endTime: '16:00', placeId: null, room: null }],
+      }),
+    );
+    await openMe();
+
+    expect(screen.getByText('토')).toBeVisible();
+    expect(screen.getByText('일')).toBeVisible();
+    expect(screen.getByLabelText('일요일 14:00–16:00 일요 스터디')).toBeVisible();
+  });
+
+  it('shows 월 to 금 only when no class falls on the weekend', async () => {
+    await openMe();
+
+    expect(screen.getByText('금')).toBeVisible();
+    expect(screen.queryByText('토')).toBeNull();
   });
 });
 
