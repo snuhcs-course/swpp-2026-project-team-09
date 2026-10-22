@@ -50,12 +50,19 @@ These are two small fixes in the tabs, found while using the app on an Android p
 - `chip-row-test`, `events-tab-test`, `friend-panel-test`, `party-mine-test`, `quests-screen-test`, `chat-quest-cards-test` and `party-find-mock-test`: 64/64 pass. These cover the chips staying pressable and selected, and the chat cards behaving as before.
 - Full mobile suite: 143 suites and 1262 tests pass.
 - `pnpm lint` and `pnpm format:check` are clean.
-- `pnpm typecheck` fails with 2 errors that were already there without this change: typed-route `string` arguments in `__tests__/menus-screen-test.tsx:73` and `__tests__/support/party.ts:141`. This ticket adds no new errors.
+- `pnpm typecheck` is clean once the files `expo start` generates (`mobile/expo-env.d.ts`, `mobile/.expo/`) are moved aside. With them in place, it shows 2 typed-route errors in `__tests__/menus-screen-test.tsx:73` and `__tests__/support/party.ts:141`, which are there without this change too. CI has no such files.
 
 **Not checked by the agent:**
 - Anything on an Android phone: the three chip rows' spacing, and pressing 찾기's cards. The user will check these.
 - The look of 내 퀘스트's and the catalogue's chip rows on Android and on the web. No screenshots were taken.
 - No test asserts the spacing itself.
+
+### Review (#118, 2026-10-22)
+
+AhnJinYoung approved, with three non-blocking notes:
+- **Press feedback on the card:** not changed. 내 파티's card (`mine-tab.tsx`) is pressable with no pressed style either, and the design system has no pressed style for a card. Adding one would be a design decision for both cards, not this ticket.
+- **Row height 56 → 58:** no change needed. The web check of 내 퀘스트 and the catalogue is still open (see above).
+- **typecheck:** confirmed. The errors come from the generated typed routes, and typecheck is clean without them.
 
 ### Agent usage (2026-10-22)
 
