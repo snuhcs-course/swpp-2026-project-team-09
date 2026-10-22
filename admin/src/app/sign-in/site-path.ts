@@ -11,5 +11,6 @@ export function sitePath(next: FormDataEntryValue | null): string {
   }
   const base = 'http://admin.invalid';
   const url = new URL(next, base);
-  return url.origin === base ? `${url.pathname}${url.search}` : '/';
+  // Dot segments can leave a path such as `/.//host` as `//host`, which a browser reads as another host.
+  return url.origin === base && !url.pathname.startsWith('//') ? `${url.pathname}${url.search}` : '/';
 }

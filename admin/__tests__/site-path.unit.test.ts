@@ -20,6 +20,11 @@ const ELSEWHERE: [string, FormDataEntryValue | null][] = [
   // A browser drops tabs and newlines from a URL, which turns these into //host.
   ['a tab inside the path', '/\t/elsewhere.example'],
   ['a newline inside the path', '/\n/elsewhere.example'],
+  // The URL parser removes dot segments, which turns these into //host too.
+  ['a dot segment before //host', '/.//elsewhere.example'],
+  ['a dot-dot segment before //host', '/..//elsewhere.example'],
+  ['an encoded dot-dot segment before //host', '/%2e%2e//elsewhere.example'],
+  ['a dot segment before \\\\host', '/.\\\\elsewhere.example'],
   ['a relative path', 'administrators'],
   ['the empty value', ''],
   ['no value', null],
