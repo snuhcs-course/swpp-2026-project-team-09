@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -52,8 +53,15 @@ async function bothAreMatched(event: GlobalEvent, minji: Student, jun: Student):
   await jun.post('/matching-requests', { globalEventId: event.id, size: 2 });
   await minji.inbox.receivesSignal('matching-changed', MATCHING_WAIT_MS);
   await jun.inbox.receivesSignal('matching-changed', MATCHING_WAIT_MS);
-  const { state, questId } = await minji.get(`/matching-requests/${event.id}`, matchingRequest);
-  expect(state).toBe('matched');
+  // The signal comes once the Shared Quest exists, before the match server writes it onto the match, and none follows.
+  const { questId } = await vi.waitFor(
+    async () => {
+      const request = await minji.get(`/matching-requests/${event.id}`, matchingRequest);
+      expect(request).toEqual({ state: 'matched', questId: expect.any(String) as unknown });
+      return request;
+    },
+    { timeout: MATCHING_WAIT_MS },
+  );
   expect(await jun.get(`/matching-requests/${event.id}`, matchingRequest)).toEqual({ state: 'matched', questId });
   const shared = await jun.get(`/quests/${String(questId)}`, quest);
   expect(shared.globalEvent?.id).toBe(event.id);
