@@ -69,7 +69,7 @@ jobs:
       - name: Wait for CI on the commit
         env:
           GH_TOKEN: ${{ github.token }}
-        run: .github/release/release.sh gate "$GITHUB_REPOSITORY" "$COMMIT"
+        run: .github/release/release.sh gate "$GITHUB_REPOSITORY" "$COMMIT" "$GITHUB_REF_NAME"
       - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.PRODUCTION_DEPLOY_ROLE_ARN }}

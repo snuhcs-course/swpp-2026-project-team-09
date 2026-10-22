@@ -135,10 +135,12 @@ unused_generated() {
 
 # --- Doing --------------------------------------------------------------------------------------------------------
 
-# Prints the jobs of every CI run of the commit, as jobs_from_json prints them.
+# Prints the jobs of every CI run of the commit, as jobs_from_json prints them. GitHub may list the run of the tag's own
+# push a little after the Release starts, so until it does, that run counts as one that will run every job.
 read_ci_jobs() {
-  local repository=$1 commit=$2 runs id run_status jobs
+  local repository=$1 commit=$2 tag=$3 runs id run_status jobs
   runs=$(gh api "repos/$repository/actions/workflows/ci.yml/runs?head_sha=$commit&per_page=100") || return 1
+  jq -e --arg tag "$tag" 'any(.workflow_runs[]; .head_branch == $tag)' <<<"$runs" >/dev/null || printf '*\tmissing\n'
   while IFS=$'\t' read -r id run_status; do
     jobs=$(gh api "repos/$repository/actions/runs/$id/jobs?per_page=100") || return 1
     jobs_from_json "$run_status" <<<"$jobs"
@@ -148,10 +150,10 @@ read_ci_jobs() {
 # Waits for CI's results on the commit and fails unless every CI job has passed. It only reads them: CI runs on the
 # tag's push by itself, since its `on: push` takes tags.
 gate() {
-  local repository=$1 commit=$2 lines jobs verdict
+  local repository=$1 commit=$2 tag=$3 lines jobs verdict
   local limit=${GATE_LIMIT_SECONDS:-2700} interval=${GATE_INTERVAL_SECONDS:-60}
   while :; do
-    if lines=$(read_ci_jobs "$repository" "$commit"); then
+    if lines=$(read_ci_jobs "$repository" "$commit" "$tag"); then
       jobs=$(summarize_jobs <<<"$lines")
       verdict=$(judge_jobs <<<"$jobs")
       echo "ci: $(tr '\t\n' '= ' <<<"$jobs")"

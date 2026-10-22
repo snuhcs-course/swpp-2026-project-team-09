@@ -62,7 +62,8 @@ The workflow reads the Region, the role ARN, the cluster name, the registry, the
 - **The gate.** It lists `ci.yml`'s runs of the tagged commit and each run's jobs through GitHub's API every 60
   seconds, and judges each job as `infra/deploy/deploy.sh` judges a check. It passes once every job listed has a
   success, and fails on a job whose runs all failed. A job that is queued or running, cancelled, or not yet listed by a
-  run that has not finished keeps it waiting. It fails after 45 minutes without a pass.
+  run that has not finished keeps it waiting, and so does a job without a success while GitHub has not yet listed the
+  run of the tag's own push (`head_branch` is the tag's name). It fails after 45 minutes without a pass.
 - **Images.** Built with `docker buildx build --platform linux/arm64 --push` and both tags. When the commit's tag is
   already in the repository, `aws ecr batch-get-image` and `aws ecr put-image` add the Release's tag to that image,
   ECR's own way to retag. An admin image built earlier for the same commit keeps the build variables it was built
@@ -109,9 +110,9 @@ keys must be PEM with real line breaks.
 - **Gate.** The bats tests serve CI's runs and jobs from a faked `gh`: every job passed goes on after one poll and
   sends only the two GET requests; a job that failed in both runs stops it; a job that failed on the branch's run and
   runs on the tag's is waited for, and the gate goes on once it passes there, with the other jobs' success from the
-  branch's run; a run that lists no jobs yet keeps a job that failed elsewhere waiting; no run at all, or a run
-  cancelled by a newer push, waits until the limit and then fails; GitHub not answering is waited for. The workflow
-  runs the gate before `configure-aws-credentials`.
+  branch's run; a run that lists no jobs yet keeps a job that failed elsewhere waiting, and so does a tag's run that
+  GitHub has not listed yet; no run at all, or a run cancelled by a newer push, waits until the limit and then fails;
+  GitHub not answering is waited for. The workflow runs the gate before `configure-aws-credentials`.
 - **Secrets files.** The bats tests feed `write-secrets` Parameter Store's answer and compare the three files: the env
   file holds the seven keys with both `DATABASE_URL`s assembled and a password with `/`, `+`, `=`, and `@`
   percent-encoded, the PEM files match the stored keys line for line, and the output holds no value. Further tests
@@ -129,11 +130,12 @@ keys must be PEM with real line breaks.
   none in the jobs; each server's job in `release-<server>` with `cancel-in-progress`, the gate inside it; the name
   check and the checkout both take the ref the run was started on, so a run by hand on a Release tag deploys that
   tag's target at its commit. The name check runs outside the groups, so two Releases of one server pushed within the
-  few seconds that job takes may enter the group in either order.
+  few seconds that job takes may enter the group in either order. GitHub shows **Run workflow** only for workflows on
+  the default branch, `main`, so a run by hand from the Actions tab needs `release.yml` there.
 - **Not run against AWS or the cluster.** The role's OIDC login, the ECR push and retag, the Parameter Store call,
   server-side apply from several jobs at once, the rollout limit, and the cleanup's `kubectl` calls are first run by
   ticket 08's first `all` Release. The arm64 runner image lists kubectl 1.35, two minors behind the cluster's 1.37 and
   outside kubectl's supported skew; the calls use stable APIs, and a pinned kubectl in the job is the fix if that run
   shows otherwise.
 - **Lint.** `actionlint` 1.7.12 reports nothing on `release.yml` and `ci.yml`; shellcheck reports nothing on the
-  script and the tests; the 12 bats tests pass in Ubuntu 24.04's `bats`, as the CI job installs it.
+  script and the tests; the 13 bats tests pass in Ubuntu 24.04's `bats`, as the CI job installs it.

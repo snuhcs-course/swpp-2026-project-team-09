@@ -10,7 +10,9 @@
 
 REPOSITORY=snuhcs-course/swpp-2026-project-team-09
 COMMIT=6b1f0c2a9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a
-CI_JOBS=(main-server socket-server worker-server match-server admin mobile flow-tests deploy-scripts terraform manifests)
+TAG=snunow/main-server/26.11.13-1
+CI_JOBS=(main-server socket-server worker-server match-server admin mobile flow-tests deploy-scripts release-script
+  terraform manifests)
 
 setup() {
   RELEASE="$BATS_TEST_DIRNAME/../release.sh"
@@ -24,17 +26,18 @@ setup() {
   export GATE_INTERVAL_SECONDS=0
 }
 
-# Makes the faked GitHub list these CI runs of the commit, each "id status conclusion", in every poll or, after
-# --poll N, in poll N.
+# Makes the faked GitHub list these CI runs of the commit, each "id status conclusion push", in every poll or, after
+# --poll N, in poll N. The push is `branch` or `tag`, the Release's tag.
 serve_runs() {
   local file=$FAKE_GITHUB/runs.json
   if [[ "$1" == --poll ]]; then
     file+=.$2
     shift 2
   fi
-  printf '%s\n' "$@" | jq --raw-input --slurp --arg commit "$COMMIT" '
+  printf '%s\n' "$@" | jq --raw-input --slurp --arg commit "$COMMIT" --arg tag "$TAG" '
     [split("\n")[] | select(length > 0) | split(" ") |
-      {id: (.[0] | tonumber), name: "CI", path: ".github/workflows/ci.yml", head_sha: $commit, status: .[1],
+      {id: (.[0] | tonumber), name: "CI", path: ".github/workflows/ci.yml", head_sha: $commit,
+        head_branch: (if .[3] == "tag" then $tag else "2.0/Main" end), status: .[1],
         conclusion: (if .[2] == "null" then null else .[2] end)}] |
     {total_count: length, workflow_runs: .}' >"$file"
 }
@@ -94,11 +97,11 @@ polls() {
 }
 
 @test "the gate goes on once every CI job of the commit has passed, and only reads CI's runs and their jobs" {
-  serve_runs '41 completed success'
+  serve_runs '41 completed success tag'
   mapfile -t jobs < <(ci_jobs completed success)
   serve_jobs 41 "${jobs[@]}"
 
-  run "$RELEASE" gate "$REPOSITORY" "$COMMIT"
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"gate: every CI job passed"* ]] || false
@@ -109,12 +112,12 @@ polls() {
 }
 
 @test "a job that failed in every run of the commit stops the gate" {
-  serve_runs '41 completed failure' '57 completed failure'
+  serve_runs '41 completed failure branch' '57 completed failure tag'
   mapfile -t jobs < <(ci_jobs completed success mobile; echo 'mobile completed failure')
   serve_jobs 41 "${jobs[@]}"
   serve_jobs 57 "${jobs[@]}"
 
-  run "$RELEASE" gate "$REPOSITORY" "$COMMIT"
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"mobile=failure"* ]] || false
@@ -124,12 +127,12 @@ polls() {
 
 @test "a job that failed on the branch's push but still runs on the tag's is waited for, and one success of each job is enough" {
   mapfile -t branch_jobs < <(ci_jobs completed success mobile; echo 'mobile completed failure')
-  serve_runs '41 completed failure' '57 in_progress null'
+  serve_runs '41 completed failure branch' '57 in_progress null tag'
   serve_jobs 41 "${branch_jobs[@]}"
   serve_jobs 57 'mobile in_progress null' 'main-server queued null'
   serve_jobs --poll 2 57 'mobile completed success' 'main-server in_progress null'
 
-  run "$RELEASE" gate "$REPOSITORY" "$COMMIT"
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
 
   [ "$status" -eq 0 ]
   [ "$(polls)" -eq 2 ]
@@ -140,22 +143,37 @@ polls() {
 @test "a run that has not listed its jobs yet keeps a job that failed elsewhere waiting" {
   mapfile -t branch_jobs < <(ci_jobs completed success mobile; echo 'mobile completed failure')
   mapfile -t tag_jobs < <(ci_jobs completed success)
-  serve_runs '41 completed failure' '57 queued null'
+  serve_runs '41 completed failure branch' '57 queued null tag'
   serve_jobs 41 "${branch_jobs[@]}"
   serve_jobs 57
   serve_jobs --poll 2 57 "${tag_jobs[@]}"
 
-  run "$RELEASE" gate "$REPOSITORY" "$COMMIT"
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
 
   [ "$status" -eq 0 ]
   [ "$(polls)" -eq 2 ]
   [[ "${lines[0]}" == *"mobile=queued"* ]] || false
 }
 
+@test "a job that failed on the branch's push is waited for until GitHub lists the tag's run" {
+  mapfile -t branch_jobs < <(ci_jobs completed success mobile; echo 'mobile completed failure')
+  mapfile -t tag_jobs < <(ci_jobs completed success)
+  serve_runs '41 completed failure branch'
+  serve_runs --poll 2 '41 completed failure branch' '57 completed success tag'
+  serve_jobs 41 "${branch_jobs[@]}"
+  serve_jobs 57 "${tag_jobs[@]}"
+
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
+
+  [ "$status" -eq 0 ]
+  [ "$(polls)" -eq 2 ]
+  [[ "${lines[0]}" == *"mobile=missing"* ]] || false
+}
+
 @test "the gate waits while the commit has no CI run, and fails once its limit passes" {
   serve_runs
 
-  GATE_LIMIT_SECONDS=0 run "$RELEASE" gate "$REPOSITORY" "$COMMIT"
+  GATE_LIMIT_SECONDS=0 run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"ci=missing"* ]] || false
@@ -164,10 +182,10 @@ polls() {
 
 @test "a run cancelled by a newer push to its branch is waited for, not failed" {
   mapfile -t jobs < <(ci_jobs completed success flow-tests; echo 'flow-tests completed cancelled')
-  serve_runs '41 completed cancelled'
+  serve_runs '41 completed cancelled branch'
   serve_jobs 41 "${jobs[@]}"
 
-  GATE_LIMIT_SECONDS=0 run "$RELEASE" gate "$REPOSITORY" "$COMMIT"
+  GATE_LIMIT_SECONDS=0 run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"flow-tests=cancelled"* ]] || false
@@ -176,11 +194,11 @@ polls() {
 
 @test "GitHub not answering is waited for" {
   mapfile -t jobs < <(ci_jobs completed success)
-  serve_runs '41 completed success'
+  serve_runs '41 completed success tag'
   serve_jobs 41 "${jobs[@]}"
   export FAKE_GITHUB_DOWN=1
 
-  run "$RELEASE" gate "$REPOSITORY" "$COMMIT"
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
 
   [ "$status" -eq 0 ]
   [ "$(polls)" -eq 2 ]
