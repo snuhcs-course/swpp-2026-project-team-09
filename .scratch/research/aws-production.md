@@ -178,6 +178,13 @@ Route 53 does not sell `.kr`. Credits cannot pay for registration.
 - With a concurrency group, GitHub keeps one running and one pending run, and a newer pending run replaces the older one [S51].
 - Express matches routes without regard to case unless `case sensitive routing` is on, while ALB path patterns are case-sensitive [S52].
 
+**Parameter Store**
+- Standard parameters cost nothing to store or to read at standard throughput [S62], and each holds up to 4,096 bytes [S63].
+- A `SecureString` parameter is encrypted with the AWS managed key `aws/ssm` unless another key is named [S63]. AWS managed keys cost nothing to create or keep; KMS requests beyond 20,000 a month, counted across Regions, cost $0.03 per 10,000 [S64].
+- The `aws/ssm` key has Decrypt permission for all IAM principals in the account [S65].
+- `GetParametersByPath` is authorized against the path in the request, not against the parameters it returns; `GetParameter` and `GetParameters` are authorized against each requested parameter [S66].
+- The External Secrets Operator's Helm chart installs three pods by default: the operator, its webhook, and its certificate controller [S67].
+
 ## 9. Tools
 
 | Tool | Licence and price | Install |
@@ -274,3 +281,11 @@ Route 53 does not sell `.kr`. Credits cannot pay for registration.
 - [S59] Lens pricing and the licensing FAQ. https://lenshq.io/pricing and https://docs.lenshq.io/faq/subscription-and-licensing/
 - [S60] Kubernetes, "Version Skew Policy". https://kubernetes.io/releases/version-skew-policy/
 - [S61] AWS CLI User Guide, `aws login`. https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html
+
+**Parameter Store**
+- [S62] AWS Systems Manager pricing, Parameter Store. https://aws.amazon.com/systems-manager/pricing/
+- [S63] AWS Systems Manager User Guide, "AWS KMS encryption for AWS Systems Manager Parameter Store SecureString parameters". https://docs.aws.amazon.com/systems-manager/latest/userguide/secure-string-parameter-kms-encryption.html
+- [S64] AWS KMS pricing. https://aws.amazon.com/kms/pricing/
+- [S65] AWS Systems Manager User Guide, "Restricting access to Parameter Store parameters using IAM policies". https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-access.html
+- [S66] AWS Systems Manager User Guide, "How Parameter Store authorizes parameter retrieval". https://docs.aws.amazon.com/systems-manager/latest/userguide/ps-retrieval-authorization.html
+- [S67] `external-secrets/external-secrets`, the Helm chart's `values.yaml`. https://github.com/external-secrets/external-secrets/blob/main/deploy/charts/external-secrets/values.yaml

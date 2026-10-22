@@ -126,8 +126,8 @@ It reads the Secret `database-setup`, which is created by hand just before it an
 The two new passwords also go into the account's Parameter Store, as the `SecureString` parameters
 `/snunow/production/main-db-password` and `/snunow/production/match-db-password`, from which the Release workflow
 assembles the servers' `DATABASE_URL`. Generate them in the same shell that creates the Secret, so that the Job and the
-parameters get the same values. `--overwrite` also replaces a value the account already holds, for example one kept
-from an earlier database.
+parameters get the same values. `--overwrite` also replaces a value the account already holds, for example one copied
+from account A in a move, or one kept from an earlier database.
 
 In `infra/production/terraform`, signed in to the account, with kubectl pointed at the cluster:
 
