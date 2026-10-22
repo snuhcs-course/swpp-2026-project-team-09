@@ -7,18 +7,12 @@
 // Partitions: a position's age at 2 and 10 minutes; a Friend seen or not, with a status, without one and with one
 // contradicted; Friend Requests both ways. Expected values: P14-01's criteria and P06's todo.md (iteration 1).
 
-import type { Friend, FriendStatus, Position } from '@/api/types';
+import { HALL, measured, MIN_JUN, MINUTE, NOW } from '../support/map-sources';
+import type { Friend, FriendStatus } from '@/api/types';
 import { keptPositions, minutesOld, toFriendRequestViews, toFriendViews, withAge } from '@/features/friends/adapter';
 
-const NOW = new Date('2026-10-06T13:00:00+09:00');
-const MINUTE = 60_000;
-
-function measured(ago: number, userId = 'min-jun'): Position {
-  return { userId, latitude: 37.4594, longitude: 126.95199, measuredAt: new Date(NOW.getTime() - ago).toISOString() };
-}
-
 function friend(visible: boolean, more: Partial<Friend> = {}): Friend {
-  return { id: 'min-jun', name: '김민준', department: '경영학과', sharing: true, visible, ...more };
+  return { ...MIN_JUN, sharing: true, visible, ...more };
 }
 
 const LIBRARY: FriendStatus = {
@@ -36,14 +30,14 @@ describe('a position of a Friend by its age', () => {
     ['2 minutes', 2 * MINUTE, 2],
     ['9 minutes 59 seconds', 10 * MINUTE - 1000, 9],
   ])('measured %s ago → minutesOld %s', (_, ago, expected) => {
-    expect(minutesOld(measured(ago), NOW)).toBe(expected);
+    expect(minutesOld(measured('min-jun', ago), NOW)).toBe(expected);
   });
 
   it.each([
     ['9 minutes 59 seconds', 10 * MINUTE - 1000, 1],
     ['10 minutes', 10 * MINUTE, 0],
   ])('measured %s ago → kept %s', (_, ago, count) => {
-    expect(keptPositions([measured(ago)], NOW)).toHaveLength(count);
+    expect(keptPositions([measured('min-jun', ago)], NOW)).toHaveLength(count);
   });
 
   it.each([
@@ -57,7 +51,7 @@ describe('a position of a Friend by its age', () => {
 
 describe('toFriendViews of one Friend seen', () => {
   it('a Friend seen, with a status and a recent position → the status, its place and the position', () => {
-    const [view] = toFriendViews([friend(true)], [measured(MINUTE)], [LIBRARY], NOW);
+    const [view] = toFriendViews([friend(true)], [measured('min-jun', MINUTE)], [LIBRARY], NOW);
     expect(view).toEqual({
       id: 'min-jun',
       name: '김민준',
@@ -67,7 +61,7 @@ describe('toFriendViews of one Friend seen', () => {
       detail: '공강 · 중앙도서관 근처 · 15:00까지 비어 있어요',
       walk: '도보 4분',
       photo: null,
-      position: { latitude: 37.4594, longitude: 126.95199 },
+      position: HALL,
       minutesOld: null,
       visible: true,
       sharing: true,
@@ -75,14 +69,14 @@ describe('toFriendViews of one Friend seen', () => {
   });
 
   it('a Friend seen with an old position → its age in minutes', () => {
-    const [view] = toFriendViews([friend(true)], [measured(5 * MINUTE)], [LIBRARY], NOW);
+    const [view] = toFriendViews([friend(true)], [measured('min-jun', 5 * MINUTE)], [LIBRARY], NOW);
     expect(view?.minutesOld).toBe(5);
   });
 });
 
 describe("toFriendViews and the main server's word", () => {
   it('a Friend not seen, whose old position is still answered → 위치 꺼짐 and no position', () => {
-    const [view] = toFriendViews([friend(false)], [measured(MINUTE)], [], NOW);
+    const [view] = toFriendViews([friend(false)], [measured('min-jun', MINUTE)], [], NOW);
     expect(view).toMatchObject({ presence: 'off', line: '위치 꺼짐', position: null, minutesOld: null });
   });
 
@@ -97,13 +91,13 @@ describe("toFriendViews and the main server's word", () => {
   });
 
   it('a Friend seen whose position the main server no longer keeps → no position', () => {
-    const [view] = toFriendViews([friend(true)], [measured(10 * MINUTE)], [LIBRARY], NOW);
+    const [view] = toFriendViews([friend(true)], [measured('min-jun', 10 * MINUTE)], [LIBRARY], NOW);
     expect(view?.position).toBeNull();
   });
 
   it("several Friends → in the Friends' order, each with its own position", () => {
     const friends = [friend(true, { id: 'b', name: '이서연' }), friend(true, { id: 'a' })];
-    const views = toFriendViews(friends, [measured(MINUTE, 'a'), measured(MINUTE, 'b')], [], NOW);
+    const views = toFriendViews(friends, [measured('a', MINUTE), measured('b', MINUTE)], [], NOW);
     expect(views.map(({ id, position }) => [id, position !== null])).toEqual([
       ['b', true],
       ['a', true],
