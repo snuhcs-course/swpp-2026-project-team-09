@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { classSaves } from '@/features/timetable-ocr/classes';
@@ -30,6 +31,9 @@ import {
 // `OCR_ACCURACY=1` prints what was read and the score.
 
 const PLACES = campusPlaces();
+
+// Instrumented for coverage, the pipeline runs slower than in the app, so its time says nothing there.
+const timed = '__coverage__' in globalThis ? it.skip : it;
 
 // The same output with the day header's letters taken out, so that the columns come from the grid lines.
 function withoutHeader(result: NativeOcrResult): NativeOcrResult {
@@ -98,7 +102,7 @@ describe.each(SCREENSHOTS)('the screenshot %s, without its header or timed', (na
     expect(fallback.readTimes).toBe(withHeader.readTimes);
   });
 
-  it('is read in well under 2 seconds in Node (the emulator is the target; Node is the proxy)', () => {
+  timed('is read in well under 2 seconds in Node (the emulator is the target; Node is the proxy)', () => {
     const output = ocrOutput(name);
     readTimetable(output, PLACES);
     const times: number[] = [];
