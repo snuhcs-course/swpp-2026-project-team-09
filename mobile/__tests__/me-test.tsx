@@ -3,12 +3,14 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { pass, screen, shownAddress } from './support/app';
 import { FRIEND_PILL } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
-import { startFresh } from './support/mocks';
+import { answered, startFresh } from './support/mocks';
+import { apiClient } from '@/api/client';
 import { readKept } from '@/storage/kept';
 
 // 내 정보, the `Profile` frame, against the mocks: the profile Onboarding saved, the frame's four classes on Thursday
@@ -88,6 +90,31 @@ describe('the week', () => {
     expect(screen.getByLabelText('화요일 15:30–17:00 확률통계, 500동')).toHaveStyle({ backgroundColor: '#865600' });
     expect(screen.getByLabelText('금요일 14:00–15:15 자료구조, 301-118')).toHaveStyle({ backgroundColor: '#6B46C1' });
     expect(screen.getAllByText('알고리즘\n302-208')).toHaveLength(2);
+  });
+
+  it('draws an evening class whole, and a 토 column for a Saturday class', async () => {
+    for (const [courseName, weekday, startTime, endTime] of [
+      ['창의적사고', 'thursday', '19:00', '21:00'],
+      ['토요 세미나', 'saturday', '10:00', '13:00'],
+    ] as const) {
+      await answered(
+        apiClient.addClass({ courseName, times: [{ weekday, startTime, endTime, placeId: null, room: null }] }),
+      );
+    }
+    await openMe();
+
+    expect(screen.getAllByTestId('class-block')).toHaveLength(9);
+    expect(screen.getByLabelText('목요일 19:00–21:00 창의적사고')).toBeVisible();
+    expect(screen.getByLabelText('토요일 10:00–13:00 토요 세미나')).toBeVisible();
+    expect(screen.getByText('토')).toBeVisible();
+    expect(screen.queryByText('일')).toBeNull();
+  });
+
+  it('shows 월 to 금 only when no class falls on the weekend', async () => {
+    await openMe();
+
+    expect(screen.getByText('금')).toBeVisible();
+    expect(screen.queryByText('토')).toBeNull();
   });
 
   it("marks today's column, Thursday, in navy", async () => {
