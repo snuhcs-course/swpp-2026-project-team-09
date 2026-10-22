@@ -86,3 +86,11 @@ exit 1
 
 - Agent time: about 11 minutes, an estimate: the implementer subagent, measured just before its last commit.
 - Tokens: input 7,260 thousand in all (cache reads 7,110 thousand, cache writes 149 thousand, uncached under 1 thousand); output 5 thousand, a lower bound, since the transcript keeps only partial output counts.
+
+### Review round (2026-10-23)
+
+The code review of P09–P11 (2026-10-23); each line names its finding.
+
+- **S4-1.** The root README's environment table gives Node.js 24.14.0, the version in `.nvmrc`.
+- **S4-5.** The root README's layout lists `scripts/`, the level check every project's `pnpm lint` runs, and "Running
+  the tests" gives its own test's command, `node --test scripts/test/check-test-levels.integration.test.ts` (16 passed).

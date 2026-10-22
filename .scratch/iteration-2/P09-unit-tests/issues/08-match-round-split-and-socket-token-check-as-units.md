@@ -91,3 +91,10 @@ The JSON reports and logs are in the orchestrator's helpers folder, `p09-08/`.
 
 - Agent time: about 21 minutes, an estimate: the implementer subagent, measured just before its last commit (about 2 of them waiting for a run slot).
 - Tokens: input 16,786 thousand in all (cache reads 16,547 thousand, cache writes 239 thousand, uncached under 1 thousand); output 15 thousand, a lower bound, since the transcript keeps only partial output counts.
+
+### Review round (2026-10-23)
+
+The code review of P09–P11 (2026-10-23); each line names its finding.
+
+- **S1-6.** placements' test takes the Quest type from `assign` (`Parameters<typeof assign>[1][number]`) instead of
+  declaring the shape again; `pnpm typecheck` passes.

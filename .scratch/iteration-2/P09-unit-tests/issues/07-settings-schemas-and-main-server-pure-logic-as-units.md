@@ -88,3 +88,12 @@ Two faults pass: `<=` in place of `<` in the crossing test, which moves a positi
 
 - Agent time: about 29 minutes, an estimate: the implementer subagent, 26 minutes measured just before its last commit, and an earlier attempt of 3 minutes that the orchestrator stopped.
 - Tokens: input 25,622 thousand in all (cache reads 25,233 thousand, cache writes 388 thousand, uncached under 1 thousand); output 5 thousand, a lower bound, since the transcript keeps only partial output counts.
+
+### Review round (2026-10-23)
+
+The code review of P09–P11 (2026-10-23); each line names its finding.
+
+- **S1-4.** geometry's L-shaped ring is an `it.each` of two rows, the notch (not held) and the arm (held), each failing
+  alone on a fault planted for it.
+- **S1-5.** main-server's settings strategy comment names only the partitions the file tests: DATABASE_URL, REDIS_HOST
+  and MATCH_SERVER_URL are tried missing only.

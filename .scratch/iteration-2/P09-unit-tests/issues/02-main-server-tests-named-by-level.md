@@ -86,3 +86,11 @@ exit 1
 
 - Agent time: about 33 minutes, an estimate: the implementer subagent, measured just before its last commit.
 - Tokens: input 17,358 thousand in all (cache reads 17,183 thousand, cache writes 175 thousand, uncached under 1 thousand); output 9 thousand, a lower bound, since the transcript keeps only partial output counts.
+
+### Review round (2026-10-23)
+
+The code review of P09–P11 (2026-10-23); each line names its finding.
+
+- **P1-4.** `pnpm test:cov` (in a slot, `--maxWorkers=4`, 01:47 to 01:50 KST, load averages 4 at the start and 57 at the
+  end): 130 files, 1771 passed, none timed out; 95.95% statements, 89.63% branches, 98.06% functions, 95.81% lines. No
+  test needed a longer timeout.

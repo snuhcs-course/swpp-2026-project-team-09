@@ -108,3 +108,12 @@ Each run went through `slot.sh P11-02 --mutex flow-stack`.
 - Agent time: about 22 minutes, an estimate: the implementer subagent, measured just before its last commit.
 - Tokens: input 20,683 thousand in all (cache reads 20,395 thousand, cache writes 287 thousand, uncached under 1
   thousand); output 19 thousand, a lower bound, since the transcript keeps only partial output counts.
+
+### Review round (2026-10-23)
+
+The code review of P09–P11 (2026-10-23); each line names its finding.
+
+- **S3-6.** `test/admin-ui/browser.ts` takes `WAIT_MS` from `test/inbox.ts`, which exports it, instead of a copy.
+- **S3-8.** The fixture's comment keeps only the why of the time zone.
+- **S4-6.** The root README mentions `pnpm test:admin-ui`, which neither `pnpm test` nor CI runs.
+- **Run.** `pnpm test:admin-ui` (in a slot, with the `flow-stack` mutex): 1 file, 2 passed.

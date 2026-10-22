@@ -45,7 +45,7 @@ An adapter is pure when its functions take data and return data, with no I/O, ho
   - **One gap, kept as it is.** `isParties` accepts a Party without `leader`: the app's `Party` type keeps it optional,
     as "provisional, from an open pull request of the main server (P08-16)", while main-server's README now always
     sends it. The test records the guard as it is ("a Party without its provisional leader → accepted"); making the
-    field required is a `src/` change outside this ticket.
+    field required is a `src/` change outside this ticket. Closed in the review round below.
   - The adapters: `features/<name>-adapter.unit.test.ts` for events, dining, room, notifications, parties, friends,
     shuttle and footprints, and the map adapter in `map-adapter-places` and `map-adapter-people`, two files over
     `__tests__/support/map-sources.ts` for the same limit.
@@ -146,3 +146,31 @@ The logs, the JSON report and the scripts of the planted faults are in the orche
   one-minute transcript that carries this ticket's marker.
 - Tokens: input 29,209 thousand in all (cache reads 28,815 thousand, cache writes 394 thousand, uncached under 1
   thousand); output 44 thousand, a lower bound, since the transcript keeps only partial output counts.
+
+### Review round (2026-10-23)
+
+The code review of P09–P11 (2026-10-23); each line names its finding.
+
+- **P2-1.** `isParties` now refuses a Party without `leader`, as main-server's README and `VisiblePartyDto` always send
+  it: the row is a refusal (`an item with no Leader → refused`), red on the old guard and green after the `fix:` commit.
+  The app's tests that sent such a Party expect it refused now (server-me's list of Parties; 알림, which leaves the
+  Parties out) and server-features' Party carries its Leader. The app's `Party` type keeps `leader` optional. The gap
+  above is closed, and the criterion on each guard stands.
+- **S2-4.** answers-parties-and-places' strategy comment names main-server's README (Party to Timetable) as the source
+  of the shapes, not the app's own `Party` type.
+- **P2-2, S2-3.** `it.each` boundary tables at each threshold: the parties adapter at 0, 1 and 2 members seen; the
+  footprints adapter at Friend counts 0, 1 and 2 and at 2, 3 and 4 faces. Faults planted at the thresholds
+  (`sharing > 1`, `count <= 1`, `FACES = 4`, a slice to `FACES - 1`) each failed a row.
+- **S2-1.** One condition per test or table row: room-adapter (the other Party, the member states, who is seen, the
+  plan's steps), map-adapter-places and map-adapter-people (the cards left out), shuttle-adapter (the vehicles gone) and
+  notifications-adapter (no Leader and no Quest, each on a fixture of its own). A fault planted under each condition
+  failed its own rows only.
+- **S2-5.** friends-adapter builds on support/map-sources' `NOW`, `MINUTE`, `measured` and `MIN_JUN`; map-sources'
+  comment names both adapters' tests.
+- **S2-6.** dining-adapter takes `restaurant()` from support/dining, which exports it now.
+- **S2-7.** shuttle-adapter's comment says the loop runs clockwise, as its stops do.
+- **S2-8.** GLOSSARY terms capitalised in the new tests' names: Lobby, Board, Leader, Event, Collection and Place. JSON
+  field names (`leader null`, `no place`) and the place text of a Sub Quest or an Event stay lower case.
+- **Runs.** Each changed file alone. Full `pnpm test` (in a slot, `--maxWorkers=4`, JSON report): 161 suites, 1887
+  tests, 1886 passed and 1 todo; by suffix 62 `.unit.test` files with 861 tests and 99 `.integration.test` files with
+  1026, 861 + 1026 = 1887. `pnpm lint` (`161 test file(s), …`), `pnpm format:check` and `pnpm typecheck` pass.
