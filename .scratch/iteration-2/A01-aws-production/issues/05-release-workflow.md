@@ -45,7 +45,7 @@ The workflow reads the Region, the role ARN, the cluster name, the registry, the
 
 ## Comments
 
-- **2026-10-22:** The workflow reads Production's secret values from Parameter Store, not from GitHub: `SecureString` parameters under `/snunow/production/` named `main-db-password`, `match-db-password`, `access-token-private-key`, `access-token-public-key`, `worker-token`, `match-server-token`, `kakao-rest-api-key`, `openrouter-api-key`, and `initial-administrator-emails`. `deploy_role.tf` already lets the deploy role read them.
+- **2026-10-22:** The workflow reads Production's secret values from Parameter Store, not from GitHub: parameters under `/snunow/production/` named `main-db-password`, `match-db-password`, `access-token-private-key`, `access-token-public-key`, `worker-token`, `match-server-token`, `kakao-rest-api-key`, `openrouter-api-key`, and `initial-administrator-emails`, each a `SecureString` but the last, a `String`. `deploy_role.tf` already lets the deploy role read them.
 - **2026-10-22:** A Release is now a tag `snunow/<target>/YY.MM.DD-N` that deploys one server, or all five with `all`, in place of one `snunow-YY.MM.DD-N` tag that deployed everything. The workflow reads the results CI already produced for the tagged commit, and every CI job gates a Release, in place of calling CI through a `workflow_call` trigger with a project input that left out the admin and mobile checks. The deploy role's trust moved to `refs/tags/snunow/*`.
 
 ### Built (2026-10-22)
@@ -93,7 +93,8 @@ The workflow reads the Region, the role ARN, the cluster name, the registry, the
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | The admin Google client's ID (the ConfigMap's `GOOGLE_ADMIN_CLIENT_ID`) |
 | `NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY` | The Kakao JavaScript key; the only one that may be left unset, as `admin/.env.example` says |
 
-The workflow reads the `SecureString` parameters under `/snunow/production/`: `main-db-password`,
+The workflow reads the parameters under `/snunow/production/`, `SecureString` except the `String`
+`initial-administrator-emails`: `main-db-password`,
 `match-db-password`, `access-token-private-key`, `access-token-public-key`, `worker-token`, `match-server-token`,
 `kakao-rest-api-key`, `openrouter-api-key`, and `initial-administrator-emails`. Each must hold a value, and the two
 keys must be PEM with real line breaks.

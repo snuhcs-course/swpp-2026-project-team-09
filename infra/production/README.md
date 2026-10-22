@@ -477,7 +477,7 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
      --type SecureString --value "$OPENROUTER_API_KEY" --overwrite
    read -rs INITIAL_ADMINISTRATOR_EMAILS
    aws ssm put-parameter --region ap-northeast-2 --name /snunow/production/initial-administrator-emails \
-     --type SecureString --value "$INITIAL_ADMINISTRATOR_EMAILS" --overwrite
+     --type String --value "$INITIAL_ADMINISTRATOR_EMAILS" --overwrite
 
    aws ssm get-parameters-by-path --region ap-northeast-2 --path /snunow/production --query 'Parameters[].Name'
    ```
@@ -702,9 +702,11 @@ aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-p
    ```bash
    for name in $(aws ssm get-parameters-by-path --profile default --region ap-northeast-2 \
        --path /snunow/production --query 'Parameters[].Name' --output text); do
+     type=$(aws ssm get-parameter --profile default --region ap-northeast-2 --name "$name" \
+       --query Parameter.Type --output text)
      value=$(aws ssm get-parameter --profile default --region ap-northeast-2 --name "$name" \
        --with-decryption --query Parameter.Value --output text)
-     aws ssm put-parameter --region ap-northeast-2 --name "$name" --type SecureString --value="$value" --overwrite
+     aws ssm put-parameter --region ap-northeast-2 --name "$name" --type "$type" --value="$value" --overwrite
    done
    aws ssm get-parameters-by-path --region ap-northeast-2 --path /snunow/production --query 'Parameters[].Name'
    ```

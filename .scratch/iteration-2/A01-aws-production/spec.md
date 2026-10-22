@@ -234,13 +234,13 @@ Production follows AWS's EKS Best Practices for network security from the first 
   - `ROUND_INTERVAL_SECONDS=60` and `ASSISTANT_MODEL`;
   - `GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID`, the team's;
   - `ANDROID_CERTIFICATE_FINGERPRINTS`, the debug key's fingerprint, since the APK is debug-signed.
-- **Secret values** live in AWS Systems Manager Parameter Store in the account that runs Production, as `SecureString` parameters under the path `/snunow/production/`, encrypted with the AWS managed key `aws/ssm` at no cost:
+- **Secret values** live in AWS Systems Manager Parameter Store in the account that runs Production, under the path `/snunow/production/`. Each is a `SecureString` parameter, encrypted with the AWS managed key `aws/ssm` at no cost, except the Administrators' addresses: they are no secret, but they name people, so they stay out of the repository as a plain `String` parameter:
   - `main-db-password` and `match-db-password`, the `main` and `match` database passwords;
   - `access-token-private-key` and `access-token-public-key`, the access-token key pair, stored as PEM with real line breaks (a Kubernetes Secret passes `\n` through literally, and Node rejects that key);
   - `worker-token` and `match-server-token`, for `WORKER_TOKEN` and `MATCH_SERVER_TOKEN`;
   - `kakao-rest-api-key` and `openrouter-api-key`, for `KAKAO_REST_API_KEY` and `OPENROUTER_API_KEY`;
   - `initial-administrator-emails`, for `INITIAL_ADMINISTRATOR_EMAILS`.
-- **Entering them.** A team member puts each value in by hand with `aws ssm put-parameter --type SecureString`, and `--overwrite` replaces one. Terraform never holds them; it only lets the deploy role read the path. They stay out of Terraform for three reasons: `terraform destroy` does not delete them, moving to account B copies the same values, and the Kakao and OpenRouter keys are entered by hand in any case.
+- **Entering them.** A team member puts each value in by hand with `aws ssm put-parameter` and its type, and `--overwrite` replaces one. Terraform never holds them; it only lets the deploy role read the path. They stay out of Terraform for three reasons: `terraform destroy` does not delete them, moving to account B copies the same values, and the Kakao and OpenRouter keys are entered by hand in any case.
 - **Writing the Secret.** On each Release, the workflow reads the path with the deploy role and writes the values to the files that Kustomize's `secretGenerator` reads, which make the Secret. The Secret's name carries a hash of its content, so a server takes up a changed value when it is next deployed, and an `all` Release rolls it to every server. No External Secrets Operator runs in the cluster, because its three pods would bring a Release to 19, over the 18 pod slots (see "Pod budget"). Rotating a secret is `aws ssm put-parameter --overwrite`, then an `all` Release.
 - **Database addresses.** The workflow assembles each server's `DATABASE_URL` from its password, the database endpoint, and the TLS setting above.
 - **Own values.** Production generates its own values, never the Dev Server's, the way the Dev Server's bootstrap does: `openssl rand` for the tokens and passwords, and `openssl genpkey` for the ES256 key pair.
@@ -381,7 +381,7 @@ Only if the money runs short, and at a quiet time, not during user testing or th
 1. Switch B to the Paid plan. Create the state bucket and B's variables file.
 2. In B, `terraform apply` with B's files. B's apply requests its certificate without waiting for validation, and outputs the validation record. Add that record to A's zone by hand, and wait until the certificate is issued.
 3. Lower the `api` and `admin` records' TTL to 60 seconds, a few days ahead.
-4. Copy every parameter under `/snunow/production/` from A to B: read them in A with `aws ssm get-parameters-by-path --with-decryption`, and put each in B with `aws ssm put-parameter --type SecureString`.
+4. Copy every parameter under `/snunow/production/` from A to B: read them in A with `aws ssm get-parameters-by-path --with-decryption`, and put each in B with `aws ssm put-parameter` and the same type.
 5. Run the database Job in B; the runbook's steps for it put B's new database passwords over the copied ones. Set the repository variables to B's outputs, push an `all` Release, which deploys all five servers to B at one commit, and scale B's servers to zero once it has rolled out.
 6. Scale A's servers to zero. Dump A's two databases with `pg_dump -Fc` from a `postgres:18` pod in A's cluster. Copy the dumps through a laptop into a pod in B's cluster, and `pg_restore` them there. Then scale B's servers up. The app is down for 10 to 30 minutes, and no write is lost.
 7. In A's zone, point `api` and `admin` at B's ALB, by hand. With the validation record, the move edits three records by hand.
