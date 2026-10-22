@@ -7,7 +7,9 @@
 # Every pod in the namespace starts with no traffic in either direction, and the policies below and each server's own
 # allow the rest. The VPC CNI always lets a pod's own node reach it, so the kubelet's probes need no rule. The addresses
 # are network.tf's: the VPC 10.0.0.0/16, the public subnets 10.0.0.0/20 and 10.0.16.0/20, where the nodes, the pods,
-# and the load balancer get theirs, and the database subnets 10.0.128.0/24 and 10.0.129.0/24.
+# and the load balancer get theirs, and the database subnets 10.0.128.0/24 and 10.0.129.0/24. The internet leaves out
+# the private ranges, which hold the VPC and the Services' addresses: the VPC CNI matches a connection to a Service by
+# its address, so 0.0.0.0/0 alone would open every Service on 443, the API server's too.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -82,6 +84,6 @@ spec:
   policyTypes: [Egress]
   egress:
     - to:
-        - ipBlock: { cidr: 0.0.0.0/0, except: [10.0.0.0/16] }
+        - ipBlock: { cidr: 0.0.0.0/0, except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16] }
       ports:
         - { protocol: TCP, port: 443 }

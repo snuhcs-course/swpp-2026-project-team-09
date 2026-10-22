@@ -15,7 +15,7 @@ Production follows AWS's EKS Best Practices for network security from the first 
   - Between the servers and to Redis: only where the code calls.
   - To the database subnets' CIDRs on 5432: only `main-server` and `match-server`.
   - To CoreDNS in `kube-system` on 53, over TCP and UDP: every pod.
-  - To the internet, `0.0.0.0/0` except the VPC's CIDR: only the servers that call outside.
+  - To the internet, `0.0.0.0/0` except the private ranges, which hold the VPC and the Services' addresses: only the servers that call outside.
   - Whatever else a default deny would break, such as the kubelet's probes and the load balancer's health checks, checked against the VPC CNI's documentation.
 - **Pods started by hand.** The database Job, the runbook's psql pod, and the copy of a server's pod that resolves a P3009 keep working: they carry a label that the policies allow, and the Job and the runbook's commands give it.
 - **Placement.** The default deny, DNS, and the other shared policies in `parts/shared`, and each server's own policy in its part, so that every target renders the policies it needs and only namespaced objects.
@@ -29,7 +29,7 @@ Production follows AWS's EKS Best Practices for network security from the first 
 - [x] Between pods, only the code's calls are allowed: the admin site, the worker, and the match server to `main-server` on 3000; `main-server` to `match-server` on 3003; `main-server` and `socket-server` to Redis on 6379.
 - [x] Only `main-server`, `match-server`, and pods labelled `database-client: "true"` reach the database subnets `10.0.128.0/24` and `10.0.129.0/24`, on 5432 only.
 - [x] Every pod reaches CoreDNS (`k8s-app: kube-dns` in `kube-system`) on 53, over UDP and TCP.
-- [x] Only `main-server`, `worker-server`, and the database Job reach the internet, as `0.0.0.0/0` except the VPC's `10.0.0.0/16`, on 443 only.
+- [x] Only `main-server`, `worker-server`, and the database Job reach the internet, as `0.0.0.0/0` except `10.0.0.0/8`, `172.16.0.0/12`, and `192.168.0.0/16`, on 443 only.
 - [x] The kubelet's probes and the load balancer's health checks still reach the pods, each by a documented rule.
 - [x] The database Job, the runbook's psql pod, and the P3009 copy carry `database-client: "true"`, and the Job also `app: database-setup`. The Job's pod template and the runbook's commands give them.
 - [x] The shared policies are in `parts/shared` and each server's in its part. Every target renders the shared policies and its servers' own, each the same object as in `all`, and only namespaced objects in `snunow`.
@@ -69,7 +69,7 @@ Each Source's collection run by hand (`node dist/collect` through `kubectl exec`
   | `dns` | every pod | out to `k8s-app: kube-dns` in `kube-system` on 53, UDP and TCP |
   | `redis` | `app: redis` | in from `app` `main-server` or `socket-server` on 6379; out nothing more |
   | `database-client` | `database-client: "true"` | out to `10.0.128.0/24` and `10.0.129.0/24` on 5432 |
-  | `database-setup` | `app: database-setup` | out to `0.0.0.0/0` except `10.0.0.0/16` on 443 |
+  | `database-setup` | `app: database-setup` | out to `0.0.0.0/0` except the private ranges on 443 |
 
 - **Each server's policy** in `parts/<server>/network-policy.yaml`, named after the server and selecting `app: <server>`, for both directions:
 
@@ -82,7 +82,7 @@ Each Source's collection run by hand (`node dist/collect` through `kubectl exec`
   | `admin` | `10.0.0.0/20` and `10.0.16.0/20` on 3100 | `main-server` on 3000 |
 
   Each part's kustomization lists its file, and the shared kustomization lists the shared one. Every target renders the five shared policies and its servers' own; `all` renders all ten. No server's Deployment changed, since the policies select the `app` labels the pods already carry.
-- **The internet on 443 only.** Every external call in the code is `https`, so port 80 and the instance metadata service stay closed.
+- **The internet on 443 only, without the private ranges.** Every external call in the code is `https`, so port 80 and the instance metadata service stay closed. The rule leaves out `10.0.0.0/8`, `172.16.0.0/12`, and `192.168.0.0/16`: they hold the VPC and the Services' addresses, which EKS takes from `10.100.0.0/16` or `172.20.0.0/16`, and the VPC CNI matches a connection to a Service by that address, before kube-proxy translates it. Leaving out only the VPC would let `main-server`, `worker-server`, and the database Job reach every Service on 443, the API server's included.
 - **Pods started by hand.**
   - The database Job's pod template carries `app: database-setup` and `database-client: "true"`.
   - The runbook's psql command adds `--labels=database-client=true`.
@@ -105,12 +105,12 @@ Each Source's collection run by hand (`node dist/collect` through `kubectl exec`
   - The object list of every target now includes its NetworkPolicies, compared by kind and name.
   - Each server target's policies are the same objects as in `all`.
   - Every object is in `snunow`.
-  - `allows.jq` evaluates `all`'s policies by Kubernetes' rules on the parsed render, covering `matchLabels`, `matchExpressions`, namespace selectors, `ipBlock` with `except`, ports, protocols, and policy types. A connection needs both the source's egress and the destination's ingress. It prints every allowed connection among the endpoints: the six Deployments with their rendered labels and ports; the database Job's pod, with the labels of `database-setup.yaml` parsed; psql; the P3009 copy; a pod without a label; a pod in `kube-system`; CoreDNS; the load balancer; the database in each database subnet; another VPC address; the internet on 443 and 80; and the instance metadata service. The result must equal `test/allowed-connections.txt`, the matrix above written out.
+  - `allows.jq` evaluates `all`'s policies by Kubernetes' rules on the parsed render, covering `matchLabels`, `matchExpressions`, namespace selectors, `ipBlock` with `except`, ports, protocols, and policy types. A connection needs both the source's egress and the destination's ingress. It prints every allowed connection among the endpoints: the six Deployments with their rendered labels and ports; the database Job's pod, with the labels of `database-setup.yaml` parsed; psql; the P3009 copy; a pod without a label; a pod in `kube-system`; CoreDNS; the load balancer; the database in each database subnet; another VPC address; the internet on 443 and 80; the instance metadata service; and the API server's Service address on 443 in each range that EKS may give the Services. The result must equal `test/allowed-connections.txt`, the matrix above written out.
   - Every Service's port equals the container port it targets.
 - **The checks can fail.** Each of these mutations on a copy failed the matching check:
   - DNS with the wrong label;
   - `main-server`'s port changed;
-  - the internet rule without its VPC exception;
+  - the internet rule without `10.0.0.0/8`, or without `172.16.0.0/12`;
   - `match-server` without zone c's subnet;
   - `admin`'s egress to a wrong label;
   - the Job without `database-client`;

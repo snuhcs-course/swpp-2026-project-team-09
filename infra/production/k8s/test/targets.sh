@@ -121,7 +121,8 @@ ignored_by_git() {
 
 # The endpoints besides the Deployments and the database Job: the runbook's psql pod and the P3009 copy, which carry
 # database-client=true, the addresses that network.tf gives the public and database subnets, and one address in each
-# place that nothing may reach.
+# place that nothing may reach. EKS gives the Services addresses in 10.100.0.0/16 or 172.20.0.0/16, and the VPC CNI
+# matches a connection to a Service by that address, such as the API server's at .1 on 443.
 others='[
   {"name": "psql", "namespace": "snunow", "labels": {"database-client": "true"}},
   {"name": "the P3009 copy", "namespace": "snunow", "labels": {"database-client": "true"}},
@@ -133,7 +134,9 @@ others='[
   {"name": "the database in zone c", "ip": "10.0.129.50", "ports": [[5432, "TCP"]]},
   {"name": "another address in the VPC", "ip": "10.0.64.10", "ports": [[443, "TCP"], [5432, "TCP"]]},
   {"name": "the internet", "ip": "203.0.113.10", "ports": [[443, "TCP"], [80, "TCP"]]},
-  {"name": "instance metadata", "ip": "169.254.169.254", "ports": [[80, "TCP"]]}
+  {"name": "instance metadata", "ip": "169.254.169.254", "ports": [[80, "TCP"]]},
+  {"name": "a Service in 10.100.0.0/16", "ip": "10.100.0.1", "ports": [[443, "TCP"]]},
+  {"name": "a Service in 172.20.0.0/16", "ip": "172.20.0.1", "ports": [[443, "TCP"]]}
 ]'
 
 # The connections in allowed-connections.txt, and no other, among every pair of endpoints.
