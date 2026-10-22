@@ -74,29 +74,41 @@ export function decodeBase64(text: string): Uint8Array {
   return out === bytes.length ? bytes : bytes.slice(0, out);
 }
 
-// The background: the most common colour, counted in bins of 8 levels per channel, as the mean of its bin's pixels.
+// The background: the most common grey colour, counted in bins of 8 levels per channel, as the mean of its bin's
+// pixels. Grey, since a week full of one block colour can cover more of the picture than the background does; the
+// most common colour of all only when nothing is grey.
 function backgroundOf(rgba: Uint8Array, count: number): Colour {
   const bins = new Uint32Array(32 * 32 * 32);
+  // The most common bin of grey pixels, and of all pixels for a picture without grey.
+  let grey = -1;
   let best = 0;
   for (let index = 0; index < count; index += 1) {
-    const bin =
-      ((rgba[index * 4] ?? 0) >> 3) * 1024 + ((rgba[index * 4 + 1] ?? 0) >> 3) * 32 + ((rgba[index * 4 + 2] ?? 0) >> 3);
+    const red = rgba[index * 4] ?? 0;
+    const green = rgba[index * 4 + 1] ?? 0;
+    const blue = rgba[index * 4 + 2] ?? 0;
+    const bin = (red >> 3) * 1024 + (green >> 3) * 32 + (blue >> 3);
     bins[bin] = (bins[bin] ?? 0) + 1;
     if ((bins[bin] ?? 0) > (bins[best] ?? 0)) {
       best = bin;
     }
+    const most = red > green ? (red > blue ? red : blue) : green > blue ? green : blue;
+    const least = red < green ? (red < blue ? red : blue) : green < blue ? green : blue;
+    if (most - least < BLOCK_CHROMA && (grey < 0 || (bins[bin] ?? 0) > (bins[grey] ?? 0))) {
+      grey = bin;
+    }
   }
+  const chosen = grey < 0 ? best : grey;
   const sum: Colour = [0, 0, 0];
   for (let index = 0; index < count; index += 1) {
     const bin =
       ((rgba[index * 4] ?? 0) >> 3) * 1024 + ((rgba[index * 4 + 1] ?? 0) >> 3) * 32 + ((rgba[index * 4 + 2] ?? 0) >> 3);
-    if (bin === best) {
+    if (bin === chosen) {
       sum[0] += rgba[index * 4] ?? 0;
       sum[1] += rgba[index * 4 + 1] ?? 0;
       sum[2] += rgba[index * 4 + 2] ?? 0;
     }
   }
-  const total = Math.max(1, bins[best] ?? 0);
+  const total = Math.max(1, bins[chosen] ?? 0);
   return [sum[0] / total, sum[1] / total, sum[2] / total];
 }
 
@@ -127,14 +139,6 @@ export function pixelImage(width: number, height: number, rgba: Uint8Array): Pix
     }
   }
   return { width, height, rgba, chroma, kind, background, backgroundChroma };
-}
-
-// Whether a colour (a row's mean, say) is plain: grey and no further from the background than a grid line is.
-export function isPlain(image: PixelImage, colour: readonly number[]): boolean {
-  return (
-    chromaOf(colour) < image.backgroundChroma + BLOCK_CHROMA &&
-    colourDistance(colour, image.background) <= FAINT_DISTANCE
-  );
 }
 
 export function decodePixels(pixels: OcrPixels): PixelImage {

@@ -146,4 +146,10 @@ it('reads 48 of the 50 true times over the four screenshots, with nothing read t
   expect(total('truthTimes')).toBe(50);
   expect(total('matched')).toBe(48);
   expect(total('readTimes')).toBe(48);
+  // Reported as left out: only the two faded blocks, so the import's "N개는 넣지 못했어요" counts nothing else.
+  const leftOut = SCREENSHOTS.flatMap((name) => {
+    const reading = readTimetable(ocrOutput(name), PLACES);
+    return reading.kind === 'read' ? reading.leftOut.map((out) => `${name} ${out.reason}`) : [];
+  });
+  expect(leftOut).toEqual(['snutt-2 end-uncertain', 'snutt-3 end-uncertain']);
 });

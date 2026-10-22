@@ -7,7 +7,7 @@
 
 import type { Place, Weekday } from '@/api/types';
 
-import { type Block, endIsUncertain, findBlocks, headerBandOf, startIsUncertain } from './blocks';
+import { type Block, endIsUncertain, findBlocks, type HeaderBand, headerBandOf, startIsUncertain } from './blocks';
 import { type BlockLine, blockText, linesIn } from './block-text';
 import { linkRoom } from './building';
 import { mergeClasses, type ReadClass, type ReadTime } from './classes';
@@ -28,6 +28,8 @@ export type LeftOutReason =
   | 'end-uncertain'
   // The block's top is cut by the picture's top or a bar over it, or fades in: the timetable was scrolled.
   | 'start-uncertain'
+  // The block is one of two classes drawn side by side in one column, each narrower than it: they overlap in time.
+  | 'too-narrow'
   // The block's top or bottom is outside the day.
   | 'outside-day'
   // No name was read in the block: no text, only a room, or only marks without a letter or digit.
@@ -58,9 +60,13 @@ function clock(hours: number): string | null {
 
 interface Grid {
   columns: Column[];
+  // Whether the day header was read; without it the header's place is a guess.
+  header: boolean;
   headerTop: number;
   headerBottom: number;
   line: TimeLine;
+  // The first hour whose label fits the line.
+  firstHour: number;
 }
 
 // ① The grid: the header's columns, or the grid lines' when no header was read; the hour labels' fitted line.
@@ -84,9 +90,11 @@ function readGrid(words: readonly Word[], image: ReturnType<typeof decodePixels>
   const headerBottom = header?.bottom ?? rowAt(shifted, firstHour - 1);
   return {
     columns,
+    header: header !== null,
     headerTop: header?.top ?? headerBottom - shifted.a / 2,
     headerBottom,
     line: refineWithGridLines(shifted, gridLines, headerBottom),
+    firstHour,
   };
 }
 
@@ -125,7 +133,7 @@ function readBlock(
   words: readonly Word[],
   grid: Grid,
   places: readonly Place[],
-  uncertain: 'start-uncertain' | 'end-uncertain' | null,
+  uncertain: 'start-uncertain' | 'end-uncertain' | 'too-narrow' | null,
 ): ReadBlock | LeftOut {
   const text = blockText(linesIn(words, block), block);
   const start = clock(hoursAt(grid.line, block.y0));
@@ -155,6 +163,20 @@ function readBlock(
   };
 }
 
+// The day header's band, sampled on its letters' row, and the first hour's row below it; null when no header was read,
+// since its place is then a guess.
+function bandOf(image: ReturnType<typeof decodePixels>, grid: Grid): HeaderBand | null {
+  const colour = grid.header
+    ? headerBandOf(
+        image,
+        (grid.headerTop + grid.headerBottom) / 2,
+        grid.columns[0]?.left ?? 0,
+        grid.columns.at(-1)?.right ?? image.width,
+      )
+    : null;
+  return colour === null ? null : { colour, firstHourRow: rowAt(grid.line, grid.firstHour) };
+}
+
 // Reads a screenshot's timetable, with what was left out and why. `places` are the campus Places (`GET /places`),
 // for linking rooms to buildings. The import (ticket 04) calls this.
 export function readTimetable(result: NativeOcrResult, places: readonly Place[]): Reading {
@@ -166,14 +188,21 @@ export function readTimetable(result: NativeOcrResult, places: readonly Place[])
   }
   const read: ReadBlock[] = [];
   const leftOut: LeftOut[] = [];
-  const blocks = findBlocks(image, grid.columns, grid.line.a, grid.headerBottom);
-  const headerBand = headerBandOf(
-    image,
-    (grid.headerTop + grid.headerBottom) / 2,
-    grid.columns[0]?.left ?? 0,
-    grid.columns.at(-1)?.right ?? image.width,
+  // A nameless piece cut at the header's bottom is the header's tinted band reaching below its letters: no class, and
+  // no block for another's edge to meet.
+  const blocks = findBlocks(image, grid.columns, grid.line.a, grid.headerBottom).filter(
+    (found) => found.clippedTop !== true || blockText(linesIn(words, found)).name !== '',
   );
+  const headerBand = bandOf(image, grid);
   for (const found of blocks) {
+    if (found.narrow === true) {
+      // Reported with its name; a narrow coloured shape without text (an icon) is no class.
+      const outcome = readBlock(found, words, grid, places, 'too-narrow');
+      if ('reason' in outcome && outcome.reason !== 'no-name') {
+        leftOut.push(outcome);
+      }
+      continue;
+    }
     const uncertainStart = startIsUncertain(image, found, blocks, headerBand);
     const uncertainEnd = endIsUncertain(image, found, blocks);
     const pieces = splitByText(found, linesIn(words, found), grid.line.a);

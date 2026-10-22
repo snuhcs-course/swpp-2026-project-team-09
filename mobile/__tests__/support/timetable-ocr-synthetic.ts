@@ -64,9 +64,10 @@ export class Canvas {
     }
   }
 
+  // Rows and columns are rounded: 9 + 1.55 hours is row 182.00000000000003, which a typed array would not index.
   fill(x0: number, y0: number, x1: number, y1: number, colour: Colour): void {
-    for (let y = y0; y < y1; y += 1) {
-      for (let x = x0; x < x1; x += 1) {
+    for (let y = Math.round(y0); y < Math.round(y1); y += 1) {
+      for (let x = Math.round(x0); x < Math.round(x1); x += 1) {
         this.set(x, y, colour);
       }
     }
@@ -153,6 +154,8 @@ export interface Drawing {
   scale?: number;
   // Draws each text line as thin strokes in these colours.
   theme?: Theme;
+  // Paints over the blocks once they are drawn: a sticky header, a tab bar.
+  overlay?: (canvas: Canvas) => void;
 }
 
 // Thin vertical strokes over a text line's box, 1 pixel wide every 3, as letters look in the small copy.
@@ -181,7 +184,7 @@ export function screenshot(
   blocks: readonly DrawnBlock[],
   extra: OcrLine[] = headerLines().concat(labelLines()),
   canvas = gridCanvas(),
-  { scale = 1, theme }: Drawing = {},
+  { scale = 1, theme, overlay }: Drawing = {},
 ): NativeOcrResult {
   const lines = [...extra];
   if (theme?.otherText !== undefined) {
@@ -211,6 +214,7 @@ export function screenshot(
       lines.push(drawn);
     });
   }
+  overlay?.(canvas);
   return {
     width: WIDTH * scale,
     height: canvas.height * scale,
