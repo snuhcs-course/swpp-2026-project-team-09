@@ -81,3 +81,10 @@ Two faults pass: `<=` in place of `<` in the crossing test, which moves a positi
 **No container in `test:unit`.** The `unit` projects have no global setup, and no new file imports `testcontainers` or calls `inject`. `docker ps -a` before and after the four `pnpm test:unit` runs: the same four containers, none added. Run with Docker stopped: pending, made by the orchestrator once all tickets have merged.
 
 **Checks.** In each server `pnpm lint` passes with the level check (`130`, `12`, `7` and `13 test file(s), each named by its test level.`), and `pnpm format:check` and `pnpm typecheck` pass. Full `pnpm test`: left to CI on the merge push; the orchestrator records the run.
+
+**Merge.** Merging `2.0/P09-11-tests` (P09-08, P09-09, P11-02) had no conflict. It changed match-server's and socket-server's `src/` and added their unit tests, so these were run again there: `pnpm test:unit` (match-server 4 files, 39 tests; socket-server 2 files, 32 tests), each `test/settings.integration.test.ts` (1 test), `pnpm lint` (14 and 8 test files named by level), `pnpm typecheck` and `pnpm format:check`, all passing. main-server and worker-server were not touched by it.
+
+### Agent usage (2026-10-22)
+
+- Agent time: about 29 minutes, an estimate: the implementer subagent, 26 minutes measured just before its last commit, and an earlier attempt of 3 minutes that the orchestrator stopped.
+- Tokens: input 25,622 thousand in all (cache reads 25,233 thousand, cache writes 388 thousand, uncached under 1 thousand); output 5 thousand, a lower bound, since the transcript keeps only partial output counts.
