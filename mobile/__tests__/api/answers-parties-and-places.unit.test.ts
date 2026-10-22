@@ -4,8 +4,8 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-// Partitions, per check of a Party, class, Place or walking route: the documented shape, and each checked field
-// left out, mistyped and null, which only nullable fields take. Expected values: main-server's README, `Party` type.
+// Partitions, per check of a Party, class, Place or walking route: the documented shape, and each checked field left
+// out, mistyped and null, which only nullable fields take. Expected values: main-server's README, Party to Timetable.
 
 import { inList, inside, omit, type Variant, wrongFields } from '../support/answer-variants';
 import {
