@@ -38,7 +38,7 @@ import { type ClassBlockView, DAY_LETTERS, openingHour, weekDays, weekHours } fr
 import { useTimetableVersions } from '@/features/timetable/use-versions';
 import { READING, useImportFromImage } from '@/features/timetable-ocr/use-import-from-image';
 import { useWeek } from '@/features/timetable/use-week';
-import { koreaWeekday } from '@/korea-time';
+import { koreaMinutes, koreaWeekday } from '@/korea-time';
 import { UnfinishedSwitch } from './unfinished-switch';
 import { VersionMenu } from './version-menu';
 
@@ -107,9 +107,14 @@ function Lines({ hours }: { hours: number }): ReactElement {
   );
 }
 
-// The days' row over the scrolling hours. Monday is 0 and Sunday 6.
+// Today's index in the week: 0 for Monday to 6 for Sunday.
+function todayInWeek(): number {
+  return (koreaWeekday(now()) + 6) % 7;
+}
+
+// The days' row over the scrolling hours.
 function Days({ days }: { days: readonly string[] }): ReactElement {
-  const today = (koreaWeekday(now()) + 6) % 7;
+  const today = todayInWeek();
   return (
     <View style={[styles.row, styles.days]}>
       <View style={styles.labels} />
@@ -122,15 +127,16 @@ function Days({ days }: { days: readonly string[] }): ReactElement {
   );
 }
 
-// Opens the hours at the earliest class, or at 09:00, as far as the week goes; again when that hour changes, as when
-// another version is chosen, and not when the User has scrolled.
+// Opens the hours at today's current hour or running class, else at the week's earliest class, else at 09:00, as
+// far as the week goes (see `openingHour`); again when that hour changes, as when another version is chosen, and not
+// when the User has scrolled.
 function useOpening(
   blocks: readonly ClassBlockView[],
   first: number,
   hours: number,
 ): { scroll: RefObject<ScrollView | null>; open: () => void } {
   const opening = Math.min(
-    (openingHour(blocks, first) - first) * HOUR_HEIGHT,
+    (openingHour(blocks, first, { day: todayInWeek(), hours: koreaMinutes(now()) / 60 }) - first) * HOUR_HEIGHT,
     Math.max(0, (hours - VISIBLE_HOURS) * HOUR_HEIGHT),
   );
   const scroll = useRef<ScrollView>(null);

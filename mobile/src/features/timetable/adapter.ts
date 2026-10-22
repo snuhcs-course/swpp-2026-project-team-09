@@ -87,7 +87,18 @@ export function weekDays(blocks: readonly ClassBlockView[]): number {
   return Math.max(WORKDAYS, ...blocks.map(({ day }) => day + 1));
 }
 
-// The hour the week opens at: that of the earliest block, or the first hour when there is none.
-export function openingHour(blocks: readonly ClassBlockView[], first: number): number {
+// The hour the week opens at, never before its first: while today has a class that has not ended, the current hour,
+// or the start of the class that is running; otherwise the hour of the week's earliest class; otherwise the first.
+// `now` is today's index in the week (0 for Monday) and the time of day in hours.
+export function openingHour(
+  blocks: readonly ClassBlockView[],
+  first: number,
+  now: { day: number; hours: number },
+): number {
+  const ahead = blocks.filter(({ day, end }) => day === now.day && end > now.hours);
+  if (ahead.length > 0) {
+    const running = ahead.find(({ start }) => start <= now.hours);
+    return Math.max(first, Math.floor(running?.start ?? now.hours));
+  }
   return blocks.length === 0 ? first : Math.max(first, Math.floor(Math.min(...blocks.map(({ start }) => start))));
 }
