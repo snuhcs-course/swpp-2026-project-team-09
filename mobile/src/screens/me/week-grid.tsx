@@ -4,7 +4,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { type ReactElement, type RefObject, useRef, useState } from 'react';
+import { memo, type ReactElement, type RefObject, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { type NativeScrollEvent, type NativeSyntheticEvent, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { now } from '@/clock';
@@ -12,19 +12,24 @@ import { classColors, color, font, radius, space, text } from '@/design-system';
 import { type ClassBlockView, DAY_LETTERS, openingHour, weekDays, weekHours } from '@/features/timetable/adapter';
 import { koreaMinutes, koreaWeekday } from '@/korea-time';
 
-// The week from 09 to 22, an hour 36 high, so that a one-hour class holds its name and room. The card shows eight
-// hours of it at a time and scrolls the rest under the days.
+// The week from 09 to 22, an hour 36 high, so that a one-hour class holds two lines of `text.micro` (its name and
+// room) inside its padding. The card shows eight hours of it at a time and scrolls the rest under the days.
 const HOUR_HEIGHT = 36;
 const VISIBLE_HOURS = 8;
-const LABEL_WIDTH = 24;
-// A block's words: `text.micro`'s line, inside its padding.
-const BLOCK_LINE = 14;
+const LABEL_WIDTH = space[6];
+// A block stands a point clear of the lines around it.
+const BLOCK_INSET = 1;
 const BLOCK_PADDING = 3;
+// A block shorter than this drops its padding, so that a 30-minute class still shows a line.
+const PADDED_HOURS = 0.75;
+// An hour's number sits just under its line.
+const LABEL_DROP = 2;
 // The fade over an edge of the hours that has more hours past it.
-const FADE_HEIGHT = 24;
+const FADE_HEIGHT = space[6];
 
 function Block({ block, first }: { block: ClassBlockView; first: number }): ReactElement {
-  const height = (block.end - block.start) * HOUR_HEIGHT - 2;
+  const height = (block.end - block.start) * HOUR_HEIGHT - 2 * BLOCK_INSET;
+  const padding = block.end - block.start < PADDED_HOURS ? 0 : BLOCK_PADDING;
   return (
     <View
       accessibilityLabel={[`${DAY_LETTERS[block.day] ?? ''}요일 ${block.time} ${block.name}`, block.where]
@@ -34,15 +39,16 @@ function Block({ block, first }: { block: ClassBlockView; first: number }): Reac
       style={[
         styles.block,
         {
-          top: (block.start - first) * HOUR_HEIGHT + 1,
+          top: (block.start - first) * HOUR_HEIGHT + BLOCK_INSET,
           height,
+          paddingVertical: padding,
           backgroundColor: classColors[block.order % classColors.length],
         },
       ]}
       testID="class-block"
     >
       <Text
-        numberOfLines={Math.max(1, Math.floor((height - 2 * BLOCK_PADDING) / BLOCK_LINE))}
+        numberOfLines={Math.max(1, Math.floor((height - 2 * padding) / text.micro.lineHeight))}
         style={styles.blockWords}
       >
         {block.where === '' ? block.name : `${block.name}\n${block.where}`}
@@ -66,13 +72,13 @@ function Lines({ hours }: { hours: number }): ReactElement {
   );
 }
 
-// Today's index in the week: 0 for Monday to 6 for Sunday.
-function todayInWeek(): number {
-  return (koreaWeekday(now()) + 6) % 7;
+// The index in the week of the day of `at`: 0 for Monday to 6 for Sunday.
+function todayInWeek(at: Date = now()): number {
+  return (koreaWeekday(at) + 6) % 7;
 }
 
 // The days' row over the scrolling hours.
-function Days({ days }: { days: readonly string[] }): ReactElement {
+const Days = memo(function Days({ days }: { days: readonly string[] }): ReactElement {
   const today = todayInWeek();
   return (
     <View style={[styles.row, styles.days]}>
@@ -84,11 +90,12 @@ function Days({ days }: { days: readonly string[] }): ReactElement {
       ))}
     </View>
   );
-}
+});
 
 // A fade from the card's white over the edge of the hours, while hours are hidden past that edge.
 function Fade({ edge }: { edge: 'top' | 'bottom' }): ReactElement {
-  const id = `week-fade-${edge}`;
+  // Unique on the page, and only letters, digits, `_` and `-`, as an SVG `url(#…)` needs.
+  const id = `week-fade-${edge}${useId().replaceAll(/[^\w-]/gu, '')}`;
   return (
     <Svg
       height={FADE_HEIGHT}
@@ -109,44 +116,68 @@ function Fade({ edge }: { edge: 'top' | 'bottom' }): ReactElement {
 
 interface HoursScroll {
   scroll: RefObject<ScrollView | null>;
-  open: () => void;
+  // For the first layout: native scroll views take a scroll only once laid out.
+  openOnLayout: () => void;
   onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   hiddenAbove: boolean;
   hiddenBelow: boolean;
 }
 
+// What the week's opening hangs on: its blocks' days and hours, so that another version opens again and a refetch
+// with the same classes does not.
+function signatureOf(blocks: readonly ClassBlockView[]): string {
+  return blocks.map(({ key, day, start, end }) => `${key}:${day}:${start}-${end}`).join(',');
+}
+
 // Opens the hours at today's current hour or running class, else at the week's earliest class, else at 09:00, as
-// far as the week goes (see `openingHour`); again when that hour changes, as when another version is chosen, and not
-// when the User has scrolled. Also says whether hours are hidden above or below, for the fades.
+// far as the week goes (see `openingHour`), with the time read once per opening. It opens on the first layout and
+// again when the classes change, as when another version is chosen, whatever the User scrolled before. Also says
+// whether hours are hidden above or below, for the fades; only a change of those re-renders the grid.
 function useHoursScroll(blocks: readonly ClassBlockView[], first: number, hours: number): HoursScroll {
   const farthest = Math.max(0, (hours - VISIBLE_HOURS) * HOUR_HEIGHT);
-  const opening = Math.min(
-    (openingHour(blocks, first, { day: todayInWeek(), hours: koreaMinutes(now()) / 60 }) - first) * HOUR_HEIGHT,
-    farthest,
-  );
+  const signature = signatureOf(blocks);
+  const latest = useRef(blocks);
+  latest.current = blocks;
+  const opening = useMemo(() => {
+    const at = now();
+    const hour = openingHour(latest.current, first, { day: todayInWeek(at), hours: koreaMinutes(at) / 60 });
+    return Math.min((hour - first) * HOUR_HEIGHT, farthest);
+    // The signature stands for the blocks, which may be a new array with the same classes.
+  }, [signature, first, farthest]);
   const scroll = useRef<ScrollView>(null);
-  const opened = useRef<number | null>(null);
-  // Where the User scrolled to; null until then, when the hours sit at the opening.
-  const [scrolled, setScrolled] = useState<number | null>(null);
-  const offset = scrolled ?? opening;
+  const [hiddenAbove, setHiddenAbove] = useState(opening > 1);
+  const [hiddenBelow, setHiddenBelow] = useState(opening < farthest - 1);
+  const edges = (offset: number): void => {
+    setHiddenAbove(offset > 1);
+    setHiddenBelow(offset < farthest - 1);
+  };
+  const open = (): void => {
+    scroll.current?.scrollTo({ y: opening, animated: false });
+    edges(opening);
+  };
+  const laidOut = useRef(false);
+  const latestOpen = useRef(open);
+  latestOpen.current = open;
+  useEffect(() => {
+    latestOpen.current();
+  }, [opening, signature]);
   return {
     scroll,
-    open: (): void => {
-      if (opened.current !== opening) {
-        opened.current = opening;
-        setScrolled(null);
-        scroll.current?.scrollTo({ y: opening, animated: false });
+    openOnLayout: (): void => {
+      if (!laidOut.current) {
+        laidOut.current = true;
+        open();
       }
     },
     onScroll: (event): void => {
-      setScrolled(event.nativeEvent.contentOffset.y);
+      edges(event.nativeEvent.contentOffset.y);
     },
-    hiddenAbove: offset > 1,
-    hiddenBelow: offset < farthest - 1,
+    hiddenAbove,
+    hiddenBelow,
   };
 }
 
-function Hours({
+const Hours = memo(function Hours({
   blocks,
   days,
   first,
@@ -162,7 +193,11 @@ function Hours({
       <Lines hours={hours} />
       <View style={styles.labels}>
         {Array.from({ length: hours }, (_, index) => (
-          <Text key={index} style={[styles.hour, { top: index * HOUR_HEIGHT + 2 }]}>
+          <Text
+            accessibilityLabel={`${first + index}시`}
+            key={index}
+            style={[styles.hour, { top: index * HOUR_HEIGHT + LABEL_DROP }]}
+          >
             {first + index}
           </Text>
         ))}
@@ -178,7 +213,7 @@ function Hours({
       ))}
     </View>
   );
-}
+});
 
 // The hours scroll inside 내 정보, which scrolls too: nested scrolling for Android, and no bounce or over-scroll at
 // the ends, so that a swipe there does not stretch the hours. Handing the swipe to the page at an end is the
@@ -187,8 +222,9 @@ function Hours({
 export function WeekGrid({ blocks }: { blocks: readonly ClassBlockView[] }): ReactElement {
   const { first, last } = weekHours(blocks);
   const hours = last - first;
-  const days = DAY_LETTERS.slice(0, weekDays(blocks));
-  const { scroll, open, onScroll, hiddenAbove, hiddenBelow } = useHoursScroll(blocks, first, hours);
+  const dayCount = weekDays(blocks);
+  const days = useMemo(() => DAY_LETTERS.slice(0, dayCount), [dayCount]);
+  const { scroll, openOnLayout, onScroll, hiddenAbove, hiddenBelow } = useHoursScroll(blocks, first, hours);
   return (
     <View style={styles.frame}>
       <Days days={days} />
@@ -196,7 +232,7 @@ export function WeekGrid({ blocks }: { blocks: readonly ClassBlockView[] }): Rea
         <ScrollView
           bounces={false}
           nestedScrollEnabled
-          onContentSizeChange={open}
+          onLayout={openOnLayout}
           onScroll={onScroll}
           overScrollMode="never"
           ref={scroll}
@@ -214,7 +250,8 @@ export function WeekGrid({ blocks }: { blocks: readonly ClassBlockView[] }): Rea
 }
 
 const styles = StyleSheet.create({
-  // The week on white inside the card's outline, as a table: hour, half-hour and day lines in the divider tokens.
+  // The week on white inside the card's outline, as a table: hour and day lines in the divider token `border`, and
+  // half-hour lines fainter, in the surface token `surfaceSubtle`.
   frame: { overflow: 'hidden', borderWidth: 1, borderColor: color.border, borderRadius: radius.md },
   row: { flexDirection: 'row' },
   days: { borderBottomWidth: 1, borderBottomColor: color.border },
@@ -238,10 +275,9 @@ const styles = StyleSheet.create({
   column: { flex: 1, borderLeftWidth: 1, borderLeftColor: color.border },
   block: {
     position: 'absolute',
-    right: 1,
-    left: 1,
+    right: BLOCK_INSET,
+    left: BLOCK_INSET,
     overflow: 'hidden',
-    paddingVertical: BLOCK_PADDING,
     paddingHorizontal: space[1],
     borderRadius: radius.sm,
   },
