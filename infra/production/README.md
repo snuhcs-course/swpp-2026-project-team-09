@@ -238,9 +238,12 @@ run by hand in the worker, has that server's allowances.
 
 The load balancer's addresses are in the public subnets, where pods get theirs too, so the rule that admits it on the
 three servers' ports admits any pod in another namespace there as well. Inside `snunow`, a pod reaches those ports only
-when its own policy allows it. The kubelet's probes need no rule, since the VPC CNI always lets a pod's own node reach
-it. A new pod is open for the seconds until the VPC CNI has applied its policies.
+when its own policy allows it. The kubelet's probes need no rule, since the VPC CNI always lets a pod and its own node
+reach each other. A new pod is open for the seconds until the VPC CNI has applied its policies.
 
 A refused connection times out rather than failing at once. A new connection that a change needs is added to the
 policies and to `allowed-connections.txt` in the same pull request, and `k8s/test/targets.sh` checks the two agree.
+A server's Release applies only the shared policies and its own, so the connection opens once an `all` Release, or a
+Release of each end's server, has applied both ends' policies. A Release of an earlier commit brings back that
+commit's shared policies.
 `k8s/test/cluster.sh` runs the policies in a throwaway k3s cluster in Docker and tries every connection.

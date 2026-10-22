@@ -208,6 +208,7 @@ Production follows AWS's EKS Best Practices for network security from the first 
 - **Enforcement.** The VPC CNI enforces them. Terraform sets the `vpc-cni` add-on's `enableNetworkPolicy`, and its agent runs inside `aws-node`, so no pod is added. It runs in its standard mode, so a new pod is open for the seconds until its policies apply.
 - **Not security groups for pods.** They would be AWS's first choice for reaching RDS, but they do not support the `t` instance family, so NetworkPolicies decide which pods reach the database. The database keeps its own passwords and TLS as well; the policies are a second layer.
 - **Placement.** The shared part holds `default-deny`, `dns`, `redis`, `database-client`, and `database-setup`, and each server's part a policy named after the server. So every target renders the policies it needs, all of them namespaced, and every Release applies them.
+- **Releasing a policy change.** A server's Release applies the shared policies and its own only. So a new connection opens once the policies of both its ends are out, through an `all` Release or a Release of each end's server, and a Release of an earlier commit brings back that commit's shared policies.
 - **What they allow,** from what each server's code and settings open:
   - every pod: DNS to CoreDNS (`k8s-app: kube-dns` in `kube-system`) on port 53, over UDP and TCP;
   - the load balancer, which uses IP targets, by the public subnets' CIDRs: `main-server` on 3000, `socket-server` on 3001, and `admin` on 3100;
@@ -219,7 +220,7 @@ Production follows AWS's EKS Best Practices for network security from the first 
 - **The database.** Egress to the database subnets' CIDRs on 5432 is allowed only to `main-server`, `match-server`, and pods labelled `database-client: "true"`.
 - **The internet** is `0.0.0.0/0` except the VPC's CIDR, on 443 only: for `main-server` (Kakao, Google's sign-in keys, and OpenRouter), `worker-server` (the Sources' sites), and the database Job's download of RDS's CA bundle (`app: database-setup`).
 - **Pods started by hand.** The database Job, the runbook's psql pod, and the copy of a server's pod that resolves a P3009 carry `database-client: "true"`. A `kubectl exec` into a server's pod, such as a Collection run by hand, has that server's allowances.
-- **Probes and health checks.** The VPC CNI always lets a pod's own node reach it, so the kubelet's probes need no rule. The load balancer's health checks come from its addresses, which the rule above admits, so the readiness gates pass.
+- **Probes and health checks.** The VPC CNI always lets a pod and its own node reach each other, so the kubelet's probes need no rule. The load balancer's health checks come from its addresses, which the rule above admits, so the readiness gates pass.
 - **Shared subnets.** Pods get their addresses from the same public subnets as the load balancer, so its rule also admits a pod of another namespace on those three ports. In `snunow`, a pod reaches them only when its own policy allows it.
 - **Services.** The VPC CNI matches a connection made through a Service only when the Service's port is its pods' container port, as every Service here keeps.
 
@@ -320,7 +321,7 @@ Production follows AWS's EKS Best Practices for network security from the first 
   - A newer Release of a server cancels that server's running one, and different servers deploy at once.
   - An `all` Release runs each server's job in that server's group, so a later Release of one server cancels only that server's job.
   - Cancelling never cuts a migration, which runs in the pods, not in the workflow.
-- **Deploying an earlier Release again.** A team member runs the workflow by hand from the Actions tab on that Release's tag (`workflow_dispatch`), which has no age limit. It deploys the tag's target at the tag's commit. The shared part goes out with it, so that commit's Ingresses and Redis come back too. Migrations only move forward, so after a Release with a migration, a fix is a new Release instead.
+- **Deploying an earlier Release again.** A team member runs the workflow by hand from the Actions tab on that Release's tag (`workflow_dispatch`), which has no age limit. It deploys the tag's target at the tag's commit. The shared part goes out with it, so that commit's Ingresses, Redis, and shared NetworkPolicies come back too. Migrations only move forward, so after a Release with a migration, a fix is a new Release instead.
 - **Settings the workflow reads.** It reads its AWS settings from repository variables: the Region, the role ARN, the cluster name, the registry, and the database endpoint. A team member sets them from `terraform output`, and moving accounts changes them. The admin site's two public build arguments are repository variables too. Every secret value comes from Parameter Store, so GitHub holds no Production secret.
 - **GitHub release pages.** The workflow does not create GitHub release pages. The only ones are the Production APKs', made by hand (below).
 
@@ -450,7 +451,7 @@ The first apply, real Releases, and the console settings happen against AWS, whi
   - `admin.snunow.com` signs an Administrator in and publishes a Global Event.
 - **Collections.** Every Source's collection, run once by hand in the worker pod, succeeds from AWS's addresses.
 - **Access.** Each team member reaches the cluster with kubectl and Lens.
-- **Network policies.** Every check above passes under the policies. A pod without the label `database-client: "true"` cannot reach the database, and the runbook's psql pod can.
+- **Network policies.** Every check above passes under the policies. A pod without the label `database-client: "true"` cannot reach the database once its policies have applied, and the runbook's psql pod can.
 - **Releases.**
   - A Release of one server causes no failed request while its pods change, and leaves the other servers' pods as they were.
   - A Release whose commit's CI fails does not deploy.
