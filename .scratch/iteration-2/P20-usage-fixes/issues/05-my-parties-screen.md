@@ -67,6 +67,9 @@ Reuse the 내 파티 list inside the app's full-screen panel, instead of writing
 
 ### Agent usage (2026-10-22)
 
-- Agent time: about 30 minutes in one session, an estimate. A few minutes of it were the one full run of the mobile suite.
-- Tokens: not measured exactly. Roughly 1.2M input, almost all of it cache reads, with cache writes around 60k, and about 20k output. No subagents.
+Counted from this session's Claude Code transcript (`~/.claude/projects/…/3c73c65a-….jsonl`), from the ticket's first prompt until this count was made. The few calls after it, which wrote this section and committed it, are not in it.
 
+- Agent time: about 17 minutes, in one session. It is an estimate: the sum of each turn's span, from the message that started it to the agent's last reply, plus the 8 minutes the agent waited between turns for the full mobile suite. Time waiting for a person is left out.
+- Tokens: 38 calls to Opus 5.5, no subagents.
+  - Input: 2,783,369 in all. Of these, 2,711,487 are cache reads, 71,804 cache writes and 78 uncached.
+  - Output: 24,514.
