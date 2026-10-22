@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Place, Weekday } from '@/api/types';
@@ -18,23 +19,17 @@ import { findTitle } from './title';
 import { type Word, wordsOf } from './words';
 
 // The reading pipeline: what the native OCR module returned for a screenshot of SNUTT or 에브리타임, turned into
-// classes. Whatever is uncertain is left out, with the reason, rather than guessed.
-
-// The confidence a block's name needs for its time and its class to be kept (Android). Chosen on the four reference
-// screenshots, whose names read 0.56 and above: see accuracy.md.
-export const NAME_CONFIDENCE = 0.5;
+// classes. Whatever is uncertain is left out, with the reason, rather than guessed. What is kept is decided by the
+// grid, the blocks' geometry and whether text is there, never by ML Kit's confidence, so that Android and iOS (which
+// gives none) follow the same rules.
 
 export type LeftOutReason =
   // The block's bottom runs under the tab bar, reaches the picture's end or fades out.
   | 'end-uncertain'
   // The block's top or bottom is outside the day.
   | 'outside-day'
-  // No name was read in the block.
-  | 'no-name'
-  // The name was read with too little confidence (Android).
-  | 'low-confidence'
-  // Without confidence (iOS): the block holds only a room, or the name is a single character.
-  | 'too-little-text';
+  // No name was read in the block: no text, only a room, or only marks without a letter or digit.
+  | 'no-name';
 
 export interface LeftOut {
   weekday: Weekday;
@@ -118,7 +113,6 @@ function splitByText(block: Block, lines: readonly BlockLine[], hourHeight: numb
 interface ReadBlock {
   name: string;
   cut: boolean;
-  confidence: number | null;
   time: ReadTime;
 }
 
@@ -140,7 +134,7 @@ function readBlock(
     end,
     reason,
   });
-  if (text.name === '') {
+  if (!/[\p{L}\p{N}]/u.test(text.name)) {
     return leftOut('no-name');
   }
   if (start === null || end === null || start >= end) {
@@ -149,18 +143,10 @@ function readBlock(
   if (uncertainEnd) {
     return leftOut('end-uncertain');
   }
-  if (text.nameConfidence === null) {
-    if (text.nameLines === 0 || Array.from(text.name.replaceAll(/\s+/gu, '')).length < 2) {
-      return leftOut('too-little-text');
-    }
-  } else if (text.nameConfidence < NAME_CONFIDENCE) {
-    return leftOut('low-confidence');
-  }
   const link = linkRoom(text.room, places);
   return {
     name: text.name,
     cut: text.cut,
-    confidence: text.nameConfidence,
     time: { weekday: block.column.weekday, start, end, room: link?.room ?? null, placeId: link?.placeId ?? null },
   };
 }

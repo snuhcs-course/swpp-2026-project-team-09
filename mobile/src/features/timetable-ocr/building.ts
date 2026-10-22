@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Place } from '@/api/types';
@@ -36,13 +37,9 @@ export function buildingOf(room: string, places: readonly Place[]): Link | null 
   return null;
 }
 
-// The confidence a room line needs before it is linked (Android). Chosen on the four reference screenshots, whose
-// room lines read 0.82–0.95: see accuracy.md.
-export const ROOM_CONFIDENCE = 0.8;
-
 // The link of a block's room line, when the line passes the rules: it matches the room pattern on its whole length,
-// none of its words was cut at the block's sides, and it is read with enough confidence. Without a confidence (iOS) the stricter rule stands in: the line is a single OCR
-// element, read whole. Either way the building must be a Place.
+// none of its words was cut at the block's sides, and its building is a Place. ML Kit's confidence is not used: it is
+// missing on iOS, and on Android it neither caught a misread digit nor kept a cut room out, which these rules do.
 export function linkRoom(line: BlockLine | null, places: readonly Place[]): Link | null {
   if (line === null) {
     return null;
@@ -51,8 +48,5 @@ export function linkRoom(line: BlockLine | null, places: readonly Place[]): Link
   if (room === null) {
     return null;
   }
-  const trusted =
-    line.unclipped &&
-    (line.confidence === null ? line.wholeElement && line.elements === 1 : line.confidence >= ROOM_CONFIDENCE);
-  return trusted ? buildingOf(room, places) : null;
+  return line.unclipped ? buildingOf(room, places) : null;
 }

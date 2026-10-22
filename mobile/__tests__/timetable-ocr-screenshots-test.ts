@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { classSaves } from '@/features/timetable-ocr/classes';
@@ -57,7 +58,7 @@ function run(name: Screenshot, output: NativeOcrResult, label: string): Score {
   return result;
 }
 
-// What each screenshot reaches with Android's confidences: the times read and matched to a true one, of those read.
+// What each screenshot reaches: the times read and matched to a true one, of those read.
 const REACHED: Record<Screenshot, number> = { 'everytime-1': 14, 'snutt-1': 16, 'snutt-2': 12, 'snutt-3': 6 };
 
 describe.each(SCREENSHOTS)('the screenshot %s', (name) => {
@@ -73,12 +74,10 @@ describe.each(SCREENSHOTS)('the screenshot %s', (name) => {
     expect(result.nameEdits / result.nameCharacters).toBeLessThanOrEqual(0.03);
   });
 
-  it('is read without confidence (iOS) leaving out at least as much, and linking no building wrongly', () => {
-    const android = run(name, ocrOutput(name), 'android');
-    const ios = run(name, withoutConfidence(ocrOutput(name)), 'no confidence');
-    expect(ios.buildingsWrong).toBe(0);
-    expect(ios.readTimes).toBeLessThanOrEqual(android.readTimes);
-    expect(ios.readTimes - ios.matched).toBe(0);
+  it('is read the same without confidence (iOS): confidence decides nothing', () => {
+    const android = readTimetable(ocrOutput(name), PLACES);
+    const ios = readTimetable(withoutConfidence(ocrOutput(name)), PLACES);
+    expect(ios).toEqual(android);
   });
 });
 

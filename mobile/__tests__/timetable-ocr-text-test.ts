@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Place } from '@/api/types';
@@ -20,15 +21,25 @@ import { headerLines, labelLines, line, screenshot } from './support/timetable-o
 const BLUE: [number, number, number] = [73, 150, 225];
 
 function word(text: string, x0: number, x1: number, y = 50, lineIndex = 0): Word {
-  return { text, x0, x1, y0: y - 5, y1: y + 5, confidence: 0.9, line: lineIndex };
+  return { text, x0, x1, y0: y - 5, y1: y + 5, line: lineIndex };
 }
 
 function place(number: string): Place {
   return { id: `place-${number}`, number, name: number, latitude: 37.45, longitude: 126.95 };
 }
 
-function roomLine(text: string, confidence: number | null, elements = 1): Parameters<typeof linkRoom>[0] {
-  return { text, y: 0, confidence, elements, wholeElement: elements === 1, unclipped: true, x0: 0, x1: 0, y1: 0 };
+function roomLine(text: string, unclipped = true): Parameters<typeof linkRoom>[0] {
+  return { text, y: 0, unclipped, x0: 0, x1: 0, y1: 0 };
+}
+
+// A one-letter name, a name with a room, an empty block and a block of a mark only, each read with `confidence`.
+function confidenceBlocks(confidence: number | null): Parameters<typeof screenshot>[0] {
+  return [
+    { day: 0, start: 10, end: 11, colour: BLUE, text: ['밍'], confidence },
+    { day: 1, start: 10, end: 11, colour: BLUE, text: ['자료구조', '302-311-1'], confidence },
+    { day: 2, start: 10, end: 11, colour: BLUE, text: [] },
+    { day: 3, start: 10, end: 11, colour: BLUE, text: ['<'], confidence },
+  ];
 }
 
 function time(weekday: ReadTime['weekday'], start: string, end: string): ReadTime {
@@ -81,50 +92,13 @@ describe('the building of a room', () => {
     expect(buildingOf('999-101', places)).toBeNull();
   });
 
-  it('is linked only from a whole room line read with enough confidence', () => {
-    expect(linkRoom(roomLine('302-311-1', 0.88), places)?.building).toBe('302');
-    expect(linkRoom(roomLine('302-311-1', 0.6), places)).toBeNull();
-    expect(linkRoom(roomLine('302 - …', 0.95), places)).toBeNull();
+  it('is linked from a whole room line that no block side cut, its confidence aside', () => {
+    expect(linkRoom(roomLine('302-311-1'), places)?.building).toBe('302');
+    // Two OCR elements, as ML Kit may split `302 -311-1`, are one room once the spaces round the hyphen go.
+    expect(linkRoom(roomLine('302 -311-1'), places)?.room).toBe('311-1');
+    expect(linkRoom(roomLine('302 - …'), places)).toBeNull();
+    expect(linkRoom(roomLine('302-311-1', false), places)).toBeNull();
     expect(linkRoom(null, places)).toBeNull();
-  });
-});
-
-describe('the building of a room without confidence (iOS)', () => {
-  const places = ['301', '302'].map((number) => place(number));
-
-  it('is linked only from a room read as one whole element', () => {
-    expect(
-      linkRoom(
-        {
-          text: '302-311-1',
-          y: 0,
-          confidence: null,
-          elements: 1,
-          wholeElement: true,
-          unclipped: true,
-          x0: 0,
-          x1: 0,
-          y1: 0,
-        },
-        places,
-      )?.room,
-    ).toBe('311-1');
-    expect(
-      linkRoom(
-        {
-          text: '302 -311-1',
-          y: 0,
-          confidence: null,
-          elements: 2,
-          wholeElement: false,
-          unclipped: true,
-          x0: 0,
-          x1: 0,
-          y1: 0,
-        },
-        places,
-      ),
-    ).toBeNull();
   });
 });
 
@@ -191,6 +165,18 @@ describe('the title', () => {
     expect(findTitle(lines, 2868, 419)).toBe('2025년 여름학기');
   });
 
+  it('drops a chevron or icon read as a mark by its characters, whatever its confidence', () => {
+    const chevron = {
+      ...line('< 2학기', 75, 225),
+      box: { x: 75, y: 225, w: 200, h: 40 },
+      elements: [
+        { text: '<', box: { x: 75, y: 225, w: 30, h: 40 }, confidence: 0.9 },
+        { text: '2학기', box: { x: 120, y: 225, w: 150, h: 40 }, confidence: null },
+      ],
+    };
+    expect(findTitle([chevron], 2868, 419)).toBe('2학기');
+  });
+
   it('is cut to 20 characters, and missing when nothing qualifies', () => {
     expect(findTitle([line('가'.repeat(25), 100, 220)], 2868, 419)).toBe('가'.repeat(20));
     expect(
@@ -222,20 +208,24 @@ describe('the whole pipeline on a drawn timetable', () => {
     });
   });
 
-  it('leaves out a block read with too little confidence, and without confidence a one-letter name', () => {
-    const reading = readTimetable(
-      screenshot([
-        { day: 0, start: 10, end: 11, colour: BLUE, text: ['밍'], confidence: 0.2 },
-        { day: 1, start: 10, end: 11, colour: BLUE, text: ['국'], confidence: null },
-        { day: 2, start: 10, end: 11, colour: BLUE, text: [] },
-      ]),
-      [],
-    );
-    expect(reading.kind === 'read' ? reading.leftOut.map((out) => out.reason) : []).toEqual([
-      'low-confidence',
-      'too-little-text',
-      'no-name',
-    ]);
+  it('keeps a block with a name whatever its confidence, on Android and iOS alike, and leaves out a block without one', () => {
+    const expected = {
+      kind: 'read',
+      classes: [
+        { name: '밍', times: [{ weekday: 'monday', start: '10:00', end: '11:00', room: null, placeId: null }] },
+        {
+          name: '자료구조',
+          times: [{ weekday: 'tuesday', start: '10:00', end: '11:00', room: '311-1', placeId: 'place-302' }],
+        },
+      ],
+      leftOut: [
+        { weekday: 'wednesday', reason: 'no-name' },
+        { weekday: 'thursday', reason: 'no-name' },
+      ],
+    };
+    for (const confidence of [0.05, 0.9, null]) {
+      expect(readTimetable(screenshot(confidenceBlocks(confidence)), [place('302')])).toMatchObject(expected);
+    }
   });
 });
 
@@ -259,11 +249,10 @@ describe('a room cut or alone', () => {
     // A block of nothing but a room has no name.
     expect(blockText(linesIn([word('302', 25, 45, 30)], { x0: 22, x1: 82, y0: 20, y1: 80 }))).toMatchObject({
       name: '',
-      nameLines: 0,
     });
   });
 
-  it('is not linked when a word was cut at the block’s side, even read with confidence (Android)', () => {
+  it('is not linked when a word was cut at the block’s side', () => {
     // `43-1-304` running over the block's left edge reads `3-1-304` inside it, which still looks like a room.
     const lines = linesIn([word('수학연습', 20, 50, 30, 1), word('43-1-304', 10, 60, 45, 2)], {
       x0: 15,
@@ -272,7 +261,7 @@ describe('a room cut or alone', () => {
       y1: 80,
     });
     const text = blockText(lines);
-    expect(text.room).toMatchObject({ text: '3-1-304', confidence: 0.9, unclipped: false });
+    expect(text.room).toMatchObject({ text: '3-1-304', unclipped: false });
     expect(
       linkRoom(
         text.room,

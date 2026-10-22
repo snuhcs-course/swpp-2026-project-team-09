@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { centreY, clipWord, meanConfidence, type Word } from './words';
+import { centreY, clipWord, type Word } from './words';
 
 // ④ A block's name and room, from the OCR lines inside it.
 
@@ -17,11 +18,6 @@ export const NAME_LENGTH = 30;
 export interface BlockLine {
   text: string;
   y: number;
-  confidence: number | null;
-  // How many OCR elements it is made of.
-  elements: number;
-  // Whether one of its elements is exactly the whole line, as a room read as one word is.
-  wholeElement: boolean;
   // Whether no element was cut at the block's sides: a room cut at a column edge (`43-1-304` → `3-1-304`) can still
   // match the room pattern, and must not be linked.
   unclipped: boolean;
@@ -33,11 +29,8 @@ export interface BlockLine {
 
 export interface BlockText {
   name: string;
-  nameConfidence: number | null;
   // The room line as read, only when one matched the room pattern.
   room: BlockLine | null;
-  // How many lines are not the room.
-  nameLines: number;
   // Whether the name shows a sign of being cut short: its last line runs to the block's right edge or bottom, so
   // that what follows may be on a line not read, or a word of it was cut at the block's side.
   cut: boolean;
@@ -55,7 +48,6 @@ interface Piece {
   x1: number;
   y: number;
   y1: number;
-  confidence: number | null;
   whole: boolean;
 }
 
@@ -65,9 +57,6 @@ function lineOf(pieces: readonly Piece[]): BlockLine {
   return {
     text: ordered.map((piece) => piece.text).join(' '),
     y: pieces.reduce((sum, piece) => sum + piece.y, 0) / pieces.length,
-    confidence: meanConfidence(pieces),
-    elements: pieces.length,
-    wholeElement: pieces.length === 1 && (pieces[0]?.whole ?? false),
     unclipped: pieces.every((piece) => piece.whole),
     x0: Math.min(...pieces.map((piece) => piece.x0)),
     x1: Math.max(...pieces.map((piece) => piece.x1)),
@@ -91,7 +80,6 @@ export function linesIn(words: readonly Word[], box: { x0: number; x1: number; y
         x1: Math.min(word.x1, box.x1),
         y,
         y1: word.y1,
-        confidence: word.confidence,
         whole: text === word.text,
       });
       byLine.set(word.line, pieces);
@@ -124,7 +112,7 @@ export function joinName(lines: readonly string[]): string {
 // every line is a room has no name: it is not a class named after its room.
 export function blockText(lines: readonly BlockLine[], box?: { x1: number; y1: number }): BlockText {
   if (lines.length > 0 && lines.every((line) => roomOf(line.text) !== null)) {
-    return { name: '', nameConfidence: null, room: lines.at(-1) ?? null, nameLines: 0, cut: false };
+    return { name: '', room: lines.at(-1) ?? null, cut: false };
   }
   let roomIndex = -1;
   lines.forEach((line, index) => {
@@ -135,9 +123,7 @@ export function blockText(lines: readonly BlockLine[], box?: { x1: number; y1: n
   const nameLines = lines.filter((_, index) => index !== roomIndex);
   return {
     name: joinName(nameLines.map((line) => line.text)),
-    nameConfidence: meanConfidence(nameLines),
     room: lines[roomIndex] ?? null,
-    nameLines: nameLines.length,
     cut: box !== undefined && looksCut(nameLines, box),
   };
 }

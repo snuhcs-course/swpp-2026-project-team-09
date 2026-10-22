@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { NativeOcrResult } from './native-ocr';
@@ -13,7 +14,6 @@ export interface Word {
   y0: number;
   x1: number;
   y1: number;
-  confidence: number | null;
   line: number;
 }
 
@@ -27,7 +27,6 @@ export function wordsOf(result: NativeOcrResult): Word[] {
       y0: element.box.y / scale,
       x1: (element.box.x + element.box.w) / scale,
       y1: (element.box.y + element.box.h) / scale,
-      confidence: element.confidence,
       line: index,
     })),
   );
@@ -77,19 +76,4 @@ export function clipWord(word: Word, x0: number, x1: number): string {
     .map(({ character }) => character)
     .join('')
     .trim();
-}
-
-// The confidence of some words weighted by their characters, or null when any of them has none (iOS).
-export function meanConfidence(parts: readonly { text: string; confidence: number | null }[]): number | null {
-  let sum = 0;
-  let count = 0;
-  for (const { text, confidence } of parts) {
-    if (confidence === null) {
-      return null;
-    }
-    const length = Array.from(text).length;
-    sum += confidence * length;
-    count += length;
-  }
-  return count === 0 ? null : sum / count;
 }
