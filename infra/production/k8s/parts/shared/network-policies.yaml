@@ -1,0 +1,87 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# Every pod in the namespace starts with no traffic in either direction, and the policies below and each server's own
+# allow the rest. The VPC CNI always lets a pod's own node reach it, so the kubelet's probes need no rule. The addresses
+# are network.tf's: the VPC 10.0.0.0/16, the public subnets 10.0.0.0/20 and 10.0.16.0/20, where the nodes, the pods,
+# and the load balancer get theirs, and the database subnets 10.0.128.0/24 and 10.0.129.0/24.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dns
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - { key: app, operator: In, values: [main-server, socket-server] }
+      ports:
+        - { protocol: TCP, port: 6379 }
+---
+# For the pods a team member starts by hand: the database Job, psql, and the copy of a server's pod that resolves a
+# migration (infra/production/README.md).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: database-client
+spec:
+  podSelector:
+    matchLabels:
+      database-client: 'true'
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - ipBlock: { cidr: 10.0.128.0/24 }
+        - ipBlock: { cidr: 10.0.129.0/24 }
+      ports:
+        - { protocol: TCP, port: 5432 }
+---
+# The database Job downloads RDS's CA bundle before it connects.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: database-setup
+spec:
+  podSelector:
+    matchLabels:
+      app: database-setup
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - ipBlock: { cidr: 0.0.0.0/0, except: [10.0.0.0/16] }
+      ports:
+        - { protocol: TCP, port: 443 }

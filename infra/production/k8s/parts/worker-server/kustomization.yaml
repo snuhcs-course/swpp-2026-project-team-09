@@ -9,3 +9,4 @@ kind: Kustomization
 
 resources:
   - worker-server.yaml
+  - network-policy.yaml

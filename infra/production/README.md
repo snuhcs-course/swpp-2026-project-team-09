@@ -113,7 +113,9 @@ Prisma's migrations, which know no `verify-full`, fall back to `prefer` and stil
 and before the first Release. As the master user, it creates the `main` and `match` roles with their passwords, a
 database owned by each, and the PostGIS extension in `main`. The Release never applies it.
 
-It reads the Secret `database-setup`, which is created by hand just before it and deleted after it:
+Its pod carries the labels `app=database-setup` and `database-client=true`, which let it download RDS's CA bundle and
+reach the database ([below](#network-policies)). It reads the Secret `database-setup`, which is created by hand just
+before it and deleted after it:
 
 | Key                 | Value                                            |
 | ------------------- | ------------------------------------------------ |
@@ -165,15 +167,16 @@ psql as the master user (below). Then delete the Job alone, and apply it again.
 In `infra/production/terraform`:
 
 ```bash
-kubectl --namespace snunow run psql --rm -it --restart=Never --image=postgres:18 \
+kubectl --namespace snunow run psql --rm -it --restart=Never --image=postgres:18 --labels=database-client=true \
   --env=PGHOST="$(terraform output -raw database_endpoint)" \
   --env=PGUSER="$(terraform output -raw database_master_username)" \
   --env=PGPASSWORD="$(terraform output -raw database_master_password)" \
   --env=PGDATABASE=postgres --env=PGSSLMODE=require --command -- psql
 ```
 
-`require` encrypts the connection without checking the certificate, since this pod has no CA bundle. `\connect main`
-switches to a server's database, and `SET ROLE main;` makes what you create there belong to the server's role.
+The label `database-client=true` lets the pod reach the database ([below](#network-policies)). `require` encrypts the
+connection without checking the certificate, since this pod has no CA bundle. `\connect main` switches to a server's
+database, and `SET ROLE main;` makes what you create there belong to the server's role.
 
 ### A migration left halfway (P3009)
 
@@ -182,14 +185,18 @@ example because its pod was killed, makes every later start fail with Prisma's e
 restarting. A team member resolves it once by hand. The commands are for the main server; for the match server, write
 `match-server` for `main-server`, and `match` for `main`.
 
-1. Open a shell in a copy of one of the server's pods. The copy has the pod's image and `DATABASE_URL`, but runs the
-   shell instead of the server, and no Service sends to it. `--profile=baseline` keeps the copy within the namespace's
-   Pod Security level, which refuses the capability that kubectl's default profile adds:
+1. Make a copy of one of the server's pods, and open a shell in it. The copy has the pod's image and `DATABASE_URL`,
+   but sleeps instead of running the server. It has none of the pod's labels, so no Service sends to it, and the label
+   `database-client=true` lets it reach the database ([below](#network-policies)). `--profile=baseline` keeps the copy
+   within the namespace's Pod Security level, which refuses the capability that kubectl's default profile adds:
 
    ```bash
    kubectl --namespace snunow debug \
      "$(kubectl --namespace snunow get pod --selector app=main-server --output name | head -n 1)" \
-     --copy-to=prisma --container=main-server --profile=baseline -it -- bash
+     --copy-to=prisma --container=main-server --profile=baseline -- sleep infinity
+   kubectl --namespace snunow label pod prisma database-client=true
+   kubectl --namespace snunow wait --for=condition=Ready pod/prisma
+   kubectl --namespace snunow exec -it prisma -- bash
    ```
 
 2. In that shell, `pnpm prisma migrate status` names the failed migration. Its SQL is in
@@ -208,3 +215,32 @@ restarting. A team member resolves it once by hand. The commands are for the mai
 
 A migration that fails each time it runs needs a fix: mark it rolled back, and ship the fixed migration in a new
 Release.
+
+## Network policies
+
+Every pod in `snunow` starts with no traffic in or out, and NetworkPolicies allow what each needs. The VPC CNI enforces
+them; its agent runs inside `aws-node`, so it adds no pod. They ship with every Release: `default-deny`, `dns`, `redis`,
+`database-client`, and `database-setup` in the shared part, and one named after each server in its part. Their list of
+allowed connections is `k8s/test/allowed-connections.txt`:
+
+- every pod asks CoreDNS in `kube-system`, on port 53;
+- the load balancer reaches `main-server`, `socket-server`, and `admin` on their ports;
+- `main-server` reaches Redis, `match-server`, the database, and the internet on 443;
+- `socket-server` reaches Redis;
+- `worker-server` reaches `main-server` and the internet on 443;
+- `match-server` reaches `main-server` and the database;
+- `admin` reaches `main-server`.
+
+Besides `main-server` and `match-server`, only pods labelled `database-client=true` reach the database. A pod started
+by hand that needs it carries that label: psql and the copy above do, and so does the database Job, whose label
+`app=database-setup` also lets it download RDS's CA bundle. A `kubectl exec` into a server's pod, such as a Collection
+run by hand in the worker, has that server's allowances.
+
+The load balancer's addresses are in the public subnets, where pods get theirs too, so the rule that admits it on the
+three servers' ports admits any pod in another namespace there as well. Inside `snunow`, a pod reaches those ports only
+when its own policy allows it. The kubelet's probes need no rule, since the VPC CNI always lets a pod's own node reach
+it. A new pod is open for the seconds until the VPC CNI has applied its policies.
+
+A refused connection times out rather than failing at once. A new connection that a change needs is added to the
+policies and to `allowed-connections.txt` in the same pull request, and `k8s/test/targets.sh` checks the two agree.
+`k8s/test/cluster.sh` runs the policies in a throwaway k3s cluster in Docker and tries every connection.

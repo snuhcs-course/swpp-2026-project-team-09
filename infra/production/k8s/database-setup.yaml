@@ -17,6 +17,11 @@ spec:
   # Its statements are not repeatable, so a failure stops at the first pod, whose log shows why.
   backoffLimit: 0
   template:
+    metadata:
+      # The labels that the NetworkPolicies database-setup and database-client allow.
+      labels:
+        app: database-setup
+        database-client: 'true'
     spec:
       restartPolicy: Never
       volumes:

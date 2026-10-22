@@ -65,9 +65,13 @@ renders() {
 
 # Kind/name of each object, with the generators' content hash shown as HASH.
 holds_shared_and_own_objects() {
-  local expected=(ConfigMap/settings-HASH Secret/secrets-HASH Ingress/api Ingress/admin Deployment/redis Service/redis)
+  local expected=(ConfigMap/settings-HASH Secret/secrets-HASH Ingress/api Ingress/admin Deployment/redis Service/redis
+    NetworkPolicy/default-deny NetworkPolicy/dns NetworkPolicy/redis NetworkPolicy/database-client
+    NetworkPolicy/database-setup)
   local server
-  for server in $(servers_of "$1"); do expected+=("Deployment/$server" "Service/$server"); done
+  for server in $(servers_of "$1"); do
+    expected+=("Deployment/$server" "Service/$server" "NetworkPolicy/$server")
+  done
   diff <(printf '%s\n' "${expected[@]}" | sort) \
     <(jq -r '.[] | "\(.kind)/\(.metadata.name)" |
       sub("^(?<id>ConfigMap/settings|Secret/secrets)-[a-z0-9]{10}$"; "\(.id)-HASH")' "$work/$1.json" | sort)
@@ -115,6 +119,49 @@ ignored_by_git() {
   git -C "$k8s" check-ignore --quiet "$1"
 }
 
+# The endpoints besides the Deployments and the database Job: the runbook's psql pod and the P3009 copy, which carry
+# database-client=true, the addresses that network.tf gives the public and database subnets, and one address in each
+# place that nothing may reach.
+others='[
+  {"name": "psql", "namespace": "snunow", "labels": {"database-client": "true"}},
+  {"name": "the P3009 copy", "namespace": "snunow", "labels": {"database-client": "true"}},
+  {"name": "a pod without a label", "namespace": "snunow", "labels": {"run": "shell"}, "ports": [[8080, "TCP"]]},
+  {"name": "a pod in kube-system", "namespace": "kube-system", "labels": {"k8s-app": "metrics-server"}},
+  {"name": "CoreDNS", "namespace": "kube-system", "labels": {"k8s-app": "kube-dns"}, "ports": [[53, "UDP"], [53, "TCP"]]},
+  {"name": "the load balancer", "ip": "10.0.16.100"},
+  {"name": "the database in zone a", "ip": "10.0.128.50", "ports": [[5432, "TCP"]]},
+  {"name": "the database in zone c", "ip": "10.0.129.50", "ports": [[5432, "TCP"]]},
+  {"name": "another address in the VPC", "ip": "10.0.64.10", "ports": [[443, "TCP"], [5432, "TCP"]]},
+  {"name": "the internet", "ip": "203.0.113.10", "ports": [[443, "TCP"], [80, "TCP"]]},
+  {"name": "instance metadata", "ip": "169.254.169.254", "ports": [[80, "TCP"]]}
+]'
+
+# The connections in allowed-connections.txt, and no other, among every pair of endpoints.
+allows_only_the_listed_connections() {
+  diff <(grep -v -e '^#' -e '^$' "$k8s/test/allowed-connections.txt" | sort) \
+    <(jq -r --slurpfile job "$work/database-setup.json" --argjson others "$others" -f "$k8s/test/allows.jq" \
+      "$work/$1.json" | sort)
+}
+
+# Each policy in a server's target is the same object as in all.
+holds_the_policies_of_all() {
+  jq -e --slurpfile all "$work/all.json" \
+    'all(.[] | select(.kind == "NetworkPolicy"); . as $policy | any($all[0][]; . == $policy))' "$work/$1.json" >/dev/null
+}
+
+# The VPC CNI matches a connection made through a Service only when the Service's port is its pods' container port.
+serves_on_container_ports() {
+  jq -e '[.[] | select(.kind == "Deployment")] as $deployments
+    | all(.[] | select(.kind == "Service"); . as $service
+      | all(.spec.ports[]; . as $port
+        | [$deployments[]
+            | select(.spec.template.metadata.labels as $labels
+                | all($service.spec.selector | to_entries[]; $labels[.key] == .value))
+            | .spec.template.spec.containers[].ports[]
+            | select(.name == $port.targetPort or .containerPort == $port.targetPort) | .containerPort]
+        | length > 0 and all(.[]; . == $port.port)))' "$work/$1.json" >/dev/null
+}
+
 copy_manifests "$work/plain"
 copy_manifests "$work/images"
 
@@ -129,7 +176,12 @@ for target in "${targets[@]}"; do
 done
 for target in "${servers[@]}"; do
   check "$target names its ConfigMap and Secret as all does" names_generated_objects_as_all_does "$target"
+  check "$target holds the same policies as all" holds_the_policies_of_all "$target"
 done
+kubectl patch --local --type merge --patch '{}' --filename "$k8s/database-setup.yaml" --output json \
+  >"$work/database-setup.json"
+check "all's policies allow exactly the listed connections" allows_only_the_listed_connections all
+check "every Service's port is its pods' container port" serves_on_container_ports all
 for file in secrets.env access-token-private-key.pem access-token-public-key.pem; do
   check "git ignores $file" ignored_by_git "parts/shared/secrets/$file"
 done

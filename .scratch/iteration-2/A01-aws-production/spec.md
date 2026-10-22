@@ -116,6 +116,7 @@ Account A's credits last until about 12/07. The rest of the course then costs ab
 - **Security groups.**
   - The nodes accept traffic only from the load balancer, from the cluster, and from each other.
   - The database accepts port 5432 only from the nodes.
+  - Inside the cluster, NetworkPolicies decide which pods reach what (see "Network policies" under "Workloads").
 - **Why two zones.** EKS needs its cluster subnets in two zones, and an ALB and an RDS subnet group need two as well.
 
 ### Cluster
@@ -170,8 +171,8 @@ Account A's credits last until about 12/07. The rest of the course then costs ab
 
 The manifests live in `infra/production/k8s/`, written for Kustomize in parts:
 
-- **The shared part:** the ConfigMap and the Secret that the generators make, the Ingresses, and Redis.
-- **A part per server:** its Deployment and Service, for each of the five servers.
+- **The shared part:** the ConfigMap and the Secret that the generators make, the Ingresses, Redis, and the NetworkPolicies that are not one server's.
+- **A part per server:** its Deployment, Service, and NetworkPolicy, for each of the five servers.
 - **Six targets.** Each server's target renders the shared part and that server's part. `all` renders everything, which the five jobs of an `all` Release apply between them. A server's Release applies its target, so the shared part goes out with every Release.
 - **Generated names.** The ConfigMap's and the Secret's names carry a hash of their content, and every reference in a render uses that name.
   - A server takes up a changed setting or secret value when it is next deployed, and an `all` Release rolls the change to every server.
@@ -199,6 +200,28 @@ The manifests live in `infra/production/k8s/`, written for Kustomize in parts:
 - **Memory.** Each container sets a memory request and limit that keep the system inside two `t4g.small` nodes. The first week's `kubectl top` decides whether to raise them or the node size.
 - **No demo services.** `demo-seed`, `demo-walker`, and `demo-menus` do not run in Production.
 - **Starting empty.** The worker collects nothing when it starts. So after the first Release a team member runs each Source's collection once by hand, from the runbook.
+
+**Network policies**
+
+Production follows AWS's EKS Best Practices for network security from the first Release: every pod in `snunow` starts from a default deny of both ingress and egress, and NetworkPolicies allow exactly the traffic each workload needs.
+
+- **Enforcement.** The VPC CNI enforces them. Terraform sets the `vpc-cni` add-on's `enableNetworkPolicy`, and its agent runs inside `aws-node`, so no pod is added. It runs in its standard mode, so a new pod is open for the seconds until its policies apply.
+- **Not security groups for pods.** They would be AWS's first choice for reaching RDS, but they do not support the `t` instance family, so NetworkPolicies decide which pods reach the database. The database keeps its own passwords and TLS as well; the policies are a second layer.
+- **Placement.** The shared part holds `default-deny`, `dns`, `redis`, `database-client`, and `database-setup`, and each server's part a policy named after the server. So every target renders the policies it needs, all of them namespaced, and every Release applies them.
+- **What they allow,** from what each server's code and settings open:
+  - every pod: DNS to CoreDNS (`k8s-app: kube-dns` in `kube-system`) on port 53, over UDP and TCP;
+  - the load balancer, which uses IP targets, by the public subnets' CIDRs: `main-server` on 3000, `socket-server` on 3001, and `admin` on 3100;
+  - `main-server`: Redis, `match-server`, the database, and the internet;
+  - `socket-server`: Redis;
+  - `worker-server`: `main-server` and the internet;
+  - `match-server`: `main-server` and the database;
+  - `admin`: `main-server`; Google's and Kakao's scripts run in the browser.
+- **The database.** Egress to the database subnets' CIDRs on 5432 is allowed only to `main-server`, `match-server`, and pods labelled `database-client: "true"`.
+- **The internet** is `0.0.0.0/0` except the VPC's CIDR, on 443 only: for `main-server` (Kakao, Google's sign-in keys, and OpenRouter), `worker-server` (the Sources' sites), and the database Job's download of RDS's CA bundle (`app: database-setup`).
+- **Pods started by hand.** The database Job, the runbook's psql pod, and the copy of a server's pod that resolves a P3009 carry `database-client: "true"`. A `kubectl exec` into a server's pod, such as a Collection run by hand, has that server's allowances.
+- **Probes and health checks.** The VPC CNI always lets a pod's own node reach it, so the kubelet's probes need no rule. The load balancer's health checks come from its addresses, which the rule above admits, so the readiness gates pass.
+- **Shared subnets.** Pods get their addresses from the same public subnets as the load balancer, so its rule also admits a pod of another namespace on those three ports. In `snunow`, a pod reaches them only when its own policy allows it.
+- **Services.** The VPC CNI matches a connection made through a Service only when the Service's port is its pods' container port, as every Service here keeps.
 
 **Settings**
 
@@ -376,7 +399,7 @@ Sessions live in the database, and the token keys stay the same because the para
 
 - `infra/production/`:
   - `terraform/`;
-  - `k8s/`, with the shared part, a part per server, the six targets, and, apart from them, the one-off database Job;
+  - `k8s/`, with the shared part, a part per server, the six targets, the tests of the render and the policies, and, apart from them, the one-off database Job;
   - `README.md`, the runbook and the tool guide.
 - The admin site's `Dockerfile` and `.dockerignore`, `output: 'standalone'` in its Next.js configuration, and its two health routes.
 - Case-sensitive routing in the main server.
@@ -403,8 +426,13 @@ A good test drives a piece the way it is used: it renders the manifests the clus
 
 - `terraform fmt -check` and `terraform validate`.
 - `kubectl kustomize` renders each of the six targets, each server's and `all`, without error.
+- Each target renders the shared policies and its servers' own. Evaluated by Kubernetes' rules on the parsed render, `all`'s policies allow exactly the connections that `infra/production/k8s/test/allowed-connections.txt` lists, among the workloads, the pods started by hand, the load balancer, the database, the internet, and addresses nothing may reach. Every Service's port is its pods' container port.
 - The admin site's health routes, tested against the built site with a fake main server, as its other tests run: `/health/live` answers 200 without a cookie; `/health/ready` answers 200 while the fake main server is live and 503 once it stops.
 - The existing server and flow tests keep guarding the code that a Release ships.
+
+**Run by hand when the policies change**
+
+- `infra/production/k8s/test/cluster.sh` applies `all`'s policies in a throwaway k3s cluster in Docker, whose network policy controller enforces them, with stand-in pods labelled like each workload and containers at `network.tf`'s addresses, and tries every pair against `allowed-connections.txt`. CI does not run it.
 
 **Checked by hand in the operations tickets**
 
@@ -422,6 +450,7 @@ The first apply, real Releases, and the console settings happen against AWS, whi
   - `admin.snunow.com` signs an Administrator in and publishes a Global Event.
 - **Collections.** Every Source's collection, run once by hand in the worker pod, succeeds from AWS's addresses.
 - **Access.** Each team member reaches the cluster with kubectl and Lens.
+- **Network policies.** Every check above passes under the policies. A pod without the label `database-client: "true"` cannot reach the database, and the runbook's psql pod can.
 - **Releases.**
   - A Release of one server causes no failed request while its pods change, and leaves the other servers' pods as they were.
   - A Release whose commit's CI fails does not deploy.
@@ -446,7 +475,7 @@ The first apply, real Releases, and the console settings happen against AWS, whi
 ## Further Notes
 
 - **Schedule.** This is Iteration 2's unexpected task A1 (folder `A01`), and its implementation continues into Iteration 3. The workers are 윤유상 and 김태현. Production must answer before the user-testing submission on 11/13.
-- **Tickets.** The nine tickets in `issues/` are built together on one integration branch with `/implement-spec` and merged as one pull request. Ticket 03's steps by hand (the first apply and the database check in account A) come before ticket 05, and ticket 08 is the operations ticket after the merge; both need a team member with account A's access.
+- **Tickets.** The ten tickets in `issues/` are built together on one integration branch with `/implement-spec` and merged as one pull request. Ticket 03's steps by hand (the first apply and the database check in account A) come before ticket 05, and ticket 08 is the operations ticket after the merge; both need a team member with account A's access.
 - **Later, when wanted:**
   - lower the cost after the beta by scaling the nodes to zero and stopping the database until the final demo;
   - raise the node size if memory runs short, or if a lost node stops the app for too long;

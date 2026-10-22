@@ -1,0 +1,27 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# Nothing calls it. It reads the Sources' sites on 443 and hands what it read to the main server.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: worker-server
+spec:
+  podSelector:
+    matchLabels:
+      app: worker-server
+  policyTypes: [Ingress, Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: main-server
+      ports:
+        - { protocol: TCP, port: 3000 }
+    - to:
+        - ipBlock: { cidr: 0.0.0.0/0, except: [10.0.0.0/16] }
+      ports:
+        - { protocol: TCP, port: 443 }

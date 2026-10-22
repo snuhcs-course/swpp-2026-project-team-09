@@ -2,8 +2,8 @@
 
 Parent: [A01 spec](../spec.md)
 Status: ready-for-agent
-Blocked by: 01, 02, 03, 04, 05, 06, 09 (the names and commands the runbook describes)
-Touches: `infra/production/README.md` (beyond ticket 01's and ticket 03's sections), the root `README.md`, and `admin/README.md`.
+Blocked by: 01, 02, 03, 04, 05, 06, 09, 10 (the names and commands the runbook describes)
+Touches: `infra/production/README.md` (beyond ticket 01's, ticket 03's, and ticket 10's sections), the root `README.md`, and `admin/README.md`.
 
 ## What to build
 
@@ -22,6 +22,7 @@ A team member with an IAM user and no memory of the spec can set up their laptop
 - **Capacity.** Reading `kubectl top`, and raising the memory settings or the node size.
 - **The Production APK**, built by hand with both server addresses set to `https://api.snunow.com` and debug signing; its commit tagged `snunow/app/YY.MM.DD-N`, which deploys nothing; and the APK, named after the tag with `/` as `-` (for example `snunow-app-26.11.13-1.apk`), attached to that tag's GitHub release page.
 - **Moving to account B**, the spec's eight steps with the real commands, including the copy of every parameter under `/snunow/production/` from A to B.
+- **Network policies.** Ticket 10's section of the runbook, kept in step with the rest: every pod that the runbook starts by hand and that reaches the database carries the label `database-client=true`, as psql (`kubectl run --labels=database-client=true`), the P3009 copy (labelled after `kubectl debug` makes it, since the copy keeps none of the pod's labels), and the database Job (`app=database-setup` and `database-client=true` in its pod template) already do. That includes the move's `pg_dump` and `pg_restore` pods. A pod that only needs a server's allowances is a `kubectl exec` into that server's pod, such as each Source's collection run by hand. A new connection is a change to the policies and to `k8s/test/allowed-connections.txt` in a pull request, then a Release.
 - **Tearing down:** delete the Ingress before `terraform destroy`, or the ALB is left behind and keeps billing.
 - **What CI does not cover**, with ticket 08 as where each item is checked.
 - **The root README:** a Production paragraph in the Deployment section that points to the runbook; `infra/` and `.github/` in the Repository layout; the admin site's address in the limitations.
@@ -31,7 +32,8 @@ Route 53 alias records have no TTL of their own; they answer with the ALB's 60 s
 
 ## Acceptance criteria
 
-- [ ] Every command in the runbook names the real files, variables, outputs, repository variables, parameters, workflow, Kustomize targets, and Job of tickets 01 to 06 and 09, checked against the code.
+- [ ] Every command in the runbook names the real files, variables, outputs, repository variables, parameters, workflow, Kustomize targets, Job, and policy labels of tickets 01 to 06, 09, and 10, checked against the code.
+- [ ] Every pod that the runbook starts by hand and that reaches the database (psql, the P3009 copy, the database Job, and the move's `pg_dump` and `pg_restore` pods) carries `database-client=true`.
 - [ ] The tool guide covers each item above for both macOS and Windows, and states how Terraform reads the `aws login` session.
 - [ ] The move section has the spec's eight steps in order, with the TTL step handled as above, and says Users stay signed in and Redis starts empty.
 - [ ] The root README's changes and `admin/README.md`'s origin are in place, and the README's table of contents stays consistent.

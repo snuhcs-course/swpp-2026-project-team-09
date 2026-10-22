@@ -9,3 +9,4 @@ kind: Kustomization
 
 resources:
   - socket-server.yaml
+  - network-policy.yaml
