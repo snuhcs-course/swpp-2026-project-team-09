@@ -26,7 +26,7 @@ The week grid is the 시간표 card on 내 정보 (`Profile` frame), not the `/m
 ## Grid lines and type (tokens only)
 
 - Hour lines: 1 px `color.border` (#E2E5EC), the design system's divider token.
-- Half-hour lines: 1 px `color.surfaceSunken` (#ECEEF3), fainter.
+- Half-hour lines: 1 px `color.surfaceSubtle` (#F5F6F9), fainter.
 - Day columns: 1 px vertical `color.border` lines; the grid sits on `color.surface` inside a `color.border` outline
   with `radius.md`, replacing the grey rounded columns.
 - Hour labels (9 … 21) in a narrow left column, top-aligned to each hour row: `text.caption` in `color.inkMuted`,
