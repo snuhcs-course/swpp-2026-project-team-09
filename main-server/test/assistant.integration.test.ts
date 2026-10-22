@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -18,7 +19,7 @@ import { refuseMatchServer } from './match-server.js';
 import { sendAsWorker } from './worker.js';
 
 // The chat Assistant's endpoint, its getMenus tool and its showOnMap presenter, with the scripted model in the model's
-// place. getShuttle is tested in shuttle.e2e-spec.ts, the one file that sends shuttle messages.
+// place. getShuttle is tested in shuttle.integration.test.ts, the one file that sends shuttle messages.
 
 let app: INestApplication<Server>;
 let accessToken: string;

@@ -658,13 +658,14 @@ after an Administrator's change (see above).
 
 What the rules read from a post, and how, is in the worker server's README. In a test, `collectedEvent()`,
 `eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
-`test/global-events.e2e-spec.ts` does; it reads what a Collection stored, by post number, with a database connection
-of its own. `test/global-event-lists.ts` reads the lists above, and `test/global-event-changes.ts` calls the
+`test/global-events.integration.test.ts` does; it reads what a Collection stored, by post number, with a database
+connection of its own. `test/global-event-lists.ts` reads the lists above, and `test/global-event-changes.ts` calls the
 Administrator's changes. The test files share one database, so `publishedAmong()` and `listedAmong()` keep only the
 events a test names, in the list's order. `signalsWhile()` in `test/signals.ts` gives the `global-events-changed`
 signals sent while a test acts, between two signals of the test's own. Other files publish, edit and cancel events
-too, so `test/global-events.e2e-spec.ts` and `test/admin-global-event-signals.e2e-spec.ts`, which check that none is
-sent, each run their server and `SignalWatcher` on a Redis of their own, where no other file's signal can reach them.
+too, so `test/global-events.integration.test.ts` and `test/admin-global-event-signals.integration.test.ts`, which
+check that none is sent, each run their server and `SignalWatcher` on a Redis of their own, where no other file's
+signal can reach them.
 
 ## Quests
 
@@ -789,7 +790,7 @@ an Administrator edits a published event or cancels it, the Holders of every Que
 attending Sub Quest, when the Global Event has none. A Sub Quest is ended when its end time has passed or when it is
 cancelled, for every Holder alike. A mark of done is shown as `done` and does not end it. This is computed when it is
 read and nothing is written. The time it is computed at is `now()` of `CLOCK` (`src/quests/clock.ts`), which a test
-moves with `vi.spyOn(app.get<Clock>(CLOCK), 'now')`, as `test/quest-progress.e2e-spec.ts` does.
+moves with `vi.spyOn(app.get<Clock>(CLOCK), 'now')`, as `test/quest-progress.integration.test.ts` does.
 
 **Class Quests.** A Class Quest stands for one of the User's classes on a day it is held. It is computed from the
 [timetable](#timetable) each time `GET /quests` or `GET /quests/:questId` is read, and nothing is stored for it, so a
@@ -1150,7 +1151,7 @@ matchServer.refuses('POST', `/users/${user.id}/matching-requests`, 409, 'MATCHIN
 
 The stub keeps each call in `calls`, with its method, path, body and `Authorization` header. A call it was given no
 answer for fails, as one to a match server that is down, and `hangs()` never answers. A route for the match server is
-called with its token by `postAsMatchServer(app, path, body)`, as `test/matching-quests.e2e-spec.ts` does.
+called with its token by `postAsMatchServer(app, path, body)`, as `test/matching-quests.integration.test.ts` does.
 
 ## Party
 
@@ -1879,7 +1880,7 @@ The tests never call a real model. `test/scripted-model.ts` stands for it: a `Sc
 kept. A step is a tool to call with its arguments, `{ tool, input }`, the text to answer, `{ text }`, an error to throw
 as the provider would, `{ error }`, or no answer until the time per message runs out, `{ stall: true }`. A call past
 the end of the script fails, and so does the model `startApp` binds by default, so a test that forgot a script cannot
-reach OpenRouter. `test/assistant.e2e-spec.ts` does it this way:
+reach OpenRouter. `test/assistant.integration.test.ts` does it this way:
 
 ```ts
 const model = new ScriptedModel();
@@ -1902,9 +1903,10 @@ User or the model receives, never the prompt's wording or a real model's prose.
 
 `pnpm eval` puts the cases of `eval/cases/` to the real model through the real server code and records what the model
 did (P19). It calls OpenRouter with the team's key in `.env`, so it costs credit: it never runs in `pnpm test` or CI,
-which leave `eval/` out. It is a Vitest project of its own (`eval/vitest.config.ts`) on the e2e machinery: Docker,
-fresh PostgreSQL and Redis, `startApp`, a fixed world (`eval/world.ts`) and the clock fixed at 2026-10-21 (수) 14:05
-in Korea. Each case's turns go to `POST /assistant/messages` as one seeded User, with the daily limit raised.
+which leave `eval/` out. It is a Vitest project of its own (`eval/vitest.config.ts`) on the integration tests'
+machinery: Docker, fresh PostgreSQL and Redis, `startApp`, a fixed world (`eval/world.ts`) and the clock fixed at
+2026-10-21 (수) 14:05 in Korea. Each case's turns go to `POST /assistant/messages` as one seeded User, with the daily
+limit raised.
 
 ```sh
 pnpm eval                                    # every case, at the branch's settings
@@ -1939,8 +1941,8 @@ the failure: STEP_LIMIT, TIMEOUT or ERROR.
 A case is a single turn, a fixed history (the earlier turns written out, the Assistant's with cards and a Proposal by
 seed name; only the last turn is sent) or live (`live: true`: each User's message sent with the real replies before
 it). A run is saved as `eval/results/<date>-<commit>-<model>-<settings>.json`, every turn's trace with it. `results/`
-is ignored by git; commit a run worth keeping with `git add -f`. `test/eval-runner.e2e-spec.ts` and
-`test/eval-options.e2e-spec.ts` test the runner with the scripted model in `pnpm test`.
+is ignored by git; commit a run worth keeping with `git add -f`. `test/eval-runner.integration.test.ts` and
+`test/eval-options.integration.test.ts` test the runner with the scripted model in `pnpm test`.
 
 #### The world and the cases
 
@@ -1948,12 +1950,12 @@ The 62 cases are one YAML file per category under `eval/cases/` (menus, shuttle,
 making-parties, missing-or-ambiguous-target, ambiguous-intent, no-data, out-of-scope, small-talk, follow-ups, live,
 compound). They name the world by seed name: what the world holds is in `eval/world-data.ts` (the asking User, the
 Friends, the Places of the shared seed, the Global Events, the recruiting Quests, the menus and the shuttle's vehicles), and
-`eval/world.ts` seeds it with the e2e helpers into the run's fresh database. The shuttle's vehicles are stored anew
+`eval/world.ts` seeds it with the test helpers into the run's fresh database. The shuttle's vehicles are stored anew
 before each case, since the server forgets them after a minute. The world and the cases change together:
-`test/eval-cases.e2e-spec.ts` checks in `pnpm test` that every case fits the schema, that the set has the spec's
+`test/eval-cases.integration.test.ts` checks in `pnpm test` that every case fits the schema, that the set has the spec's
 categories and counts, that every seed name a case gives is in the world as that kind of thing, and that the tools
 answer in the world what the cases expect (for example that 민수 names two Friends and that 2026-10-23 has no menus).
-It seeds the world into a database of its own, as `test/eval-runner.e2e-spec.ts` does.
+It seeds the world into a database of its own, as `test/eval-runner.integration.test.ts` does.
 
 #### Scoring
 
@@ -2001,7 +2003,7 @@ reply shows nothing and its last sentence asks back by `ASK_CUES` (`?`, 까요, 
 실래요, 나요) or the trace calls for a question; TOOL and PROPOSE as above without the case, with +ASK by the same cues;
 `NO_TOOL` for a reply with no tool and no question (REFUSE and CHAT alike), `NONE` for tools and none of the kinds, or
 the failure kind. The scorecard and the comparison show it against what each case accepts, as a confusion table. It
-decides no pass. `test/eval-*.e2e-spec.ts` test the scorer with
+decides no pass. `test/eval-*.unit.test.ts` test the scorer with
 hand-made traces (`test/eval-traces.ts`) in `pnpm test`.
 
 ## Seed data
@@ -2081,7 +2083,7 @@ Each exported file keeps, at its top, where it came from and the day of the expo
 - **In a test**: the global setup loads the seed into the test database, so every test file has the Places and the
   shuttle's stops and line. A test that changes the seed loads it into a database of its own, made by
   `createDatabase()` from `test/containers.ts`, with `loadSeed(prisma, directory)` from `src/load-seed.ts`, as
-  `test/seed.e2e-spec.ts` and `test/shuttle-seed.e2e-spec.ts` do.
+  `test/seed.integration.test.ts` and `test/shuttle-seed.integration.test.ts` do.
 - **A new seed** adds its export to `scripts/export-seed.ts` when the file is exported, its model with a unique key
   that outlasts a reload, and its loading to `loadSeed()`. The key is the identifier the origin gives or, where no
   origin gives one, as for a shuttle stop, a key of the seed's own. `readSeedFile()` beside `SEED_DIRECTORY` reads a
@@ -2152,16 +2154,20 @@ themselves. To bring only the demo's times up to date, restart `demo-seed` as ab
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
 
-| Command             | Checks                                       |
-| ------------------- | -------------------------------------------- |
-| `pnpm lint`         | oxlint with type-aware rules                 |
-| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it) |
-| `pnpm typecheck`    | TypeScript in strict mode                    |
-| `pnpm test`         | Vitest tests in `test/`                      |
+| Command             | Checks                                                              |
+| ------------------- | ------------------------------------------------------------------- |
+| `pnpm lint`         | oxlint with type-aware rules, and that each test file names a level |
+| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it)                        |
+| `pnpm typecheck`    | TypeScript in strict mode                                           |
+| `pnpm test`         | Vitest tests in `test/`                                             |
 
 `pnpm test` needs Docker running. It starts its own PostgreSQL and Redis containers and removes them afterwards. The
-test files run in parallel, except `test/redis-idempotency-store.e2e-spec.ts`: it waits for Redis to expire records in
-real time, so it runs alone after the others.
+test files run in parallel, except `test/redis-idempotency-store.integration.test.ts`: it waits for Redis to expire
+records in real time, so it runs alone after the others, against a Redis container of its own.
+
+Each test file is named by its level (ADR 0007): `*.unit.test.ts` or `*.integration.test.ts`. `pnpm test:unit` runs
+the unit tests alone and needs no Docker. `pnpm test:integration` runs the integration tests, which start the
+containers. `pnpm test:cov` and `pnpm test:cov:unit` add the coverage of `src/`, written to `coverage/`.
 
 ## Folder layout
 
@@ -2228,7 +2234,8 @@ src/
                                      adapter that runs them
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
 eval/                                the benchmark of the Assistant, `pnpm eval`: its runner, recorder, world and cases
-test/                                tests, run against PostgreSQL and Redis in containers
+test/                                tests named by level; the integration tests run against PostgreSQL and Redis in
+                                     containers
 ```
 
 ## Database
@@ -2271,7 +2278,8 @@ The steps add a feature named `party`. Use a short lowercase name, with dashes b
    ```
 
 2. Create the controller, which holds the HTTP routes, and the service, which holds the logic. Both are registered in
-   `PartyModule`. `--no-spec` skips unit test files, because this project tests through HTTP (step 8):
+   `PartyModule`. `--no-spec` skips the generated test files: tests live in `test/`, named by level, and pure logic
+   gets a unit test there (step 8):
 
    ```bash
    pnpm exec nest g controller party --no-spec
@@ -2310,12 +2318,13 @@ The steps add a feature named `party`. Use a short lowercase name, with dashes b
    `main-server` service's `environment` in `compose.yaml` only when it needs another value inside Compose, as the
    database and Redis addresses do. Read it by injecting `ConfigService<Settings, true>` and calling
    `get('NAME', { infer: true })`.
-8. Write `test/party.e2e-spec.ts`. Start the server with `startApp` from `test/start-app.ts` and call its routes
-   with `supertest`, as `test/health.e2e-spec.ts` does. `signIn` from `test/sign-in.ts` signs in a new User,
-   completes onboarding and returns the tokens, `signInBeforeOnboarding` stops before onboarding, and
-   `signInAsAdministrator` signs in an Administrator. oxlint's `max-lines` (300) and
-   `max-lines-per-function` (50) apply to tests too: split a long file by route, as `test/refresh.e2e-spec.ts` and
-   `test/sign-out.e2e-spec.ts` split the auth tests, and a long `describe` into several.
+8. Write `test/party.integration.test.ts`. Start the server with `startApp` from `test/start-app.ts` and call its
+   routes with `supertest`, as `test/health.integration.test.ts` does. `signIn` from `test/sign-in.ts` signs in a new
+   User, completes onboarding and returns the tokens, `signInBeforeOnboarding` stops before onboarding, and
+   `signInAsAdministrator` signs in an Administrator. Pure logic of the feature gets `test/party.unit.test.ts`, which
+   calls it directly and starts nothing. oxlint's `max-lines` (300) and `max-lines-per-function` (50) apply to tests
+   too: split a long file by route, as `test/refresh.integration.test.ts` and `test/sign-out.integration.test.ts` split
+   the auth tests, and a long `describe` into several.
 9. Run `pnpm format`, then the four checks.
 
 Import classes with a plain `import { PartyService } from ...`, never `import type`. Nest looks the class up at
@@ -2347,7 +2356,7 @@ create(@Body({ schema: createPartySchema }) body: CreatePartyDto, @CurrentUser()
   send two keys.
 - Register a global interceptor (`APP_INTERCEPTOR`) in the feature's module, which `AppModule` imports after
   `IdempotencyModule`, never in `AppModule`'s providers, so that the idempotency interceptor runs outside it.
-- In a test, send the key with `.set('Idempotency-Key', randomUUID())`, as `test/idempotency.e2e-spec.ts` does.
+- In a test, send the key with `.set('Idempotency-Key', randomUUID())`, as `test/idempotency.integration.test.ts` does.
 
 The results are kept in Redis by `src/common/redis-idempotency.store.ts`.
 
@@ -2372,7 +2381,7 @@ this.signals.send('everyone', 'global-events-changed');
   needs no change there; the [socket server's README](../socket-server/README.md#signals) lists each signal with what
   the app does on it.
 - In a test, `SignalWatcher` from `test/signals.ts` collects the signals put on Redis, as
-  `test/friend-signals.e2e-spec.ts` does.
+  `test/friend-signals.integration.test.ts` does.
 
 `session-ended` and `shuttle-vehicles-updated` are events of their own, not signals, which the socket server handles by
 name (see [Sign-in](#sign-in) and [Shuttle](#shuttle)).
@@ -2442,7 +2451,7 @@ so a message is stored once. Every route for the worker follows these rules.
   Source of another kind is refused there.
 
 In a test, `sendAsWorker()` from `test/worker.ts` sends a request as the worker does, with its token, as
-`test/menus.e2e-spec.ts` does:
+`test/menus.integration.test.ts` does:
 
 ```ts
 const app = await startApp(inject('settings'));
@@ -2454,8 +2463,8 @@ await app.close(); // in afterAll
 - The database is the shared one, so each test stores data of its own. The menus tests take their days from `daysOf()`
   in `test/menus.ts`, a month for each file and a day for each test, and the events tests their post numbers from
   `postNumbersFrom()` in `test/global-events.ts`, a range for each file. A Source's Collection status is one row, so
-  only one file checks the status of a Source: `test/collection.e2e-spec.ts` the dormitory's, `test/menus.e2e-spec.ts`
-  the Co-op's, `test/shuttle.e2e-spec.ts` the shuttle's two, whose stops and line are one set of records and whose
-  vehicles one key in Redis besides, and `test/global-events.e2e-spec.ts` the events list's.
-  `test/stored-event-posts.e2e-spec.ts` therefore stores its posts with a database connection instead, and asks its
-  question with `askAsWorker()` from `test/worker.ts`, which resolves with the answer.
+  only one file checks the status of a Source: `test/collection.integration.test.ts` the dormitory's,
+  `test/menus.integration.test.ts` the Co-op's, `test/shuttle.integration.test.ts` the shuttle's two, whose stops and
+  line are one set of records and whose vehicles one key in Redis besides, and `test/global-events.integration.test.ts`
+  the events list's. `test/stored-event-posts.integration.test.ts` therefore stores its posts with a database
+  connection instead, and asks its question with `askAsWorker()` from `test/worker.ts`, which resolves with the answer.

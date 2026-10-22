@@ -4,6 +4,7 @@
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-02  Opus 5.5   prompted by fyoon46
  * 2026-10-03  Opus 5.5   prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { cp, mkdtemp, rm, writeFile } from 'node:fs/promises';
@@ -17,7 +18,8 @@ import { loadSeed } from '../src/load-seed.js';
 import { createDatabase } from './containers.js';
 
 // The other test files read the Places of the shared database. These tests load the seed into a database of their
-// own, so that a corrected seed loaded here reaches no other test. test/seed-outlines.e2e-spec.ts has the outlines.
+// own, so that a corrected seed loaded here reaches no other test. test/seed-outlines.integration.test.ts has the
+// outlines.
 let prisma: PrismaClient;
 let drop: () => Promise<void>;
 
