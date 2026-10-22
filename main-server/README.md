@@ -69,6 +69,10 @@ The server answers two health checks:
 - `GET http://localhost:3000/health/ready`: readiness, the database and Redis can be reached. It answers 503 and names
   the store when one cannot.
 
+Routes match case, so `/ADMIN/administrators` answers 404. Production's load balancer refuses every path under
+`/admin/` with case-sensitive patterns, and this keeps the administrator routes from being reached past it
+(`src/common/http-adapter.ts`).
+
 If a setting in `.env` is missing or invalid, the server stops and names it, for example
 `Config validation error: PORT: Invalid input: expected string, received undefined`.
 

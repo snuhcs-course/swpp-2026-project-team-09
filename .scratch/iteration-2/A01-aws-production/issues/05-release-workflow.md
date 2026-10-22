@@ -1,7 +1,7 @@
 # 05: The Release workflow
 
 Parent: [A01 spec](../spec.md)
-Status: ready-for-agent
+Status: resolved
 Blocked by: 03 (the confirmed `DATABASE_URL` form and the database output), 04 (the manifests and the admin image), 09 (the shared part and the per-server parts it applies). Tickets 01 and 02 come before 03.
 Touches: `.github/workflows/release.yml` (new). Nothing else.
 
@@ -41,12 +41,12 @@ The workflow reads the Region, the role ARN, the cluster name, the registry, the
 - [x] `actionlint` reports nothing on `release.yml`.
 - [x] The first real run happens in ticket 08, since CI cannot reach AWS; `## Comments` lists the repository variables and the parameters the workflow reads, for ticket 07's runbook.
 - [x] `release.yml` carries the `#` AI-generated box with a row for this change (`CLAUDE.md`).
-- [ ] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+- [x] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
 
 ## Comments
 
 - **2026-10-22:** The workflow reads Production's secret values from Parameter Store, not from GitHub: parameters under `/snunow/production/` named `main-db-password`, `match-db-password`, `access-token-private-key`, `access-token-public-key`, `worker-token`, `match-server-token`, `kakao-rest-api-key`, `openrouter-api-key`, and `initial-administrator-emails`, each a `SecureString` but the last, a `String`. `deploy_role.tf` already lets the deploy role read them.
-- **2026-10-22:** A Release is now a tag `snunow/<target>/YY.MM.DD-N` that deploys one server, or all five with `all`, in place of one `snunow-YY.MM.DD-N` tag that deployed everything. The workflow reads the results CI already produced for the tagged commit, and every CI job gates a Release, in place of calling CI through a `workflow_call` trigger with a project input that left out the admin and mobile checks. The deploy role's trust moved to `refs/tags/snunow/*`.
+- **2026-10-22:** A Release is a tag `snunow/<target>/YY.MM.DD-N` that deploys one server, or all five with `all`. The workflow reads the results CI already produced for the tagged commit, and every CI job gates a Release. The deploy role trusts `refs/tags/snunow/*`.
 
 ### Built (2026-10-22)
 
@@ -140,3 +140,8 @@ keys must be PEM with real line breaks.
   shows otherwise.
 - **Lint.** `actionlint` 1.7.12 reports nothing on `release.yml` and `ci.yml`; shellcheck reports nothing on the
   script and the tests; the 13 bats tests pass in Ubuntu 24.04's `bats`, as the CI job installs it.
+
+### Agent usage (2026-10-22)
+
+- Agent time: about 1 hour 15 minutes, an estimate, summed over its implementer and its reviewer, and the agents that rewrote the design for Parameter Store and per-server Releases and reviewed it.
+- Tokens, subagents included: input 548 new, 41.3 million read from the cache, and 1.27 million written to the cache; output 40 thousand.

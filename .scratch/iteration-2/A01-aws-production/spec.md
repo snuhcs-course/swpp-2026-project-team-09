@@ -143,7 +143,7 @@ Account A's credits last until about 12/07. The rest of the course then costs ab
   - The single-replica pods on the lost node, for example Redis, wait until EKS replaces the node, usually within minutes.
   - If that proves too long, the instance type is raised.
 - **Readiness gates.** Terraform labels the `snunow` namespace `elbv2.k8s.aws/pod-readiness-gate-inject: enabled` when it creates it. A new pod then counts as ready only once the ALB finds it healthy, so a rollout never leaves the load balancer without a healthy target.
-- **Namespace:** the app runs in `snunow`.
+- **Namespace:** the app runs in `snunow`, which Terraform also labels `pod-security.kubernetes.io/enforce: baseline`, so that the deploy role, whose rights stop at the namespace, cannot run a privileged or host-network pod that would take over a node.
 
 ### Database
 
@@ -176,7 +176,7 @@ The manifests live in `infra/production/k8s/`, written for Kustomize in parts:
 - **Six targets.** Each server's target renders the shared part and that server's part. `all` renders everything, which the five jobs of an `all` Release apply between them. A server's Release applies its target, so the shared part goes out with every Release.
 - **Generated names.** The ConfigMap's and the Secret's names carry a hash of their content, and every reference in a render uses that name.
   - A server takes up a changed setting or secret value when it is next deployed, and an `all` Release rolls the change to every server.
-  - After a successful rollout, the generated ConfigMaps and Secrets that no pod uses any more are deleted.
+  - After a successful rollout, the generated ConfigMaps and Secrets that no pod uses any more are deleted, except those made in the last 10 minutes, which another server's job of the same `all` Release may still be rolling out.
 - **The database Job** stays outside every target (see "Database").
 
 **What runs**
@@ -379,12 +379,12 @@ Production follows AWS's EKS Best Practices for network security from the first 
 Only if the money runs short, and at a quiet time, not during user testing or the beta. The runbook lists:
 
 1. Switch B to the Paid plan. Create the state bucket and B's variables file.
-2. In B, `terraform apply` with B's files. B's apply requests its certificate without waiting for validation, and outputs the validation record. Add that record to A's zone by hand, and wait until the certificate is issued.
-3. Lower the `api` and `admin` records' TTL to 60 seconds, a few days ahead.
+2. In B, `terraform apply` with B's files. B's apply requests its certificate without waiting for validation, and outputs its two validation records, one for `api` and one for `admin`. Add both to A's zone by hand, and wait until the certificate is issued.
+3. Nothing to lower ahead: `api` and `admin` are alias records, which answer with the load balancer's 60-second TTL.
 4. Copy every parameter under `/snunow/production/` from A to B: read them in A with `aws ssm get-parameters-by-path --with-decryption`, and put each in B with `aws ssm put-parameter` and the same type.
 5. Run the database Job in B; the runbook's steps for it put B's new database passwords over the copied ones. Set the repository variables to B's outputs, push an `all` Release, which deploys all five servers to B at one commit, and scale B's servers to zero once it has rolled out.
 6. Scale A's servers to zero. Dump A's two databases with `pg_dump -Fc` from a `postgres:18` pod in A's cluster. Copy the dumps through a laptop into a pod in B's cluster, and `pg_restore` them there. Then scale B's servers up. The app is down for 10 to 30 minutes, and no write is lost.
-7. In A's zone, point `api` and `admin` at B's ALB, by hand. With the validation record, the move edits three records by hand.
+7. In A's zone, point `api` and `admin` at B's ALB, by hand. With the two validation records, the move edits four records by hand.
 8. In A, remove the two records from Terraform's state with `terraform state rm`. Delete the Ingress, then `terraform destroy`. The hosted zone, the domain, and A's parameters stay. Account A stays open, because closing it deletes the domain, and its owner edits the zone from then on.
 
 Sessions live in the database, and the token keys stay the same because the parameters are copied, so Users stay signed in. Redis starts empty, as after any restart.
@@ -405,7 +405,7 @@ Sessions live in the database, and the token keys stay the same because the para
 - The admin site's `Dockerfile` and `.dockerignore`, `output: 'standalone'` in its Next.js configuration, and its two health routes.
 - Case-sensitive routing in the main server.
 - `.github/workflows/release.yml`.
-- `.github/workflows/ci.yml`: a `terraform` job, and a `manifests` job that renders every target. Its trigger stays as it is.
+- `.github/workflows/ci.yml`: a `terraform` job, a `manifests` job that renders every target, and a `release-script` job that checks the Release workflow's script, `.github/release/release.sh`, with shellcheck and its bats tests. Its trigger stays as it is.
 - **The root README:**
   - a Production paragraph in the Deployment section, pointing to the runbook;
   - `infra/` and `.github/` in the Repository layout;

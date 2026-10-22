@@ -211,6 +211,7 @@ src/app/(signed-in)/events/new/   the page for a new event and its Server Action
 src/app/(signed-in)/places/       the Places page and its map
 src/app/(signed-in)/users/        the Users page, and in [id]/ a User's page with their friendships
 src/app/(signed-in)/collection/   the Collection status page
+src/app/health/          /health/live and /health/ready, answered without a session; ready while the main server is live
 src/app/globals.css      the palette, the font and the shared classes
 src/main-server.ts       the only way the site calls the main server; server-only
 src/session.ts           the cookie, and asAdministrator(), which sends the person to sign-in on a missing cookie or a 401
@@ -218,6 +219,7 @@ src/seoul-time.ts        times in Asia/Seoul
 src/kakao-maps.ts        loads Kakao's JavaScript SDK in the browser, and the types of the parts the site uses
 __tests__/               page tests, named *.test.tsx, and their support/
 __tests__/site/          tests against the built site
+Dockerfile               Production's image: the standalone build (next.config.ts) on port 3100
 ```
 
 Add a main server operation to `mainServer` in `src/main-server.ts`, and the same operation to the fake in

@@ -1,7 +1,7 @@
 # 07: The runbook, the tool guide, and the README changes
 
 Parent: [A01 spec](../spec.md)
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01, 02, 03, 04, 05, 06, 09, 10 (the names and commands the runbook describes)
 Touches: `infra/production/README.md` (beyond ticket 01's, ticket 03's, and ticket 10's sections), the root `README.md`, and `admin/README.md`.
 
@@ -32,10 +32,15 @@ Route 53 alias records have no TTL of their own; they answer with the ALB's 60 s
 
 ## Acceptance criteria
 
-- [ ] Every command in the runbook names the real files, variables, outputs, repository variables, parameters, workflow, Kustomize targets, Job, and policy labels of tickets 01 to 06, 09, and 10, checked against the code.
-- [ ] Every pod that the runbook starts by hand and that reaches the database (psql, the P3009 copy, the database Job, and the move's `pg_dump` and `pg_restore` pods) carries `database-client=true`.
-- [ ] The tool guide covers each item above for both macOS and Windows, and states how Terraform reads the `aws login` session.
-- [ ] The move section has the spec's eight steps in order, with the TTL step handled as above, and says Users stay signed in and Redis starts empty.
-- [ ] The root README's changes and `admin/README.md`'s origin are in place, and the README's table of contents stays consistent.
-- [ ] Markdown files get no AI-generated box (`CLAUDE.md`).
-- [ ] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+- [x] Every command in the runbook names the real files, variables, outputs, repository variables, parameters, workflow, Kustomize targets, Job, and policy labels of tickets 01 to 06, 09, and 10, checked against the code.
+- [x] Every pod that the runbook starts by hand and that reaches the database (psql, the P3009 copy, the database Job, and the move's `pg_dump` and `pg_restore` pods) carries `database-client=true`.
+- [x] The tool guide covers each item above for both macOS and Windows, and states how Terraform reads the `aws login` session.
+- [x] The move section has the spec's eight steps in order, with the TTL step handled as above, and says Users stay signed in and Redis starts empty.
+- [x] The root README's changes and `admin/README.md`'s origin are in place, and the README's table of contents stays consistent.
+- [x] Markdown files get no AI-generated box (`CLAUDE.md`).
+- [x] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+
+### Agent usage (2026-10-22)
+
+- Agent time: about 15 minutes, an estimate, for the writer of the runbook and the README changes, and the orchestrating session's additions after tickets 05 and 10.
+- Tokens, subagents included: input 106 new, 8.2 million read from the cache, and 208 thousand written to the cache; output 4 thousand.
