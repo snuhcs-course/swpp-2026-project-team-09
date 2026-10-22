@@ -63,6 +63,17 @@ jobs:
       - run: find infra/deploy \( -name '*.sh' -o -name '*.bats' \) -print0 | xargs -0 shellcheck
       - run: bats --recursive infra/deploy
 
+  # The Release workflow's script and its tests, which reach neither GitHub nor AWS.
+  release-script:
+    name: release-script
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends bats shellcheck jq
+      - run: find .github/release \( -name '*.sh' -o -name '*.bats' \) -print0 | xargs -0 shellcheck
+      - run: bats --recursive .github/release
+
   # Production's Terraform, checked without a backend or AWS credentials.
   terraform:
     name: terraform

@@ -1,0 +1,97 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# Deploys a Release to Production: a pushed tag snunow/<target>/YY.MM.DD-N deploys its target, one server or all five,
+# at the tag's commit once CI has passed on it. Run by hand on a Release's tag, it deploys that Release again. The
+# steps' logic is in .github/release/release.sh.
+name: Release
+run-name: ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - snunow/**
+      # Production APKs, which are released by hand.
+      - '!snunow/app/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  name:
+    name: name check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      servers: ${{ steps.check.outputs.servers }}
+      image-tag: ${{ steps.check.outputs.image-tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/release
+      - id: check
+        run: .github/release/release.sh check-name "$GITHUB_REF" | tee -a "$GITHUB_OUTPUT"
+
+  release:
+    name: release ${{ matrix.server }}
+    needs: name
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        server: ${{ fromJSON(needs.name.outputs.servers) }}
+    # The gate runs inside the group too, so a newer Release of the server cancels an older one wherever it is, and an
+    # older one still waiting for CI never starts after it.
+    concurrency:
+      group: release-${{ matrix.server }}
+      cancel-in-progress: true
+    env:
+      SERVER: ${{ matrix.server }}
+      IMAGE_TAG: ${{ needs.name.outputs.image-tag }}
+      REGISTRY: ${{ vars.PRODUCTION_ECR_REGISTRY }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: echo "COMMIT=$(git rev-parse HEAD)" >>"$GITHUB_ENV"
+      - name: Wait for CI on the commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/release/release.sh gate "$GITHUB_REPOSITORY" "$COMMIT"
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.PRODUCTION_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.PRODUCTION_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and push the image
+        env:
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+          NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY: ${{ vars.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY }}
+        run: .github/release/release.sh push-image "$REGISTRY" "$SERVER" "$COMMIT" "$IMAGE_TAG"
+      # The role's permission names the path without a trailing slash, and the request must name it the same way.
+      - name: Write the secrets from Parameter Store
+        env:
+          DATABASE_ENDPOINT: ${{ vars.PRODUCTION_DATABASE_ENDPOINT }}
+        run: |
+          aws ssm get-parameters-by-path --path /snunow/production --with-decryption --output json |
+            .github/release/release.sh write-secrets infra/production/k8s/parts/shared/secrets "$DATABASE_ENDPOINT"
+      - name: Deploy
+        env:
+          CLUSTER_NAME: ${{ vars.PRODUCTION_CLUSTER_NAME }}
+        run: |
+          aws eks update-kubeconfig --name "$CLUSTER_NAME"
+          .github/release/release.sh deploy "$REGISTRY" "$SERVER" "$COMMIT"
+      - name: Delete the settings and secrets no pod uses
+        run: .github/release/release.sh clean
