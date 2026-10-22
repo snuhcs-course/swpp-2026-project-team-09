@@ -50,6 +50,22 @@ describe('the week', () => {
     expect(weekHours(blocks)).toEqual({ first: 8, last: 23 });
     expect(openingHour(blocks, 8, WEDNESDAY_AT(15))).toBe(8);
   });
+});
+
+describe('the ends of the week', () => {
+  it('ends the week at 24 for a class that runs to 24:00 or 23:59', () => {
+    const blocks = toWeekBlocks(
+      [lesson('자정', 'monday', '22:00', '24:00'), lesson('막차', 'tuesday', '23:00', '23:59')],
+      [],
+    );
+
+    expect(blocks).toMatchObject([{ start: 22, end: 24 }, { start: 23 }]);
+    expect(weekHours(blocks)).toEqual({ first: 9, last: 24 });
+  });
+
+  it('leaves out a time that does not end after it starts, which the main server refuses', () => {
+    expect(toWeekBlocks([lesson('자정 넘어', 'friday', '23:00', '01:00')], [])).toEqual([]);
+  });
 
   it('adds 토 for a Saturday class, and 토 and 일 for a Sunday one', () => {
     const saturday = toWeekBlocks([lesson('토요일', 'saturday', '10:00', '13:00')], []);

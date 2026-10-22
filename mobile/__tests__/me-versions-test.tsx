@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { within } from '@testing-library/react-native';
+import { fireEvent, within } from '@testing-library/react-native';
+import { ScrollView } from 'react-native';
 import { pass, screen } from './support/app';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { answered, startFresh } from './support/mocks';
@@ -91,6 +93,24 @@ describe('new versions', () => {
 
     expect(trigger('2026-2학기')).toBeVisible();
     expect(screen.getAllByTestId('class-block')).toHaveLength(7);
+  });
+
+  it("opens the week's hours again on another version, after the User scrolled them", async () => {
+    const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
+    const user = await openMe();
+    // The frame's time, Thursday 13:37, is after Thursday's class: the week opens at its earliest class, 09:30.
+    expect(scrollTo).toHaveBeenLastCalledWith({ y: 0, animated: false });
+    await fireEvent.scroll(screen.getByTestId('week-scroll'), {
+      nativeEvent: { contentOffset: { y: 300 }, contentSize: { height: 468 }, layoutMeasurement: { height: 288 } },
+    });
+    scrollTo.mockClear();
+
+    await openMenu(user, '2026-2학기');
+    await user.press(screen.getByRole('button', { name: '빈 시간표 추가' }));
+    await pass(3000);
+
+    expect(screen.queryAllByTestId('class-block')).toHaveLength(0);
+    expect(scrollTo).toHaveBeenCalledWith({ y: 0, animated: false });
   });
 
   it('duplicates the current version as 복사본', async () => {

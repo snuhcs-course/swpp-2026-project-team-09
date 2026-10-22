@@ -102,6 +102,20 @@ describe("the week's hours and days", () => {
     expect(screen.queryByText('일')).toBeNull();
   });
 
+  it('adds 토 and 일 for a Sunday class', async () => {
+    await answered(
+      apiClient.addClass({
+        courseName: '일요 스터디',
+        times: [{ weekday: 'sunday', startTime: '14:00', endTime: '16:00', placeId: null, room: null }],
+      }),
+    );
+    await openMe();
+
+    expect(screen.getByText('토')).toBeVisible();
+    expect(screen.getByText('일')).toBeVisible();
+    expect(screen.getByLabelText('일요일 14:00–16:00 일요 스터디')).toBeVisible();
+  });
+
   it('shows 월 to 금 only when no class falls on the weekend', async () => {
     await openMe();
 
