@@ -1,0 +1,27 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# M2, US-FRIEND-01 scenario 2, on a warm start: an Invite Link opened from outside while the app is on the map shows
+# the link's accept screen at once.
+appId: com.bonnieandclaude.snunow
+name: M2 an Invite Link opened on a warm start
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: deny
+- extendedWaitUntil:
+    visible: '서울대 계정으로 로그인'
+    timeout: 30000
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      SHOTS: m2-warm
+- openLink: snunow://invite/from-yujian
+- runFlow:
+    file: ../subflows/accept-invite.yaml
+    env:
+      SHOTS: m2-warm

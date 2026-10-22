@@ -306,6 +306,71 @@ file in `src/`, written to `coverage/`.
 A test may take up to 60 seconds: the first test of a file that touches a text input or an animation loads those
 parts of React Native, which is slow on a machine that has not run the tests before, as in CI.
 
+## Device runs
+
+Two journeys run a release build of the app on an Android emulator, driven by Maestro. M1 is a first run, from the
+sign-in through the consent and Onboarding to the map, and a relaunch that opens the map without signing in again
+(US-AUTH-01, scenario 1). M2 opens an Invite Link from outside the app, on a cold and on a warm start, and accepts it
+(US-FRIEND-01, scenario 2). The app answers from its own mock data and reaches no server, so they are integration
+tests ([ADR 0007](../docs/adr/0007-test-levels-by-what-a-test-starts.md)): their flows are in `maestro/integration/`
+and the steps they share in `maestro/subflows/`. Neither `pnpm test` nor CI runs them. Run them after changing a
+screen they pass through, on a Mac with Apple Silicon and the tools of "Build the app for Android".
+
+### The mock APK
+
+```bash
+pnpm build:mock-apk
+```
+
+It builds `android/app/build/outputs/apk/release/app-release.apk` with Homebrew's JDK 17 (`brew install openjdk@17`;
+JDK 25 breaks the build). The main server's and the socket server's addresses, Google's web client ID and
+`INVITE_LINK_HOST` are empty for the build, so the app signs in by its mock, answers from its mock data with the clock
+at the wireframes' moment, and opens Invite Links only through `snunow://`. The rest comes from `.env`, which needs
+`KAKAO_NATIVE_APP_KEY`: Kakao's SDK refuses to start without it. `ANDROID_X86_64` is unset, so the APK is for
+`arm64-v8a` alone, and it is signed with the debug key of Expo's template, as the dev APK is. The build generates
+`android/` again (`expo prebuild --clean`); after it, `pnpm android` makes a development build again.
+
+### The emulator
+
+The runs are made on one emulator: the system image `system-images;android-36;google_apis_playstore;arm64-v8a`
+(API 36, Google Play, `arm64-v8a`) with Android Studio's "Medium Phone" device profile, here an AVD named
+`Medium_Phone`. For a run whose result is reported, boot it cold and wait until it has started:
+
+```bash
+$ANDROID_HOME/emulator/emulator -avd Medium_Phone -no-snapshot-load -no-audio &
+until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1 ]; do sleep 2; done
+```
+
+The first runs, on 2026-10-23, used the emulator 37.1.11 and the system image's revision 7. Stop the emulator with
+`adb emu kill`.
+
+### Maestro
+
+Maestro CLI 2.11.0, which runs on JDK 17. Download `maestro.zip` from the release `cli-2.11.0` of
+`mobile-dev-inc/maestro` on GitHub and unpack it so that the CLI is `~/.maestro/bin/maestro`. `pnpm test:device` adds
+that folder to `PATH` and points `JAVA_HOME` at JDK 17 itself.
+
+### The command
+
+With the emulator started and nothing else connected:
+
+```bash
+pnpm test:device
+```
+
+It checks that exactly one device is connected, with ABI `arm64-v8a` and API 36, and that `maestro --version` prints
+2.11.0; turns the emulator's window, transition and animator scales to 0; reinstalls the mock APK; and runs
+`maestro test --format junit` over `maestro/integration/`. Each flow starts with a launch that clears the app's state,
+and the relaunch in M1 keeps it. The flows grant the app no permission: granted the location, the app watches it, and
+Google Play services may ask over the map to turn on Location Accuracy, a system screen that depends on the emulator's
+settings. So the app explains the location once on the map, and the flows answer "나중에".
+
+Each run writes into its own folder under `device-results/`, which git ignores, named by the date, the time and the
+commit, such as `device-results/2026-10-23T001807-74381a9b/`. It holds `report.xml`, the JUnit report, and Maestro's
+output, a folder for each flow: the screenshot of each checkpoint in `takeScreenshot/`, Maestro's log and the
+emulator's logcat in `logs/`, and for a failed step the screen and its hierarchy. The logcat holds the Kakao key that
+the map sends, so share the report and the screenshots, not the logs.
+
 ## Folder layout
 
 ```text
@@ -325,6 +390,8 @@ src/session/        where the User is in the flow between the screens, and the w
 src/screens/        the screens that the routes show; a screen of several files has a folder
 modules/            the native modules, local Expo modules: the map (snu-now-map) and text recognition (snu-now-ocr)
 __tests__/          Jest tests
+maestro/            the device runs' Maestro flows: integration/ holds M1 and M2, subflows/ the steps they share
+scripts/            the device runs' two commands: build-mock-apk.sh and test-device.sh
 assets/             app icons, the splash image, the fonts, the loading screen's photos and the sign-in screen's pictures
 ```
 

@@ -1,0 +1,39 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# A first run, from the sign-in screen to the map: the mock's sign-in, the consent, and Onboarding with the mock's
+# suggested name and a department chosen from the list. SHOTS names the screenshots after the flow that runs this.
+# The flows launch the app with no permission granted. Granted the location, the app watches it, and on an emulator
+# Google Play services may then ask over the map to turn on Location Accuracy, a system screen that depends on the
+# emulator's settings. Not granted it, the app explains the location once, on the map, and the flow answers "later".
+appId: com.bonnieandclaude.snunow
+---
+- tapOn: '서울대학교 구글 계정(@snu.ac.kr)으로 로그인'
+- assertVisible: '약관에 동의해 주세요'
+- takeScreenshot: ${SHOTS}-consent
+- tapOn: '동의하고 시작'
+- assertVisible: '프로필 만들기'
+- assertVisible: '안진영'
+- takeScreenshot: ${SHOTS}-onboarding
+- tapOn: '학과'
+# The list scrolls inside the form. scrollUntilVisible swipes from the screen's centre and flings past rows, so short,
+# slow swipes move it instead, inside it as it lies on the pinned emulator's screen.
+- repeat:
+    while:
+      notVisible: '경제학부'
+    times: 10
+    commands:
+      - swipe:
+          start: 50%, 58%
+          end: 50%, 42%
+          duration: 1500
+- tapOn: '경제학부'
+- takeScreenshot: ${SHOTS}-department
+- tapOn: '저장하고 시작하기'
+- assertVisible: '내 위치를 지도에 표시할까요?'
+- tapOn: '나중에'
+- runFlow: map.yaml
+- takeScreenshot: ${SHOTS}-map

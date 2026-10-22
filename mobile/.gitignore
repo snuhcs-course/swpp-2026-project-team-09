@@ -6,6 +6,9 @@ node_modules/
 # Jest coverage reports
 /coverage
 
+# Device runs' reports and screenshots (pnpm test:device)
+/device-results
+
 # Expo
 .expo/
 dist/
