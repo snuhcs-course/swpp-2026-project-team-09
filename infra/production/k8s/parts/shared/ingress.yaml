@@ -1,0 +1,76 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# One internet-facing ALB for both hosts: the AWS Load Balancer Controller merges the Ingresses of the IngressGroup
+# snunow, and tags the ALB with it. On 443 the controller finds the ACM certificate from the hosts, so no ARN is here.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api
+  annotations:
+    alb.ingress.kubernetes.io/group.name: snunow
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/healthcheck-path: /health/ready
+    # The administrator routes answer only inside the cluster, to the admin site.
+    alb.ingress.kubernetes.io/actions.admin-routes-refused: >-
+      {"type": "fixed-response", "fixedResponseConfig": {"contentType": "application/json", "statusCode": "404",
+      "messageBody": "{\"message\":\"Not Found\",\"statusCode\":404}"}}
+spec:
+  ingressClassName: alb
+  rules:
+    - host: api.snunow.com
+      http:
+        # The controller puts longer Prefix paths first, so /socket.io and /admin come before /.
+        paths:
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: socket-server
+                port:
+                  name: http
+          - path: /admin
+            pathType: Prefix
+            backend:
+              service:
+                name: admin-routes-refused
+                port:
+                  name: use-annotation
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: main-server
+                port:
+                  name: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: admin
+  annotations:
+    alb.ingress.kubernetes.io/group.name: snunow
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/healthcheck-path: /health/ready
+spec:
+  ingressClassName: alb
+  rules:
+    - host: admin.snunow.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: admin
+                port:
+                  name: http

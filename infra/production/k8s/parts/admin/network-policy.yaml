@@ -1,0 +1,30 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# Browsers reach it through the load balancer, whose addresses are in the public subnets (network.tf). It calls the main
+# server only; Google's and Kakao's scripts run in the browser.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: admin
+spec:
+  podSelector:
+    matchLabels:
+      app: admin
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - ipBlock: { cidr: 10.0.0.0/20 }
+        - ipBlock: { cidr: 10.0.16.0/20 }
+      ports:
+        - { protocol: TCP, port: 3100 }
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: main-server
+      ports:
+        - { protocol: TCP, port: 3000 }

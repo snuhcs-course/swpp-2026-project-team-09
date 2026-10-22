@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ChildProcess, spawn } from 'node:child_process';
@@ -28,7 +29,9 @@ function listening(server: Server): Promise<number> {
 function answer(request: IncomingMessage, response: ServerResponse, body: string): void {
   const signedIn = request.headers.authorization === `Bearer ${ACCESS_TOKEN}`;
   const route = `${request.method} ${request.url}`;
-  if (route === 'POST /admin/auth/google') {
+  if (route === 'GET /health/live') {
+    response.writeHead(200, { 'content-type': 'application/json' }).end('{"status":"ok"}');
+  } else if (route === 'POST /admin/auth/google') {
     const known = body === JSON.stringify({ idToken: ID_TOKEN });
     response.writeHead(known ? 200 : 403, { 'content-type': 'application/json' });
     response.end(known ? JSON.stringify({ accessToken: ACCESS_TOKEN }) : '{}');

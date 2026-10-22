@@ -1,0 +1,71 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: admin
+  template:
+    metadata:
+      labels:
+        app: admin
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: admin
+          image: admin
+          ports:
+            - name: http
+              containerPort: 3100
+          env:
+            - name: PORT
+              value: '3100'
+            # Kubernetes sets HOSTNAME to the pod's name, and the standalone server binds to HOSTNAME.
+            - name: HOSTNAME
+              value: 0.0.0.0
+            # Inside the cluster, never through the load balancer.
+            - name: MAIN_SERVER_URL
+              valueFrom: { configMapKeyRef: { name: settings, key: MAIN_SERVER_URL } }
+          resources:
+            requests:
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+          livenessProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet: { path: /health/ready, port: http }
+            periodSeconds: 5
+            timeoutSeconds: 3
+          # Until the load balancer has stopped sending to the pod.
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin
+spec:
+  selector:
+    app: admin
+  ports:
+    - name: http
+      port: 3100
+      targetPort: http

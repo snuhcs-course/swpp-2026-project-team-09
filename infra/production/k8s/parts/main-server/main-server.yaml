@@ -1,0 +1,110 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: main-server
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: main-server
+  template:
+    metadata:
+      labels:
+        app: main-server
+    spec:
+      enableServiceLinks: false
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: main-server
+          matchLabelKeys: [pod-template-hash]
+      containers:
+        - name: main-server
+          image: main-server
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: PORT
+              value: '3000'
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: secrets, key: MAIN_DATABASE_URL } }
+            - name: REDIS_HOST
+              valueFrom: { configMapKeyRef: { name: settings, key: REDIS_HOST } }
+            - name: REDIS_PORT
+              valueFrom: { configMapKeyRef: { name: settings, key: REDIS_PORT } }
+            - name: ACCESS_TOKEN_PRIVATE_KEY
+              valueFrom: { secretKeyRef: { name: secrets, key: ACCESS_TOKEN_PRIVATE_KEY } }
+            - name: ACCESS_TOKEN_PUBLIC_KEY
+              valueFrom: { secretKeyRef: { name: secrets, key: ACCESS_TOKEN_PUBLIC_KEY } }
+            - name: GOOGLE_APP_CLIENT_ID
+              valueFrom: { configMapKeyRef: { name: settings, key: GOOGLE_APP_CLIENT_ID } }
+            - name: GOOGLE_ADMIN_CLIENT_ID
+              valueFrom: { configMapKeyRef: { name: settings, key: GOOGLE_ADMIN_CLIENT_ID } }
+            - name: INITIAL_ADMINISTRATOR_EMAILS
+              valueFrom: { secretKeyRef: { name: secrets, key: INITIAL_ADMINISTRATOR_EMAILS } }
+            - name: KAKAO_REST_API_KEY
+              valueFrom: { secretKeyRef: { name: secrets, key: KAKAO_REST_API_KEY } }
+            - name: WORKER_TOKEN
+              valueFrom: { secretKeyRef: { name: secrets, key: WORKER_TOKEN } }
+            - name: PUBLIC_URL
+              valueFrom: { configMapKeyRef: { name: settings, key: PUBLIC_URL } }
+            - name: ANDROID_CERTIFICATE_FINGERPRINTS
+              valueFrom: { configMapKeyRef: { name: settings, key: ANDROID_CERTIFICATE_FINGERPRINTS } }
+            - name: MATCH_SERVER_URL
+              valueFrom: { configMapKeyRef: { name: settings, key: MATCH_SERVER_URL } }
+            - name: MATCH_SERVER_TOKEN
+              valueFrom: { secretKeyRef: { name: secrets, key: MATCH_SERVER_TOKEN } }
+            - name: OPENROUTER_API_KEY
+              valueFrom: { secretKeyRef: { name: secrets, key: OPENROUTER_API_KEY } }
+            - name: ASSISTANT_MODEL
+              valueFrom: { configMapKeyRef: { name: settings, key: ASSISTANT_MODEL } }
+          resources:
+            requests:
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          # The first start migrates the database and loads the seed before it listens.
+          startupProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet: { path: /health/ready, port: http }
+            periodSeconds: 5
+            timeoutSeconds: 3
+          # Until the load balancer has stopped sending to the pod.
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: main-server
+spec:
+  selector:
+    app: main-server
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http

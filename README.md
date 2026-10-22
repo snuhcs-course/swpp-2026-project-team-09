@@ -151,8 +151,8 @@ What the demo cannot show, and what is known not to work yet:
   needs that key registered: its SHA-1 in an Android OAuth client of the Google Cloud project, with the package name
   `com.bonnieandclaude.snunow`; its key hash at Kakao under the app's Android platform; and its SHA-256 in the main
   server's `ANDROID_CERTIFICATE_FINGERPRINTS` for Invite Links. Without the first, sign-in fails; without the second,
-  the map stays blank. The admin site works only on `http://localhost:3100`, the origin registered for its Google
-  client and its Kakao key.
+  the map stays blank. The admin site works only on `http://localhost:3100` and on Production's
+  `https://admin.snunow.com`, the origins registered for its Google client and its Kakao key.
 - **Invite Links need a fixed https address.** Links are built from the main server's public address, and Android
   opens the app only for links under the https host the build was made with. A link under a computer's own address
   over http opens the browser, not the app, and a build without the link host opens links only through
@@ -535,6 +535,16 @@ member fast-forwards it to `2.0/Main` from a checkout.
 The runbook, [infra/deploy/README.md](infra/deploy/README.md), says how to set up a server, read the status and the
 journal, redeploy by hand, move `development`, restore a dump and add an APK.
 
+**Production** is the system that people outside the team use, for user testing, the beta test, and the final demo.
+It runs on Amazon EKS in AWS's Seoul Region, built with Terraform, and answers at `https://api.snunow.com` for the app
+and at `https://admin.snunow.com` for the admin site. It starts with only the seed data and never carries Demo Data.
+It changes only with a Release: a tag `snunow/<target>/YY.MM.DD-N` on a reviewed commit of the iteration branch, which
+deploys one server, or all five with `all`, once every CI job has passed on that commit
+([ADR 0006](docs/adr/0006-production-runs-on-eks-and-releases-are-pushed.md)). The Production APK is attached to the
+GitHub release page of its `snunow/app/YY.MM.DD-N` tag. The runbook and the tool guide,
+[infra/production/README.md](infra/production/README.md), say how to set up a laptop, release, deploy an earlier
+Release again, rotate a secret, and move Production to another AWS account.
+
 ## Repository layout
 
 | Folder           | What it holds                                                                                 |
@@ -546,10 +556,10 @@ journal, redeploy by hand, move `development`, restore a dump and add an APK.
 | `admin/`         | The admin site for Administrators                                                             |
 | `mobile/`        | The app, with the native map module for Android and iOS in `modules/`                         |
 | `flow-tests/`    | Tests of the three demo flows across the four servers                                         |
-| `infra/`         | The PostgreSQL image with PostGIS, and the Dev Server's proxy and deployment (`deploy/`)      |
+| `infra/`         | The PostgreSQL image, the Dev Server (`deploy/`, `proxy/`), and Production (`production/`)    |
 | `docs/`          | Decision records (`adr/`), the agents' conventions (`agents/`), and the demo videos (`demo/`) |
 | `.scratch/`      | Specs and tickets of each iteration's tasks, and research notes                               |
-| `.github/`       | The CI workflow, the pull request template and the code owners                                |
+| `.github/`       | The CI and Release workflows, the pull request template, and the code owners                  |
 | `.claude/`       | Shared skills for coding agents; `.agents/` links to them                                     |
 
 ## AI-generated code

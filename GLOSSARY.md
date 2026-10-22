@@ -164,7 +164,7 @@ The system that real Users' phones reach during user testing, the beta test, and
 _Avoid_: Prod server, AWS server, live server
 
 **Release**:
-A reviewed state of the code that the team puts on Production, named for the day it ships in Korea and its place among that day's Releases.
+A reviewed state of the code that the team puts on Production for one server or the admin site, or for all of them at once, named for that target, the day it ships in Korea, and its place among that day's Releases of the target. Different servers may run different Releases. The tag that marks the commit a Production APK was built from is not a Release.
 _Avoid_: Deployment (the Dev Server deploys without Releases), version, build
 
 **Demo Data**:
