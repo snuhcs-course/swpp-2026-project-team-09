@@ -180,7 +180,7 @@ What the project was built and run with:
 | Part                   | Used                                                                                               |
 | ---------------------- | -------------------------------------------------------------------------------------------------- |
 | Development machine    | macOS on Apple Silicon                                                                             |
-| Node.js and pnpm       | Node.js 24 (24.21.0), pnpm 12.6.0                                                                  |
+| Node.js and pnpm       | Node.js 24.14.0, the version in `.nvmrc`; pnpm 12.6.0                                              |
 | Containers             | Docker Desktop (Docker 29, Compose 5), `compose.yaml` at the repository root                       |
 | Servers                | NestJS 12 on Node.js 24 in containers; Prisma 7; Socket.IO 4                                       |
 | Data stores            | PostgreSQL 18 with PostGIS 3, Redis 8                                                              |
