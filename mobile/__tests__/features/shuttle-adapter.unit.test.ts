@@ -18,7 +18,7 @@ import {
   toShuttleView,
 } from '@/features/shuttle/adapter';
 
-// A loop anticlockwise round a rectangle: 111.32 m north, 88.90 m east (0.001° at 37°), back south and west.
+// A loop clockwise round a rectangle: 111.32 m north, 88.90 m east (0.001° at 37°), back south and west.
 const NORTH = 111.32;
 const EAST = 0.001 * 111_320 * Math.cos((37 * Math.PI) / 180);
 const LOOP = 2 * NORTH + 2 * EAST;
