@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { OcrLine } from './native-ocr';
@@ -11,8 +12,6 @@ import type { OcrLine } from './native-ocr';
 export const TITLE_LENGTH = 20;
 // The top of the picture that the phone's status bar takes (its clock, `1:04`).
 const STATUS_BAR = 0.06;
-// A word read with less confidence than this is left out of the title: a chevron read as `<` (0.06).
-const TITLE_WORD_CONFIDENCE = 0.3;
 // Words the apps draw beside the title that are no title: 에브리타임's screen heading.
 const NOT_TITLES = new Set(['시간표']);
 
@@ -23,8 +22,8 @@ export function findTitle(lines: readonly OcrLine[], imageHeight: number, header
   for (const line of lines) {
     const centre = line.box.y + line.box.h / 2;
     if (centre > imageHeight * STATUS_BAR && line.box.y + line.box.h <= headerTop) {
+      // Marks such as a chevron read as `<` fall out by their characters.
       const text = line.elements
-        .filter((element) => element.confidence === null || element.confidence >= TITLE_WORD_CONFIDENCE)
         .map((element) => element.text)
         .join(' ')
         .replaceAll(/[^\p{L}\p{N}\s()\-_.]/gu, '')

@@ -4,6 +4,7 @@
 # 2026-10-01  Opus 5.5   prompted by fyoon46
 # 2026-10-06  Fable 5.1  prompted by fyoon46
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
+# 2026-10-22  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 name: CI
@@ -50,6 +51,34 @@ jobs:
       - run: pnpm format:check
       - run: pnpm typecheck
       - run: pnpm test
+        if: matrix.project != 'mobile'
+
+  # mobile's tests take over ten minutes on one runner, so they are split across four. Each keeps Jest's transform
+  # cache for the next runs on its branch.
+  mobile-tests:
+    name: mobile-tests (${{ matrix.shard }}/${{ strategy.job-total }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          working-directory: mobile
+          node-version-file: ../.nvmrc
+          cache: true
+          require-lockfile: true
+      - uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/jest
+          key: mobile-jest-${{ matrix.shard }}-${{ hashFiles('mobile/pnpm-lock.yaml') }}
+      - run: pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }} --cacheDirectory=${{ runner.temp }}/jest
 
   # The Dev Server's shell scripts and their tests. The deploy script does not wait for this check.
   deploy-scripts:
@@ -61,3 +90,41 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends bats shellcheck jq
       - run: find infra/deploy \( -name '*.sh' -o -name '*.bats' \) -print0 | xargs -0 shellcheck
       - run: bats --recursive infra/deploy
+
+  # The Release workflow's script and its tests, which reach neither GitHub nor AWS.
+  release-script:
+    name: release-script
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends bats shellcheck jq
+      - run: find .github/release \( -name '*.sh' -o -name '*.bats' \) -print0 | xargs -0 shellcheck
+      - run: bats --recursive .github/release
+
+  # Production's Terraform, checked without a backend or AWS credentials.
+  terraform:
+    name: terraform
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: infra/production/terraform
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.16.6
+      - run: terraform fmt -check
+      - run: terraform init -backend=false -input=false -lockfile=readonly
+      - run: terraform validate
+
+  # Production's manifests: each target renders with stand-ins for the secrets that the Release workflow writes, and
+  # holds the objects that a Release of it applies.
+  manifests:
+    name: manifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: infra/production/k8s/test/targets.sh

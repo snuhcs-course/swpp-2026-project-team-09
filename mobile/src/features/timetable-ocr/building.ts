@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Place } from '@/api/types';
 
-import { type BlockLine, roomOf } from './block-text';
+import { roomOf, type RoomText } from './block-text';
 
 // Linking a room to a campus building.
 
@@ -36,14 +37,16 @@ export function buildingOf(room: string, places: readonly Place[]): Link | null 
   return null;
 }
 
-// The confidence a room line needs before it is linked (Android). Chosen on the four reference screenshots, whose
-// room lines read 0.82–0.95: see accuracy.md.
-export const ROOM_CONFIDENCE = 0.8;
+// The confidence a room needs before it is linked (Android). The only use of ML Kit's confidence left: a misread digit
+// can land on another real building (301 read as 307), and a User must never be sent to the wrong place, while a room
+// left unlinked is harmless. The four reference screenshots' rooms read 0.82–0.95, so 0.5 refuses none of them (0.8,
+// the earlier floor, left a margin of 0.02); a read that ML Kit itself doubts, under even odds, is not linked.
+export const ROOM_CONFIDENCE = 0.5;
 
-// The link of a block's room line, when the line passes the rules: it matches the room pattern on its whole length,
-// none of its words was cut at the block's sides, and it is read with enough confidence. Without a confidence (iOS) the stricter rule stands in: the line is a single OCR
-// element, read whole. Either way the building must be a Place.
-export function linkRoom(line: BlockLine | null, places: readonly Place[]): Link | null {
+// The link of a block's room, when it passes the rules: it matches the room pattern on its whole length, none of its
+// words was cut at the block's sides, and its building is a Place. On Android it is read with at least
+// ROOM_CONFIDENCE; without a confidence (iOS) it is read inside one OCR element, read whole.
+export function linkRoom(line: RoomText | null, places: readonly Place[]): Link | null {
   if (line === null) {
     return null;
   }
@@ -51,8 +54,6 @@ export function linkRoom(line: BlockLine | null, places: readonly Place[]): Link
   if (room === null) {
     return null;
   }
-  const trusted =
-    line.unclipped &&
-    (line.confidence === null ? line.wholeElement && line.elements === 1 : line.confidence >= ROOM_CONFIDENCE);
+  const trusted = line.unclipped && (line.confidence === null ? line.oneElement : line.confidence >= ROOM_CONFIDENCE);
   return trusted ? buildingOf(room, places) : null;
 }

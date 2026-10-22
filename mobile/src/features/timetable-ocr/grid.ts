@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Weekday } from '@/api/types';
 
-import type { PixelImage } from './pixels';
+import { BLOCK, FAINT, type PixelImage } from './pixels';
 import { centreY, type Word } from './words';
 
 // ① The grid's columns and lines, in the small copy's pixels. `hours.ts` fits the time to the rows.
@@ -21,6 +22,29 @@ const DAYS: Record<string, Weekday> = {
   일: 'sunday',
 };
 const WEEK: Weekday[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const ENGLISH: Record<string, Weekday> = {
+  MON: 'monday',
+  TUE: 'tuesday',
+  WED: 'wednesday',
+  THU: 'thursday',
+  FRI: 'friday',
+  SAT: 'saturday',
+  SUN: 'sunday',
+};
+
+// The day a header word names: `월`, `월요일`, `Mon`, `MON`, `Monday`, `Tues`, `Thurs`.
+export function dayOf(text: string): Weekday | undefined {
+  const word = text.trim().replace(/\.$/u, '');
+  const korean = /^([월화수목금토일])(?:요일)?$/u.exec(word)?.[1];
+  if (korean !== undefined) {
+    return DAYS[korean];
+  }
+  const upper = word.toUpperCase();
+  const abbreviation = upper.slice(0, 3);
+  const full = (ENGLISH[abbreviation] ?? '').toUpperCase();
+  const known = upper === abbreviation || upper === full || upper === 'TUES' || upper === 'THURS';
+  return known ? ENGLISH[abbreviation] : undefined;
+}
 
 export interface Column {
   weekday: Weekday;
@@ -46,7 +70,7 @@ function columnsAround(x0: number, d: number, last: number): Column[] {
 // The day letters grouped into rows of about one height.
 function letterRows(words: readonly Word[]): Word[][] {
   const letters = words
-    .filter((word) => DAYS[word.text.trim()] !== undefined)
+    .filter((word) => dayOf(word.text) !== undefined)
     .toSorted((one, other) => centreY(one) - centreY(other));
   const rows: Word[][] = [];
   for (const letter of letters) {
@@ -82,7 +106,7 @@ function dayLine(days: readonly number[], centres: readonly number[]): { x0: num
 export function findHeader(words: readonly Word[], imageWidth: number): Header | null {
   let best: { row: Word[]; days: number[] } | null = null;
   for (const row of letterRows(words)) {
-    const days = row.map((word) => WEEK.indexOf(DAYS[word.text.trim()] ?? 'sunday'));
+    const days = row.map((word) => WEEK.indexOf(dayOf(word.text) ?? 'sunday'));
     const ordered = days.every((day, index) => index === 0 || day > (days[index - 1] ?? 7));
     if (ordered && new Set(days).size >= 3 && (best === null || row.length > best.row.length)) {
       best = { row, days };
@@ -107,16 +131,15 @@ export function findHeader(words: readonly Word[], imageWidth: number): Header |
   };
 }
 
-// A pixel of a grid line: light grey, neither white nor coloured.
+// A pixel of a grid line: grey and a little off the background, lighter or darker (`pixels.ts`).
 function gridGrey(image: PixelImage, index: number): boolean {
-  const value = image.value[index] ?? 0;
-  return (image.saturation[index] ?? 1) < 0.1 && value >= 170 && value <= 250;
+  return image.kind[index] === FAINT;
 }
 
 // Whether a block's coloured pixel meets a pixel of another colour between x − 1 and x.
 function colourEdge(image: PixelImage, index: number): boolean {
   const left = index - 1;
-  if ((image.saturation[index] ?? 0) < 0.25 && (image.saturation[left] ?? 0) < 0.25) {
+  if (image.kind[index] !== BLOCK && image.kind[left] !== BLOCK) {
     return false;
   }
   let difference = 0;
@@ -195,7 +218,7 @@ export function columnsFromGridLines(image: PixelImage, top: number, bottom: num
   return count < 3 || count > 7 ? null : columnsAround(first + d / 2, d, count - 1);
 }
 
-// The rows of horizontal grid lines between x0 and x1: most of a row's uncoloured pixels are light grey. A run of such
+// The rows of horizontal grid lines between x0 and x1: most of a row's uncoloured pixels are faint. A run of such
 // rows longer than 3 is a grey area, not a line.
 export function horizontalLines(image: PixelImage, x0: number, x1: number): number[] {
   const lines: number[] = [];
@@ -213,7 +236,7 @@ export function horizontalLines(image: PixelImage, x0: number, x1: number): numb
     let grey = 0;
     for (let x = from; x < to; x += 1) {
       const index = y * image.width + x;
-      plain += (image.saturation[index] ?? 1) < 0.1 ? 1 : 0;
+      plain += image.kind[index] === BLOCK ? 0 : 1;
       grey += gridGrey(image, index) ? 1 : 0;
     }
     if (plain >= (x1 - x0) * 0.2 && grey >= plain * 0.6) {

@@ -4,6 +4,7 @@
 # 2026-09-28  Opus 5.5   prompted by TaeHyun79
 # 2026-09-29  Opus 5.5   prompted by TaeHyun79
 # 2026-09-29  Opus 5.5   prompted by fyoon46
+# 2026-10-22  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # The match server as compose.yaml at the repository root runs it.
@@ -21,6 +22,11 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 RUN pnpm build
+
+# Production's database on RDS presents a certificate from Amazon's own CAs, which Node does not trust by itself. Set
+# after the install, because pnpm would trust only this bundle and fail to reach the registry.
+ADD https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /etc/ssl/certs/rds-global-bundle.pem
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/rds-global-bundle.pem
 
 EXPOSE 3003
 # Bring the database up to the current schema, then start the server.

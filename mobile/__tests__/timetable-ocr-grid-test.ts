@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { endIsUncertain, findBlocks, splitAtLightLines } from '@/features/timetable-ocr/blocks';
+import { endIsUncertain, findBlocks, splitAtSeparators } from '@/features/timetable-ocr/blocks';
 import { columnsFromGridLines, findHeader } from '@/features/timetable-ocr/grid';
 import { fitHourLabels, type HourLabel, hoursAt, unfoldHours, wrapCandidates } from '@/features/timetable-ocr/hours';
 import { readTimetable } from '@/features/timetable-ocr/read-timetable';
@@ -137,7 +138,7 @@ describe('the blocks', () => {
     const x0 = LEFT + 1;
     canvas.fill(x0, rowOf(10), x0 + COLUMN - 1, rowOf(13), BLUE);
     canvas.fill(x0, rowOf(11.5), x0 + COLUMN - 1, rowOf(11.5) + 1, [160, 200, 240]);
-    expect(splitAtLightLines(canvas.image(), { x0, x1: x0 + COLUMN - 1, y0: rowOf(10), y1: rowOf(13) })).toEqual([
+    expect(splitAtSeparators(canvas.image(), { x0, x1: x0 + COLUMN - 1, y0: rowOf(10), y1: rowOf(13) })).toEqual([
       rowOf(11.5),
     ]);
     const blocks = findBlocks(canvas.image(), HEADER_COLUMNS, HOUR, HEADER_BOTTOM);
