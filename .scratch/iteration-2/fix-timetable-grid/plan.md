@@ -61,3 +61,32 @@ Approved, with these added (separate commits, tests first):
 4. Opening position: when today has a class that has not ended, open at the current hour, or at that class's start
    when it is already running; otherwise at the week's earliest class; otherwise at 09:00.
 5. Tests: a class starting at 08:00 widens the start to 08; a Saturday class shows in a 토 column; the opening rules.
+
+### Second review (independent, PR #115)
+
+1. Re-open on a version switch: the hours opened from `onContentSizeChange`, which does not fire when another
+   version has the same range. They now open on the first layout and in an effect on the opening and on the
+   classes' signature (their days and hours), so another version opens again after the User scrolled, and a
+   refetch of the same classes does not move them. Programmatic scrolls only update the fades.
+2. Re-render per scroll frame: only `hiddenAbove` and `hiddenBelow` are kept in state, and the days and hours
+   are memoised.
+3. The opening reads the time once per opening (memoised with the classes), not on every render.
+4. A block's line is `text.micro.lineHeight`; insets and offsets are named; the label column and the fade are
+   `space[6]`; the styles' comment names `surfaceSubtle` as a surface token.
+5. A block under 45 minutes drops its vertical padding, so a 30-minute class shows a line.
+6. A time across midnight (23:00–01:00) stays left out: the main server keeps only `HH:MM` from 00:00 to 23:59
+   with the end after the start, so it cannot come. Tested, with a 24:00 and a 23:59 end ending the week at 24.
+7. The fades' gradient ids come from `useId`.
+8. The hour labels read as "9시" to a screen reader.
+
+Tests added: the version-switch re-open (a spy on `ScrollView.prototype.scrollTo`), a Sunday class showing 토 and
+일, a 24:00 end, a time across midnight.
+
+## Comments
+
+### Agent usage (2026-10-22)
+
+- Agent time: about 4 hours in all, an estimate, most of it waiting on three full runs of the mobile suite (about
+  30 minutes each) and Metro bundling for the web screenshots.
+- Tokens: not measured exactly; roughly 0.3M input (most of it cache reads, cache writes a small share) and about
+  60k output, in one agent session without subagents.
