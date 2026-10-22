@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -43,6 +44,9 @@ beforeEach(async () => {
   sockets.length = 0;
   server = await askMainServer({ signedIn: true });
   answerMainScreen(server);
+  // The Shared Quest "저녁 약속" stands at 학생회관, where it would share one marker with 학생회관식당
+  // (`main-place-group-test.tsx`): here a restaurant stands alone.
+  server.on('GET /quests', { status: 200, body: [] });
   answerDining(server);
   givePhone({ permission: 'granted', position: ON_CAMPUS });
 });

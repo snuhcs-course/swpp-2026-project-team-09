@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -26,6 +27,11 @@ const CATEGORIES: Record<MapPlaceKind, { fill: string; icon: IconName; service: 
   library: { fill: color.svcStudy, icon: 'book', service: true, name: '공부공간' },
   shuttle: { fill: color.svcShuttle, icon: 'bus', service: true, name: '셔틀버스' },
 };
+
+// A kind's colour, icon and name, for a view that draws several kinds together.
+export function placeKindLook(kind: MapPlaceKind): { fill: string; icon: IconName; name: string } {
+  return CATEGORIES[kind];
+}
 
 interface MePinProps {
   kind: 'me';
