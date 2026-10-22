@@ -127,3 +127,9 @@ Each Source's collection run by hand (`node dist/collect` through `kubectl exec`
   - A mutated run, with Redis closed to `socket-server` and DNS over UDP removed, failed eight checks.
 - **Not checkable without AWS.** The VPC CNI's own enforcement, the ALB's health checks, the readiness gates, and enforcement on standalone pods come with the first Release. Ticket 08 checks them.
 - **Boxes.** The new policy files, `allows.jq`, and `cluster.sh` carry the box with this change's row. The changed kustomizations, `targets.sh`, and `database-setup.yaml` already had it. `allowed-connections.txt` is a test fixture and gets none.
+- **After merging the iteration branch** (with ticket 03's steps by hand), the render test passed again, from the working tree and from a clean clone, and so did the local cluster, in 56 seconds.
+
+### Agent usage (2026-10-22)
+
+- Agent time: about 30 minutes, an estimate, for one implementing agent.
+- Tokens: input 140 new, 13.6 million read from the cache, and 300 thousand written to the cache; output 33 thousand.
