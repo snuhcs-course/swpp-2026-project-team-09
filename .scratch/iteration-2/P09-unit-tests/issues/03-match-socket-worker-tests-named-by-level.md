@@ -1,7 +1,7 @@
 # 03: match-server, socket-server and worker-server: tests named by level, run and measured apart
 
 Parent: [P09 spec](../spec.md)
-Status: ready-for-agent
+Status: resolved
 Blocked by: P09-01 (The shared pieces of the test levels)
 Touches: match-server, socket-server and worker-server (the names of their `test/` files, `vitest.config.ts`, `package.json`, `README.md`), plus their three rows of the root README's test table.
 
@@ -15,15 +15,74 @@ P10-02 and P09-08 build on the renamed socket-server and match-server files. In 
 
 ## Acceptance criteria
 
-- [ ] In each of the three servers, every test file in `test/` has a level suffix under ADR 0007, and none is named `*.e2e-spec.ts`. Each was renamed with `git mv`, no import changed, and `git log --follow` shows a renamed file's history.
-- [ ] In each server, `pnpm test` passes the same number of tests before and after the rename, and `pnpm test:unit` and `pnpm test:integration` together run exactly the tests that `pnpm test` runs. The counts are recorded in `## Comments`.
+- [x] In each of the three servers, every test file in `test/` has a level suffix under ADR 0007, and none is named `*.e2e-spec.ts`. Each was renamed with `git mv`, no import changed, and `git log --follow` shows a renamed file's history.
+- [x] In each server, `pnpm test` passes the same number of tests before and after the rename, and `pnpm test:unit` and `pnpm test:integration` together run exactly the tests that `pnpm test` runs. The counts are recorded in `## Comments`.
 - [ ] `pnpm test:unit` passes in each server with Docker stopped, also in a server whose `unit` project has no test file yet.
-- [ ] Each server has the projects `unit` and `integration`, and only `integration` runs the global setup.
-- [ ] In each server, `test`, `test:unit`, `test:integration`, `test:cov:unit` and `test:cov` each run what the spec's table says.
-- [ ] Each coverage block is the spec's, with no thresholds, and a file under `src/` that no test loads shows 0%.
-- [ ] Each server's `pnpm lint` runs the level check. It passes on the renamed tree and fails on a test file planted under an old name, naming that file, and the runs are recorded in `## Comments`. `pnpm format:check` and `pnpm typecheck` pass.
-- [ ] match-server's and socket-server's READMEs give the new reason for `--no-spec` instead of the old one. None of the three READMEs names a test file by an old name.
-- [ ] The three servers' rows of the root README's test table say that `pnpm test:unit` needs no Docker.
-- [ ] A file that is only renamed gets no new box row, and every other changed source file gets one (`CLAUDE.md`).
-- [ ] No CI workflow file changes.
-- [ ] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+- [x] Each server has the projects `unit` and `integration`, and only `integration` runs the global setup.
+- [x] In each server, `test`, `test:unit`, `test:integration`, `test:cov:unit` and `test:cov` each run what the spec's table says.
+- [x] Each coverage block is the spec's, with no thresholds, and a file under `src/` that no test loads shows 0%.
+- [x] Each server's `pnpm lint` runs the level check. It passes on the renamed tree and fails on a test file planted under an old name, naming that file, and the runs are recorded in `## Comments`. `pnpm format:check` and `pnpm typecheck` pass.
+- [x] match-server's and socket-server's READMEs give the new reason for `--no-spec` instead of the old one. None of the three READMEs names a test file by an old name.
+- [x] The three servers' rows of the root README's test table say that `pnpm test:unit` needs no Docker.
+- [x] A file that is only renamed gets no new box row, and every other changed source file gets one (`CLAUDE.md`).
+- [x] No CI workflow file changes.
+- [x] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+
+## Comments
+
+### Decisions (2026-10-22)
+
+- **Levels.** match-server's `grouping` (calls `HashtagGrouping` directly) and worker-server's six parser tests and `demo-menus` (call the parsers and `savedMenuMessages` on saved pages) are unit tests. Every other file starts the server (`startApp`) or opens a database connection, so it is an integration test, the three `settings` tests among them until P09-07. socket-server has no unit test yet.
+- **Config.** In each `vitest.config.ts` the root keeps `globals`, `root`, `unstubEnvs`, `hookTimeout` and the coverage block, with no `globalSetup`; the projects `unit` and `integration` use `extends: true` and select their files by suffix, and only `integration` has `globalSetup: ['test/global-setup.ts']`.
+- **An empty unit project.** Vitest exits 1 when no file matches (`No test files found`). socket-server's root config sets `passWithNoTests: true`, a root-only option in Vitest 4.1, so its `test:unit` passes before its first unit test. The scripts stay as the spec's table gives them. match-server and worker-server have unit tests, so they keep Vitest's default.
+- **READMEs.** Besides the old names and the `--no-spec` reason, each server's "Checks" section gains one paragraph on the levels and the new scripts, the folder-layout line for `test/` says the tests are named by level, and the "add a module" step adds a `<feature>.unit.test.ts` for pure logic. The root README's three rows keep the table's column widths.
+
+### Evidence (2026-10-22)
+
+**Counts.** `pnpm test` (Vitest's summary line), before the rename (at 4ac779a7) and after:
+
+| Server | Before | After `test` | `test:unit` | `test:integration` |
+|---|---|---|---|---|
+| match-server | 11 files, 73 tests | 11 files, 73 tests | 1 file, 6 tests | 10 files, 67 tests |
+| socket-server | 6 files, 31 tests | 6 files, 31 tests | `No test files found, exiting with code 0` | 6 files, 31 tests |
+| worker-server | 12 files, 141 tests | 12 files, 141 tests | 7 files, 88 tests | 5 files, 53 tests |
+
+`vitest list --json` for every project, for `--project unit` and for `--project 'integration*'` gives, in each server, the unit and integration tests together as exactly the set of all tests (file and test name): 73 = 6 + 67, 31 = 0 + 31, 141 = 88 + 53.
+
+**Renames.** The rename commit (1e085e07) changes 29 files with 0 insertions and 0 deletions; no import names a test file. `git log --follow -- socket-server/test/users.integration.test.ts` shows its history back to P04-11.
+
+**No container in `test:unit`.** The `unit` project has no global setup and no unit test file imports `testcontainers`. `docker ps -a` before and after each server's `pnpm test:unit`: no container started (in worker-server's run, a Ryuk container left by socket-server's integration run ended; none was added). Run with Docker stopped: pending, made by the orchestrator once all tickets have merged.
+
+**Coverage.** `pnpm test:cov:unit` and `pnpm test:cov` (lines of `src/`; no file of `src/generated/`, no `.d.ts` and nothing outside `src/` in `coverage-summary.json`):
+
+| Server | `test:cov:unit` | `test:cov` | Files at 0% in `test:cov` |
+|---|---|---|---|
+| match-server | 6.86% lines, 17 of 19 files at 0% | 95.7% lines | `src/main.ts` |
+| socket-server | 0% lines (no unit test), 16 of 19 files at 0% | 89.65% lines | `src/main.ts` |
+| worker-server | 51.42% lines, 17 of 35 files at 0% | 93.84% lines, written though tests timed out (below) | `src/collect.ts`, `src/demo-menus.ts`, `src/main.ts` |
+
+worker-server's `pnpm test:cov` ran all 141 tests, but on a machine busy with other agents' runs some took over Vitest's 5-second test timeout: 2 failed at a load average of 48, and 13 at 63 in the one rerun (the slowest took 17.5 s). The plain `pnpm test` passed 141 of 141 before and after the rename, and `test:cov:unit` passed 88 of 88. With `reportOnFailure: true` the report was still written. A run on an idle machine is left to the orchestrator.
+
+**Level check.** `pnpm lint` on the renamed tree:
+
+```
+match-server:  11 test file(s), each named by its test level.   exit 0
+socket-server: 6 test file(s), each named by its test level.    exit 0
+worker-server: 12 test file(s), each named by its test level.   exit 0
+```
+
+With a copy of a test planted as `test/planted.e2e-spec.ts` in each server, each `pnpm lint` exits 1:
+
+```
+$ oxlint --type-aware && node ../scripts/check-test-levels.ts
+test/planted.e2e-spec.ts: declares a test but its name does not end in .unit.test.ts(x), .integration.test.ts(x) or .e2e.test.ts
+1 file(s) not named by test level (ADR 0007).
+[ELIFECYCLE] Command failed with exit code 1.
+```
+
+`pnpm format:check` and `pnpm typecheck` pass in each server. No file under `.github/` changes. The three `vitest.config.ts` get the row `2026-10-22  Opus 5.5   prompted by TaeHyun79`; the renamed test files get none.
+
+### Agent usage (2026-10-22)
+
+- Agent time: about 14 minutes, an estimate: the implementer subagent, measured just before its last commit.
+- Tokens: input 13,635 thousand in all (cache reads 13,449 thousand, cache writes 186 thousand, uncached under 1 thousand); output 13 thousand, a lower bound, since the transcript keeps only partial output counts.

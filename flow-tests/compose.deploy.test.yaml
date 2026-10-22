@@ -2,10 +2,11 @@
 # AI-generated with Claude
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
+# 2026-10-22  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
-# The deployment stack of test/deploy-stack.flow.ts: compose.yaml and compose.deploy.yaml at the repository root with
-# this file over them. Only the proxy is published, on a free port of the loopback address instead of 80.
+# The deployment stack of test/deploy-stack.e2e.test.ts: compose.yaml and compose.deploy.yaml at the repository root
+# with this file over them. Only the proxy is published, on a free port of the loopback address instead of 80.
 services:
   proxy:
     ports: !override
