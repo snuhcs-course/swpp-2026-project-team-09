@@ -38,13 +38,13 @@ empty database).
 A `NEXT_PUBLIC_` value is written into the browser's code when the site is built, so change it before `pnpm build`.
 
 The admin site's Google client is a Web application client of its own. Its authorized JavaScript origins must include
-both `http://localhost` and `http://localhost:3100` (`.scratch/research/external-sources.md`, section 8); the sign-in
-button does not work on an address that is not among them.
+`http://localhost`, `http://localhost:3100` (`.scratch/research/external-sources.md`, section 8), and Production's
+`https://admin.snunow.com`; the sign-in button does not work on an address that is not among them.
 
 The Kakao key works only on the addresses registered for it in the Kakao app, under JavaScript SDK domains;
-`http://localhost:3100` is registered (`.scratch/research/external-sources.md`, section 7.3). `src/kakao-maps.ts` loads
-Kakao's JavaScript SDK once, in the browser. Without the key the event form takes the position as two numbers instead
-of on the map.
+`http://localhost:3100` (`.scratch/research/external-sources.md`, section 7.3) and `https://admin.snunow.com` are
+registered. `src/kakao-maps.ts` loads Kakao's JavaScript SDK once, in the browser. Without the key the event form takes
+the position as two numbers instead of on the map.
 
 ## The session
 
