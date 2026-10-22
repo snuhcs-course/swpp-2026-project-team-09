@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type NativeStackNavigationOptions, router, Stack, useGlobalSearchParams, useSegments } from 'expo-router';
@@ -78,6 +79,7 @@ export default function SignedInLayout(): ReactElement {
             <Stack.Screen name="me/friends/index" options={slideFrom('right', reduceMotion)} />
             <Stack.Screen name="me/friends/requests" options={slideFrom('right', reduceMotion)} />
             <Stack.Screen name="me/friends/add" options={slideFrom('right', reduceMotion)} />
+            <Stack.Screen name="me/parties" options={slideFrom('right', reduceMotion)} />
             <Stack.Screen name="me/timetable/index" options={slideFrom('right', reduceMotion)} />
             <Stack.Screen name="me/timetable/class" options={slideFrom('right', reduceMotion)} />
             <Stack.Screen name="invite/[token]" options={slideFrom('bottom', reduceMotion)} />

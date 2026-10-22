@@ -4,9 +4,11 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { pass, screen, shownAddress } from './support/app';
+import { holdBackButton } from './support/back';
 import { FRIEND_PILL } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { answered, startFresh } from './support/mocks';
@@ -200,13 +202,15 @@ describe('the activity rows', () => {
     expect(shownAddress()).toBe('/me/friends');
   });
 
-  it("open 파티 at 내 파티 from 참여 중인 파티, which counts the User's Quests that are not classes", async () => {
+  it("open 참여 중인 파티 above the tabs, not the 파티 tab, from its row, which counts the User's Quests that are not classes", async () => {
     const user = await openMe();
 
     await user.press(screen.getByRole('button', { name: '참여 중인 파티 2' }));
+    await pass(500);
 
-    expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
-    expect(shownAddress()).toBe('/party?tab=mine');
+    expect(shownAddress()).toBe('/me/parties');
+    expect(screen.getByRole('header', { name: '참여 중인 파티' })).toBeVisible();
+    expect(screen.getByText('전체 2')).toBeVisible();
   });
 
   it('open the Quest list on the whole screen from 내 퀘스트', async () => {
@@ -223,6 +227,29 @@ describe('the activity rows', () => {
 
     expect(screen.queryByText('관심 행사')).toBeNull();
     expect(screen.queryByText('알림 설정')).toBeNull();
+  });
+});
+
+describe('참여 중인 파티 above the tabs', () => {
+  it.each([
+    ["the screen's 뒤로", 'screen'],
+    ["Android's back button", 'android'],
+  ])('return from 참여 중인 파티 to 내 정보 by %s', async (_name, way) => {
+    const pressBack = holdBackButton();
+    const user = await openMe();
+    await user.press(screen.getByRole('button', { name: '참여 중인 파티 2' }));
+    await pass(500);
+
+    if (way === 'screen') {
+      await user.press(screen.getByRole('button', { name: '뒤로' }));
+    } else {
+      expect(await pressBack()).toBe(true);
+    }
+    await pass(500);
+
+    expect(shownAddress()).toBe('/me');
+    expect(screen.getByRole('tab', { name: '내 정보' })).toBeSelected();
+    expect(screen.getByRole('button', { name: '참여 중인 파티 2' })).toBeVisible();
   });
 });
 

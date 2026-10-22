@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -29,6 +30,7 @@ import InviteScreen from '@/app/(signed-in)/invite/[token]';
 import AddFriendScreen from '@/app/(signed-in)/me/friends/add';
 import FriendsScreen from '@/app/(signed-in)/me/friends/index';
 import FriendRequestsScreen from '@/app/(signed-in)/me/friends/requests';
+import MyPartiesScreen from '@/app/(signed-in)/me/parties';
 import MapSourcesScreen from '@/app/(signed-in)/map-sources';
 import MenusScreen from '@/app/(signed-in)/menus';
 import ClassFormScreen from '@/app/(signed-in)/me/timetable/class';
@@ -77,6 +79,7 @@ export async function startApp(initialUrl = '/', more: Record<string, ComponentT
       '(signed-in)/me/friends/index': FriendsScreen,
       '(signed-in)/me/friends/requests': FriendRequestsScreen,
       '(signed-in)/me/friends/add': AddFriendScreen,
+      '(signed-in)/me/parties': MyPartiesScreen,
       '(signed-in)/me/timetable/index': TimetableScreen,
       '(signed-in)/me/timetable/class': ClassFormScreen,
       '(signed-in)/invite/[token]': InviteScreen,
