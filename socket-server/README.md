@@ -200,12 +200,12 @@ from an open map when no further list arrives (P15). `showVehicles` stands for t
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
 
-| Command             | Checks                                       |
-| ------------------- | -------------------------------------------- |
-| `pnpm lint`         | oxlint with type-aware rules                 |
-| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it) |
-| `pnpm typecheck`    | TypeScript in strict mode                    |
-| `pnpm test`         | Vitest tests in `test/`                      |
+| Command             | Checks                                                              |
+| ------------------- | ------------------------------------------------------------------- |
+| `pnpm lint`         | oxlint with type-aware rules, and that each test file names a level |
+| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it)                        |
+| `pnpm typecheck`    | TypeScript in strict mode                                           |
+| `pnpm test`         | Vitest tests in `test/`                                             |
 
 `pnpm test` needs Docker running. It starts its own Redis container and removes it afterwards.
 
