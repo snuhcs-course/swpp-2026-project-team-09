@@ -2,11 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import { Text } from 'react-native';
 import { holdBackButton } from '../support/back';
+import { hideKeyboard, KEYBOARD, showKeyboard } from '../support/keyboard';
 
 import { BottomSheet } from '@/design-system/bottom-sheet';
 
@@ -68,5 +70,16 @@ describe('BottomSheet', () => {
 
     await dragHandle(500, 560);
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('stands on the keyboard while it is up, and goes back down with it', async () => {
+    await renderSheet(jest.fn<void, []>());
+
+    await showKeyboard(KEYBOARD);
+    expect(screen.getByTestId('sheet-room')).toHaveStyle({ bottom: KEYBOARD });
+    expect(screen.getByText('인원')).toBeVisible();
+
+    await hideKeyboard();
+    expect(screen.getByTestId('sheet-room')).toHaveStyle({ bottom: 0 });
   });
 });
