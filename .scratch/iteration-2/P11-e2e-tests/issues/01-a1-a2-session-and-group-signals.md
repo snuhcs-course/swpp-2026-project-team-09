@@ -78,3 +78,12 @@ Each run went through `heavy.sh`.
 - The branch changes only `flow-tests/README.md`, `test/inbox.ts`, `test/people.ts` and the two new flows: no product
   code, CI workflow or other test. Both new files carry the box, and `inbox.ts` and `people.ts` got the row
   `2026-10-22  Opus 5.5   prompted by TaeHyun79`.
+- **After merging the integration tip** (P09-02's main-server rename, which rebuilt the main server's image):
+  `pnpm test` passed `Test Files  7 passed (7)`, `Tests  13 passed (13)`, 264 s, and lint, format and typecheck pass.
+
+### Agent usage (2026-10-22)
+
+- Agent time: about 42 minutes, an estimate: the implementer subagent, measured just before its last commit. About 24
+  of them were spent waiting for the heavy lock while another ticket's agent held it.
+- Tokens: input 10,672 thousand in all (cache reads 10,017 thousand, cache writes 654 thousand, uncached under 1
+  thousand); output 3 thousand, a lower bound, since the transcript keeps only partial output counts.
