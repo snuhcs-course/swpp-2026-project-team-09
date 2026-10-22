@@ -140,7 +140,12 @@ function useHoursScroll(blocks: readonly ClassBlockView[], first: number, hours:
   latest.current = blocks;
   const opening = useMemo(() => {
     const at = now();
-    const hour = openingHour(latest.current, first, { day: todayInWeek(at), hours: koreaMinutes(at) / 60 });
+    const hour = openingHour(
+      latest.current,
+      first,
+      { day: todayInWeek(at), hours: koreaMinutes(at) / 60 },
+      VISIBLE_HOURS,
+    );
     return Math.min((hour - first) * HOUR_HEIGHT, farthest);
     // The signature stands for the blocks, which may be a new array with the same classes.
   }, [signature, first, farthest]);
