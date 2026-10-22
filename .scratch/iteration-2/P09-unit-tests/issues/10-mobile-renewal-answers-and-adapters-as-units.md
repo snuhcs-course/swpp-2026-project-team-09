@@ -174,3 +174,19 @@ The code review of P09–P11 (2026-10-23); each line names its finding.
 - **Runs.** Each changed file alone. Full `pnpm test` (in a slot, `--maxWorkers=4`, JSON report): 161 suites, 1887
   tests, 1886 passed and 1 todo; by suffix 62 `.unit.test` files with 861 tests and 99 `.integration.test` files with
   1026, 861 + 1026 = 1887. `pnpm lint` (`161 test file(s), …`), `pnpm format:check` and `pnpm typecheck` pass.
+- **After the round.** The orchestrator put back the plan table's row for the step without a start (`없음`, neither
+  over nor next), which the split had left out (d1f0a34f).
+
+### Agent usage shared by P09–P11 (2026-10-23)
+
+Work that no ticket's own section counts, recorded once here for P09-01 to P09-10, P10-01, P10-02 and P11-01 to
+P11-03, as of 02:12 KST before the pull request was marked ready.
+
+- Agent time, an estimate: the orchestrating session about 3 hours 45 minutes of wall time, most of it waiting on the
+  agents it ran and overlapping their time, plus a forked session of 22 minutes that set the run slots (`slot.sh`); 18
+  merger subagents, 17 minutes; the code review's 16 subagents, 88 minutes in all; the fix round's 2 subagents, 48
+  minutes. Re-runs after a stopped workflow resume (2 mergers, 1 implementer) are counted with the mergers.
+- Tokens: input 191,088 thousand in all (cache reads 187,053 thousand, cache writes 4,033 thousand, uncached 2
+  thousand); output 328 thousand, a lower bound, since the transcripts keep only partial output counts. Of these, the
+  two sessions 51,604 thousand in and 258 thousand out; the mergers 8,021 thousand in and 9 thousand out; the code
+  review 71,561 thousand in and 50 thousand out; the fix round 59,711 thousand in and 11 thousand out.
