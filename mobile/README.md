@@ -648,7 +648,9 @@ number of 알림's rows in red ("9+" above nine), and four cards from the top:
 
 - the profile from the Lobby: the Avatar, the name, "컴퓨터공학부 · 22학번" (the department alone without an
   admission year), "SNU 계정 인증됨" and "프로필 편집";
-- 시간표 (`week-card.tsx`): Monday to Friday from 09 to 18, today's day in navy, a block for each time of a class
+- 시간표 (`week-card.tsx`): Monday to Friday from 09 to 22 (wider for a class outside it), drawn as a table with a
+  line at each hour and a fainter one at each half hour; eight hours show at a time and the rest scroll under the
+  days, opening at the earliest class. Today's day in navy, a block for each time of a class
   (`GET /timetable/classes`, with `GET /places` for the numbers) in the colour of the class's place in the timetable
   (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". The tile "직접 입력" opens 시간표; "이미지로
   불러오기" and "빈 시간 말하기" say "준비 중이에요";
