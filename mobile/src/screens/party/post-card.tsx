@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -67,8 +68,9 @@ interface CardProps {
   children: ReactNode;
 }
 
-// The card, which a press opens where it is drawn outside 찾기. Its buttons stay buttons of their own: the card is not
-// one control for a screen reader, and `자세히 ›` is the button that opens it.
+// The card, which a press opens when its owner gives it `onOpen`, as 찾기 does. Its buttons stay buttons of their own:
+// a press of one does not open the card. The card is not one control for a screen reader, and `자세히 ›` is the button
+// that opens it.
 function Card({ post, onOpen, children }: CardProps): ReactElement {
   const shared = { accessibilityLabel: post.title, style: [cardStyles.card, styles.card] };
   return onOpen === undefined ? (

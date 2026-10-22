@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -117,6 +118,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.snuBlue,
   },
   countWords: { fontFamily: font.bold, fontSize: 11, lineHeight: 14, color: color.onPrimary },
-  filtersScroll: { flexGrow: 0 },
-  filters: { alignItems: 'center', gap: space[2], minHeight: 56, paddingHorizontal: space[4] },
+  // The room above and below the chips is padding on the scroller, as in `ChipRow`, so that Android keeps it.
+  filtersScroll: { flexGrow: 0, paddingVertical: space[3] },
+  filters: { alignItems: 'center', gap: space[2], paddingHorizontal: space[4] },
 });
