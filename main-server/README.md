@@ -1927,7 +1927,8 @@ budget. The budget is an estimate; a credit limit on the OpenRouter key is the h
 The recorder (`eval/recorder.ts`) wraps the model and records each step: its tool calls and inputs, its finish
 reason and its usage with cache reads and writes. The tool results come through the run observer, the one seam in the
 server: `runFeature` takes an optional `RunObserver` (`adapter.ts`) that it tells of each tool's result or error and
-each step's end. `AssistantService` passes the one bound to `RUN_OBSERVER`, which only the benchmark binds, so
+each step's end, with the step's tool errors, so that a call whose input the tool's schema refused before it ran
+shows its error too. `AssistantService` passes the one bound to `RUN_OBSERVER`, which only the benchmark binds, so
 production runs as before. A turn's trace ends with the reply (its text and length, cards, map buttons, Proposal) or
 the failure: STEP_LIMIT, TIMEOUT or ERROR.
 
@@ -1954,13 +1955,13 @@ in its `expect`. Values that name the world are seed names; the run file keeps t
 
 The scorer (`eval/score.ts`) reads each scored turn's action from its trace and reply:
 
-| Action      | When                                                                                                                                          |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| PROPOSE     | the reply carries a Proposal                                                                                                                  |
-| TOOL        | the reply shows cards or map buttons, or a lookup answered `none`, the case gives mentions and the text holds them                            |
-| ASK         | nothing shown, and a resolver answered `several`/`none` or proposeQuest `refused`, or the case accepts an ASK and the text holds its mentions |
-| …+ASK       | TOOL or PROPOSE, in a case that accepts an ASK, with the text holding its mentions                                                            |
-| REFUSE/CHAT | no tool called: REFUSE when the case accepts it, else CHAT                                                                                    |
+| Action      | When                                                                                                                                                                                                        |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PROPOSE     | the reply carries a Proposal                                                                                                                                                                                |
+| TOOL        | the reply shows cards or map buttons; a lookup found data and the text answers (a missing button or card fails its own check); or a lookup answered `none`, the case gives mentions and the text holds them |
+| ASK         | nothing shown, and a resolver answered `several`/`none` or proposeQuest `refused`, or the case accepts an ASK and the text holds its mentions                                                               |
+| …+ASK       | TOOL or PROPOSE, in a case that accepts an ASK, with the text holding its mentions                                                                                                                          |
+| REFUSE/CHAT | no tool called: REFUSE when the case accepts it, else CHAT                                                                                                                                                  |
 
 A question mark never counts. An ASK read from the trace alone is still ASK, so that a wrong one shows, but it is
 right (and recalled) only when the text holds the case's mentions. A turn passes when its action is right and every
@@ -1976,7 +1977,14 @@ argument accuracy, over- and under-calling, the pass rate per category with know
 passing listed, STEP_LIMIT/TIMEOUT/ERROR per category over every turn that ran, pass^k of the cases run more than once, average steps and
 latency, tokens with cache reads and writes and the estimated cost, the settings, each failed case with its trace and
 the full text and length of every reply of a case that accepts REFUSE or CHAT and of the `ambiguous-intent` category. The comparison (`eval/compare.ts`) lists
-regressions apart from known failures, which never count as one. `test/eval-*.e2e-spec.ts` test the scorer with
+regressions apart from known failures, which never count as one.
+
+For diagnosis only, each turn also gets an observed action read without the case (`eval/observed.ts`): ASK when the
+reply shows nothing and its last sentence asks back by `ASK_CUES` (`?`, 까요, 할래요, 주세요, 어떠세요, 알려 주세요,
+실래요, 나요) or the trace calls for a question; TOOL and PROPOSE as above without the case, with +ASK by the same cues;
+`NO_TOOL` for a reply with no tool and no question (REFUSE and CHAT alike), `NONE` for tools and none of the kinds, or
+the failure kind. The scorecard and the comparison show it against what each case accepts, as a confusion table. It
+decides no pass. `test/eval-*.e2e-spec.ts` test the scorer with
 hand-made traces (`test/eval-traces.ts`) in `pnpm test`.
 
 ## Seed data

@@ -76,9 +76,25 @@ After the two-axis review of 7b356f2; these replace the matching decisions above
   comparison); `recall` is a list over `KINDS`; `Outcome` comes from one `as const` list; `proposalMismatches`;
   `RunLog.keepSeeds`. The `expect` schema is unchanged.
 
+### Review by 함재현 (2026-10-22)
+
+On #110, after #108 was squash-merged into `2.0/Main` (023384d); the branch is rebased onto it.
+
+- Observed action, for diagnosis only (`eval/observed.ts`): read without the case's `expect`. ASK when nothing is
+  shown and the last sentence asks back by `ASK_CUES` (`?`, 까요, 할래요, 주세요, 어떠세요, 알려 주세요, and 실래요,
+  나요, which I added) or the trace calls for a question; TOOL and PROPOSE as the case-free parts of the scorer's
+  rules, +ASK by the same cues; `NO_TOOL` for no tool and no question, since REFUSE and CHAT cannot be told apart
+  without the label; `NONE` for tools and none of the kinds; the failure kind for a failed turn. The scorecard and
+  `eval:compare` show it as a confusion table, a row per set of accepted actions. It decides no pass; `recalled` and
+  the pass rules are unchanged. A courtesy question ("더 궁금한 거 있으세요?") reads as +ASK here, which only the
+  case's mentions tell apart.
+- A lookup that found data and was answered in words is TOOL; a missing button or card fails its own check.
+- Tool calls refused by their input schema before `execute`: `StepEnd` carries the step's tool errors (the step
+  result's `tool-error` parts), and the recorder gives them to calls that have neither result nor error. Production
+  passes no observer and is unchanged.
+
 ### Agent usage (2026-10-22)
 
-- Agent time: about 1 hour 30 minutes (estimate), the scorer subagent's session in its worktree, the review fixes
-  included.
-- Tokens (estimate, this session only): about 17M input, of which about 16.4M cache reads and 0.4M cache writes, and
-  about 100k output. No subagents.
+- Agent time: about 2 hours (estimate), the scorer subagent's session in its worktree, both reviews included.
+- Tokens (estimate, this session only): about 26M input, of which about 25.2M cache reads and 0.5M cache writes, and
+  about 130k output. No subagents.
