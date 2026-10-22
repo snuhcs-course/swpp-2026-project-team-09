@@ -1,0 +1,35 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# Only the main server calls it. It calls the main server and its database.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: match-server
+spec:
+  podSelector:
+    matchLabels:
+      app: match-server
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: main-server
+      ports:
+        - { protocol: TCP, port: 3003 }
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: main-server
+      ports:
+        - { protocol: TCP, port: 3000 }
+    - to:
+        - ipBlock: { cidr: 10.0.128.0/24 }
+        - ipBlock: { cidr: 10.0.129.0/24 }
+      ports:
+        - { protocol: TCP, port: 5432 }

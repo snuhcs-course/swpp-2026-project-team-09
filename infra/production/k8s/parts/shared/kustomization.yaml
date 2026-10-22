@@ -13,6 +13,7 @@ kind: Kustomization
 resources:
   - redis.yaml
   - ingress.yaml
+  - network-policies.yaml
 
 # The generated names end in a hash of the values, so a server takes up a changed value when it is next deployed.
 configMapGenerator:
