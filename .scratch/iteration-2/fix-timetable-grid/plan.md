@@ -44,3 +44,20 @@ The week grid is the 시간표 card on 내 정보 (`Profile` frame), not the `/m
   19:00–21:00 class (not committed), before and after, plus the grid scrolled to the evening:
   `fix-timetable-grid-before.png`, `fix-timetable-grid-after.png`, `fix-timetable-grid-after-scrolled.png` in
   Downloads.
+
+## Review (함재현, PR #115)
+
+Approved, with these added (separate commits, tests first):
+
+1. Weekend columns: `DAY_LETTERS` becomes 월–일 and `toWeekBlocks` keeps Saturday and Sunday times. The grid shows
+   토 (and 일) only when a class falls on it (토 with 일 when only Sunday has one, so the week stays in order), the same
+   idea as widening the hours.
+2. Nested scrolling: the grid scrolls inside 내 정보, which scrolls too. `nestedScrollEnabled` stays for Android;
+   the grid does not bounce or over-scroll (`bounces={false}`, `overScrollMode="never"`), so a swipe at its top or
+   bottom does not stretch it. iOS has no scroll chaining between nested scroll views in React Native, so handing a
+   swipe over to the page at the edge needs a check on a phone.
+3. "More hours" cue: a fade from `color.surface` to transparent (an SVG gradient, 24 high) over the grid's bottom
+   while hours are hidden below, and over its top once scrolled down.
+4. Opening position: when today has a class that has not ended, open at the current hour, or at that class's start
+   when it is already running; otherwise at the week's earliest class; otherwise at 09:00.
+5. Tests: a class starting at 08:00 widens the start to 08; a Saturday class shows in a 토 column; the opening rules.
