@@ -4,23 +4,17 @@
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 ################################################################################
 
-# What a Release applies to Production. Only namespaced objects: the deploy role's rights stop at the namespace, which
-# Terraform creates. The database Job beside these files is run by hand and is not part of this base.
+# What every target in targets/ applies besides its servers' parts. A target holds only namespaced objects, since the
+# deploy role's rights stop at the namespace, which Terraform creates. The database Job in k8s/ is run by hand and is
+# in no target.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: snunow
-
 resources:
   - redis.yaml
-  - main-server.yaml
-  - socket-server.yaml
-  - worker-server.yaml
-  - match-server.yaml
-  - admin.yaml
   - ingress.yaml
 
-# The generated names end in a hash of the values, so a changed value rolls every Deployment that reads it.
+# The generated names end in a hash of the values, so a server takes up a changed value when it is next deployed.
 configMapGenerator:
   - name: settings
     literals:
