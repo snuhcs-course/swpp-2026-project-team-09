@@ -60,7 +60,7 @@ Two team members have new-account AWS credits, and a card pays beyond them.
 15. As an Administrator, I want the admin routes unreachable from the internet except through the admin site, so that nobody can call them directly.
 16. As the team member who changes infrastructure, I want every AWS resource that the system needs in Terraform, applied from my laptop with shared state and a lock, so that two team members never apply at once and the system can be rebuilt.
 17. As the team member who changes infrastructure, I want CI to check Terraform's format and validity, so that a broken configuration is caught in review.
-18. As the team, I want no AWS key stored in GitHub, so that a leaked repository secret cannot reach the account.
+18. As the team, I want neither an AWS key nor any of Production's secret values stored in GitHub, so that nothing leaked from GitHub reaches the account or Production.
 19. As the team, I want a cost alert at every $50 actually spent, credits included, so that the credits never run out unnoticed.
 20. As the team, I want the database backed up every day and restorable to any moment of the last 7 days, so that a bad migration does not lose the week's data.
 21. As the team, I want EKS to replace a failed node by itself, so that a hardware fault during the beta stops the app for minutes at most.
@@ -194,13 +194,14 @@ The manifests live in `infra/production/k8s/` as a Kustomize base.
   - `ROUND_INTERVAL_SECONDS=60` and `ASSISTANT_MODEL`;
   - `GOOGLE_APP_CLIENT_ID` and `GOOGLE_ADMIN_CLIENT_ID`, the team's;
   - `ANDROID_CERTIFICATE_FINGERPRINTS`, the debug key's fingerprint, since the APK is debug-signed.
-- **Secret values** live in GitHub repository secrets prefixed `PRODUCTION_`:
-  - the access-token key pair, stored as PEM with real line breaks (a Kubernetes Secret passes `\n` through literally, and Node rejects that key);
-  - `WORKER_TOKEN` and `MATCH_SERVER_TOKEN`;
-  - `KAKAO_REST_API_KEY` and `OPENROUTER_API_KEY`;
-  - the `main` and `match` database passwords;
-  - `INITIAL_ADMINISTRATOR_EMAILS`.
-- **Writing the Secret.** On each Release, the workflow writes the secret values to an env file, and Kustomize's `secretGenerator` makes the Secret from it. The Secret's name carries a hash of its content, so a changed value rolls every Deployment that uses it. Rotating a secret is updating the repository secret and deploying the current Release again.
+- **Secret values** live in AWS Systems Manager Parameter Store in the account that runs Production, as `SecureString` parameters under the path `/snunow/production/`, encrypted with the AWS managed key `aws/ssm` at no cost:
+  - `main-db-password` and `match-db-password`, the `main` and `match` database passwords;
+  - `access-token-private-key` and `access-token-public-key`, the access-token key pair, stored as PEM with real line breaks (a Kubernetes Secret passes `\n` through literally, and Node rejects that key);
+  - `worker-token` and `match-server-token`, for `WORKER_TOKEN` and `MATCH_SERVER_TOKEN`;
+  - `kakao-rest-api-key` and `openrouter-api-key`, for `KAKAO_REST_API_KEY` and `OPENROUTER_API_KEY`;
+  - `initial-administrator-emails`, for `INITIAL_ADMINISTRATOR_EMAILS`.
+- **Entering them.** A team member puts each value in by hand with `aws ssm put-parameter --type SecureString`, and `--overwrite` replaces one. Terraform never holds them; it only lets the deploy role read the path. They stay out of Terraform for three reasons: `terraform destroy` does not delete them, moving to account B copies the same values, and the Kakao and OpenRouter keys are entered by hand in any case.
+- **Writing the Secret.** On each Release, the workflow reads the path with the deploy role and writes the values to the files that Kustomize's `secretGenerator` reads, which make the Secret. The Secret's name carries a hash of its content, so a changed value rolls every Deployment that uses it. No External Secrets Operator runs in the cluster, because its pods do not fit the pod budget. Rotating a secret is `aws ssm put-parameter --overwrite`, then deploying the current Release again.
 - **Database addresses.** The workflow assembles each server's `DATABASE_URL` from its password, the database endpoint, and the TLS setting above.
 - **Own values.** Production generates its own values, never the Dev Server's, the way the Dev Server's bootstrap does: `openssl rand` for the tokens and passwords, and `openssl genpkey` for the ES256 key pair.
 
@@ -257,15 +258,16 @@ The manifests live in `infra/production/k8s/` as a Kustomize base.
 - **AWS access.**
   - The workflow assumes the deploy role with `aws-actions/configure-aws-credentials@v6` and logs in to ECR with `aws-actions/amazon-ecr-login@v2`. Its permissions are `id-token: write` and `contents: read`.
   - The deploy role trusts `token.actions.githubusercontent.com` with `aud` equal to `sts.amazonaws.com` and `sub` like `repo:snuhcs-course@139540821/swpp-2026-project-team-09@1374366029:ref:refs/tags/snunow-*`. This repository uses GitHub's immutable subject claims.
-  - The role may get an ECR login token, which cannot be limited to repositories, describe and push images in the five repositories, and describe the cluster. Its cluster rights come from its access entry.
+  - The role may get an ECR login token, which cannot be limited to repositories; describe and push images in the five repositories; read the parameters under `/snunow/production/`; and describe the cluster. Its cluster rights come from its access entry.
+  - The AWS managed key `aws/ssm` lets every principal in the account decrypt, so the role needs no KMS permission to read the parameters.
 - **Build and push.** The workflow builds and pushes the five images, skipping one whose commit-SHA tag is already in its repository.
 - **Deploy.**
-  1. Generate the Secret.
+  1. Read the parameters under `/snunow/production/`, and generate the Secret from them.
   2. Set the images to the commit SHA with Kustomize, and apply.
   3. Wait on `kubectl rollout status` for each Deployment, with a time limit longer than the startup probe's. A Deployment that does not become ready fails the run.
 - **One at a time.** The workflow's concurrency group has its own fixed name. It cannot share CI's, because a called workflow takes its caller's context. It does not cancel a running deploy. A newer Release waiting behind it replaces an older waiting one, so the newest always deploys.
 - **Deploying an earlier Release again.** A team member runs the workflow by hand from the Actions tab on that Release's tag (`workflow_dispatch`), which has no age limit. Migrations only move forward, so after a Release with a migration, a fix is a new Release instead.
-- **Settings the workflow reads.** It reads its AWS settings from repository variables: the Region, the role ARN, the cluster name, the registry, and the database endpoint. A team member sets them from `terraform output`, and moving accounts changes them.
+- **Settings the workflow reads.** It reads its AWS settings from repository variables: the Region, the role ARN, the cluster name, the registry, and the database endpoint. A team member sets them from `terraform output`, and moving accounts changes them. The admin site's two public build arguments are repository variables too. Every secret value comes from Parameter Store, so GitHub holds no Production secret.
 - **GitHub release pages.** The workflow does not create GitHub release pages. The Production APK's page is made by hand (below).
 
 ### Terraform
@@ -288,6 +290,7 @@ The manifests live in `infra/production/k8s/` as a Kustomize base.
   - the certificate and, in the account that holds the zone, the DNS records;
   - the budget.
 - **IAM users.** They are not in Terraform, so that no password or key lands in the state. A move or a teardown never deletes them either.
+- **Secret values.** They are not in Terraform either (see "Settings"); it only lets the deploy role read their path.
 - **Outputs:** what the repository variables and the database Job need.
 - **CI.** A `terraform` job runs `terraform fmt -check` and `terraform validate` without a backend or AWS credentials.
 
@@ -312,7 +315,7 @@ The manifests live in `infra/production/k8s/` as a Kustomize base.
   - looking and restarting from Freelens, k9s, or kubectl is fine;
   - manifests change only through a pull request and a Release, since a Release overwrites changes made by hand;
   - infrastructure changes through a pull request, then `terraform apply`;
-  - secret values change in the repository secrets, then the current Release is deployed again;
+  - secret values change with `aws ssm put-parameter --overwrite`, then the current Release is deployed again;
   - adding a team member is an IAM user, an entry in the variables file, and an apply; removing one reverses those steps.
 - **Logs.** A pod's logs last only as long as the pod: a Release replaces the pods and their logs, and `kubectl logs --previous` shows only the last crash. The guide says so, so that a tester's report is looked into the same day.
 
@@ -323,12 +326,13 @@ Only if the money runs short, and at a quiet time, not during user testing or th
 1. Switch B to the Paid plan. Create the state bucket and B's variables file.
 2. In B, `terraform apply` with B's files. B's apply requests its certificate without waiting for validation, and outputs the validation record. Add that record to A's zone by hand, and wait until the certificate is issued.
 3. Lower the `api` and `admin` records' TTL to 60 seconds, a few days ahead.
-4. Run the database Job in B. Set the repository variables to B's outputs, deploy the current Release to B from the Actions tab, and scale B's servers to zero.
-5. Scale A's servers to zero. Dump A's two databases with `pg_dump -Fc` from a `postgres:18` pod in A's cluster. Copy the dumps through a laptop into a pod in B's cluster, and `pg_restore` them there. Then scale B's servers up. The app is down for 10 to 30 minutes, and no write is lost.
-6. In A's zone, point `api` and `admin` at B's ALB, by hand. With the validation record, the move edits three records by hand.
-7. In A, remove the two records from Terraform's state with `terraform state rm`. Delete the Ingress, then `terraform destroy`. The hosted zone and the domain stay. Account A stays open, because closing it deletes the domain, and its owner edits the zone from then on.
+4. Copy every parameter under `/snunow/production/` from A to B: read them in A with `aws ssm get-parameters-by-path --with-decryption`, and put each in B with `aws ssm put-parameter --type SecureString`.
+5. Run the database Job in B; the runbook's steps for it put B's new database passwords over the copied ones. Set the repository variables to B's outputs, deploy the current Release to B from the Actions tab, and scale B's servers to zero.
+6. Scale A's servers to zero. Dump A's two databases with `pg_dump -Fc` from a `postgres:18` pod in A's cluster. Copy the dumps through a laptop into a pod in B's cluster, and `pg_restore` them there. Then scale B's servers up. The app is down for 10 to 30 minutes, and no write is lost.
+7. In A's zone, point `api` and `admin` at B's ALB, by hand. With the validation record, the move edits three records by hand.
+8. In A, remove the two records from Terraform's state with `terraform state rm`. Delete the Ingress, then `terraform destroy`. The hosted zone, the domain, and A's parameters stay. Account A stays open, because closing it deletes the domain, and its owner edits the zone from then on.
 
-Sessions live in the database, and the token keys stay in the repository secrets, so Users stay signed in. Redis starts empty, as after any restart.
+Sessions live in the database, and the token keys stay the same because the parameters are copied, so Users stay signed in. Redis starts empty, as after any restart.
 
 ### Production APK
 

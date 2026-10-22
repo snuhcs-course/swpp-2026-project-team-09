@@ -18,6 +18,6 @@ The Dev Server pulls its deployments (ADR 0003) because GitHub cannot reach the 
 ## Consequences
 
 - What runs in the cluster is what the last Release applied. A change made by hand with kubectl stays until the next Release overwrites it.
-- The workflow's role can push images and deploy to the cluster but not change infrastructure. Infrastructure changes are applied with Terraform from a team member's laptop.
+- The workflow's role can push images, read Production's secret values from Parameter Store in the same account, and deploy to the cluster, but not change infrastructure. Infrastructure changes are applied with Terraform from a team member's laptop. GitHub holds neither an AWS key nor any of Production's secret values.
 - The Application Load Balancer is created by the AWS Load Balancer Controller from the cluster's Ingress, outside Terraform. Before tearing the system down, delete the Ingress, or the load balancer is left behind and keeps billing.
-- AWS bills Production by the hour, about $144 per 30 days, from team members' sign-up credits and then a card. Because Terraform holds the whole system, moving it to another team member's AWS account is a second `terraform apply` there, plus a database dump and restore.
+- AWS bills Production by the hour, about $144 per 30 days, from team members' sign-up credits and then a card. Because Terraform holds the whole system except the secret values, which team members put in Parameter Store by hand, moving it to another team member's AWS account is a second `terraform apply` there, a copy of the secret values, and a database dump and restore.

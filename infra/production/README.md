@@ -123,9 +123,11 @@ It reads the Secret `database-setup`, which is created by hand just before it an
 | `MAIN_DB_PASSWORD`  | The `main` role's new password                   |
 | `MATCH_DB_PASSWORD` | The `match` role's new password                  |
 
-The two new passwords also go into the repository secrets `PRODUCTION_MAIN_DB_PASSWORD` and
-`PRODUCTION_MATCH_DB_PASSWORD`, from which the Release workflow assembles the servers' `DATABASE_URL`. GitHub never
-shows a secret again, so generate and set them in the same shell that creates the Secret.
+The two new passwords also go into the account's Parameter Store, as the `SecureString` parameters
+`/snunow/production/main-db-password` and `/snunow/production/match-db-password`, from which the Release workflow
+assembles the servers' `DATABASE_URL`. Generate them in the same shell that creates the Secret, so that the Job and the
+parameters get the same values. `--overwrite` also replaces a value the account already holds, for example one kept
+from an earlier database.
 
 In `infra/production/terraform`, signed in to the account, with kubectl pointed at the cluster:
 
@@ -134,8 +136,10 @@ aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-p
 
 MAIN_DB_PASSWORD=$(openssl rand -hex 32)
 MATCH_DB_PASSWORD=$(openssl rand -hex 32)
-gh secret set PRODUCTION_MAIN_DB_PASSWORD --body "$MAIN_DB_PASSWORD"
-gh secret set PRODUCTION_MATCH_DB_PASSWORD --body "$MATCH_DB_PASSWORD"
+aws ssm put-parameter --region ap-northeast-2 --name /snunow/production/main-db-password \
+  --type SecureString --value "$MAIN_DB_PASSWORD" --overwrite
+aws ssm put-parameter --region ap-northeast-2 --name /snunow/production/match-db-password \
+  --type SecureString --value "$MATCH_DB_PASSWORD" --overwrite
 
 kubectl --namespace snunow create secret generic database-setup \
   --from-literal=PGHOST="$(terraform output -raw database_endpoint)" \

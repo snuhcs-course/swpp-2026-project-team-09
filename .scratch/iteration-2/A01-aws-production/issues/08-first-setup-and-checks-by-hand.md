@@ -13,7 +13,7 @@ Ticket 03 already checked the quotas, applied tickets 01 to 03 in account A, and
 Follow the runbook's first setup:
 
 1. Apply again with tickets 04 to 06 merged, so that the certificate is issued.
-2. Set the repository variables from `terraform output`, and the `PRODUCTION_` secrets with Production's own generated values.
+2. Set the repository variables from `terraform output`, and put the parameters under `/snunow/production/` that the database Job's steps did not, with `aws ssm put-parameter --type SecureString` and Production's own generated values.
 3. Add `https://admin.snunow.com` to the admin Google client's authorized JavaScript origins and to the Kakao JavaScript key's site domains, leave the Kakao REST key without an allowed-IP list, and publish the Google OAuth consent screen.
 4. Tag a reviewed commit of the iteration branch as the first Release and follow its run in the Actions tab.
 5. Apply with the records variable on, so that `api` and `admin` point at the ALB.
