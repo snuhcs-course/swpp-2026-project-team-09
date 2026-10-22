@@ -1,7 +1,7 @@
 # 03: The database and its setup Job, confirmed on a first apply in account A
 
 Parent: [A01 spec](../spec.md)
-Status: ready-for-human
+Status: resolved
 Blocked by: 02 (the cluster and the `snunow` namespace that the Job and the check pod run in)
 Touches: `infra/production/terraform/` (the database), `infra/production/k8s/` outside the Kustomize base (the Job), the main-server and match-server Dockerfiles (the CA bundle), and the runbook's database section. Not the Kustomize base, which ticket 04 owns.
 
@@ -34,11 +34,11 @@ The database, the Job that prepares it, and the TLS form the servers use with it
 - [x] `terraform fmt -check` and `terraform validate` pass, locally and in the `terraform` CI job.
 - [x] The instance, its backups, its final snapshot, and its security group are as above, and it is not publicly accessible.
 - [x] The main-server and match-server images carry the CA bundle and set `NODE_EXTRA_CA_CERTS`; both projects' checks and the flow tests pass, and the laptop Compose stack starts as before.
-- [ ] By hand: the four items before the first apply are done.
-- [ ] By hand: the apply succeeded in account A, with the state and its lock file in the bucket.
-- [ ] By hand: the Job created both roles and both databases, and PostGIS in `main`.
-- [ ] By hand: the check pod migrated, loaded the seed, and answered ready on `/health/ready` against the real instance with `?sslmode=verify-full`. `## Comments` records the exact `DATABASE_URL` form for ticket 05, with the password left out.
-- [ ] `## Comments` records how Terraform's AWS provider got the team member's credentials: from the `aws login` session directly, or through `aws configure export-credentials`. Ticket 07's guide states it.
+- [x] By hand: the four items before the first apply are done.
+- [x] By hand: the apply succeeded in account A, with the state and its lock file in the bucket.
+- [x] By hand: the Job created both roles and both databases, and PostGIS in `main`.
+- [x] By hand: the check pod migrated, loaded the seed, and answered ready on `/health/ready` against the real instance with `?sslmode=verify-full`. `## Comments` records the exact `DATABASE_URL` form for ticket 05, with the password left out.
+- [x] `## Comments` records how Terraform's AWS provider got the team member's credentials: from the `aws login` session directly, or through `aws configure export-credentials`. Ticket 07's guide states it.
 - [x] The runbook's database section names the real Job, its inputs, and the P3009 commands.
 - [x] Every new or changed source file (the `.tf` files, the Job, the two Dockerfiles) carries the `#` AI-generated box with a row for this change (`CLAUDE.md`).
 - [ ] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section, and the time the steps by hand took is recorded beside it.
@@ -58,8 +58,17 @@ The database, the Job that prepares it, and the TLS form the servers use with it
 - **Fixed before the first apply.** The final snapshot's name comes from `timestamp()` with `final_snapshot_identifier` in `ignore_changes`, not from `time_static`, so an instance replaced in the same state also gets a new name. The runbook's `kubectl debug` adds `--profile=baseline`, because kubectl's default profile adds `SYS_PTRACE`, which the namespace's Pod Security baseline level refuses.
 - **2026-10-22:** Production's secret values live in Parameter Store in the account that runs Production, not in GitHub: `SecureString` parameters under `/snunow/production/` named `main-db-password`, `match-db-password`, `access-token-private-key`, `access-token-public-key`, `worker-token`, `match-server-token`, `kakao-rest-api-key`, `openrouter-api-key`, and `initial-administrator-emails`. The runbook's database section puts the two passwords there.
 
+- **By hand, 2026-10-22.**
+  - Before the first apply: account A is on the Paid plan; each team member has an IAM user with `AdministratorAccess`, a password changed at first sign-in, and MFA; the On-Demand Standard vCPU quota is 32 and the Application Load Balancer quota 50; `snunow.com` is registered in Route 53 and its name servers match the hosted zone. Read-only checks: the `metrics-server` add-on has `v0.9.0-eksbuild.13` for Kubernetes 1.37, and PostgreSQL 18.6 is orderable on `db.t4g.micro` in `ap-northeast-2`.
+  - Credentials: Terraform's AWS provider read the `aws login` session directly; `aws configure export-credentials` was not needed.
+  - The first apply created 86 resources, with the state and its lock file in `snunow-terraform-state-account-a`. Two nodes came up `Ready` on v1.37.1, one in each zone, with every system pod running.
+  - The database Job created both roles, both databases, and PostGIS in `main`. The two passwords are in Parameter Store as `/snunow/production/main-db-password` and `/snunow/production/match-db-password`.
+  - The check pod, with the main-server image built for `linux/arm64`, applied 17 migrations, loaded the seed (230 places and 14 shuttle stops), registered the four team members as Administrators, and answered 200 on `/health/ready` with the database and Redis up. The `DATABASE_URL` form for ticket 05, password left out: `postgresql://main:<password>@<database_endpoint>:5432/main?sslmode=verify-full`, with `database_endpoint` = `snunow.c5842y42ijd7.ap-northeast-2.rds.amazonaws.com`; the match server's is the same with `match`. Every object the check created was deleted, and the `check` image was removed from ECR.
+  - A second apply changed the deploy role's trust to the `snunow/` tags, let it read `/snunow/production`, and turned on the VPC CNI's NetworkPolicy enforcement.
+
 ### Agent usage (2026-10-22)
 
 - Agent time: about 1 hour 15 minutes for the code, an estimate, summed over its implementer and its reviewer, plus an even share of the Terraform research, the review before the first apply, and the session that orchestrated the tickets.
 - Tokens, with the same shares and the subagents included: input 542 new, 46.7 million read from the cache, and 1.55 million written to the cache; output 32 thousand.
-- The steps by hand are not done yet; their time goes here when they are.
+- The commands for the steps by hand, drafted and checked by two subagents: about 30 minutes, an estimate; input 188 new, 12.4 million read from the cache, and 329 thousand written to the cache; output 15 thousand.
+- The time the steps by hand took is recorded by the team member who ran them.
