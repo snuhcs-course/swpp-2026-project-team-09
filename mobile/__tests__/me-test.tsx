@@ -80,27 +80,19 @@ describe('the profile card', () => {
   });
 });
 
-describe('the week', () => {
-  it('draws a block for each time from Monday to Friday, coloured by the class', async () => {
-    await openMe();
-
-    expect(screen.getAllByTestId('class-block')).toHaveLength(7);
-    expect(screen.getByLabelText('월요일 10:30–12:00 운영체제, 301동')).toHaveStyle({ backgroundColor: '#001A72' });
-    expect(screen.getByLabelText('화요일 09:30–11:00 알고리즘, 302-208')).toHaveStyle({ backgroundColor: '#0E7383' });
-    expect(screen.getByLabelText('화요일 15:30–17:00 확률통계, 500동')).toHaveStyle({ backgroundColor: '#865600' });
-    expect(screen.getByLabelText('금요일 14:00–15:15 자료구조, 301-118')).toHaveStyle({ backgroundColor: '#6B46C1' });
-    expect(screen.getAllByText('알고리즘\n302-208')).toHaveLength(2);
-  });
-
+describe("the week's hours and days", () => {
   it('draws an evening class whole, and a 토 column for a Saturday class', async () => {
-    for (const [courseName, weekday, startTime, endTime] of [
+    const added = [
       ['창의적사고', 'thursday', '19:00', '21:00'],
       ['토요 세미나', 'saturday', '10:00', '13:00'],
-    ] as const) {
-      await answered(
-        apiClient.addClass({ courseName, times: [{ weekday, startTime, endTime, placeId: null, room: null }] }),
-      );
-    }
+    ] as const;
+    await Promise.all(
+      added.map(([courseName, weekday, startTime, endTime]) =>
+        answered(
+          apiClient.addClass({ courseName, times: [{ weekday, startTime, endTime, placeId: null, room: null }] }),
+        ),
+      ),
+    );
     await openMe();
 
     expect(screen.getAllByTestId('class-block')).toHaveLength(9);
@@ -115,6 +107,19 @@ describe('the week', () => {
 
     expect(screen.getByText('금')).toBeVisible();
     expect(screen.queryByText('토')).toBeNull();
+  });
+});
+
+describe('the week', () => {
+  it('draws a block for each time from Monday to Friday, coloured by the class', async () => {
+    await openMe();
+
+    expect(screen.getAllByTestId('class-block')).toHaveLength(7);
+    expect(screen.getByLabelText('월요일 10:30–12:00 운영체제, 301동')).toHaveStyle({ backgroundColor: '#001A72' });
+    expect(screen.getByLabelText('화요일 09:30–11:00 알고리즘, 302-208')).toHaveStyle({ backgroundColor: '#0E7383' });
+    expect(screen.getByLabelText('화요일 15:30–17:00 확률통계, 500동')).toHaveStyle({ backgroundColor: '#865600' });
+    expect(screen.getByLabelText('금요일 14:00–15:15 자료구조, 301-118')).toHaveStyle({ backgroundColor: '#6B46C1' });
+    expect(screen.getAllByText('알고리즘\n302-208')).toHaveLength(2);
   });
 
   it("marks today's column, Thursday, in navy", async () => {
