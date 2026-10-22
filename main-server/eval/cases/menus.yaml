@@ -1,0 +1,23 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# Menus: a lookup with the right day and meal, and the dining button. The sample case of ticket 01; ticket 03 writes
+# the rest. `expect` is in the spec's format (P19 spec, "Cases"), which the scorer of ticket 02 reads.
+
+- id: menus-today-lunch
+  category: menus
+  turns:
+    - user: 오늘 점심 학식 뭐 나와?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getMenus, showOnMap]
+      forbidden: [proposeQuest]
+    args:
+      getMenus: { date: '2026-10-21', meal: lunch }
+    mapButtons: [dining]
+    text:
+      mentions: [제육볶음]

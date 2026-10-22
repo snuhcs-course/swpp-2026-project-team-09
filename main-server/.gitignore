@@ -8,3 +8,5 @@
 # Key files. The access token keys are settings in .env; a key written to a file must not be committed either.
 *.pem
 *.key
+# The benchmark's runs (eval/). The team commits the ones it keeps with git add -f.
+/eval/results/
