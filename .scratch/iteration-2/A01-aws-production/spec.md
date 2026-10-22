@@ -481,5 +481,6 @@ The first apply, real Releases, and the console settings happen against AWS, whi
   - lower the cost after the beta by scaling the nodes to zero and stopping the database until the final demo;
   - raise the node size if memory runs short, or if a lost node stops the app for too long;
   - add a GitHub environment with required reviewers, or a tag ruleset;
-  - build the APK in CI.
+  - build the APK in CI;
+  - move the manifests to a Helm chart with values per environment, one Helm release per server, if a second Kubernetes environment comes or the team wants Helm's release history; Helm can take over the objects that `kubectl apply` made, so the move needs no downtime.
 - **Sources.** The facts and prices behind this spec, with their sources, are in `.scratch/research/aws-production.md`.
