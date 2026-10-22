@@ -80,27 +80,12 @@ jobs:
       - run: terraform init -backend=false -input=false -lockfile=readonly
       - run: terraform validate
 
-  # Production's manifests render as a Release would apply them, with stand-ins for the secrets folder that the Release
-  # workflow writes.
+  # Production's manifests: each target renders with stand-ins for the secrets that the Release workflow writes, and
+  # holds the objects that a Release of it applies.
   manifests:
     name: manifests
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
-      - name: Write stand-in secrets
-        working-directory: infra/production/k8s
-        run: |
-          mkdir secrets
-          cat >secrets/secrets.env <<'EOF'
-          MAIN_DATABASE_URL=postgresql://main:stand-in@database.example:5432/main?sslmode=verify-full
-          MATCH_DATABASE_URL=postgresql://match:stand-in@database.example:5432/match?sslmode=verify-full
-          WORKER_TOKEN=stand-in
-          MATCH_SERVER_TOKEN=stand-in
-          KAKAO_REST_API_KEY=stand-in
-          OPENROUTER_API_KEY=stand-in
-          INITIAL_ADMINISTRATOR_EMAILS=stand-in@example.com
-          EOF
-          echo stand-in >secrets/access-token-private-key.pem
-          echo stand-in >secrets/access-token-public-key.pem
-      - run: kubectl kustomize infra/production/k8s
+      - run: infra/production/k8s/test/targets.sh
