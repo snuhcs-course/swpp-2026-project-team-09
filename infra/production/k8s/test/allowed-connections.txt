@@ -1,0 +1,64 @@
+# Every connection that Production's NetworkPolicies allow, as "source -> destination port/protocol"; any other pair is
+# refused. targets.sh checks the render against it, and cluster.sh a running cluster. The names are the Deployments',
+# the database Job's, and the other endpoints that targets.sh describes.
+
+main-server -> CoreDNS 53/UDP
+main-server -> CoreDNS 53/TCP
+main-server -> redis 6379/TCP
+main-server -> match-server 3003/TCP
+main-server -> the database in zone a 5432/TCP
+main-server -> the database in zone c 5432/TCP
+main-server -> the internet 443/TCP
+
+socket-server -> CoreDNS 53/UDP
+socket-server -> CoreDNS 53/TCP
+socket-server -> redis 6379/TCP
+
+worker-server -> CoreDNS 53/UDP
+worker-server -> CoreDNS 53/TCP
+worker-server -> main-server 3000/TCP
+worker-server -> the internet 443/TCP
+
+match-server -> CoreDNS 53/UDP
+match-server -> CoreDNS 53/TCP
+match-server -> main-server 3000/TCP
+match-server -> the database in zone a 5432/TCP
+match-server -> the database in zone c 5432/TCP
+
+admin -> CoreDNS 53/UDP
+admin -> CoreDNS 53/TCP
+admin -> main-server 3000/TCP
+
+redis -> CoreDNS 53/UDP
+redis -> CoreDNS 53/TCP
+
+the database Job -> CoreDNS 53/UDP
+the database Job -> CoreDNS 53/TCP
+the database Job -> the database in zone a 5432/TCP
+the database Job -> the database in zone c 5432/TCP
+the database Job -> the internet 443/TCP
+
+psql -> CoreDNS 53/UDP
+psql -> CoreDNS 53/TCP
+psql -> the database in zone a 5432/TCP
+psql -> the database in zone c 5432/TCP
+
+the P3009 copy -> CoreDNS 53/UDP
+the P3009 copy -> CoreDNS 53/TCP
+the P3009 copy -> the database in zone a 5432/TCP
+the P3009 copy -> the database in zone c 5432/TCP
+
+a pod without a label -> CoreDNS 53/UDP
+a pod without a label -> CoreDNS 53/TCP
+
+# The load balancer reaches the three servers behind it, and its rule admits the public subnets, where pods get their
+# addresses too. So a pod in kube-system, whose egress no policy in snunow limits, reaches the same three ports.
+the load balancer -> main-server 3000/TCP
+the load balancer -> socket-server 3001/TCP
+the load balancer -> admin 3100/TCP
+a pod in kube-system -> main-server 3000/TCP
+a pod in kube-system -> socket-server 3001/TCP
+a pod in kube-system -> admin 3100/TCP
+CoreDNS -> main-server 3000/TCP
+CoreDNS -> socket-server 3001/TCP
+CoreDNS -> admin 3100/TCP

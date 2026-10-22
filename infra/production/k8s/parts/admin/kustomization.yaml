@@ -9,3 +9,4 @@ kind: Kustomization
 
 resources:
   - admin.yaml
+  - network-policy.yaml
