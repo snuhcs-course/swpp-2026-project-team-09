@@ -36,6 +36,7 @@ Files whose comments start with `#` (shell, YAML, Dockerfile) draw the same box 
 
 - When an agent changes a file, it adds a row at the bottom of the box: today's date, its model and the GitHub ID of the person who prompted it (`gh api user --jq .login`). Skip the row if one with the same date, model and person is already there. A new file gets the box with its first row. Never change or remove a row.
 - A change made only by hand adds no row. A file written wholly by hand gets no box.
+- A file that is only renamed, its content unchanged, gets no new row.
 - When two branches add rows to the same file, the merge keeps both, in date order.
 - For a single line, `git blame` gives the commit that last changed it; its `Co-Authored-By: Claude …` trailer names the model.
 - `git grep -l "AI-generated with Claude"` lists the marked files; the AI Collaboration Report points to it.
