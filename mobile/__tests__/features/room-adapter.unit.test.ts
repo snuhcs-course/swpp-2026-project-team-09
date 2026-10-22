@@ -214,6 +214,7 @@ describe('toRoom plan', () => {
     ['a step done', 'over, and not next', '모이기', { over: true, next: false }],
     ['the first step not done, ended or cancelled', 'next, and not over', '설명회', { over: false, next: true }],
     ['a step after the next one', 'neither', '카페', { over: false, next: false }],
+    ['a step without a start, listed last', 'neither', '없음', { over: false, next: false }],
   ])('%s → %s', (_, _result, id, expected) => {
     const view = room({ quest: quest({ subQuests: plan }) });
     expect(view.plan.find(({ subQuest }) => subQuest.id === id)).toMatchObject(expected);
