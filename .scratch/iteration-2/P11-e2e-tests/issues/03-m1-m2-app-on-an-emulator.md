@@ -113,3 +113,11 @@ fails until a follow-up ticket fixes the app. The M2 criterion is left unticked 
   and the README) and `pnpm typecheck` pass. No file under `src/`, `__tests__/` or `.github/` changed.
 - Seen in the screenshots, outside this ticket: on Onboarding the chosen department's name starts under the field's
   search icon.
+
+### Agent usage (2026-10-23)
+
+- Agent time: about 46 minutes, an estimate: the implementer subagent of this attempt (45 minutes, measured just
+  before its last commit) and an earlier attempt in another workflow, stopped by the orchestrator after a minute,
+  before it made a branch. About 15 minutes of it went to waiting for the APK build and the device runs.
+- Tokens: input 44,034 thousand in all (cache reads 43,641 thousand, cache writes 392 thousand, uncached under 1
+  thousand); output 11 thousand, a lower bound, since the transcript keeps only partial output counts.
