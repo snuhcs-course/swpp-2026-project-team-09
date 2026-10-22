@@ -95,7 +95,7 @@ describe('isParties', () => {
       ),
       ['no Leader', omit(PARTY, 'leader')],
       ['leader null', { ...PARTY, leader: null }],
-      ['a leader without a name', { ...PARTY, leader: { id: 'u1' } }],
+      ['a Leader without a name', { ...PARTY, leader: { id: 'u1' } }],
       ...inside(
         PARTY,
         'quest',

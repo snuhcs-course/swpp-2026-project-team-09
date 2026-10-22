@@ -89,7 +89,7 @@ describe("toCards of the User's Party", () => {
 });
 
 describe('toCards order', () => {
-  it('one of each → the events, the Quests, the Friends, then the Party members', () => {
+  it('one of each → the Events, the Quests, the Friends, then the Party members', () => {
     const cards = toCards(
       sources({
         quests: [quest('q1')],

@@ -50,7 +50,7 @@ describe('a position of a Friend by its age', () => {
 });
 
 describe('toFriendViews of one Friend seen', () => {
-  it('a Friend seen, with a status and a recent position → the status, its place and the position', () => {
+  it('a Friend seen, with a status and a recent position → the status, its Place and the position', () => {
     const [view] = toFriendViews([friend(true)], [measured('min-jun', MINUTE)], [LIBRARY], NOW);
     expect(view).toEqual({
       id: 'min-jun',

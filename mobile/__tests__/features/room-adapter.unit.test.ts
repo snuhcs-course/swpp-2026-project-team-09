@@ -90,7 +90,7 @@ describe('toRoom head', () => {
     expect(view.tags).toEqual(['#AI커리어']);
   });
 
-  it('a Closed Quest for a Global Event that another leads → the count, 비공개, the event, its text in the room', () => {
+  it('a Closed Quest for a Global Event that another leads → the count, 비공개, the Event, its text in the room', () => {
     const closed = quest({
       joinPolicy: 'closed',
       leader: MIN_JUN,

@@ -137,7 +137,7 @@ describe('isJoinPolicy', () => {
 describe('isBoard', () => {
   checks(
     isBoard,
-    [...['meal', 'career', 'hobby', 'show'].map((board): Variant => [board, board]), ['no board, null', null]],
+    [...['meal', 'career', 'hobby', 'show'].map((board): Variant => [board, board]), ['no Board, null', null]],
     [
       ['study', 'study'],
       ['1', 1],
@@ -151,7 +151,7 @@ describe('isQuest', () => {
     [
       ['a Closed Quest for a Global Event', QUEST],
       [
-        'an Open Quest on a board',
+        'an Open Quest on a Board',
         { ...QUEST, globalEvent: null, joinPolicy: 'open', board: 'meal', description: '학관' },
       ],
       ['a Class Quest', { ...QUEST, globalEvent: null, leader: null, createdAt: null, classQuest: true }],

@@ -118,7 +118,7 @@ describe('toMenuDay', () => {
     expect(restaurants[1]?.meals).toEqual({ breakfast: [], lunch: [], dinner: [] });
   });
 
-  it("restaurants collected at different times → the oldest collection, in Korea's time", () => {
+  it("restaurants collected at different times → the oldest Collection, in Korea's time", () => {
     const menus = [
       restaurant('학생회관식당', LUNCH, '2026-10-05T21:30:00Z'),
       restaurant('두레미담', LUNCH, '2026-10-05T20:05:00Z'),
@@ -126,7 +126,7 @@ describe('toMenuDay', () => {
     expect(toMenuDay(menus).collected).toBe('10월 6일 05:05에 가져온 메뉴예요');
   });
 
-  it('an empty day → no restaurant and no collection line', () => {
+  it('an empty day → no restaurant and no Collection line', () => {
     expect(toMenuDay([])).toEqual({ restaurants: [], collected: '' });
   });
 });
