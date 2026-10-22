@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -18,7 +19,8 @@ import { toast } from './support/room';
 import { answerParty, openAt } from './support/party';
 import { askMainServer, DINNER, INVITATION, PHONE_NOW } from './support/server';
 
-// 초대, against the fake main server, on Tuesday 6 October 2026 at 13:00 in Korea. Moved out of `party-mine-test.tsx`.
+// 초대, against the fake main server, on Tuesday 6 October 2026 at 13:00 in Korea. Moved out of
+// `party-mine.integration.test.tsx`.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({

@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -74,8 +75,8 @@ describe('the connection to the socket server', () => {
     expect(server.received('GET /positions')).toHaveLength(before + 1);
   });
 
-  // The glide itself is the map's (`map-glide-test.tsx`): the screen gives a Friend's Avatar a glide of five seconds,
-  // and this file turns motion off, so the plain ground places the Avatar at once.
+  // The glide itself is the map's (`map-glide.unit.test.tsx`): the screen gives a Friend's Avatar a glide of five
+  // seconds, and this file turns motion off, so the plain ground places the Avatar at once.
 
   it('fetches the positions again when the app comes back to the front', async () => {
     await openLive();
