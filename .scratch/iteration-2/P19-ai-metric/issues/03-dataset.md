@@ -97,11 +97,21 @@ From the review of #111, as a third commit:
   a model passing 학생회관식당 can pass once abbreviations are read. The outcome keeps right from wrong: the mention
   제육볶음 is 학생회관식당's lunch, which 자하연식당 (비빔밥) does not serve, and the dining button. A call for every
   restaurant that lists both lunches passes too, as it answers the question.
-- Still open: `no-data-restaurant-breakfast` is checked again after the scorer's next change (a found lookup answered
-  in words counts as TOOL).
+
+### Rebased onto 02's new head (2026-10-22)
+
+The three commits moved onto `2.0/P19-02-scorer` at `d63f423` (on 2.0/Main `023384d`), with no conflict.
+
+- `no-data-restaurant-breakfast` now passes as it should: a getMenus for every restaurant that finds 학생회관식당's
+  breakfast, answered "자하연식당은 내일 아침 메뉴가 없어요", reads as TOOL (a found lookup answered in words) and holds
+  the mention. The limitation noted in the review fixes above is gone. `test/eval-cases.e2e-spec.ts` scores that
+  answer and a wrong one ("내일 아침은 토스트예요." fails its mention), and the 학관 case's right and wrong lunch, on
+  hand-made traces.
+- 02's new `test/eval-tool-errors.e2e-spec.ts` called `seedWorld(app)`; it now seeds into a database of its own
+  through `seededDatabase`, as the other benchmark tests do.
 
 ### Agent usage (2026-10-22)
 
-- Agent time: about 1 hour 40 minutes (estimate), one subagent session in its worktree, both reviews' fixes included.
-- Tokens (estimate, this session only): about 18M input, of which about 17.1M cache reads and 0.7M cache writes, and
-  about 90k output. No subagents.
+- Agent time: about 1 hour 50 minutes (estimate), one subagent session in its worktree, both reviews' fixes included.
+- Tokens (estimate, this session only): about 20M input, of which about 19M cache reads and 0.8M cache writes, and
+  about 95k output. No subagents.

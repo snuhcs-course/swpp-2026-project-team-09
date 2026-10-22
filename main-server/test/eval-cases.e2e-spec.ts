@@ -9,10 +9,13 @@ import { Server } from 'node:http';
 import { inject, type ProvidedContext } from 'vitest';
 import { type EvalCase, loadCases } from '../eval/cases.ts';
 import { type Expect } from '../eval/expect.ts';
+import { namesOf } from '../eval/normalise.ts';
+import { scoreTurn } from '../eval/score.ts';
 import { type Seeded, seedWorld, type World } from '../eval/world.ts';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { NOW } from '../eval/runner.ts';
 import { ask, postAssistantMessages } from './assistant.js';
+import { call, turn as traceOf } from './eval-traces.ts';
 import { type SeededDatabase, seededDatabase } from './containers.js';
 import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel } from './scripted-model.js';
@@ -159,6 +162,53 @@ describe('The case files', () => {
     );
     expect(abbreviated.length).toBeGreaterThan(0);
     expect(abbreviated.every(({ knownFailure }) => knownFailure !== undefined)).toBe(true);
+  });
+});
+
+// The case of that id, and its expectation.
+function expectOfCase(id: string): Expect {
+  const found = cases.find((evalCase) => evalCase.id === id)?.expect;
+  if (found === undefined) {
+    throw new Error(`No case ${id} with an expect`);
+  }
+  return found;
+}
+
+const breakfastFound = call(
+  'getMenus',
+  { date: '2026-10-22', meal: 'breakfast' },
+  { result: 'found', date: '2026-10-22', restaurants: [{ name: '학생회관식당', meals: [] }] },
+);
+
+const lunchFound = call(
+  'getMenus',
+  { date: '2026-10-21', meal: 'lunch' },
+  { result: 'found', date: '2026-10-21', restaurants: [] },
+);
+
+describe('Some cases, scored on hand-made answers', () => {
+  // A getMenus for every restaurant finds 학생회관식당's breakfast: saying in words that 자하연식당 has none is right.
+  it.each([
+    ['자하연식당은 내일 아침 메뉴가 없어요. 학생회관식당은 토스트가 나와요.', true],
+    ['내일 아침은 토스트예요.', false],
+  ])('no-data-restaurant-breakfast: "%s" passes: %s', (text, passes) => {
+    const score = scoreTurn(
+      traceOf({ steps: [[breakfastFound]], text }),
+      expectOfCase('no-data-restaurant-breakfast'),
+      namesOf({}),
+    );
+    expect(score.action).toBe('TOOL');
+    expect(score.passed).toBe(passes);
+  });
+
+  // 학관 is 학생회관: its lunch is 제육볶음, and 자하연식당's 비빔밥 is not the answer.
+  it.each([
+    ['학생회관식당 점심은 제육볶음이에요.', true],
+    ['자하연식당 점심은 비빔밥이에요.', false],
+  ])('menus-abbreviation-hakgwan: "%s" passes: %s', (text, passes) => {
+    const dining = call('showOnMap', { layer: 'dining' }, { result: 'shown', layer: 'dining' });
+    const trace = traceOf({ steps: [[lunchFound], [dining]], text, mapButtons: ['dining'] });
+    expect(scoreTurn(trace, expectOfCase('menus-abbreviation-hakgwan'), namesOf({})).passed).toBe(passes);
   });
 });
 
