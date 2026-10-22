@@ -289,12 +289,19 @@ xcrun simctl spawn booted log stream --predicate 'eventMessage CONTAINS "SnuNowM
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
 
-| Command             | Checks                                       |
-| ------------------- | -------------------------------------------- |
-| `pnpm lint`         | oxlint with type-aware rules                 |
-| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it) |
-| `pnpm typecheck`    | TypeScript in strict mode                    |
-| `pnpm test`         | Jest tests in `__tests__/`                   |
+| Command             | Checks                                                                |
+| ------------------- | --------------------------------------------------------------------- |
+| `pnpm lint`         | oxlint with type-aware rules, and that each test file names its level |
+| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it)                          |
+| `pnpm typecheck`    | TypeScript in strict mode                                             |
+| `pnpm test`         | Jest tests in `__tests__/`                                            |
+
+Each test file names its level ([ADR 0007](../docs/adr/0007-test-levels-by-what-a-test-starts.md)). A
+`.unit.test.ts(x)` file calls one module, a function, hook or component, whose collaborators are pure code or
+stand-ins. A `.integration.test.ts(x)` file starts the app's router over the mocks or the fake main server, or runs
+several of the app's layers together, such as a hook over the API client and its mocks. `pnpm test:unit` and
+`pnpm test:integration` run one level each; `pnpm test:cov` and `pnpm test:cov:unit` also measure the coverage of every
+file in `src/`, written to `coverage/`.
 
 A test may take up to 60 seconds: the first test of a file that touches a text input or an animation loads those
 parts of React Native, which is slow on a machine that has not run the tests before, as in CI.
@@ -1372,7 +1379,7 @@ of the design system's tokens. How it keeps the rules:
 
 The module cannot be tested with Jest: Jest runs without it. It is checked by hand on `/map-check`, against the
 device check of the spec. `native-map.tsx` is tested with the module's view mocked
-(`__tests__/map-native-view-test.tsx`).
+(`__tests__/map-native-view.unit.test.tsx`).
 
 ### The iOS module
 

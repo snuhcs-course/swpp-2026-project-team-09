@@ -61,20 +61,49 @@
     "web": "expo start --web",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "oxlint --type-aware",
+    "lint": "oxlint --type-aware && node ../scripts/check-test-levels.ts",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "test:unit": "jest --selectProjects unit",
+    "test:integration": "jest --selectProjects integration",
+    "test:cov:unit": "jest --selectProjects unit --coverage",
+    "test:cov": "jest --coverage"
   },
   "jest": {
-    "preset": "jest-expo",
-    "moduleNameMapper": {
-      "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock"
-    },
-    "testPathIgnorePatterns": [
-      "/node_modules/",
-      "<rootDir>/__tests__/support/"
+    "projects": [
+      {
+        "displayName": "unit",
+        "preset": "jest-expo",
+        "moduleNameMapper": {
+          "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock"
+        },
+        "testMatch": [
+          "<rootDir>/__tests__/**/*.unit.test.{ts,tsx}"
+        ]
+      },
+      {
+        "displayName": "integration",
+        "preset": "jest-expo",
+        "moduleNameMapper": {
+          "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock"
+        },
+        "testMatch": [
+          "<rootDir>/__tests__/**/*.integration.test.{ts,tsx}"
+        ]
+      }
     ],
-    "testTimeout": 60000
+    "testTimeout": 60000,
+    "coverageProvider": "babel",
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx}",
+      "!**/*.d.ts"
+    ],
+    "coverageReporters": [
+      "text-summary",
+      "json-summary",
+      "html",
+      "lcov"
+    ]
   },
   "private": true,
   "license": "UNLICENSED"

@@ -509,7 +509,7 @@ pnpm test
 | `worker-server` | Vitest on saved pages of each Source; no Docker                                                              |
 | `match-server`  | Vitest against a PostgreSQL container it starts itself; Docker running                                       |
 | `admin`         | Vitest: page tests in jsdom, and tests against a build of the site with a fake main server                   |
-| `mobile`        | Jest, against the mocks and a fake main server and socket                                                    |
+| `mobile`        | Jest, against the mocks and a fake main server and socket; no Docker, and `pnpm test:unit` needs none        |
 | `flow-tests`    | The three demo flows across the four built servers, under a Compose project of its own; Docker and `openssl` |
 
 `flow-tests` builds the servers' images the first time, which takes some minutes, and leaves a running stack and its
