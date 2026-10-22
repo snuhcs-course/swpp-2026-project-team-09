@@ -49,6 +49,8 @@ export interface RunScore {
   overCalling: { turns: number; withOver: number; calls: number };
   underCalling: { turns: number; withUnder: number; calls: number };
   categories: Record<string, CategoryScore>;
+  // Per set of accepted actions, in the order first met, how many turns took each observed action.
+  confusion: { expected: string; observed: Record<string, number> }[];
   // Cases marked as known failures of which every run passed: their mark is to be removed.
   knownNowPassing: string[];
   // The cases run more than once, and how many of their runs passed; a case counts toward pass^k when all did.
@@ -75,6 +77,20 @@ function recallOf(turns: readonly TurnScore[]): RunScore['recall'] {
     });
     return { kind, expected: counted.length, recalled: countOf(counted, ({ recalled }) => recalled) };
   });
+}
+
+function confusionOf(turns: readonly TurnScore[]): RunScore['confusion'] {
+  const rows: RunScore['confusion'] = [];
+  for (const { accepted, observed } of turns) {
+    const expected = accepted.join(' or ');
+    let row = rows.find((found) => found.expected === expected);
+    if (row === undefined) {
+      row = { expected, observed: {} };
+      rows.push(row);
+    }
+    row.observed[observed] = (row.observed[observed] ?? 0) + 1;
+  }
+  return rows;
 }
 
 function categoriesOf(cases: readonly CaseScore[]): Record<string, CategoryScore> {
@@ -175,6 +191,7 @@ export function scoreRun(written: unknown): RunScore {
     recall: recallOf(turns),
     ...toolsOf(turns),
     categories: categoriesOf(cases),
+    confusion: confusionOf(turns),
     knownNowPassing,
     passK: passKOf(cases),
     usage: usageOfRun(saved),

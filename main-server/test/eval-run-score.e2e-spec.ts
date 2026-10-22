@@ -139,9 +139,9 @@ describe("A run's measures", () => {
   );
 
   it('give action recall per kind, a turn counting toward the action it took when accepted, else the first accepted', () => {
-    // b took no action: its lookup showed nothing. d asked without the mentions, so it is not recalled.
+    // b answered its lookup in words, a TOOL whose button check fails. d asked without the mentions: not recalled.
     expect(run.recall).toEqual([
-      { kind: 'TOOL', expected: 2, recalled: 1 },
+      { kind: 'TOOL', expected: 2, recalled: 2 },
       { kind: 'ASK', expected: 2, recalled: 1 },
       { kind: 'PROPOSE', expected: 0, recalled: 0 },
       { kind: 'REFUSE', expected: 0, recalled: 0 },

@@ -17,6 +17,7 @@ import {
   roleOf,
 } from './normalise.ts';
 import type { CaseRun } from './runner.ts';
+import { type Observed, observedActionOf } from './observed.ts';
 import { type FailureKind, type TurnTrace } from './trace.ts';
 
 // The scorer (spec P19, "Scoring (rules only)"): fixed rules that read a turn's trace and reply against its case's
@@ -39,6 +40,8 @@ export interface TurnScore {
   // The action is accepted and, when it asks, the text holds the case's mentions: an ASK read from the trace alone
   // is still an ASK, but not a right one.
   recalled: boolean;
+  // The action read without the case's expect, for the confusion table only (eval/observed.ts).
+  observed: Observed;
   failure: FailureKind | null;
   checks: Check[];
   passed: boolean;
@@ -66,8 +69,9 @@ function missingMentions(text: string, expect: Expect): Mention[] {
 
 // The action of a turn that ended with a reply (the spec's "Scoring"):
 // - PROPOSE: the reply carries a Proposal.
-// - TOOL: the reply shows cards or map buttons, or a lookup answered none and the text says so: the case gives
-//   mentions and the text holds them. A lookup that found something and showed nothing is not TOOL.
+// - TOOL: the reply shows cards or map buttons; or a lookup found data and the text answers in words, a missing
+//   button or card failing its own check; or a lookup answered none and the text says so: the case gives mentions
+//   and the text holds them.
 // - ASK: no Proposal and nothing shown, and the trace calls for a question (a resolver answered several or none,
 //   proposeQuest refused) or, in a case that accepts an ASK, the text holds its mentions. A question mark never counts.
 //   An ASK read from the trace alone is still ASK, so that a wrong one shows, but is recalled only with the mentions.
@@ -86,8 +90,10 @@ export function actionOf(trace: TurnTrace, expect: Expect, names: Names): Action
     return asks ? 'PROPOSE+ASK' : 'PROPOSE';
   }
   const shown = reply.cards.length > 0 || reply.mapButtons.length > 0;
-  const foundNone = calls.some((call) => roleOf(call.name) === 'lookup' && outcomeOf(call) === 'none');
-  if (shown || (foundNone && holdsMentions)) {
+  const answered = (outcome: string): boolean =>
+    calls.some((call) => roleOf(call.name) === 'lookup' && outcomeOf(call) === outcome);
+  const inWords = answered('found') && reply.text.trim() !== '';
+  if (shown || inWords || (answered('none') && holdsMentions)) {
     return asks ? 'TOOL+ASK' : 'TOOL';
   }
   const calledFor = calls.some((call) => {
@@ -241,6 +247,7 @@ export function scoreTurn(trace: TurnTrace, expect: Expect, names: Names): TurnS
     action,
     accepted: expect.actions,
     recalled,
+    observed: observedActionOf(trace),
     failure: trace.failure,
     checks,
     passed: checks.every(({ passed }) => passed),

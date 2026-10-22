@@ -138,6 +138,28 @@ function reviewedReplies(score: RunScore): string[] {
   );
 }
 
+// Expected against observed actions: a row per set of accepted actions, a column per observed action.
+export function confusionTable({ confusion }: RunScore): string {
+  if (confusion.length === 0) {
+    return 'No scored turn.';
+  }
+  const columns = [...new Set(confusion.flatMap(({ observed }) => Object.keys(observed)))];
+  return table(
+    ['Expected', ...columns],
+    confusion.map(({ expected, observed }) => [expected, ...columns.map((column) => String(observed[column] ?? 0))]),
+  );
+}
+
+function confusionSection(score: RunScore): string[] {
+  return [
+    '## Expected and observed actions',
+    'For diagnosis only: the observed action is read without the case, the last sentence asking back by a fixed ' +
+      'list of cues (`ASK_CUES` in eval/observed.ts) or the trace calling for a question. NO_TOOL is a reply with no ' +
+      'tool and no question, REFUSE and CHAT alike; NONE called tools and took none of the kinds.',
+    confusionTable(score),
+  ];
+}
+
 function recallSection(score: RunScore): string[] {
   return [
     '## Action recall',
@@ -253,6 +275,7 @@ export function scorecard(score: RunScore): string {
     `# Scorecard: ${saved.name}`,
     saved.stoppedBy === null ? '' : `The run was stopped by its ${saved.stoppedBy}: the cases after it did not run.`,
     ...recallSection(score),
+    ...confusionSection(score),
     ...toolsSection(score),
     ...categoriesSection(score),
     ...passKSection(score),

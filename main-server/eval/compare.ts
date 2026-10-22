@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { allCategories, averagesOf, passedById, type RunScore, settingsOf, totalFailures } from './run-score.ts';
-import { averages, cost, count, FAILURE_KINDS, ratio, table } from './scorecard.ts';
+import { averages, confusionTable, cost, count, FAILURE_KINDS, ratio, table } from './scorecard.ts';
 
 // Two scored runs side by side (spec P19, "The scorecard"): the scorecard's measures with their differences, the
 // settings that differ and the cases that changed. With about 60 cases one case is about 2 points of the whole set,
@@ -131,6 +131,10 @@ export function compare(a: RunScore, b: RunScore): string {
     `# Comparison: ${nameA} and ${nameB}`,
     'With about 60 cases one case is about 2 points of the whole set; small differences are noise.',
     measuresTable(a, b, nameA, nameB),
+    `## Expected and observed actions, ${nameA}`,
+    confusionTable(a),
+    `## Expected and observed actions, ${nameB}`,
+    confusionTable(b),
     '## Settings that differ',
     settingsTable(a, b, nameA, nameB),
     '## Cases',
