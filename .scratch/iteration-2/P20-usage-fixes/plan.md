@@ -93,7 +93,7 @@ People (Friends, Party members, the User) and shuttle vehicles are Avatars. They
 - the friend panel's search: `screens/main/friend-panel.tsx`,
 - the 행사 tab's search: `screens/events/events-bar.tsx`,
 - 파티 → 찾기's search: `screens/party/find-tab.tsx`,
-- 시간표 version rename: `screens/me/version-rename.tsx`, inside 내 정보's week card (`week-card.tsx` → `version-menu.tsx`) in the tab's own `ScrollView`, not in `FullScreenPanel`,
+- 시간표 version rename: `screens/me/version-rename.tsx`, in the week card's version list (`week-card.tsx` → `version-menu.tsx`), which stands in a RN `Modal` of its own, placed where the trigger was, not in `FullScreenPanel` nor in 내 정보's `ScrollView`,
 - 수업 추가 / 수정: `screens/timetable/class-form-screen.tsx`,
 - the onboarding, which already has `KeyboardAvoidingView`: check that it works on Android edge to edge,
 - the AI input: already rises, so keep it as it is unless one shared mechanism replaces `useKeyboardHeight`.

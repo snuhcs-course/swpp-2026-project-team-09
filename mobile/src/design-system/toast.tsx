@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import {
@@ -18,6 +19,7 @@ import {
 } from 'react';
 import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
+import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { Icon, type IconName } from './icon';
 import { color, font, radius, space, text } from './tokens';
 
@@ -38,6 +40,15 @@ interface Toasts {
 
 const ToastContext = createContext<Toasts | null>(null);
 
+// What a toast stands on, from the screen's bottom: the phone's own bar, none without a provider of it, as in a test.
+// While the phone's keyboard is up, the keyboard instead, and the toast is still clear of what was claimed: a form's
+// footer rises above the keyboard, and a navigation the keyboard covers only puts the toast that much higher.
+function useToastFloor(): number {
+  const inset = use(SafeAreaInsetsContext)?.bottom ?? 0;
+  const keyboard = useKeyboardHeight(inset);
+  return keyboard > 0 ? keyboard : inset;
+}
+
 // Shows one toast at a time over everything it wraps, except an open Dialog, which the phone draws above the app. A
 // new toast replaces the one before it. The design system has no toast; the `Main` frame draws one, a dark bar from
 // side to side with a check mark before its words and no shadow, and the app adds it in the design system's terms.
@@ -46,8 +57,7 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactEleme
   const [toast, setToast] = useState<{ message: string; shownMs: number; icon: IconName } | null>(null);
   const [claims, setClaims] = useState<readonly { height: number }[]>([]);
   const taken = claims.at(-1)?.height ?? 0;
-  // The phone's own bar at the bottom. Without a provider of it, as in a test, there is none.
-  const inset = use(SafeAreaInsetsContext)?.bottom ?? 0;
+  const floor = useToastFloor();
   const show = useCallback<ShowToast>((message, shownMs = SHOWN_MS, icon = 'check') => {
     setToast({ message, shownMs, icon });
     // iOS has no live regions: the words are announced by hand. Android reads the live region below.
@@ -81,7 +91,7 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactEleme
     <ToastContext value={toasts}>
       {children}
       {toast === null ? null : (
-        <View style={[styles.layer, { bottom: inset + taken + space[6] }]} testID="toast-layer">
+        <View style={[styles.layer, { bottom: floor + taken + space[6] }]} testID="toast-layer">
           <View accessibilityLiveRegion="polite" accessibilityRole="alert" accessible style={styles.toast}>
             <Icon color={color.onPrimary} name={toast.icon} size={ICON} />
             <Text style={styles.words}>{toast.message}</Text>

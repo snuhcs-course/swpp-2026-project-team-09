@@ -6,7 +6,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { type ReactElement, type ReactNode, type Ref, useRef } from 'react';
+import { type ReactElement, type ReactNode, type Ref, useCallback, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { useRevealFocused } from '@/hooks/use-reveal-focused';
@@ -40,14 +40,18 @@ function useBothRefs(given: Ref<ScrollView> | undefined): {
   set: (node: ScrollView | null) => void;
 } {
   const own = useRef<ScrollView>(null);
-  const set = (node: ScrollView | null): void => {
-    own.current = node;
-    if (typeof given === 'function') {
-      given(node);
-    } else if (given !== undefined && given !== null) {
-      given.current = node;
-    }
-  };
+  // The same function from render to render, so that the screen's ref is not cleared and set again each time.
+  const set = useCallback(
+    (node: ScrollView | null): void => {
+      own.current = node;
+      if (typeof given === 'function') {
+        given(node);
+      } else if (given !== undefined && given !== null) {
+        given.current = node;
+      }
+    },
+    [given],
+  );
   return { own, set };
 }
 

@@ -2,7 +2,6 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
- * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -29,12 +28,10 @@ import {
   text,
 } from '@/design-system';
 import { useNotices } from '@/features/notifications/use-notices';
-import { useRevealFocused } from '@/hooks/use-reveal-focused';
 import { stopBackground, useSending } from '@/position';
 import { useSession } from '@/session/session';
 import { LocationExplanation } from '../main/location-explanation';
 import { yearLabel } from '../onboarding/form';
-import { useKeyboardOverNav } from '../shell/layout';
 import { TabScreen } from '../shell/tab-screen';
 import { SharingCard } from './sharing-card';
 import { useSharingSwitch } from './use-sharing-switch';
@@ -234,29 +231,25 @@ interface MeScreenProps {
 }
 
 // The 내 정보 tab, the `Profile` frame: the User's profile, the week, the Master Switch, the ways to the User's
-// Friends, Parties and Quests, and the sign-out. The keyboard, as for a 시간표 version's name, shortens the body.
+// Friends, Parties and Quests, and the sign-out.
 export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactElement {
   const profile = useQuery(lobbyQuery).data?.profile;
   const sharing = useSharingSwitch();
   const { scroll, setTop } = useShowSharing(showSharing, onSharingShown);
-  const lift = useKeyboardOverNav();
-  const reveal = useRevealFocused(scroll, lift > 0);
   return (
     <TabScreen actions={<Bell />} title="내 정보">
-      <ScrollView ref={scroll} style={{ marginBottom: lift }} {...reveal.scrollProps}>
-        <View ref={reveal.content} style={styles.body}>
-          {profile === undefined ? null : <ProfileCard profile={profile} />}
-          <WeekCard />
-          <SharingCard
-            onLayout={(event) => {
-              setTop(event.nativeEvent.layout.y);
-            }}
-            outlined={showSharing}
-            sharing={sharing}
-          />
-          <ActivityCard />
-          <SignOut />
-        </View>
+      <ScrollView contentContainerStyle={styles.body} ref={scroll}>
+        {profile === undefined ? null : <ProfileCard profile={profile} />}
+        <WeekCard />
+        <SharingCard
+          onLayout={(event) => {
+            setTop(event.nativeEvent.layout.y);
+          }}
+          outlined={showSharing}
+          sharing={sharing}
+        />
+        <ActivityCard />
+        <SignOut />
       </ScrollView>
       <LocationExplanation
         blocked={sharing.blocked}

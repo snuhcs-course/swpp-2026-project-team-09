@@ -36,7 +36,7 @@ Plan item 5 has the full list with where each lives:
 - the friend panel's search,
 - the 행사 tab's search,
 - 파티 → 찾기's search,
-- 시간표 version rename, which sits in 내 정보's week card, inside the tab's own scroll view and not in the full-screen panel, so the shared fix does not reach it and it is checked on its own,
+- 시간표 version rename, which sits in the week card's version list, a `Modal` of its own and not in the full-screen panel, so the shared fix does not reach it and it is checked on its own,
 - 수업 추가 / 수정,
 - the onboarding,
 - the AI input.
@@ -76,7 +76,7 @@ Built on `useKeyboardHeight`. `react-native-keyboard-controller` was not added.
   - Android tells of the keyboard only once it is up (`keyboardDidShow`/`keyboardDidHide`). The footer and sheet move just after the keyboard, not with it, as the AI input already does.
   - Scrolling the focused field into view is our own small hook (`hooks/use-reveal-focused.ts`). It measures the focused input against the scroll view's content and scrolls it above the shortened view:
     - when the view shrinks for the keyboard,
-    - when the content grows (a multiline field, or a message sent).
+    - when the content grows (a multiline field, or a message sent), unless the User dragged the field out of view to read. It follows again once a drag leaves the field in view.
 
 Per-screen choice:
 - A form with a 52 primary button in the footer (파티 만들기 / 모집글 수정, 수업 추가 / 수정) keeps the button right above the keyboard, and the body scrolls the focused field into view.
@@ -84,6 +84,7 @@ Per-screen choice:
 - The room is the one exception (`footerHidesForKeyboard`):
   - its footer's 나가기 / 파티 없애기 gives way while the keyboard is up,
   - so the chat input stands right above the keyboard, with the latest message over it.
+  - It gives way for every field in the room, the plan form's too. The plan form's own 취소 / 추가 are inline under its fields, and the footer's danger button is not needed while typing.
 
 ### Result
 
@@ -101,9 +102,10 @@ Per-screen choice:
 | Friend panel's search | `screens/main/friend-panel.tsx` | Checked, not changed: at the top of the side panel |
 | 행사 tab's search | `screens/events/events-bar.tsx` | Checked, not changed: in the tab's top bar |
 | 파티 → 찾기's search | `screens/party/find-tab.tsx` | Checked, not changed: first in the tab's list, under the official banner |
-| 시간표 version rename | `screens/me/me-screen.tsx` (+ `screens/shell/layout.ts`) | Changed: 내 정보's scroll view ends at the keyboard (`useKeyboardOverNav`) and scrolls the field into view. `keyboardShouldPersistTaps="handled"` was added, so 확인 is pressed at the first tap. `version-rename.tsx` not touched |
+| 시간표 version rename | `screens/me/version-menu.tsx` (+ new `screens/me/menu-lift.ts`) | Changed: the list stands in a `Modal`, placed once under the trigger, so nothing else reaches it. While the current version is renamed and the keyboard would cover its row, the list goes up so the row stands 16 above the keyboard, never over the status bar. With up to 10 versions the row can reach well below the keyboard's top. `version-rename.tsx` not touched |
 | 수업 추가 / 수정 | `screens/timetable/class-form-screen.tsx` | Changed by the shared fix (panel). File not touched. 저장 stands above the keyboard |
 | Onboarding | `screens/onboarding/onboarding-screen.tsx` | Checked in code, not changed: it keeps its own `KeyboardAvoidingView` and revealer. It still needs the device check on Android edge to edge |
+| Toasts while typing (from the review of #119) | `design-system/toast.tsx` | Changed: while the keyboard is up, a toast stands on it, still clear of what its screen claims (a form's footer, which rises above the keyboard; a tab's navigation, which only puts it higher). Before, every toast shown while typing sat behind the keyboard, such as 파티방's "메시지를 보내지 못했어요" |
 | AI input | `screens/main/map-bottom.tsx` | Not changed: still lifted by `useKeyboardHeight` |
 
 ### What was and was not checked (2026-10-22)
@@ -113,14 +115,17 @@ Checked by the agent:
   - `__tests__/design-system/full-screen-panel-test.tsx`: the panel ends `KEYBOARD` above the bottom and the footer stays; it returns when the keyboard hides; `footerHidesForKeyboard` puts the footer away and back.
   - `__tests__/design-system/bottom-sheet-test.tsx`: the sheet stands `KEYBOARD` high and returns.
   - `__tests__/room-keyboard-test.tsx`: the room ends at the keyboard, its footer gives way and the chat input stays.
+- `__tests__/hooks/use-reveal-focused-test.tsx`, with a faked focused field: the field is scrolled 16 above what is seen, counting the scroll offset; nothing moves for a field already in view, outside the content, or with the keyboard down; it follows the content's growth, but not after the User drags the field away, until a drag leaves it in view.
+- `__tests__/design-system/toast-test.tsx`: the toast stands `KEYBOARD` + the claimed 65 + 24 high while the keyboard is up, and returns.
+- `__tests__/menu-lift-test.ts`: the version list goes up just enough for a low row, not for a high one or with the keyboard down, and never over the status bar.
 - `pnpm lint`, `pnpm typecheck` (with the locally generated `expo-env.d.ts` and `.expo/` moved aside) and `pnpm format:check` pass.
 - The whole mobile suite (`jest --maxWorkers=2`): 147 suites, 1294 passed, 1 todo. That includes main-chat, onboarding, party-form and timetable.
 
 Not checked by the agent:
 - Every device check on an Android phone, and on iOS. The person checks them on the phone once, after every P20 ticket is in.
-- The scroll-into-view (`useRevealFocused`). The tests' phone has no focused native input, so it only runs on a device.
+- That `measureLayout` and `scrollTo` behave on a device as the faked field does in `useRevealFocused`'s test.
+- The version list's lift: `measureInWindow`, the window's height and the keyboard's height must agree on a device, inside the `Modal`.
 - Whether the footer and sheet moving just after the keyboard on Android reads as a jump.
-- Toasts shown above a footer (`useToastAbove`) do not move with the keyboard and may sit behind it. Left as it was.
 
 ### Agent usage (2026-10-22)
 
@@ -128,3 +133,11 @@ Not checked by the agent:
 - Tokens, estimated from the session's context growth because the session has no exact counter (no subagents were used):
   - input: about 3.0M, of which about 2.85M were cache reads and about 0.12M cache writes, about 30k uncached,
   - output: about 30k.
+
+### Agent usage (2026-10-23)
+
+The round answering the review of #119.
+- Agent time: about 60 minutes in one session, two runs of the whole suite (~18 and ~15 minutes) included. Time waiting for the person is not counted. This is an estimate.
+- Tokens, estimated from the session's context growth because the session has no exact counter (no subagents were used):
+  - input: about 5.2M, of which about 5.0M were cache reads and about 0.15M cache writes, about 30k uncached,
+  - output: about 35k.
