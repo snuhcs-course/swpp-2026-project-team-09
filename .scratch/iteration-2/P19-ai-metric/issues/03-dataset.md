@@ -76,9 +76,8 @@ From the two-axis review of `301c0b6`, as a second commit:
   questions (좋아하, 취향, 당기, …). `resolveGlobalEvent` is allowed, not required, wherever `searchGlobalEvents` also
   gives ids proposeQuest accepts. `global-events-this-week-shows` and `finding-parties-study` check only the cards.
   `ask-lunch-already-past` takes "the time has passed" or a question about the time as one any-of mention.
-  `no-data-events-day-after-tomorrow` allows showGlobalEvents. `menus-abbreviation-hakgwan` expects getMenus with the
-  restaurant 학생회관 (compared exactly, after trimming), so a call for every restaurant no longer passes; one that
-  passes 학생회관식당 fails it too.
+  `no-data-events-day-after-tomorrow` allows showGlobalEvents. `menus-abbreviation-hakgwan` expected getMenus with
+  the restaurant 학생회관; changed again in the review by 함재현, below.
 - A known limitation: in `no-data-restaurant-breakfast`, a getMenus for every restaurant finds 학생회관식당's
   breakfast, and a reply that then says 자하연식당 has none without the dining button is no action under the scorer
   (a lookup that found something with nothing shown). Left as it is.
@@ -87,8 +86,22 @@ From the two-axis review of `301c0b6`, as a second commit:
   the database's URL; `seededDatabase(settings)` in `test/containers.ts` gives a test file its own seeded database;
   English prose says Quest, not 파티.
 
+### Review by 함재현 (2026-10-22)
+
+From the review of #111, as a third commit:
+
+- `compound-proposal-two-friends-place-event`: the User now says "5시에 학생회관에서 모여서 가는 걸로". resolvePlace is
+  told to pass the User's words exactly, and "학생회관 앞" names no Place. The case checks no resolvePlace argument, so
+  nothing else changed: the Proposal still expects 학생회관.
+- `menus-abbreviation-hakgwan`: getMenus is checked for its date and meal only, no longer for its restaurant, so that
+  a model passing 학생회관식당 can pass once abbreviations are read. The outcome keeps right from wrong: the mention
+  제육볶음 is 학생회관식당's lunch, which 자하연식당 (비빔밥) does not serve, and the dining button. A call for every
+  restaurant that lists both lunches passes too, as it answers the question.
+- Still open: `no-data-restaurant-breakfast` is checked again after the scorer's next change (a found lookup answered
+  in words counts as TOOL).
+
 ### Agent usage (2026-10-22)
 
-- Agent time: about 1 hour 30 minutes (estimate), one subagent session in its worktree, the review fixes included.
-- Tokens (estimate, this session only): about 16M input, of which about 15.2M cache reads and 0.6M cache writes, and
-  about 85k output. No subagents.
+- Agent time: about 1 hour 40 minutes (estimate), one subagent session in its worktree, both reviews' fixes included.
+- Tokens (estimate, this session only): about 18M input, of which about 17.1M cache reads and 0.7M cache writes, and
+  about 90k output. No subagents.

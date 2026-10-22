@@ -60,7 +60,7 @@
 - id: compound-proposal-two-friends-place-event
   category: compound
   turns:
-    - user: 토요일 축제 개막 공연 이민수, 김지은이랑 보러 갈래. 5시에 학생회관 앞에서 모여서 가는 걸로 파티 만들어줘
+    - user: 토요일 축제 개막 공연 이민수, 김지은이랑 보러 갈래. 5시에 학생회관에서 모여서 가는 걸로 파티 만들어줘
   expect:
     actions: [PROPOSE]
     tools:

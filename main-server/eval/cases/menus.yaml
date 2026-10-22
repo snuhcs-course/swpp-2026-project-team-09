@@ -69,8 +69,8 @@
       mentions: [토스트, 닭갈비덮밥, 카레라이스]
 
 # "학관" is what students call 학생회관 (63동), but the restaurant filter matches substrings, and 학생회관식당 does not
-# hold 학관: a getMenus with restaurant 학관 answers none. The right call names the restaurant 학생회관, so that a call
-# for every restaurant does not pass for reading 학관.
+# hold 학관: a getMenus with restaurant 학관 answers none. The case checks the outcome: 학생회관식당's lunch (제육볶음,
+# which 자하연식당 does not serve) and the dining button, however the restaurant is named.
 - id: menus-abbreviation-hakgwan
   category: menus
   knownFailure: '"학관" is not read as 학생회관: names are matched as substrings, and 학생회관식당 does not hold 학관'
@@ -82,7 +82,7 @@
       required: [getMenus, showOnMap]
       forbidden: [proposeQuest]
     args:
-      getMenus: { date: '2026-10-21', meal: lunch, restaurant: 학생회관 }
+      getMenus: { date: '2026-10-21', meal: lunch }
     mapButtons: [dining]
     text:
       mentions: [제육볶음]

@@ -19,7 +19,7 @@ The 62 cases of `main-server/eval/cases/`, for review in one read. The clock sta
 | menus-tomorrow-breakfast | **U:** 내일 아침 학식 메뉴 알려줘 | TOOL; calls getMenus, showOnMap; never proposeQuest; getMenus {date: 2026-10-22, meal: breakfast}; buttons dining; text holds 토스트 |  |
 | menus-today-dinner-restaurant | **U:** 오늘 저녁 자하연식당 뭐 나와? | TOOL; calls getMenus, showOnMap; never proposeQuest; getMenus {date: 2026-10-21, meal: dinner}; buttons dining; text holds 순두부찌개 |  |
 | menus-tomorrow-whole-day | **U:** 내일 학식 하루치 전부 보여줘 | TOOL; calls getMenus, showOnMap; never proposeQuest; getMenus {date: 2026-10-22}; buttons dining; text holds 토스트 & 닭갈비덮밥 & 카레라이스 |  |
-| menus-abbreviation-hakgwan | **U:** 학관 점심 뭐야? | TOOL; calls getMenus, showOnMap; never proposeQuest; getMenus {date: 2026-10-21, meal: lunch, restaurant: 학생회관}; buttons dining; text holds 제육볶음 | "학관" is not read as 학생회관: names are matched as substrings, and 학생회관식당 does not hold 학관 |
+| menus-abbreviation-hakgwan | **U:** 학관 점심 뭐야? | TOOL; calls getMenus, showOnMap; never proposeQuest; getMenus {date: 2026-10-21, meal: lunch}; buttons dining; text holds 제육볶음 | "학관" is not read as 학생회관: names are matched as substrings, and 학생회관식당 does not hold 학관 |
 
 ## shuttle (3)
 
@@ -135,6 +135,6 @@ The 62 cases of `main-server/eval/cases/`, for review in one read. The clock sta
 | compound-menus-and-shuttle | **U:** 오늘 저녁 학식 메뉴랑 지금 셔틀 어디 있는지 같이 알려줘 | TOOL; calls getMenus, getShuttle, showOnMap; never proposeQuest; getMenus {date: 2026-10-21, meal: dinner}; buttons dining, shuttle; text holds 돈까스 & 정문/301동 |  |
 | compound-this-week-menus | **U:** 이번 주 학식 메뉴 전부 알려줘 | TOOL; calls getMenus, showOnMap; never proposeQuest; getMenus {date: 2026-10-21} & {date: 2026-10-22}; buttons dining; text holds 제육볶음 & 닭갈비덮밥 |  |
 | compound-festival-and-party | **U:** 이번 주말 축제 뭐 있는지 보여주고, 같이 갈 파티도 찾아줘 | TOOL; calls searchGlobalEvents, showGlobalEvents, searchRecruitingQuests, showQuests; never proposeQuest; globalEvent cards incl. 관악 가을 축제; quest cards incl. 축제 같이 즐겨요 |  |
-| compound-proposal-two-friends-place-event | **U:** 토요일 축제 개막 공연 이민수, 김지은이랑 보러 갈래. 5시에 학생회관 앞에서 모여서 가는 걸로 파티 만들어줘 | PROPOSE; calls resolveFriend, resolvePlace, proposeQuest; resolveFriend {name: 이민수} & {name: 김지은}; Proposal joinPolicy: closed, board: None, capacity: 3, startsAt: 2026-10-24 17:00, place: 학생회관, globalEvent: 축제 개막 공연, invitees: 이민수/김지은 |  |
+| compound-proposal-two-friends-place-event | **U:** 토요일 축제 개막 공연 이민수, 김지은이랑 보러 갈래. 5시에 학생회관에서 모여서 가는 걸로 파티 만들어줘 | PROPOSE; calls resolveFriend, resolvePlace, proposeQuest; resolveFriend {name: 이민수} & {name: 김지은}; Proposal joinPolicy: closed, board: None, capacity: 3, startsAt: 2026-10-24 17:00, place: 학생회관, globalEvent: 축제 개막 공연, invitees: 이민수/김지은 |  |
 | compound-exercise-or-make | **U:** 운동 파티 있으면 보여주고 없으면 하나 만들어줘 | TOOL; calls searchRecruitingQuests, showQuests; never proposeQuest; searchRecruitingQuests {board: hobby}; quest cards incl. 저녁 농구 한 판, 주말 배드민턴, ≤3 |  |
 
