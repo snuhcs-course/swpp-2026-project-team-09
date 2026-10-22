@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -29,7 +30,8 @@ afterAll(async () => {
 const newPost = postNumbersFrom(910_000);
 
 // Stores a post as an earlier Collection, or an Administrator after it, left it. Posted to `/global-events/collected`
-// instead, it would change the events list's Collection status, which test/global-events.e2e-spec.ts checks.
+// instead, it would change the events list's Collection status, which
+// test/global-events.integration.test.ts checks.
 async function store(postNumber: number, state: GlobalEventState): Promise<void> {
   await prisma.globalEvent.create({
     data: {
