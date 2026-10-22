@@ -87,3 +87,11 @@ Each run went through `heavy.sh`.
   of them were spent waiting for the heavy lock while another ticket's agent held it.
 - Tokens: input 10,672 thousand in all (cache reads 10,017 thousand, cache writes 654 thousand, uncached under 1
   thousand); output 3 thousand, a lower bound, since the transcript keeps only partial output counts.
+
+### Review round (2026-10-23)
+
+The code review of P09–P11 (2026-10-23); each line names its finding.
+
+- **S3-3.** flow-tests' README intro names what `pnpm test` runs, the demo's flows, A1 and A2, and the checks of the
+  stacks, with no count of flows.
+- **S4-6.** The root README's flow-tests rows ("Running the tests" and the layout) say the same, without a count.

@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -180,6 +181,7 @@ describe('the Parties from the main server', () => {
       capacity: 6,
       joinPolicy: 'open',
       quest: { id: 'q1', title: 'AI 커리어 설명회', globalEvent: { id: 'e1', title: 'AI 커리어 설명회' } },
+      leader: { id: MIN_JUN.id, name: '김민준' },
       holdsQuest: false,
       friends: [{ id: MIN_JUN.id, name: '김민준', department: '컴퓨터공학부' }],
     };

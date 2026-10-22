@@ -21,8 +21,8 @@ The new files follow the spec's "Test design for new unit test files" and "Isola
 - [x] `namedPlace` is tested on the Places seed read from its file, with place texts from the worker's saved event pages: a Place's name with its building number; a number alone; another campus, a hospital or a station; a street address other than the campus's own; an online event; several places in one text; a campus name glued to a building name.
 - [x] `metresBetween`, `encloses` and `metresToRing` are tested on distances worked out independently, named in the strategy comment, and on simple rings: inside, outside, on an edge and on a corner.
 - [x] Every new test file is named `.unit.test.ts`, has a one- or two-line testing strategy comment below its box comment, names its tests `describe(subject)` with `it('condition → result')` in GLOSSARY terms, and uses no real clock, network or file write.
-- [ ] `pnpm test:unit` passes in each server with Docker stopped, and in each server `test:unit` and `test:integration` together run exactly the tests `test` runs.
-- [ ] `pnpm test`, `pnpm lint` (with the level check), `pnpm format:check` and `pnpm typecheck` pass in each server.
+- [x] `pnpm test:unit` passes in each server with Docker stopped, and in each server `test:unit` and `test:integration` together run exactly the tests `test` runs.
+- [x] `pnpm test`, `pnpm lint` (with the level check), `pnpm format:check` and `pnpm typecheck` pass in each server.
 - [x] Every new source file starts with the AI-generated box, and each changed one gets a new row (`CLAUDE.md`).
 - [x] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
 
@@ -78,9 +78,9 @@ In each server the unit and integration counts add up to the count of every proj
 
 Two faults pass: `<=` in place of `<` in the crossing test, which moves a position on a shared edge to the other ring (the tests leave the side open, as above), and leaving out the closing edge of a ring whose first corner is not repeated (every ring the server reads is a closed GeoJSON ring, and so are the tests').
 
-**No container in `test:unit`.** The `unit` projects have no global setup, and no new file imports `testcontainers` or calls `inject`. `docker ps -a` before and after the four `pnpm test:unit` runs: the same four containers, none added. Run with Docker stopped: pending, made by the orchestrator once all tickets have merged.
+**No container in `test:unit`.** The `unit` projects have no global setup, and no new file imports `testcontainers` or calls `inject`. `docker ps -a` before and after the four `pnpm test:unit` runs: the same four containers, none added. Run with Docker stopped: the orchestrator ran it on 2026-10-23 at 00:59 KST at 7803d4e8 (`docker desktop stop`, then `docker info` failed to connect; Docker started again at 01:00:53), and `pnpm test:unit` passed: main-server 9 files, 195 tests; match-server 4 files, 39 tests; socket-server 2 files, 32 tests; worker-server 8 files, 100 tests. The log is `docker-stopped-unit.log` in the orchestrator's helpers folder.
 
-**Checks.** In each server `pnpm lint` passes with the level check (`130`, `12`, `7` and `13 test file(s), each named by its test level.`), and `pnpm format:check` and `pnpm typecheck` pass. Full `pnpm test`: left to CI on the merge push; the orchestrator records the run.
+**Checks.** In each server `pnpm lint` passes with the level check (`130`, `12`, `7` and `13 test file(s), each named by its test level.`), and `pnpm format:check` and `pnpm typecheck` pass. Full `pnpm test`: P09-07 merged as fc7bf095, whose own CI run 39808255148 was cancelled by the next push; run 39808477203 at fd492a03, which contains it, passed; every package's `pnpm test` is a job of the CI workflow.
 
 **Merge.** Merging `2.0/P09-11-tests` (P09-08, P09-09, P11-02) had no conflict. It changed match-server's and socket-server's `src/` and added their unit tests, so these were run again there: `pnpm test:unit` (match-server 4 files, 39 tests; socket-server 2 files, 32 tests), each `test/settings.integration.test.ts` (1 test), `pnpm lint` (14 and 8 test files named by level), `pnpm typecheck` and `pnpm format:check`, all passing. main-server and worker-server were not touched by it.
 
@@ -88,3 +88,12 @@ Two faults pass: `<=` in place of `<` in the crossing test, which moves a positi
 
 - Agent time: about 29 minutes, an estimate: the implementer subagent, 26 minutes measured just before its last commit, and an earlier attempt of 3 minutes that the orchestrator stopped.
 - Tokens: input 25,622 thousand in all (cache reads 25,233 thousand, cache writes 388 thousand, uncached under 1 thousand); output 5 thousand, a lower bound, since the transcript keeps only partial output counts.
+
+### Review round (2026-10-23)
+
+The code review of P09–P11 (2026-10-23); each line names its finding.
+
+- **S1-4.** geometry's L-shaped ring is an `it.each` of two rows, the notch (not held) and the arm (held), each failing
+  alone on a fault planted for it.
+- **S1-5.** main-server's settings strategy comment names only the partitions the file tests: DATABASE_URL, REDIS_HOST
+  and MATCH_SERVER_URL are tried missing only.

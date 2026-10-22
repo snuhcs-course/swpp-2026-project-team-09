@@ -100,3 +100,12 @@ not call `fetch` at all.
 - Agent time: about 12 minutes, an estimate: the implementer subagent, measured just before its last commit.
 - Tokens: input 10,315 thousand in all (cache reads 10,172 thousand, cache writes 143 thousand, uncached under 1
   thousand); output 22 thousand, a lower bound, since the transcript keeps only partial output counts.
+
+### Review round (2026-10-23)
+
+The code review of P09–P11 (2026-10-23); each line names its finding.
+
+- **S3-4.** admin's README layout says `__tests__/` holds the unit tests (`*.unit.test.ts`) and the page tests, and
+  `__tests__/site/` the integration tests against the built site.
+- **S3-5.** main-server.unit.test.ts runs its four calls through two tables, `→ only the headers it was given` and
+  `→ the body it was given, or none`; a dropped body and a wrong content-type each failed only their own table.

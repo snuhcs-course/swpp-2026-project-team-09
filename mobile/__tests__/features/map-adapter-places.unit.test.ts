@@ -12,7 +12,7 @@ import type { Party } from '@/api/types';
 import { toCards } from '@/features/map/adapter';
 
 describe('toCards of a Global Event', () => {
-  it('an event with its announcer, place and two recruiting Quests → all of them on its card', () => {
+  it('an Event with its announcer, place and two recruiting Quests → all of them on its card', () => {
     const [card] = toCards(
       sources({
         globalEvents: [event('e1', { endsAt: '2026-10-06T20:00:00+09:00', place: '301동 대강당' })],
@@ -38,7 +38,7 @@ describe('toCards of a Global Event', () => {
     });
   });
 
-  it('an event with one recruiting Quest and no announcer or place → no count on its pin, the plain kicker', () => {
+  it('an Event with one recruiting Quest and no announcer or place → no count on its pin, the plain kicker', () => {
     const [card] = toCards(sources({ globalEvents: [event('e1')], recruiting: [recruitingFor('e1', 'r1')] }));
     expect(card).toMatchObject({ subLabel: '공식 행사', marker: { count: 0 } });
     expect(card?.lines).toEqual([
@@ -51,7 +51,7 @@ describe('toCards of a Global Event', () => {
 describe('toCards of Global Events at one point', () => {
   const point = 'event-point:37.45016,126.95259';
 
-  it("two events at one point and one elsewhere → the point's card first, then each, marked within it", () => {
+  it("two Events at one point and one elsewhere → the point's card first, then each, marked within it", () => {
     const elsewhere = { latitude: 37.46, longitude: 126.95 };
     const events = [event('a'), event('b', { place: '대강당' }), event('c', elsewhere)];
     const cards = toCards(sources({ globalEvents: events }));
@@ -63,7 +63,7 @@ describe('toCards of Global Events at one point', () => {
     ]);
   });
 
-  it("the point's card → named as the first event that says where, counting and listing them", () => {
+  it("the point's card → named as the first Event that says where, counting and listing them", () => {
     const [card] = toCards(sources({ globalEvents: [event('a'), event('b', { place: '대강당' })] }));
     expect(card).toMatchObject({
       kind: 'event-point',
@@ -107,11 +107,14 @@ describe("toCards of the User's Quests without a Party", () => {
     expect(card).toMatchObject({ kind: 'shared-quest', subLabel: '공개 파티 · 2명' });
   });
 
-  it('a Class Quest, and a Quest whose place is words alone → no card', () => {
-    const [step] = quest('q2').subQuests;
-    const words = step === undefined ? [] : [{ ...step, place: { ...GATE, latitude: null, longitude: null } }];
-    const quests = [quest('q1', { classQuest: true, leader: null }), quest('q2', { subQuests: words })];
-    expect(toCards(sources({ quests }))).toEqual([]);
+  const [step] = quest('q2').subQuests;
+  const words = step === undefined ? [] : [{ ...step, place: { ...GATE, latitude: null, longitude: null } }];
+
+  it.each([
+    ['a Class Quest', quest('q1', { classQuest: true, leader: null })],
+    ['a Quest whose place is words alone', quest('q2', { subQuests: words })],
+  ])('%s → no card', (_, one) => {
+    expect(toCards(sources({ quests: [one] }))).toEqual([]);
   });
 });
 

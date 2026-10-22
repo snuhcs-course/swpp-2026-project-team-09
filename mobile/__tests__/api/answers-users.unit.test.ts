@@ -122,7 +122,7 @@ describe('isProfile', () => {
 describe('isLobby', () => {
   checks(
     isLobby,
-    [['the lobby', LOBBY]],
+    [['the Lobby', LOBBY]],
     [
       ...wrongFields(LOBBY, { profile: ['홍길동'], masterSwitch: ['false'] }),
       ['a profile without a friendId', { ...LOBBY, profile: omit(PROFILE, 'friendId') }],

@@ -314,12 +314,12 @@ Two Sources of the shuttle operator's circular route 41946 (`.scratch/research/e
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
 
-| Command             | Checks                                       |
-| ------------------- | -------------------------------------------- |
-| `pnpm lint`         | oxlint with type-aware rules                 |
-| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it) |
-| `pnpm typecheck`    | TypeScript in strict mode                    |
-| `pnpm test`         | Vitest tests in `test/`                      |
+| Command             | Checks                                                              |
+| ------------------- | ------------------------------------------------------------------- |
+| `pnpm lint`         | oxlint with type-aware rules, and that each test file names a level |
+| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it)                        |
+| `pnpm typecheck`    | TypeScript in strict mode                                           |
+| `pnpm test`         | Vitest tests in `test/`                                             |
 
 `pnpm test` needs no Docker: the tests run the worker alone.
 
@@ -349,7 +349,7 @@ src/
 ├── shuttle/                         a feature: the collector of the shuttle's route page and vehicle positions, and
 │                                    their parsers
 └── event/                           a feature: the collector of the events list and its parsers
-test/                                tests, which stand in for the Sources and the main server
+test/                                tests named by level, which stand in for the Sources and the main server
 └── pages/                           pages saved from the Sources, which the tests read in place of them
 ```
 

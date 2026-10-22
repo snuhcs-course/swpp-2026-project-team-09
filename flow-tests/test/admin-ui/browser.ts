@@ -8,14 +8,10 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium, type Page } from 'playwright';
 import { inject, it as base } from 'vitest';
+import { WAIT_MS } from '../inbox.js';
 import { GOOGLE_SCRIPT, standInForGoogle } from './google.js';
 
-// As long as the harness waits for a message on the socket.
-const WAIT_MS = 10_000;
-
-// A test whose `page` is a headless Chromium tab on the admin site, in a time zone far from Seoul, so that a time read
-// in the browser's zone fails. The page accepts every `window.confirm`. A request to another host than the site's is
-// aborted and fails the test. A failed test leaves a screenshot and a Playwright trace in admin-ui-results/failures/.
+// The time zone is far from Seoul's, so that a time read in the browser's zone instead of Seoul's fails.
 export const it = base.extend<{ page: Page }>({
   page: async ({ task, onTestFinished }, use) => {
     const site = new URL(inject('adminSite'));

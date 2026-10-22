@@ -229,12 +229,12 @@ Grouping by AI lands here in a later iteration: another provider of `Grouping` i
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
 
-| Command             | Checks                                       |
-| ------------------- | -------------------------------------------- |
-| `pnpm lint`         | oxlint with type-aware rules                 |
-| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it) |
-| `pnpm typecheck`    | TypeScript in strict mode                    |
-| `pnpm test`         | Vitest tests in `test/`                      |
+| Command             | Checks                                                              |
+| ------------------- | ------------------------------------------------------------------- |
+| `pnpm lint`         | oxlint with type-aware rules, and that each test file names a level |
+| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it)                        |
+| `pnpm typecheck`    | TypeScript in strict mode                                           |
+| `pnpm test`         | Vitest tests in `test/`                                             |
 
 `pnpm test` needs Docker running. It starts its own PostgreSQL container and removes it afterwards.
 

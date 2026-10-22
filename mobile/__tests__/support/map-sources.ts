@@ -4,8 +4,8 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-// What the map adapter's unit tests build its sources from: 13:00 in Korea on Tuesday 6 October 2026, the User, two
-// Friends' names and one point on the campus.
+// What the map and friends adapters' unit tests build their sources from: 13:00 in Korea on Tuesday 6 October 2026,
+// the User, two Friends' names and one point on the campus.
 
 import type { RecruitingQuest } from '@/api/party-types';
 import type { Friend, GlobalEvent, MyParty, Person, Position, Quest } from '@/api/types';

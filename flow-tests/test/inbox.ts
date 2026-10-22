@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { Socket } from 'socket.io-client';
@@ -13,7 +14,7 @@ interface Message {
   payload: unknown;
 }
 
-const WAIT_MS = 10_000;
+export const WAIT_MS = 10_000;
 
 // How long a message that should not come is waited for. Delivered messages take milliseconds.
 const QUIET_MS = 1500;

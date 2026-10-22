@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // Partitions: positions inside, outside, on an edge and on a corner of simple rings. The distances come from the
@@ -57,18 +58,20 @@ describe('encloses', () => {
     expect(encloses(square, { latitude: 37.4605, longitude: 126.952 })).toBe(false);
   });
 
-  it("a position in the notch of an L-shaped ring, inside the L's bounding box → not held", () => {
-    const shape = [
-      { latitude: 37.46, longitude: 126.95 },
-      { latitude: 37.46, longitude: 126.952 },
-      { latitude: 37.461, longitude: 126.952 },
-      { latitude: 37.461, longitude: 126.951 },
-      { latitude: 37.462, longitude: 126.951 },
-      { latitude: 37.462, longitude: 126.95 },
-    ];
+  const lShape = [
+    { latitude: 37.46, longitude: 126.95 },
+    { latitude: 37.46, longitude: 126.952 },
+    { latitude: 37.461, longitude: 126.952 },
+    { latitude: 37.461, longitude: 126.951 },
+    { latitude: 37.462, longitude: 126.951 },
+    { latitude: 37.462, longitude: 126.95 },
+  ];
 
-    expect(encloses(shape, { latitude: 37.4615, longitude: 126.9515 })).toBe(false);
-    expect(encloses(shape, { latitude: 37.4615, longitude: 126.9505 })).toBe(true);
+  it.each([
+    ["in the notch of an L-shaped ring, inside the L's bounding box", 'not held', 37.4615, 126.9515, false],
+    ['in the arm of an L-shaped ring, beside the notch', 'held', 37.4615, 126.9505, true],
+  ])('a position %s → %s', (_as, _result, latitude, longitude, held) => {
+    expect(encloses(lShape, { latitude, longitude })).toBe(held);
   });
 
   it('a position on the edge two rings share → held by exactly one of them', () => {

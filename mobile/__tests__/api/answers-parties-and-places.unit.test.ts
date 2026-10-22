@@ -4,8 +4,8 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-// Partitions, per check of a Party, class, Place or walking route: the documented shape, and each checked field
-// left out, mistyped and null, which only nullable fields take. Expected values: main-server's README, `Party` type.
+// Partitions, per check of a Party, class, Place or walking route: the documented shape, and each checked field left
+// out, mistyped and null, which only nullable fields take. Expected values: main-server's README, Party to Timetable.
 
 import { inList, inside, omit, type Variant, wrongFields } from '../support/answer-variants';
 import {
@@ -77,7 +77,6 @@ describe('isParties', () => {
       ['no Party', []],
       ['a Party tied to no Quest', [{ ...PARTY, quest: null }]],
       ['a Party whose Quest has no Global Event', [{ ...PARTY, quest: { ...PARTY_QUEST, globalEvent: null } }]],
-      ['a Party without its provisional leader', [omit(PARTY, 'leader')]],
     ],
     inList(PARTY, [
       ...wrongFields(
@@ -94,8 +93,9 @@ describe('isParties', () => {
         },
         ['quest'],
       ),
+      ['no Leader', omit(PARTY, 'leader')],
       ['leader null', { ...PARTY, leader: null }],
-      ['a leader without a name', { ...PARTY, leader: { id: 'u1' } }],
+      ['a Leader without a name', { ...PARTY, leader: { id: 'u1' } }],
       ...inside(
         PARTY,
         'quest',

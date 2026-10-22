@@ -88,10 +88,13 @@ describe('toNotices of Parties and Friend Requests', () => {
     ]);
   });
 
-  it('a Party whose entry names no Leader, and one tied to no Quest → the plain words, and no room', () => {
-    const { leader: _, ...unnamed } = party('p1', true, { quest: null });
-    const [row] = toNotices({ ...NONE, parties: [unnamed] });
-    expect(row).toMatchObject({ title: '파티가 활성화됐어요', questId: null });
+  it('a Party whose entry names no Leader → the plain words', () => {
+    const { leader: _, ...unnamed } = party('p1', true);
+    expect(toNotices({ ...NONE, parties: [unnamed] })[0]?.title).toBe('파티가 활성화됐어요');
+  });
+
+  it('a Party tied to no Quest → no room', () => {
+    expect(toNotices({ ...NONE, parties: [party('p1', true, { quest: null })] })[0]?.questId).toBeNull();
   });
 
   it('Friend Requests received and sent → a row for each one received only', () => {

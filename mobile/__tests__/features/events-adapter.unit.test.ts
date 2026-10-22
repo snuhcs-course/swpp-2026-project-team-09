@@ -121,15 +121,15 @@ describe('toEventViews filters', () => {
   const monday = event('monday', '2026-10-12T00:00:00+09:00');
   const all = [started, lastOfToday, tomorrow, sunday, monday];
 
-  it('전체 → every event, in their order', () => {
+  it('전체 → every Event, in their order', () => {
     expect(idsOf('all', all)).toEqual(['started', 'last-of-today', 'tomorrow', 'sunday', 'monday']);
   });
 
-  it('오늘 → the events that start by midnight in Korea, one already started too', () => {
+  it('오늘 → the Events that start by midnight in Korea, one already started too', () => {
     expect(idsOf('today', all)).toEqual(['started', 'last-of-today']);
   });
 
-  it('이번 주 → the events that start by Sunday midnight in Korea', () => {
+  it('이번 주 → the Events that start by Sunday midnight in Korea', () => {
     expect(idsOf('week', all)).toEqual(['started', 'last-of-today', 'tomorrow', 'sunday']);
   });
 
@@ -138,7 +138,7 @@ describe('toEventViews filters', () => {
     expect(idsOf('week', [sunday, monday], onSunday)).toEqual(['sunday']);
   });
 
-  it('파티 모집 중 → the events with a recruiting Quest', () => {
+  it('파티 모집 중 → the Events with a recruiting Quest', () => {
     const more = { recruiting: [recruiting('sunday'), recruiting(null)] };
     expect(idsOf('recruiting', all, more)).toEqual(['sunday']);
   });
@@ -156,8 +156,8 @@ describe('toEventViews search', () => {
     ['a place', '301동', ['b']],
     ['a description', 'jazz', ['c']],
     ['nothing typed', '  ', ['a', 'b', 'c']],
-    ['words no event holds', '수학', []],
-  ])('%s → its events', (_, search, expected) => {
+    ['words no Event holds', '수학', []],
+  ])('%s → its Events', (_, search, expected) => {
     expect(idsOf('all', events, {}, search)).toEqual(expected);
   });
 });
@@ -211,18 +211,18 @@ describe('toRecruitRows', () => {
     expect(row).toMatchObject({ badge: { kind: 'leader', label: '김민준' }, fill: '2/4명', meta: '내일 17:40' });
   });
 
-  it('a Quest for another event → no row', () => {
+  it('a Quest for another Event → no row', () => {
     expect(toRecruitRows('night', [questFor('other', [ME])], [], ME.id, NOW)).toEqual([]);
   });
 });
 
 describe('sharedQuestFor', () => {
-  it('a Quest for the event held with another → that Quest', () => {
+  it('a Quest for the Event held with another → that Quest', () => {
     const shared = questFor('night', [ME, MIN_JUN]);
     expect(sharedQuestFor([questFor('other', [ME, MIN_JUN]), shared], 'night')).toBe(shared);
   });
 
-  it('a Quest for the event held alone → null', () => {
+  it('a Quest for the Event held alone → null', () => {
     expect(sharedQuestFor([questFor('night', [ME])], 'night')).toBeNull();
   });
 });
@@ -245,7 +245,7 @@ describe('toMatchingRows', () => {
     expect(toMatchingRows(requests, [night], NOW)).toEqual([]);
   });
 
-  it('a request for an event no longer listed → no title and no time', () => {
+  it('a request for an Event no longer listed → no title and no time', () => {
     const [row] = toMatchingRows([request('gone', 'waiting', '2026-10-06T12:00:00+09:00')], [night], NOW);
     expect(row).toMatchObject({ title: '', when: '' });
   });

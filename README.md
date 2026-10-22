@@ -180,7 +180,7 @@ What the project was built and run with:
 | Part                   | Used                                                                                               |
 | ---------------------- | -------------------------------------------------------------------------------------------------- |
 | Development machine    | macOS on Apple Silicon                                                                             |
-| Node.js and pnpm       | Node.js 24 (24.21.0), pnpm 12.6.0                                                                  |
+| Node.js and pnpm       | Node.js 24.14.0, the version in `.nvmrc`; pnpm 12.6.0                                              |
 | Containers             | Docker Desktop (Docker 29, Compose 5), `compose.yaml` at the repository root                       |
 | Servers                | NestJS 12 on Node.js 24 in containers; Prisma 7; Socket.IO 4                                       |
 | Data stores            | PostgreSQL 18 with PostGIS 3, Redis 8                                                              |
@@ -502,18 +502,25 @@ pnpm typecheck
 pnpm test
 ```
 
-| Project         | What `pnpm test` runs and needs                                                                              |
-| --------------- | ------------------------------------------------------------------------------------------------------------ |
-| `main-server`   | Vitest against PostgreSQL and Redis containers it starts; Docker running; `pnpm test:unit` needs no Docker   |
-| `socket-server` | Vitest against a Redis container it starts itself; Docker running; `pnpm test:unit` needs no Docker          |
-| `worker-server` | Vitest on saved pages of each Source; neither it nor `pnpm test:unit` needs Docker                           |
-| `match-server`  | Vitest against a PostgreSQL container it starts itself; Docker running; `pnpm test:unit` needs no Docker     |
-| `admin`         | Vitest: `unit`, `integration-pages`, `integration-site`; neither it nor `pnpm test:unit` needs Docker        |
-| `mobile`        | Jest, against the mocks and a fake main server and socket; neither it nor `pnpm test:unit` needs Docker      |
-| `flow-tests`    | The three demo flows across the four built servers, under a Compose project of its own; Docker and `openssl` |
+| Project         | What `pnpm test` runs and needs                                                                            |
+| --------------- | ---------------------------------------------------------------------------------------------------------- |
+| `main-server`   | Vitest against PostgreSQL and Redis containers it starts; Docker running; `pnpm test:unit` needs no Docker |
+| `socket-server` | Vitest against a Redis container it starts itself; Docker running; `pnpm test:unit` needs no Docker        |
+| `worker-server` | Vitest on saved pages of each Source; neither it nor `pnpm test:unit` needs Docker                         |
+| `match-server`  | Vitest against a PostgreSQL container it starts itself; Docker running; `pnpm test:unit` needs no Docker   |
+| `admin`         | Vitest: `unit`, `integration-pages`, `integration-site`; neither it nor `pnpm test:unit` needs Docker      |
+| `mobile`        | Jest, against the mocks and a fake main server and socket; neither it nor `pnpm test:unit` needs Docker    |
+| `flow-tests`    | The demo's flows, A1 and A2, and the stack checks, on the four built servers; Docker and `openssl`         |
 
 `flow-tests` builds the servers' images the first time, which takes some minutes, and leaves a running stack and its
-data alone: [flow-tests/README.md](flow-tests/README.md).
+data alone: [flow-tests/README.md](flow-tests/README.md). Its `pnpm test:admin-ui` runs the W1 and W2 journeys through
+the admin site in a browser, which neither `pnpm test` nor CI runs.
+
+The level check of `scripts/` has a test of its own, which no project runs. From the repository root:
+
+```bash
+node --test scripts/test/check-test-levels.integration.test.ts
+```
 
 ## Deployment
 
@@ -555,7 +562,8 @@ Release again, rotate a secret, and move Production to another AWS account.
 | `match-server/`  | The match server: keeps the requests for Matching and groups them in rounds                   |
 | `admin/`         | The admin site for Administrators                                                             |
 | `mobile/`        | The app, with the native map module for Android and iOS in `modules/`                         |
-| `flow-tests/`    | Tests of the three demo flows across the four servers                                         |
+| `flow-tests/`    | End-to-end tests across the four servers, and of the admin site in a browser                  |
+| `scripts/`       | The level check every project's `pnpm lint` runs (ADR 0007), and its test                     |
 | `infra/`         | The PostgreSQL image, the Dev Server (`deploy/`, `proxy/`), and Production (`production/`)    |
 | `docs/`          | Decision records (`adr/`), the agents' conventions (`agents/`), and the demo videos (`demo/`) |
 | `.scratch/`      | Specs and tickets of each iteration's tasks, and research notes                               |

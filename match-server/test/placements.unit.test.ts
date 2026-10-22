@@ -27,14 +27,7 @@ function request(id: string, { globalEventId = CONCERT, size = 3 } = {}): Matchi
   };
 }
 
-interface EligibleQuest {
-  id: string;
-  globalEventId: string;
-  capacity: number;
-  freePlaces: number;
-  holderIds: string[];
-  createdAt: string;
-}
+type EligibleQuest = Parameters<typeof assign>[1][number];
 
 // An eligible Quest as the main server answers it, made `minute` minutes after 08:00 (UTC).
 function quest(

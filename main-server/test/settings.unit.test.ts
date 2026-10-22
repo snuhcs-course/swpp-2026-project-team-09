@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-// Partitions: each setting missing, malformed and on either side of its bound, keys of each wrong kind and lists with
-// the wrong separator (P09 spec, (a)). Valid values and bounds come from .env.example and README.md.
+// Partitions: each setting missing; all but DATABASE_URL, REDIS_HOST and MATCH_SERVER_URL malformed or by a bound;
+// keys of each wrong kind; lists with the wrong separator. Valid values and bounds: .env.example and README.md.
 
 import { generateKeyPairSync } from 'node:crypto';
 import { readFileSync } from 'node:fs';
