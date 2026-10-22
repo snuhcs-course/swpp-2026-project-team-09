@@ -11,13 +11,15 @@ import type { ClassTime, Place, TimetableClass, Weekday } from '@/api/types';
 export const FIRST_HOUR = 9;
 export const LAST_HOUR = 22;
 
-const WEEKDAYS: readonly Weekday[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-export const DAY_LETTERS = ['월', '화', '수', '목', '금'] as const;
+const WEEKDAYS: readonly Weekday[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+export const DAY_LETTERS = ['월', '화', '수', '목', '금', '토', '일'] as const;
+// 월 to 금 always; 토 and 일 only for a class on them.
+const WORKDAYS = 5;
 
 // One time of a class in the week on 내 정보.
 export interface ClassBlockView {
   key: string;
-  // 0 for Monday to 4 for Friday.
+  // 0 for Monday to 6 for Sunday.
   day: number;
   // In hours of the day: 10.5 for 10:30.
   start: number;
@@ -46,7 +48,7 @@ function whereOf(time: ClassTime, places: readonly Place[]): string {
   return number === null ? (room ?? '') : `${number}동`;
 }
 
-// The blocks of the week, Monday to Friday, each whole. A time on Saturday or Sunday is not drawn.
+// The blocks of the week, Monday to Sunday, each whole.
 export function toWeekBlocks(classes: readonly TimetableClass[], places: readonly Place[]): ClassBlockView[] {
   return classes.flatMap((lesson, order) =>
     lesson.times.flatMap((time) => {
@@ -78,6 +80,11 @@ export function weekHours(blocks: readonly ClassBlockView[]): { first: number; l
   const first = Math.min(FIRST_HOUR, ...blocks.map(({ start }) => Math.floor(start)));
   const last = Math.max(LAST_HOUR, ...blocks.map(({ end }) => Math.ceil(end)));
   return { first: Math.max(0, first), last: Math.min(24, last) };
+}
+
+// How many days the week shows: 월 to 금, to 토 for a class on Saturday, and to 일 for one on Sunday.
+export function weekDays(blocks: readonly ClassBlockView[]): number {
+  return Math.max(WORKDAYS, ...blocks.map(({ day }) => day + 1));
 }
 
 // The hour the week opens at: that of the earliest block, or the first hour when there is none.

@@ -34,7 +34,7 @@ import {
   useNotReadyToast,
 } from '@/design-system';
 import { now } from '@/clock';
-import { type ClassBlockView, DAY_LETTERS, openingHour, weekHours } from '@/features/timetable/adapter';
+import { type ClassBlockView, DAY_LETTERS, openingHour, weekDays, weekHours } from '@/features/timetable/adapter';
 import { useTimetableVersions } from '@/features/timetable/use-versions';
 import { READING, useImportFromImage } from '@/features/timetable-ocr/use-import-from-image';
 import { useWeek } from '@/features/timetable/use-week';
@@ -107,13 +107,13 @@ function Lines({ hours }: { hours: number }): ReactElement {
   );
 }
 
-// The days' row over the scrolling hours. Monday is 0; on Saturday and Sunday no column is today's.
-function Days(): ReactElement {
-  const today = koreaWeekday(now()) - 1;
+// The days' row over the scrolling hours. Monday is 0 and Sunday 6.
+function Days({ days }: { days: readonly string[] }): ReactElement {
+  const today = (koreaWeekday(now()) + 6) % 7;
   return (
     <View style={[styles.row, styles.days]}>
       <View style={styles.labels} />
-      {DAY_LETTERS.map((letter, day) => (
+      {days.map((letter, day) => (
         <View key={letter} style={styles.dayCell}>
           <Text style={[styles.day, day === today && styles.today]}>{letter}</Text>
         </View>
@@ -149,10 +149,11 @@ function useOpening(
 function Grid({ blocks }: { blocks: readonly ClassBlockView[] }): ReactElement {
   const { first, last } = weekHours(blocks);
   const hours = last - first;
+  const days = DAY_LETTERS.slice(0, weekDays(blocks));
   const { scroll, open } = useOpening(blocks, first, hours);
   return (
     <View style={styles.frame}>
-      <Days />
+      <Days days={days} />
       <ScrollView
         nestedScrollEnabled
         onContentSizeChange={open}
@@ -169,7 +170,7 @@ function Grid({ blocks }: { blocks: readonly ClassBlockView[] }): ReactElement {
               </Text>
             ))}
           </View>
-          {DAY_LETTERS.map((letter, day) => (
+          {days.map((letter, day) => (
             <View key={letter} style={styles.column}>
               {blocks
                 .filter((block) => block.day === day)
