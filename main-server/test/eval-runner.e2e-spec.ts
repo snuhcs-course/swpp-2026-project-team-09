@@ -12,7 +12,7 @@ import { FALLBACK_PRICES } from '../eval/cost.ts';
 import { type RunOptions } from '../eval/options.ts';
 import { type EvalApp, runCase, RunLog, startEvalApp } from '../eval/runner.ts';
 import { seedWorld, type World } from '../eval/world.ts';
-import { createDatabase, seed } from './containers.js';
+import { type SeededDatabase, seededDatabase } from './containers.js';
 import { ScriptedModel } from './scripted-model.js';
 
 // The benchmark's runner (P19 ticket 01) with the scripted model in the real model's place, so that it never calls
@@ -59,17 +59,14 @@ const SHORT_TIMEOUT = { ...OPTIONS, timeoutMs: 300 };
 let evalApp: EvalApp;
 let shortApp: EvalApp;
 let world: World;
-// The world lives in a database of its own, so that its Global Events, 파티 and menus reach no other test.
-let database: Awaited<ReturnType<typeof createDatabase>>;
-let settings: ProvidedContext['settings'];
+// The world lives in a database of its own, so that its Global Events, Quests and menus reach no other test.
+let database: SeededDatabase<ProvidedContext['settings']>;
 
 beforeAll(async () => {
-  database = await createDatabase(inject('settings').DATABASE_URL);
-  await seed(database.url);
-  settings = { ...inject('settings'), DATABASE_URL: database.url };
-  evalApp = await startEvalApp(settings, reporting, OPTIONS);
-  shortApp = await startEvalApp(settings, reporting, SHORT_TIMEOUT);
-  world = await seedWorld(evalApp.app);
+  database = await seededDatabase(inject('settings'));
+  evalApp = await startEvalApp(database.settings, reporting, OPTIONS);
+  shortApp = await startEvalApp(database.settings, reporting, SHORT_TIMEOUT);
+  world = await seedWorld(evalApp.app, database.url);
 });
 
 afterAll(async () => {
@@ -145,7 +142,7 @@ describe("The run's hyperparameters", () => {
   });
 
   it('leave the sampling to the provider when not given', async () => {
-    const plain = await startEvalApp(settings, model.model, { ...OPTIONS, temperature: null, topP: null });
+    const plain = await startEvalApp(database.settings, model.model, { ...OPTIONS, temperature: null, topP: null });
     try {
       model.script({ text: '네' });
 

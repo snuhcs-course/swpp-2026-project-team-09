@@ -24,9 +24,9 @@
       getMenus: { date: '2026-10-22', meal: lunch }
     mapButtons: [dining]
     text:
-      mentions: [[약속, 파티, 같이 드실, 같이 먹]]
+      mentions: [[잡아 드릴까, 약속을 잡을까, 만들어 드릴까, 모집해 드릴까, 만들까요]]
 
-# Find a 파티 to the festival, or make one: show the one there is, and ask whether to make one.
+# Find a Quest going to the festival, or make one: show the one there is, and ask whether to make one.
 - id: ambiguous-intent-festival-company
   category: ambiguous-intent
   knownFailure: No rule for ambiguous intent until improvement 3-1 (show one reading, ask about the other)
@@ -42,7 +42,7 @@
       - kind: quest
         seeds: [축제 같이 즐겨요]
     text:
-      mentions: [[만들, 모집]]
+      mentions: [[만들어 드릴까, 모집해 드릴까, 열어 드릴까, 만들까요, 모집할까요]]
 
 - id: ambiguous-intent-basketball-tomorrow
   category: ambiguous-intent
@@ -58,9 +58,9 @@
       - kind: quest
         seeds: [저녁 농구 한 판]
     text:
-      mentions: [[만들, 모집]]
+      mentions: [[만들어 드릴까, 모집해 드릴까, 열어 드릴까, 만들까요, 모집할까요]]
 
-# The concert itself, or a 파티 to it.
+# The concert itself, or a Quest going to it.
 - id: ambiguous-intent-jazz-concert
   category: ambiguous-intent
   knownFailure: No rule for ambiguous intent until improvement 3-1 (show one reading, ask about the other)
@@ -76,4 +76,4 @@
       - kind: globalEvent
         seeds: [가을 재즈 콘서트]
     text:
-      mentions: [파티]
+      mentions: [[찾아 드릴까, 만들어 드릴까, 모집해 드릴까, 찾아볼까요, 만들까요]]

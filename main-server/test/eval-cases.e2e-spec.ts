@@ -6,14 +6,14 @@
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
-import { inject } from 'vitest';
+import { inject, type ProvidedContext } from 'vitest';
 import { type EvalCase, loadCases } from '../eval/cases.ts';
 import { type Expect } from '../eval/expect.ts';
 import { type Seeded, seedWorld, type World } from '../eval/world.ts';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { NOW } from '../eval/runner.ts';
 import { ask, postAssistantMessages } from './assistant.js';
-import { createDatabase, seed } from './containers.js';
+import { type SeededDatabase, seededDatabase } from './containers.js';
 import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
@@ -46,15 +46,24 @@ interface SeedRef {
   name: string;
 }
 
-// The seed names of an `expect`: its cards, its Proposal and the id fields of its arguments.
-function refsOfExpect(expected: Expect): SeedRef[] {
-  const refs: SeedRef[] = (expected.cards ?? []).flatMap(({ kind, seeds }) => seeds.map((name) => ({ kind, name })));
-  const { place, globalEvent, invitees } = expected.proposal ?? {};
-  refs.push(
+// The seed names of a Proposal, expected or written in an Assistant's turn: its Place, Global Event and invitees.
+function refsOfProposal(
+  proposal: { place?: string | null; globalEvent?: string | null; invitees?: string[] } | null | undefined,
+): SeedRef[] {
+  const { place, globalEvent, invitees } = proposal ?? {};
+  return [
     ...(typeof place === 'string' ? [{ kind: 'place' as const, name: place }] : []),
     ...(typeof globalEvent === 'string' ? [{ kind: 'globalEvent' as const, name: globalEvent }] : []),
     ...(invitees ?? []).map((name) => ({ kind: 'friend' as const, name })),
-  );
+  ];
+}
+
+// The seed names of an `expect`: its cards, its Proposal and the id fields of its arguments.
+function refsOfExpect(expected: Expect): SeedRef[] {
+  const refs: SeedRef[] = [
+    ...(expected.cards ?? []).flatMap(({ kind, seeds }) => seeds.map((name) => ({ kind, name }))),
+    ...refsOfProposal(expected.proposal),
+  ];
   for (const [tool, written] of Object.entries(expected.args)) {
     for (const args of Array.isArray(written) ? written : [written]) {
       if (typeof args.globalEvent === 'string') {
@@ -80,14 +89,7 @@ function refsOf(evalCase: EvalCase): SeedRef[] {
         return turn.expect === undefined ? [] : refsOfExpect(turn.expect);
       }
       const { cards, proposal } = turn.assistant;
-      return [
-        ...cards.map((card) => ({ kind: card.kind, name: card.seed })),
-        ...(typeof proposal?.place === 'string' ? [{ kind: 'place' as const, name: proposal.place }] : []),
-        ...(typeof proposal?.globalEvent === 'string'
-          ? [{ kind: 'globalEvent' as const, name: proposal.globalEvent }]
-          : []),
-        ...(proposal?.invitees ?? []).map((name) => ({ kind: 'friend' as const, name })),
-      ];
+      return [...cards.map((card) => ({ kind: card.kind, name: card.seed })), ...refsOfProposal(proposal)];
     }),
   ];
 }
@@ -198,22 +200,15 @@ function unseeded(world: World): string[] {
 
 describe('The world the cases refer to', () => {
   const model = new ScriptedModel();
-  let database: Awaited<ReturnType<typeof createDatabase>>;
+  let database: SeededDatabase<ProvidedContext['settings']>;
   let app: INestApplication<Server>;
   let world: World;
 
   beforeAll(async () => {
-    database = await createDatabase(inject('settings').DATABASE_URL);
-    await seed(database.url);
-    app = await startApp(
-      { ...inject('settings'), DATABASE_URL: database.url },
-      [],
-      refuseKakao,
-      refuseMatchServer,
-      model.model,
-    );
+    database = await seededDatabase(inject('settings'));
+    app = await startApp(database.settings, [], refuseKakao, refuseMatchServer, model.model);
     vi.spyOn(app.get<Clock>(CLOCK), 'now').mockImplementation(() => new Date(NOW));
-    world = await seedWorld(app);
+    world = await seedWorld(app, database.url);
     await world.refresh();
   });
 

@@ -22,7 +22,7 @@ import { type RunOptions, runName } from './options.ts';
 import { Recorder } from './recorder.ts';
 import { runObserverModule } from './run-observer.module.ts';
 import { failureOf, type ReplyTrace, type TurnTrace, usageOf } from './trace.ts';
-import { type Seeded, type World } from './world.ts';
+import { type Seeded, seedOf, type World } from './world.ts';
 
 // The runner (spec P19, ticket 01): the app started as the e2e tests start it, with the model behind the recorder and
 // the clock fixed, each case's turns sent to POST /assistant/messages as the app sends them, and the run saved as
@@ -70,21 +70,14 @@ export async function startEvalApp(
 
 type SentAssistant = Extract<SentMessage, { role: 'assistant' }>;
 
-function seedId(world: World, kind: string, name: string): string {
-  const seeded = world.seeds[name];
-  if (seeded?.kind !== kind) {
-    throw new Error(`The world has no ${kind} named ${name}`);
-  }
-  return seeded.id;
-}
-
 function sentProposalOf(proposal: CaseProposal, world: World): SentAssistant['proposal'] {
   const { place, globalEvent, invitees, ...values } = proposal;
   return {
     ...values,
-    place: place === null ? null : { id: seedId(world, 'place', place), name: place },
-    globalEvent: globalEvent === null ? null : { id: seedId(world, 'globalEvent', globalEvent), title: globalEvent },
-    invitees: invitees.map((name) => ({ id: seedId(world, 'friend', name), name })),
+    place: place === null ? null : { id: seedOf(world.seeds, 'place', place).id, name: place },
+    globalEvent:
+      globalEvent === null ? null : { id: seedOf(world.seeds, 'globalEvent', globalEvent).id, title: globalEvent },
+    invitees: invitees.map((name) => ({ id: seedOf(world.seeds, 'friend', name).id, name })),
   };
 }
 
@@ -98,7 +91,7 @@ export function requestMessages(turns: readonly CaseTurn[], world: World): SentM
     return {
       role: 'assistant',
       text,
-      cards: cards.map(({ kind, seed }) => ({ kind, id: seedId(world, kind, seed) })),
+      cards: cards.map(({ kind, seed }) => ({ kind, id: seedOf(world.seeds, kind, seed).id })),
       proposal: proposal === null ? null : sentProposalOf(proposal, world),
     };
   });

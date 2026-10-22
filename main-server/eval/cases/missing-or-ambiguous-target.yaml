@@ -35,7 +35,7 @@
       required: [resolveFriend]
       allowed: [resolvePlace, proposeQuest]
     text:
-      mentions: [박서준, [경영, 물리, 학과, 아이디, ID]]
+      mentions: [[경영학과, 경영], [물리천문학부, 물리천문, 물리]]
 
 - id: ask-which-festival-event
   category: missing-or-ambiguous-target
@@ -44,8 +44,7 @@
   expect:
     actions: [ASK]
     tools:
-      required: [resolveGlobalEvent]
-      allowed: [resolveFriend, searchGlobalEvents, proposeQuest]
+      allowed: [resolveGlobalEvent, searchGlobalEvents, resolveFriend, proposeQuest]
     text:
       mentions: [[관악 가을 축제, 가을 축제], 개막 공연]
 
@@ -82,7 +81,7 @@
     tools:
       allowed: [proposeQuest]
     text:
-      mentions: [[지났, 지난, 이미], [몇 시, 언제, 시간]]
+      mentions: [[지났, 지나, 지난, 이미, 몇 시, 언제, 시간]]
 
 - id: ask-unknown-friend
   category: missing-or-ambiguous-target

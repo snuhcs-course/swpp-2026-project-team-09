@@ -8,7 +8,7 @@ The 62 cases of `main-server/eval/cases/`, for review in one read. The clock sta
 - Places from the shared seed: 학생회관 (63동) and 제1공학관 (301동). "학관" matches 약학관, 공학관, 법학관 … but not 학생회관.
 - Menus: 10-21 학생회관식당 김치볶음밥 / 제육볶음 / 돈까스, 자하연식당 비빔밥 / 순두부찌개; 10-22 학생회관식당 토스트 / 닭갈비덮밥 / 카레라이스, 자하연식당 lunch 김치찌개. None on 10-23 or later.
 - Global Events: 취업 박람회 (10-20, ended), 미술대학 졸업 전시 (10-20 – 10-22 18:00), AI 시대의 진로 특강 (10-21 18:00, 301동), 가을 재즈 콘서트 (10-22 19:00), 관악 가을 축제 (10-24 12:00 – 10-25), 축제 개막 공연 (10-24 18:00), 총장배 농구 대회 (10-25). None on 10-23.
-- 파티 (another User leads them): hobby 저녁 농구 한 판 (10-22 19:00), 주말 배드민턴 (10-24 10:00, approval), 아침 러닝 크루 (10-22 07:00, full), 보드게임 모임 (10-24 19:00); meal 내일 점심 학식 같이 (10-22 12:00, 학생회관), 오늘 저녁 고기 먹을 사람 (10-21 18:30), 어제 점심 번개 (10-20, ended); career 알고리즘 스터디 (10-24 20:00, approval), 토익 스터디 (10-26); show 재즈 콘서트 같이 가요 (to the concert), 축제 같이 즐겨요 (to the festival).
+- Recruiting Quests (another User leads them): hobby 저녁 농구 한 판 (10-22 19:00), 주말 배드민턴 (10-24 10:00, approval), 아침 러닝 크루 (10-22 07:00, full), 보드게임 모임 (10-24 19:00); meal 내일 점심 학식 같이 (10-22 12:00, 학생회관), 오늘 저녁 고기 먹을 사람 (10-21 18:30), 어제 점심 번개 (10-20, ended); career 알고리즘 스터디 (10-24 20:00, approval), 토익 스터디 (10-26); show 재즈 콘서트 같이 가요 (to the concert), 축제 같이 즐겨요 (to the festival).
 - Shuttle: two vehicles, at 정문 and 301동.
 
 ## menus (5)
@@ -19,7 +19,7 @@ The 62 cases of `main-server/eval/cases/`, for review in one read. The clock sta
 | menus-tomorrow-breakfast | **U:** 내일 아침 학식 메뉴 알려줘 | TOOL; calls getMenus, showOnMap; never proposeQuest; getMenus {date: 2026-10-22, meal: breakfast}; buttons dining; text holds 토스트 |  |
 | menus-today-dinner-restaurant | **U:** 오늘 저녁 자하연식당 뭐 나와? | TOOL; calls getMenus, showOnMap; never proposeQuest; getMenus {date: 2026-10-21, meal: dinner}; buttons dining; text holds 순두부찌개 |  |
 | menus-tomorrow-whole-day | **U:** 내일 학식 하루치 전부 보여줘 | TOOL; calls getMenus, showOnMap; never proposeQuest; getMenus {date: 2026-10-22}; buttons dining; text holds 토스트 & 닭갈비덮밥 & 카레라이스 |  |
-| menus-abbreviation-hakgwan | **U:** 학관 점심 뭐야? | TOOL; calls getMenus, showOnMap; never proposeQuest; getMenus {date: 2026-10-21, meal: lunch}; buttons dining; text holds 제육볶음 | "학관" is not read as 학생회관: names are matched as substrings, and 학생회관식당 does not hold 학관 |
+| menus-abbreviation-hakgwan | **U:** 학관 점심 뭐야? | TOOL; calls getMenus, showOnMap; never proposeQuest; getMenus {date: 2026-10-21, meal: lunch, restaurant: 학생회관}; buttons dining; text holds 제육볶음 | "학관" is not read as 학생회관: names are matched as substrings, and 학생회관식당 does not hold 학관 |
 
 ## shuttle (3)
 
@@ -33,7 +33,7 @@ The 62 cases of `main-server/eval/cases/`, for review in one read. The clock sta
 
 | id | User says | Expected | Known failure |
 |---|---|---|---|
-| global-events-this-week-shows | **U:** 이번 주에 공연 뭐 있어? | TOOL; calls searchGlobalEvents, showGlobalEvents; never proposeQuest; searchGlobalEvents {from: 2026-10-21, to: 2026-10-25}; globalEvent cards incl. 가을 재즈 콘서트, 축제 개막 공연, ≤3 |  |
+| global-events-this-week-shows | **U:** 이번 주에 공연 뭐 있어? | TOOL; calls searchGlobalEvents, showGlobalEvents; never proposeQuest; globalEvent cards incl. 가을 재즈 콘서트, 축제 개막 공연, ≤3 |  |
 | global-events-tonight-talk | **U:** 오늘 저녁에 들을 만한 강연 있어? | TOOL; calls searchGlobalEvents, showGlobalEvents; never proposeQuest; searchGlobalEvents {from: 2026-10-21, to: 2026-10-21}; globalEvent cards incl. AI 시대의 진로 특강, ≤1 |  |
 | global-events-weekend-festival | **U:** 이번 주말에 축제 해? | TOOL; calls searchGlobalEvents, showGlobalEvents; never proposeQuest; searchGlobalEvents {from: 2026-10-24, to: 2026-10-25}; globalEvent cards incl. 관악 가을 축제, ≤2 |  |
 | global-events-thursday | **U:** 목요일에 하는 행사 다 알려줘 | TOOL; calls searchGlobalEvents, showGlobalEvents; never proposeQuest; searchGlobalEvents {from: 2026-10-22, to: 2026-10-22}; globalEvent cards incl. 가을 재즈 콘서트, 미술대학 졸업 전시, ≤2 |  |
@@ -46,7 +46,7 @@ The 62 cases of `main-server/eval/cases/`, for review in one read. The clock sta
 | finding-parties-no-condition (×3) | **U:** 파티 찾기 | TOOL; calls searchRecruitingQuests, showQuests; never proposeQuest; quest cards, ≥1, ≤3 |  |
 | finding-parties-exercise | **U:** 같이 운동할 파티 있어? | TOOL; calls searchRecruitingQuests, showQuests; never proposeQuest; searchRecruitingQuests {board: hobby}; quest cards incl. 저녁 농구 한 판, 주말 배드민턴, ≤3 |  |
 | finding-parties-tomorrow-meal | **U:** 내일 같이 밥 먹을 파티 있어? | TOOL; calls searchRecruitingQuests, showQuests; never proposeQuest; searchRecruitingQuests {board: meal}; quest cards incl. 내일 점심 학식 같이, ≤1 |  |
-| finding-parties-study | **U:** 스터디 모집하는 파티 찾아줘 | TOOL; calls searchRecruitingQuests, showQuests; never proposeQuest; searchRecruitingQuests {board: career}; quest cards incl. 알고리즘 스터디, 토익 스터디, ≤2 |  |
+| finding-parties-study | **U:** 스터디 모집하는 파티 찾아줘 | TOOL; calls searchRecruitingQuests, showQuests; never proposeQuest; quest cards incl. 알고리즘 스터디, 토익 스터디, ≤2 |  |
 | finding-parties-for-event | **U:** 재즈 콘서트 같이 갈 파티 있어? | TOOL; calls searchRecruitingQuests, showQuests; never proposeQuest; quest cards incl. 재즈 콘서트 같이 가요, ≤1 |  |
 
 ## making-parties (7)
@@ -57,20 +57,20 @@ The 62 cases of `main-server/eval/cases/`, for review in one read. The clock sta
 | making-parties-breakfast-by-building-number | **U:** 모레 아침에 301동에서 김지은이랑 같이 공부하기로 했어. 약속 잡아줘 | PROPOSE; calls resolveFriend, resolvePlace, proposeQuest; resolveFriend {name: 김지은}; resolvePlace {words: 301동}; Proposal joinPolicy: closed, board: None, capacity: 2, startsAt: 2026-10-23 08:00, place: 제1공학관, invitees: 김지은 |  |
 | making-parties-open-dinner | **U:** 내일 저녁에 같이 고기 먹을 사람 나 포함 4명 모집해줘 | PROPOSE; calls proposeQuest; Proposal joinPolicy: open, board: meal, capacity: 4, startsAt: 2026-10-22 18:00, invitees:  |  |
 | making-parties-approval-tennis | **U:** 토요일 오전 10시에 테니스 칠 사람 나까지 6명 모집해줘. 신청 오면 내가 승인하고 받을게 | PROPOSE; calls proposeQuest; Proposal joinPolicy: approval, board: hobby, capacity: 6, startsAt: 2026-10-24 10:00 |  |
-| making-parties-for-event | **U:** 가을 재즈 콘서트 같이 갈 사람 나 포함 3명, 공개로 모집해줘 | PROPOSE; calls resolveGlobalEvent, proposeQuest; Proposal joinPolicy: open, board: show, capacity: 3, startsAt: 2026-10-22 19:00, globalEvent: 가을 재즈 콘서트 |  |
+| making-parties-for-event | **U:** 가을 재즈 콘서트 같이 갈 사람 나 포함 3명, 공개로 모집해줘 | PROPOSE; calls proposeQuest; Proposal joinPolicy: open, board: show, capacity: 3, startsAt: 2026-10-22 19:00, globalEvent: 가을 재즈 콘서트 |  |
 | making-parties-abbreviation-hakgwan | **U:** 내일 점심 학관에서 이민수랑 밥 약속 잡아줘 | PROPOSE; calls resolveFriend, resolvePlace, proposeQuest; Proposal joinPolicy: closed, capacity: 2, startsAt: 2026-10-22 12:00, place: 학생회관, invitees: 이민수 | "학관" is not read as 학생회관 (63동): resolvePlace matches substrings, and 학생회관 does not hold 학관 |
-| making-parties-states-date-and-weekday | **U:** 금요일 저녁 7시에 김지은이랑 저녁 약속 잡아줘 | PROPOSE; calls resolveFriend, proposeQuest; Proposal joinPolicy: closed, capacity: 2, startsAt: 2026-10-23 19:00, invitees: 김지은; text holds 10월 23일/10/23/23일 & 금요일/(금)/금) | The reply does not state the computed date with its weekday until improvement 3-5; the prompt says not to repeat the fields |
+| making-parties-friday-dinner | **U:** 금요일 저녁 7시에 김지은이랑 저녁 약속 잡아줘 | PROPOSE; calls resolveFriend, proposeQuest; Proposal joinPolicy: closed, capacity: 2, startsAt: 2026-10-23 19:00, invitees: 김지은 |  |
 
 ## missing-or-ambiguous-target (8)
 
 | id | User says | Expected | Known failure |
 |---|---|---|---|
 | ask-which-minsu (×3) | **U:** 내일 점심에 학생회관에서 민수랑 밥 약속 잡아줘 | ASK; calls resolveFriend; resolveFriend {name: 민수}; text holds 이민수 & 김민수 |  |
-| ask-which-same-name-friend | **U:** 내일 저녁 6시에 서준이랑 학생회관에서 밥 약속 잡아줘 | ASK; calls resolveFriend; text holds 박서준 & 경영/물리/학과/아이디/ID | resolveFriend returns only names and ids, so nothing tells two Friends named 박서준 apart (proposed for P20) |
-| ask-which-festival-event | **U:** 축제 같이 갈 파티 만들어줘. 이민수랑 김지은 초대해서 | ASK; calls resolveGlobalEvent; text holds 관악 가을 축제/가을 축제 & 개막 공연 |  |
+| ask-which-same-name-friend | **U:** 내일 저녁 6시에 서준이랑 학생회관에서 밥 약속 잡아줘 | ASK; calls resolveFriend; text holds 경영학과/경영 & 물리천문학부/물리천문/물리 | resolveFriend returns only names and ids, so nothing tells two Friends named 박서준 apart (proposed for P20) |
+| ask-which-festival-event | **U:** 축제 같이 갈 파티 만들어줘. 이민수랑 김지은 초대해서 | ASK; text holds 관악 가을 축제/가을 축제 & 개막 공연 |  |
 | ask-which-engineering-building | **U:** 내일 저녁 7시에 공학관에서 김지은이랑 스터디 약속 잡아줘 | ASK; calls resolvePlace; text holds 제1공학관/제2공학관/공학관1/공학관2/공학관3/301동/302동/어느 공학관/어떤 공학관/몇 동 |  |
 | ask-missing-time | **U:** 이민수랑 밥 약속 잡아줘 | ASK; text holds 언제/몇 시/날짜/시간 |  |
-| ask-lunch-already-past | **U:** 오늘 점심 약속 잡아줘 | ASK; text holds 지났/지난/이미 & 몇 시/언제/시간 |  |
+| ask-lunch-already-past | **U:** 오늘 점심 약속 잡아줘 | ASK; text holds 지났/지나/지난/이미/몇 시/언제/시간 |  |
 | ask-unknown-friend | **U:** 내일 점심에 박지훈이랑 밥 약속 잡아줘 | ASK; calls resolveFriend; text holds 박지훈 & 없/찾을 수 없/찾지 못 |  |
 | ask-missing-fields-in-one-question | **U:** 운동 파티 하나 모집해줘 | ASK; text holds 언제/몇 시/날짜/시간 & 몇 명/인원/몇 분 |  |
 
@@ -78,10 +78,10 @@ The 62 cases of `main-server/eval/cases/`, for review in one read. The clock sta
 
 | id | User says | Expected | Known failure |
 |---|---|---|---|
-| ambiguous-intent-lunch-at-student-center | **U:** 내일 학생회관에서 점심 | TOOL+ASK; calls getMenus, showOnMap; never proposeQuest; getMenus {date: 2026-10-22, meal: lunch}; buttons dining; text holds 약속/파티/같이 드실/같이 먹 | No rule for ambiguous intent until improvement 3-1 (show one reading, ask about the other) |
-| ambiguous-intent-festival-company | **U:** 이번 주 토요일 축제 같이 갈 사람 | TOOL+ASK; calls searchRecruitingQuests, showQuests; never proposeQuest; quest cards incl. 축제 같이 즐겨요; text holds 만들/모집 | No rule for ambiguous intent until improvement 3-1 (show one reading, ask about the other) |
-| ambiguous-intent-basketball-tomorrow | **U:** 내일 저녁 농구 | TOOL+ASK; calls searchRecruitingQuests, showQuests; never proposeQuest; quest cards incl. 저녁 농구 한 판; text holds 만들/모집 | No rule for ambiguous intent until improvement 3-1 (show one reading, ask about the other) |
-| ambiguous-intent-jazz-concert | **U:** 목요일 재즈 콘서트 | TOOL+ASK; calls searchGlobalEvents, showGlobalEvents; never proposeQuest; globalEvent cards incl. 가을 재즈 콘서트; text holds 파티 | No rule for ambiguous intent until improvement 3-1 (show one reading, ask about the other) |
+| ambiguous-intent-lunch-at-student-center | **U:** 내일 학생회관에서 점심 | TOOL+ASK; calls getMenus, showOnMap; never proposeQuest; getMenus {date: 2026-10-22, meal: lunch}; buttons dining; text holds 잡아 드릴까/약속을 잡을까/만들어 드릴까/모집해 드릴까/만들까요 | No rule for ambiguous intent until improvement 3-1 (show one reading, ask about the other) |
+| ambiguous-intent-festival-company | **U:** 이번 주 토요일 축제 같이 갈 사람 | TOOL+ASK; calls searchRecruitingQuests, showQuests; never proposeQuest; quest cards incl. 축제 같이 즐겨요; text holds 만들어 드릴까/모집해 드릴까/열어 드릴까/만들까요/모집할까요 | No rule for ambiguous intent until improvement 3-1 (show one reading, ask about the other) |
+| ambiguous-intent-basketball-tomorrow | **U:** 내일 저녁 농구 | TOOL+ASK; calls searchRecruitingQuests, showQuests; never proposeQuest; quest cards incl. 저녁 농구 한 판; text holds 만들어 드릴까/모집해 드릴까/열어 드릴까/만들까요/모집할까요 | No rule for ambiguous intent until improvement 3-1 (show one reading, ask about the other) |
+| ambiguous-intent-jazz-concert | **U:** 목요일 재즈 콘서트 | TOOL+ASK; calls searchGlobalEvents, showGlobalEvents; never proposeQuest; globalEvent cards incl. 가을 재즈 콘서트; text holds 찾아 드릴까/만들어 드릴까/모집해 드릴까/찾아볼까요/만들까요 | No rule for ambiguous intent until improvement 3-1 (show one reading, ask about the other) |
 
 ## no-data (4)
 
@@ -89,7 +89,7 @@ The 62 cases of `main-server/eval/cases/`, for review in one read. The clock sta
 |---|---|---|---|
 | no-data-menus-day-after-tomorrow | **U:** 모레 학식 뭐 나와? | TOOL; calls getMenus; never proposeQuest; getMenus {date: 2026-10-23}; text holds 없/않 |  |
 | no-data-restaurant-breakfast | **U:** 내일 자하연식당 아침 메뉴 뭐야? | TOOL; calls getMenus; never proposeQuest; getMenus {date: 2026-10-22}; text holds 없/않 |  |
-| no-data-events-day-after-tomorrow | **U:** 모레 학교에서 열리는 행사 있어? | TOOL; calls searchGlobalEvents; never proposeQuest, showGlobalEvents; searchGlobalEvents {from: 2026-10-23, to: 2026-10-23}; text holds 없/않 |  |
+| no-data-events-day-after-tomorrow | **U:** 모레 학교에서 열리는 행사 있어? | TOOL; calls searchGlobalEvents; never proposeQuest; searchGlobalEvents {from: 2026-10-23, to: 2026-10-23}; text holds 없/않 |  |
 | no-data-meal-parties-day-after-tomorrow | **U:** 모레 같이 밥 먹는 파티 있어? | TOOL; calls searchRecruitingQuests; never proposeQuest, showQuests; searchRecruitingQuests {board: meal, from: 2026-10-23, to: 2026-10-23}; text holds 없/않 |  |
 
 ## out-of-scope (4)
@@ -107,7 +107,7 @@ The 62 cases of `main-server/eval/cases/`, for review in one read. The clock sta
 |---|---|---|---|
 | small-talk-greeting | **U:** 안녕! 넌 누구야? | CHAT; no tool |  |
 | small-talk-tired | **U:** 아 오늘 수업 너무 많아서 피곤하다 | CHAT; no tool |  |
-| small-talk-meal-recommendation-asks-taste | **U:** 저녁 뭐 먹을지 추천해줘 | CHAT; no tool; text holds 한식/일식/양식/중식/어떤/당기/땡기 |  |
+| small-talk-meal-recommendation-asks-taste | **U:** 저녁 뭐 먹을지 추천해줘 | CHAT; no tool; text holds 좋아하/취향/드시고 싶/먹고 싶/당기/땡기 |  |
 
 ## follow-ups (6)
 
@@ -135,6 +135,6 @@ The 62 cases of `main-server/eval/cases/`, for review in one read. The clock sta
 | compound-menus-and-shuttle | **U:** 오늘 저녁 학식 메뉴랑 지금 셔틀 어디 있는지 같이 알려줘 | TOOL; calls getMenus, getShuttle, showOnMap; never proposeQuest; getMenus {date: 2026-10-21, meal: dinner}; buttons dining, shuttle; text holds 돈까스 & 정문/301동 |  |
 | compound-this-week-menus | **U:** 이번 주 학식 메뉴 전부 알려줘 | TOOL; calls getMenus, showOnMap; never proposeQuest; getMenus {date: 2026-10-21} & {date: 2026-10-22}; buttons dining; text holds 제육볶음 & 닭갈비덮밥 |  |
 | compound-festival-and-party | **U:** 이번 주말 축제 뭐 있는지 보여주고, 같이 갈 파티도 찾아줘 | TOOL; calls searchGlobalEvents, showGlobalEvents, searchRecruitingQuests, showQuests; never proposeQuest; globalEvent cards incl. 관악 가을 축제; quest cards incl. 축제 같이 즐겨요 |  |
-| compound-proposal-two-friends-place-event | **U:** 토요일 축제 개막 공연 이민수, 김지은이랑 보러 갈래. 5시에 학생회관 앞에서 모여서 가는 걸로 파티 만들어줘 | PROPOSE; calls resolveFriend, resolvePlace, resolveGlobalEvent, proposeQuest; resolveFriend {name: 이민수} & {name: 김지은}; Proposal joinPolicy: closed, board: None, capacity: 3, startsAt: 2026-10-24 17:00, place: 학생회관, globalEvent: 축제 개막 공연, invitees: 이민수/김지은 |  |
+| compound-proposal-two-friends-place-event | **U:** 토요일 축제 개막 공연 이민수, 김지은이랑 보러 갈래. 5시에 학생회관 앞에서 모여서 가는 걸로 파티 만들어줘 | PROPOSE; calls resolveFriend, resolvePlace, proposeQuest; resolveFriend {name: 이민수} & {name: 김지은}; Proposal joinPolicy: closed, board: None, capacity: 3, startsAt: 2026-10-24 17:00, place: 학생회관, globalEvent: 축제 개막 공연, invitees: 이민수/김지은 |  |
 | compound-exercise-or-make | **U:** 운동 파티 있으면 보여주고 없으면 하나 만들어줘 | TOOL; calls searchRecruitingQuests, showQuests; never proposeQuest; searchRecruitingQuests {board: hobby}; quest cards incl. 저녁 농구 한 판, 주말 배드민턴, ≤3 |  |
 

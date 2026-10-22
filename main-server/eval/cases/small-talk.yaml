@@ -33,4 +33,4 @@
     tools:
       forbidden: '*'
     text:
-      mentions: [[한식, 일식, 양식, 중식, 어떤, 당기, 땡기]]
+      mentions: [[좋아하, 취향, 드시고 싶, 먹고 싶, 당기, 땡기]]

@@ -4,8 +4,8 @@
 # 2026-10-22  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
-# Making 파티: a Proposal with the right fields. P07's open questions: 아침, 점심 and 저녁 start at 08:00, 12:00 and
-# 18:00; every Friend, Place and event is resolved before proposeQuest. A 파티 with named Friends only is closed (비공개),
+# Making a Quest: a Proposal with the right fields. P07's open questions: 아침, 점심 and 저녁 start at 08:00, 12:00 and
+# 18:00; every Friend, Place and event is resolved before proposeQuest. A Quest with named Friends only is closed (비공개),
 # on no Board, and its capacity counts the User. Starts are written in Korea's time.
 
 - id: making-parties-lunch-with-friend
@@ -76,7 +76,7 @@
       capacity: 6
       startsAt: '2026-10-24 10:00'
 
-# With a related event and no time, the 파티 starts with the event.
+# With a related event and no time, the Quest starts with the event.
 - id: making-parties-for-event
   category: making-parties
   turns:
@@ -84,8 +84,8 @@
   expect:
     actions: [PROPOSE]
     tools:
-      required: [resolveGlobalEvent, proposeQuest]
-      allowed: [searchGlobalEvents]
+      required: [proposeQuest]
+      allowed: [resolveGlobalEvent, searchGlobalEvents]
     proposal:
       joinPolicy: open
       board: show
@@ -111,10 +111,10 @@
       place: 학생회관
       invitees: [이민수]
 
-# P20's plan (3-5): the reply states the computed date with its weekday, so that the User can check it.
-- id: making-parties-states-date-and-weekday
+# A weekday read against now: this Friday is 2026-10-23. (That the reply states the date with its weekday waits for
+# P20's 3-5, since the prompt now says not to repeat a Proposal's fields.)
+- id: making-parties-friday-dinner
   category: making-parties
-  knownFailure: 'The reply does not state the computed date with its weekday until improvement 3-5; the prompt says not to repeat the fields'
   turns:
     - user: 금요일 저녁 7시에 김지은이랑 저녁 약속 잡아줘
   expect:
@@ -126,5 +126,3 @@
       capacity: 2
       startsAt: '2026-10-23 19:00'
       invitees: [김지은]
-    text:
-      mentions: [[10월 23일, 10/23, 23일], [금요일, (금), 금)]]

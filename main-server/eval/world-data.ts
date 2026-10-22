@@ -61,6 +61,9 @@ export const MENUS = [
   },
 ];
 
+// When the Co-op collector collected the menus.
+export const MENUS_COLLECTED_AT = '2026-10-21T07:00:00+09:00';
+
 export const at = (koreaTime: string): Date => new Date(`${koreaTime}+09:00`);
 
 // The published Global Events by seed name, their title. None takes place on 2026-10-23, the day of the "no data" cases.
@@ -112,7 +115,7 @@ export const GLOBAL_EVENTS: Record<string, { description: string; startsAt: stri
   },
 };
 
-// A 파티 of the User's own Board, led by someone who is no Friend of the asker: its title is its seed name.
+// A recruiting Quest on a Board, led by LEADER, who is no Friend of the asker: its title is its seed name.
 export interface QuestSeed {
   board: 'meal' | 'career' | 'hobby' | 'show';
   joinPolicy: 'open' | 'approval';
@@ -127,6 +130,10 @@ export interface QuestSeed {
   // Joined by another User to its capacity.
   full?: boolean;
 }
+
+// The Users who lead the recruiting Quests and fill the full one. Neither is a Friend of the asker.
+export const LEADER = { name: '정다은', department: '체육교육과' };
+export const JOINER = { name: '오세훈', department: '건축학과' };
 
 export const QUESTS: Record<string, QuestSeed> = {
   '저녁 농구 한 판': {

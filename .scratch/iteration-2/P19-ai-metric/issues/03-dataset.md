@@ -41,11 +41,11 @@ Built on `2.0/P19-03-dataset`, on `2.0/P19-02-scorer` at `4f5b5e2` (01 and 02 no
   `small-talk`, `follow-ups`, `live`, `compound`. The repeated set: `menus-today-lunch`, `shuttle-where-now`,
   `finding-parties-no-condition`, `making-parties-lunch-with-friend`, `ask-which-minsu`. The table for review is
   [cases.md](../cases.md), generated from the YAML.
-- Known failures (9): the 4 ambiguous-intent cases (until 3-1); "학관" in `menus-abbreviation-hakgwan` and
+- Known failures (8): the 4 ambiguous-intent cases (until 3-1); "학관" in `menus-abbreviation-hakgwan` and
   `making-parties-abbreviation-hakgwan`; same-name Friends in `ask-which-same-name-friend` and
-  `follow-up-second-same-name-friend`; and `making-parties-states-date-and-weekday`, the one case that asks for the
-  computed date with its weekday (P20's 3-5; the prompt says not to repeat a Proposal's fields). The other cases do
-  not ask for the weekday, so that they measure today's Assistant.
+  `follow-up-second-same-name-friend`. A case asking the reply to state the computed date with its weekday waits for
+  P20's 3-5 (today's prompt says not to repeat a Proposal's fields); `making-parties-friday-dinner` checks only the
+  Proposal's date, 2026-10-23 19:00.
 - Decided where the spec left room:
   - "7시로 바꿔줘" is PROPOSE+ASK with 19:00 and a mention of 오전/아침/07:00; the history's Proposal is sent back as the
     app does, so its ids are accepted.
@@ -66,8 +66,29 @@ Built on `2.0/P19-03-dataset`, on `2.0/P19-02-scorer` at `4f5b5e2` (01 and 02 no
   STEP_LIMIT and TIMEOUT counts go here once run (`pnpm eval --case <5 ids>`, then `pnpm eval --category compound`
   and again with `--max-steps 30 --timeout 60000`).
 
+### Review fixes (2026-10-22)
+
+From the two-axis review of `301c0b6`, as a second commit:
+
+- Cases: the ambiguous-intent mentions are question forms for the other reading (만들어 드릴까, 모집해 드릴까, 잡아
+  드릴까, …), so that a plain lookup no longer passes as TOOL+ASK. `ask-which-same-name-friend` must name both
+  departments (경영학과 and 물리천문학부, or their short forms). The meal recommendation's mentions are taste
+  questions (좋아하, 취향, 당기, …). `resolveGlobalEvent` is allowed, not required, wherever `searchGlobalEvents` also
+  gives ids proposeQuest accepts. `global-events-this-week-shows` and `finding-parties-study` check only the cards.
+  `ask-lunch-already-past` takes "the time has passed" or a question about the time as one any-of mention.
+  `no-data-events-day-after-tomorrow` allows showGlobalEvents. `menus-abbreviation-hakgwan` expects getMenus with the
+  restaurant 학생회관 (compared exactly, after trimming), so a call for every restaurant no longer passes; one that
+  passes 학생회관식당 fails it too.
+- A known limitation: in `no-data-restaurant-breakfast`, a getMenus for every restaurant finds 학생회관식당's
+  breakfast, and a reply that then says 자하연식당 has none without the dining button is no action under the scorer
+  (a lookup that found something with nothing shown). Left as it is.
+- Code: the world's remaining data (the leader and joiner, the menus' collectedAt) is in `eval/world-data.ts`;
+  `seedOf` in `eval/world.ts` is the one seed lookup, which the runner uses too; `seedWorld(app, databaseUrl)` takes
+  the database's URL; `seededDatabase(settings)` in `test/containers.ts` gives a test file its own seeded database;
+  English prose says Quest, not 파티.
+
 ### Agent usage (2026-10-22)
 
-- Agent time: about 1 hour 10 minutes (estimate), one subagent session in its worktree.
-- Tokens (estimate, this session only): about 12M input, of which about 11.4M cache reads and 0.5M cache writes, and
-  about 70k output. No subagents.
+- Agent time: about 1 hour 30 minutes (estimate), one subagent session in its worktree, the review fixes included.
+- Tokens (estimate, this session only): about 16M input, of which about 15.2M cache reads and 0.6M cache writes, and
+  about 85k output. No subagents.

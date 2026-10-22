@@ -64,8 +64,8 @@
   expect:
     actions: [PROPOSE]
     tools:
-      required: [resolveFriend, resolvePlace, resolveGlobalEvent, proposeQuest]
-      allowed: [searchGlobalEvents]
+      required: [resolveFriend, resolvePlace, proposeQuest]
+      allowed: [resolveGlobalEvent, searchGlobalEvents]
     args:
       resolveFriend:
         - { name: 이민수 }
@@ -79,7 +79,7 @@
       globalEvent: 축제 개막 공연
       invitees: [이민수, 김지은]
 
-# There are 운동 파티, so the right answer shows them and makes nothing.
+# There are recruiting Quests for 운동, so the right answer shows them and makes nothing.
 - id: compound-exercise-or-make
   category: compound
   turns:

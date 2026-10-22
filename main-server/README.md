@@ -1943,7 +1943,7 @@ is ignored by git; commit a run worth keeping with `git add -f`. `test/eval-runn
 The 62 cases are one YAML file per category under `eval/cases/` (menus, shuttle, global-events, finding-parties,
 making-parties, missing-or-ambiguous-target, ambiguous-intent, no-data, out-of-scope, small-talk, follow-ups, live,
 compound). They name the world by seed name: what the world holds is in `eval/world-data.ts` (the asking User, the
-Friends, the Places of the shared seed, the Global Events, the 파티, the menus and the shuttle's vehicles), and
+Friends, the Places of the shared seed, the Global Events, the recruiting Quests, the menus and the shuttle's vehicles), and
 `eval/world.ts` seeds it with the e2e helpers into the run's fresh database. The shuttle's vehicles are stored anew
 before each case, since the server forgets them after a minute. The world and the cases change together:
 `test/eval-cases.e2e-spec.ts` checks in `pnpm test` that every case fits the schema, that the set has the spec's

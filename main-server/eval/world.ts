@@ -7,9 +7,7 @@
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { z } from 'zod';
-import { ConfigService } from '@nestjs/config';
 import { type PrismaClient } from '../src/generated/prisma/client.js';
-import { type Settings } from '../src/common/settings.js';
 import { connect } from '../test/containers.js';
 import { befriend, signInUser, type TestUser } from '../test/friends.js';
 import { menusMessage } from '../test/menus.js';
@@ -21,7 +19,10 @@ import {
   at,
   FRIENDS,
   GLOBAL_EVENTS,
+  JOINER,
+  LEADER,
   MENUS,
+  MENUS_COLLECTED_AT,
   PLACES,
   QUESTS,
   type QuestSeed,
@@ -37,9 +38,9 @@ import {
 // The run's clock stands at 2026-10-21 (수) 14:05 in Korea (eval/runner.ts). The week of the cases is Monday 10-19 to
 // Sunday 10-25:
 // - menus for 10-21 (today) and 10-22 (tomorrow), with breakfast, lunch and dinner;
-// - 10-23 (금, 모레) is the day of "no data": no menus, no Global Event and no 식사 파티 on it;
+// - 10-23 (금, 모레) is the day of "no data": no menus, no Global Event and no recruiting Quest of the meal Board;
 // - Global Events of several kinds through the week, one of which ended on 10-20 and two whose titles hold 축제;
-// - recruiting 파티 on the Boards meal, career (study), hobby (운동 and not) and show, one full and one ended;
+// - recruiting Quests on the Boards meal, career (study), hobby (운동 and not) and show, one full and one ended;
 // - the shuttle's stops from the seed and two vehicles, stored anew before each case (`refresh`), since the server
 //   forgets a set of vehicles a minute after it was stored.
 
@@ -59,7 +60,8 @@ export interface World {
   refresh: () => Promise<void>;
 }
 
-function seeded(seeds: Record<string, Seeded>, kind: Seeded['kind'], name: string): Seeded {
+// The seed of that kind and name, which a case must name rightly.
+export function seedOf(seeds: Readonly<Record<string, Seeded>>, kind: Seeded['kind'], name: string): Seeded {
   const seed = seeds[name];
   if (seed?.kind !== kind) {
     throw new Error(`The world has no ${kind} named ${name}`);
@@ -123,8 +125,8 @@ async function seedQuests(
   prisma: PrismaClient,
   seeds: Record<string, Seeded>,
 ): Promise<void> {
-  const leader = await signInUser(app, { name: '정다은', department: '체육교육과' });
-  const joiner = await signInUser(app, { name: '오세훈', department: '건축학과' });
+  const leader = await signInUser(app, LEADER);
+  const joiner = await signInUser(app, JOINER);
   for (const [title, quest] of Object.entries(QUESTS)) {
     const { board, joinPolicy, capacity, description, startsAt, place, globalEvent } = quest;
     const id =
@@ -143,12 +145,12 @@ async function seedQuests(
                 place === undefined
                   ? null
                   : 'seed' in place
-                    ? { placeId: seeded(seeds, 'place', place.seed).id }
+                    ? { placeId: seedOf(seeds, 'place', place.seed).id }
                     : { label: place.label },
             },
           })
         : // oxlint-disable-next-line no-await-in-loop -- as above
-          await eventQuest(app, prisma, leader, title, quest, seeded(seeds, 'globalEvent', globalEvent).id);
+          await eventQuest(app, prisma, leader, title, quest, seedOf(seeds, 'globalEvent', globalEvent).id);
     if (quest.full === true) {
       // oxlint-disable-next-line no-await-in-loop -- as above
       const response = await joinQuest(app, joiner, id);
@@ -168,11 +170,10 @@ async function storeVehicles(app: INestApplication<Server>): Promise<void> {
   );
 }
 
-// Seeds the world into the app's database. The app's clock must already stand at the run's time.
-export async function seedWorld(app: INestApplication<Server>): Promise<World> {
-  // A connection of its own to the app's database, as the tests store Global Events: the app's PrismaService is of
-  // the module graph startApp imported afresh, which the benchmark cannot ask for by class.
-  const prisma = connect(app.get<ConfigService<Settings, true>>(ConfigService).get('DATABASE_URL', { infer: true }));
+// Seeds the world into the app's database, at `databaseUrl`, through a connection of its own, as the tests store
+// Global Events. The app's clock must already stand at the run's time.
+export async function seedWorld(app: INestApplication<Server>, databaseUrl: string): Promise<World> {
+  const prisma = connect(databaseUrl);
   const asker = await signInUser(app, ASKER);
   const seeds: Record<string, Seeded> = {};
   try {
@@ -183,6 +184,6 @@ export async function seedWorld(app: INestApplication<Server>): Promise<World> {
   } finally {
     await prisma.$disconnect();
   }
-  await sendAsWorker(app, '/menus/collected', menusMessage(MENUS, { collectedAt: '2026-10-21T07:00:00+09:00' }));
+  await sendAsWorker(app, '/menus/collected', menusMessage(MENUS, { collectedAt: MENUS_COLLECTED_AT }));
   return { accessToken: asker.accessToken, seeds, refresh: () => storeVehicles(app) };
 }

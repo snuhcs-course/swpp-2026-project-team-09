@@ -38,7 +38,7 @@ beforeAll(async () => {
     openRouterModel(key, options.model),
     options,
   );
-  started.world = await seedWorld(started.evalApp.app);
+  started.world = await seedWorld(started.evalApp.app, inject('settings').DATABASE_URL);
   started.names = namesOf(started.world.seeds);
   log.keepSeeds(started.world.seeds);
 });

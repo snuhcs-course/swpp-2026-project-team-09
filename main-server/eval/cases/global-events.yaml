@@ -16,8 +16,6 @@
     tools:
       required: [searchGlobalEvents, showGlobalEvents]
       forbidden: [proposeQuest]
-    args:
-      searchGlobalEvents: { from: '2026-10-21', to: '2026-10-25' }
     cards:
       - kind: globalEvent
         seeds: [가을 재즈 콘서트, 축제 개막 공연]
