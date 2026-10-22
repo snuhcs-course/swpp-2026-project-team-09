@@ -4,9 +4,8 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-// Partitions: a Global Event alone and with others at its point; a Quest held alone, with a Friend, with a Party of
-// others and with the User's Party, and one with no card. Expected values: P06-09's and P13-03's criteria (iteration
-// 1): "공식 행사 · AI 커리어 설명회", "같이 갈 파티 {n}개 모집 중", "활성화에 참여하면 서로 위치가 공유돼요".
+// Partitions: a Global Event alone and at a shared point; a Quest alone, with a Friend, with others' Party, with
+// the User's and with no card. Expected values: P06-09's and P13-03's criteria (iteration 1), in Korea's time.
 
 import { event, GATE, HALL, ME, MIN_JUN, myParty, quest, recruitingFor, sources } from '../support/map-sources';
 import type { Party } from '@/api/types';

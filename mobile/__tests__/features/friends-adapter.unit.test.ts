@@ -4,9 +4,8 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-// Partitions: a position's age at the 2 and 10 minute edges; a Friend seen or not, with a status, without one and with
-// one the main server's word contradicts; and the Friend Requests both ways. Expected values: P14-01's criteria and
-// P06's todo (iteration 1): "공강 · 중앙도서관", "{n}분 전 위치", a position gone after 10 minutes.
+// Partitions: a position's age at 2 and 10 minutes; a Friend seen or not, with a status, without one and with one
+// contradicted; Friend Requests both ways. Expected values: P14-01's criteria and P06's todo.md (iteration 1).
 
 import type { Friend, FriendStatus, Position } from '@/api/types';
 import { keptPositions, minutesOld, toFriendRequestViews, toFriendViews, withAge } from '@/features/friends/adapter';

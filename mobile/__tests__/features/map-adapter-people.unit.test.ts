@@ -4,9 +4,8 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-// Partitions: a Friend and a member of the User's Party, each recent, old (2 minutes on) and too old (10 minutes on),
-// a member who is a Friend or unseen, and the order of all the cards. Expected values: P06-09's, P13-01's and P14-01's
-// criteria (iteration 1): "마지막 위치 {n}분 전", "파티 만들기", "파티 열기", a Friend shown once.
+// Partitions: a Friend and a Party member, recent, old (2 minutes) and too old (10 minutes); a member who is a
+// Friend or unseen; the cards' order. Expected values: P06-09's, P13-01's and P14-01's criteria (iteration 1).
 
 import {
   event,

@@ -4,9 +4,8 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-// Partitions: an Open and a Closed Quest, led or not; the four states of 활성화; a plan's order, its next step and its
-// destination; each member state; and the ages at each unit's edge. Expected values: P13-01's and P06-06's criteria
-// (iteration 1 and 2), worked by hand in Korea's time.
+// Partitions: Open and Closed Quests, led or not; 활성화's four states; the plan's order, next step and destination;
+// each member state; ages at each unit's edge. Expected values: P13-01's and P06-06's criteria, in Korea's time.
 
 import type { ShownQuest } from '@/api/quest-parts-types';
 import type { MyParty, Party, Person, SubQuest } from '@/api/types';

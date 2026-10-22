@@ -4,9 +4,8 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-// Partitions: each side of the four times of the next meal, a pin for one restaurant, for two sharing a Place and for
-// none, each kind of menu line, and the panel's 7 days. Expected values: P15-01's criteria, worked by hand in Korea's
-// time, and the restaurant table's numbers (`restaurant-places.ts`).
+// Partitions: each side of the next meal's four times; a pin for one restaurant, two at a Place and none; each
+// menu line; the 7 days. Expected values: P15-01's criteria (iteration 1) and the restaurant table, in Korea's time.
 
 import type { MenuLine, RestaurantMenus } from '@/api/menu-types';
 import type { Place } from '@/api/types';

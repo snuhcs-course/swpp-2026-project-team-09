@@ -4,9 +4,8 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-// Partitions: the service hours' edges; a vehicle seen first, at the same stop, a stop ahead, stops skipped, a stop
-// behind, past the loop's end, with reduced motion and gone; and the cards. Expected values: P15-02's criteria
-// (iteration 1), and a rectangle loop whose lengths are worked by hand (0.001° of latitude is 111.32 m).
+// Partitions: the service hours' edges; a vehicle new, unmoved, a stop on, past stops, behind, past the loop's end,
+// with less motion and gone; the cards. Expected values: P15-02's criteria and a rectangle loop worked by hand.
 
 import type { ShuttleRoute, ShuttleStop, ShuttleVehicle } from '@/api/shuttle-types';
 import {

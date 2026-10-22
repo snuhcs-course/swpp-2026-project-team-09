@@ -4,9 +4,8 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-// Partitions, for each check of an answer about Parties, the timetable, Places and walking routes: the documented
-// shape, each checked field left out, null and of another type, and null where it is allowed. Expected values:
-// main-server's README (Party, Timetable, Places, Walking route) and the app's `Party` type (its provisional leader).
+// Partitions, per check of a Party, class, Place or walking route: the documented shape, and each checked field
+// left out, mistyped and null, which only nullable fields take. Expected values: main-server's README, `Party` type.
 
 import { inList, inside, omit, type Variant, wrongFields } from '../support/answer-variants';
 import {
