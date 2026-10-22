@@ -117,3 +117,12 @@ Test first: each fix starts with a failing test.
 - The four reference screenshots: at least 48 of 50 times, nothing read that is not there, no building linked wrongly,
   the same with and without confidence. The new number is reported.
 - Whole mobile suite, typecheck and lint at the end.
+
+## Comments
+
+### Agent usage (2026-10-22)
+
+- Agent time: about 1 h 30 min, an estimate: one implementing subagent in its own worktree, from reading the pipeline
+  through the plan, the fixes, the tests and the docs. The coordinating session is not counted here.
+- Tokens: not split per tool call in this session; roughly 0.3 M tokens of context at the end, about 0.1 M output, an
+  estimate. Cache reads and writes were not visible to the agent; take them from the session's transcript.

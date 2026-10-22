@@ -61,30 +61,32 @@ The pipeline is a set of pure TypeScript functions. Its input is what the native
 
 **① Grid**
 
-- Day header: a row near the top whose elements read `월 화 수 목 금` and maybe `토` (and `일`), left to right. Each day's column is centred on its letter; column edges are the midpoints between neighbours, and the outer edges mirror the inner gap.
-- When the header is not found, columns come from the vertical grid lines: the peaks of a projection of light-grey pixels per pixel column.
-- Hour labels: numbers only, in a narrow strip left of the first column and below the header. The strip excludes the status bar's clock (`1:04`).
+- Day header: a row near the top whose elements read `월 화 수 목 금` and maybe `토` (and `일`), left to right; `월요일` and `Mon`/`MON`/`Monday` are read as well. Each day's column is centred on its letter; column edges are the midpoints between neighbours, and the outer edges mirror the inner gap.
+- When the header is not found, columns come from the vertical grid lines: the peaks of a projection of faint pixels per pixel column (grey and a little off the measured background, lighter or darker).
+- Hour labels: numbers, in a narrow strip left of the first column and below the header, as `9`, `09:00`, `9:30` (read as 9.5), `오전 9시`, `오후 1시`, `9 AM` or `1 PM` (a morning or afternoon mark gives the 24-hour value). The strip excludes the status bar's clock (`1:04`).
 - 12-hour labels are unfolded top to bottom: whenever a label is smaller than the one above, 12 is added from there on (… 11, 12, 1, 2 → … 11, 12, 13, 14). A 24-hour column is left unchanged, so both apps use one path.
-- Pixels to time: a line `y = a·t + b` fitted with RANSAC over the labels, so that one or two misread labels (1 read as 7) do not bend it. At least 3 inliers are needed; with fewer, the image is refused as "no timetable found".
+- Pixels to time: a line `y = a·t + b` fitted with RANSAC over the labels, so that one or two misread labels (1 read as 7) do not bend it. At least 3 inliers are needed; with fewer, the image is refused as "no timetable found". An hour is between a fiftieth and a third of the picture tall.
 
 **② Blocks**
 
-- A mask of saturated pixels (HSV saturation above a threshold, value not too dark) marks the coloured blocks; the white or light grey background and the grey grid lines fall out.
-- A morphological close fills the white letters inside a block.
+- The picture's background is measured: its most common colour. Nothing assumes a white or a dark picture, so light and dark mode are read alike.
+- A mask of coloured pixels (chroma, max − min of RGB, above the background's by a tenth of the range) marks the blocks, pale ones included; the background, the grey grid lines and text fall out in either theme.
+- A morphological close fills the letters inside a block.
 - Connected components become rectangles. A component that crosses a column edge is cut at the edge, so that two same-coloured blocks side by side (근장 on 수 and 목) become two.
 - Components in the header, the left label strip and the bottom tab bar, and components smaller than a quarter of a cell, are dropped.
-- Two blocks of the same colour stacked in one column with no gap are split where a thin lighter line runs across them, or else where the OCR text falls into two separate groups.
+- Two blocks of the same colour stacked in one column with no gap are split where a thin separator runs across them (a row leaning from the block's colour towards the background's: lighter on a light picture, darker on a dark one), or else where the OCR text falls into two separate groups.
 
 **③ Times**
 
 - A block's top and bottom are turned into times by the fitted line and rounded to 5 minutes.
-- When a block's bottom touches the tab bar or the bottom of the picture, or the block fades towards the bottom (the blur behind a floating tab bar), its end is uncertain and the time is left out (see Leaving out what is uncertain).
+- When a block's bottom touches the tab bar or the bottom of the picture, or the block fades towards the bottom (the blur behind a floating tab bar), its end is uncertain and the time is left out (see Leaving out what is uncertain). Below the block, the background, a grid line or another block's top is certain.
+- The same holds for a block's top, for a timetable scrolled down: a block cut by the picture's top, or under a bar that is neither the background, a grid line, another block nor the day header's band, has an uncertain start.
 
 **④ Name and room**
 
-- The OCR lines inside a block are read top to bottom. A line that matches the room pattern is the room; the others, joined, are the name. Korean lines join without a space; a join between Latin letters or digits keeps one.
+- The OCR lines inside a block are read top to bottom. Below the first line, the room part starts at a line that begins with a building number and a hyphen and holds only room characters (digits, capitals, `-`, `/`, `,`, `…`), and runs over the lines like it, so that a list of rooms wrapped over lines (`61-320/61-102/…`) is not taken into the name; its first complete room is the block's room. The other lines, joined, are the name. Korean lines join without a space; a join between Latin letters or digits keeps one.
 - Room pattern: `^\d{1,3}(-[A-Z]?\d{1,4}){0,3}$` (`302-311-1`, `43-2-B101`, `500-L308`, `43-1`, `26-404`), after removing spaces around hyphens.
-- A name that ends in `…` is kept without the `…`: the part read is right, only shorter.
+- A name that ends in `…` is kept without the `…`: the part read is right, only shorter. When exactly one whole name in the timetable starts with it, its time joins that class; otherwise it stays a class of its own.
 - Bold or small type is not used to tell name from room: SNUTT draws the room bold and 에브리타임 draws it small.
 - A name longer than 30 characters is cut to 30.
 
@@ -120,7 +122,7 @@ interface ReadClass {
 
 ### Linking a room to a building
 
-- Only a room line that matches the pattern on its whole length is linked. A line cut off (`302 - …`), with stray characters, below the OCR confidence threshold, or absent is never linked: its time has `placeId: null` and `room: null`.
+- Only a room that matches the pattern on its whole length is linked. A room cut off (`302 - …`) or at a block's side, with stray characters, below the room's confidence floor, or absent is never linked: its time has `placeId: null` and `room: null`.
 - The building is the longest leading run of segments that equals a campus Place's `number`: `43-1-304` → building `43-1`, room `304`; `302-311-1` → building `302`, room `311-1`. No match leaves the time unlinked.
 - The room kept is the rest after the building; a time with no building keeps no room.
 - The Places come from `GET /places`, read once per import.
@@ -129,20 +131,21 @@ interface ReadClass {
 
 Nothing uncertain is written into the timetable, and nothing is marked for checking:
 
-- **Room and building**: left empty unless the room line passes the rules above.
-- **A time** (one block) is left out when its end is uncertain, when its day column or its start cannot be placed, or when its OCR confidence is under the threshold.
-- **A class** is left out when none of its times is left, or when its name is empty or under the confidence threshold.
+- **Room and building**: left empty unless the room passes the rules above.
+- **A time** (one block) is left out when its start or end is uncertain, or when its day column or its times cannot be placed.
+- **A class** is left out when none of its times is left, or when its name holds no letter or digit (no text, only a room, or only marks).
 - A name cut off with `…` is not uncertain: the part read is kept.
 
-The thresholds are set from the four reference screenshots in ticket 02, and `accuracy.md` reports what was left out as well as what was read wrongly.
+What is kept is decided by structure: the grid, the blocks' geometry and whether text is there. **ML Kit's confidence decides nothing about classes, times, names or titles** (changed on 2026-10-22, `2.0/fix-timetable-ocr`): it dropped real classes and is missing on iOS, so Android and iOS follow the same rules. A one-character name is kept; the User fixes it in the class form, while a dropped class would be lost silently.
 
-**Where the platform gives no confidence** (ticket 01 records what Android and iOS return), the confidence checks above cannot run, and stricter rules stand in, so that a phone without confidence leaves out at least as much as one with it:
+**The room's link is the one exception**, since a misread digit can land on another real building (`301` read as `307`) and story 11 asks never to send the User to the wrong place, while a room left unlinked is harmless:
 
-- a room is linked only when its building number also appears as a whole OCR element, the room line is a single element, and the building is one of the Places;
-- a time is kept only when its block's text holds at least one line that is not a room, and its day, start and end all come from the grid;
-- a class is kept only when its name has at least two characters.
+- on Android, a room is linked only when read with a confidence of at least 0.5 (`ROOM_CONFIDENCE`; the four reference screenshots' rooms read 0.82–0.95, so the floor refuses none of them);
+- where the platform gives no confidence (iOS, ticket 01), a room is linked only when it is read inside one OCR element, read whole.
 
 **A misread digit** (`301` read as `307`) can still match a real building. The timetable screen already shows each class's building (`제1공학관 301동 118호`), so the User can see it; `accuracy.md` counts wrong links, which must stay at 0 on the four screenshots.
+
+**Out of scope** (decided 2026-10-22): photos of a screen (skew, perspective, moiré, glare), a professor's name printed inside a block (it is joined into the name), and two classes overlapping in time drawn side by side at half a column's width (both are left out).
 
 ### Importing
 
