@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -17,7 +18,8 @@ import type { ClassSave, Place, TimetableClass } from '@/api/types';
 import { googleAvailable } from '@/auth/google';
 
 // The timetable's routes and the Places' against the fake main server, and the classes and the Quests fetched again
-// after a change made on the screens. `GET /timetable/classes` and `GET /places` are in `api/server-me-test.ts`.
+// after a change made on the screens. `GET /timetable/classes` and `GET /places` are in
+// `api/server-me.integration.test.ts`.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
