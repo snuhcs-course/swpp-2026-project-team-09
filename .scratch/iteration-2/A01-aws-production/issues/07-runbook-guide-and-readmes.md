@@ -2,7 +2,7 @@
 
 Parent: [A01 spec](../spec.md)
 Status: ready-for-agent
-Blocked by: 01, 02, 03, 04, 05, 06 (the names and commands the runbook describes)
+Blocked by: 01, 02, 03, 04, 05, 06, 09 (the names and commands the runbook describes)
 Touches: `infra/production/README.md` (beyond ticket 01's and ticket 03's sections), the root `README.md`, and `admin/README.md`.
 
 ## What to build
@@ -12,10 +12,15 @@ A team member with an IAM user and no memory of the spec can set up their laptop
 - **The tool guide.** Installing the AWS CLI v2 from AWS's installer and kubectl, kubectx and kubens, k9s, Terraform, and Freelens from Homebrew or winget, on macOS and Windows. Signing in with `aws login` (AWS CLI 2.32 or newer), and how Terraform then gets the session, as ticket 03 found. `aws eks update-kubeconfig` with the context alias `snunow-production`, switching to it with kubectx, and `snunow` as its namespace with kubens. Opening it in Freelens, with Lens Personal as the alternative that needs a Lens ID. Reading logs, restarting a Deployment, and forwarding a port. kubectl kept within one minor version of the cluster.
 - **The rules** for changing Production, as the spec lists them, and adding or removing a team member.
 - **Logs** last only as long as their pod, so a tester's report is looked into the same day.
-- **First setup**, in order: what ticket 03 did; the repository variables from `terraform output`; the parameters under `/snunow/production/` that ticket 03's database section did not put, each with `aws ssm put-parameter --type SecureString` and Production's own values (`openssl rand` for the tokens, `openssl genpkey` for the ES256 key pair, stored as PEM with real line breaks); the settings made by hand once in Google's and Kakao's consoles; the first Release; the second apply with the records variable on; each Source's collection run once by hand in the worker pod.
-- **Releases.** Naming and tagging a reviewed commit of the iteration branch; following the run in the Actions tab; fixing a bad Release with a new one; deploying an earlier Release again from the Actions tab, never across a migration; rotating a secret with `aws ssm put-parameter --overwrite` and deploying the current Release again.
+- **First setup**, in order: what ticket 03 did; the repository variables from `terraform output`; the parameters under `/snunow/production/` that ticket 03's database section did not put, each with `aws ssm put-parameter --type SecureString` and Production's own values (`openssl rand` for the tokens, `openssl genpkey` for the ES256 key pair, stored as PEM with real line breaks); the settings made by hand once in Google's and Kakao's consoles; the first Release, an `all` Release; the second apply with the records variable on; each Source's collection run once by hand in the worker pod.
+- **Releases.**
+  - Naming and tagging a reviewed commit of the iteration branch as `snunow/<target>/YY.MM.DD-N`: the five server targets, `main-server`, `socket-server`, `worker-server`, `match-server`, and `admin`, and `all`, which deploys all five at one commit and is used for the first deploy, a change that spans servers, and rolling a changed setting or secret value to every server.
+  - Different servers may run different commits, so a change that spans servers is released in an order that keeps old and new versions working together, or with `all`.
+  - Following the run in the Actions tab, including its wait for CI, which must pass in full on the tagged commit.
+  - Fixing a bad Release with a new one; deploying an earlier Release again from the Actions tab, which deploys that tag's target at its commit and puts back that commit's shared part, never across a migration.
+  - Rotating a secret with `aws ssm put-parameter --overwrite`, then an `all` Release.
 - **Capacity.** Reading `kubectl top`, and raising the memory settings or the node size.
-- **The Production APK**, built by hand with both server addresses set to `https://api.snunow.com` and debug signing, named after the Release, and attached to that Release's GitHub release page, or the last APK linked when only the servers changed.
+- **The Production APK**, built by hand with both server addresses set to `https://api.snunow.com` and debug signing; its commit tagged `snunow/app/YY.MM.DD-N`, which deploys nothing; and the APK, named after the tag with `/` as `-` (for example `snunow-app-26.11.13-1.apk`), attached to that tag's GitHub release page.
 - **Moving to account B**, the spec's eight steps with the real commands, including the copy of every parameter under `/snunow/production/` from A to B.
 - **Tearing down:** delete the Ingress before `terraform destroy`, or the ALB is left behind and keeps billing.
 - **What CI does not cover**, with ticket 08 as where each item is checked.
@@ -26,7 +31,7 @@ Route 53 alias records have no TTL of their own; they answer with the ALB's 60 s
 
 ## Acceptance criteria
 
-- [ ] Every command in the runbook names the real files, variables, outputs, repository variables, parameters, workflow, and Job of tickets 01 to 06, checked against the code.
+- [ ] Every command in the runbook names the real files, variables, outputs, repository variables, parameters, workflow, Kustomize targets, and Job of tickets 01 to 06 and 09, checked against the code.
 - [ ] The tool guide covers each item above for both macOS and Windows, and states how Terraform reads the `aws login` session.
 - [ ] The move section has the spec's eight steps in order, with the TTL step handled as above, and says Users stay signed in and Redis starts empty.
 - [ ] The root README's changes and `admin/README.md`'s origin are in place, and the README's table of contents stays consistent.

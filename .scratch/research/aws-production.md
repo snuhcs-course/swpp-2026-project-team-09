@@ -98,7 +98,7 @@ Alternatives, per 30 days, compared with the parts of the design they replace:
 - **OIDC subject claims.** This repository uses immutable subject claims, with the prefix `repo:snuhcs-course@139540821/swpp-2026-project-team-09@1374366029` [S16].
 - **A role that trusts Release tags:**
   - `token.actions.githubusercontent.com:aud` equals `sts.amazonaws.com`;
-  - `token.actions.githubusercontent.com:sub` is `StringLike` with `<prefix>:ref:refs/tags/snunow-*`.
+  - `token.actions.githubusercontent.com:sub` is `StringLike` with `<prefix>:ref:refs/tags/snunow/*`.
   - The tag form is derived from the prefix, and the first real token confirms it.
   - A job that declares `environment:` gets `<prefix>:environment:<name>` instead.
 - **Actions versions.** `aws-actions/configure-aws-credentials@v6` and `aws-actions/amazon-ecr-login@v2`.

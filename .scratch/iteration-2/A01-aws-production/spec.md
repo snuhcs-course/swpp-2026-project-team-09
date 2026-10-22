@@ -30,11 +30,16 @@ Two team members have new-account AWS credits, and a card pays beyond them.
 **Production** (`GLOSSARY.md`) runs on Amazon EKS in AWS's Seoul Region, as ADR 0006 records.
 
 - **Infrastructure.** Terraform builds the network, the cluster, the database, the image registries, the certificate, and the access rules.
-- **Releases.** A **Release** (`GLOSSARY.md`) is a tag named `snunow-YY.MM.DD-N` on a reviewed commit of the iteration branch. The date is the day in Korea, and N is the Release's order that day. Pushing the tag starts a GitHub Actions workflow that:
-  1. runs the server checks;
-  2. builds arm64 images and pushes them to ECR;
-  3. applies the manifests to the cluster;
-  4. waits until every Deployment has rolled out.
+- **Releases.** A **Release** (`GLOSSARY.md`) is a tag named `snunow/<target>/YY.MM.DD-N` on a reviewed commit of the iteration branch, for example `snunow/main-server/26.11.13-1`.
+  - The target is one of the five servers, `main-server`, `socket-server`, `worker-server`, `match-server`, or `admin` (the admin site), and the Release deploys only that one. Or it is `all`, which deploys all five at that commit.
+  - The date is the day in Korea, and N is the target's order that day, from 1.
+  - The servers are separate services, so different servers may run different commits.
+
+  Pushing the tag starts a GitHub Actions workflow that:
+  1. waits for CI's results on the tagged commit, and goes on only once every CI job has passed;
+  2. builds the target's arm64 images and pushes them to ECR;
+  3. applies the shared manifests and the target's own to the cluster;
+  4. waits until the Deployments it deployed have rolled out.
 - **Addresses.** Phones reach `https://api.snunow.com`. Administrators use the admin site at `https://admin.snunow.com`.
 - **Data.** Production starts with only the seed data every system needs, the Places and the shuttle's stops. It never carries Demo Data.
 - **Access.** Every team member has their own AWS login and cluster access, and works with kubectl, kubectx, k9s, and Freelens (the open-source Lens).
@@ -46,30 +51,31 @@ Two team members have new-account AWS credits, and a card pays beyond them.
 1. As a participant in user testing, I want the app to reach one fixed HTTPS address that stays the same across test days, so that the APK I installed keeps working.
 2. As a beta tester, I want my sign-in, my position, and my messages encrypted on the way to the servers, so that others on the same Wi-Fi cannot read them.
 3. As a beta tester, I want to see only real people, Quests, and Events, so that what I try is what the service is.
-4. As a developer, I want a Release to be one tag that any team member pushes on a reviewed commit of the iteration branch, so that shipping takes one command.
-5. As a developer, I want a Release whose server checks fail not to deploy, so that a broken commit never reaches testers.
-6. As a developer, I want to follow a Release's build and deployment in the Actions tab, with a failed rollout marking the run failed, so that I know whether Production runs my change.
-7. As a developer, I want the tag's name to tell me the day it shipped and its order that day, so that I can tell Releases apart at a glance.
-8. As a developer, I want to fix a bad Release with a new Release, and in an emergency to deploy an earlier Release again from the Actions tab, so that I can recover quickly.
-9. As a developer, I want a Release to replace the servers without failed requests in between, so that testers do not notice it.
-10. As a team member, I want my own AWS login with MFA, and no long-lived AWS key on my laptop, so that nobody shares a password and a lost laptop leaks nothing lasting.
-11. As a team member, I want my own cluster access through `aws eks update-kubeconfig`, so that kubectl, kubectx, k9s, and Lens work against Production.
-12. As a team member, I want one guide that installs and connects the tools, so that I set up my laptop without asking.
-13. As a team member, I want to read a pod's logs and restart it from Lens, so that I can look into a problem at night.
-14. As an Administrator, I want to open `admin.snunow.com` in any browser and sign in with Google as today, so that I can publish a Global Event from anywhere.
-15. As an Administrator, I want the admin routes unreachable from the internet except through the admin site, so that nobody can call them directly.
-16. As the team member who changes infrastructure, I want every AWS resource that the system needs in Terraform, applied from my laptop with shared state and a lock, so that two team members never apply at once and the system can be rebuilt.
-17. As the team member who changes infrastructure, I want CI to check Terraform's format and validity, so that a broken configuration is caught in review.
-18. As the team, I want neither an AWS key nor any of Production's secret values stored in GitHub, so that nothing leaked from GitHub reaches the account or Production.
-19. As the team, I want a cost alert at every $50 actually spent, credits included, so that the credits never run out unnoticed.
-20. As the team, I want the database backed up every day and restorable to any moment of the last 7 days, so that a bad migration does not lose the week's data.
-21. As the team, I want EKS to replace a failed node by itself, so that a hardware fault during the beta stops the app for minutes at most.
-22. As the team, I want to change the node size with one variable, so that a shortage of memory is a one-line fix.
-23. As the team, I want to move Production to the other team member's AWS account without losing data or changing its addresses, so that the second account's credits can pay for it.
-24. As a tester, I want a Release's GitHub release page to link the APK to install, so that I can install it from my phone.
-25. As a developer, I want the Dev Server and the laptop Compose flow unchanged, so that day-to-day work goes on as before.
-26. As a reviewer, I want the manifests rendered in CI, so that a Release does not fail on a mistake that review could catch.
-27. As a reader of the repository, I want the root README to point to Production's runbook, so that I find it from the place I already read.
+4. As a developer, I want a Release to be one tag that any team member pushes on a reviewed commit of the iteration branch, naming the server it deploys or `all`, so that shipping takes one command.
+5. As a developer, I want to release one server without deploying the others, so that a change to one server ships without restarting the rest.
+6. As a developer, I want a Release whose commit has not passed every CI job not to deploy, so that a broken commit never reaches testers.
+7. As a developer, I want to follow a Release's build and deployment in the Actions tab, with a failed rollout marking the run failed, so that I know whether Production runs my change.
+8. As a developer, I want the tag's name to tell me what it deployed, the day it shipped, and its order among that day's Releases of the same target, so that I can tell Releases apart at a glance.
+9. As a developer, I want to fix a bad Release with a new Release, and in an emergency to deploy a server's earlier Release again from the Actions tab, so that I can recover quickly.
+10. As a developer, I want a Release to replace the servers without failed requests in between, so that testers do not notice it.
+11. As a team member, I want my own AWS login with MFA, and no long-lived AWS key on my laptop, so that nobody shares a password and a lost laptop leaks nothing lasting.
+12. As a team member, I want my own cluster access through `aws eks update-kubeconfig`, so that kubectl, kubectx, k9s, and Lens work against Production.
+13. As a team member, I want one guide that installs and connects the tools, so that I set up my laptop without asking.
+14. As a team member, I want to read a pod's logs and restart it from Lens, so that I can look into a problem at night.
+15. As an Administrator, I want to open `admin.snunow.com` in any browser and sign in with Google as today, so that I can publish a Global Event from anywhere.
+16. As an Administrator, I want the admin routes unreachable from the internet except through the admin site, so that nobody can call them directly.
+17. As the team member who changes infrastructure, I want every AWS resource that the system needs in Terraform, applied from my laptop with shared state and a lock, so that two team members never apply at once and the system can be rebuilt.
+18. As the team member who changes infrastructure, I want CI to check Terraform's format and validity, so that a broken configuration is caught in review.
+19. As the team, I want neither an AWS key nor any of Production's secret values stored in GitHub, so that nothing leaked from GitHub reaches the account or Production.
+20. As the team, I want a cost alert at every $50 actually spent, credits included, so that the credits never run out unnoticed.
+21. As the team, I want the database backed up every day and restorable to any moment of the last 7 days, so that a bad migration does not lose the week's data.
+22. As the team, I want EKS to replace a failed node by itself, so that a hardware fault during the beta stops the app for minutes at most.
+23. As the team, I want to change the node size with one variable, so that a shortage of memory is a one-line fix.
+24. As the team, I want to move Production to the other team member's AWS account without losing data or changing its addresses, so that the second account's credits can pay for it.
+25. As a tester, I want each Production APK on a GitHub release page, so that I can install it from my phone.
+26. As a developer, I want the Dev Server and the laptop Compose flow unchanged, so that day-to-day work goes on as before.
+27. As a reviewer, I want the manifests rendered in CI, so that a Release does not fail on a mistake that review could catch.
+28. As a reader of the repository, I want the root README to point to Production's runbook, so that I find it from the place I already read.
 
 ## Implementation Decisions
 
@@ -130,7 +136,7 @@ Account A's credits last until about 12/07. The rest of the course then costs ab
 - **Pod budget.**
   - Two nodes leave 18 pod slots after the per-node daemons.
   - The steady state is 13 pods: 8 of the app, 2 of `coredns`, 2 of `metrics-server`, and the controller.
-  - A Release adds one surge pod each for `main-server`, `socket-server`, and `admin`, which makes 16. `worker-server` and `match-server` use the `Recreate` strategy, so a Release never runs two of them.
+  - Deploying `main-server`, `socket-server`, and `admin` adds one surge pod each, which makes 16 when all three deploy at once. `worker-server` and `match-server` use the `Recreate` strategy, so a Release never runs two of them.
 - **Losing a node.** One `t4g.small` cannot hold every pod.
   - The two-replica servers keep one pod on the surviving node.
   - The single-replica pods on the lost node, for example Redis, wait until EKS replaces the node, usually within minutes.
@@ -147,7 +153,7 @@ Account A's credits last until about 12/07. The rest of the course then costs ab
   - A team member runs it by hand from the runbook, as the master user.
   - The master user on RDS is not a superuser. Before each `CREATE DATABASE … OWNER`, the Job grants the new role to the master user, which PostgreSQL 16 and later require.
   - It also creates the PostGIS extension in `main`. Creating an extension needs `rds_superuser`, which only the master user has. The main server's first migration then finds PostGIS present.
-  - The Job is kept apart from the Kustomize base, because the workflow's role cannot run it and it runs once per database.
+  - The Job is kept apart from every Kustomize target, because the workflow's role cannot run it and it runs once per database.
 - **TLS.** RDS for PostgreSQL 15 and later requires TLS by default. The main and match servers connect through two clients that read `DATABASE_URL` differently:
   - At run time, `@prisma/adapter-pg` (node-postgres) treats `sslmode=require` and `verify-full` alike: it verifies against Node's CA list, which lacks the RDS CAs.
   - `prisma migrate` runs Prisma's schema engine, which knows only `disable`, `prefer`, and `require`.
@@ -160,7 +166,17 @@ Account A's credits last until about 12/07. The rest of the course then costs ab
 
 ### Workloads
 
-The manifests live in `infra/production/k8s/` as a Kustomize base.
+**Manifest layout**
+
+The manifests live in `infra/production/k8s/`, written for Kustomize in parts:
+
+- **The shared part:** the ConfigMap and the Secret that the generators make, the Ingresses, and Redis.
+- **A part per server:** its Deployment and Service, for each of the five servers.
+- **Six targets.** Each server's target renders the shared part and that server's part. `all` renders everything, which the five jobs of an `all` Release apply between them. A server's Release applies its target, so the shared part goes out with every Release.
+- **Generated names.** The ConfigMap's and the Secret's names carry a hash of their content, and every reference in a render uses that name.
+  - A server takes up a changed setting or secret value when it is next deployed, and an `all` Release rolls the change to every server.
+  - After a successful rollout, the generated ConfigMaps and Secrets that no pod uses any more are deleted.
+- **The database Job** stays outside every target (see "Database").
 
 **What runs**
 
@@ -201,7 +217,7 @@ The manifests live in `infra/production/k8s/` as a Kustomize base.
   - `kakao-rest-api-key` and `openrouter-api-key`, for `KAKAO_REST_API_KEY` and `OPENROUTER_API_KEY`;
   - `initial-administrator-emails`, for `INITIAL_ADMINISTRATOR_EMAILS`.
 - **Entering them.** A team member puts each value in by hand with `aws ssm put-parameter --type SecureString`, and `--overwrite` replaces one. Terraform never holds them; it only lets the deploy role read the path. They stay out of Terraform for three reasons: `terraform destroy` does not delete them, moving to account B copies the same values, and the Kakao and OpenRouter keys are entered by hand in any case.
-- **Writing the Secret.** On each Release, the workflow reads the path with the deploy role and writes the values to the files that Kustomize's `secretGenerator` reads, which make the Secret. The Secret's name carries a hash of its content, so a changed value rolls every Deployment that uses it. No External Secrets Operator runs in the cluster, because its three pods would bring a Release to 19, over the 18 pod slots (see "Pod budget"). Rotating a secret is `aws ssm put-parameter --overwrite`, then deploying the current Release again.
+- **Writing the Secret.** On each Release, the workflow reads the path with the deploy role and writes the values to the files that Kustomize's `secretGenerator` reads, which make the Secret. The Secret's name carries a hash of its content, so a server takes up a changed value when it is next deployed, and an `all` Release rolls it to every server. No External Secrets Operator runs in the cluster, because its three pods would bring a Release to 19, over the 18 pod slots (see "Pod budget"). Rotating a secret is `aws ssm put-parameter --overwrite`, then an `all` Release.
 - **Database addresses.** The workflow assembles each server's `DATABASE_URL` from its password, the database endpoint, and the TLS setting above.
 - **Own values.** Production generates its own values, never the Dev Server's, the way the Dev Server's bootstrap does: `openssl rand` for the tokens and passwords, and `openssl genpkey` for the ES256 key pair.
 
@@ -243,32 +259,47 @@ The manifests live in `infra/production/k8s/` as a Kustomize base.
 ### Images and ECR
 
 - **Repositories.** Five private ECR repositories: `main-server`, `socket-server`, `worker-server`, `match-server`, and `admin`.
-- **Tags.** Each image is tagged with its commit SHA and with the Release's name.
+- **Which images.** A Release builds only its target's images: one for a server, all five for `all`.
+- **Tags.** Each image is tagged with its commit SHA and with the Release's tag name without `snunow/` and with `/` as `-`, since ECR tags cannot hold `/`: for example `main-server-26.11.13-1`, or `all-26.11.13-2` on each of the five images.
 - **Cleanup.** A lifecycle rule keeps the newest 10 images in each repository.
 - **Architecture.** Images are built for `linux/arm64` on GitHub's arm64 runners. The manifests ticket checks that every image, and every native dependency in it, runs on arm64.
 
 ### The Release workflow
 
-- **Trigger and name check.** `.github/workflows/release.yml` starts on a pushed tag matching `snunow-*`. Its first step checks the full name: two-digit year, month 01 to 12, day 01 to 31, and N from 1. A name that does not match fails the run.
+- **Trigger.** `.github/workflows/release.yml` starts on a pushed tag matching `snunow/**`, except `snunow/app/**`, which marks a Production APK (below). It also runs by hand (see "Deploying an earlier Release again").
+- **Name check.** Its first step checks the full name, `snunow/<target>/YY.MM.DD-N`:
+  - the target is `main-server`, `socket-server`, `worker-server`, `match-server`, `admin`, or `all`;
+  - the year has two digits, the month runs from 01 to 12, and the day from 01 to 31;
+  - N counts from 1.
+
+  A name that does not match fails the run, for example `snunow/web/26.11.13-1` or `snunow/main-server/26.11.13`.
 - **Which commits.** Tags go on reviewed commits of the iteration branch. This is a team rule; the workflow does not check it.
-- **Server checks.**
-  - The workflow runs the `main-server`, `socket-server`, `worker-server`, `match-server`, and `flow-tests` checks on the tagged commit, and continues only if all of them pass.
-  - It does so by calling the CI workflow, which gains a `workflow_call` trigger with an input listing the projects to check. When the input is set, CI's matrix runs only those projects and its other jobs are skipped.
-  - So the admin and mobile checks do not gate a Release, as on the Dev Server.
+- **Order across servers.** Different servers may run different commits. So a change that spans servers is released in an order that keeps the old and new versions working together, for example the main server's new route before the match server that calls it, or as one `all` Release.
+- **The gate.** The workflow does not run or call CI. Before any AWS step, it reads the results that CI produced for the tagged commit, as the Dev Server's deploy does (`infra/deploy/deploy.sh`):
+  - Every CI job counts: the server projects, `admin`, `mobile`, `flow-tests`, and the rest of `ci.yml`'s jobs.
+  - One successful run of a job is enough, since a commit pushed to a branch and then tagged has a CI run for each push.
+  - While a job is still queued or running, the gate waits.
+  - A job that failed with no successful run, or no result within a time limit, fails the run.
+
+  CI runs on the tag push too, because its `on: push` takes tags, so a tagged commit always gets results. CI gains no trigger and no input for Releases.
 - **AWS access.**
-  - The workflow assumes the deploy role with `aws-actions/configure-aws-credentials@v6` and logs in to ECR with `aws-actions/amazon-ecr-login@v2`. Its permissions are `id-token: write` and `contents: read`.
-  - The deploy role trusts `token.actions.githubusercontent.com` with `aud` equal to `sts.amazonaws.com` and `sub` like `repo:snuhcs-course@139540821/swpp-2026-project-team-09@1374366029:ref:refs/tags/snunow-*`. This repository uses GitHub's immutable subject claims.
+  - The workflow assumes the deploy role with `aws-actions/configure-aws-credentials@v6` and logs in to ECR with `aws-actions/amazon-ecr-login@v2`. Its permissions are `id-token: write`, `contents: read`, and `actions: read`, the last to read CI's results.
+  - The deploy role trusts `token.actions.githubusercontent.com` with `aud` equal to `sts.amazonaws.com` and `sub` like `repo:snuhcs-course@139540821/swpp-2026-project-team-09@1374366029:ref:refs/tags/snunow/*` (`StringLike`). This repository uses GitHub's immutable subject claims.
   - The role may get an ECR login token, which cannot be limited to repositories; describe and push images in the five repositories; read the parameters under `/snunow/production/`; and describe the cluster. Its cluster rights come from its access entry.
   - The AWS managed key `aws/ssm` lets every principal in the account decrypt, so the role needs no KMS permission to read the parameters.
-- **Build and push.** The workflow builds and pushes the five images, skipping one whose commit-SHA tag is already in its repository.
-- **Deploy.**
-  1. Read the parameters under `/snunow/production/`, and generate the Secret from them.
-  2. Set the images to the commit SHA with Kustomize, and apply.
-  3. Wait on `kubectl rollout status` for each Deployment, with a time limit longer than the startup probe's. A Deployment that does not become ready fails the run.
-- **One at a time.** The workflow's concurrency group has its own fixed name. It cannot share CI's, because a called workflow takes its caller's context. It does not cancel a running deploy. A newer Release waiting behind it replaces an older waiting one, so the newest always deploys.
-- **Deploying an earlier Release again.** A team member runs the workflow by hand from the Actions tab on that Release's tag (`workflow_dispatch`), which has no age limit. Migrations only move forward, so after a Release with a migration, a fix is a new Release instead.
+- **Build and push.** The workflow builds the target's images and pushes each with the two tags of "Images and ECR". An image whose commit-SHA tag is already in its repository is not built again, but still gets the Release's tag.
+- **Deploy.** Each server that the Release deploys gets a job of its own, so an `all` Release runs five. Each job:
+  1. reads the parameters under `/snunow/production/` and generates the Secret from them;
+  2. sets its server's image to the commit SHA with Kustomize, and applies its server's target, the shared part and that server's part;
+  3. waits on `kubectl rollout status` for its server's Deployment only, with a time limit longer than the startup probe's; a Deployment that does not become ready fails the run;
+  4. after a successful rollout, deletes the generated ConfigMaps and Secrets that no pod uses any more.
+- **One at a time per server.** Each server has a fixed concurrency group, for example `release-main-server`, with `cancel-in-progress`.
+  - A newer Release of a server cancels that server's running one, and different servers deploy at once.
+  - An `all` Release runs each server's job in that server's group, so a later Release of one server cancels only that server's job.
+  - Cancelling never cuts a migration, which runs in the pods, not in the workflow.
+- **Deploying an earlier Release again.** A team member runs the workflow by hand from the Actions tab on that Release's tag (`workflow_dispatch`), which has no age limit. It deploys the tag's target at the tag's commit. The shared part goes out with it, so that commit's Ingresses and Redis come back too. Migrations only move forward, so after a Release with a migration, a fix is a new Release instead.
 - **Settings the workflow reads.** It reads its AWS settings from repository variables: the Region, the role ARN, the cluster name, the registry, and the database endpoint. A team member sets them from `terraform output`, and moving accounts changes them. The admin site's two public build arguments are repository variables too. Every secret value comes from Parameter Store, so GitHub holds no Production secret.
-- **GitHub release pages.** The workflow does not create GitHub release pages. The Production APK's page is made by hand (below).
+- **GitHub release pages.** The workflow does not create GitHub release pages. The only ones are the Production APKs', made by hand (below).
 
 ### Terraform
 
@@ -315,7 +346,7 @@ The manifests live in `infra/production/k8s/` as a Kustomize base.
   - looking and restarting from Freelens, k9s, or kubectl is fine;
   - manifests change only through a pull request and a Release, since a Release overwrites changes made by hand;
   - infrastructure changes through a pull request, then `terraform apply`;
-  - secret values change with `aws ssm put-parameter --overwrite`, then the current Release is deployed again;
+  - secret values change with `aws ssm put-parameter --overwrite`, then an `all` Release rolls them to every server;
   - adding a team member is an IAM user, an entry in the variables file, and an apply; removing one reverses those steps.
 - **Logs.** A pod's logs last only as long as the pod: a Release replaces the pods and their logs, and `kubectl logs --previous` shows only the last crash. The guide says so, so that a tester's report is looked into the same day.
 
@@ -327,7 +358,7 @@ Only if the money runs short, and at a quiet time, not during user testing or th
 2. In B, `terraform apply` with B's files. B's apply requests its certificate without waiting for validation, and outputs the validation record. Add that record to A's zone by hand, and wait until the certificate is issued.
 3. Lower the `api` and `admin` records' TTL to 60 seconds, a few days ahead.
 4. Copy every parameter under `/snunow/production/` from A to B: read them in A with `aws ssm get-parameters-by-path --with-decryption`, and put each in B with `aws ssm put-parameter --type SecureString`.
-5. Run the database Job in B; the runbook's steps for it put B's new database passwords over the copied ones. Set the repository variables to B's outputs, deploy the current Release to B from the Actions tab, and scale B's servers to zero.
+5. Run the database Job in B; the runbook's steps for it put B's new database passwords over the copied ones. Set the repository variables to B's outputs, push an `all` Release, which deploys all five servers to B at one commit, and scale B's servers to zero once it has rolled out.
 6. Scale A's servers to zero. Dump A's two databases with `pg_dump -Fc` from a `postgres:18` pod in A's cluster. Copy the dumps through a laptop into a pod in B's cluster, and `pg_restore` them there. Then scale B's servers up. The app is down for 10 to 30 minutes, and no write is lost.
 7. In A's zone, point `api` and `admin` at B's ALB, by hand. With the validation record, the move edits three records by hand.
 8. In A, remove the two records from Terraform's state with `terraform state rm`. Delete the Ingress, then `terraform destroy`. The hosted zone, the domain, and A's parameters stay. Account A stays open, because closing it deletes the domain, and its owner edits the zone from then on.
@@ -337,20 +368,20 @@ Sessions live in the database, and the token keys stay the same because the para
 ### Production APK
 
 - A team member builds the APK by hand, as today, with `EXPO_PUBLIC_MAIN_SERVER_URL` and `EXPO_PUBLIC_SOCKET_SERVER_URL` set to `https://api.snunow.com`, and with debug signing.
-- They name it after the Release, for example `snunow-26.11.13-1.apk`, and attach it to a GitHub release page created for that tag.
-- A Release that changes only the servers links the last APK from its page instead of attaching a new one.
+- They tag the commit it was built from `snunow/app/YY.MM.DD-N`, where N is the app's order that day, and attach the APK to a GitHub release page created for that tag. The APK is named after the tag with `/` as `-`, for example `snunow-app-26.11.13-1.apk`.
+- The app tag deploys nothing. The Release workflow does not run for it, and it is not a Release.
 - `usesCleartextTraffic` stays on, because the Dev Server is HTTP.
 
 ### Repository additions
 
 - `infra/production/`:
   - `terraform/`;
-  - `k8s/`, with the Kustomize base and, apart from it, the one-off database Job;
+  - `k8s/`, with the shared part, a part per server, the six targets, and, apart from them, the one-off database Job;
   - `README.md`, the runbook and the tool guide.
 - The admin site's `Dockerfile` and `.dockerignore`, `output: 'standalone'` in its Next.js configuration, and its two health routes.
 - Case-sensitive routing in the main server.
 - `.github/workflows/release.yml`.
-- `.github/workflows/ci.yml`: a `workflow_call` trigger with its project input, a `terraform` job, and a render check of the manifests.
+- `.github/workflows/ci.yml`: a `terraform` job, and a `manifests` job that renders every target. Its trigger stays as it is.
 - **The root README:**
   - a Production paragraph in the Deployment section, pointing to the runbook;
   - `infra/` and `.github/` in the Repository layout;
@@ -371,7 +402,7 @@ A good test drives a piece the way it is used: it renders the manifests the clus
 **In CI on every push**
 
 - `terraform fmt -check` and `terraform validate`.
-- `kubectl kustomize infra/production/k8s` renders without error.
+- `kubectl kustomize` renders each of the six targets, each server's and `all`, without error.
 - The admin site's health routes, tested against the built site with a fake main server, as its other tests run: `/health/live` answers 200 without a cookie; `/health/ready` answers 200 while the fake main server is live and 503 once it stops.
 - The existing server and flow tests keep guarding the code that a Release ships.
 
@@ -380,7 +411,7 @@ A good test drives a piece the way it is used: it renders the manifests the clus
 The first apply, real Releases, and the console settings happen against AWS, which CI does not reach.
 
 - **Before building.** Account A's service quotas allow four `t4g.small` instances at once (a node group replacement) and an ALB.
-- **First setup.** The first apply, the database Job, the first Release, and the second apply that adds the DNS records.
+- **First setup.** The first apply, the database Job, the first Release (`all`), and the second apply that adds the DNS records.
 - **From a phone off the campus network:**
   - `https://api.snunow.com/health/ready` answers;
   - the app signs in;
@@ -392,8 +423,10 @@ The first apply, real Releases, and the console settings happen against AWS, whi
 - **Collections.** Every Source's collection, run once by hand in the worker pod, succeeds from AWS's addresses.
 - **Access.** Each team member reaches the cluster with kubectl and Lens.
 - **Releases.**
-  - A Release causes no failed request while the pods change.
-  - A Release whose server check fails does not deploy.
+  - A Release of one server causes no failed request while its pods change, and leaves the other servers' pods as they were.
+  - A Release whose commit's CI fails does not deploy.
+  - A tag with a malformed name fails at the name check, before any AWS step.
+  - An app tag starts no Release.
 - **Budget.** The budget's first alert reaches the team.
 
 ## Out of Scope
@@ -413,7 +446,7 @@ The first apply, real Releases, and the console settings happen against AWS, whi
 ## Further Notes
 
 - **Schedule.** This is Iteration 2's unexpected task A1 (folder `A01`), and its implementation continues into Iteration 3. The workers are 윤유상 and 김태현. Production must answer before the user-testing submission on 11/13.
-- **Tickets.** The eight tickets in `issues/` are built together on one integration branch with `/implement-spec` and merged as one pull request. Ticket 03's steps by hand (the first apply and the database check in account A) come before ticket 05, and ticket 08 is the operations ticket after the merge; both need a team member with account A's access.
+- **Tickets.** The nine tickets in `issues/` are built together on one integration branch with `/implement-spec` and merged as one pull request. Ticket 03's steps by hand (the first apply and the database check in account A) come before ticket 05, and ticket 08 is the operations ticket after the merge; both need a team member with account A's access.
 - **Later, when wanted:**
   - lower the cost after the beta by scaling the nodes to zero and stopping the database until the final demo;
   - raise the node size if memory runs short, or if a lost node stops the app for too long;

@@ -13,7 +13,7 @@ The one root Terraform configuration that tickets 02, 03, and 06 add to, holding
 - **State.** The S3 backend with `use_lockfile`. Account A's backend settings file is committed. The variables file, which names the team members' IAM users and the budget's addresses, is ignored by git; a committed example of it names nobody.
 - **The network.** One VPC over zones `a` and `c` of `ap-northeast-2`: a public subnet in each, tagged for the load balancer controller and with `map_public_ip_on_launch`, and a database subnet in each with no route to the internet. No NAT gateway.
 - **ECR.** Five private repositories, `main-server`, `socket-server`, `worker-server`, `match-server`, and `admin`, each with a lifecycle rule that keeps the newest 10 images.
-- **The deploy role.** GitHub's OIDC provider and a role that trusts `token.actions.githubusercontent.com` with `aud` equal to `sts.amazonaws.com` and `sub` like `repo:snuhcs-course@139540821/swpp-2026-project-team-09@1374366029:ref:refs/tags/snunow-*`. It may get an ECR login token and describe and push images in the five repositories. Ticket 02 gives it its cluster rights.
+- **The deploy role.** GitHub's OIDC provider and a role that trusts `token.actions.githubusercontent.com` with `aud` equal to `sts.amazonaws.com` and `sub` like `repo:snuhcs-course@139540821/swpp-2026-project-team-09@1374366029:ref:refs/tags/snunow/*`. It may get an ECR login token and describe and push images in the five repositories. Ticket 02 gives it its cluster rights.
 - **The budget.** One cost budget that counts gross spend (`include_credit` off), from the first apply to 2026-12-31 without a monthly reset, with actual-cost alerts at $50, $100, $150, $200, $250, and $300 to the addresses in the variables file.
 - **Outputs** for the repository variables known here: the Region, the role ARN, and the registry.
 - **CI.** A `terraform` job runs `terraform fmt -check` and `terraform validate` after `terraform init -backend=false`, without AWS credentials, on every push.
@@ -38,6 +38,7 @@ IAM users stay out of Terraform, so that no password or key lands in the state.
 
 - The budget carries all six alerts. AWS's `Notification` and CloudFormation pages allow up to ten notifications per budget, and `CreateBudget` accepts up to ten, though its prose says five. If the first apply in ticket 03 is refused, two budgets over the same period carry them.
 - The budget's period uses the `CUSTOM` time unit, which the Budgets API and the provider accept. It starts at 00:00 UTC on the first apply's day, held by `time_static`; the first apply confirms that AWS keeps it as written.
+- **2026-10-22:** The deploy role's trust moved from `refs/tags/snunow-*` to `refs/tags/snunow/*`, since Release tags became `snunow/<target>/YY.MM.DD-N` (ticket 05).
 
 ### Agent usage (2026-10-22)
 
