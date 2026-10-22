@@ -117,7 +117,7 @@ Checked by the agent:
 - The whole mobile suite (`jest --maxWorkers=2`): 147 suites, 1294 passed, 1 todo. That includes main-chat, onboarding, party-form and timetable.
 
 Not checked by the agent:
-- Every device check on an Android phone, and on iOS: left to the person.
+- Every device check on an Android phone, and on iOS. The person checks them on the phone once, after every P20 ticket is in.
 - The scroll-into-view (`useRevealFocused`). The tests' phone has no focused native input, so it only runs on a device.
 - Whether the footer and sheet moving just after the keyboard on Android reads as a jump.
 - Toasts shown above a footer (`useToastAbove`) do not move with the keyboard and may sit behind it. Left as it was.
