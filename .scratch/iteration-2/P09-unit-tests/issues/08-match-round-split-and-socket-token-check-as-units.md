@@ -25,7 +25,7 @@ Both moves are made under P10-02's tests, which fail if behaviour changes: no ot
 - [ ] `pnpm test:unit` passes in both servers with Docker stopped, and in each `test:unit` and `test:integration` together run exactly the tests `test` runs.
 - [x] `pnpm test`, `pnpm lint` (with the level check), `pnpm format:check` and `pnpm typecheck` pass in both servers.
 - [x] Every new source file starts with the AI-generated box, and each changed one gets a new row (`CLAUDE.md`).
-- [ ] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
+- [x] When done, the agent time and tokens are recorded under `## Comments` in an `### Agent usage (YYYY-MM-DD)` section.
 
 ## Comments
 
@@ -86,3 +86,8 @@ The JSON reports and logs are in the orchestrator's helpers folder, `p09-08/`.
 **Checks**: `pnpm lint` (`13 test file(s), each named by its test level.` in match-server, `7 test file(s), …` in socket-server), `pnpm format:check` and `pnpm typecheck` pass in both servers.
 
 **Box rows**: `round.service.ts`, `placement.service.ts`, `users.module.ts` and `users.gateway.ts` gain `2026-10-23  Opus 5.5   prompted by TaeHyun79`; the new `access-token.ts` and the three new test files start with the box and that row.
+
+### Agent usage (2026-10-23)
+
+- Agent time: about 21 minutes, an estimate: the implementer subagent, measured just before its last commit (about 2 of them waiting for a run slot).
+- Tokens: input 16,786 thousand in all (cache reads 16,547 thousand, cache writes 239 thousand, uncached under 1 thousand); output 15 thousand, a lower bound, since the transcript keeps only partial output counts.
