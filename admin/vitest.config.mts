@@ -4,6 +4,7 @@
  * 2026-09-29  Opus 5.5   prompted by TaeHyun79
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { defineConfig } from 'vitest/config';
@@ -17,8 +18,6 @@ export default defineConfig({
     globals: true,
     restoreMocks: true,
     unstubEnvs: true,
-    // So that `pnpm test:unit` passes before the unit project has a test file.
-    passWithNoTests: true,
     projects: [
       {
         extends: true,
