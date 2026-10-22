@@ -82,11 +82,18 @@ Approved, with these added (separate commits, tests first):
 Tests added: the version-switch re-open (a spy on `ScrollView.prototype.scrollTo`), a Sunday class showing 토 and
 일, a 24:00 end, a time across midnight.
 
+### Re-review (함재현, PR #115)
+
+Today's next class could open out of view: at 10:00 with today's only class at 19:00 the week opened on 10–18.
+`openingHour` now takes the window (8 hours): with no class running it opens at the current hour or later, at
+`ceil(next end − window)`, so the next class shows whole, and no later than that class's start (for a class longer
+than the window). Tested at 10:00 with 19:00–21:00 (opens at 13) and 19:00–21:30 (14), and with a 10-hour class.
+
 ## Comments
 
 ### Agent usage (2026-10-22)
 
-- Agent time: about 4 hours in all, an estimate, most of it waiting on three full runs of the mobile suite (about
-  30 minutes each) and Metro bundling for the web screenshots.
+- Agent time: about 5 hours in all, an estimate, most of it waiting on the full runs of the mobile suite (about
+  30 minutes each, five of them counting the base) and Metro bundling for the web screenshots.
 - Tokens: not measured exactly; roughly 0.3M input (most of it cache reads, cache writes a small share) and about
   60k output, in one agent session without subagents.
