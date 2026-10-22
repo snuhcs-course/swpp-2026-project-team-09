@@ -7,10 +7,11 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 import { z } from 'zod';
+import { expectSchema } from './expect.ts';
 
 // The cases (spec P19, "Cases"): YAML files under eval/cases/, one per category, each a list of cases. A case is a
 // conversation and what the Assistant should do in it. This file reads them; what `expect` holds is the scorer's
-// (ticket 02), and is kept as it is written.
+// (eval/expect.ts).
 //
 // Three kinds of case, by their turns:
 // - single turn: one User's message;
@@ -41,7 +42,7 @@ const proposalSchema = z.strictObject({
 const userTurnSchema = z.strictObject({
   user: z.string().min(1),
   // A live case's expectation of this turn.
-  expect: z.unknown().optional(),
+  expect: expectSchema.optional(),
 });
 
 const assistantTurnSchema = z.strictObject({
@@ -62,8 +63,12 @@ export const caseSchema = z
     // Why the Assistant does not do this yet: scored as usual, reported apart.
     knownFailure: z.string().min(1).optional(),
     turns: z.array(z.union([userTurnSchema, assistantTurnSchema])).min(1),
-    // What the scored turn should be, for the scorer.
-    expect: z.unknown().optional(),
+    // What the scored turn should be, for the scorer: the last, or a live case's last when it gives none of its own.
+    expect: expectSchema.optional(),
+  })
+  .refine(({ knownFailure, expect }) => knownFailure === undefined || expect?.knownFailure === undefined, {
+    message: 'Give knownFailure on the case or in its expect, not both',
+    path: ['knownFailure'],
   })
   .refine(({ turns }) => turns.findLastIndex((turn) => 'user' in turn) === turns.length - 1, {
     message: "The last turn must be the User's",

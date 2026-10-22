@@ -31,6 +31,8 @@
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "eval": "node eval/cli.ts",
+    "eval:score": "node eval/score-cli.ts",
+    "eval:compare": "node eval/compare-cli.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

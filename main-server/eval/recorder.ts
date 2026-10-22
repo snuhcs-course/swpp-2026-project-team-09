@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { APICallError, type LanguageModelMiddleware, wrapLanguageModel } from 'ai';
-import { type Model, type RunObserver, type ToolCallEnd } from '../src/assistant/adapter.js';
+import { type Model, type RunObserver, type StepEnd, type ToolCallEnd } from '../src/assistant/adapter.js';
 import { type StepTrace } from './trace.ts';
 
 // The recorder (spec P19, "The recorder"): a wrapper around the model that records each model call, the tools the
@@ -72,11 +72,19 @@ export class Recorder implements RunObserver {
     }
   }
 
-  // The finish reason and the usage are the provider's, recorded by the wrapper; the run only says the step ended.
-  stepEnded(): void {
+  // The finish reason and the usage are the provider's, recorded by the wrapper; the run says the step ended, and
+  // which of its calls failed, such as one whose input the tool's schema refused before it ran.
+  stepEnded({ toolErrors }: StepEnd): void {
     const step = this.steps.at(-1);
-    if (step !== undefined) {
-      step.ended = true;
+    if (step === undefined) {
+      return;
+    }
+    step.ended = true;
+    for (const { callId, error } of toolErrors) {
+      const recorded = step.toolCalls.find(({ id }) => id === callId);
+      if (recorded !== undefined && recorded.result === undefined && recorded.error === undefined) {
+        recorded.error = toolErrorOf(error);
+      }
     }
   }
 
