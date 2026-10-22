@@ -134,4 +134,15 @@ Checks in `mobile/`: `pnpm lint` passes (`161 test file(s), each named by its te
 Full `pnpm test`: left to CI on the merge push; the orchestrator records the run. That criterion stays unticked until
 then.
 
+After merging the integration tip (`fd492a03`, which changes in `mobile/` only the Maestro flows, two scripts and
+their `package.json` entries): `pnpm test:unit` 62 files, 837 tests, 836 passed and 1 todo; `--listTests` as above;
+`pnpm lint` (`161 test file(s), …`), `pnpm format:check` and `pnpm typecheck` pass.
+
 The logs, the JSON report and the scripts of the planted faults are in the orchestrator's helpers folder, `p09-10/`.
+
+### Agent usage (2026-10-23)
+
+- Agent time: about 28 minutes, an estimate: the implementer subagent, measured just before its last commit, and a
+  one-minute transcript that carries this ticket's marker.
+- Tokens: input 29,209 thousand in all (cache reads 28,815 thousand, cache writes 394 thousand, uncached under 1
+  thousand); output 44 thousand, a lower bound, since the transcript keeps only partial output counts.
