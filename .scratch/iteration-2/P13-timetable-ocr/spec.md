@@ -63,13 +63,13 @@ The pipeline is a set of pure TypeScript functions. Its input is what the native
 
 - Day header: a row near the top whose elements read `월 화 수 목 금` and maybe `토` (and `일`), left to right; `월요일` and `Mon`/`MON`/`Monday` are read as well. Each day's column is centred on its letter; column edges are the midpoints between neighbours, and the outer edges mirror the inner gap.
 - When the header is not found, columns come from the vertical grid lines: the peaks of a projection of faint pixels per pixel column (grey and a little off the measured background, lighter or darker).
-- Hour labels: numbers, in a narrow strip left of the first column and below the header, as `9`, `09:00`, `9:30` (read as 9.5), `오전 9시`, `오후 1시`, `9 AM` or `1 PM` (a morning or afternoon mark gives the 24-hour value). The strip excludes the status bar's clock (`1:04`).
+- Hour labels: numbers, in a narrow strip left of the first column and below the header, as `9`, `09:00`, `9:30` (read as 9.5), `오전 9시`, `오후 1시`, `9 AM` or `1 PM` (a morning or afternoon mark gives the 24-hour value; `오전 12시` and `12 AM` are 0). The strip excludes the status bar's clock (`1:04`).
 - 12-hour labels are unfolded top to bottom: whenever a label is smaller than the one above, 12 is added from there on (… 11, 12, 1, 2 → … 11, 12, 13, 14). A 24-hour column is left unchanged, so both apps use one path.
 - Pixels to time: a line `y = a·t + b` fitted with RANSAC over the labels, so that one or two misread labels (1 read as 7) do not bend it. At least 3 inliers are needed; with fewer, the image is refused as "no timetable found". An hour is between a fiftieth and a third of the picture tall.
 
 **② Blocks**
 
-- The picture's background is measured: its most common colour. Nothing assumes a white or a dark picture, so light and dark mode are read alike.
+- The picture's background is measured: its most common grey colour (the most common of all only when nothing is grey), so that a week full of one block colour does not become the background. Nothing assumes a white or a dark picture, so light and dark mode are read alike.
 - A mask of coloured pixels (chroma, max − min of RGB, above the background's by a tenth of the range) marks the blocks, pale ones included; the background, the grey grid lines and text fall out in either theme.
 - A morphological close fills the letters inside a block.
 - Connected components become rectangles. A component that crosses a column edge is cut at the edge, so that two same-coloured blocks side by side (근장 on 수 and 목) become two.
@@ -80,13 +80,14 @@ The pipeline is a set of pure TypeScript functions. Its input is what the native
 
 - A block's top and bottom are turned into times by the fitted line and rounded to 5 minutes.
 - When a block's bottom touches the tab bar or the bottom of the picture, or the block fades towards the bottom (the blur behind a floating tab bar), its end is uncertain and the time is left out (see Leaving out what is uncertain). Below the block, the background, a grid line or another block's top is certain.
-- The same holds for a block's top, for a timetable scrolled down: a block cut by the picture's top, or under a bar that is neither the background, a grid line, another block nor the day header's band, has an uncertain start.
+- The same holds for a block's top, for a timetable scrolled down: a block cut by the picture's top, or under a bar that is neither the background, a grid line nor another block, has an uncertain start. The day header's band counts as plain only above a block whose top is on the first hour's line, and only when the header was read: a block cut under a sticky header elsewhere is left out. A row is plain when at least 4 in 5 of its pixels are the background or faint, so an opaque bar with icons is no plain row.
+- A block that runs up into the header is cut at the header's bottom and judged by the start check, rather than dropped; a nameless piece cut there is the header's band.
 
 **④ Name and room**
 
 - The OCR lines inside a block are read top to bottom. Below the first line, the room part starts at a line that begins with a building number and a hyphen and holds only room characters (digits, capitals, `-`, `/`, `,`, `…`), and runs over the lines like it, so that a list of rooms wrapped over lines (`61-320/61-102/…`) is not taken into the name; its first complete room is the block's room. The other lines, joined, are the name. Korean lines join without a space; a join between Latin letters or digits keeps one.
 - Room pattern: `^\d{1,3}(-[A-Z]?\d{1,4}){0,3}$` (`302-311-1`, `43-2-B101`, `500-L308`, `43-1`, `26-404`), after removing spaces around hyphens.
-- A name that ends in `…` is kept without the `…`: the part read is right, only shorter. When exactly one whole name in the timetable starts with it, its time joins that class; otherwise it stays a class of its own.
+- A name that ends in `…` is kept without the `…`: the part read is right, only shorter. When exactly one whole name in the timetable starts with it, its time joins that class; otherwise it stays a class of its own. A name that is itself cut, by `…` or by the block's edge, is no whole name.
 - Bold or small type is not used to tell name from room: SNUTT draws the room bold and 에브리타임 draws it small.
 - A name longer than 30 characters is cut to 30.
 
@@ -132,7 +133,7 @@ interface ReadClass {
 Nothing uncertain is written into the timetable, and nothing is marked for checking:
 
 - **Room and building**: left empty unless the room passes the rules above.
-- **A time** (one block) is left out when its start or end is uncertain, or when its day column or its times cannot be placed.
+- **A time** (one block) is left out when its start or end is uncertain, when its day column or its times cannot be placed, or when it is one of two classes drawn side by side at less than a column's width (`too-narrow`).
 - **A class** is left out when none of its times is left, or when its name holds no letter or digit (no text, only a room, or only marks).
 - A name cut off with `…` is not uncertain: the part read is kept.
 
@@ -145,7 +146,7 @@ What is kept is decided by structure: the grid, the blocks' geometry and whether
 
 **A misread digit** (`301` read as `307`) can still match a real building. The timetable screen already shows each class's building (`제1공학관 301동 118호`), so the User can see it; `accuracy.md` counts wrong links, which must stay at 0 on the four screenshots.
 
-**Out of scope** (decided 2026-10-22): photos of a screen (skew, perspective, moiré, glare), a professor's name printed inside a block (it is joined into the name), and two classes overlapping in time drawn side by side at half a column's width (both are left out).
+**Out of scope** (decided 2026-10-22): photos of a screen (skew, perspective, moiré, glare), a professor's name printed inside a block (it is joined into the name), and reading two classes overlapping in time drawn side by side at less than a column's width: both are reported as left out (`too-narrow`, with their names), never read as classes.
 
 ### Importing
 

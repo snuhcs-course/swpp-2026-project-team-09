@@ -24,7 +24,10 @@ inventory of failure modes, is `.scratch/iteration-2/fix-timetable-ocr/plan.md`.
   the picture's bottom) left out. **Pending:** the real screenshot and its ML Kit output as fixture `dark-1`, once a
   device run saves them; the screenshots test lists it as to do.
 - **Out of scope:** photos of a screen (skew, perspective, moiré, glare), a professor's name printed inside a block
-  (joined into the name), two classes overlapping in time drawn side by side at half width (both left out).
+  (joined into the name), two classes overlapping in time drawn side by side at half width (not read: both are
+  reported as left out, `too-narrow`, with their names, so the import's "N개는 넣지 못했어요" counts them).
+- **Left out on the four:** only the two faded blocks below (`end-uncertain`); the tests hold this, so that nothing
+  else (a widget below the grid, a header band) is counted as a class left out.
 - **Run time** in Node: about 30–40 ms per screenshot (median of 5), as before.
 
 The tables below are from 2026-10-18; their numbers hold, except where the thresholds table says otherwise.

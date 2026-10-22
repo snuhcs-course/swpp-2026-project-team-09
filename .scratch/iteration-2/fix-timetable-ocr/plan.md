@@ -38,6 +38,38 @@ These override the plan below where they differ.
 7. **Reference screenshots.** "No building linked wrongly" stays a hard bar beside at least 48 of 50 times; the room-link
    numbers with the 0.5 floor are reported in `accuracy.md`.
 
+## Second review (2026-10-22)
+
+An independent review of the four commits found one blocking issue and several should-fixes, fixed test first:
+
+1. **Blocking: a shaded header hid a block cut by scrolling.** The header's band now counts as plain only above a block
+   whose top is on the first hour's line (within 2 px), and only when the day header was read.
+2. **Background when one block colour dominates:** the background is the most common grey bin (chroma under
+   `BLOCK_CHROMA`), the most common of all only when nothing is grey.
+3. **A tinted header band swallowed the first block:** parts are cut at the header's bottom instead of rejected; the
+   start check judges the cut part (it is reported `start-uncertain`), and a nameless piece cut there is the band.
+4. **Midnight:** `오전 12시` and `12 AM` are 0.
+5. **A plain row** is one where at least 4 in 5 pixels are PLAIN or FAINT, not one whose mean is: an opaque tab bar
+   with icons in dark mode now gives an uncertain end. `isPlain` is gone.
+6. **`…` joining** counts as whole names only names neither `cut` nor `marked`.
+7. Small: `Tues`/`Thurs`; comments on `splitByColour`'s 12/45 and `isBlock`'s 0.85/0.25/0.6 (they predate this branch
+   and are checked only on the four screenshots and drawn timetables); **half-width overlapping classes are now
+   reported** as left out (`too-narrow`, with their names) rather than dropped unseen: touching ones are told apart by
+   colour within the part, apart ones by runs covering a third to a half of the column, kept only in pairs. A guard on
+   the four screenshots keeps their left-out list to the two faded blocks; it caught a lone bar of 에브리타임's credits
+   widget, hence the pairing.
+8. The test generator now rounds rows: `rowOf(10.55)` was 182.00000000000003, which a typed array silently ignores.
+
+### Which tests proved a failure, and which only guard
+
+- **Red before their fix** (each failed on the code before it): dark mode (the user's timetable); pastel blocks; back
+  to back; dark separator; scrolled top; multi-room part; `스튜디오…` joining; `오전 9시` labels; a third-tall hour;
+  `월요일`/`Mon`/`MON`; shaded header at the first hour; and from the second review: sticky header, tinted band,
+  dense week, tab bar with icons, half-width (touching and apart), midnight, `Tues`/`Thurs`, `…` beside a cut name.
+- **Regression guards only** (passed on the code before): `9 AM … 8 PM`, `09:00 … 20:00`, half-hour `9:30` labels
+  (passed on a RANSAC tie-break; now parsed), `물리…` kept apart, a room cut with `…` or broken at a wrap, the
+  iOS-same reading of the four screenshots, English name / 30-minute class / 8–23 timetable, the title chevron.
+
 ## Confidence: what goes and what replaces it
 
 | Today                                                                                                                     | Plan                                                                                                                                                                                                                                                                                                                |
@@ -122,7 +154,9 @@ Test first: each fix starts with a failing test.
 
 ### Agent usage (2026-10-22)
 
-- Agent time: about 1 h 30 min, an estimate: one implementing subagent in its own worktree, from reading the pipeline
-  through the plan, the fixes, the tests and the docs. The coordinating session is not counted here.
-- Tokens: not split per tool call in this session; roughly 0.3 M tokens of context at the end, about 0.1 M output, an
+- Agent time: about 2 h 30 min, an estimate: one implementing subagent in its own worktree, from reading the pipeline
+  through the plan, the fixes, the tests and the docs, and the second review's fixes (about 1 h). Waiting on the
+  machine's other jobs during the whole-suite run (about 1 h) is not counted. The coordinating session is not counted
+  here.
+- Tokens: not split per tool call in this session; roughly 0.4 M tokens of context at the end, about 0.15 M output, an
   estimate. Cache reads and writes were not visible to the agent; take them from the session's transcript.
