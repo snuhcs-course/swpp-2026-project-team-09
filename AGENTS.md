@@ -14,6 +14,10 @@ Use the five default triage roles as `Status:` values in local issue files. See 
 
 Use a single-context layout: root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.md`.
 
+## Tests
+
+Before writing, renaming or moving a test, read `docs/adr/0007-test-levels-by-what-a-test-starts.md`. A test's level sets its file-name suffix, and each runner picks up only its own level's suffix.
+
 ## Collaboration
 
 Keep `AGENTS.md` and `CLAUDE.md` synchronized. Whenever repository instructions change, update both files together with the same content.
