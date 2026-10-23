@@ -19,7 +19,7 @@
     "start:debug": "nest start --debug --watch --env-file .env",
     "start:prod": "node --env-file-if-exists=.env dist/main",
     "db:migrate": "prisma migrate deploy",
-    "lint": "oxlint --type-aware && node ../scripts/check-test-levels.ts",
+    "lint": "oxlint --type-aware && node ../scripts/check-test-levels.ts 'test/**/*.unit.test.ts' 'test/**/*.integration.test.ts'",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run --project unit",

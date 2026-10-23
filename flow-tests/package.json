@@ -11,7 +11,7 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "oxlint --type-aware && node ../scripts/check-test-levels.ts",
+    "lint": "oxlint --type-aware && node ../scripts/check-test-levels.ts 'test/**/*.e2e.test.ts' 'test/**/*.integration.test.ts'",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:admin-ui": "vitest run --config test/admin-ui/vitest.config.ts"

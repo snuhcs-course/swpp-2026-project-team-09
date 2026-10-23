@@ -9,7 +9,7 @@
     "start": "next start --port 3100",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "next typegen && oxlint --type-aware && node ../scripts/check-test-levels.ts",
+    "lint": "next typegen && oxlint --type-aware && node ../scripts/check-test-levels.ts '__tests__/**/*.unit.test.{ts,tsx}' '__tests__/*.integration.test.tsx' '__tests__/site/*.integration.test.ts'",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run --project unit",

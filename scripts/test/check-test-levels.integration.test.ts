@@ -2,10 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // Partitions: test files in test/ and __tests__/ with no, one or two level suffixes, level suffixes outside them,
-// support files, the benchmark's eval/ and ignored folders. Expected results come from ADR 0007 and the P09 spec.
+// names the package's runners do not run, .test and .spec names outside test folders, support files, the benchmark's
+// eval/ and ignored folders. Expected results come from ADR 0007, the P09 spec and each package's runner config.
 
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -17,15 +19,19 @@ import { test } from 'node:test';
 const script = join(import.meta.dirname, '..', 'check-test-levels.ts');
 const aTest = "describe('rounds', () => {\n  it('places a request', () => {});\n});\n";
 
-// Runs the check from a package folder holding the given files.
-function check(files: Record<string, string>) {
+// What the four servers' Vitest runs.
+const SERVER = ['test/**/*.unit.test.ts', 'test/**/*.integration.test.ts'];
+const EVERY_LEVEL = ['{test,__tests__}/**/*.{unit,integration}.test.{ts,tsx}', '{test,__tests__}/**/*.e2e.test.ts'];
+
+// Runs the check from a package folder holding the given files, told that the runners run the names `runs` matches.
+function check(files: Record<string, string>, runs = EVERY_LEVEL) {
   const dir = mkdtempSync(join(tmpdir(), 'test-levels-'));
   try {
     for (const [path, content] of Object.entries(files)) {
       mkdirSync(dirname(join(dir, path)), { recursive: true });
       writeFileSync(join(dir, path), content);
     }
-    const run = spawnSync(process.execPath, [script], { cwd: dir, encoding: 'utf8' });
+    const run = spawnSync(process.execPath, [script, ...runs], { cwd: dir, encoding: 'utf8' });
     return { status: run.status, output: run.stdout + run.stderr };
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -71,6 +77,42 @@ test('every failing file → named', () => {
   assert.match(run.output, /test\/rounds\.e2e-spec\.ts/);
   assert.match(run.output, /__tests__\/events-test\.tsx/);
   assert.doesNotMatch(run.output, /places\.unit\.test\.ts/);
+});
+
+for (const [name, path, runs] of [
+  ['an e2e test in a server', 'test/parties.e2e.test.ts', SERVER],
+  ['a .tsx test in a server', 'test/rounds.unit.test.tsx', SERVER],
+  [
+    "a .ts integration test beside admin's pages",
+    '__tests__/csv.integration.test.ts',
+    ['__tests__/**/*.unit.test.{ts,tsx}', '__tests__/*.integration.test.tsx', '__tests__/site/*.integration.test.ts'],
+  ],
+  ['a unit test in flow-tests', 'test/stack.unit.test.ts', ['test/**/*.e2e.test.ts', 'test/**/*.integration.test.ts']],
+] as const) {
+  test(`${name}, a name the package's runners do not run → fails, naming the file`, () => {
+    const run = check({ [path]: aTest }, [...runs]);
+    assert.equal(run.status, 1);
+    assert.match(run.output, new RegExp(path.replaceAll('.', '\\.')));
+  });
+}
+
+test("a server's unit and integration tests → pass", () => {
+  const run = check({ 'test/rounds.unit.test.ts': aTest, 'test/places/coop.integration.test.ts': aTest }, SERVER);
+  assert.equal(run.status, 0, run.output);
+});
+
+for (const path of ['src/round.test.ts', 'src/features/map.spec.tsx', 'app/page.test.js']) {
+  test(`${path}, a .test or .spec name outside test/ and __tests__/ → fails, naming the file`, () => {
+    const run = check({ [path]: aTest });
+    assert.equal(run.status, 1);
+    assert.match(run.output, new RegExp(path.replaceAll('.', '\\.')));
+  });
+}
+
+test('no names of what the runners run → fails, saying how to run it', () => {
+  const run = check({ 'test/rounds.unit.test.ts': aTest }, []);
+  assert.equal(run.status, 2);
+  assert.match(run.output, /check-test-levels\.ts <glob>/);
 });
 
 for (const declaration of [

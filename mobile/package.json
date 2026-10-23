@@ -61,7 +61,7 @@
     "web": "expo start --web",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "oxlint --type-aware && node ../scripts/check-test-levels.ts",
+    "lint": "oxlint --type-aware && node ../scripts/check-test-levels.ts '__tests__/**/*.unit.test.{ts,tsx}' '__tests__/**/*.integration.test.{ts,tsx}'",
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:unit": "jest --selectProjects unit",
