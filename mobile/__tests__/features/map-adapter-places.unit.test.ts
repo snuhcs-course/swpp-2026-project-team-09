@@ -4,8 +4,8 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-// Partitions: a Global Event alone and at a shared point; a Quest alone, with a Friend, with others' Party, with
-// the User's and with no card. Expected values: P06-09's and P13-03's criteria (iteration 1), in Korea's time.
+// Partitions: a Global Event alone and at a shared point; a Quest alone, with a Friend, with others' Party, with the
+// User's and with no card. Expected values: P06-09's and P13-03's criteria (iteration 1) and P20-04's, in Korea's time.
 
 import { event, GATE, HALL, ME, MIN_JUN, myParty, quest, recruitingFor, sources } from '../support/map-sources';
 import type { Party } from '@/api/types';
@@ -48,32 +48,16 @@ describe('toCards of a Global Event', () => {
   });
 });
 
+// The marker that Global Events at one place share is `place-groups.ts`' (P20-04), not the adapter's.
 describe('toCards of Global Events at one point', () => {
-  const point = 'event-point:37.45016,126.95259';
-
-  it("two Events at one point and one elsewhere → the point's card first, then each, marked within it", () => {
+  it("two Events at one point and one elsewhere → a card each, in their order, none within another's", () => {
     const elsewhere = { latitude: 37.46, longitude: 126.95 };
     const events = [event('a'), event('b', { place: '대강당' }), event('c', elsewhere)];
     const cards = toCards(sources({ globalEvents: events }));
     expect(cards.map(({ id, within }) => [id, within])).toEqual([
-      [point, undefined],
-      ['event:a', point],
-      ['event:b', point],
+      ['event:a', undefined],
+      ['event:b', undefined],
       ['event:c', undefined],
-    ]);
-  });
-
-  it("the point's card → named as the first Event that says where, counting and listing them", () => {
-    const [card] = toCards(sources({ globalEvents: [event('a'), event('b', { place: '대강당' })] }));
-    expect(card).toMatchObject({
-      kind: 'event-point',
-      title: '대강당',
-      subLabel: '공식 행사 2개',
-      marker: { count: 2 },
-    });
-    expect(card?.choices).toEqual([
-      { id: 'event:a', title: 'AI 커리어 설명회', detail: '오늘 18:00' },
-      { id: 'event:b', title: 'AI 커리어 설명회', detail: '오늘 18:00' },
     ]);
   });
 });
