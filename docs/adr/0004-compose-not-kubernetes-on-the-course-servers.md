@@ -11,4 +11,4 @@ The Dev Server therefore runs the laptop `compose.yaml` with a deployment overri
 ## Consequences
 
 - The course servers get nothing k8s-specific (Helm charts, manifests, operators) unless their container profile changes. Production runs on Kubernetes in AWS instead, with manifests of its own (ADR 0006).
-- Compose's `depends_on` ordering does not exist in Kubernetes, so a start-up step that assumes the database is ready (the migration at the main and match servers' start) needs a retry or an init container there.
+- Compose's `depends_on` ordering does not exist in Kubernetes, so a start-up step that assumes the database is ready (the migration at the main and match servers' start) needs a retry or an init container there. The match server was later removed (ADR 0007).

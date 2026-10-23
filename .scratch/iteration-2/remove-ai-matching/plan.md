@@ -134,7 +134,7 @@ Proposal, in two commits so the team can hold back the second:
    dropped.
 2. **Destructive, its own commit** `feat!: drop quests.match_id (destructive)`: remove the field from the schema and add
    the migration `20261023120000_drop_quest_match_ids` (`DROP INDEX "quests_match_id_key"; ALTER TABLE "quests" DROP
-   COLUMN "match_id";`). The main server applies it at its next start in every environment, Production included, and
+COLUMN "match_id";`). The main server applies it at its next start in every environment, Production included, and
    it cannot be undone (the ids are lost; they point at matches in a database that is going away anyway).
 
 **Decision for the team:** take both commits now, or revert the second and drop the column in a later Release once the
@@ -155,7 +155,7 @@ volume) and in Production on RDS (created by the database Job in `infra/producti
 
 - **Production:** a Release applies with `kubectl apply` and no pruning, so the match server's Deployment, Service and
   NetworkPolicy stay until deleted by hand: `kubectl --namespace snunow delete deployment,service,networkpolicy
-  match-server`. Then an `all` Release (or main-server's), then the database step above, then `terraform apply` for the
+match-server`. Then an `all` Release (or main-server's), then the database step above, then `terraform apply` for the
   ECR repository.
 - **Dev Server:** `compose up` keeps the old `match-server` container as an orphan; remove it once with
   `docker compose rm --stop --force match-server` in the deployment folder, and drop the database as above.

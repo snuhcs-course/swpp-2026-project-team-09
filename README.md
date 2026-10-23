@@ -3,12 +3,12 @@
 SNU Now is a social map for Seoul National University's Gwanak campus. A student signs in with an SNU Google account
 and sees, on Kakao's map of the campus, the Global Events of the university, their Friends and the members of their
 Party moving as Avatars, today's menus and the shuttle. Around an event or a plan of their own, a User makes a Quest
-and finds companions for it: by recruiting on a Board, by asking for Matching or by inviting Friends to a 비공개 파티.
+and finds companions for it: by recruiting on a Board or by inviting Friends to a 비공개 파티.
 When the time comes, they open a Party and see each other on the map until they meet. The words used here are
 defined in [GLOSSARY.md](GLOSSARY.md); the app's screens are in Korean.
 
-The system is an Android app, four servers (main, socket, worker and match) with PostgreSQL and Redis, and an admin
-site for Administrators.
+The system is an Android app, three servers (main, socket and worker) with PostgreSQL and Redis, and an admin site
+for Administrators.
 
 ## Table of contents
 
@@ -41,8 +41,9 @@ The prototype was meant to validate that:
 - live positions travel from one phone through the servers to another within seconds, only between Users who agreed
   to share, and only on campus;
 - Kakao's map can be shown in a React Native app through a native module of our own, with Avatars that glide;
-- strangers interested in the same event can be grouped by Matching into a Shared Quest, and then into a Party;
-- the four servers work together: the three demo flows below run end to end against the built servers in CI
+- strangers interested in the same event can be grouped by Matching into a Shared Quest, and then into a Party
+  (Matching and its match server were removed in Iteration 2);
+- the servers work together: the three demo flows below run end to end against the built servers in CI
   (`flow-tests`).
 
 ### Features of Iteration 1
@@ -59,7 +60,8 @@ The prototype was meant to validate that:
 - **Quests and Matching**: Quests for a Global Event or a plan of the User's own, with Sub Quests; recruiting on the
   식사, 진로, 취미 and 공연 Boards with a Join Policy; join requests and invitations; Matching for a Global Event in
   groups of 2 to 4, run in rounds every minute. The Meetup between Friends was retired in Iteration 2: a plan with
-  a Friend is a 비공개 파티, a Closed Quest.
+  a Friend is a 비공개 파티, a Closed Quest. Matching was removed in Iteration 2 with the match server: Users gather
+  for an event by recruiting on a Board.
 - **Parties**: a Party opened for a Quest, entered by its Holders, with its plan, its members on the map and the
   Leader's controls.
 - **Timetable**: classes entered with their times and Places; today's classes appear as Class Quests.
@@ -79,8 +81,8 @@ Each flow is what a User does with the app on campus, on two phones, or on one p
 
 1. **Event**: two Users sign in. An Administrator publishes a Global Event on the admin site. Both Users choose the
    event and ask for Matching in a group of two. Within a minute both see the same Shared Quest. One opens the Quest's
-   Party and the other enters it. Each sees the other's Avatar move on the map. One taps the Quest and sees the
-   walking route to the event.
+   Party and the other enters it. (Matching was removed in Iteration 2: one now recruits for the event and the other
+   joins.) Each sees the other's Avatar move on the map. One taps the Quest and sees the walking route to the event.
 2. **Friend**: one User sends an Invite Link through a messenger. The other opens it and accepts. Both see each
    other's Avatar. One proposes a Meetup and the other accepts it. Both see the Shared Quest it made. (The Meetup was
    retired in Iteration 2.)
@@ -220,7 +222,7 @@ nvm install
 nvm use
 ```
 
-The main server's settings, with an access token key pair and the two shared secrets of your own:
+The main server's settings, with an access token key pair and the shared secret of your own:
 
 ```bash
 cd main-server
@@ -228,7 +230,6 @@ pnpm install
 cp .env.example .env
 pnpm keys:generate >> .env
 echo "WORKER_TOKEN=$(openssl rand -hex 32)" >> .env
-echo "MATCH_SERVER_TOKEN=$(openssl rand -hex 32)" >> .env
 cd ..
 ```
 
@@ -237,7 +238,7 @@ Then open `main-server/.env`, fill in `KAKAO_REST_API_KEY`, and replace the exam
 main server reads it only when it starts on a database that holds no Administrator: once the servers have run with
 the example address, a new address is not taken until the data is deleted with `docker compose down -v`.
 
-The other servers take the same public key and secrets from it:
+The other servers take the same public key and secret from it:
 
 ```bash
 cd socket-server
@@ -248,10 +249,6 @@ cd ../worker-server
 pnpm install
 cp .env.example .env
 grep '^WORKER_TOKEN=' ../main-server/.env >> .env
-cd ../match-server
-pnpm install
-cp .env.example .env
-grep '^MATCH_SERVER_TOKEN=' ../main-server/.env >> .env
 cd ..
 ```
 
@@ -294,8 +291,6 @@ file's.
 | `WORKER_TOKEN`                     | The secret the worker server sends with what it collects; generated in [Setup](#setup).            |
 | `PUBLIC_URL`                       | The address the apps reach this server at from outside, from which Invite Links are built.         |
 | `ANDROID_CERTIFICATE_FINGERPRINTS` | The SHA-256 fingerprints of the app's signing certificates, for Invite Links' App Links.           |
-| `MATCH_SERVER_URL`                 | Where the match server is reached.                                                                 |
-| `MATCH_SERVER_TOKEN`               | The secret the main and match servers send each other; generated in [Setup](#setup).               |
 | `DEMO_ACCOUNT_EMAILS`              | Read by the demo profile only: real SNU addresses that get demo Friends, requests, an invitation.  |
 
 ### socket-server
@@ -314,16 +309,6 @@ file's.
 | `PORT`            | The port the HTTP server listens on.                              |
 | `MAIN_SERVER_URL` | Where the main server is reached, to hand over what is collected. |
 | `WORKER_TOKEN`    | The same line as in `main-server/.env`.                           |
-
-### match-server
-
-| Setting                  | What it is                                                    |
-| ------------------------ | ------------------------------------------------------------- |
-| `PORT`                   | The port the HTTP server listens on.                          |
-| `DATABASE_URL`           | The match database, reached with the match server's own role. |
-| `MATCH_SERVER_TOKEN`     | The same line as in `main-server/.env`.                       |
-| `MAIN_SERVER_URL`        | Where the main server is reached.                             |
-| `ROUND_INTERVAL_SECONDS` | The seconds from one round of Matching to the next.           |
 
 ### admin
 
@@ -356,10 +341,10 @@ In the repository root, with Docker running:
 docker compose up --build
 ```
 
-This starts PostgreSQL, Redis and the four servers. The main server brings its database up to date and loads the seed
+This starts PostgreSQL, Redis and the three servers. The main server brings its database up to date and loads the seed
 (the Places, the Campus Boundary and the shuttle's stops and line) before it starts. The main server answers on port
-3000 and the socket server on 3001, on the network too, so that a phone can reach them; the worker (3002), the match
-server (3003), PostgreSQL and Redis only on the loopback address. Anyone on the same network can reach the two ports
+3000 and the socket server on 3001, on the network too, so that a phone can reach them; the worker (3002),
+PostgreSQL and Redis only on the loopback address. Anyone on the same network can reach the two ports
 over plain http, so on a public Wi-Fi run the servers only while you use them. `http://localhost:3000/health/ready`
 answers 200 once the main server can reach its stores.
 
@@ -502,22 +487,21 @@ pnpm typecheck
 pnpm test
 ```
 
-| Project         | What `pnpm test` runs and needs                                                                              |
-| --------------- | ------------------------------------------------------------------------------------------------------------ |
-| `main-server`   | Vitest against PostgreSQL and Redis containers it starts itself; Docker running                              |
-| `socket-server` | Vitest against a Redis container it starts itself; Docker running                                            |
-| `worker-server` | Vitest on saved pages of each Source; no Docker                                                              |
-| `match-server`  | Vitest against a PostgreSQL container it starts itself; Docker running                                       |
-| `admin`         | Vitest: page tests in jsdom, and tests against a build of the site with a fake main server                   |
-| `mobile`        | Jest, against the mocks and a fake main server and socket                                                    |
-| `flow-tests`    | The three demo flows across the four built servers, under a Compose project of its own; Docker and `openssl` |
+| Project         | What `pnpm test` runs and needs                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------------- |
+| `main-server`   | Vitest against PostgreSQL and Redis containers it starts itself; Docker running                               |
+| `socket-server` | Vitest against a Redis container it starts itself; Docker running                                             |
+| `worker-server` | Vitest on saved pages of each Source; no Docker                                                               |
+| `admin`         | Vitest: page tests in jsdom, and tests against a build of the site with a fake main server                    |
+| `mobile`        | Jest, against the mocks and a fake main server and socket                                                     |
+| `flow-tests`    | The three demo flows across the three built servers, under a Compose project of its own; Docker and `openssl` |
 
 `flow-tests` builds the servers' images the first time, which takes some minutes, and leaves a running stack and its
 data alone: [flow-tests/README.md](flow-tests/README.md).
 
 ## Deployment
 
-The **Dev Server** is the team's shared server, server B of the two the course lends the team. It runs the four
+The **Dev Server** is the team's shared server, server B of the two the course lends the team. It runs the three
 servers, PostgreSQL, Redis and the [Demo Data](#demo-data) under Docker Compose, behind a Caddy proxy, at
 `http://swpp26t09.147-46-242-174.sslip.io`. The stack is `compose.yaml` with `compose.deploy.yaml` over it.
 
@@ -552,10 +536,9 @@ Release again, rotate a secret, and move Production to another AWS account.
 | `main-server/`   | The main server: sign-in, Users, Friends, Quests, Parties, Location Sharing, events, the seed |
 | `socket-server/` | The socket server: pushes positions and signals to the apps over Socket.IO, keeps no data     |
 | `worker-server/` | The worker server: collects the events list, the menus and the shuttle on a schedule          |
-| `match-server/`  | The match server: keeps the requests for Matching and groups them in rounds                   |
 | `admin/`         | The admin site for Administrators                                                             |
 | `mobile/`        | The app, with the native map module for Android and iOS in `modules/`                         |
-| `flow-tests/`    | Tests of the three demo flows across the four servers                                         |
+| `flow-tests/`    | Tests of the three demo flows across the three servers                                        |
 | `infra/`         | The PostgreSQL image, the Dev Server (`deploy/`, `proxy/`), and Production (`production/`)    |
 | `docs/`          | Decision records (`adr/`), the agents' conventions (`agents/`), and the demo videos (`demo/`) |
 | `.scratch/`      | Specs and tickets of each iteration's tasks, and research notes                               |
@@ -603,5 +586,5 @@ comes from Kakao's, Naver's or Google's maps.
   and specifications, the design documentation and the meeting log.
 - [GLOSSARY.md](GLOSSARY.md): the project's words. [docs/adr/](docs/adr/): its architecture decisions.
 - Each project's README: [main-server](main-server/README.md), [socket-server](socket-server/README.md),
-  [worker-server](worker-server/README.md), [match-server](match-server/README.md), [admin](admin/README.md),
+  [worker-server](worker-server/README.md), [admin](admin/README.md),
   [mobile](mobile/README.md) and [flow-tests](flow-tests/README.md).

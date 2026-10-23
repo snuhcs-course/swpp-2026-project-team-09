@@ -70,7 +70,7 @@ A User who holds a Quest. Each Holder tracks their own progress through its Sub 
 _Avoid_: Participant, assignee
 
 **Shared Quest**:
-A Quest with two or more Holders, such as matched Users or Users who joined another's Quest.
+A Quest with two or more Holders, such as Users who joined another's Quest.
 _Avoid_: Common quest
 
 **Leader**:
@@ -94,8 +94,8 @@ A Quest for attending one of the User's own classes on a given day, derived from
 A proposal between Friends to meet. Accepting it created a Shared Quest and did not open a Party. A 비공개 파티, a Closed Quest whose Leader invites the Friend, takes its place.
 _Avoid_: Appointment
 
-**Matching**:
-Finding companions for Users who want them for the same Global Event, by grouping them into a new Shared Quest or by placing one into an Open Quest for that event. They open a Party themselves when the time comes.
+**Matching** (removed in Iteration 2):
+Finding companions for Users who wanted them for the same Global Event, by grouping them into a new Shared Quest or by placing one into an Open Quest for that event. The match server ran it in rounds. It was removed with the match server (ADR 0007): Users gather for an event by recruiting on a Board, by joining a recruiting Quest or by inviting Friends.
 _Avoid_: Auto-join
 
 ### Parties
