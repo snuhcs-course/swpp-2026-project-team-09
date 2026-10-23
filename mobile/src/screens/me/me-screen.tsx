@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -143,7 +144,7 @@ function ActivityCard(): ReactElement {
         icon="users"
         label="참여 중인 파티"
         onPress={() => {
-          router.navigate({ pathname: '/party', params: { tab: 'mine' } });
+          router.push('/me/parties');
         }}
         value={parties}
       />

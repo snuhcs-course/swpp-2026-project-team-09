@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
@@ -15,6 +16,7 @@ import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { socketServer } from './support/live';
 import { pass, screen, shownAddress } from './support/app';
+import { holdBackButton } from './support/back';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMyParty, DINNER_PARTY_MINE, myPicnicParty, PICNIC, toast } from './support/room';
@@ -170,6 +172,40 @@ describe('a card of 내 파티', () => {
     await user.press(screen.getByRole('button', { name: MY_HIKE.title }));
 
     expect(shownAddress()).toBe(`/room/${MY_HIKE.id}`);
+  });
+});
+
+describe('참여 중인 파티 above the tabs', () => {
+  it('lists the User’s Quests as 내 파티 does, with its chips', async () => {
+    const user = await openAt('/me/parties');
+
+    expect(screen.getByRole('header', { name: '참여 중인 파티' })).toBeVisible();
+    expect(card(DINNER.title).getByText('비공개 파티')).toBeVisible();
+    expect(card(MY_HIKE.title).getByText('모집 중 · 1/6명')).toBeVisible();
+    expect(screen.getByText('전체 2')).toBeVisible();
+    await user.press(screen.getByText('비공개 1'));
+    expect(screen.getByRole('button', { name: DINNER.title })).toBeVisible();
+    expect(screen.queryByRole('button', { name: MY_HIKE.title })).toBeNull();
+  });
+
+  it('says when the User holds no Quest', async () => {
+    setAnswers({ quests: [] });
+    await openAt('/me/parties');
+
+    expect(screen.getByText('참여 중인 파티가 없어요')).toBeVisible();
+  });
+
+  it('opens a card’s room, whose back returns to it', async () => {
+    const pressBack = holdBackButton();
+    const user = await openAt('/me/parties');
+
+    await user.press(screen.getByRole('button', { name: MY_HIKE.title }));
+    await pass(500);
+    expect(shownAddress()).toBe(`/room/${MY_HIKE.id}`);
+
+    expect(await pressBack()).toBe(true);
+    await pass(500);
+    expect(shownAddress()).toBe('/me/parties');
   });
 });
 
