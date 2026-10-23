@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 'use server';
@@ -11,15 +12,7 @@ import { redirect } from 'next/navigation';
 import { mainServer, MainServerError } from '@/main-server';
 import { startSession } from '@/session';
 
-// Only a path of this site is followed after signing in; anything else leads to the home page.
-function sitePath(next: FormDataEntryValue | null): string {
-  if (typeof next !== 'string' || !next.startsWith('/')) {
-    return '/';
-  }
-  const base = 'http://admin.invalid';
-  const url = new URL(next, base);
-  return url.origin === base ? `${url.pathname}${url.search}` : '/';
-}
+import { sitePath } from './site-path';
 
 // The address in a Google ID token the main server has just accepted, read without checking it again, only to show it.
 function emailIn(idToken: string): string | undefined {

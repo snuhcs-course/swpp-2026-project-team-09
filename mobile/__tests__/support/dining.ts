@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { MenuLine, RestaurantMenus } from '@/api/menu-types';
@@ -21,7 +22,7 @@ export const HOURS: MenuLine = { text: '※운영시간: 11:30~13:30', kind: 'no
 export const STEW: MenuLine = { text: '뼈없는감자탕', kind: null, name: null, price: null };
 export const NO_PRICE: MenuLine = { text: '한입버거 : 9,900원 / 12,400원', kind: 'dish', name: null, price: null };
 
-function restaurant(
+export function restaurant(
   name: string,
   meals: RestaurantMenus['meals'],
   collectedAt = '2026-10-05T20:00:00.000Z',

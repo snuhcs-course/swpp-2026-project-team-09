@@ -1,0 +1,27 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# The accept screen of the mock's Invite Link, from-yujian, then accepted: the map says so, and the Friends list under
+# the Me tab lists the sender. SHOTS names the screenshots after the flow that runs this.
+appId: com.bonnieandclaude.snunow
+---
+- assertVisible: '유지안님의 친구 초대'
+- assertVisible: '수락하면 친구가 되고, 서로의 위치를 지도에서 볼 수 있어요. 위치 공유는 친구마다 끌 수 있어요.'
+- takeScreenshot: ${SHOTS}-accept-screen
+- tapOn: '수락'
+- assertVisible: '유지안님과 친구가 됐어요'
+- takeScreenshot: ${SHOTS}-accepted
+- runFlow: map.yaml
+- tapOn: '내 정보'
+- scrollUntilVisible:
+    element: '친구 관리.*'
+    direction: DOWN
+- tapOn: '친구 관리.*'
+- assertVisible: '친구 \d+'
+- scrollUntilVisible:
+    element: '유지안'
+    direction: DOWN
+- takeScreenshot: ${SHOTS}-friends

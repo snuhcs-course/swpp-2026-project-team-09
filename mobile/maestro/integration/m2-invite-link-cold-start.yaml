@@ -1,0 +1,31 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# M2, US-FRIEND-01 scenario 2, on a cold start: a signed-in User's app is stopped, and an Invite Link opened from
+# outside starts it at the link's accept screen, after the loading screen.
+appId: com.bonnieandclaude.snunow
+name: M2 an Invite Link opened on a cold start
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: deny
+- extendedWaitUntil:
+    visible: '서울대 계정으로 로그인'
+    timeout: 30000
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      SHOTS: m2-cold
+- stopApp
+- openLink: snunow://invite/from-yujian
+- extendedWaitUntil:
+    visible: '유지안님의 친구 초대'
+    timeout: 30000
+- runFlow:
+    file: ../subflows/accept-invite.yaml
+    env:
+      SHOTS: m2-cold

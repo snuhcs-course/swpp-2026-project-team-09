@@ -200,14 +200,18 @@ from an open map when no further list arrives (P15). `showVehicles` stands for t
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
 
-| Command             | Checks                                       |
-| ------------------- | -------------------------------------------- |
-| `pnpm lint`         | oxlint with type-aware rules                 |
-| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it) |
-| `pnpm typecheck`    | TypeScript in strict mode                    |
-| `pnpm test`         | Vitest tests in `test/`                      |
+| Command             | Checks                                                              |
+| ------------------- | ------------------------------------------------------------------- |
+| `pnpm lint`         | oxlint with type-aware rules, and that each test file names a level |
+| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it)                        |
+| `pnpm typecheck`    | TypeScript in strict mode                                           |
+| `pnpm test`         | Vitest tests in `test/`                                             |
 
 `pnpm test` needs Docker running. It starts its own Redis container and removes it afterwards.
+
+Each test file is named by its level (ADR 0007): `*.unit.test.ts` or `*.integration.test.ts`. `pnpm test:unit` runs
+the unit tests alone and needs no Docker. `pnpm test:integration` runs the integration tests, which start the
+container. `pnpm test:cov` and `pnpm test:cov:unit` add the coverage of `src/`, written to `coverage/`.
 
 ## Folder layout
 
@@ -225,7 +229,7 @@ src/
 ├── signals/                         a feature: sends each signal of the main server to the connections of the Users it
 │                                    names, or to every connection
 └── shuttle/                         a feature: sends the shuttle's vehicles to every connected app
-test/                                tests, run against Redis in a container
+test/                                tests named by level; the integration tests run against Redis in a container
 ```
 
 ## Adding a feature module
@@ -239,7 +243,8 @@ The steps add a feature named `signal`. Use a short lowercase name, with dashes 
    ```
 
 2. Create the controller, which holds the HTTP routes, and the service, which holds the logic. Both are registered in
-   `SignalModule`. `--no-spec` skips unit test files, because this project tests through the running server (step 6):
+   `SignalModule`. `--no-spec` skips the generated test files: tests live in `test/`, named by level, and pure logic
+   gets a unit test there (step 6):
 
    ```bash
    pnpm exec nest g controller signal --no-spec
@@ -254,9 +259,10 @@ The steps add a feature named `signal`. Use a short lowercase name, with dashes 
    `.env` and to the settings in `test/global-setup.ts`. Compose passes `.env` to the server. Add the setting to the
    `socket-server` service's `environment` in `compose.yaml` only when it needs another value inside Compose, as the
    Redis address does. Read it by injecting `ConfigService<Settings, true>` and calling `get('NAME', { infer: true })`.
-6. Write `test/signal.e2e-spec.ts`. Start the server with `startApp` from `test/start-app.ts` and call its routes with
-   `supertest`, as `test/health.e2e-spec.ts` does, or open a socket connection as the app does, as
-   `test/users.e2e-spec.ts` does.
+6. Write `test/signal.integration.test.ts`. Start the server with `startApp` from `test/start-app.ts` and call its
+   routes with `supertest`, as `test/health.integration.test.ts` does, or open a socket connection as the app does, as
+   `test/users.integration.test.ts` does. Pure logic of the feature gets `test/signal.unit.test.ts`, which calls it
+   directly and starts nothing.
 7. Run `pnpm format`, then the four checks.
 
 Import classes with a plain `import { SignalService } from ...`, never `import type`. Nest looks the class up at

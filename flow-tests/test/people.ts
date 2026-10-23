@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { randomInt } from 'node:crypto';
@@ -19,6 +21,9 @@ const ADMINISTRATOR = { email: 'admin@flow-tests.example', sub: '100000000000000
 
 const tokens = z.object({ accessToken: z.string() });
 
+// The claims of a Google account's ID tokens.
+type GoogleAccount = Record<string, unknown>;
+
 const sockets = new Set<Socket>();
 
 export function closeSockets(): void {
@@ -35,8 +40,16 @@ export class Student extends Caller {
     accessToken: string,
     readonly id: string,
     readonly inbox: Inbox,
+    private readonly googleAccount: GoogleAccount,
   ) {
     super(name, accessToken);
+  }
+
+  // The same User signing in on another phone with the same Google account, onboarded already. The sign-in ends this
+  // phone's Session.
+  async signsInOnAnotherPhone(): Promise<Student> {
+    const name = `${this.name} on another phone`;
+    return openTheApp(name, this.googleAccount, await signInToTheApp(name, this.googleAccount));
   }
 
   // The phone's position now, as the app uploads it. Answers whether it was off campus.
@@ -90,29 +103,45 @@ function connect(name: string, accessToken: string): Promise<Inbox> {
   });
 }
 
+// Signs in to the app with the Google account and answers the access token.
+async function signInToTheApp(name: string, googleAccount: GoogleAccount): Promise<string> {
+  const answer = await signInWithGoogle(googleAccount);
+  if (answer.status !== 200) {
+    throw new Error(`${name} could not sign in: ${answer.status} ${JSON.stringify(answer.body)}`);
+  }
+  return tokens.parse(answer.body).accessToken;
+}
+
+// An onboarded User's app, signed in and connected to the socket server.
+async function openTheApp(name: string, googleAccount: GoogleAccount, accessToken: string): Promise<Student> {
+  const { id } = await new Caller(name, accessToken).get('/users/me', z.object({ id: z.string() }));
+  return new Student(name, accessToken, id, await connect(name, accessToken), googleAccount);
+}
+
 // Signs in with a new SNU account, finishes onboarding under `name` and opens the app's socket connection.
 export async function signIn(name: string): Promise<Student> {
   const sub = String(randomInt(2 ** 47));
-  const answer = await signInWithGoogle({
+  const googleAccount = {
     aud: APP_CLIENT_ID,
     sub,
     email: `student-${sub}@snu.ac.kr`,
     hd: 'snu.ac.kr',
     name: `${name} / 학생 / 컴퓨터공학부`,
-  });
-  if (answer.status !== 200) {
-    throw new Error(`${name} could not sign in: ${answer.status} ${JSON.stringify(answer.body)}`);
-  }
-  const { accessToken } = tokens.parse(answer.body);
+  };
+  const accessToken = await signInToTheApp(name, googleAccount);
   const caller = new Caller(name, accessToken);
   await caller.post('/users/me/onboarding', { name, department: '컴퓨터공학부', admissionYear: 2024, hashtags: [] });
-  const { id } = await caller.get('/users/me', z.object({ id: z.string() }));
-  return new Student(name, accessToken, id, await connect(name, accessToken));
+  return openTheApp(name, googleAccount, accessToken);
+}
+
+// The ID token Google hands the admin site when the test stack's Administrator signs in.
+export function administratorIdToken(): string {
+  return googleIdToken({ aud: ADMIN_CLIENT_ID, ...ADMINISTRATOR });
 }
 
 // The Administrator of the test stack, signed in to the admin site.
 export async function signInAsAdministrator(): Promise<Caller> {
-  const idToken = googleIdToken({ aud: ADMIN_CLIENT_ID, ...ADMINISTRATOR });
+  const idToken = administratorIdToken();
   const { accessToken } = await new Caller('Administrator').post('/admin/auth/google', { idToken }, tokens);
   return new Caller('Administrator', accessToken);
 }

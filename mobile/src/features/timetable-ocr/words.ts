@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { NativeOcrResult } from './native-ocr';
@@ -79,7 +80,8 @@ export function clipWord(word: Word, x0: number, x1: number): string {
     .trim();
 }
 
-// The confidence of some words weighted by their characters, or null when any of them has none (iOS).
+// The confidence of some words weighted by their characters, or null when any of them has none (iOS). Only a room's
+// link uses it (`building.ts`).
 export function meanConfidence(parts: readonly { text: string; confidence: number | null }[]): number | null {
   let sum = 0;
   let count = 0;
