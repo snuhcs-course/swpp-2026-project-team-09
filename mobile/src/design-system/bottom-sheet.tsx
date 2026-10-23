@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useState } from 'react';
 import { Animated, type GestureResponderEvent, Pressable, StyleSheet, View } from 'react-native';
 import { useInsets } from './insets';
 import { useBackToClose } from '@/hooks/use-back-to-close';
+import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { Overlay } from './overlay';
 import { color, radius, space } from './tokens';
 import { useSlide } from './use-slide';
@@ -45,11 +47,15 @@ function useDragDown(onClose: () => void): {
 
 // A sheet that rises from the bottom over the whole screen, the bottom navigation too, as the frames draw them: a
 // handle, a top radius of 24 and the scrim. A press on the scrim, Android's back button or a drag down from the
-// handle closes it.
+// handle closes it. While the phone's keyboard is up the sheet stands on it, at most 90% of what is left above it, so
+// that a search at its top and the first rows under it stay in view.
 export function BottomSheet({ open, onClose, label, children }: BottomSheetProps): ReactElement | null {
   const { shown, progress } = useSlide(open);
   const drag = useDragDown(onClose);
-  const { bottom } = useInsets();
+  const insets = useInsets();
+  const keyboard = useKeyboardHeight(insets.bottom);
+  // The keyboard covers the phone's own bar.
+  const bottom = keyboard > 0 ? 0 : insets.bottom;
   useBackToClose(open, onClose);
   if (!shown) {
     return null;
@@ -65,19 +71,26 @@ export function BottomSheet({ open, onClose, label, children }: BottomSheetProps
             style={styles.scrim}
           />
         </Animated.View>
-        <Animated.View
-          accessibilityLabel={label}
-          style={[
-            styles.sheet,
-            { paddingBottom: space[4] + bottom },
-            { transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [RISE, 0] }) }] },
-          ]}
-        >
-          <View onTouchEnd={drag.onTouchEnd} onTouchStart={drag.onTouchStart} style={styles.grip} testID="sheet-handle">
-            <View style={styles.handle} />
-          </View>
-          {children}
-        </Animated.View>
+        <View style={[styles.room, { bottom: keyboard }]} testID="sheet-room">
+          <Animated.View
+            accessibilityLabel={label}
+            style={[
+              styles.sheet,
+              { paddingBottom: space[4] + bottom },
+              { transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [RISE, 0] }) }] },
+            ]}
+          >
+            <View
+              onTouchEnd={drag.onTouchEnd}
+              onTouchStart={drag.onTouchStart}
+              style={styles.grip}
+              testID="sheet-handle"
+            >
+              <View style={styles.handle} />
+            </View>
+            {children}
+          </Animated.View>
+        </View>
       </View>
     </Overlay>
   );
@@ -86,6 +99,8 @@ export function BottomSheet({ open, onClose, label, children }: BottomSheetProps
 const styles = StyleSheet.create({
   layer: { ...StyleSheet.absoluteFill },
   scrim: { flex: 1, backgroundColor: color.scrim },
+  // Where the sheet stands: the whole screen, or what the keyboard leaves of it. Touches above the sheet go to the scrim.
+  room: { position: 'absolute', top: 0, right: 0, left: 0, pointerEvents: 'box-none' },
   sheet: {
     position: 'absolute',
     right: 0,
