@@ -7,6 +7,7 @@
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -26,7 +27,7 @@ export async function startPostgres(): Promise<StartedTestContainer> {
   ).build('snu-now-postgres-test', { deleteOnExit: false });
   return (
     image
-      .withEnvironment({ POSTGRES_PASSWORD: 'postgres', MAIN_DB_PASSWORD: 'main', MATCH_DB_PASSWORD: 'match' })
+      .withEnvironment({ POSTGRES_PASSWORD: 'postgres', MAIN_DB_PASSWORD: 'main' })
       .withExposedPorts(5432)
       // The image logs this once while it creates the databases and once when it is ready.
       .withWaitStrategy(Wait.forLogMessage('database system is ready to accept connections', 2))

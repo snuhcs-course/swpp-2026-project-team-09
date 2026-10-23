@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -23,7 +24,7 @@ const input = z.object({
 export function showGlobalEvents(globalEvents: GlobalEventsService): Tool {
   return defineTool({
     description:
-      "Shows Global Events under your reply as the cards of the app's 행사 tab, in the order given; the User presses a card to open it, recruit a 파티 or ask for AI 매칭. Give only ids that searchGlobalEvents returned in this message. Do not repeat the cards' details in your text.",
+      "Shows Global Events under your reply as the cards of the app's 행사 tab, in the order given; the User presses a card to open it or to find or recruit a 파티. Give only ids that searchGlobalEvents returned in this message. Do not repeat the cards' details in your text.",
     input,
     run: async ({ ids }, { found, presented }) => {
       found.refuseUnfound('globalEvent', ids);

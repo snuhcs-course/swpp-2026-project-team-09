@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-09-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -24,14 +25,5 @@ describe('Main database', () => {
     await prisma.$disconnect();
 
     expect(rows).toEqual([{ distance: 5 }]);
-  });
-
-  it('keeps the main role out of the match database', async () => {
-    const matchUrl = new URL(DATABASE_URL);
-    matchUrl.pathname = '/match';
-    const prisma = connect(matchUrl.toString());
-
-    await expect(prisma.$queryRaw`SELECT 1`).rejects.toThrow('permission denied for database "match"');
-    await prisma.$disconnect();
   });
 });
