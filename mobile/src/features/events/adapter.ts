@@ -3,16 +3,15 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import type { MatchingRequest } from '@/api/matching-types';
 import type { GlobalEvent, Quest } from '@/api/types';
 import type { RecruitingQuest } from '@/api/party-types';
 import { shownSubQuest } from '@/features/quests/adapter';
-import { agoWords } from '@/features/quests/room-adapter';
 import { koreaClock, koreaDay, koreaDaysAfter, koreaWeekday } from '@/korea-time';
 
-// What the 행사 tab, its sheets and the AI 매칭 신청 list show of the Global Events.
+// What the 행사 tab and its sheets show of the Global Events.
 
 export type EventFilter = 'all' | 'today' | 'week' | 'recruiting';
 
@@ -46,8 +45,6 @@ export interface EventView {
   recruiting: number;
   // The User holds a Quest for it.
   mine: boolean;
-  // The User's request for Matching on it waits.
-  matching: boolean;
 }
 
 export interface EventSources {
@@ -55,7 +52,6 @@ export interface EventSources {
   announcers: readonly { eventId: string; announcer: string }[];
   recruiting: readonly RecruitingQuest[];
   quests: readonly Quest[];
-  matching: readonly MatchingRequest[];
   now: Date;
 }
 
@@ -84,7 +80,7 @@ function matches(event: GlobalEvent, search: string): boolean {
 }
 
 export function toEventViews(sources: EventSources, filter: EventFilter, search: string): EventView[] {
-  const { events, announcers, recruiting, quests, matching, now } = sources;
+  const { events, announcers, recruiting, quests, now } = sources;
   const counts = recruitingCounts(recruiting);
   return events
     .filter((event) => matches(event, search) && passes(event, counts.get(event.id) ?? 0, filter, now))
@@ -97,7 +93,6 @@ export function toEventViews(sources: EventSources, filter: EventFilter, search:
       sourceUrl: event.sourceUrl,
       recruiting: counts.get(event.id) ?? 0,
       mine: quests.some(({ globalEvent }) => globalEvent?.id === event.id),
-      matching: matching.some(({ globalEventId, state }) => globalEventId === event.id && state === 'waiting'),
     }));
 }
 
@@ -161,34 +156,4 @@ export function toRecruitRows(
 // The Quest the User holds with others for the event: its 파티, which `+ 파티 모집` leads to.
 export function sharedQuestFor(quests: readonly Quest[], eventId: string): Quest | null {
   return quests.find(({ globalEvent, holders }) => globalEvent?.id === eventId && holders.length > 1) ?? null;
-}
-
-export interface MatchingRowView {
-  eventId: string;
-  title: string;
-  // "오늘 18:00–20:00 · 301동 대강당"
-  when: string;
-  size: number;
-  // "방금 신청", "5분 전"
-  ago: string;
-}
-
-export function toMatchingRows(
-  requests: readonly MatchingRequest[],
-  events: readonly GlobalEvent[],
-  now: Date,
-): MatchingRowView[] {
-  return requests
-    .filter(({ state }) => state === 'waiting')
-    .map((request) => {
-      const event = events.find(({ id }) => id === request.globalEventId);
-      const ago = agoWords(request.arrivedAt, now);
-      return {
-        eventId: request.globalEventId,
-        title: event?.title ?? '',
-        when: event === undefined ? '' : metaOf([eventTime(event, now), event.place ?? '']),
-        size: request.size,
-        ago: ago === '방금' ? '방금 신청' : ago,
-      };
-    });
 }

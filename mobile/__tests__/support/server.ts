@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Friend, Lobby, Party, Position, Quest } from '@/api/types';
@@ -133,7 +134,6 @@ export function answerMainScreen(server: FakeServer): void {
   server.on('GET /quest-invitations', { status: 200, body: [] });
   server.on('GET /global-events', { status: 200, body: [] });
   server.on('GET /quests/recruiting', { status: 200, body: [] });
-  server.on('GET /matching-requests', { status: 200, body: [] });
 }
 
 // --- What waits for the User, which 알림 lists ---

@@ -10,6 +10,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { AssistantReply, ChatMessage } from './assistant-types';
@@ -18,7 +19,6 @@ import { serverClient } from './server/client';
 import type { ShownClient } from './quest-parts-types';
 import { withQuestParts } from './quest-parts/with-parts';
 import { asksMainServer } from './servers';
-import type { MatchingRequest } from './matching-types';
 import type {
   Board,
   ClassSave,
@@ -103,13 +103,6 @@ export interface ApiClient {
   // Who announced each Global Event. The app's own: the stored event does not hold it.
   listGlobalEventAnnouncers: () => Promise<{ eventId: string; announcer: string }[]>;
   listParties: () => Promise<Party[]>;
-  // `size` is 2 to 4.
-  requestMatching: (globalEventId: string, size: number) => Promise<MatchingRequest>;
-  // The waiting requests, the oldest first.
-  listMatchingRequests: () => Promise<MatchingRequest[]>;
-  // The latest request for the Global Event, in whatever state.
-  getMatchingRequest: (globalEventId: string) => Promise<MatchingRequest>;
-  withdrawMatchingRequest: (globalEventId: string) => Promise<void>;
   // Null for a User who is in no Party. The main server says so with a refusal, 404 NOT_IN_PARTY: the operation turns
   // exactly that one into null, with `isRefusal`, and throws any other.
   getMyParty: () => Promise<MyParty | null>;
@@ -211,10 +204,6 @@ export const apiClient: ShownClient = {
   listGlobalEvents: () => chosen().listGlobalEvents(),
   listGlobalEventAnnouncers: () => chosen().listGlobalEventAnnouncers(),
   listParties: () => chosen().listParties(),
-  requestMatching: (globalEventId, size) => chosen().requestMatching(globalEventId, size),
-  listMatchingRequests: () => chosen().listMatchingRequests(),
-  getMatchingRequest: (globalEventId) => chosen().getMatchingRequest(globalEventId),
-  withdrawMatchingRequest: (globalEventId) => chosen().withdrawMatchingRequest(globalEventId),
   getMyParty: () => chosen().getMyParty(),
   getFootprints: () => chosen().getFootprints(),
   findWalkingRoute: (from, to) => chosen().findWalkingRoute(from, to),

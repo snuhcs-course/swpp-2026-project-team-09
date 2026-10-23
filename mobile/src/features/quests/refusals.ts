@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
@@ -34,9 +35,6 @@ const WORDS: Readonly<Record<string, string>> = {
   BOARD_REQUIRED: '게시판을 골라 주세요',
   GLOBAL_EVENT_STARTED: '이미 시작한 행사예요',
   GLOBAL_EVENT_NOT_FOUND: '행사를 찾을 수 없어요',
-  MATCHING_REQUEST_WAITING: '이미 매칭 중이에요',
-  MATCHING_REQUEST_NOT_WAITING: '이미 매칭이 끝났어요',
-  MATCHING_REQUEST_NOT_FOUND: '이미 매칭이 끝났어요',
 };
 
 // Where the User enters a Quest, by joining, asking or accepting, an ended Quest is the Quest's, not its Party's.

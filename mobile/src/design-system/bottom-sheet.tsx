@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useState } from 'react';
@@ -15,7 +16,7 @@ import { useSlide } from './use-slide';
 interface BottomSheetProps {
   open: boolean;
   onClose: () => void;
-  // The sheet's name, such as "AI 매칭": the scrim is read as "AI 매칭 닫기".
+  // The sheet's name, such as "파티 찾기/모집": the scrim is read as "파티 찾기/모집 닫기".
   label: string;
   children: ReactNode;
 }

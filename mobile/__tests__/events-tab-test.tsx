@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -64,7 +65,6 @@ describe('the list', () => {
     expect(card(CAREER).getByText('오늘 18:00–20:00')).toBeVisible();
     expect(card(CAREER).getByText('301동 대강당')).toBeVisible();
     expect(card(CAREER).getByRole('button', { name: '파티 찾기/모집' })).toBeVisible();
-    expect(card(CAREER).getByRole('button', { name: 'AI 매칭' })).toBeVisible();
     expect(card(MAJOR).getByText('10월 8일 (목) 17:00')).toBeVisible();
     expect(card(MAJOR).queryByText('내 파티')).toBeNull();
     expect(card(MAJOR).queryByText(/같이 갈 파티/u)).toBeNull();

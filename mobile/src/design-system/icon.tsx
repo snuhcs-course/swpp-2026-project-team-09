@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -81,11 +82,6 @@ const ICONS = {
   // Not the design system's: the `Profile` frame draws them on the timetable versions' 이름 바꾸기 and 이 시간표 삭제.
   pencil: [{ path: 'M4 20h4L19 9l-4-4L4 16z' }],
   trash: [{ path: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3' }],
-  // Not the design system's: the `Events` frame draws it on `AI 매칭` and on the button of the requests.
-  sparkle: [
-    { path: 'M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z' },
-    { path: 'M18.5 14.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z' },
-  ],
   // Not the design system's: the `Party` frame draws them on the button that pauses and plays the official banner.
   pause: [{ path: 'M9 5v14' }, { path: 'M15 5v14' }],
   play: [{ path: 'M7 5l12 7-12 7z' }],

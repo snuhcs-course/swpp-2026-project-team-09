@@ -361,7 +361,7 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   (`/notifications`), 프로필 편집 (`/profile-edit`), 시간표 (`/me/timetable`) and its class form
   (`/me/timetable/class`), a Quest's room (`/room/<questId>`), the map view of the place picker (`/place-map`), 전체
   파티 (`/boards`), a board (`/boards/meal`), 파티 모집글 (`/post/<questId>`), 파티 만들기 (`/party-form`, and
-  `/party-form?questId=<id>` for its edit mode) and the AI 매칭 신청 list (`/matching`). Each is a `FullScreenPanel`
+  `/party-form?questId=<id>` for its edit mode). Each is a `FullScreenPanel`
   and slides in over 0.28 s, from the bottom for `/quests` and from the right for a pushed screen,
   or appears without sliding where the phone asks for less motion (`slideFrom` in the layout). The tabs lie under
   them also when the app opens at their address (`unstable_settings`).
@@ -802,15 +802,13 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
 **행사** (`src/screens/events/`, the `Events` frame, `/events`) lists the published Global Events (`GET
 /global-events`) by their start, with the data of `useEventSources()` and the words of `src/features/events/adapter.ts`:
 
-- The app bar (`events-bar.tsx`) has "행사", the sparkle "AI 매칭 신청 내역" with a navy count of the waiting
-  requests, which opens the AI 매칭 신청 list, and the search, which puts the field "행사 검색" and ✕ "검색 닫기" in
+- The app bar (`events-bar.tsx`) has "행사" and the search, which puts the field "행사 검색" and ✕ "검색 닫기" in
   place of the title and keeps the events whose title, place or description holds the words.
 - The chips "전체", "오늘", "이번 주" (to Sunday in Korea's time) and "파티 모집 중" (an event with a recruiting Quest)
   filter the list. Empty: "예정된 행사가 없어요" without any event, "검색 결과가 없어요" after a filter or a search.
 - A card (`event-item.tsx`) has "같이 갈 파티 {n}개" for the recruiting Quests of `GET /quests/recruiting`, "내 파티"
   when the User holds a Quest for the event, the source from the app's own list of announcers, the title, the time
-  and the place, and "자세히", which opens `sourceUrl` in the browser and is left out without one, "파티 찾기/모집" and
-  "AI 매칭", or "매칭 중" while the User's request waits, which opens the list. At `/events?focus=<id>` the list shows
+  and the place, and "자세히", which opens `sourceUrl` in the browser and is left out without one, and "파티 찾기/모집". At `/events?focus=<id>` the list shows
   every event, scrolls to the card and marks it with a navy border and a glow for 2.6 s (`use-focus.ts`).
 - **파티 찾기/모집** (`recruiting-sheet.tsx`) lists the User's own Quest for the event ("내 파티" when the User leads it,
   "참여 중" with its Leader otherwise), then the Quests gathering for it (`GET /quests/recruiting?globalEventId=`),
@@ -819,14 +817,6 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
   (`POST /quest-join-requests`). "+ 파티 모집", like the map card's "같이 갈 사람 찾기", opens the room of a Quest the
   User already holds with others for the event, with "이 행사에 함께 가는 파티가 이미 있어요", and 파티 만들기 with the
   event chosen otherwise (`/party-form?eventId=<id>`, `use-party-create.ts`).
-- **AI 매칭** (`matching-sheet.tsx`) asks only the group size, "2명", "3명" or "4명", explains what Matching does and
-  sends `POST /matching-requests`. **The AI 매칭 신청 list** (`matching-screen.tsx`, `/matching`) shows each waiting
-  request with "매칭 중", when it was asked, the event and the size, and withdraws one after "매칭 신청을 취소할까요?"
-  (`POST /matching-requests/:globalEventId/withdraw`). The requests and their refusals are in `use-event-actions.ts`,
-  and the words of every refusal in `src/features/quests/refusals.ts`.
-- `MatchingWatch` (`src/features/events/matching-watch.tsx`), in the signed-in layout, watches the waiting requests
-  wherever the User is: a request that stops waiting is read again (`GET /matching-requests/:globalEventId`), and a
-  match says "{event} 파티가 만들어졌어요" and fetches the Quests again.
 
 **The date·time sheet** (`src/screens/date-time-sheet.tsx`) is shared: "언제" with the choice in words ("오늘 19:00"),
 21 days from today in Korea's time, the hours and the minutes by tens, and "확인". **The map view**
@@ -948,9 +938,6 @@ Behind a hook are three layers:
 | `attendGlobalEvent`                                                  | The User's Quest for the Global Event                        | `POST /quests` with `{ globalEventId }`                                 |
 | `inviteToQuest`                                                      | Nothing                                                      | `POST /quests/:questId/invitations`                                     |
 | `acceptInvitation`, `declineInvitation`                              | The Quest; nothing                                           | `POST /quest-invitations/:id/accept`, `/decline`                        |
-| `requestMatching`, `listMatchingRequests`                            | The request; the waiting requests                            | `POST`, `GET /matching-requests`                                        |
-| `getMatchingRequest`                                                 | The latest request for a Global Event                        | `GET /matching-requests/:globalEventId`                                 |
-| `withdrawMatchingRequest`                                            | Nothing                                                      | `POST /matching-requests/:globalEventId/withdraw`                       |
 | `askAssistant`                                                       | The Assistant's reply to the conversation                    | `POST /assistant/messages`                                              |
 
 The mock keeps the Friends, the Friend Requests and the Invite Links in memory while the app runs
@@ -1079,8 +1066,8 @@ socket server's README describes:
 - The signals fetch what they name again: `friends-changed` the Friends, the positions and the Friend Requests,
   `quests-changed` the Quests (the open room's Quest among them), the invitations, the requests to join and the
   Leader's invitations, the recruiting Quests and the User's requests to join,
-  `party-changed` the Parties and the positions, `global-events-changed` the Global Events and the Quests,
-  `matching-changed` the requests for Matching, the Quests and the recruiting Quests. When the app returns to the
+  `party-changed` the Parties and the positions, `global-events-changed` the Global Events and the Quests. When the
+  app returns to the
   front, the lists of 알림, the Friend Requests among them, are fetched again too.
 - `shuttle-vehicles-updated` replaces the shuttle's vehicles in the cache of `GET /shuttle/vehicles` while the
   shuttle layer is on, which is while that query is in use; a set that comes while it is off is dropped. When the

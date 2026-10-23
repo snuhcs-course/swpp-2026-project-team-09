@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -16,7 +17,6 @@ import {
   FRIENDS_KEY,
   GLOBAL_EVENTS_KEY,
   JOIN_REQUESTS_KEY,
-  MATCHING_REQUESTS_KEY,
   MY_JOIN_REQUESTS_KEY,
   MY_PARTY_KEY,
   PARTIES_KEY,
@@ -51,7 +51,6 @@ const REFETCH: Record<string, readonly QueryKey[]> = {
   // Who is in the User's Party changes whom the User sees.
   'party-changed': [MY_PARTY_KEY, PARTIES_KEY, POSITIONS_KEY],
   'global-events-changed': [GLOBAL_EVENTS_KEY, QUESTS_KEY],
-  'matching-changed': [MATCHING_REQUESTS_KEY, QUESTS_KEY, RECRUITING_KEY],
 };
 
 // The lists of what waits for the User, which 알림 and the badge on 파티 show.
@@ -69,7 +68,6 @@ const SHOWN: readonly QueryKey[] = [
   SHUTTLE_VEHICLES_KEY,
   RECRUITING_KEY,
   MY_JOIN_REQUESTS_KEY,
-  MATCHING_REQUESTS_KEY,
   SENT_INVITATIONS_KEY,
   ...WAITING,
 ];

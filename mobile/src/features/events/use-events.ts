@@ -3,18 +3,12 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
-import {
-  globalEventAnnouncersQuery,
-  globalEventsQuery,
-  matchingRequestsQuery,
-  questsQuery,
-  recruitingQuestsQuery,
-} from '@/api/queries';
+import { globalEventAnnouncersQuery, globalEventsQuery, questsQuery, recruitingQuestsQuery } from '@/api/queries';
 import { askAgain, type ScreenData } from '@/api/screen-data';
-import type { MatchingRequest } from '@/api/matching-types';
 import type { GlobalEvent, Quest } from '@/api/types';
 import type { RecruitingQuest } from '@/api/party-types';
 import { now } from '@/clock';
@@ -25,13 +19,12 @@ type Results = [
   UseQueryResult<{ eventId: string; announcer: string }[]>,
   UseQueryResult<RecruitingQuest[]>,
   UseQueryResult<Quest[]>,
-  UseQueryResult<MatchingRequest[]>,
 ];
 
 // The list waits for the Global Events and fails with them. What the cards add to an event, its source, its recruiting
-// Quests, whether the User holds a Quest for it and whether the User's request waits, is left out while it is missing.
+// Quests and whether the User holds a Quest for it, is left out while it is missing.
 function combine(results: Results): ScreenData<EventSources> {
-  const [events, announcers, recruiting, quests, matching] = results;
+  const [events, announcers, recruiting, quests] = results;
   return {
     data:
       events.data === undefined
@@ -41,7 +34,6 @@ function combine(results: Results): ScreenData<EventSources> {
             announcers: announcers.data ?? [],
             recruiting: recruiting.data ?? [],
             quests: quests.data ?? [],
-            matching: matching.data ?? [],
             now: now(),
           },
     isPending: events.isPending,
@@ -54,20 +46,18 @@ type ExtraResults = [
   UseQueryResult<{ eventId: string; announcer: string }[]>,
   UseQueryResult<RecruitingQuest[]>,
   UseQueryResult<Quest[]>,
-  UseQueryResult<MatchingRequest[]>,
 ];
 
 // What the cards add to Global Events that came from elsewhere, such as the Assistant's cards, which the server filled:
 // the list of events is not fetched again, and what is missing is left out as on the tab.
 export function useSourcesFor(events: readonly GlobalEvent[]): EventSources {
   return useQueries({
-    queries: [globalEventAnnouncersQuery, recruitingQuestsQuery, questsQuery, matchingRequestsQuery],
-    combine: ([announcers, recruiting, quests, matching]: ExtraResults): EventSources => ({
+    queries: [globalEventAnnouncersQuery, recruitingQuestsQuery, questsQuery],
+    combine: ([announcers, recruiting, quests]: ExtraResults): EventSources => ({
       events,
       announcers: announcers.data ?? [],
       recruiting: recruiting.data ?? [],
       quests: quests.data ?? [],
-      matching: matching.data ?? [],
       now: now(),
     }),
   });
@@ -75,7 +65,7 @@ export function useSourcesFor(events: readonly GlobalEvent[]): EventSources {
 
 export function useEventSources(): ScreenData<EventSources> {
   return useQueries({
-    queries: [globalEventsQuery, globalEventAnnouncersQuery, recruitingQuestsQuery, questsQuery, matchingRequestsQuery],
+    queries: [globalEventsQuery, globalEventAnnouncersQuery, recruitingQuestsQuery, questsQuery],
     combine,
   });
 }

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
@@ -22,7 +23,7 @@ afterEach(() => {
 
 async function renderSheet(onClose: () => void): Promise<void> {
   await render(
-    <BottomSheet label="AI 매칭" onClose={onClose} open>
+    <BottomSheet label="파티 찾기/모집" onClose={onClose} open>
       <Text>인원</Text>
     </BottomSheet>,
   );
@@ -45,7 +46,7 @@ describe('BottomSheet', () => {
     const onClose = jest.fn<void, []>();
     await renderSheet(onClose);
 
-    await userEvent.press(screen.getByRole('button', { name: 'AI 매칭 닫기' }));
+    await userEvent.press(screen.getByRole('button', { name: '파티 찾기/모집 닫기' }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });

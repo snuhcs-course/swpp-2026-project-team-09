@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -97,7 +98,7 @@ export function Panels(): ReactElement {
       <SidePanel label="친구" onClose={close} open={open === 'side'}>
         <AppBar actions={<IconButton icon="x" label="닫기" onPress={close} />} count={12} line={false} title="친구" />
       </SidePanel>
-      <BottomSheet label="AI 매칭" onClose={close} open={open === 'sheet'}>
+      <BottomSheet label="파티 찾기/모집" onClose={close} open={open === 'sheet'}>
         <Text style={styles.body}>인원</Text>
       </BottomSheet>
     </Section>

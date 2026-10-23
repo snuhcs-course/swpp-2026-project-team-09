@@ -7,6 +7,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
@@ -41,7 +42,6 @@ export const SHUTTLE_VEHICLES_KEY = ['shuttle-vehicles'] as const;
 type MenusKey = readonly ['menus', string];
 export const RECRUITING_KEY = ['recruiting'] as const;
 export const MY_JOIN_REQUESTS_KEY = ['my-join-requests'] as const;
-export const MATCHING_REQUESTS_KEY = ['matching-requests'] as const;
 export const PARTY_CHAT_KEY = ['party-chat'] as const;
 export const PAST_QUESTS_KEY = ['past-quests'] as const;
 export const MY_TAGS_KEY = ['my-tags'] as const;
@@ -146,10 +146,6 @@ export function eventRecruitingQuery(
 export const myJoinRequestsQuery = queryOptions({
   queryKey: MY_JOIN_REQUESTS_KEY,
   queryFn: () => apiClient.listMyJoinRequests(),
-});
-export const matchingRequestsQuery = queryOptions({
-  queryKey: MATCHING_REQUESTS_KEY,
-  queryFn: () => apiClient.listMatchingRequests(),
 });
 // The User's tags, and the mocked parts of 찾기 (`./quest-parts/`).
 export const myTagsQuery = queryOptions({ queryKey: MY_TAGS_KEY, queryFn: () => apiClient.listMyTags() });
