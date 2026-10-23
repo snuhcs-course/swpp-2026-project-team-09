@@ -82,6 +82,7 @@ describe('the event cards of an answer', () => {
     expect(chatCard(CAREER.id).getByText('오늘 18:00–20:00')).toBeVisible();
     expect(chatCard(CAREER.id).getByText('같이 갈 파티 2개')).toBeVisible();
     expect(chatCard(CAREER.id).getByRole('button', { name: '파티 찾기/모집' })).toBeVisible();
+    expect(chatCard(CAREER.id).queryByRole('button', { name: 'AI 매칭' })).toBeNull();
   });
 
   it('are sent back as their references only', async () => {

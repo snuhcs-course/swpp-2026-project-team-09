@@ -41,8 +41,7 @@ The prototype was meant to validate that:
 - live positions travel from one phone through the servers to another within seconds, only between Users who agreed
   to share, and only on campus;
 - Kakao's map can be shown in a React Native app through a native module of our own, with Avatars that glide;
-- strangers interested in the same event can be grouped by Matching into a Shared Quest, and then into a Party
-  (Matching and its match server were removed in Iteration 2);
+- strangers interested in the same event can find each other through a recruiting Quest, share it, and then a Party;
 - the servers work together: the three demo flows below run end to end against the built servers in CI
   (`flow-tests`).
 
@@ -57,11 +56,10 @@ The prototype was meant to validate that:
 - **Location Sharing**: the Master Switch on 내 정보, the position sent every 5 seconds while the app is open and,
   on Android, every 30 seconds in the background under a notification; Avatars dimmed after 2 minutes without a
   position and removed after 10; nobody shown outside the Campus Boundary.
-- **Quests and Matching**: Quests for a Global Event or a plan of the User's own, with Sub Quests; recruiting on the
-  식사, 진로, 취미 and 공연 Boards with a Join Policy; join requests and invitations; Matching for a Global Event in
-  groups of 2 to 4, run in rounds every minute. The Meetup between Friends was retired in Iteration 2: a plan with
-  a Friend is a 비공개 파티, a Closed Quest. Matching was removed in Iteration 2 with the match server: Users gather
-  for an event by recruiting on a Board.
+- **Quests**: Quests for a Global Event or a plan of the User's own, with Sub Quests; recruiting on the 식사, 진로,
+  취미 and 공연 Boards with a Join Policy; join requests and invitations. The Meetup between Friends was retired in
+  Iteration 2: a plan with a Friend is a 비공개 파티, a Closed Quest. Matching, which grouped Users for an event in
+  rounds run by a match server, was removed in Iteration 2 (ADR 0007).
 - **Parties**: a Party opened for a Quest, entered by its Holders, with its plan, its members on the map and the
   Leader's controls.
 - **Timetable**: classes entered with their times and Places; today's classes appear as Class Quests.
@@ -79,10 +77,9 @@ The prototype was meant to validate that:
 
 Each flow is what a User does with the app on campus, on two phones, or on one phone with the demo data.
 
-1. **Event**: two Users sign in. An Administrator publishes a Global Event on the admin site. Both Users choose the
-   event and ask for Matching in a group of two. Within a minute both see the same Shared Quest. One opens the Quest's
-   Party and the other enters it. (Matching was removed in Iteration 2: one now recruits for the event and the other
-   joins.) Each sees the other's Avatar move on the map. One taps the Quest and sees the walking route to the event.
+1. **Event**: two Users sign in. An Administrator publishes a Global Event on the admin site. One User
+   attends the event and recruits for it on a Board; the other finds the Quest on the event's card and joins it, so
+   both hold the same Shared Quest. One opens the Quest's Party and the other enters it. Each sees the other's Avatar move on the map. One taps the Quest and sees the walking route to the event.
 2. **Friend**: one User sends an Invite Link through a messenger. The other opens it and accepts. Both see each
    other's Avatar. One proposes a Meetup and the other accepts it. Both see the Shared Quest it made. (The Meetup was
    retired in Iteration 2.)
@@ -103,8 +100,8 @@ repository under `docs/demo/iteration-1/`. What each one shows:
   [login.mp4](docs/demo/iteration-1/login.mp4)
 - The map, with the Friends and the Quests over it, a Global Event's card, the menus, and the dining and shuttle
   layers: [map.mp4](docs/demo/iteration-1/map.mp4)
-- Global Events on the 행사 tab, with an event's source page, a request for Matching, and a request to join a Quest
-  that recruits for the event: [event.mp4](docs/demo/iteration-1/event.mp4)
+- Global Events on the 행사 tab, with an event's source page and a request to join a Quest that recruits for
+  the event: [event.mp4](docs/demo/iteration-1/event.mp4)
 - Friends, with a Friend Request by Friend ID, the sharing switch of each Friend, the end of a friendship, and the
   Master Switch: [friends.mp4](docs/demo/iteration-1/friends.mp4)
 - 내 정보, with the notifications, the profile, and a class added to the timetable and then corrected:

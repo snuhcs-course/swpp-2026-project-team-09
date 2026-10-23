@@ -299,6 +299,23 @@ exist, because PostgreSQL creates them on an empty volume; those errors are expe
 server was removed also brings back its `match` role and database, which nothing uses. A `manual-` dump is not among the
 seven the deploy run keeps, so it stays until a person deletes it.
 
+## Removing the match server
+
+Matching and the match server were removed in October 2026 (ADR 0007). A Dev Server that ran the match server keeps
+its container, its database and its settings until a team member removes them, once, after the first deploy without
+it. The GitHub rulesets must already have stopped requiring the `match-server` check
+([infra/production/README.md](../production/README.md#removing-the-match-server-from-a-running-environment)).
+
+```bash
+sudo docker rm --force snu-now-match-server-1
+dc exec -T postgres pg_dump --username postgres -Fc match > /srv/team/snu-now-backups/manual-match-$(date -u +%Y%m%dT%H%M%SZ).dump
+dc exec -T postgres psql --username postgres --dbname postgres --command='DROP DATABASE match' --command='DROP ROLE match'
+```
+
+The first line removes the container, which Compose no longer knows as a service, so `dc rm` cannot. `dc` is the
+function of [Compose by hand](#compose-by-hand). The settings file may keep `MATCH_DB_PASSWORD`,
+`MATCH_SERVER_TOKEN` and `ROUND_INTERVAL_SECONDS`; nothing reads them, and they can be deleted from it.
+
 ## Emptying the data and starting again
 
 This deletes every User, Quest, Party and collected Global Event, and the Administrators. Take a `manual-` dump first

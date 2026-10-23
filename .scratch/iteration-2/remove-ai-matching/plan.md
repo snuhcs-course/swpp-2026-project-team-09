@@ -158,7 +158,8 @@ volume) and in Production on RDS (created by the database Job in `infra/producti
 match-server`. Then an `all` Release (or main-server's), then the database step above, then `terraform apply` for the
   ECR repository.
 - **Dev Server:** `compose up` keeps the old `match-server` container as an orphan; remove it once with
-  `docker compose rm --stop --force match-server` in the deployment folder, and drop the database as above.
+  `sudo docker rm --force snu-now-match-server-1` (Compose no longer knows the service, so `compose rm` cannot), and
+  drop the database as above. Both runbooks now hold these steps (`infra/production/README.md`, `infra/deploy/README.md`).
 - **GitHub:** if branch protection on the main lines requires the `match-server` check, remove it there, or no PR can
   merge once the job is gone.
 

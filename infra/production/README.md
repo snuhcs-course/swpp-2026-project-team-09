@@ -591,6 +591,52 @@ time.
 - **`initial-administrator-emails`** is read only while the database holds no Administrator. Afterwards Administrators
   register each other on the admin site.
 
+### Removing the match server from a running environment
+
+Matching and the match server were removed in October 2026 (ADR 0007). A Release applies without pruning, so a cluster
+that ran the match server keeps its objects until a team member removes them. Do it once, in this order.
+
+1. **GitHub.** Make the repository's rulesets stop requiring the `match-server` check; CI no longer runs that job, so
+   a ruleset that still requires it blocks every merge.
+2. **The match server's objects**, before the main server's Release, whose network policy no longer admits it:
+
+   ```bash
+   kubectl --namespace snunow delete deployment/match-server service/match-server networkpolicy/match-server
+   ```
+
+3. **The Release.** The commit that drops `quests.match_id` (migration `20261023120000_drop_quest_match_ids`) goes in
+   a later main-server Release than the rest of the removal. The main server runs 2 replicas with `maxSurge: 1` and
+   `maxUnavailable: 0`, so its old pods keep serving, and reading `quests.match_id`, for about a minute after the new
+   pod has dropped the column: Quest reads on them fail until they stop. Release the removal first, and the drop once
+   no pod of an earlier commit runs; or release both at once and accept that minute.
+4. **The `match` database and role.** Keep a dump first, from a `postgres:18` pod as in
+   [psql as the master user](#psql-as-the-master-user), in `infra/production/terraform`:
+
+   ```bash
+   kubectl --namespace snunow run dump --restart=Never --image=postgres:18 --labels=database-client=true \
+     --env=PGHOST="$(terraform output -raw database_endpoint)" \
+     --env=PGUSER="$(terraform output -raw database_master_username)" \
+     --env=PGPASSWORD="$(terraform output -raw database_master_password)" \
+     --env=PGSSLMODE=require --command -- sleep infinity
+   kubectl --namespace snunow wait --for=condition=Ready pod/dump
+   kubectl --namespace snunow exec dump -- pg_dump -Fc --dbname=match --file=/tmp/match.dump
+   kubectl --namespace snunow cp dump:/tmp/match.dump match.dump
+   kubectl --namespace snunow exec dump -- \
+     psql --dbname=postgres --command='DROP DATABASE match' --command='DROP ROLE match'
+   kubectl --namespace snunow delete pod dump
+   ```
+
+5. **Parameter Store.** Delete the two entries the Release no longer reads:
+
+   ```bash
+   aws ssm delete-parameters --region ap-northeast-2 \
+     --names /snunow/production/match-db-password /snunow/production/match-server-token
+   ```
+
+6. **ECR.** `terraform apply` deletes the `match-server` repository with its images.
+
+The Dev Server's part is in [infra/deploy/README.md](../deploy/README.md#removing-the-match-server).
+
 ## Capacity
 
 ```bash
