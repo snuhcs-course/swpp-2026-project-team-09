@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -17,7 +18,6 @@ import { NOW } from '../eval/runner.ts';
 import { ask, postAssistantMessages } from './assistant.js';
 import { call, turn as traceOf } from './eval-traces.ts';
 import { type SeededDatabase, seededDatabase } from './containers.js';
-import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
@@ -256,7 +256,7 @@ describe('The world the cases refer to', () => {
 
   beforeAll(async () => {
     database = await seededDatabase(inject('settings'));
-    app = await startApp(database.settings, [], refuseKakao, refuseMatchServer, model.model);
+    app = await startApp(database.settings, [], refuseKakao, model.model);
     vi.spyOn(app.get<Clock>(CLOCK), 'now').mockImplementation(() => new Date(NOW));
     world = await seedWorld(app, database.url);
     await world.refresh();

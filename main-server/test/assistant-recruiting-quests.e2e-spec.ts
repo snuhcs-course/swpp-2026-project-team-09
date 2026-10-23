@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -14,7 +15,6 @@ import { getRecruitingQuests, ownQuest } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
-import { refuseMatchServer } from './match-server.js';
 
 // The chat Assistant's searchRecruitingQuests and showQuests, with the scripted model in the model's place. The files
 // share the database, so each test seeds Quests that meet in a month of 2097 of its own, which no other file uses.
@@ -25,7 +25,7 @@ let reader: TestUser;
 const model = new ScriptedModel();
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model.model);
+  app = await startApp(inject('settings'), [], refuseKakao, model.model);
   leader = await signInUser(app);
   reader = await signInUser(app);
 });

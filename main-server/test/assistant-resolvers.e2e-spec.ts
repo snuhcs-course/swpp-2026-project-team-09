@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -16,7 +17,6 @@ import { connectToDatabase, storeEvent } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
-import { refuseMatchServer } from './match-server.js';
 
 // The chat Assistant's resolvers, with the scripted model in the model's place. The app's clock stands in March 2095,
 // which no other file uses, and the Friends' names and the events' titles are this file's own. The seed's Places are
@@ -50,7 +50,7 @@ function eventAt(title: string, koreaTime: string): Promise<GlobalEvent> {
 }
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model.model);
+  app = await startApp(inject('settings'), [], refuseKakao, model.model);
   vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(NOW);
   prisma = connectToDatabase();
   user = await named('홍길동');

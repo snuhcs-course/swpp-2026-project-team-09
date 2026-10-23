@@ -16,6 +16,7 @@
 // 2026-10-06  Opus 5.5   prompted by fyoon46
 // 2026-10-06  Fable 5.1  prompted by fyoon46
 // 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+// 2026-10-23  Opus 5.5   prompted by AhnJinYoung
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -246,7 +247,8 @@ model Quest {
   board         QuestBoard?
   // The recruiting post, up to 200 characters, which the migration checks.
   description   String        @default("")
-  // The match server's match this Quest was created for, so that a repeated request finds it (README.md: Matching).
+  // Was the match server's match this Quest was created for. Nothing reads or writes it since Matching was removed;
+  // the column goes in a migration of its own (.scratch/iteration-2/remove-ai-matching/plan.md).
   matchId       String?       @unique @map("match_id") @db.Uuid
   createdAt     DateTime      @default(now()) @map("created_at")
   holders       QuestHolder[]

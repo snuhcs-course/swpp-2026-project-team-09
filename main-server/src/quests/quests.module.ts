@@ -4,6 +4,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
@@ -17,7 +18,6 @@ import { InvitationsService } from './invitations.service.js';
 import { JoinRequestsController } from './join-requests.controller.js';
 import { JoinRequestsService } from './join-requests.service.js';
 import { LeaderService } from './leader.service.js';
-import { MatchingQuestsService } from './matching-quests.service.js';
 import { QuestsController } from './quests.controller.js';
 import { QuestsService } from './quests.service.js';
 import { RecruitingService } from './recruiting.service.js';
@@ -34,9 +34,8 @@ import { SubQuestsService } from './sub-quests.service.js';
     LeaderService,
     JoinRequestsService,
     InvitationsService,
-    MatchingQuestsService,
     { provide: CLOCK, useValue: systemClock },
   ],
-  exports: [QuestsService, RecruitingService, CLOCK, MatchingQuestsService],
+  exports: [QuestsService, RecruitingService, CLOCK],
 })
 export class QuestsModule {}

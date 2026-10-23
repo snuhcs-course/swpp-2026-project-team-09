@@ -8,6 +8,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -144,16 +145,15 @@ export class QuestsService {
 
   // A Quest for the Global Event, with the Holders and the Sub Quest for attending it, titled as the event unless a
   // title is given. The title is the Quest's own and does not follow later changes to the event's. Each Holder must
-  // hold no Quest for it yet, or the unique index on the Holders refuses it. The Holders enter in the order given. A
-  // match's Quest names the match, once.
+  // hold no Quest for it yet, or the unique index on the Holders refuses it. The Holders enter in the order given.
   createForGlobalEvent(
     globalEvent: Pick<GlobalEvent, 'id' | 'title'>,
     holderIds: readonly string[],
     tx: Prisma.TransactionClient,
-    { matchId, title = globalEvent.title, ...settings }: QuestSettings & { matchId?: string; title?: string } = {},
+    { title = globalEvent.title, ...settings }: QuestSettings & { title?: string } = {},
   ): Promise<string> {
     return this.create(
-      { title, globalEventId: globalEvent.id, matchId, subQuest: { attending: true } },
+      { title, globalEventId: globalEvent.id, subQuest: { attending: true } },
       holderIds,
       settings,
       tx,
@@ -241,19 +241,17 @@ export class QuestsService {
     quest: {
       title: string;
       globalEventId: string | null;
-      matchId?: string;
       subQuest: Prisma.SubQuestCreateWithoutQuestInput;
     },
     holderIds: readonly string[],
     { leaderId = holderIds[0], ...settings }: QuestSettings,
     tx: Prisma.TransactionClient,
   ): Promise<string> {
-    const { title, globalEventId, matchId, subQuest } = quest;
+    const { title, globalEventId, subQuest } = quest;
     const { id } = await tx.quest.create({
       data: {
         title,
         globalEventId,
-        matchId,
         leaderId,
         ...settings,
         holders: { create: holderIds.map((userId) => ({ userId, globalEventId })) },

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication, Logger } from '@nestjs/common';
@@ -12,7 +13,6 @@ import request from 'supertest';
 import { inject } from 'vitest';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { ask, postAssistantMessages, type SentMessage } from './assistant.js';
-import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel } from './scripted-model.js';
 import { signIn } from './sign-in.js';
 import { startApp } from './start-app.js';
@@ -29,7 +29,7 @@ let app: INestApplication<Server>;
 let accessToken: string;
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model.model);
+  app = await startApp(inject('settings'), [], refuseKakao, model.model);
   ({ accessToken } = await signIn(app));
 });
 
@@ -187,7 +187,6 @@ beforeAll(async () => {
     { ...inject('settings'), ASSISTANT_TIMEOUT_MS: '200', ASSISTANT_DAILY_MESSAGES: '2' },
     [],
     refuseKakao,
-    refuseMatchServer,
     model.model,
   );
 });
@@ -244,13 +243,7 @@ describe('Without an OpenRouter key', () => {
   let keyless: INestApplication<Server>;
 
   beforeAll(async () => {
-    keyless = await startApp(
-      { ...inject('settings'), OPENROUTER_API_KEY: '' },
-      [],
-      refuseKakao,
-      refuseMatchServer,
-      model.model,
-    );
+    keyless = await startApp({ ...inject('settings'), OPENROUTER_API_KEY: '' }, [], refuseKakao, model.model);
   });
 
   afterAll(async () => {

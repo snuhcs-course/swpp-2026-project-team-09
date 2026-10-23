@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,7 +14,6 @@ import { sentProposalOf as sentBackProposal } from '../src/assistant/proposal.js
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { type Settings } from '../src/common/settings.js';
 import { postAssistantMessages, type SentMessage } from '../test/assistant.js';
-import { refuseMatchServer } from '../test/match-server.js';
 import { startApp } from '../test/start-app.js';
 import { refuseKakao } from '../test/walking-route.js';
 import { type CaseKind, type CaseProposal, type CaseTurn, type EvalCase, kindOf } from './cases.ts';
@@ -60,7 +60,6 @@ export async function startEvalApp(
     },
     [],
     refuseKakao,
-    refuseMatchServer,
     recorder.wrap(model),
     [runObserverModule(recorder)],
   );

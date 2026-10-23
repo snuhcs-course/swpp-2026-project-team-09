@@ -12,6 +12,7 @@
  * 2026-10-04  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Module, StandardSchemaValidationPipe } from '@nestjs/common';
@@ -37,7 +38,6 @@ import { HealthModule } from './health/health.module.js';
 import { InviteLinksModule } from './invite-links/invite-links.module.js';
 import { LobbyModule } from './lobby/lobby.module.js';
 import { LocationSharingModule } from './location-sharing/location-sharing.module.js';
-import { MatchingModule } from './matching/matching.module.js';
 import { MenusModule } from './menus/menus.module.js';
 import { PartiesModule } from './parties/parties.module.js';
 import { PlacesModule } from './places/places.module.js';
@@ -84,7 +84,6 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     ShuttleModule,
     QuestsModule,
     LocationSharingModule,
-    MatchingModule,
     PartiesModule,
     TimetableModule,
     AssistantModule,
