@@ -11,14 +11,16 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "oxlint --type-aware",
+    "lint": "oxlint --type-aware && node ../scripts/check-test-levels.ts 'test/**/*.e2e.test.ts' 'test/**/*.integration.test.ts' '!test/admin-ui/**/*.integration.test.ts'",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:admin-ui": "vitest run --config test/admin-ui/vitest.config.ts"
   },
   "devDependencies": {
     "@types/node": "^24.19.1",
     "oxlint": "^1.86.0",
     "oxlint-tsgolint": "^7.0.2003",
+    "playwright": "1.64.1",
     "prettier": "^3.9.9",
     "socket.io-client": "^4.8.4",
     "typescript": "~6.0.3",

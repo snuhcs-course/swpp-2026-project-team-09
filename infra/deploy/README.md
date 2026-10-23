@@ -376,7 +376,7 @@ has run.
   since the bootstrap never rewrites an existing file. In the commit, add it to `compose.deploy.yaml`,
   `snu-now.env.example` and the settings the bootstrap writes.
 - The tests: `bats --recursive infra/deploy` and `shellcheck` on every `*.sh` and `*.bats` under `infra/deploy`
-  (CI's `deploy-scripts` job runs both), and `pnpm test` in `flow-tests`, whose `test/deploy-stack.flow.ts` starts
+  (CI's `deploy-scripts` job runs both), and `pnpm test` in `flow-tests`, whose `test/deploy-stack.e2e.test.ts` starts
   the deployment stack and calls it through the proxy.
 
 A deploy run waits only for the five server checks, not for `deploy-scripts`, so a commit that breaks `deploy.sh`
@@ -399,8 +399,8 @@ Server A (`ssh swpp-a`, `http://swpp26t09.147-46-242-169.sslip.io`) stays empty.
 
 The bats tests in `test/` cover the deploy run's decisions and the order of its steps with fakes in place of `git`,
 `docker` and `curl`, and the bootstrap's settings file, folders and units with fakes in place of `apt-get`, `git` and
-`systemctl`. `flow-tests/test/deploy-stack.flow.ts` covers the stack's routing through the proxy. These are checked by
-hand on the server instead, in the operations tickets of [P04-05](../../.scratch/iteration-2/P04-05-dev-deploy/):
+`systemctl`. `flow-tests/test/deploy-stack.e2e.test.ts` covers the stack's routing through the proxy. These are checked
+by hand on the server instead, in the operations tickets of [P04-05](../../.scratch/iteration-2/P04-05-dev-deploy/):
 
 - The bootstrap on the real server: the packages from Ubuntu's archive, the team folder's group and default ACL, the
   clone and `safe.directory`, and a second run that changes nothing. Ticket 06.

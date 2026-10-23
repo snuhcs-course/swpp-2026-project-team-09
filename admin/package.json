@@ -9,9 +9,13 @@
     "start": "next start --port 3100",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "next typegen && oxlint --type-aware",
+    "lint": "next typegen && oxlint --type-aware && node ../scripts/check-test-levels.ts '__tests__/**/*.unit.test.{ts,tsx}' '__tests__/*.integration.test.tsx' '__tests__/site/*.integration.test.ts'",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project 'integration*'",
+    "test:cov:unit": "vitest run --project unit --coverage",
+    "test:cov": "vitest run --coverage"
   },
   "dependencies": {
     "next": "16.3.7",
@@ -26,6 +30,7 @@
     "@types/node": "^24.0.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "~4.1.11",
     "jsdom": "^30.1.1",
     "oxlint": "^1.58.0",
     "oxlint-tsgolint": "^7.0.2001",
