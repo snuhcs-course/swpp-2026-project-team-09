@@ -45,14 +45,14 @@ A field near the top of its screen may never be covered. Check it, and record it
 
 ## Acceptance criteria
 
-- [ ] **Every input stays in view.**
+- [x] **Every input stays in view.**
   - On an Android phone, for each input in the list above, pressing the field brings the keyboard up with the field fully visible above it.
   - The field stays visible while typing several lines where the field allows them.
-- [ ] **Forms stay usable.**
+- [x] **Forms stay usable.**
   - In 파티 만들기, 수업 추가 / 수정 and 친구 추가, with the keyboard up, the focused field is in view, and the form's primary button can be reached without putting the keyboard down first, or right after it goes down.
-- [ ] **Sheets.** In a bottom sheet with a search, such as the party form's 행사, 친구 and 게시판 sheets, the search field and the first results stay above the keyboard.
-- [ ] **Room chat.** In 파티방, the chat input sits right above the keyboard, and the latest message stays in view.
-- [ ] **No regressions.**
+- [x] **Sheets.** In a bottom sheet with a search, such as the party form's 행사, 친구 and 게시판 sheets, the search field and the first results stay above the keyboard.
+- [x] **Room chat.** In 파티방, the chat input sits right above the keyboard, and the latest message stays in view.
+- [x] **No regressions.**
   - The main screen's AI input still rises above the keyboard and returns, as P07-09 made it.
   - The onboarding still works.
   - When the keyboard goes down, every screen returns to its place without a jump.
@@ -60,7 +60,7 @@ A field near the top of its screen may never be covered. Check it, and record it
   - with the keyboard shown at a height (a mocked keyboard event), the full-screen panel's footer and the bottom sheet's content rise by that height, and return when it hides
   - the room chat's input rises the same way
   - the existing main-chat, onboarding, party-form and timetable tests pass
-- [ ] Checked on an Android phone: every input in the list, each marked changed or checked as already fine. Also checked on iOS if one is at hand. Write what was and was not checked under `## Comments`.
+- [x] Checked on an Android phone: every input in the list, each marked changed or checked as already fine. Also checked on iOS if one is at hand. Write what was and was not checked under `## Comments`.
 
 ## Comments
 
@@ -141,3 +141,10 @@ The round answering the review of #119.
 - Tokens, estimated from the session's context growth because the session has no exact counter (no subagents were used):
   - input: about 5.2M, of which about 5.0M were cache reads and about 0.15M cache writes, about 30k uncached,
   - output: about 35k.
+
+### Phone check (2026-10-23)
+
+Checked by the person (Jaehyun0320) on an Android phone, a Galaxy S22 (SM-S901N), and reported as passing. The build was a debug build of all six P20 branches merged on `origin/2.0/Main` (a local branch, not pushed), against the servers in Docker with the demo profile. Not checked on iOS.
+
+- **Checked on the phone:** every input in the list stays above the keyboard. That covers the forms' fields and primary buttons, the party form's sheets with a search, 파티방's chat input, the 시간표 version list and the onboarding (a new User on the Docker servers). The AI input still rises and returns, and screens return to their place when the keyboard goes down.
+- **Not checked:** iOS.
