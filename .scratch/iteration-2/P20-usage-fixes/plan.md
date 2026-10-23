@@ -93,7 +93,7 @@ People (Friends, Party members, the User) and shuttle vehicles are Avatars. They
 - the friend panel's search: `screens/main/friend-panel.tsx`,
 - the 행사 tab's search: `screens/events/events-bar.tsx`,
 - 파티 → 찾기's search: `screens/party/find-tab.tsx`,
-- 시간표 version rename: `screens/me/version-rename.tsx`,
+- 시간표 version rename: `screens/me/version-rename.tsx`, in the week card's version list (`week-card.tsx` → `version-menu.tsx`), which stands in a RN `Modal` of its own, placed where the trigger was, not in `FullScreenPanel` nor in 내 정보's `ScrollView`,
 - 수업 추가 / 수정: `screens/timetable/class-form-screen.tsx`,
 - the onboarding, which already has `KeyboardAvoidingView`: check that it works on Android edge to edge,
 - the AI input: already rises, so keep it as it is unless one shared mechanism replaces `useKeyboardHeight`.
@@ -144,7 +144,7 @@ Fields at the top of a screen, such as the searches, may never be covered. Mark 
 **Checked in code.** `PartyScreen` (`screens/party/party-screen.tsx`) shows one of `FindTab`, `MineTab` or `InvitesTab` by the `tab` search parameter (`app/(signed-in)/(tabs)/party.tsx`). There is no gesture. `react-native-pager-view` is not installed.
 
 **Conflicts to handle.**
-- Sideways scrollers inside the tabs win inside their own area:
+- Sideways scrollers inside the tabs win inside their own area. The first two below are hidden in the server build, being mocks, so check them in the mock build:
   - 찾기's 같이 할 사람을 찾는 중 row (`find-tab.tsx`),
   - the official banner (`official-banner.tsx`),
   - 내 파티's `ChipRow`.

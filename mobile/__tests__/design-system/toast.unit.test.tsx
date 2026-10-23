@@ -3,11 +3,13 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
+import { hideKeyboard, KEYBOARD, showKeyboard } from '../support/keyboard';
 
 import { Button } from '@/design-system/button';
 import { ToastProvider, useNotReadyToast, useToast, useToastAbove } from '@/design-system/toast';
@@ -175,6 +177,23 @@ describe("Toast's place", () => {
 
     await fireEvent.press(screen.getByRole('button', { name: '추가' }));
 
+    expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 34 + 65 + 24 });
+  });
+
+  it('stands on the keyboard while it is up, still clear of what is claimed, and comes back down with it', async () => {
+    await render(
+      <SafeAreaInsetsContext value={{ top: 0, right: 0, bottom: 34, left: 0 }}>
+        <ToastProvider>
+          <ScreenWithNavigation />
+        </ToastProvider>
+      </SafeAreaInsetsContext>,
+    );
+    await fireEvent.press(screen.getByRole('button', { name: '추가' }));
+
+    await showKeyboard(KEYBOARD);
+    expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: KEYBOARD + 65 + 24 });
+
+    await hideKeyboard();
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 34 + 65 + 24 });
   });
 });

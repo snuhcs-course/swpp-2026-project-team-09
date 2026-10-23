@@ -4,10 +4,11 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { type ReactElement, useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type ReactElement, type ReactNode, useRef } from 'react';
+import { Keyboard, Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import type { GlobalEventCard, MapLayer, QuestProposal } from '@/api/assistant-types';
 import type { ShownChatCard, ShownRecruitingQuest } from '@/api/quest-parts-types';
 import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
@@ -24,6 +25,22 @@ const CHAT_EXAMPLES: readonly { words: string; icon: IconName; tint: string }[] 
   { words: '파티 찾기', icon: 'users', tint: color.party },
 ];
 
+// What a chat's scroll view holds, filling it: a press on it that nothing in it takes puts the keyboard down. It lies
+// inside the scroll view, not around it: on Android a JS responder around a scroll view takes the drag from it.
+function Dismissing({ style, children }: { style: StyleProp<ViewStyle>; children: ReactNode }): ReactElement {
+  return (
+    <Pressable
+      accessible={false}
+      onPress={() => {
+        Keyboard.dismiss();
+      }}
+      style={style}
+    >
+      {children}
+    </Pressable>
+  );
+}
+
 interface ChatEmptyProps {
   onSend: (text: string) => void;
   // How far from the sheet's bottom the content ends, clear of the AI input.
@@ -31,38 +48,40 @@ interface ChatEmptyProps {
 }
 
 // The empty chat: the greeting, where what the User writes goes, and the examples as rows. A drag puts the keyboard
-// down; a press on an example sends it at once, keyboard up or not.
+// down, and so does a press that no example takes; a press on an example sends it at once, keyboard up or not.
 export function ChatEmpty({ onSend, under }: ChatEmptyProps): ReactElement {
   return (
     <ScrollView
-      contentContainerStyle={[styles.empty, { paddingBottom: under }]}
+      contentContainerStyle={[styles.fill, { paddingBottom: under }]}
       keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
       testID="chat-empty"
     >
-      <Text accessibilityRole="header" style={styles.greeting}>
-        무엇을 도와드릴까요?
-      </Text>
-      <Text style={styles.notice}>대화 내용은 AI 제공자에게 전송돼요</Text>
-      <View style={styles.examples}>
-        {CHAT_EXAMPLES.map(({ words, icon, tint }) => (
-          <Pressable
-            accessibilityLabel={words}
-            accessibilityRole="button"
-            key={words}
-            onPress={() => {
-              onSend(words);
-            }}
-            style={({ pressed }) => [styles.example, pressed && styles.examplePressed]}
-          >
-            <View style={[styles.exampleIcon, { backgroundColor: tint }]}>
-              <Icon color={color.onPrimary} name={icon} size={18} />
-            </View>
-            <Text style={styles.exampleText}>{words}</Text>
-            <Icon color={color.inkMuted} name="chevronRight" size={18} />
-          </Pressable>
-        ))}
-      </View>
+      <Dismissing style={styles.empty}>
+        <Text accessibilityRole="header" style={styles.greeting}>
+          무엇을 도와드릴까요?
+        </Text>
+        <Text style={styles.notice}>대화 내용은 AI 제공자에게 전송돼요</Text>
+        <View style={styles.examples}>
+          {CHAT_EXAMPLES.map(({ words, icon, tint }) => (
+            <Pressable
+              accessibilityLabel={words}
+              accessibilityRole="button"
+              key={words}
+              onPress={() => {
+                onSend(words);
+              }}
+              style={({ pressed }) => [styles.example, pressed && styles.examplePressed]}
+            >
+              <View style={[styles.exampleIcon, { backgroundColor: tint }]}>
+                <Icon color={color.onPrimary} name={icon} size={18} />
+              </View>
+              <Text style={styles.exampleText}>{words}</Text>
+              <Icon color={color.inkMuted} name="chevronRight" size={18} />
+            </Pressable>
+          ))}
+        </View>
+      </Dismissing>
     </ScrollView>
   );
 }
@@ -211,14 +230,14 @@ interface ChatBubblesProps {
 }
 
 // The conversation: the User's bubbles at the right, the Assistant's at the left, and "···" while the Assistant
-// works. It keeps the latest in view. A drag puts the keyboard down; a press on a button sends it at once, keyboard up
-// or not.
+// works. It keeps the latest in view. A drag puts the keyboard down, and so does a press that no button takes; a press
+// on a button sends it at once, keyboard up or not.
 export function ChatBubbles(props: ChatBubblesProps): ReactElement {
   const { bubbles, waiting, onRetry, onShowLayer, cardActions, under } = props;
   const scroller = useRef<ScrollView>(null);
   return (
     <ScrollView
-      contentContainerStyle={[styles.bubbles, { paddingBottom: under }]}
+      contentContainerStyle={[styles.fill, { paddingBottom: under }]}
       keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
       onContentSizeChange={() => {
@@ -227,20 +246,22 @@ export function ChatBubbles(props: ChatBubblesProps): ReactElement {
       ref={scroller}
       testID="chat-bubbles"
     >
-      {bubbles.map((bubble, index) => (
-        <Bubble
-          bubble={bubble}
-          cardActions={cardActions}
-          key={bubble.id}
-          onRetry={bubble.failure === 'unavailable' && index === bubbles.length - 1 && !waiting ? onRetry : null}
-          onShowLayer={onShowLayer}
-        />
-      ))}
-      {waiting ? (
-        <View accessibilityLabel="답변을 기다리는 중" style={[styles.bubble, styles.theirs]} testID="waiting-bubble">
-          <Text style={styles.waiting}>···</Text>
-        </View>
-      ) : null}
+      <Dismissing style={styles.bubbles}>
+        {bubbles.map((bubble, index) => (
+          <Bubble
+            bubble={bubble}
+            cardActions={cardActions}
+            key={bubble.id}
+            onRetry={bubble.failure === 'unavailable' && index === bubbles.length - 1 && !waiting ? onRetry : null}
+            onShowLayer={onShowLayer}
+          />
+        ))}
+        {waiting ? (
+          <View accessibilityLabel="답변을 기다리는 중" style={[styles.bubble, styles.theirs]} testID="waiting-bubble">
+            <Text style={styles.waiting}>···</Text>
+          </View>
+        ) : null}
+      </Dismissing>
     </ScrollView>
   );
 }
@@ -250,7 +271,9 @@ const TAIL = 6;
 const EXAMPLE_ICON = 36;
 
 const styles = StyleSheet.create({
-  empty: { gap: space[3], paddingTop: space[4], paddingHorizontal: space[4] },
+  // A chat's scroll view: what it holds fills it, so that a press below the last of it puts the keyboard down too.
+  fill: { flexGrow: 1 },
+  empty: { flexGrow: 1, gap: space[3], paddingTop: space[4], paddingHorizontal: space[4] },
   greeting: { ...text.titleLg, color: color.ink },
   notice: { ...text.caption, marginTop: -space[2], color: color.inkMuted },
   examples: { gap: space[2] },
@@ -275,7 +298,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   exampleText: { flex: 1, fontFamily: font.semiBold, fontSize: 15, lineHeight: 22, color: color.ink },
-  bubbles: { gap: space[3], paddingTop: space[2], paddingHorizontal: space[4] },
+  bubbles: { flexGrow: 1, gap: space[3], paddingTop: space[2], paddingHorizontal: space[4] },
   bubble: { paddingVertical: space[3], borderRadius: radius.lg },
   mine: {
     alignSelf: 'flex-end',

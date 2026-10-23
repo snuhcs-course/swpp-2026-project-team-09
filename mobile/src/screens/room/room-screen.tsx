@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -188,6 +189,8 @@ function Body({ room, actions, onAsk, open }: BodyProps): ReactElement {
 }
 
 // A Quest's room, the frame's `PartyDetail`: what the Holders plan, who comes and whether the Quest's Party runs.
+// While the User types in 파티 채팅, the footer's 나가기 gives way, so that the input stands right above the keyboard
+// with the latest message over it.
 export function RoomScreen({ questId }: { questId: string }): ReactElement {
   const { data: room, isPending, refetch, gone } = useRoom(questId);
   const actions = useRoomActions();
@@ -213,6 +216,7 @@ export function RoomScreen({ questId }: { questId: string }): ReactElement {
         )
       }
       actions={room === undefined ? undefined : <RecruitingActions room={room} />}
+      footerHidesForKeyboard
       leave={{ kind: 'back', onPress: leaveRoom }}
       title="파티"
     >

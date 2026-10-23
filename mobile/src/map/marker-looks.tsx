@@ -5,17 +5,28 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { MapDot, MapPerson, MapPin, type MapPlaceKind, MapRestaurant, type PersonTone } from '@/design-system';
+import {
+  MapDot,
+  MapGroupDot,
+  MapGroupPin,
+  MapPerson,
+  MapPin,
+  type MapPlaceKind,
+  MapRestaurant,
+  type PersonTone,
+} from '@/design-system';
 
 // How something on the map looks. One picture is made for each look and kept under the look's name, so two things
 // that look the same share one, and the number of pictures is the number of names:
 // - two for the User's own Avatar;
 // - for each person, the two sizes in each tone the person was seen in, with and without a photo, dimmed while the
 //   person's position was old, and each of them selected, which only the one selected person ever asks for;
-// - for each kind of place, the dot and the pin, the pin once for each count it shows, and each of them selected.
+// - for each kind of place, the dot and the pin, the pin once for each count it shows, and each of them selected;
+// - for each set of kinds that stand together at one place, the dot and the pin, and each of them selected.
 // No look holds a name or a label: that is the map's own text under the marker (`text` of `MapMarker`).
 //
 // A name holds nothing that changes from one answer of the server to the next: a person is named by their id and by
@@ -50,7 +61,9 @@ export type MarkerLook =
   // A place, of each kind the design system has. `count` is drawn on a pin, never on a dot; 0 or left out, none.
   | { kind: MapPlaceKind; form: MarkerForm; count?: number; selected?: boolean }
   // The Place of restaurants with menus today, at every level of detail.
-  | { kind: 'restaurant'; selected?: boolean };
+  | { kind: 'restaurant'; selected?: boolean }
+  // Things of several kinds at one place: a small round for each kind, in the order given.
+  | { kind: 'group'; kinds: readonly MapPlaceKind[]; form: MarkerForm; selected?: boolean };
 
 function parts(...names: (string | false)[]): string {
   return names.filter((name) => name !== false).join(':');
@@ -64,6 +77,9 @@ export function lookName(look: MarkerLook): string {
   const selected = look.selected === true && 'selected';
   if (look.kind === 'restaurant') {
     return parts('restaurant', selected);
+  }
+  if (look.kind === 'group') {
+    return parts('group', look.kinds.join('+'), look.form, selected);
   }
   if (look.kind === 'person') {
     const photo = look.photo !== null && 'photo';
@@ -107,6 +123,13 @@ export function LookView({ look, onPhotoSettled }: { look: MarkerLook; onPhotoSe
   }
   if (look.kind === 'restaurant') {
     return <MapRestaurant selected={look.selected} />;
+  }
+  if (look.kind === 'group') {
+    return look.form === 'dot' ? (
+      <MapGroupDot kinds={look.kinds} selected={look.selected} />
+    ) : (
+      <MapGroupPin kinds={look.kinds} selected={look.selected} />
+    );
   }
   return look.form === 'dot' ? (
     <MapDot kind={look.kind} selected={look.selected} />
