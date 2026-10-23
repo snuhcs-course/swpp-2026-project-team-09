@@ -289,15 +289,90 @@ xcrun simctl spawn booted log stream --predicate 'eventMessage CONTAINS "SnuNowM
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
 
-| Command             | Checks                                       |
-| ------------------- | -------------------------------------------- |
-| `pnpm lint`         | oxlint with type-aware rules                 |
-| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it) |
-| `pnpm typecheck`    | TypeScript in strict mode                    |
-| `pnpm test`         | Jest tests in `__tests__/`                   |
+| Command             | Checks                                                                |
+| ------------------- | --------------------------------------------------------------------- |
+| `pnpm lint`         | oxlint with type-aware rules, and that each test file names its level |
+| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it)                          |
+| `pnpm typecheck`    | TypeScript in strict mode                                             |
+| `pnpm test`         | Jest tests in `__tests__/`                                            |
+
+Each test file names its level ([ADR 0007](../docs/adr/0007-test-levels-by-what-a-test-starts.md)). A
+`.unit.test.ts(x)` file calls one module, a function, hook or component, whose collaborators are pure code or
+stand-ins. A `.integration.test.ts(x)` file starts the app's router over the mocks or the fake main server, or runs
+several of the app's layers together, such as a hook over the API client and its mocks. `pnpm test:unit` and
+`pnpm test:integration` run one level each; `pnpm test:cov` and `pnpm test:cov:unit` also measure the coverage of every
+file in `src/`, written to `coverage/`.
 
 A test may take up to 60 seconds: the first test of a file that touches a text input or an animation loads those
 parts of React Native, which is slow on a machine that has not run the tests before, as in CI.
+
+## Device runs
+
+Two journeys run a release build of the app on an Android emulator, driven by Maestro. M1 is a first run, from the
+sign-in through the consent and Onboarding to the map, and a relaunch that opens the map without signing in again
+(US-AUTH-01, scenario 1). M2 opens an Invite Link from outside the app, on a cold and on a warm start, and accepts it
+(US-FRIEND-01, scenario 2). The app answers from its own mock data and reaches no server, so they are integration
+tests ([ADR 0007](../docs/adr/0007-test-levels-by-what-a-test-starts.md)): their flows are in `maestro/integration/`
+and the steps they share in `maestro/subflows/`. Neither `pnpm test` nor CI runs them. Run them after changing a
+screen they pass through, on a Mac with Apple Silicon and the tools of "Build the app for Android".
+
+### The mock APK
+
+```bash
+pnpm build:mock-apk
+```
+
+It builds `android/app/build/outputs/apk/release/app-release.apk` with Homebrew's JDK 17 (`brew install openjdk@17`;
+JDK 25 breaks the build). The main server's and the socket server's addresses, Google's web client ID and
+`INVITE_LINK_HOST` are empty for the build, so the app signs in by its mock, answers from its mock data with the clock
+at the wireframes' moment, and opens Invite Links only through `snunow://`. The rest comes from `.env`, which needs
+`KAKAO_NATIVE_APP_KEY`: Kakao's SDK refuses to start without it. `ANDROID_X86_64` is unset, so the APK is for
+`arm64-v8a` alone, and it is signed with the debug key of Expo's template, as the dev APK is. The build generates
+`android/` again (`expo prebuild --clean`); after it, `pnpm android` makes a development build again.
+
+### The emulator
+
+The runs are made on one emulator: the system image `system-images;android-36;google_apis_playstore;arm64-v8a`
+(API 36, Google Play, `arm64-v8a`) with Android Studio's "Medium Phone" device profile, here an AVD named
+`Medium_Phone`. For a run whose result is reported, boot it cold and wait until it has started:
+
+```bash
+$ANDROID_HOME/emulator/emulator -avd Medium_Phone -no-snapshot-load -no-audio &
+until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1 ]; do sleep 2; done
+```
+
+The first runs, on 2026-10-23, used the emulator 37.1.11 and the system image's revision 7. Stop the emulator with
+`adb emu kill`.
+
+### Maestro
+
+Maestro CLI 2.11.0, which runs on JDK 17. Download `maestro.zip` from the release `cli-2.11.0` of
+`mobile-dev-inc/maestro` on GitHub and unpack it so that the CLI is `~/.maestro/bin/maestro`. `pnpm test:device` adds
+that folder to `PATH` and points `JAVA_HOME` at JDK 17 itself.
+
+### The command
+
+With the emulator started and nothing else connected:
+
+```bash
+pnpm test:device
+```
+
+It checks that exactly one device is connected, with ABI `arm64-v8a` and API 36, and that `maestro --version` prints
+2.11.0; turns the emulator's window, transition and animator scales to 0; reinstalls the mock APK; and runs
+`maestro test --format junit` over `maestro/integration/`. Each flow starts with a launch that clears the app's state,
+and the relaunch in M1 keeps it. The flows grant the app no permission: granted the location, the app watches it, and
+Google Play services may ask over the map to turn on Location Accuracy, a system screen that depends on the emulator's
+settings. So the app explains the location once on the map, and the flows answer "나중에".
+
+M2 on a cold start fails until the ticket in `.scratch/iteration-2/fix-invite-link-cold-start/` is fixed: the app
+lands on the map, not on the accept screen. M1 and M2 on a warm start pass.
+
+Each run writes into its own folder under `device-results/`, which git ignores, named by the date, the time and the
+commit, such as `device-results/2026-10-23T001807-74381a9b/`. It holds `report.xml`, the JUnit report, and Maestro's
+output, a folder for each flow: the screenshot of each checkpoint in `takeScreenshot/`, Maestro's log and the
+emulator's logcat in `logs/`, and for a failed step the screen and its hierarchy. The logcat holds the Kakao key that
+the map sends, so share the report and the screenshots, not the logs.
 
 ## Folder layout
 
@@ -318,6 +393,8 @@ src/session/        where the User is in the flow between the screens, and the w
 src/screens/        the screens that the routes show; a screen of several files has a folder
 modules/            the native modules, local Expo modules: the map (snu-now-map) and text recognition (snu-now-ocr)
 __tests__/          Jest tests
+maestro/            the device runs' Maestro flows: integration/ holds M1 and M2, subflows/ the steps they share
+scripts/            the device runs' two commands: build-mock-apk.sh and test-device.sh
 assets/             app icons, the splash image, the fonts, the loading screen's photos and the sign-in screen's pictures
 ```
 
@@ -648,7 +725,11 @@ number of 알림's rows in red ("9+" above nine), and four cards from the top:
 
 - the profile from the Lobby: the Avatar, the name, "컴퓨터공학부 · 22학번" (the department alone without an
   admission year), "SNU 계정 인증됨" and "프로필 편집";
-- 시간표 (`week-card.tsx`): Monday to Friday from 09 to 18, today's day in navy, a block for each time of a class
+- 시간표 (`week-card.tsx`, the grid in `week-grid.tsx`): Monday to Friday from 09 to 22, with 토 (and 일) and wider
+  hours when a class falls outside them, drawn as a table with a line at each hour and a fainter one at each half
+  hour; eight hours show at a time and the rest scroll under the days behind a fade, opening at a running class's
+  start, else, while today has a class to come, at the current hour or later so that the class shows whole, else at
+  the week's earliest class. Today's day in navy, a block for each time of a class
   (`GET /timetable/classes`, with `GET /places` for the numbers) in the colour of the class's place in the timetable
   (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". The tile "직접 입력" opens 시간표; "이미지로
   불러오기" and "빈 시간 말하기" say "준비 중이에요";
@@ -687,11 +768,12 @@ A plan with a Friend is a 비공개 파티: the Meetup of Iteration 1, with its 
 Iteration 2 (P06), and commit `2f4f201` holds its code.
 
 알림 (`notifications-screen.tsx`) is composed from the main server's lists (`useNotices()` of the notifications
-feature), in this order: a Party running for a Quest the User holds ("{name}님이 파티를 활성화했어요", or "파티가
-활성화됐어요" without its Leader), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and the requests to join each Quest the User leads with Approval ("참여 신청
-{n}명"). An invitation's row opens 파티 at 초대, a Friend Request's 친구 요청, and a running Party's
-and the requests' the Quest's room. A list that failed is left out; when every one failed it shows the error state.
-Without rows it says "새 알림이 없어요".
+feature), in this order: a Party running for a Quest the User holds ("{name}님이 파티를 활성화했어요"), a Friend
+Request received, a Quest invitation ("{name}님의 파티 초대"), and the requests to join each Quest the User leads with
+Approval ("참여 신청 {n}명"). An invitation's row opens 파티 at 초대, a Friend Request's 친구 요청, and a running
+Party's and the requests' the Quest's room. A list that failed is left out; when every one failed it shows the error
+state. The main server names each Party's Leader, and an answer of `GET /parties` with a Party without one is refused
+whole, so 알림 then leaves out every Party. Without rows it says "새 알림이 없어요".
 
 **The menu panel** (`src/screens/menus/`, `/menus`) has no frame. It is a `FullScreenPanel` that comes up from the
 bottom: ✕ "닫기" and "메뉴"; under the app bar the 7 days from today as `DayTile`s ("오늘", "내일", then the weekday),
@@ -1368,7 +1450,7 @@ of the design system's tokens. How it keeps the rules:
 
 The module cannot be tested with Jest: Jest runs without it. It is checked by hand on `/map-check`, against the
 device check of the spec. `native-map.tsx` is tested with the module's view mocked
-(`__tests__/map-native-view-test.tsx`).
+(`__tests__/map-native-view.unit.test.tsx`).
 
 ### The iOS module
 

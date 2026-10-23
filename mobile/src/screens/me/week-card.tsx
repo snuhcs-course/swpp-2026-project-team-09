@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -11,7 +12,6 @@ import { ActivityIndicator, Pressable, type StyleProp, StyleSheet, Text, View, t
 import {
   BottomSheet,
   cardStyles,
-  classColors,
   color,
   ErrorState,
   font,
@@ -23,20 +23,12 @@ import {
   text,
   useNotReadyToast,
 } from '@/design-system';
-import { now } from '@/clock';
-import { type ClassBlockView, DAY_LETTERS, FIRST_HOUR, LAST_HOUR } from '@/features/timetable/adapter';
 import { useTimetableVersions } from '@/features/timetable/use-versions';
 import { READING, useImportFromImage } from '@/features/timetable-ocr/use-import-from-image';
 import { useWeek } from '@/features/timetable/use-week';
-import { koreaWeekday } from '@/korea-time';
 import { UnfinishedSwitch } from './unfinished-switch';
 import { VersionMenu } from './version-menu';
-
-// The `Profile` frame's week: 216 high from 09 to 18.
-const GRID_HEIGHT = 216;
-const HOUR_HEIGHT = GRID_HEIGHT / (LAST_HOUR - FIRST_HOUR);
-const HOUR_LABELS = [9, 11, 13, 15, 17] as const;
-const LABEL_WIDTH = 28;
+import { WeekGrid } from './week-grid';
 
 // `직접 입력` opens the timetable, `이미지로 불러오기` reads a screenshot (or says that it is not ready where the build
 // cannot read one), and `빈 시간 말하기` says that it is not ready.
@@ -49,65 +41,6 @@ const TILES: readonly { icon: IconName; label: string; action: TileAction }[] = 
 
 function openTimetable(): void {
   router.push('/me/timetable');
-}
-
-function Block({ block }: { block: ClassBlockView }): ReactElement {
-  return (
-    <View
-      accessibilityLabel={[`${DAY_LETTERS[block.day] ?? ''}요일 ${block.time} ${block.name}`, block.where]
-        .filter((part) => part !== '')
-        .join(', ')}
-      accessible
-      style={[
-        styles.block,
-        {
-          top: (block.start - FIRST_HOUR) * HOUR_HEIGHT,
-          height: (block.end - block.start) * HOUR_HEIGHT - 2,
-          backgroundColor: classColors[block.order % classColors.length],
-        },
-      ]}
-      testID="class-block"
-    >
-      <Text numberOfLines={2} style={styles.blockWords}>
-        {block.where === '' ? block.name : `${block.name}\n${block.where}`}
-      </Text>
-    </View>
-  );
-}
-
-function Grid({ blocks }: { blocks: readonly ClassBlockView[] }): ReactElement {
-  // Monday is 0; on Saturday and Sunday no column is today's.
-  const today = koreaWeekday(now()) - 1;
-  return (
-    <View>
-      <View style={styles.row}>
-        <View style={styles.labels} />
-        {DAY_LETTERS.map((letter, day) => (
-          <Text key={letter} style={[styles.day, day === today && styles.today]}>
-            {letter}
-          </Text>
-        ))}
-      </View>
-      <View style={[styles.row, styles.hours]}>
-        <View style={styles.labels}>
-          {HOUR_LABELS.map((hour) => (
-            <Text key={hour} style={[styles.hour, { top: (hour - FIRST_HOUR) * HOUR_HEIGHT - 6 }]}>
-              {hour}
-            </Text>
-          ))}
-        </View>
-        {DAY_LETTERS.map((letter, day) => (
-          <View key={letter} style={styles.column}>
-            {blocks
-              .filter((block) => block.day === day)
-              .map((block) => (
-                <Block block={block} key={block.key} />
-              ))}
-          </View>
-        ))}
-      </View>
-    </View>
-  );
 }
 
 // The 시간표 card: the User's week from the main server, the version it is, and the three ways to fill it in.
@@ -130,7 +63,7 @@ export function WeekCard(): ReactElement {
         <VersionMenu versions={versions} />
       </View>
       <UnfinishedSwitch versions={versions} />
-      {data === undefined ? null : <Grid blocks={data} />}
+      {data === undefined ? null : <WeekGrid blocks={data} />}
       {data === undefined && isPending ? <LoadingState /> : null}
       {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
       <View style={styles.tiles}>
@@ -166,30 +99,6 @@ const styles = StyleSheet.create({
   card: { gap: space[3] },
   head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space[2] },
   title: { ...text.title, color: color.ink },
-  row: { flexDirection: 'row', gap: space[1] },
-  labels: { width: LABEL_WIDTH },
-  day: { flex: 1, textAlign: 'center', ...text.caption, color: color.inkMuted },
-  today: { fontFamily: font.bold, color: color.snuBlue },
-  hours: { height: GRID_HEIGHT },
-  hour: {
-    position: 'absolute',
-    right: 2,
-    fontFamily: font.medium,
-    fontSize: 10,
-    lineHeight: 12,
-    color: color.inkMuted,
-  },
-  column: { flex: 1, borderRadius: radius.sm + 2, backgroundColor: color.surfaceSubtle },
-  block: {
-    position: 'absolute',
-    right: 2,
-    left: 2,
-    overflow: 'hidden',
-    paddingVertical: 3,
-    paddingHorizontal: space[1],
-    borderRadius: radius.sm,
-  },
-  blockWords: { fontFamily: font.semiBold, fontSize: 10, lineHeight: 13, color: color.onPrimary },
   tiles: { flexDirection: 'row', gap: space[2] },
   tile: {
     flex: 1,
