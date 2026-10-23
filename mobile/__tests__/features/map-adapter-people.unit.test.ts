@@ -10,7 +10,9 @@
 import {
   event,
   friendView,
+  GYM_POINT,
   HALL,
+  LIBRARY_POINT,
   measured,
   member,
   ME,
@@ -61,9 +63,17 @@ describe('toCards of Friends', () => {
 describe("toCards of the User's Party", () => {
   it('a member who is no Friend → a card that opens the Party; the User and a Friend get none here', () => {
     const members = [ME, MIN_JUN, SEO_YEON].map((person) => member(person, true));
-    const positions = [measured('me', MINUTE), measured('min-jun', MINUTE), measured('seo-yeon', MINUTE)];
-    const cards = toCards(sources({ myParty: myParty('q9', members), friends: [friendView(MIN_JUN)], positions }));
-    expect(cards.map(({ id }) => id)).toEqual(['friend:min-jun', 'party-member:seo-yeon']);
+    const positions = [
+      measured('me', MINUTE),
+      measured('min-jun', MINUTE, LIBRARY_POINT),
+      measured('seo-yeon', MINUTE, GYM_POINT),
+    ];
+    const friends = [friendView(MIN_JUN, { position: LIBRARY_POINT })];
+    const cards = toCards(sources({ myParty: myParty('q9', members), friends, positions }));
+    expect(cards.map(({ id, position }) => [id, position])).toEqual([
+      ['friend:min-jun', LIBRARY_POINT],
+      ['party-member:seo-yeon', GYM_POINT],
+    ]);
     expect(cards[1]).toMatchObject({
       mark: { type: 'person', presence: null, stale: false },
       marker: { name: '이서연 · 활성 파티 멤버 · 위치 공유 중', short: '서연' },

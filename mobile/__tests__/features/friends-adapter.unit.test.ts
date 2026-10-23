@@ -7,7 +7,7 @@
 // Partitions: a position's age at 2 and 10 minutes; a Friend seen or not, with a status, without one and with one
 // contradicted; Friend Requests both ways. Expected values: P14-01's criteria and P06's todo.md (iteration 1).
 
-import { HALL, measured, MIN_JUN, MINUTE, NOW } from '../support/map-sources';
+import { GYM_POINT, HALL, LIBRARY_POINT, measured, MIN_JUN, MINUTE, NOW } from '../support/map-sources';
 import type { Friend, FriendStatus } from '@/api/types';
 import { keptPositions, minutesOld, toFriendRequestViews, toFriendViews, withAge } from '@/features/friends/adapter';
 
@@ -97,10 +97,11 @@ describe("toFriendViews and the main server's word", () => {
 
   it("several Friends → in the Friends' order, each with its own position", () => {
     const friends = [friend(true, { id: 'b', name: '이서연' }), friend(true, { id: 'a' })];
-    const views = toFriendViews(friends, [measured('a', MINUTE), measured('b', MINUTE)], [], NOW);
-    expect(views.map(({ id, position }) => [id, position !== null])).toEqual([
-      ['b', true],
-      ['a', true],
+    const positions = [measured('a', MINUTE, LIBRARY_POINT), measured('b', MINUTE, GYM_POINT)];
+    const views = toFriendViews(friends, positions, [], NOW);
+    expect(views.map(({ id, position }) => [id, position])).toEqual([
+      ['b', GYM_POINT],
+      ['a', LIBRARY_POINT],
     ]);
   });
 });

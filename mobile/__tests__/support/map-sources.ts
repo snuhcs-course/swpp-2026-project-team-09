@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 // What the map and friends adapters' unit tests build their sources from: 13:00 in Korea on Tuesday 6 October 2026,
-// the User, two Friends' names and one point on the campus.
+// the User, two Friends' names and three points on the campus.
 
 import type { RecruitingQuest } from '@/api/party-types';
 import type { Friend, GlobalEvent, MyParty, Person, Position, Quest } from '@/api/types';
@@ -18,6 +18,8 @@ export const ME: Person = { id: 'me', name: '홍길동', department: '컴퓨터�
 export const MIN_JUN: Person = { id: 'min-jun', name: '김민준', department: '경영학과' };
 export const SEO_YEON: Person = { id: 'seo-yeon', name: '이서연', department: '경영학과' };
 export const HALL = { latitude: 37.45016, longitude: 126.95259 };
+export const LIBRARY_POINT = { latitude: 37.45961, longitude: 126.95185 };
+export const GYM_POINT = { latitude: 37.46304, longitude: 126.95499 };
 export const GATE = { placeId: null, label: '301동 앞', ...HALL };
 
 export function sources(more: Partial<MapSources>): MapSources {
@@ -90,8 +92,8 @@ export function quest(id: string, more: Partial<Quest> = {}): Quest {
   };
 }
 
-export function measured(userId: string, ago: number): Position {
-  return { userId, ...HALL, measuredAt: new Date(NOW.getTime() - ago).toISOString() };
+export function measured(userId: string, ago: number, at = HALL): Position {
+  return { userId, ...at, measuredAt: new Date(NOW.getTime() - ago).toISOString() };
 }
 
 // A Friend seen at the point, free, with a detail and a walk.
