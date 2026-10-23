@@ -32,7 +32,7 @@ Reuse the 내 파티 list inside the app's full-screen panel, instead of writing
   - back from it shows 내 정보
   - the screen lists the User's Quests as 내 파티 does
   - the existing 내 정보 and 내 파티 tests pass
-- [ ] Checked on an Android phone: the slide in, back to 내 정보, and a room opened from the screen. Write what was and was not checked under `## Comments`.
+- [x] Checked on an Android phone: the slide in, back to 내 정보, and a room opened from the screen. Write what was and was not checked under `## Comments`.
 
 ## Comments
 
@@ -73,3 +73,10 @@ Counted from this session's Claude Code transcript (`~/.claude/projects/…/3c73
 - Tokens: 38 calls to Opus 5.5, no subagents.
   - Input: 2,783,369 in all. Of these, 2,711,487 are cache reads, 71,804 cache writes and 78 uncached.
   - Output: 24,514.
+
+### Phone check (2026-10-23)
+
+Checked by the person (Jaehyun0320) on an Android phone, a Galaxy S22 (SM-S901N), and reported as passing. The build was a debug build of all six P20 branches merged on `origin/2.0/Main` (a local branch, not pushed), against the servers in Docker with the demo profile. Not checked on iOS.
+
+- **Checked on the phone:** 참여 중인 파티 on 내 정보 slides in from the right. Both the screen's 뒤로 and Android's back button return to 내 정보. A room opened from the screen returns to it.
+- **Not checked:** iOS.
