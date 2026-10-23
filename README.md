@@ -516,8 +516,8 @@ pnpm test
 data alone: [flow-tests/README.md](flow-tests/README.md). Its `pnpm test:admin-ui` runs the W1 and W2 journeys through
 the admin site in a browser, which neither `pnpm test` nor CI runs.
 
-Each project's `pnpm lint` runs the level check of `scripts/` with the globs its test runners include, so it fails a
-test file that no runner of that project would run, as well as one without a level. The check has a test of its own,
+Each project's `pnpm lint` runs the level check of `scripts/` with the globs its test runners include and exclude, so it
+fails a test file that no runner of that project would run, as well as one without a level. The check has a test of its own,
 which no project runs. From the repository root:
 
 ```bash

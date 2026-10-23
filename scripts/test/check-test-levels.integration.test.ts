@@ -23,15 +23,15 @@ const aTest = "describe('rounds', () => {\n  it('places a request', () => {});\n
 const SERVER = ['test/**/*.unit.test.ts', 'test/**/*.integration.test.ts'];
 const EVERY_LEVEL = ['{test,__tests__}/**/*.{unit,integration}.test.{ts,tsx}', '{test,__tests__}/**/*.e2e.test.ts'];
 
-// Runs the check from a package folder holding the given files, told that the runners run the names `runs` matches.
-function check(files: Record<string, string>, runs = EVERY_LEVEL) {
+// Runs the check from a package folder holding the given files, told that the runners run the names `globs` match.
+function check(files: Record<string, string>, globs = EVERY_LEVEL) {
   const dir = mkdtempSync(join(tmpdir(), 'test-levels-'));
   try {
     for (const [path, content] of Object.entries(files)) {
       mkdirSync(dirname(join(dir, path)), { recursive: true });
       writeFileSync(join(dir, path), content);
     }
-    const run = spawnSync(process.execPath, [script, ...runs], { cwd: dir, encoding: 'utf8' });
+    const run = spawnSync(process.execPath, [script, ...globs], { cwd: dir, encoding: 'utf8' });
     return { status: run.status, output: run.stdout + run.stderr };
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -79,7 +79,7 @@ test('every failing file → named', () => {
   assert.doesNotMatch(run.output, /places\.unit\.test\.ts/);
 });
 
-for (const [name, path, runs] of [
+for (const [name, path, globs] of [
   ['an e2e test in a server', 'test/parties.e2e.test.ts', SERVER],
   ['a .tsx test in a server', 'test/rounds.unit.test.tsx', SERVER],
   [
@@ -90,11 +90,22 @@ for (const [name, path, runs] of [
   ['a unit test in flow-tests', 'test/stack.unit.test.ts', ['test/**/*.e2e.test.ts', 'test/**/*.integration.test.ts']],
 ] as const) {
   test(`${name}, a name the package's runners do not run → fails, naming the file`, () => {
-    const run = check({ [path]: aTest }, [...runs]);
+    const run = check({ [path]: aTest }, [...globs]);
     assert.equal(run.status, 1);
     assert.match(run.output, new RegExp(path.replaceAll('.', '\\.')));
   });
 }
+
+test('a name a ! glob excludes, as flow-tests excludes test/admin-ui/ but for its e2e tests → fails', () => {
+  const globs = ['test/**/*.e2e.test.ts', 'test/**/*.integration.test.ts', '!test/admin-ui/**/*.integration.test.ts'];
+  const run = check(
+    { 'test/admin-ui/sign-in.e2e.test.ts': aTest, 'test/admin-ui/stack.integration.test.ts': aTest },
+    globs,
+  );
+  assert.equal(run.status, 1);
+  assert.match(run.output, /test\/admin-ui\/stack\.integration\.test\.ts/);
+  assert.doesNotMatch(run.output, /sign-in\.e2e\.test\.ts/);
+});
 
 test("a server's unit and integration tests → pass", () => {
   const run = check({ 'test/rounds.unit.test.ts': aTest, 'test/places/coop.integration.test.ts': aTest }, SERVER);

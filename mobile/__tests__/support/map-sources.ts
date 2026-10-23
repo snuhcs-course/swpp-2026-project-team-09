@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 // What the map and friends adapters' unit tests build their sources from: 13:00 in Korea on Tuesday 6 October 2026,
-// the User, two Friends' names and three points on the campus.
+// the User, two Friends' names and points on the campus.
 
 import type { RecruitingQuest } from '@/api/party-types';
 import type { Friend, GlobalEvent, MyParty, Person, Position, Quest } from '@/api/types';

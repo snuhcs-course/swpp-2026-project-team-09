@@ -84,7 +84,7 @@ No other test ran on the machine during these runs.
 ### Agent usage (2026-10-22)
 
 - Agent time: about 42 minutes, an estimate: the implementer subagent, measured just before its last commit. About 24
-  of them were spent waiting for the heavy lock while another ticket's agent held it.
+  of them were spent waiting while another ticket's agent ran its tests.
 - Tokens: input 10,672 thousand in all (cache reads 10,017 thousand, cache writes 654 thousand, uncached under 1
   thousand); output 3 thousand, a lower bound, since the transcript keeps only partial output counts.
 - The orchestrating session, the merges, the code review and its fix round are recorded once, under

@@ -244,8 +244,7 @@ export interface Party {
   holdsQuest: boolean;
   // The User's Friends among the members, in the order they entered.
   friends: Person[];
-  // The Party's Leader now. The main server always sends it, and `isParties` refuses a Party without it; it stays
-  // optional, with the adapters' cases for a Party without one, so that the check was the only change (P09-10).
+  // The Party's Leader now; the main server always sends it, and `isParties` refuses a Party without one.
   leader?: { id: string; name: string };
 }
 

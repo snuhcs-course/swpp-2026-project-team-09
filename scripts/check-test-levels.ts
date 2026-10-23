@@ -6,7 +6,8 @@
  ******************************************************************************/
 
 // Checks that the test files of the package in the current folder are named by level (ADR 0007) and that its runners
-// run them. Run from a package folder with the globs its runners include: node ../scripts/check-test-levels.ts <glob>…
+// run them. Run from a package folder with the globs its runners include, and with ! before each glob they exclude:
+// node ../scripts/check-test-levels.ts <glob>…
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { basename, join, matchesGlob, sep } from 'node:path';
@@ -29,12 +30,15 @@ function* files(dir: string): Generator<string> {
   }
 }
 
-const runs = process.argv.slice(2);
-if (runs.length === 0) {
+const globs = process.argv.slice(2);
+const included = globs.filter((glob) => !glob.startsWith('!'));
+const excluded = globs.filter((glob) => glob.startsWith('!')).map((glob) => glob.slice(1));
+if (included.length === 0) {
   console.error("Usage: node ../scripts/check-test-levels.ts <glob>…, the globs the package's runners include.");
   process.exit(2);
 }
-const isRun = (path: string) => runs.some((glob) => matchesGlob(path, glob));
+const matchesAny = (path: string, some: string[]) => some.some((glob) => matchesGlob(path, glob));
+const isRun = (path: string) => matchesAny(path, included) && !matchesAny(path, excluded);
 
 function problem(path: string): string | undefined {
   const name = basename(path);
@@ -48,7 +52,7 @@ function problem(path: string): string | undefined {
   }
   if (isRun(path)) return undefined;
   if (hasSuffix) {
-    return `is named by level but not run: this package's runners include ${runs.join(', ')}`;
+    return `is named by level but not run: this package's runners run ${globs.join(', ')}`;
   }
   if (CODE.test(name) && DECLARES_A_TEST.test(readFileSync(path, 'utf8'))) {
     return 'declares a test but its name does not end in .unit.test.ts(x), .integration.test.ts(x) or .e2e.test.ts';
