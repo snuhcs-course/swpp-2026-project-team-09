@@ -247,9 +247,6 @@ model Quest {
   board         QuestBoard?
   // The recruiting post, up to 200 characters, which the migration checks.
   description   String        @default("")
-  // Was the match server's match this Quest was created for. Nothing reads or writes it since Matching was removed;
-  // the column goes in a migration of its own (.scratch/iteration-2/remove-ai-matching/plan.md).
-  matchId       String?       @unique @map("match_id") @db.Uuid
   createdAt     DateTime      @default(now()) @map("created_at")
   holders       QuestHolder[]
   subQuests     SubQuest[]
