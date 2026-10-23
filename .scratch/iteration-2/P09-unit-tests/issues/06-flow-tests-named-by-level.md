@@ -29,7 +29,7 @@ The `include` of the Vitest config follows the new names. The default configurat
 
 - **Names.** `event`, `friend`, `campus-services` and `deploy-stack` became `.e2e.test.ts`, and `stack` became `.integration.test.ts`. The five renames are one commit with no content change (`697f4d83`), so they carry no new box row. Support files keep their names.
 - **Config.** `include: ['test/**/*.e2e.test.ts', 'test/**/*.integration.test.ts']`, `exclude: ['test/admin-ui/**']`. Setting `exclude` replaces Vitest's default (`**/node_modules/**`, `**/.git/**`). That is safe here because `include` only reaches `test/`.
-- **Lint.** `"lint": "oxlint --type-aware && node ../scripts/check-test-levels.ts"`, as P09-01 gave it.
+- **Lint.** `"lint": "oxlint --type-aware && node ../scripts/check-test-levels.ts 'test/**/*.e2e.test.ts' 'test/**/*.integration.test.ts' '!test/admin-ui/**/*.integration.test.ts'"`, the globs of the main config and the admin site's config as P09-01 gives them.
 - **Root README.** flow-tests' row is unchanged. `pnpm test` still runs the same flows across the four built servers, under the same Compose project, so the row still says what it runs.
 - **Outside Touches.** The comment at the top of `flow-tests/compose.deploy.test.yaml` named `test/deploy-stack.flow.ts`. It now names the new file, and the file got a box row. In `flow-tests/README.md` the folder layout was realigned for the longer names.
 

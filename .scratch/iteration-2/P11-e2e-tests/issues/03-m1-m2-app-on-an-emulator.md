@@ -127,4 +127,4 @@ fails until [fix-invite-link-cold-start 01](../../fix-invite-link-cold-start/iss
 
 ### Review of PR #124 (2026-10-23)
 
-fyoon46's review found that the cold-start defect had no ticket of its own and was written down only here, in a resolved ticket. It is now [fix-invite-link-cold-start 01](../../fix-invite-link-cold-start/issues/01-invite-link-on-a-cold-start.md) (`needs-triage`), with the reproduction, why the Jest test passes and the likely cause. The M2 criterion and the finding above point to it, and mobile's README "Device runs" says that M2 on a cold start fails until it is fixed.
+The review found that the cold-start defect had no ticket of its own and was written down only here, in a resolved ticket. It is now [fix-invite-link-cold-start 01](../../fix-invite-link-cold-start/issues/01-invite-link-on-a-cold-start.md) (`needs-triage`), with the reproduction, why the Jest test passes and the likely cause. The M2 criterion and the finding above point to it, and mobile's README "Device runs" says that M2 on a cold start fails until it is fixed.
