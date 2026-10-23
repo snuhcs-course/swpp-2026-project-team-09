@@ -31,7 +31,7 @@ These are two small fixes in the tabs, found while using the app on an Android p
   - a press on a 찾기 card opens `/post/<questId>`, and a press on its `참여하기` or `관심 없음` does not
   - the chip row and the 행사 filters keep their chips pressable and selected as before
   - the existing party and events tab tests pass
-- [ ] Checked on an Android phone: the three chip rows and 찾기's cards. Write what was and was not checked under `## Comments`.
+- [x] Checked on an Android phone: the three chip rows and 찾기's cards. Write what was and was not checked under `## Comments`.
 
 ## Comments
 
@@ -69,3 +69,9 @@ AhnJinYoung approved, with three non-blocking notes:
 - Agent time: about 15 minutes (an estimate), in one session with no subagents. The full jest run takes up most of it.
 - Tokens: about 1.55M input, of which about 1.50M were cache reads, about 50k were cache writes and fewer than 100 were uncached. Output was about 11k.
 
+### Phone check (2026-10-23)
+
+Checked by the person (Jaehyun0320) on an Android phone, a Galaxy S22 (SM-S901N), and reported as passing. The build was a debug build of all six P20 branches merged on `origin/2.0/Main` (a local branch, not pushed), against the servers in Docker with the demo profile. Not checked on iOS.
+
+- **Checked on the phone:** the room above the three chip rows (the friend panel, the 행사 tab and 내 파티), 내 퀘스트's chip row, and pressing a card in 찾기 → 모집 중인 파티, which opens its post, while `관심 없음` and `참여하기` keep their own actions.
+- **Not checked:** the chip rows in the web build. "Room above the chips" stays unticked for that alone.
