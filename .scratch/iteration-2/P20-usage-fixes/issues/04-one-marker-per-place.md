@@ -34,7 +34,7 @@ When several things stand at the same place on the main map, their markers lie o
 
 ## Acceptance criteria
 
-- [ ] **One marker per place.**
+- [x] **One marker per place.**
   - With a Global Event and a Party's Quest at the same coordinates, the map shows one marker there, with one small circle for each of the two kinds.
   - The same holds for any mix of the kinds above, including restaurants and shuttle stops while their layers are on.
   - Turning a layer off takes its kind out of the group, and a group left with one thing shows that thing's own marker again.
@@ -50,7 +50,7 @@ When several things stand at the same place on the main map, their markers lie o
   - grouping: things at the same coordinates become one group across all place kinds, Avatars never join one, and a group of one is no group
   - the main screen: pressing a grouped marker shows the chips, and choosing a row opens that thing's card
   - the existing map, main-screen and event-point tests pass, updated where the event point's behaviour has moved into the general grouping
-- [ ] Checked on an Android phone with real overlapping things, or with mock data that puts them at one place. Write what was and was not checked under `## Comments`.
+- [x] Checked on an Android phone with real overlapping things, or with mock data that puts them at one place. Write what was and was not checked under `## Comments`.
 
 ## Comments
 
@@ -98,3 +98,10 @@ When several things stand at the same place on the main map, their markers lie o
 
 - Agent time: about 1.5 hours in all, an estimate, in one session. About 8 minutes of it was the one full run of the mobile suite.
 - Tokens: not measured exactly. The main session took roughly 5M input, almost all of it cache reads, with cache writes around 0.2M, and about 50k output. The two `/code-review` subagents used about 132k tokens together (58k and 74k); their split into input and output was not reported.
+
+### Phone check (2026-10-23)
+
+Checked by the person (Jaehyun0320) on an Android phone, a Galaxy S22 (SM-S901N), and reported as passing. The build was a debug build of all six P20 branches merged on `origin/2.0/Main` (a local branch, not pushed), against the servers in Docker with the demo profile. Not checked on iOS.
+
+- **Checked on the phone:** with things the person made at one building themselves, the map showed one marker for them, and its card's chips reached each one. Places with nothing overlapping kept their own markers.
+- **Not checked:** iOS.
