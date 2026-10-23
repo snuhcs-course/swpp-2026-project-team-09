@@ -517,10 +517,12 @@ data alone: [flow-tests/README.md](flow-tests/README.md). Its `pnpm test:admin-u
 the admin site in a browser, which neither `pnpm test` nor CI runs.
 
 Each project's `pnpm lint` runs the level check of `scripts/` with the globs its test runners include and exclude, so it
-fails a test file that no runner of that project would run, as well as one without a level. After a coverage run,
+fails a test file that no runner of that project would run, as well as one without a level. It also fails a focused
+(`.only`), skipped (`.skip`, `xit`) or commented-out test, and in the Vitest projects a `.todo`; one kept on purpose
+carries an `oxlint-disable-next-line` comment with its reason. After a coverage run,
 `node ../scripts/coverage-by-file-set.ts coverage/coverage-summary.json` in a project's folder sums the report over the
 P09 spec's file sets ([its coverage goals](.scratch/iteration-2/P09-unit-tests/spec.md)). The two scripts have tests of
-their own, which no project runs. From the repository root:
+their own, which CI's `scripts` job runs. From the repository root:
 
 ```bash
 node --test 'scripts/test/*.test.ts'

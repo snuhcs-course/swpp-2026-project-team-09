@@ -17,3 +17,8 @@
 ## Rollback Scenario
 
 ## Test Results
+
+<!-- What ran, and its result -->
+
+- Expected values from: <!-- for each new or changed test: the spec, a README contract or reference data -->
+- Behaviour changes to confirm: <!-- input: before → after; also each test, end-to-end journey or benchmark case weakened, skipped or deleted, and why -->

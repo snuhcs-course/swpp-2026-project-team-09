@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["unicorn", "typescript", "oxc", "jest"],
   "categories": {
     "correctness": "error",
     "suspicious": "error",
@@ -12,7 +13,15 @@
     "typescript/explicit-function-return-type": "error",
     "typescript/no-non-null-assertion": "error",
     "typescript/consistent-type-imports": "error",
-    "typescript/prefer-readonly-parameter-types": "off"
+    "typescript/prefer-readonly-parameter-types": "off",
+    "jest/no-focused-tests": "error",
+    "jest/no-disabled-tests": "error",
+    "jest/no-commented-out-tests": "error",
+    "jest/expect-expect": "off",
+    "jest/no-conditional-expect": "off",
+    "jest/no-conditional-in-test": "off",
+    "jest/no-standalone-expect": "off",
+    "jest/require-to-throw-message": "off"
   },
   "env": {
     "node": true

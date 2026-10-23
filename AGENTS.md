@@ -18,6 +18,10 @@ Use a single-context layout: root `GLOSSARY.md` and `docs/adr/`. See `docs/agent
 
 Before writing, renaming or moving a test, read `docs/adr/0007-test-levels-by-what-a-test-starts.md`. A test's level sets its file-name suffix, and each runner picks up only its own level's suffix.
 
+A test's expected values come from the spec, a README contract or reference data, never from the code's own output.
+
+Existing tests hold the definition of done: a failing one is met by changing the code. Weakening, skipping or deleting an existing test, an end-to-end journey (`flow-tests/test/*.e2e.test.ts`, `flow-tests/test/admin-ui/`, `mobile/maestro/integration/`) or a benchmark case (`main-server/eval/cases/`) takes a person's approval in the PR, so name each one and its reason under the PR's Test Results.
+
 ## Collaboration
 
 Keep `AGENTS.md` and `CLAUDE.md` synchronized. Whenever repository instructions change, update both files together with the same content.

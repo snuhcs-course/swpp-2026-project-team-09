@@ -5,6 +5,7 @@
 # 2026-10-06  Fable 5.1  prompted by fyoon46
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-10-23  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 name: CI
@@ -79,6 +80,18 @@ jobs:
           path: ${{ runner.temp }}/jest
           key: mobile-jest-${{ matrix.shard }}-${{ hashFiles('mobile/pnpm-lock.yaml') }}
       - run: pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }} --cacheDirectory=${{ runner.temp }}/jest
+
+  # The tests of the level check and the coverage sum in scripts/, on Node's own test runner, which needs no install.
+  scripts:
+    name: scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - run: node --test 'scripts/test/*.test.ts'
 
   # The Dev Server's shell scripts and their tests. The deploy script does not wait for this check.
   deploy-scripts:
