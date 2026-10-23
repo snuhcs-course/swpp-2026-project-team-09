@@ -124,3 +124,7 @@ fails until [fix-invite-link-cold-start 01](../../fix-invite-link-cold-start/iss
   thousand); output 11 thousand, a lower bound, since the transcript keeps only partial output counts.
 - The orchestrating session, the merges, the code review and its fix round are recorded once, under
   [P09-10](../../P09-unit-tests/issues/10-mobile-renewal-answers-and-adapters-as-units.md).
+
+### Review of PR #124 (2026-10-23)
+
+fyoon46's review found that the cold-start defect had no ticket of its own and was written down only here, in a resolved ticket. It is now [fix-invite-link-cold-start 01](../../fix-invite-link-cold-start/issues/01-invite-link-on-a-cold-start.md) (`needs-triage`), with the reproduction, why the Jest test passes and the likely cause. The M2 criterion and the finding above point to it, and mobile's README "Device runs" says that M2 on a cold start fails until it is fixed.

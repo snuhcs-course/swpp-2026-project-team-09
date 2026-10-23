@@ -202,3 +202,19 @@ P11-03, as of 02:12 KST before the pull request was marked ready.
   thousand); output 328 thousand, a lower bound, since the transcripts keep only partial output counts. Of these, the
   two sessions 51,604 thousand in and 258 thousand out; the mergers 8,021 thousand in and 9 thousand out; the code
   review 71,561 thousand in and 50 thousand out; the fix round 59,711 thousand in and 11 thousand out.
+
+### Review of PR #124 (2026-10-23)
+
+- **Whose position.** fyoon46's review found that every measured position was at `HALL`, so `toFriendViews` taking `kept[0]` instead of `kept.find(({ userId }) => userId === id)` passed every test. `measured()` takes a point now (`HALL` by default), and friends-adapter's "several Friends" test and map-adapter-people's Party member test give each User a point of their own and check the coordinates. With `kept[0]` planted in `src/features/friends/adapter.ts` and `positions[0]` in the map adapter's Party members: `Tests: 2 failed, 24 passed, 26 total`, one in each file; restored, both pass.
+- **`isParties`' leftovers.** mobile's README says that 알림 leaves out every Party when one comes without its Leader, `Party.leader`'s comment no longer calls it provisional, and this ticket's Touches and Decisions name the `src/` change.
+- **Runs.** Full `pnpm test` in mobile (`--maxWorkers=4`, JSON report): `Test Suites: 161 passed, 161 total`, `Tests: 1 todo, 1887 passed, 1888 total`; by suffix 862 unit and 1026 integration tests, as before. `pnpm lint` (`161 test file(s), each named by its test level and run.`) and `pnpm format:check` pass. `pnpm typecheck` in the main checkout reports only the two typed-route errors that its stale, git-ignored `.expo/types/router.d.ts` causes, as before this round.
+
+### Agent usage of the review of PR #124 (2026-10-23)
+
+Recorded once here, for the changes it made in P09-01, P09-10 and P11-03.
+
+- Agent time: about 47 minutes, an estimate: the session that made the changes, from reading the review to just before
+  this commit (40 minutes, its waits for a person left out), and the code review's 2 subagents (7 minutes). The pull
+  request's text and the replies to the review after this commit are not counted.
+- Tokens: input 30,532 thousand in all (cache reads 29,398 thousand, cache writes 1,134 thousand, uncached under 1
+  thousand); output 127 thousand, a lower bound, since the transcripts keep only partial output counts.

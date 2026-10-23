@@ -32,12 +32,12 @@ The three pieces every rename ticket (P09-02 to P09-06) relies on. They land onc
 
 ### Decisions (2026-10-22)
 
-- **Calling form.** From a package folder, with no arguments: `node ../scripts/check-test-levels.ts`. It checks the current folder. A rename ticket's `lint` becomes `oxlint --type-aware && node ../scripts/check-test-levels.ts` (admin: `next typegen && oxlint --type-aware && node ../scripts/check-test-levels.ts`). Node 24.14.0 strips the types with no warning; no `package.json` is needed at the root.
+- **Calling form.** From a package folder, with no arguments: `node ../scripts/check-test-levels.ts`. It checks the current folder. A rename ticket's `lint` becomes `oxlint --type-aware && node ../scripts/check-test-levels.ts` (admin: `next typegen && oxlint --type-aware && node ../scripts/check-test-levels.ts`). Node 24.14.0 strips the types with no warning; no `package.json` is needed at the root. Since the review of PR #124 (below), each package passes the check the globs its runners include and exclude.
 - **Test folder.** The package's top-level `test/` or `__tests__/` and everything below it (`test/admin-ui/`, `test/sources/`, `__tests__/support/`, `__tests__/site/`). These are the folders the runners include, so a level suffix anywhere else fails. `eval/` is not one.
 - **Declares a test.** A code file (`.ts`, `.tsx`, `.js`, `.jsx`, `.mts`, `.cts`, `.mjs`, `.cjs`) with a line that starts, after spaces, with `describe`, `it` or `test`, optionally `.word` parts (`.each`, `.skipIf`, `.todo`, Playwright's `test.describe`), then `(`, a backtick or `<`. Comments and calls such as `pattern.test(x)` do not count. Saved pages, recorded answers, images and READMEs are never read. On today's tree every one of the 323 old-named test files matches and none of the 94 support code files in the test folders does.
 - **Two suffixes.** In a test folder, a name with two or more of `unit`, `integration`, `e2e` as dot-separated parts after the first fails (`a.unit.integration.test.ts`).
 - **Files walked.** Every file under the package except `node_modules` folders and names starting with `.` (`.next`, `.expo`, `.stack`). Run read-only on the main checkout, with `node_modules`, `dist`, `.next`, `android` and `ios` present, mobile's check takes 0.45 s and fails only on its 147 old-named test files.
-- **The script's own test** is `scripts/test/check-test-levels.integration.test.ts` (16 tests, run with `node --test scripts/test/check-test-levels.integration.test.ts`). It writes sample packages to a temporary folder and runs the script, so it is an integration test by ADR 0007. Each rule broken on purpose in a copy of the script made at least one of its tests fail. This file is outside the ticket's Touches; no CI job runs it (CI is out of scope).
+- **The script's own test** is `scripts/test/check-test-levels.integration.test.ts` (16 tests, 26 since the review of PR #124; run with `node --test scripts/test/check-test-levels.integration.test.ts`). It writes sample packages to a temporary folder and runs the script, so it is an integration test by ADR 0007. Each rule broken on purpose in a copy of the script made at least one of its tests fail. This file is outside the ticket's Touches; no CI job runs it (CI is out of scope).
 
 ### Evidence (2026-10-22)
 
@@ -97,3 +97,25 @@ The code review of P09–P11 (2026-10-23); each line starts with what it found.
 - **The README did not mention `scripts/` or how to run its test.** The root README's layout lists `scripts/`, the level
   check every project's `pnpm lint` runs, and "Running the tests" gives its own test's command, `node --test
   scripts/test/check-test-levels.integration.test.ts` (16 passed).
+
+### Review of PR #124 (2026-10-23)
+
+fyoon46's review found that the check took the three level suffixes in any test folder, while each package's runners run only some of them, so a name such as main-server's `test/parties.e2e.test.ts` or admin's `__tests__/csv.integration.test.ts` passed lint and never ran.
+
+- **The globs.** Each package's `lint` now passes the check the globs its runners include, as its runner config writes them, and `!` before a glob they exclude: flow-tests adds `'!test/admin-ui/**/*.integration.test.ts'`, since its main config excludes `test/admin-ui/` and the admin site's config runs only its e2e tests. A file in a test folder whose level suffix no glob takes fails, and the check with no glob exits 2 with its usage. Level names alone were not enough: admin runs integration `.tsx` files only directly in `__tests__/` and `.ts` files only in `__tests__/site/`. The globs now live both in the runner configs and in the `lint` scripts, so a change to what a runner runs takes both.
+- **Outside the test folders** a `.test` or `.spec` code file fails too, since no runner looks there; mobile's Jest has looked only in `__tests__/` since P09-05.
+- **Touches**, beyond this ticket's: every package's `package.json` (`lint`) and the root README's "Running the tests".
+- **Red first.** The 9 new rows of the check's test that expect a refusal each failed on the check before its change, which exited 0. After it: `node --test scripts/test/check-test-levels.integration.test.ts`, 26 passed.
+- **Planted in the tree**, each removed after its run; each package's `lint` failed (exit 1) on its file:
+
+  ```
+  main-server    test/parties.e2e.test.ts
+  worker-server  test/source.unit.test.tsx
+  admin          __tests__/csv.integration.test.ts
+  mobile         src/x.test.ts
+  flow-tests     test/stack.unit.test.ts
+  flow-tests     test/admin-ui/planted.integration.test.ts
+  ```
+
+  admin's message: `__tests__/csv.integration.test.ts: is named by level but not run: this package's runners include __tests__/**/*.unit.test.{ts,tsx}, __tests__/*.integration.test.tsx, __tests__/site/*.integration.test.ts`. The word "include" became "run" once the globs could exclude.
+- **The tree as it is** passes in every package with the counts the old check gave: main-server 130, match-server 14, socket-server 8, worker-server 13, admin 18, mobile 161 and flow-tests 8 test files, `each named by its test level and run.`
