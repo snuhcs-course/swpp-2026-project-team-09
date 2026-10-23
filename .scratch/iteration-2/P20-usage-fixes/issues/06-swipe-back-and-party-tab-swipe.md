@@ -28,7 +28,7 @@ A swipe that starts at the screen's left edge goes back, as Android's back butto
 In the 파티 tab, a light sideways swipe anywhere on the screen moves to the next or previous tab: left for the next, right for the previous. It does not have to start at the edge.
 - **The tabs bar and the address** follow the swipe, as a press on a tab does.
 - **A swipe from the very left edge** stays the back gesture above.
-- **Sideways scrollers inside the tabs** win inside their own area: 찾기's row of people looking for company, the official recruiting banner, and 내 파티's chip row.
+- **Sideways scrollers inside the tabs** win inside their own area: 찾기's row of people looking for company, the official recruiting banner, and 내 파티's chip row. The build connected to the server hides the first two, which are still mocks there (P06's `server-endpoints.md`). Check the conflicts in the mock build, where they show.
 - **Vertical scrolling** never turns into a tab change.
 - **At either end, 찾기 and 초대**, a swipe further does not change the tab.
 - **Thresholds**: the edge width, the distances and the angles are the implementer's to choose. Write the values under `## Comments`.
@@ -47,7 +47,7 @@ Plan items 7 and 8 say where each part lives.
   - In the 파티 tab, a sideways swipe moves between 찾기, 내 파티 and 초대, and the tabs bar and the address follow.
   - A press on a tab still works.
   - A vertical scroll never changes the tab.
-  - The sideways scrollers inside the tabs scroll without changing the tab.
+  - The sideways scrollers inside the tabs scroll without changing the tab, checked in the mock build, where 찾기's people row and the official banner show.
   - A swipe from the left edge in the 파티 tab is the back gesture, not a tab change.
 - [ ] **Tests:**
   - the 파티 tab moves to the next and previous tab on a sideways swipe, and stays at its ends

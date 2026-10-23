@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useRef, useState } from 'react';
@@ -20,13 +21,13 @@ import {
 import { color, Dialog, font, Icon, type IconName, shadow, space, text } from '@/design-system';
 import type { VersionsView } from '@/features/timetable/versions';
 import type { TimetableVersions } from '@/features/timetable/use-versions';
+import { type Place, ROW_HEIGHT, useLiftedPlace } from './menu-lift';
 import { Rename } from './version-rename';
 
 // The timetable versions on the week card, as the `Profile` frame draws them: the current version's name with ⌄ beside
 // 시간표, and under it the list `시간표 버전`.
 
 const MENU_WIDTH = 236;
-const ROW_HEIGHT = 40;
 const SMALL_BUTTON = 32;
 const DELETE_OFF = '#D5D8E0';
 const CHEVRON = '#9AA0B2';
@@ -35,12 +36,6 @@ const DIVIDER = '#F0F1F5';
 // React Native's roles lack the frame's `listbox`; the web takes it as it is.
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- a role React Native's types lack
 const LISTBOX = { role: 'listbox' } as unknown as Pick<ViewProps, 'role'>;
-
-// Where the list stands on the screen: under the trigger, its right edge on the trigger's.
-interface Place {
-  top: number;
-  right: number;
-}
 
 function Action({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }): ReactElement {
   return (
@@ -115,9 +110,11 @@ interface ListProps {
   place: Place;
 }
 
-// The list `시간표 버전`. Every choice closes it, except 이름 바꾸기, which turns the current row into a field.
+// The list `시간표 버전`. Every choice closes it, except 이름 바꾸기, which turns the current row into a field; the list
+// goes up while the keyboard would cover that field.
 function VersionList({ versions, view, onClose, onDelete, place }: ListProps): ReactElement {
   const [renaming, setRenaming] = useState(false);
+  const lifted = useLiftedPlace(place, view, renaming);
   const then = (change: () => void) => (): void => {
     onClose();
     change();
@@ -129,7 +126,7 @@ function VersionList({ versions, view, onClose, onDelete, place }: ListProps): R
     }
   };
   return (
-    <View aria-label="시간표 버전" {...LISTBOX} style={[styles.menu, place]}>
+    <View aria-label="시간표 버전" {...LISTBOX} style={[styles.menu, lifted]}>
       {view.versions.map(({ id, name }) => {
         const on = id === view.currentId;
         return on && renaming ? (

@@ -7,6 +7,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -17,6 +18,7 @@ import type { LatLng } from '@/api/types';
 import { color, useNotReadyToast, useToastAbove } from '@/design-system';
 import { useDiningCards } from '@/features/dining/use-dining';
 import type { CardView } from '@/features/map/adapter';
+import { groupedByPlace } from '@/features/map/place-groups';
 import { useMapCards } from '@/features/map/use-map-cards';
 import { type ShuttleLayer, useShuttle } from '@/features/shuttle/use-shuttle';
 import { CAMPUS_CAMERA, Map, type MapLine } from '@/map';
@@ -187,13 +189,16 @@ function MainMapView({ map, me, things, lines, cardHeight, onPress }: MainMapVie
   );
 }
 
-// The map's cards, and the 식당 layer's and the shuttle layer's while they are on.
-// `ready` once the map's own cards are known.
+// The map's cards, and the 식당 layer's and the shuttle layer's while they are on, with the things at one place
+// grouped: a layer turned off takes its things out of the groups. `ready` once the map's own cards are known.
 function useCards(dining: boolean, shuttle: ShuttleLayer): { cards: readonly CardView[]; ready: boolean } {
   const { data } = useMapCards();
   const mapCards = data ?? NO_CARDS;
   const diningCards = useDiningCards(dining);
-  const cards = useMemo(() => [...mapCards, ...diningCards, ...shuttle.cards], [mapCards, diningCards, shuttle.cards]);
+  const cards = useMemo(
+    () => groupedByPlace([...mapCards, ...diningCards, ...shuttle.cards]),
+    [mapCards, diningCards, shuttle.cards],
+  );
   return { cards, ready: data !== undefined };
 }
 
