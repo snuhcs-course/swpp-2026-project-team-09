@@ -365,6 +365,9 @@ and the relaunch in M1 keeps it. The flows grant the app no permission: granted 
 Google Play services may ask over the map to turn on Location Accuracy, a system screen that depends on the emulator's
 settings. So the app explains the location once on the map, and the flows answer "나중에".
 
+M2 on a cold start fails until the ticket in `.scratch/iteration-2/fix-invite-link-cold-start/` is fixed: the app
+lands on the map, not on the accept screen. M1 and M2 on a warm start pass.
+
 Each run writes into its own folder under `device-results/`, which git ignores, named by the date, the time and the
 commit, such as `device-results/2026-10-23T001807-74381a9b/`. It holds `report.xml`, the JUnit report, and Maestro's
 output, a folder for each flow: the screenshot of each checkpoint in `takeScreenshot/`, Maestro's log and the

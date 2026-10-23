@@ -20,7 +20,7 @@ Neither command is part of `pnpm test` or CI; both are run by hand.
 - [x] The emulator is the pinned one: `system-images;android-36;google_apis_playstore;arm64-v8a` with the "Medium Phone" profile. The README gives its cold boot for the official run (`-no-snapshot-load`) and the wait until `sys.boot_completed` is 1, and the emulator and image revisions used are recorded in `## Comments`.
 - [x] M1 and M2 sit in `mobile/maestro/integration/`, shared steps in `mobile/maestro/subflows/`, and nothing in `mobile/maestro/e2e/`. Every flow names `appId: com.bonnieandclaude.snunow` and finds elements by visible text or accessibility label; Korean appears only in selectors, and nothing is typed in Korean.
 - [x] M1 passes as the spec's flow describes it: consent, then "프로필 만들기" with the mock's suggested name, a department chosen by scrolling, then the map screen and its bottom tabs; after a relaunch without clearing state, the map screen appears and the sign-in screen does not.
-- [ ] M2 passes on a cold start (the app stopped, `snunow://invite/from-yujian` opened with `openLink`) and on a warm start (opened while on the map): the accept screen shows "유지안님의 친구 초대" and the location notice; after "수락" the map shows "유지안님과 친구가 됐어요" and the Friends list under "내 정보" lists "유지안".
+- [ ] M2 passes on a cold start (the app stopped, `snunow://invite/from-yujian` opened with `openLink`) and on a warm start (opened while on the map): the accept screen shows "유지안님의 친구 초대" and the location notice; after "수락" the map shows "유지안님과 친구가 됐어요" and the Friends list under "내 정보" lists "유지안". Unmet on a cold start, an app defect left to [fix-invite-link-cold-start 01](../../fix-invite-link-cold-start/issues/01-invite-link-on-a-cold-start.md).
 - [x] Each flow starts with a launch that clears the app's state, and a later launch keeps it only where the journey is about what the phone kept; no `retry`, no fixed sleep, `extendedWaitUntil` with a timeout for the first screen after a launch; screenshots at each checkpoint; no step asserts on the map.
 - [x] `pnpm test:device` checks that exactly one device is connected, with ABI `arm64-v8a` and API 36, and that `maestro --version` prints 2.11.0; sets the window, transition and animator scales to 0; reinstalls the mock APK; and runs `maestro test --format junit --output <run>/report.xml --test-output-dir <run> maestro/integration` from `mobile/`.
 - [x] Each run's folder is named by date and commit and sits in a results folder that `mobile/.gitignore` ignores.
@@ -74,7 +74,7 @@ A likely cause, not verified: on Android, expo-router's `getInitialURLWithTimeou
 (`node_modules/expo-router/build/fork/useLinking.native.js`) races React Native's `Linking.getInitialURL()` against a
 150 ms timer and starts at `/` when the timer wins, which a busy cold start can make it do. The fix is in the app's
 code, outside this ticket and the spec ("No product code changes"), so the flow stays as the spec describes it and
-fails until a follow-up ticket fixes the app. The M2 criterion is left unticked for it; its warm start passes.
+fails until [fix-invite-link-cold-start 01](../../fix-invite-link-cold-start/issues/01-invite-link-on-a-cold-start.md) fixes the app. The M2 criterion is left unticked for it; its warm start passes.
 
 ### Evidence (2026-10-23)
 
