@@ -49,7 +49,7 @@ Plan items 7 and 8 say where each part lives.
   - A vertical scroll never changes the tab.
   - The sideways scrollers inside the tabs scroll without changing the tab, checked in the mock build, where 찾기's people row and the official banner show.
   - A swipe from the left edge in the 파티 tab is the back gesture, not a tab change.
-- [ ] **Tests:**
+- [x] **Tests:**
   - the 파티 tab moves to the next and previous tab on a sideways swipe, and stays at its ends
   - a swipe that starts at the left edge is not taken as a tab change, and on 파티, 행사 and 내 정보 it shows 지도
   - the existing navigation, party tab and back-button tests pass
@@ -204,3 +204,11 @@ Both are from one session of Opus 5.5 with no subagents, counted from the sessio
   - Input: 20,533,437 in all. Of these, 20,419,337 are cache reads, 113,924 are cache writes and 176 are uncached.
   - Output: 65,455, over 88 calls.
   - These are the counts when this note was written. The few calls after it are not in them.
+
+### Tests box (2026-10-23)
+
+Ticked before merging #125, as the review asked:
+- **The 파티 tab moves and stops at its ends:** `swipe.integration.test.tsx`, "the 파티 tab's swipe": next, previous, and staying at 찾기 and 초대.
+- **A swipe from the left edge is not a tab change, and shows 지도 on 파티, 행사 and 내 정보:** the same file, "leaves a swipe that starts at the left edge to the edge" and "the swipe from the left edge on a tab".
+- **The existing navigation, 파티 tab and back-button tests pass:** CI run 39958499050 passed on f2f61f5, which is this branch merged with `2.0/Main` after #118–#122.
+- **Limit, from the review:** `fireGestureHandler` skips `activeOffsetX`, `failOffsetY` and `hitSlop`, so the vertical-scroll case does not prove the arbitration. The phone check covers it.
