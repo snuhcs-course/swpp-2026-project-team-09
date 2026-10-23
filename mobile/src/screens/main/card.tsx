@@ -5,12 +5,14 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Avatar, Button, color, font, Icon, type IconName, radius, shadow, space, text } from '@/design-system';
 import type { CardMark, CardView } from '@/features/map/adapter';
+import { Choices, GroupMark } from './card-choices';
 import { CARD } from './layout';
 
 export const LOOK_CLOSER = '가까이 보기';
@@ -41,8 +43,8 @@ const PLACE: Record<Extract<CardMark, { type: 'place' }>['place'], { tint: strin
   shuttle: { tint: color.svcShuttle, icon: 'bus' },
 };
 
-// What stands at the card's head: a person's Avatar, with the status for a Friend, or the place's icon on a round
-// of its kind's colour.
+// What stands at the card's head: a person's Avatar, with the status for a Friend, the place's icon on a round of its
+// kind's colour, or a group's round of its kinds.
 function Leading({ mark }: { mark: CardMark }): ReactElement {
   if (mark.type === 'person') {
     return (
@@ -52,6 +54,9 @@ function Leading({ mark }: { mark: CardMark }): ReactElement {
         status={mark.presence ?? undefined}
       />
     );
+  }
+  if (mark.type === 'group') {
+    return <GroupMark kinds={mark.kinds} />;
   }
   const { tint, icon } = PLACE[mark.place];
   return (
@@ -69,7 +74,11 @@ function Head({ card, onClose }: Pick<CardProps, 'card' | 'onClose'>): ReactElem
       <View style={styles.words}>
         <Text
           numberOfLines={1}
-          style={mark.type === 'person' ? styles.personLabel : [styles.placeLabel, { color: PLACE[mark.place].tint }]}
+          style={
+            mark.type === 'person'
+              ? styles.personLabel
+              : [styles.placeLabel, { color: mark.type === 'group' ? color.inkMuted : PLACE[mark.place].tint }]
+          }
         >
           {subLabel}
         </Text>
@@ -86,39 +95,6 @@ function Head({ card, onClose }: Pick<CardProps, 'card' | 'onClose'>): ReactElem
       >
         <Icon color={color.inkMuted} name="x" size={20} />
       </Pressable>
-    </View>
-  );
-}
-
-// The choices of a card that stands for several things, such as the Global Events at one point: a row each, with its
-// title and its time, which opens the thing's own card.
-function Choices({ card, onChoose }: Pick<CardProps, 'card' | 'onChoose'>): ReactElement | null {
-  if (card.choices === undefined) {
-    return null;
-  }
-  return (
-    <View style={styles.choices}>
-      {card.choices.map(({ id, title, detail }) => (
-        <Pressable
-          accessibilityLabel={title}
-          accessibilityRole="button"
-          key={id}
-          onPress={() => {
-            onChoose?.(id);
-          }}
-          style={styles.choice}
-        >
-          <View style={styles.words}>
-            <Text numberOfLines={1} style={styles.choiceTitle}>
-              {title}
-            </Text>
-            <Text numberOfLines={1} style={styles.lineWords}>
-              {detail}
-            </Text>
-          </View>
-          <Icon color={color.inkMuted} name="chevronRight" size={18} />
-        </Pressable>
-      ))}
     </View>
   );
 }
@@ -155,7 +131,7 @@ export function Card({
           ))}
         </View>
       )}
-      <Choices card={card} onChoose={onChoose} />
+      <Choices card={card} key={card.id} onChoose={onChoose} />
       <View style={styles.buttons}>
         {canLookCloser ? (
           <Button icon="search" onPress={onLookCloser} variant="secondary">
@@ -213,9 +189,6 @@ const styles = StyleSheet.create({
   lines: { gap: space[1] },
   line: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   lineWords: { ...text.body, flexShrink: 1, color: color.inkMuted },
-  choices: { gap: space[1] },
-  choice: { flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: CLOSE, paddingVertical: space[1] },
-  choiceTitle: { ...text.body, fontFamily: font.semiBold, color: color.ink },
   buttons: { flexDirection: 'row', gap: space[2] },
   primary: { flexGrow: 1, flexShrink: 1 },
 });

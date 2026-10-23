@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { MarkerLook } from '@/map';
@@ -39,6 +40,25 @@ describe("a person's look on the map", () => {
       'person:full:free:f2:photo:selected',
       'person:full:class:f2:photo',
       'person:full:free:f3:photo',
+    ]);
+  });
+});
+
+describe("a group's look on the map", () => {
+  it('is named by its kinds, its form and whether it is selected', () => {
+    const looks: MarkerLook[] = [
+      { kind: 'group', kinds: ['official', 'party'], form: 'pin' },
+      { kind: 'group', kinds: ['official', 'party'], form: 'dot' },
+      { kind: 'group', kinds: ['official', 'party'], form: 'pin', selected: true },
+      { kind: 'group', kinds: ['party', 'dining', 'shuttle'], form: 'pin' },
+    ];
+    const names = looks.map((look) => lookName(look));
+
+    expect(names).toEqual([
+      'group:official+party:pin',
+      'group:official+party:dot',
+      'group:official+party:pin:selected',
+      'group:party+dining+shuttle:pin',
     ]);
   });
 });

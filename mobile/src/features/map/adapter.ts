@@ -9,6 +9,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { RecruitingQuest } from '@/api/party-types';
@@ -17,7 +18,7 @@ import { eventTime, recruitingCounts } from '@/features/events/adapter';
 import { type FriendView, keptPositions, minutesOld } from '@/features/friends/adapter';
 import { otherHolders, partyOf, positionOf, type QuestParty, shownSubQuest } from '@/features/quests/adapter';
 import { koreaClock, koreaDay } from '@/korea-time';
-import { type EventCard, eventPointId, groupedByPoint } from './event-points';
+import { placeGroupId } from './place-groups';
 import { givenName, shortTitle, withParticle } from './short-name';
 
 // The icons a card's lines use, by their names in the design system.
@@ -28,11 +29,16 @@ export type CardIcon = 'clock' | 'pin' | 'users' | 'info' | 'route' | 'meal';
 //   no Friend, whose marker has the Party's colour; `id` is the person's own, which stays while what is shown of
 //   them changes;
 // - a place: the icon and the colour of its kind in the design system. The frames draw a Shared Quest as a Party, and a
-//   shuttle's vehicle as its stops.
+//   shuttle's vehicle as its stops;
+// - a group: the kinds of the things at one place, in the order `place-groups.ts` draws them.
 export type CardMark =
   // `stale`: the position is over two minutes old, and the Avatar is dimmed.
   | { type: 'person'; id: string; name: string; photo: string | null; presence: Presence | null; stale: boolean }
-  | { type: 'place'; place: 'official' | 'party' | 'quest' | 'dining' | 'shuttle' };
+  | { type: 'place'; place: PlaceKind }
+  | { type: 'group'; kinds: readonly PlaceKind[] };
+
+// The kinds of a place in the design system.
+export type PlaceKind = 'official' | 'party' | 'quest' | 'dining' | 'shuttle';
 
 // The thing's marker on the map, beside its `mark` and its `position`.
 export interface CardMarker {
@@ -42,7 +48,7 @@ export interface CardMarker {
   // word's end within 8 characters, "AI 커리어", which the map does not draw: no words stand under a place.
   short: string;
   // On a place's pin: a Party's members; the Quests that gather for a Global Event, when they are more than one; the
-  // Global Events at one point. 0 for none, and for a person.
+  // things of one kind at one place. 0 for none, for a person and for a group of several kinds.
   count: number;
   // For a person whose position is old: how many minutes ago it was measured. The marker is dimmed and its short
   // name says so. Null otherwise.
@@ -54,10 +60,10 @@ export interface CardView {
   id: string;
   // `shared-quest` is a Quest of the User's that no Party names, such as a dinner with a Friend. `dining` is the
   // Place of restaurants with menus today, `shuttle-stop` and `shuttle-vehicle` the shuttle's, while their layer is
-  // on. `event-point` is a point on the map where two or more Global Events are, which its card lists.
+  // on. `place-group` is a place on the map where two or more things stand, which its card lists.
   kind:
     | 'global-event'
-    | 'event-point'
+    | 'place-group'
     | 'party'
     | 'shared-quest'
     | 'friend'
@@ -87,17 +93,18 @@ export interface CardView {
   // For a thing that glides on the map other than a person, how long its glide to a new position takes. A person's
   // Avatar glides as the positions come.
   glideMs?: number;
-  // For a Global Event at a point with others: the id of the point's card, whose marker stands for the event. The
-  // event has no marker of its own, and its card opens from the point's.
+  // For a thing at a place with others: the id of the place's card, whose marker stands for the thing. The thing has
+  // no marker of its own, and its card opens from the place's.
   within?: string;
-  // For the point of Global Events: the events, each with its card's id, its title and its time.
-  choices?: { id: string; title: string; detail: string }[];
+  // For a place with several things: the things, each with its card's id, its kind, its title and a line of its card,
+  // such as its time.
+  choices?: { id: string; kind: PlaceKind; title: string; detail: string }[];
 }
 
 // A card's id from the id of what it shows, for a part of a screen that holds the thing and not its card.
 export const cardId = {
   globalEvent: (eventId: string): string => `event:${eventId}`,
-  eventPoint: eventPointId,
+  placeGroup: placeGroupId,
   quest: (questId: string): string => `party:${questId}`,
   friend: (userId: string): string => `friend:${userId}`,
   partyMember: (userId: string): string => `party-member:${userId}`,
@@ -125,13 +132,13 @@ export interface MapSources {
   now: Date;
 }
 
-// The Global Events' cards with where each event says it is, before grouping by point (`event-points.ts`).
-function eventCards({ globalEvents, globalEventAnnouncers, recruiting: gathering, now }: MapSources): EventCard[] {
+// The Global Events' cards. Things at one place are grouped on the main screen (`place-groups.ts`).
+function eventCards({ globalEvents, globalEventAnnouncers, recruiting: gathering, now }: MapSources): CardView[] {
   const counts = recruitingCounts(gathering);
-  return globalEvents.map((event): EventCard => {
+  return globalEvents.map((event): CardView => {
     const announcer = globalEventAnnouncers.find(({ eventId }) => eventId === event.id)?.announcer;
     const recruiting = counts.get(event.id) ?? 0;
-    const card: CardView = {
+    return {
       id: cardId.globalEvent(event.id),
       kind: 'global-event',
       mark: { type: 'place', place: 'official' },
@@ -152,7 +159,6 @@ function eventCards({ globalEvents, globalEventAnnouncers, recruiting: gathering
       secondary: null,
       position: { latitude: event.latitude, longitude: event.longitude },
     };
-    return { card, place: event.place };
   });
 }
 
@@ -310,8 +316,7 @@ function partyMemberCards(sources: MapSources): CardView[] {
   });
 }
 
-// One card for each thing on the map that a press opens.
+// One card for each thing on the map that a press opens, before things at one place are grouped.
 export function toCards(sources: MapSources): CardView[] {
-  const events = groupedByPoint(eventCards(sources));
-  return [...events, ...questCards(sources), ...friendCards(sources), ...partyMemberCards(sources)];
+  return [...eventCards(sources), ...questCards(sources), ...friendCards(sources), ...partyMemberCards(sources)];
 }

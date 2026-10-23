@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // The team's design system "SNU Now", ported to React Native. A screen takes its colours, text styles and shared
@@ -26,7 +27,8 @@ export { FullScreenPanel } from './full-screen-panel';
 export { Icon, ICON_NAMES, type IconName } from './icon';
 export { ListRow, RoundIcon, SectionHeader } from './list-row';
 export { MapPerson, type PersonTone } from './map-person';
-export { MapDot, MapPin, type MapPinKind, type MapPlaceKind, MapRestaurant } from './map-pin';
+export { KindRounds, MapGroupDot, MapGroupPin } from './map-group-pin';
+export { MapDot, MapPin, type MapPinKind, type MapPlaceKind, MapRestaurant, placeKindLook } from './map-pin';
 export { Overlay, OverlayHost } from './overlay';
 export { SearchField } from './search-field';
 export { type Segment, SegmentedTabs } from './segmented-tabs';
