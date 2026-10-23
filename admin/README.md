@@ -171,34 +171,41 @@ what happened and reads the lists again; the refusals `ALREADY_FRIENDS`, `USER_N
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
 
-| Command             | Checks                                       |
-| ------------------- | -------------------------------------------- |
-| `pnpm lint`         | oxlint with type-aware rules                 |
-| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it) |
-| `pnpm typecheck`    | TypeScript in strict mode                    |
-| `pnpm test`         | Vitest tests in `__tests__/`                 |
+| Command             | Checks                                                                |
+| ------------------- | --------------------------------------------------------------------- |
+| `pnpm lint`         | oxlint with type-aware rules, and that each test file names its level |
+| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it)                          |
+| `pnpm typecheck`    | TypeScript in strict mode                                             |
+| `pnpm test`         | Vitest tests in `__tests__/`                                          |
 
 `pnpm lint` and `pnpm typecheck` first run `next typegen`, which writes the route types (`LayoutProps`, `PageProps`)
 into `.next/types/`, so both checks also work on a fresh clone, before `pnpm dev` has run.
 
 ## Tests
 
-`pnpm test` runs two Vitest projects:
+Each test file is named by its level (ADR 0007): `*.unit.test.ts(x)` or `*.integration.test.ts(x)`. `pnpm test` runs
+three Vitest projects:
 
-- **pages** (`__tests__/*.test.tsx`): each test renders a page with React Testing Library in jsdom, as Next.js would
-  on a request, and clicks through it. `vitest.setup.ts` replaces the parts of Next.js that need a request (`cookies()`,
-  `redirect()`, `refresh()`) with `__tests__/support/browser.tsx`, which keeps the cookies and the page a redirect led
-  to, and replaces the main server with the fake in `__tests__/support/fake-main-server.ts`. Kakao's map is replaced by
-  `__tests__/support/fake-maps.tsx`, which shows where its marker is and lets a test point on it, and the Places' map by
-  `__tests__/support/fake-places-map.tsx`, which lists the Places it was handed as buttons that select them. The tests run without
-  a Kakao key; a test of the map sets one with `vi.stubEnv`. `__tests__/support/google.ts`
-  stands in for Google's script on the sign-in page. `notFound()` is replaced too, and `browser.notFound` tells a test
-  that the page would show the not-found page. The tests run in `America/Los_Angeles`, so that a time shown in the
-  browser's zone instead of Seoul's fails.
-- **site** (`__tests__/site/*.test.ts`): builds the site once (`next build`, about 20 seconds) into `.next-test/`, with
-  a test Google client ID, starts it with `next start` on a free port against a fake main server over HTTP, and checks
-  what only the real server shows: the cookie's attributes, that the token is in no page, and that a Server Action
-  posted from another origin is refused. The separate folder keeps the test build away from your own `.next/`.
+- **unit** (`__tests__/**/*.unit.test.{ts,tsx}`): each test calls one module of `src/` directly, in Node, and renders
+  no page, builds nothing and starts no server.
+- **integration-pages** (`__tests__/*.integration.test.tsx`): each test renders a page with React Testing Library in
+  jsdom, as Next.js would on a request, and clicks through it. `vitest.setup.ts` replaces the parts of Next.js that need
+  a request (`cookies()`, `redirect()`, `refresh()`) with `__tests__/support/browser.tsx`, which keeps the cookies and
+  the page a redirect led to, and replaces the main server with the fake in `__tests__/support/fake-main-server.ts`.
+  Kakao's map is replaced by `__tests__/support/fake-maps.tsx`, which shows where its marker is and lets a test point on
+  it, and the Places' map by `__tests__/support/fake-places-map.tsx`, which lists the Places it was handed as buttons
+  that select them. The tests run without a Kakao key; a test of the map sets one with `vi.stubEnv`.
+  `__tests__/support/google.ts` stands in for Google's script on the sign-in page. `notFound()` is replaced too, and
+  `browser.notFound` tells a test that the page would show the not-found page. The tests run in `America/Los_Angeles`,
+  so that a time shown in the browser's zone instead of Seoul's fails.
+- **integration-site** (`__tests__/site/*.integration.test.ts`): builds the site once (`next build`, about 20 seconds)
+  into `.next-test/`, with a test Google client ID, starts it with `next start` on a free port against a fake main
+  server over HTTP, and checks what only the real server shows: the cookie's attributes, that the token is in no page,
+  and that a Server Action posted from another origin is refused. The separate folder keeps the test build away from
+  your own `.next/`.
+
+`pnpm test:unit` runs the unit project alone, `pnpm test:integration` the two integration projects; none of them
+needs Docker. `pnpm test:cov` and `pnpm test:cov:unit` add the coverage of `src/`, written to `coverage/`.
 
 ## Folder layout
 
@@ -217,8 +224,8 @@ src/main-server.ts       the only way the site calls the main server; server-onl
 src/session.ts           the cookie, and asAdministrator(), which sends the person to sign-in on a missing cookie or a 401
 src/seoul-time.ts        times in Asia/Seoul
 src/kakao-maps.ts        loads Kakao's JavaScript SDK in the browser, and the types of the parts the site uses
-__tests__/               page tests, named *.test.tsx, and their support/
-__tests__/site/          tests against the built site
+__tests__/               unit tests (*.unit.test.ts), page tests (*.integration.test.tsx) and their support/
+__tests__/site/          integration tests against the built site (*.integration.test.ts)
 Dockerfile               Production's image: the standalone build (next.config.ts) on port 3100
 ```
 

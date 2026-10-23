@@ -118,8 +118,8 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
 
 The tests never call a real Source or the main server. `startApp` replaces the HTTP call under `PageFetcher` (`FETCH`),
 and every request fails unless the test gives it pages; and the one under `MainServer` (`FETCH_MAIN_SERVER`), with a
-`MainServerStub`. A parser is tested as a function and a collector by running it once, not through
-HTTP; their files are still named `*.e2e-spec.ts`, the one pattern Vitest runs.
+`MainServerStub`. A parser is tested as a function, in a unit test (`*.unit.test.ts`), and a collector by running it
+once in the started worker, not through HTTP, in an integration test (`*.integration.test.ts`).
 
 - **Saved pages**: `test/pages/` holds pages of each Source as they were served, named after the Source, the page when
   the Source has several, and the day it was saved, and read with `savedPage(name)`, or `savedAnswer(name)` for a JSON
@@ -131,15 +131,15 @@ HTTP; their files are still named `*.e2e-spec.ts`, the one pattern Vitest runs.
   ```
 
 - **A parser** is given a saved page with `savedPage(name)` from `test/pages.ts`, and the test checks what comes out,
-  as `test/menu-page-parser.e2e-spec.ts` does. A case the saved page does not show, such as a closure or the turn of
+  as `test/menu-page-parser.unit.test.ts` does. A case the saved page does not show, such as a closure or the turn of
   the year, is an edit of the saved page made in the test, with a comment that says what it changes.
 - **A collector** runs once against `sourcesServing(pages)` from `test/sources.ts`, which stands for the Sources, and a
   `MainServerStub` from `test/main-server.ts`, which stands for the main server and keeps the messages the worker
-  sends, as `test/menu-collector.e2e-spec.ts` does. `answers.set(path, answer)` gives the stub its answer to a
+  sends, as `test/menu-collector.integration.test.ts` does. `answers.set(path, answer)` gives the stub its answer to a
   question, and `refusals.set(path, problem)` makes it refuse a message. The test sets the clock with
   `vi.useFakeTimers({ toFake: ['Date'], now })`. An address given `null` in place of a page never answers, and so do
   the paths in the stub's `unanswered`; a test that waits for the 5 seconds replaces the timers too, as
-  `test/shuttle-collector.e2e-spec.ts` does.
+  `test/shuttle-collector.integration.test.ts` does.
 - **The command** is tested through `collectSources(app, names)`, which `src/collect.ts` calls, in the same file.
 
 ## Menus
@@ -277,7 +277,7 @@ what was read whether the event is published: [Global Events](../main-server/REA
 176525 (a time and a place, after an application period with times), 176516 (a time in words), 176561 (two sessions,
 and an application deadline), 176558 (a range of days and several places), 176564 (no time line, and the application
 period as the header's date) and 176549 (lists and a table, and not an event). Cases they do not show, such as a range
-across the new year, are edits of them made in `test/event-page-parser.e2e-spec.ts`.
+across the new year, are edits of them made in `test/event-page-parser.unit.test.ts`.
 
 ## Shuttle
 
@@ -314,14 +314,18 @@ Two Sources of the shuttle operator's circular route 41946 (`.scratch/research/e
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
 
-| Command             | Checks                                       |
-| ------------------- | -------------------------------------------- |
-| `pnpm lint`         | oxlint with type-aware rules                 |
-| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it) |
-| `pnpm typecheck`    | TypeScript in strict mode                    |
-| `pnpm test`         | Vitest tests in `test/`                      |
+| Command             | Checks                                                              |
+| ------------------- | ------------------------------------------------------------------- |
+| `pnpm lint`         | oxlint with type-aware rules, and that each test file names a level |
+| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it)                        |
+| `pnpm typecheck`    | TypeScript in strict mode                                           |
+| `pnpm test`         | Vitest tests in `test/`                                             |
 
 `pnpm test` needs no Docker: the tests run the worker alone.
+
+Each test file is named by its level (ADR 0007): `*.unit.test.ts` or `*.integration.test.ts`. `pnpm test:unit` runs
+the unit tests alone, and `pnpm test:integration` the integration tests. `pnpm test:cov` and `pnpm test:cov:unit` add
+the coverage of `src/`, written to `coverage/`.
 
 ## Folder layout
 
@@ -345,7 +349,7 @@ src/
 ├── shuttle/                         a feature: the collector of the shuttle's route page and vehicle positions, and
 │                                    their parsers
 └── event/                           a feature: the collector of the events list and its parsers
-test/                                tests, which stand in for the Sources and the main server
+test/                                tests named by level, which stand in for the Sources and the main server
 └── pages/                           pages saved from the Sources, which the tests read in place of them
 ```
 
@@ -378,7 +382,7 @@ named `library`. Use a short lowercase name, with dashes between words (`shuttle
    `get('NAME', { infer: true })`.
 7. Save a page of the Source and write the tests of the parser and of the collector (see
    [Collections](#collections)). Start the server with `startApp` from `test/start-app.ts`. A route is called with
-   `supertest`, as `test/health.e2e-spec.ts` does.
+   `supertest`, as `test/health.integration.test.ts` does.
 8. Run `pnpm format`, then the four checks.
 
 Import classes with a plain `import { PageFetcher } from ...`, never `import type`. Nest looks the class up at runtime
