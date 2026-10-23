@@ -768,11 +768,12 @@ A plan with a Friend is a 비공개 파티: the Meetup of Iteration 1, with its 
 Iteration 2 (P06), and commit `2f4f201` holds its code.
 
 알림 (`notifications-screen.tsx`) is composed from the main server's lists (`useNotices()` of the notifications
-feature), in this order: a Party running for a Quest the User holds ("{name}님이 파티를 활성화했어요", or "파티가
-활성화됐어요" without its Leader), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and the requests to join each Quest the User leads with Approval ("참여 신청
-{n}명"). An invitation's row opens 파티 at 초대, a Friend Request's 친구 요청, and a running Party's
-and the requests' the Quest's room. A list that failed is left out; when every one failed it shows the error state.
-Without rows it says "새 알림이 없어요".
+feature), in this order: a Party running for a Quest the User holds ("{name}님이 파티를 활성화했어요"), a Friend
+Request received, a Quest invitation ("{name}님의 파티 초대"), and the requests to join each Quest the User leads with
+Approval ("참여 신청 {n}명"). An invitation's row opens 파티 at 초대, a Friend Request's 친구 요청, and a running
+Party's and the requests' the Quest's room. A list that failed is left out; when every one failed it shows the error
+state. The main server names each Party's Leader, and an answer of `GET /parties` with a Party without one is refused
+whole, so 알림 then leaves out every Party. Without rows it says "새 알림이 없어요".
 
 **The menu panel** (`src/screens/menus/`, `/menus`) has no frame. It is a `FullScreenPanel` that comes up from the
 bottom: ✕ "닫기" and "메뉴"; under the app bar the 7 days from today as `DayTile`s ("오늘", "내일", then the weekday),

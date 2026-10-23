@@ -7,6 +7,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // The answers of the main server, as the app reads them; `src/api/server/answers.ts` checks them. A shape marked "the
@@ -243,7 +244,8 @@ export interface Party {
   holdsQuest: boolean;
   // The User's Friends among the members, in the order they entered.
   friends: Person[];
-  // Provisional: the Party's Leader now, from an open pull request of the main server (P08-16).
+  // The Party's Leader now. The main server always sends it, and `isParties` refuses a Party without it; it stays
+  // optional, with the adapters' cases for a Party without one, so that the check was the only change (P09-10).
   leader?: { id: string; name: string };
 }
 

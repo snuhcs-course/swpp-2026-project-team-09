@@ -3,7 +3,8 @@
 Parent: [P09 spec](../spec.md)
 Status: resolved
 Blocked by: P09-05 (mobile: tests named by level, run and measured apart)
-Touches: new unit test files in mobile's `__tests__/`. No `src/` change is planned.
+Touches: new unit test files in mobile's `__tests__/`. No `src/` change was planned; the review round changed
+`isParties` in `src/api/server/answers.ts` and the comment on `Party.leader` in `src/api/types.ts`.
 
 ## What to build
 
@@ -28,7 +29,8 @@ An adapter is pure when its functions take data and return data, with no I/O, ho
 
 ### Decisions (2026-10-23)
 
-- **Files.** 14 new unit test files and 2 support files, all under `mobile/__tests__/`; no `src/` change.
+- **Files.** 14 new unit test files and 2 support files, all under `mobile/__tests__/`; no `src/` change until the
+  review round below, which made `isParties` refuse a Party without its Leader.
   - `api/http-renewal.unit.test.ts`: `http.ts` through `call()`. Stand-ins: `@/auth/tokens`, `@/session/session-events`
     and `@/api/servers` by `jest.mock`; `fetch` behind the support fake server's `startFakeServer()`, which records each
     request. The token store keeps both tokens or neither, so "no refresh token" is "no tokens held". A fourth case
