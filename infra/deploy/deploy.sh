@@ -4,6 +4,7 @@
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
+# 2026-10-23  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # One run of the Dev Server's deployment, started by snu-now-deploy.timer: brings the stack up to the tip of
@@ -13,7 +14,7 @@
 
 readonly TRACKED_REF=development
 readonly REPOSITORY=snuhcs-course/swpp-2026-project-team-09
-readonly REQUIRED_CHECKS='main-server socket-server worker-server match-server flow-tests'
+readonly REQUIRED_CHECKS='main-server socket-server worker-server flow-tests'
 readonly MAX_ATTEMPTS=3
 readonly KEPT_DUMPS=7
 readonly COMPOSE_PROJECT=snu-now

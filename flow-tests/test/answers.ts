@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -21,8 +22,6 @@ export const removedPosition = z.object({ userId: z.string() });
 const someone = z.object({ id: z.string() });
 
 export const globalEvent = position.extend({ id: z.string(), state: z.string(), version: z.number() });
-
-export const matchingRequest = z.object({ state: z.string(), questId: z.string().nullable() });
 
 export const quest = z.object({
   id: z.string(),

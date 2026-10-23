@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { createPublicKey } from 'node:crypto';
@@ -21,7 +22,7 @@ function parseConfig(printed: string): z.infer<typeof composeConfig> {
   return composeConfig.parse(JSON.parse(printed));
 }
 
-const GENERATED = ['ACCESS_TOKEN_PRIVATE_KEY', 'ACCESS_TOKEN_PUBLIC_KEY', 'WORKER_TOKEN', 'MATCH_SERVER_TOKEN'];
+const GENERATED = ['ACCESS_TOKEN_PRIVATE_KEY', 'ACCESS_TOKEN_PUBLIC_KEY', 'WORKER_TOKEN'];
 
 // One service that hands on what the settings file holds; `docker compose config` reads it without starting anything.
 function probeCompose(names: string[]): string {
@@ -48,7 +49,6 @@ it("a stack of its own project, Compose files and settings file gets the generat
     expect(environment.ACCESS_TOKEN_PRIVATE_KEY).toMatch(/^-----BEGIN PRIVATE KEY-----\n/u);
     expect(environment.ACCESS_TOKEN_PUBLIC_KEY).toMatch(/^-----BEGIN PUBLIC KEY-----\n/u);
     expect(environment.WORKER_TOKEN).toMatch(/^[0-9a-f]{64}$/u);
-    expect(environment.MATCH_SERVER_TOKEN).toMatch(/^[0-9a-f]{64}$/u);
     expect(environment.DEPLOY_STATUS_DIR).toBe('/srv/status');
     // The answered key signs the Google ID tokens that the stack's sources container checks.
     const googlePublicKey = createPublicKey(googlePrivateKey).export({ type: 'spki', format: 'pem' });

@@ -2,12 +2,13 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-10-23  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Prepares a new database once, as infra/postgres/init-databases.sh does on laptops. A team member runs it by hand as
 # the master user (infra/production/README.md, The database); the Release never applies it. Its settings come from the
 # Secret database-setup, which the runbook creates before it and deletes after it: PGHOST, PGUSER, and PGPASSWORD for
-# the master user, and MAIN_DB_PASSWORD and MATCH_DB_PASSWORD for the two new roles.
+# the master user, and MAIN_DB_PASSWORD for the new role.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -66,17 +67,11 @@ spec:
             - |
               set -euo pipefail
               psql -v ON_ERROR_STOP=1 \
-                -v main_password="$MAIN_DB_PASSWORD" \
-                -v match_password="$MATCH_DB_PASSWORD" <<'SQL'
+                -v main_password="$MAIN_DB_PASSWORD" <<'SQL'
               CREATE ROLE main LOGIN PASSWORD :'main_password';
               GRANT main TO CURRENT_USER;
               CREATE DATABASE main OWNER main;
               REVOKE ALL ON DATABASE main FROM PUBLIC;
-
-              CREATE ROLE match LOGIN PASSWORD :'match_password';
-              GRANT match TO CURRENT_USER;
-              CREATE DATABASE match OWNER match;
-              REVOKE ALL ON DATABASE match FROM PUBLIC;
 
               \connect main
               CREATE EXTENSION postgis;

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -23,13 +24,11 @@ const SERVER_SETTINGS = {
   DEPLOY_APK_DIR: apkFolder,
   POSTGRES_PASSWORD: 'deploy-test-postgres',
   MAIN_DB_PASSWORD: 'deploy-test-main',
-  MATCH_DB_PASSWORD: 'deploy-test-match',
   PUBLIC_URL: 'http://deploy-test.example',
   GOOGLE_APP_CLIENT_ID: 'deploy-test-app.apps.googleusercontent.com',
   GOOGLE_ADMIN_CLIENT_ID: 'deploy-test-admin.apps.googleusercontent.com',
   ANDROID_CERTIFICATE_FINGERPRINTS:
     'FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C',
-  ROUND_INTERVAL_SECONDS: '60',
   KAKAO_REST_API_KEY: 'deploy-test',
   INITIAL_ADMINISTRATOR_EMAILS: 'admin@deploy-test.example',
   DEMO_ACCOUNT_EMAILS: 'student@snu.ac.kr',

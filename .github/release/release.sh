@@ -3,17 +3,18 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-10-23  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Release workflow's steps (.github/workflows/release.yml), one command each. The functions under Deciding take
 # plain inputs and print a verdict; those under Doing call gh, aws, docker, kustomize, and kubectl.
 
-readonly SERVERS=(main-server socket-server worker-server match-server admin)
+readonly SERVERS=(main-server socket-server worker-server admin)
 readonly PARAMETER_PATH=/snunow/production
 readonly NAMESPACE=snunow
 REPOSITORY_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 readonly REPOSITORY_ROOT
-readonly TARGETS='main-server|socket-server|worker-server|match-server|admin|all'
+readonly TARGETS='main-server|socket-server|worker-server|admin|all'
 readonly RELEASE_REF="^refs/tags/snunow/($TARGETS)/[0-9]{2}\\.(0[1-9]|1[0-2])\\.(0[1-9]|[12][0-9]|3[01])-[1-9][0-9]*\$"
 
 # --- Deciding -----------------------------------------------------------------------------------------------------
@@ -189,9 +190,7 @@ write_secrets() {
   fi
   parameters=$(cat)
   env="MAIN_DATABASE_URL=$(database_url main)" &&
-    env+=$'\n'"MATCH_DATABASE_URL=$(database_url match)" &&
     env+=$'\n'"WORKER_TOKEN=$(line_parameter worker-token)" &&
-    env+=$'\n'"MATCH_SERVER_TOKEN=$(line_parameter match-server-token)" &&
     env+=$'\n'"KAKAO_REST_API_KEY=$(line_parameter kakao-rest-api-key)" &&
     env+=$'\n'"OPENROUTER_API_KEY=$(line_parameter openrouter-api-key)" &&
     env+=$'\n'"INITIAL_ADMINISTRATOR_EMAILS=$(line_parameter initial-administrator-emails)" &&

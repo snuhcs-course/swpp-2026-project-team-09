@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-10-23  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Renders each target with stand-in secrets, as a Release would, and checks the objects that the cluster would receive.
@@ -14,7 +15,7 @@ work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 export KUBECONFIG=/dev/null
 
-servers=(main-server socket-server worker-server match-server admin)
+servers=(main-server socket-server worker-server admin)
 targets=("${servers[@]}" all)
 failures=0
 
@@ -41,9 +42,7 @@ copy_manifests() {
   mkdir -p "$secrets"
   cat >"$secrets/secrets.env" <<'EOF'
 MAIN_DATABASE_URL=postgresql://main:stand-in@database.example:5432/main?sslmode=verify-full
-MATCH_DATABASE_URL=postgresql://match:stand-in@database.example:5432/match?sslmode=verify-full
 WORKER_TOKEN=stand-in
-MATCH_SERVER_TOKEN=stand-in
 KAKAO_REST_API_KEY=stand-in
 OPENROUTER_API_KEY=stand-in
 INITIAL_ADMINISTRATOR_EMAILS=stand-in@example.com

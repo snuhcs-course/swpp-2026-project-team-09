@@ -8,6 +8,7 @@
 # 2026-10-03  Opus 5.5   prompted by fyoon46
 # 2026-10-04  Opus 5.5   prompted by fyoon46
 # 2026-10-06  Fable 5.1  prompted by fyoon46
+# 2026-10-23  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Starts the data stores and the servers on a developer's laptop: `docker compose up --build` in this folder.
@@ -21,7 +22,6 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
       MAIN_DB_PASSWORD: main
-      MATCH_DB_PASSWORD: match
     ports:
       - '127.0.0.1:5432:5432'
     volumes:
@@ -59,7 +59,6 @@ services:
       DATABASE_URL: postgresql://main:main@postgres:5432/main
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      MATCH_SERVER_URL: http://match-server:3003
     ports:
       - '3000:3000'
     healthcheck:
@@ -104,23 +103,6 @@ services:
       - '127.0.0.1:3002:3002'
     depends_on:
       - main-server
-
-  match-server:
-    build: match-server
-    init: true
-    # The secret it shares with the main server comes from match-server/.env (see match-server/.env.example).
-    env_file:
-      - path: match-server/.env
-        required: false
-    environment:
-      PORT: 3003
-      DATABASE_URL: postgresql://match:match@postgres:5432/match
-      MAIN_SERVER_URL: http://main-server:3000
-    ports:
-      - '127.0.0.1:3003:3003'
-    depends_on:
-      postgres:
-        condition: service_healthy
 
   # The demo profile, `docker compose --profile demo up --build`: demo data, moving Avatars and menus, so that every
   # feature can be tried at once (main-server/README.md, Demo data). Never started without the profile.

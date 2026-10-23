@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { spawn } from 'node:child_process';
@@ -102,11 +103,10 @@ async function psql(database: string, command: string): Promise<void> {
   );
 }
 
-// Each test starts from an empty state: what earlier tests made is gone from both databases and from Redis.
+// Each test starts from an empty state: what earlier tests made is gone from the database and from Redis.
 export async function emptyState(): Promise<void> {
   await Promise.all([
     psql('main', emptyTables(['places', 'shuttle_routes', 'shuttle_stops', 'administrators'])),
-    psql('match', emptyTables([])),
     compose('exec', '-T', 'redis', 'redis-cli', 'FLUSHALL'),
   ]);
 }

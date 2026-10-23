@@ -2,10 +2,11 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-10-23  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 locals {
-  image_repositories = toset(["main-server", "socket-server", "worker-server", "match-server", "admin"])
+  image_repositories = toset(["main-server", "socket-server", "worker-server", "admin"])
   ecr_registry       = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.region}.amazonaws.com"
 }
 

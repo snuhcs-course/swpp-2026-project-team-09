@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
+# 2026-10-23  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Each test runs in a subshell of its own, so that its exports reach no other test, as meant.
@@ -46,7 +47,6 @@ setup() {
  Container snu-now-main-server-1  Recreated
  Container snu-now-socket-server-1  Recreated
  Container snu-now-proxy-1  Created
- Container snu-now-match-server-1  Running
  Container snu-now-main-server-1  Starting
  Container snu-now-socket-server-1  Starting
  Container snu-now-proxy-1  Starting
@@ -80,7 +80,7 @@ steps() {
 }
 
 PASSED=('main-server completed success' 'socket-server completed success' 'worker-server completed success'
-  'match-server completed success' 'flow-tests completed success')
+  'flow-tests completed success')
 
 # The verdict on a commit's check runs, each given as "name status conclusion".
 verdict() {
@@ -118,7 +118,7 @@ serve_check_runs() {
   [[ "$(field .checkedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]] || false
   [[ "$(field .deployedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]] || false
   [[ ! "$(field .deployedAt)" < "$(field .checkedAt)" ]] || false
-  [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success match-server=success flow-tests=success" ]
+  [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success flow-tests=success" ]
   [ "$(field '.recreatedServices | join(" ")')" = "main-server socket-server proxy" ]
 }
 
@@ -147,27 +147,27 @@ serve_check_runs() {
   [ "$(cut -d ' ' -f 1-2 "$FAKE_CALLS" | tr '\n' ' ')" = "git fetch git rev-parse " ]
 }
 
-@test "all five required checks success gives deploy; one missing or in_progress gives waiting-for-ci; one failure gives ci-failed and the commit is not looked at again; a failed admin or mobile check alone still gives deploy" {
+@test "all four required checks success gives deploy; one missing or in_progress gives waiting-for-ci; one failure gives ci-failed and the commit is not looked at again; a failed admin or mobile check alone still gives deploy" {
   # shellcheck source=../deploy.sh
   source "$DEPLOY"
   [ "$(verdict "${PASSED[@]}")" = deploy ]
-  [ "$(verdict "${PASSED[@]:0:4}")" = waiting-for-ci ]
-  [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests in_progress null')" = waiting-for-ci ]
-  [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests completed failure')" = ci-failed ]
+  [ "$(verdict "${PASSED[@]:0:3}")" = waiting-for-ci ]
+  [ "$(verdict "${PASSED[@]:0:3}" 'flow-tests in_progress null')" = waiting-for-ci ]
+  [ "$(verdict "${PASSED[@]:0:3}" 'flow-tests completed failure')" = ci-failed ]
   [ "$(verdict "${PASSED[@]}" 'admin completed failure' 'mobile completed failure')" = deploy ]
 
-  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed failure' 'mobile completed success'
+  serve_check_runs "${PASSED[@]:0:3}" 'flow-tests completed failure' 'mobile completed success'
   run "$DEPLOY"
   [ "$status" -eq 0 ]
   [ "$(field '[.result, .candidateCommit, .attempt, .deployedCommit] | map(tostring) | join(" ")')" = "ci-failed $TIP null null" ]
-  [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success match-server=success flow-tests=failure" ]
+  [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success flow-tests=failure" ]
   : >"$FAKE_CALLS"
 
   run "$DEPLOY"
 
   [ "$status" -eq 0 ]
   [ "$(field .result)" = ci-failed ]
-  [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success match-server=success flow-tests=failure" ]
+  [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success flow-tests=failure" ]
   [ "$(grep -c '^curl ' "$FAKE_CALLS")" -eq 0 ]
 }
 
@@ -175,7 +175,7 @@ serve_check_runs() {
   # shellcheck source=../deploy.sh
   source "$DEPLOY"
   [ "$(verdict "${PASSED[@]}" 'flow-tests completed failure')" = deploy ]
-  [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests completed failure' 'flow-tests in_progress null')" = waiting-for-ci ]
+  [ "$(verdict "${PASSED[@]:0:3}" 'flow-tests completed failure' 'flow-tests in_progress null')" = waiting-for-ci ]
 }
 
 @test "a required check whose only run was cancelled, went stale or awaits an action gives waiting-for-ci, also beside a failed run; failure, timed_out, startup_failure, neutral and skipped give ci-failed" {
@@ -183,11 +183,11 @@ serve_check_runs() {
   source "$DEPLOY"
   local conclusion
   for conclusion in cancelled stale action_required; do
-    [ "$(verdict "${PASSED[@]:0:4}" "flow-tests completed $conclusion")" = waiting-for-ci ]
-    [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests completed failure' "flow-tests completed $conclusion")" = waiting-for-ci ]
+    [ "$(verdict "${PASSED[@]:0:3}" "flow-tests completed $conclusion")" = waiting-for-ci ]
+    [ "$(verdict "${PASSED[@]:0:3}" 'flow-tests completed failure' "flow-tests completed $conclusion")" = waiting-for-ci ]
   done
   for conclusion in failure timed_out startup_failure neutral skipped; do
-    [ "$(verdict "${PASSED[@]:0:4}" "flow-tests completed $conclusion")" = ci-failed ]
+    [ "$(verdict "${PASSED[@]:0:3}" "flow-tests completed $conclusion")" = ci-failed ]
   done
 }
 
@@ -303,9 +303,9 @@ outcome() {
   [ "$(outcome)" = "up-to-date zero" ]
 
   export FAKE_TIP=$NEXT_TIP
-  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests in_progress null'
+  serve_check_runs "${PASSED[@]:0:3}" 'flow-tests in_progress null'
   [ "$(outcome)" = "waiting-for-ci zero" ]
-  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed failure'
+  serve_check_runs "${PASSED[@]:0:3}" 'flow-tests completed failure'
   [ "$(outcome)" = "ci-failed zero" ]
 
   export FAKE_TIP=$THIRD_TIP FAKE_BUILD_STATUS=1
@@ -371,7 +371,7 @@ outcome() {
 }
 
 @test "a run outside systemd, as sudo bash deploy.sh starts one, asks GitHub again about a ci-failed commit" {
-  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed failure'
+  serve_check_runs "${PASSED[@]:0:3}" 'flow-tests completed failure'
   run "$DEPLOY"
   [ "$(field .result)" = ci-failed ]
 

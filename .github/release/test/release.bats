@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-10-23  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Release workflow's script, through its commands: the name check, the gate with gh faked on PATH, the secrets
@@ -11,7 +12,7 @@
 REPOSITORY=snuhcs-course/swpp-2026-project-team-09
 COMMIT=6b1f0c2a9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a
 TAG=snunow/main-server/26.11.13-1
-CI_JOBS=(main-server socket-server worker-server match-server admin mobile flow-tests deploy-scripts release-script
+CI_JOBS=(main-server socket-server worker-server admin mobile flow-tests deploy-scripts release-script
   terraform manifests)
 
 setup() {
@@ -79,7 +80,7 @@ polls() {
 
   run "$RELEASE" check-name refs/tags/snunow/all/26.11.13-12
   [ "$status" -eq 0 ]
-  [ "$output" = $'servers=["main-server","socket-server","worker-server","match-server","admin"]\nimage-tag=all-26.11.13-12' ]
+  [ "$output" = $'servers=["main-server","socket-server","worker-server","admin"]\nimage-tag=all-26.11.13-12' ]
 }
 
 @test "the name check refuses every other name, a branch and an app tag among them" {
@@ -218,8 +219,8 @@ serve_parameters() {
   done | jq --slurp '{Parameters: .}' >"$BATS_TEST_TMPDIR/parameters.json"
 }
 
-PARAMETERS=(main-db-password 'k/9Zr+Qw2=xT@4' match-db-password 0b5e3c9a7d1f42e8 access-token-private-key
-  "$PRIVATE_KEY" access-token-public-key "$PUBLIC_KEY" worker-token 3f9a1c77d2e0 match-server-token 8e21b4a09c5d
+PARAMETERS=(main-db-password 'k/9Zr+Qw2=xT@4' access-token-private-key "$PRIVATE_KEY" access-token-public-key
+  "$PUBLIC_KEY" worker-token 3f9a1c77d2e0
   kakao-rest-api-key 5c1d0e9f8a7b openrouter-api-key sk-or-v1-77aa initial-administrator-emails 'a@snu.ac.kr,b@snu.ac.kr')
 
 @test "the secrets files hold every parameter, the database addresses with their passwords encoded, and the key pair with its line breaks, and no value is printed" {
@@ -231,9 +232,7 @@ PARAMETERS=(main-db-password 'k/9Zr+Qw2=xT@4' match-db-password 0b5e3c9a7d1f42e8
   [ "$status" -eq 0 ]
   diff "$secrets/secrets.env" - <<EOF
 MAIN_DATABASE_URL=postgresql://main:k%2F9Zr%2BQw2%3DxT%404@$ENDPOINT:5432/main?sslmode=verify-full
-MATCH_DATABASE_URL=postgresql://match:0b5e3c9a7d1f42e8@$ENDPOINT:5432/match?sslmode=verify-full
 WORKER_TOKEN=3f9a1c77d2e0
-MATCH_SERVER_TOKEN=8e21b4a09c5d
 KAKAO_REST_API_KEY=5c1d0e9f8a7b
 OPENROUTER_API_KEY=sk-or-v1-77aa
 INITIAL_ADMINISTRATOR_EMAILS=a@snu.ac.kr,b@snu.ac.kr
@@ -241,7 +240,7 @@ EOF
   diff "$secrets/access-token-private-key.pem" <(printf '%s\n' "$PRIVATE_KEY")
   diff "$secrets/access-token-public-key.pem" <(printf '%s\n' "$PUBLIC_KEY")
   [ "$(wc -l <"$secrets/access-token-private-key.pem")" -eq 4 ]
-  [[ "$output" != *3f9a1c77d2e0* && "$output" != *"BEGIN"* && "$output" != *0b5e3c9a7d1f42e8* ]] || false
+  [[ "$output" != *3f9a1c77d2e0* && "$output" != *"BEGIN"* && "$output" != *5c1d0e9f8a7b* ]] || false
 }
 
 @test "a missing parameter, a key without line breaks, a value over two lines, or no database endpoint fails, naming the parameter and printing no value" {
@@ -252,13 +251,13 @@ EOF
   [ "$status" -eq 1 ]
   [[ "$output" == *"/snunow/production/main-db-password"* ]] || false
 
-  serve_parameters "${PARAMETERS[@]:0:6}" access-token-public-key \
-    '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE\n-----END PUBLIC KEY-----' "${PARAMETERS[@]:8}"
+  serve_parameters "${PARAMETERS[@]:0:4}" access-token-public-key \
+    '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE\n-----END PUBLIC KEY-----' "${PARAMETERS[@]:6}"
   run "$RELEASE" write-secrets "$secrets" "$ENDPOINT" <"$BATS_TEST_TMPDIR/parameters.json"
   [ "$status" -eq 1 ]
   [[ "$output" == *"/snunow/production/access-token-public-key"* && "$output" != *MFkw* ]] || false
 
-  serve_parameters "${PARAMETERS[@]:0:8}" worker-token $'3f9a1c77\nd2e0' "${PARAMETERS[@]:10}"
+  serve_parameters "${PARAMETERS[@]:0:6}" worker-token $'3f9a1c77\nd2e0' "${PARAMETERS[@]:8}"
   run "$RELEASE" write-secrets "$secrets" "$ENDPOINT" <"$BATS_TEST_TMPDIR/parameters.json"
   [ "$status" -eq 1 ]
   [[ "$output" == *"/snunow/production/worker-token"* && "$output" != *3f9a1c77* ]] || false

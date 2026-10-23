@@ -1,7 +1,7 @@
 # deploy
 
 The Dev Server's deployment and its runbook. The Dev Server is server B of the two the course lends the team. It runs
-the four servers, PostgreSQL, Redis and the Demo Data under Docker Compose, behind a Caddy proxy, and keeps itself on
+the three servers, PostgreSQL, Redis and the Demo Data under Docker Compose, behind a Caddy proxy, and keeps itself on
 the tip of `development`: nothing pushes to it
 ([ADR 0003](../../docs/adr/0003-the-dev-server-pulls-its-deployments.md),
 [ADR 0004](../../docs/adr/0004-compose-not-kubernetes-on-the-course-servers.md)).
@@ -34,7 +34,7 @@ systemd never starts it while a run is going. The service runs `infra/deploy/dep
 
 1. Fetches `development`. When its tip is the deployed commit, the result is `up-to-date` and the run stops.
 2. Reads the tip's check runs from GitHub's public API, without a token. The CI checks `main-server`,
-   `socket-server`, `worker-server`, `match-server` and `flow-tests` must have succeeded; `admin`, `mobile` and
+   `socket-server`, `worker-server` and `flow-tests` must have succeeded; `admin`, `mobile` and
    `deploy-scripts` are not consulted. One success of each among its runs is enough. Otherwise a check missing, still
    running, cancelled (as a newer push cancels it), stale or waiting for an action gives `waiting-for-ci`, asked again
    next run; one failed, timed out, neutral or skipped gives `ci-failed`, and the commit is not asked about again.
@@ -133,7 +133,7 @@ left, that a `CHANGE_ME` waits. Once the checkout exists, run it from there:
 
 The timers start at once, so the first deploy run stops at `secrets-missing`. Fill in the settings
 ([Filling the settings](#filling-the-settings)); the next run, within a minute, deploys by itself. The first build of
-the four servers' images takes several minutes. Follow it with `sudo journalctl -u snu-now-deploy --follow`, then open
+the three servers' images takes several minutes. Follow it with `sudo journalctl -u snu-now-deploy --follow`, then open
 `/health/ready` and `/deploy-status` at the Dev Server's address from a phone. Until the first deployment nothing
 listens on port 80 and the ingress answers 503; the status is then read on the server, in
 `/srv/team/snu-now-status/status.json`.
@@ -147,10 +147,9 @@ The settings file, `/srv/team/snu-now-secrets/snu-now.env`, holds two kinds of v
 servers' own `.env.example` files.
 
 **Written by the bootstrap, left as they are.** The generated secrets: `POSTGRES_PASSWORD`, `MAIN_DB_PASSWORD`,
-`MATCH_DB_PASSWORD`, the access-token key pair `ACCESS_TOKEN_PRIVATE_KEY` and `ACCESS_TOKEN_PUBLIC_KEY`, `WORKER_TOKEN`
-and `MATCH_SERVER_TOKEN`. The fixed values: `COMPOSE_PROFILES=demo`, `DEPLOY_STATUS_DIR`, `DEPLOY_APK_DIR`,
+the access-token key pair `ACCESS_TOKEN_PRIVATE_KEY` and `ACCESS_TOKEN_PUBLIC_KEY`, and `WORKER_TOKEN`. The fixed values: `COMPOSE_PROFILES=demo`, `DEPLOY_STATUS_DIR`, `DEPLOY_APK_DIR`,
 `PUBLIC_URL` (the Dev Server's address), the two Google client IDs, `ANDROID_CERTIFICATE_FINGERPRINTS` (the debug
-key's, which signs the dev APK), `ASSISTANT_MODEL` and `ROUND_INTERVAL_SECONDS`.
+key's, which signs the dev APK) and `ASSISTANT_MODEL`.
 
 **Filled in by a person**, `CHANGE_ME` until then:
 
@@ -295,8 +294,9 @@ dc up --detach
 sudo systemctl start snu-now-deploy.timer
 ```
 
-with the name of the dump to restore in the fourth line. `psql` reports that the roles and the two databases already
-exist, because PostgreSQL creates them on an empty volume; those errors are expected. A `manual-` dump is not among the
+with the name of the dump to restore in the fourth line. `psql` reports that the `main` role and database already
+exist, because PostgreSQL creates them on an empty volume; those errors are expected. A dump taken before the match
+server was removed also brings back its `match` role and database, which nothing uses. A `manual-` dump is not among the
 seven the deploy run keeps, so it stays until a person deletes it.
 
 ## Emptying the data and starting again

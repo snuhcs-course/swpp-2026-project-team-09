@@ -3,6 +3,7 @@
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
+# 2026-10-23  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Dev Server's stack: compose.yaml with this file over it, and the settings file as Compose's --env-file
@@ -23,7 +24,6 @@ services:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       MAIN_DB_PASSWORD: ${MAIN_DB_PASSWORD}
-      MATCH_DB_PASSWORD: ${MATCH_DB_PASSWORD}
     ports: !reset []
 
   redis:
@@ -44,7 +44,6 @@ services:
       WORKER_TOKEN: ${WORKER_TOKEN}
       PUBLIC_URL: ${PUBLIC_URL}
       ANDROID_CERTIFICATE_FINGERPRINTS: ${ANDROID_CERTIFICATE_FINGERPRINTS}
-      MATCH_SERVER_TOKEN: ${MATCH_SERVER_TOKEN}
       # May be absent from a settings file written before the Assistant, which is then off.
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       ASSISTANT_MODEL: ${ASSISTANT_MODEL:-}
@@ -62,15 +61,6 @@ services:
     env_file: !reset []
     environment:
       WORKER_TOKEN: ${WORKER_TOKEN}
-    ports: !reset []
-
-  match-server:
-    <<: *deployed
-    env_file: !reset []
-    environment:
-      DATABASE_URL: postgresql://match:${MATCH_DB_PASSWORD}@postgres:5432/match
-      MATCH_SERVER_TOKEN: ${MATCH_SERVER_TOKEN}
-      ROUND_INTERVAL_SECONDS: ${ROUND_INTERVAL_SECONDS}
     ports: !reset []
 
   demo-seed:

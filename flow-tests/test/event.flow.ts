@@ -2,17 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { z } from 'zod';
-import { globalEvent, matchingRequest, party, quest, walkingRoute } from './answers.js';
+import { globalEvent, party, quest, walkingRoute } from './answers.js';
 import { ENGINEERING_BUILDING, hoursFromNow, JAHAYEON, NEW_MEDIA_INSTITUTE } from './campus.js';
 import { APP_CLIENT_ID, signIn, signInAsAdministrator, signInWithGoogle, type Student } from './people.js';
 
 type GlobalEvent = z.infer<typeof globalEvent>;
-
-// A round of the match server runs every second (compose.test.yaml).
-const MATCHING_WAIT_MS = 15_000;
 
 async function anOutsiderIsRefused(): Promise<void> {
   const outsider = await signInWithGoogle({
@@ -46,16 +44,19 @@ async function anAdministratorPublishesAnEventForTomorrow(): Promise<GlobalEvent
   return event;
 }
 
-// Both ask for Matching in a group of two; after the match server's round both hold the same Shared Quest.
-async function bothAreMatched(event: GlobalEvent, minji: Student, jun: Student): Promise<string> {
-  await minji.post('/matching-requests', { globalEventId: event.id, size: 2 });
-  await jun.post('/matching-requests', { globalEventId: event.id, size: 2 });
-  await minji.inbox.receivesSignal('matching-changed', MATCHING_WAIT_MS);
-  await jun.inbox.receivesSignal('matching-changed', MATCHING_WAIT_MS);
-  const { state, questId } = await minji.get(`/matching-requests/${event.id}`, matchingRequest);
-  expect(state).toBe('matched');
-  expect(await jun.get(`/matching-requests/${event.id}`, matchingRequest)).toEqual({ state: 'matched', questId });
-  const shared = await jun.get(`/quests/${String(questId)}`, quest);
+// Minji attends the event and recruits for it on the 진로 board; Jun finds her Quest among the event's recruiting
+// Quests and joins it, so both hold the same Shared Quest.
+async function theyGatherForTheEvent(event: GlobalEvent, minji: Student, jun: Student): Promise<string> {
+  const attending = await minji.post('/quests', { globalEventId: event.id }, quest);
+  expect(await minji.call('PATCH', `/quests/${attending.id}`, { joinPolicy: 'open', board: 'career' })).toMatchObject({
+    status: 200,
+  });
+  const recruiting = await jun.get(
+    `/quests/recruiting?globalEventId=${event.id}`,
+    z.array(z.object({ id: z.string() })),
+  );
+  expect(recruiting).toEqual([{ id: attending.id }]);
+  const shared = await jun.post(`/quests/${attending.id}/join`, undefined, quest);
   expect(shared.globalEvent?.id).toBe(event.id);
   expect(shared.holders.map((holder) => holder.id)).toEqual([minji.id, jun.id]);
   return shared.id;
@@ -101,13 +102,13 @@ async function aSwitchTurnedOffHidesThemAtOnce(minji: Student, jun: Student): Pr
   expect(await minji.get('/positions', z.array(z.unknown()))).toEqual([]);
 }
 
-it('two students matched for an event meet in its Party and see each other on the way there', async () => {
+it('two students gathered for an event meet in its Party and see each other on the way there', async () => {
   await anOutsiderIsRefused();
   const event = await anAdministratorPublishesAnEventForTomorrow();
   const minji = await signIn('김민지');
   const jun = await signIn('이준');
   expect(await minji.get('/global-events', z.array(z.object({ id: z.string() })))).toEqual([{ id: event.id }]);
-  const questId = await bothAreMatched(event, minji, jun);
+  const questId = await theyGatherForTheEvent(event, minji, jun);
   await theyMeetInTheQuestsParty(questId, minji, jun);
   await theySeeEachOtherOnTheWay(event, minji, jun);
   await aSwitchTurnedOffHidesThemAtOnce(minji, jun);

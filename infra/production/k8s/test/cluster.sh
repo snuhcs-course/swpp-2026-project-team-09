@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-10-23  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Runs all's NetworkPolicies in a throwaway k3s cluster in Docker, whose network policy controller enforces them, and
@@ -137,7 +138,7 @@ namespace_of() {
   if [[ $1 == 'a pod in kube-system' ]]; then echo kube-system; else echo snunow; fi
 }
 
-servers=(main-server socket-server worker-server match-server admin redis)
+servers=(main-server socket-server worker-server admin redis)
 pods_in_snunow=("${servers[@]}" 'the database Job' psql 'the P3009 copy' 'a pod without a label')
 shell_address=$(kubectl --namespace snunow get pod shell --output jsonpath='{.status.podIP}')
 

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-23  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { execFileSync } from 'node:child_process';
@@ -67,7 +68,6 @@ export function writeSettings(folder: string, values: Record<string, string> = {
     ACCESS_TOKEN_PRIVATE_KEY: String(accessTokens.privateKey.export({ type: 'pkcs8', format: 'pem' })),
     ACCESS_TOKEN_PUBLIC_KEY: String(accessTokens.publicKey.export({ type: 'spki', format: 'pem' })),
     WORKER_TOKEN: randomBytes(32).toString('hex'),
-    MATCH_SERVER_TOKEN: randomBytes(32).toString('hex'),
     ...values,
   };
   const lines = Object.entries(settings).map(([name, value]) => envLine(name, value));

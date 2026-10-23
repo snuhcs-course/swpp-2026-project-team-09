@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-10-23  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -16,5 +17,4 @@ resources:
   - ../../parts/main-server
   - ../../parts/socket-server
   - ../../parts/worker-server
-  - ../../parts/match-server
   - ../../parts/admin

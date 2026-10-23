@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-06  Fable 5.1  prompted by fyoon46
+# 2026-10-23  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The flow tests' stack: compose.yaml at the repository root with this file over it, under a project name of its own
@@ -31,7 +32,6 @@ services:
       WORKER_TOKEN: ${WORKER_TOKEN}
       PUBLIC_URL: http://localhost:3000
       ANDROID_CERTIFICATE_FINGERPRINTS: FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C
-      MATCH_SERVER_TOKEN: ${MATCH_SERVER_TOKEN}
     volumes:
       - ./flow-tests/.stack/tls:/tls:ro
     ports: !override
@@ -68,13 +68,6 @@ services:
     depends_on: !override
       main-server:
         condition: service_healthy
-
-  match-server:
-    env_file: !reset []
-    environment:
-      MATCH_SERVER_TOKEN: ${MATCH_SERVER_TOKEN}
-      ROUND_INTERVAL_SECONDS: 1
-    ports: !reset []
 
   # Google, the worker's Sources and Kakao, answered from the saved pages and answers of the servers' own tests. A Source
   # the flows do not collect, which the worker's schedule may still ask for, gets 404.
