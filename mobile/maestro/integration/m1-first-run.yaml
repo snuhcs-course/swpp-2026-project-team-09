@@ -1,0 +1,30 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-22  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# M1, US-AUTH-01 scenario 1: a first run from the sign-in through the consent and Onboarding to the map, then a
+# relaunch with what the phone kept, which opens the map without signing in again.
+appId: com.bonnieandclaude.snunow
+name: M1 first run, then a relaunch to the map
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: deny
+- extendedWaitUntil:
+    visible: '서울대 계정으로 로그인'
+    timeout: 30000
+- takeScreenshot: m1-sign-in
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      SHOTS: m1
+- stopApp
+- launchApp:
+    permissions:
+      all: deny
+- runFlow: ../subflows/map.yaml
+- assertNotVisible: '서울대 계정으로 로그인'
+- takeScreenshot: m1-relaunch
