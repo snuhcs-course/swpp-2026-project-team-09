@@ -190,3 +190,17 @@ The review on #125 found that `EdgeClose` drew a plain 40dp `View` over the whol
   - An edge swipe closes the 게시판 sheet, PlacePicker, the friend panel and the AI chat, and leaves the screen under each as it was. With nothing open, the same swipe takes 파티 만들기 back.
   - The person also checked by hand that presses and scrolls at the left edge now work.
 - **Left as it is:** the left 0–16dp of most screens is padding with nothing to press. The friend panel's rows have no press of their own, only their 파티 만들기 button.
+
+### Agent usage (2026-10-23, phone check and review fix)
+
+Both are from one session of Opus 5.5 with no subagents, counted from the session's transcript once per message id. The session is split at the person's request to read #125's new review.
+
+- **Phone check of all six P20 tickets, before the split.** This part is shared by 01 to 06 and recorded only here. It covers the merged test branch, the Docker and Metro set-up and the debug build, the tickets' phone-check notes, and the template rewrite of #119–#122 and #125.
+  - Agent time: about 27 minutes, an estimate. That is the sum of each turn's span, from the message that started it to the agent's last reply. The 77-minute Gradle build and the time spent waiting for the person are left out.
+  - Input: 8,504,526 in all. Of these, 8,279,443 are cache reads, 224,907 are cache writes and 176 are uncached.
+  - Output: 56,153, over 85 calls.
+- **Review fix of #125, from the split on.** This part covers reading the review, the `EdgeClose` fix and the memoised gestures, the tests, the adb checks on the phone, the PR and ticket updates, and the CI check.
+  - Agent time: about 19 minutes, an estimate, counted the same way.
+  - Input: 20,533,437 in all. Of these, 20,419,337 are cache reads, 113,924 are cache writes and 176 are uncached.
+  - Output: 65,455, over 88 calls.
+  - These are the counts when this note was written. The few calls after it are not in them.
