@@ -113,3 +113,10 @@ Also check what must keep working:
 
 - Agent time: about 25 minutes in one session, no subagents (an estimate). About 11 minutes of it was the full mobile suite. The time spent waiting for the User's decision on the fix is left out.
 - Tokens: about 5.64M input, of which about 5.51M were cache reads, 125k cache writes and about 100 uncached; and 48k output. The figures come from the session's transcript up to this write-up and leave out the commit and the PR.
+
+### Phone check (2026-10-23): on hold
+
+Checked by the person (Jaehyun0320) on an Android phone, a Galaxy S22 (SM-S901N), and reported as passing. The build was a debug build of all six P20 branches merged on `origin/2.0/Main` (a local branch, not pushed), against the servers in Docker with the demo profile. Not checked on iOS.
+
+- **On Android:** the conversation kept scrolling through the steps under "To check on the phone".
+- **On hold:** the freeze was only ever seen on another team member's iPhone, never on Android. So it has not been reproduced, and the fix cannot be confirmed on Android. "Cause found", "It keeps scrolling", "Keep what works" and the phone box stay unticked until it is checked on that iPhone.
