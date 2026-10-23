@@ -118,7 +118,7 @@ Every route for the main server follows these rules:
   none within 5 seconds, as a failure and answers the app 502.
 
 In a test, the helpers in `test/main-server.ts` call a route as the main server does, with its token, as
-`test/matching-requests.e2e-spec.ts` does:
+`test/matching-requests.integration.test.ts` does:
 
 ```ts
 const app = await startApp(inject('settings'));
@@ -128,9 +128,9 @@ await app.close(); // in afterAll
 ```
 
 `asMainServer(call, token)` sends another token, or none with `null`. Add a new route to the list in
-`test/main-server-token.e2e-spec.ts`, which checks that each refuses a call without the token. The database is the
-shared one, so each test makes up a User and a Global Event of its own with `randomUUID()`. `connectToDatabase()` gives
-a test its own connection, for the states that only the rounds write.
+`test/main-server-token.integration.test.ts`, which checks that each refuses a call without the token. The database is
+the shared one, so each test makes up a User and a Global Event of its own with `randomUUID()`. `connectToDatabase()`
+gives a test its own connection, for the states that only the rounds write.
 
 ## Rounds
 
@@ -195,7 +195,7 @@ In a test, `MainServerStub` from `test/main-server.ts` answers in the main serve
 each call in `calls`; `placements()` lists the placements asked for.
 A round never runs by itself in the tests, whose settings set an hour between rounds. `useRounds()` from
 `test/rounds.ts`, called at the top of a test file, gives the file a database of its own, since a round groups every
-waiting request, and `rounds.run(app)` runs a round, as `test/rounds.e2e-spec.ts` does:
+waiting request, and `rounds.run(app)` runs a round, as `test/rounds.integration.test.ts` does:
 
 ```ts
 const rounds = useRounds();
@@ -220,7 +220,7 @@ for the next round. A round calls it only with at least `size` requests. Nothing
 `HashtagGrouping` in `src/matching/hashtag-grouping.ts` is the rule now. It forms as many groups as the requests fill.
 Each group starts from the earliest request left and takes, until it is full, the request that shares the most hashtags
 with the requests already in it, counted for each of them, the earlier request first where two share as many.
-`test/grouping.e2e-spec.ts` tests it on its own.
+`test/grouping.unit.test.ts` tests it on its own.
 
 Grouping by AI lands here in a later iteration: another provider of `Grouping` in `MatchingModule`, which is why
 `group()` answers a promise. A test replaces the module as a whole by giving `startApp` a `grouping`.
@@ -229,14 +229,18 @@ Grouping by AI lands here in a later iteration: another provider of `Grouping` i
 
 Each command fails when it finds a problem. Run all four before opening a pull request.
 
-| Command             | Checks                                       |
-| ------------------- | -------------------------------------------- |
-| `pnpm lint`         | oxlint with type-aware rules                 |
-| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it) |
-| `pnpm typecheck`    | TypeScript in strict mode                    |
-| `pnpm test`         | Vitest tests in `test/`                      |
+| Command             | Checks                                                              |
+| ------------------- | ------------------------------------------------------------------- |
+| `pnpm lint`         | oxlint with type-aware rules, and that each test file names a level |
+| `pnpm format:check` | Prettier formatting (`pnpm format` fixes it)                        |
+| `pnpm typecheck`    | TypeScript in strict mode                                           |
+| `pnpm test`         | Vitest tests in `test/`                                             |
 
 `pnpm test` needs Docker running. It starts its own PostgreSQL container and removes it afterwards.
+
+Each test file is named by its level (ADR 0007): `*.unit.test.ts` or `*.integration.test.ts`. `pnpm test:unit` runs
+the unit tests alone and needs no Docker. `pnpm test:integration` runs the integration tests, which start the
+container. `pnpm test:cov` and `pnpm test:cov:unit` add the coverage of `src/`, written to `coverage/`.
 
 ## Folder layout
 
@@ -258,7 +262,7 @@ src/
 └── matching/                        a feature: the requests for Matching, asked, withdrawn and read, and the
                                      rounds that place them into Open Quests, group them and ask the main
                                      server for Shared Quests
-test/                                tests, run against PostgreSQL in a container
+test/                                tests named by level; the integration tests run against PostgreSQL in a container
 ```
 
 ## Database
@@ -299,7 +303,8 @@ The steps add a feature named `explanations`. Use a short lowercase name, with d
    ```
 
 2. Create the controller, which holds the HTTP routes, and the service, which holds the logic. Both are registered in
-   `ExplanationsModule`. `--no-spec` skips unit test files, because this project tests through HTTP (step 8):
+   `ExplanationsModule`. `--no-spec` skips the generated test files: tests live in `test/`, named by level, and pure
+   logic gets a unit test there (step 8):
 
    ```bash
    pnpm exec nest g controller explanations --no-spec
@@ -329,8 +334,9 @@ The steps add a feature named `explanations`. Use a short lowercase name, with d
    `match-server` service's `environment` in `compose.yaml` only when it needs another value inside Compose, as the
    database address does. Read it by injecting `ConfigService<Settings, true>` and calling
    `get('NAME', { infer: true })`.
-8. Write `test/explanations.e2e-spec.ts`. Start the server with `startApp` from `test/start-app.ts` and call its routes
-   with `supertest` and the main server's token, as [Routes for the main server](#routes-for-the-main-server) shows.
+8. Write `test/explanations.integration.test.ts`. Start the server with `startApp` from `test/start-app.ts` and call
+   its routes with `supertest` and the main server's token, as [Routes for the main server](#routes-for-the-main-server)
+   shows. Pure logic of the feature gets `test/explanations.unit.test.ts`, which calls it directly and starts nothing.
 9. Run `pnpm format`, then the four checks.
 
 Import classes with a plain `import { ExplanationsService } from ...`, never `import type`. Nest looks the class up at
