@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useState } from 'react';
@@ -40,7 +41,7 @@ export function useLayerStack(inFront: boolean): LayerStack {
   const turnOn = useCallback((layer: keyof Layers) => {
     setLayers((now) => ({ ...now, [layer]: true }));
   }, []);
-  useBackToClose(open && inFront, close);
+  useBackToClose(open && inFront, close, { edge: false });
   return {
     layers,
     open,

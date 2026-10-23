@@ -76,6 +76,9 @@
       {
         "displayName": "unit",
         "preset": "jest-expo",
+        "setupFiles": [
+          "react-native-gesture-handler/jestSetup"
+        ],
         "moduleNameMapper": {
           "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock"
         },
@@ -86,6 +89,9 @@
       {
         "displayName": "integration",
         "preset": "jest-expo",
+        "setupFiles": [
+          "react-native-gesture-handler/jestSetup"
+        ],
         "moduleNameMapper": {
           "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock"
         },
