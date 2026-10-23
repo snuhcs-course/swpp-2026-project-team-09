@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -26,7 +27,7 @@ import type { PostView } from '@/features/party/posts';
 import { useCompanionSeekers, useFindPosts, useOfficialRecruiting } from '@/features/party/use-party';
 import { JoinSheet, officialSubject } from './join-sheet';
 import { OfficialBanner } from './official-banner';
-import { PostCard } from './post-card';
+import { openPost, PostCard } from './post-card';
 import { TagBadges } from './quest-photo';
 import { useFindActions, usePartyActions } from './use-party-actions';
 
@@ -101,7 +102,7 @@ function PostsHead(): ReactElement {
   );
 }
 
-// 모집 중인 파티: the cards, and how many the User hid.
+// 모집 중인 파티: the cards, which a press opens at their post, and how many the User hid.
 function Posts({ search, onJoin }: { search: string; onJoin: (post: PostView) => void }): ReactElement {
   const { data: found, isPending, refetch } = useFindPosts(search);
   const actions = useFindActions();
@@ -111,7 +112,15 @@ function Posts({ search, onJoin }: { search: string; onJoin: (post: PostView) =>
       {found === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
       {found?.posts.length === 0 ? <EmptyState words="결과 없음" /> : null}
       {(found?.posts ?? []).map((post) => (
-        <PostCard key={post.questId} onHide={({ questId }) => void actions.hide(questId)} onJoin={onJoin} post={post} />
+        <PostCard
+          key={post.questId}
+          onHide={({ questId }) => void actions.hide(questId)}
+          onJoin={onJoin}
+          onOpen={({ questId }) => {
+            openPost(questId);
+          }}
+          post={post}
+        />
       ))}
       {found === undefined || found.hidden === 0 ? null : (
         <View style={styles.hidden}>

@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -142,7 +143,7 @@ describe('the chat and the keyboard', () => {
     const user = await openChat();
     await showKeyboard(KEYBOARD);
 
-    await user.press(screen.getByTestId('chat-sheet'));
+    await user.press(screen.getByText(GREETING));
 
     expect(dismiss).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('chat-sheet')).toBeVisible();
