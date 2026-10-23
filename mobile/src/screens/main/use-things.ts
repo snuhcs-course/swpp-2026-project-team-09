@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-07  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
@@ -27,18 +28,22 @@ const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 // A card's look at a level of detail. A person is the frames' teardrop at every level, small while the whole campus
 // is in view, and dimmed while their position is old. A place is a dot there, and a pin with its count closer; a
 // restaurant and the shuttle's stops and vehicles look the same at every level: a stop a dot and a vehicle a pin, so
-// that a vehicle standing at its stop is seen.
+// that a vehicle standing at its stop is seen, and stops at one place stay a dot. Things of several kinds at one
+// place are a group's dot or pin.
 function lookOf({ kind, mark, marker }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
   const far = detail === 'overview';
   if (mark.type === 'person') {
     const { id, name, photo, presence, stale } = mark;
     return { kind: 'person', id, tone: presence ?? 'member', small: far, selected, stale, name, photo };
   }
+  if (mark.type === 'group') {
+    return { kind: 'group', kinds: mark.kinds, form: far ? 'dot' : 'pin', selected };
+  }
   if (mark.place === 'dining') {
     return { kind: 'restaurant', selected };
   }
   if (mark.place === 'shuttle') {
-    return { kind: 'shuttle', form: kind === 'shuttle-stop' ? 'dot' : 'pin', selected };
+    return { kind: 'shuttle', form: kind === 'shuttle-vehicle' ? 'pin' : 'dot', selected };
   }
   return far
     ? { kind: mark.place, form: 'dot', selected }
@@ -61,8 +66,8 @@ function wordsOf({ mark, marker }: CardView, detail: ZoomDetail): string | undef
 }
 
 // Turns the cards into what the map shows at a level of detail. From the "names" level a person has their given name
-// under them, in the map's own text. The selected one is drawn selected and above the others. A Global Event within a
-// point has no marker: the point's stands for it, and is selected while the event is.
+// under them, in the map's own text. The selected one is drawn selected and above the others. A thing within a place
+// has no marker: the place's stands for it, and is selected while the thing is.
 export function useThings(cards: readonly CardView[], detail: ZoomDetail, selectedId: string | null): Things {
   const selectedWithin = cards.find(({ id }) => id === selectedId)?.within ?? selectedId;
   const isSelected = (card: CardView): boolean => card.id === selectedId || card.id === selectedWithin;

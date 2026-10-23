@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -54,6 +55,8 @@ export function ChipRow<Key extends string>({
 }
 
 const styles = StyleSheet.create({
-  scroll: { flexGrow: 0 },
-  row: { alignItems: 'center', gap: space[2], minHeight: 56, paddingHorizontal: space[5] },
+  // The room above and below the chips is padding on the scroller itself: Android does not size a sideways
+  // scroller to its content's minHeight, so the row would touch what is above it.
+  scroll: { flexGrow: 0, paddingVertical: space[3] },
+  row: { alignItems: 'center', gap: space[2], paddingHorizontal: space[5] },
 });

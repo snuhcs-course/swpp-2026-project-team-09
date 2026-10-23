@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -95,6 +96,30 @@ describe('모집 중인 파티', () => {
     await user.press(screen.getByRole('button', { name: `${RUN.title} 모집글 자세히 보기` }));
 
     expect(shownAddress()).toBe(`/post/${RUN.id}`);
+  });
+});
+
+describe('a press of a card', () => {
+  it('opens the post', async () => {
+    const user = await openAt('/party');
+
+    await user.press(screen.getByTestId(`post-${RUN.id}`));
+
+    expect(shownAddress()).toBe(`/post/${RUN.id}`);
+  });
+
+  it('keeps 참여하기 and 관심 없음 to themselves, without opening the post', async () => {
+    const user = await openAt('/party');
+
+    await user.press(card(RUN.title).getByRole('button', { name: '참여하기' }));
+    expect(screen.getByText(`‘${RUN.title}’에 참여할까요?`)).toBeVisible();
+    expect(shownAddress()).toBe('/party');
+    await user.press(screen.getByRole('button', { name: '취소' }));
+
+    await user.press(card(CODING.title).getByRole('button', { name: `${CODING.title} 관심 없음` }));
+    await pass(500);
+    expect(screen.queryByText(CODING.title)).toBeNull();
+    expect(shownAddress()).toBe('/party');
   });
 });
 
