@@ -37,13 +37,13 @@ Plan items 7 and 8 say where each part lives.
 
 ## Acceptance criteria
 
-- [ ] **Edge swipe back.**
+- [x] **Edge swipe back.**
   - On an Android phone, on a screen above the tabs, a swipe from the left edge drags the screen with the finger. Past the threshold it goes back to the screen under it; short of it, it slides back into place.
   - An open side panel or bottom sheet goes away with the swipe as it does with the back button.
   - On 지도 the edge swipe does nothing, and the map still pans from its edges.
   - On 파티, 행사 and 내 정보, a swipe from the left edge past the threshold goes to 지도, and one short of it leaves the tab as it was.
   - Every screen keeps its slide in and its back button, and reduced motion still turns the slides off.
-- [ ] **Swipe between the 파티 tab's tabs.**
+- [x] **Swipe between the 파티 tab's tabs.**
   - In the 파티 tab, a sideways swipe moves between 찾기, 내 파티 and 초대, and the tabs bar and the address follow.
   - A press on a tab still works.
   - A vertical scroll never changes the tab.
@@ -53,7 +53,7 @@ Plan items 7 and 8 say where each part lives.
   - the 파티 tab moves to the next and previous tab on a sideways swipe, and stays at its ends
   - a swipe that starts at the left edge is not taken as a tab change, and on 파티, 행사 and 내 정보 it shows 지도
   - the existing navigation, party tab and back-button tests pass
-- [ ] Checked on an Android phone: the edge swipe on several screens above the tabs, with a panel or a sheet open, on 지도 and on the other tabs, and the 파티 tab's swipes, including over its sideways scrollers. Also checked on iOS if one is at hand, where the native swipe back must still work. Write what was and was not checked under `## Comments`.
+- [x] Checked on an Android phone: the edge swipe on several screens above the tabs, with a panel or a sheet open, on 지도 and on the other tabs, and the 파티 tab's swipes, including over its sideways scrollers. Also checked on iOS if one is at hand, where the native swipe back must still work. Write what was and was not checked under `## Comments`.
 
 ## Comments
 
@@ -164,3 +164,10 @@ Counted from this session's Claude Code transcript (`~/.claude/projects/…/287c
 - **Tokens:** 87 calls to Opus 5.5, with no subagents. Usage was summed once per message id.
   - Input: 11,669,985 in all. Of these, 11,334,446 are cache reads, 335,363 are cache writes and 176 are uncached.
   - Output: 79,745.
+
+### Phone check (2026-10-23)
+
+Checked by the person (Jaehyun0320) on an Android phone, a Galaxy S22 (SM-S901N), and reported as passing. The build was a debug build of all six P20 branches merged on `origin/2.0/Main` (a local branch, not pushed), against the servers in Docker with the demo profile. Not checked on iOS.
+
+- **Checked on the phone:** the edge swipe back follows the finger on the screens above the tabs, and closes an open panel or sheet. On 지도 it does nothing, and on 파티, 행사 and 내 정보 it goes to 지도. In the 파티 tab, a sideways swipe moves between 찾기, 내 파티 and 초대, and vertical scrolls and 내 파티's chips leave the tab as it is.
+- **Not checked:** steps 7.3 and 7.4, 찾기's 같이 할 사람을 찾는 중 row and the official banner. A build connected to servers hides them, and they need the mock build. iOS was not checked either.
