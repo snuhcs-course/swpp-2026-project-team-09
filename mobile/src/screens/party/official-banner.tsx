@@ -3,10 +3,11 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-23  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
-import { type ReactElement, useEffect, useState } from 'react';
+import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 import { AppState, type AppStateStatus, Pressable, StyleSheet, Text, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import type { OfficialRecruiting } from '@/api/quest-parts-types';
@@ -89,12 +90,17 @@ function useTurning(count: number): Turning {
       }
     };
   }, [playing, seen, count]);
+  // Kept from one render to the next, so that the banner's swipe is not made again on every turn.
+  const turn = useCallback(
+    (by: number) => {
+      setIndex((at) => (at + by + count) % count);
+    },
+    [count],
+  );
   return {
     index: count === 0 ? 0 : index % count,
     playing,
-    turn: (by) => {
-      setIndex((at) => (at + by + count) % count);
-    },
+    turn,
     togglePlaying: () => {
       setPlaying((was) => !was);
     },
@@ -167,16 +173,21 @@ function Controls({ turning, count, onAll }: { turning: Turning; count: number; 
 
 export function OfficialBanner({ recruiting, onOpen, onAll }: OfficialBannerProps): ReactElement | null {
   const turning = useTurning(recruiting.length);
+  const { turn } = turning;
+  const swipe = useMemo(
+    () =>
+      sidewaysSwipe('official-banner-swipe', TURN_SWIPE).onEnd(({ translationX, velocityX }) => {
+        const step = swipeStep(translationX, velocityX, TURN_SWIPE);
+        if (step !== 0) {
+          turn(step);
+        }
+      }),
+    [turn],
+  );
   const shown = recruiting[turning.index];
   if (shown === undefined) {
     return null;
   }
-  const swipe = sidewaysSwipe('official-banner-swipe', TURN_SWIPE).onEnd(({ translationX, velocityX }) => {
-    const step = swipeStep(translationX, velocityX, TURN_SWIPE);
-    if (step !== 0) {
-      turning.turn(step);
-    }
-  });
   return (
     <GestureDetector gesture={swipe}>
       <View accessibilityLabel="공식 모집" collapsable={false} style={styles.banner}>

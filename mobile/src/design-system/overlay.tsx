@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-23  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import {
@@ -24,7 +25,7 @@ const OverlayContext = createContext<Put | null>(null);
 
 // Where side panels and bottom sheets are drawn: above every screen and the bottom navigation, and under the toast,
 // so that a panel covers the whole screen as the frames draw it and a toast it shows stays in view. A Modal would
-// hide the toast. Over them all, the left edge's strip that closes the latest with a swipe.
+// hide the toast. Around them all, the left edge's swipe that closes the latest.
 export function OverlayHost({ children }: { children: ReactNode }): ReactElement {
   const [layers, setLayers] = useState<ReadonlyMap<string, ReactNode>>(new Map());
   const put = useCallback<Put>((id, layer) => {
@@ -40,11 +41,12 @@ export function OverlayHost({ children }: { children: ReactNode }): ReactElement
   }, []);
   return (
     <OverlayContext value={put}>
-      {children}
-      {[...layers].map(([id, layer]) => (
-        <Fragment key={id}>{layer}</Fragment>
-      ))}
-      <EdgeClose />
+      <EdgeClose>
+        {children}
+        {[...layers].map(([id, layer]) => (
+          <Fragment key={id}>{layer}</Fragment>
+        ))}
+      </EdgeClose>
     </OverlayContext>
   );
 }

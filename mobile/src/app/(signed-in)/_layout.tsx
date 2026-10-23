@@ -6,6 +6,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-23  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type NativeStackNavigationOptions, router, Stack, useGlobalSearchParams, useSegments } from 'expo-router';
@@ -14,6 +15,7 @@ import { type ReactElement, useEffect } from 'react';
 import { Platform } from 'react-native';
 import { MatchingWatch } from '@/features/events/matching-watch';
 import { VersionsAtLaunch } from '@/features/timetable/use-versions';
+import { useEdgeCloser } from '@/hooks/use-back-to-close';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { EDGE_WIDTH } from '@/navigation/swipe-rule';
 import { BackgroundSharingProvider, PositionProvider, PositionSending } from '@/position';
@@ -61,25 +63,27 @@ function slideFrom(edge: Edge, reduceMotion: boolean): NativeStackNavigationOpti
 
 // The same on Android's JS stack, where a swipe from the left edge also goes back with the screen under the finger:
 // it slides right, or down for one from the bottom, and past half the screen it goes. Where the phone asks for less
-// motion the screen stays still under the finger and only the line counts.
-function cardFrom(edge: Edge, reduceMotion: boolean): StackNavigationOptions {
+// motion the screen stays still under the finger and only the line counts. While a side panel or a bottom sheet is
+// open, the edge's swipe closes it instead (`EdgeClose`), and the screen's own swipe is off.
+function cardFrom(edge: Edge, reduceMotion: boolean, covered: boolean): StackNavigationOptions {
   let animation: StackNavigationOptions['animation'] = edge === 'bottom' ? 'slide_from_bottom' : 'slide_from_right';
   if (reduceMotion) {
     animation = 'none';
   }
-  return { animation, gestureEnabled: true, gestureDirection: 'horizontal', gestureResponseDistance: EDGE_WIDTH };
+  return { animation, gestureEnabled: !covered, gestureDirection: 'horizontal', gestureResponseDistance: EDGE_WIDTH };
 }
 
 // The tabs and the screens that cover them, which the stack's back closes. On iOS the native stack, whose own swipe
 // from the left edge goes back. On Android a native stack has no swipe back that follows the finger, so the stack
 // there is the JS one that expo-router carries.
 function AboveTabs({ reduceMotion }: { reduceMotion: boolean }): ReactElement {
+  const covered = useEdgeCloser() !== null;
   if (Platform.OS === 'android') {
     return (
       <JsStack screenOptions={{ headerShown: false }}>
         <JsStack.Screen name="(tabs)" />
         {ABOVE_TABS.map(([name, edge]) => (
-          <JsStack.Screen key={name} name={name} options={cardFrom(edge, reduceMotion)} />
+          <JsStack.Screen key={name} name={name} options={cardFrom(edge, reduceMotion, covered)} />
         ))}
       </JsStack>
     );

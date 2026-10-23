@@ -13,7 +13,7 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { FRIEND, press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { openAt } from './support/party';
-import { hasGesture, swipe, WIDTH } from './support/swipe';
+import { hasGesture, swipe, swipeIsOn, WIDTH } from './support/swipe';
 
 // The sideways swipes (P20 ticket 06): from the left edge, back; anywhere else in the 파티 tab, between its tabs.
 // The gestures are driven by their test ids, so a test gives where the finger starts and how far it moves.
@@ -170,7 +170,7 @@ describe('the swipe from the left edge on a tab', () => {
     await openMain();
 
     expect(hasGesture('edge-back-main')).toBe(false);
-    expect(hasGesture('edge-close')).toBe(false);
+    expect(swipeIsOn('edge-close')).toBe(false);
   });
 });
 
@@ -185,7 +185,7 @@ describe('the swipe from the left edge over a side panel or a bottom sheet', () 
 
     expect(screen.queryByLabelText('친구')).toBeNull();
     expect(screen.getByRole('tab', { name: '지도' })).toBeSelected();
-    expect(hasGesture('edge-close')).toBe(false);
+    expect(swipeIsOn('edge-close')).toBe(false);
   });
 
   it('leaves the panel open short of half the screen', async () => {
@@ -215,6 +215,6 @@ describe('the swipe from the left edge over a side panel or a bottom sheet', () 
     await press(user, FRIEND);
     expect(screen.getByRole('header', { name: '김민준' })).toBeVisible();
 
-    expect(hasGesture('edge-close')).toBe(false);
+    expect(swipeIsOn('edge-close')).toBe(false);
   });
 });

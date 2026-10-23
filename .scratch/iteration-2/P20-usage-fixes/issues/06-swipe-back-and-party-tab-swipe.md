@@ -171,3 +171,22 @@ Checked by the person (Jaehyun0320) on an Android phone, a Galaxy S22 (SM-S901N)
 
 - **Checked on the phone:** the edge swipe back follows the finger on the screens above the tabs, and closes an open panel or sheet. On 지도 it does nothing, and on 파티, 행사 and 내 정보 it goes to 지도. In the 파티 tab, a sideways swipe moves between 찾기, 내 파티 and 초대, and vertical scrolls and 내 파티's chips leave the tab as it is.
 - **Not checked:** steps 7.3 and 7.4, 찾기's 같이 할 사람을 찾는 중 row and the official banner. A build connected to servers hides them, and they need the mock build. iOS was not checked either.
+
+### The edge strip no longer takes presses (2026-10-23)
+
+The review on #125 found that `EdgeClose` drew a plain 40dp `View` over the whole left edge while a side panel or bottom sheet was open. That view took every touch that started there, so a press in the left 40dp did nothing, and a scroll that started there did not scroll.
+
+- **The fix:**
+  - `EdgeClose` now wraps the app and its layers in `OverlayHost`, on a view with `pointerEvents: 'box-none'`. The same edge swipe (`hitSlop` 40dp) sits on that view and is on only while something can be closed, so presses and scrolls reach what is under the finger. Only a swipe to the right takes the touch.
+  - The strip used to keep the screen's own swipe back and `TabEdgeBack` from starting under an open panel or sheet. Both are now off while one is open: `gestureEnabled: !covered` in `cardFrom`, and `.enabled(!covered)` in `TabEdgeBack`.
+  - The view stays mounted with nothing open, so the app under it is never mounted again.
+- **Gestures are memoised** (review note 5): `TabEdgeBack`, `EdgeClose`, `TabSwipe` and the official banner. The banner's `turn` and the 파티 route's `onTab` are now stable, so the banner's 4-second turns no longer rebuild its swipe.
+- **Tests:** `swipeIsOn` in `__tests__/support/swipe.ts` replaces `hasGesture` for `edge-close`, which is now always there and turned on and off. `swipe-test` and `android-stack-test` pass, 23 tests. The suites around panels, sheets, 파티, 내 정보, the chat and toasts pass, 29 suites and 286 tests. `oxlint --type-aware`, `prettier --check` and `tsc --noEmit` are clean. Jest does no hit-testing, so presses passing through were checked only on the phone.
+- **Checked on the phone (Galaxy S22, 3-button navigation, 1dp = 3px).** The agent drove it over adb, with the targets' bounds read from `uiautomator`:
+  - PlacePicker's `뒤로`, pressed at 25dp, closes the picker.
+  - A row of 파티 만들기's 게시판 sheet, pressed at 25dp, is chosen.
+  - The friend panel's 전체 chip, pressed at 37dp, is selected.
+  - An example in the AI chat, pressed at 25dp, is sent.
+  - An edge swipe closes the 게시판 sheet, PlacePicker, the friend panel and the AI chat, and leaves the screen under each as it was. With nothing open, the same swipe takes 파티 만들기 back.
+  - The person also checked by hand that presses and scrolls at the left edge now work.
+- **Left as it is:** the left 0–16dp of most screens is padding with nothing to press. The friend panel's rows have no press of their own, only their 파티 만들기 button.

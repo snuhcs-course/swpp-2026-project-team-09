@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-23  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -38,4 +39,13 @@ export function hasGesture(testId: string): boolean {
   } catch {
     return false;
   }
+}
+
+// Whether a gesture with this test id is in the app and on, so that a swipe reaches it.
+export function swipeIsOn(testId: string): boolean {
+  if (!hasGesture(testId)) {
+    return false;
+  }
+  const { config } = getByGestureTestId(testId) as { config?: { enabled?: boolean } };
+  return config?.enabled !== false;
 }
