@@ -517,11 +517,13 @@ data alone: [flow-tests/README.md](flow-tests/README.md). Its `pnpm test:admin-u
 the admin site in a browser, which neither `pnpm test` nor CI runs.
 
 Each project's `pnpm lint` runs the level check of `scripts/` with the globs its test runners include and exclude, so it
-fails a test file that no runner of that project would run, as well as one without a level. The check has a test of its own,
-which no project runs. From the repository root:
+fails a test file that no runner of that project would run, as well as one without a level. After a coverage run,
+`node ../scripts/coverage-by-file-set.ts coverage/coverage-summary.json` in a project's folder sums the report over the
+P09 spec's file sets ([its coverage goals](.scratch/iteration-2/P09-unit-tests/spec.md)). The two scripts have tests of
+their own, which no project runs. From the repository root:
 
 ```bash
-node --test scripts/test/check-test-levels.integration.test.ts
+node --test 'scripts/test/*.test.ts'
 ```
 
 ## Deployment
@@ -565,7 +567,7 @@ Release again, rotate a secret, and move Production to another AWS account.
 | `admin/`         | The admin site for Administrators                                                             |
 | `mobile/`        | The app, with the native map module for Android and iOS in `modules/`                         |
 | `flow-tests/`    | End-to-end tests across the four servers, and of the admin site in a browser                  |
-| `scripts/`       | The level check every project's `pnpm lint` runs (ADR 0007), and its test                     |
+| `scripts/`       | The level check every project's `pnpm lint` runs (ADR 0007), the coverage sums, their tests   |
 | `infra/`         | The PostgreSQL image, the Dev Server (`deploy/`, `proxy/`), and Production (`production/`)    |
 | `docs/`          | Decision records (`adr/`), the agents' conventions (`agents/`), and the demo videos (`demo/`) |
 | `.scratch/`      | Specs and tickets of each iteration's tasks, and research notes                               |
