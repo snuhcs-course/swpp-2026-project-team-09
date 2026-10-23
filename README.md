@@ -61,7 +61,8 @@ about Friends and parties. Iteration 2 answered it, and its work was merged into
   out.
 - **The map**: Kakao's map of the campus with the User's Avatar, Friends, the active party's members, Global Events and
   the User's parties, the Places' outlines, the 퀘스트 list of today's classes and parties, a card for whatever is
-  pressed, and a walking route on request.
+  pressed, one marker for everything at one place (events, parties, restaurants and shuttle stops) whose card lists
+  each kind, and a walking route on request.
 - **Location Sharing**: the Master Switch (친구와 위치 공유) on 내 정보, off until the User turns it on; a switch for
   each Friend and each active party; the position sent every 5 seconds while the app is open and, on Android, every 30
   seconds in the background under a notification; Avatars dimmed after 2 minutes without a position and removed after
@@ -70,11 +71,14 @@ about Friends and parties. Iteration 2 answered it, and its work was merged into
   Friend, and ending a friendship.
 - **Parties (파티)**: a party for a Global Event or a plan of the User's own, with a capacity of 1 to 8 and a Join
   Policy: 공개 파티 recruit on the 식사, 진로, 취미 and 공연 Boards (바로 참여 or 승인 후 참여), 비공개 파티 only
-  among invited Friends. The 파티 tab with 찾기, the Boards, 내 파티 and 초대; join requests and invitations, with
+  among invited Friends. The 파티 tab with 찾기, the Boards, 내 파티 and 초대, moved between by a sideways swipe; a
+  card in 찾기 opens its post; 참여 중인 파티 on 내 정보 opens 내 파티 as a screen of its own; join requests and invitations, with
   waiting invitations the Leader can cancel; the room with the party's steps (일정), walking times, the Leader's
   controls and the hand-over of the Leader's role.
 - **Active party (활성 파티)**: any member activates the party when they are about to meet; the members who accept see
   each other on the map, Friends or not, until they pause, leave or the Leader ends it. A User is in at most one.
+- **Navigation**: on Android, a swipe from the screen's left edge goes back, as the back button does, and closes an
+  open panel or sheet; inputs rise above the keyboard everywhere.
 - **SNU Now AI**: a chat sheet from the map's input bar that answers about today's menus and the shuttle, finds Global
   Events and recruiting parties, and turns one sentence into a Proposal that the
   User makes or edits. 50 messages per User a day; the conversation stays on the phone.
@@ -381,16 +385,16 @@ file's.
 
 ### mobile
 
-| Setting                            | What it is                                                                                                                                               |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | The Google client of type "Web application" the ID token is issued for: the main server's `GOOGLE_APP_CLIENT_ID`. Without it the sign-in stays the mock. |
-| `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` | The Google client of type "iOS"; the iOS build only.                                                                                                     |
-| `GOOGLE_IOS_URL_SCHEME`            | The iOS client's ID reversed; the iOS build only.                                                                                                        |
-| `EXPO_PUBLIC_MAIN_SERVER_URL`      | The main server's address as the phone reaches it. Without it the app keeps its sample data.                                                             |
-| `EXPO_PUBLIC_SOCKET_SERVER_URL`    | The socket server's address as the phone reaches it.                                                                                                     |
-| `INVITE_LINK_HOST`                 | The host of the main server's `PUBLIC_URL`, for Invite Links' App Links; read when the build is made.                                                    |
-| `KAKAO_NATIVE_APP_KEY`             | The native app key of the team's Kakao app, for the map; the Owner shares it; read when the build is made.                                               |
-| `ANDROID_X86_64`                   | `1` adds `x86_64` to a development build, for an x86_64 emulator, where everything but Kakao's map runs; read when the project is generated.             |
+| Setting                            | What it is                                                                                                                                                          |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | The Google client of type "Web application" the ID token is issued for: the main server's `GOOGLE_APP_CLIENT_ID`. Without it the sign-in stays the mock.            |
+| `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` | The Google client of type "iOS"; the iOS build only.                                                                                                                |
+| `GOOGLE_IOS_URL_SCHEME`            | The iOS client's ID reversed; the iOS build only.                                                                                                                   |
+| `EXPO_PUBLIC_MAIN_SERVER_URL`      | The main server's address as the phone reaches it. Without it the app keeps its sample data.                                                                        |
+| `EXPO_PUBLIC_SOCKET_SERVER_URL`    | The socket server's address as the phone reaches it.                                                                                                                |
+| `INVITE_LINK_HOST`                 | The host of the main server's `PUBLIC_URL`, for Invite Links' App Links; read when the build is made.                                                               |
+| `KAKAO_NATIVE_APP_KEY`             | The native app key of the team's Kakao app, for the map; the Owner shares it; read when the build is made.                                                          |
+| `ANDROID_X86_64`                   | `1` adds `x86_64` to a development build, for an x86_64 emulator, where everything but Kakao's map runs; given on the prebuild command line, not in `.env.example`. |
 
 The app also takes development settings when it is started, such as answers that fail on purpose; they are in
 [mobile/README.md](mobile/README.md), "Development settings".
@@ -527,11 +531,11 @@ alone and signed with the shared debug key, so Google and Kakao accept it as the
 needs a build of the app or a development server.
 
 - **Production**: the app for `https://api.snunow.com`, the APK for testers:
-  `snu-now-production-2026-10-22.apk` on the
-  [production-2026-10-22 release](https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/tag/production-2026-10-22).
-  It was built from `2.0/Main` on 2026-10-22, so it does not yet have the dark-mode timetable reading (#113) or the
-  week grid to 22:00 (#115). Invite Links under `https://api.snunow.com/invite/` open it; a phone that installed it
-  before Production was up must install it again. Later Production APKs are attached to the release page of their
+  `snunow-app-26.10.23-1.apk` on the
+  [snunow/app/26.10.23-1 release](https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/tag/snunow/app/26.10.23-1),
+  built from `51ce92f` with every Iteration 2 feature. Invite Links under `https://api.snunow.com/invite/` open it. A
+  phone that installed an earlier Production APK before Production was up should install this one, so that Android
+  checks the Invite Links' App Link again. Later Production APKs are attached to the release page of their own
   `snunow/app/YY.MM.DD-N` tag ([Deployment](#deployment)).
 - **Dev Server**: the app for the Dev Server, attached to a `dev-YYYY-MM-DD` release and listed at the Dev Server's
   [`/apk/`](http://swpp26t09.147-46-242-174.sslip.io/apk/) for a phone's browser.
