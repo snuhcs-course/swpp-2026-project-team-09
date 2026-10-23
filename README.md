@@ -42,7 +42,7 @@ admin site for Administrators.
 
 The Iteration 1 review asked for more technical depth in one main feature, ideally solved with AI, and a clearer story
 about Friends and parties. Iteration 2 answered it, and its work was merged into `2.0/Main` between 2026-10-17 and
-2026-10-22. It was meant to show that:
+2026-10-23. It was meant to show that:
 
 - a student can ask in their own words instead of finding the screen: the Assistant answers from the collected data,
   shows events and parties as the app's own cards, and fills in a party that the User makes with one press, while the
@@ -122,7 +122,8 @@ Iteration 2, and its Matching became the frozen AI 매칭.
 
 ## Demo video
 
-The Iteration 2 demo is in [this Google Drive folder](https://drive.google.com/drive/folders/1LnGPIOsQbjt4Or9v-cogjmvhMoUhx7y6).
+The Iteration 2 demo is in [this Google Drive folder](https://drive.google.com/drive/folders/1LnGPIOsQbjt4Or9v-cogjmvhMoUhx7y6),
+the same folder as Iteration 1's videos.
 In this video:
 
 - Checking friends' status
@@ -140,8 +141,9 @@ What the demo cannot show, and what is known not to work yet:
   the app for iOS"), and the Iteration 1 videos were recorded on an iPhone, but sharing in the background is built for
   Android alone, and the APKs are Android builds.
 - **ARM only.** Kakao's map SDK ships ARM libraries only, so the app is built for `arm64-v8a` alone. It runs on an
-  ARM phone or an arm64 emulator (an Apple Silicon Mac), not on the x86_64 emulator of an Intel Mac or most Windows PCs:
-  use a physical Android phone there.
+  ARM phone or an arm64 emulator (an Apple Silicon Mac). On the x86_64 emulator of an Intel Mac or most Windows PCs, a
+  development build made with `ANDROID_X86_64=1` adds `x86_64` and runs everything but Kakao's map; for the map, use a
+  physical Android phone there.
 - **Expo Go shows no map.** In Expo Go and on the web the map is a plain ground, the sign-in is a mock and every answer
   is the app's sample data. Kakao's map, Google sign-in and the servers need a development build.
 - **Background sharing stops when the app is swiped away.** It runs on Android only, in a build of the app (not Expo
@@ -388,6 +390,7 @@ file's.
 | `EXPO_PUBLIC_SOCKET_SERVER_URL`    | The socket server's address as the phone reaches it.                                                                                                     |
 | `INVITE_LINK_HOST`                 | The host of the main server's `PUBLIC_URL`, for Invite Links' App Links; read when the build is made.                                                    |
 | `KAKAO_NATIVE_APP_KEY`             | The native app key of the team's Kakao app, for the map; the Owner shares it; read when the build is made.                                               |
+| `ANDROID_X86_64`                   | `1` adds `x86_64` to a development build, for an x86_64 emulator, where everything but Kakao's map runs; read when the project is generated.             |
 
 The app also takes development settings when it is started, such as answers that fail on purpose; they are in
 [mobile/README.md](mobile/README.md), "Development settings".
@@ -489,11 +492,14 @@ The phone must reach the main and socket servers:
 
 - Every build allows plain http (`usesCleartextTraffic` in `mobile/app.json`), so on the same network as the computer
   the two addresses can be the computer's address on that network, with ports 3000 and 3001. Invite Links do not open
-  the app there (see "Invite Links need a fixed https address" under
+  the app there (see "Invite Links open the app only under a fixed https address" under
   [Known limitations and todos](#known-limitations-and-todos)).
 - From anywhere else, put the computer's ports 3000 and 3001 behind an https tunnel and use its two https addresses
   in `mobile/.env`. Set the main server's `PUBLIC_URL` to the tunnel's address for the main server and
   `INVITE_LINK_HOST` to its host, so that Invite Links open the app.
+- Or use a deployed server instead of the computer's: Production at `https://api.snunow.com` for both addresses, with
+  `INVITE_LINK_HOST=api.snunow.com`, or the Dev Server at the address in the comments of `mobile/.env.example`
+  ([Deployment](#deployment), [infra/production/README.md](infra/production/README.md)).
 
 A debug build loads its JavaScript from the development server on the computer (port 8081), which `pnpm android`
 starts: keep its terminal open, and keep the phone on the cable or on the same network as the computer. Without it the
@@ -520,10 +526,13 @@ Release builds of the app, attached to the repository's
 alone and signed with the shared debug key, so Google and Kakao accept it as they accept a development build. None
 needs a build of the app or a development server.
 
-- **Production**: the app for `https://api.snunow.com`, the APK for testers. It is attached to the release page of its
-  `snunow/app/YY.MM.DD-N` tag ([Deployment](#deployment)). Invite Links under `https://api.snunow.com/invite/` open it.
-  <!-- TODO: link the first snunow/app release once it exists. Until then the only Production APK is
-  production-2026-10-22, built before Production answered; reinstall it so that Android checks the App Link again. -->
+- **Production**: the app for `https://api.snunow.com`, the APK for testers:
+  `snu-now-production-2026-10-22.apk` on the
+  [production-2026-10-22 release](https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/tag/production-2026-10-22).
+  It was built from `2.0/Main` on 2026-10-22, so it does not yet have the dark-mode timetable reading (#113) or the
+  week grid to 22:00 (#115). Invite Links under `https://api.snunow.com/invite/` open it; a phone that installed it
+  before Production was up must install it again. Later Production APKs are attached to the release page of their
+  `snunow/app/YY.MM.DD-N` tag ([Deployment](#deployment)).
 - **Dev Server**: the app for the Dev Server, attached to a `dev-YYYY-MM-DD` release and listed at the Dev Server's
   [`/apk/`](http://swpp26t09.147-46-242-174.sslip.io/apk/) for a phone's browser.
 - **Iteration 1 demo**: `snu-now-iteration-1.apk`, attached to the
@@ -558,15 +567,15 @@ pnpm typecheck
 pnpm test
 ```
 
-| Project         | What `pnpm test` runs and needs                                                                            |
-| --------------- | ---------------------------------------------------------------------------------------------------------- |
-| `main-server`   | Vitest against PostgreSQL and Redis containers it starts; Docker running; `pnpm test:unit` needs no Docker |
-| `socket-server` | Vitest against a Redis container it starts itself; Docker running; `pnpm test:unit` needs no Docker        |
-| `worker-server` | Vitest on saved pages of each Source; neither it nor `pnpm test:unit` needs Docker                         |
-| `match-server`  | Vitest against a PostgreSQL container it starts itself; Docker running; `pnpm test:unit` needs no Docker   |
-| `admin`         | Vitest: `unit`, `integration-pages`, `integration-site`; neither it nor `pnpm test:unit` needs Docker      |
-| `mobile`        | Jest, against the mocks and a fake main server and socket; neither it nor `pnpm test:unit` needs Docker    |
-| `flow-tests`    | The demo's flows, A1 and A2, and the stack checks, on the four built servers; Docker and `openssl`         |
+| Project         | What `pnpm test` runs and needs                                                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main-server`   | Vitest against PostgreSQL and Redis containers it starts; Docker running; `pnpm test:unit` needs no Docker                                              |
+| `socket-server` | Vitest against a Redis container it starts itself; Docker running; `pnpm test:unit` needs no Docker                                                     |
+| `worker-server` | Vitest on saved pages of each Source; neither it nor `pnpm test:unit` needs Docker                                                                      |
+| `match-server`  | Vitest against a PostgreSQL container it starts itself; Docker running; `pnpm test:unit` needs no Docker                                                |
+| `admin`         | Vitest: `unit`, `integration-pages`, `integration-site`; neither it nor `pnpm test:unit` needs Docker                                                   |
+| `mobile`        | Jest, against the mocks and a fake main server and socket; neither it nor `pnpm test:unit` needs Docker                                                 |
+| `flow-tests`    | Iteration 1's demo flows (Event through AI 매칭, Friend, Campus services), A1, A2 and the stack checks, on the four built servers; Docker and `openssl` |
 
 `flow-tests` builds the servers' images the first time, which takes some minutes, and leaves a running stack and its
 data alone: [flow-tests/README.md](flow-tests/README.md). Its `pnpm test:admin-ui` runs the W1 and W2 journeys through
