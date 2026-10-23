@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type {
@@ -219,13 +220,12 @@ function isPartyHead(value: unknown): boolean {
 }
 
 function isParty(value: unknown): value is Party {
-  const leader = field(value, 'leader');
   return (
     isPartyHead(value) &&
     isNumber(field(value, 'memberCount')) &&
     typeof field(value, 'holdsQuest') === 'boolean' &&
     listOf(isHolder)(field(value, 'friends')) &&
-    (leader === undefined || hasTexts(leader, ['id', 'name']))
+    hasTexts(field(value, 'leader'), ['id', 'name'])
   );
 }
 
