@@ -18,7 +18,7 @@ The three pieces every rename ticket (P09-02 to P09-06) relies on. They land onc
 ## Acceptance criteria
 
 - [x] The script runs with `node` alone on Node's own TypeScript support, imports only Node's built-in modules, and can be called on one package's files.
-- [x] In `test/` or `__tests__/`, a file that declares a test passes with exactly one level suffix and fails with none or with two. A file with a level suffix outside a test folder fails. A support file in a test folder that declares no test passes without a suffix.
+- [x] In `test/` or `__tests__/`, a file that declares a test passes with exactly one level suffix, in a name the package's runners run (the globs its `lint` passes the check), and fails with none, with two, or with a level its runners do not run there. A file with a level suffix, or a `.test` or `.spec` name, outside a test folder fails. A support file in a test folder that declares no test passes without a suffix.
 - [x] Files under `main-server/eval/`, such as the benchmark's `*.eval.ts`, are not checked as test files.
 - [x] The check names every file that fails and exits non-zero when any file fails.
 - [x] `## Comments` shows the check passing on a sample of renamed paths that covers all three levels and failing on a planted test file with no level suffix, with the output of each run.
@@ -119,3 +119,7 @@ fyoon46's review found that the check took the three level suffixes in any test 
 
   admin's message: `__tests__/csv.integration.test.ts: is named by level but not run: this package's runners include __tests__/**/*.unit.test.{ts,tsx}, __tests__/*.integration.test.tsx, __tests__/site/*.integration.test.ts`. The word "include" became "run" once the globs could exclude.
 - **The tree as it is** passes in every package with the counts the old check gave: main-server 130, match-server 14, socket-server 8, worker-server 13, admin 18, mobile 161 and flow-tests 8 test files, `each named by its test level and run.`
+- **fyoon46's follow-up comment** (after #123 merged), for P09-11 and the spec:
+  - `scripts/coverage-by-file-set.ts` sums a coverage report over the P09 spec's file sets, run from a package folder after each coverage run. It fails when the files under `src/` do not add up to the report's total. Its test, `scripts/test/coverage-by-file-set.integration.test.ts`, has 8 rows, all red before the script and green after. On the reports of the earlier, unofficial measurement at d4f07461, 60 of its 62 figures equal those of a sum made apart over the same reports; the other 2 are match-server's logic, which now holds the round and placement services.
+  - `node --test 'scripts/test/*.test.ts'` runs both scripts' tests: 34 passed.
+  - The spec's "The level check" and this ticket's first criterion say that only names the package's runners run pass.

@@ -89,7 +89,7 @@ Support files (helpers, saved pages, recorded answers, `test/start-app.ts` and t
 
 **The level check.** A small dependency-free script, `scripts/check-test-levels.ts` at the repository root, run with Node's own TypeScript support and called by each package's `pnpm lint` on that package's files, so CI runs it with no workflow change.
 
-- In a test folder (`test/`, `__tests__/`), every file that declares a test (`describe`, `it` or `test`) must carry exactly one level suffix. A file with a level suffix outside a test folder fails too. Support files that declare no test need no suffix. The check names each file that fails.
+- In a test folder (`test/`, `__tests__/`), every file that declares a test (`describe`, `it` or `test`) must carry exactly one level suffix, in a name the package's runners run: each package's `pnpm lint` passes the check the globs its runners include, with `!` before those they exclude, so only the levels its runners run are allowed, with their file types and folders. A file with a level suffix, or a `.test` or `.spec` name, outside a test folder fails too. Support files that declare no test need no suffix. The check names each file that fails.
 - `main-server/eval/` is not a test folder; the benchmark's `*.eval.ts` runs only under `pnpm eval` (P19).
 - oxlint's `vitest/consistent-test-filename` was considered; it judges a file by its name alone, so it cannot tell a helper in `test/` from a test that has lost its suffix.
 - The pull request shows the check passing on the renamed tree and failing on a test file planted under an old name.
@@ -109,7 +109,7 @@ Support files (helpers, saved pages, recorded answers, `test/start-app.ts` and t
 - Every README line that names a test file by its old name, or describes admin's old `pages` and `site` projects, is updated. The root README's test table says that `pnpm test:unit` needs no Docker.
 - `CLAUDE.md` and `AGENTS.md` each gain the same line in "AI-generated code markers": "A file that is only renamed, its content unchanged, gets no new row."
 
-**Open pull requests.** P10's event-flow fix merges before the rename. P20's #118 to #122 change mobile tests; each merges before the rename, or rebases after it and renames its new test files. The level check fails any file still under an old name.
+**Open pull requests.** P10's event-flow fix merges before the rename. P20's #118 to #122 and #125 change mobile tests; each merges before the rename, or renames its new and changed test files by level after it. The level check fails any file still under an old name.
 
 **Tests of test tooling.** main-server's tests of the AI benchmark (`test/eval-*`) and flow-tests' harness self-test carry level suffixes and run in `pnpm test` as before. The Results count them on their own line, outside the product's counts. flow-tests' Dev Server stack check (`deploy-stack`) becomes `.e2e.test.ts` and counts among flow-tests' end-to-end tests; it is not one of P11's journeys.
 
@@ -194,15 +194,15 @@ Declared before the official measurement. Every figure is a percentage of the fi
 | P11's end-to-end journeys (A1, A2, W1, W2) | Every journey passes | They drive the system as a User or an Administrator would. |
 | P11's device runs (M1, M2), integration | Every flow passes | The app on a device against its own mock data. |
 
-**Unit-only coverage, reported with no target:** servers' logic (`src/**/*.ts` without `**/*.{controller,service,gateway,module,collector,guard,interceptor,filter}.ts`, the entry files above, `**/*.seed.ts`, `src/demo/**` and `src/generated/**`); admin's modules outside the route tree; mobile logic (`src/features`, `src/auth`, `src/session`, `src/storage`, `src/hooks`); mobile API client (`src/api` without `src/api/mock`); mobile design-system and map components (`src/design-system`, `src/map`).
+**Unit-only coverage, reported with no target:** servers' logic (`src/**/*.ts` without `**/*.{controller,service,gateway,module,collector,guard,interceptor,filter}.ts`, the entry files above, `**/*.seed.ts`, `src/demo/**` and `src/generated/**`, but with match-server's `src/matching/{round,placement}.service.ts`, which hold the pure `splitRound` and `assign`); admin's modules (`src/**` without the route entry files `**/page.tsx`, `**/layout.tsx` and `**/route.ts`, so with `src/app/health/health-answer.ts` and `src/app/sign-in/site-path.ts`); mobile logic (`src/features`, `src/auth`, `src/session`, `src/storage`, `src/hooks`); mobile API client (`src/api` without `src/api/mock`); mobile design-system and map components (`src/design-system`, `src/map`).
 
-**Reporting.** Statements, branches, functions and lines, unit-only and whole suite, for each component and file set. A note that `emitDecoratorMetadata` lowers branch figures on decorated class lines, and that V8 (Vitest) and Istanbul (Jest) count branches differently.
+**Reporting.** Statements, branches, functions and lines, unit-only and whole suite, for each component and file set. `scripts/coverage-by-file-set.ts` sums a report over the file sets of this section, as they are written here; a set changed here changes there too. A note that `emitDecoratorMetadata` lowers branch figures on decorated class lines, and that V8 (Vitest) and Istanbul (Jest) count branches differently.
 
 ### The official measurement
 
 - Once, at the final commit of `2.0/Main` after all P9, P10 and P11 work has merged, on the measurement Mac (an Apple Silicon Mac; its model, chip and memory recorded).
 - It records macOS, Node (the pinned version), pnpm 12.6.0, Docker, Java, Playwright and its Chromium build, Maestro, the emulator and its system image, and each command as typed.
-- It runs `pnpm test:cov:unit` and `pnpm test:cov` in every package except flow-tests; `pnpm test` and `pnpm test:admin-ui` in flow-tests; `pnpm build:mock-apk` and `pnpm test:device` in mobile.
+- It runs `pnpm test:cov:unit` and `pnpm test:cov` in every package except flow-tests, each followed by `node ../scripts/coverage-by-file-set.ts coverage/coverage-summary.json`, which sums the report over the file sets above; `pnpm test` and `pnpm test:admin-ui` in flow-tests; `pnpm build:mock-apk` and `pnpm test:device` in mobile.
 - The numbers go into the Results section below.
 
 ## Testing Decisions

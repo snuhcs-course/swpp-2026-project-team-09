@@ -211,10 +211,14 @@ P11-03, as of 02:12 KST before the pull request was marked ready.
 
 ### Agent usage of the review of PR #124 (2026-10-23)
 
-Recorded once here, for the changes it made in P09-01, P09-10 and P11-03.
+Recorded once here, for the changes it made in P09-01, P09-05, P09-10, P09-11, P11-03 and the P09 spec.
 
 - Agent time: about 47 minutes, an estimate: the session that made the changes, from reading the review to just before
   this commit (40 minutes, its waits for a person left out), and the code review's 2 subagents (7 minutes). The pull
   request's text and the replies to the review after this commit are not counted.
 - Tokens: input 30,532 thousand in all (cache reads 29,398 thousand, cache writes 1,134 thousand, uncached under 1
   thousand); output 127 thousand, a lower bound, since the transcripts keep only partial output counts.
+- After that commit, the same session's work on the pull request's text, the replies, the merge of `2.0/Main` and
+  fyoon46's follow-up comment, measured just before its own commit: about 14 minutes, an estimate. Input 15,185
+  thousand in all (cache reads 15,102 thousand, cache writes 84 thousand, uncached under 1 thousand); output 56
+  thousand, a lower bound.

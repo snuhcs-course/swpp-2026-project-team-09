@@ -3,7 +3,7 @@
 Parent: [P09 spec](../spec.md)
 Status: resolved
 Blocked by: P09-01 (The shared pieces of the test levels)
-Touches: mobile only (the names of its `__tests__/` files, `package.json` with its Jest config and scripts, `.gitignore`, `README.md`), plus mobile's row of the root README's test table. P20's open pull requests #118 to #122 change mobile tests too.
+Touches: mobile only (the names of its `__tests__/` files, `package.json` with its Jest config and scripts, `.gitignore`, `README.md`), plus mobile's row of the root README's test table. P20's open pull requests #118 to #122 and #125 change mobile tests too.
 
 ## What to build
 
@@ -11,7 +11,7 @@ This is the P09 spec's foundation change for mobile. Each `__tests__/**/*-test.t
 
 Jest gets the projects `unit` and `integration`, and each selects its files by suffix. The scripts follow the spec's "Projects and scripts" table, with `--selectProjects`. CI's four shards still run `pnpm test --shard`, and no workflow changes. Coverage follows the Jest part of the spec's "Coverage configuration": `coverageProvider: 'babel'` (Istanbul), `collectCoverageFrom` `src/**/*.{ts,tsx}` without `*.d.ts`, the same four reporters and no thresholds. `mobile/.gitignore` gains `/coverage`. `pnpm lint` calls P09-01's level check on mobile's files.
 
-P20's pull requests #118 to #122 change mobile tests (the spec's "Open pull requests"). Each one merges before this ticket lands, or rebases after it and renames its new test files. The level check fails any file still under an old name.
+P20's pull requests #118 to #122 and #125 change mobile tests (the spec's "Open pull requests"); `## Comments` says who renames their test files, and when.
 
 ## Acceptance criteria
 
@@ -35,7 +35,7 @@ P20's pull requests #118 to #122 change mobile tests (the spec's "Open pull requ
 - **Jest config.** Inline `projects` in `package.json`, each with `preset`, the AsyncStorage `moduleNameMapper` and a `testMatch` by suffix. `testTimeout`, `coverageProvider`, `collectCoverageFrom` and `coverageReporters` stay at the top level: Jest 29 reads them as global options. The `testPathIgnorePatterns` entry for `__tests__/support/` went, since the suffixes select no support file.
 - **Two changes outside the Touches.** (1) Four integration tests' comments named other test files by their old names (`live`, `party-invites`, `party-mine`, `timetable-server`); they now name the new ones. (2) `timetable-ocr-screenshots.unit.test.ts` checks that a reading's median of 5 is under 500 ms. Under the first `pnpm test:cov:unit` the instrumented pipeline took 564 to 886 ms on a loaded machine, so 3 tests failed on a speed the app never runs at. The check is now skipped when `__coverage__` is defined and runs as before otherwise: 4 tests show as skipped under coverage. These five files got a box row; the other 142 are renamed only.
 - **READMEs.** mobile's: the `pnpm lint` row, a paragraph on the two levels and the scripts, and `map-native-view.unit.test.tsx`. Root: mobile's row says "neither it nor `pnpm test:unit` needs Docker", in worker-server's words from P09-03. mobile needs no Docker at all, so the spec's run with Docker stopped does not apply here.
-- **P20's pull requests** #118 to #122 have not merged into this branch's base, so no file of theirs is here. Their new test files get renamed when the orchestrator merges `2.0/Main`; the level check fails any left under an old name.
+- **P20's pull requests** #118 to #122 and #125 have not merged into this branch's base, so no file of theirs is here. Each must rename its new and changed test files by level after P09–P11's pull request merges; the level check fails any file under an old name.
 
 ### Evidence (2026-10-22)
 
