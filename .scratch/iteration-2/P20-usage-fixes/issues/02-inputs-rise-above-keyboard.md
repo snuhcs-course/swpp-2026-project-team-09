@@ -36,7 +36,7 @@ Plan item 5 has the full list with where each lives:
 - the friend panel's search,
 - the 행사 tab's search,
 - 파티 → 찾기's search,
-- 시간표 version rename,
+- 시간표 version rename, which sits in 내 정보's week card, inside the tab's own scroll view and not in the full-screen panel, so the shared fix does not reach it and it is checked on its own,
 - 수업 추가 / 수정,
 - the onboarding,
 - the AI input.
