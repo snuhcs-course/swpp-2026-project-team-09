@@ -29,7 +29,7 @@ This lands first, in its own pull request into `2.0/Main`, before P09's rename o
 
 - **Where it lands.** The person running P09–P11 asked for one pull request for all of them, so this change lands in the integration branch `2.0/P09-11-tests` (from `2.0/P10-01`), before P09-06, not in a pull request of its own into `2.0/Main`. The pull request criterion stays unticked for that reason.
 - **Decisions.** The wait checks the whole request, `toEqual({ state: 'matched', questId: expect.any(String) as unknown })`, so a timeout prints the last request in full; `as unknown` is how main-server's tests get an asymmetric matcher past lint's `no-unsafe-assignment`. `vi.waitFor` keeps its default 50 ms interval. The second User's request is read once, after the wait. Only `bothAreMatched` changed (and its box row); `vi` is a Vitest global here, so no import.
-- **The wait works.** Each run is `event.flow.ts` alone through `heavy.sh`. The planted sleep and the read counter were in the working copy only, never committed, and removed before the final run.
+- **The wait works.** Each run is `event.flow.ts` alone, with no other test run on the machine meanwhile. The planted sleep and the read counter were in the working copy only, never committed, and removed before the final run.
   - Red: the old flow, with a 1 s sleep planted in match-server's `askForQuest` between the main server's answer and the write of the `questId`, fails with `이준: GET /quests/null answered 400 {"message":["Invalid UUID"],…}`: both reads said `matched` with `questId: null`.
   - Green, same plant, new flow: passes. The wait took 21 reads; 20 said `questId: null`, the 21st, at +1026 ms, named the Quest.
   - Timeout, a 20 s plant: fails after 15.5 s, after 285 reads, with the last failed assertion from `vi.waitFor`: `expected { state: 'matched', questId: null } to deeply equal { state: 'matched', …(1) }` (diff `"questId": Any<String>` against `null`), at the `expect` inside the wait.
@@ -40,3 +40,4 @@ This lands first, in its own pull request into `2.0/Main`, before P09's rename o
 
 - Agent time: about 8 minutes, an estimate: the implementer subagent, measured just before its last commit.
 - Tokens: input 5,476,000 in all (cache reads 5,347,000, cache writes 128,000, uncached under 1,000); output 2,000, a lower bound, since the transcript keeps only partial output counts.
+- The orchestrating session, the merges, the code review and its fix round are recorded once, under [P09-10](../../P09-unit-tests/issues/10-mobile-renewal-answers-and-adapters-as-units.md).

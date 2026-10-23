@@ -66,7 +66,7 @@ An adapter is pure when its functions take data and return data, with no I/O, ho
 
 ### Evidence (2026-10-23)
 
-`pnpm test:unit` (in a slot, `--maxWorkers=4`, `--json`): 62 files, 837 tests: 836 passed, 1 todo; P09-05 left 48
+`pnpm test:unit` (`--maxWorkers=4`, `--json`): 62 files, 837 tests: 836 passed, 1 todo; P09-05 left 48
 files and 282 tests. The 14 new files hold 555 tests:
 
 | File | Tests |
@@ -104,7 +104,7 @@ Faults planted in `src/` one at a time, each restored after its run:
 | `isSignInAnswer` not checking `onboarding.completed` | 6 of 402 |
 | `isWalkingRoute` taking any status without a route | 1 of 402 |
 
-Unit-only coverage, `pnpm test:cov:unit` (in a slot, `--maxWorkers=4`; 832 passed, 4 skipped, the OCR timing check
+Unit-only coverage, `pnpm test:cov:unit` (`--maxWorkers=4`; 832 passed, 4 skipped, the OCR timing check
 under coverage, 1 todo):
 
 | Run | Statements | Branches | Functions | Lines |
@@ -140,7 +140,12 @@ After merging the integration tip (`fd492a03`, which changes in `mobile/` only t
 their `package.json` entries): `pnpm test:unit` 62 files, 837 tests, 836 passed and 1 todo; `--listTests` as above;
 `pnpm lint` (`161 test file(s), …`), `pnpm format:check` and `pnpm typecheck` pass.
 
-The logs, the JSON report and the scripts of the planted faults are in the orchestrator's helpers folder, `p09-10/`.
+`pnpm test:unit`'s summary, the same before and after the merge:
+
+```
+Test Suites: 62 passed, 62 total
+Tests:       1 todo, 836 passed, 837 total
+```
 
 ### Agent usage (2026-10-23)
 
@@ -151,29 +156,33 @@ The logs, the JSON report and the scripts of the planted faults are in the orche
 
 ### Review round (2026-10-23)
 
-The code review of P09–P11 (2026-10-23); each line names its finding.
+The code review of P09–P11 (2026-10-23); each line starts with what it found.
 
-- **P2-1.** `isParties` now refuses a Party without `leader`, as main-server's README and `VisiblePartyDto` always send
-  it: the row is a refusal (`an item with no Leader → refused`), red on the old guard and green after the `fix:` commit.
-  The app's tests that sent such a Party expect it refused now (server-me's list of Parties; 알림, which leaves the
-  Parties out) and server-features' Party carries its Leader. The app's `Party` type keeps `leader` optional. The gap
-  above is closed, and the criterion on each guard stands.
-- **S2-4.** answers-parties-and-places' strategy comment names main-server's README (Party to Timetable) as the source
-  of the shapes, not the app's own `Party` type.
-- **P2-2, S2-3.** `it.each` boundary tables at each threshold: the parties adapter at 0, 1 and 2 members seen; the
-  footprints adapter at Friend counts 0, 1 and 2 and at 2, 3 and 4 faces. Faults planted at the thresholds
-  (`sharing > 1`, `count <= 1`, `FACES = 4`, a slice to `FACES - 1`) each failed a row.
-- **S2-1.** One condition per test or table row: room-adapter (the other Party, the member states, who is seen, the
-  plan's steps), map-adapter-places and map-adapter-people (the cards left out), shuttle-adapter (the vehicles gone) and
-  notifications-adapter (no Leader and no Quest, each on a fixture of its own). A fault planted under each condition
-  failed its own rows only.
-- **S2-5.** friends-adapter builds on support/map-sources' `NOW`, `MINUTE`, `measured` and `MIN_JUN`; map-sources'
-  comment names both adapters' tests.
-- **S2-6.** dining-adapter takes `restaurant()` from support/dining, which exports it now.
-- **S2-7.** shuttle-adapter's comment says the loop runs clockwise, as its stops do.
-- **S2-8.** GLOSSARY terms capitalised in the new tests' names: Lobby, Board, Leader, Event, Collection and Place. JSON
-  field names (`leader null`, `no place`) and the place text of a Sub Quest or an Event stay lower case.
-- **Runs.** Each changed file alone. Full `pnpm test` (in a slot, `--maxWorkers=4`, JSON report): 161 suites, 1887
+- **`isParties` accepted a Party without its Leader, against main-server's README.** `isParties` now refuses a Party
+  without `leader`, as main-server's README and `VisiblePartyDto` always send it: the row is a refusal (`an item with no
+  Leader → refused`), red on the old guard and green after the `fix:` commit. The app's tests that sent such a Party
+  expect it refused now (server-me's list of Parties; 알림, which leaves the Parties out) and server-features' Party
+  carries its Leader. The app's `Party` type keeps `leader` optional. The gap above is closed, and the criterion on each
+  guard stands.
+- **A strategy comment took its shapes from the app's own type.** answers-parties-and-places' strategy comment names
+  main-server's README (Party to Timetable) as the source of the shapes, not the app's own `Party` type.
+- **The thresholds had no boundary tables.** `it.each` boundary tables at each threshold: the parties adapter at 0, 1
+  and 2 members seen; the footprints adapter at Friend counts 0, 1 and 2 and at 2, 3 and 4 faces. Faults planted at the
+  thresholds (`sharing > 1`, `count <= 1`, `FACES = 4`, a slice to `FACES - 1`) each failed a row.
+- **Several tests checked more than one condition.** One condition per test or table row: room-adapter (the other Party,
+  the member states, who is seen, the plan's steps), map-adapter-places and map-adapter-people (the cards left out),
+  shuttle-adapter (the vehicles gone) and notifications-adapter (no Leader and no Quest, each on a fixture of its own).
+  A fault planted under each condition failed its own rows only.
+- **friends-adapter defined again what support/map-sources exports.** friends-adapter builds on support/map-sources'
+  `NOW`, `MINUTE`, `measured` and `MIN_JUN`; map-sources' comment names both adapters' tests.
+- **dining-adapter copied a helper of support/dining.** dining-adapter takes `restaurant()` from support/dining, which
+  exports it now.
+- **shuttle-adapter's comment said the loop runs anticlockwise.** shuttle-adapter's comment says the loop runs
+  clockwise, as its stops do.
+- **GLOSSARY terms were in lower case in test names.** GLOSSARY terms capitalised in the new tests' names: Lobby, Board,
+  Leader, Event, Collection and Place. JSON field names (`leader null`, `no place`) and the place text of a Sub Quest or
+  an Event stay lower case.
+- **Runs.** Each changed file alone. Full `pnpm test` (`--maxWorkers=4`, JSON report): 161 suites, 1887
   tests, 1886 passed and 1 todo; by suffix 62 `.unit.test` files with 861 tests and 99 `.integration.test` files with
   1026, 861 + 1026 = 1887. `pnpm lint` (`161 test file(s), …`), `pnpm format:check` and `pnpm typecheck` pass.
 - **After the round.** The orchestrator put back the plan table's row for the step without a start (`없음`, neither
@@ -185,9 +194,10 @@ Work that no ticket's own section counts, recorded once here for P09-01 to P09-1
 P11-03, as of 02:12 KST before the pull request was marked ready.
 
 - Agent time, an estimate: the orchestrating session about 3 hours 45 minutes of wall time, most of it waiting on the
-  agents it ran and overlapping their time, plus a forked session of 22 minutes that set the run slots (`slot.sh`); 18
-  merger subagents, 17 minutes; the code review's 16 subagents, 88 minutes in all; the fix round's 2 subagents, 48
-  minutes. Re-runs after a stopped workflow resume (2 mergers, 1 implementer) are counted with the mergers.
+  agents it ran and overlapping their time, plus a forked session of 22 minutes that set how the agents shared the
+  machine's test runs; 18 merger subagents, 17 minutes; the code review's 16 subagents, 88 minutes in all; the fix
+  round's 2 subagents, 48 minutes. Re-runs after a stopped workflow resume (2 mergers, 1 implementer) are counted with
+  the mergers.
 - Tokens: input 191,088 thousand in all (cache reads 187,053 thousand, cache writes 4,033 thousand, uncached 2
   thousand); output 328 thousand, a lower bound, since the transcripts keep only partial output counts. Of these, the
   two sessions 51,604 thousand in and 258 thousand out; the mergers 8,021 thousand in and 9 thousand out; the code

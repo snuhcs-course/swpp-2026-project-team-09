@@ -136,3 +136,4 @@ Other pure modules, chosen by their imports (no hook, storage, API client, socke
 
 - Agent time: about 70 minutes, an estimate: the implementer subagent, measured just before its last commit. Most of it went to waiting for the Jest runs on a heavily loaded machine.
 - Tokens: input 31,442 thousand in all (cache reads 30,460 thousand, cache writes 981 thousand, uncached under 1 thousand); output 9 thousand, a lower bound, since the transcript keeps only partial output counts.
+- The orchestrating session, the merges, the code review and its fix round are recorded once, under [P09-10](10-mobile-renewal-answers-and-adapters-as-units.md).

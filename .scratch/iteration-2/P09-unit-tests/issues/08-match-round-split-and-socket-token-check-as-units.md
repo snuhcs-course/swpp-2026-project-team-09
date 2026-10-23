@@ -74,14 +74,31 @@ P10-02's two files (`match-server/test/rounds.integration.test.ts`, `socket-serv
 
 **New unit tests**: `rounds.unit.test.ts` 6, `placements.unit.test.ts` 10, `access-token.unit.test.ts` 12, all passing.
 
-**`pnpm test:unit`**, after merging the integration tip: match-server 3 files, 22 passed (`grouping` 6, `placements` 10, `rounds` 6); socket-server 1 file, 12 passed. `docker ps -a` listed the same 4 containers before and after both runs; neither `unit` project has a global setup, and no new unit test imports `testcontainers` or calls `inject`. Run with Docker stopped: the orchestrator ran it on 2026-10-23 at 00:59 KST at 7803d4e8 (`docker desktop stop`, then `docker info` failed to connect; Docker started again at 01:00:53), and `pnpm test:unit` passed: match-server 4 files, 39 tests; socket-server 2 files, 32 tests. The log is `docker-stopped-unit.log` in the orchestrator's helpers folder.
+**`pnpm test:unit`**, after merging the integration tip: match-server 3 files, 22 passed (`grouping` 6, `placements` 10, `rounds` 6); socket-server 1 file, 12 passed. `docker ps -a` listed the same 4 containers before and after both runs; neither `unit` project has a global setup, and no new unit test imports `testcontainers` or calls `inject`. Run with Docker stopped: the orchestrator ran it on 2026-10-23 at 00:59 KST at 7803d4e8 (`docker desktop stop`, then `docker info` failed to connect; Docker started again at 01:00:53), and `pnpm test:unit` passed: match-server 4 files, 39 tests; socket-server 2 files, 32 tests.
 
-**Full `pnpm test`** (in a slot, `--maxWorkers=4`, with a JSON report), after merging the integration tip:
+```
+docker info: failed to connect to the docker API at unix://…/.docker/run/docker.sock; … connect: no such file or directory
+===== match-server
+ Test Files  4 passed (4)
+      Tests  39 passed (39)
+===== socket-server
+ Test Files  2 passed (2)
+      Tests  32 passed (32)
+```
+
+**Full `pnpm test`** (`--maxWorkers=4`, with a JSON report), after merging the integration tip:
 
 - match-server: 13 files, 90 passed. By suffix: 3 `.unit.test.ts` files with 22 tests and 10 `.integration.test.ts` files with 68 tests; 22 + 68 = 90, so `test:unit` and `test:integration` together run what `test` runs.
 - socket-server: 7 files, 43 passed. By suffix: 1 `.unit.test.ts` file with 12 tests and 6 `.integration.test.ts` files with 31 tests; 12 + 31 = 43.
 
-The JSON reports and logs are in the orchestrator's helpers folder, `p09-08/`.
+```
+===== match-server
+ Test Files  13 passed (13)
+      Tests  90 passed (90)
+===== socket-server
+ Test Files  7 passed (7)
+      Tests  43 passed (43)
+```
 
 **Checks**: `pnpm lint` (`13 test file(s), each named by its test level.` in match-server, `7 test file(s), …` in socket-server), `pnpm format:check` and `pnpm typecheck` pass in both servers.
 
@@ -89,12 +106,13 @@ The JSON reports and logs are in the orchestrator's helpers folder, `p09-08/`.
 
 ### Agent usage (2026-10-23)
 
-- Agent time: about 21 minutes, an estimate: the implementer subagent, measured just before its last commit (about 2 of them waiting for a run slot).
+- Agent time: about 21 minutes, an estimate: the implementer subagent, measured just before its last commit (about 2 of them waiting for another agent's test run to end).
 - Tokens: input 16,786 thousand in all (cache reads 16,547 thousand, cache writes 239 thousand, uncached under 1 thousand); output 15 thousand, a lower bound, since the transcript keeps only partial output counts.
+- The orchestrating session, the merges, the code review and its fix round are recorded once, under [P09-10](10-mobile-renewal-answers-and-adapters-as-units.md).
 
 ### Review round (2026-10-23)
 
-The code review of P09–P11 (2026-10-23); each line names its finding.
+The code review of P09–P11 (2026-10-23); each line starts with what it found.
 
-- **S1-6.** placements' test takes the Quest type from `assign` (`Parameters<typeof assign>[1][number]`) instead of
-  declaring the shape again; `pnpm typecheck` passes.
+- **The placements test declared the Quest's shape again.** placements' test takes the Quest type from `assign`
+  (`Parameters<typeof assign>[1][number]`) instead of declaring the shape again; `pnpm typecheck` passes.

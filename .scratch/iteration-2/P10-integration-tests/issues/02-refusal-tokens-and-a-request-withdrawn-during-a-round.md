@@ -64,3 +64,4 @@ The expired token's message says `connected: false` because the gateway's expiry
 
 - Agent time: about 9 minutes, an estimate: the implementer subagent, measured just before its last commit.
 - Tokens: input 5,609 thousand in all (cache reads 5,508 thousand, cache writes 100 thousand, uncached under 1 thousand); output 5 thousand, a lower bound, since the transcript keeps only partial output counts.
+- The orchestrating session, the merges, the code review and its fix round are recorded once, under [P09-10](../../P09-unit-tests/issues/10-mobile-renewal-answers-and-adapters-as-units.md).

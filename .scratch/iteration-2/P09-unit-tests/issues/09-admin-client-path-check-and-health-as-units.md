@@ -71,7 +71,7 @@ The main-server client's `request()` is tested through `mainServer`'s exported c
 **The dot-segment rows, red before `f49ea1f2`:** 8 failed (4 "→ the home page" with `Received: "//elsewhere.example"`,
 4 "→ a browser stays on the admin site" with `Received: "https://elsewhere.example"`), 30 passed; green after it.
 
-**Counts.** One full run, `pnpm test --maxWorkers=4 --reporter=default --reporter=json`, in a slot: 18 files and 146
+**Counts.** One full run, `pnpm test --maxWorkers=4 --reporter=default --reporter=json`: 18 files and 146
 tests passed. Added up by file suffix from its JSON report: `.unit.test.*` 3 files, 61 tests (`main-server` 16,
 `site-path` 38, `health-answer` 7); `.integration.test.*` 15 files, 85 tests, the same as at P09-04's rename. 61 + 85 =
 146, so `test:unit` and `test:integration` together run exactly what `test` runs. admin's integration tests are
@@ -100,12 +100,15 @@ not call `fetch` at all.
 - Agent time: about 12 minutes, an estimate: the implementer subagent, measured just before its last commit.
 - Tokens: input 10,315 thousand in all (cache reads 10,172 thousand, cache writes 143 thousand, uncached under 1
   thousand); output 22 thousand, a lower bound, since the transcript keeps only partial output counts.
+- The orchestrating session, the merges, the code review and its fix round are recorded once, under
+  [P09-10](10-mobile-renewal-answers-and-adapters-as-units.md).
 
 ### Review round (2026-10-23)
 
-The code review of P09–P11 (2026-10-23); each line names its finding.
+The code review of P09–P11 (2026-10-23); each line starts with what it found.
 
-- **S3-4.** admin's README layout says `__tests__/` holds the unit tests (`*.unit.test.ts`) and the page tests, and
-  `__tests__/site/` the integration tests against the built site.
-- **S3-5.** main-server.unit.test.ts runs its four calls through two tables, `→ only the headers it was given` and
-  `→ the body it was given, or none`; a dropped body and a wrong content-type each failed only their own table.
+- **admin's README said `__tests__/` holds the page tests only.** admin's README layout says `__tests__/` holds the unit
+  tests (`*.unit.test.ts`) and the page tests, and `__tests__/site/` the integration tests against the built site.
+- **The headers table also checked the body, which its name did not say.** main-server.unit.test.ts runs its four calls
+  through two tables, `→ only the headers it was given` and `→ the body it was given, or none`; a dropped body and a
+  wrong content-type each failed only their own table.

@@ -72,7 +72,7 @@ The command runs over `test/admin-ui/`, which P09-06's default configuration alr
 
 ### Evidence (2026-10-23)
 
-Each run went through `slot.sh P11-02 --mutex flow-stack`.
+No other flow-tests run used the stack during these runs.
 
 - **Red first.** With the journeys written and nothing else, `pnpm typecheck` failed on
   `Cannot find module './browser.js'`.
@@ -108,12 +108,16 @@ Each run went through `slot.sh P11-02 --mutex flow-stack`.
 - Agent time: about 22 minutes, an estimate: the implementer subagent, measured just before its last commit.
 - Tokens: input 20,683 thousand in all (cache reads 20,395 thousand, cache writes 287 thousand, uncached under 1
   thousand); output 19 thousand, a lower bound, since the transcript keeps only partial output counts.
+- The orchestrating session, the merges, the code review and its fix round are recorded once, under
+  [P09-10](../../P09-unit-tests/issues/10-mobile-renewal-answers-and-adapters-as-units.md).
 
 ### Review round (2026-10-23)
 
-The code review of P09–P11 (2026-10-23); each line names its finding.
+The code review of P09–P11 (2026-10-23); each line starts with what it found.
 
-- **S3-6.** `test/admin-ui/browser.ts` takes `WAIT_MS` from `test/inbox.ts`, which exports it, instead of a copy.
-- **S3-8.** The fixture's comment keeps only the why of the time zone.
-- **S4-6.** The root README mentions `pnpm test:admin-ui`, which neither `pnpm test` nor CI runs.
-- **Run.** `pnpm test:admin-ui` (in a slot, with the `flow-stack` mutex): 1 file, 2 passed.
+- **`WAIT_MS` copied a constant of `test/inbox.ts`.** `test/admin-ui/browser.ts` takes `WAIT_MS` from `test/inbox.ts`,
+  which exports it, instead of a copy.
+- **The fixture's comment restated the code.** The fixture's comment keeps only the why of the time zone.
+- **The root README's flow-tests rows were out of date.** The root README mentions `pnpm test:admin-ui`, which neither
+  `pnpm test` nor CI runs.
+- **Run.** `pnpm test:admin-ui`, alone on the flow stack: 1 file, 2 passed.

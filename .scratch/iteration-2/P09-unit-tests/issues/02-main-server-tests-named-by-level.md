@@ -53,7 +53,14 @@ The README keeps `--no-spec` in its "add a module" steps, but "because this proj
 
 **Renames.** The rename commit (135e0389) has 127 renames at 100% similarity and nothing else; no import names a test file. `git log --follow -- main-server/test/quests.integration.test.ts` shows its history through 1bbe7a1f, 9ecafa21 and fa04f0d9.
 
-**No container in `test:unit`.** The `unit` project has no global setup, and no unit test file imports `testcontainers` or calls `inject`. `docker ps -a` before and after `pnpm test:unit`: the same four containers, none added. Run with Docker stopped: the orchestrator ran it on 2026-10-23 at 00:59 KST at 7803d4e8 (`docker desktop stop`, then `docker info` failed to connect; Docker started again at 01:00:53), and `pnpm test:unit` passed: 9 files, 195 tests. The log is `docker-stopped-unit.log` in the orchestrator's helpers folder.
+**No container in `test:unit`.** The `unit` project has no global setup, and no unit test file imports `testcontainers` or calls `inject`. `docker ps -a` before and after `pnpm test:unit`: the same four containers, none added. Run with Docker stopped: the orchestrator ran it on 2026-10-23 at 00:59 KST at 7803d4e8 (`docker desktop stop`, then `docker info` failed to connect; Docker started again at 01:00:53), and `pnpm test:unit` passed: 9 files, 195 tests.
+
+```
+docker info: failed to connect to the docker API at unix://…/.docker/run/docker.sock; … connect: no such file or directory
+===== main-server
+ Test Files  9 passed (9)
+      Tests  195 passed (195)
+```
 
 **Coverage.** `coverage-summary.json` holds 200 files, all under `src/`, none of `src/generated/`.
 
@@ -86,11 +93,12 @@ exit 1
 
 - Agent time: about 33 minutes, an estimate: the implementer subagent, measured just before its last commit.
 - Tokens: input 17,358 thousand in all (cache reads 17,183 thousand, cache writes 175 thousand, uncached under 1 thousand); output 9 thousand, a lower bound, since the transcript keeps only partial output counts.
+- The orchestrating session, the merges, the code review and its fix round are recorded once, under [P09-10](10-mobile-renewal-answers-and-adapters-as-units.md).
 
 ### Review round (2026-10-23)
 
-The code review of P09–P11 (2026-10-23); each line names its finding.
+The code review of P09–P11 (2026-10-23); each line starts with what it found.
 
-- **P1-4.** `pnpm test:cov` (in a slot, `--maxWorkers=4`, 01:47 to 01:50 KST, load averages 4 at the start and 57 at the
-  end): 130 files, 1771 passed, none timed out; 95.95% statements, 89.63% branches, 98.06% functions, 95.81% lines. No
-  test needed a longer timeout.
+- **No passing `pnpm test:cov` was recorded.** `pnpm test:cov` (`--maxWorkers=4`, 01:47 to 01:50 KST, load averages 4 at
+  the start and 57 at the end): 130 files, 1771 passed, none timed out; 95.95% statements, 89.63% branches, 98.06%
+  functions, 95.81% lines. No test needed a longer timeout.

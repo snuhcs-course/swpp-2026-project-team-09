@@ -51,7 +51,20 @@ P10-02 and P09-08 build on the renamed socket-server and match-server files. In 
 
 **Renames.** The rename commit (1e085e07) changes 29 files with 0 insertions and 0 deletions; no import names a test file. `git log --follow -- socket-server/test/users.integration.test.ts` shows its history back to P04-11.
 
-**No container in `test:unit`.** The `unit` project has no global setup and no unit test file imports `testcontainers`. `docker ps -a` before and after each server's `pnpm test:unit`: no container started (in worker-server's run, a Ryuk container left by socket-server's integration run ended; none was added). Run with Docker stopped: the orchestrator ran it on 2026-10-23 at 00:59 KST at 7803d4e8 (`docker desktop stop`, then `docker info` failed to connect; Docker started again at 01:00:53), and `pnpm test:unit` passed: match-server 4 files, 39 tests; socket-server 2 files, 32 tests; worker-server 8 files, 100 tests. The log is `docker-stopped-unit.log` in the orchestrator's helpers folder. By then each server's `unit` project had test files.
+**No container in `test:unit`.** The `unit` project has no global setup and no unit test file imports `testcontainers`. `docker ps -a` before and after each server's `pnpm test:unit`: no container started (in worker-server's run, a Ryuk container left by socket-server's integration run ended; none was added). Run with Docker stopped: the orchestrator ran it on 2026-10-23 at 00:59 KST at 7803d4e8 (`docker desktop stop`, then `docker info` failed to connect; Docker started again at 01:00:53), and `pnpm test:unit` passed: match-server 4 files, 39 tests; socket-server 2 files, 32 tests; worker-server 8 files, 100 tests. By then each server's `unit` project had test files.
+
+```
+docker info: failed to connect to the docker API at unix://…/.docker/run/docker.sock; … connect: no such file or directory
+===== match-server
+ Test Files  4 passed (4)
+      Tests  39 passed (39)
+===== socket-server
+ Test Files  2 passed (2)
+      Tests  32 passed (32)
+===== worker-server
+ Test Files  8 passed (8)
+      Tests  100 passed (100)
+```
 
 **Coverage.** `pnpm test:cov:unit` and `pnpm test:cov` (lines of `src/`; no file of `src/generated/`, no `.d.ts` and nothing outside `src/` in `coverage-summary.json`):
 
@@ -86,15 +99,17 @@ test/planted.e2e-spec.ts: declares a test but its name does not end in .unit.tes
 
 - Agent time: about 14 minutes, an estimate: the implementer subagent, measured just before its last commit.
 - Tokens: input 13,635 thousand in all (cache reads 13,449 thousand, cache writes 186 thousand, uncached under 1 thousand); output 13 thousand, a lower bound, since the transcript keeps only partial output counts.
+- The orchestrating session, the merges, the code review and its fix round are recorded once, under [P09-10](10-mobile-renewal-answers-and-adapters-as-units.md).
 
 ### Review round (2026-10-23)
 
-The code review of P09–P11 (2026-10-23); each line names its finding.
+The code review of P09–P11 (2026-10-23); each line starts with what it found.
 
-- **S1-2, P1-3.** socket-server's `vitest.config.ts` drops `passWithNoTests` and its comment, stale since its `unit`
-  project has test files: `pnpm test:unit` passes (2 files, 32 tests), and with the unit glob planted to match nothing
-  it now fails instead of passing on no test.
-- **S1-9.** match-, socket- and worker-server's "Checks" rows say that `pnpm lint` also checks that each test file names
-  a level, as main-server's does, and worker-server's `test/` line says its tests are named by level.
-- **P1-4.** worker-server's `pnpm test:cov` (in a slot, `--maxWorkers=4`, load average 35): 13 files, 148 passed, none
-  timed out; 93.84% statements, 87.4% branches, 96.8% functions, 93.84% lines.
+- **`passWithNoTests` was stale in socket-server.** socket-server's `vitest.config.ts` drops `passWithNoTests` and its
+  comment, stale since its `unit` project has test files: `pnpm test:unit` passes (2 files, 32 tests), and with the unit
+  glob planted to match nothing it now fails instead of passing on no test.
+- **Three server READMEs described `pnpm lint` as oxlint alone.** match-, socket- and worker-server's "Checks" rows say
+  that `pnpm lint` also checks that each test file names a level, as main-server's does, and worker-server's `test/`
+  line says its tests are named by level.
+- **No passing `pnpm test:cov` was recorded for worker-server.** worker-server's `pnpm test:cov` (`--maxWorkers=4`, load
+  average 35): 13 files, 148 passed, none timed out; 93.84% statements, 87.4% branches, 96.8% functions, 93.84% lines.

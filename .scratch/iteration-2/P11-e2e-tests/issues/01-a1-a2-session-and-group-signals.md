@@ -57,7 +57,7 @@ The harness gains the two additions these flows need (spec: "The harness"): a `S
 
 ### Evidence (2026-10-22)
 
-Each run went through `heavy.sh`.
+No other test ran on the machine during these runs.
 
 - **Red first.** With A1 written and the harness unchanged, `pnpm typecheck` failed on
   `Property 'isDisconnectedByServer' does not exist on type 'Inbox'` and
@@ -87,11 +87,14 @@ Each run went through `heavy.sh`.
   of them were spent waiting for the heavy lock while another ticket's agent held it.
 - Tokens: input 10,672 thousand in all (cache reads 10,017 thousand, cache writes 654 thousand, uncached under 1
   thousand); output 3 thousand, a lower bound, since the transcript keeps only partial output counts.
+- The orchestrating session, the merges, the code review and its fix round are recorded once, under
+  [P09-10](../../P09-unit-tests/issues/10-mobile-renewal-answers-and-adapters-as-units.md).
 
 ### Review round (2026-10-23)
 
-The code review of P09–P11 (2026-10-23); each line names its finding.
+The code review of P09–P11 (2026-10-23); each line starts with what it found.
 
-- **S3-3.** flow-tests' README intro names what `pnpm test` runs, the demo's flows, A1 and A2, and the checks of the
-  stacks, with no count of flows.
-- **S4-6.** The root README's flow-tests rows ("Running the tests" and the layout) say the same, without a count.
+- **flow-tests' README still said "the three flows of the demo".** flow-tests' README intro names what `pnpm test` runs,
+  the demo's flows, A1 and A2, and the checks of the stacks, with no count of flows.
+- **The root README still counted three demo flows.** The root README's flow-tests rows ("Running the tests" and the
+  layout) say the same, without a count.

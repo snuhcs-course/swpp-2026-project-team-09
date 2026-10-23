@@ -35,7 +35,7 @@ The `include` of the Vitest config follows the new names. The default configurat
 
 ### Evidence (2026-10-22)
 
-Each run is `pnpm test` in `flow-tests` through `heavy.sh`.
+Each run is `pnpm test` in `flow-tests`, with no other test run on the machine meanwhile.
 
 - **Before** the rename, at `4ac779a7`: `Test Files  5 passed (5)`, `Tests  11 passed (11)`, 36.2 s.
 - **After**, with a test that throws planted at `test/admin-ui/planted.e2e.test.ts`: `Test Files  5 passed (5)`, `Tests  11 passed (11)`, 36.3 s. The verbose reporter (`pnpm test --reporter=verbose`) listed 6 tests in `deploy-stack.e2e.test.ts`, 1 each in `event`, `friend` and `campus-services.e2e.test.ts`, and 2 in `stack.integration.test.ts`. The planted file was not run. `pnpm exec vitest list --filesOnly` with the same plant lists the five files and not the planted one:
@@ -73,9 +73,11 @@ Each run is `pnpm test` in `flow-tests` through `heavy.sh`.
 
 - Agent time: about 10 minutes, an estimate: the implementer subagent, measured just before its last commit.
 - Tokens: input 6,163 thousand in all (cache reads 6,019 thousand, cache writes 143 thousand, uncached under 1 thousand); output 7 thousand, a lower bound, since the transcript keeps only partial output counts.
+- The orchestrating session, the merges, the code review and its fix round are recorded once, under [P09-10](10-mobile-renewal-answers-and-adapters-as-units.md).
 
 ### Review round (2026-10-23)
 
-The code review of P09–P11 (2026-10-23); each line names its finding.
+The code review of P09–P11 (2026-10-23); each line starts with what it found.
 
-- **S3-2.** flow-tests' README "Checks" row says that `pnpm lint` also checks that each test file names its level.
+- **The README's `pnpm lint` row left out the level check.** flow-tests' README "Checks" row says that `pnpm lint` also
+  checks that each test file names its level.

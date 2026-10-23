@@ -122,10 +122,13 @@ exit 1
   minutes, and the one that finished, about 15 minutes), measured from their transcripts just before the last commit.
 - Tokens: input 14,306 thousand in all (cache reads 13,975 thousand, cache writes 331 thousand, uncached under 1
   thousand); output 7 thousand, a lower bound, since the transcript keeps only partial output counts.
+- The orchestrating session, the merges, the code review and its fix round are recorded once, under
+  [P09-10](10-mobile-renewal-answers-and-adapters-as-units.md).
 
 ### Review round (2026-10-23)
 
-The code review of P09–P11 (2026-10-23); each line names its finding.
+The code review of P09–P11 (2026-10-23); each line starts with what it found.
 
-- **S3-1.** `vitest.config.mts` drops `passWithNoTests` and its comment, stale since the `unit` project has test files:
-  `pnpm test:unit` passes (3 files, 61 tests), and with the unit glob planted to match nothing it now fails.
+- **`passWithNoTests` was stale.** `vitest.config.mts` drops `passWithNoTests` and its comment, stale since the `unit`
+  project has test files: `pnpm test:unit` passes (3 files, 61 tests), and with the unit glob planted to match nothing
+  it now fails.

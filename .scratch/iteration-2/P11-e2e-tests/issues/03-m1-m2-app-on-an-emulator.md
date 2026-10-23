@@ -78,7 +78,7 @@ fails until [fix-invite-link-cold-start 01](../../fix-invite-link-cold-start/iss
 
 ### Evidence (2026-10-23)
 
-- **The APK** (`pnpm build:mock-apk` in both slots, 4 minutes with Gradle's cache): prebuild printed
+- **The APK** (`pnpm build:mock-apk`, 4 minutes with Gradle's cache): prebuild printed
   `env: export EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID GOOGLE_IOS_URL_SCHEME KAKAO_NATIVE_APP_KEY`, so the four blanked
   variables were not taken from `.env`. The bundle (`assets/index.android.bundle`, Hermes) holds none of `.env`'s main
   server address, socket server address or Google web client ID, and no `googleusercontent` or `sslip`, while it holds
@@ -106,7 +106,7 @@ fails until [fix-invite-link-cold-start 01](../../fix-invite-link-cold-start/iss
   out on the map. The APK was built from the integration tip `74381a9b` with this ticket's scripts before their commit;
   the commit changed the build script only by writing its blanks as `''`, the same empty strings.
 
-- `pnpm test:unit` (one slot, `--maxWorkers=4`): 48 suites, 282 tests: 281 passed, 1 todo. `jest --listTests` lists the
+- `pnpm test:unit` (`--maxWorkers=4`): 48 suites, 282 tests: 281 passed, 1 todo. `jest --listTests` lists the
   147 files P09-05 counted, none under `maestro/` or `scripts/`: `pnpm test` is `jest` and runs neither new command.
   Full `pnpm test`: CI run 39808477203 at P11-03's merge, fd492a03, passed; every package's `pnpm test` is a job of
   the CI workflow.
@@ -122,3 +122,5 @@ fails until [fix-invite-link-cold-start 01](../../fix-invite-link-cold-start/iss
   before it made a branch. About 15 minutes of it went to waiting for the APK build and the device runs.
 - Tokens: input 44,034 thousand in all (cache reads 43,641 thousand, cache writes 392 thousand, uncached under 1
   thousand); output 11 thousand, a lower bound, since the transcript keeps only partial output counts.
+- The orchestrating session, the merges, the code review and its fix round are recorded once, under
+  [P09-10](../../P09-unit-tests/issues/10-mobile-renewal-answers-and-adapters-as-units.md).
