@@ -17,12 +17,12 @@ Pushing `snunow/all/…` deploys the five servers and then, once every server ha
   - for `app`, alone;
   - after the same CI gate as the servers;
   - in its own concurrency group.
-- [ ] The job computes the Android and iOS fingerprints with `expo-updates`' fingerprint command and reads the Latest Release's `app-version.json`. A pure `release.sh` function decides, and `release.bats` tests each case:
+- [ ] The job sets every build setting from repository variables (the `EXPO_PUBLIC_*` values, `INVITE_LINK_HOST`, `GOOGLE_IOS_URL_SCHEME`; never `ANDROID_X86_64`). It computes the Android and iOS fingerprints with `expo-updates`' fingerprint command and reads `app-version.json` from the `app-version` Release. A pure `release.sh` function decides, and `release.bats` tests each case:
   - publish when the fingerprints match;
   - fail, saying to raise `version` and make a native Release, when a fingerprint differs and `version` is unchanged;
   - publish with a "new APK and iOS build needed" notice in the job summary when both changed;
-  - publish with a "no baseline" notice when there is no file.
+  - fail when the file is missing or unreadable.
 - [ ] `eas update --channel production --platform all --non-interactive` publishes with the tag as its message, and `EXPO_PUBLIC_RELEASE_TAG` and `EXPO_PUBLIC_RELEASE_COMMIT` set.
-- [ ] The repository secret `EXPO_TOKEN` (the developer robot token) and the variables for Production's server URLs and Google client IDs are set. The workflow reads its `EXPO_PUBLIC_*` values only from them.
+- [ ] The repository secret `EXPO_TOKEN` (the developer robot token) and the variables for every build setting are set. The workflow reads these settings only from them.
 - [ ] Checked on a real tag: a JavaScript-only change pushed as `snunow/app/…` reaches the ticket 01 APK after one restart. Running the workflow again on the previous tag brings the previous code back.
 - [ ] `infra/production/README.md`'s Release section describes the `app` target, the ordering after the servers, the fingerprint check and rollback.

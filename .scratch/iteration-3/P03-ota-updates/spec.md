@@ -15,7 +15,7 @@ The app gets `expo-updates` and takes its JavaScript, with the images it imports
 A bundle goes only to apps whose native part matches it. The runtime version is the app's **fingerprint**, a hash of the native dependencies and configuration that `expo-updates` computes. When the native part changes, no OTA can reach the installed apps. A new APK and iOS build are needed. Two things handle that case:
 
 - The Release workflow notices a native change and makes sure `version` was raised. It then reports that a new build is needed.
-- An installed app reads the latest native Release's `app-version.json`. If a newer native build exists, it shows **업데이트가 필요합니다** with **업데이트 하기** and **계속 사용하기**.
+- An installed app reads `app-version.json`, which describes the latest native build. If a newer native build exists, it shows **업데이트가 필요합니다** with **업데이트 하기** and **계속 사용하기**.
 
 The 내 정보 screen shows the app's version and the update it runs, so anyone can tell what a phone has.
 
@@ -38,7 +38,7 @@ Words:
 
 ### Native changes
 
-7. As a developer, I want the workflow to fail when the native part changed since the latest native Release but `version` did not, so that nobody forgets to raise it.
+7. As a developer, I want the workflow to fail when the native part changed since the latest native build but `version` did not, so that nobody forgets to raise it.
 8. As a developer, I want the workflow to say "a new APK and iOS build are needed" when the native part changed and `version` was raised, so that the native Release is not forgotten either.
 9. As a developer, I want the installed app never to receive a bundle built for a different native part, so that an OTA can never crash it.
 
@@ -68,10 +68,14 @@ Words:
   - The update channel is sent as the `expo-channel-name` request header. It is set in one place in `app.config.ts`: a build-time setting that defaults to `production`. A later Dev channel only needs another value there and its own publish step.
 - **One channel, `production`,** linked to an EAS branch of the same name. The Dev APK gets no OTA in this task.
 - **`eas.json`:** as small as `eas-cli` needs for `eas update`. No EAS Build profiles: native builds stay hand-made.
-- **Bundle settings must match the native build.** A bundle is built with the same `EXPO_PUBLIC_*` values as the Production APK, since they are baked into the JavaScript.
-  - In CI they come from repository variables: Production's main and socket server URLs (`https://api.snunow.com`) and the Google web and iOS client IDs.
-  - The hand build's steps in `infra/production/README.md` name the same values.
-  - Native-only settings (`KAKAO_NATIVE_APP_KEY`, `INVITE_LINK_HOST`) do not affect a bundle.
+- **Every setting must match the native build.** This covers two kinds of setting, and they matter for different reasons.
+  - `EXPO_PUBLIC_*` values are baked into the JavaScript. These are Production's main and socket server URLs (`https://api.snunow.com`) and the Google web and iOS client IDs.
+  - The settings `app.config.ts` reads from the environment change the evaluated app configuration, and with it the **fingerprint**. These are `INVITE_LINK_HOST` (Production: `api.snunow.com`, the value the deployed APK was built with) and `GOOGLE_IOS_URL_SCHEME`. `ANDROID_X86_64` is never set for a Production build or a publish.
+
+  Measured on `2.0/Main` with `@expo/fingerprint`, each of `INVITE_LINK_HOST`, `GOOGLE_IOS_URL_SCHEME` and `ANDROID_X86_64` changes the fingerprint. `KAKAO_NATIVE_APP_KEY`, which the map's plugin writes only at prebuild, and the `EXPO_PUBLIC_*` values do not. If CI computed the fingerprint without the build's settings, every JavaScript-only tag would either fail the version check or publish a bundle that no installed app takes.
+
+  - In CI, all of these come from repository variables, and the app job sets every one of them.
+  - The hand build's steps in `infra/production/README.md` list the same names and values.
 
 ### Publishing from the Release workflow
 
@@ -86,19 +90,24 @@ Words:
   - The app job passes the same CI gate as the servers (`release.sh gate`) and uses its own concurrency group, so a newer Release cancels an older one.
 - **The app job's steps:**
   1. Install the app's dependencies (pnpm, as CI does).
-  2. Compute the Android and iOS fingerprints with `expo-updates`' own fingerprint command. This is the same value as the runtime version.
-  3. Read the latest native Release's `app-version.json`.
+  2. Compute the Android and iOS fingerprints with `expo-updates`' own fingerprint command, under the build's settings (above). This is the same value as the runtime version.
+  3. Read `app-version.json` from its fixed Release (below).
   4. Decide. The decision is a pure `release.sh` function, tested in `release.bats`.
-     - Both fingerprints equal the Release's → publish.
-     - A fingerprint differs and `version` equals the Release's → fail, with a message saying to raise `version` and make a native Release.
+     - Both fingerprints equal the file's → publish.
+     - A fingerprint differs and `version` equals the file's `latest` → fail, with a message saying to raise `version` and make a native Release.
      - A fingerprint differs and `version` is higher → publish, and write a notice in the job summary that a new APK and iOS build are needed.
-     - No `app-version.json` yet → publish, with a notice that there is no baseline.
+     - The file is missing or unreadable → fail. Ticket 01 uploads the first file by hand, so the workflow never needs a "no baseline" case.
   5. `eas update --channel production --platform all --non-interactive`. The message is the tag name, and the tag and commit are passed in as `EXPO_PUBLIC_RELEASE_TAG` and `EXPO_PUBLIC_RELEASE_COMMIT`.
 - **Rollback:** run the Release workflow by hand on an earlier tag. That publishes the earlier commit's bundle again as the newest update.
 
 ### The native Release and `app-version.json`
 
-- A native Release stays hand-made, as today, under `snunow/app/YY.MM.DD-N`. It is the only kind of GitHub Release marked **Latest**. The app reads `https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/latest/download/app-version.json`. This is a plain download, not the GitHub API, so it has no rate limit. The repository is public.
+- A native Release stays hand-made, as today, under `snunow/app/YY.MM.DD-N`, with its APK.
+- **`app-version.json` lives on a Release of its own**, the tag `app-version`. The app and the workflow read it from `https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/download/app-version/app-version.json`.
+  - The address is fixed, so it does not depend on which Release is marked Latest. GitHub marks the newest Release Latest by default, and the repository already has others (`production-…`, `dev-…`). Any new Release would otherwise move `releases/latest`.
+  - The tag sits outside `snunow/`, so it never starts the Release workflow.
+  - The `app-version` Release is never marked Latest. A native Release replaces its file with `gh release upload app-version app-version.json --clobber`.
+  - Reading it is a plain download, not a GitHub API call, so it has no rate limit. The repository is public.
 - `app-version.json`:
 
   ```json
@@ -111,10 +120,10 @@ Words:
   ```
 
   - `latest` is the Release's `version`.
-  - `minimum` is the lowest version allowed to go on. To stop old builds, replace the file on the latest Release (`gh release upload --clobber`); no build or deploy is needed.
+  - `minimum` is the lowest version allowed to go on. To stop old builds, replace the file (`--clobber`); no build or deploy is needed.
   - `fingerprint` is the build's runtime versions.
   - `download.ios` stays `null` until iOS builds are distributed.
-- **`version` changes only with a native build.** A JavaScript-only Release keeps it. The first native build with `expo-updates` keeps `1.0.0` as a one-time exception, because the currently installed `1.0.0` APK has no update check that a higher number could trigger. That build's Release carries the first `app-version.json` and becomes the workflow's baseline.
+- **`version` changes only with a native build.** A JavaScript-only Release keeps it. The first native build with `expo-updates` keeps `1.0.0` as a one-time exception, because the currently installed `1.0.0` APK has no update check that a higher number could trigger. That build's fingerprints go into the first `app-version.json`, which is the workflow's baseline. Before the file is uploaded, the fingerprint CI computes for that commit is checked against the build's.
 
 ### The app
 
@@ -131,7 +140,11 @@ Words:
 ### Documentation
 
 - `infra/production/README.md`:
-  - § The Production APK gains `app-version.json`, the Latest-Release rule, when to raise `version`, the shared `EXPO_PUBLIC_*` values, and the iOS build steps for the Mac owner.
+  - § The Production APK gains:
+    - `app-version.json` and its `app-version` Release;
+    - when to raise `version`;
+    - the full list of build settings (the `EXPO_PUBLIC_*` values, `INVITE_LINK_HOST`, `GOOGLE_IOS_URL_SCHEME`, and no `ANDROID_X86_64`). `INVITE_LINK_HOST` is `api.snunow.com`, replacing the old "leave it empty";
+    - the iOS build steps for the Mac owner.
   - The Release section gains the `app` target and rollback.
 - The root `README.md` mentions that the app updates itself.
 
@@ -143,7 +156,7 @@ Words:
   - the 내 정보 version line for an OTA, an embedded and a Dev build.
 - **`release.bats`:**
   - `check-name` with `app` and `all`;
-  - the publish decision for each of its four cases.
+  - the publish decision for each of its four cases, including failing on a missing or unreadable file.
 - **The workflow's first runs** are checked by hand on a real tag: one JavaScript-only change, published and received.
 - **On a phone, Android and iOS each:**
   1. Install the new native build.

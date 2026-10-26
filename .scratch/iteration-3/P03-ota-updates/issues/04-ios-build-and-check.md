@@ -11,7 +11,7 @@ The Mac owner follows written steps to build a Production iOS app with `expo-upd
 ## Acceptance criteria
 
 - [ ] `infra/production/README.md` has iOS build steps for the Mac owner:
-  - the `.env` values, the same `EXPO_PUBLIC_*` as the APK;
+  - the `.env` values: the full list of build settings, the same as the APK and CI, because they change the fingerprint;
   - `expo prebuild --platform ios`, then building and installing with Xcode on a free or paid Apple account;
   - the 7-day limit of a free account.
 - [ ] The iOS build's fingerprint is compared with the `ios` fingerprint CI computes. If they differ, `app-version.json` records the Mac build's value, and the spec's note is updated.

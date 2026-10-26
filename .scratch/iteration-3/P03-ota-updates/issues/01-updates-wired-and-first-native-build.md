@@ -18,11 +18,14 @@ The app takes its JavaScript from EAS Update. A bundle published by hand from a 
   - the `expo-channel-name` header, taken from one build-time setting that defaults to `production`.
 - [ ] `eas.json` is only as large as `eas update` needs and has no EAS Build profiles.
 - [ ] 내 정보 shows `앱 <version> · 업데이트 <tag> (<short commit>)` from `EXPO_PUBLIC_RELEASE_TAG` and `EXPO_PUBLIC_RELEASE_COMMIT`, and `개발 빌드` for a Dev or local build. Unit tests cover an OTA, an embedded and a Dev build.
-- [ ] A Production APK with `version` `1.0.0` is built by hand, with the same `EXPO_PUBLIC_*` values a bundle will use. It is released as `snunow/app/YY.MM.DD-N` and marked Latest.
-- [ ] The same Release carries `app-version.json` with the build's Android and iOS fingerprints, `latest` and `minimum` both `1.0.0`, and the APK's direct download URL.
+- [ ] A Production APK with `version` `1.0.0` is built by hand and released as `snunow/app/YY.MM.DD-N`. Its build settings are the full list in the spec: the `EXPO_PUBLIC_*` values, `INVITE_LINK_HOST=api.snunow.com`, `GOOGLE_IOS_URL_SCHEME`, and no `ANDROID_X86_64`.
+- [ ] A Release with the tag `app-version`, never marked Latest, carries `app-version.json`. The file holds:
+  - the build's Android and iOS fingerprints;
+  - `latest` and `minimum`, both `1.0.0`;
+  - the APK's direct download URL.
+- [ ] Before the file is uploaded, the fingerprints are computed for the build's commit with the same command and settings CI will use, and they equal the build's runtime version. It is noted in the PR how this was checked.
 - [ ] Checked on a phone: a bundle published by hand (`eas update --channel production`) with a visible change shows after one restart, and 내 정보 shows its tag.
 - [ ] `infra/production/README.md` § The Production APK says:
-  - which `EXPO_PUBLIC_*` values a build must use;
+  - the full list of build settings and their Production values, why they must match CI (they change the fingerprint), and that `INVITE_LINK_HOST` is `api.snunow.com`, replacing "leave it empty";
   - that `version` is raised only for a native build;
-  - that only native Releases are marked Latest;
-  - what `app-version.json` holds.
+  - what `app-version.json` holds, and that it lives on the `app-version` Release and is replaced with `--clobber`.
