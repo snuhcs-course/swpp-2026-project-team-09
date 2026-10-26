@@ -3,11 +3,13 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-26  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { FriendsService } from '../../friends/friends.service.js';
 import { GlobalEventsService } from '../../global-events/global-events.service.js';
 import { MenusService } from '../../menus/menus.service.js';
+import { PlaceMatcher } from '../../places/place-matcher.js';
 import { PlacesService } from '../../places/places.service.js';
 import { RecruitingService } from '../../quests/recruiting.service.js';
 import { ShuttleService } from '../../shuttle/shuttle.service.js';
@@ -34,6 +36,7 @@ export interface ChatAssistantServices {
   recruiting: RecruitingService;
   friends: FriendsService;
   places: PlacesService;
+  placeMatcher: PlaceMatcher;
 }
 
 function instructions(now: Date): string {
@@ -68,6 +71,7 @@ export function chatAssistant({
   recruiting,
   friends,
   places,
+  placeMatcher,
 }: ChatAssistantServices): Feature {
   return {
     instructions,
@@ -80,7 +84,7 @@ export function chatAssistant({
       searchRecruitingQuests: searchRecruitingQuests(recruiting),
       showQuests: showQuests(recruiting),
       resolveFriend: resolveFriend(friends),
-      resolvePlace: resolvePlace(places),
+      resolvePlace: resolvePlace(placeMatcher),
       resolveGlobalEvent: resolveGlobalEvent(globalEvents),
       proposeQuest: proposeQuest({ friends, places, globalEvents }),
     },

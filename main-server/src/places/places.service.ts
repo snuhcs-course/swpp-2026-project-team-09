@@ -4,6 +4,7 @@
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-26  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -15,7 +16,7 @@ import { PlaceDto, toPlaceDto } from './dto/place.dto.js';
 // `25-1` comes after `25` and before `26`, and Korean names in the order a User reads them.
 const koreanOrder = new Intl.Collator('ko', { numeric: true });
 
-export function byNumber(a: Place, b: Place): number {
+export function byNumber(a: Pick<Place, 'number' | 'name'>, b: Pick<Place, 'number' | 'name'>): number {
   if (a.number !== null && b.number !== null) {
     return koreanOrder.compare(a.number, b.number);
   }

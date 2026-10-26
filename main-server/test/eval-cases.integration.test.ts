@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-26  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -155,13 +156,26 @@ describe('The case files', () => {
       expect(JSON.stringify(evalCase.turns), evalCase.id).not.toMatch(ABBREVIATION);
     }
   });
+});
 
-  it('write "학관" only in cases that are known failures', () => {
+// resolvePlace reads 학관 as 학생회관 among others (P07 ticket 01), so the making-parties case expects the Assistant to
+// ask, naming 학생회관. The restaurant filter of getMenus still matches substrings, so the menus case stays a known
+// failure.
+describe('The abbreviation cases', () => {
+  it('write "학관" only in the two abbreviation cases, of which the menus one is the known failure', () => {
     const abbreviated = cases.filter(({ turns }) =>
       turns.some((turn) => 'user' in turn && ABBREVIATION.test(turn.user)),
     );
-    expect(abbreviated.length).toBeGreaterThan(0);
-    expect(abbreviated.every(({ knownFailure }) => knownFailure !== undefined)).toBe(true);
+    expect(abbreviated.map(({ id }) => id).toSorted()).toEqual([
+      'making-parties-abbreviation-hakgwan',
+      'menus-abbreviation-hakgwan',
+    ]);
+    expect(expectOfCase('making-parties-abbreviation-hakgwan')).toMatchObject({
+      actions: ['ASK'],
+      text: { mentions: ['학생회관'] },
+    });
+    expect(cases.find(({ id }) => id === 'making-parties-abbreviation-hakgwan')?.knownFailure).toBeUndefined();
+    expect(cases.find(({ id }) => id === 'menus-abbreviation-hakgwan')?.knownFailure).toBeDefined();
   });
 });
 
@@ -220,7 +234,8 @@ const WORLD_FACTS: [string, object, string[], string[]][] = [
   ['resolveFriend', { name: '박지훈' }, ['"none"'], []],
   ['resolvePlace', { words: '학생회관' }, ['"one"', '학생회관'], []],
   ['resolvePlace', { words: '301동' }, ['"one"', '제1공학관'], []],
-  ['resolvePlace', { words: '학관' }, ['"several"'], ['"학생회관"']],
+  ['resolvePlace', { words: '학관' }, ['"several"', '학생회관'], ['공학관']],
+  ['resolvePlace', { words: 'ㅎㄱ' }, ['"several"', '학생회관'], []],
   ['resolvePlace', { words: '공학관' }, ['"several"'], []],
   ['resolveGlobalEvent', { words: '축제' }, ['"several"', '관악 가을 축제', '축제 개막 공연'], []],
   ['getMenus', { date: '2026-10-21', meal: 'lunch' }, ['"found"', '제육볶음'], []],

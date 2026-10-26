@@ -1839,7 +1839,12 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     model to ask on several and say so on none. Each adds the ids it answered to `FoundIds`.
     `resolveFriend(name)` answers the User's Friends whose name holds the words, ignoring spaces, by id and name only
     (`friend.name` in delimiters), never another User and never a location. `resolvePlace(words)` answers the Places
-    whose name holds the words or whose building number they are (`301동`), as `GET /places/search` does.
+    the words name by the first of these tiers that has hits, never mixing them: the exact name or building number
+    (`301동`); an alias someone taught, of which only the curated building groups (공대, 자연대, …) exist yet; a short
+    form the rules make from each name when the catalog loads (학관 for 학생회관, 중도 for 중앙도서관 본관) or, when
+    the words are all consonants, its 초성 (ㅎㄱ); the names whose syllables hold the words in order from the first;
+    the names within one jamo. A form several Places shorten to still answers several. `GET /places/search` keeps
+    matching substrings for the app's pickers.
     `resolveGlobalEvent(words, from?, to?)` answers the published events still to come whose title holds the words,
     within the period when one is given.
   - `proposeQuest(title, description, joinPolicy, board, capacity, startsAt, placeId, globalEventId, inviteeIds)` is
