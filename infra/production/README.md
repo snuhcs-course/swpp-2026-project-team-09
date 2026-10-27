@@ -623,17 +623,73 @@ is placed only on a node with room for its request, and a container that goes ov
 
 ## The Production APK
 
-Built by hand as the [dev APK](../deploy/README.md#adding-an-apk) is, signed with the shared debug key, with both
-server addresses in `mobile/.env` set to Production's:
+A native build, made by hand as the [dev APK](../deploy/README.md#adding-an-apk) is and signed with the shared debug
+key. Most changes reach phones without one, as an update the app downloads from EAS Update; a native build is needed
+only when the native part changes: a native dependency, a config plugin, or `app.json`.
+
+### Its settings
+
+`mobile/.env` holds these when the APK is built:
 
 ```text
 EXPO_PUBLIC_MAIN_SERVER_URL=https://api.snunow.com
 EXPO_PUBLIC_SOCKET_SERVER_URL=https://api.snunow.com
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=<the main server's Google client, of type "Web application">
+EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=<the Google client of type "iOS">
+GOOGLE_IOS_URL_SCHEME=<the iOS client's ID reversed>
+INVITE_LINK_HOST=api.snunow.com
+KAKAO_NATIVE_APP_KEY=<the team's key>
+EXPO_PUBLIC_RELEASE_TAG=snunow/app/26.11.13-1
+EXPO_PUBLIC_RELEASE_COMMIT=<the tag's full commit>
 ```
 
-Leave `INVITE_LINK_HOST` empty, as for the dev APK. Then tag the commit it was built from as
-`snunow/app/YY.MM.DD-N`, where N is the app's order that day, and attach the APK, named after the tag with `/` as `-`,
-to a GitHub release page for that tag:
+`ANDROID_X86_64` is never set. The release tag and commit are the Release's own, below; 내 정보 shows them.
+
+An update published later must be made with the same settings, and the Release workflow uses the same values. The
+app takes an update only when the update's runtime version, a **fingerprint** of the native part, equals its own.
+`INVITE_LINK_HOST`, `GOOGLE_IOS_URL_SCHEME` and `ANDROID_X86_64` change the app's configuration and so the
+fingerprint: an update made with any of them different reaches no installed app. The `EXPO_PUBLIC_*` values and the
+Kakao key leave the fingerprint alone, measured with `@expo/fingerprint`, but the `EXPO_PUBLIC_*` values are baked
+into the JavaScript, so an update with other ones would point the app elsewhere.
+
+### `version` and `app-version.json`
+
+`version` in `mobile/app.json` is raised only for a native build, never for an update. The first build with
+`expo-updates` kept `1.0.0`, as the APKs installed before it have no update check that a higher number could start.
+
+`app-version.json` describes the latest native build. The app reads it at start to offer a newer APK, and the
+Release workflow to tell whether an update still fits the native build:
+
+```json
+{
+  "latest": "1.0.0",
+  "minimum": "1.0.0",
+  "fingerprint": { "android": "<hash>", "ios": "<hash>" },
+  "download": {
+    "android": "https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/download/snunow/app/26.11.13-1/snunow-app-26.11.13-1.apk",
+    "ios": null
+  }
+}
+```
+
+`latest` is the build's `version`, and `minimum` the lowest version allowed to go on; raising it stops older builds
+without a new one. `fingerprint` is the build's runtime versions, from `npx expo-updates fingerprint:generate` for
+each platform with the settings above.
+
+The file lives on a Release of its own, `app-version`, at a fixed address, so that it never depends on which Release
+is marked Latest. It is never marked Latest itself:
+
+```bash
+gh release create app-version app-version.json --latest=false \
+  --title app-version --notes 'The latest native build of the app, which the app and the Release workflow read.'
+```
+
+That was done once. A native Release replaces the file with `gh release upload app-version app-version.json --clobber`.
+
+### Releasing it
+
+Tag the commit it was built from as `snunow/app/YY.MM.DD-N`, where N is the app's order that day, and attach the
+APK, named after the tag with `/` as `-`, to a GitHub release page for that tag. Then replace `app-version.json`:
 
 ```bash
 git tag snunow/app/26.11.13-1 <commit>
@@ -641,10 +697,23 @@ git push origin snunow/app/26.11.13-1
 cp mobile/android/app/build/outputs/apk/release/app-release.apk snunow-app-26.11.13-1.apk
 gh release create snunow/app/26.11.13-1 snunow-app-26.11.13-1.apk --verify-tag \
   --title snunow/app/26.11.13-1 --notes 'The app for Production, at https://api.snunow.com.'
+gh release upload app-version app-version.json --clobber
 ```
 
 An app tag deploys nothing: the Release workflow does not run for it, and it is not a Release. Testers open the release
 page in a phone's browser and install the APK from it.
+
+### Publishing an update by hand
+
+Until the Release workflow publishes updates, one is published from `mobile/` with the settings above, the update's
+own tag and commit in the two `EXPO_PUBLIC_RELEASE_*` values, and the Organization's developer robot token as
+`EXPO_TOKEN`:
+
+```bash
+eas update --channel production --platform all --message snunow/app/26.11.14-1
+```
+
+An installed app downloads it the next time it starts and runs it from the start after that.
 
 ## Moving to account B
 

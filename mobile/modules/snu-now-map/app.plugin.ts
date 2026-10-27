@@ -3,9 +3,11 @@
  *
  * 2026-10-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-27  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { AndroidConfig, type ConfigPlugin, withAndroidManifest, withInfoPlist } from 'expo/config-plugins';
+// eas-cli loads this file through Node's own ESM loader, which needs the `.js`: `expo` has no exports map.
+import { AndroidConfig, type ConfigPlugin, withAndroidManifest, withInfoPlist } from 'expo/config-plugins.js';
 
 // The app's configuration hands the Kakao native app key to the map module at build time. The key is a setting a
 // person fills in: `KAKAO_NATIVE_APP_KEY` in `mobile/.env`, which Expo reads before it builds. It is written into the
