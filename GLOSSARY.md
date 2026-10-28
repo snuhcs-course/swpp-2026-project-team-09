@@ -143,6 +143,18 @@ _Avoid_: Chatbot, AI agent, bot
 A Quest the Assistant filled in from what a User wrote, shown for the User to make or to edit first. Nothing exists until the User makes it.
 _Avoid_: Draft (a Draft is an unpublished Global Event), suggestion
 
+**Alias**:
+Words that name a Place or a Friend to the Assistant by someone's say-so rather than by the catalog: a User's own, learned from one choice of theirs; everyone's, learned once enough distinct accounts chose the same Place for the same words; or curated, written by the team for groups of buildings such as 공대. An Alias points only at a catalog Place or a current Friend.
+_Avoid_: Synonym, nickname, shortcut (a Shortcut is a Suggestion)
+
+**Suggestion**:
+The one request the server picks for the moment when a User opens the chat, shown in grey and run with a tap without the model: a Proposal or a walking route. A Shortcut is a Suggestion made from what the User did before.
+_Avoid_: Recommendation, hint, ghost text (the grey look, not the thing)
+
+**Resolution Event**:
+One row the server keeps when a resolver answers or a User chooses, rejects or edits a candidate: the normalised words, the ids shown and the outcome, never the sentence. What Aliases are learned from and what the learning curve is measured on.
+_Avoid_: Log line, conversation
+
 ### Campus services
 
 **Source**:
