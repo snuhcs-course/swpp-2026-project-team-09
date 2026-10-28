@@ -31,13 +31,15 @@ import {
   type TodaysClass,
 } from './templates.js';
 
-// A template that applies now, with what a tap runs.
+// A template that applies now, with what a tap runs, and the ids its Proposal takes as "<kind>:<id>", by which a
+// Proposal the User asks for in the chat instead is matched to it. A route takes none.
 export interface EligibleSuggestion {
   template: Template;
   text: string;
   reason: string;
   repeats: number;
   action: SuggestionActionDto;
+  keys: string[];
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -162,10 +164,11 @@ export class SuggestionCandidates {
   private async withAction(userId: string, now: Date, candidate: Candidate): Promise<EligibleSuggestion | null> {
     const { action } = candidate;
     if (action.type === 'route') {
-      return { ...candidate, action };
+      return { ...candidate, action, keys: [] };
     }
     const proposal = await this.proposalOf(userId, now, action);
-    return proposal === null ? null : { ...candidate, action: { type: 'proposal', proposal } };
+    const keys = action.found.map(({ kind, id }) => `${kind}:${id}`);
+    return proposal === null ? null : { ...candidate, action: { type: 'proposal', proposal }, keys };
   }
 
   // proposeQuest as the chat runs it, with the template's ids as if a resolver had returned them in this message, so

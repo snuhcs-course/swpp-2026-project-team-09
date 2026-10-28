@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -75,7 +76,7 @@ async function openEvent(weeks: number): Promise<Record<string, string>> {
 
 function impressionOf(
   id: string | undefined,
-): Promise<{ template: string; eligible: string[]; propensity: number } | null> {
+): Promise<{ template: string | null; eligible: string[]; propensity: number | null } | null> {
   return prisma.suggestionImpression.findUnique({
     where: { id },
     select: { template: true, eligible: true, propensity: true },

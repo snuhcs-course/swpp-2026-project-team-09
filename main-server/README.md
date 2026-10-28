@@ -1902,6 +1902,10 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     the User for, or `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when
     it is called twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
     the change.
+    The free text the model writes into a Proposal is the title and the description, from the User's own words; both
+    are bounded by `makeQuestSchema` (50 and 200 characters) before the card is drawn and by `questProposalSchema`
+    when the Proposal is sent back, `startsAt` must parse as a date and time, `capacity` is 1 to 8, and every name on
+    the card comes from the catalog, never from the model. The tap on 만들기 is the last line, not the defence.
   - A **presenter** puts something real into the reply rather than the model describing it.
     `showOnMap(dining | shuttle)` adds that map button; any other layer goes back to the model as an error.
     `showGlobalEvents(ids)` adds those events as cards, in the order given, and `showQuests(ids)` those Quests. Cards
@@ -1941,13 +1945,21 @@ the second of a day in Korea, and for the rest of the day after the third. The t
 of those over their threshold drawn uniformly (`SUGGESTION_RANDOM` binds the random source), and the probability the
 shown one had is written as its propensity. `ASSISTANT_SUGGESTION_HOLDBACK_PERCENT` (10) of accounts, chosen by the
 SHA-256 of the User's id, read acceptance as 0.5 and no repeats. The numbers sit in `suggestions/constants.ts`, each
-with its reason. `suggestion_impressions` holds one row for each suggestion shown, without its text: the template, the
-eligible templates best first, the bucket, the propensity, `holdback`, `shown_at` and the outcome, `shown` until
-`POST /assistant/suggestions/:id/outcome` with `{ "outcome": "accepted" | "dismissed" }`, or
-`{ "outcome": "confirmed", "questId" }` once 만들기 made the Proposal's Quest, answers 204 and records it with
-`outcome_at`. The same outcome again changes nothing; another User's suggestion gets 404 `SUGGESTION_NOT_FOUND`, and an
-outcome that would replace a later one 409 `SUGGESTION_OUTCOME_SETTLED`. An ignored suggestion is a row still `shown`
-10 minutes on, read when the rows are analysed. The rows go with the account.
+with its reason. `suggestion_impressions` holds one row for each answer, without any text: the template shown, or null
+when nothing was shown, the eligible templates best first, `candidates`, the ids each eligible template's Proposal
+would take as `<template> <kind>:<id>`, the bucket, the propensity (null when nothing was shown), `holdback`,
+`shown_at`, when the chat opened, and the outcome: `silent` when nothing was shown (no template eligible, none over its
+threshold, or a cooldown), else `shown` until `POST /assistant/suggestions/:id/outcome` with
+`{ "outcome": "accepted" | "dismissed" }`, or `{ "outcome": "confirmed", "questId" }` once 만들기 made the Proposal's
+Quest, answers 204 and records it with `outcome_at`. The same outcome again changes nothing; another User's suggestion
+gets 404 `SUGGESTION_NOT_FOUND`, and an outcome that would replace a later one 409 `SUGGESTION_OUTCOME_SETTLED`. An
+ignored suggestion is a row still `shown` 10 minutes on, read when the rows are analysed. When a chat reply carries a
+Proposal, the server matches it to the User's row of the last 10 minutes: the first eligible template whose Proposal
+would have taken one of its ids (its Place, its event or an invited Friend) is written as `typed_template` with
+`typed_at`. On a silent row, or one that showed another template, that is a missed need: the User asked for what a
+suggestion could have offered. On the row of the template shown it says the User typed what was suggested. Acceptance
+and missed needs together are what the replay reports (below), as ProactiveBench (ICLR 2025) counts proposals accepted,
+rejected and needed but not made. The rows go with the account.
 
 ### Testing with the scripted model
 

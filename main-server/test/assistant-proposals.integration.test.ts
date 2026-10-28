@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -177,6 +178,16 @@ describe('proposeQuest, refusing a time or a length', () => {
     await send(ask('점심 같이 먹을 사람 모집해줘'));
 
     expect(refusedFields()).toEqual(['title']);
+  });
+
+  // The title and the description are the free text the model writes into a Proposal, from the User's own words. Both
+  // are bounded before the card is drawn: the tap is the last line, not the defence.
+  it('refuses a description over the length the main server allows', async () => {
+    scriptProposal(lunch({ description: '나'.repeat(201) }));
+
+    await send(ask('점심 같이 먹을 사람 모집해줘'));
+
+    expect(refusedFields()).toEqual(['description']);
   });
 });
 
