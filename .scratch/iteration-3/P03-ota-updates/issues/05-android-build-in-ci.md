@@ -39,3 +39,21 @@ written, not at release time.
   fingerprint's comment stripping that was put off in #128. Its tag builds the APK in CI, and `app-version.json`
   changes. A 1.0.0 phone shows 업데이트가 필요합니다, installs the new APK over the old one, and takes updates
   again.
+
+## Comments
+
+### Agent usage (2026-10-28)
+
+- **Agent time** (estimate): about 1.5 hours. That covers the building subagent (about 13 minutes, plus 2 minutes for each of two rounds of fixes), two reviews (about 2 minutes), and the spec, the setup and the PR. Time spent waiting for the person is not counted.
+- **Tokens** (estimate):
+  - Subagents: about 270,000, measured (building and fixes 136k, reviews 147k).
+  - Main session: about 120,000 input and 25,000 output, not counting cache reads. Cache reads were about 5,000,000 and cache writes about 200,000. These are estimates from the number of turns.
+
+### Status (2026-10-28)
+
+- **Before the PR.** bats passed 26/26, and shellcheck and actionlint were clean. The new `app-fingerprint` CI job ran on GitHub and passed.
+- **Dry runs** against the live `app-version.json`:
+  - the decision was `publish`;
+  - the writer printed valid JSON that keeps `minimum`;
+  - `check-apk` passed on the released 1.0.0 APK, and failed on a wrong fingerprint.
+- **Still open: the real build.** It happens with the 1.0.1 native Release after this merges.
