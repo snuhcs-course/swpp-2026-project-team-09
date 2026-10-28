@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -12,7 +13,7 @@ import { type PublishedGlobalEventDto } from '../../global-events/dto/global-eve
 import { GlobalEventsService } from '../../global-events/global-events.service.js';
 import { PlacesService } from '../../places/places.service.js';
 import { TimetableService } from '../../timetable/timetable.service.js';
-import { type Tool, type ToolContext } from '../feature.js';
+import { type ResolutionLog, type Tool, type ToolContext } from '../feature.js';
 import { FoundIds } from '../found-ids.js';
 import { proposeQuest } from '../tools/propose-quest.js';
 import { type Template, REPEAT_WINDOW_DAYS } from './constants.js';
@@ -42,6 +43,9 @@ export interface EligibleSuggestion {
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // Reads what the templates decide from, one query each, and runs every Proposal through proposeQuest.
+// A suggestion resolves nothing in a chat, so its Proposal records no resolution event.
+const UNRECORDED: ResolutionLog = { answered: () => Promise.resolve(), edited: () => Promise.resolve() };
+
 @Injectable()
 export class SuggestionCandidates {
   private readonly propose: Tool;
@@ -180,7 +184,8 @@ export class SuggestionCandidates {
       now,
       found: ids,
       shown: null,
-      presented: { mapButtons: [], cards: [], proposal: null },
+      presented: { mapButtons: [], cards: [], proposal: null, choices: [], resolvedBy: [] },
+      resolutions: UNRECORDED,
     };
     await this.propose.run(input, context);
     return context.presented.proposal;

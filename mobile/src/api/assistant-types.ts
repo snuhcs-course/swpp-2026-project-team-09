@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { RecruitingQuest } from './party-types';
@@ -52,10 +53,23 @@ export function sentProposalOf(proposal: QuestProposal): SentProposal {
   return { ...proposal, globalEvent: globalEvent === null ? null : { id: globalEvent.id, title: globalEvent.title } };
 }
 
-// One message of the conversation, as the app sends it: the User's text, or the Assistant's with the cards it showed
-// and, on the last that made one, its Proposal by its values.
+// A candidate the Assistant asks the User to choose among when the User's words name several: a Place, a Friend or a
+// Global Event, by id and the name or title its chip shows. `words` are the words it was found for.
+export interface Choice {
+  kind: 'place' | 'friend' | 'globalEvent';
+  id: string;
+  label: string;
+  words: string;
+}
+
+// The candidate a User's message answers with: the chip the User pressed.
+export type Chosen = Pick<Choice, 'kind' | 'id' | 'words'>;
+
+// One message of the conversation, as the app sends it: the User's text, with the candidate it chose if a chip sent
+// it, or the Assistant's with the cards it showed and, on the last that made one, its Proposal by its values.
 export type ChatMessage =
-  { role: 'user'; text: string } | { role: 'assistant'; text: string; cards: CardReference[]; proposal?: SentProposal };
+  | { role: 'user'; text: string; chosen?: Chosen }
+  | { role: 'assistant'; text: string; cards: CardReference[]; proposal?: SentProposal };
 
 // What the main server takes (main-server README: Assistant): the latest 20 messages, a User's of at most 1,000
 // characters, and at most 24,000 characters together, a Proposal's text and names included.
@@ -101,10 +115,11 @@ export function referenceOf(card: ChatCard): CardReference {
 }
 
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
-// cards in the order shown, and the Proposal it made, or null.
+// cards in the order shown, the Proposal it made, or null, and the candidates it asks the User to choose among.
 export interface AssistantReply {
   text: string;
   mapButtons: MapLayer[];
   cards: ChatCard[];
   proposal: QuestProposal | null;
+  choices: Choice[];
 }

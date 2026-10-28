@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-26  Fable 5.1  prompted by fyoon46
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PlaceDto } from './dto/place.dto.js';
@@ -76,7 +77,7 @@ export class CuratedGroups implements PlaceAliases {
     }
   }
 
-  lookup(query: string): AliasHit[] {
-    return this.hitsByWord.get(query) ?? [];
+  lookup(query: string): Promise<AliasHit[]> {
+    return Promise.resolve(this.hitsByWord.get(query) ?? []);
   }
 }

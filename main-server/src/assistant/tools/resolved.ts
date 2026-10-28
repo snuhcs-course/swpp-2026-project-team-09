@@ -2,9 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type NoneFound, noneFound } from '../feature.js';
+import { type AliasSource } from '../../places/place-aliases.js';
+import { type MatchTier } from '../../places/place-index.js';
+import { type ChoiceKind, type NoneFound, noneFound, type ToolContext } from '../feature.js';
+import { type ProposalPlace } from '../proposal.js';
 
 // The most candidates a resolver gives. More than that, the model asks the User for more words.
 const CANDIDATES_MAX = 10;
@@ -37,4 +41,53 @@ export function givenIds<Candidate extends { id: string }>(answer: Resolved<Cand
     return [answer.candidate.id];
   }
   return answer.result === 'several' ? answer.candidates.map(({ id }) => id) : [];
+}
+
+// A resolver's answer with what goes with it: the words as the model passed them, each candidate's plain name or
+// title by id, for Places the matcher's tier, and whose alias answered, if one did.
+export interface Settled<Candidate> {
+  kind: ChoiceKind;
+  words: string;
+  answer: Resolved<Candidate>;
+  labels: ReadonlyMap<string, string>;
+  tier?: MatchTier | null;
+  aliasSource?: AliasSource | null;
+}
+
+// What a resolver does with its answer before the model reads it: the ids go to FoundIds, so that proposeQuest takes
+// them; the candidates of a 'several' answer become the reply's choices, each kind and id once; an answer of one
+// candidate read from an alias goes under the reply, so that the User sees it and can say 아니에요; and the answer is
+// recorded as a resolution event.
+export async function settle<Candidate extends { id: string }>(
+  { found, presented, resolutions }: ToolContext,
+  { kind, words, answer, labels, tier = null, aliasSource = null }: Settled<Candidate>,
+): Promise<void> {
+  const ids = givenIds(answer);
+  found.add(kind, ids);
+  if (answer.result === 'several') {
+    for (const id of ids) {
+      if (!presented.choices.some((choice) => choice.kind === kind && choice.id === id)) {
+        presented.choices.push({ kind, id, label: labels.get(id) ?? '', words });
+      }
+    }
+  }
+  if (answer.result === 'one' && aliasSource !== null) {
+    const { id } = answer.candidate;
+    if (!presented.resolvedBy.some((entry) => entry.kind === kind && entry.id === id && entry.words === words)) {
+      presented.resolvedBy.push({ kind, words, id, label: labels.get(id) ?? '', source: aliasSource });
+    }
+  }
+  await resolutions.answered({ kind, words, result: answer.result, candidateIds: ids, tier, aliasSource });
+}
+
+// A Proposal whose Place is not the one of the Proposal sent back is the User correcting it, which is recorded as a
+// label for the words last resolved to a Place.
+export async function recordPlaceChange(
+  { shown, resolutions }: ToolContext,
+  place: ProposalPlace | null,
+): Promise<void> {
+  const before = shown?.place?.id;
+  if (place !== null && before !== undefined && place.id !== before) {
+    await resolutions.edited(before, place.id);
+  }
 }

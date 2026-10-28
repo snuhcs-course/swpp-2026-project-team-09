@@ -1783,13 +1783,55 @@ its model through OpenRouter with the Vercel AI SDK
   `{ "id", "name" }` or null, `globalEvent` whole as `GET /global-events` serves it or null, and `invitees`, the Friends
   to invite, as `[{ "id", "name" }]`, never where they are (`src/assistant/proposal.ts`). The app sends a card back only
   as its reference, `{ "kind", "id" }`, the last Proposal with its values and its `globalEvent` as `{ "id", "title" }`,
-  and never the map buttons. Nothing of a conversation is stored: the app keeps it.
+  and never the map buttons. No conversation is stored, only the words the resolvers were given and the ids they
+  answered (`resolution_events`, below): the app keeps the conversation.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
     (`quest` or `globalEvent`, by id; `cards` may be left out) and the Proposal it made (`proposal`, which may be left
     out, on one message at most). The model gets only the latest 20 messages, and of an Assistant's message its text,
     a line naming its cards and a line with its Proposal's values, never an earlier message's tool results.
+  - **Choices and the chosen candidate** (P07). `choices` lists the candidates of every `several` answer of the run's
+    resolvers as `[{ "kind": "place" | "friend" | "globalEvent", "id", "label", "words" }]`, in each resolver's order,
+    at most 10 per answer and each kind and id once, `label` being the plain name or title and `words` the resolver's
+    input, trimmed; it is always there, `[]` when no resolver answered `several`. The app shows them as chips, and a tap
+    sends the label as the User's message with `"chosen": { "kind", "id", "words" }` (`words` of 1 to 50 characters,
+    not counted in the 24,000). Before the run the server checks the new message's `chosen` again: a Place of the
+    catalog, a current Friend of the User, or a published event that has not ended. A valid one goes into the run's
+    `FoundIds`, so that proposeQuest takes it with no resolver call, and the model reads the message with a line
+    `[Chosen: place <id> "학생회관" for "학관"]`, a Friend's name or an event's title inside delimiters; one that fails
+    the check is dropped, and the message stands as its text. A `chosen` on an earlier message, which the app sends
+    back with the rest of the conversation, is only read, with the message's text as the name. Each resolver call,
+    each valid `chosen` and each Proposal whose Place differs from the one sent back write one row of
+    `resolution_events` (`resolution-events.service.ts`): the User, the resolver's kind, the words normalised by
+    `normaliseWords` (`src/common/normalise-words.ts`: NFC, lower case, no whitespace) and their 초성 when they are all
+    Hangul, the result, for Places the matcher's tier and alias source, the candidate ids in order, the chosen id and
+    the outcome, `answered`, `chosen`, `edited` or `rejected` (below). An edit's words are those last resolved to a
+    Place in the run, or empty. No sentence is stored, the rows go with the account, and a row that cannot be written
+    is logged by its cause and never fails the reply.
+  - **Aliases** (P07, `aliases/`). A valid `chosen` and an edited Proposal's new Place teach the User an alias at
+    once (`AliasesService.learn`): a row of `user_aliases` (user, kind `place` or `friend`, normalised words, target
+    id, `uses`, `last_used_at`), deleted with the account. It answers only that User: in `resolvePlace` before every
+    tier but the exact one, and in `resolveFriend` before the name match, `one` for one taught target and `several`
+    for more; a Place the catalog does not have and someone who is no Friend any more never answer. For Places, after
+    every `chosen`, `edited` or `rejected` row the server counts the words again from `resolution_events` in one
+    query: when at least 3 distinct accounts, each onboarded 7 days or more before it chose, chose the same Place and
+    it holds at least 0.8 of the accounts that chose anything for the words, a `learned` row of `place_aliases`
+    answers every User after their own aliases and before the curated groups. Its `score`, the supporters less the
+    distinct accounts that rejected it, halved for every 30 days since it last answered or its Place was chosen for
+    the words, is computed again on every read; under 0.5 (3 supporters' score after about 77 days unused), or under
+    the share, the row is retired (`retired_at`) and stops answering until a new choice qualifies it again
+    (`aliases/alias-rules.ts` holds the values and why). Friend aliases are never shared. `resolvedBy` lists each
+    answer of one candidate read from an alias, `[{ "kind", "words", "id", "label", "source" }]` with `source` one of
+    `personal`, `global` and `curated`; it is always there, and the app shows each as "학관 → 학생회관으로 찾았어요"
+    with 아니에요. `GET /assistant/aliases` answers the User's own, the most recently used first,
+    `{ "aliases": [{ "id", "kind", "words", "target": { "id", "label" }, "uses", "lastUsedAt" }] }`, a former
+    Friend's label being `친구` and a Place no longer in the catalog `장소`; `DELETE /assistant/aliases/:id` answers
+    204, or 404 `ALIAS_NOT_FOUND` for another User's; `POST /assistant/aliases/reject` with
+    `{ "kind": "place" | "friend", "words", "targetId" }` (아니에요) writes a `rejected` row, deletes the User's alias
+    and counts the words again, and answers 204. `ASSISTANT_GLOBAL_ALIASES=false` switches everyone's aliases off at
+    once, and `ASSISTANT_ALIAS_HOLDBACK_PERCENT` (10) keeps that share of Users, by the first four bytes of the
+    SHA-256 of their id modulo 100 (`src/common/holdback.ts`), from receiving them while their choices still count.
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
     the User's, a message of another shape, a User's message over 1,000 characters, an Assistant's over 4,000, more
     than one Proposal, or messages over 24,000 characters together, a Proposal's title, description and names included
@@ -1837,10 +1879,11 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
   - **Resolvers** take the User's words as written and answer `{ "result": "one", "candidate" }`,
     `{ "result": "several", "candidates", "more" }` (at most 10) or "none", never a guess; the system prompt tells the
     model to ask on several and say so on none. Each adds the ids it answered to `FoundIds`.
-    `resolveFriend(name)` answers the User's Friends whose name holds the words, ignoring spaces, by id and name only
-    (`friend.name` in delimiters), never another User and never a location. `resolvePlace(words)` answers the Places
+    `resolveFriend(name)` answers the Friends the User taught the words for, or else the User's Friends whose name
+    holds the words, ignoring spaces, by id and name only (`friend.name` in delimiters), never another User and never
+    a location. `resolvePlace(words)` answers the Places
     the words name by the first of these tiers that has hits, never mixing them: the exact name or building number
-    (`301동`); an alias someone taught, of which only the curated building groups (공대, 자연대, …) exist yet; a short
+    (`301동`); an alias, the User's own, then everyone's, then the curated building groups (공대, 자연대, …); a short
     form the rules make from each name when the catalog loads (학관 for 학생회관, 중도 for 중앙도서관 본관) or, when
     the words are all consonants, its 초성 (ㅎㄱ); the names whose syllables hold the words in order from the first;
     the names within one jamo. A form several Places shorten to still answers several. `GET /places/search` keeps

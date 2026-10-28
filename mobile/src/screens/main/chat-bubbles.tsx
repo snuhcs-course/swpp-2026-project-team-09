@@ -10,10 +10,11 @@
 
 import { type ReactElement, type ReactNode, useRef } from 'react';
 import { Keyboard, Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
-import type { GlobalEventCard, MapLayer, QuestProposal } from '@/api/assistant-types';
+import type { Choice, GlobalEventCard, MapLayer, QuestProposal } from '@/api/assistant-types';
 import type { ShownChatCard, ShownRecruitingQuest } from '@/api/quest-parts-types';
 import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
 import type { ChatBubble } from '@/features/assistant/use-chat';
+import { ChatChoices } from './chat-choices';
 import { ChatEventCards, type EventCardActions } from './chat-event-cards';
 import { ChatProposalCard, type ProposalMaking } from './chat-proposal-card';
 import { ChatQuestCards, type QuestCardActions } from './chat-quest-cards';
@@ -174,13 +175,16 @@ interface BubbleProps {
   bubble: ChatBubble;
   // 다시 시도 under a failure the Assistant may get over, while it is the last bubble.
   onRetry: (() => void) | null;
+  // The chips of the answer's candidates, while it is the last bubble.
+  onChoose: ((choice: Choice) => void) | null;
   onShowLayer: (layer: MapLayer) => void;
   cardActions: CardActions;
 }
 
 function Bubble({
-  bubble: { id, role, text: words, cards, mapButtons, proposal, failure },
+  bubble: { id, role, text: words, cards, mapButtons, proposal, choices, failure },
   onRetry,
+  onChoose,
   onShowLayer,
   cardActions,
 }: BubbleProps): ReactElement {
@@ -197,6 +201,7 @@ function Bubble({
       <Text style={[styles.words, mine && styles.mineWords]}>{words}</Text>
       {shown.length === 0 ? null : <Cards actions={cardActions} cards={shown} />}
       {proposed === null ? null : <Proposal actions={cardActions.proposals} bubbleId={id} proposal={proposed} />}
+      {onChoose === null || choices.length === 0 ? null : <ChatChoices choices={choices} onChoose={onChoose} />}
       {layers.map((layer) => (
         <View key={layer} style={styles.below}>
           <Button
@@ -225,6 +230,8 @@ interface ChatBubblesProps {
   bubbles: readonly ChatBubble[];
   waiting: boolean;
   onRetry: () => void;
+  // A chip of the last answer: sends its candidate as the User's choice.
+  onChoose: (choice: Choice) => void;
   // A map button: shows that layer on the map.
   onShowLayer: (layer: MapLayer) => void;
   // What the cards of the answers do.
@@ -237,7 +244,7 @@ interface ChatBubblesProps {
 // works. It keeps the latest in view. A drag puts the keyboard down, and so does a press that no button takes; a press
 // on a button sends it at once, keyboard up or not.
 export function ChatBubbles(props: ChatBubblesProps): ReactElement {
-  const { bubbles, waiting, onRetry, onShowLayer, cardActions, under } = props;
+  const { bubbles, waiting, onRetry, onChoose, onShowLayer, cardActions, under } = props;
   const scroller = useRef<ScrollView>(null);
   return (
     <ScrollView
@@ -256,6 +263,7 @@ export function ChatBubbles(props: ChatBubblesProps): ReactElement {
             bubble={bubble}
             cardActions={cardActions}
             key={bubble.id}
+            onChoose={index === bubbles.length - 1 ? onChoose : null}
             onRetry={bubble.failure === 'unavailable' && index === bubbles.length - 1 && !waiting ? onRetry : null}
             onShowLayer={onShowLayer}
           />

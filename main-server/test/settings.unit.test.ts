@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions: each setting missing; all but DATABASE_URL, REDIS_HOST and MATCH_SERVER_URL malformed or by a bound;
@@ -228,5 +229,29 @@ describe("settingsSchema: the Assistant's settings", () => {
     it('1 → accepted as 1', () => {
       expect(settingsSchema.parse({ ...valid, [setting]: '1' })).toMatchObject({ [setting]: 1 });
     });
+  });
+});
+
+describe('settingsSchema: the global aliases', () => {
+  it('missing → on, with 10 percent held back', () => {
+    expect(settingsSchema.parse(valid)).toMatchObject({
+      ASSISTANT_GLOBAL_ALIASES: true,
+      ASSISTANT_ALIAS_HOLDBACK_PERCENT: 10,
+    });
+  });
+
+  it('false and 0 → off, with nobody held back', () => {
+    expect(
+      settingsSchema.parse({ ...valid, ASSISTANT_GLOBAL_ALIASES: 'false', ASSISTANT_ALIAS_HOLDBACK_PERCENT: '0' }),
+    ).toMatchObject({ ASSISTANT_GLOBAL_ALIASES: false, ASSISTANT_ALIAS_HOLDBACK_PERCENT: 0 });
+  });
+
+  it.each([
+    ['ASSISTANT_GLOBAL_ALIASES', 'maybe'],
+    ['ASSISTANT_ALIAS_HOLDBACK_PERCENT', '101'],
+    ['ASSISTANT_ALIAS_HOLDBACK_PERCENT', '-1'],
+    ['ASSISTANT_ALIAS_HOLDBACK_PERCENT', '2.5'],
+  ])('%s=%s → refused, naming it', (setting, value) => {
+    expect(refused({ ...valid, [setting]: value })).toEqual([setting]);
   });
 });

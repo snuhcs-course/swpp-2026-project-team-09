@@ -4,12 +4,15 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
 import {
   CHAT_HISTORY_MAX,
   type ChatMessage,
+  type Choice,
+  type Chosen,
   lengthOf,
   type MapLayer,
   MESSAGES_TOTAL_MAX,
@@ -37,6 +40,10 @@ export interface ChatBubble {
   mapButtons: readonly MapLayer[];
   // The Proposal an Assistant's answer made. The last one is sent back with its values.
   proposal: QuestProposal | null;
+  // The candidates an Assistant's answer asks the User to choose among, as chips while it is the last bubble.
+  choices: readonly Choice[];
+  // The candidate a User's message chose with a chip, sent with that message.
+  chosen: Chosen | null;
   failure: ChatFailure | null;
 }
 
@@ -45,6 +52,8 @@ export interface Chat {
   // While the Assistant works on the User's last message: the "···" bubble, and nothing more is sent.
   waiting: boolean;
   send: (text: string) => void;
+  // A chip pressed: sends its label as the User's message, with the candidate it chose.
+  choose: (choice: Choice) => void;
   // Sends the User's last message again, after a failure the Assistant may get over.
   retry: () => void;
   // 새 대화: forgets the conversation, and a reply still on its way.
@@ -71,9 +80,9 @@ export function messagesToSend(bubbles: readonly ChatBubble[]): ChatMessage[] {
   const proposing = said.findLast(({ proposal }) => proposal !== null);
   let messages = said
     .map((bubble): ChatMessage => {
-      const { role, text, cards, proposal } = bubble;
+      const { role, text, cards, proposal, chosen } = bubble;
       if (role === 'user') {
-        return { role, text };
+        return chosen === null ? { role, text } : { role, text, chosen };
       }
       const references = cards.map((card) => referenceOf(card));
       return bubble === proposing && proposal !== null
@@ -93,12 +102,17 @@ type NewBubble = Omit<ChatBubble, 'id'>;
 async function answerTo(messages: ChatMessage[]): Promise<NewBubble> {
   try {
     const reply = await apiClient.askAssistant(messages);
-    const { text, cards, mapButtons, proposal } = reply;
-    return { role: 'assistant', text, cards, mapButtons, proposal, failure: null };
+    const { text, cards, mapButtons, proposal, choices } = reply;
+    return { role: 'assistant', text, cards, mapButtons, proposal, choices, chosen: null, failure: null };
   } catch (error) {
     const failure = error instanceof ApiError && error.status === 429 ? 'usedUp' : 'unavailable';
-    return { role: 'assistant', text: FAILURE_TEXT[failure], cards: [], mapButtons: [], proposal: null, failure };
+    const text = FAILURE_TEXT[failure];
+    return { role: 'assistant', text, cards: [], mapButtons: [], proposal: null, choices: [], chosen: null, failure };
   }
+}
+
+function userBubble(text: string, chosen: Chosen | null): NewBubble {
+  return { role: 'user', text, cards: [], mapButtons: [], proposal: null, choices: [], chosen, failure: null };
 }
 
 interface Bubbles {
@@ -128,15 +142,18 @@ function useBubbles(): Bubbles {
   return { bubbles, said, show, add };
 }
 
-// The conversation with the Assistant, kept in memory by whoever holds the hook; the server keeps none of it. Each
-// message sends the conversation, and the reply is shown whole.
-export function useChat(): Chat {
-  const { bubbles, said, show, add } = useBubbles();
+// Asking the Assistant: the request for the conversation as it stands, the User's message last, with 다시 시도 and
+// 새 대화.
+function useAsking({ said, show, add }: Bubbles): {
+  waiting: boolean;
+  ask: () => void;
+  retry: () => void;
+  reset: () => void;
+} {
   const [waiting, setWaiting] = useState(false);
   // Which conversation a reply belongs to: 새 대화 starts another, and a reply to the one before is dropped.
   const conversation = useRef(0);
 
-  // Asks the Assistant to answer the conversation as it stands, the User's message last.
   const ask = useCallback((): void => {
     const asked = conversation.current;
     setWaiting(true);
@@ -147,14 +164,6 @@ export function useChat(): Chat {
       }
     });
   }, [add, said]);
-
-  const send = useCallback(
-    (text: string): void => {
-      add({ role: 'user', text, cards: [], mapButtons: [], proposal: null, failure: null });
-      ask();
-    },
-    [add, ask],
-  );
 
   const retry = useCallback((): void => {
     if (said.current.at(-1)?.failure !== 'unavailable') {
@@ -170,11 +179,41 @@ export function useChat(): Chat {
     setWaiting(false);
   }, [show]);
 
+  return { waiting, ask, retry, reset };
+}
+
+// An Assistant's bubble the app adds itself, with a Proposal the server made outside the chat.
+function proposedBubble(text: string, proposal: QuestProposal): NewBubble {
+  return { role: 'assistant', text, cards: [], mapButtons: [], proposal, choices: [], chosen: null, failure: null };
+}
+
+// The conversation with the Assistant, kept in memory by whoever holds the hook; the server keeps none of it. Each
+// message sends the conversation, and the reply is shown whole.
+export function useChat(): Chat {
+  const held = useBubbles();
+  const { add } = held;
+  const { waiting, ask, retry, reset } = useAsking(held);
+
+  const send = useCallback(
+    (text: string): void => {
+      add(userBubble(text, null));
+      ask();
+    },
+    [add, ask],
+  );
+
+  const choose = useCallback(
+    ({ kind, id, label, words }: Choice): void => {
+      add(userBubble(label, { kind, id, words }));
+      ask();
+    },
+    [add, ask],
+  );
+
   const propose = useCallback(
-    (text: string, proposal: QuestProposal): number =>
-      add({ role: 'assistant', text, cards: [], mapButtons: [], proposal, failure: null }),
+    (text: string, proposal: QuestProposal): number => add(proposedBubble(text, proposal)),
     [add],
   );
 
-  return { bubbles, waiting, send, retry, reset, propose };
+  return { bubbles: held.bubbles, waiting, send, choose, retry, reset, propose };
 }
