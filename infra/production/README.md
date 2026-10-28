@@ -806,6 +806,80 @@ adds nothing, and the settings come from `mobile/.env`.
 
 An installed app downloads it the next time it starts and runs it from the start after that.
 
+## The Production iOS build
+
+The iOS counterpart of the APK, built and installed by the Mac owner with Xcode, on an iPhone or, without one, on the
+simulator. It is not distributed, through TestFlight or otherwise, so `download.ios` in `app-version.json` is `null`.
+It takes the same bundles from EAS Update as the APK. The Mac's tools, and why the checkout stays out of iCloud Drive,
+are in [mobile/README.md](../../mobile/README.md), "Build the app for iOS".
+
+### The iOS build's settings
+
+`mobile/.env` holds the same settings as the APK's ([Its settings](#its-settings)) and the Release workflow's
+([The app's bundle](#the-apps-bundle)):
+
+- `EXPO_PUBLIC_MAIN_SERVER_URL` and `EXPO_PUBLIC_SOCKET_SERVER_URL`, both `https://api.snunow.com`;
+- `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` and `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`, the Google web and iOS client IDs;
+- `GOOGLE_IOS_URL_SCHEME`, the iOS client's ID reversed;
+- `INVITE_LINK_HOST=api.snunow.com`;
+- `KAKAO_NATIVE_APP_KEY`, the team's key;
+- `EXPO_PUBLIC_RELEASE_TAG` and `EXPO_PUBLIC_RELEASE_COMMIT`, the tag and full commit of the Release built.
+
+`ANDROID_X86_64` is never set, and `UPDATE_CHANNEL` is left unset. A value other than CI's either changes the
+fingerprint, and the build then takes no update, or is baked into the JavaScript and points the app elsewhere.
+
+### Building it
+
+Build the commit of an `app` or `all` Release, normally the newest, with Node.js 24 and pnpm 12.6.0. From `mobile/`:
+
+```bash
+git checkout snunow/app/26.11.13-1
+pnpm install --frozen-lockfile
+CI=1 pnpm expo prebuild --platform ios
+open ios/*.xcworkspace
+```
+
+`prebuild` generates the iOS project in `ios/` and installs its pods; `CI=1` keeps it from asking questions. Then, in
+Xcode:
+
+1. Under the target's **Signing & Capabilities**, choose a team. A free Apple ID's Personal Team works.
+2. Under **Product > Scheme > Edit Scheme… > Run > Build Configuration**, choose **Release**. `expo-updates` is off in
+   a Debug build, which loads its JavaScript from the development server instead.
+3. Choose the iPhone, or a simulator if there is none, and run.
+
+**Change nothing in `mobile/app.json`, the bundle identifier included, to make signing work.** Any change there changes
+the fingerprint, and the build would take no update. If Xcode says the bundle identifier `com.bonnieandclaude.snunow`
+is not available to a free team, stop and report it.
+
+A free account's build stops opening 7 days after it was signed; build and install it again then. A free account also
+installs at most 3 apps of its own on a device.
+
+Without an iPhone, a Release build for the simulator needs no team and has no 7-day limit: choose a simulator in step 3
+and skip step 1.
+
+### The iOS fingerprint
+
+CI computes the iOS fingerprint on Linux, and the Mac build must have the same one. On the Mac, from `mobile/`, with
+the same `.env`:
+
+```bash
+set -a; . ./.env; set +a
+npx expo-updates fingerprint:generate --platform ios
+curl -sL https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/download/app-version/app-version.json
+```
+
+The hash the second line prints must equal `fingerprint.ios` in the file the third prints. If it differs, report it:
+whoever maintains the Releases then writes the Mac build's hash into `fingerprint.ios` and replaces the file with
+`gh release upload app-version app-version.json --clobber`.
+
+`fingerprint:generate` is a check made before building. The build computes its own fingerprint during an Xcode build
+phase, after `prebuild` has made `ios/`, and the real proof is an update arriving. If the hashes match but no update
+arrives, compare the fingerprint the built app carries: in Xcode, **Product > Show Build Folder in Finder**, open the
+`.app` with **Show Package Contents**, and look for the `fingerprint` file, which may sit inside `EXUpdates.bundle`.
+
+On iOS, 업데이트가 필요합니다 has no 업데이트 하기, since `download.ios` is `null`: it only asks the User to install the
+new version.
+
 ## Moving to account B
 
 Only if the money runs short, and at a quiet time, not during user testing or the beta. Account B's names are A's with
