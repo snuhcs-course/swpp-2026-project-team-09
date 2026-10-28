@@ -1815,7 +1815,7 @@ its model through OpenRouter with the Vercel AI SDK
     tier but the exact one, and in `resolveFriend` before the name match, `one` for one taught target and `several`
     for more; a Place the catalog does not have and someone who is no Friend any more never answer. For Places, after
     every `chosen`, `edited` or `rejected` row the server counts the words again from `resolution_events` in one
-    query: when at least 3 distinct accounts, each onboarded 7 days or more before it chose, chose the same Place and
+    query (`aliases/alias-standings.ts`): when at least 3 distinct accounts, each onboarded 7 days or more before it chose, chose the same Place and
     it holds at least 0.8 of the accounts that chose anything for the words, a `learned` row of `place_aliases`
     answers every User after their own aliases and before the curated groups. Its `score`, the supporters less the
     distinct accounts that rejected it, halved for every 30 days since it last answered or its Place was chosen for
@@ -2082,6 +2082,63 @@ the failure kind. The scorecard and the comparison show it against what each cas
 decides no pass. `test/eval-*.unit.test.ts` test the scorer with
 hand-made traces (`test/eval-traces.ts`) in `pnpm test`.
 
+### Replay
+
+Three commands measure the short forms, the aliases and the grey suggestions on the database's own rows, without the
+model (P07): whether the Assistant gets better with use. They only read the database at `DATABASE_URL`, from the
+environment or `.env`, and are run by hand, never in CI. Each writes `eval/results/replay-<name>-<time>.json` and the
+same numbers as Markdown beside it (`.md`), and prints both paths. Every rate is given as its value, its 95% Wilson
+interval (`eval/replay/wilson.ts`) and k/n. Node starts each command, and its code runs through Vitest's module runner
+(`eval/replay/launch.ts`), which compiles `src/` as for the tests; no test runs.
+
+```sh
+pnpm eval:replay --development                 # the development set, with every alias learned so far
+pnpm eval:replay --as-of 2026-11-16            # the test set, stage C learning only from the rows before that day
+pnpm eval:learning-curve --from 2026-11-02 --to 2026-12-14 --step 7
+pnpm eval:suggestions --from 2026-11-02 --to 2026-12-14
+```
+
+`pnpm eval:replay [--gold <file>] [--as-of <day>] [--development]` answers each item of the gold file
+(`eval/gold/places.yaml` unless `--gold`) at three stages (`eval/replay/stages.ts`): A, the substring and number match
+`resolvePlace` used before P07, which is `PlacesService.search` as a function; B, the tiered matcher (`PlaceIndex`) with
+the curated groups only; C, B with the personal and everyone's aliases rebuilt in memory from the `resolution_events`
+before `--as-of` (a day in Korea from its first moment; the run's start when left out) by the server's own count and
+rules (`aliases/alias-standings.ts`, `aliases/alias-rules.ts`), never written. The items are asked as an account that
+taught nothing and is never held back. An item is `{ words, accept, collected, set, note? }`: `accept` lists every Place
+the words may mean by seed name, else by number, and is empty for words that name no Place (a name or number the
+catalog lacks stops the run); `collected` is the day it was collected; `set` is `development` or `test`. The test set
+is scored unless `--development`, never both together. Per stage: resolution (not `none`, over every item), precision
+of `one` (the one Place accepted, over the `one` answers), recall@10 (an accepted Place among the first 10 candidates,
+the most a resolver gives, over the items that accept a Place), top-1 (the first candidate accepted, over the same),
+`none` (over every item), false `none` (`none` for an item that accepts a Place, over those), the mean candidates shown
+(at most 10, over the answers that are not `none`), how many items each tier answered, and the alias tier's hits of the
+curated groups apart from the learned aliases; then each item's answers. The development set holds hand-picked short
+forms, the group words and words that name no Place, chosen to tune the rules, so its numbers are no evidence. The test
+set is collected from students who are shown no official names, at least a week after the development set, each item
+with the day it was collected and `set: test`.
+
+`pnpm eval:learning-curve --from <day> --to <day> [--step 7]` replays `resolution_events` by date, at points T from
+`--from` to `--to` every `--step` days. At T it scores the `answered` Place rows of the `--step` days from T that their
+User labelled: a `chosen`, `edited` or `rejected` row of the same User and words after the row and before their next
+`answered` row of those words. Each is answered again by the matcher with the curated groups only (rules) and with the
+aliases rebuilt from the rows before T as for stage C (learned), the labels being scored left out, so that a label
+never teaches the row it scores. Per point and arm: the rows, the ask rate (answered `several`, over the rows) and top-1
+(the first candidate is the Place the User last chose or edited to, over the rows with one). The accounts that
+`ASSISTANT_ALIAS_HOLDBACK_PERCENT` holds back (as set where the command runs; 10 by default), whom everyone's aliases
+never answer, are reported apart.
+
+`pnpm eval:suggestions --from <day> --to <day>` reads the `suggestion_impressions` shown from the first moment of
+`--from` to the end of `--to`, less those shown in the last 10 minutes, whose outcome may still come. Per ISO week in
+Korea, template and arm (the impression's `holdback`): how many were shown, acceptance (`accepted` or `confirmed`),
+confirmed within 10 minutes (`confirmed` with `outcome_at` at most 10 minutes after `shown_at`), dismissal, and ignored
+(no outcome within 10 minutes). Per template and arm over the whole range, acceptance weighted by inverse propensity:
+the sum of 1 / propensity over the accepted impressions divided by that sum over all of them, so that the templates the
+score shows most do not decide the rate alone.
+
+`test/eval-replay-*.unit.test.ts` test the rates on hand-made rows, and `test/eval-replay.integration.test.ts` runs the
+commands' functions on a seeded database of its own: stage A against `PlacesService.search`, the gold file's Places
+against the seed, and stage C and the learning curve learning only from the rows before their time.
+
 ## Seed data
 
 Seed data comes from outside the project once, rather than by Collection: a file in `seed/` that one command loads
@@ -2309,7 +2366,8 @@ src/
 └── assistant/                       a feature: the Assistant, its model port, tools, feature definitions and the
                                      adapter that runs them
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
-eval/                                the benchmark of the Assistant, `pnpm eval`: its runner, recorder, world and cases
+eval/                                the benchmark of the Assistant, `pnpm eval`: its runner, recorder, world and cases;
+                                     `replay/` and `gold/`, the replay without the model, `pnpm eval:replay`
 test/                                tests named by level; the integration tests run against PostgreSQL and Redis in
                                      containers
 ```

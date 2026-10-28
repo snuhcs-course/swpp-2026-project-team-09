@@ -1,0 +1,94 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-28  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# The gold set of `pnpm eval:replay` (P07 ticket 05, research note 08 §4): the words as a student writes them for a
+# campus Place, every Place they may mean by seed name or number (none for words that name no Place), the day they were
+# collected and the set. The development set below is research note 08's examples, the group words and words that
+# name nothing, picked by the team to tune the rules: its numbers are no evidence. The test set is collected later from
+# students who are shown no official names, at least a week after the development set, and marked `set: test`.
+
+# Short forms the rules make, 초성, a mixed form and a typo.
+- { words: 학관, accept: [학생회관], collected: 2026-10-28, set: development }
+- { words: ㅎㄱ, accept: [학생회관], collected: 2026-10-28, set: development }
+- { words: ㅎ관, accept: [학생회관], collected: 2026-10-28, set: development }
+- { words: 학곤, accept: [학생회관], collected: 2026-10-28, set: development, note: 학관 one jamo off }
+- words: 중도
+  accept: [중앙도서관 본관, 중앙도서관 관정관]
+  collected: 2026-10-28
+  set: development
+  note: Students mean either building.
+- { words: 관정, accept: [중앙도서관 관정관], collected: 2026-10-28, set: development }
+- { words: 관정관, accept: [중앙도서관 관정관], collected: 2026-10-28, set: development }
+- { words: 농생대, accept: [200, 201, 203], collected: 2026-10-28, set: development }
+- words: 학식
+  accept: [제3학생식당, 학생회관]
+  collected: 2026-10-28
+  set: development
+  note: 학생회관 has a student cafeteria too.
+- { words: 체육, accept: [체육관], collected: 2026-10-28, set: development }
+- { words: 공학관, accept: [301, 302, 30, 31, 32, 33, 34, 35, 36, 37], collected: 2026-10-28, set: development }
+- { words: 생과대, accept: [생활과학대학], collected: 2026-10-28, set: development }
+- { words: 수의대, accept: [수의과대학], collected: 2026-10-28, set: development }
+- { words: 음대, accept: [53, 54, 55], collected: 2026-10-28, set: development, note: The bracket of 예술관(음대). }
+- { words: 미대, accept: [50, 51, 52], collected: 2026-10-28, set: development, note: The bracket of 예술관(미대). }
+- { words: 서당골, accept: [제4식당(서당골)], collected: 2026-10-28, set: development }
+- { words: 자하연, accept: [자하연, 자하연식당], collected: 2026-10-28, set: development }
+- { words: 버들골, accept: [버들골 풍산마당], collected: 2026-10-28, set: development }
+- { words: 두레문예관, accept: [NH농협두레문예관], collected: 2026-10-28, set: development }
+- { words: 호암, accept: [호암교수회관], collected: 2026-10-28, set: development }
+- { words: 인문관, accept: [1, 2, 3, 5, 6, 7, 8, 14], collected: 2026-10-28, set: development }
+- { words: 경영대, accept: [58, 59], collected: 2026-10-28, set: development }
+- { words: 정문, accept: [서울대 정문], collected: 2026-10-28, set: development }
+- { words: 대운동장, accept: [종합운동장], collected: 2026-10-28, set: development }
+
+# Group words: any building of the group is right, and several is the right answer.
+- words: 공대
+  accept: [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 43, 43-1, 43-2, 44-1, 301, 302, 303]
+  collected: 2026-10-28
+  set: development
+- { words: 윗공대, accept: [301, 302, 303], collected: 2026-10-28, set: development }
+- { words: 윗공, accept: [301, 302, 303], collected: 2026-10-28, set: development }
+- words: 자연대
+  accept: [18, 19, 22, 23, 24, 25, 25-1, 26, 27, 28, 56, 56-1]
+  collected: 2026-10-28
+  set: development
+- { words: 인문대, accept: [1, 2, 3, 4, 5, 6, 7, 8, 14], collected: 2026-10-28, set: development }
+- { words: 사회대, accept: [16, 16-1], collected: 2026-10-28, set: development }
+- { words: 사범대, accept: [9, 10, 10-1, 11, 12, 13], collected: 2026-10-28, set: development }
+
+# Official names and numbers.
+- { words: 학생회관, accept: [학생회관], collected: 2026-10-28, set: development }
+- { words: 중앙도서관, accept: [62, 62-1], collected: 2026-10-28, set: development }
+- { words: 301동, accept: [301], collected: 2026-10-28, set: development }
+- { words: '301', accept: [301], collected: 2026-10-28, set: development }
+- { words: 302동, accept: [302], collected: 2026-10-28, set: development }
+- { words: 25-1동, accept: [25-1], collected: 2026-10-28, set: development }
+- { words: 63동, accept: [63], collected: 2026-10-28, set: development }
+
+# Words that name no Place: places off the campus, activities, contractions and random syllables.
+- { words: 샤로수길, accept: [], collected: 2026-10-28, set: development }
+- words: 후문
+  accept: []
+  collected: 2026-10-28
+  set: development
+  note: The back gate and its guard post lie outside the catalog's boundary.
+- { words: 녹두거리, accept: [], collected: 2026-10-28, set: development }
+- { words: 강남역, accept: [], collected: 2026-10-28, set: development }
+- { words: 홍대입구, accept: [], collected: 2026-10-28, set: development }
+- { words: 롯데월드, accept: [], collected: 2026-10-28, set: development }
+- { words: 집, accept: [], collected: 2026-10-28, set: development }
+- { words: 피시방, accept: [], collected: 2026-10-28, set: development }
+- { words: 보겜, accept: [], collected: 2026-10-28, set: development }
+- { words: 스카, accept: [], collected: 2026-10-28, set: development }
+- { words: 코노, accept: [], collected: 2026-10-28, set: development }
+- { words: 배민, accept: [], collected: 2026-10-28, set: development }
+- { words: 밥약, accept: [], collected: 2026-10-28, set: development }
+- { words: 알바, accept: [], collected: 2026-10-28, set: development }
+- { words: 뷁쀍, accept: [], collected: 2026-10-28, set: development }
+- { words: 퉯, accept: [], collected: 2026-10-28, set: development }
+- { words: 꿻뛟쀍, accept: [], collected: 2026-10-28, set: development }
+- { words: ㅋㅋㅋ, accept: [], collected: 2026-10-28, set: development }
+- { words: asdf, accept: [], collected: 2026-10-28, set: development }
