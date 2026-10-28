@@ -13,20 +13,14 @@ import { FriendsService } from '../../friends/friends.service.js';
 import { PlacesService } from '../../places/places.service.js';
 import { type ChoiceKind } from '../feature.js';
 import { ResolutionEventsService } from '../resolution-events.service.js';
-import { ACCOUNT_AGE_DAYS, qualifies, scoreOf, type Standing, topOf } from './alias-rules.js';
+import { qualifies, scoreOf, topOf } from './alias-rules.js';
+import { standingsOf } from './alias-standings.js';
 import { type AliasDto } from './aliases.dto.js';
 import { type AliasKind, PersonalAliases } from './personal-aliases.js';
 
 // The names of a target that is gone: nothing more of a former Friend is shown.
 const FORMER_FRIEND = '친구';
 const FORMER_PLACE = '장소';
-
-// One Place's standing for the words, or with no Place the count of every account that chose anything for them.
-interface StandingRow {
-  placeId: string | null;
-  supporters: number;
-  rejecters: number;
-}
 
 const aliasNotFound = (): NotFoundException =>
   new NotFoundException({
@@ -138,7 +132,7 @@ export class AliasesService {
   // Everyone's standing of the words, counted again, makes, keeps or retires their alias. A choice of an alias's Place
   // is a use of it, which resets its decay, so that a choice brings back an alias decay retired.
   private async recount(words: string, chosenPlaceId: string | null): Promise<void> {
-    const { standings, allSupporters } = await this.standingsOf(words);
+    const { standings, allSupporters } = await standingsOf(this.prisma, words);
     const top = topOf(standings);
     const now = new Date();
     const aliases = await this.prisma.placeAlias.findMany({ where: { words, source: 'learned' } });
@@ -174,32 +168,5 @@ export class AliasesService {
     if (writes.length > 0) {
       await this.prisma.$transaction(writes);
     }
-  }
-
-  // Each Place's standing for the words from resolution_events, in one query, and how many accounts chose anything for
-  // them. Supporters are distinct accounts that were old enough when they chose, so an account counts once for the
-  // words and a Place however often it chooses; rejecters are distinct accounts that said 아니에요 to it. Only Places
-  // still in the catalog are counted.
-  private async standingsOf(words: string): Promise<{ standings: Standing[]; allSupporters: number }> {
-    const rows = await this.prisma.$queryRaw<StandingRow[]>`
-      SELECT e.chosen_id AS "placeId",
-        (count(DISTINCT e.user_id) FILTER (
-          WHERE e.outcome <> 'rejected'
-            AND e.created_at >= u.onboarded_at + make_interval(days => ${ACCOUNT_AGE_DAYS}::int)
-        ))::int AS supporters,
-        (count(DISTINCT e.user_id) FILTER (WHERE e.outcome = 'rejected'))::int AS rejecters
-      FROM resolution_events e
-      JOIN users u ON u.id = e.user_id
-      WHERE e.kind = 'place'
-        AND e.words = ${words}
-        AND e.outcome IN ('chosen', 'edited', 'rejected')
-        AND e.chosen_id IN (SELECT id FROM places)
-      GROUP BY GROUPING SETS ((e.chosen_id), ())`;
-    return {
-      standings: rows.flatMap(({ placeId, supporters, rejecters }): Standing[] =>
-        placeId === null ? [] : [{ placeId, supporters, rejecters }],
-      ),
-      allSupporters: rows.find(({ placeId }) => placeId === null)?.supporters ?? 0,
-    };
   }
 }
