@@ -9,6 +9,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -60,6 +61,9 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     ASSISTANT_MAX_STEPS: '8',
     ASSISTANT_TIMEOUT_MS: '30000',
     ASSISTANT_MAX_OUTPUT_TOKENS: '1000',
+    // No account is held back, so that every test's User gets the whole score. A test of the holdback starts an app
+    // with 100.
+    ASSISTANT_SUGGESTION_HOLDBACK_PERCENT: '0',
   };
   migrate(settings.DATABASE_URL);
   await seed(settings.DATABASE_URL);

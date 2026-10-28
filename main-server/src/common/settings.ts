@@ -9,6 +9,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -80,6 +81,12 @@ export const settingsSchema = z
     ASSISTANT_MAX_STEPS: count(8),
     ASSISTANT_TIMEOUT_MS: count(30_000),
     ASSISTANT_MAX_OUTPUT_TOKENS: count(1000),
+    // The share of accounts, in percent, whose grey suggestions use the base weights only, so that what the learned
+    // factors add can be told from habit.
+    ASSISTANT_SUGGESTION_HOLDBACK_PERCENT: z
+      .string()
+      .default('10')
+      .pipe(z.coerce.number<string>().int().min(0).max(100)),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),

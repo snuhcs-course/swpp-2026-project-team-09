@@ -16,6 +16,7 @@
 // 2026-10-06  Opus 5.5   prompted by fyoon46
 // 2026-10-06  Fable 5.1  prompted by fyoon46
 // 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+// 2026-10-28  Opus 5.5   prompted by fyoon46
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -66,6 +67,7 @@ model User {
   partyJoinRequests PartyJoinRequest[]
   partyInvitations  PartyInvitation[]
   timetableClasses  TimetableClass[]
+  suggestionImpressions SuggestionImpression[]
 
   @@map("users")
 }
@@ -624,4 +626,44 @@ enum Weekday {
   sunday
 
   @@map("weekday")
+}
+
+// A grey suggestion the Assistant showed a User when the chat opened, and what the User did with it (README.md:
+// Assistant). It holds no text, only what measuring acceptance needs. It goes with the account.
+model SuggestionImpression {
+  id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String            @map("user_id") @db.Uuid
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // The template shown, such as lunch_with_free_friend, and every template that was eligible, the best score first.
+  template   String
+  eligible   String[]
+  // The time of day in Korea whose acceptance was read: morning, midday, afternoon or evening.
+  bucket     String
+  // The probability the shown template had of being shown, by which acceptance is weighted later.
+  propensity Float
+  // Whether the account is held back to the base weights.
+  holdback   Boolean
+  shownAt    DateTime          @map("shown_at")
+  // The migration checks that outcomeAt is set once the outcome is not shown, and questId exactly when it is confirmed.
+  outcome    SuggestionOutcome @default(shown)
+  outcomeAt  DateTime?         @map("outcome_at")
+  // The Quest made from the suggestion's Proposal. No relation, so that the row outlives the Quest.
+  questId    String?           @map("quest_id") @db.Uuid
+
+  @@index([userId, shownAt])
+  @@index([bucket, shownAt])
+  @@map("suggestion_impressions")
+}
+
+// An impression still shown 10 minutes after it was shown was ignored, which is read when it is analysed, not stored.
+enum SuggestionOutcome {
+  shown
+  // Tapped.
+  accepted
+  // Closed with ×.
+  dismissed
+  // Its Proposal's Quest was made with 만들기.
+  confirmed
+
+  @@map("suggestion_outcome")
 }
