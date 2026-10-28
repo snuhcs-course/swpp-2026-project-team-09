@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -141,6 +142,14 @@ function ActivityCard(): ReactElement {
         value={friends}
       />
       <ActivityRow
+        icon="chat"
+        label="내가 가르친 말"
+        onPress={() => {
+          router.push('/me/aliases');
+        }}
+        value=""
+      />
+      <ActivityRow
         icon="users"
         label="참여 중인 파티"
         onPress={() => {
@@ -232,7 +241,7 @@ interface MeScreenProps {
 }
 
 // The 내 정보 tab, the `Profile` frame: the User's profile, the week, the Master Switch, the ways to the User's
-// Friends, Parties and Quests, and the sign-out.
+// Friends, the words they taught the Assistant, their Parties and Quests, and the sign-out.
 export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactElement {
   const profile = useQuery(lobbyQuery).data?.profile;
   const sharing = useSharingSwitch();

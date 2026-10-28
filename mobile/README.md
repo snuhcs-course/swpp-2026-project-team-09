@@ -612,6 +612,12 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     its bubble while it is the last bubble, one row for each kind (`chat-choices.tsx`). A chip sends its label as the
     User's message with the candidate it chose (`choose`, `chosen`), which that message keeps in later requests.
     Anything the User sends takes the chips away. A reply without `choices`, from an older server, draws none.
+  - When the Assistant read the User's words through an alias, the User's own, everyone's or the team's
+    (`resolvedBy`), its bubble has a line for each, "학관 → 학생회관으로 찾았어요" with "아니에요"
+    (`chat-resolved-by.tsx`). 아니에요 sends the words, their kind and the target's id (`rejectAlias`), thanks the
+    User with "알려 주셔서 고마워요. 다음부터는 다시 물어볼게요" and takes the line away for the rest of the
+    conversation; a failure says "보내지 못했어요. 잠시 후 다시 시도해 주세요" and leaves it. A reply without
+    `resolvedBy`, from an older server, draws none.
   - A failure is the Assistant's bubble, and is left out of what the next message sends. When the server cannot
     answer, it says "지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요" with "다시 시도", while it is the last bubble,
     which sends the User's message again in its place. Once the User's messages of the day are used up (429), it says
@@ -743,8 +749,14 @@ number of 알림's rows in red ("9+" above nine), and four cards from the top:
   "위치 권한을 허용해야 공유할 수 있어요". The new state shows at once, and turns back with "위치 공유를 바꾸지
   못했어요" when the main server did not take it. At `/me?show=sharing` the screen scrolls to the card and outlines
   it for 1.2 s;
-- "친구 관리 {n}" (친구 관리), "참여 중인 파티 {n}" (파티 at 내 파티) and "내 퀘스트" (the Quest list on the
-  whole screen).
+- "친구 관리 {n}" (친구 관리), "내가 가르친 말", "참여 중인 파티 {n}" (파티 at 내 파티) and "내 퀘스트" (the Quest
+  list on the whole screen).
+
+내가 가르친 말 (`/me/aliases`, `src/screens/me/taught-words-screen.tsx`) lists the words the User taught the Assistant
+by choosing what they meant (`GET /assistant/aliases`), the latest used first: "중도 → 중앙도서관" over "3번 · 10월
+26일", and "친구" in place of a Friend who is no Friend any more. The trash button asks "가르친 말을 지울까요?" and
+deletes it (`DELETE /assistant/aliases/:id`), which takes its row away with "지웠어요"; one deleted already counts as
+deleted. With none it says "아직 가르친 말이 없어요".
 
 "로그아웃" asks "로그아웃할까요?", then stops the sending, signs out and shows the sign-in screen. 프로필 편집
 (`profile-edit-screen.tsx`) edits the name, the department, the admission year and the interests with Onboarding's
@@ -1034,6 +1046,11 @@ Behind a hook are three layers:
 | `getMatchingRequest`                                                 | The latest request for a Global Event                        | `GET /matching-requests/:globalEventId`                                 |
 | `withdrawMatchingRequest`                                            | Nothing                                                      | `POST /matching-requests/:globalEventId/withdraw`                       |
 | `askAssistant`                                                       | The Assistant's reply to the conversation                    | `POST /assistant/messages`                                              |
+| `listAliases`, `deleteAlias`                                         | The words the User taught the Assistant; nothing             | `GET /assistant/aliases`, `DELETE /assistant/aliases/:id`               |
+| `rejectAlias`                                                        | Nothing                                                      | `POST /assistant/aliases/reject`                                        |
+
+The mock keeps the User's taught words in memory too (`src/api/mock/aliases.ts`): 중도 for 중앙도서관, which the mock
+Assistant reads "중도에서 내일 점심 모집해줘" through until it is deleted or rejected, and 민준 for 김민준.
 
 The mock keeps the Friends, the Friend Requests and the Invite Links in memory while the app runs
 (`src/api/mock/friendships.ts`), with Friend IDs for the frame's people, and refuses as the main server does. The

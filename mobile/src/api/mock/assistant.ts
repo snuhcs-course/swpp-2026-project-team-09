@@ -10,6 +10,7 @@ import type { AssistantReply, ChatMessage, Choice, ProposalPlace, QuestProposal 
 import type { RecruitingQuest } from '@/api/party-types';
 import { now } from '@/clock';
 import { koreaDateKey, koreaNextDay } from '@/korea-time';
+import { CENTRAL_LIBRARY, readThroughAlias } from './aliases';
 import { RECRUITING_QUESTS } from './data/boards';
 import { FRIENDS } from './data/friends';
 import { MENUS } from './data/menus';
@@ -20,8 +21,9 @@ import { GLOBAL_EVENTS } from './data/quests';
 // or, 비공개, a Closed one for the mocks' first Global Event inviting their first Friend,
 // one about 파티 with the mocks' recruiting Quests that meet soonest as cards, one about events with the mocks' Global
 // Events as cards, one that says 학관 with the question which Place it means and the candidates as chips, the answer
-// to it with a Proposal for tomorrow's lunch there, and anything else with a short reply, so that the chat can be
-// seen and tried where the app asks no main server.
+// to it with a Proposal for tomorrow's lunch there, one that says 중도 with that Proposal at 중앙도서관, read through
+// the User's alias while the User keeps it, and anything else with a short reply, so that the chat can be seen and
+// tried where the app asks no main server.
 
 const MENU_WORDS = ['메뉴', '학식', '점심', '저녁', '아침', '밥'];
 const SHUTTLE_WORDS = ['셔틀', '버스'];
@@ -35,6 +37,8 @@ const HAKGWAN: readonly Choice[] = [
   { kind: 'place', id: 'place-919', label: '(관악사)학부 생활관', words: '학관' },
   { kind: 'place', id: 'place-300', label: '유회진 학술정보관', words: '학관' },
 ];
+// The User's own word for 중앙도서관 in the mock's aliases.
+const JUNGDO = '중도';
 // The most events, and the most Quests, the mock shows as cards.
 const EVENT_CARDS = 3;
 const QUEST_CARDS = 3;
@@ -114,53 +118,53 @@ function menusReply(): string {
   return ['오늘 메뉴예요.', ...lines].join('\n');
 }
 
-export function mockAssistantReply(messages: readonly ChatMessage[]): AssistantReply {
+function replyOf(text: string, more: Partial<AssistantReply> = {}): AssistantReply {
+  return { text, mapButtons: [], cards: [], proposal: null, choices: [], resolvedBy: [], ...more };
+}
+
+// The answers that name a Place: the answer to the question which 학관, 중도 read through the User's alias, and the
+// question which 학관.
+function placeReply(messages: readonly ChatMessage[]): AssistantReply | null {
   const last = messages.at(-1)?.text ?? '';
   const place = chosenPlace(messages.at(-1));
   if (place !== null) {
-    return { text: PROPOSING, mapButtons: [], cards: [], proposal: { ...lunchProposal(), place }, choices: [] };
+    return replyOf(PROPOSING, { proposal: { ...lunchProposal(), place } });
+  }
+  if (last.includes(JUNGDO)) {
+    const reading = readThroughAlias(JUNGDO);
+    const proposal = { ...lunchProposal(), place: { ...CENTRAL_LIBRARY } };
+    return replyOf(PROPOSING, { proposal, resolvedBy: reading === null ? [] : [reading] });
   }
   if (saysHakgwan(last)) {
-    const text = '학관은 여러 곳을 말할 수 있어요. 어디를 말씀하신 건가요?';
-    return { text, mapButtons: [], cards: [], proposal: null, choices: [...HAKGWAN] };
+    return replyOf('학관은 여러 곳을 말할 수 있어요. 어디를 말씀하신 건가요?', { choices: [...HAKGWAN] });
   }
+  return null;
+}
+
+export function mockAssistantReply(messages: readonly ChatMessage[]): AssistantReply {
+  const placed = placeReply(messages);
+  if (placed !== null) {
+    return placed;
+  }
+  const last = messages.at(-1)?.text ?? '';
   if (SHUTTLE_WORDS.some((word) => last.includes(word))) {
-    const text = '셔틀이 어디 있는지 지도에서 볼 수 있어요.';
-    return { text, mapButtons: ['shuttle'], cards: [], proposal: null, choices: [] };
+    return replyOf('셔틀이 어디 있는지 지도에서 볼 수 있어요.', { mapButtons: ['shuttle'] });
   }
   if (PROPOSAL_WORDS.some((word) => last.includes(word))) {
-    return {
-      text: PROPOSING,
-      mapButtons: [],
-      cards: [],
-      proposal: last.includes('비공개') ? closedProposal() : lunchProposal(),
-      choices: [],
-    };
+    return replyOf(PROPOSING, { proposal: last.includes('비공개') ? closedProposal() : lunchProposal() });
   }
   if (QUEST_WORDS.some((word) => last.includes(word))) {
-    return {
-      text: '곧 모이는 파티예요. 운동, 식사처럼 원하는 걸 말해 주시면 좁혀 드릴게요.',
-      mapButtons: [],
-      cards: questCards(),
-      proposal: null,
-      choices: [],
-    };
+    return replyOf('곧 모이는 파티예요. 운동, 식사처럼 원하는 걸 말해 주시면 좁혀 드릴게요.', { cards: questCards() });
   }
   if (EVENT_WORDS.some((word) => last.includes(word))) {
     const cards = GLOBAL_EVENTS.slice(0, EVENT_CARDS).map((globalEvent) => ({
       kind: 'globalEvent' as const,
       globalEvent,
     }));
-    return { text: '다가오는 행사예요.', mapButtons: [], cards, proposal: null, choices: [] };
+    return replyOf('다가오는 행사예요.', { cards });
   }
   if (MENU_WORDS.some((word) => last.includes(word))) {
-    return { text: menusReply(), mapButtons: ['dining'], cards: [], proposal: null, choices: [] };
+    return replyOf(menusReply(), { mapButtons: ['dining'] });
   }
-  return {
-    text: '데모에서는 오늘 메뉴와 셔틀, 행사, 파티만 답할 수 있어요. "오늘 점심 뭐 나와?"처럼 물어봐 주세요.',
-    mapButtons: [],
-    cards: [],
-    proposal: null,
-    choices: [],
-  };
+  return replyOf('데모에서는 오늘 메뉴와 셔틀, 행사, 파티만 답할 수 있어요. "오늘 점심 뭐 나와?"처럼 물어봐 주세요.');
 }

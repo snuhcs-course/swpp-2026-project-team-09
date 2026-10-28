@@ -65,6 +65,16 @@ export interface Choice {
 // The candidate a User's message answers with: the chip the User pressed.
 export type Chosen = Pick<Choice, 'kind' | 'id' | 'words'>;
 
+// Words of the User's that the Assistant read through an alias, the User's own, everyone's or the team's, as the
+// Place, Friend or event it names. The app shows each under the answer with 아니에요.
+export interface ResolvedBy {
+  kind: Choice['kind'];
+  words: string;
+  id: string;
+  label: string;
+  source: 'personal' | 'global' | 'curated';
+}
+
 // One message of the conversation, as the app sends it: the User's text, with the candidate it chose if a chip sent
 // it, or the Assistant's with the cards it showed and, on the last that made one, its Proposal by its values.
 export type ChatMessage =
@@ -115,11 +125,13 @@ export function referenceOf(card: ChatCard): CardReference {
 }
 
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
-// cards in the order shown, the Proposal it made, or null, and the candidates it asks the User to choose among.
+// cards in the order shown, the Proposal it made, or null, the candidates it asks the User to choose among, and the
+// words it read through an alias.
 export interface AssistantReply {
   text: string;
   mapButtons: MapLayer[];
   cards: ChatCard[];
   proposal: QuestProposal | null;
   choices: Choice[];
+  resolvedBy: ResolvedBy[];
 }

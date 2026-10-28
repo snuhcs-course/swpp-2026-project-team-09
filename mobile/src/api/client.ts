@@ -10,8 +10,10 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { AliasRejection, TaughtAlias } from './alias-types';
 import type { AssistantReply, ChatMessage } from './assistant-types';
 import { mockClient } from './mock/client';
 import { serverClient } from './server/client';
@@ -167,6 +169,12 @@ export interface ApiClient {
   declineInvitation: (invitationId: string) => Promise<void>;
   // The chat Assistant's reply to the conversation, the User's new message last.
   askAssistant: (messages: ChatMessage[]) => Promise<AssistantReply>;
+  // The words the User taught the Assistant, the latest used first.
+  listAliases: () => Promise<TaughtAlias[]>;
+  // Refused with 404 for an alias the User does not have.
+  deleteAlias: (aliasId: string) => Promise<void>;
+  // 아니에요 under an answer: the User's own alias of those words for that target goes.
+  rejectAlias: (rejection: AliasRejection) => Promise<void>;
 }
 
 // The main server's client in a build that asks it, and the mocks everywhere else (`asksMainServer()`), each with the
@@ -264,4 +272,7 @@ export const apiClient: ShownClient = {
   listCompanionSeekers: () => chosen().listCompanionSeekers(),
   askCompanionSeeker: (seekerId) => chosen().askCompanionSeeker(seekerId),
   askAssistant: (messages) => chosen().askAssistant(messages),
+  listAliases: () => chosen().listAliases(),
+  deleteAlias: (aliasId) => chosen().deleteAlias(aliasId),
+  rejectAlias: (rejection) => chosen().rejectAlias(rejection),
 };
