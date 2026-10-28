@@ -5,6 +5,7 @@
 # 2026-10-06  Fable 5.1  prompted by fyoon46
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-10-28  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 name: CI
@@ -79,6 +80,48 @@ jobs:
           path: ${{ runner.temp }}/jest
           key: mobile-jest-${{ matrix.shard }}-${{ hashFiles('mobile/pnpm-lock.yaml') }}
       - run: pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }} --cacheDirectory=${{ runner.temp }}/jest
+
+  # The app's fingerprints under Production's build settings, against the latest native build's in app-version.json:
+  # the Release workflow's own decision, so that a native change without a raised `version` fails here and not at its
+  # Release. A commit from before the latest native Release passes with a notice; its app Release would still refuse to
+  # publish. The Kakao key changes no fingerprint and is not needed.
+  app-fingerprint:
+    name: app-fingerprint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    env:
+      EXPO_PUBLIC_MAIN_SERVER_URL: ${{ vars.PRODUCTION_APP_MAIN_SERVER_URL }}
+      EXPO_PUBLIC_SOCKET_SERVER_URL: ${{ vars.PRODUCTION_APP_SOCKET_SERVER_URL }}
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ vars.PRODUCTION_APP_GOOGLE_WEB_CLIENT_ID }}
+      EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: ${{ vars.PRODUCTION_APP_GOOGLE_IOS_CLIENT_ID }}
+      GOOGLE_IOS_URL_SCHEME: ${{ vars.PRODUCTION_APP_GOOGLE_IOS_URL_SCHEME }}
+      INVITE_LINK_HOST: ${{ vars.PRODUCTION_APP_INVITE_LINK_HOST }}
+      APP_VERSION_URL: https://github.com/${{ github.repository }}/releases/download/app-version/app-version.json
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          working-directory: mobile
+          node-version-file: ../.nvmrc
+          cache: true
+          require-lockfile: true
+      - name: Decide as the Release workflow would
+        run: |
+          outputs=$(.github/release/release.sh fingerprint-and-decide "$APP_VERSION_URL" \
+            "$RUNNER_TEMP/app-version.json" ci)
+          case $(sed -n 's/^verdict=//p' <<<"$outputs") in
+            publish-needs-build)
+              echo "::notice::The app's native part changed and version was raised: the next app Release's tag" \
+                "builds the APK in CI (infra/production/README.md § The Production APK)."
+              ;;
+            behind)
+              echo "::notice::This commit is behind the latest native Release (latest" \
+                "$(jq -r .latest "$RUNNER_TEMP/app-version.json")): rebase onto the main line."
+              ;;
+          esac
 
   # The Dev Server's shell scripts and their tests. The deploy script does not wait for this check.
   deploy-scripts:
