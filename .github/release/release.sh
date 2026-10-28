@@ -7,12 +7,15 @@
 ################################################################################
 
 # The Release workflow's steps (.github/workflows/release.yml), one command each. The functions under Deciding take
-# plain inputs and print a verdict; those under Doing call gh, aws, docker, kustomize, and kubectl. The app's job calls
-# its tools from the workflow itself, and only its decisions and its check of the published updates are here.
+# plain inputs and print a verdict; those under Doing call gh, aws, docker, kustomize, kubectl, and the app's tools. The
+# app's job builds and attaches its APK from the workflow itself; its decision, its checks of the APK and of the
+# published updates, and its new app-version.json are here.
 
 readonly SERVERS=(main-server socket-server worker-server match-server admin)
 readonly PARAMETER_PATH=/snunow/production
 readonly NAMESPACE=snunow
+# The SHA-256 digest of the Expo template's debug key, which signs every APK, so that a new one installs over the old.
+readonly APK_SIGNER=fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
 REPOSITORY_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 readonly REPOSITORY_ROOT
 readonly TARGETS='main-server|socket-server|worker-server|match-server|admin|app|all'
@@ -132,6 +135,41 @@ check_published() {
   echo "app: published for android $1 and ios $2" >&2
 }
 
+# Checks a built APK, given the Android fingerprint the decision computed, the fingerprint embedded in the APK
+# (assets/fingerprint), and `apksigner verify --print-certs`'s output on stdin: the APK must carry the computed
+# fingerprint, and its one signer must be the shared debug key.
+check_apk() {
+  local computed=$1 embedded=$2 signers
+  if [[ -z "$computed" || "$embedded" != "$computed" ]]; then
+    echo "app: the APK embeds the fingerprint '$embedded', but the computed one is '$computed'" >&2
+    return 1
+  fi
+  signers=$(sed -n 's/^Signer #[0-9]* certificate SHA-256 digest: *//p')
+  if [[ "$signers" != "$APK_SIGNER" ]]; then
+    echo "app: the APK is signed by '${signers//$'\n'/ }', not the shared debug key $APK_SIGNER" >&2
+    return 1
+  fi
+  echo "app: the APK embeds $embedded and is signed by the shared debug key" >&2
+}
+
+# Prints the new app-version.json for a native build, given its version, its Android and iOS fingerprints, the APK's
+# address, and the path of the old app-version.json, whose `minimum` it keeps. iOS has no download until iOS builds
+# are distributed.
+app_version_json() {
+  local version=$1 android=$2 ios=$3 url=$4 file=$5 minimum
+  if ! minimum=$(jq -er '.minimum | strings' "$file" 2>/dev/null); then
+    echo "app: $file is missing or unreadable; it must give minimum" >&2
+    return 1
+  fi
+  if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ || -z "$android" || -z "$ios" || "$url" != https://* ]]; then
+    echo "app: a new app-version.json needs version as x.y.z, both fingerprints, and the APK's https address" >&2
+    return 1
+  fi
+  jq --null-input --arg latest "$version" --arg minimum "$minimum" --arg android "$android" --arg ios "$ios" \
+    --arg url "$url" '{latest: $latest, minimum: $minimum, fingerprint: {android: $android, ios: $ios},
+    download: {android: $url, ios: null}}'
+}
+
 # Prints `name<TAB>status<TAB>conclusion` for each job of a CI run, given the run's status and GitHub's jobs answer on
 # stdin. A run that has not finished but lists no jobs yet prints `*<TAB>status`, since it will run every job.
 jobs_from_json() {
@@ -246,6 +284,29 @@ read_ci_jobs() {
     jobs=$(gh api "repos/$repository/actions/runs/$id/jobs?per_page=100") || return 1
     jobs_from_json "$run_status" <<<"$jobs"
   done < <(jq -r '.workflow_runs[] | [.id, .status] | @tsv' <<<"$runs")
+}
+
+# Prints the app's Android and iOS fingerprints, its `version`, and the decision (app_decision) as job outputs, given
+# the address of app-version.json and where to save it. The fingerprints are computed in mobile/ under the build
+# settings in the environment, with expo-updates' own command, so they are the runtime versions a build gets. An empty
+# setting would give another fingerprint, or a bundle that calls nowhere, so each must be set.
+decide_app() {
+  local url=$1 file=$2 android ios version verdict name
+  for name in EXPO_PUBLIC_MAIN_SERVER_URL EXPO_PUBLIC_SOCKET_SERVER_URL EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID \
+    EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID GOOGLE_IOS_URL_SCHEME INVITE_LINK_HOST; do
+    if [[ -z "${!name:-}" ]]; then
+      echo "app: the repository variable for $name is not set" >&2
+      return 1
+    fi
+  done
+  cd "$REPOSITORY_ROOT/mobile"
+  android=$(npx expo-updates fingerprint:generate --platform android | jq -er .hash) &&
+    ios=$(npx expo-updates fingerprint:generate --platform ios | jq -er .hash) &&
+    version=$(jq -er .expo.version app.json) || return 1
+  echo "app: version $version, fingerprints android $android, ios $ios" >&2
+  curl --fail --silent --show-error --location --output "$file" "$url" || echo "app: $url could not be downloaded" >&2
+  verdict=$(app_decision "$android" "$ios" "$version" "$file") || return 1
+  printf 'android=%s\nios=%s\nversion=%s\nverdict=%s\n' "$android" "$ios" "$version" "$verdict"
 }
 
 # Waits for CI's results on the commit and fails unless every CI job has passed. It only reads them: CI runs on the
@@ -380,6 +441,9 @@ main() {
     app-decision) app_decision "$@" ;;
     app-order) app_order "$@" ;;
     check-published) check_published "$@" ;;
+    check-apk) check_apk "$@" ;;
+    app-version-json) app_version_json "$@" ;;
+    decide-app) decide_app "$@" ;;
     gate) gate "$@" ;;
     write-secrets) write_secrets "$@" ;;
     push-image) push_image "$@" ;;

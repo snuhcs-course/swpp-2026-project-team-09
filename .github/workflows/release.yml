@@ -6,8 +6,9 @@
 ################################################################################
 
 # Deploys a Release to Production: a pushed tag snunow/<target>/YY.MM.DD-N deploys its target at the tag's commit once
-# CI has passed on it: one server, the app's bundle to EAS Update, or all five servers and then the app. Run by hand on
-# a Release's tag, it deploys that Release again. The steps' logic is in .github/release/release.sh.
+# CI has passed on it: one server, the app's bundle to EAS Update, or all five servers and then the app. A native
+# change to the app also builds its Android APK. Run by hand on a Release's tag, it deploys that Release again. The
+# steps' logic is in .github/release/release.sh.
 name: Release
 run-name: ${{ github.ref_name }}
 
@@ -117,7 +118,12 @@ jobs:
       !cancelled() && needs.name.result == 'success' && needs.name.outputs.app == 'true' &&
       (needs.release.result == 'success' || needs.release.result == 'skipped')
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    # The CI gate takes up to 45 minutes, and an Android build about as long again.
+    timeout-minutes: 150
+    # Creates the tag's Release and replaces app-version.json, on a native change.
+    permissions:
+      contents: write
+      actions: read
     # Not cancelled by a newer arrival: an `all` Release's app job arrives only when its servers finish, so arrival
     # order is not push order, and cancelling would drop a newer bundle. The later arrival waits and its ordering check
     # skips it. GitHub keeps one pending job per group, so a third arrival replaces the pending one.
@@ -147,13 +153,6 @@ jobs:
           node-version-file: ../.nvmrc
           cache: true
           require-lockfile: true
-      # An empty variable would give another fingerprint, or a bundle that calls nowhere.
-      - name: Check the build settings
-        run: |
-          for name in EXPO_PUBLIC_MAIN_SERVER_URL EXPO_PUBLIC_SOCKET_SERVER_URL EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID \
-            EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID GOOGLE_IOS_URL_SCHEME INVITE_LINK_HOST; do
-            [[ -n "${!name}" ]] || { echo "app: the repository variable for $name is not set" >&2 && exit 1; }
-          done
       # An older Release whose server jobs finished late must not put its bundle over a newer one. A run by hand is a
       # rollback and always publishes.
       - name: Check that no newer commit's bundle is published
@@ -191,28 +190,97 @@ jobs:
       - name: Decide whether the bundle fits the latest native build
         id: decision
         if: steps.order.outputs.order == 'publish'
-        working-directory: mobile
         run: |
-          android=$(npx expo-updates fingerprint:generate --platform android | jq -er .hash)
-          ios=$(npx expo-updates fingerprint:generate --platform ios | jq -er .hash)
-          version=$(jq -r .expo.version app.json)
-          echo "app: version $version, fingerprints android $android, ios $ios"
-          echo "android=$android" >>"$GITHUB_OUTPUT"
-          echo "ios=$ios" >>"$GITHUB_OUTPUT"
-          curl --fail --silent --show-error --location --output "$RUNNER_TEMP/app-version.json" "$APP_VERSION_URL" ||
-            echo "app: $APP_VERSION_URL could not be downloaded"
-          verdict=$(../.github/release/release.sh app-decision "$android" "$ios" "$version" \
-            "$RUNNER_TEMP/app-version.json")
-          if [[ "$verdict" == publish-needs-build ]]; then
-            echo "::notice::A new APK and iOS build are needed: the app's native part changed, and version is $version."
-            {
-              echo "### A new APK and iOS build are needed"
-              echo
-              echo "The app's native part changed since the latest native build, and \`version\` is $version. This"
-              echo "update reaches only a native build of this commit's native part: make a native Release"
-              echo "(infra/production/README.md § The Production APK)."
-            } >>"$GITHUB_STEP_SUMMARY"
+          .github/release/release.sh decide-app "$APP_VERSION_URL" "$RUNNER_TEMP/app-version.json" |
+            tee -a "$GITHUB_OUTPUT"
+      # The native part changed and `version` was raised: the APK for this commit is built here, as the hand build is
+      # (infra/production/README.md § The Production APK), and goes out before the bundle that only it takes. Each step
+      # fails the job, so a phone never sees an app-version.json without its APK, or a bundle without its build.
+      - name: Make room for the Android build
+        if: steps.decision.outputs.verdict == 'publish-needs-build'
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/.ghcup /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - uses: actions/setup-java@v5
+        if: steps.decision.outputs.verdict == 'publish-needs-build'
+        with:
+          distribution: temurin
+          java-version: 21
+      # The Kakao key changes no fingerprint, but without it Kakao sign-in fails in the APK.
+      - name: Build the APK
+        if: steps.decision.outputs.verdict == 'publish-needs-build'
+        working-directory: mobile
+        env:
+          KAKAO_NATIVE_APP_KEY: ${{ secrets.KAKAO_NATIVE_APP_KEY }}
+          EXPO_PUBLIC_RELEASE_TAG: ${{ github.ref_name }}
+          EXPO_PUBLIC_RELEASE_COMMIT: ${{ env.COMMIT }}
+        run: |
+          if [[ -z "$KAKAO_NATIVE_APP_KEY" ]]; then
+            echo "::error::The repository secret KAKAO_NATIVE_APP_KEY is empty or not set; the APK is not built."
+            exit 1
           fi
+          CI=1 pnpm expo prebuild --platform android --no-install
+          echo "sdk.dir=$ANDROID_HOME" >android/local.properties
+          (cd android && ./gradlew assembleRelease --no-daemon)
+      - name: Check the APK
+        if: steps.decision.outputs.verdict == 'publish-needs-build'
+        env:
+          ANDROID: ${{ steps.decision.outputs.android }}
+        run: |
+          apk=mobile/android/app/build/outputs/apk/release/app-release.apk
+          build_tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -printf '%f\n' | sort -V | tail -n 1)
+          "$ANDROID_HOME/build-tools/$build_tools/apksigner" verify --print-certs "$apk" |
+            .github/release/release.sh check-apk "$ANDROID" "$(unzip -p "$apk" assets/fingerprint)"
+      # The asset is named after the tag, with `/` as `-`. The Release is the hand-made one if there is one.
+      - name: Attach the APK to the tag's Release
+        id: apk
+        if: steps.decision.outputs.verdict == 'publish-needs-build'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          name=${GITHUB_REF_NAME//\//-}.apk
+          cp mobile/android/app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/$name"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$RUNNER_TEMP/$name" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/$name" --verify-tag --title "$GITHUB_REF_NAME" \
+              --notes 'The app for Production, at https://api.snunow.com.'
+          fi
+          echo "url=https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/$name" >>"$GITHUB_OUTPUT"
+      # From here the app offers the new APK to phones on older builds. GitHub serves the new file after a few minutes.
+      - name: Replace app-version.json
+        if: steps.decision.outputs.verdict == 'publish-needs-build'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ steps.decision.outputs.version }}
+          ANDROID: ${{ steps.decision.outputs.android }}
+          IOS: ${{ steps.decision.outputs.ios }}
+          APK_URL: ${{ steps.apk.outputs.url }}
+        run: |
+          mkdir "$RUNNER_TEMP/new"
+          .github/release/release.sh app-version-json "$VERSION" "$ANDROID" "$IOS" "$APK_URL" \
+            "$RUNNER_TEMP/app-version.json" >"$RUNNER_TEMP/new/app-version.json"
+          cat "$RUNNER_TEMP/new/app-version.json"
+          gh release upload app-version "$RUNNER_TEMP/new/app-version.json" --clobber
+          echo "::notice::The APK of version $VERSION is out at $APK_URL. The iOS build is still made by hand."
+          {
+            echo "### The APK of version $VERSION is out"
+            echo
+            echo "Built from this commit, attached to the Release at $APK_URL, and offered to older builds through"
+            echo "app-version.json. The iOS build is still made by hand (infra/production/README.md § The Production"
+            echo "APK)."
+          } >>"$GITHUB_STEP_SUMMARY"
+      # eas update computes the runtime version again, and must do so on the tree the decision step saw: the generated
+      # android/ folder and anything else prebuild wrote outside git go. check-published still guards the result.
+      - name: Remove what the Android build generated
+        if: steps.decision.outputs.verdict == 'publish-needs-build'
+        run: |
+          rm -rf mobile/android
+          git clean -fd -- mobile
+          git checkout -- mobile
+          git status --short
       # `--json` prints the published updates to stdout and the progress to the log. Each platform's runtime version
       # must be the fingerprint decided on above.
       - name: Publish the bundle

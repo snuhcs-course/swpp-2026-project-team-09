@@ -7,8 +7,8 @@
 ################################################################################
 
 # The Release workflow's script, through its commands: the name check, the gate with gh faked on PATH, the app's
-# publish decision, its ordering and its check of the published updates, the secrets files, and the choice of
-# generated objects to delete.
+# publish decision, its ordering and its check of the published updates, its checks of a built APK and its new
+# app-version.json, the secrets files, and the choice of generated objects to delete.
 
 # The app's decision tests read $stderr, which bats's `run --separate-stderr` sets.
 # shellcheck disable=SC2154
@@ -232,6 +232,84 @@ published_updates() {
     run --separate-stderr "$RELEASE" check-published "$ANDROID" "$IOS" <<<"$updates"
     [ "$status" -eq 1 ] || { echo "accepted $updates"; false; }
     [[ "$stderr" == *"did not report exactly one"* ]] || false
+  done
+}
+
+SIGNER=fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
+
+# Prints what `apksigner verify --print-certs` prints for an APK signed by keys with these SHA-256 digests.
+print_certs() {
+  local digest n=0
+  for digest; do
+    n=$((n + 1))
+    printf 'Signer #%d certificate DN: CN=Android Debug, OU=Android, O=Unknown, L=Unknown, ST=Unknown, C=US\n' "$n"
+    printf 'Signer #%d certificate SHA-256 digest: %s\n' "$n" "$digest"
+    printf 'Signer #%d certificate SHA-1 digest: 5e8f16062ea3cd2c4a0d547876baa6f38cabf625\n' "$n"
+  done
+}
+
+@test "an APK that embeds the computed fingerprint and is signed by the shared debug key passes" {
+  run --separate-stderr "$RELEASE" check-apk "$ANDROID" "$ANDROID" <<<"$(print_certs "$SIGNER")"
+
+  [ "$status" -eq 0 ]
+}
+
+@test "an APK with another or no embedded fingerprint, or another, a second or no signer, fails" {
+  local embedded
+  for embedded in "$CHANGED" ''; do
+    run --separate-stderr "$RELEASE" check-apk "$ANDROID" "$embedded" <<<"$(print_certs "$SIGNER")"
+    [ "$status" -eq 1 ] || { echo "accepted '$embedded'"; false; }
+    [[ "$stderr" == *"the APK embeds the fingerprint '$embedded', but the computed one is '$ANDROID'"* ]] || false
+  done
+
+  local signers
+  for signers in "$CHANGED$CHANGED" "$SIGNER $CHANGED$CHANGED" ''; do
+    # shellcheck disable=SC2086
+    run --separate-stderr "$RELEASE" check-apk "$ANDROID" "$ANDROID" <<<"$(print_certs $signers)"
+    [ "$status" -eq 1 ] || { echo "accepted '$signers'"; false; }
+    [[ "$stderr" == *"not the shared debug key $SIGNER"* ]] || false
+  done
+}
+
+@test "the new app-version.json gives the build's version, fingerprints and APK, and keeps the old minimum" {
+  local url=https://github.com/$REPOSITORY/releases/download/snunow/app/26.11.13-1/snunow-app-26.11.13-1.apk
+  serve_app_version 1.0.0 "$ANDROID" "$IOS"
+  jq '.minimum = "0.9.0"' "$BATS_TEST_TMPDIR/app-version.json" >"$BATS_TEST_TMPDIR/old.json"
+
+  run --separate-stderr "$RELEASE" app-version-json 1.0.1 "$CHANGED" "$IOS" "$url" "$BATS_TEST_TMPDIR/old.json"
+
+  [ "$status" -eq 0 ]
+  jq --exit-status --arg android "$CHANGED" --arg ios "$IOS" --arg url "$url" '. == {latest: "1.0.1",
+    minimum: "0.9.0", fingerprint: {android: $android, ios: $ios}, download: {android: $url, ios: null}}' \
+    <<<"$output"
+  # The app and the Release workflow read it back.
+  printf '%s' "$output" >"$BATS_TEST_TMPDIR/new.json"
+  run --separate-stderr "$RELEASE" app-decision "$CHANGED" "$IOS" 1.0.1 "$BATS_TEST_TMPDIR/new.json"
+  [ "$output" = publish ]
+}
+
+@test "a new app-version.json fails without a readable old file, or with a malformed version, fingerprint or address" {
+  local url=https://example.com/app.apk old=$BATS_TEST_TMPDIR/app-version.json
+  run --separate-stderr "$RELEASE" app-version-json 1.0.1 "$ANDROID" "$IOS" "$url" "$old"
+  [ "$status" -eq 1 ]
+  [[ "$stderr" == *"$old is missing or unreadable"* ]] || false
+
+  printf '%s' '{"latest": "1.0.0"}' >"$old"
+  run --separate-stderr "$RELEASE" app-version-json 1.0.1 "$ANDROID" "$IOS" "$url" "$old"
+  [ "$status" -eq 1 ]
+  [ "$output" = '' ]
+
+  serve_app_version 1.0.0 "$ANDROID" "$IOS"
+  local case version android ios address
+  # Each: the version, the Android and iOS fingerprints, and the APK's address; _ stands for an empty one.
+  for case in "1.0 $ANDROID $IOS $url" "1.0.1 _ $IOS $url" "1.0.1 $ANDROID _ $url" "1.0.1 $ANDROID $IOS _" \
+    "1.0.1 $ANDROID $IOS http://example.com/app.apk"; do
+    read -r version android ios address <<<"$case"
+    android=${android#_} ios=${ios#_} address=${address#_}
+    run --separate-stderr "$RELEASE" app-version-json "$version" "$android" "$ios" "$address" "$old"
+    [ "$status" -eq 1 ] || { echo "accepted $case"; false; }
+    [ "$output" = '' ]
+    [[ "$stderr" == *"needs version as x.y.z"* ]] || false
   done
 }
 

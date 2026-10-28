@@ -612,8 +612,8 @@ It then computes the app's Android and iOS fingerprints and compares them with `
 ([`version` and `app-version.json`](#version-and-app-versionjson)):
 
 - Both equal the latest native build's: it publishes.
-- One differs and `version` in `mobile/app.json` is above the file's `latest`: it publishes, and the run's summary says
-  that a new APK and iOS build are needed. Until that native Release, no installed app takes the update.
+- One differs and `version` in `mobile/app.json` is above the file's `latest`: it builds and releases the APK first
+  ([Releasing it](#releasing-it)), then publishes. Until the iOS build is made by hand, no iPhone takes the update.
 - One differs and `version` is not above `latest`: it fails before publishing. Raise `version` and make a native
   Release ([Releasing it](#releasing-it)).
 - The file cannot be downloaded or read: it fails.
@@ -621,8 +621,9 @@ It then computes the app's Android and iOS fingerprints and compares them with `
 After publishing, it checks that EAS Update published each platform under the fingerprint it computed, and fails if
 not.
 
-It takes the build settings ([Its settings](#its-settings)) only from these repository variables, and the
-Organization's developer robot token from the repository secret `EXPO_TOKEN`:
+It takes the build settings ([Its settings](#its-settings)) only from these repository variables, the
+Organization's developer robot token from the repository secret `EXPO_TOKEN`, and, for an APK, the Kakao key from the
+repository secret `KAKAO_NATIVE_APP_KEY`. It alone has `contents: write`, to create Releases and upload their assets.
 
 | Repository variable                    | Build setting                      |
 | -------------------------------------- | ---------------------------------- |
@@ -678,13 +679,15 @@ is placed only on a node with room for its request, and a container that goes ov
 
 ## The Production APK
 
-A native build, made by hand as the [dev APK](../deploy/README.md#adding-an-apk) is and signed with the shared debug
-key. Most changes reach phones without one, as an update the app downloads from EAS Update; a native build is needed
-only when the native part changes: a native dependency, a config plugin, or `app.json`.
+A native build, signed with the shared debug key. Most changes reach phones without one, as an update the app
+downloads from EAS Update; a native build is needed only when the native part changes: a native dependency, a config
+plugin, or `app.json`. The Release workflow builds it ([Releasing it](#releasing-it)); it is built by hand, as the
+[dev APK](../deploy/README.md#adding-an-apk) is, only when CI cannot. iOS is always built by hand, by the Mac owner.
 
 ### Its settings
 
-`mobile/.env` holds these when the APK is built:
+`mobile/.env` holds these when the APK is built by hand; the Release workflow takes them from the repository
+([The app's bundle](#the-apps-bundle)):
 
 ```text
 EXPO_PUBLIC_MAIN_SERVER_URL=https://api.snunow.com
@@ -743,21 +746,38 @@ That was done once. A native Release replaces the file with `gh release upload a
 
 ### Releasing it
 
-Tag the commit it was built from as `snunow/app/YY.MM.DD-N`, where N is the app's order that day, and attach the
-APK, named after the tag with `/` as `-`, to a GitHub release page for that tag. Then replace `app-version.json`:
+Raise `version` in `mobile/app.json` with the native change. CI's `app-fingerprint` job runs the Release workflow's
+decision on every push: it fails when the native part changed and `version` did not, and passes with a notice when
+`version` was raised. Then tag the commit as an `app` Release, `snunow/app/YY.MM.DD-N`, where N is the app's order
+that day; an `all` Release does the same.
+
+Its `release app` job finds that the fingerprint changed and `version` was raised, and before publishing the bundle:
+
+1. builds the APK as the hand build does (`CI=1 pnpm expo prebuild --platform android --no-install`, then
+   `./gradlew assembleRelease` with JDK 21 and the runner's Android SDK), with the build settings from the repository
+   variables and the Kakao key from the repository secret `KAKAO_NATIVE_APP_KEY`;
+2. checks that the APK embeds the computed Android fingerprint (`assets/fingerprint`) and is signed by the shared debug
+   key (SHA-256 `fac61745…3b9c`), so that it installs over the builds on phones;
+3. attaches it, named after the tag with `/` as `-`, to the tag's GitHub Release, creating the Release if there is
+   none;
+4. replaces `app-version.json` with the new `version` as `latest`, the old `minimum`, both fingerprints, and the APK's
+   address.
+
+A failed step stops the job, and nothing after it happens. The run's summary gives the APK's address. Testers open the
+release page in a phone's browser and install the APK from it; an older build offers it at its next start, once
+GitHub serves the new `app-version.json`, a few minutes later. The iOS build for the same commit is still made by
+hand.
+
+When CI cannot build, the job fails and publishes nothing. Build the APK by hand from the tagged commit with the
+settings above, attach it, and replace `app-version.json` written as the job would; then run the Release workflow
+again by hand on the tag, which now finds the native part built and publishes the bundle:
 
 ```bash
-git tag snunow/app/26.11.13-1 <commit>
-git push origin snunow/app/26.11.13-1
 cp mobile/android/app/build/outputs/apk/release/app-release.apk snunow-app-26.11.13-1.apk
 gh release create snunow/app/26.11.13-1 snunow-app-26.11.13-1.apk --verify-tag \
   --title snunow/app/26.11.13-1 --notes 'The app for Production, at https://api.snunow.com.'
 gh release upload app-version app-version.json --clobber
 ```
-
-The tag is also an `app` Release, so the Release workflow publishes the commit's bundle to the new build's
-fingerprint. Pushed before `app-version.json` is replaced, it publishes with the notice that a new build is needed;
-after, it publishes plainly. Testers open the release page in a phone's browser and install the APK from it.
 
 ### Publishing an update by hand
 

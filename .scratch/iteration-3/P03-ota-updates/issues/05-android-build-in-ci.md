@@ -16,7 +16,7 @@ written, not at release time.
 
 ## Acceptance criteria
 
-- [ ] On `publish-needs-build`, the `release app` job:
+- [x] On `publish-needs-build`, the `release app` job:
   - builds the APK with prebuild and `assembleRelease` (JDK 21, the runner's Android SDK, the repository variables,
     the secret `KAKAO_NATIVE_APP_KEY`);
   - checks that the embedded `assets/fingerprint` equals the computed Android fingerprint and that the signer is
@@ -26,14 +26,14 @@ written, not at release time.
   - publishes the bundle last.
 
   When a step fails, nothing after it happens.
-- [ ] A pure `release.sh` function writes the new `app-version.json`, and `release.bats` tests it.
-- [ ] Only the `release app` job gets `contents: write`.
-- [ ] A CI job runs on every push and computes both fingerprints with the build settings. It runs the same decision
+- [x] A pure `release.sh` function writes the new `app-version.json`, and `release.bats` tests it.
+- [x] Only the `release app` job gets `contents: write`.
+- [x] A CI job runs on every push and computes both fingerprints with the build settings. It runs the same decision
   against `app-version.json`:
   - fail when the native part changed and `version` did not;
   - pass with a notice when `version` was raised;
   - pass when nothing native changed.
-- [ ] `infra/production/README.md` describes the automatic Android build, what a person still does (iOS, by hand),
+- [x] `infra/production/README.md` describes the automatic Android build, what a person still does (iOS, by hand),
   and the new CI check. § The Production APK says the hand build is now only for when CI cannot build.
 - [ ] Checked on a real native Release after ticket 04. That Release raises `version` to `1.0.1` and adds the
   fingerprint's comment stripping that was put off in #128. Its tag builds the APK in CI, and `app-version.json`
