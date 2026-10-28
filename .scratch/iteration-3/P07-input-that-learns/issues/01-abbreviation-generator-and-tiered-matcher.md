@@ -54,3 +54,7 @@ Tests: `test/abbreviations.unit.test.ts` and `test/place-matcher.unit.test.ts` (
 
 - Agent time: about 25 minutes (estimate), one session in its worktree, no subagents.
 - Tokens (estimate): about 7.6M input, of which about 7.3M cache reads, 309k cache writes and 870 uncached, and about 116k output. With cache reads excluded, about 426k.
+
+### For the team to decide
+
+- **수의대 misses 수의과대학** (live run of 2026-10-29, ticket 05, Comments). The generated tier answers 수의대 with the two Places whose names start with it, 수의대부속동물병원 (80동) and 수의대시약보관창고 (85-1동), and never 수의과대학 (85동), so the right Place is not among the chips and cannot be taught by a tap. 생과대 → 생활과학대학 and 농생대 → 농업생명과학대학 work, so the gap is the form X과대학 → X대 (수의과대학 → 수의대, 자연과학대학 → 자연대, 사회과학대학 → 사회대). A rule for it is small; run `pnpm eval:replay --development` before and after, since the development gold holds those words. 경영대 (SK경영관, LG경영관) and 대운동장 (종합운동장) stay `none` for the rules and can only come from the curated groups or from learned aliases, which ticket 03 says they cannot be taught either.
