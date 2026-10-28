@@ -48,3 +48,6 @@ Pushing `snunow/all/…` deploys the five servers and then, once every server ha
 - **Rollback.** Running `-1` again by hand with `gh workflow run release.yml --ref snunow/app/26.10.28-1` (run 40632312598) succeeded, and the phone went back to `-1`.
 - **Who pushed.** A person pushed the tags and started the manual run. The agent's permission rules treat them as a Production deploy.
 - **Known display issue.** When the server job is skipped, GitHub shows its name unexpanded, as `release ${{ matrix.server }}`. GitHub never expands a matrix it does not run. It does no harm.
+- **After the review fixes, `snunow/app/26.10.28-3` on f1c559b** (run 40633762156) succeeded.
+  - The ordering step found that the latest update was of ff70930, and that this commit is ahead of it, so it published.
+  - The check after publishing found the published runtime versions equal to the computed fingerprints: android `d0581b58…` and ios `ffd1bd8f…`.
