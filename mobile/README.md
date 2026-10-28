@@ -608,6 +608,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     the Assistant works. The reply is shown whole. Each message sends the latest 20 messages of the conversation
     (`askAssistant`, `messagesToSend`), the Assistant's with the cards they showed, and fewer while they hold more
     than 24,000 characters.
+  - When the Assistant asks which Place, Friend or event the User means, its candidates (`choices`) are chips under
+    its bubble while it is the last bubble, one row for each kind (`chat-choices.tsx`). A chip sends its label as the
+    User's message with the candidate it chose (`choose`, `chosen`), which that message keeps in later requests.
+    Anything the User sends takes the chips away. A reply without `choices`, from an older server, draws none.
   - A failure is the Assistant's bubble, and is left out of what the next message sends. When the server cannot
     answer, it says "지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요" with "다시 시도", while it is the last bubble,
     which sends the User's message again in its place. Once the User's messages of the day are used up (429), it says
