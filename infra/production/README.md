@@ -839,8 +839,21 @@ CI=1 pnpm expo prebuild --platform ios
 open ios/*.xcworkspace
 ```
 
-`prebuild` generates the iOS project in `ios/` and installs its pods; `CI=1` keeps it from asking questions. Then, in
-Xcode:
+The checkout must sit at a path without spaces: expo-constants' "Generate app.config" build phase fails on one, and a
+symlink does not help, since Xcode resolves it.
+
+`prebuild` generates the iOS project in `ios/` and installs its pods; `CI=1` keeps it from asking questions. Before
+building, tell Xcode which Node to use. Its "Generate updates resources" phase runs `node` from `PATH` to read the app's
+configuration, and Xcode's `PATH` usually lacks Homebrew. When that fails, the phase only logs `Cannot get Expo
+config…`, and the build succeeds with a fingerprint computed without the configuration. One build embedded `6d3e9ef3…`
+instead of `ffd1bd8f…` this way, and took no update. In `mobile/ios/.xcode.env.local`, with the path of your Node 24:
+
+```bash
+export PATH=/opt/homebrew/opt/node@24/bin:$PATH
+export NODE_BINARY=/opt/homebrew/opt/node@24/bin/node
+```
+
+Then, in Xcode:
 
 1. Under the target's **Signing & Capabilities**, choose a team. A free Apple ID's Personal Team works.
 2. Under **Product > Scheme > Edit Scheme… > Run > Build Configuration**, choose **Release**. `expo-updates` is off in
@@ -874,8 +887,9 @@ whoever maintains the Releases then writes the Mac build's hash into `fingerprin
 
 `fingerprint:generate` is a check made before building. The build computes its own fingerprint during an Xcode build
 phase, after `prebuild` has made `ios/`, and the real proof is an update arriving. If the hashes match but no update
-arrives, compare the fingerprint the built app carries: in Xcode, **Product > Show Build Folder in Finder**, open the
-`.app` with **Show Package Contents**, and look for the `fingerprint` file, which may sit inside `EXUpdates.bundle`.
+arrives, compare the fingerprint the built app carries, in `SNUNow.app/EXUpdates.bundle/fingerprint`: in Xcode,
+**Product > Show Build Folder in Finder**, then open the `.app` with **Show Package Contents**. A different hash there
+usually means the Node problem above.
 
 On iOS, 업데이트가 필요합니다 has no 업데이트 하기, since `download.ios` is `null`: it only asks the User to install the
 new version.

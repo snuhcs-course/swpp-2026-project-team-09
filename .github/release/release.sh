@@ -319,7 +319,8 @@ fingerprint_and_decide() {
     ios=$(npx expo-updates fingerprint:generate --platform ios | jq -er .hash) &&
     version=$(jq -er .expo.version app.json) || return 1
   echo "app: version $version, fingerprints android $android, ios $ios" >&2
-  curl --fail --silent --show-error --location --output "$file" "$url" || echo "app: $url could not be downloaded" >&2
+  # A transient GitHub error would turn CI red and, through the Release gate, block every Release: retry it.
+  curl --fail --silent --show-error --location --retry 3 --retry-all-errors --output "$file" "$url" || echo "app: $url could not be downloaded" >&2
   verdict=$(app_decision "$android" "$ios" "$version" "$file" "$check") || return 1
   printf 'android=%s\nios=%s\nversion=%s\nverdict=%s\n' "$android" "$ios" "$version" "$verdict"
 }
