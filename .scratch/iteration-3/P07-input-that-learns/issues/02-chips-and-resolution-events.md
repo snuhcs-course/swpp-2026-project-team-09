@@ -55,3 +55,8 @@ Tests: `test/assistant-choices.integration.test.ts` (choices for Places, Friends
 - The mock answers a message with 학관 as a word (not inside 제1공학관) with the question and three Place choices (`place-63` 학생회관, `place-919` (관악사)학부 생활관, `place-300` 유회진 학술정보관, words 학관), and a message whose `chosen` id or text is one of them with tomorrow's lunch Proposal at that Place. 300 is not among the mocks' Places, so a Quest made from it in the mock has no Place.
 - Tests: `chat-choices.integration.test.tsx` (fake main server: chip rows per kind, a tap's request body, chips leaving after a tap or a typed message, a reply without `choices`), `chat-choices-mock.integration.test.tsx` (the mock's 학관 flow), `features/chat-messages.unit.test.ts`, `api/answers-assistant.unit.test.ts`. The mobile README's chat section describes the chips.
 - For the server half: a `chosen` comes back on its message in every later request of the conversation, so the server should write the `chosen` row only for the last message (or not twice for one choice).
+
+### Agent usage (2026-10-28)
+
+- Agent time: about 42 minutes (estimate), two Opus 5.5 sessions in their worktrees, the server half and the app half, plus about 21 minutes of the orchestrating Fable 5.1 session, which wrote the spec and tickets, reviewed, merged and tested the stack, split evenly over tickets 02 to 05.
+- Tokens (estimate): the building sessions about 28.4M input, of which about 27.9M cache reads, 538k cache writes and 298 uncached, and about 167k output; the orchestrating share about 10.1M input (9.9M cache reads, 132k cache writes) and 33k output. With cache reads excluded, about 870k in all.
