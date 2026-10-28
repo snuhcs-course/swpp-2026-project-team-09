@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -17,6 +18,7 @@ import { globalEventAnnouncersQuery, questsQuery } from '@/api/queries';
 import { now } from '@/clock';
 import { Button, color, font, Icon, space, useToast } from '@/design-system';
 import { type Chat, useChat } from '@/features/assistant/use-chat';
+import type { Suggestion } from '@/features/assistant/use-suggestion';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { holdProposal } from '@/features/party/held-proposal';
 import { isReady, type PartyForm, proposalForm } from '@/features/party/making';
@@ -30,6 +32,7 @@ import { type CardActions, ChatBubbles, ChatEmpty, type ProposalActions } from '
 import type { EventCardActions } from './chat-event-cards';
 import type { ProposalMaking } from './chat-proposal-card';
 import type { QuestCardActions } from './chat-quest-cards';
+import { type ChatFrom, SuggestionRow, useSuggestedSheet } from './chat-suggestion';
 
 interface ChatSheetProps {
   chat: Chat;
@@ -44,6 +47,8 @@ interface ChatSheetProps {
   onOpenPost: (questId: string) => void;
   // The Proposal card of an answer: 만들기, and how it stands.
   proposals: ProposalActions;
+  // The grey suggestion of the empty chat.
+  suggestion: Suggestion;
   // How high the AI input's top stands above the sheet's bottom: the input lies over it.
   inputTop: number;
 }
@@ -132,7 +137,7 @@ function useQuestCards(onOpenPost: (questId: string) => void): {
 // no touch: on Android a JS responder around the conversation's scroll view takes the drag from it, and the
 // conversation stopped scrolling while the keyboard was down.
 export function ChatSheet(props: ChatSheetProps): ReactElement {
-  const { chat, inFront, onClose, onShowLayer, onOpenEvent, onOpenPost, proposals, inputTop } = props;
+  const { chat, inFront, onClose, onShowLayer, onOpenEvent, onOpenPost, proposals, suggestion, inputTop } = props;
   const { top } = useSafeAreaInsets();
   useBackToClose(inFront, onClose);
   const eventCards = useEventCards(onOpenEvent);
@@ -148,7 +153,7 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
     <View style={[styles.sheet, { top: -top }]} testID="chat-sheet">
       <ChatHeader onClose={onClose} onReset={reset} />
       {bubbles.length === 0 && !waiting ? (
-        <ChatEmpty onSend={send} under={under} />
+        <ChatEmpty onSend={send} suggestion={<SuggestionRow suggestion={suggestion} />} under={under} />
       ) : (
         <ChatBubbles
           bubbles={bubbles}
@@ -191,8 +196,9 @@ function openProposalForm(proposal: QuestProposal, made: () => void, close: () =
 // Proposal is made once: its card then says so, and a second press while it is on its way does nothing. The state
 // lives with the conversation, so that closing the sheet keeps it.
 // A Quest made in the form 수정 opens counts as made here too, so that the card does not make it again; coming back
-// without making leaves the card as it was.
-function useProposalMaking(close: () => void): ProposalActions {
+// without making leaves the card as it was. `onMade` closes the sheet once 만들기 made a Quest, told which and from
+// which card's bubble.
+function useProposalMaking(close: () => void, onMade: (bubbleId: number, questId: string) => void): ProposalActions {
   const sendParty = useSendParty(null);
   const showToast = useToast();
   const announcers = useQuery(globalEventAnnouncersQuery).data;
@@ -223,7 +229,7 @@ function useProposalMaking(close: () => void): ProposalActions {
         return;
       }
       mark(bubbleId, 'made');
-      close();
+      onMade(bubbleId, sent.questId);
       if (sent.sent === 'room') {
         router.navigate(`/room/${sent.questId}`);
       } else {
@@ -281,6 +287,8 @@ export interface ChatSheetControl {
   chat: Chat;
   shown: boolean;
   open: () => void;
+  // The AI input's placeholder: the suggestion's text while one is held.
+  placeholder: string | undefined;
   // The sheet while it is open, under an AI input whose top stands that high above the sheet's bottom.
   sheet: (inputTop: number) => ReactElement | null;
 }
@@ -288,24 +296,19 @@ export interface ChatSheetControl {
 // The chat's sheet and how to open it. The conversation is kept while the sheet is closed. A map button closes the
 // sheet and turns its layer on with `turnOn`, the map's own layers; an event card closes it and opens the 행사 tab at
 // the event, as the room's event does; a Quest card closes it and opens the post, as 찾기's card does; a Proposal,
-// once made, closes it and shows 내 파티, as the party form does, and its 수정 closes it and opens that form. However
-// the sheet closes, the keyboard goes down with it: the AI input would keep the focus otherwise.
-export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void): ChatSheetControl {
+// once made, closes it and shows 내 파티, as the party form does, and its 수정 closes it and opens that form. Opening
+// on the empty chat asks for a grey suggestion (`useSuggestedSheet`).
+export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void, from: ChatFrom): ChatSheetControl {
   const chat = useChat();
   const [shown, setShown] = useState(false);
-  const open = useCallback((): void => {
-    setShown(true);
-  }, []);
-  const close = useCallback((): void => {
-    Keyboard.dismiss();
-    setShown(false);
-  }, []);
+  const { suggestion, open, close, closeMade } = useSuggestedSheet(chat, from, setShown);
   const { showLayer, openEvent, openQuestPost } = useLeaving(close, turnOn);
-  const proposals = useProposalMaking(close);
+  const proposals = useProposalMaking(close, closeMade);
   return {
     chat,
     shown,
     open,
+    placeholder: suggestion.held?.text,
     sheet: (inputTop) =>
       shown ? (
         <ChatSheet
@@ -317,6 +320,7 @@ export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void
           onOpenPost={openQuestPost}
           onShowLayer={showLayer}
           proposals={proposals}
+          suggestion={suggestion}
         />
       ) : null,
   };

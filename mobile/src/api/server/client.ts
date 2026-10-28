@@ -7,6 +7,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -42,6 +43,7 @@ import { eventClient } from './event-client';
 import { call } from './http';
 import { partyClient } from './party-client';
 import { roomClient } from './room-client';
+import { suggestionClient } from './suggestion-client';
 
 // The operations the main server serves on its main line, each from its route. What it does not serve stays the
 // mock's: the Friends' statuses, who announced the Global Events, and 오늘의 발자국 (todo.md, section 3).
@@ -51,6 +53,7 @@ export const serverClient: ApiClient = {
   ...partyClient,
   ...eventClient,
   ...assistantClient,
+  ...suggestionClient,
   // The main server stores four of the answers. The course level and the gender have no place there, so the phone
   // keeps them with the rest, once the main server has saved its part.
   completeOnboarding: async (answers: OnboardingAnswers) => {

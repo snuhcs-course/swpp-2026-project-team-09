@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -48,6 +49,9 @@ export interface Chat {
   retry: () => void;
   // 새 대화: forgets the conversation, and a reply still on its way.
   reset: () => void;
+  // Shows a Proposal that no request asked for, a suggestion's, as the Assistant's, and gives its bubble's id. Nothing
+  // is sent now; the bubble goes with the next request as any other.
+  propose: (text: string, proposal: QuestProposal) => number;
 }
 
 export const CHAT_FAILED = '지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요';
@@ -102,7 +106,7 @@ interface Bubbles {
   // What was said, as the next request sends it, without waiting for a render.
   said: { readonly current: readonly ChatBubble[] };
   show: (next: readonly ChatBubble[]) => void;
-  add: (bubble: NewBubble) => void;
+  add: (bubble: NewBubble) => number;
 }
 
 function useBubbles(): Bubbles {
@@ -114,9 +118,10 @@ function useBubbles(): Bubbles {
     setBubbles(next);
   }, []);
   const add = useCallback(
-    (bubble: NewBubble): void => {
+    (bubble: NewBubble): number => {
       nextId.current += 1;
       show([...said.current, { ...bubble, id: nextId.current }]);
+      return nextId.current;
     },
     [show],
   );
@@ -165,5 +170,11 @@ export function useChat(): Chat {
     setWaiting(false);
   }, [show]);
 
-  return { bubbles, waiting, send, retry, reset };
+  const propose = useCallback(
+    (text: string, proposal: QuestProposal): number =>
+      add({ role: 'assistant', text, cards: [], mapButtons: [], proposal, failure: null }),
+    [add],
+  );
+
+  return { bubbles, waiting, send, retry, reset, propose };
 }

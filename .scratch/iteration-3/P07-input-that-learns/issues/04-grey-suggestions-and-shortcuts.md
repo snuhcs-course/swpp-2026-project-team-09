@@ -25,3 +25,15 @@ App: the grey row in `ChatEmpty` (text, reason, ×), the tap into a Proposal bub
 - [ ] Tests as the spec's Testing Decisions for 04; README paragraph; `pnpm lint`, `pnpm typecheck` and the touched tests pass in both packages.
 
 ## Comments
+
+### Built (2026-10-28), app
+
+On `3.0/P07-04-app`, from `3.0/P07-01-abbreviation-matcher` at `2d8ec933`, against the spec's contract; the server half is a sibling branch.
+
+- Types in a new `mobile/src/api/suggestion-types.ts` (`ChatSuggestion`, `SuggestionAction`, `SuggestionContext`, `SuggestionOutcome`), not in `assistant-types.ts`, and the guards and client in a new `api/server/suggestion-client.ts`, so that the merge with ticket 02's app half touches fewer lines; `isQuestProposal` in `assistant-client.ts` is only exported. `ApiClient` gains `getChatSuggestion(context)` (unwraps `{ suggestion }`, sends `screen` and `openCard=globalEvent:<id>`) and `sendSuggestionOutcome(id, outcome)`. An action of an unknown type refuses the whole answer, so an older app shows no row.
+- The mock (`api/mock/suggestion.ts`) suggests "민준이랑 점심 어때요?" / "공강 시작 · 민준이도 공강", a closed lunch for two inviting 김민준 at the next quarter hour at least 15 minutes ahead (14:00 at the mocks' moment), and keeps the outcomes for the tests. The mocks have no 민수 and their first Friend, 강도윤, is in class, so it names the first free Friend instead of the spec's example.
+- `features/assistant/use-suggestion.ts`: asks once per opening of the sheet, only when the chat is empty; drops an answer that comes after the sheet closed; a failure or 404 is no row and no message. The suggestion shows (row and placeholder) only while the chat is empty, so it comes back after 새 대화 within the same opening; closing the sheet drops it. `use-chat.ts` gains `propose(text, proposal)`, which adds the Assistant's bubble ("이렇게 만들어 볼까요?") with no request.
+- `screens/main/chat-suggestion.tsx`: the grey row (text, reason, ×), the sheet's open and close with the suggestion (moved out of `chat-sheet.tsx`, which is at its 300-line limit), and the route action: closes the sheet, finds the Place in the places list and calls the map's `routeTo`, or says 길을 찾지 못했어요. `main-screen.tsx` passes the open Global Event card's id and `route.routeTo` down through `MapBottom`; `MainMapView` now takes `room` so that `MainScreen` stays under 50 lines.
+- `confirmed` is sent when the card's 만들기 made the Quest (also when it lands in the room after a failed step). Left out: a Quest made through 수정 and the party form sends no `confirmed`, since the form does not hand the Quest's id back.
+- After a tap on a Proposal suggestion the conversation starts with an Assistant message; the server's schema allows it.
+- Tests: `__tests__/api/answers-suggestion.unit.test.ts` (guards), `__tests__/api/server-suggestion.integration.test.ts` (query, null, 404, outcome bodies against the fake server), `__tests__/chat-suggestion.integration.test.tsx` (mock client: row, placeholder, once per opening, the open event card, ×, tap into a Proposal bubble with no model call, `confirmed` with the Quest, route, none and failure).
