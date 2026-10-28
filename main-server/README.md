@@ -1878,6 +1878,34 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 - **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
   call, tool call and answer within the limits per message. `causeOf` names why a run failed for the log.
 
+**Grey suggestions** (`src/assistant/suggestions/`) are decided by this server without the model, when the chat opens.
+`GET /assistant/suggestion?screen=main|events|party&openCard=globalEvent:<id>` answers
+`200 { "suggestion": { "id", "text", "reason", "action" } }` or `{ "suggestion": null }`, never cached, where `action` is
+`{ "type": "proposal", "proposal": { … } }` with a Proposal as above, or `{ "type": "route", "placeId", "name" }`; a
+query of another shape gets 400. Four templates apply by rules read in Korea time from the timetables, a User being
+free when no class of theirs covers now: `lunch_with_free_friend` (from 11:00 to 14:00, the User free and a Friend
+whose friendship shares at both ends free with a class today: a Closed Proposal for two inviting the first such Friend
+of the list, at the next quarter hour at least 15 minutes ahead), `route_to_next_class` (on `main`, the next class
+today starts within 60 minutes and has a Place), `party_for_open_event` (the open card is a published event that has
+not ended: an Open Proposal for three on the show Board, starting with it) and `repeat_last` (two or more Quests the
+User led in the last 14 days at one Place in one meal slot, 아침 before 10:30, 점심 to 14:30, 저녁 from 16:00, none
+made from a suggestion: the last one again at its time today or tomorrow). Each Proposal goes through `proposeQuest`
+with the template's ids as if a resolver had returned them, so one the chat would refuse is never shown. The score is
+the template's weight × its acceptance `(accepted + 1) / (shown + 2)` over all Users' impressions of the last 30 days in
+the bucket of the time of day (05–11, 11–14, 14–18, 18–05) × `1 + 0.5 × min(repeats, 4)` for `repeat_last`. A
+suggestion shows from 0.25, 0.35 for one that names a Friend, and none shows for 2 hours after a dismissal, for 6 after
+the second of a day in Korea, and for the rest of the day after the third. The top score shows 9 times in 10, else one
+of those over their threshold drawn uniformly (`SUGGESTION_RANDOM` binds the random source), and the probability the
+shown one had is written as its propensity. `ASSISTANT_SUGGESTION_HOLDBACK_PERCENT` (10) of accounts, chosen by the
+SHA-256 of the User's id, read acceptance as 0.5 and no repeats. The numbers sit in `suggestions/constants.ts`, each
+with its reason. `suggestion_impressions` holds one row for each suggestion shown, without its text: the template, the
+eligible templates best first, the bucket, the propensity, `holdback`, `shown_at` and the outcome, `shown` until
+`POST /assistant/suggestions/:id/outcome` with `{ "outcome": "accepted" | "dismissed" }`, or
+`{ "outcome": "confirmed", "questId" }` once 만들기 made the Proposal's Quest, answers 204 and records it with
+`outcome_at`. The same outcome again changes nothing; another User's suggestion gets 404 `SUGGESTION_NOT_FOUND`, and an
+outcome that would replace a later one 409 `SUGGESTION_OUTCOME_SETTLED`. An ignored suggestion is a row still `shown`
+10 minutes on, read when the rows are analysed. The rows go with the account.
+
 ### Testing with the scripted model
 
 The tests never call a real model. `test/scripted-model.ts` stands for it: a `ScriptedModel` whose `model` goes to
