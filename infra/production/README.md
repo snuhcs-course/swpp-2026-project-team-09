@@ -516,19 +516,21 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
 A Release is a tag named `snunow/<target>/YY.MM.DD-N` on a reviewed commit of the iteration branch. Pushing it starts
 the Release workflow, which deploys the target at that commit.
 
-| Target          | What it deploys                |
-| --------------- | ------------------------------ |
-| `main-server`   | The main server                |
-| `socket-server` | The socket server              |
-| `worker-server` | The worker server              |
-| `match-server`  | The match server               |
-| `admin`         | The admin site                 |
-| `all`           | All five, at the tagged commit |
+| Target          | What it deploys                                               |
+| --------------- | ------------------------------------------------------------- |
+| `main-server`   | The main server                                               |
+| `socket-server` | The socket server                                             |
+| `worker-server` | The worker server                                             |
+| `match-server`  | The match server                                              |
+| `admin`         | The admin site                                                |
+| `app`           | The app's bundle, published to EAS Update                     |
+| `all`           | The five servers, then the app's bundle, at the tagged commit |
 
 `all` is for the first deploy, for a change that spans servers, and for rolling a changed setting or secret value to
-every server. `YY.MM.DD` is the day in Korea, and `N` is the target's order that day, from 1, so
-`snunow/main-server/26.11.13-1` and `snunow/all/26.11.13-1` can share a day. A name that does not match, such as
-`snunow/web/26.11.13-1` or `snunow/main-server/26.11.13`, fails the run at its first step.
+every server. `app` is for a change to the app alone ([The app's bundle](#the-apps-bundle)). `YY.MM.DD` is the day in
+Korea, and `N` is the target's order that day, from 1, so `snunow/main-server/26.11.13-1` and `snunow/all/26.11.13-1`
+can share a day. A name that does not match, such as `snunow/web/26.11.13-1` or `snunow/main-server/26.11.13`, fails the
+run at its first step.
 
 ```bash
 git fetch origin
@@ -562,9 +564,13 @@ The run appears in the repository's **Actions** tab under the Release workflow, 
 4. A job for each server it deploys applies the server's target and waits until its Deployment has rolled out. A
    Deployment that does not become ready fails the run. The main and socket servers and the admin site keep their old
    pods serving then; the worker and match servers, which use `Recreate`, stay down until a working Release.
+5. For `app` and `all`, the `release app` job publishes the bundle ([The app's bundle](#the-apps-bundle)). For `all`
+   it starts only once every server job has succeeded, so a new bundle never calls a server that is not there yet; a
+   failed or cancelled server job skips it.
 
-A newer Release of a server cancels that server's running one, and Releases of different servers deploy at once. In
-the cluster, `kubectl --namespace snunow rollout status deployment/<server>` follows a rollout, and
+A newer Release of a server cancels that server's running one, a newer `app` or `all` Release cancels the app's job, and
+Releases of different servers deploy at once. In the cluster,
+`kubectl --namespace snunow rollout status deployment/<server>` follows a rollout, and
 `kubectl --namespace snunow get pods` shows the pods.
 
 ### Fixing a bad Release, and deploying an earlier one again
@@ -573,7 +579,10 @@ A bad Release is fixed with a new Release of a fixed commit.
 
 In an emergency, an earlier Release is deployed again from the **Actions** tab: open the Release workflow, choose
 **Run workflow**, pick the earlier Release's tag under **Use workflow from**, and run it. It deploys that tag's target
-at the tag's commit, and puts back that commit's shared part, so its Ingresses and Redis come back too.
+at the tag's commit, and puts back that commit's shared part, so its Ingresses and Redis come back too. For an `app`
+tag, or an `all` tag, it publishes that commit's bundle again as the newest update, which phones take at their next
+starts. A tag from before the latest native build fails the fingerprint check, since no installed build would take
+its bundle.
 
 Never deploy again across a migration. Migrations only move forward, so a server older than the database's schema may
 fail. To see whether Releases since the earlier one brought a migration:
@@ -583,6 +592,34 @@ git diff --stat <earlier tag> <current tag> -- main-server/prisma/migrations mat
 ```
 
 If any did, fix with a new Release instead.
+
+### The app's bundle
+
+The `release app` job publishes the tagged commit's JavaScript bundle for Android and iOS to the `production` channel
+of EAS Update, with the tag as its message and in `EXPO_PUBLIC_RELEASE_TAG`, and the commit in
+`EXPO_PUBLIC_RELEASE_COMMIT`. After the same CI gate as the servers, it computes the app's Android and iOS fingerprints
+and compares them with `app-version.json` ([`version` and `app-version.json`](#version-and-app-versionjson)):
+
+- Both equal the latest native build's: it publishes.
+- One differs and `version` in `mobile/app.json` is above the file's `latest`: it publishes, and the run's summary says
+  that a new APK and iOS build are needed. Until that native Release, no installed app takes the update.
+- One differs and `version` is not above `latest`: it fails before publishing. Raise `version` and make a native
+  Release ([Releasing it](#releasing-it)).
+- The file cannot be downloaded or read: it fails.
+
+It takes the build settings ([Its settings](#its-settings)) only from these repository variables, and the
+Organization's developer robot token from the repository secret `EXPO_TOKEN`:
+
+| Repository variable                    | Build setting                      |
+| -------------------------------------- | ---------------------------------- |
+| `PRODUCTION_APP_MAIN_SERVER_URL`       | `EXPO_PUBLIC_MAIN_SERVER_URL`      |
+| `PRODUCTION_APP_SOCKET_SERVER_URL`     | `EXPO_PUBLIC_SOCKET_SERVER_URL`    |
+| `PRODUCTION_APP_GOOGLE_WEB_CLIENT_ID`  | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` |
+| `PRODUCTION_APP_GOOGLE_IOS_CLIENT_ID`  | `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` |
+| `PRODUCTION_APP_GOOGLE_IOS_URL_SCHEME` | `GOOGLE_IOS_URL_SCHEME`            |
+| `PRODUCTION_APP_INVITE_LINK_HOST`      | `INVITE_LINK_HOST`                 |
+
+Each must equal the native build's value: a different one changes the fingerprint or points the bundle elsewhere.
 
 ### Rotating a secret
 
@@ -700,14 +737,15 @@ gh release create snunow/app/26.11.13-1 snunow-app-26.11.13-1.apk --verify-tag \
 gh release upload app-version app-version.json --clobber
 ```
 
-An app tag deploys nothing: the Release workflow does not run for it, and it is not a Release. Testers open the release
-page in a phone's browser and install the APK from it.
+The tag is also an `app` Release, so the Release workflow publishes the commit's bundle to the new build's
+fingerprint. Pushed before `app-version.json` is replaced, it publishes with the notice that a new build is needed;
+after, it publishes plainly. Testers open the release page in a phone's browser and install the APK from it.
 
 ### Publishing an update by hand
 
-Until the Release workflow publishes updates, one is published from `mobile/` with the settings above, the update's
-own tag and commit in the two `EXPO_PUBLIC_RELEASE_*` values, and the Organization's developer robot token as
-`EXPO_TOKEN`:
+Only when the Release workflow cannot, such as while EAS or GitHub Actions is down, an update is published from
+`mobile/` with the settings above, the update's own tag and commit in the two `EXPO_PUBLIC_RELEASE_*` values, and the
+Organization's developer robot token as `EXPO_TOKEN`:
 
 ```bash
 eas update --channel production --environment production --platform all --message snunow/app/26.11.14-1

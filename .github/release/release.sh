@@ -3,32 +3,92 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-10-28  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Release workflow's steps (.github/workflows/release.yml), one command each. The functions under Deciding take
-# plain inputs and print a verdict; those under Doing call gh, aws, docker, kustomize, and kubectl.
+# plain inputs and print a verdict; those under Doing call gh, aws, docker, kustomize, and kubectl. The app's job calls
+# its tools from the workflow itself, and only its decision is here.
 
 readonly SERVERS=(main-server socket-server worker-server match-server admin)
 readonly PARAMETER_PATH=/snunow/production
 readonly NAMESPACE=snunow
 REPOSITORY_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 readonly REPOSITORY_ROOT
-readonly TARGETS='main-server|socket-server|worker-server|match-server|admin|all'
+readonly TARGETS='main-server|socket-server|worker-server|match-server|admin|app|all'
 readonly RELEASE_REF="^refs/tags/snunow/($TARGETS)/[0-9]{2}\\.(0[1-9]|1[0-2])\\.(0[1-9]|[12][0-9]|3[01])-[1-9][0-9]*\$"
 
 # --- Deciding -----------------------------------------------------------------------------------------------------
 
-# Prints the job outputs for a Release's ref: the servers it deploys, as a JSON array, and the images' Release tag.
+# Prints the job outputs for a Release's ref: the servers it deploys, as a JSON array, whether it publishes the app's
+# bundle, and the images' Release tag. `all` is the five servers and the app; `app` deploys no server.
 check_name() {
-  local ref=$1 servers
+  local ref=$1 servers=() app=false
   if [[ ! "$ref" =~ $RELEASE_REF ]]; then
     echo "name: $ref is not a Release tag (refs/tags/snunow/<target>/YY.MM.DD-N)" >&2
     return 1
   fi
-  if [[ "${BASH_REMATCH[1]}" == all ]]; then servers=("${SERVERS[@]}"); else servers=("${BASH_REMATCH[1]}"); fi
+  case ${BASH_REMATCH[1]} in
+    all) servers=("${SERVERS[@]}") app=true ;;
+    app) app=true ;;
+    *) servers=("${BASH_REMATCH[1]}") ;;
+  esac
   local name=${ref#refs/tags/snunow/}
   echo "servers=$(jq --compact-output --null-input '$ARGS.positional' --args "${servers[@]}")"
+  echo "app=$app"
   echo "image-tag=${name//\//-}"
+}
+
+# Whether version $1 is lower than, equal to, or higher than $2, as -1, 0, or 1. Both are x.y.z.
+compare_versions() {
+  local a b i
+  IFS=. read -r -a a <<<"$1"
+  IFS=. read -r -a b <<<"$2"
+  for i in 0 1 2; do
+    if ((10#${a[i]} < 10#${b[i]})); then
+      echo -1
+      return
+    elif ((10#${a[i]} > 10#${b[i]})); then
+      echo 1
+      return
+    fi
+  done
+  echo 0
+}
+
+# Prints publish or new-build, given the app's Android and iOS fingerprints, its `version`, and the path of
+# app-version.json, which describes the latest native build. An update reaches only the builds whose fingerprint is its
+# own: when the native part changed, it goes out only with a raised `version`, for the native build that is still to be
+# made (new-build). Otherwise it fails. The reason goes to stderr, the verdict alone to stdout.
+app_decision() {
+  local android=$1 ios=$2 version=$3 file=$4 latest built_android built_ios
+  local semver='^[0-9]+\.[0-9]+\.[0-9]+$'
+  if ! latest=$(jq -er '.latest | strings' "$file" 2>/dev/null) ||
+    ! built_android=$(jq -er '.fingerprint.android | strings' "$file" 2>/dev/null) ||
+    ! built_ios=$(jq -er '.fingerprint.ios | strings' "$file" 2>/dev/null) || [[ ! "$latest" =~ $semver ]]; then
+    echo "app: $file is missing or unreadable; it must give latest as x.y.z and fingerprint.android and .ios" >&2
+    return 1
+  fi
+  if [[ ! "$version" =~ $semver || -z "$android" || -z "$ios" ]]; then
+    echo "app: the app's version ($version) must be x.y.z, and both fingerprints must be given" >&2
+    return 1
+  fi
+  if [[ "$android" == "$built_android" && "$ios" == "$built_ios" ]]; then
+    echo "app: the native part is the latest native build's ($latest)" >&2
+    echo publish
+    return
+  fi
+  case $(compare_versions "$version" "$latest") in
+    1)
+      echo "app: the native part changed and version $version is above the latest native build's $latest" >&2
+      echo new-build
+      ;;
+    *)
+      echo "app: the native part changed since the latest native build ($latest), but version is $version; raise" \
+        "version in mobile/app.json and make a native Release" >&2
+      return 1
+      ;;
+  esac
 }
 
 # Prints `name<TAB>status<TAB>conclusion` for each job of a CI run, given the run's status and GitHub's jobs answer on
@@ -276,6 +336,7 @@ main() {
   trap 'rm -rf "$work"' EXIT
   case $command in
     check-name) check_name "$@" ;;
+    app-decision) app_decision "$@" ;;
     gate) gate "$@" ;;
     write-secrets) write_secrets "$@" ;;
     push-image) push_image "$@" ;;

@@ -2,11 +2,12 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-10-28  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
-# Deploys a Release to Production: a pushed tag snunow/<target>/YY.MM.DD-N deploys its target, one server or all five,
-# at the tag's commit once CI has passed on it. Run by hand on a Release's tag, it deploys that Release again. The
-# steps' logic is in .github/release/release.sh.
+# Deploys a Release to Production: a pushed tag snunow/<target>/YY.MM.DD-N deploys its target at the tag's commit once
+# CI has passed on it: one server, the app's bundle to EAS Update, or all five servers and then the app. Run by hand on
+# a Release's tag, it deploys that Release again. The steps' logic is in .github/release/release.sh.
 name: Release
 run-name: ${{ github.ref_name }}
 
@@ -14,8 +15,6 @@ on:
   push:
     tags:
       - snunow/**
-      # Production APKs, which are released by hand.
-      - '!snunow/app/**'
   workflow_dispatch:
 
 permissions:
@@ -34,6 +33,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       servers: ${{ steps.check.outputs.servers }}
+      app: ${{ steps.check.outputs.app }}
       image-tag: ${{ steps.check.outputs.image-tag }}
     steps:
       - uses: actions/checkout@v7
@@ -46,6 +46,7 @@ jobs:
   release:
     name: release ${{ matrix.server }}
     needs: name
+    if: needs.name.outputs.servers != '[]'
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 90
     strategy:
@@ -104,3 +105,79 @@ jobs:
           .github/release/release.sh deploy "$REGISTRY" "$SERVER" "$COMMIT"
       - name: Delete the settings and secrets no pod uses
         run: .github/release/release.sh clean
+
+  # Publishes the commit's JavaScript bundle to EAS Update for Android and iOS. For `all` it starts only once every
+  # server has rolled out, so that a bundle never calls a server that is not there yet; a failed or cancelled server
+  # job stops it. Every build setting comes from a repository variable and must equal the native build's (see
+  # infra/production/README.md § The Production APK): some are baked into the bundle, others change the fingerprint.
+  app:
+    name: release app
+    needs: [name, release]
+    if: >-
+      !cancelled() && needs.name.result == 'success' && needs.name.outputs.app == 'true' &&
+      (needs.release.result == 'success' || needs.release.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    concurrency:
+      group: release-app
+      cancel-in-progress: true
+    env:
+      EXPO_PUBLIC_MAIN_SERVER_URL: ${{ vars.PRODUCTION_APP_MAIN_SERVER_URL }}
+      EXPO_PUBLIC_SOCKET_SERVER_URL: ${{ vars.PRODUCTION_APP_SOCKET_SERVER_URL }}
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ vars.PRODUCTION_APP_GOOGLE_WEB_CLIENT_ID }}
+      EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: ${{ vars.PRODUCTION_APP_GOOGLE_IOS_CLIENT_ID }}
+      GOOGLE_IOS_URL_SCHEME: ${{ vars.PRODUCTION_APP_GOOGLE_IOS_URL_SCHEME }}
+      INVITE_LINK_HOST: ${{ vars.PRODUCTION_APP_INVITE_LINK_HOST }}
+      APP_VERSION_URL: https://github.com/${{ github.repository }}/releases/download/app-version/app-version.json
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: echo "COMMIT=$(git rev-parse HEAD)" >>"$GITHUB_ENV"
+      - name: Wait for CI on the commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/release/release.sh gate "$GITHUB_REPOSITORY" "$COMMIT" "$GITHUB_REF_NAME"
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          working-directory: mobile
+          node-version-file: ../.nvmrc
+          cache: true
+          require-lockfile: true
+      # An empty variable would give another fingerprint, or a bundle that calls nowhere.
+      - name: Check the build settings
+        run: |
+          for name in EXPO_PUBLIC_MAIN_SERVER_URL EXPO_PUBLIC_SOCKET_SERVER_URL EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID \
+            EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID GOOGLE_IOS_URL_SCHEME INVITE_LINK_HOST; do
+            [[ -n "${!name}" ]] || { echo "app: the repository variable for $name is not set" >&2 && exit 1; }
+          done
+      # The fingerprint is the app's runtime version, which EAS Update gives to installed apps only when it is their own.
+      - name: Decide whether the bundle fits the latest native build
+        working-directory: mobile
+        run: |
+          android=$(npx expo-updates fingerprint:generate --platform android | jq -er .hash)
+          ios=$(npx expo-updates fingerprint:generate --platform ios | jq -er .hash)
+          version=$(jq -r .expo.version app.json)
+          echo "app: version $version, fingerprints android $android, ios $ios"
+          curl --fail --silent --show-error --location --output "$RUNNER_TEMP/app-version.json" "$APP_VERSION_URL" ||
+            echo "app: $APP_VERSION_URL could not be downloaded"
+          verdict=$(../.github/release/release.sh app-decision "$android" "$ios" "$version" \
+            "$RUNNER_TEMP/app-version.json")
+          if [[ "$verdict" == new-build ]]; then
+            echo "::notice::A new APK and iOS build are needed: the app's native part changed, and version is $version."
+            {
+              echo "### A new APK and iOS build are needed"
+              echo
+              echo "The app's native part changed since the latest native build, and \`version\` is $version. This"
+              echo "update reaches only a native build of this commit's native part: make a native Release"
+              echo "(infra/production/README.md § The Production APK)."
+            } >>"$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Publish the bundle
+        working-directory: mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PUBLIC_RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          EXPO_PUBLIC_RELEASE_COMMIT=$COMMIT npx --yes eas-cli@26.0.0 update --channel production \
+            --environment production --platform all --non-interactive --message "$GITHUB_REF_NAME"

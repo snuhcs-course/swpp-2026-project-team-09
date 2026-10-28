@@ -3,10 +3,15 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-10-28  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
-# The Release workflow's script, through its commands: the name check, the gate with gh faked on PATH, the secrets
-# files, and the choice of generated objects to delete.
+# The Release workflow's script, through its commands: the name check, the gate with gh faked on PATH, the app's
+# publish decision, the secrets files, and the choice of generated objects to delete.
+
+# The app's decision tests read $stderr, which bats's `run --separate-stderr` sets.
+# shellcheck disable=SC2154
+bats_require_minimum_version 1.5.0
 
 REPOSITORY=snuhcs-course/swpp-2026-project-team-09
 COMMIT=6b1f0c2a9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a
@@ -72,28 +77,107 @@ polls() {
   cat "$FAKE_GITHUB/poll"
 }
 
-@test "the name check accepts a server's tag and an all tag, and gives the servers and the image tag" {
+@test "the name check accepts a server's tag, an app tag and an all tag, and gives the servers, the app and the image tag" {
   run "$RELEASE" check-name refs/tags/snunow/main-server/26.11.13-1
   [ "$status" -eq 0 ]
-  [ "$output" = $'servers=["main-server"]\nimage-tag=main-server-26.11.13-1' ]
+  [ "$output" = $'servers=["main-server"]\napp=false\nimage-tag=main-server-26.11.13-1' ]
+
+  run "$RELEASE" check-name refs/tags/snunow/app/26.11.13-2
+  [ "$status" -eq 0 ]
+  [ "$output" = $'servers=[]\napp=true\nimage-tag=app-26.11.13-2' ]
 
   run "$RELEASE" check-name refs/tags/snunow/all/26.11.13-12
   [ "$status" -eq 0 ]
-  [ "$output" = $'servers=["main-server","socket-server","worker-server","match-server","admin"]\nimage-tag=all-26.11.13-12' ]
+  [ "$output" = $'servers=["main-server","socket-server","worker-server","match-server","admin"]\napp=true\nimage-tag=all-26.11.13-12' ]
 }
 
-@test "the name check refuses every other name, a branch and an app tag among them" {
+@test "the name check refuses every other name, a branch among them" {
   local ref
   for ref in refs/tags/snunow/web/26.11.13-1 refs/tags/snunow/main-server/26.13.01-1 \
     refs/tags/snunow/main-server/26.11.32-1 refs/tags/snunow/main-server/26.11.13-0 \
     refs/tags/snunow/main-server/26.11.13 refs/tags/snunow-26.11.13-1 refs/tags/snunow/main-server/26.00.13-1 \
     refs/tags/snunow/main-server/26.11.00-1 refs/tags/snunow/main-server/2026.11.13-1 \
-    refs/tags/snunow/main-server/26.11.13-01 refs/tags/snunow/app/26.11.13-1 refs/heads/snunow/main-server/26.11.13-1 \
-    refs/heads/2.0/Main refs/tags/snunow/main-server/26.11.13-1/x; do
+    refs/tags/snunow/main-server/26.11.13-01 refs/tags/snunow/apps/26.11.13-1 refs/tags/app-version \
+    refs/heads/snunow/main-server/26.11.13-1 refs/heads/snunow/app/26.11.13-1 refs/heads/2.0/Main \
+    refs/tags/snunow/main-server/26.11.13-1/x; do
     run "$RELEASE" check-name "$ref"
     [ "$status" -eq 1 ] || { echo "accepted $ref"; false; }
     [[ "$output" == *"$ref"* ]] || false
   done
+}
+
+ANDROID=d0581b58754328418c26d9e11c074416dd5767dd
+IOS=ffd1bd8fa94e7c53c2109b8a357959d60e817ece
+CHANGED=5e2a9c0b7d4f1e3a8c6b9d2e0f1a3b5c7d9e8f6a
+
+# Writes app-version.json for a native build of this version with these Android and iOS fingerprints.
+serve_app_version() {
+  jq --null-input --arg latest "$1" --arg android "$2" --arg ios "$3" '{latest: $latest, minimum: "1.0.0",
+    fingerprint: {android: $android, ios: $ios}, download: {android: "https://example.com/app.apk", ios: null}}' \
+    >"$BATS_TEST_TMPDIR/app-version.json"
+}
+
+@test "the app's update is published when both fingerprints are the latest native build's" {
+  serve_app_version 1.0.0 "$ANDROID" "$IOS"
+
+  run --separate-stderr "$RELEASE" app-decision "$ANDROID" "$IOS" 1.0.0 "$BATS_TEST_TMPDIR/app-version.json"
+
+  [ "$status" -eq 0 ]
+  [ "$output" = publish ]
+}
+
+@test "a changed native part with an unchanged or lower version fails, saying to raise version and make a native Release" {
+  local case latest version android ios
+  # Each: the latest native build's version, the app's version, and its Android and iOS fingerprints.
+  for case in "1.0.0 1.0.0 $CHANGED $IOS" "1.0.0 1.0.0 $ANDROID $CHANGED" "1.0.10 1.0.9 $CHANGED $CHANGED" \
+    "2.0.0 1.9.9 $CHANGED $IOS"; do
+    read -r latest version android ios <<<"$case"
+    serve_app_version "$latest" "$ANDROID" "$IOS"
+
+    run --separate-stderr "$RELEASE" app-decision "$android" "$ios" "$version" "$BATS_TEST_TMPDIR/app-version.json"
+
+    [ "$status" -eq 1 ] || { echo "accepted $case"; false; }
+    [ "$output" = '' ]
+    [[ "$stderr" == *"raise version in mobile/app.json and make a native Release"* ]] || false
+  done
+}
+
+@test "a changed native part with a raised version is published, saying a new native build is needed" {
+  local case latest version android ios
+  for case in "1.0.0 1.0.1 $CHANGED $IOS" "1.0.0 1.1.0 $ANDROID $CHANGED" "1.9.9 2.0.0 $CHANGED $CHANGED" \
+    "1.0.9 1.0.10 $CHANGED $IOS"; do
+    read -r latest version android ios <<<"$case"
+    serve_app_version "$latest" "$ANDROID" "$IOS"
+
+    run --separate-stderr "$RELEASE" app-decision "$android" "$ios" "$version" "$BATS_TEST_TMPDIR/app-version.json"
+
+    [ "$status" -eq 0 ] || { echo "refused $case"; false; }
+    [ "$output" = new-build ]
+    [[ "$stderr" == *"native part changed and version $version is above"* ]] || false
+  done
+}
+
+@test "a missing, empty or unreadable app-version.json, or a malformed version, fails" {
+  local file=$BATS_TEST_TMPDIR/app-version.json
+  run --separate-stderr "$RELEASE" app-decision "$ANDROID" "$IOS" 1.0.0 "$file"
+  [ "$status" -eq 1 ]
+  [[ "$stderr" == *"$file is missing or unreadable"* ]] || false
+
+  local content
+  for content in '' '<!DOCTYPE html><title>Not Found</title>' '{"latest": "1.0.0"}' \
+    '{"latest": "1.0", "fingerprint": {"android": "a", "ios": "b"}}' \
+    '{"latest": 1, "fingerprint": {"android": "a", "ios": "b"}}' '{"latest": "1.0.0", "fingerprint": {"android": "a"}}'; do
+    printf '%s' "$content" >"$file"
+    run --separate-stderr "$RELEASE" app-decision a b 1.0.0 "$file"
+    [ "$status" -eq 1 ] || { echo "accepted $content"; false; }
+    [ "$output" = '' ]
+    [[ "$stderr" == *"is missing or unreadable"* ]] || false
+  done
+
+  serve_app_version 1.0.0 "$ANDROID" "$IOS"
+  run --separate-stderr "$RELEASE" app-decision "$ANDROID" "$IOS" 1.0 "$file"
+  [ "$status" -eq 1 ]
+  [[ "$stderr" == *"version (1.0) must be x.y.z"* ]] || false
 }
 
 @test "the gate goes on once every CI job of the commit has passed, and only reads CI's runs and their jobs" {
