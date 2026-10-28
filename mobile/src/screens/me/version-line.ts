@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-27  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import Constants from 'expo-constants';
@@ -29,7 +30,9 @@ export function versionLine({ version, tag, commit, dev }: Build): string {
   return short === '' ? `${app} · 업데이트 ${tag}` : `${app} · 업데이트 ${tag} (${short})`;
 }
 
-// This build's line. The tag and commit are baked into the JavaScript when a Release publishes it or a native build
+// This build's line. `version` is read from the running JavaScript's configuration, not from the native build: the
+// two agree, because `version` is part of the fingerprint, so an update made with another `version` never reaches
+// this build. The tag and commit are baked into the JavaScript when a Release publishes it or a native build
 // is made; each variable is read by its full name, because the bundler replaces only those.
 export function thisVersionLine(): string {
   return versionLine({

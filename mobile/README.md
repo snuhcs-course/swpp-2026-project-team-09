@@ -26,7 +26,9 @@ Add packages with `pnpm expo install <package>`, not `pnpm add`. It picks the ve
 ### Development settings
 
 A setting is an `EXPO_PUBLIC_` variable given when the app is started, for example
-`EXPO_PUBLIC_MOCK_FAIL=listFriends pnpm start`. A released app ignores all of them.
+`EXPO_PUBLIC_MOCK_FAIL=listFriends pnpm start`. A released app ignores all of them. The build settings of a released
+app, such as `EXPO_PUBLIC_RELEASE_TAG`, are not development settings: they are listed in
+[the Production APK](../infra/production/README.md#the-production-apk).
 
 | Variable                     | Value                                                 | What it does                                        |
 | ---------------------------- | ----------------------------------------------------- | --------------------------------------------------- |
