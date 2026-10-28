@@ -582,7 +582,9 @@ In an emergency, an earlier Release is deployed again from the **Actions** tab: 
 at the tag's commit, and puts back that commit's shared part, so its Ingresses and Redis come back too. For an `app`
 tag, or an `all` tag, it publishes that commit's bundle again as the newest update, which phones take at their next
 starts. Such a rollback works only within the current native build: a tag from before the latest native Release
-fails the fingerprint check by design, since no installed build would take its bundle.
+fails the fingerprint check by design, since no installed build would take its bundle. A rollback holds until the next
+publish: if an `all` Release pushed earlier finishes its servers afterwards and its commit is newer than the rolled-back
+one, its bundle goes out over the rollback. Run the rollback again by hand if that happens.
 
 Never deploy again across a migration. Migrations only move forward, so a server older than the database's schema may
 fail. To see whether Releases since the earlier one brought a migration:
@@ -601,6 +603,10 @@ of EAS Update, with the tag as its message and in `EXPO_PUBLIC_RELEASE_TAG`, and
 on the `production` branch. When the Release came from a pushed tag and its commit is older than that one, as when an
 older `all` Release's server jobs finished after a newer Release, it does not publish: the job succeeds, and its
 summary says so. A run by hand is a deliberate rollback and always publishes.
+
+One app job runs at a time, and a newer one waits instead of cancelling the running one, since an `all` Release's app
+job starts only when its servers finish. GitHub keeps one waiting job per group: a third that arrives replaces the
+waiting one, which ends as cancelled. If a Release's app job was cancelled that way, run its tag again by hand.
 
 It then computes the app's Android and iOS fingerprints and compares them with `app-version.json`
 ([`version` and `app-version.json`](#version-and-app-versionjson)):
