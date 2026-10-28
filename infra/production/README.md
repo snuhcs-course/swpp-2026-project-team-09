@@ -822,6 +822,9 @@ is not available to a free team, stop and report it.
 A free account's build stops opening 7 days after it was signed; build and install it again then. A free account also
 installs at most 3 apps of its own on a device.
 
+Without an iPhone, a Release build for the simulator needs no team and has no 7-day limit: choose a simulator in step 3
+and skip step 1.
+
 ### The iOS fingerprint
 
 CI computes the iOS fingerprint on Linux, and the Mac build must have the same one. On the Mac, from `mobile/`, with
@@ -836,6 +839,11 @@ curl -sL https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/dow
 The hash the second line prints must equal `fingerprint.ios` in the file the third prints. If it differs, report it:
 whoever maintains the Releases then writes the Mac build's hash into `fingerprint.ios` and replaces the file with
 `gh release upload app-version app-version.json --clobber`.
+
+`fingerprint:generate` is a check made before building. The build computes its own fingerprint during an Xcode build
+phase, after `prebuild` has made `ios/`, and the real proof is an update arriving. If the hashes match but no update
+arrives, compare the fingerprint the built app carries: in Xcode, **Product > Show Build Folder in Finder**, open the
+`.app` with **Show Package Contents**, and look for the `fingerprint` file, which may sit inside `EXUpdates.bundle`.
 
 On iOS, 업데이트가 필요합니다 has no 업데이트 하기, since `download.ios` is `null`: it only asks the User to install the
 new version.
