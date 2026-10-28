@@ -38,6 +38,7 @@ import {
 import { isMenus } from './menu-answers';
 import { isShuttleRoute, isShuttleVehicles } from './shuttle-answers';
 import { isFriendRequests, isJoinRequests, isQuestInvitations } from './waiting-answers';
+import { aliasClient } from './alias-client';
 import { assistantClient } from './assistant-client';
 import { eventClient } from './event-client';
 import { call } from './http';
@@ -54,6 +55,7 @@ export const serverClient: ApiClient = {
   ...eventClient,
   ...assistantClient,
   ...suggestionClient,
+  ...aliasClient,
   // The main server stores four of the answers. The course level and the gender have no place there, so the phone
   // keeps them with the rest, once the main server has saved its part.
   completeOnboarding: async (answers: OnboardingAnswers) => {

@@ -16,6 +16,7 @@ import { ApiError } from '@/api/errors';
 import type { OnboardingAnswers, Profile } from '@/api/types';
 import { CAMPUS_BOUNDS, isInside } from '@/map/campus';
 import { keep, readKept } from '@/storage/kept';
+import { mockAliases } from './aliases';
 import { answer } from './answer';
 import { mockAssistantReply } from './assistant';
 import { FOOTPRINTS } from './data/footprints';
@@ -158,4 +159,5 @@ export const mockClient: ApiClient = {
   ...mockParty,
   ...mockEvents,
   ...mockSuggestion,
+  ...mockAliases,
 };
