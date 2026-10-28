@@ -60,3 +60,8 @@ On `3.0/P07-04-app`, from `3.0/P07-01-abbreviation-matcher` at `2d8ec933`, again
 - `confirmed` is sent when the card's 만들기 made the Quest (also when it lands in the room after a failed step). Left out: a Quest made through 수정 and the party form sends no `confirmed`, since the form does not hand the Quest's id back.
 - After a tap on a Proposal suggestion the conversation starts with an Assistant message; the server's schema allows it.
 - Tests: `__tests__/api/answers-suggestion.unit.test.ts` (guards), `__tests__/api/server-suggestion.integration.test.ts` (query, null, 404, outcome bodies against the fake server), `__tests__/chat-suggestion.integration.test.tsx` (mock client: row, placeholder, once per opening, the open event card, ×, tap into a Proposal bubble with no model call, `confirmed` with the Quest, route, none and failure).
+
+### Agent usage (2026-10-28)
+
+- Agent time: about 79 minutes (estimate), two Opus 5.5 sessions in their worktrees, the server half and the app half, plus about 21 minutes of the orchestrating Fable 5.1 session, which wrote the spec and tickets, reviewed, merged and tested the stack, split evenly over tickets 02 to 05.
+- Tokens (estimate): the building sessions about 46.6M input, of which about 46.0M cache reads, 655k cache writes and 408 uncached, and about 273k output; the orchestrating share about 10.1M input (9.9M cache reads, 132k cache writes) and 33k output. With cache reads excluded, about 1.1M in all.
