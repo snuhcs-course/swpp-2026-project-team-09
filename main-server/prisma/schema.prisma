@@ -649,7 +649,7 @@ model ResolutionEvent {
   // The id the User chose, or rejected.
   chosenId     String?                @map("chosen_id") @db.Uuid
   outcome      ResolutionOutcome
-  createdAt    DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdAt    DateTime               @default(now()) @map("created_at")
 
   @@index([userId, createdAt])
   @@index([kind, words, createdAt])

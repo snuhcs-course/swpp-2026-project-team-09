@@ -26,7 +26,7 @@ CREATE TABLE "resolution_events" (
     "candidate_ids" UUID[],
     "chosen_id" UUID,
     "outcome" "resolution_outcome" NOT NULL,
-    "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "resolution_events_pkey" PRIMARY KEY ("id"),
     CONSTRAINT "resolution_events_words_check" CHECK (char_length("words") <= 50),
