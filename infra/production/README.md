@@ -710,8 +710,11 @@ own tag and commit in the two `EXPO_PUBLIC_RELEASE_*` values, and the Organizati
 `EXPO_TOKEN`:
 
 ```bash
-eas update --channel production --platform all --message snunow/app/26.11.14-1
+eas update --channel production --environment production --platform all --message snunow/app/26.11.14-1
 ```
+
+`--environment` is required in a non-interactive run since eas-cli 26. The project keeps no variables on EAS, so it
+adds nothing, and the settings come from `mobile/.env`.
 
 An installed app downloads it the next time it starts and runs it from the start after that.
 
