@@ -8,7 +8,7 @@
 
 # The Release workflow's steps (.github/workflows/release.yml), one command each. The functions under Deciding take
 # plain inputs and print a verdict; those under Doing call gh, aws, docker, kustomize, and kubectl. The app's job calls
-# its tools from the workflow itself, and only its decision is here.
+# its tools from the workflow itself, and only its decisions and its check of the published updates are here.
 
 readonly SERVERS=(main-server socket-server worker-server match-server admin)
 readonly PARAMETER_PATH=/snunow/production
@@ -56,10 +56,10 @@ compare_versions() {
   echo 0
 }
 
-# Prints publish or new-build, given the app's Android and iOS fingerprints, its `version`, and the path of
+# Prints publish or publish-needs-build, given the app's Android and iOS fingerprints, its `version`, and the path of
 # app-version.json, which describes the latest native build. An update reaches only the builds whose fingerprint is its
 # own: when the native part changed, it goes out only with a raised `version`, for the native build that is still to be
-# made (new-build). Otherwise it fails. The reason goes to stderr, the verdict alone to stdout.
+# made (publish-needs-build). Otherwise it fails. The reason goes to stderr, the verdict alone to stdout.
 app_decision() {
   local android=$1 ios=$2 version=$3 file=$4 latest built_android built_ios
   local semver='^[0-9]+\.[0-9]+\.[0-9]+$'
@@ -81,7 +81,7 @@ app_decision() {
   case $(compare_versions "$version" "$latest") in
     1)
       echo "app: the native part changed and version $version is above the latest native build's $latest" >&2
-      echo new-build
+      echo publish-needs-build
       ;;
     *)
       echo "app: the native part changed since the latest native build ($latest), but version is $version; raise" \
@@ -89,6 +89,47 @@ app_decision() {
       return 1
       ;;
   esac
+}
+
+# Prints publish or skip, given the workflow's event and GitHub's comparison of the latest published update's commit
+# with this run's (behind, ahead, identical, diverged, or empty when there is none to compare). A pushed tag whose
+# commit is behind the published one is an older Release whose server jobs finished late: it skips, so as not to put an
+# older bundle over a newer one. A run by hand is a deliberate rollback and always publishes.
+app_order() {
+  local event=$1 status=$2
+  if [[ "$event" == push && "$status" == behind ]]; then
+    echo "app: a newer commit's bundle is already published; this older Release does not publish its own" >&2
+    echo skip
+    return
+  fi
+  case $event:$status in
+    push:) echo "app: no earlier update to compare with" >&2 ;;
+    push:*) echo "app: this commit is $status of the published update's" >&2 ;;
+    *) echo "app: a run by hand always publishes" >&2 ;;
+  esac
+  echo publish
+}
+
+# Checks the updates that `eas update --json` printed, given on stdin, against the Android and iOS fingerprints the
+# decision computed: each platform must have been published, under its fingerprint as its runtime version.
+check_published() {
+  local -A expected=([android]=$1 [ios]=$2)
+  local updates platform published
+  updates=$(cat)
+  for platform in android ios; do
+    if ! published=$(jq -er --arg platform "$platform" \
+      '[.[] | select(.platform == $platform) | .runtimeVersion] | if length == 1 then .[0] | strings else empty end' \
+      <<<"$updates" 2>/dev/null); then
+      echo "app: eas update did not report exactly one $platform update" >&2
+      return 1
+    fi
+    if [[ "$published" != "${expected[$platform]}" ]]; then
+      echo "app: the $platform update went out for runtime version $published, but its fingerprint is" \
+        "${expected[$platform]}" >&2
+      return 1
+    fi
+  done
+  echo "app: published for android $1 and ios $2" >&2
 }
 
 # Prints `name<TAB>status<TAB>conclusion` for each job of a CI run, given the run's status and GitHub's jobs answer on
@@ -337,6 +378,8 @@ main() {
   case $command in
     check-name) check_name "$@" ;;
     app-decision) app_decision "$@" ;;
+    app-order) app_order "$@" ;;
+    check-published) check_published "$@" ;;
     gate) gate "$@" ;;
     write-secrets) write_secrets "$@" ;;
     push-image) push_image "$@" ;;

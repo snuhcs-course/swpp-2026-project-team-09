@@ -7,7 +7,8 @@
 ################################################################################
 
 # The Release workflow's script, through its commands: the name check, the gate with gh faked on PATH, the app's
-# publish decision, the secrets files, and the choice of generated objects to delete.
+# publish decision, its ordering and its check of the published updates, the secrets files, and the choice of
+# generated objects to delete.
 
 # The app's decision tests read $stderr, which bats's `run --separate-stderr` sets.
 # shellcheck disable=SC2154
@@ -152,7 +153,7 @@ serve_app_version() {
     run --separate-stderr "$RELEASE" app-decision "$android" "$ios" "$version" "$BATS_TEST_TMPDIR/app-version.json"
 
     [ "$status" -eq 0 ] || { echo "refused $case"; false; }
-    [ "$output" = new-build ]
+    [ "$output" = publish-needs-build ]
     [[ "$stderr" == *"native part changed and version $version is above"* ]] || false
   done
 }
@@ -178,6 +179,60 @@ serve_app_version() {
   run --separate-stderr "$RELEASE" app-decision "$ANDROID" "$IOS" 1.0 "$file"
   [ "$status" -eq 1 ]
   [[ "$stderr" == *"version (1.0) must be x.y.z"* ]] || false
+}
+
+@test "a pushed Release whose commit is behind the published update's skips, and every other push publishes" {
+  run --separate-stderr "$RELEASE" app-order push behind
+  [ "$status" -eq 0 ]
+  [ "$output" = skip ]
+  [[ "$stderr" == *"a newer commit's bundle is already published"* ]] || false
+
+  local compared
+  # No earlier update, the same commit, a newer one, and one on another line of history.
+  for compared in '' identical ahead diverged; do
+    run --separate-stderr "$RELEASE" app-order push "$compared"
+    [ "$status" -eq 0 ] || { echo "failed on '$compared'"; false; }
+    [ "$output" = publish ] || { echo "skipped on '$compared'"; false; }
+  done
+}
+
+@test "a Release run by hand always publishes, even an older commit's" {
+  local compared
+  for compared in behind '' identical ahead diverged; do
+    run --separate-stderr "$RELEASE" app-order workflow_dispatch "$compared"
+    [ "$status" -eq 0 ]
+    [ "$output" = publish ] || { echo "skipped on '$compared'"; false; }
+    [[ "$stderr" == *"a run by hand always publishes"* ]] || false
+  done
+}
+
+# Prints what `eas update --json` prints for an Android and an iOS update with these runtime versions.
+published_updates() {
+  jq --null-input --compact-output --arg android "$1" --arg ios "$2" \
+    '[{platform: "android", runtimeVersion: $android, group: "g"}, {platform: "ios", runtimeVersion: $ios, group: "g"}]'
+}
+
+@test "the published updates pass when each platform's runtime version is its fingerprint" {
+  run --separate-stderr "$RELEASE" check-published "$ANDROID" "$IOS" <<<"$(published_updates "$ANDROID" "$IOS")"
+
+  [ "$status" -eq 0 ]
+}
+
+@test "the published updates fail when a runtime version is not its fingerprint, or a platform is missing" {
+  run --separate-stderr "$RELEASE" check-published "$ANDROID" "$IOS" <<<"$(published_updates "$ANDROID" "$CHANGED")"
+  [ "$status" -eq 1 ]
+  [[ "$stderr" == *"the ios update went out for runtime version $CHANGED, but its fingerprint is $IOS"* ]] || false
+
+  run --separate-stderr "$RELEASE" check-published "$ANDROID" "$IOS" <<<"$(published_updates "$IOS" "$IOS")"
+  [ "$status" -eq 1 ]
+  [[ "$stderr" == *"the android update went out"* ]] || false
+
+  local updates
+  for updates in '[]' '[{"platform": "android", "runtimeVersion": "'"$ANDROID"'"}]' 'Not JSON' ''; do
+    run --separate-stderr "$RELEASE" check-published "$ANDROID" "$IOS" <<<"$updates"
+    [ "$status" -eq 1 ] || { echo "accepted $updates"; false; }
+    [[ "$stderr" == *"did not report exactly one"* ]] || false
+  done
 }
 
 @test "the gate goes on once every CI job of the commit has passed, and only reads CI's runs and their jobs" {

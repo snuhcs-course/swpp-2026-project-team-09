@@ -20,7 +20,7 @@ Pushing `snunow/all/…` deploys the five servers and then, once every server ha
 - [x] The job sets every build setting from repository variables (the `EXPO_PUBLIC_*` values, `INVITE_LINK_HOST`, `GOOGLE_IOS_URL_SCHEME`; never `ANDROID_X86_64`). It computes the Android and iOS fingerprints with `expo-updates`' fingerprint command and reads `app-version.json` from the `app-version` Release. A pure `release.sh` function decides, and `release.bats` tests each case:
   - publish when the fingerprints match;
   - fail, saying to raise `version` and make a native Release, when a fingerprint differs and `version` is unchanged;
-  - publish with a "new APK and iOS build needed" notice in the job summary when both changed;
+  - publish with a "new APK and iOS build needed" notice in the job summary when a fingerprint changed and `version` was raised;
   - fail when the file is missing or unreadable.
 - [x] `eas update --channel production --platform all --non-interactive` publishes with the tag as its message, and `EXPO_PUBLIC_RELEASE_TAG` and `EXPO_PUBLIC_RELEASE_COMMIT` set.
 - [x] The repository secret `EXPO_TOKEN` (the developer robot token) and the variables for every build setting are set. The workflow reads these settings only from them.
@@ -42,7 +42,7 @@ Pushing `snunow/all/…` deploys the five servers and then, once every server ha
   - the server job was skipped;
   - CI computed the fingerprints android `d0581b58…` and ios `ffd1bd8f…`, both equal to `app-version.json`;
   - the verdict was publish, and both platforms were published.
-  
+
   On the 1.0.0 APK, 내 정보 showed the tag after the app was restarted.
 - **`snunow/app/26.10.28-2` on the same commit**, run 40631634399, succeeded. The phone showed `-2`.
 - **Rollback.** Running `-1` again by hand with `gh workflow run release.yml --ref snunow/app/26.10.28-1` (run 40632312598) succeeded, and the phone went back to `-1`.

@@ -581,8 +581,8 @@ In an emergency, an earlier Release is deployed again from the **Actions** tab: 
 **Run workflow**, pick the earlier Release's tag under **Use workflow from**, and run it. It deploys that tag's target
 at the tag's commit, and puts back that commit's shared part, so its Ingresses and Redis come back too. For an `app`
 tag, or an `all` tag, it publishes that commit's bundle again as the newest update, which phones take at their next
-starts. A tag from before the latest native build fails the fingerprint check, since no installed build would take
-its bundle.
+starts. Such a rollback works only within the current native build: a tag from before the latest native Release
+fails the fingerprint check by design, since no installed build would take its bundle.
 
 Never deploy again across a migration. Migrations only move forward, so a server older than the database's schema may
 fail. To see whether Releases since the earlier one brought a migration:
@@ -597,8 +597,13 @@ If any did, fix with a new Release instead.
 
 The `release app` job publishes the tagged commit's JavaScript bundle for Android and iOS to the `production` channel
 of EAS Update, with the tag as its message and in `EXPO_PUBLIC_RELEASE_TAG`, and the commit in
-`EXPO_PUBLIC_RELEASE_COMMIT`. After the same CI gate as the servers, it computes the app's Android and iOS fingerprints
-and compares them with `app-version.json` ([`version` and `app-version.json`](#version-and-app-versionjson)):
+`EXPO_PUBLIC_RELEASE_COMMIT`. After the same CI gate as the servers, it first looks up the commit of the latest update
+on the `production` branch. When the Release came from a pushed tag and its commit is older than that one, as when an
+older `all` Release's server jobs finished after a newer Release, it does not publish: the job succeeds, and its
+summary says so. A run by hand is a deliberate rollback and always publishes.
+
+It then computes the app's Android and iOS fingerprints and compares them with `app-version.json`
+([`version` and `app-version.json`](#version-and-app-versionjson)):
 
 - Both equal the latest native build's: it publishes.
 - One differs and `version` in `mobile/app.json` is above the file's `latest`: it publishes, and the run's summary says
@@ -606,6 +611,9 @@ and compares them with `app-version.json` ([`version` and `app-version.json`](#v
 - One differs and `version` is not above `latest`: it fails before publishing. Raise `version` and make a native
   Release ([Releasing it](#releasing-it)).
 - The file cannot be downloaded or read: it fails.
+
+After publishing, it checks that EAS Update published each platform under the fingerprint it computed, and fails if
+not.
 
 It takes the build settings ([Its settings](#its-settings)) only from these repository variables, and the
 Organization's developer robot token from the repository secret `EXPO_TOKEN`:
@@ -620,6 +628,10 @@ Organization's developer robot token from the repository secret `EXPO_TOKEN`:
 | `PRODUCTION_APP_INVITE_LINK_HOST`      | `INVITE_LINK_HOST`                 |
 
 Each must equal the native build's value: a different one changes the fingerprint or points the bundle elsewhere.
+
+The EAS project keeps no environment variables. `--environment production` is required since eas-cli 26 and would
+load any variables stored on EAS for that environment, so they must stay empty for the bundle to use only the
+repository variables.
 
 ### Rotating a secret
 

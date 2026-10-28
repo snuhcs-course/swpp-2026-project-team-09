@@ -151,19 +151,56 @@ jobs:
             EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID GOOGLE_IOS_URL_SCHEME INVITE_LINK_HOST; do
             [[ -n "${!name}" ]] || { echo "app: the repository variable for $name is not set" >&2 && exit 1; }
           done
+      # An older Release whose server jobs finished late must not put its bundle over a newer one. A run by hand is a
+      # rollback and always publishes.
+      - name: Check that no newer commit's bundle is published
+        id: order
+        working-directory: mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          group=$(npx --yes eas-cli@26.0.0 update:list --branch production --limit 1 --json --non-interactive |
+            jq -r '.currentPage[0].group // empty')
+          published='' compared=''
+          if [[ -n "$group" ]]; then
+            published=$(npx --yes eas-cli@26.0.0 update:view "$group" --json | jq -r '.[0].gitCommitHash // empty')
+          fi
+          if [[ -n "$published" ]]; then
+            echo "app: the latest update, group $group, is of commit $published"
+            compared=$(gh api "repos/$GITHUB_REPOSITORY/compare/$published...$COMMIT" --jq .status) || {
+              echo "::warning::The published update's commit $published could not be compared with $COMMIT."
+              compared=''
+            }
+          fi
+          order=$(../.github/release/release.sh app-order "$GITHUB_EVENT_NAME" "$compared")
+          echo "order=$order" >>"$GITHUB_OUTPUT"
+          if [[ "$order" == skip ]]; then
+            echo "::notice::Not published: the bundle of $published, newer than $COMMIT, is already published."
+            {
+              echo "### Not published"
+              echo
+              echo "The bundle of $published, a newer commit than this Release's $COMMIT, is already published. A"
+              echo "Release run by hand publishes regardless (infra/production/README.md § The app's bundle)."
+            } >>"$GITHUB_STEP_SUMMARY"
+          fi
       # The fingerprint is the app's runtime version, which EAS Update gives to installed apps only when it is their own.
       - name: Decide whether the bundle fits the latest native build
+        id: decision
+        if: steps.order.outputs.order == 'publish'
         working-directory: mobile
         run: |
           android=$(npx expo-updates fingerprint:generate --platform android | jq -er .hash)
           ios=$(npx expo-updates fingerprint:generate --platform ios | jq -er .hash)
           version=$(jq -r .expo.version app.json)
           echo "app: version $version, fingerprints android $android, ios $ios"
+          echo "android=$android" >>"$GITHUB_OUTPUT"
+          echo "ios=$ios" >>"$GITHUB_OUTPUT"
           curl --fail --silent --show-error --location --output "$RUNNER_TEMP/app-version.json" "$APP_VERSION_URL" ||
             echo "app: $APP_VERSION_URL could not be downloaded"
           verdict=$(../.github/release/release.sh app-decision "$android" "$ios" "$version" \
             "$RUNNER_TEMP/app-version.json")
-          if [[ "$verdict" == new-build ]]; then
+          if [[ "$verdict" == publish-needs-build ]]; then
             echo "::notice::A new APK and iOS build are needed: the app's native part changed, and version is $version."
             {
               echo "### A new APK and iOS build are needed"
@@ -173,11 +210,18 @@ jobs:
               echo "(infra/production/README.md § The Production APK)."
             } >>"$GITHUB_STEP_SUMMARY"
           fi
+      # `--json` prints the published updates to stdout and the progress to the log. Each platform's runtime version
+      # must be the fingerprint decided on above.
       - name: Publish the bundle
+        if: steps.order.outputs.order == 'publish'
         working-directory: mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_PUBLIC_RELEASE_TAG: ${{ github.ref_name }}
+          EXPO_PUBLIC_RELEASE_COMMIT: ${{ env.COMMIT }}
+          ANDROID: ${{ steps.decision.outputs.android }}
+          IOS: ${{ steps.decision.outputs.ios }}
         run: |
-          EXPO_PUBLIC_RELEASE_COMMIT=$COMMIT npx --yes eas-cli@26.0.0 update --channel production \
-            --environment production --platform all --non-interactive --message "$GITHUB_REF_NAME"
+          npx --yes eas-cli@26.0.0 update --channel production --environment production --platform all \
+            --non-interactive --message "$GITHUB_REF_NAME" --json | tee "$RUNNER_TEMP/updates.json"
+          ../.github/release/release.sh check-published "$ANDROID" "$IOS" <"$RUNNER_TEMP/updates.json"
