@@ -1877,7 +1877,8 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 
 The tests never call a real model. `test/scripted-model.ts` stands for it: a `ScriptedModel` whose `model` goes to
 `startApp` in the model port's place. Each call to the model takes the next step of its script, and every call is
-kept. A step is a tool to call with its arguments, `{ tool, input }`, the text to answer, `{ text }`, an error to throw
+kept. A step is a tool to call with its arguments, `{ tool, input }`, with `text` when the model wrote words beside the
+call, the text to answer, `{ text }`, an error to throw
 as the provider would, `{ error }`, or no answer until the time per message runs out, `{ stall: true }`. A call past
 the end of the script fails, and so does the model `startApp` binds by default, so a test that forgot a script cannot
 reach OpenRouter. `test/assistant.integration.test.ts` does it this way:

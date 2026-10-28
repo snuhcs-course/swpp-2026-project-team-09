@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-29  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
@@ -125,7 +126,7 @@ function lastShown(messages: readonly ChatMessage[]): SentProposal | null {
   return proposals.findLast((proposal) => proposal !== null) ?? null;
 }
 
-// Runs the feature on the conversation, the User's new message last, and answers with the model's last text and what
+// Runs the feature on the conversation, the User's new message last, and answers with the text of the model's steps and what
 // the presenters put beside it. It throws NoAnswerError when the steps ran out on tools, and the SDK's errors when the
 // model fails or the time runs out. An observer, if given, is told of each tool call and each step's end.
 export async function runFeature(
@@ -142,7 +143,7 @@ export async function runFeature(
     shown: lastShown(messages),
     presented: { mapButtons: [], cards: [], proposal: null },
   };
-  const { text, finishReason } = await generateText({
+  const { steps, finishReason } = await generateText({
     model,
     instructions: feature.instructions(asker.now),
     messages: messages.map((message) => ({ role: message.role, content: contentOf(message) })),
@@ -168,10 +169,18 @@ export async function runFeature(
             });
           },
   });
-  if (finishReason === 'tool-calls' || text.trim() === '') {
+  const text = textOf(steps);
+  if (finishReason === 'tool-calls' || text === '') {
     throw new NoAnswerError(`No answer within ${maxSteps} steps`);
   }
   return { text, ...context.presented };
+}
+
+// The model may write part of its answer beside a tool call and close with a line in its last step, or write nothing
+// there: the reply is every step's text in order, a step that repeats the one before it left out.
+function textOf(steps: readonly { text: string }[]): string {
+  const texts = steps.map((step) => step.text.trim()).filter((text) => text !== '');
+  return texts.filter((text, index) => index === 0 || text !== texts[index - 1]).join('\n\n');
 }
 
 // Why a run failed, for the server's log: the error's name and, from the model's provider, the HTTP status. Never an

@@ -3,13 +3,16 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-29  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { MockLanguageModelV4 } from 'ai/test';
 
-// One step of the model: a tool to call with its arguments, the text to answer, an error to throw as the provider
+// One step of the model: a tool to call with its arguments, with the text the model wrote beside the call when the test
+// needs it, the text to answer, an error to throw as the provider
 // would, or no answer until the call is aborted, as the provider's request is when the time runs out.
-export type Step = { tool: string; input: object } | { text: string } | { error: Error } | { stall: true };
+export type Step =
+  { tool: string; input: object; text?: string } | { text: string } | { error: Error } | { stall: true };
 
 type CallOptions = MockLanguageModelV4['doGenerateCalls'][number];
 type Result = Awaited<ReturnType<MockLanguageModelV4['doGenerate']>>;
@@ -19,8 +22,8 @@ const NO_USAGE: Result['usage'] = {
   outputTokens: { total: undefined, text: undefined, reasoning: undefined },
 };
 
-function resultOf(step: { tool: string; input: object } | { text: string }, index: number): Result {
-  if ('text' in step) {
+function resultOf(step: { tool: string; input: object; text?: string } | { text: string }, index: number): Result {
+  if (!('tool' in step)) {
     return {
       content: [{ type: 'text', text: step.text }],
       finishReason: { unified: 'stop', raw: undefined },
@@ -30,7 +33,13 @@ function resultOf(step: { tool: string; input: object } | { text: string }, inde
   }
   return {
     content: [
-      { type: 'tool-call', toolCallId: `call-${index}`, toolName: step.tool, input: JSON.stringify(step.input) },
+      ...(step.text === undefined ? [] : [{ type: 'text' as const, text: step.text }]),
+      {
+        type: 'tool-call' as const,
+        toolCallId: `call-${index}`,
+        toolName: step.tool,
+        input: JSON.stringify(step.input),
+      },
     ],
     finishReason: { unified: 'tool-calls', raw: undefined },
     usage: NO_USAGE,
