@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -107,7 +108,9 @@ describe('party_for_open_event', () => {
     clock.mockReturnValue(korea(day(12), '12:00'));
 
     await expect(suggestionFor(app, user, onEvent(started))).resolves.toBeNull();
-    await expect(prisma.suggestionImpression.count({ where: { userId: user.id } })).resolves.toBe(0);
+    await expect(prisma.suggestionImpression.findMany({ where: { userId: user.id } })).resolves.toEqual([
+      expect.objectContaining({ template: null, eligible: [], outcome: 'silent' }),
+    ]);
   });
 });
 

@@ -6,6 +6,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-26  Fable 5.1  prompted by fyoon46
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -45,6 +46,7 @@ import { type AssistantReplyDto, type SentMessage } from './dto/assistant-messag
 import { type Asker, type ChatMessage, type Feature } from './feature.js';
 import { koreaDate } from './korea-time.js';
 import { ResolutionEventsService } from './resolution-events.service.js';
+import { SuggestionsService } from './suggestions/suggestions.service.js';
 
 // The latest messages the model is given. Earlier ones are dropped, so that a long conversation does not make every
 // message cost more.
@@ -76,6 +78,7 @@ export class AssistantService {
     placeMatcher: PlaceMatcher,
     private readonly resolutionEvents: ResolutionEventsService,
     private readonly aliases: AliasesService,
+    private readonly suggestions: SuggestionsService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
@@ -119,6 +122,10 @@ export class AssistantService {
         this.observer,
       );
       const { text, mapButtons, cards, proposal, choices, resolvedBy } = reply;
+      if (proposal !== null) {
+        // A Proposal asked for in the chat may be one a grey suggestion would have made (suggestions.service.ts).
+        await this.suggestions.typedInstead(userId, proposal, now);
+      }
       return { text, mapButtons, cards, proposal, choices, resolvedBy };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);

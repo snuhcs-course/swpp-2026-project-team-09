@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 // The numbers of the grey suggestions, each with its reason. They are starting points: no precedent publishes its
@@ -50,6 +51,11 @@ export const REPEATS_MAX = 4;
 // Two Quests the User led in two weeks at one Place and meal slot make a habit.
 export const REPEAT_WINDOW_DAYS = 14;
 export const REPEATS_MIN = 2;
+
+// A Proposal the User asks for in the chat this soon after the chat opened is read as what they wanted then: when an
+// eligible template would have proposed the same thing and was not shown, the suggestion missed a need (research
+// note 10 §1, ProactiveBench's missed needs, ICLR 2025). The replay settles outcomes at the same 10 minutes.
+export const TYPED_WITHIN_MINUTES = 10;
 
 // The share of impressions drawn uniformly among the templates above their threshold, so that the log holds the
 // random traffic an offline replay needs; the rest show the top score.
