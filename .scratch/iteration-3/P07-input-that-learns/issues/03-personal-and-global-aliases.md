@@ -63,3 +63,8 @@ On branch `3.0/P07-03-app`, from `b4a4265a`.
 - The mock holds two aliases in memory (`api/mock/aliases.ts`, reset by `startFresh`): 중도 → 중앙도서관 (`place-62`, not among the mocks' Places) and 민준 → 김민준. A message with 중도 gets tomorrow's lunch Proposal at 중앙도서관 with the 찾았어요 line while that alias is held; delete and reject remove it. `mockAssistantReply` now fills its defaults with one helper.
 - Tests: `chat-resolved-by.integration.test.tsx`, `me-aliases.integration.test.tsx` (fake main server), `aliases-mock.integration.test.tsx`, `api/answers-aliases.unit.test.ts`. The mobile README describes the line, the screen and the operations.
 - For the merge with ticket 04's app half: `ChatBubble` gains a required `resolvedBy`, so a bubble literal there (`propose`) needs `resolvedBy: []`; `useChat` is at the 50-line function limit, with `rejectAlias` built in its return.
+
+### Agent usage (2026-10-28)
+
+- Agent time: about 65 minutes (estimate), two Opus 5.5 sessions in their worktrees, the server half and the app half, plus about 21 minutes of the orchestrating Fable 5.1 session, which wrote the spec and tickets, reviewed, merged and tested the stack, split evenly over tickets 02 to 05.
+- Tokens (estimate): the building sessions about 52.3M input, of which about 51.4M cache reads, 865k cache writes and 452 uncached, and about 256k output; the orchestrating share about 10.1M input (9.9M cache reads, 132k cache writes) and 33k output. With cache reads excluded, about 1.3M in all.
