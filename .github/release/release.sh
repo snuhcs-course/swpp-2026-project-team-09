@@ -7,7 +7,8 @@
 ################################################################################
 
 # The Release workflow's steps (.github/workflows/release.yml), one command each. The functions under Deciding take
-# plain inputs and print a verdict; those under Doing call gh, aws, docker, kustomize, kubectl, and the app's tools. The
+# plain inputs, files or stdin and print a verdict, job outputs or a file's content, without calling anything outside;
+# those under Doing call gh, aws, docker, kustomize, kubectl, and the app's tools. The
 # app's job builds and attaches its APK from the workflow itself; its decision, its checks of the APK and of the
 # published updates, and its new app-version.json are here.
 
@@ -59,12 +60,15 @@ compare_versions() {
   echo 0
 }
 
-# Prints publish or publish-needs-build, given the app's Android and iOS fingerprints, its `version`, and the path of
-# app-version.json, which describes the latest native build. An update reaches only the builds whose fingerprint is its
-# own: when the native part changed, it goes out only with a raised `version`, for the native build that is still to be
-# made (publish-needs-build). Otherwise it fails. The reason goes to stderr, the verdict alone to stdout.
+# Prints publish or publish-needs-build, given the app's Android and iOS fingerprints, its `version`, the path of
+# app-version.json, which describes the latest native build, and, for CI's check, `ci`. An update reaches only the
+# builds whose fingerprint is its own: when the native part changed, it goes out only with a raised `version`, for the
+# native build that is still to be made (publish-needs-build). A changed native part with an unchanged `version` fails.
+# One with a lower `version` is a commit from before the latest native Release: a Release refuses it, since no
+# installed build takes its bundle, but CI prints behind, so that a branch not yet rebased, or a server's Release of an
+# older commit, is not stopped. The reason goes to stderr, the verdict alone to stdout.
 app_decision() {
-  local android=$1 ios=$2 version=$3 file=$4 latest built_android built_ios
+  local android=$1 ios=$2 version=$3 file=$4 check=${5:-} latest built_android built_ios
   local semver='^[0-9]+\.[0-9]+\.[0-9]+$'
   if ! latest=$(jq -er '.latest | strings' "$file" 2>/dev/null) ||
     ! built_android=$(jq -er '.fingerprint.android | strings' "$file" 2>/dev/null) ||
@@ -85,6 +89,17 @@ app_decision() {
     1)
       echo "app: the native part changed and version $version is above the latest native build's $latest" >&2
       echo publish-needs-build
+      ;;
+    -1)
+      if [[ "$check" == ci ]]; then
+        echo "app: this commit is behind the latest native Release ($latest), as its version $version and its" \
+          "native part show; rebase onto the main line" >&2
+        echo behind
+        return
+      fi
+      echo "app: this commit's version $version is below the latest native build's $latest; no installed build" \
+        "takes its bundle, so it is not published" >&2
+      return 1
       ;;
     *)
       echo "app: the native part changed since the latest native build ($latest), but version is $version; raise" \
@@ -287,11 +302,11 @@ read_ci_jobs() {
 }
 
 # Prints the app's Android and iOS fingerprints, its `version`, and the decision (app_decision) as job outputs, given
-# the address of app-version.json and where to save it. The fingerprints are computed in mobile/ under the build
+# the address of app-version.json, where to save it, and, for CI's check, `ci`. The fingerprints are computed in mobile/ under the build
 # settings in the environment, with expo-updates' own command, so they are the runtime versions a build gets. An empty
 # setting would give another fingerprint, or a bundle that calls nowhere, so each must be set.
-decide_app() {
-  local url=$1 file=$2 android ios version verdict name
+fingerprint_and_decide() {
+  local url=$1 file=$2 check=${3:-} android ios version verdict name
   for name in EXPO_PUBLIC_MAIN_SERVER_URL EXPO_PUBLIC_SOCKET_SERVER_URL EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID \
     EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID GOOGLE_IOS_URL_SCHEME INVITE_LINK_HOST; do
     if [[ -z "${!name:-}" ]]; then
@@ -305,7 +320,7 @@ decide_app() {
     version=$(jq -er .expo.version app.json) || return 1
   echo "app: version $version, fingerprints android $android, ios $ios" >&2
   curl --fail --silent --show-error --location --output "$file" "$url" || echo "app: $url could not be downloaded" >&2
-  verdict=$(app_decision "$android" "$ios" "$version" "$file") || return 1
+  verdict=$(app_decision "$android" "$ios" "$version" "$file" "$check") || return 1
   printf 'android=%s\nios=%s\nversion=%s\nverdict=%s\n' "$android" "$ios" "$version" "$verdict"
 }
 
@@ -443,7 +458,7 @@ main() {
     check-published) check_published "$@" ;;
     check-apk) check_apk "$@" ;;
     app-version-json) app_version_json "$@" ;;
-    decide-app) decide_app "$@" ;;
+    fingerprint-and-decide) fingerprint_and_decide "$@" ;;
     gate) gate "$@" ;;
     write-secrets) write_secrets "$@" ;;
     push-image) push_image "$@" ;;

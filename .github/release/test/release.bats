@@ -127,19 +127,37 @@ serve_app_version() {
   [ "$output" = publish ]
 }
 
-@test "a changed native part with an unchanged or lower version fails, saying to raise version and make a native Release" {
+@test "a changed native part with an unchanged version fails, in a Release and in CI, saying to raise version and make a native Release" {
+  local case android ios check
+  # Each: the app's Android and iOS fingerprints; the latest native build and the app are both 1.0.0.
+  for case in "$CHANGED $IOS" "$ANDROID $CHANGED" "$CHANGED $CHANGED"; do
+    read -r android ios <<<"$case"
+    serve_app_version 1.0.0 "$ANDROID" "$IOS"
+    for check in '' ci; do
+      run --separate-stderr "$RELEASE" app-decision "$android" "$ios" 1.0.0 "$BATS_TEST_TMPDIR/app-version.json" $check
+
+      [ "$status" -eq 1 ] || { echo "accepted $case ($check)"; false; }
+      [ "$output" = '' ]
+      [[ "$stderr" == *"raise version in mobile/app.json and make a native Release"* ]] || false
+    done
+  done
+}
+
+@test "a changed native part with a lower version, a commit from before the latest native Release, fails a Release and is behind in CI" {
   local case latest version android ios
-  # Each: the latest native build's version, the app's version, and its Android and iOS fingerprints.
-  for case in "1.0.0 1.0.0 $CHANGED $IOS" "1.0.0 1.0.0 $ANDROID $CHANGED" "1.0.10 1.0.9 $CHANGED $CHANGED" \
-    "2.0.0 1.9.9 $CHANGED $IOS"; do
+  for case in "1.0.1 1.0.0 $CHANGED $IOS" "1.0.10 1.0.9 $ANDROID $CHANGED" "2.0.0 1.9.9 $CHANGED $CHANGED"; do
     read -r latest version android ios <<<"$case"
     serve_app_version "$latest" "$ANDROID" "$IOS"
 
     run --separate-stderr "$RELEASE" app-decision "$android" "$ios" "$version" "$BATS_TEST_TMPDIR/app-version.json"
-
     [ "$status" -eq 1 ] || { echo "accepted $case"; false; }
     [ "$output" = '' ]
-    [[ "$stderr" == *"raise version in mobile/app.json and make a native Release"* ]] || false
+    [[ "$stderr" == *"version $version is below the latest native build's $latest"* ]] || false
+
+    run --separate-stderr "$RELEASE" app-decision "$android" "$ios" "$version" "$BATS_TEST_TMPDIR/app-version.json" ci
+    [ "$status" -eq 0 ] || { echo "failed $case in CI"; false; }
+    [ "$output" = behind ]
+    [[ "$stderr" == *"behind the latest native Release ($latest)"*"rebase onto the main line"* ]] || false
   done
 }
 
@@ -155,6 +173,9 @@ serve_app_version() {
     [ "$status" -eq 0 ] || { echo "refused $case"; false; }
     [ "$output" = publish-needs-build ]
     [[ "$stderr" == *"native part changed and version $version is above"* ]] || false
+
+    run --separate-stderr "$RELEASE" app-decision "$android" "$ios" "$version" "$BATS_TEST_TMPDIR/app-version.json" ci
+    [ "$output" = publish-needs-build ]
   done
 }
 

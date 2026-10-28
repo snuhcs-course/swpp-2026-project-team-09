@@ -614,8 +614,10 @@ It then computes the app's Android and iOS fingerprints and compares them with `
 - Both equal the latest native build's: it publishes.
 - One differs and `version` in `mobile/app.json` is above the file's `latest`: it builds and releases the APK first
   ([Releasing it](#releasing-it)), then publishes. Until the iOS build is made by hand, no iPhone takes the update.
-- One differs and `version` is not above `latest`: it fails before publishing. Raise `version` and make a native
-  Release ([Releasing it](#releasing-it)).
+- One differs and `version` equals `latest`: it fails before publishing. Raise `version` and make a native Release
+  ([Releasing it](#releasing-it)).
+- One differs and `version` is below `latest`, a commit from before the latest native Release: it fails before
+  publishing, since no installed build would take the bundle.
 - The file cannot be downloaded or read: it fails.
 
 After publishing, it checks that EAS Update published each platform under the fingerprint it computed, and fails if
@@ -748,7 +750,10 @@ That was done once. A native Release replaces the file with `gh release upload a
 
 Raise `version` in `mobile/app.json` with the native change. CI's `app-fingerprint` job runs the Release workflow's
 decision on every push: it fails when the native part changed and `version` did not, and passes with a notice when
-`version` was raised. Then tag the commit as an `app` Release, `snunow/app/YY.MM.DD-N`, where N is the app's order
+`version` was raised. A commit from before the latest native Release, such as a branch not yet rebased, passes with a
+notice to rebase; its app job would still refuse to publish. The Release gate waits for `app-fingerprint` as for every
+CI job, so a commit whose native part changed without a raised `version` cannot be released at all, servers included,
+which is intended. Then tag the commit as an `app` Release, `snunow/app/YY.MM.DD-N`, where N is the app's order
 that day; an `all` Release does the same.
 
 Its `release app` job finds that the fingerprint changed and `version` was raised, and before publishing the bundle:
@@ -769,14 +774,21 @@ GitHub serves the new `app-version.json`, a few minutes later. The iOS build for
 hand.
 
 When CI cannot build, the job fails and publishes nothing. Build the APK by hand from the tagged commit with the
-settings above, attach it, and replace `app-version.json` written as the job would; then run the Release workflow
-again by hand on the tag, which now finds the native part built and publishes the bundle:
+settings above, attach it, and replace `app-version.json`, written by `release.sh app-version-json` from the old file
+and the fingerprints CI computed for the commit; then run the Release workflow again by hand on the tag, which now
+finds the native part built and publishes the bundle:
 
 ```bash
 cp mobile/android/app/build/outputs/apk/release/app-release.apk snunow-app-26.11.13-1.apk
 gh release create snunow/app/26.11.13-1 snunow-app-26.11.13-1.apk --verify-tag \
   --title snunow/app/26.11.13-1 --notes 'The app for Production, at https://api.snunow.com.'
-gh release upload app-version app-version.json --clobber
+curl --fail --location --remote-name \
+  https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/download/app-version/app-version.json
+mkdir new
+.github/release/release.sh app-version-json <version> <android fingerprint> <ios fingerprint> \
+  https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/download/snunow/app/26.11.13-1/snunow-app-26.11.13-1.apk \
+  app-version.json >new/app-version.json
+gh release upload app-version new/app-version.json --clobber
 ```
 
 ### Publishing an update by hand

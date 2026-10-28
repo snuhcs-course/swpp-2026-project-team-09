@@ -138,6 +138,7 @@ jobs:
       GOOGLE_IOS_URL_SCHEME: ${{ vars.PRODUCTION_APP_GOOGLE_IOS_URL_SCHEME }}
       INVITE_LINK_HOST: ${{ vars.PRODUCTION_APP_INVITE_LINK_HOST }}
       APP_VERSION_URL: https://github.com/${{ github.repository }}/releases/download/app-version/app-version.json
+      APK: mobile/android/app/build/outputs/apk/release/app-release.apk
     steps:
       - uses: actions/checkout@v7
         with:
@@ -191,7 +192,7 @@ jobs:
         id: decision
         if: steps.order.outputs.order == 'publish'
         run: |
-          .github/release/release.sh decide-app "$APP_VERSION_URL" "$RUNNER_TEMP/app-version.json" |
+          .github/release/release.sh fingerprint-and-decide "$APP_VERSION_URL" "$RUNNER_TEMP/app-version.json" |
             tee -a "$GITHUB_OUTPUT"
       # The native part changed and `version` was raised: the APK for this commit is built here, as the hand build is
       # (infra/production/README.md § The Production APK), and goes out before the bundle that only it takes. Each step
@@ -227,10 +228,9 @@ jobs:
         env:
           ANDROID: ${{ steps.decision.outputs.android }}
         run: |
-          apk=mobile/android/app/build/outputs/apk/release/app-release.apk
           build_tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -printf '%f\n' | sort -V | tail -n 1)
-          "$ANDROID_HOME/build-tools/$build_tools/apksigner" verify --print-certs "$apk" |
-            .github/release/release.sh check-apk "$ANDROID" "$(unzip -p "$apk" assets/fingerprint)"
+          "$ANDROID_HOME/build-tools/$build_tools/apksigner" verify --print-certs "$APK" |
+            .github/release/release.sh check-apk "$ANDROID" "$(unzip -p "$APK" assets/fingerprint)"
       # The asset is named after the tag, with `/` as `-`. The Release is the hand-made one if there is one.
       - name: Attach the APK to the tag's Release
         id: apk
@@ -240,7 +240,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           name=${GITHUB_REF_NAME//\//-}.apk
-          cp mobile/android/app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/$name"
+          cp "$APK" "$RUNNER_TEMP/$name"
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" "$RUNNER_TEMP/$name" --clobber
           else
@@ -272,8 +272,9 @@ jobs:
             echo "app-version.json. The iOS build is still made by hand (infra/production/README.md § The Production"
             echo "APK)."
           } >>"$GITHUB_STEP_SUMMARY"
-      # eas update computes the runtime version again, and must do so on the tree the decision step saw: the generated
-      # android/ folder and anything else prebuild wrote outside git go. check-published still guards the result.
+      # eas update computes the runtime version again, and must do so on the tree the decision step saw, so what
+      # prebuild wrote goes. android/ is git-ignored, so git clean leaves it and it is removed by name; ignored build
+      # output under node_modules stays. check-published still guards the result.
       - name: Remove what the Android build generated
         if: steps.decision.outputs.verdict == 'publish-needs-build'
         run: |
