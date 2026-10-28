@@ -87,3 +87,4 @@ Research note 10 (`.scratch/iteration-3/research/10-recent-papers-2024-2026.md`,
 
 - Agent time: about 28 minutes (estimate), one Opus 5.5 session in its worktree, plus about 21 minutes of the orchestrating Fable 5.1 session, which wrote the spec and tickets, reviewed, merged and tested the stack, split evenly over tickets 02 to 05.
 - Tokens (estimate): the building sessions about 24.3M input, of which about 24.0M cache reads, 317k cache writes and 210 uncached, and about 143k output; the orchestrating share about 10.1M input (9.9M cache reads, 132k cache writes) and 33k output. With cache reads excluded, about 625k in all.
+- After research note 10, the same day: about 20 minutes more of the Fable 5.1 session (estimate; the 40 minutes of that pass split evenly over tickets 04 and 05), about 14.7M input, of which 14.0M cache reads and 707k cache writes, and about 200k output. With cache reads excluded, about 0.9M.
