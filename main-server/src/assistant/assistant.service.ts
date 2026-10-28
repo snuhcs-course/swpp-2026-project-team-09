@@ -38,6 +38,7 @@ import {
   type RunLimits,
   type RunObserver,
 } from './adapter.js';
+import { AliasesService } from './aliases/aliases.service.js';
 import { chatAssistant } from './chat/chat-assistant.js';
 import { checkedChoice, type ChoiceServices } from './chosen.js';
 import { type AssistantReplyDto, type SentMessage } from './dto/assistant-messages.dto.js';
@@ -74,10 +75,11 @@ export class AssistantService {
     places: PlacesService,
     placeMatcher: PlaceMatcher,
     private readonly resolutionEvents: ResolutionEventsService,
+    private readonly aliases: AliasesService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
-    this.chat = chatAssistant({ menus, shuttle, globalEvents, recruiting, friends, places, placeMatcher });
+    this.chat = chatAssistant({ menus, shuttle, globalEvents, recruiting, friends, places, placeMatcher, aliases });
     this.choiceServices = { places, friends, globalEvents };
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
     this.dailyMessages = settings.get('ASSISTANT_DAILY_MESSAGES', { infer: true });
@@ -104,7 +106,9 @@ export class AssistantService {
     const asker = { userId, now };
     try {
       const conversation = await this.conversationOf(asker, messages.slice(-HISTORY_MAX));
-      const resolutions = this.resolutionEvents.forRun(userId);
+      const resolutions = this.resolutionEvents.forRun(userId, (kind, words, targetId) =>
+        this.aliases.learn(userId, kind, words, targetId),
+      );
       const reply = await runFeature(
         this.model,
         this.chat,
@@ -114,23 +118,25 @@ export class AssistantService {
         resolutions,
         this.observer,
       );
-      const { text, mapButtons, cards, proposal, choices } = reply;
-      return { text, mapButtons, cards, proposal, choices };
+      const { text, mapButtons, cards, proposal, choices, resolvedBy } = reply;
+      return { text, mapButtons, cards, proposal, choices, resolvedBy };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();
     }
   }
 
-  // The conversation as the feature runs it. The candidate the User's new message answers with is checked again and
-  // recorded, or dropped when it fails the check. An earlier message's, which the app sends back with the rest of the
-  // conversation, was recorded when it was new: it is only read, with the message's text as its name.
+  // The conversation as the feature runs it. The candidate the User's new message answers with is checked again,
+  // recorded and taught as the User's alias for its words, or dropped when it fails the check. An earlier message's,
+  // which the app sends back with the rest of the conversation, was recorded when it was new: it is only read, with
+  // the message's text as its name.
   private async conversationOf(asker: Asker, messages: readonly SentMessage[]): Promise<ChatMessage[]> {
     const last = messages.at(-1);
     const sent = last?.role === 'user' ? last.chosen : undefined;
     const chosen = sent === undefined ? null : await checkedChoice(sent, asker, this.choiceServices);
     if (chosen !== null) {
       await this.resolutionEvents.chosen(asker.userId, chosen);
+      await this.aliases.learn(asker.userId, chosen.kind, chosen.words, chosen.id);
     }
     return messages.map((message): ChatMessage => {
       if (message.role === 'assistant') {

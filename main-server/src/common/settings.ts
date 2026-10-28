@@ -9,6 +9,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -19,6 +20,11 @@ const port = z.string().pipe(z.coerce.number<string>().int().min(1).max(65535));
 // A count from the environment, or `fallback` when it is not set.
 function count(fallback: number): z.ZodType<number> {
   return z.string().default(String(fallback)).pipe(z.coerce.number<string>().int().min(1));
+}
+
+// A share of the Users in percent, from 0 to 100, or `fallback` when it is not set.
+function percent(fallback: number): z.ZodType<number> {
+  return z.string().default(String(fallback)).pipe(z.coerce.number<string>().int().min(0).max(100));
 }
 
 const googleClientId = z.string().endsWith('.apps.googleusercontent.com');
@@ -80,6 +86,10 @@ export const settingsSchema = z
     ASSISTANT_MAX_STEPS: count(8),
     ASSISTANT_TIMEOUT_MS: count(30_000),
     ASSISTANT_MAX_OUTPUT_TOKENS: count(1000),
+    // Whether everyone's aliases answer (P07): false switches them off at once. The share of Users, by a stable hash
+    // of their id, who never receive them while they still teach, so that learning can be told from habit.
+    ASSISTANT_GLOBAL_ALIASES: z.stringbool().default(true),
+    ASSISTANT_ALIAS_HOLDBACK_PERCENT: percent(10),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),

@@ -14,6 +14,7 @@ import { PlaceMatcher } from '../../places/place-matcher.js';
 import { PlacesService } from '../../places/places.service.js';
 import { RecruitingService } from '../../quests/recruiting.service.js';
 import { ShuttleService } from '../../shuttle/shuttle.service.js';
+import { AliasesService } from '../aliases/aliases.service.js';
 import { type Feature } from '../feature.js';
 import { koreaNow } from '../korea-time.js';
 import { DELIMITER } from '../others-text.js';
@@ -38,6 +39,7 @@ export interface ChatAssistantServices {
   friends: FriendsService;
   places: PlacesService;
   placeMatcher: PlaceMatcher;
+  aliases: AliasesService;
 }
 
 function instructions(now: Date): string {
@@ -74,6 +76,7 @@ export function chatAssistant({
   friends,
   places,
   placeMatcher,
+  aliases,
 }: ChatAssistantServices): Feature {
   return {
     instructions,
@@ -85,7 +88,7 @@ export function chatAssistant({
       showGlobalEvents: showGlobalEvents(globalEvents),
       searchRecruitingQuests: searchRecruitingQuests(recruiting),
       showQuests: showQuests(recruiting),
-      resolveFriend: resolveFriend(friends),
+      resolveFriend: resolveFriend(friends, aliases),
       resolvePlace: resolvePlace(placeMatcher),
       resolveGlobalEvent: resolveGlobalEvent(globalEvents),
       proposeQuest: proposeQuest({ friends, places, globalEvents }),

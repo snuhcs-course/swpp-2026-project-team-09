@@ -94,6 +94,7 @@ describe('proposeQuest, with a complete Open Proposal', () => {
       cards: [],
       proposal: LUNCH,
       choices: [],
+      resolvedBy: [],
     });
     expect(model.toolResults()).toEqual([{ result: 'proposed', proposal: LUNCH }]);
   });

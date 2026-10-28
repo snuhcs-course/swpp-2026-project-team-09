@@ -171,7 +171,7 @@ export async function runFeature(
     ...asker,
     found: foundChosen(messages),
     shown: lastShown(messages),
-    presented: { mapButtons: [], cards: [], proposal: null, choices: [] },
+    presented: { mapButtons: [], cards: [], proposal: null, choices: [], resolvedBy: [] },
     resolutions,
   };
   const { text, finishReason } = await generateText({

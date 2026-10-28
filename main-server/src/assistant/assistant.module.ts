@@ -16,6 +16,8 @@ import { PlacesModule } from '../places/places.module.js';
 import { QuestsModule } from '../quests/quests.module.js';
 import { ShuttleModule } from '../shuttle/shuttle.module.js';
 import { type Model, MODEL_PORT, openRouterModel } from './adapter.js';
+import { AliasesController } from './aliases/aliases.controller.js';
+import { AliasesService } from './aliases/aliases.service.js';
 import { AssistantController } from './assistant.controller.js';
 import { AssistantService } from './assistant.service.js';
 import { ResolutionEventsService } from './resolution-events.service.js';
@@ -24,10 +26,11 @@ import { ResolutionEventsService } from './resolution-events.service.js';
   // QuestsModule gives the clock, by which a message falls in its day, and the recruiting list. FriendsModule and
   // PlacesModule give what the resolvers read.
   imports: [FriendsModule, GlobalEventsModule, MenusModule, PlacesModule, QuestsModule, ShuttleModule],
-  controllers: [AssistantController],
+  controllers: [AssistantController, AliasesController],
   providers: [
     AssistantService,
     ResolutionEventsService,
+    AliasesService,
     {
       provide: MODEL_PORT,
       inject: [ConfigService],

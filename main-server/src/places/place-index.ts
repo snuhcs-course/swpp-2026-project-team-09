@@ -135,7 +135,7 @@ export class PlaceIndex {
       .map(({ text }) => text);
   }
 
-  match(words: string, userId: string): PlaceMatch {
+  async match(words: string, userId: string): Promise<PlaceMatch> {
     const query = normaliseWords(words);
     if (query === '') {
       return NONE;
@@ -145,7 +145,8 @@ export class PlaceIndex {
       return { tier: 'exact', source: null, places: unique(exact).toSorted(byNumber) };
     }
     for (const source of this.aliases) {
-      const hits = source.lookup(query, userId);
+      // oxlint-disable-next-line no-await-in-loop -- a later source is asked only when the earlier ones have no hits
+      const hits = await source.lookup(query, userId);
       const places = hits.map(({ placeId }) => this.byId.get(placeId)).filter((place) => place !== undefined);
       if (places.length > 0) {
         return { tier: 'alias', source: hits[0]?.source ?? null, places: unique(places).toSorted(byNumber) };

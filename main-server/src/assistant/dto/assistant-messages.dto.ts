@@ -7,7 +7,15 @@
  ******************************************************************************/
 
 import { z } from 'zod';
-import { type Card, type CardKind, CARDS_MAX, type Choice, type ChoiceKind, type MapLayer } from '../feature.js';
+import {
+  type Card,
+  type CardKind,
+  CARDS_MAX,
+  type Choice,
+  type ChoiceKind,
+  type MapLayer,
+  type ResolvedBy,
+} from '../feature.js';
 import { proposalLength, type QuestProposal, questProposalSchema } from '../proposal.js';
 
 // The most characters of a User's message, which the app's input also keeps to.
@@ -72,13 +80,14 @@ export type AssistantMessages = z.infer<typeof assistantMessagesSchema>;
 export type SentMessage = AssistantMessages['messages'][number];
 
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
-// cards in the order shown, filled from the database, the Proposal it made, if any, and the candidates of every
-// 'several' answer of its resolvers, which the app offers as chips. The lists are always there, empty when there are
-// none, and the Proposal null.
+// cards in the order shown, filled from the database, the Proposal it made, if any, the candidates of every 'several'
+// answer of its resolvers, which the app offers as chips, and the answers they read from an alias. The lists are
+// always there, empty when there are none, and the Proposal null.
 export interface AssistantReplyDto {
   text: string;
   mapButtons: MapLayer[];
   cards: Card[];
   proposal: QuestProposal | null;
   choices: Choice[];
+  resolvedBy: ResolvedBy[];
 }

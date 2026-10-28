@@ -156,6 +156,9 @@ describe('searchRecruitingQuests, with text by others', () => {
   });
 });
 
+// What a reply holds beside its text when it shows nothing.
+const NOTHING_SHOWN = { mapButtons: [], cards: [], proposal: null, choices: [], resolvedBy: [] };
+
 describe('showQuests', () => {
   it("puts the Quests the search gave in the reply as cards, in the order given, as the Boards' list serves them", async () => {
     const first = await questAt('2097-06-05T18:00:00', { title: '풋살 한 판' });
@@ -171,14 +174,12 @@ describe('showQuests', () => {
     const listed = z.array(z.object({ id: z.string() }).loose()).parse((await getRecruitingQuests(app, reader)).body);
     const listedOf = (id: string): unknown => listed.find((quest) => quest.id === id);
     expect(response.body).toEqual({
+      ...NOTHING_SHOWN,
       text: '운동 파티 두 개가 있어요.',
-      mapButtons: [],
       cards: [
         { kind: 'quest', quest: listedOf(second) },
         { kind: 'quest', quest: listedOf(first) },
       ],
-      proposal: null,
-      choices: [],
     });
     expect(listedOf(first)).toBeDefined();
     expect(model.toolResults().at(-1)).toEqual({ result: 'shown', ids: [second, first] });
@@ -200,7 +201,7 @@ describe('showQuests', () => {
       { role: 'user', text: '7월 5일은?' },
     ]);
 
-    expect(response.body).toEqual({ text: '…', mapButtons: [], cards: [], proposal: null, choices: [] });
+    expect(response.body).toEqual({ text: '…', ...NOTHING_SHOWN });
     expect(model.toolResults().at(-1)).toEqual(
       expect.stringContaining(`No tool returned these ids in this message: ${other}`),
     );

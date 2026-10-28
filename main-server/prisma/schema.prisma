@@ -68,6 +68,7 @@ model User {
   partyInvitations  PartyInvitation[]
   timetableClasses  TimetableClass[]
   resolutionEvents  ResolutionEvent[]
+  userAliases       UserAlias[]
 
   @@map("users")
 }
@@ -539,6 +540,7 @@ model Place {
   subQuests SubQuest[]
   meetups   Meetup[]
   classTimes ClassTime[]
+  aliases    PlaceAlias[]
 
   @@unique([origin, originId])
   @@map("places")
@@ -656,6 +658,54 @@ model ResolutionEvent {
   @@map("resolution_events")
 }
 
+// Words a User taught the Assistant by choosing what they meant (P07): the words, normalised as resolution_events keys
+// them, and the Place or Friend chosen. It answers that User alone, and is checked against the catalog or the
+// friendships each time it answers. Friend aliases live only here.
+model UserAlias {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String       @map("user_id") @db.Uuid
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind       ResolverKind
+  // 1 to 50 characters.
+  words      String
+  // A Place's id, or a Friend's user id.
+  targetId   String       @map("target_id") @db.Uuid
+  // How many times the User chose the target for the words.
+  uses       Int          @default(1)
+  createdAt  DateTime     @default(now()) @map("created_at")
+  // The last choice of it, or the last time it answered.
+  lastUsedAt DateTime     @default(now()) @map("last_used_at")
+
+  @@unique([userId, kind, words, targetId])
+  @@index([userId, kind, words])
+  @@map("user_aliases")
+}
+
+// Words that name a Place for every User (P07), once enough distinct accounts chose it for them
+// (src/assistant/aliases/alias-rules.ts). Retired rather than deleted, so that what was learned can be counted.
+model PlaceAlias {
+  id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // 1 to 50 characters, normalised.
+  words      String
+  placeId    String           @map("place_id") @db.Uuid
+  place      Place            @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  source     PlaceAliasSource
+  // Distinct accounts that chose the Place for the words, and that rejected it.
+  supporters Int              @default(0)
+  rejecters  Int              @default(0)
+  // As of the last count or use. It decays from lastUsedAt and is computed again whenever it is read.
+  score      Float            @default(0)
+  createdAt  DateTime         @default(now()) @map("created_at")
+  // The last time it answered, or when it was made.
+  lastUsedAt DateTime         @default(now()) @map("last_used_at")
+  // Set when it stops answering.
+  retiredAt  DateTime?        @map("retired_at")
+
+  @@unique([words, placeId])
+  @@index([words])
+  @@map("place_aliases")
+}
+
 // Which resolver the words were given to.
 enum ResolverKind {
   place
@@ -690,6 +740,14 @@ enum ResolutionAliasSource {
   curated
 
   @@map("resolution_alias_source")
+}
+
+// Whose say-so a Place alias is: the team's (PLACE_GROUPS, which stay in code for now) or learned from Users' choices.
+enum PlaceAliasSource {
+  curated
+  learned
+
+  @@map("place_alias_source")
 }
 
 // answered: a resolver answered. chosen: the User tapped a candidate. edited: the User changed a Proposal's Place.

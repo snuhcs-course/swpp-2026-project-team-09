@@ -145,6 +145,9 @@ describe('searchGlobalEvents, with text by others', () => {
   });
 });
 
+// What a reply holds beside its text when it shows nothing.
+const NOTHING_SHOWN = { mapButtons: [], cards: [], proposal: null, choices: [], resolvedBy: [] };
+
 describe('showGlobalEvents', () => {
   it('puts the events the search gave in the reply as cards, in the order given, as the 행사 tab lists them', async () => {
     const first = await storeAt('2098-06-05T18:00:00', { title: '가을 재즈 공연' });
@@ -167,6 +170,7 @@ describe('showGlobalEvents', () => {
       ],
       proposal: null,
       choices: [],
+      resolvedBy: [],
     });
     expect(model.toolResults().at(-1)).toEqual({ result: 'shown', ids: [second.id, first.id] });
   });
@@ -187,7 +191,7 @@ describe('showGlobalEvents', () => {
       { role: 'user', text: '7월 5일은?' },
     ]);
 
-    expect(response.body).toEqual({ text: '…', mapButtons: [], cards: [], proposal: null, choices: [] });
+    expect(response.body).toEqual({ text: '…', ...NOTHING_SHOWN });
     expect(model.toolResults().at(-1)).toEqual(
       expect.stringContaining(`No tool returned these ids in this message: ${other.id}`),
     );

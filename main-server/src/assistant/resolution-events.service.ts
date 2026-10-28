@@ -5,30 +5,26 @@
  ******************************************************************************/
 
 import { Injectable, Logger } from '@nestjs/common';
+import { databaseCauseOf } from '../common/database-cause.js';
 import { normaliseWords } from '../common/normalise-words.js';
 import { PrismaService } from '../common/prisma.service.js';
-import { Prisma, type ResolverKind } from '../generated/prisma/client.js';
+import { type Prisma, type ResolverKind } from '../generated/prisma/client.js';
 import { choseongOf } from '../places/abbreviations.js';
-import { type Choice, type ResolutionLog, type ResolverAnswer } from './feature.js';
+import { type Choice, type ChoiceKind, type ResolutionLog, type ResolverAnswer } from './feature.js';
 
 // Words of Hangul syllables and consonants alone, whose 초성 is a key of its own: 학관 and ㅎㄱ, not 301동.
 const HANGUL = /^[가-힣ㄱ-ㅎ]+$/u;
 
 type Row = Omit<Prisma.ResolutionEventUncheckedCreateInput, 'userId' | 'kind' | 'words' | 'choseong'>;
 
-// Why a row was not written, for the log: the error's name and Prisma's code, never its message, which can hold the
+// What a run does with a label the User gave it, a Place they changed a Proposal to: teach it as their alias for the
 // words.
-function causeOf(error: unknown): string {
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    return `${error.name} ${error.code}`;
-  }
-  return error instanceof Error ? error.name : typeof error;
-}
+export type Learn = (kind: ChoiceKind, words: string, targetId: string) => Promise<void>;
 
 // How the User's words were resolved, one row of resolution_events each (P07 ticket 02): every resolver's answer,
-// every candidate the User chose, and every Proposal whose Place they changed. Later pieces learn aliases from these
-// rows and are measured on them. A row that cannot be written is logged by its cause, and the answer goes on without
-// it.
+// every candidate the User chose, every Proposal whose Place they changed, and every alias they said was wrong.
+// Everyone's aliases are counted from these rows (P07 ticket 03), and ticket 05 measures on them. A row that cannot be
+// written is logged by its cause, and the answer goes on without it.
 @Injectable()
 export class ResolutionEventsService {
   private readonly logger = new Logger(ResolutionEventsService.name);
@@ -36,8 +32,8 @@ export class ResolutionEventsService {
   constructor(private readonly prisma: PrismaService) {}
 
   // What one run of the Assistant records through its tools. An edit names the words resolved to a Place last in the
-  // run, those the User most likely corrected, or none.
-  forRun(userId: string): ResolutionLog {
+  // run, those the User most likely corrected, or none, and teaches the new Place for them.
+  forRun(userId: string, learn: Learn): ResolutionLog {
     let placeWords = '';
     return {
       answered: async (answer) => {
@@ -46,7 +42,10 @@ export class ResolutionEventsService {
         }
         await this.answered(userId, answer);
       },
-      edited: (fromPlaceId, toPlaceId) => this.edited(userId, placeWords, fromPlaceId, toPlaceId),
+      edited: async (fromPlaceId, toPlaceId) => {
+        await this.edited(userId, placeWords, fromPlaceId, toPlaceId);
+        await learn('place', placeWords, toPlaceId);
+      },
     };
   }
 
@@ -64,6 +63,11 @@ export class ResolutionEventsService {
     return this.write(userId, 'place', words, { outcome: 'edited', candidateIds: [fromPlaceId], chosenId: toPlaceId });
   }
 
+  // The User said an alias's answer was wrong: the target as the rejected choice.
+  rejected(userId: string, kind: ResolverKind, words: string, targetId: string): Promise<void> {
+    return this.write(userId, kind, words, { outcome: 'rejected', candidateIds: [], chosenId: targetId });
+  }
+
   private async write(userId: string, kind: ResolverKind, words: string, row: Row): Promise<void> {
     const key = normaliseWords(words);
     try {
@@ -71,7 +75,7 @@ export class ResolutionEventsService {
         data: { userId, kind, words: key, choseong: HANGUL.test(key) ? choseongOf(key) : null, ...row },
       });
     } catch (error) {
-      this.logger.warn(`A resolution event was not recorded: ${causeOf(error)}`);
+      this.logger.warn(`A resolution event was not recorded: ${databaseCauseOf(error)}`);
     }
   }
 }

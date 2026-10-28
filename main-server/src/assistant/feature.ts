@@ -41,6 +41,17 @@ export interface Choice {
   words: string;
 }
 
+// A resolver's answer of one candidate read from an alias (P07 ticket 03), which the app shows under the reply as
+// "학관 → 학생회관으로 찾았어요" with 아니에요: the words as the model passed them, the candidate's plain name or title,
+// and whose alias it was.
+export interface ResolvedBy {
+  kind: ChoiceKind;
+  words: string;
+  id: string;
+  label: string;
+  source: AliasSource;
+}
+
 // One message of a conversation, as the server runs it: the User's text, with the candidate it answers with, or the
 // Assistant's with the cards it showed and the Proposal it made, by its values. Only the new message's candidate is
 // checked again, with its name; an earlier one is as the app sent it back, its text as the name. Only the last
@@ -81,6 +92,8 @@ export interface Presented {
   proposal: QuestProposal | null;
   // The candidates of every 'several' answer, in the resolvers' order, each once.
   readonly choices: Choice[];
+  // Every answer of one candidate read from an alias, each once.
+  readonly resolvedBy: ResolvedBy[];
 }
 
 // Who asks and when.
@@ -95,7 +108,7 @@ export interface ResolverAnswer {
   words: string;
   result: 'none' | 'one' | 'several';
   candidateIds: string[];
-  // Places only: the matcher's tier that answered and, on the alias tier, whose alias it was.
+  // Places only: the matcher's tier that answered. Whose alias it was, when an alias answered.
   tier: MatchTier | null;
   aliasSource: AliasSource | null;
 }
