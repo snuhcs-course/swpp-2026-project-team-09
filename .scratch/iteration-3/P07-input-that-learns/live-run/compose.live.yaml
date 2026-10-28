@@ -1,0 +1,17 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-29  Fable 5.1  prompted by fyoon46
+################################################################################
+
+# The data stores of the P07 live run, apart from a developer's own (compose.yaml publishes them on 5432 and 6379):
+# a Compose project of its own, so the volume is new, on other ports. From the repository root:
+#   docker compose -p p07-live -f compose.yaml -f .scratch/iteration-3/P07-input-that-learns/live-run/compose.live.yaml up -d postgres redis
+# main-server/.env then points at them: DATABASE_URL=postgresql://main:main@localhost:5433/main and REDIS_PORT=6380.
+services:
+  postgres:
+    ports: !override
+      - '127.0.0.1:5433:5432'
+  redis:
+    ports: !override
+      - '127.0.0.1:6380:6379'
