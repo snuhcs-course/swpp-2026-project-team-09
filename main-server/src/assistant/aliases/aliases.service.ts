@@ -68,7 +68,7 @@ export class AliasesService {
         update: { uses: { increment: 1 }, lastUsedAt: new Date() },
       });
       if (kind === 'place') {
-        await this.recount(key);
+        await this.recount(key, targetId);
       }
     } catch (error) {
       this.logger.warn(`An alias was not learned: ${databaseCauseOf(error)}`);
@@ -82,7 +82,7 @@ export class AliasesService {
     await this.resolutionEvents.rejected(userId, kind, key, targetId);
     await this.prisma.userAlias.deleteMany({ where: { userId, kind, words: key, targetId } });
     if (kind === 'place') {
-      await this.recount(key);
+      await this.recount(key, null);
     }
   }
 
@@ -135,8 +135,9 @@ export class AliasesService {
     }
   }
 
-  // Everyone's standing of the words, counted again, makes, keeps or retires their alias.
-  private async recount(words: string): Promise<void> {
+  // Everyone's standing of the words, counted again, makes, keeps or retires their alias. A choice of an alias's Place
+  // is a use of it, which resets its decay, so that a choice brings back an alias decay retired.
+  private async recount(words: string, chosenPlaceId: string | null): Promise<void> {
     const { standings, allSupporters } = await this.standingsOf(words);
     const top = topOf(standings);
     const now = new Date();
@@ -147,12 +148,13 @@ export class AliasesService {
         supporters: 0,
         rejecters: 0,
       };
-      const score = scoreOf(standing, alias.lastUsedAt, now);
+      const lastUsedAt = alias.placeId === chosenPlaceId ? now : alias.lastUsedAt;
+      const score = scoreOf(standing, lastUsedAt, now);
       const active = standing.placeId === top?.placeId && qualifies(standing, allSupporters, score);
       const { supporters, rejecters } = standing;
       return this.prisma.placeAlias.update({
         where: { id: alias.id },
-        data: { supporters, rejecters, score, retiredAt: active ? null : (alias.retiredAt ?? now) },
+        data: { supporters, rejecters, score, lastUsedAt, retiredAt: active ? null : (alias.retiredAt ?? now) },
       });
     });
     if (top !== undefined && !aliases.some(({ placeId }) => placeId === top.placeId)) {

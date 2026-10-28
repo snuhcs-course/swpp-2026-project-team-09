@@ -23,6 +23,10 @@ export const ACCOUNT_AGE_DAYS = 7;
 // The days over which an alias's score halves while it goes unused, as the precedents' 30-day windows.
 export const HALF_LIFE_DAYS = 30;
 
+// The score under which an alias is retired: half a supporter, so that decay retires an alias nobody uses (one of 3
+// supporters after about 77 days unused) and not only rejections do. A new choice of its Place brings it back.
+export const MIN_SCORE = 0.5;
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // What the choices and rejections of distinct accounts say of one Place for one words.
@@ -47,7 +51,9 @@ export function topOf(standings: readonly Standing[]): Standing | undefined {
 }
 
 // Whether a Place answers the words for every User: enough accounts chose it, it holds the share of all that chose for
-// the words, and its score is above 0. Otherwise its alias is retired.
+// the words, and its score is at least MIN_SCORE. Otherwise its alias is retired.
 export function qualifies(standing: Standing, allSupporters: number, score: number): boolean {
-  return standing.supporters >= MIN_SUPPORTERS && standing.supporters / allSupporters >= MIN_SHARE && score > 0;
+  return (
+    standing.supporters >= MIN_SUPPORTERS && standing.supporters / allSupporters >= MIN_SHARE && score >= MIN_SCORE
+  );
 }

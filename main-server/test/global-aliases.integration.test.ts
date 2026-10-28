@@ -75,6 +75,11 @@ function aliasesFor(words: string): Promise<PlaceAlias[]> {
   return prisma.placeAlias.findMany({ where: { words } });
 }
 
+// Everyone's alias of the words last answered `days` ago.
+async function unusedFor(words: string, days: number): Promise<void> {
+  await prisma.placeAlias.updateMany({ where: { words }, data: { lastUsedAt: new Date(Date.now() - days * DAY_MS) } });
+}
+
 describe('promotion', () => {
   it('never comes of one account choosing a Place ten times', async () => {
     const insistent = await account(30);
@@ -157,6 +162,19 @@ describe('retirement', () => {
     expect(await aliasesFor('뷁사')).toEqual([
       expect.objectContaining({ supporters: 3, rejecters: 3, retiredAt: expect.any(Date) as unknown }),
     ]);
+  });
+});
+
+describe('decay', () => {
+  it('retires an alias of 3 supporters unused for 80 days, and keeps one used 20 days ago', async () => {
+    await teachEveryone(3, studentCentre, '뷁육');
+    await teachEveryone(3, studentCentre, '뷁칠');
+    await unusedFor('뷁육', 80);
+    await unusedFor('뷁칠', 20);
+
+    expect((await newcomerResolves('뷁육')).answer.result).toBe('none');
+    expect(await aliasesFor('뷁육')).toEqual([expect.objectContaining({ retiredAt: expect.any(Date) as unknown })]);
+    expect((await newcomerResolves('뷁칠')).answer.result).toBe('one');
   });
 });
 

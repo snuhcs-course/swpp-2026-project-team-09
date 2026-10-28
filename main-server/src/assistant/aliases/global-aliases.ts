@@ -10,7 +10,7 @@ import { heldBack } from '../../common/holdback.js';
 import { PrismaService } from '../../common/prisma.service.js';
 import { type PlaceAlias } from '../../generated/prisma/client.js';
 import { type AliasHit, type PlaceAliases } from '../../places/place-aliases.js';
-import { scoreOf } from './alias-rules.js';
+import { MIN_SCORE, scoreOf } from './alias-rules.js';
 
 export interface GlobalAliasSettings {
   // ASSISTANT_GLOBAL_ALIASES.
@@ -20,8 +20,9 @@ export interface GlobalAliasSettings {
 }
 
 // Everyone's aliases (place_aliases): words enough distinct accounts chose one Place for (alias-rules.ts), each
-// answering while it is not retired and its score, computed again on every read, is above 0. Switched off, they answer
-// nobody; they never answer a User of the held-back share, whose choices still count.
+// answering while it is not retired. Its score is computed again on every read, and one decayed under MIN_SCORE is
+// retired there. Switched off, they answer nobody; they never answer a User of the held-back share, whose choices
+// still count.
 export class GlobalAliases implements PlaceAliases {
   private readonly logger = new Logger(GlobalAliases.name);
 
@@ -35,11 +36,29 @@ export class GlobalAliases implements PlaceAliases {
       return [];
     }
     const now = new Date();
-    const active = (await this.prisma.placeAlias.findMany({ where: { words: query, retiredAt: null } })).filter(
-      (alias) => scoreOf(alias, alias.lastUsedAt, now) > 0,
+    const aliases = await this.prisma.placeAlias.findMany({ where: { words: query, retiredAt: null } });
+    const active = aliases.filter((alias) => scoreOf(alias, alias.lastUsedAt, now) >= MIN_SCORE);
+    await this.retire(
+      aliases.filter((alias) => !active.includes(alias)),
+      now,
     );
     await this.used(active, now);
     return active.map(({ placeId }) => ({ placeId, source: 'global' }));
+  }
+
+  // The aliases decay brought under MIN_SCORE. A failure is logged, and they still do not answer.
+  private async retire(aliases: readonly PlaceAlias[], now: Date): Promise<void> {
+    if (aliases.length === 0) {
+      return;
+    }
+    try {
+      await this.prisma.placeAlias.updateMany({
+        where: { id: { in: aliases.map(({ id }) => id) } },
+        data: { retiredAt: now },
+      });
+    } catch (error) {
+      this.logger.warn(`An alias was not retired: ${databaseCauseOf(error)}`);
+    }
   }
 
   // The aliases that answered, used now, so that their score stops decaying. A failure is logged, and the answer

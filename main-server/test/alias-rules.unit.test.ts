@@ -53,8 +53,10 @@ describe('promotion', () => {
     expect(qualifies(standing('a', 12), 15, 12)).toBe(true);
   });
 
-  it('takes a score above 0', () => {
+  it('takes a score of at least half a supporter', () => {
     expect(qualifies(standing('a', 3, 3), 3, 0)).toBe(false);
+    expect(qualifies(standing('a', 3), 3, scoreOf(standing('a', 3), daysBefore(80), NOW))).toBe(false);
+    expect(qualifies(standing('a', 3), 3, scoreOf(standing('a', 3), daysBefore(75), NOW))).toBe(true);
   });
 });
 

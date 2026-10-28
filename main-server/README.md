@@ -1818,8 +1818,9 @@ its model through OpenRouter with the Vercel AI SDK
     query: when at least 3 distinct accounts, each onboarded 7 days or more before it chose, chose the same Place and
     it holds at least 0.8 of the accounts that chose anything for the words, a `learned` row of `place_aliases`
     answers every User after their own aliases and before the curated groups. Its `score`, the supporters less the
-    distinct accounts that rejected it, halved for every 30 days since it last answered, is computed again on every
-    read; at 0 or below, or under the share, the row is retired (`retired_at`) and stops answering
+    distinct accounts that rejected it, halved for every 30 days since it last answered or its Place was chosen for
+    the words, is computed again on every read; under 0.5 (3 supporters' score after about 77 days unused), or under
+    the share, the row is retired (`retired_at`) and stops answering until a new choice qualifies it again
     (`aliases/alias-rules.ts` holds the values and why). Friend aliases are never shared. `resolvedBy` lists each
     answer of one candidate read from an alias, `[{ "kind", "words", "id", "label", "source" }]` with `source` one of
     `personal`, `global` and `curated`; it is always there, and the app shows each as "학관 → 학생회관으로 찾았어요"
