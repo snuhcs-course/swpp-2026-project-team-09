@@ -60,3 +60,8 @@ Tests: `test/assistant-choices.integration.test.ts` (choices for Places, Friends
 
 - Agent time: about 42 minutes (estimate), two Opus 5.5 sessions in their worktrees, the server half and the app half, plus about 21 minutes of the orchestrating Fable 5.1 session, which wrote the spec and tickets, reviewed, merged and tested the stack, split evenly over tickets 02 to 05.
 - Tokens (estimate): the building sessions about 28.4M input, of which about 27.9M cache reads, 538k cache writes and 298 uncached, and about 167k output; the orchestrating share about 10.1M input (9.9M cache reads, 132k cache writes) and 33k output. With cache reads excluded, about 870k in all.
+
+### For the team to decide
+
+- **The model may answer without the resolver** (live run of 2026-10-29, ticket 05, Comments). Asked "집에서 저녁 파티 만들어줘", it answered that 집 is no campus Place and asked for the head count, without calling `resolvePlace`: no `resolution_events` row, no chip, and nothing to teach, while the gold lists 집 as a word that names no Place. Chips exist only when the resolver is called. Whether the prompt should require `resolvePlace` for every word that could name a Place, at the cost of a call on words like 집, is the team's call; the benchmark's missing-or-ambiguous-target cases would carry it.
+- **Asking before proposing.** In the 18 teaching turns the model asked for the head count, and often the join policy, before proposing, while in other turns it proposed at once with 4 people and 바로 참여. Either is defensible; the making-parties cases of the benchmark should say which, so that the chip's second turn ends in a card when the User gave enough.
