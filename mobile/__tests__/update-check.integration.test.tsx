@@ -34,6 +34,21 @@ function answer(json: unknown, status = 200): jest.SpiedFunction<typeof fetch> {
     .mockResolvedValue(new Response(JSON.stringify(json), { status, headers: { 'Content-Type': 'application/json' } }));
 }
 
+// A GitHub that never answers. Gives whether the fetch was aborted.
+function hangUntilAborted(): () => boolean {
+  let aborted = false;
+  jest.spyOn(globalThis, 'fetch').mockImplementation(
+    (_, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          aborted = true;
+          reject(new DOMException('Aborted', 'AbortError'));
+        });
+      }),
+  );
+  return (): boolean => aborted;
+}
+
 // Starts the check on a phone with native build 1.0.0 and lets the fetch answer.
 async function start(platform: 'android' | 'ios' = 'android'): Promise<void> {
   jest.replaceProperty(Platform, 'OS', platform);
@@ -49,6 +64,7 @@ async function start(platform: 'android' | 'ios' = 'android'): Promise<void> {
 }
 
 afterEach(() => {
+  jest.useRealTimers();
   jest.restoreAllMocks();
 });
 
@@ -134,26 +150,25 @@ describe('The update check, showing nothing', () => {
     expect(screen.queryByText('업데이트가 필요합니다')).toBeNull();
   });
 
+  it('stops the fetch when the check is taken away', async () => {
+    const aborted = hangUntilAborted();
+    await start();
+
+    await screen.unmount();
+
+    expect(aborted()).toBe(true);
+  });
+
   it('when GitHub does not answer in time', async () => {
     jest.useFakeTimers({ doNotFake: ['setImmediate'] });
-    let aborted = false;
-    jest.spyOn(globalThis, 'fetch').mockImplementation(
-      (_, init) =>
-        new Promise((_resolve, reject) => {
-          init?.signal?.addEventListener('abort', () => {
-            aborted = true;
-            reject(new DOMException('Aborted', 'AbortError'));
-          });
-        }),
-    );
+    const aborted = hangUntilAborted();
     await start();
 
     await act(async () => {
       await jest.advanceTimersByTimeAsync(CHECK_TIMEOUT_MS);
     });
 
-    expect(aborted).toBe(true);
+    expect(aborted()).toBe(true);
     expect(screen.queryByText('업데이트가 필요합니다')).toBeNull();
-    jest.useRealTimers();
   });
 });

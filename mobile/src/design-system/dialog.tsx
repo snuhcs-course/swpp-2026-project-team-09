@@ -23,14 +23,14 @@ interface DialogProps {
   confirmLabel?: string;
   // `danger` for an answer that cannot be taken back, such as "로그아웃".
   tone?: 'primary' | 'danger';
-  // The answer that leaves things as they are. Without it the dialog has one button.
+  // The answer that leaves things as they are. Without it the dialog has the confirming answer alone, or no button.
   cancelLabel?: string;
   onConfirm?: () => void;
-  // Also Android's back button.
+  // Also Android's back button. Without it the back button leaves the dialog open.
   onCancel?: () => void;
 }
 
-// A question with two answers, or a statement with one, over the screen and a scrim. The design system has no
+// A question with two answers, or a statement with one answer or none, over the screen and a scrim. The design system has no
 // dialog; this one is built from its card, its text styles and its Buttons.
 export function Dialog({
   visible,

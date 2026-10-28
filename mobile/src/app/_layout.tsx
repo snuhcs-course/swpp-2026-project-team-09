@@ -22,7 +22,6 @@ import { UpdateCheck } from '@/update/update-check';
 // The native splash image stays until the fonts are ready, so that no screen appears in the system font first.
 void SplashScreen.preventAutoHideAsync();
 
-// The check for a newer native build starts with the first screen and shows its dialog over it.
 export default function RootLayout(): ReactElement | null {
   const [fontsLoaded, fontsError] = useFonts({
     [font.regular]: pretendardRegular,
@@ -43,6 +42,7 @@ export default function RootLayout(): ReactElement | null {
   return (
     <AppProviders>
       <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />
+      {/* The check for a newer native build starts with the first screen and shows its dialog over it. */}
       <UpdateCheck />
     </AppProviders>
   );

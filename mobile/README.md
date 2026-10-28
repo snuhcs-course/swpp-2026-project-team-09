@@ -396,6 +396,7 @@ src/map/            the one map component, its interface and the pictures of its
 src/position/       the User's own position: the phone's, or the development walk, and its sending
 src/storage/        what the phone keeps between two starts of the app
 src/session/        where the User is in the flow between the screens, and the work of the start
+src/update/         the check at start for a newer native build, and its dialog
 src/screens/        the screens that the routes show; a screen of several files has a folder
 modules/            the native modules, local Expo modules: the map (snu-now-map) and text recognition (snu-now-ocr)
 __tests__/          Jest tests
@@ -924,6 +925,17 @@ The three legal documents open from the consent screen on a screen of their own,
 `/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
 closes back to the screen it was opened from. The documents' texts are placeholders.
 
+**The update check** (`src/update/`) runs once at every start: `UpdateCheck`, in the root layout beside the stack,
+fetches `app-version.json` from the `app-version` Release on GitHub with a 5-second timeout, without holding back the
+first screen. `app-version.ts` decides from the file's `latest` and `minimum` and the installed version: a build
+older than `latest` sees 업데이트가 필요합니다 with 업데이트 하기 and 계속 사용하기, a build older than `minimum` the same
+without 계속 사용하기. 업데이트 하기 opens the platform's `download`; where it is `null`, as on iOS, the dialog asks the
+User to install the new version and has no 업데이트 하기. Nothing is kept, so the dialog comes back at the next start.
+Any failure, offline, a timeout or a malformed file, shows nothing. The installed version is
+`Constants.expoConfig.version`, the running JavaScript's own `version`. It is the native build's too: `version` is part
+of the fingerprint (raising 1.0.0 to 1.1.0 changes it from `d0581b58…` to `5d2e4656…`), so an update made with
+another `version` never reaches an older build. The web is not checked.
+
 ## Data
 
 A screen holds no data of its own and never reads an answer of the main server. It calls a hook of a feature, which
@@ -1204,8 +1216,10 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
   Inside the design system the names are the design system's, also where the glossary prefers another word: its
   `Avatar` is a person's picture anywhere, its event kind is `official`, and a card's place is its `venue`.
 - **Dialog**: the design system has none and the frames ask questions with two answers. `Dialog` shows a title in
-  18/700, a sentence and one or two Buttons over the screen; `tone="danger"` fills the confirming answer in red
-  (the Button variant `destructive`) for what cannot be taken back. Android's back button is its cancel.
+  18/700, a sentence and up to two Buttons over the screen: a confirming answer, a cancel, both, or none for a
+  statement that nothing in the app answers. `tone="danger"` fills the confirming answer in red (the Button variant
+  `destructive`) for what cannot be taken back. Android's back button is its cancel (`onCancel`); without one, back
+  leaves the dialog open.
 - **The parts the screens around the map repeat**, which the design system lacks and the frames draw:
   - `AppBar`: a tab's (title 22/700, actions at the right) or, with `leave`, a sub-screen's (✕ "닫기" or the chevron
     "뒤로" in 48, title 20/700), with an optional count after the title ("퀘스트 12"). `IconButton` is an icon in 48.
