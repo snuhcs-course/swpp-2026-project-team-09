@@ -18,6 +18,7 @@ import {
   MESSAGES_TOTAL_MAX,
   type QuestProposal,
   referenceOf,
+  type ResolvedBy,
   sentProposalOf,
 } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
@@ -44,6 +45,8 @@ export interface ChatBubble {
   choices: readonly Choice[];
   // The candidate a User's message chose with a chip, sent with that message.
   chosen: Chosen | null;
+  // The words an Assistant's answer read through an alias, each shown with 아니에요 until the User presses it.
+  resolvedBy: readonly ResolvedBy[];
   failure: ChatFailure | null;
 }
 
@@ -56,6 +59,9 @@ export interface Chat {
   choose: (choice: Choice) => void;
   // Sends the User's last message again, after a failure the Assistant may get over.
   retry: () => void;
+  // 아니에요 under an answer: tells the main server those words did not mean that, and then takes the line away.
+  // Throws when the main server did not take it.
+  rejectAlias: (bubbleId: number, reading: ResolvedBy) => Promise<void>;
   // 새 대화: forgets the conversation, and a reply still on its way.
   reset: () => void;
   // Shows a Proposal that no request asked for, a suggestion's, as the Assistant's, and gives its bubble's id. Nothing
@@ -102,17 +108,37 @@ type NewBubble = Omit<ChatBubble, 'id'>;
 async function answerTo(messages: ChatMessage[]): Promise<NewBubble> {
   try {
     const reply = await apiClient.askAssistant(messages);
-    const { text, cards, mapButtons, proposal, choices } = reply;
-    return { role: 'assistant', text, cards, mapButtons, proposal, choices, chosen: null, failure: null };
+    const { text, cards, mapButtons, proposal, choices, resolvedBy } = reply;
+    return { role: 'assistant', text, cards, mapButtons, proposal, choices, chosen: null, resolvedBy, failure: null };
   } catch (error) {
     const failure = error instanceof ApiError && error.status === 429 ? 'usedUp' : 'unavailable';
     const text = FAILURE_TEXT[failure];
-    return { role: 'assistant', text, cards: [], mapButtons: [], proposal: null, choices: [], chosen: null, failure };
+    return {
+      role: 'assistant',
+      text,
+      cards: [],
+      mapButtons: [],
+      proposal: null,
+      choices: [],
+      chosen: null,
+      resolvedBy: [],
+      failure,
+    };
   }
 }
 
 function userBubble(text: string, chosen: Chosen | null): NewBubble {
-  return { role: 'user', text, cards: [], mapButtons: [], proposal: null, choices: [], chosen, failure: null };
+  return {
+    role: 'user',
+    text,
+    cards: [],
+    mapButtons: [],
+    proposal: null,
+    choices: [],
+    chosen,
+    resolvedBy: [],
+    failure: null,
+  };
 }
 
 interface Bubbles {
@@ -140,6 +166,27 @@ function useBubbles(): Bubbles {
     [show],
   );
   return { bubbles, said, show, add };
+}
+
+function sameReading(one: ResolvedBy, other: ResolvedBy): boolean {
+  return one.kind === other.kind && one.words === other.words && one.id === other.id;
+}
+
+// 아니에요 of the conversation's bubbles: the line of that reading leaves its bubble once the main server took it.
+function useRejectAlias({ said, show }: Pick<Bubbles, 'said' | 'show'>): Chat['rejectAlias'] {
+  return useCallback(
+    async (bubbleId: number, reading: ResolvedBy): Promise<void> => {
+      await apiClient.rejectAlias({ kind: reading.kind, words: reading.words, targetId: reading.id });
+      show(
+        said.current.map((bubble) =>
+          bubble.id === bubbleId
+            ? { ...bubble, resolvedBy: bubble.resolvedBy.filter((held) => !sameReading(held, reading)) }
+            : bubble,
+        ),
+      );
+    },
+    [said, show],
+  );
 }
 
 // Asking the Assistant: the request for the conversation as it stands, the User's message last, with 다시 시도 and
@@ -184,14 +231,24 @@ function useAsking({ said, show, add }: Bubbles): {
 
 // An Assistant's bubble the app adds itself, with a Proposal the server made outside the chat.
 function proposedBubble(text: string, proposal: QuestProposal): NewBubble {
-  return { role: 'assistant', text, cards: [], mapButtons: [], proposal, choices: [], chosen: null, failure: null };
+  return {
+    role: 'assistant',
+    text,
+    cards: [],
+    mapButtons: [],
+    proposal,
+    choices: [],
+    chosen: null,
+    resolvedBy: [],
+    failure: null,
+  };
 }
 
 // The conversation with the Assistant, kept in memory by whoever holds the hook; the server keeps none of it. Each
 // message sends the conversation, and the reply is shown whole.
 export function useChat(): Chat {
   const held = useBubbles();
-  const { add } = held;
+  const { add, said, show } = held;
   const { waiting, ask, retry, reset } = useAsking(held);
 
   const send = useCallback(
@@ -215,5 +272,7 @@ export function useChat(): Chat {
     [add],
   );
 
-  return { bubbles: held.bubbles, waiting, send, choose, retry, reset, propose };
+  const rejectAlias = useRejectAlias({ said, show });
+
+  return { bubbles: held.bubbles, waiting, send, choose, retry, rejectAlias, reset, propose };
 }

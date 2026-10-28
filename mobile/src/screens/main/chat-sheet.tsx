@@ -28,7 +28,8 @@ import { JoinSheet } from '../party/join-sheet';
 import { useSendParty } from '../party/form/use-send';
 import { openPost } from '../party/post-card';
 import { showMine, usePartyActions } from '../party/use-party-actions';
-import { type CardActions, ChatBubbles, ChatEmpty, type ProposalActions } from './chat-bubbles';
+import { type CardActions, ChatBubbles, type ProposalActions } from './chat-bubbles';
+import { ChatEmpty } from './chat-empty';
 import type { EventCardActions } from './chat-event-cards';
 import type { ProposalMaking } from './chat-proposal-card';
 import type { QuestCardActions } from './chat-quest-cards';
@@ -143,8 +144,8 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
   const eventCards = useEventCards(onOpenEvent);
   const questCards = useQuestCards(onOpenPost);
   const cardActions: CardActions = useMemo(
-    () => ({ events: eventCards.actions, quests: questCards.actions, proposals }),
-    [eventCards.actions, questCards.actions, proposals],
+    () => ({ events: eventCards.actions, quests: questCards.actions, proposals, rejectAlias: chat.rejectAlias }),
+    [eventCards.actions, questCards.actions, proposals, chat.rejectAlias],
   );
   const { bubbles, waiting, send, choose, retry, reset } = chat;
   // From the sheet's bottom to the AI input's top, and the room above it.
