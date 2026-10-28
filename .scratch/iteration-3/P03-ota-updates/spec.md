@@ -137,6 +137,41 @@ Words:
 - **내 정보** shows, in small text at the bottom: `앱 <version> · 업데이트 <tag> (<short commit>)`. A build running its embedded bundle shows the tag and commit of the commit it was built from. A Dev or local build shows `개발 빌드`.
 - **iOS is built by the Mac owner** with Xcode, as a Production build including `expo-updates`, from the steps this task writes. A free Apple account's 7-day limit does not matter for the check.
 
+### The Android build in CI (ticket 05, added 2026-10-28)
+
+Added after tickets 01–04. A native change used to need a person to build the APK by hand. If they forgot, updates
+stopped reaching phones without a word: a bundle for the new fingerprint goes out, and no installed build takes it.
+GitHub Actions now builds the APK. The repository is public, so its standard runners cost nothing.
+
+- **When it builds.** The `release app` job builds only when the decision is `publish-needs-build`: a fingerprint
+  changed and `version` was raised. It runs these steps in this order:
+  1. Run `CI=1 pnpm expo prebuild --platform android --no-install` and `./gradlew assembleRelease`, as the hand build
+     does, with JDK 21 and the runner's Android SDK. The build settings come from the repository variables. The Kakao
+     key comes from the secret `KAKAO_NATIVE_APP_KEY`.
+  2. Check the APK before anything goes out. The fingerprint embedded in the APK (`assets/fingerprint`) must equal the
+     computed Android fingerprint. Its signer must be the shared debug key (SHA-256 `fac61745…3b9c`), so that it
+     installs over the builds already on phones.
+  3. Attach the APK to the GitHub Release of the pushed tag, creating the Release if it does not exist. The asset is
+     named after the tag, with `/` replaced by `-`.
+  4. Replace `app-version.json` on the `app-version` Release. `latest` becomes the new `version`. `minimum` is kept
+     from the old file. `fingerprint` takes the computed Android and iOS hashes. `download.android` becomes the new
+     APK's URL, and `download.ios` stays `null`. A pure `release.sh` function writes the file, and `release.bats`
+     tests it.
+  5. Publish the bundle, as for any Release.
+
+  If any step fails, the job stops there and nothing later happens, so installed phones keep their current bundle.
+- **Signing.** The build keeps the Expo template's debug key, which prebuild writes on every run, so no key is
+  stored. A proper release key is a decision for later, because changing the key makes every user reinstall.
+- **iOS.** iOS is still built by hand by the Mac owner. A device build needs a paid Apple account.
+- **Permissions.** Only the `release app` job gets `contents: write`, to create Releases and upload assets.
+- **A pull request is checked as well.** CI gains a job that computes the app's fingerprints with the build settings
+  and runs the same decision against `app-version.json`:
+  - It fails when the native part changed and `version` was not raised.
+  - It passes, with a notice that the tag will build an APK, when `version` was raised.
+  - It passes when nothing native changed.
+
+  The Release workflow's check stays as the last guard.
+
 ### Documentation
 
 - `infra/production/README.md`:
@@ -168,7 +203,7 @@ Words:
 
 ## Out of Scope
 
-- Building APKs or iOS apps in CI (EAS Build, Gradle in Actions); native Releases stay hand-made.
+- Building iOS apps in CI, and EAS Build. Android APKs are built in GitHub Actions since ticket 05.
 - A Dev channel and OTA for the Dev APK (the configuration is ready for it).
 - Distributing iOS builds (TestFlight, App Store).
 - Installing an APK from inside the app without the browser, or silently.
