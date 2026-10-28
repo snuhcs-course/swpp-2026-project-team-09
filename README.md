@@ -543,6 +543,13 @@ needs a build of the app or a development server.
   [Iteration 1 release](https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/tag/iteration-1), for the
   servers on your own computer. It is Iteration 1's app, with the Meetup and without the Iteration 2 features.
 
+The Production app updates itself. A Release that changes only JavaScript publishes the app's bundle to EAS Update,
+and an installed app downloads it when it starts and runs it from its next start, with no new APK. A change to the
+native part, such as a native dependency, a config plugin or `app.json`, needs a native Release instead: `version` is
+raised, a new APK and iOS build are made, and `app-version.json` is replaced, so that older builds show
+업데이트가 필요합니다 at their start. [infra/production/README.md](infra/production/README.md), "The Production APK" and
+"The Production iOS build", has the steps.
+
 The Iteration 1 APK reaches the main server at `http://localhost:3000` and the socket server at
 `http://localhost:3001`, on the phone itself. With the servers running on your computer
 ([Running the servers](#running-the-servers), with the [demo data](#demo-data)), Android's Platform-Tools for `adb`, and
