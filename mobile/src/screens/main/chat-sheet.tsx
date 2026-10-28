@@ -139,8 +139,8 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
   const eventCards = useEventCards(onOpenEvent);
   const questCards = useQuestCards(onOpenPost);
   const cardActions: CardActions = useMemo(
-    () => ({ events: eventCards.actions, quests: questCards.actions, proposals }),
-    [eventCards.actions, questCards.actions, proposals],
+    () => ({ events: eventCards.actions, quests: questCards.actions, proposals, rejectAlias: chat.rejectAlias }),
+    [eventCards.actions, questCards.actions, proposals, chat.rejectAlias],
   );
   const { bubbles, waiting, send, choose, retry, reset } = chat;
   // From the sheet's bottom to the AI input's top, and the room above it.

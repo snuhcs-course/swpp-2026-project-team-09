@@ -13,11 +13,12 @@ import { Keyboard, Pressable, ScrollView, type StyleProp, StyleSheet, Text, View
 import type { Choice, GlobalEventCard, MapLayer, QuestProposal } from '@/api/assistant-types';
 import type { ShownChatCard, ShownRecruitingQuest } from '@/api/quest-parts-types';
 import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
-import type { ChatBubble } from '@/features/assistant/use-chat';
+import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
 import { ChatChoices } from './chat-choices';
 import { ChatEventCards, type EventCardActions } from './chat-event-cards';
 import { ChatProposalCard, type ProposalMaking } from './chat-proposal-card';
 import { ChatQuestCards, type QuestCardActions } from './chat-quest-cards';
+import { ChatResolvedBy } from './chat-resolved-by';
 
 // The examples of the empty chat, each with its icon on its layer's colour. They replace the frame's library seats,
 // and 파티 찾기 takes the Party's colour. A press sends the words.
@@ -101,11 +102,12 @@ export interface ProposalActions {
   edit: (bubbleId: number, proposal: QuestProposal) => void;
 }
 
-// What the cards of the answers do.
+// What the cards of the answers do, and 아니에요 under the words an answer read through an alias.
 export interface CardActions {
   events: EventCardActions;
   quests: QuestCardActions;
   proposals: ProposalActions;
+  rejectAlias: Chat['rejectAlias'];
 }
 
 // The cards of an answer in the order the Assistant showed them, the cards of one kind next to each other together.
@@ -179,7 +181,7 @@ interface BubbleProps {
 }
 
 function Bubble({
-  bubble: { id, role, text: words, cards, mapButtons, proposal, choices, failure },
+  bubble: { id, role, text: words, cards, mapButtons, proposal, choices, resolvedBy, failure },
   onRetry,
   onChoose,
   onShowLayer,
@@ -199,6 +201,7 @@ function Bubble({
       {shown.length === 0 ? null : <Cards actions={cardActions} cards={shown} />}
       {proposed === null ? null : <Proposal actions={cardActions.proposals} bubbleId={id} proposal={proposed} />}
       {onChoose === null || choices.length === 0 ? null : <ChatChoices choices={choices} onChoose={onChoose} />}
+      <ChatResolvedBy onReject={(reading) => cardActions.rejectAlias(id, reading)} readings={resolvedBy} />
       {layers.map((layer) => (
         <View key={layer} style={styles.below}>
           <Button

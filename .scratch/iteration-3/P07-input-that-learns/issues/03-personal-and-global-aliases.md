@@ -25,3 +25,14 @@ App: the "학관 → 학생회관으로 찾았어요 · 아니에요" line under
 - [ ] Tests as the spec's Testing Decisions for 03; README paragraph; `pnpm lint`, `pnpm typecheck` and the touched tests pass in both packages.
 
 ## Comments
+
+### Built (2026-10-28), app
+
+On branch `3.0/P07-03-app`, from `b4a4265a`.
+
+- `ResolvedBy` and `AssistantReply.resolvedBy` in `assistant-types.ts`. `isAssistantAnswer` takes a reply with or without `resolvedBy` and `askAssistant` gives an absent one as `[]`; a malformed entry fails the reply. The guard `isResolvedBy` lives in the new `api/server/alias-client.ts` with `isTaughtAliases` and the three operations `listAliases`, `deleteAlias` and `rejectAlias` (`api/alias-types.ts`: `TaughtAlias`, `AliasRejection`), on `ApiClient`, the server client and the mock.
+- `ChatBubble.resolvedBy` from the reply. `useChat().rejectAlias(bubbleId, reading)` sends `POST /assistant/aliases/reject` `{ kind, words, targetId }` and, once it is taken, removes that reading from the bubble, so the line stays away when the sheet is closed and opened again. `chat-resolved-by.tsx` draws a line per reading inside the bubble after the chips, "학관 → 학생회관으로 찾았어요" (으로/로 by the label's last syllable) with 아니에요; it thanks the User with a toast, or says it was not sent and leaves the line. `rejectAlias` reaches the bubble through `CardActions`, since `chat-bubbles.tsx` and `chat-sheet.tsx` are at the 300-line limit.
+- 내가 가르친 말 at `/me/aliases` (`taught-words-screen.tsx`, `features/assistant/use-taught-aliases.ts`), its row right under 친구 관리: "중도 → 중앙도서관" over "3번 · 10월 26일", a trash button with the dialog "가르친 말을 지울까요?", `DELETE /assistant/aliases/:id`, which takes the row out of the cache and fetches the list again; a 404 counts as deleted. Empty: "아직 가르친 말이 없어요". There is no swipe-to-delete pattern in the app, so it is a button.
+- The mock holds two aliases in memory (`api/mock/aliases.ts`, reset by `startFresh`): 중도 → 중앙도서관 (`place-62`, not among the mocks' Places) and 민준 → 김민준. A message with 중도 gets tomorrow's lunch Proposal at 중앙도서관 with the 찾았어요 line while that alias is held; delete and reject remove it. `mockAssistantReply` now fills its defaults with one helper.
+- Tests: `chat-resolved-by.integration.test.tsx`, `me-aliases.integration.test.tsx` (fake main server), `aliases-mock.integration.test.tsx`, `api/answers-aliases.unit.test.ts`. The mobile README describes the line, the screen and the operations.
+- For the merge with ticket 04's app half: `ChatBubble` gains a required `resolvedBy`, so a bubble literal there (`propose`) needs `resolvedBy: []`; `useChat` is at the 50-line function limit, with `rejectAlias` built in its return.

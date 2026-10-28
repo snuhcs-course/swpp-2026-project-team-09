@@ -13,8 +13,10 @@ import {
   MAP_LAYERS,
   type MapLayer,
   type QuestProposal,
+  type ResolvedBy,
 } from '@/api/assistant-types';
 import type { ApiClient } from '@/api/client';
+import { isResolvedBy } from './alias-client';
 import { field, hasTexts, isBoard, isJoinPolicy, isNothing, isNumber, listOf } from './answers';
 import { isGlobalEvent } from './event-client';
 import { call } from './http';
@@ -62,26 +64,30 @@ function isChoice(value: unknown): value is Choice {
   return CHOICE_KINDS.has(field(value, 'kind')) && hasTexts(value, ['id', 'label', 'words']);
 }
 
-// A reply of a main server from before the candidates has no `choices`.
-export type AssistantAnswer = Omit<AssistantReply, 'choices'> & { choices?: Choice[] };
+// A reply of a main server from before the candidates has no `choices`, and one from before aliases no `resolvedBy`.
+export type AssistantAnswer = Omit<AssistantReply, 'choices' | 'resolvedBy'> & {
+  choices?: Choice[];
+  resolvedBy?: ResolvedBy[];
+};
 
 export function isAssistantAnswer(value: unknown): value is AssistantAnswer {
   const proposal = field(value, 'proposal');
   const choices = field(value, 'choices');
+  const resolvedBy = field(value, 'resolvedBy');
   return (
     hasTexts(value, ['text']) &&
     listOf(isMapLayer)(field(value, 'mapButtons')) &&
     listOf(isChatCard)(field(value, 'cards')) &&
     (isNothing(proposal) || isQuestProposal(proposal)) &&
-    (choices === undefined || listOf(isChoice)(choices))
+    (choices === undefined || listOf(isChoice)(choices)) &&
+    (resolvedBy === undefined || listOf(isResolvedBy)(resolvedBy))
   );
 }
 
 export const assistantClient: Pick<ApiClient, 'askAssistant'> = {
   askAssistant: async (messages) => {
-    const { choices = [], ...reply } = await call('POST', '/assistant/messages', isAssistantAnswer, {
-      body: { messages },
-    });
-    return { ...reply, choices };
+    const answer = await call('POST', '/assistant/messages', isAssistantAnswer, { body: { messages } });
+    const { choices = [], resolvedBy = [], ...reply } = answer;
+    return { ...reply, choices, resolvedBy };
   },
 };
