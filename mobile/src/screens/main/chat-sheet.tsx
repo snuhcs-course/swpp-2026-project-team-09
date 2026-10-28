@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -141,7 +142,7 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
     () => ({ events: eventCards.actions, quests: questCards.actions, proposals }),
     [eventCards.actions, questCards.actions, proposals],
   );
-  const { bubbles, waiting, send, retry, reset } = chat;
+  const { bubbles, waiting, send, choose, retry, reset } = chat;
   // From the sheet's bottom to the AI input's top, and the room above it.
   const under = inputTop + OVER_INPUT;
   return (
@@ -153,6 +154,7 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
         <ChatBubbles
           bubbles={bubbles}
           cardActions={cardActions}
+          onChoose={choose}
           onRetry={retry}
           onShowLayer={onShowLayer}
           under={under}

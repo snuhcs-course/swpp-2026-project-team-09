@@ -24,3 +24,12 @@ App: `mobile/src/api/assistant-types.ts` and `assistant-client.ts` (fields and g
 - [ ] Tests as the spec's Testing Decisions for 02, server and app; the README's Assistant section describes `choices`, `chosen` and the table; `pnpm lint`, `pnpm typecheck` and the touched tests pass in both packages.
 
 ## Comments
+
+### Built (2026-10-28), app
+
+- `Choice` and `Chosen` in `assistant-types.ts`; `AssistantReply.choices`; a User `ChatMessage` may carry `chosen`. `isAssistantAnswer` in `assistant-client.ts` takes a reply with or without `choices` and `askAssistant` gives an absent one as `[]`; a malformed `choices` fails the reply, as any malformed field does.
+- `useChat().choose(choice)` adds the User's bubble with the label and `chosen: { kind, id, words }` and asks as `send` does. `messagesToSend` sends `chosen` with the message that carried it, in that request and every later one, as the rest of the history goes; it does not count toward the 24,000 characters, as the server's length counts only text and Proposals.
+- `chat-choices.tsx` draws the chips (the design system's `Chip`) inside the last bubble only, one row per kind in the order the kinds first appear. Anything sent makes another bubble last, so the chips leave.
+- The mock answers a message with 학관 as a word (not inside 제1공학관) with the question and three Place choices (`place-63` 학생회관, `place-919` (관악사)학부 생활관, `place-300` 유회진 학술정보관, words 학관), and a message whose `chosen` id or text is one of them with tomorrow's lunch Proposal at that Place. 300 is not among the mocks' Places, so a Quest made from it in the mock has no Place.
+- Tests: `chat-choices.integration.test.tsx` (fake main server: chip rows per kind, a tap's request body, chips leaving after a tap or a typed message, a reply without `choices`), `chat-choices-mock.integration.test.tsx` (the mock's 학관 flow), `features/chat-messages.unit.test.ts`, `api/answers-assistant.unit.test.ts`. The mobile README's chat section describes the chips.
+- For the server half: a `chosen` comes back on its message in every later request of the conversation, so the server should write the `chosen` row only for the last message (or not twice for one choice).
