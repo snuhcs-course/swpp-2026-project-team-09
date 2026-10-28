@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-27  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ConfigContext, ExpoConfig } from 'expo/config';
@@ -63,6 +64,20 @@ function withInviteLinks(config: ExpoConfig, host: string): ExpoConfig {
   };
 }
 
+// The app asks EAS Update for bundles on one channel, sent as the `expo-channel-name` header. The channel is baked
+// into a native build when it is made, from `UPDATE_CHANNEL`; unset, it is `production`. A later Dev channel needs
+// only another value here for the Dev APK, and its own publish step.
+function withUpdateChannel(config: ExpoConfig, channel: string): ExpoConfig {
+  const updates = config.updates ?? {};
+  return {
+    ...config,
+    updates: {
+      ...updates,
+      requestHeaders: { ...updates.requestHeaders, 'expo-channel-name': channel === '' ? 'production' : channel },
+    },
+  };
+}
+
 // The Android build is for `arm64-v8a` alone (`app.json`), as Kakao's map ships ARM libraries only. For a development
 // build on an x86_64 emulator, such as the one that reads the timetable screenshots with ML Kit, `ANDROID_X86_64=1`
 // adds `x86_64` beside it when the project is generated. On that emulator everything but Kakao's map runs. A release
@@ -94,7 +109,10 @@ export default function appConfig({ config: fromJson }: ConfigContext): Partial<
   // `app.json` names both; they are repeated only because a plugin takes a whole configuration.
   const named = { ...fromJson, name: fromJson.name ?? 'SNU Now', slug: fromJson.slug ?? 'snu-now' };
   const config = withEmulatorAbi(
-    withInviteLinks(named, (process.env.INVITE_LINK_HOST ?? '').trim()),
+    withUpdateChannel(
+      withInviteLinks(named, (process.env.INVITE_LINK_HOST ?? '').trim()),
+      (process.env.UPDATE_CHANNEL ?? '').trim(),
+    ),
     process.env.ANDROID_X86_64 === '1',
   );
   const iosUrlScheme = process.env.GOOGLE_IOS_URL_SCHEME ?? '';

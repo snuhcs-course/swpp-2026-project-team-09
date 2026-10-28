@@ -23,10 +23,16 @@ that build; `pnpm start` is the way to Expo Go.
 
 Add packages with `pnpm expo install <package>`, not `pnpm add`. It picks the version that matches the Expo SDK.
 
+A package with native code, `app.json`, and the config plugins are the app's native part. Any edit to them, a
+comment included, needs a new native build before updates reach phones again (see the repository's `CLAUDE.md`, "The
+app's native files").
+
 ### Development settings
 
 A setting is an `EXPO_PUBLIC_` variable given when the app is started, for example
-`EXPO_PUBLIC_MOCK_FAIL=listFriends pnpm start`. A released app ignores all of them.
+`EXPO_PUBLIC_MOCK_FAIL=listFriends pnpm start`. A released app ignores all of them. The build settings of a released
+app, such as `EXPO_PUBLIC_RELEASE_TAG`, are not development settings: they are listed in
+[the Production APK](../infra/production/README.md#the-production-apk).
 
 | Variable                     | Value                                                 | What it does                                        |
 | ---------------------------- | ----------------------------------------------------- | --------------------------------------------------- |
