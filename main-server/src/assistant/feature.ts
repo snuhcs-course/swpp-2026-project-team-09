@@ -3,10 +3,13 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
+import { type AliasSource } from '../places/place-aliases.js';
+import { type MatchTier } from '../places/place-index.js';
 import { type RecruitingQuestDto } from '../quests/dto/quest.dto.js';
 import { type FoundIds } from './found-ids.js';
 import { type QuestProposal, type SentProposal } from './proposal.js';
@@ -26,10 +29,24 @@ export interface CardReference {
   id: string;
 }
 
-// One message of a conversation, as the app sends it: the User's text, or the Assistant's with the cards it showed and
-// the Proposal it made, by its values. Only the last Proposal is sent back.
+// What a resolver finds: a Place, a Friend or a Global Event.
+export type ChoiceKind = 'place' | 'friend' | 'globalEvent';
+
+// A candidate of a resolver's 'several' answer, which the app offers under the reply for the User to tap: its plain
+// name or title, and the words the resolver was given, as the model passed them.
+export interface Choice {
+  kind: ChoiceKind;
+  id: string;
+  label: string;
+  words: string;
+}
+
+// One message of a conversation, as the server runs it: the User's text, with the candidate it answers with, or the
+// Assistant's with the cards it showed and the Proposal it made, by its values. Only the new message's candidate is
+// checked again, with its name; an earlier one is as the app sent it back, its text as the name. Only the last
+// Proposal is sent back.
 export type ChatMessage =
-  | { role: 'user'; text: string }
+  | { role: 'user'; text: string; chosen: Choice | null }
   | { role: 'assistant'; text: string; cards: CardReference[]; proposal: SentProposal | null };
 
 // The map layers a reply can show with a button: the restaurants and the shuttle.
@@ -62,6 +79,8 @@ export interface Presented {
   readonly cards: Card[];
   // At most one Proposal: the last that passed proposeQuest.
   proposal: QuestProposal | null;
+  // The candidates of every 'several' answer, in the resolvers' order, each once.
+  readonly choices: Choice[];
 }
 
 // Who asks and when.
@@ -70,13 +89,34 @@ export interface Asker {
   readonly now: Date;
 }
 
-// What every tool of a run is given: who asks and when, the ids the run's lookups and resolvers returned, which are
-// all its presenters accept, the last Proposal sent back with the conversation, whose ids proposeQuest also accepts,
-// and what the presenters have put in the reply.
+// One resolver's answer, as a resolution event records it: the words as the model passed them, and the ids given.
+export interface ResolverAnswer {
+  kind: ChoiceKind;
+  words: string;
+  result: 'none' | 'one' | 'several';
+  candidateIds: string[];
+  // Places only: the matcher's tier that answered and, on the alias tier, whose alias it was.
+  tier: MatchTier | null;
+  aliasSource: AliasSource | null;
+}
+
+// Where a run records how the User's words were resolved (resolution_events). Recording never fails a tool: a row
+// that cannot be written is logged and left out.
+export interface ResolutionLog {
+  answered(answer: ResolverAnswer): Promise<void>;
+  // proposeQuest was given a Place other than the one of the Proposal sent back.
+  edited(fromPlaceId: string, toPlaceId: string): Promise<void>;
+}
+
+// What every tool of a run is given: who asks and when, the ids the run's lookups and resolvers returned and the
+// candidate the User chose, which are all its presenters accept, the last Proposal sent back with the conversation,
+// whose ids proposeQuest also accepts, what the presenters have put in the reply, and where the resolvers record what
+// they answered.
 export interface ToolContext extends Asker {
   readonly found: FoundIds;
   readonly shown: SentProposal | null;
   readonly presented: Presented;
+  readonly resolutions: ResolutionLog;
 }
 
 // A feature's reply: the model's last text, and what the presenters put beside it.

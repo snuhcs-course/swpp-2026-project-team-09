@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -9,7 +10,7 @@ import { GlobalEventsService } from '../../global-events/global-events.service.j
 import { defineTool, type Tool } from '../feature.js';
 import { koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
-import { givenIds, resolved } from './resolved.js';
+import { resolved, settle } from './resolved.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -44,7 +45,8 @@ export function resolveGlobalEvent(globalEvents: GlobalEventsService): Tool {
     description:
       "Finds the published Global Event (campus event) the User's words refer to, as the event a 파티 goes to, optionally within a period. Answers result 'one' with the event, 'several' with the candidates, or 'none' with the reason. On 'several', ask the User which one, listing the titles; on 'none', say there is no such event.",
     input,
-    run: async ({ words, from, to }, { now, found }) => {
+    run: async ({ words, from, to }, context) => {
+      const { now } = context;
       const period =
         from === undefined || to === undefined
           ? undefined
@@ -62,7 +64,8 @@ export function resolveGlobalEvent(globalEvents: GlobalEventsService): Tool {
         })),
         `No published Global Event still to come has a title holding ${words}${period === undefined ? '' : ` from ${from} to ${to}`}.`,
       );
-      found.add('globalEvent', givenIds(answer));
+      const labels = new Map(events.map(({ id, title }) => [id, title]));
+      await settle(context, { kind: 'globalEvent', words, answer, labels });
       return answer;
     },
   });

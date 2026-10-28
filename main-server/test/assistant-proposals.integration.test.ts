@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -92,6 +93,7 @@ describe('proposeQuest, with a complete Open Proposal', () => {
       mapButtons: [],
       cards: [],
       proposal: LUNCH,
+      choices: [],
     });
     expect(model.toolResults()).toEqual([{ result: 'proposed', proposal: LUNCH }]);
   });

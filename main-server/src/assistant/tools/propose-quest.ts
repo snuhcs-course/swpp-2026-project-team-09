@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -21,6 +22,7 @@ import {
   type QuestProposal,
   sentProposalOf,
 } from '../proposal.js';
+import { recordPlaceChange } from './resolved.js';
 
 // The services proposeQuest checks the resolved ids with.
 export interface ProposeQuestServices {
@@ -92,7 +94,8 @@ interface Resolved {
   failures: FieldFailures;
 }
 
-// An id is taken only when a resolver returned it in this message or it is in the last Proposal sent back.
+// An id is taken only when a resolver returned it in this message, the User chose it in their last message, or it is
+// in the last Proposal sent back.
 function accepted({ found }: ToolContext, kind: FoundKind, id: string, shownIds: readonly string[]): boolean {
   return found.has(kind, id) || shownIds.includes(id);
 }
@@ -284,7 +287,7 @@ function inThePast(startsAt: string | undefined, now: Date): FieldFailures {
 export function proposeQuest(services: ProposeQuestServices): Tool {
   return defineTool({
     description:
-      'Proposes a 파티 (a Quest) the User asked to make or recruit for: 공개 (open or approval, on a Board) or 비공개 (closed, with invited Friends), optionally at a Place and for a Global Event. It is shown under your reply as a card with 만들기, which makes it. Nothing is made until the User presses it. Give only ids the resolvers returned in this message or those in [Proposal shown: …]. To change a Proposal shown before, give its values again with only the change. When it answers "refused", ask the User for the fields it names.',
+      'Proposes a 파티 (a Quest) the User asked to make or recruit for: 공개 (open or approval, on a Board) or 비공개 (closed, with invited Friends), optionally at a Place and for a Global Event. It is shown under your reply as a card with 만들기, which makes it. Nothing is made until the User presses it. Give only ids the resolvers returned in this message, the one in [Chosen: …], or those in [Proposal shown: …]. To change a Proposal shown before, give its values again with only the change. When it answers "refused", ask the User for the fields it names.',
     input,
     run: async (given, context) => {
       const resolved = await resolvedOf(given, context, services);
@@ -319,6 +322,7 @@ export function proposeQuest(services: ProposeQuestServices): Tool {
         invitees: resolved.invitees,
       };
       context.presented.proposal = proposal;
+      await recordPlaceChange(context, resolved.place);
       return { result: 'proposed', proposal: proposalForModel(sentProposalOf(proposal)) };
     },
   });

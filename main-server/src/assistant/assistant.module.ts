@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
@@ -17,6 +18,7 @@ import { ShuttleModule } from '../shuttle/shuttle.module.js';
 import { type Model, MODEL_PORT, openRouterModel } from './adapter.js';
 import { AssistantController } from './assistant.controller.js';
 import { AssistantService } from './assistant.service.js';
+import { ResolutionEventsService } from './resolution-events.service.js';
 
 @Module({
   // QuestsModule gives the clock, by which a message falls in its day, and the recruiting list. FriendsModule and
@@ -25,6 +27,7 @@ import { AssistantService } from './assistant.service.js';
   controllers: [AssistantController],
   providers: [
     AssistantService,
+    ResolutionEventsService,
     {
       provide: MODEL_PORT,
       inject: [ConfigService],

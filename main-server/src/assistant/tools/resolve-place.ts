@@ -3,12 +3,13 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-26  Fable 5.1  prompted by fyoon46
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { PlaceMatcher } from '../../places/place-matcher.js';
 import { defineTool, type Tool } from '../feature.js';
-import { givenIds, resolved } from './resolved.js';
+import { resolved, settle } from './resolved.js';
 
 const input = z.object({
   words: z
@@ -29,14 +30,15 @@ export function resolvePlace(matcher: PlaceMatcher): Tool {
     description:
       "Finds the campus Place (a building) the User's words refer to, by name, building number or a short form such as 학관 or ㅎㄱ, for where a 파티 meets. Answers result 'one' with the Place, 'several' with the candidates, or 'none' with the reason. On 'several', ask the User which one, listing the names; on 'none', say there is no such Place.",
     input,
-    run: ({ words }, { found, userId }) => {
-      const { places } = matcher.match(words, userId);
+    run: async ({ words }, context) => {
+      const { tier, source, places } = matcher.match(words, context.userId);
       const answer = resolved(
         places.map(({ id, name, number }) => ({ id, name, number })),
         `No Place is named ${words}, has the building number ${words} or is shortened to ${words}.`,
       );
-      found.add('place', givenIds(answer));
-      return Promise.resolve(answer);
+      const labels = new Map(places.map(({ id, name }) => [id, name]));
+      await settle(context, { kind: 'place', words, answer, labels, tier, aliasSource: source });
+      return answer;
     },
   });
 }

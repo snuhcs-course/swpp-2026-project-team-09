@@ -16,6 +16,7 @@
 // 2026-10-06  Opus 5.5   prompted by fyoon46
 // 2026-10-06  Fable 5.1  prompted by fyoon46
 // 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+// 2026-10-28  Opus 5.5   prompted by fyoon46
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -66,6 +67,7 @@ model User {
   partyJoinRequests PartyJoinRequest[]
   partyInvitations  PartyInvitation[]
   timetableClasses  TimetableClass[]
+  resolutionEvents  ResolutionEvent[]
 
   @@map("users")
 }
@@ -624,4 +626,79 @@ enum Weekday {
   sunday
 
   @@map("weekday")
+}
+
+// One answer of the Assistant's resolvers to a User's words, or one answer of the User to them (P07): the words
+// normalised (src/common/normalise-words.ts) and the ids, never the sentence. Rows go with the account.
+model ResolutionEvent {
+  id           String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String                 @map("user_id") @db.Uuid
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind         ResolverKind
+  // At most 50 characters. Empty on an edit when no Place was resolved in that message.
+  words        String
+  // The 초성 of the words when they are all Hangul: ㅎㄱ for 학관.
+  choseong     String?
+  // The resolver's answer; null on the User's own.
+  result       ResolutionResult?
+  // Places only: the matcher's tier that answered and, on the alias tier, whose alias it was.
+  tier         ResolutionTier?
+  aliasSource  ResolutionAliasSource? @map("alias_source")
+  // The ids shown, in order, at most 10. On an edit, the Place it replaced.
+  candidateIds String[]               @map("candidate_ids") @db.Uuid
+  // The id the User chose, or rejected.
+  chosenId     String?                @map("chosen_id") @db.Uuid
+  outcome      ResolutionOutcome
+  createdAt    DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([userId, createdAt])
+  @@index([kind, words, createdAt])
+  @@map("resolution_events")
+}
+
+// Which resolver the words were given to.
+enum ResolverKind {
+  place
+  friend
+  globalEvent @map("global_event")
+
+  @@map("resolver_kind")
+}
+
+enum ResolutionResult {
+  none
+  one
+  several
+
+  @@map("resolution_result")
+}
+
+// The tiers of the Place matcher (src/places/place-index.ts).
+enum ResolutionTier {
+  exact
+  alias
+  generated
+  subsequence
+  distance
+
+  @@map("resolution_tier")
+}
+
+enum ResolutionAliasSource {
+  personal
+  global
+  curated
+
+  @@map("resolution_alias_source")
+}
+
+// answered: a resolver answered. chosen: the User tapped a candidate. edited: the User changed a Proposal's Place.
+// rejected: the User said a learned reading was wrong. Only the last three are labels.
+enum ResolutionOutcome {
+  answered
+  chosen
+  edited
+  rejected
+
+  @@map("resolution_outcome")
 }
