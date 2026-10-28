@@ -23,3 +23,18 @@ When a phone's native build is older than the latest native build, the app says 
   - restoring the file hides the screen again.
 
   Screenshots go in the PR.
+
+## Comments
+
+### Agent usage (2026-10-28)
+
+- **Agent time** (estimate): about 2 hours. The building subagent took about 35 minutes of work plus two full test runs of about 40 minutes each. The two reviews took about 2 minutes. Fixes and the PR took about 20 minutes. Time spent waiting for the person is not counted.
+- **Tokens** (estimate):
+  - Subagents, measured: building and fixes about 130,000, reviews about 130,000.
+  - Main session: about 80,000 input and 15,000 output, not counting cache reads. Cache reads were about 3,000,000 and cache writes about 100,000. These are estimates from the number of turns.
+
+### Notes (2026-10-28)
+
+- **Device check.** The check on the ticket 01 APK happens after merge. Code that has not been reviewed is never published to `production`. To see the screen, publish the merged code with a Release tag. Then replace `app-version.json` with `"latest": "1.0.1"`, check the screen, and put the file back with `"latest": "1.0.0"`. The screenshots go in a PR comment.
+- **Installed version.** It comes from `Constants.expoConfig.version`. That is right because `version` is part of the fingerprint: changing 1.0.0 to 1.1.0 changes `d0581b58…` to `5d2e4656…`, measured. So a bundle with another `version` never reaches an older build.
+- **Two dialogs at once.** If the session's "다른 기기에서 로그인했어요" dialog and this one open together, the one opened later sits on top. Making the session's dialog win would need a change to the Session context, which was left out.
