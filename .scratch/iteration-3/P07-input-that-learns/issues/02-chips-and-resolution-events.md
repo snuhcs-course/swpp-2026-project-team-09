@@ -24,3 +24,25 @@ App: `mobile/src/api/assistant-types.ts` and `assistant-client.ts` (fields and g
 - [ ] Tests as the spec's Testing Decisions for 02, server and app; the README's Assistant section describes `choices`, `chosen` and the table; `pnpm lint`, `pnpm typecheck` and the touched tests pass in both packages.
 
 ## Comments
+
+### Built (2026-10-28), server
+
+On branch `3.0/P07-02-chips-and-resolution-events`, from `2d8ec933`.
+
+- `src/common/normalise-words.ts`: `normaliseWords` replaces the matcher's `key()` and the Friend resolver's `bare()`, and keys every row. The resolvers' answers are unchanged.
+- `feature.ts`: `Choice`, `Presented.choices`, `chosen` on a User `ChatMessage`, and one new field on `ToolContext`, `resolutions`, a per-run `ResolutionLog` (`answered`, `edited`). `tools/resolved.ts` gains `settle`, which each resolver now calls: the ids go to `FoundIds`, a `several` answer's candidates become choices (plain label, trimmed words, each kind and id once), and the answer is recorded. `recordPlaceChange` there writes the `edited` row for `proposeQuest`.
+- `chosen.ts` checks a `chosen` again (Place in `PlacesService.list`, Friend in `listFriends`, event through a new `GlobalEventsService.notEndedAmong` with the search's not-ended rule). `AssistantService.reply` does it before the run, inside the 503 guard, writes the `chosen` row, and passes the checked choice on the last message; `runFeature` seeds `FoundIds` from it and `contentOf` adds the `[Chosen: …]` line.
+- `resolution-events.service.ts`: `ResolutionEventsService` (`answered`, `chosen`, `edited`, `forRun`), every write in a try that logs `A resolution event was not recorded: <error name> [Prisma code]` and never the words. Model `ResolutionEvent`, migration `20261028120000_add_resolution_events`.
+
+Decisions where the spec left room:
+
+- Only the last User message's `chosen` is checked, seeds `FoundIds` and writes a row. An earlier one, which the app resends with the history, is read unchecked as `[Chosen: …]` with the message's text as the name; the system prompt line tells the model to resolve that name again when it needs the id, since `proposeQuest` would refuse it.
+- In the `[Chosen: …]` line a Friend's name and an event's title go inside the delimiters; a Place's name is plain.
+- Rows are written as each resolver answers, awaited, so a run that later fails keeps its `answered` rows.
+- A `chosen` row has empty `candidate_ids`: the request does not say which candidates were shown. Ticket 05 can join it to the User's last `answered` row for the same kind and words.
+- An `edited` row is written only when `proposeQuest` proposes (not on a refused call), the Proposal sent back had a Place, and the new Place passed its checks.
+- `choseong` is set only when the normalised words are all Hangul syllables or consonants (학관, ㅎㄱ; not 301동 or 2093오월).
+- The table follows the spec: `created_at` is `timestamptz(3)` (the other tables use `timestamp(3)`); the migration adds CHECKs for words of at most 50 characters and at most 10 candidate ids. Enums: `ResolverKind` (`globalEvent` mapped to `global_event`, meant for ticket 03's `user_aliases.kind` too), `ResolutionResult`, `ResolutionTier`, `ResolutionAliasSource`, and `ResolutionOutcome`.
+- `proposeQuest`'s description names `[Chosen: …]` among the ids it takes.
+
+Tests: `test/assistant-choices.integration.test.ts` (choices for Places, Friends, and events, none for one or none, a chosen Place taken with no resolver call and refused without it, an earlier choice only read, a chosen Friend in delimiters, a former Friend and an ended event dropped, malformed choices refused with 400), `test/resolution-events.integration.test.ts` (answered rows with words, 초성, tier, alias source, and candidates; no sentence stored; a chosen row; no second row when the history is resent; none for a failed check; an edited row and none when the Place stays; a failing write leaves the reply and logs no words; rows deleted with the account), and `test/normalise-words.unit.test.ts`. Existing reply `toEqual`s gained `choices: []`. The paid eval harness was not run.
