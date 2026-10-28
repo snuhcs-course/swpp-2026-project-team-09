@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { curveFlags, replayFlags, suggestionFlags } from '../eval/replay/flags.ts';
@@ -91,9 +92,15 @@ describe('The command lines', () => {
       from: new Date('2026-09-30T15:00:00Z'),
       to: new Date('2026-10-28T15:00:00Z'),
       stepDays: 7,
+      finalFrom: null,
     });
-    expect(suggestionFlags(['--from', '2026-10-01', '--to', '2026-10-01']).until).toEqual(
-      new Date('2026-10-01T15:00:00Z'),
+    expect(suggestionFlags(['--from', '2026-10-01', '--to', '2026-10-01', '--final-from', '2026-10-01'])).toEqual({
+      from: new Date('2026-09-30T15:00:00Z'),
+      until: new Date('2026-10-01T15:00:00Z'),
+      finalFrom: new Date('2026-09-30T15:00:00Z'),
+    });
+    expect(() => curveFlags(['--from', '2026-10-01', '--to', '2026-10-29', '--final-from', 'soon'])).toThrow(
+      '--final-from',
     );
     expect(() => curveFlags(['--from', '2026-10-01'])).toThrow('--to is required');
     expect(() => curveFlags(['--from', '2026-10-01', '--to', '2026-10-29', '--step', '0'])).toThrow('--step');

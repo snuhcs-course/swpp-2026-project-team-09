@@ -2054,6 +2054,12 @@ pnpm eval:score eval/results/<run>.json             # score a saved run again, w
 pnpm eval:compare eval/results/<a>.json eval/results/<b>.json   # two runs side by side, with the differences
 ```
 
+The scorecard's last table gives the run's tokens in, read from and written to the cache, tokens out and estimated
+cost, and the same per turn, one request to the Assistant, so that the accuracy is read beside what a request costs
+(`eval/per-turn.ts`). The comparison adds a "Cost and accuracy" table with the two runs as points: model, pass rate,
+pass^k, cost and tokens per turn. Run the cases once with a larger model, `pnpm eval --model <larger>`, and compare it
+with the branch's run there: the claim that a small model is enough is then a measured one.
+
 A case's `expect` (`eval/expect.ts`) holds the accepted `actions` (TOOL, ASK, PROPOSE, REFUSE, CHAT, TOOL+ASK,
 PROPOSE+ASK), `tools` (`required`, `allowed`, `forbidden`, `"*"` for none), `args` of required tools (a list for one
 call each), and the outcome: `proposal` fields, `cards` (`kind`, `seeds`, `min`, `max`), `mapButtons` and
@@ -2106,9 +2112,14 @@ interval (`eval/replay/wilson.ts`) and k/n. Node starts each command, and its co
 ```sh
 pnpm eval:replay --development                 # the development set, with every alias learned so far
 pnpm eval:replay --as-of 2026-11-16            # the test set, stage C learning only from the rows before that day
-pnpm eval:learning-curve --from 2026-11-02 --to 2026-12-14 --step 7
-pnpm eval:suggestions --from 2026-11-02 --to 2026-12-14
+pnpm eval:learning-curve --from 2026-11-02 --to 2026-12-14 --step 7 --final-from 2026-12-07
+pnpm eval:suggestions --from 2026-11-02 --to 2026-12-14 --final-from 2026-12-07
 ```
+
+`--final-from <day>` on the two commands over the rows marks the rows from that day as the final slice: k, s, the
+templates' thresholds and the other constants are tuned on the rows before it only, and once the tuning is done the
+numbers reported are the final slice's alone, so that no number is read on the rows that set it. Without the flag every
+row is one slice. The gold set's counterpart is its two sets and its fingerprint, below.
 
 `pnpm eval:replay [--gold <file>] [--as-of <day>] [--development]` answers each item of the gold file
 (`eval/gold/places.yaml` unless `--gold`) at three stages (`eval/replay/stages.ts`): A, the substring and number match
@@ -2118,8 +2129,15 @@ before `--as-of` (a day in Korea from its first moment; the run's start when lef
 rules (`aliases/alias-standings.ts`, `aliases/alias-rules.ts`), never written. The items are asked as an account that
 taught nothing and is never held back. An item is `{ words, accept, collected, set, note? }`: `accept` lists every Place
 the words may mean by seed name, else by number, and is empty for words that name no Place (a name or number the
-catalog lacks stops the run); `collected` is the day it was collected; `set` is `development` or `test`. The test set
-is scored unless `--development`, never both together. Per stage: resolution (not `none`, over every item), precision
+catalog lacks stops the run); `collected` is the day it was collected; `set` is `development` or `test`; `from` and
+`until`, each a day in Korea, make a knowledge update: an item holds from the first day and before the second, so two
+items of the same words, one until a day and one from it, say that the Places the words mean changed that day (a
+nickname moving to a new building, a renamed one), and runs at several `--as-of` days show how long stage C takes to
+follow. The test set is scored unless `--development`, never both together. The report heads with the set's
+fingerprint (`fingerprintOf` in `eval/replay/gold.ts`), the first 12 hex digits of the SHA-256 of the set's words,
+targets, days and windows in a fixed order, the same whatever the order and the notes of the file: the test set is
+frozen before any rule, group table or constant is tuned on it, its fingerprint is written in the ticket, and a run
+whose fingerprint differs has scored another set. Per stage: resolution (not `none`, over every item), precision
 of `one` (the one Place accepted, over the `one` answers), recall@10 (an accepted Place among the first 10 candidates,
 the most a resolver gives, over the items that accept a Place), top-1 (the first candidate accepted, over the same),
 `none` (over every item), false `none` (`none` for an item that accepts a Place, over those), the mean candidates shown
@@ -2137,19 +2155,29 @@ aliases rebuilt from the rows before T as for stage C (learned), the labels bein
 never teaches the row it scores. Per point and arm: the rows, the ask rate (answered `several`, over the rows) and top-1
 (the first candidate is the Place the User last chose or edited to, over the rows with one). The accounts that
 `ASSISTANT_ALIAS_HOLDBACK_PERCENT` holds back (as set where the command runs; 10 by default), whom everyone's aliases
-never answer, are reported apart.
+never answer, are reported apart, and each point says which slice it is in, `tuning` or `final` (`all` without
+`--final-from`).
 
-`pnpm eval:suggestions --from <day> --to <day>` reads the `suggestion_impressions` shown from the first moment of
-`--from` to the end of `--to`, less those shown in the last 10 minutes, whose outcome may still come. Per ISO week in
-Korea, template and arm (the impression's `holdback`): how many were shown, acceptance (`accepted` or `confirmed`),
-confirmed within 10 minutes (`confirmed` with `outcome_at` at most 10 minutes after `shown_at`), dismissal, and ignored
-(no outcome within 10 minutes). Per template and arm over the whole range, acceptance weighted by inverse propensity:
-the sum of 1 / propensity over the accepted impressions divided by that sum over all of them, so that the templates the
-score shows most do not decide the rate alone.
+`pnpm eval:suggestions --from <day> --to <day> [--final-from <day>]` reads the `suggestion_impressions` of the chats
+opened from the first moment of `--from` to the end of `--to`, less those of the last 10 minutes, whose outcome may
+still come. First the openings per slice: how many, how many showed nothing (`silent`), and how many of those the User
+followed within 10 minutes by asking the chat for what an eligible template would have proposed (`typed_template`).
+Then, over the shown rows, per slice, ISO week in Korea, template and arm (the row's `holdback`): how many were shown,
+acceptance (`accepted` or `confirmed`), confirmed within 10 minutes (`confirmed` with `outcome_at` at most 10 minutes
+after `shown_at`), dismissal, and ignored (no outcome within 10 minutes). Then the missed needs and false alarms per
+slice, template and arm, as ProactiveBench (ICLR 2025) counts proposals: shown, accepted, false alarm (shown and not
+accepted, over the shown), the openings where the template was eligible and another or nothing was shown, the missed
+need (of those, the ones the User then asked the chat for its Proposal, over them), recall (accepted over accepted and
+missed), and how often the User typed what the shown template suggested instead of tapping it. Acceptance alone would
+reward showing almost nothing. Last, per slice, template and arm, acceptance weighted by inverse propensity: the sum of
+1 / propensity over the accepted rows divided by that sum over all shown ones, so that the templates the score shows
+most do not decide the rate alone.
 
 `test/eval-replay-*.unit.test.ts` test the rates on hand-made rows, and `test/eval-replay.integration.test.ts` runs the
 commands' functions on a seeded database of its own: stage A against `PlacesService.search`, the gold file's Places
-against the seed, and stage C and the learning curve learning only from the rows before their time.
+against the seed, stage C and the learning curve learning only from the rows before their time, and a knowledge update
+followed: once the accounts that taught the old Place reject it, its alias is retired at once, and the new Place
+answers once it holds the share of all who chose for the words.
 
 ## Seed data
 

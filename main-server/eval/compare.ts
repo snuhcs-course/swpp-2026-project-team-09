@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { allCategories, averagesOf, passedById, type RunScore, settingsOf, totalFailures } from './run-score.ts';
+import { costPerTurnShown, perTurn, perTurnShown } from './per-turn.ts';
 import { averages, confusionTable, cost, count, FAILURE_KINDS, ratio, table } from './scorecard.ts';
 
 // Two scored runs side by side (spec P19, "The scorecard"): the scorecard's measures with their differences, the
@@ -33,6 +35,7 @@ function measuresOf(score: RunScore): Measure[] {
   const { tokens, costUsd } = score.usage;
   const average = averagesOf(score);
   const shown = averages(score);
+  const turn = perTurn(score);
   return [
     ...score.recall.map(({ kind, expected, recalled }) => rate(`Action recall, ${kind}`, recalled, expected)),
     rate('Tool selection accuracy', score.toolSelection.correct, score.toolSelection.turns),
@@ -51,7 +54,33 @@ function measuresOf(score: RunScore): Measure[] {
     amount('Cache write', tokens.cacheWriteTokens),
     amount('Tokens out', tokens.outputTokens),
     amount('Estimated cost', costUsd, cost(score)),
+    amount('Tokens in per turn', turn.inputTokens, perTurnShown(turn.inputTokens)),
+    amount('Tokens out per turn', turn.outputTokens, perTurnShown(turn.outputTokens)),
+    amount('Cost per turn', turn.costUsd, costPerTurnShown(turn.costUsd)),
   ];
+}
+
+// The two runs as points of the cost-accuracy plane (research note 10 §3): the branch's model, and a larger one put
+// once through the same cases with `pnpm eval --model …`, so that "a small model is enough" is a measured claim.
+function point(score: RunScore, name: string): string[] {
+  const all = allCategories(score);
+  const turn = perTurn(score);
+  return [
+    name,
+    new Map(settingsOf(score)).get('model') ?? '—',
+    ratio(all.passed, all.runs),
+    score.passK.cases.length === 0 ? '—' : ratio(score.passK.passedAll, score.passK.cases.length),
+    costPerTurnShown(turn.costUsd),
+    perTurnShown(turn.inputTokens),
+    perTurnShown(turn.outputTokens),
+  ];
+}
+
+function costAndAccuracy(a: RunScore, b: RunScore, nameA: string, nameB: string): string {
+  return table(
+    ['Run', 'Model', 'Pass rate', 'pass^k', 'Cost per turn', 'Tokens in per turn', 'Tokens out per turn'],
+    [point(a, nameA), point(b, nameB)],
+  );
 }
 
 function difference(a: Measure | undefined, b: Measure | undefined): string {
@@ -131,6 +160,10 @@ export function compare(a: RunScore, b: RunScore): string {
     `# Comparison: ${nameA} and ${nameB}`,
     'With about 60 cases one case is about 2 points of the whole set; small differences are noise.',
     measuresTable(a, b, nameA, nameB),
+    '## Cost and accuracy',
+    'Each run as a point of the cost-accuracy plane. To weigh the model against a larger one, run the cases once with ' +
+      '`pnpm eval --model <larger>` and compare the two runs here.',
+    costAndAccuracy(a, b, nameA, nameB),
     `## Expected and observed actions, ${nameA}`,
     confusionTable(a),
     `## Expected and observed actions, ${nameB}`,

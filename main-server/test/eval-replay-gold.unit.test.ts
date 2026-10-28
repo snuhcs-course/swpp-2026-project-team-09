@@ -2,10 +2,20 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { parse } from 'yaml';
-import { acceptedIds, goldFileSchema, type GoldItem, itemsOf, loadGold } from '../eval/replay/gold.ts';
+import {
+  acceptedIds,
+  activeAt,
+  fingerprintOf,
+  goldFileSchema,
+  type GoldItem,
+  itemsOf,
+  loadGold,
+  updatesOf,
+} from '../eval/replay/gold.ts';
 import { type PlaceDto } from '../src/places/dto/place.dto.js';
 
 // The gold file of the replay (P07 ticket 05): its schema, its sets and how its targets name Places.
@@ -43,6 +53,40 @@ describe('The gold file', () => {
     ]) {
       expect(() => goldFileSchema.parse(parse(bad))).toThrow();
     }
+  });
+});
+
+describe('A knowledge update', () => {
+  const before: GoldItem = {
+    words: '학관',
+    accept: ['학생회관'],
+    collected: '2026-10-28',
+    set: 'test',
+    until: '2026-12-01',
+  };
+  const after: GoldItem = { words: '학관', accept: ['63'], collected: '2026-12-01', set: 'test', from: '2026-12-01' };
+  const always: GoldItem = { words: '중도', accept: [], collected: '2026-10-28', set: 'test' };
+
+  it('holds from its day and before its end, in Korea, and counts as an update', () => {
+    const items = [before, after, always];
+
+    expect(activeAt(items, new Date('2026-11-30T14:59:59Z'))).toEqual([before, always]);
+    expect(activeAt(items, new Date('2026-11-30T15:00:00Z'))).toEqual([after, always]);
+    expect(updatesOf(items)).toBe(2);
+    expect(() =>
+      goldFileSchema.parse(
+        parse('- { words: 학관, accept: [], collected: 2026-10-28, set: test, from: 2026-12-01, until: 2026-11-01 }'),
+      ),
+    ).toThrow('until');
+  });
+
+  it('is in the fingerprint of the set, which ignores the order of the items and their notes', () => {
+    const items = [before, after, always];
+
+    expect(fingerprintOf(items)).toMatch(/^[0-9a-f]{12}$/u);
+    expect(fingerprintOf([always, { ...after, note: '63동' }, before])).toBe(fingerprintOf(items));
+    expect(fingerprintOf([before, always])).not.toBe(fingerprintOf(items));
+    expect(fingerprintOf([before, { ...after, from: '2026-12-02' }, always])).not.toBe(fingerprintOf(items));
   });
 });
 

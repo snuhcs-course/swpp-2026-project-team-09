@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { parseArgs } from 'node:util';
@@ -60,18 +61,30 @@ export function replayFlags(argv: string[], now: Date): ReplayFlags {
   };
 }
 
+// `--final-from <day>`: the rows from that day are the final slice, which no tuning of k, s or the templates' thresholds
+// reads, and whose numbers alone are reported once the tuning is done (research note 10 §3). Null when left out.
+function finalFromOf(value: string | undefined): Date | null {
+  return value === undefined ? null : koreaDay(value, 'final-from');
+}
+
 export interface CurveFlags {
   // The first and the last point.
   from: Date;
   to: Date;
   stepDays: number;
+  finalFrom: Date | null;
 }
 
 export function curveFlags(argv: string[]): CurveFlags {
   const { values } = parseArgs({
     args: argv,
     strict: true,
-    options: { from: { type: 'string' }, to: { type: 'string' }, step: { type: 'string', default: '7' } },
+    options: {
+      from: { type: 'string' },
+      to: { type: 'string' },
+      step: { type: 'string', default: '7' },
+      'final-from': { type: 'string' },
+    },
   });
   const from = koreaDay(required(values.from, 'from'), 'from');
   const to = koreaDay(required(values.to, 'to'), 'to');
@@ -80,23 +93,24 @@ export function curveFlags(argv: string[]): CurveFlags {
   if (!Number.isInteger(stepDays) || stepDays < 1) {
     throw new Error(`--step takes a whole number of days, not ${values.step}`);
   }
-  return { from, to, stepDays };
+  return { from, to, stepDays, finalFrom: finalFromOf(values['final-from']) };
 }
 
 export interface SuggestionFlags {
   from: Date;
   // The end of the last day, exclusive.
   until: Date;
+  finalFrom: Date | null;
 }
 
 export function suggestionFlags(argv: string[]): SuggestionFlags {
   const { values } = parseArgs({
     args: argv,
     strict: true,
-    options: { from: { type: 'string' }, to: { type: 'string' } },
+    options: { from: { type: 'string' }, to: { type: 'string' }, 'final-from': { type: 'string' } },
   });
   const from = koreaDay(required(values.from, 'from'), 'from');
   const to = koreaDay(required(values.to, 'to'), 'to');
   ordered(from, to);
-  return { from, until: new Date(to.getTime() + DAY_MS) };
+  return { from, until: new Date(to.getTime() + DAY_MS), finalFrom: finalFromOf(values['final-from']) };
 }

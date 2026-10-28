@@ -2,8 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 import { z } from 'zod';
@@ -22,14 +24,24 @@ export type GoldSet = (typeof GOLD_SETS)[number];
 // A Place by its seed name, or by its number, which YAML reads as a number when it is all digits.
 const targetSchema = z.union([z.string().trim().min(1), z.int().nonnegative().transform(String)]);
 
-export const goldItemSchema = z.strictObject({
-  words: z.string().trim().min(1).max(50),
-  // Every Place the words may mean; empty for words that name no Place.
-  accept: z.array(targetSchema),
-  collected: z.iso.date(),
-  set: z.enum(GOLD_SETS),
-  note: z.string().min(1).optional(),
-});
+export const goldItemSchema = z
+  .strictObject({
+    words: z.string().trim().min(1).max(50),
+    // Every Place the words may mean; empty for words that name no Place.
+    accept: z.array(targetSchema),
+    collected: z.iso.date(),
+    set: z.enum(GOLD_SETS),
+    note: z.string().min(1).optional(),
+    // A knowledge update (research note 10 §5): the item holds from the first day, and before the second, in Korea. Two
+    // items of the same words, one until a day and one from it, say that the Places the words mean changed that day,
+    // and a run at several --as-of days shows when stage C follows.
+    from: z.iso.date().optional(),
+    until: z.iso.date().optional(),
+  })
+  .refine(({ from, until }) => from === undefined || until === undefined || from < until, {
+    path: ['until'],
+    message: 'until must come after from',
+  });
 
 export type GoldItem = z.infer<typeof goldItemSchema>;
 
@@ -50,6 +62,43 @@ export function itemsOf(items: readonly GoldItem[], set: GoldSet): GoldItem[] {
     );
   }
   return chosen;
+}
+
+// The first moment of a day in Korea.
+function koreaDayStart(day: string): Date {
+  return new Date(`${day}T00:00:00+09:00`);
+}
+
+// The items that hold at a time: those without a window, and those whose window holds it.
+export function activeAt(items: readonly GoldItem[], asOf: Date): GoldItem[] {
+  return items.filter(
+    ({ from, until }) =>
+      (from === undefined || koreaDayStart(from).getTime() <= asOf.getTime()) &&
+      (until === undefined || asOf.getTime() < koreaDayStart(until).getTime()),
+  );
+}
+
+// How many items hold only from or until a day: the knowledge updates of the set.
+export function updatesOf(items: readonly GoldItem[]): number {
+  return items.filter(({ from, until }) => from !== undefined || until !== undefined).length;
+}
+
+// The fingerprint of a set, the first 12 hex digits of the SHA-256 of its items' words, targets, days and windows in a
+// fixed order: the same whatever the order and the notes of the file, different once an item changes. The test set is
+// frozen before any rule or group table is tuned on it, its fingerprint recorded, and a later run must show the same
+// one, or it scores another set (research note 10 §3).
+export function fingerprintOf(items: readonly GoldItem[]): string {
+  const canonical = items
+    .map(({ words, accept, collected, set, from, until }) => ({
+      words,
+      accept: accept.toSorted(),
+      collected,
+      set,
+      from: from ?? null,
+      until: until ?? null,
+    }))
+    .toSorted((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  return createHash('sha256').update(JSON.stringify(canonical)).digest('hex').slice(0, 12);
 }
 
 // The ids of the Places each item accepts: every Place of that exact name, else every Place of that number. Targets

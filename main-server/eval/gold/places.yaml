@@ -2,13 +2,23 @@
 # AI-generated with Claude
 #
 # 2026-10-28  Opus 5.5   prompted by fyoon46
+# 2026-10-28  Fable 5.1  prompted by fyoon46
 ################################################################################
 
 # The gold set of `pnpm eval:replay` (P07 ticket 05, research note 08 §4): the words as a student writes them for a
 # campus Place, every Place they may mean by seed name or number (none for words that name no Place), the day they were
 # collected and the set. The development set below is research note 08's examples, the group words and words that
 # name nothing, picked by the team to tune the rules: its numbers are no evidence. The test set is collected later from
-# students who are shown no official names, at least a week after the development set, and marked `set: test`.
+# students who are shown no official names, at least a week after the development set, and marked `set: test`. Before
+# any rule, group table or constant is tuned on it, the test set is frozen: no item added, changed or removed, and the
+# fingerprint `pnpm eval:replay` prints written in ticket 05.
+#
+# A knowledge update, the Places some words mean changing on a day (a nickname moving to a new building, a renamed
+# one), is two items of the same words with a window, each a day in Korea:
+#   - { words: 옛이름, accept: [옛 건물], collected: 2026-11-10, set: test, until: 2026-12-01 }
+#   - { words: 옛이름, accept: [새 건물], collected: 2026-12-01, set: test, from: 2026-12-01 }
+# The first holds before the day and the second from it, and `pnpm eval:replay --as-of` at several days shows how long
+# stage C takes to follow. None is known yet; the first real one is collected with the test set.
 
 # Short forms the rules make, 초성, a mixed form and a typo.
 - { words: 학관, accept: [학생회관], collected: 2026-10-28, set: development }

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { koreaDate } from '../../src/assistant/korea-time.js';
@@ -15,6 +16,7 @@ import { curveFlags, type CurveFlags } from './flags.ts';
 import { learnedAliases } from './learned-aliases.ts';
 import { saveReport, table } from './report.ts';
 import { type Stage, stageB, stageC } from './stages.ts';
+import { type Slice, sliceOf } from './suggestion-metrics.ts';
 import { shown } from './wilson.ts';
 
 // `pnpm eval:learning-curve --from <day> --to <day> [--step 7]` (P07 ticket 05): resolution_events replayed by date.
@@ -27,6 +29,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export interface CurvePoint {
   // The day of T in Korea; the rows scored are those from T to the next point.
   from: string;
+  // The final slice, from --final-from, tunes nothing (research note 10 §3).
+  slice: Slice;
   learned: { personal: number; global: number };
   learning: CurveGroup;
   holdback: CurveGroup;
@@ -35,6 +39,7 @@ export interface CurvePoint {
 export interface LearningCurve {
   stepDays: number;
   holdbackPercent: number;
+  finalFrom: string | null;
   points: CurvePoint[];
 }
 
@@ -50,7 +55,7 @@ async function pointAt(
   places: readonly PlaceDto[],
   rules: Stage,
   scored: readonly LabelledRow[],
-  at: { from: Date; holdbackPercent: number },
+  at: { from: Date; holdbackPercent: number; finalFrom: Date | null },
 ): Promise<CurvePoint> {
   const learned = await learnedAliases(prisma, {
     before: at.from,
@@ -69,6 +74,7 @@ async function pointAt(
   );
   return {
     from: koreaDate(at.from),
+    slice: sliceOf(at.from, at.finalFrom),
     learned: { personal: learned.personalCount, global: learned.globalCount },
     learning: curveGroup(replayed.filter((row) => !row.heldBack)),
     holdback: curveGroup(replayed.filter((row) => row.heldBack)),
@@ -77,7 +83,7 @@ async function pointAt(
 
 export async function learningCurve(
   prisma: PrismaClient,
-  { from, to, stepDays }: CurveFlags,
+  { from, to, stepDays, finalFrom }: CurveFlags,
   holdbackPercent: number,
 ): Promise<LearningCurve> {
   const places = await catalogOf(prisma);
@@ -90,6 +96,7 @@ export async function learningCurve(
   return {
     stepDays,
     holdbackPercent,
+    finalFrom: finalFrom === null ? null : koreaDate(finalFrom),
     points: await Promise.all(
       points.map((point) => {
         const end = point.getTime() + stepDays * DAY_MS;
@@ -97,7 +104,7 @@ export async function learningCurve(
           const time = row.createdAt.getTime();
           return time >= point.getTime() && time < end;
         });
-        return pointAt(prisma, places, rules, scored, { from: point, holdbackPercent });
+        return pointAt(prisma, places, rules, scored, { from: point, holdbackPercent, finalFrom });
       }),
     ),
   };
@@ -108,6 +115,7 @@ export function curveMarkdown(curve: LearningCurve): string {
     (['learning', 'holdback'] as const).map((arm) => {
       const group = point[arm];
       return [
+        point.slice,
         point.from,
         arm,
         `${point.learned.personal} / ${point.learned.global}`,
@@ -124,11 +132,17 @@ export function curveMarkdown(curve: LearningCurve): string {
     '',
     `Each point T scores the labelled answered Place rows of the ${curve.stepDays} days from T with the aliases ` +
       `learned before T. Holdback: ${curve.holdbackPercent}% of accounts, which everyone's aliases never answer. ` +
-      'Rules: the matcher with the curated groups only (stage B); learned: with the aliases (stage C). Each rate: ' +
-      'value, 95% Wilson interval, k/n.',
+      'Rules: the matcher with the curated groups only (stage B); learned: with the aliases (stage C). ' +
+      `${
+        curve.finalFrom === null
+          ? 'No final slice was set: every point is one slice.'
+          : `The points from ${curve.finalFrom} are the final slice, which tunes nothing; report its numbers alone once ` +
+            'the tuning is done.'
+      } Each rate: value, 95% Wilson interval, k/n.`,
     '',
     table(
       [
+        'Slice',
         'From',
         'Arm',
         'Aliases personal / everyone',

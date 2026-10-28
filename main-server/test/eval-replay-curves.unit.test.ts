@@ -2,11 +2,20 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { curveGroup, type EventRow, labelledRows } from '../eval/replay/curve-metrics.ts';
 import { type StageAnswer } from '../eval/replay/stages.ts';
-import { type Impression, koreaWeek, suggestionCells, weightedAcceptance } from '../eval/replay/suggestion-metrics.ts';
+import {
+  type Impression,
+  koreaWeek,
+  needCells,
+  openingsOf,
+  sliceOf,
+  suggestionCells,
+  weightedAcceptance,
+} from '../eval/replay/suggestion-metrics.ts';
 
 // The learning curve's labels and rates, and the suggestions' weekly rates and weighted acceptance (P07 ticket 05), on
 // hand-made rows.
@@ -90,11 +99,13 @@ function impression(
   const outcomeAt = minutes === null ? null : new Date(SHOWN.getTime() + minutes * MINUTE_MS);
   return {
     template: 'lunch_with_free_friend',
+    eligible: ['lunch_with_free_friend'],
     propensity: 0.9,
     holdback: false,
     shownAt: SHOWN,
     outcome,
     outcomeAt,
+    typedTemplate: null,
     ...more,
   };
 }
@@ -106,18 +117,27 @@ const impressions = [
   impression('dismissed', 2),
   impression('shown', null),
   impression('shown', null, { holdback: true }),
-  impression('accepted', 1, { template: 'route_to_next_class', shownAt: new Date('2026-11-02T03:00:00Z') }),
+  impression('accepted', 1, {
+    template: 'route_to_next_class',
+    eligible: ['route_to_next_class'],
+    shownAt: new Date('2026-11-02T03:00:00Z'),
+  }),
+  // Nothing shown: the lunch was eligible, and the User then asked the chat for it.
+  impression('silent', null, { template: null, propensity: null, typedTemplate: 'lunch_with_free_friend' }),
+  impression('silent', null, { template: null, propensity: null, eligible: [] }),
 ];
 
 describe("The suggestions' rates", () => {
-  it('count per week, template and arm, a late outcome as ignored', () => {
+  it('count the shown rows per week, template and arm, a late outcome as ignored', () => {
     const cells = suggestionCells(impressions);
 
-    expect(cells.map(({ week, template, holdback, shown }) => [week, template, holdback, shown])).toEqual([
-      ['2026-W44', 'lunch_with_free_friend', true, 1],
-      ['2026-W44', 'lunch_with_free_friend', false, 5],
-      ['2026-W45', 'route_to_next_class', false, 1],
-    ]);
+    expect(cells.map(({ slice, week, template, holdback, shown }) => [slice, week, template, holdback, shown])).toEqual(
+      [
+        ['all', '2026-W44', 'lunch_with_free_friend', true, 1],
+        ['all', '2026-W44', 'lunch_with_free_friend', false, 5],
+        ['all', '2026-W45', 'route_to_next_class', false, 1],
+      ],
+    );
     expect(cells[1]).toMatchObject({
       acceptance: { k: 3, n: 5 },
       confirmedWithin10Minutes: { k: 1, n: 5 },
@@ -126,11 +146,50 @@ describe("The suggestions' rates", () => {
     });
   });
 
-  it('weigh each impression by the inverse of its propensity', () => {
+  it('weigh each shown row by the inverse of its propensity', () => {
     const [, learning] = weightedAcceptance(impressions);
     const weights = 4 / 0.9 + 1 / 0.025;
 
     expect(learning).toMatchObject({ template: 'lunch_with_free_friend', holdback: false, shown: 5 });
     expect(learning?.acceptance).toBeCloseTo((2 / 0.9 + 1 / 0.025) / weights, 10);
+  });
+});
+
+describe("The suggestions' needs and slices", () => {
+  it('count missed needs and false alarms per template and arm, over the rows where it could have shown', () => {
+    const cells = needCells(impressions);
+
+    expect(cells.map(({ slice, template, holdback }) => [slice, template, holdback])).toEqual([
+      ['all', 'lunch_with_free_friend', true],
+      ['all', 'lunch_with_free_friend', false],
+      ['all', 'route_to_next_class', false],
+    ]);
+    expect(cells[1]).toMatchObject({
+      shown: 5,
+      accepted: { k: 3, n: 5 },
+      falseAlarm: { k: 2, n: 5 },
+      eligibleNotShown: 1,
+      missedNeed: { k: 1, n: 1 },
+      recall: { k: 3, n: 4 },
+      typedWhatWasShown: 0,
+    });
+    expect(openingsOf(impressions)).toEqual([{ slice: 'all', openings: 9, silent: 2, silentThenTyped: 1 }]);
+  });
+
+  it('split the rows at --final-from into the tuning and the final slice', () => {
+    const finalFrom = new Date('2026-11-01T15:00:00Z');
+
+    expect(sliceOf(new Date('2026-11-01T14:59:59Z'), finalFrom)).toBe('tuning');
+    expect(sliceOf(finalFrom, finalFrom)).toBe('final');
+    expect(sliceOf(finalFrom, null)).toBe('all');
+    expect(suggestionCells(impressions, finalFrom).map(({ slice, template }) => [slice, template])).toEqual([
+      ['final', 'route_to_next_class'],
+      ['tuning', 'lunch_with_free_friend'],
+      ['tuning', 'lunch_with_free_friend'],
+    ]);
+    expect(openingsOf(impressions, finalFrom).map(({ slice, openings }) => [slice, openings])).toEqual([
+      ['final', 1],
+      ['tuning', 8],
+    ]);
   });
 });

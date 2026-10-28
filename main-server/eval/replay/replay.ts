@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { koreaTime } from '../../src/assistant/korea-time.js';
 import { type PrismaClient } from '../../src/generated/prisma/client.js';
 import { catalogOf, connectToDatabase } from './database.ts';
 import { replayFlags } from './flags.ts';
-import { acceptedIds, type GoldItem, itemsOf, loadGold } from './gold.ts';
+import { acceptedIds, activeAt, fingerprintOf, type GoldItem, itemsOf, loadGold, updatesOf } from './gold.ts';
 import { learnedAliases } from './learned-aliases.ts';
 import { SHOWN_MAX, type StageMetrics, stageMetrics } from './replay-metrics.ts';
 import { saveReport, table } from './report.ts';
@@ -45,6 +46,10 @@ export interface ItemReplay {
 
 export interface GoldReplay {
   set: GoldItem['set'];
+  // Of the whole set, the items with a window too (gold.ts).
+  fingerprint: string;
+  // How many items of the set hold only from or until a day.
+  updates: number;
   asOf: string;
   learned: { personal: number; global: number };
   stages: Record<StageName, StageMetrics>;
@@ -64,7 +69,12 @@ function itemAnswer(names: ReadonlyMap<string, string>, accept: ReadonlySet<stri
   };
 }
 
-export async function replayGold(prisma: PrismaClient, items: readonly GoldItem[], asOf: Date): Promise<GoldReplay> {
+// `set` is every item of the set; those that hold at `asOf` are scored.
+export async function replayGold(prisma: PrismaClient, set: readonly GoldItem[], asOf: Date): Promise<GoldReplay> {
+  const items = activeAt(set, asOf);
+  if (items.length === 0) {
+    throw new Error(`No item of the set holds on ${koreaTime(asOf)}.`);
+  }
   const places = await catalogOf(prisma);
   const names = new Map(places.map(({ id, name }) => [id, name]));
   const learned = await learnedAliases(prisma, {
@@ -90,6 +100,8 @@ export async function replayGold(prisma: PrismaClient, items: readonly GoldItem[
     stageMetrics(scored.map(({ accept, answers }) => ({ accept, answer: answers[stage] })));
   return {
     set: items[0]?.set ?? 'test',
+    fingerprint: fingerprintOf(set),
+    updates: updatesOf(set),
     asOf: koreaTime(asOf),
     learned: { personal: learned.personalCount, global: learned.globalCount },
     stages: { A: metricsOf('A'), B: metricsOf('B'), C: metricsOf('C') },
@@ -138,9 +150,11 @@ export function goldMarkdown(replay: GoldReplay): string {
   return [
     '# Replay of the gold set: A, B and C',
     '',
-    `The ${replay.set} set, ${replay.items.length} items. Stage C learned from the events before ${replay.asOf}: ` +
-      `${replay.learned.personal} personal aliases and ${replay.learned.global} of everyone's for these words. ` +
-      'Each rate: value, 95% Wilson interval, k/n.',
+    `The ${replay.set} set, fingerprint ${replay.fingerprint}, ${replay.items.length} items holding on ${replay.asOf}` +
+      `${replay.updates === 0 ? '' : ` (${replay.updates} of the set hold only from or until a day: run at several --as-of days to see when stage C follows)`}. ` +
+      `Stage C learned from the events before ${replay.asOf}: ${replay.learned.personal} personal aliases and ` +
+      `${replay.learned.global} of everyone's for these words. Each rate: value, 95% Wilson interval, k/n. The test ` +
+      'set is frozen before any rule or group table is tuned on it; a run whose fingerprint differs scores another set.',
     '',
     table(
       ['', 'A: substring', 'B: rules and groups', 'C: B and learned aliases'],

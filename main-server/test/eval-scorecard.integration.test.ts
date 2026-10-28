@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
@@ -131,6 +132,8 @@ describe('The scorecard', () => {
     expect(card).toContain('test/model');
     expect(card).toContain('abc1234');
     expect(card).toMatch(/\| 4 \| 1\.00 \| 8\.4 s \| 6,000 \| 1,500 \| 0 \| 300 \| USD 0\.0\d+ \|/u);
+    // Per turn: the tokens and the cost of one request beside the accuracy.
+    expect(card).toMatch(/\| 1,500 \| 375 \| 0 \| 75 \| USD 0\.0\d+ \|/u);
   });
 
   it('lists each failed case with its trace', () => {
@@ -201,6 +204,14 @@ describe('Two runs compared', () => {
   it('shows the settings that differ', () => {
     expect(shown).toMatch(/\| maxSteps \| 8 \| 30 \|/u);
     expect(shown).not.toMatch(/\| model \|/u);
+  });
+
+  it('puts the two runs as points of the cost-accuracy plane, with the model and the cost per turn', () => {
+    expect(shown).toContain(
+      '| Run | Model | Pass rate | pass^k | Cost per turn | Tokens in per turn | Tokens out per turn |',
+    );
+    expect(shown).toMatch(/\| before \| test\/model \| \d\/\d \(\d+\.\d%\) \| — \| USD 0\.0\d+ \| [\d,]+ \| \d+ \|/u);
+    expect(shown).toMatch(/\| Cost per turn \| USD 0\.0\d+ \| USD 0\.0\d+ \| /u);
   });
 
   it('lists the regressions and the fixed cases, and the known failures apart, never as regressions', () => {

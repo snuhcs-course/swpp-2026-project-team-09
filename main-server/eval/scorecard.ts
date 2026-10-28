@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-28  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -15,6 +16,7 @@ import {
   settingsOf,
   totalFailures,
 } from './run-score.ts';
+import { costPerTurnShown, perTurn, perTurnShown } from './per-turn.ts';
 import { type CaseScore } from './score.ts';
 import { type FailureKind, type TurnTrace } from './trace.ts';
 
@@ -237,6 +239,7 @@ function passKSection({ passK }: RunScore): string[] {
 function usageSection(score: RunScore): string[] {
   const { steps, latency } = averages(score);
   const { turns, tokens } = score.usage;
+  const turn = perTurn(score);
   return [
     '## Steps, latency and cost',
     table(
@@ -260,6 +263,19 @@ function usageSection(score: RunScore): string[] {
           count(tokens.cacheWriteTokens),
           count(tokens.outputTokens),
           cost(score),
+        ],
+      ],
+    ),
+    'Per turn, one request to the Assistant:',
+    table(
+      ['Tokens in', 'Cache read', 'Cache write', 'Tokens out', 'Estimated cost'],
+      [
+        [
+          perTurnShown(turn.inputTokens),
+          perTurnShown(turn.cacheReadTokens),
+          perTurnShown(turn.cacheWriteTokens),
+          perTurnShown(turn.outputTokens),
+          costPerTurnShown(turn.costUsd),
         ],
       ],
     ),
