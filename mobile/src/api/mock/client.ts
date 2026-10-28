@@ -8,6 +8,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -29,6 +30,7 @@ import { mockParty } from './party';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
 import { mockRoom } from './room';
+import { mockSuggestion } from './suggestion';
 import { mockWalkingRoute } from './walking-route';
 
 // The Master Switch, which the main server keeps on the User. The mock keeps it in memory: off at each start.
@@ -155,4 +157,5 @@ export const mockClient: ApiClient = {
   ...mockRoom,
   ...mockParty,
   ...mockEvents,
+  ...mockSuggestion,
 };

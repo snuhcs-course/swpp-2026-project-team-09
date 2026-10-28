@@ -5,6 +5,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -25,6 +26,8 @@ interface AiInputProps {
   lift: number;
   // The bar's height, 50 for a line, so that the chat keeps its last bubble clear of the bar.
   onHeight: (height: number) => void;
+  // The grey text of the empty field.
+  placeholder?: string;
 }
 
 // The field's height for one line, and the most it grows to before it scrolls.
@@ -59,7 +62,8 @@ function useBarHeight(onHeight: (height: number) => void): [number, (event: Layo
 // there is something to send.
 // The field grows by itself, between its least and its most height: nothing sets its height from its content, which
 // would lay it out again and could swing it between two heights.
-export function AiInput({ chatOpen, onOpen, waiting, onSend, lift, onHeight }: AiInputProps): ReactElement {
+export function AiInput(props: AiInputProps): ReactElement {
+  const { chatOpen, onOpen, waiting, onSend, lift, onHeight, placeholder = '무엇이든 부탁해 보세요' } = props;
   const [message, setMessage] = useState('');
   const [height, laidOut] = useBarHeight(onHeight);
   const canSend = message.trim() !== '' && !waiting;
@@ -85,7 +89,7 @@ export function AiInput({ chatOpen, onOpen, waiting, onSend, lift, onHeight }: A
         onChangeText={setMessage}
         onFocus={onOpen}
         onPressIn={onOpen}
-        placeholder="무엇이든 부탁해 보세요"
+        placeholder={placeholder}
         placeholderTextColor={color.inkMuted}
         style={styles.field}
         submitBehavior="newline"

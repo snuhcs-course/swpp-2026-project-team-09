@@ -8,6 +8,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -165,17 +166,17 @@ interface MainMapViewProps {
   me: Me;
   things: Things;
   lines: readonly MapLine[];
-  cardHeight: number | null;
+  room: Room;
   onPress: (id: string) => void;
 }
 
 // The map with the things of the cards, the User's own Avatar and the lines. Its credit opens the sources of its data.
-function MainMapView({ map, me, things, lines, cardHeight, onPress }: MainMapViewProps): ReactElement {
+function MainMapView({ map, me, things, lines, room, onPress }: MainMapViewProps): ReactElement {
   return (
     <Map
       avatars={[...things.avatars, ...me.avatars]}
       {...CAMPUS_CAMERA}
-      inset={mapInset(cardHeight)}
+      inset={mapInset(room.cardHeight)}
       markers={things.markers}
       onCameraIdle={map.onCameraIdle}
       onCreditPress={() => {
@@ -205,6 +206,12 @@ function useCards(dining: boolean, shuttle: ShuttleLayer): { cards: readonly Car
 // The shuttle's line under the walking route.
 function useLines(shuttle: ShuttleLayer, route: MainRoute): readonly MapLine[] {
   return useMemo(() => [...shuttle.lines, ...(route.line === null ? [] : [route.line])], [shuttle.lines, route.line]);
+}
+
+// The Global Event whose card is open, which the chat's suggestion is asked for.
+function openEventOf(card: CardView | null): string | null {
+  const primary = card?.kind === 'global-event' ? card.primary : null;
+  return primary?.action === 'recruit' ? primary.eventId : null;
 }
 
 // The friend list and the Quest list, which give way to a card at the top.
@@ -262,14 +269,7 @@ export function MainScreen(): ReactElement {
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
-        <MainMapView
-          cardHeight={room.cardHeight}
-          lines={lines}
-          map={map}
-          me={me}
-          onPress={selection.select}
-          things={things}
-        />
+        <MainMapView lines={lines} map={map} me={me} onPress={selection.select} room={room} things={things} />
         <OverMap onStage={setStage}>
           <Lists hidden={taken.topCard} map={map} room={room} selection={selection} />
           {taken.bottomCard || taken.notice !== null || stack.open ? null : <MainZoomControl map={map} me={me} />}
@@ -282,7 +282,14 @@ export function MainScreen(): ReactElement {
             shuttleLine={shuttle.line}
             top={taken.topCard}
           />
-          <MapBottom onNoticeHeight={setCardHeight} onParty={party.open} room={room} stack={stack} taken={taken} />
+          <MapBottom
+            chatFrom={{ openEventId: openEventOf(selection.selected), routeTo: route.routeTo }}
+            onNoticeHeight={setCardHeight}
+            onParty={party.open}
+            room={room}
+            stack={stack}
+            taken={taken}
+          />
         </OverMap>
       </View>
       {party.sheet}

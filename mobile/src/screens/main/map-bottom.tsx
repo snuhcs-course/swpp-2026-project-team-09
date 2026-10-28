@@ -5,6 +5,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -19,6 +20,7 @@ import { tabBarHeight } from '../shell/layout';
 import { AiInput } from './ai-input';
 import { BottomControls } from './bottom-controls';
 import { useChatSheet } from './chat-sheet';
+import type { ChatFrom } from './chat-suggestion';
 import { LayerControls, type LayerStack } from './layers';
 import { AI_INPUT, CARD, LAYERS_BUTTON, type Room } from './layout';
 import { ShuttleNotice } from './shuttle-notice';
@@ -62,6 +64,7 @@ interface MapBottomProps {
   onParty: () => void;
   room: Room;
   stack: LayerStack;
+  chatFrom: ChatFrom;
 }
 
 // What is at the bottom of the map: the shuttle's notice, the row of buttons, the 편의기능 button and the AI input. A
@@ -70,8 +73,8 @@ interface MapBottomProps {
 // in the same place in the tree, so that it keeps the focus. While the keyboard is up, the input stands right above
 // it, and the chat keeps its last bubble clear of it there. The conversation is kept while the app runs.
 export function MapBottom(props: MapBottomProps): ReactElement {
-  const { taken, onParty, onNoticeHeight, room, stack } = props;
-  const chat = useChatSheet(useIsFocused(), stack.turnOn);
+  const { taken, onParty, onNoticeHeight, room, stack, chatFrom } = props;
+  const chat = useChatSheet(useIsFocused(), stack.turnOn, chatFrom);
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const lift = useKeyboardLift();
   const { bottomCard, notice } = taken;
@@ -90,6 +93,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
         onHeight={setInputHeight}
         onOpen={chat.open}
         onSend={chat.chat.send}
+        placeholder={chat.placeholder}
         waiting={chat.chat.waiting}
       />
     </>

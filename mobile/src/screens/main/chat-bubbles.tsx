@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useRef } from 'react';
@@ -43,13 +44,15 @@ function Dismissing({ style, children }: { style: StyleProp<ViewStyle>; children
 
 interface ChatEmptyProps {
   onSend: (text: string) => void;
+  // The grey suggestion over the examples, if any.
+  suggestion?: ReactNode;
   // How far from the sheet's bottom the content ends, clear of the AI input.
   under: number;
 }
 
 // The empty chat: the greeting, where what the User writes goes, and the examples as rows. A drag puts the keyboard
 // down, and so does a press that no example takes; a press on an example sends it at once, keyboard up or not.
-export function ChatEmpty({ onSend, under }: ChatEmptyProps): ReactElement {
+export function ChatEmpty({ onSend, suggestion, under }: ChatEmptyProps): ReactElement {
   return (
     <ScrollView
       contentContainerStyle={[styles.fill, { paddingBottom: under }]}
@@ -62,6 +65,7 @@ export function ChatEmpty({ onSend, under }: ChatEmptyProps): ReactElement {
           무엇을 도와드릴까요?
         </Text>
         <Text style={styles.notice}>대화 내용은 AI 제공자에게 전송돼요</Text>
+        {suggestion}
         <View style={styles.examples}>
           {CHAT_EXAMPLES.map(({ words, icon, tint }) => (
             <Pressable
