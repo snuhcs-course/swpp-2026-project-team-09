@@ -76,6 +76,7 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
 ### extra.snu collection (worker)
 
 - A new collector reads extra.snu's list and detail pages. The detail page sits behind a waiting-room script, so it is opened with a headless browser (Playwright). Opening pages sits behind an interface so that the parser is tested on saved pages.
+- Prior art: hangsha (`wafflestudio/hangsha-server`) collects extra.snu with Playwright, filtering the list by application status codes `0001`–`0004` (their meanings are not yet known) and reading the first four pages of twelve programmes each. It has no licence, so it may be read but not copied.
 - It reads the list's first four pages, opens one detail page every two seconds, and runs twice a day, apart from the SNU Now schedule (four times a day).
 - A programme whose detail page redirects to the SSO sign-in is skipped and counted in the Collection's result; it is not a failure.
 - Each session of a programme becomes one collected event, with the session's time and place from the page's structured fields. The programme's description and application period go into the description.

@@ -74,8 +74,9 @@ Words: a **Full** Quest has as many Holders as its capacity. A Quest's start is 
 - A Quest is in the window when its start (its first Sub Quest's start) is in it. A Quest whose start has passed is never returned, by either tool or the join search.
 - The Quest search drops Full Quests always. It takes an optional fewest places left (`minPlacesLeft`, default one) and an optional exact capacity.
 - The Quest search drops, for the reader, the Quests for a Global Event for which the reader holds a Shared Quest.
-- Every filter runs before the list is cut. Searches return up to 30 candidates instead of 20, with descriptions cut at 150 characters.
-- Search words rank the results instead of filtering them: candidates that hold a word come first, then the rest of the window, both in start order. The tool descriptions tell the model to give related words and to correct a typo in the User's question.
+- Every filter runs before the list is cut, in the database query rather than over every recruiting Quest read into memory, so that a search stays quick with a thousand Quests. Searches return up to 30 candidates instead of 20, with descriptions cut at 150 characters.
+- Search words rank the results instead of filtering them: candidates that hold more of the words come first, ties in start order, and the rest of the window fills the places left. The tool descriptions tell the model to give related words (공연 → 콘서트, 음악회, 연주회, 뮤지컬) and to correct a typo in the User's question.
+- The instructions tell the model to search Quests without a Board when it is not sure of one, and, when choosing among candidates, to leave out only those that are clearly different.
 - Each Quest in a result keeps its places left and its Join Policy.
 
 ### Join if one exists
@@ -101,7 +102,7 @@ Words: a **Full** Quest has as many Holders as its capacity. A Quest's start is 
 
 ## Testing Decisions
 
-- A good test checks what the tool returns for a call, or what the Assistant's reply contains for a scripted model, not how the query is built.
+- A good test checks what the tool returns for a call, or what the Assistant's reply contains for a scripted model, not how the query is built. A condition added to a search never adds a result: its results are a subset of the search without it.
 - **Assistant over HTTP with the model scripted** (prior art: `assistant-global-events`, `assistant-recruiting-quests` e2e specs and `test/scripted-model.ts`): a scripted model calls a tool with given inputs, and the test checks the tool's result: the window by overlap and the end-of-day default, Quests by start, started and Full Quests dropped, `minPlacesLeft` and capacity, Shared Quests held, the Place radius and words-only places, ordering by Holders, 30 candidates and 150 characters, words ranking but not filtering.
 - **The eval harness's own tests** (prior art: `eval-*.e2e-spec.ts`) cover any new check or world shape.
 - **The large world without a model**, in CI: the search tools called with each case's intended inputs return every expected card (server recall).

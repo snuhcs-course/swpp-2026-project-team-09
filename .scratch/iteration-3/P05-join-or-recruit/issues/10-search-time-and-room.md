@@ -11,7 +11,7 @@
 - [ ] A Quest's start is its first Sub Quest's start; a Quest is returned when its start is in the window, and never once its start has passed.
 - [ ] Full Quests are never returned; `minPlacesLeft` (default one) and an exact capacity are optional inputs.
 - [ ] Quests for a Global Event of which the reader holds a Shared Quest are not returned.
-- [ ] Every filter runs before the list is cut; each Quest keeps its places left and Join Policy.
+- [ ] Every filter runs in the database query, before the list is cut, not over every Quest read into memory; a test checks that adding a condition only ever narrows the result; each Quest keeps its places left and Join Policy.
 - [ ] The Boards keep their listing unchanged.
 - [ ] The fixed test of the Full `아침 러닝 크루` changes to the new behaviour.
 - [ ] Tests over HTTP with the scripted model cover each rule.
