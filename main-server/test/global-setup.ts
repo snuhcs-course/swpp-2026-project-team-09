@@ -9,6 +9,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-30  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -44,6 +45,7 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     // Not a secret: sendAsWorker(app, …) sends it as the worker does.
     WORKER_TOKEN: 'test-worker-token-of-thirty-two-characters',
     PUBLIC_URL: 'https://snunow.example',
+    CLOCK_OFFSET_MINUTES: '0',
     // Two, as for a development build and the demo build.
     ANDROID_CERTIFICATE_FINGERPRINTS: [
       'FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C',

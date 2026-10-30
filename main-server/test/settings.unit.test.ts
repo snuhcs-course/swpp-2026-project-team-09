@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-30  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 // Partitions: each setting missing; all but DATABASE_URL, REDIS_HOST and MATCH_SERVER_URL malformed or by a bound;
@@ -228,5 +229,33 @@ describe("settingsSchema: the Assistant's settings", () => {
     it('1 → accepted as 1', () => {
       expect(settingsSchema.parse({ ...valid, [setting]: '1' })).toMatchObject({ [setting]: 1 });
     });
+  });
+});
+
+describe('settingsSchema: the clock offset', () => {
+  it('missing → 0', () => {
+    expect(settingsSchema.parse(valid)).toMatchObject({ CLOCK_OFFSET_MINUTES: 0 });
+  });
+
+  it('-90 on localhost → accepted as -90', () => {
+    expect(settingsSchema.parse({ ...valid, CLOCK_OFFSET_MINUTES: '-90' })).toMatchObject({
+      CLOCK_OFFSET_MINUTES: -90,
+    });
+  });
+
+  it('120 with a PUBLIC_URL that is not localhost → refused, naming it', () => {
+    expect(refused({ ...valid, PUBLIC_URL: 'https://snunow.example', CLOCK_OFFSET_MINUTES: '120' })).toEqual([
+      'CLOCK_OFFSET_MINUTES',
+    ]);
+  });
+
+  it('0 with a PUBLIC_URL that is not localhost → accepted', () => {
+    expect(settingsSchema.parse({ ...valid, PUBLIC_URL: 'https://snunow.example' })).toMatchObject({
+      CLOCK_OFFSET_MINUTES: 0,
+    });
+  });
+
+  it.each(['1.5', 'abc'])('%s → refused, naming it', (value) => {
+    expect(refused({ ...valid, CLOCK_OFFSET_MINUTES: value })).toEqual(['CLOCK_OFFSET_MINUTES']);
   });
 });

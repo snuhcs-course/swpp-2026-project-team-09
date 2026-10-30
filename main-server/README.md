@@ -63,6 +63,12 @@ pnpm db:seed
 pnpm start:dev
 ```
 
+To try what the server decides by the time of day in Korea at another hour, such as the grey suggestions of the
+Assistant, set `CLOCK_OFFSET_MINUTES` in `.env` to the minutes to add to the clock, negative to go back; it moves the
+server's own clock (`CLOCK`, `src/quests/clock.ts`), which the Quests, the Assistant and the suggestions read, and
+nothing else: sessions, tokens and the timestamps the database fills in itself keep the real time. The setting is
+refused unless `PUBLIC_URL` is a localhost address, so that it cannot reach a deployed server.
+
 The server answers two health checks:
 
 - `GET http://localhost:3000/health/live`: liveness, the process is up.

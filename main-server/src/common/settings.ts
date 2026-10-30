@@ -9,6 +9,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-30  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -39,6 +40,12 @@ function es256Key(type: 'private' | 'public'): z.ZodString {
       return false;
     }
   }, `Expected a P-256 ${type} key in PEM, beginning with ${header}`);
+}
+
+// A developer's own server: localhost or the loopback address.
+function isLocal(url: string): boolean {
+  const { hostname } = new URL(url);
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
 }
 
 // Every setting arrives as a string from the environment; the schema converts it to the type the code uses.
@@ -80,6 +87,10 @@ export const settingsSchema = z
     ASSISTANT_MAX_STEPS: count(8),
     ASSISTANT_TIMEOUT_MS: count(30_000),
     ASSISTANT_MAX_OUTPUT_TOKENS: count(1000),
+    // Minutes added to the server's clock (src/quests/clock.ts), so that what the server decides by the time of day in
+    // Korea, such as the grey suggestions, can be tried at any hour. For a developer's laptop only: a value other
+    // than 0 is refused unless PUBLIC_URL is a localhost address.
+    CLOCK_OFFSET_MINUTES: z.string().default('0').pipe(z.coerce.number<string>().int()),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),
@@ -96,6 +107,11 @@ export const settingsSchema = z
   .refine((settings) => settings.GOOGLE_APP_CLIENT_ID !== settings.GOOGLE_ADMIN_CLIENT_ID, {
     path: ['GOOGLE_ADMIN_CLIENT_ID'],
     message: 'Must differ from GOOGLE_APP_CLIENT_ID',
+  })
+  .refine((settings) => settings.CLOCK_OFFSET_MINUTES === 0 || isLocal(settings.PUBLIC_URL), {
+    path: ['CLOCK_OFFSET_MINUTES'],
+    message: 'Only for a PUBLIC_URL on localhost',
+    when: ({ issues }) => issues.length === 0,
   });
 
 export type Settings = z.infer<typeof settingsSchema>;
