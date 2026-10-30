@@ -48,8 +48,15 @@ An Event published to every User, such as a departmental notice or an organizer'
 _Avoid_: Official event, public event
 
 **Draft**:
-A Global Event that was collected or entered but is not yet visible to Users. An Administrator publishes it.
+A Global Event that was collected or entered but is not yet visible to Users. An Administrator publishes it, or it is published on its own once its time and place are read from its post or confirmed by a Judgement.
 _Avoid_: Pending event, unverified event
+
+**Publication Route**:
+How a Global Event came to be published: by an Administrator, by the rules that read its post, or by a Judgement. Only Administrators see it.
+
+**Judgement**:
+The AI's reading of a Draft: for each session, its time and place, and the lines of the post they were read from. A Judgement publishes the sessions that pass the server's checks and leaves the rest a Draft.
+_Avoid_: AI verification, AI publishing
 
 **Private Event**:
 An Event a User registers for their own use, visible only on that User's map.
@@ -86,6 +93,10 @@ The screens call an Open or Approval Quest a "공개 파티" and a Closed Quest 
 **Board**:
 Where an Open or Approval Quest is listed for recruiting, one of four kinds: 식사, 진로, 취미 and 공연. A Closed Quest is on none.
 _Avoid_: Category
+
+**Full**:
+Said of a Quest whose Holders already number its capacity. Nobody more can enter it until a Holder leaves.
+_Avoid_: Closed (Closed is a Join Policy), 마감 (an application deadline)
 
 **Class Quest**:
 A Quest for attending one of the User's own classes on a given day, derived from the User's timetable.
@@ -148,6 +159,10 @@ _Avoid_: Draft (a Draft is an unpublished Global Event), suggestion
 **Source**:
 A page or feed outside the project that the worker server collects, such as the Co-op menu page or the shuttle operator's vehicle positions.
 _Avoid_: Site, provider
+
+**Source Post**:
+One post on a Source that a Global Event was read from, such as an SNU Now notice or an extra.snu program. A Global Event can have several, when more than one Source posted the same event.
+_Avoid_: Original, article, duplicate
 
 **Collection**:
 One run of the worker server reading a Source and handing what it read to the main server. A Source records its last successful Collection and its last failure.
