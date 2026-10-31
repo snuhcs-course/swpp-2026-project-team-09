@@ -107,6 +107,7 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
   - the date, the weekday and the time agree with the quoted line;
   - the quoted line is not an application or registration period;
   - the start comes before the end;
+  - unless it is read as running over a period, the start has a time of day: a day alone is stored at 00:00 and would show as 00:00 on its card;
   - a session lasts at most 24 hours, unless it is read as running over a period, in which case the quoted line must hold both its first and last day;
   - the place matches exactly one Place. Where the Source's setting says so, a building number alone ("301동 117호") is taken as Gwanak; a place naming another campus is not matched.
 - Each passing session becomes its own Global Event; the failing sessions of a post stay as one Draft.
