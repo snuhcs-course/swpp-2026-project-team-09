@@ -291,6 +291,7 @@ tags:
     - { case: search-o-04, seed: 판화전 같이 봐요 }
     - { case: search-o-05, seed: 사진전 같이 봐요 }
     - { case: search-o-05, seed: 사진전 주말 관람 }
+    - { case: search-o-05, seed: 전시 보러 가요 }
     - { case: search-o-06, seed: 사진전 같이 봐요 }
     - { case: search-o-06, seed: 사진전 주말 관람 }
     - { case: search-o-06, seed: 공룡 전시 보러 가요 }
@@ -435,14 +436,14 @@ thresholds:
     declared: 2026-10-31
   - id: j9.floor
     metric: J9
-    measure: 'Runs passed ÷ runs, on the cases whose answer holds an Approval Quest'
+    measure: 'Runs passed ÷ runs, on the join cases whose answer holds an Approval Quest'
     kind: floor
     comparator: '>='
     value: 0.7
     declared: 2026-10-31
   - id: j9.target
     metric: J9
-    measure: 'Runs passed ÷ runs, on the cases whose answer holds an Approval Quest'
+    measure: 'Runs passed ÷ runs, on the join cases whose answer holds an Approval Quest'
     kind: target
     comparator: '>='
     value: 0.9

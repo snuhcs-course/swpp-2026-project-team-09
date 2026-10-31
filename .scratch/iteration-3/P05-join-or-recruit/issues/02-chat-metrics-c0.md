@@ -39,6 +39,10 @@ In review the owner decided that a question naming neither 행사 nor 파티 fin
 
 Known gap: `join-08` expects a Proposal, as the spec says, but a User holding a Shared Quest for that event cannot get a second Quest for it. The record says so; neither the answer nor the code changes.
 
+### Review settled (2026-11-01)
+
+`TaeHyun79` reviewed `8abf006` and the owner settled three items before C0. `search-o-05` now expects `전시 보러 가요`, as `join-17` does; section 8 of the rules says that "about 300 m" means 300 m or less and that a broad word such as 운동 finds every activity under it. Only `search-o-05`'s answer changed.
+
 ### Agent usage (2026-11-01)
 
 Agent work so far; R0 will add to it.

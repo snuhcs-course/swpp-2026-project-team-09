@@ -871,7 +871,7 @@
       allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
       forbidden: [proposeQuest]
     cards:
-      - { kind: quest, seeds: [사진전 같이 봐요, 사진전 주말 관람], max: 2 }
+      - { kind: quest, seeds: [사진전 같이 봐요, 사진전 주말 관람, 전시 보러 가요], max: 3 }
       - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-o-06

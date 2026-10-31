@@ -71,13 +71,27 @@ const reviews = z
   .parse(labelFile('owner'));
 
 // The cards settled after the review, when the owner and the second labeller compared their answers.
-const SETTLED: Record<string, string[]> = { 'join-17': ['전시 보러 가요'] };
+const SETTLED: Record<string, string[]> = { 'join-17': ['전시 보러 가요'], 'search-o-05': ['전시 보러 가요'] };
 
 function writtenCards(id: string): string[] | undefined {
   return cases
     .find((one) => one.id === id)
     ?.expect?.cards?.flatMap(({ kind, seeds }) => seeds.map((seed) => `${kind}/${seed}`))
     .toSorted();
+}
+
+// The tags whose seeds are not the cards of their case's answer, or a null seed when it has none.
+function tagsOffTheirCases(): string[] {
+  return Object.entries(suite.tags).flatMap(([tag, tagged]) =>
+    [...casesTagged(tag)].flatMap((id) => {
+      const seeds = tagged
+        .filter((one) => caseOfTag(one) === id)
+        .map((one) => (typeof one === 'string' ? '' : one.seed));
+      const cards = (writtenCards(id) ?? []).map((card) => card.split('/')[1]);
+      const written = (cards.length === 0 ? [null] : cards).map(String).toSorted();
+      return JSON.stringify(seeds.map(String).toSorted()) === JSON.stringify(written) ? [] : [`${tag} ${id}`];
+    }),
+  );
 }
 
 function reviewedCards(id: string): string[] {
@@ -178,11 +192,6 @@ describe('The P05 suite', () => {
     expect(groups.filter(({ seeds, max }) => max !== seeds || seeds > 20)).toEqual([]);
   });
 
-  it('expects of every case the cards of its reviewed answer', () => {
-    expect(ids.filter((id) => writtenCards(id) === undefined)).toEqual([]);
-    expect(ids.filter((id) => JSON.stringify(writtenCards(id)) !== JSON.stringify(reviewedCards(id)))).toEqual([]);
-  });
-
   it('commits a floor or target for every metric, each once', () => {
     expect([...new Set(suite.thresholds.map(({ metric }) => metric))]).toEqual(THRESHOLD_METRICS);
     const entries = suite.thresholds.map(({ id }) => id);
@@ -193,6 +202,17 @@ describe('The P05 suite', () => {
     const fixed = new Set(Object.values(FIXED_SET).flat());
 
     expect(suite.superseded.filter(({ case: id, heldBy }) => !fixed.has(id) || !ids.includes(heldBy))).toEqual([]);
+  });
+});
+
+describe('The P05 answers', () => {
+  it('expects of every case the cards of its reviewed answer', () => {
+    expect(ids.filter((id) => writtenCards(id) === undefined)).toEqual([]);
+    expect(ids.filter((id) => JSON.stringify(writtenCards(id)) !== JSON.stringify(reviewedCards(id)))).toEqual([]);
+  });
+
+  it('tags each case with the seeds of its answer', () => {
+    expect(tagsOffTheirCases()).toEqual([]);
   });
 });
 
