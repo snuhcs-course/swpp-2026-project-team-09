@@ -57,6 +57,25 @@ function checked(
   return result;
 }
 
+// Against a post of its time line, quoted for the start and any end, and the place line.
+function checkedOn(line: string, changes: Partial<AnsweredSession>): JudgedSession {
+  const lines = { start: [line], end: changes.end === null ? [] : [line], place: [PLACE_LINE] };
+  const [result] = checkedSessions(
+    { announcesEvent: true, sessions: [session({ ...changes, lines })] },
+    {
+      post: { title: '설명회', text: `${line}\n${PLACE_LINE}` },
+      source: POST_SOURCES.snu_events,
+      places: PLACES,
+      now: new Date('2026-11-01T12:00:00+09:00'),
+      readStarts: [],
+    },
+  );
+  if (result === undefined) {
+    throw new Error('No session');
+  }
+  return result;
+}
+
 function failing({ checks }: JudgedSession): JudgementCheck[] {
   return checks.filter(({ passed }) => !passed).map(({ name }) => name);
 }
@@ -121,25 +140,9 @@ describe('checkedSessions', () => {
 
 describe('checkedSessions: the day and time of a session', () => {
   it('fails a weekday the date does not fall on', () => {
-    const line = '2027. 11. 5.(목) 14:00';
-    const post = { title: '설명회', text: `${line}\n${PLACE_LINE}` };
-    const [result] = checkedSessions(
-      {
-        announcesEvent: true,
-        sessions: [
-          session({ start: '2027-11-05T14:00', end: null, lines: { start: [line], end: [], place: [PLACE_LINE] } }),
-        ],
-      },
-      {
-        post,
-        source: POST_SOURCES.snu_events,
-        places: PLACES,
-        now: new Date('2026-11-01T12:00:00+09:00'),
-        readStarts: [],
-      },
-    );
-
-    expect(result === undefined ? [] : failing(result)).toEqual(['weekdayAgrees']);
+    expect(failing(checkedOn('2027. 11. 5.(목) 14:00', { start: '2027-11-05T14:00', end: null }))).toEqual([
+      'weekdayAgrees',
+    ]);
   });
 });
 
@@ -178,48 +181,22 @@ describe('checkedSessions: the length and time of day of a session', () => {
     ).toEqual(['length']);
   });
 
-  it('takes 00:00 for no time of day, as the site writes it', () => {
-    const line = '2026.11.05. 00:00';
-    const post = { title: '설명회', text: `${line}\n${PLACE_LINE}` };
-    const [result] = checkedSessions(
-      {
-        announcesEvent: true,
-        sessions: [
-          session({ start: '2026-11-05T00:00', end: null, lines: { start: [line], end: [], place: [PLACE_LINE] } }),
-        ],
-      },
-      {
-        post,
-        source: POST_SOURCES.snu_events,
-        places: PLACES,
-        now: new Date('2026-11-01T12:00:00+09:00'),
-        readStarts: [],
-      },
-    );
+  it('refuses an end given as a day alone', () => {
+    expect(failing(checkedOn('2026. 11. 5.(목) 14:00 ~ 2026. 11. 6.(금)', { end: '2026-11-06' }))).toEqual([
+      'hasTimeOfDay',
+    ]);
+  });
 
-    expect(result === undefined ? [] : failing(result)).toEqual(['hasTimeOfDay']);
+  it('takes 00:00 for no time of day, as the site writes it', () => {
+    expect(failing(checkedOn('2026.11.05. 00:00', { start: '2026-11-05T00:00', end: null }))).toEqual(['hasTimeOfDay']);
   });
 });
 
 describe('checkedSessions: a long session', () => {
   it('refuses a session longer than a day', () => {
-    const line = '2026. 11. 5.(목) 14:00 ~ 2026. 11. 6.(금) 15:00';
-    const post = { title: '설명회', text: `${line}\n${PLACE_LINE}` };
-    const [result] = checkedSessions(
-      {
-        announcesEvent: true,
-        sessions: [session({ end: '2026-11-06T15:00', lines: { start: [line], end: [line], place: [PLACE_LINE] } })],
-      },
-      {
-        post,
-        source: POST_SOURCES.snu_events,
-        places: PLACES,
-        now: new Date('2026-11-01T12:00:00+09:00'),
-        readStarts: [],
-      },
-    );
-
-    expect(result === undefined ? [] : failing(result)).toEqual(['length']);
+    expect(failing(checkedOn('2026. 11. 5.(목) 14:00 ~ 2026. 11. 6.(금) 15:00', { end: '2026-11-06T15:00' }))).toEqual([
+      'length',
+    ]);
   });
 });
 

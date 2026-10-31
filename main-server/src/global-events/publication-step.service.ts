@@ -26,17 +26,15 @@ import { GlobalEventsService } from './global-events.service.js';
 import { type JudgedSession, storedSessions } from './judgement-answer.js';
 import { placedSessions } from './judgement-checks.js';
 import { readJudgedTime } from './judgement-time.js';
-import { isChangedByAdministrator, judgedDrafts, JudgementsService, waitsForAJudgement } from './judgements.service.js';
+import {
+  isChangedByAdministrator,
+  judgedDrafts,
+  JudgementsService,
+  waitsForAJudgement,
+  WITH_OWN_SESSIONS,
+} from './judgements.service.js';
 
-const WITH_SESSIONS = {
-  sessions: {
-    where: { attachedBy: SessionAttachment.own },
-    orderBy: { number: 'asc' },
-    include: { globalEvent: true },
-  },
-} satisfies Prisma.SourcePostInclude;
-
-type PostWithOwnSessions = Prisma.SourcePostGetPayload<{ include: typeof WITH_SESSIONS }>;
+type PostWithOwnSessions = Prisma.SourcePostGetPayload<{ include: typeof WITH_OWN_SESSIONS }>;
 
 interface PublishedValues {
   startsAt: Date | null;
@@ -135,7 +133,7 @@ export class PublicationStepService {
       const judged = await this.publishJudged(tx, sourcePostId);
       const post = await tx.sourcePost.findUniqueOrThrow({
         where: { id: sourcePostId },
-        include: { judgement: true, ...WITH_SESSIONS },
+        include: { judgement: true, ...WITH_OWN_SESSIONS },
       });
       // With Judgements turned off meanwhile, no try will come.
       if (!this.judges || post.judgement === null || !waitsForAJudgement(post, post.judgement)) {
@@ -162,7 +160,7 @@ export class PublicationStepService {
         ],
       },
       orderBy: [{ source: 'asc' }, { key: 'asc' }],
-      include: { judgement: true, ...WITH_SESSIONS },
+      include: { judgement: true, ...WITH_OWN_SESSIONS },
     });
     return posts.map(({ source, key, address, stepFinishedAt, stepFailure, stepFailedAt, judgement, sessions }) => ({
       source,
@@ -185,7 +183,7 @@ export class PublicationStepService {
     if (!this.publishes) {
       return false;
     }
-    const post = await tx.sourcePost.findUniqueOrThrow({ where: { id: sourcePostId }, include: WITH_SESSIONS });
+    const post = await tx.sourcePost.findUniqueOrThrow({ where: { id: sourcePostId }, include: WITH_OWN_SESSIONS });
     const { count: taken } = await tx.judgement.updateMany({
       where: { sourcePostId, outcome: JudgementOutcome.judged, publishedAt: null },
       data: { publishedAt: new Date() },

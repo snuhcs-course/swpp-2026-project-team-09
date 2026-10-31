@@ -647,7 +647,8 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
 - **What the model answers:** whether the post announces an event, and per session the start, end, place, whether it runs
   over a period, and the lines each came from (`judgement-answer.ts`). The call is limited by `JUDGEMENT_TIMEOUT_MS` (60,000)
   and `JUDGEMENT_MAX_OUTPUT_TOKENS` (4,000), is not sent again, and runs outside any transaction, after the Collection's
-  answer. It uses the Assistant's model and OpenRouter key, so it spends the same credit.
+  answer. It uses the Assistant's model and OpenRouter key, so it spends the same credit. `judgement-model.ts` calls the
+  model library itself, because the Assistant's adapter runs a User's tools and stays as the chat's evaluations measured it.
 - **What the server checks** (`judgement-checks.ts`), each on its own: the post is called an event, each quoted line is in
   the post, the date, weekday and time agree with the lines, the whole line and a short label above it are not an
   application period, the start is before the end, it has a time of day, it lasts at most 24 hours, the place is in its

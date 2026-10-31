@@ -43,6 +43,8 @@ describe('writtenDays', () => {
     ['11월 5일(목요일)', { year: null, month: 11, day: 5, weekday: '목' }],
     ['11/5(목)', { year: null, month: 11, day: 5, weekday: '목' }],
     ['26.11.5', { year: 2026, month: 11, day: 5, weekday: null }],
+    ['11월 5일 목 오후 2시', { year: null, month: 11, day: 5, weekday: '목' }],
+    ['11월 5일（목）', { year: null, month: 11, day: 5, weekday: '목' }],
   ])('reads %s', (line, expected) => {
     expect(writtenDays(line)[0]).toEqual(expected);
   });

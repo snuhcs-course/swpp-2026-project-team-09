@@ -26,8 +26,7 @@ import { POST_SOURCE_NAMES, POST_SOURCES } from './post-sources.js';
 // A Judgement is tried at most this many times, whatever happens to each try: a try counts when it is claimed.
 export const JUDGEMENT_TRIES = 2;
 
-const WITH_SESSIONS = {
-  judgement: true,
+export const WITH_OWN_SESSIONS = {
   sessions: {
     where: { attachedBy: SessionAttachment.own },
     orderBy: { number: 'asc' },
@@ -35,7 +34,9 @@ const WITH_SESSIONS = {
   },
 } satisfies Prisma.SourcePostInclude;
 
-type PostWithSessions = Prisma.SourcePostGetPayload<{ include: typeof WITH_SESSIONS }>;
+const WITH_SESSIONS = { judgement: true, ...WITH_OWN_SESSIONS } satisfies Prisma.SourcePostInclude;
+
+type PostWithSessions = Prisma.SourcePostGetPayload<{ include: typeof WITH_OWN_SESSIONS }>;
 
 // The sessions of a post a Judgement reads for: those the rules did not read and that are still Drafts as collected.
 export function judgedDrafts({ sessions }: Pick<PostWithSessions, 'sessions'>): PostWithSessions['sessions'] {
@@ -50,17 +51,18 @@ export function isChangedByAdministrator({ sessions }: Pick<PostWithSessions, 's
   return sessions.some(({ globalEvent }) => globalEvent.version !== 1);
 }
 
+// Whether the post has a Draft a Judgement may read.
+function isJudgeable(post: Pick<PostWithSessions, 'sessions'>): boolean {
+  return !isChangedByAdministrator(post) && judgedDrafts(post).length > 0;
+}
+
 // Whether the step should come back to a post for its Judgement: a try is running or was left by a server that stopped,
 // or one that could not be made has a try left. Not a post no longer to be judged.
 export function waitsForAJudgement(
   post: Pick<PostWithSessions, 'sessions'>,
   { outcome, attempts }: Judgement,
 ): boolean {
-  return (
-    !isChangedByAdministrator(post) &&
-    judgedDrafts(post).length > 0 &&
-    (outcome === null || (outcome === JudgementOutcome.failed && attempts < JUDGEMENT_TRIES))
-  );
+  return isJudgeable(post) && (outcome === null || (outcome === JudgementOutcome.failed && attempts < JUDGEMENT_TRIES));
 }
 
 // Reads Drafts with the model and stores what it read. It publishes nothing and calls the model outside any transaction.
@@ -106,7 +108,7 @@ export class JudgementsService {
       where: { id: sourcePostId },
       include: WITH_SESSIONS,
     });
-    if (isChangedByAdministrator(post) || judgedDrafts(post).length === 0) {
+    if (!isJudgeable(post)) {
       return post.judgement;
     }
     const claimed = await this.claim(sourcePostId);
@@ -123,9 +125,7 @@ export class JudgementsService {
       include: WITH_SESSIONS,
     });
     const due = posts.filter((post) =>
-      post.judgement === null
-        ? !isChangedByAdministrator(post) && judgedDrafts(post).length > 0
-        : waitsForAJudgement(post, post.judgement),
+      post.judgement === null ? isJudgeable(post) : waitsForAJudgement(post, post.judgement),
     );
     return new Set(due.map(({ id }) => id));
   }

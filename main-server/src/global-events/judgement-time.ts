@@ -47,7 +47,7 @@ export function readJudgedTime(value: string): JudgedTime | null {
   return { at, year, month, day, clock, weekday: WEEKDAYS[inKorea.getUTCDay()] ?? '' };
 }
 
-// A day a line writes: "2026. 10. 13.(화)", "2026-10-13", "10월 13일 화요일", "10/13(화)", "26.10.13".
+// A day a line writes: "2026. 10. 13.(화)", "2026-10-13", "10월 13일 화요일", "10월 13일 화", "10/13(화)", "26.10.13".
 export interface WrittenDay {
   year: number | null;
   month: number;
@@ -57,16 +57,16 @@ export interface WrittenDay {
 
 const DAY = new RegExp(
   String.raw`(?<![\d.:-])(?:(\d{4}|\d{2})\s*[년./-]\s*)?(\d{1,2})\s*[월./-]\s*(\d{1,2})(?![\d:])\s*일?\s*\.?` +
-    String.raw`(?:\s*\(\s*([${WEEKDAYS}])(?:요일)?\s*\)|\s*([${WEEKDAYS}])요일)?`,
+    String.raw`(?:\s*[(（]\s*([${WEEKDAYS}])(?:요일)?\s*[)）]|\s*([${WEEKDAYS}])요일|\s*([${WEEKDAYS}])(?![\p{L}\p{N}]))?`,
   'gu',
 );
 
 export function writtenDays(line: string): WrittenDay[] {
-  return [...line.matchAll(DAY)].map(({ 1: year, 2: month, 3: day, 4: inBrackets, 5: named }) => ({
+  return [...line.matchAll(DAY)].map(({ 1: year, 2: month, 3: day, 4: inBrackets, 5: named, 6: alone }) => ({
     year: year === undefined ? null : Number(year.length === 2 ? `20${year}` : year),
     month: Number(month),
     day: Number(day),
-    weekday: inBrackets ?? named ?? null,
+    weekday: inBrackets ?? named ?? alone ?? null,
   }));
 }
 

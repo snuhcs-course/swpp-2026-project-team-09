@@ -25,11 +25,11 @@ function draft(id: string, start: string | null = null): { id: string; startsAt:
   return { id, startsAt: start === null ? null : new Date(`${start}:00+09:00`) };
 }
 
-describe('placedSessions', () => {
-  const FIRST = '2026-11-05T14:00';
-  const SECOND = '2026-11-12T14:00';
-  const THIRD = '2026-11-19T14:00';
+const FIRST = '2026-11-05T14:00';
+const SECOND = '2026-11-12T14:00';
+const THIRD = '2026-11-19T14:00';
 
+describe('placedSessions', () => {
   it('publishes one Draft with the one session that passed', () => {
     const one = judged(FIRST, true);
 
@@ -65,6 +65,32 @@ describe('placedSessions', () => {
     const [repeat, one] = [judged(FIRST, false, false), judged(SECOND, true)];
 
     expect(placedSessions([repeat, one], [draft('d')]).get(one)).toBe('d');
+  });
+});
+
+describe('placedSessions, with Drafts the worker read', () => {
+  it('does not write over the time the worker read in a Draft of several', () => {
+    const one = judged('2026-11-26T14:00', true);
+
+    expect(placedSessions([one], [draft('d1', FIRST), draft('d2', SECOND)]).get(one)).toBeNull();
+  });
+
+  it('takes a Draft of several that has no start', () => {
+    const one = judged(THIRD, true);
+
+    expect(placedSessions([one], [draft('d1', FIRST), draft('d2')]).get(one)).toBe('d2');
+  });
+
+  it('takes the Draft that holds only its day', () => {
+    const one = judged(FIRST, true);
+
+    expect(placedSessions([one], [draft('d2', SECOND), draft('d1', '2026-11-05T00:00')]).get(one)).toBe('d1');
+  });
+
+  it('does not lose a Draft to two failing sessions of one start', () => {
+    const [one, two, three] = [judged(FIRST, false), judged(FIRST, false), judged(SECOND, true)];
+
+    expect(placedSessions([one, two, three], [draft('d')]).get(three)).toBeNull();
   });
 
   it('leaves alone a Draft the answer did not mention', () => {

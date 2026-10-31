@@ -30,7 +30,7 @@ import { type PostSourceSettings } from './post-sources.js';
 const HOURS_24_MS = 24 * 60 * 60 * 1000;
 
 // What marks a line as a period to apply in, not the event's own time.
-const APPLICATION = /신청|접수|모집|등록|지원\s*기간|마감|응모|제출|원서|application|registration|deadline/iu;
+const APPLICATION = /신청|접수|모집|등록|지원\s*기간|마감|응모|제출|원서|appl(?:y|ication)|registration|deadline/iu;
 
 // A line this short holds a label for the next one, as "신청 기간" above its dates does.
 const LABEL_LENGTH = 20;
@@ -133,11 +133,13 @@ function startBeforeEnd(session: AnsweredSession, start: JudgedTime | null, end:
 }
 
 // A day alone is stored at 00:00 and would show as 00:00 on its card, and the site writes 00:00 where it has no time.
-function hasTimeOfDay(session: AnsweredSession, start: JudgedTime | null): boolean {
+// An end given as a day alone would be stored at 00:00 of that day too.
+function hasTimeOfDay(session: AnsweredSession, start: JudgedTime | null, end: JudgedTime | null): boolean {
   if (session.overPeriod) {
     return true;
   }
-  return start?.clock !== null && start?.clock !== undefined && (start.clock.hour !== 0 || start.clock.minute !== 0);
+  const startClock = start?.clock ?? null;
+  return startClock !== null && (startClock.hour !== 0 || startClock.minute !== 0) && end?.clock !== null;
 }
 
 // A session read as running over a period does not pass until ticket 07 lets one that quotes both its days through.
@@ -189,7 +191,7 @@ function checksOf(
     timeAgrees: clockIn(session.lines.start, start) && clockIn(session.lines.end, end),
     notApplicationPeriod: notApplicationPeriod(session, lines),
     startBeforeEnd: startBeforeEnd(session, start, end),
-    hasTimeOfDay: hasTimeOfDay(session, start),
+    hasTimeOfDay: hasTimeOfDay(session, start, end),
     length: length(session, start, end),
     placeInLines: placeInLines(session),
     placeMatches: named !== null,
@@ -219,53 +221,56 @@ export function checkedSessions({ announcesEvent, sessions }: JudgementAnswer, c
   });
 }
 
-function startOf({ start }: JudgedSession): number | undefined {
-  return start === null ? undefined : readJudgedTime(start)?.at.getTime();
+// Whether a Draft is the one the worker read this session into: it has the session's start, or its day alone.
+function isDraftOf({ startsAt }: PlacedDraft, { start }: JudgedSession): boolean {
+  const time = start === null ? null : readJudgedTime(start);
+  if (time === null || startsAt === null) {
+    return false;
+  }
+  const day = readJudgedTime(`${start?.slice(0, 10)}`)?.at.getTime();
+  return startsAt.getTime() === time.at.getTime() || startsAt.getTime() === day;
 }
 
-// Where each passing session goes, given the post's Drafts in session order: a Draft with its start, else a Draft that
-// stays free, else a new event, shown here as null. Failing sessions make no Draft: a Draft stays for them, the one with
-// a failing session's start or else the last, so that a Draft keeps what an Administrator must look at. A session that
-// is not new is no session left to look at.
-export function placedSessions(
-  sessions: JudgedSession[],
-  drafts: { id: string; startsAt: Date | null }[],
-): Map<JudgedSession, string | null> {
+interface PlacedDraft {
+  id: string;
+  startsAt: Date | null;
+}
+
+// Where each passing session goes, given the post's Drafts in session order, null being a new event: the Draft the worker
+// read it into, else the post's only Draft, whose start may be only the header's date, else a Draft without a start. A
+// Draft of several with another start keeps what the worker read. Failing sessions make no Draft, and a Draft stays for
+// them: their own, or any other left. A session that is not new is no session left to look at.
+export function placedSessions(sessions: JudgedSession[], drafts: PlacedDraft[]): Map<JudgedSession, string | null> {
   const passing = sessions.filter(({ passed }) => passed);
   const failing = sessions.filter(
     ({ passed, checks }) => !passed && checks.some(({ name, passed: ok }) => name === 'newSession' && ok),
   );
-  const free = [...drafts];
-  const take = (draft: { id: string } | undefined): string | null => {
-    if (draft === undefined) {
-      return null;
-    }
-    free.splice(
-      free.findIndex(({ id }) => id === draft.id),
-      1,
-    );
-    return draft.id;
-  };
   const placed = new Map<JudgedSession, string | null>();
-  const withoutStart = passing.filter((session) => {
-    const own = free.find(({ startsAt }) => startsAt?.getTime() === startOf(session));
-    if (own === undefined) {
-      return true;
+  const taken = new Set<string>();
+  for (const session of passing) {
+    const own = drafts.find((draft) => !taken.has(draft.id) && isDraftOf(draft, session));
+    if (own !== undefined) {
+      taken.add(own.id);
+      placed.set(session, own.id);
     }
-    placed.set(session, take(own));
-    return false;
-  });
-  const keptForFailing = failing.flatMap((session) =>
-    free.filter(({ startsAt }) => startsAt?.getTime() === startOf(session)),
-  );
-  for (const draft of keptForFailing) {
-    take(draft);
   }
-  if (failing.length > 0 && keptForFailing.length === 0) {
-    free.pop();
+  // Every Draft went to a passing session, and a failing one needs one left: the last of them becomes a new event.
+  const last = [...placed.entries()].at(-1);
+  if (failing.length > 0 && taken.size === drafts.length && last !== undefined) {
+    placed.delete(last[0]);
+    taken.delete(last[1] ?? '');
   }
-  for (const session of withoutStart) {
-    placed.set(session, take(free[0]));
+  const free = drafts.filter(({ id }) => !taken.has(id));
+  const unclaimed = free.filter((draft) => !failing.some((session) => isDraftOf(draft, session)));
+  const spare = drafts.length === 1 ? [...unclaimed] : unclaimed.filter(({ startsAt }) => startsAt === null);
+  // No other Draft is left to stay for the failing sessions.
+  if (failing.length > 0 && free.length === spare.length) {
+    spare.pop();
+  }
+  for (const session of passing) {
+    if (!placed.has(session)) {
+      placed.set(session, spare.shift()?.id ?? null);
+    }
   }
   return placed;
 }

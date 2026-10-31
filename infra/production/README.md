@@ -577,7 +577,7 @@ meanwhile are not published when it is turned on again.
 `AUTOMATIC_JUDGEMENT` is `off` in `k8s/parts/shared/kustomization.yaml`: no model is called, no post leaves the server, and
 the rules go on publishing. Turn it on only when all of these hold (ticket 09):
 
-- the team has agreed that masked posts may be sent to the model provider;
+- masked posts may still be sent to the model provider, as Jaehyun0320 and TaeHyun79 agreed on 2026-11-01;
 - evaluation A's floors are met, on the commit being released, and recorded;
 - the OpenRouter key's credit limit allows for it, since Judgements spend the Assistant's credit, and its account allows
   only providers that do not train on prompts.
