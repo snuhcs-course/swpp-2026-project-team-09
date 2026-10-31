@@ -16,7 +16,6 @@ import { type PrismaClient } from '../src/generated/prisma/client.js';
 import { connect, migrate, seed } from './containers.js';
 import { listedAmong, publishedAmong } from './global-event-lists.js';
 import { collectedPost, eventsMessage, stepOver } from './global-events.js';
-
 import { signIn, signInAsAdministrator } from './sign-in.js';
 import { startApp } from './start-app.js';
 import { askAsWorker, sendAsWorker } from './worker.js';

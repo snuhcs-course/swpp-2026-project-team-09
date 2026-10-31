@@ -7,7 +7,7 @@
 import { Source } from '../generated/prisma/client.js';
 
 // What differs between the Sources whose posts become Global Events. The steps that read a post take these and do not
-// ask which Source it came from, so that a later Source needs only its collector and a line here.
+// ask which Source it came from, so that a later Source needs only its collector and its settings here.
 export interface PostSourceSettings {
   // Whether a building number alone, "301동 117호", is taken as Gwanak.
   buildingNumberIsGwanak: boolean;

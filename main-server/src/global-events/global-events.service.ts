@@ -30,6 +30,7 @@ import {
   toPublishedGlobalEventDto,
   WITH_OWN_POST,
 } from './dto/global-event.dto.js';
+
 // 00:00 in Asia/Seoul, which keeps +09:00 all year, of the day `now` falls on there.
 function startOfSeoulDay(now: Date): Date {
   const day = new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -189,8 +190,8 @@ export class GlobalEventsService {
 
   // Writes the change to an event in one of the states `from` and raises its version, in one statement that also
   // compares the version and the state, so that of two changes from the same version one is applied and the other
-  // refused, and a change does not land on a Draft the step after a Collection published meanwhile, which leaves the
-  // version as it is. An event that stays or becomes published by this change has an Administrator's route: they have
+  // refused, and a change checked against a Draft is checked again when the step after a Collection published it
+  // meanwhile, which leaves the version as it is. An event that stays or becomes published by this change has an Administrator's route: they have
   // looked at it. A change Users see is announced once written: to every app, and to the Holders of the event's Quests
   // when the event was published.
   private async change(

@@ -73,8 +73,6 @@ function firstValue(lines: string[], isLabel: (label: string) => boolean): strin
   return null;
 }
 
-// The start and end from the body's time line, or failing it from the header's date, which is often the application
-// period.
 // A post as its page reads, with its one time and place: the events list's posts have one session.
 export interface EventPost {
   postNumber: number;
@@ -87,6 +85,8 @@ export interface EventPost {
   place: string | null;
 }
 
+// The start and end from the body's time line, or failing it from the header's date, which is often the application
+// period.
 function timeOf(timeLine: string | null, headerDate: string): Pick<EventPost, 'start' | 'end' | 'readFrom'> {
   const bodyTime = timeLine === null ? null : readEventTime(timeLine);
   if (bodyTime !== null) {
