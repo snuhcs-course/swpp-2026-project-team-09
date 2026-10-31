@@ -1661,6 +1661,31 @@ The worker's two routes, which follow [Requests from the worker server](#request
   where `collectedAt` is when the operator's answer arrived and `x`, `y` the position on the drawing. A `carId` listed
   twice is refused.
 
+### Shuttle times from the Dev log
+
+Real waits and rides come from a few days of vehicle positions logged on the Dev Server
+([The shuttle log](../infra/deploy/README.md#the-shuttle-log)). Production keeps no history of them. A folder holds
+each logged day as `YYYY-MM-DD.csv` with its set log `YYYY-MM-DD.sets.csv`, both plain or both gzipped; the committed
+days are in `eval/shuttle-days/`.
+
+```sh
+pnpm shuttle:derive eval/shuttle-days   # writes seed/shuttle-timing.json from the days in the folder
+pnpm shuttle:score eval/shuttle-days    # the shuttle metric, each day held out in turn
+```
+
+Neither calls anything. Both clean the days with one implementation of the rules R1 to R12 of the P04 spec
+(`scripts/shuttle/`) and print every item left out, with its rule and reason. A value that breaks R1, such as a time
+without an offset, stops the command. Stops are named by `loop_order`, their place in the stop seed.
+
+`seed/shuttle-timing.json` has the shape in `src/shuttle/shuttle-timing.ts`, in seconds: per stop and band the average
+wait, Σh² / (2Σh) over the observed headways h, and per pair of stops and band the median ride. A stop-band that kept
+under 75% of its headway time (R11) is left out, so the fallback covers it.
+
+The score holds each day out and compares it with the times derived from the others. A stop-band or pair-band those
+days lack is predicted with the fallback. The ride compares every held-out ride with the median, by MAE and the share
+within ±1 minute, against along-loop distance at 4.15 m/s. The wait compares each scored stop-band of 08–19 with the
+prediction, each with equal weight, against 3.5 minutes. The threshold holds when both MAEs are below their baselines.
+
 ## Timetable
 
 A User's timetable is the User's classes, and nothing else is stored for it. A User keeps one timetable from semester
