@@ -12,12 +12,15 @@ import {
   MAP_LAYERS,
   type MapLayer,
   type QuestProposal,
+  type RestaurantCard,
+  type RestaurantWay,
   type TravelBox,
 } from '@/api/assistant-types';
 import type { ApiClient } from '@/api/client';
-import { field, hasTexts, isBoard, isJoinPolicy, isNothing, isNumber, isText, listOf } from './answers';
+import { field, hasTexts, isBoard, isJoinPolicy, isNothing, isNumber, isText, isTextOrNull, listOf } from './answers';
 import { isGlobalEvent } from './event-client';
 import { call } from './http';
+import { isMenuLine } from './menu-answers';
 import { isRecruitingQuest } from './party-client';
 
 // The operation of the AI chat: the conversation goes to the main server, which asks the model.
@@ -49,17 +52,6 @@ function isTravelBox(value: unknown): value is TravelBox {
   );
 }
 
-function isChatCard(value: unknown): value is ChatCard {
-  switch (field(value, 'kind')) {
-    case 'globalEvent':
-      return isGlobalEvent(field(value, 'globalEvent')) && isTravelBox(value);
-    case 'quest':
-      return isRecruitingQuest(field(value, 'quest')) && isTravelBox(value);
-    default:
-      return false;
-  }
-}
-
 // A Place or a Friend of a Proposal: an id and a name.
 function isNamed(value: unknown): value is { id: string; name: string } {
   return hasTexts(value, ['id', 'name']);
@@ -77,6 +69,43 @@ function isQuestProposal(value: unknown): value is QuestProposal {
     (isNothing(globalEvent) || isGlobalEvent(globalEvent)) &&
     listOf(isNamed)(field(value, 'invitees'))
   );
+}
+
+function isRestaurantWay(value: unknown): value is RestaurantWay {
+  const mode = field(value, 'mode');
+  const minutes = field(value, 'minutes');
+  return (
+    isText(field(value, 'name')) &&
+    (mode === null || mode === 'walk' || mode === 'shuttle') &&
+    (minutes === null || isNumber(minutes)) &&
+    typeof field(value, 'longest') === 'boolean'
+  );
+}
+
+function isRestaurant(value: unknown): value is RestaurantCard['restaurant'] {
+  const meal = field(value, 'meal');
+  return (
+    hasTexts(value, ['key', 'name', 'date']) &&
+    isTextOrNull(field(value, 'placeNumber')) &&
+    (meal === 'lunch' || meal === 'dinner') &&
+    isNumber(field(value, 'eatingMinutes')) &&
+    listOf(isMenuLine)(field(value, 'lines')) &&
+    listOf(isRestaurantWay)(field(value, 'people')) &&
+    isQuestProposal(field(value, 'proposal'))
+  );
+}
+
+function isChatCard(value: unknown): value is ChatCard {
+  switch (field(value, 'kind')) {
+    case 'globalEvent':
+      return isGlobalEvent(field(value, 'globalEvent')) && isTravelBox(value);
+    case 'quest':
+      return isRecruitingQuest(field(value, 'quest')) && isTravelBox(value);
+    case 'restaurant':
+      return isRestaurant(field(value, 'restaurant'));
+    default:
+      return false;
+  }
 }
 
 function isAssistantReply(value: unknown): value is AssistantReply {

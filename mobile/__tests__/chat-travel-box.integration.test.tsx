@@ -95,7 +95,6 @@ describe('the 이동 시간 box', () => {
     }
     expect(box.getAllByText(/./u)).toHaveLength(lines.length);
   });
-
 });
 
 describe('the 이동 시간 box on a card', () => {

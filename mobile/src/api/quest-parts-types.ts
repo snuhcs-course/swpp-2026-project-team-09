@@ -7,7 +7,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import type { AssistantReply, GlobalEventCard, QuestCard } from './assistant-types';
+import type { AssistantReply, GlobalEventCard, QuestCard, RestaurantCard } from './assistant-types';
 import type { ApiClient } from './client';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
 import type { Person, Quest } from './types';
@@ -83,7 +83,7 @@ export type ShownQuest = Quest & QuestParts;
 export type ShownRecruitingQuest = RecruitingQuest & QuestParts;
 // The Assistant's reply, its Quest cards with their parts as the Boards draw them.
 export type ShownQuestCard = Omit<QuestCard, 'quest'> & { quest: ShownRecruitingQuest };
-export type ShownChatCard = GlobalEventCard | ShownQuestCard;
+export type ShownChatCard = GlobalEventCard | ShownQuestCard | RestaurantCard;
 export type ShownAssistantReply = Omit<AssistantReply, 'cards'> & { cards: ShownChatCard[] };
 // What an invitation's card says of the plan besides its Quest, which the main server's invitation does not carry yet:
 // when the Quest's next Sub Quest starts and where. Null where the build leaves it out (the server build, always).

@@ -138,7 +138,7 @@ describe('the restaurants of a day', () => {
     expect(screen.queryByText('9,900원')).toBeNull();
   });
 
-  it('lists the restaurants in the order of the server, with their Place where the table has one', async () => {
+  it('lists the restaurants in the order of the server, with their Place where the server gives one', async () => {
     await openFromStack();
 
     const order = [

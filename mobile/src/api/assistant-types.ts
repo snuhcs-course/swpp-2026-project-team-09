@@ -6,14 +6,16 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
+import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
 import type { Board, GlobalEvent, JoinPolicy } from './types';
 
 // --- The Assistant (POST /assistant/messages) ---
 
-// A card the Assistant showed, by what it is and its id. The server is sent only these, never the card's data.
+// A card the Assistant showed, by what it is and its id, which for a Restaurant is its key. The server is sent only
+// these, never the card's data.
 export interface CardReference {
-  kind: 'quest' | 'globalEvent';
+  kind: 'quest' | 'globalEvent' | 'restaurant';
   id: string;
 }
 
@@ -90,7 +92,33 @@ export interface QuestCard extends TravelBox {
   quest: RecruitingQuest;
 }
 
-export type ChatCard = GlobalEventCard | QuestCard;
+// How one person gets to a Restaurant: `name` is 나 for the User, and a person whose way is unknown has no mode and no
+// minutes ("—"). `longest` marks whoever walks furthest.
+export interface RestaurantWay {
+  name: string;
+  mode: 'walk' | 'shuttle' | null;
+  minutes: number | null;
+  longest: boolean;
+}
+
+// A Restaurant of a 공강에 밥 answer: its Place's number, the day and the meal, how long there is to eat, its lines that
+// are not notes, each person's way, and the 파티 its 파티 만들기 fills the form with.
+export interface RestaurantCard {
+  kind: 'restaurant';
+  restaurant: {
+    key: string;
+    name: string;
+    placeNumber: string | null;
+    date: string;
+    meal: 'lunch' | 'dinner';
+    eatingMinutes: number;
+    lines: MenuLine[];
+    people: RestaurantWay[];
+    proposal: QuestProposal;
+  };
+}
+
+export type ChatCard = GlobalEventCard | QuestCard | RestaurantCard;
 
 // The characters a Proposal counts for, as the main server counts them (proposalLength): its title, its description,
 // and the names of its Place, its event and its Friends.
@@ -107,6 +135,9 @@ export function lengthOf(message: ChatMessage): number {
 
 // What a later request sends of a card: what it is and its id, never its data.
 export function referenceOf(card: ChatCard): CardReference {
+  if (card.kind === 'restaurant') {
+    return { kind: card.kind, id: card.restaurant.key };
+  }
   return { kind: card.kind, id: card.kind === 'quest' ? card.quest.id : card.globalEvent.id };
 }
 

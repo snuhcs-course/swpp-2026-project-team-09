@@ -10,13 +10,11 @@
 
 import { type ReactElement, type ReactNode, useRef } from 'react';
 import { Keyboard, Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
-import type { GlobalEventCard, MapLayer, QuestProposal } from '@/api/assistant-types';
-import type { ShownChatCard, ShownQuestCard } from '@/api/quest-parts-types';
+import type { MapLayer, QuestProposal } from '@/api/assistant-types';
 import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
 import type { ChatBubble } from '@/features/assistant/use-chat';
-import { ChatEventCards, type EventCardActions } from './chat-event-cards';
-import { ChatProposalCard, type ProposalMaking } from './chat-proposal-card';
-import { ChatQuestCards, type QuestCardActions } from './chat-quest-cards';
+import { type CardActions, Cards, type ProposalActions } from './chat-cards';
+import { ChatProposalCard } from './chat-proposal-card';
 
 // The examples of the empty chat, each with its icon on its layer's colour. They replace the frame's library seats,
 // and 파티 찾기 takes the Party's colour. A press sends the words.
@@ -92,56 +90,6 @@ const MAP_BUTTONS: Record<MapLayer, { label: string; icon: IconName }> = {
   dining: { label: '지도에서 식당 보기', icon: 'meal' },
   shuttle: { label: '지도에서 셔틀 보기', icon: 'bus' },
 };
-
-// What the Proposal card of an answer does, by the answer's bubble: how its making stands, 만들기 and 수정.
-export interface ProposalActions {
-  makingOf: (bubbleId: number) => ProposalMaking;
-  make: (bubbleId: number, proposal: QuestProposal) => void;
-  edit: (bubbleId: number, proposal: QuestProposal) => void;
-}
-
-// What the cards of the answers do.
-export interface CardActions {
-  events: EventCardActions;
-  quests: QuestCardActions;
-  proposals: ProposalActions;
-}
-
-// The cards of an answer in the order the Assistant showed them, the cards of one kind next to each other together.
-type CardRun = { kind: 'globalEvent'; events: GlobalEventCard[] } | { kind: 'quest'; quests: ShownQuestCard[] };
-
-function runsOf(cards: readonly ShownChatCard[]): CardRun[] {
-  const runs: CardRun[] = [];
-  for (const card of cards) {
-    const last = runs.at(-1);
-    if (card.kind === 'globalEvent') {
-      if (last?.kind === 'globalEvent') {
-        last.events.push(card);
-      } else {
-        runs.push({ kind: 'globalEvent', events: [card] });
-      }
-    } else if (last?.kind === 'quest') {
-      last.quests.push(card);
-    } else {
-      runs.push({ kind: 'quest', quests: [card] });
-    }
-  }
-  return runs;
-}
-
-function Cards({ cards, actions }: { cards: readonly ShownChatCard[]; actions: CardActions }): ReactElement {
-  return (
-    <>
-      {runsOf(cards).map((run) =>
-        run.kind === 'globalEvent' ? (
-          <ChatEventCards actions={actions.events} cards={run.events} key={`event-${run.events[0]?.globalEvent.id}`} />
-        ) : (
-          <ChatQuestCards actions={actions.quests} cards={run.quests} key={`quest-${run.quests[0]?.quest.id}`} />
-        ),
-      )}
-    </>
-  );
-}
 
 // The Proposal card of the answer in this bubble.
 function Proposal({

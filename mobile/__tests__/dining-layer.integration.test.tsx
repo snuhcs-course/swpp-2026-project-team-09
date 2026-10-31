@@ -94,7 +94,7 @@ describe('the 식당 layer', () => {
     expect(pin(STUDENT_CENTRE)).toBeVisible();
     expect(pin(JAHAYEON)).toBeVisible();
     expect(pin(ENGINEERING)).toBeVisible();
-    // Listed without meals, outside the table, and without a Place.
+    // Listed without meals, without a Place from the server, and at a Place `GET /places` does not list.
     expect(pin('식당 · 예술계식당')).toBeNull();
     expect(pin('식당 · 교수회관식당')).toBeNull();
     expect(pin('식당 · 수의대식당')).toBeNull();
