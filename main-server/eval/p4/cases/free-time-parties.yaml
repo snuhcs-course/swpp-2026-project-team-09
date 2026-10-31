@@ -1147,7 +1147,7 @@
   expect:
     actions: [TOOL]
     tools:
-      required: [resolvePlace, findFreeTimeEvents, showQuests, showGlobalEvents]
+      required: [resolvePlace, findFreeTimeEvents, showGlobalEvents]
       allowed: [getMyDay]
       forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
     args:
