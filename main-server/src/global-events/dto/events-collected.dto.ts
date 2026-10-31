@@ -5,10 +5,11 @@
  * 2026-10-03  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
-import { Source } from '../../generated/prisma/client.js';
+import { POST_SOURCE_NAMES } from '../post-sources.js';
 
 // A time with its offset, or a day when the rules read no time of day, which stands for its start in Asia/Seoul.
 const boundSchema = z
@@ -18,13 +19,8 @@ const boundSchema = z
   ])
   .nullable();
 
-const collectedEventSchema = z.strictObject({
-  // The post's `bbsidx`. The column's range, so that a larger number is refused here rather than in the database.
-  postNumber: z.int32().positive(),
-  // Shown as a link, so no other scheme is taken.
-  sourceUrl: z.url({ protocol: /^https$/u }),
-  title: z.string().min(1),
-  description: z.string(),
+const collectedSessionSchema = z.strictObject({
+  number: z.int32().positive(),
   start: boundSchema,
   end: boundSchema,
   // Where the start and end were read: the body's time line, or the header's date.
@@ -32,22 +28,37 @@ const collectedEventSchema = z.strictObject({
   place: z.string().min(1).nullable(),
 });
 
-// What one Collection of the events list read, posted by the worker to `/global-events/collected`: the posts the main
+const collectedPostSchema = z.strictObject({
+  // What identifies the post on its Source: SNU Now's `bbsidx`, extra.snu's `dataSeq`.
+  key: z.string().min(1),
+  // Shown as a link, so no other scheme is taken.
+  address: z.url({ protocol: /^https$/u }),
+  title: z.string().min(1),
+  description: z.string(),
+  sessions: z
+    .array(collectedSessionSchema)
+    .min(1)
+    .refine(
+      (sessions) => new Set(sessions.map(({ number }) => number)).size === sessions.length,
+      'Each session must appear once',
+    ),
+});
+
+// What one Collection of a Source's posts read, posted by the worker to `/global-events/collected`: the posts the main
 // server did not store when the worker asked.
 export const eventsCollectedSchema = z.strictObject({
-  source: z.enum([Source.snu_events]),
+  source: z.enum(POST_SOURCE_NAMES),
   collectedAt: z.iso.datetime({ offset: true }),
   // Why the Collection stopped early, or null when it went through the whole list. Its posts are stored all the same,
   // and the reason is recorded as its failure.
   failureReason: z.string().min(1).nullable(),
-  events: z
-    .array(collectedEventSchema)
-    .refine(
-      (events) => new Set(events.map(({ postNumber }) => postNumber)).size === events.length,
-      'Each post must appear once',
-    ),
+  posts: z
+    .array(collectedPostSchema)
+    .refine((posts) => new Set(posts.map(({ key }) => key)).size === posts.length, 'Each post must appear once'),
 });
 
 export type EventsCollectedMessage = z.infer<typeof eventsCollectedSchema>;
 
-export type CollectedEvent = EventsCollectedMessage['events'][number];
+export type CollectedPost = EventsCollectedMessage['posts'][number];
+
+export type CollectedSession = CollectedPost['sessions'][number];

@@ -438,8 +438,24 @@ A Global Event, model `GlobalEvent` in `prisma/schema.prisma`, holds:
     next Collection does not bring its post back.
 - `version`, which starts at 1 and which every change by an Administrator raises by one, so that a change made from an
   older version is refused (see below).
-- For a collected event, `postNumber`, the post's `bbsidx`, which identifies the post, and `sourceUrl`, the post's
-  address. An event an Administrator creates has neither.
+- `publicationRoute`, how it came to be published: `administrator`, `rule` or `judgement`. It is empty while a Draft and
+  on an event discarded as a Draft. An Administrator's publishing or editing sets `administrator`, since they have
+  looked at it; cancelling leaves it as it is.
+- `needsAdministrator`, a flag that an Administrator must look at it.
+- For a collected event, its links to its Source Posts (below). An event an Administrator creates has none.
+
+A **Source Post**, model `SourcePost`, is one post on a Source, stored once: its `source`, its `key` on that Source
+(SNU Now's `bbsidx`, extra.snu's `dataSeq`) and its `address`; (`source`, `key`) is unique. It is read as one or more
+numbered sessions, model `SourcePostSession`, each linked to one Global Event with its `number`, how it was attached
+(`attachedBy`: `own` for the event made from it, `rule`, `ai` or `administrator`) and the `reason`; (Source Post,
+`number`) is unique, and a Global Event can have links from several posts. What differs by Source, whether a building
+number alone is taken as Gwanak and the pattern by which a body's link names a post, is a setting of that Source in
+`src/global-events/post-sources.ts`, so that the steps reading a post do not ask which Source it came from.
+
+`publicationRoute`, `needsAdministrator` and the links are for Administrators, and no DTO the app receives carries them.
+The app's `sourceUrl` is the address of the event's own post. The columns `post_number` and `source_url` of
+`global_events` were moved to Source Posts by the migration `add_source_posts`; nothing reads or writes them, and a
+later migration drops them, once no pod of an older server can run.
 
 An event has ended when its end has passed or, when it has no end, once the day of its start has passed in Asia/Seoul:
 an event without an end that starts today is listed until midnight. The same rule decides both lists of published
@@ -488,8 +504,11 @@ needs beside them through a controller of their own feature. Each route needs an
     "longitude": 126.95407,
     "state": "draft",
     "version": 1,
-    "postNumber": 176525,
+    "source": "snu_events",
+    "postKey": "176525",
     "sourceUrl": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
+    "publicationRoute": null,
+    "needsAdministrator": false,
     "missing": ["startsAt"]
   }
   ```
@@ -511,7 +530,7 @@ An Administrator creates and changes them through the same controller. Each answ
 `GET /admin/global-events/:id` does:
 
 - `POST /admin/global-events` with `{ "title", "description", "startsAt", "endsAt", "place", "latitude", "longitude" }`
-  creates a Draft by hand, such as from an organizer's submission, and answers 201 with it: version 1, `postNumber` and
+  creates a Draft by hand, such as from an organizer's submission, and answers 201 with it: version 1, `source`, `postKey` and
   `sourceUrl` `null`. `title` and `description` are required, and a field left out is `null`. It requires an
   `Idempotency-Key` (see [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)).
 - `PATCH /admin/global-events/:id` with `{ "version", ... }` and any of the same fields edits a Draft or a published
@@ -571,10 +590,10 @@ The worker sends each post of the events list as one event, all those of a Colle
   "source": "snu_events",
   "collectedAt": "2026-10-02T06:00:00+09:00",
   "failureReason": null,
-  "events": [
+  "posts": [
     {
-      "postNumber": 176525,
-      "sourceUrl": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
+      "key": "176525",
+      "address": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
       "title": "[연합전공 지능형통신] 2027학년도 1학기 선발 및 설명회 안내",
       "description": "안녕하세요.\n…\n- 일시: 2026. 10. 13.(화) 17:00\n- 장소: 뉴미디어통신공동연구소 이충웅홀(132동 103호)\n…",
       "start": "2026-10-13T17:00:00+09:00",
@@ -597,10 +616,23 @@ The worker sends each post of the events list as one event, all those of a Colle
   read.
 - `place` is the body's place line as the post writes it, or `null`.
 - A post whose page the worker could not read as the post comes with its title from the list, an empty `description`
-  and no time or place, so it is stored as a Draft. An Administrator reads it at its `sourceUrl`.
+  and no time or place, so it is stored as a Draft. An Administrator reads it at its address.
 
-The rules read one start and one end per post, so a post that describes several sessions, such as a lecture series, is
-one event, which an Administrator splits.
+The events list's rules read one start and one end per post, so a post of that list that describes several sessions, such
+as a lecture series, is one session and one event, which an Administrator splits. A message can carry several sessions
+of a post, and each becomes its own event.
+
+A Collection's message is stored and answered at once, since the worker waits only five seconds: every session is stored
+as a Draft, and nothing is published inside the request. The step after the answer, `PublicationStepService`, then goes
+through each Source Post of that Source not yet through it, `stepFinishedAt` empty, and publishes the sessions the rules
+read, with the route `rule`. Their version stays 1, since it counts an Administrator's changes. An event an Administrator
+edited or discarded before the step ran is left as it is. When the step fails on a post, or the server restarts before
+it ran, the post stays as it is, and the next Collection of its Source takes it up; a Collection whose list holds nothing
+new still sends its message, so at the latest at that Source's next scheduled Collection.
+
+With the setting `AUTOMATIC_PUBLICATION=off` (default `on`) the step publishes nothing: every session stays a Draft for an
+Administrator, and turning it on again does not publish those. [infra/production/README.md](../infra/production/README.md)
+says how to turn it off in Production.
 
 A collected event is published, with no person involved, when the rules read both its time and its place:
 
@@ -608,7 +640,7 @@ A collected event is published, with no person involved, when the rules read bot
   date does not count, because that date is often the application period;
 - its place names exactly one Place of the [list](#places). Its position is that Place's coordinates.
 
-Any other collected event is stored as a Draft with whatever was read: an event online or off campus, one whose place
+Any other collected event stays a Draft with whatever was read: an event online or off campus, one whose place
 names no Place or several, and a post that is not an event, which mostly writes no such time and place. A rule that
 is not sure makes a Draft.
 
@@ -646,20 +678,20 @@ account for makes a Draft:
   `시흥`, `평창`, `수원`, `의과대학`, `간호대학`, `서울대학교병원`, `부설` and the like), at the stations named after it, at
   another university, at an address in another district or region, or in a flat. The list is Gwanak's.
 
-No Collection changes a stored event, whatever its state. A post is stored once, by its post number, and a later
+No Collection changes a stored event, whatever its state. A post is stored once, by its Source and key, and a later
 message carrying it again leaves it exactly as it is. So an Administrator's edits stay, and a discarded post does not
-come back. The worker asks which posts are stored before it reads any (`/global-events/stored-posts`), so it does not read a
+come back: a discarded event keeps its Source Post. The worker asks which posts are stored before it reads any (`/global-events/stored-posts`), so it does not read a
 stored post again: an edit or a deletion at the Source after that is not seen.
 
-A Collection that stores at least one event as published sends `global-events-changed` to every connected app once
-the events are stored, and the app fetches the published events again (see [Signals](#signals)). It carries nothing. A
-Collection that stores only Drafts, or no new post, sends none. `GlobalEventsService.signalChanged()` sends it, also
+The step sends `global-events-changed` to every connected app once when it published at least one event, and the app
+fetches the published events again (see [Signals](#signals)). It carries nothing. A step that publishes nothing sends
+none. `GlobalEventsService.signalChanged()` sends it, also
 after an Administrator's change (see above).
 
-What the rules read from a post, and how, is in the worker server's README. In a test, `collectedEvent()`,
-`eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
-`test/global-events.integration.test.ts` does; it reads what a Collection stored, by post number, with a database
-connection of its own. `test/global-event-lists.ts` reads the lists above, and `test/global-event-changes.ts` calls the
+What the rules read from a post, and how, is in the worker server's README. In a test, `collectedPost()`,
+`eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, and `stepOver()` waits
+for the step after the answer, as `test/global-events.integration.test.ts` does; it reads what a Collection stored, by
+post, with a database connection of its own. `ownSession()` links an event a test stores to a post. `test/global-event-lists.ts` reads the lists above, and `test/global-event-changes.ts` calls the
 Administrator's changes. The test files share one database, so `publishedAmong()` and `listedAmong()` keep only the
 events a test names, in the list's order. `signalsWhile()` in `test/signals.ts` gives the `global-events-changed`
 signals sent while a test acts, between two signals of the test's own. Other files publish, edit and cancel events
@@ -2394,17 +2426,16 @@ so a message is stored once. Every route for the worker follows these rules.
 
 - **Route and shape**: a message is a `POST` in the feature's controller, marked `@WorkerOnly()` from
   `src/common/worker-only.decorator.ts` and `@HttpCode(HttpStatus.NO_CONTENT)`. Its path says what happened:
-  `/menus/collected` for what a Collection of a menu Source read, `/global-events/collected` for the events list's, and
+  `/menus/collected` for what a Collection of a menu Source read, `/global-events/collected` for a Source of posts', and
   `/collections/failed`. The body is a JSON object. It names its `source`, a value of `Source` in
   `prisma/schema.prisma`, and the time of the Collection in ISO 8601 with an offset (`collectedAt`, `failedAt`). A day
   is `YYYY-MM-DD`, a calendar day in Asia/Seoul. A field without a value is `null`, not left out.
 - **Questions**: a Collection that needs to know what the main server holds asks it, since the worker keeps nothing. A
   question is a `POST` too, marked `@WorkerOnly()` and `@HttpCode(HttpStatus.OK)`, since what it asks about is a list.
   Its path names what it asks for, its body carries only what it asks about, and it answers 200 with what it asks for
-  and stores nothing: the events list is one Source and a post number identifies a post, so
-  `/global-events/stored-posts` carries no `source` and no time. `/global-events/stored-posts` with
-  `{ "postNumbers": [176558, 176525] }` asks which of these posts are stored, and `{ "postNumbers": [176558] }` answers
-  that 176558 is, in whatever state. The worker asks with `MainServer.ask()`.
+  and stores nothing: a post is identified by its Source and key, so `/global-events/stored-posts` carries no time.
+  `/global-events/stored-posts` with `{ "source": "snu_events", "keys": ["176558", "176525"] }` asks which of these posts
+  are stored, and `{ "keys": ["176558"] }` answers that 176558 is, whatever became of its event. The worker asks with `MainServer.ask()`.
 - **Who may call it**: the worker alone. The request carries `Authorization: Bearer <WORKER_TOKEN>`, the secret that
   the two servers' settings share, and `WorkerGuard` in `src/auth/worker.guard.ts` answers 401 to any other request,
   a User's and an Administrator's access token included. The token is no signed token: the worker is no User.

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -10,7 +11,7 @@ import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { eventDetailSchema, getAdminGlobalEvent } from './global-event-lists.js';
-import { postNumbersFrom } from './global-events.js';
+import { ownSession, postAddress, postNumbersFrom } from './global-events.js';
 import { connectToDatabase, place132, storeEvent } from './quests.js';
 import { refused } from './signals.js';
 import { signInAsAdministrator } from './sign-in.js';
@@ -44,8 +45,7 @@ describe('A Global Event read by an Administrator', () => {
         startsAt: new Date('2099-10-13T08:00:00Z'),
         endsAt: null,
         version: 3,
-        postNumber,
-        sourceUrl: `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=${postNumber}`,
+        sessions: ownSession(postNumber),
       });
 
       const response = await getAdminGlobalEvent(app, accessToken, event.id);
@@ -61,8 +61,11 @@ describe('A Global Event read by an Administrator', () => {
         ...place132,
         state,
         version: 3,
-        postNumber,
-        sourceUrl: `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=${postNumber}`,
+        source: 'snu_events',
+        postKey: String(postNumber),
+        sourceUrl: postAddress(postNumber),
+        publicationRoute: null,
+        needsAdministrator: false,
         missing: [],
       });
     },

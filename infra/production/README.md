@@ -551,6 +551,20 @@ The servers are separate services, so different servers may run different commit
 released in an order that keeps the old and new versions working together, for example the main server's new route
 before the match server that calls it. Or it goes out as one `all` Release.
 
+### Stopping automatic publication
+
+The step after a Collection publishes what it read as long as `AUTOMATIC_PUBLICATION` is `on`, its value in
+`k8s/parts/shared/kustomization.yaml`. To stop it at once, without a build or a Release:
+
+```bash
+kubectl --namespace snunow set env deployment/main-server AUTOMATIC_PUBLICATION=off
+kubectl --namespace snunow rollout status deployment/main-server
+```
+
+Every session from then on stays a Draft for an Administrator, and what was published stays published. The next Release
+of the main server brings the committed value back, so also set `AUTOMATIC_PUBLICATION=off` in that file and merge it.
+Sessions stored meanwhile are not published when it is turned on again.
+
 ### Following a Release
 
 The run appears in the repository's **Actions** tab under the Release workflow, named after the tag:

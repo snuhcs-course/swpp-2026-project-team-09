@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -17,6 +18,7 @@ const SOURCES: Record<string, string> = {
   shuttle_stops: 'Shuttle stops',
   shuttle_vehicles: 'Shuttle vehicles',
   snu_events: 'SNU events list',
+  extra_snu: 'extra.snu programmes',
 };
 
 function stateOf({ lastSucceededAt, lastFailedAt }: CollectionStatus): { label: string; broken: boolean } {
