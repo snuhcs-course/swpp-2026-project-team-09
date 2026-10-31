@@ -18,7 +18,10 @@ export interface PostSourceSettings {
 }
 
 export const POST_SOURCES = {
-  [Source.snu_events]: { buildingNumberIsGwanak: true, postKeyInLink: /snu\.ac\.kr\/snunow\/events\S*?[?&]bbsidx=(\d+)/u },
+  [Source.snu_events]: {
+    buildingNumberIsGwanak: true,
+    postKeyInLink: /snu\.ac\.kr\/snunow\/events\S*?[?&]bbsidx=(\d+)/u,
+  },
   [Source.extra_snu]: { buildingNumberIsGwanak: true, postKeyInLink: /extra\.snu\.ac\.kr\/\S*?[?&]dataSeq=(\w+)/u },
 } as const satisfies Partial<Record<Source, PostSourceSettings>>;
 

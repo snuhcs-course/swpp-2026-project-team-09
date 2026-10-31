@@ -122,7 +122,6 @@ describe('A session a Judgement could not read yet', () => {
 
     expect((await world.onlySession('snu_events', post)).globalEventId).toBe(event.id);
   });
-
 });
 
 describe('A session the rules read, attached at the first try', () => {
