@@ -142,11 +142,17 @@ export const thresholdsSchema = z.strictObject({
       value: z.number().optional(),
       declared: z.iso.date(),
       note: z.string().optional(),
+      // A later entry that changes an earlier one, which stays (metrics document, 4.1).
+      revises: z.string().optional(),
+      reason: z.string().optional(),
     }),
   ),
 });
 
-export function read<Schema extends z.ZodType>(name: string, schema: Schema): z.infer<Schema> {
+export type LabelsA = z.infer<typeof labelsASchema>;
+export type LabelsB = z.infer<typeof labelsBSchema>;
+
+export function readCollectionFile<Schema extends z.ZodType>(name: string, schema: Schema): z.infer<Schema> {
   const parsed = schema.safeParse(parse(readFileSync(new URL(name, COLLECTION_DIRECTORY), 'utf8')));
   if (!parsed.success) {
     throw new Error(`${name}: ${z.prettifyError(parsed.error)}`);

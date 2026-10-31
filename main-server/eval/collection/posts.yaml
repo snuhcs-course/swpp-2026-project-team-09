@@ -1,3 +1,9 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+################################################################################
+
 # Every saved post of the sets, and when it was fetched. The HTML is in posts/, under the name in `post`.
 - post: snu-176516
   source: snu_events

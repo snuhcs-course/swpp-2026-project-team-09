@@ -2,10 +2,10 @@
 labeller: null
 labelledOn: null
 items:
-  - id: a-010
-    title: '2026학년도 2학기 학부대학 유미 명사 초청 특강 안내(구글폼 접수)_장소 변경'
-    url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002245'
-    file: posts/extra-PGM012002245.html
+  - id: a-005
+    title: '듣기의 새로운 경험, 사운드아트 페스티벌 《Sonic Nomads 2026》'
+    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177524'
+    file: posts/snu-177524.html
     announcesEvent: null
     sessions:
       - n: 1
@@ -15,10 +15,10 @@ items:
         overPeriod: null
         mayPublish: null
     note: null
-  - id: a-016
-    title: '[첨단융합학부-SNUTI In Lounge #15] 전공을 고르지 마세요, 질문을 고르세요 (한남식 교수 - 연세대학교 양자정보기술원)'
-    url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002313'
-    file: posts/extra-PGM012002313.html
+  - id: a-006
+    title: '제5회 백암 박은식 선생 기념 학술대회 “백암 박은식의 교육과 사범” 안내'
+    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178424'
+    file: posts/snu-178424.html
     announcesEvent: null
     sessions:
       - n: 1
@@ -28,10 +28,10 @@ items:
         overPeriod: null
         mayPublish: null
     note: null
-  - id: a-028
-    title: '[중앙도서관]2026년 연구자 커리어 멘토링 특강 안내'
-    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178016'
-    file: posts/snu-178016.html
+  - id: a-012
+    title: '사회과학연구원 고전강좌 “마이클 올리버의 『장애화의 정치』: 장애의 사회적 모델이 바꾼 세계, 그리고 그 이후” (26/10/28) 안내'
+    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177407'
+    file: posts/snu-177407.html
     announcesEvent: null
     sessions:
       - n: 1
@@ -41,127 +41,10 @@ items:
         overPeriod: null
         mayPublish: null
     note: null
-  - id: a-030
-    title: "사회과학연구원 월례세미나 “복지국가와 자산 불평등: 연금제도와 '확장된 자산' 개념을 중심으로”"
-    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178145'
-    file: posts/snu-178145.html
-    announcesEvent: null
-    sessions:
-      - n: 1
-        start: null
-        end: null
-        place: null
-        overPeriod: null
-        mayPublish: null
-    note: null
-  - id: a-031
-    title: '[대학생활문화원](마감 임박) 게임 습관 조절 집단상담 프로그램 참여자 모집'
-    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177458'
-    file: posts/snu-177458.html
-    announcesEvent: null
-    sessions:
-      - n: 1
-        start: null
-        end: null
-        place: null
-        overPeriod: null
-        mayPublish: null
-    note: null
-  - id: a-032
-    title: '“AI 시대의 친절교육” 온라인 특강 안내 (11월 2일 월요일, 오전 11시)'
-    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178349'
-    file: posts/snu-178349.html
-    announcesEvent: null
-    sessions:
-      - n: 1
-        start: null
-        end: null
-        place: null
-        overPeriod: null
-        mayPublish: null
-    note: null
-  - id: a-036
-    title: 'ChatGPT Edu 활용 상시 공모전(10월)'
-    url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002238'
-    file: posts/extra-PGM012002238.html
-    announcesEvent: null
-    sessions:
-      - n: 1
-        start: null
-        end: null
-        place: null
-        overPeriod: null
-        mayPublish: null
-    note: null
-  - id: a-043
-    title: 'ICHC 2026 국제학술대회 학회등록 안내'
-    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178067'
-    file: posts/snu-178067.html
-    announcesEvent: null
-    sessions:
-      - n: 1
-        start: null
-        end: null
-        place: null
-        overPeriod: null
-        mayPublish: null
-    note: null
-  - id: a-044
-    title: '[아시아연구소] 2026 SNUAC Conference on Asian Studies(CAS)'
-    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177590'
-    file: posts/snu-177590.html
-    announcesEvent: null
-    sessions:
-      - n: 1
-        start: null
-        end: null
-        place: null
-        overPeriod: null
-        mayPublish: null
-    note: null
-  - id: a-050
-    title: '[COSS그린바이오]2026 GreenBio Global Idea Bridge Lab 참가자 모집 (~10/23)'
-    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177506'
-    file: posts/snu-177506.html
-    announcesEvent: null
-    sessions:
-      - n: 1
-        start: null
-        end: null
-        place: null
-        overPeriod: null
-        mayPublish: null
-    note: null
-  - id: a-054
-    title: '대학 공부, 다시 설계하기'
-    url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002385'
-    file: posts/extra-PGM012002385.html
-    announcesEvent: null
-    sessions:
-      - n: 1
-        start: null
-        end: null
-        place: null
-        overPeriod: null
-        mayPublish: null
-    note: null
-  - id: a-056
-    title: '(사)서울대출판문화원 마케팅팀 직원 채용 공고'
-    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178244'
-    file: posts/snu-178244.html
-    announcesEvent: null
-    sessions:
-      - n: 1
-        start: null
-        end: null
-        place: null
-        overPeriod: null
-        mayPublish: null
-    note: null
-  - id: a-057
-    title: '2026학년도 2학기 비교과 프로그램 jamovi를 활용한 통계분석: 이론·실습'
-    url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002261'
-    file: posts/extra-PGM012002261.html
+  - id: a-015
+    title: '[4시간, 12/1,12/8] 핑거니팅 자이언트얀 가방 DIY Crafts OpenLnL 26년 2학기'
+    url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002362'
+    file: posts/extra-PGM012002362.html
     announcesEvent: null
     sessions:
       - n: 1
@@ -177,10 +60,10 @@ items:
         overPeriod: null
         mayPublish: null
     note: null
-  - id: a-061
-    title: '해외학자 초청강연: Dr. Yujie Zhu (ANU) 〈Heritage in Motion〉'
-    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177767'
-    file: posts/snu-177767.html
+  - id: a-018
+    title: '“AI 시대의 친절교육” 온라인 특강 안내 (11월 2일 월요일, 오전 11시)'
+    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178349'
+    file: posts/snu-178349.html
     announcesEvent: null
     sessions:
       - n: 1
@@ -190,10 +73,127 @@ items:
         overPeriod: null
         mayPublish: null
     note: null
-  - id: a-062
-    title: '트렌드 코리아 2027 특강(소비자학과 김난도 명예교수)'
-    url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002294'
-    file: posts/extra-PGM012002294.html
+  - id: a-023
+    title: '「제5회 한솥 경진대회: SNU 푸드 비즈 챌린지」 참가 모집 안내'
+    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177476'
+    file: posts/snu-177476.html
+    announcesEvent: null
+    sessions:
+      - n: 1
+        start: null
+        end: null
+        place: null
+        overPeriod: null
+        mayPublish: null
+    note: null
+  - id: a-024
+    title: 'ChatGPT Edu 활용 상시 공모전(10월)'
+    url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002238'
+    file: posts/extra-PGM012002238.html
+    announcesEvent: null
+    sessions:
+      - n: 1
+        start: null
+        end: null
+        place: null
+        overPeriod: null
+        mayPublish: null
+    note: null
+  - id: a-030
+    title: '2026 SNUTI to Silicon Valley 동계 Field Trip 3차 사전교육'
+    url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002387'
+    file: posts/extra-PGM012002387.html
+    announcesEvent: null
+    sessions:
+      - n: 1
+        start: null
+        end: null
+        place: null
+        overPeriod: null
+        mayPublish: null
+    note: null
+  - id: a-031
+    title: '[SNU 그랜드퀘스트 아카데미 주니어 참가 신청]'
+    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177752'
+    file: posts/snu-177752.html
+    announcesEvent: null
+    sessions:
+      - n: 1
+        start: null
+        end: null
+        place: null
+        overPeriod: null
+        mayPublish: null
+    note: null
+  - id: a-033
+    title: '제18차 노화고령사회연구소 심포지엄 개최'
+    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177995'
+    file: posts/snu-177995.html
+    announcesEvent: null
+    sessions:
+      - n: 1
+        start: null
+        end: null
+        place: null
+        overPeriod: null
+        mayPublish: null
+    note: null
+  - id: a-039
+    title: '대학 공부, 다시 설계하기'
+    url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002385'
+    file: posts/extra-PGM012002385.html
+    announcesEvent: null
+    sessions:
+      - n: 1
+        start: null
+        end: null
+        place: null
+        overPeriod: null
+        mayPublish: null
+    note: null
+  - id: a-049
+    title: '[첨단융합학부-SNUTI In Lounge #15] 전공을 고르지 마세요, 질문을 고르세요 (한남식 교수 - 연세대학교 양자정보기술원)'
+    url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002313'
+    file: posts/extra-PGM012002313.html
+    announcesEvent: null
+    sessions:
+      - n: 1
+        start: null
+        end: null
+        place: null
+        overPeriod: null
+        mayPublish: null
+    note: null
+  - id: a-063
+    title: '[대학생활문화원](마감 임박) 게임 습관 조절 집단상담 프로그램 참여자 모집'
+    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177458'
+    file: posts/snu-177458.html
+    announcesEvent: null
+    sessions:
+      - n: 1
+        start: null
+        end: null
+        place: null
+        overPeriod: null
+        mayPublish: null
+    note: null
+  - id: a-065
+    title: '면접 전략 특강'
+    url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002403'
+    file: posts/extra-PGM012002403.html
+    announcesEvent: null
+    sessions:
+      - n: 1
+        start: null
+        end: null
+        place: null
+        overPeriod: null
+        mayPublish: null
+    note: null
+  - id: a-072
+    title: '[중앙도서관]2026년 연구자 커리어 멘토링 특강 안내'
+    url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178016'
+    file: posts/snu-178016.html
     announcesEvent: null
     sessions:
       - n: 1

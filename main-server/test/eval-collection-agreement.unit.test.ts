@@ -4,9 +4,8 @@
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { type z } from 'zod';
 import { agreementOf, agreementOnPairs, agreementOnPosts, yesNoAgreementOf } from '../eval/collection/agreement.ts';
-import { type labelsASchema, type labelsBSchema } from '../eval/collection/sets.ts';
+import { type LabelsA, type LabelsB } from '../eval/collection/sets.ts';
 
 // The agreement between two labellers (P05 ticket 01), worked out by hand on small tables.
 
@@ -19,8 +18,6 @@ function pairs(bothYes: number, firstOnly: number, secondOnly: number, bothNo: n
   ];
 }
 
-type LabelsA = z.infer<typeof labelsASchema>;
-type LabelsB = z.infer<typeof labelsBSchema>;
 type Session = LabelsA['items'][number]['sessions'][number];
 
 const side = { title: '', url: 'https://example.com/', file: '', session: null };
@@ -94,6 +91,7 @@ describe('agreementOnPosts', () => {
     const agreement = agreementOnPosts(owner, second);
     expect(agreement.announcesEvent).toMatchObject({ n: 1, observed: 1 });
     expect(agreement.place).toMatchObject({ n: 2, observed: 0.5 });
+    expect(agreement.mayPublish).toMatchObject({ n: 2, bothYes: 1, oneOfEach: 1, negative: 0 });
   });
 
   it("leaves out a blank and an item the second labeller wasn't given", () => {

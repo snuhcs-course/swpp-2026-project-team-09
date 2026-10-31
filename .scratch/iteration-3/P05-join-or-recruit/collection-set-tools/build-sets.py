@@ -18,16 +18,16 @@ P=lambda n: 'PGM01200'+str(n) if len(str(n))==4 else str(n)
 DEV_A=['177848','177863','177869','177890','177902','177908','177926','177929','177932','177992','178022','178028','176516','176525','176549','176558','176561','176564']
 A={ # post: why it was chosen
  'no-event':['178244','178082','177752',2298,2199,2238],
- 'application-period-only':['177476','177506','177326','177653',2403,2245],
- 'image-only':['177458','178013','177320',2313],
+ 'application-period-only':['177476','177506','177326',2403,2245],
+ 'image-only':['177458','177476','177506',2313],
  'multi-session':['177470','178016','178130','177509','178250',2304,2362,2261],
  'year-left-out':['177407','177650','177659','177755','178010','178247','177773','178145'],
  'building-number-alone':['177989','178424','177767','178250',2406,2294,2347,2375,2387,2331,1974,2367],
- 'over-a-period':['178235','177662','177524','177590','178025',2199,2238,2385,2415,2413,2198,2369],
+ 'over-a-period':['177326','178235','177662','177524','177590','178025',2199,2238,2385,2415,2413,2198,2369],
  'elsewhere':['177995','178067'],
  'online':['178349','178454',2411,2197,2261],
 }
-A_EXTRA=[2395]  # time left blank at midnight in its field; no separate tag
+A_EXTRA=[2395,'177653','178013','177320']  # chosen for another reason than a tag: no date line, or a time at midnight
 tags=collections.defaultdict(list)
 for t,ks in A.items():
     for k in ks: tags[P(k)].append(t)
@@ -64,23 +64,33 @@ keys=[tuple(sorted([x['a'],x['b']]))+(x['sa'],x['sb']) for x in pos+neg]
 for k,c in collections.Counter(keys).items():
     if c>1: print('!! dup',k)
 rng=random.Random(20261031)
-# 20% of each kind to development, whole clusters together; the trap and its true pairs stay held out.
-for kind in sorted({x['kind'] for x in pos}):
-    xs=[x for x in pos if x['kind']==kind]; cl=sorted({x['cluster'] for x in xs}-{'178079','177707'}); rng.shuffle(cl); got=0
-    for c in cl:
-        size=sum(x['cluster']==c for x in xs)
-        if got>=round(.2*len(xs)) or got+size>max(1,round(.3*len(xs))): continue
-        for x in xs:
-            if x['cluster']==c: x['part']='development'
-        got+=size
-for kind in sorted({x['kind'] for x in neg}):
-    xs=[x for x in neg if x['kind']==kind and not x['trap']]; rng.shuffle(xs)
-    for x in xs[:round(.2*(len(xs)+ (kind=='in-person-or-online')))]: x['part']='development'
+# About 20% to development, by groups of pairs joined through a shared post, so that no post is in both parts of B. A
+# group touching a held-out post of A, or the trap, stays held out.
 pairs=pos+neg
+parent={}
+def find(x):
+    parent.setdefault(x,x)
+    while parent[x]!=x: parent[x]=parent[parent[x]]; x=parent[x]
+    return x
+for x in pairs: parent[find(x['a'])]=find(x['b'])
+groups=collections.defaultdict(list)
+for x in pairs: groups[find(x['a'])].append(x)
+heldA=set(held)
+free=[g for g in sorted(groups,key=str) if not any(x['trap'] or x['a'] in heldA or x['b'] in heldA for x in groups[g])]
+print('groups',len(groups),'free',len(free),'free pairs',sum(len(groups[g]) for g in free),sorted(len(groups[g]) for g in groups)[-5:])
+rng.shuffle(free)
+dev=[]
+for g in free:
+    if len(dev)+len(groups[g])<=30: dev+=groups[g]
+    if len(dev)>=24: break
+for x in dev: x['part']='development'
 for x in pairs: x.setdefault('part','held-out')
 rng.shuffle(pairs)
-for i,x in enumerate(pairs,1): x['id']=f'b-{i:03d}'
+for i,x in enumerate(pairs,1):
+    x['id']=f'b-{i:03d}'
+    if rng.random()<.5: x['a'],x['b'],x['sa'],x['sb']=x['b'],x['a'],x['sb'],x['sa']
 print('B parts',collections.Counter((x['part'],x['kind']) for x in pairs))
+print('dev',sum(x['part']=='development' for x in pairs),'dev positives',sum(x['part']=='development' and x['kind'] in ('body-link','different-title','many-to-one') for x in pairs))
 # Second labeller, hard negatives held out: the spec's 30, all kinds.
 hn=[x for x in pairs if x['part']=='held-out' and x['kind'] in ('in-person-or-online','another-round','same-time-another-event')]
 sec=[]
@@ -112,18 +122,18 @@ for f in os.listdir(f'{OUT}/posts'): os.remove(f'{OUT}/posts/{f}')
 J=lambda v: json.dumps(v,ensure_ascii=False)
 size=0
 with open(f'{OUT}/posts.yaml','w',encoding='utf8') as o:
-    o.write('# Every saved post of the sets, and when it was fetched. The HTML is in posts/, under the name in `post`.\n')
+    o.write('################################################################################\n# AI-generated with Claude\n#\n# 2026-10-31  Opus 5.5   prompted by Jaehyun0320\n################################################################################\n\n# Every saved post of the sets, and when it was fetched. The HTML is in posts/, under the name in `post`.\n')
     for k in used:
         shutil.copy(f'{POOL}/raw/{pid(k)}.html',f'{OUT}/posts/{pid(k)}.html'); size+=os.path.getsize(f'{OUT}/posts/{pid(k)}.html')
         m=man[k]; src='extra_snu' if k.startswith('PGM') else 'snu_events'
         o.write(f"- post: {pid(k)}\n  source: {src}\n  key: {J(k)}\n  url: {J(m['url'])}\n  fetchedAt: {J(m['fetchedAt'])}\n")
 print('posts',len(used),'MB',round(size/1e6,1))
 with open(f'{OUT}/set-a.yaml','w',encoding='utf8') as o:
-    o.write('# Evaluation A: why each post was chosen, not its answer. The answers are in labels/.\n')
+    o.write('################################################################################\n# AI-generated with Claude\n#\n# 2026-10-31  Opus 5.5   prompted by Jaehyun0320\n################################################################################\n\n# Evaluation A: why each post was chosen, not its answer. The answers are in labels/.\n')
     for x in sorted(items,key=lambda x:x['id']):
         o.write(f"- id: {x['id']}\n  post: {pid(x['post'])}\n  part: {x['part']}\n  tags: {J(x['tags'])}\n")
 with open(f'{OUT}/set-b.yaml','w',encoding='utf8') as o:
-    o.write('# Evaluation B: why each pair was chosen, not its answer. `chosenAs` is what a pair was expected to be when it was\n# chosen; the answers are in labels/. Second labellers do not see this file.\n')
+    o.write('################################################################################\n# AI-generated with Claude\n#\n# 2026-10-31  Opus 5.5   prompted by Jaehyun0320\n################################################################################\n\n# Evaluation B: why each pair was chosen, not its answer. `chosenAs` is what a pair was expected to be when it was\n# chosen; the answers are in labels/. Second labellers do not see this file.\n')
     for x in sorted(pairs,key=lambda x:x['id']):
         o.write(f"- id: {x['id']}\n  a:\n    post: {pid(x['a'])}\n    session: {J(x['sa'])}\n  b:\n    post: {pid(x['b'])}\n    session: {J(x['sb'])}\n  part: {x['part']}\n  chosenAs: {x['kind']}\n  trap: {J(x['trap'])}\n")
 def labels_a(path,its,head):

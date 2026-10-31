@@ -1,3 +1,9 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+################################################################################
+
 # Thresholds of evaluations A and B, committed with the sets before any run (metrics document, 2 and 4.1). The values are
 # the metrics document's, confirmed by the P05 owner on 2026-10-31. To change one, leave it here and add an entry with
 # `revises:` and `reason:`; a value chosen after seeing a result counts as undeclared.
@@ -37,9 +43,9 @@ thresholds:
     measure: 'Sessions published wrong ÷ sessions published. Wrong when the start, the Place or a given end differs'
     kind: floor
     comparator: '<='
-    value: 0.03334
+    value: 0.03333333333333333
     declared: 2026-10-31
-    note: '1/30, as the metrics document writes it, rounded up so that exactly 1/30 passes. Reported as k/n.'
+    note: '1/30, as the metrics document writes it. Reported as k/n.'
   - id: c2.target
     metric: C2
     measure: 'Sessions published wrong ÷ sessions published. Wrong when the start, the Place or a given end differs'

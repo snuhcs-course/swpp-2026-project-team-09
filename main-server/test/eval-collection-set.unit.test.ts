@@ -15,7 +15,7 @@ import {
   POSITIVE_KINDS,
   POST_TAGS,
   postsSchema,
-  read,
+  readCollectionFile,
   setASchema,
   setBSchema,
   thresholdsSchema,
@@ -24,18 +24,19 @@ import {
 // The fixed sets of evaluations A and B as committed (P05 ticket 01): what the metrics document and the owner's decisions
 // of 2026-10-31 say they hold. It reads the files only, so it passes whether or not the labels have been filled in.
 
-const posts = read('posts.yaml', postsSchema);
-const setA = read('set-a.yaml', setASchema);
-const setB = read('set-b.yaml', setBSchema);
-const thresholds = read('thresholds.yaml', thresholdsSchema);
-const aOwner = read(LABEL_FILES.aOwner, labelsASchema);
-const aSecond = read(LABEL_FILES.aSecond, labelsASchema);
-const bOwner = read(LABEL_FILES.bOwner, labelsBSchema);
-const bSecond = read(LABEL_FILES.bSecond, labelsBSchema);
+const posts = readCollectionFile('posts.yaml', postsSchema);
+const setA = readCollectionFile('set-a.yaml', setASchema);
+const setB = readCollectionFile('set-b.yaml', setBSchema);
+const thresholds = readCollectionFile('thresholds.yaml', thresholdsSchema);
+const aOwner = readCollectionFile(LABEL_FILES.aOwner, labelsASchema);
+const aSecond = readCollectionFile(LABEL_FILES.aSecond, labelsASchema);
+const bOwner = readCollectionFile(LABEL_FILES.bOwner, labelsBSchema);
+const bSecond = readCollectionFile(LABEL_FILES.bSecond, labelsBSchema);
 
 const isPositive = ({ chosenAs }: (typeof setB)[number]): boolean =>
   (POSITIVE_KINDS as readonly string[]).includes(chosenAs);
 const isExtra = (post: string): boolean => post.startsWith('extra-');
+const sidesOf = ({ a, b }: (typeof setB)[number]): string => [a.post, b.post].toSorted().join(' ');
 const ids = (items: { id: string }[]): string[] => items.map(({ id }) => id);
 
 describe('The saved posts', () => {
@@ -73,9 +74,6 @@ describe('Evaluation A', () => {
 });
 
 describe('Evaluation B', () => {
-  const heldOut = setB.filter(({ part }) => part === 'held-out');
-  const development = setB.filter(({ part }) => part === 'development');
-
   it('holds 120 pairs, 30 to 50% of them expected to be the same event', () => {
     expect(setB).toHaveLength(120);
     const positives = setB.filter((pair) => isPositive(pair)).length;
@@ -93,13 +91,19 @@ describe('Evaluation B', () => {
       [`${a.post}#${a.session}`, `${b.post}#${b.session}`].toSorted().join(' ');
     expect(new Set(setB.map((pair) => key(pair))).size).toBe(setB.length);
   });
+});
+
+describe('The parts of evaluation B', () => {
+  const heldOut = setB.filter(({ part }) => part === 'held-out');
+  const development = setB.filter(({ part }) => part === 'development');
 
   it('holds the trap 177707 against PGM012002382 out, with the true pairs of both', () => {
-    const trap = setB.find(({ trap: isTrap }) => isTrap);
-    expect(trap).toMatchObject({ a: { post: 'snu-177707' }, b: { post: 'extra-PGM012002382' }, part: 'held-out' });
-    const pairsHeldOut = heldOut.map(({ a, b }) => `${a.post} ${b.post}`);
-    expect(pairsHeldOut).toContain('snu-177707 extra-PGM012002381');
-    expect(pairsHeldOut).toContain('snu-178079 extra-PGM012002382');
+    const traps = setB.filter(({ trap }) => trap);
+    expect(traps.map((pair) => sidesOf(pair))).toEqual(['extra-PGM012002382 snu-177707']);
+    expect(traps[0].part).toBe('held-out');
+    const pairsHeldOut = heldOut.map((pair) => sidesOf(pair));
+    expect(pairsHeldOut).toContain('extra-PGM012002381 snu-177707');
+    expect(pairsHeldOut).toContain('extra-PGM012002382 snu-178079');
   });
 
   it('sets aside about a fifth for development', () => {
@@ -107,14 +111,22 @@ describe('Evaluation B', () => {
     expect(development.length).toBeLessThanOrEqual(30);
   });
 
-  it('keeps the posts of one many-to-one group in one part', () => {
-    const parts = new Map<string, Set<string>>();
-    for (const { a, chosenAs, part } of setB) {
-      if (chosenAs === 'many-to-one') {
-        parts.set(a.post, (parts.get(a.post) ?? new Set()).add(part));
-      }
+  it('shares no post between development and the held-out part', () => {
+    const held = new Set(heldOut.flatMap(({ a, b }) => [a.post, b.post]));
+    expect(development.flatMap(({ a, b }) => [a.post, b.post]).filter((post) => held.has(post))).toEqual([]);
+  });
+
+  it('develops on none of the held-out posts of evaluation A', () => {
+    const held = new Set(setA.filter(({ part }) => part === 'held-out').map(({ post }) => post));
+    expect(development.flatMap(({ a, b }) => [a.post, b.post]).filter((post) => held.has(post))).toEqual([]);
+  });
+});
+
+describe('The order of the pairs of evaluation B', () => {
+  it('says nothing: each source comes first in both positives and hard negatives', () => {
+    for (const pairs of [setB.filter((pair) => isPositive(pair)), setB.filter((pair) => !isPositive(pair))]) {
+      expect(new Set(pairs.map(({ a }) => isExtra(a.post))).size).toBe(2);
     }
-    expect([...parts.entries()].filter(([, seen]) => seen.size > 1)).toEqual([]);
   });
 });
 
