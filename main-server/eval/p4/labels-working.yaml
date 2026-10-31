@@ -1,0 +1,468 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by TaeHyun79
+# 2026-11-01  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# The label drafter's working, word for word, one entry per case: how each `expect` in cases/ was worked by hand from
+# rules.md, world.yaml and travel-fixture.json alone, for the reviewer to check. `open: true` marks an answer the rules
+# leave open, which suite.yaml lists for the person's review.
+#
+# The person's review of 11-01 changed the answers of parties-named-classes, parties-abbreviated-gap-begun and
+# parties-departure-after-asking (rules.md section 15). Their entries here are the draft's, not those answers.
+
+- id: parties-named-classes
+  working: |
+    Monday, now 11:30. 멀티코어컴퓨팅 11:00-12:15 at 제2공학관, 현대암호학개론 14:00-15:15 at 이공계멀티미디어강의동. Nothing held
+    falls between, so one gap 12:15-14:00. Leave 제2공학관 at 12:15:00. Arrive at least 1 min before the start.
+    Back: at the next Place by 13:59:00. No-end or over-3-hours candidates: leave-by = 13:59:00 - way to 이공계, need at least
+    start + 30 min.
+    Fits:
+    - 공대 앞 스트레칭 모임 12:20 제1공학관: 185 s, arrive 12:18:05 <= 12:19. Way back 577 s, leave-by 13:49:23, shown 13:49, >= 12:50.
+    - 3식당 점심 번개 12:28 제3학생식당: 720 s, arrive 12:27:00, exactly the margin (<= 12:27:00). Way back 331 s, leave-by 13:53:29.
+    - 학식 같이 먹어요 12:45 학생회관: 913 s, arrive 12:30:13. Way back 447 s, leave-by 13:51:33, >= 13:15.
+    - 공대 족구 대회 12:50, no end, point exact 제1공학관: 185 s. Leave-by 13:49:23, >= 13:20.
+    - AI 창업 특강 13:00-13:40 글로벌공학교육센터: 826 s (14분), arrive 12:28:46. Ends 13:40, way 266 s, there 13:44:26 <= 13:59. next 5분, a Class.
+    - 가을 미디어아트전 13:00-18:00 (5 h, over 3 h) 학생회관: 913 s. Leave-by 13:51:33 >= 13:30. Has an end, so no endUnknown.
+    - 점심 농구 한 판 13:00 체육관: 1570 s (27분), arrive 12:41:10. Way back 1613 s, leave-by 13:32:07 >= 13:30.
+    - 보드게임 한 판 13:05 글로벌공학교육센터: 826 s. Way back 266 s, leave-by 13:54:34 >= 13:35.
+    Left out:
+    - 3식당 앞 커피챗 12:27: arrive 12:27:00, must be <= 12:26:00.
+    - 학생회관 점심 번개 12:29: arrive 12:30:13, must be <= 12:28:00.
+    - 공학 포스터 세션 13:00-13:56: 13:56 + 266 s = 14:00:26, must be <= 13:59:00.
+    - 동아리 연합 공연 13:30, no end, 문화관: way back 778 s, leave-by 13:46:02 < 14:00.
+    - 점심 배드민턴 13:10 체육관: leave-by 13:32:07 < 13:40.
+    - 가을 사진전: began 11-02 10:00, no start inside the gap.
+    Every other Monday Quest or event starts outside the gap (잠깐 커피 한 잔 15:20, 학과 설명회 15:25 and later).
+    Order: same start 13:00 by code point, A before 가 before 점. Total 8.
+    getMyDay stays allowed as in the header's example, with from and to in args; see notes.md.
+
+- id: parties-abbreviated-gap-begun
+  working: |
+    Monday, now 12:40. 멀코 is 멀티코어컴퓨팅, 현암 is 현대암호학개론. The gap 12:15-14:00 has begun, so it starts at now, 12:40, and
+    keeps its previous item. Leave 제2공학관 at 12:40:00. Starts before 12:40 are outside the gap: 공대 앞 스트레칭 모임 12:20,
+    3식당 앞 커피챗 12:27, 3식당 점심 번개 12:28, 학생회관 점심 번개 12:29. 가을 사진전 is already under way.
+    Fits:
+    - 공대 족구 대회 12:50: 185 s, arrive 12:43:05 <= 12:49. Leave-by 13:49:23 (577 s back).
+    - AI 창업 특강 13:00-13:40: 826 s, arrive 12:53:46 <= 12:59. 13:40 + 266 s = 13:44:26 <= 13:59. next 5분.
+    - 가을 미디어아트전 13:00-18:00: 913 s, arrive 12:55:13 <= 12:59. Leave-by 13:51:33 >= 13:30.
+    - 보드게임 한 판 13:05: 826 s, arrive 12:53:46. Leave-by 13:54:34.
+    Left out:
+    - 학식 같이 먹어요 12:45: 913 s, arrive 12:55:13 > 12:44.
+    - 점심 농구 한 판 13:00: 1570 s, arrive 13:06:10 > 12:59.
+    - 공학 포스터 세션: ends 13:56, back 14:00:26 > 13:59.
+    - 점심 배드민턴 13:10: arrive 13:06:10 is in time, but leave-by 13:32:07 < 13:40.
+    - 동아리 연합 공연 13:30: leave-by 13:46:02 < 14:00.
+    OPEN: section 12 asks for "when the previous item ends", which is 12:15, but section 6 answers the gap's start, 12:40, and the
+    item's end is not in that answer. Neither says which a reply must give for a gap cut by now, so the mention accepts both.
+  open: true
+
+- id: parties-next-gap
+  working: |
+    Wednesday, now 10:00, inside 컴퓨터구조 (09:30-10:45, 제1공학관). Items of the day: 컴퓨터구조; 수요일 점심 모임 13:00 with no end, busy
+    13:00-13:30 (joined, so held); 공모전 작업 15:50-19:30, 3 h 40 m, busy 15:50-16:20; 캡스톤디자인 17:00-18:15.
+    The first gap after now is 10:45-13:00. The next item's place is the label 학생회관, which equals a Place's name (step 5).
+    Leave 제1공학관 at 10:45:00; be at 학생회관 by 12:59:00.
+    Fits:
+    - 오전 코드 리뷰 11:10 제2공학관: 218 s (4분), arrive 10:48:38. No end. 제2공학관 to 학생회관 913 s, leave-by 12:43:47, shown 12:43, >= 11:40.
+    - 연구실 공개 세미나 11:30-12:30 제1공학관: 0 s, 0분. 12:30 + 806 s = 12:43:26 <= 12:59. next 14분, a Quest, not a Class.
+    Left out:
+    - 오전 테니스 11:00 체육관: 1472 s, arrive 11:09:32 > 10:59.
+    - 가을 사진전: already under way.
+    The results' args use from now to the next item, which gives this one gap. from now to end would return all three gaps and the
+    reply must then keep to the first, so the model's args hold only the date; the cards check the rest.
+
+- id: parties-named-classes-tomorrow
+  working: |
+    Tuesday, asked on Monday. 데이터베이스 11:00-12:15 at 사회과학관, 운영체제 15:00-16:15 at 인문사회계멀티미디어강의동. One gap 12:15-15:00.
+    Leave 사회과학관 at 12:15:00, be at 인문사회계 by 14:59:00.
+    Fits:
+    - 점심 코딩 스터디 12:40-13:40, 인문사회계: 92 s (2분), arrive 12:16:32. Way back 0 s. next 0분, a Class.
+    - 동원관 앞 카페 모임 12:50: the point maps to 동원생활관 (lookup). 217 s (4분). Way 236 s, leave-by 14:55:04, >= 13:20.
+    - 문화관 앞 플로깅 13:10: label 문화관 equals a Place name (step 5). 279 s (5분). Way 258 s, leave-by 14:54:42.
+    - 재즈 같이 가요: Quest for 재즈 런치 콘서트, so its attending Sub Quest is 13:20-14:20 at the event's place. The point is exact null, lookup 문화관. 279 s. 14:20 + 258 s = 14:24:18 <= 14:59. next 5분.
+    - 재즈 런치 콘서트 13:20-14:20: the same.
+    - 미대 작품 설명회 13:30-14:10 미술관: 416 s (7분). 14:10 + 505 s = 14:18:25. next 9분.
+    - 83동 라운지 스터디 13:40: label '83' equals the number of 인문사회계멀티미디어강의동. 92 s (2분). Way 0, leave-by 14:59:00.
+    - 야외 농구장 3대3 14:00: the point has no lookup, nearest 동원생활관 at 49 m <= 150 m. 217 s. Leave-by 14:55:04 >= 14:30.
+    - 주간 독서 모임: judged on its Sub Quest inside the gap, 14:10 at 사회과학관, not Monday's 20:00. 0 s. Way 92 s, leave-by 14:57:28 >= 14:40.
+    Left out:
+    - 문화관 앞 버스킹 13:00: full.
+    - 자하연 산책 모임 13:00: the asker asked to join.
+    - 언제든 스터디: no start.
+    - 녹두 보드게임 모임 13:00: label is no Place, unknown.
+    - 샤로수길 맛집 탐방 13:00: no lookup, nearest 1358 m > 150 m, label is no Place, unknown.
+    - 비공개 점심 약속: Closed.
+    - 토크콘서트 사전 모임: a Quest for 과학기술 토크콘서트, whose Shared Quest the asker holds.
+    - 낙성대 플리마켓 13:00: no lookup, nearest 1049 m > 150 m, label is no Place, unknown.
+    - 가을 사진전: under way. 캠퍼스 투어, 아침 특강, 아침 러닝, 모닝 커피챗 start before the gap.
+    Order: the two 13:20 by title, 재즈 같 before 재즈 런. 주간 독서 모임's card still shows Monday 20:00 (section 15.3); it is ordered by 14:10.
+
+- id: parties-before-first-class
+  working: |
+    Tuesday, asked on Monday, so now does not cut the day. 첫 수업 전 is from 00:00 to the first item, 데이터베이스 11:00 at 사회과학관.
+    Gap 00:00-11:00, no previous item, so travel is null. Be at 사회과학관 by 10:59:00.
+    Fits:
+    - 아침 러닝 07:00 체육관: 체육관 to 사회과학관 590 s, leave-by 10:49:10, >= 07:30.
+    - 캠퍼스 투어 08:30, point exact 서울대 정문: 521 s, leave-by 10:50:19, >= 09:00.
+    - 아침 특강 09:00-10:00 문화관: 10:00 + 255 s = 10:04:15 <= 10:59. next 5분, a Class.
+    Left out:
+    - 모닝 커피챗 10:30 동원생활관: 241 s, leave-by 10:54:59 < 11:00:00, under 30 minutes.
+    - 가을 사진전: under way.
+
+- id: parties-after-last-class
+  working: |
+    Monday, now 11:30. 컴퓨터그래픽스 ends 17:15 at 제1공학관 and is the last item. Gap 17:15-24:00, no next item, so no after side.
+    Fits:
+    - AI 시대의 진로 특강 18:00-20:00 제1공학관: 0 s.
+    - 저녁 고기 먹을 사람 18:30 학생회관: 806 s (14분), arrive 17:28:26.
+    - 가을 재즈 콘서트 19:00-21:00 문화관: 977 s (17분).
+    - 밤 코딩 모임 20:00 제1공학관: 0 s.
+    - 주간 독서 모임, Sub Quest 20:00 문화관: 977 s (17분).
+    Left out:
+    - 해질녘 산책 17:17 제2공학관: 218 s, arrive 17:18:38 > 17:16.
+    - 가을 사진전, 가을 미디어아트전: under way.
+    Order: the two 20:00 by title, 밤 before 주.
+
+- id: parties-nothing-fits
+  working: |
+    Monday, now 11:30. Gap 15:15-16:00, from 이공계멀티미디어강의동 to 제1공학관, which must be reached by 15:59:00.
+    Two candidates start inside it, and neither fits:
+    - 잠깐 커피 한 잔 15:20 이공계: 0 s, arrive 15:15:00 <= 15:19. No end: 668 s, leave-by 15:47:52 < 15:50:00, 2 min 8 s short of 30 minutes.
+    - 학과 설명회 15:25-15:50 중앙도서관 본관: 377 s, arrive 15:21:17 <= 15:24. 15:50 + 930 s = 16:05:30 > 15:59.
+    가을 미디어아트전, 동아리 연합 공연 and 가을 사진전 began earlier, so they are under way and left out.
+    Nothing fits: result found, no candidates, no cards. The reply says so plainly and explains no candidate.
+
+- id: parties-over-twenty
+  working: |
+    Friday, asked on Monday. 미분방정식 ends 10:45, 글쓰기의 기초 starts 18:00, both at 문화관. Nothing held between. Gap 10:45-18:00.
+    Leave 문화관 at 10:45:00, be back by 17:59:00.
+    Way from 문화관, seconds and minutes shown: 체육관 818 (14), 학생회관 357 (6), 중앙도서관 본관 344 (6), 자하연식당 196 (4),
+    예술복합연구동 254 (5), 사회과학관 255 (5), 미술관 673 (12), 인문사회계 258 (5), 문화관 0 (0). All walk.
+    Even the soonest, 금요일 아침 풋살 11:15, is reached at 10:58:38, so every before side holds.
+    Way back to 문화관 and leave-by from 17:59:00: 체육관 862, 17:44:38; 학생회관 314, 17:53:46; 중앙도서관 본관 318, 17:53:42;
+    자하연식당 176, 17:56:04; 예술복합연구동 238, 17:55:02; 사회과학관 279, 17:54:21; 미술관 736, 17:46:44; 인문사회계 282, 17:54:18;
+    문화관 0, 17:59:00. All are far more than 30 minutes after the start; the last start is 16:45.
+    Global Events: 가을 독서 토크 13:20-14:00 중앙도서관 본관, back 318 s, next 6분. 총장배 풋살 대회 14:10-15:10 체육관, back 862 s, next 15분.
+    All 23 Friday Quests and both Global Events fit: 25. 가을 사진전 is under way and left out.
+    The 20 soonest become cards, 18 Quests and 2 Global Events; the last five candidates stay out of the cards. The reply gives the total 25
+    and how to narrow. The fixed history of parties-over-twenty-narrowed agrees: 25, and the same 20 cards in this order.
+
+- id: parties-over-twenty-narrowed
+  working: |
+    The same gap and judgement as parties-over-twenty. 운동만 calls with Board 취미 (section 12), so the tool drops the 13 Quests of other
+    Boards (meal, career, show) and keeps the 10 hobby Quests and both Global Events: 12 candidates, in the order above.
+    Results are the same values as in parties-over-twenty, filtered.
+    OPEN, a meaning label a person sets. My reading of "the hobby Quests and the Global Events whose titles are sports":
+    - kept: 금요일 아침 풋살, 금요일 점심 농구, 배드민턴 복식, 테니스 랠리, 족구 번개, 탁구 한 판, 저녁 러닝 크루 (run), 총장배 풋살 대회.
+    - dropped: 보드게임 오후반 (the rule says board games drop), 뜨개질 모임 (knitting), 사진 출사 모임 (a photo walk), 가을 독서 토크 (a talk).
+    The rule names only board games. A wider reading would keep 뜨개질 and 사진 출사 as hobby Quests, which would make 10 cards.
+    The count in the mention follows the 8 cards, not the 12 the tool returned; section 12 does not say which a narrowed reply counts.
+    The header says only the last turn is sent to the model; 운동만 alone has no gap to narrow, so this label reads the history as
+    reaching the model. See notes.md. The call needs the item ids again: tool results do not carry over.
+  open: true
+
+- id: parties-held-quests-busy
+  working: |
+    Wednesday. Between 컴퓨터구조 (ends 10:45) and 캡스톤디자인 (starts 17:00) the asker holds two Quests:
+    - 수요일 점심 모임 13:00, no end, joined, so busy 13:00-13:30. Its label 학생회관 equals a Place name.
+    - 공모전 작업 15:50-19:30, 3 h 40 m, over 3 hours, so busy 15:50-16:20 at 중앙도서관 본관.
+    Three gaps.
+    Gap 10:45-13:00, from 제1공학관 to 학생회관 (by 12:59:00), as in parties-next-gap:
+    - 오전 코드 리뷰: 218 s, leave-by 12:43:47. 연구실 공개 세미나: 0 s, back 12:43:26, next 14분, not a Class.
+    - 오전 테니스 11:00: arrive 11:09:32 > 10:59, left out.
+    Gap 13:30-15:50, from 학생회관 to 중앙도서관 본관 (by 15:49:00):
+    - 오후 커피 모임 13:40 중앙도서관 본관: 163 s (3분), arrive 13:32:43 <= 13:39. Way 0, leave-by 15:49:00, >= 14:10.
+    - 취업 설명회 14:10-15:10 중앙도서관 본관: 163 s. Way 0, back 15:10. next 0분.
+    - 자하연 티타임 14:30 자하연식당: 306 s (6분). Way 248 s, leave-by 15:44:52, >= 15:00.
+    - 학생회 토론회 14:30-15:40 학생회관: 0 s. 15:40 + 163 s = 15:42:43 <= 15:49. next 3분.
+    - 늦은 오후 배드민턴 15:40 체육관: left out. Way 1163 s, leave-by 15:29:37 < 16:10.
+    Gap 16:20-17:00: nothing starts inside it.
+    가을 사진전 is under way. Next items here are Quests, so isClass is false.
+    Order: at 14:30 by title, 자 before 학. Total 6.
+    Section 12 says the reply holds the gap found, so all three gaps are in the mentions, the third too although nothing fits in it.
+
+- id: parties-what-is-on-meal-search
+  working: |
+    Section 11: looking for a party to eat with goes to the chat's searches, not findFreeTimeEvents, with no regard to the User's day.
+    Tuesday's Quests on the meal Board: 동원관 앞 카페 모임 12:50 and 샤로수길 맛집 탐방 13:00, both Open, neither held. Search has no
+    place check, so 샤로수길's unknown place does not matter here. 비공개 점심 약속 is Closed and on no Board.
+    OPEN, a meaning label: is a cafe meeting "같이 밥 먹을 파티"? It is on the meal Board, so my reading keeps it. A person may drop it.
+    `board` is left out of args: the rules do not say the model must pass it, and a search of all Boards followed by a pick gives the same
+    cards. Nothing the rules decide calls for a Global Event card.
+  open: true
+
+- id: parties-no-timetable-rest-of-day
+  working: |
+    새내기 (서나래) has no Timetable and holds nothing, so no items. Section 6: a User with no items has one gap, the rest of the day: 18:40-24:00,
+    no previous and no next item, so no travel and no after side.
+    Fits, starting after now: 가을 재즈 콘서트 19:00-21:00, 밤 코딩 모임 20:00, 주간 독서 모임 20:00 (its first Sub Quest).
+    Left out, starting before the gap: 저녁 고기 먹을 사람 18:30, AI 시대의 진로 특강 18:00, 가을 사진전 and 가을 미디어아트전.
+    Places all map: 문화관, 제1공학관.
+    Order: 20:00 by title, 밤 before 주. With no items around the gap, the only section 12 number the reply must hold is the count.
+
+- id: parties-ambiguous-class
+  working: |
+    Monday has two Classes with 컴퓨터 in the name: 컴퓨터구조 and 컴퓨터그래픽스. Section 11: ask when a Class is ambiguous. The model needs
+    getMyDay to see them. 컴퓨터구조 has already ended at now 11:30, which might suggest 컴퓨터그래픽스, but the rules give no rule that picks
+    the later one, and "ask when ambiguous" decides it.
+
+- id: parties-departure-after-asking
+  working: |
+    Thursday. 과외 17:00-18:30 at the label 낙성대역 스터디카페: no Place, no point, no matching name, so an item without a Place.
+    The earlier turns are consistent with section 8: the model asked where the User leaves from, 낙성대역 answered none, and it asked once
+    where the User enters. 서울대 정문 answers `one`. It takes the previous item's Place; the time of leaving stays 18:30.
+    Gap 18:30-24:00, no next item, so no after side.
+    Fits:
+    - 저녁 배드민턴 19:00 체육관: 494 s (9분), arrive 18:38:14 <= 18:59.
+    - 오픈 마이크 19:30-21:00 문화관: 764 s (13분), arrive 18:42:44.
+    Left out:
+    - 야간 코딩 18:40 제1공학관: 1594 s, arrive 18:56:34 > 18:39.
+    Nothing else starts after 18:30 on Thursday.
+
+- id: parties-leave-by-after-asking
+  working: |
+    Thursday. 컴퓨터네트워크 ends 14:15 at 제1공학관; 과외 starts 17:00 with no Place. Gap 14:15-17:00. The history matches section 8's after
+    question. The User answers 4시 반, so leaveBy 16:30 replaces the after side.
+    Fits:
+    - 오픈소스 세미나 15:00-16:00 제1공학관: 0 s. Has an end of at most 3 hours, so it must end by 16:30; 16:00 does. No `next`.
+    - 오후 커피챗 15:30 제2공학관: 218 s (4분), arrive 14:18:38. No end: 15:30 + 30 min = 16:00 <= 16:30. Shows leaveBy 16:30, endUnknown.
+    Left out:
+    - 늦은 오후 산책 16:10 제1공학관: 16:40 > 16:30, under 30 minutes.
+    - 가을 사진전: under way.
+
+- id: meals-who-lunch-today
+  working: |
+    Monday, now 11:30, lunch 11:00-14:30. The asker is in 멀티코어컴퓨팅 until 12:15 and in 현대암호학개론 from 14:00. Free Time in the window: 12:15-14:00.
+    Friends:
+    - 이민수: classes end 12:00, next 15:30. Shares 12:15-14:00. Free.
+    - 김지은: 11:00-12:15, 동아리 회의 12:55-13:25, 15:00. Shares 12:15-12:55 and 13:25-14:00. Free.
+    - 박서준 (경영학과): class ends 11:45. 박서준 (물리천문학부): class ends 11:15. Both share 12:15-14:00. Free.
+    - 최유진: no Timetable, whole day free. 정하람: no Monday Class. Both share 12:15-14:00. Free.
+    - 한도윤: class ends 11:45, 수학 과외 from 13:45. Shares 12:15-13:45. Free.
+    - 강민재: busy 11:00-13:45 (two touching Classes), then 14:00. Free 13:45-14:00: exactly 15 minutes, which counts. Free.
+    Not free:
+    - 오지호: 건축설계 11:00-13:00 and 연구실 미팅 13:00-14:30 touch, so the window holds no Free Time.
+    - 윤서아: free only 13:50-14:00, 10 minutes.
+    Who-is-free replies have no dining map button in section 12. The two 박서준 appear under one name.
+
+- id: meals-who-lunch-begun
+  working: |
+    Monday, now 13:10, which cuts every Free Time. The asker: 13:10-14:00.
+    - 이민수, both 박서준, 최유진, 정하람: free through it, share 13:10-14:00. Free.
+    - 김지은: 동아리 회의 runs to 13:25, so 13:25-14:00, 35 minutes. Free.
+    - 한도윤: 수학 과외 from 13:45, so 13:10-13:45, 35 minutes. Free.
+    - 강민재: 13:45-14:00, exactly 15 minutes. Free.
+    Not free: 오지호, no Free Time before 14:30. 윤서아, 13:50-14:00, 10 minutes.
+
+- id: meals-who-dinner-tomorrow
+  working: |
+    Tuesday, asked on Monday, dinner 17:00-19:30. The asker's Classes end 16:15. The asker also holds the Shared Quest for 과학기술 토크콘서트
+    (world.yaml `sharedQuest`). Section 2: the attending Sub Quest takes the event's times, 18:00-20:00, 2 hours, so busy. Free Time in the window: 17:00-18:00.
+    CONTRADICTION: the header of questions.yaml lists the asker's items and leaves this Shared Quest out. Without it, Free Time would be
+    17:00-19:30, and 이민수 (18:30-19:30) and 오지호 (18:00-19:30) would be free too. This label follows rules.md section 2 and world.yaml. See notes.md.
+    Friends:
+    - 이민수: 국제경제학 16:00-18:30, so nothing in 17:00-18:00. Not free.
+    - 오지호: 건축구조 17:00-18:00 takes the whole stretch. Not free.
+    - 김지은, both 박서준, 최유진, 정하람, 한도윤, 윤서아, 강민재: nothing that evening. Each shares 17:00-18:00, 60 minutes. Free.
+
+- id: meals-two-friends-lunch
+  working: |
+    Monday, now 11:30, lunch 11:00-14:30.
+    Free Time: 나 12:15-14:00. 이민수 from 12:00 until 15:30. 김지은 12:15-12:55 and 13:25-15:00.
+    Shared: 12:15-12:55 and 13:25-14:00.
+    Considered: 학생회관식당, 자하연식당 3층, 301동식당, 3식당, 동원관식당.
+    Not considered: 302동식당 (no lunch lines), 두레미담 (only notes, closed), 감골식당 (no Place), 자하연식당 2층 and 예술계식당 (no lines that day).
+    Items. 나: previous 멀티코어컴퓨팅 제2공학관 12:15, next 현대암호학개론 이공계 14:00. 이민수: previous 미시경제이론 사회과학관 12:00, next 거시경제이론
+    사회과학관 15:30. 김지은, first interval: previous 자료구조 제1공학관 12:15, next 동아리 회의 12:55, whose point maps by lookup to 중앙도서관 본관.
+    김지은, second interval: previous 동아리 회의 중앙도서관 본관 13:25, next 알고리즘 제1공학관 15:00.
+    학생회관식당, first interval. 나: 913 s, arrive 12:30:13; out 447 s, 13:51:33. 이민수: 626 s, 12:10:26; leave-by capped 14:30. 김지은: 806 s, 12:28:26;
+    out 163 s, 12:54:00 - 2:43 = 12:51:17. Start 12:30:13 up to 12:35. 12:51:17 - 12:35 = 16:17, shows 16.
+    자하연식당 3층, first interval. 나: 1035 s, 12:32:15. 김지은: 928 s, 12:30:28; out 248 s, 12:49:52. Start 12:35. 14:52 < 15, no fit.
+    자하연식당 3층, second interval. 나: arrive 12:32:15 from 12:15; out 690 s, 13:47:30. 이민수: 415 s, 12:06:55. 김지은: 223 s from 13:25, 13:28:43; out 1075 s,
+    14:41:05, capped 14:30. Start 13:28:43 up to 13:30. 13:47:30 - 13:30 = 17:30, shows 17. Minutes shown: 18, 7, 4.
+    301동식당, first interval. 나: 185 s, 12:18:05; out 577 s, 13:49:23. 이민수: 1307 s, 12:21:47; capped 14:30. 김지은: 0 s, 12:15; out 795 s, 12:40:45.
+    Start 12:21:47 up to 12:25. 15:45, shows 15. Fits.
+    3식당, first interval. 나: 720 s, 12:27:00; out 331 s, 13:53:29. 이민수: 1082 s, 12:18:02. 김지은: 628 s, 12:25:28; out 529 s, 12:45:11.
+    Start 12:27:00 up to 12:30. 15:11, shows 15. Fits.
+    동원관식당 is left out. First interval. 나: 1367 s, 12:37:47; out 1266 s, 13:37:54. 김지은: 1262 s, 12:36:02; out 813 s, 12:40:27. Start 12:40, 27 s left.
+    Second interval. 김지은: 754 s from 13:25, 13:37:34. Start 13:40, after 나's leave-by 13:37:54.
+    Order by the most minutes shown: 16, 18, 19, 22. This matches the order of the cards in the history of meals-no-noodles.
+
+- id: meals-no-timetable-friends-dinner
+  working: |
+    Monday, dinner 17:00-19:30. 나: 컴퓨터그래픽스 ends 17:15 at 제1공학관, nothing after. 최유진 has no Timetable, 정하람 no Monday Class, so both are
+    free all day. Shared: 17:15-19:30.
+    Open for Monday dinner with a Place: 학생회관식당, 301동식당, 302동식당, 동원관식당.
+    Not considered: 3식당 (금일 휴무, only a note), 자하연식당 3층 and 두레미담 (no dinner lines), 감골식당 (no Place).
+    The Friends have no previous and no next item: arrival 17:00, leave-by 19:30, travel "—". 나 has no next item: leave-by 19:30.
+    - 301동식당: 0 s, arrive 17:15:00, already a multiple of 5, Start 17:15. 135 minutes.
+    - 302동식당: 218 s, 17:18:38, Start 17:20. 130.
+    - 학생회관식당: 806 s, 17:28:26, Start 17:30. 120.
+    - 동원관식당: 1262 s, 17:36:02, Start 17:40. 110. 1262 / 60 = 21.03, shows 22.
+    나 is `longest` everywhere, also at 0 minutes, being the only person with minutes shown. A "—" is never longest.
+    Order by minutes: 0, 4, 14, 22.
+
+- id: meals-friend-off-campus-item
+  working: |
+    Monday, now 12:40, lunch 11:00-14:30. 나: 12:40-14:00. 한도윤: 회로이론 ended 11:45 at 제1공학관; 수학 과외 13:45 at 낙성대역 스터디카페 has no Place.
+    Shared: 12:40-13:45. Considered: as in meals-two-friends-lunch, the same five.
+    Everyone's free interval starts at now, 12:40.
+    한도윤's next item has no Place: section 8, that side's travel is left out and he is judged on time only. Section 15.2: he still shows his in-time.
+    나: out-travel to 이공계 by 13:59:00.
+    - 301동식당: 나 185 s, 12:43:05; 577 s, 13:49:23. 한도윤 0 s. Start 12:45. Earliest leave-by 13:44:00. 59.
+    - 3식당: 나 720 s, 12:52:00; 331 s, 13:53:29. 한도윤 628 s, 12:50:28. Start 12:55. 49.
+    - 학생회관식당: 나 913 s, 12:55:13; 447 s, 13:51:33. 한도윤 806 s, 12:53:26. Start 13:00. 44.
+    - 자하연식당 3층: 나 1035 s, 12:57:15; 690 s, 13:47:30. 한도윤 928 s, 12:55:28. Start 13:00. 44.
+    - 동원관식당: 나 1367 s, 13:02:47; 1266 s, 13:37:54. 한도윤 1262 s, 13:01:02. Start 13:05. Earliest leave-by is 나's 13:37:54. 32:54, shows 32.
+    Order by the most minutes shown: 4, 12, 16, 18, 23.
+    OPEN: "judged on time only" does not say whether the 1-minute margin stays. I keep it, since only the travel is left out, so 한도윤's leave-by
+    is 13:45 - 1 min = 13:44:00. Without the margin it is 13:45:00 and the first four become 60, 50, 45 and 45. Starts, order and 동원관식당 do not change.
+  open: true
+
+- id: meals-no-noodles
+  working: |
+    The tool answers as in meals-two-friends-lunch; its result is not narrowed. A follow-up calls resolveFriend and the find tool again.
+    The history's shared time and cards match that case. "면 빼고" keeps a Restaurant with at least one lunch dish that is not noodles:
+    - 학생회관식당: 제육볶음 is not noodles (잔치국수 is). Kept.
+    - 자하연식당 3층: 칼국수 and 비빔냉면 are both noodles. Dropped.
+    - 3식당: 소고기국밥, 비빔밥. Kept.
+    - 301동식당: 순두부찌개, 돈까스. Kept.
+    OPEN, a meaning label a person sets: which dishes are noodles. 칼국수 and 냉면 are named in section 10, and 잔치국수 is a 국수.
+  open: true
+
+- id: meals-soup-wanted
+  working: |
+    The tool answers as in meals-two-friends-lunch; its result is not narrowed. "X 먹고 싶어" keeps the Restaurants with an X dish. Of the four,
+    only 3식당 has one, 소고기국밥. 학생회관식당 (제육볶음, 잔치국수), 자하연식당 3층 (칼국수, 비빔냉면), 301동식당 (순두부찌개, 돈까스) have none.
+    OPEN: section 12 asks every reply with Friends to say the Restaurants are ordered by the longest Travel Time. With one card that sentence
+    says nothing, so I do not assert it here. The fixed history of meals-here-after-cards gives this very reply without it, and without the shared
+    time too, which section 12 requires; see notes.md. I keep the shared time in the mentions, as the rule says.
+  open: true
+
+- id: meals-here-after-cards
+  working: |
+    "여기로 하자" follows the single 3식당 card, so it picks 3식당. Section 11: call resolveFriend again, findMealRestaurants again, and proposeQuest.
+    The Proposal is Closed, on no Board, at the Restaurant's Place 제3학생식당, at the Restaurant's Start. From meals-two-friends-lunch: 3식당's Start
+    is 12:30, in the first interval. Capacity 1 + 2 = 3.
+    Sections 14 and the header leave a Restaurant card's own Proposal unscored; this one is the model's proposeQuest from chat, so it is given here.
+    The rules decide no cards for this reply, so `cards`, `mapButtons` and `text` are left out.
+    The history's last reply lacks what section 12 requires of a reply with Friends. It is fixed history and changes no answer here; see notes.md.
+
+- id: meals-no-shared-time
+  working: |
+    Monday, lunch 11:00-14:30. 나: 12:15-14:00. 오지호: 건축설계 11:00-13:00 and 연구실 미팅 13:00-14:30 touch, so he has no Free Time in the window.
+    A menu was collected, so no-menu does not apply. The shared time is empty: no-shared-time.
+    The reply says so plainly and does not name who is busy. `absent` holds his full stored name, as the header's example of a Friend who is not
+    free does; 지호 alone stays allowed. His items and Places are never told.
+
+- id: meals-no-menu
+  working: |
+    Friday 11-06 is within a week. Menus exist for Monday to Thursday only, so no menu was collected for that day: no-menu, which comes first.
+    Shared time would be 11:00-14:30, but it is not judged.
+
+- id: meals-no-restaurant-fits
+  working: |
+    Monday, lunch. 나: 12:15-14:00. 강민재: Classes 11:00-12:30 and 12:30-13:45 touch, then 확률론 14:00, all at 이공계멀티미디어강의동. Shared: 13:45-14:00.
+    강민재 must leave by 14:00 - 1 min - out-travel, from 13:45 + in-travel, so even with no travel he has 14 minutes, under 15. No Restaurant can fit.
+    Worked for each, 강민재's in and out from 이공계:
+    - 학생회관식당: 367 s, 13:51:07, Start 13:55. Out 447 s, 13:51:33. None.
+    - 자하연식당 3층: 586 s, 13:54:46, Start 13:55. Out 690 s, 13:47:30. None.
+    - 301동식당: 668 s, 13:56:08, Start 14:00. Out 577 s, 13:49:23. None.
+    - 3식당: 325 s, 13:50:25, Start 13:55. Out 331 s, 13:53:29. None.
+    - 동원관식당: 1105 s, 14:03:25. Out 1266 s, 13:37:54. None.
+    Shared time and no Restaurant: result found, with shared and no restaurants. The reply says so plainly, with no reason.
+    He counts as free in who-is-free, so his name is not in `absent`; his Classes are. "Without naming who is busy" is held by those.
+
+- id: meals-same-name-asks
+  working: |
+    resolveFriend(서준) answers several: the two 박서준. Section 11: the model then calls findFreeFriends for that meal, reads the departments there and
+    names them in its question. Result as in meals-who-lunch-today; both 박서준 are free, 경영학과 and 물리천문학부.
+    The results' args have no `friends`, the plain call for the meal; a call with the two ids would narrow `friends` and add `shared`.
+
+- id: meals-breakfast
+  working: |
+    Section 11: breakfast is not handled. The model says that lunch and dinner are covered, and no tool is called.
+    The rules do not say which kind of action that reply is. It may just talk, decline, or go on to ask which meal, so all three are accepted.
+
+- id: meals-needs-departure
+  working: |
+    Thursday, lunch 11:00-14:30. A menu exists that day. 나: 논리설계 09:30-10:45 has no Place; 컴퓨터네트워크 13:00-14:15. 이민수 has no Thursday Class.
+    Shared: 11:00-13:00 and 14:15-14:30. The first interval decides, and the before side comes first: its previous item 논리설계 has no Place.
+    So `needs`, side before, and the model asks where the User leaves from.
+
+- id: common-ask-no-day-or-meal
+  working: |
+    Section 11's table: no day or no meal, no tool, ask. The message has neither, so the question asks for them. One mention, since either the day or
+    the meal in the question is a fair way to ask.
+
+- id: common-refuse-friend-classes
+  working: |
+    Section 13: a Friend's Classes and Places are never said, and a request for them is refused. No tool. 이민수's Monday is 미시경제이론 and 거시경제이론 at
+    사회과학관 (16동); none of it may appear.
+
+- id: common-no-timetable-named-classes
+  working: |
+    새내기 has no Timetable. Section 6: two named Classes that are not on that day cannot be found; a User with no Timetable has none, so the model asks
+    for the time. getMyDay is how it learns the day is empty. There is no item id to pass, so findFreeTimeEvents has nothing to take.
+
+- id: common-off-campus-after
+  working: |
+    Thursday gap 14:15-17:00. The previous item 컴퓨터네트워크 has a Place, 제1공학관, so the before side is fine. The next item 과외 is at the label 낙성대역
+    스터디카페, which maps to no Place. So `needs`, side after, and the model asks by when the User must leave.
+
+- id: common-off-campus-answer-none
+  working: |
+    resolvePlace(낙성대역) answers none. Section 8: the model says Travel Times cannot be computed from off campus and asks once where the User enters the
+    campus, such as 정문. findFreeTimeEvents is not required, and a call without departurePlace only gives `needs` again, so no `results` entry.
+
+- id: common-choice-meal-friends
+  working: |
+    Section 11's table: Friends with a day and a meal goes to resolveFriend then findMealRestaurants. Tuesday, lunch 11:00-14:30, asked on Monday.
+    나: 데이터베이스 ends 12:15 at 사회과학관, 운영체제 15:00 at 인문사회계. 이민수: 계량경제학 ends 11:15 at 사회과학관, 국제경제학 16:00 at 사회과학관.
+    Shared: 12:15-14:30. Open with a Place: 학생회관식당, 자하연식당 2층, 예술계식당, 동원관식당. No other Restaurant has Tuesday lunch lines.
+    Both people come from 사회과학관. Everyone's leave-by is the window's end 14:30: all next items are far later.
+    - 학생회관식당: 626 s (11분). 나 12:25:26, Start 12:30. 120.
+    - 자하연식당 2층: 415 s (7분). 나 12:21:55, Start 12:25. 125.
+    - 예술계식당: 360 s (6분). 나 12:21:00, Start 12:25. 125.
+    - 동원관식당: 217 s (4분). 나 12:18:37, Start 12:20. 130.
+    Both have the same minutes, so both are `longest`.
+    Order: 4, 6, 7, 11.
+
+- id: common-choice-meal-window
+  working: |
+    Section 15.1: a time window goes to findMealRestaurants with that window. 12시에서 1시 is 12:00-13:00, inside lunch, so meal is lunch. The window narrows
+    the meal window on both sides, and everyone must leave by 13:00. Shared: 12:15-13:00, since 나 is in class until 12:15.
+    Arrivals as in common-choice-meal-friends, 나 being the later: Starts 12:30, 12:25, 12:25, 12:20. Leave-by 13:00 for both: 30, 35, 35, 40.
+    Order: 4, 6, 7, 11.
+
+- id: common-choice-meal-clock
+  working: |
+    Sections 11 and 15.1: a single clock time goes to proposeQuest. Closed, on no Board, that time, no Place since none is named, 이민수 invited,
+    capacity 1 + 1 = 2. 1시 is 13:00 for a meal. 이민수 is resolved first, for the invitee's id.
+
+- id: common-choice-clock-fits
+  working: |
+    Section 11's table: whether a party fits the User's day goes to findFreeTimeEvents. 수요일 2시 to 3시 반 is 14:00-15:30. It lies inside the gap 13:30-15:50.
+    The gap part is 14:00-15:30, with the previous and next items of the gap. Travel runs from 수요일 점심 모임's Place 학생회관, leaving at 13:30, and to 공모전 작업's
+    Place 중앙도서관 본관 by 15:49:00, not from the window's edges. A candidate must start inside the window and, with an end, end inside it.
+    Fits:
+    - 취업 설명회 14:10-15:10 중앙도서관 본관: 163 s (3분). Ends in the window. Way 0, next 0분.
+    - 자하연 티타임 14:30 자하연식당: 306 s (6분). No end. Way 248 s, leave-by 15:44:52, >= 15:00. It may run past 15:30; only an end must be inside.
+    Left out:
+    - 학생회 토론회 14:30-15:40: ends after 15:30.
+    - 오후 커피 모임 13:40: starts before the window.
+    - 늦은 오후 배드민턴 15:40: starts after the window.
+    OPEN: as in parties-abbreviated-gap-begun. Section 12 asks for when the previous item ends and the next starts, here 13:30 and 15:50, while section 6
+    answers the part inside the window, 14:00 and 15:30. The mentions accept either.
+  open: true
+
+- id: common-choice-clock-search
+  working: |
+    Section 11's table: what is on at a time goes to the chat's searches, with no regard to the User's day. The cards are those that start inside the time asked, 14:00-15:30.
+    Wednesday Quests the Boards show: 오전 테니스 11:00, 오전 코드 리뷰 11:10, 오후 커피 모임 13:40, 자하연 티타임 14:30, 늦은 오후 배드민턴 15:40. 수요일 점심 모임 is held.
+    Only 자하연 티타임 starts inside.
+    Global Events on Wednesday: 가을 사진전 (began Monday), 연구실 공개 세미나 11:30, 취업 설명회 14:10, 학생회 토론회 14:30. 취업 설명회 and 학생회 토론회 start inside.
+    학생회 토론회 ends 15:40, after 15:30, but this path checks only the start, unlike common-choice-clock-fits.
+    The table says "searches", plural, so both are required.
