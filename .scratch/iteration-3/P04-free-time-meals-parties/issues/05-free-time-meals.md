@@ -101,3 +101,12 @@ The app changes only in JavaScript. An item marked **Person** is a person's work
   - A case newly fails when it fails in at least 2 later runs but in at most 1 baseline run. No case may newly fail.
   - Any call to a new tool in those cases is reported, with the tokens and cost per turn of both sets of runs.
 - [ ] **After both scenarios: the P4 suite.** The 40 cases run 3 times. The mean per category and overall is recorded against the thresholds, with the model, the limits, the commit and the date.
+
+## Comments
+
+### Agent usage (2026-10-31)
+
+- **Agent time** (estimate): about 48 minutes in all: about 35 minutes for the implementing subagent, about 8 for its two reviewers, and about 5 for this ticket's share of the session that ran all five tickets. Time spent waiting for a person is not counted.
+- **Tokens** (measured from the agents' transcripts, reviewers included; the running session's share is an estimate, a fifth of its total):
+  - Input: about 190 not cached, about 27,700,000 cache reads and about 1,494,000 cache writes.
+  - Output: about 228,000.
