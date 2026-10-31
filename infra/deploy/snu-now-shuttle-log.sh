@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-10-31  Opus 5.5   prompted by TaeHyun79
+# 2026-11-01  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # Logs the shuttle's vehicles on the Dev Server for `pnpm shuttle:derive` (infra/deploy/README.md, "The shuttle log").
@@ -15,6 +16,8 @@ LOG_DIR=/srv/team/shuttle-log
 
 KEY=shuttle:vehicles
 POLL_SECONDS=5
+# With the poll, under the 15 s between sets: a slower read would no longer see a new set as a jump.
+READ_TIMEOUT_SECONDS=8
 # The main server stores each set with this lifetime.
 LIFETIME_MS=60000
 # One atomic read, so that the lifetime is that of the set read with it.
@@ -36,7 +39,8 @@ is_service_time() {
 }
 
 read_redis() {
-  docker compose --env-file "$ENV_FILE" --file "$CHECKOUT/compose.yaml" --file "$CHECKOUT/compose.deploy.yaml" \
+  timeout "$READ_TIMEOUT_SECONDS" \
+    docker compose --env-file "$ENV_FILE" --file "$CHECKOUT/compose.yaml" --file "$CHECKOUT/compose.deploy.yaml" \
     exec -T redis redis-cli --raw EVAL "$READ_SCRIPT" 1 "$KEY"
 }
 
@@ -60,10 +64,15 @@ record() {
 }
 
 # A new set is a lifetime that jumped back: without one, it only falls. A missing key is an outage, which logs nothing.
+# After a failed read any set counts as new, since R2 drops a repeated one.
 read_once() {
   local read_ms answer lifetime
   read_ms=$(date +%s%3N)
-  answer=$(read_redis) || return 0
+  if ! answer=$(read_redis); then
+    echo 'Could not read Dev Redis' >&2
+    last_lifetime=0
+    return 0
+  fi
   lifetime=${answer%%$'\n'*}
   if [[ ! $lifetime =~ ^[0-9]+$ ]]; then
     last_lifetime=0
@@ -74,6 +83,30 @@ read_once() {
   fi
   last_lifetime=$lifetime
 }
+
+# One read at any hour, written to a scratch folder and printed, so that a fault shows before the first service hour.
+# With the key missing, as it can be outside them, a sample set stands in.
+check() {
+  local answer lifetime vehicles
+  answer=$(read_redis)
+  lifetime=${answer%%$'\n'*}
+  echo "Dev Redis answered, lifetime $lifetime ms"
+  if [[ $lifetime =~ ^[0-9]+$ ]]; then
+    vehicles=${answer#*$'\n'}
+  else
+    vehicles=$(jq --null-input --compact-output --argjson stops "$STOPS" --arg at "$(date +%FT%T%:z)" \
+      '[{carId: "check", stop: {id: "check", name: $stops[0]}, receivedAt: $at}]')
+  fi
+  LOG_DIR=$(mktemp --directory)
+  record "$vehicles" "$(date +%s%3N)"
+  tail --lines=+1 "$LOG_DIR"/*
+  rm -r "$LOG_DIR"
+}
+
+if [[ ${1:-} == --check ]]; then
+  check
+  exit
+fi
 
 while true; do
   if is_service_time; then

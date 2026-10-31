@@ -414,30 +414,40 @@ In `/srv/team/shuttle-log`, for each day:
 
 ### Installing it
 
-Once, from a laptop on the university's network, with a checkout of the branch that holds these files. The installed
-copies live outside the checkout: the Dev Server's checkout follows `development`, which may not hold them, and each
-deploy cleans it. The bootstrap does not install them.
+Once, from a laptop on the university's network, before the first service hour, with a checkout of the branch that
+holds these files. The installed copies live outside the checkout: the Dev Server's checkout follows `development`,
+which may not hold them, and each deploy cleans it. The bootstrap does not install them.
 
 ```bash
 scp infra/deploy/snu-now-shuttle-log.sh infra/deploy/snu-now-shuttle-log.service swpp-b:
 ssh swpp-b
+jq --version
 sudo install --directory --group swpp26-members --mode 2775 /srv/team/shuttle-log
 sudo install --mode 0755 snu-now-shuttle-log.sh /usr/local/bin/
 sudo install --mode 0644 snu-now-shuttle-log.service /etc/systemd/system/
 rm snu-now-shuttle-log.sh snu-now-shuttle-log.service
 sudo systemctl daemon-reload
+sudo /usr/local/bin/snu-now-shuttle-log.sh --check
 sudo systemctl enable --now snu-now-shuttle-log
 ```
 
+`--check` works at any hour. It reads Dev Redis once, writes that set, or a sample set when the key is missing, to a
+scratch folder and prints the files, so that Redis, `jq` and `date` are known to work before the first service hour.
+
 Check it by hand: in service hours, `systemctl status snu-now-shuttle-log` says it is active, and
 `tail /srv/team/shuttle-log/$(TZ=KST-9 date +%F).csv` gains rows, with one set about every 15 seconds in the `.sets.csv`.
+The service stays active when reads fail, so read `journalctl --unit snu-now-shuttle-log` too.
+
+While it logs, merge nothing into `development`: a deploy restarts the server and the worker, and R9 leaves that time
+out.
 
 ### Fetching the days
 
 Once the last day is over, from a laptop on the university's network, stop it and fetch the days, then gzip them:
 
 ```bash
-ssh swpp-b sudo systemctl disable --now snu-now-shuttle-log
+ssh -t swpp-b sudo systemctl disable --now snu-now-shuttle-log
+mkdir -p main-server/eval/shuttle-days
 scp 'swpp-b:/srv/team/shuttle-log/*.csv' main-server/eval/shuttle-days/
 gzip main-server/eval/shuttle-days/*.csv
 ```
