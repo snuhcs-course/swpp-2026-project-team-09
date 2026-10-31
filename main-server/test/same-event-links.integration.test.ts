@@ -216,7 +216,6 @@ describe('Posts that link and fail', () => {
 
     expect((await world.stored(event.id)).needsAdministrator).toBe(true);
   });
-
 });
 
 describe('Posts that link each other, and a failure', () => {
