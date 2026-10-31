@@ -55,7 +55,7 @@ _Avoid_: Pending event, unverified event
 How a Global Event came to be published: by an Administrator, by the rules that read its post, or by a Judgement. Only Administrators see it.
 
 **Judgement**:
-The AI's reading of a Draft: for each session, its time and place, and the lines of the post they were read from. One call reads the Draft's whole Source Post, so a post has one Judgement, tried at most twice. A Judgement publishes the sessions that pass the server's checks and leaves the rest a Draft.
+The AI's reading of a Draft: for each session, its time and place, and the lines of the post they were read from. One call reads the Draft's whole Source Post, so a post has one Judgement, tried at most twice. A Judgement publishes the sessions that pass the server's checks and leaves the rest a Draft. It may read a session as running over a period, such as an exhibition open for several days.
 _Avoid_: AI verification, AI publishing
 
 **Private Event**:
