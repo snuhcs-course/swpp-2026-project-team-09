@@ -1,0 +1,318 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# 공통: asking back, refusals, no Timetable, off-campus items, and both sides of each tool-choice rule for meals and
+# clock times.
+
+- id: common-ask-no-day-or-meal
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 이민수랑 밥 약속 잡아줘
+  expect:
+    actions: [ASK]
+    tools:
+      forbidden: ['*']
+    mapButtons: []
+    text:
+      mentions: [[언제, 날짜, 어느 날, 며칠, 요일, 점심, 저녁]]
+
+- id: common-refuse-friend-classes
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 민수 오늘 무슨 수업 들어? 몇 동에 있어?
+  expect:
+    actions: [REFUSE]
+    tools:
+      forbidden: ['*']
+    mapButtons: []
+    text:
+      absent: [미시경제이론, 거시경제이론, 사회과학관, 16동]
+
+- id: common-no-timetable-named-classes
+  category: free-time-common
+  world: p4
+  repeat: 3
+  asker: 새내기
+  turns:
+    - user: 오늘 멀티코어컴퓨팅이랑 현대암호학개론 사이에 갈 수 있는 파티 있어?
+  expect:
+    actions: [ASK]
+    tools:
+      required: [getMyDay]
+      forbidden: [findFreeTimeEvents, showQuests, showGlobalEvents, proposeQuest]
+    args:
+      getMyDay: { date: '2026-11-02' }
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    mapButtons: []
+    text:
+      mentions: [[몇 시, 시간, 언제]]
+    results:
+      getMyDay:
+        args: { date: '2026-11-02' }
+        result: found
+        items: []
+
+- id: common-off-campus-after
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 목요일 컴퓨터네트워크 끝나고 과외 전까지 갈 수 있는 파티 있어?
+  expect:
+    actions: [ASK]
+    tools:
+      required: [findFreeTimeEvents]
+      allowed: [getMyDay]
+      forbidden: [showQuests, showGlobalEvents, proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      findFreeTimeEvents: { date: '2026-11-05', from: 컴퓨터네트워크 (목), to: 과외 (목) }
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    mapButtons: []
+    text:
+      mentions: [[몇 시, 언제]]
+    results:
+      findFreeTimeEvents:
+        args: { date: '2026-11-05', from: 컴퓨터네트워크 (목), to: 과외 (목) }
+        result: needs
+        needs: { side: after, item: 과외 }
+
+- id: common-off-campus-answer-none
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 목요일 과외 끝나고 갈 수 있는 파티 있어?
+    - assistant:
+        text: 과외가 끝나고 어디서 출발하세요?
+    - user: 낙성대역에서 출발해
+  expect:
+    actions: [ASK]
+    tools:
+      required: [resolvePlace]
+      allowed: [findFreeTimeEvents, getMyDay]
+      forbidden: [showQuests, showGlobalEvents, proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      resolvePlace: { words: 낙성대역 }
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    mapButtons: []
+    text:
+      mentions: [[이동 시간, 계산], [캠퍼스, 교내], [정문, 들어오, 들어가]]
+
+- id: common-choice-meal-friends
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 내일 점심 민수랑 밥
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolveFriend, findMealRestaurants, showRestaurants, showOnMap]
+      allowed: [findFreeFriends, getMenus, getMyDay]
+      forbidden: [proposeQuest, findFreeTimeEvents, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      resolveFriend: { name: 민수 }
+      findMealRestaurants: { date: '2026-11-03', meal: lunch, friends: [이민수] }
+      showOnMap: { layer: dining }
+    cards:
+      - { kind: restaurant, seeds: [동원관식당, 예술계식당, 자하연식당 2층, 학생회관식당], max: 4 }
+    mapButtons: [dining]
+    text:
+      mentions: [['12:15', 12시 15분], ['14:30', 2시 30분, 2시 반], [이동시간, 오래 걷], [순서, 순으로]]
+      absent: [국제경제학, 계량경제학]
+    results:
+      findMealRestaurants:
+        args: { date: '2026-11-03', meal: lunch, friends: [이민수] }
+        result: found
+        shared:
+          - { start: '12:15', end: '14:30' }
+        restaurants:
+          - seed: 동원관식당
+            start: '12:20'
+            eatingMinutes: 130
+            people:
+              - { name: 나, mode: walk, minutes: 4, longest: true }
+              - { name: 이민수, mode: walk, minutes: 4, longest: true }
+          - seed: 예술계식당
+            start: '12:25'
+            eatingMinutes: 125
+            people:
+              - { name: 나, mode: walk, minutes: 6, longest: true }
+              - { name: 이민수, mode: walk, minutes: 6, longest: true }
+          - seed: 자하연식당 2층
+            start: '12:25'
+            eatingMinutes: 125
+            people:
+              - { name: 나, mode: walk, minutes: 7, longest: true }
+              - { name: 이민수, mode: walk, minutes: 7, longest: true }
+          - seed: 학생회관식당
+            start: '12:30'
+            eatingMinutes: 120
+            people:
+              - { name: 나, mode: walk, minutes: 11, longest: true }
+              - { name: 이민수, mode: walk, minutes: 11, longest: true }
+
+- id: common-choice-meal-window
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 내일 12시에서 1시 사이에 민수랑 밥
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolveFriend, findMealRestaurants, showRestaurants, showOnMap]
+      allowed: [findFreeFriends, getMenus, getMyDay]
+      forbidden: [proposeQuest, findFreeTimeEvents, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      resolveFriend: { name: 민수 }
+      findMealRestaurants:
+        { date: '2026-11-03', meal: lunch, friends: [이민수], window: { from: '12:00', to: '13:00' } }
+      showOnMap: { layer: dining }
+    cards:
+      - { kind: restaurant, seeds: [동원관식당, 예술계식당, 자하연식당 2층, 학생회관식당], max: 4 }
+    mapButtons: [dining]
+    text:
+      mentions: [['12:15', 12시 15분], ['13:00', 1시], [이동시간, 오래 걷], [순서, 순으로]]
+      absent: [국제경제학, 계량경제학]
+    results:
+      findMealRestaurants:
+        args: { date: '2026-11-03', meal: lunch, friends: [이민수], window: { from: '12:00', to: '13:00' } }
+        result: found
+        shared:
+          - { start: '12:15', end: '13:00' }
+        restaurants:
+          - seed: 동원관식당
+            start: '12:20'
+            eatingMinutes: 40
+            people:
+              - { name: 나, mode: walk, minutes: 4, longest: true }
+              - { name: 이민수, mode: walk, minutes: 4, longest: true }
+          - seed: 예술계식당
+            start: '12:25'
+            eatingMinutes: 35
+            people:
+              - { name: 나, mode: walk, minutes: 6, longest: true }
+              - { name: 이민수, mode: walk, minutes: 6, longest: true }
+          - seed: 자하연식당 2층
+            start: '12:25'
+            eatingMinutes: 35
+            people:
+              - { name: 나, mode: walk, minutes: 7, longest: true }
+              - { name: 이민수, mode: walk, minutes: 7, longest: true }
+          - seed: 학생회관식당
+            start: '12:30'
+            eatingMinutes: 30
+            people:
+              - { name: 나, mode: walk, minutes: 11, longest: true }
+              - { name: 이민수, mode: walk, minutes: 11, longest: true }
+
+- id: common-choice-meal-clock
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 내일 1시에 민수랑 밥
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [resolveFriend, proposeQuest]
+      forbidden:
+        [
+          findMealRestaurants,
+          showRestaurants,
+          findFreeFriends,
+          findFreeTimeEvents,
+          searchRecruitingQuests,
+          searchGlobalEvents,
+        ]
+    args:
+      resolveFriend: { name: 민수 }
+      proposeQuest: { startsAt: '2026-11-03 13:00', invitees: [이민수], joinPolicy: closed, capacity: 2 }
+    proposal:
+      joinPolicy: closed
+      board: null
+      capacity: 2
+      startsAt: '2026-11-03 13:00'
+      place: null
+      globalEvent: null
+      invitees: [이민수]
+
+- id: common-choice-clock-fits
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 수요일 2시부터 3시 반에 갈 수 있는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeTimeEvents, showQuests, showGlobalEvents]
+      allowed: [getMyDay]
+      forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      findFreeTimeEvents: { date: '2026-11-04', from: '14:00', to: '15:30' }
+    cards:
+      - { kind: quest, seeds: [자하연 티타임], max: 1 }
+      - { kind: globalEvent, seeds: [취업 설명회], max: 1 }
+    mapButtons: []
+    text:
+      mentions:
+        [['14:00', 2시, '13:30', 1시 30분, 1시 반], ['15:30', 3시 30분, 3시 반, '15:50', 3시 50분], [2개, 두 개, 2건]]
+      absent: [학생회 토론회, 오후 커피 모임, 늦은 오후 배드민턴]
+    results:
+      findFreeTimeEvents:
+        args: { date: '2026-11-04', from: '14:00', to: '15:30' }
+        result: found
+        gaps:
+          - { start: '14:00', end: '15:30', before: 수요일 점심 모임, after: 공모전 작업 }
+        candidates:
+          - {
+              kind: globalEvent,
+              seed: 취업 설명회,
+              start: '14:10',
+              end: '15:10',
+              travel: { mode: walk, minutes: 3 },
+              next: { minutes: 0, isClass: false },
+            }
+          - {
+              kind: quest,
+              seed: 자하연 티타임,
+              start: '14:30',
+              end: null,
+              travel: { mode: walk, minutes: 6 },
+              leaveBy: '15:44',
+              endUnknown: true,
+            }
+
+- id: common-choice-clock-search
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 수요일 2시부터 3시 반 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, searchGlobalEvents, showQuests, showGlobalEvents]
+      forbidden: [findFreeTimeEvents, proposeQuest]
+    args:
+      searchRecruitingQuests: { from: '2026-11-04', to: '2026-11-04' }
+      searchGlobalEvents: { from: '2026-11-04', to: '2026-11-04' }
+    cards:
+      - { kind: quest, seeds: [자하연 티타임], max: 1 }
+      - { kind: globalEvent, seeds: [취업 설명회, 학생회 토론회], max: 2 }
+    mapButtons: []
