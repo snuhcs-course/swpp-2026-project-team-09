@@ -58,6 +58,9 @@ How a Global Event came to be published: by an Administrator, by the rules that 
 The AI's reading of a Draft: for each session, its time and place, and the lines of the post they were read from. One call reads the Draft's whole Source Post, so a post has one Judgement, tried at most twice. A Judgement publishes the sessions that pass the server's checks and leaves the rest a Draft.
 _Avoid_: AI verification, AI publishing
 
+**Unsettled post**:
+A Source Post the publication step failed on or has not finished with, or whose Judgement could not be made while a Draft of it waits. Administrators see them on the Collection status page, since a Collection is recorded as a success whatever the step does.
+
 **Private Event**:
 An Event a User registers for their own use, visible only on that User's map.
 _Avoid_: Personal event
