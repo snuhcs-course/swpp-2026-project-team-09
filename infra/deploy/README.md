@@ -153,7 +153,7 @@ servers' own `.env.example` files.
 `MATCH_DB_PASSWORD`, the access-token key pair `ACCESS_TOKEN_PRIVATE_KEY` and `ACCESS_TOKEN_PUBLIC_KEY`, `WORKER_TOKEN`
 and `MATCH_SERVER_TOKEN`. The fixed values: `COMPOSE_PROFILES=demo`, `DEPLOY_STATUS_DIR`, `DEPLOY_APK_DIR`,
 `PUBLIC_URL` (the Dev Server's address), the two Google client IDs, `ANDROID_CERTIFICATE_FINGERPRINTS` (the debug
-key's, which signs the dev APK), `ASSISTANT_MODEL` and `ROUND_INTERVAL_SECONDS`.
+key's, which signs the dev APK), `ASSISTANT_MODEL`, `ROUND_INTERVAL_SECONDS` and `EXTRA_SNU_COLLECTION=off`.
 
 **Filled in by a person**, `CHANGE_ME` until then:
 

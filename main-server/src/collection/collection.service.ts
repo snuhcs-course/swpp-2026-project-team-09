@@ -5,6 +5,7 @@
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -39,6 +40,15 @@ export class CollectionService {
     });
   }
 
+  // In the transaction that stores what the Collection read.
+  async recordSkippedPosts(tx: Prisma.TransactionClient, source: Source, skippedPosts: number): Promise<void> {
+    await tx.collectionStatus.upsert({
+      where: { source },
+      create: { source, lastSkippedPosts: skippedPosts },
+      update: { lastSkippedPosts: skippedPosts },
+    });
+  }
+
   // One for every Source, in the order of the enum, including those never collected.
   async statuses(): Promise<CollectionStatusDto[]> {
     const stored = new Map(
@@ -51,6 +61,7 @@ export class CollectionService {
         lastSucceededAt: status?.lastSucceededAt?.toISOString() ?? null,
         lastFailedAt: status?.lastFailedAt?.toISOString() ?? null,
         lastFailureReason: status?.lastFailureReason ?? null,
+        lastSkippedPosts: status?.lastSkippedPosts ?? null,
       };
     });
   }

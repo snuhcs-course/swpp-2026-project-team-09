@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -45,6 +46,7 @@ function StatusRow({ status }: { status: CollectionStatus }): ReactElement {
           ? '—'
           : `${formatInSeoul(status.lastFailedAt)} · ${status.lastFailureReason ?? 'no reason recorded'}`}
       </td>
+      <td>{status.lastSkippedPosts ?? '—'}</td>
     </tr>
   );
 }
@@ -57,7 +59,8 @@ export default async function CollectionPage(): Promise<ReactElement> {
         <h1>Collection status</h1>
         <p className="text-sm text-zinc-600">
           Each Source with its last successful Collection and its last failure, in Seoul&apos;s time. A Source that
-          failed since it last worked, or never worked, is marked in red.
+          failed since it last worked, or never worked, is marked in red. Skipped counts the posts its last Collection
+          could not reach, for a sign-in or a waiting room, which is not a failure.
         </p>
       </header>
       <div className="card">
@@ -68,6 +71,7 @@ export default async function CollectionPage(): Promise<ReactElement> {
               <th>Status</th>
               <th>Last success</th>
               <th>Last failure</th>
+              <th>Skipped</th>
             </tr>
           </thead>
           <tbody>

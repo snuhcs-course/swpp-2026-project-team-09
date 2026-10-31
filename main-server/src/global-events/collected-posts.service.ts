@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -25,12 +26,12 @@ function isReadByRules(session: CollectedSession, named: PlaceDto | null): boole
 function toDraft(
   id: string,
   { title, description }: CollectedPost,
-  { start, end, place }: CollectedSession,
+  { title: sessionTitle, start, end, place }: CollectedSession,
   named: PlaceDto | null,
 ): Prisma.GlobalEventCreateManyInput {
   return {
     id,
-    title,
+    title: sessionTitle ?? title,
     description,
     startsAt: start?.at ?? null,
     endsAt: end?.at ?? null,
@@ -51,13 +52,16 @@ export class CollectedPostsService {
   // Stores each new post with its sessions. A post already stored is left as it is and its events too, in whatever
   // state, so that an Administrator's edits stay and a discarded post does not come back.
   // A Collection that stopped early is recorded as failed, with the posts it read, so that the two are stored together.
-  async store({ source, collectedAt, failureReason, posts }: EventsCollectedMessage): Promise<void> {
+  async store({ source, collectedAt, failureReason, skippedPosts, posts }: EventsCollectedMessage): Promise<void> {
     const places = await this.places.list();
     await this.prisma.$transaction(async (tx) => {
       if (failureReason === null) {
         await this.collection.recordSuccess(tx, source, new Date(collectedAt));
       } else {
         await this.collection.recordFailure(source, new Date(collectedAt), failureReason, tx);
+      }
+      if (skippedPosts !== undefined) {
+        await this.collection.recordSkippedPosts(tx, source, skippedPosts);
       }
       const created = await tx.sourcePost.createManyAndReturn({
         data: posts.map(({ key, address }) => ({ source, key, address })),
