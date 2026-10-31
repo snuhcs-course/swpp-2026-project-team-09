@@ -18,7 +18,8 @@ const SEEDS = {
 
 const SUITE: Suite = {
   world: 'p5',
-  tags: { L: ['s1'], E: ['s2'], J10: ['j1'] },
+  tags: { L: ['s1'], E: ['s2'], J10: ['j1', 'j2'] },
+  j10StatesDay: ['j2'],
   thresholds: [
     { metric: 'E2', kind: 'floor', comparator: '>=', value: 0.7 },
     { metric: 'E5', kind: 'target', comparator: '=', value: 1 },
@@ -48,7 +49,7 @@ interface RunWritten {
 }
 
 function runOf({ id, category = 'search', seeds, shown, repetition = 1 }: RunWritten): object {
-  const expect = {
+  const written = {
     actions: ['TOOL'],
     cards: [{ kind: 'quest', seeds, max: seeds.length }],
   };
@@ -58,7 +59,7 @@ function runOf({ id, category = 'search', seeds, shown, repetition = 1 }: RunWri
     kind: 'single',
     repetition,
     knownFailure: null,
-    expect,
+    expect: written,
     turnExpects: [null],
     turns: [shown],
   };
@@ -111,8 +112,30 @@ describe('A threshold', () => {
   });
 });
 
+describe('J8', () => {
+  it('counts a reply that says the asker joined, however it is spaced', () => {
+    const said = turn({ text: '참여 했어요', cards: [questCard('가')] });
+    const { metrics } = report([
+      { id: 'j1', category: 'join-or-recruit', seeds: ['가'], shown: said },
+      { id: 'j1', category: 'join-or-recruit', seeds: ['가'], shown: showing(['가']), repetition: 2 },
+    ]);
+
+    expect(metrics.find(({ metric }) => metric === 'J8')).toMatchObject({ k: 1, n: 2 });
+  });
+});
+
 describe('J10', () => {
   const seeds = ['가', '나'];
+
+  it("does not count the period of a day the case states, but counts another's", () => {
+    const day = { from: '2026-11-06', to: '2026-11-06' };
+    const { metrics } = report([
+      { id: 'j2', category: 'join-or-recruit', seeds, shown: showing(['가'], day) },
+      { id: 'j1', category: 'join-or-recruit', seeds, shown: showing(['가'], day) },
+    ]);
+
+    expect(metrics.find(({ metric }) => metric === 'J10')).toMatchObject({ k: 1, n: 2 });
+  });
 
   it('counts a run that missed a card with a condition the User did not state', () => {
     const { metrics } = report([

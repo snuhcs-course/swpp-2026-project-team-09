@@ -42,6 +42,6 @@ export function p5Section(
         ratio(subset.exact),
       ]),
     ),
-    `Cases that passed all their runs (J5): ${ratio(stable)}.`,
+    `Join cases that passed all their runs (J5): ${ratio(stable)}.`,
   ];
 }

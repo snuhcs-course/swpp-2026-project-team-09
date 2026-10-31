@@ -54,12 +54,14 @@ distances:
   - { between: [문화관, 예술복합연구동], metres: 187 }
   - { between: [체육관, 미술관], metres: 267 }
 
-# How far a Quest's point on the map is from those Places, in whole metres. A test checks it.
+# How far a Quest's point on the map, or a Global Event's, is from those Places, in whole metres. A test checks it.
 pointDistances:
   - { label: 공대 앞 벤치, place: 제1공학관, metres: 18 }
   - { label: 공대 앞 벤치, place: 제2공학관, metres: 159 }
   - { label: 공대 앞 벤치, place: 정밀기계연구소실험연구동, metres: 99 }
   - { label: 공대 앞 벤치, place: 차세대자동차신기술연구소, metres: 166 }
+  - { label: 공룡 화석 전시, place: 학생회관, metres: 125 }
+  - { label: 공룡 화석 전시, place: 문화관, metres: 258 }
 
 # Published Global Events. `ends` null: no end is known.
 globalEvents:

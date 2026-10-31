@@ -1976,8 +1976,9 @@ of the 3 runs. `test/eval-p4-cases.integration.test.ts` checks the set, the fixt
 `eval/p5/world.yaml`, with the clock at 2026-11-02 (월) 14:05. `eval/p5/rules.md` states the judgement in prose, and
 `eval/p5/suite.yaml` commits the thresholds of evaluations C and D, each case's subset, the superseded P19 cases and who
 drafted and reviewed the labels. Do not run it with the real model before C0, and rehearse only with words outside the
-set, keeping no result (metrics document, 4.1). `test/eval-p5-cases.integration.test.ts` checks the set and the world. A scorecard of the suite adds each metric with its
-pass or fail, and each subset's cards summed over the repetitions beside the mean over its cases (`eval/p5/report.ts`).
+set, keeping no result (metrics document, 4.1). `test/eval-p5-cases.integration.test.ts` checks the set and the world.
+A scorecard of the suite adds each metric with its pass or fail, and each subset's cards summed over the repetitions
+beside the mean over its cases (`eval/p5/report.ts`).
 
 #### Scoring
 

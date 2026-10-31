@@ -8,7 +8,8 @@ import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 import { z } from 'zod';
 
-// The shape of eval/p5/world.yaml, which holds the P05 world by seed name, and what reads it. eval/p5/world.ts seeds it.
+// The shape of eval/p5/world.yaml, which holds the P05 world by seed name, and what reads it. eval/p5/world.ts seeds
+// it.
 
 const profileSchema = z.strictObject({ name: z.string(), department: z.string() });
 

@@ -12,6 +12,7 @@ import { parse } from 'yaml';
 import { z } from 'zod';
 import { casesIn, loadCases, WORLD_CLOCKS } from '../eval/cases.ts';
 import { FIXED_SET } from '../eval/fixed-set.ts';
+import { caseOfTag, tagSchema } from '../eval/p5/report.ts';
 import { seedP5World } from '../eval/p5/world.ts';
 import { p5WorldData } from '../eval/p5/world-data.ts';
 import { type World } from '../eval/world.ts';
@@ -46,10 +47,7 @@ const thresholdSchema = z.strictObject({
 
 const suiteSchema = z.looseObject({
   world: z.literal('p5'),
-  tags: z.record(
-    z.string(),
-    z.array(z.union([z.string(), z.strictObject({ case: z.string(), seed: z.string().nullable() })])),
-  ),
+  tags: z.record(z.string(), z.array(tagSchema)),
   superseded: z.array(z.strictObject({ case: z.string(), heldBy: z.string() })),
   thresholds: z.array(thresholdSchema),
 });
@@ -107,7 +105,10 @@ function placeDistances(stored: readonly StoredPlace[]): object[] {
 // How far each listed point is from each listed Place.
 function pointDistances(stored: readonly StoredPlace[]): object[] {
   const named = placesOf(stored);
-  const points = data.quests.flatMap((quest) => ('place' in quest && 'latitude' in quest.place ? [quest.place] : []));
+  const points = [
+    ...data.quests.flatMap((quest) => ('place' in quest && 'latitude' in quest.place ? [quest.place] : [])),
+    ...data.globalEvents.map(({ title, point }) => ({ label: title, ...point })),
+  ];
   return data.pointDistances.map(({ label, place: name }) => {
     const point = points.find((one) => one.label === label);
     const place = named.find((one) => one.name === name)?.place;
@@ -133,10 +134,18 @@ describe('The P05 suite', () => {
   it('tags only cases it holds, and every search case with a subset', () => {
     const tagged = Object.values(suite.tags)
       .flat()
-      .map((tag) => (typeof tag === 'string' ? tag : tag.case));
+      .map((tag) => caseOfTag(tag));
 
     expect(tagged.filter((id) => !ids.includes(id))).toEqual([]);
     expect(ids.filter((id) => id.startsWith('search-') && !tagged.includes(id))).toEqual([]);
+  });
+
+  it('expects exact sets of at most 20 cards', () => {
+    const groups = cases.flatMap(({ id, expect: written }) =>
+      (written?.cards ?? []).map(({ kind, seeds, max }) => ({ id, kind, seeds: seeds.length, max })),
+    );
+
+    expect(groups.filter(({ seeds, max }) => max !== seeds || seeds > 20)).toEqual([]);
   });
 
   it('commits a floor or target for every metric, each once', () => {

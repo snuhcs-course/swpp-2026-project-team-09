@@ -16,9 +16,10 @@ import { withAccessToken } from '../../test/sign-in.js';
 import { type Seeded, seedOf, type World } from '../world.ts';
 import { type AskersQuest, type OthersQuest, type P5WorldData, p5WorldData } from './world-data.ts';
 
-// The P05 world (P05 spec, "The P05 eval suite"): eval/p5/world.yaml, seeded with the test helpers into a fresh database
-// beside the shared Places seed. What the answers were worked from is that file, so nothing here decides anything: it
-// only stores what the file says, as the app would. Its Quests may start before the run's clock, which the app allows.
+// The P05 world (P05 spec, "The P05 eval suite"): eval/p5/world.yaml, seeded with the test helpers into a fresh
+// database beside the shared Places seed. What the answers were worked from is that file, so nothing here decides
+// anything: it only stores what the file says, as the app would. Its Quests may start before the run's clock, which the
+// app allows.
 
 type Seeds = Record<string, Seeded>;
 
@@ -192,8 +193,11 @@ export async function seedP5World(app: INestApplication<Server>, databaseUrl: st
     await seedPlaces(prisma, data, seeds);
     await seedEvents(prisma, data, seeds);
     const shared = seedOf(seeds, 'globalEvent', data.sharedQuest);
-    const other = rotation(people, -1 + people.length, 1)[0]?.id ?? '';
-    await storeSharedQuest(prisma, { id: shared.id, title: shared.name }, [asker.id, other]);
+    const other = people.at(-1);
+    if (other === undefined) {
+      throw new Error('The world holds no people');
+    }
+    await storeSharedQuest(prisma, { id: shared.id, title: shared.name }, [asker.id, other.id]);
     await seedAskersQuests(app, prisma, data.heldByAsker, { asker, people }, seeds);
     await seedOthersQuests(app, prisma, data, { asker, people }, seeds);
   } finally {

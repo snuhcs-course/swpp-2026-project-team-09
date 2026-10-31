@@ -46,7 +46,7 @@ On a request to recruit ("모집해 줘", "구해 줘", "같이 갈 사람"), th
 
 1. **Only what the asker stated is compared.** With an activity and no day, the next seven days from today. With a day and no activity, every activity that day. No Place, time or Board that the asker did not name.
 2. **Time.** Section 2.
-3. **Place.** A named Place matches Quests at that Place or within about 300 m of it, by the distances in the world. A Quest with words only is left out when a Place is named.
+3. **Place.** A named Place matches Quests at that Place or within about 300 m of it, by the distances in the world. A Global Event's position is the point the world gives it. A Quest with words only is left out when a Place is named.
 4. **Same activity.** Words of the same meaning match (민턴, 배드민턴). Words that only look alike do not (배민, 배드민턴). A Quest for something else at the same time does not match.
 5. **People.** A number the asker names is the capacity with the asker: "4명" and "나 포함 4명" ask for capacity 4, and only Quests of that capacity match. With no number, Quests of any capacity with room left match.
 6. **A named Global Event.** When the request names a Global Event, or points at one just shown, the candidates are that event's Quests, with no time or Place comparison.
@@ -69,7 +69,7 @@ On a question that looks for events or Quests ("있어?", "찾아줘"), nothing 
 ## 6. A Proposal's fields
 
 - **Time:** the time the asker named, in Korea.
-- **Board:** 식사 `meal`, 커리어와 스터디 `career`, 운동과 취미 `hobby`, 공연과 전시 `show`.
+- **Board:** 식사 `meal`, 진로 `career` (스터디 포함), 취미 `hobby` (운동 포함), 공연 `show` (전시 포함).
 - **Capacity:** the number with the asker, as in section 4.
 - **Join Policy:** `open`, or `approval` when the asker says they will approve each one.
 - **Global Event:** the event, when the request names one. Otherwise none.
@@ -84,6 +84,6 @@ For each case: the action (`join`, `propose`, `ask`, `show` or `none`), the exac
 (The owner settles these in review. Each is listed with the answer used.)
 
 - A search with no day takes the next seven days from today, as rule 1 of section 4 does. The spec says this only for recruiting.
-- A window's start and a part of the day's start are included (section 2). The world puts nothing exactly on any other edge.
+- A window's start and a part of the day's start are included (section 2), and a named time's ±30 minutes holds exactly 30 minutes. The world puts nothing exactly on any other edge.
 - A Quest the asker already holds is never offered (section 3), since the Boards do not list it.
 - A Proposal's Board follows section 6.

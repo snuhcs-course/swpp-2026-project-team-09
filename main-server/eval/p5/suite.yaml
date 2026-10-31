@@ -62,7 +62,10 @@ superseded:
   - { case: making-parties-for-event, heldBy: join-35 }
   - { case: making-parties-open-dinner, heldBy: join-01 }
   - { case: making-parties-approval-tennis, heldBy: join-30 }
-  - { case: ask-missing-fields-in-one-question, heldBy: join-28 }
+  - { case: ask-missing-fields-in-one-question, heldBy: join-37 }
+
+# J10's cases that state a day: there a period of that day is no unstated condition.
+j10StatesDay: [join-24]
 
 # Which cases count toward each metric and subset. Seeds are added beside the case ids with the answers, as (case id,
 # seed): the answers stay out of the repository until the second labeller is done.
