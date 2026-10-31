@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -60,6 +61,8 @@ interface PostCardProps {
   onHide?: (post: PostView) => void;
   // Opens the post, from a press of the card or of `자세히 ›`. Left out, `자세히 ›` alone opens it with `openPost`.
   onOpen?: (post: PostView) => void;
+  // What its owner adds under the time and the place.
+  children?: ReactNode;
 }
 
 interface CardProps {
@@ -90,7 +93,7 @@ function Card({ post, onOpen, children }: CardProps): ReactElement {
 }
 
 // A card of 찾기's 모집 중인 파티: its photo beside the title, the members' faces, `관심 없음` and `참여하기`.
-export function PostCard({ post, onJoin, onHide, onOpen }: PostCardProps): ReactElement {
+export function PostCard({ post, onJoin, onHide, onOpen, children }: PostCardProps): ReactElement {
   return (
     <Card onOpen={onOpen} post={post}>
       <PostBadges post={post} />
@@ -109,6 +112,7 @@ export function PostCard({ post, onJoin, onHide, onOpen }: PostCardProps): React
         <Line icon="clock">{post.time}</Line>
         <Line icon="pin">{post.place}</Line>
       </View>
+      {children}
       <View style={styles.people}>
         <Faces faces={post.faces} />
         <Text numberOfLines={1} style={styles.members}>
@@ -134,7 +138,7 @@ export function PostCard({ post, onJoin, onHide, onOpen }: PostCardProps): React
   );
 }
 
-function CardButtons({ post, onJoin, onHide }: Omit<PostCardProps, 'onOpen'>): ReactElement {
+function CardButtons({ post, onJoin, onHide }: Omit<PostCardProps, 'onOpen' | 'children'>): ReactElement {
   return (
     <View style={styles.buttons}>
       {onHide === undefined ? null : (

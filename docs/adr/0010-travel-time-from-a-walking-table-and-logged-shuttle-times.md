@@ -30,3 +30,4 @@ Travel Time is the time from one Place to another, on foot or by the circular sh
 - `pnpm walking:build --sensitivity` moves every pin and shows the Places whose Travel Times move most, so that the table's fragile Places are known.
 - The walking table is measured against stopwatch walks and a baseline, and the shuttle times against held-out days. Their thresholds were frozen before any walk or collection.
 - Days map to weekdays only, so the shuttle treats holidays and vacations as weekdays.
+- A leave-by time's out-travel departs at the next item's start − 1 minute − the walking time, so `TravelProvider` answers the way on foot alone as well as the chosen one.

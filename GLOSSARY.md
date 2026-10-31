@@ -109,6 +109,20 @@ _Avoid_: Appointment
 Finding companions for Users who want them for the same Global Event, by grouping them into a new Shared Quest or by placing one into an Open Quest for that event. They open a Party themselves when the time comes.
 _Avoid_: Auto-join
 
+### The User's day
+
+**Timetable**:
+The Classes of a User, kept from semester to semester until the User resets it.
+_Avoid_: Schedule
+
+**Class**:
+A course of a User's Timetable, with the times it meets each week and, for each time, a Place if one is known.
+_Avoid_: Lecture
+
+**Free Time**:
+A stretch of a User's day not taken by a Class or by a timed Sub Quest of a Quest they hold. The screens call it "공강".
+_Avoid_: Spare time
+
 ### Parties
 
 **Party**:
@@ -163,6 +177,18 @@ _Avoid_: Site, provider
 **Source Post**:
 One post on a Source that a Global Event was read from, such as an SNU Now notice or an extra.snu program. A Global Event can have several, when more than one Source posted the same event.
 _Avoid_: Original, article, duplicate
+
+**Restaurant**:
+A dining place whose daily menu a Source publishes.
+_Avoid_: Cafeteria
+
+**Travel Time**:
+The time from one Place to another, on foot or by the circular shuttle.
+_Avoid_: ETA, distance
+
+**Shuttle Stop**:
+One of the operator's stops on the route of the circular shuttle.
+_Avoid_: Bus stop
 
 **Collection**:
 One run of the worker server reading a Source and handing what it read to the main server. A Source records its last successful Collection and its last failure.
