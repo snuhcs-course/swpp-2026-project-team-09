@@ -6,6 +6,7 @@
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -75,7 +76,12 @@ describe('A failed Collection', () => {
       lastFailureReason: 'The page did not answer within 5 seconds',
     });
     expect((await getMenus(app, accessToken, date)).body).toEqual([
-      { name: '아워홈(901동)', collectedAt: '2026-10-31T12:00:00.000Z', meals: [servedLunch] },
+      {
+        name: '아워홈(901동)',
+        placeId: expect.any(String) as unknown,
+        collectedAt: '2026-10-31T12:00:00.000Z',
+        meals: [servedLunch],
+      },
     ]);
   });
 

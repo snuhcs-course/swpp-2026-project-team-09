@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -138,7 +139,7 @@ describe('the restaurants of a day', () => {
     expect(screen.queryByText('9,900원')).toBeNull();
   });
 
-  it('lists the restaurants in the order of the server, with their Place where the table has one', async () => {
+  it('lists the restaurants in the order of the server, with their Place where the server gives one', async () => {
     await openFromStack();
 
     const order = [

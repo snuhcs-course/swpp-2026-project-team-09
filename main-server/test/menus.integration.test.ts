@@ -5,6 +5,7 @@
  * 2026-10-02  Opus 5.5   prompted by fyoon46
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -12,6 +13,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
+import { z } from 'zod';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { daysOf, getMenus, menusMessage, restaurant, servedLunch } from './menus.js';
 import { signIn } from './sign-in.js';
@@ -35,8 +37,12 @@ afterAll(async () => {
 
 const newDay = daysOf('2026-11');
 
-function menusOn(date: string): request.Test {
-  return getMenus(app, accessToken, date);
+// The answer without each restaurant's Place, which restaurant-places.integration.test.ts checks.
+async function menusOn(date: string): Promise<{ status: number; body: unknown }> {
+  const response = await getMenus(app, accessToken, date);
+  const served = z.array(z.looseObject({})).safeParse(response.body);
+  const rows = served.data?.map((row) => Object.entries(row).filter(([field]) => field !== 'placeId'));
+  return { status: response.status, body: rows?.map((row) => Object.fromEntries(row)) ?? (response.body as unknown) };
 }
 
 // A cell of several kinds of line, as the Co-op page writes them, across the three meals.

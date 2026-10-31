@@ -3,12 +3,14 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { menusQuery, placesQuery } from '@/api/queries';
 import type { ScreenData } from '@/api/screen-data';
+import type { Place } from '@/api/types';
 import { now } from '@/clock';
 import type { CardView } from '@/features/map/adapter';
 import { useLayerFailureToast } from '@/features/map/use-layer-failure';
@@ -36,9 +38,14 @@ export function useDiningCards(on: boolean): readonly CardView[] {
   );
 }
 
-// One day's menus for the menu panel, "2026-10-06", asked once per day while the cache keeps it.
+const NO_PLACES: readonly Place[] = [];
+
+// One day's menus for the menu panel, "2026-10-06", asked once per day while the cache keeps it. Without the Places
+// yet, or after they failed, a restaurant has no "N동".
 export function useMenuDay(date: string): ScreenData<MenuDayView> {
-  const { data, isPending, isError, refetch } = useQuery({ ...menusQuery(date), select: toMenuDay });
+  const { data: menus, isPending, isError, refetch } = useQuery(menusQuery(date));
+  const places = useQuery(placesQuery).data ?? NO_PLACES;
+  const data = useMemo(() => (menus === undefined ? undefined : toMenuDay(menus, places)), [menus, places]);
   return {
     data,
     isPending,

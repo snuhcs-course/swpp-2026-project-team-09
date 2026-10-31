@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // --- Menus (GET /menus?date=) ---
@@ -22,6 +23,8 @@ export interface MenuLine {
 // the page lists with empty cells has none.
 export interface RestaurantMenus {
   name: string;
+  // Its Place; null for a restaurant the server's seed does not hold.
+  placeId: string | null;
   collectedAt: string;
   meals: { meal: Meal; lines: MenuLine[] }[];
 }

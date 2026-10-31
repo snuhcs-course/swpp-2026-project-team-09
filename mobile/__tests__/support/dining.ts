@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { MenuLine, RestaurantMenus } from '@/api/menu-types';
@@ -25,28 +26,46 @@ export const NO_PRICE: MenuLine = { text: '한입버거 : 9,900원 / 12,400원',
 export function restaurant(
   name: string,
   meals: RestaurantMenus['meals'],
+  placeId: string | null = null,
   collectedAt = '2026-10-05T20:00:00.000Z',
 ): RestaurantMenus {
-  return { name, collectedAt, meals };
+  return { name, placeId, collectedAt, meals };
 }
 
 export const TODAY_MENUS: RestaurantMenus[] = [
-  restaurant('302동식당', [{ meal: 'lunch', lines: [BUFFET, STEW, HOURS] }]),
+  restaurant('302동식당', [{ meal: 'lunch', lines: [BUFFET, STEW, HOURS] }], 'p302'),
   restaurant('교수회관식당', [{ meal: 'lunch', lines: [NO_PRICE] }]),
   // Collected the evening before, the oldest of the day.
-  restaurant('수의대식당', [{ meal: 'lunch', lines: [{ ...STEW, text: '카레라이스' }] }], '2026-10-05T11:00:00.000Z'),
-  restaurant('예술계식당', []),
-  restaurant('자하연식당 2층', [
-    {
-      meal: 'lunch',
-      lines: [{ ...NOODLES, text: '나가사키꼬치어묵 : 5,500원', name: '나가사키꼬치어묵', price: 5500 }],
-    },
-  ]),
-  restaurant('자하연식당 3층', [{ meal: 'dinner', lines: [{ ...HOURS, text: '※ 저녁 단체예약문의: 02-880-7889' }] }]),
-  restaurant('학생회관식당', [
-    { meal: 'lunch', lines: [NOODLES] },
-    { meal: 'dinner', lines: [{ ...NOODLES, text: '갈비구이 : 6,000원', name: '갈비구이' }] },
-  ]),
+  restaurant(
+    '수의대식당',
+    [{ meal: 'lunch', lines: [{ ...STEW, text: '카레라이스' }] }],
+    'p85',
+    '2026-10-05T11:00:00.000Z',
+  ),
+  restaurant('예술계식당', [], 'p74'),
+  restaurant(
+    '자하연식당 2층',
+    [
+      {
+        meal: 'lunch',
+        lines: [{ ...NOODLES, text: '나가사키꼬치어묵 : 5,500원', name: '나가사키꼬치어묵', price: 5500 }],
+      },
+    ],
+    'p109',
+  ),
+  restaurant(
+    '자하연식당 3층',
+    [{ meal: 'dinner', lines: [{ ...HOURS, text: '※ 저녁 단체예약문의: 02-880-7889' }] }],
+    'p109',
+  ),
+  restaurant(
+    '학생회관식당',
+    [
+      { meal: 'lunch', lines: [NOODLES] },
+      { meal: 'dinner', lines: [{ ...NOODLES, text: '갈비구이 : 6,000원', name: '갈비구이' }] },
+    ],
+    'p63',
+  ),
 ];
 
 function place(id: string, number: string | null, name: string, latitude: number, longitude: number): Place {

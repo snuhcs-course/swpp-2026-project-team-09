@@ -2,11 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type Card, type CardKind, CARDS_MAX, type Presented } from '../feature.js';
 
-function idOf(card: Card): string {
+export function idOf(card: Card): string {
+  if (card.kind === 'restaurant') {
+    return card.restaurant.key;
+  }
   return card.kind === 'quest' ? card.quest.id : card.globalEvent.id;
 }
 

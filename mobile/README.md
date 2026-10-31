@@ -619,6 +619,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     answer, it says "지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요" with "다시 시도", while it is the last bubble,
     which sends the User's message again in its place. Once the User's messages of the day are used up (429), it says
     "오늘은 여기까지 답할 수 있어요. 내일 다시 물어봐 주세요", without "다시 시도".
+  - A Restaurant card of a 공강에 밥 answer (`chat-restaurant-cards.tsx`) shows the name, "63동 · 오늘 점심", "식사 가능 시간
+    N분", the first two menu lines with "외 N개", a chip per person, "{name} {도보|셔틀} N분" or "{name} —", with the
+    longest highlighted, and 파티 만들기, which opens the party form filled from the card's Proposal as 수정 does, with
+    no model call.
   - The conversation lives in memory in `useChat()` (`src/features/assistant/use-chat.ts`), held by the main screen,
     so closing the sheet keeps it while the app runs and restarting the app loses it. "새 대화" also drops a reply
     still on its way. The server stores none of it.
@@ -636,7 +640,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   open. The layers start off when the app starts and stay as they are while another tab is shown.
 - **The 식당 layer** (`src/features/dining/`, the `MapDining` frame). Turning it on fetches today's menus, a day of
   Korea's calendar, and the Places, every time; failing either shows no pins and says "식당 정보를 불러오지
-  못했어요". A pin stands on the Place of each restaurant of the restaurant → Place table (see "Data") that has a
+  못했어요". A pin stands on the Place `GET /menus` gives each restaurant that has a
   line today; restaurants that share a Place share it. A pin is the frame's single 학식 mark (`MapRestaurant`), with
   the restaurant's name under it from the `names` level, or "{first} 외 {n}곳". Its card says "식당 · 학식 · 63동",
   the restaurant's name (the Place's when several share it), the Place, and the meals each restaurant serves today
@@ -789,7 +793,7 @@ on the meal served next by Korea's clock: 아침 before 10:00, 점심 from 10:00
 20:00 (`NEXT_MEAL_FROM` in the dining adapter). Its address may name the day, the meal and a restaurant
 (`/menus?date=2026-10-06&meal=lunch&restaurant=학생회관식당`), whose section is then scrolled to the top. A day is
 fetched once when it is chosen, and kept; a meal fetches nothing. The restaurants are cards in the server's order,
-the name with "{number}동" where the table places it, and the chosen meal's lines in the page's order (ADR 0001): a
+the name with "{number}동" of the Place `GET /menus` gives it, and the chosen meal's lines in the page's order (ADR 0001): a
 line with a name and a price as a row with the price at the right ("6,000원"), a heading in 14/700, a note in 13
 muted, any other line as written; a restaurant without lines for the meal says "운영하지 않아요". An empty day says
 "이날 올라온 메뉴가 없어요"; the shared loading and error states cover the rest.
@@ -1058,12 +1062,6 @@ User's Friend ID is `7KX2M9QD`; `/invite/from-yujian` opens a link the User can 
 Session without a renewal and shows the notice "다른 기기에서 로그인했어요" with the sign-in screen; a 403 with
 `ONBOARDING_REQUIRED` shows Onboarding with the suggestion it carries (`src/session/session-events.ts`, which
 `SessionProvider` follows).
-
-**The restaurant → Place table** (`src/features/dining/restaurant-places.ts`) gives the number of the Place of each
-restaurant whose menus are collected, by the restaurant's name as `GET /menus` gives it. A restaurant missing from
-it, or whose number `GET /places` does not answer, has no pin and is still in the menu panel. When the Co-op renames
-or moves a restaurant, correct its row there, with the name exactly as the worker sends it and the number as the
-main server's Places have it (`main-server/seed/`).
 
 The User's own id is the access token's subject, and the app's time is the phone's. Where the answers are mocks, the
 User is the mock's `me` and the time is the moment the wireframe shows, 1 October 2026 at 13:37 (`src/clock.ts`), so

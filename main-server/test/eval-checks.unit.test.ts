@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { caseSchema } from '../eval/cases.ts';
@@ -201,6 +203,45 @@ describe('The map buttons and the text', () => {
       'text.mentions',
     ]);
   });
+
+  it('do not match a word that starts with a digit inside a longer number', () => {
+    const trace = turn({ text: '12시 15분까지 18개 있어요.' });
+
+    expect(failedChecks(trace, { actions: ['ASK'], text: { mentions: ['2시', '8개'] } })).toEqual([
+      'action',
+      'text.mentions',
+    ]);
+    expect(failedChecks(trace, { actions: ['ASK'], text: { mentions: ['12시', '15분', '18개'] } })).toEqual([]);
+  });
+});
+
+describe('The words the text must not hold', () => {
+  const trace = turn({ steps: [[menusFound]], text: '이민수, 김 지은 님이 돼요.' });
+
+  it('fail when one is there, spaces aside', () => {
+    expect(failedChecks(trace, { actions: ['TOOL'], text: { absent: ['김지은'] } })).toEqual(['text.absent']);
+  });
+
+  it('pass on a word that starts with a digit inside a longer number', () => {
+    expect(
+      failedChecks(turn({ steps: [[menusFound]], text: '116동이에요.' }), {
+        actions: ['TOOL'],
+        text: { absent: ['16동'] },
+      }),
+    ).toEqual([]);
+  });
+
+  it('pass when none is, with no mentions asked', () => {
+    expect(failedChecks(trace, { actions: ['TOOL'], text: { absent: ['오지호'] } })).toEqual([]);
+  });
+
+  it('do not stand in for the mentions that say a lookup found nothing', () => {
+    const none = call('getMenus', {}, { result: 'none', reason: '메뉴가 없어요' });
+
+    expect(
+      failedChecks(turn({ steps: [[none]], text: '없어요' }), { actions: ['TOOL'], text: { absent: ['x'] } }),
+    ).toEqual(['action']);
+  });
 });
 
 describe('An expectation', () => {
@@ -214,6 +255,9 @@ describe('An expectation', () => {
     { actions: ['TOOL'], cards: [{ kind: 'quest', min: 3, max: 1 }] },
     { actions: ['TOOL'], mapButtons: ['library'] },
     { actions: ['TOOL'], text: { mentions: [[]] } },
+    { actions: ['TOOL'], text: {} },
+    { actions: ['TOOL'], text: { absent: [] } },
+    { actions: ['ASK'], text: { absent: ['오지호'] } },
     { actions: ['TOOL'], unknown: 1 },
   ])('is refused when it is %j', (wrong) => {
     expect(expectSchema.safeParse(wrong).success).toBe(false);

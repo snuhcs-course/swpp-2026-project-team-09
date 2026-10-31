@@ -8,4 +8,4 @@ We chose this over a structured model of dishes with prices, which is what the S
 
 - The app (P15) shows a dish that has a name and a price as a row with both, as Siksha does, and every other line as its text. It does not group by corner or compute a meal's cheapest dish.
 - A kind is read from the line alone. A dish listed under a heading with a set price has no kind and no price of its own.
-- Hours are text, so the app cannot say whether a restaurant is open now.
+- Hours are text, so the app cannot say whether a restaurant is open now. [ADR 0011](0011-a-restaurant-is-open-when-a-meal-cell-has-a-line-that-is-not-a-note.md) adds what the lines can say: whether a meal is served that day.

@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
@@ -39,6 +40,10 @@ export interface RunLimits {
 // User, who can send the message again instead. Were it ever retried, the retries would stay within `timeoutMs`,
 // which also aborts them.
 const MAX_RETRIES = 0;
+
+// Course names, Friends' names and per-Friend results reach the provider, so no provider that collects data is used.
+// It adds no ZDR restriction, which could shrink the providers available.
+const PROVIDER_OPTIONS = { openrouter: { provider: { data_collection: 'deny' } } };
 
 // A run that used every step on tools and never answered.
 export class NoAnswerError extends Error {
@@ -141,6 +146,8 @@ export async function runFeature(
     found: new FoundIds(),
     shown: lastShown(messages),
     presented: { mapButtons: [], cards: [], proposal: null },
+    judged: new Map(),
+    restaurants: new Map(),
   };
   const { text, finishReason } = await generateText({
     model,
@@ -150,6 +157,7 @@ export async function runFeature(
     stopWhen: stepCountIs(maxSteps),
     maxRetries: MAX_RETRIES,
     maxOutputTokens,
+    providerOptions: PROVIDER_OPTIONS,
     timeout: { totalMs: timeoutMs },
     onStepEnd:
       observer === undefined
@@ -171,7 +179,7 @@ export async function runFeature(
   if (finishReason === 'tool-calls' || text.trim() === '') {
     throw new NoAnswerError(`No answer within ${maxSteps} steps`);
   }
-  return { text, ...context.presented };
+  return { text, ...context.presented, cards: feature.cardsAfterRun?.(context) ?? context.presented.cards };
 }
 
 // Why a run failed, for the server's log: the error's name and, from the model's provider, the HTTP status. Never an

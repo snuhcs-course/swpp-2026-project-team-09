@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -17,6 +18,14 @@ export const ASSISTANT_MESSAGE_MAX = 4000;
 // oldest messages to stay within it.
 export const MESSAGES_TOTAL_MAX = 24_000;
 
+// A Restaurant's key is its name, not a UUID.
+const RESTAURANT_KEY_MAX = 200;
+
+const cardReference = z.union([
+  z.strictObject({ kind: z.enum(['quest', 'globalEvent'] satisfies CardKind[]), id: z.uuid() }),
+  z.strictObject({ kind: z.literal('restaurant' satisfies CardKind), id: z.string().min(1).max(RESTAURANT_KEY_MAX) }),
+]);
+
 const userMessage = z.strictObject({
   role: z.literal('user'),
   text: z.string().trim().min(1).max(USER_MESSAGE_MAX),
@@ -25,10 +34,7 @@ const userMessage = z.strictObject({
 const assistantMessage = z.strictObject({
   role: z.literal('assistant'),
   text: z.string().trim().min(1).max(ASSISTANT_MESSAGE_MAX),
-  cards: z
-    .array(z.strictObject({ kind: z.enum(['quest', 'globalEvent'] satisfies CardKind[]), id: z.uuid() }))
-    .max(CARDS_MAX)
-    .default([]),
+  cards: z.array(cardReference).max(CARDS_MAX).default([]),
   proposal: questProposalSchema.nullable().default(null),
 });
 

@@ -1,0 +1,1148 @@
+{
+  "date": "2026-10-01",
+  "restaurants": [
+    {
+      "source": "coop_menus",
+      "name": "학생회관식당",
+      "lines": [
+        {
+          "meal": "breakfast",
+          "text": "쇠고기채소찌개 : 3,000원",
+          "kind": "dish",
+          "name": "쇠고기채소찌개",
+          "price": 3000
+        },
+        {
+          "meal": "breakfast",
+          "text": "※ 운영시간 : 08:00~10:00",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "눈꽃치즈닭갈비 : 6,000원",
+          "kind": "dish",
+          "name": "눈꽃치즈닭갈비",
+          "price": 6000
+        },
+        {
+          "meal": "lunch",
+          "text": "단호박영양밥&양념장(#) : 3,000원",
+          "kind": "dish",
+          "name": "단호박영양밥&양념장(#)",
+          "price": 3000
+        },
+        {
+          "meal": "lunch",
+          "text": "수제탕수육 : 6,000원",
+          "kind": "dish",
+          "name": "수제탕수육",
+          "price": 6000
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 운영시간 : 11:00~14:30",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 혼잡시간 : 11:50~12:20",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "갈비구이 : 6,000원",
+          "kind": "dish",
+          "name": "갈비구이",
+          "price": 6000
+        },
+        {
+          "meal": "dinner",
+          "text": "꽁치무조림(#) : 3,000원",
+          "kind": "dish",
+          "name": "꽁치무조림(#)",
+          "price": 3000
+        },
+        {
+          "meal": "dinner",
+          "text": "※ 운영시간 : 17:00~19:00",
+          "kind": "note",
+          "name": null,
+          "price": null
+        }
+      ]
+    },
+    {
+      "source": "coop_menus",
+      "name": "자하연식당 3층",
+      "lines": [
+        {
+          "meal": "lunch",
+          "text": "동태매운탕(#) : 13,000원",
+          "kind": "dish",
+          "name": "동태매운탕(#)",
+          "price": 13000
+        },
+        {
+          "meal": "lunch",
+          "text": "세가지치즈를품은쇠고기함박 : 15,000원",
+          "kind": "dish",
+          "name": "세가지치즈를품은쇠고기함박",
+          "price": 15000
+        },
+        {
+          "meal": "lunch",
+          "text": "<+세미뷔페>",
+          "kind": "heading",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "오징어다시마숙회",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "단호박튀김",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "그린샐러드",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "팽이미소국",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "후식",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "<뷔페 특성상 메뉴의 조기품절",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "가능성이 있으니 양해 부탁드립니다>",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 운영시간 : 11:30~14:00",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 혼잡시간 : 11:30~12:30",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "※ 저녁 단체예약문의: 02-880-7889",
+          "kind": "note",
+          "name": null,
+          "price": null
+        }
+      ]
+    },
+    {
+      "source": "coop_menus",
+      "name": "자하연식당 2층",
+      "lines": [
+        {
+          "meal": "lunch",
+          "text": "나가사키꼬치어묵 : 5,500원",
+          "kind": "dish",
+          "name": "나가사키꼬치어묵",
+          "price": 5500
+        },
+        {
+          "meal": "lunch",
+          "text": "바비큐립& 베이컨마늘볶음밥 : 6,500원",
+          "kind": "dish",
+          "name": "바비큐립& 베이컨마늘볶음밥",
+          "price": 6500
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 운영시간 : 11:30~14:00",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 혼잡시간 : 11:50~12:30",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "뼈없는닭갈비 : 6,000원",
+          "kind": "dish",
+          "name": "뼈없는닭갈비",
+          "price": 6000
+        },
+        {
+          "meal": "dinner",
+          "text": "※ 운영시간 : 17:00~18:30",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "※ 혼잡시간 : 17:50~18:20",
+          "kind": "note",
+          "name": null,
+          "price": null
+        }
+      ]
+    },
+    {
+      "source": "coop_menus",
+      "name": "예술계식당",
+      "lines": [
+        {
+          "meal": "lunch",
+          "text": "<A코너>제육김치덮밥, 잡채, 떡꼬치구이 : 6,000원",
+          "kind": "dish",
+          "name": "<A코너>제육김치덮밥, 잡채, 떡꼬치구이",
+          "price": 6000
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 운영시간 : 11:30 ~ 14:00",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "<B코너>오므라이스, 까르보떡볶이, 수제소시지구이 : 6,500원",
+          "kind": "dish",
+          "name": "<B코너>오므라이스, 까르보떡볶이, 수제소시지구이",
+          "price": 6500
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 운영시간 : 11:30 ~ 13:00",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "<C코너>셀프라면,밥,김치 : 3,000원",
+          "kind": "dish",
+          "name": "<C코너>셀프라면,밥,김치",
+          "price": 3000
+        },
+        {
+          "meal": "dinner",
+          "text": "치킨까스정식, 비빔양념막국수, 마늘바게트 : 6,500원",
+          "kind": "dish",
+          "name": "치킨까스정식, 비빔양념막국수, 마늘바게트",
+          "price": 6500
+        },
+        {
+          "meal": "dinner",
+          "text": "※ 운영시간 : 17:00 ~ 18:30",
+          "kind": "note",
+          "name": null,
+          "price": null
+        }
+      ]
+    },
+    {
+      "source": "coop_menus",
+      "name": "두레미담",
+      "lines": [
+        {
+          "meal": "lunch",
+          "text": "<셀프코너> 7,000원",
+          "kind": "heading",
+          "name": null,
+          "price": 7000
+        },
+        {
+          "meal": "lunch",
+          "text": "잡곡밥",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "뼈없는감자탕",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "영양부추간장불고기",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "치킨까스*소스",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "버터치킨크림카레",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "마늘쫑무침",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "깍두기",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "그린샐러드",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "오늘의차",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "<주문식 메뉴>",
+          "kind": "heading",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "고등어 소금구이  : 14,000원",
+          "kind": "dish",
+          "name": "고등어 소금구이",
+          "price": 14000
+        },
+        {
+          "meal": "lunch",
+          "text": "철판주꾸미 볶음 : 15,000원",
+          "kind": "dish",
+          "name": "철판주꾸미 볶음",
+          "price": 15000
+        },
+        {
+          "meal": "lunch",
+          "text": "철판제육볶음 : 15,000원",
+          "kind": "dish",
+          "name": "철판제육볶음",
+          "price": 15000
+        },
+        {
+          "meal": "lunch",
+          "text": "떡갈비 구이 : 16,000원",
+          "kind": "dish",
+          "name": "떡갈비 구이",
+          "price": 16000
+        },
+        {
+          "meal": "lunch",
+          "text": "소갈비탕  : 19,000원",
+          "kind": "dish",
+          "name": "소갈비탕",
+          "price": 19000
+        },
+        {
+          "meal": "lunch",
+          "text": "7선 산채비빔밥 : 16,000원",
+          "kind": "dish",
+          "name": "7선 산채비빔밥",
+          "price": 16000
+        },
+        {
+          "meal": "lunch",
+          "text": "소불고기뚝배기 : 15,000원",
+          "kind": "dish",
+          "name": "소불고기뚝배기",
+          "price": 15000
+        },
+        {
+          "meal": "lunch",
+          "text": "차돌순두부 : 12,000원",
+          "kind": "dish",
+          "name": "차돌순두부",
+          "price": 12000
+        },
+        {
+          "meal": "lunch",
+          "text": "냉면 : 12,000원",
+          "kind": "dish",
+          "name": "냉면",
+          "price": 12000
+        },
+        {
+          "meal": "lunch",
+          "text": "초계국수 : 12,000원",
+          "kind": "dish",
+          "name": "초계국수",
+          "price": 12000
+        },
+        {
+          "meal": "lunch",
+          "text": "솥밥(추가) : 2,000원",
+          "kind": "dish",
+          "name": "솥밥(추가)",
+          "price": 2000
+        },
+        {
+          "meal": "lunch",
+          "text": "※운영시간 : 11:00~14:00",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "※혼잡시간 : 12:00~12:30",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "<셀프코너> 7,000원",
+          "kind": "heading",
+          "name": null,
+          "price": 7000
+        },
+        {
+          "meal": "dinner",
+          "text": "잡곡밥",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "크림스프",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "크리미어니언순살치킨",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "볼로네제치즈파스타",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "오이피클",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "치즈후레시팡*딸기쨈",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "깍두기",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "그린샐러드",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "오늘의차",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "<주문식 메뉴>",
+          "kind": "heading",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "고등어 소금구이  : 14,000원",
+          "kind": "dish",
+          "name": "고등어 소금구이",
+          "price": 14000
+        },
+        {
+          "meal": "dinner",
+          "text": "철판주꾸미 볶음 : 15,000원",
+          "kind": "dish",
+          "name": "철판주꾸미 볶음",
+          "price": 15000
+        },
+        {
+          "meal": "dinner",
+          "text": "철판제육볶음 : 15,000원",
+          "kind": "dish",
+          "name": "철판제육볶음",
+          "price": 15000
+        },
+        {
+          "meal": "dinner",
+          "text": "떡갈비 구이 : 16,000원",
+          "kind": "dish",
+          "name": "떡갈비 구이",
+          "price": 16000
+        },
+        {
+          "meal": "dinner",
+          "text": "소갈비탕  : 19,000원",
+          "kind": "dish",
+          "name": "소갈비탕",
+          "price": 19000
+        },
+        {
+          "meal": "dinner",
+          "text": "7선 산채비빔밥 : 16,000원",
+          "kind": "dish",
+          "name": "7선 산채비빔밥",
+          "price": 16000
+        },
+        {
+          "meal": "dinner",
+          "text": "소불고기뚝배기 : 15,000원",
+          "kind": "dish",
+          "name": "소불고기뚝배기",
+          "price": 15000
+        },
+        {
+          "meal": "dinner",
+          "text": "차돌순두부 : 12,000원",
+          "kind": "dish",
+          "name": "차돌순두부",
+          "price": 12000
+        },
+        {
+          "meal": "dinner",
+          "text": "냉면 : 12,000원",
+          "kind": "dish",
+          "name": "냉면",
+          "price": 12000
+        },
+        {
+          "meal": "dinner",
+          "text": "초계국수 : 12,000원",
+          "kind": "dish",
+          "name": "초계국수",
+          "price": 12000
+        },
+        {
+          "meal": "dinner",
+          "text": "솥밥(추가) : 2,000원",
+          "kind": "dish",
+          "name": "솥밥(추가)",
+          "price": 2000
+        },
+        {
+          "meal": "dinner",
+          "text": "※운영시간 : 17:00~19:00",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "※주문식 라스트 오더 : 19:15",
+          "kind": "note",
+          "name": null,
+          "price": null
+        }
+      ]
+    },
+    {
+      "source": "coop_menus",
+      "name": "동원관식당",
+      "lines": [
+        {
+          "meal": "lunch",
+          "text": "돈까스김치치즈나베 : 6,000원",
+          "kind": "dish",
+          "name": "돈까스김치치즈나베",
+          "price": 6000
+        },
+        {
+          "meal": "lunch",
+          "text": "고추장숙주불고기 : 6,000원",
+          "kind": "dish",
+          "name": "고추장숙주불고기",
+          "price": 6000
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 운영시간 : 11:00~14:00",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 혼잡시간 : 11:30~12:10",
+          "kind": "note",
+          "name": null,
+          "price": null
+        }
+      ]
+    },
+    {
+      "source": "coop_menus",
+      "name": "3식당",
+      "lines": [
+        {
+          "meal": "lunch",
+          "text": "치즈한장부대찌개 : 6,000원",
+          "kind": "dish",
+          "name": "치즈한장부대찌개",
+          "price": 6000
+        },
+        {
+          "meal": "lunch",
+          "text": "오므라이스&육즙함박 : 6,000원",
+          "kind": "dish",
+          "name": "오므라이스&육즙함박",
+          "price": 6000
+        },
+        {
+          "meal": "lunch",
+          "text": "<든든한끼샐러드코너>",
+          "kind": "heading",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "닭가슴살마일드샐러드(채식변경가능) : 8,500원",
+          "kind": "dish",
+          "name": "닭가슴살마일드샐러드(채식변경가능)",
+          "price": 8500
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 든든한끼샐러드 코너는 항상 채식변경가능합니다",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 운영시간 : 11:00~14:00",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 혼잡시간 : 11:50~12:20",
+          "kind": "note",
+          "name": null,
+          "price": null
+        }
+      ]
+    },
+    {
+      "source": "coop_menus",
+      "name": "302동식당",
+      "lines": [
+        {
+          "meal": "lunch",
+          "text": "<뷔페> 6,500원",
+          "kind": "heading",
+          "name": null,
+          "price": 6500
+        },
+        {
+          "meal": "lunch",
+          "text": "뼈없는감자탕",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "미트볼굴소스조림",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "참깨소스냉두부",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "치커리유자청무침",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "오렌지",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "그린샐러드&오늘의차",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "※운영시간: 11:30~13:30",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "※혼잡시간: 11:50~12:20",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "<뷔페> 6,500원",
+          "kind": "heading",
+          "name": null,
+          "price": 6500
+        },
+        {
+          "meal": "dinner",
+          "text": "중식볶음밥 & 짜장소스",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "치킨텐더",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "물만두",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "미나리무생채",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "파계란국",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "그린샐러드&오늘의차",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "※운영시간: 17:00~18:30",
+          "kind": "note",
+          "name": null,
+          "price": null
+        }
+      ]
+    },
+    {
+      "source": "coop_menus",
+      "name": "301동식당",
+      "lines": [
+        {
+          "meal": "breakfast",
+          "text": "<천원의아침밥>",
+          "kind": "heading",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "breakfast",
+          "text": "마파두부컵밥&두유 : 1,000원",
+          "kind": "dish",
+          "name": "마파두부컵밥&두유",
+          "price": 1000
+        },
+        {
+          "meal": "breakfast",
+          "text": "삼각김밥&토핑요거트&두유: 1,000원",
+          "kind": "dish",
+          "name": "삼각김밥&토핑요거트&두유",
+          "price": 1000
+        },
+        {
+          "meal": "breakfast",
+          "text": "즉석떡국OR즉석라면: 1,000원",
+          "kind": "dish",
+          "name": "즉석떡국OR즉석라면",
+          "price": 1000
+        },
+        {
+          "meal": "breakfast",
+          "text": "※  Take- Out전용",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "breakfast",
+          "text": "※  학생증 지참",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "breakfast",
+          "text": "※ 08:20~준비수량 소진시까지",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "breakfast",
+          "text": "※ 카페안쪽 피키피커스에서 수령",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "<식사>",
+          "kind": "heading",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "부대짬뽕&군만두 : 6,500원",
+          "kind": "dish",
+          "name": "부대짬뽕&군만두",
+          "price": 6500
+        },
+        {
+          "meal": "lunch",
+          "text": "(뚝)순댓국&계란장조림: 6,500원",
+          "kind": "dish",
+          "name": "(뚝)순댓국&계란장조림",
+          "price": 6500
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 운영시간 11:30~13:30",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "<TAKE-OUT>",
+          "kind": "heading",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "베이컨감자샐러드 : 5,500원",
+          "kind": "dish",
+          "name": "베이컨감자샐러드",
+          "price": 5500
+        },
+        {
+          "meal": "lunch",
+          "text": "헬스팩 : 6,000원",
+          "kind": "dish",
+          "name": "헬스팩",
+          "price": 6000
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 운영시간 : 10:30~16:00",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 요일별 샐러드 종류 변경(월10회 : 5,300원, 월20회 : 5,250원)",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "<301동1층  교직원전용식당>",
+          "kind": "heading",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "육개장칼국수&메밀전병:  9,000원",
+          "kind": "dish",
+          "name": "육개장칼국수&메밀전병",
+          "price": 9000
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 교직원이용시간 : 11:30~12:15",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 학생 및 대학원생 이용시간  12:15~13:30",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "<TAKE-OUT 카페 301동>",
+          "kind": "heading",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 운영시간 :  08:30~16:00",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 신학기 카페 이벤트 : 아메리카노(ICE: 2,000원/ HOT: 1,800원)",
+          "kind": "note",
+          "name": null,
+          "price": null
+        }
+      ]
+    },
+    {
+      "source": "dormitory_menus",
+      "name": "아워홈(901동)",
+      "lines": [
+        {
+          "meal": "breakfast",
+          "text": "세미양식부페 : 5,000원",
+          "kind": "dish",
+          "name": "세미양식부페",
+          "price": 5000
+        },
+        {
+          "meal": "breakfast",
+          "text": "브로콜리스프/아욱국,고기산적조림,계란후라이,토스트,씨리얼, 흰우유/두유,그린샐러드",
+          "kind": null,
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "breakfast",
+          "text": "※운영시간 : 08:00~09:30",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "lunch",
+          "text": "뼈없는닭갈비&들기름막국수 : 6,000원",
+          "kind": "dish",
+          "name": "뼈없는닭갈비&들기름막국수",
+          "price": 6000
+        },
+        {
+          "meal": "lunch",
+          "text": "돈코츠라멘&일본풍감자고로케 : 6,000원",
+          "kind": "dish",
+          "name": "돈코츠라멘&일본풍감자고로케",
+          "price": 6000
+        },
+        {
+          "meal": "lunch",
+          "text": "(잇템)새우튀김*타르타르소스 : 3,000원",
+          "kind": "dish",
+          "name": "(잇템)새우튀김*타르타르소스",
+          "price": 3000
+        },
+        {
+          "meal": "lunch",
+          "text": "※운영시간 : 11:30~13:30",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "쇠고기왕만두전골&계란찜 : 6,000원",
+          "kind": "dish",
+          "name": "쇠고기왕만두전골&계란찜",
+          "price": 6000
+        },
+        {
+          "meal": "dinner",
+          "text": "고구마치즈돈까스&마카로니후르츠샐러드 : 6,000원",
+          "kind": "dish",
+          "name": "고구마치즈돈까스&마카로니후르츠샐러드",
+          "price": 6000
+        },
+        {
+          "meal": "dinner",
+          "text": "(잇템)츄러스*초코소스 : 2,000원",
+          "kind": "dish",
+          "name": "(잇템)츄러스*초코소스",
+          "price": 2000
+        },
+        {
+          "meal": "dinner",
+          "text": "※운영시간 : 17:30~19:30",
+          "kind": "note",
+          "name": null,
+          "price": null
+        }
+      ]
+    },
+    {
+      "source": "dormitory_menus",
+      "name": "생협기숙사(919동)",
+      "lines": [
+        {
+          "meal": "lunch",
+          "text": "파인애플등심탕수육 : 6,000원",
+          "kind": "dish",
+          "name": "파인애플등심탕수육",
+          "price": 6000
+        },
+        {
+          "meal": "lunch",
+          "text": "※ 운영시간 : 11:30~13:30",
+          "kind": "note",
+          "name": null,
+          "price": null
+        },
+        {
+          "meal": "dinner",
+          "text": "카레라이스&궁중고기말이 : 6,000원",
+          "kind": "dish",
+          "name": "카레라이스&궁중고기말이",
+          "price": 6000
+        },
+        {
+          "meal": "dinner",
+          "text": "※ 운영시간 : 17:30~19:00",
+          "kind": "note",
+          "name": null,
+          "price": null
+        }
+      ]
+    },
+    {
+      "source": "veterinary_menus",
+      "name": "수의대식당",
+      "lines": [
+        {
+          "meal": "lunch",
+          "text": "카레라이스",
+          "kind": null,
+          "name": null,
+          "price": null
+        }
+      ]
+    }
+  ]
+}

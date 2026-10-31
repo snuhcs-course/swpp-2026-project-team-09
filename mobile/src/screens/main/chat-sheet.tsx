@@ -5,31 +5,29 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { type ReactElement, useCallback, useMemo, useRef, useState } from 'react';
+import { type ReactElement, useCallback, useMemo, useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapLayer, QuestProposal } from '@/api/assistant-types';
-import { globalEventAnnouncersQuery, questsQuery } from '@/api/queries';
-import { now } from '@/clock';
-import { Button, color, font, Icon, space, useToast } from '@/design-system';
+import { questsQuery } from '@/api/queries';
+import { Button, color, font, Icon, space } from '@/design-system';
 import { type Chat, useChat } from '@/features/assistant/use-chat';
 import { useBackToClose } from '@/hooks/use-back-to-close';
-import { holdProposal } from '@/features/party/held-proposal';
-import { isReady, type PartyForm, proposalForm } from '@/features/party/making';
 import type { PostView } from '@/features/party/posts';
 import { EventSheets, useEventSheets } from '../events/event-sheets';
 import { JoinSheet } from '../party/join-sheet';
-import { useSendParty } from '../party/form/use-send';
 import { openPost } from '../party/post-card';
-import { showMine, usePartyActions } from '../party/use-party-actions';
-import { type CardActions, ChatBubbles, ChatEmpty, type ProposalActions } from './chat-bubbles';
+import { usePartyActions } from '../party/use-party-actions';
+import { ChatBubbles, ChatEmpty } from './chat-bubbles';
+import type { CardActions, ProposalActions } from './chat-cards';
 import type { EventCardActions } from './chat-event-cards';
-import type { ProposalMaking } from './chat-proposal-card';
 import type { QuestCardActions } from './chat-quest-cards';
+import { openProposalForm, useProposalMaking } from './use-proposal-making';
 
 interface ChatSheetProps {
   chat: Chat;
@@ -42,6 +40,8 @@ interface ChatSheetProps {
   onOpenEvent: (globalEventId: string) => void;
   // A Quest card of an answer: closes the sheet and opens its post.
   onOpenPost: (questId: string) => void;
+  // A Restaurant card's 파티 만들기: closes the sheet and opens the party form filled with its Proposal.
+  onOpenPartyForm: (proposal: QuestProposal) => void;
   // The Proposal card of an answer: 만들기, and how it stands.
   proposals: ProposalActions;
   // How high the AI input's top stands above the sheet's bottom: the input lies over it.
@@ -132,14 +132,14 @@ function useQuestCards(onOpenPost: (questId: string) => void): {
 // no touch: on Android a JS responder around the conversation's scroll view takes the drag from it, and the
 // conversation stopped scrolling while the keyboard was down.
 export function ChatSheet(props: ChatSheetProps): ReactElement {
-  const { chat, inFront, onClose, onShowLayer, onOpenEvent, onOpenPost, proposals, inputTop } = props;
+  const { chat, inFront, onClose, onShowLayer, onOpenEvent, onOpenPost, onOpenPartyForm, proposals, inputTop } = props;
   const { top } = useSafeAreaInsets();
   useBackToClose(inFront, onClose);
   const eventCards = useEventCards(onOpenEvent);
   const questCards = useQuestCards(onOpenPost);
   const cardActions: CardActions = useMemo(
-    () => ({ events: eventCards.actions, quests: questCards.actions, proposals }),
-    [eventCards.actions, questCards.actions, proposals],
+    () => ({ events: eventCards.actions, quests: questCards.actions, proposals, openPartyForm: onOpenPartyForm }),
+    [eventCards.actions, questCards.actions, proposals, onOpenPartyForm],
   );
   const { bubbles, waiting, send, retry, reset } = chat;
   // From the sheet's bottom to the AI input's top, and the room above it.
@@ -165,86 +165,12 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
   );
 }
 
-const NOT_READY = '빠진 내용이 있어요. 채팅으로 알려 주세요';
-const STARTED = '시작 시간이 지났어요. 새 시간을 채팅으로 알려 주세요';
-
-// Why a Proposal cannot be sent as it stands, checked again on the phone before 만들기: the form's own readiness, and a
-// start that has passed since the Assistant proposed it, which the main server would take.
-function blockOf(proposal: QuestProposal, form: PartyForm): string | null {
-  if (!isReady(form, proposal.invitees.length, false)) {
-    return NOT_READY;
-  }
-  return form.startsAt !== null && new Date(form.startsAt) <= now() ? STARTED : null;
-}
-
-// 수정 on a Proposal card: closes the sheet and opens the party form filled with the Proposal, which tells `made` once
-// it made the Quest.
-function openProposalForm(proposal: QuestProposal, made: () => void, close: () => void): void {
-  holdProposal({ proposal, made });
-  close();
-  router.push({ pathname: '/party-form', params: { fromProposal: '1' } });
-}
-
-// 만들기 on a Proposal card: makes the Quest the way the party form does, attending its event and inviting its Friends,
-// and shows the form's toast. Made, it closes the sheet and goes where the form goes after making, 내 파티, or to the
-// room when a step after attending the event failed; refused, the sheet stays and the card can be pressed again. A
-// Proposal is made once: its card then says so, and a second press while it is on its way does nothing. The state
-// lives with the conversation, so that closing the sheet keeps it.
-// A Quest made in the form 수정 opens counts as made here too, so that the card does not make it again; coming back
-// without making leaves the card as it was.
-function useProposalMaking(close: () => void): ProposalActions {
-  const sendParty = useSendParty(null);
-  const showToast = useToast();
-  const announcers = useQuery(globalEventAnnouncersQuery).data;
-  const [making, setMaking] = useState<ReadonlyMap<number, ProposalMaking>>(new Map());
-  // The bubbles whose 만들기 is on its way, before a render disables their button.
-  const sending = useRef(new Set<number>());
-  const mark = useCallback((bubbleId: number, state: ProposalMaking): void => {
-    setMaking((held) => new Map(held).set(bubbleId, state));
-  }, []);
-  const make = (bubbleId: number, proposal: QuestProposal): void => {
-    if (sending.current.has(bubbleId)) {
-      return;
-    }
-    const form = proposalForm(proposal, announcers);
-    const blocked = blockOf(proposal, form);
-    if (blocked !== null) {
-      showToast(blocked);
-      return;
-    }
-    sending.current.add(bubbleId);
-    mark(bubbleId, 'making');
-    const invitees = proposal.invitees.map(({ id }) => id);
-    void sendParty(form, invitees, null).then((sent) => {
-      showToast(sent.toast);
-      if (sent.sent === 'refused') {
-        sending.current.delete(bubbleId);
-        mark(bubbleId, 'ready');
-        return;
-      }
-      mark(bubbleId, 'made');
-      close();
-      if (sent.sent === 'room') {
-        router.navigate(`/room/${sent.questId}`);
-      } else {
-        showMine();
-      }
-    });
-  };
-  const edit = (bubbleId: number, proposal: QuestProposal): void => {
-    openProposalForm(
-      proposal,
-      () => {
-        mark(bubbleId, 'made');
-      },
-      close,
-    );
-  };
-  return { makingOf: (bubbleId) => making.get(bubbleId) ?? 'ready', make, edit };
+function ignoreMade(): void {
+  // A Restaurant card says nothing of what its form made.
 }
 
 // What closes the sheet and goes elsewhere: a map button to its layer, an event card to the 행사 tab, a Quest card to
-// its post.
+// its post, a Restaurant card to the party form.
 function useLeaving(
   close: () => void,
   turnOn: (layer: MapLayer) => void,
@@ -252,6 +178,7 @@ function useLeaving(
   showLayer: (layer: MapLayer) => void;
   openEvent: (globalEventId: string) => void;
   openQuestPost: (questId: string) => void;
+  openPartyForm: (proposal: QuestProposal) => void;
 } {
   const showLayer = useCallback(
     (layer: MapLayer): void => {
@@ -274,7 +201,13 @@ function useLeaving(
     },
     [close],
   );
-  return { showLayer, openEvent, openQuestPost };
+  const openPartyForm = useCallback(
+    (proposal: QuestProposal): void => {
+      openProposalForm(proposal, ignoreMade, close);
+    },
+    [close],
+  );
+  return { showLayer, openEvent, openQuestPost, openPartyForm };
 }
 
 export interface ChatSheetControl {
@@ -288,8 +221,9 @@ export interface ChatSheetControl {
 // The chat's sheet and how to open it. The conversation is kept while the sheet is closed. A map button closes the
 // sheet and turns its layer on with `turnOn`, the map's own layers; an event card closes it and opens the 행사 tab at
 // the event, as the room's event does; a Quest card closes it and opens the post, as 찾기's card does; a Proposal,
-// once made, closes it and shows 내 파티, as the party form does, and its 수정 closes it and opens that form. However
-// the sheet closes, the keyboard goes down with it: the AI input would keep the focus otherwise.
+// once made, closes it and shows 내 파티, as the party form does, and its 수정, like a Restaurant card's 파티 만들기, closes
+// it and opens that form. However the sheet closes, the keyboard goes down with it: the AI input would keep the focus
+// otherwise.
 export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void): ChatSheetControl {
   const chat = useChat();
   const [shown, setShown] = useState(false);
@@ -300,7 +234,7 @@ export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void
     Keyboard.dismiss();
     setShown(false);
   }, []);
-  const { showLayer, openEvent, openQuestPost } = useLeaving(close, turnOn);
+  const { showLayer, openEvent, openQuestPost, openPartyForm } = useLeaving(close, turnOn);
   const proposals = useProposalMaking(close);
   return {
     chat,
@@ -314,6 +248,7 @@ export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void
           inputTop={inputTop}
           onClose={close}
           onOpenEvent={openEvent}
+          onOpenPartyForm={openPartyForm}
           onOpenPost={openQuestPost}
           onShowLayer={showLayer}
           proposals={proposals}
