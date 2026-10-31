@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-10-31  Opus 5.5   prompted by Jaehyun0320
 ################################################################################
 
 # What every target in targets/ applies besides its servers' parts. A target holds only namespaced objects, since the
@@ -26,6 +27,7 @@ configMapGenerator:
       - MATCH_SERVER_URL=http://match-server:3003
       - ROUND_INTERVAL_SECONDS=60
       - ASSISTANT_MODEL=anthropic/claude-haiku-5.5
+      - AUTOMATIC_PUBLICATION=on
       - GOOGLE_APP_CLIENT_ID=1021723676612-aria1ohmdms787sqbvldtt8484fnf04c.apps.googleusercontent.com
       - GOOGLE_ADMIN_CLIENT_ID=1021723676612-23lpoe5ue36rr2a07uora5ai4qckoe87.apps.googleusercontent.com
       # The Expo template's debug key, which signs the APK.

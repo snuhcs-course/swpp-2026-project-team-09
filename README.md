@@ -86,7 +86,7 @@ about Friends and parties. Iteration 2 answered it, and its work was merged into
   on the phone; up to 10 timetable versions on the phone; a week grid from 09 to 22 on 내 정보; today's classes appear
   as Quests on the map.
 - **Global Events and the admin site**: events collected four times a day from the university's events list and
-  published when their time and place are read; on the admin site, Administrators review Drafts, correct and publish
+  published shortly after each Collection when their time and place are read; on the admin site, Administrators review Drafts, correct and publish
   them, create and cancel events, see the Places on a map, see each Source's Collection status, and make or end
   friendships between Users for demo accounts.
 - **Dining and shuttle**: a dining layer with today's menus of the Co-op's restaurants, the dormitory and the
@@ -161,7 +161,7 @@ What the demo cannot show, and what is known not to work yet:
 - **Collected events wait for an Administrator** unless the rules read both their time and their place: a start
   with a time of day from the post's body, and a place that names exactly one Place. Every other collected event is a
   Draft until an Administrator publishes it on the admin site. A post is read once, so a later edit at the source is
-  not seen, and a post that describes several sessions is one event.
+  not seen, and a post of the events list that describes several sessions is one event.
 - **Users outside the Campus Boundary are hidden** from everyone, by design: a demo must be run on campus. The app's
   development settings can replace the phone's position with a walk on campus ([mobile/README.md](mobile/README.md),
   "Development settings").

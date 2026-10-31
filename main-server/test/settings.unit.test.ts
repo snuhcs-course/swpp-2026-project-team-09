@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: each setting missing; all but DATABASE_URL, REDIS_HOST and MATCH_SERVER_URL malformed or by a bound;
@@ -228,5 +229,23 @@ describe("settingsSchema: the Assistant's settings", () => {
     it('1 → accepted as 1', () => {
       expect(settingsSchema.parse({ ...valid, [setting]: '1' })).toMatchObject({ [setting]: 1 });
     });
+  });
+});
+
+describe('settingsSchema: AUTOMATIC_PUBLICATION', () => {
+  it('unset → on', () => {
+    expect(settingsSchema.parse({ ...valid, AUTOMATIC_PUBLICATION: undefined })).toMatchObject({
+      AUTOMATIC_PUBLICATION: true,
+    });
+  });
+
+  it('off → off', () => {
+    expect(settingsSchema.parse({ ...valid, AUTOMATIC_PUBLICATION: 'off' })).toMatchObject({
+      AUTOMATIC_PUBLICATION: false,
+    });
+  });
+
+  it('anything else → refused, naming AUTOMATIC_PUBLICATION', () => {
+    expect(refused({ ...valid, AUTOMATIC_PUBLICATION: 'false' })).toEqual(['AUTOMATIC_PUBLICATION']);
   });
 });

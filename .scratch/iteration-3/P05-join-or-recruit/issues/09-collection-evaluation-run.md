@@ -10,4 +10,5 @@
 - [ ] Then each change is run on its own, one change per run: the Judgement (A), the rules of 08a (B), the AI's choice of 08b (B).
 - [ ] Each run is on a clean commit and records the exact command, the commit, the date and time, the model slug, the checks turned on, the campus setting, the cost, the scores and each threshold's pass or fail.
 - [ ] A missed floor of C2, C3 or D1 turns automatic publication off in Production, and the record says so.
+- [ ] `AUTOMATIC_JUDGEMENT` is turned on in Production only after evaluation A's floors are met and the posts may be sent to the model provider, and the record says so.
 - [ ] A failure analysis table is written for the failed posts and pairs, and the scores go into the improvement log table.
