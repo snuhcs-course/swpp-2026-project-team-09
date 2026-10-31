@@ -895,7 +895,8 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
   filter the list. Empty: "예정된 행사가 없어요" without any event, "검색 결과가 없어요" after a filter or a search.
 - A card (`event-item.tsx`) has "같이 갈 파티 {n}개" for the recruiting Quests of `GET /quests/recruiting`, "내 파티"
   when the User holds a Quest for the event, the source from the app's own list of announcers, the title, the time
-  and the place, and "자세히", which opens `sourceUrl` in the browser and is left out without one, "파티 찾기/모집" and
+  ("M월 D일까지" for an event whose end is more than 24 hours after its start, on every card and sheet that shows an
+  event's time) and the place, and "자세히", which opens `sourceUrl` in the browser and is left out without one, "파티 찾기/모집" and
   "AI 매칭", or "매칭 중" while the User's request waits, which opens the list. At `/events?focus=<id>` the list shows
   every event, scrolls to the card and marks it with a navy border and a glow for 2.6 s (`use-focus.ts`).
 - **파티 찾기/모집** (`recruiting-sheet.tsx`) lists the User's own Quest for the event ("내 파티" when the User leads it,

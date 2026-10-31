@@ -25,7 +25,7 @@ import { type UnsettledPostDto } from './dto/unsettled-post.dto.js';
 import { GlobalEventsService } from './global-events.service.js';
 import { type JudgedSession, storedSessions } from './judgement-answer.js';
 import { placedSessions } from './judgement-checks.js';
-import { readJudgedTime } from './judgement-time.js';
+import { periodEndAt, readJudgedTime } from './judgement-time.js';
 import {
   isChangedByAdministrator,
   judgedDrafts,
@@ -46,10 +46,14 @@ interface PublishedValues {
   publicationRoute: typeof PublicationRoute.judgement;
 }
 
-function publishedValues({ start, end, place }: JudgedSession, { latitude, longitude }: PlaceDto): PublishedValues {
+function publishedValues(
+  { start, end, place, overPeriod }: JudgedSession,
+  { latitude, longitude }: PlaceDto,
+): PublishedValues {
+  const ends = readJudgedTime(end ?? '');
   return {
     startsAt: readJudgedTime(start ?? '')?.at ?? null,
-    endsAt: readJudgedTime(end ?? '')?.at ?? null,
+    endsAt: ends === null ? null : overPeriod ? periodEndAt(ends) : ends.at,
     place,
     latitude,
     longitude,

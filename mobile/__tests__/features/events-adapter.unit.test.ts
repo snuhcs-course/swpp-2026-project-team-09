@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: each filter of the 행사 tab at the edges of today and of the week, the search's fields, the sheet's own and
@@ -14,6 +15,7 @@ import {
   type EventFilter,
   type EventSources,
   eventTime,
+  isOverPeriod,
   sharedQuestFor,
   toEventViews,
   toMatchingRows,
@@ -110,6 +112,39 @@ describe('eventTime', () => {
     ['a later day', { startsAt: '2026-10-08T09:00:00+09:00', endsAt: null }, '10월 8일 (목) 09:00'],
   ])('%s → "%s"', (_, times, expected) => {
     expect(eventTime(times, NOW)).toBe(expected);
+  });
+});
+
+describe('isOverPeriod', () => {
+  it.each([
+    ['no end', '2026-10-06T18:00:00+09:00', null, false],
+    ['a sitting of an evening', '2026-10-06T18:00:00+09:00', '2026-10-06T20:00:00+09:00', false],
+    ['a night across midnight', '2026-10-06T22:00:00+09:00', '2026-10-07T02:00:00+09:00', false],
+    ['exactly a day', '2026-10-06T14:00:00+09:00', '2026-10-07T14:00:00+09:00', false],
+    ['a minute over a day', '2026-10-06T14:00:00+09:00', '2026-10-07T14:01:00+09:00', true],
+    ['two whole days', '2026-10-06T00:00:00+09:00', '2026-10-07T23:59:00+09:00', true],
+    ['an exhibition', '2026-10-05T00:00:00+09:00', '2026-11-30T23:59:00+09:00', true],
+  ])('%s', (_, startsAt, endsAt, expected) => {
+    expect(isOverPeriod({ startsAt, endsAt })).toBe(expected);
+  });
+});
+
+describe('eventTime of an event over a period', () => {
+  it.each([
+    ['its last day, without its hours', '2026-10-05T00:00:00+09:00', '2026-11-30T23:59:00+09:00', '11월 30일까지'],
+    ['a time the post writes', '2026-10-05T10:00:00+09:00', '2026-11-30T18:00:00+09:00', '11월 30일까지'],
+    ['today as its last day, by date', '2026-10-01T00:00:00+09:00', '2026-10-06T23:59:00+09:00', '10월 6일까지'],
+    // 23:59 in Korea is 14:59 UTC, and 01:00 in Korea the day before by UTC.
+    ['the day in Korea', '2026-10-01T00:00:00+09:00', '2026-10-31T01:00:00+09:00', '10월 31일까지'],
+    ['the next year', '2026-12-20T00:00:00+09:00', '2027-01-05T23:59:00+09:00', '1월 5일까지'],
+  ])('reads %s', (_, startsAt, endsAt, expected) => {
+    expect(eventTime({ startsAt, endsAt }, NOW)).toBe(expected);
+  });
+
+  it('leaves a night across midnight its day and hours', () => {
+    expect(eventTime({ startsAt: '2026-10-06T22:00:00+09:00', endsAt: '2026-10-07T02:00:00+09:00' }, NOW)).toBe(
+      '오늘 22:00–02:00',
+    );
   });
 });
 

@@ -150,17 +150,39 @@ function hasTimeOfDay(session: AnsweredSession, start: JudgedTime | null, end: J
   return startClock !== null && (startClock.hour !== 0 || startClock.minute !== 0) && end?.clock !== null;
 }
 
-// A session read as running over a period does not pass until ticket 07 lets one that quotes both its days through.
-// Whether it is one is the model's word, so a time line that runs on to another day must end on that day, whatever the
-// model called it: "전시 기간: 11월 5일 ~ 11월 30일" is no sitting on 11-05.
-function length(session: AnsweredSession, start: JudgedTime | null, end: JudgedTime | null, lines: string[]): boolean {
-  if (session.overPeriod || start === null) {
+// One quoted line holds both days of a session over a period, and they are two: read over one day, a day alone would show
+// as 00:00 on its card, which hasTimeOfDay lets by only for a period.
+function holdsBothDays({ lines }: AnsweredSession, start: JudgedTime, end: JudgedTime | null, now: Date): boolean {
+  if (end === null || (end.year === start.year && end.month === start.month && end.day === start.day)) {
+    return false;
+  }
+  return quotedPieces([...lines.start, ...lines.end]).some((piece) => {
+    const days = writtenDays(piece);
+    return days.some((day) => isWrittenDay(day, start, now)) && days.some((day) => isWrittenDay(day, end, now));
+  });
+}
+
+// Whether a session is over a period is the model's word, so a time line that runs on to another day must end on that
+// day, whatever the model called it: "전시 기간: 11월 5일 ~ 11월 30일" is no sitting on 11-05.
+function length(
+  session: AnsweredSession,
+  start: JudgedTime | null,
+  end: JudgedTime | null,
+  lines: string[],
+  now: Date,
+): boolean {
+  if (start === null) {
     return false;
   }
   const endsAsWritten = enclosingLines([...session.lines.start, ...session.lines.end], lines)
     .flatMap((line) => rangesEndIn(line))
     .every(({ month, day }) => end?.month === month && end.day === day);
-  return endsAsWritten && (end === null || end.at.getTime() - start.at.getTime() <= HOURS_24_MS);
+  if (!endsAsWritten) {
+    return false;
+  }
+  return session.overPeriod
+    ? holdsBothDays(session, start, end, now)
+    : end === null || end.at.getTime() - start.at.getTime() <= HOURS_24_MS;
 }
 
 function placeInLines({ place, lines }: AnsweredSession): boolean {
@@ -205,7 +227,7 @@ function checksOf(
     notApplicationPeriod: notApplicationPeriod(session, lines),
     startBeforeEnd: startBeforeEnd(session, start, end),
     hasTimeOfDay: hasTimeOfDay(session, start, end),
-    length: length(session, start, end, lines),
+    length: length(session, start, end, lines, now),
     placeInLines: placeInLines(session),
     // The model may quote only "301동 117호" from "장소: 연건캠퍼스 301동 117호".
     placeMatches: named !== null && !enclosingLines(session.lines.place, lines).some((line) => isElsewhere(line)),

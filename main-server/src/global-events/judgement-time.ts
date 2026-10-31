@@ -9,6 +9,8 @@
 
 const WEEKDAYS = '일월화수목금토';
 
+const LAST_MINUTE_OF_DAY_MS = (23 * 60 + 59) * 60 * 1000;
+
 // A time the model gave, in Korea.
 export interface JudgedTime {
   at: Date;
@@ -55,8 +57,15 @@ export interface WrittenDay {
   weekday: string | null;
 }
 
+// What may stand right before the hyphen of a range, so that "2026.11.05-2026.11.30" and "11/5 10:00-11/7" read two days
+// and "301-1-2" reads none: a day, or a clock.
+const BEFORE_HYPHEN = String.raw`(?:(?<!\d)\d{1,2}\s*[월./-]\s*\d{1,2}\s*일?\s*\.?(?:\s*[(（][${WEEKDAYS}](?:요일)?[)）])?|\d{1,2}:\d{2})`;
+
+// A year's mark goes on after the month, or the "11/5" of "11/5 - 11/30" would read as a day of the year 2011.
+const YEAR_THEN = String.raw`(?:년|\.(?=\s*\d{1,2}\s*[.월])|/(?=\s*\d{1,2}\s*/)|-(?=\s*\d{1,2}\s*-))`;
+
 const DAY = new RegExp(
-  String.raw`(?<![\d.:-])(?:(\d{4}|\d{2})\s*[년./-]\s*)?(\d{1,2})\s*[월./-]\s*(\d{1,2})(?![\d:])\s*일?\s*\.?` +
+  String.raw`(?<![\d.:])(?<!(?<!${BEFORE_HYPHEN})-)(?:(\d{4}|\d{2})\s*${YEAR_THEN}\s*)?(\d{1,2})\s*[월./-]\s*(\d{1,2})(?![\d:])\s*일?\s*\.?` +
     String.raw`(?:\s*[(（]\s*([${WEEKDAYS}])(?:요일)?\s*[)）]|\s*([${WEEKDAYS}])요일|\s*([${WEEKDAYS}])(?![\p{L}\p{N}]))?`,
   'gu',
 );
@@ -70,10 +79,11 @@ export function writtenDays(line: string): WrittenDay[] {
   }));
 }
 
-const THEN_TO = /^[\s\d:시분반오전후()]*(?:[~∼〜–—]|부터)\s*$/u;
-const THEN_TO_DAY = /^[\s\d:시분반오전후()]*[~∼〜–—]\s*(\d{1,2})일/u;
+const THEN_TO = /^[\s\d:시분반오전후()]*(?:[~∼〜–—-]|부터)\s*$/u;
+const THEN_TO_DAY = /^[\s\d:시분반오전후()]*[~∼〜–—-]\s*(\d{1,2})일/u;
 
-// The last days of the ranges a line writes across days: "11월 5일 ~ 11월 30일", "11/5 10:00 ~ 11/7 18:00", "11월 5일~30일".
+// The last days of the ranges a line writes across days: "11월 5일 ~ 11월 30일", "11/5 10:00 ~ 11/7 18:00", "11월 5일~30일",
+// "2026.11.05-2026.11.30". The hyphen of "2026-11-05" is inside a day, and that of "10:00-18:00" between no days.
 export function rangesEndIn(line: string): { month: number; day: number }[] {
   const days = [...line.matchAll(DAY)];
   return days.flatMap((match, index) => {
@@ -92,6 +102,14 @@ export function rangesEndIn(line: string): { month: number; day: number }[] {
     const last = { month: Number(next[2]), day: Number(next[3]) };
     return last.month === month && last.day === day ? [] : [last];
   });
+}
+
+// When a period is over, for what is stored as its end. A day alone, or the 00:00 extra.snu writes where it has no time,
+// is the whole of that day: at its 00:00 the event would leave the lists a day early, and at the next day's 00:00 its card
+// would name the next day.
+export function periodEndAt({ at, clock }: JudgedTime): Date {
+  const hasNoTime = clock === null || (clock.hour === 0 && clock.minute === 0);
+  return hasNoTime ? new Date(at.getTime() + LAST_MINUTE_OF_DAY_MS) : at;
 }
 
 // Whether `written` is the day of `time`. A day written without a year is the one nearest to `now`: the model is given

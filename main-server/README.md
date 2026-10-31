@@ -664,12 +664,15 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
   line that runs across days ends, the place is in its lines and names exactly one Place on a line that names nowhere
   else, and it is not a session the rules or the same answer already gave. A place that is a
   building number alone is taken as Gwanak where the Source's setting says so. A session read as running over a period
-  does not pass until ticket 07.
+  needs no time of day and may last longer than 24 hours, but it must end on two different days, with one quoted line
+  holding both of them. The lines' ranges may be written with `~`, `부터` or a hyphen.
 - **What it publishes:** each passing session becomes its own Global Event with the route `judgement`, at version 1,
   taking the post's Draft with its start, or else a free one, or else a new event linked as another own session of the
   post. Failing sessions make no Draft: a post stored as one Draft keeps it for them, and a post the worker sent with a
   Draft per session keeps those it did not publish, so that no time the worker read is lost. A post called no event stays
-  as it is, with the outcome `no_event`.
+  as it is, with the outcome `no_event`. A session over a period whose end is a day alone, or the 00:00 extra.snu writes
+  where it has no time, is stored as ending at 23:59 of that day in Korea, so that it stays listed through its last day
+  and its card names that day.
 - **What it leaves alone:** a post with any session an Administrator changed is not judged, and a change while the model
   reads it publishes nothing of that Judgement. With `AUTOMATIC_PUBLICATION=off` the Judgement is stored and nothing is
   published.

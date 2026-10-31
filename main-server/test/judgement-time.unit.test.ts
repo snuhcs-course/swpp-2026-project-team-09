@@ -7,6 +7,7 @@
 import {
   isWrittenClock,
   isWrittenDay,
+  periodEndAt,
   rangesEndIn,
   readJudgedTime,
   writtenDays,
@@ -49,6 +50,10 @@ describe('writtenDays', () => {
     ['11월 5일(목요일)', { year: null, month: 11, day: 5, weekday: '목' }],
     ['11/5(목)', { year: null, month: 11, day: 5, weekday: '목' }],
     ['26.11.5', { year: 2026, month: 11, day: 5, weekday: null }],
+    ['26/11/5', { year: 2026, month: 11, day: 5, weekday: null }],
+    ['26-11-5', { year: 2026, month: 11, day: 5, weekday: null }],
+    ['2026.11월 5일', { year: 2026, month: 11, day: 5, weekday: null }],
+    ['11/5 - 11/30', { year: null, month: 11, day: 5, weekday: null }],
     ['11월 5일 목 오후 2시', { year: null, month: 11, day: 5, weekday: '목' }],
     ['11월 5일（목）', { year: null, month: 11, day: 5, weekday: '목' }],
   ])('reads %s', (line, expected) => {
@@ -61,6 +66,14 @@ describe('writtenDays', () => {
 
   it('does not take a time for a day', () => {
     expect(writtenDays('10.13.14:00')[0]).toMatchObject({ month: 10, day: 13 });
+  });
+
+  it('reads the day right after a hyphen that follows a day', () => {
+    expect(writtenDays('2026.11.05-2026.11.30').map(({ day }) => day)).toEqual([5, 30]);
+  });
+
+  it.each(['301-1-2', '880-12-34', '10:00-18:00'])('reads no day in %s', (line) => {
+    expect(writtenDays(line)).toEqual([]);
   });
 });
 
@@ -121,6 +134,16 @@ describe('isWrittenClock', () => {
   });
 });
 
+describe('periodEndAt', () => {
+  it.each(['2026-11-30', '2026-11-30T00:00'])('takes %s for the end of its day in Korea', (value) => {
+    expect(periodEndAt(timeOf(value))).toEqual(new Date('2026-11-30T23:59:00+09:00'));
+  });
+
+  it('keeps a time the post writes', () => {
+    expect(periodEndAt(timeOf('2026-11-30T18:00'))).toEqual(new Date('2026-11-30T18:00:00+09:00'));
+  });
+});
+
 describe('rangesEndIn', () => {
   it.each([
     ['전시 기간: 11월 5일 ~ 11월 30일 10:00~18:00', { month: 11, day: 30 }],
@@ -128,14 +151,34 @@ describe('rangesEndIn', () => {
     ['11월 5일~30일', { month: 11, day: 30 }],
     ['2026.11.05. 10:00 ~ 2026.11.06. 11:00', { month: 11, day: 6 }],
     ['11월 5일부터 11월 7일까지', { month: 11, day: 7 }],
+    ['2026.11.05 - 2026.11.30', { month: 11, day: 30 }],
+    ['2026.11.05-2026.11.30', { month: 11, day: 30 }],
+    ['2026-11-05-2026-11-30', { month: 11, day: 30 }],
+    ['11/5 - 11/30 10:00-18:00', { month: 11, day: 30 }],
+    ['11/5-11/30', { month: 11, day: 30 }],
+    ['11/5(목)-11/30(월)', { month: 11, day: 30 }],
+    ['11월 5일 - 11월 30일', { month: 11, day: 30 }],
+    ['11월 5일-11월 30일', { month: 11, day: 30 }],
+    ['11월 5일 - 30일', { month: 11, day: 30 }],
+    ['11/5 - 30일', { month: 11, day: 30 }],
+    ['11/5 10:00-11/7 18:00', { month: 11, day: 7 }],
   ])('%s runs to its last day', (line, last) => {
     expect(rangesEndIn(line)).toEqual([last]);
   });
 
-  it.each(['2026.11.05. 10:00 ~ 2026.11.05. 11:00', '11월 5일 14:00~16:00', '11/5, 11/12, 11/19 14:00', '11월 5일'])(
-    '%s runs across no days',
-    (line) => {
-      expect(rangesEndIn(line)).toEqual([]);
-    },
-  );
+  it.each([
+    '2026.11.05. 10:00 ~ 2026.11.05. 11:00',
+    '11월 5일 14:00~16:00',
+    '11/5, 11/12, 11/19 14:00',
+    '11월 5일',
+    '2026-11-05',
+    '2026-11-05 10:00-18:00',
+    '11월 5일 10:00-18:00',
+    '11/5 14:00-16:00, 11/12 14:00-16:00',
+    '2026.11.05-2026.11.05',
+    // A number after a hyphen is a day only after a day or a time.
+    '2026.11.05 문의 301-1-2',
+  ])('%s runs across no days', (line) => {
+    expect(rangesEndIn(line)).toEqual([]);
+  });
 });
