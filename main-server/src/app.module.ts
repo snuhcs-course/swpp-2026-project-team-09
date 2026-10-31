@@ -12,6 +12,7 @@
  * 2026-10-04  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Module, StandardSchemaValidationPipe } from '@nestjs/common';
@@ -44,6 +45,7 @@ import { PlacesModule } from './places/places.module.js';
 import { QuestsModule } from './quests/quests.module.js';
 import { ShuttleModule } from './shuttle/shuttle.module.js';
 import { TimetableModule } from './timetable/timetable.module.js';
+import { TravelModule } from './travel/travel.module.js';
 import { UsersModule } from './users/users.module.js';
 import { WalkingRouteModule } from './walking-route/walking-route.module.js';
 
@@ -87,6 +89,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     MatchingModule,
     PartiesModule,
     TimetableModule,
+    TravelModule,
     AssistantModule,
   ],
   providers: [

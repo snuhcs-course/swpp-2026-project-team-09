@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -17,12 +18,13 @@ interface Source {
 }
 
 // The attributions that the map's data asks for: OpenStreetMap's (external-sources.md §6), and the one 공공누리 type 1
-// asks for, with the year that VWorld gives for the files of the seed (public-building-outlines.md §8).
+// asks for, with the year that VWorld gives for the files of the seed (public-building-outlines.md §8). SRTM is in the
+// public domain and is credited all the same.
 const SOURCES: readonly Source[] = [
   {
     name: 'OpenStreetMap',
     credit: '© OpenStreetMap contributors',
-    use: '캠퍼스 경계, 셔틀버스 노선과 건물 윤곽에 쓰여요. ODbL 라이선스로 제공돼요.',
+    use: '캠퍼스 경계, 셔틀버스 노선, 건물 윤곽과 도보 시간에 쓰여요. ODbL 라이선스로 제공돼요.',
     link: { words: '저작권과 라이선스 보기', url: 'https://www.openstreetmap.org/copyright' },
   },
   {
@@ -30,6 +32,12 @@ const SOURCES: readonly Source[] = [
     credit: '국토지리정보원, 연속수치지형도 건물 (2026), 공공누리 제1유형',
     use: '건물 윤곽에 쓰여요. 출처를 밝히면 자유롭게 이용할 수 있는 공공저작물이에요.',
     link: { words: '브이월드에서 내려받기', url: 'https://www.vworld.kr/dtmk/dtmk_ntads_s002.do?dsId=30162' },
+  },
+  {
+    name: 'SRTM',
+    credit: 'NASA Shuttle Radar Topography Mission (SRTM) 30 m',
+    use: '도보 시간의 고도 차이에 쓰여요. 누구나 자유롭게 이용할 수 있는 공공 자료예요.',
+    link: { words: '데이터 정보 보기', url: 'https://doi.org/10.5067/MEaSUREs/SRTM/SRTMGL1.003' },
   },
 ];
 
