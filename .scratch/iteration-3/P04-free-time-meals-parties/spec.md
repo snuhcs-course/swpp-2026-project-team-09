@@ -13,7 +13,7 @@ The Assistant (P07) knows the menus, the shuttle, Global Events and recruiting Q
 
 ## Solution
 
-Two scenarios run in one new Assistant **Feature**, 공강. A router decides for each message whether the existing chat Feature or 공강 answers it. The input bar does not change.
+Two scenarios join the existing chat Assistant as a new group of tools, 공강. The input bar does not change, and the model chooses among all the tools.
 
 - **공강 파티.** "오늘 멀티코어컴퓨팅이랑 현대암호학개론 사이에 갈 수 있는 파티 있어?"
   - The Assistant finds the gap between those Classes. It lists every recruiting Quest and Global Event the User can reach before it starts, and can still leave in time to reach the next Class.
@@ -39,7 +39,6 @@ Words:
 - A **gap** is one Free Time interval between two items.
 - **Travel Time** is the time from one Place to another, on foot or by the circular shuttle.
 - A **Restaurant** is a dining place whose daily menu a Source publishes.
-- A **Feature** is one way the Assistant answers, with its own system prompt and tool list. All Features share the Assistant's endpoint, and the router picks one for each message.
 
 The wireframe's AI 채팅 boards (https://claude.ai/artifact/136sh65V4Trkv5KBM78Vgr) show the cards and example replies: 공강 파티 (`MainChatFreeParty`), 공강에 밥 ① (`MainChatMealWho`), ② (`MainChatMealPlaces`) and ③ (`MainChatMealParty`). Where a board and this spec differ, this spec wins (see Further Notes).
 
@@ -48,15 +47,15 @@ The wireframe's AI 채팅 boards (https://claude.ai/artifact/136sh65V4Trkv5KBM78
 ### Asking about a gap
 
 1. As a User, I want to name two of my Classes ("멀코랑 현암 사이") and get the gap between them, so that I can ask the way I think about my day.
-2. As a User, I want to ask with clock times ("2시부터 3시 반") or for "다음 공강", so that I do not have to name Classes.
+2. As a User, I want to ask with clock times ("2시부터 3시 반에 갈 수 있는 파티") or for "다음 공강", so that I do not have to name Classes.
 3. As a User, I want to ask about any day from today to a week ahead, so that I can plan tomorrow's gap too.
 4. As a User, I want the Assistant to tell me which gap it found, when the previous item ends and when the next one starts, so that I can check it understood me.
 5. As a User, I want the Quests I hold to count as busy time, so that the Assistant never suggests something during a party I already joined.
-6. As a User, I want a Sub Quest with no end time to count as 30 minutes long, so that an open-ended plan still blocks my time.
+6. As a User, I want a Sub Quest with no end time, or one longer than 3 hours, to count as 30 minutes long, so that an open-ended plan still blocks my time and a long event does not take my whole day.
 7. As a User asking about today, I want a gap that has already begun to start now, so that nothing in the past is suggested.
 8. As a User without a Timetable, I want my whole day treated as free, so that I still get answers; when I name Classes I do not have, I want to be asked for the time instead.
 9. As a User whose item next to the gap has no Place (a 과외 off campus, or a room the screenshot reader did not match), I want to be asked where I leave from or by when I must leave, so that the Travel Times are right without my storing anything.
-10. As a User, I want what I answer to such a question used only for this request, so that nothing about my off-campus life is saved.
+10. As a User, I want what I answer to such a question used only for this request, so that no item or Travel Time of my off-campus life is saved.
 
 ### 공강 파티
 
@@ -132,14 +131,10 @@ The wireframe's AI 채팅 boards (https://claude.ai/artifact/136sh65V4Trkv5KBM78
 65. As a User, I want what I wrote, my Classes' names and my Friends' names sent only to AI providers that do not collect user data, so that they are not used for training.
 66. As a User, I want rooms, the buildings of anyone's Classes and anyone's coordinates never sent to the AI provider, so that where people are stays private.
 
-### Routing and the rest of the Assistant
+### The rest of the Assistant
 
 67. As a User, I want to ask in the same input bar as always, so that I do not have to choose a mode.
-68. As a User, I want questions that need my Timetable or Friends' Free Time answered by 공강, and everything else, such as "오늘 점심 뭐 있어?", answered by the chat as before, so that nothing I used to ask gets worse.
-69. As a User, I want a follow-up to a 공강 answer ("운동만", "여기로 하자") answered by 공강, so that the conversation carries on.
-70. As a User, I want the chat to answer when routing fails, so that a routing error never leaves me without a reply.
 71. As a User on an APK from before P4, I want 공강 파티 answers to show as before and the chat to keep working, so that only the new Restaurant cards need the new APK.
-72. As a User, I want my daily message count unchanged by routing, so that the router does not use up my messages.
 
 ### Operating and measuring
 
@@ -148,43 +143,28 @@ The wireframe's AI 채팅 boards (https://claude.ai/artifact/136sh65V4Trkv5KBM78
 75. As the PM, I want a frozen set of 40 cases with thresholds committed before any run, scored per scenario, so that a weak scenario cannot hide behind the total.
 76. As the PM, I want the walking table measured against 30 walked pairs and a straight-line baseline, so that the travel model's accuracy is a number.
 77. As the PM, I want the shuttle's derived times checked against held-out days, so that the log-based model is shown to beat the notice's values.
-78. As the PM, I want P19's 62 cases run through the router, so that the chat is shown not to get worse.
+78. As the PM, I want every case of `eval/cases` run before and after the chat's change, so that the chat is shown not to get worse.
 79. As the PM, I want the ground-truth labels drafted without sight of the judgement code and reviewed by a person, so that the labels do not just copy the code.
 
 ## Implementation Decisions
 
-### Shape: a router and two Features (ADR 0008)
+### Shape: one chat Assistant (ADR 0009)
 
-- **The 공강 Feature** is a new Feature beside the chat Feature (ADR 0005). It has its own system prompt and its own tool list.
-- **Shared tools have one definition.** A tool both Features need lives in one module, and each Feature lists it in its own tool list. Nothing is copied.
-  - Shared: `showQuests`, `showGlobalEvents`, `showOnMap`, `resolveFriend`, `resolvePlace`, `proposeQuest`.
-  - They are used as they are. The chat Feature, its prompt and its tools do not change.
-  - The presenters' descriptions ask for ids from the chat's searches. So the 공강 prompt says that the ids `findFreeTimeEvents` returned are the ones to show. The presenters already accept any id a tool found in this message.
-  - What 공강 needs beyond the shared tools is done in its own tools and its own run (below), not in the shared ones.
-- **The router.**
-  - It runs before every message in the adapter, the only place that imports the AI SDK.
-  - It is one forced call to a `route` tool with one argument, the Feature: `chat` or `공강`.
-  - Input: a short router prompt and the text of the last 6 messages.
-  - Limits: 1 step, 5 seconds, 50 output tokens. Any failure or timeout routes to `chat`.
-  - The boundary is written by meaning, with no keyword list:
-    - a question that can only be answered with the User's Timetable or Friends' Free Time goes to 공강 ("점심에 누구 돼?");
-    - a message that continues a 공강 answer, by narrowing its candidates or picking from them ("운동만", "여기로 하자"), also goes to 공강;
-    - everything else goes to chat ("오늘 점심 뭐 있어?").
-  - It always runs. There is no app version header.
-  - It is its own injectable seam beside the model port. Tests bind a router that always answers `chat` unless they need 공강, so existing scripts do not change.
-  - Its call is tagged in the run's records, so P19's scoring does not count it.
-- **Limits.**
-  - The 공강 Feature runs with up to 10 model steps, a setting of its own beside the chat's 8. The flow "who is free → resolve Friends → Restaurants → show → propose" is tight at 8.
-  - The 30-second limit per message, the output token cap, the 20-message history and the daily message limit stay as they are.
-  - The router's call does not count as a message.
-- **OpenRouter data policy.** Every Assistant request, the router and the chat included, sets provider `data_collection: "deny"`. It adds no ZDR restriction, which could shrink the providers available. The reason is that course names, Friends' names and per-Friend results now reach the provider. This setting on the shared model call is the one change the chat's requests get (decided in the grill); what the chat answers does not change.
+- **공강 joins the chat.** Its tools go into the chat's tool list, so the model chooses among all of them. There is one Feature, as with P05 and P07.
+- **The new tools have a module of their own.** `getMyDay`, `findFreeTimeEvents`, `findFreeFriends`, `findMealRestaurants` and `showRestaurants` live apart from the chat's existing tools. The chat's tool list only names them.
+- **The rules are a fragment of their own.** A constant appended to the chat's prompt holds the 공강 rules, so that P05's changes to the prompt do not collide with them.
+- **The existing tools are used as they are.** `showQuests`, `showGlobalEvents`, `showOnMap`, `resolveFriend`, `resolvePlace` and `proposeQuest` do not change.
+  - The presenters' descriptions ask for ids from the chat's searches. So the rules say that the ids `findFreeTimeEvents` returned are the ones to show. The presenters already accept any id a tool found in this message.
+- **After the run.** While a run lasts, it keeps what `findFreeTimeEvents` returned. A common step after the run attaches each candidate's 이동 시간 box and orders those cards by start. Cards from other tools stay after them with no box. A run that did not call `findFreeTimeEvents` keeps its cards as they were.
+- **Limits.** The 8 model steps, the 30-second limit per message, the output token cap, the 20-message history and the daily message limit stay as they are.
+- **OpenRouter data policy.** Every call made through the shared model setup sets provider `data_collection: "deny"`. It adds no ZDR restriction, which could shrink the providers available. The reason is that course names, Friends' names and per-Friend results now reach the provider.
 
 ### Busy time and Free Time
 
 - **Busy items on a day:**
   - each Class meeting on that weekday;
   - each timed Sub Quest of a Quest the User holds. The attending Sub Quest of a Global Event Quest takes the Global Event's start and end.
-  - A Sub Quest with a start and no end is busy for 30 minutes. One with no start, or a cancelled one, is ignored.
+  - A Sub Quest with a start and no end, or one longer than 3 hours, is busy for 30 minutes from its start. One with no start, or a cancelled one, is ignored.
   - The active Party blocks nothing.
 - **Free Time** is every interval between busy items, including before the first and after the last item of the day. On today, it starts no earlier than now.
 - **Friends' busy time** uses the same function on the Friend's Timetable and held Quests. The reason a Friend is busy is never shown or sent to the model.
@@ -194,11 +174,12 @@ The wireframe's AI 채팅 boards (https://claude.ai/artifact/136sh65V4Trkv5KBM78
 - **My item without a Place** next to a gap:
   - a tool that judges travel returns `needs: {side: before | after, item}` instead of results;
   - before → the model asks where the User leaves from and passes `departurePlace` (resolved through `resolvePlace`);
+  - when `resolvePlace` answers `none`, the model says that Travel Times cannot be computed from off campus and asks once where the User enters the campus, such as 정문. If that gives no Place, it shows no candidates;
   - after → it asks by when the User must leave and passes `leaveBy`, which replaces the after side.
-  - Nothing is stored.
+  - No item or Travel Time is stored. The words pass through `resolvePlace`, which records them as it does any place word (P07).
 - **A Friend's item without a Place:** that side's travel is left out, the Friend is judged on time only, and their Travel Time shows "—".
 
-### Travel Time (ADR 0009)
+### Travel Time (ADR 0010)
 
 One function, `travel(from Place, to Place, departure time)`, serves both scenarios. It returns seconds and a mode, walk or shuttle, and shows whole minutes rounded up. It sits behind an injectable provider. The eval runner and the labels test bind the frozen travel fixture to it (Evaluation plan), so the real table and shuttle file never reach the eval.
 
@@ -246,7 +227,7 @@ One function, `travel(from Place, to Place, departure time)`, serves both scenar
   - Quests the User holds;
   - Quests the User has asked to join;
   - Quests for a Global Event whose Shared Quest the User already holds (what joining would refuse as `SHARED_QUEST_HELD`);
-  - a Quest or Global Event with no start time inside the gap;
+  - a Quest or Global Event with no start time inside the gap. An event already under way, such as one running over a period, is left out too, since its hours that day are unknown;
   - a candidate whose place cannot be mapped to a Place.
 - **A Quest is judged on its first Sub Quest that starts inside the gap**, not on the existing next-Sub-Quest rule. That rule can pick an old Sub Quest with no end.
 - **Mapping a candidate's place to a Place**, in order:
@@ -262,11 +243,11 @@ One function, `travel(from Place, to Place, departure time)`, serves both scenar
   - **After, when the end is unknown or longer than 3 hours.** The candidate fits when the User can stay at least 30 minutes before leaving for the next item. The card shows the leave-by time. Quests made in the app have no end, so this is the common case.
   - **Clock times** ("2시부터 3시 반") narrow the gap. A candidate must start inside the window, and when it has an end, that end must fall inside the window too. Travel still runs from the previous item's Place and to the next item, as for a gap.
 - **Board.** `board` narrows Quests to that Board. Global Events have no Board, so they stay, and the model judges them by title like any other condition.
-- **Order:** soonest start first. All fitting candidates are returned, with no cap. At most 20 become cards (the existing card limit). After the run, the 공강 Feature orders these cards by start whatever order the presenters were called in, so Quests and Global Events interleave.
+- **Order:** soonest start first. All fitting candidates are returned, with no cap. At most 20 become cards (the existing card limit). The step after the run orders these cards by start whatever order the presenters were called in, so Quests and Global Events interleave.
 - **Every number of the judgement** sits in one constants table, frozen with the evaluation:
   - 1 minute (arrival margin, for parties and meals);
   - 30 minutes (minimum stay at an open-ended or over-3-hour candidate);
-  - 30 minutes (length of a Sub Quest with no end);
+  - 30 minutes (length of a Sub Quest with no end or longer than 3 hours);
   - 3 hours;
   - 150 m;
   - 15 minutes (minimum eating time);
@@ -284,7 +265,7 @@ One function, `travel(from Place, to Place, departure time)`, serves both scenar
   - A Restaurant's key is its name as `GET /menus` gives it, which is also its key in the seed.
   - `GET /menus` gains a `placeId` per Restaurant. The new app reads it for the dining layer and for the menu panel's "N동" label, and its hard-coded file is deleted. Old apps ignore the field.
   - A Restaurant not in the seed is left out.
-- **Open (ADR 0010).** A Restaurant is open for a meal when that day's meal cell has at least one line that is not a note.
+- **Open (ADR 0011).** A Restaurant is open for a meal when that day's meal cell has at least one line that is not a note.
   - A cell of only notes (휴무, hours, ※ notices) is closed.
   - There are no special cases, and the worker's line classification does not change.
   - This adds to ADR 0001, which says the app cannot tell whether a Restaurant is open.
@@ -323,7 +304,7 @@ One function, `travel(from Place, to Place, departure time)`, serves both scenar
   - The form's own 파티 만들기 makes the Quest and invites through the existing making sequence.
   - The chat path ("여기로 하자" → `proposeQuest`) also stays.
 
-### Tools of the 공강 Feature
+### The 공강 tools
 
 **The rule is P07's: the model passes the User's words or ids it was given, and the server decides.**
 
@@ -337,13 +318,13 @@ One function, `travel(from Place, to Place, departure time)`, serves both scenar
 - **`findFreeFriends(date, meal | window, friendIds?)`**
   - It returns the User's Free Time in the window and the free Friends, each with id, name, department and the overlap.
   - With `friendIds`, it returns the time shared by the User and those Friends.
-  - The model takes the Friends of a meal from this list. Two Friends with the same name differ there by department, which the shared `resolveFriend` does not give.
-- **`findMealRestaurants(date, meal, friendIds, window?, departurePlace?, leaveBy?)`** returns the fitting Restaurants in order. Each comes with:
+  - The model finds named Friends through `resolveFriend` and passes their ids. When it answers `several`, the model calls `findFreeFriends` for that meal, reads the departments there and names them in its question. P07's chips stay as they are, with names only.
+- **`findMealRestaurants(date, meal, friendIds, window?, departurePlace?, leaveBy?)`** returns the shared time, when the menus were collected (`collectedAt`) and the fitting Restaurants in order. Each comes with:
   - its key, name and Place;
   - its non-note menu lines (wrapped as others' text);
   - 식사 가능 시간, the start, and each person's Travel Time and mode.
 
-  When no menu was collected for that day, it says so. It can also return `needs`.
+  When no menu was collected for that day, it says so. When the shared time is empty, it says so and does not say who is busy. It can also return `needs`.
 - **`showRestaurants(keys)`** shows Restaurant cards. The server builds each card and attaches its Proposal.
 - **Found ids.**
   - Presenters accept only ids a tool returned in this message, as today.
@@ -351,20 +332,25 @@ One function, `travel(from Place, to Place, departure time)`, serves both scenar
     - the candidates of `findFreeTimeEvents`;
     - the Friends of `findFreeFriends`;
     - the Restaurants of `findMealRestaurants`, and their Places for `proposeQuest`.
-  - After the run, the 공강 Feature attaches each candidate's 이동 시간 box to the Quest or Global Event card shown for it. The shared presenters stay as they are.
-- **Follow-ups.** Tool results do not carry over between messages. A follow-up ("면 빼고", "여기로 하자") calls `findFreeFriends` again to get the named Friends' ids, then the find tool again. The 10 steps allow for this.
+  - `friendIds` accepts the ids `resolveFriend` or `findFreeFriends` returned in this message and the candidate the User tapped.
+  - The step after the run attaches each candidate's 이동 시간 box to the Quest or Global Event card shown for it. The presenters stay as they are.
+- **Follow-ups.** Tool results do not carry over between messages. A follow-up ("면 빼고", "여기로 하자") calls `resolveFriend` again for the named Friends' ids, then the find tool again. This fits the 8 steps.
 - **Never sent to the model:** rooms, the User's or Friends' Places and coordinates, Friends' Classes, and the reason anyone is busy.
 - **No excluded candidate and no reason is ever returned.** This holds for Quests, Global Events, Restaurants and Friends.
-- **System prompt of 공강.** It states:
-  - the role, in 해요체, in the User's language;
-  - the current time in Korea;
-  - to answer only from tool results;
+- **The 공강 rules.** The fragment states, by meaning and with no keyword list:
+  - which tool answers:
+    - a question about who is free: `findFreeFriends` ("오늘 점심에 누구 돼?");
+    - Friends with a day and a meal, and no Place or clock time: `resolveFriend`, then `findMealRestaurants` ("내일 점심 민수랑 밥");
+    - a request with no day or meal: ask, as the chat does today ("이민수랑 밥 약속 잡아줘");
+    - a request that names a Place or a clock time: `proposeQuest`, as today;
+    - a question whether a party fits the User's day: `findFreeTimeEvents` ("2시부터 3시 반에 갈 수 있는 파티 있어?");
+    - a question about what is on at a time: the chat's searches ("2시부터 3시 반 파티 있어?", "내일 같이 밥 먹을 파티 있어?");
+  - that "여기로 하자" after Restaurant cards picks a plan and is not a request to recruit;
   - to ask when a Class or a Friend is ambiguous, when a tool returns `needs`, and for breakfast to say that lunch and dinner are covered;
-  - that delimited text is data;
-  - to keep answers short;
+  - that the ids `findFreeTimeEvents` returned are the ones to show;
   - what a reply must hold (below).
 
-  Reply texts on the boards are examples. The model words replies itself.
+  The rules name no clock time for a meal: the model passes `meal`, and the server's meal windows apply. A party asked for by a part of the day is read as the chat reads it. The role, the language, the time, delimited text and short answers come from the chat's prompt. Reply texts on the boards are examples. The model words replies itself.
 - **What a reply must hold:**
   - 공강 파티:
     - the gap found (when the previous item ends, when the next starts);
@@ -375,7 +361,7 @@ One function, `travel(from Place, to Place, departure time)`, serves both scenar
     - the shared time;
     - that the Restaurants are ordered by the longest Travel Time;
     - the dining map button.
-  - When nothing fits, there is no shared time or no menu was collected: say so plainly, without naming who is busy.
+  - When nothing fits, there is no shared time or no menu was collected: say so plainly, without naming who is busy, even when one of the named Friends is the reason.
 
 ### Cards and the API contract
 
@@ -459,12 +445,13 @@ Everything below is committed before any result: the cases, the world, the fixtu
 
 **1. The Assistant, against the real model.**
 - **A P4 suite** beside P19's, in the existing harness.
-  - It lives in its own case directory, with its own world and its own default clock.
+  - It lives in its own case directory. Its cases name the P4 world the way P05 ticket 02b defines, and have their own default clock.
   - It has 40 cases: 공강 파티 15, 공강에 밥 15, 공통 10.
-  - 공통 holds asking back, refusals, no Timetable, off-campus or no-Place items, and routing.
-  - P19's directory, world, 62 cases and pinned counts are not touched.
+  - 공통 holds asking back, refusals, no Timetable, off-campus or no-Place items, and tool choice.
+  - P4 does not change the existing cases or their world. The pinned counts become a check that the fixed set is included, once, by whichever of P4 and P05 comes first.
 - **Harness changes:**
   - a `now` per case;
+  - the `world` field, by whichever of P4 and P05 comes first;
   - the `restaurant` card kind, in `expect.cards` and in a fixed history's Assistant turns;
   - `text.absent`: words the reply must not hold (the names of Friends who are not free);
   - normalisers for the new tools.
@@ -475,11 +462,12 @@ Everything below is committed before any result: the cases, the world, the fixtu
   - exactly the cards the tools returned, none added or dropped, and no busy Friend named;
   - the fields of a Proposal from `proposeQuest`. The Restaurant card's Proposal is checked by integration tests only;
   - the reply's required content through `text.mentions`.
-  - Routing shows in the tools: a case that must reach 공강 requires one of its tools, and one that must stay in chat forbids them.
+  - Tool choice shows in the tools: a case that needs a new tool requires it, and one that must not use it forbids it.
 - **Required cases:**
   - one gap where at least 21 candidates fit;
   - one follow-up turn that narrows it;
-  - one "여기로 하자" turn after Restaurant cards.
+  - one "여기로 하자" turn after Restaurant cards;
+  - both sides of each tool-choice rule for meals and clock times, among the 공통 cases.
   - The follow-ups are fixed-history cases.
 - **The world:**
   - the User with a Timetable on at least 3 weekdays, gaps before the first and after the last Class, one off-campus item and one Class without a Place;
@@ -502,9 +490,9 @@ Everything below is committed before any result: the cases, the world, the fixtu
   - Thresholds: overall ≥ 80% and each category ≥ 70%.
   - Run 3 times and take the mean. Record the model, the limits, the commit and the date.
 - **Regression.**
-  - Before the router lands, P19's 62 cases run 3 times on the commit before it, with the same model and limits, and the runs are saved. They run 3 times again with the router.
-  - A case newly fails when it fails in at least 2 router runs but in at most 1 baseline run. No case may newly fail.
-  - The router's tags show which Feature each P19 case went to. Any case routed to 공강 is reported.
+  - Every case of `eval/cases` at the commit just before the chat's prompt and tools change runs 3 times, with the same model and limits, and the runs are saved. They run 3 times again after the change.
+  - A case newly fails when it fails in at least 2 later runs but in at most 1 baseline run. No case may newly fail.
+  - Any call to a new tool in those cases is reported, with the tokens and cost per turn of both sets of runs.
 
 **2. The walking table, against walks.**
 - **30 pairs**, committed with the walking method and, for each pair, the table's seconds and the baseline's seconds at the freeze.
@@ -530,15 +518,15 @@ Everything below is committed before any result: the cases, the world, the fixtu
 
 ### Documentation
 
-- **ADR 0008:** the router and Features. It amends ADR 0005, which says one agent needs no orchestration of several and that each later feature has its own entry point.
-- **ADR 0009:** Travel Time. It covers:
+- **ADR 0009:** new capabilities join the chat as tools and prompt fragments. It amends ADR 0005, and the comment in `feature.ts` changes with it.
+- **ADR 0010:** Travel Time. It covers:
   - the OpenStreetMap pedestrian graph and the join rule;
   - SRTM elevation;
   - shuttle times derived from a few days of Dev logging, and why positions are collected there and not in a Production table;
   - that Kakao is not used for the table;
   - ODbL.
-- **ADR 0010:** the meal open rule. It supplements ADR 0001.
-- **GLOSSARY** gains Timetable, Class, Free Time, Restaurant, Travel Time, Shuttle Stop and Feature.
+- **ADR 0011:** the meal open rule. It supplements ADR 0001.
+- **GLOSSARY** gains Timetable, Class, Free Time, Restaurant, Travel Time and Shuttle Stop.
 - **README** attribution: the OpenStreetMap row adds "도보 시간", and an SRTM row is added.
 
 ## Testing Decisions
@@ -549,9 +537,7 @@ Everything below is committed before any result: the cases, the world, the fixtu
   - **Separate integration tests** cover only what the world does not reach:
     - `needs`, then a departure Place or a leave-by time passed after asking;
     - the shuttle chosen only when ≥ 3 minutes faster, and not at weekends or after 21:00;
-    - routing, with the real router over the scripted model, and chat as its fallback;
     - `data_collection: deny` reaching the model call;
-    - the step limits;
     - a Restaurant card accepted in history;
     - the cards' 이동 시간 fields and their order across kinds;
     - the Restaurant card's Proposal, field by field.
@@ -579,7 +565,7 @@ Everything below is committed before any result: the cases, the world, the fixtu
 - Friend status labels (수업 중, 공강, 오늘 수업 끝, 방해금지). The app's mock Friend status stays as it is.
 - Any switch or consent for sharing Timetables, and any screen showing a Friend's Timetable.
 - Highlighting Friends or Restaurants on the map, and any new map button.
-- An attend button for Global Events (P5's core).
+- An attend button for Global Events.
 - Breakfast.
 - A meal request with no Friends, or with more Friends than a Quest can hold. The card's Proposal is then not makeable as it is.
 - Mentioning Friends who are not free, and explaining any excluded candidate.
@@ -592,7 +578,7 @@ Everything below is committed before any result: the cases, the world, the fixtu
 - A Production database log of shuttle positions, and real-time arrival prediction. These are the PM's later, separate work.
 - The clockwise shuttle 41914.
 - Calibrating the walking speed or climb before 11-01.
-- An app version header, routing by version, or skipping unknown cards in the app.
+- An app version header, or skipping unknown cards in the app.
 - Demo Data for P4. The PM prepares it separately.
 - The P22 write-up. For it, the builder's sensitivity mode re-runs the pin shift on the chosen rule. The 40 m figures stay as measured in the study.
 
@@ -630,15 +616,17 @@ Everything below is committed before any result: the cases, the world, the fixtu
   - The shuttle metric measures how consistent the logged days are with each other, not real rides, over only 2–3 days that one week's events or weather may bias.
   - The fallback wait of 3.5 minutes holds only when at least 3 cars are actually moving. On 9-30 only 2 of 6 moved.
   - A Friend's item without a Place makes their Travel Time unknown.
-- **P5 touch points**, flagged for the PM to settle with 함재현:
-  - If P5 is a Feature, the router chooses among three, and the router becomes shared.
-  - The harness changes (per-case now, Restaurant cards, `text.absent`, normalisers) serve both.
-  - "Can this User enter this Quest" (full, already asked, `SHARED_QUEST_HELD`) is the same predicate as P5's candidate filter.
-  - Attending Global Events belongs to P5.
-  - `findFreeTimeEvents`' fit judgement can serve P5's "reachable events".
+  - A same-name Friend who is not free has no department to show, and P07's chips show names only.
+  - Words given for a departure stay in P07's resolver log, off-campus ones included.
+- **P5 touch points.** P5 changes the chat's prompt and search tools and adds no Feature.
+  - P4's chat change lands before P5's R0 (11-02), so that P5's R0 and R1 differ only by P5's own change.
+  - P5's "search first" rule stays as P5 wrote it, and it covers a request to recruit after a 공강 answer too.
+  - P5's search drops Full, started and Shared-Quest-held Quests. P4 uses its Full and Shared Quest code once it exists, and adds the Quests the User asked to join. P4 does not use "started", since it judges the Sub Quest inside the gap.
 - **P07 (input that learns) works on the same files in parallel.**
   - Its branches change the Feature definition, the adapter, the request DTO and the shared resolvers and `proposeQuest`. P4 tickets rebase on whichever lands first.
-  - Its grey suggestions read Timetables with a free rule of their own ("free when no Class covers now"). Once P4 lands, the two should share P4's Free Time function. That is for the PM to settle with P07.
+  - Its grey suggestions read Friends by a rule of their own: Location Sharing on, a Class that day, free when no Class covers now, Quests ignored. P4 leaves it as it is and reuses P07's Korea time helpers. The two rules are compared after 11-01, on what was built.
+  - The reply-text fix (`3.0/fix-reply-text-across-steps`) is in neither 3.0/Main nor P07. P4's required reply content needs it, since the model often writes its answer beside a tool call.
+- **A router later.** For now the chat takes everything in one prompt. If regressions or worse tool choice remain after the prompt is fixed, a router is reconsidered.
 - **Departures from the boards:**
   - The 공강 파티 board's sentence about excluded parties is dropped.
   - Board ①'s "김민수님은 이 시간에 안 돼요" is dropped, and its "30분" is 15 minutes.
@@ -652,14 +640,14 @@ Everything below is committed before any result: the cases, the world, the fixtu
   - After 11-01: the walks. After 11-03: the shuttle results.
   - Improvements follow in P11 and the design write-up in P22.
 - **A ticket order that keeps a working Assistant at each step:**
-  1. The router and the 공강 Feature, with `getMyDay` and walk-only `findFreeTimeEvents` on a fixture.
+  1. `getMyDay` and walk-only `findFreeTimeEvents` on a fixture, in the chat's tool list, with the 공강 rules.
   2. The walking-table builder and its seed.
   3. 공강 파티 cards with the 이동 시간 box.
   4. The Restaurant seed, the open rule and `placeId`.
   5. `findFreeFriends`, `findMealRestaurants`, the Restaurant card and 파티 만들기.
   6. Shuttle travel with the fallback values.
   7. The collector and the shuttle tools.
-  8. The P4 eval suite, its world and labels, and the P19 baseline runs.
+  8. The P4 eval suite, its world and labels, and the baseline runs.
   9. ADRs, GLOSSARY and attribution.
 
   The frozen items land before 11-01.
