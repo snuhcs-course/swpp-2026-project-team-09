@@ -85,6 +85,7 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
   4. **Publication.** A session neither attached nor queued is published when the rules or a Judgement passed it, with that Publication Route; otherwise it stays a Draft.
 - Publishing tells the apps to refetch the published Global Events, as any publication does.
 - A setting turns automatic publication off. With it off, the step still runs and stores Judgements and attachments, but publishes nothing; every session that would have been published stays a Draft. It is turned off when a floor of C2, C3 or D1 is missed.
+- Two more settings let this work be merged and released before it runs, both `off` by default and in Production. `EXTRA_SNU_COLLECTION` starts the worker's scheduled extra.snu Collections; it is turned on once the same-event rules (ticket 08a) are deployed, so that Users do not see an event twice. `AUTOMATIC_JUDGEMENT` lets the step judge Drafts; with it off no model is called and no post leaves the server, and those Drafts stay Drafts. It is turned on once the posts may be sent to the model provider and evaluation A's floors are met (ticket 09). Drafts stored while it was off are not judged when it is turned on; the service step can run over them later.
 
 ### extra.snu collection (worker)
 
