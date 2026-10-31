@@ -37,6 +37,9 @@
     "eval": "node eval/cli.ts",
     "eval:score": "node eval/score-cli.ts",
     "eval:compare": "node eval/compare-cli.ts",
+    "eval:collection:status": "node eval/collection/status-cli.ts",
+    "shuttle:derive": "node scripts/shuttle-derive.ts",
+    "shuttle:score": "node scripts/shuttle-score.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

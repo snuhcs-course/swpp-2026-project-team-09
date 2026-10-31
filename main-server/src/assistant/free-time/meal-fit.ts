@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Meal } from '../../generated/prisma/client.js';
@@ -30,6 +31,7 @@ export interface Diner {
   name: string;
   free: readonly FreeInterval[];
   departurePlace: string | null;
+  departureTime: Date | null;
   leaveBy: Date | null;
 }
 
@@ -123,7 +125,8 @@ function wayOut(placeId: string, next: { start: Date; placeId: string | null }, 
 
 function partOf(diner: Diner, shared: Interval, window: Interval, placeId: string, travel: TravelProvider): Part {
   const { start, previous, next } = aroundShared(diner.free, shared);
-  const leaves = latest([start, window.start]);
+  const given = previous?.placeId === null ? diner.departureTime : null;
+  const leaves = latest(given === null ? [start, window.start] : [start, window.start, given]);
   const origin = previous === null ? null : (previous.placeId ?? diner.departurePlace);
   const wayIn = origin === null ? null : travel.travel(origin, placeId, leaves);
   const out = next === null ? null : wayOut(placeId, next, travel);

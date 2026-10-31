@@ -9,6 +9,8 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -80,6 +82,21 @@ export const settingsSchema = z
     ASSISTANT_MAX_STEPS: count(8),
     ASSISTANT_TIMEOUT_MS: count(30_000),
     ASSISTANT_MAX_OUTPUT_TOKENS: count(1000),
+    // Whether the step after a Collection publishes what it read. "off" leaves every session a Draft: it is turned off
+    // when automatic publication is found to make mistakes (infra/production/README.md).
+    AUTOMATIC_PUBLICATION: z
+      .enum(['on', 'off'])
+      .default('on')
+      .transform((value) => value === 'on'),
+    // Whether that step asks the model about the Drafts the rules left. "off" calls no model and sends no post out
+    // (infra/production/README.md says when to turn it on). Each Judgement's call has its own limits: the time in
+    // milliseconds and the tokens the model may write.
+    AUTOMATIC_JUDGEMENT: z
+      .enum(['on', 'off'])
+      .default('off')
+      .transform((value) => value === 'on'),
+    JUDGEMENT_TIMEOUT_MS: count(60_000),
+    JUDGEMENT_MAX_OUTPUT_TOKENS: count(4000),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),
@@ -91,6 +108,12 @@ export const settingsSchema = z
       // next key Node parses.
       when: ({ issues }) => issues.length === 0,
     },
+  )
+  // Refused at the start, so that a Release shows the mistake and no try of a Judgement is used on it.
+  .refine(
+    ({ AUTOMATIC_JUDGEMENT, OPENROUTER_API_KEY, ASSISTANT_MODEL }) =>
+      !AUTOMATIC_JUDGEMENT || (OPENROUTER_API_KEY !== '' && ASSISTANT_MODEL !== ''),
+    { path: ['AUTOMATIC_JUDGEMENT'], message: 'Needs OPENROUTER_API_KEY and ASSISTANT_MODEL' },
   )
   // With one client ID in both settings, either sign-in would accept the other's ID token.
   .refine((settings) => settings.GOOGLE_APP_CLIENT_ID !== settings.GOOGLE_ADMIN_CLIENT_ID, {

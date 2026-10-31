@@ -42,7 +42,7 @@ The app changes only in JavaScript.
   - A Sub Quest with a point or a label goes through the mapping below first. Only one it cannot map is without a Place (ticket 03, PM decisions).
   - The tool returns `needs`, with the side (before or after) and the item, instead of results.
   - Before: the model asks where the User leaves from and passes a departure Place, resolved through `resolvePlace`.
-  - When `resolvePlace` answers `none`, the model says that Travel Times cannot be computed from off campus and asks once where the User enters the campus, such as 정문. If that gives no Place, it shows no candidates.
+  - When `resolvePlace` answers `none`, the model says that Travel Times cannot be computed from off campus and asks once where the User enters the campus, such as 정문, and at what time, and passes them as `departurePlace` and `departureTime`. If that gives no Place, it shows no candidates.
   - After: it asks by when the User must leave and passes a leave-by time, which replaces the after side.
   - No item or Travel Time is stored.
 - [x] **Candidates** are recruiting Quests, Open or Approval, visible as on the Boards, and published Global Events.
@@ -64,8 +64,8 @@ The app changes only in JavaScript.
   6. otherwise unknown, and the candidate is left out.
 - [x] **Fit.**
   - Before, with an item before the gap: the User leaves its Place at the start of the gap (the item's end, or now if that is later) and must arrive 1 minute before the candidate starts. Without one, the candidate only has to start after now.
-  - After, when the candidate has an end and lasts at most 3 hours: with an item after the gap, the User leaves the candidate when it ends and must reach the next item's Place 1 minute before it starts. Without one, there is no after side.
-  - After, when the end is unknown or longer than 3 hours: the candidate fits when the User can stay at least 30 minutes before leaving for the next item, and the leave-by time goes to the card. For a leave-by time, out-travel departs at the next item's start − 1 minute − the walking time.
+  - After, when the candidate has an end and lasts at most 3 hours: with an item after the gap, it fits as it is when the User can leave it when it ends and reach the next item's Place 1 minute before that item starts. When it ends too late for that, the next rule applies. Without an item after the gap, there is no after side.
+  - After, when the end is unknown, longer than 3 hours or too late: the candidate fits when the User can stay at least 30 minutes before leaving for the next item, and the leave-by time goes to the card. For a leave-by time, out-travel departs at the next item's start − 1 minute − the walking time.
   - Clock times narrow the gap. A candidate must start inside the window, and when it has an end, that end must fall inside the window too. Travel still runs from the previous item's Place and to the next item.
 - [x] **Board.** `board` narrows Quests to that Board. Global Events stay, and the model judges them by title like any other condition. There is no condition code, keyword list or word-specific prompt hint.
 - [x] **Constants.** The party numbers join the one constants table from ticket 01: 1 minute, 30 minutes of stay, 30 minutes of a Sub Quest with no end, 3 hours and 150 m.
@@ -90,7 +90,7 @@ The app changes only in JavaScript.
 - [x] **The 이동 시간 box** on those cards, as the 공강 파티 board draws it:
   - "가는 길 {도보|셔틀} N분";
   - then "· 다음 수업까지 N분", or "다음 일정까지" when the next item is not a Class;
-  - or "· HH:MM엔 나서야 해요" when the end is unknown or longer than 3 hours, after "끝 시간이 없어요" only when the end is unknown.
+  - or "· HH:MM엔 나서야 해요" when the card has a leave-by time, after "끝 시간이 없어요" only when the end is unknown.
   - A part shows only when its field is there.
   - The cards' existing buttons and the seats-left label stay.
 - [x] **The eval's Travel Times.** The eval runner and the judgement suite bind the frozen travel fixture to the provider of `travel`, so that the real table and shuttle file never reach the eval.
@@ -105,3 +105,12 @@ The app changes only in JavaScript.
     - the cards' 이동 시간 fields and their order across kinds.
   - A fake-server screen test of the 이동 시간 box in its forms.
 - [ ] **Landing.** With ticket 05, this lands before P05's R0 (11-02), so that P05's R0 and R1 differ only by P05's own change. It rebases on whatever P07 has landed on the Feature definition, the adapter and the request DTO, and reuses P07's Korea time helpers.
+
+## Comments
+
+### Agent usage (2026-10-31)
+
+- **Agent time** (estimate): about 48 minutes in all: about 34 minutes for the implementing subagent, about 9 for its two reviewers, and about 5 for this ticket's share of the session that ran all five tickets. Time spent waiting for a person is not counted.
+- **Tokens** (measured from the agents' transcripts, reviewers included; the running session's share is an estimate, a fifth of its total):
+  - Input: about 170 not cached, about 23,300,000 cache reads and about 1,419,000 cache writes.
+  - Output: about 233,000.

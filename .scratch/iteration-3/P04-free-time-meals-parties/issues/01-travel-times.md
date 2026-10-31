@@ -64,3 +64,10 @@ An item marked **Person** is a person's work, not an agent's.
 ### Walking evaluation (2026-10-31)
 
 The pairs, the method, the metric, the baseline, the threshold and the fragile Places are frozen in [evidence/01-walking-evaluation.md](../evidence/01-walking-evaluation.md). The Person walk remains.
+
+### Agent usage (2026-10-31)
+
+- **Agent time** (estimate): about 35 minutes in all: about 23 minutes for the implementing subagent, about 7 for its two reviewers, and about 5 for this ticket's share of the session that ran all five tickets. Time spent waiting for a person is not counted.
+- **Tokens** (measured from the agents' transcripts, reviewers included; the running session's share is an estimate, a fifth of its total):
+  - Input: about 160 not cached, about 12,300,000 cache reads and about 568,000 cache writes.
+  - Output: about 163,000.

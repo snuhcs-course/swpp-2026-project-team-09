@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -33,7 +34,16 @@ import {
   windowOn,
 } from './meal-fit.js';
 import { type OpenRestaurant, restaurantCard } from './restaurant-card.js';
-import { clockTime, dateInput, departurePlaceInput, leaveByInput, neededOf, noDay, outOfReach } from './tool-parts.js';
+import {
+  clockTime,
+  dateInput,
+  departurePlaceInput,
+  departureTimeInput,
+  leaveByInput,
+  neededOf,
+  noDay,
+  outOfReach,
+} from './tool-parts.js';
 import { UserDayService } from './user-day.service.js';
 
 // The meal side of the 공강 tools. Friends' Timetables are used without any switch, but only "free or not" comes out of
@@ -124,6 +134,7 @@ const restaurantsInput = z.object({
   friendIds: friendIdsInput.describe(FRIEND_IDS),
   window: windowInput.optional(),
   departurePlace: departurePlaceInput,
+  departureTime: departureTimeInput,
   leaveBy: leaveByInput,
 });
 
@@ -166,7 +177,7 @@ function neededOfFirst({ free }: Diner, shared: readonly Interval[], conditions:
 }
 
 async function dinersOf(
-  { date, departurePlace, leaveBy }: RestaurantConditions,
+  { date, departurePlace, departureTime, leaveBy }: RestaurantConditions,
   chosen: readonly FriendDto[],
   { userId, now }: Pick<ToolContext, 'userId' | 'now'>,
   days: UserDayService,
@@ -179,9 +190,16 @@ async function dinersOf(
       name: '나',
       free: mine ?? [],
       departurePlace: departurePlace ?? null,
+      departureTime: departureTime === undefined ? null : onDay(date, departureTime),
       leaveBy: leaveBy === undefined ? null : onDay(date, leaveBy),
     },
-    ...chosen.map(({ name }, index) => ({ name, free: theirs[index] ?? [], departurePlace: null, leaveBy: null })),
+    ...chosen.map(({ name }, index) => ({
+      name,
+      free: theirs[index] ?? [],
+      departurePlace: null,
+      departureTime: null,
+      leaveBy: null,
+    })),
   ];
 }
 

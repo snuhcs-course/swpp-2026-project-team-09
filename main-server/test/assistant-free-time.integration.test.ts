@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { ownQuest } from './quests.js';
@@ -60,6 +61,30 @@ describe('An item of mine without a Place before the gap', () => {
   });
 });
 
+describe('Leaving for the gap from off campus', () => {
+  it('leaves from the Place given at the time given, and never before the item ends', async () => {
+    const date = '2098-01-09';
+    const { here, near, model } = stage;
+    await stage.asking(date);
+    const item = await stage.classOn('thursday', '09:00', '10:00', null);
+    const early = await stage.questAt({ date, start: '10:30', place: { placeId: near.id } }, '일찍 시작하는 모임');
+    const late = await stage.questAt({ date, start: '12:00', place: { placeId: near.id } }, '늦게 시작하는 모임');
+    const asked = { date, from: item, to: 'end', departurePlace: here.id };
+    const resolving = { tool: 'resolvePlace', input: { words: here.name } };
+
+    const send = (departureTime: string): Promise<unknown> =>
+      stage.send(resolving, { tool: 'findFreeTimeEvents', input: { ...asked, departureTime } }, { text: '…' });
+
+    await send('11:30');
+
+    expect(model.toolResults()[1]).toMatchObject({ result: 'found', candidates: [{ id: late }] });
+
+    await send('08:00');
+
+    expect(model.toolResults()[1]).toMatchObject({ result: 'found', candidates: [{ id: early }, { id: late }] });
+  });
+});
+
 describe('An item of mine without a Place after the gap', () => {
   it('asks by when the User must leave, which then replaces the side after the gap', async () => {
     const date = '2098-01-20';
@@ -69,7 +94,7 @@ describe('An item of mine without a Place after the gap', () => {
     const before = await stage.classOn('monday', '09:00', '10:00', here.id);
     const after = await stage.classOn('monday', '17:00', '18:00', null);
     const ended = await stage.questAt({ date, start: '10:30', end: '11:30', place });
-    await stage.questAt({ date, start: '11:30', end: '12:20', place }, '늦게 끝나는 모임');
+    const late = await stage.questAt({ date, start: '11:30', end: '12:20', place }, '늦게 끝나는 모임');
     const open = await stage.questAt({ date, start: '11:40', place });
     await stage.questAt({ date, start: '11:50', place }, '오래 못 있는 모임');
 
@@ -79,9 +104,11 @@ describe('An item of mine without a Place after the gap', () => {
 
     const { candidates } = await stage.find(date, before, after, { leaveBy: '12:10' });
 
-    expect(candidates.map(({ id }) => id)).toEqual([ended, open]);
+    expect(candidates.map(({ id }) => id)).toEqual([ended, late, open]);
     expect(candidates[0]).not.toHaveProperty('next');
-    expect(candidates[1]).toMatchObject({ leaveBy: '12:10', endUnknown: true });
+    expect(candidates[1]).toMatchObject({ leaveBy: '12:10' });
+    expect(candidates[1]).not.toHaveProperty('endUnknown');
+    expect(candidates[2]).toMatchObject({ leaveBy: '12:10', endUnknown: true });
   });
 
   it('maps a Sub Quest of mine with a label to its Place, and asks only about one it cannot map', async () => {

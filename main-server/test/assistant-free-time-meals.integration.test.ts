@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -95,6 +96,30 @@ describe('findMealRestaurants when the item before the User has no Place', () =>
           ],
         },
       ],
+    });
+  });
+});
+
+describe('findMealRestaurants when the User comes from off campus', () => {
+  it('leaves from the Place given at the time given', async () => {
+    const date = '2098-06-16';
+    await stage.asking(date);
+    await menusOn(date);
+    await stage.classOn('monday', '10:00', '11:00', null);
+    const { id } = await friendWithClass('이보라', '09:00', '10:00', stage.here.id);
+    const input = { date, meal: 'lunch', friendIds: [id], departurePlace: stage.here.id, departureTime: '12:00' };
+
+    await stage.send(
+      resolve('보라'),
+      { tool: 'resolvePlace', input: { words: '제1공학관' } },
+      { tool: 'findMealRestaurants', input },
+      { text: '…' },
+    );
+
+    // 590 s on foot from 12:00 is 12:09:50, rounded up to 5 minutes.
+    expect(lastAnswer()).toMatchObject({
+      result: 'found',
+      restaurants: [{ key: '학생회관식당', start: `${date}T12:10:00+09:00` }],
     });
   });
 });

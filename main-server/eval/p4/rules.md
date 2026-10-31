@@ -116,20 +116,21 @@ Each gap is answered with its start, its end, the name of its previous item and 
 
 **Before.** With a previous item, the User leaves its Place at the start of the gap (the item's end, or `now` if that is later) and must arrive at least 1 minute before the candidate starts. Without one there is no travel on that side, and the candidate only has to start after `now`.
 
-**After, with an end and at most 3 hours long.** With a next item, the User leaves the candidate when it ends and must reach the next item's Place at least 1 minute before it starts. Without one there is no after side.
+**After, with an end and at most 3 hours long.** With a next item, a candidate fits as it is when the User can leave it when it ends and reach the next item's Place at least 1 minute before that item starts. When it ends too late for that, the User leaves it early, as in the next paragraph. Without a next item there is no after side.
 
-**After, with no end or longer than 3 hours.** With a next item, the User's leave-by time is the next item's start − 1 minute − the way from the candidate to the next item's Place. The candidate fits when that leaves at least 30 minutes after its start. Without one there is no after side.
+**After, leaving early: no end, longer than 3 hours, or ending too late.** With a next item, the User's leave-by time is the next item's start − 1 minute − the way from the candidate to the next item's Place. The candidate fits when that leaves at least 30 minutes after its start. Without one there is no after side.
 
 **What is returned for a candidate that fits:** its kind and seed, its start and end (null when it has none), and:
 
-| Situation                            | `travel`      | After it                                              |
-| ------------------------------------ | ------------- | ----------------------------------------------------- |
-| A previous item                      | its way there |                                                       |
-| No previous item                     | null          |                                                       |
-| Next item, an end of at most 3 hours |               | `next`: minutes of the way, and whether it is a Class |
-| Next item, longer than 3 hours       |               | `leaveBy`                                             |
-| Next item, no end                    |               | `leaveBy` and `endUnknown: true`                      |
-| No next item                         |               | nothing                                               |
+| Situation                                      | `travel`      | After it                                              |
+| ---------------------------------------------- | ------------- | ----------------------------------------------------- |
+| A previous item                                | its way there |                                                       |
+| No previous item                               | null          |                                                       |
+| Next item, an end of at most 3 hours, in time  |               | `next`: minutes of the way, and whether it is a Class |
+| Next item, an end of at most 3 hours, too late |               | `leaveBy`                                             |
+| Next item, longer than 3 hours                 |               | `leaveBy`                                             |
+| Next item, no end                              |               | `leaveBy` and `endUnknown: true`                      |
+| No next item                                   |               | nothing                                               |
 
 **Board.** `board` narrows Quests to that Board. Global Events have no Board and stay, and the model judges them by title like any other condition.
 
@@ -140,9 +141,9 @@ Each gap is answered with its start, its end, the name of its previous item and 
 **The User's item next to the gap.** A tool that judges travel returns `needs` instead of results, naming the side (before or after) and the item. With several gaps, the first gap decides, and the before side comes first.
 
 - Before: the model asks where the User leaves from and passes the answer as `departurePlace`, a Place found through `resolvePlace`. It takes the place of the previous item's Place, and the time of leaving does not change.
-- If `resolvePlace` answers `none`, the model says that Travel Times cannot be computed from off campus and asks once where the User enters the campus, such as 정문. If that gives no Place either, it shows no candidates.
+- If `resolvePlace` answers `none`, the model says that Travel Times cannot be computed from off campus and asks once where the User enters the campus, such as 정문, and at what time. It passes that Place as `departurePlace` and that time as `departureTime`. The User leaves from there at that time, or at the time section 7 gives if that is later. The gap stays as it is. If no Place comes of it either, the model shows no candidates.
 - After: the model asks by when the User must leave and passes the answer as `leaveBy`, which replaces the after side:
-  - a candidate with an end of at most 3 hours must end by `leaveBy`, and shows no `next`;
+  - a candidate with an end of at most 3 hours that ends by `leaveBy` shows no `next`;
   - any other candidate must leave at least 30 minutes between its start and `leaveBy`, and shows that `leaveBy`, with `endUnknown: true` when it has no end.
 - What the User answers is used for this request alone. Nothing is stored.
 
@@ -172,7 +173,7 @@ Each gap is answered with its start, its end, the name of its previous item and 
 
 **Fit.** For a Restaurant and one shared interval, for each person, take their previous item (the last that ends at or before the interval's start) and next item (the first that starts at or after the interval's end):
 
-- their free interval starts at the latest of the previous item's end, the meal window's start and `now`;
+- their free interval starts at the latest of the previous item's end, the meal window's start and `now`, and for the User `departureTime` too;
 - in-travel is the way from the previous item's Place to the Restaurant's Place; with no previous item there is none;
 - out-travel is the way from the Restaurant's Place to the next item's Place; with no next item there is none;
 - arrival = the start of their free interval + in-travel;
@@ -202,7 +203,7 @@ For a person whose previous item has no Place, the in-time is unknown, so they s
 - The shared time is empty: `result: none`, `why: no-shared-time`.
 - There is shared time and no Restaurant fits: `result: found`, with `shared` and no `restaurants`.
 
-**The User's item without a Place** next to the shared interval gives `needs`, as in section 8. With several shared intervals, the first decides, and the before side comes first. `departurePlace` works as there. `leaveBy` takes the place of the User's own leave-by.
+**The User's item without a Place** next to the shared interval gives `needs`, as in section 8. With several shared intervals, the first decides, and the before side comes first. `departurePlace` and `departureTime` work as there. `leaveBy` takes the place of the User's own leave-by.
 
 **Menu conditions** are read by the model from the menu lines it receives. There is no keyword list.
 
@@ -218,9 +219,9 @@ The model passes the User's words, or ids a tool gave it, and the server decides
 The 공강 tools:
 
 - **`getMyDay(date)`**: the User's items that day, each with its id, name, start and end. Never rooms, Places or coordinates.
-- **`findFreeTimeEvents(date, from, to, board?, departurePlace?, leaveBy?)`**: sections 6 to 8.
+- **`findFreeTimeEvents(date, from, to, board?, departurePlace?, departureTime?, leaveBy?)`**: sections 6 to 8.
 - **`findFreeFriends(date, meal | window, friendIds?)`**: section 9.
-- **`findMealRestaurants(date, meal, friendIds, window?, departurePlace?, leaveBy?)`**: section 10.
+- **`findMealRestaurants(date, meal, friendIds, window?, departurePlace?, departureTime?, leaveBy?)`**: section 10.
 - **`showRestaurants(keys)`**: shows Restaurant cards. The server builds each card.
 
 The chat's other tools:
@@ -288,3 +289,8 @@ The spec disagrees with itself on three points and leaves a fourth open. These a
 2. **A Friend's Travel Time.** The card shows the time "Travel shown per person" picks when it is known, and "—" only when it is unknown. So a Friend whose previous item has a Place and whose next item does not shows the in-time.
 3. **A Quest card's time.** The presenters do not change, so a Quest card still shows the existing next Sub Quest. Cards are ordered by the start of the Sub Quest judged inside the gap. With several Sub Quests the card's time can differ from the judged one, which is a known limitation.
 4. **A Sub Quest's Place.** A Sub Quest can hold a point or a label and no Place. The mapping of section 5 applies to the User's and Friends' Sub Quests too, and only a Sub Quest it cannot map is an item without a Place. A Class's Place is used as it is.
+
+The PM's label review of 2026-11-01 changed two rules. They are written into sections 7, 8 and 10 above.
+
+5. **Leaving a short candidate early.** One with an end of at most 3 hours that ends too late for the next item is no longer left out. It fits when the User can stay at least 30 minutes, and it shows its leave-by time.
+6. **Entering the campus.** A User who comes from off campus is asked at what time they enter it, and the way runs from that time.

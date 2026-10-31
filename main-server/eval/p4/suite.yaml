@@ -2,16 +2,21 @@
 # AI-generated with Claude
 #
 # 2026-10-31  Opus 5.5   prompted by TaeHyun79
+# 2026-11-01  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # The P4 suite (spec P04, "Evaluation plan" 1), committed before any run. Its cases are under cases/, its world is
 # world.yaml and its rules rules.md. `pnpm eval --world p4` runs it: every case has `repeat: 3`, so that a scorecard's
 # pass rates are the mean of the 3 runs.
 #
-# The labels are the `expect` of each case, as drafted. labels-working.yaml holds the drafter's working for every case,
+# The labels are the `expect` of each case, as drafted and reviewed. labels-working.yaml holds the drafter's working for every case,
 # and labels-notes.md the drafter's notes: the answers to look at, and contradictions in the header of questions.yaml.
 # questions.yaml is the list of questions the drafter was given, with that header, as it was: cases/ is what runs. The
-# fixed history the notes flag in meals-here-after-cards was completed after the draft, which changed no answer.
+# fixed history the notes flag in meals-here-after-cards was completed after the draft, which changed no answer. The
+# review of the harness on 11-01 tightened or loosened some assertions of cases/ and changed no answer: which tools are
+# forbidden, the argument `from` of parties-abbreviated-gap-begun, and a few words and card limits. The person's review
+# of 11-01 changed two rules (rules.md section 15), and with them the answers of parties-named-classes,
+# parties-abbreviated-gap-begun and parties-departure-after-asking. labels-working.yaml keeps the draft's working of them.
 
 world: p4
 cases:
@@ -27,10 +32,12 @@ labels:
   # A separate agent that read only rules.md, world.yaml, travel-fixture.json and the questions, never the judgement code.
   draftedBy: Claude Opus 5.5 (claude-opus-5-5)
   draftedOn: '2026-10-31'
-  # The person's review is open.
-  reviewedBy: null
-  reviewedOn: null
-  # What the rules leave open, with the drafter's reason. Nothing here is settled: the person's review decides each one.
+  reviewedBy: TaeHyun79
+  reviewedOn: '2026-11-01'
+  # Not among the open answers, but reviewed too: the header of questions.yaml leaves out the asker's Shared Quest
+  # for 과학기술 토크콘서트, which world.yaml and rules.md section 2 make an item. In meals-who-dinner-tomorrow the draft
+  # follows the rules: the asker is free 17:00–18:00, and 이민수 and 오지호 are not free.
+  # What the rules left open, with the drafter's reason. The person's review kept each answer as drafted.
   openForReview:
     - id: parties-over-twenty-narrowed
       kind: meaning

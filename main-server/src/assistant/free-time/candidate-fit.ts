@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { ARRIVAL_MARGIN_SECONDS, SHORTEST_STAY_SECONDS } from '../../travel/judgement-constants.js';
@@ -63,7 +64,7 @@ function wayThere(
   return { travel: { mode: way.mode, minutes: shownMinutes(way.seconds) } };
 }
 
-// The leave-by box of a candidate with no end, or a longer one, when the User can stay long enough before it.
+// The leave-by box of a candidate the User leaves early, when they can stay long enough before it.
 function leavingBy({ start, end }: Candidate, leaveBy: Date): TravelBox | null {
   if (leaveBy < later(start, SHORTEST_STAY_SECONDS)) {
     return null;
@@ -89,19 +90,15 @@ function wayAfter(candidate: Candidate, { after }: Gap, travel: TravelProvider):
     return {};
   }
   if (after.kind === 'leaveBy') {
-    if (!endsInTime(start, end)) {
-      return leavingBy(candidate, after.at);
+    return endsInTime(start, end) && end <= after.at ? {} : leavingBy(candidate, after.at);
+  }
+  if (endsInTime(start, end)) {
+    const way = travel.travel(placeId, after.placeId, end);
+    if (later(end, way.seconds).getTime() <= after.at.getTime() - ARRIVAL_MARGIN_MS) {
+      return { next: { minutes: shownMinutes(way.seconds), isClass: after.isClass } };
     }
-    return end <= after.at ? {} : null;
   }
-  if (!endsInTime(start, end)) {
-    return leavingBy(candidate, leaveFor(candidate, after, travel));
-  }
-  const way = travel.travel(placeId, after.placeId, end);
-  if (later(end, way.seconds).getTime() > after.at.getTime() - ARRIVAL_MARGIN_MS) {
-    return null;
-  }
-  return { next: { minutes: shownMinutes(way.seconds), isClass: after.isClass } };
+  return leavingBy(candidate, leaveFor(candidate, after, travel));
 }
 
 // The box of a candidate that fits the gap, or null. The caller has found that it starts inside the gap.

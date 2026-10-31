@@ -6,6 +6,7 @@
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -16,12 +17,14 @@ import { StartedTestContainer } from 'testcontainers';
 import { CollectionStatus, GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
 import { redisSettings, startRedis } from './containers.js';
 import {
-  collectedEvent,
+  collectedPost,
   eventsMessage,
   invalidEventsMessages,
   placesNamingAPlace,
   placesNamingNoPlace,
+  postAddress,
   postNumbersFrom,
+  stepOver,
 } from './global-events.js';
 import { SignalWatcher, signalsWhile } from './signals.js';
 import { startApp } from './start-app.js';
@@ -52,7 +55,9 @@ afterAll(async () => {
 const newPost = postNumbersFrom(900_000);
 
 function storedEvent(postNumber: number): Promise<GlobalEvent | null> {
-  return prisma.globalEvent.findUnique({ where: { postNumber } });
+  return prisma.globalEvent.findFirst({
+    where: { sessions: { some: { sourcePost: { source: 'snu_events', key: String(postNumber) } } } },
+  });
 }
 
 // Only this file stores events as the events list's Source, so no other file changes its status meanwhile.
@@ -60,10 +65,16 @@ function eventsStatus(): Promise<CollectionStatus | null> {
   return prisma.collectionStatus.findUnique({ where: { source: 'snu_events' } });
 }
 
+// Sends a message and waits for the step after its answer.
+async function collected(message: object): Promise<void> {
+  await sendAsWorker(app, '/global-events/collected', message);
+  await stepOver(prisma);
+}
+
 // Sends a post of its own, with `changes` applied, and gives what was stored of it.
-async function collect(changes: object): Promise<GlobalEvent | null> {
+async function collect(changes: Record<string, unknown>): Promise<GlobalEvent | null> {
   const postNumber = newPost();
-  await sendAsWorker(app, '/global-events/collected', eventsMessage([collectedEvent(postNumber, changes)]));
+  await collected(eventsMessage([collectedPost(postNumber, changes)]));
   return storedEvent(postNumber);
 }
 
@@ -76,9 +87,7 @@ describe('A collected event whose time and place were read', () => {
   it("is published at the position of the Place its place names, with the post's text", async () => {
     const postNumber = newPost();
 
-    await expect(
-      sendAsWorker(app, '/global-events/collected', eventsMessage([collectedEvent(postNumber)])),
-    ).resolves.toBeUndefined();
+    await expect(collected(eventsMessage([collectedPost(postNumber)]))).resolves.toBeUndefined();
 
     expect(await storedEvent(postNumber)).toMatchObject({
       state: 'published',
@@ -89,9 +98,11 @@ describe('A collected event whose time and place were read', () => {
       place: '뉴미디어통신공동연구소 이충웅홀(132동 103호)',
       ...place132,
       version: 1,
-      postNumber,
-      sourceUrl: `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=${postNumber}`,
+      publicationRoute: 'rule',
     });
+    expect(
+      await prisma.sourcePost.findUnique({ where: { source_key: { source: 'snu_events', key: String(postNumber) } } }),
+    ).toMatchObject({ address: postAddress(postNumber) });
   });
 
   it('is published with its end when one was read', async () => {
@@ -158,11 +169,11 @@ describe('The place of a collected event', () => {
 describe('A post that is already stored', () => {
   it('is stored once when it is sent twice', async () => {
     const postNumber = newPost();
-    const message = eventsMessage([collectedEvent(postNumber)]);
-    await sendAsWorker(app, '/global-events/collected', message);
+    const message = eventsMessage([collectedPost(postNumber)]);
+    await collected(message);
     const stored = await storedEvent(postNumber);
 
-    await expect(sendAsWorker(app, '/global-events/collected', message)).resolves.toBeUndefined();
+    await expect(collected(message)).resolves.toBeUndefined();
 
     expect(await storedEvent(postNumber)).toEqual(stored);
   });
@@ -177,17 +188,14 @@ describe('A post that is already stored', () => {
     ['discarded', { state: 'discarded' as const }],
   ])('is left as it is when it was %s', async (_case, changes) => {
     const postNumber = newPost();
-    await sendAsWorker(app, '/global-events/collected', eventsMessage([collectedEvent(postNumber)]));
+    await collected(eventsMessage([collectedPost(postNumber)]));
     // As an Administrator would change it.
-    const stored = await prisma.globalEvent.update({ where: { postNumber }, data: changes });
+    const { id } = (await storedEvent(postNumber)) ?? { id: '' };
+    const stored = await prisma.globalEvent.update({ where: { id }, data: changes });
 
     // The post as a later Collection would read it, had the Source changed it.
-    const changed = collectedEvent(postNumber, { title: '설명회 (온라인 전환)', place: '온라인 (Zoom)' });
-    await sendAsWorker(
-      app,
-      '/global-events/collected',
-      eventsMessage([changed], { collectedAt: '2026-10-02T12:00:00+09:00' }),
-    );
+    const changed = collectedPost(postNumber, { title: '설명회 (온라인 전환)', place: '온라인 (Zoom)' });
+    await collected(eventsMessage([changed], { collectedAt: '2026-10-02T12:00:00+09:00' }));
 
     expect(await storedEvent(postNumber)).toEqual(stored);
   });
@@ -209,18 +217,14 @@ describe('An events message that does not match the schema', () => {
 
 describe('A Collection of the events list', () => {
   it('is recorded with its time when its message is stored', async () => {
-    await sendAsWorker(
-      app,
-      '/global-events/collected',
-      eventsMessage([], { collectedAt: '2026-10-02T18:00:00+09:00' }),
-    );
+    await collected(eventsMessage([], { collectedAt: '2026-10-02T18:00:00+09:00' }));
 
     expect(await eventsStatus()).toMatchObject({ lastSucceededAt: new Date('2026-10-02T09:00:00Z') });
   });
 
   it('that failed is recorded with its time and reason, and the stored events stay', async () => {
     const postNumber = newPost();
-    await sendAsWorker(app, '/global-events/collected', eventsMessage([collectedEvent(postNumber)]));
+    await collected(eventsMessage([collectedPost(postNumber)]));
     const stored = await storedEvent(postNumber);
 
     await expect(
@@ -243,19 +247,13 @@ describe('A Collection of the events list that stopped early', () => {
   it('stores the posts read before it, and records its failure in place of a success', async () => {
     const postNumber = newPost();
     const failureReason = "The university's firewall blocked https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525";
-    await sendAsWorker(
-      app,
-      '/global-events/collected',
-      eventsMessage([], { collectedAt: '2026-10-03T00:00:00+09:00' }),
+    await collected(eventsMessage([], { collectedAt: '2026-10-03T00:00:00+09:00' }));
+
+    await collected(
+      eventsMessage([collectedPost(postNumber)], { collectedAt: '2026-10-03T06:00:00+09:00', failureReason }),
     );
 
-    await sendAsWorker(
-      app,
-      '/global-events/collected',
-      eventsMessage([collectedEvent(postNumber)], { collectedAt: '2026-10-03T06:00:00+09:00', failureReason }),
-    );
-
-    expect(await storedEvent(postNumber)).toMatchObject({ postNumber });
+    expect(await storedEvent(postNumber)).not.toBeNull();
     expect(await eventsStatus()).toMatchObject({
       lastSucceededAt: new Date('2026-10-02T15:00:00Z'),
       lastFailedAt: new Date('2026-10-02T21:00:00Z'),
@@ -265,38 +263,35 @@ describe('A Collection of the events list that stopped early', () => {
 });
 
 describe('global-events-changed', () => {
-  it('goes once to every connected app, carrying nothing, when a Collection publishes an event', async () => {
+  it('goes once to every connected app, carrying nothing, when the step after a Collection publishes an event', async () => {
     const message = eventsMessage([
-      collectedEvent(newPost()),
-      collectedEvent(newPost()),
-      collectedEvent(newPost(), { place: null }),
+      collectedPost(newPost()),
+      collectedPost(newPost()),
+      collectedPost(newPost(), { place: null }),
     ]);
+    const before = watcher.all().filter(({ name }) => name === 'global-events-changed').length;
 
     expect(
-      await signalsWhile(app, watcher, 'global-events-changed', () =>
-        sendAsWorker(app, '/global-events/collected', message),
-      ),
+      await signalsWhile(app, watcher, 'global-events-changed', async () => {
+        await collected(message);
+        // Sent after the step has written.
+        await vi.waitFor(() => {
+          expect(watcher.all().filter(({ name }) => name === 'global-events-changed').length).toBeGreaterThan(before);
+        });
+      }),
     ).toEqual([{ name: 'global-events-changed' }]);
   });
 
   it('is not sent when a Collection stores only Drafts', async () => {
-    const message = eventsMessage([collectedEvent(newPost(), { place: null })]);
+    const message = eventsMessage([collectedPost(newPost(), { place: null })]);
 
-    expect(
-      await signalsWhile(app, watcher, 'global-events-changed', () =>
-        sendAsWorker(app, '/global-events/collected', message),
-      ),
-    ).toEqual([]);
+    expect(await signalsWhile(app, watcher, 'global-events-changed', () => collected(message))).toEqual([]);
   });
 
   it('is not sent when a Collection stores nothing new', async () => {
-    const message = eventsMessage([collectedEvent(newPost())]);
-    await sendAsWorker(app, '/global-events/collected', message);
+    const message = eventsMessage([collectedPost(newPost())]);
+    await collected(message);
 
-    expect(
-      await signalsWhile(app, watcher, 'global-events-changed', () =>
-        sendAsWorker(app, '/global-events/collected', message),
-      ),
-    ).toEqual([]);
+    expect(await signalsWhile(app, watcher, 'global-events-changed', () => collected(message))).toEqual([]);
   });
 });

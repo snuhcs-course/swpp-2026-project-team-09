@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // The numbers of the judgement, in one table, frozen with the evaluation.
@@ -15,7 +16,7 @@ export const ARRIVAL_MARGIN_SECONDS = 60;
 // The longest a candidate or a Sub Quest is taken at its own end.
 export const LONGEST_TIMED_SECONDS = 3 * 60 * 60;
 
-// The shortest stay at a candidate with no end, or longer than LONGEST_TIMED_SECONDS.
+// The shortest stay at a candidate the User leaves early: no end, longer than LONGEST_TIMED_SECONDS, or ending too late.
 export const SHORTEST_STAY_SECONDS = 30 * 60;
 
 // How long a Sub Quest with no end, or longer than LONGEST_TIMED_SECONDS, is busy for.

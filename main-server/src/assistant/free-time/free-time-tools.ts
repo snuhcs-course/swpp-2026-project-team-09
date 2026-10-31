@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -27,6 +28,7 @@ import {
   clockTime,
   dateInput,
   departurePlaceInput,
+  departureTimeInput,
   itemName,
   leaveByInput,
   neededOf,
@@ -75,6 +77,7 @@ const input = z.object({
       'Only the 파티 of one Board: meal (식사), career (커리어), hobby (취미) or show (공연·전시). Global Events have no Board and stay.',
     ),
   departurePlace: departurePlaceInput,
+  departureTime: departureTimeInput,
   leaveBy: leaveByInput,
 });
 
@@ -133,7 +136,7 @@ function findFreeTimeEvents({ days, ...services }: FreeTimeServices): Tool {
       "Finds the gap or gaps of the User's day between from and to, and every recruiting 파티 and published Global Event the User can reach in them and still leave in time, soonest first. Answers result 'found' with the gaps (start, end, and the names of the items before and after) and the candidates with their total; or result 'needs' with the side (before or after) and the item without a Place, for which ask the User and call again with departurePlace or leaveBy; or result 'none' with the reason. Show the candidates with showQuests and showGlobalEvents. Their cards show the way there and when to leave.",
     input,
     run: async (conditions, { userId, now, found, judged }) => {
-      const { date, from, to, board, departurePlace, leaveBy } = conditions;
+      const { date, from, to, board, departurePlace, departureTime, leaveBy } = conditions;
       if (outOfReach(date, now)) {
         return noDay(date);
       }
@@ -152,7 +155,7 @@ function findFreeTimeEvents({ days, ...services }: FreeTimeServices): Tool {
         return needed;
       }
       const clockEnd = CLOCK_TIME.test(to) ? to : null;
-      const search = { date, clockEnd, board, departurePlace, leaveBy };
+      const search = { date, clockEnd, board, departurePlace, departureTime, leaveBy };
       const candidates = await fittingCandidates(services, { userId, now }, parts, search);
       for (const candidate of candidates) {
         found.add(candidate.kind, [candidate.id]);

@@ -5,6 +5,7 @@
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-02  Opus 5.5   prompted by fyoon46
  * 2026-10-03  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { SchedulerRegistry } from '@nestjs/schedule';
@@ -235,7 +236,7 @@ describe('The command that runs one Collection', () => {
       const { collectSources } = await import('../src/collect-sources.js');
 
       await expect(collectSources(app, names)).rejects.toThrow(
-        'Name one or more of: coop_menus, dormitory_menus, veterinary_menus',
+        'Name one or more of: extra_snu, coop_menus, dormitory_menus, veterinary_menus',
       );
       await app.close();
       expect(sources.requests).toEqual([]);

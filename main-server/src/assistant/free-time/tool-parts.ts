@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -25,6 +26,10 @@ export const departurePlaceInput = z
   .uuid()
   .optional()
   .describe('Where the User leaves from, as resolvePlace returned it in this message, after this tool asked by needs.');
+
+export const departureTimeInput = clockTime
+  .optional()
+  .describe('When the User enters the campus, as HH:MM, given with departurePlace when they come from off campus.');
 
 export const leaveByInput = clockTime
   .optional()
