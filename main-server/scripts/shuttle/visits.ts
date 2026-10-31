@@ -5,16 +5,14 @@
  ******************************************************************************/
 
 import { alongLoopMetres, fallbackRideSeconds, SHUTTLE_STOP_COUNT } from '../../src/shuttle/shuttle-timing.ts';
-import { clockTime, type ReportLine, type ShuttleSet } from './sets.ts';
+import { clockTime, MINUTE, SECOND } from './clock.ts';
+import { appendTo, type ReportLine, type ShuttleSet } from './sets.ts';
 
 // Rules R3 to R7 of the shuttle log (the P04 spec): the sets of a day as each car's visits to the stops and its moves
 // between them.
 
-export const SECOND = 1000;
-export const MINUTE = 60 * SECOND;
-
-// The fastest lap there can be: 5,226 m at 11 m/s is 7.9 minutes.
-export const LAP = 8 * MINUTE;
+// Rounded up from 5,226 m at 11 m/s, the top speed.
+export const FASTEST_LAP = 8 * MINUTE;
 const NEAR = MINUTE;
 const FLICKER_SETS = 2;
 const STEP_GAP = 35 * SECOND;
@@ -26,8 +24,10 @@ const SHINSOJAE = 5;
 const LAYOVER_SLACK_SECONDS = 180;
 const OTHER_SLACK_SECONDS = 600;
 
+export const ALL_STOPS: readonly number[] = Array.from({ length: SHUTTLE_STOP_COUNT }, (_, stop) => stop);
+
 // D_s: the baseline drive from each stop to the next, in seconds.
-export const BASELINE_DRIVE_SECONDS: readonly number[] = Array.from({ length: SHUTTLE_STOP_COUNT }, (_, stop) =>
+export const BASELINE_DRIVE_SECONDS = ALL_STOPS.map((stop) =>
   Math.round(fallbackRideSeconds(stop, (stop + 1) % SHUTTLE_STOP_COUNT)),
 );
 
@@ -79,6 +79,10 @@ export function lastSet({ times }: Visit): number {
   return last(times);
 }
 
+export function describeSighting(car: string, stop: number, at: number): string {
+  return `${car} at stop ${stop}, ${clockTime(at)}`;
+}
+
 // R7.
 export function isLong(visit: Visit): boolean {
   return visit.next !== null && arrival(visit.next) - arrival(visit) > longLimitSeconds(visit.stop) * SECOND;
@@ -90,7 +94,7 @@ function withoutIsolated(car: string, sightings: Sighting[], report: ReportLine[
     const neighbours = [sightings[index - 1], sightings[index + 1]];
     const near = neighbours.some((other) => other !== undefined && Math.abs(other.at - at) <= NEAR);
     if (!near) {
-      report.push({ rule: 'R3', reason: 'isolated sighting', detail: `${car} at stop ${stop}, ${clockTime(at)}` });
+      report.push({ rule: 'R3', reason: 'isolated sighting', detail: describeSighting(car, stop, at) });
     }
     return near;
   });
@@ -112,7 +116,7 @@ function toRuns(sightings: Sighting[]): Run[] {
 function isFlicker(before: Run, run: Run, after: Run): boolean {
   const backOrNext = after.stop === before.stop || after.stop === (before.stop + 1) % SHUTTLE_STOP_COUNT;
   const short = run.times.length <= FLICKER_SETS || run.times.length < after.times.length;
-  return backOrNext && short && first(after.times) - last(before.times) < LAP;
+  return backOrNext && short && first(after.times) - last(before.times) < FASTEST_LAP;
 }
 
 // R4. The scan steps back after a deletion, since the runs around it are new neighbours.
@@ -128,7 +132,7 @@ function withoutFlicker(car: string, runs: Run[], report: ReportLine[]): Run[] {
     report.push({
       rule: 'R4',
       reason: 'flicker',
-      detail: `${car} at stop ${run.stop}, ${clockTime(first(run.times))}, ${run.times.length} sets`,
+      detail: `${describeSighting(car, run.stop, first(run.times))}, ${run.times.length} sets`,
     });
     if (after.stop === before.stop) {
       before.times.push(...after.times);
@@ -141,38 +145,45 @@ function withoutFlicker(car: string, runs: Run[], report: ReportLine[]): Run[] {
   return kept;
 }
 
+function newVisit(car: string, stop: number, times: number[]): Visit {
+  return { car, stop, times, entry: null, exit: null, next: null, ahead: 0 };
+}
+
 // R5.
 function toVisits(car: string, runs: Run[]): Visit[] {
   const visits: Visit[] = [];
   for (const { stop, times } of runs) {
     let current: number[] = [];
     for (const at of times) {
-      if (current.length > 0 && at - last(current) >= LAP) {
-        visits.push({ car, stop, times: current, entry: null, exit: null, next: null, ahead: 0 });
+      if (current.length > 0 && at - last(current) >= FASTEST_LAP) {
+        visits.push(newVisit(car, stop, current));
         current = [];
       }
       current.push(at);
     }
-    visits.push({ car, stop, times: current, entry: null, exit: null, next: null, ahead: 0 });
+    visits.push(newVisit(car, stop, current));
   }
   return visits;
+}
+
+function stopsAhead(from: Visit, to: Visit): number {
+  return (to.stop - from.stop + SHUTTLE_STOP_COUNT) % SHUTTLE_STOP_COUNT;
 }
 
 // R6.
 function classify(from: Visit, to: Visit): Move {
   const gap = arrival(to) - lastSet(from);
-  const ahead = (to.stop - from.stop + SHUTTLE_STOP_COUNT) % SHUTTLE_STOP_COUNT;
   const reach = TOP_SPEED * Math.max(gap / SECOND, SHORTEST_GAP_SECONDS);
-  if (gap >= LAP) {
+  if (gap >= FASTEST_LAP) {
     return 'ABSENT';
   }
   if (alongLoopMetres((from.stop + 1) % SHUTTLE_STOP_COUNT, to.stop) > reach) {
     return 'JUMP';
   }
   if (gap <= STEP_GAP) {
-    return ahead === 1 ? 'STEP' : 'SKIP';
+    return stopsAhead(from, to) === 1 ? 'STEP' : 'SKIP';
   }
-  return gap <= SHORT_GAP && ahead <= 2 ? 'GAP' : 'BREAK';
+  return gap <= SHORT_GAP && stopsAhead(from, to) <= 2 ? 'GAP' : 'BREAK';
 }
 
 export function visitsOf(car: string, sightings: Sighting[], report: ReportLine[]): Visit[] {
@@ -184,21 +195,18 @@ export function visitsOf(car: string, sightings: Sighting[], report: ReportLine[
       const move = classify(from, to);
       from.exit = move;
       from.next = to;
-      from.ahead = (to.stop - from.stop + SHUTTLE_STOP_COUNT) % SHUTTLE_STOP_COUNT;
+      from.ahead = stopsAhead(from, to);
       to.entry = move;
     }
   }
   return visits;
 }
 
-// Each car's sightings in time order, under its id.
 export function sightingsByCar(sets: ShuttleSet[]): Map<string, Sighting[]> {
   const cars = new Map<string, Sighting[]>();
   for (const { at, cars: stops } of sets) {
     for (const [car, stop] of stops) {
-      const sightings = cars.get(car) ?? [];
-      sightings.push({ at, stop });
-      cars.set(car, sightings);
+      appendTo(cars, car, { at, stop });
     }
   }
   return cars;

@@ -1678,8 +1678,8 @@ Neither calls anything. Both clean the days with one implementation of the rules
 without an offset, stops the command. Stops are named by `loop_order`, their place in the stop seed.
 
 `seed/shuttle-timing.json` has the shape in `src/shuttle/shuttle-timing.ts`, in seconds: per stop and band the average
-wait, Σh² / (2Σh) over the observed headways h, and per pair of stops and band the median ride. A stop-band that kept
-under 75% of its headway time (R11) is left out, so the fallback covers it.
+wait, Σh² / (2Σh) over the observed headways h, and per pair of stops and band the median ride. What the file lacks,
+the fallback in that module covers. The 75% of R11 decides only what the score counts.
 
 The score holds each day out and compares it with the times derived from the others. A stop-band or pair-band those
 days lack is predicted with the fallback. The ride compares every held-out ride with the median, by MAE and the share
@@ -2258,7 +2258,8 @@ src/
 └── assistant/                       a feature: the Assistant, its model port, tools, feature definitions and the
                                      adapter that runs them
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
-eval/                                the benchmark of the Assistant, `pnpm eval`: its runner, recorder, world and cases
+eval/                                the benchmark of the Assistant, `pnpm eval`: its runner, recorder, world and cases;
+                                     also the shuttle metric's logged days
 test/                                tests named by level; the integration tests run against PostgreSQL and Redis in
                                      containers
 ```

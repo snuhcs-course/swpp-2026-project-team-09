@@ -9,7 +9,7 @@ import { scoreLeaveOneDayOut } from './shuttle/score.ts';
 import { waitCells, waitReport } from './shuttle/timing.ts';
 
 // `pnpm shuttle:score <folder>`: the shuttle metric over the logged days in the folder, leaving each day out in turn,
-// after all that the cleaning rules left out. See README.md, "Shuttle".
+// after all that the cleaning rules left out. See README.md, "Shuttle times from the Dev log".
 
 function seconds(value: number): string {
   return `${value.toFixed(1)} s`;
@@ -20,13 +20,8 @@ function percent(share: number): string {
 }
 
 function main([folder]: string[]): number {
-  if (folder === undefined) {
-    console.error('Usage: pnpm shuttle:score <folder>');
-    return 1;
-  }
-  const days = cleanLogFolder(folder);
+  const days = cleanLogFolder(folder, 'shuttle:score');
   if (days.length === 0) {
-    console.error(`No logged day in ${folder}`);
     return 1;
   }
   for (const day of days) {

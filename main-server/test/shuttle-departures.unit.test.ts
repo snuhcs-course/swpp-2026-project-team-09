@@ -4,8 +4,8 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
+import { clockTime } from '../scripts/shuttle/clock.ts';
 import { type UnknownWindow } from '../scripts/shuttle/departures.ts';
-import { clockTime } from '../scripts/shuttle/sets.ts';
 import { deriveTiming, ridesOf, waitCells, waitReport } from '../scripts/shuttle/timing.ts';
 import { cleaned, cleanedLog, logFile, reasons } from './shuttle-fixtures.ts';
 
@@ -65,10 +65,10 @@ describe('R8 event', () => {
 describe('R9 unknown windows', () => {
   it('marks the stops a BREAK and a JUMP passed', () => {
     expect(windowsOf(cleaned('r06-moves').day.windows)).toEqual([
-      ['set gap', '-', ALL_STOPS, '10:08:15', '10:16:15'],
       ['BREAK', '4531', [6, 7, 8], '10:04:30', '10:05:30'],
       ['forward JUMP', '4531', [9, 10, 11, 12, 13, 0, 1], '10:05:30', '10:06:30'],
       ['backward JUMP', '4531', [2], '10:07:15', '10:07:30'],
+      ['set gap', 'all cars', ALL_STOPS, '10:08:15', '10:16:15'],
     ]);
   });
 
@@ -99,7 +99,7 @@ describe('R9 unknown windows', () => {
 
   it('marks all stops for a gap of 8 minutes between sets', () => {
     expect(windowsOf(cleaned('r09-set-gap').day.windows)).toEqual([
-      ['set gap', '-', ALL_STOPS, '10:00:45', '10:09:45'],
+      ['set gap', 'all cars', ALL_STOPS, '10:00:45', '10:09:45'],
     ]);
   });
 
@@ -127,11 +127,14 @@ describe('R10 headways and the kept share of R11', () => {
     });
   });
 
-  it('keeps out a stop-band with under 75% of its headway time kept', () => {
+  it('does not score a stop-band with under 75% of its headway time kept', () => {
     expect(waitReport(waitCells([day]))).toEqual([
       { rule: 'R11', reason: 'under 75% of the headway time kept', detail: 'stop 4, 08-11: kept 360 s, dropped 360 s' },
     ]);
-    expect(deriveTiming([day]).waits).toEqual({});
+  });
+
+  it('still derives its wait from the time kept', () => {
+    expect(deriveTiming([day]).waits).toEqual({ '4': { '08-11': 180 } });
   });
 });
 

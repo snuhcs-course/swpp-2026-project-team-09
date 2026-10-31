@@ -10,9 +10,10 @@ import {
   type ShuttleBand,
   type ShuttleTiming,
 } from '../../src/shuttle/shuttle-timing.ts';
+import { bandOf, SECOND } from './clock.ts';
 import { type CleanedDay } from './departures.ts';
-import { bandOf, type ReportLine } from './sets.ts';
-import { arrival, baselineDriveMs, SECOND, type Visit } from './visits.ts';
+import { type ReportLine } from './sets.ts';
+import { ALL_STOPS, arrival, baselineDriveMs, type Visit } from './visits.ts';
 
 // Rules R11 and R12 of the shuttle log (the P04 spec), and the times `shuttle-timing.json` holds.
 
@@ -25,7 +26,7 @@ export interface WaitCell {
   waitSeconds: number;
   keptSeconds: number;
   droppedSeconds: number;
-  // R11: at least 75% of the headway time was kept.
+  // R11: at least 75% of the headway time was kept, so that the score counts it.
   enoughKept: boolean;
 }
 
@@ -73,8 +74,7 @@ function sum(values: number[]): number {
 
 // R11, over the headways of the days given: the kept parts' waiting over their time, which is Σh² / (2Σh).
 export function waitCells(days: CleanedDay[]): WaitCell[] {
-  const stops = Array.from({ length: SHUTTLE_STOP_COUNT }, (_, stop) => stop);
-  return stops.flatMap((stop) =>
+  return ALL_STOPS.flatMap((stop) =>
     SHUTTLE_BANDS.flatMap((band) => {
       const parts = headwayParts(days, stop, band);
       const kept = parts.filter(({ dropped }) => !dropped);
@@ -108,7 +108,7 @@ export function waitReport(cells: WaitCell[]): ReportLine[] {
 }
 
 // The runs of consecutive segments of one car, each with the visit it ends at.
-function segmentRuns(segments: Visit[]): Visit[][] {
+function consecutiveVisits(segments: Visit[]): Visit[][] {
   const runs: Visit[][] = [];
   for (const visit of segments) {
     const run = runs.at(-1);
@@ -124,7 +124,7 @@ function segmentRuns(segments: Visit[]): Visit[][] {
 // R12: every pair of visits along a run, less than a lap apart, banded by the arrival at the first.
 export function ridesOf({ segments }: CleanedDay): Ride[] {
   const rides: Ride[] = [];
-  for (const run of segmentRuns(segments)) {
+  for (const run of consecutiveVisits(segments)) {
     for (const [index, start] of run.entries()) {
       const band = bandOf(arrival(start));
       let ahead = start.ahead;
@@ -161,11 +161,11 @@ function medianRides(rides: Ride[]): ShuttleTiming['rides'] {
   return timing;
 }
 
-// What `shuttle-timing.json` holds for these days. A stop-band that kept too little is left out, for the fallback.
+// What `shuttle-timing.json` holds for these days. R11's 75% decides what is scored: the file takes any kept time.
 export function deriveTiming(days: CleanedDay[]): ShuttleTiming {
   const waits: ShuttleTiming['waits'] = {};
-  for (const { stop, band, waitSeconds, enoughKept } of waitCells(days)) {
-    if (enoughKept) {
+  for (const { stop, band, waitSeconds, keptSeconds } of waitCells(days)) {
+    if (keptSeconds > 0) {
       waits[stop] = { ...waits[stop], [band]: Math.round(waitSeconds) };
     }
   }

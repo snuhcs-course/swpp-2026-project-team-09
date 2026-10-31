@@ -39,9 +39,17 @@ export function printReport(heading: string, report: ReportLine[]): void {
   }
 }
 
-// What both tools start from: the folder's days under the cleaning rules, with all that was left out printed.
-export function cleanLogFolder(folder: string): CleanedDay[] {
+// What both tools start from: the folder's days under the cleaning rules, with all that was left out printed. No day at
+// all, which it says, ends the command.
+export function cleanLogFolder(folder: string | undefined, command: string): CleanedDay[] {
+  if (folder === undefined) {
+    console.error(`Usage: pnpm ${command} <folder>`);
+    return [];
+  }
   const { days, report } = loadDays(readLogFiles(folder));
+  if (days.length === 0) {
+    console.error(`No logged day in ${folder}`);
+  }
   printReport('The log files', report);
   return days.map((day) => {
     const cleaned = cleanDay(day);

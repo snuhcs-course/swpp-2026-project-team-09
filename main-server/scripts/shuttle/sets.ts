@@ -4,14 +4,15 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { koreaDate, koreaTime } from '../../src/assistant/korea-time.ts';
-import { bandAt, SHUTTLE_STOP_COUNT, type ShuttleBand } from '../../src/shuttle/shuttle-timing.ts';
+import { koreaDate } from '../../src/assistant/korea-time.ts';
+import { SHUTTLE_STOP_COUNT } from '../../src/shuttle/shuttle-timing.ts';
+import { clockTime } from './clock.ts';
 
 // The first two cleaning rules of the shuttle log (the P04 spec's R1 and R2): the CSV days as sets of vehicles.
 
 // What the cleaning left out of a day, or a note on it, and why.
 export interface ReportLine {
-  rule: string;
+  rule: `R${number}`;
   reason: string;
   detail: string;
 }
@@ -39,14 +40,6 @@ const PILOT_DAY = '2026-10-29';
 
 const OFFSET = /(?:Z|[+-]\d{2}:\d{2})$/u;
 
-export function clockTime(at: number): string {
-  return koreaTime(new Date(at)).slice(11, 19);
-}
-
-export function bandOf(at: number): ShuttleBand | null {
-  return bandAt(Number(clockTime(at).slice(0, 2)));
-}
-
 function readClock(value: string): number {
   const at = Date.parse(value);
   if (!OFFSET.test(value) || Number.isNaN(at)) {
@@ -56,6 +49,12 @@ function readClock(value: string): number {
     throw new Error(`R1: a set outside 07:55–21:05 in Korea: ${value}`);
   }
   return at;
+}
+
+export function appendTo<Key, Value>(lists: Map<Key, Value[]>, key: Key, value: Value): void {
+  const list = lists.get(key) ?? [];
+  list.push(value);
+  lists.set(key, list);
 }
 
 function dataLines(text: string): string[] {
@@ -106,9 +105,7 @@ function rowsByReceivedAt(csv: string, report: ReportLine[]): Map<string, Row[]>
       report.push({ rule: 'R2', reason: 'garbled row', detail: line });
       continue;
     }
-    const set = rows.get(row.receivedAt) ?? [];
-    set.push(row);
-    rows.set(row.receivedAt, set);
+    appendTo(rows, row.receivedAt, row);
   }
   return rows;
 }
@@ -139,9 +136,7 @@ export function loadDays(logs: LogFile[]): { days: ShuttleDay[]; report: ReportL
     if (date === PILOT_DAY) {
       throw new Error(`${PILOT_DAY} is the pilot sample, which the shuttle tools never read`);
     }
-    const daySets = days.get(date) ?? [];
-    daySets.push(set);
-    days.set(date, daySets);
+    appendTo(days, date, set);
   }
   return { days: [...days].map(([date, daySets]) => ({ date, sets: daySets })), report };
 }

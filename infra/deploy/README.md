@@ -70,6 +70,7 @@ restarts `demo-seed`, which rewrites the Demo Data's days around today.
 | `/etc/systemd/system/snu-now-*`           | The five unit files, copied there from `infra/deploy` by the bootstrap    |
 | The Docker volume `snu-now_postgres-data` | PostgreSQL's data                                                         |
 | `/srv/team/shuttle-log`                   | [The shuttle log](#the-shuttle-log)'s days, while a person has it running |
+| `/usr/local/bin/snu-now-shuttle-log.sh`   | Its script, with a sixth unit file in systemd's folder, installed by hand |
 
 The folders belong to the team group: every member reads them, and writes the settings file, the dumps and the APKs,
 without `sudo`. Docker and systemd need `sudo`.

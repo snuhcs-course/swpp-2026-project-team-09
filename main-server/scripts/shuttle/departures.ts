@@ -5,8 +5,20 @@
  ******************************************************************************/
 
 import { SHUTTLE_STOP_COUNT } from '../../src/shuttle/shuttle-timing.ts';
-import { bandOf, clockTime, type ReportLine, type ShuttleDay } from './sets.ts';
-import { arrival, isLong, LAP, lastSet, MINUTE, type Move, sightingsByCar, type Visit, visitsOf } from './visits.ts';
+import { bandOf, clockTime, MINUTE } from './clock.ts';
+import { type ReportLine, type ShuttleDay } from './sets.ts';
+import {
+  ALL_STOPS,
+  arrival,
+  describeSighting,
+  FASTEST_LAP,
+  isLong,
+  lastSet,
+  type Move,
+  sightingsByCar,
+  type Visit,
+  visitsOf,
+} from './visits.ts';
 
 // Rules R8 to R10 of the shuttle log (the P04 spec): a car's departures from the stops, where one may have gone unseen,
 // and the headways that are left.
@@ -14,7 +26,6 @@ import { arrival, isLong, LAP, lastSet, MINUTE, type Move, sightingsByCar, type 
 const STOOD_PARKED = 10 * MINUTE;
 const BACKWARD_FROM = 12;
 
-const ALL_STOPS = Array.from({ length: SHUTTLE_STOP_COUNT }, (_, stop) => stop);
 // 정문, 38동 and 신소재공동연구소.
 const PARKING_STOPS = new Set([0, 4, 5]);
 
@@ -74,7 +85,7 @@ function stopsPassed({ stop, ahead }: Visit): number[] {
 }
 
 function described(visit: Visit): string {
-  return `${visit.car} at stop ${visit.stop}, ${clockTime(arrival(visit))}`;
+  return describeSighting(visit.car, visit.stop, arrival(visit));
 }
 
 class DayCleaning {
@@ -82,9 +93,17 @@ class DayCleaning {
   readonly windows: UnknownWindow[] = [];
   readonly segments: Visit[] = [];
   readonly report: ReportLine[] = [];
+  private readonly dayStart: number;
+  private readonly dayEnd: number;
 
-  private mark(stops: readonly number[], from: number, to: number, reason: string, car: string): void {
-    this.windows.push({ stops, from, to, reason, car });
+  constructor(dayStart: number, dayEnd: number) {
+    this.dayStart = dayStart;
+    this.dayEnd = dayEnd;
+  }
+
+  private mark(window: UnknownWindow): void {
+    const { stops, from, to, reason, car } = window;
+    this.windows.push(window);
     this.report.push({
       rule: 'R9',
       reason: `window: ${reason}`,
@@ -95,63 +114,74 @@ class DayCleaning {
   private leftMoving(visit: Visit, next: Visit): void {
     if (!confirms(next, visit)) {
       this.report.push({ rule: 'R8', reason: 'departure not confirmed', detail: described(visit) });
-      this.mark(stopsPassed(visit), lastSet(visit), arrival(next), 'unconfirmed move', visit.car);
+      this.markBetween(stopsPassed(visit), visit, next, 'unconfirmed move');
       return;
     }
     for (const stop of stopsPassed(visit)) {
       this.departures.push({ stop, car: visit.car, at: arrival(next) });
     }
-    this.segmentOf(visit);
+    this.addSegment(visit);
   }
 
-  private segmentOf(visit: Visit): void {
+  // A car's first visit is no segment lost: the day holds no arrival for it to be timed from.
+  private addSegment(visit: Visit): void {
+    if (visit.entry === null) {
+      return;
+    }
     if (visit.exit === 'GAP') {
       this.report.push({ rule: 'R12', reason: 'left in a GAP', detail: described(visit) });
-    } else if (visit.entry !== null && !isTimed(visit.entry)) {
+    } else if (!isTimed(visit.entry)) {
       this.report.push({ rule: 'R12', reason: 'arrival not timed', detail: described(visit) });
-    } else if (visit.entry !== null && isLong(visit)) {
+    } else if (isLong(visit)) {
       this.report.push({ rule: 'R7', reason: 'LONG visit', detail: described(visit) });
-    } else if (visit.entry !== null && bandOf(arrival(visit)) === null) {
+    } else if (bandOf(arrival(visit)) === null) {
       this.report.push({ rule: 'R12', reason: 'arrival outside the bands', detail: described(visit) });
-    } else if (visit.entry !== null) {
+    } else {
       this.segments.push(visit);
     }
+  }
+
+  private markBetween(stops: readonly number[], visit: Visit, next: Visit, reason: string): void {
+    this.mark({ stops, from: lastSet(visit), to: arrival(next), reason, car: visit.car });
   }
 
   private leftOtherwise(visit: Visit, next: Visit, move: Move): void {
     this.report.push({ rule: 'R6', reason: `no departure: ${move}`, detail: described(visit) });
     if (move === 'BREAK') {
-      this.mark(stopsPassed(visit), lastSet(visit), arrival(next), 'BREAK', visit.car);
+      this.markBetween(stopsPassed(visit), visit, next, 'BREAK');
     } else if (move === 'ABSENT') {
       if (isTimed(visit.entry) || isTimed(next.exit)) {
-        this.mark(ALL_STOPS, lastSet(visit), arrival(next), 'ABSENT', visit.car);
+        this.markBetween(ALL_STOPS, visit, next, 'ABSENT');
       }
     } else if (isBackward(visit)) {
-      this.mark([visit.stop], lastSet(visit), arrival(next), 'backward JUMP', visit.car);
+      this.markBetween([visit.stop], visit, next, 'backward JUMP');
     } else if (lastSet(visit) - arrival(visit) < STOOD_PARKED) {
-      this.mark(stopsPassed(visit), arrival(visit), arrival(next), 'forward JUMP', visit.car);
+      const stops = stopsPassed(visit);
+      this.mark({ stops, from: arrival(visit), to: arrival(next), reason: 'forward JUMP', car: visit.car });
     }
   }
 
-  private carEdges(car: string, visits: Visit[], dayStart: number, dayEnd: number): void {
+  private markCarEdges(car: string, visits: Visit[]): void {
     const [firstVisit] = visits;
     const lastVisit = visits.at(-1);
     if (firstVisit === undefined || lastVisit === undefined) {
       return;
     }
-    if (arrival(firstVisit) > dayStart && !PARKING_STOPS.has(firstVisit.stop)) {
-      this.mark(ALL_STOPS, dayStart, arrival(firstVisit), 'first seen mid-day', car);
+    if (arrival(firstVisit) > this.dayStart && !PARKING_STOPS.has(firstVisit.stop)) {
+      const to = arrival(firstVisit);
+      this.mark({ stops: ALL_STOPS, from: this.dayStart, to, reason: 'first seen mid-day', car });
     }
-    if (lastSet(lastVisit) < dayEnd) {
+    if (lastSet(lastVisit) < this.dayEnd) {
       if (PARKING_STOPS.has(lastVisit.stop)) {
         this.report.push({ rule: 'R9', reason: 'left the feed at a parking stop', detail: described(lastVisit) });
       } else {
-        this.mark(ALL_STOPS, lastSet(lastVisit), dayEnd, 'lost mid-day', car);
+        const from = lastSet(lastVisit);
+        this.mark({ stops: ALL_STOPS, from, to: this.dayEnd, reason: 'lost mid-day', car });
       }
     }
   }
 
-  car(car: string, visits: Visit[], dayStart: number, dayEnd: number): void {
+  readCar(car: string, visits: Visit[]): void {
     for (const visit of visits) {
       const { next, exit } = visit;
       if (next !== null && exit !== null) {
@@ -162,20 +192,20 @@ class DayCleaning {
         }
       }
     }
-    this.carEdges(car, visits, dayStart, dayEnd);
+    this.markCarEdges(car, visits);
   }
 
-  setGaps(times: number[]): void {
+  markSetGaps(times: number[]): void {
     for (const [index, to] of times.slice(1).entries()) {
       const from = times[index];
-      if (from !== undefined && to - from >= LAP) {
-        this.mark(ALL_STOPS, from, to, 'set gap', '-');
+      if (from !== undefined && to - from >= FASTEST_LAP) {
+        this.mark({ stops: ALL_STOPS, from, to, reason: 'set gap', car: 'all cars' });
       }
     }
   }
 
   // R10.
-  headways(): Headway[] {
+  buildHeadways(): Headway[] {
     return ALL_STOPS.flatMap((stop) => {
       const times = this.departures
         .filter((departure) => departure.stop === stop)
@@ -198,17 +228,16 @@ class DayCleaning {
 }
 
 export function cleanDay({ date, sets }: ShuttleDay): CleanedDay {
-  const cleaning = new DayCleaning();
   const times = sets.map(({ at }) => at);
-  const dayStart = times[0] ?? 0;
-  const dayEnd = times.at(-1) ?? 0;
+  const cleaning = new DayCleaning(times[0] ?? 0, times.at(-1) ?? 0);
   const visits = new Map<string, Visit[]>();
   for (const [car, sightings] of sightingsByCar(sets)) {
     const carVisits = visitsOf(car, sightings, cleaning.report);
     visits.set(car, carVisits);
-    cleaning.car(car, carVisits, dayStart, dayEnd);
+    cleaning.readCar(car, carVisits);
   }
-  cleaning.setGaps(times);
+  cleaning.markSetGaps(times);
+  const headways = cleaning.buildHeadways();
   const { departures, windows, segments, report } = cleaning;
-  return { date, visits, departures, windows, headways: cleaning.headways(), segments, report };
+  return { date, visits, departures, windows, headways, segments, report };
 }
