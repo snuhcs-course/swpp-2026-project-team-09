@@ -1,0 +1,19 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# The shuttle log (infra/deploy/README.md). A person installs it by hand, not the bootstrap: this copy and the script's
+# live outside the checkout, which `development` and each deploy would otherwise take them from.
+[Unit]
+Description=Log the shuttle's vehicles from Dev Redis
+After=docker.service
+
+[Service]
+ExecStart=/bin/bash /usr/local/bin/snu-now-shuttle-log.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
