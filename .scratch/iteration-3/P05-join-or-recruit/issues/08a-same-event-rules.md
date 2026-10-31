@@ -14,3 +14,4 @@
 - [ ] A session neither attached nor held is published as in ticket 05; an attached session is not published on its own.
 - [ ] Two existing events are never merged; the step reads only Source Posts, with no branch for a particular Source.
 - [ ] Integration tests over HTTP cover each rule, the order, the flag, and that nothing is published before the step.
+- [ ] Once this ticket is deployed, `EXTRA_SNU_COLLECTION` may be turned on (ticket 04), and the ticket says so when it closes.

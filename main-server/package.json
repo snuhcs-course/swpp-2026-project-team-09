@@ -23,6 +23,7 @@
     "demo:seed": "nest build && node --env-file-if-exists=.env dist/demo-seed",
     "demo:walk": "nest build && node --env-file-if-exists=.env dist/demo-walk",
     "seed:export": "node scripts/export-seed.ts",
+    "walking:build": "nest build && node dist/build-walking-table",
     "keys:generate": "node scripts/generate-access-token-keys.ts",
     "lint": "oxlint --type-aware && node ../scripts/check-test-levels.ts 'test/**/*.unit.test.ts' 'test/**/*.integration.test.ts'",
     "typecheck": "tsc --noEmit",
@@ -36,6 +37,9 @@
     "eval": "node eval/cli.ts",
     "eval:score": "node eval/score-cli.ts",
     "eval:compare": "node eval/compare-cli.ts",
+    "eval:collection:status": "node eval/collection/status-cli.ts",
+    "shuttle:derive": "node scripts/shuttle-derive.ts",
+    "shuttle:score": "node scripts/shuttle-score.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

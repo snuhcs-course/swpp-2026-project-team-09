@@ -438,8 +438,24 @@ A Global Event, model `GlobalEvent` in `prisma/schema.prisma`, holds:
     next Collection does not bring its post back.
 - `version`, which starts at 1 and which every change by an Administrator raises by one, so that a change made from an
   older version is refused (see below).
-- For a collected event, `postNumber`, the post's `bbsidx`, which identifies the post, and `sourceUrl`, the post's
-  address. An event an Administrator creates has neither.
+- `publicationRoute`, how it came to be published: `administrator`, `rule` or `judgement`. It is empty while a Draft and
+  on an event discarded as a Draft. An Administrator's publishing or editing sets `administrator`, since they have
+  looked at it; cancelling leaves it as it is.
+- `needsAdministrator`, a flag that an Administrator must look at it.
+- For a collected event, its links to its Source Posts (below). An event an Administrator creates has none.
+
+A **Source Post**, model `SourcePost`, is one post on a Source, stored once: its `source`, its `key` on that Source
+(SNU Now's `bbsidx`, extra.snu's `dataSeq`) and its `address`; (`source`, `key`) is unique. It is read as one or more
+numbered sessions, model `SourcePostSession`, each linked to one Global Event with its `number`, how it was attached
+(`attachedBy`: `own` for the event made from it, `rule`, `ai` or `administrator`) and the `reason`; (Source Post,
+`number`) is unique, and a Global Event can have links from several posts. What differs by Source, whether a building
+number alone is taken as Gwanak and the pattern by which a body's link names a post, is a setting of that Source in
+`src/global-events/post-sources.ts`, so that the steps reading a post do not ask which Source it came from.
+
+`publicationRoute`, `needsAdministrator` and the links are for Administrators, and no DTO the app receives carries them.
+The app's `sourceUrl` is the address of the event's own post. The columns `post_number` and `source_url` of
+`global_events` were moved to Source Posts by the migration `add_source_posts`; nothing reads or writes them, and a
+later migration drops them, once no pod of an older server can run.
 
 An event has ended when its end has passed or, when it has no end, once the day of its start has passed in Asia/Seoul:
 an event without an end that starts today is listed until midnight. The same rule decides both lists of published
@@ -488,8 +504,11 @@ needs beside them through a controller of their own feature. Each route needs an
     "longitude": 126.95407,
     "state": "draft",
     "version": 1,
-    "postNumber": 176525,
+    "source": "snu_events",
+    "postKey": "176525",
     "sourceUrl": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
+    "publicationRoute": null,
+    "needsAdministrator": false,
     "missing": ["startsAt"]
   }
   ```
@@ -511,7 +530,7 @@ An Administrator creates and changes them through the same controller. Each answ
 `GET /admin/global-events/:id` does:
 
 - `POST /admin/global-events` with `{ "title", "description", "startsAt", "endsAt", "place", "latitude", "longitude" }`
-  creates a Draft by hand, such as from an organizer's submission, and answers 201 with it: version 1, `postNumber` and
+  creates a Draft by hand, such as from an organizer's submission, and answers 201 with it: version 1, `source`, `postKey` and
   `sourceUrl` `null`. `title` and `description` are required, and a field left out is `null`. It requires an
   `Idempotency-Key` (see [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)).
 - `PATCH /admin/global-events/:id` with `{ "version", ... }` and any of the same fields edits a Draft or a published
@@ -571,10 +590,10 @@ The worker sends each post of the events list as one event, all those of a Colle
   "source": "snu_events",
   "collectedAt": "2026-10-02T06:00:00+09:00",
   "failureReason": null,
-  "events": [
+  "posts": [
     {
-      "postNumber": 176525,
-      "sourceUrl": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
+      "key": "176525",
+      "address": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
       "title": "[연합전공 지능형통신] 2027학년도 1학기 선발 및 설명회 안내",
       "description": "안녕하세요.\n…\n- 일시: 2026. 10. 13.(화) 17:00\n- 장소: 뉴미디어통신공동연구소 이충웅홀(132동 103호)\n…",
       "start": "2026-10-13T17:00:00+09:00",
@@ -597,10 +616,24 @@ The worker sends each post of the events list as one event, all those of a Colle
   read.
 - `place` is the body's place line as the post writes it, or `null`.
 - A post whose page the worker could not read as the post comes with its title from the list, an empty `description`
-  and no time or place, so it is stored as a Draft. An Administrator reads it at its `sourceUrl`.
+  and no time or place, so it is stored as a Draft. An Administrator reads it at its address.
 
-The rules read one start and one end per post, so a post that describes several sessions, such as a lecture series, is
-one event, which an Administrator splits.
+The events list's rules read one start and one end per post, so a post of that list that describes several sessions, such
+as a lecture series, is one session and one event, which an Administrator splits. A message can carry several sessions
+of a post, and each becomes its own event.
+
+A Collection's message is stored and answered at once, since the worker waits only five seconds: every session is stored
+as a Draft, and nothing is published inside the request. The step after the answer, `PublicationStepService`, then goes
+through each Source Post of that Source not yet through it, `stepFinishedAt` empty, and publishes the sessions the rules
+read, with the route `rule`. Their version stays 1, since it counts an Administrator's changes. An event an
+Administrator edited or discarded before the step ran is left as it is. A worker that gave up while its message was
+stored does not stop the step. When the step fails on a post, or the server restarts before it ran, the post stays as it
+is, and the next Collection of its Source takes it up; a Collection whose list holds nothing new still sends its
+message, so at the latest at that Source's next scheduled Collection.
+
+With the setting `AUTOMATIC_PUBLICATION=off` (default `on`) the step publishes nothing: every session stays a Draft for an
+Administrator, and turning it on again does not publish those. [infra/production/README.md](../infra/production/README.md)
+says how to turn it off in Production.
 
 A collected event is published, with no person involved, when the rules read both its time and its place:
 
@@ -608,7 +641,7 @@ A collected event is published, with no person involved, when the rules read bot
   date does not count, because that date is often the application period;
 - its place names exactly one Place of the [list](#places). Its position is that Place's coordinates.
 
-Any other collected event is stored as a Draft with whatever was read: an event online or off campus, one whose place
+Any other collected event stays a Draft with whatever was read: an event online or off campus, one whose place
 names no Place or several, and a post that is not an event, which mostly writes no such time and place. A rule that
 is not sure makes a Draft.
 
@@ -646,20 +679,20 @@ account for makes a Draft:
   `시흥`, `평창`, `수원`, `의과대학`, `간호대학`, `서울대학교병원`, `부설` and the like), at the stations named after it, at
   another university, at an address in another district or region, or in a flat. The list is Gwanak's.
 
-No Collection changes a stored event, whatever its state. A post is stored once, by its post number, and a later
+No Collection changes a stored event, whatever its state. A post is stored once, by its Source and key, and a later
 message carrying it again leaves it exactly as it is. So an Administrator's edits stay, and a discarded post does not
-come back. The worker asks which posts are stored before it reads any (`/global-events/stored-posts`), so it does not read a
+come back: a discarded event keeps its Source Post. The worker asks which posts are stored before it reads any (`/global-events/stored-posts`), so it does not read a
 stored post again: an edit or a deletion at the Source after that is not seen.
 
-A Collection that stores at least one event as published sends `global-events-changed` to every connected app once
-the events are stored, and the app fetches the published events again (see [Signals](#signals)). It carries nothing. A
-Collection that stores only Drafts, or no new post, sends none. `GlobalEventsService.signalChanged()` sends it, also
+The step sends `global-events-changed` to every connected app once when it published at least one event, and the app
+fetches the published events again (see [Signals](#signals)). It carries nothing. A step that publishes nothing sends
+none. `GlobalEventsService.signalChanged()` sends it, also
 after an Administrator's change (see above).
 
-What the rules read from a post, and how, is in the worker server's README. In a test, `collectedEvent()`,
-`eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
-`test/global-events.integration.test.ts` does; it reads what a Collection stored, by post number, with a database
-connection of its own. `test/global-event-lists.ts` reads the lists above, and `test/global-event-changes.ts` calls the
+What the rules read from a post, and how, is in the worker server's README. In a test, `collectedPost()`,
+`eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, and `stepOver()` waits
+for the step after the answer, as `test/global-events.integration.test.ts` does; it reads what a Collection stored, by
+post, with a database connection of its own. `ownSession()` links an event a test stores to a post. `test/global-event-lists.ts` reads the lists above, and `test/global-event-changes.ts` calls the
 Administrator's changes. The test files share one database, so `publishedAmong()` and `listedAmong()` keep only the
 events a test names, in the list's order. `signalsWhile()` in `test/signals.ts` gives the `global-events-changed`
 signals sent while a test acts, between two signals of the test's own. Other files publish, edit and cancel events
@@ -1661,6 +1694,45 @@ The worker's two routes, which follow [Requests from the worker server](#request
   where `collectedAt` is when the operator's answer arrived and `x`, `y` the position on the drawing. A `carId` listed
   twice is refused.
 
+### Shuttle times from the Dev log
+
+Real waits and rides come from a few days of vehicle positions logged on the Dev Server
+([The shuttle log](../infra/deploy/README.md#the-shuttle-log)). Production keeps no history of them. A folder holds
+each logged day as `YYYY-MM-DD.csv` with its set log `YYYY-MM-DD.sets.csv`, both plain or both gzipped; the committed
+days are in `eval/shuttle-days/`.
+
+```sh
+pnpm shuttle:derive eval/shuttle-days   # writes seed/shuttle-timing.json from the days in the folder
+pnpm shuttle:score eval/shuttle-days    # the shuttle metric, each day held out in turn
+```
+
+Neither calls anything. Both clean the days with one implementation of the rules R1 to R12 of the P04 spec
+(`scripts/shuttle/`) and print every item left out, with its rule and reason. A value that breaks R1, such as a time
+without an offset, stops the command. Stops are named by `loop_order`, their place in the stop seed.
+
+`seed/shuttle-timing.json` has the shape in `src/shuttle/shuttle-timing.ts`, in seconds: per stop and band the average
+wait, Σh² / (2Σh) over the observed headways h, and per pair of stops and band the median ride. What the file lacks,
+the fallback in that module covers. The 75% of R11 decides only what the score counts.
+
+The score holds each day out and compares it with the times derived from the others. A stop-band or pair-band those
+days lack is predicted with the fallback. The ride compares every held-out ride with the median, by MAE and the share
+within ±1 minute, against along-loop distance at 4.15 m/s. The wait compares each scored stop-band of 08–19 with the
+prediction, each with equal weight, against 3.5 minutes. The threshold holds when both MAEs are below their baselines.
+
+## Travel Time
+
+`TRAVEL_PROVIDER` (`src/travel/travel.ts`) says how long the way from one Place to another takes at a departure time,
+in seconds, on foot or by the circular shuttle. Show its seconds as whole minutes, rounded up, with `shownMinutes`. Both
+of its files are read once when the server starts. A fixture can be bound to the provider in place of them.
+
+- **On foot**, it looks the pair up in `seed/walking-table.json` (Seed data, ADR 0010).
+- **By shuttle**, only the anticlockwise route 41946: a walk to a boarding stop, the average wait, the ride to a stop
+  ahead on the loop and a walk from that stop, by the best pair of stops. The wait and the ride use the band of the time
+  the User reaches the stop. It is offered only when the User reaches the stop on a weekday between 08:00 and 21:00 in
+  Korea, and chosen when it is at least 3 minutes faster than walking.
+- **The shuttle's values** come from `seed/shuttle-timing.json` when it exists. Any stop-band or pair-band it lacks, or
+  all of them until it exists, take the fallback in `src/shuttle/shuttle-timing.ts`.
+
 ## Timetable
 
 A User's timetable is the User's classes, and nothing else is stored for it. A User keeps one timetable from semester
@@ -1945,6 +2017,11 @@ it). A run is saved as `eval/results/<date>-<commit>-<model>-<settings>.json`, e
 is ignored by git; commit a run worth keeping with `git add -f`. `test/eval-runner.integration.test.ts` and
 `test/eval-options.integration.test.ts` test the runner with the scripted model in `pnpm test`.
 
+The collection evaluations (A and B of P05) have their own fixed sets, saved posts, labels and thresholds in
+`eval/collection/`, with their record in `eval/collection/README.md`. `pnpm eval:collection:status` shows the blanks left
+in the label files and how far the two labellers agree; `test/eval-collection-set.unit.test.ts` checks the sets in
+`pnpm test`. Their runner comes with ticket 09.
+
 #### The world and the cases
 
 The 62 cases are one YAML file per category under `eval/cases/` (menus, shuttle, global-events, finding-parties,
@@ -2037,9 +2114,16 @@ into the database.
 | `campus-map-shuttle-stops.json`  | The campus map's 15 stops of its loop, route 61, as it serves them                                      | The campus map, `map.snu.ac.kr`                      |
 | `shuttle-stops.json`             | The operator's 14 stops in loop order, their places on the drawing and the pairs, and the service hours | The operator's route page; the pairs written by hand |
 | `shuttle-route.geojson`          | The shuttle's line, traced along OpenStreetMap's roads                                                  | OpenStreetMap, through Overpass                      |
+| `openstreetmap-paths.json`       | The pinned extract of ways with a `highway` tag, as of its `timestamp`, read only by the builder        | OpenStreetMap, through Overpass                      |
+| `srtm-elevation.json`            | SRTM 30 m heights over the campus, read only by the builder                                             | NASA SRTM, through OpenTopoData                      |
+| `walking-table.json`             | Seconds on foot for every pair of Places and of Places and stops, with each one's elevation             | `pnpm walking:build`, from the seed files above      |
 
 Each exported file keeps, at its top, where it came from and the day of the export.
 
+- **The walking table**: `pnpm walking:build` writes `walking-table.json`. Run it when the Places, the stops or the
+  extract change. `pnpm walking:build --sensitivity` writes nothing: it moves every pin 10 m and 20 m in random
+  directions, 10 runs each, and prints the mean change and the Places that move most. `openstreetmap-paths.json` and
+  `srtm-elevation.json` were exported once and have no name in `pnpm seed:export`, so that the table stays reproducible.
 - **Exporting**: `pnpm seed:export <name>…` repeats the export of the files it names and overwrites them; run without
   a name, it lists the names. An export over the network is one request, sent with a User-Agent that names the
   project, as OpenStreetMap asks. When Overpass answers 504 it is busy: wait some minutes before trying again.
@@ -2091,8 +2175,9 @@ Each exported file keeps, at its top, where it came from and the day of the expo
 - **Coordinates** come from the campus map, OpenStreetMap and the national map only, never from Kakao, Naver or Google
   maps, whose terms forbid storing their data.
 - **Licences**: OpenStreetMap's data is under the ODbL and the national map's layer under 공공누리 type 1. Both ask
-  that the source is shown: the files carry their notices, and the app shows both attributions (P15). The campus map
-  publishes no terms. `.scratch/research/external-sources.md` §6 and `.scratch/research/public-building-outlines.md`
+  that the source is shown: the files carry their notices, and the app shows both attributions (P15). So does
+  `walking-table.json`, which is derived from OpenStreetMap. SRTM is in the public domain. The campus map publishes no
+  terms. `.scratch/research/external-sources.md` §6 and `.scratch/research/public-building-outlines.md`
   §8 have the terms.
 - **In a test**: the global setup loads the seed into the test database, so every test file has the Places and the
   shuttle's stops and line. A test that changes the seed loads it into a database of its own, made by
@@ -2196,6 +2281,7 @@ src/
 ├── load-seed.ts                     loads every seed file; the command and the tests call it
 ├── demo-seed.ts                     the command that writes the demo data, `pnpm demo:seed`
 ├── demo-walk.ts                     the command that walks the demo Users, `pnpm demo:walk`
+├── build-walking-table.ts           the command that writes the walking table, `pnpm walking:build`
 ├── demo/                            the demo profile's data, its seed and the walker's paths (not a module)
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
@@ -2238,6 +2324,7 @@ src/
 ├── matching/                        a feature: requests for Matching, checked and passed on to the match server, and
 │                                    the Shared Quests of its matches
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
+├── travel/                          Travel Time: the walking table's builder, and the provider that looks it up
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a
 │                                    position
@@ -2247,7 +2334,8 @@ src/
 └── assistant/                       a feature: the Assistant, its model port, tools, feature definitions and the
                                      adapter that runs them
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
-eval/                                the benchmark of the Assistant, `pnpm eval`: its runner, recorder, world and cases
+eval/                                the benchmark of the Assistant, `pnpm eval`: its runner, recorder, world and cases;
+                                     also the shuttle metric's logged days
 test/                                tests named by level; the integration tests run against PostgreSQL and Redis in
                                      containers
 ```
@@ -2408,17 +2496,16 @@ so a message is stored once. Every route for the worker follows these rules.
 
 - **Route and shape**: a message is a `POST` in the feature's controller, marked `@WorkerOnly()` from
   `src/common/worker-only.decorator.ts` and `@HttpCode(HttpStatus.NO_CONTENT)`. Its path says what happened:
-  `/menus/collected` for what a Collection of a menu Source read, `/global-events/collected` for the events list's, and
+  `/menus/collected` for what a Collection of a menu Source read, `/global-events/collected` for a Source of posts', and
   `/collections/failed`. The body is a JSON object. It names its `source`, a value of `Source` in
   `prisma/schema.prisma`, and the time of the Collection in ISO 8601 with an offset (`collectedAt`, `failedAt`). A day
   is `YYYY-MM-DD`, a calendar day in Asia/Seoul. A field without a value is `null`, not left out.
 - **Questions**: a Collection that needs to know what the main server holds asks it, since the worker keeps nothing. A
   question is a `POST` too, marked `@WorkerOnly()` and `@HttpCode(HttpStatus.OK)`, since what it asks about is a list.
   Its path names what it asks for, its body carries only what it asks about, and it answers 200 with what it asks for
-  and stores nothing: the events list is one Source and a post number identifies a post, so
-  `/global-events/stored-posts` carries no `source` and no time. `/global-events/stored-posts` with
-  `{ "postNumbers": [176558, 176525] }` asks which of these posts are stored, and `{ "postNumbers": [176558] }` answers
-  that 176558 is, in whatever state. The worker asks with `MainServer.ask()`.
+  and stores nothing: a post is identified by its Source and key, so `/global-events/stored-posts` carries no time.
+  `/global-events/stored-posts` with `{ "source": "snu_events", "keys": ["176558", "176525"] }` asks which of these posts
+  are stored, and `{ "keys": ["176558"] }` answers that 176558 is, whatever became of its event. The worker asks with `MainServer.ask()`.
 - **Who may call it**: the worker alone. The request carries `Authorization: Bearer <WORKER_TOKEN>`, the secret that
   the two servers' settings share, and `WorkerGuard` in `src/auth/worker.guard.ts` answers 401 to any other request,
   a User's and an Administrator's access token included. The token is no signed token: the worker is no User.
