@@ -28,11 +28,11 @@
           seeds: [공대 앞 스트레칭 모임, 3식당 점심 번개, 학식 같이 먹어요, 점심 농구 한 판, 보드게임 한 판],
           max: 5,
         }
-      - { kind: globalEvent, seeds: [공대 족구 대회, AI 창업 특강, 가을 미디어아트전], max: 3 }
+      - { kind: globalEvent, seeds: [공대 족구 대회, AI 창업 특강, 가을 미디어아트전, 공학 포스터 세션], max: 4 }
     mapButtons: []
     text:
-      mentions: [['12:15', 12시 15분], ['14:00', 2시], [8개, 여덟 개, 8건]]
-      absent: [3식당 앞 커피챗, 학생회관 점심 번개, 공학 포스터 세션, 동아리 연합 공연, 점심 배드민턴, 가을 사진전]
+      mentions: [['12:15', 12시 15분], ['14:00', 2시], [9개, 아홉 개, 9건]]
+      absent: [3식당 앞 커피챗, 학생회관 점심 번개, 동아리 연합 공연, 점심 배드민턴, 가을 사진전]
     results:
       findFreeTimeEvents:
         args: { date: '2026-11-02', from: 멀티코어컴퓨팅 (월), to: 현대암호학개론 (월) }
@@ -93,6 +93,14 @@
               leaveBy: '13:51',
             }
           - {
+              kind: globalEvent,
+              seed: 공학 포스터 세션,
+              start: '13:00',
+              end: '13:56',
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '13:54',
+            }
+          - {
               kind: quest,
               seed: 점심 농구 한 판,
               start: '13:00',
@@ -128,10 +136,10 @@
       findFreeTimeEvents: { date: '2026-11-02', to: 현대암호학개론 (월) }
     cards:
       - { kind: quest, seeds: [보드게임 한 판], max: 1 }
-      - { kind: globalEvent, seeds: [공대 족구 대회, AI 창업 특강, 가을 미디어아트전], max: 3 }
+      - { kind: globalEvent, seeds: [공대 족구 대회, AI 창업 특강, 가을 미디어아트전, 공학 포스터 세션], max: 4 }
     mapButtons: []
     text:
-      mentions: [['12:40', 12시 40분, '12:15', 12시 15분], ['14:00', 2시], [4개, 네 개, 4건]]
+      mentions: [['12:40', 12시 40분, '12:15', 12시 15분], ['14:00', 2시], [5개, 다섯 개, 5건]]
       absent:
         [
           공대 앞 스트레칭 모임,
@@ -139,7 +147,6 @@
           3식당 점심 번개,
           학생회관 점심 번개,
           학식 같이 먹어요,
-          공학 포스터 세션,
           동아리 연합 공연,
           점심 농구 한 판,
           점심 배드민턴,
@@ -176,6 +183,14 @@
               end: '18:00',
               travel: { mode: shuttle, minutes: 16 },
               leaveBy: '13:51',
+            }
+          - {
+              kind: globalEvent,
+              seed: 공학 포스터 세션,
+              start: '13:00',
+              end: '13:56',
+              travel: { mode: walk, minutes: 14 },
+              leaveBy: '13:54',
             }
           - {
               kind: quest,
@@ -1126,6 +1141,9 @@
     - assistant:
         text: 캠퍼스 밖에서는 이동 시간을 계산할 수 없어요. 캠퍼스에는 어디로 들어오세요? 정문처럼 알려 주세요.
     - user: 서울대 정문으로 들어가
+    - assistant:
+        text: 캠퍼스에는 몇 시쯤 들어오세요?
+    - user: 7시쯤
   expect:
     actions: [TOOL]
     tools:
@@ -1133,23 +1151,22 @@
       allowed: [getMyDay]
       forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
     args:
-      resolvePlace: { words: 서울대 정문 }
-      findFreeTimeEvents: { date: '2026-11-05', from: 과외 (목), to: end, departurePlace: 서울대 정문 }
+      findFreeTimeEvents:
+        { date: '2026-11-05', from: 과외 (목), to: end, departurePlace: 서울대 정문, departureTime: '19:00' }
     cards:
-      - { kind: quest, seeds: [저녁 배드민턴], max: 1 }
+      - { kind: quest, seeds: [], max: 0 }
       - { kind: globalEvent, seeds: [오픈 마이크], max: 1 }
     mapButtons: []
     text:
-      mentions: [['18:30', 6시 30분, 6시 반], [2개, 두 개, 2건]]
-      absent: [야간 코딩]
+      mentions: [['18:30', 6시 30분, 6시 반, '19:00', 7시], [1개, 한 개, 1건]]
+      absent: [야간 코딩, 저녁 배드민턴]
     results:
       findFreeTimeEvents:
-        args: { date: '2026-11-05', from: 과외 (목), to: end, departurePlace: 서울대 정문 }
+        args: { date: '2026-11-05', from: 과외 (목), to: end, departurePlace: 서울대 정문, departureTime: '19:00' }
         result: found
         gaps:
           - { start: '18:30', end: '24:00', before: 과외, after: null }
         candidates:
-          - { kind: quest, seed: 저녁 배드민턴, start: '19:00', end: null, travel: { mode: walk, minutes: 9 } }
           - { kind: globalEvent, seed: 오픈 마이크, start: '19:30', end: '21:00', travel: { mode: walk, minutes: 13 } }
 
 - id: parties-leave-by-after-asking

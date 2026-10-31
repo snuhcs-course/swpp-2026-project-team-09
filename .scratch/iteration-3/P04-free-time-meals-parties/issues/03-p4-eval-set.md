@@ -60,7 +60,7 @@ An item marked **Person** is a person's work, not an agent's.
   - A Quest card's time. The presenters do not change, so a Quest card still shows the existing next Sub Quest. Cards are ordered by the start of the Sub Quest judged inside the gap. With several Sub Quests the card's time can differ from the judged one, which is a known limitation.
   - A Sub Quest's Place. A Sub Quest can hold a point or a label and no Place. Ticket 04's mapping of a candidate's place applies to the User's and Friends' Sub Quests too, and only a Sub Quest it cannot map is an item without a Place. A Class's Place is used as it is.
 - [x] **Label draft.** An agent in a separate session, which sees only the rules document, the world and the fixture and not the judgement code, drafts each case's answer with its working.
-- [ ] **Person: label review.** A person reviews every answer and sets the labels that need a judgement of meaning:
+- [x] **Person: label review.** A person reviews every answer and sets the labels that need a judgement of meaning:
   - which dishes are noodles;
   - "운동만": the tool call uses Board 취미, and the expected cards are the hobby Quests and the Global Events whose titles are sports, so board games drop out.
 - [ ] **Person: the TA.** The meaning labels are discussed with the TA, as the course asks.
@@ -88,6 +88,13 @@ Two points on the set of cases, also for the review:
 
 - A meal request that names a Place has no case, only the single clock time. Adding one means a new label, and one case out of the 40.
 - "내일 같이 밥 먹을 파티 있어?" is in 공강 파티 (`parties-what-is-on-meal-search`), not in 공통.
+
+### Label review (2026-11-01)
+
+The PM reviewed all 40 answers and the 3 questions on the set of cases: 41 of the 43 stand, and the set of cases stays. Two notes changed the rules, now in `rules.md` section 15:
+
+- A candidate with an end of at most 3 hours that ends too late for the next item fits when the User can stay at least 30 minutes, and shows its leave-by time. `parties-named-classes` and `parties-abbreviated-gap-begun` gain 공학 포스터 세션. 점심 농구 한 판 stays out of the second, since the User would arrive late.
+- A User from off campus is asked when they enter it, passed as `departureTime`. `parties-departure-after-asking` gains that turn, and the case no longer checks the words of `resolvePlace`.
 
 ### Agent usage (2026-10-31)
 
