@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-31  Opus 5.5   prompted by TaeHyun79
+# 2026-11-01  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # 공강 파티: finding a gap and what fits in it. The fixed histories write the earlier turns as the app sends them back,
@@ -124,7 +125,7 @@
       allowed: [getMyDay]
       forbidden: [proposeQuest, searchRecruitingQuests, searchGlobalEvents]
     args:
-      findFreeTimeEvents: { date: '2026-11-02', from: 멀티코어컴퓨팅 (월), to: 현대암호학개론 (월) }
+      findFreeTimeEvents: { date: '2026-11-02', to: 현대암호학개론 (월) }
     cards:
       - { kind: quest, seeds: [보드게임 한 판], max: 1 }
       - { kind: globalEvent, seeds: [공대 족구 대회, AI 창업 특강, 가을 미디어아트전], max: 3 }

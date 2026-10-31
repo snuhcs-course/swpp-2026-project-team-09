@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-31  Opus 5.5   prompted by TaeHyun79
+# 2026-11-01  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # The P4 suite (spec P04, "Evaluation plan" 1), committed before any run. Its cases are under cases/, its world is
@@ -11,7 +12,9 @@
 # The labels are the `expect` of each case, as drafted. labels-working.yaml holds the drafter's working for every case,
 # and labels-notes.md the drafter's notes: the answers to look at, and contradictions in the header of questions.yaml.
 # questions.yaml is the list of questions the drafter was given, with that header, as it was: cases/ is what runs. The
-# fixed history the notes flag in meals-here-after-cards was completed after the draft, which changed no answer.
+# fixed history the notes flag in meals-here-after-cards was completed after the draft, which changed no answer. The
+# review of the harness on 11-01 tightened or loosened some assertions of cases/ and changed no answer: which tools are
+# forbidden, the argument `from` of parties-abbreviated-gap-begun, and a few words and card limits.
 
 world: p4
 cases:
@@ -69,3 +72,9 @@ labels:
       why: >-
         Section 12's "ordered by the longest Travel Time" says nothing with one card. That sentence is not asserted. The
         shared time stays in the mentions.
+    - id: questions-header
+      kind: rules
+      why: >-
+        The header of questions.yaml leaves out the asker's Shared Quest for 과학기술 토크콘서트, Tuesday 18:00–20:00, which
+        world.yaml and rules.md section 2 make an item. It changes meals-who-dinner-tomorrow: the draft follows the
+        rules, so the asker is free 17:00–18:00 and 이민수 and 오지호 are not free.

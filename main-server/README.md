@@ -2030,8 +2030,8 @@ compound). They name the world by seed name: what the world holds is in `eval/wo
 Friends, the Places of the shared seed, the Global Events, the recruiting Quests, the menus and the shuttle's vehicles), and
 `eval/world.ts` seeds it with the test helpers into the run's fresh database. The shuttle's vehicles are stored anew
 before each case, since the server forgets them after a minute. The world and the cases change together:
-`test/eval-cases.integration.test.ts` checks in `pnpm test` that every case fits the schema, that the set has the spec's
-categories and counts, that every seed name a case gives is in the world as that kind of thing, and that the tools
+`test/eval-cases.integration.test.ts` checks in `pnpm test` that every case fits the schema, that the fixed set is included
+once, that every seed name a case gives is in the world as that kind of thing, and that the tools
 answer in the world what the cases expect (for example that 민수 names two Friends and that 2026-10-23 has no menus).
 It seeds the world into a database of its own, as `test/eval-runner.integration.test.ts` does.
 
