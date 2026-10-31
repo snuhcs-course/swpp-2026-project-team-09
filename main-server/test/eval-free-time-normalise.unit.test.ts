@@ -184,10 +184,10 @@ describe("A Restaurant in a tool's result, as the labels write it", () => {
 
 describe('What a tool needs, as the labels write it', () => {
   it('is read by the name of the item, however it is given', () => {
-    const named = { needs: { side: 'before', item: '논리설계' } };
+    const bare = { needs: { side: 'before', item: '논리설계' } };
     const withId = { result: 'needs', needs: { side: 'after', item: { id: 'x', name: '과외' } } };
 
-    expect(normaliseResult(named, names)).toEqual(named);
+    expect(normaliseResult(bare, names)).toEqual({ result: 'needs', ...bare });
     expect(normaliseResult(withId, names)).toEqual({ result: 'needs', needs: { side: 'after', item: '과외' } });
   });
 });

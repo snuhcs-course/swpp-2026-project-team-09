@@ -9,9 +9,9 @@
 # pass rates are the mean of the 3 runs.
 #
 # The labels are the `expect` of each case, as drafted. labels-working.yaml holds the drafter's working for every case,
-# and labels-notes.md the drafter's notes: the answers to look at, and contradictions in the header of questions.yaml,
-# the list of questions the drafter was given. The fixed history the notes flag in meals-here-after-cards was completed
-# after the draft, which changed no answer.
+# and labels-notes.md the drafter's notes: the answers to look at, and contradictions in the header of questions.yaml.
+# questions.yaml is the list of questions the drafter was given, with that header, as it was: cases/ is what runs. The
+# fixed history the notes flag in meals-here-after-cards was completed after the draft, which changed no answer.
 
 world: p4
 cases:

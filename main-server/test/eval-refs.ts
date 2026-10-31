@@ -29,7 +29,7 @@ function refsOfProposal(
 
 const namesIn = (written: unknown): string[] => (Array.isArray(written) ? written.map(String) : []);
 
-// An item's seed names a time of day when it holds no space: 14:00, now and end are no items.
+// An item's seed ends in its weekday, 논리설계 (목), as no clock time, `now` or `end` does.
 const isItem = (written: unknown): written is string => typeof written === 'string' && / \(.\)$/u.test(written);
 
 // The id fields of a tool's arguments.

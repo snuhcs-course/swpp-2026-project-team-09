@@ -73,12 +73,12 @@ const intervalSchema = z.strictObject({ start: clockSchema, end: clockSchema });
 
 const modeSchema = z.enum(['walk', 'shuttle']);
 
-// What a 공강 tool must answer, read by normaliseResult (eval/normalise.ts): for the judgement suite, which calls the
+// What a 공강 tool must answer, read by normaliseResult (eval/normalise-result.ts): for the judgement suite, which calls the
 // tool with `args`, written as `expect.args` is, whatever the model passes. A run never checks it.
-const called = { args: z.record(z.string(), z.unknown()) };
+const withArgs = { args: z.record(z.string(), z.unknown()) };
 
 const needsSchema = z.strictObject({
-  ...called,
+  ...withArgs,
   result: z.literal('needs'),
   needs: z.strictObject({ side: z.enum(['before', 'after']), item: z.string().min(1) }),
 });
@@ -117,7 +117,7 @@ const restaurantSchema = z.strictObject({
 const resultsSchema = z.strictObject({
   getMyDay: z
     .strictObject({
-      ...called,
+      ...withArgs,
       result: z.literal('found'),
       items: z.array(intervalSchema.extend({ seed: seedName })),
     })
@@ -125,7 +125,7 @@ const resultsSchema = z.strictObject({
   findFreeTimeEvents: z
     .union([
       z.strictObject({
-        ...called,
+        ...withArgs,
         result: z.literal('found'),
         gaps: z.array(gapSchema),
         // Every candidate that fits, soonest first.
@@ -136,7 +136,7 @@ const resultsSchema = z.strictObject({
     .optional(),
   findFreeFriends: z
     .strictObject({
-      ...called,
+      ...withArgs,
       result: z.literal('found'),
       freeTime: z.array(intervalSchema),
       friends: z.array(z.strictObject({ seed: seedName, overlap: z.array(intervalSchema) })),
@@ -147,13 +147,13 @@ const resultsSchema = z.strictObject({
   findMealRestaurants: z
     .union([
       z.strictObject({
-        ...called,
+        ...withArgs,
         result: z.literal('found'),
         shared: z.array(intervalSchema),
         // The Restaurants that fit, in order.
         restaurants: z.array(restaurantSchema),
       }),
-      z.strictObject({ ...called, result: z.literal('none'), why: z.enum(['no-menu', 'no-shared-time']) }),
+      z.strictObject({ ...withArgs, result: z.literal('none'), why: z.enum(['no-menu', 'no-shared-time']) }),
       needsSchema,
     ])
     .optional(),

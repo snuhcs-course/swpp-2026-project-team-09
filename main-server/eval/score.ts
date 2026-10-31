@@ -103,6 +103,10 @@ export function actionOf(trace: TurnTrace, expect: Expect, names: Names): Action
   const answered = (outcome: string): boolean =>
     calls.some((call) => roleOf(call.name) === 'lookup' && outcomeOf(call) === outcome);
   const inWords = answered('found') && reply.text.trim() !== '';
+  // A lookup such as getMyDay can be what it took to ask: with nothing shown, a case that accepts an ASK reads one.
+  if (!shown && asks && expect.actions.includes('ASK')) {
+    return 'ASK';
+  }
   if (shown || inWords || (answered('none') && holdsMentions)) {
     return asks ? 'TOOL+ASK' : 'TOOL';
   }
