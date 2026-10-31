@@ -9,7 +9,7 @@ import { PlaceLookup } from '../../places/place-lookup.js';
 import { QuestsService } from '../../quests/quests.service.js';
 import { TimetableService } from '../../timetable/timetable.service.js';
 import { koreaDate } from '../korea-time.js';
-import { busyEnd, type DayItem, onDay, weekdayOf } from './free-time.js';
+import { busyEnd, dateOf, type DayItem, onDay, weekdayOf } from './free-time.js';
 
 // The items of any User's day, read from their Timetable and the Quests they hold.
 @Injectable()
@@ -39,11 +39,11 @@ export class UserDayService {
         })),
     );
     const timed = subQuests.flatMap(({ id, questTitle, startsAt, endsAt, place, cancelled }) => {
-      const start = startsAt === null ? null : new Date(startsAt);
+      const start = dateOf(startsAt);
       if (cancelled || start === null || koreaDate(start) !== date) {
         return [];
       }
-      const end = busyEnd(start, endsAt === null ? null : new Date(endsAt));
+      const end = busyEnd(start, dateOf(endsAt));
       return [{ id, name: questTitle, start, end, placeId: this.places.placeIdOf(place), isClass: false }];
     });
     return [...meetings, ...timed];

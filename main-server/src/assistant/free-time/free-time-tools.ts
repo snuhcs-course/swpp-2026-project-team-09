@@ -9,8 +9,17 @@ import { QuestBoard } from '../../generated/prisma/client.js';
 import { defineTool, noneFound, type NoneFound, type Tool } from '../feature.js';
 import { koreaDate, koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
-import { clockOf, type DayItem, endOfDay, freeTimeOf, type FreeInterval, onDay, startOfDay } from './free-time.js';
-import { type AskedInterval, fittingCandidates, type PartyServices } from './party-candidates.js';
+import { type AskedInterval, type CandidateServices, fittingCandidates } from './candidates.js';
+import {
+  byStart,
+  clockOf,
+  type DayItem,
+  endOfDay,
+  freeTimeOf,
+  type FreeInterval,
+  onDay,
+  startOfDay,
+} from './free-time.js';
 import { cardKey, type JudgedCandidate } from './travel-boxes.js';
 import { UserDayService } from './user-day.service.js';
 
@@ -18,8 +27,7 @@ import { UserDayService } from './user-day.service.js';
 // which candidates appear, and the model passes the User's words or ids it was given. Rooms, Places, coordinates and
 // the reason anyone is busy stay here.
 
-// The services the 공강 tools call.
-export interface FreeTimeServices extends PartyServices {
+export interface FreeTimeServices extends CandidateServices {
   days: UserDayService;
 }
 
@@ -57,7 +65,7 @@ function getMyDay(days: UserDayService): Tool {
       return {
         result: 'found',
         items: items
-          .toSorted((a, b) => a.start.getTime() - b.start.getTime())
+          .toSorted(byStart)
           .map((item) => ({ id: item.id, name: itemName(item), start: clockOf(item.start), end: clockOf(item.end) })),
       };
     },
@@ -76,7 +84,7 @@ const input = z.object({
     .enum(QuestBoard)
     .optional()
     .describe(
-      'Only the 파티 of one Board: meal (식사), career (커리어), hobby (취미, 운동 among them) or show (공연·전시). Global Events have no Board and stay.',
+      'Only the 파티 of one Board: meal (식사), career (커리어), hobby (취미) or show (공연·전시). Global Events have no Board and stay.',
     ),
   departurePlace: z
     .uuid()
@@ -116,7 +124,7 @@ function askedParts(free: readonly FreeInterval[], from: Date, to: Date): AskedI
   });
 }
 
-// What the tool needs to know before it can judge: the first gap decides, and the before side comes first.
+// What the tool needs to know before it can judge, the earliest gap's first and the before side first.
 function neededOf(parts: readonly AskedInterval[], { departurePlace, leaveBy }: Conditions): object | null {
   for (const { previous, next } of parts) {
     if (previous !== null && previous.placeId === null && departurePlace === undefined) {
@@ -129,7 +137,7 @@ function neededOf(parts: readonly AskedInterval[], { departurePlace, leaveBy }: 
   return null;
 }
 
-function candidateFor({ kind, id, title, start, end, box }: JudgedCandidate): object {
+function candidateAnswer({ kind, id, title, start, end, box }: JudgedCandidate): object {
   const { travel = null, ...after } = box;
   return {
     kind,
@@ -142,7 +150,7 @@ function candidateFor({ kind, id, title, start, end, box }: JudgedCandidate): ob
   };
 }
 
-function gapFor({ askedStart, askedEnd, previous, next }: AskedInterval, date: string): object {
+function gapAnswer({ askedStart, askedEnd, previous, next }: AskedInterval, date: string): object {
   return {
     start: clockOf(askedStart),
     end: askedEnd >= endOfDay(date) ? '24:00' : clockOf(askedEnd),
@@ -184,15 +192,14 @@ function findFreeTimeEvents({ days, ...services }: FreeTimeServices): Tool {
       }
       return {
         result: 'found',
-        gaps: parts.map((part) => gapFor(part, date)),
+        gaps: parts.map((part) => gapAnswer(part, date)),
         total: candidates.length,
-        candidates: candidates.map((candidate) => candidateFor(candidate)),
+        candidates: candidates.map((candidate) => candidateAnswer(candidate)),
       };
     },
   });
 }
 
-// The chat's tool list names these.
-export function freeTimeTools(services: FreeTimeServices): Record<string, Tool> {
+export function freeTimeTools(services: FreeTimeServices): { getMyDay: Tool; findFreeTimeEvents: Tool } {
   return { getMyDay: getMyDay(services.days), findFreeTimeEvents: findFreeTimeEvents(services) };
 }

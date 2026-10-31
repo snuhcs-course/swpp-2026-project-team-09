@@ -61,8 +61,7 @@ export class RecruitingService {
     return ids.flatMap((id) => listed.find((quest) => quest.id === id) ?? []);
   }
 
-  // The Quests the list gives the reader, of that Board, without those that entering would refuse or has already asked
-  // for: a Full one, one the reader asked to join, and one for a Global Event whose Shared Quest the reader holds.
+  // The Quests the list gives the reader, of that Board, that they have not asked for and entering would not refuse.
   async enterable(readerId: string, board: QuestBoard | undefined): Promise<EnterableQuest[]> {
     const quests = await this.storedListWhere(readerId, { board });
     const asked = await this.prisma.questJoinRequest.findMany({
@@ -83,7 +82,6 @@ export class RecruitingService {
       .map((quest) => ({ id: quest.id, title: quest.title, subQuests: subQuestContentsOf(quest) }));
   }
 
-  // The Global Events the User holds a Shared Quest for.
   private async sharedQuestEvents(userId: string): Promise<Set<string>> {
     const holders = await this.prisma.questHolder.findMany({
       where: { userId, globalEventId: { not: null } },

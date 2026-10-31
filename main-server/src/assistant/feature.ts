@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
 import { type RecruitingQuestDto } from '../quests/dto/quest.dto.js';
 import { type FoundIds } from './found-ids.js';
-import { type TravelBox } from './free-time/party-fit.js';
+import { type TravelBox } from './free-time/candidate-fit.js';
 import { type JudgedCandidates } from './free-time/travel-boxes.js';
 import { type QuestProposal, type SentProposal } from './proposal.js';
 

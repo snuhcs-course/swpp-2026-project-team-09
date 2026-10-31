@@ -5,7 +5,8 @@
  ******************************************************************************/
 
 import { type Card, type CardKind } from '../feature.js';
-import { type TravelBox } from './party-fit.js';
+import { idOf } from '../tools/fresh-ids.js';
+import { type TravelBox } from './candidate-fit.js';
 
 // What the step after a run needs of each candidate findFreeTimeEvents returned, by card.
 export interface JudgedCandidate {
@@ -33,7 +34,7 @@ export function bySoonest(
 }
 
 function judgedOf(card: Card, judged: JudgedCandidates): JudgedCandidate | undefined {
-  return judged.get(cardKey(card.kind, card.kind === 'quest' ? card.quest.id : card.globalEvent.id));
+  return judged.get(cardKey(card.kind, idOf(card)));
 }
 
 // The cards of a run after what it judged: those of its candidates first, each with its 이동 시간 box and soonest

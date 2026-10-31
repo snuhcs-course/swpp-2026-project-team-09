@@ -4,13 +4,9 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import {
-  ARRIVAL_MARGIN_SECONDS,
-  LONGEST_TIMED_SECONDS,
-  SHORTEST_STAY_SECONDS,
-} from '../../travel/judgement-constants.js';
+import { ARRIVAL_MARGIN_SECONDS, SHORTEST_STAY_SECONDS } from '../../travel/judgement-constants.js';
 import { shownMinutes, type TravelMode, type TravelProvider } from '../../travel/travel.js';
-import { clockOf } from './free-time.js';
+import { clockOf, endsInTime } from './free-time.js';
 
 // Whether a recruiting Quest or a Global Event fits a gap, and what its card then says. Every comparison uses the exact
 // seconds: rounding is only for what is shown.
@@ -92,14 +88,13 @@ function wayAfter(candidate: Candidate, { after }: Gap, travel: TravelProvider):
   if (after === null) {
     return {};
   }
-  const endsOnTime = end !== null && end.getTime() - start.getTime() <= LONGEST_TIMED_SECONDS * 1000;
   if (after.kind === 'leaveBy') {
-    if (!endsOnTime) {
+    if (!endsInTime(start, end)) {
       return leavingBy(candidate, after.at);
     }
     return end <= after.at ? {} : null;
   }
-  if (!endsOnTime) {
+  if (!endsInTime(start, end)) {
     return leavingBy(candidate, leaveFor(candidate, after, travel));
   }
   const way = travel.travel(placeId, after.placeId, end);

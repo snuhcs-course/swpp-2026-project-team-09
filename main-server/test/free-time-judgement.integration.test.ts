@@ -23,7 +23,7 @@ import { refuseKakao } from './walking-route.js';
 
 // The server's judgement against the reviewed labels (spec P04, "Testing Decisions"): the P4 world and its travel
 // fixture, each 공강 tool called with the arguments of a label, and what it answers read as the labels write it. The
-// labels were worked by hand from eval/p4/rules.md and do not follow the code. Ticket 05 adds the meal tools.
+// labels were worked by hand from eval/p4/rules.md and do not follow the code.
 
 const TOOLS = ['getMyDay', 'findFreeTimeEvents'] as const;
 

@@ -104,9 +104,7 @@ export class PlaceLookup implements OnModuleInit {
     return { place: nearest.place, relation: inside ? 'inside' : 'near' };
   }
 
-  // The id of the Place a written place is, or null when it is unknown or there is none. In order: its own Place, the
-  // Place at exactly its point, the Place at() finds there, the nearest Place point within reach, and the Place its
-  // label names exactly.
+  // The id of the Place a written place is, or null when it is unknown or there is none.
   placeIdOf(written: WrittenPlace | null): string | null {
     if (written === null) {
       return null;

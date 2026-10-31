@@ -66,10 +66,22 @@ export function clockOf(at: Date): string {
   return koreaTime(at).slice(11, 16);
 }
 
-// When a Sub Quest stops being busy: its end, unless it has none or is longer than a timed one can be.
+export function dateOf(time: string | null): Date | null {
+  return time === null ? null : new Date(time);
+}
+
+export function byStart(a: { start: Date }, b: { start: Date }): number {
+  return a.start.getTime() - b.start.getTime();
+}
+
+// Whether something is taken at its own end: it has one, and is not longer than the limit.
+export function endsInTime(start: Date, end: Date | null): end is Date {
+  return end !== null && end.getTime() - start.getTime() <= LONGEST_TIMED_SECONDS * 1000;
+}
+
+// When a Sub Quest stops being busy.
 export function busyEnd(start: Date, end: Date | null): Date {
-  const timed = end !== null && end.getTime() - start.getTime() <= LONGEST_TIMED_SECONDS * 1000;
-  return timed ? end : new Date(start.getTime() + OPEN_SUB_QUEST_SECONDS * 1000);
+  return endsInTime(start, end) ? end : new Date(start.getTime() + OPEN_SUB_QUEST_SECONDS * 1000);
 }
 
 // Every interval between the items of a day, including before the first and after the last. Overlapping or touching
@@ -78,7 +90,7 @@ export function freeTimeOf(items: readonly DayItem[], date: string, now: Date): 
   const intervals: FreeInterval[] = [];
   let start = startOfDay(date);
   let previous: DayItem | null = null;
-  for (const item of items.toSorted((a, b) => a.start.getTime() - b.start.getTime())) {
+  for (const item of items.toSorted(byStart)) {
     if (item.start > start) {
       intervals.push({ start, end: item.start, previous, next: item });
     }

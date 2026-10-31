@@ -79,6 +79,7 @@ export function chatAssistant({
   places,
   freeTime,
 }: ChatAssistantServices): Feature {
+  const { getMyDay, findFreeTimeEvents } = freeTimeTools(freeTime);
   return {
     instructions,
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
@@ -94,7 +95,8 @@ export function chatAssistant({
       resolvePlace: resolvePlace(places),
       resolveGlobalEvent: resolveGlobalEvent(globalEvents),
       proposeQuest: proposeQuest({ friends, places, globalEvents }),
-      ...freeTimeTools(freeTime),
+      getMyDay,
+      findFreeTimeEvents,
     },
   };
 }
