@@ -33,6 +33,9 @@ labels:
   # The person's review is open.
   reviewedBy: null
   reviewedOn: null
+  # Not among the open answers, but for the review too: the header of questions.yaml leaves out the asker's Shared Quest
+  # for 과학기술 토크콘서트, which world.yaml and rules.md section 2 make an item. In meals-who-dinner-tomorrow the draft
+  # follows the rules: the asker is free 17:00–18:00, and 이민수 and 오지호 are not free.
   # What the rules leave open, with the drafter's reason. Nothing here is settled: the person's review decides each one.
   openForReview:
     - id: parties-over-twenty-narrowed
@@ -72,9 +75,3 @@ labels:
       why: >-
         Section 12's "ordered by the longest Travel Time" says nothing with one card. That sentence is not asserted. The
         shared time stays in the mentions.
-    - id: questions-header
-      kind: rules
-      why: >-
-        The header of questions.yaml leaves out the asker's Shared Quest for 과학기술 토크콘서트, Tuesday 18:00–20:00, which
-        world.yaml and rules.md section 2 make an item. It changes meals-who-dinner-tomorrow: the draft follows the
-        rules, so the asker is free 17:00–18:00 and 이민수 and 오지호 are not free.
