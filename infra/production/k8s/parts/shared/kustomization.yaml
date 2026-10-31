@@ -30,6 +30,8 @@ configMapGenerator:
       - ASSISTANT_MODEL=anthropic/claude-haiku-5.5
       - AUTOMATIC_PUBLICATION=on
       - AUTOMATIC_JUDGEMENT=off
+      # Stays off until the same-event rules are deployed (infra/production/README.md).
+      - EXTRA_SNU_COLLECTION=off
       - GOOGLE_APP_CLIENT_ID=1021723676612-aria1ohmdms787sqbvldtt8484fnf04c.apps.googleusercontent.com
       - GOOGLE_ADMIN_CLIENT_ID=1021723676612-23lpoe5ue36rr2a07uora5ai4qckoe87.apps.googleusercontent.com
       # The Expo template's debug key, which signs the APK.

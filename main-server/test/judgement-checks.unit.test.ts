@@ -296,3 +296,11 @@ describe('checkedSessions: what the model left out of its quote', () => {
     },
   );
 });
+
+describe('checkedSessions: a session line of extra.snu, as ticket 04 writes it', () => {
+  const line = '[1회차] 기간: 2026.11.02. 10:00 ~ 2026.11.02. 11:00 / 장소: 301동 117호';
+
+  it('passes', () => {
+    expect(failing(checkedOn(line, { start: '2026-11-02T10:00', end: '2026-11-02T11:00' }, line))).toEqual([]);
+  });
+});

@@ -66,6 +66,8 @@ services:
     env_file: !reset []
     environment:
       WORKER_TOKEN: ${WORKER_TOKEN}
+      # Off until the same-event rules are deployed (infra/production/README.md).
+      EXTRA_SNU_COLLECTION: ${EXTRA_SNU_COLLECTION:-off}
     ports: !reset []
 
   match-server:

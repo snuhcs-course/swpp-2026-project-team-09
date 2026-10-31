@@ -34,6 +34,9 @@ The server answers two health checks:
 - `GET http://localhost:3002/health/ready`: readiness, the main server can be reached. It answers 503 and names the
   main server when it cannot.
 
+To run a Collection of extra.snu outside the image, install its browser once: `pnpm exec playwright install --only-shell
+chromium`.
+
 If a setting in `.env` is missing or invalid, the server stops and names it, for example
 `Config validation error: PORT: Invalid input: expected string, received undefined`.
 
@@ -93,7 +96,9 @@ follows these rules; `src/menu/menu.collector.ts` is the first. A collector exte
   the page has not come within 5 seconds. Each collector has a `PageFetcher` of its own, which asks for one page at a
   time: a collector's pages wait for one another, and never for another collector's, so the shuttle's vehicle positions
   are asked for on time while the menus' fifteen pages are read. `fetch(url, body)` asks with a POST of the body as
-  JSON, as the shuttle operator's vehicle positions want.
+  JSON, as the shuttle operator's vehicle positions want. A Source that a plain request cannot read opens its pages with
+  `BrowserPages.during(read)` from `src/common/browser-pages.ts` instead, as [extra.snu](#extrasnu) does: a browser lives
+  for one Collection, and each page waits two seconds after the one before it.
 - **Parsing**: a parser is a function from a page's text to what the message carries, in the feature's folder, such as
   `src/menu/menu-page.parser.ts`. No page is a versioned interface, and the university's firewall answers a blocked
   request with status 200 and another page. So a parser checks that the page is the one it knows, such as the table
@@ -123,7 +128,9 @@ once in the started worker, not through HTTP, in an integration test (`*.integra
 
 - **Saved pages**: `test/pages/` holds pages of each Source as they were served, named after the Source, the page when
   the Source has several, and the day it was saved, and read with `savedPage(name)`, or `savedAnswer(name)` for a JSON
-  answer. Save a page once, with the project's `User-Agent`. Prettier leaves the folder alone:
+  answer. Save a page once, with the project's `User-Agent`. extra.snu's list pages are the one exception to "as they
+  were served": the posts `main-server/eval/collection/` holds out are cut from them, so that no test reads one. Prettier
+  leaves the folder alone:
 
   ```bash
   curl -A 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)' \
@@ -133,6 +140,9 @@ once in the started worker, not through HTTP, in an integration test (`*.integra
 - **A parser** is given a saved page with `savedPage(name)` from `test/pages.ts`, and the test checks what comes out,
   as `test/menu-page-parser.unit.test.ts` does. A case the saved page does not show, such as a closure or the turn of
   the year, is an edit of the saved page made in the test, with a comment that says what it changes.
+- **A browser** is never started by a test: `startApp` replaces it (`LAUNCH_BROWSER`), and every launch fails unless the
+  test gives it `browserServing(pages)` from `test/browser.ts`, where a page can be a redirect. `src/common/chromium.ts`,
+  the real one, is left to a check by hand.
 - **A collector** runs once against `sourcesServing(pages)` from `test/sources.ts`, which stands for the Sources, and a
   `MainServerStub` from `test/main-server.ts`, which stands for the main server and keeps the messages the worker
   sends, as `test/menu-collector.integration.test.ts` does. `answers.set(path, answer)` gives the stub its answer to a
@@ -281,6 +291,60 @@ and an application deadline), 176558 (a range of days and several places), 17656
 period as the header's date) and 176549 (lists and a table, and not an event). Cases they do not show, such as a range
 across the new year, are edits of them made in `test/event-page-parser.unit.test.ts`.
 
+## extra.snu
+
+The university's programme site, the Source `extra_snu`, is collected twice a day, at 03:00 and 15:00, midway between the
+events list's Collections, and posted as one message to `/global-events/collected`. The times (`COLLECTION_TIMES`) and
+the pages read (`LISTED_PAGES`) are constants at the top of `src/event/extra-snu.collector.ts`.
+
+The schedule starts them only with the setting `EXTRA_SNU_COLLECTION=on`. It is `off` by default and in Production, since
+until the same-event rules are deployed Users would see an event posted on both Sources twice
+([infra/production/README.md](../infra/production/README.md) says when and how to turn it on). `pnpm collect extra_snu`
+does not look at the setting: it runs one Collection whenever someone runs it, so do not run it in Production before then.
+
+Its pages sit behind a waiting-room script, so they are opened in a headless browser, one every two seconds. The
+worker's image carries the browser (Chromium's headless shell), which adds some 300 MB while a Collection runs. It is
+started for each Collection and closed after it. It loads no images, media or fonts.
+
+A Collection does four things:
+
+1. It reads the first four pages of the list, twelve programmes to a page and the newest first:
+   `https://extra.snu.ac.kr/ptfol/pgm/index.do?currentPageNo=1&applyChkCdSh=0001&applyChkCdSh=0002&applyChkCdSh=0004`.
+   The codes are the application states 모집중, 마감임박 and 모집대기, the list the site shows by default; 0003 is
+   모집마감. A page that lists none ends the list.
+2. It asks the main server which of them it stores, by the Source and each programme's key, its `dataSeq`.
+3. It opens the page of each new one, `https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002414`, which redirects
+   to the programme's page. A programme that redirects to a sign-in, at `nsso.snu.ac.kr` or the site's `/comm/login/`, is
+   skipped and counted. It is not stored, so the next Collection tries it again. A browser that ends up anywhere but a
+   programme's page, `findIcmpNsbjtPgmInfo.do`, is skipped and counted the same way, unless three in a row do: then the
+   waiting room is holding every page, and the Collection stops. The rest follows the events list: a page that fails, or the firewall's error page, stops the
+   Collection; a page at that address that is not the programme asked for is sent with its title from the list alone;
+   three in a row, or a Collection that read no programme, fail it.
+4. It sends what it read in one message, with the number it skipped as `skippedPosts`, which the admin site's Collection
+   status shows.
+
+From a programme's page, `src/event/extra-snu-page.parser.ts` reads the title, and one session for each row group of the
+page's session tables (`[1] 회차`):
+
+- Its `start` and `end` from the field `교육(활동)기간`, by `src/event/event-time.ts`, and its `place` from
+  `교육(활동)장소`. A place of `-` is no place.
+- Its `readFrom` is `body`, so that the main server's rules read the field as they read a post's own time line. Three kinds
+  of field would then be published wrongly, and are kept from the rules. The site fills in 00:00 where it has no time of
+  day, so a start at 00:00 is sent as a day, and its end takes the same form. A session of more than 24 hours is often a period to apply or to take part
+  in, and one with no end may not be one sitting, so both are sent with `readFrom` null: the time stays for an
+  Administrator and the Judgement.
+- When a programme has several sessions, each has a `title` of the programme's title and its number:
+  `영어 스피치 (2회차)`. It names that session's Global Event.
+
+The description is the programme's summary, one line for each session as the page writes it,
+`[1회차] 기간: … / 장소: …`, since a Judgement reads a post's text alone and quotes it, a line `신청기간: …` with its
+application period, and its main text, one line of the page per line. E-mail addresses, there and in every other value of the page, are replaced by `[이메일]` before anything leaves the worker: the
+site's footer refuses the automatic collection of the addresses it shows. The address sent is the `view.do` one, since
+the programme's page has an address of its own that names no key.
+
+A programme's page is read only when its scrap button names the programme asked for, `pgmType` and `pgmSeq` making up
+the key. `robots.txt` answers 404 and the site links no terms of use (checked on 2026-11-01; ticket P05-04).
+
 ## Shuttle
 
 Two Sources of the shuttle operator's circular route 41946 (`.scratch/research/external-sources.md` §5), collected by
@@ -344,13 +408,16 @@ src/
 │   ├── main-server.ts               the worker's way to the main server: HTTP requests with the worker's token
 │   ├── page-fetcher.module.ts       gives every collector a PageFetcher of its own
 │   ├── page-fetcher.ts              the one place where pages are fetched
+│   ├── browser-pages.module.ts      makes BrowserPages available to every feature
+│   ├── browser-pages.ts             the one place where pages are opened in a browser, one every two seconds
+│   ├── chromium.ts                  the real browser under BrowserPages
 │   ├── seoul-day.ts                 the calendar day in Asia/Seoul
 │   └── collector.ts                 the worker's end of a Collection, which every collector extends
 ├── health/                          a feature: the liveness and readiness checks
 ├── menu/                            a feature: the collector of the three menu Sources and its parsers
 ├── shuttle/                         a feature: the collector of the shuttle's route page and vehicle positions, and
 │                                    their parsers
-└── event/                           a feature: the collector of the events list and its parsers
+└── event/                           a feature: the collectors of the events list and extra.snu, and their parsers
 test/                                tests named by level, which stand in for the Sources and the main server
 └── pages/                           pages saved from the Sources, which the tests read in place of them
 ```

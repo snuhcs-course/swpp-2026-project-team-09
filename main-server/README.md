@@ -418,7 +418,7 @@ export class AdminEventsController {
 ## Global Events
 
 A Global Event is an Event published to every User. The worker server collects them from the university's events list
-and posts them to `/global-events/collected` (see
+and programme site, extra.snu, and posts them to `/global-events/collected` (see
 [Requests from the worker server](#requests-from-the-worker-server)). Users read the published ones, and Administrators
 read every one, and create and change them, through the routes below.
 
@@ -523,8 +523,10 @@ needs beside them through a controller of their own feature. Each route needs an
 - `GET /admin/places` answers every Place in the order and form of `GET /places` (see [Places](#places)), so that the
   admin site offers the list without a User's token. `src/places/admin-places.controller.ts` serves it.
 - `GET /admin/collection-statuses` answers one entry for every Source, in the order of the `Source` enum:
-  `{ "source": "snu_events", "lastSucceededAt": "…", "lastFailedAt": null, "lastFailureReason": null }`. All three are
-  `null` for a Source never collected (see [Requests from the worker server](#requests-from-the-worker-server)).
+  `{ "source": "snu_events", "lastSucceededAt": "…", "lastFailedAt": null, "lastFailureReason": null,
+"lastSkippedPosts": null }`. The times and the reason are `null` for a Source never collected (see
+  [Requests from the worker server](#requests-from-the-worker-server)). `lastSkippedPosts` is how many posts the Source's
+  last Collection skipped, needing a sign-in or never reaching their page, `null` for a Source that does not send the number.
   `src/collection/admin-collection.controller.ts` serves it.
 
 An Administrator creates and changes them through the same controller. Each answers the event as
@@ -612,9 +614,15 @@ The worker sends each post of the events list as one event, all those of a Colle
   through the whole list. A Collection that stopped hands over the posts it read all the same, and the main server stores them and
   records the reason as the Collection's failure in the same transaction, so that `lastSucceededAt` stays the time of
   the last Collection that went through the whole list.
+- `skippedPosts`, which extra.snu's Collection sends and SNU Now's does not, counts the posts it skipped, needing a
+  sign-in or never reaching their page. They are not stored, and it is not a failure: `CollectionService.recordSkippedPosts()` keeps the number in
+  the same transaction as `lastSkippedPosts`.
+- A session's `title`, which is optional, names its Global Event in place of the post's title, when a post of several
+  sessions could not tell them apart otherwise.
 - `start` and `end` are each a time with its offset, or a day when no time of day was read. `readFrom` says where they
-  were read: `body` for the body's time line, `header` for the header's date. All three are `null` when no day was
-  read.
+  were read: `body` for the post's own statement of the event's time, its body's time line or extra.snu's session field,
+  `header` for the header's date. All three are `null` when no day was read. A time may come with `readFrom` `null`, when
+  the worker keeps it for a person and not for the rules, as extra.snu's sessions of over 24 hours are.
 - `place` is the body's place line as the post writes it, or `null`.
 - A post whose page the worker could not read as the post comes with its title from the list, an empty `description`
   and no time or place, so it is stored as a Draft. An Administrator reads it at its address.
@@ -701,8 +709,9 @@ each with `start`, `end`, `place`, `overPeriod`, `lines`, `placeId`, `checks` (e
 
 A collected event is published, with no person involved, when the rules read both its time and its place:
 
-- its start comes from the body's time line (`readFrom` is `body`) and has a time of day. A start read from the header's
-  date does not count, because that date is often the application period;
+- its start comes from the post's own statement of the event's time, its body's time line or extra.snu's session field
+  (`readFrom` is `body`), and has a time of day. A start read from the header's date does not count, because that date is
+  often the application period;
 - its place names exactly one Place of the [list](#places). Its position is that Place's coordinates.
 
 Any other collected event stays a Draft with whatever was read: an event online or off campus, one whose place

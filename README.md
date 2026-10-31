@@ -362,11 +362,12 @@ file's.
 
 ### worker-server
 
-| Setting           | What it is                                                        |
-| ----------------- | ----------------------------------------------------------------- |
-| `PORT`            | The port the HTTP server listens on.                              |
-| `MAIN_SERVER_URL` | Where the main server is reached, to hand over what is collected. |
-| `WORKER_TOKEN`    | The same line as in `main-server/.env`.                           |
+| Setting                | What it is                                                                                |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| `PORT`                 | The port the HTTP server listens on.                                                      |
+| `MAIN_SERVER_URL`      | Where the main server is reached, to hand over what is collected.                         |
+| `WORKER_TOKEN`         | The same line as in `main-server/.env`.                                                   |
+| `EXTRA_SNU_COLLECTION` | `on` lets the schedule start extra.snu's Collections. `off` by default and in Production. |
 
 ### match-server
 

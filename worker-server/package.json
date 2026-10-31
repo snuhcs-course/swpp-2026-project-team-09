@@ -38,6 +38,7 @@
     "@nestjs/schedule": "^12.0.2",
     "@nestjs/terminus": "^12.1.0",
     "cheerio": "^1.2.0",
+    "playwright": "^1.64.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "zod": "^4.6.5"
