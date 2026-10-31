@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -16,9 +17,18 @@ import { postAssistantMessages, type SentMessage } from '../test/assistant.js';
 import { refuseMatchServer } from '../test/match-server.js';
 import { startApp } from '../test/start-app.js';
 import { refuseKakao } from '../test/walking-route.js';
-import { type CaseKind, type CaseProposal, type CaseTurn, type EvalCase, kindOf } from './cases.ts';
+import {
+  type CaseKind,
+  type CaseProposal,
+  type CaseTurn,
+  type EvalCase,
+  kindOf,
+  nowOf,
+  WORLD_CLOCKS,
+} from './cases.ts';
 import { addTokens, costOf, NO_TOKENS, type Tokens } from './cost.ts';
 import { type RunOptions, runName } from './options.ts';
+import { FixtureTravel } from './p4/travel-fixture.ts';
 import { Recorder } from './recorder.ts';
 import { runObserverModule } from './run-observer.module.ts';
 import { failureOf, type ReplyTrace, type TurnTrace, usageOf } from './trace.ts';
@@ -28,8 +38,8 @@ import { type Seeded, seedOf, type World } from './world.ts';
 // the clock fixed, each case's turns sent to POST /assistant/messages as the app sends them, and the run saved as
 // JSON with every turn's trace.
 
-// The fixed time of every run: 2026-10-21 (수) 14:05 in Korea.
-export const NOW = '2026-10-21T14:05:00+09:00';
+// The fixed time of a run of the small world: 2026-10-21 (수) 14:05 in Korea.
+export const NOW = WORLD_CLOCKS.small;
 
 // The daily message limit of a run, above any run's turns, so that the limit never answers in the model's place.
 const RUN_DAILY_MESSAGES = '1000000';
@@ -39,9 +49,13 @@ export const RESULTS_DIRECTORY = new URL('results/', import.meta.url);
 export interface EvalApp {
   app: INestApplication<Server>;
   recorder: Recorder;
+  // Stands for `travel`, so that the real table and shuttle file never reach a run. The P4 world binds its Places.
+  travel: FixtureTravel;
+  // Stands the app's clock at this time, until the next.
+  setNow: (now: string) => void;
 }
 
-// Starts the app with `model` behind the recorder, the run's limits as its settings and the clock fixed at NOW.
+// Starts the app with `model` behind the recorder, the run's limits as its settings and the clock fixed at its world's.
 // `settings` are the e2e settings with the model's key and id.
 export async function startEvalApp(
   settings: Partial<Record<keyof Settings, string>>,
@@ -49,6 +63,7 @@ export async function startEvalApp(
   options: RunOptions,
 ): Promise<EvalApp> {
   const recorder = new Recorder({ temperature: options.temperature, topP: options.topP });
+  const travel = new FixtureTravel();
   const app = await startApp(
     {
       ...settings,
@@ -63,12 +78,26 @@ export async function startEvalApp(
     refuseMatchServer,
     recorder.wrap(model),
     [runObserverModule(recorder)],
+    travel,
   );
-  vi.spyOn(app.get<Clock>(CLOCK), 'now').mockImplementation(() => new Date(NOW));
-  return { app, recorder };
+  let now = WORLD_CLOCKS[options.world];
+  vi.spyOn(app.get<Clock>(CLOCK), 'now').mockImplementation(() => new Date(now));
+  return {
+    app,
+    recorder,
+    travel,
+    setNow: (next) => {
+      now = next;
+    },
+  };
 }
 
 type SentAssistant = Extract<SentMessage, { role: 'assistant' }>;
+
+// A message of a case: a Restaurant card goes back by its key, which is no UUID.
+type RequestMessage =
+  | SentMessage
+  | (Omit<SentAssistant, 'cards'> & { cards: { kind: 'quest' | 'globalEvent' | 'restaurant'; id: string }[] });
 
 function sentProposalOf(proposal: CaseProposal, world: World): SentAssistant['proposal'] {
   const { place, globalEvent, invitees, ...values } = proposal;
@@ -82,8 +111,8 @@ function sentProposalOf(proposal: CaseProposal, world: World): SentAssistant['pr
 }
 
 // A case's turns as the app sends them, its seed names turned into the world's ids.
-export function requestMessages(turns: readonly CaseTurn[], world: World): SentMessage[] {
-  return turns.map((turn): SentMessage => {
+export function requestMessages(turns: readonly CaseTurn[], world: World): RequestMessage[] {
+  return turns.map((turn): RequestMessage => {
     if ('user' in turn) {
       return { role: 'user', text: turn.user };
     }
@@ -109,17 +138,29 @@ function sentBack({ text, cards, proposal }: AssistantReplyDto): SentAssistant {
   };
 }
 
+// The access token of the User who asks the case.
+function accessTokenOf(world: World, { asker }: EvalCase): string {
+  if (asker === undefined) {
+    return world.accessToken;
+  }
+  const token = world.askers[asker];
+  if (token === undefined) {
+    throw new Error(`The world has no asker named ${asker}`);
+  }
+  return token;
+}
+
 // Sends the messages and records the turn.
 async function sendTurn(
   evalApp: EvalApp,
-  world: World,
-  messages: SentMessage[],
+  accessToken: string,
+  messages: readonly RequestMessage[],
   options: RunOptions,
 ): Promise<{ trace: TurnTrace; body: AssistantReplyDto | null }> {
   const { app, recorder } = evalApp;
   recorder.begin();
   const started = performance.now();
-  const response = await postAssistantMessages(app, world.accessToken, messages);
+  const response = await postAssistantMessages(app, accessToken, messages);
   const latencyMs = Math.round(performance.now() - started);
   const steps = recorder.take();
   const ok = response.status === 200;
@@ -185,6 +226,8 @@ export async function runCase(
   { passed = (): boolean => true, turnEnded = (): void => {}, stop = (): boolean => false }: CaseRunControls = {},
 ): Promise<CaseRun> {
   const kind = kindOf(evalCase);
+  const accessToken = accessTokenOf(world, evalCase);
+  evalApp.setNow(nowOf(evalCase));
   const userTurns = evalCase.turns.flatMap((turn) => ('user' in turn ? [turn] : []));
   const run: CaseRun = {
     id: evalCase.id,
@@ -197,7 +240,7 @@ export async function runCase(
     turns: [],
   };
   if (kind !== 'live') {
-    const { trace } = await sendTurn(evalApp, world, requestMessages(evalCase.turns, world), options);
+    const { trace } = await sendTurn(evalApp, accessToken, requestMessages(evalCase.turns, world), options);
     run.turns.push(trace);
     turnEnded(trace);
     return run;
@@ -209,7 +252,7 @@ export async function runCase(
     }
     messages.push({ role: 'user', text: turn.user });
     // oxlint-disable-next-line no-await-in-loop -- each turn is sent with the replies before it
-    const { trace, body } = await sendTurn(evalApp, world, messages, options);
+    const { trace, body } = await sendTurn(evalApp, accessToken, messages, options);
     run.turns.push(trace);
     turnEnded(trace);
     if (body === null || !passed(trace, turn.expect ?? null)) {
@@ -263,7 +306,7 @@ export class RunLog {
       name: runName(this.options, this.startedAt),
       startedAt: this.startedAt.toISOString(),
       endedAt: new Date().toISOString(),
-      now: NOW,
+      now: WORLD_CLOCKS[this.options.world],
       options: this.options,
       stoppedBy: this.stoppedBy,
       seeds: this.seeds,

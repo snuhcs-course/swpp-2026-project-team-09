@@ -7,6 +7,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
@@ -54,8 +55,8 @@ export interface PublishedSearch {
   place?: string;
   title?: string;
   words?: readonly string[];
-  // The most events answered.
-  take: number;
+  // The most events answered; left out, all of them.
+  take?: number;
 }
 
 function holding(text: string): Prisma.StringFilter {

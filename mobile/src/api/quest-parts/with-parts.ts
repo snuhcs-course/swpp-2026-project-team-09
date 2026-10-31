@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ChatCard } from '@/api/assistant-types';
@@ -83,7 +84,7 @@ function withNotes(client: ApiClient, build: Build): Pick<ShownClient, 'listJoin
 }
 
 function cardWithParts(card: ChatCard, entered: Entered, build: Build): ShownChatCard {
-  return card.kind === 'quest' ? { kind: 'quest', quest: summaryWithParts(card.quest, entered, build) } : card;
+  return card.kind === 'quest' ? { ...card, quest: summaryWithParts(card.quest, entered, build) } : card;
 }
 
 // The Assistant's reply, its Quest cards with the parts the Boards' post card draws, as the Boards' list has them.

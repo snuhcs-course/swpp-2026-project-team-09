@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { RecruitingQuest } from './party-types';
@@ -68,14 +69,23 @@ export const MAP_LAYERS = ['dining', 'shuttle'] as const;
 
 export type MapLayer = (typeof MAP_LAYERS)[number];
 
+// The 이동 시간 box of a card of a 공강 파티 answer: the way there, then the way to the next item, or the time to leave
+// by ("HH:MM") with whether the end is unknown. Each is there only when it applies.
+export interface TravelBox {
+  travel?: { mode: 'walk' | 'shuttle'; minutes: number };
+  next?: { minutes: number; isClass: boolean };
+  leaveBy?: string;
+  endUnknown?: boolean;
+}
+
 // A card of a reply, in the shape of the list the app draws it from: a Global Event as the 행사 tab lists it, and a
 // recruiting Quest as the Boards list it.
-export interface GlobalEventCard {
+export interface GlobalEventCard extends TravelBox {
   kind: 'globalEvent';
   globalEvent: GlobalEvent;
 }
 
-export interface QuestCard {
+export interface QuestCard extends TravelBox {
   kind: 'quest';
   quest: RecruitingQuest;
 }

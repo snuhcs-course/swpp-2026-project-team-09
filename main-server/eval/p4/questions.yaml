@@ -1,0 +1,534 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# The 40 questions of the P4 suite, without their answers.
+#
+# You work each answer by hand from three other files and nothing else: rules.md (the judgement), world.yaml (the
+# world) and travel-fixture.json (every Travel Time). Write down the working. Where the rules leave an answer open, do
+# not guess silently: say so in `working` and set `open: true`.
+#
+# ----------------------------------------------------------------------------------------------------------------------
+# HOW TO READ A CASE
+#
+#   id        its name
+#   category  free-time-parties (공강 파티), free-time-meals (공강에 밥) or free-time-common (공통)
+#   now       the time the case stands at, in Korea. "오늘" is this date. The week runs Monday 2026-11-02 to Sunday 11-08.
+#   asker     who asks: `김하늘`, the world's `asker`, or `새내기`, the User of that name in `askers`
+#   turns     the conversation. `user` is the User's message; `assistant` is the Assistant's earlier reply, with the
+#             cards it showed, as the app sends it back. Earlier turns are history: only the LAST user turn is answered,
+#             and it is the only turn sent to the model. Tool results do not carry over from the earlier turns.
+#
+# ----------------------------------------------------------------------------------------------------------------------
+# THE FORM OF AN ANSWER
+#
+# For each case, one entry in an answers file, with this form. The names in this example are made up.
+#
+#   - id: some-case-id
+#     expect:
+#       actions: [TOOL]
+#       tools:
+#         required: [findFreeTimeEvents, showQuests, showGlobalEvents]
+#         allowed: [getMyDay]
+#         forbidden: [proposeQuest, searchRecruitingQuests]
+#       args:
+#         findFreeTimeEvents: { date: '2026-11-02' }
+#       cards:
+#         - { kind: quest, seeds: [어떤 파티], max: 1 }
+#         - { kind: globalEvent, seeds: [어떤 행사, 다른 행사], max: 2 }
+#       text:
+#         mentions: [[12:15, 12시 15분], [14:00, 2시, 오후 2시], [3개, 세 개]]
+#         absent: [홍길동]
+#       results:
+#         findFreeTimeEvents:
+#           args: { date: '2026-11-02', from: 어떤 수업 (월), to: 다른 수업 (월) }
+#           result: found
+#           gaps:
+#             - { start: '12:15', end: '14:00', before: 어떤 수업, after: 다른 수업 }
+#           candidates:
+#             - kind: quest
+#               seed: 어떤 파티
+#               start: '12:45'
+#               end: null
+#               travel: { mode: shuttle, minutes: 16 }
+#               leaveBy: '13:51'
+#               endUnknown: true
+#     working: |
+#       The steps, with the seconds and times used, candidate by candidate, including those left out and why.
+#
+# ----------------------------------------------------------------------------------------------------------------------
+# EVERY FIELD OF `expect`
+#
+# How a case is scored: it passes when the action is one it accepts and every check below that it gives holds. A field
+# left out is not checked, so give every field the rules decide.
+#
+# actions (required): the kinds of action accepted, any one of which passes, usually one.
+#   TOOL         the reply shows cards or a map button, or a lookup found data and the text answers in words, or a
+#                lookup found nothing and the text says so (which needs `text.mentions`)
+#   ASK          nothing shown; the reply asks the User back. Needs `text.mentions`: what the question must hold.
+#   PROPOSE      the reply carries a Proposal from proposeQuest
+#   REFUSE       no tool called; the Assistant declines
+#   CHAT         no tool called; it just talks
+#   TOOL+ASK     TOOL, and the text also asks. Needs `text.mentions`.
+#   PROPOSE+ASK  PROPOSE, and the text also asks. Needs `text.mentions`.
+#   A tool answering `needs`, resolveFriend or resolvePlace answering `several` or `none`, or proposeQuest refusing is
+#   read as calling for a question.
+#
+# tools: the tools by name (rules.md section 11).
+#   required   every one must be called
+#   allowed    may be called, and are not needed
+#   forbidden  none may be called; "*" means no tool at all. A tool the case must not use goes here.
+#   A tool in none of the three may be called and only counts against efficiency. That is how tool choice is scored: a
+#   case that needs a tool requires it, and one that must not use it forbids it.
+#
+# args: for a required tool, the arguments a call must hold. Only the fields given are compared, so give only what the
+#   rules decide from the User's words. A list of objects means one call with each. Written so:
+#     date             YYYY-MM-DD
+#     from, to         an item by seed name; a clock time HH:MM; now; or end
+#     board            meal, career, hobby or show
+#     meal             lunch or dinner
+#     window           { from: HH:MM, to: HH:MM }
+#     friends          a list of Friends by seed name, compared as a set (the tools' `friendIds`)
+#     departurePlace   a Place by seed name
+#     leaveBy          HH:MM
+#     keys             showRestaurants: a list of Restaurants by key, compared as a set
+#     ids              showQuests, showGlobalEvents: a list by seed name, compared as a set
+#     name             resolveFriend: the User's word for the Friend
+#     words            resolvePlace: the User's words for the Place
+#     layer            showOnMap: dining or shuttle
+#     from, to         searchRecruitingQuests, searchGlobalEvents: YYYY-MM-DD
+#     startsAt         proposeQuest: 'YYYY-MM-DD HH:MM'
+#     place, invitees  proposeQuest: a Place by seed name; a list of Friends by seed name
+#     joinPolicy, board, capacity, title, description  proposeQuest: as given
+#
+# proposal: the fields the reply's Proposal must hold, when the action is PROPOSE: joinPolicy (open, approval or closed),
+#   board (null for none), capacity, startsAt ('YYYY-MM-DD HH:MM'), place (Place by seed name, or null), globalEvent
+#   (null for none), invitees (Friends by seed name). A Restaurant card's own Proposal is not scored.
+#
+# cards: one entry per kind: { kind: quest | globalEvent | restaurant, seeds: [...], min: n, max: n }.
+#   seeds  the cards of that kind that must be shown, by seed name (a Restaurant by its key)
+#   max    how many of that kind may be shown at most
+#   min    how many at least
+#   A case checks exactly the cards: give every seed and `max` equal to their number. For a kind that must not be shown,
+#   give { kind: ..., seeds: [], max: 0 }. Order is not checked here; it is in `results`.
+#
+# mapButtons: the map buttons of the reply, all and only those: [dining], [shuttle] or [].
+#
+# text: the reply's words. Spaces are ignored and a word is found anywhere in the text.
+#   mentions  what the text must hold: each entry a word, or a list of which any one counts. Give the spellings a reply
+#             may fairly use, such as [12:15, 12시 15분].
+#   absent    words the text must not hold, such as the full stored names of Friends who are not free. Give full names:
+#             민수 would also match 이민수.
+#
+# results: what each 공강 tool must answer, for the check of the server's judgement. It is not scored on the model. Give
+#   it for every 공강 tool the case requires, except showRestaurants. Each entry has `args`, the complete arguments that
+#   call uses, written as above, whatever the model passes, and then:
+#
+#   getMyDay
+#     result: found
+#     items: [{ seed, start, end }]  each item of the day, by item seed name
+#
+#   findFreeTimeEvents, when it answers
+#     result: found  (also when nothing fits)
+#     gaps: [{ start, end, before, after }]  before and after are the names of the items around it, or null
+#     candidates: every candidate that fits, in order, not cut to 20:
+#       kind: quest or globalEvent
+#       seed: its title
+#       start, end: of what was judged; end is null when there is none
+#       travel: { mode: walk or shuttle, minutes }, or null with no previous item
+#       next: { minutes, isClass }  when the rules give it
+#       leaveBy: HH:MM  when the rules give it
+#       endUnknown: true  when the rules give it
+#     Give `next`, `leaveBy` and `endUnknown` only when they apply (rules.md section 7).
+#
+#   findFreeTimeEvents, when it needs an answer
+#     result: needs
+#     needs: { side: before or after, item: the item's name }
+#
+#   findFreeFriends
+#     result: found
+#     freeTime: [{ start, end }]  the User's Free Time in the window
+#     friends: [{ seed, overlap: [{ start, end }] }]  the free Friends, by seed name
+#     shared: [{ start, end }]  only with `friends` in its args
+#
+#   findMealRestaurants, when it answers
+#     result: found  (also when no Restaurant fits)
+#     shared: [{ start, end }]
+#     restaurants: in order:
+#       seed: the Restaurant's key
+#       start: its Start
+#       eatingMinutes: 식사 가능 시간, as shown
+#       people: [{ name, mode, minutes, longest }]  name is 나 or the Friend's stored name; mode and minutes are null for "—"
+#
+#   findMealRestaurants, when there is nothing to judge
+#     result: none
+#     why: no-menu or no-shared-time
+#
+#   findMealRestaurants, when it needs an answer: as for findFreeTimeEvents.
+#
+#   Times are HH:MM. The end of a day is 24:00.
+#
+# working: your steps in plain words. It is not scored. A person reviews every answer from it.
+# open: true  only when the rules leave this answer open; say why in `working`.
+#
+# ----------------------------------------------------------------------------------------------------------------------
+# SEED NAMES
+#
+#   A Place               its key under `places`, such as 제1공학관
+#   A Friend              its key under `friends`, such as 이민수 or 박서준 (경영학과)
+#   A Quest, Global Event its title
+#   A Restaurant          its key under `restaurants`, such as 학생회관식당
+#   An item of the asker  <name> (<요일>): a Class meeting, such as 멀티코어컴퓨팅 (월), or a Quest held, by its title, such
+#                         as 과외 (목). These are the ids `from` and `to` take. The asker's items are: their Timetable's
+#                         meetings; 공모전 작업 (수) and 과외 (목) of `ownQuests`; and 수요일 점심 모임 (수), which they joined.
+#
+# WHAT THE RESOLVERS ANSWER
+#
+#   resolveFriend matches any part of a stored name, so the world's Friends answer as you can read off `friends`:
+#   민수 is 이민수 alone, 지은 is 김지은, 서준 is the two 박서준, and each of 유진, 하람, 도윤, 지호 and 민재 is one Friend.
+#   resolvePlace looks through all the campus's Places, more than the world uses. 서울대 정문 answers `one`, that Place.
+#   낙성대역 answers `none`: it is off campus.
+#
+# ----------------------------------------------------------------------------------------------------------------------
+
+cases:
+  - id: parties-named-classes
+    category: free-time-parties
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 오늘 멀티코어컴퓨팅이랑 현대암호학개론 사이에 갈 수 있는 파티 있어?
+  - id: parties-abbreviated-gap-begun
+    category: free-time-parties
+    now: 2026-11-02T12:40:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 멀코 끝났는데 현암 전까지 갈 수 있는 파티 있어?
+  - id: parties-next-gap
+    category: free-time-parties
+    now: 2026-11-04T10:00:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 다음 공강에 갈 수 있는 파티 있어?
+  - id: parties-named-classes-tomorrow
+    category: free-time-parties
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 내일 데이터베이스랑 운영체제 사이에 갈 수 있는 파티 있어?
+  - id: parties-before-first-class
+    category: free-time-parties
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 내일 첫 수업 전에 갈 수 있는 파티 있어?
+  - id: parties-after-last-class
+    category: free-time-parties
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 오늘 컴퓨터그래픽스 끝나고 갈 수 있는 파티 있어?
+  - id: parties-nothing-fits
+    category: free-time-parties
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 오늘 현대암호학개론이랑 컴퓨터그래픽스 사이에 갈 수 있는 파티 있어?
+  - id: parties-over-twenty
+    category: free-time-parties
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 금요일 미분방정식이랑 글쓰기의 기초 사이에 갈 수 있는 파티 있어?
+  - id: parties-over-twenty-narrowed
+    category: free-time-parties
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 금요일 미분방정식이랑 글쓰기의 기초 사이에 갈 수 있는 파티 있어?
+      - assistant:
+          text: 금요일 미분방정식은 10:45에 끝나고 글쓰기의 기초는 18:00에 시작해요. 갈 수 있는 파티가 25개라 빠른 순서로 20개를 보여 드려요. 조건을 말해 주시면 좁혀 드릴게요.
+          cards:
+            - kind: quest
+              seed: 금요일 아침 풋살
+            - kind: quest
+              seed: 브런치 모임
+            - kind: quest
+              seed: 토익 스터디
+            - kind: quest
+              seed: 금요일 점심 농구
+            - kind: quest
+              seed: 금요일 점심 번개
+            - kind: quest
+              seed: 뜨개질 모임
+            - kind: quest
+              seed: 코딩 테스트 스터디
+            - kind: quest
+              seed: 배드민턴 복식
+            - kind: quest
+              seed: 커피 한 잔 모임
+            - kind: globalEvent
+              seed: 가을 독서 토크
+            - kind: quest
+              seed: 보드게임 오후반
+            - kind: quest
+              seed: 사진 출사 모임
+            - kind: quest
+              seed: 테니스 랠리
+            - kind: globalEvent
+              seed: 총장배 풋살 대회
+            - kind: quest
+              seed: 면접 스터디
+            - kind: quest
+              seed: 디저트 탐방
+            - kind: quest
+              seed: 족구 번개
+            - kind: quest
+              seed: 합창 연습 구경
+            - kind: quest
+              seed: 탁구 한 판
+            - kind: quest
+              seed: 전시 같이 보기
+      - user: 운동만
+  - id: parties-held-quests-busy
+    category: free-time-parties
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 수요일 컴퓨터구조랑 캡스톤디자인 사이에 갈 수 있는 파티 있어?
+  - id: parties-what-is-on-meal-search
+    category: free-time-parties
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 내일 같이 밥 먹을 파티 있어?
+  - id: parties-no-timetable-rest-of-day
+    category: free-time-parties
+    now: 2026-11-02T18:40:00+09:00
+    asker: 새내기
+    turns:
+      - user: 다음 공강에 갈 수 있는 파티 있어?
+  - id: parties-ambiguous-class
+    category: free-time-parties
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 오늘 컴퓨터 수업 끝나고 갈 수 있는 파티 있어?
+  - id: parties-departure-after-asking
+    category: free-time-parties
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 목요일 과외 끝나고 갈 수 있는 파티 있어?
+      - assistant:
+          text: 과외가 끝나고 어디서 출발하세요?
+      - user: 낙성대역에서 출발해
+      - assistant:
+          text: 캠퍼스 밖에서는 이동 시간을 계산할 수 없어요. 캠퍼스에는 어디로 들어오세요? 정문처럼 알려 주세요.
+      - user: 서울대 정문으로 들어가
+  - id: parties-leave-by-after-asking
+    category: free-time-parties
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 목요일 컴퓨터네트워크 끝나고 과외 전까지 갈 수 있는 파티 있어?
+      - assistant:
+          text: 과외 장소는 이동 시간을 알 수 없어요. 몇 시까지 나서야 하세요?
+      - user: 4시 반까지는 나가야 해
+  - id: meals-who-lunch-today
+    category: free-time-meals
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 오늘 점심에 누구 돼?
+  - id: meals-who-lunch-begun
+    category: free-time-meals
+    now: 2026-11-02T13:10:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 오늘 점심 같이 먹을 수 있는 사람 누구야?
+  - id: meals-who-dinner-tomorrow
+    category: free-time-meals
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 내일 저녁에 누구 돼?
+  - id: meals-two-friends-lunch
+    category: free-time-meals
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 오늘 점심 민수랑 지은이랑 밥
+  - id: meals-no-timetable-friends-dinner
+    category: free-time-meals
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 오늘 저녁 유진이랑 하람이랑 밥
+  - id: meals-friend-off-campus-item
+    category: free-time-meals
+    now: 2026-11-02T12:40:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 오늘 점심 도윤이랑 밥
+  - id: meals-no-noodles
+    category: free-time-meals
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 오늘 점심 민수랑 지은이랑 밥
+      - assistant:
+          text: 오늘 점심에 함께 비는 시간은 12:15~12:55, 13:25~14:00이에요. 가장 오래 걷는 사람의 이동 시간이 짧은 순서로 보여 드려요.
+          cards:
+            - kind: restaurant
+              seed: 학생회관식당
+            - kind: restaurant
+              seed: 자하연식당 3층
+            - kind: restaurant
+              seed: 3식당
+            - kind: restaurant
+              seed: 301동식당
+      - user: 면 빼고
+  - id: meals-soup-wanted
+    category: free-time-meals
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 오늘 점심 민수랑 지은이랑 밥
+      - assistant:
+          text: 오늘 점심에 함께 비는 시간은 12:15~12:55, 13:25~14:00이에요. 가장 오래 걷는 사람의 이동 시간이 짧은 순서로 보여 드려요.
+          cards:
+            - kind: restaurant
+              seed: 학생회관식당
+            - kind: restaurant
+              seed: 자하연식당 3층
+            - kind: restaurant
+              seed: 3식당
+            - kind: restaurant
+              seed: 301동식당
+      - user: 국밥 먹고 싶어
+  - id: meals-here-after-cards
+    category: free-time-meals
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 오늘 점심 민수랑 지은이랑 밥
+      - assistant:
+          text: 오늘 점심에 함께 비는 시간은 12:15~12:55, 13:25~14:00이에요. 가장 오래 걷는 사람의 이동 시간이 짧은 순서로 보여 드려요.
+          cards:
+            - kind: restaurant
+              seed: 학생회관식당
+            - kind: restaurant
+              seed: 자하연식당 3층
+            - kind: restaurant
+              seed: 3식당
+            - kind: restaurant
+              seed: 301동식당
+      - user: 국밥 먹고 싶어
+      - assistant:
+          text: 소고기국밥은 3식당에 있어요.
+          cards:
+            - kind: restaurant
+              seed: 3식당
+      - user: 여기로 하자
+  - id: meals-no-shared-time
+    category: free-time-meals
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 오늘 점심 지호랑 밥
+  - id: meals-no-menu
+    category: free-time-meals
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 금요일 점심 민수랑 밥
+  - id: meals-no-restaurant-fits
+    category: free-time-meals
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 오늘 점심 민재랑 밥
+  - id: meals-same-name-asks
+    category: free-time-meals
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 오늘 점심 서준이랑 밥
+  - id: meals-breakfast
+    category: free-time-meals
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 내일 아침 민수랑 밥
+  - id: meals-needs-departure
+    category: free-time-meals
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 목요일 점심 민수랑 밥
+  - id: common-ask-no-day-or-meal
+    category: free-time-common
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 이민수랑 밥 약속 잡아줘
+  - id: common-refuse-friend-classes
+    category: free-time-common
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 민수 오늘 무슨 수업 들어? 몇 동에 있어?
+  - id: common-no-timetable-named-classes
+    category: free-time-common
+    now: 2026-11-02T11:30:00+09:00
+    asker: 새내기
+    turns:
+      - user: 오늘 멀티코어컴퓨팅이랑 현대암호학개론 사이에 갈 수 있는 파티 있어?
+  - id: common-off-campus-after
+    category: free-time-common
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 목요일 컴퓨터네트워크 끝나고 과외 전까지 갈 수 있는 파티 있어?
+  - id: common-off-campus-answer-none
+    category: free-time-common
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 목요일 과외 끝나고 갈 수 있는 파티 있어?
+      - assistant:
+          text: 과외가 끝나고 어디서 출발하세요?
+      - user: 낙성대역에서 출발해
+  - id: common-choice-meal-friends
+    category: free-time-common
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 내일 점심 민수랑 밥
+  - id: common-choice-meal-window
+    category: free-time-common
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 내일 12시에서 1시 사이에 민수랑 밥
+  - id: common-choice-meal-clock
+    category: free-time-common
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 내일 1시에 민수랑 밥
+  - id: common-choice-clock-fits
+    category: free-time-common
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 수요일 2시부터 3시 반에 갈 수 있는 파티 있어?
+  - id: common-choice-clock-search
+    category: free-time-common
+    now: 2026-11-02T11:30:00+09:00
+    asker: 김하늘
+    turns:
+      - user: 수요일 2시부터 3시 반 파티 있어?
