@@ -1,0 +1,706 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+################################################################################
+
+# The P05 world (P05 spec, "The P05 eval suite"): what evaluations C and D run in, by seed name. eval/p5/world.ts seeds
+# it. The answers are worked from this file and rules.md, so a change here changes the answers; it is frozen at C0.
+# Times are in Korea. The cases stand on Monday 2026-11-02 at 14:05, and the week runs to Sunday 11-08.
+
+# The User every case asks as.
+asker: { name: 한서윤, department: 컴퓨터공학부 }
+
+# Who leads and joins the recruiting Quests. None is a Friend of the asker.
+people:
+  - { name: 강민재, department: 경영학과 }
+  - { name: 윤지아, department: 체육교육과 }
+  - { name: 임도현, department: 건축학과 }
+  - { name: 배수아, department: 음악학과 }
+  - { name: 송현우, department: 물리천문학부 }
+  - { name: 조유나, department: 국어국문학과 }
+  - { name: 문태오, department: 기계공학부 }
+  - { name: 신예린, department: 미술학과 }
+  - { name: 권시우, department: 사회학과 }
+  - { name: 홍채원, department: 생명과학부 }
+
+# The Places the world uses, of the shared seed: seed name and number.
+places:
+  제1공학관: '301'
+  제2공학관: '302'
+  정밀기계연구소실험연구동: '312'
+  차세대자동차신기술연구소: '314'
+  학생회관: '63'
+  중앙도서관 본관: '62'
+  문화관: '73'
+  예술복합연구동: '74'
+  체육관: '71'
+  미술관: '151'
+
+# How far apart the Places are, in whole metres, as the shared seed places them. A test checks it. Pairs of the world's
+# Places under 500 m; every other pair is further.
+distances:
+  - { between: [제1공학관, 제2공학관], metres: 144 }
+  - { between: [제1공학관, 정밀기계연구소실험연구동], metres: 104 }
+  - { between: [제1공학관, 차세대자동차신기술연구소], metres: 181 }
+  - { between: [제2공학관, 정밀기계연구소실험연구동], metres: 237 }
+  - { between: [제2공학관, 차세대자동차신기술연구소], metres: 324 }
+  - { between: [정밀기계연구소실험연구동, 차세대자동차신기술연구소], metres: 108 }
+  - { between: [학생회관, 중앙도서관 본관], metres: 125 }
+  - { between: [학생회관, 문화관], metres: 256 }
+  - { between: [학생회관, 예술복합연구동], metres: 367 }
+  - { between: [중앙도서관 본관, 문화관], metres: 258 }
+  - { between: [중앙도서관 본관, 예술복합연구동], metres: 298 }
+  - { between: [문화관, 예술복합연구동], metres: 187 }
+  - { between: [체육관, 미술관], metres: 267 }
+
+# How far a Quest's point on the map, or a Global Event's, is from those Places, in whole metres. A test checks it.
+pointDistances:
+  - { label: 공대 앞 벤치, place: 제1공학관, metres: 18 }
+  - { label: 공대 앞 벤치, place: 제2공학관, metres: 159 }
+  - { label: 공대 앞 벤치, place: 정밀기계연구소실험연구동, metres: 99 }
+  - { label: 공대 앞 벤치, place: 차세대자동차신기술연구소, metres: 166 }
+  - { label: 공룡 화석 전시, place: 학생회관, metres: 125 }
+  - { label: 공룡 화석 전시, place: 문화관, metres: 258 }
+
+# Published Global Events. `ends` null: no end is known.
+globalEvents:
+  - {
+      title: 가을 정기 공연,
+      description: 음악대학 학생들의 정기 무대입니다.,
+      starts: '2026-11-04T19:00',
+      ends: '2026-11-04T21:00',
+      place: 문화관 대극장,
+      point: { latitude: 37.46159, longitude: 126.95104 },
+    }
+  - {
+      title: 관현악단 공연의 밤,
+      description: 교내 관현악단의 가을 무대입니다.,
+      starts: '2026-11-06T19:00',
+      ends: '2026-11-06T21:00',
+      place: 문화관 중강당,
+      point: { latitude: 37.46159, longitude: 126.95104 },
+    }
+  - {
+      title: 피아노 독주회,
+      description: 졸업을 앞둔 학생의 독주 무대입니다.,
+      starts: '2026-11-05T18:30',
+      ends: '2026-11-05T20:00',
+      place: 예술복합연구동 콘서트홀,
+      point: { latitude: 37.46193, longitude: 126.95312 },
+    }
+  - {
+      title: 뮤지컬 〈지하철 1호선〉,
+      description: 뮤지컬 동아리의 가을 무대입니다.,
+      starts: '2026-11-07T15:00',
+      ends: '2026-11-07T17:30',
+      place: 문화관 대극장,
+      point: { latitude: 37.46159, longitude: 126.95104 },
+    }
+  - {
+      title: 재즈 콘서드,
+      description: 재즈 동아리의 저녁 무대입니다.,
+      starts: '2026-11-05T19:30',
+      ends: '2026-11-05T21:00',
+      place: 학생회관 라운지,
+      point: { latitude: 37.45932, longitude: 126.95058 },
+    }
+  - {
+      title: 잔디광장 버스킹,
+      description: 학생 밴드 세 팀이 나옵니다.,
+      starts: '2026-11-06T17:30',
+      ends: '2026-11-06T19:00',
+      place: 잔디광장,
+      point: { latitude: 37.4594, longitude: 126.95199 },
+    }
+  - {
+      title: 가을 음악제,
+      description: 단과대 연합 음악 축제입니다.,
+      starts: '2026-11-06T18:00',
+      ends: '2026-11-06T21:00',
+      place: 학생회관 앞,
+      point: { latitude: 37.45932, longitude: 126.95058 },
+    }
+  - {
+      title: 가을 사진전,
+      description: 사진 동아리의 정기 전시입니다.,
+      starts: '2026-10-30T10:00',
+      ends: '2026-11-08T18:00',
+      place: 미술관 1층,
+      point: { latitude: 37.4665, longitude: 126.94969 },
+    }
+  - {
+      title: 판화 특별전,
+      description: 오늘 하루 열리는 판화 전시입니다.,
+      starts: '2026-11-02T10:00',
+      ends: '2026-11-02T18:00',
+      place: 미술관 2층,
+      point: { latitude: 37.4665, longitude: 126.94969 },
+    }
+  - {
+      title: 공룡 화석 전시,
+      description: 자연사 자료를 모은 전시입니다.,
+      starts: '2026-11-05T10:00',
+      ends: '2026-11-07T17:00',
+      place: 중앙도서관 로비,
+      point: { latitude: 37.4594, longitude: 126.95199 },
+    }
+  - {
+      title: 채용 박람회,
+      description: 기업 부스와 현장 상담이 있습니다.,
+      starts: '2026-11-04T10:00',
+      ends: '2026-11-04T17:00',
+      place: 체육관,
+      point: { latitude: 37.4676, longitude: 126.95238 },
+    }
+  - {
+      title: 동아리 박람회,
+      description: 중앙 동아리가 부스를 엽니다.,
+      starts: '2026-11-03T12:00',
+      ends: null,
+      place: 학생회관 앞,
+      point: { latitude: 37.45932, longitude: 126.95058 },
+    }
+  - {
+      title: 도서 바자회,
+      description: 헌책을 사고팔 수 있습니다.,
+      starts: '2026-11-01T10:00',
+      ends: '2026-11-03T18:00',
+      place: 중앙도서관 앞,
+      point: { latitude: 37.4594, longitude: 126.95199 },
+    }
+  - {
+      title: 양자컴퓨터 특강,
+      description: 초청 교수의 공개 강연입니다.,
+      starts: '2026-11-03T16:00',
+      ends: '2026-11-03T17:30',
+      place: 제1공학관 대강당,
+      point: { latitude: 37.45016, longitude: 126.95259 },
+    }
+  - {
+      title: 스타트업 창업 특강,
+      description: 동문 창업자의 강연입니다.,
+      starts: '2026-11-05T14:00',
+      ends: '2026-11-05T15:30',
+      place: 제2공학관 세미나실,
+      point: { latitude: 37.44887, longitude: 126.95265 },
+    }
+  - {
+      title: 취엄 설명회,
+      description: 경력개발센터의 진로 안내입니다.,
+      starts: '2026-11-03T18:30',
+      ends: '2026-11-03T20:00',
+      place: 중앙도서관 강당,
+      point: { latitude: 37.4594, longitude: 126.95199 },
+    }
+  - {
+      title: 알고리즘 대회,
+      description: 프로그래밍 동아리가 엽니다.,
+      starts: '2026-11-07T13:00',
+      ends: '2026-11-07T17:00',
+      place: 제1공학관 실습실,
+      point: { latitude: 37.45016, longitude: 126.95259 },
+    }
+  - {
+      title: 벼룩시장,
+      description: 안 쓰는 물건을 나눕니다.,
+      starts: '2026-10-31T10:00',
+      ends: '2026-10-31T17:00',
+      place: 잔디광장,
+      point: { latitude: 37.4594, longitude: 126.95199 },
+    }
+  - {
+      title: 겨울 콘서트,
+      description: 연말을 앞둔 합창 무대입니다.,
+      starts: '2026-11-13T19:00',
+      ends: '2026-11-13T21:00',
+      place: 문화관 대극장,
+      point: { latitude: 37.46159, longitude: 126.95104 },
+    }
+
+# The Global Event for which the asker already holds a Shared Quest, with another User.
+sharedQuest: 가을 음악제
+
+# Quests the asker holds. `closed` is only on the asker's own schedule; `leads` recruits on a Board; `joined` is a Quest
+# of someone else that the asker joined.
+heldByAsker:
+  - {
+      title: 동아리 회의,
+      role: closed,
+      board: null,
+      joinPolicy: closed,
+      capacity: 1,
+      holders: 1,
+      starts: '2026-11-04T19:00',
+      place: { seed: 학생회관 },
+    }
+  - {
+      title: 자바 스터디원 모집,
+      role: leads,
+      board: career,
+      joinPolicy: open,
+      capacity: 4,
+      holders: 1,
+      starts: '2026-11-05T16:00',
+      place: { seed: 제1공학관 },
+    }
+  - {
+      title: 영어 회화 모임,
+      role: joined,
+      board: hobby,
+      joinPolicy: open,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-04T12:00',
+      place: { seed: 중앙도서관 본관 },
+    }
+
+# Recruiting Quests led by others. `holders` counts every Holder, the Leader and the asker aside from `askedByAsker`,
+# which only asked. A Quest with `globalEvent` takes its time and place from the event.
+quests:
+  # 식사
+  - {
+      title: 삼겹살 드실 분,
+      board: meal,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-03T18:30',
+      place: { label: 녹두 고깃집 },
+    }
+  - {
+      title: 저녁에 고기 구워요,
+      board: meal,
+      capacity: 4,
+      holders: 1,
+      starts: '2026-11-03T19:00',
+      place: { label: 샤로수길 },
+    }
+  - {
+      title: 배민 같이 시켜요,
+      board: meal,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-03T19:00',
+      place: { seed: 제2공학관 },
+    }
+  - {
+      title: 학식 같이 먹어요,
+      board: meal,
+      capacity: 3,
+      holders: 1,
+      starts: '2026-11-03T12:10',
+      place: { seed: 학생회관 },
+    }
+  - {
+      title: 돈까스 드실 분,
+      board: meal,
+      capacity: 2,
+      holders: 1,
+      starts: '2026-11-03T12:30',
+      place: { seed: 제2공학관 },
+    }
+  - {
+      title: 치킨 뜯으실 분,
+      board: meal,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-02T17:00',
+      place: { seed: 제1공학관 },
+    }
+  - {
+      title: 떡볶이 드실 분,
+      board: meal,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-02T16:30',
+      place: { seed: 제1공학관 },
+    }
+  - {
+      title: 족발 야식 모임,
+      board: meal,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-02T23:30',
+      place: { seed: 제2공학관 },
+    }
+  - {
+      title: 심야 라면 모임,
+      board: meal,
+      capacity: 4,
+      holders: 1,
+      starts: '2026-11-03T00:30',
+      place: { seed: 제2공학관 },
+    }
+  - {
+      title: 마라탕 넷이서,
+      board: meal,
+      capacity: 4,
+      holders: 1,
+      starts: '2026-11-05T18:00',
+      place: { label: 녹두 마라탕집 },
+    }
+  - {
+      title: 마라탕 둘이서,
+      board: meal,
+      capacity: 2,
+      holders: 1,
+      starts: '2026-11-05T18:10',
+      place: { label: 녹두 마라탕집 },
+    }
+  - {
+      title: 마라탕 여럿이,
+      board: meal,
+      capacity: 6,
+      holders: 2,
+      starts: '2026-11-05T18:20',
+      place: { label: 녹두 마라탕집 },
+    }
+  - {
+      title: 마라땅 드실 분,
+      board: meal,
+      capacity: 3,
+      holders: 1,
+      starts: '2026-11-06T12:00',
+      place: { label: 녹두 마라탕집 },
+    }
+  - {
+      title: 목요일 점심 학생회관,
+      board: meal,
+      capacity: 4,
+      holders: 3,
+      starts: '2026-11-05T12:00',
+      place: { seed: 학생회관 },
+    }
+  - {
+      title: 목요일 점심 도서관,
+      board: meal,
+      capacity: 4,
+      holders: 1,
+      starts: '2026-11-05T12:10',
+      place: { seed: 중앙도서관 본관 },
+    }
+  - {
+      title: 목요일 점심 문화관,
+      board: meal,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-05T12:00',
+      place: { seed: 문화관 },
+    }
+  - {
+      title: 목요일 점심 예술복합,
+      board: meal,
+      capacity: 4,
+      holders: 1,
+      starts: '2026-11-05T12:00',
+      place: { seed: 예술복합연구동 },
+    }
+  - {
+      title: 목요일 점심 맛집 탐방,
+      board: meal,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-05T12:00',
+      place: { label: 샤로수길 맛집 },
+    }
+  - {
+      title: 금요일 저녁 파스타,
+      board: meal,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-06T18:30',
+      place: { label: 샤로수길 },
+    }
+  # 운동과 취미
+  - {
+      title: 배드민턴 치실 분,
+      board: hobby,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-03T19:10',
+      place: { seed: 체육관 },
+    }
+  - { title: 민턴 한 판, board: hobby, capacity: 4, holders: 3, starts: '2026-11-05T20:00', place: { seed: 체육관 } }
+  - {
+      title: 배드민튼 초보 모임,
+      board: hobby,
+      capacity: 6,
+      holders: 2,
+      starts: '2026-11-07T10:00',
+      place: { seed: 체육관 },
+    }
+  - { title: 민턴 정기전, board: hobby, capacity: 8, holders: 3, starts: '2026-11-12T19:00', place: { seed: 체육관 } }
+  - { title: 농구 한 게임, board: hobby, capacity: 6, holders: 6, starts: '2026-11-03T18:40', place: { seed: 체육관 } }
+  - { title: 농구 3대3, board: hobby, capacity: 6, holders: 2, starts: '2026-11-04T17:30', place: { seed: 체육관 } }
+  - { title: 풋살 하실 분, board: hobby, capacity: 8, holders: 3, starts: '2026-11-04T18:00', place: { seed: 체육관 } }
+  - { title: 풋쌀 번개, board: hobby, capacity: 8, holders: 4, starts: '2026-11-08T16:00', place: { seed: 체육관 } }
+  - {
+      title: 테니스 복식,
+      board: hobby,
+      joinPolicy: approval,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-04T18:00',
+      place: { seed: 체육관 },
+    }
+  - {
+      title: 테니즈 치실 분,
+      board: hobby,
+      capacity: 2,
+      holders: 1,
+      starts: '2026-11-07T11:00',
+      place: { seed: 체육관 },
+    }
+  - {
+      title: 아침 러닝,
+      board: hobby,
+      joinPolicy: approval,
+      capacity: 8,
+      holders: 3,
+      starts: '2026-11-03T07:30',
+      place: { seed: 체육관 },
+    }
+  - {
+      title: 볼링 네 명,
+      board: hobby,
+      capacity: 4,
+      holders: 1,
+      starts: '2026-11-04T20:00',
+      place: { label: 낙성대 볼링장 },
+    }
+  - {
+      title: 볼링 여섯 명,
+      board: hobby,
+      capacity: 6,
+      holders: 2,
+      starts: '2026-11-04T20:10',
+      place: { label: 낙성대 볼링장 },
+    }
+  - {
+      title: 볼링 둘이서,
+      board: hobby,
+      capacity: 2,
+      holders: 1,
+      starts: '2026-11-04T20:20',
+      place: { label: 낙성대 볼링장 },
+    }
+  - {
+      title: 볼링 번개,
+      board: hobby,
+      capacity: 4,
+      holders: 4,
+      starts: '2026-11-04T20:00',
+      place: { label: 낙성대 볼링장 },
+    }
+  - {
+      title: 보드게임 카페 갈 분,
+      board: hobby,
+      capacity: 4,
+      holders: 3,
+      starts: '2026-11-05T19:00',
+      place: { label: 녹두 보드게임 카페 },
+    }
+  - {
+      title: 보드게임 밤샘,
+      board: hobby,
+      capacity: 6,
+      holders: 2,
+      starts: '2026-11-05T19:00',
+      place: { label: 녹두 보드게임 카페 },
+    }
+  - {
+      title: 보드게임 셋이서,
+      board: hobby,
+      capacity: 3,
+      holders: 1,
+      starts: '2026-11-05T19:30',
+      place: { label: 녹두 보드게임 카페 },
+    }
+  - {
+      title: 보드게임 번개,
+      board: hobby,
+      capacity: 4,
+      holders: 4,
+      starts: '2026-11-05T19:00',
+      place: { label: 녹두 보드게임 카페 },
+    }
+  - {
+      title: 오늘 오후 보드게임,
+      board: hobby,
+      capacity: 5,
+      holders: 2,
+      starts: '2026-11-02T13:50',
+      place: { label: 동아리방 },
+    }
+  # 스터디와 커리어
+  - {
+      title: 오늘 오후 공부 모임,
+      board: career,
+      capacity: 6,
+      holders: 2,
+      starts: '2026-11-02T13:30',
+      ends: '2026-11-02T16:00',
+      place: { seed: 중앙도서관 본관 },
+    }
+  - {
+      title: 오늘 저녁 공부 모임,
+      board: career,
+      capacity: 6,
+      holders: 2,
+      starts: '2026-11-02T19:00',
+      place: { seed: 중앙도서관 본관 },
+    }
+  - {
+      title: 토익 스터디,
+      board: career,
+      joinPolicy: approval,
+      capacity: 4,
+      holders: 2,
+      askedByAsker: true,
+      starts: '2026-11-04T19:00',
+      place: { seed: 중앙도서관 본관 },
+    }
+  - {
+      title: 토익 스피킹 스터디,
+      board: career,
+      joinPolicy: approval,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-05T19:00',
+      place: { seed: 중앙도서관 본관 },
+    }
+  - {
+      title: 공대 면접 스터디,
+      board: career,
+      capacity: 4,
+      holders: 3,
+      starts: '2026-11-05T18:00',
+      place: { seed: 제1공학관 },
+    }
+  - {
+      title: 전공 스터디 그룹,
+      board: career,
+      capacity: 4,
+      holders: 1,
+      starts: '2026-11-05T18:00',
+      place: { seed: 제2공학관 },
+    }
+  - {
+      title: 코딩 테스트 스터디,
+      board: career,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-05T18:00',
+      place: { seed: 차세대자동차신기술연구소 },
+    }
+  - {
+      title: 벤치에서 스터디,
+      board: career,
+      capacity: 4,
+      holders: 1,
+      starts: '2026-11-05T18:10',
+      place: { label: 공대 앞 벤치, latitude: 37.4503, longitude: 126.9527 },
+    }
+  - {
+      title: 카페 스터디,
+      board: career,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-05T18:00',
+      place: { label: 공대 근처 카페 },
+    }
+  - {
+      title: 인문대 독서 스터디,
+      board: career,
+      capacity: 4,
+      holders: 1,
+      starts: '2026-11-05T18:00',
+      place: { seed: 문화관 },
+    }
+  # 다른 게시판에 올라간 글
+  - {
+      title: 전시 보러 가요,
+      board: hobby,
+      capacity: 4,
+      holders: 1,
+      starts: '2026-11-07T14:00',
+      place: { seed: 미술관 },
+    }
+  - {
+      title: 연극 보고 저녁 먹어요,
+      board: meal,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-07T17:00',
+      place: { seed: 문화관 },
+    }
+  - {
+      title: 등산 후 막걸리,
+      board: meal,
+      capacity: 6,
+      holders: 2,
+      starts: '2026-11-07T09:00',
+      place: { label: 관악산 입구 },
+    }
+  - {
+      title: 개발자 농구 모임,
+      board: career,
+      capacity: 8,
+      holders: 3,
+      starts: '2026-11-07T15:00',
+      place: { seed: 체육관 },
+    }
+  - {
+      title: 취준생 점심 모임,
+      board: career,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-04T12:00',
+      place: { seed: 학생회관 },
+    }
+  - {
+      title: 합창 연습 같이 해요,
+      board: career,
+      capacity: 6,
+      holders: 2,
+      starts: '2026-11-08T14:00',
+      place: { seed: 문화관 },
+    }
+  # 행사 파티
+  - { title: 정기 공연 같이 가요, board: show, capacity: 4, holders: 2, globalEvent: 가을 정기 공연 }
+  - { title: 정기 공연 앞자리, board: show, capacity: 2, holders: 2, globalEvent: 가을 정기 공연 }
+  - {
+      title: 공연의 밤 같이 봐요,
+      board: show,
+      joinPolicy: approval,
+      capacity: 4,
+      holders: 1,
+      globalEvent: 관현악단 공연의 밤,
+    }
+  - { title: 독주회 같이 가요, board: show, joinPolicy: approval, capacity: 3, holders: 1, globalEvent: 피아노 독주회 }
+  - { title: 뮤지컬 보러 갈 분, board: show, capacity: 4, holders: 3, globalEvent: 뮤지컬 〈지하철 1호선〉 }
+  - { title: 재즈 콘서드 갈 사람, board: show, capacity: 4, holders: 2, globalEvent: 재즈 콘서드 }
+  - { title: 음악제 같이 가요, board: show, capacity: 4, holders: 2, globalEvent: 가을 음악제 }
+  - { title: 음악제 앞자리 모임, board: show, capacity: 6, holders: 2, globalEvent: 가을 음악제 }
+  - { title: 사진전 같이 봐요, board: show, capacity: 4, holders: 2, globalEvent: 가을 사진전 }
+  - { title: 사진전 주말 관람, board: show, joinPolicy: approval, capacity: 4, holders: 1, globalEvent: 가을 사진전 }
+  - { title: 판화전 같이 봐요, board: show, capacity: 3, holders: 1, globalEvent: 판화 특별전 }
+  - { title: 공룡 전시 보러 가요, board: show, capacity: 4, holders: 2, globalEvent: 공룡 화석 전시 }
+  - { title: 버스킹 구경 갈 분, board: hobby, capacity: 5, holders: 2, globalEvent: 잔디광장 버스킹 }
+  - { title: 박람회 같이 돌아요, board: career, capacity: 4, holders: 2, globalEvent: 채용 박람회 }
+  - {
+      title: 콘서드 같이 가실 분,
+      board: show,
+      capacity: 4,
+      holders: 1,
+      starts: '2026-11-05T19:40',
+      place: { seed: 학생회관 },
+    }
+  - {
+      title: 뮤지걸 보러 가실 분,
+      board: show,
+      capacity: 4,
+      holders: 2,
+      starts: '2026-11-08T15:00',
+      place: { seed: 문화관 },
+    }

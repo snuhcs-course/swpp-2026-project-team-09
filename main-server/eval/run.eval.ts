@@ -2,15 +2,19 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { fileURLToPath } from 'node:url';
 import { inject } from 'vitest';
 import { openRouterModel } from '../src/assistant/adapter.js';
-import { loadCases, repetitionsOf, selectCases, sentTurnsOf } from './cases.ts';
+import { casesIn, loadCases, repetitionsOf, selectCases, sentTurnsOf, type WorldName } from './cases.ts';
 import { dotEnv, runOptionsFromEnv } from './options.ts';
 import { expectSchema } from './expect.ts';
 import { type Names, namesOf } from './normalise.ts';
+import { seedP4World } from './p4/world.ts';
+import { seedP5World } from './p5/world.ts';
 import { type EvalApp, runCase, RunLog, startEvalApp } from './runner.ts';
 import { scoreTurn } from './score.ts';
 import { saveScorecard } from './scorecard.ts';
@@ -21,8 +25,10 @@ import { seedWorld, type World } from './world.ts';
 // case at its first failed turn. The run is saved when it ends, stopped by the budget or not, with its scorecard
 // beside it.
 
+const SEEDERS: Record<WorldName, typeof seedWorld> = { small: seedWorld, p4: seedP4World, p5: seedP5World };
+
 const options = runOptionsFromEnv();
-const cases = selectCases(loadCases(), options.categories, options.caseIds);
+const cases = selectCases(casesIn(loadCases(), options.world), options.categories, options.caseIds);
 const log = new RunLog(options);
 // The app and its world, once started, and the world's ids by seed name for the scorer.
 const started: { evalApp?: EvalApp; world?: World; names?: Names } = {};
@@ -38,7 +44,7 @@ beforeAll(async () => {
     openRouterModel(key, options.model),
     options,
   );
-  started.world = await seedWorld(started.evalApp.app, inject('settings').DATABASE_URL);
+  started.world = await SEEDERS[options.world](started.evalApp.app, inject('settings').DATABASE_URL);
   started.names = namesOf(started.world.seeds);
   log.keepSeeds(started.world.seeds);
 });

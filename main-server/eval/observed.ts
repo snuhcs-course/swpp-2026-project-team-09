@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type Action } from './expect.ts';
@@ -42,6 +43,7 @@ export function observedActionOf(trace: TurnTrace): Observed {
   const calledFor = calls.some((call) => {
     const outcome = outcomeOf(call);
     return (
+      outcome === 'needs' ||
       (roleOf(call.name) === 'resolver' && (outcome === 'several' || outcome === 'none')) ||
       (roleOf(call.name) === 'proposer' && outcome === 'refused')
     );
