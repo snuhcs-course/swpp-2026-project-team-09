@@ -13,14 +13,13 @@
 - [x] Thresholds (floor and target) are committed for C1–C7 and D1–D6, as the metrics document's section 2 now defines them, together with what happens when a floor is missed (section 4.1).
 - [x] R0 for each evaluation is defined in the record: the rules alone for A (C1's baseline is 0, since every Draft is one the rules did not publish), and equal starts with title similarity for B.
 - [ ] The P05 owner labels every item. A second labeller labels 15 posts of A and 30 hard negative pairs of B on their own; the record keeps both original label files, the agreement (p_o, κ, positive and negative agreement, n) and how disagreements were settled.
-- [ ] The TA is asked by message, before C0, whether labels made by the team are acceptable; the date and the answer (or "no answer by C0") are recorded.
 - [ ] The commit is tagged as C0 and the tag is written into the metrics record.
 
 ## Comments
 
 ### Set built, labels pending (2026-10-31)
 
-The record is `main-server/eval/collection/README.md`. Done by an agent: saved posts, sets, blank label files, thresholds, R0 definitions. Not done, since people do them: the owner's labels, the second labeller's 15 posts and 30 pairs, the agreement and gold files, the TA's message, the C0 tag.
+The record is `main-server/eval/collection/README.md`. Done by an agent: saved posts, sets, blank label files, thresholds, R0 definitions. Not done, since people do them: the owner's labels, the second labeller's 15 posts and 30 pairs, the agreement and gold files, the C0 tag.
 
 The first box stays open until its labels are in: its posts are saved and dated, and each session's values are blank. The sets' tags say why a post was chosen, not its answer.
 
@@ -31,6 +30,7 @@ Decisions by the P05 owner on 2026-10-31:
 - Evaluation A's 60 posts are 35 of SNU Now and 25 of extra.snu.
 - Thresholds are the metrics document's values as written: no floor for D2–D6, D3 and D4 as targets, D5 diagnostic, D6 diagnostic with a target of 0.50.
 - An online session's `mayPublish` is false, as the Judgement's check requires one Place.
+- The TA is not asked about team-made labels; the P05 owner dropped that step.
 
 Decided by the agent: a pair is post to post, with a session number where a post's other sessions are another event.
 

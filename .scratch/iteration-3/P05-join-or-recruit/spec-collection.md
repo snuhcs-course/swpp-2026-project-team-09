@@ -139,7 +139,7 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
 ### Metrics (first ticket)
 
 - The fixed sets and thresholds of evaluations A and B in `iter3-p5 메트릭.md` are committed before the first run, as C0, with R0 for each: the rules alone for A, and equal starts with title similarity for B.
-- The P05 owner labels every item. A second labeller labels an overlapping part (15 posts of A, 30 hard negative pairs of B) on their own, and the agreement is reported. The TA is asked by message before C0 whether team-made labels are acceptable, since the TA meeting (11-04) comes after the freeze (11-01).
+- The P05 owner labels every item. A second labeller labels an overlapping part (15 posts of A, 30 hard negative pairs of B) on their own, and the agreement is reported.
 
 ## Testing Decisions
 
