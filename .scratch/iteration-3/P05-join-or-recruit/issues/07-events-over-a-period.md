@@ -33,3 +33,8 @@ Known limits, none changed here, for ticket 09's failure analysis and whoever pi
 - A yearless period over half a year long, `12월 20일 ~ 6월 30일` read in November, stays a Draft, since each day takes its nearest year.
 - An event that has started cannot be asked for Matching (`GLOBAL_EVENT_STARTED`, "이미 시작한 행사예요"), so "AI 매칭" is refused for most of a period.
 - A Quest for it attends the event's Sub Quest, whose time is the event's: a Quest made for a period event whose start is a day alone shows 00:00 and, in its room, 00:00–23:59. The list is by start, so a running period comes first. Neither is changed.
+
+### Agent usage (2026-11-01)
+
+- Agent time: about 1 hour 30 minutes (estimate), one session with two review subagents. It leaves out about 30 minutes lost to a Docker engine that had stopped answering, and counts the full test runs.
+- Tokens, subagents included: input 136, with 7,724,060 cache reads and 334,543 cache writes shown apart; output 85,696. Counted before the PR was opened.
