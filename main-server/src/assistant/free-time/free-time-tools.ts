@@ -22,7 +22,17 @@ import {
 } from './free-time.js';
 import { type FreeTimeServices } from './free-time-services.js';
 import { findFreeFriends, findMealRestaurants, showRestaurants } from './meal-tools.js';
-import { CLOCK_TIME, clockTime, dateInput, itemName, neededOf, noDay, outOfReach } from './tool-parts.js';
+import {
+  CLOCK_TIME,
+  clockTime,
+  dateInput,
+  departurePlaceInput,
+  itemName,
+  leaveByInput,
+  neededOf,
+  noDay,
+  outOfReach,
+} from './tool-parts.js';
 import { cardKey, type JudgedCandidate } from './travel-boxes.js';
 import { UserDayService } from './user-day.service.js';
 
@@ -64,13 +74,8 @@ const input = z.object({
     .describe(
       'Only the 파티 of one Board: meal (식사), career (커리어), hobby (취미) or show (공연·전시). Global Events have no Board and stay.',
     ),
-  departurePlace: z
-    .uuid()
-    .optional()
-    .describe(
-      'Where the User leaves from, as resolvePlace returned it in this message, after this tool asked by needs.',
-    ),
-  leaveBy: clockTime.optional().describe('By when the User must leave, as HH:MM, after this tool asked by needs.'),
+  departurePlace: departurePlaceInput,
+  leaveBy: leaveByInput,
 });
 
 // Where a stretch of the day asked for starts or ends, or null for an id that is no item of that day.

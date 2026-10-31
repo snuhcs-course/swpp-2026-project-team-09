@@ -13,7 +13,7 @@ import {
   type MapLayer,
   type QuestProposal,
   type RestaurantCard,
-  type RestaurantWay,
+  type RestaurantTravel,
   type TravelBox,
 } from '@/api/assistant-types';
 import type { ApiClient } from '@/api/client';
@@ -71,7 +71,7 @@ function isQuestProposal(value: unknown): value is QuestProposal {
   );
 }
 
-function isRestaurantWay(value: unknown): value is RestaurantWay {
+function isRestaurantTravel(value: unknown): value is RestaurantTravel {
   const mode = field(value, 'mode');
   const minutes = field(value, 'minutes');
   return (
@@ -90,7 +90,7 @@ function isRestaurant(value: unknown): value is RestaurantCard['restaurant'] {
     (meal === 'lunch' || meal === 'dinner') &&
     isNumber(field(value, 'eatingMinutes')) &&
     listOf(isMenuLine)(field(value, 'lines')) &&
-    listOf(isRestaurantWay)(field(value, 'people')) &&
+    listOf(isRestaurantTravel)(field(value, 'people')) &&
     isQuestProposal(field(value, 'proposal'))
   );
 }

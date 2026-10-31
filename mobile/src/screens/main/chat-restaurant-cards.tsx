@@ -6,7 +6,7 @@
 
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { QuestProposal, RestaurantCard, RestaurantWay } from '@/api/assistant-types';
+import type { QuestProposal, RestaurantCard, RestaurantTravel } from '@/api/assistant-types';
 import type { MenuLine } from '@/api/menu-types';
 import { now } from '@/clock';
 import { Button, cardStyles, color, font, Icon, radius, space } from '@/design-system';
@@ -30,14 +30,31 @@ function lineWords({ text, name, price }: MenuLine): string {
   return name !== null && price !== null ? `${name} ${won(price)}` : text;
 }
 
-function WayChip({ way: { name, mode, minutes, longest } }: { way: RestaurantWay }): ReactElement {
+function TravelChip({ way: { name, mode, minutes, longest } }: { way: RestaurantTravel }): ReactElement {
   const ink = longest ? color.party : color.inkMuted;
   return (
-    <View style={[styles.chip, longest && styles.longest]} testID={longest ? 'longest-way' : undefined}>
+    <View style={[styles.chip, longest && styles.longest]} testID={longest ? 'longest-travel' : undefined}>
       <Icon color={ink} name={mode === 'shuttle' ? 'bus' : 'route'} size={12} />
       <Text style={[styles.chipWords, { color: ink }]}>
         {mode === null ? `${name} ${NO_WAY}` : `${name} ${MODE_WORDS[mode]} ${String(minutes)}분`}
       </Text>
+    </View>
+  );
+}
+
+function Top({ restaurant }: { restaurant: RestaurantCard['restaurant'] }): ReactElement {
+  return (
+    <View style={styles.top}>
+      <View style={styles.mark}>
+        <Icon color={color.onPrimary} name="meal" size={16} />
+      </View>
+      <View style={styles.titles}>
+        <Text accessibilityRole="header" style={styles.name}>
+          {restaurant.name}
+        </Text>
+        <Text style={styles.where}>{whereAndWhen(restaurant)}</Text>
+      </View>
+      <Text style={styles.eating}>{`식사 가능 시간 ${String(restaurant.eatingMinutes)}분`}</Text>
     </View>
   );
 }
@@ -49,33 +66,26 @@ function Card({
   restaurant: RestaurantCard['restaurant'];
   onMakeParty: (proposal: QuestProposal) => void;
 }): ReactElement {
-  const { key, name, eatingMinutes, lines, people, proposal } = restaurant;
+  const { key, lines, people, proposal } = restaurant;
   const more = lines.length - LINES_SHOWN;
   return (
     <View style={[cardStyles.card, styles.card]} testID={`restaurant-${key}`}>
-      <View style={styles.top}>
-        <View style={styles.mark}>
-          <Icon color={color.onPrimary} name="meal" size={16} />
-        </View>
-        <View style={styles.titles}>
-          <Text accessibilityRole="header" style={styles.name}>
-            {name}
-          </Text>
-          <Text style={styles.where}>{whereAndWhen(restaurant)}</Text>
-        </View>
-        <Text style={styles.eating}>{`식사 가능 시간 ${String(eatingMinutes)}분`}</Text>
-      </View>
+      <Top restaurant={restaurant} />
       <View style={styles.lines}>
-        {lines.slice(0, LINES_SHOWN).map((line) => (
-          <Text key={line.text} style={styles.line}>
+        {lines.slice(0, LINES_SHOWN).map((line, index) => (
+          // A meal's lines have no id, and the same text may come twice.
+          // oxlint-disable-next-line no-array-index-key
+          <Text key={index} style={styles.line}>
             {lineWords(line)}
           </Text>
         ))}
         {more > 0 ? <Text style={styles.more}>{`외 ${String(more)}개`}</Text> : null}
       </View>
       <View accessibilityLabel="사람별 이동 시간" style={styles.chips}>
-        {people.map((way) => (
-          <WayChip key={way.name} way={way} />
+        {people.map((way, index) => (
+          // Two Friends may share a name.
+          // oxlint-disable-next-line no-array-index-key
+          <TravelChip key={index} way={way} />
         ))}
       </View>
       <Button

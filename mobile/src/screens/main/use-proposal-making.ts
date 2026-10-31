@@ -30,8 +30,7 @@ function blockOf(proposal: QuestProposal, form: PartyForm): string | null {
   return form.startsAt !== null && new Date(form.startsAt) <= now() ? STARTED : null;
 }
 
-// 수정 on a Proposal card: closes the sheet and opens the party form filled with the Proposal, which tells `made` once
-// it made the Quest.
+// Closes the sheet and opens the party form filled with the Proposal, which tells `made` once it made the Quest.
 export function openProposalForm(proposal: QuestProposal, made: () => void, close: () => void): void {
   holdProposal({ proposal, made });
   close();

@@ -15,13 +15,13 @@ import { CARDS_MAX, defineTool, noneFound, type Tool, type ToolContext } from '.
 import { koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
 import { freshIds } from '../tools/fresh-ids.js';
-import { clockOf, endOfDay, freeTimeOf, onDay } from './free-time.js';
+import { clockOf, endOfDay, type FreeInterval, freeTimeOf, onDay } from './free-time.js';
 import { type FreeTimeServices } from './free-time-services.js';
 import {
   aroundShared,
-  askedWindow,
-  byShortestLongestWay,
+  byLongestTravel,
   type Diner,
+  earliest,
   type HandledMeal,
   type Interval,
   longEnough,
@@ -30,9 +30,11 @@ import {
   mealWindow,
   overlapOf,
   sharedTime,
+  windowOn,
 } from './meal-fit.js';
 import { type OpenRestaurant, restaurantCard } from './restaurant-card.js';
-import { clockTime, dateInput, neededOf, noDay, outOfReach } from './tool-parts.js';
+import { clockTime, dateInput, departurePlaceInput, leaveByInput, neededOf, noDay, outOfReach } from './tool-parts.js';
+import { UserDayService } from './user-day.service.js';
 
 // The meal side of the 공강 tools. Friends' Timetables are used without any switch, but only "free or not" comes out of
 // here: never their Classes, their Places or why anyone is busy, and no Friend who is not free and no Restaurant that
@@ -50,6 +52,11 @@ const FRIEND_IDS = 'The Friends, as resolveFriend or findFreeFriends returned th
 
 function intervalAnswer({ start, end }: Interval, date: string): object {
   return { start: clockOf(start), end: end >= endOfDay(date) ? '24:00' : clockOf(end) };
+}
+
+// A person's Free Time that day.
+async function freeOn(days: UserDayService, userId: string, date: string, now: Date): Promise<FreeInterval[]> {
+  return freeTimeOf(await days.itemsOn(userId, date), date, now);
 }
 
 const intervalAnswers = (intervals: readonly Interval[], date: string): object[] =>
@@ -80,15 +87,14 @@ export function findFreeFriends({ days, friends }: Pick<FreeTimeServices, 'days'
       }
       found.refuseUnfound('friend', friendIds ?? []);
       const narrowed = meal === undefined ? null : mealWindow(date, meal, window);
-      const bounds = narrowed ?? (window === undefined ? null : askedWindow(date, window));
+      const bounds = narrowed ?? (window === undefined ? null : windowOn(date, window));
       if (bounds === null) {
         return noneFound('Give a meal or a window.');
       }
-      const mine = await days.itemsOn(userId, date);
-      const freeTime = overlapOf(freeTimeOf(mine, date, now), [bounds]);
+      const freeTime = overlapOf(await freeOn(days, userId, date, now), [bounds]);
       const listed = await friends.listFriends(userId);
       const asked = friendIds === undefined ? listed : chosenFriends(listed, friendIds);
-      const frees = await Promise.all(asked.map(async ({ id }) => freeTimeOf(await days.itemsOn(id, date), date, now)));
+      const frees = await Promise.all(asked.map(({ id }) => freeOn(days, id, date, now)));
       const free = asked.flatMap((friend, index) => {
         const overlap = overlapOf(freeTime, frees[index] ?? []);
         return longEnough(overlap) ? [{ friend, overlap }] : [];
@@ -117,24 +123,19 @@ const restaurantsInput = z.object({
   meal: mealInput,
   friendIds: friendIdsInput.describe(FRIEND_IDS),
   window: windowInput.optional(),
-  departurePlace: z
-    .uuid()
-    .optional()
-    .describe(
-      'Where the User leaves from, as resolvePlace returned it in this message, after this tool asked by needs.',
-    ),
-  leaveBy: clockTime.optional().describe('By when the User must leave, as HH:MM, after this tool asked by needs.'),
+  departurePlace: departurePlaceInput,
+  leaveBy: leaveByInput,
 });
 
 type RestaurantConditions = z.output<typeof restaurantsInput>;
 
 // The Restaurants considered: those with a Place, open for the meal.
 function openRestaurants(
-  days: readonly RestaurantMenusDto[],
+  collected: readonly RestaurantMenusDto[],
   meal: HandledMeal,
   restaurantPlaces: RestaurantPlaces,
 ): OpenRestaurant[] {
-  return days.flatMap(({ name, meals }) => {
+  return collected.flatMap(({ name, meals }) => {
     const place = restaurantPlaces.placeOf(name);
     const lines = servedLines(meals.find((served) => served.meal === meal)?.lines ?? []);
     return place === null || lines.length === 0 ? [] : [{ key: name, place, lines }];
@@ -153,18 +154,25 @@ function fittingRestaurants(
       const fit = mealFitAt(restaurant.place.id, diners, when, travel);
       return fit === null ? [] : [{ ...restaurant, ...fit }];
     })
-    .toSorted(byShortestLongestWay);
+    .toSorted(byLongestTravel);
 }
 
-// The User and the Friends of the request, the User first.
+// The first shared interval decides. In a later one, a side without a Place is left out of the judgement.
+function neededOfFirst({ free }: Diner, shared: readonly Interval[], conditions: RestaurantConditions): object | null {
+  return neededOf(
+    shared.slice(0, 1).map((interval) => aroundShared(free, interval)),
+    conditions,
+  );
+}
+
 async function dinersOf(
   { date, departurePlace, leaveBy }: RestaurantConditions,
   chosen: readonly FriendDto[],
   { userId, now }: Pick<ToolContext, 'userId' | 'now'>,
-  days: FreeTimeServices['days'],
+  days: UserDayService,
 ): Promise<[Diner, ...Diner[]]> {
   const [mine, ...theirs] = await Promise.all(
-    [userId, ...chosen.map(({ id }) => id)].map(async (id) => freeTimeOf(await days.itemsOn(id, date), date, now)),
+    [userId, ...chosen.map(({ id }) => id)].map((id) => freeOn(days, id, date, now)),
   );
   return [
     {
@@ -191,8 +199,8 @@ function restaurantAnswer({ key, place, lines, start, eatingMinutes, people }: O
   };
 }
 
-function oldestCollection(days: readonly RestaurantMenusDto[]): string {
-  return koreaTime(new Date(Math.min(...days.map(({ collectedAt }) => collectedAt.getTime()))));
+function oldestCollection(collected: readonly RestaurantMenusDto[]): string {
+  return koreaTime(earliest(collected.map(({ collectedAt }) => collectedAt)));
 }
 
 export function findMealRestaurants({ days, friends, menus, restaurantPlaces, travel }: FreeTimeServices): Tool {
@@ -220,16 +228,15 @@ export function findMealRestaurants({ days, friends, menus, restaurantPlaces, tr
       if (shared.length === 0) {
         return { ...noneFound('They share no time then.'), why: 'no-shared-time' };
       }
-      const needed = neededOf(
-        shared.map((interval) => aroundShared(diners[0].free, interval)),
-        conditions,
-      );
+      const needed = neededOfFirst(diners[0], shared, conditions);
       if (needed !== null) {
         return needed;
       }
       const open = openRestaurants(collected, meal, restaurantPlaces);
       const fitting = fittingRestaurants(open, diners, { shared, window: bounds }, travel);
       const invitees = chosen.map(({ id, name }) => ({ id, name }));
+      // A second call of a run answers for the first: showRestaurants takes what this one judged.
+      restaurants.clear();
       for (const restaurant of fitting) {
         found.add('restaurant', [restaurant.key]);
         found.add('place', [restaurant.place.id]);

@@ -21,6 +21,15 @@ export const clockTime = z.string().regex(CLOCK_TIME, 'Expected HH:MM');
 
 export const dateInput = z.iso.date().describe('The day, a calendar day in Korea as YYYY-MM-DD.');
 
+export const departurePlaceInput = z
+  .uuid()
+  .optional()
+  .describe('Where the User leaves from, as resolvePlace returned it in this message, after this tool asked by needs.');
+
+export const leaveByInput = clockTime
+  .optional()
+  .describe('By when the User must leave, as HH:MM, after this tool asked by needs.');
+
 export function outOfReach(date: string, now: Date): boolean {
   return date < koreaDate(now) || date > koreaDate(new Date(now.getTime() + DAYS_AHEAD * DAY_MS));
 }

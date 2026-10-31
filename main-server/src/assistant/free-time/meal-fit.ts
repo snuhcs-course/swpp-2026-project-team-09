@@ -34,7 +34,7 @@ export interface Diner {
 }
 
 // How a person gets there, as a card shows it: their way, or none ("—").
-export interface WayShown {
+export interface TravelShown {
   name: string;
   mode: TravelMode | null;
   minutes: number | null;
@@ -45,38 +45,37 @@ export interface MealFit {
   start: Date;
   // Rounded down.
   eatingMinutes: number;
-  people: WayShown[];
+  people: TravelShown[];
 }
 
 const later = (at: Date, seconds: number): Date => new Date(at.getTime() + seconds * 1000);
 
 const latest = (times: readonly Date[]): Date => new Date(Math.max(...times.map((at) => at.getTime())));
 
-const earliest = (times: readonly Date[]): Date => new Date(Math.min(...times.map((at) => at.getTime())));
+export const earliest = (times: readonly Date[]): Date => new Date(Math.min(...times.map((at) => at.getTime())));
 
 const secondsBetween = (from: Date, to: Date): number => (to.getTime() - from.getTime()) / 1000;
 
-// A time window of two clock times, as the tools take one.
+// A window of two clock times, as a tool takes one and the constants hold a meal's.
 export interface ClockWindow {
   from: string;
   to: string;
 }
 
-export function askedWindow(date: string, { from, to }: ClockWindow): Interval {
+export function windowOn(date: string, { from, to }: ClockWindow): Interval {
   return { start: onDay(date, from), end: onDay(date, to) };
 }
 
 // The meal's window on that day, narrowed on both sides by a window asked for. It may come out empty.
 export function mealWindow(date: string, meal: HandledMeal, asked?: ClockWindow): Interval {
-  const window = askedWindow(date, MEAL_WINDOWS[meal]);
+  const window = windowOn(date, MEAL_WINDOWS[meal]);
   if (asked === undefined) {
     return window;
   }
-  const { start, end } = askedWindow(date, asked);
+  const { start, end } = windowOn(date, asked);
   return { start: latest([window.start, start]), end: earliest([window.end, end]) };
 }
 
-// Every stretch two lists of intervals share.
 export function overlapOf(one: readonly Interval[], other: readonly Interval[]): Interval[] {
   return one.flatMap((a) =>
     other.flatMap((b) => {
@@ -136,7 +135,7 @@ function partOf(diner: Diner, shared: Interval, window: Interval, placeId: strin
   };
 }
 
-function shownOf(diners: readonly Diner[], parts: readonly Part[]): WayShown[] {
+function shownOf(diners: readonly Diner[], parts: readonly Part[]): TravelShown[] {
   const minutes = parts.map(({ shown }) => (shown === null ? null : shownMinutes(shown.seconds)));
   const longest = Math.max(...minutes.map((shown) => shown ?? 0));
   return diners.map(({ name }, index) => {
@@ -197,7 +196,7 @@ function minutesShown({ people }: Fitted): number[] {
 
 // By the longest Travel Time shown, shortest first; then by their sum; then by name, the key, by code point. A "—" counts
 // in neither.
-export function byShortestLongestWay(a: Fitted, b: Fitted): number {
+export function byLongestTravel(a: Fitted, b: Fitted): number {
   const [waysA, waysB] = [minutesShown(a), minutesShown(b)];
   return (
     Math.max(0, ...waysA) - Math.max(0, ...waysB) ||

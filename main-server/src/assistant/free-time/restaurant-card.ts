@@ -9,7 +9,7 @@ import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { koreaTime } from '../korea-time.js';
 import { type ProposalFriend, type QuestProposal } from '../proposal.js';
-import { type HandledMeal, type MealFit, type WayShown } from './meal-fit.js';
+import { type HandledMeal, type MealFit, type TravelShown } from './meal-fit.js';
 
 // A Restaurant card: what findMealRestaurants judged, and the 파티 its 파티 만들기 opens the form with, which the server
 // fills so that no model call is needed. Older apps refuse a reply with one, as they refuse any card they do not know.
@@ -33,7 +33,7 @@ export interface RestaurantCard {
     meal: HandledMeal;
     eatingMinutes: number;
     lines: MenuLineDto[];
-    people: WayShown[];
+    people: TravelShown[];
     proposal: QuestProposal;
   };
 }

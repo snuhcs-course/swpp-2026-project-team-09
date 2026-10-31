@@ -150,7 +150,7 @@ describe('the Restaurant card', () => {
 
     expect(card().getByText('나 도보 4분')).toBeVisible();
     expect(card().getByText(`${SEO_YEON_HOLDER.name} —`)).toBeVisible();
-    expect(card().getByTestId('longest-way')).toHaveTextContent(`${MIN_JUN_HOLDER.name} 셔틀 9분`);
+    expect(card().getByTestId('longest-travel')).toHaveTextContent(`${MIN_JUN_HOLDER.name} 셔틀 9분`);
   });
 
   it('names another day and meal, and no more lines than it has', async () => {

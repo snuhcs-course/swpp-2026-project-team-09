@@ -92,9 +92,9 @@ export interface QuestCard extends TravelBox {
   quest: RecruitingQuest;
 }
 
-// How one person gets to a Restaurant: `name` is 나 for the User, and a person whose way is unknown has no mode and no
-// minutes ("—"). `longest` marks whoever walks furthest.
-export interface RestaurantWay {
+// One person's Travel Time to a Restaurant: `name` is 나 for the User, and an unknown one has no mode and no minutes
+// ("—"). `longest` marks the most minutes of the card.
+export interface RestaurantTravel {
   name: string;
   mode: 'walk' | 'shuttle' | null;
   minutes: number | null;
@@ -102,7 +102,7 @@ export interface RestaurantWay {
 }
 
 // A Restaurant of a 공강에 밥 answer: its Place's number, the day and the meal, how long there is to eat, its lines that
-// are not notes, each person's way, and the 파티 its 파티 만들기 fills the form with.
+// are not notes, each person's Travel Time, and the 파티 its 파티 만들기 fills the form with.
 export interface RestaurantCard {
   kind: 'restaurant';
   restaurant: {
@@ -113,7 +113,7 @@ export interface RestaurantCard {
     meal: 'lunch' | 'dinner';
     eatingMinutes: number;
     lines: MenuLine[];
-    people: RestaurantWay[];
+    people: RestaurantTravel[];
     proposal: QuestProposal;
   };
 }

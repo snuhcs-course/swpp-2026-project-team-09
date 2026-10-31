@@ -122,6 +122,30 @@ describe('findMealRestaurants when the item after the User has no Place', () => 
   });
 });
 
+describe('findMealRestaurants with several shared intervals', () => {
+  it('lets the first decide, whatever a later one touches', async () => {
+    const date = '2098-06-16';
+    await stage.asking(date);
+    await menusOn(date);
+    await stage.classOn('monday', '11:00', '11:10', stage.here.id);
+    await stage.classOn('monday', '12:30', '12:40', stage.here.id);
+    await stage.classOn('monday', '13:00', '13:10', null);
+    const { id } = await friendWithClass('임하루', '09:00', '10:00', stage.barely.id);
+
+    await stage.send(
+      resolve('하루'),
+      { tool: 'findMealRestaurants', input: { date, meal: 'lunch', friendIds: [id] } },
+      { text: '…' },
+    );
+
+    // 11:10 + 590 s on foot, in the first interval, which leaves until 12:29 less the way back.
+    expect(lastAnswer()).toMatchObject({
+      result: 'found',
+      restaurants: [{ key: '학생회관식당', start: `${date}T11:20:00+09:00` }],
+    });
+  });
+});
+
 describe("A Restaurant card's Proposal", () => {
   it('is the meal Quest, field by field, with no model call for it', async () => {
     const date = '2098-04-28';
