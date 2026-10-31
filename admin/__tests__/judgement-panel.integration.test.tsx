@@ -139,7 +139,7 @@ describe('which session of the post this event is', () => {
     expect(sessionPanel(1).getByRole('link', { name: 'Another event' })).toHaveAttribute('href', `/events/${other.id}`);
     expect(sessionPanel(1).queryByText('This event')).toBeNull();
     expect(sessionPanel(2).getByText('This event')).toBeVisible();
-    expect(sessionPanel(3).getByText('No event')).toBeVisible();
+    expect(sessionPanel(3).getByText('Not linked to an event')).toBeVisible();
   });
 });
 

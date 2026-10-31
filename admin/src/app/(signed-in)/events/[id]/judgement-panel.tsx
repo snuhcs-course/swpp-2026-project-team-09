@@ -65,7 +65,7 @@ function placeName(placeId: string | null, places: Place[]): string | null {
 // it may have been published, attached to an existing event, or be a Draft waiting for an Administrator.
 function SessionEvent({ eventId, globalEventId }: { eventId: string; globalEventId: string | null }): ReactElement {
   if (globalEventId === null) {
-    return <span className="text-zinc-600">No event</span>;
+    return <span className="text-zinc-600">Not linked to an event</span>;
   }
   if (globalEventId === eventId) {
     return <span className="font-medium text-accent-strong">This event</span>;
