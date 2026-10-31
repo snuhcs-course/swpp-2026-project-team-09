@@ -1814,14 +1814,27 @@ its model through OpenRouter with the Vercel AI SDK
     id, `uses`, `last_used_at`), deleted with the account. It answers only that User: in `resolvePlace` before every
     tier but the exact one, and in `resolveFriend` before the name match, `one` for one taught target and `several`
     for more; a Place the catalog does not have and someone who is no Friend any more never answer. For Places, after
-    every `chosen`, `edited` or `rejected` row the server counts the words again from `resolution_events` in one
-    query (`aliases/alias-standings.ts`): when at least 3 distinct accounts, each onboarded 7 days or more before it chose, chose the same Place and
-    it holds at least 0.8 of the accounts that chose anything for the words, a `learned` row of `place_aliases`
-    answers every User after their own aliases and before the curated groups. Its `score`, the supporters less the
-    distinct accounts that rejected it, halved for every 30 days since it last answered or its Place was chosen for
-    the words, is computed again on every read; under 0.5 (3 supporters' score after about 77 days unused), or under
-    the share, the row is retired (`retired_at`) and stops answering until a new choice qualifies it again
-    (`aliases/alias-rules.ts` holds the values and why). Friend aliases are never shared. `resolvedBy` lists each
+    every chat run that chose a candidate, changed a Proposal's Place or resolved a Place as `one`, and after every
+    rejection, the server counts the words of the User's session (their Place rows within 5 minutes) again through
+    the absorbing Markov chain of Ponnusamy et al., "Feedback-Based Self-Learning in Large-Scale Conversational AI
+    Agents" (AAAI 2020; `aliases/alias-sessions.ts`, `aliases/alias-chain.ts`): one account's Place rows at most 5
+    minutes apart are a session, cut after a rejection and where the User, having reached a Place, goes on to other
+    words, and ended by success after a Place or by failure after words left open (a question or a nothing) or a
+    rejection; the states are the resolver's readings, a Place or the words left open (an alias's answer being read
+    as the words left open and then the Place, as the rewrite stands in for the question), and the transition
+    probabilities are counts over the sessions of the last 90 days of accounts onboarded 7 days or more before. The
+    source of words is their reading by the rules alone (`PlaceMatcher.byRule`);
+    from it, the expected visits to each Place (the fundamental matrix (I − Q)⁻¹, as the series Σ Qⁿ) times the
+    Place's one-step success is its Φ∞, and the alias is the Place of greatest Φ∞ among those that beat the reading's
+    own one-step success Φ₁, were reached by at least 3 distinct accounts in successful sessions with the words and
+    hold at least 0.8 of the reach, or none when the reading, a Place, beats them all. So words the rules miss learn
+    from the Place the User names next in the session, with no chip. A `learned` row of `place_aliases`
+    (`supporters`, `rejecters`, `success` Φ∞, `own_success` Φ₁) answers every User after their own aliases and before
+    the curated groups. Its `score`, the supporters less the distinct accounts that rejected it, halved for every 30
+    days since it last answered or its Place was chosen for the words, is computed again on every read; under 0.5
+    (3 supporters' score after about 77 days unused), or once the chain no longer picks it, the row is retired
+    (`retired_at`) and stops answering until the chain picks it again (`aliases/alias-rules.ts` holds the values and
+    why). Friend aliases are never shared. `resolvedBy` lists each
     answer of one candidate read from an alias, `[{ "kind", "words", "id", "label", "source" }]` with `source` one of
     `personal`, `global` and `curated`; it is always there, and the app shows each as "학관 → 학생회관으로 찾았어요"
     with 아니에요. `GET /assistant/aliases` answers the User's own, the most recently used first,
@@ -2111,7 +2124,7 @@ interval (`eval/replay/wilson.ts`) and k/n. Node starts each command, and its co
 
 ```sh
 pnpm eval:replay --development                 # the development set, with every alias learned so far
-pnpm eval:replay --as-of 2026-11-16            # the test set, stage C learning only from the rows before that day
+pnpm eval:replay --as-of 2026-11-16            # the test set, stages C and D learning only from the rows before that day
 pnpm eval:learning-curve --from 2026-11-02 --to 2026-12-14 --step 7 --final-from 2026-12-07
 pnpm eval:suggestions --from 2026-11-02 --to 2026-12-14 --final-from 2026-12-07
 ```
@@ -2122,18 +2135,20 @@ numbers reported are the final slice's alone, so that no number is read on the r
 row is one slice. The gold set's counterpart is its two sets and its fingerprint, below.
 
 `pnpm eval:replay [--gold <file>] [--as-of <day>] [--development]` answers each item of the gold file
-(`eval/gold/places.yaml` unless `--gold`) at three stages (`eval/replay/stages.ts`): A, the substring and number match
+(`eval/gold/places.yaml` unless `--gold`) at four stages (`eval/replay/stages.ts`): A, the substring and number match
 `resolvePlace` used before P07, which is `PlacesService.search` as a function; B, the tiered matcher (`PlaceIndex`) with
-the curated groups only; C, B with the personal and everyone's aliases rebuilt in memory from the `resolution_events`
-before `--as-of` (a day in Korea from its first moment; the run's start when left out) by the server's own count and
-rules (`aliases/alias-standings.ts`, `aliases/alias-rules.ts`), never written. The items are asked as an account that
+the curated groups only; C, B with the personal aliases and everyone's rebuilt in memory from the `resolution_events`
+before `--as-of` (a day in Korea from its first moment; the run's start when left out) by the count of distinct
+accounts that chose each Place (`eval/replay/counted-aliases.ts`, the rule the server learned by before the chain, kept
+as the baseline); D, the same with everyone's aliases by the alias chain the server learns by (`aliases/alias-chain.ts`,
+each words' source being its reading by stage B). Nothing is written. The items are asked as an account that
 taught nothing and is never held back. An item is `{ words, accept, collected, set, note? }`: `accept` lists every Place
 the words may mean by seed name, else by number, and is empty for words that name no Place (a name or number the
 catalog lacks stops the run); `collected` is the day it was collected; `set` is `development` or `test`; `from` and
 `until`, each a day in Korea, make a knowledge update: an item holds from the first day and before the second, so two
 items of the same words, one until a day and one from it, say that the Places the words mean changed that day (a
-nickname moving to a new building, a renamed one), and runs at several `--as-of` days show how long stage C takes to
-follow. The test set is scored unless `--development`, never both together. The report heads with the set's
+nickname moving to a new building, a renamed one), and runs at several `--as-of` days show how long stages C and D take
+to follow. The test set is scored unless `--development`, never both together. The report heads with the set's
 fingerprint (`fingerprintOf` in `eval/replay/gold.ts`), the first 12 hex digits of the SHA-256 of the set's words,
 targets, days and windows in a fixed order, the same whatever the order and the notes of the file: the test set is
 frozen before any rule, group table or constant is tuned on it, its fingerprint is written in the ticket, and a run
@@ -2150,9 +2165,10 @@ with the day it was collected and `set: test`.
 `pnpm eval:learning-curve --from <day> --to <day> [--step 7]` replays `resolution_events` by date, at points T from
 `--from` to `--to` every `--step` days. At T it scores the `answered` Place rows of the `--step` days from T that their
 User labelled: a `chosen`, `edited` or `rejected` row of the same User and words after the row and before their next
-`answered` row of those words. Each is answered again by the matcher with the curated groups only (rules) and with the
-aliases rebuilt from the rows before T as for stage C (learned), the labels being scored left out, so that a label
-never teaches the row it scores. Per point and arm: the rows, the ask rate (answered `several`, over the rows) and top-1
+`answered` row of those words. Each is answered again by the matcher with the curated groups only (rules), with the
+aliases rebuilt from the rows before T by the count as for stage C (count) and by the alias chain as for stage D
+(chain), the labels being scored left out, so that a label never teaches the row it scores. Per point and arm: the
+rows, and for each of the three the ask rate (answered `several`, over the rows) and top-1
 (the first candidate is the Place the User last chose or edited to, over the rows with one). The accounts that
 `ASSISTANT_ALIAS_HOLDBACK_PERCENT` holds back (as set where the command runs; 10 by default), whom everyone's aliases
 never answer, are reported apart, and each point says which slice it is in, `tuning` or `final` (`all` without

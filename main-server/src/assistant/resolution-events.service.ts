@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable, Logger } from '@nestjs/common';
@@ -21,6 +22,12 @@ type Row = Omit<Prisma.ResolutionEventUncheckedCreateInput, 'userId' | 'kind' | 
 // words.
 export type Learn = (kind: ChoiceKind, words: string, targetId: string) => Promise<void>;
 
+// A run's log, and whether a resolver answered a Place as `one`, after which everyone's aliases of the session's words
+// are counted again (P07 ticket 06).
+export interface RunLog extends ResolutionLog {
+  readonly reachedPlace: boolean;
+}
+
 // How the User's words were resolved, one row of resolution_events each (P07 ticket 02): every resolver's answer,
 // every candidate the User chose, every Proposal whose Place they changed, and every alias they said was wrong.
 // Everyone's aliases are counted from these rows (P07 ticket 03), and ticket 05 measures on them. A row that cannot be
@@ -33,12 +40,17 @@ export class ResolutionEventsService {
 
   // What one run of the Assistant records through its tools. An edit names the words resolved to a Place last in the
   // run, those the User most likely corrected, or none, and teaches the new Place for them.
-  forRun(userId: string, learn: Learn): ResolutionLog {
+  forRun(userId: string, learn: Learn): RunLog {
     let placeWords = '';
+    let reachedPlace = false;
     return {
+      get reachedPlace(): boolean {
+        return reachedPlace;
+      },
       answered: async (answer) => {
         if (answer.kind === 'place') {
           placeWords = answer.words;
+          reachedPlace ||= answer.result === 'one';
         }
         await this.answered(userId, answer);
       },

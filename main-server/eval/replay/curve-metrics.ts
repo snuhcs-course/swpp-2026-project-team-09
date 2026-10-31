@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { type StageAnswer } from './stages.ts';
@@ -52,9 +53,11 @@ export function labelledRows(events: readonly EventRow[]): LabelledRow[] {
 
 export interface Replayed {
   truth: string | null;
-  // The matcher with the curated groups only (stage B), and with the aliases learned before the point (stage C).
+  // The matcher with the curated groups only (stage B), with the aliases learned before the point by the count
+  // (stage C), and by the alias chain (stage D).
   rules: StageAnswer;
   learned: StageAnswer;
+  chained: StageAnswer;
 }
 
 export interface CurveGroup {
@@ -62,9 +65,11 @@ export interface CurveGroup {
   // Answered several, over the rows.
   askRules: Rate;
   askLearned: Rate;
+  askChained: Rate;
   // The first candidate is the Place finally chosen, over the rows whose User chose one.
   top1Rules: Rate;
   top1Learned: Rate;
+  top1Chained: Rate;
 }
 
 export function curveGroup(rows: readonly Replayed[]): CurveGroup {
@@ -77,7 +82,9 @@ export function curveGroup(rows: readonly Replayed[]): CurveGroup {
     n: rows.length,
     askRules: asks(({ rules }) => rules),
     askLearned: asks(({ learned }) => learned),
+    askChained: asks(({ chained }) => chained),
     top1Rules: tops(({ rules }) => rules),
     top1Learned: tops(({ learned }) => learned),
+    top1Chained: tops(({ chained }) => chained),
   };
 }

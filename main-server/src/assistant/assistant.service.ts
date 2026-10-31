@@ -7,6 +7,7 @@
  * 2026-10-26  Fable 5.1  prompted by fyoon46
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -109,9 +110,11 @@ export class AssistantService {
     const asker = { userId, now };
     try {
       const conversation = await this.conversationOf(asker, messages.slice(-HISTORY_MAX));
-      const resolutions = this.resolutionEvents.forRun(userId, (kind, words, targetId) =>
-        this.aliases.learn(userId, kind, words, targetId),
-      );
+      let taught = false;
+      const resolutions = this.resolutionEvents.forRun(userId, async (kind, words, targetId) => {
+        taught = true;
+        await this.aliases.learn(userId, kind, words, targetId);
+      });
       const reply = await runFeature(
         this.model,
         this.chat,
@@ -125,6 +128,11 @@ export class AssistantService {
       if (proposal !== null) {
         // A Proposal asked for in the chat may be one a grey suggestion would have made (suggestions.service.ts).
         await this.suggestions.typedInstead(userId, proposal, now);
+      }
+      const last = conversation.at(-1);
+      if (taught || resolutions.reachedPlace || (last?.role === 'user' && last.chosen !== null)) {
+        // The session may have led the User's words to a Place, which everyone's aliases learn from (ticket 06).
+        await this.aliases.recountSession(userId);
       }
       return { text, mapButtons, cards, proposal, choices, resolvedBy };
     } catch (error) {

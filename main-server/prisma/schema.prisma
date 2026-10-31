@@ -36,39 +36,39 @@ datasource db {
 
 // A person who signed in with an SNU Google account.
 model User {
-  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   // Google's subject identifier ("sub"), which stays the same while the email address may change.
-  googleSubject  String       @unique @map("google_subject")
-  email          String
+  googleSubject         String                 @unique @map("google_subject")
+  email                 String
   // The profile. The name and the department stay empty until onboarding. The limits are in src/users/dto/.
-  name           String       @default("")
-  department     String       @default("")
-  admissionYear  Int?         @map("admission_year")
-  hashtags       String[]     @default([])
+  name                  String                 @default("")
+  department            String                 @default("")
+  admissionYear         Int?                   @map("admission_year")
+  hashtags              String[]               @default([])
   // The Google account's name at the last sign-in, from which onboarding suggests a name and a department.
-  googleName     String       @default("") @map("google_name")
-  onboardedAt    DateTime?    @map("onboarded_at")
+  googleName            String                 @default("") @map("google_name")
+  onboardedAt           DateTime?              @map("onboarded_at")
   // Made when the User is created (src/users/friend-id.ts), and never changed.
-  friendId       String       @unique @map("friend_id")
+  friendId              String                 @unique @map("friend_id")
   // Location Sharing as a whole. Off until the User turns it on; signing in and out leave it as it is.
-  masterSwitchOn Boolean      @default(false) @map("master_switch_on")
-  sessions       Session[]
-  friendshipsAsA Friendship[] @relation("FriendshipUserA")
-  friendshipsAsB Friendship[] @relation("FriendshipUserB")
-  inviteLinks   InviteLink[]
-  questHolders  QuestHolder[]
-  ledQuests     Quest[]
-  questJoinRequests QuestJoinRequest[]
-  questInvitations  QuestInvitation[]
-  meetupsProposed Meetup[] @relation("MeetupProposer")
-  meetupsReceived Meetup[] @relation("MeetupReceiver")
-  partyMember       PartyMember?
-  ledParties        Party[]
-  partyJoinRequests PartyJoinRequest[]
-  partyInvitations  PartyInvitation[]
-  timetableClasses  TimetableClass[]
-  resolutionEvents  ResolutionEvent[]
-  userAliases       UserAlias[]
+  masterSwitchOn        Boolean                @default(false) @map("master_switch_on")
+  sessions              Session[]
+  friendshipsAsA        Friendship[]           @relation("FriendshipUserA")
+  friendshipsAsB        Friendship[]           @relation("FriendshipUserB")
+  inviteLinks           InviteLink[]
+  questHolders          QuestHolder[]
+  ledQuests             Quest[]
+  questJoinRequests     QuestJoinRequest[]
+  questInvitations      QuestInvitation[]
+  meetupsProposed       Meetup[]               @relation("MeetupProposer")
+  meetupsReceived       Meetup[]               @relation("MeetupReceiver")
+  partyMember           PartyMember?
+  ledParties            Party[]
+  partyJoinRequests     PartyJoinRequest[]
+  partyInvitations      PartyInvitation[]
+  timetableClasses      TimetableClass[]
+  resolutionEvents      ResolutionEvent[]
+  userAliases           UserAlias[]
   suggestionImpressions SuggestionImpression[]
 
   @@map("users")
@@ -199,24 +199,24 @@ model Administrator {
 // An Event published to every User, collected from the university's events list or created by an Administrator
 // (README.md: Global Events). A Collection never changes one once it is stored.
 model GlobalEvent {
-  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title       String
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String
   // The post's body as text, for a collected event.
-  description String
+  description  String
   // A Draft may have neither. A day read without a time of day is stored at 00:00 Asia/Seoul.
-  startsAt    DateTime?        @map("starts_at")
-  endsAt      DateTime?        @map("ends_at")
-  place       String?
+  startsAt     DateTime?        @map("starts_at")
+  endsAt       DateTime?        @map("ends_at")
+  place        String?
   // A published event has both.
-  latitude    Float?
-  longitude   Float?
-  state       GlobalEventState @default(draft)
+  latitude     Float?
+  longitude    Float?
+  state        GlobalEventState @default(draft)
   // Checked and raised by every change an Administrator makes, so that a change from an older version is refused.
-  version     Int              @default(1)
+  version      Int              @default(1)
   // The `bbsidx` and address of a collected event's post. An event an Administrator creates has neither.
-  postNumber  Int?             @unique @map("post_number")
-  sourceUrl   String?          @map("source_url")
-  quests      Quest[]
+  postNumber   Int?             @unique @map("post_number")
+  sourceUrl    String?          @map("source_url")
+  quests       Quest[]
   questHolders QuestHolder[]
 
   @@map("global_events")
@@ -235,24 +235,24 @@ enum GlobalEventState {
 
 // What one or more Users set out to do (README.md: Quests). Its time and place belong to its Sub Quests.
 model Quest {
-  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title         String
   // Never changes.
-  globalEventId String?       @map("global_event_id") @db.Uuid
-  globalEvent   GlobalEvent?  @relation(fields: [globalEventId], references: [id], onDelete: Restrict)
+  globalEventId String?            @map("global_event_id") @db.Uuid
+  globalEvent   GlobalEvent?       @relation(fields: [globalEventId], references: [id], onDelete: Restrict)
   // One of the Holders (README.md: Quests).
-  leaderId      String        @map("leader_id") @db.Uuid
-  leader        User          @relation(fields: [leaderId], references: [id])
+  leaderId      String             @map("leader_id") @db.Uuid
+  leader        User               @relation(fields: [leaderId], references: [id])
   // From 1 to 8, which the migration checks.
-  capacity      Int           @default(4)
-  joinPolicy    JoinPolicy    @default(closed) @map("join_policy")
+  capacity      Int                @default(4)
+  joinPolicy    JoinPolicy         @default(closed) @map("join_policy")
   // Set for an Open or an Approval Quest and empty for a Closed one, which the migration checks.
   board         QuestBoard?
   // The recruiting post, up to 200 characters, which the migration checks.
-  description   String        @default("")
+  description   String             @default("")
   // The match server's match this Quest was created for, so that a repeated request finds it (README.md: Matching).
-  matchId       String?       @unique @map("match_id") @db.Uuid
-  createdAt     DateTime      @default(now()) @map("created_at")
+  matchId       String?            @unique @map("match_id") @db.Uuid
+  createdAt     DateTime           @default(now()) @map("created_at")
   holders       QuestHolder[]
   subQuests     SubQuest[]
   joinRequests  QuestJoinRequest[]
@@ -377,19 +377,19 @@ model QuestInvitation {
 // A group of Users who are together now (README.md: Party). It ends, and its row is deleted, when its last member
 // leaves.
 model Party {
-  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title      String
+  id           String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String
   // From 1 to 8, which the migration checks.
-  capacity   Int
-  joinPolicy JoinPolicy    @map("join_policy")
-  leaderId   String        @map("leader_id") @db.Uuid
-  leader     User          @relation(fields: [leaderId], references: [id])
+  capacity     Int
+  joinPolicy   JoinPolicy         @map("join_policy")
+  leaderId     String             @map("leader_id") @db.Uuid
+  leader       User               @relation(fields: [leaderId], references: [id])
   // The Party's Quest: one the opener holds, given when the Party is opened. Unique, so that one running Party has a
   // Quest. Empty once the Quest is deleted, when its last Holder dropped it.
-  questId    String?       @unique @map("quest_id") @db.Uuid
-  quest      Quest?        @relation(fields: [questId], references: [id], onDelete: SetNull)
-  createdAt  DateTime      @default(now()) @map("created_at")
-  members    PartyMember[]
+  questId      String?            @unique @map("quest_id") @db.Uuid
+  quest        Quest?             @relation(fields: [questId], references: [id], onDelete: SetNull)
+  createdAt    DateTime           @default(now()) @map("created_at")
+  members      PartyMember[]
   joinRequests PartyJoinRequest[]
   invitations  PartyInvitation[]
 
@@ -527,19 +527,19 @@ model CollectionStatus {
 model Place {
   // Computed from the origin and its identifier when the seed is loaded, not generated by the database, so that a
   // Place has the same id in every database.
-  id        String      @id @db.Uuid
-  origin    PlaceOrigin
+  id         String       @id @db.Uuid
+  origin     PlaceOrigin
   // The identifier the origin gives the entry.
-  originId  String      @map("origin_id")
+  originId   String       @map("origin_id")
   // Such as `302` or `25-1`. Places such as 자하연 have none.
-  number    String?
-  name      String
-  latitude  Float
-  longitude Float
+  number     String?
+  name       String
+  latitude   Float
+  longitude  Float
   // Each a closed ring: [[{ latitude, longitude }, …], …].
-  outlines  Json           @default("[]")
-  subQuests SubQuest[]
-  meetups   Meetup[]
+  outlines   Json         @default("[]")
+  subQuests  SubQuest[]
+  meetups    Meetup[]
   classTimes ClassTime[]
   aliases    PlaceAlias[]
 
@@ -682,8 +682,9 @@ model UserAlias {
   @@map("user_aliases")
 }
 
-// Words that name a Place for every User (P07), once enough distinct accounts chose it for them
-// (src/assistant/aliases/alias-rules.ts). Retired rather than deleted, so that what was learned can be counted.
+// Words that name a Place for every User (P07), once enough distinct accounts led to it for them through the alias
+// chain (src/assistant/aliases/alias-chain.ts, alias-rules.ts). Retired rather than deleted, so that what was learned
+// can be counted.
 model PlaceAlias {
   id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   // 1 to 50 characters, normalised.
@@ -691,11 +692,15 @@ model PlaceAlias {
   placeId    String           @map("place_id") @db.Uuid
   place      Place            @relation(fields: [placeId], references: [id], onDelete: Cascade)
   source     PlaceAliasSource
-  // Distinct accounts that chose the Place for the words, and that rejected it.
+  // Distinct accounts whose successful session with the words reached the Place, and that rejected it.
   supporters Int              @default(0)
   rejecters  Int              @default(0)
   // As of the last count or use. It decays from lastUsedAt and is computed again whenever it is read.
   score      Float            @default(0)
+  // As of the last count: Φ∞, the expected visits to the Place from the words' own reading times the Place's one-step
+  // success, and Φ₁, that reading's own one-step success, which the alias beat.
+  success    Float            @default(0)
+  ownSuccess Float            @default(0) @map("own_success")
   createdAt  DateTime         @default(now()) @map("created_at")
   // The last time it answered, or when it was made.
   lastUsedAt DateTime         @default(now()) @map("last_used_at")

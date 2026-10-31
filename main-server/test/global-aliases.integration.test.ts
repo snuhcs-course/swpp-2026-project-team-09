@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -217,5 +218,56 @@ describe('the switch and the holdback', () => {
     } finally {
       await holdingAll.close();
     }
+  });
+});
+
+// The account resolves the words, which no rule answers, and then the Place by its name, `minutesApart` later.
+async function openedThenNamed(words: string, minutesApart = 0): Promise<void> {
+  for (const user of await Promise.all([account(30), account(30), account(30)])) {
+    // oxlint-disable-next-line no-await-in-loop -- one message after another through the one scripted model
+    expect((await resolveAs(app, model, user, words)).answer.result).toBe('none');
+    if (minutesApart > 0) {
+      // oxlint-disable-next-line no-await-in-loop -- the same
+      await prisma.resolutionEvent.updateMany({
+        where: { userId: user.id, words },
+        data: { createdAt: new Date(Date.now() - minutesApart * 60 * 1000) },
+      });
+    }
+    // oxlint-disable-next-line no-await-in-loop -- the same
+    await resolveAs(app, model, user, '학생회관');
+  }
+}
+
+describe('the alias chain', () => {
+  it('learns words answered none from the Place the accounts then named in the same session', async () => {
+    await openedThenNamed('뷁팔');
+
+    const { answer, body } = await newcomerResolves('뷁팔');
+    expect(idsOf(answer)).toEqual([studentCentre]);
+    expect(body.resolvedBy).toMatchObject([{ source: 'global', words: '뷁팔' }]);
+    const [alias] = await aliasesFor('뷁팔');
+    expect(alias).toMatchObject({
+      placeId: studentCentre,
+      supporters: 3,
+      rejecters: 0,
+      ownSuccess: 0,
+      retiredAt: null,
+    });
+    expect(alias?.success).toBeGreaterThan(0);
+    expect(alias?.success).toBeLessThanOrEqual(1);
+  });
+
+  it('learns nothing across a gap of over 5 minutes, another session', async () => {
+    await openedThenNamed('뷁구', 6);
+
+    expect((await newcomerResolves('뷁구')).answer.result).toBe('none');
+    expect(await aliasesFor('뷁구')).toEqual([]);
+  });
+
+  it('keeps an exact name its own answer though three accounts choose another Place for it', async () => {
+    await teachEveryone(3, library, '학생회관');
+
+    expect(idsOf((await newcomerResolves('학생회관')).answer)).toEqual([studentCentre]);
+    expect(await aliasesFor('학생회관')).toEqual([]);
   });
 });

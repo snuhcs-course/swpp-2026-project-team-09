@@ -3,6 +3,7 @@
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -108,11 +109,12 @@ describe('The gold file on the seed', () => {
     expect(replay.items).toHaveLength(itemsOf(loadGold(), 'development').length);
     expect(replay.stages.B.recallAt10.k).toBeGreaterThan(replay.stages.A.recallAt10.k);
     expect(replay.stages.C).toEqual(replay.stages.B);
+    expect(replay.stages.D).toEqual(replay.stages.B);
   });
 });
 
-describe('Stage C', () => {
-  it('learns only from the rows before --as-of, which the later rows would change', async () => {
+describe('Stages C and D', () => {
+  it('learn only from the rows before --as-of, which the later rows would change', async () => {
     const asOf = new Date(NOW - 10 * DAY_MS);
     const [early, late] = await Promise.all([accounts(3), accounts(3)]);
     await choices(early, '학관', idOf('학생회관'), new Date(asOf.getTime() - 2 * DAY_MS));
@@ -123,13 +125,48 @@ describe('Stage C', () => {
     const then = await replayGold(prisma, items, asOf);
     const later = await replayGold(prisma, items, new Date(NOW));
 
-    expect(then.learned).toEqual({ personal: 3, global: 1 });
-    expect(then.items[0]?.answers.C).toMatchObject({ result: 'one', source: 'global', candidates: ['학생회관'] });
-    expect(then.items[1]?.answers.C).toEqual(then.items[1]?.answers.B);
-    expect(later.items.map(({ answers }) => [answers.C.tier, answers.C.result, answers.C.candidates[0]])).toEqual([
-      ['generated', 'several', '학생회관'],
-      ['alias', 'one', '중앙도서관 관정관'],
-    ]);
+    expect(then.learned).toEqual({ personal: 3, counted: 1, chained: 1 });
+    for (const stage of ['C', 'D'] as const) {
+      expect(then.items[0]?.answers[stage]).toMatchObject({
+        result: 'one',
+        source: 'global',
+        candidates: ['학생회관'],
+      });
+      expect(then.items[1]?.answers[stage]).toEqual(then.items[1]?.answers.B);
+      expect(
+        later.items.map(({ answers }) => [answers[stage].tier, answers[stage].result, answers[stage].candidates[0]]),
+      ).toEqual([
+        ['generated', 'several', '학생회관'],
+        ['alias', 'one', '중앙도서관 관정관'],
+      ]);
+    }
+  });
+});
+
+describe('Stage D', () => {
+  it('learns words answered none from the Place named next in the session, which the count cannot', async () => {
+    const opened = new Date(NOW - DAY_MS);
+    const named = new Date(opened.getTime() + 60_000);
+    const hall = idOf('학생회관');
+    await events(
+      (await accounts(3)).flatMap((userId) => [
+        { userId, words: '뷁없', outcome: 'answered' as const, result: 'none' as const, createdAt: opened },
+        {
+          userId,
+          words: '학생회관',
+          outcome: 'answered' as const,
+          result: 'one' as const,
+          candidateIds: [hall],
+          createdAt: named,
+        },
+      ]),
+    );
+
+    const replay = await replayGold(prisma, [item('뷁없', ['학생회관'])], new Date(NOW));
+
+    expect(replay.learned).toMatchObject({ counted: 0, chained: 1 });
+    expect(replay.items[0]?.answers.C).toMatchObject({ result: 'none' });
+    expect(replay.items[0]?.answers.D).toMatchObject({ result: 'one', source: 'global', candidates: ['학생회관'] });
   });
 });
 
@@ -154,20 +191,22 @@ describe('The learning curve', () => {
     const heldBack = await learningCurve(prisma, { from, to, stepDays: 7, finalFrom: null }, 100);
 
     expect(curve.points.map(({ slice, learned }) => [slice, learned])).toEqual([
-      ['tuning', { personal: 0, global: 0 }],
-      ['final', { personal: 1, global: 0 }],
+      ['tuning', { personal: 0, counted: 0, chained: 0 }],
+      ['final', { personal: 1, counted: 0, chained: 0 }],
     ]);
     expect(
-      curve.points.map(({ learning: { n, askRules, askLearned, top1Rules, top1Learned } }) => [
+      curve.points.map(({ learning: { n, askRules, askLearned, askChained, top1Rules, top1Learned, top1Chained } }) => [
         n,
         askRules.k,
         askLearned.k,
+        askChained.k,
         top1Rules.k,
         top1Learned.k,
+        top1Chained.k,
       ]),
     ).toEqual([
-      [1, 1, 1, 0, 0],
-      [1, 1, 0, 0, 1],
+      [1, 1, 1, 1, 0, 0, 0],
+      [1, 1, 0, 0, 0, 1, 1],
     ]);
     expect(heldBack.points.map(({ learning, holdback }) => [learning.n, holdback.n])).toEqual([
       [0, 1],
@@ -261,15 +300,21 @@ describe('A knowledge update', () => {
         [before.fingerprint, 2, 1],
       ],
     );
-    expect(before.items[0]?.answers.C).toMatchObject({ result: 'one', source: 'global', candidates: ['학생회관'] });
-    // The rejections retire the old alias at once, and the new Place has 3 of 6 choosers: the words fall back to the
-    // rules, which know no 옛학관, until the new Place holds the share.
-    expect(gap.items[0]?.answers.C).toMatchObject({ result: 'none' });
-    expect(gap.stages.C.falseNone).toMatchObject({ k: 1, n: 1 });
-    expect(after.items[0]?.answers.C).toMatchObject({
-      result: 'one',
-      source: 'global',
-      candidates: ['유회진 학술정보관'],
-    });
+    for (const stage of ['C', 'D'] as const) {
+      expect(before.items[0]?.answers[stage]).toMatchObject({
+        result: 'one',
+        source: 'global',
+        candidates: ['학생회관'],
+      });
+      // The rejections retire the old alias at once, and the new Place has 3 of 6 choosers, half the reach: the words
+      // fall back to the rules, which know no 옛학관, until the new Place holds the share.
+      expect(gap.items[0]?.answers[stage]).toMatchObject({ result: 'none' });
+      expect(gap.stages[stage].falseNone).toMatchObject({ k: 1, n: 1 });
+      expect(after.items[0]?.answers[stage]).toMatchObject({
+        result: 'one',
+        source: 'global',
+        candidates: ['유회진 학술정보관'],
+      });
+    }
   });
 });

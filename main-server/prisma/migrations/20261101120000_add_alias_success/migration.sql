@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "place_aliases" ADD COLUMN     "own_success" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "success" DOUBLE PRECISION NOT NULL DEFAULT 0;

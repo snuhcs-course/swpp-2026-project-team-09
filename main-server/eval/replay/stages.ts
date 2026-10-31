@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { type PlaceDto } from '../../src/places/dto/place.dto.js';
@@ -10,8 +11,9 @@ import { CuratedGroups } from '../../src/places/place-groups.js';
 import { PlaceIndex } from '../../src/places/place-index.js';
 import { byNumber } from '../../src/places/places.service.js';
 
-// The three stages the replay compares (research note 08 §5): A, the substring and number match resolvePlace used
-// before P07; B, the tiered matcher with the curated groups only; C, B with aliases learned from earlier events.
+// The stages the replay compares (research note 08 §5, P07 ticket 06): A, the substring and number match resolvePlace
+// used before P07; B, the tiered matcher with the curated groups only; C, B with the personal aliases and everyone's
+// by ticket 03's count; D, B with the personal aliases and everyone's by the alias chain the server learns by.
 
 export type Result = 'none' | 'one' | 'several';
 
@@ -27,7 +29,7 @@ export interface StageAnswer {
 
 export type Stage = (words: string, userId: string) => Promise<StageAnswer>;
 
-export type StageName = 'A' | 'B' | 'C';
+export type StageName = 'A' | 'B' | 'C' | 'D';
 
 function answerOf(candidates: string[], tier: string | null, source: AliasSource | null): StageAnswer {
   if (candidates.length === 0) {
@@ -72,7 +74,11 @@ export function stageB(places: readonly PlaceDto[]): Stage {
   return matcherStage(new PlaceIndex(places, [new CuratedGroups(places)]));
 }
 
-// The learned sources in the order PlaceMatcher asks them: the User's own, then everyone's, then the curated groups.
-export function stageC(places: readonly PlaceDto[], learned: { personal: PlaceAliases; global: PlaceAliases }): Stage {
+// Stage C or D: the learned sources in the order PlaceMatcher asks them, the User's own, then everyone's by the count
+// or by the chain, then the curated groups.
+export function withAliases(
+  places: readonly PlaceDto[],
+  learned: { personal: PlaceAliases; global: PlaceAliases },
+): Stage {
   return matcherStage(new PlaceIndex(places, [learned.personal, learned.global, new CuratedGroups(places)]));
 }

@@ -2,10 +2,21 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
-import { Prisma, type PrismaClient } from '../../generated/prisma/client.js';
-import { ACCOUNT_AGE_DAYS, type Standing } from './alias-rules.js';
+import {
+  ACCOUNT_AGE_DAYS,
+  MIN_SCORE,
+  MIN_SHARE,
+  MIN_SUPPORTERS,
+  type Standing,
+} from '../../src/assistant/aliases/alias-rules.js';
+import { Prisma, type PrismaClient } from '../../src/generated/prisma/client.js';
+
+// Ticket 03's count rule, the baseline stage C measures the alias chain against (P07 ticket 06): each Place's standing
+// for the words from the labels alone, and the top Place promoted on the same supporters, share and score. The server
+// no longer learns by it.
 
 // One Place's standing for the words, or with no Place the count of every account that chose anything for them.
 interface StandingRow {
@@ -20,8 +31,7 @@ export interface Standings {
   allSupporters: number;
 }
 
-// The rows a count reads: the server reads them all; ticket 05's replay reads those before the time it replays to,
-// less the labels it scores.
+// The rows a count reads: those before the time it replays to, less the labels it scores.
 export interface StandingsWindow {
   before?: Date;
   excluding?: readonly string[];
@@ -64,4 +74,20 @@ export async function standingsOf(
     ),
     allSupporters: rows.find(({ placeId }) => placeId === null)?.supporters ?? 0,
   };
+}
+
+// The Place most accounts chose for the words, the only one that can be their alias: the fewest rejecters, then the id,
+// break a tie.
+export function topOf(standings: readonly Standing[]): Standing | undefined {
+  return standings.toSorted(
+    (a, b) => b.supporters - a.supporters || a.rejecters - b.rejecters || a.placeId.localeCompare(b.placeId),
+  )[0];
+}
+
+// Whether a Place answers the words for every User by the count: enough accounts chose it, it holds the share of all
+// that chose for the words, and its score is at least MIN_SCORE.
+export function qualifies(standing: Standing, allSupporters: number, score: number): boolean {
+  return (
+    standing.supporters >= MIN_SUPPORTERS && standing.supporters / allSupporters >= MIN_SHARE && score >= MIN_SCORE
+  );
 }

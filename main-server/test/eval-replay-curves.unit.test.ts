@@ -3,6 +3,7 @@
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { curveGroup, type EventRow, labelledRows } from '../eval/replay/curve-metrics.ts';
@@ -63,19 +64,31 @@ function answer(result: StageAnswer['result'], candidates: string[]): StageAnswe
 }
 
 describe("A learning curve's point", () => {
-  it('asks over every row and is right at top-1 over the rows whose User chose a Place', () => {
+  it('asks over every row and is right at top-1 over the rows whose User chose a Place, for each of the three', () => {
     const group = curveGroup([
-      { truth: 'p1', rules: answer('several', ['p0', 'p1']), learned: answer('one', ['p1']) },
-      { truth: 'p2', rules: answer('several', ['p2', 'p0']), learned: answer('several', ['p2', 'p0']) },
-      { truth: null, rules: answer('one', ['p3']), learned: answer('none', []) },
+      {
+        truth: 'p1',
+        rules: answer('several', ['p0', 'p1']),
+        learned: answer('one', ['p1']),
+        chained: answer('one', ['p1']),
+      },
+      {
+        truth: 'p2',
+        rules: answer('several', ['p2', 'p0']),
+        learned: answer('several', ['p2', 'p0']),
+        chained: answer('one', ['p0']),
+      },
+      { truth: null, rules: answer('one', ['p3']), learned: answer('none', []), chained: answer('several', ['p3']) },
     ]);
 
     expect(group).toMatchObject({
       n: 3,
       askRules: { k: 2, n: 3 },
       askLearned: { k: 1, n: 3 },
+      askChained: { k: 1, n: 3 },
       top1Rules: { k: 1, n: 2 },
       top1Learned: { k: 2, n: 2 },
+      top1Chained: { k: 1, n: 2 },
     });
   });
 });
