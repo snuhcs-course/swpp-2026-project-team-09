@@ -1,0 +1,195 @@
+# Thresholds of evaluations A and B, committed with the sets before any run (metrics document, 2 and 4.1). The values are
+# the metrics document's, confirmed by the P05 owner on 2026-10-31. To change one, leave it here and add an entry with
+# `revises:` and `reason:`; a value chosen after seeing a result counts as undeclared.
+sets:
+  a: set-a.yaml
+  b: set-b.yaml
+
+# R0, the first official run of each evaluation, on a clean descendant of C0.
+naive:
+  a: "The collection rules alone. Every post of the set is a Draft the rules did not publish, so C1's baseline is 0."
+  b: 'Equal starts with title similarity, and nothing else.'
+
+whenAFloorIsMissed:
+  every: "That metric's improvement is not claimed, and the failure analysis says why."
+  stopsAutomaticPublication: [C2, C3, D1]
+  stops: 'Automatic publication is turned off in Production by its setting, and the record says so.'
+
+thresholds:
+  # Evaluation A. Scored on the held-out part, per session unless it says otherwise. C1 and C2 are always reported as a
+  # pair, with k/n.
+  - id: c1.floor
+    metric: C1
+    measure: 'Sessions published as the answer says ÷ sessions the answer says may be published'
+    kind: floor
+    comparator: '>='
+    value: 0.25
+    declared: 2026-10-31
+  - id: c1.target
+    metric: C1
+    measure: 'Sessions published as the answer says ÷ sessions the answer says may be published'
+    kind: target
+    comparator: '>='
+    value: 0.60
+    declared: 2026-10-31
+  - id: c2.floor
+    metric: C2
+    measure: 'Sessions published wrong ÷ sessions published. Wrong when the start, the Place or a given end differs'
+    kind: floor
+    comparator: '<='
+    value: 0.03334
+    declared: 2026-10-31
+    note: '1/30, as the metrics document writes it, rounded up so that exactly 1/30 passes. Reported as k/n.'
+  - id: c2.target
+    metric: C2
+    measure: 'Sessions published wrong ÷ sessions published. Wrong when the start, the Place or a given end differs'
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: c3.floor
+    metric: C3
+    measure: "Place ids given that differ from the answer's"
+    kind: floor
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: c3.target
+    metric: C3
+    measure: "Place ids given that differ from the answer's"
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: c4.schema.floor
+    metric: C4
+    measure: 'Answers that fit the schema'
+    kind: floor
+    comparator: '='
+    value: 1
+    declared: 2026-10-31
+  - id: c4.start-precision.floor
+    metric: C4
+    measure: 'Precision of the start, to the minute'
+    kind: floor
+    comparator: '>='
+    value: 0.90
+    declared: 2026-10-31
+  - id: c4.start-precision.target
+    metric: C4
+    measure: 'Precision of the start, to the minute'
+    kind: target
+    comparator: '>='
+    value: 0.95
+    declared: 2026-10-31
+  - id: c4.start-recall.target
+    metric: C4
+    measure: 'Recall of the start, to the minute'
+    kind: target
+    comparator: '>='
+    value: 0.80
+    declared: 2026-10-31
+  - id: c4.other-fields
+    metric: C4
+    measure: 'Precision and recall of the end, the Place and whether a post announces an event; made-up values'
+    kind: diagnostic
+    declared: 2026-10-31
+    note: 'Reported without a threshold: the metrics document gives none.'
+  - id: c5.floor
+    metric: C5
+    measure: 'Posts published that the answer says announce no event'
+    kind: floor
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: c5.target
+    metric: C5
+    measure: 'Posts published that the answer says announce no event'
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: c6.floor
+    metric: C6
+    measure: 'Sessions whose running over a period is judged as the answer says'
+    kind: floor
+    comparator: '>='
+    value: 0.80
+    declared: 2026-10-31
+  - id: c6.target
+    metric: C6
+    measure: 'Sessions whose running over a period is judged as the answer says'
+    kind: target
+    comparator: '>='
+    value: 0.95
+    declared: 2026-10-31
+  - id: c7.floor
+    metric: C7
+    measure: 'Sessions published with an application period as their start and end'
+    kind: floor
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: c7.target
+    metric: C7
+    measure: 'Sessions published with an application period as their start and end'
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+
+  # Evaluation B. Scored on the held-out part. The metrics document gives no floor for D2 to D6, nor a target for D5; none
+  # is made up here. D3 and D4 have one value, taken as their target.
+  - id: d1.floor
+    metric: D1
+    measure: 'Different events attached automatically'
+    kind: floor
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: d1.target
+    metric: D1
+    measure: 'Different events attached automatically'
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: d2.recall-with-queue.target
+    metric: D2
+    measure: "Pair recall, counting pairs sent to the Administrator's queue. Precision, recall and F1 are reported with TP, FP, FN"
+    kind: target
+    comparator: '>='
+    value: 0.80
+    declared: 2026-10-31
+  - id: d3.target
+    metric: D3
+    measure: 'True pairs among the candidates within a day of the start (Pair Completeness)'
+    kind: target
+    comparator: '>='
+    value: 0.95
+    declared: 2026-10-31
+  - id: d4.target
+    metric: D4
+    measure: "Sessions sent to the Administrator's queue: unsure, several candidates, a link not one to one, a failed call"
+    kind: target
+    comparator: '<='
+    value: 0.30
+    declared: 2026-10-31
+  - id: d5.diagnostic
+    metric: D5
+    measure: 'Groups of one post and several sessions attached as the answer says'
+    kind: diagnostic
+    declared: 2026-10-31
+  - id: d6.diagnostic
+    metric: D6
+    measure: 'True pairs attached without a person, by a rule or the AI'
+    kind: diagnostic
+    declared: 2026-10-31
+    note: 'Diagnostic in place of a floor, as the metrics document writes it.'
+  - id: d6.target
+    metric: D6
+    measure: 'True pairs attached without a person, by a rule or the AI'
+    kind: target
+    comparator: '>='
+    value: 0.50
+    declared: 2026-10-31

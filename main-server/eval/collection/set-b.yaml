@@ -1,0 +1,1202 @@
+# Evaluation B: why each pair was chosen, not its answer. `chosenAs` is what a pair was expected to be when it was
+# chosen; the answers are in labels/. Second labellers do not see this file.
+- id: b-001
+  a:
+    post: snu-178085
+    session: null
+  b:
+    post: extra-PGM012002389
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-002
+  a:
+    post: extra-PGM012002270
+    session: null
+  b:
+    post: snu-177656
+    session: null
+  part: development
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-003
+  a:
+    post: extra-PGM012002334
+    session: null
+  b:
+    post: extra-PGM012002335
+    session: null
+  part: development
+  chosenAs: another-round
+  trap: false
+- id: b-004
+  a:
+    post: snu-177893
+    session: null
+  b:
+    post: extra-PGM012002322
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-005
+  a:
+    post: extra-PGM012002406
+    session: null
+  b:
+    post: snu-178151
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-006
+  a:
+    post: extra-PGM012002398
+    session: null
+  b:
+    post: extra-PGM012002397
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-007
+  a:
+    post: snu-178085
+    session: null
+  b:
+    post: extra-PGM012002391
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-008
+  a:
+    post: extra-PGM012002177
+    session: null
+  b:
+    post: extra-PGM012002179
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-009
+  a:
+    post: snu-177458
+    session: null
+  b:
+    post: extra-PGM012002264
+    session: null
+  part: development
+  chosenAs: different-title
+  trap: false
+- id: b-010
+  a:
+    post: extra-PGM012002390
+    session: null
+  b:
+    post: extra-PGM012002393
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-011
+  a:
+    post: snu-177119
+    session: null
+  b:
+    post: extra-PGM012002311
+    session: null
+  part: held-out
+  chosenAs: different-title
+  trap: false
+- id: b-012
+  a:
+    post: extra-PGM012002356
+    session: null
+  b:
+    post: extra-PGM012002357
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-013
+  a:
+    post: extra-PGM012002144
+    session: null
+  b:
+    post: extra-PGM012002146
+    session: null
+  part: held-out
+  chosenAs: in-person-or-online
+  trap: false
+- id: b-014
+  a:
+    post: snu-177317
+    session: null
+  b:
+    post: extra-PGM012001882
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-015
+  a:
+    post: extra-PGM012002328
+    session: null
+  b:
+    post: snu-178136
+    session: null
+  part: development
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-016
+  a:
+    post: snu-178250
+    session: null
+  b:
+    post: snu-178328
+    session: null
+  part: development
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-017
+  a:
+    post: extra-PGM012002071
+    session: null
+  b:
+    post: extra-PGM012002091
+    session: null
+  part: held-out
+  chosenAs: different-title
+  trap: false
+- id: b-018
+  a:
+    post: snu-177026
+    session: null
+  b:
+    post: extra-PGM012002309
+    session: null
+  part: held-out
+  chosenAs: different-title
+  trap: false
+- id: b-019
+  a:
+    post: snu-177122
+    session: null
+  b:
+    post: snu-177131
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-020
+  a:
+    post: extra-PGM012002331
+    session: null
+  b:
+    post: extra-PGM012002332
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-021
+  a:
+    post: snu-177323
+    session: null
+  b:
+    post: snu-177668
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-022
+  a:
+    post: snu-177017
+    session: null
+  b:
+    post: extra-PGM012002415
+    session: null
+  part: development
+  chosenAs: many-to-one
+  trap: false
+- id: b-023
+  a:
+    post: snu-177542
+    session: null
+  b:
+    post: extra-PGM012002329
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-024
+  a:
+    post: extra-PGM012002354
+    session: null
+  b:
+    post: extra-PGM012002355
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-025
+  a:
+    post: snu-177314
+    session: null
+  b:
+    post: extra-PGM012001958
+    session: 6
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-026
+  a:
+    post: extra-PGM012002195
+    session: null
+  b:
+    post: snu-176924
+    session: null
+  part: development
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-027
+  a:
+    post: snu-177317
+    session: null
+  b:
+    post: extra-PGM012002398
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-028
+  a:
+    post: snu-178064
+    session: null
+  b:
+    post: extra-PGM012002395
+    session: null
+  part: held-out
+  chosenAs: different-title
+  trap: false
+- id: b-029
+  a:
+    post: extra-PGM012002176
+    session: null
+  b:
+    post: extra-PGM012002177
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-030
+  a:
+    post: snu-178085
+    session: null
+  b:
+    post: extra-PGM012002394
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-031
+  a:
+    post: extra-PGM012002363
+    session: null
+  b:
+    post: extra-PGM012002364
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-032
+  a:
+    post: snu-177017
+    session: null
+  b:
+    post: extra-PGM012002307
+    session: null
+  part: development
+  chosenAs: many-to-one
+  trap: false
+- id: b-033
+  a:
+    post: extra-PGM012002367
+    session: null
+  b:
+    post: extra-PGM012002368
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-034
+  a:
+    post: extra-PGM012002271
+    session: null
+  b:
+    post: snu-177626
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-035
+  a:
+    post: snu-177764
+    session: null
+  b:
+    post: extra-PGM012002389
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-036
+  a:
+    post: snu-178079
+    session: null
+  b:
+    post: extra-PGM012002382
+    session: null
+  part: held-out
+  chosenAs: body-link
+  trap: false
+- id: b-037
+  a:
+    post: extra-PGM012001882
+    session: null
+  b:
+    post: extra-PGM012002398
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-038
+  a:
+    post: extra-PGM012002068
+    session: null
+  b:
+    post: extra-PGM012002127
+    session: null
+  part: held-out
+  chosenAs: different-title
+  trap: false
+- id: b-039
+  a:
+    post: snu-177920
+    session: null
+  b:
+    post: extra-PGM012001958
+    session: 5
+  part: development
+  chosenAs: another-round
+  trap: false
+- id: b-040
+  a:
+    post: extra-PGM012002084
+    session: null
+  b:
+    post: extra-PGM012002088
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-041
+  a:
+    post: snu-177314
+    session: null
+  b:
+    post: extra-PGM012001958
+    session: 5
+  part: development
+  chosenAs: many-to-one
+  trap: false
+- id: b-042
+  a:
+    post: extra-PGM012002074
+    session: null
+  b:
+    post: extra-PGM012002139
+    session: null
+  part: development
+  chosenAs: different-title
+  trap: false
+- id: b-043
+  a:
+    post: snu-177863
+    session: null
+  b:
+    post: extra-PGM012002376
+    session: null
+  part: held-out
+  chosenAs: different-title
+  trap: false
+- id: b-044
+  a:
+    post: extra-PGM012002391
+    session: null
+  b:
+    post: extra-PGM012002394
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-045
+  a:
+    post: snu-177707
+    session: null
+  b:
+    post: extra-PGM012002144
+    session: null
+  part: development
+  chosenAs: in-person-or-online
+  trap: false
+- id: b-046
+  a:
+    post: snu-177392
+    session: null
+  b:
+    post: extra-PGM012002266
+    session: null
+  part: development
+  chosenAs: body-link
+  trap: false
+- id: b-047
+  a:
+    post: snu-178226
+    session: null
+  b:
+    post: extra-PGM012002414
+    session: null
+  part: held-out
+  chosenAs: different-title
+  trap: false
+- id: b-048
+  a:
+    post: snu-178346
+    session: null
+  b:
+    post: snu-178349
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-049
+  a:
+    post: extra-PGM012001974
+    session: null
+  b:
+    post: extra-PGM012001975
+    session: null
+  part: held-out
+  chosenAs: in-person-or-online
+  trap: false
+- id: b-050
+  a:
+    post: snu-177626
+    session: null
+  b:
+    post: snu-177692
+    session: null
+  part: development
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-051
+  a:
+    post: extra-PGM012002073
+    session: null
+  b:
+    post: extra-PGM012002138
+    session: null
+  part: held-out
+  chosenAs: different-title
+  trap: false
+- id: b-052
+  a:
+    post: extra-PGM012002364
+    session: null
+  b:
+    post: extra-PGM012002365
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-053
+  a:
+    post: extra-PGM012002332
+    session: null
+  b:
+    post: extra-PGM012002333
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-054
+  a:
+    post: snu-178085
+    session: null
+  b:
+    post: extra-PGM012002390
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-055
+  a:
+    post: snu-177821
+    session: null
+  b:
+    post: snu-178103
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-056
+  a:
+    post: snu-177707
+    session: null
+  b:
+    post: extra-PGM012002382
+    session: null
+  part: held-out
+  chosenAs: in-person-or-online
+  trap: true
+- id: b-057
+  a:
+    post: extra-PGM012002389
+    session: null
+  b:
+    post: extra-PGM012002392
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-058
+  a:
+    post: extra-PGM012002381
+    session: null
+  b:
+    post: extra-PGM012002382
+    session: null
+  part: held-out
+  chosenAs: in-person-or-online
+  trap: false
+- id: b-059
+  a:
+    post: extra-PGM012002175
+    session: null
+  b:
+    post: extra-PGM012002176
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-060
+  a:
+    post: snu-178013
+    session: null
+  b:
+    post: extra-PGM012002403
+    session: null
+  part: held-out
+  chosenAs: different-title
+  trap: false
+- id: b-061
+  a:
+    post: extra-PGM012002075
+    session: null
+  b:
+    post: extra-PGM012002234
+    session: null
+  part: held-out
+  chosenAs: different-title
+  trap: false
+- id: b-062
+  a:
+    post: extra-PGM012002184
+    session: null
+  b:
+    post: extra-PGM012002130
+    session: null
+  part: development
+  chosenAs: another-round
+  trap: false
+- id: b-063
+  a:
+    post: snu-177764
+    session: null
+  b:
+    post: extra-PGM012002393
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-064
+  a:
+    post: extra-PGM012002349
+    session: null
+  b:
+    post: snu-177533
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-065
+  a:
+    post: snu-177329
+    session: null
+  b:
+    post: extra-PGM012002319
+    session: null
+  part: held-out
+  chosenAs: different-title
+  trap: false
+- id: b-066
+  a:
+    post: snu-176978
+    session: null
+  b:
+    post: extra-PGM012001958
+    session: 4
+  part: development
+  chosenAs: many-to-one
+  trap: false
+- id: b-067
+  a:
+    post: snu-178079
+    session: null
+  b:
+    post: extra-PGM012002146
+    session: null
+  part: held-out
+  chosenAs: in-person-or-online
+  trap: false
+- id: b-068
+  a:
+    post: extra-PGM012002411
+    session: null
+  b:
+    post: extra-PGM012002412
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-069
+  a:
+    post: snu-178085
+    session: null
+  b:
+    post: extra-PGM012002393
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-070
+  a:
+    post: snu-177035
+    session: null
+  b:
+    post: snu-178022
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-071
+  a:
+    post: snu-177764
+    session: null
+  b:
+    post: extra-PGM012002391
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-072
+  a:
+    post: extra-PGM012002205
+    session: 2
+  b:
+    post: snu-177113
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-073
+  a:
+    post: extra-PGM012002322
+    session: null
+  b:
+    post: extra-PGM012002326
+    session: null
+  part: development
+  chosenAs: another-round
+  trap: false
+- id: b-074
+  a:
+    post: extra-PGM012002174
+    session: null
+  b:
+    post: extra-PGM012002175
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-075
+  a:
+    post: snu-177764
+    session: null
+  b:
+    post: extra-PGM012002394
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-076
+  a:
+    post: snu-177689
+    session: null
+  b:
+    post: snu-177824
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-077
+  a:
+    post: snu-177848
+    session: null
+  b:
+    post: extra-PGM012002396
+    session: null
+  part: held-out
+  chosenAs: different-title
+  trap: false
+- id: b-078
+  a:
+    post: extra-PGM012002393
+    session: null
+  b:
+    post: snu-177710
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-079
+  a:
+    post: extra-PGM012002331
+    session: null
+  b:
+    post: extra-PGM012002347
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-080
+  a:
+    post: extra-PGM012002082
+    session: null
+  b:
+    post: extra-PGM012002084
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-081
+  a:
+    post: snu-177035
+    session: null
+  b:
+    post: snu-177809
+    session: null
+  part: development
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-082
+  a:
+    post: extra-PGM012002304
+    session: 3
+  b:
+    post: extra-PGM012002322
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-083
+  a:
+    post: extra-PGM012002076
+    session: null
+  b:
+    post: extra-PGM012002137
+    session: null
+  part: held-out
+  chosenAs: different-title
+  trap: false
+- id: b-084
+  a:
+    post: snu-178223
+    session: null
+  b:
+    post: extra-PGM012002404
+    session: null
+  part: held-out
+  chosenAs: different-title
+  trap: false
+- id: b-085
+  a:
+    post: snu-178016
+    session: null
+  b:
+    post: extra-PGM012001882
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-086
+  a:
+    post: snu-177026
+    session: null
+  b:
+    post: extra-PGM012002277
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-087
+  a:
+    post: snu-177311
+    session: null
+  b:
+    post: extra-PGM012002184
+    session: null
+  part: development
+  chosenAs: another-round
+  trap: false
+- id: b-088
+  a:
+    post: extra-PGM012002357
+    session: null
+  b:
+    post: extra-PGM012002358
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-089
+  a:
+    post: snu-177311
+    session: null
+  b:
+    post: extra-PGM012002244
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-090
+  a:
+    post: snu-177473
+    session: null
+  b:
+    post: snu-178097
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-091
+  a:
+    post: snu-177707
+    session: null
+  b:
+    post: extra-PGM012002381
+    session: null
+  part: held-out
+  chosenAs: body-link
+  trap: false
+- id: b-092
+  a:
+    post: extra-PGM012002378
+    session: null
+  b:
+    post: snu-178205
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-093
+  a:
+    post: snu-177311
+    session: null
+  b:
+    post: extra-PGM012002305
+    session: null
+  part: development
+  chosenAs: different-title
+  trap: false
+- id: b-094
+  a:
+    post: extra-PGM012002390
+    session: null
+  b:
+    post: snu-177902
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-095
+  a:
+    post: extra-PGM012002333
+    session: null
+  b:
+    post: extra-PGM012002334
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-096
+  a:
+    post: extra-PGM012002142
+    session: null
+  b:
+    post: extra-PGM012002303
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-097
+  a:
+    post: extra-PGM012002355
+    session: null
+  b:
+    post: extra-PGM012002356
+    session: null
+  part: development
+  chosenAs: another-round
+  trap: false
+- id: b-098
+  a:
+    post: snu-177920
+    session: null
+  b:
+    post: extra-PGM012001958
+    session: 6
+  part: development
+  chosenAs: many-to-one
+  trap: false
+- id: b-099
+  a:
+    post: snu-177542
+    session: null
+  b:
+    post: extra-PGM012002327
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-100
+  a:
+    post: snu-177881
+    session: null
+  b:
+    post: snu-178217
+    session: null
+  part: development
+  chosenAs: another-round
+  trap: false
+- id: b-101
+  a:
+    post: snu-177542
+    session: null
+  b:
+    post: extra-PGM012002330
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-102
+  a:
+    post: extra-PGM012002277
+    session: null
+  b:
+    post: extra-PGM012002309
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-103
+  a:
+    post: extra-PGM012002315
+    session: null
+  b:
+    post: extra-PGM012002317
+    session: null
+  part: development
+  chosenAs: another-round
+  trap: false
+- id: b-104
+  a:
+    post: snu-177764
+    session: null
+  b:
+    post: extra-PGM012002392
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-105
+  a:
+    post: snu-177017
+    session: null
+  b:
+    post: extra-PGM012002211
+    session: null
+  part: development
+  chosenAs: many-to-one
+  trap: false
+- id: b-106
+  a:
+    post: extra-PGM012002332
+    session: null
+  b:
+    post: snu-177869
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-107
+  a:
+    post: snu-178016
+    session: null
+  b:
+    post: extra-PGM012002397
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-108
+  a:
+    post: extra-PGM012002088
+    session: null
+  b:
+    post: extra-PGM012002090
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-109
+  a:
+    post: extra-PGM012002272
+    session: null
+  b:
+    post: snu-176972
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-110
+  a:
+    post: snu-176978
+    session: null
+  b:
+    post: extra-PGM012001976
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-111
+  a:
+    post: snu-178079
+    session: null
+  b:
+    post: extra-PGM012002381
+    session: null
+  part: held-out
+  chosenAs: in-person-or-online
+  trap: false
+- id: b-112
+  a:
+    post: extra-PGM012002244
+    session: null
+  b:
+    post: extra-PGM012002305
+    session: null
+  part: held-out
+  chosenAs: another-round
+  trap: false
+- id: b-113
+  a:
+    post: snu-177587
+    session: null
+  b:
+    post: snu-177887
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-114
+  a:
+    post: extra-PGM012002145
+    session: 3
+  b:
+    post: snu-176918
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-115
+  a:
+    post: extra-PGM012002377
+    session: null
+  b:
+    post: snu-178064
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-116
+  a:
+    post: snu-178085
+    session: null
+  b:
+    post: extra-PGM012002392
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-117
+  a:
+    post: extra-PGM012001976
+    session: null
+  b:
+    post: extra-PGM012001977
+    session: null
+  part: development
+  chosenAs: in-person-or-online
+  trap: false
+- id: b-118
+  a:
+    post: snu-177764
+    session: null
+  b:
+    post: extra-PGM012002390
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false
+- id: b-119
+  a:
+    post: extra-PGM012002347
+    session: null
+  b:
+    post: snu-178427
+    session: null
+  part: held-out
+  chosenAs: same-time-another-event
+  trap: false
+- id: b-120
+  a:
+    post: snu-178016
+    session: null
+  b:
+    post: extra-PGM012002398
+    session: null
+  part: held-out
+  chosenAs: many-to-one
+  trap: false

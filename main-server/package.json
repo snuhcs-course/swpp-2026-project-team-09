@@ -36,6 +36,7 @@
     "eval": "node eval/cli.ts",
     "eval:score": "node eval/score-cli.ts",
     "eval:compare": "node eval/compare-cli.ts",
+    "eval:collection:status": "node eval/collection/status-cli.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

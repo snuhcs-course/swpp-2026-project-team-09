@@ -1944,6 +1944,11 @@ it). A run is saved as `eval/results/<date>-<commit>-<model>-<settings>.json`, e
 is ignored by git; commit a run worth keeping with `git add -f`. `test/eval-runner.integration.test.ts` and
 `test/eval-options.integration.test.ts` test the runner with the scripted model in `pnpm test`.
 
+The collection evaluations (A and B of P05) have their own fixed sets, saved posts, labels and thresholds in
+`eval/collection/`, with their record in `eval/collection/README.md`. `pnpm eval:collection:status` shows the blanks left
+in the label files and how far the two labellers agree; `test/eval-collection-set.unit.test.ts` checks the sets in
+`pnpm test`. Their runner comes with ticket 09.
+
 #### The world and the cases
 
 The 62 cases are one YAML file per category under `eval/cases/` (menus, shuttle, global-events, finding-parties,

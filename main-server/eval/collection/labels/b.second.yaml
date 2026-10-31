@@ -1,0 +1,394 @@
+# 평가 B 라벨. 방법은 labels/GUIDE.md. sameEvent의 null을 true나 false로 채운다.
+labeller: null
+labelledOn: null
+items:
+  - id: b-004
+    a:
+      title: '제8회 인문학 심포지엄 안내: AI 시대, 인문학자가 살아가는 법'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177893'
+      file: posts/snu-177893.html
+      session: null
+    b:
+      title: '(1차) 스피치 훈련: 청중과 소통하는 스피치 (11.6.(금) 10-12시)'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002322'
+      file: posts/extra-PGM012002322.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-006
+    a:
+      title: '제7회 연구자 커리어 멘토링 특강 《저널 편집자의 관심을 끄는 논문 구조화 방법》'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002398'
+      file: posts/extra-PGM012002398.html
+      session: null
+    b:
+      title: '제8회 연구자 커리어 멘토링 특강 《디자인 개발 연구, 어떻게 논문이 되는가: 논문 설계와 해외학술대회 발표 경험》'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002397'
+      file: posts/extra-PGM012002397.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-008
+    a:
+      title: '2026학년도 2학기 위빠사나 명상 프로그램(6회차: 11월 25일 수요일)'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002177'
+      file: posts/extra-PGM012002177.html
+      session: null
+    b:
+      title: '2026학년도 2학기 위빠사나 명상 프로그램(7회차: 12월 9일 수요일)'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002179'
+      file: posts/extra-PGM012002179.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-010
+    a:
+      title: '2026년 건강주간 행사 <잔디 위 건강댄스> 프로그램(11월 4일 수요일)'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002390'
+      file: posts/extra-PGM012002390.html
+      session: null
+    b:
+      title: '2026년 건강주간행사 <잔디 위 건강댄스> 프로그램 (11월 5일 목요일)'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002393'
+      file: posts/extra-PGM012002393.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-013
+    a:
+      title: '알렉산더테크닉(대면) 2026년 9-10월'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002144'
+      file: posts/extra-PGM012002144.html
+      session: null
+    b:
+      title: '알렉산더테크닉(비대면) 2026년 9-10월'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002146'
+      file: posts/extra-PGM012002146.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-019
+    a:
+      title: 'SNUBIC Colloquium: 정동일 교수 초청 강연 (10.19 월 13:00)'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177122'
+      file: posts/snu-177122.html
+      session: null
+    b:
+      title: '(10/19) 〈제46회 일본진단세미나〉 "‘정원의 이야기’에서 ‘새로운 제작’으로(「庭の話」から「新しい制作」へ)"'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177131'
+      file: posts/snu-177131.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-020
+    a:
+      title: '[2시간, 11/3] 베이킹 OpenLnL 2학기'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002331'
+      file: posts/extra-PGM012002331.html
+      session: null
+    b:
+      title: '[2시간, 11/11] 베이킹 OpenLnL 2학기'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002332'
+      file: posts/extra-PGM012002332.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-031
+    a:
+      title: '[2시간, 11/4] 첫 면접을 앞둔 대학생을 위한 실전스피치 OpenLnL 26년 2학기'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002363'
+      file: posts/extra-PGM012002363.html
+      session: null
+    b:
+      title: '[2시간, 11/16] 첫 면접을 앞둔 대학생을 위한 실전스피치 OpenLnL 26년 2학기'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002364'
+      file: posts/extra-PGM012002364.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-033
+    a:
+      title: '[2시간, 11/20] 러닝 및 근력강화 OpenLnL 26년 2학기'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002367'
+      file: posts/extra-PGM012002367.html
+      session: null
+    b:
+      title: '[2시간, 12/4] 러닝 및 근력강화 OpenLnL 26년 2학기'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002368'
+      file: posts/extra-PGM012002368.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-034
+    a:
+      title: 'AI를 활용한 나만의 데이터 분석 전략'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002271'
+      file: posts/extra-PGM012002271.html
+      session: null
+    b:
+      title: '"대미투자와 경제안보: 알래스카 LNG의 지정학" 안내'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177626'
+      file: posts/snu-177626.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-049
+    a:
+      title: '대학원 공통 특강 시리즈 <SHINE AI: 통찰과 성찰> 데이터가 여는 생명의 지도(대면 강의)'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012001974'
+      file: posts/extra-PGM012001974.html
+      session: null
+    b:
+      title: '대학원 공통 특강 시리즈 <SHINE AI: 통찰과 성찰> 데이터가 여는 생명의 지도(비대면 강의)'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012001975'
+      file: posts/extra-PGM012001975.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-056
+    a:
+      title: '2026년 11-12월 알렉산더테크닉 프로그램(비대면) 참여자 모집'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177707'
+      file: posts/snu-177707.html
+      session: null
+    b:
+      title: '알렉산더테크닉(대면) 2026년 11-12월'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002382'
+      file: posts/extra-PGM012002382.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-057
+    a:
+      title: '2026년 건강주간 행사 <잔디 위 맨몸 필라테스> 프로그램 (11월 4일 수요일)'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002389'
+      file: posts/extra-PGM012002389.html
+      session: null
+    b:
+      title: '2026년 건강주간 행사 <잔디 위 맨몸 필라테스> 프로그램(11월 5일 목요일)'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002392'
+      file: posts/extra-PGM012002392.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-064
+    a:
+      title: '2026 아카데믹 페스티벌: 식품영양학과 동문 리더십 특강'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002349'
+      file: posts/extra-PGM012002349.html
+      session: null
+    b:
+      title: '2026년 서울저널 특별 워크숍: 고등교육 시리즈 제1강 개최'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177533'
+      file: posts/snu-177533.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-067
+    a:
+      title: '〈11-12월 알렉산더테크닉(대면)〉 편안한 마음과 몸을 위한 바른 자세(대학생활문화원)'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178079'
+      file: posts/snu-178079.html
+      session: null
+    b:
+      title: '알렉산더테크닉(비대면) 2026년 9-10월'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002146'
+      file: posts/extra-PGM012002146.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-068
+    a:
+      title: '11/25일 *온라인* 노션 기초 26년 2학기'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002411'
+      file: posts/extra-PGM012002411.html
+      session: null
+    b:
+      title: '11/26일 *온라인* 노션 심화 26년 2학기'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002412'
+      file: posts/extra-PGM012002412.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-070
+    a:
+      title: '교육종합연구원 제2차 교육 포럼 및 서울대학교 사범대학 80주년 기념 강연회 안내(10/28, 수, 15:30)'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177035'
+      file: posts/snu-177035.html
+      session: null
+    b:
+      title: '소설가 현기영 강연회 안내'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178022'
+      file: posts/snu-178022.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-072
+    a:
+      title: '2026 바이오 기술창업·기술이전 역량강화 프로그램'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002205'
+      file: posts/extra-PGM012002205.html
+      session: 2
+    b:
+      title: 'SNU OGA HAPPY HOUR — Celebrating SNU’s 80th (2026-10-14, Wed, 16:00–17:00'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177113'
+      file: posts/snu-177113.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-074
+    a:
+      title: '2026학년도 2학기 위빠사나 명상 프로그램(3회차: 10월 28일 수요일)'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002174'
+      file: posts/extra-PGM012002174.html
+      session: null
+    b:
+      title: '2026학년도 2학기 위빠사나 명상 프로그램(4회차: 11월 11일 수요일)'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002175'
+      file: posts/extra-PGM012002175.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-079
+    a:
+      title: '[2시간, 11/3] 베이킹 OpenLnL 2학기'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002331'
+      file: posts/extra-PGM012002331.html
+      session: null
+    b:
+      title: '2026 아카데믹 페스티벌: 의류학과 동문 리더십 특강'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002347'
+      file: posts/extra-PGM012002347.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-080
+    a:
+      title: '[2시간, 9/23] 스피치 OpenLnL 26년 2학기'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002082'
+      file: posts/extra-PGM012002082.html
+      session: null
+    b:
+      title: '[2시간, 9/30] 스피치 OpenLnL 26년 2학기'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002084'
+      file: posts/extra-PGM012002084.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-086
+    a:
+      title: '[경력개발센터]2026 하반기 온라인 모의직무적성검사 2차 안내'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177026'
+      file: posts/snu-177026.html
+      session: null
+    b:
+      title: '2026 하반기 온라인 모의직무적성검사 1차'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002277'
+      file: posts/extra-PGM012002277.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-102
+    a:
+      title: '2026 하반기 온라인 모의직무적성검사 1차'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002277'
+      file: posts/extra-PGM012002277.html
+      session: null
+    b:
+      title: '2026 하반기 온라인 모의직무적성검사 2차'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002309'
+      file: posts/extra-PGM012002309.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-109
+    a:
+      title: 'AI 커넥터(클로드, 코덱스)를 활용한 학습자료 통합과 정보 탐색'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002272'
+      file: posts/extra-PGM012002272.html
+      session: null
+    b:
+      title: '규장각 특별 한국학 워크숍 II: 『경전의 수사학』'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176972'
+      file: posts/snu-176972.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-110
+    a:
+      title: '대학원 공통 「SHINE AI: 통찰과 성찰」4회차 특강 (10/16 박진호 교수)'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176978'
+      file: posts/snu-176978.html
+      session: null
+    b:
+      title: '대학원 공통 특강 시리즈 <SHINE AI: 통찰과 성찰> AI시대 사회과학연구의 방법론적 확장(대면 강의)'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012001976'
+      file: posts/extra-PGM012001976.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-112
+    a:
+      title: '이웃사랑 10월 1차 특별단기봉사활동 및 나눔교육'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002244'
+      file: posts/extra-PGM012002244.html
+      session: null
+    b:
+      title: '이웃사랑 10월 2차 특별단기봉사활동 및 나눔교육'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002305'
+      file: posts/extra-PGM012002305.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-113
+    a:
+      title: '데이터 큐레이션 ON 2026 《다시 읽고 쓰는 데이터 - 연구데이터 재이용의 사례와 조건》 안내'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177587'
+      file: posts/snu-177587.html
+      session: null
+    b:
+      title: '현대한국종합연구단 서사팀 연속 콜로키움 “한국의 헤게모니적 남성성과 애도 (불)가능성'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=177887'
+      file: posts/snu-177887.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-114
+    a:
+      title: '이별 후 성장 집단상담 프로그램(목요일 저녁)'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002145'
+      file: posts/extra-PGM012002145.html
+      session: 3
+    b:
+      title: '2026년 2학기 경제학부 Open-Talk 행사 안내'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176918'
+      file: posts/snu-176918.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-115
+    a:
+      title: '2026 아카데믹 페스티벌: 소비자학과 학부 심포지엄'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002377'
+      file: posts/extra-PGM012002377.html
+      session: null
+    b:
+      title: '취업역량강화특강[AI 시대의 커리어 설계와 직무 탐색] 참여자 모집(~11/1)'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178064'
+      file: posts/snu-178064.html
+      session: null
+    sameEvent: null
+    note: null
+  - id: b-119
+    a:
+      title: '2026 아카데믹 페스티벌: 의류학과 동문 리더십 특강'
+      url: 'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002347'
+      file: posts/extra-PGM012002347.html
+      session: null
+    b:
+      title: '[건축학과 해안건축 공개강연시리즈]한옥, 선과 면의 건축(조재량 국가무형유산 대목장)'
+      url: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178427'
+      file: posts/snu-178427.html
+      session: null
+    sameEvent: null
+    note: null
