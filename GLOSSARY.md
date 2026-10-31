@@ -161,7 +161,7 @@ A page or feed outside the project that the worker server collects, such as the 
 _Avoid_: Site, provider
 
 **Source Post**:
-One post on a Source that a Global Event was read from, such as an SNU Now notice or an extra.snu program. A Global Event can have several, when more than one Source posted the same event.
+One post on a Source that Global Events were read from, such as an SNU Now notice or an extra.snu program, stored once by its Source and its key on that Source. It is read as one or more numbered sessions, each linked to one Global Event. A Global Event can have several, when more than one Source posted the same event. A post's session (회차, `SourcePostSession`) is not a **Session**, the app signed in on one phone.
 _Avoid_: Original, article, duplicate
 
 **Collection**:

@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type Place, PrismaClient, type User } from '../generated/prisma/client.js';
@@ -116,6 +117,7 @@ async function seedGlobalEvents(prisma: PrismaClient, place: PlaceOf, now: Date)
         latitude,
         longitude,
         state: 'published' as const,
+        publicationRoute: 'administrator' as const,
       };
       return prisma.globalEvent.upsert({
         where: { id },

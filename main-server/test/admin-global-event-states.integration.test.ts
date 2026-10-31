@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -47,7 +48,12 @@ describe('Publishing a Draft', () => {
     const response = await changeState(app, accessToken, draft.id, 'publish', 1);
 
     expect(response.status).toBe(200);
-    expect(eventDetailSchema.parse(response.body)).toEqual({ ...draft, state: 'published', version: 2 });
+    expect(eventDetailSchema.parse(response.body)).toEqual({
+      ...draft,
+      state: 'published',
+      version: 2,
+      publicationRoute: 'administrator',
+    });
     expect(await publishedAmong(app, userToken, [draft.id])).toMatchObject([{ id: draft.id, title: draft.title }]);
   });
 

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import 'server-only';
@@ -45,8 +46,11 @@ export interface ListedGlobalEvent {
   longitude: number | null;
   state: GlobalEventState;
   version: number;
-  postNumber: number | null;
+  source: string | null;
+  postKey: string | null;
   sourceUrl: string | null;
+  publicationRoute: 'administrator' | 'rule' | 'judgement' | null;
+  needsAdministrator: boolean;
   missing: Missing[];
 }
 
