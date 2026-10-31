@@ -517,7 +517,8 @@ needs beside them through a controller of their own feature. Each route needs an
   not be read fully shows it. It is `[]` for an event in any other state. An empty `missing` does not make a Draft
   right: its start may be the header's date (see below).
 - `GET /admin/global-events/:id` answers one event in any state, as an entry of the lists with its `description`, the
-  text to check against the post at `sourceUrl`. An unknown id gets 404 `GLOBAL_EVENT_NOT_FOUND`, and an id that is
+  text to check against the post at `sourceUrl`, and `judgement`, its post's Judgement or `null` (see
+  [the step](#requests-from-the-worker-server)). An unknown id gets 404 `GLOBAL_EVENT_NOT_FOUND`, and an id that is
   not a UUID 400.
 - `GET /admin/places` answers every Place in the order and form of `GET /places` (see [Places](#places)), so that the
   admin site offers the list without a User's token. `src/places/admin-places.controller.ts` serves it.
@@ -642,6 +643,69 @@ message, so at the latest at that Source's next scheduled Collection.
 With the setting `AUTOMATIC_PUBLICATION=off` (default `on`) the step publishes nothing: every session stays a Draft for an
 Administrator, and turning it on again does not publish those. [infra/production/README.md](../infra/production/README.md)
 says how to turn it off in Production.
+
+**A Judgement** ([ADR 0008](../docs/adr/0008-judgements-publish-only-what-the-server-checks.md)) reads what the rules
+left. With `AUTOMATIC_JUDGEMENT=on` (default `off`, also in Production) the step calls the model once for each post with a
+session the rules did not read, one post at a time, after the posts that need no model. `off` calls no model, sends no post
+out and leaves the rules' publication alone; Drafts stored meanwhile are not judged when it is turned on. With `on`, the
+server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
+
+- **What leaves the server:** the post's title and text and the Source's name, with e-mail addresses and phone numbers
+  starting with 0 masked (`judgement-post.ts`), and today's date, by which the model chooses the year of a date written
+  without one. The checks compare the quoted lines with the masked text.
+- **What the model answers:** whether the post announces an event, and per session the start, end, place, whether it runs
+  over a period, and the lines each came from (`judgement-answer.ts`). The call is limited by `JUDGEMENT_TIMEOUT_MS` (60,000)
+  and `JUDGEMENT_MAX_OUTPUT_TOKENS` (4,000), is not sent again, and runs outside any transaction, after the Collection's
+  answer. It uses the Assistant's model and OpenRouter key, so it spends the same credit. `judgement-model.ts` calls the
+  model library itself, because the Assistant's adapter runs a User's tools and stays as the chat's evaluations measured it.
+- **What the server checks** (`judgement-checks.ts`), each on its own: the post is called an event, each quoted line is in
+  the post, the date, weekday and time agree with the lines, the whole line and a short label above it are not an
+  application period, the start is before the end, it has a time of day, it lasts at most 24 hours and ends where a time
+  line that runs across days ends, the place is in its lines and names exactly one Place on a line that names nowhere
+  else, and it is not a session the rules or the same answer already gave. A place that is a
+  building number alone is taken as Gwanak where the Source's setting says so. A session read as running over a period
+  does not pass until ticket 07.
+- **What it publishes:** each passing session becomes its own Global Event with the route `judgement`, at version 1,
+  taking the post's Draft with its start, or else a free one, or else a new event linked as another own session of the
+  post. Failing sessions make no Draft: a post stored as one Draft keeps it for them, and a post the worker sent with a
+  Draft per session keeps those it did not publish, so that no time the worker read is lost. A post called no event stays
+  as it is, with the outcome `no_event`.
+- **What it leaves alone:** a post with any session an Administrator changed is not judged, and a change while the model
+  reads it publishes nothing of that Judgement. With `AUTOMATIC_PUBLICATION=off` the Judgement is stored and nothing is
+  published.
+- **Failing closed and tries:** an error, a timeout or a malformed answer publishes nothing. A post has at most two tries,
+  counted when claimed in `judgements.attempts`, so a server that dies during a call has used its try, and of two servers
+  one calls. A claim older than twice the time limit was left by such a server. `source_posts.step_finished_at` has no
+  limit: the step comes back to an unfinished post at each Collection of its Source, and asks the model only while a try
+  is left. It finishes a post once its Judgement has an answer or no try left. A stored answer whose publication failed is
+  published by the next Collection without another call.
+- **One step over one Draft:** `JudgementsService.judgeDraft(globalEventId)` judges and stores whatever
+  `AUTOMATIC_JUDGEMENT` says, for the evaluation, and `PublicationStepService.overDraft(globalEventId)` also publishes what
+  passed, for a later script. Both judge the Draft's whole post, since its Drafts share one text, and keep to its tries.
+
+Administrators read a post's Judgement in `judgement` of `GET /admin/global-events/:id`. `GET
+/admin/global-events/unsettled-posts` gives the posts the step failed on or has not finished with, and those whose
+Judgement could not be made while a Draft waits, since a Collection is recorded as a success whatever the step does. No
+DTO the app receives carries any of it. An entry of that list:
+
+```json
+{
+  "source": "snu_events",
+  "key": "178226",
+  "address": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178226",
+  "stepFinished": false,
+  "stepFailure": null,
+  "stepFailedAt": null,
+  "judgementFailure": "APICallError: HTTP 402, the OpenRouter credit is used up",
+  "judgementAttempts": 1,
+  "drafts": [{ "id": "…", "title": "…" }]
+}
+```
+
+The `judgement` of an event's page holds `outcome` (`judged`, `no_event` for a post called no event, `failed` for one that
+could not be made, `null` while a try runs), `failure`, `attempts`, `announcesEvent`, `modelId`, `judgedAt` and `sessions`,
+each with `start`, `end`, `place`, `overPeriod`, `lines`, `placeId`, `checks` (each `name` and `passed`), `passed` and
+`globalEventId`, the event it was published as.
 
 A collected event is published, with no person involved, when the rules read both its time and its place:
 

@@ -10,6 +10,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -62,6 +63,9 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     ASSISTANT_TIMEOUT_MS: '30000',
     ASSISTANT_MAX_OUTPUT_TOKENS: '1000',
     AUTOMATIC_PUBLICATION: 'on',
+    AUTOMATIC_JUDGEMENT: 'off',
+    JUDGEMENT_TIMEOUT_MS: '60000',
+    JUDGEMENT_MAX_OUTPUT_TOKENS: '4000',
   };
   migrate(settings.DATABASE_URL);
   await seed(settings.DATABASE_URL);

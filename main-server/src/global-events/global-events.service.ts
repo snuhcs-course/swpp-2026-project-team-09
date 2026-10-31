@@ -8,6 +8,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
@@ -20,6 +21,7 @@ import { conflict, notFound } from '../quests/refusals.js';
 import { type CreateGlobalEventDto, type EditGlobalEventDto } from './dto/change-global-event.dto.js';
 import {
   GlobalEventDetailDto,
+  type GlobalEventWithJudgement,
   type GlobalEventWithOwnPost,
   ListedGlobalEventDto,
   type ListedState,
@@ -29,6 +31,7 @@ import {
   toListedGlobalEventDto,
   toPublishedGlobalEventDto,
   WITH_OWN_POST,
+  WITH_OWN_POST_AND_JUDGEMENT,
 } from './dto/global-event.dto.js';
 
 // 00:00 in Asia/Seoul, which keeps +09:00 all year, of the day `now` falls on there.
@@ -87,10 +90,10 @@ const globalEventNotFound = (): NotFoundException => notFound('GLOBAL_EVENT_NOT_
 // Refuses a change from `version` to an event that does not exist, that is not in one of the states `from`, or whose
 // stored version is another.
 function refuseUnlessChangeable(
-  stored: GlobalEventWithOwnPost | null,
+  stored: GlobalEventWithJudgement | null,
   from: readonly GlobalEventState[],
   version: number,
-): asserts stored is GlobalEventWithOwnPost {
+): asserts stored is GlobalEventWithJudgement {
   if (stored === null) {
     throw globalEventNotFound();
   }
@@ -158,7 +161,7 @@ export class GlobalEventsService {
 
   // In any state.
   async read(id: string): Promise<GlobalEventDetailDto> {
-    const event = await this.prisma.globalEvent.findUnique({ where: { id }, include: WITH_OWN_POST });
+    const event = await this.prisma.globalEvent.findUnique({ where: { id }, include: WITH_OWN_POST_AND_JUDGEMENT });
     if (event === null) {
       throw globalEventNotFound();
     }
@@ -167,7 +170,9 @@ export class GlobalEventsService {
 
   async create(fields: CreateGlobalEventDto): Promise<GlobalEventDetailDto> {
     this.refuseOffCampus(fields);
-    return toGlobalEventDetailDto(await this.prisma.globalEvent.create({ data: fields, include: WITH_OWN_POST }));
+    return toGlobalEventDetailDto(
+      await this.prisma.globalEvent.create({ data: fields, include: WITH_OWN_POST_AND_JUDGEMENT }),
+    );
   }
 
   // A Draft or a published event, which stays published.
@@ -200,7 +205,7 @@ export class GlobalEventsService {
     from: readonly GlobalEventState[],
     change: Change,
   ): Promise<GlobalEventDetailDto> {
-    const stored = await this.prisma.globalEvent.findUnique({ where: { id }, include: WITH_OWN_POST });
+    const stored = await this.prisma.globalEvent.findUnique({ where: { id }, include: WITH_OWN_POST_AND_JUDGEMENT });
     refuseUnlessChangeable(stored, from, version);
     const changed = { ...stored, ...change };
     const timed = change.startsAt !== undefined || change.endsAt !== undefined;
