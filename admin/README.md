@@ -115,8 +115,7 @@ event's page with "Needs an Administrator". The event's page also shows the rout
 
 The event's page shows the Judgement of its post beside the post's text (`events/[id]/judgement-panel.tsx`), when there
 is one. A post has one Judgement, so the panel holds all its sessions: each with its values, the lines they were read
-from, whether it passed, each check by the name the main server gives it, and whether it was published as this event or
-another. Its times are shown as the AI wrote them, in which it is asked for Seoul's time, since a time the checks could not read is shown too.
+from, whether it passed, each check by the name the main server gives it, and which event it belongs to, this one or another, as `globalEventId` says, which does not mean a Judgement published it. Its times are shown as the AI wrote them, in which it is asked for Seoul's time, since a time the checks could not read is shown too.
 Above them it says the outcome, with the model and the time: how many sessions passed, that the post was called no
 event, why a Judgement could not be made and whether another try is left, or that a try is running. A Draft that a
 Judgement left stays a Draft, published or discarded with the same form. Cancelling an event a Judgement published is

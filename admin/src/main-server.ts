@@ -58,7 +58,7 @@ export interface ListedGlobalEvent {
 }
 
 // A session as the AI read it. The times are as it wrote them, which the checks may have failed to read. `name` of a
-// check is the main server's to choose. `globalEventId` is the event it was published as.
+// check is the main server's to choose. `globalEventId` is the event it belongs to, not proof that it was published.
 export interface JudgedSession {
   start: string | null;
   end: string | null;

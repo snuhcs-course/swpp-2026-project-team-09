@@ -118,7 +118,7 @@ describe('what a Judgement holds that the site cannot foresee', () => {
 });
 
 describe('which session of the post this event is', () => {
-  it('marks the session this event was published as, and links the one published as another event', async () => {
+  it('marks the session of this event, and links the session of another event', async () => {
     const [other] = fakeMainServer.hasGlobalEvents({ title: '2회차', state: 'published' });
     const [event] = fakeMainServer.hasGlobalEvents({ ...COLLECTED, state: 'published', publicationRoute: 'judgement' });
     if (event === undefined || other === undefined) {
@@ -136,13 +136,10 @@ describe('which session of the post this event is', () => {
 
     await openEvent(event.id);
 
-    expect(sessionPanel(1).getByRole('link', { name: 'Published as another event' })).toHaveAttribute(
-      'href',
-      `/events/${other.id}`,
-    );
+    expect(sessionPanel(1).getByRole('link', { name: 'Another event' })).toHaveAttribute('href', `/events/${other.id}`);
     expect(sessionPanel(1).queryByText('This event')).toBeNull();
     expect(sessionPanel(2).getByText('This event')).toBeVisible();
-    expect(sessionPanel(3).getByText('Not published')).toBeVisible();
+    expect(sessionPanel(3).getByText('No event')).toBeVisible();
   });
 });
 

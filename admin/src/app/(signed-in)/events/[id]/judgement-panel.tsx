@@ -61,16 +61,18 @@ function placeName(placeId: string | null, places: Place[]): string | null {
   return place.number === null ? place.name : `${place.number} ${place.name}`;
 }
 
-function PublishedAs({ eventId, globalEventId }: { eventId: string; globalEventId: string | null }): ReactElement {
+// The event a session belongs to. That says nothing of how it got there or of its state, which the event's page tells:
+// it may have been published, attached to an existing event, or be a Draft waiting for an Administrator.
+function SessionEvent({ eventId, globalEventId }: { eventId: string; globalEventId: string | null }): ReactElement {
   if (globalEventId === null) {
-    return <span className="text-zinc-600">Not published</span>;
+    return <span className="text-zinc-600">No event</span>;
   }
   if (globalEventId === eventId) {
     return <span className="font-medium text-accent-strong">This event</span>;
   }
   return (
     <Link href={`/events/${globalEventId}`} className="text-accent-strong hover:underline">
-      Published as another event
+      Another event
     </Link>
   );
 }
@@ -100,7 +102,7 @@ function JudgedSessionCard({
         <span className={passed ? 'text-accent-strong' : 'font-medium text-red-700'}>
           {passed ? 'Passed' : 'Failed'}
         </span>
-        <PublishedAs eventId={eventId} globalEventId={globalEventId} />
+        <SessionEvent eventId={eventId} globalEventId={globalEventId} />
       </div>
       <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2 text-sm">
         <ReadValue label="Start" value={start} lines={lines.start} />
