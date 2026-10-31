@@ -625,10 +625,11 @@ of a post, and each becomes its own event.
 A Collection's message is stored and answered at once, since the worker waits only five seconds: every session is stored
 as a Draft, and nothing is published inside the request. The step after the answer, `PublicationStepService`, then goes
 through each Source Post of that Source not yet through it, `stepFinishedAt` empty, and publishes the sessions the rules
-read, with the route `rule`. Their version stays 1, since it counts an Administrator's changes. An event an Administrator
-edited or discarded before the step ran is left as it is. When the step fails on a post, or the server restarts before
-it ran, the post stays as it is, and the next Collection of its Source takes it up; a Collection whose list holds nothing
-new still sends its message, so at the latest at that Source's next scheduled Collection.
+read, with the route `rule`. Their version stays 1, since it counts an Administrator's changes. An event an
+Administrator edited or discarded before the step ran is left as it is. A worker that gave up while its message was
+stored does not stop the step. When the step fails on a post, or the server restarts before it ran, the post stays as it
+is, and the next Collection of its Source takes it up; a Collection whose list holds nothing new still sends its
+message, so at the latest at that Source's next scheduled Collection.
 
 With the setting `AUTOMATIC_PUBLICATION=off` (default `on`) the step publishes nothing: every session stays a Draft for an
 Administrator, and turning it on again does not publish those. [infra/production/README.md](../infra/production/README.md)

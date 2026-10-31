@@ -5,7 +5,11 @@
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
+import { once } from 'node:events';
 import { Server } from 'node:http';
+import { setTimeout } from 'node:timers/promises';
+import request from 'supertest';
+import { inject } from 'vitest';
 import { type GlobalEvent, type PrismaClient } from '../src/generated/prisma/client.js';
 import { changeState, patchGlobalEvent, type StateChange } from './global-event-changes.js';
 import { publishedAmong } from './global-event-lists.js';
@@ -160,6 +164,41 @@ describe('A post the step did not finish', () => {
     await nextCollection(world);
 
     expect(await eventOf(failing)).toMatchObject({ state: 'published', publicationRoute: 'rule' });
+  });
+});
+
+describe('A worker that gave up before the message was stored', () => {
+  it('leaves the step to run all the same, once the message is stored', async () => {
+    const { CollectedPostsService } = await import('../src/global-events/collected-posts.service.js');
+    const collectedPosts = app.get(CollectedPostsService);
+    const store = collectedPosts.store.bind(collectedPosts);
+    const worker = new EventTarget();
+    const storing = vi.spyOn(collectedPosts, 'store').mockImplementation(async (message) => {
+      await once(worker, 'gone');
+      return store(message);
+    });
+    const postNumber = newPost();
+
+    const call = request(app.getHttpServer())
+      .post('/global-events/collected')
+      .auth(inject('settings').WORKER_TOKEN, { type: 'bearer' })
+      .send(eventsMessage([collectedPost(postNumber)]));
+    const answered = call.then(
+      () => 'answered',
+      () => 'gave up',
+    );
+    await vi.waitFor(() => {
+      expect(storing).toHaveBeenCalled();
+    });
+    call.abort();
+    // Long enough for the server to see the connection close.
+    await setTimeout(100);
+    worker.dispatchEvent(new Event('gone'));
+    await answered;
+
+    await vi.waitFor(async () => {
+      expect(await eventOf(postNumber)).toMatchObject({ state: 'published', publicationRoute: 'rule' });
+    });
   });
 });
 

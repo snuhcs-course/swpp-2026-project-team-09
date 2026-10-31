@@ -43,9 +43,14 @@ export class GlobalEventsController {
   ): Promise<void> {
     await this.collectedPosts.store(message);
     // Nothing is published inside the request, which the worker waits for only five seconds.
-    response.once('close', () => {
+    // A worker that gave up while the message was stored has already closed the response.
+    if (response.closed) {
       void this.publicationStep.run(message.source);
-    });
+    } else {
+      response.once('close', () => {
+        void this.publicationStep.run(message.source);
+      });
+    }
   }
 
   // A question, which stores nothing and answers with what it asks for (README.md: Requests from the worker server).

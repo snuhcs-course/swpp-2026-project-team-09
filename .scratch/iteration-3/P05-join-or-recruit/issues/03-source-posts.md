@@ -31,5 +31,5 @@ Decided with the ticket's owner on 2026-10-31, where the ticket and the spec giv
 
 ### Agent usage (2026-10-31)
 
-- Agent time: about 40 minutes (estimate), one session with two review subagents.
-- Tokens, subagents included: input 134, with 11,292,455 cache reads and 490,570 cache writes shown apart; output 149,137. Counted before the PR was opened.
+- Agent time: about 50 minutes (estimate), one session with two review subagents, including the fixes after the PR's review.
+- Tokens, subagents included: input 158, with 14,563,204 cache reads and 514,241 cache writes shown apart; output 166,558. Counted before the last commit of those fixes.

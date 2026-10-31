@@ -191,9 +191,9 @@ export class GlobalEventsService {
   // Writes the change to an event in one of the states `from` and raises its version, in one statement that also
   // compares the version and the state, so that of two changes from the same version one is applied and the other
   // refused, and a change checked against a Draft is checked again when the step after a Collection published it
-  // meanwhile, which leaves the version as it is. An event that stays or becomes published by this change has an Administrator's route: they have
-  // looked at it. A change Users see is announced once written: to every app, and to the Holders of the event's Quests
-  // when the event was published.
+  // meanwhile, which leaves the version as it is. An event that stays or becomes published by this change has an
+  // Administrator's route: they have looked at it. A change Users see is announced once written: to every app, and to
+  // the Holders of the event's Quests when the event was published.
   private async change(
     id: string,
     version: number,
