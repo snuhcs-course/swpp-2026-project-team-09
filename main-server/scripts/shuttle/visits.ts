@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { alongLoopMetres, fallbackRideSeconds, SHUTTLE_STOP_COUNT } from '../../src/shuttle/shuttle-timing.ts';
@@ -11,7 +12,7 @@ import { appendTo, type ReportLine, type ShuttleSet } from './sets.ts';
 // Rules R3 to R7 of the shuttle log (the P04 spec): the sets of a day as each car's visits to the stops and its moves
 // between them.
 
-// Rounded up from 5,226 m at 11 m/s, the top speed.
+// Rounded up from 5,224 m at 11 m/s, the top speed.
 export const FASTEST_LAP = 8 * MINUTE;
 const NEAR = MINUTE;
 const FLICKER_SETS = 2;

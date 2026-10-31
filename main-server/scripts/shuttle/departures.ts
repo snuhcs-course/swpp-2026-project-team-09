@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { SHUTTLE_STOP_COUNT } from '../../src/shuttle/shuttle-timing.ts';
@@ -93,6 +94,7 @@ class DayCleaning {
   readonly windows: UnknownWindow[] = [];
   readonly segments: Visit[] = [];
   readonly report: ReportLine[] = [];
+  private readonly departed = new Set<Visit>();
   private readonly dayStart: number;
   private readonly dayEnd: number;
 
@@ -117,6 +119,7 @@ class DayCleaning {
       this.markBetween(stopsPassed(visit), visit, next, 'unconfirmed move');
       return;
     }
+    this.departed.add(visit);
     for (const stop of stopsPassed(visit)) {
       this.departures.push({ stop, car: visit.car, at: arrival(next) });
     }
@@ -161,20 +164,22 @@ class DayCleaning {
     }
   }
 
+  // Only a car with a departure counted: a ghost id would otherwise open all stops for the rest of the day.
   private markCarEdges(car: string, visits: Visit[]): void {
     const [firstVisit] = visits;
+    const beforeLast = visits.at(-2);
     const lastVisit = visits.at(-1);
     if (firstVisit === undefined || lastVisit === undefined) {
       return;
     }
-    if (arrival(firstVisit) > this.dayStart && !PARKING_STOPS.has(firstVisit.stop)) {
+    if (arrival(firstVisit) > this.dayStart && !PARKING_STOPS.has(firstVisit.stop) && this.departed.has(firstVisit)) {
       const to = arrival(firstVisit);
       this.mark({ stops: ALL_STOPS, from: this.dayStart, to, reason: 'first seen mid-day', car });
     }
     if (lastSet(lastVisit) < this.dayEnd) {
       if (PARKING_STOPS.has(lastVisit.stop)) {
         this.report.push({ rule: 'R9', reason: 'left the feed at a parking stop', detail: described(lastVisit) });
-      } else {
+      } else if (beforeLast !== undefined && this.departed.has(beforeLast)) {
         const from = lastSet(lastVisit);
         this.mark({ stops: ALL_STOPS, from, to: this.dayEnd, reason: 'lost mid-day', car });
       }

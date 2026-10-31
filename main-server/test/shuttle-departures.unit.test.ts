@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { clockTime } from '../scripts/shuttle/clock.ts';
@@ -59,6 +60,17 @@ describe('R8 event', () => {
       ['unconfirmed move', '4531', [0], '10:00:45', '10:01:00'],
       ['BREAK', '4531', [1, 2, 3], '10:01:00', '10:02:00'],
     ]);
+  });
+});
+
+describe('a ghost id on a fault-free day', () => {
+  it('opens no window and drops no headway, since it has no departure counted', () => {
+    const { csv, setLog } = logFile('fault-free');
+    const ghost = ['10:17:30', '10:17:45'].map((time) => `2026-11-02T${time}+09:00,4599,s1,법과대,1`);
+    const { day } = cleanedLog({ csv: [csv, ...ghost].join('\n'), setLog });
+
+    expect(day.windows).toEqual([]);
+    expect(day.headways.filter(({ droppedFor }) => droppedFor !== null)).toEqual([]);
   });
 });
 
