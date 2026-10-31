@@ -8,6 +8,9 @@
 import { type Card, type CardKind, CARDS_MAX, type Presented } from '../feature.js';
 
 export function idOf(card: Card): string {
+  if (card.kind === 'restaurant') {
+    return card.restaurant.key;
+  }
   return card.kind === 'quest' ? card.quest.id : card.globalEvent.id;
 }
 

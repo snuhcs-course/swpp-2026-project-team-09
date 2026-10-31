@@ -14,7 +14,8 @@ import { RecruitingService } from '../../quests/recruiting.service.js';
 import { ShuttleService } from '../../shuttle/shuttle.service.js';
 import { type Feature } from '../feature.js';
 import { FREE_TIME_RULES } from '../free-time/free-time-rules.js';
-import { type FreeTimeServices, freeTimeTools } from '../free-time/free-time-tools.js';
+import { type FreeTimeServices } from '../free-time/free-time-services.js';
+import { freeTimeTools } from '../free-time/free-time-tools.js';
 import { withTravelBoxes } from '../free-time/travel-boxes.js';
 import { koreaNow } from '../korea-time.js';
 import { DELIMITER } from '../others-text.js';
@@ -79,7 +80,8 @@ export function chatAssistant({
   places,
   freeTime,
 }: ChatAssistantServices): Feature {
-  const { getMyDay, findFreeTimeEvents } = freeTimeTools(freeTime);
+  const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
+    freeTimeTools(freeTime);
   return {
     instructions,
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
@@ -97,6 +99,9 @@ export function chatAssistant({
       proposeQuest: proposeQuest({ friends, places, globalEvents }),
       getMyDay,
       findFreeTimeEvents,
+      findFreeFriends,
+      findMealRestaurants,
+      showRestaurants,
     },
   };
 }

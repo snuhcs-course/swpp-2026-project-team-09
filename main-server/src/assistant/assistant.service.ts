@@ -22,6 +22,7 @@ import { REDIS } from '../common/redis.module.js';
 import { type Settings } from '../common/settings.js';
 import { FriendsService } from '../friends/friends.service.js';
 import { MenusService } from '../menus/menus.service.js';
+import { RestaurantPlaces } from '../menus/restaurant-places.js';
 import { GlobalEventsService } from '../global-events/global-events.service.js';
 import { PlaceLookup } from '../places/place-lookup.js';
 import { PlacesService } from '../places/places.service.js';
@@ -72,6 +73,7 @@ export class AssistantService {
     places: PlacesService,
     placeLookup: PlaceLookup,
     days: UserDayService,
+    restaurantPlaces: RestaurantPlaces,
     @Inject(TRAVEL_PROVIDER) travel: TravelProvider,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
@@ -83,7 +85,7 @@ export class AssistantService {
       recruiting,
       friends,
       places,
-      freeTime: { days, recruiting, globalEvents, places: placeLookup, travel },
+      freeTime: { days, recruiting, globalEvents, places: placeLookup, travel, friends, menus, restaurantPlaces },
     });
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
     this.dailyMessages = settings.get('ASSISTANT_DAILY_MESSAGES', { infer: true });

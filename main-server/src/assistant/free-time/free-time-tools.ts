@@ -6,10 +6,10 @@
 
 import { z } from 'zod';
 import { QuestBoard } from '../../generated/prisma/client.js';
-import { defineTool, noneFound, type NoneFound, type Tool } from '../feature.js';
-import { koreaDate, koreaTime } from '../korea-time.js';
+import { defineTool, noneFound, type Tool } from '../feature.js';
+import { koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
-import { type AskedInterval, type CandidateServices, fittingCandidates } from './candidates.js';
+import { type AskedInterval, fittingCandidates } from './candidates.js';
 import {
   byStart,
   clockOf,
@@ -20,37 +20,15 @@ import {
   onDay,
   startOfDay,
 } from './free-time.js';
+import { type FreeTimeServices } from './free-time-services.js';
+import { findFreeFriends, findMealRestaurants, showRestaurants } from './meal-tools.js';
+import { CLOCK_TIME, clockTime, dateInput, itemName, neededOf, noDay, outOfReach } from './tool-parts.js';
 import { cardKey, type JudgedCandidate } from './travel-boxes.js';
 import { UserDayService } from './user-day.service.js';
 
 // The 공강 tools, apart from the chat's own (ADR 0009): the server computes Free Time, fit and Travel Time and decides
 // which candidates appear, and the model passes the User's words or ids it was given. Rooms, Places, coordinates and
 // the reason anyone is busy stay here.
-
-export interface FreeTimeServices extends CandidateServices {
-  days: UserDayService;
-}
-
-const DAYS_AHEAD = 7;
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-const CLOCK_TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$|^24:00$/u;
-
-const clockTime = z.string().regex(CLOCK_TIME, 'Expected HH:MM');
-
-const dateInput = z.iso.date().describe('The day, a calendar day in Korea as YYYY-MM-DD.');
-
-function outOfReach(date: string, now: Date): boolean {
-  return date < koreaDate(now) || date > koreaDate(new Date(now.getTime() + DAYS_AHEAD * DAY_MS));
-}
-
-function noDay(date: string): NoneFound {
-  return noneFound(`${date} is not between today and a week from today.`);
-}
-
-function itemName({ name }: DayItem): string {
-  return othersText('item.name', name);
-}
 
 function getMyDay(days: UserDayService): Tool {
   return defineTool({
@@ -95,8 +73,6 @@ const input = z.object({
   leaveBy: clockTime.optional().describe('By when the User must leave, as HH:MM, after this tool asked by needs.'),
 });
 
-type Conditions = z.output<typeof input>;
-
 // Where a stretch of the day asked for starts or ends, or null for an id that is no item of that day.
 function timeOf(
   bound: string,
@@ -122,19 +98,6 @@ function askedParts(free: readonly FreeInterval[], from: Date, to: Date): AskedI
     const askedEnd = interval.end < to ? interval.end : to;
     return askedStart < askedEnd ? [{ ...interval, askedStart, askedEnd }] : [];
   });
-}
-
-// What the tool needs to know before it can judge, the earliest gap's first and the before side first.
-function neededOf(parts: readonly AskedInterval[], { departurePlace, leaveBy }: Conditions): object | null {
-  for (const { previous, next } of parts) {
-    if (previous !== null && previous.placeId === null && departurePlace === undefined) {
-      return { result: 'needs', needs: { side: 'before', item: itemName(previous) } };
-    }
-    if (next !== null && next.placeId === null && leaveBy === undefined) {
-      return { result: 'needs', needs: { side: 'after', item: itemName(next) } };
-    }
-  }
-  return null;
 }
 
 function candidateAnswer({ kind, id, title, start, end, box }: JudgedCandidate): object {
@@ -200,6 +163,20 @@ function findFreeTimeEvents({ days, ...services }: FreeTimeServices): Tool {
   });
 }
 
-export function freeTimeTools(services: FreeTimeServices): { getMyDay: Tool; findFreeTimeEvents: Tool } {
-  return { getMyDay: getMyDay(services.days), findFreeTimeEvents: findFreeTimeEvents(services) };
+interface FreeTimeTools {
+  getMyDay: Tool;
+  findFreeTimeEvents: Tool;
+  findFreeFriends: Tool;
+  findMealRestaurants: Tool;
+  showRestaurants: Tool;
+}
+
+export function freeTimeTools(services: FreeTimeServices): FreeTimeTools {
+  return {
+    getMyDay: getMyDay(services.days),
+    findFreeTimeEvents: findFreeTimeEvents(services),
+    findFreeFriends: findFreeFriends(services),
+    findMealRestaurants: findMealRestaurants(services),
+    showRestaurants: showRestaurants(),
+  };
 }

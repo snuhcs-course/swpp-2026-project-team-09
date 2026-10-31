@@ -23,3 +23,15 @@ export const OPEN_SUB_QUEST_SECONDS = 30 * 60;
 
 // How far the nearest Place point reaches when a place is mapped to a Place.
 export const NEAREST_PLACE_METRES = 150;
+
+// The shortest meal, and the shortest stretch a Friend must share with the User to be free.
+export const SHORTEST_MEAL_SECONDS = 15 * 60;
+
+// A meal's start rounds up to the next of these.
+export const MEAL_START_STEP_SECONDS = 5 * 60;
+
+// When each meal is served across all Restaurants, in Korea. Breakfast is not handled.
+export const MEAL_WINDOWS = {
+  lunch: { from: '11:00', to: '14:30' },
+  dinner: { from: '17:00', to: '19:30' },
+} as const;

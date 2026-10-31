@@ -11,6 +11,7 @@ import { Server } from 'node:http';
 import { type Model } from '../src/assistant/adapter.js';
 import { type AssistantReplyDto } from '../src/assistant/dto/assistant-messages.dto.js';
 import { sentProposalOf as sentBackProposal } from '../src/assistant/proposal.js';
+import { idOf } from '../src/assistant/tools/fresh-ids.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { type Settings } from '../src/common/settings.js';
 import { postAssistantMessages, type SentMessage } from '../test/assistant.js';
@@ -94,11 +95,6 @@ export async function startEvalApp(
 
 type SentAssistant = Extract<SentMessage, { role: 'assistant' }>;
 
-// A message of a case: a Restaurant card goes back by its key, which is no UUID.
-type RequestMessage =
-  | SentMessage
-  | (Omit<SentAssistant, 'cards'> & { cards: { kind: 'quest' | 'globalEvent' | 'restaurant'; id: string }[] });
-
 function sentProposalOf(proposal: CaseProposal, world: World): SentAssistant['proposal'] {
   const { place, globalEvent, invitees, ...values } = proposal;
   return {
@@ -111,8 +107,8 @@ function sentProposalOf(proposal: CaseProposal, world: World): SentAssistant['pr
 }
 
 // A case's turns as the app sends them, its seed names turned into the world's ids.
-export function requestMessages(turns: readonly CaseTurn[], world: World): RequestMessage[] {
-  return turns.map((turn): RequestMessage => {
+export function requestMessages(turns: readonly CaseTurn[], world: World): SentMessage[] {
+  return turns.map((turn): SentMessage => {
     if ('user' in turn) {
       return { role: 'user', text: turn.user };
     }
@@ -131,9 +127,7 @@ function sentBack({ text, cards, proposal }: AssistantReplyDto): SentAssistant {
   return {
     role: 'assistant',
     text,
-    cards: cards.map((card) =>
-      card.kind === 'quest' ? { kind: card.kind, id: card.quest.id } : { kind: card.kind, id: card.globalEvent.id },
-    ),
+    cards: cards.map((card) => ({ kind: card.kind, id: idOf(card) })),
     proposal: proposal === null ? null : sentBackProposal(proposal),
   };
 }
@@ -154,7 +148,7 @@ function accessTokenOf(world: World, { asker }: EvalCase): string {
 async function sendTurn(
   evalApp: EvalApp,
   accessToken: string,
-  messages: readonly RequestMessage[],
+  messages: readonly SentMessage[],
   options: RunOptions,
 ): Promise<{ trace: TurnTrace; body: AssistantReplyDto | null }> {
   const { app, recorder } = evalApp;
