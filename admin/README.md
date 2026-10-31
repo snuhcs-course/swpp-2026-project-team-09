@@ -92,13 +92,13 @@ controls and tables so that every page looks alike.
 | Path              | What it does                                                                                                                                                                                            |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/sign-in`        | Sign in with Google                                                                                                                                                                                     |
-| `/`               | Events: the Drafts, each with what publishing it still needs, and below them the published events that have not ended, both in the main server's order. A title opens the event's page.                 |
+| `/`               | Events: Drafts with what publishing still needs, and published events not yet ended with their Publication Route, filtered by it. A flag marks what needs an Administrator.                             |
 | `/events/new`     | A new event entered by hand, with the event's form; creating it opens the new Draft's page.                                                                                                             |
-| `/events/<id>`    | One Global Event: its state, its source link and post number, its text as stored, and the form that saves, publishes, discards or cancels it. An unknown id shows the not-found page.                   |
+| `/events/<id>`    | One Global Event: state, Publication Route, flag, source link and post number, stored text, its Judgement, and the form that saves, publishes, discards or cancels it.                                  |
 | `/places`         | Kakao's map of the campus with every Place's outlines, or a marker for a Place without one; a search and a click select a Place and show its record.                                                    |
 | `/users`          | Lists the Users with their name, email, department, Friend ID and number of Friends, a User before onboarding marked; a search filters them. A User opens their page.                                   |
 | `/users/<id>`     | A User's Friends, "친구 맺기" with another onboarded User who is not yet their Friend, and "친구 끊기" after a confirmation. An unknown id shows the not-found page.                                    |
-| `/collection`     | Collection status: each Source with its last successful Collection and its last failure, a broken Source marked.                                                                                        |
+| `/collection`     | Collection status: each Source with its last success and last failure, a broken Source marked, and below them the posts that are not settled.                                                           |
 | `/administrators` | Lists the Administrators with whether each has signed in; registers an address; removes one, the signed-in one included, after a confirmation. The main server keeps the last one and the page says so. |
 
 ## Global Events
@@ -106,6 +106,20 @@ controls and tables so that every page looks alike.
 The home page reads `GET /admin/global-events?state=draft` and `?state=published`, and links to the page for a new
 event; the event's page reads
 `GET /admin/global-events/:id` and the Places from `GET /admin/places`.
+
+A published event's Publication Route is a column of the Published table, and `/?route=administrator`, `rule` or
+`judgement` filters that table by it, in the site, from the list the main server sent. A Draft has no route, so the
+Drafts stay as they are; ended and cancelled events are in neither list. `needsAdministrator` marks a row and the
+event's page with "Needs an Administrator". The event's page also shows the route.
+
+The event's page shows the Judgement of its post beside the post's text (`events/[id]/judgement-panel.tsx`), when there
+is one. A post has one Judgement, so the panel holds all its sessions: each with its values, the lines they were read
+from, whether it passed, each check by the name the main server gives it, and whether it was published as this event or
+another. Its times are shown as the AI wrote them, since a time the checks could not read is shown too; they are Seoul's.
+Above them it says the outcome, with the model and the time: how many sessions passed, that the post was called no
+event, why a Judgement could not be made and whether another try is left, or that a try is running. A Draft that a
+Judgement left stays a Draft, published or discarded with the same form. Cancelling an event a Judgement published is
+the same action as for any other, and leaves its route and Judgement in place.
 
 Times are shown and entered in Asia/Seoul, whatever the browser's time zone (`src/seoul-time.ts`). A start at 00:00 is
 marked as possibly a day without its time, in the list and on the form, since a collection often stores a day read
@@ -143,6 +157,14 @@ After a change goes through the page is read again. A refusal leaves what the pe
 400 with the main server's message, `GLOBAL_EVENT_INCOMPLETE` as what is missing, `GLOBAL_EVENT_STATE` as the event's
 state now, and `GLOBAL_EVENT_CHANGED` as a warning that another Administrator changed the event. The last two offer
 "Load the current version", which reads the page again and replaces the input.
+
+## Unsettled posts
+
+A Collection is recorded as a success whatever happens to its posts afterwards, so the Collection status page lists,
+below the Sources, what `GET /admin/global-events/unsettled-posts` answers: the posts the publication step failed on or
+has not finished with, a post it is reading at that moment included, and those whose Judgement could not be made while
+a Draft waits. Each row has the post's Source and link, the step's state, the Judgement's try and failure, and links to
+the post's Drafts.
 
 ## Places
 

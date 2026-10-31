@@ -37,6 +37,8 @@ export interface Administrator {
   signedIn: boolean;
 }
 
+export type PublicationRoute = 'administrator' | 'rule' | 'judgement';
+
 export interface ListedGlobalEvent {
   id: string;
   title: string;
@@ -50,13 +52,53 @@ export interface ListedGlobalEvent {
   source: string | null;
   postKey: string | null;
   sourceUrl: string | null;
-  publicationRoute: 'administrator' | 'rule' | 'judgement' | null;
+  publicationRoute: PublicationRoute | null;
   needsAdministrator: boolean;
   missing: Missing[];
 }
 
+// A session as the AI read it. The times are as it wrote them, which the checks may have failed to read. `name` of a
+// check is the main server's to choose. `globalEventId` is the event it was published as.
+export interface JudgedSession {
+  start: string | null;
+  end: string | null;
+  place: string | null;
+  overPeriod: boolean;
+  lines: { start: string[]; end: string[]; place: string[] };
+  placeId: string | null;
+  checks: { name: string; passed: boolean }[];
+  passed: boolean;
+  globalEventId: string | null;
+}
+
+// The one Judgement of an event's post. `outcome` is empty while a try runs, and `sessions` empty when no answer came.
+export interface Judgement {
+  outcome: 'judged' | 'no_event' | 'failed' | null;
+  failure: string | null;
+  attempts: number;
+  announcesEvent: boolean | null;
+  sessions: JudgedSession[];
+  modelId: string | null;
+  judgedAt: string | null;
+}
+
 export interface GlobalEvent extends ListedGlobalEvent {
   description: string;
+  judgement: Judgement | null;
+}
+
+// A post the publication step failed on or has not finished with, or whose Judgement could not be made.
+export interface UnsettledPost {
+  source: string;
+  key: string;
+  address: string;
+  stepFinished: boolean;
+  stepFailure: string | null;
+  stepFailedAt: string | null;
+  judgementFailure: string | null;
+  judgementAttempts: number;
+  // Its events that are still Drafts.
+  drafts: { id: string; title: string }[];
 }
 
 // The fields an edit sends. Times carry their offset; null clears an optional field.
@@ -169,6 +211,8 @@ export const mainServer = {
     request('DELETE', `/admin/administrators/${encodeURIComponent(id)}`, token),
   listGlobalEvents: (token: string, state: 'draft' | 'published'): Promise<ListedGlobalEvent[]> =>
     request('GET', `/admin/global-events?state=${state}`, token),
+  listUnsettledPosts: (token: string): Promise<UnsettledPost[]> =>
+    request('GET', '/admin/global-events/unsettled-posts', token),
   // The same key on a retry gets the event the first attempt created.
   createGlobalEvent: (token: string, idempotencyKey: string, change: GlobalEventChange): Promise<GlobalEvent> =>
     request('POST', '/admin/global-events', token, change, idempotencyKey),

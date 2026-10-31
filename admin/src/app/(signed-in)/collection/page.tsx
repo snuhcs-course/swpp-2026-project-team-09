@@ -6,11 +6,14 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import Link from 'next/link';
 import type { ReactElement } from 'react';
 
-import { type CollectionStatus, mainServer } from '@/main-server';
+import { type CollectionStatus, mainServer, type UnsettledPost } from '@/main-server';
 import { formatInSeoul } from '@/seoul-time';
 import { asAdministrator } from '@/session';
+
+import { JUDGEMENT_TRIES } from '../events/publication';
 
 const SOURCES: Record<string, string> = {
   coop_menus: 'Co-op menus',
@@ -51,8 +54,89 @@ function StatusRow({ status }: { status: CollectionStatus }): ReactElement {
   );
 }
 
+function stepOf({ stepFinished, stepFailure, stepFailedAt }: UnsettledPost): string {
+  if (stepFailure !== null) {
+    return stepFailedAt === null ? `Failed · ${stepFailure}` : `Failed ${formatInSeoul(stepFailedAt)} · ${stepFailure}`;
+  }
+  return stepFinished ? 'Finished' : 'Not finished';
+}
+
+function judgementOf({ judgementFailure, judgementAttempts }: UnsettledPost): string {
+  if (judgementAttempts === 0) {
+    return '—';
+  }
+  const tried = `Try ${judgementAttempts} of ${JUDGEMENT_TRIES}`;
+  return judgementFailure === null ? tried : `${tried} · ${judgementFailure}`;
+}
+
+function UnsettledRow({ post }: { post: UnsettledPost }): ReactElement {
+  return (
+    <tr>
+      <td className="font-medium">
+        {SOURCES[post.source] ?? post.source} ·{' '}
+        <a href={post.address} target="_blank" rel="noreferrer" className="text-accent-strong hover:underline">
+          Post {post.key}
+        </a>
+      </td>
+      <td>{stepOf(post)}</td>
+      <td>{judgementOf(post)}</td>
+      <td>
+        {post.drafts.length === 0 ? (
+          '—'
+        ) : (
+          <ul className="space-y-1">
+            {post.drafts.map(({ id, title }) => (
+              <li key={id}>
+                <Link href={`/events/${id}`} className="text-accent-strong hover:underline">
+                  {title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </td>
+    </tr>
+  );
+}
+
+function UnsettledPosts({ posts }: { posts: UnsettledPost[] }): ReactElement {
+  return (
+    <section className="space-y-3">
+      <h2 id="unsettled">Unsettled posts</h2>
+      <p className="text-sm text-zinc-600">
+        A Collection is recorded as a success whatever happens to its posts afterwards. These are the posts the
+        publication step failed on or has not finished with, one it is reading now included, and those whose Judgement
+        could not be made while a Draft waits.
+      </p>
+      {posts.length === 0 ? (
+        <p className="text-sm text-zinc-500">Every post is settled.</p>
+      ) : (
+        <div className="card">
+          <table className="data-table" aria-labelledby="unsettled">
+            <thead>
+              <tr>
+                <th>Post</th>
+                <th>Step</th>
+                <th>Judgement</th>
+                <th>Drafts</th>
+              </tr>
+            </thead>
+            <tbody>
+              {posts.map((post) => (
+                <UnsettledRow key={`${post.source}/${post.key}`} post={post} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default async function CollectionPage(): Promise<ReactElement> {
-  const statuses = await asAdministrator('/collection', (token) => mainServer.listCollectionStatuses(token));
+  const [statuses, unsettled] = await asAdministrator('/collection', (token) =>
+    Promise.all([mainServer.listCollectionStatuses(token), mainServer.listUnsettledPosts(token)]),
+  );
   return (
     <div className="space-y-6">
       <header className="space-y-1">
@@ -81,6 +165,7 @@ export default async function CollectionPage(): Promise<ReactElement> {
           </tbody>
         </table>
       </div>
+      <UnsettledPosts posts={unsettled} />
     </div>
   );
 }

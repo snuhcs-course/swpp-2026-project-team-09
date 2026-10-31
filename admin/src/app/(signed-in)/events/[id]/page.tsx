@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import Link from 'next/link';
@@ -14,7 +15,9 @@ import { formatInSeoul } from '@/seoul-time';
 import { asAdministrator } from '@/session';
 
 import { StartTime } from '../../start-time';
+import { NeedsAdministratorMark, PUBLICATION_ROUTES } from '../publication';
 import { EventForm } from './event-form';
+import { JudgementPanel } from './judgement-panel';
 
 const STATES: Record<GlobalEventState, { label: string; look: string }> = {
   draft: { label: 'Draft', look: 'bg-amber-50 text-amber-800' },
@@ -96,11 +99,22 @@ export default async function EventPage({ params }: PageProps<'/events/[id]'>): 
         <div className="flex flex-wrap items-center gap-3">
           <h1>{event.title}</h1>
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${state.look}`}>{state.label}</span>
+          {event.needsAdministrator && <NeedsAdministratorMark />}
+          {event.publicationRoute !== null && (
+            <span className="text-sm text-zinc-600">
+              Publication Route: {PUBLICATION_ROUTES[event.publicationRoute]}
+            </span>
+          )}
         </div>
       </header>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <Source event={event} />
-        {editable ? <EventForm key={event.version} event={event} places={places} /> : <Stored event={event} />}
+        <div className="min-w-0 space-y-6">
+          {event.judgement !== null && (
+            <JudgementPanel judgement={event.judgement} eventId={event.id} places={places} />
+          )}
+          {editable ? <EventForm key={event.version} event={event} places={places} /> : <Stored event={event} />}
+        </div>
       </div>
     </div>
   );
