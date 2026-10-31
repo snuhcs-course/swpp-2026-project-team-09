@@ -9,6 +9,7 @@ import { parse } from 'yaml';
 import { z } from 'zod';
 import { type Expect, expectSchema } from '../expect.ts';
 import { cardsOf, type Names, namesOf } from '../normalise.ts';
+import { isRecord } from '../readers.ts';
 import { type RunScore } from '../run-score.ts';
 import { type CaseScore, type ScoredTurn } from '../score.ts';
 
@@ -166,7 +167,7 @@ function carriedUnstated({ turns }: CaseScore): boolean {
   return calls
     .filter(({ name }) => name === 'searchRecruitingQuests')
     .some(({ input }) => {
-      const args = (input ?? {}) as Record<string, unknown>;
+      const args = isRecord(input) ? input : {};
       const { from, to } = args;
       const period =
         typeof from === 'string' &&
