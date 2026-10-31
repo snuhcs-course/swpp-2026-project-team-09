@@ -91,6 +91,7 @@ A candidate whose place is unknown is left out. An item whose place is unknown i
 - From an item to an item: every gap between them, in order. There may be several, when something the User holds falls between the two.
 - From `now`, or from an item, to `end`: every gap from there to the end of the day.
 - Between two clock times: the part of each gap inside that window. The candidates must also start inside the window, and one with an end must end inside it too. Travel still runs from the gap's previous item and to its next item, and the User still leaves at the time section 7 gives, not at the window's start.
+- Any mix of these works the same way. 첫 수업 전 is from `00:00` to the first item, and from `now` on today.
 - 다음 공강 is the first gap after `now`. A User with no items has one gap, the rest of the day.
 - Two Classes the User names that are not on that day cannot be found. A User with no Timetable has none, so the model asks for the time.
 
@@ -268,6 +269,8 @@ Conditions such as "운동만" narrow what is shown. "운동만" calls with Boar
 - The reason anyone is busy.
 - A Friend who is not free, in any list.
 - Any candidate, Restaurant or Friend that was left out, and why.
+
+A request for any of these is refused.
 
 ## 14. The score
 
