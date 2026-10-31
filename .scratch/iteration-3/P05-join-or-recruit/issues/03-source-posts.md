@@ -19,7 +19,7 @@
 
 ## Comments
 
-Decided with the ticket's owner on 2026-10-31, where the ticket and the spec give no value:
+Decided on 2026-10-31, where the ticket and the spec give no value:
 
 - The worker's question and message take no old shape. Server and worker go out as one `all` Release, away from the Collection times; a Collection that still meets the other version is refused, recorded as failed and read again by the next one.
 - `post_number` and `source_url` stay on `global_events`, unused, for one Release, because old pods of the rolling update read them. A later migration drops them.
@@ -31,5 +31,5 @@ Decided with the ticket's owner on 2026-10-31, where the ticket and the spec giv
 
 ### Agent usage (2026-10-31)
 
-- Agent time: about 50 minutes (estimate), one session with two review subagents, including the fixes after the PR's review.
-- Tokens, subagents included: input 158, with 14,563,204 cache reads and 514,241 cache writes shown apart; output 166,558. Counted before the last commit of those fixes.
+- Agent time: about 1 hour (estimate), one session with two review subagents, including the fixes after the PR's reviews.
+- Tokens, subagents included: input 220, with 21,718,977 cache reads and 1,208,994 cache writes shown apart; output 196,930. Counted before the last commit of those fixes.
