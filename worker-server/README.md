@@ -128,7 +128,9 @@ once in the started worker, not through HTTP, in an integration test (`*.integra
 
 - **Saved pages**: `test/pages/` holds pages of each Source as they were served, named after the Source, the page when
   the Source has several, and the day it was saved, and read with `savedPage(name)`, or `savedAnswer(name)` for a JSON
-  answer. Save a page once, with the project's `User-Agent`. Prettier leaves the folder alone:
+  answer. Save a page once, with the project's `User-Agent`. extra.snu's list pages are the one exception to "as they
+  were served": the posts `main-server/eval/collection/` holds out are cut from them, so that no test reads one. Prettier
+  leaves the folder alone:
 
   ```bash
   curl -A 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)' \
@@ -313,9 +315,11 @@ A Collection does four things:
 2. It asks the main server which of them it stores, by the Source and each programme's key, its `dataSeq`.
 3. It opens the page of each new one, `https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002414`, which redirects
    to the programme's page. A programme that redirects to a sign-in, at `nsso.snu.ac.kr` or the site's `/comm/login/`, is
-   skipped and counted. It is not stored, so the next Collection tries it again. Everything else follows the events list:
-   a page that fails, or the firewall's error page, stops the Collection; a page that is not the programme asked for is
-   sent with its title from the list alone; three in a row, or a Collection that read no programme, fail it.
+   skipped and counted. It is not stored, so the next Collection tries it again. A browser that ends up anywhere but a
+   programme's page, `findIcmpNsbjtPgmInfo.do`, was held in the waiting room: that stops the Collection, and the next one
+   reads the programme. The rest follows the events list: a page that fails, or the firewall's error page, stops the
+   Collection; a page at that address that is not the programme asked for is sent with its title from the list alone;
+   three in a row, or a Collection that read no programme, fail it.
 4. It sends what it read in one message, with the number it skipped as `skippedPosts`, which the admin site's Collection
    status shows.
 
@@ -326,14 +330,14 @@ page's session tables (`[1] 회차`):
   `교육(활동)장소`. A place of `-` is no place.
 - Its `readFrom` is `body`, so that the main server's rules read the field as they read a post's own time line. Two kinds
   of field would then be published wrongly, and are kept from the rules. The site fills in 00:00 where it has no time of
-  day, so a start at 00:00 is sent as a day. A session of more than 24 hours is often a period to apply or to take part
+  day, so a start at 00:00 is sent as a day, and its end takes the same form. A session of more than 24 hours is often a period to apply or to take part
   in, so it is sent with `readFrom` null: its time stays for an Administrator and the Judgement.
 - When a programme has several sessions, each has a `title` of the programme's title and its number:
   `영어 스피치 (2회차)`. It names that session's Global Event.
 
 The description is the programme's summary, one line for each session as the page writes it,
 `[1회차] 기간: … / 장소: …`, since a Judgement reads a post's text alone and quotes it, a line `신청기간: …` with its
-application period, and its main text, one line of the page per line. E-mail addresses in it are replaced by `[이메일]` before anything leaves the worker: the
+application period, and its main text, one line of the page per line. E-mail addresses, there and in every other value of the page, are replaced by `[이메일]` before anything leaves the worker: the
 site's footer refuses the automatic collection of the addresses it shows. The address sent is the `view.do` one, since
 the programme's page has an address of its own that names no key.
 
@@ -403,13 +407,16 @@ src/
 │   ├── main-server.ts               the worker's way to the main server: HTTP requests with the worker's token
 │   ├── page-fetcher.module.ts       gives every collector a PageFetcher of its own
 │   ├── page-fetcher.ts              the one place where pages are fetched
+│   ├── browser-pages.module.ts      makes BrowserPages available to every feature
+│   ├── browser-pages.ts             the one place where pages are opened in a browser, one every two seconds
+│   ├── chromium.ts                  the real browser under BrowserPages
 │   ├── seoul-day.ts                 the calendar day in Asia/Seoul
 │   └── collector.ts                 the worker's end of a Collection, which every collector extends
 ├── health/                          a feature: the liveness and readiness checks
 ├── menu/                            a feature: the collector of the three menu Sources and its parsers
 ├── shuttle/                         a feature: the collector of the shuttle's route page and vehicle positions, and
 │                                    their parsers
-└── event/                           a feature: the collector of the events list and its parsers
+└── event/                           a feature: the collectors of the events list and extra.snu, and their parsers
 test/                                tests named by level, which stand in for the Sources and the main server
 └── pages/                           pages saved from the Sources, which the tests read in place of them
 ```

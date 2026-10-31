@@ -19,7 +19,7 @@ import {
 import { type StoredEventPostsQuestion, storedEventPostsAnswerSchema } from './dto/stored-event-posts.dto.js';
 import { type ListedProgramme, parseExtraSnuListPage } from './extra-snu-list-page.parser.js';
 import { listPageAddress, programmeAddress } from './extra-snu-list.js';
-import { parseExtraSnuPage } from './extra-snu-page.parser.js';
+import { maskEmails, parseExtraSnuPage } from './extra-snu-page.parser.js';
 
 // 03:00 and 15:00, midway between the SNU events list's Collections, and clear of the menus' and the shuttle stops'.
 const COLLECTION_TIMES = '0 0 3,15 * * *';
@@ -36,6 +36,12 @@ function needsSignIn(url: string): boolean {
   return hostname === 'nsso.snu.ac.kr' || pathname.startsWith('/comm/login/');
 }
 
+// Where every programme ends up past the waiting room. A browser that is anywhere else was not let through in time: a
+// next Collection can read that programme, unlike one stored as unreadable.
+function isProgrammePage(url: string): boolean {
+  return new URL(url).pathname.endsWith('/findIcmpNsbjtPgmInfo.do');
+}
+
 // A browser follows the university's firewall's block page to its error page.
 function isBlocked(url: string): boolean {
   return new URL(url).hostname === 'snucert.snu.ac.kr';
@@ -47,7 +53,7 @@ function unreadableProgramme({ key, title }: ListedProgramme): CollectedPost {
   return {
     key,
     address: programmeAddress(key),
-    title,
+    title: maskEmails(title),
     description: '',
     sessions: [{ number: 1, start: null, end: null, readFrom: null, place: null }],
   };
@@ -156,6 +162,9 @@ export class ExtraSnuCollector extends Collector {
         this.logger.log(`Programme ${programme.key} needs a sign-in, and is skipped`);
         skipped += 1;
         continue;
+      }
+      if (!isProgrammePage(page.url)) {
+        return { posts, skipped, failure: new Error(`${programmeAddress(programme.key)} stopped at ${page.url}`) };
       }
       const read = readProgramme(page.html, programme.key);
       if (read instanceof Error) {

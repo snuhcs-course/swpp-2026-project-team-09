@@ -104,9 +104,7 @@ describe('A session whose fields the rules should not publish as they stand', ()
   });
 
   it('starting at 00:00, which stands for no time of day, gives its start as a day', () => {
-    expect(parsed('PGM012002188').sessions).toMatchObject([
-      { start: '2026-11-21', end: '2026-11-21T23:59:00+09:00', readFrom: 'body' },
-    ]);
+    expect(parsed('PGM012002188').sessions).toMatchObject([{ start: '2026-11-21', end: null, readFrom: 'body' }]);
   });
 
   it('with an empty period and "-" as its place gives neither, and no line of the description', () => {
@@ -114,6 +112,32 @@ describe('A session whose fields the rules should not publish as they stand', ()
 
     expect(sessions).toEqual([{ number: 1, start: null, end: null, readFrom: null, place: null }]);
     expect(description).not.toContain('회차]');
+  });
+});
+
+describe('A session the main server would refuse', () => {
+  it('of a number that appears twice is refused, so that the programme alone is held back', () => {
+    // The saved programme's second session under the number of its first.
+    const twice = programme('PGM012002329').replace('[2]', '[1]');
+    expect(() => parseExtraSnuPage(twice, 'PGM012002329')).toThrow('Session 1 appears twice');
+  });
+
+  it('of number 0 is refused', () => {
+    const zero = programme('PGM012002414').replace('[1]', '[0]');
+    expect(() => parseExtraSnuPage(zero, 'PGM012002414')).toThrow('A session has no number');
+  });
+});
+
+describe('An e-mail address anywhere on the page', () => {
+  it('is masked in the place and the title too', () => {
+    const page = programme('PGM012002414')
+      .replace('<td class="last">중앙도서관 관정관 3층 양두석홀</td>', '<td class="last">문의 a.b@snu.ac.kr</td>')
+      .replace('<p class="tit">IEEE Authorship Seminar</p>', '<p class="tit">문의 a.b@snu.ac.kr</p>');
+
+    const { title, sessions } = parseExtraSnuPage(page, 'PGM012002414');
+
+    expect(title).toBe('문의 [이메일]');
+    expect(sessions[0].place).toBe('문의 [이메일]');
   });
 });
 
@@ -131,6 +155,7 @@ describe('A page that is not the programme asked for', () => {
   });
 
   it('a programme without session tables is refused', () => {
+    // No table holds a session once none has the name the parser looks for.
     const noSessions = programme('PGM012002414').replaceAll('intlNsbjtLtrInfoList', 'other');
     expect(() => parseExtraSnuPage(noSessions, 'PGM012002414')).toThrow('The programme has no sessions');
   });

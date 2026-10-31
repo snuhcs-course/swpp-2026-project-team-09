@@ -4,15 +4,27 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { collect, collected, list, listPages, mainServerNotStoring, programme, seminar } from './extra-snu.js';
+import {
+  collect,
+  collected,
+  list,
+  listPages,
+  mainServerNotStoring,
+  programme,
+  programmePage,
+  seminar,
+} from './extra-snu.js';
 
-const NOT_A_PROGRAMME = '<html><body><p>존재하지 않는 프로그램입니다.</p></body></html>';
+const NOT_A_PROGRAMME = programmePage('<html><body><p>존재하지 않는 프로그램입니다.</p></body></html>');
 
 describe('A Collection of extra.snu that cannot open a page', () => {
   it('hands over what it read with the reason when a programme does not answer, and opens no more', async () => {
     const { browser, mainServer, succeeded } = await collect(
       // The saved programme as the page of the first new one, whose own page is not saved.
-      { ...listPages, [programme('PGM012002407')]: seminar.replaceAll('2002414', '2002407') },
+      {
+        ...listPages,
+        [programme('PGM012002407')]: programmePage(String(seminar.html).replaceAll('2002414', '2002407')),
+      },
       mainServerNotStoring('PGM012002407', 'PGM012002417', 'PGM012002416'),
     );
 
@@ -37,6 +49,22 @@ describe('A Collection of extra.snu that cannot open a page', () => {
     expect(succeeded).toBe(false);
     expect(collected(mainServer)).toMatchObject({
       failureReason: `The university's firewall blocked ${programme('PGM012002407')}`,
+      posts: [],
+    });
+  });
+});
+
+describe('A Collection of extra.snu held in the waiting room', () => {
+  it('stops with the reason, and does not store the programme, so that the next Collection reads it', async () => {
+    const waiting = 'https://extra.snu.ac.kr/wait.jsp';
+    const { mainServer, succeeded } = await collect(
+      { ...listPages, [programme('PGM012002407')]: { redirectedTo: waiting } },
+      mainServerNotStoring('PGM012002407'),
+    );
+
+    expect(succeeded).toBe(false);
+    expect(collected(mainServer)).toMatchObject({
+      failureReason: `${programme('PGM012002407')} stopped at ${waiting}`,
       posts: [],
     });
   });

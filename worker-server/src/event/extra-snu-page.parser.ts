@@ -20,13 +20,22 @@ const EMAIL_MASK = '[이메일]';
 // The page's own programme is named by a scrap button: {"pgmType":"PGM01" ,"pgmSeq":"2002414", ...}.
 const PROGRAMME_NAME = /"pgmType":"(\w+)"\s*,\s*"pgmSeq":"(\d+)"/u;
 
+export function maskEmails(text: string): string {
+  return text.replaceAll(EMAIL, EMAIL_MASK);
+}
+
+// A value of the page as one line, in the place of what it must not carry.
+function oneLine(text: string): string {
+  return maskEmails(clean(text).replaceAll(/\s+/gu, ' '));
+}
+
 function keyOf($: CheerioAPI): string | null {
   const name = PROGRAMME_NAME.exec($('.scrap input').attr('data-params') ?? '');
   return name === null ? null : `${name[1]}${name[2]}`;
 }
 
 // A session's period field, "2026.11.02. 10:00 ~ 2026.11.02. 11:00". The site fills in 00:00 where it has no time of
-// day, so a start at 00:00 is sent as a day. A session over a day, often a period to apply or to take part in, is not one
+// day, so a start at 00:00 is sent as a day, and its end takes the same form, as in the events list's posts. A session over a day, often a period to apply or to take part in, is not one
 // sitting: its time is kept for an Administrator and the Judgement, and not for the rules to publish.
 function timeOf(period: string): Pick<CollectedSession, 'start' | 'end' | 'readFrom'> {
   const time = readEventTime(period);
@@ -34,11 +43,13 @@ function timeOf(period: string): Pick<CollectedSession, 'start' | 'end' | 'readF
     return { start: null, end: null, readFrom: null };
   }
   const isOverADay = time.end !== null && Date.parse(time.end) - Date.parse(time.start) > A_DAY;
-  return {
-    start: time.start.endsWith(MIDNIGHT) ? time.start.slice(0, -MIDNIGHT.length) : time.start,
-    end: time.end,
-    readFrom: isOverADay ? null : 'body',
-  };
+  const readFrom = isOverADay ? null : 'body';
+  if (!time.start.endsWith(MIDNIGHT)) {
+    return { start: time.start, end: time.end, readFrom };
+  }
+  const startDay = time.start.slice(0, 10);
+  const endDay = time.end?.slice(0, 10) ?? null;
+  return { start: startDay, end: endDay !== null && endDay > startDay ? endDay : null, readFrom };
 }
 
 interface SessionFields {
@@ -55,15 +66,19 @@ function sessionFieldsOf($: CheerioAPI): SessionFields[] {
   for (const row of $('[id="intlNsbjtLtrInfoList"] tr').toArray()) {
     const head = $(row).find('th.bg2');
     if (head.length > 0) {
-      const number = /\[(\d+)\]/u.exec(head.text())?.[1];
+      const number = /\[([1-9]\d*)\]/u.exec(head.text())?.[1];
       if (number === undefined) {
         throw new Error('A session has no number');
+      }
+      // The main server would refuse the whole message over it.
+      if (sessions.some((session) => session.number === number)) {
+        throw new Error(`Session ${number} appears twice`);
       }
       sessions.push({ number, rows: [] });
     }
     sessions.at(-1)?.rows.push({
       label: clean($(row).find('th').last().text()),
-      value: clean($(row).find('td').last().text()).replaceAll(/\s+/gu, ' '),
+      value: oneLine($(row).find('td').last().text()),
     });
   }
   return sessions.map(({ number, rows }) => {
@@ -102,16 +117,15 @@ function sessionLine({ number, period, place }: SessionFields): string | null {
 // The programme's summary, its sessions, its application period and its main text, one line per line of the page. The
 // sessions come before the application period, so that a Judgement does not take a session's line for that period.
 function descriptionOf($: CheerioAPI, sessions: SessionFields[]): string {
-  const applicationPeriod = clean($('dl.date dd').first().text()).replaceAll(/\s+/gu, ' ');
+  const applicationPeriod = oneLine($('dl.date dd').first().text());
   return [
-    clean($('.text_wrap .desc').first().text()),
+    oneLine($('.text_wrap .desc').first().text()),
     ...sessions.flatMap((session) => sessionLine(session) ?? []),
     `신청기간: ${applicationPeriod}`,
-    ...bodyLines($, '.cont_box:has(.cont_tit:contains("주요내용")) .td_box'),
+    ...bodyLines($, '.cont_box:has(.cont_tit:contains("주요내용")) .td_box').map((line) => maskEmails(line)),
   ]
     .filter((line) => line !== '')
-    .join('\n')
-    .replaceAll(EMAIL, EMAIL_MASK);
+    .join('\n');
 }
 
 // One Source Post with one session per 회차, from a programme's page.
@@ -125,7 +139,7 @@ export function parseExtraSnuPage(html: string, key: string): CollectedPost {
   if (pageKey !== key) {
     throw new Error(`The page is not programme ${key}`);
   }
-  const title = clean($('.text_wrap .tit').first().text()).replaceAll(/\s+/gu, ' ');
+  const title = oneLine($('.text_wrap .tit').first().text());
   if (title === '') {
     throw new Error('The programme has no title');
   }

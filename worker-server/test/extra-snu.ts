@@ -17,7 +17,8 @@ export const list = (page: number): string =>
 
 export const programme = (key: string): string => `https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=${key}`;
 
-// The programmes of the first four pages as saved, without those the evaluation holds out.
+// The programmes of the first four pages. The saved pages list twelve each, less those the evaluation holds out, which
+// were cut from them so that no test reads a held-out post.
 export const listed = [
   'PGM012002407',
   'PGM012002417',
@@ -38,7 +39,15 @@ export const listPages = Object.fromEntries(
   [1, 2, 3, 4].map((page) => [list(page), savedPage(`extra-snu-list-page-${page}-2026-10-31`)]),
 );
 
-export const seminar = savedPage('extra-snu-programme-PGM012002414-2026-10-31');
+// A programme's page, as the browser reaches it from its `view.do` address.
+export function programmePage(html: string): Redirected {
+  return {
+    redirectedTo: 'https://extra.snu.ac.kr/ptfol/imng/icmpNsbjtPgm/findIcmpNsbjtPgmInfo.do?encSddpbSeq=91632f592d',
+    html,
+  };
+}
+
+export const seminar = programmePage(savedPage('extra-snu-programme-PGM012002414-2026-10-31'));
 
 // The main server stores every listed programme but those given.
 export function mainServerNotStoring(...newKeys: string[]): MainServerStub {

@@ -16,12 +16,13 @@ import {
   mainServerNotStoring,
   onAFakeClock,
   programme,
+  programmePage,
   seminar,
 } from './extra-snu.js';
 import { savedPage } from './pages.js';
 import { startApp } from './start-app.js';
 
-const course = savedPage('extra-snu-programme-PGM012002329-2026-10-31');
+const course = programmePage(savedPage('extra-snu-programme-PGM012002329-2026-10-31'));
 const SIGN_IN: Redirected = { redirectedTo: 'https://nsso.snu.ac.kr/sso/usr/snu/mfa/login/view' };
 
 describe('A Collection of extra.snu, on the list', () => {
@@ -164,5 +165,21 @@ describe('The schedule of extra.snu', () => {
     await app.close();
 
     expect(times).toContain('0 0 3,15 * * *');
+  });
+});
+
+describe('The command, on extra.snu', () => {
+  it('collects it whatever the setting, and gives that it succeeded', async () => {
+    const browser = browserServing(listPages);
+    const mainServer = mainServerNotStoring();
+    const app = await startApp(inject('settings'), { mainServer, launchBrowser: browser.launch });
+    const { collectSources } = await import('../src/collect-sources.js');
+
+    const succeeded = await onAFakeClock(() => collectSources(app, ['extra_snu']));
+    await app.close();
+
+    expect(succeeded).toBe(true);
+    expect(browser.opened).toHaveLength(4);
+    expect(mainServer.from('extra_snu', '/global-events/collected')).toHaveLength(1);
   });
 });

@@ -31,6 +31,7 @@ describe('A page of the list of programmes', () => {
   });
 
   it('whose programme has no key is refused', () => {
+    // The saved page with no link naming its programme's key.
     expect(() => parseExtraSnuListPage(listPage(2).replaceAll('global.write(', 'other('))).toThrow(
       'A programme of the list has no key',
     );
