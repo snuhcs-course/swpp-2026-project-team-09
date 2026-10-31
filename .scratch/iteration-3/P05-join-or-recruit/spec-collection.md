@@ -90,7 +90,7 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
 ### extra.snu collection (worker)
 
 - A new collector reads extra.snu's list and detail pages. The detail page sits behind a waiting-room script, so it is opened with a headless browser (Playwright). Opening pages sits behind an interface so that the parser is tested on saved pages.
-- Prior art: hangsha (`wafflestudio/hangsha-server`) collects extra.snu with Playwright, filtering the list by application status codes `0001`–`0004` (their meanings are not yet known) and reading the first four pages of twelve programmes each. It has no licence, so it may be read but not copied.
+- Prior art: hangsha (`wafflestudio/hangsha-server`) collects extra.snu with Playwright, filtering the list by application status codes (`0001` 모집중, `0002` 마감임박, `0003` 모집마감, `0004` 모집대기; the site's default and our list leave out `0003`) and reading the first four pages of twelve programmes each. It has no licence, so it may be read but not copied.
 - It reads the list's first four pages, asks which programmes are stored, opens the detail page of each new one every two seconds, and runs twice a day, apart from the SNU Now schedule (four times a day).
 - A programme whose detail page redirects to the SSO sign-in is skipped and counted in the Collection's result; it is not a failure.
 - Each programme is one Source Post whose sessions come from the page's structured fields (time and place per session). The programme's description and application period go into the description.
@@ -111,7 +111,7 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
   - unless it is read as running over a period, the start has a time of day: a day alone is stored at 00:00 and would show as 00:00 on its card;
   - a session lasts at most 24 hours, unless it is read as running over a period, in which case the quoted line must hold both its first and last day;
   - the place matches exactly one Place. Where the Source's setting says so, a building number alone ("301동 117호") is taken as Gwanak; a place naming another campus is not matched.
-- Each passing session becomes its own Global Event; the failing sessions of a post stay as one Draft.
+- Each passing session becomes its own Global Event; failing sessions make no new Draft. A post stored as one Draft keeps it for them. A post the worker sent with a Draft per session keeps those it did not publish, since each holds a time and place the worker read (ticket 05, decided 2026-11-01).
 - The Judgement is stored with the Draft or event: the values, the lines, each check and whether it passed, the model id and the time.
 - Running a Judgement is one service step over one Draft, so that a later script can run it over the stored Drafts. Running it over the Drafts stored before this work is not part of this spec.
 - Hangsha's prompt rules (application and event periods apart, 오전/오후 carried to a later time, one session per time, only a confirmed place) may guide the prompt, but none of its code or prompt text is copied: it has no licence.
@@ -164,7 +164,7 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
 ## Further Notes
 
 - If time runs short, cut in this order: the same-event step's AI choice, queue and detaching (the link and title rules stay, so the duplicates they catch are still caught), then publishing events over a period, then the admin site's Judgement panel.
-- Assumptions pending the team, to be settled before C0: that posts may be sent to the model provider once masked (the reviewer recommends allowing it: the posts are public and the masks remove contact details); the second labeller.
+- Posts may be sent to the model provider once masked: agreed by Jaehyun0320 and TaeHyun79 on 2026-11-01 (the posts are public and the masks remove contact details). Assumption pending the team, to be settled before C0: the second labeller.
 - Prior art for a Judgement and its failure: hangsha's Gemini parser fills events and shows them even when the call fails, and its parser appears to have stopped for about three weeks unnoticed (ADR 0008).
 - Real overlapping pairs for tests and the metric set, checked on 2026-10-30 (SNU Now `bbsidx` ↔ extra.snu `dataSeq`):
   - 178226 ↔ PGM012002414 (IEEE Authorship Seminar, 11-02 10:00, 관정관 양두석홀)

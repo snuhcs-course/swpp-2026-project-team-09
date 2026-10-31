@@ -347,6 +347,9 @@ file's.
 | `ASSISTANT_MAX_STEPS`              | Optional: the model calls per message; 8 unless set.                                                |
 | `ASSISTANT_TIMEOUT_MS`             | Optional: the milliseconds over all of a message's model calls; 30000 unless set.                   |
 | `ASSISTANT_MAX_OUTPUT_TOKENS`      | Optional: the tokens the model may write in each call; 1000 unless set.                             |
+| `AUTOMATIC_JUDGEMENT`              | Optional: `on` lets the step after a Collection ask the model about Drafts; `off` unless set.       |
+| `JUDGEMENT_TIMEOUT_MS`             | Optional: the milliseconds of a Judgement's model call; 60000 unless set.                           |
+| `JUDGEMENT_MAX_OUTPUT_TOKENS`      | Optional: the tokens the model may write in a Judgement; 4000 unless set.                           |
 
 ### socket-server
 
@@ -359,11 +362,12 @@ file's.
 
 ### worker-server
 
-| Setting           | What it is                                                        |
-| ----------------- | ----------------------------------------------------------------- |
-| `PORT`            | The port the HTTP server listens on.                              |
-| `MAIN_SERVER_URL` | Where the main server is reached, to hand over what is collected. |
-| `WORKER_TOKEN`    | The same line as in `main-server/.env`.                           |
+| Setting                | What it is                                                                                |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| `PORT`                 | The port the HTTP server listens on.                                                      |
+| `MAIN_SERVER_URL`      | Where the main server is reached, to hand over what is collected.                         |
+| `WORKER_TOKEN`         | The same line as in `main-server/.env`.                                                   |
+| `EXTRA_SNU_COLLECTION` | `on` lets the schedule start extra.snu's Collections. `off` by default and in Production. |
 
 ### match-server
 

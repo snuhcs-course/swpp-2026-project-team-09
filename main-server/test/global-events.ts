@@ -6,6 +6,7 @@
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type Prisma, type PrismaClient, type Source } from '../src/generated/prisma/client.js';
@@ -132,6 +133,11 @@ export const invalidEventsMessages: [string, (valid: number, other: number) => o
     'the same post twice',
     (valid) => eventsMessage([collectedPost(valid), collectedPost(valid)], refusedAt),
     'posts: Each post must appear once',
+  ],
+  [
+    'a negative number of skipped posts',
+    (valid) => eventsMessage([collectedPost(valid)], { ...refusedAt, skippedPosts: -1 }),
+    'skippedPosts: ',
   ],
   [
     'no word on whether the Collection finished',

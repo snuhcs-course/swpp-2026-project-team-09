@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 ################################################################################
 
 # One worker at a time, as its README requires, so a Release stops the old pod before it starts the new one.
@@ -22,6 +23,8 @@ spec:
         app: worker-server
     spec:
       enableServiceLinks: false
+      # Node is not an init process: this reaps what the browser leaves behind, as compose.yaml's `init: true` does.
+      shareProcessNamespace: true
       containers:
         - name: worker-server
           image: worker-server
@@ -35,11 +38,14 @@ spec:
               valueFrom: { configMapKeyRef: { name: settings, key: MAIN_SERVER_URL } }
             - name: WORKER_TOKEN
               valueFrom: { secretKeyRef: { name: secrets, key: WORKER_TOKEN } }
+            - name: EXTRA_SNU_COLLECTION
+              valueFrom: { configMapKeyRef: { name: settings, key: EXTRA_SNU_COLLECTION } }
           resources:
             requests:
-              memory: 160Mi
+              memory: 256Mi
+            # The browser of extra.snu's Collections lives only while they run, on top of the worker's usual memory.
             limits:
-              memory: 320Mi
+              memory: 1Gi
           startupProbe:
             httpGet: { path: /health/live, port: http }
             periodSeconds: 10

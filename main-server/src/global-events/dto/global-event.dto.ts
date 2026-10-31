@@ -3,17 +3,21 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
 import {
   GlobalEvent,
   GlobalEventState,
+  type Judgement,
+  type JudgementOutcome,
   type Prisma,
   type PublicationRoute,
   SessionAttachment,
   type Source,
 } from '../../generated/prisma/client.js';
+import { type JudgedSession, storedSessions } from '../judgement-answer.js';
 
 // With what the DTOs read of the post the event was made from: its own session's. One made by an Administrator has none.
 export const WITH_OWN_POST = {
@@ -115,11 +119,52 @@ export function toListedGlobalEventDto(event: GlobalEventWithOwnPost): ListedGlo
   };
 }
 
+// What an event's page reads beyond the lists: its own post's Judgement.
+export const WITH_OWN_POST_AND_JUDGEMENT = {
+  sessions: {
+    ...WITH_OWN_POST.sessions,
+    select: { sourcePost: { select: { source: true, key: true, address: true, judgement: true } } },
+  },
+} satisfies Prisma.GlobalEventInclude;
+
+export type GlobalEventWithJudgement = Prisma.GlobalEventGetPayload<{ include: typeof WITH_OWN_POST_AND_JUDGEMENT }>;
+
+// The Judgement of an event's post, as an Administrator reads it. One post's Judgement covers all its sessions, and a
+// session's `globalEventId` says which event it was published as. `outcome` is `no_event` for a post called no event,
+// `failed` for a Judgement that could not be made, and empty while a try runs.
+export interface JudgementDto {
+  outcome: JudgementOutcome | null;
+  failure: string | null;
+  attempts: number;
+  announcesEvent: boolean | null;
+  sessions: JudgedSession[];
+  modelId: string | null;
+  judgedAt: string | null;
+}
+
+function toJudgementDto(judgement: Judgement): JudgementDto {
+  return {
+    outcome: judgement.outcome,
+    failure: judgement.failure,
+    attempts: judgement.attempts,
+    announcesEvent: judgement.announcesEvent,
+    sessions: storedSessions(judgement.sessions),
+    modelId: judgement.modelId,
+    judgedAt: judgement.judgedAt?.toISOString() ?? null,
+  };
+}
+
 // One event as an Administrator reads it, with the text to check against its Source.
 export interface GlobalEventDetailDto extends ListedGlobalEventDto {
   description: string;
+  judgement: JudgementDto | null;
 }
 
-export function toGlobalEventDetailDto(event: GlobalEventWithOwnPost): GlobalEventDetailDto {
-  return { ...toListedGlobalEventDto(event), description: event.description };
+export function toGlobalEventDetailDto(event: GlobalEventWithJudgement): GlobalEventDetailDto {
+  const judgement = event.sessions.at(0)?.sourcePost.judgement ?? null;
+  return {
+    ...toListedGlobalEventDto(event),
+    description: event.description,
+    judgement: judgement === null ? null : toJudgementDto(judgement),
+  };
 }

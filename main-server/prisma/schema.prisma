@@ -17,6 +17,7 @@
 // 2026-10-06  Fable 5.1  prompted by fyoon46
 // 2026-10-09  Opus 5.5   prompted by Jaehyun0320
 // 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+// 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -258,7 +259,11 @@ model SourcePost {
   // When the step after the Collection's answer finished with the post. Empty until then, so that the next Collection
   // of its Source takes up a post that a failure or a restart left.
   stepFinishedAt DateTime? @map("step_finished_at")
+  // Why the step last failed on the post, and when, for Administrators. Emptied when the step finishes.
+  stepFailure    String?   @map("step_failure")
+  stepFailedAt   DateTime? @map("step_failed_at")
   sessions       SourcePostSession[]
+  judgement      Judgement?
 
   @@unique([source, key])
   @@map("source_posts")
@@ -281,6 +286,45 @@ model SourcePostSession {
   @@unique([sourcePostId, number])
   @@index([globalEventId])
   @@map("source_post_sessions")
+}
+
+// The AI's reading of the sessions of a Source Post the rules left Drafts. One per post, since one call reads the whole
+// post, whatever its tries. Only Administrators see it.
+model Judgement {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourcePostId   String            @unique @map("source_post_id") @db.Uuid
+  // The tries claimed, at most two. A try counts when it is claimed, so that a server that dies during the call has used
+  // it. `source_posts.step_finished_at` has no such limit: the step comes back to a post until it finishes, and asks the
+  // model only while a try is left.
+  attempts       Int               @default(0)
+  // While a server calls the model. So that another server, or the next Collection, does not call it too.
+  claimedAt      DateTime?         @map("claimed_at")
+  // Empty until a try ended.
+  outcome        JudgementOutcome?
+  // Why it could not be made: the error's name, never the post or the answer.
+  failure        String?
+  announcesEvent Boolean?          @map("announces_event")
+  // Per session the values, the quoted lines, each check and the event it was published as: JudgedSession. Dropped
+  // when no answer came.
+  sessions       Json?
+  modelId        String?           @map("model_id")
+  judgedAt       DateTime?         @map("judged_at")
+  // When its passing sessions were published, so that that happens once.
+  publishedAt    DateTime?         @map("published_at")
+  sourcePost     SourcePost        @relation(fields: [sourcePostId], references: [id], onDelete: Cascade)
+
+  @@map("judgements")
+}
+
+enum JudgementOutcome {
+  // The model read the post as announcing an event. Each session passed or failed the checks.
+  judged
+  // The model read the post as announcing no event. It stays a Draft.
+  no_event
+  // An error, a timeout or a malformed answer. Nothing was read.
+  failed
+
+  @@map("judgement_outcome")
 }
 
 // How a session came to be linked to its Global Event.
@@ -581,6 +625,9 @@ model CollectionStatus {
   lastSucceededAt   DateTime? @map("last_succeeded_at")
   lastFailedAt      DateTime? @map("last_failed_at")
   lastFailureReason String?   @map("last_failure_reason")
+  // How many posts its last Collection skipped, needing a sign-in or never reaching their page. Empty for a Source that
+  // has no such posts.
+  lastSkippedPosts  Int?      @map("last_skipped_posts")
 
   @@map("collection_statuses")
 }
