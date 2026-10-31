@@ -4,6 +4,7 @@
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
+# 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 ################################################################################
 
 # Runs bootstrap.sh on a pretend machine under $BATS_TEST_TMPDIR: the team folder, systemd's unit folder and, through
@@ -15,7 +16,7 @@ CONTRACT=(
   POSTGRES_PASSWORD MAIN_DB_PASSWORD MATCH_DB_PASSWORD ACCESS_TOKEN_PRIVATE_KEY ACCESS_TOKEN_PUBLIC_KEY WORKER_TOKEN
   MATCH_SERVER_TOKEN
   PUBLIC_URL GOOGLE_APP_CLIENT_ID GOOGLE_ADMIN_CLIENT_ID ANDROID_CERTIFICATE_FINGERPRINTS ASSISTANT_MODEL
-  ROUND_INTERVAL_SECONDS
+  ROUND_INTERVAL_SECONDS EXTRA_SNU_COLLECTION
   KAKAO_REST_API_KEY INITIAL_ADMINISTRATOR_EMAILS DEMO_ACCOUNT_EMAILS OPENROUTER_API_KEY
 )
 
@@ -105,6 +106,7 @@ example_value_of() {
   [ "$(value_of DEPLOY_STATUS_DIR)" = "$BOOTSTRAP_TEAM_DIR/snu-now-status" ]
   [ "$(value_of DEPLOY_APK_DIR)" = "$BOOTSTRAP_TEAM_DIR/snu-now-apk" ]
   [ "$(value_of ROUND_INTERVAL_SECONDS)" = 60 ]
+  [ "$(value_of EXTRA_SNU_COLLECTION)" = off ]
 }
 
 @test "the key pair is a P-256 pair in one-line PEM form that openssl reads back as PKCS8 private and SPKI public keys, and the public key matches the private" {
