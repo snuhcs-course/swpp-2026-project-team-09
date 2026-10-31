@@ -88,3 +88,10 @@ Two points on the set of cases, also for the review:
 
 - A meal request that names a Place has no case, only the single clock time. Adding one means a new label, and one case out of the 40.
 - "내일 같이 밥 먹을 파티 있어?" is in 공강 파티 (`parties-what-is-on-meal-search`), not in 공통.
+
+### Agent usage (2026-10-31)
+
+- **Agent time** (estimate): about 77 minutes in all: about 48 minutes for the implementing subagent, about 16 for the agent that drafted the labels, about 8 for the two reviewers, and about 5 for this ticket's share of the session that ran all five tickets. Time spent waiting for a person is not counted.
+- **Tokens** (measured from the agents' transcripts, reviewers included; the running session's share is an estimate, a fifth of its total):
+  - Input: about 230 not cached, about 31,600,000 cache reads and about 2,319,000 cache writes.
+  - Output: about 437,000.
