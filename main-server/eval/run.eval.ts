@@ -43,6 +43,9 @@ beforeAll(async () => {
     options,
   );
   started.world = await SEEDERS[options.world](started.evalApp.app, inject('settings').DATABASE_URL);
+  if (options.world === 'p4') {
+    started.evalApp.travel.bind(started.world.seeds);
+  }
   started.names = namesOf(started.world.seeds);
   log.keepSeeds(started.world.seeds);
 });

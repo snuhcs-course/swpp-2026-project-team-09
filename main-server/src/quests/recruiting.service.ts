@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -14,9 +15,24 @@ import { JoinPolicy, Prisma, Quest, QuestBoard } from '../generated/prisma/clien
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import { CLOCK, type Clock } from './clock.js';
-import { QUEST_INCLUDE, QuestDto, RecruitingQuestDto, toRecruitingQuestDto } from './dto/quest.dto.js';
+import {
+  QUEST_INCLUDE,
+  QuestDto,
+  RecruitingQuestDto,
+  type StoredQuest,
+  type SubQuestContent,
+  subQuestContentsOf,
+  toRecruitingQuestDto,
+} from './dto/quest.dto.js';
 import { QuestsService } from './quests.service.js';
 import { alreadyHolder, conflict, notRecruiting, sharedQuestHeld } from './refusals.js';
+
+// A Quest of the list that the reader can still enter, with all its Sub Quests.
+export interface EnterableQuest {
+  id: string;
+  title: string;
+  subQuests: SubQuestContent[];
+}
 
 // The list of recruiting Quests and every way into a Quest (README.md: Quests).
 @Injectable()
@@ -45,8 +61,50 @@ export class RecruitingService {
     return ids.flatMap((id) => listed.find((quest) => quest.id === id) ?? []);
   }
 
+  // The Quests the list gives the reader, of that Board, without those that entering would refuse or has already asked
+  // for: a Full one, one the reader asked to join, and one for a Global Event whose Shared Quest the reader holds.
+  async enterable(readerId: string, board: QuestBoard | undefined): Promise<EnterableQuest[]> {
+    const quests = await this.storedListWhere(readerId, { board });
+    const asked = await this.prisma.questJoinRequest.findMany({
+      where: { userId: readerId },
+      select: { questId: true },
+    });
+    const askedIds = new Set(asked.map(({ questId }) => questId));
+    const sharedEvents = await this.sharedQuestEvents(readerId);
+    const now = this.clock.now();
+    return quests
+      .filter(
+        (quest) =>
+          toRecruitingQuestDto(quest, now) !== null &&
+          quest.holders.length < quest.capacity &&
+          !askedIds.has(quest.id) &&
+          (quest.globalEventId === null || !sharedEvents.has(quest.globalEventId)),
+      )
+      .map((quest) => ({ id: quest.id, title: quest.title, subQuests: subQuestContentsOf(quest) }));
+  }
+
+  // The Global Events the User holds a Shared Quest for.
+  private async sharedQuestEvents(userId: string): Promise<Set<string>> {
+    const holders = await this.prisma.questHolder.findMany({
+      where: { userId, globalEventId: { not: null } },
+      // Two Holders are enough to tell a Shared Quest.
+      select: { globalEventId: true, quest: { select: { holders: { select: { id: true }, take: 2 } } } },
+    });
+    return new Set(
+      holders.flatMap(({ globalEventId, quest }) =>
+        quest.holders.length > 1 && globalEventId !== null ? [globalEventId] : [],
+      ),
+    );
+  }
+
   private async listWhere(readerId: string, where: Prisma.QuestWhereInput): Promise<RecruitingQuestDto[]> {
-    const quests = await this.prisma.quest.findMany({
+    const quests = await this.storedListWhere(readerId, where);
+    const now = this.clock.now();
+    return quests.flatMap((quest) => toRecruitingQuestDto(quest, now) ?? []);
+  }
+
+  private storedListWhere(readerId: string, where: Prisma.QuestWhereInput): Promise<StoredQuest[]> {
+    return this.prisma.quest.findMany({
       where: {
         ...where,
         joinPolicy: { in: [JoinPolicy.open, JoinPolicy.approval] },
@@ -55,8 +113,6 @@ export class RecruitingService {
       include: QUEST_INCLUDE,
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     });
-    const now = this.clock.now();
-    return quests.flatMap((quest) => toRecruitingQuestDto(quest, now) ?? []);
   }
 
   // Joining an Open Quest, which makes the User a Holder at once.

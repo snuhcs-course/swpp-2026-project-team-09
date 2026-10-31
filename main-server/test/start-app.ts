@@ -10,6 +10,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { DynamicModule, INestApplication, Type } from '@nestjs/common';
@@ -21,6 +22,7 @@ import { httpAdapter } from '../src/common/http-adapter.js';
 import { JSON_BODY_LIMIT } from '../src/common/json-body-limit.js';
 import { Settings } from '../src/common/settings.js';
 import { FETCH_MATCH_SERVER } from '../src/matching/match-server.js';
+import { TRAVEL_PROVIDER, type TravelProvider } from '../src/travel/travel.js';
 import { FETCH_KAKAO } from '../src/walking-route/walking-route.service.js';
 import { TestGoogleIdTokenVerifier } from './google.js';
 import { refuseMatchServer } from './match-server.js';
@@ -32,7 +34,8 @@ import { refuseKakao } from './walking-route.js';
 // in the match server's and `model` in the Assistant's model's: by default a ScriptedModel without a script, which
 // fails every call.
 // `controllers` adds controllers that exist only in the tests, such as handlers that no feature has yet, and `modules`
-// modules that only the tests or the benchmark import, such as the one binding the benchmark's run observer.
+// modules that only the tests or the benchmark import, such as the one binding the benchmark's run observer. `travel`,
+// when given, answers in the place of the real Travel Times.
 export async function startApp(
   settings: Partial<Record<keyof Settings, string | undefined>>,
   controllers: Type[] = [],
@@ -40,6 +43,7 @@ export async function startApp(
   fetchMatchServer: typeof fetch = refuseMatchServer,
   model: Model = new ScriptedModel().model,
   modules: (Type | DynamicModule)[] = [],
+  travel?: TravelProvider,
 ): Promise<INestApplication<Server>> {
   for (const [name, value] of Object.entries(settings)) {
     vi.stubEnv(name, value);
@@ -48,7 +52,11 @@ export async function startApp(
   const { AppModule } = await import('../src/app.module.js');
   // Imported after AppModule, so that it is the same class AppModule registers.
   const { GoogleIdTokenVerifier } = await import('../src/auth/google-id-token.verifier.js');
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule, ...modules], controllers })
+  const testing = Test.createTestingModule({ imports: [AppModule, ...modules], controllers });
+  if (travel !== undefined) {
+    testing.overrideProvider(TRAVEL_PROVIDER).useValue(travel);
+  }
+  const moduleRef = await testing
     .overrideProvider(GoogleIdTokenVerifier)
     .useClass(TestGoogleIdTokenVerifier)
     .overrideProvider(FETCH_KAKAO)

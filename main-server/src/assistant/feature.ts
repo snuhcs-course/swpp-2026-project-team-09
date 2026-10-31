@@ -3,18 +3,21 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
 import { type RecruitingQuestDto } from '../quests/dto/quest.dto.js';
 import { type FoundIds } from './found-ids.js';
+import { type TravelBox } from './free-time/party-fit.js';
+import { type JudgedCandidates } from './free-time/travel-boxes.js';
 import { type QuestProposal, type SentProposal } from './proposal.js';
 
 // The parts of an AI feature that know nothing of the model library (ADR 0005). A tool is a zod schema of its input
 // and a plain function that calls the main server's services as the signed-in User. A feature is an entry point with
-// its own system prompt and its own set of tools. A later AI feature is a new Feature that reuses tools, never more
-// tools on another feature, so that one feature cannot reach another's data. `adapter.ts` alone runs them.
+// its own system prompt and its own set of tools. A new capability of the chat joins it as tools and a prompt fragment
+// (ADR 0009), and a Feature of its own only when it has an entry point of its own. `adapter.ts` alone runs them.
 
 // What a card shows: a Quest or a Global Event.
 export type CardKind = 'quest' | 'globalEvent';
@@ -42,12 +45,13 @@ export const CARDS_MAX = 20;
 
 // A card of the reply, filled by the server in the shape of the list the app already draws it from: a Global Event as
 // the 행사 tab's published list serves it, and a Quest as the Boards' recruiting list does.
-export interface GlobalEventCard {
+// A candidate of findFreeTimeEvents also has its 이동 시간 box, which older apps ignore.
+export interface GlobalEventCard extends TravelBox {
   kind: 'globalEvent';
   globalEvent: PublishedGlobalEventDto;
 }
 
-export interface QuestCard {
+export interface QuestCard extends TravelBox {
   kind: 'quest';
   quest: RecruitingQuestDto;
 }
@@ -72,11 +76,12 @@ export interface Asker {
 
 // What every tool of a run is given: who asks and when, the ids the run's lookups and resolvers returned, which are
 // all its presenters accept, the last Proposal sent back with the conversation, whose ids proposeQuest also accepts,
-// and what the presenters have put in the reply.
+// what the presenters have put in the reply, and the candidates findFreeTimeEvents returned so far.
 export interface ToolContext extends Asker {
   readonly found: FoundIds;
   readonly shown: SentProposal | null;
   readonly presented: Presented;
+  readonly judged: JudgedCandidates;
 }
 
 // A feature's reply: the model's last text, and what the presenters put beside it.
@@ -107,6 +112,8 @@ export interface Feature {
   instructions(now: Date): string;
   // By the name the model calls each one.
   readonly tools: Readonly<Record<string, Tool>>;
+  // The cards of a run that answered, from what its tools kept. Left out, they stay as the presenters put them.
+  cardsAfterRun?(context: ToolContext): Card[];
 }
 
 // What a tool answers when nothing matches, so that the model says so instead of answering from elsewhere.

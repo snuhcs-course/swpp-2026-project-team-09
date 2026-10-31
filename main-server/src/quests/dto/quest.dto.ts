@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import {
@@ -94,6 +95,11 @@ export interface RecruitingQuestDto extends QuestSummaryDto {
   nextSubQuest: Pick<SubQuestDto, 'id' | 'attending' | 'title' | 'startsAt' | 'endsAt' | 'place'>;
 }
 
+// A Sub Quest's content, the attending one's read from its Global Event, with its Quest's title.
+export type SubQuestContent = Pick<SubQuestDto, 'id' | 'startsAt' | 'endsAt' | 'place' | 'cancelled'> & {
+  questTitle: string;
+};
+
 // Every Holder's progress, from which the reader's own is picked.
 export const SUB_QUEST_INCLUDE = {
   place: true,
@@ -118,7 +124,7 @@ export const QUEST_INCLUDE = {
 
 type StoredSubQuest = Prisma.SubQuestGetPayload<{ include: typeof SUB_QUEST_INCLUDE }>;
 
-type StoredQuest = Prisma.QuestGetPayload<{ include: typeof QUEST_INCLUDE }>;
+export type StoredQuest = Prisma.QuestGetPayload<{ include: typeof QUEST_INCLUDE }>;
 
 // The content of the attending Sub Quest is the Global Event's as it is now.
 function contentOf(
@@ -158,6 +164,13 @@ export function toPlaceDto({
     return { placeId: place.id, label: place.name, latitude: place.latitude, longitude: place.longitude };
   }
   return placeLabel === null ? null : { placeId: null, label: placeLabel, latitude, longitude };
+}
+
+export function subQuestContentsOf({ title, subQuests, globalEvent }: StoredQuest): SubQuestContent[] {
+  return subQuests.map((subQuest) => {
+    const { startsAt, endsAt, place, cancelled } = contentOf(subQuest, globalEvent);
+    return { id: subQuest.id, questTitle: title, startsAt, endsAt, place, cancelled };
+  });
 }
 
 // Ended for every Holder alike: cancelled, or its end time has passed by `now`.
