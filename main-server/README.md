@@ -1661,6 +1661,20 @@ The worker's two routes, which follow [Requests from the worker server](#request
   where `collectedAt` is when the operator's answer arrived and `x`, `y` the position on the drawing. A `carId` listed
   twice is refused.
 
+## Travel Time
+
+`TRAVEL_PROVIDER` (`src/travel/travel.ts`) says how long the way from one Place to another takes at a departure time,
+in seconds, on foot or by the circular shuttle. Show its seconds as whole minutes, rounded up, with `shownMinutes`. Both
+of its files are read once when the server starts. The eval binds its frozen fixture to the provider.
+
+- **On foot**, it looks the pair up in `seed/walking-table.json` (Seed data, ADR 0010).
+- **By shuttle**, only the anticlockwise route 41946: a walk to a boarding stop, the average wait, the ride to a stop
+  ahead on the loop and a walk from that stop, by the best pair of stops. The wait and the ride use the band of the time
+  the User reaches the stop. It is offered only when the User reaches the stop on a weekday between 08:00 and 21:00 in
+  Korea, and chosen when it is at least 3 minutes faster than walking.
+- **The shuttle's values** come from `seed/shuttle-timing.json` when it exists. Any stop-band or pair-band it lacks, or
+  all of them until it exists, take the fallback in `src/shuttle/shuttle-timing.ts`.
+
 ## Timetable
 
 A User's timetable is the User's classes, and nothing else is stored for it. A User keeps one timetable from semester
@@ -2023,9 +2037,16 @@ into the database.
 | `campus-map-shuttle-stops.json`  | The campus map's 15 stops of its loop, route 61, as it serves them                                      | The campus map, `map.snu.ac.kr`                      |
 | `shuttle-stops.json`             | The operator's 14 stops in loop order, their places on the drawing and the pairs, and the service hours | The operator's route page; the pairs written by hand |
 | `shuttle-route.geojson`          | The shuttle's line, traced along OpenStreetMap's roads                                                  | OpenStreetMap, through Overpass                      |
+| `openstreetmap-paths.json`       | The pinned extract of ways with a `highway` tag, as of its `timestamp`, read only by the builder        | OpenStreetMap, through Overpass                      |
+| `srtm-elevation.json`            | SRTM 30 m heights over the campus, read only by the builder                                             | NASA SRTM, through OpenTopoData                      |
+| `walking-table.json`             | Seconds on foot for every pair of Places and of Places and stops, with each one's elevation             | `pnpm walking:build`, from the seed files above      |
 
 Each exported file keeps, at its top, where it came from and the day of the export.
 
+- **The walking table**: `pnpm walking:build` writes `walking-table.json`. Run it when the Places, the stops or the
+  extract change. `pnpm walking:build --sensitivity` writes nothing: it moves every pin 10 m and 20 m in random
+  directions, 10 runs each, and prints the mean change and the Places that move most. `openstreetmap-paths.json` and
+  `srtm-elevation.json` were exported once and have no name in `pnpm seed:export`, so that the table stays reproducible.
 - **Exporting**: `pnpm seed:export <name>…` repeats the export of the files it names and overwrites them; run without
   a name, it lists the names. An export over the network is one request, sent with a User-Agent that names the
   project, as OpenStreetMap asks. When Overpass answers 504 it is busy: wait some minutes before trying again.
@@ -2182,6 +2203,7 @@ src/
 ├── load-seed.ts                     loads every seed file; the command and the tests call it
 ├── demo-seed.ts                     the command that writes the demo data, `pnpm demo:seed`
 ├── demo-walk.ts                     the command that walks the demo Users, `pnpm demo:walk`
+├── build-walking-table.ts           the command that writes the walking table, `pnpm walking:build`
 ├── demo/                            the demo profile's data, its seed and the walker's paths (not a module)
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
@@ -2224,6 +2246,7 @@ src/
 ├── matching/                        a feature: requests for Matching, checked and passed on to the match server, and
 │                                    the Shared Quests of its matches
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
+├── travel/                          Travel Time: the walking table's builder, and the provider that looks it up
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a
 │                                    position
