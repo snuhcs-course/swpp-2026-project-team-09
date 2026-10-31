@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -47,14 +48,15 @@ import {
 
 // Something a case names by its seed name, such as a card it showed or a Friend it invited.
 export interface Seeded {
-  kind: 'quest' | 'globalEvent' | 'place' | 'friend';
+  kind: 'quest' | 'globalEvent' | 'place' | 'friend' | 'restaurant' | 'item';
   id: string;
   name: string;
 }
 
 export interface World {
-  // The asking User's, with which every message is sent.
+  // The asking User's, with which every message is sent unless a case names one of `askers`.
   accessToken: string;
+  askers: Record<string, string>;
   // By seed name.
   seeds: Record<string, Seeded>;
   // Brings back what the server keeps only for a while (the shuttle's vehicles), before each case.
@@ -186,5 +188,5 @@ export async function seedWorld(app: INestApplication<Server>, databaseUrl: stri
     await prisma.$disconnect();
   }
   await sendAsWorker(app, '/menus/collected', menusMessage(MENUS, { collectedAt: MENUS_COLLECTED_AT }));
-  return { accessToken: asker.accessToken, seeds, refresh: () => storeVehicles(app) };
+  return { accessToken: asker.accessToken, askers: {}, seeds, refresh: () => storeVehicles(app) };
 }

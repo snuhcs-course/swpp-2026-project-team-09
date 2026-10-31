@@ -2,13 +2,24 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { caseSchema, type EvalCase, loadCases, repetitionsOf, selectCases, sentTurnsOf } from '../eval/cases.ts';
+import {
+  caseSchema,
+  casesIn,
+  CASES_DIRECTORY,
+  type EvalCase,
+  loadCases,
+  nowOf,
+  repetitionsOf,
+  selectCases,
+  sentTurnsOf,
+} from '../eval/cases.ts';
 import { costOf, FALLBACK_PRICES } from '../eval/cost.ts';
 import { parseFlags, type RunOptions, runName } from '../eval/options.ts';
 import { type CaseRun, RunLog } from '../eval/runner.ts';
@@ -34,6 +45,7 @@ describe('The command line, from the settings', () => {
       categories: [],
       caseIds: [],
       budgetUsd: 5,
+      world: 'small',
     });
     expect(yes).toBe(false);
   });
@@ -47,6 +59,7 @@ describe('The command line, from the flags', () => {
         '--model', 'openai/gpt-x', '--temperature', '0.2', '--top-p', '0.9', '--max-steps', '30',
         '--timeout', '60000', '--max-output-tokens', '2000', '--repeat', '5', '--budget', '1.5',
         '--category', 'menus,shuttle', '--category', 'small-talk', '--case', 'menus-today-lunch', '--yes',
+        '--world', 'p4',
       ],
       { ASSISTANT_MODEL: 'anthropic/claude-haiku-5.5' },
     );
@@ -62,16 +75,20 @@ describe('The command line, from the flags', () => {
       categories: ['menus', 'shuttle', 'small-talk'],
       caseIds: ['menus-today-lunch'],
       budgetUsd: 1.5,
+      world: 'p4',
     });
     expect(yes).toBe(true);
   });
 
-  it.each([[['--temperature', 'hot']], [['--max-steps', '0']], [['--top-p', '1.5']], [['--unknown']]])(
-    'refuses %j',
-    (argv) => {
-      expect(() => parseFlags(argv, { ASSISTANT_MODEL: 'a/b' })).toThrow();
-    },
-  );
+  it.each([
+    [['--temperature', 'hot']],
+    [['--max-steps', '0']],
+    [['--top-p', '1.5']],
+    [['--unknown']],
+    [['--world', 'large']],
+  ])('refuses %j', (argv) => {
+    expect(() => parseFlags(argv, { ASSISTANT_MODEL: 'a/b' })).toThrow();
+  });
 
   it('refuses a run with no model', () => {
     expect(() => parseFlags([], {})).toThrow();
@@ -90,6 +107,8 @@ describe('The cases', () => {
     ['ends with the Assistant', { turns: [{ user: '안녕' }, { assistant: { text: '네' } }] }],
     ['is live with an Assistant turn', { live: true, turns: [{ assistant: { text: '네' } }, { user: '안녕' }] }],
     ['has an id in other words', { id: 'Menus Today', turns: [{ user: '안녕' }] }],
+    ['names a world there is not', { world: 'large', turns: [{ user: '안녕' }] }],
+    ['gives a time with no offset', { now: '2026-11-02T12:40:00', turns: [{ user: '안녕' }] }],
     [
       'names a card of an unknown kind',
       { turns: [{ assistant: { text: '네', cards: [{ kind: 'place', seed: '학생회관' }] } }, { user: '안녕' }] },
@@ -97,7 +116,34 @@ describe('The cases', () => {
   ])('refuse a case that %s', (_, changes) => {
     expect(caseSchema.safeParse({ id: 'a-case', category: 'menus', ...changes }).success).toBe(false);
   });
+});
 
+describe('The cases of a world', () => {
+  const cases = [single('a', 'menus'), single('b', 'menus', 3), single('c', 'shuttle')];
+
+  it('run in the world they name, the small one unless they name another', () => {
+    const named = caseSchema.parse({ id: 'p', category: 'menus', world: 'p4', turns: [{ user: '안녕' }] });
+
+    expect(casesIn([...cases, named], 'p4')).toEqual([named]);
+    expect(casesIn([...cases, named], 'small')).toEqual(cases);
+  });
+
+  it("run at their own time, else at their world's clock", () => {
+    const written = { id: 'p', category: 'menus', turns: [{ user: '안녕' }] };
+
+    expect(nowOf(caseSchema.parse(written))).toBe('2026-10-21T14:05:00+09:00');
+    expect(nowOf(caseSchema.parse({ ...written, world: 'p4' }))).toBe('2026-11-02T11:30:00+09:00');
+    expect(nowOf(caseSchema.parse({ ...written, world: 'p4', now: '2026-11-02T12:40:00+09:00' }))).toBe(
+      '2026-11-02T12:40:00+09:00',
+    );
+  });
+
+  it('refuse an id used twice, across the case directories', () => {
+    expect(() => loadCases([CASES_DIRECTORY, CASES_DIRECTORY])).toThrow('used twice');
+  });
+});
+
+describe('The cases chosen', () => {
   const cases = [single('a', 'menus'), single('b', 'menus', 3), single('c', 'shuttle')];
 
   it('are chosen by category or by id, all when neither is given', () => {
@@ -173,6 +219,7 @@ const OPTIONS: RunOptions = {
   categories: [],
   caseIds: [],
   budgetUsd: 0.01,
+  world: 'small',
   prices: FALLBACK_PRICES,
   commit: 'abc1234',
 };
