@@ -168,6 +168,13 @@ describe('An ASK a tool called for', () => {
     expect(score.recalled).toBe(true);
   });
 
+  it('stays an ASK after a lookup found what it needed in order to ask', () => {
+    const day = call('getMyDay', { date: '2026-11-05' }, { result: 'found', items: [] });
+    const trace = turn({ steps: [[day], [needs]], text: '어디서 출발하세요?' });
+
+    expect(scoreTurn(trace, asked, names)).toMatchObject({ action: 'ASK', recalled: true });
+  });
+
   it('is what the observed action says too', () => {
     expect(observedActionOf(turn({ steps: [[needs]], text: '출발지를 알려 주세요' }))).toBe('ASK');
   });

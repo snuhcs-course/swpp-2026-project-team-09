@@ -9,7 +9,7 @@
 import { fileURLToPath } from 'node:url';
 import { inject } from 'vitest';
 import { openRouterModel } from '../src/assistant/adapter.js';
-import { casesIn, loadCases, repetitionsOf, selectCases, sentTurnsOf } from './cases.ts';
+import { casesIn, loadCases, repetitionsOf, selectCases, sentTurnsOf, type WorldName } from './cases.ts';
 import { dotEnv, runOptionsFromEnv } from './options.ts';
 import { expectSchema } from './expect.ts';
 import { type Names, namesOf } from './normalise.ts';
@@ -25,7 +25,7 @@ import { seedWorld, type World } from './world.ts';
 // case at its first failed turn. The run is saved when it ends, stopped by the budget or not, with its scorecard
 // beside it.
 
-const SEEDERS = { small: seedWorld, p4: seedP4World, p5: seedP5World };
+const SEEDERS: Record<WorldName, typeof seedWorld> = { small: seedWorld, p4: seedP4World, p5: seedP5World };
 
 const options = runOptionsFromEnv();
 const cases = selectCases(casesIn(loadCases(), options.world), options.categories, options.caseIds);

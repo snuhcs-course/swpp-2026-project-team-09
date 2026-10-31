@@ -7,6 +7,11 @@
 # The P4 suite (spec P04, "Evaluation plan" 1), committed before any run. Its cases are under cases/, its world is
 # world.yaml and its rules rules.md. `pnpm eval --world p4` runs it: every case has `repeat: 3`, so that a scorecard's
 # pass rates are the mean of the 3 runs.
+#
+# The labels are the `expect` of each case, as drafted. labels-working.yaml holds the drafter's working for every case,
+# and labels-notes.md the drafter's notes: the answers to look at, and contradictions in the header of questions.yaml.
+# questions.yaml is the list of questions the drafter was given, with that header, as it was: cases/ is what runs. The
+# fixed history the notes flag in meals-here-after-cards was completed after the draft, which changed no answer.
 
 world: p4
 cases:
@@ -19,7 +24,48 @@ score:
   perCategory: 0.7
   runs: 3
 labels:
-  draftedBy: null
-  draftedOn: null
+  # A separate agent that read only rules.md, world.yaml, travel-fixture.json and the questions, never the judgement code.
+  draftedBy: Claude Opus 5.5 (claude-opus-5-5)
+  draftedOn: '2026-10-31'
+  # The person's review is open.
   reviewedBy: null
   reviewedOn: null
+  # What the rules leave open, with the drafter's reason. Nothing here is settled: the person's review decides each one.
+  openForReview:
+    - id: parties-over-twenty-narrowed
+      kind: meaning
+      why: >-
+        Which Friday candidates are 운동. The rule names only board games as dropping out. The draft keeps the 7 sports
+        hobby Quests and 총장배 풋살 대회, and drops 뜨개질 모임, 사진 출사 모임, 보드게임 오후반 and 가을 독서 토크. The wider reading keeps
+        뜨개질 and 사진 출사. Section 12 also does not say whether a narrowed reply counts the cards (8) or the tool's
+        candidates (12); the draft says 8.
+    - id: meals-no-noodles
+      kind: meaning
+      why: >-
+        Which dishes are noodles. The draft takes 칼국수, 비빔냉면 and 잔치국수 as noodles, so 자하연식당 3층 drops and 학생회관식당 stays
+        through 제육볶음.
+    - id: parties-what-is-on-meal-search
+      kind: meaning
+      why: >-
+        Whether a cafe meeting on the meal Board is a party to eat with. The draft keeps 동원관 앞 카페 모임 with 샤로수길 맛집 탐방. `board`
+        is not in `args`, as the rules do not require it.
+    - id: meals-friend-off-campus-item
+      kind: rules
+      why: >-
+        Section 8 says a Friend with an unplaced item is "judged on time only". It does not say whether the 1-minute margin
+        stays. The draft keeps it: 한도윤's leave-by is 13:44. Without it, the first four Restaurants show 60, 50, 45, 45
+        instead of 59, 49, 44, 44. Starts and order do not change.
+    - id: parties-abbreviated-gap-begun
+      kind: rules
+      why: >-
+        Section 12 asks for when the previous item ends (12:15). Section 6 answers the gap's start (12:40). The mention
+        accepts either.
+    - id: common-choice-clock-fits
+      kind: rules
+      why: >-
+        The same point for a clock window: 13:30 and 15:50 against 14:00 and 15:30. The mentions accept either.
+    - id: meals-soup-wanted
+      kind: rules
+      why: >-
+        Section 12's "ordered by the longest Travel Time" says nothing with one card. That sentence is not asserted. The
+        shared time stays in the mentions.

@@ -2,7 +2,7 @@
 
 What the Assistant's 공강 tools must answer, and what a reply must do with it, in prose. The labels of the P4 suite are worked by hand from this document, the world (`world.yaml`) and the travel fixture (`travel-fixture.json`), never from the code.
 
-The rules are frozen with the suite at the P8 freeze, 2026-11-01. Section 15 holds the PM's decisions of 2026-10-31. Where this document and the spec disagree, this document holds.
+The rules are frozen with the suite at the P8 freeze, 2026-11-01. Section 15 holds the PM's decisions of 2026-10-31. Where the spec disagrees with section 15, section 15 holds.
 
 ## Words
 
@@ -16,21 +16,22 @@ The rules are frozen with the suite at the P8 freeze, 2026-11-01. Section 15 hol
 
 ## The numbers
 
-Every number of the judgement. Nothing else in this document is a free constant.
+Every number of the judgement.
 
-| What                                                            | Value                              |
-| --------------------------------------------------------------- | ---------------------------------- |
-| Arrival margin, for parties and for meals                       | 1 minute                           |
-| Shortest stay at a candidate with no end or longer than 3 hours | 30 minutes                         |
-| Length of a busy Sub Quest with no end or longer than 3 hours   | 30 minutes                         |
-| Longest candidate or Sub Quest taken at its own end             | 3 hours                            |
-| Reach of the nearest Place point                                | 150 m                              |
-| Shortest eating time                                            | 15 minutes                         |
-| A meal's start rounds up to the next                            | 5 minutes                          |
-| Lunch                                                           | 11:00–14:30                        |
-| Dinner                                                          | 17:00–19:30                        |
-| Shuttle chosen when faster than walking by at least             | 3 minutes (already in the fixture) |
-| Most cards in one reply                                         | 20                                 |
+| What                                                               | Value                              |
+| ------------------------------------------------------------------ | ---------------------------------- |
+| Arrival margin, for parties and for meals                          | 1 minute                           |
+| Shortest stay at a candidate with no end or longer than 3 hours    | 30 minutes                         |
+| Length of a busy Sub Quest with no end or longer than 3 hours      | 30 minutes                         |
+| Longest candidate or Sub Quest taken at its own end                | 3 hours                            |
+| Reach of the nearest Place point                                   | 150 m                              |
+| Reach of the place lookup from a wall                              | 20 m                               |
+| Shortest eating time, and shortest stretch for a Friend to be free | 15 minutes                         |
+| A meal's start rounds up to the next                               | 5 minutes                          |
+| Lunch                                                              | 11:00–14:30                        |
+| Dinner                                                             | 17:00–19:30                        |
+| Shuttle chosen when faster than walking by at least                | 3 minutes (already in the fixture) |
+| Most cards in one reply                                            | 20                                 |
 
 ## 1. Time
 

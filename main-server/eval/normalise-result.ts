@@ -32,6 +32,7 @@ export function normaliseResult(input: unknown, names: Names): unknown {
   }
   const given = input.id ?? input.key;
   const seed = typeof given === 'string' ? { seed: names(given) ?? given } : {};
+  const needs = 'needs' in input ? { result: 'needs' } : {};
   const fields = Object.entries(input).flatMap(([field, entry]): [string, unknown][] => {
     if (UNREAD.has(field) || (field === 'name' && given !== undefined)) {
       return [];
@@ -41,5 +42,5 @@ export function normaliseResult(input: unknown, names: Names): unknown {
     }
     return [[field, field === 'item' ? itemName(entry) : normaliseResult(entry, names)]];
   });
-  return { ...seed, ...Object.fromEntries(fields) };
+  return { ...seed, ...needs, ...Object.fromEntries(fields) };
 }
