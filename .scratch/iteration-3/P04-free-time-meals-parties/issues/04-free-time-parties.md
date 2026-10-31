@@ -105,3 +105,12 @@ The app changes only in JavaScript.
     - the cards' 이동 시간 fields and their order across kinds.
   - A fake-server screen test of the 이동 시간 box in its forms.
 - [ ] **Landing.** With ticket 05, this lands before P05's R0 (11-02), so that P05's R0 and R1 differ only by P05's own change. It rebases on whatever P07 has landed on the Feature definition, the adapter and the request DTO, and reuses P07's Korea time helpers.
+
+## Comments
+
+### Agent usage (2026-10-31)
+
+- **Agent time** (estimate): about 48 minutes in all: about 34 minutes for the implementing subagent, about 9 for its two reviewers, and about 5 for this ticket's share of the session that ran all five tickets. Time spent waiting for a person is not counted.
+- **Tokens** (measured from the agents' transcripts, reviewers included; the running session's share is an estimate, a fifth of its total):
+  - Input: about 170 not cached, about 23,300,000 cache reads and about 1,419,000 cache writes.
+  - Output: about 233,000.
