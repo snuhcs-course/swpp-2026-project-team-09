@@ -27,7 +27,7 @@ The first box stays open until its labels are in: its posts are saved and dated,
 Decisions by the P05 owner on 2026-10-31:
 
 - Evaluation B has 120 pairs, with 44 positive candidates (36.7%) against the metrics document's 30–50%. 8 pairs were known on 10-30; 44 were counted over the wider pull, before labelling.
-- Evaluation A's development part is the metrics document's 18 posts, outside the fixed 60; the ticket's "split" is read that way. Evaluation B sets aside about 20% per kind.
+- Evaluation A's development part is the metrics document's 18 posts, outside the fixed 60; the ticket's "split" is read that way. Evaluation B sets aside about 20%, split so that the two parts share no post.
 - Evaluation A's 60 posts are 35 of SNU Now and 25 of extra.snu.
 - Thresholds are the metrics document's values as written: no floor for D2–D6, D3 and D4 as targets, D5 diagnostic, D6 diagnostic with a target of 0.50.
 - An online session's `mayPublish` is false, as the Judgement's check requires one Place.
@@ -35,3 +35,10 @@ Decisions by the P05 owner on 2026-10-31:
 Decided by the agent: a pair is post to post, with a session number where a post's other sessions are another event.
 
 For ticket 04: `robots.txt` on 10-31 is `Allow: /` for every agent at www.snu.ac.kr and 404 at extra.snu.ac.kr; the site's terms were not checked. The status codes are 0001 모집중, 0002 마감임박, 0003 모집마감, 0004 모집대기, and the list without a filter leaves 모집마감 out. Evaluation A's Drafts of extra.snu were picked by the same rules over the page's session table, since the collector does not exist yet.
+
+### Agent usage (2026-10-31)
+
+Agent work so far; the labels and later steps may add to it.
+
+- Agent time: about 1 hour (estimate), one session with two review subagents. It includes about 25 minutes of waiting on the site's two-second pacing.
+- Tokens, subagents included: input 160, with 13,265,556 cache reads and 524,088 cache writes shown apart; output 147,926. Counted before the PR was opened.
