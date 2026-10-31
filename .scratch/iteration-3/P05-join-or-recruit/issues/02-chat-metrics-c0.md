@@ -22,3 +22,18 @@
 - [ ] The commit is tagged as C0 and recorded.
 - [ ] R0 runs on the C0 commit with no chat change of P05 in it, on a clean working tree, three times per case, with the exact command recorded. P19's cases run three times on the same commit as the regression baseline.
 - [ ] The record names the commit, the date and time, the model slug, the repetitions, the limits and the cost, as section 4.3 lists. Scores go into the improvement log table as R0 with each threshold's pass or fail, and a failure analysis table is written for the failed cases.
+
+## Comments
+
+### Suite built, labels pending (2026-10-31)
+
+The record is `main-server/eval/p5/README.md`. Done by an agent: the world, rules, 98 questions, thresholds, tags, the scoring and the drafting sessions. Not done, since people do them or they come later: the owner's review, the second labeller's 20 cases, the agreement, putting the answers into the cases, the C0 tag, R0. The answers stay out of the repository until the second labeller is done, because it is public.
+
+The branch is on `3.0/P04-03-p4-eval-set`, which holds the harness this suite needs, and merges after it.
+
+### Agent usage (2026-10-31)
+
+Agent work so far; the labels and R0 will add to it.
+
+- Agent time: about 50 minutes (estimate), one session with two review subagents and four drafting CLI calls (about 10 minutes of them, running alongside it).
+- Tokens, subagents and drafting included: input 172, with 13,744,459 cache reads and 692,073 cache writes shown apart; output 260,882. Counted before the PR was opened.
