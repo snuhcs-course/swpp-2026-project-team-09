@@ -209,7 +209,8 @@ A Collection does four things, one page at a time:
    over the next 365 days. The pager's links drop the filter, so the collector builds each page's address. A page whose
    posts were all listed before fails the Collection, since a list that answered every page with an earlier one would
    be read without end.
-2. It asks the main server which of the listed posts it stores, at `/global-events/stored-posts`. The question and its
+2. It asks the main server which of the listed posts it stores, by the Source and each post's key, its `bbsidx`, at
+   `/global-events/stored-posts`. The question and its
    answer are shaped in `src/event/dto/stored-event-posts.dto.ts`.
 3. It reads the page of each post the main server does not store,
    `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525`, one after the other. A page that cannot be fetched, or the
@@ -219,7 +220,8 @@ A Collection does four things, one page at a time:
    posts; none of the three is sent. A skipped post is kept back until a post after it is read or the list ends, so a
    Collection that stops before then does not send it either. A Collection that read no post fails as well and sends
    none of its skipped posts: it cannot tell an odd post from pages that have changed.
-4. It sends what it read, in the list's order, in one message. When every post is stored, the message has no event and
+4. It sends what it read, in the list's order, in one message. Each post has its key and address and one numbered session
+   with its time and place. When every post is stored, the message has no post and
    still records a successful Collection. When the Collection stops, the posts read before are sent all the same, with
    why it stopped as `failureReason`: the main server stores them, so that they are never read again, and records the
    failure in place of a success in the same transaction. The command then says the Collection failed.
@@ -238,7 +240,7 @@ fails the Collection.
 
 From a post's page, `src/event/event-page.parser.ts` reads, by the team's own rules:
 
-- The title, and the post's address as the post number and the source link.
+- The title, and the post's number, which the message sends as its key, and its address.
 - The description: the body as text, one line of the page per line, with no-break spaces as spaces.
 - A label, of the time line or the place line, is followed by a colon, a `]` or a `|`, as in `- 일시:`, `• 장소]` or
   `장소 | …`. A label alone on its line, with no colon, `]` or `|`, as in `4. 장소`, takes the next line as its

@@ -16,6 +16,7 @@
 // 2026-10-06  Opus 5.5   prompted by fyoon46
 // 2026-10-06  Fable 5.1  prompted by fyoon46
 // 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+// 2026-10-31  Opus 5.5   prompted by Jaehyun0320
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -209,9 +210,16 @@ model GlobalEvent {
   state       GlobalEventState @default(draft)
   // Checked and raised by every change an Administrator makes, so that a change from an older version is refused.
   version     Int              @default(1)
-  // The `bbsidx` and address of a collected event's post. An event an Administrator creates has neither.
-  postNumber  Int?             @unique @map("post_number")
-  sourceUrl   String?          @map("source_url")
+  // How it came to be published; empty while a Draft and for one discarded as a Draft. Only Administrators see it.
+  publicationRoute PublicationRoute? @map("publication_route")
+  // That an Administrator must look at it. Only Administrators see it.
+  needsAdministrator Boolean @default(false) @map("needs_administrator")
+  // Moved to SourcePost, and read and written by nothing. They stay for one Release so that the old pods of a rolling
+  // update keep working; a later migration drops them.
+  retiredPostNumber Int?     @unique @map("post_number")
+  retiredSourceUrl  String?  @map("source_url")
+  // None for an event an Administrator created.
+  sessions    SourcePostSession[]
   quests      Quest[]
   questHolders QuestHolder[]
 
@@ -227,6 +235,63 @@ enum GlobalEventState {
   discarded
 
   @@map("global_event_state")
+}
+
+enum PublicationRoute {
+  administrator
+  // The rules read its time and place from its post.
+  rule
+  judgement
+
+  @@map("publication_route")
+}
+
+// One post on a Source that Global Events were read from. Kept whatever becomes of them, so that the next Collection
+// does not bring a discarded event's post back.
+model SourcePost {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source         Source
+  // What identifies the post on its Source, known from the list before its page is opened: SNU Now's `bbsidx`, or
+  // extra.snu's `dataSeq`.
+  key            String
+  address        String
+  // When the step after the Collection's answer finished with the post. Empty until then, so that the next Collection
+  // of its Source takes up a post that a failure or a restart left.
+  stepFinishedAt DateTime? @map("step_finished_at")
+  sessions       SourcePostSession[]
+
+  @@unique([source, key])
+  @@map("source_posts")
+}
+
+// One numbered session of a Source Post, linked to the Global Event it belongs to.
+model SourcePostSession {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourcePostId  String            @map("source_post_id") @db.Uuid
+  number        Int
+  globalEventId String            @map("global_event_id") @db.Uuid
+  attachedBy    SessionAttachment @map("attached_by")
+  // The rule's name or the AI's choice; empty for an event's own session.
+  reason        String?
+  // Whether the rules read the session's time and place when it was stored.
+  readByRules   Boolean           @default(false) @map("read_by_rules")
+  sourcePost    SourcePost        @relation(fields: [sourcePostId], references: [id], onDelete: Cascade)
+  globalEvent   GlobalEvent       @relation(fields: [globalEventId], references: [id], onDelete: Cascade)
+
+  @@unique([sourcePostId, number])
+  @@index([globalEventId])
+  @@map("source_post_sessions")
+}
+
+// How a session came to be linked to its Global Event.
+enum SessionAttachment {
+  // The event was made from this session.
+  own
+  rule
+  ai
+  administrator
+
+  @@map("session_attachment")
 }
 
 // What one or more Users set out to do (README.md: Quests). Its time and place belong to its Sub Quests.
@@ -502,6 +567,8 @@ enum Source {
   shuttle_vehicles
   // The university's events list, https://www.snu.ac.kr/snunow/events
   snu_events
+  // The university's programme site, https://extra.snu.ac.kr
+  extra_snu
 
   @@map("source")
 }

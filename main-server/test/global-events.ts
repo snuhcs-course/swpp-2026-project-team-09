@@ -5,7 +5,10 @@
  * 2026-10-03  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
+
+import { type Prisma, type PrismaClient, type Source } from '../src/generated/prisma/client.js';
 
 // Post numbers after `first`, one per call. Each test file takes numbers of its own, because the files share the
 // database and a post is stored once.
@@ -17,32 +20,72 @@ export function postNumbersFrom(first: number): () => number {
   };
 }
 
-// A post as the worker reads it, with `changes` applied: a time from the body's time line and a place in 132동.
-export function collectedEvent(postNumber: number, changes: object = {}): Record<string, unknown> {
+// The address of a post of the events list.
+export function postAddress(postNumber: number): string {
+  return `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=${postNumber}`;
+}
+
+// A post as the worker reads it, with one session, with `changes` applied to the session or the post: a time from the
+// body's time line and a place in 132동.
+export function collectedPost(postNumber: number, changes: Record<string, unknown> = {}): Record<string, unknown> {
+  const {
+    number = 1,
+    start = '2026-10-13T17:00:00+09:00',
+    end = null,
+    readFrom = 'body',
+    place = '뉴미디어통신공동연구소 이충웅홀(132동 103호)',
+    ...post
+  } = changes;
   return {
-    postNumber,
-    sourceUrl: `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=${postNumber}`,
+    key: String(postNumber),
+    address: postAddress(postNumber),
     title: '[연합전공 지능형통신] 2027학년도 1학기 선발 및 설명회 안내',
     description: '- 일시: 2026. 10. 13.(화) 17:00\n- 장소: 뉴미디어통신공동연구소 이충웅홀(132동 103호)',
-    start: '2026-10-13T17:00:00+09:00',
-    end: null,
-    readFrom: 'body',
-    place: '뉴미디어통신공동연구소 이충웅홀(132동 103호)',
-    ...changes,
+    sessions: [{ number, start, end, readFrom, place }],
+    ...post,
   };
 }
 
 // An events message of the worker, with `changes` applied.
-export function eventsMessage(events: object[], changes: object = {}): object {
-  return { source: 'snu_events', collectedAt: '2026-10-02T06:00:00+09:00', failureReason: null, events, ...changes };
+export function eventsMessage(posts: object[], changes: object = {}): object {
+  return { source: 'snu_events', collectedAt: '2026-10-02T06:00:00+09:00', failureReason: null, posts, ...changes };
+}
+
+// Resolves once no post of `source` waits for the step after a Collection's answer. A file that uses it stores that
+// Source's posts in a database, or as a Source, of its own.
+export async function stepOver(prisma: PrismaClient, source: Source = 'snu_events'): Promise<void> {
+  await vi.waitFor(
+    async () => {
+      expect(await prisma.sourcePost.count({ where: { source, stepFinishedAt: null } })).toBe(0);
+    },
+    { timeout: 5000, interval: 20 },
+  );
+}
+
+// The session that links a stored event to a post of the events list, as an earlier Collection left it.
+export function ownSession(postNumber: number): Prisma.SourcePostSessionCreateNestedManyWithoutGlobalEventInput {
+  return {
+    create: {
+      number: 1,
+      attachedBy: 'own',
+      sourcePost: {
+        create: {
+          source: 'snu_events',
+          key: String(postNumber),
+          address: postAddress(postNumber),
+          stepFinishedAt: new Date(),
+        },
+      },
+    },
+  };
 }
 
 // A time no stored message carries, so that a success recorded for a refused message would be seen.
 const refusedAt = { collectedAt: '2026-10-31T06:00:00+09:00' };
 
 // The post `valid`, then the post `other` with `changes`, so that storing nothing is seen.
-function secondChanged(valid: number, other: number, changes: object): object {
-  return eventsMessage([collectedEvent(valid), collectedEvent(other, changes)], refusedAt);
+function secondChanged(valid: number, other: number, changes: Record<string, unknown>): object {
+  return eventsMessage([collectedPost(valid), collectedPost(other, changes)], refusedAt);
 }
 
 // The problem, the message for two posts of the test's own and what the answer names.
@@ -50,46 +93,54 @@ export const invalidEventsMessages: [string, (valid: number, other: number) => o
   [
     'a start that is neither a time nor a day',
     (valid, other) => secondChanged(valid, other, { start: '10. 13.(화) 17:00' }),
-    'events.1.start: ',
+    'posts.1.sessions.0.start: ',
   ],
   [
     'a time without its offset',
     (valid, other) => secondChanged(valid, other, { end: '2026-10-13T19:00:00' }),
-    'events.1.end: ',
+    'posts.1.sessions.0.end: ',
   ],
   [
     'a source other than the time line or the header',
     (valid, other) => secondChanged(valid, other, { readFrom: 'title' }),
-    'events.1.readFrom: ',
+    'posts.1.sessions.0.readFrom: ',
   ],
   [
-    'a source link that is not an https address',
-    (valid, other) => secondChanged(valid, other, { sourceUrl: 'javascript:alert(1)' }),
-    'events.1.sourceUrl: ',
+    'an address that is not an https address',
+    (valid, other) => secondChanged(valid, other, { address: 'javascript:alert(1)' }),
+    'posts.1.address: ',
   ],
+  ['a key that is not text', (valid, other) => secondChanged(valid, other, { key: other }), 'posts.1.key: '],
+  ['a post without sessions', (valid, other) => secondChanged(valid, other, { sessions: [] }), 'posts.1.sessions: '],
   [
-    'a post number that is not a number',
-    (valid, other) => secondChanged(valid, other, { postNumber: String(other) }),
-    'events.1.postNumber: ',
+    'the same session twice',
+    (valid, other) =>
+      secondChanged(valid, other, {
+        sessions: [
+          { number: 1, start: null, end: null, readFrom: null, place: null },
+          { number: 1, start: null, end: null, readFrom: null, place: null },
+        ],
+      }),
+    'posts.1.sessions: Each session must appear once',
   ],
   [
     'a field the schema does not know',
     (valid, other) => secondChanged(valid, other, { poster: 'poster.jpg' }),
-    'events.1: ',
+    'posts.1: ',
   ],
   [
     'the same post twice',
-    (valid) => eventsMessage([collectedEvent(valid), collectedEvent(valid)], refusedAt),
-    'events: Each post must appear once',
+    (valid) => eventsMessage([collectedPost(valid), collectedPost(valid)], refusedAt),
+    'posts: Each post must appear once',
   ],
   [
     'no word on whether the Collection finished',
-    (valid) => eventsMessage([collectedEvent(valid)], { ...refusedAt, failureReason: undefined }),
+    (valid) => eventsMessage([collectedPost(valid)], { ...refusedAt, failureReason: undefined }),
     'failureReason: ',
   ],
   [
-    'a Source that has no events',
-    (valid) => eventsMessage([collectedEvent(valid)], { ...refusedAt, source: 'coop_menus' }),
+    'a Source that has no posts',
+    (valid) => eventsMessage([collectedPost(valid)], { ...refusedAt, source: 'coop_menus' }),
     'source: ',
   ],
 ];

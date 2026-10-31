@@ -18,4 +18,5 @@
 - [ ] Each passing session becomes its own Global Event; failing sessions stay as one Draft.
 - [ ] The Judgement (values, lines, checks, model id, time) is stored; a published session's Publication Route is Judgement; with automatic publication turned off, nothing is published.
 - [ ] Judging is one service step over one Draft, callable later for the stored Drafts.
+- [ ] A post the step failed on or has not finished is recorded and the admin API gives it, so that a failure shows beyond the logs (PR #143: the Collection is recorded as a success whatever the step does).
 - [ ] Integration tests use the scripted model; no hangsha code or prompt text is copied.

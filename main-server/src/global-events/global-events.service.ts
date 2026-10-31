@@ -7,22 +7,20 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { CollectionService } from '../collection/collection.service.js';
 import { CampusBoundary } from '../common/campus-boundary.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
-import { GlobalEvent, GlobalEventState, Prisma } from '../generated/prisma/client.js';
-import { PlaceDto } from '../places/dto/place.dto.js';
-import { PlacesService } from '../places/places.service.js';
+import { GlobalEvent, GlobalEventState, Prisma, PublicationRoute } from '../generated/prisma/client.js';
 import { QuestsService } from '../quests/quests.service.js';
 import { conflict, notFound } from '../quests/refusals.js';
 import { type CreateGlobalEventDto, type EditGlobalEventDto } from './dto/change-global-event.dto.js';
-import { type CollectedEvent, type EventsCollectedMessage } from './dto/events-collected.dto.js';
 import {
   GlobalEventDetailDto,
+  type GlobalEventWithOwnPost,
   ListedGlobalEventDto,
   type ListedState,
   missingFor,
@@ -30,28 +28,8 @@ import {
   toGlobalEventDetailDto,
   toListedGlobalEventDto,
   toPublishedGlobalEventDto,
+  WITH_OWN_POST,
 } from './dto/global-event.dto.js';
-import { type StoredEventPostsDto } from './dto/stored-event-posts.dto.js';
-import { namedPlace } from './named-place.js';
-
-// Published when the body's time line gave a time of day and the place names one Place; a Draft otherwise. The
-// header's date is often the application period.
-function toGlobalEvent(event: CollectedEvent, places: PlaceDto[]): Prisma.GlobalEventCreateManyInput {
-  const named = namedPlace(event.place, places);
-  const published = event.readFrom === 'body' && event.start?.hasTimeOfDay === true && named !== null;
-  return {
-    title: event.title,
-    description: event.description,
-    startsAt: event.start?.at ?? null,
-    endsAt: event.end?.at ?? null,
-    place: event.place,
-    latitude: named?.latitude ?? null,
-    longitude: named?.longitude ?? null,
-    state: published ? GlobalEventState.published : GlobalEventState.draft,
-    postNumber: event.postNumber,
-    sourceUrl: event.sourceUrl,
-  };
-}
 
 // 00:00 in Asia/Seoul, which keeps +09:00 all year, of the day `now` falls on there.
 function startOfSeoulDay(now: Date): Date {
@@ -109,10 +87,10 @@ const globalEventNotFound = (): NotFoundException => notFound('GLOBAL_EVENT_NOT_
 // Refuses a change from `version` to an event that does not exist, that is not in one of the states `from`, or whose
 // stored version is another.
 function refuseUnlessChangeable(
-  stored: GlobalEvent | null,
+  stored: GlobalEventWithOwnPost | null,
   from: readonly GlobalEventState[],
   version: number,
-): asserts stored is GlobalEvent {
+): asserts stored is GlobalEventWithOwnPost {
   if (stored === null) {
     throw globalEventNotFound();
   }
@@ -137,48 +115,14 @@ const BY_START: Prisma.GlobalEventOrderByWithRelationInput[] = [
 export class GlobalEventsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly collection: CollectionService,
-    private readonly places: PlacesService,
     private readonly signals: SignalsService,
     private readonly campusBoundary: CampusBoundary,
     private readonly quests: QuestsService,
   ) {}
 
-  // A post already stored is left as it is, in whatever state, so that an Administrator's edits stay and a discarded
-  // post does not come back.
-  // A Collection that stopped early is recorded as failed, with the posts it read, so that the two are stored together.
-  async storeCollected({ source, collectedAt, failureReason, events }: EventsCollectedMessage): Promise<void> {
-    const places = await this.places.list();
-    const stored = await this.prisma.$transaction(async (tx) => {
-      if (failureReason === null) {
-        await this.collection.recordSuccess(tx, source, new Date(collectedAt));
-      } else {
-        await this.collection.recordFailure(source, new Date(collectedAt), failureReason, tx);
-      }
-      return tx.globalEvent.createManyAndReturn({
-        data: events.map((event) => toGlobalEvent(event, places)),
-        skipDuplicates: true,
-        select: { state: true },
-      });
-    });
-    if (stored.some(({ state }) => state === GlobalEventState.published)) {
-      this.signalChanged();
-    }
-  }
-
   // Tells every connected app to fetch the published Global Events again. Call it once a change to them is committed.
   signalChanged(): void {
     this.signals.send('everyone', 'global-events-changed');
-  }
-
-  // In the order asked.
-  async storedPosts(postNumbers: number[]): Promise<StoredEventPostsDto> {
-    const stored = await this.prisma.globalEvent.findMany({
-      where: { postNumber: { in: postNumbers } },
-      select: { postNumber: true },
-    });
-    const storedNumbers = new Set(stored.map(({ postNumber }) => postNumber));
-    return { postNumbers: postNumbers.filter((postNumber) => storedNumbers.has(postNumber)) };
   }
 
   async listPublished(): Promise<PublishedGlobalEventDto[]> {
@@ -191,6 +135,7 @@ export class GlobalEventsService {
       where: { state: GlobalEventState.published, AND: [notEnded(now), ...searched(search)] },
       orderBy: BY_START,
       take: search.take,
+      include: WITH_OWN_POST,
     });
     return events.map((event) => toPublishedGlobalEventDto(event));
   }
@@ -199,6 +144,7 @@ export class GlobalEventsService {
   async publishedAmong(ids: readonly string[]): Promise<PublishedGlobalEventDto[]> {
     const events = await this.prisma.globalEvent.findMany({
       where: { id: { in: [...ids] }, state: GlobalEventState.published },
+      include: WITH_OWN_POST,
     });
     return ids.flatMap((id) => {
       const event = events.find((each) => each.id === id);
@@ -212,7 +158,7 @@ export class GlobalEventsService {
 
   // In any state.
   async read(id: string): Promise<GlobalEventDetailDto> {
-    const event = await this.prisma.globalEvent.findUnique({ where: { id } });
+    const event = await this.prisma.globalEvent.findUnique({ where: { id }, include: WITH_OWN_POST });
     if (event === null) {
       throw globalEventNotFound();
     }
@@ -221,7 +167,7 @@ export class GlobalEventsService {
 
   async create(fields: CreateGlobalEventDto): Promise<GlobalEventDetailDto> {
     this.refuseOffCampus(fields);
-    return toGlobalEventDetailDto(await this.prisma.globalEvent.create({ data: fields }));
+    return toGlobalEventDetailDto(await this.prisma.globalEvent.create({ data: fields, include: WITH_OWN_POST }));
   }
 
   // A Draft or a published event, which stays published.
@@ -243,16 +189,18 @@ export class GlobalEventsService {
   }
 
   // Writes the change to an event in one of the states `from` and raises its version, in one statement that also
-  // compares the version, so that of two changes from the same version one is applied and the other refused. Every
-  // write raises the version, so the fields checked are those written over. A change Users see is announced once
-  // written: to every app, and to the Holders of the event's Quests when the event was published.
+  // compares the version and the state, so that of two changes from the same version one is applied and the other
+  // refused, and a change checked against a Draft is checked again when the step after a Collection published it
+  // meanwhile, which leaves the version as it is. An event that stays or becomes published by this change has an
+  // Administrator's route: they have looked at it. A change Users see is announced once written: to every app, and to
+  // the Holders of the event's Quests when the event was published.
   private async change(
     id: string,
     version: number,
     from: readonly GlobalEventState[],
     change: Change,
   ): Promise<GlobalEventDetailDto> {
-    const stored = await this.prisma.globalEvent.findUnique({ where: { id } });
+    const stored = await this.prisma.globalEvent.findUnique({ where: { id }, include: WITH_OWN_POST });
     refuseUnlessChangeable(stored, from, version);
     const changed = { ...stored, ...change };
     const timed = change.startsAt !== undefined || change.endsAt !== undefined;
@@ -264,8 +212,12 @@ export class GlobalEventsService {
       throw conflict('GLOBAL_EVENT_INCOMPLETE', 'A published Global Event needs a start and a position.', { missing });
     }
     const [written] = await this.prisma.globalEvent.updateManyAndReturn({
-      where: { id, version },
-      data: { ...change, version: { increment: 1 } },
+      where: { id, version, state: stored.state },
+      data: {
+        ...change,
+        ...(changed.state === GlobalEventState.published ? { publicationRoute: PublicationRoute.administrator } : {}),
+        version: { increment: 1 },
+      },
     });
     // Changed between the read and the write: checked again as it is now.
     if (written === undefined) {
@@ -277,7 +229,7 @@ export class GlobalEventsService {
     if (stored.state === GlobalEventState.published) {
       this.signals.send(await this.quests.holderIdsFor(id), 'quests-changed');
     }
-    return toGlobalEventDetailDto(written);
+    return toGlobalEventDetailDto({ ...written, sessions: stored.sessions });
   }
 
   // A body's rule that needs the Campus Boundary, so it is checked here rather than by the body's schema.
@@ -292,10 +244,11 @@ export class GlobalEventsService {
   }
 
   // Every Draft, or the published events that have not ended.
-  private findListed(state: ListedState): Promise<GlobalEvent[]> {
+  private findListed(state: ListedState): Promise<GlobalEventWithOwnPost[]> {
     return this.prisma.globalEvent.findMany({
       where: state === GlobalEventState.published ? { state, ...notEnded(new Date()) } : { state },
       orderBy: BY_START,
+      include: WITH_OWN_POST,
     });
   }
 }
