@@ -633,16 +633,46 @@ of a post, and each becomes its own event.
 
 A Collection's message is stored and answered at once, since the worker waits only five seconds: every session is stored
 as a Draft, and nothing is published inside the request. The step after the answer, `PublicationStepService`, then goes
-through each Source Post of that Source not yet through it, `stepFinishedAt` empty, and publishes the sessions the rules
-read, with the route `rule`. Their version stays 1, since it counts an Administrator's changes. An event an
+through each Source Post of that Source not yet through it, `stepFinishedAt` empty: the link rule, then the rules' reading
+and a Judgement's, then the comparison with the events that exist (below), then publication of the sessions neither
+attached nor held, the rules' with the route `rule`. Their version stays 1, since it counts an Administrator's changes. An event an
 Administrator edited or discarded before the step ran is left as it is. A worker that gave up while its message was
 stored does not stop the step. When the step fails on a post, or the server restarts before it ran, the post stays as it
 is, and the next Collection of its Source takes it up; a Collection whose list holds nothing new still sends its
 message, so at the latest at that Source's next scheduled Collection.
 
-With the setting `AUTOMATIC_PUBLICATION=off` (default `on`) the step publishes nothing: every session stays a Draft for an
-Administrator, and turning it on again does not publish those. [infra/production/README.md](../infra/production/README.md)
+With the setting `AUTOMATIC_PUBLICATION=off` (default `on`) the step publishes nothing: it still stores Judgements and
+attachments, every other session stays a Draft for an Administrator, and turning it on again does not publish those. [infra/production/README.md](../infra/production/README.md)
 says how to turn it off in Production.
+
+**The same event posted twice** (`same-event.ts`). A new post's sessions are only ever attached to events that exist, and
+two existing events are never merged. The step reads only a post's title, text and links, and what differs by Source is
+its address pattern in `post-sources.ts`. Comparing and publishing a post hold one transaction-scoped lock, so that of two
+posts of one event on two pods the second sees the first.
+
+- **The link rule** comes first and asks no model. The worker sends where the links of a post's body lead as `links`, since
+  words can hide an address; the rule reads those and the body's text. When they name one stored post (not the post
+  itself) with as many sessions, the sessions are attached in the order of their numbers, whatever their times, with the
+  reason `link`. A session whose time was read from the body and differs from its event's leaves the event as it is and
+  sets its `needsAdministrator`, without raising its version. Several posts, or another number of sessions, leave the
+  post's sessions Drafts with `heldFor` `link_not_one_to_one`: they are neither judged nor published. Only a new post that
+  links a stored one is looked at, so a post stored first and linked by nothing later comes to the title rule alone.
+- **The candidates**, once a session's time is known, are the events of any Source starting within one day, other than the
+  post's own, in any state, so that a cancelled or discarded event does not come back through another post. A Draft is a
+  candidate only if an Administrator made it, or the rules read it and its post has been through the step: the start of
+  any other may be only an application period, and attaching to it could hide the post for good. A session whose
+  Judgement could not be made is compared at its retry, and stays a Draft until then.
+- **The refusing rules** read the titles as written, never the body, which often speaks of the other kind. They refuse two
+  times of day on one day, and titles that say different rounds (`1차`, `2회차`), modes (대면 or 오프라인 against 비대면
+  or 온라인) or roles (헬퍼, 디자이너, 멘토, 멘티, 튜터, 튜티, 스태프: what a participant does, not who it is for). A
+  title saying nothing of it is not refused. Candidates on the day before or after are kept.
+- **The attaching rule:** equal normalised titles (NFKC, lower case, without what is in `[]`, `()`, `【】` or `<>`, spaces or
+  punctuation) and equal starts attach, with the reason `equal_title_and_start`. Several such events leave the session a
+  Draft with `heldFor` `several_matches`.
+- **What attaching does:** the session's link moves to the event, with `attachedBy` `rule`. Its own Draft is removed and what
+  it held, the only copy of the post's title and text, stays in the session's `ownDraft`, for detaching (ticket 08b). The
+  event's `sourceUrl`, its version and its route stay, since those read its own session. Attaching tells no app to refetch.
+  A session's `globalEventId` in a Judgement is the event it was published as or attached to, or its Draft while held.
 
 **A Judgement** ([ADR 0008](../docs/adr/0008-judgements-publish-only-what-the-server-checks.md)) reads what the rules
 left. With `AUTOMATIC_JUDGEMENT=on` (default `off`, also in Production) the step calls the model once for each post with a
@@ -671,8 +701,8 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
   Draft per session keeps those it did not publish, so that no time the worker read is lost. A post called no event stays
   as it is, with the outcome `no_event`.
 - **What it leaves alone:** a post with any session an Administrator changed is not judged, and a change while the model
-  reads it publishes nothing of that Judgement. With `AUTOMATIC_PUBLICATION=off` the Judgement is stored and nothing is
-  published.
+  reads it publishes nothing of that Judgement. A post the link rule decided is not judged. With
+  `AUTOMATIC_PUBLICATION=off` the Judgement and what it attaches are stored and nothing is published.
 - **Failing closed and tries:** an error, a timeout or a malformed answer publishes nothing. A post has at most two tries,
   counted when claimed in `judgements.attempts`, so a server that dies during a call has used its try, and of two servers
   one calls. A claim older than twice the time limit was left by such a server. `source_posts.step_finished_at` has no

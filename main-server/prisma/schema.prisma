@@ -256,6 +256,8 @@ model SourcePost {
   // extra.snu's `dataSeq`.
   key            String
   address        String
+  // Where the links of the post's body lead. A link hidden behind words is not in its text.
+  links          String[]  @default([])
   // When the step after the Collection's answer finished with the post. Empty until then, so that the next Collection
   // of its Source takes up a post that a failure or a restart left.
   stepFinishedAt DateTime? @map("step_finished_at")
@@ -280,12 +282,29 @@ model SourcePostSession {
   reason        String?
   // Whether the rules read the session's time and place when it was stored.
   readByRules   Boolean           @default(false) @map("read_by_rules")
+  // Whether the session's time was read from the post's own statement of it, and not a header's date, which is often the
+  // application period.
+  timeReadFromBody Boolean        @default(false) @map("time_read_from_body")
+  // Why it waits for an Administrator's decision, as a Draft that is neither judged nor published.
+  heldFor       SessionHold?      @map("held_for")
+  // What the session's own Draft held before the session was attached to another event, the only place the post's title
+  // and text are then kept, so that detaching can make the Draft again.
+  ownDraft      Json?             @map("own_draft")
   sourcePost    SourcePost        @relation(fields: [sourcePostId], references: [id], onDelete: Cascade)
   globalEvent   GlobalEvent       @relation(fields: [globalEventId], references: [id], onDelete: Cascade)
 
   @@unique([sourcePostId, number])
   @@index([globalEventId])
   @@map("source_post_sessions")
+}
+
+enum SessionHold {
+  // The post's body links a stored post, but their sessions do not match one to one.
+  link_not_one_to_one
+  // Its title and start equal those of several events.
+  several_matches
+
+  @@map("session_hold")
 }
 
 // The AI's reading of the sessions of a Source Post the rules left Drafts. One per post, since one call reads the whole

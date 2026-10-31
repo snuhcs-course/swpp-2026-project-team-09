@@ -6,7 +6,7 @@
 
 import { type CheerioAPI, load } from 'cheerio';
 import { type CollectedPost, type CollectedSession } from './dto/events-collected.dto.js';
-import { bodyLines, clean } from './event-page.parser.js';
+import { bodyLines, bodyLinks, clean } from './event-page.parser.js';
 import { readEventTime } from './event-time.js';
 import { programmeAddress } from './extra-snu-list.js';
 
@@ -115,6 +115,8 @@ function sessionLine({ number, period, place }: SessionFields): string | null {
   return parts.length === 0 ? null : `[${number}회차] ${parts.join(' / ')}`;
 }
 
+const MAIN_TEXT = '.cont_box:has(.cont_tit:contains("주요내용")) .td_box';
+
 // The programme's summary, its sessions, its application period and its main text, one line per line of the page. The
 // sessions come before the application period, so that a Judgement does not take a session's line for that period.
 function descriptionOf($: CheerioAPI, sessions: SessionFields[]): string {
@@ -123,7 +125,7 @@ function descriptionOf($: CheerioAPI, sessions: SessionFields[]): string {
     oneLine($('.text_wrap .desc').first().text()),
     ...sessions.flatMap((session) => sessionLine(session) ?? []),
     `신청기간: ${applicationPeriod}`,
-    ...bodyLines($, '.cont_box:has(.cont_tit:contains("주요내용")) .td_box').map((line) => maskEmails(line)),
+    ...bodyLines($, MAIN_TEXT).map((line) => maskEmails(line)),
   ]
     .filter((line) => line !== '')
     .join('\n');
@@ -148,11 +150,15 @@ export function parseExtraSnuPage(html: string, key: string): CollectedPost {
   if (sessions.length === 0) {
     throw new Error('The programme has no sessions');
   }
+  const address = programmeAddress(key);
+  // Before the description, which takes the main text's lines apart.
+  const links = bodyLinks($, MAIN_TEXT, address).map((link) => maskEmails(link));
   return {
     key,
-    address: programmeAddress(key),
+    address,
     title,
     description: descriptionOf($, sessions),
+    links,
     sessions: sessions.map((session) => toSession(session, sessions.length > 1 ? title : null)),
   };
 }

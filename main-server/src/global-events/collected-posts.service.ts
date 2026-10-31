@@ -64,7 +64,7 @@ export class CollectedPostsService {
         await this.collection.recordSkippedPosts(tx, source, skippedPosts);
       }
       const created = await tx.sourcePost.createManyAndReturn({
-        data: posts.map(({ key, address }) => ({ source, key, address })),
+        data: posts.map(({ key, address, links }) => ({ source, key, address, links })),
         skipDuplicates: true,
         select: { id: true, key: true },
       });
@@ -91,6 +91,7 @@ export class CollectedPostsService {
           globalEventId,
           attachedBy: SessionAttachment.own,
           readByRules: isReadByRules(session, named),
+          timeReadFromBody: session.readFrom === 'body',
         })),
       });
     });

@@ -6,6 +6,7 @@
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -45,6 +46,7 @@ function unreadablePost({ postNumber, title }: ListedPost): EventPost {
     sourceUrl: postAddress(postNumber),
     title,
     description: '',
+    links: [],
     start: null,
     end: null,
     readFrom: null,
@@ -57,6 +59,7 @@ function collectedPost({
   sourceUrl,
   title,
   description,
+  links,
   start,
   end,
   readFrom,
@@ -67,6 +70,7 @@ function collectedPost({
     address: sourceUrl,
     title,
     description,
+    links,
     sessions: [{ number: 1, start, end, readFrom, place }],
   };
 }

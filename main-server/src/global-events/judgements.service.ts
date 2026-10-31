@@ -6,6 +6,7 @@
 
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { z } from 'zod';
 import { causeOf, type Model, MODEL_PORT } from '../assistant/adapter.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { Settings } from '../common/settings.js';
@@ -36,33 +37,41 @@ export const WITH_OWN_SESSIONS = {
 
 const WITH_SESSIONS = { judgement: true, ...WITH_OWN_SESSIONS } satisfies Prisma.SourcePostInclude;
 
-type PostWithSessions = Prisma.SourcePostGetPayload<{ include: typeof WITH_OWN_SESSIONS }>;
+export type PostWithOwnSessions = Prisma.SourcePostGetPayload<{ include: typeof WITH_OWN_SESSIONS }>;
 
-// The sessions of a post a Judgement reads for: those the rules did not read and that are still Drafts as collected.
-export function judgedDrafts({ sessions }: Pick<PostWithSessions, 'sessions'>): PostWithSessions['sessions'] {
+// The sessions of a post a Judgement reads for: those the rules did not read, that are still Drafts as collected, and
+// that do not wait for an Administrator's decision.
+export function judgedDrafts({ sessions }: Pick<PostWithOwnSessions, 'sessions'>): PostWithOwnSessions['sessions'] {
   return sessions.filter(
-    ({ readByRules, globalEvent }) => !readByRules && globalEvent.state === GlobalEventState.draft,
+    ({ readByRules, heldFor, globalEvent }) =>
+      !readByRules && heldFor === null && globalEvent.state === GlobalEventState.draft,
   );
 }
 
 // An Administrator's change raises a version. After one, whatever the model reads of the post could override their
 // work, or repeat a session they split off by hand, so that post is never judged.
-export function isChangedByAdministrator({ sessions }: Pick<PostWithSessions, 'sessions'>): boolean {
+export function isChangedByAdministrator({ sessions }: Pick<PostWithOwnSessions, 'sessions'>): boolean {
   return sessions.some(({ globalEvent }) => globalEvent.version !== 1);
 }
 
 // Whether the post has a Draft a Judgement may read.
-function isJudgeable(post: Pick<PostWithSessions, 'sessions'>): boolean {
+function isJudgeable(post: Pick<PostWithOwnSessions, 'sessions'>): boolean {
   return !isChangedByAdministrator(post) && judgedDrafts(post).length > 0;
 }
 
 // Whether the step should come back to a post for its Judgement: a try is running or was left by a server that stopped,
 // or one that could not be made has a try left. Not a post no longer to be judged.
 export function waitsForAJudgement(
-  post: Pick<PostWithSessions, 'sessions'>,
+  post: Pick<PostWithOwnSessions, 'sessions'>,
   { outcome, attempts }: Judgement,
 ): boolean {
   return isJudgeable(post) && (outcome === null || (outcome === JudgementOutcome.failed && attempts < JUDGEMENT_TRIES));
+}
+
+// The start kept on a session that left its own Draft.
+function ownDraftStart(ownDraft: Prisma.JsonValue): Date | null {
+  const { startsAt } = z.object({ startsAt: z.iso.datetime().nullable() }).parse(ownDraft);
+  return startsAt === null ? null : new Date(startsAt);
 }
 
 // Reads Drafts with the model and stores what it read. It publishes nothing and calls the model outside any transaction.
@@ -157,7 +166,7 @@ export class JudgementsService {
     return claimed ?? null;
   }
 
-  private async judge(post: PostWithSessions, claim: Judgement): Promise<Judgement> {
+  private async judge(post: PostWithOwnSessions, claim: Judgement): Promise<Judgement> {
     const now = this.clock.now();
     const event = post.sessions[0]?.globalEvent;
     const masked = maskedPost({ title: event?.title ?? '', text: event?.description ?? '' });
@@ -165,6 +174,10 @@ export class JudgementsService {
     if (source === undefined) {
       throw new Error(`Source ${post.source} has no settings for its posts`);
     }
+    // A session the rules read may have gone to another event at an earlier try, and is no new session for this one.
+    const attached = await this.prisma.sourcePostSession.findMany({
+      where: { sourcePostId: post.id, readByRules: true, attachedBy: { not: SessionAttachment.own } },
+    });
     let answered: Prisma.JudgementUpdateManyMutationInput;
     try {
       const { answer, modelId } = await askForJudgement(this.model, masked, source, now, this.limits);
@@ -173,9 +186,15 @@ export class JudgementsService {
         source: POST_SOURCES[source],
         places: await this.places.list(),
         now,
-        readStarts: post.sessions.flatMap(({ readByRules, globalEvent: { startsAt } }) =>
-          readByRules && startsAt !== null ? [startsAt] : [],
-        ),
+        readStarts: [
+          ...post.sessions.flatMap(({ readByRules, globalEvent: { startsAt } }) =>
+            readByRules && startsAt !== null ? [startsAt] : [],
+          ),
+          ...attached.flatMap(({ ownDraft }) => {
+            const startsAt = ownDraftStart(ownDraft);
+            return startsAt === null ? [] : [startsAt];
+          }),
+        ],
       });
       answered = {
         outcome: answer.announcesEvent ? JudgementOutcome.judged : JudgementOutcome.no_event,

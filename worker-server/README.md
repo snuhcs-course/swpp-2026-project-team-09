@@ -252,6 +252,8 @@ From a post's page, `src/event/event-page.parser.ts` reads, by the team's own ru
 
 - The title, and the post's number, which the message sends as its key, and its address.
 - The description: the body as text, one line of the page per line, with no-break spaces as spaces.
+- The links: where the web links of the body lead, each once, since words can hide an address. The main server's link
+  rule reads them, and no DTO carries them further.
 - A label, of the time line or the place line, is followed by a colon, a `]` or a `|`, as in `- 일시:`, `• 장소]` or
   `장소 | …`. A label alone on its line, with no colon, `]` or `|`, as in `4. 장소`, takes the next line as its
   value, unless that line has a label of its own or is Hangul words alone, such as `- 학생회관`.
@@ -336,7 +338,7 @@ page's session tables (`[1] 회차`):
 - When a programme has several sessions, each has a `title` of the programme's title and its number:
   `영어 스피치 (2회차)`. It names that session's Global Event.
 
-The description is the programme's summary, one line for each session as the page writes it,
+The links are those of the programme's main text, as on the events list. The description is the programme's summary, one line for each session as the page writes it,
 `[1회차] 기간: … / 장소: …`, since a Judgement reads a post's text alone and quotes it, a line `신청기간: …` with its
 application period, and its main text, one line of the page per line. E-mail addresses, there and in every other value of the page, are replaced by `[이메일]` before anything leaves the worker: the
 site's footer refuses the automatic collection of the addresses it shows. The address sent is the `view.do` one, since

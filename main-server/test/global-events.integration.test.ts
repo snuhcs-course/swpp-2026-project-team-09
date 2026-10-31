@@ -7,6 +7,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -91,7 +92,7 @@ describe('A collected event whose time and place were read', () => {
 
     expect(await storedEvent(postNumber)).toMatchObject({
       state: 'published',
-      title: '[연합전공 지능형통신] 2027학년도 1학기 선발 및 설명회 안내',
+      title: `[연합전공 지능형통신] 2027학년도 1학기 선발 및 설명회 안내 ${postNumber}`,
       description: '- 일시: 2026. 10. 13.(화) 17:00\n- 장소: 뉴미디어통신공동연구소 이충웅홀(132동 103호)',
       startsAt: new Date('2026-10-13T08:00:00Z'),
       endsAt: null,

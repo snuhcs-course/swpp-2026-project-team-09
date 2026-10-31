@@ -6,6 +6,7 @@
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type EventPost, parseEventPage } from '../src/event/event-page.parser.js';
@@ -277,6 +278,31 @@ describe('A post whose time cannot be read', () => {
 describe('A page that is not the post asked for', () => {
   it('is not read when it is the page of another post', () => {
     expect(() => parseEventPage(post(176525), 176558)).toThrow('The page is not post 176558');
+  });
+
+  it("gives where the body's links lead, each once, whatever their words, and no mail address", () => {
+    const { links } = parsed(176525, (page) =>
+      page.replace(
+        '<div class="content">',
+        `<div class="content">
+          <a href="https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002382">신청하기</a>
+          <a href="https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002382">여기</a>
+          <a href="/snunow/events?md=v&amp;bbsidx=178226">이전 글</a>`,
+      ),
+    );
+
+    expect(links).toEqual(
+      expect.arrayContaining([
+        'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002382',
+        'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178226',
+      ]),
+    );
+    expect(links.filter((link) => link.includes('PGM012002382'))).toHaveLength(1);
+    expect(links.filter((link) => link.startsWith('mailto:'))).toEqual([]);
+  });
+
+  it('gives no link of the page around the body', () => {
+    expect(parsed(176549).links).toEqual([]);
   });
 
   it("is not read when it is the firewall's block page", () => {

@@ -44,6 +44,20 @@ export function bodyLines($: CheerioAPI, selector: string): string[] {
   );
 }
 
+// Where the links of a post's body lead, from the page at `address`, each once. Words can hide the address, so the text
+// alone may not hold it. Only web addresses, so that no mail address leaves with them.
+export function bodyLinks($: CheerioAPI, selector: string, address: string): string[] {
+  const links = $(selector)
+    .first()
+    .find('a[href]')
+    .toArray()
+    .flatMap((link) => {
+      const url = URL.parse($(link).attr('href') ?? '', address);
+      return url?.protocol === 'http:' || url?.protocol === 'https:' ? [url.href] : [];
+    });
+  return [...new Set(links)];
+}
+
 // "· 일   시: 2026. 10. 13.(화) 19:30" is the label 일시 and its value, whatever comes before the label's first letter. A
 // "]" or a "|" may stand for the colon: "• 장소] 50동 301호", "장소 | 4동 309호".
 const FIELD = /^[^가-힣]*([가-힣][가-힣 ]*?)\s*[:：\]|]\s*(.*)$/u;
@@ -80,6 +94,8 @@ export interface EventPost {
   sourceUrl: string;
   title: string;
   description: string;
+  // Where the links of the body lead.
+  links: string[];
   start: string | null;
   end: string | null;
   readFrom: 'body' | 'header' | null;
@@ -112,12 +128,14 @@ export function parseEventPage(html: string, postNumber: number): EventPost {
   if ($('link[rel="canonical"]').attr('href') !== sourceUrl) {
     throw new Error(`The page is not post ${postNumber}`);
   }
+  const links = bodyLinks($, '.board-view .content', sourceUrl);
   const lines = bodyLines($, '.board-view .content');
   return {
     postNumber,
     sourceUrl,
     title,
     description: lines.join('\n'),
+    links,
     ...timeOf(
       firstValue(lines, (label) => TIME_LABELS.has(label)),
       view.find('.header .date').text(),
