@@ -3,6 +3,8 @@
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
+# 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 ################################################################################
 
 # The Dev Server's stack: compose.yaml with this file over it, and the settings file as Compose's --env-file
@@ -48,6 +50,8 @@ services:
       # May be absent from a settings file written before the Assistant, which is then off.
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       ASSISTANT_MODEL: ${ASSISTANT_MODEL:-}
+      AUTOMATIC_PUBLICATION: ${AUTOMATIC_PUBLICATION:-on}
+      AUTOMATIC_JUDGEMENT: ${AUTOMATIC_JUDGEMENT:-off}
     ports: !reset []
 
   socket-server:
@@ -62,6 +66,8 @@ services:
     env_file: !reset []
     environment:
       WORKER_TOKEN: ${WORKER_TOKEN}
+      # Off until the same-event rules are deployed (infra/production/README.md).
+      EXTRA_SNU_COLLECTION: ${EXTRA_SNU_COLLECTION:-off}
     ports: !reset []
 
   match-server:

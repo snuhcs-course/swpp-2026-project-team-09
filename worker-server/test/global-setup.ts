@@ -3,6 +3,7 @@
  *
  * 2026-09-29  Opus 5.5   prompted by fyoon46
  * 2026-10-03  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -23,5 +24,6 @@ export default function setup({ provide }: TestProject): void {
     MAIN_SERVER_URL: 'http://main-server.test:3000',
     // Not a secret: the stand-in for the main server keeps the token of each message.
     WORKER_TOKEN: 'test-worker-token-of-thirty-two-characters',
+    EXTRA_SNU_COLLECTION: 'off',
   });
 }

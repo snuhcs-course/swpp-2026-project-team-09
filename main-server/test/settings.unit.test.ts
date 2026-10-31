@@ -3,6 +3,8 @@
  *
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: each setting missing; all but DATABASE_URL, REDIS_HOST and MATCH_SERVER_URL malformed or by a bound;
@@ -228,5 +230,56 @@ describe("settingsSchema: the Assistant's settings", () => {
     it('1 → accepted as 1', () => {
       expect(settingsSchema.parse({ ...valid, [setting]: '1' })).toMatchObject({ [setting]: 1 });
     });
+  });
+});
+
+describe('settingsSchema: AUTOMATIC_PUBLICATION', () => {
+  it('unset → on', () => {
+    expect(settingsSchema.parse({ ...valid, AUTOMATIC_PUBLICATION: undefined })).toMatchObject({
+      AUTOMATIC_PUBLICATION: true,
+    });
+  });
+
+  it('off → off', () => {
+    expect(settingsSchema.parse({ ...valid, AUTOMATIC_PUBLICATION: 'off' })).toMatchObject({
+      AUTOMATIC_PUBLICATION: false,
+    });
+  });
+
+  it('anything else → refused, naming AUTOMATIC_PUBLICATION', () => {
+    expect(refused({ ...valid, AUTOMATIC_PUBLICATION: 'false' })).toEqual(['AUTOMATIC_PUBLICATION']);
+  });
+});
+
+describe('settingsSchema: AUTOMATIC_JUDGEMENT', () => {
+  it('unset → off, and no key is needed', () => {
+    const unset = {
+      ...valid,
+      AUTOMATIC_JUDGEMENT: undefined,
+      OPENROUTER_API_KEY: undefined,
+      ASSISTANT_MODEL: undefined,
+    };
+
+    expect(settingsSchema.parse(unset)).toMatchObject({
+      AUTOMATIC_JUDGEMENT: false,
+      JUDGEMENT_TIMEOUT_MS: 60_000,
+      JUDGEMENT_MAX_OUTPUT_TOKENS: 4000,
+    });
+  });
+
+  it('on with the key and the model → on', () => {
+    expect(settingsSchema.parse({ ...valid, AUTOMATIC_JUDGEMENT: 'on', OPENROUTER_API_KEY: 'key' })).toMatchObject({
+      AUTOMATIC_JUDGEMENT: true,
+    });
+  });
+
+  it.each(['OPENROUTER_API_KEY', 'ASSISTANT_MODEL'])('on without %s → refused, naming AUTOMATIC_JUDGEMENT', (name) => {
+    const without = { ...valid, AUTOMATIC_JUDGEMENT: 'on', OPENROUTER_API_KEY: 'key', [name]: '' };
+
+    expect(refused(without)).toEqual(['AUTOMATIC_JUDGEMENT']);
+  });
+
+  it('anything else → refused, naming AUTOMATIC_JUDGEMENT', () => {
+    expect(refused({ ...valid, AUTOMATIC_JUDGEMENT: 'true' })).toEqual(['AUTOMATIC_JUDGEMENT']);
   });
 });

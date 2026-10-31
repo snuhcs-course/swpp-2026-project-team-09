@@ -55,7 +55,7 @@ _Avoid_: Pending event, unverified event
 How a Global Event came to be published: by an Administrator, by the rules that read its post, or by a Judgement. Only Administrators see it.
 
 **Judgement**:
-The AI's reading of a Draft: for each session, its time and place, and the lines of the post they were read from. A Judgement publishes the sessions that pass the server's checks and leaves the rest a Draft.
+The AI's reading of a Draft: for each session, its time and place, and the lines of the post they were read from. One call reads the Draft's whole Source Post, so a post has one Judgement, tried at most twice. A Judgement publishes the sessions that pass the server's checks and leaves the rest a Draft.
 _Avoid_: AI verification, AI publishing
 
 **Private Event**:
@@ -175,7 +175,7 @@ A page or feed outside the project that the worker server collects, such as the 
 _Avoid_: Site, provider
 
 **Source Post**:
-One post on a Source that a Global Event was read from, such as an SNU Now notice or an extra.snu program. A Global Event can have several, when more than one Source posted the same event.
+One post on a Source that Global Events were read from, such as an SNU Now notice or an extra.snu program, stored once by its Source and its key on that Source. It is read as one or more numbered sessions, each linked to one Global Event. A Global Event can have several, when more than one Source posted the same event. A post's session (회차, `SourcePostSession`) is not a **Session**, the app signed in on one phone.
 _Avoid_: Original, article, duplicate
 
 **Restaurant**:

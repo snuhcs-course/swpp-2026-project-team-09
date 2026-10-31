@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { cardsOf, normaliseArgs, outcomeOf, roleOf } from '../eval/normalise.ts';
@@ -30,9 +31,12 @@ describe('The arguments of the 공강 tools', () => {
     expect(normaliseArgs('findFreeTimeEvents', { from: '2026-11-02T05:00:00Z' }, items)).toEqual({ from: '14:00' });
   });
 
-  it('read a departure Place by seed and a leave-by time as HH:MM', () => {
-    expect(normaliseArgs('findMealRestaurants', { departurePlace: PLACE, leaveBy: '16:30' }, names)).toEqual({
+  it('read a departure Place by seed and departure and leave-by times as HH:MM', () => {
+    const args = { departurePlace: PLACE, departureTime: '2026-11-02T10:00:00Z', leaveBy: '16:30' };
+
+    expect(normaliseArgs('findMealRestaurants', args, names)).toEqual({
       departurePlace: '학생회관',
+      departureTime: '19:00',
       leaveBy: '16:30',
     });
   });

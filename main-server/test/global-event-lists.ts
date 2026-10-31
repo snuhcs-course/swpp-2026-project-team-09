@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -56,8 +58,11 @@ export const listedEventSchema = z.strictObject({
   longitude: z.number().nullable(),
   state: z.enum(['draft', 'published', 'cancelled', 'discarded']),
   version: z.number(),
-  postNumber: z.number().nullable(),
+  source: z.enum(['snu_events', 'extra_snu']).nullable(),
+  postKey: z.string().nullable(),
   sourceUrl: z.string().nullable(),
+  publicationRoute: z.enum(['administrator', 'rule', 'judgement']).nullable(),
+  needsAdministrator: z.boolean(),
   missing: z.array(z.enum(['startsAt', 'position'])),
 });
 
@@ -89,7 +94,11 @@ export async function listedAmong(
 }
 
 // An event as an Administrator reads it alone, exactly.
-export const eventDetailSchema = listedEventSchema.extend({ description: z.string() });
+// Its Judgement's shape is tested by test/judgement-publication.integration.test.ts.
+export const eventDetailSchema = listedEventSchema.extend({
+  description: z.string(),
+  judgement: z.looseObject({}).nullable(),
+});
 
 export type EventDetail = z.infer<typeof eventDetailSchema>;
 

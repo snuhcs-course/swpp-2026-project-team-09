@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-31  Opus 5.5   prompted by TaeHyun79
+# 2026-11-01  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # 공강에 밥: who is free, where to eat, and the plan. The fixed histories write the earlier turns as the app sends them
@@ -22,6 +23,8 @@
       findFreeFriends: { date: '2026-11-02', meal: lunch }
     cards:
       - { kind: restaurant, seeds: [], max: 0 }
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
     mapButtons: []
     text:
       mentions:
@@ -59,6 +62,8 @@
       findFreeFriends: { date: '2026-11-02', meal: lunch }
     cards:
       - { kind: restaurant, seeds: [], max: 0 }
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
     mapButtons: []
     text:
       mentions:
@@ -95,6 +100,8 @@
       findFreeFriends: { date: '2026-11-03', meal: dinner }
     cards:
       - { kind: restaurant, seeds: [], max: 0 }
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
     mapButtons: []
     text:
       mentions: [['17:00', 5시], ['18:00', 6시], [김지은], [박서준], [최유진], [정하람], [한도윤], [윤서아], [강민재]]
@@ -544,7 +551,7 @@
     mapButtons: []
     text:
       mentions: [[없]]
-      absent: [오지호, 건축설계, 연구실 미팅, 글로벌공학교육센터, 제1공학관]
+      absent: [오지호, 수업, 건축설계, 연구실 미팅, 글로벌공학교육센터, 제1공학관]
     results:
       findMealRestaurants:
         args: { date: '2026-11-02', meal: lunch, friends: [오지호] }
@@ -652,7 +659,7 @@
   expect:
     actions: [CHAT, REFUSE, ASK]
     tools:
-      forbidden: ['*']
+      forbidden: '*'
     mapButtons: []
     text:
       mentions: [[점심], [저녁]]

@@ -6,6 +6,7 @@ Ticket: [01: Travel Times](../issues/01-travel-times.md). Everything here is com
 
 - Walk each test pair below with a stopwatch, at your usual pace, by the way you would really take.
 - Start at the origin Place's entrance on the side you leave by and stop at the destination Place's entrance on the side you arrive by. A Place's pin is a point in or beside the building, and the walk ends at the building.
+- The table runs from pin to pin and a walk from entrance to entrance, so the table may read slightly long; read the results with that in mind.
 - Record only the time, the walker, the date and the time of day.
 - A pair more than 2 minutes off the table gets one line on the route taken.
 - Shuttle legs are not walked.

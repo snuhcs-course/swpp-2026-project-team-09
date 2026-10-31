@@ -86,7 +86,7 @@ about Friends and parties. Iteration 2 answered it, and its work was merged into
   on the phone; up to 10 timetable versions on the phone; a week grid from 09 to 22 on 내 정보; today's classes appear
   as Quests on the map.
 - **Global Events and the admin site**: events collected four times a day from the university's events list and
-  published when their time and place are read; on the admin site, Administrators review Drafts, correct and publish
+  published shortly after each Collection when their time and place are read; on the admin site, Administrators review Drafts, correct and publish
   them, create and cancel events, see the Places on a map, see each Source's Collection status, and make or end
   friendships between Users for demo accounts.
 - **Dining and shuttle**: a dining layer with today's menus of the Co-op's restaurants, the dormitory and the
@@ -161,7 +161,7 @@ What the demo cannot show, and what is known not to work yet:
 - **Collected events wait for an Administrator** unless the rules read both their time and their place: a start
   with a time of day from the post's body, and a place that names exactly one Place. Every other collected event is a
   Draft until an Administrator publishes it on the admin site. A post is read once, so a later edit at the source is
-  not seen, and a post that describes several sessions is one event.
+  not seen, and a post of the events list that describes several sessions is one event.
 - **Users outside the Campus Boundary are hidden** from everyone, by design: a demo must be run on campus. The app's
   development settings can replace the phone's position with a walk on campus ([mobile/README.md](mobile/README.md),
   "Development settings").
@@ -347,6 +347,9 @@ file's.
 | `ASSISTANT_MAX_STEPS`              | Optional: the model calls per message; 8 unless set.                                                |
 | `ASSISTANT_TIMEOUT_MS`             | Optional: the milliseconds over all of a message's model calls; 30000 unless set.                   |
 | `ASSISTANT_MAX_OUTPUT_TOKENS`      | Optional: the tokens the model may write in each call; 1000 unless set.                             |
+| `AUTOMATIC_JUDGEMENT`              | Optional: `on` lets the step after a Collection ask the model about Drafts; `off` unless set.       |
+| `JUDGEMENT_TIMEOUT_MS`             | Optional: the milliseconds of a Judgement's model call; 60000 unless set.                           |
+| `JUDGEMENT_MAX_OUTPUT_TOKENS`      | Optional: the tokens the model may write in a Judgement; 4000 unless set.                           |
 
 ### socket-server
 
@@ -359,11 +362,12 @@ file's.
 
 ### worker-server
 
-| Setting           | What it is                                                        |
-| ----------------- | ----------------------------------------------------------------- |
-| `PORT`            | The port the HTTP server listens on.                              |
-| `MAIN_SERVER_URL` | Where the main server is reached, to hand over what is collected. |
-| `WORKER_TOKEN`    | The same line as in `main-server/.env`.                           |
+| Setting                | What it is                                                                                |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| `PORT`                 | The port the HTTP server listens on.                                                      |
+| `MAIN_SERVER_URL`      | Where the main server is reached, to hand over what is collected.                         |
+| `WORKER_TOKEN`         | The same line as in `main-server/.env`.                                                   |
+| `EXTRA_SNU_COLLECTION` | `on` lets the schedule start extra.snu's Collections. `off` by default and in Production. |
 
 ### match-server
 
