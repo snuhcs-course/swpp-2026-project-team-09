@@ -2009,14 +2009,15 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     User). Rooms, Places, coordinates and the reason anyone is busy are never returned.
     - `getMyDay(date)` answers the User's items, each with its id (a Class meeting's is its ClassTime's), name, start
       and end. A Sub Quest with no end, or longer than 3 hours, ends 30 minutes after its start.
-    - `findFreeTimeEvents(date, from, to, board?, departurePlace?, leaveBy?)` takes `from` and `to` as an item id, a
+    - `findFreeTimeEvents(date, from, to, board?, departurePlace?, departureTime?, leaveBy?)` takes `from` and `to` as an item id, a
       clock time, `now` or `end`. It answers the gaps found, with the items around them, the `total` and every candidate
       that fits, soonest first with no cap: recruiting Quests the User can still enter and published Global Events that
       start inside a gap, at a place that maps to a Place (`PlaceLookup.placeIdOf`), reached 1 minute early and left in
-      time for the next item. What is left out is neither returned nor explained. Or it answers
+      time for the next item, at their end or, after a stay of at least 30 minutes, at a leave-by time. What is left out is neither returned nor explained. Or it answers
       `{ "result": "needs", "needs": { "side": "before" | "after", "item" } }` for an item of the User's without a Place,
       and takes the answer as `departurePlace`, which must come from `resolvePlace` in the same message, or `leaveBy`.
-      Those two answer only sides without a Place, and nothing of them is stored. A clock time as `to` also limits a
+      From off campus, `departureTime` says when the User enters the campus at that Place, and they leave from there
+      at that time. These answer only sides without a Place, and nothing of them is stored. A clock time as `to` also limits a
       candidate's end. The numbers are in `src/travel/judgement-constants.ts`.
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
       puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called

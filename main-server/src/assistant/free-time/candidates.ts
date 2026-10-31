@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type PublishedGlobalEventDto } from '../../global-events/dto/global-event.dto.js';
@@ -34,6 +35,7 @@ export interface CandidateSearch {
   clockEnd: string | null;
   board: QuestBoard | undefined;
   departurePlace: string | undefined;
+  departureTime: string | undefined;
   leaveBy: string | undefined;
 }
 
@@ -51,10 +53,20 @@ function afterOf(next: DayItem | null, { date, leaveBy }: CandidateSearch): Afte
   return leaveBy === undefined ? null : { kind: 'leaveBy', at: onDay(date, leaveBy) };
 }
 
-function gapOf({ start, previous, next }: AskedInterval, search: CandidateSearch): Gap {
+// When the User leaves for a gap: a time they gave for an item without a Place, when it is later.
+function leavesAt({ start, previous }: AskedInterval, { date, departureTime }: CandidateSearch): Date {
+  if (previous?.placeId !== null || departureTime === undefined) {
+    return start;
+  }
+  const entering = onDay(date, departureTime);
+  return entering > start ? entering : start;
+}
+
+function gapOf(part: AskedInterval, search: CandidateSearch): Gap {
+  const { previous, next } = part;
   const { date, clockEnd, departurePlace } = search;
   return {
-    leavesAt: start,
+    leavesAt: leavesAt(part, search),
     origin: previous === null ? null : (previous.placeId ?? departurePlace ?? null),
     after: afterOf(next, search),
     // An item or the end of the day leaves the end to the side after the gap.
