@@ -30,7 +30,31 @@ labels:
   reviewedBy: null
   reviewedOn: null
   secondLabeller: null
-  overlapCases: 20
+  # The second labeller's cases, one drawn per tag with a fixed seed, and three kinds the tags
+  # leave out: asking back, a new Proposal and a named Place.
+  overlap:
+    [
+      join-06,
+      join-08,
+      join-19,
+      join-20,
+      join-12,
+      join-24,
+      search-l-02,
+      search-p-04,
+      search-t1-02,
+      search-t2-02,
+      search-h-01,
+      search-s-05,
+      search-n-05,
+      search-r-01,
+      search-o-03,
+      search-b-02,
+      search-e-01,
+      join-27,
+      join-29,
+      join-31,
+    ]
 
 # P19 cases whose expected answer this work changes, not edited, reported apart in G1. Each is listed with the P05 case
 # that holds the new answer.

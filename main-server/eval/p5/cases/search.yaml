@@ -425,11 +425,11 @@
   world: p5
   repeat: 3
   turns:
-    - user: 토요일 밤 10시 이후 파티 있어?
+    - user: 이번 주에 클라이밍 파티 있어?
 
 - id: search-e-06
   category: search
   world: p5
   repeat: 3
   turns:
-    - user: 일요일 저녁 행사 있어?
+    - user: 이번 주에 스케이트 행사 있어?
