@@ -46,7 +46,10 @@ const thresholdSchema = z.strictObject({
 
 const suiteSchema = z.looseObject({
   world: z.literal('p5'),
-  tags: z.record(z.string(), z.array(z.string())),
+  tags: z.record(
+    z.string(),
+    z.array(z.union([z.string(), z.strictObject({ case: z.string(), seed: z.string().nullable() })])),
+  ),
   superseded: z.array(z.strictObject({ case: z.string(), heldBy: z.string() })),
   thresholds: z.array(thresholdSchema),
 });
@@ -128,7 +131,9 @@ describe('The P05 suite', () => {
   });
 
   it('tags only cases it holds, and every search case with a subset', () => {
-    const tagged = Object.values(suite.tags).flat();
+    const tagged = Object.values(suite.tags)
+      .flat()
+      .map((tag) => (typeof tag === 'string' ? tag : tag.case));
 
     expect(tagged.filter((id) => !ids.includes(id))).toEqual([]);
     expect(ids.filter((id) => id.startsWith('search-') && !tagged.includes(id))).toEqual([]);
