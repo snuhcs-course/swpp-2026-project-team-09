@@ -71,9 +71,10 @@ The app changes only in JavaScript.
 - [ ] **Found ids.** The candidates of `findFreeTimeEvents` join the ids found in this message, so that the presenters accept them with no change.
 - [ ] **After the run.**
   - While a run lasts, it keeps what `findFreeTimeEvents` returned.
-  - A common step after the run attaches each candidate's 이동 시간 box to the Quest or Global Event card shown for it, and orders those cards by start, whatever order the presenters were called in.
+  - A common step after the run attaches each candidate's 이동 시간 box to the Quest or Global Event card shown for it, and orders those cards by the candidate's start, for a Quest the start of the Sub Quest judged inside the gap, whatever order the presenters were called in.
   - Cards from other tools stay after them with no box. A run that did not call `findFreeTimeEvents` keeps its cards as they were.
-  - At most 20 become cards, the existing card limit, so the 20 soonest when more fit. The third point of ticket 03's PM decisions applies here.
+  - At most 20 become cards, the existing card limit, so the 20 soonest when more fit.
+  - A Quest card still shows the existing next Sub Quest, which can differ from the judged one (ticket 03, PM decisions).
 - [ ] **Never sent to the model:** rooms, the User's or Friends' Places and coordinates, and the reason anyone is busy. No excluded candidate and no reason is ever returned.
 - [ ] **The 공강 rules, 공강 파티 side.** A constant appended to the chat's prompt, apart from it, so that P05's prompt changes do not collide. It states by meaning, with no keyword list:
   - a question whether a party fits the User's day goes to `findFreeTimeEvents` ("2시부터 3시 반에 갈 수 있는 파티 있어?");

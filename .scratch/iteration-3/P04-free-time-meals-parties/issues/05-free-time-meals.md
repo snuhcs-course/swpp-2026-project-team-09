@@ -44,7 +44,7 @@ The app changes only in JavaScript. An item marked **Person** is a person's work
   - when the shared time has several intervals, the earliest one in which the Restaurant fits is used, and a window the model passes limits the search.
 - [ ] **Items without a Place.**
   - My item next to the free interval: the tool returns `needs` as in ticket 04, and accepts a departure Place or a leave-by time. Nothing is stored.
-  - A Friend's item: that side's travel is left out, the Friend is judged on time only, and their Travel Time shows "—". The second point of ticket 03's PM decisions applies here.
+  - A Friend's item: that side's travel is left out and the Friend is judged on time only. Their Travel Time shows as below, and "—" only when the time to show is unknown (ticket 03, PM decisions).
 - [ ] **Travel shown per person:** the in-time; with no previous item, the out-time; with neither, "—".
 - [ ] **Order:** by the longest Travel Time shown, shortest first; then by the sum of the shown times; then by name. A "—" counts in neither and is never highlighted. At most 20 cards.
 - [ ] **Menu conditions** ("면 빼고", "국밥 먹고 싶어") are read by the model from the menu lines it receives. There is no condition code, keyword list or word-specific prompt hint. "X 빼고" keeps Restaurants with at least one dish of that meal that is not X, and "X 먹고 싶어" keeps those with an X dish.
@@ -75,9 +75,9 @@ The app changes only in JavaScript. An item marked **Person** is a person's work
 - [ ] **Constants.** The meal numbers join the one constants table: 15 minutes of eating, 5 minutes of rounding and the meal windows.
 - [ ] **The 공강 rules, meal side.** The same fragment as ticket 04 states, by meaning and with no keyword list:
   - a question about who is free goes to `findFreeFriends` ("오늘 점심에 누구 돼?");
-  - Friends with a day and a meal, and no Place or clock time, go to `resolveFriend`, then `findMealRestaurants` ("내일 점심 민수랑 밥");
+  - Friends with a day and a meal, and no Place or single clock time, go to `resolveFriend`, then `findMealRestaurants` ("내일 점심 민수랑 밥"), with the window when the User names one ("12시에서 1시 사이");
   - a request with no day or meal is asked about, as the chat does today ("이민수랑 밥 약속 잡아줘");
-  - a request that names a Place or a clock time goes to `proposeQuest`, as today. The first point of ticket 03's PM decisions applies here;
+  - a request that names a Place or a single clock time goes to `proposeQuest`, as today ("1시에"; ticket 03, PM decisions);
   - "여기로 하자" after Restaurant cards picks a plan and is not a request to recruit;
   - when `resolveFriend` answers `several`, the model calls `findFreeFriends` for that meal, reads the departments there and names them in its question. P07's chips stay as they are;
   - to ask when a Friend is ambiguous or a tool returns `needs`, and for breakfast to say that lunch and dinner are covered;
