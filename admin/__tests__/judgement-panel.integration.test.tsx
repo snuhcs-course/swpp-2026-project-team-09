@@ -178,6 +178,17 @@ describe('a post called no event', () => {
     expect(screen.getByRole('button', { name: 'Discard' })).toBeEnabled();
   });
 
+  it('claims nothing about the form on an event that has none', async () => {
+    await opened({
+      ...COLLECTED,
+      state: 'discarded',
+      judgement: { ...JUDGED, outcome: 'no_event', announcesEvent: false, sessions: [] },
+    });
+
+    expect(panel().getByText('The AI called this post no event, so the Judgement publishes nothing.')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+  });
+
   it('shows what the AI read of a post it called no event', async () => {
     await opened({
       ...COLLECTED,
@@ -196,7 +207,7 @@ describe('a post called no event', () => {
 
 describe('a Judgement without an answer', () => {
   it.each([
-    [1, /The next Collection of its Source tries once more/u],
+    [1, /A try is left for the next Collection of its Source/u],
     [2, /It will not be tried again/u],
   ])('says why a Judgement could not be made, at try %i', async (attempts, next) => {
     await opened({
@@ -233,6 +244,20 @@ describe('a Judgement without an answer', () => {
     await opened(COLLECTED);
 
     expect(screen.queryByRole('region', { name: 'Judgement' })).toBeNull();
+  });
+});
+
+describe('the way back from the event’s page', () => {
+  it.each([
+    [{ route: 'judgement' }, '/?route=judgement'],
+    [{}, '/'],
+    [{ route: 'constructor' }, '/'],
+  ])('with %j goes to %s', async (query, href) => {
+    const [event] = fakeMainServer.hasGlobalEvents(COLLECTED);
+
+    await openEvent(event?.id ?? '', query);
+
+    expect(screen.getByRole('link', { name: '← Events' })).toHaveAttribute('href', href);
   });
 });
 

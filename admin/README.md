@@ -108,14 +108,15 @@ event; the event's page reads
 `GET /admin/global-events/:id` and the Places from `GET /admin/places`.
 
 A published event's Publication Route is a column of the Published table, and `/?route=administrator`, `rule` or
-`judgement` filters that table by it, in the site, from the list the main server sent. A Draft has no route, so the
-Drafts stay as they are; ended and cancelled events are in neither list. `needsAdministrator` marks a row and the
+`judgement` filters that table by it, in the site, from the list the main server sent. A filtered row passes the route to the
+event's page, whose "← Events" goes back to the same filter. A Draft has no route, so the Drafts stay as they are;
+ended and cancelled events are in neither list. `needsAdministrator` marks a row and the
 event's page with "Needs an Administrator". The event's page also shows the route.
 
 The event's page shows the Judgement of its post beside the post's text (`events/[id]/judgement-panel.tsx`), when there
 is one. A post has one Judgement, so the panel holds all its sessions: each with its values, the lines they were read
 from, whether it passed, each check by the name the main server gives it, and whether it was published as this event or
-another. Its times are shown as the AI wrote them, since a time the checks could not read is shown too; they are Seoul's.
+another. Its times are shown as the AI wrote them, in which it is asked for Seoul's time, since a time the checks could not read is shown too.
 Above them it says the outcome, with the model and the time: how many sessions passed, that the post was called no
 event, why a Judgement could not be made and whether another try is left, or that a try is running. A Draft that a
 Judgement left stays a Draft, published or discarded with the same form. Cancelling an event a Judgement published is
@@ -234,8 +235,8 @@ needs Docker. `pnpm test:cov` and `pnpm test:cov:unit` add the coverage of `src/
 ```text
 src/app/sign-in/         the sign-in page, Google's button and the sign-in Server Action
 src/app/(signed-in)/     the pages behind the session; layout.tsx and site-menu.tsx are the menu around them
-src/app/(signed-in)/events/       the form's fields shared by both event pages (event-fields.tsx, fields.ts) and the map
-src/app/(signed-in)/events/[id]/  the event's page, its form (event-form.tsx) and its Server Action
+src/app/(signed-in)/events/       the form's fields shared by both event pages (event-fields.tsx, fields.ts), the map and the Publication Route's labels (publication.tsx)
+src/app/(signed-in)/events/[id]/  the event's page, its form (event-form.tsx), its Judgement (judgement-panel.tsx) and its Server Action
 src/app/(signed-in)/events/new/   the page for a new event and its Server Action
 src/app/(signed-in)/places/       the Places page and its map
 src/app/(signed-in)/users/        the Users page, and in [id]/ a User's page with their friendships

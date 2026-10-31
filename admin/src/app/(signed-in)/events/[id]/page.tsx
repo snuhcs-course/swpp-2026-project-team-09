@@ -15,7 +15,7 @@ import { formatInSeoul } from '@/seoul-time';
 import { asAdministrator } from '@/session';
 
 import { StartTime } from '../../start-time';
-import { NeedsAdministratorMark, PUBLICATION_ROUTES } from '../publication';
+import { isPublicationRoute, NeedsAdministratorMark, PUBLICATION_ROUTES } from '../publication';
 import { EventForm } from './event-form';
 import { JudgementPanel } from './judgement-panel';
 
@@ -83,8 +83,9 @@ function Stored({ event }: { event: GlobalEvent }): ReactElement {
   );
 }
 
-export default async function EventPage({ params }: PageProps<'/events/[id]'>): Promise<ReactElement> {
+export default async function EventPage({ params, searchParams }: PageProps<'/events/[id]'>): Promise<ReactElement> {
   const { id } = await params;
+  const { route } = await searchParams;
   const [event, places] = await asAdministrator(`/events/${id}`, (token) =>
     Promise.all([read(token, id), mainServer.listPlaces(token)]),
   );
@@ -93,7 +94,10 @@ export default async function EventPage({ params }: PageProps<'/events/[id]'>): 
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-800">
+        <Link
+          href={isPublicationRoute(route) ? `/?route=${route}` : '/'}
+          className="text-sm text-zinc-500 hover:text-zinc-800"
+        >
           ← Events
         </Link>
         <div className="flex flex-wrap items-center gap-3">

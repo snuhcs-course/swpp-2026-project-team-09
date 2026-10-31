@@ -18,19 +18,19 @@ function outcomeOf({ outcome, failure, attempts, sessions }: Judgement): string 
     return `The AI read ${sessions.length} session(s) in this post, and ${passed} passed every check.`;
   }
   if (outcome === 'no_event') {
-    return 'The AI called this post no event, so it publishes nothing. An Administrator can still publish or discard it.';
+    return 'The AI called this post no event, so the Judgement publishes nothing.';
   }
   if (outcome === 'failed') {
     const next =
       attempts < JUDGEMENT_TRIES
-        ? 'The next Collection of its Source tries once more, unless an Administrator has changed one of its Drafts.'
+        ? 'A try is left for the next Collection of its Source, unless Judgements are off or an Administrator has changed an event of this post.'
         : 'It will not be tried again.';
     return `The Judgement could not be made: ${failure ?? 'no reason recorded'}. Try ${attempts} of ${JUDGEMENT_TRIES}. ${next}`;
   }
   return `No answer yet: try ${attempts} of ${JUDGEMENT_TRIES} is running, or was left by a server that stopped.`;
 }
 
-function Value({ label, value, lines }: { label: string; value: string | null; lines: string[] }): ReactElement {
+function ReadValue({ label, value, lines }: { label: string; value: string | null; lines: string[] }): ReactElement {
   return (
     <div className="contents">
       <dt className="text-zinc-500">{label}</dt>
@@ -75,7 +75,7 @@ function PublishedAs({ eventId, globalEventId }: { eventId: string; globalEventI
   );
 }
 
-function Session({
+function JudgedSessionCard({
   session,
   number,
   eventId,
@@ -103,11 +103,11 @@ function Session({
         <PublishedAs eventId={eventId} globalEventId={globalEventId} />
       </div>
       <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2 text-sm">
-        <Value label="Start" value={start} lines={lines.start} />
-        <Value label="End" value={end} lines={lines.end} />
-        <Value label="Place" value={place} lines={lines.place} />
-        <Value label="Matched Place" value={placeName(placeId, places)} lines={[]} />
-        <Value label="Over a period" value={overPeriod ? 'Yes' : 'No'} lines={[]} />
+        <ReadValue label="Start" value={start} lines={lines.start} />
+        <ReadValue label="End" value={end} lines={lines.end} />
+        <ReadValue label="Place" value={place} lines={lines.place} />
+        <ReadValue label="Matched Place" value={placeName(placeId, places)} lines={[]} />
+        <ReadValue label="Over a period" value={overPeriod ? 'Yes' : 'No'} lines={[]} />
       </dl>
       <ul aria-label={`Checks of session ${number}`} className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
         {checks.map(({ name, passed: ok }, index) => (
@@ -120,8 +120,8 @@ function Session({
   );
 }
 
-// The Judgement of the event's post, whichever of its sessions this event is. Times stay as the AI wrote them, Seoul's
-// without an offset, since a time the checks could not read is shown too.
+// The Judgement of the event's post, whichever of its sessions this event is. Times stay as the AI wrote them, without
+// an offset, which formatInSeoul would misread, and perhaps no time at all, since one the checks could not read shows too.
 export function JudgementPanel({
   judgement,
   eventId,
@@ -142,10 +142,10 @@ export function JudgementPanel({
         </p>
       )}
       {sessions.length > 0 && (
-        <p className="text-sm text-zinc-600">Times are as the AI wrote them, in Seoul&apos;s time.</p>
+        <p className="text-sm text-zinc-600">Times are as the AI wrote them; it is asked for Seoul&apos;s time.</p>
       )}
       {sessions.map((session, index) => (
-        <Session key={index} session={session} number={index + 1} eventId={eventId} places={places} />
+        <JudgedSessionCard key={index} session={session} number={index + 1} eventId={eventId} places={places} />
       ))}
     </section>
   );

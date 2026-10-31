@@ -98,7 +98,7 @@ describe('the unsettled posts', () => {
     expect(rowsOf('Unsettled posts')).toEqual([
       ['SNU events list · Post 178226', 'Failed 2026-11-01 10:00 · PrismaClientKnownRequestError', '—', '—'],
       ['SNU events list · Post 178227', 'Not finished', '—', '—'],
-      ['extra.snu programmes · Post 4411', 'Finished', 'Try 2 of 2 · APICallError: HTTP 402', '창업 특강'],
+      ['extra.snu programmes · Post 4411', 'Finished', 'Tries used: 2 of 2 · APICallError: HTTP 402', '창업 특강'],
     ]);
     expect(screen.getByRole('link', { name: 'Post 178226' })).toHaveAttribute('href', POST.address);
     const table = within(screen.getByRole('table', { name: 'Unsettled posts' }));

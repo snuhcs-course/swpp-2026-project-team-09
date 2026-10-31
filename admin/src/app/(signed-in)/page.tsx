@@ -11,21 +11,36 @@ import type { ReactElement } from 'react';
 import { type ListedGlobalEvent, mainServer, type Missing, type PublicationRoute } from '@/main-server';
 import { asAdministrator } from '@/session';
 
-import { NeedsAdministratorMark, PUBLICATION_ROUTES } from './events/publication';
+import { isPublicationRoute, NeedsAdministratorMark, PUBLICATION_ROUTES } from './events/publication';
 import { StartTime } from './start-time';
 
 const NEEDED: Record<Missing, string> = { startsAt: 'Start', position: 'Position' };
 
 type Column = 'missing' | 'route';
 
-function EventRow({ event, column }: { event: ListedGlobalEvent; column: Column }): ReactElement {
+function EventRow({
+  event,
+  column,
+  route,
+}: {
+  event: ListedGlobalEvent;
+  column: Column;
+  route: PublicationRoute | undefined;
+}): ReactElement {
   return (
     <tr>
       <td className="font-medium">
-        <Link href={`/events/${event.id}`} className="text-accent-strong hover:underline">
+        <Link
+          href={route === undefined ? `/events/${event.id}` : `/events/${event.id}?route=${route}`}
+          className="text-accent-strong hover:underline"
+        >
           {event.title}
         </Link>
-        {event.needsAdministrator && <NeedsAdministratorMark />}
+        {event.needsAdministrator && (
+          <span className="ml-2">
+            <NeedsAdministratorMark />
+          </span>
+        )}
       </td>
       <td className="whitespace-nowrap">{event.startsAt !== null && <StartTime startsAt={event.startsAt} />}</td>
       <td>{event.place}</td>
@@ -46,6 +61,7 @@ function EventTable({
   events,
   empty,
   column,
+  route,
   filter,
 }: {
   id: string;
@@ -53,6 +69,7 @@ function EventTable({
   events: ListedGlobalEvent[];
   empty: string;
   column: Column;
+  route?: PublicationRoute;
   filter?: ReactElement;
 }): ReactElement {
   return (
@@ -74,7 +91,7 @@ function EventTable({
             </thead>
             <tbody>
               {events.map((event) => (
-                <EventRow key={event.id} event={event} column={column} />
+                <EventRow key={event.id} event={event} column={column} route={route} />
               ))}
             </tbody>
           </table>
@@ -84,22 +101,19 @@ function EventTable({
   );
 }
 
-const isRoute = (value: unknown): value is PublicationRoute =>
-  typeof value === 'string' && Object.keys(PUBLICATION_ROUTES).includes(value);
-
-// In the address, so that coming back from an event's page keeps it.
+// In the address, which the rows pass on to an event's page, so that its way back keeps the filter.
 function RouteFilter({ current }: { current: PublicationRoute | undefined }): ReactElement {
-  const choices: [string, string, boolean][] = [
-    ['All', '/', current === undefined],
-    ...Object.entries(PUBLICATION_ROUTES).map(([route, label]): [string, string, boolean] => [
+  const choices = [
+    { label: 'All', href: '/', chosen: current === undefined },
+    ...Object.entries(PUBLICATION_ROUTES).map(([route, label]) => ({
       label,
-      `/?route=${route}`,
-      route === current,
-    ]),
+      href: `/?route=${route}`,
+      chosen: route === current,
+    })),
   ];
   return (
     <nav aria-label="Filter by Publication Route" className="flex flex-wrap gap-1 text-sm">
-      {choices.map(([label, href, chosen]) => (
+      {choices.map(({ label, href, chosen }) => (
         <Link
           key={label}
           href={href}
@@ -116,7 +130,7 @@ function RouteFilter({ current }: { current: PublicationRoute | undefined }): Re
 
 export default async function EventsPage({ searchParams }: PageProps<'/'>): Promise<ReactElement> {
   const { route: asked } = await searchParams;
-  const route = isRoute(asked) ? asked : undefined;
+  const route = isPublicationRoute(asked) ? asked : undefined;
   const [drafts, published] = await asAdministrator('/', (token) =>
     Promise.all([mainServer.listGlobalEvents(token, 'draft'), mainServer.listGlobalEvents(token, 'published')]),
   );
@@ -145,6 +159,7 @@ export default async function EventsPage({ searchParams }: PageProps<'/'>): Prom
             : `No published event still to come has the route ${PUBLICATION_ROUTES[route]}.`
         }
         column="route"
+        route={route}
         filter={<RouteFilter current={route} />}
       />
     </div>

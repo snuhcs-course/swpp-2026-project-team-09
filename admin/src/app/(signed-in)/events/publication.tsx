@@ -14,12 +14,15 @@ export const PUBLICATION_ROUTES: Record<PublicationRoute, string> = {
   judgement: 'Judgement',
 };
 
+export const isPublicationRoute = (value: unknown): value is PublicationRoute =>
+  typeof value === 'string' && Object.keys(PUBLICATION_ROUTES).includes(value);
+
 // A post's Judgement is tried at most this many times, as the main server's JUDGEMENT_TRIES says.
 export const JUDGEMENT_TRIES = 2;
 
 export function NeedsAdministratorMark(): ReactElement {
   return (
-    <span className="ml-2 inline-block rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+    <span className="inline-block rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800">
       Needs an Administrator
     </span>
   );

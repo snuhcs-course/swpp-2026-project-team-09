@@ -25,6 +25,8 @@ const SOURCES: Record<string, string> = {
   extra_snu: 'extra.snu programmes',
 };
 
+const sourceName = (source: string): string => SOURCES[source] ?? source;
+
 function stateOf({ lastSucceededAt, lastFailedAt }: CollectionStatus): { label: string; broken: boolean } {
   if (lastSucceededAt === null) {
     return { label: lastFailedAt === null ? 'Never collected' : 'Never succeeded', broken: true };
@@ -39,7 +41,7 @@ function StatusRow({ status }: { status: CollectionStatus }): ReactElement {
   const { label, broken } = stateOf(status);
   return (
     <tr>
-      <td className="font-medium">{SOURCES[status.source] ?? status.source}</td>
+      <td className="font-medium">{sourceName(status.source)}</td>
       <td className={broken ? 'font-medium text-red-700' : 'text-zinc-600'}>{label}</td>
       <td className="whitespace-nowrap">
         {status.lastSucceededAt === null ? '—' : formatInSeoul(status.lastSucceededAt)}
@@ -54,18 +56,18 @@ function StatusRow({ status }: { status: CollectionStatus }): ReactElement {
   );
 }
 
-function stepOf({ stepFinished, stepFailure, stepFailedAt }: UnsettledPost): string {
+function stepText({ stepFinished, stepFailure, stepFailedAt }: UnsettledPost): string {
   if (stepFailure !== null) {
     return stepFailedAt === null ? `Failed · ${stepFailure}` : `Failed ${formatInSeoul(stepFailedAt)} · ${stepFailure}`;
   }
   return stepFinished ? 'Finished' : 'Not finished';
 }
 
-function judgementOf({ judgementFailure, judgementAttempts }: UnsettledPost): string {
+function judgementText({ judgementFailure, judgementAttempts }: UnsettledPost): string {
   if (judgementAttempts === 0) {
     return '—';
   }
-  const tried = `Try ${judgementAttempts} of ${JUDGEMENT_TRIES}`;
+  const tried = `Tries used: ${judgementAttempts} of ${JUDGEMENT_TRIES}`;
   return judgementFailure === null ? tried : `${tried} · ${judgementFailure}`;
 }
 
@@ -73,13 +75,13 @@ function UnsettledRow({ post }: { post: UnsettledPost }): ReactElement {
   return (
     <tr>
       <td className="font-medium">
-        {SOURCES[post.source] ?? post.source} ·{' '}
+        {sourceName(post.source)} ·{' '}
         <a href={post.address} target="_blank" rel="noreferrer" className="text-accent-strong hover:underline">
           Post {post.key}
         </a>
       </td>
-      <td>{stepOf(post)}</td>
-      <td>{judgementOf(post)}</td>
+      <td>{stepText(post)}</td>
+      <td>{judgementText(post)}</td>
       <td>
         {post.drafts.length === 0 ? (
           '—'

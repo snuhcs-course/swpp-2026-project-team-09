@@ -35,10 +35,10 @@ export async function openEvents(query: Record<string, string> = {}): Promise<vo
   );
 }
 
-export async function openEvent(id: string): Promise<void> {
+export async function openEvent(id: string, query: Record<string, string> = {}): Promise<void> {
   await openPage(async () =>
     SignedInLayout({
-      children: await EventPage({ params: Promise.resolve({ id }), searchParams: Promise.resolve({}) }),
+      children: await EventPage({ params: Promise.resolve({ id }), searchParams: Promise.resolve(query) }),
     }),
   );
 }

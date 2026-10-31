@@ -143,6 +143,17 @@ describe('the filter by Publication Route', () => {
     expect(routeFilter().getByRole('link', { name: 'All' })).not.toHaveAttribute('aria-current');
   });
 
+  it('passes the route on to an event’s page, to come back to', async () => {
+    const [event] = fakeMainServer.hasGlobalEvents(published('Judged', 'judgement'));
+
+    await openEvents({ route: 'judgement' });
+
+    expect(screen.getByRole('link', { name: 'Judged' })).toHaveAttribute(
+      'href',
+      `/events/${event?.id}?route=judgement`,
+    );
+  });
+
   it('says so when no published event has the route', async () => {
     fakeMainServer.hasGlobalEvents(published('Read', 'rule'));
 
