@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -35,7 +36,7 @@ export type Mention = z.infer<typeof mentionSchema>;
 // The cards of one kind the reply must show: these seeds among them, and how many in all.
 const cardsSchema = z
   .strictObject({
-    kind: z.enum(['quest', 'globalEvent']),
+    kind: z.enum(['quest', 'globalEvent', 'restaurant']),
     seeds: z.array(seedName).default([]),
     min: z.int().min(0).optional(),
     max: z.int().min(0).optional(),
@@ -65,6 +66,110 @@ const argsSchema = z.record(
 
 const toolList = z.array(z.string().min(1));
 
+// A time of day in Korea; 24:00 is the end of the day.
+const clockSchema = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$|^24:00$/u, 'Expected HH:MM');
+
+const intervalSchema = z.strictObject({ start: clockSchema, end: clockSchema });
+
+const modeSchema = z.enum(['walk', 'shuttle']);
+
+// What a 공강 tool must answer, read by normaliseResult (eval/normalise.ts): for the judgement suite, which calls the
+// tool with `args`, written as `expect.args` is, whatever the model passes. A run never checks it.
+const called = { args: z.record(z.string(), z.unknown()) };
+
+const needsSchema = z.strictObject({
+  ...called,
+  result: z.literal('needs'),
+  needs: z.strictObject({ side: z.enum(['before', 'after']), item: z.string().min(1) }),
+});
+
+const candidateSchema = z.strictObject({
+  kind: z.enum(['quest', 'globalEvent']),
+  seed: seedName,
+  start: clockSchema,
+  end: clockSchema.nullable(),
+  // None when no item comes before the gap.
+  travel: z.strictObject({ mode: modeSchema, minutes: z.int().min(0) }).nullable(),
+  // After a candidate with an end of at most 3 hours, the way to the next item.
+  next: z.strictObject({ minutes: z.int().min(0), isClass: z.boolean() }).optional(),
+  // After one with no end or longer than 3 hours.
+  leaveBy: clockSchema.optional(),
+  endUnknown: z.boolean().optional(),
+});
+
+const gapSchema = intervalSchema.extend({ before: z.string().min(1).nullable(), after: z.string().min(1).nullable() });
+
+const personSchema = z.strictObject({
+  // 나 for the User.
+  name: z.string().min(1),
+  mode: modeSchema.nullable(),
+  minutes: z.int().min(0).nullable(),
+  longest: z.boolean(),
+});
+
+const restaurantSchema = z.strictObject({
+  seed: seedName,
+  start: clockSchema,
+  eatingMinutes: z.int().min(0),
+  people: z.array(personSchema).min(1),
+});
+
+const resultsSchema = z.strictObject({
+  getMyDay: z
+    .strictObject({
+      ...called,
+      result: z.literal('found'),
+      items: z.array(intervalSchema.extend({ seed: seedName })),
+    })
+    .optional(),
+  findFreeTimeEvents: z
+    .union([
+      z.strictObject({
+        ...called,
+        result: z.literal('found'),
+        gaps: z.array(gapSchema),
+        // Every candidate that fits, soonest first.
+        candidates: z.array(candidateSchema),
+      }),
+      needsSchema,
+    ])
+    .optional(),
+  findFreeFriends: z
+    .strictObject({
+      ...called,
+      result: z.literal('found'),
+      freeTime: z.array(intervalSchema),
+      friends: z.array(z.strictObject({ seed: seedName, overlap: z.array(intervalSchema) })),
+      // With Friends named, the time they all share with the User.
+      shared: z.array(intervalSchema).optional(),
+    })
+    .optional(),
+  findMealRestaurants: z
+    .union([
+      z.strictObject({
+        ...called,
+        result: z.literal('found'),
+        shared: z.array(intervalSchema),
+        // The Restaurants that fit, in order.
+        restaurants: z.array(restaurantSchema),
+      }),
+      z.strictObject({ ...called, result: z.literal('none'), why: z.enum(['no-menu', 'no-shared-time']) }),
+      needsSchema,
+    ])
+    .optional(),
+});
+
+// What the reply's text must hold, each a word or a list of which any one counts, and the words it must not hold, such
+// as the names of Friends who are not free.
+const textSchema = z
+  .strictObject({
+    mentions: z.array(mentionSchema).min(1).optional(),
+    absent: z.array(z.string().min(1)).min(1).optional(),
+  })
+  .refine(({ mentions, absent }) => mentions !== undefined || absent !== undefined, {
+    message: 'Give mentions, absent or both',
+  });
+
 export const expectSchema = z
   .strictObject({
     actions: z.array(z.enum(ACTIONS)).min(1),
@@ -81,12 +186,13 @@ export const expectSchema = z
     cards: z.array(cardsSchema).optional(),
     // The map layers the reply's buttons show, all and only those.
     mapButtons: z.array(z.enum(['dining', 'shuttle'])).optional(),
-    text: z.strictObject({ mentions: z.array(mentionSchema).min(1) }).optional(),
+    text: textSchema.optional(),
+    results: resultsSchema.optional(),
     // Why the Assistant does not do this yet: scored as usual, reported apart. It may also be given on the case.
     knownFailure: z.string().min(1).optional(),
   })
   .refine(
-    ({ actions, text }) => !actions.some((action) => action.includes('ASK')) || text !== undefined,
+    ({ actions, text }) => !actions.some((action) => action.includes('ASK')) || text?.mentions !== undefined,
     // ASK is read from the words the text must hold, never from a question mark.
     { message: 'An expectation accepting an ASK names what the question holds in text.mentions', path: ['text'] },
   )

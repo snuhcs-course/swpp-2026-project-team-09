@@ -1,0 +1,150 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# 공강 파티: finding a gap and what fits in it. The fixed histories write the earlier turns as the app sends them back,
+# and only the last turn is scored.
+
+- id: parties-named-classes
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 멀티코어컴퓨팅이랑 현대암호학개론 사이에 갈 수 있는 파티 있어?
+
+- id: parties-abbreviated-gap-begun
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  now: '2026-11-02T12:40:00+09:00'
+  turns:
+    - user: 멀코 끝났는데 현암 전까지 갈 수 있는 파티 있어?
+
+- id: parties-next-gap
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  now: '2026-11-04T10:00:00+09:00'
+  turns:
+    - user: 다음 공강에 갈 수 있는 파티 있어?
+
+- id: parties-named-classes-tomorrow
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 내일 데이터베이스랑 운영체제 사이에 갈 수 있는 파티 있어?
+
+- id: parties-before-first-class
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 내일 첫 수업 전에 갈 수 있는 파티 있어?
+
+- id: parties-after-last-class
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 컴퓨터그래픽스 끝나고 갈 수 있는 파티 있어?
+
+- id: parties-nothing-fits
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 현대암호학개론이랑 컴퓨터그래픽스 사이에 갈 수 있는 파티 있어?
+
+- id: parties-over-twenty
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 금요일 미분방정식이랑 글쓰기의 기초 사이에 갈 수 있는 파티 있어?
+
+- id: parties-over-twenty-narrowed
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 금요일 미분방정식이랑 글쓰기의 기초 사이에 갈 수 있는 파티 있어?
+    - assistant:
+        text: 금요일 미분방정식은 10:45에 끝나고 글쓰기의 기초는 18:00에 시작해요. 갈 수 있는 파티가 25개라 빠른 순서로 20개를 보여 드려요. 조건을 말해 주시면 좁혀 드릴게요.
+        cards:
+          - { kind: quest, seed: 금요일 아침 풋살 }
+          - { kind: quest, seed: 브런치 모임 }
+          - { kind: quest, seed: 토익 스터디 }
+          - { kind: quest, seed: 금요일 점심 농구 }
+          - { kind: quest, seed: 금요일 점심 번개 }
+          - { kind: quest, seed: 뜨개질 모임 }
+          - { kind: quest, seed: 코딩 테스트 스터디 }
+          - { kind: quest, seed: 배드민턴 복식 }
+          - { kind: quest, seed: 커피 한 잔 모임 }
+          - { kind: globalEvent, seed: 가을 독서 토크 }
+          - { kind: quest, seed: 보드게임 오후반 }
+          - { kind: quest, seed: 사진 출사 모임 }
+          - { kind: quest, seed: 테니스 랠리 }
+          - { kind: globalEvent, seed: 총장배 풋살 대회 }
+          - { kind: quest, seed: 면접 스터디 }
+          - { kind: quest, seed: 디저트 탐방 }
+          - { kind: quest, seed: 족구 번개 }
+          - { kind: quest, seed: 합창 연습 구경 }
+          - { kind: quest, seed: 탁구 한 판 }
+          - { kind: quest, seed: 전시 같이 보기 }
+    - user: 운동만
+
+- id: parties-held-quests-busy
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 수요일 컴퓨터구조랑 캡스톤디자인 사이에 갈 수 있는 파티 있어?
+
+- id: parties-what-is-on-meal-search
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 내일 같이 밥 먹을 파티 있어?
+
+- id: parties-no-timetable-rest-of-day
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  asker: 새내기
+  now: '2026-11-02T18:40:00+09:00'
+  turns:
+    - user: 다음 공강에 갈 수 있는 파티 있어?
+
+- id: parties-ambiguous-class
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 컴퓨터 수업 끝나고 갈 수 있는 파티 있어?
+
+- id: parties-departure-after-asking
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 목요일 과외 끝나고 갈 수 있는 파티 있어?
+    - assistant:
+        text: 과외가 끝나고 어디서 출발하세요?
+    - user: 낙성대역에서 출발해
+    - assistant:
+        text: 캠퍼스 밖에서는 이동 시간을 계산할 수 없어요. 캠퍼스에는 어디로 들어오세요? 정문처럼 알려 주세요.
+    - user: 서울대 정문으로 들어가
+
+- id: parties-leave-by-after-asking
+  category: free-time-parties
+  world: p4
+  repeat: 3
+  turns:
+    - user: 목요일 컴퓨터네트워크 끝나고 과외 전까지 갈 수 있는 파티 있어?
+    - assistant:
+        text: 과외 장소는 이동 시간을 알 수 없어요. 몇 시까지 나서야 하세요?
+    - user: 4시 반까지는 나가야 해

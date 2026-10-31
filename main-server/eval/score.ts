@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type Action, type Expect, expectSchema, type Mention } from './expect.ts';
@@ -27,7 +28,15 @@ import { type FailureKind, type TurnTrace } from './trace.ts';
 // One check of a turn and why it failed.
 export interface Check {
   name:
-    'action' | 'tools.required' | 'tools.forbidden' | 'args' | 'proposal' | 'cards' | 'mapButtons' | 'text.mentions';
+    | 'action'
+    | 'tools.required'
+    | 'tools.forbidden'
+    | 'args'
+    | 'proposal'
+    | 'cards'
+    | 'mapButtons'
+    | 'text.mentions'
+    | 'text.absent';
   passed: boolean;
   detail: string;
 }
@@ -73,7 +82,8 @@ function missingMentions(text: string, expect: Expect): Mention[] {
 //   button or card failing its own check; or a lookup answered none and the text says so: the case gives mentions
 //   and the text holds them.
 // - ASK: no Proposal and nothing shown, and the trace calls for a question (a resolver answered several or none,
-//   proposeQuest refused) or, in a case that accepts an ASK, the text holds its mentions. A question mark never counts.
+//   proposeQuest refused, a tool answered needs) or, in a case that accepts an ASK, the text holds its mentions. A
+//   question mark never counts.
 //   An ASK read from the trace alone is still ASK, so that a wrong one shows, but is recalled only with the mentions.
 // - TOOL+ASK and PROPOSE+ASK: TOOL or PROPOSE, in a case that accepts an ASK, with the text holding its mentions.
 // - REFUSE or CHAT: no tool called, by what the case accepts: REFUSE when it accepts one, else CHAT.
@@ -84,7 +94,7 @@ export function actionOf(trace: TurnTrace, expect: Expect, names: Names): Action
   }
   const calls = trace.steps.flatMap(({ toolCalls }) => toolCalls);
   const asksAccepted = expect.actions.some((action) => action.includes('ASK'));
-  const holdsMentions = expect.text !== undefined && missingMentions(reply.text, expect).length === 0;
+  const holdsMentions = expect.text?.mentions !== undefined && missingMentions(reply.text, expect).length === 0;
   const asks = asksAccepted && holdsMentions;
   if (proposalOf(reply.proposal, names) !== null) {
     return asks ? 'PROPOSE+ASK' : 'PROPOSE';
@@ -99,6 +109,7 @@ export function actionOf(trace: TurnTrace, expect: Expect, names: Names): Action
   const calledFor = calls.some((call) => {
     const outcome = outcomeOf(call);
     return (
+      outcome === 'needs' ||
       (roleOf(call.name) === 'resolver' && (outcome === 'several' || outcome === 'none')) ||
       (roleOf(call.name) === 'proposer' && outcome === 'refused')
     );
@@ -213,12 +224,21 @@ function outcomeChecks(trace: TurnTrace, expect: Expect, names: Names): Check[] 
       check('mapButtons', JSON.stringify(wanted) === JSON.stringify(shown) ? [] : [`shown [${shown.join(', ')}]`]),
     );
   }
-  if (expect.text !== undefined) {
+  if (expect.text?.mentions !== undefined) {
     const missing = missingMentions(reply.text, expect);
     checks.push(
       check(
         'text.mentions',
         missing.map((mention) => `missing ${JSON.stringify(mention)}`),
+      ),
+    );
+  }
+  if (expect.text?.absent !== undefined) {
+    const held = expect.text.absent.filter((word) => mentionedIn(reply.text, word));
+    checks.push(
+      check(
+        'text.absent',
+        held.map((word) => `holds ${JSON.stringify(word)}`),
       ),
     );
   }

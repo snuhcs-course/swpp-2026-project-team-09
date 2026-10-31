@@ -2,12 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { execFileSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { startVitest } from 'vitest/node';
-import { loadCases, repetitionsOf, selectCases, sentTurnsOf } from './cases.ts';
+import { casesIn, loadCases, repetitionsOf, selectCases, sentTurnsOf } from './cases.ts';
 import { costOf, pricesOf, tokensPerTurn } from './cost.ts';
 import { dotEnv, parseFlags, RUN_ENV, type RunOptions } from './options.ts';
 
@@ -51,7 +52,7 @@ async function main(): Promise<number> {
   }
   const { options: flags, yes } = parseFlags(process.argv.slice(2), env);
   const options: RunOptions = { ...flags, prices: await pricesOf(flags.model), commit: commit() };
-  const cases = selectCases(loadCases(), options.categories, options.caseIds);
+  const cases = selectCases(casesIn(loadCases(), options.world), options.categories, options.caseIds);
   const turns = cases.reduce(
     (total, evalCase) => total + sentTurnsOf(evalCase) * repetitionsOf(evalCase, options.repeat),
     0,

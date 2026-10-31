@@ -1,0 +1,82 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# 공통: asking back, refusals, no Timetable, off-campus items, and both sides of each tool-choice rule for meals and
+# clock times.
+
+- id: common-ask-no-day-or-meal
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 이민수랑 밥 약속 잡아줘
+
+- id: common-refuse-friend-classes
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 민수 오늘 무슨 수업 들어? 몇 동에 있어?
+
+- id: common-no-timetable-named-classes
+  category: free-time-common
+  world: p4
+  repeat: 3
+  asker: 새내기
+  turns:
+    - user: 오늘 멀티코어컴퓨팅이랑 현대암호학개론 사이에 갈 수 있는 파티 있어?
+
+- id: common-off-campus-after
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 목요일 컴퓨터네트워크 끝나고 과외 전까지 갈 수 있는 파티 있어?
+
+- id: common-off-campus-answer-none
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 목요일 과외 끝나고 갈 수 있는 파티 있어?
+    - assistant:
+        text: 과외가 끝나고 어디서 출발하세요?
+    - user: 낙성대역에서 출발해
+
+- id: common-choice-meal-friends
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 내일 점심 민수랑 밥
+
+- id: common-choice-meal-window
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 내일 12시에서 1시 사이에 민수랑 밥
+
+- id: common-choice-meal-clock
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 내일 1시에 민수랑 밥
+
+- id: common-choice-clock-fits
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 수요일 2시부터 3시 반에 갈 수 있는 파티 있어?
+
+- id: common-choice-clock-search
+  category: free-time-common
+  world: p4
+  repeat: 3
+  turns:
+    - user: 수요일 2시부터 3시 반 파티 있어?

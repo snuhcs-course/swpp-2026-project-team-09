@@ -2,8 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
+import { observedActionOf } from '../eval/observed.ts';
 import { scoreTurn } from '../eval/score.ts';
 import {
   call,
@@ -148,6 +150,26 @@ describe('An ASK read from the trace', () => {
     expect(scoreTurn(turn({ steps: [[minsuSeveral]], text: '이민수, 김민수 중 누구요' }), ask, names).recalled).toBe(
       true,
     );
+  });
+});
+
+describe('An ASK a tool called for', () => {
+  const needs = call(
+    'findFreeTimeEvents',
+    { date: '2026-11-05' },
+    { result: 'needs', needs: { side: 'before', item: '논리설계' } },
+  );
+  const asked = expectOf({ actions: ['ASK'], text: { mentions: ['어디'] } });
+
+  it('is read from a tool answering needs, and recalled with the mentions', () => {
+    const score = scoreTurn(turn({ steps: [[needs]], text: '어디서 출발하세요?' }), asked, names);
+
+    expect(score.action).toBe('ASK');
+    expect(score.recalled).toBe(true);
+  });
+
+  it('is what the observed action says too', () => {
+    expect(observedActionOf(turn({ steps: [[needs]], text: '출발지를 알려 주세요' }))).toBe('ASK');
   });
 });
 

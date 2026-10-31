@@ -1,0 +1,144 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# 공강에 밥: who is free, where to eat, and the plan. The fixed histories write the earlier turns as the app sends them
+# back, and only the last turn is scored.
+
+- id: meals-who-lunch-today
+  category: free-time-meals
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 점심에 누구 돼?
+
+- id: meals-who-lunch-begun
+  category: free-time-meals
+  world: p4
+  repeat: 3
+  now: '2026-11-02T13:10:00+09:00'
+  turns:
+    - user: 오늘 점심 같이 먹을 수 있는 사람 누구야?
+
+- id: meals-who-dinner-tomorrow
+  category: free-time-meals
+  world: p4
+  repeat: 3
+  turns:
+    - user: 내일 저녁에 누구 돼?
+
+- id: meals-two-friends-lunch
+  category: free-time-meals
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 점심 민수랑 지은이랑 밥
+
+- id: meals-no-timetable-friends-dinner
+  category: free-time-meals
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 저녁 유진이랑 하람이랑 밥
+
+- id: meals-friend-off-campus-item
+  category: free-time-meals
+  world: p4
+  repeat: 3
+  now: '2026-11-02T12:40:00+09:00'
+  turns:
+    - user: 오늘 점심 도윤이랑 밥
+
+- id: meals-no-noodles
+  category: free-time-meals
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 점심 민수랑 지은이랑 밥
+    - assistant:
+        text: 오늘 점심에 함께 비는 시간은 12:15~12:55, 13:25~14:00이에요. 가장 오래 걷는 사람의 이동 시간이 짧은 순서로 보여 드려요.
+        cards:
+          - { kind: restaurant, seed: 학생회관식당 }
+          - { kind: restaurant, seed: 자하연식당 3층 }
+          - { kind: restaurant, seed: 3식당 }
+          - { kind: restaurant, seed: 301동식당 }
+    - user: 면 빼고
+
+- id: meals-soup-wanted
+  category: free-time-meals
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 점심 민수랑 지은이랑 밥
+    - assistant:
+        text: 오늘 점심에 함께 비는 시간은 12:15~12:55, 13:25~14:00이에요. 가장 오래 걷는 사람의 이동 시간이 짧은 순서로 보여 드려요.
+        cards:
+          - { kind: restaurant, seed: 학생회관식당 }
+          - { kind: restaurant, seed: 자하연식당 3층 }
+          - { kind: restaurant, seed: 3식당 }
+          - { kind: restaurant, seed: 301동식당 }
+    - user: 국밥 먹고 싶어
+
+- id: meals-here-after-cards
+  category: free-time-meals
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 점심 민수랑 지은이랑 밥
+    - assistant:
+        text: 오늘 점심에 함께 비는 시간은 12:15~12:55, 13:25~14:00이에요. 가장 오래 걷는 사람의 이동 시간이 짧은 순서로 보여 드려요.
+        cards:
+          - { kind: restaurant, seed: 학생회관식당 }
+          - { kind: restaurant, seed: 자하연식당 3층 }
+          - { kind: restaurant, seed: 3식당 }
+          - { kind: restaurant, seed: 301동식당 }
+    - user: 국밥 먹고 싶어
+    - assistant:
+        text: 소고기국밥은 3식당에 있어요.
+        cards:
+          - { kind: restaurant, seed: 3식당 }
+    - user: 여기로 하자
+
+- id: meals-no-shared-time
+  category: free-time-meals
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 점심 지호랑 밥
+
+- id: meals-no-menu
+  category: free-time-meals
+  world: p4
+  repeat: 3
+  turns:
+    - user: 금요일 점심 민수랑 밥
+
+- id: meals-no-restaurant-fits
+  category: free-time-meals
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 점심 민재랑 밥
+
+- id: meals-same-name-asks
+  category: free-time-meals
+  world: p4
+  repeat: 3
+  turns:
+    - user: 오늘 점심 서준이랑 밥
+
+- id: meals-breakfast
+  category: free-time-meals
+  world: p4
+  repeat: 3
+  turns:
+    - user: 내일 아침 민수랑 밥
+
+- id: meals-needs-departure
+  category: free-time-meals
+  world: p4
+  repeat: 3
+  turns:
+    - user: 목요일 점심 민수랑 밥

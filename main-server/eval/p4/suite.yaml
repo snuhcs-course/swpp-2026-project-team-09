@@ -1,0 +1,25 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# The P4 suite (spec P04, "Evaluation plan" 1), committed before any run. Its cases are under cases/, its world is
+# world.yaml and its rules rules.md. `pnpm eval --world p4` runs it: every case has `repeat: 3`, so that a scorecard's
+# pass rates are the mean of the 3 runs.
+
+world: p4
+cases:
+  free-time-parties: 15
+  free-time-meals: 15
+  free-time-common: 10
+score:
+  # A case passes when all its assertions hold.
+  overall: 0.8
+  perCategory: 0.7
+  runs: 3
+labels:
+  draftedBy: null
+  draftedOn: null
+  reviewedBy: null
+  reviewedOn: null
