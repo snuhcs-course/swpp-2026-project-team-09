@@ -280,6 +280,12 @@ describe('A page that is not the post asked for', () => {
     expect(() => parseEventPage(post(176525), 176558)).toThrow('The page is not post 176558');
   });
 
+  it("is not read when it is the firewall's block page", () => {
+    expect(() => parseEventPage(blockPage, 176525)).toThrow('The page has no post');
+  });
+});
+
+describe("A post's links", () => {
   it("gives where the body's links lead, each once, whatever their words, and no mail address", () => {
     const { links } = parsed(176525, (page) =>
       page.replace(
@@ -303,9 +309,5 @@ describe('A page that is not the post asked for', () => {
 
   it('gives no link of the page around the body', () => {
     expect(parsed(176549).links).toEqual([]);
-  });
-
-  it("is not read when it is the firewall's block page", () => {
-    expect(() => parseEventPage(blockPage, 176525)).toThrow('The page has no post');
   });
 });

@@ -653,7 +653,7 @@ posts of one event on two pods the second sees the first.
 - **The link rule** comes first and asks no model. The worker sends where the links of a post's body lead as `links`, since
   words can hide an address; the rule reads those and the body's text. When they name one stored post (not the post
   itself) with as many sessions, the sessions are attached in the order of their numbers, whatever their times, with the
-  reason `link`. A session whose time was read from the body and differs from its event's leaves the event as it is and
+  reason `link`. A session whose time the post states, more than a header's date, and that differs from its event's leaves the event as it is and
   sets its `needsAdministrator`, without raising its version. Several posts, or another number of sessions, leave the
   post's sessions Drafts with `heldFor` `link_not_one_to_one`: they are neither judged nor published. Only a new post that
   links a stored one is looked at, so a post stored first and linked by nothing later comes to the title rule alone.
@@ -663,8 +663,7 @@ posts of one event on two pods the second sees the first.
   any other may be only an application period, and attaching to it could hide the post for good. A session whose
   Judgement could not be made is compared at its retry, and stays a Draft until then.
 - **The refusing rules** read the titles as written, never the body, which often speaks of the other kind. They refuse two
-  times of day on one day, and titles that say different rounds (`1차`, `2회차`), modes (대면 or 오프라인 against 비대면
-  or 온라인) or roles (헬퍼, 디자이너, 멘토, 멘티, 튜터, 튜티, 스태프: what a participant does, not who it is for). A
+  times of day on one day, and titles that say different rounds (`1차`, `2회차`), modes (대면 against 비대면) or roles (헬퍼, 디자이너, 멘토, 멘티, 튜터, 튜티, 스태프: what a participant does, not who it is for). A
   title saying nothing of it is not refused. Candidates on the day before or after are kept.
 - **The attaching rule:** equal normalised titles (NFKC, lower case, without what is in `[]`, `()`, `【】` or `<>`, spaces or
   punctuation) and equal starts attach, with the reason `equal_title_and_start`. Several such events leave the session a

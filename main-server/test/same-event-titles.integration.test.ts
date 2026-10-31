@@ -76,7 +76,9 @@ describe('An event with an attached post', () => {
     const detail = await getAdminGlobalEvent(app, world.administrator, event.id);
     expect(detail.body).toMatchObject({ source: 'snu_events', postKey: original.key, sourceUrl: original.address });
   });
+});
 
+describe('Titles that normalise alike', () => {
   it.each([
     ['1차 against 2차', '특강 (1차)', '특강 (2차)'],
     ['대면 against 비대면', '특강 (대면)', '특강 (비대면)'],
@@ -111,7 +113,7 @@ describe('Equal titles with other starts', () => {
 });
 
 describe('The candidates', () => {
-  it('hold a session that matches several, and a held Draft is no candidate', async () => {
+  it('hold a session that matches several', async () => {
     const title = world.uniqueTitle();
     await world.publishedThrough('snu_events', world.snuPost(title));
     await createDraft(app, world.administrator, { title, startsAt: START });

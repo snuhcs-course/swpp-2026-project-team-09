@@ -91,7 +91,7 @@ export class CollectedPostsService {
           globalEventId,
           attachedBy: SessionAttachment.own,
           readByRules: isReadByRules(session, named),
-          timeReadFromBody: session.readFrom === 'body',
+          timeStated: session.start !== null && session.readFrom !== 'header',
         })),
       });
     });

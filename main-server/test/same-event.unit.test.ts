@@ -41,7 +41,6 @@ describe('The refusing rules', () => {
     ['특강 1차', '특강 2차', 'different_rounds'],
     ['특강 (1회차)', '특강 2차', 'different_rounds'],
     ['특강 대면', '특강 비대면', 'different_modes'],
-    ['특강 오프라인', '특강 온라인', 'different_modes'],
     ['행사 헬퍼', '행사 디자이너', 'different_roles'],
     ['멘토 모집', '멘티 모집', 'different_roles'],
   ])('tell %s from %s', (first, second, refusal) => {

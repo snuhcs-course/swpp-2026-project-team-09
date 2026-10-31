@@ -22,11 +22,12 @@ const KOREA_OFFSET = 9 * 60 * 60 * 1000;
 export const LINK_RULE = 'link';
 export const TITLE_RULE = 'equal_title_and_start';
 
-// The day of Asia/Seoul a time falls on, counted from the epoch, and how far into it. A day alone is stored at its start.
+// The day of Asia/Seoul a time falls on, counted from the epoch.
 function dayOf(at: Date): number {
   return Math.floor((at.getTime() + KOREA_OFFSET) / A_DAY);
 }
 
+// A day alone is stored at its start.
 function hasTimeOfDay(at: Date): boolean {
   return (at.getTime() + KOREA_OFFSET) % A_DAY !== 0;
 }
@@ -55,8 +56,8 @@ export function normalisedTitle(title: string): string {
 // What two titles may say apart. Both must say it, and say nothing in common, for them to differ: "1차" against a title
 // with no round says nothing. The body is not read, since it often speaks of the other kind ("비대면 참여 불가").
 const ROUND = /(\d+)\s*회?차(?!원)/gu;
-const IN_PERSON = /(?<!비)대면|오프라인/u;
-const REMOTE = /비대면|온라인/u;
+const IN_PERSON = /(?<!비)대면/u;
+const REMOTE = /비대면/u;
 // What a participant does there, not who it is for: 학생용 and 일반용 can be one event.
 const ROLE = /헬퍼|디자이너|멘토(?!링)|멘티|튜터(?!링)|튜티|스태프/gu;
 
@@ -157,7 +158,7 @@ export function ownDraftOf({
   };
 }
 
-type PostSession = PostWithOwnSessions['sessions'][number];
+export type PostSession = PostWithOwnSessions['sessions'][number];
 
 // Moves a session of its own Draft to another event, keeps what the Draft held, and removes the Draft. Sessions of other
 // posts already attached to the Draft follow. An Administrator's change to the Draft meanwhile fails the step over the
@@ -195,8 +196,8 @@ export async function attachLinked(
   const isOwnPost = ({ source, key }: { source: Source; key: string }): boolean =>
     source === post.source && key === post.key;
   const named = linkedPosts([description, ...post.links].join('\n')).filter((linked) => !isOwnPost(linked));
-  const isUntouched = sessions.every(({ globalEvent: { state } }) => state === GlobalEventState.draft);
-  if (named.length === 0 || !isUntouched || isChangedByAdministrator(post)) {
+  const areDrafts = sessions.every(({ globalEvent: { state } }) => state === GlobalEventState.draft);
+  if (named.length === 0 || !areDrafts || isChangedByAdministrator(post)) {
     return false;
   }
   const ownEvents = new Set(sessions.map(({ globalEventId }) => globalEventId));
@@ -222,7 +223,7 @@ export async function attachLinked(
     const { globalEvent: target } = only.sessions[index];
     const { startsAt } = session.globalEvent;
     if (
-      session.timeReadFromBody &&
+      session.timeStated &&
       startsAt !== null &&
       target.startsAt !== null &&
       startsDiffer(startsAt, target.startsAt)
@@ -259,7 +260,6 @@ export async function sameEventMatch(
             some: {
               attachedBy: SessionAttachment.own,
               readByRules: true,
-              heldFor: null,
               sourcePost: { stepFinishedAt: { not: null } },
             },
           },

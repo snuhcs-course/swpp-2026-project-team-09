@@ -30,15 +30,17 @@ import {
   isChangedByAdministrator,
   judgedDrafts,
   JudgementsService,
+  type PostWithOwnSessions,
   waitsForAJudgement,
   WITH_OWN_SESSIONS,
 } from './judgements.service.js';
 import { attachLinked } from './same-event.js';
-import { settleJudgedSession, settleReadByRules } from './session-settling.js';
+import { createDraft, settleJudgedSession, settleReadByRules } from './session-settling.js';
 
 // Comparing a post with the events and publishing it are one statement to the other servers: a lock is taken for the
 // transaction, so that of two posts of one event the second sees the first. It may wait for another server's post.
 const STEP_TRANSACTION = { timeout: 30_000 };
+const STEP_LOCK = 8008;
 
 interface PublishedValues {
   startsAt: Date | null;
@@ -189,7 +191,7 @@ export class PublicationStepService {
 
   private locked<T>(work: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return this.prisma.$transaction(async (tx) => {
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(8008)`;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${STEP_LOCK}::bigint)`;
       return work(tx);
     }, STEP_TRANSACTION);
   }
@@ -263,8 +265,33 @@ export class PublicationStepService {
         written.push({ ...session, globalEventId: settled.globalEventId });
       }
     }
+    await this.keepLeftSessions(tx, post, written, places, number);
     await tx.judgement.update({ where: { sourcePostId }, data: { sessions: written } });
     return published;
+  }
+
+  // With automatic publication off, a passing session stays in a Draft of the post. Should attaching the others have
+  // taken every Draft, the session gets one, or nothing would be left of it.
+  private async keepLeftSessions(
+    tx: Prisma.TransactionClient,
+    post: PostWithOwnSessions,
+    written: JudgedSession[],
+    places: Map<string, PlaceDto>,
+    first: number,
+  ): Promise<void> {
+    const own = await tx.sourcePostSession.count({
+      where: { sourcePostId: post.id, attachedBy: SessionAttachment.own },
+    });
+    let number = first;
+    for (const [index, session] of written.entries()) {
+      const place = places.get(session.placeId ?? '');
+      if (own === 0 && session.passed && session.globalEventId === null && place !== undefined) {
+        // oxlint-disable-next-line no-await-in-loop -- one transaction runs one statement at a time
+        const globalEventId = await createDraft(tx, post, number, publishedValues(session, place));
+        written[index] = { ...session, globalEventId };
+        number += 1;
+      }
+    }
   }
 
   private async stepFailed(sourcePostId: string, error: unknown): Promise<void> {

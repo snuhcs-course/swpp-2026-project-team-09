@@ -211,6 +211,35 @@ describe("A Judgement's session with automatic publication off", () => {
   });
 });
 
+describe('A post of one Draft with automatic publication off', () => {
+  it('keeps a session that matches nothing when the other was attached and took the Draft', async () => {
+    const title = world.uniqueTitle();
+    const event = await world.publishedThrough('extra_snu', world.programme(title, { start: JUDGED_START }));
+    const other = answeredSession({ start: '2026-11-05T17:00', end: '2026-11-05T18:00' });
+    const line = '- 일시: 2026. 11. 5.(목) 14:00~16:00, 17:00~18:00';
+    world.scripted.script(
+      answer([
+        answeredSession({ lines: { start: [line], end: [line], place: [PLACE_LINE] } }),
+        { ...other, lines: { start: [line], end: [line], place: [PLACE_LINE] } },
+      ]),
+    );
+    const post = draftPost(world.postNumber(), { title, description: `${line}\n${PLACE_LINE}` });
+
+    await world.through(notPublishing, 'snu_events', [post]);
+
+    const { sessions } = await world.sourcePostOf('snu_events', post);
+    expect(sessions.map(({ attachedBy, globalEventId }) => [attachedBy, globalEventId === event.id])).toEqual([
+      ['rule', true],
+      ['own', false],
+    ]);
+    expect(sessions[1].globalEvent).toMatchObject({ state: 'draft', title });
+    expect((await world.judgementOf(Number(post.key)))?.sessions).toMatchObject([
+      { passed: true, globalEventId: event.id },
+      { passed: true, globalEventId: sessions[1].globalEventId },
+    ]);
+  });
+});
+
 describe('Two servers at once', () => {
   it('publish one event of two posts of it, wherever each runs', async () => {
     const title = world.uniqueTitle();

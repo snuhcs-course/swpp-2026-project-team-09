@@ -282,9 +282,9 @@ model SourcePostSession {
   reason        String?
   // Whether the rules read the session's time and place when it was stored.
   readByRules   Boolean           @default(false) @map("read_by_rules")
-  // Whether the session's time was read from the post's own statement of it, and not a header's date, which is often the
-  // application period.
-  timeReadFromBody Boolean        @default(false) @map("time_read_from_body")
+  // Whether the post itself states the session's time, and it is not only a header's date, which is often the application
+  // period.
+  timeStated    Boolean           @default(false) @map("time_stated")
   // Why it waits for an Administrator's decision, as a Draft that is neither judged nor published.
   heldFor       SessionHold?      @map("held_for")
   // What the session's own Draft held before the session was attached to another event, the only place the post's title

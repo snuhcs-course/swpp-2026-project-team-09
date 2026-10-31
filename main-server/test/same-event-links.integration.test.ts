@@ -194,6 +194,32 @@ describe('The link rule, in other cases', () => {
 });
 
 describe('Posts that link and fail', () => {
+  it('comes before the title rule: a post goes to the event it links, not the one with its title', async () => {
+    const title = world.uniqueTitle();
+    const named = await world.publishedThrough('extra_snu', world.programme(title));
+    const linked = world.snuPost(world.uniqueTitle());
+    const event = await world.publishedThrough('snu_events', linked);
+    const post = world.programme(title, { description: linkTo(linked) });
+
+    await world.collectedOf('extra_snu', post);
+
+    expect(await world.onlySession('extra_snu', post)).toMatchObject({ globalEventId: event.id, reason: 'link' });
+    expect(event.id).not.toBe(named.id);
+  });
+
+  it('flags a programme over several days, whose time the post states, against another time', async () => {
+    const linked = world.snuPost(world.uniqueTitle());
+    const event = await world.publishedThrough('snu_events', linked);
+    const post = world.programme('다른 제목', { readFrom: null, start: '2027-05-01', description: linkTo(linked) });
+
+    await world.collectedOf('extra_snu', post);
+
+    expect((await world.stored(event.id)).needsAdministrator).toBe(true);
+  });
+
+});
+
+describe('Posts that link each other, and a failure', () => {
   it('leaves two posts that link each other one event', async () => {
     const first = world.snuPost(world.uniqueTitle());
     const second = world.snuPost(world.uniqueTitle(), { description: linkTo(first) });

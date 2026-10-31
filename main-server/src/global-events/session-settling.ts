@@ -13,17 +13,22 @@ import {
   SessionHold,
 } from '../generated/prisma/client.js';
 import { type PostWithOwnSessions } from './judgements.service.js';
-import { attachSession, ownDraftOf, sameEventMatch, TITLE_RULE } from './same-event.js';
+import {
+  attachSession,
+  type OwnDraft,
+  ownDraftOf,
+  type PostSession,
+  sameEventMatch,
+  TITLE_RULE,
+} from './same-event.js';
 
-const emptyPost = { title: '', description: '' };
+const EMPTY_POST = { title: '', description: '' };
 
 // What a Judgement read of a session, as it would publish it.
-type JudgedValues = Pick<GlobalEvent, 'startsAt' | 'endsAt' | 'place' | 'latitude' | 'longitude'> & {
+export type JudgedValues = Pick<GlobalEvent, 'startsAt' | 'endsAt' | 'place' | 'latitude' | 'longitude'> & {
   state: typeof GlobalEventState.published;
   publicationRoute: typeof PublicationRoute.judgement;
 };
-
-type PostSession = PostWithOwnSessions['sessions'][number];
 
 // Attaches, holds or publishes each session of the post that the rules read. An event an Administrator has changed or
 // discarded meanwhile is left as it is. Gives whether it published one.
@@ -68,7 +73,7 @@ async function createEvent(
   number: number,
   values: JudgedValues,
 ): Promise<string> {
-  const { title, description } = sessions[0]?.globalEvent ?? emptyPost;
+  const { title, description } = sessions[0]?.globalEvent ?? EMPTY_POST;
   const { id } = await tx.globalEvent.create({
     data: {
       ...values,
@@ -89,30 +94,48 @@ async function publishDraft(tx: Prisma.TransactionClient, id: string, values: Ju
   return count === 0 ? null : id;
 }
 
+// A new Draft, one more own session of the post, with what a Judgement read.
+export async function createDraft(
+  tx: Prisma.TransactionClient,
+  post: PostWithOwnSessions,
+  number: number,
+  { startsAt, endsAt, place, latitude, longitude }: JudgedValues,
+  heldFor: SessionHold | null = null,
+): Promise<string> {
+  const { title, description } = post.sessions[0]?.globalEvent ?? EMPTY_POST;
+  const { id } = await tx.globalEvent.create({
+    data: {
+      startsAt,
+      endsAt,
+      place,
+      latitude,
+      longitude,
+      title,
+      description,
+      sessions: { create: { sourcePostId: post.id, number, attachedBy: SessionAttachment.own, heldFor } },
+    },
+  });
+  return id;
+}
+
 // Keeps what the Judgement read on the session's Draft, a new one if it has none, for an Administrator to decide on.
 async function holdJudged(
   tx: Prisma.TransactionClient,
   post: PostWithOwnSessions,
   draft: PostSession | undefined,
   number: number,
-  { startsAt, endsAt, place, latitude, longitude }: JudgedValues,
+  values: JudgedValues,
 ): Promise<string> {
-  const read = { startsAt, endsAt, place, latitude, longitude };
   const heldFor = SessionHold.several_matches;
   if (draft === undefined) {
-    const { title, description } = post.sessions[0]?.globalEvent ?? emptyPost;
-    const { id } = await tx.globalEvent.create({
-      data: {
-        ...read,
-        title,
-        description,
-        sessions: { create: { sourcePostId: post.id, number, attachedBy: SessionAttachment.own, heldFor } },
-      },
-    });
-    return id;
+    return createDraft(tx, post, number, values, heldFor);
   }
+  const { startsAt, endsAt, place, latitude, longitude } = values;
   await tx.sourcePostSession.update({ where: { id: draft.id }, data: { heldFor } });
-  await tx.globalEvent.update({ where: { id: draft.globalEventId }, data: read });
+  await tx.globalEvent.update({
+    where: { id: draft.globalEventId },
+    data: { startsAt, endsAt, place, latitude, longitude },
+  });
   return draft.globalEventId;
 }
 
@@ -123,7 +146,7 @@ async function attachJudged(
   draft: PostSession | undefined,
   number: number,
   globalEventId: string,
-  ownDraft: ReturnType<typeof ownDraftOf>,
+  ownDraft: OwnDraft,
 ): Promise<void> {
   if (draft !== undefined) {
     await attachSession(tx, draft, globalEventId, TITLE_RULE, ownDraft);
@@ -134,7 +157,7 @@ async function attachJudged(
   });
 }
 
-export interface JudgedSessionPlace {
+export interface SessionToSettle {
   post: PostWithOwnSessions;
   // Its own Draft, or none when it needs a new event.
   draft: PostSession | undefined;
@@ -148,9 +171,9 @@ export interface JudgedSessionPlace {
 // was a publication.
 export async function settleJudgedSession(
   tx: Prisma.TransactionClient,
-  { post, draft, number, values, publishes }: JudgedSessionPlace,
+  { post, draft, number, values, publishes }: SessionToSettle,
 ): Promise<{ globalEventId: string | null; published: boolean }> {
-  const { title, description } = draft?.globalEvent ?? post.sessions[0]?.globalEvent ?? emptyPost;
+  const { title, description } = draft?.globalEvent ?? post.sessions[0]?.globalEvent ?? EMPTY_POST;
   const { startsAt } = values;
   const match = startsAt === null ? null : await sameEventMatch(tx, { title, startsAt }, post.id);
   if (match?.kind === 'one') {
