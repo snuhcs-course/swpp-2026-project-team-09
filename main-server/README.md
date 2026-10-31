@@ -1375,6 +1375,7 @@ for today and the six days after, and posts them to `/menus/collected` (see
   [
     {
       "name": "두레미담",
+      "placeId": "9a1f0c3e-6d0b-5a0a-8f3e-2f6a7c1b4d21",
       "collectedAt": "2026-09-30T20:00:00.000Z",
       "meals": [
         {
@@ -1391,6 +1392,9 @@ for today and the six days after, and posts them to `/menus/collected` (see
   ]
   ```
 
+- `placeId` is the restaurant's Place, from `seed/restaurant-places.json`, or `null` for a restaurant the seed does not
+  hold. Each restaurant's key is its name here. `RestaurantPlaces` (`src/menus/restaurant-places.ts`) reads the seed once
+  when the server starts.
 - A meal is the lines of its cell on the page, in the page's order
   ([ADR 0001](../docs/adr/0001-menus-kept-as-lines.md)). `meals` holds the meals that have lines, in the order
   breakfast, lunch, dinner, and a restaurant the page lists with empty cells is served with `meals: []`. `collectedAt`
@@ -1799,13 +1803,17 @@ its model through OpenRouter with the Vercel AI SDK
   to invite, as `[{ "id", "name" }]`, never where they are (`src/assistant/proposal.ts`). A candidate of
   `findFreeTimeEvents` has its 이동 시간 fields beside the `quest` or the `globalEvent`, each only when it applies:
   `travel` (`{ "mode": "walk" | "shuttle", "minutes" }`), then either `next` (`{ "minutes", "isClass" }`) or `leaveBy`
-  (`"HH:MM"`) with `endUnknown`. Older apps ignore them. The app sends a card back only
+  (`"HH:MM"`) with `endUnknown`. Older apps ignore them. A `restaurant` card (`{ "kind": "restaurant", "restaurant": { … } }`)
+  holds `key`, `name`, `placeNumber`, `date`, `meal`, `eatingMinutes`, `lines` (those that are not notes, as `GET /menus`
+  serves them), `people` (`[{ "name", "mode", "minutes", "longest" }]`, with `나` for the User and `mode` and `minutes`
+  null when the way is unknown) and its `proposal`, the meal Quest the server filled in for the card's 파티 만들기. An APK
+  from before P4 refuses a reply with such a card as its ordinary failure. The app sends a card back only
   as its reference, `{ "kind", "id" }`, the last Proposal with its values and its `globalEvent` as `{ "id", "title" }`,
   and never the map buttons. Nothing of a conversation is stored: the app keeps it.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
-    (`quest` or `globalEvent`, by id; `cards` may be left out) and the Proposal it made (`proposal`, which may be left
+    (`quest` or `globalEvent` by id, `restaurant` by its key; `cards` may be left out) and the Proposal it made (`proposal`, which may be left
     out, on one message at most). The model gets only the latest 20 messages, and of an Assistant's message its text,
     a line naming its cards and a line with its Proposal's values, never an earlier message's tool results.
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
@@ -1887,6 +1895,20 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       and takes the answer as `departurePlace`, which must come from `resolvePlace` in the same message, or `leaveBy`.
       Those two answer only sides without a Place, and nothing of them is stored. A clock time as `to` also limits a
       candidate's end. The numbers are in `src/travel/judgement-constants.ts`.
+    - `findFreeFriends(date, meal | window, friendIds?)` answers the User's Free Time in the window (`freeTime`) and the
+      accepted Friends free with them, whatever their Location Sharing switch: those who share at least 15 unbroken
+      minutes of it, each with id, name, department and the `overlap`, and no others. With `friendIds` it adds what they
+      all share with the User (`shared`).
+    - `findMealRestaurants(date, meal, friendIds, window?, departurePlace?, leaveBy?)` answers the time shared, the
+      oldest `collectedAt` of the day and the Restaurants that fit, in order (`free-time/meal-fit.ts`): each with its key,
+      name, Place, its lines that are not notes, `start`, `eatingMinutes` and each person's way. A Restaurant is one with
+      a Place that is open for the meal (`src/menus/open-rule.ts`, ADR 0011). It fits when, after the last of them
+      arrives and the start rounds up to 5 minutes, at least 15 minutes are left before the first must leave and before
+      the window ends, in the earliest shared interval where that holds. Nothing to show answers
+      `{ "result": "none", "why": "no-menu" | "no-shared-time" }`, which never says who is busy, or `found` with no
+      Restaurants. It can answer `needs` as `findFreeTimeEvents` does. A Friend's item without a Place only leaves out
+      that side's travel.
+    - `showRestaurants(keys)` adds the cards the server built for those keys, in the order of `findMealRestaurants`.
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
       puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
       in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.
@@ -1895,8 +1917,9 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     `showGlobalEvents(ids)` adds those events as cards, in the order given, and `showQuests(ids)` those Quests. Cards
     of both kinds lie in one list in the order shown, at most 20 in a reply.
   - **The presenters' guard** (`found-ids.ts`): a presenter accepts only ids that a lookup or a resolver returned in
-    this message. Its kinds are the cards' (`quest`, `globalEvent`) and the resolvers' `friend` and `place`, which
-    are never cards. Each run has its own `FoundIds` in the tools' context, which the lookups add to. Any other id, one
+    this message. Its kinds are the cards' (`quest`, `globalEvent`, `restaurant`) and the resolvers' `friend` and
+    `place`, which are never cards. `findFreeFriends` adds its Friends, and `findMealRestaurants` its Restaurants and
+    their Places. Each run has its own `FoundIds` in the tools' context, which the lookups add to. Any other id, one
     from an earlier message too, goes back to the model as an error, and nothing of that call is shown.
   - **Text by others** (`others-text.ts`): text written by other people or collected from a Source, such as a Global
     Event's title, description and place, or a Quest's (`quest.title`, …), reaches the model as
@@ -2080,6 +2103,7 @@ into the database.
 | `openstreetmap-paths.json`       | The pinned extract of ways with a `highway` tag, as of its `timestamp`, read only by the builder        | OpenStreetMap, through Overpass                      |
 | `srtm-elevation.json`            | SRTM 30 m heights over the campus, read only by the builder                                             | NASA SRTM, through OpenTopoData                      |
 | `walking-table.json`             | Seconds on foot for every pair of Places and of Places and stops, with each one's elevation             | `pnpm walking:build`, from the seed files above      |
+| `restaurant-places.json`         | The number of each Restaurant's Place, by its name as `GET /menus` gives it, read by the server         | Written by hand                                      |
 
 Each exported file keeps, at its top, where it came from and the day of the export.
 
@@ -2117,6 +2141,9 @@ Each exported file keeps, at its top, where it came from and the day of the expo
     stored. The line replaces the route's line. The service hours
     are the file's `serviceHours` when the route is first loaded, so that a new database has them without waiting for
     a Collection; after that they are the ones the route page's Collection last stored.
+- **When the Co-op renames or moves a restaurant**, correct its row in `restaurant-places.json`, with the name exactly as
+  the worker sends it and the number as the Places have it. A restaurant the file does not hold has no Place: no pin, no
+  "N동" and no place in 공강에 밥. It stays in the menu panel.
 - **Correcting a Place**: change it in its file, such as a name in `inst_kor_nm`, and load again. The next export
   overwrites the correction.
 - **Giving a Place its outlines by hand**: add an entry to `place-outlines.json`.
