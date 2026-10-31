@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -93,7 +94,11 @@ export async function listedAmong(
 }
 
 // An event as an Administrator reads it alone, exactly.
-export const eventDetailSchema = listedEventSchema.extend({ description: z.string() });
+// Its Judgement's shape is tested by test/judgement-publication.integration.test.ts.
+export const eventDetailSchema = listedEventSchema.extend({
+  description: z.string(),
+  judgement: z.looseObject({}).nullable(),
+});
 
 export type EventDetail = z.infer<typeof eventDetailSchema>;
 
