@@ -22,7 +22,7 @@ import {
 } from '../eval/collection/sets.ts';
 
 // The fixed sets of evaluations A and B as committed (P05 ticket 01): what the metrics document and the owner's decisions
-// of 2026-10-31 say they hold. It reads the files only, so it passes whether or not the labels have been filled in.
+// of 2026-10-31 say they hold. It reads the files only.
 
 const posts = readCollectionFile('posts.yaml', postsSchema);
 const setA = readCollectionFile('set-a.yaml', setASchema);
@@ -152,6 +152,51 @@ describe('The label files', () => {
     const places = placeLabels();
     const given = [...aOwner.items, ...aSecond.items].flatMap(({ sessions }) => sessions.map(({ place }) => place));
     expect(given.filter((place) => place !== null && place !== 'none' && !places.has(place))).toEqual([]);
+  });
+});
+
+describe('The gold labels', () => {
+  const aGold = readCollectionFile(LABEL_FILES.aGold, labelsASchema);
+  const bGold = readCollectionFile(LABEL_FILES.bGold, labelsBSchema);
+  const sessions = aGold.items.flatMap(({ id, sessions: rows }) => rows.map((row) => ({ id, ...row })));
+
+  it('cover every item, with no blank', () => {
+    expect(ids(aGold.items)).toEqual(ids(setA));
+    expect(ids(bGold.items)).toEqual(ids(setB));
+    expect(aGold.items.filter(({ announcesEvent }) => announcesEvent === null)).toEqual([]);
+    expect(bGold.items.filter(({ sameEvent }) => sameEvent === null)).toEqual([]);
+    expect(
+      sessions.filter(({ start, end, place, overPeriod, mayPublish }) =>
+        [start, end, place, overPeriod, mayPublish].includes(null),
+      ),
+    ).toEqual([]);
+  });
+
+  it('a post that announces no event has no session', () => {
+    expect(
+      aGold.items.filter(({ announcesEvent, sessions: rows }) => announcesEvent === false && rows.length > 0),
+    ).toEqual([]);
+  });
+
+  it('a session that may be published has one Place, and a time of day unless it runs over a period', () => {
+    const publishable = sessions.filter(({ mayPublish }) => mayPublish === true);
+    expect(publishable.filter(({ place }) => place === 'none')).toEqual([]);
+    expect(publishable.filter(({ start, overPeriod }) => overPeriod !== true && start?.includes('T') !== true)).toEqual(
+      [],
+    );
+    expect(publishable.filter(({ start, overPeriod }) => overPeriod === true && start === 'none')).toEqual([]);
+  });
+
+  it('every place is a row of labels/places.tsv or none', () => {
+    const places = placeLabels();
+    expect(sessions.filter(({ place }) => place !== 'none' && !places.has(place ?? ''))).toEqual([]);
+  });
+
+  it('the original label files name their labellers', () => {
+    expect(aOwner.labeller).toBe('Jaehyun0320');
+    expect(bOwner.labeller).toBe('Jaehyun0320');
+    expect(aSecond.labeller).toBe('TaeHyun79');
+    expect(bSecond.labeller).toBe('TaeHyun79');
   });
 });
 

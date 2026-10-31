@@ -165,6 +165,8 @@ export const LABEL_FILES = {
   aSecond: 'labels/a.second.yaml',
   bOwner: 'labels/b.owner.yaml',
   bSecond: 'labels/b.second.yaml',
+  aGold: 'labels/a.gold.yaml',
+  bGold: 'labels/b.gold.yaml',
 } as const;
 
 // The Places a label can name, one a line after the header: label, number, name, id.

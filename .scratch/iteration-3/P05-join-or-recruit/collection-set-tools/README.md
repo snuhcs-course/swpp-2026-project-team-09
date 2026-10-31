@@ -13,3 +13,5 @@ Playwright와 cheerio가 필요하고, 사이트 요청은 2초 간격입니다.
 | 5 | `analyze.mts` | 규칙으로 판정. SNU Now는 `parseEventPage` + `namedPlace`, 비교과는 강좌 정보 표의 회차별 기간·장소에 `readEventTime` + `namedPlace` |
 | 6 | `overlap2.py` | 겹침 후보 찾기(본문 링크, 제목 유사도, 본문 날짜). 후보를 사람이 아닌 에이전트가 원문과 대조해 골랐고, 정답은 라벨로 정합니다 |
 | 7 | `build-sets.py` | 세트, 저장본 복사, 빈 라벨 파일, `places.tsv` 생성(난수 시드 20261031) |
+| 8 | `label-data.mjs` | 라벨 파일과 저장본에서 문제지 페이지의 데이터 만들기. 빈칸만 넣습니다 |
+| 9 | `fill-labels.mjs` | 문제지에 저장된 답을 라벨 파일에 옮기기 |
