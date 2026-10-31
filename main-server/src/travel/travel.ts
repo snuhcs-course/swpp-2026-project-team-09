@@ -26,8 +26,8 @@ export interface Travel {
   mode: TravelMode;
 }
 
-// The one way to ask for a Travel Time. Both scenarios inject it by TRAVEL_PROVIDER, and the eval binds its frozen
-// fixture there, so that the real table and shuttle file never reach the eval.
+// The one way to ask for a Travel Time. Injected by TRAVEL_PROVIDER, so that a fixture can stand in for the real table
+// and shuttle file.
 export interface TravelProvider {
   travel(fromPlaceId: string, toPlaceId: string, departure: Date): Travel;
 }
@@ -54,7 +54,11 @@ function serviceBand(at: Date): ShuttleBand | null {
   return bandAt(Number(koreaTime(at).slice(11, 13)));
 }
 
-// Looks the seconds up in the walking table and the shuttle's times, which are read once at start.
+// The cell of a table's rows, which a Place's row and a stop's loop order always find.
+function cell(rows: readonly (readonly number[])[], row: number, column: number): number {
+  return rows[row]?.[column] ?? Number.POSITIVE_INFINITY;
+}
+
 export class SeedTravel implements TravelProvider {
   private readonly rowOf: Map<string, number>;
 
@@ -68,7 +72,7 @@ export class SeedTravel implements TravelProvider {
   travel(fromPlaceId: string, toPlaceId: string, departure: Date): Travel {
     const from = this.row(fromPlaceId);
     const to = this.row(toPlaceId);
-    const walk = this.table.placeToPlace[from]?.[to] ?? Number.POSITIVE_INFINITY;
+    const walk = cell(this.table.placeToPlace, from, to);
     const shuttle = this.bestShuttleSeconds(from, to, departure);
     return shuttle + SHUTTLE_ADVANTAGE_SECONDS <= walk
       ? { seconds: Math.round(shuttle), mode: 'shuttle' }
@@ -88,7 +92,7 @@ export class SeedTravel implements TravelProvider {
     const stops = this.table.stops.length;
     let best = Number.POSITIVE_INFINITY;
     for (let boarding = 0; boarding < stops; boarding += 1) {
-      const walkToStop = this.table.placeToStop[from]?.[boarding] ?? Number.POSITIVE_INFINITY;
+      const walkToStop = cell(this.table.placeToStop, from, boarding);
       const band = serviceBand(new Date(departure.getTime() + walkToStop * 1000));
       if (band === null) {
         continue;
@@ -97,8 +101,7 @@ export class SeedTravel implements TravelProvider {
       for (let alighting = 0; alighting < stops; alighting += 1) {
         if (alighting !== boarding) {
           const ride = this.timing.rides[boarding]?.[alighting]?.[band] ?? fallbackRideSeconds(boarding, alighting);
-          const walkFromStop = this.table.stopToPlace[alighting]?.[to] ?? Number.POSITIVE_INFINITY;
-          best = Math.min(best, walkToStop + wait + ride + walkFromStop);
+          best = Math.min(best, walkToStop + wait + ride + cell(this.table.stopToPlace, alighting, to));
         }
       }
     }

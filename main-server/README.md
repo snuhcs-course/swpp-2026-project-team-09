@@ -1665,7 +1665,7 @@ The worker's two routes, which follow [Requests from the worker server](#request
 
 `TRAVEL_PROVIDER` (`src/travel/travel.ts`) says how long the way from one Place to another takes at a departure time,
 in seconds, on foot or by the circular shuttle. Show its seconds as whole minutes, rounded up, with `shownMinutes`. Both
-of its files are read once when the server starts. The eval binds its frozen fixture to the provider.
+of its files are read once when the server starts. A fixture can be bound to the provider in place of them.
 
 - **On foot**, it looks the pair up in `seed/walking-table.json` (Seed data, ADR 0010).
 - **By shuttle**, only the anticlockwise route 41946: a walk to a boarding stop, the average wait, the ride to a stop
@@ -2098,8 +2098,9 @@ Each exported file keeps, at its top, where it came from and the day of the expo
 - **Coordinates** come from the campus map, OpenStreetMap and the national map only, never from Kakao, Naver or Google
   maps, whose terms forbid storing their data.
 - **Licences**: OpenStreetMap's data is under the ODbL and the national map's layer under 공공누리 type 1. Both ask
-  that the source is shown: the files carry their notices, and the app shows both attributions (P15). The campus map
-  publishes no terms. `.scratch/research/external-sources.md` §6 and `.scratch/research/public-building-outlines.md`
+  that the source is shown: the files carry their notices, and the app shows both attributions (P15). So does
+  `walking-table.json`, which is derived from OpenStreetMap. SRTM is in the public domain. The campus map publishes no
+  terms. `.scratch/research/external-sources.md` §6 and `.scratch/research/public-building-outlines.md`
   §8 have the terms.
 - **In a test**: the global setup loads the seed into the test database, so every test file has the Places and the
   shuttle's stops and line. A test that changes the seed loads it into a database of its own, made by

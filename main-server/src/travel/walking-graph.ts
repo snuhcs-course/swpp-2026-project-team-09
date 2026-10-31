@@ -66,11 +66,12 @@ interface Join {
   along: number;
 }
 
-// One projection for the whole campus. The campus spans 2.5 km, over which a degree of longitude hardly changes.
-const EAST = metresPerDegreeEast(37.458);
+// One projection for the whole campus, whose 2.5 km hardly change a degree of longitude.
+const CAMPUS_LATITUDE = 37.458;
+const METRES_PER_DEGREE_EAST = metresPerDegreeEast(CAMPUS_LATITUDE);
 
 function onPlane({ latitude, longitude }: Position): PlanePoint {
-  return { x: longitude * EAST, y: latitude * METRES_PER_DEGREE };
+  return { x: longitude * METRES_PER_DEGREE_EAST, y: latitude * METRES_PER_DEGREE };
 }
 
 function walkable({ highway, foot, access }: Record<string, string>): boolean {
@@ -150,7 +151,6 @@ function joinsOf({ joinable }: WalkingGraph, pin: Pin): Join[] {
   return measured.filter(({ connector }) => connector <= nearest + JOIN_MARGIN_METRES);
 }
 
-// A binary heap of nodes by their metres so far, nearest first.
 class NearestNodes {
   private readonly heap: { metres: number; node: number }[] = [];
 
@@ -202,7 +202,6 @@ class NearestNodes {
   }
 }
 
-// Metres from a pin's joins to every node, by Dijkstra's algorithm.
 function metresToNodes({ neighbours }: WalkingGraph, joins: readonly Join[]): Float64Array {
   const metres = new Float64Array(neighbours.length).fill(Number.POSITIVE_INFINITY);
   const nearest = new NearestNodes();
@@ -239,7 +238,6 @@ function metresBetweenJoins(toNodes: Float64Array, starts: ReadonlyMap<Segment, 
   return best;
 }
 
-// The walk's seconds from each pin to each pin. A pin to itself takes none.
 export function walkingSeconds(graph: WalkingGraph, from: readonly Pin[], to: readonly Pin[]): number[][] {
   const ends = to.map((pin) => joinsOf(graph, pin));
   return from.map((origin) => {

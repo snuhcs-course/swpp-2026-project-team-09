@@ -16,9 +16,7 @@ import { readSeedStops } from './shuttle/shuttle.seed.js';
 import { type Pin, walkingGraph, type WalkingGraph, walkingSeconds } from './travel/walking-graph.js';
 import { WALKING_TABLE_FILE, type WalkingTable } from './travel/walking-table.js';
 
-// The command that writes `seed/walking-table.json` from the Places, the Shuttle Stops, the pinned OpenStreetMap
-// extract and the saved SRTM raster: `pnpm walking:build`. With `--sensitivity` it writes nothing, and prints how far
-// the table moves when every pin moves.
+// The command that writes `seed/walking-table.json`: `pnpm walking:build` (README.md: Seed data).
 
 const pathsFileSchema = z.object({
   timestamp: z.string(),
@@ -46,8 +44,8 @@ const SHIFTS_METRES = [10, 20];
 const RUNS_PER_SHIFT = 10;
 const WITHIN_SECONDS = 120;
 const FRAGILE_PLACES_SHOWN = 15;
-// Any fixed seed: it makes a report repeatable.
-const SEED = 20_261_031;
+// Any fixed value: it makes a report repeatable.
+const RANDOM_SEED = 20_261_031;
 
 // Bilinear between the raster's four nearest values, to the decimetre.
 function elevationAt(
@@ -108,7 +106,7 @@ function movedPin(srtm: Srtm, { latitude, longitude }: Pin, metres: number, rand
   return { ...moved, elevation: elevationAt(srtm, moved) };
 }
 
-interface Built {
+interface SensitivityInput {
   graph: WalkingGraph;
   srtm: Srtm;
   pins: readonly Pin[];
@@ -116,7 +114,11 @@ interface Built {
   seconds: readonly number[][];
 }
 
-function printShift({ graph, srtm, pins, names, seconds }: Built, metres: number, random: () => number): void {
+function printShift(
+  { graph, srtm, pins, names, seconds }: SensitivityInput,
+  metres: number,
+  random: () => number,
+): void {
   const changes: number[] = [];
   const changesOfPlace = names.map((): number[] => []);
   for (let run = 0; run < RUNS_PER_SHIFT; run += 1) {
@@ -160,22 +162,22 @@ async function buildWalkingTable(): Promise<void> {
     throw new Error(`${unreachable} pairs have no walk`);
   }
   if (process.argv.includes('--sensitivity')) {
-    const random = randomSource(SEED);
+    const random = randomSource(RANDOM_SEED);
     const names = places.map(({ number, name }) => (number === null ? name : `${number} ${name}`));
     for (const metres of SHIFTS_METRES) {
       printShift({ graph, srtm, pins, names, seconds }, metres, random);
     }
     return;
   }
-  const whole = seconds.map((row) => row.map((value) => Math.round(value)));
+  const wholeSeconds = seconds.map((row) => row.map((value) => Math.round(value)));
   const table: WalkingTable = {
     builtFrom: `OpenStreetMap as of ${paths.timestamp}, and ${srtm.exportedFrom}`,
     copyright: paths.copyright,
     places: places.map(({ id, name }, index) => ({ id, name, elevation: pins[index]?.elevation ?? 0 })),
     stops: stops.map(({ name }, index) => ({ name, elevation: pins[places.length + index]?.elevation ?? 0 })),
-    placeToPlace: whole.slice(0, places.length).map((row) => row.slice(0, places.length)),
-    placeToStop: whole.slice(0, places.length).map((row) => row.slice(places.length)),
-    stopToPlace: whole.slice(places.length).map((row) => row.slice(0, places.length)),
+    placeToPlace: wholeSeconds.slice(0, places.length).map((row) => row.slice(0, places.length)),
+    placeToStop: wholeSeconds.slice(0, places.length).map((row) => row.slice(places.length)),
+    stopToPlace: wholeSeconds.slice(places.length).map((row) => row.slice(0, places.length)),
   };
   const file = join(SEED_DIRECTORY, WALKING_TABLE_FILE);
   await writeFile(file, await format(JSON.stringify(table), { ...(await resolveConfig(file)), filepath: file }));
