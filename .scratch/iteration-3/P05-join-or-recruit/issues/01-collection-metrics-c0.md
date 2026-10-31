@@ -13,7 +13,7 @@
 - [x] Thresholds (floor and target) are committed for C1–C7 and D1–D6, as the metrics document's section 2 now defines them, together with what happens when a floor is missed (section 4.1).
 - [x] R0 for each evaluation is defined in the record: the rules alone for A (C1's baseline is 0, since every Draft is one the rules did not publish), and equal starts with title similarity for B.
 - [x] The P05 owner labels every item. A second labeller labels 15 posts of A and 30 hard negative pairs of B on their own; the record keeps both original label files, the agreement (p_o, κ, positive and negative agreement, n) and how disagreements were settled.
-- [ ] The commit is tagged as C0 and the tag is written into the metrics record.
+- [x] The commit is tagged as C0 and the tag is written into the metrics record.
 
 ## Comments
 
@@ -48,3 +48,7 @@ Agent work so far; the C0 tag adds a little.
 
 - Agent time: about 2.5 hours (estimate), one session with two review subagents. It includes about 25 minutes of waiting on the site's two-second pacing; waiting for people is left out.
 - Tokens, subagents included: input 382, with 50,505,145 cache reads and 1,840,256 cache writes shown apart; output 266,201.
+
+### C0 tagged (2026-11-01)
+
+`eval-freeze-iter3-collection` on `e53fe85`, the merge commit of #136. The record is `main-server/eval/collection/README.md`.
