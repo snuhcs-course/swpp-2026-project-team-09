@@ -61,7 +61,7 @@ Then:
 
 On a question that looks for events or Quests ("있어?", "찾아줘"), nothing is proposed.
 
-- **`show`:** the reply shows every event or Quest that fits, and no other, as cards. A question about 행사 shows Global Events. A question about 파티 shows Quests. Section 3 applies, and with no day it is the next seven days from today.
+- **`show`:** the reply shows every event or Quest that fits, and no other, as cards. A question about 행사 shows Global Events. A question about 파티 shows Quests. A question that says neither ("뮤지컬 있어?") shows both: the events that fit and the Quests that fit, with a Global Event or without one. A question about an event's 파티 ("그 행사 파티 있어?") shows that event's Quests, and the Quests with no Global Event for the same activity that start within the event's span. Section 3 applies, and with no day it is the next seven days from today.
 - **Meaning, not spelling:** "공연" finds a 콘서트, 독주회, 뮤지컬, 버스킹 or 음악제 even when the post's words differ. A misspelt post ("콘서드") is found under the right word, and a misspelt question ("콘서드") is read as what it means. The Board a Quest is posted on does not decide what it is: a Quest about a 전시 on the hobby Board is about a 전시.
 - **Conditions:** the Place, the places left ("2자리 이상") and the capacity ("4명 모집", "정원 8명") narrow the answer as sections 3 and 4 say. "N자리 이상" means at least N places left.
 - **`none`:** when nothing fits, the reply says so plainly, with no card and no Proposal.
@@ -81,9 +81,10 @@ For each case: the action (`join`, `propose`, `ask`, `show` or `none`), the exac
 
 ## 8. What the spec left open
 
-(The owner settles these in review. Each is listed with the answer used.)
+(The owner settled these in review. Each is listed with the answer used.)
 
 - A search with no day takes the next seven days from today, as rule 1 of section 4 does. The spec says this only for recruiting.
 - A window's start and a part of the day's start are included (section 2), and a named time's ±30 minutes holds exactly 30 minutes. The world puts nothing exactly on any other edge.
 - A Quest the asker already holds is never offered (section 3), since the Boards do not list it.
 - A Proposal's Board follows section 6.
+- A question that says neither 행사 nor 파티 shows both, and a question about an event's 파티 also shows Quests with no Global Event for the same activity within the event's span (section 5). The P05 owner settled these on 2026-11-01. They apply to finding only: a recruiting request that names an event keeps section 4, rule 6.

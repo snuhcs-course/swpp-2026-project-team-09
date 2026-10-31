@@ -2,9 +2,10 @@
 # AI-generated with Claude
 #
 # 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 ################################################################################
 
-# 찾기: 조건에 맞는 행사와 파티를 다 찾는지 (evaluation D). Turns only until the labels are in. A case's subset is in
+# 찾기: 조건에 맞는 행사와 파티를 다 찾는지 (evaluation D). A case's subset is in
 # suite.yaml.
 
 - id: search-l-01
@@ -13,6 +14,15 @@
   repeat: 3
   turns:
     - user: 이번 주에 특강 행사 뭐 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      allowed: [searchRecruitingQuests, showQuests, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [양자컴퓨터 특강, 스타트업 창업 특강], max: 2 }
 
 - id: search-l-02
   category: search
@@ -20,6 +30,15 @@
   repeat: 3
   turns:
     - user: 이번 주에 박람회 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests, searchGlobalEvents, showGlobalEvents]
+      allowed: [resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [박람회 같이 돌아요], max: 1 }
+      - { kind: globalEvent, seeds: [채용 박람회, 동아리 박람회], max: 2 }
 
 - id: search-l-03
   category: search
@@ -27,6 +46,15 @@
   repeat: 3
   turns:
     - user: 수요일에 볼링 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [볼링 네 명, 볼링 여섯 명, 볼링 둘이서], max: 3 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-l-04
   category: search
@@ -34,6 +62,15 @@
   repeat: 3
   turns:
     - user: 목요일에 마라탕 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [마라탕 넷이서, 마라탕 둘이서, 마라탕 여럿이], max: 3 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-l-05
   category: search
@@ -41,6 +78,31 @@
   repeat: 3
   turns:
     - user: 이번 주 사진전 행사 찾아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      allowed: [searchRecruitingQuests, showQuests, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [가을 사진전], max: 1 }
+
+- id: search-l-06
+  category: search
+  world: p5
+  repeat: 3
+  turns:
+    - user: 토요일에 전시 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests, searchGlobalEvents, showGlobalEvents]
+      allowed: [resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [사진전 같이 봐요, 사진전 주말 관람, 공룡 전시 보러 가요, 전시 보러 가요], max: 4 }
+      - { kind: globalEvent, seeds: [가을 사진전, 공룡 화석 전시], max: 2 }
 
 - id: search-p-01
   category: search
@@ -48,6 +110,28 @@
   repeat: 3
   turns:
     - user: 이번 주에 공연 행사 뭐 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      allowed: [searchRecruitingQuests, showQuests, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - {
+          kind: globalEvent,
+          seeds:
+            [
+              가을 정기 공연,
+              관현악단 공연의 밤,
+              피아노 독주회,
+              '뮤지컬 〈지하철 1호선〉',
+              재즈 콘서드,
+              잔디광장 버스킹,
+              가을 음악제,
+            ],
+          max: 7,
+        }
 
 - id: search-p-02
   category: search
@@ -55,6 +139,28 @@
   repeat: 3
   turns:
     - user: 이번 주에 음악 들을 수 있는 행사 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      allowed: [searchRecruitingQuests, showQuests, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - {
+          kind: globalEvent,
+          seeds:
+            [
+              가을 정기 공연,
+              관현악단 공연의 밤,
+              피아노 독주회,
+              '뮤지컬 〈지하철 1호선〉',
+              재즈 콘서드,
+              잔디광장 버스킹,
+              가을 음악제,
+            ],
+          max: 7,
+        }
 
 - id: search-p-03
   category: search
@@ -62,6 +168,15 @@
   repeat: 3
   turns:
     - user: 수요일에 같이 운동할 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [농구 3대3, 풋살 하실 분, 테니스 복식, 볼링 네 명, 볼링 여섯 명, 볼링 둘이서], max: 6 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-p-04
   category: search
@@ -69,6 +184,15 @@
   repeat: 3
   turns:
     - user: 이번 주 전시 행사 찾아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      allowed: [searchRecruitingQuests, showQuests, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [가을 사진전, 판화 특별전, 공룡 화석 전시], max: 3 }
 
 - id: search-p-05
   category: search
@@ -76,6 +200,15 @@
   repeat: 3
   turns:
     - user: 금요일에 공연 보러 가는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [공연의 밤 같이 봐요, 버스킹 구경 갈 분], max: 2 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-p-06
   category: search
@@ -83,6 +216,20 @@
   repeat: 3
   turns:
     - user: 내일 같이 밥 먹는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - {
+          kind: quest,
+          seeds:
+            [삼겹살 드실 분, 저녁에 고기 구워요, 배민 같이 시켜요, 학식 같이 먹어요, 돈까스 드실 분, 심야 라면 모임],
+          max: 6,
+        }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-t1-01
   category: search
@@ -90,6 +237,15 @@
   repeat: 3
   turns:
     - user: 콘서트 보러 가는 파티 찾아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [재즈 콘서드 갈 사람, 콘서드 같이 가실 분], max: 2 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-t1-02
   category: search
@@ -97,6 +253,15 @@
   repeat: 3
   turns:
     - user: 재즈 콘서트 행사 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      allowed: [searchRecruitingQuests, showQuests, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [재즈 콘서드], max: 1 }
 
 - id: search-t1-03
   category: search
@@ -104,6 +269,15 @@
   repeat: 3
   turns:
     - user: 취업 설명회 행사 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      allowed: [searchRecruitingQuests, showQuests, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [취엄 설명회], max: 1 }
 
 - id: search-t1-04
   category: search
@@ -111,6 +285,15 @@
   repeat: 3
   turns:
     - user: 일요일에 뮤지컬 보러 가는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [뮤지걸 보러 가실 분], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-t1-05
   category: search
@@ -118,6 +301,15 @@
   repeat: 3
   turns:
     - user: 일요일에 풋살 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [풋쌀 번개], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-t1-06
   category: search
@@ -125,6 +317,31 @@
   repeat: 3
   turns:
     - user: 금요일에 마라탕 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [마라땅 드실 분], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+
+- id: search-t1-07
+  category: search
+  world: p5
+  repeat: 3
+  turns:
+    - user: 일요일에 뮤지컬 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [뮤지걸 보러 가실 분], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-t2-01
   category: search
@@ -132,6 +349,15 @@
   repeat: 3
   turns:
     - user: 콘서드 가는 파티 찾아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [재즈 콘서드 갈 사람, 콘서드 같이 가실 분], max: 2 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-t2-02
   category: search
@@ -139,6 +365,15 @@
   repeat: 3
   turns:
     - user: 이번 주 특감 행사 뭐 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      allowed: [searchRecruitingQuests, showQuests, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [양자컴퓨터 특강, 스타트업 창업 특강], max: 2 }
 
 - id: search-t2-03
   category: search
@@ -146,6 +381,15 @@
   repeat: 3
   turns:
     - user: 수요일에 볼릉 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [볼링 네 명, 볼링 여섯 명, 볼링 둘이서], max: 3 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-t2-04
   category: search
@@ -153,6 +397,15 @@
   repeat: 3
   turns:
     - user: 토요일에 테니쓰 파티 찾아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [테니즈 치실 분], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-t2-05
   category: search
@@ -160,6 +413,15 @@
   repeat: 3
   turns:
     - user: 이번 주에 박람휘 행사 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      allowed: [searchRecruitingQuests, showQuests, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [채용 박람회, 동아리 박람회], max: 2 }
 
 - id: search-h-01
   category: search
@@ -167,6 +429,20 @@
   repeat: 3
   turns:
     - user: 11/2 17:00 이후 파티 찾아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - {
+          kind: quest,
+          seeds:
+            [치킨 뜯으실 분, 족발 야식 모임, 오늘 저녁 공부 모임, 판화전 같이 봐요, 사진전 같이 봐요, 사진전 주말 관람],
+          max: 6,
+        }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-h-02
   category: search
@@ -174,6 +450,19 @@
   repeat: 3
   turns:
     - user: 오늘 저녁 파티 찾아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - {
+          kind: quest,
+          seeds: [치킨 뜯으실 분, 오늘 저녁 공부 모임, 판화전 같이 봐요, 사진전 같이 봐요, 사진전 주말 관람],
+          max: 5,
+        }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-h-03
   category: search
@@ -181,6 +470,15 @@
   repeat: 3
   turns:
     - user: 내일 아침 파티 찾아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [아침 러닝, 사진전 같이 봐요, 사진전 주말 관람], max: 3 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-h-04
   category: search
@@ -188,6 +486,15 @@
   repeat: 3
   turns:
     - user: 내일 점심 파티 찾아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [학식 같이 먹어요, 돈까스 드실 분, 사진전 같이 봐요, 사진전 주말 관람], max: 4 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-h-05
   category: search
@@ -195,6 +502,15 @@
   repeat: 3
   turns:
     - user: 화요일 15시부터 18시까지 하는 행사 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      allowed: [searchRecruitingQuests, showQuests, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [가을 사진전, 동아리 박람회, 도서 바자회, 양자컴퓨터 특강], max: 4 }
 
 - id: search-h-06
   category: search
@@ -202,6 +518,15 @@
   repeat: 3
   turns:
     - user: 오늘 17시 이후 행사 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      allowed: [searchRecruitingQuests, showQuests, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [가을 사진전, 판화 특별전, 도서 바자회], max: 3 }
 
 - id: search-h-07
   category: search
@@ -209,6 +534,15 @@
   repeat: 3
   turns:
     - user: 오늘 공부 모임 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [오늘 저녁 공부 모임], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-s-01
   category: search
@@ -216,6 +550,15 @@
   repeat: 3
   turns:
     - user: 목요일에 보드게임 파티 찾아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [보드게임 카페 갈 분, 보드게임 밤샘, 보드게임 셋이서], max: 3 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-s-02
   category: search
@@ -223,6 +566,15 @@
   repeat: 3
   turns:
     - user: 목요일 보드게임 파티 중에 2자리 이상 남은 거 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [보드게임 밤샘, 보드게임 셋이서], max: 2 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-s-03
   category: search
@@ -230,6 +582,15 @@
   repeat: 3
   turns:
     - user: 수요일 볼링 파티 중에 3자리 이상 남은 거 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [볼링 네 명, 볼링 여섯 명], max: 2 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-s-04
   category: search
@@ -237,6 +598,16 @@
   repeat: 3
   turns:
     - user: 내일 농구 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      allowed: [searchRecruitingQuests, searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest, showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: search-s-05
   category: search
@@ -244,6 +615,15 @@
   repeat: 3
   turns:
     - user: 가을 정기 공연 가는 파티 중에 자리 남은 거 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [정기 공연 같이 가요], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-n-01
   category: search
@@ -251,6 +631,15 @@
   repeat: 3
   turns:
     - user: 수요일에 4명 모집하는 볼링 파티 찾아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [볼링 네 명], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-n-02
   category: search
@@ -258,6 +647,15 @@
   repeat: 3
   turns:
     - user: 목요일에 2명 모집하는 마라탕 파티 찾아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [마라탕 둘이서], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-n-03
   category: search
@@ -265,6 +663,15 @@
   repeat: 3
   turns:
     - user: 목요일에 6명 모집하는 보드게임 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [보드게임 밤샘], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-n-04
   category: search
@@ -272,6 +679,15 @@
   repeat: 3
   turns:
     - user: 정원 8명인 풋살 파티 찾아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [풋살 하실 분, 풋쌀 번개], max: 2 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-n-05
   category: search
@@ -279,6 +695,15 @@
   repeat: 3
   turns:
     - user: 목요일에 4명 모집하는 마라탕 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [마라탕 넷이서], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-r-01
   category: search
@@ -286,6 +711,15 @@
   repeat: 3
   turns:
     - user: 목요일 저녁 6시에 301동 근처에서 하는 스터디 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [공대 면접 스터디, 전공 스터디 그룹, 코딩 테스트 스터디, 벤치에서 스터디], max: 4 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-r-02
   category: search
@@ -293,6 +727,15 @@
   repeat: 3
   turns:
     - user: 목요일 저녁 6시에 302동 근처에서 하는 스터디 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [공대 면접 스터디, 전공 스터디 그룹, 벤치에서 스터디], max: 3 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-r-03
   category: search
@@ -300,6 +743,19 @@
   repeat: 3
   turns:
     - user: 목요일 점심에 학생회관 근처 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - {
+          kind: quest,
+          seeds: [목요일 점심 학생회관, 목요일 점심 도서관, 목요일 점심 문화관, 공룡 전시 보러 가요],
+          max: 4,
+        }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-r-04
   category: search
@@ -307,6 +763,20 @@
   repeat: 3
   turns:
     - user: 목요일 점심에 문화관 근처 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - {
+          kind: quest,
+          seeds:
+            [목요일 점심 문화관, 목요일 점심 예술복합, 목요일 점심 학생회관, 목요일 점심 도서관, 공룡 전시 보러 가요],
+          max: 5,
+        }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-r-05
   category: search
@@ -314,6 +784,15 @@
   repeat: 3
   turns:
     - user: 목요일 저녁 6시에 314동 근처에서 하는 스터디 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [코딩 테스트 스터디, 공대 면접 스터디, 벤치에서 스터디], max: 3 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-o-01
   category: search
@@ -321,6 +800,15 @@
   repeat: 3
   turns:
     - user: 오늘 오후 3시에 볼 수 있는 전시 행사 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      allowed: [searchRecruitingQuests, showQuests, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [가을 사진전, 판화 특별전], max: 2 }
 
 - id: search-o-02
   category: search
@@ -328,6 +816,15 @@
   repeat: 3
   turns:
     - user: 화요일 오후 5시에 열려 있는 행사 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      allowed: [searchRecruitingQuests, showQuests, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [가을 사진전, 동아리 박람회, 도서 바자회, 양자컴퓨터 특강], max: 4 }
 
 - id: search-o-03
   category: search
@@ -335,6 +832,15 @@
   repeat: 3
   turns:
     - user: 수요일 오후 3시에 열려 있는 행사 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchGlobalEvents, showGlobalEvents]
+      allowed: [searchRecruitingQuests, showQuests, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [가을 사진전, 채용 박람회], max: 2 }
 
 - id: search-o-04
   category: search
@@ -342,6 +848,15 @@
   repeat: 3
   turns:
     - user: 오늘 전시 보러 가는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [사진전 같이 봐요, 사진전 주말 관람, 판화전 같이 봐요], max: 3 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-o-05
   category: search
@@ -349,6 +864,15 @@
   repeat: 3
   turns:
     - user: 토요일에 사진전 가는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [사진전 같이 봐요, 사진전 주말 관람], max: 2 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-o-06
   category: search
@@ -356,6 +880,15 @@
   repeat: 3
   turns:
     - user: 금요일 오후 3시에 전시 보러 가는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [사진전 같이 봐요, 사진전 주말 관람, 공룡 전시 보러 가요], max: 3 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-b-01
   category: search
@@ -363,6 +896,15 @@
   repeat: 3
   turns:
     - user: 토요일에 전시 보러 가는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [전시 보러 가요, 사진전 같이 봐요, 사진전 주말 관람, 공룡 전시 보러 가요], max: 4 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-b-02
   category: search
@@ -370,6 +912,15 @@
   repeat: 3
   turns:
     - user: 토요일 저녁에 연극 보는 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [연극 보고 저녁 먹어요], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-b-03
   category: search
@@ -377,6 +928,15 @@
   repeat: 3
   turns:
     - user: 토요일에 등산 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [등산 후 막걸리], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-b-04
   category: search
@@ -384,6 +944,15 @@
   repeat: 3
   turns:
     - user: 토요일에 농구 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [개발자 농구 모임], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-b-05
   category: search
@@ -391,6 +960,15 @@
   repeat: 3
   turns:
     - user: 수요일 점심에 취준생 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [searchRecruitingQuests, showQuests]
+      allowed: [searchGlobalEvents, showGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest]
+    cards:
+      - { kind: quest, seeds: [취준생 점심 모임], max: 1 }
+      - { kind: globalEvent, seeds: [], max: 0 }
 
 - id: search-e-01
   category: search
@@ -398,6 +976,16 @@
   repeat: 3
   turns:
     - user: 이번 주에 스키 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      allowed: [searchRecruitingQuests, searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest, showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: search-e-02
   category: search
@@ -405,6 +993,16 @@
   repeat: 3
   turns:
     - user: 이번 주에 요가 행사 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      allowed: [searchRecruitingQuests, searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest, showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: search-e-03
   category: search
@@ -412,6 +1010,16 @@
   repeat: 3
   turns:
     - user: 내일 서핑 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      allowed: [searchRecruitingQuests, searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest, showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: search-e-04
   category: search
@@ -419,6 +1027,16 @@
   repeat: 3
   turns:
     - user: 이번 주에 바둑 행사 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      allowed: [searchRecruitingQuests, searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest, showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: search-e-05
   category: search
@@ -426,6 +1044,16 @@
   repeat: 3
   turns:
     - user: 이번 주에 클라이밍 파티 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      allowed: [searchRecruitingQuests, searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest, showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: search-e-06
   category: search
@@ -433,3 +1061,13 @@
   repeat: 3
   turns:
     - user: 이번 주에 스케이트 행사 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      allowed: [searchRecruitingQuests, searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [proposeQuest, showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    text:
+      mentions: [[없, 찾지 못, 못 찾]]

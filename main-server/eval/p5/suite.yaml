@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 ################################################################################
 
 # The P05 suite (P05 spec, "The P05 eval suite"): evaluations C and D, committed before any run. Its cases are under
@@ -25,11 +26,11 @@ whenAFloorIsMissed: "That metric's improvement is not claimed, and the failure a
 smallSamples: 'Each subset has at least five cases, and E has six. One case of five is 20%; a smaller improvement is a direction only.'
 
 labels:
-  draftedBy: null
-  draftedOn: null
-  reviewedBy: null
-  reviewedOn: null
-  secondLabeller: null
+  draftedBy: claude-opus-5-5
+  draftedOn: [2026-10-31, 2026-11-01]
+  reviewedBy: Jaehyun0320
+  reviewedOn: [2026-10-31, 2026-11-01]
+  secondLabeller: 김태현
   # The second labeller's cases, one drawn per tag with a fixed seed, and three kinds the tags
   # leave out: asking back, a new Proposal and a named Place.
   overlap:
@@ -67,27 +68,248 @@ superseded:
 # J10's cases that state a day: there a period of that day is no unstated condition.
 j10StatesDay: [join-24]
 
-# Which cases count toward each metric and subset. Seeds are added beside the case ids with the answers, as (case id,
-# seed): the answers stay out of the repository until the second labeller is done.
+# Which cases count toward each metric and subset, as (case id, seed): one entry for each card of the case's answer,
+# and a null seed when the answer has none.
 tags:
-  J3a: [join-03, join-06, join-07]
-  J3b: [join-04, join-08, join-09, join-10]
-  J4: [join-01, join-03, join-05, join-06, join-07, join-33]
-  J6: [join-16, join-17, join-18, join-19]
-  J7: [join-20, join-21, join-22]
-  J9: [join-12, join-13, join-14, join-15]
-  J10: [join-23, join-24, join-25, join-26]
-  L: [search-l-01, search-l-02, search-l-03, search-l-04, search-l-05]
-  P: [search-p-01, search-p-02, search-p-03, search-p-04, search-p-05, search-p-06]
-  T1: [search-t1-01, search-t1-02, search-t1-03, search-t1-04, search-t1-05, search-t1-06]
-  T2: [search-t2-01, search-t2-02, search-t2-03, search-t2-04, search-t2-05]
-  H: [search-h-01, search-h-02, search-h-03, search-h-04, search-h-05, search-h-06, search-h-07]
-  S: [search-s-01, search-s-02, search-s-03, search-s-04, search-s-05]
-  N: [search-n-01, search-n-02, search-n-03, search-n-04, search-n-05]
-  R: [search-r-01, search-r-02, search-r-03, search-r-04, search-r-05]
-  O: [search-o-01, search-o-02, search-o-03, search-o-04, search-o-05, search-o-06]
-  B: [search-b-01, search-b-02, search-b-03, search-b-04, search-b-05]
-  E: [search-e-01, search-e-02, search-e-03, search-e-04, search-e-05, search-e-06]
+  J3a:
+    - { case: join-03, seed: 배드민턴 치실 분 }
+    - { case: join-06, seed: null }
+    - { case: join-07, seed: null }
+  J3b:
+    - { case: join-04, seed: null }
+    - { case: join-08, seed: null }
+    - { case: join-09, seed: null }
+    - { case: join-10, seed: null }
+  J4:
+    - { case: join-01, seed: 삼겹살 드실 분 }
+    - { case: join-01, seed: 저녁에 고기 구워요 }
+    - { case: join-03, seed: 배드민턴 치실 분 }
+    - { case: join-05, seed: 정기 공연 같이 가요 }
+    - { case: join-06, seed: null }
+    - { case: join-07, seed: null }
+    - { case: join-33, seed: null }
+  J6:
+    - { case: join-16, seed: 정기 공연 같이 가요 }
+    - { case: join-17, seed: 사진전 같이 봐요 }
+    - { case: join-17, seed: 사진전 주말 관람 }
+    - { case: join-17, seed: 전시 보러 가요 }
+    - { case: join-18, seed: 뮤지컬 보러 갈 분 }
+    - { case: join-19, seed: 버스킹 구경 갈 분 }
+  J7:
+    - { case: join-20, seed: null }
+    - { case: join-21, seed: null }
+    - { case: join-22, seed: null }
+  J9:
+    - { case: join-12, seed: 아침 러닝 }
+    - { case: join-13, seed: 테니스 복식 }
+    - { case: join-14, seed: 토익 스피킹 스터디 }
+    - { case: join-15, seed: 독주회 같이 가요 }
+    - { case: join-24, seed: 금요일 저녁 파스타 }
+    - { case: join-24, seed: 버스킹 구경 갈 분 }
+    - { case: join-24, seed: 사진전 같이 봐요 }
+    - { case: join-24, seed: 공룡 전시 보러 가요 }
+    - { case: join-24, seed: 마라땅 드실 분 }
+    - { case: join-24, seed: 공연의 밤 같이 봐요 }
+    - { case: join-24, seed: 사진전 주말 관람 }
+    - { case: join-35, seed: 사진전 같이 봐요 }
+    - { case: join-35, seed: 사진전 주말 관람 }
+    - { case: join-37, seed: 풋쌀 번개 }
+    - { case: join-37, seed: 아침 러닝 }
+    - { case: join-37, seed: 풋살 하실 분 }
+    - { case: join-37, seed: 민턴 한 판 }
+    - { case: join-37, seed: 개발자 농구 모임 }
+    - { case: join-37, seed: 배드민턴 치실 분 }
+    - { case: join-37, seed: 농구 3대3 }
+    - { case: join-37, seed: 테니스 복식 }
+    - { case: join-37, seed: 볼링 여섯 명 }
+    - { case: join-37, seed: 등산 후 막걸리 }
+    - { case: join-37, seed: 배드민튼 초보 모임 }
+    - { case: join-37, seed: 볼링 네 명 }
+    - { case: join-37, seed: 볼링 둘이서 }
+    - { case: join-37, seed: 테니즈 치실 분 }
+  J10:
+    - { case: join-23, seed: 민턴 한 판 }
+    - { case: join-23, seed: 배드민턴 치실 분 }
+    - { case: join-23, seed: 배드민튼 초보 모임 }
+    - { case: join-24, seed: 금요일 저녁 파스타 }
+    - { case: join-24, seed: 버스킹 구경 갈 분 }
+    - { case: join-24, seed: 사진전 같이 봐요 }
+    - { case: join-24, seed: 공룡 전시 보러 가요 }
+    - { case: join-24, seed: 마라땅 드실 분 }
+    - { case: join-24, seed: 공연의 밤 같이 봐요 }
+    - { case: join-24, seed: 사진전 주말 관람 }
+    - { case: join-25, seed: 풋쌀 번개 }
+    - { case: join-25, seed: 풋살 하실 분 }
+    - { case: join-26, seed: 개발자 농구 모임 }
+    - { case: join-26, seed: 농구 3대3 }
+  L:
+    - { case: search-l-01, seed: 양자컴퓨터 특강 }
+    - { case: search-l-01, seed: 스타트업 창업 특강 }
+    - { case: search-l-02, seed: 채용 박람회 }
+    - { case: search-l-02, seed: 동아리 박람회 }
+    - { case: search-l-02, seed: 박람회 같이 돌아요 }
+    - { case: search-l-03, seed: 볼링 네 명 }
+    - { case: search-l-03, seed: 볼링 여섯 명 }
+    - { case: search-l-03, seed: 볼링 둘이서 }
+    - { case: search-l-04, seed: 마라탕 넷이서 }
+    - { case: search-l-04, seed: 마라탕 둘이서 }
+    - { case: search-l-04, seed: 마라탕 여럿이 }
+    - { case: search-l-05, seed: 가을 사진전 }
+    - { case: search-l-06, seed: 가을 사진전 }
+    - { case: search-l-06, seed: 공룡 화석 전시 }
+    - { case: search-l-06, seed: 사진전 같이 봐요 }
+    - { case: search-l-06, seed: 사진전 주말 관람 }
+    - { case: search-l-06, seed: 공룡 전시 보러 가요 }
+    - { case: search-l-06, seed: 전시 보러 가요 }
+  P:
+    - { case: search-p-01, seed: 가을 정기 공연 }
+    - { case: search-p-01, seed: 관현악단 공연의 밤 }
+    - { case: search-p-01, seed: 피아노 독주회 }
+    - { case: search-p-01, seed: '뮤지컬 〈지하철 1호선〉' }
+    - { case: search-p-01, seed: 재즈 콘서드 }
+    - { case: search-p-01, seed: 잔디광장 버스킹 }
+    - { case: search-p-01, seed: 가을 음악제 }
+    - { case: search-p-02, seed: 가을 정기 공연 }
+    - { case: search-p-02, seed: 관현악단 공연의 밤 }
+    - { case: search-p-02, seed: 피아노 독주회 }
+    - { case: search-p-02, seed: '뮤지컬 〈지하철 1호선〉' }
+    - { case: search-p-02, seed: 재즈 콘서드 }
+    - { case: search-p-02, seed: 잔디광장 버스킹 }
+    - { case: search-p-02, seed: 가을 음악제 }
+    - { case: search-p-03, seed: 농구 3대3 }
+    - { case: search-p-03, seed: 풋살 하실 분 }
+    - { case: search-p-03, seed: 테니스 복식 }
+    - { case: search-p-03, seed: 볼링 네 명 }
+    - { case: search-p-03, seed: 볼링 여섯 명 }
+    - { case: search-p-03, seed: 볼링 둘이서 }
+    - { case: search-p-04, seed: 가을 사진전 }
+    - { case: search-p-04, seed: 판화 특별전 }
+    - { case: search-p-04, seed: 공룡 화석 전시 }
+    - { case: search-p-05, seed: 공연의 밤 같이 봐요 }
+    - { case: search-p-05, seed: 버스킹 구경 갈 분 }
+    - { case: search-p-06, seed: 삼겹살 드실 분 }
+    - { case: search-p-06, seed: 저녁에 고기 구워요 }
+    - { case: search-p-06, seed: 배민 같이 시켜요 }
+    - { case: search-p-06, seed: 학식 같이 먹어요 }
+    - { case: search-p-06, seed: 돈까스 드실 분 }
+    - { case: search-p-06, seed: 심야 라면 모임 }
+  T1:
+    - { case: search-t1-01, seed: 재즈 콘서드 갈 사람 }
+    - { case: search-t1-01, seed: 콘서드 같이 가실 분 }
+    - { case: search-t1-02, seed: 재즈 콘서드 }
+    - { case: search-t1-03, seed: 취엄 설명회 }
+    - { case: search-t1-04, seed: 뮤지걸 보러 가실 분 }
+    - { case: search-t1-05, seed: 풋쌀 번개 }
+    - { case: search-t1-06, seed: 마라땅 드실 분 }
+    - { case: search-t1-07, seed: 뮤지걸 보러 가실 분 }
+  T2:
+    - { case: search-t2-01, seed: 재즈 콘서드 갈 사람 }
+    - { case: search-t2-01, seed: 콘서드 같이 가실 분 }
+    - { case: search-t2-02, seed: 양자컴퓨터 특강 }
+    - { case: search-t2-02, seed: 스타트업 창업 특강 }
+    - { case: search-t2-03, seed: 볼링 네 명 }
+    - { case: search-t2-03, seed: 볼링 여섯 명 }
+    - { case: search-t2-03, seed: 볼링 둘이서 }
+    - { case: search-t2-04, seed: 테니즈 치실 분 }
+    - { case: search-t2-05, seed: 채용 박람회 }
+    - { case: search-t2-05, seed: 동아리 박람회 }
+  H:
+    - { case: search-h-01, seed: 치킨 뜯으실 분 }
+    - { case: search-h-01, seed: 족발 야식 모임 }
+    - { case: search-h-01, seed: 오늘 저녁 공부 모임 }
+    - { case: search-h-01, seed: 판화전 같이 봐요 }
+    - { case: search-h-01, seed: 사진전 같이 봐요 }
+    - { case: search-h-01, seed: 사진전 주말 관람 }
+    - { case: search-h-02, seed: 치킨 뜯으실 분 }
+    - { case: search-h-02, seed: 오늘 저녁 공부 모임 }
+    - { case: search-h-02, seed: 판화전 같이 봐요 }
+    - { case: search-h-02, seed: 사진전 같이 봐요 }
+    - { case: search-h-02, seed: 사진전 주말 관람 }
+    - { case: search-h-03, seed: 아침 러닝 }
+    - { case: search-h-03, seed: 사진전 같이 봐요 }
+    - { case: search-h-03, seed: 사진전 주말 관람 }
+    - { case: search-h-04, seed: 학식 같이 먹어요 }
+    - { case: search-h-04, seed: 돈까스 드실 분 }
+    - { case: search-h-04, seed: 사진전 같이 봐요 }
+    - { case: search-h-04, seed: 사진전 주말 관람 }
+    - { case: search-h-05, seed: 가을 사진전 }
+    - { case: search-h-05, seed: 동아리 박람회 }
+    - { case: search-h-05, seed: 도서 바자회 }
+    - { case: search-h-05, seed: 양자컴퓨터 특강 }
+    - { case: search-h-06, seed: 가을 사진전 }
+    - { case: search-h-06, seed: 판화 특별전 }
+    - { case: search-h-06, seed: 도서 바자회 }
+    - { case: search-h-07, seed: 오늘 저녁 공부 모임 }
+  S:
+    - { case: search-s-01, seed: 보드게임 카페 갈 분 }
+    - { case: search-s-01, seed: 보드게임 밤샘 }
+    - { case: search-s-01, seed: 보드게임 셋이서 }
+    - { case: search-s-02, seed: 보드게임 밤샘 }
+    - { case: search-s-02, seed: 보드게임 셋이서 }
+    - { case: search-s-03, seed: 볼링 네 명 }
+    - { case: search-s-03, seed: 볼링 여섯 명 }
+    - { case: search-s-04, seed: null }
+    - { case: search-s-05, seed: 정기 공연 같이 가요 }
+  N:
+    - { case: search-n-01, seed: 볼링 네 명 }
+    - { case: search-n-02, seed: 마라탕 둘이서 }
+    - { case: search-n-03, seed: 보드게임 밤샘 }
+    - { case: search-n-04, seed: 풋살 하실 분 }
+    - { case: search-n-04, seed: 풋쌀 번개 }
+    - { case: search-n-05, seed: 마라탕 넷이서 }
+  R:
+    - { case: search-r-01, seed: 공대 면접 스터디 }
+    - { case: search-r-01, seed: 전공 스터디 그룹 }
+    - { case: search-r-01, seed: 코딩 테스트 스터디 }
+    - { case: search-r-01, seed: 벤치에서 스터디 }
+    - { case: search-r-02, seed: 공대 면접 스터디 }
+    - { case: search-r-02, seed: 전공 스터디 그룹 }
+    - { case: search-r-02, seed: 벤치에서 스터디 }
+    - { case: search-r-03, seed: 목요일 점심 학생회관 }
+    - { case: search-r-03, seed: 목요일 점심 도서관 }
+    - { case: search-r-03, seed: 목요일 점심 문화관 }
+    - { case: search-r-03, seed: 공룡 전시 보러 가요 }
+    - { case: search-r-04, seed: 목요일 점심 문화관 }
+    - { case: search-r-04, seed: 목요일 점심 예술복합 }
+    - { case: search-r-04, seed: 목요일 점심 학생회관 }
+    - { case: search-r-04, seed: 목요일 점심 도서관 }
+    - { case: search-r-04, seed: 공룡 전시 보러 가요 }
+    - { case: search-r-05, seed: 코딩 테스트 스터디 }
+    - { case: search-r-05, seed: 공대 면접 스터디 }
+    - { case: search-r-05, seed: 벤치에서 스터디 }
+  O:
+    - { case: search-o-01, seed: 가을 사진전 }
+    - { case: search-o-01, seed: 판화 특별전 }
+    - { case: search-o-02, seed: 가을 사진전 }
+    - { case: search-o-02, seed: 동아리 박람회 }
+    - { case: search-o-02, seed: 도서 바자회 }
+    - { case: search-o-02, seed: 양자컴퓨터 특강 }
+    - { case: search-o-03, seed: 가을 사진전 }
+    - { case: search-o-03, seed: 채용 박람회 }
+    - { case: search-o-04, seed: 사진전 같이 봐요 }
+    - { case: search-o-04, seed: 사진전 주말 관람 }
+    - { case: search-o-04, seed: 판화전 같이 봐요 }
+    - { case: search-o-05, seed: 사진전 같이 봐요 }
+    - { case: search-o-05, seed: 사진전 주말 관람 }
+    - { case: search-o-06, seed: 사진전 같이 봐요 }
+    - { case: search-o-06, seed: 사진전 주말 관람 }
+    - { case: search-o-06, seed: 공룡 전시 보러 가요 }
+  B:
+    - { case: search-b-01, seed: 전시 보러 가요 }
+    - { case: search-b-01, seed: 사진전 같이 봐요 }
+    - { case: search-b-01, seed: 사진전 주말 관람 }
+    - { case: search-b-01, seed: 공룡 전시 보러 가요 }
+    - { case: search-b-02, seed: 연극 보고 저녁 먹어요 }
+    - { case: search-b-03, seed: 등산 후 막걸리 }
+    - { case: search-b-04, seed: 개발자 농구 모임 }
+    - { case: search-b-05, seed: 취준생 점심 모임 }
+  E:
+    - { case: search-e-01, seed: null }
+    - { case: search-e-02, seed: null }
+    - { case: search-e-03, seed: null }
+    - { case: search-e-04, seed: null }
+    - { case: search-e-05, seed: null }
+    - { case: search-e-06, seed: null }
   # The cases of the large world, added by ticket 02b.
   V: []
 

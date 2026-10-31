@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -27,7 +28,7 @@ import { refuseKakao } from './walking-route.js';
 
 // The P05 suite's cases, world and thresholds (P05 ticket 02), without a model: the set is the ticket's, the thresholds
 // cover it, and every seed name a case gives is something of that kind in the world, seeded into a database of its own.
-// The answers are worked by hand, and a run scores them.
+// The answers are reviewed by people (eval/p5/README.md), and a run scores them.
 
 const cases = casesIn(loadCases(), 'p5');
 const data = p5WorldData();
@@ -55,6 +56,35 @@ const suiteSchema = z.looseObject({
 const suite = suiteSchema.parse(parse(readFileSync(new URL('../eval/p5/suite.yaml', import.meta.url), 'utf8')));
 
 const ids = cases.map(({ id }) => id);
+
+const casesTagged = (tag: string): Set<string> => new Set((suite.tags[tag] ?? []).map((one) => caseOfTag(one)));
+
+const answerSchema = z.looseObject({
+  action: z.string(),
+  cards: z.array(z.strictObject({ kind: z.string(), seed: z.string() })),
+});
+const labelFile = (name: string): unknown =>
+  JSON.parse(readFileSync(new URL(`../eval/p5/labels/${name}.json`, import.meta.url), 'utf8'));
+const drafts = z.array(answerSchema.extend({ id: z.string() })).parse(labelFile('drafts'));
+const reviews = z
+  .record(z.string(), z.looseObject({ verdict: z.enum(['approve', 'edit']), answer: answerSchema.nullable() }))
+  .parse(labelFile('owner'));
+
+// The cards settled after the review, when the owner and the second labeller compared their answers.
+const SETTLED: Record<string, string[]> = { 'join-17': ['전시 보러 가요'] };
+
+function writtenCards(id: string): string[] | undefined {
+  return cases
+    .find((one) => one.id === id)
+    ?.expect?.cards?.flatMap(({ kind, seeds }) => seeds.map((seed) => `${kind}/${seed}`))
+    .toSorted();
+}
+
+function reviewedCards(id: string): string[] {
+  const reviewed = reviews[id]?.answer ?? drafts.find((draft) => draft.id === id);
+  const seeds = (reviewed?.cards ?? []).map(({ kind, seed }) => `${kind}/${seed}`);
+  return [...seeds, ...(SETTLED[id] ?? []).map((seed) => `quest/${seed}`)].toSorted();
+}
 
 const THRESHOLD_METRICS = [
   'J1',
@@ -123,12 +153,12 @@ describe('The P05 suite', () => {
   });
 
   it.each(['L', 'P', 'T1', 'T2', 'H', 'S', 'N', 'R', 'O', 'B'])('holds at least five cases of subset %s', (subset) => {
-    expect(suite.tags[subset]?.length).toBeGreaterThanOrEqual(5);
+    expect(casesTagged(subset).size).toBeGreaterThanOrEqual(5);
   });
 
   it('holds six cases of subset E and three traps of J3a', () => {
-    expect(suite.tags.E).toHaveLength(6);
-    expect(suite.tags.J3a).toHaveLength(3);
+    expect(casesTagged('E').size).toBe(6);
+    expect(casesTagged('J3a').size).toBe(3);
   });
 
   it('tags only cases it holds, and every search case with a subset', () => {
@@ -146,6 +176,11 @@ describe('The P05 suite', () => {
     );
 
     expect(groups.filter(({ seeds, max }) => max !== seeds || seeds > 20)).toEqual([]);
+  });
+
+  it('expects of every case the cards of its reviewed answer', () => {
+    expect(ids.filter((id) => writtenCards(id) === undefined)).toEqual([]);
+    expect(ids.filter((id) => JSON.stringify(writtenCards(id)) !== JSON.stringify(reviewedCards(id)))).toEqual([]);
   });
 
   it('commits a floor or target for every metric, each once', () => {
