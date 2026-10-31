@@ -13,6 +13,35 @@
   repeat: 3
   turns:
     - user: 오늘 점심에 누구 돼?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeFriends]
+      forbidden: [findMealRestaurants, showRestaurants, proposeQuest, findFreeTimeEvents]
+    args:
+      findFreeFriends: { date: '2026-11-02', meal: lunch }
+    cards:
+      - { kind: restaurant, seeds: [], max: 0 }
+    mapButtons: []
+    text:
+      mentions:
+        [['12:15', 12시 15분], ['14:00', 2시], [이민수], [김지은], [박서준], [최유진], [정하람], [한도윤], [강민재]]
+      absent: [오지호, 윤서아]
+    results:
+      findFreeFriends:
+        args: { date: '2026-11-02', meal: lunch }
+        result: found
+        freeTime:
+          - { start: '12:15', end: '14:00' }
+        friends:
+          - { seed: 이민수, overlap: [{ start: '12:15', end: '14:00' }] }
+          - { seed: 김지은, overlap: [{ start: '12:15', end: '12:55' }, { start: '13:25', end: '14:00' }] }
+          - { seed: 박서준 (경영학과), overlap: [{ start: '12:15', end: '14:00' }] }
+          - { seed: 박서준 (물리천문학부), overlap: [{ start: '12:15', end: '14:00' }] }
+          - { seed: 최유진, overlap: [{ start: '12:15', end: '14:00' }] }
+          - { seed: 정하람, overlap: [{ start: '12:15', end: '14:00' }] }
+          - { seed: 한도윤, overlap: [{ start: '12:15', end: '13:45' }] }
+          - { seed: 강민재, overlap: [{ start: '13:45', end: '14:00' }] }
 
 - id: meals-who-lunch-begun
   category: free-time-meals
@@ -21,6 +50,35 @@
   now: '2026-11-02T13:10:00+09:00'
   turns:
     - user: 오늘 점심 같이 먹을 수 있는 사람 누구야?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeFriends]
+      forbidden: [findMealRestaurants, showRestaurants, proposeQuest, findFreeTimeEvents]
+    args:
+      findFreeFriends: { date: '2026-11-02', meal: lunch }
+    cards:
+      - { kind: restaurant, seeds: [], max: 0 }
+    mapButtons: []
+    text:
+      mentions:
+        [['13:10', 1시 10분], ['14:00', 2시], [이민수], [김지은], [박서준], [최유진], [정하람], [한도윤], [강민재]]
+      absent: [오지호, 윤서아]
+    results:
+      findFreeFriends:
+        args: { date: '2026-11-02', meal: lunch }
+        result: found
+        freeTime:
+          - { start: '13:10', end: '14:00' }
+        friends:
+          - { seed: 이민수, overlap: [{ start: '13:10', end: '14:00' }] }
+          - { seed: 김지은, overlap: [{ start: '13:25', end: '14:00' }] }
+          - { seed: 박서준 (경영학과), overlap: [{ start: '13:10', end: '14:00' }] }
+          - { seed: 박서준 (물리천문학부), overlap: [{ start: '13:10', end: '14:00' }] }
+          - { seed: 최유진, overlap: [{ start: '13:10', end: '14:00' }] }
+          - { seed: 정하람, overlap: [{ start: '13:10', end: '14:00' }] }
+          - { seed: 한도윤, overlap: [{ start: '13:10', end: '13:45' }] }
+          - { seed: 강민재, overlap: [{ start: '13:45', end: '14:00' }] }
 
 - id: meals-who-dinner-tomorrow
   category: free-time-meals
@@ -28,6 +86,34 @@
   repeat: 3
   turns:
     - user: 내일 저녁에 누구 돼?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findFreeFriends]
+      forbidden: [findMealRestaurants, showRestaurants, proposeQuest, findFreeTimeEvents]
+    args:
+      findFreeFriends: { date: '2026-11-03', meal: dinner }
+    cards:
+      - { kind: restaurant, seeds: [], max: 0 }
+    mapButtons: []
+    text:
+      mentions: [['17:00', 5시], ['18:00', 6시], [김지은], [박서준], [최유진], [정하람], [한도윤], [윤서아], [강민재]]
+      absent: [이민수, 오지호]
+    results:
+      findFreeFriends:
+        args: { date: '2026-11-03', meal: dinner }
+        result: found
+        freeTime:
+          - { start: '17:00', end: '18:00' }
+        friends:
+          - { seed: 김지은, overlap: [{ start: '17:00', end: '18:00' }] }
+          - { seed: 박서준 (경영학과), overlap: [{ start: '17:00', end: '18:00' }] }
+          - { seed: 박서준 (물리천문학부), overlap: [{ start: '17:00', end: '18:00' }] }
+          - { seed: 최유진, overlap: [{ start: '17:00', end: '18:00' }] }
+          - { seed: 정하람, overlap: [{ start: '17:00', end: '18:00' }] }
+          - { seed: 한도윤, overlap: [{ start: '17:00', end: '18:00' }] }
+          - { seed: 윤서아, overlap: [{ start: '17:00', end: '18:00' }] }
+          - { seed: 강민재, overlap: [{ start: '17:00', end: '18:00' }] }
 
 - id: meals-two-friends-lunch
   category: free-time-meals
@@ -35,6 +121,66 @@
   repeat: 3
   turns:
     - user: 오늘 점심 민수랑 지은이랑 밥
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolveFriend, findMealRestaurants, showRestaurants, showOnMap]
+      allowed: [findFreeFriends, getMenus, getMyDay]
+      forbidden: [proposeQuest, findFreeTimeEvents, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      resolveFriend: [{ name: 민수 }, { name: 지은 }]
+      findMealRestaurants: { date: '2026-11-02', meal: lunch, friends: [이민수, 김지은] }
+      showOnMap: { layer: dining }
+    cards:
+      - { kind: restaurant, seeds: [학생회관식당, 자하연식당 3층, 3식당, 301동식당], max: 4 }
+    mapButtons: [dining]
+    text:
+      mentions:
+        [
+          ['12:15', 12시 15분],
+          ['12:55', 12시 55분],
+          ['13:25', 1시 25분],
+          ['14:00', 2시],
+          [이동시간, 오래 걷],
+          [순서, 순으로],
+        ]
+      absent: [동원관식당, 두레미담, 감골식당, 302동식당, 동아리 회의, 도서관 앞 벤치]
+    results:
+      findMealRestaurants:
+        args: { date: '2026-11-02', meal: lunch, friends: [이민수, 김지은] }
+        result: found
+        shared:
+          - { start: '12:15', end: '12:55' }
+          - { start: '13:25', end: '14:00' }
+        restaurants:
+          - seed: 학생회관식당
+            start: '12:35'
+            eatingMinutes: 16
+            people:
+              - { name: 나, mode: shuttle, minutes: 16, longest: true }
+              - { name: 이민수, mode: walk, minutes: 11, longest: false }
+              - { name: 김지은, mode: shuttle, minutes: 14, longest: false }
+          - seed: 자하연식당 3층
+            start: '13:30'
+            eatingMinutes: 17
+            people:
+              - { name: 나, mode: shuttle, minutes: 18, longest: true }
+              - { name: 이민수, mode: walk, minutes: 7, longest: false }
+              - { name: 김지은, mode: walk, minutes: 4, longest: false }
+          - seed: 3식당
+            start: '12:30'
+            eatingMinutes: 15
+            people:
+              - { name: 나, mode: shuttle, minutes: 12, longest: false }
+              - { name: 이민수, mode: walk, minutes: 19, longest: true }
+              - { name: 김지은, mode: shuttle, minutes: 11, longest: false }
+          - seed: 301동식당
+            start: '12:25'
+            eatingMinutes: 15
+            people:
+              - { name: 나, mode: walk, minutes: 4, longest: false }
+              - { name: 이민수, mode: shuttle, minutes: 22, longest: true }
+              - { name: 김지은, mode: walk, minutes: 0, longest: false }
 
 - id: meals-no-timetable-friends-dinner
   category: free-time-meals
@@ -42,6 +188,57 @@
   repeat: 3
   turns:
     - user: 오늘 저녁 유진이랑 하람이랑 밥
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolveFriend, findMealRestaurants, showRestaurants, showOnMap]
+      allowed: [findFreeFriends, getMenus, getMyDay]
+      forbidden: [proposeQuest, findFreeTimeEvents, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      resolveFriend: [{ name: 유진 }, { name: 하람 }]
+      findMealRestaurants: { date: '2026-11-02', meal: dinner, friends: [최유진, 정하람] }
+      showOnMap: { layer: dining }
+    cards:
+      - { kind: restaurant, seeds: [301동식당, 302동식당, 학생회관식당, 동원관식당], max: 4 }
+    mapButtons: [dining]
+    text:
+      mentions: [['17:15', 5시 15분], ['19:30', 7시 30분, 7시 반], [이동시간, 오래 걷], [순서, 순으로]]
+      absent: [3식당, 자하연식당, 두레미담, 감골식당]
+    results:
+      findMealRestaurants:
+        args: { date: '2026-11-02', meal: dinner, friends: [최유진, 정하람] }
+        result: found
+        shared:
+          - { start: '17:15', end: '19:30' }
+        restaurants:
+          - seed: 301동식당
+            start: '17:15'
+            eatingMinutes: 135
+            people:
+              - { name: 나, mode: walk, minutes: 0, longest: true }
+              - { name: 최유진, mode: null, minutes: null, longest: false }
+              - { name: 정하람, mode: null, minutes: null, longest: false }
+          - seed: 302동식당
+            start: '17:20'
+            eatingMinutes: 130
+            people:
+              - { name: 나, mode: walk, minutes: 4, longest: true }
+              - { name: 최유진, mode: null, minutes: null, longest: false }
+              - { name: 정하람, mode: null, minutes: null, longest: false }
+          - seed: 학생회관식당
+            start: '17:30'
+            eatingMinutes: 120
+            people:
+              - { name: 나, mode: shuttle, minutes: 14, longest: true }
+              - { name: 최유진, mode: null, minutes: null, longest: false }
+              - { name: 정하람, mode: null, minutes: null, longest: false }
+          - seed: 동원관식당
+            start: '17:40'
+            eatingMinutes: 110
+            people:
+              - { name: 나, mode: shuttle, minutes: 22, longest: true }
+              - { name: 최유진, mode: null, minutes: null, longest: false }
+              - { name: 정하람, mode: null, minutes: null, longest: false }
 
 - id: meals-friend-off-campus-item
   category: free-time-meals
@@ -50,6 +247,59 @@
   now: '2026-11-02T12:40:00+09:00'
   turns:
     - user: 오늘 점심 도윤이랑 밥
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolveFriend, findMealRestaurants, showRestaurants, showOnMap]
+      allowed: [findFreeFriends, getMenus, getMyDay]
+      forbidden: [proposeQuest, findFreeTimeEvents, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      resolveFriend: { name: 도윤 }
+      findMealRestaurants: { date: '2026-11-02', meal: lunch, friends: [한도윤] }
+      showOnMap: { layer: dining }
+    cards:
+      - { kind: restaurant, seeds: [301동식당, 3식당, 학생회관식당, 자하연식당 3층, 동원관식당], max: 5 }
+    mapButtons: [dining]
+    text:
+      mentions: [['12:40', 12시 40분], ['13:45', 1시 45분], [이동시간, 오래 걷], [순서, 순으로]]
+      absent: [두레미담, 감골식당, 302동식당, 수학 과외, 낙성대]
+    results:
+      findMealRestaurants:
+        args: { date: '2026-11-02', meal: lunch, friends: [한도윤] }
+        result: found
+        shared:
+          - { start: '12:40', end: '13:45' }
+        restaurants:
+          - seed: 301동식당
+            start: '12:45'
+            eatingMinutes: 59
+            people:
+              - { name: 나, mode: walk, minutes: 4, longest: true }
+              - { name: 한도윤, mode: walk, minutes: 0, longest: false }
+          - seed: 3식당
+            start: '12:55'
+            eatingMinutes: 49
+            people:
+              - { name: 나, mode: shuttle, minutes: 12, longest: true }
+              - { name: 한도윤, mode: shuttle, minutes: 11, longest: false }
+          - seed: 학생회관식당
+            start: '13:00'
+            eatingMinutes: 44
+            people:
+              - { name: 나, mode: shuttle, minutes: 16, longest: true }
+              - { name: 한도윤, mode: shuttle, minutes: 14, longest: false }
+          - seed: 자하연식당 3층
+            start: '13:00'
+            eatingMinutes: 44
+            people:
+              - { name: 나, mode: shuttle, minutes: 18, longest: true }
+              - { name: 한도윤, mode: shuttle, minutes: 16, longest: false }
+          - seed: 동원관식당
+            start: '13:05'
+            eatingMinutes: 32
+            people:
+              - { name: 나, mode: shuttle, minutes: 23, longest: true }
+              - { name: 한도윤, mode: shuttle, minutes: 22, longest: false }
 
 - id: meals-no-noodles
   category: free-time-meals
@@ -65,6 +315,66 @@
           - { kind: restaurant, seed: 3식당 }
           - { kind: restaurant, seed: 301동식당 }
     - user: 면 빼고
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolveFriend, findMealRestaurants, showRestaurants, showOnMap]
+      allowed: [findFreeFriends, getMenus, getMyDay]
+      forbidden: [proposeQuest, findFreeTimeEvents, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      resolveFriend: [{ name: 민수 }, { name: 지은 }]
+      findMealRestaurants: { date: '2026-11-02', meal: lunch, friends: [이민수, 김지은] }
+      showOnMap: { layer: dining }
+    cards:
+      - { kind: restaurant, seeds: [학생회관식당, 3식당, 301동식당], max: 3 }
+    mapButtons: [dining]
+    text:
+      mentions:
+        [
+          ['12:15', 12시 15분],
+          ['12:55', 12시 55분],
+          ['13:25', 1시 25분],
+          ['14:00', 2시],
+          [이동시간, 오래 걷],
+          [순서, 순으로],
+        ]
+      absent: [자하연식당, 동원관식당, 두레미담, 감골식당, 302동식당]
+    results:
+      findMealRestaurants:
+        args: { date: '2026-11-02', meal: lunch, friends: [이민수, 김지은] }
+        result: found
+        shared:
+          - { start: '12:15', end: '12:55' }
+          - { start: '13:25', end: '14:00' }
+        restaurants:
+          - seed: 학생회관식당
+            start: '12:35'
+            eatingMinutes: 16
+            people:
+              - { name: 나, mode: shuttle, minutes: 16, longest: true }
+              - { name: 이민수, mode: walk, minutes: 11, longest: false }
+              - { name: 김지은, mode: shuttle, minutes: 14, longest: false }
+          - seed: 자하연식당 3층
+            start: '13:30'
+            eatingMinutes: 17
+            people:
+              - { name: 나, mode: shuttle, minutes: 18, longest: true }
+              - { name: 이민수, mode: walk, minutes: 7, longest: false }
+              - { name: 김지은, mode: walk, minutes: 4, longest: false }
+          - seed: 3식당
+            start: '12:30'
+            eatingMinutes: 15
+            people:
+              - { name: 나, mode: shuttle, minutes: 12, longest: false }
+              - { name: 이민수, mode: walk, minutes: 19, longest: true }
+              - { name: 김지은, mode: shuttle, minutes: 11, longest: false }
+          - seed: 301동식당
+            start: '12:25'
+            eatingMinutes: 15
+            people:
+              - { name: 나, mode: walk, minutes: 4, longest: false }
+              - { name: 이민수, mode: shuttle, minutes: 22, longest: true }
+              - { name: 김지은, mode: walk, minutes: 0, longest: false }
 
 - id: meals-soup-wanted
   category: free-time-meals
@@ -80,6 +390,58 @@
           - { kind: restaurant, seed: 3식당 }
           - { kind: restaurant, seed: 301동식당 }
     - user: 국밥 먹고 싶어
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolveFriend, findMealRestaurants, showRestaurants, showOnMap]
+      allowed: [findFreeFriends, getMenus, getMyDay]
+      forbidden: [proposeQuest, findFreeTimeEvents, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      resolveFriend: [{ name: 민수 }, { name: 지은 }]
+      findMealRestaurants: { date: '2026-11-02', meal: lunch, friends: [이민수, 김지은] }
+      showOnMap: { layer: dining }
+    cards:
+      - { kind: restaurant, seeds: [3식당], max: 1 }
+    mapButtons: [dining]
+    text:
+      mentions: [['12:15', 12시 15분], ['12:55', 12시 55분], ['13:25', 1시 25분], ['14:00', 2시]]
+      absent: [학생회관식당, 자하연식당, 301동식당, 동원관식당, 두레미담, 감골식당, 302동식당]
+    results:
+      findMealRestaurants:
+        args: { date: '2026-11-02', meal: lunch, friends: [이민수, 김지은] }
+        result: found
+        shared:
+          - { start: '12:15', end: '12:55' }
+          - { start: '13:25', end: '14:00' }
+        restaurants:
+          - seed: 학생회관식당
+            start: '12:35'
+            eatingMinutes: 16
+            people:
+              - { name: 나, mode: shuttle, minutes: 16, longest: true }
+              - { name: 이민수, mode: walk, minutes: 11, longest: false }
+              - { name: 김지은, mode: shuttle, minutes: 14, longest: false }
+          - seed: 자하연식당 3층
+            start: '13:30'
+            eatingMinutes: 17
+            people:
+              - { name: 나, mode: shuttle, minutes: 18, longest: true }
+              - { name: 이민수, mode: walk, minutes: 7, longest: false }
+              - { name: 김지은, mode: walk, minutes: 4, longest: false }
+          - seed: 3식당
+            start: '12:30'
+            eatingMinutes: 15
+            people:
+              - { name: 나, mode: shuttle, minutes: 12, longest: false }
+              - { name: 이민수, mode: walk, minutes: 19, longest: true }
+              - { name: 김지은, mode: shuttle, minutes: 11, longest: false }
+          - seed: 301동식당
+            start: '12:25'
+            eatingMinutes: 15
+            people:
+              - { name: 나, mode: walk, minutes: 4, longest: false }
+              - { name: 이민수, mode: shuttle, minutes: 22, longest: true }
+              - { name: 김지은, mode: walk, minutes: 0, longest: false }
 
 - id: meals-here-after-cards
   category: free-time-meals
@@ -96,10 +458,71 @@
           - { kind: restaurant, seed: 301동식당 }
     - user: 국밥 먹고 싶어
     - assistant:
-        text: 소고기국밥은 3식당에 있어요.
+        text: 소고기국밥은 3식당에 있어요. 오늘 점심에 함께 비는 시간은 12:15~12:55, 13:25~14:00이에요.
         cards:
           - { kind: restaurant, seed: 3식당 }
     - user: 여기로 하자
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [resolveFriend, findMealRestaurants, proposeQuest]
+      allowed: [findFreeFriends, getMenus, getMyDay]
+      forbidden: [findFreeTimeEvents, searchRecruitingQuests, searchGlobalEvents]
+    args:
+      resolveFriend: [{ name: 민수 }, { name: 지은 }]
+      findMealRestaurants: { date: '2026-11-02', meal: lunch, friends: [이민수, 김지은] }
+      proposeQuest:
+        {
+          startsAt: '2026-11-02 12:30',
+          place: 제3학생식당,
+          invitees: [이민수, 김지은],
+          joinPolicy: closed,
+          capacity: 3,
+        }
+    proposal:
+      joinPolicy: closed
+      board: null
+      capacity: 3
+      startsAt: '2026-11-02 12:30'
+      place: 제3학생식당
+      globalEvent: null
+      invitees: [이민수, 김지은]
+    results:
+      findMealRestaurants:
+        args: { date: '2026-11-02', meal: lunch, friends: [이민수, 김지은] }
+        result: found
+        shared:
+          - { start: '12:15', end: '12:55' }
+          - { start: '13:25', end: '14:00' }
+        restaurants:
+          - seed: 학생회관식당
+            start: '12:35'
+            eatingMinutes: 16
+            people:
+              - { name: 나, mode: shuttle, minutes: 16, longest: true }
+              - { name: 이민수, mode: walk, minutes: 11, longest: false }
+              - { name: 김지은, mode: shuttle, minutes: 14, longest: false }
+          - seed: 자하연식당 3층
+            start: '13:30'
+            eatingMinutes: 17
+            people:
+              - { name: 나, mode: shuttle, minutes: 18, longest: true }
+              - { name: 이민수, mode: walk, minutes: 7, longest: false }
+              - { name: 김지은, mode: walk, minutes: 4, longest: false }
+          - seed: 3식당
+            start: '12:30'
+            eatingMinutes: 15
+            people:
+              - { name: 나, mode: shuttle, minutes: 12, longest: false }
+              - { name: 이민수, mode: walk, minutes: 19, longest: true }
+              - { name: 김지은, mode: shuttle, minutes: 11, longest: false }
+          - seed: 301동식당
+            start: '12:25'
+            eatingMinutes: 15
+            people:
+              - { name: 나, mode: walk, minutes: 4, longest: false }
+              - { name: 이민수, mode: shuttle, minutes: 22, longest: true }
+              - { name: 김지은, mode: walk, minutes: 0, longest: false }
 
 - id: meals-no-shared-time
   category: free-time-meals
@@ -107,6 +530,26 @@
   repeat: 3
   turns:
     - user: 오늘 점심 지호랑 밥
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolveFriend, findMealRestaurants]
+      allowed: [findFreeFriends, getMyDay]
+      forbidden: [showRestaurants, proposeQuest, findFreeTimeEvents]
+    args:
+      resolveFriend: { name: 지호 }
+      findMealRestaurants: { date: '2026-11-02', meal: lunch, friends: [오지호] }
+    cards:
+      - { kind: restaurant, seeds: [], max: 0 }
+    mapButtons: []
+    text:
+      mentions: [[없]]
+      absent: [오지호, 건축설계, 연구실 미팅, 글로벌공학교육센터, 제1공학관]
+    results:
+      findMealRestaurants:
+        args: { date: '2026-11-02', meal: lunch, friends: [오지호] }
+        result: none
+        why: no-shared-time
 
 - id: meals-no-menu
   category: free-time-meals
@@ -114,6 +557,25 @@
   repeat: 3
   turns:
     - user: 금요일 점심 민수랑 밥
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolveFriend, findMealRestaurants]
+      allowed: [findFreeFriends, getMenus, getMyDay]
+      forbidden: [showRestaurants, proposeQuest, findFreeTimeEvents]
+    args:
+      resolveFriend: { name: 민수 }
+      findMealRestaurants: { date: '2026-11-06', meal: lunch, friends: [이민수] }
+    cards:
+      - { kind: restaurant, seeds: [], max: 0 }
+    mapButtons: []
+    text:
+      mentions: [[메뉴, 식단]]
+    results:
+      findMealRestaurants:
+        args: { date: '2026-11-06', meal: lunch, friends: [이민수] }
+        result: none
+        why: no-menu
 
 - id: meals-no-restaurant-fits
   category: free-time-meals
@@ -121,6 +583,29 @@
   repeat: 3
   turns:
     - user: 오늘 점심 민재랑 밥
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolveFriend, findMealRestaurants]
+      allowed: [findFreeFriends, getMenus, getMyDay]
+      forbidden: [showRestaurants, proposeQuest, findFreeTimeEvents]
+    args:
+      resolveFriend: { name: 민재 }
+      findMealRestaurants: { date: '2026-11-02', meal: lunch, friends: [강민재] }
+    cards:
+      - { kind: restaurant, seeds: [], max: 0 }
+    mapButtons: []
+    text:
+      mentions: [['13:45', 1시 45분], ['14:00', 2시], [없]]
+      absent:
+        [미적분학, 선형대수학, 확률론, 이공계멀티미디어강의동, 학생회관식당, 자하연식당, 301동식당, 3식당, 동원관식당]
+    results:
+      findMealRestaurants:
+        args: { date: '2026-11-02', meal: lunch, friends: [강민재] }
+        result: found
+        shared:
+          - { start: '13:45', end: '14:00' }
+        restaurants: []
 
 - id: meals-same-name-asks
   category: free-time-meals
@@ -128,6 +613,35 @@
   repeat: 3
   turns:
     - user: 오늘 점심 서준이랑 밥
+  expect:
+    actions: [ASK]
+    tools:
+      required: [resolveFriend, findFreeFriends]
+      forbidden: [findMealRestaurants, showRestaurants, showOnMap, proposeQuest]
+    args:
+      resolveFriend: { name: 서준 }
+      findFreeFriends: { date: '2026-11-02', meal: lunch }
+    cards:
+      - { kind: restaurant, seeds: [], max: 0 }
+    mapButtons: []
+    text:
+      mentions: [[경영학과, 경영], [물리천문학부, 물리]]
+      absent: [오지호, 윤서아]
+    results:
+      findFreeFriends:
+        args: { date: '2026-11-02', meal: lunch }
+        result: found
+        freeTime:
+          - { start: '12:15', end: '14:00' }
+        friends:
+          - { seed: 이민수, overlap: [{ start: '12:15', end: '14:00' }] }
+          - { seed: 김지은, overlap: [{ start: '12:15', end: '12:55' }, { start: '13:25', end: '14:00' }] }
+          - { seed: 박서준 (경영학과), overlap: [{ start: '12:15', end: '14:00' }] }
+          - { seed: 박서준 (물리천문학부), overlap: [{ start: '12:15', end: '14:00' }] }
+          - { seed: 최유진, overlap: [{ start: '12:15', end: '14:00' }] }
+          - { seed: 정하람, overlap: [{ start: '12:15', end: '14:00' }] }
+          - { seed: 한도윤, overlap: [{ start: '12:15', end: '13:45' }] }
+          - { seed: 강민재, overlap: [{ start: '13:45', end: '14:00' }] }
 
 - id: meals-breakfast
   category: free-time-meals
@@ -135,6 +649,13 @@
   repeat: 3
   turns:
     - user: 내일 아침 민수랑 밥
+  expect:
+    actions: [CHAT, REFUSE, ASK]
+    tools:
+      forbidden: ['*']
+    mapButtons: []
+    text:
+      mentions: [[점심], [저녁]]
 
 - id: meals-needs-departure
   category: free-time-meals
@@ -142,3 +663,22 @@
   repeat: 3
   turns:
     - user: 목요일 점심 민수랑 밥
+  expect:
+    actions: [ASK]
+    tools:
+      required: [resolveFriend, findMealRestaurants]
+      allowed: [findFreeFriends, getMenus, getMyDay]
+      forbidden: [showRestaurants, showOnMap, proposeQuest]
+    args:
+      resolveFriend: { name: 민수 }
+      findMealRestaurants: { date: '2026-11-05', meal: lunch, friends: [이민수] }
+    cards:
+      - { kind: restaurant, seeds: [], max: 0 }
+    mapButtons: []
+    text:
+      mentions: [[어디]]
+    results:
+      findMealRestaurants:
+        args: { date: '2026-11-05', meal: lunch, friends: [이민수] }
+        result: needs
+        needs: { side: before, item: 논리설계 }

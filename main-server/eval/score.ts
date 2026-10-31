@@ -303,7 +303,7 @@ export function scoreCase(run: CaseRun, names: Names): CaseScore {
     if (expect === null) {
       return [];
     }
-    // A single or fixed-history case sends only its last turn.
+    // A single or fixed-history case has one trace, of its last turn.
     const trace = (run.kind === 'live' ? run.turns[index] : index === last ? run.turns[0] : undefined) ?? null;
     return [{ index, trace, score: trace === null ? null : scoreTurn(trace, expect, names) }];
   });

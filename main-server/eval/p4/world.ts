@@ -252,7 +252,9 @@ async function seedQuests(
     seeds[title] = { kind: 'globalEvent', id: event.id, name: title };
   }
   const shared = seedOf(seeds, 'globalEvent', data.sharedQuest);
-  await storeSharedQuest(prisma, { id: shared.id, title: shared.name }, [asker.id, joiner.id]);
+  const sharedId = await storeSharedQuest(prisma, { id: shared.id, title: shared.name }, [asker.id, joiner.id]);
+  const sharedStart = data.globalEvents.find(({ title }) => title === shared.name)?.starts ?? '';
+  await seedItem(prisma, sharedId, shared.name, sharedStart, seeds);
   for (const quest of data.quests) {
     // oxlint-disable-next-line no-await-in-loop -- in a fixed order
     await seedRecruiting(app, prisma, { asker, leader, joiner }, quest, seeds);

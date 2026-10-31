@@ -34,7 +34,7 @@ const isItem = (written: unknown): written is string => typeof written === 'stri
 
 // The id fields of a tool's arguments.
 function refsOfArgs(tool: string, args: Readonly<Record<string, unknown>>): SeedRef[] {
-  const { globalEvent, place, invitees, friends, departurePlace, from, to, keys } = args;
+  const { globalEvent, place, invitees, friends, departurePlace, from, to, keys, ids } = args;
   return [
     ...(typeof globalEvent === 'string' ? [{ kind: 'globalEvent' as const, name: globalEvent }] : []),
     ...(tool === 'proposeQuest' && typeof place === 'string' ? [{ kind: 'place' as const, name: place }] : []),
@@ -42,6 +42,8 @@ function refsOfArgs(tool: string, args: Readonly<Record<string, unknown>>): Seed
     ...namesIn(tool === 'proposeQuest' ? invitees : []).map((name) => ({ kind: 'friend' as const, name })),
     ...namesIn(friends).map((name) => ({ kind: 'friend' as const, name })),
     ...namesIn(tool === 'showRestaurants' ? keys : []).map((name) => ({ kind: 'restaurant' as const, name })),
+    ...namesIn(tool === 'showQuests' ? ids : []).map((name) => ({ kind: 'quest' as const, name })),
+    ...namesIn(tool === 'showGlobalEvents' ? ids : []).map((name) => ({ kind: 'globalEvent' as const, name })),
     ...[from, to].filter((written) => isItem(written)).map((name) => ({ kind: 'item' as const, name })),
   ];
 }

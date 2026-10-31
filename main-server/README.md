@@ -1940,7 +1940,7 @@ production runs as before. A turn's trace ends with the reply (its text and leng
 the failure: STEP_LIMIT, TIMEOUT or ERROR.
 
 A case is a single turn, a fixed history (the earlier turns written out, the Assistant's with cards and a Proposal by
-seed name; only the last turn is sent) or live (`live: true`: each User's message sent with the real replies before
+seed name; all of them are sent in one request, and only the last turn is scored) or live (`live: true`: each User's message sent with the real replies before
 it). A run is saved as `eval/results/<date>-<commit>-<model>-<settings>.json`, every turn's trace with it. `results/`
 is ignored by git; commit a run worth keeping with `git add -f`. `test/eval-runner.integration.test.ts` and
 `test/eval-options.integration.test.ts` test the runner with the scripted model in `pnpm test`.

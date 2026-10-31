@@ -37,14 +37,26 @@ const suiteSchema = z.strictObject({
   cases: z.record(z.string(), z.int()),
   score: z.strictObject({ overall: z.number(), perCategory: z.number(), runs: z.int() }),
   labels: z.strictObject({
-    draftedBy: z.string().nullable(),
-    draftedOn: z.string().nullable(),
+    draftedBy: z.string().min(1),
+    draftedOn: z.iso.date(),
     reviewedBy: z.string().nullable(),
-    reviewedOn: z.string().nullable(),
+    reviewedOn: z.iso.date().nullable(),
+    openForReview: z.array(
+      z.strictObject({ id: z.string(), kind: z.enum(['meaning', 'rules']), why: z.string().min(1) }),
+    ),
   }),
 });
 
-const suite = suiteSchema.parse(parse(readFileSync(new URL('../eval/p4/suite.yaml', import.meta.url), 'utf8')));
+const workingSchema = z.array(
+  z.strictObject({ id: z.string(), working: z.string().min(1), open: z.literal(true).optional() }),
+);
+
+function suiteFile(name: string): unknown {
+  return parse(readFileSync(new URL(`../eval/p4/${name}`, import.meta.url), 'utf8'));
+}
+
+const suite = suiteSchema.parse(suiteFile('suite.yaml'));
+const working = workingSchema.parse(suiteFile('labels-working.yaml'));
 
 describe('The P4 suite', () => {
   it('holds 40 cases: 공강 파티 15, 공강에 밥 15, 공통 10', () => {
@@ -70,6 +82,19 @@ describe('The P4 suite', () => {
       'history',
       'history',
     ]);
+  });
+});
+
+describe('The labels', () => {
+  it('give every case an expectation for the turn it scores, and the drafter keeps its working', () => {
+    expect(cases.filter((evalCase) => evalCase.expect === undefined).map(({ id }) => id)).toEqual([]);
+    expect(working.map(({ id }) => id).toSorted()).toEqual(cases.map(({ id }) => id).toSorted());
+  });
+
+  it('are listed for the review wherever the drafter left them open', () => {
+    const open = working.filter((entry) => entry.open === true).map(({ id }) => id);
+
+    expect(suite.labels.openForReview.map(({ id }) => id).toSorted()).toEqual(open.toSorted());
   });
 });
 
