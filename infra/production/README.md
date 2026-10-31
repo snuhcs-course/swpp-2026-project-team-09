@@ -572,6 +572,25 @@ Every session from then on stays a Draft for an Administrator, and what was publ
 brings the committed value back, so also set `AUTOMATIC_PUBLICATION=off` in that file and merge it. Sessions stored
 meanwhile are not published when it is turned on again.
 
+### Turning on Judgements
+
+`AUTOMATIC_JUDGEMENT` is `off` in `k8s/parts/shared/kustomization.yaml`: no model is called, no post leaves the server, and
+the rules go on publishing. Turn it on only when all of these hold (ticket 09):
+
+- the team has agreed that masked posts may be sent to the model provider;
+- evaluation A's floors are met, on the commit being released, and recorded;
+- the OpenRouter key's credit limit allows for it, since Judgements spend the Assistant's credit, and its account allows
+  only providers that do not train on prompts.
+
+Set the value to `on` in that file, merge it and release. The server refuses to start with `on` and no
+`OPENROUTER_API_KEY` or `ASSISTANT_MODEL`, so a Release with that mistake does not replace the running pods. To turn it
+off again at once, use the ConfigMap patch above with `AUTOMATIC_JUDGEMENT`, and also change the file. Drafts stored while
+it was off are not judged when it is turned on.
+
+To stop what Judgements publish while they keep being stored, turn off `AUTOMATIC_PUBLICATION` instead. Check failures on
+`GET /admin/global-events/unsettled-posts`: during a model outage each new post uses its two tries over two Collections
+and then waits for an Administrator.
+
 ### Following a Release
 
 The run appears in the repository's **Actions** tab under the Release workflow, named after the tag:
