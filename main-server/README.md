@@ -2070,6 +2070,7 @@ pnpm eval --model anthropic/claude-haiku-5.5 --temperature 0 --max-steps 30 --ti
 | `--repeat <n>`                                         | the cases marked `repeat` run their own count (3)                                 |
 | `--category`, `--case`                                 | every case; both take several values, comma-separated or again                    |
 | `--budget <USD>`                                       | 5                                                                                 |
+| `--world <small \| p4>`                                | `small`, P19's world and the cases that name it                                   |
 | `--yes`                                                | asks before it starts                                                             |
 
 `eval/cli.ts` reads the flags, prints the estimated cost from the number of turns, the tokens a turn took in the last
@@ -2087,7 +2088,7 @@ production runs as before. A turn's trace ends with the reply (its text and leng
 the failure: STEP_LIMIT, TIMEOUT or ERROR.
 
 A case is a single turn, a fixed history (the earlier turns written out, the Assistant's with cards and a Proposal by
-seed name; only the last turn is sent) or live (`live: true`: each User's message sent with the real replies before
+seed name; all of them are sent in one request, and only the last turn is scored) or live (`live: true`: each User's message sent with the real replies before
 it). A run is saved as `eval/results/<date>-<commit>-<model>-<settings>.json`, every turn's trace with it. `results/`
 is ignored by git; commit a run worth keeping with `git add -f`. `test/eval-runner.integration.test.ts` and
 `test/eval-options.integration.test.ts` test the runner with the scripted model in `pnpm test`.
@@ -2105,10 +2106,22 @@ compound). They name the world by seed name: what the world holds is in `eval/wo
 Friends, the Places of the shared seed, the Global Events, the recruiting Quests, the menus and the shuttle's vehicles), and
 `eval/world.ts` seeds it with the test helpers into the run's fresh database. The shuttle's vehicles are stored anew
 before each case, since the server forgets them after a minute. The world and the cases change together:
-`test/eval-cases.integration.test.ts` checks in `pnpm test` that every case fits the schema, that the set has the spec's
-categories and counts, that every seed name a case gives is in the world as that kind of thing, and that the tools
+`test/eval-cases.integration.test.ts` checks in `pnpm test` that every case fits the schema, that the fixed set is included
+once, that every seed name a case gives is in the world as that kind of thing, and that the tools
 answer in the world what the cases expect (for example that 민수 names two Friends and that 2026-10-23 has no menus).
 It seeds the world into a database of its own, as `test/eval-runner.integration.test.ts` does.
+
+A case names the world it runs in, `small` unless it says otherwise, and a run is of one world. P19's fixed set is pinned
+by id in `eval/fixed-set.ts`: other cases can join `eval/cases/`, and the test checks that the set is included, once.
+
+#### The P4 suite
+
+`pnpm eval --world p4` runs the 40 cases of `eval/p4/cases/` (공강 파티 15, 공강에 밥 15, 공통 10) in a world of their
+own, `eval/p4/world.yaml`, with the clock at 2026-11-02 (월) 11:30 unless a case gives its own `now`. A case's `asker`
+sends it as another User of the world, such as one with no Timetable. `eval/p4/rules.md` states the judgement in prose,
+`eval/p4/travel-fixture.json` freezes every ordered pair of the world's Places, and `eval/p4/suite.yaml` commits the
+thresholds and who drafted and reviewed the labels. Every case has `repeat: 3`, so a scorecard's pass rates are the mean
+of the 3 runs. `test/eval-p4-cases.integration.test.ts` checks the set, the fixture and every seed name.
 
 #### Scoring
 
@@ -2121,8 +2134,9 @@ pnpm eval:compare eval/results/<a>.json eval/results/<b>.json   # two runs side 
 
 A case's `expect` (`eval/expect.ts`) holds the accepted `actions` (TOOL, ASK, PROPOSE, REFUSE, CHAT, TOOL+ASK,
 PROPOSE+ASK), `tools` (`required`, `allowed`, `forbidden`, `"*"` for none), `args` of required tools (a list for one
-call each), and the outcome: `proposal` fields, `cards` (`kind`, `seeds`, `min`, `max`), `mapButtons` and
-`text.mentions` (each a word, or a list of which any one counts, spaces ignored). `knownFailure` goes on the case or
+call each), and the outcome: `proposal` fields, `cards` (`kind`, `seeds`, `min`, `max`), `mapButtons`, `text.mentions`
+(each a word, or a list of which any one counts, spaces ignored) and `text.absent` (words the reply must not hold). A
+case of the 공강 tools can also give `results`, what each tool must answer, which only the judgement suite reads. `knownFailure` goes on the case or
 in its `expect`. Values that name the world are seed names; the run file keeps the world's seeds to read ids by.
 
 The scorer (`eval/score.ts`) reads each scored turn's action from its trace and reply:

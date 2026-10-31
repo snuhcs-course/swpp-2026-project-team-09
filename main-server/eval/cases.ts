@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { readdirSync, readFileSync } from 'node:fs';
@@ -9,9 +10,9 @@ import { parse } from 'yaml';
 import { z } from 'zod';
 import { expectSchema } from './expect.ts';
 
-// The cases (spec P19, "Cases"): YAML files under eval/cases/, one per category, each a list of cases. A case is a
-// conversation and what the Assistant should do in it. This file reads them; what `expect` holds is the scorer's
-// (eval/expect.ts).
+// The cases (spec P19, "Cases"): YAML files under eval/cases/ and eval/p4/cases/, one per category, each a list of
+// cases. A case is a conversation and what the Assistant should do in it. This file reads them; what `expect` holds is
+// the scorer's (eval/expect.ts).
 //
 // Three kinds of case, by their turns:
 // - single turn: one User's message;
@@ -21,9 +22,25 @@ import { expectSchema } from './expect.ts';
 
 export const CASES_DIRECTORY = new URL('cases/', import.meta.url);
 
+const P4_CASES_DIRECTORY = new URL('p4/cases/', import.meta.url);
+
+// The worlds a case can run in: `small`, P19's (eval/world.ts), and `p4`, of the 공강 tools (eval/p4/world.ts). A run is
+// of one world.
+export const WORLDS = ['small', 'p4'] as const;
+
+export type WorldName = (typeof WORLDS)[number];
+
+// When a run of each world stands in Korea, unless a case gives its own `now`: 2026-10-21 (수) 14:05 and 2026-11-02
+// (월) 11:30.
+export const WORLD_CLOCKS: Record<WorldName, string> = {
+  small: '2026-10-21T14:05:00+09:00',
+  p4: '2026-11-02T11:30:00+09:00',
+};
+
 const seedName = z.string().min(1);
 
-const cardSchema = z.strictObject({ kind: z.enum(['quest', 'globalEvent']), seed: seedName });
+// A Restaurant card's seed is its key, the name `GET /menus` gives it.
+const cardSchema = z.strictObject({ kind: z.enum(['quest', 'globalEvent', 'restaurant']), seed: seedName });
 
 // A Proposal the Assistant made, with its Place, its Global Event and its invitees by seed name. The endpoint checks
 // the other values, as it does the app's; the join policies and Boards are the database's (prisma/schema.prisma).
@@ -57,6 +74,11 @@ export const caseSchema = z
   .strictObject({
     id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u, 'Expected lowercase words joined by hyphens'),
     category: z.string().min(1),
+    world: z.enum(WORLDS).default('small'),
+    // When the case stands, if not at its world's clock.
+    now: z.iso.datetime({ offset: true }).optional(),
+    // Who asks, by a name in the world's `askers`, if not the world's User.
+    asker: seedName.optional(),
     live: z.boolean().default(false),
     // Run this many times, for pass^k (the repeated set).
     repeat: z.int().min(2).optional(),
@@ -91,19 +113,23 @@ export function kindOf({ live, turns }: EvalCase): CaseKind {
   return turns.length === 1 ? 'single' : 'history';
 }
 
-// Every case of every file in the directory, in the order of the files' names and then as written. A case that does
-// not fit the schema, or an id used twice, fails the whole load.
-export function loadCases(directory: URL = CASES_DIRECTORY): EvalCase[] {
+function casesInDirectory(directory: URL): EvalCase[] {
   const files = readdirSync(directory)
     .filter((name) => name.endsWith('.yaml'))
     .toSorted();
-  const cases = files.flatMap((name) => {
+  return files.flatMap((name) => {
     const parsed = z.array(caseSchema).safeParse(parse(readFileSync(new URL(name, directory), 'utf8')));
     if (!parsed.success) {
       throw new Error(`${name}: ${z.prettifyError(parsed.error)}`);
     }
     return parsed.data;
   });
+}
+
+// Every case of every file in the directories, in the order of the files' names and then as written. A case that does
+// not fit the schema, or an id used twice, fails the whole load.
+export function loadCases(directories: readonly URL[] = [CASES_DIRECTORY, P4_CASES_DIRECTORY]): EvalCase[] {
+  const cases = directories.flatMap((directory) => casesInDirectory(directory));
   const seen = new Set<string>();
   for (const { id } of cases) {
     if (seen.has(id)) {
@@ -112,6 +138,15 @@ export function loadCases(directory: URL = CASES_DIRECTORY): EvalCase[] {
     seen.add(id);
   }
   return cases;
+}
+
+export function casesIn(cases: readonly EvalCase[], world: WorldName): EvalCase[] {
+  return cases.filter((evalCase) => evalCase.world === world);
+}
+
+// When the case stands, in Korea.
+export function nowOf({ world, now }: EvalCase): string {
+  return now ?? WORLD_CLOCKS[world];
 }
 
 // What to run: the cases in any of `categories` or named in `caseIds`, or every case when both are empty. A category or

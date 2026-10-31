@@ -62,7 +62,7 @@ The wireframe's AI 채팅 boards (https://claude.ai/artifact/136sh65V4Trkv5KBM78
 11. As a User, I want every recruiting Quest and every published Global Event that I can reach in the gap, so that I see all my options.
 12. As a User, I want a candidate only when I can travel there from my previous item's Place and arrive a minute before it starts, so that I am never late.
 13. As a User, I want a candidate with an end time only when I can travel from it to my next item and arrive a minute before that, so that I am not late for my next Class.
-14. As a User, I want a candidate with no end, or one longer than 3 hours, shown when I can stay at least 30 minutes, with the time I must leave by, so that I can drop in and leave on time.
+14. As a User, I want a candidate with no end, one longer than 3 hours, or one that ends too late for my next item, shown when I can stay at least 30 minutes, with the time I must leave by, so that I can drop in and leave on time.
 15. As a User, I want each card to show how long the way there takes and whether that is on foot or by shuttle, so that I know how to get there.
 16. As a User, I want the card to show how long the way from the party to my next Class takes, or the time I must leave by, so that I can plan my exit.
 17. As a User, I want the candidates' cards in order of start time, Quests and Global Events together, so that the soonest one comes first.
@@ -174,7 +174,7 @@ The wireframe's AI 채팅 boards (https://claude.ai/artifact/136sh65V4Trkv5KBM78
 - **My item without a Place** next to a gap:
   - a tool that judges travel returns `needs: {side: before | after, item}` instead of results;
   - before → the model asks where the User leaves from and passes `departurePlace` (resolved through `resolvePlace`);
-  - when `resolvePlace` answers `none`, the model says that Travel Times cannot be computed from off campus and asks once where the User enters the campus, such as 정문. If that gives no Place, it shows no candidates;
+  - when `resolvePlace` answers `none`, the model says that Travel Times cannot be computed from off campus and asks once where the User enters the campus, such as 정문, and at what time, and passes them as `departurePlace` and `departureTime`. If that gives no Place, it shows no candidates;
   - after → it asks by when the User must leave and passes `leaveBy`, which replaces the after side.
   - No item or Travel Time is stored. The words pass through `resolvePlace`, which records them as it does any place word (P07).
 - **A Friend's item without a Place:** that side's travel is left out, the Friend is judged on time only, and their Travel Time shows "—".
@@ -239,8 +239,8 @@ One function, `travel(from Place, to Place, departure time)`, serves both scenar
   6. otherwise unknown, and the candidate is left out.
 - **Fit:**
   - **Before.** With an item before the gap, the User leaves its Place at the start of the gap (the item's end, or now if that is later) and must arrive 1 minute before the candidate starts. Without one, the candidate only has to start after now.
-  - **After, when the candidate has an end of at most 3 hours.** With an item after the gap, the User leaves the candidate when it ends and must reach the next item's Place 1 minute before it starts. Without one, there is no after side.
-  - **After, when the end is unknown or longer than 3 hours.** The candidate fits when the User can stay at least 30 minutes before leaving for the next item. The card shows the leave-by time. Quests made in the app have no end, so this is the common case.
+  - **After, when the candidate has an end of at most 3 hours.** With an item after the gap, it fits as it is when the User can leave it when it ends and reach the next item's Place 1 minute before that item starts. When it ends too late for that, the next rule applies. Without an item after the gap, there is no after side.
+  - **After, when the end is unknown, longer than 3 hours or too late.** The candidate fits when the User can stay at least 30 minutes before leaving for the next item. The card shows the leave-by time. Quests made in the app have no end, so this is the common case.
   - **Clock times** ("2시부터 3시 반") narrow the gap. A candidate must start inside the window, and when it has an end, that end must fall inside the window too. Travel still runs from the previous item's Place and to the next item, as for a gap.
 - **Board.** `board` narrows Quests to that Board. Global Events have no Board, so they stay, and the model judges them by title like any other condition.
 - **Order:** soonest start first. All fitting candidates are returned, with no cap. At most 20 become cards (the existing card limit). The step after the run orders these cards by start whatever order the presenters were called in, so Quests and Global Events interleave.
@@ -309,7 +309,7 @@ One function, `travel(from Place, to Place, departure time)`, serves both scenar
 **The rule is P07's: the model passes the User's words or ids it was given, and the server decides.**
 
 - **`getMyDay(date)`** returns the User's items that day: id (a Class meeting's id is its ClassTime's), name (course name or Quest title), start and end. It never returns rooms, Places or coordinates.
-- **`findFreeTimeEvents(date, from, to, board?, departurePlace?, leaveBy?)`**
+- **`findFreeTimeEvents(date, from, to, board?, departurePlace?, departureTime?, leaveBy?)`**
   - `from` and `to` are each an item id, a clock time, `now`, or `end` (end of day).
   - It returns:
     - the gap or gaps found, each with its start, its end and the names of the items around it;
@@ -319,7 +319,7 @@ One function, `travel(from Place, to Place, departure time)`, serves both scenar
   - It returns the User's Free Time in the window and the free Friends, each with id, name, department and the overlap.
   - With `friendIds`, it returns the time shared by the User and those Friends.
   - The model finds named Friends through `resolveFriend` and passes their ids. When it answers `several`, the model calls `findFreeFriends` for that meal, reads the departments there and names them in its question. P07's chips stay as they are, with names only.
-- **`findMealRestaurants(date, meal, friendIds, window?, departurePlace?, leaveBy?)`** returns the shared time, when the menus were collected (`collectedAt`) and the fitting Restaurants in order. Each comes with:
+- **`findMealRestaurants(date, meal, friendIds, window?, departurePlace?, departureTime?, leaveBy?)`** returns the shared time, when the menus were collected (`collectedAt`) and the fitting Restaurants in order. Each comes with:
   - its key, name and Place;
   - its non-note menu lines (wrapped as others' text);
   - 식사 가능 시간, the start, and each person's Travel Time and mode.
@@ -381,7 +381,7 @@ One function, `travel(from Place, to Place, departure time)`, serves both scenar
 - **The 이동 시간 box** on the Quest and Global Event cards, as the 공강 파티 board draws it:
   - "가는 길 {도보|셔틀} N분";
   - then "· 다음 수업까지 N분" ("다음 일정까지" when the next item is not a Class);
-  - or "· HH:MM엔 나서야 해요" when the end is unknown or longer than 3 hours, after "끝 시간이 없어요" only when the end is unknown.
+  - or "· HH:MM엔 나서야 해요" when the card has a leave-by time, after "끝 시간이 없어요" only when the end is unknown.
   - Existing buttons and the seats-left label stay.
 - **The Restaurant card**, as board ② draws it:
   - name;
@@ -535,7 +535,7 @@ Everything below is committed before any result: the cases, the world, the fixtu
 - **Server: the existing seam, the assistant endpoint with the scripted model** (prior art: the `assistant-*` integration tests and the scripted model).
   - **The judgement, over the eval world.** One suite seeds the P4 eval world with its travel fixture. It calls each tool with the labelled arguments and checks the results against the reviewed labels: Free Time, fit, exclusions, the place mapping, Travel Times, free Friends and shared time, open Restaurants, order and start time.
   - **Separate integration tests** cover only what the world does not reach:
-    - `needs`, then a departure Place or a leave-by time passed after asking;
+    - `needs`, then a departure Place, with the time of entering the campus when it is off campus, or a leave-by time passed after asking;
     - the shuttle chosen only when ≥ 3 minutes faster, and not at weekends or after 21:00;
     - `data_collection: deny` reaching the model call;
     - a Restaurant card accepted in history;
