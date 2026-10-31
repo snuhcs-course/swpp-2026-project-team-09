@@ -37,7 +37,7 @@ Decided on 2026-11-01, where the ticket and the spec give no value. Jaehyun0320 
 - **Added checks.** The place is in its quoted lines, the end has a time of day when one is given, and a session is not one the rules or the same answer already gave. The prompt also gives today's date, for a date without a year.
 - **extra.snu text.** The session lines reach the Judgement through the post's description, which ticket 04 writes, with no branch here.
 
-Known limits, for ticket 09's failure analysis: a place with only a name and no 서울대 or number does not match (as with the rules), so many extra.snu places may stay Drafts, which is not measured yet and which ticket 09 measures and answers with a Source setting; an application heading two lines above a time line is not seen; a model outage uses both tries of the posts it meets, and `overDraft` cannot retry those.
+Known limits, for ticket 09's failure analysis: a place with only a name and no 서울대 or number does not match (as with the rules), so many extra.snu places may stay Drafts, which is not measured yet and which ticket 09 measures and answers with a Source setting; an application heading two lines above a time line is not seen; a model outage uses both tries of the posts it meets, and `overDraft` cannot retry those; `overPeriod` is the model's word, and a time line running across days is held to its last day only when written with `~` or 부터, so a period written otherwise can pass as one sitting (C2, C6).
 
 ### Agent usage (2026-11-01)
 

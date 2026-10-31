@@ -17,11 +17,12 @@ import {
   isWrittenClock,
   isWrittenDay,
   type JudgedTime,
+  rangesEndIn,
   readJudgedTime,
   type WrittenDay,
   writtenDays,
 } from './judgement-time.js';
-import { namedPlace } from './named-place.js';
+import { isElsewhere, namedPlace } from './named-place.js';
 import { type PostSourceSettings } from './post-sources.js';
 
 // The server's checks of a Judgement (ADR 0008). The model decides nothing: a session is published only when every
@@ -30,7 +31,8 @@ import { type PostSourceSettings } from './post-sources.js';
 const HOURS_24_MS = 24 * 60 * 60 * 1000;
 
 // What marks a line as a period to apply in, not the event's own time.
-const APPLICATION = /신청|접수|모집|등록|지원\s*기간|마감|응모|제출|원서|appl(?:y|ication)|registration|deadline/iu;
+const APPLICATION =
+  /신청|접수|모집|등록|지원\s*기간|마감|응모|제출|원서|예약|appl(?:y|ication)|regist(?:er|ration)|deadline/iu;
 
 // A line this short holds a label for the next one, as "신청 기간" above its dates does.
 const LABEL_LENGTH = 20;
@@ -111,6 +113,12 @@ function clockIn(quotes: string[], time: JudgedTime | null): boolean {
   return clock === null || quotedPieces(quotes).some((piece) => isWrittenClock(piece, clock));
 }
 
+// The whole lines the quotes come from: the model chooses what it quotes, so a check of what surrounds a value reads them.
+function enclosingLines(quotes: string[], lines: string[]): string[] {
+  const pieces = quotedPieces(quotes);
+  return lines.filter((line) => pieces.some((piece) => piece !== '' && line.includes(piece)));
+}
+
 // Reads the whole line a quote comes from and the short label above it, so that quoting only the dates of "신청 기간:
 // 11/5 14:00" does not pass.
 function notApplicationPeriod(session: AnsweredSession, lines: string[]): boolean {
@@ -143,11 +151,16 @@ function hasTimeOfDay(session: AnsweredSession, start: JudgedTime | null, end: J
 }
 
 // A session read as running over a period does not pass until ticket 07 lets one that quotes both its days through.
-function length(session: AnsweredSession, start: JudgedTime | null, end: JudgedTime | null): boolean {
+// Whether it is one is the model's word, so a time line that runs on to another day must end on that day, whatever the
+// model called it: "전시 기간: 11월 5일 ~ 11월 30일" is no sitting on 11-05.
+function length(session: AnsweredSession, start: JudgedTime | null, end: JudgedTime | null, lines: string[]): boolean {
   if (session.overPeriod || start === null) {
     return false;
   }
-  return end === null || end.at.getTime() - start.at.getTime() <= HOURS_24_MS;
+  const endsAsWritten = enclosingLines([...session.lines.start, ...session.lines.end], lines)
+    .flatMap((line) => rangesEndIn(line))
+    .every(({ month, day }) => end?.month === month && end.day === day);
+  return endsAsWritten && (end === null || end.at.getTime() - start.at.getTime() <= HOURS_24_MS);
 }
 
 function placeInLines({ place, lines }: AnsweredSession): boolean {
@@ -192,9 +205,10 @@ function checksOf(
     notApplicationPeriod: notApplicationPeriod(session, lines),
     startBeforeEnd: startBeforeEnd(session, start, end),
     hasTimeOfDay: hasTimeOfDay(session, start, end),
-    length: length(session, start, end),
+    length: length(session, start, end, lines),
     placeInLines: placeInLines(session),
-    placeMatches: named !== null,
+    // The model may quote only "301동 117호" from "장소: 연건캠퍼스 301동 117호".
+    placeMatches: named !== null && !enclosingLines(session.lines.place, lines).some((line) => isElsewhere(line)),
     newSession: isNew,
   };
 }

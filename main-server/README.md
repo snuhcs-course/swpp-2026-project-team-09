@@ -517,7 +517,8 @@ needs beside them through a controller of their own feature. Each route needs an
   not be read fully shows it. It is `[]` for an event in any other state. An empty `missing` does not make a Draft
   right: its start may be the header's date (see below).
 - `GET /admin/global-events/:id` answers one event in any state, as an entry of the lists with its `description`, the
-  text to check against the post at `sourceUrl`. An unknown id gets 404 `GLOBAL_EVENT_NOT_FOUND`, and an id that is
+  text to check against the post at `sourceUrl`, and `judgement`, its post's Judgement or `null` (see
+  [the step](#requests-from-the-worker-server)). An unknown id gets 404 `GLOBAL_EVENT_NOT_FOUND`, and an id that is
   not a UUID 400.
 - `GET /admin/places` answers every Place in the order and form of `GET /places` (see [Places](#places)), so that the
   admin site offers the list without a User's token. `src/places/admin-places.controller.ts` serves it.
@@ -651,8 +652,9 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
   model library itself, because the Assistant's adapter runs a User's tools and stays as the chat's evaluations measured it.
 - **What the server checks** (`judgement-checks.ts`), each on its own: the post is called an event, each quoted line is in
   the post, the date, weekday and time agree with the lines, the whole line and a short label above it are not an
-  application period, the start is before the end, it has a time of day, it lasts at most 24 hours, the place is in its
-  lines and names exactly one Place, and it is not a session the rules or the same answer already gave. A place that is a
+  application period, the start is before the end, it has a time of day, it lasts at most 24 hours and ends where a time
+  line that runs across days ends, the place is in its lines and names exactly one Place on a line that names nowhere
+  else, and it is not a session the rules or the same answer already gave. A place that is a
   building number alone is taken as Gwanak where the Source's setting says so. A session read as running over a period
   does not pass until ticket 07.
 - **What it publishes:** each passing session becomes its own Global Event with the route `judgement`, at version 1,
@@ -676,7 +678,26 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
 Administrators read a post's Judgement in `judgement` of `GET /admin/global-events/:id`. `GET
 /admin/global-events/unsettled-posts` gives the posts the step failed on or has not finished with, and those whose
 Judgement could not be made while a Draft waits, since a Collection is recorded as a success whatever the step does. No
-DTO the app receives carries any of it.
+DTO the app receives carries any of it. An entry of that list:
+
+```json
+{
+  "source": "snu_events",
+  "key": "178226",
+  "address": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178226",
+  "stepFinished": false,
+  "stepFailure": null,
+  "stepFailedAt": null,
+  "judgementFailure": "APICallError: HTTP 402, the OpenRouter credit is used up",
+  "judgementAttempts": 1,
+  "drafts": [{ "id": "…", "title": "…" }]
+}
+```
+
+The `judgement` of an event's page holds `outcome` (`judged`, `no_event` for a post called no event, `failed` for one that
+could not be made, `null` while a try runs), `failure`, `attempts`, `announcesEvent`, `modelId`, `judgedAt` and `sessions`,
+each with `start`, `end`, `place`, `overPeriod`, `lines`, `placeId`, `checks` (each `name` and `passed`), `passed` and
+`globalEventId`, the event it was published as.
 
 A collected event is published, with no person involved, when the rules read both its time and its place:
 

@@ -4,7 +4,13 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { isWrittenClock, isWrittenDay, readJudgedTime, writtenDays } from '../src/global-events/judgement-time.js';
+import {
+  isWrittenClock,
+  isWrittenDay,
+  rangesEndIn,
+  readJudgedTime,
+  writtenDays,
+} from '../src/global-events/judgement-time.js';
 
 const NOW = new Date('2026-11-01T12:00:00+09:00');
 
@@ -109,7 +115,27 @@ describe('isWrittenClock', () => {
     // A date is no time.
     ['11.14', 11, 14],
     ['25시', 1, 0],
+    ['총 2시간', 14, 0],
   ])('%s does not hold %i:%i', (line, hour, minute) => {
     expect(isWrittenClock(line, { hour, minute })).toBe(false);
   });
+});
+
+describe('rangesEndIn', () => {
+  it.each([
+    ['전시 기간: 11월 5일 ~ 11월 30일 10:00~18:00', { month: 11, day: 30 }],
+    ['11/5 10:00 ~ 11/7 18:00', { month: 11, day: 7 }],
+    ['11월 5일~30일', { month: 11, day: 30 }],
+    ['2026.11.05. 10:00 ~ 2026.11.06. 11:00', { month: 11, day: 6 }],
+    ['11월 5일부터 11월 7일까지', { month: 11, day: 7 }],
+  ])('%s runs to its last day', (line, last) => {
+    expect(rangesEndIn(line)).toEqual([last]);
+  });
+
+  it.each(['2026.11.05. 10:00 ~ 2026.11.05. 11:00', '11월 5일 14:00~16:00', '11/5, 11/12, 11/19 14:00', '11월 5일'])(
+    '%s runs across no days',
+    (line) => {
+      expect(rangesEndIn(line)).toEqual([]);
+    },
+  );
 });

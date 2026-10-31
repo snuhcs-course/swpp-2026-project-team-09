@@ -58,12 +58,16 @@ function checked(
 }
 
 // Against a post of its time line, quoted for the start and any end, and the place line.
-function checkedOn(line: string, changes: Partial<AnsweredSession>): JudgedSession {
-  const lines = { start: [line], end: changes.end === null ? [] : [line], place: [PLACE_LINE] };
+function checkedOn(line: string, changes: Partial<AnsweredSession>, placeLine = PLACE_LINE): JudgedSession {
+  const lines = {
+    start: [line],
+    end: changes.end === null ? [] : [line],
+    place: [placeLine.includes('301동 117호') ? '301동 117호' : placeLine],
+  };
   const [result] = checkedSessions(
     { announcesEvent: true, sessions: [session({ ...changes, lines })] },
     {
-      post: { title: '설명회', text: `${line}\n${PLACE_LINE}` },
+      post: { title: '설명회', text: `${line}\n${placeLine}` },
       source: POST_SOURCES.snu_events,
       places: PLACES,
       now: new Date('2026-11-01T12:00:00+09:00'),
@@ -156,6 +160,7 @@ describe('checkedSessions: what a post says beyond the session', () => {
 
     expect(failing(checked(session({ start: '2026-10-20T09:00', end: null, lines })))).toEqual([
       'notApplicationPeriod',
+      'length',
     ]);
   });
 
@@ -262,4 +267,32 @@ describe('matchedPlace', () => {
   it('has no place to match for none', () => {
     expect(matchedPlace(null, gwanak, PLACES)).toBeNull();
   });
+});
+
+describe('checkedSessions: what the model left out of its quote', () => {
+  it.each(['- 장소: 연건캠퍼스 301동 117호', '- 장소: 고려대학교 301동 117호'])(
+    'fails a building number alone on the line %s',
+    (placeLine) => {
+      expect(failing(checkedOn(TIME_LINE, {}, placeLine))).toEqual(['placeMatches']);
+    },
+  );
+
+  it('fails a sitting on the first day of a line that runs to a later one', () => {
+    const line = '전시 기간: 11월 5일 ~ 11월 30일 10:00~18:00';
+
+    expect(failing(checkedOn(line, { start: '2026-11-05T10:00', end: '2026-11-05T18:00' }))).toEqual(['length']);
+  });
+
+  it('passes one of several sessions a line lists', () => {
+    const line = '일시: 11월 5일, 11월 12일 14:00~16:00';
+
+    expect(failing(checkedOn(line, {}))).toEqual([]);
+  });
+
+  it.each(['사전예약 11월 5일 14:00~16:00', 'Register by 11월 5일 14:00~16:00'])(
+    'fails the application line %s',
+    (line) => {
+      expect(failing(checkedOn(line, {}))).toEqual(['notApplicationPeriod']);
+    },
+  );
 });

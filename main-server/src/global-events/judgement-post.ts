@@ -10,12 +10,12 @@ export interface JudgedPost {
   text: string;
 }
 
-const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/gu;
+const EMAIL = /[\p{L}\p{N}._+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+/gu;
 
 // A phone number starting with 0, with or without separators: "02-880-1234", "02)880-1234", "010 1234 5678",
-// "01012345678". Three groups of digits in these lengths are not a date or a time, and a number inside a longer run of
-// digits and separators, such as a date's "2026.01.05" or the times after "11/02", is not one.
-const PHONE = /(?<![\d./-])(?:0\d{1,2}[-.\s)]{1,2}\d{3,4}[-.\s]\d{4}|0\d{9,10})(?![\d.-]*\d)/gu;
+// "0507-1234-5678", "010-12345678", "01012345678". A zero right after a digit and a separator is inside a date, as in
+// "2026.01.05", or follows one, as in "11/02 1400-1600". Masking too much only fails the checks (ADR 0008).
+const PHONE = /(?<!\d|\d[./-])(?:0\d{1,3}[-.\s)]{1,2}\d{3,4}[-.\s]\d{4}|0\d{1,3}[-.\s)]{1,2}\d{7,8}|0\d{9,10})(?!\d)/gu;
 
 const EMAIL_MASK = '[이메일]';
 const PHONE_MASK = '[전화번호]';

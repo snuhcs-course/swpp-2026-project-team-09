@@ -70,6 +70,30 @@ export function writtenDays(line: string): WrittenDay[] {
   }));
 }
 
+const THEN_TO = /^[\s\d:시분반오전후()]*(?:[~∼〜–—]|부터)\s*$/u;
+const THEN_TO_DAY = /^[\s\d:시분반오전후()]*[~∼〜–—]\s*(\d{1,2})일/u;
+
+// The last days of the ranges a line writes across days: "11월 5일 ~ 11월 30일", "11/5 10:00 ~ 11/7 18:00", "11월 5일~30일".
+export function rangesEndIn(line: string): { month: number; day: number }[] {
+  const days = [...line.matchAll(DAY)];
+  return days.flatMap((match, index) => {
+    const after = match.index + match[0].length;
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const next = days[index + 1];
+    const between = line.slice(after, next?.index ?? line.length);
+    const sameMonth = THEN_TO_DAY.exec(between);
+    if (sameMonth !== null) {
+      return [{ month, day: Number(sameMonth[1]) }];
+    }
+    if (next === undefined || !THEN_TO.test(between)) {
+      return [];
+    }
+    const last = { month: Number(next[2]), day: Number(next[3]) };
+    return last.month === month && last.day === day ? [] : [last];
+  });
+}
+
 // Whether `written` is the day of `time`. A day written without a year is the one nearest to `now`: the model is given
 // today's date to choose its year, and a year it chose otherwise is not what the post says.
 export function isWrittenDay({ year, month, day }: WrittenDay, time: JudgedTime, now: Date): boolean {
@@ -88,7 +112,7 @@ export function isWrittenDay({ year, month, day }: WrittenDay, time: JudgedTime,
 // A clock a line writes: "14:00", "오후 2시 30분", "2시 반", "2:00 PM". A line's hour of 1 to 12 without 오전 or 오후, which
 // a later time may also leave to an earlier one in "오후 2시~4시", is read as the daytime hours it can be.
 const CLOCK =
-  /(오전|오후|낮|저녁|밤|새벽|AM|PM)?\s*(?<![\d:.])(\d{1,2})(?:\s*:\s*(\d{2})(?::\d{2})?|\s*시(?:\s*(\d{1,2})\s*분|\s*(반))?)(?!\d)\s*(AM|PM)?/giu;
+  /(오전|오후|낮|저녁|밤|새벽|AM|PM)?\s*(?<![\d:.])(\d{1,2})(?:\s*:\s*(\d{2})(?::\d{2})?|\s*시(?!간)(?:\s*(\d{1,2})\s*분|\s*(반))?)(?!\d)\s*(AM|PM)?/giu;
 
 const EARLIEST_DAYTIME_HOUR = 7;
 const LATEST_DAYTIME_HOUR = 21;
