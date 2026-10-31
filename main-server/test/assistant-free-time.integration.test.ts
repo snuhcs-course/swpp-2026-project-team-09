@@ -49,6 +49,19 @@ describe('An item of mine without a Place before the gap', () => {
     expect(model.toolResults()[0]).toMatchObject({ result: 'needs' });
   });
 
+  it('takes a departure Place only from resolvePlace, in the same message', async () => {
+    const other = '2098-01-13';
+    await stage.asking(other);
+    const item = await stage.classOn('monday', '09:00', '10:00', null);
+    const input = { date: other, from: item, to: 'end', departurePlace: stage.here.id };
+
+    await stage.send({ tool: 'findFreeTimeEvents', input }, { text: '…' });
+
+    expect(JSON.stringify(stage.model.toolResults()[0])).toContain('No tool returned these ids');
+  });
+});
+
+describe('Leaving for the gap from off campus', () => {
   it('leaves from the Place given at the time given, and never before the item ends', async () => {
     const date = '2098-01-09';
     const { here, near, model } = stage;
@@ -69,17 +82,6 @@ describe('An item of mine without a Place before the gap', () => {
     await send('08:00');
 
     expect(model.toolResults()[1]).toMatchObject({ result: 'found', candidates: [{ id: early }, { id: late }] });
-  });
-
-  it('takes a departure Place only from resolvePlace, in the same message', async () => {
-    const other = '2098-01-13';
-    await stage.asking(other);
-    const item = await stage.classOn('monday', '09:00', '10:00', null);
-    const input = { date: other, from: item, to: 'end', departurePlace: stage.here.id };
-
-    await stage.send({ tool: 'findFreeTimeEvents', input }, { text: '…' });
-
-    expect(JSON.stringify(stage.model.toolResults()[0])).toContain('No tool returned these ids');
   });
 });
 

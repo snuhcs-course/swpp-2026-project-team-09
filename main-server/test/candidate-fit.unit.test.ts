@@ -50,7 +50,7 @@ describe('A candidate after a leave-by time the User gave', () => {
   const leaving = gap({ kind: 'leaveBy', at: at('13:30') });
 
   it('shows nothing more when it ends by then', () => {
-    expect(fit('12:40', '13:30', leaving)).toEqual(expect.not.objectContaining({ leaveBy: expect.anything() }));
+    expect(fit('12:40', '13:30', leaving)).not.toHaveProperty('leaveBy');
   });
 
   it('shows that time when it ends later, the User staying at least 30 minutes', () => {
