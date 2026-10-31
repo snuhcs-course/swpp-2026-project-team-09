@@ -525,7 +525,7 @@ needs beside them through a controller of their own feature. Each route needs an
   `{ "source": "snu_events", "lastSucceededAt": "…", "lastFailedAt": null, "lastFailureReason": null,
 "lastSkippedPosts": null }`. The times and the reason are `null` for a Source never collected (see
   [Requests from the worker server](#requests-from-the-worker-server)). `lastSkippedPosts` is how many posts the Source's
-  last Collection could not read without a sign-in, `null` for a Source that does not send the number.
+  last Collection skipped, needing a sign-in or never reaching their page, `null` for a Source that does not send the number.
   `src/collection/admin-collection.controller.ts` serves it.
 
 An Administrator creates and changes them through the same controller. Each answers the event as
@@ -613,8 +613,8 @@ The worker sends each post of the events list as one event, all those of a Colle
   through the whole list. A Collection that stopped hands over the posts it read all the same, and the main server stores them and
   records the reason as the Collection's failure in the same transaction, so that `lastSucceededAt` stays the time of
   the last Collection that went through the whole list.
-- `skippedPosts`, which extra.snu's Collection sends and SNU Now's does not, counts the posts it could not read without
-  a sign-in. They are not stored, and it is not a failure: `CollectionService.recordSkippedPosts()` keeps the number in
+- `skippedPosts`, which extra.snu's Collection sends and SNU Now's does not, counts the posts it skipped, needing a
+  sign-in or never reaching their page. They are not stored, and it is not a failure: `CollectionService.recordSkippedPosts()` keeps the number in
   the same transaction as `lastSkippedPosts`.
 - A session's `title`, which is optional, names its Global Event in place of the post's title, when a post of several
   sessions could not tell them apart otherwise.

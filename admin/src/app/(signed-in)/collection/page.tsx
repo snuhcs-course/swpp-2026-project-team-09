@@ -60,7 +60,7 @@ export default async function CollectionPage(): Promise<ReactElement> {
         <p className="text-sm text-zinc-600">
           Each Source with its last successful Collection and its last failure, in Seoul&apos;s time. A Source that
           failed since it last worked, or never worked, is marked in red. Skipped counts the posts its last Collection
-          could not read without a sign-in, which is not a failure.
+          could not reach, for a sign-in or a waiting room, which is not a failure.
         </p>
       </header>
       <div className="card">

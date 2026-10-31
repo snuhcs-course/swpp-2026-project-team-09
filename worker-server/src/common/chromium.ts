@@ -22,20 +22,26 @@ export async function launchChromium(): Promise<Browser> {
   const { chromium } = await import('playwright');
   // A container's /dev/shm is too small for Chromium: without this flag, a page can crash it.
   const browser = await chromium.launch({ args: ['--disable-dev-shm-usage'] });
-  const context = await browser.newContext({ userAgent: USER_AGENT, locale: 'ko-KR' });
-  await context.route('**/*', (route) =>
-    NOT_LOADED.has(route.request().resourceType()) ? route.abort() : route.continue(),
-  );
-  const page = await context.newPage();
-  return {
-    open: async (url) => {
-      const response = await page.goto(url, { waitUntil: 'networkidle', timeout: PAGE_TIMEOUT });
-      if (response !== null && !response.ok()) {
-        throw new Error(`${url} answered ${response.status()}`);
-      }
-      await page.waitForTimeout(AFTER_NETWORK_IDLE);
-      return { url: page.url(), html: await page.content() };
-    },
-    close: () => browser.close(),
-  };
+  try {
+    const context = await browser.newContext({ userAgent: USER_AGENT, locale: 'ko-KR' });
+    await context.route('**/*', (route) =>
+      NOT_LOADED.has(route.request().resourceType()) ? route.abort() : route.continue(),
+    );
+    const page = await context.newPage();
+    return {
+      open: async (url) => {
+        const response = await page.goto(url, { waitUntil: 'networkidle', timeout: PAGE_TIMEOUT });
+        if (response !== null && !response.ok()) {
+          throw new Error(`${url} answered ${response.status()}`);
+        }
+        await page.waitForTimeout(AFTER_NETWORK_IDLE);
+        return { url: page.url(), html: await page.content() };
+      },
+      close: () => browser.close(),
+    };
+  } catch (error) {
+    // BrowserPages closes only a browser it was given, and a repeated failure would leave one for each Collection.
+    await browser.close();
+    throw error;
+  }
 }

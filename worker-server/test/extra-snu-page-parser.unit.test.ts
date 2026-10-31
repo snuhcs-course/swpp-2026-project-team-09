@@ -107,6 +107,18 @@ describe('A session whose fields the rules should not publish as they stand', ()
     expect(parsed('PGM012002188').sessions).toMatchObject([{ start: '2026-11-21', end: null, readFrom: 'body' }]);
   });
 
+  it('with a start and no end, whose length is unknown, keeps its time for a person', () => {
+    // The saved programme's period without its end.
+    const page = programme('PGM012002414').replace(
+      '2026.11.02. 10:00 ~ 2026.11.02. 11:00</td>',
+      '2026.11.02. 10:00 ~</td>',
+    );
+
+    expect(parseExtraSnuPage(page, 'PGM012002414').sessions).toMatchObject([
+      { start: '2026-11-02T10:00:00+09:00', end: null, readFrom: null },
+    ]);
+  });
+
   it('with an empty period and "-" as its place gives neither, and no line of the description', () => {
     const { sessions, description } = parsed('PGM012002143');
 
@@ -123,6 +135,7 @@ describe('A session the main server would refuse', () => {
   });
 
   it('of number 0 is refused', () => {
+    // The saved programme's one session under the number 0.
     const zero = programme('PGM012002414').replace('[1]', '[0]');
     expect(() => parseExtraSnuPage(zero, 'PGM012002414')).toThrow('A session has no number');
   });
@@ -130,6 +143,7 @@ describe('A session the main server would refuse', () => {
 
 describe('An e-mail address anywhere on the page', () => {
   it('is masked in the place and the title too', () => {
+    // The saved programme with an address in its place's field and its title.
     const page = programme('PGM012002414')
       .replace('<td class="last">중앙도서관 관정관 3층 양두석홀</td>', '<td class="last">문의 a.b@snu.ac.kr</td>')
       .replace('<p class="tit">IEEE Authorship Seminar</p>', '<p class="tit">문의 a.b@snu.ac.kr</p>');

@@ -4,6 +4,7 @@
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
+# 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 ################################################################################
 
 # Readies a course server for the deploy timer. Run as root, once and again whenever: it never overwrites the settings
@@ -131,6 +132,7 @@ GOOGLE_ADMIN_CLIENT_ID=1021723676612-23lpoe5ue36rr2a07uora5ai4qckoe87.apps.googl
 ANDROID_CERTIFICATE_FINGERPRINTS=FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C
 ASSISTANT_MODEL=anthropic/claude-haiku-5.5
 ROUND_INTERVAL_SECONDS=60
+EXTRA_SNU_COLLECTION=off
 KAKAO_REST_API_KEY=CHANGE_ME
 INITIAL_ADMINISTRATOR_EMAILS=CHANGE_ME
 DEMO_ACCOUNT_EMAILS=CHANGE_ME

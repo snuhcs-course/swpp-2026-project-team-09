@@ -582,7 +582,8 @@ model CollectionStatus {
   lastSucceededAt   DateTime? @map("last_succeeded_at")
   lastFailedAt      DateTime? @map("last_failed_at")
   lastFailureReason String?   @map("last_failure_reason")
-  // How many posts its last Collection could not read without a sign-in. Empty for a Source that has no such posts.
+  // How many posts its last Collection skipped, needing a sign-in or never reaching their page. Empty for a Source that
+  // has no such posts.
   lastSkippedPosts  Int?      @map("last_skipped_posts")
 
   @@map("collection_statuses")

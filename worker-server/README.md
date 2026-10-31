@@ -316,8 +316,8 @@ A Collection does four things:
 3. It opens the page of each new one, `https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002414`, which redirects
    to the programme's page. A programme that redirects to a sign-in, at `nsso.snu.ac.kr` or the site's `/comm/login/`, is
    skipped and counted. It is not stored, so the next Collection tries it again. A browser that ends up anywhere but a
-   programme's page, `findIcmpNsbjtPgmInfo.do`, was held in the waiting room: that stops the Collection, and the next one
-   reads the programme. The rest follows the events list: a page that fails, or the firewall's error page, stops the
+   programme's page, `findIcmpNsbjtPgmInfo.do`, is skipped and counted the same way, unless three in a row do: then the
+   waiting room is holding every page, and the Collection stops. The rest follows the events list: a page that fails, or the firewall's error page, stops the
    Collection; a page at that address that is not the programme asked for is sent with its title from the list alone;
    three in a row, or a Collection that read no programme, fail it.
 4. It sends what it read in one message, with the number it skipped as `skippedPosts`, which the admin site's Collection
@@ -328,10 +328,11 @@ page's session tables (`[1] 회차`):
 
 - Its `start` and `end` from the field `교육(활동)기간`, by `src/event/event-time.ts`, and its `place` from
   `교육(활동)장소`. A place of `-` is no place.
-- Its `readFrom` is `body`, so that the main server's rules read the field as they read a post's own time line. Two kinds
+- Its `readFrom` is `body`, so that the main server's rules read the field as they read a post's own time line. Three kinds
   of field would then be published wrongly, and are kept from the rules. The site fills in 00:00 where it has no time of
   day, so a start at 00:00 is sent as a day, and its end takes the same form. A session of more than 24 hours is often a period to apply or to take part
-  in, so it is sent with `readFrom` null: its time stays for an Administrator and the Judgement.
+  in, and one with no end may not be one sitting, so both are sent with `readFrom` null: the time stays for an
+  Administrator and the Judgement.
 - When a programme has several sessions, each has a `title` of the programme's title and its number:
   `영어 스피치 (2회차)`. It names that session's Global Event.
 

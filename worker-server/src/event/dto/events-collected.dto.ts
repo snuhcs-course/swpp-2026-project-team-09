@@ -55,7 +55,8 @@ export interface EventsCollectedMessage {
   // Why the Collection stopped early, or null when it went through the whole list. The main server records it as the
   // failure.
   failureReason: string | null;
-  // The posts the Collection could not read without a sign-in, on a Source that has such posts. It is not a failure.
+  // The posts the Collection skipped, on a Source that has such posts: those that need a sign-in or never reached their
+  // page. They are not stored, and it is not a failure.
   skippedPosts?: number;
   posts: CollectedPost[];
 }

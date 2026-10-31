@@ -30,14 +30,18 @@ const LISTED_PAGES = 4;
 // Programmes in a row whose pages are not programmes fail the Collection at this many: then the pages have changed.
 const UNREADABLE_IN_A_ROW = 3;
 
+// Programmes in a row that end up short of their pages fail the Collection at this many: then the waiting room is holding
+// every page, and more requests only add to its queue. Fewer may be odd ones, which should not hold up the rest.
+const SHORT_OF_THEIR_PAGES_IN_A_ROW = 3;
+
 // Where a programme that needs a sign-in redirects: the university's SSO, or the site's own sign-in page.
 function needsSignIn(url: string): boolean {
   const { hostname, pathname } = new URL(url);
   return hostname === 'nsso.snu.ac.kr' || pathname.startsWith('/comm/login/');
 }
 
-// Where every programme ends up past the waiting room. A browser that is anywhere else was not let through in time: a
-// next Collection can read that programme, unlike one stored as unreadable.
+// Where every programme ends up past the waiting room. A browser that is anywhere else was not let through in time, or
+// the programme is an odd one: a next Collection can read it, unlike one stored as unreadable.
 function isProgrammePage(url: string): boolean {
   return new URL(url).pathname.endsWith('/findIcmpNsbjtPgmInfo.do');
 }
@@ -57,6 +61,14 @@ function unreadableProgramme({ key, title }: ListedProgramme): CollectedPost {
     description: '',
     sessions: [{ number: 1, start: null, end: null, readFrom: null, place: null }],
   };
+}
+
+function heldBack(url: string): string {
+  return `${SHORT_OF_THEIR_PAGES_IN_A_ROW} programmes in a row stopped short of their pages: at ${url}`;
+}
+
+function noneRead(problem: Error): Error {
+  return new Error(`No programme could be read: ${problem.message}`, { cause: problem });
 }
 
 function asError(error: unknown): Error {
@@ -141,13 +153,14 @@ export class ExtraSnuCollector extends Collector {
   }
 
   // The programmes, one after the other, as the events list's Collection reads its posts. A programme that needs a
-  // sign-in is counted, and asked for again by the next Collection, in case it no longer does.
+  // sign-in or ends up short of its page is counted, and asked for again by the next Collection.
   private async readProgrammes(
     open: OpenPage,
     listed: ListedProgramme[],
   ): Promise<{ posts: CollectedPost[]; skipped: number; failure: Error | null }> {
     const posts: CollectedPost[] = [];
     let skipped = 0;
+    let shortInARow = 0;
     let unreadable: CollectedPost[] = [];
     let problem: Error | null = null;
     for (const programme of listed) {
@@ -158,14 +171,17 @@ export class ExtraSnuCollector extends Collector {
       } catch (error) {
         return { posts, skipped, failure: asError(error) };
       }
-      if (needsSignIn(page.url)) {
-        this.logger.log(`Programme ${programme.key} needs a sign-in, and is skipped`);
+      const signIn = needsSignIn(page.url);
+      if (signIn || !isProgrammePage(page.url)) {
+        this.logger.warn(`Programme ${programme.key} ended up at ${page.url}, and is skipped`);
         skipped += 1;
+        shortInARow = signIn ? 0 : shortInARow + 1;
+        if (shortInARow === SHORT_OF_THEIR_PAGES_IN_A_ROW) {
+          return { posts, skipped, failure: new Error(heldBack(page.url)) };
+        }
         continue;
       }
-      if (!isProgrammePage(page.url)) {
-        return { posts, skipped, failure: new Error(`${programmeAddress(programme.key)} stopped at ${page.url}`) };
-      }
+      shortInARow = 0;
       const read = readProgramme(page.html, programme.key);
       if (read instanceof Error) {
         this.logger.warn(`Programme ${programme.key} could not be read: ${read.message}`);
@@ -181,11 +197,7 @@ export class ExtraSnuCollector extends Collector {
       }
     }
     if (posts.length === 0 && problem !== null) {
-      return {
-        posts,
-        skipped,
-        failure: new Error(`No programme could be read: ${problem.message}`, { cause: problem }),
-      };
+      return { posts, skipped, failure: noneRead(problem) };
     }
     return { posts: [...posts, ...unreadable], skipped, failure: null };
   }

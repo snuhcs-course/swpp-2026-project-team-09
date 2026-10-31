@@ -56,7 +56,8 @@ export const eventsCollectedSchema = z.strictObject({
   // Why the Collection stopped early, or null when it went through the whole list. Its posts are stored all the same,
   // and the reason is recorded as its failure.
   failureReason: z.string().min(1).nullable(),
-  // The posts the Collection could not read without a sign-in, on a Source that has such posts. It is not a failure.
+  // The posts the Collection skipped, on a Source that has such posts: those that need a sign-in or never reached their
+  // page. They are not stored, and it is not a failure.
   skippedPosts: z.int32().nonnegative().optional(),
   posts: z
     .array(collectedPostSchema)

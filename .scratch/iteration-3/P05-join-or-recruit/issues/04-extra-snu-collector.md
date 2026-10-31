@@ -32,11 +32,20 @@
 - A programme of several sessions titles each `제목 (n회차)`, which takes one line in `toDraft`.
 - A start at 00:00 is sent as a day, and a session over 24 hours with `readFrom` null. Both stay Drafts.
 
+### Decisions after the review (2026-11-01)
+
+The P05 owner told the agent to review the comments and decide:
+
+- A session with a start and no end is sent with `readFrom` null, since its length is unknown. It stays a Draft. None of the saved posts outside the held-out sets has one.
+- A programme that ends up short of its page is skipped and counted, not stored, and the Collection stops only at three in a row. One odd programme then holds up nothing. So `lastSkippedPosts` counts both those and the ones needing a sign-in.
+- Each session is also a line of the description (`[n회차] 기간: … / 장소: …`), beyond what the spec asks. The session working on ticket 05 asked for it and said the owner approved it, since a Judgement can quote only the post's text. Users see these lines.
+- The repeated run of unreadable programmes in `extra-snu.collector.ts` and `event.collector.ts` is left as it is. The two loops now differ in what they skip, and sharing them would mean changing a working collector here.
+
 ### Left for a person
 
 The box on the image and memory stays open. The image was built and its browser opened a local page (arm64, 1.17 GB), and a page took about 300 MB of browser and 120 MB of Node on a Mac against a local server. Nothing has opened the real site from this code or run in Production. Open: the waiting room with images blocked, the list's address with the three codes, and whether the waiting room reaches any port but 443, which is all the worker's network policy allows.
 
 ### Agent usage (2026-11-01)
 
-- Agent time: about 40 minutes (estimate), one session with two review subagents.
+- Agent time: about 40 minutes (estimate) up to the first review, one session with two review subagents.
 - Tokens, subagents included: input 132, with 11,250,033 cache reads and 502,223 cache writes shown apart; output 149,423. Counted before this comment's commit.

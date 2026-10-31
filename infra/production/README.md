@@ -581,11 +581,14 @@ same-event rules (`.scratch/iteration-3/P05-join-or-recruit/issues/08a-same-even
 an event posted on both SNU Now and extra.snu would show twice, and Users could gather for it in two places. Do not run
 `node dist/collect extra_snu` by hand before then either: the command does not look at the setting.
 
-Once they are deployed, check the Dockerfile's browser and the 1 GiB limit by running one Collection by hand:
+Once they are deployed, check the Dockerfile's browser and the 1 GiB limit by running one Collection by hand, and watch
+its memory from a second terminal while it runs. The browser closes when the Collection ends, so a reading after it says
+nothing, and the numbers lag by the metrics interval:
 
 ```bash
 kubectl --namespace snunow exec deployment/worker-server -- node dist/collect extra_snu
-kubectl --namespace snunow top pod --selector app=worker-server
+# In a second terminal, during the Collection:
+watch kubectl --namespace snunow top pod --selector app=worker-server
 ```
 
 Then set `EXTRA_SNU_COLLECTION=on` in `k8s/parts/shared/kustomization.yaml`, merge it and release the worker. To stop it

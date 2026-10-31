@@ -54,19 +54,53 @@ describe('A Collection of extra.snu that cannot open a page', () => {
   });
 });
 
-describe('A Collection of extra.snu held in the waiting room', () => {
-  it('stops with the reason, and does not store the programme, so that the next Collection reads it', async () => {
-    const waiting = 'https://extra.snu.ac.kr/wait.jsp';
+describe('A Collection of extra.snu with programmes short of their pages', () => {
+  const waiting = { redirectedTo: 'https://extra.snu.ac.kr/wait.jsp' };
+
+  it('skips and counts an odd one, stores nothing of it, and reads those after it', async () => {
     const { mainServer, succeeded } = await collect(
-      { ...listPages, [programme('PGM012002407')]: { redirectedTo: waiting } },
-      mainServerNotStoring('PGM012002407'),
+      { ...listPages, [programme('PGM012002407')]: waiting, [programme('PGM012002414')]: seminar },
+      mainServerNotStoring('PGM012002407', 'PGM012002414'),
+    );
+
+    expect(succeeded).toBe(true);
+    expect(collected(mainServer)).toMatchObject({
+      failureReason: null,
+      skippedPosts: 1,
+      posts: [{ key: 'PGM012002414' }],
+    });
+  });
+
+  it('fails at three in a row, since the waiting room is then holding every page', async () => {
+    const keys = ['PGM012002407', 'PGM012002417', 'PGM012002416', 'PGM012002414'];
+    const { browser, mainServer, succeeded } = await collect(
+      { ...listPages, ...Object.fromEntries(keys.map((key) => [programme(key), waiting])) },
+      mainServerNotStoring(...keys),
     );
 
     expect(succeeded).toBe(false);
+    expect(browser.opened).toHaveLength(7);
     expect(collected(mainServer)).toMatchObject({
-      failureReason: `${programme('PGM012002407')} stopped at ${waiting}`,
+      failureReason: '3 programmes in a row stopped short of their pages: at https://extra.snu.ac.kr/wait.jsp',
+      skippedPosts: 3,
       posts: [],
     });
+  });
+
+  it('does not count those that a programme read comes between', async () => {
+    const { mainServer, succeeded } = await collect(
+      {
+        ...listPages,
+        [programme('PGM012002407')]: waiting,
+        [programme('PGM012002417')]: waiting,
+        [programme('PGM012002414')]: seminar,
+        [programme('PGM012002401')]: waiting,
+      },
+      mainServerNotStoring('PGM012002407', 'PGM012002417', 'PGM012002414', 'PGM012002401'),
+    );
+
+    expect(succeeded).toBe(true);
+    expect(collected(mainServer)).toMatchObject({ failureReason: null, skippedPosts: 3 });
   });
 });
 

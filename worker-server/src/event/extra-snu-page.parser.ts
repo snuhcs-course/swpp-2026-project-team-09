@@ -35,15 +35,16 @@ function keyOf($: CheerioAPI): string | null {
 }
 
 // A session's period field, "2026.11.02. 10:00 ~ 2026.11.02. 11:00". The site fills in 00:00 where it has no time of
-// day, so a start at 00:00 is sent as a day, and its end takes the same form, as in the events list's posts. A session over a day, often a period to apply or to take part in, is not one
-// sitting: its time is kept for an Administrator and the Judgement, and not for the rules to publish.
+// day, so a start at 00:00 is sent as a day, and its end takes the same form, as in the events list's posts. A session
+// over a day, often a period to apply or to take part in, is not one sitting, and one with no end may not be: their
+// times are kept for an Administrator and the Judgement, and not for the rules to publish.
 function timeOf(period: string): Pick<CollectedSession, 'start' | 'end' | 'readFrom'> {
   const time = readEventTime(period);
   if (time === null) {
     return { start: null, end: null, readFrom: null };
   }
-  const isOverADay = time.end !== null && Date.parse(time.end) - Date.parse(time.start) > A_DAY;
-  const readFrom = isOverADay ? null : 'body';
+  const isOneSitting = time.end !== null && Date.parse(time.end) - Date.parse(time.start) <= A_DAY;
+  const readFrom = isOneSitting ? 'body' : null;
   if (!time.start.endsWith(MIDNIGHT)) {
     return { start: time.start, end: time.end, readFrom };
   }
