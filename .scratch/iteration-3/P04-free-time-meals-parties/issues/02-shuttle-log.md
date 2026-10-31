@@ -50,3 +50,12 @@ An item marked **Person** is a person's work, not an agent's. The last items com
 - [ ] **After the collection.** The gzipped days are committed as the fixed data of the shuttle metric.
 - [ ] **After the collection.** `pnpm shuttle:derive` produces `shuttle-timing.json` from them, and it is committed. It reaches Production with the next regular Release.
 - [ ] **After the collection.** `pnpm shuttle:score` runs, and the ride and wait MAEs, their baselines and whether the threshold holds are recorded in this ticket's comments.
+
+## Comments
+
+### Agent usage (2026-10-31)
+
+- **Agent time** (estimate): about 42 minutes in all: about 30 minutes for the implementing subagent, about 7 for its two reviewers, and about 5 for this ticket's share of the session that ran all five tickets. Time spent waiting for a person is not counted.
+- **Tokens** (measured from the agents' transcripts, reviewers included; the running session's share is an estimate, a fifth of its total):
+  - Input: about 120 not cached, about 9,800,000 cache reads and about 906,000 cache writes.
+  - Output: about 218,000.
