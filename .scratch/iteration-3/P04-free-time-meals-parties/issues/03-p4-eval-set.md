@@ -54,10 +54,11 @@ An item marked **Person** is a person's work, not an agent's.
   - lunch and dinner menus: a noodle-only Restaurant, a mixed one, a closed cell (notes only), an open Restaurant that does not fit the shared time, and a Restaurant without a Place.
 - [ ] **The travel fixture** is a frozen file giving, for every ordered pair of Places the world uses, the seconds and the mode. It does not depend on the time of day. The labels do not change when the real table or the shuttle file changes.
 - [ ] **The rules document** states the judgement in prose, with every number of the spec's constants table, and is committed with the suite.
-- [ ] **PM decisions (2026-10-31).** The spec disagrees with itself on three points. The PM settled them, and the rules document states the answers. The spec is not changed; where it disagrees, these answers hold.
+- [ ] **PM decisions (2026-10-31).** The spec disagrees with itself on three points and leaves a fourth open. The PM settled them, and the rules document states the answers. The spec is not changed; where it disagrees, these answers hold.
   - A window named for a meal. A single clock time ("1시에") goes to `proposeQuest`. A time window ("12시에서 1시 사이") goes to `findMealRestaurants` with that window.
   - A Friend's Travel Time. The card shows the time "Travel shown per person" picks when it is known, and "—" only when it is unknown. So a Friend whose previous item has a Place and whose next item does not shows the in-time.
   - A Quest card's time. The presenters do not change, so a Quest card still shows the existing next Sub Quest. Cards are ordered by the start of the Sub Quest judged inside the gap. With several Sub Quests the card's time can differ from the judged one, which is a known limitation.
+  - A Sub Quest's Place. A Sub Quest can hold a point or a label and no Place. Ticket 04's mapping of a candidate's place applies to the User's and Friends' Sub Quests too, and only a Sub Quest it cannot map is an item without a Place. A Class's Place is used as it is.
 - [ ] **Label draft.** An agent in a separate session, which sees only the rules document, the world and the fixture and not the judgement code, drafts each case's answer with its working.
 - [ ] **Person: label review.** A person reviews every answer and sets the labels that need a judgement of meaning:
   - which dishes are noodles;

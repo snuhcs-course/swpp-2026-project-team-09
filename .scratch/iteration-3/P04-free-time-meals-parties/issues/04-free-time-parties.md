@@ -39,6 +39,7 @@ The app changes only in JavaScript.
   - It returns every fitting candidate, soonest first, with no cap: kind, id, title (wrapped as others' text), start, end, travel minutes and mode, and the minutes to the next item or the leave-by time.
   - Or it returns `needs` (below).
 - [ ] **My item without a Place** next to a gap.
+  - A Sub Quest with a point or a label goes through the mapping below first. Only one it cannot map is without a Place (ticket 03, PM decisions).
   - The tool returns `needs`, with the side (before or after) and the item, instead of results.
   - Before: the model asks where the User leaves from and passes a departure Place, resolved through `resolvePlace`.
   - When `resolvePlace` answers `none`, the model says that Travel Times cannot be computed from off campus and asks once where the User enters the campus, such as 정문. If that gives no Place, it shows no candidates.

@@ -43,6 +43,7 @@ The app changes only in JavaScript. An item marked **Person** is a person's work
   - the Restaurant fits when 식사 가능 시간 is at least 15 minutes;
   - when the shared time has several intervals, the earliest one in which the Restaurant fits is used, and a window the model passes limits the search.
 - [ ] **Items without a Place.**
+  - A Sub Quest with a point or a label goes through ticket 04's mapping first, the User's and a Friend's alike. Only one it cannot map is without a Place (ticket 03, PM decisions).
   - My item next to the free interval: the tool returns `needs` as in ticket 04, and accepts a departure Place or a leave-by time. Nothing is stored.
   - A Friend's item: that side's travel is left out and the Friend is judged on time only. Their Travel Time shows as below, and "—" only when the time to show is unknown (ticket 03, PM decisions).
 - [ ] **Travel shown per person:** the in-time; with no previous item, the out-time; with neither, "—".
