@@ -14,6 +14,7 @@ import {
 } from './judgement-answer.js';
 import { type JudgedPost } from './judgement-post.js';
 import {
+  isSameDay,
   isWrittenClock,
   isWrittenDay,
   type JudgedTime,
@@ -93,8 +94,7 @@ function dateAgrees(session: AnsweredSession, start: JudgedTime | null, end: Jud
     return true;
   }
   const endDays = daysAmong(session.lines.end);
-  const sameDay = end.year === start.year && end.month === start.month && end.day === start.day;
-  return sameDay || endDays.some((day) => isWrittenDay(day, end, now));
+  return isSameDay(end, start) || endDays.some((day) => isWrittenDay(day, end, now));
 }
 
 // A day written with a weekday has the weekday of the date the model gave. One without a weekday leaves nothing to
@@ -153,7 +153,7 @@ function hasTimeOfDay(session: AnsweredSession, start: JudgedTime | null, end: J
 // One quoted line holds both days of a session over a period, and they are two: read over one day, a day alone would show
 // as 00:00 on its card, which hasTimeOfDay lets by only for a period.
 function holdsBothDays({ lines }: AnsweredSession, start: JudgedTime, end: JudgedTime | null, now: Date): boolean {
-  if (end === null || (end.year === start.year && end.month === start.month && end.day === start.day)) {
+  if (end === null || isSameDay(end, start)) {
     return false;
   }
   return quotedPieces([...lines.start, ...lines.end]).some((piece) => {

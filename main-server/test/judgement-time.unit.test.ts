@@ -162,6 +162,10 @@ describe('rangesEndIn', () => {
     ['11월 5일 - 30일', { month: 11, day: 30 }],
     ['11/5 - 30일', { month: 11, day: 30 }],
     ['11/5 10:00-11/7 18:00', { month: 11, day: 7 }],
+    ['11월 5일 14시-11월 6일 16시', { month: 11, day: 6 }],
+    ['11월 5일 오후 2시 30분-11월 6일 오후 4시', { month: 11, day: 6 }],
+    ['11월 5일 목요일-11월 30일 월요일 10:00-18:00', { month: 11, day: 30 }],
+    ['11월 5일 목-11월 30일 월', { month: 11, day: 30 }],
   ])('%s runs to its last day', (line, last) => {
     expect(rangesEndIn(line)).toEqual([last]);
   });

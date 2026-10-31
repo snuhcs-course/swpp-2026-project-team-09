@@ -22,6 +22,10 @@ export interface JudgedTime {
   weekday: string;
 }
 
+export function isSameDay(one: JudgedTime, other: JudgedTime): boolean {
+  return one.year === other.year && one.month === other.month && one.day === other.day;
+}
+
 const TIME = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::00)?(?:\+09:00)?)?$/u;
 
 function padded(part: number): string {
@@ -58,8 +62,10 @@ export interface WrittenDay {
 }
 
 // What may stand right before the hyphen of a range, so that "2026.11.05-2026.11.30" and "11/5 10:00-11/7" read two days
-// and "301-1-2" reads none: a day, or a clock.
-const BEFORE_HYPHEN = String.raw`(?:(?<!\d)\d{1,2}\s*[월./-]\s*\d{1,2}\s*일?\s*\.?(?:\s*[(（][${WEEKDAYS}](?:요일)?[)）])?|\d{1,2}:\d{2})`;
+// and "301-1-2" reads none: a day with any weekday, or a clock.
+const BEFORE_HYPHEN =
+  String.raw`(?:(?<!\d)\d{1,2}\s*[월./-]\s*\d{1,2}\s*일?\s*\.?(?:\s*[(（]?[${WEEKDAYS}](?:요일)?[)）]?)?` +
+  String.raw`|\d{1,2}:\d{2}|\d{1,2}\s*시(?:\s*\d{1,2}\s*분|\s*반)?)`;
 
 // A year's mark goes on after the month, or the "11/5" of "11/5 - 11/30" would read as a day of the year 2011.
 const YEAR_THEN = String.raw`(?:년|\.(?=\s*\d{1,2}\s*[.월])|/(?=\s*\d{1,2}\s*/)|-(?=\s*\d{1,2}\s*-))`;

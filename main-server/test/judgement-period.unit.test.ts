@@ -116,6 +116,7 @@ describe('checkedSessions: a period not read as one', () => {
     '2026.11.05-2026.11.30 10:00-18:00',
     '11/5 - 11/30 10:00-18:00',
     '11월 5일 - 11월 30일 10:00-18:00',
+    '11월 5일 10시-11월 30일 18시',
   ])('fails as a sitting on the first day of %s', (line) => {
     expect(failingOn([line], sitting)).toEqual(['length']);
   });

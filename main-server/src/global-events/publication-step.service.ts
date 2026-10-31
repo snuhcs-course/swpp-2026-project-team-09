@@ -50,10 +50,10 @@ function publishedValues(
   { start, end, place, overPeriod }: JudgedSession,
   { latitude, longitude }: PlaceDto,
 ): PublishedValues {
-  const ends = readJudgedTime(end ?? '');
+  const judgedEnd = readJudgedTime(end ?? '');
   return {
     startsAt: readJudgedTime(start ?? '')?.at ?? null,
-    endsAt: ends === null ? null : overPeriod ? periodEndAt(ends) : ends.at,
+    endsAt: judgedEnd !== null && overPeriod ? periodEndAt(judgedEnd) : (judgedEnd?.at ?? null),
     place,
     latitude,
     longitude,
