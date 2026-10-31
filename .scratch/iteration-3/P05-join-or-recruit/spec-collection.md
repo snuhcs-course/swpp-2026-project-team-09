@@ -14,7 +14,7 @@ The worker collects extra.snu as a second Source, one Global Event for each sess
 
 When the rules leave a collected post a Draft, the main server asks the AI for a Judgement: for each session, its time and place and the lines of the post it read them from. The server checks every value against the post, and publishes the sessions that pass every check. Anything that fails, and anything the AI could not answer, stays a Draft for an Administrator, who sees the AI's values, the lines and the checks that failed. Events that run over a period are published too, and their cards read "11월 30일까지".
 
-When a new post is the same event as a Global Event that already exists, from either Source, the new post is attached to that event as another Source Post instead of becoming a second event. The rules attach the obvious pairs and refuse the impossible ones; the AI decides between the remaining candidates. When it is unsure, the new post stays a Draft in an Administrator's queue. An Administrator can detach a Source Post that was attached by mistake.
+When a new post is the same event as a Global Event that already exists, from either Source, the new post is attached to that event as another Source Post instead of becoming a second event. Nothing a Collection brings is published before this comparison. The rules attach the obvious pairs and refuse the impossible ones; the AI decides between the remaining candidates. When it is unsure, the new post stays a Draft in an Administrator's queue. An Administrator can detach a Source Post that was attached by mistake, and can turn automatic publication off altogether.
 
 Administrators see, for every published Global Event, its Publication Route (an Administrator, the rules or a Judgement), and can filter by it. Users never see it.
 
@@ -60,65 +60,77 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
 28. As a team member, I want the existing SNU Now events to keep working after the storage changes, so that the migration loses nothing.
 29. As a team member, I want Judgements to be one step that can be run over a given Draft, so that we can later run it over the Drafts already stored.
 30. As a team member, I want tests to run without a model, so that CI stays deterministic and free.
+31. As an Administrator, I want one setting that stops automatic publication, so that a Judgement or same-event step found to make mistakes can be stopped at once without a Release.
+32. As a User, I want a post that announces no event, such as a recruitment notice, never to appear as an event, so that the Events tab holds only events.
 
 ## Implementation Decisions
 
-### Storage: Sources and Source Posts
+### Storage: Sources, Source Posts and their sessions
 
 - Judgements and the same-event step read only a post's title, text and Source, so that a later Source needs only its own collector. What differs by Source is a setting of that Source, not a branch in their code: whether a building number alone is taken as Gwanak, and the address pattern by which a body's link names one of its posts.
+- A **Source Post** is stored once per post: its Source, its key on that Source and its address. (Source, key) is unique. Keys: an SNU Now post's `bbsidx`; an extra.snu programme's `dataSeq`. The key is known from the list page, before the detail page is opened, so the worker's question "which of these posts are stored?" stays one question per post.
+- A post is read as one or more numbered sessions. Each session is linked to one Global Event; the link records the session's number, how it was attached (the event's own, by a rule, by the AI, by an Administrator) and the reason (the rule's name or the AI's choice). (Source Post, session number) is unique. A Global Event has zero (created by an Administrator) or more links, from one post or from several.
+- A migration moves every collected event's post number and address into a Source Post with one session linked to that event. Discarded events keep their Source Posts so that the next Collection does not bring them back.
+- The worker's question and the Collection message carry the Source and the key in place of the post number, and the message carries each post's sessions. The Source enumeration gains extra.snu.
+- A Global Event gains its Publication Route (Administrator, rule, Judgement; empty while a Draft) and a flag that an Administrator must look at it. Neither, nor the links, is in any DTO the app receives.
+- The migration fills the Publication Route of the events already published: Administrator for an event an Administrator created, rule for a collected event still at version 1, and Administrator for a collected event at a later version, since an Administrator has changed it.
 
-- A Global Event's link to its post moves out of the event into a **Source Post** table: Source, the post's key on that Source, its address, how it was attached (the event's own post, by a rule, by the AI, by an Administrator) and, when attached, the reason (the rule's name, or the AI's choice). A Source Post's (Source, key) is unique. A Global Event has zero (created by an Administrator) or more Source Posts.
-- Keys: an SNU Now post's key is its `bbsidx`; an extra.snu session's key is the programme's `dataSeq` and the session's number.
-- A migration moves every existing collected event's post number and address into a Source Post. Discarded events keep their Source Posts so that the next Collection does not bring them back.
-- The worker's question "which of these posts are stored?" and the Collection message carry the Source and the key in place of the post number. The Source enumeration gains extra.snu.
-- A Global Event gains its Publication Route (Administrator, rule, Judgement; empty for a Draft) and a flag that an Administrator must look at it (a Source Post that gives another time). Neither is in any DTO the app receives.
+### Storing and publishing are apart
+
+- A Collection's message is stored and answered at once; nothing it carries is published inside the request, whether the rules can read it or not. The worker waits only five seconds.
+- After the answer, each new Source Post goes through one step, in this order:
+  1. **The link rule.** When the post's body links a stored Source Post, by that Source's address pattern, the new post's sessions are attached to the linked post's Global Events, whatever their times. When the linked post has several sessions and the match between them is not one to one, the new post goes to the Administrator's queue.
+  2. **Times and places.** For each session not yet attached, the rules read the time and place as today. Where they do not, a Judgement reads them (below). A session whose time is still unknown stays a Draft and is compared at its Judgement's retry.
+  3. **The same event**, with the times now known (below).
+  4. **Publication.** A session neither attached nor queued is published when the rules or a Judgement passed it, with that Publication Route; otherwise it stays a Draft.
+- Publishing tells the apps to refetch the published Global Events, as any publication does.
+- A setting turns automatic publication off. With it off, the step still runs and stores Judgements and attachments, but publishes nothing; every session that would have been published stays a Draft. It is turned off when a floor of C2, C3 or D1 is missed.
 
 ### extra.snu collection (worker)
 
 - A new collector reads extra.snu's list and detail pages. The detail page sits behind a waiting-room script, so it is opened with a headless browser (Playwright). Opening pages sits behind an interface so that the parser is tested on saved pages.
 - Prior art: hangsha (`wafflestudio/hangsha-server`) collects extra.snu with Playwright, filtering the list by application status codes `0001`–`0004` (their meanings are not yet known) and reading the first four pages of twelve programmes each. It has no licence, so it may be read but not copied.
-- It reads the list's first four pages, opens one detail page every two seconds, and runs twice a day, apart from the SNU Now schedule (four times a day).
+- It reads the list's first four pages, asks which programmes are stored, opens the detail page of each new one every two seconds, and runs twice a day, apart from the SNU Now schedule (four times a day).
 - A programme whose detail page redirects to the SSO sign-in is skipped and counted in the Collection's result; it is not a failure.
-- Each session of a programme becomes one collected event, with the session's time and place from the page's structured fields. The programme's description and application period go into the description.
+- Each programme is one Source Post whose sessions come from the page's structured fields (time and place per session). The programme's description and application period go into the description.
 - The worker's container image gains a browser; its memory limit is raised to fit it.
 - `robots.txt` and the site's terms are checked before the first Production Collection and noted in the ticket.
 
 ### Judgement (main server)
 
-- Runs in the main server, after the Collection's message is stored and answered, never within the request: the worker waits only five seconds.
-- A collected event the rules leave a Draft is judged once. If the Judgement could not be made (an error, a timeout, a malformed answer) it is tried once more at the next Collection of its Source, and then not again. A Draft an Administrator has changed is never judged.
-- The model is the Assistant's model (Haiku 5.5 through OpenRouter) with a fixed JSON schema. Its answer has, for each session, the start, the end, the place, whether it is an event at all, whether it runs over a period, and for each value the lines of the post it read it from.
+- A session the rules leave unpublished is judged once. If the Judgement could not be made (an error, a timeout, a malformed answer) it is tried once more at the next Collection of its Source, and then not again. A Draft an Administrator has changed is never judged.
+- The model is the Assistant's model (Haiku 5.5 through OpenRouter) with a fixed JSON schema. Its answer says whether the post announces an event at all, and for each session the start, the end, the place and whether it runs over a period, with for each value the lines of the post it read it from.
 - Before the post is sent, e-mail addresses and phone numbers starting with 0 are replaced by a mask. Dates and times do not match the masks. The checks compare the quoted lines with the masked text.
-- The server checks each session, and publishes a session only if every check passes:
+- The server checks each session, and passes it only if every check passes:
+  - the answer says the post announces an event; a post it calls no event is never published and stays a Draft marked so;
   - each quoted line is in the post;
   - the date, the weekday and the time agree with the quoted line;
   - the quoted line is not an application or registration period;
   - the start comes before the end;
   - a session lasts at most 24 hours, unless it is read as running over a period, in which case the quoted line must hold both its first and last day;
-  - the place matches exactly one Place. On a school Source, a building number alone ("301동 117호") is taken as Gwanak; a place naming another campus is not matched.
-- A post with several sessions becomes one Global Event per session that passes; the sessions that fail stay as one Draft.
-- The Judgement is stored with the event: the values, the lines, each check and whether it passed, the model id and the time. Publishing by a Judgement sets the Publication Route to Judgement. Publishing tells the apps to refetch the published Global Events as any publication does.
+  - the place matches exactly one Place. Where the Source's setting says so, a building number alone ("301동 117호") is taken as Gwanak; a place naming another campus is not matched.
+- Each passing session becomes its own Global Event; the failing sessions of a post stay as one Draft.
+- The Judgement is stored with the Draft or event: the values, the lines, each check and whether it passed, the model id and the time.
 - Running a Judgement is one service step over one Draft, so that a later script can run it over the stored Drafts. Running it over the Drafts stored before this work is not part of this spec.
 - Hangsha's prompt rules (application and event periods apart, 오전/오후 carried to a later time, one session per time, only a confirmed place) may guide the prompt, but none of its code or prompt text is copied: it has no licence.
 
 ### The same event posted twice (main server)
 
-- Runs after a new Source Post is stored, and before its Judgement. A Draft that fails and is retried is compared again at the retry, against the events that exist then.
-- A new Source Post is only ever attached to an existing Global Event. Two existing events are never merged.
-- Candidates: the Global Events, of any Source, whose start is within one day of the new post's.
-- A rule attaches the new post when the post's body links the candidate's Source Post, or when the normalised titles are equal and the starts are equal.
-- A rule refuses a candidate when the start times differ, when one is a 1차 and the other a 2차 session, when one is 대면 and the other 비대면, or when the roles differ.
+- A new Source Post's sessions are only ever attached to existing Global Events. Two existing events are never merged.
+- The link rule comes first, as above. When a session it attached gives another time than its event, the event is not changed; it is flagged for an Administrator.
+- For the sessions left, with their times known, the candidates are the Global Events of any Source whose start is within one day.
+- The refusing rules come next. A candidate is refused when both have a time of day on the same day and the times differ, when one is a 1차 and the other a 2차 session, when one is 대면 and the other 비대면, or when the roles differ. Candidates on the day before or after are kept for the AI.
+- Then the attaching rule: equal normalised titles and equal starts attach.
 - For the candidates left, the AI chooses one of them or none, or answers unsure.
-- When the AI is unsure, when the new post matches several candidates, or when the call fails, the new post stays a Draft and enters the Administrator's queue with its candidates. It is not shown to Users, so nothing is lost by waiting.
-- When an attached Source Post gives a time other than a published event's, the event is not changed; it is flagged for an Administrator.
-- An Administrator can attach a queued post to a candidate, publish it as its own event, or detach an attached Source Post, which becomes its own Draft again. The Quests of the event stay with it.
+- When the AI is unsure, when a session matches several candidates, or when the call fails, the session stays a Draft and enters the Administrator's queue with its candidates. It is not shown to Users, so nothing is lost by waiting.
+- An Administrator can attach a queued session to a candidate, publish it as its own event, or detach an attached session, which becomes its own Draft again. The Quests of the event stay with it.
 
 ### Admin site
 
 - The events list gains a Publication Route column and a filter by it.
-- An event's page shows its Source Posts (Source, link, how attached, reason) with a detach action, and its Judgement (each session's values, lines, checks, model, time).
-- A queue page lists the undecided new posts with their candidates and the actions above.
-- The flag of a differing time shows on the list and the page.
+- An event's page shows its linked Source Posts and sessions (Source, link, how attached, reason) with a detach action, and its Judgement (each session's values, lines, checks, model, time).
+- A queue page lists the undecided sessions with their candidates and the actions above.
+- The flag shows on the list and the page.
 
 ### App
 
@@ -126,14 +138,15 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
 
 ### Metrics (first ticket)
 
-- The fixed sets and thresholds of evaluations A and B in `iter3-p5 메트릭.md` are committed before the first run, as C0. One labeller (the P05 owner) labels them; a second labeller is pending the team.
+- The fixed sets and thresholds of evaluations A and B in `iter3-p5 메트릭.md` are committed before the first run, as C0, with R0 for each: the rules alone for A, and equal starts with title similarity for B.
+- The P05 owner labels every item. A second labeller labels an overlapping part (15 posts of A, 30 hard negative pairs of B) on their own, and the agreement is reported. The TA is asked by message before C0 whether team-made labels are acceptable, since the TA meeting (11-04) comes after the freeze (11-01).
 
 ## Testing Decisions
 
-- A good test checks behaviour a caller sees through the seam, not how it is built: what is stored and published, what the admin API and the app API return, which Collections and skips are recorded.
-- **Main server over HTTP, with the model scripted** (prior art: `collection`, `stored-event-posts`, `admin-global-event*`, `published-global-events` e2e specs, and `test/scripted-model.ts`): a Collection message goes in, the admin and app APIs are read. Covers keys per Source and the migration, publication by the rules and by a Judgement, each check failing on its own, failing closed, the single retry, never judging a changed Draft, masking, attaching by rule and by the AI, refusing by rule, the queue, detaching, the time flag, and that no app DTO carries the Publication Route or the Judgement.
-- **Worker parser on saved pages** (prior art: `event-page-parser`, `event-collector` e2e specs and `test/pages`): sessions, the SSO skip, the list range, the two-second pacing through the fetching interface.
-- **Admin site components** (prior art: `admin/__tests__/event-page.test.tsx`): the column and filter, the Judgement panel, the queue and the detach action.
+- A good test checks behaviour a caller sees through the seam, not how it is built: what is stored and published, what the admin API and the app API return, which Collections and skips are recorded. Test files are named by their level (ADR 0007): `.unit.test.ts` or `.integration.test.ts`.
+- **Main server over HTTP, with the model scripted** (prior art: the `collection`, `admin-global-event*` and `published-global-events` integration tests, and the scripted model of the Assistant's tests): a Collection message goes in, the admin and app APIs are read. Covers keys and sessions per Source and the migration with its Publication Routes, nothing published inside the request, the step's order, publication by the rules and by a Judgement, each check failing on its own, the no-event check, failing closed, the single retry, never judging a changed Draft, masking, the link rule regardless of times and its flag, refusing and attaching by rule, the AI's choice, the queue, detaching, the setting that turns publication off, and that no app DTO carries the Publication Route, the links or the Judgement.
+- **Worker parser on saved pages** (prior art: the event page parser and event collector tests and their saved pages): sessions, the SSO skip, the list range, the two-second pacing through the fetching interface.
+- **Admin site components** (prior art: the event page integration test): the column and filter, the Judgement panel, the queue and the detach action.
 - **Offline evaluation with the real model**, outside CI: the Judgement step and the same-event step over the committed sets, scored as evaluations A and B define.
 - The app's "M월 D일까지" is checked on a phone; the app has no test setup.
 
@@ -148,8 +161,8 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
 
 ## Further Notes
 
-- If time runs short, cut in this order: the same-event step (and with it the queue and detaching), then publishing events over a period, then the admin site's Judgement panel.
-- Assumptions pending the team: that the PM allows posts to be sent to the model provider once masked; the second labeller.
+- If time runs short, cut in this order: the same-event step's AI choice, queue and detaching (the link and title rules stay, so the duplicates they catch are still caught), then publishing events over a period, then the admin site's Judgement panel.
+- Assumptions pending the team, to be settled before C0: that posts may be sent to the model provider once masked (the reviewer recommends allowing it: the posts are public and the masks remove contact details); the second labeller.
 - Prior art for a Judgement and its failure: hangsha's Gemini parser fills events and shows them even when the call fails, and its parser appears to have stopped for about three weeks unnoticed (ADR 0008).
 - Real overlapping pairs for tests and the metric set, checked on 2026-10-30 (SNU Now `bbsidx` ↔ extra.snu `dataSeq`):
   - 178226 ↔ PGM012002414 (IEEE Authorship Seminar, 11-02 10:00, 관정관 양두석홀)

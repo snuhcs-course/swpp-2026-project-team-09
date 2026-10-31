@@ -30,7 +30,7 @@ Words: a **Full** Quest has as many Holders as its capacity. A Quest's start is 
 6. As a User, I want to say "그래도 새로 만들어 줘" and get a Proposal, so that I am never forced into an existing Quest.
 7. As a User, I want only Quests for the same activity, so that "공연 보러 갈 사람" never shows a dinner Quest at the same time.
 8. As a User, I want words of the same meaning to count as the same activity ("민턴" and "배드민턴") and words that only look alike not to ("배민" and "배드민턴"), so that matching follows meaning.
-9. As a User, I want only what I said to be compared: no Place unless I named one, and the next seven days from today when I gave no day, so that conditions I did not state do not hide Quests.
+9. As a User, I want only what I said to be compared: no Place unless I named one, the next seven days from today when I gave an activity and no day, and every activity when I gave a day and no activity, so that conditions I did not state do not hide Quests.
 10. As a User, I want a time I named to match Quests starting within 30 minutes of it, so that "7시" finds a 7:20 Quest.
 11. As a User, I want "아침", "점심" and "저녁" to mean 07–11, 11–16 and 17–22, so that a part of the day finds the Quests in it.
 12. As a User, I want a Place I named to match Quests at that Place or a nearby one, so that "301동 근처" finds one at 302동.
@@ -51,7 +51,7 @@ Words: a **Full** Quest has as many Holders as its capacity. A Quest's start is 
 24. As a User, I want "17시 이후 파티" to return Quests starting from 17:00 to the end of that day.
 25. As a User, I want to give both ends ("11/2 15–18시"), so that I can ask for any window.
 26. As a User, I want Full Quests never to be returned, so that every Quest shown has room.
-27. As a User, I want Quests that already started never to be returned, so that every Quest shown is one I can still go to.
+27. As a User, I want Quests that already started never to be returned, except Quests for an event still under way, so that every Quest shown is one I can still go to.
 28. As a User, I want "2자리 이상 남은 파티" to return only Quests with at least two places left, so that my friend and I can join together.
 29. As a User, I want each Quest shown to say how many places are left and whether it is 바로 참여 or 승인제, as now.
 30. As a User, I want "공연" to find posts that say "콘서트" or "버스킹", so that wording does not hide events.
@@ -64,49 +64,66 @@ Words: a **Full** Quest has as many Holders as its capacity. A Quest's start is 
 34. As a team member, I want what the server can decide (time, room, started, Shared Quests held) decided by the server before the list is cut, so that the model gets fewer and better candidates and the result does not depend on the model noticing.
 35. As a team member, I want the behaviour measured on fixed cases before and after the change (R0, R1), so that we can show it got better.
 36. As a team member, I want CI tests that need no model, so that CI stays deterministic.
+37. As a User, I want Quests I already asked to join not to be offered again, so that I am not offered what the app refuses.
+38. As a team member, I want P19's cases left as they are and run before and after, so that this work is shown not to make the rest of the chat worse.
 
 ## Implementation Decisions
+
+### A Quest's time and place
+
+- A Quest's start is its first Sub Quest's start. For a Sub Quest attending a Global Event, its time and place are the event's as it is now: it stores neither, so every filter reads them from the event.
+- A Quest for a Global Event is treated as its event: it is in a window when the event's span overlaps it, and it is returned until the event ends, so that the Quests of an exhibition running for weeks stay findable. Any other Quest is in a window when its start is in it, and is never returned once its start has passed.
+- A Quest's position, for distances, is its first Sub Quest's: a Place's position, a point on the map, or its Global Event's position. A Quest has words only when its first Sub Quest has none of these.
 
 ### Search tools
 
 - Both search tools take `after` and `before`, each a date with a time of day in Asia/Seoul, alongside today's days. With only `after`, the window ends at 23:59 of that day. With only a day, the window is the whole day.
 - An event is in the window when its span overlaps it. An event without an end is taken to last until the end of its start's day, as today.
-- A Quest is in the window when its start (its first Sub Quest's start) is in it. A Quest whose start has passed is never returned, by either tool or the join search.
-- The Quest search drops Full Quests always. It takes an optional fewest places left (`minPlacesLeft`, default one) and an optional exact capacity.
-- The Quest search drops, for the reader, the Quests for a Global Event for which the reader holds a Shared Quest.
-- Every filter runs before the list is cut, in the database query rather than over every recruiting Quest read into memory, so that a search stays quick with a thousand Quests. Searches return up to 30 candidates instead of 20, with descriptions cut at 150 characters.
-- Search words rank the results instead of filtering them: candidates that hold more of the words come first, ties in start order, and the rest of the window fills the places left. The tool descriptions tell the model to give related words (공연 → 콘서트, 음악회, 연주회, 뮤지컬) and to correct a typo in the User's question.
-- The instructions tell the model to search Quests without a Board when it is not sure of one, and, when choosing among candidates, to leave out only those that are clearly different.
-- Each Quest in a result keeps its places left and its Join Policy.
+- The Quest search drops, always: Full Quests; Quests out of time as above; Quests for a Global Event for which the reader holds a Shared Quest; and Quests the reader has already asked to join and is waiting on.
+- The Quest search takes, besides its present inputs, `words`, an optional fewest places left (`minPlacesLeft`, default one), an optional exact capacity, and an optional Place with a radius (about 300 m), measured between positions; a Quest with words only is left out when a Place is given.
+- Every filter runs in the database query, before the list is cut, rather than over every recruiting Quest read into memory, so that a search stays quick with a thousand Quests. Searches return up to 30 candidates instead of 20, with descriptions cut at 150 characters.
+- The server's order: search words rank the results instead of filtering them. Candidates that hold more of the words come first, ties in start order, and the rest of the window fills the places left. The server does not order by Holders.
+- The tool descriptions tell the model to give related words (공연 → 콘서트, 음악회, 연주회, 뮤지컬) and to correct a typo in the User's question. The instructions tell it to search Quests without a Board when it is not sure of one, and, when choosing among candidates, to leave out only those that are clearly different.
+- Each Quest in a result keeps its places left, its Join Policy and its number of Holders.
 
 ### Join if one exists
 
 - The Assistant's instructions say: on a request to recruit, search for Quests first, with the rules below, unless the User has already said to make a new one in this conversation.
-- Rules: (i) compare only what the User stated; without a day, the next seven days from today. (ii) A named time is ±30 minutes; 아침 07–11, 점심 11–16, 저녁 17–22. (iii) A named Place matches Quests at that Place or at a Place within about 300 m, which the server computes from the Places' positions; a Quest whose place is only words is left out. (iv) Only Open and Approval Quests. (v) Quests for an event of which the reader holds a Shared Quest are dropped; telling the User they already go is not part of this spec. (vi) Several matches are shown with the most Holders first. (vii) Without an activity or a day, ask; with no match, say so and propose. (viii) Same meaning matches, look-alike words do not.
+- Rules:
+  - (i) Compare only what the User stated. With an activity and no day, the next seven days from today; with a day and no activity, every activity that day.
+  - (ii) A named time is ±30 minutes; 아침 07–11, 점심 11–16, 저녁 17–22.
+  - (iii) A named Place matches Quests at that Place or within about 300 m, through the search's radius; a Quest with words only is left out.
+  - (iv) Only Open and Approval Quests.
+  - (v) Quests for an event of which the reader holds a Shared Quest, and Quests the reader already asked to join, are dropped by the server; telling the User they already go is not part of this spec.
+  - (vi) When several fit, the Assistant shows them with the most Holders first. This is the order of the cards it shows, not the server's order.
+  - (vii) With neither an activity nor a day, ask. With no match, say so and propose.
+  - (viii) Same meaning matches, look-alike words do not.
 - A number of people the User names is the capacity with the User: "4명" asks for capacity four.
 - When the request names a Global Event, the candidates are that event's Quests, with no time or Place comparison.
-- The Place comparison is a new input of the Quest search (a Place and a radius) rather than a separate tool.
 - The Assistant never joins a Quest itself. It shows cards with the existing card buttons and asks.
 - Making a new Quest is the existing Proposal, unchanged, with a line that none was found.
 
-### Eval world and cases
+### The P05 eval suite
 
-- The eval world gains Quests the asker holds, Quests led by others, a Full Quest, a Quest already started, Quests at a nearby Place and a Quest whose place is only words, a Shared Quest the asker holds for an event, and the typo and synonym posts that evaluation D needs. These changes go in one list with the P04–P07 world changes and are frozen on one day.
-- A second, large world serves evaluation D at scale: about 1,000 Quests and a few hundred Global Events generated from attributes with a fixed seed, with titles varied by checked wordings, hand-made traps on top, and each case's expected cards computed from the attributes. A case names the world it runs in; the existing cases keep the small world. Both worlds exist only in the database container of a run. The large world is generated once and committed as a versioned data file (`large-world-v1`) with each case's expected cards, so that the same world and answers serve every later change to the Assistant; changing either makes a new version.
-- Scoring adds card-level micro precision and recall per subset. New subsets cover the conditions above: N (capacity), R (nearby Place), O (an event under way); H covers started Quests, `after` alone and the parts of the day. Each search subset has at least five cases.
-- Existing cases change: `making-parties-for-event` now expects a join offer; the recruiting cases allow the search before the Proposal; `ask-missing-fields-in-one-question` follows rules (i) and (vii); the fixed test of the Full `아침 러닝 크루` with `"placesLeft":0` changes now that Full Quests are not returned.
+- A P05 suite sits beside P19's in the existing harness, as P04's does: its own case directory, its own small world and its own default clock. P19's directory, world, cases and pinned counts are not touched.
+- The small world holds what evaluation C and most of D need: Quests the asker holds, Quests led by others, a Full Quest, a Quest already started, a Quest for an event under way, a Quest the asker already asked to join, Quests at a nearby Place, a Quest with words only, a Shared Quest the asker holds for an event, the typo and synonym posts, and Quests on another Board than the obvious one.
+- A large world serves evaluation D at scale: about 1,000 Quests and a few hundred Global Events generated from attributes with a fixed seed, with titles varied by checked wordings, hand-made traps on top, and each case's expected cards computed from the attributes once and stored. It is committed as a versioned data file (`large-world-v1`) read through its own loader; changing it or its answers makes a new version. A case names the world it runs in. Both worlds exist only in the database container of a run.
+- A reply shows at most 20 cards, so no case expects more than 20.
+- P19 cases whose expected answer this work changes (`making-parties-for-event`, the recruiting cases that now search first, `ask-missing-fields-in-one-question`) are listed at C0 as superseded, with the P05 case that holds the new answer. They are not edited. P19's cases run three times before and after the work as a regression check, and the superseded ones are reported apart.
+- Scoring adds card-level micro precision and recall per subset, and the mean over cases beside it. New subsets cover the conditions above: N (capacity), R (nearby Place), O (an event under way); H covers started Quests, `after` alone and the parts of the day.
 
-### Metrics (first ticket)
+### Metrics (first tickets)
 
-- The fixed cases and thresholds of evaluations C and D in `iter3-p5 메트릭.md` are committed before the first run, as C0, and R0 is run on the code before this work. J3a's Full Quest trap moves to the server-filtered traps (J3b), since the server now drops Full Quests. One labeller (the P05 owner); a second is pending the team.
+- The cases, both worlds, the labels and every threshold of evaluations C and D in `iter3-p5 메트릭.md` are committed before the first run, as C0, and R0 runs on the code before this work. Every later run changes one thing: R1 after ticket 10, R2 after 11, R3 after 12.
+- The P05 owner labels the small world's cases by the rules above; a second labeller labels an overlapping part on their own, and the agreement is reported. The large world's answers are computed, and only its wordings are checked by a person.
 
 ## Testing Decisions
 
-- A good test checks what the tool returns for a call, or what the Assistant's reply contains for a scripted model, not how the query is built. A condition added to a search never adds a result: its results are a subset of the search without it.
-- **Assistant over HTTP with the model scripted** (prior art: `assistant-global-events`, `assistant-recruiting-quests` e2e specs and `test/scripted-model.ts`): a scripted model calls a tool with given inputs, and the test checks the tool's result: the window by overlap and the end-of-day default, Quests by start, started and Full Quests dropped, `minPlacesLeft` and capacity, Shared Quests held, the Place radius and words-only places, ordering by Holders, 30 candidates and 150 characters, words ranking but not filtering.
-- **The eval harness's own tests** (prior art: `eval-*.e2e-spec.ts`) cover any new check or world shape.
-- **The large world without a model**, in CI: the search tools called with each case's intended inputs return every expected card (server recall).
-- **Eval cases with the real model**, outside CI: evaluations C and D, run as R0 before this work and R1 after it, recorded as the metrics document's section 4 says.
+- A good test checks what the tool returns for a call, or what the Assistant's reply contains for a scripted model, not how the query is built. A condition added to a search never adds a result: its results are a subset of the search without it. Test files are named by their level (ADR 0007): `.unit.test.ts` or `.integration.test.ts`.
+- **Assistant over HTTP with the model scripted** (prior art: the `assistant-global-events` and `assistant-recruiting-quests` integration tests and the scripted model): a scripted model calls a tool with given inputs, and the test checks the tool's result: the window by overlap and the end-of-day default, Quests by start, Quests for an event kept until it ends, started, Full and already requested Quests dropped, `minPlacesLeft` and capacity, Shared Quests held, the radius and words-only Quests, the Global Event's time and place read for attending Sub Quests, 30 candidates and 150 characters, words ranking but not filtering.
+- **The eval harness's own tests** (prior art: the `eval-*` unit and integration tests) cover the suite, both worlds, the loader, the new checks and the scorer.
+- **The large world without a model**, in CI: the search tools called with each case's intended inputs return every expected card (server recall). It lands with ticket 10, which makes it pass; until then the cases it needs are marked as expected to fail.
+- **Eval cases with the real model**, outside CI: evaluations C and D in both worlds, R0 to R3, recorded as the metrics document's section 4 says.
 
 ## Out of Scope
 
@@ -119,5 +136,6 @@ Words: a **Full** Quest has as many Holders as its capacity. A Quest's start is 
 ## Further Notes
 
 - The Quest search's start rule (first Sub Quest) applies to the Assistant's tools only. The Boards keep listing Quests with any Sub Quest ahead.
+- Excluding Quests the reader already asked to join matches P04's story 19.
 - The Full and started filters are the same code the join search uses, so the time and room work comes first.
-- Typos in posts are caught for Quests (the model reads their titles among the candidates) but not for events whose words do not rank them into the 30; stage 1 addresses that.
+- Typos in posts are caught only while the misspelt Quest or event is among the 30 candidates. When a window holds more than 30, one whose words do not rank it in is cut, so evaluation D reports E3 per world; stage 1 addresses that.
