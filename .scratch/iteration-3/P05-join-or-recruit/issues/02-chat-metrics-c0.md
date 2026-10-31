@@ -14,7 +14,10 @@
 - [ ] P19 cases whose expected answer this work changes (`making-parties-for-event`, the recruiting cases that now search first, `ask-missing-fields-in-one-question`) are listed as superseded, each with the P05 case that holds the new answer; none is edited.
 - [ ] Thresholds (floor and target) for J1–J10 and E1–E8 are committed beside the cases, with each case's subset tags listed there as (case id, seed), and what happens when a floor is missed.
 - [ ] The scorer adds card-level micro precision and recall over the repetitions, per subset, and the mean over cases beside them. It may land after the C0 commit, since stored runs can be scored again.
-- [ ] The P05 owner labels each case by the rules of the spec; a second labeller labels an overlapping part on their own, and the agreement is recorded as in ticket 01.
+- [ ] Each case's answer is drafted, as P04's are, by an agent in a separate session that sees only the rules of the spec, the small world and the case, never the Assistant's prompts, tools or code; it writes the answer with its working.
+- [ ] The P05 owner reviews every draft against the rules and the world; each change made in review is recorded with its reason, and the record names the drafting session's model and date.
+- [ ] A second labeller labels an overlapping part from scratch, without the drafts, and the agreement with the reviewed answers is recorded as in ticket 01.
+- [ ] Evaluations A and B are not drafted this way: their answers are read from real posts by people, since a drafting model would share the Judgement's mistakes.
 - [ ] The eval harness's own tests pass in CI with the new suite.
 - [ ] The commit is tagged as C0 and recorded.
 - [ ] R0 runs on the C0 commit with no chat change of P05 in it, on a clean working tree, three times per case, with the exact command recorded. P19's cases run three times on the same commit as the regression baseline.

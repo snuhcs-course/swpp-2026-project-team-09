@@ -115,7 +115,7 @@ Words: a **Full** Quest has as many Holders as its capacity. A Quest's start is 
 ### Metrics (first tickets)
 
 - The cases, both worlds, the labels and every threshold of evaluations C and D in `iter3-p5 메트릭.md` are committed before the first run, as C0, and R0 runs on the code before this work. Every later run changes one thing: R1 after ticket 10, R2 after 11, R3 after 12.
-- The P05 owner labels the small world's cases by the rules above; a second labeller labels an overlapping part on their own, and the agreement is reported. The large world's answers are computed, and only its wordings are checked by a person.
+- The small world's answers are drafted, as P04's are, by an agent in a separate session that sees only the rules above, the world and the case, never the Assistant's prompts, tools or code. The P05 owner reviews every draft and records each change with its reason. A second labeller labels an overlapping part from scratch, without the drafts, and the agreement is reported. The large world's answers are computed, and only its wordings are checked by a person.
 
 ## Testing Decisions
 
