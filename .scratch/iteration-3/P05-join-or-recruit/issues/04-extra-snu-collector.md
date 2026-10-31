@@ -13,4 +13,5 @@
 - [ ] A session the rules can read is published by the step of ticket 03; the rest are Drafts.
 - [ ] extra.snu's Collection status appears beside the other Sources.
 - [ ] The worker's image carries the browser, its memory limit fits it, and the local and Production setups run it.
+- [ ] The scheduled Collection runs only with `EXTRA_SNU_COLLECTION=on`, `off` by default and in Production, so that a Release before ticket 08a's starts nothing; `infra/production/README.md` says when to turn it on.
 - [ ] `robots.txt` and the terms were checked, and the result is written in this ticket.
