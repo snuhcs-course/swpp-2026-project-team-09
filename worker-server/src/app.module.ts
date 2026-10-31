@@ -6,12 +6,14 @@
  * 2026-10-01  Opus 5.5   prompted by TaeHyun79
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-03  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DiscoveryModule } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
+import { BrowserPagesModule } from './common/browser-pages.module.js';
 import { MainServerModule } from './common/main-server.module.js';
 import { PageFetcherModule } from './common/page-fetcher.module.js';
 import { settingsSchema } from './common/settings.js';
@@ -34,6 +36,7 @@ import { ShuttleModule } from './shuttle/shuttle.module.js';
     DiscoveryModule,
     MainServerModule,
     PageFetcherModule,
+    BrowserPagesModule,
     HealthModule,
     MenuModule,
     ShuttleModule,

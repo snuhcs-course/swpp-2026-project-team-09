@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import 'server-only';
@@ -117,6 +118,7 @@ export interface CollectionStatus {
   lastSucceededAt: string | null;
   lastFailedAt: string | null;
   lastFailureReason: string | null;
+  lastSkippedPosts: number | null;
 }
 
 async function request<T>(

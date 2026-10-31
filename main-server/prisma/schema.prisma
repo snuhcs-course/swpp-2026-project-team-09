@@ -17,6 +17,7 @@
 // 2026-10-06  Fable 5.1  prompted by fyoon46
 // 2026-10-09  Opus 5.5   prompted by Jaehyun0320
 // 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+// 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -581,6 +582,8 @@ model CollectionStatus {
   lastSucceededAt   DateTime? @map("last_succeeded_at")
   lastFailedAt      DateTime? @map("last_failed_at")
   lastFailureReason String?   @map("last_failure_reason")
+  // How many posts its last Collection could not read without a sign-in. Empty for a Source that has no such posts.
+  lastSkippedPosts  Int?      @map("last_skipped_posts")
 
   @@map("collection_statuses")
 }

@@ -505,7 +505,8 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
      coop_menus dormitory_menus veterinary_menus snu_events shuttle_stops shuttle_vehicles
    ```
 
-   It logs for each Source whether its Collection succeeded, and exits with status 1 when one failed.
+   It logs for each Source whether its Collection succeeded, and exits with status 1 when one failed. `extra_snu` is left
+   out on purpose until it may run ([Turning on extra.snu's Collections](#turning-on-extrasnus-collections)).
 
 10. **The Production APK** ([The Production APK](#the-production-apk)).
 
@@ -571,6 +572,34 @@ server-side apply cannot merge.
 Every session from then on stays a Draft for an Administrator, and what was published stays published. The next Release
 brings the committed value back, so also set `AUTOMATIC_PUBLICATION=off` in that file and merge it. Sessions stored
 meanwhile are not published when it is turned on again.
+
+### Turning on extra.snu's Collections
+
+The worker's image carries a browser for extra.snu, and its pod may use up to 1 GiB for it, but the schedule starts
+nothing while `EXTRA_SNU_COLLECTION` is `off`, its value in `k8s/parts/shared/kustomization.yaml`. Keep it off until the
+same-event rules (`.scratch/iteration-3/P05-join-or-recruit/issues/08a-same-event-rules.md`) are deployed. Before them,
+an event posted on both SNU Now and extra.snu would show twice, and Users could gather for it in two places. Do not run
+`node dist/collect extra_snu` by hand before then either: the command does not look at the setting.
+
+Once they are deployed, check the Dockerfile's browser and the 1 GiB limit by running one Collection by hand:
+
+```bash
+kubectl --namespace snunow exec deployment/worker-server -- node dist/collect extra_snu
+kubectl --namespace snunow top pod --selector app=worker-server
+```
+
+Then set `EXTRA_SNU_COLLECTION=on` in `k8s/parts/shared/kustomization.yaml`, merge it and release the worker. To stop it
+again at once, without a build or a Release, change the value in the ConfigMap the worker reads and restart it:
+
+```bash
+settings=$(kubectl --namespace snunow get deployment worker-server --output json |
+  jq -r '.spec.template.spec.containers[0].env[] | select(.name == "EXTRA_SNU_COLLECTION") | .valueFrom.configMapKeyRef.name')
+kubectl --namespace snunow patch configmap "$settings" --type merge --patch '{"data":{"EXTRA_SNU_COLLECTION":"off"}}'
+kubectl --namespace snunow rollout restart deployment/worker-server
+kubectl --namespace snunow rollout status deployment/worker-server
+```
+
+The next Release brings the committed value back, so also set it in that file and merge it. What was collected stays.
 
 ### Following a Release
 

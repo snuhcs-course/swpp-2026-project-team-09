@@ -6,6 +6,7 @@
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -21,9 +22,12 @@ const boundSchema = z
 
 const collectedSessionSchema = z.strictObject({
   number: z.int32().positive(),
+  // The session's own title, when the post's title alone would not tell it from the post's other sessions.
+  title: z.string().min(1).optional(),
   start: boundSchema,
   end: boundSchema,
-  // Where the start and end were read: the body's time line, or the header's date.
+  // Where the start and end were read: `body` for the post's own statement of the event's time, its body's time line or
+  // extra.snu's session field, `header` for the header's date. Only a time read from `body` can be published by the rules.
   readFrom: z.enum(['body', 'header']).nullable(),
   place: z.string().min(1).nullable(),
 });
@@ -52,6 +56,8 @@ export const eventsCollectedSchema = z.strictObject({
   // Why the Collection stopped early, or null when it went through the whole list. Its posts are stored all the same,
   // and the reason is recorded as its failure.
   failureReason: z.string().min(1).nullable(),
+  // The posts the Collection could not read without a sign-in, on a Source that has such posts. It is not a failure.
+  skippedPosts: z.int32().nonnegative().optional(),
   posts: z
     .array(collectedPostSchema)
     .refine((posts) => new Set(posts.map(({ key }) => key)).size === posts.length, 'Each post must appear once'),

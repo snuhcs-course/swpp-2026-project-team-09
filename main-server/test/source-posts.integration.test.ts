@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -89,6 +90,85 @@ describe('A post of several sessions', () => {
     await expect(
       askAsWorker(app, '/global-events/stored-posts', { source: 'extra_snu', keys: [key] }),
     ).resolves.toEqual({ keys: [key] });
+  });
+});
+
+describe("A session's own title", () => {
+  it('names its event in place of the title of the post, and each event keeps the description of the post', async () => {
+    const key = 'PGM012002329';
+    const session = { start: null, end: null, readFrom: null, place: null };
+    const post = {
+      key,
+      address: `https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=${key}`,
+      title: '영어 스피치',
+      description: '안내',
+      sessions: [
+        { ...session, number: 1, title: '영어 스피치 (1회차)' },
+        { ...session, number: 2, title: '영어 스피치 (2회차)' },
+      ],
+    };
+
+    await collected({ app, prisma }, eventsMessage([post], { source: 'extra_snu' }), 'extra_snu');
+
+    const events = await eventsOf(prisma, key, 'extra_snu');
+    expect(events.map(({ title }) => title).toSorted()).toEqual(['영어 스피치 (1회차)', '영어 스피치 (2회차)']);
+    expect(events.map(({ description }) => description)).toEqual(['안내', '안내']);
+  });
+
+  it('is not sent for a post of the events list, whose event keeps the title of the post', async () => {
+    const postNumber = newPost();
+    const post = collectedPost(postNumber);
+
+    await collected({ app, prisma }, eventsMessage([post]));
+
+    expect((await onlyEventOf(prisma, postNumber)).title).toBe(post.title);
+  });
+});
+
+async function skippedOf(source: 'extra_snu' | 'snu_events'): Promise<number | null | undefined> {
+  const status = await prisma.collectionStatus.findUnique({ where: { source } });
+  return status?.lastSkippedPosts;
+}
+
+describe('The posts a Collection skipped', () => {
+  it('are recorded with its status, and the next Collection replaces their number', async () => {
+    await collected({ app, prisma }, eventsMessage([], { source: 'extra_snu', skippedPosts: 3 }), 'extra_snu');
+    expect(await skippedOf('extra_snu')).toBe(3);
+
+    await collected({ app, prisma }, eventsMessage([], { source: 'extra_snu', skippedPosts: 0 }), 'extra_snu');
+    expect(await skippedOf('extra_snu')).toBe(0);
+  });
+
+  it('do not make the Collection a failure', async () => {
+    const collectedAt = '2026-11-01T06:00:00.000Z';
+
+    await collected(
+      { app, prisma },
+      eventsMessage([], { source: 'extra_snu', collectedAt, skippedPosts: 1 }),
+      'extra_snu',
+    );
+
+    await expect(prisma.collectionStatus.findUnique({ where: { source: 'extra_snu' } })).resolves.toMatchObject({
+      lastSucceededAt: new Date(collectedAt),
+      lastSkippedPosts: 1,
+    });
+  });
+
+  it('are recorded with a Collection that stopped early too', async () => {
+    const message = eventsMessage([], { source: 'extra_snu', failureReason: 'blocked', skippedPosts: 2 });
+
+    await collected({ app, prisma }, message, 'extra_snu');
+
+    await expect(prisma.collectionStatus.findUnique({ where: { source: 'extra_snu' } })).resolves.toMatchObject({
+      lastFailureReason: 'blocked',
+      lastSkippedPosts: 2,
+    });
+  });
+
+  it('are left empty by a Source that does not send them', async () => {
+    await collected({ app, prisma }, eventsMessage([collectedPost(newPost())]));
+
+    expect(await skippedOf('snu_events')).toBeNull();
   });
 });
 

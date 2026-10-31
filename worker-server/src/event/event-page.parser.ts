@@ -5,6 +5,7 @@
  * 2026-10-03  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type CheerioAPI, load } from 'cheerio';
@@ -24,9 +25,9 @@ export function clean(text: string): string {
   return text.replaceAll('\u00A0', ' ').trim();
 }
 
-// The lines of the body as a browser shows them.
-function bodyLines($: CheerioAPI): string[] {
-  const body = $('.board-view .content').first();
+// The lines of a post's body, the first element `selector` finds, as a browser shows them.
+export function bodyLines($: CheerioAPI, selector: string): string[] {
+  const body = $(selector).first();
   body.find('br').replaceWith(LINE_BREAK);
   body
     .find('p, div, ul, ol, li, table, caption, tr, th, td, h1, h2, h3, h4, h5, h6, blockquote')
@@ -111,7 +112,7 @@ export function parseEventPage(html: string, postNumber: number): EventPost {
   if ($('link[rel="canonical"]').attr('href') !== sourceUrl) {
     throw new Error(`The page is not post ${postNumber}`);
   }
-  const lines = bodyLines($);
+  const lines = bodyLines($, '.board-view .content');
   return {
     postNumber,
     sourceUrl,
