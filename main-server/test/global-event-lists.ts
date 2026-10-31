@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -56,8 +57,11 @@ export const listedEventSchema = z.strictObject({
   longitude: z.number().nullable(),
   state: z.enum(['draft', 'published', 'cancelled', 'discarded']),
   version: z.number(),
-  postNumber: z.number().nullable(),
+  source: z.enum(['snu_events', 'extra_snu']).nullable(),
+  postKey: z.string().nullable(),
   sourceUrl: z.string().nullable(),
+  publicationRoute: z.enum(['administrator', 'rule', 'judgement']).nullable(),
+  needsAdministrator: z.boolean(),
   missing: z.array(z.enum(['startsAt', 'position'])),
 });
 

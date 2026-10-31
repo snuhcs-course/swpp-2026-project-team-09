@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -9,7 +10,7 @@ import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { getAdminGlobalEvents, listedAmong } from './global-event-lists.js';
-import { postNumbersFrom } from './global-events.js';
+import { ownSession, postAddress, postNumbersFrom } from './global-events.js';
 import { connectToDatabase, place132, storeEvent } from './quests.js';
 import { signInAsAdministrator } from './sign-in.js';
 import { startApp } from './start-app.js';
@@ -38,8 +39,7 @@ describe("An Administrator's list of Drafts", () => {
       state: 'draft',
       startsAt: null,
       endsAt: null,
-      postNumber,
-      sourceUrl: `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=${postNumber}`,
+      sessions: ownSession(postNumber),
     });
 
     expect(await listedAmong(app, accessToken, 'draft', [draft.id])).toEqual([
@@ -52,8 +52,11 @@ describe("An Administrator's list of Drafts", () => {
         ...place132,
         state: 'draft',
         version: 1,
-        postNumber,
-        sourceUrl: `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=${postNumber}`,
+        source: 'snu_events',
+        postKey: String(postNumber),
+        sourceUrl: postAddress(postNumber),
+        publicationRoute: null,
+        needsAdministrator: false,
         missing: ['startsAt'],
       },
     ]);

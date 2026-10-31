@@ -5,10 +5,10 @@
  * 2026-10-03  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { type CollectedEvent } from '../src/event/dto/events-collected.dto.js';
-import { parseEventPage } from '../src/event/event-page.parser.js';
+import { type EventPost, parseEventPage } from '../src/event/event-page.parser.js';
 import { blockPage, savedPage } from './pages.js';
 
 function post(postNumber: number): string {
@@ -16,7 +16,7 @@ function post(postNumber: number): string {
 }
 
 // The saved page of a post, with `edit` applied, read as the page of that post.
-function parsed(postNumber: number, edit = (page: string): string => page): CollectedEvent {
+function parsed(postNumber: number, edit = (page: string): string => page): EventPost {
   return parseEventPage(edit(post(postNumber)), postNumber);
 }
 
@@ -55,7 +55,7 @@ describe('A post with a time and a place', () => {
 // 176525's place line, and the same place written another way.
 const PLACE_LINE = '- 장소: 뉴미디어통신공동연구소 이충웅홀(132동 103호)';
 
-function withPlaceLine(line: string): CollectedEvent {
+function withPlaceLine(line: string): EventPost {
   return parsed(176525, (page) => page.replace(PLACE_LINE, line));
 }
 
@@ -124,7 +124,7 @@ describe('The time line of a post', () => {
 });
 
 // 176516, whose time line reads "2026년 10월 7일(수요일) 오후 2시", with another time of day.
-function startAt(time: string): CollectedEvent {
+function startAt(time: string): EventPost {
   return parsed(176516, (page) => page.replace('오후 2시</span>', `${time}</span>`));
 }
 
