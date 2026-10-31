@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { readdirSync, readFileSync } from 'node:fs';
@@ -10,7 +11,7 @@ import { parse } from 'yaml';
 import { z } from 'zod';
 import { expectSchema } from './expect.ts';
 
-// The cases (spec P19, "Cases"): YAML files under eval/cases/ and eval/p4/cases/, one per category, each a list of
+// The cases (spec P19, "Cases"): YAML files under eval/cases/, eval/p4/cases/ and eval/p5/cases/, one per category, each a list of
 // cases. A case is a conversation and what the Assistant should do in it. This file reads them; what `expect` holds is
 // the scorer's (eval/expect.ts).
 //
@@ -24,17 +25,20 @@ export const CASES_DIRECTORY = new URL('cases/', import.meta.url);
 
 const P4_CASES_DIRECTORY = new URL('p4/cases/', import.meta.url);
 
-// The worlds a case can run in: `small`, P19's (eval/world.ts), and `p4`, of the 공강 tools (eval/p4/world.ts). A run is
-// of one world.
-export const WORLDS = ['small', 'p4'] as const;
+const P5_CASES_DIRECTORY = new URL('p5/cases/', import.meta.url);
+
+// The worlds a case can run in: `small`, P19's (eval/world.ts), `p4`, of the 공강 tools (eval/p4/world.ts), and `p5`, of
+// joining and finding (eval/p5/world.ts). A run is of one world.
+export const WORLDS = ['small', 'p4', 'p5'] as const;
 
 export type WorldName = (typeof WORLDS)[number];
 
-// When a run of each world stands in Korea, unless a case gives its own `now`: 2026-10-21 (수) 14:05 and 2026-11-02
-// (월) 11:30.
+// When a run of each world stands in Korea, unless a case gives its own `now`: 2026-10-21 (수) 14:05, 2026-11-02 (월)
+// 11:30 and 2026-11-02 (월) 14:05.
 export const WORLD_CLOCKS: Record<WorldName, string> = {
   small: '2026-10-21T14:05:00+09:00',
   p4: '2026-11-02T11:30:00+09:00',
+  p5: '2026-11-02T14:05:00+09:00',
 };
 
 const seedName = z.string().min(1);
@@ -128,7 +132,9 @@ function casesInDirectory(directory: URL): EvalCase[] {
 
 // Every case of every file in the directories, in the order of the files' names and then as written. A case that does
 // not fit the schema, or an id used twice, fails the whole load.
-export function loadCases(directories: readonly URL[] = [CASES_DIRECTORY, P4_CASES_DIRECTORY]): EvalCase[] {
+export function loadCases(
+  directories: readonly URL[] = [CASES_DIRECTORY, P4_CASES_DIRECTORY, P5_CASES_DIRECTORY],
+): EvalCase[] {
   const cases = directories.flatMap((directory) => casesInDirectory(directory));
   const seen = new Set<string>();
   for (const { id } of cases) {

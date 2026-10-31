@@ -1,0 +1,317 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+################################################################################
+
+# The P05 suite (P05 spec, "The P05 eval suite"): evaluations C and D, committed before any run. Its cases are under
+# cases/, its world is world.yaml and its rules rules.md. `pnpm eval --world p5` runs it: every case has `repeat: 3`.
+# The values are the metrics document's, confirmed by the P05 owner on 2026-10-31. To change one, leave it here and add
+# an entry with `revises:` and `reason:`; a value chosen after seeing a result counts as undeclared.
+world: p5
+
+# k/n counts runs: a case repeated 3 times counts 3. So J3a's 2/3 is at least 6 of its 9 runs, and E5's 4/6 is at least
+# 12 of its 18 (P05 owner, 2026-10-31).
+unit: runs
+
+# R0, the first official run: the code before any chat change of P05, on a clean descendant of C0. Later runs change one
+# thing each: R1 ticket 10, R2 ticket 11, R3 ticket 12.
+naive: 'The chat as it is before this work.'
+
+whenAFloorIsMissed: "That metric's improvement is not claimed, and the failure analysis says why (metrics document, 4.1)."
+
+# A subset of five cases moves by 20% with one case. An improvement smaller than the exact McNemar test can tell (6, 8
+# or 10 fixed with 0, 1 or 2 turned the other way) is reported as a direction only (metrics document, 4.4).
+smallSamples: 'Each subset has at least five cases, and E has six. One case of five is 20%; a smaller improvement is a direction only.'
+
+labels:
+  draftedBy: null
+  draftedOn: null
+  reviewedBy: null
+  reviewedOn: null
+  secondLabeller: null
+  overlapCases: 20
+
+# P19 cases whose expected answer this work changes, not edited, reported apart in G1. Each is listed with the P05 case
+# that holds the new answer.
+superseded:
+  - { case: making-parties-for-event, heldBy: join-35 }
+  - { case: making-parties-open-dinner, heldBy: join-01 }
+  - { case: making-parties-approval-tennis, heldBy: join-30 }
+  - { case: ask-missing-fields-in-one-question, heldBy: join-28 }
+
+# Which cases count toward each metric and subset. Seeds are added beside the case ids with the answers, as (case id,
+# seed): the answers stay out of the repository until the second labeller is done.
+tags:
+  J3a: [join-03, join-06, join-07]
+  J3b: [join-04, join-08, join-09, join-10]
+  J4: [join-01, join-03, join-05, join-06, join-07, join-33]
+  J6: [join-16, join-17, join-18, join-19]
+  J7: [join-20, join-21, join-22]
+  J9: [join-12, join-13, join-14, join-15]
+  J10: [join-23, join-24, join-25, join-26]
+  L: [search-l-01, search-l-02, search-l-03, search-l-04, search-l-05]
+  P: [search-p-01, search-p-02, search-p-03, search-p-04, search-p-05, search-p-06]
+  T1: [search-t1-01, search-t1-02, search-t1-03, search-t1-04, search-t1-05, search-t1-06]
+  T2: [search-t2-01, search-t2-02, search-t2-03, search-t2-04, search-t2-05]
+  H: [search-h-01, search-h-02, search-h-03, search-h-04, search-h-05, search-h-06, search-h-07]
+  S: [search-s-01, search-s-02, search-s-03, search-s-04, search-s-05]
+  N: [search-n-01, search-n-02, search-n-03, search-n-04, search-n-05]
+  R: [search-r-01, search-r-02, search-r-03, search-r-04, search-r-05]
+  O: [search-o-01, search-o-02, search-o-03, search-o-04, search-o-05, search-o-06]
+  B: [search-b-01, search-b-02, search-b-03, search-b-04, search-b-05]
+  E: [search-e-01, search-e-02, search-e-03, search-e-04, search-e-05, search-e-06]
+  # The cases of the large world, added by ticket 02b.
+  V: []
+
+thresholds:
+  - id: j1.floor
+    metric: J1
+    measure: "Runs whose action is the answer's ÷ runs, on every join-or-recruit case"
+    kind: floor
+    comparator: '>='
+    value: 0.5
+    declared: 2026-10-31
+  - id: j1.target
+    metric: J1
+    measure: "Runs whose action is the answer's ÷ runs, on every join-or-recruit case"
+    kind: target
+    comparator: '>='
+    value: 0.85
+    declared: 2026-10-31
+  - id: j1-p.floor
+    metric: J1-P
+    measure: "Runs whose Proposal holds the answer's fields ÷ runs, on the cases whose answer is a Proposal"
+    kind: floor
+    comparator: '>='
+    value: 0.8
+    declared: 2026-10-31
+  - id: j1-p.target
+    metric: J1-P
+    measure: "Runs whose Proposal holds the answer's fields ÷ runs, on the cases whose answer is a Proposal"
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: j2.floor
+    metric: J2
+    measure: "Runs whose Quest cards are exactly the answer's ÷ runs, on the join cases whose answer shows Quest cards"
+    kind: floor
+    comparator: '>='
+    value: 0.4
+    declared: 2026-10-31
+  - id: j2.target
+    metric: J2
+    measure: "Runs whose Quest cards are exactly the answer's ÷ runs, on the join cases whose answer shows Quest cards"
+    kind: target
+    comparator: '>='
+    value: 0.8
+    declared: 2026-10-31
+  - id: j3a.floor
+    metric: J3a
+    measure: 'Runs passed ÷ runs, on the three traps a model can avoid'
+    kind: floor
+    comparator: '>='
+    value: 0.6666666666666666
+    declared: 2026-10-31
+  - id: j3a.target
+    metric: J3a
+    measure: 'Runs passed ÷ runs, on the three traps a model can avoid'
+    kind: target
+    comparator: '='
+    value: 1
+    declared: 2026-10-31
+  - id: j3b.target
+    metric: J3b
+    measure: 'Runs passed ÷ runs, on the four traps that need the server'
+    kind: target
+    comparator: '='
+    value: 1
+    declared: 2026-10-31
+  - id: j4.floor
+    metric: J4
+    measure: 'Runs that show a card outside the answer ÷ runs, on the tagged cases'
+    kind: floor
+    comparator: '<='
+    value: 0.16666666666666666
+    declared: 2026-10-31
+  - id: j4.target
+    metric: J4
+    measure: 'Runs that show a card outside the answer ÷ runs, on the tagged cases'
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: j6.floor
+    metric: J6
+    measure: 'Runs passed ÷ runs, on the two-turn cases'
+    kind: floor
+    comparator: '>='
+    value: 0.6
+    declared: 2026-10-31
+  - id: j6.target
+    metric: J6
+    measure: 'Runs passed ÷ runs, on the two-turn cases'
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: j7.floor
+    metric: J7
+    measure: 'Runs passed ÷ runs, on the 그래도 새로 cases'
+    kind: floor
+    comparator: '>='
+    value: 0.8
+    declared: 2026-10-31
+  - id: j7.target
+    metric: J7
+    measure: 'Runs passed ÷ runs, on the 그래도 새로 cases'
+    kind: target
+    comparator: '>='
+    value: 0.95
+    declared: 2026-10-31
+  - id: j8.floor
+    metric: J8
+    measure: 'Runs that say the asker joined or asked to join ÷ runs, on the join cases'
+    kind: floor
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: j8.target
+    metric: J8
+    measure: 'Runs that say the asker joined or asked to join ÷ runs, on the join cases'
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: j9.floor
+    metric: J9
+    measure: 'Runs passed ÷ runs, on the cases whose answer holds an Approval Quest'
+    kind: floor
+    comparator: '>='
+    value: 0.7
+    declared: 2026-10-31
+  - id: j9.target
+    metric: J9
+    measure: 'Runs passed ÷ runs, on the cases whose answer holds an Approval Quest'
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: j10.floor
+    metric: J10
+    measure: "Cases that missed an answer's card with an unstated condition in the search ÷ cases, on the tagged cases"
+    kind: floor
+    comparator: '<='
+    value: 0.1
+    declared: 2026-10-31
+  - id: j10.target
+    metric: J10
+    measure: "Cases that missed an answer's card with an unstated condition in the search ÷ cases, on the tagged cases"
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: g1.floor
+    metric: G1
+    measure: 'P19 cases, without the superseded, that passed at the baseline and now fail'
+    kind: floor
+    comparator: '<='
+    value: 2
+    declared: 2026-10-31
+  - id: g1.target
+    metric: G1
+    measure: 'P19 cases, without the superseded, that passed at the baseline and now fail'
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: e1.floor
+    metric: E1
+    measure: "Micro precision over the subsets' cards: rightly shown ÷ shown, over the repetitions"
+    kind: floor
+    comparator: '>='
+    value: 0.7
+    declared: 2026-10-31
+  - id: e1.target
+    metric: E1
+    measure: "Micro precision over the subsets' cards: rightly shown ÷ shown, over the repetitions"
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: e2.floor
+    metric: E2
+    measure: 'Micro recall of subset L'
+    kind: floor
+    comparator: '>='
+    value: 0.7
+    declared: 2026-10-31
+  - id: e2.target
+    metric: E2
+    measure: 'Micro recall of subset L'
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: e3.target
+    metric: E3
+    measure: 'Micro recall of subsets P and T1, each world apart'
+    kind: target
+    comparator: '>='
+    value: 0.8
+    declared: 2026-10-31
+  - id: e4.target
+    metric: E4
+    measure: 'Micro recall of subset V, in the large world (ticket 02b)'
+    kind: target
+    comparator: '>='
+    value: 0.8
+    declared: 2026-10-31
+  - id: e5.floor
+    metric: E5
+    measure: 'Runs with no card and a line saying none ÷ runs, on subset E'
+    kind: floor
+    comparator: '>='
+    value: 0.6666666666666666
+    declared: 2026-10-31
+  - id: e5.target
+    metric: E5
+    measure: 'Runs with no card and a line saying none ÷ runs, on subset E'
+    kind: target
+    comparator: '='
+    value: 1
+    declared: 2026-10-31
+  - id: e7.floor
+    metric: E7
+    measure: "Micro recall of each of T2, H, S, N, R, O, B, by the model. The server's recall in CI, of 1.0, is a floor too, measured from ticket 02b"
+    kind: floor
+    comparator: '>='
+    value: 0.7
+    declared: 2026-10-31
+  - id: e7.target
+    metric: E7
+    measure: "Micro recall of each of T2, H, S, N, R, O, B, by the model. The server's recall in CI, of 1.0, is a floor too, measured from ticket 02b"
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: e8.floor
+    metric: E8
+    measure: 'Runs stopped by 8 steps or 30 s ÷ runs'
+    kind: floor
+    comparator: '<='
+    value: 0.05
+    declared: 2026-10-31
+  - id: e8.target
+    metric: E8
+    measure: 'Runs stopped by 8 steps or 30 s ÷ runs'
+    kind: target
+    comparator: '<='
+    value: 0.02
+    declared: 2026-10-31
+
+# Reported, with no threshold.
+diagnostic:
+  J5: 'Cases that passed all 3 runs ÷ cases'
+  E6: 'Runs whose cards are exactly the answer ÷ runs'

@@ -1922,7 +1922,7 @@ pnpm eval --model anthropic/claude-haiku-5.5 --temperature 0 --max-steps 30 --ti
 | `--repeat <n>`                                         | the cases marked `repeat` run their own count (3)                                 |
 | `--category`, `--case`                                 | every case; both take several values, comma-separated or again                    |
 | `--budget <USD>`                                       | 5                                                                                 |
-| `--world <small \| p4>`                                | `small`, P19's world and the cases that name it                                   |
+| `--world <small \| p4 \| p5>`                           | `small`, P19's world and the cases that name it                                   |
 | `--yes`                                                | asks before it starts                                                             |
 
 `eval/cli.ts` reads the flags, prints the estimated cost from the number of turns, the tokens a turn took in the last
@@ -1969,6 +1969,14 @@ sends it as another User of the world, such as one with no Timetable. `eval/p4/r
 `eval/p4/travel-fixture.json` freezes every ordered pair of the world's Places, and `eval/p4/suite.yaml` commits the
 thresholds and who drafted and reviewed the labels. Every case has `repeat: 3`, so a scorecard's pass rates are the mean
 of the 3 runs. `test/eval-p4-cases.integration.test.ts` checks the set, the fixture and every seed name.
+
+#### The P05 suite
+
+`pnpm eval --world p5` runs the cases of `eval/p5/cases/`, joining or recruiting and finding, in a world of their own,
+`eval/p5/world.yaml`, with the clock at 2026-11-02 (월) 14:05. `eval/p5/rules.md` states the judgement in prose, and
+`eval/p5/suite.yaml` commits the thresholds of evaluations C and D, each case's subset, the superseded P19 cases and who
+drafted and reviewed the labels. Do not run it with the real model before C0, and rehearse only with words outside the
+set, keeping no result (metrics document, 4.1). `test/eval-p5-cases.integration.test.ts` checks the set and the world.
 
 #### Scoring
 

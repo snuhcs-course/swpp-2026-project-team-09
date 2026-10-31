@@ -1,0 +1,300 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+################################################################################
+
+# 합류와 모집: 있으면 합류, 없으면 만들기 (evaluation C). Turns only until the labels are in. The fixed histories write the
+# earlier turns as the app sends them back, and only the last turn is scored.
+
+- id: join-01
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 저녁 삼겹살 먹을 사람 모집해 줘
+
+- id: join-02
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 점심에 학생회관에서 같이 밥 먹을 사람 모집해 줘
+
+- id: join-03
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 저녁 7시에 민턴 칠 사람 구해 줘
+
+- id: join-04
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 저녁 7시에 같이 농구할 사람 나 포함 6명 모집해 줘
+
+- id: join-05
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 수요일 저녁 7시에 공연 같이 갈 사람 모집해 줘
+
+- id: join-06
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 저녁 7시에 볼링 칠 사람 나 포함 4명 모집해 줘
+
+- id: join-07
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 수요일 저녁 8시에 민턴 칠 사람 나 포함 4명 모집해 줘
+
+- id: join-08
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 가을 음악제 같이 갈 사람 나 포함 4명 모집해 줘
+
+- id: join-09
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 수요일 저녁 7시에 토익 스터디 할 사람 나 포함 4명 모집해 줘
+
+- id: join-10
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 오늘 오후 2시 10분에 보드게임 할 사람 나 포함 5명 모집해 줘
+
+- id: join-11
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 오늘 저녁에 치킨 먹을 사람 모집해 줘
+
+- id: join-12
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 아침에 같이 러닝할 사람 모집해 줘
+
+- id: join-13
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 수요일 저녁 6시에 테니스 칠 사람 모집해 줘
+
+- id: join-14
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 저녁 7시에 토익 스피킹 스터디 할 사람 모집해 줘
+
+- id: join-15
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 이번 주에 독주회 있어?
+    - assistant:
+        text: 목요일에 피아노 독주회가 있어요.
+        cards:
+          - { kind: globalEvent, seed: 피아노 독주회 }
+    - user: 이 공연 같이 갈 사람 모집해 줘
+
+- id: join-16
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 수요일에 공연 뭐 있어?
+    - assistant:
+        text: 수요일에는 가을 정기 공연이 있어요.
+        cards:
+          - { kind: globalEvent, seed: 가을 정기 공연 }
+    - user: 그 행사 파티 있어?
+
+- id: join-17
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 이번 주에 사진 전시 뭐 있어?
+    - assistant:
+        text: 가을 사진전이 열리고 있어요.
+        cards:
+          - { kind: globalEvent, seed: 가을 사진전 }
+    - user: 그 행사 파티 있어?
+
+- id: join-18
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 토요일에 뮤지컬 있어?
+    - assistant:
+        text: 토요일에 뮤지컬 〈지하철 1호선〉이 있어요.
+        cards:
+          - { kind: globalEvent, seed: 뮤지컬 〈지하철 1호선〉 }
+    - user: 그 행사 파티 있어?
+
+- id: join-19
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 금요일 저녁에 버스킹 있어?
+    - assistant:
+        text: 금요일 저녁에 잔디광장 버스킹이 있어요.
+        cards:
+          - { kind: globalEvent, seed: 잔디광장 버스킹 }
+    - user: 그 행사 파티 있어?
+
+- id: join-20
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 저녁 7시에 고기 먹을 사람 나 포함 4명 모집해 줘
+    - assistant:
+        text: 이미 모집 중인 파티가 있어요. 참여해 보시겠어요?
+        cards:
+          - { kind: quest, seed: 저녁에 고기 구워요 }
+    - user: 그래도 새로 만들어 줘
+
+- id: join-21
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 저녁 8시에 민턴 칠 사람 나 포함 4명 모집해 줘
+    - assistant:
+        text: 이미 모집 중인 파티가 있어요. 참여해 보시겠어요?
+        cards:
+          - { kind: quest, seed: 민턴 한 판 }
+    - user: 그래도 새로 만들어 줘
+
+- id: join-22
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 수요일 저녁 6시에 풋살 할 사람 나 포함 8명 모집해 줘
+    - assistant:
+        text: 이미 모집 중인 파티가 있어요. 참여해 보시겠어요?
+        cards:
+          - { kind: quest, seed: 풋살 하실 분 }
+    - user: 그래도 새로 만들어 줘
+
+- id: join-23
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 민턴 칠 사람 모집해 줘
+
+- id: join-24
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 금요일에 같이 뭐 할 사람 모집해 줘
+
+- id: join-25
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 풋살 할 사람 구해 줘
+
+- id: join-26
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 농구할 사람 모집해 줘
+
+- id: join-27
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 같이 할 사람 모집해 줘
+
+- id: join-28
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 파티 하나 모집해 줘
+
+- id: join-29
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 토요일 오후 3시에 체스 둘 사람 나 포함 2명 모집해 줘
+
+- id: join-30
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 일요일 오전 10시에 요가할 사람 나 포함 5명 모집해 줘. 신청 오면 내가 승인할게
+
+- id: join-31
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 점심 12시에 학생회관에서 밥 먹을 사람 모집해 줘
+
+- id: join-32
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 저녁 6시에 마라탕 먹을 사람 4명 모집해 줘
+
+- id: join-33
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 저녁 7시에 민턴 칠 사람 나 포함 4명 모집해 줘
+
+- id: join-34
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 저녁 7시 40분에 민턴 칠 사람 모집해 줘
+
+- id: join-35
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 가을 사진전 같이 갈 사람 모집해 줘
+
+- id: join-36
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 오후 4시에 자바 스터디 할 사람 나 포함 4명 모집해 줘

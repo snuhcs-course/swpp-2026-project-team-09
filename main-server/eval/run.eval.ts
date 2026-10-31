@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { fileURLToPath } from 'node:url';
@@ -13,6 +14,7 @@ import { dotEnv, runOptionsFromEnv } from './options.ts';
 import { expectSchema } from './expect.ts';
 import { type Names, namesOf } from './normalise.ts';
 import { seedP4World } from './p4/world.ts';
+import { seedP5World } from './p5/world.ts';
 import { type EvalApp, runCase, RunLog, startEvalApp } from './runner.ts';
 import { scoreTurn } from './score.ts';
 import { saveScorecard } from './scorecard.ts';
@@ -22,6 +24,8 @@ import { seedWorld, type World } from './world.ts';
 // is one test, which passes once its turns are recorded: the scorer (eval/score.ts) judges them, and stops a live
 // case at its first failed turn. The run is saved when it ends, stopped by the budget or not, with its scorecard
 // beside it.
+
+const SEEDS = { small: seedWorld, p4: seedP4World, p5: seedP5World };
 
 const options = runOptionsFromEnv();
 const cases = selectCases(casesIn(loadCases(), options.world), options.categories, options.caseIds);
@@ -40,8 +44,7 @@ beforeAll(async () => {
     openRouterModel(key, options.model),
     options,
   );
-  const seed = options.world === 'p4' ? seedP4World : seedWorld;
-  started.world = await seed(started.evalApp.app, inject('settings').DATABASE_URL);
+  started.world = await SEEDS[options.world](started.evalApp.app, inject('settings').DATABASE_URL);
   started.names = namesOf(started.world.seeds);
   log.keepSeeds(started.world.seeds);
 });
