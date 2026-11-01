@@ -32,6 +32,6 @@
 
 ### Agent usage (2026-11-02)
 
-- Agent time: about 27 minutes (estimate), one session with two review subagents, summed from the transcript with gaps capped at 5 minutes, up to this commit.
-- Tokens, subagents included: input 116, with 7,452,785 cache reads and 376,187 cache writes shown apart; output 106,880. Counted before this commit.
+- Agent time: about 48 minutes (estimate), one session with two review subagents, summed from the transcript with gaps capped at 5 minutes, through the reviews' fixes. Waiting for CI and for people is capped the same way, so a little of it is counted.
+- Tokens, subagents included: input 140, with 10,040,403 cache reads and 400,558 cache writes shown apart; output 123,827. Counted before this commit.
 - No eval model calls.
