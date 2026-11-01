@@ -1,0 +1,301 @@
+{
+  "12101": {
+    "successYN": "Y",
+    "seatInfo": {
+      "SEATNO": 12101001,
+      "NAME": "G201",
+      "VNAME": "G201",
+      "SECTORNO": 12101,
+      "STATUS": 1,
+      "POSX": 0,
+      "POSY": 0,
+      "POSW": 0,
+      "POSH": 0,
+      "ICONTYPE": 0,
+      "GR_MIN": 11,
+      "GR_MAX": 20,
+      "SECTOR_NAME": "20인실",
+      "LIBNAME": "중앙도서관 관정관",
+      "FLOORNAME": "2층"
+    },
+    "params": {
+      "sectorNo": "12101"
+    }
+  },
+  "12102": {
+    "successYN": "Y",
+    "seatInfo": {
+      "SEATNO": 12102001,
+      "NAME": "G203",
+      "VNAME": "G203",
+      "SECTORNO": 12102,
+      "STATUS": 1,
+      "POSX": 0,
+      "POSY": 0,
+      "POSW": 0,
+      "POSH": 0,
+      "ICONTYPE": 0,
+      "GR_MIN": 7,
+      "GR_MAX": 10,
+      "SECTOR_NAME": "10인실",
+      "LIBNAME": "중앙도서관 관정관",
+      "FLOORNAME": "2층"
+    },
+    "params": {
+      "sectorNo": "12102"
+    }
+  },
+  "12103": {
+    "successYN": "Y",
+    "seatInfo": {
+      "SEATNO": 12103001,
+      "NAME": "G204",
+      "VNAME": "G204",
+      "SECTORNO": 12103,
+      "STATUS": 1,
+      "POSX": 0,
+      "POSY": 0,
+      "POSW": 0,
+      "POSH": 0,
+      "ICONTYPE": 0,
+      "GR_MIN": 4,
+      "GR_MAX": 6,
+      "SECTOR_NAME": "6인실",
+      "LIBNAME": "중앙도서관 관정관",
+      "FLOORNAME": "2층"
+    },
+    "params": {
+      "sectorNo": "12103"
+    }
+  },
+  "12104": {
+    "successYN": "Y",
+    "seatInfo": {
+      "SEATNO": 12104001,
+      "NAME": "G202",
+      "VNAME": "G202",
+      "SECTORNO": 12104,
+      "STATUS": 3,
+      "POSX": 0,
+      "POSY": 0,
+      "POSW": 0,
+      "POSH": 0,
+      "ICONTYPE": 0,
+      "GR_MIN": 4,
+      "GR_MAX": 5,
+      "SECTOR_NAME": "5인실",
+      "LIBNAME": "중앙도서관 관정관",
+      "FLOORNAME": "2층"
+    },
+    "params": {
+      "sectorNo": "12104"
+    }
+  },
+  "14101": {
+    "successYN": "Y",
+    "seatInfo": {
+      "SEATNO": 14101001,
+      "NAME": "G402",
+      "VNAME": "G402",
+      "SECTORNO": 14101,
+      "STATUS": 1,
+      "POSX": 0,
+      "POSY": 0,
+      "POSW": 0,
+      "POSH": 0,
+      "ICONTYPE": 0,
+      "GR_MIN": 7,
+      "GR_MAX": 10,
+      "SECTOR_NAME": "10인실",
+      "LIBNAME": "중앙도서관 관정관",
+      "FLOORNAME": "4층"
+    },
+    "params": {
+      "sectorNo": "14101"
+    }
+  },
+  "14102": {
+    "successYN": "Y",
+    "seatInfo": {
+      "SEATNO": 14102001,
+      "NAME": "G401",
+      "VNAME": "G401",
+      "SECTORNO": 14102,
+      "STATUS": 1,
+      "POSX": 0,
+      "POSY": 0,
+      "POSW": 0,
+      "POSH": 0,
+      "ICONTYPE": 0,
+      "GR_MIN": 6,
+      "GR_MAX": 8,
+      "SECTOR_NAME": "8인실",
+      "LIBNAME": "중앙도서관 관정관",
+      "FLOORNAME": "4층"
+    },
+    "params": {
+      "sectorNo": "14102"
+    }
+  },
+  "14103": {
+    "successYN": "Y",
+    "seatInfo": {
+      "SEATNO": 14103001,
+      "NAME": "G404",
+      "VNAME": "G404",
+      "SECTORNO": 14103,
+      "STATUS": 1,
+      "POSX": 0,
+      "POSY": 0,
+      "POSW": 0,
+      "POSH": 0,
+      "ICONTYPE": 0,
+      "GR_MIN": 4,
+      "GR_MAX": 6,
+      "SECTOR_NAME": "6인실",
+      "LIBNAME": "중앙도서관 관정관",
+      "FLOORNAME": "4층"
+    },
+    "params": {
+      "sectorNo": "14103"
+    }
+  },
+  "16201": {
+    "successYN": "Y",
+    "seatInfo": {
+      "SEATNO": 16201001,
+      "NAME": "STUDIO A",
+      "VNAME": "STUDIO A",
+      "SECTORNO": 16201,
+      "STATUS": 1,
+      "POSX": 174,
+      "POSY": 211,
+      "POSW": 0,
+      "POSH": 0,
+      "ICONTYPE": 0,
+      "GR_MIN": 1,
+      "GR_MAX": 8,
+      "SECTOR_NAME": "창의미디어스페이스",
+      "LIBNAME": "중앙도서관 관정관",
+      "FLOORNAME": "6층"
+    },
+    "params": {
+      "sectorNo": "16201"
+    }
+  },
+  "16401": {
+    "successYN": "Y",
+    "seatInfo": {
+      "SEATNO": 16401001,
+      "NAME": "미디어캐럴 A",
+      "VNAME": "Media Carrel A",
+      "SECTORNO": 16401,
+      "STATUS": 1,
+      "POSX": 89,
+      "POSY": 211,
+      "POSW": 0,
+      "POSH": 0,
+      "ICONTYPE": 0,
+      "GR_MIN": 1,
+      "GR_MAX": 6,
+      "SECTOR_NAME": "미디어캐럴",
+      "LIBNAME": "중앙도서관 관정관",
+      "FLOORNAME": "6층"
+    },
+    "params": {
+      "sectorNo": "16401"
+    }
+  },
+  "16501": {
+    "successYN": "Y",
+    "seatInfo": {
+      "SEATNO": 16501001,
+      "NAME": "VR 1",
+      "VNAME": "VR 1",
+      "SECTORNO": 16501,
+      "STATUS": 1,
+      "POSX": 89,
+      "POSY": 211,
+      "POSW": 0,
+      "POSH": 0,
+      "ICONTYPE": 0,
+      "GR_MIN": 1,
+      "GR_MAX": 1,
+      "SECTOR_NAME": "XR Experience Center",
+      "LIBNAME": "중앙도서관 관정관",
+      "FLOORNAME": "6층"
+    },
+    "params": {
+      "sectorNo": "16501"
+    }
+  },
+  "16601": {
+    "successYN": "Y",
+    "seatInfo": {
+      "SEATNO": 16601001,
+      "NAME": "Creative Media Studio",
+      "VNAME": "Creative Media Studio",
+      "SECTORNO": 16601,
+      "STATUS": 1,
+      "POSX": 89,
+      "POSY": 211,
+      "POSW": 0,
+      "POSH": 0,
+      "ICONTYPE": 0,
+      "GR_MIN": 1,
+      "GR_MAX": 10,
+      "SECTOR_NAME": "Creative Media Studio",
+      "LIBNAME": "중앙도서관 관정관",
+      "FLOORNAME": "6층"
+    },
+    "params": {
+      "sectorNo": "16601"
+    }
+  },
+  "17202": {
+    "successYN": "Y",
+    "seatInfo": {
+      "SEATNO": 17202001,
+      "NAME": "7A 열람실 2구역-1",
+      "VNAME": "7193",
+      "SECTORNO": 17202,
+      "STATUS": 1,
+      "POSX": 538,
+      "POSY": 41,
+      "POSW": 0,
+      "POSH": 0,
+      "ICONTYPE": 8,
+      "GR_MIN": 0,
+      "GR_MAX": 0,
+      "SECTOR_NAME": "7A 열람실 2 구역",
+      "LIBNAME": "중앙도서관 관정관",
+      "FLOORNAME": "7층"
+    },
+    "params": {
+      "sectorNo": "17202"
+    }
+  },
+  "18202": {
+    "successYN": "Y",
+    "seatInfo": {
+      "SEATNO": 18202001,
+      "NAME": "8A 열람실 2구역-1",
+      "VNAME": "8169",
+      "SECTORNO": 18202,
+      "STATUS": 1,
+      "POSX": 509,
+      "POSY": 37,
+      "POSW": 0,
+      "POSH": 0,
+      "ICONTYPE": 8,
+      "GR_MIN": 0,
+      "GR_MAX": 0,
+      "SECTOR_NAME": "8A 열람실 2 구역(노트북존)",
+      "LIBNAME": "중앙도서관 관정관",
+      "FLOORNAME": "8층"
+    },
+    "params": {
+      "sectorNo": "18202"
+    }
+  }
+}

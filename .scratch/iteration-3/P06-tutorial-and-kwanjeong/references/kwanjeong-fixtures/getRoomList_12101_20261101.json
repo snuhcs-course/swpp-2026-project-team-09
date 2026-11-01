@@ -1,0 +1,31 @@
+{
+ "request": "searchDate=20261101&roomNo=121&sectorNo=12101&seatNo=&TIME_START=&TIME_END=&ABLETIME=&NAME=&sectorName=20%EC%9D%B8%EC%8B%A4&roomName=%EA%B7%B8%EB%A3%B9%EC%8A%A4%ED%84%B0%EB%94%94%EB%A3%B8&tab_on=tabBooking&libNo=1",
+ "response": {
+  "successYN": "Y",
+  "BookingTimeList": [
+   {
+    "SEATNO": "12101001",
+    "NAME": "G201",
+    "SECTORNO": "12101",
+    "ROOMNO": "121",
+    "ABLETIME": "2026-11-01 17:30:00,2026-11-01 20:30:00,2026-11-01 21:00:00,2026-11-01 21:30:00,2026-11-01 22:00:00,2026-11-01 22:30:00",
+    "OPENTIME": "0900",
+    "CLOSETIME": "2300"
+   }
+  ],
+  "params": {
+   "TIME_START": "",
+   "sectorNo": "12101",
+   "NAME": "",
+   "tab_on": "tabBooking",
+   "seatNo": "",
+   "roomName": "그룹스터디룸",
+   "libNo": "1",
+   "roomNo": "121",
+   "TIME_END": "",
+   "sectorName": "20인실",
+   "searchDate": "20261101",
+   "ABLETIME": ""
+  }
+ }
+}

@@ -1,0 +1,636 @@
+# 관정관 (libNo 1) space catalogue for request-to-room mapping.
+# Built read-only from k-rsv.snu.ac.kr/NEW_SNU_BOOKING on 2026-11-01:
+#   getSectorList, getRoomList (2026-11-02), getSeatInfo (json/seatinfo_<seatNo>.json),
+#   roomForm_<sectorNo>.html 유의사항/사용용도/서약서, page_<room>_<sector>.html, FINDINGS.md.
+# purpose: one sentence drawn from site text (DEVICE_COMMENT, 유의사항); where the site says
+#   nothing, purpose_source: proposed.
+# aliases: source: site = the site's own wording; source: proposed = inferred.
+# implemented: true = inside the user's scope (2/4층 그룹스터디룸, 6층 미디어플렉스 bookable rooms,
+#   7/8층 열람실 incl. 노트북존 and 대학원 열람실).
+# The /pc/guide/list page only explains how to use the web booking UI (01 예약하기, 02 그룹스터디룸 예약,
+#   03 나의 예약현황); it describes no space and links to no further guide content.
+
+common:
+  group_study_room:
+    duration: "0:30–3:00 in 30-min steps, no extension"
+    hours: "09:00–23:00 (getRoomList OPENTIME/CLOSETIME; '0000' = closed that day)"
+    booking_ahead: "today + 3 days (DAY_FROM 0, DAY_TO 3)"
+    useDesc: [강의, 과제, 동아리활동, 연구, 취업, 기타]
+    needs_pledge: false
+    eligibility: >-
+      Applicant plus companions by name + 학번 (getUserCheck), at least GR_MIN people including the applicant.
+      Site notes: S-CARD required to enter (register at scard.snu.ac.kr); using another person's 학번 → cancellation
+      and 30-day ban (guide page).
+    rules: "Not entered within 1 h → cancelled; 3 no-shows in 7 days → 3-day ban (FINDINGS)."
+  media_room:
+    duration: "0:30–3:00 (XR 0:30–2:00, Creative Media Studio 0:30–4:00)"
+    booking_ahead: "today + 3 days"
+    needs_pledge: true
+    pledge_text: >-
+      퇴실 시 기기 고장, PC 비정상 프로그램 설치 등의 문제 발생 시 변상 및 원상 복구 규정에 대해 동의 … 민, 형사상의 모든 책임을 본인이 지고 …
+    eligibility: "Leave an ID card (신분증) at the 6층 desk / 관정미디어플렉스 at the booked time. Users who may damage equipment can be refused."
+    saturday_hours: unknown
+  reading_room:
+    unit: seat
+    duration: "0:30–6:00 in 30-min steps, extension possible"
+    hours: "07:00–23:00"
+    booking_ahead: "today only"
+    useDesc: null          # seat bookings have no 사용용도
+    needs_pledge: false
+    capacity: null         # one person per seat; no GR_MIN/GR_MAX
+    rules: >-
+      Confirm at the 좌석배정기 (kiosk) within 30 min or the seat is auto-returned (site: "예약 후 좌석배정기에서 확인을 해야 정상 이용이 가능합니다");
+      5 no-shows/unreturned in a month → 10-day ban (FINDINGS). S-CARD required to enter.
+    seat_info: "getSeatInfo returns successYN N '좌석 추가 정보가 존재하지 않습니다.' for every reading-room seat sampled — no per-seat equipment text."
+
+spaces:
+
+  # ───────────────────────── 2층 그룹스터디룸 (roomNo 121) ─────────────────────────
+  - id: 2F-group-20
+    floor: 2
+    roomNo: 121
+    sectorNo: 12101
+    seatNos: [12101001]
+    rooms: [G201]
+    name: "그룹스터디룸 20인실 (G201)"
+    kind: group-study-room
+    bookable: true
+    implemented: true
+    purpose: "11–20명이 함께 강의·과제·동아리 활동·연구·취업 준비를 하는 대형 그룹스터디룸입니다."
+    equipment: "무선랜/전원 제공 (LAN_YN Y, POWER_YN Y, no monitor)"
+    capacity: "11–20"
+    party_note: "needs ≥ 11 people, not bookable through a party yet"   # a party (Quest) holds at most 8
+    common: group_study_room
+    photo: /MAP/POP/pop_12101001.jpg
+    aliases:
+      - {text: 20인실, source: site}
+      - {text: 그룹스터디룸, source: site}
+      - {text: 단체 스터디룸, source: proposed}
+      - {text: 큰 스터디룸, source: proposed}
+      - {text: 동아리 모임 장소, source: proposed}
+      - {text: 20명 들어가는 방, source: proposed}
+
+  - id: 2F-group-10
+    floor: 2
+    roomNo: 121
+    sectorNo: 12102
+    seatNos: [12102001, 12102002, 12102003]
+    rooms: [G203, G207, G208]
+    name: "그룹스터디룸 10인실"
+    kind: group-study-room
+    bookable: true
+    implemented: true
+    purpose: "7–10명이 함께 공부·회의를 하는 그룹스터디룸입니다."
+    equipment: "무선랜/전원 제공 (no monitor)"
+    capacity: "7–10"
+    common: group_study_room
+    aliases:
+      - {text: 10인실, source: site}
+      - {text: 그룹스터디룸, source: site}
+      - {text: 팀플 방, source: proposed}
+      - {text: 10명 스터디룸, source: proposed}
+
+  - id: 2F-group-6
+    floor: 2
+    roomNo: 121
+    sectorNo: 12103
+    seatNos: [12103001, 12103002, 12103003, 12103006]
+    rooms: [G204, G205, G206, G211]
+    name: "그룹스터디룸 6인실"
+    kind: group-study-room
+    bookable: true
+    implemented: true
+    purpose: "4–6명이 함께 공부·팀 과제를 하는 소형 그룹스터디룸입니다."
+    equipment: "무선랜/전원 제공 (no monitor)"
+    capacity: "4–6"
+    common: group_study_room
+    note: "Map labels G209 and G210 in this sector are absent from getRoomList (not bookable online)."
+    aliases:
+      - {text: 6인실, source: site}
+      - {text: 그룹스터디룸, source: site}
+      - {text: 작은 스터디룸, source: proposed}
+      - {text: 팀플실, source: proposed}
+
+  - id: 2F-group-5-G202
+    floor: 2
+    roomNo: 121
+    sectorNo: 12104
+    seatNos: [12104001]
+    rooms: [G202]
+    name: "그룹스터디룸 5인실 (G202)"
+    kind: group-study-room
+    bookable: false
+    why_not: "BOOKING_YN N — booked offline, not on the web site."
+    implemented: false
+    purpose: "4–5명용 그룹스터디룸입니다."
+    equipment: "무선랜/전원 제공"
+    capacity: "4–5"
+    aliases:
+      - {text: 5인실, source: site}
+
+  # ───────────────────────── 4층 그룹스터디룸 (roomNo 141) ─────────────────────────
+  - id: 4F-group-10
+    floor: 4
+    roomNo: 141
+    sectorNo: 14101
+    seatNos: [14101001, 14101002, 14101003, 14101004]
+    rooms: [G402, G403, G423, G425]
+    name: "그룹스터디룸 10인실"
+    kind: group-study-room
+    bookable: true
+    implemented: true
+    purpose: "7–10명이 모니터를 띄워 발표·회의·스터디를 하는 그룹스터디룸입니다."
+    equipment: "모니터/무선랜/전원 제공"
+    capacity: "7–10"
+    common: group_study_room
+    donor_notes:   # COMMENT field
+      G402: "의학과 동문 정규철님이 기증해주신 그룹스터디룸입니다."
+      G403: "국사학과 명예교수 김철준님이 기증해주신 그룹스터디룸입니다."
+      G423: "우송재단에서 기증해주신 그룹스터디룸입니다."
+    aliases:
+      - {text: 10인실, source: site}
+      - {text: 모니터 있는 스터디룸, source: proposed}
+      - {text: 발표 연습할 방, source: proposed}
+
+  - id: 4F-group-8
+    floor: 4
+    roomNo: 141
+    sectorNo: 14102
+    seatNos: [14102001]
+    rooms: [G401]
+    name: "그룹스터디룸 8인실 (G401)"
+    kind: group-study-room
+    bookable: true
+    implemented: true
+    purpose: "6–8명이 모니터를 쓰며 함께 공부하는 그룹스터디룸입니다."
+    equipment: "모니터/무선랜/전원 제공"
+    capacity: "6–8"
+    common: group_study_room
+    aliases:
+      - {text: 8인실, source: site}
+      - {text: 모니터 있는 스터디룸, source: proposed}
+
+  - id: 4F-group-6
+    floor: 4
+    roomNo: 141
+    sectorNo: 14103
+    seatNos: [14103001, 14103002, 14103003, 14103004, 14103005, 14103006, 14103007, 14103008, 14103009, 14103010, 14103012, 14103013, 14103014, 14103015, 14103016, 14103017, 14103018, 14103019, 14103020, 14103021, 14103022, 14103023, 14103024, 14103025]
+    name: "그룹스터디룸 6인실 (24 rooms)"
+    kind: group-study-room
+    bookable: true
+    implemented: true
+    purpose: "4–6명이 함께 공부·팀 과제를 하는 소형 그룹스터디룸이며, 방마다 모니터나 전자칠판 유무가 다릅니다."
+    equipment: "무선랜/전원 제공 in all; some add 모니터 or 전자칠판 (see rooms)"
+    capacity: "4–6"
+    common: group_study_room
+    note: "G414 and G431 appear on the floor map but not in getRoomList (not bookable online)."
+    aliases:
+      - {text: 6인실, source: site}
+      - {text: 그룹스터디룸, source: site}
+      - {text: 4층 스터디룸, source: proposed}
+    rooms:
+      - group: with-monitor
+        names: [G405, G407, G411, G413]
+        seatNos: [14103002, 14103004, 14103008, 14103010]
+        equipment: "모니터/무선랜/전원 제공"
+        aliases:
+          - {text: 모니터 있는 스터디룸, source: proposed}
+          - {text: 화면 띄울 수 있는 방, source: proposed}
+      - group: with-electronic-whiteboard
+        names: [G404, G406, G408, G410, G422, G424, G426, G428]
+        seatNos: [14103001, 14103003, 14103005, 14103007, 14103019, 14103020, 14103021, 14103023]
+        equipment: "무선랜/전원/전자칠판 제공"
+        aliases:
+          - {text: 전자칠판, source: site}
+          - {text: 칠판 있는 스터디룸, source: proposed}
+          - {text: 판서하면서 공부할 방, source: proposed}
+      - group: basic
+        names: [G409, G412, G415, G416, G417, G418, G419, G420, G421, G427, G429, G430]
+        seatNos: [14103006, 14103009, 14103012, 14103013, 14103014, 14103015, 14103016, 14103017, 14103018, 14103022, 14103024, 14103025]
+        equipment: "무선랜/전원 제공"
+    donor_notes:
+      G404: "제12대 평의원회의장 박종근님이 기증해주신 그룹스터디룸입니다."
+      G405: "문헌지식정보 최고위과정 제4기 일동이 기증해주신 그룹스터디룸입니다."
+      G406: "국사학과 명예교수 이태진님이 기증해주신 그룹스터디룸입니다."
+      G407: "물리학과 동문 김두희님이 기증해주신 그룹스터디룸입니다."
+      G408: "중앙도서관 사서선임행정관 김성자님이 기증해주신 그룹스터디룸입니다."
+      G409: "국사학과 명예교수 최병헌님이 기증해주신 그룹스터디룸입니다."
+      G410: "(주)수도CAC 대표이사 송명호님이 기증해주신 그룹스터디룸입니다."
+      G411: "국어국문학과 명예교수 이상억님이 기증해주신 그룹스터디룸입니다."
+      G412: "마이크로엠(주) 대표이사 이상복님이 기증해주신 그룹스터디룸입니다."
+      G413: "문헌지식정보 최고위과정 제5기 일동이 기증해주신 그룹스터디룸입니다."
+      G415: "키티스산학연정보(주) 대표이사 홍영표님이 기증해주신 그룹스터디룸입니다."
+      G416: "제18-21대 의학도서관장 서정욱님이 기증해주신 그룹스터디룸입니다."
+      G417: "키티스산학연정보(주)에서 기증해주신 그룹스터디룸입니다."
+
+  # ───────────────────────── 6층 관정미디어플렉스 ─────────────────────────
+  - id: 6F-studio
+    floor: 6
+    roomNo: 162
+    sectorNo: 16201
+    seatNos: [16201001, 16201002, 16201003]
+    name: "창의미디어스페이스 (STUDIO A/B/C)"
+    kind: media
+    bookable: true
+    implemented: true
+    purpose: "영상·사진 촬영, 강의 촬영, 인터뷰, 화상회의·발표, 실시간 방송을 하는 촬영 스튜디오입니다 (편집 등 촬영·방송 외 용도는 금지)."
+    capacity: "1–8"
+    hours: "09:00–17:00 weekdays; closed Sunday"
+    duration: "0:30–3:00"
+    useDesc: [강의, 과제, 동아리활동, 연구, 취업, 콘텐츠제작, 녹음, 기타]
+    common: media_room
+    site_notes:
+      - "예약 시간에 6층 안내데스크로 오셔서 신분증을 맡기신 후 열쇠를 수령하시기 바랍니다."
+      - "이용 인원 초과 이용시 6층 관리자의 현장 승인이 필요합니다."
+      - "촬영, 방송 외 다른 용도로의 이용은 금지됩니다.(편집 등의 작업은 다른 좌석을 이용하시기 바랍니다.)"
+      - "PC에 새로운 프로그램을 임의로 추가할 수 없습니다."
+    aliases:
+      - {text: 창의미디어스페이스, source: site}
+      - {text: 스튜디오, source: site}
+      - {text: 촬영 스튜디오, source: proposed}
+      - {text: 영상 찍는 곳, source: proposed}
+      - {text: 유튜브 촬영, source: proposed}
+      - {text: 크로마키 방, source: proposed}
+    rooms:
+      - name: STUDIO A
+        seatNos: [16201001]
+        purpose: "27㎡ 와이드 스튜디오에서 영상·사진 촬영과 화상회의·발표를 합니다."
+        equipment: "27㎡(WIDE) | 모니터링 TV, 크로마키(파,녹), 배경지(노,흰) | HD 캠코더, LED 조명, 오디오믹서, 마이크 | 통합방송S/W(Live stream)"
+        aliases:
+          - {text: 사진 촬영, source: site}
+          - {text: 화상회의, source: site}
+          - {text: 큰 스튜디오, source: proposed}
+          - {text: 프로필 사진 찍는 곳, source: proposed}
+      - name: STUDIO B
+        seatNos: [16201002]
+        purpose: "21㎡ 스튜디오에서 강의·일반 영상 촬영, 인터뷰, 화상회의·발표를 합니다."
+        equipment: "21㎡ | 86인치 TV, 강연대 | 모니터링 TV, 크로마키(녹), 배경지(베,검) | HD 캠코더, LED 조명, 오디오믹서, 마이크 | 통합방송S/W(Live stream)"
+        aliases:
+          - {text: 강의 촬영, source: site}
+          - {text: 인터뷰, source: site}
+          - {text: 발표 영상 찍는 곳, source: proposed}
+      - name: STUDIO C
+        seatNos: [16201003]
+        purpose: "1인 실시간 방송(라이브 스트리밍)을 하는 스튜디오입니다."
+        equipment: "HD 캠코더, 오디오믹서, LED 조명, 마이크 | 크로마키, 통합방송S/W(Live stream) | Adobe 편집 S/W"
+        site_phone: "유선문의 02-880-1159 (library desk, from DEVICE_COMMENT)"
+        aliases:
+          - {text: 1인 실시간 방송, source: site}
+          - {text: 라이브 방송, source: proposed}
+          - {text: 개인 방송실, source: proposed}
+          - {text: 스트리밍 하는 곳, source: proposed}
+
+  - id: 6F-media-carrel
+    floor: 6
+    roomNo: 164
+    sectorNo: 16401
+    seatNos: [16401001, 16401002]
+    name: "미디어캐럴 (Media Carrel A/B)"
+    kind: media
+    bookable: true
+    implemented: true
+    purpose: "첨단 미디어 및 XR 관련 연구·창업·프로젝트 등 다양한 활동을 지원하는 작업 공간으로, VR 기기를 대여해 이용할 수 있습니다."
+    capacity: "1–6"
+    hours: "09:00–18:00"
+    duration: "0:30–3:00"
+    useDesc: [강의, 과제, 동아리활동, 연구, 취업, 기타]   # no 콘텐츠제작/녹음 here, unlike the studios
+    common: media_room
+    site_notes:
+      - "첨단 미디어 및 XR 관련 교육, 학습, 연구, 체험이 가능합니다."
+      - "VR 기기를 대여하여 이용하실 수 있습니다."
+    aliases:
+      - {text: 미디어캐럴, source: site}
+      - {text: 미디어 작업실, source: proposed}
+      - {text: XR 프로젝트 하는 곳, source: proposed}
+      - {text: 창업 프로젝트 공간, source: proposed}
+      - {text: 아이맥 쓰는 곳, source: proposed}
+    rooms:
+      - name: Media Carrel A
+        seatNos: [16401001]
+        equipment: "모니터/무선랜/전원 제공 | VR 기기, iMac, 책상, 의자"
+        aliases:
+          - {text: iMac, source: site}
+      - name: Media Carrel B
+        seatNos: [16401002]
+        equipment: "무선랜 제공 (no monitor, no power listed) | VR 기기, 이동식 작은 테이블, 의자"
+
+  - id: 6F-xr
+    floor: 6
+    roomNo: 165
+    sectorNo: 16501
+    seatNos: [16501001, 16501002, 16501003, 16501004, 16501007, 16501008]
+    name: "XR Experience Center"
+    kind: media
+    bookable: true
+    implemented: true
+    purpose: "VR·공간컴퓨팅·AR-MR 기기로 1인이 교육·학습·연구·체험을 하는 XR 체험 부스입니다."
+    capacity: "1–1"
+    hours: "09:00–17:00"
+    duration: "0:30–2:00"
+    useDesc: [체험, 강의, 과제, 연구, 동아리활동, 취업, 기타]
+    common: media_room
+    site_notes:
+      - "예약 시간에 6층 관정미디어플렉스로 오셔서 신분증을 맡기신 후 이용 가능합니다."
+      - "VR 관련 교육, 학습, 연구, 체험이 가능합니다."
+      - "부상의 위험이 있으니 안전사고에 유의하시기 바랍니다."
+    aliases:
+      - {text: XR Experience Center, source: site}
+      - {text: VR 체험, source: site}
+      - {text: VR 하는 곳, source: proposed}
+      - {text: 가상현실 체험, source: proposed}
+      - {text: 메타버스 체험, source: proposed}
+    rooms:
+      - name: [VR 1, VR 2]
+        seatNos: [16501001, 16501002]
+        purpose: "다양한 VR 체험이 가능합니다."
+        equipment: "모니터/무선랜/전원 | 연구 및 학습을 위한 VR 기기, 고성능 컴퓨터 | 스마트 TV"
+        aliases:
+          - {text: VR, source: site}
+          - {text: VR 게임, source: proposed}
+      - name: [공간컴퓨팅 1, 공간컴퓨팅 2]
+        seatNos: [16501003, 16501004]
+        purpose: "다양한 공간컴퓨팅 체험이 가능합니다."
+        equipment: "모니터/무선랜/전원 | 연구 및 학습을 위한 공간컴퓨팅 기기, 고성능 컴퓨터 | 스마트 TV"
+        aliases:
+          - {text: 공간컴퓨팅, source: site}
+          - {text: 비전 프로 체험, source: proposed}   # device model not named on the site
+      - name: [AR-MR 1, AR-MR 2]
+        seatNos: [16501007, 16501008]
+        purpose: "다양한 AR-MR 콘텐츠 체험이 가능합니다."
+        equipment: "모니터/무선랜/전원 | 연구 및 학습을 위한 AR-MR 기기, 고성능 컴퓨터 | 스마트 TV"
+        aliases:
+          - {text: AR-MR, source: site}
+          - {text: 증강현실 체험, source: proposed}
+          - {text: 혼합현실, source: proposed}
+
+  - id: 6F-creative-media-studio
+    floor: 6
+    roomNo: 166
+    sectorNo: 16601
+    seatNos: [16601001]
+    name: "Creative Media Studio"
+    kind: media
+    bookable: true
+    implemented: true
+    purpose: "카메라 3대·프롬프터·대형 크로마키·호리존트를 갖춘 대형 첨단 촬영 스튜디오에서 촬영·방송을 합니다 (편집은 편집 좌석 이용)."
+    equipment: "RGB 및 스팟 조명, 카메라 3대, 모니터링 TV, 프롬프터, 대형 크로마키(녹색), 호리존트, 오디오 믹서, 스위처, 마이크 (MONITOR/LAN/POWER Y)"
+    capacity: "1–10"
+    hours: "09:00–17:00"
+    duration: "0:30–4:00"
+    useDesc: [강의, 과제, 동아리활동, 연구, 취업, 콘텐츠제작, 녹음, 기타]
+    common: media_room
+    site_notes:
+      - "예약 시간에 6층 관정미디어플렉스로 오셔서 신분증을 맡기신 후 이용 가능합니다."
+      - "촬영, 방송 외 다른 용도로의 이용은 금지됩니다. (편집 등의 작업은 편집 좌석을 이용하시기 바랍니다.)"
+    aliases:
+      - {text: Creative Media Studio, source: site}
+      - {text: 대형 촬영 스튜디오, source: site}
+      - {text: 큰 스튜디오, source: proposed}
+      - {text: 단체 촬영, source: proposed}
+      - {text: 방송 촬영, source: proposed}
+      - {text: 녹음실, source: proposed}   # 녹음 is a useDesc option here and in STUDIO A/B/C; no dedicated recording booth is listed
+
+  - id: 6F-multimedia-viewing
+    floor: 6
+    roomNo: 161
+    sectorNos: [16101, 16102, 16103, 16104, 16105, 16106, 16107]
+    name: "멀티미디어(감상석,PC)"
+    kind: media
+    bookable: false
+    why_not: "BOOKING_YN N for all sectors (DAY_TO 0) — first-come, used on site."
+    implemented: false
+    purpose: "1인용 감상석(쇼파형 26·열람형 16), 2인용·4인용 감상석, 음악감상석, 자유석과 멀티미디어 검색용 PC(1~24)에서 영상·음악 자료를 감상합니다."
+    purpose_source: proposed   # the site gives only the sector names
+    sectors:
+      16101: "1인용 감상석 26 (쇼파형)"
+      16102: "1인용 감상석 16 (열람형)"
+      16103: "2인용 감상석 4"
+      16104: "4인용 감상석 4"
+      16105: "자유석"
+      16106: "멀티미디어 검색용 PC 1~24"
+      16107: "음악감상석"
+    aliases:
+      - {text: 감상석, source: site}
+      - {text: 음악감상석, source: site}
+      - {text: 멀티미디어, source: site}
+      - {text: 영화 보는 곳, source: proposed}
+      - {text: DVD 보는 곳, source: proposed}
+      - {text: 음악 듣는 곳, source: proposed}
+      - {text: 둘이 영화 보는 자리, source: proposed}
+    assistant_hint: >-
+      "6층에서 영화 보는 곳 예약해줘" maps here; tell the user it cannot be booked online (현장 이용).
+      Do not substitute a studio — the studios forbid uses other than 촬영·방송.
+
+  - id: 6F-info-search
+    floor: 6
+    roomNo: 163
+    sectorNo: 16301
+    name: "정보검색실"
+    kind: other
+    bookable: false
+    why_not: "BOOKING_YN N — PCs used on site."
+    implemented: false
+    purpose: "PC로 정보를 검색하는 공간입니다."
+    purpose_source: proposed
+    aliases:
+      - {text: 정보검색실, source: site}
+      - {text: PC실, source: proposed}
+      - {text: 컴퓨터 쓰는 곳, source: proposed}
+
+  # ───────────────────────── 7층 열람실 ─────────────────────────
+  - id: 7F-7A-zone1-notebook
+    floor: 7
+    roomNo: 172
+    sectorNo: 17201
+    name: "7A 열람실 1 구역(노트북존)"
+    kind: notebook-zone
+    bookable: true
+    implemented: true
+    seats: 192
+    seat_labels: "7001–7192"
+    purpose: "노트북을 사용하며 개인 공부를 하는 열람실 좌석 구역입니다."
+    purpose_source: proposed   # the site only says 노트북존
+    common: reading_room
+    aliases:
+      - {text: 노트북존, source: site}
+      - {text: 7A 열람실, source: site}
+      - {text: 노트북 쓰는 곳, source: proposed}
+      - {text: 타자 쳐도 되는 열람실, source: proposed}
+
+  - id: 7F-7A-zone2
+    floor: 7
+    roomNo: 172
+    sectorNo: 17202
+    name: "7A 열람실 2 구역"
+    kind: reading-room
+    bookable: true
+    implemented: true
+    seats: 478
+    seat_labels: "7193–7670"
+    purpose: "개인 공부를 하는 일반 열람실 좌석 구역입니다."
+    purpose_source: proposed
+    common: reading_room
+    aliases:
+      - {text: 7A 열람실, source: site}
+      - {text: 열람실, source: site}
+      - {text: 7층 열람실, source: proposed}
+      - {text: 공부하는 자리, source: proposed}
+      - {text: 독서실 자리, source: proposed}
+
+  - id: 7F-notebook-171
+    floor: 7
+    roomNo: 171
+    sectorNo: 17101
+    name: "노트북존"
+    kind: notebook-zone
+    bookable: true
+    implemented: true
+    seats: 128
+    seat_labels: "7671–7798"
+    purpose: "노트북을 사용하며 공부하는 좌석 구역입니다."
+    purpose_source: proposed
+    note: "TYPENO 20 (17201/17202 are TYPENO 1); same seat booking flow."
+    common: reading_room
+    aliases:
+      - {text: 노트북존, source: site}
+      - {text: 노트북 쓰는 곳, source: proposed}
+
+  - id: 7F-7B-notebook
+    floor: 7
+    roomNo: 173
+    sectorNo: 17301
+    name: "7B 노트북존"
+    kind: notebook-zone
+    bookable: true
+    implemented: true
+    seats: 194
+    seat_labels: "7799–7992"
+    purpose: "노트북을 사용하며 공부하는 7B 열람 구역입니다."
+    purpose_source: proposed
+    common: reading_room
+    aliases:
+      - {text: 7B 노트북존, source: site}
+      - {text: 노트북 쓰는 곳, source: proposed}
+
+  - id: 7F-carrel
+    floor: 7
+    roomNo: 174
+    sectorNo: 17401
+    name: "캐럴 1-40"
+    kind: other
+    bookable: false
+    why_not: "TYPENO 22 with DAY_TO 120 — a long-term assigned carrel, not part of the web seat/room flow (FINDINGS: not bookable online)."
+    implemented: false
+    purpose: "장기 배정되는 개인 캐럴(칸막이 좌석)입니다."
+    purpose_source: proposed
+    aliases:
+      - {text: 캐럴, source: site}
+      - {text: 개인 칸막이 자리, source: proposed}
+
+  # ───────────────────────── 8층 열람실 ─────────────────────────
+  - id: 8F-8A-zone1-quiet
+    floor: 8
+    roomNo: 182
+    sectorNo: 18201
+    name: "8A 열람실 1 구역(QUIET ZONE)"
+    kind: reading-room
+    bookable: true
+    implemented: true
+    seats: 168
+    seat_labels: "8001–8168"
+    purpose: "조용히 개인 공부를 하는 정숙 열람 구역입니다."
+    purpose_source: proposed   # the site only says QUIET ZONE
+    common: reading_room
+    aliases:
+      - {text: QUIET ZONE, source: site}
+      - {text: 8A 열람실, source: site}
+      - {text: 조용한 열람실, source: proposed}
+      - {text: 정숙 열람실, source: proposed}
+      - {text: 노트북 안 쓰는 곳, source: proposed}
+
+  - id: 8F-8A-zone2-notebook
+    floor: 8
+    roomNo: 182
+    sectorNo: 18202
+    name: "8A 열람실 2 구역(노트북존)"
+    kind: notebook-zone
+    bookable: true
+    implemented: true
+    seats: 560
+    seat_labels: "8169–8728"
+    purpose: "노트북을 사용하며 개인 공부를 하는 8층의 큰 열람 구역입니다."
+    purpose_source: proposed
+    common: reading_room
+    aliases:
+      - {text: 노트북존, source: site}
+      - {text: 8A 열람실, source: site}
+      - {text: 8층 노트북존, source: proposed}
+      - {text: 노트북 쓰는 곳, source: proposed}
+
+  - id: 8F-notebook-181
+    floor: 8
+    roomNo: 181
+    sectorNo: 18101
+    name: "노트북 존"
+    kind: notebook-zone
+    bookable: true
+    implemented: true
+    seats: 128
+    seat_labels: "8729–8856"
+    purpose: "노트북을 사용하며 공부하는 좌석 구역입니다."
+    purpose_source: proposed
+    note: "TYPENO 20, like 17101."
+    common: reading_room
+    aliases:
+      - {text: 노트북 존, source: site}
+      - {text: 노트북 쓰는 곳, source: proposed}
+
+  - id: 8F-grad-reading-room
+    floor: 8
+    roomNo: 183
+    sectorNo: 18301
+    name: "대학원 열람실"
+    kind: grad-reading-room
+    bookable: true
+    implemented: true
+    seats: 194
+    seat_labels: "S001–S194 (S079, S149, S169 render as noBooking)"
+    purpose: "대학원생을 위한 열람실 좌석 구역으로 보입니다 (사이트는 이름 외 설명 없음)."
+    purpose_source: proposed
+    eligibility: >-
+      Not stated on the booking site. The room page shows the same 유의사항 as every other reading room,
+      getSeatInfo has no text, and the guide page says nothing. Only the name implies graduate students;
+      whether the server rejects undergraduates is unknown (not tested — a test would be a write).
+    common: reading_room
+    aliases:
+      - {text: 대학원 열람실, source: site}
+      - {text: 대학원생 열람실, source: proposed}
+      - {text: 대학원생 자리, source: proposed}
+
+  - id: 8F-carrel
+    floor: 8
+    roomNo: 184
+    sectorNo: 18401
+    name: "캐럴 1-40"
+    kind: other
+    bookable: false
+    why_not: "TYPENO 22 with DAY_TO 30 — assigned carrel, not bookable online."
+    implemented: false
+    purpose: "장기 배정되는 개인 캐럴(칸막이 좌석)입니다."
+    purpose_source: proposed
+    aliases:
+      - {text: 캐럴, source: site}
+
+  # ───────────────────────── outside 관정관 / not mapped ─────────────────────────
+  - id: main-library
+    libNo: 2
+    name: "본관"
+    bookable: unknown
+    implemented: false
+    why_not: "Not crawled; reachable via /pc/login/changeLib."
+  - id: other-floors
+    floors: [1, 3, 5]
+    name: "관정관 1·3·5층"
+    bookable: false
+    implemented: false
+    why_not: "The floor list (/pc/booking/floorList) offers only 2F 그룹스터디룸, 4F 그룹스터디룸, 6F 관정미디어플렉스·정보검색실, 7F 열람실·노트북존, 8F 열람실·노트북존."

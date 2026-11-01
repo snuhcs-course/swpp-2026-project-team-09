@@ -1,0 +1,17 @@
+{
+  "successYN": "Y",
+  "seatInfo": {
+    "SEATNO": "16401001",
+    "NAME": "Media Carrel A",
+    "COMMENT": "",
+    "DEVICE_COMMENT": "모니터/무선랜/전원 제공|최소 1명 이상, 최대 6명 예약|첨단 미디어 및 XR 관련 연구,창업,프로젝트 등 다양한 활동 지원|VR 기기, iMac, 책상, 의자 이용 가능",
+    "SEAT_IMAGE": "/MAP/POP/pop_16401001.png",
+    "MONITOR_YN": "Y",
+    "LAN_YN": "Y",
+    "STAND_YN": "",
+    "POWER_YN": "Y"
+  },
+  "params": {
+    "seatNo": "16401001"
+  }
+}

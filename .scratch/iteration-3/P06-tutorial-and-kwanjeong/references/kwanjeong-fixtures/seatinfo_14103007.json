@@ -1,0 +1,17 @@
+{
+  "successYN": "Y",
+  "seatInfo": {
+    "SEATNO": "14103007",
+    "NAME": "G410",
+    "COMMENT": "(주)수도CAC 대표이사 송명호님이 기증해주신 그룹스터디룸입니다.",
+    "DEVICE_COMMENT": "무선랜/전원/전자칠판 제공|6인실 최소 4명이상 예약",
+    "SEAT_IMAGE": "/MAP/POP/pop_14103007.png",
+    "MONITOR_YN": "",
+    "LAN_YN": "Y",
+    "STAND_YN": "",
+    "POWER_YN": "Y"
+  },
+  "params": {
+    "seatNo": "14103007"
+  }
+}
