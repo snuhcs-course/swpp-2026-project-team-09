@@ -2104,12 +2104,15 @@
     cards:
       - kind: quest
         seeds:
+          - q0210
+          - q0491
+          - q0874
           - c-lol-sat-1
           - c-lol-sat-2
           - c-lol-sat-3
           - c-valorant
           - c-pcroom
-        max: 5
+        max: 8
       - kind: globalEvent
         seeds: []
         max: 0
@@ -2198,10 +2201,13 @@
     cards:
       - kind: quest
         seeds:
+          - q0621
+          - q0645
+          - q0685
           - c-lol-wed-1
           - c-lol-wed-2
           - c-lol-wed-3
-        max: 3
+        max: 6
       - kind: globalEvent
         seeds: []
         max: 0

@@ -574,7 +574,7 @@ diagnostic:
 largeWorld:
   version: large-world-v1
   worldSha256: 462b9539b1a2afa9249ea40d1e18adf3f824b6daec0b36b53f6a0af91a91708c
-  casesSha256: a2d7d75100fca88ee883516327c4911e19ecc3be46448b448d03b21a0b8b153e
+  casesSha256: c7cb030213f20c82d23510dc050893c66738d5b31daee4d4895428719aa4ee9f
   tags:
     V:
       - { case: large-v-01, seed: q0076 }
@@ -872,6 +872,9 @@ largeWorld:
       - { case: large-e-05, seed: null }
       - { case: large-e-06, seed: null }
     C:
+      - { case: large-c-01, seed: q0210 }
+      - { case: large-c-01, seed: q0491 }
+      - { case: large-c-01, seed: q0874 }
       - { case: large-c-01, seed: c-lol-sat-1 }
       - { case: large-c-01, seed: c-lol-sat-2 }
       - { case: large-c-01, seed: c-lol-sat-3 }
@@ -885,6 +888,9 @@ largeWorld:
       - { case: large-c-03, seed: c-lol-wed-1 }
       - { case: large-c-03, seed: c-lol-wed-2 }
       - { case: large-c-03, seed: c-lol-wed-3 }
+      - { case: large-c-04, seed: q0621 }
+      - { case: large-c-04, seed: q0645 }
+      - { case: large-c-04, seed: q0685 }
       - { case: large-c-04, seed: c-lol-wed-1 }
       - { case: large-c-04, seed: c-lol-wed-2 }
       - { case: large-c-04, seed: c-lol-wed-3 }

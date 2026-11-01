@@ -7,9 +7,9 @@
 import { days, DAYS, evening, parties, type Question } from './question-builders.ts';
 
 // The questions of subset C of the large world (P05 ticket 02b): what a post means only by what people know of it. Their
-// posts are in context-posts.ts. A 보드게임 is not 게임 here, and a 피시방 is (P05 owner, 2026-11-01).
+// posts are in context-posts.ts. A 보드게임 is 게임 here, as the P05 owner ruled on 2026-11-01, and so is a 피시방.
 
-const GAMES = ['lol', 'valorant', 'overwatch', 'pubg', 'maple', 'tft', 'pcroom', 'mariokart'];
+const GAMES = ['lol', 'valorant', 'overwatch', 'pubg', 'maple', 'tft', 'pcroom', 'mariokart', 'boardgame'];
 const GAME_WORDS = ['게임', '롤', '발로란트', '배그', '피시방'];
 
 export const CONTEXT_QUESTIONS: readonly Question[] = [
