@@ -39,7 +39,7 @@ The shuttle metric compares logged days with each other, and no real ride is tim
 
 - 5 rides on 11-02, in service hours, on the circular route 41946.
 - All 5 in one band of 08–11, 11–14, 14–17, 17–19 or 19–21, so only that band is compared. The rider names the band before the first ride. A ride's band is the band of the time of reaching the stop, as Travel Time reads it.
-- At least 2 rides include the longest segment, 신소재공동연구소 → 302동 (1,096 m).
+- At least 2 rides include the longest segment, 신소재공동연구소 → 302동 (1,096 m). They board before 신소재공동연구소, so that a hold there counts on both clocks. A ride whose car rests there for more than 3 minutes says so in one line, since the log leaves such a visit out.
 - Each ride records the date, the rider, the boarding and alighting stops, and the times of reaching the stop, boarding and alighting.
 
 TaeHyun79 rides and records the times under ticket 02's `## Comments`.
