@@ -3,27 +3,19 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router, useLocalSearchParams } from 'expo-router';
 import { type ReactElement, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  color,
-  font,
-  Icon,
-  mapText,
-  questTone,
-  radius,
-  shadow,
-  space,
-  text,
-  textHalo,
-  useToast,
-} from '@/design-system';
+import type { Tutorial } from '@/api/tutorial-types';
+import { color, font, Icon, mapText, radius, shadow, space, text, textHalo, useToast } from '@/design-system';
 import type { QuestRowView } from '@/features/quests/adapter';
 import { useQuestRows } from '@/features/quests/use-quest-rows';
+import { questsInList } from '@/features/tutorial/rules';
+import { questRows, type RowLook, tutorialRows } from './quest-list-rows';
 import { listRows, LISTS, listsTop, type Room } from './layout';
 import { CollapseButton, RowWindow } from './list-parts';
 import type { MainMap } from './use-main-map';
@@ -34,21 +26,22 @@ interface QuestListProps {
   selection: Selection;
   // The room the list has: its window is lower on a low screen.
   room: Room;
+  // The 새내기 튜토리얼, whose started quests sit on top, and what a press on one of them opens: its sheet.
+  tutorial: Tutorial | undefined;
+  onTutorial: (key: string) => void;
 }
 
 interface RowsProps {
-  rows: readonly QuestRowView[];
+  rows: readonly RowLook[];
   shown: number;
-  onPress: (row: QuestRowView) => void;
 }
 
 interface QuestRowProps {
-  row: QuestRowView;
+  row: RowLook;
   // Where the row is in the list, for the rail that joins the rows' rounds: it starts at the first row's round and
   // ends at the last one's. A list of one row has none.
   first: boolean;
   last: boolean;
-  onPress: () => void;
 }
 
 // The pill at the list's head: "퀘스트", the number of today's Quests, and the round button that opens the Quest list
@@ -78,15 +71,15 @@ function QuestPill({ count, onFullScreen }: { count: number | null; onFullScreen
   );
 }
 
-// One Quest of today: its words at the left of the round that holds its icon, both in the colour of its tone. The
-// rail runs behind the round.
-function QuestRow({ row, first, last, onPress }: QuestRowProps): ReactElement {
-  const tint = questTone[row.tone];
+// One Quest of today or a started tutorial quest: its words at the left of the round that holds its icon, both in the
+// colour of its tone. The rail runs behind the round.
+function QuestRow({ row, first, last }: QuestRowProps): ReactElement {
+  const { tint } = row;
   return (
     <Pressable
       accessibilityLabel={[row.kicker, row.title, row.meta].filter((part) => part !== '').join(' · ')}
       accessibilityRole="button"
-      onPress={onPress}
+      onPress={row.onPress}
       style={styles.row}
     >
       <View style={styles.words}>
@@ -148,8 +141,9 @@ function useAskedQuest(rows: readonly QuestRowView[] | undefined, press: (row: Q
 }
 
 // The Quest list of the `Main` frame, at the right over the map: the round button that collapses the list, the pill,
-// and today's Quests joined by the rail, in a window of up to three rows. Without a Quest it says so.
-export function QuestList({ map, selection, room }: QuestListProps): ReactElement {
+// and the started tutorial quests over today's Quests, joined by the rail, in a window of up to three rows. Without
+// a Quest it says so.
+export function QuestList({ map, selection, room, tutorial, onTutorial }: QuestListProps): ReactElement {
   const rows = useQuestRows().data;
   const [open, setOpen] = useState(true);
   const press = usePress({ map, selection });
@@ -168,18 +162,20 @@ export function QuestList({ map, selection, room }: QuestListProps): ReactElemen
           pill="right"
         />
         <QuestPill
-          count={rows?.length ?? null}
+          count={rows === undefined ? null : rows.length + questsInList(tutorial).length}
           onFullScreen={() => {
             router.push('/quests');
           }}
         />
       </View>
-      {open && rows !== undefined ? <Rows onPress={press} rows={rows} shown={shown} /> : null}
+      {open && rows !== undefined ? (
+        <Rows rows={[...tutorialRows(tutorial, onTutorial), ...questRows(rows, press)]} shown={shown} />
+      ) : null}
     </View>
   );
 }
 
-function Rows({ rows, shown, onPress }: RowsProps): ReactElement | null {
+function Rows({ rows, shown }: RowsProps): ReactElement | null {
   if (rows.length === 0) {
     return <Text style={styles.empty}>오늘 일정 없음</Text>;
   }
@@ -190,15 +186,7 @@ function Rows({ rows, shown, onPress }: RowsProps): ReactElement | null {
     <View style={styles.rows}>
       <RowWindow
         rows={rows.map((row, index) => (
-          <QuestRow
-            first={index === 0}
-            key={row.id}
-            last={index === rows.length - 1}
-            onPress={() => {
-              onPress(row);
-            }}
-            row={row}
-          />
+          <QuestRow first={index === 0} key={row.id} last={index === rows.length - 1} row={row} />
         ))}
         shown={shown}
         side="right"
