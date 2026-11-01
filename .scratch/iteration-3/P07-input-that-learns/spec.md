@@ -189,6 +189,28 @@ The matcher's rules are no longer hand-written only. A reflector, the Assistant'
 - The app: `assistant-types.ts` and `assistant-client.ts` gain the new fields and endpoints with guards; `use-chat.ts` gains `choose`, `rejectAlias` and the suggestion run; `chat-bubbles.tsx` draws chips and the 찾았어요 line; `me-screen.tsx` links "내가 가르친 말"; the mock client answers every new endpoint.
 - Every source file carries the AI-generated box with a dated row; the README's Assistant section describes each new field, table and endpoint in one paragraph per ticket.
 
+### Ticket 09: the next line in grey
+
+When an answer leaves an obvious next request, the reply names it and the app shows it in grey in the empty input, with 채우기. It is the way Claude Code and Codex predict the next turn (research/12 §1), from templates over the reply and with no model call.
+
+`AssistantReplyDto` gains `nextLine: { id: string; text: string; chosen: { kind: 'globalEvent'; id: string; words: string } | null } | null`, where `id` is the impression's.
+
+| Template | Eligible when | Text | Chosen |
+|---|---|---|---|
+| `change_shown_proposal` | the reply has a Proposal | 시간을 1시간 뒤로 미뤄줘; with an event, whose start a later time would pass, 인원을 6명으로 늘려줘 on an open Proposal under 6 | none |
+| `party_for_shown_event` | the first event card of the reply starts after now | 이 행사 같이 갈 사람 모집해줘, or 첫 번째 행사 with several | that event, for those words |
+| `party_after_menus` | the reply has the 식당 map button | 오늘 점심, 오늘 저녁 or 내일 점심 같이 먹을 사람 모집해줘, the next meal with time to make it | none |
+
+The first eligible of this order is on top. A reply with chips asks the User something, so it has none. Text someone else wrote never goes into a line, since the User sends it as their own: the words 이 행사 go with the event's id as the chosen candidate of ticket 02, which the server checks again and the model reads inside delimiters.
+
+**Score.** The template's acceptance as in ticket 04, read as 0.5 by a held-back account, from 0.05: a next line is asked of less than a suggestion the User opened the chat to, and most are passed by. 0.9 the top, 0.1 uniform among the eligible, with the propensity written. A dismissal's cooldown holds next lines back too.
+
+**Gate.** The newest ten settled next lines of the User's last day, `(accepted + 1) / (shown + 2)`, from 0.09: ten in a row not taken silence them until the day has passed. The chat-open gate reads its own rows.
+
+**Impressions.** `suggestion_impressions.moment` is `open` or `answer`. A reply with something eligible writes one row, silent when the gate or a cooldown held it back; a reply with nothing eligible writes none. 채우기 sends `accepted`. The typed marks, the chat-open gate and the openings of the metric read `open` rows.
+
+**App.** The line is the AI input's placeholder while the sheet is open, the input empty and the last bubble the answer that carried it. 채우기 beside the send button puts it in the input. Sent unchanged it carries its chosen candidate; changed, it is a message as any other.
+
 ## Testing Decisions
 
 As P07's spec of Iteration 2: tests drive the server through HTTP with the scripted model and a real database, and the app through its screens against the mock client. Each ticket tests only what it adds.
@@ -199,13 +221,14 @@ As P07's spec of Iteration 2: tests drive the server through HTTP with the scrip
 - **05**: the harness's metrics on hand-made answers (Wilson interval values on known n and k), stage A reproducing `PlacesService.search`, stage C learning only from rows before the date, the gold file loading and its two sets.
 - **06**: sessions, walks and transition counts on hand-made rows; the series against the closed-form inverse; Φ∞, Φ₁, the candidate test, the argmax and the self-partition on hand-made chains; through HTTP, none-words learned from a rephrase in the same session, an exact name kept, and ticket 03's safety list unchanged; stage D and the chain's curve series on the seeded replay database.
 - **07**: the rule language on hand-made patterns (what is refused, what a form may be); the tier's place and the holdback in `PlaceIndex` with fake rules; instances from hand-made rows; the loop with a scripted reflector (Pareto sampling, minibatch acceptance, the seed); the gate's refusals and leave-one-out; through HTTP, two accounts' labelled 뷁-words making a rule after `POST /internal/induction` with the scripted model as the reflector, a third account answered on the `induced` tier, a held-back one not, the token required; stage E and the induced series on the seeded replay database from a rules file.
+- **09**: each template's rule and text, on plain replies; the row, the score, the gate, the holdback and the cooldown through the endpoint; the chat-open gate and the typed marks unmoved by `answer` rows; the benchmark's cases on the real model. App: the placeholder, 채우기, the chosen candidate with an unchanged line, and none with a changed one.
 - Budget: implementation over tests; no test of style; no call to the real model; the paid eval harness is not part of any ticket's checks.
 
 ## Out of Scope
 
 - Learning from 만들기 itself: the app's `POST /quests` does not say which conversation a Quest came from. A later ticket can send the resolution event ids with it.
 - Aliases for Global Events (they expire) and aliases in the prompt (tokens and cache).
-- Grey text while typing (continuation) and a trigger model: the suggestion shows once, when the chat opens.
+- Grey text while typing (continuation) and a trigger model: a suggestion shows when the chat opens and after an answer (ticket 09), and stays as it is while the User types.
 - Bandits and learned rankers: at our traffic a hand score with two learned factors is the right size.
 - Collecting the test set from students, and the first official measurement, which ticket 05 only makes possible.
 

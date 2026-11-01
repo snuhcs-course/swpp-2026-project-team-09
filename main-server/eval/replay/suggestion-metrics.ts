@@ -4,6 +4,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Rate, rate } from './wilson.ts';
@@ -17,6 +18,9 @@ import { type Rate, rate } from './wilson.ts';
 // shown, `gated` when the User's own acceptance of the last suggestions held it back, `typedTemplate` the eligible
 // template whose Proposal the User asked for in the chat within 10 minutes.
 export interface Impression {
+  // When it was decided: the chat opened, or an answer left a next line (ticket 09). The openings and the missed needs
+  // are the chat's openings; a next line counts in the weekly rates and the weighted acceptance, by its own template.
+  moment: 'open' | 'answer';
   template: string | null;
   eligible: string[];
   propensity: number | null;
@@ -220,7 +224,7 @@ function needCellOf(slice: Slice, template: string, holdback: boolean, rows: rea
 export function needCells(impressions: readonly Impression[], finalFrom: Date | null = null): NeedCell[] {
   const keys = new Map<string, { slice: Slice; template: string; holdback: boolean }>();
   const bySliceAndArm = new Map<string, Impression[]>();
-  for (const row of impressions) {
+  for (const row of impressions.filter(({ moment }) => moment === 'open')) {
     const slice = sliceOf(row.shownAt, finalFrom);
     const at = `${slice} ${arm(row.holdback)}`;
     bySliceAndArm.set(at, [...(bySliceAndArm.get(at) ?? []), row]);
@@ -248,7 +252,7 @@ interface OpeningCounts {
 // Every row by slice and arm, in the order of their keys.
 export function openingsOf(impressions: readonly Impression[], finalFrom: Date | null = null): Openings[] {
   const groups = new Map<string, OpeningCounts>();
-  for (const row of impressions) {
+  for (const row of impressions.filter(({ moment }) => moment === 'open')) {
     const slice = sliceOf(row.shownAt, finalFrom);
     const at = `${slice} ${arm(row.holdback)}`;
     const counted = groups.get(at) ?? {

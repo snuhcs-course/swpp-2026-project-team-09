@@ -1,0 +1,112 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-01  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# The sentences a next line offers (P07 ticket 09), sent as the User would: each must do what it says. They are outside
+# the fixed set of FIXED_SET, so that they change no earlier score.
+
+- id: next-line-later-proposal
+  category: next-lines
+  turns:
+    - user: 내일 점심 같이 먹을 사람 모집해줘, 식사 게시판에
+    - assistant:
+        text: 만들기를 누르면 파티가 만들어져요.
+        proposal:
+          title: 내일 점심 같이 먹어요
+          description: 내일 점심 같이 먹을 사람 모집해요
+          joinPolicy: open
+          board: meal
+          capacity: 4
+          startsAt: '2026-10-22T12:00:00+09:00'
+    - user: 시간을 1시간 뒤로 미뤄줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+    proposal:
+      joinPolicy: open
+      board: meal
+      capacity: 4
+      startsAt: '2026-10-22 13:00'
+
+- id: next-line-more-people
+  category: next-lines
+  turns:
+    - user: 가을 재즈 콘서트 같이 갈 사람 모집해줘
+    - assistant:
+        text: 만들기를 누르면 파티가 만들어져요.
+        proposal:
+          title: 가을 재즈 콘서트 같이 가요
+          description: 가을 재즈 콘서트 같이 갈 사람 모집해요
+          joinPolicy: open
+          board: show
+          capacity: 4
+          startsAt: '2026-10-22T19:00:00+09:00'
+          globalEvent: 가을 재즈 콘서트
+    - user: 인원을 6명으로 늘려줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+    proposal:
+      joinPolicy: open
+      capacity: 6
+      startsAt: '2026-10-22 19:00'
+      globalEvent: 가을 재즈 콘서트
+
+- id: next-line-party-for-this-event
+  category: next-lines
+  turns:
+    - user: 이번 주에 재즈 공연 있어?
+    - assistant:
+        text: 재즈 공연이 하나 있어요.
+        cards:
+          - { kind: globalEvent, seed: 가을 재즈 콘서트 }
+    - user: 이 행사 같이 갈 사람 모집해줘
+      chosen: { kind: globalEvent, seed: 가을 재즈 콘서트, words: 이 행사 }
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+      forbidden: [resolveGlobalEvent]
+    proposal:
+      joinPolicy: open
+      globalEvent: 가을 재즈 콘서트
+
+- id: next-line-party-for-first-event
+  category: next-lines
+  turns:
+    - user: 이번 주 공연 있어?
+    - assistant:
+        text: 공연이 두 개 있어요.
+        cards:
+          - { kind: globalEvent, seed: 가을 재즈 콘서트 }
+          - { kind: globalEvent, seed: 축제 개막 공연 }
+    - user: 첫 번째 행사 같이 갈 사람 모집해줘
+      chosen: { kind: globalEvent, seed: 가을 재즈 콘서트, words: 첫 번째 행사 }
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+      forbidden: [resolveGlobalEvent]
+    proposal:
+      joinPolicy: open
+      globalEvent: 가을 재즈 콘서트
+
+- id: next-line-party-after-menus
+  category: next-lines
+  turns:
+    - user: 오늘 학식 뭐 나와?
+    - assistant:
+        text: 오늘 메뉴예요. 학생회관식당은 제육볶음이에요.
+    - user: 오늘 저녁 같이 먹을 사람 모집해줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+    proposal:
+      joinPolicy: open
+      board: meal
+      startsAt: '2026-10-21 18:00'

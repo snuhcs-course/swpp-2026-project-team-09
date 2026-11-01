@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -88,6 +89,14 @@ export type SentMessage = AssistantMessages['messages'][number];
 // cards in the order shown, filled from the database, the Proposal it made, if any, the candidates of every 'several'
 // answer of its resolvers, which the app offers as chips, and the answers they read from an alias. The lists are
 // always there, empty when there are none, and the Proposal null.
+// The sentence the User may send next (P07 ticket 09). `id` is the impression's, which the outcome names, and `chosen`
+// the candidate its words stand for, which goes with the sentence when it is sent unchanged.
+export interface NextLineDto {
+  id: string;
+  text: string;
+  chosen: { kind: 'globalEvent'; id: string; words: string } | null;
+}
+
 export interface AssistantReplyDto {
   text: string;
   mapButtons: MapLayer[];
@@ -95,4 +104,6 @@ export interface AssistantReplyDto {
   proposal: QuestProposal | null;
   choices: Choice[];
   resolvedBy: ResolvedBy[];
+  // What the answer leaves to ask next, in grey in the empty input; null when it leaves nothing.
+  nextLine: NextLineDto | null;
 }

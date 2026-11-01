@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -110,7 +111,14 @@ function sentProposalOf(proposal: CaseProposal, world: World): SentAssistant['pr
 export function requestMessages(turns: readonly CaseTurn[], world: World): SentMessage[] {
   return turns.map((turn): SentMessage => {
     if ('user' in turn) {
-      return { role: 'user', text: turn.user };
+      const { user, chosen } = turn;
+      return chosen === undefined
+        ? { role: 'user', text: user }
+        : {
+            role: 'user',
+            text: user,
+            chosen: { kind: chosen.kind, id: seedOf(world.seeds, chosen.kind, chosen.seed).id, words: chosen.words },
+          };
     }
     const { text, cards, proposal } = turn.assistant;
     return {

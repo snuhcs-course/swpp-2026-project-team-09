@@ -5,12 +5,13 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
-import { ask, postAssistantMessages } from './assistant.js';
+import { ask, besideNextLine, postAssistantMessages } from './assistant.js';
 import { daysOf, menusMessage, restaurant } from './menus.js';
 import { ScriptedModel } from './scripted-model.js';
 import { signIn } from './sign-in.js';
@@ -59,6 +60,7 @@ describe('The chat Assistant', () => {
       proposal: null,
       choices: [],
       resolvedBy: [],
+      nextLine: null,
     });
   });
 
@@ -137,6 +139,7 @@ describe('getMenus', () => {
       proposal: null,
       choices: [],
       resolvedBy: [],
+      nextLine: null,
     });
     expect(model.toolResults()).toEqual([{ result: 'found', date, restaurants: [studentCentre] }]);
   });
@@ -210,7 +213,7 @@ describe('showOnMap', () => {
 
     const response = await postAssistantMessages(app, accessToken, ask('오늘 점심 뭐 나와?'));
 
-    expect(response.body).toEqual({
+    expect(besideNextLine(response.body)).toEqual({
       text: '오늘 메뉴예요.',
       mapButtons: ['dining'],
       cards: [],
@@ -246,6 +249,7 @@ describe('showOnMap', () => {
       proposal: null,
       choices: [],
       resolvedBy: [],
+      nextLine: null,
     });
     expect(model.toolResults()).toEqual([expect.stringContaining('layer')]);
   });

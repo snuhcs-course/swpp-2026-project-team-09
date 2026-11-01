@@ -2281,6 +2281,18 @@ suggestion could have offered. On the row of the template shown it says the User
 and missed needs together are what the replay reports (below), as ProactiveBench (ICLR 2025) counts proposals accepted,
 rejected and needed but not made. The rows go with the account.
 
+**The next line** (`suggestions/next-line.ts`, `next-lines.service.ts`) is a Suggestion after an answer, in the way
+Claude Code and Codex predict the next turn, from templates and with no model call. A reply has
+`"nextLine": { "id", "text", "chosen" }`, or `null`: `change_shown_proposal` after a Proposal (시간을 1시간 뒤로 미뤄줘, or
+인원을 6명으로 늘려줘 with an event), `party_for_shown_event` after an upcoming event card (이 행사 같이 갈 사람 모집해줘)
+and `party_after_menus` after the 식당 map button (오늘 저녁 같이 먹을 사람 모집해줘); a reply with chips has none. The User
+sends a line as their own words, so text someone else wrote never goes into one: the event's id comes as `chosen`, as a
+chip's does, and the server checks it again. A line shows from an acceptance of 0.05, as most are passed by, with the
+draw and propensity above; ten in a row not taken within a day silence next lines, which a held-back account never
+reads, and a dismissal's cooldown holds them back too. A reply with something eligible writes one row with `moment`
+`answer`, the rows of the chat opening being `open`, and `POST /assistant/suggestions/:id/outcome` takes `accepted`
+when 채우기 puts the line in the input. A failure is logged and the reply stands, with no line.
+
 ### Testing with the scripted model
 
 The tests never call a real model. `test/scripted-model.ts` stands for it: a `ScriptedModel` whose `model` goes to
@@ -2537,7 +2549,8 @@ never answer, are reported apart, and each point says which slice it is in, `tun
 
 `pnpm eval:suggestions --from <day> --to <day> [--final-from <day>]` reads the `suggestion_impressions` of the chats
 opened from the first moment of `--from` to the end of `--to`, less those of the last 10 minutes, whose outcome may
-still come. First the openings per slice and arm: how many, the accepted over them (what the gate on the User's own
+still come. A next line counts in the weekly rates and the weighted acceptance under its own template, and not in the
+openings or the missed needs. First the openings per slice and arm: how many, the accepted over them (what the gate on the User's own
 acceptance is judged by, since it holds back learning-arm accounts only), how many showed nothing (`silent`), how many
 of those the gate made (`gated`), and how many of the silent ones the User followed within 10 minutes by asking the
 chat for what an eligible template would have proposed (`typed_template`).

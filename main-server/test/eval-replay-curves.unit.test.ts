@@ -4,6 +4,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { curveGroup, type EventRow, labelledRows } from '../eval/replay/curve-metrics.ts';
@@ -121,6 +122,7 @@ function impression(
 ): Impression {
   const outcomeAt = minutes === null ? null : new Date(SHOWN.getTime() + minutes * MINUTE_MS);
   return {
+    moment: 'open',
     template: 'lunch_with_free_friend',
     eligible: ['lunch_with_free_friend'],
     propensity: 0.9,
@@ -181,6 +183,22 @@ describe("The suggestions' rates", () => {
 
     expect(learning).toMatchObject({ template: 'lunch_with_free_friend', holdback: false, shown: 5 });
     expect(learning?.acceptance).toBeCloseTo((2 / 0.9 + 1 / 0.025) / weights, 10);
+  });
+});
+
+describe('A next line', () => {
+  it('leave a next line out of the openings and the needs, and count it in the rates by its own template', () => {
+    const line = impression('accepted', 1, {
+      moment: 'answer',
+      template: 'change_shown_proposal',
+      eligible: ['change_shown_proposal'],
+    });
+
+    expect(openingsOf([line])).toEqual([]);
+    expect(needCells([line])).toEqual([]);
+    expect(suggestionCells([line]).map(({ template, shown }) => [template, shown])).toEqual([
+      ['change_shown_proposal', 1],
+    ]);
   });
 });
 
