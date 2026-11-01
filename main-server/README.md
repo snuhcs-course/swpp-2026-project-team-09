@@ -2244,7 +2244,8 @@ most do not decide the rate alone.
 
 `pnpm eval:induce [--as-of <day>] [--development [--fold i/k]] [--budget 12] [--seed 1]` runs one induction
 (`src/assistant/induction/induction.ts`, as the server runs it nightly) over the rows before `--as-of`, from no rules,
-with the model named by `OPENROUTER_API_KEY` and `ASSISTANT_MODEL` as the reflector, and writes
+with the model named by `OPENROUTER_API_KEY` and `ASSISTANT_REFLECTOR_MODEL`, or `ASSISTANT_MODEL` when that is
+empty, as the reflector, and writes
 `eval/results/replay-induced-<time>.json`: the rules in force after the run with what each fixed and broke, the words
 the reflector was shown (the training instances'; the held-out words are scored with the rules, though the gate read
 them, so that number is a validation score), and the run's trace (every call's minibatch and every proposal with why it was kept, dropped or refused),

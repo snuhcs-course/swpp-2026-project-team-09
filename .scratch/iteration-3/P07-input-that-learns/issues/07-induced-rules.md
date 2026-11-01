@@ -84,14 +84,14 @@ Every promoted rule is the 학생회관 family: the 초성 ㅎㄱ, the mixed ㅎ
 
 What this says, plainly: the loop proposes the right kind of rule (families of forms, typos, prefixes, the college pattern), the gate refuses what rests on one words, and on 25 hand-picked items with one real family the cross-validated gain is zero. The claim the feature can make today is the mechanism and its proof, not a number: what the rules add shows on the learning curve's induced series and the ask rate once students' rows hold families (a college's 대 forms, 윗·아랫, the 도서관 forms), and the holdback tells it from habit. Before that, the test set (3 items) is too small to say anything.
 
-### For the team to decide
+### Decided (2026-11-01)
 
-- **The induced tier before the generator's forms.** Chosen so that the rules can fix the generator's questions, which is most of what is wrong. The gate, the audit and the holdback are the safety; if the team would rather have the hand-written forms win, the tier moves back one place (one line in `place-index.ts`) and the rules fix only `none` and the loose tiers.
-- **The held-out words counting toward a rule's two words.** Kept so that a family rule can pass on little data; the price is that stage E on the held-out words is a validation score. Once the rows hold hundreds of labelled words, the gate can go back to training-only fixes with the held-out as a pure check.
-- **The reflector's model.** The Assistant's (Haiku-class). A stronger reflector would propose fewer literal rules; ACE found weak reflectors pollute the memory, and here the gate is what stops that. `ASSISTANT_MODEL` sets both for now; a setting of its own is a line.
-- **Nightly at 04:00.** One run a night, 12 calls (about 20,000 tokens at today's reasoning lengths). More often adds nothing until the rows do.
-- **The held-out fifth and the window** (20 %, 90 days) are guesses, as ticket 06's were.
-- **The literal-looking rules** (`^ㅎ([ㄱ관])$ → 학생회관`) pass the language because they generalise over a character class, and the gate because they fix two words; whether to require a capture group in every rule is the team's call.
+- **The induced tier stays before the generator's forms.** Most of what the matcher gets wrong is the generator's `several`, which a rule behind it could never fix; the gate, the audit and the holdback are the safety, and the one line that moves the tier is known should a rule ever beat a right hand-written form.
+- **Held-out fixes keep counting toward a rule's two words** while the labelled words are few: it is what lets a family rule pass on today's data, at the price of stage E on the held-out words being a validation score, which the reports say. The gate returns to training-only fixes once a window holds some 200 labelled words; a line in `gate.ts`, when the rows are there.
+- **The reflector's model is a setting.** `ASSISTANT_REFLECTOR_MODEL` (empty by default, the Assistant's model then) names the OpenRouter model the induction asks for rules, so that a stronger reflector, which proposes fewer literal rules, can be tried without touching the Assistant's own model; the gate stays what stops a weak one from polluting the rules, as ACE found weak reflectors do.
+- **Nightly at 04:00 Asia/Seoul stands**: one run, 12 calls, about 20,000 tokens; more often adds nothing until the rows do.
+- **The held-out fifth and the 90-day window stand** (`HOLDOUT_PERCENT`, `INSTANCE_WINDOW_DAYS`), as ticket 06's numbers do, until the final slice says otherwise.
+- **No capture group is required of a rule.** `^ㅎ([ㄱ관])$ → 학생회관` is literal-looking and right: what makes a rule general is the gate's two words from two accounts, not its syntax, and a required group would only make the reflector write one for show.
 
 ### Agent usage (2026-11-01)
 

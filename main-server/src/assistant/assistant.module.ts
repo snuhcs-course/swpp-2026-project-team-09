@@ -54,16 +54,23 @@ import { SuggestionsService } from './suggestions/suggestions.service.js';
           settings.get('ASSISTANT_MODEL', { infer: true }),
         ),
     },
-    // The induction's reflector (P07 ticket 07) is the Assistant's model, called offline.
+    // The induction's reflector (P07 ticket 07) is the Assistant's model, called offline, unless
+    // ASSISTANT_REFLECTOR_MODEL names another.
     {
       provide: REFLECTOR,
       inject: [MODEL_PORT, ConfigService],
-      useFactory: (model: Model, settings: ConfigService<Settings, true>): Reflector =>
-        new ModelReflector(
-          model,
-          settings.get('ASSISTANT_MODEL', { infer: true }),
-          settings.get('ASSISTANT_TIMEOUT_MS', { infer: true }),
-        ),
+      useFactory: (model: Model, settings: ConfigService<Settings, true>): Reflector => {
+        const own = settings.get('ASSISTANT_REFLECTOR_MODEL', { infer: true });
+        const timeoutMs = settings.get('ASSISTANT_TIMEOUT_MS', { infer: true });
+        if (own === '') {
+          return new ModelReflector(model, settings.get('ASSISTANT_MODEL', { infer: true }), timeoutMs);
+        }
+        return new ModelReflector(
+          openRouterModel(settings.get('OPENROUTER_API_KEY', { infer: true }), own),
+          own,
+          timeoutMs,
+        );
+      },
     },
   ],
 })
