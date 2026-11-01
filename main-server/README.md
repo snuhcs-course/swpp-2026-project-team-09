@@ -2306,7 +2306,7 @@ is ignored by git; commit a run worth keeping with `git add -f`. `test/eval-runn
 The collection evaluations (A and B of P05) have their own fixed sets, saved posts, labels and thresholds in
 `eval/collection/`, with their record in `eval/collection/README.md`. `pnpm eval:collection:status` shows the blanks left
 in the label files and how far the two labellers agree; `test/eval-collection-set.unit.test.ts` checks the sets in
-`pnpm test`. Their runner comes with ticket 09.
+`pnpm test`. `pnpm eval:collection` runs them, and ticket 09 records the runs.
 
 #### The world and the cases
 
