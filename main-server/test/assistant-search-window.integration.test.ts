@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,7 +14,7 @@ import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { signInUser, TestUser } from './friends.js';
 import { refuseMatchServer } from './match-server.js';
-import { connectToDatabase, ownQuest, place132, storeEvent, subQuestIn } from './quests.js';
+import { connectToDatabase, inBatches, ownQuest, place132, storeEvent, subQuestIn } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
@@ -126,7 +127,7 @@ describe('searchRecruitingQuests, in a window of times', () => {
   });
 
   it('gives the evening of a day whose morning alone is more than the list holds', async () => {
-    await Promise.all(Array.from({ length: 31 }, () => questAt('2093-04-05T09:00:00')));
+    await inBatches(31, () => questAt('2093-04-05T09:00:00'));
     const evening = await questAt('2093-04-05T18:00:00');
 
     expect(await questsFound({ after: '2093-04-05T17:00' })).toEqual([evening]);
@@ -201,7 +202,7 @@ describe('searchRecruitingQuests, for a Quest with no start', () => {
 describe('searchRecruitingQuests, for a Quest with no start, at the cut', () => {
   it('takes no place in the list once its end has passed', async () => {
     const own = { board: 'career', capacity: 6 };
-    await Promise.all(Array.from({ length: 30 }, () => questAt('2093-06-25T18:00:00', own)));
+    await inBatches(30, () => questAt('2093-06-25T18:00:00', own));
     const endsAt = korea('2093-06-25T12:00:00').toISOString();
     await questAt('2093-06-25T18:00:00', { ...own, title: '가나다', subQuest: { title: '모임', endsAt } });
     await questAt('2093-06-25T18:00:00', { ...own, title: '언제든', subQuest: { title: '모임' } });
