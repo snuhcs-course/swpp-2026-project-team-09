@@ -1,0 +1,17 @@
+{
+  "successYN": "Y",
+  "seatInfo": {
+    "SEATNO": "16501003",
+    "NAME": "공간컴퓨팅 1",
+    "COMMENT": "",
+    "DEVICE_COMMENT": "모니터/무선랜/전원 제공|1명 예약|다양한 공간컴퓨팅 체험 가능|연구 및 학습을 위한 공간컴퓨팅 기기, 고성능 컴퓨터|스마트 TV 이용 가능",
+    "SEAT_IMAGE": "/MAP/POP/pop_165011-4.jpg",
+    "MONITOR_YN": "Y",
+    "LAN_YN": "Y",
+    "STAND_YN": "",
+    "POWER_YN": "Y"
+  },
+  "params": {
+    "seatNo": "16501003"
+  }
+}
