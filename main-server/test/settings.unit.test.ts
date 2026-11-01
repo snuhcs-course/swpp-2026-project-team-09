@@ -283,3 +283,32 @@ describe('settingsSchema: AUTOMATIC_JUDGEMENT', () => {
     expect(refused({ ...valid, AUTOMATIC_JUDGEMENT: 'true' })).toEqual(['AUTOMATIC_JUDGEMENT']);
   });
 });
+
+describe('settingsSchema: SAME_EVENT_AI_CHOICE', () => {
+  it('unset → off, and no key is needed', () => {
+    const unset = {
+      ...valid,
+      SAME_EVENT_AI_CHOICE: undefined,
+      OPENROUTER_API_KEY: undefined,
+      ASSISTANT_MODEL: undefined,
+    };
+
+    expect(settingsSchema.parse(unset)).toMatchObject({ SAME_EVENT_AI_CHOICE: false });
+  });
+
+  it('on with the key and the model → on', () => {
+    expect(settingsSchema.parse({ ...valid, SAME_EVENT_AI_CHOICE: 'on', OPENROUTER_API_KEY: 'key' })).toMatchObject({
+      SAME_EVENT_AI_CHOICE: true,
+    });
+  });
+
+  it.each(['OPENROUTER_API_KEY', 'ASSISTANT_MODEL'])('on without %s → refused, naming SAME_EVENT_AI_CHOICE', (name) => {
+    const without = { ...valid, SAME_EVENT_AI_CHOICE: 'on', OPENROUTER_API_KEY: 'key', [name]: '' };
+
+    expect(refused(without)).toEqual(['SAME_EVENT_AI_CHOICE']);
+  });
+
+  it('anything else → refused, naming SAME_EVENT_AI_CHOICE', () => {
+    expect(refused({ ...valid, SAME_EVENT_AI_CHOICE: 'true' })).toEqual(['SAME_EVENT_AI_CHOICE']);
+  });
+});

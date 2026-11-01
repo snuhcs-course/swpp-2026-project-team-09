@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import {
@@ -41,7 +42,7 @@ import {
 } from './adapter.js';
 import { chatAssistant } from './chat/chat-assistant.js';
 import { type AssistantReplyDto } from './dto/assistant-messages.dto.js';
-import { type ChatMessage, type Feature } from './feature.js';
+import { type ChatMessage, type Feature, type FeatureReply } from './feature.js';
 import { UserDayService } from './free-time/user-day.service.js';
 import { koreaDate } from './korea-time.js';
 
@@ -112,6 +113,9 @@ export class AssistantService {
     const latest = messages.slice(-HISTORY_MAX);
     try {
       const reply = await runFeature(this.model, this.chat, { userId, now }, latest, this.limits, this.observer);
+      if (reply.noTextFinishReason !== null) {
+        this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
+      }
       return { text: reply.text, mapButtons: reply.mapButtons, cards: reply.cards, proposal: reply.proposal };
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
@@ -126,6 +130,12 @@ export class AssistantService {
     await this.redis.expire(key, COUNT_LIFETIME_SECONDS);
     return sent;
   }
+}
+
+// That a reply had no text of the model's: how many things it showed, never what they were.
+function fixedSentenceLog({ cards, mapButtons, proposal }: FeatureReply, finishReason: string): string {
+  const shown = `${cards.length} cards, ${mapButtons.length} map buttons, ${proposal === null ? 'no' : 'a'} Proposal`;
+  return `The Assistant answered with its fixed sentence: no step had text (finish reason ${finishReason}, ${shown})`;
 }
 
 function unavailable(): ServiceUnavailableException {

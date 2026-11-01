@@ -349,6 +349,7 @@ file's.
 | `ASSISTANT_MAX_OUTPUT_TOKENS`      | Optional: the tokens the model may write in each call; 1000 unless set.                             |
 | `AUTOMATIC_JUDGEMENT`              | Optional: `on` lets the step after a Collection ask the model about Drafts; `off` unless set.       |
 | `SAME_EVENT_TITLE_RULE`            | Optional: `on` lets that step attach a session by an equal title and start; `off` unless set.       |
+| `SAME_EVENT_AI_CHOICE`             | Optional: `on` lets that step ask the model about the candidates the rules leave; `off` unless set. |
 | `JUDGEMENT_TIMEOUT_MS`             | Optional: the milliseconds of a Judgement's model call; 60000 unless set.                           |
 | `JUDGEMENT_MAX_OUTPUT_TOKENS`      | Optional: the tokens the model may write in a Judgement; 4000 unless set.                           |
 

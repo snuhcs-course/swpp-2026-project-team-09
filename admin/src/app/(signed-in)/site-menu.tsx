@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 'use client';
@@ -15,6 +16,7 @@ import { signOut } from './actions';
 // A section of the site is one entry here and one route under (signed-in); its pages live under `href` or `under`.
 const SECTIONS = [
   { href: '/', under: '/events', label: 'Events' },
+  { href: '/queue', under: '/queue', label: 'Same-event queue' },
   { href: '/places', under: '/places', label: 'Places' },
   { href: '/users', under: '/users', label: 'Users' },
   { href: '/collection', under: '/collection', label: 'Collection status' },

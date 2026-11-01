@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -38,6 +39,8 @@ export const runOptionsSchema = z.strictObject({
   budgetUsd: z.number().positive(),
   // The world the run seeds, and whose cases it runs.
   world: z.enum(WORLDS),
+  // Runs the world's holdout in place of its cases. Only the P4 suite has one.
+  holdout: z.literal(true).optional(),
   prices: pricesSchema,
   // The commit measured, and whether files were changed on top of it.
   commit: z.string().min(1),
@@ -96,6 +99,7 @@ export function parseFlags(argv: string[], env: Record<string, string | undefine
       case: { type: 'string', multiple: true },
       budget: { type: 'string' },
       world: { type: 'string' },
+      holdout: { type: 'boolean', default: false },
       yes: { type: 'boolean', default: false },
     },
   });
@@ -115,7 +119,11 @@ export function parseFlags(argv: string[], env: Record<string, string | undefine
     caseIds: listOf(values.case),
     budgetUsd: number('budget', values.budget) ?? DEFAULT_BUDGET_USD,
     world: values.world ?? 'small',
+    ...(values.holdout ? { holdout: true } : {}),
   });
+  if (options.holdout === true && options.world !== 'p4') {
+    throw new Error(`--holdout runs the P4 suite's, and ${options.world} has none`);
+  }
   return { options, yes: values.yes };
 }
 
@@ -133,8 +141,10 @@ export function settingsSlug({ maxSteps, timeoutMs, maxOutputTokens, temperature
   return `s${maxSteps}-t${timeoutMs}-o${maxOutputTokens}-temp${temperature ?? 'default'}-topp${topP ?? 'default'}`;
 }
 
-// The name of a run's file: <YYYY-MM-DD>-<commit>-<model>-<settings>, the day in Korea, the model's slash replaced.
+// The name of a run's file: <YYYY-MM-DD>-<commit>-<model>-<settings>, the day in Korea, the model's slash replaced, and
+// -holdout on a run of the holdout, so that it is not taken for the official run of that commit.
 export function runName(options: RunOptions, startedAt: Date): string {
   const model = options.model.replaceAll(/[^\w.-]/gu, '_');
-  return `${koreaDate(startedAt)}-${options.commit}-${model}-${settingsSlug(options)}`;
+  const name = `${koreaDate(startedAt)}-${options.commit}-${model}-${settingsSlug(options)}`;
+  return options.holdout === true ? `${name}-holdout` : name;
 }

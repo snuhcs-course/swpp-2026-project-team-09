@@ -572,12 +572,15 @@ work.
 
 The refusals each have a `code`, and are checked in the order of the table:
 
-| Refusal                                                                         | Status | `code`                    | Also in the body |
-| ------------------------------------------------------------------------------- | ------ | ------------------------- | ---------------- |
-| An unknown id                                                                   | 404    | `GLOBAL_EVENT_NOT_FOUND`  |                  |
-| A change the state does not allow, or an edit of a cancelled or discarded event | 409    | `GLOBAL_EVENT_STATE`      | `state`          |
-| A `version` that is not the stored one                                          | 409    | `GLOBAL_EVENT_CHANGED`    | `version`        |
-| Publishing without a start or a position, or an edit that would remove one      | 409    | `GLOBAL_EVENT_INCOMPLETE` | `missing`        |
+| Refusal                                                                                   | Status     | `code`                                              | Also in the body |
+| ----------------------------------------------------------------------------------------- | ---------- | --------------------------------------------------- | ---------------- |
+| An unknown id                                                                             | 404        | `GLOBAL_EVENT_NOT_FOUND`                            |                  |
+| Attaching or publishing a queued session no longer queued, or detaching a session unknown | 409 or 404 | `POST_SESSION_NOT_QUEUED`, `POST_SESSION_NOT_FOUND` | —                |
+| A change the state does not allow, or an edit of a cancelled or discarded event           | 409        | `GLOBAL_EVENT_STATE`                                | `state`          |
+| A `version` that is not the stored one                                                    | 409        | `GLOBAL_EVENT_CHANGED`                              | `version`        |
+| Publishing without a start or a position, or an edit that would remove one                | 409        | `GLOBAL_EVENT_INCOMPLETE`                           | `missing`        |
+| Attaching a queued session to an event that is no longer its candidate                    | 409        | `CANDIDATE_GONE`                                    | —                |
+| Detaching a session of its own, or one that kept nothing of its Draft                     | 409        | `POST_SESSION_NOT_DETACHABLE`                       | —                |
 
 An id that is not a UUID gets 400, as does a body that breaks the rules above, before any of these.
 
@@ -677,6 +680,34 @@ posts of one event on two pods the second sees the first.
   it held, the only copy of the post's title and text, stays in the session's `ownDraft`, for detaching (ticket 08b). The
   event's `sourceUrl`, its version and its route stay, since those read its own session. Attaching tells no app to refetch.
   A session's `globalEventId` in a Judgement is the event it was published as or attached to, or its Draft while held.
+
+- **The AI's choice** runs only with `SAME_EVENT_AI_CHOICE=on` (default `off`, also in Production; with `on` the server
+  refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`). `off` calls no model, sends nothing out and asks
+  nothing of the candidates, so a session the rules do not attach is published as before. For the sessions of a post
+  with candidates the refusing rules left, whether the rules read them or a Judgement passed them, it makes one call,
+  outside any transaction and lock, with no retry. No model is called for a session with no candidate, one the rules
+  decided, or a post the link rule decided. An answer is stored in `same_event_answers`, one row per session named by
+  its start, made before the call: of two servers one calls, and a session is never asked about twice.
+- **What leaves the server for it:** the Source's name, the post's title and text, each session's start and place,
+  and each candidate's title, start, place and text, masked as for a Judgement. Candidates are numbers, never ids; one that a refusing rule refused is not sent.
+- **An answer is applied under the step's lock**, once checked. `same` attaches with `attachedBy` `ai` and the AI's sentence as the `reason`. Another time flags the event and changes nothing else, nor its version. `different` lets the session go on to publication. Attaching still happens with `AUTOMATIC_PUBLICATION=off`; nothing is published and no app is told.
+- **The queue** is a session's `heldFor`, a value saying why it waits, so that an evaluation can count them (`holdOf` in
+  `same-event-choice.ts`): `link_not_one_to_one`, `several_matches` (several title matches, or two sessions chose one
+  event), `ai_unsure`, `ai_failed` (a failed call, a timeout, a malformed answer, a candidate not offered, or a server
+  that stopped during the call), `candidates_changed` (the chosen event is no longer a candidate, or one the AI was not
+  asked about has appeared, as when another server published it meanwhile). It stays a Draft, is neither judged nor
+  published, and its post finishes the step. A post another server is asking about is left to it.
+- **What an Administrator does** (`admin/global-events`, each under the step's lock, so that of two one acts and the
+  other gets 409): `GET queue` lists the sessions with their candidates, worked out when asked, so a removed event goes,
+  a cancelled one says so and a later one appears, and those of the posts the body links are among them. `POST
+queue/:sessionId/attach` (`attachedBy` `administrator`, reason empty, no flag) takes only a candidate; `POST
+queue/:sessionId/publish` publishes the Draft by an Administrator's route, or answers `GLOBAL_EVENT_INCOMPLETE` for
+  what it still needs, and it stays queued while they fill it in on its page. Both take the Draft's version. Publishing
+  or discarding a queued Draft on its own page takes it out too. Only publishing tells the apps to refetch.
+- **Detaching** (`POST sessions/:sessionId/detach`, listed by `GET :id/sessions`) makes a session with an `ownDraft` its
+  own Draft again, with a new id, with `readByRules` off and `reason` and `ownDraft` empty. The event, its Quests and
+  its flag stay. The Draft has version 2, an Administrator's change, so that neither the next Collection nor `overDraft`
+  judges or attaches the post again. `POST :id/acknowledge` takes an event's flag off, also without a new version.
 
 **A Judgement** ([ADR 0008](../docs/adr/0008-judgements-publish-only-what-the-server-checks.md)) reads what the rules
 left. With `AUTOMATIC_JUDGEMENT=on` (default `off`, also in Production) the step calls the model once for each post with a
@@ -2034,9 +2065,14 @@ its model through OpenRouter with the Vercel AI SDK
     (`dto/assistant-messages.dto.ts`).
   - **429 `{ "message": "Today's messages are used up" }`** once a User has sent `ASSISTANT_DAILY_MESSAGES` messages
     (50) that day in Korea, without calling the model. Redis counts them under `assistant:messages:<userId>:<date>`.
+  - **The reply's text** is the text of the model's steps in order, a step that repeats the one before it left out,
+    since the model may write beside a tool call and close with a line or with nothing. A run that wrote no text but
+    shows cards, map buttons or a Proposal says `아래에서 확인해 보세요.` above them, and the server logs that it did, as
+    `The Assistant answered with its fixed sentence: no step had text (finish reason stop, 2 cards, 0 map buttons, no
+Proposal)`.
   - **503 `{ "message": "The Assistant cannot answer now" }`**, the one error reply, whatever failed: no key configured,
-    a model error, exhausted credit (OpenRouter's 402), the time running out, or the step cap reached without an
-    answer. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
+    a model error, exhausted credit (OpenRouter's 402), the time running out, the step cap reached without an answer,
+    or a run with no text and nothing to show. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
     message's text, the model's answer or an error's message or body, which can hold the request sent to the model.
 
 - `OPENROUTER_API_KEY` is the OpenRouter key and `ASSISTANT_MODEL` the OpenRouter id of the model, such as
@@ -2145,15 +2181,16 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
   another's data.
 - **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
   call, tool call and answer within the limits per message, asking OpenRouter for providers that do not collect data
-  (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). `causeOf` names why a
-  run failed for the log.
+  (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). It makes the reply's
+  text from the steps' text, or the fixed sentence. `causeOf` names why a run failed for the log.
 
 ### Testing with the scripted model
 
 The tests never call a real model. `test/scripted-model.ts` stands for it: a `ScriptedModel` whose `model` goes to
 `startApp` in the model port's place. Each call to the model takes the next step of its script, and every call is
-kept. A step is a tool to call with its arguments, `{ tool, input }`, the text to answer, `{ text }`, an error to throw
-as the provider would, `{ error }`, or no answer until the time per message runs out, `{ stall: true }`. A call past
+kept. A step is a tool to call with its arguments, `{ tool, input }`, with `text` when the model wrote words beside the
+call, the text to answer, `{ text }`, a call cut at the output limit, `{ cut }`, an error to throw as the provider
+would, `{ error }`, or no answer until the time per message runs out, `{ stall: true }`. A call past
 the end of the script fails, and so does the model `startApp` binds by default, so a test that forgot a script cannot
 reach OpenRouter. `test/assistant.integration.test.ts` does it this way:
 
@@ -2207,7 +2244,9 @@ the settings given to `startApp`. During the run the tokens the model reported a
 budget. The budget is an estimate; a credit limit on the OpenRouter key is the hard stop.
 
 The recorder (`eval/recorder.ts`) wraps the model and records each step: its tool calls and inputs, its finish
-reason and its usage with cache reads and writes. The tool results come through the run observer, the one seam in the
+reason and its usage with cache reads and writes. A step cut at the output limit also keeps `cut`: its content parts,
+its reasoning tokens and the provider's response as it came, which the benchmark's fetch (`RawResponses`) keeps because
+the provider library's schema drops what it does not know. Only the trace holds these, never the server's logs. The tool results come through the run observer, the one seam in the
 server: `runFeature` takes an optional `RunObserver` (`adapter.ts`) that it tells of each tool's result or error and
 each step's end, with the step's tool errors, so that a call whose input the tool's schema refused before it ran
 shows its error too. `AssistantService` passes the one bound to `RUN_OBSERVER`, which only the benchmark binds, so
@@ -2250,6 +2289,16 @@ sends it as another User of the world, such as one with no Timetable. `eval/p4/r
 real table and shuttle file never reach a run, and `eval/p4/suite.yaml` commits the
 thresholds and who drafted and reviewed the labels. Every case has `repeat: 3`, so a scorecard's pass rates are the mean
 of the 3 runs. `test/eval-p4-cases.integration.test.ts` checks the set, the fixture and every seed name.
+
+A scorecard of the suite adds each threshold's pass or fail, the pass rate of six layers (the action, the tools, the
+arguments, the cards with the map buttons, the Proposal and the reply's words) and the runs that failed on the words
+alone (`eval/p4/report.ts`). Only the thresholds decide. A run counts in a layer only when its case checks that layer,
+and the action is read as if the words were right, so that a failure lands in the lowest layer that needs fixing.
+
+`pnpm eval:holdout` runs the suite's holdout, 12 of its cases with only the last User turn reworded
+(`eval/p4/holdout.yaml`), which P11 does not tune on. Nothing else reaches those wordings, so `pnpm eval --world p4`
+still runs exactly the 40 cases. Its scorecard gives the pass rates and the layer rates, with what the run cost and its
+settings, and names no case, and `pnpm eval:compare` refuses its runs. `eval/p4/record.md` is the record of the suite's runs.
 
 #### The P05 suite
 
