@@ -1,0 +1,507 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>SNU 비교과</title><meta http-equiv="X-UA-Compatible" content="IE=edge"><link rel="shortcut icon" type="image/x-icon" href="/common/1user/common/css/images/common/favicon.ico"><meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1"><meta name="OWASP_CSRFTOKEN" content="REMOVED"><link rel="stylesheet" type="text/css" href="/common/plugin/fancytree/jquery.fancytree.css"><link rel="stylesheet" href="/common/plugin/customTags/jquery.customTags.css" charset="utf-8"><link rel="stylesheet" href="/common/plugin/uploadFile/jquery.uploadFile.css" charset="utf-8"><link rel="stylesheet" href="/common/plugin/jquery.ui.datetimepicker.css" charset="utf-8"><link rel="stylesheet" href="/common/plugin/jquery.timepicker.css" charset="utf-8"><link rel="stylesheet" href="/common/plugin/bgrins-spectrum/spectrum.css" charset="utf-8" media="all"><link rel="stylesheet" href="/common/1user/common/common/syCntCustomTags.css" charset="utf-8" media="all"><link rel="stylesheet" href="/common/1user/common/common/syCntUploadFile.css" charset="utf-8" media="all"><link rel="stylesheet" href="/common/1user/common/lib/cropprt/cropper.min.css" charset="utf-8"><script type="text/javascript" src="/common/plugin/jquery-3.6.0/jquery-3.6.0.min.js" charset="utf-8"></script><script type="text/javascript" src="/common/plugin/jquery-3.6.0/jquery-ui-1.12.1.min.js" charset="utf-8"></script><link rel="stylesheet" href="/common/plugin/jquery-3.6.0/jquery-ui-1.12.1.min.css" charset="utf-8" media="all"><script type="text/javascript" src="/common/plugin/fancytree/jquery.fancytree.js" charset="utf-8"></script><script type="text/javascript" src="/common/plugin/fancytree/jquery.fancytree.dnd.js" charset="utf-8"></script><script type="text/javascript" src="/common/plugin/jquery.ui.datetimepicker.js" charset="utf-8"></script><script type="text/javascript" src="/common/plugin/jquery.timepicker.min.js" charset="utf-8"></script><script type="text/javascript" src="/common/1user/common/lib/monthpicker/js/jquery.mtz.monthpicker.js" charset="utf-8"></script><script type="text/javascript" src="/common/plugin/jquery.form.js" charset="utf-8"></script><script type="text/javascript" src="/common/plugin/jquery.toJSON.js" charset="utf-8"></script><script type="text/javascript" src="/common/1user/common/common/syCntUploadFile.js" charset="utf-8"></script><script type="text/javascript" src="/common/plugin/syworks.jquery.fn.js" charset="utf-8"></script><script type="text/javascript" src="/common/plugin/syworks.jquery.dialog.js" charset="utf-8"></script><script type="text/javascript" src="/common/plugin/customTags/jquery.customTags.js" charset="utf-8"></script><script type="text/javascript" src="/common/plugin/moment.min.js" charset="utf-8"></script><script type="text/javascript" src="/common/plugin/bgrins-spectrum/spectrum.js" charset="utf-8"></script><!-- 개발 공통 시작 --><script type="text/javascript" src="/common/plugin/ckeditor/ckeditor.js" charset="utf-8"></script><style>.cke{visibility:hidden;}</style><!-- 슬라이드 소스 시작 --><link rel="stylesheet" type="text/css" href="/common/1user/common/lib/swiper/swiper.min.css" media="all"><script type="text/javascript" src="/common/1user/common/lib/swiper/swiper.min.js"></script><!-- 슬라이드 소스 끝 --><script type="text/javascript" src="/common/1user/common/lib/cropprt/cropper.min.js" charset="utf-8"></script><script type="text/javascript" src="/common/common/syPgmCustomTags.js"></script><script type="text/javascript" src="/common/common/childFunction.js"></script><script type="text/javascript" src="/common/common/syPgmFunction.js"></script><!-- 개발 공통 끝 --><!-- 차트 --><script type="text/javascript" src="/common/1user/common/lib/chart/chart.min.js"></script><!-- 지도 --><!-- <script type='text/javascript' src='https://www.google.com/jsapi'></script><script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=840d3fe8d902e6dfbe6910475056c943"></script> --><!-- 스타일 적용 --><script type="text/javascript" src="/common/1user/common/common/common.js" charset="utf-8"></script><script type="text/javascript" src="/common/1user/common/common/syCntFunction.js" charset="utf-8"></script><script type="text/javascript" src="/common/1user/common/common/sySurvValidate.js" charset="utf-8"></script><script type="text/javascript" src="/common/1user/common/common/syCntCustomTags.js" charset="utf-8"></script><script type="text/javascript" src="/common/1user/common/common/multilanguage.js" charset="utf-8"></script><link rel="stylesheet" href="/common/1user/common/css/font.css" charset="utf-8" media="all"><link rel="stylesheet" href="/common/1user/common/css/common.css" charset="utf-8" media="all"><link rel="stylesheet" href="/common/1user/common/css/portfolio/style.css?ver=241224" charset="utf-8" media="all"><script type="text/javascript" src="/common/ptfol/js/ex.js" charset="utf-8"></script><script type="text/javascript" src="/common/common/core-min.js"></script><script type="text/javascript" src="/common/common/cipher-core-min.js"></script><script type="text/javascript" src="/common/common/sha256.js"></script><script type="text/javascript" src="/common/common/aes.js"></script><script type="text/javascript" src="/common/common/aesEnc.js"></script><!-- jquery 끝 --><!--[if lt IE 9]><script src="../lib/html5/html5.js"></script><script src="../lib/respond/respond.min.js"></script><![endif]--><!-- lib 끝 --><script type="text/javascript" charset="utf-8">var global={"sysdate":"2026.10.31","contextPath":"","mappingUrl":"/ptfol/imng/icmpNsbjtPgm/findIcmpNsbjtPgmInfo.do","isMobile":false,"queryString":"encSddpbSeq=2347f7c435e8092083cde728b72ba2cf","params":"{encSddpbSeq=2347f7c435e8092083cde728b72ba2cf}","env":"real","userId":null};var globalMain={"sysdate":"2026.10.31","contextPath":"","mappingUrl":"/ptfol/imng/icmpNsbjtPgm/findIcmpNsbjtPgmInfo.do","isMobile":false,"queryString":"encSddpbSeq=2347f7c435e8092083cde728b72ba2cf","params":"{encSddpbSeq=2347f7c435e8092083cde728b72ba2cf}","env":"real","userId":null}</script><!-- [보안이슈202301] --><script type="text/javascript" src="/common/common/sySecurity.js"></script><script type="text/javascript">
+	$( document ).ready( function () {
+		global.realDev = "http://localhost:8080";
+		var csrfToken = $( 'meta[name="OWASP_CSRFTOKEN"]' ).attr( 'content' );
+		if ( csrfToken ) {
+			$( 'form' ).each( function () {
+				if ( !$( this ).find( 'input[name="OWASP_CSRFTOKEN"]' ).length ) {
+					$( this ).append( '<input type="hidden" name="OWASP_CSRFTOKEN" value="' + csrfToken + '">' );
+				}
+			} );
+			$.ajaxSetup( { headers: { 'X-OWASP-CSRFTOKEN': csrfToken } } );
+		}
+		console.log("Multilanguage");
+		console.log("http://localhost:8080");
+		console.log('');
+		console.log('1247');
+		console.log('kor');
+		Multilanguage.init( 'kor' ,'1247' ,'kor' );
+		console.log("Multilanguage.start");
+		Multilanguage.start();
+		//Multilanguage의 Multilanguage.dataLoader();//안에서 customTags()호출함
+		//$( document ).customTags();
+		//$( document ).pgmCustomTags();
+		$( ".btn_back" ).click( function () {
+			window.history.back();
+		} );
+		/* if ( '' == "Y" ) {
+			$( '.search_form' ).addClass( 'on' );
+			$( '.detail_box' ).slideDown();
+		} */
+	} );
+</script><link rel="stylesheet" href="/common/2base/common/css/netfunnel.css" charset="utf-8" media="all"><script type="text/javascript" src="/common/2base/js/netfunnel-debug.js"></script><script type="text/javascript">
+
+
+
+	$(window).on("load", function() {
+
+		function setCookie(name, value){
+			var expires =  null;
+			var path = null;
+			var domain = null;
+
+			document.cookie =
+					name + "=" + escape(value) +
+					((expires == null) ? "" : ("; expires =" + expires.toGMTString())) +
+					((path == null) ? "" : ("; path =" + path)) +
+					((domain == null) ? "" : ("; domain =" + domain)) +
+					"; Secure; SameSite=Lax";
+		}
+
+		function getCookie(name) {
+			var dcookie = document.cookie;
+			var cname = name + "=";
+			var clen = dcookie.length;
+			var cbegin = 0;
+			while (cbegin < clen) {
+				var vbegin = cbegin + cname.length;
+				if (dcookie.substring(cbegin, vbegin) == cname) {
+					var vend = dcookie.indexOf (";", vbegin);
+					if (vend == -1) vend = clen;
+					return unescape(dcookie.substring(vbegin, vend));
+				}
+				cbegin = dcookie.indexOf(" ", cbegin) + 1;
+				if (cbegin == 0) break;
+			}
+			return "";
+		}
+		
+		
+		// NetFunnel.TS_BYPASS = true; // NetFunnel Routine Bypass [true|false] 	=> default false
+		NetFunnel.TS_DEBUG_MODE = false; // Debug Mode		=> default false
+		
+		NetFunnel.TS_SERVICE_ID		= 'service_3';		// Default TS Service id
+
+		let ACT_MAINPAGE = "mainpage";
+		let ACT_LOGIN = "login";
+		let ACT_PROGRAMLIST = "programlist";
+		let ACT_PROGRAMAPLY = "programaply";
+		let ACT_PROGRAMDETAIL = "programdetail";
+		let ACT_PROGRAMAPLYFIX = "programaplyfix";
+
+		
+
+		// console.log("NetFunnel > ", NetFunnel)
+		
+		/*
+		NetFunnel_Action({action_id:ACT_MAINPAGE}, function(ev,ret) {
+				console.log("NetFunnel_Action mainpage > ", ret, this);	
+		});
+		*/
+		
+		
+		// 로그인 버튼 처리
+		try{
+			function NetFunnel_Login(url){
+				console.log("NetFunnel_Login !!");
+				
+				NetFunnel_Action({action_id : ACT_LOGIN}, function(ev,ret) {
+					location.href = url;
+				});
+			}
+			$("div.header_top .log_btn, div.m_gnbv .login_btn").click(function(){			// 로그인 버튼
+				let ahref = $(this).attr("href");
+				if(ahref.indexOf("/comm/login/user/login.do") >= 0){
+					NetFunnel_Login( ahref );	
+					return false;
+				}
+				return true;
+			});
+		}catch(e){}
+
+		
+		// 목록에서 비교과 신청
+		try{
+			function NetFunnel_Programlist( url ){
+				console.log("NetFunnel_Programlist !!");
+				NetFunnel_Action({action_id : ACT_PROGRAMLIST}, function(ev,ret) {
+					setCookie(ACT_PROGRAMLIST, "DONE");
+					location.href = url;
+				});
+			}
+			
+			//-- 상단 메뉴
+			$("div.gnb_wrap").find("ul li a").click(function(e){
+				let ahref = $(this).attr("href");
+				let act = getCookie(ACT_PROGRAMLIST)
+				if(ahref.indexOf("/ptfol/pgm") >= 1 && ahref.indexOf("/index.do") && act !="DONE") {
+					NetFunnel_Programlist( ahref );
+					return false;
+				}
+				return true;
+			});
+			
+			$("div.sub_cont .h3_box.sub_visual").find("ul.depth_box li a").click(function(e){
+				let ahref = $(this).attr("href");
+				let act = getCookie(ACT_PROGRAMLIST)
+				if(ahref.indexOf("/ptfol/pgm") >= 1 && ahref.indexOf("/index.do") && act !="DONE") {
+					NetFunnel_Programlist( ahref );
+					return false;
+				}
+				return true;
+			});
+
+		}catch(e){}
+		
+		// 상세에서  비교과 신청
+		window.NetFunnel_Programaply = function (callback) {
+			console.log("NetFunnel_Programaply !!");
+			NetFunnel_Action({action_id : ACT_PROGRAMAPLY}, function(ev,ret) {
+				if(callback) callback();
+			});
+		}
+		
+		window.NetFunnel_Programaplyfix = function (callback) {
+			console.log("NetFunnel_Programaplyfix !!");
+			NetFunnel_Action({action_id : ACT_PROGRAMAPLYFIX}, function(ev,ret) {
+				if(callback) callback();
+			});
+		}
+		
+		
+		
+		
+		
+		
+	} );
+</script></head><body class="kor"><!-- 레프트 메뉴 없을 경우 클래스 추가  class="no_left_gnb" --><!-- Skip Nav --><div id="skipnavigation"><a href="#gnb">주메뉴 바로가기</a><a href="#container">본문내용 바로가기</a><a href="#footer">사이트정보 바로가기</a></div><!-- //Skip Nav --><!-- header -->
+	<header><article><div class="header_top"><ul><li class="first"><a href="/comm/login/user/login.do?rtnUrl=e9cea66abc1cf2c0eaa2dd7750902b2298283c6f2e255a2d04a510eb84163cc5f0d888b840623000d642d5300f136c2c9a08873b56aabb19843cccdec3c4c64ec88f65ffa1d0871000e981b66c0ff24907705ee83571c80cf208ec32c8840f565ed14a33c9e43821a9496156ceda1e033e213f73d2680fbb64396eba595ecbd0" class="log_btn" title="로그인">로그인</a></li><li><ul class="language_wrap"><li class="on first"><a href="#;" onclick="Multilanguage.change(&quot;kor&quot;, &quot;1247&quot;);"><span>KR</span></a></li><li class="last"><a href="#;" onclick="Multilanguage.change(&quot;eng&quot;, &quot;1247&quot;);"><span>EN</span></a></li></ul></li></ul></div><div class="gnb_wrap"><div class="logo_wrap"><a href="/index.do" title="SNU 비교과"><span>SNU 비교과</span></a></div><nav id="gnb"><h2>주요메뉴</h2><ul><li class="open first"><a href="/menu/redirect.do?url=/ptfol/pgm/index.do" class="on">비교과 프로그램</a><!-- class on이 추가 됩니다. --><ul><li class="open first"><a href="/menu/redirect.do?url=/ptfol/pgm/index.do" class="on">전체보기</a><!-- class on이 추가 됩니다. --></li><li class=""><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0001/index.do" class="">교육 (특강/세미나)</a><!-- class on이 추가 됩니다. --></li><li class=""><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0002/index.do" class="">공모전/경진대회</a><!-- class on이 추가 됩니다. --></li><li class=""><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0004/index.do" class="">현장학습/인턴</a><!-- class on이 추가 됩니다. --></li><li class=""><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0003/index.do" class="">사회공헌 (봉사)</a><!-- class on이 추가 됩니다. --></li><li class=""><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0005/index.do" class="">학습/진로상담</a><!-- class on이 추가 됩니다. --></li><li class=""><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0006/index.do" class="">레크리에이션</a><!-- class on이 추가 됩니다. --></li><li class="last"><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0007/index.do" class="">기타</a><!-- class on이 추가 됩니다. --></li></ul></li><li class=""><a href="/menu/redirect.do?url=/ptfol/cp/dgns/eb7ddda0ffd43bae614d927845d24850/index.do" class="">역량·학습유형 진단</a><!-- class on이 추가 됩니다. --><ul><li class="first"><a href="/menu/redirect.do?url=/ptfol/cp/dgns/eb7ddda0ffd43bae614d927845d24850/index.do" class="">SNU 핵심역량진단</a><!-- class on이 추가 됩니다. --></li><li class="last"><a href="/menu/redirect.do?url=/ptfol/cp/dgns/8a92185b0cf20721ebcc9835da3d1b9e/index.do" class="">SNU 학습유형검사</a><!-- class on이 추가 됩니다. --></li></ul></li><li class=""><a href="/menu/redirect.do?url=/ptfol/cusl/asignProf/index.do?cuslKndCd=1000053" class="">상담신청</a><!-- class on이 추가 됩니다. --><ul><li class="first"><a href="/menu/redirect.do?url=/ptfol/cusl/asignProf/index.do?cuslKndCd=1000053" class="">취업컨설팅</a><!-- class on이 추가 됩니다. --></li><li class=""><a href="/menu/redirect.do?url=/ptfol/cusl/cldr/U170300001/snu/index.do" class="">학습상담</a><!-- class on이 추가 됩니다. --></li><li class="last"><a href="/menu/redirect.do?url=/ptfol/cusl/cldr/U170300002/snu/index.do" class="">글쓰기상담</a><!-- class on이 추가 됩니다. --></li></ul></li><li class=""><a href="/menu/redirect.do?url=/ptfol/imng/icmpNsbjtPgm/findIcmpNsbjtAplDscList.do" class="">나의 활동</a><!-- class on이 추가 됩니다. --><ul><li class="first"><a href="/menu/redirect.do?url=/ptfol/imng/icmpNsbjtPgm/findIcmpNsbjtAplDscList.do" class="">비교과이력</a><!-- class on이 추가 됩니다. --></li><li class="last"><a href="/menu/redirect.do?url=/ptfol/myPage/myInfoSet/index.do" class="">환경설정</a><!-- class on이 추가 됩니다. --></li></ul></li><li class=""><a href="/menu/redirect.do?url=/ptfol/comm/board/7d5781d33124f58f831fe856c5c86e53/index.do" class="">안내</a><!-- class on이 추가 됩니다. --><ul><li class="first"><a href="/menu/redirect.do?url=/ptfol/comm/board/7d5781d33124f58f831fe856c5c86e53/index.do" class="">공지사항</a><!-- class on이 추가 됩니다. --></li><li class="last"><a href="/menu/redirect.do?url=/ptfol/comm/board/ddc9e44a747e06bd982f4b260ddb0b7c/index.do" class="">자료실</a><!-- class on이 추가 됩니다. --></li></ul></li></ul></nav><div class="util_wrap"><form id="mainForm" name="mainForm" method="get" action="/ptfol/pgm/index.do"><input type="hidden" name="currentPageNo" value=""><script>
+						//[YK]인기검색어
+						function mainPopSearchFn ( shVal ) {
+							$( "[name=searchValue]" ).val( shVal );
+							mainSearchFn();
+						}
+						function mainSearchFn () {
+							$( "[name=mainForm]" ).submit();
+						}
+						function mainSearchKeypressFn () {
+							if ( event.keyCode == 13 ) {
+								mainSearchFn();
+							}
+						}
+					</script><!-- 비교과검색 --><div class="lica_search"><div class="search_box"><input type="text" name="searchValue" onkeyup="mainSearchKeypressFn(this)" value="" placeholder="프로그램명 또는 키워드를 검색해 보세요."><a href="#" class="search_btn" title="검색" onclick="mainSearchFn();"></a></div><!-- lica_detail --><div class="lica_detail"><a href="#" class="detail_btn" title="상세검색 열기"></a><!-- detail_search --><div class="detail_search"><dl><dt><span class="search_title">모집상태</span></dt><dd><div class="cdDiv"><ul class="ul_inblock comm_el"><input type="hidden" id="APPLY_CHK_CD" class="gojworld"><li class="first"><label class="check"><script>$(document).ready(function(){$('.checkboxAllchk' ).change( function ( e ) {e.preventDefault();var checkedChk = $(this).is(':checked');$(this).closest('.cdDiv').find('input').each(function(){$(this).prop('checked', checkedChk);});});});</script><input type="checkbox" id="APPLY_CHK_CD0000" class="checkboxAllchk " name="applyChkCdSh" value="0000" title="조회유형" onchange=""><span class="ico"></span><span class="txt">전체</span></label></li><li><label class="check"><input type="checkbox" id="applyChkCdSh0001" class="" name="applyChkCdSh" value="0001" title="조회유형" onchange=""><span class="ico"></span><span class="txt">모집중</span></label></li><li><label class="check"><input type="checkbox" id="applyChkCdSh0002" class="" name="applyChkCdSh" value="0002" title="조회유형" onchange=""><span class="ico"></span><span class="txt">마감임박</span></label></li><li><label class="check"><input type="checkbox" id="applyChkCdSh0003" class="" name="applyChkCdSh" value="0003" title="조회유형" onchange=""><span class="ico"></span><span class="txt">모집마감</span></label></li><li class="last"><label class="check"><input type="checkbox" id="applyChkCdSh0004" class="" name="applyChkCdSh" value="0004" title="조회유형" onchange=""><span class="ico"></span><span class="txt">모집대기</span></label></li></ul></div></dd></dl><dl><dt><span class="search_title">프로그램 유형</span></dt><dd><div class="cdDiv"><span class="cd"><input type="hidden" id="PLAN_BIG_CD" class="gojworld"><span class="select"><select name="planBigCdSh" id="planBigCdSh" class="swid100" title="프로그램유형코드" onchange=""><option value="0000">전체</option><option value="PBC0001">교육(특강/세미나)</option><option value="PBC0002">공모전/경진대회</option><option value="PBC0004">현장학습/인턴</option><option value="PBC0003">사회공헌(봉사)</option><option value="PBC0005">학습/진로상담</option><option value="PBC0006">레크리에이션</option><option value="PBC0007">기타</option></select></span></span></div></dd></dl><!-- <dl><dt>접수상태</dt><dd><ul class="ul_inblock"><li><label class="check"><input type="checkbox"><span class="ico"></span><span class="txt">전체</span></label></li><li><label class="check"><input type="checkbox"><span class="ico"></span><span class="txt">모집대기</span></label></li><li><label class="check"><input type="checkbox"><span class="ico"></span><span class="txt">모집중</span></label></li><li><label class="check"><input type="checkbox"><span class="ico"></span><span class="txt">종료</span></label></li></ul></dd> --><dl><dt>핵심역량</dt><dd><div class="cdDiv"><ul class="ul_inblock comm_el"><input type="hidden" id="CORE_ABLY_CD" class="gojworld"><li class="first"><label class="check"><script>$(document).ready(function(){$('.checkboxAllchk' ).change( function ( e ) {e.preventDefault();var checkedChk = $(this).is(':checked');$(this).closest('.cdDiv').find('input').each(function(){$(this).prop('checked', checkedChk);});});});</script><input type="checkbox" id="CORE_ABLY_CD0000" class="checkboxAllchk " name="coreAblyCdSh" value="0000" title="핵심역량" onchange=""><span class="ico"></span><span class="txt">전체</span></label></li><li><label class="check"><input type="checkbox" id="coreAblyCdShABLY_CRTC_CD" class="" name="coreAblyCdSh" value="ABLY_CRTC_CD" title="핵심역량" onchange=""><span class="ico"></span><span class="txt">공동체역량</span></label></li><li><label class="check"><input type="checkbox" id="coreAblyCdShABLY_LRNN_CD" class="" name="coreAblyCdSh" value="ABLY_LRNN_CD" title="핵심역량" onchange=""><span class="ico"></span><span class="txt">도전역량</span></label></li><li><label class="check"><input type="checkbox" id="coreAblyCdShABLY_CMCT_CD" class="" name="coreAblyCdSh" value="ABLY_CMCT_CD" title="핵심역량" onchange=""><span class="ico"></span><span class="txt">학문탐구역량</span></label></li><li><label class="check"><input type="checkbox" id="coreAblyCdShABLY_GBCZ_CD" class="" name="coreAblyCdSh" value="ABLY_GBCZ_CD" title="핵심역량" onchange=""><span class="ico"></span><span class="txt">리더십역량</span></label></li><li><label class="check"><input type="checkbox" id="coreAblyCdShABLY_CLSR_CD" class="" name="coreAblyCdSh" value="ABLY_CLSR_CD" title="핵심역량" onchange=""><span class="ico"></span><span class="txt">문제해결역량</span></label></li><li><label class="check"><input type="checkbox" id="coreAblyCdShABLY_WDFS_CD" class="" name="coreAblyCdSh" value="ABLY_WDFS_CD" title="핵심역량" onchange=""><span class="ico"></span><span class="txt">협업역량</span></label></li><li class="last"><label class="check"><input type="checkbox" id="coreAblyCdShABLY_MYMG_CD" class="" name="coreAblyCdSh" value="ABLY_MYMG_CD" title="핵심역량" onchange=""><span class="ico"></span><span class="txt">자기관리역량</span></label></li></ul></div></dd></dl><!--
+							<dl><dt>프로그램 운영방식</dt><dd><ul class="ul_inblock"><li><label class="check"><input type="checkbox"><span class="ico"></span><span class="txt">온라인(비대면)</span></label></li><li><label class="check"><input type="checkbox"><span class="ico"></span><span class="txt">오프라인 (대면)</span></label></li><li><label class="check"><input type="checkbox"><span class="ico"></span><span class="txt">블렌디드 (혼합)</span></label></li></ul></dd></dl> --><dl><dt><span class="search_title">조회기간</span></dt><dd><ul class="ul_inblock"><li class="first"><label class="radio"><input type="radio" name="giganGb" value="0001" onclick="dateChk()"><span class="ico"></span><span class="txt lg">당일</span></label></li><li><label class="radio"><input type="radio" name="giganGb" value="0002" onclick="dateChk()"><span class="ico"></span><span class="txt lg">1주일</span></label></li><li><label class="radio"><input type="radio" name="giganGb" value="0003" onclick="dateChk()"><span class="ico"></span><span class="txt lg">1개월</span></label></li><li><label class="radio"><input type="radio" name="giganGb" value="0004" onclick="dateChk()"><span class="ico"></span><span class="txt lg">3개월</span></label></li><li><label class="radio"><input type="radio" name="giganGb" value="0006" onclick="dateChk()"><span class="ico"></span><span class="txt lg">6개월</span></label></li><li><label class="radio"><input type="radio" name="giganGb" value="0007" onclick="dateChk()"><span class="ico"></span><span class="txt lg">1년</span></label></li><li><label class="radio"><input type="radio" name="giganGb" value="0005" onclick="dateChk()"><span class="ico"></span><span class="txt lg">직접 입력 </span></label></li><li class="date_input last" id="self" style="display: none;"><input type="text" name="eduFrDt" class="{'ime':'date','required':true,'maxDateTarget':'eduToDt'}" placeholder="yyyy.mm.dd" title="기간" value="" maxlength="10"><span>~</span><input type="text" name="eduToDt" class="{'ime':'date','required':true,'minDateTarget':'eduFrDt'}" placeholder="yyyy.mm.dd" title="기간" value="" maxlength="10"></li></ul></dd></dl><dl><dt><span class="search_title">조회기준</span></dt><dd><ul class="ul_inblock"><li class="first"><label class="radio"><input type="radio" name="dtGbSh" value="0001"><span class="ico"></span><span class="txt lg">등록일</span></label></li><li><label class="radio"><input type="radio" name="dtGbSh" value="0002"><span class="ico"></span><span class="txt lg">신청시작일</span></label></li><li><label class="radio"><input type="radio" name="dtGbSh" value="0003"><span class="ico"></span><span class="txt lg">신청마감일</span></label></li><li><label class="radio"><input type="radio" name="dtGbSh" value="0004"><span class="ico"></span><span class="txt lg">운영시작일</span></label></li><li class="last"><label class="radio"><input type="radio" name="dtGbSh" value="0005"><span class="ico"></span><span class="txt lg">운영마감일</span></label></li></ul></dd></dl><dl><dt><span class="search_title">캠퍼스구분</span></dt><dd><div class="cdDiv"><ul class="ul_inblock comm_el"><input type="hidden" id="CAM_CD" class="gojworld"><li class="first"><label class="check"><script>$(document).ready(function(){$('.checkboxAllchk' ).change( function ( e ) {e.preventDefault();var checkedChk = $(this).is(':checked');$(this).closest('.cdDiv').find('input').each(function(){$(this).prop('checked', checkedChk);});});});</script><input type="checkbox" id="CAM_CD0000" class="checkboxAllchk " name="operCamCdSh" value="0000" title="캠퍼스코드" onchange=""><span class="ico"></span><span class="txt">전체</span></label></li><li><label class="check"><input type="checkbox" id="operCamCdShCC0001" class="" name="operCamCdSh" value="CC0001" title="캠퍼스코드" onchange=""><span class="ico"></span><span class="txt">관악캠퍼스</span></label></li><li><label class="check"><input type="checkbox" id="operCamCdShCC0002" class="" name="operCamCdSh" value="CC0002" title="캠퍼스코드" onchange=""><span class="ico"></span><span class="txt">연건캠퍼스</span></label></li><li><label class="check"><input type="checkbox" id="operCamCdShCC0003" class="" name="operCamCdSh" value="CC0003" title="캠퍼스코드" onchange=""><span class="ico"></span><span class="txt">수원캠퍼스</span></label></li><li><label class="check"><input type="checkbox" id="operCamCdShCC0004" class="" name="operCamCdSh" value="CC0004" title="캠퍼스코드" onchange=""><span class="ico"></span><span class="txt">평창캠퍼스</span></label></li><li class="last"><label class="check"><input type="checkbox" id="operCamCdShCC0005" class="" name="operCamCdSh" value="CC0005" title="캠퍼스코드" onchange=""><span class="ico"></span><span class="txt">시흥캠퍼스</span></label></li></ul></div></dd></dl><dl><dt>운영부서</dt><dd><input type="hidden" name="vshOrgid" id="vshOrgid" title="운영조직코드" class="{'required' : false} wid100p" value=""><input type="text" name="vshOrgzNm" id="vshOrgzNm" title="대학/학과" class="{'required' : false} wid100p orgSearch" value="" onkeyup="ex.findOrgzTreeList.keydown($(this).val(), {&quot;orgzId&quot;:$(this).prev(), &quot;orgzNm&quot;:$(this), &quot;orgzType&quot;:&quot;0002&quot;});" placeholder="대학/학과"></dd></dl><dl><dt><span class="search_title">인기검색어</span></dt><dd><div class="keyword_box popular"><label class="check"><input type="checkbox" name="searchSh" value="openlnl"><span class="ico"></span><span class="txt">#openlnl</span></label><label class="check"><input type="checkbox" name="searchSh" value="부하테스트"><span class="ico"></span><span class="txt">#부하테스트</span></label><label class="check"><input type="checkbox" name="searchSh" value="튜터링"><span class="ico"></span><span class="txt">#튜터링</span></label><label class="check"><input type="checkbox" name="searchSh" value="첨단융합"><span class="ico"></span><span class="txt">#첨단융합</span></label><label class="check"><input type="checkbox" name="searchSh" value="피어튜터링"><span class="ico"></span><span class="txt">#피어튜터링</span></label><label class="check"><input type="checkbox" name="searchSh" value="미산"><span class="ico"></span><span class="txt">#미산</span></label><label class="check"><input type="checkbox" name="searchSh" value="등산"><span class="ico"></span><span class="txt">#등산</span></label><label class="check"><input type="checkbox" name="searchSh" value="인트로특강"><span class="ico"></span><span class="txt">#인트로특강</span></label><label class="check"><input type="checkbox" name="searchSh" value="OpenLnL"><span class="ico"></span><span class="txt">#OpenLnL</span></label><label class="check"><input type="checkbox" name="searchSh" value="snuti"><span class="ico"></span><span class="txt">#snuti</span></label></div></dd></dl><div class="btn_gp"><a href="#;" class="btn01 resetBtn" id="resetBtn" onclick="global.reset();"><span>초기화</span></a><a href="#;" class="btn01 col02 searchBtn" id="searchBtn" onclick="mainSearchFn();"><span>검색</span></a></div></div><!-- //detail_search --></div><!-- //lica_detail --></div><script>
+						headerDateChk();
+						function headerDateChk () {
+							if ( $( ".lica_search input:radio[name='giganGb']:checked" ).val() != '0005' ) {
+								$( ".lica_search input[name='eduFrDt']" ).val( '' );
+								$( ".lica_search input[name='eduToDt']" ).val( '' );
+								$( ".lica_search #self" ).hide();
+							} else {
+								$( ".lica_search #self" ).show().customTags();
+							}
+						}
+					</script><input type="hidden" name="OWASP_CSRFTOKEN" value="REMOVED"></form><!-- //비교과검색 --><a href="#" title="전체 서비스" class="all_service"></a></div></div><!-- nav --></article><div class="bg_gnb"><div class="text_bg"><p class="tit">
+				설레는 내일을
+				<br>
+				향한 도전!
+			</p><p>여러분의 꿈을 응원합니다.</p></div></div><!-- nav --><a href="/ptfol/pgm/index.do" class="lica_search" title="비교과 검색"></a><a href="#" class="btn_gnb"><i></i><i></i><i></i><span>메뉴</span></a><div class="m_gnb"><ul class="lang_wrap"><li class="on first"><a href="#;" onclick="Multilanguage.change(&quot;kor&quot;, &quot;1247&quot;);"><span>KR</span></a></li><li class="last"><a href="#;" onclick="Multilanguage.change(&quot;eng&quot;, &quot;1247&quot;);"><span>EN</span></a></li></ul><div class="user_wrap lg"><p class="name"><strong>로그인 후</strong><br>
+						다양한 서비스를 이용해 보세요.
+					</p><a href="/comm/login/user/login.do" class="login_btn"><span>로그인하기</span></a><!-- <p class="name lg">로그인이 필요합니다.</p><a href="#;" class="logout_btn lg">로그인</a> --></div><div class="m_gnb_wrap"><!-- S:1뎁스 --><ul class="m_gnb_list"><li class="open first"><a href="#;" class="depth_tit1 on"><span>비교과 프로그램</span></a><!-- class on이 추가 됩니다. --><ul class="m_gnb_list2"><li class="open first"><a href="/menu/redirect.do?url=/ptfol/pgm/index.do" class="tit on">전체보기</a></li><li class=""><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0001/index.do" class="tit ">교육 (특강/세미나)</a></li><li class=""><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0002/index.do" class="tit ">공모전/경진대회</a></li><li class=""><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0004/index.do" class="tit ">현장학습/인턴</a></li><li class=""><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0003/index.do" class="tit ">사회공헌 (봉사)</a></li><li class=""><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0005/index.do" class="tit ">학습/진로상담</a></li><li class=""><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0006/index.do" class="tit ">레크리에이션</a></li><li class="last"><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0007/index.do" class="tit ">기타</a></li></ul></li><li class="in_depth3"><a href="#;" class="depth_tit1 "><span>역량·학습유형 진단</span></a><!-- class on이 추가 됩니다. --><ul class="m_gnb_list2"><li class="in_depth3 first"><a href="#;" class="tit ">SNU 핵심역량진단</a><!-- class on이 추가 됩니다. --><ul class="depth3"><li class="first"><a href="/menu/redirect.do?url=/ptfol/cp/dgns/eb7ddda0ffd43bae614d927845d24850/index.do" class="">진단하기</a><!-- class on이 추가 됩니다. --></li><li class="last"><a href="/menu/redirect.do?url=/ptfol/cp/dgrl/eb7ddda0ffd43bae614d927845d24850/index.do" class="">결과보기</a><!-- class on이 추가 됩니다. --></li></ul></li><li class="in_depth3"><a href="#;" class="tit ">SNU 학습유형검사</a><!-- class on이 추가 됩니다. --><ul class="depth3"><li class="first"><a href="/menu/redirect.do?url=/ptfol/cp/dgns/8a92185b0cf20721ebcc9835da3d1b9e/index.do" class="">진단하기</a><!-- class on이 추가 됩니다. --></li><li class="last"><a href="/menu/redirect.do?url=/ptfol/cp/dgrl/8a92185b0cf20721ebcc9835da3d1b9e/index.do" class="">결과보기</a><!-- class on이 추가 됩니다. --></li></ul></li></ul></li><li class=""><a href="#;" class="depth_tit1 "><span>상담신청</span></a><!-- class on이 추가 됩니다. --><ul class="m_gnb_list2"><li class="first"><a href="/menu/redirect.do?url=/ptfol/cusl/asignProf/index.do?cuslKndCd=1000053" class="tit ">취업컨설팅</a></li><li class=""><a href="/menu/redirect.do?url=/ptfol/cusl/cldr/U170300001/snu/index.do" class="tit ">학습상담</a></li><li class="last"><a href="/menu/redirect.do?url=/ptfol/cusl/cldr/U170300002/snu/index.do" class="tit ">글쓰기상담</a></li></ul></li><li class="in_depth3"><a href="#;" class="depth_tit1 "><span>나의 활동</span></a><!-- class on이 추가 됩니다. --><ul class="m_gnb_list2"><li class="in_depth3 first"><a href="#;" class="tit ">비교과이력</a><!-- class on이 추가 됩니다. --><ul class="depth3"><li class="first"><a href="/menu/redirect.do?url=/ptfol/imng/icmpNsbjtPgm/findIcmpNsbjtAplDscList.do" class="">비교과 활동이력</a><!-- class on이 추가 됩니다. --></li><li><a href="/menu/redirect.do?url=/ptfol/pgm/apl/pgm05/index.do" class="">튜터링 활동이력</a><!-- class on이 추가 됩니다. --></li><li><a href="/menu/redirect.do?url=/ptfol/pgm/apl/pgm06/index.do" class="">학생자율교육</a><!-- class on이 추가 됩니다. --></li><li><a href="/menu/redirect.do?url=/ptfol/cusl/unit/stu/index.do" class="">상담참여이력</a><!-- class on이 추가 됩니다. --></li><li class="last"><a href="/menu/redirect.do?url=/ptfol/bk/bkApl/index.do" class="">BK 참여이력</a><!-- class on이 추가 됩니다. --></li></ul></li><li class="in_depth3"><a href="#;" class="tit ">환경설정</a><!-- class on이 추가 됩니다. --><ul class="depth3"><li class="first"><a href="/menu/redirect.do?url=/ptfol/myPage/myInfoSet/index.do" class="">마이설정</a><!-- class on이 추가 됩니다. --></li><li><a href="/menu/redirect.do?url=/ptfol/myPage/messageBox/index.do" class="">메시지함</a><!-- class on이 추가 됩니다. --></li><li><a href="/menu/redirect.do?url=/ptfol/myPage/scrap/index.do" class="">관심 프로그램</a><!-- class on이 추가 됩니다. --></li><li class="last"><a href="/menu/redirect.do?url=/ptfol/imng/slcom/index.do" class="">학생선발프로그램</a><!-- class on이 추가 됩니다. --></li></ul></li></ul></li><li class=""><a href="#;" class="depth_tit1 "><span>안내</span></a><!-- class on이 추가 됩니다. --><ul class="m_gnb_list2"><li class="first"><a href="/menu/redirect.do?url=/ptfol/comm/board/7d5781d33124f58f831fe856c5c86e53/index.do" class="tit ">공지사항</a></li><li class="last"><a href="/menu/redirect.do?url=/ptfol/comm/board/ddc9e44a747e06bd982f4b260ddb0b7c/index.do" class="tit ">자료실</a></li></ul></li></ul></div><ul class="mgnb_bottom_box"><a href="/ptfol/comm/board/7d5781d33124f58f831fe856c5c86e53/index.do" class="mgnb_btn notice"><span>공지사항</span></a><a href="https://www.snu.ac.kr/index.html" target="_blank" rel="noopener noreferrer" class="mgnb_btn home"><span>홈페이지</span></a><a href="https://my.snu.ac.kr/" target="_blank" rel="noopener noreferrer" class="mgnb_btn portal"><span>포털</span></a></ul></div><!-- //mGnb --></header><div class="dimlnb_bg"></div><!-- /header --><!-- Container --><div class="container"><div class="con_wrap"><!-- 레프트 메뉴 --><aside class="left_gnb"><div class="left_gnb_title"><h2>비교과 프로그램</h2></div><nav class="gnb_list"><ul><li class="open first"><p class="tit"><a href="/menu/redirect.do?url=/ptfol/pgm/index.do" class="sub_use"><span>전체보기</span></a></p><div class="sub_gnb"><ul class="sub_gnb_w"></ul></div></li><li class=""><p class="tit"><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0001/index.do" class="sub_use"><span>교육 (특강/세미나)</span></a></p><div class="sub_gnb"><ul class="sub_gnb_w"></ul></div></li><li class=""><p class="tit"><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0002/index.do" class="sub_use"><span>공모전/경진대회</span></a></p><div class="sub_gnb"><ul class="sub_gnb_w"></ul></div></li><li class=""><p class="tit"><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0004/index.do" class="sub_use"><span>현장학습/인턴</span></a></p><div class="sub_gnb"><ul class="sub_gnb_w"></ul></div></li><li class=""><p class="tit"><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0003/index.do" class="sub_use"><span>사회공헌 (봉사)</span></a></p><div class="sub_gnb"><ul class="sub_gnb_w"></ul></div></li><li class=""><p class="tit"><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0005/index.do" class="sub_use"><span>학습/진로상담</span></a></p><div class="sub_gnb"><ul class="sub_gnb_w"></ul></div></li><li class=""><p class="tit"><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0006/index.do" class="sub_use"><span>레크리에이션</span></a></p><div class="sub_gnb"><ul class="sub_gnb_w"></ul></div></li><li class="last"><p class="tit"><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0007/index.do" class="sub_use"><span>기타</span></a></p><div class="sub_gnb"><ul class="sub_gnb_w"></ul></div></li></ul></nav></aside><!-- /레프트 메뉴 --><div class="sub_cont"><!-- 네비게이션 --><script>
+	$( document ).ready( function () {
+		( function () {
+			$( ".userFeedBackBtn" ).click( function ( e ) {
+				e.preventDefault();
+				//var params = $( this ).data( "params" )
+				var params = {
+					"smlbSeq" : "1247" ,
+					"siteDomain" : "portfolio"
+				};
+				$.ajax( {
+					"url" : "/comm/feedBack/dialog/userFeedBack.do" ,
+					"dataType" : "text" ,
+					"data" : params ,
+					"success" : function ( html ) {
+						var $html = $( html );
+						$html.layout( {
+							"width" : 850 ,
+							"title" : "의견접수" ,
+							"buttons" : [ {
+								text : "저장" ,
+								addClass : "di_btn_conf" ,
+								click : function () {
+									var $form = $html.find( "[name='userFeedBackForm']" );
+									if ( !$form.validate() ) return;
+									global.confirm( $form ,"/comm/feedBack/proc.do" ,"저장" ,retAction );
+								}
+							} ,{
+								text : "닫기" ,
+								addClass : "di_btn_close" ,
+								click : function () {
+									$html.dialog( 'close' );
+								}
+							} ]
+						} );
+					}
+				} );
+			} );
+		} )();
+		function retAction () {
+			location.reload();
+		}
+		//sub 비주얼 순서
+		var menuIdx;
+		$( '#gnb > ul > li' ).each( function () {
+			if ( $( this ).hasClass( 'open' ) ) {
+				menuIdx = $( this ).index();
+			}
+		} )
+		menuIdx++;
+		$( '.sub_visual' ).addClass( 'sub' + menuIdx );
+	} );
+</script><div class="h3_box sub_visual sub1"><h3 class="title">전체보기</h3><!--
+		<ul class="navigation"><li class="">비교과 프로그램</li><li class="last">전체보기</li></ul><div class="opinion_btn"><a href="#;">의견접수</a><a href="#" class="userFeedBackBtn"><span>의견접수</span></a></div> --><div class="swiper-container m_navigation swiper-container-horizontal swiper-container-free-mode"><ul class="swiper-wrapper "><li class="swiper-slide home swiper-slide-active first"></li><li class="swiper-slide swiper-slide-next"><a href="#" class="title">
+							비교과 프로그램</a><ul class="depth_box"><li class="first"><a href="/menu/redirect.do?url=/ptfol/pgm/index.do" class="on">비교과 프로그램</a></li><li><a href="/menu/redirect.do?url=/ptfol/cp/dgns/eb7ddda0ffd43bae614d927845d24850/index.do" class="">역량·학습유형 진단</a></li><li><a href="/menu/redirect.do?url=/ptfol/cusl/asignProf/index.do?cuslKndCd=1000053" class="">상담신청</a></li><li><a href="/menu/redirect.do?url=/ptfol/imng/icmpNsbjtPgm/findIcmpNsbjtAplDscList.do" class="">나의 활동</a></li><li class="last"><a href="/menu/redirect.do?url=/ptfol/comm/board/7d5781d33124f58f831fe856c5c86e53/index.do" class="">안내</a></li></ul></li><li class="swiper-slide"><a href="#" class="title">
+									전체보기</a><ul class="depth_box"><li class="first"><a href="/menu/redirect.do?url=/ptfol/pgm/index.do" class="on">전체보기</a></li><li><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0001/index.do" class="">교육 (특강/세미나)</a></li><li><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0002/index.do" class="">공모전/경진대회</a></li><li><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0004/index.do" class="">현장학습/인턴</a></li><li><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0003/index.do" class="">사회공헌 (봉사)</a></li><li><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0005/index.do" class="">학습/진로상담</a></li><li><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0006/index.do" class="">레크리에이션</a></li><li class="last"><a href="/menu/redirect.do?url=/ptfol/pgm/PBC0007/index.do" class="">기타</a></li></ul></li></ul><div class="swiper-button-next nav_left swiper-button-disabled" tabindex="0" role="button" aria-label="Next slide" aria-disabled="true"></div><div class="swiper-button-prev nav_right swiper-button-disabled" tabindex="0" role="button" aria-label="Previous slide" aria-disabled="true"></div><span class="swiper-notification" aria-live="assertive" aria-atomic="true"></span></div></div><!-- /네비게이션 --><!-- 내용 --><section><!-- 개발 --><!-- 다국어 및 custom_tags 적용이후 show함 /WebContent/common/1user/common/common/multilanguage.js 참조 --><div class="con_box" id="tilesContent" style="">
+						<script type="text/javascript">
+	$(window).bind("pageshow", function(event) {
+		if (event.originalEvent.persisted) {
+			histroy.go(-2);
+		}
+	});
+	$( document ).ready( function () {
+		//목록 이벤트
+		( function () {
+			$( "#lstBtn" ).click( function ( e ) {
+				e.preventDefault();
+				$.location( "/ptfol/pgm/index.do" );
+			} );
+		} )();
+		// 신청이벤트
+		( function () {
+			$( ".aplBtn" ).click( function ( e ) {
+				
+				let $this = $( this ); 
+				window.NetFunnel_Programaply(function(){
+
+					e.preventDefault();
+					var params = $this.data( "params" );
+					var blackCont = params.blackCont;
+					var blackBeginDate = params.blackBeginDate;
+					var blackEndDate = params.blackEndDate;
+					var blackOperOrgzNm = params.blackOperOrgzNm;
+					if ( params.blackYn > 0 ) {
+						$.alert( "해당 프로그램의 신청 제한 대상자이므로 신청할 수 없습니다. </br> 제한 사유 : " + blackCont + "</br> 제한 부서 : " + blackOperOrgzNm);
+						return false;
+					}
+					if("" == "0002"){
+						$.location( "/mngt/nsbjtMngtCtr/pgmMngt/popup/preview2.do" ,params );
+					}else{
+						$.location( "/ptfol/imng/icmpNsbjtPgm/findNsbjtPtcptAplForm.do" ,params );
+					}
+
+				})
+				
+			} );
+		} )();
+		//수강후기 수정
+		( function () {
+			$( ".modiBtn" ).click( function ( e ) {
+				e.preventDefault();
+				var tr = $( this ).closest( ".trRpl" );
+				tr.find( ".trRplTd1" ).hide();
+				tr.find( ".trRplTd2" ).show();
+			} );
+		} )();
+		//수강후기 수정 저장
+		( function () {
+			$( ".saveBtn" ).click( function ( e ) {
+				e.preventDefault();
+				var status = $( this ).data( "params" ).status;
+				var stebSeq = $( this ).data( "params" ).stebSeq;
+				var cont = $( this ).closest( ".trRplTd2" ).find( "[name='cont']" ).val();
+				$.confirm( "수정 하시겠습니까?" ,function () {
+					$.ajax( {
+						"url" : "/ptfol/imng/icmpNsbjtPgm/saveTkcrsEplgBas.do" ,
+						"method" : "post" ,
+						"dataType" : "json" ,
+						"data" : {
+							"status" : status ,
+							"stebSeq" : stebSeq ,
+							"cont" : cont
+						} ,
+						"success" : function ( result ) {
+							location.reload();
+						}
+					} );
+				} );
+			} );
+		} )();
+		//수강후기 전체글/내글
+		( function () {
+			$( "input:radio[name='memoSort']" ).click( function ( e ) {
+				e.preventDefault();
+				var memoSortVal = $( this ).val();
+				var $form = $( "#sppiinpSearch" );
+				$form.find( "[name='paginationInfo.currentPageNo']" ).val( 1 );
+				$form.find( "[name='memoSort']" ).val( memoSortVal );
+				$form.submit();
+			} );
+		} )();
+		//프로그램 취소
+		( function () {
+			$( ".pgmCancelBtn" ).click( function ( e ) {
+				e.preventDefault();
+				var params = $( this ).data( "params" );
+				$.confirm( "취소하시겠습니까?" ,function () {
+					$.ajax( {
+						"url" : "/ptfol/imng/icmpNsbjtPgm/saveDicaDPgmAplBas.do" ,
+						"method" : "post" ,
+						"dataType" : "json" ,
+						"data" : params ,
+						"success" : function ( result ) {
+							$.alert( "취소 처리가 완료되었습니다." ,{
+								"close" : function () {
+									location.reload();
+								}
+							} );
+						}
+					} );
+				} );
+			} );
+		} )();
+		//신청대상 아닐경우
+		( function () {
+			$( ".noAplBtn" ).click( function ( e ) {
+				e.preventDefault();
+				if("" == "0002"){
+					var params = {
+						"encSddpbSeq" : "2347f7c435e8092083cde728b72ba2cf"
+					};
+					$.location( "/mngt/nsbjtMngtCtr/pgmMngt/popup/preview2.do" ,params );
+				}else{
+					$.alert( "모집대상이 아닙니다." );
+				}
+			} );
+			$( ".noLoginAplBtn" ).click( function ( e ) {
+				e.preventDefault();
+				$.alert( "로그인 후 신청하세요." );
+			} );
+			$( ".noDtBtn" ).click( function ( e ) {
+				e.preventDefault();
+				$.alert( "신청기간이 아닙니다." );
+			} );
+		} )();
+		// 이미취소후취소버튼클릭이벤트
+		( function () {
+			$( ".alreadyCancelBtn" ).click( function ( e ) {
+				e.preventDefault();
+				$.alert( "취소한 비교과프로그램은 재신청이 불가합니다. 재신청을 원하시는 경우 담당자에게 문의주세요." );
+			} );
+		} )();
+	} );
+	String.prototype.popupView = function () {
+		var img_view = this;
+		var x = x + 20;
+		var y = y + 30;
+		htmlz = "<html><head><title>이미지크게보기</title><style>body{margin:0;cursor:hand;}</style></head><body scroll=auto onload='width1=document.all.Timage.width;if(width1>1024)width1=1024;height1=document.all.Timage.height;if(height1>768)height1=768;top.window.resizeTo(width1+300,height1+540);' onclick='top.window.close();'><img src='"+img_view+"' title='클릭하시면 닫힙니다.' name='Timage' id='Timage'></body></html>";
+		imagez = window.open( '' ,"image" ,"width=" + 100 + ", height=" + 100 + ", top=0,left=0,scrollbars=auto,resizable=1,toolbar=0,menubar=0,location=0,directories=0,status=1" );
+		imagez.document.open();
+		imagez.document.write( htmlz )
+		imagez.document.close();
+	}
+	// scrap 체크
+	function scrpChk ( obj ) {
+		var param = $( obj ).data( "params" );
+		var pgmSeq = param.pgmSeq;
+		var smsSeq = param.smsSeq;
+		var pgmType = param.pgmType;
+		var chkVal = "N";
+		var msg = "스크랩이 해제 되었습니다."
+		if ( $( obj ).is( ":checked" ) ) {
+			chkVal = "Y"
+			msg = "스크랩 되었습니다.";
+		}
+		$.ajax( {
+			"url" : "/ptfol/pgm/scrpProc.do" ,
+			"method" : "post" ,
+			"dataType" : "json" ,
+			"data" : {
+				"pgmSeq" : pgmSeq ,
+				"dataSeq" : smsSeq ,
+				"scrpDivCd" : pgmType ,
+				"stuid" : "" ,
+				"chkVal" : chkVal
+			} ,
+			"success" : function ( data ) {
+				var dataSeq = data[ 'result' ];
+				if ( dataSeq > 0 ) {
+					$.alert( msg ,{
+						"close" : function () {
+							location.reload();
+						}
+					} );
+				} else {
+					$.alert( "로그인 후 이용해주세요." );
+				}
+			}
+		} );
+	}
+</script><div class="lica_detail"><!-- lica_smry --><div class="lica_smry cont_box"><div class="smry_info"><div class="thumb_wrap"><!-- if (repnImgSrc != null && !repnImgSrc.equals("N") && repnImgSrc.length() > 10) {
+				imgUrl = repnImgSrc;
+			} else {
+				imgUrl = "/comm/cmfile/openThumbnail.do?encSvrFileNm=" + JavaUtil.encrypt(repnImgNm);
+			} --><div class="{'ime' : 'imageEdit', 'required' : false}" title="썸네일 이미지" data-setting="{&quot;name&quot;:&quot;repnImgFileSeq&quot;,&quot;width&quot;:&quot;700&quot;,&quot;height&quot;:&quot;470&quot;,&quot;bmp&quot;:&quot;chk&quot;,&quot;type&quot;:&quot;view&quot;}" data-params="{&quot;status&quot;:&quot;4&quot;,&quot;fileSeq&quot;:&quot;34674&quot;,&quot;fileGrpSeq&quot;:&quot;20616&quot;,&quot;svrFileNm&quot;:&quot;/9999/2026/09/29/randcb1b837c8b604477ac2fb7d569c0e404.png&quot;,&quot;origFileNm&quot;:&quot;스크린샷 2026-09-29 090244.png&quot;,&quot;fileExtsnNm&quot;:&quot;png&quot;,&quot;fileSz&quot;:&quot;42397&quot;,&quot;sortOer&quot;:&quot;1&quot;,&quot;repnImgCropValu&quot;:{&quot;position&quot;:{&quot;w&quot;:280,&quot;h&quot;:188,&quot;x&quot;:19,&quot;y&quot;:0},&quot;cropBoxData&quot;:{&quot;left&quot;:240,&quot;top&quot;:0,&quot;width&quot;:280,&quot;height&quot;:188},&quot;canvasData&quot;:{&quot;left&quot;:221,&quot;top&quot;:0,&quot;width&quot;:318,&quot;height&quot;:188,&quot;naturalWidth&quot;:318,&quot;naturalHeight&quot;:188}},&quot;encFileGrpSeq&quot;:&quot;77159fd01f4e67795d937993ba753735&quot;,&quot;encFileSeq&quot;:&quot;d24979a80ee163117d9d5e9517a365b8&quot;,&quot;encSvrFileNm&quot;:&quot;08c927b5d040798d3ba1bbfcdfcd543385cf76329d5ed9dc8f923863ccab9defc619d3a492c3ddcb1278ce9bb51b5eb5f3f4bece86161d89c88901170021857e&quot;}" maxlength="100"><div class="image"><div class="fileimg_wrap700"><span class="img_file"><img data-params="{&quot;naturalWidth&quot;:&quot;318&quot;,&quot;naturalHeight&quot;:&quot;188&quot;,&quot;data&quot;:{&quot;position&quot;:{&quot;w&quot;:280,&quot;h&quot;:188,&quot;x&quot;:19,&quot;y&quot;:0},&quot;cropBoxData&quot;:{&quot;left&quot;:240,&quot;top&quot;:0,&quot;width&quot;:280,&quot;height&quot;:188},&quot;canvasData&quot;:{&quot;left&quot;:221,&quot;top&quot;:0,&quot;width&quot;:318,&quot;height&quot;:188,&quot;naturalWidth&quot;:318,&quot;naturalHeight&quot;:188}},&quot;svrFileNm&quot; : &quot;/9999/2026/09/29/randcb1b837c8b604477ac2fb7d569c0e404.png&quot; ,&quot;encSvrFileNm&quot; : &quot;08c927b5d040798d3ba1bbfcdfcd543385cf76329d5ed9dc8f923863ccab9defc619d3a492c3ddcb1278ce9bb51b5eb5f3f4bece86161d89c88901170021857e&quot;,&quot;origFileNm&quot;:&quot;스크린샷 2026-09-29 090244.png&quot;,&quot;fileExtsnNm&quot;:&quot;png&quot;,&quot;fileSz&quot;:&quot;42397&quot;}" src="/comm/cmfile/openCrop.do?width=280&amp;height=188&amp;x=19&amp;y=0&amp;encSvrFileNm=08c927b5d040798d3ba1bbfcdfcd543385cf76329d5ed9dc8f923863ccab9defc619d3a492c3ddcb1278ce9bb51b5eb5f3f4bece86161d89c88901170021857e&amp;thumbW=318&amp;thumbH=188" id="fileEditeImgrepnImgFileSeq" alt=".."></span></div><div class="imageInfo" id="repnImgFileSeq"></div></div></div></div><div class="text_wrap"><label class="scrap"><input type="checkbox" data-params="{&quot;pgmType&quot;:&quot;PGM01&quot; ,&quot;pgmSeq&quot;:&quot;2002188&quot;, &quot;smsSeq&quot; : &quot;&quot;, &quot;userId&quot;:&quot;&quot;}" onclick="scrpChk(this);"><span class="txt">스크랩</span></label><p class="tit">제12회 SNU 토론한마당</p><p class="desc">우리 사회에 대한 통찰을 바탕으로 상생하는 토론의 장을 추구하는 토론대회, SNU 토론한마당입니다.</p><div class="pgm_info"><dl class="date"><dt>신청기간</dt><dd class="str">2026.09.09. 00:00&nbsp;~&nbsp;2026.10.15. 23:59</dd></dl><dl class="date2"><dt>활동기간</dt><dd class="str">
+							2026.11.21.&nbsp;~&nbsp;2026.11.21.</dd></dl><dl class="chk"><dt>선발확인일시</dt><dd>
+							2026.10.23 15:00 이후
+							</dd></dl><dl class="chk"><dt>선정방법</dt><dd>직접선발</dd></dl><dl class="crt"><dt>수료인증서</dt><dd>발급불가</dd></dl></div></div></div><div class="smry_target"><div class="target_dl"><dl><dt>신청대상(소속)</dt><dd><ul class="ul_chk ul_inline"><li class="first last">서울대학교</li></ul></dd></dl><dl><dt>신청신분</dt><dd><div class="cdDiv">학사</div></dd></dl></div><div class="target_detail"><p class="tit">신청대상 상세정보</p><div class="detail_dl"><dl class="flex_dl"><dt>학적</dt><dd><div class="ably_list"><div class="cdDiv"><ul class="ul_inblock comm_el"><input type="hidden" id="SCREG_SXN_CD" class="gojworld"><li class="first"><label class="check"><input type="checkbox" id="scregSxnCdCmnSub0001" class="" name="scregSxnCdCmnSub" value="0001" checked="" disabled="" title="학적구분코드" onchange=""><span class="ico"></span><span class="txt">재학</span></label></li><li><label class="check"><input type="checkbox" id="scregSxnCdCmnSub0002" class="" name="scregSxnCdCmnSub" value="0002" checked="" disabled="" title="학적구분코드" onchange=""><span class="ico"></span><span class="txt">휴학</span></label></li><li><label class="check"><input type="checkbox" id="scregSxnCdCmnSub0004" class="" name="scregSxnCdCmnSub" value="0004" checked="" disabled="" title="학적구분코드" onchange=""><span class="ico"></span><span class="txt">수료</span></label></li><li><label class="check"><input type="checkbox" id="scregSxnCdCmnSub0005" class="" name="scregSxnCdCmnSub" value="0005" disabled="" title="학적구분코드" onchange=""><span class="ico"></span><span class="txt">졸업</span></label></li><li><label class="check"><input type="checkbox" id="scregSxnCdCmnSub0006" class="" name="scregSxnCdCmnSub" value="0006" disabled="" title="학적구분코드" onchange=""><span class="ico"></span><span class="txt">수학가능</span></label></li><li class="last"><label class="check"><input type="checkbox" id="scregSxnCdCmnSub0007" class="" name="scregSxnCdCmnSub" value="0007" disabled="" title="학적구분코드" onchange=""><span class="ico"></span><span class="txt">기타</span></label></li></ul></div></div></dd></dl><dl class="flex_dl"><dt>국적</dt><dd><div class="ably_list"><span class="ably_label">내국인+외국인</span></div></dd></dl><dl class="flex_dl"><dt>과정</dt><dd><div class="ably_list"><div class="cdDiv"><ul class="ul_inblock comm_el"><input type="hidden" id="SCHGR_CD02" class="gojworld"><li class="first"><label class="check"><input type="checkbox" id="schgrCd02CmnSub0004" class="" name="schgrCd02CmnSub" value="0004" checked="" disabled="" title="대학원 학기코드" onchange=""><span class="ico"></span><span class="txt">학사</span></label></li><li><label class="check"><input type="checkbox" id="schgrCd02CmnSub0002" class="" name="schgrCd02CmnSub" value="0002" disabled="" title="대학원 학기코드" onchange=""><span class="ico"></span><span class="txt">석사</span></label></li><li class="last"><label class="check"><input type="checkbox" id="schgrCd02CmnSub0001" class="" name="schgrCd02CmnSub" value="0001" disabled="" title="대학원 학기코드" onchange=""><span class="ico"></span><span class="txt">박사</span></label></li></ul></div></div></dd></dl><dl class="flex_dl"><dt>학년</dt><dd><div class="ably_list"><div class="cdDiv"><ul class="ul_inblock comm_el"><input type="hidden" id="SCHGR_CD" class="gojworld"><li class="first"><label class="check"><input type="checkbox" id="schgrCdCmnSub0001" class="" name="schgrCdCmnSub" value="0001" checked="" disabled="" title="학년코드" onchange=""><span class="ico"></span><span class="txt">1학년</span></label></li><li><label class="check"><input type="checkbox" id="schgrCdCmnSub0002" class="" name="schgrCdCmnSub" value="0002" checked="" disabled="" title="학년코드" onchange=""><span class="ico"></span><span class="txt">2학년</span></label></li><li><label class="check"><input type="checkbox" id="schgrCdCmnSub0003" class="" name="schgrCdCmnSub" value="0003" checked="" disabled="" title="학년코드" onchange=""><span class="ico"></span><span class="txt">3학년</span></label></li><li><label class="check"><input type="checkbox" id="schgrCdCmnSub0004" class="" name="schgrCdCmnSub" value="0004" checked="" disabled="" title="학년코드" onchange=""><span class="ico"></span><span class="txt">4학년</span></label></li><li><label class="check"><input type="checkbox" id="schgrCdCmnSub0005" class="" name="schgrCdCmnSub" value="0005" checked="" disabled="" title="학년코드" onchange=""><span class="ico"></span><span class="txt">5학년</span></label></li><li class="last"><label class="check"><input type="checkbox" id="schgrCdCmnSub0006" class="" name="schgrCdCmnSub" value="0006" checked="" disabled="" title="학년코드" onchange=""><span class="ico"></span><span class="txt">6학년</span></label></li></ul></div></div></dd></dl></div></div></div><!-- lica_apply
+			type1 : 신청하기
+			type2 : 신청 취소, 신청 마감
+		 --><!--김형섭 2019-07-10 운영 반영후 확인예정--><!-- 신청기간이 아닐경우 --><div class="lica_apply type1"><div class="pgm_cnt"><span class="aply">신청 <strong>57</strong>명</span></div><a href="#" class="btn01 col02 noDtBtn"><span>프로그램 신청하기</span></a></div></div><!-- //lica_smry --><!-- 분반정보 써머리 위에 한번 더 출력 --><!-- //분반정보 써머리 위에 한번 더 출력 --><div class="cont_box"><p class="cont_tit">프로그램 기본정보</p><div class="dl_wrap"><dl class="dot_dl"><dt>운영년도</dt><dd>2026</dd></dl><dl class="dot_dl"><dt>운영학기</dt><dd>2학기</dd></dl><dl class="dot_dl"><dt>운영부서</dt><dd>학부대학</dd></dl><dl class="dot_dl wid100p"><dt>비교과 시스템 역량</dt><dd><div class="ably_list"><div class="cdDiv"><ul class="ul_inblock comm_el"><input type="hidden" id="CORE_ABLY_CD" class="gojworld"><li class="first"><label class="check"><input type="checkbox" id="coreAblyCdCmnSubABLY_CRTC_CD" class="" name="coreAblyCdCmnSub" value="ABLY_CRTC_CD" checked="" disabled="" title="핵심역량" onchange=""><span class="ico"></span><span class="txt">공동체역량</span></label></li><li><label class="check"><input type="checkbox" id="coreAblyCdCmnSubABLY_LRNN_CD" class="" name="coreAblyCdCmnSub" value="ABLY_LRNN_CD" checked="" disabled="" title="핵심역량" onchange=""><span class="ico"></span><span class="txt">도전역량</span></label></li><li><label class="check"><input type="checkbox" id="coreAblyCdCmnSubABLY_CMCT_CD" class="" name="coreAblyCdCmnSub" value="ABLY_CMCT_CD" disabled="" title="핵심역량" onchange=""><span class="ico"></span><span class="txt">학문탐구역량</span></label></li><li><label class="check"><input type="checkbox" id="coreAblyCdCmnSubABLY_GBCZ_CD" class="" name="coreAblyCdCmnSub" value="ABLY_GBCZ_CD" disabled="" title="핵심역량" onchange=""><span class="ico"></span><span class="txt">리더십역량</span></label></li><li><label class="check"><input type="checkbox" id="coreAblyCdCmnSubABLY_CLSR_CD" class="" name="coreAblyCdCmnSub" value="ABLY_CLSR_CD" checked="" disabled="" title="핵심역량" onchange=""><span class="ico"></span><span class="txt">문제해결역량</span></label></li><li><label class="check"><input type="checkbox" id="coreAblyCdCmnSubABLY_WDFS_CD" class="" name="coreAblyCdCmnSub" value="ABLY_WDFS_CD" checked="" disabled="" title="핵심역량" onchange=""><span class="ico"></span><span class="txt">협업역량</span></label></li><li class="last"><label class="check"><input type="checkbox" id="coreAblyCdCmnSubABLY_MYMG_CD" class="" name="coreAblyCdCmnSub" value="ABLY_MYMG_CD" disabled="" title="핵심역량" onchange=""><span class="ico"></span><span class="txt">자기관리역량</span></label></li></ul></div></div></dd></dl><!-- [퍼블] 학부대학 핵심역량 추가 1219 --><dl class="dot_dl wid100p"><dt>학부대학 핵심역량</dt><dd><div class="ably_list"><div class=""><ul class="ul_inblock"><li class="first"><label class="check"><input type="checkbox" id="subCd0001" disabled="disabled"><span class="ico"></span><span class="txt">사회공헌역량</span></label></li><li><label class="check"><input type="checkbox" id="subCd0002" disabled="disabled"><span class="ico"></span><span class="txt">의사소통역량</span></label></li><li><label class="check"><input type="checkbox" id="subCd0003" disabled="disabled"><span class="ico"></span><span class="txt">도전혁신역량</span></label></li><li class="last"><label class="check"><input type="checkbox" id="subCd0004" disabled="disabled"><span class="ico"></span><span class="txt">문제해결역량</span></label></li></ul></div></div></dd></dl><!-- // [퍼블] 학부대학 핵심역량 추가 1219 -->
+	<dl class="dot_dl wid100p"><dt>키워드</dt><dd><div class="keyword_list"><span class="keyword">#SNU토론한마당</span><span class="keyword">#토론대회</span><span class="keyword">#팀참여</span><span class="keyword">#서울대학교총장상</span></div></dd></dl><dl class="dot_dl"><dt>문의전화</dt><dd>02-880-1415</dd></dl><dl class="dot_dl"><dt>문의메일</dt><dd>dmsqls8371@snu.ac.kr</dd></dl><dl class="dot_dl"><dt>홈페이지 주소</dt><dd><a href="" target="_blank"></a></dd></dl><dl class="dot_dl wid100p"><dt>장애학생 지원사항</dt><dd></dd></dl><dl class="dot_dl wid100p no_bot"><dt>첨부파일</dt><dd><ul class="ul_file"><li class="first"><a href="/comm/cmfile/download.do?encFileGrpSeq=6e6870efca2bf10231c8bcc10ba05d21&amp;encFileSeq=543f13564b00456794d0ee6899ed7b0f" class="link_file">제12회 SNU 토론한마당 리플릿_앞면.png</a></li><li><a href="/comm/cmfile/download.do?encFileGrpSeq=6e6870efca2bf10231c8bcc10ba05d21&amp;encFileSeq=a545786024667ee8d1b4ac9c0b1f289f" class="link_file">제12회 SNU 토론한마당 리플릿_뒷면.png</a></li><li><a href="/comm/cmfile/download.do?encFileGrpSeq=6e6870efca2bf10231c8bcc10ba05d21&amp;encFileSeq=4be9f69def93a1625d16c5227aff3268" class="link_file">제12회 SNU토론한마당 예선 참가팀 인적 정보(팀 이름).xlsx</a></li><li><a href="/comm/cmfile/download.do?encFileGrpSeq=6e6870efca2bf10231c8bcc10ba05d21&amp;encFileSeq=5c3a6332913d66a4a0382e94107b08cd" class="link_file">제12회 SNU 토론한마당 리플릿.pdf</a></li><li><a href="/comm/cmfile/download.do?encFileGrpSeq=6e6870efca2bf10231c8bcc10ba05d21&amp;encFileSeq=2ae8089e2832ac2096d56a8e159b2e61" class="link_file">제12회 SNU 토론한마당 포스터.jpg</a></li><li class="last"><a href="/comm/cmfile/download.do?encFileGrpSeq=6e6870efca2bf10231c8bcc10ba05d21&amp;encFileSeq=547dd1f5480e55a33272550e068618f7" class="link_file">제12회 SNU 토론한마당 대회 취지문 및 참고자료.pdf</a></li></ul></dd></dl></div></div><div class="cont_box"><p class="cont_tit">프로그램 주요내용</p><div class="td_box"><p><img alt="" onclick="this.src.popupView()" src="/comm/cmfile/download.do?encFileGrpSeq=6e6870efca2bf10231c8bcc10ba05d21&amp;encFileSeq=d84cde509b495ebe44c022b3917db135"></p><p><img alt="" onclick="this.src.popupView()" src="/comm/cmfile/download.do?encFileGrpSeq=6e6870efca2bf10231c8bcc10ba05d21&amp;encFileSeq=2ae8089e2832ac2096d56a8e159b2e61"></p><p><strong><span style="font-size:20px;">안녕하세요.</span></strong></p><p><strong><span style="font-size:20px;">추석과 공휴일이 접수 기간에 포함된 점을 고려해, 학생들이 팀을 꾸리고 신청을 준비할 시간을 조금 더 가질 수 있도록</span></strong></p><p><strong><span style="font-size:20px;">접수 기간을 아래와 같이 연장합니다.</span></strong></p><p><strong><span style="font-size:20px;">- 기존 마감: 10월 11일 일요일</span></strong></p><p><span style="font-size:20px;"><span style="color:#0000ff;"><u><strong>- 연장 마감: 10월 15일(목) 23시 59분까지</strong></u></span></span></p><p><strong><span style="font-size:20px;">감사합니다.</span></strong></p><p><strong><span style="font-size:20px;">----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------</span></strong></p><p><span style="font-size:20px;"><strong>&lt;제12회 SNU 토론한마당 안내&gt;</strong></span></p><p><span style="font-size:16px;">우리 사회에 대한 통찰을 바탕으로, 상생하는 토론의 장을 추구하는 제12회 SNU 토론한마당이 예선 접수를 시작합니다.</span></p><p><span style="font-size:16px;">토론한마당은 2인~5인으로 구성된 팀이 주제에 관한 입론문을 작성하여 제출하는 것으로 예선을 진행하며,</span></p><p><span style="font-size:16px;">예선 지원팀 중 <strong>상위 16개 팀</strong>이 <strong>본선</strong> 행사 당일 <strong>토너먼트</strong> 형식으로 토론을 진행합니다.</span></p><p>&nbsp;</p><p><span style="font-size:16px;">토론한마당 참가를 희망하는 팀(2인 이상 5인 이하의 학부생으로 구성된 팀)은</span></p><p><span style="font-size:16px;"><strong>아래 본문에 제시된 취지문과 참고자료를 활용하여 토론 주제</strong>&nbsp;&nbsp;<strong><span style="color:#000000;">'외향성을 요구하는 사회, 바람직한가?'</span>에 관한 <span style="color:#0000ff;">입론문을 작성 후 제출</span>해주세요.</strong></span></p><p><span style="font-size:16px;">또한 본 공고에 함께 게시된&nbsp;<span style="color:#0000ff;"><strong>팀 구성원 정보(엑셀 파일)도 함게 작성하여 제출</strong></span>하여 주시길 바랍니다. (제출은 하단 신청 버튼을 누르면 파일 첨부를 통해 가능합니다.)</span></p><p>&nbsp;</p><p><span style="font-size:16px;"><strong>팀 구성원 정보 엑셀 파일(링크를 누르면 다운로드 가능-&gt;):&nbsp; </strong></span><span style="font-size:18px;"><strong>&nbsp;</strong><a href="/comm/cmfile/download.do?encFileGrpSeq=6e6870efca2bf10231c8bcc10ba05d21&amp;encFileSeq=4be9f69def93a1625d16c5227aff3268">제12회 SNU토론한마당 예선 참가팀 인적 정보(팀 이름).xlsx</a></span></p><p><span style="font-size:16px;">(입론문과 팀 구성 정보 파일 모두 팀별 한 번만 팀장이 제출하면 됩니다.)</span></p><p>&nbsp;</p><p><span style="font-size:16px;"><strong>*제출 입론문 기준</strong> - 입론문의 형식과 분량에 제한은 없으나, <strong>입론 시간인 4분간의 발표에 적합한 분량을 권장</strong>합니다.</span></p><p><span style="font-size:16px;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>&nbsp; 권장 분량 - A4 1p 내외</strong> (폰트는 나눔 고딕, 글씨 크기는 10pt 기준)입니다.</span></p><p>&nbsp;</p><p><span style="font-size:16px;"><strong>*입론문이란?</strong>&nbsp; 주제에 관해 찬성과 반대를 나누기보다,&nbsp;<strong>팀의 구체적인 주장을 제시하고 이를 뒷받침할 근거를 정리한 글</strong>입니다.</span></p><p><span style="font-size:16px;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;<strong>팀만의 주장을 서론에서 구체적으로 제시하는 것이 중요</strong>합니다.</span></p><p>&nbsp;</p><p><span style="font-size:16px;"><strong>*제11회 토론한마당 결승 영상 링크(링크를 누르면 접속&nbsp;가능 →)</strong>&nbsp;-&nbsp;<a href="https://snu.alma.exlibrisgroup.com/discovery/delivery/82SNU_INST:AlmaGeneralView/121071253460002591?lang=en&amp;viewerServiceCode=DigitalViewer">제11회 SNU토론한마당: 직업 선택에서 물질적 가치를 우선적으로 고려해야 하는가?</a></span></p><p><span style="font-size:16px;">(위 링크 접속이 어려운 경우, 서울대학교 중앙도서관 홈페이지에서 검색 후 시청이 가능합니다.)</span></p><p>&nbsp;</p><p><span style="font-size:16px;"><strong>▶참가 대상: 서울대학교 학부생</strong>(졸업생 및 대학원생 지원 불가, 외국인 학생 지원 가능하나 한국어로만 토론 진행 가능)</span></p><p><span style="color:#ff0000;"><strong><span style="font-size: 16px;">*역대 토론한마당 대회에서 '대상'을 수상한 학생은 팀 구성을 달리하더라도 재참가할 수 없습니다.</span></strong></span></p><p>&nbsp;</p><p><span style="font-size:16px;"><strong>▶예선 접수: 2026. 9. 9.(수) ~ <span style="color:#0000ff;">2026.&nbsp;10.15.(목) 23:59까지</span></strong></span></p><p>&nbsp;</p><p><span style="font-size:16px;"><strong>▶예선 결과 발표:<span style="color:#0000ff;">&nbsp;2026. 10. 23.(금) 예정</span></strong></span></p><p>&nbsp;</p><p><span style="font-size:16px;"><strong>▶본선 일시: 2026. 11. 21.(토) 09:00 ~ 18:00 *토너먼트 형식으로 진행 (16강 → 8강 → 4강 → 결승)</strong></span></p><p>&nbsp;</p><p><span style="font-size:16px;"><strong>▶토론 주제:&nbsp;<span style="color:#0000ff;">'외향성을 요구하는 사회, 바람직한가?'</span></strong></span></p><p>&nbsp;</p><p><span style="font-size:16px;"><strong>▶ 대회 취지문</strong></span></p><p><span style="font-size:16px;"><strong>토론 주제: 외향성을 요구하는 사회, 바람직한가?</strong></span></p><p><span style="font-size:16px;">&nbsp;SNU 토론한마당은 2015년 선한 지성인을 기른다는 목표로 시작되었다. 선한 지성인은 개인의 지식만을 축적하는 데 그치지 않는다. 바람직한 공동체와 보다 좋은 사회를 만들기 위해 자신의 앎을 바탕으로 끊임없이 도전하고 실천하는 태도를 지닌다.</span></p><p><span style="font-size:16px;">&nbsp;토론은 그 유형과 양상에는 세부적으로 차이가 있을지언정 동서고금을 막론하고 공동체의 문제를 함께 찾고 합리적으로 그 문제를 해결해 나가는 데 훌륭한 수단으로 기능해 왔다. 이때, 토론은 단순한 설전(舌戰)만을 의미하지 않는다. 이것은 더 나은 세상을 향해 문제를 진지하게 탐구하고 실천을 모색하는 과정이다. 또한 토론은 나와 타인을 이해하고 설득하는 소통의 과정이다. 이에 따라 토론은 우리 사회와 공동체에 대해 애정과 관심을 가지고 역지사지의 자세로 구성원들과 공감하고 연대하는 통로가 될 수 있다.</span></p><p><span style="font-size:16px;">&nbsp;이러한 맥락에서 SNU 토론한마당에서는 &lt;찬성&gt; 팀과 &lt;반대&gt; 팀으로 구분하지 않고 &lt;주장 1&gt; 팀과 &lt;주장 2&gt; 팀으로 구분한다. 서로가 반대되는 입장에서 대립각을 세우며 다투기보다는 같은 입장이더라도 더 나은 문제 해결을 위해 합리적이고 타당한 근거를 함께 모색하는 과정에 초점을 둔다. 이는 단순히 논리의 </span><span style="font-size:16px;">우위만을 겨루는 방식이 아닌, 서로 다른 입장과 견해를 교환하며 그 안에서 중지를 모으는 과정이다.</span></p><p><span style="font-size:16px;">&nbsp;이번 제12회 SNU 토론한마당의 주제는 “외향성을 요구하는 사회, 바람직한가?”이다. 오늘날 우리 사회는 적극적인 자기표현에 바탕을 둔 외향성을 개인의 중요한 역량으로 평가하는 경향을 보이고 있다. 대학 생활을 비롯하여 취업 과정은 물론이고, 조직문화 전반에서도 자신의 생각을 분명하게 드러내고 타인과 활발하게 관계 맺는 태도가 요구되고 있다. 이러한 흐름 속에서 외향성은 사회생활에 필요한 바람직한 특성으로 인식되기도 한다. 반면에, 사회가 특정한 성향과 태도를 요구하는 것은 개인의 다양성과 개성, 삶의 방식 등을 충분히 존중하지 못하고, 내향적인 사람들에게 변화와 적응을 강요하는 획일적인 기준으로 작용할 수 있다는 관점도 존재한다.</span></p><p><span style="font-size:16px;">&nbsp;따라서 그간의 SNU 토론한마당의 대회 취지를 계승하여, 이번 주제 역시 현시대의 흐름을 반영함과 동시에 사회적 논의의 차원을 넘어 윤리적 성찰과 철학적 논의로도 확장될 여지를 담고자 하였다. 토론을 통해 우리 사회에서 올바른 가치 정립과 그 실천이 요구되는 다양한 문제 상황에 대해 함께 심도 있게 고민하고 탐색하는 열린 장(場)이 되기를 기대한다.</span></p><p>&nbsp;</p><p><span style="font-size:16px;"><strong>※ 참고자료 -*<span style="color:#0000cd;">입론문 작성 및 대회 참여 시 모든 참고자료를 활용하지 않아도 됩니다.</span></strong></span></p><p><span style="font-size:16px;">1. 수전 케인(저)·김우열(역)(2012), 『콰이어트』, 알에이치코리아.</span></p><p><span style="font-size:16px;">2. 이기호, 「미드나잇 하이웨이」, 박완서 외(2024), 『스무 낮 읽고 스무 밤 느끼다』, 마음산책.</span></p><p><span style="font-size:16px;">3. 프리드리히 니체(저), 이진우(역)(2020), 「16. 이웃 사랑에 대하여」, 『차라투스트라는 이렇게 말했다』, 휴머니스트.</span></p><p><span style="font-size:16px;">4. [논문] 전병현·황진우·최민희·김강진(2026), 「직업군별 요구 성격 구조에 대한 분</span><span style="font-size:16px;">석」, 『조사연구』 27(1), 한국조사연구학회.</span></p><p><span style="font-size:16px;">5. [기사] 내향적인 사람과 외향적인 사람의 뇌는 어떻게 다를까?(장승용, 정신의학신문, 2025.8.12.) <a href="https://www.psychiatricnews.net/news/articleView.html?idxno=36110"><u>https://www.psychiatricnews.net/news/articleView.html?idxno=36110</u></a></span></p><p><span style="font-size:16px;">6. [영화] &lt;소셜 네트워크&gt;(The Social Network), 2010.</span></p><p>&nbsp;</p><div data-hjsonver="1.0" data-jsonlen="15696" id="hwpEditorBoardContent"><strong><span style="font-size:16px;">취지문과 참고 자료 첨부 파일(링크를 누르면 다운로드 가능-&gt;):</span>&nbsp;&nbsp;</strong><span style="font-size:16px;"><a href="/comm/cmfile/download.do?encFileGrpSeq=6e6870efca2bf10231c8bcc10ba05d21&amp;encFileSeq=547dd1f5480e55a33272550e068618f7">제12회 SNU 토론한마당 대회 취지문 및 참고자료.pdf</a></span></div><div data-hjsonver="1.0" data-jsonlen="15696"><p>&nbsp;</p></div><div data-hjsonver="1.0" data-jsonlen="15696"><strong><span style="font-size:16px;">대회 리플릿&nbsp;안내</span></strong></div><div data-hjsonver="1.0" data-jsonlen="15696"><p><img alt="" onclick="this.src.popupView()" src="/comm/cmfile/download.do?encFileGrpSeq=6e6870efca2bf10231c8bcc10ba05d21&amp;encFileSeq=7d4ece68b056a8e1851e2e0ceaba05f7"></p><p><img alt="" onclick="this.src.popupView()" src="/comm/cmfile/download.do?encFileGrpSeq=6e6870efca2bf10231c8bcc10ba05d21&amp;encFileSeq=543f13564b00456794d0ee6899ed7b0f"></p><p><img alt="" onclick="this.src.popupView()" src="/comm/cmfile/download.do?encFileGrpSeq=6e6870efca2bf10231c8bcc10ba05d21&amp;encFileSeq=a545786024667ee8d1b4ac9c0b1f289f"></p><p><img alt="" onclick="this.src.popupView()" src="/comm/cmfile/download.do?encFileGrpSeq=6e6870efca2bf10231c8bcc10ba05d21&amp;encFileSeq=a83430831c27f32333aa8c0979bc2353"></p><p>&nbsp;</p><p>&nbsp;</p><p><strong style="font-size: 16px;">▶ 시상 내역: 대상(1팀) 200만원 / 금상(1팀) 100만원 / 은상(2팀) 각 50만원 / 동상(4팀) 각 30만원 / 장려상(8팀) 각 20만원</strong></p></div><div data-hjsonver="1.0" data-jsonlen="15696"><p>&nbsp;</p><p><span style="font-size:16px;">기타 문의는 dmsqls8371@snu.ac.kr로 문의 바랍니다.</span></p></div><div data-hjsonver="1.0" data-jsonlen="10629" id="hwpEditorBoardContent">&nbsp;</div></div></div><div class="cont_box"><p class="cont_tit">강좌 정보</p><div class="table_wrap" id="intlNsbjtLtrInfoList"><table class="table t_view add_tr"><caption>강좌정보 테이블</caption><colgroup><col class="wid180"><col><col class="wid180"><col></colgroup><tbody><tr class="first last"><th scope="row" class="first">출석관리</th><td>N</td><th scope="row">진행속성</th><td class="last">1회</td></tr></tbody></table></div><div class="table_wrap" id="intlNsbjtLtrInfoList"><table class="table t_view add_tr"><caption>강좌정보 테이블</caption><colgroup><col class="wid60"><col class="wid120"><col></colgroup><tbody><tr class="first"><th rowspan="6" class="bg2 first">
+								[1]
+								<br><b>회차</b></th><th>강좌명</th><td class="last">제12회 SNU 토론한마당</td></tr><tr><th class="first">교육(활동)장소</th><td class="last">관악캠퍼스 61동 학부대학 건물 일대</td></tr><tr><th class="first">교육(활동)기간</th><td class="last">
+								2026.11.21. 00:00 ~ 2026.11.21. 23:59</td></tr><tr><th class="first">강사(진행자)</th><td class="last">-</td></tr><tr><th class="first">첨부파일</th><td class="last"><ul class="cmnFileLst"></ul></td></tr><tr class="last"><th class="first">과제(자료)제출</th><td class="last"><b>미제출</b></td></tr></tbody></table></div></div><div class="btn_wrap a2"><p class="f_left b1"><a href="#" class="btn01 col01" id="lstBtn"><span class="ic01_">목록</span></a></p><div class="f_right c1"><!--김형섭 2019-07-10 운영 반영후 확인예정--><!-- 신청기간이 아닐경우 --><div class="lica_apply type1"><div class="pgm_cnt"><span class="aply">신청 <strong>57</strong>명</span></div><a href="#" class="btn01 col02 noDtBtn"><span>프로그램 신청하기</span></a></div><script>
+				//신청 명 개발 필요
+				/* $(function(){
+					$('.lica_apply').prepend('<div class="pgm_cnt">'
+					+ '<span class="aply">신청 <strong>57</strong>명</span> / '
+					+ '<span>정원 <strong>99999</strong>명</span>'
+					+ '</div>');
+				}) */
+				$(function(){
+					if("Y" == "Y"){
+						$('.lica_apply').prepend('<div class="pgm_cnt">'
+								+ '<span class="aply">신청 <strong>57</strong>명</span>');
+					}
+					else{
+						$('.lica_apply').prepend('<div class="pgm_cnt">'
+								+ '<span class="aply">신청 <strong>57</strong>명</span> / '
+								+ '<span>정원 <strong>99999</strong>명</span>'
+								+ '</div>');
+					}
+				})
+			</script></div></div></div><script type="text/javascript">
+$( document ).ready( function () {
+ 	var sub = [];
+ 	
+	 	sub.push("ABLY_CLSR_CD");
+ 	
+	 	sub.push("ABLY_CRTC_CD");
+ 	
+	 	sub.push("ABLY_LRNN_CD");
+ 	
+	 	sub.push("ABLY_WDFS_CD");
+ 	
+ 	for(var i in sub){
+ 		var cdId = sub[i]
+ 		$("input[name='coreAblyCdCmnSub'][value='"+cdId+"']").prop("checked",true);
+ 		if(cdId == 'ABLY_CRTC_CD' || cdId == 'ABLY_WDFS_CD' || cdId == 'ABLY_GBCZ_CD'){
+ 			//사회공헌 의사소통
+ 			$("#subCd0001").prop("checked",true);
+ 			$("#subCd0002").prop("checked",true);
+ 		}else if(cdId == 'ABLY_CMCT_CD' || cdId == 'ABLY_LRNN_CD'){
+ 			//도전혁신
+ 			$("#subCd0003").prop("checked",true);
+ 		}else if(cdId == 'ABLY_MYMG_CD' || cdId == 'ABLY_CLSR_CD'){
+ 			//문제해결
+ 			$("#subCd0004").prop("checked",true);
+ 		}
+ 	}
+} );
+</script><!-- var $form = $( "[name='currentPageNo']" ).closest( "form" ); 해당 사항들이 있을수있어 밑에 배치 --><script type="text/javascript" src="/common/common/backFormFunction.js" charset="utf-8"></script><script>
+$( document ).ready( function () {
+	//alert(btoa("[]"));
+});
+</script><form id="backForm" name="backForm" method="get"><!-- backForm으로 submit시 backFormSerializeArray을 초기화하기위해 넣음 --><input type="hidden" name="backFormSerializeArray" value="W10="><input type="hidden" name="urlType" value="findIcmpNsbjtPgmInfo"><!-- form을 잡을때 해당 name가 같이 잡히는 경우에 수가 있어 name를 암호화함 --><input type="hidden" name="OWASP_CSRFTOKEN" value="REMOVED"></form></div><!-- 개발 --></section><!-- 내용 --></div></div></div><!-- footer --><div class="footer_wrap style01"><div class="footer_inner"><div class="footer02"><ul class="footer_left"><li class="first"><a href="https://www.snu.ac.kr/personal_information" target="_blank" rel="noopener noreferrer">개인정보처리방침</a></li><li><a href="https://www.snu.ac.kr/prohibition_of_unauthorized_email_collection" target="_blank" rel="noopener noreferrer">이메일무단수집거부</a></li><!-- <li><a href="#;" target="_blank" rel="noopener noreferrer" >학부모서비스</a></li> --><li class="last"><a href="https://map.snu.ac.kr/web/main.action" target="_blank" rel="noopener noreferrer">캠퍼스맵</a></li></ul><div class="family_gp"><!-- <div class="family_site"><p class="tit"><a href="javascript:;">학내주요 서비스</a></p><ul><li><a href='http://www.moe.go.kr/' target='_blank' rel="noopener noreferrer" title='새창'>교육부</a></li><li><a href='http://kess.kedi.re.kr/' target='_blank' rel="noopener noreferrer" title='새창'>교육통계서비스</a></li><li><a href='http://www.riss.kr' target='_blank' rel="noopener noreferrer" title='새창'>한국교육학술정보원</a></li><li><a href='http://www.kosaf.go.kr' target='_blank' rel="noopener noreferrer" title='새창'>한국장학재단</a></li></ul></div> --><div class="family_site"><p class="tit"><a href="javascript:;">학내주요 홈페이지</a></p><ul><li class="first last"><a href="https://snugenie.snu.ac.kr/login/sso.do" target="_blank" rel="noopener noreferrer" title="새창">스누지니</a><!-- <a href="https://mylearn.snu.ac.kr/clientMain/a/t/main.do" target="_blank" rel="noopener noreferrer" title="새창">MyLearn</a> --><a href="https://www.snu.ac.kr/index.html" target="_blank" rel="noopener noreferrer" title="새창">서울대학교 대표홈페이지</a></li></ul></div></div></div><div class="footer03"><ul class="address"><li class="first"><ul><li class="first">08826 서울시 관악구 관악로 1 서울대학교</li><li>Tel. 02-880-5114</li><li class="last">Fax. 02-885-5272</li></ul></li></ul><p class="copy">Copyright ⓒ Seoul National University. All Rights Reserved.</p></div></div></div><!-- footer --><ul class="quick_menu"><li class="first"><a href="#" target="_blank" rel="noopener noreferrer" class="help userFeedBackBtn"><span>의견접수</span></a></li><li class="top last"><a href="#;" class="btn_top"><span>TOP</span></a></li></ul>
+</body></html>

@@ -1,0 +1,17 @@
+{
+  "successYN": "Y",
+  "seatInfo": {
+    "SEATNO": "14103008",
+    "NAME": "G411",
+    "COMMENT": "국어국문학과 명예교수 이상억님이 기증해주신 그룹스터디룸입니다.",
+    "DEVICE_COMMENT": "모니터/무선랜/전원 제공|6인실 최소 4명이상 예약",
+    "SEAT_IMAGE": "/MAP/POP/pop_14103008.png",
+    "MONITOR_YN": "Y",
+    "LAN_YN": "Y",
+    "STAND_YN": "",
+    "POWER_YN": "Y"
+  },
+  "params": {
+    "seatNo": "14103008"
+  }
+}

@@ -69,19 +69,22 @@ restarts `demo-seed`, which rewrites the Demo Data's days around today.
 | `/srv/team/snu-now-apk`                   | The dev APKs                                                              |
 | `/etc/systemd/system/snu-now-*`           | The five unit files, copied there from `infra/deploy` by the bootstrap    |
 | The Docker volume `snu-now_postgres-data` | PostgreSQL's data                                                         |
+| `/srv/team/shuttle-log`                   | [The shuttle log](#the-shuttle-log)'s days, while a person has it running |
+| `/usr/local/bin/snu-now-shuttle-log.sh`   | Its script, with a sixth unit file in systemd's folder, installed by hand |
 
 The folders belong to the team group: every member reads them, and writes the settings file, the dumps and the APKs,
 without `sudo`. Docker and systemd need `sudo`.
 
-| In the repository                  | What it is                                                                           |
-| ---------------------------------- | ------------------------------------------------------------------------------------ |
-| `compose.deploy.yaml`              | The deployment override, laid over the laptop `compose.yaml`                         |
-| `infra/proxy/`                     | The proxy's `Caddyfile` and the `Dockerfile` that builds it into the proxy's image   |
-| `infra/deploy/deploy.sh`           | One deploy run                                                                       |
-| `infra/deploy/bootstrap.sh`        | Readies a server for the deploy timer                                                |
-| `infra/deploy/snu-now-*.service`   | The deploy and demo-refresh services, each with a `.timer`, and the redeploy service |
-| `infra/deploy/snu-now.env.example` | The settings file as the bootstrap writes it, with what each value is                |
-| `infra/deploy/test/`               | The two scripts' bats tests                                                          |
+| In the repository                    | What it is                                                                           |
+| ------------------------------------ | ------------------------------------------------------------------------------------ |
+| `compose.deploy.yaml`                | The deployment override, laid over the laptop `compose.yaml`                         |
+| `infra/proxy/`                       | The proxy's `Caddyfile` and the `Dockerfile` that builds it into the proxy's image   |
+| `infra/deploy/deploy.sh`             | One deploy run                                                                       |
+| `infra/deploy/bootstrap.sh`          | Readies a server for the deploy timer                                                |
+| `infra/deploy/snu-now-*.service`     | The deploy and demo-refresh services, each with a `.timer`, and the redeploy service |
+| `infra/deploy/snu-now.env.example`   | The settings file as the bootstrap writes it, with what each value is                |
+| `infra/deploy/test/`                 | The two scripts' bats tests                                                          |
+| `infra/deploy/snu-now-shuttle-log.*` | [The shuttle log](#the-shuttle-log)'s script and unit, installed by hand             |
 
 ### Compose by hand
 
@@ -150,7 +153,7 @@ servers' own `.env.example` files.
 `MATCH_DB_PASSWORD`, the access-token key pair `ACCESS_TOKEN_PRIVATE_KEY` and `ACCESS_TOKEN_PUBLIC_KEY`, `WORKER_TOKEN`
 and `MATCH_SERVER_TOKEN`. The fixed values: `COMPOSE_PROFILES=demo`, `DEPLOY_STATUS_DIR`, `DEPLOY_APK_DIR`,
 `PUBLIC_URL` (the Dev Server's address), the two Google client IDs, `ANDROID_CERTIFICATE_FINGERPRINTS` (the debug
-key's, which signs the dev APK), `ASSISTANT_MODEL` and `ROUND_INTERVAL_SECONDS`.
+key's, which signs the dev APK), `ASSISTANT_MODEL`, `ROUND_INTERVAL_SECONDS` and `EXTRA_SNU_COLLECTION=off`.
 
 **Filled in by a person**, `CHANGE_ME` until then:
 
@@ -390,6 +393,65 @@ sudo git -C /srv/team/snu-now fetch origin development
 sudo git -C /srv/team/snu-now reset --hard FETCH_HEAD
 ```
 
+## The shuttle log
+
+A collector writes the shuttle's vehicles to one CSV per day, for `pnpm shuttle:derive` and `pnpm shuttle:score`
+([the main server's README](../../main-server/README.md#shuttle-times-from-the-dev-log)). It runs on the Dev Server
+only, because a Production table of positions is not worth having for a few days' times. It reads Dev Redis and changes
+nothing there, and nothing on Production changes.
+
+Every 5 seconds, on weekdays from 08:00 to 21:00 in Seoul, `snu-now-shuttle-log.sh` reads the key `shuttle:vehicles`
+and its remaining lifetime through `docker compose exec -T redis redis-cli`, since Redis publishes no port here. A
+lifetime that jumped back towards 60 s is a new set, whose time is `receivedAt`. An empty set has none, so its time is
+the read time − (60 s − the remaining lifetime). A missing key is an outage, which logs nothing. It takes each stop's
+`loop_order` from `main-server/seed/shuttle-stops.json` in the checkout when it starts, since Redis does not hold it.
+
+In `/srv/team/shuttle-log`, for each day:
+
+- `YYYY-MM-DD.csv`: one row per car per set, even when nothing changed: `received_at` (with `+09:00`), `car_id`,
+  `stop_id`, `stop_name`, `loop_order`.
+- `YYYY-MM-DD.sets.csv`: one line per set, `received_at,cars`, which tells an empty set from an outage.
+
+### Installing it
+
+Once, from a laptop on the university's network, before the first service hour, with a checkout of the branch that
+holds these files. The installed copies live outside the checkout: the Dev Server's checkout follows `development`,
+which may not hold them, and each deploy cleans it. The bootstrap does not install them.
+
+```bash
+scp infra/deploy/snu-now-shuttle-log.sh infra/deploy/snu-now-shuttle-log.service swpp-b:
+ssh swpp-b
+jq --version
+sudo install --directory --group swpp26-members --mode 2775 /srv/team/shuttle-log
+sudo install --mode 0755 snu-now-shuttle-log.sh /usr/local/bin/
+sudo install --mode 0644 snu-now-shuttle-log.service /etc/systemd/system/
+rm snu-now-shuttle-log.sh snu-now-shuttle-log.service
+sudo systemctl daemon-reload
+sudo /usr/local/bin/snu-now-shuttle-log.sh --check
+sudo systemctl enable --now snu-now-shuttle-log
+```
+
+`--check` works at any hour. It reads Dev Redis once, writes that set, or a sample set when the key is missing, to a
+scratch folder and prints the files, so that Redis, `jq` and `date` are known to work before the first service hour.
+
+Check it by hand: in service hours, `systemctl status snu-now-shuttle-log` says it is active, and
+`tail /srv/team/shuttle-log/$(TZ=KST-9 date +%F).csv` gains rows, with one set about every 15 seconds in the `.sets.csv`.
+The service stays active when reads fail, so read `journalctl --unit snu-now-shuttle-log` too.
+
+While it logs, merge nothing into `development`: a deploy restarts the server and the worker, and R9 leaves that time
+out.
+
+### Fetching the days
+
+Once the last day is over, from a laptop on the university's network, stop it and fetch the days, then gzip them:
+
+```bash
+ssh -t swpp-b sudo systemctl disable --now snu-now-shuttle-log
+mkdir -p main-server/eval/shuttle-days
+scp 'swpp-b:/srv/team/shuttle-log/*.csv' main-server/eval/shuttle-days/
+gzip main-server/eval/shuttle-days/*.csv
+```
+
 ## Server A
 
 Server A (`ssh swpp-a`, `http://swpp26t09.147-46-242-169.sslip.io`) stays empty. Production runs on AWS
@@ -410,6 +472,7 @@ by hand on the server instead, in the operations tickets of [P04-05](../../.scra
 - The course's ingress: the host reaching the proxy from a phone, and an APK downloaded whole through it. Tickets 06
   and 07; ticket 07 also checks [Adding an APK](#adding-an-apk) against what was done.
 - WebSocket through the ingress. Ticket 08, below.
+- [The shuttle log](#the-shuttle-log)'s collector, as that section says. Its rows are checked by the tools' own tests.
 
 ### WebSocket through the ingress
 

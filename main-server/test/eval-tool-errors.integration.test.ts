@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { inject, type ProvidedContext } from 'vitest';
@@ -30,6 +31,7 @@ const OPTIONS: RunOptions = {
   categories: [],
   caseIds: [],
   budgetUsd: 5,
+  world: 'small',
   prices: FALLBACK_PRICES,
   commit: 'abc1234',
 };

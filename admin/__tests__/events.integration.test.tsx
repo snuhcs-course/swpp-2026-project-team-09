@@ -2,9 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { screen } from '@testing-library/react';
+import { type BoundFunctions, type queries, screen, within } from '@testing-library/react';
+
+import type { GlobalEvent } from '@/main-server';
 
 import { browser } from './support/browser';
 import { fakeMainServer } from './support/fake-main-server';
@@ -53,12 +56,13 @@ describe('the home page’s marks and links', () => {
         place: '종합운동장',
         latitude: 37.4629,
         longitude: 126.9543,
+        publicationRoute: 'rule',
       },
     );
 
     await openEvents();
 
-    expect(rowsOf('Published')).toEqual([['관악 축제', '2026-10-20 12:00', '종합운동장']]);
+    expect(rowsOf('Published')).toEqual([['관악 축제', '2026-10-20 12:00', '종합운동장', 'Rule']]);
   });
 
   it('marks a start at 00:00 in Seoul as possibly a day without its time', async () => {
@@ -81,6 +85,106 @@ describe('the home page’s marks and links', () => {
     await openEvents();
 
     expect(screen.getByRole('link', { name: '도서관 특강' })).toHaveAttribute('href', `/events/${event?.id}`);
+  });
+});
+
+const published = (title: string, publicationRoute: 'administrator' | 'rule' | 'judgement'): Partial<GlobalEvent> => ({
+  title,
+  state: 'published',
+  startsAt: '2026-10-20T03:00:00.000Z',
+  publicationRoute,
+});
+
+const titlesOf = (name: string): (string | null | undefined)[] => rowsOf(name).map((row) => row[0]);
+
+const routeFilter = (): BoundFunctions<typeof queries> =>
+  within(screen.getByRole('navigation', { name: 'Filter by Publication Route' }));
+
+function hasOneEventOfEachRoute(): void {
+  fakeMainServer.hasGlobalEvents(
+    { title: 'A Draft' },
+    published('Entered', 'administrator'),
+    published('Judged', 'judgement'),
+    published('Read', 'rule'),
+  );
+}
+
+describe('the Publication Route column', () => {
+  it('shows each published event’s route, and no such column on the Drafts', async () => {
+    hasOneEventOfEachRoute();
+
+    await openEvents();
+
+    expect(rowsOf('Published').map((row) => row.at(-1))).toEqual(['Administrator', 'Judgement', 'Rule']);
+    const drafts = within(screen.getByRole('table', { name: 'Drafts' }));
+    expect(drafts.queryByRole('columnheader', { name: 'Publication Route' })).toBeNull();
+  });
+});
+
+describe('the filter by Publication Route', () => {
+  it('links each route, the current one marked', async () => {
+    await openEvents();
+
+    expect(routeFilter().getByRole('link', { name: 'All' })).toHaveAttribute('aria-current', 'true');
+    expect(routeFilter().getByRole('link', { name: 'All' })).toHaveAttribute('href', '/');
+    expect(routeFilter().getByRole('link', { name: 'Administrator' })).toHaveAttribute('href', '/?route=administrator');
+    expect(routeFilter().getByRole('link', { name: 'Rule' })).toHaveAttribute('href', '/?route=rule');
+    expect(routeFilter().getByRole('link', { name: 'Judgement' })).toHaveAttribute('href', '/?route=judgement');
+  });
+
+  it('filters the published events by the route in the address and leaves the Drafts', async () => {
+    hasOneEventOfEachRoute();
+
+    await openEvents({ route: 'judgement' });
+
+    expect(titlesOf('Published')).toEqual(['Judged']);
+    expect(titlesOf('Drafts')).toEqual(['A Draft']);
+    expect(routeFilter().getByRole('link', { name: 'Judgement' })).toHaveAttribute('aria-current', 'true');
+    expect(routeFilter().getByRole('link', { name: 'All' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('passes the route on to an event’s page, to come back to', async () => {
+    const [event] = fakeMainServer.hasGlobalEvents(published('Judged', 'judgement'));
+
+    await openEvents({ route: 'judgement' });
+
+    expect(screen.getByRole('link', { name: 'Judged' })).toHaveAttribute(
+      'href',
+      `/events/${event?.id}?route=judgement`,
+    );
+  });
+
+  it('says so when no published event has the route', async () => {
+    fakeMainServer.hasGlobalEvents(published('Read', 'rule'));
+
+    await openEvents({ route: 'judgement' });
+
+    expect(screen.queryByRole('table', { name: 'Published' })).toBeNull();
+    expect(screen.getByText('No published event still to come has the route Judgement.')).toBeVisible();
+  });
+
+  it('shows every published event for a route it does not know', async () => {
+    hasOneEventOfEachRoute();
+
+    await openEvents({ route: 'constructor' });
+
+    expect(titlesOf('Published')).toEqual(['Entered', 'Judged', 'Read']);
+  });
+});
+
+describe('the flag of the home page', () => {
+  it('marks a Draft and a published event that an Administrator must look at, and only those', async () => {
+    fakeMainServer.hasGlobalEvents(
+      { title: 'Flagged Draft', needsAdministrator: true },
+      { title: 'Plain Draft' },
+      { title: 'Flagged event', state: 'published', needsAdministrator: true, publicationRoute: 'rule' },
+      { title: 'Plain event', state: 'published', publicationRoute: 'rule' },
+    );
+
+    await openEvents();
+
+    expect(rowsOf('Drafts').map((row) => row[0])).toEqual(['Flagged DraftNeeds an Administrator', 'Plain Draft']);
+    expect(rowsOf('Published').map((row) => row[0])).toEqual(['Flagged eventNeeds an Administrator', 'Plain event']);
   });
 });
 

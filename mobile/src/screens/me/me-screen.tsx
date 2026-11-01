@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-27  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -36,6 +37,7 @@ import { yearLabel } from '../onboarding/form';
 import { TabScreen } from '../shell/tab-screen';
 import { SharingCard } from './sharing-card';
 import { useSharingSwitch } from './use-sharing-switch';
+import { thisVersionLine } from './version-line';
 import { WeekCard } from './week-card';
 
 // How long the 위치 공유 card stays outlined after the friend panel's "공유 설정".
@@ -232,7 +234,7 @@ interface MeScreenProps {
 }
 
 // The 내 정보 tab, the `Profile` frame: the User's profile, the week, the Master Switch, the ways to the User's
-// Friends, Parties and Quests, and the sign-out.
+// Friends, Parties and Quests, the sign-out, and below it the build and update the phone runs.
 export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactElement {
   const profile = useQuery(lobbyQuery).data?.profile;
   const sharing = useSharingSwitch();
@@ -251,6 +253,7 @@ export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactE
         />
         <ActivityCard />
         <SignOut />
+        <Text style={styles.version}>{thisVersionLine()}</Text>
       </ScrollView>
       <LocationExplanation
         blocked={sharing.blocked}
@@ -302,4 +305,5 @@ const styles = StyleSheet.create({
   },
   outPressed: { backgroundColor: color.dangerSoft },
   outWords: { ...text.label, color: color.danger },
+  version: { ...text.caption, textAlign: 'center', color: color.inkMuted },
 });
