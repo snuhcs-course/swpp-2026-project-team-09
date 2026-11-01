@@ -29,7 +29,7 @@ const HOLDERS = Prisma.sql`(SELECT count(*) FROM quest_holders h WHERE h.quest_i
 // span overlaps it. An event without an end lasts until the end of its start's day.
 function asItsEvent(now: Date, window: RecruitingSearch['window']): Prisma.Sql {
   const lastsUntil = (at: Date): Prisma.Sql =>
-    Prisma.sql`(e.ends_at >= ${timestamp(at)} OR (e.ends_at IS NULL AND e.starts_at >= ${timestamp(startOfSeoulDay(at))}))`;
+    Prisma.sql`(e.ends_at > ${timestamp(at)} OR (e.ends_at IS NULL AND e.starts_at >= ${timestamp(startOfSeoulDay(at))}))`;
   return Prisma.sql`e.state = 'published' AND ${lastsUntil(now)}${
     window === undefined
       ? Prisma.empty
@@ -66,8 +66,8 @@ function conditionsOf(readerId: string, search: RecruitingSearch, now: Date): Pr
   ];
 }
 
-// The ids of the Quests found, in start order, those without a start last. Everything is decided here, before the list
-// is cut, so that a search stays quick however many Quests there are. The first Sub Quest is in the order that
+// The ids of the Quests found, in start order, those without a start last. Every filter is here, before the list is cut,
+// so that a search stays quick however many Quests there are. The first Sub Quest is in the order that
 // QUEST_INCLUDE reads them, and the attending one takes its time from the Global Event as it is now.
 // Ties go by title in code points, 가나다 order in every database, so that the same world gives the same list.
 export async function recruitingSearchIds(

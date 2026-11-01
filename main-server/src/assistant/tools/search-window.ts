@@ -39,15 +39,12 @@ export interface WindowConditions {
 
 // The first and the last minute of the window in Korea, as YYYY-MM-DDTHH:MM, or null when no end was given.
 function minutesOf({ from, to, after, before }: WindowConditions): { first: string; last: string } | null {
-  const first = after ?? (from === undefined ? undefined : `${from}T00:00`);
-  const last = before ?? (to === undefined ? undefined : `${to}T23:59`);
-  if (first === undefined && last === undefined) {
-    return null;
+  const first = after?.slice(0, 16) ?? (from === undefined ? undefined : `${from}T00:00`);
+  const last = before?.slice(0, 16) ?? (to === undefined ? undefined : `${to}T23:59`);
+  if (first === undefined) {
+    return last === undefined ? null : { first: `${last.slice(0, 10)}T00:00`, last };
   }
-  return {
-    first: (first ?? `${String(last).slice(0, 10)}T00:00`).slice(0, 16),
-    last: (last ?? `${String(first).slice(0, 10)}T23:59`).slice(0, 16),
-  };
+  return { first, last: last ?? `${first.slice(0, 10)}T23:59` };
 }
 
 export function daysTogether({ from, to }: WindowConditions): boolean {

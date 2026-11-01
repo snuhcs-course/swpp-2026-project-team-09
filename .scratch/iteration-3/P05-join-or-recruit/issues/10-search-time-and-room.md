@@ -6,13 +6,30 @@
 
 **Status:** ready-for-agent
 
-- [ ] Both tools take `after` and `before` (date and time in Asia/Seoul); with only `after`, the window ends at 23:59 of that day.
-- [ ] An event is returned when its span overlaps the window; one without an end lasts until the end of its start's day.
-- [ ] A Quest's start is its first Sub Quest's start; a Sub Quest attending a Global Event takes the event's time and place as it is now.
-- [ ] A Quest for a Global Event is returned while the event's span overlaps the window and until the event ends; any other Quest is returned when its start is in the window, and never once its start has passed.
-- [ ] Full Quests, Quests for a Global Event of which the reader holds a Shared Quest, and Quests the reader already asked to join are never returned.
-- [ ] `minPlacesLeft` (default one) and an exact capacity are optional inputs; each Quest in a result keeps its places left, Join Policy and number of Holders.
-- [ ] Every filter runs in the database query, before the list is cut, not over every Quest read into memory; a test checks that adding a condition only ever narrows the result.
-- [ ] The Boards keep their listing unchanged.
-- [ ] Integration tests with the scripted model cover each rule; the large world's server recall test now passes for the cases this ticket enables.
-- [ ] This ticket has no full evaluation run of its own (P05 owner, 2026-11-01). Its cases may be checked with `pnpm eval --case`, and the full run comes at the end of the bundle, in ticket 12a.
+- [x] Both tools take `after` and `before` (date and time in Asia/Seoul); with only `after`, the window ends at 23:59 of that day.
+- [x] An event is returned when its span overlaps the window; one without an end lasts until the end of its start's day.
+- [x] A Quest's start is its first Sub Quest's start; a Sub Quest attending a Global Event takes the event's time and place as it is now.
+- [x] A Quest for a Global Event is returned while the event's span overlaps the window and until the event ends; any other Quest is returned when its start is in the window, and never once its start has passed.
+- [x] Full Quests, Quests for a Global Event of which the reader holds a Shared Quest, and Quests the reader already asked to join are never returned.
+- [x] `minPlacesLeft` (default one) and an exact capacity are optional inputs; each Quest in a result keeps its places left, Join Policy and number of Holders.
+- [x] Every filter runs in the database query, before the list is cut, not over every Quest read into memory; a test checks that adding a condition only ever narrows the result.
+- [x] The Boards keep their listing unchanged.
+- [x] Integration tests with the scripted model cover each rule; the large world's server recall test now passes for the cases this ticket enables.
+- [x] This ticket has no full evaluation run of its own (P05 owner, 2026-11-01). Its cases may be checked with `pnpm eval --case`, and the full run comes at the end of the bundle, in ticket 12a.
+
+## Comments
+
+### Decisions (2026-11-02)
+
+- `before` alone starts the window at 00:00 of its day, as the large world's generator reads it. A time overrides the day of its end, so `after` with `from` and `to` runs from that time to the end of `to`.
+- A Quest for a cancelled event is never returned, though the Boards may still list it for another Sub Quest ahead. The spec does not say; such a Quest counts as its event, which is gone.
+- An event ending at the very minute a window starts does not overlap it, as `searched()` already read a period. `eval/p5/large-world/answers.ts` reads that case as overlapping (`end >= from`). No large-world case's recall depends on it, and the small world was not checked for it.
+- Ties in start order go by title in code points, then id. The spec names no tie rule, the database's own collation does not sort Hangul in 가나다 order, and random ids made the list differ between seedings. `large-v-05` holds only by this order: its card is one of three tied candidates across the twentieth place. Ticket 11's ranking replaces this for cases with words.
+- The Quest search takes no `words` or Place yet (ticket 11), so the intended calls' `words` and `placeId` are dropped by the input schema. The 16 cases this ticket frees hold on the window alone; their `until` is now null. The other 49 marks are as they were.
+- The prompt is unchanged, so the model learns `after` and `before` only from the tool descriptions. Whether it uses them is measured in R1 (ticket 12a).
+
+### Agent usage (2026-11-02)
+
+- Agent time: about 18 minutes (estimate), one session with two review subagents, from the transcript's first and last timestamps up to this commit. It does not count waiting for CI and for reviews after the PR.
+- Tokens, subagents included: input 96, with 5,580,219 cache reads and 357,321 cache writes shown apart; output 94,525. Counted before this commit.
+- No eval model calls.

@@ -239,10 +239,11 @@ describe('searchGlobalEvents, in a window of times', () => {
   });
 
   it('with both ends, gives what overlaps them', async () => {
-    const first = await eventAt('2093-11-05T13:00:00');
+    const first = await eventAt('2093-11-05T13:01:00');
     const last = await eventAt('2093-11-05T18:00:00');
     await eventAt('2093-11-05T18:01:00');
-    await eventAt('2093-11-05T10:00:00');
+    // It ends as the window starts, so they do not overlap.
+    await eventAt('2093-11-05T13:00:00');
 
     expect(await eventsFound({ after: '2093-11-05T15:00', before: '2093-11-05T18:00' })).toEqual([first.id, last.id]);
   });

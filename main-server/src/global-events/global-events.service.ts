@@ -66,7 +66,7 @@ function searched({ period, place, title, words }: PublishedSearch): Prisma.Glob
       : [
           {
             startsAt: { lt: period.to },
-            OR: [{ endsAt: { gte: period.from } }, { endsAt: null, startsAt: { gte: startOfSeoulDay(period.from) } }],
+            OR: [{ endsAt: { gt: period.from } }, { endsAt: null, startsAt: { gte: startOfSeoulDay(period.from) } }],
           },
         ]),
     ...(place === undefined ? [] : [{ place: holding(place) }]),

@@ -100,7 +100,7 @@ export function searchRecruitingQuests(recruiting: RecruitingService): Tool {
             // open: the User joins at once; approval: the Leader accepts each User who asks.
             joinPolicy: quest.joinPolicy,
             placesLeft: quest.capacity - quest.holderCount,
-            holders: quest.holderCount,
+            holderCount: quest.holderCount,
             next: {
               startsAt: startsAt === null ? null : koreaTime(new Date(startsAt)),
               endsAt: endsAt === null ? null : koreaTime(new Date(endsAt)),

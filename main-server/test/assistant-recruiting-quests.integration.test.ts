@@ -81,7 +81,7 @@ describe('searchRecruitingQuests, by Board', () => {
             globalEvent: null,
             joinPolicy: 'open',
             placesLeft: 3,
-            holders: 1,
+            holderCount: 1,
             next: { startsAt: '2097-01-05T18:00:00+09:00', endsAt: '2097-01-05T20:00:00+09:00', place: null },
             description: '<data label="quest.description"></data>',
           },

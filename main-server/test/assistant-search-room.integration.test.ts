@@ -140,7 +140,7 @@ describe('searchRecruitingQuests, by room', () => {
 
     expect(model.toolResults()).toEqual([
       expect.objectContaining({
-        quests: [expect.objectContaining({ id: quest, placesLeft: 2, joinPolicy: 'open', holders: 2 })],
+        quests: [expect.objectContaining({ id: quest, placesLeft: 2, joinPolicy: 'open', holderCount: 2 })],
       }),
     ]);
   });
