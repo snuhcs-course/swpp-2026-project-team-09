@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,7 +14,15 @@ import { ask, postAssistantMessages } from './assistant.js';
 import { signInUser, TestUser } from './friends.js';
 import { refuseMatchServer } from './match-server.js';
 import { askToJoin } from './quest-recruiting.js';
-import { connectToDatabase, getRecruitingQuests, joinQuest, ownQuest, storeEvent, storeSharedQuest } from './quests.js';
+import {
+  connectToDatabase,
+  getRecruitingQuests,
+  inBatches,
+  joinQuest,
+  ownQuest,
+  storeEvent,
+  storeSharedQuest,
+} from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
@@ -148,7 +157,7 @@ describe('searchRecruitingQuests, by room', () => {
 
 // More Quests than the list holds, all sooner than the one to find, and each left out by the condition.
 function sooner(body: object, day: string): Promise<string[]> {
-  return Promise.all(Array.from({ length: 31 }, () => questAt(`${day}T09:00:00`, body)));
+  return inBatches(31, () => questAt(`${day}T09:00:00`, body));
 }
 
 describe('searchRecruitingQuests, before the list is cut', () => {
