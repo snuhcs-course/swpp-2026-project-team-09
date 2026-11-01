@@ -72,12 +72,12 @@ Measured on the live run's database (the rows of 2026-10-29, ticket 05, Comments
 
 D learns 미대 and 호암 and not 정문. In the live run the first account probed 수의대, 미대, 경영대, 대운동장, 호암 and 정문 one after another, choosing nothing, and then named 예술관(미대)1: to the chain that is one search rephrased six times, so the reach from `open:정문` leaks to 예술관(미대)1 (first passage 0.667 to 서울대 정문, 0.333 to 예술관(미대)1), and the share guard keeps 정문 a question, where the count, reading taps alone, promoted it. The learning curve has its 10 labelled rows on 2026-10-29 and no later rows: no curve yet.
 
-### For the team to decide
+### Decided (2026-11-01)
 
-- **A probe of several words is read as one rephrased search.** Options: (a) count a rephrase only when the later words share a syllable with the earlier (경영대 → 경영대학, 학관 → 학생회관; but 미대 → 예술관, a rephrase by meaning, would be lost); (b) a shorter gap than 5 minutes; (c) leave it, as the share guard kept 정문 a question rather than a wrong alias, and real users rarely probe six words in a row.
-- **Who counts as a supporter.** The chain counts every account whose successful session reached the Place after the words, an alias's answer included (the paper's "absence of failure"); ticket 03 counted taps and edits alone. A User who got the alias's answer and said nothing now supports it.
-- **The chain is rebuilt from the window's rows on every count.** Fine at the live run's size (a few hundred rows); when rows reach tens of thousands, keep the counts in memory and add each row as it comes, or count once a night.
-- **The 5 minutes and the 90 days** are guesses in place of the paper's 45 seconds and three months; the replay's final slice is where they are tuned.
+- **A probe of several words stays one rephrased search.** Neither a syllable shared with the earlier words (it would lose rephrases by meaning, 미대 → 예술관) nor a shorter gap (it would split real sessions) is worth what it costs; the share guard already kept 정문 a question rather than a wrong alias, and a student who probes six words in a row is rare. Nothing changes.
+- **A supporter is what the chain counts**: every account whose successful session reached the Place after the words, one that accepted an alias's answer in silence included. It is the paper's measure, "absence of failure", and the one the server learns by; ticket 03's taps and edits are what the replay's stage C still reports beside it.
+- **The chain is rebuilt from the window's rows on every count** while `resolution_events` of the window stay under 10,000 rows (a few hundred today); past that, the count moves to a nightly job beside the induction's, which the worker server already schedules.
+- **The 5 minutes and the 90 days stand** (`SESSION_GAP_MINUTES`, `CHAIN_WINDOW_DAYS` in `alias-rules.ts`), in place of the paper's 45 seconds and three months, until the final slice of the replay says otherwise.
 
 ### Agent usage (2026-11-01)
 

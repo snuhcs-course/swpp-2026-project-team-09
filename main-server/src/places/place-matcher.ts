@@ -10,12 +10,13 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { ConfigService } from '@nestjs/config';
 import { GlobalAliases } from '../assistant/aliases/global-aliases.js';
 import { PersonalAliases } from '../assistant/aliases/personal-aliases.js';
+import { RejectedAliases } from '../assistant/aliases/rejected-aliases.js';
 import { databaseCauseOf } from '../common/database-cause.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { type Settings } from '../common/settings.js';
 import { type PlaceDto, toPlaceDto } from './dto/place.dto.js';
 import { type CompiledRule, compileRules } from './induced-rules.js';
-import { type PlaceAliases } from './place-aliases.js';
+import { type AliasRejections, NO_REJECTIONS, type PlaceAliases } from './place-aliases.js';
 import { CuratedGroups } from './place-groups.js';
 import { PlaceIndex, type PlaceMatch } from './place-index.js';
 
@@ -43,6 +44,7 @@ export class PlaceMatcher implements OnModuleInit, OnModuleDestroy {
   private places: PlaceDto[] = [];
   private sources: PlaceAliases[] = [];
   private curated: PlaceAliases[] = [];
+  private rejections: AliasRejections = NO_REJECTIONS;
   private active: CompiledRule[] = [];
   private version = '';
   private timer: NodeJS.Timeout | null = null;
@@ -61,6 +63,7 @@ export class PlaceMatcher implements OnModuleInit, OnModuleDestroy {
     const curated = new CuratedGroups(this.places);
     this.sources = [new PersonalAliases(this.prisma), global, curated];
     this.curated = [curated];
+    this.rejections = new RejectedAliases(this.prisma);
     await this.reload();
     this.timer = setInterval(() => void this.refresh(), REFRESH_MS);
     this.timer.unref();
@@ -92,10 +95,12 @@ export class PlaceMatcher implements OnModuleInit, OnModuleDestroy {
     }
     this.version = versionOf(rows);
     this.active = rules;
-    this.index = new PlaceIndex(this.places, this.sources, {
-      rules,
-      holdbackPercent: this.settings.get('ASSISTANT_ALIAS_HOLDBACK_PERCENT', { infer: true }),
-    });
+    this.index = new PlaceIndex(
+      this.places,
+      this.sources,
+      { rules, holdbackPercent: this.settings.get('ASSISTANT_ALIAS_HOLDBACK_PERCENT', { infer: true }) },
+      this.rejections,
+    );
     this.rules = new PlaceIndex(this.places, this.curated, { rules, holdbackPercent: 0 });
   }
 

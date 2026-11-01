@@ -19,7 +19,7 @@ import {
 } from './abbreviations.js';
 import { type PlaceDto } from './dto/place.dto.js';
 import { type CompiledRule, formOf, rewriteOf } from './induced-rules.js';
-import { type AliasSource, type PlaceAliases } from './place-aliases.js';
+import { type AliasRejections, type AliasSource, NO_REJECTIONS, type PlaceAliases } from './place-aliases.js';
 import { byNumber } from './places.service.js';
 
 // Which Places a User's words name (P07 ticket 01, research note 08 §3), for the Assistant's resolvePlace. The tiers
@@ -149,6 +149,7 @@ export class PlaceIndex {
     places: readonly PlaceDto[],
     private readonly aliases: readonly PlaceAliases[],
     private readonly induced: InducedRules = NO_INDUCED,
+    private readonly rejections: AliasRejections = NO_REJECTIONS,
   ) {
     for (const place of places.toSorted(byNumber)) {
       this.byId.set(place.id, place);
@@ -191,10 +192,14 @@ export class PlaceIndex {
     if (exact.length > 0) {
       return { tier: 'exact', source: null, places: unique(exact).toSorted(byNumber) };
     }
+    const excluded = this.aliases.length === 0 ? new Set<string>() : await this.rejections.excluded(query, userId);
     for (const source of this.aliases) {
       // oxlint-disable-next-line no-await-in-loop -- a later source is asked only when the earlier ones have no hits
       const hits = await source.lookup(query, userId);
-      const places = hits.map(({ placeId }) => this.byId.get(placeId)).filter((place) => place !== undefined);
+      const places = hits
+        .filter(({ placeId }) => !excluded.has(placeId))
+        .map(({ placeId }) => this.byId.get(placeId))
+        .filter((place) => place !== undefined);
       if (places.length > 0) {
         return { tier: 'alias', source: hits[0]?.source ?? null, places: unique(places).toSorted(byNumber) };
       }
