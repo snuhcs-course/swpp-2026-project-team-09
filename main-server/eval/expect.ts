@@ -221,6 +221,9 @@ export const expectSchema = z
         allowed: toolList.default([]),
         // "*": no tool may be called.
         forbidden: z.union([toolList, z.literal('*')]).default([]),
+        // true: every tool outside required and allowed counts as forbidden, such as an ASK that may call only
+        // resolveFriend.
+        only: z.literal(true).optional(),
       })
       .default({ required: [], allowed: [], forbidden: [] }),
     args: argsSchema.default({}),

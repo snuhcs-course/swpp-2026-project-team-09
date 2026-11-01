@@ -6,7 +6,8 @@
 
 # Refusals (P06 spec, "The P6 eval suite"): unsupported → "미구현" and no card (3); notOnline → "현장" and no card (3);
 # out of the window or the hours (a seat tomorrow, a room in 4 days, 23:30 and 7 hours) → the reason and no card (3);
-# 대학원 열람실 for an undergraduate → notEligible (1). The `expect` of each is drafted blind and not written yet.
+# 대학원 열람실 for an undergraduate → notEligible (1). Each `expect` was drafted blind and settled by the PM's rulings
+# of 2026-11-02 (labels-notes.md). A refusal calls no tool: its bounds are in the rules.
 
 # ── unsupported ──
 
@@ -16,6 +17,14 @@
   repeat: 3
   turns:
     - user: 중앙도서관 본관 3층 열람실 오늘 3시부터 2시간 예약해줘
+  expect:
+    actions: [REFUSE]
+    tools:
+      forbidden: '*'
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [미구현]
 
 - id: p6-refusals-other-floor
   category: p6-refusals
@@ -23,6 +32,14 @@
   repeat: 3
   turns:
     - user: 관정관 5층 자리 오늘 2시부터 2시간 예약해줘
+  expect:
+    actions: [REFUSE]
+    tools:
+      forbidden: '*'
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [미구현]
 
 - id: p6-refusals-other-library
   category: p6-refusals
@@ -30,6 +47,14 @@
   repeat: 3
   turns:
     - user: 법학도서관 열람실 오늘 4시부터 2시간 잡아줄 수 있어?
+  expect:
+    actions: [REFUSE]
+    tools:
+      forbidden: '*'
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [미구현]
 
 # ── notOnline ──
 
@@ -39,6 +64,15 @@
   repeat: 3
   turns:
     - user: 2층 G202 5인실 내일 3시부터 2시간 예약해줘. 민수, 지은, 하람이랑 써
+  expect:
+    actions: [REFUSE]
+    tools:
+      forbidden: '*'
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [현장]
+      absent: [6인실]
 
 - id: p6-refusals-info-search
   category: p6-refusals
@@ -46,6 +80,14 @@
   repeat: 3
   turns:
     - user: 정보검색실 컴퓨터 오늘 2시부터 1시간 예약해줘
+  expect:
+    actions: [REFUSE]
+    tools:
+      forbidden: '*'
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [현장]
 
 - id: p6-refusals-carrel
   category: p6-refusals
@@ -53,6 +95,14 @@
   repeat: 3
   turns:
     - user: 7층 캐럴 자리 하나 오늘 오후에 예약해줘
+  expect:
+    actions: [REFUSE]
+    tools:
+      forbidden: '*'
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [현장]
 
 # ── out of the window or the hours ──
 
@@ -62,14 +112,30 @@
   repeat: 3
   turns:
     - user: 내일 아침 9시부터 7층 열람실 3시간 예약해줘
+  expect:
+    actions: [REFUSE]
+    tools:
+      forbidden: '*'
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [당일]
 
-# Sunday 11/8 is today + 4.
+# 4일 뒤 is 11/8, today + 4. No weekday name: it drifts as dates move (ruling 7).
 - id: p6-refusals-room-in-four-days
   category: p6-refusals
   world: p6
   repeat: 3
   turns:
-    - user: 일요일 2시부터 2시간 4층 6인실 예약해줘. 민수, 지은, 하람이랑
+    - user: 4일 뒤 2시부터 2시간 4층 6인실 예약해줘. 민수, 지은, 하람이랑
+  expect:
+    actions: [REFUSE]
+    tools:
+      forbidden: '*'
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [3일]
 
 # Both of the spec's other examples at once: a start at 23:30, past the hours, and 7 hours, past the longest.
 - id: p6-refusals-late-and-long
@@ -78,6 +144,16 @@
   repeat: 3
   turns:
     - user: 오늘 밤 11시 반부터 7시간 7층 열람실 잡아줘
+  expect:
+    actions: [REFUSE]
+    tools:
+      forbidden: '*'
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions:
+        - 6시간
+        - [운영 시간, 이용 시간, 마감]
 
 # ── notEligible: the asker is an undergraduate ──
 
@@ -87,3 +163,11 @@
   repeat: 3
   turns:
     - user: 대학원 열람실 오늘 1시부터 3시간 예약해줘
+  expect:
+    actions: [REFUSE]
+    tools:
+      forbidden: '*'
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [대학원생, 내 정보]

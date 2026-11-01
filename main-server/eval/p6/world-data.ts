@@ -79,6 +79,16 @@ const worldSchema = z.strictObject({
     ends: timeSchema,
     place: z.string(),
   }),
+  globalEvents: z.array(
+    z.strictObject({
+      title: z.string(),
+      description: z.string(),
+      starts: timeSchema,
+      ends: timeSchema,
+      place: z.string(),
+      point: z.strictObject({ latitude: z.number(), longitude: z.number() }),
+    }),
+  ),
 });
 
 export type P6WorldData = z.infer<typeof worldSchema>;

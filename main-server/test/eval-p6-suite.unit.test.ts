@@ -19,7 +19,7 @@ import { tutorialState } from '../src/tutorial/tutorial-state.js';
 const P6 = new URL('../eval/p6/', import.meta.url);
 
 const cases = casesIn(loadCases(), 'p6');
-const ids = cases.map(({ id }) => id);
+const ids = new Set(cases.map(({ id }) => id));
 const data = p6WorldData();
 
 const suiteSchema = z.looseObject({
@@ -40,7 +40,7 @@ function suiteFiles(): { name: string; text: string }[] {
 }
 
 describe('The P6 cases', () => {
-  it("hold the spec's seven categories with its counts, 60 in all", () => {
+  it('hold the seven categories with their counts, 62 in all', () => {
     const counts = Object.fromEntries(Object.keys(suite.cases).map((category) => [category, 0]));
     for (const { category } of cases) {
       counts[category] = (counts[category] ?? 0) + 1;
@@ -48,7 +48,7 @@ describe('The P6 cases', () => {
 
     expect(counts).toEqual({
       'p6-spaces': 14,
-      'p6-conditions': 12,
+      'p6-conditions': 14,
       'p6-refusals': 10,
       'p6-group-rooms': 7,
       'p6-bookings': 5,
@@ -66,10 +66,61 @@ describe('The P6 cases', () => {
   it('are named by their category', () => {
     expect(cases.filter(({ id, category }) => !id.startsWith(`${category}-`)).map(({ id }) => id)).toEqual([]);
   });
+});
 
-  // The labels are drafted blind after this commit; the loader takes a case without one and a run fails it.
-  it('hold no expectation until the blind draft', () => {
-    expect(unlabelled(cases).map(({ id }) => id)).toEqual(ids);
+describe('The P6 labels', () => {
+  // The labels were drafted blind and settled by the PM (labels-notes.md).
+  it('label every case', () => {
+    expect(unlabelled(cases).map(({ id }) => id)).toEqual([]);
+  });
+
+  // One right answer per case: one action, and no key that lets several answers pass, such as a set of spaces of
+  // which any one counts.
+  it('give each case one answer', () => {
+    const several = cases.filter(({ expect: wanted }) => wanted !== undefined && wanted.actions.length !== 1);
+    const loose = suiteFiles().filter(({ name, text }) => name.startsWith('cases/') && /spaceIn|either/u.test(text));
+
+    expect(several.map(({ id }) => id)).toEqual([]);
+    expect(loose.map(({ name }) => name)).toEqual([]);
+  });
+});
+
+describe('The tools and words of the P6 labels', () => {
+  it('let a refusal, a CHAT and an ASK call no tool, but the resolver of a name or the free slots', () => {
+    const asksWith: Record<string, string[]> = {
+      'p6-group-rooms-same-name': ['resolveFriend'],
+      'p6-conditions-free-time': ['findLibraryFreeSlots'],
+    };
+    const loose = cases.flatMap(({ id, expect: wanted }) => {
+      if (wanted === undefined || !['REFUSE', 'ASK', 'CHAT'].includes(wanted.actions[0] ?? '')) {
+        return [];
+      }
+      const { required, allowed, forbidden, only } = wanted.tools;
+      const tools = [...required, ...allowed].toSorted();
+      const allowedHere = asksWith[id];
+      const tight =
+        allowedHere === undefined
+          ? forbidden === '*'
+          : only === true && JSON.stringify(tools) === JSON.stringify(allowedHere.toSorted());
+      return tight ? [] : [id];
+    });
+
+    expect(loose).toEqual([]);
+  });
+
+  // A facility's hours are a fact of the text, as the tutorial's other facts are (labels-notes.md, ruling 10).
+  it('name the candidates an ASK chooses between, and no time outside an ASK but a facility fact', () => {
+    const asks = cases.filter(({ expect: wanted }) => wanted?.actions[0] === 'ASK');
+    const timed = cases.filter(
+      ({ id, expect: wanted }) =>
+        wanted !== undefined &&
+        wanted.actions[0] !== 'ASK' &&
+        id !== 'p6-tutorial-clinic-hours' &&
+        JSON.stringify(wanted.text ?? {}).match(/\d{1,2}:\d{2}/u) !== null,
+    );
+
+    expect(asks.filter(({ expect: wanted }) => (wanted?.text?.mentions ?? []).length === 0)).toEqual([]);
+    expect(timed.map(({ id }) => id)).toEqual([]);
   });
 
   it('ask only as Users of the world', () => {
@@ -83,7 +134,7 @@ describe('The P6 suite', () => {
   it('names only cases it holds in its subsets', () => {
     const named = Object.values(suite.subsets).flat();
 
-    expect(named.filter((id) => !ids.includes(id))).toEqual([]);
+    expect(named.filter((id) => !ids.has(id))).toEqual([]);
     expect(suite.subsets.siteAliases).toHaveLength(4);
     expect(suite.subsets.proposedAliases).toHaveLength(4);
     expect(suite.subsets.partyLimit).toHaveLength(2);
@@ -93,7 +144,7 @@ describe('The P6 suite', () => {
     const fixed = new Set(Object.values(FIXED_SET).flat());
 
     expect(suite.superseded.map(({ case: id }) => id)).toContain('out-of-scope-library-seats');
-    expect(suite.superseded.filter(({ case: id, heldBy }) => !fixed.has(id) || !ids.includes(heldBy))).toEqual([]);
+    expect(suite.superseded.filter(({ case: id, heldBy }) => !fixed.has(id) || !ids.has(heldBy))).toEqual([]);
   });
 
   it('proposes a threshold for each of M1 to M5 and overall', () => {

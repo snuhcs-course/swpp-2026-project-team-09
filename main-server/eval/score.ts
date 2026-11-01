@@ -201,9 +201,11 @@ function scoreTools(trace: TurnTrace, expect: Expect, names: Names): ToolsScore 
     .map(({ name, input }) => ({ name, args: normaliseArgs(name, input, names) }));
   const { required, allowed, forbidden } = expect.tools;
   const called = [...new Set(calls.map(({ name }) => name))];
-  const isForbidden = (name: string): boolean => forbidden === '*' || forbidden.includes(name);
+  const listed = (name: string): boolean => required.includes(name) || allowed.includes(name);
+  const isForbidden = (name: string): boolean =>
+    forbidden === '*' || forbidden.includes(name) || (expect.tools.only === true && !listed(name));
   const underCalls = required.filter((name) => !called.includes(name));
-  const outside = (name: string): boolean => isForbidden(name) || !(required.includes(name) || allowed.includes(name));
+  const outside = (name: string): boolean => isForbidden(name) || !listed(name);
   const { args, failures } = argsChecked(calls, expect, names);
   return {
     checks: [

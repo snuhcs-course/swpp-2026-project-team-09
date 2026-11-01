@@ -38,7 +38,8 @@ describe('The P6 world', () => {
     app = await startApp(database.settings, [], refuseKakao, refuseMatchServer, model.model);
     vi.spyOn(app.get<Clock>(CLOCK), 'now').mockImplementation(() => new Date(WORLD_CLOCKS.p6));
     world = await seedP6World(app, database.url);
-  });
+    // Seventeen Users signed in, befriended and given a profile through the app, which a loaded machine takes minutes for.
+  }, 300_000);
 
   afterAll(async () => {
     await app.close();

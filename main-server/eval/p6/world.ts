@@ -9,7 +9,7 @@ import { Server } from 'node:http';
 import { type PrismaClient } from '../../src/generated/prisma/client.js';
 import { connect } from '../../test/containers.js';
 import { befriend, signInUser, type TestUser } from '../../test/friends.js';
-import { ownQuest } from '../../test/quests.js';
+import { ownQuest, storeEvent } from '../../test/quests.js';
 import { addClass } from '../../test/timetable.js';
 import { type Seeded, seedOf, type World } from '../world.ts';
 import { type P6Person, type P6User, type P6WorldData, p6WorldData, type TutorialProgressData } from './world-data.ts';
@@ -177,6 +177,21 @@ async function seedLunchQuest(
   seeds[title] = { kind: 'quest', id, name: title };
 }
 
+async function seedGlobalEvents(prisma: PrismaClient, { globalEvents }: P6WorldData, seeds: Seeds): Promise<void> {
+  for (const { title, description, starts, ends, place, point } of globalEvents) {
+    // oxlint-disable-next-line no-await-in-loop -- a few events
+    const event = await storeEvent(prisma, {
+      title,
+      description,
+      startsAt: inKorea(starts),
+      endsAt: inKorea(ends),
+      place,
+      ...point,
+    });
+    seeds[title] = { kind: 'globalEvent', id: event.id, name: title };
+  }
+}
+
 // Seeds the world into the app's database, at `databaseUrl`, through a connection of its own. The app's clock must
 // already stand at the world's.
 export async function seedP6World(app: INestApplication<Server>, databaseUrl: string): Promise<World> {
@@ -191,6 +206,7 @@ export async function seedP6World(app: INestApplication<Server>, databaseUrl: st
     await seedTimetable(app, asker, data, seeds);
     await seedFriends(app, prisma, columns, data, asker, seeds);
     await seedLunchQuest(app, prisma, data, asker, seeds);
+    await seedGlobalEvents(prisma, data, seeds);
     for (const [name, user] of Object.entries(data.askers)) {
       // oxlint-disable-next-line no-await-in-loop -- a few Users
       askers[name] = (await seedUser(app, prisma, columns, user)).accessToken;

@@ -137,9 +137,19 @@ friends:
 # The lunch Quest the asker holds, for the "existing 파티" cases: a Closed Quest the asker leads, with four Friends as
 # Holders, 5 people in all, on Thursday at 학생회관. It is not a booking party.
 lunchQuest:
-  title: 목요일 점심 모임
+  title: 학관 점심 모임
   capacity: 6
   holders: [이민수, 김지은, 정하람, 최유진]
   starts: '2026-11-05T12:00'
   ends: '2026-11-05T13:00'
   place: 학생회관
+
+# Published Global Events. The exhibition at 미술관 runs today, so "오늘 미술관에서 무슨 전시 해?" is answered from the
+# app's data after getTutorial (rules.md section 14). 파워플랜트 has none.
+globalEvents:
+  - title: 가을 소장품전
+    description: 서울대학교 미술관 소장품 가운데 근현대 회화를 모은 전시입니다.
+    starts: '2026-10-28T10:00'
+    ends: '2026-11-15T18:00'
+    place: 서울대학교 미술관 1층
+    point: { latitude: 37.4665, longitude: 126.94969 }

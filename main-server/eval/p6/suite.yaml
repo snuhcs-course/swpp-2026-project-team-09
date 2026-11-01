@@ -8,15 +8,17 @@
 # under cases/, its world is world.yaml and its rules rules.md. `pnpm eval --world p6` runs it: every case has
 # `repeat: 3`, so that a pass rate is the mean of the 3 runs.
 #
-# A SKELETON, not yet frozen. The cases hold no `expect` until the blind draft (labels-working.yaml) and the owner's
-# review (labels-notes.md); until then a run loads them and fails every one. The thresholds below are the spec's
-# proposals, to freeze at C0: everything (cases, world, rules, labels, thresholds) is committed and tagged C0 before R0.
-# A value changed after a result is entered with `revises:` and `reason:`, as P5's are.
+# Labelled, not yet frozen. Each case's `expect` was drafted blind by an agent that read only rules.md, world.yaml, the
+# catalogue, content/tutorial.yaml, the spec and the questions, and then settled by the PM's rulings of 2026-11-02
+# (labels-notes.md): one right answer per case, anything ambiguous an ASK. The clinic's facts come
+# from health4u.snu.ac.kr. The thresholds below are the spec's proposals, to freeze at C0: everything (cases, world, rules,
+# labels, thresholds) is committed and tagged C0 before R0. A value changed after a result is entered with `revises:`
+# and `reason:`, as P5's are.
 world: p6
 
 cases:
   p6-spaces: 14
-  p6-conditions: 12
+  p6-conditions: 14
   p6-refusals: 10
   p6-group-rooms: 7
   p6-bookings: 5
@@ -76,16 +78,22 @@ thresholds:
     }
 
 labels:
-  # A separate agent that reads only rules.md, world.yaml, the catalogue, content/tutorial.yaml and the questions.
-  draftedBy: null
-  draftedOn: null
+  # A separate agent that read only rules.md, world.yaml, the catalogue, content/tutorial.yaml, the spec and the
+  # questions, never the prompt, tools or code.
+  draftedBy: claude-opus-5-5
+  draftedOn: '2026-11-02'
+  # The PM's rulings on the draft, three rounds on one day (labels-notes.md). The PR reviewer checks the labels.
+  ruledBy: AhnJinYoung
+  ruledOn: '2026-11-02'
   reviewedBy: null
   reviewedOn: null
-  # A teammate who labels 10 cases from scratch.
+  # Optional: a teammate who labels about 10 cases from scratch.
   secondLabeller: null
   overlap: []
   agreement: null
-  # What the rules left open, with the drafter's reason and the review's answer.
+  # What is still open.
+  # The clinic's facts (health4u.snu.ac.kr, 2026-11-02) are labelled here; ticket 07 puts them into the app's content
+  # and fixes the tutorial's floor.
   openForReview: []
 
 # Set at C0 and at each run.
