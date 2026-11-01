@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type Expect, expectSchema } from '../eval/expect.ts';
@@ -127,8 +128,8 @@ export function caseRun(changes: Partial<CaseRun> & Pick<CaseRun, 'turns'>): Cas
   };
 }
 
-// A run as the runner saves it, at USD 1 and 2 per million tokens in and out, the cache free.
-export function savedRun(cases: CaseRun[]): unknown {
+// A run as the runner saves it, at USD 1 and 2 per million tokens in and out, the cache free, with any `options` added.
+export function savedRun(cases: CaseRun[], options: object = {}): unknown {
   return {
     name: 'run',
     options: {
@@ -136,6 +137,7 @@ export function savedRun(cases: CaseRun[]): unknown {
       maxSteps: 8,
       timeoutMs: 30_000,
       prices: { input: 1e-6, output: 2e-6, cacheRead: 0, cacheWrite: 0, source: 'fallback' },
+      ...options,
     },
     seeds: SEEDS,
     stoppedBy: null,

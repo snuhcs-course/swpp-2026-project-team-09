@@ -4,6 +4,8 @@
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-10-30  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: each setting missing; all but DATABASE_URL, REDIS_HOST and MATCH_SERVER_URL malformed or by a bound;
@@ -232,30 +234,82 @@ describe("settingsSchema: the Assistant's settings", () => {
   });
 });
 
-describe('settingsSchema: the clock offset', () => {
-  it('missing → 0', () => {
-    expect(settingsSchema.parse(valid)).toMatchObject({ CLOCK_OFFSET_MINUTES: 0 });
-  });
-
-  it('-90 on localhost → accepted as -90', () => {
-    expect(settingsSchema.parse({ ...valid, CLOCK_OFFSET_MINUTES: '-90' })).toMatchObject({
-      CLOCK_OFFSET_MINUTES: -90,
+describe('settingsSchema: AUTOMATIC_PUBLICATION', () => {
+  it('unset → on', () => {
+    expect(settingsSchema.parse({ ...valid, AUTOMATIC_PUBLICATION: undefined })).toMatchObject({
+      AUTOMATIC_PUBLICATION: true,
     });
   });
 
-  it('120 with a PUBLIC_URL that is not localhost → refused, naming it', () => {
-    expect(refused({ ...valid, PUBLIC_URL: 'https://snunow.example', CLOCK_OFFSET_MINUTES: '120' })).toEqual([
-      'CLOCK_OFFSET_MINUTES',
-    ]);
-  });
-
-  it('0 with a PUBLIC_URL that is not localhost → accepted', () => {
-    expect(settingsSchema.parse({ ...valid, PUBLIC_URL: 'https://snunow.example' })).toMatchObject({
-      CLOCK_OFFSET_MINUTES: 0,
+  it('off → off', () => {
+    expect(settingsSchema.parse({ ...valid, AUTOMATIC_PUBLICATION: 'off' })).toMatchObject({
+      AUTOMATIC_PUBLICATION: false,
     });
   });
 
-  it.each(['1.5', 'abc'])('%s → refused, naming it', (value) => {
-    expect(refused({ ...valid, CLOCK_OFFSET_MINUTES: value })).toEqual(['CLOCK_OFFSET_MINUTES']);
+  it('anything else → refused, naming AUTOMATIC_PUBLICATION', () => {
+    expect(refused({ ...valid, AUTOMATIC_PUBLICATION: 'false' })).toEqual(['AUTOMATIC_PUBLICATION']);
+  });
+});
+
+describe('settingsSchema: AUTOMATIC_JUDGEMENT', () => {
+  it('unset → off, and no key is needed', () => {
+    const unset = {
+      ...valid,
+      AUTOMATIC_JUDGEMENT: undefined,
+      OPENROUTER_API_KEY: undefined,
+      ASSISTANT_MODEL: undefined,
+    };
+
+    expect(settingsSchema.parse(unset)).toMatchObject({
+      AUTOMATIC_JUDGEMENT: false,
+      JUDGEMENT_TIMEOUT_MS: 60_000,
+      JUDGEMENT_MAX_OUTPUT_TOKENS: 4000,
+    });
+  });
+
+  it('on with the key and the model → on', () => {
+    expect(settingsSchema.parse({ ...valid, AUTOMATIC_JUDGEMENT: 'on', OPENROUTER_API_KEY: 'key' })).toMatchObject({
+      AUTOMATIC_JUDGEMENT: true,
+    });
+  });
+
+  it.each(['OPENROUTER_API_KEY', 'ASSISTANT_MODEL'])('on without %s → refused, naming AUTOMATIC_JUDGEMENT', (name) => {
+    const without = { ...valid, AUTOMATIC_JUDGEMENT: 'on', OPENROUTER_API_KEY: 'key', [name]: '' };
+
+    expect(refused(without)).toEqual(['AUTOMATIC_JUDGEMENT']);
+  });
+
+  it('anything else → refused, naming AUTOMATIC_JUDGEMENT', () => {
+    expect(refused({ ...valid, AUTOMATIC_JUDGEMENT: 'true' })).toEqual(['AUTOMATIC_JUDGEMENT']);
+  });
+});
+
+describe('settingsSchema: SAME_EVENT_AI_CHOICE', () => {
+  it('unset → off, and no key is needed', () => {
+    const unset = {
+      ...valid,
+      SAME_EVENT_AI_CHOICE: undefined,
+      OPENROUTER_API_KEY: undefined,
+      ASSISTANT_MODEL: undefined,
+    };
+
+    expect(settingsSchema.parse(unset)).toMatchObject({ SAME_EVENT_AI_CHOICE: false });
+  });
+
+  it('on with the key and the model → on', () => {
+    expect(settingsSchema.parse({ ...valid, SAME_EVENT_AI_CHOICE: 'on', OPENROUTER_API_KEY: 'key' })).toMatchObject({
+      SAME_EVENT_AI_CHOICE: true,
+    });
+  });
+
+  it.each(['OPENROUTER_API_KEY', 'ASSISTANT_MODEL'])('on without %s → refused, naming SAME_EVENT_AI_CHOICE', (name) => {
+    const without = { ...valid, SAME_EVENT_AI_CHOICE: 'on', OPENROUTER_API_KEY: 'key', [name]: '' };
+
+    expect(refused(without)).toEqual(['SAME_EVENT_AI_CHOICE']);
+  });
+
+  it('anything else → refused, naming SAME_EVENT_AI_CHOICE', () => {
+    expect(refused({ ...valid, SAME_EVENT_AI_CHOICE: 'true' })).toEqual(['SAME_EVENT_AI_CHOICE']);
   });
 });

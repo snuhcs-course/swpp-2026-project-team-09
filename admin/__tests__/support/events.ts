@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { fireEvent, screen } from '@testing-library/react';
@@ -19,7 +20,8 @@ export const COLLECTED: Partial<GlobalEvent> = {
   place: '뉴미디어통신공동연구소 이충웅홀(132동 103호)',
   latitude: 37.45487,
   longitude: 126.95407,
-  postNumber: 176525,
+  source: 'snu_events',
+  postKey: '176525',
   sourceUrl: 'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525',
 };
 

@@ -1,0 +1,677 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by TaeHyun79
+################################################################################
+
+# The P4 world (spec P04, "Evaluation plan" 1): what the 공강 cases run in, by seed name. eval/p4/world.ts seeds it.
+# The labels were drafted from this file, the rules and the travel fixture, so a change here changes the answers.
+# Times are in Korea. The week of the cases is Monday 2026-11-02 to Sunday 11-08; the run's clock stands on Monday at
+# 11:30.
+
+# The User every case asks as, unless the case names another of `askers`.
+asker: { name: 김하늘, department: 컴퓨터공학부 }
+# Users with no Timetable and no Friends.
+askers:
+  새내기: { name: 서나래, department: 자유전공학부 }
+# Who leads the recruiting Quests and who fills the full ones. Neither is a Friend of the asker.
+leader: { name: 정다은, department: 체육교육과 }
+joiner: { name: 오세훈, department: 건축학과 }
+
+# The Places the world uses, of the shared seed: seed name and number.
+places:
+  제1공학관: '301'
+  제2공학관: '302'
+  글로벌공학교육센터: '38'
+  이공계멀티미디어강의동: '43-1'
+  제3학생식당: '75-1'
+  학생회관: '63'
+  중앙도서관 본관: '62'
+  자하연식당: '109'
+  문화관: '73'
+  예술복합연구동: '74'
+  사회과학관: '16'
+  인문사회계멀티미디어강의동: '83'
+  동원생활관: '113'
+  체육관: '71'
+  미술관: '151'
+  서울대 정문: null
+
+# Each Restaurant by its key, the name `GET /menus` gives it, and its Place; null when it has none.
+restaurants:
+  학생회관식당: 학생회관
+  자하연식당 3층: 자하연식당
+  자하연식당 2층: 자하연식당
+  예술계식당: 예술복합연구동
+  두레미담: 제3학생식당
+  3식당: 제3학생식당
+  동원관식당: 동원생활관
+  301동식당: 제1공학관
+  302동식당: 제2공학관
+  감골식당: null
+
+# The asker's Timetable. A meeting's place is a Place, or null when it has none.
+timetable:
+  - course: 컴퓨터구조
+    meetings:
+      - { day: monday, start: '09:30', end: '10:45', place: 제1공학관 }
+      - { day: wednesday, start: '09:30', end: '10:45', place: 제1공학관 }
+  - course: 멀티코어컴퓨팅
+    meetings:
+      - { day: monday, start: '11:00', end: '12:15', place: 제2공학관 }
+  - course: 현대암호학개론
+    meetings:
+      - { day: monday, start: '14:00', end: '15:15', place: 이공계멀티미디어강의동 }
+  - course: 컴퓨터그래픽스
+    meetings:
+      - { day: monday, start: '16:00', end: '17:15', place: 제1공학관 }
+  - course: 데이터베이스
+    meetings:
+      - { day: tuesday, start: '11:00', end: '12:15', place: 사회과학관 }
+  - course: 운영체제
+    meetings:
+      - { day: tuesday, start: '15:00', end: '16:15', place: 인문사회계멀티미디어강의동 }
+  - course: 캡스톤디자인
+    meetings:
+      - { day: wednesday, start: '17:00', end: '18:15', place: 제1공학관 }
+  - course: 논리설계
+    meetings:
+      - { day: thursday, start: '09:30', end: '10:45', place: null }
+  - course: 컴퓨터네트워크
+    meetings:
+      - { day: thursday, start: '13:00', end: '14:15', place: 제1공학관 }
+  - course: 미분방정식
+    meetings:
+      - { day: friday, start: '09:30', end: '10:45', place: 문화관 }
+  - course: 글쓰기의 기초
+    meetings:
+      - { day: friday, start: '18:00', end: '19:15', place: 문화관 }
+
+# Quests of the asker's own, Closed and held by the asker alone.
+ownQuests:
+  - title: 공모전 작업
+    subQuest: { starts: '2026-11-04T15:50', ends: '2026-11-04T19:30', place: { seed: 중앙도서관 본관 } }
+  - title: 과외
+    subQuest: { starts: '2026-11-05T17:00', ends: '2026-11-05T18:30', place: { label: 낙성대역 스터디카페 } }
+
+# The asker's Friends by seed name, each with their Timetable and the Quests they hold, Closed and held alone.
+friends:
+  이민수:
+    name: 이민수
+    department: 경제학부
+    timetable:
+      - course: 미시경제이론
+        meetings:
+          - { day: monday, start: '10:30', end: '12:00', place: 사회과학관 }
+      - course: 거시경제이론
+        meetings:
+          - { day: monday, start: '15:30', end: '16:45', place: 사회과학관 }
+      - course: 계량경제학
+        meetings:
+          - { day: tuesday, start: '10:00', end: '11:15', place: 사회과학관 }
+      - course: 국제경제학
+        meetings:
+          - { day: tuesday, start: '16:00', end: '18:30', place: 사회과학관 }
+  김지은:
+    name: 김지은
+    department: 컴퓨터공학부
+    timetable:
+      - course: 자료구조
+        meetings:
+          - { day: monday, start: '11:00', end: '12:15', place: 제1공학관 }
+      - course: 알고리즘
+        meetings:
+          - { day: monday, start: '15:00', end: '16:15', place: 제1공학관 }
+      - course: 이산수학
+        meetings:
+          - { day: tuesday, start: '13:00', end: '14:15', place: 제1공학관 }
+    quests:
+      - title: 동아리 회의
+        subQuest:
+          starts: '2026-11-02T12:55'
+          ends: '2026-11-02T13:25'
+          place: { label: 도서관 앞 벤치, latitude: 37.4596, longitude: 126.9522 }
+  박서준 (경영학과):
+    name: 박서준
+    department: 경영학과
+    timetable:
+      - course: 회계원리
+        meetings:
+          - { day: monday, start: '10:30', end: '11:45', place: 사회과학관 }
+  박서준 (물리천문학부):
+    name: 박서준
+    department: 물리천문학부
+    timetable:
+      - course: 일반물리학
+        meetings:
+          - { day: monday, start: '10:00', end: '11:15', place: 이공계멀티미디어강의동 }
+  # Never entered a Timetable.
+  최유진:
+    name: 최유진
+    department: 심리학과
+  정하람:
+    name: 정하람
+    department: 국어국문학과
+    timetable:
+      - course: 고전문학
+        meetings:
+          - { day: tuesday, start: '14:00', end: '15:15', place: 인문사회계멀티미디어강의동 }
+  한도윤:
+    name: 한도윤
+    department: 전기정보공학부
+    timetable:
+      - course: 회로이론
+        meetings:
+          - { day: monday, start: '10:00', end: '11:45', place: 제1공학관 }
+      - course: 영어 학원
+        meetings:
+          - { day: tuesday, start: '10:00', end: '11:30', place: null }
+    quests:
+      - title: 수학 과외
+        subQuest: { starts: '2026-11-02T13:45', ends: '2026-11-02T15:00', place: { label: 낙성대역 스터디카페 } }
+  오지호:
+    name: 오지호
+    department: 건축학과
+    timetable:
+      - course: 건축설계
+        meetings:
+          - { day: monday, start: '11:00', end: '13:00', place: 글로벌공학교육센터 }
+      - course: 건축구조
+        meetings:
+          - { day: tuesday, start: '17:00', end: '18:00', place: 글로벌공학교육센터 }
+    quests:
+      - title: 연구실 미팅
+        subQuest: { starts: '2026-11-02T13:00', ends: '2026-11-02T14:30', place: { seed: 제1공학관 } }
+  윤서아:
+    name: 윤서아
+    department: 영어영문학과
+    timetable:
+      - course: 영문학개론
+        meetings:
+          - { day: monday, start: '11:00', end: '12:30', place: 인문사회계멀티미디어강의동 }
+      - course: 영어학개론
+        meetings:
+          - { day: monday, start: '12:30', end: '13:50', place: 인문사회계멀티미디어강의동 }
+      - course: 미국문학
+        meetings:
+          - { day: monday, start: '14:00', end: '15:15', place: 인문사회계멀티미디어강의동 }
+  강민재:
+    name: 강민재
+    department: 수학과
+    timetable:
+      - course: 미적분학
+        meetings:
+          - { day: monday, start: '11:00', end: '12:30', place: 이공계멀티미디어강의동 }
+      - course: 선형대수학
+        meetings:
+          - { day: monday, start: '12:30', end: '13:45', place: 이공계멀티미디어강의동 }
+      - course: 확률론
+        meetings:
+          - { day: monday, start: '14:00', end: '15:15', place: 이공계멀티미디어강의동 }
+
+# The published Global Events, by title. A point is what the event stores beside its place's words.
+globalEvents:
+  - title: 가을 사진전
+    starts: '2026-11-02T10:00'
+    ends: '2026-11-06T18:00'
+    place: 미술관(151동) 전시실
+    point: { latitude: 37.4665, longitude: 126.94969 }
+  - title: 공대 족구 대회
+    starts: '2026-11-02T12:50'
+    ends: null
+    place: 제1공학관 앞 족구장
+    point: { latitude: 37.45016, longitude: 126.95259 }
+  - title: AI 창업 특강
+    starts: '2026-11-02T13:00'
+    ends: '2026-11-02T13:40'
+    place: 글로벌공학교육센터(38동) 대강당
+    point: { latitude: 37.4549, longitude: 126.95062 }
+  - title: 공학 포스터 세션
+    starts: '2026-11-02T13:00'
+    ends: '2026-11-02T13:56'
+    place: 글로벌공학교육센터(38동) 로비
+    point: { latitude: 37.4549, longitude: 126.95062 }
+  - title: 가을 미디어아트전
+    starts: '2026-11-02T13:00'
+    ends: '2026-11-02T18:00'
+    place: 학생회관(63동) 라운지
+    point: { latitude: 37.45932, longitude: 126.95058 }
+  - title: 동아리 연합 공연
+    starts: '2026-11-02T13:30'
+    ends: null
+    place: 문화관(73동) 중강당
+    point: { latitude: 37.46159, longitude: 126.95104 }
+  - title: 학과 설명회
+    starts: '2026-11-02T15:25'
+    ends: '2026-11-02T15:50'
+    place: 중앙도서관 본관 세미나실
+    point: { latitude: 37.4594, longitude: 126.95199 }
+  - title: AI 시대의 진로 특강
+    starts: '2026-11-02T18:00'
+    ends: '2026-11-02T20:00'
+    place: 제1공학관(301동) 118호
+    point: { latitude: 37.45016, longitude: 126.95259 }
+  - title: 가을 재즈 콘서트
+    starts: '2026-11-02T19:00'
+    ends: '2026-11-02T21:00'
+    place: 문화관(73동) 대강당
+    point: { latitude: 37.46159, longitude: 126.95104 }
+  - title: 캠퍼스 투어
+    starts: '2026-11-03T08:30'
+    ends: null
+    place: 서울대 정문 앞
+    point: { latitude: 37.4662863019456, longitude: 126.948422649575 }
+  - title: 아침 특강
+    starts: '2026-11-03T09:00'
+    ends: '2026-11-03T10:00'
+    place: 문화관(73동) 소강당
+    point: { latitude: 37.46159, longitude: 126.95104 }
+  - title: 재즈 런치 콘서트
+    starts: '2026-11-03T13:20'
+    ends: '2026-11-03T14:20'
+    place: 문화관 앞 잔디밭
+    point: { latitude: 37.4614, longitude: 126.9512 }
+  - title: 미대 작품 설명회
+    starts: '2026-11-03T13:30'
+    ends: '2026-11-03T14:10'
+    place: 미술관(151동) 강당
+    point: { latitude: 37.4665, longitude: 126.94969 }
+  - title: 낙성대 플리마켓
+    starts: '2026-11-03T13:00'
+    ends: '2026-11-03T15:00'
+    place: 낙성대공원
+    point: { latitude: 37.477, longitude: 126.9636 }
+  - title: 과학기술 토크콘서트
+    starts: '2026-11-03T18:00'
+    ends: '2026-11-03T20:00'
+    place: 학생회관(63동) 두레문예관
+    point: { latitude: 37.45932, longitude: 126.95058 }
+  - title: 연구실 공개 세미나
+    starts: '2026-11-04T11:30'
+    ends: '2026-11-04T12:30'
+    place: 제1공학관(301동) 세미나실
+    point: { latitude: 37.45016, longitude: 126.95259 }
+  - title: 취업 설명회
+    starts: '2026-11-04T14:10'
+    ends: '2026-11-04T15:10'
+    place: 중앙도서관 본관 강당
+    point: { latitude: 37.4594, longitude: 126.95199 }
+  - title: 학생회 토론회
+    starts: '2026-11-04T14:30'
+    ends: '2026-11-04T15:40'
+    place: 학생회관(63동) 라운지
+    point: { latitude: 37.45932, longitude: 126.95058 }
+  - title: 오픈소스 세미나
+    starts: '2026-11-05T15:00'
+    ends: '2026-11-05T16:00'
+    place: 제1공학관(301동) 세미나실
+    point: { latitude: 37.45016, longitude: 126.95259 }
+  - title: 오픈 마이크
+    starts: '2026-11-05T19:30'
+    ends: '2026-11-05T21:00'
+    place: 문화관(73동) 소강당
+    point: { latitude: 37.46159, longitude: 126.95104 }
+  - title: 가을 독서 토크
+    starts: '2026-11-06T13:20'
+    ends: '2026-11-06T14:00'
+    place: 중앙도서관 본관 강당
+    point: { latitude: 37.4594, longitude: 126.95199 }
+  - title: 총장배 풋살 대회
+    starts: '2026-11-06T14:10'
+    ends: '2026-11-06T15:10'
+    place: 체육관(71동)
+    point: { latitude: 37.4676, longitude: 126.95238 }
+
+# The asker's Shared Quest for this Global Event, held with `joiner`. Its time is the event's.
+sharedQuest: 과학기술 토크콘서트
+
+# Quests led by `leader`, by title. Left out: join policy open, capacity 4, no end. A Sub Quest's place is a Place
+# (seed), words alone (label), or a point with the label the app showed for it. A Quest for a Global Event has its
+# attending Sub Quest, at the event's time, before the Sub Quests written here. `full`: joined by `joiner` up to its
+# capacity. `joinedByAsker`: the asker joined it and holds it. `askedByAsker`: the asker asked to join and is waiting.
+quests:
+  # Monday
+  - title: 공대 앞 스트레칭 모임
+    board: hobby
+    subQuests: [{ starts: '2026-11-02T12:20', place: { seed: 제1공학관 } }]
+  - title: 3식당 앞 커피챗
+    board: career
+    subQuests: [{ starts: '2026-11-02T12:27', place: { seed: 제3학생식당 } }]
+  - title: 3식당 점심 번개
+    board: meal
+    subQuests: [{ starts: '2026-11-02T12:28', place: { seed: 제3학생식당 } }]
+  - title: 학생회관 점심 번개
+    board: meal
+    subQuests: [{ starts: '2026-11-02T12:29', place: { seed: 학생회관 } }]
+  - title: 학식 같이 먹어요
+    board: meal
+    subQuests: [{ starts: '2026-11-02T12:45', place: { seed: 학생회관 } }]
+  - title: 점심 농구 한 판
+    board: hobby
+    subQuests: [{ starts: '2026-11-02T13:00', place: { seed: 체육관 } }]
+  - title: 보드게임 한 판
+    board: hobby
+    subQuests: [{ starts: '2026-11-02T13:05', place: { seed: 글로벌공학교육센터 } }]
+  - title: 점심 배드민턴
+    board: hobby
+    joinPolicy: approval
+    subQuests: [{ starts: '2026-11-02T13:10', place: { seed: 체육관 } }]
+  - title: 잠깐 커피 한 잔
+    board: meal
+    subQuests: [{ starts: '2026-11-02T15:20', place: { seed: 이공계멀티미디어강의동 } }]
+  - title: 해질녘 산책
+    board: hobby
+    subQuests: [{ starts: '2026-11-02T17:17', place: { seed: 제2공학관 } }]
+  - title: 저녁 고기 먹을 사람
+    board: meal
+    subQuests: [{ starts: '2026-11-02T18:30', place: { seed: 학생회관 } }]
+  - title: 밤 코딩 모임
+    board: career
+    subQuests: [{ starts: '2026-11-02T20:00', place: { seed: 제1공학관 } }]
+  # Tuesday
+  - title: 아침 러닝
+    board: hobby
+    subQuests: [{ starts: '2026-11-03T07:00', place: { seed: 체육관 } }]
+  - title: 모닝 커피챗
+    board: career
+    subQuests: [{ starts: '2026-11-03T10:30', place: { seed: 동원생활관 } }]
+  - title: 점심 코딩 스터디
+    board: career
+    subQuests: [{ starts: '2026-11-03T12:40', ends: '2026-11-03T13:40', place: { seed: 인문사회계멀티미디어강의동 } }]
+  - title: 동원관 앞 카페 모임
+    board: meal
+    subQuests:
+      - { starts: '2026-11-03T12:50', place: { label: 동원관 앞 카페, latitude: 37.46504, longitude: 126.95185 } }
+  - title: 문화관 앞 버스킹
+    board: show
+    capacity: 2
+    full: true
+    subQuests: [{ starts: '2026-11-03T13:00', place: { seed: 문화관 } }]
+  - title: 자하연 산책 모임
+    board: hobby
+    joinPolicy: approval
+    askedByAsker: true
+    subQuests: [{ starts: '2026-11-03T13:00', place: { seed: 자하연식당 } }]
+  - title: 언제든 스터디
+    board: career
+    subQuests: [{ place: { label: 문화관 } }]
+  - title: 녹두 보드게임 모임
+    board: hobby
+    subQuests: [{ starts: '2026-11-03T13:00', place: { label: 녹두거리 보드게임 카페 } }]
+  - title: 샤로수길 맛집 탐방
+    board: meal
+    subQuests:
+      - { starts: '2026-11-03T13:00', place: { label: 샤로수길, latitude: 37.4812, longitude: 126.9527 } }
+  - title: 비공개 점심 약속
+    joinPolicy: closed
+    subQuests: [{ starts: '2026-11-03T13:00', place: { seed: 문화관 } }]
+  - title: 문화관 앞 플로깅
+    board: hobby
+    subQuests: [{ starts: '2026-11-03T13:10', place: { label: 문화관 } }]
+  - title: 토크콘서트 사전 모임
+    board: show
+    globalEvent: 과학기술 토크콘서트
+    subQuests: [{ starts: '2026-11-03T13:30', place: { seed: 문화관 } }]
+  - title: 재즈 같이 가요
+    board: show
+    globalEvent: 재즈 런치 콘서트
+  - title: 83동 라운지 스터디
+    board: career
+    subQuests: [{ starts: '2026-11-03T13:40', place: { label: '83' } }]
+  - title: 야외 농구장 3대3
+    board: hobby
+    subQuests:
+      - { starts: '2026-11-03T14:00', place: { label: 야외 농구장, latitude: 37.4651, longitude: 126.9512 } }
+  - title: 주간 독서 모임
+    board: career
+    subQuests:
+      - { starts: '2026-11-02T20:00', place: { seed: 문화관 } }
+      - { starts: '2026-11-03T14:10', place: { seed: 사회과학관 } }
+  # Wednesday
+  - title: 오전 테니스
+    board: hobby
+    subQuests: [{ starts: '2026-11-04T11:00', place: { seed: 체육관 } }]
+  - title: 오전 코드 리뷰
+    board: career
+    subQuests: [{ starts: '2026-11-04T11:10', place: { seed: 제2공학관 } }]
+  - title: 수요일 점심 모임
+    board: meal
+    joinedByAsker: true
+    subQuests: [{ starts: '2026-11-04T13:00', place: { label: 학생회관 } }]
+  - title: 오후 커피 모임
+    board: meal
+    subQuests: [{ starts: '2026-11-04T13:40', place: { seed: 중앙도서관 본관 } }]
+  - title: 자하연 티타임
+    board: meal
+    subQuests: [{ starts: '2026-11-04T14:30', place: { seed: 자하연식당 } }]
+  - title: 늦은 오후 배드민턴
+    board: hobby
+    subQuests: [{ starts: '2026-11-04T15:40', place: { seed: 체육관 } }]
+  # Thursday
+  - title: 오후 커피챗
+    board: career
+    subQuests: [{ starts: '2026-11-05T15:30', place: { seed: 제2공학관 } }]
+  - title: 늦은 오후 산책
+    board: hobby
+    subQuests: [{ starts: '2026-11-05T16:10', place: { seed: 제1공학관 } }]
+  - title: 야간 코딩
+    board: career
+    subQuests: [{ starts: '2026-11-05T18:40', place: { seed: 제1공학관 } }]
+  - title: 저녁 배드민턴
+    board: hobby
+    subQuests: [{ starts: '2026-11-05T19:00', place: { seed: 체육관 } }]
+  # Friday
+  - title: 금요일 아침 풋살
+    board: hobby
+    subQuests: [{ starts: '2026-11-06T11:15', place: { seed: 체육관 } }]
+  - title: 브런치 모임
+    board: meal
+    subQuests: [{ starts: '2026-11-06T11:30', place: { seed: 학생회관 } }]
+  - title: 토익 스터디
+    board: career
+    subQuests: [{ starts: '2026-11-06T11:45', place: { seed: 중앙도서관 본관 } }]
+  - title: 금요일 점심 농구
+    board: hobby
+    subQuests: [{ starts: '2026-11-06T12:00', place: { seed: 체육관 } }]
+  - title: 금요일 점심 번개
+    board: meal
+    subQuests: [{ starts: '2026-11-06T12:15', place: { seed: 자하연식당 } }]
+  - title: 뜨개질 모임
+    board: hobby
+    subQuests: [{ starts: '2026-11-06T12:30', place: { seed: 예술복합연구동 } }]
+  - title: 코딩 테스트 스터디
+    board: career
+    subQuests: [{ starts: '2026-11-06T12:45', place: { seed: 사회과학관 } }]
+  - title: 배드민턴 복식
+    board: hobby
+    subQuests: [{ starts: '2026-11-06T13:00', place: { seed: 체육관 } }]
+  - title: 커피 한 잔 모임
+    board: meal
+    subQuests: [{ starts: '2026-11-06T13:15', place: { seed: 문화관 } }]
+  - title: 보드게임 오후반
+    board: hobby
+    subQuests: [{ starts: '2026-11-06T13:30', place: { seed: 문화관 } }]
+  - title: 사진 출사 모임
+    board: hobby
+    subQuests: [{ starts: '2026-11-06T13:45', place: { seed: 미술관 } }]
+  - title: 테니스 랠리
+    board: hobby
+    subQuests: [{ starts: '2026-11-06T14:00', place: { seed: 체육관 } }]
+  - title: 면접 스터디
+    board: career
+    subQuests: [{ starts: '2026-11-06T14:15', place: { seed: 사회과학관 } }]
+  - title: 디저트 탐방
+    board: meal
+    subQuests: [{ starts: '2026-11-06T14:30', place: { seed: 자하연식당 } }]
+  - title: 족구 번개
+    board: hobby
+    subQuests: [{ starts: '2026-11-06T14:45', place: { seed: 체육관 } }]
+  - title: 합창 연습 구경
+    board: show
+    subQuests: [{ starts: '2026-11-06T15:00', place: { seed: 문화관 } }]
+  - title: 탁구 한 판
+    board: hobby
+    subQuests: [{ starts: '2026-11-06T15:15', place: { seed: 체육관 } }]
+  - title: 전시 같이 보기
+    board: show
+    subQuests: [{ starts: '2026-11-06T15:30', place: { seed: 미술관 } }]
+  - title: 자소서 첨삭 모임
+    board: career
+    subQuests: [{ starts: '2026-11-06T15:45', place: { seed: 인문사회계멀티미디어강의동 } }]
+  - title: 저녁 러닝 크루
+    board: hobby
+    subQuests: [{ starts: '2026-11-06T16:00', place: { seed: 체육관 } }]
+  - title: 연극 같이 보기
+    board: show
+    subQuests: [{ starts: '2026-11-06T16:15', place: { seed: 문화관 } }]
+  - title: 이른 저녁 모임
+    board: meal
+    subQuests: [{ starts: '2026-11-06T16:30', place: { seed: 학생회관 } }]
+  - title: 영어 회화 모임
+    board: career
+    subQuests: [{ starts: '2026-11-06T16:45', place: { seed: 문화관 } }]
+
+# What the steps of mapping a place that need a map answer for each point of the world, in metres: the Place whose
+# point equals it, the Place the place lookup finds at it, and the nearest Place point of the whole campus, which may
+# be a Place the world does not otherwise use.
+mappedPoints:
+  - { latitude: 37.4665, longitude: 126.94969, exact: 미술관, lookup: 미술관, nearest: 미술관, metres: 0 }
+  - { latitude: 37.45016, longitude: 126.95259, exact: 제1공학관, lookup: 제1공학관, nearest: 제1공학관, metres: 0 }
+  - {
+      latitude: 37.4549,
+      longitude: 126.95062,
+      exact: 글로벌공학교육센터,
+      lookup: 글로벌공학교육센터,
+      nearest: 글로벌공학교육센터,
+      metres: 0,
+    }
+  - { latitude: 37.45932, longitude: 126.95058, exact: 학생회관, lookup: 학생회관, nearest: 학생회관, metres: 0 }
+  - { latitude: 37.46159, longitude: 126.95104, exact: 문화관, lookup: 문화관, nearest: 문화관, metres: 0 }
+  - {
+      latitude: 37.4594,
+      longitude: 126.95199,
+      exact: 중앙도서관 본관,
+      lookup: 중앙도서관 본관,
+      nearest: 중앙도서관 본관,
+      metres: 0,
+    }
+  - {
+      latitude: 37.4662863019456,
+      longitude: 126.948422649575,
+      exact: 서울대 정문,
+      lookup: 서울대 정문,
+      nearest: 서울대 정문,
+      metres: 0,
+    }
+  - { latitude: 37.4676, longitude: 126.95238, exact: 체육관, lookup: 체육관, nearest: 체육관, metres: 0 }
+  - { latitude: 37.4614, longitude: 126.9512, exact: null, lookup: 문화관, nearest: 문화관, metres: 25 }
+  - { latitude: 37.46504, longitude: 126.95185, exact: null, lookup: 동원생활관, nearest: 동원생활관, metres: 9 }
+  - {
+      latitude: 37.4596,
+      longitude: 126.9522,
+      exact: null,
+      lookup: 중앙도서관 본관,
+      nearest: 중앙도서관 본관,
+      metres: 29,
+    }
+  - { latitude: 37.4651, longitude: 126.9512, exact: null, lookup: null, nearest: 동원생활관, metres: 49 }
+  - { latitude: 37.477, longitude: 126.9636, exact: null, lookup: null, nearest: 컨벤션센타, metres: 1049 }
+  - {
+      latitude: 37.4812,
+      longitude: 126.9527,
+      exact: null,
+      lookup: null,
+      nearest: 치의학대학원 첨단교육연구복합단지,
+      metres: 1358,
+    }
+
+# When the Co-op collector collected the menus.
+menusCollectedAt: '2026-11-02T07:00:00+09:00'
+
+# The menus of Monday to Thursday; none was collected for Friday or the weekend. Each meal's cell is a list of lines: a
+# dish with its price, or a note.
+menus:
+  - date: '2026-11-02'
+    restaurants:
+      - name: 학생회관식당
+        breakfast: [{ dish: 토스트, price: 2000 }]
+        lunch:
+          - { dish: 제육볶음, price: 6000 }
+          - { dish: 잔치국수, price: 4500 }
+          - { note: '※ 운영시간 : 11:00~14:30' }
+        dinner:
+          - { dish: 돈까스, price: 5500 }
+          - { dish: 우동, price: 4500 }
+      - name: 자하연식당 3층
+        lunch:
+          - { dish: 칼국수, price: 6500 }
+          - { dish: 비빔냉면, price: 7000 }
+      - name: 301동식당
+        lunch:
+          - { dish: 순두부찌개, price: 5500 }
+          - { dish: 돈까스, price: 6000 }
+        dinner:
+          - { dish: 제육덮밥, price: 5500 }
+      - name: 302동식당
+        dinner:
+          - { dish: 라면, price: 3000 }
+      - name: 3식당
+        lunch:
+          - { dish: 소고기국밥, price: 6000 }
+          - { dish: 비빔밥, price: 5500 }
+        dinner:
+          - { note: 금일 휴무 }
+      - name: 동원관식당
+        lunch:
+          - { dish: 김치볶음밥, price: 5000 }
+        dinner:
+          - { dish: 비빔밥, price: 5000 }
+      - name: 두레미담
+        lunch:
+          - { note: 금일 휴무 }
+          - { note: '※ 운영시간 : 11:30~14:00' }
+      - name: 감골식당
+        lunch:
+          - { dish: 비빔밥, price: 5000 }
+        dinner:
+          - { dish: 김치찌개, price: 5000 }
+  - date: '2026-11-03'
+    restaurants:
+      - name: 학생회관식당
+        breakfast: [{ dish: 콩나물국밥, price: 2000 }]
+        lunch:
+          - { dish: 불고기덮밥, price: 6000 }
+          - { dish: 물냉면, price: 5500 }
+        dinner:
+          - { dish: 오므라이스, price: 5500 }
+      - name: 자하연식당 2층
+        lunch:
+          - { dish: 콩나물국밥, price: 5000 }
+        dinner:
+          - { note: 금일 휴무 }
+      - name: 예술계식당
+        lunch:
+          - { dish: 볶음우동, price: 6000 }
+      - name: 동원관식당
+        lunch:
+          - { dish: 김치찌개, price: 5000 }
+        dinner:
+          - { dish: 순두부찌개, price: 5500 }
+  - date: '2026-11-04'
+    restaurants:
+      - name: 학생회관식당
+        lunch:
+          - { dish: 카레라이스, price: 5000 }
+        dinner:
+          - { dish: 닭갈비, price: 6000 }
+      - name: 301동식당
+        lunch:
+          - { dish: 비빔밥, price: 6000 }
+  - date: '2026-11-05'
+    restaurants:
+      - name: 학생회관식당
+        lunch:
+          - { dish: 돈까스, price: 5500 }
+      - name: 302동식당
+        lunch:
+          - { dish: 제육덮밥, price: 5500 }

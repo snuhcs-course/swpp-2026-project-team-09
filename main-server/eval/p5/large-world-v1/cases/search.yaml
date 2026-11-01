@@ -1,0 +1,2508 @@
+- id: large-v-01
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 수요일 밤 10시 30분 이후에 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0076
+          - q0110
+          - q0207
+          - q0333
+          - q0619
+          - q0676
+          - q0687
+          - q0706
+          - q0760
+          - q0762
+          - q0782
+          - t-under-way-1
+          - t-under-way-2
+        max: 13
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-v-02
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 오늘 저녁 8시 이후 파티 찾아줘
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0032
+          - q0124
+          - q0134
+          - q0178
+          - q0261
+          - q0270
+          - q0288
+          - q0365
+          - q0370
+          - q0371
+          - q0486
+          - q0508
+          - q0606
+          - q0768
+          - q0773
+          - q0812
+          - q0878
+          - t-under-way-1
+          - t-under-way-2
+        max: 19
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-v-03
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 토요일 21시 이후 행사 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchGlobalEvents
+        - showGlobalEvents
+      allowed:
+        - searchRecruitingQuests
+        - showQuests
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds:
+          - e0031
+          - e0044
+          - e0046
+          - e0067
+          - e0166
+          - e0167
+          - e0180
+          - e0189
+          - e0250
+          - e0287
+          - te-under-way
+        max: 11
+- id: large-v-04
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 목요일 21시 이후에 하는 행사 찾아줘
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchGlobalEvents
+        - showGlobalEvents
+      allowed:
+        - searchRecruitingQuests
+        - showQuests
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds:
+          - e0044
+          - e0111
+          - e0140
+          - e0188
+          - e0197
+          - e0252
+          - e0292
+          - te-under-way
+        max: 8
+- id: large-v-05
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 금요일 저녁에 볼링 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0519
+        max: 1
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-v-06
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 목요일에 심야 라면 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0775
+        max: 1
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-v-07
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 금요일 저녁에 보드게임 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0187
+          - q0443
+          - q0513
+        max: 3
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-v-08
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 화요일 저녁에 고기 먹는 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0177
+          - q0324
+          - q0654
+        max: 3
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-l-01
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 화요일에 볼링 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0007
+          - q0205
+          - q0372
+          - q0432
+          - q0536
+          - q0841
+        max: 6
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-l-02
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 토요일에 테니스 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0728
+          - q0746
+          - q0777
+          - q0881
+        max: 4
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-l-03
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 이번 주에 설명회 행사 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchGlobalEvents
+        - showGlobalEvents
+      allowed:
+        - searchRecruitingQuests
+        - showQuests
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds:
+          - e0069
+          - e0078
+          - e0103
+          - e0107
+          - e0117
+          - e0124
+          - e0133
+          - e0134
+          - e0153
+          - e0158
+          - e0172
+          - e0175
+          - e0213
+          - e0216
+          - e0230
+          - e0262
+          - e0268
+        max: 17
+- id: large-l-04
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 금요일에 비대면 특강 행사 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchGlobalEvents
+        - showGlobalEvents
+      allowed:
+        - searchRecruitingQuests
+        - showQuests
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds:
+          - te-online-1
+          - te-online-2
+        max: 2
+- id: large-l-05
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 금요일에 대면으로 하는 특강 행사 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchGlobalEvents
+        - showGlobalEvents
+      allowed:
+        - searchRecruitingQuests
+        - showQuests
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds:
+          - te-face-1
+          - te-face-2
+        max: 2
+- id: large-p-01
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 수요일에 공연 행사 뭐 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchGlobalEvents
+        - showGlobalEvents
+      allowed:
+        - searchRecruitingQuests
+        - showQuests
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds:
+          - e0021
+          - e0028
+          - e0057
+          - e0101
+          - e0121
+          - e0139
+          - e0246
+          - e0273
+          - e0283
+          - e0289
+        max: 10
+- id: large-p-02
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 일요일 아침에 운동 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0236
+          - q0405
+          - q0487
+          - q0693
+          - t-board-hiking
+        max: 5
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-p-03
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 화요일에 민턴 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0179
+          - q0188
+          - q0265
+          - q0663
+        max: 4
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-p-04
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 금요일에 조깅 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0514
+        max: 1
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-p-05
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 목요일에 배민 같이 시킬 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0063
+          - q0215
+          - t-baemin-1
+          - t-baemin-2
+        max: 4
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-t1-01
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 금요일에 콘서트 행사 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchGlobalEvents
+        - showGlobalEvents
+      allowed:
+        - searchRecruitingQuests
+        - showQuests
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds:
+          - e0222
+          - te-typo-concert
+        max: 2
+- id: large-t1-02
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 토요일 저녁에 풋살 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0322
+          - q0689
+          - t-typo-futsal
+        max: 3
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-t1-03
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 목요일에 마라탕 먹는 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0165
+          - q0396
+          - q0475
+          - q0586
+          - q0900
+          - t-typo-malatang
+        max: 6
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-t1-04
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 일요일 저녁에 뮤지컬 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0162
+          - q0230
+          - q0462
+          - q0649
+          - t-typo-musical
+        max: 5
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-t1-05
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 금요일에 박람회 행사 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchGlobalEvents
+        - showGlobalEvents
+      allowed:
+        - searchRecruitingQuests
+        - showQuests
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds:
+          - e0099
+          - e0199
+          - te-typo-fair
+        max: 3
+- id: large-t2-01
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 화요일에 베드민턴 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0179
+          - q0188
+          - q0265
+          - q0663
+        max: 4
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-t2-02
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 목요일에 콘서드 행사 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchGlobalEvents
+        - showGlobalEvents
+      allowed:
+        - searchRecruitingQuests
+        - showQuests
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds:
+          - e0063
+          - e0128
+          - e0164
+        max: 3
+- id: large-t2-03
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 목요일 저녁에 볼림 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0022
+          - q0098
+        max: 2
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-t2-04
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 일요일에 마라땅 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0031
+          - q0114
+          - q0122
+          - q0267
+          - q0278
+          - q0391
+          - q0563
+          - q0604
+        max: 8
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-t2-05
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 수요일에 박랍회 행사 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchGlobalEvents
+        - showGlobalEvents
+      allowed:
+        - searchRecruitingQuests
+        - showQuests
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds:
+          - e0022
+          - e0211
+        max: 2
+- id: large-h-01
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 목요일 저녁에 탁구 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - t-evening-start
+          - t-evening-middle
+          - t-evening-last
+        max: 3
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-h-02
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 금요일 22시 이후에 탁구 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - t-after-start
+          - t-after-last
+        max: 2
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-h-03
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 토요일 15시부터 18시까지 탁구 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - t-both-start
+          - t-both-end
+        max: 2
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-h-04
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 일요일 저녁 7시에 탁구 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - t-named-first
+          - t-named-at
+          - t-named-last
+        max: 3
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-h-05
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 수요일 아침에 탁구 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - t-morning-start
+          - t-morning-last
+        max: 2
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-h-06
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 화요일 점심에 탁구 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - t-noon-start
+          - t-noon-last
+        max: 2
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-h-07
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 오늘 탁구 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - t-today-ahead
+        max: 1
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-s-01
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 수요일 저녁에 2자리 이상 남은 스쿼시 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - t-two-left
+        max: 1
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-s-02
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 수요일 저녁에 자리 남은 스쿼시 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - t-one-left
+          - t-two-left
+        max: 2
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-s-03
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 총학생회 초청 콘서트 가는 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0399
+        max: 1
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-s-04
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 목요일에 3자리 이상 남은 학식 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0376
+        max: 1
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-s-05
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 이번 주에 3자리 이상 남은 풋살 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0016
+          - q0304
+          - q0410
+          - q0523
+          - q0537
+          - q0582
+          - q0623
+          - q0815
+          - q0835
+        max: 9
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-n-01
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 이번 주에 4명 모집하는 농구 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0103
+          - q0151
+          - q0198
+          - q0283
+          - q0291
+          - q0358
+          - q0365
+          - q0403
+          - q0450
+          - q0535
+          - q0592
+          - q0706
+          - q0731
+          - q0782
+          - q0897
+          - q0899
+          - t-board-basketball
+        max: 17
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-n-02
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 이번 주에 정원 2명인 학식 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0302
+          - q0774
+        max: 2
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-n-03
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 이번 주에 6명 모집하는 볼링 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0022
+          - q0091
+          - q0192
+          - q0346
+          - q0432
+          - q0826
+          - q0841
+        max: 7
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-n-04
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 이번 주에 정원 8명인 풋살 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0815
+        max: 1
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-n-05
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 이번 주에 4명 모집하는 테니스 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0051
+          - q0236
+          - q0728
+          - q0746
+          - q0777
+          - q0842
+        max: 6
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-r-01
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 이번 주에 제1공학관 근처에서 하는 스터디 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0086
+          - q0139
+          - q0191
+          - q0317
+          - q0344
+          - q0368
+          - q0447
+          - q0573
+          - q0581
+          - q0607
+          - q0710
+          - q0903
+        max: 12
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-r-02
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 이번 주에 학생회관 근처에서 학식 먹는 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0107
+          - q0249
+          - q0438
+          - q0464
+          - q0696
+        max: 5
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-r-03
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 화요일에 체육관 근처에서 하는 운동 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0498
+          - q0637
+          - q0758
+          - q0852
+        max: 4
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-r-04
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 토요일에 문화관 근처에서 하는 공연 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0271
+          - q0279
+          - q0400
+          - q0448
+          - q0512
+          - q0749
+          - q0828
+        max: 7
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-r-05
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 이번 주에 중앙도서관 근처에서 하는 토익 스터디 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0129
+          - q0174
+          - q0439
+          - q0584
+        max: 4
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-o-01
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 수요일 오후 3시쯤 볼 수 있는 전시 행사 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchGlobalEvents
+        - showGlobalEvents
+      allowed:
+        - searchRecruitingQuests
+        - showQuests
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds:
+          - e0155
+          - e0197
+          - e0252
+          - e0267
+          - te-named
+          - te-under-way
+        max: 6
+- id: large-o-02
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 오늘 17시 이후에 진행 중인 판화전 행사 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchGlobalEvents
+        - showGlobalEvents
+      allowed:
+        - searchRecruitingQuests
+        - showQuests
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds:
+          - te-under-way
+        max: 1
+- id: large-o-03
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 금요일 15시부터 17시까지 미술전 보러 가는 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0076
+          - q0796
+          - t-under-way-1
+          - t-under-way-2
+        max: 4
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-o-04
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 제9회 관악 사진전 가는 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - t-named-1
+          - t-named-2
+        max: 2
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-o-05
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 오늘 미술전 보러 가는 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - t-under-way-1
+          - t-under-way-2
+        max: 2
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-b-01
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 일요일 아침에 등산 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - t-board-hiking
+        max: 1
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-b-02
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 금요일 저녁에 농구 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0151
+          - q0553
+          - q0605
+          - q0902
+          - t-board-basketball
+        max: 5
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-b-03
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 토요일 점심에 사진전 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0077
+          - q0301
+          - q0786
+          - t-board-photo
+        max: 4
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-b-04
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 일요일 점심에 코딩 스터디 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0273
+          - t-board-study
+        max: 2
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-b-05
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 화요일 점심에 학식 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0089
+          - q0234
+          - q0268
+          - t-board-meal
+        max: 4
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-e-01
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 이번 주에 스키 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      allowed:
+        - searchRecruitingQuests
+        - searchGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+        - showQuests
+        - showGlobalEvents
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds: []
+        max: 0
+    text:
+      mentions:
+        - - 없
+          - 찾지 못
+          - 못 찾
+- id: large-e-02
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 이번 주에 요가 행사 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      allowed:
+        - searchRecruitingQuests
+        - searchGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+        - showQuests
+        - showGlobalEvents
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds: []
+        max: 0
+    text:
+      mentions:
+        - - 없
+          - 찾지 못
+          - 못 찾
+- id: large-e-03
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 이번 주에 수영 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      allowed:
+        - searchRecruitingQuests
+        - searchGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+        - showQuests
+        - showGlobalEvents
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds: []
+        max: 0
+    text:
+      mentions:
+        - - 없
+          - 찾지 못
+          - 못 찾
+- id: large-e-04
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 화요일 새벽 3시에 볼링 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      allowed:
+        - searchRecruitingQuests
+        - searchGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+        - showQuests
+        - showGlobalEvents
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds: []
+        max: 0
+    text:
+      mentions:
+        - - 없
+          - 찾지 못
+          - 못 찾
+- id: large-e-05
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 이번 주에 탁구 행사 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      allowed:
+        - searchRecruitingQuests
+        - searchGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+        - showQuests
+        - showGlobalEvents
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds: []
+        max: 0
+    text:
+      mentions:
+        - - 없
+          - 찾지 못
+          - 못 찾
+- id: large-e-06
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 12월 25일에 볼링 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      allowed:
+        - searchRecruitingQuests
+        - searchGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+        - showQuests
+        - showGlobalEvents
+    cards:
+      - kind: quest
+        seeds: []
+        max: 0
+      - kind: globalEvent
+        seeds: []
+        max: 0
+    text:
+      mentions:
+        - - 없
+          - 찾지 못
+          - 못 찾
+- id: large-c-01
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 토요일 저녁에 게임 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0210
+          - q0491
+          - q0874
+          - c-lol-sat-1
+          - c-lol-sat-2
+          - c-lol-sat-3
+          - c-valorant
+          - c-pcroom
+        max: 8
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-c-02
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 목요일 저녁에 게임 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - c-overwatch
+          - c-pubg
+          - c-maple
+          - c-mariokart
+          - c-tft
+        max: 5
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-c-03
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 수요일에 롤 하는 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - c-lol-wed-1
+          - c-lol-wed-2
+          - c-lol-wed-3
+        max: 3
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-c-04
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 수요일 저녁에 게임 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - q0621
+          - q0645
+          - q0685
+          - c-lol-wed-1
+          - c-lol-wed-2
+          - c-lol-wed-3
+        max: 6
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-c-05
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 금요일에 디저트 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - c-dujjonku
+          - c-eggtart
+          - c-buttertteok
+          - c-croffle
+          - c-coffee
+          - c-iced
+        max: 6
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-c-06
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 토요일에 단 거 먹으러 갈 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - c-yoajung
+          - c-bingsu
+          - c-macaron
+          - c-rollcake-sat
+          - c-maple-syrup-sat
+        max: 5
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-c-07
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 금요일에 술 마시는 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - c-chimaek
+          - c-pimaek
+          - c-makgeolli
+        max: 3
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-c-08
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 화요일 저녁에 분식 먹는 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - c-yeopddeok
+          - c-tteoktwisun
+        max: 2
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-c-09
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 일요일에 노래방 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - c-cono
+          - c-coin-karaoke
+        max: 2
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-c-10
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 목요일에 클라이밍 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - c-climbing
+          - c-bouldering
+        max: 2
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-c-11
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 토요일에 뭐 만드는 모임 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - c-knitting
+          - c-perfume
+        max: 2
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-c-12
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 오늘 저녁에 독서 모임 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - c-book
+        max: 1
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-c-13
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 일요일에 사진 찍으러 가는 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - c-photobooth
+        max: 1
+      - kind: globalEvent
+        seeds: []
+        max: 0
+- id: large-c-14
+  category: search
+  world: large-world-v1
+  repeat: 3
+  turns:
+    - user: 일요일에 방탈출 파티 있어?
+  expect:
+    actions:
+      - TOOL
+    tools:
+      required:
+        - searchRecruitingQuests
+        - showQuests
+      allowed:
+        - searchGlobalEvents
+        - showGlobalEvents
+        - resolveGlobalEvent
+        - resolvePlace
+      forbidden:
+        - proposeQuest
+    cards:
+      - kind: quest
+        seeds:
+          - c-escape-room
+        max: 1
+      - kind: globalEvent
+        seeds: []
+        max: 0

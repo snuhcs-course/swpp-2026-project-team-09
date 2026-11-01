@@ -2,15 +2,16 @@
  * AI-generated with Claude
  *
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // A type, not an interface, so that a list of positions is JSON that Prisma stores.
 export type Position = { latitude: number; longitude: number };
 
 // Of latitude. A degree of longitude is as long times the cosine of the latitude.
-const METRES_PER_DEGREE = 111_195;
+export const METRES_PER_DEGREE = 111_195;
 
-function metresPerDegreeEast(latitude: number): number {
+export function metresPerDegreeEast(latitude: number): number {
   return METRES_PER_DEGREE * Math.cos((latitude * Math.PI) / 180);
 }
 
