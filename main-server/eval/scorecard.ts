@@ -2,8 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { p5Report } from './p5/report.ts';
+import { p5Section } from './p5/report-section.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { outcomeOf } from './normalise.ts';
 import {
@@ -280,6 +283,7 @@ export function scorecard(score: RunScore): string {
     ...categoriesSection(score),
     ...passKSection(score),
     ...usageSection(score),
+    ...(saved.options.world === 'p5' ? p5Section(p5Report(score), table) : []),
     '## Settings',
     table(['Setting', 'Value'], settingsOf(score)),
     '## Failed cases',

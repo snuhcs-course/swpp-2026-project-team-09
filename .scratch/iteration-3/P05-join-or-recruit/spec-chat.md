@@ -42,7 +42,7 @@ Words: a **Full** Quest has as many Holders as its capacity. A Quest's start is 
 18. As a User, I want the Quests with the most Holders first when several fit, so that I join the liveliest one.
 19. As a User, I want the Assistant to ask for the activity or the day when I gave neither, and to offer to make one when nothing fits, so that it never guesses.
 20. As a User who asks to recruit for a Global Event ("이 공연 같이 갈 사람 모집해 줘"), I want the Quests for that event offered, whatever their time and place, so that I join those going to it.
-21. As a User who was just shown an event's card, I want to ask "그 행사 파티 있어?" and get that event's Quests, so that a follow-up works.
+21. As a User who was just shown an event's card, I want to ask "그 행사 파티 있어?" and get that event's Quests, and Quests with no Global Event for the same activity within its span, so that a follow-up works.
 
 ### Searching by time and room
 
@@ -83,7 +83,7 @@ Words: a **Full** Quest has as many Holders as its capacity. A Quest's start is 
 - The Quest search takes, besides its present inputs, `words`, an optional fewest places left (`minPlacesLeft`, default one), an optional exact capacity, and an optional Place with a radius (about 300 m), measured between positions; a Quest with words only is left out when a Place is given.
 - Every filter runs in the database query, before the list is cut, rather than over every recruiting Quest read into memory, so that a search stays quick with a thousand Quests. Searches return up to 30 candidates instead of 20, with descriptions cut at 150 characters.
 - The server's order: search words rank the results instead of filtering them. Candidates that hold more of the words come first, ties in start order, and the rest of the window fills the places left. The server does not order by Holders.
-- The tool descriptions tell the model to give related words (공연 → 콘서트, 음악회, 연주회, 뮤지컬) and to correct a typo in the User's question. The instructions tell it to search Quests without a Board when it is not sure of one, and, when choosing among candidates, to leave out only those that are clearly different.
+- The tool descriptions tell the model to give related words (공연 → 콘서트, 음악회, 연주회, 뮤지컬) and to correct a typo in the User's question. The instructions tell it to search Quests without a Board when it is not sure of one, and, when choosing among candidates, to leave out only those that are clearly different. They also tell it that a question naming neither 행사 nor 파티 ("뮤지컬 있어?") searches both, since the User may mean a Quest with no Global Event, and that a question about an event's Quests ("그 행사 파티 있어?", "사진전 가는 파티 있어?") also takes Quests with no Global Event for the same activity within the event's span.
 - Each Quest in a result keeps its places left, its Join Policy and its number of Holders.
 
 ### Join if one exists
@@ -92,7 +92,7 @@ Words: a **Full** Quest has as many Holders as its capacity. A Quest's start is 
 - Rules:
   - (i) Compare only what the User stated. With an activity and no day, the next seven days from today; with a day and no activity, every activity that day.
   - (ii) A named time is ±30 minutes; 아침 07–11, 점심 11–16, 저녁 17–22.
-  - (iii) A named Place matches Quests at that Place or within about 300 m, through the search's radius; a Quest with words only is left out.
+  - (iii) A named Place matches Quests at that Place or within about 300 m (300 m or less), through the search's radius; a Quest with words only is left out.
   - (iv) Only Open and Approval Quests.
   - (v) Quests for an event of which the reader holds a Shared Quest, and Quests the reader already asked to join, are dropped by the server; telling the User they already go is not part of this spec.
   - (vi) When several fit, the Assistant shows them with the most Holders first. This is the order of the cards it shows, not the server's order.

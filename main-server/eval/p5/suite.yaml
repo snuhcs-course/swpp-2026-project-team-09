@@ -1,0 +1,567 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+################################################################################
+
+# The P05 suite (P05 spec, "The P05 eval suite"): evaluations C and D, committed before any run. Its cases are under
+# cases/, its world is world.yaml and its rules rules.md. `pnpm eval --world p5` runs it: every case has `repeat: 3`.
+# The values are the metrics document's, confirmed by the P05 owner on 2026-10-31. To change one, leave it here and add
+# an entry with `revises:` and `reason:`; a value chosen after seeing a result counts as undeclared.
+world: p5
+
+# k/n counts runs: a case repeated 3 times counts 3. So J3a's 2/3 is at least 6 of its 9 runs, and E5's 4/6 is at least
+# 12 of its 18 (P05 owner, 2026-10-31).
+unit: runs
+
+# R0, the first official run: the code before any chat change of P05, on a clean descendant of C0. Later runs change one
+# thing each: R1 ticket 10, R2 ticket 11, R3 ticket 12.
+naive: 'The chat as it is before this work.'
+
+whenAFloorIsMissed: "That metric's improvement is not claimed, and the failure analysis says why (metrics document, 4.1)."
+
+# A subset of five cases moves by 20% with one case. An improvement smaller than the exact McNemar test can tell (6, 8
+# or 10 fixed with 0, 1 or 2 turned the other way) is reported as a direction only (metrics document, 4.4).
+smallSamples: 'Each subset has at least five cases, and E has six. One case of five is 20%; a smaller improvement is a direction only.'
+
+labels:
+  draftedBy: claude-opus-5-5
+  draftedOn: [2026-10-31, 2026-11-01]
+  reviewedBy: Jaehyun0320
+  reviewedOn: [2026-10-31, 2026-11-01]
+  secondLabeller: 김태현
+  # The second labeller's cases, one drawn per tag with a fixed seed, and three kinds the tags
+  # leave out: asking back, a new Proposal and a named Place.
+  overlap:
+    [
+      join-06,
+      join-08,
+      join-19,
+      join-20,
+      join-12,
+      join-24,
+      search-l-02,
+      search-p-04,
+      search-t1-02,
+      search-t2-02,
+      search-h-01,
+      search-s-05,
+      search-n-05,
+      search-r-01,
+      search-o-03,
+      search-b-02,
+      search-e-01,
+      join-27,
+      join-29,
+      join-31,
+    ]
+
+# P19 cases whose expected answer this work changes, not edited, reported apart in G1. Each is listed with the P05 case
+# that holds the new answer.
+superseded:
+  - { case: making-parties-for-event, heldBy: join-35 }
+  - { case: making-parties-open-dinner, heldBy: join-01 }
+  - { case: making-parties-approval-tennis, heldBy: join-30 }
+  - { case: ask-missing-fields-in-one-question, heldBy: join-37 }
+
+# J10's cases that state a day: there a period of that day is no unstated condition.
+j10StatesDay: [join-24]
+
+# Which cases count toward each metric and subset, as (case id, seed): one entry for each card of the case's answer,
+# and a null seed when the answer has none.
+tags:
+  J3a:
+    - { case: join-03, seed: 배드민턴 치실 분 }
+    - { case: join-06, seed: null }
+    - { case: join-07, seed: null }
+  J3b:
+    - { case: join-04, seed: null }
+    - { case: join-08, seed: null }
+    - { case: join-09, seed: null }
+    - { case: join-10, seed: null }
+  J4:
+    - { case: join-01, seed: 삼겹살 드실 분 }
+    - { case: join-01, seed: 저녁에 고기 구워요 }
+    - { case: join-03, seed: 배드민턴 치실 분 }
+    - { case: join-05, seed: 정기 공연 같이 가요 }
+    - { case: join-06, seed: null }
+    - { case: join-07, seed: null }
+    - { case: join-33, seed: null }
+  J6:
+    - { case: join-16, seed: 정기 공연 같이 가요 }
+    - { case: join-17, seed: 사진전 같이 봐요 }
+    - { case: join-17, seed: 사진전 주말 관람 }
+    - { case: join-17, seed: 전시 보러 가요 }
+    - { case: join-18, seed: 뮤지컬 보러 갈 분 }
+    - { case: join-19, seed: 버스킹 구경 갈 분 }
+  J7:
+    - { case: join-20, seed: null }
+    - { case: join-21, seed: null }
+    - { case: join-22, seed: null }
+  J9:
+    - { case: join-12, seed: 아침 러닝 }
+    - { case: join-13, seed: 테니스 복식 }
+    - { case: join-14, seed: 토익 스피킹 스터디 }
+    - { case: join-15, seed: 독주회 같이 가요 }
+    - { case: join-24, seed: 금요일 저녁 파스타 }
+    - { case: join-24, seed: 버스킹 구경 갈 분 }
+    - { case: join-24, seed: 사진전 같이 봐요 }
+    - { case: join-24, seed: 공룡 전시 보러 가요 }
+    - { case: join-24, seed: 마라땅 드실 분 }
+    - { case: join-24, seed: 공연의 밤 같이 봐요 }
+    - { case: join-24, seed: 사진전 주말 관람 }
+    - { case: join-35, seed: 사진전 같이 봐요 }
+    - { case: join-35, seed: 사진전 주말 관람 }
+    - { case: join-37, seed: 풋쌀 번개 }
+    - { case: join-37, seed: 아침 러닝 }
+    - { case: join-37, seed: 풋살 하실 분 }
+    - { case: join-37, seed: 민턴 한 판 }
+    - { case: join-37, seed: 개발자 농구 모임 }
+    - { case: join-37, seed: 배드민턴 치실 분 }
+    - { case: join-37, seed: 농구 3대3 }
+    - { case: join-37, seed: 테니스 복식 }
+    - { case: join-37, seed: 볼링 여섯 명 }
+    - { case: join-37, seed: 등산 후 막걸리 }
+    - { case: join-37, seed: 배드민튼 초보 모임 }
+    - { case: join-37, seed: 볼링 네 명 }
+    - { case: join-37, seed: 볼링 둘이서 }
+    - { case: join-37, seed: 테니즈 치실 분 }
+  J10:
+    - { case: join-23, seed: 민턴 한 판 }
+    - { case: join-23, seed: 배드민턴 치실 분 }
+    - { case: join-23, seed: 배드민튼 초보 모임 }
+    - { case: join-24, seed: 금요일 저녁 파스타 }
+    - { case: join-24, seed: 버스킹 구경 갈 분 }
+    - { case: join-24, seed: 사진전 같이 봐요 }
+    - { case: join-24, seed: 공룡 전시 보러 가요 }
+    - { case: join-24, seed: 마라땅 드실 분 }
+    - { case: join-24, seed: 공연의 밤 같이 봐요 }
+    - { case: join-24, seed: 사진전 주말 관람 }
+    - { case: join-25, seed: 풋쌀 번개 }
+    - { case: join-25, seed: 풋살 하실 분 }
+    - { case: join-26, seed: 개발자 농구 모임 }
+    - { case: join-26, seed: 농구 3대3 }
+  L:
+    - { case: search-l-01, seed: 양자컴퓨터 특강 }
+    - { case: search-l-01, seed: 스타트업 창업 특강 }
+    - { case: search-l-02, seed: 채용 박람회 }
+    - { case: search-l-02, seed: 동아리 박람회 }
+    - { case: search-l-02, seed: 박람회 같이 돌아요 }
+    - { case: search-l-03, seed: 볼링 네 명 }
+    - { case: search-l-03, seed: 볼링 여섯 명 }
+    - { case: search-l-03, seed: 볼링 둘이서 }
+    - { case: search-l-04, seed: 마라탕 넷이서 }
+    - { case: search-l-04, seed: 마라탕 둘이서 }
+    - { case: search-l-04, seed: 마라탕 여럿이 }
+    - { case: search-l-05, seed: 가을 사진전 }
+    - { case: search-l-06, seed: 가을 사진전 }
+    - { case: search-l-06, seed: 공룡 화석 전시 }
+    - { case: search-l-06, seed: 사진전 같이 봐요 }
+    - { case: search-l-06, seed: 사진전 주말 관람 }
+    - { case: search-l-06, seed: 공룡 전시 보러 가요 }
+    - { case: search-l-06, seed: 전시 보러 가요 }
+  P:
+    - { case: search-p-01, seed: 가을 정기 공연 }
+    - { case: search-p-01, seed: 관현악단 공연의 밤 }
+    - { case: search-p-01, seed: 피아노 독주회 }
+    - { case: search-p-01, seed: '뮤지컬 〈지하철 1호선〉' }
+    - { case: search-p-01, seed: 재즈 콘서드 }
+    - { case: search-p-01, seed: 잔디광장 버스킹 }
+    - { case: search-p-01, seed: 가을 음악제 }
+    - { case: search-p-02, seed: 가을 정기 공연 }
+    - { case: search-p-02, seed: 관현악단 공연의 밤 }
+    - { case: search-p-02, seed: 피아노 독주회 }
+    - { case: search-p-02, seed: '뮤지컬 〈지하철 1호선〉' }
+    - { case: search-p-02, seed: 재즈 콘서드 }
+    - { case: search-p-02, seed: 잔디광장 버스킹 }
+    - { case: search-p-02, seed: 가을 음악제 }
+    - { case: search-p-03, seed: 농구 3대3 }
+    - { case: search-p-03, seed: 풋살 하실 분 }
+    - { case: search-p-03, seed: 테니스 복식 }
+    - { case: search-p-03, seed: 볼링 네 명 }
+    - { case: search-p-03, seed: 볼링 여섯 명 }
+    - { case: search-p-03, seed: 볼링 둘이서 }
+    - { case: search-p-04, seed: 가을 사진전 }
+    - { case: search-p-04, seed: 판화 특별전 }
+    - { case: search-p-04, seed: 공룡 화석 전시 }
+    - { case: search-p-05, seed: 공연의 밤 같이 봐요 }
+    - { case: search-p-05, seed: 버스킹 구경 갈 분 }
+    - { case: search-p-06, seed: 삼겹살 드실 분 }
+    - { case: search-p-06, seed: 저녁에 고기 구워요 }
+    - { case: search-p-06, seed: 배민 같이 시켜요 }
+    - { case: search-p-06, seed: 학식 같이 먹어요 }
+    - { case: search-p-06, seed: 돈까스 드실 분 }
+    - { case: search-p-06, seed: 심야 라면 모임 }
+  T1:
+    - { case: search-t1-01, seed: 재즈 콘서드 갈 사람 }
+    - { case: search-t1-01, seed: 콘서드 같이 가실 분 }
+    - { case: search-t1-02, seed: 재즈 콘서드 }
+    - { case: search-t1-03, seed: 취엄 설명회 }
+    - { case: search-t1-04, seed: 뮤지걸 보러 가실 분 }
+    - { case: search-t1-05, seed: 풋쌀 번개 }
+    - { case: search-t1-06, seed: 마라땅 드실 분 }
+    - { case: search-t1-07, seed: 뮤지걸 보러 가실 분 }
+  T2:
+    - { case: search-t2-01, seed: 재즈 콘서드 갈 사람 }
+    - { case: search-t2-01, seed: 콘서드 같이 가실 분 }
+    - { case: search-t2-02, seed: 양자컴퓨터 특강 }
+    - { case: search-t2-02, seed: 스타트업 창업 특강 }
+    - { case: search-t2-03, seed: 볼링 네 명 }
+    - { case: search-t2-03, seed: 볼링 여섯 명 }
+    - { case: search-t2-03, seed: 볼링 둘이서 }
+    - { case: search-t2-04, seed: 테니즈 치실 분 }
+    - { case: search-t2-05, seed: 채용 박람회 }
+    - { case: search-t2-05, seed: 동아리 박람회 }
+  H:
+    - { case: search-h-01, seed: 치킨 뜯으실 분 }
+    - { case: search-h-01, seed: 족발 야식 모임 }
+    - { case: search-h-01, seed: 오늘 저녁 공부 모임 }
+    - { case: search-h-01, seed: 판화전 같이 봐요 }
+    - { case: search-h-01, seed: 사진전 같이 봐요 }
+    - { case: search-h-01, seed: 사진전 주말 관람 }
+    - { case: search-h-02, seed: 치킨 뜯으실 분 }
+    - { case: search-h-02, seed: 오늘 저녁 공부 모임 }
+    - { case: search-h-02, seed: 판화전 같이 봐요 }
+    - { case: search-h-02, seed: 사진전 같이 봐요 }
+    - { case: search-h-02, seed: 사진전 주말 관람 }
+    - { case: search-h-03, seed: 아침 러닝 }
+    - { case: search-h-03, seed: 사진전 같이 봐요 }
+    - { case: search-h-03, seed: 사진전 주말 관람 }
+    - { case: search-h-04, seed: 학식 같이 먹어요 }
+    - { case: search-h-04, seed: 돈까스 드실 분 }
+    - { case: search-h-04, seed: 사진전 같이 봐요 }
+    - { case: search-h-04, seed: 사진전 주말 관람 }
+    - { case: search-h-05, seed: 가을 사진전 }
+    - { case: search-h-05, seed: 동아리 박람회 }
+    - { case: search-h-05, seed: 도서 바자회 }
+    - { case: search-h-05, seed: 양자컴퓨터 특강 }
+    - { case: search-h-06, seed: 가을 사진전 }
+    - { case: search-h-06, seed: 판화 특별전 }
+    - { case: search-h-06, seed: 도서 바자회 }
+    - { case: search-h-07, seed: 오늘 저녁 공부 모임 }
+  S:
+    - { case: search-s-01, seed: 보드게임 카페 갈 분 }
+    - { case: search-s-01, seed: 보드게임 밤샘 }
+    - { case: search-s-01, seed: 보드게임 셋이서 }
+    - { case: search-s-02, seed: 보드게임 밤샘 }
+    - { case: search-s-02, seed: 보드게임 셋이서 }
+    - { case: search-s-03, seed: 볼링 네 명 }
+    - { case: search-s-03, seed: 볼링 여섯 명 }
+    - { case: search-s-04, seed: null }
+    - { case: search-s-05, seed: 정기 공연 같이 가요 }
+  N:
+    - { case: search-n-01, seed: 볼링 네 명 }
+    - { case: search-n-02, seed: 마라탕 둘이서 }
+    - { case: search-n-03, seed: 보드게임 밤샘 }
+    - { case: search-n-04, seed: 풋살 하실 분 }
+    - { case: search-n-04, seed: 풋쌀 번개 }
+    - { case: search-n-05, seed: 마라탕 넷이서 }
+  R:
+    - { case: search-r-01, seed: 공대 면접 스터디 }
+    - { case: search-r-01, seed: 전공 스터디 그룹 }
+    - { case: search-r-01, seed: 코딩 테스트 스터디 }
+    - { case: search-r-01, seed: 벤치에서 스터디 }
+    - { case: search-r-02, seed: 공대 면접 스터디 }
+    - { case: search-r-02, seed: 전공 스터디 그룹 }
+    - { case: search-r-02, seed: 벤치에서 스터디 }
+    - { case: search-r-03, seed: 목요일 점심 학생회관 }
+    - { case: search-r-03, seed: 목요일 점심 도서관 }
+    - { case: search-r-03, seed: 목요일 점심 문화관 }
+    - { case: search-r-03, seed: 공룡 전시 보러 가요 }
+    - { case: search-r-04, seed: 목요일 점심 문화관 }
+    - { case: search-r-04, seed: 목요일 점심 예술복합 }
+    - { case: search-r-04, seed: 목요일 점심 학생회관 }
+    - { case: search-r-04, seed: 목요일 점심 도서관 }
+    - { case: search-r-04, seed: 공룡 전시 보러 가요 }
+    - { case: search-r-05, seed: 코딩 테스트 스터디 }
+    - { case: search-r-05, seed: 공대 면접 스터디 }
+    - { case: search-r-05, seed: 벤치에서 스터디 }
+  O:
+    - { case: search-o-01, seed: 가을 사진전 }
+    - { case: search-o-01, seed: 판화 특별전 }
+    - { case: search-o-02, seed: 가을 사진전 }
+    - { case: search-o-02, seed: 동아리 박람회 }
+    - { case: search-o-02, seed: 도서 바자회 }
+    - { case: search-o-02, seed: 양자컴퓨터 특강 }
+    - { case: search-o-03, seed: 가을 사진전 }
+    - { case: search-o-03, seed: 채용 박람회 }
+    - { case: search-o-04, seed: 사진전 같이 봐요 }
+    - { case: search-o-04, seed: 사진전 주말 관람 }
+    - { case: search-o-04, seed: 판화전 같이 봐요 }
+    - { case: search-o-05, seed: 사진전 같이 봐요 }
+    - { case: search-o-05, seed: 사진전 주말 관람 }
+    - { case: search-o-05, seed: 전시 보러 가요 }
+    - { case: search-o-06, seed: 사진전 같이 봐요 }
+    - { case: search-o-06, seed: 사진전 주말 관람 }
+    - { case: search-o-06, seed: 공룡 전시 보러 가요 }
+  B:
+    - { case: search-b-01, seed: 전시 보러 가요 }
+    - { case: search-b-01, seed: 사진전 같이 봐요 }
+    - { case: search-b-01, seed: 사진전 주말 관람 }
+    - { case: search-b-01, seed: 공룡 전시 보러 가요 }
+    - { case: search-b-02, seed: 연극 보고 저녁 먹어요 }
+    - { case: search-b-03, seed: 등산 후 막걸리 }
+    - { case: search-b-04, seed: 개발자 농구 모임 }
+    - { case: search-b-05, seed: 취준생 점심 모임 }
+  E:
+    - { case: search-e-01, seed: null }
+    - { case: search-e-02, seed: null }
+    - { case: search-e-03, seed: null }
+    - { case: search-e-04, seed: null }
+    - { case: search-e-05, seed: null }
+    - { case: search-e-06, seed: null }
+  # The cases of the large world, added by ticket 02b.
+  V: []
+
+thresholds:
+  - id: j1.floor
+    metric: J1
+    measure: "Runs whose action is the answer's ÷ runs, on every join-or-recruit case"
+    kind: floor
+    comparator: '>='
+    value: 0.5
+    declared: 2026-10-31
+  - id: j1.target
+    metric: J1
+    measure: "Runs whose action is the answer's ÷ runs, on every join-or-recruit case"
+    kind: target
+    comparator: '>='
+    value: 0.85
+    declared: 2026-10-31
+  - id: j1-p.floor
+    metric: J1-P
+    measure: "Runs whose Proposal holds the answer's fields ÷ runs, on the cases whose answer is a Proposal"
+    kind: floor
+    comparator: '>='
+    value: 0.8
+    declared: 2026-10-31
+  - id: j1-p.target
+    metric: J1-P
+    measure: "Runs whose Proposal holds the answer's fields ÷ runs, on the cases whose answer is a Proposal"
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: j2.floor
+    metric: J2
+    measure: "Runs whose Quest cards are exactly the answer's ÷ runs, on the join cases whose answer shows Quest cards"
+    kind: floor
+    comparator: '>='
+    value: 0.4
+    declared: 2026-10-31
+  - id: j2.target
+    metric: J2
+    measure: "Runs whose Quest cards are exactly the answer's ÷ runs, on the join cases whose answer shows Quest cards"
+    kind: target
+    comparator: '>='
+    value: 0.8
+    declared: 2026-10-31
+  - id: j3a.floor
+    metric: J3a
+    measure: 'Runs passed ÷ runs, on the three traps a model can avoid'
+    kind: floor
+    comparator: '>='
+    value: 0.6666666666666666
+    declared: 2026-10-31
+  - id: j3a.target
+    metric: J3a
+    measure: 'Runs passed ÷ runs, on the three traps a model can avoid'
+    kind: target
+    comparator: '='
+    value: 1
+    declared: 2026-10-31
+  - id: j3b.target
+    metric: J3b
+    measure: 'Runs passed ÷ runs, on the four traps that need the server'
+    kind: target
+    comparator: '='
+    value: 1
+    declared: 2026-10-31
+  - id: j4.floor
+    metric: J4
+    measure: 'Runs that show a card outside the answer ÷ runs, on the tagged cases'
+    kind: floor
+    comparator: '<='
+    value: 0.16666666666666666
+    declared: 2026-10-31
+  - id: j4.target
+    metric: J4
+    measure: 'Runs that show a card outside the answer ÷ runs, on the tagged cases'
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: j6.floor
+    metric: J6
+    measure: 'Runs passed ÷ runs, on the two-turn cases'
+    kind: floor
+    comparator: '>='
+    value: 0.6
+    declared: 2026-10-31
+  - id: j6.target
+    metric: J6
+    measure: 'Runs passed ÷ runs, on the two-turn cases'
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: j7.floor
+    metric: J7
+    measure: 'Runs passed ÷ runs, on the 그래도 새로 cases'
+    kind: floor
+    comparator: '>='
+    value: 0.8
+    declared: 2026-10-31
+  - id: j7.target
+    metric: J7
+    measure: 'Runs passed ÷ runs, on the 그래도 새로 cases'
+    kind: target
+    comparator: '>='
+    value: 0.95
+    declared: 2026-10-31
+  - id: j8.floor
+    metric: J8
+    measure: 'Runs that say the asker joined or asked to join ÷ runs, on the join cases'
+    kind: floor
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: j8.target
+    metric: J8
+    measure: 'Runs that say the asker joined or asked to join ÷ runs, on the join cases'
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: j9.floor
+    metric: J9
+    measure: 'Runs passed ÷ runs, on the join cases whose answer holds an Approval Quest'
+    kind: floor
+    comparator: '>='
+    value: 0.7
+    declared: 2026-10-31
+  - id: j9.target
+    metric: J9
+    measure: 'Runs passed ÷ runs, on the join cases whose answer holds an Approval Quest'
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: j10.floor
+    metric: J10
+    measure: "Runs that missed an answer's card with an unstated condition in the search ÷ runs, on the tagged cases"
+    kind: floor
+    comparator: '<='
+    value: 0.1
+    declared: 2026-10-31
+  - id: j10.target
+    metric: J10
+    measure: "Runs that missed an answer's card with an unstated condition in the search ÷ runs, on the tagged cases"
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: g1.floor
+    metric: G1
+    measure: 'P19 cases, without the superseded, that passed at the baseline and now fail'
+    kind: floor
+    comparator: '<='
+    value: 2
+    declared: 2026-10-31
+  - id: g1.target
+    metric: G1
+    measure: 'P19 cases, without the superseded, that passed at the baseline and now fail'
+    kind: target
+    comparator: '='
+    value: 0
+    declared: 2026-10-31
+  - id: e1.floor
+    metric: E1
+    measure: "Micro precision over the subsets' cards: rightly shown ÷ shown, over the repetitions"
+    kind: floor
+    comparator: '>='
+    value: 0.7
+    declared: 2026-10-31
+  - id: e1.target
+    metric: E1
+    measure: "Micro precision over the subsets' cards: rightly shown ÷ shown, over the repetitions"
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: e2.floor
+    metric: E2
+    measure: 'Micro recall of subset L'
+    kind: floor
+    comparator: '>='
+    value: 0.7
+    declared: 2026-10-31
+  - id: e2.target
+    metric: E2
+    measure: 'Micro recall of subset L'
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: e3.target
+    metric: E3
+    measure: 'Micro recall of subsets P and T1 together, each world apart'
+    kind: target
+    comparator: '>='
+    value: 0.8
+    declared: 2026-10-31
+  - id: e4.target
+    metric: E4
+    measure: 'Micro recall of subset V, in the large world (ticket 02b)'
+    kind: target
+    comparator: '>='
+    value: 0.8
+    declared: 2026-10-31
+  - id: e5.floor
+    metric: E5
+    measure: 'Runs with no card and a line saying none ÷ runs, on subset E'
+    kind: floor
+    comparator: '>='
+    value: 0.6666666666666666
+    declared: 2026-10-31
+  - id: e5.target
+    metric: E5
+    measure: 'Runs with no card and a line saying none ÷ runs, on subset E'
+    kind: target
+    comparator: '='
+    value: 1
+    declared: 2026-10-31
+  - id: e7.floor
+    metric: E7
+    measure: 'Micro recall of subsets T2, H, S, N, R, O and B together, by the model. The floor also asks a server recall of 1.0 in CI, not measured until ticket 02b and ticket 10'
+    kind: floor
+    comparator: '>='
+    value: 0.7
+    declared: 2026-10-31
+  - id: e7.target
+    metric: E7
+    measure: 'Micro recall of subsets T2, H, S, N, R, O and B together, by the model. The floor also asks a server recall of 1.0 in CI, not measured until ticket 02b and ticket 10'
+    kind: target
+    comparator: '>='
+    value: 0.9
+    declared: 2026-10-31
+  - id: e8.floor
+    metric: E8
+    measure: 'Runs stopped by 8 steps or 30 s ÷ runs'
+    kind: floor
+    comparator: '<='
+    value: 0.05
+    declared: 2026-10-31
+  - id: e8.target
+    metric: E8
+    measure: 'Runs stopped by 8 steps or 30 s ÷ runs'
+    kind: target
+    comparator: '<='
+    value: 0.02
+    declared: 2026-10-31
+
+# Reported, with no threshold.
+diagnostic:
+  J5: 'Cases that passed all 3 runs ÷ cases'
+  E6: 'Runs whose cards are exactly the answer ÷ runs'
