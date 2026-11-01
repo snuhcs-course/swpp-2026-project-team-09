@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-02  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The 새내기 튜토리얼 (README.md: Tutorial). The server checks this file when it starts and serves it with GET /tutorial,
@@ -10,6 +11,9 @@
 # A place is a Place of the shared seed by its number (seed/campus-map-places.json and the others), with the floor and
 # the label shown when they help, or a point with its label. A completion is `button` (완료했어요), or `kwanjeongCheck`,
 # which the phone checks against the User's library bookings, with the label of its skip.
+# `facts` are what the Assistant answers from beyond the sheet's text (getTutorial), each with its source and the day
+# it was checked; GET /tutorial does not serve them. A fact the source does not state is left out, and the Assistant
+# answers it as 확인되지 않아요 with the quest's link.
 #
 # The texts marked *drafted* in the P06 spec (the briefs, conditions and completion messages of the quests other than
 # kwanjeong) wait for the owner's review before the P6 eval set freezes them.
@@ -84,17 +88,50 @@ quests:
     title: 서울대 보건진료소 이용
     brief: 보건진료소가 어디 있는지 알아 두세요.
     body:
-      - 서울대 보건진료소는 학생회관(63동) 2층에 있어요. 진료 시간과 이용 방법은 보건진료소 홈페이지에서 확인할 수 있어요.
+      - 서울대 보건진료소는 학생회관(63동) 3–4층에 있어요. 진료는 3층에서 하고, 접수와 수납은 329호에서 해요. 진료 시간과 이용 방법은 보건진료소 홈페이지에서 확인할 수 있어요.
     condition: 보건진료소 위치와 이용 방법 확인하기
     completion:
       kind: button
     completionMessage: 아플 땐 참지 말고 보건진료소를 찾아 주세요!
     places:
       - place: '63'
-        floor: 2
+        floor: 3
     links:
       - label: 보건진료소 홈페이지
         url: https://health4u.snu.ac.kr/index.do
+      - label: 진료 시간표
+        url: https://health4u.snu.ac.kr/medicalTreatment/PracticeSchedule/_/view.do
+      - label: 오시는 길
+        url: https://health4u.snu.ac.kr/operation/guide/_/view.do
+      - label: 이용 절차
+        url: https://health4u.snu.ac.kr/operation/useProcedure/_/view.do
+      - label: 진료 예약
+        url: https://health4u.snu.ac.kr/medicalTreatment/newAppointment/_/init.do
+    facts:
+      - text: 학생회관(63동) 3–4층에 있어요. 진료는 3층에서 하고, 접수와 수납은 329호에서 해요.
+        source: https://health4u.snu.ac.kr/operation/guide/_/view.do
+        checked: 2026-11-02
+      - text: 평일 09:00–12:00, 13:30–17:30에 진료해요. 금요일은 16:30까지예요. 12:00–13:30에는 진료하지 않아요.
+        source: https://health4u.snu.ac.kr/index.do
+        checked: 2026-11-02
+      - text: 진료과는 가정의학과, 내과, 정신건강의학과, 이비인후과, 피부과, 안과, 부인과, 정형외과, 금연클리닉, 비만클리닉, 치과예요.
+        source: https://health4u.snu.ac.kr/operation/contact/_/view.do
+        checked: 2026-11-02
+      - text: 진료 당일 신분증을 들고 329호에서 접수해요. 예약 없이도 진료받을 수 있어요.
+        source: https://health4u.snu.ac.kr/operation/useProcedure/_/view.do
+        checked: 2026-11-02
+      - text: 예약은 선택이에요. 진료일 하루 전까지 홈페이지에서 온라인으로 예약해요. 전화로는 예약할 수 없어요.
+        source: https://health4u.snu.ac.kr/operation/useProcedure/_/view.do
+        checked: 2026-11-02
+      - text: 정신건강의학과는 예약해야 진료받을 수 있어요. 방문하거나 02-880-5347로 전화해 예약해요.
+        source: https://health4u.snu.ac.kr/operation/useProcedure/_/view.do
+        checked: 2026-11-02
+      - text: 건강보험 가입자는 진찰료 없이 검사·처치 비용 일부만 내요. 미가입자는 할인된 진찰료와 검사·처치 비용 일부를 내요.
+        source: https://health4u.snu.ac.kr/noti/faq/_/list.do
+        checked: 2026-11-02
+      - text: 대표전화는 02-880-5338이에요.
+        source: https://health4u.snu.ac.kr/operation/guide/_/view.do
+        checked: 2026-11-02
 
   - key: art-museum
     order: 5
