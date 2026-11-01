@@ -101,3 +101,4 @@ Estimates from this session's transcript, the subagents' reports and the eval ru
 - **Tokens, this session (Fable 5.1)**: input about 1.8k uncached, 28.0M cache reads and 396k cache writes; output about 256k. The research for note 11 before it: 1.7M cache reads, 164k cache writes, 45k output.
 - **Subagents (Opus 5.5)**: three research agents for note 11, about 108k, 114k and 113k tokens each; one for note 12, about 111k.
 - **The reflector (Haiku 5.5 through OpenRouter)**: 7 eval runs of 12 calls and 1 run on the live server, about 100 calls of some 2,000 tokens each, most of them reasoning; about $0.06 in all.
+- The decisions pass of the same day, in which every open item of tickets 01 to 07 was decided and built: about 6 of its 40 minutes, split evenly over the seven tickets (estimate); about 8.2M input, of which about 8.1M cache reads, 90k cache writes and 0.6k uncached, and about 53k output. With cache reads excluded, about 0.16M.

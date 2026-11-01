@@ -126,3 +126,7 @@ A settled outcome posted again answered 409 `SUGGESTION_OUTCOME_SETTLED`, anothe
 ### Changed (2026-11-01), with ticket 04's gate
 
 `pnpm eval:suggestions` reports the openings per slice and arm, with the accepted over every opening and the silent openings the gate made (`gated`), so that the gate of ticket 04, which holds back learning-arm accounts only, is judged by accepts per opening arm against arm and not by the acceptance per shown it raises by shrinking the denominator. `suggestion-metrics.ts` (`Openings`, `openingsOf`), `suggestions.ts`, and the two tests that read the openings.
+
+### Agent usage (2026-11-01)
+
+- The decisions pass of the same day, in which every open item of tickets 01 to 07 was decided and built: about 6 of its 40 minutes, split evenly over the seven tickets (estimate); about 8.2M input, of which about 8.1M cache reads, 90k cache writes and 0.6k uncached, and about 53k output. With cache reads excluded, about 0.16M.

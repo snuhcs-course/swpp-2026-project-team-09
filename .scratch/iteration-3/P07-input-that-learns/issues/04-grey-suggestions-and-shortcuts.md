@@ -97,3 +97,4 @@ Research note 12 (`.scratch/iteration-3/research/12-ghost-text-suggestions-2025-
 
 - Agent time: about 25 minutes (estimate), one Fable 5.1 session: the explanation of what the gate would be, then the gate, its tests, the openings per arm in ticket 05's suggestion curves, the merges forward to ticket 07, and the live database and server brought up to date.
 - Tokens (estimate): about 16.4M input, of which about 16.2M cache reads, 250k cache writes and 2k uncached, and about 143k output. With cache reads excluded, about 0.4M.
+- The decisions pass of the same day, in which every open item of tickets 01 to 07 was decided and built: about 6 of its 40 minutes, split evenly over the seven tickets (estimate); about 8.2M input, of which about 8.1M cache reads, 90k cache writes and 0.6k uncached, and about 53k output. With cache reads excluded, about 0.16M.

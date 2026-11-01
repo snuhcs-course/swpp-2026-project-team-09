@@ -83,3 +83,4 @@ D learns 미대 and 호암 and not 정문. In the live run the first account pro
 
 - Agent time: about 55 minutes (estimate), one Fable 5.1 session, including about 4 minutes of a web-fetch subagent that read the paper's equations.
 - Tokens (estimate, from the session transcript since the go-ahead): about 10.3M input, of which about 9.96M cache reads, 287k cache writes and under 1k uncached, and about 184k output; the subagent about 114k tokens in all.
+- The decisions pass of the same day, in which every open item of tickets 01 to 07 was decided and built: about 6 of its 40 minutes, split evenly over the seven tickets (estimate); about 8.2M input, of which about 8.1M cache reads, 90k cache writes and 0.6k uncached, and about 53k output. With cache reads excluded, about 0.16M.
