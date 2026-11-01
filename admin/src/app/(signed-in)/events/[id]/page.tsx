@@ -18,6 +18,7 @@ import { StartTime } from '../../start-time';
 import { isPublicationRoute, NeedsAdministratorMark, PUBLICATION_ROUTES } from '../publication';
 import { EventForm } from './event-form';
 import { JudgementPanel } from './judgement-panel';
+import { AcknowledgeButton, SessionsPanel } from './sessions-panel';
 
 const STATES: Record<GlobalEventState, { label: string; look: string }> = {
   draft: { label: 'Draft', look: 'bg-amber-50 text-amber-800' },
@@ -86,8 +87,8 @@ function Stored({ event }: { event: GlobalEvent }): ReactElement {
 export default async function EventPage({ params, searchParams }: PageProps<'/events/[id]'>): Promise<ReactElement> {
   const { id } = await params;
   const { route } = await searchParams;
-  const [event, places] = await asAdministrator(`/events/${id}`, (token) =>
-    Promise.all([read(token, id), mainServer.listPlaces(token)]),
+  const [event, places, sessions] = await asAdministrator(`/events/${id}`, (token) =>
+    Promise.all([read(token, id), mainServer.listPlaces(token), mainServer.listLinkedSessions(token, id)]),
   );
   const state = STATES[event.state];
   const editable = event.state === 'draft' || event.state === 'published';
@@ -103,7 +104,12 @@ export default async function EventPage({ params, searchParams }: PageProps<'/ev
         <div className="flex flex-wrap items-center gap-3">
           <h1>{event.title}</h1>
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${state.look}`}>{state.label}</span>
-          {event.needsAdministrator && <NeedsAdministratorMark />}
+          {event.needsAdministrator && (
+            <>
+              <NeedsAdministratorMark />
+              <AcknowledgeButton eventId={event.id} />
+            </>
+          )}
           {event.publicationRoute !== null && (
             <span className="text-sm text-zinc-600">
               Publication Route: {PUBLICATION_ROUTES[event.publicationRoute]}
@@ -114,6 +120,7 @@ export default async function EventPage({ params, searchParams }: PageProps<'/ev
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <Source event={event} />
         <div className="min-w-0 space-y-6">
+          {sessions.length > 0 && <SessionsPanel eventId={event.id} sessions={sessions} />}
           {event.judgement !== null && (
             <JudgementPanel judgement={event.judgement} eventId={event.id} places={places} />
           )}

@@ -20,6 +20,10 @@ export const isPublicationRoute = (value: unknown): value is PublicationRoute =>
 // A post's Judgement is tried at most this many times, as the main server's JUDGEMENT_TRIES says.
 export const JUDGEMENT_TRIES = 2;
 
+const SOURCES: Record<string, string> = { snu_events: 'SNU Now', extra_snu: 'extra.snu' };
+
+export const sourceLabel = (source: string): string => SOURCES[source] ?? source;
+
 export function NeedsAdministratorMark(): ReactElement {
   return (
     <span className="inline-block rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800">

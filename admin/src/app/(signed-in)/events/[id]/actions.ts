@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 'use server';
@@ -83,6 +84,26 @@ export async function changeEvent(request: EventChange): Promise<Refused | null>
   }
   refresh();
   return null;
+}
+
+// The session's own Draft is made again. What the event's page says when another Administrator got there first.
+export async function detachSession(eventId: string, sessionId: string): Promise<string | null> {
+  try {
+    await asAdministrator(`/events/${eventId}`, (token) => mainServer.detachSession(token, sessionId));
+  } catch (error) {
+    if (error instanceof MainServerError && error.status === 409) {
+      refresh();
+      return 'This session has been detached already, or kept nothing to detach with.';
+    }
+    throw error;
+  }
+  refresh();
+  return null;
+}
+
+export async function acknowledgeEvent(eventId: string): Promise<void> {
+  await asAdministrator(`/events/${eventId}`, (token) => mainServer.acknowledgeGlobalEvent(token, eventId));
+  refresh();
 }
 
 // oxlint-disable-next-line require-await -- a Server Action is an async function, also one that awaits nothing

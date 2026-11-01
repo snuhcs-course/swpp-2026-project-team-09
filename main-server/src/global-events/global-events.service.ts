@@ -176,6 +176,14 @@ export class GlobalEventsService {
     );
   }
 
+  // Takes the flag off, leaving the version as setting it does: Users see nothing of it.
+  async acknowledge(id: string): Promise<void> {
+    const { count } = await this.prisma.globalEvent.updateMany({ where: { id }, data: { needsAdministrator: false } });
+    if (count === 0) {
+      throw globalEventNotFound();
+    }
+  }
+
   // A Draft or a published event, which stays published.
   edit(id: string, { version, ...fields }: EditGlobalEventDto): Promise<GlobalEventDetailDto> {
     this.refuseOffCampus(fields);
@@ -228,6 +236,13 @@ export class GlobalEventsService {
     // Changed between the read and the write: checked again as it is now.
     if (written === undefined) {
       return this.change(id, version, from, change);
+    }
+    // A Draft no longer one is out of the same-event queue.
+    if (written.state !== GlobalEventState.draft) {
+      await this.prisma.sourcePostSession.updateMany({
+        where: { globalEventId: id, heldFor: { not: null } },
+        data: { heldFor: null },
+      });
     }
     if (stored.state === GlobalEventState.published || written.state === GlobalEventState.published) {
       this.signalChanged();

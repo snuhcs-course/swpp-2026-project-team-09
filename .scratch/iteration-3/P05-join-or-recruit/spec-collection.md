@@ -123,7 +123,7 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
 - For the sessions left, with their times known, the candidates are the Global Events of any Source whose start is within one day.
 - The refusing rules come next. A candidate is refused when both have a time of day on the same day and the times differ, when one is a 1차 and the other a 2차 session, when one is 대면 and the other 비대면, or when the roles differ. Candidates on the day before or after are kept for the AI.
 - Then the attaching rule: equal normalised titles and equal starts attach. A setting, `SAME_EVENT_TITLE_RULE`, `off` by default and in Production, turns this rule on once evaluation B has measured it, since a wrong attachment hides an event from Users. `EXTRA_SNU_COLLECTION` waits for it.
-- For the candidates left, the AI chooses one of them or none, or answers unsure.
+- For the candidates left, the AI chooses one of them or none, or answers unsure. A setting, `SAME_EVENT_AI_CHOICE`, `off` by default and in Production, turns this on once evaluation B has shown D1 at its floor of 0 and the posts may be sent to the model provider; with it off no model is called, and a session the rules do not attach is published. The queue and detaching work either way.
 - When the AI is unsure, when a session matches several candidates, or when the call fails, the session stays a Draft and enters the Administrator's queue with its candidates. It is not shown to Users, so nothing is lost by waiting.
 - An Administrator can attach a queued session to a candidate, publish it as its own event, or detach an attached session, which becomes its own Draft again. The Quests of the event stay with it.
 

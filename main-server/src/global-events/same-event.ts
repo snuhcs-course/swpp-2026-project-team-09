@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { type CandidateEvent } from './same-event-choice.js';
 import {
   type GlobalEvent,
   GlobalEventState,
@@ -124,6 +125,11 @@ export function matchAmong(session: ComparedSession, candidates: (ComparedSessio
   return ids.length === 1 ? { kind: 'one', globalEventId: ids[0] } : { kind: 'several', globalEventIds: ids };
 }
 
+// Those of the candidates the refusing rules leave.
+export function candidatesLeft<T extends ComparedSession>(session: ComparedSession, candidates: T[]): T[] {
+  return candidates.filter((candidate) => refusalOf(session, candidate) === null);
+}
+
 // The posts of any Source that a text names by their addresses, each once.
 export function linkedPosts(text: string): { source: Source; key: string }[] {
   return POST_SOURCE_NAMES.flatMap((source) => {
@@ -168,8 +174,9 @@ export async function attachSession(
   tx: Prisma.TransactionClient,
   { id, globalEvent: draft }: PostSession,
   globalEventId: string,
-  reason: string,
+  reason: string | null,
   ownDraft: OwnDraft = ownDraftOf(draft),
+  attachedBy: SessionAttachment = SessionAttachment.rule,
 ): Promise<void> {
   // Read here: a post of the same message may have flagged the Draft since this session was read.
   const flagged = await tx.globalEvent.count({ where: { id: draft.id, needsAdministrator: true } });
@@ -179,10 +186,12 @@ export async function attachSession(
   await tx.sourcePostSession.updateMany({ where: { globalEventId: draft.id }, data: { globalEventId } });
   await tx.sourcePostSession.update({
     where: { id },
-    data: { attachedBy: SessionAttachment.rule, reason, ownDraft },
+    data: { attachedBy, reason, ownDraft, heldFor: null },
   });
+  // An Administrator attaches a Draft they may have changed, having checked its version.
+  const version = attachedBy === SessionAttachment.administrator ? draft.version : 1;
   const { count } = await tx.globalEvent.deleteMany({
-    where: { id: draft.id, state: GlobalEventState.draft, version: 1 },
+    where: { id: draft.id, state: GlobalEventState.draft, version },
   });
   if (count === 0) {
     throw new Error('An Administrator changed a Draft while it was being attached');
@@ -200,6 +209,16 @@ const WITH_LINKED_EVENTS = {
 
 type LinkedPost = Prisma.SourcePostGetPayload<{ include: typeof WITH_LINKED_EVENTS }>;
 type LinkedSession = LinkedPost['sessions'][number];
+
+// The other posts a post names, by its body and the links behind its words.
+export function namedPosts(
+  post: { source: Source; key: string; links: string[] },
+  description: string,
+): { source: Source; key: string }[] {
+  return linkedPosts([description, ...post.links].join('\n')).filter(
+    ({ source, key }) => source !== post.source || key !== post.key,
+  );
+}
 
 // A Draft takes a linked post only with a time someone read: one an Administrator made, or one the rules read. Another
 // may never be published, and the post would be hidden with it, though it could be published itself.
@@ -239,10 +258,7 @@ export async function attachLinked(
   post: PostWithOwnSessions & { links: string[] },
 ): Promise<boolean> {
   const { sessions } = post;
-  const description = sessions[0]?.globalEvent.description ?? '';
-  const isOwnPost = ({ source, key }: { source: Source; key: string }): boolean =>
-    source === post.source && key === post.key;
-  const named = linkedPosts([description, ...post.links].join('\n')).filter((linked) => !isOwnPost(linked));
+  const named = namedPosts(post, sessions[0]?.globalEvent.description ?? '');
   const areDrafts = sessions.every(({ globalEvent: { state } }) => state === GlobalEventState.draft);
   if (named.length === 0 || !areDrafts || isChangedByAdministrator(post)) {
     return false;
@@ -273,17 +289,16 @@ export async function attachLinked(
   return true;
 }
 
-// The events a session may be the same as, and how it matches them: those of any Source starting within one day, but for
-// its post's own, in any state since a cancelled or discarded event must not come back through another post. A Draft
-// must have a time someone read, or its start may be only an application period and attaching to it could hide the post
-// for good: one an Administrator made, or one the rules read whose post has been through the step, so that of two new
-// posts the first stays and the second comes to it.
-export async function sameEventMatch(
+// The events a session may be the same as: those of any Source starting within one day, but for its post's own, in any
+// state since a cancelled or discarded event must not come back through another post. A Draft must have a time someone
+// read, or its start may be only an application period and attaching to it could hide the post for good: one an
+// Administrator made, or one the rules read whose post has been through the step, so that of two new posts the first
+// stays and the second comes to it.
+export async function sameEventCandidates(
   tx: Prisma.TransactionClient,
-  session: ComparedSession,
+  startsAt: Date,
   sourcePostId: string,
-): Promise<SameEventMatch> {
-  const { startsAt } = session;
+): Promise<CandidateEvent[]> {
   const candidates = await tx.globalEvent.findMany({
     where: {
       startsAt: { gte: new Date(startsAt.getTime() - A_DAY), lte: new Date(startsAt.getTime() + A_DAY) },
@@ -302,10 +317,10 @@ export async function sameEventMatch(
         },
       ],
     },
-    select: { id: true, title: true, startsAt: true },
+    orderBy: { id: 'asc' },
+    select: { id: true, title: true, description: true, startsAt: true, place: true, state: true },
   });
-  return matchAmong(
-    session,
-    candidates.flatMap(({ id, title, startsAt: start }) => (start === null ? [] : [{ id, title, startsAt: start }])),
+  return candidates.flatMap(({ startsAt: start, ...candidate }) =>
+    start === null ? [] : [{ ...candidate, startsAt: start }],
   );
 }

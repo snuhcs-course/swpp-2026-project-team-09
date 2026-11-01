@@ -601,6 +601,18 @@ measured it on the commit being released, by setting the value to `on` in that f
 only at posts that go through the step afterwards. To turn it off at once, use the ConfigMap patch above with this name,
 and also change the file.
 
+### Turning on the same-event AI choice
+
+`SAME_EVENT_AI_CHOICE` is `off` in `k8s/parts/shared/kustomization.yaml`: no model is called for the same-event step and no
+post leaves the server for it, and a session the rules do not attach is published as before. Turn it on only when both
+hold: evaluation B (ticket 09) has shown D1 at its floor of 0 on the commit being released, and the posts may be sent to the
+model provider. A person decides this, by setting the value to `on` in that file, merging it and releasing. With `on`, the
+server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`. It looks only at posts that go through the
+step afterwards. To turn it off at once, use the ConfigMap patch above with this name, and also change the file.
+
+The queue, attaching, publishing from it and detaching work with the setting off too: `/queue` on the admin site. With it
+on, a model outage sends the sessions that have candidates there, each once, publishing none of them.
+
 ### Turning on extra.snu's Collections
 
 The worker's image carries a browser for extra.snu, and its pod may use up to 1 GiB for it, but the schedule starts

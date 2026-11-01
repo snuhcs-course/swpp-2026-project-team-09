@@ -81,6 +81,8 @@ spec:
               valueFrom: { configMapKeyRef: { name: settings, key: AUTOMATIC_JUDGEMENT } }
             - name: SAME_EVENT_TITLE_RULE
               valueFrom: { configMapKeyRef: { name: settings, key: SAME_EVENT_TITLE_RULE } }
+            - name: SAME_EVENT_AI_CHOICE
+              valueFrom: { configMapKeyRef: { name: settings, key: SAME_EVENT_AI_CHOICE } }
           resources:
             requests:
               memory: 256Mi

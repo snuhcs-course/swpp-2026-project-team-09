@@ -101,6 +101,52 @@ export interface UnsettledPost {
   drafts: { id: string; title: string }[];
 }
 
+// Why a session waits for an Administrator.
+export type SessionHold = 'link_not_one_to_one' | 'several_matches' | 'ai_unsure' | 'ai_failed' | 'candidates_changed';
+
+export interface QueueCandidate {
+  id: string;
+  title: string;
+  startsAt: string | null;
+  place: string | null;
+  state: GlobalEventState;
+}
+
+// A session the same-event step could not decide, with its Draft and its candidates as they now are. `reason` is what the
+// AI said of it.
+export interface QueuedSession {
+  sessionId: string;
+  number: number;
+  heldFor: SessionHold;
+  reason: string | null;
+  source: string;
+  key: string;
+  address: string;
+  draft: {
+    id: string;
+    version: number;
+    title: string;
+    startsAt: string | null;
+    place: string | null;
+    missing: Missing[];
+  };
+  candidates: QueueCandidate[];
+}
+
+export type SessionAttachment = 'own' | 'rule' | 'ai' | 'administrator';
+
+// A session linked to an event, from any Source Post.
+export interface LinkedSession {
+  sessionId: string;
+  number: number;
+  source: string;
+  key: string;
+  address: string;
+  attachedBy: SessionAttachment;
+  reason: string | null;
+  detachable: boolean;
+}
+
 // The fields an edit sends. Times carry their offset; null clears an optional field.
 export interface GlobalEventChange {
   title: string;
@@ -225,6 +271,20 @@ export const mainServer = {
     change: 'publish' | 'discard' | 'cancel',
     version: number,
   ): Promise<GlobalEvent> => request('POST', `${eventPath(id)}/${change}`, token, { version }),
+  acknowledgeGlobalEvent: (token: string, id: string): Promise<void> =>
+    request('POST', `${eventPath(id)}/acknowledge`, token),
+  listLinkedSessions: (token: string, id: string): Promise<LinkedSession[]> =>
+    request('GET', `${eventPath(id)}/sessions`, token),
+  detachSession: (token: string, sessionId: string): Promise<void> =>
+    request('POST', `/admin/global-events/sessions/${encodeURIComponent(sessionId)}/detach`, token),
+  listSameEventQueue: (token: string): Promise<QueuedSession[]> => request('GET', '/admin/global-events/queue', token),
+  attachQueuedSession: (token: string, sessionId: string, version: number, globalEventId: string): Promise<void> =>
+    request('POST', `/admin/global-events/queue/${encodeURIComponent(sessionId)}/attach`, token, {
+      version,
+      globalEventId,
+    }),
+  publishQueuedSession: (token: string, sessionId: string, version: number): Promise<void> =>
+    request('POST', `/admin/global-events/queue/${encodeURIComponent(sessionId)}/publish`, token, { version }),
   listPlaces: (token: string): Promise<Place[]> => request('GET', '/admin/places', token),
   listUsers: (token: string): Promise<AdminUser[]> => request('GET', '/admin/users', token),
   listFriendsOf: (token: string, id: string): Promise<AdminFriend[]> =>

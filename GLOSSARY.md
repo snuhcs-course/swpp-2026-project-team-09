@@ -181,6 +181,10 @@ _Avoid_: Site, provider
 One post on a Source that Global Events were read from, such as an SNU Now notice or an extra.snu program, stored once by its Source and its key on that Source. It is read as one or more numbered sessions, each linked to one Global Event. A Global Event can have several, when more than one Source posted the same event: a new post's sessions are attached to the event that exists instead of becoming a second one. A post's session (회차, `SourcePostSession`) is not a **Session**, the app signed in on one phone.
 _Avoid_: Original, article, duplicate
 
+**Same-event queue**:
+The sessions of Source Posts that wait for an Administrator, since neither the rules nor the AI could say whether they are an event that exists. Each stays a Draft with its candidates, which Users do not see, until an Administrator attaches it to one or publishes it as its own. Detaching is the way back from a session attached by mistake: it becomes its own Draft again, and the event keeps its Quests.
+_Avoid_: Review list, pending posts
+
 **Restaurant**:
 A dining place whose daily menu a Source publishes.
 _Avoid_: Cafeteria
