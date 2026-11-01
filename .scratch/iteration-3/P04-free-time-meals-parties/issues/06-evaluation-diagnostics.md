@@ -29,7 +29,7 @@ Declared in a new evidence file beside the walking evaluation, which does not ch
   - **The pairs that tell them apart:** the MAE of the table and of the baseline over pairs 5, 11, 15, 20, 22, 23, 24 and 27, where the two differ by more than 2 minutes at the freeze.
 - [ ] **Who walks.** TaeHyun79 walks all 30 pairs, so that k reads one person's pace.
 - [ ] **Calibration.** The 13 calibration pairs are walked only when a threshold is missed or k is outside 0.9–1.1.
-  - The fit uses the calibration pairs only, never the test pairs.
+  - The fit uses the calibration pairs only, never the test pairs: speed and the climb value, by ordinary least squares over all 13 pairs, once, with nothing else changed. [The evidence file](../evidence/06-walking-and-ride-diagnostics.md) gives the rule.
   - The calibrated table is scored against the same 30 walked times as a new entry, beside the original result.
   - When neither condition holds, nothing is calibrated and the reason is recorded.
 - [ ] **Real shuttle rides.** The procedure is declared here, and the rides are Person work below.

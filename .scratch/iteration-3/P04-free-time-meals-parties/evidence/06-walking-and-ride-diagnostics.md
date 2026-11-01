@@ -26,7 +26,10 @@ The 13 calibration pairs are walked only when one of these holds:
 When one holds:
 
 - TaeHyun79 walks the calibration pairs by the same method.
-- The fit sets the walking speed and the climb from the calibration pairs only, never the test pairs. So k itself is never applied to the table.
+- The model stays: seconds = path metres / speed + climb metres × climb seconds per metre, where climb is max(0, destination elevation − origin elevation).
+- Speed and the climb value are fitted by ordinary least squares over all 13 calibration pairs, never the test pairs, and nothing else changes: not the paths, the pins or the elevations. So k itself is never applied to the table.
+- The fit runs once. A climb value below 0 becomes 0, and no pair is left out.
+- The fitted values, unrounded in the working and as used in the rebuilt table, are recorded in ticket 01's `## Comments`.
 - The calibrated table is scored against the same 30 walked times as a new entry, beside the original result, which stays.
 
 When neither holds, nothing is calibrated, and the reason is recorded in ticket 01's `## Comments`.
