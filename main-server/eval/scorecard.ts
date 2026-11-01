@@ -3,9 +3,11 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { p5Report } from './p5/report.ts';
+import { LARGE_WORLD } from './p5/large-world/world-data.ts';
+import { largeWorldSuite, p5Report } from './p5/report.ts';
 import { p5Section } from './p5/report-section.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { outcomeOf } from './normalise.ts';
@@ -284,6 +286,9 @@ export function scorecard(score: RunScore): string {
     ...passKSection(score),
     ...usageSection(score),
     ...(saved.options.world === 'p5' ? p5Section(p5Report(score), table) : []),
+    ...(saved.options.world === LARGE_WORLD
+      ? p5Section(p5Report(score, largeWorldSuite()), table, `The P05 suite, ${LARGE_WORLD}`)
+      : []),
     '## Settings',
     table(['Setting', 'Value'], settingsOf(score)),
     '## Failed cases',

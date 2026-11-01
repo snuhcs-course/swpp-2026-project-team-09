@@ -1,2 +1,4 @@
 pnpm-lock.yaml
 test/answers
+# Written once by the generator, and pinned by their hashes in eval/p5/suite.yaml.
+eval/p5/large-world-v1
