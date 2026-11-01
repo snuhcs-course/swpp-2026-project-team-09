@@ -6,7 +6,7 @@
 
 import { BadRequestException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
-import { TutorialCompletion } from '../generated/prisma/client.js';
+import { TutorialCompletion, type User } from '../generated/prisma/client.js';
 import { notFound } from '../quests/refusals.js';
 import { UsersService } from '../users/users.service.js';
 import { affiliationOf } from './affiliation.js';
@@ -15,6 +15,11 @@ import { type TutorialContent, type TutorialQuest } from './tutorial-content.js'
 import { eligibleByDefault, questStatus, tutorialState } from './tutorial-state.js';
 
 export const TUTORIAL_CONTENT = 'TUTORIAL_CONTENT';
+
+// By the User's admission year and 소속 now, whether or not the tutorial was turned on by it.
+function isEligibleByDefault(user: User, at: Date): boolean {
+  return eligibleByDefault({ admissionYear: user.admissionYear, affiliation: affiliationOf(user) }, at);
+}
 
 // The completions each kind of quest accepts. The phone does the 관정 check, so the server records how and does not
 // verify it.
@@ -42,23 +47,34 @@ export class TutorialService {
   async read(userId: string): Promise<TutorialDto> {
     const user = await this.users.findById(userId);
     const now = new Date();
-    if (eligibleByDefault({ admissionYear: user.admissionYear, affiliation: affiliationOf(user) }, now)) {
+    if (isEligibleByDefault(user, now)) {
       await this.ensureProgress(userId);
       await this.prisma.tutorialProgress.updateMany({
         where: { userId, enabledAt: null, stoppedAt: null },
-        data: { enabledAt: now },
+        data: { enabledAt: now, rowHiddenAt: null },
       });
     }
-    return this.tutorialOf(userId);
+    return this.tutorialOf(userId, user);
   }
 
-  // 진행하기: keeps the quests' progress.
+  // 진행하기: keeps the quests' progress and shows the 내 정보 row again. A finished tutorial stays finished unless the
+  // content has a quest the User has not completed (one added after `finishedAt`).
   async enable(userId: string): Promise<TutorialDto> {
     const enabledAt = new Date();
     await this.prisma.tutorialProgress.upsert({
       where: { userId },
       create: { userId, enabledAt },
-      update: { enabledAt, stoppedAt: null, finishedAt: null },
+      update: { enabledAt, stoppedAt: null, rowHiddenAt: null },
+    });
+    await this.prisma.tutorialProgress.updateMany({
+      where: {
+        userId,
+        finishedAt: { not: null },
+        OR: this.keys.map((questKey) => ({
+          user: { tutorialQuests: { none: { questKey, completedAt: { not: null } } } },
+        })),
+      },
+      data: { finishedAt: null },
     });
     return this.tutorialOf(userId);
   }
@@ -143,13 +159,16 @@ export class TutorialService {
   }
 
   // Rows of keys no longer in the content are left out.
-  private async tutorialOf(userId: string): Promise<TutorialDto> {
-    const [progress, rows] = await Promise.all([
+  private async tutorialOf(userId: string, known?: User): Promise<TutorialDto> {
+    const [user, progress, rows] = await Promise.all([
+      known ?? this.users.findById(userId),
       this.prisma.tutorialProgress.findUnique({ where: { userId } }),
       this.prisma.tutorialQuestProgress.findMany({ where: { userId, questKey: { in: this.keys } } }),
     ]);
     return {
       state: tutorialState(progress, rows, this.keys),
+      rowHidden: progress !== null && progress.rowHiddenAt !== null,
+      eligibleByDefault: isEligibleByDefault(user, new Date()),
       quests: this.content.quests.map((quest) => ({
         ...quest,
         status: questStatus(rows.find(({ questKey }) => questKey === quest.key)),

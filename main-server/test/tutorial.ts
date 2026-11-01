@@ -25,6 +25,8 @@ const placeSchema = z.union([
 // The answer of every tutorial route, exactly: the content and the statuses, and nothing of any User.
 export const tutorialSchema = z.strictObject({
   state: z.enum(['finished', 'stopped', 'off', 'active', 'available']),
+  rowHidden: z.boolean(),
+  eligibleByDefault: z.boolean(),
   quests: z.array(
     z.strictObject({
       key: z.string(),

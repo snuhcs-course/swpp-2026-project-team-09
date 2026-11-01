@@ -184,13 +184,22 @@ describe('Stopping and turning on again', () => {
     expect(enabled.state).toBe('available');
   });
 
-  it('turns a finished tutorial on again with every quest still completed', async () => {
+  it('leaves a finished tutorial finished when every quest is still completed', async () => {
     const user = await enabledUser();
     await completeAll(app, user);
 
     const again = await tutorialAfter(postTutorial(app, user, 'enable'));
 
-    expect(again.state).toBe('active');
+    expect(again.state).toBe('finished');
     expect(again.quests.map(({ status }) => status)).toEqual(Array.from({ length: 5 }, () => 'completed'));
+    expect((await tutorialAfter(getTutorial(app, user))).state).toBe('finished');
+  });
+
+  it('leaves a stopped and finished tutorial finished', async () => {
+    const user = await enabledUser();
+    await completeAll(app, user);
+    await tutorialAfter(postTutorial(app, user, 'stop'));
+
+    expect((await tutorialAfter(postTutorial(app, user, 'enable'))).state).toBe('finished');
   });
 });

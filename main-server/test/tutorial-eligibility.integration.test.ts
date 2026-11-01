@@ -33,17 +33,22 @@ describe('A User admitted this year', () => {
     const user = await signInUser(app);
     await admitIn(app, user, yearInKorea());
 
-    expect((await tutorialAfter(getTutorial(app, user))).state).toBe('available');
+    const tutorial = await tutorialAfter(getTutorial(app, user));
+
+    expect(tutorial.state).toBe('available');
+    expect(tutorial.eligibleByDefault).toBe(true);
   });
 
-  it('keeps it on after changing the admission year', async () => {
+  it('keeps it on after changing the admission year, no longer eligible by default', async () => {
     const user = await signInUser(app);
     await admitIn(app, user, yearInKorea());
     await tutorialAfter(getTutorial(app, user));
 
     await admitIn(app, user, yearInKorea() - 3);
 
-    expect((await tutorialAfter(getTutorial(app, user))).state).toBe('available');
+    const tutorial = await tutorialAfter(getTutorial(app, user));
+    expect(tutorial.state).toBe('available');
+    expect(tutorial.eligibleByDefault).toBe(false);
   });
 
   it('does not find it on again after stopping it', async () => {
@@ -55,13 +60,25 @@ describe('A User admitted this year', () => {
     expect((await tutorialAfter(getTutorial(app, user))).state).toBe('stopped');
   });
 
-  it('finds it on when the admission year is given after closing the 내 정보 row', async () => {
+  it('finds it on, the row shown again, when the admission year is given after closing the 내 정보 row', async () => {
     const user = await signInUser(app);
     await tutorialAfter(postTutorial(app, user, 'hide-row'));
 
     await admitIn(app, user, yearInKorea());
 
-    expect((await tutorialAfter(getTutorial(app, user))).state).toBe('available');
+    expect(await tutorialAfter(getTutorial(app, user))).toMatchObject({ state: 'available', rowHidden: false });
+  });
+});
+
+describe('Eligible by default', () => {
+  it('is said in the replies of the POSTs too, stopped or not', async () => {
+    const user = await signInUser(app);
+    await admitIn(app, user, yearInKorea());
+
+    expect(await tutorialAfter(postTutorial(app, user, 'stop'))).toMatchObject({
+      state: 'stopped',
+      eligibleByDefault: true,
+    });
   });
 });
 
@@ -76,6 +93,8 @@ describe('Any other User', () => {
     const tutorial = await tutorialAfter(getTutorial(app, user));
 
     expect(tutorial.state).toBe('off');
+    expect(tutorial.eligibleByDefault).toBe(false);
+    expect(tutorial.rowHidden).toBe(false);
     expect(tutorial.quests.map(({ status }) => status)).toEqual(Array.from({ length: 5 }, () => 'notStarted'));
   });
 
@@ -94,6 +113,19 @@ describe('Any other User', () => {
     expect((await tutorialAfter(postTutorial(app, user, 'hide-row'))).state).toBe('off');
     expect((await tutorialAfter(postTutorial(app, user, 'hide-row'))).state).toBe('off');
   });
+
+  it('reads the 내 정보 row hidden after closing it, until turning the tutorial on', async () => {
+    const user = await signInUser(app);
+    const hidden = await tutorialAfter(postTutorial(app, user, 'hide-row'));
+
+    const read = await tutorialAfter(getTutorial(app, user));
+    const enabled = await tutorialAfter(postTutorial(app, user, 'enable'));
+
+    expect(hidden.rowHidden).toBe(true);
+    expect(read).toMatchObject({ state: 'off', rowHidden: true });
+    expect(enabled).toMatchObject({ state: 'available', rowHidden: false });
+    expect((await tutorialAfter(getTutorial(app, user))).rowHidden).toBe(false);
+  });
 });
 
 describe.skipIf(!HAS_AFFILIATION)('An exchange student', () => {
@@ -102,7 +134,7 @@ describe.skipIf(!HAS_AFFILIATION)('An exchange student', () => {
     await admitIn(app, user, yearInKorea() - 1);
     await patchProfile(app, user.accessToken, { affiliation: 'exchange' }).expect(200);
 
-    expect((await tutorialAfter(getTutorial(app, user))).state).toBe('available');
+    expect(await tutorialAfter(getTutorial(app, user))).toMatchObject({ state: 'available', eligibleByDefault: true });
   });
 });
 
