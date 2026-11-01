@@ -11,6 +11,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { DynamicModule, INestApplication, Type } from '@nestjs/common';
@@ -23,6 +24,7 @@ import { JSON_BODY_LIMIT } from '../src/common/json-body-limit.js';
 import { Settings } from '../src/common/settings.js';
 import { FETCH_MATCH_SERVER } from '../src/matching/match-server.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../src/travel/travel.js';
+import { TUTORIAL_FILE_PATH } from '../src/tutorial/tutorial-content.js';
 import { FETCH_KAKAO } from '../src/walking-route/walking-route.service.js';
 import { TestGoogleIdTokenVerifier } from './google.js';
 import { refuseMatchServer } from './match-server.js';
@@ -35,7 +37,8 @@ import { refuseKakao } from './walking-route.js';
 // fails every call.
 // `controllers` adds controllers that exist only in the tests, such as handlers that no feature has yet, and `modules`
 // modules that only the tests or the benchmark import, such as the one binding the benchmark's run observer. `travel`,
-// when given, answers in the place of the real Travel Times.
+// when given, answers in the place of the real Travel Times. `tutorialFile`, when given, is read as the tutorial's content
+// in the place of content/tutorial.yaml.
 export async function startApp(
   settings: Partial<Record<keyof Settings, string | undefined>>,
   controllers: Type[] = [],
@@ -44,6 +47,7 @@ export async function startApp(
   model: Model = new ScriptedModel().model,
   modules: (Type | DynamicModule)[] = [],
   travel?: TravelProvider,
+  tutorialFile?: string,
 ): Promise<INestApplication<Server>> {
   for (const [name, value] of Object.entries(settings)) {
     vi.stubEnv(name, value);
@@ -55,6 +59,9 @@ export async function startApp(
   const testing = Test.createTestingModule({ imports: [AppModule, ...modules], controllers });
   if (travel !== undefined) {
     testing.overrideProvider(TRAVEL_PROVIDER).useValue(travel);
+  }
+  if (tutorialFile !== undefined) {
+    testing.overrideProvider(TUTORIAL_FILE_PATH).useValue(tutorialFile);
   }
   const moduleRef = await testing
     .overrideProvider(GoogleIdTokenVerifier)
