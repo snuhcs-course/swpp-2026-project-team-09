@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type ReactElement, type RefObject, useState } from 'react';
-import { type StyleProp, StyleSheet, TextInput, type TextStyle } from 'react-native';
+import { type KeyboardTypeOptions, type StyleProp, StyleSheet, TextInput, type TextStyle } from 'react-native';
 import { color, radius, size, space, text } from '@/design-system';
 import { cut } from './length';
 
@@ -26,6 +27,8 @@ interface InputProps {
   onSubmit?: () => void;
   // Tells a screen reader what is wrong with what was typed.
   hint?: string;
+  // The phone's own keyboard for it, such as the digits' for a 학번.
+  keyboardType?: KeyboardTypeOptions;
   style?: StyleProp<TextStyle>;
   ref?: RefObject<TextInput | null>;
 }
@@ -38,6 +41,7 @@ export function Input({ label, value, onChangeText, placeholder, most, style, re
     <TextInput
       accessibilityHint={on.hint}
       accessibilityLabel={label}
+      keyboardType={on.keyboardType}
       onBlur={() => {
         setFocused(false);
         on.onBlur?.();

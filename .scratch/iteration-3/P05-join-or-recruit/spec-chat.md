@@ -114,7 +114,7 @@ Words: a **Full** Quest has as many Holders as its capacity. A Quest's start is 
 
 ### Metrics (first tickets)
 
-- The cases, both worlds, the labels and every threshold of evaluations C and D in `iter3-p5 메트릭.md` are committed before the first run, as C0, and R0 runs on the code before this work. Every later run changes one thing. P04's chat PRs landed after R0, so R0p repeats R0 on the code just before ticket 10a and is what R0a is compared with; it is no P05 change. R0a comes after ticket 10a, R1 after ticket 10, R2 after 11, R3 after 12.
+- The cases, both worlds, the labels and every threshold of evaluations C and D in `iter3-p5 메트릭.md` are committed before the first run, as C0, and R0 runs on the code before this work. Each run changes one thing, except that the P05 owner decided on 2026-11-01 to measure tickets 10, 11, 12 and 12a together, in one run, to save time and cost. P04's chat PRs landed after R0, so R0p repeats R0 on the code just before ticket 10a and is what R0a is compared with; it is no P05 change. R0a comes after ticket 10a, and R1 after ticket 12a.
 - The small world's answers are drafted, as P04's are, by an agent in a separate session that sees only the rules above, the world and the case, never the Assistant's prompts, tools or code. The P05 owner reviews every draft and records each change with its reason. A second labeller labels an overlapping part from scratch, without the drafts, and the agreement is reported. The large world's answers are computed, and only its wordings are checked by a person.
 
 ## Testing Decisions
@@ -123,7 +123,7 @@ Words: a **Full** Quest has as many Holders as its capacity. A Quest's start is 
 - **Assistant over HTTP with the model scripted** (prior art: the `assistant-global-events` and `assistant-recruiting-quests` integration tests and the scripted model): a scripted model calls a tool with given inputs, and the test checks the tool's result: the window by overlap and the end-of-day default, Quests by start, Quests for an event kept until it ends, started, Full and already requested Quests dropped, `minPlacesLeft` and capacity, Shared Quests held, the radius and words-only Quests, the Global Event's time and place read for attending Sub Quests, 30 candidates and 150 characters, words ranking but not filtering.
 - **The eval harness's own tests** (prior art: the `eval-*` unit and integration tests) cover the suite, both worlds, the loader, the new checks and the scorer.
 - **The large world without a model**, in CI: the search tools called with each case's intended inputs return every expected card (server recall). It lands with ticket 10, which makes it pass; until then the cases it needs are marked as expected to fail.
-- **Eval cases with the real model**, outside CI: evaluations C and D in both worlds, R0 to R3, recorded as the metrics document's section 4 says.
+- **Eval cases with the real model**, outside CI: evaluations C and D in both worlds, R0, R0p, R0a and R1, recorded as the metrics document's section 4 says.
 
 ## Out of Scope
 

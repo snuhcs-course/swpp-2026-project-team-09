@@ -1,0 +1,21 @@
+quests:
+  - key: s-card
+    order: 1
+    title: 학생증 발급받기
+    brief: 학생증을 받아 보세요.
+    body: [학생증은 학교생활 곳곳에서 써요.]
+    condition: 학생증 받기
+    completion: { kind: button }
+    completionMessage: 잘했어요!
+    places: []
+    links: []
+  - key: s-card
+    order: 2
+    title: 학생증 다시 받기
+    brief: 학생증을 한 번 더 받아 보세요.
+    body: [학생증은 학교생활 곳곳에서 써요.]
+    condition: 학생증 받기
+    completion: { kind: button }
+    completionMessage: 잘했어요!
+    places: []
+    links: []
