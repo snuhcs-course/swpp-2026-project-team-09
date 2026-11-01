@@ -9,7 +9,7 @@ The cause is known, from R0's traces (`main-server/eval/p5/r0.md`, "빈 답 503"
 **Status:** ready-for-agent
 
 - [ ] When the last step's text is empty, the reply takes the text of the latest step that has any.
-- [ ] When no step has text and the reply holds cards, map buttons or a Proposal, the reply carries a fixed sentence, such as "찾은 결과예요.", and what was shown. The server logs that it was used.
+- [ ] When no step has text and the reply holds cards, map buttons or a Proposal, the reply carries a fixed sentence, such as "찾은 결과예요.", and what was shown. The server logs that it was used. No run of R0 had this shape, so this is a guard, and R0a will not measure it.
 - [ ] With no text and nothing shown, or at the step limit, the answer stays 503.
 - [ ] A last step that has text is used as today, whatever earlier steps wrote.
 - [ ] Integration tests with the scripted model cover each of these.
