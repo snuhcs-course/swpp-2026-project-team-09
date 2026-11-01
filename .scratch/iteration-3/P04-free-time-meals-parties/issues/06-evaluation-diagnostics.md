@@ -1,7 +1,7 @@
 # 06: What the evaluation shows beyond its thresholds
 
 Parent: [P04 spec](../spec.md) ("Evaluation plan")
-Status: ready-for-agent
+Status: ready-for-human
 Blocked by: None
 
 ## What to build
@@ -23,16 +23,16 @@ The work lands as two pull requests with different deadlines. An item marked **P
 
 Declared in a new evidence file beside the walking evaluation, which does not change. It lands on `3.0/Main` before any pair is walked.
 
-- [ ] **Walking diagnostics**, read from the same 30 walked times. No extra walk is needed.
+- [x] **Walking diagnostics**, read from the same 30 walked times. No extra walk is needed.
   - **Late risk:** the share of pairs where walked − predicted is more than 120 seconds, for the table and for the baseline.
   - **Speed factor:** k = Σ(walked × table) / Σ(table²), the one factor that best scales the table to the walks.
   - **The pairs that tell them apart:** the MAE of the table and of the baseline over pairs 5, 11, 15, 20, 22, 23, 24 and 27, where the two differ by more than 2 minutes at the freeze.
-- [ ] **Who walks.** TaeHyun79 walks all 30 pairs, so that k reads one person's pace.
-- [ ] **Calibration.** The 13 calibration pairs are walked only when a threshold is missed or k is outside 0.9–1.1.
+- [x] **Who walks.** TaeHyun79 walks all 30 pairs, so that k reads one person's pace.
+- [x] **Calibration.** The 13 calibration pairs are walked only when a threshold is missed or k is outside 0.9–1.1.
   - The fit uses the calibration pairs only, never the test pairs: speed and the climb value, by ordinary least squares over all 13 pairs, once, with nothing else changed. [The evidence file](../evidence/06-walking-and-ride-diagnostics.md) gives the rule.
   - The calibrated table is scored against the same 30 walked times as a new entry, beside the original result.
   - When neither condition holds, nothing is calibrated and the reason is recorded.
-- [ ] **Real shuttle rides.** The procedure is declared here, and the rides are Person work below.
+- [x] **Real shuttle rides.** The procedure is declared here, and the rides are Person work below.
   - 5 rides in service hours on 11-02, in one band. So only that band is compared.
   - At least 2 rides include the longest segment, 신소재공동연구소 → 302동 (1,096 m).
   - Each ride records the date, the rider, the boarding and alighting stops, and the times of reaching the stop, boarding and alighting.
@@ -53,20 +53,20 @@ Declared in a new evidence file beside the walking evaluation, which does not ch
   - A case runs 3 times, as in the fixed set.
 - [ ] **Who rewords.** A separate session drafts the wordings. It sees the original questions and the world, not the prompts, the tools or the code. It may use abbreviations, spoken wording and another word order, and adds no condition.
 - [ ] **Person: the wordings.** TaeHyun79 reviews the 12 and confirms each still has its original's answer.
-- [ ] **Kept apart.** The holdout has its own command. `pnpm eval --world p4` still runs exactly the 40 cases, and their pinned counts do not change.
-- [ ] **How it is read.**
+- [x] **Kept apart.** The holdout has its own command. `pnpm eval --world p4` still runs exactly the 40 cases, and their pinned counts do not change.
+- [x] **How it is read.**
   - It runs twice: with the first official run, and on the final code of P11.
   - Only the pass rates and the layer rates are read. No holdout failure is opened until P11 is over.
   - The record sets its pass rate beside that of the same 12 fixed-set cases in the same run.
-- [ ] **The report by layer.** The P4 suite's scorecard shows, as P05's does for its suite, computed from a stored run without the model:
+- [x] **The report by layer.** The P4 suite's scorecard shows, as P05's does for its suite, computed from a stored run without the model:
   - each threshold's pass or fail: overall and per category;
   - the pass rate of 6 layers: the action, the tools, the arguments, the cards with the map buttons, the Proposal, and the reply's words (`text.mentions` and `text.absent`). A run counts in a layer only when its case checks that layer;
   - the runs that failed on the reply's words alone.
-- [ ] **The record of runs.** A file beside the suite holds, per official run, the model with its `canonical_slug` that day, the decoding settings, the limits, the commit, the date, the command and the scores.
+- [x] **The record of runs.** A file beside the suite holds, per official run, the model with its `canonical_slug` that day, the decoding settings, the limits, the commit, the date, the command and the scores.
   - Each run after the first has one line: hypothesis → what changed → the cases that changed → kept or reverted.
   - Its first entry is the smoke run: `parties-named-classes`, 3 runs on `871886a`, 2026-11-01, not scored, and nothing changed because of it.
   - The walked times stay in ticket 01's `## Comments`, as the walking evaluation says. The wiki gets the summary in P20.
-- [ ] **The regression of tickets 03 and 05, from runs that exist.** Nothing is run for this.
+- [x] **The regression of tickets 03 and 05, from runs that exist.** Nothing is run for this.
   - The baseline is the three P19 runs of P05's R0 on `28c0ce1`, in place of `c94bcc7`, which never ran. It holds the same assistant code, model and limits.
   - The later runs are the three P19 runs of P05's R0p on `871886a`: P04's chat, with no change of P05.
   - The rule and "no case may newly fail" stay. Read by it, this is a fail, with three cases: `follow-up-yes-after-menus` (0 → 3 failed runs), `compound-menus-and-shuttle` (1 → 2) and `follow-up-seven-oclock` (1 → 2).
@@ -89,3 +89,18 @@ Nothing to build here. P11 follows these, and the first official run waits for P
 - A floor beside "no case may newly fail".
 - A git tag for the freeze. The wiki gives the commit `d0cb28d`.
 - A second labeller, or comparing against a chat with the judgement in the model.
+
+## Comments
+
+### Part 1 (2026-11-01)
+
+Declared in [evidence/06-walking-and-ride-diagnostics.md](../evidence/06-walking-and-ride-diagnostics.md). The file goes beyond the ticket's wording in a few places: the rider names the band before the first ride, a ride's band is that of the time of reaching the stop, a pair and band with no logged median is compared with the fallback only, the rides are on route 41946, the same walker walks the calibration pairs, and k is never applied to the table. The Person walks and rides remain.
+
+### Part 2 (2026-11-01)
+
+- The 12 wordings in `main-server/eval/p4/holdout.yaml` are a draft until TaeHyun79 reviews them, so "The holdout set", "Who rewords" and "Person: the wordings" stay open. `reviewedBy` and `reviewedOn` are set with the review.
+- The drafting agent was given the 12 questions and `world.yaml`, with each question's clock, asker and earlier turns, since a follow-up such as "운동만" has no meaning without them. It was also told to keep people's and places' names as written, because the cases check those words as arguments.
+- The report reads the action as if the reply's words were right, since the scorer's action check also reads the mentions. So a run's failure lands in the lowest layer that needs fixing.
+- A run of the holdout gets a scorecard of rates only, and `pnpm eval:compare` refuses it, so that no failure of it is opened by accident.
+- The regression is recorded in `main-server/eval/p4/record.md`: a fail by the rule, with one real tool-choice fault (`follow-up-yes-after-menus`) and two failures of the words alone.
+- Part 1's boxes are ticked here because PR #159 was to add only the ticket and the evidence file.
