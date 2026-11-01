@@ -129,6 +129,28 @@ describe('The action layer', () => {
     expect(report.wordsAlone).toEqual([{ id: 'asks', repetition: 1 }]);
   });
 
+  it('wants a reply that asks, since words alone do not make it a question', () => {
+    const report = p4Report(runOf([askRun('이민수님이랑 드시면 돼요.')]), SUITE);
+
+    expect(layerOf(report, 'Action')).toEqual({ layer: 'Action', k: 0, n: 1 });
+    expect(report.wordsAlone).toEqual([]);
+  });
+
+  it('reads a "none" without its times as the words alone, however the times would run together', () => {
+    const none = call('findMealRestaurants', {}, { result: 'none', why: 'no-menu' });
+    const expected = expectOf({ actions: ['TOOL'], text: { mentions: ['13:45', '14:00'] } });
+    const said = caseRun({
+      id: 'n',
+      category: 'other',
+      expect: expected,
+      turns: [turn({ steps: [[none]], text: '없어요' })],
+    });
+    const report = p4Report(runOf([said]), SUITE);
+
+    expect(layerOf(report, 'Action')).toEqual({ layer: 'Action', k: 1, n: 1 });
+    expect(report.wordsAlone).toEqual([{ id: 'n', repetition: 1 }]);
+  });
+
   it('reads a wrong action as wrong whatever the words', () => {
     const offered = turn({ steps: [[severalFriends]], text: '만들어 드릴게요.', proposal });
     const report = p4Report(runOf([caseRun({ id: 'asks', category: 'other', expect: asks, turns: [offered] })]), SUITE);

@@ -29,7 +29,7 @@ export function p4Holdout(): Holdout {
 }
 
 // The case with its last User turn in other words.
-function reworded(original: EvalCase, user: string): EvalCase {
+function withLastTurn(original: EvalCase, user: string): EvalCase {
   return {
     ...original,
     id: `holdout-${original.id}`,
@@ -44,7 +44,7 @@ export function holdoutCases(cases: readonly EvalCase[], { wordings }: Holdout =
     if (original === undefined) {
       throw new Error(`The holdout rewords ${of}, which no case is`);
     }
-    return reworded(original, user);
+    return withLastTurn(original, user);
   });
 }
 

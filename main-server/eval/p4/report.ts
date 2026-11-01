@@ -10,7 +10,8 @@ import { z } from 'zod';
 import { type Expect, expectSchema } from '../expect.ts';
 import { type Names, namesOf } from '../normalise.ts';
 import { allCategories, type RunScore } from '../run-score.ts';
-import { type CaseScore, type Check, scoreTurn } from '../score.ts';
+import { asksBack } from '../observed.ts';
+import { type CaseScore, type Check, scoreTurn, type TurnScore } from '../score.ts';
 import { type TurnTrace } from '../trace.ts';
 import { p4Holdout } from './holdout.ts';
 
@@ -80,21 +81,28 @@ const LAYERS: readonly Layer[] = [
   { layer: WORDS, checks: ['text.mentions', 'text.absent'], checkedBy: ({ text }) => text !== undefined },
 ];
 
-function spaceless(text: string): string {
-  return text.replaceAll(/\s/gu, '');
-}
+// Keeps one word from running into the next: the scorer ignores spaces, and reads a word that starts with a digit only
+// where no digit comes before it.
+const WORD_BREAK = ' · ';
 
-// The reply as if its words were right: without the words it must not hold, and with one word of each mention.
-function withRightWords(trace: TurnTrace, { text }: Expect): TurnTrace {
-  if (trace.reply === null || text === undefined) {
+// The reply as if it held every mention.
+function withMentions(trace: TurnTrace, { text }: Expect): TurnTrace {
+  if (trace.reply === null || text?.mentions === undefined) {
     return trace;
   }
-  const kept = (text.absent ?? []).reduce(
-    (written, word) => written.replaceAll(spaceless(word), ''),
-    spaceless(trace.reply.text),
-  );
-  const mentioned = (text.mentions ?? []).map((mention) => (typeof mention === 'string' ? mention : mention[0]));
-  return { ...trace, reply: { ...trace.reply, text: [kept, ...mentioned].join(' ') } };
+  const mentioned = text.mentions.map((mention) => (typeof mention === 'string' ? mention : mention[0]));
+  return { ...trace, reply: { ...trace.reply, text: [trace.reply.text, ...mentioned].join(WORD_BREAK) } };
+}
+
+// The scorer's action check also reads the words: an ASK without its mentions, or a lookup that found nothing and a
+// reply that does not say so, fails it. So the action is read as if the words were right, and such a run fails in the
+// words alone, which is where it would need fixing. Words do not make a reply a question, so an ASK must also ask.
+function actionRight(score: TurnScore, trace: TurnTrace, expect: Expect, names: Names): boolean {
+  if (score.recalled) {
+    return true;
+  }
+  const { action, recalled } = scoreTurn(withMentions(trace, expect), expect, names);
+  return recalled && (action !== 'ASK' || asksBack(trace.reply?.text ?? ''));
 }
 
 interface RunLayers {
@@ -105,10 +113,6 @@ interface RunLayers {
   failed: string[];
 }
 
-// A run's layers. The scorer's action check also reads the words: an ASK without its mentions, or a lookup that found
-// nothing and a reply that does not say so, fails it. So the action is read as if the words were right, and such a run
-// fails in the words alone, which is where it would need fixing. An ASK is only ever read from its words, so a reply
-// that does not ask at all counts there too, unless it did something else instead.
 function layersOf({ run, turns }: CaseScore, names: Names): RunLayers | null {
   const last = turns.at(-1);
   const written = run.turnExpects.at(-1) ?? run.expect;
@@ -116,21 +120,16 @@ function layersOf({ run, turns }: CaseScore, names: Names): RunLayers | null {
     return null;
   }
   const expect = expectSchema.parse(written);
-  const { checks } = last.score;
-  const actionRight = scoreTurn(withRightWords(last.trace, expect), expect, names).checks.some(
-    ({ name, passed }) => name === 'action' && passed,
-  );
-  const failedChecks = new Set(
-    checks.filter(({ name, passed }) => !passed && name !== 'action').map(({ name }) => name),
-  );
-  const held = LAYERS.filter(({ checkedBy }) => checkedBy(expect));
-  const failed = held.filter(({ layer, checks: read }) =>
-    layer === 'Action' ? !actionRight : read.some((name) => failedChecks.has(name)),
-  );
+  const failedChecks = new Set(last.score.checks.filter(({ passed }) => !passed).map(({ name }) => name));
+  if (actionRight(last.score, last.trace, expect, names)) {
+    failedChecks.delete('action');
+  }
+  const checked = LAYERS.filter(({ checkedBy }) => checkedBy(expect));
+  const failed = checked.filter(({ checks }) => checks.some((name) => failedChecks.has(name)));
   return {
     id: run.id,
     repetition: run.repetition,
-    checked: held.map(({ layer }) => layer),
+    checked: checked.map(({ layer }) => layer),
     failed: failed.map(({ layer }) => layer),
   };
 }
@@ -145,16 +144,16 @@ function ratesOf(score: RunScore, { cases, score: wanted }: P4Suite): RateScore[
     return { k: category?.passed ?? 0, n: category?.runs ?? 0 };
   };
   const isWhole = (name: string): boolean => ofCategory(name).n === (cases[name] ?? 0) * wanted.runs;
-  const names = Object.keys(cases);
+  const categories = Object.keys(cases);
   const { passed, runs } = allCategories(score);
   return [
     rateOf(
       'Overall',
       wanted.overall,
       { k: passed, n: runs },
-      names.every((name) => isWhole(name)),
+      categories.every((name) => isWhole(name)),
     ),
-    ...names.map((name) => rateOf(name, wanted.perCategory, ofCategory(name), isWhole(name))),
+    ...categories.map((name) => rateOf(name, wanted.perCategory, ofCategory(name), isWhole(name))),
   ];
 }
 

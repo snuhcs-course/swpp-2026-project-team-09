@@ -14,7 +14,7 @@
 # earlier turns, and never the prompts, the tools or the code.
 #
 # It runs twice: with the first official run, and on the final code of P11. Only the pass rates and the layer rates are
-# read, which is all its scorecard holds. No holdout failure is opened until P11 is over.
+# read, and its scorecard names no case. No holdout failure is opened until P11 is over.
 
 draftedBy: Claude Opus 5.5 (claude-opus-5-5)
 draftedOn: '2026-11-01'

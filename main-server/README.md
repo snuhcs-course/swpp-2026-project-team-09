@@ -2245,8 +2245,8 @@ and the action is read as if the words were right, so that a failure lands in th
 
 `pnpm eval:holdout` runs the suite's holdout, 12 of its cases with only the last User turn reworded
 (`eval/p4/holdout.yaml`), which P11 does not tune on. Nothing else reaches those wordings, so `pnpm eval --world p4`
-still runs exactly the 40 cases. Its scorecard holds only the pass rates and the layer rates, naming no case, and
-`pnpm eval:compare` refuses its runs. `eval/p4/record.md` is the record of the suite's runs.
+still runs exactly the 40 cases. Its scorecard gives the pass rates and the layer rates, with what the run cost and its
+settings, and names no case, and `pnpm eval:compare` refuses its runs. `eval/p4/record.md` is the record of the suite's runs.
 
 #### The P05 suite
 

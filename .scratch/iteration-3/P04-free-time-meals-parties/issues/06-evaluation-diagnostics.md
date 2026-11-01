@@ -100,7 +100,7 @@ Declared in [evidence/06-walking-and-ride-diagnostics.md](../evidence/06-walking
 
 - The 12 wordings in `main-server/eval/p4/holdout.yaml` are a draft until TaeHyun79 reviews them, so "The holdout set", "Who rewords" and "Person: the wordings" stay open. `reviewedBy` and `reviewedOn` are set with the review.
 - The drafting agent was given the 12 questions and `world.yaml`, with each question's clock, asker and earlier turns, since a follow-up such as "운동만" has no meaning without them. It was also told to keep people's and places' names as written, because the cases check those words as arguments.
-- The report reads the action as if the reply's words were right, since the scorer's action check also reads the mentions. So a run's failure lands in the lowest layer that needs fixing.
-- A run of the holdout gets a scorecard of rates only, and `pnpm eval:compare` refuses it, so that no failure of it is opened by accident.
+- The report reads the action as if the reply's words were right, since the scorer's action check also reads the mentions, and a bare ASK must also end by asking. So a run's failure lands in the lowest layer that needs fixing.
+- A run of the holdout gets a scorecard that names no case, and `pnpm eval:compare` refuses it, so that no failure of it is opened by accident.
 - The regression is recorded in `main-server/eval/p4/record.md`: a fail by the rule, with one real tool-choice fault (`follow-up-yes-after-menus`) and two failures of the words alone.
 - Part 1's boxes are ticked here because PR #159 was to add only the ticket and the evidence file.

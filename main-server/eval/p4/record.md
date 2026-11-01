@@ -8,7 +8,7 @@ The walked times stay in ticket 01's `## Comments`, as the walking evaluation sa
 
 `pnpm eval:holdout` runs the 12 reworded cases of `holdout.yaml`, 3 times each. It runs twice: with the first official run, and on the final code of P11.
 
-- Only the pass rates and the layer rates are read, and the holdout's scorecard holds nothing else.
+- Only the pass rates and the layer rates are read. The holdout's scorecard gives those, with what the run cost and its settings, and names no case and holds no reply.
 - No holdout failure is opened until P11 is over.
 - An entry sets the holdout's pass rate beside that of the same 12 fixed-set cases in the official run on that commit. The official scorecard gives that rate.
 
@@ -24,11 +24,11 @@ No official run yet. It waits for P05's ticket 10a and for a person to confirm t
 | Date | 2026-11-01, 17:32 KST |
 | Commit | `871886a` |
 | Command | `pnpm eval --world p4 --case parties-named-classes --model anthropic/claude-haiku-5.5 --budget 0.5` |
-| Model | `anthropic/claude-haiku-5.5`; that day's `canonical_slug` was `anthropic/claude-haiku-5.5-20261007` |
+| Model | `anthropic/claude-haiku-5.5`; that day's `canonical_slug` was `anthropic/claude-haiku-5.5-20261007`, as P05's R0 looked it up on 2026-11-01 |
 | Decoding | Provider defaults: no temperature, top-p or seed passed |
 | Limits | 8 steps, 30 s, 1,000 output tokens |
 | Usage | Input 172,383, output 3,232, USD 0.0189 |
-| Result file | `eval/results/2026-11-01-871886a-anthropic_claude-haiku-5.5-s8-t30000-o1000-tempdefault-toppdefault` |
+| Result file | `eval/results/2026-11-01-871886a-anthropic_claude-haiku-5.5-s8-t30000-o1000-tempdefault-toppdefault`, kept locally and not committed |
 
 It was run to see that the suite reaches the real model. It is not scored, and nothing changed because of it. Its finding, a reply that leaves out the gap and the count, is not fixed before the first official run.
 
@@ -57,13 +57,15 @@ The other cases that moved did not newly fail. 8 failed less often, and 4 failed
 
 ### Why each one failed
 
-**`follow-up-yes-after-menus`.** The User asked "내일 학생회관에서 점심", the Assistant offered to make the plan and asked who comes, and the User said "응 김지은이랑". In all 3 baseline runs the model called `proposeQuest`. In all 3 later runs it called `resolveFriend`, then `findMealRestaurants` and `showRestaurants`, and never `proposeQuest`. The third also ended in an empty reply and a 503.
+**`follow-up-yes-after-menus`.** The User asked "내일 학생회관에서 점심", the Assistant offered to set up the lunch and asked who comes, and the User said "응 김지은이랑". In all 3 baseline runs the model called `proposeQuest`. In all 3 later runs it called `resolveFriend`, then `findMealRestaurants` and `showRestaurants`, and never `proposeQuest`. The third also ended in an empty reply and a 503.
 
-By the 공강 rules, **the case's `proposeQuest` is right and `findMealRestaurants` is wrong.** `findMealRestaurants` is for Friends with a day and a meal and no Place, and a request that names a Place is a 파티 to propose. Here the conversation names 학생회관, and "응 김지은이랑" only answers the Assistant's question about that plan. The model read the last turn alone. The rules do not say in words that a Place from an earlier turn counts, so this is a judgement of what the rule means. The case and its label stand. It is the one real tool-choice fault of the three.
+By the 공강 rules, **the case's `proposeQuest` is right and `findMealRestaurants` is wrong.** `findMealRestaurants` is for Friends with a day and a meal and no Place, and a request that names a Place is a 파티 to propose. Here the conversation names 학생회관, and "응 김지은이랑" only answers the Assistant's question about it. The case and its label stand. It is the one real tool-choice fault of the three.
+
+The model did keep the earlier turns: it passed tomorrow's lunch and showed only 학생회관식당. So it took 학생회관 as which Restaurant to show, not as a Place named in the request. Two things in the rules may lead there, and the traces cannot tell which did. They do not say in words that a Place from an earlier turn counts, and their follow-up rule says a follow-up calls `resolveFriend` and then `findMealRestaurants` again.
 
 **`compound-menus-and-shuttle`.** The tools, their arguments and the two map buttons are right in all 3 later runs. In the 2 failed runs the reply says only that the menus and the shuttle are on the map ("지도에 표시해 두었어요"), with neither the dishes nor the stops. The baseline's one failure was of another kind, an empty reply and a 503.
 
-**`follow-up-seven-oclock`.** The Proposal is right in all 6 runs, at 19:00, and no new tool is called. The case also wants the reply to check the time against the morning, through the words 오전, 아침 or 07:00. The 2 failed later runs say the plan moved from lunch to dinner and offer to change it back, without those words. The baseline's one failure was of the same kind.
+**`follow-up-seven-oclock`.** The Proposal is right in all 6 runs, at 19:00, and no new tool is called. The case also wants the reply to check the time against the morning, through the words 오전, 아침 or 07:00. The 2 failed later runs say the time moved from lunch to dinner and offer to change it back, without those words. The baseline's one failure was of the same kind.
 
 The last two are a change of one run each, on replies that vary between runs. These traces cannot tell whether P04's longer prompt caused them.
 
