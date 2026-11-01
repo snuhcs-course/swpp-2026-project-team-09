@@ -40,6 +40,7 @@
     "react-native-svg": "15.15.4",
     "react-native-view-shot": "5.1.0",
     "react-native-web": "~0.21.0",
+    "react-native-webview": "13.16.1",
     "react-native-worklets": "0.10.1",
     "socket.io-client": "^4.8.4"
   },
@@ -78,7 +79,8 @@
         "displayName": "unit",
         "preset": "jest-expo",
         "setupFiles": [
-          "react-native-gesture-handler/jestSetup"
+          "react-native-gesture-handler/jestSetup",
+          "<rootDir>/__tests__/support/jest-setup.ts"
         ],
         "moduleNameMapper": {
           "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock"
@@ -91,7 +93,8 @@
         "displayName": "integration",
         "preset": "jest-expo",
         "setupFiles": [
-          "react-native-gesture-handler/jestSetup"
+          "react-native-gesture-handler/jestSetup",
+          "<rootDir>/__tests__/support/jest-setup.ts"
         ],
         "moduleNameMapper": {
           "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock"

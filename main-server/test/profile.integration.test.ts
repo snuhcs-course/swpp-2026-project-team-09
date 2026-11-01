@@ -4,6 +4,7 @@
  * 2026-09-30  Opus 5.5   prompted by fyoon46
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,8 +14,15 @@ import { inject } from 'vitest';
 import { z } from 'zod';
 import { A_FRIEND_ID } from './friends.js';
 import { googleSubject } from './google.js';
-import { getProfile, patchProfile } from './profile.js';
-import { getMe, ONBOARDED_PROFILE, signIn, signInAsAdministrator } from './sign-in.js';
+import { getProfile, NO_LIBRARY_DETAILS, patchProfile } from './profile.js';
+import {
+  getMe,
+  ONBOARDED_PROFILE,
+  postOnboarding,
+  signIn,
+  signInAsAdministrator,
+  signInBeforeOnboarding,
+} from './sign-in.js';
 import { startApp } from './start-app.js';
 
 const settings = inject('settings');
@@ -35,7 +43,13 @@ describe('Reading the profile', () => {
     const response = await getProfile(app, accessToken);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ ...ONBOARDED_PROFILE, admissionYear: null, hashtags: [], friendId: A_FRIEND_ID });
+    expect(response.body).toEqual({
+      ...ONBOARDED_PROFILE,
+      admissionYear: null,
+      hashtags: [],
+      friendId: A_FRIEND_ID,
+      ...NO_LIBRARY_DETAILS,
+    });
   });
 });
 
@@ -47,7 +61,7 @@ describe('Editing the profile', () => {
     const response = await patchProfile(app, accessToken, edited);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ ...edited, friendId: A_FRIEND_ID });
+    expect(response.body).toEqual({ ...edited, friendId: A_FRIEND_ID, ...NO_LIBRARY_DETAILS });
     expect((await getProfile(app, accessToken)).body).toEqual(response.body);
   });
 
@@ -63,18 +77,29 @@ describe('Editing the profile', () => {
       admissionYear: 2022,
       hashtags: ['러닝'],
       friendId: A_FRIEND_ID,
+      ...NO_LIBRARY_DETAILS,
     });
   });
+});
 
+describe('Emptying fields of the profile', () => {
   it('empties the admission year with null and the hashtags with an empty list', async () => {
     const { accessToken } = await signIn(app);
     await patchProfile(app, accessToken, { admissionYear: 2023, hashtags: ['러닝'] });
 
     const response = await patchProfile(app, accessToken, { admissionYear: null, hashtags: [] });
 
-    expect(response.body).toEqual({ ...ONBOARDED_PROFILE, admissionYear: null, hashtags: [], friendId: A_FRIEND_ID });
+    expect(response.body).toEqual({
+      ...ONBOARDED_PROFILE,
+      admissionYear: null,
+      hashtags: [],
+      friendId: A_FRIEND_ID,
+      ...NO_LIBRARY_DETAILS,
+    });
   });
+});
 
+describe('Editing the profile with spaces', () => {
   it('saves text without the spaces around it', async () => {
     const { accessToken } = await signIn(app);
 
@@ -85,6 +110,70 @@ describe('Editing the profile', () => {
     });
 
     expect(response.body).toMatchObject({ name: '김철수', department: '경영학과', hashtags: ['AI'] });
+  });
+});
+
+describe("The library's details", () => {
+  it('are saved, answered and read again: the 학번 as nine digits', async () => {
+    const { accessToken } = await signIn(app);
+
+    const response = await patchProfile(app, accessToken, {
+      studentNumber: '2026-12345',
+      registeredName: '홍길동',
+      affiliation: 'exchange',
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      studentNumber: '202612345',
+      registeredName: '홍길동',
+      affiliation: 'exchange',
+    });
+    expect((await getProfile(app, accessToken)).body).toEqual(response.body);
+  });
+
+  it('are cleared by an empty 학번 and registered name and a null 소속, and by null', async () => {
+    const { accessToken } = await signIn(app);
+    const details = { studentNumber: '202612345', registeredName: '홍길동', affiliation: 'graduate' };
+    await patchProfile(app, accessToken, details);
+
+    const emptied = await patchProfile(app, accessToken, { studentNumber: '', registeredName: '', affiliation: null });
+    await patchProfile(app, accessToken, details);
+    const nulled = await patchProfile(app, accessToken, { studentNumber: null, registeredName: null });
+
+    expect(emptied.body).toMatchObject(NO_LIBRARY_DETAILS);
+    expect(nulled.body).toMatchObject({ studentNumber: null, registeredName: null, affiliation: 'graduate' });
+  });
+
+  it('stay as they are when other fields change', async () => {
+    const { accessToken } = await signIn(app);
+    await patchProfile(app, accessToken, { studentNumber: '202612345', affiliation: 'undergraduate' });
+
+    const response = await patchProfile(app, accessToken, { name: '길동' });
+
+    expect(response.body).toMatchObject({ name: '길동', studentNumber: '202612345', affiliation: 'undergraduate' });
+  });
+});
+
+describe("The library's details left empty", () => {
+  it('keep an empty registered name empty, not the name', async () => {
+    const { accessToken } = await signIn(app);
+
+    const response = await patchProfile(app, accessToken, { registeredName: '  ' });
+
+    expect(response.body).toMatchObject({ name: ONBOARDED_PROFILE.name, registeredName: null });
+  });
+
+  it('are not taken by onboarding', async () => {
+    const { accessToken } = await signInBeforeOnboarding(app);
+
+    await postOnboarding(app, accessToken, {
+      ...ONBOARDED_PROFILE,
+      studentNumber: '202612345',
+      affiliation: 'exchange',
+    });
+
+    expect((await getProfile(app, accessToken)).body).toMatchObject(NO_LIBRARY_DETAILS);
   });
 });
 
@@ -113,6 +202,7 @@ describe("Another User's profile", () => {
       admissionYear: null,
       hashtags: [],
       friendId: A_FRIEND_ID,
+      ...NO_LIBRARY_DETAILS,
     });
   });
 

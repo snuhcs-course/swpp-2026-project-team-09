@@ -19,6 +19,7 @@
 // 2026-10-28  Opus 5.5   prompted by fyoon46
 // 2026-10-31  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+// 2026-11-01  Opus 5.5   prompted by AhnJinYoung
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -47,6 +48,11 @@ model User {
   department        String             @default("")
   admissionYear     Int?               @map("admission_year")
   hashtags          String[]           @default([])
+  // For a group study room's booking at 관정도서관 only, and never in another User's reply. The 학번 is nine digits
+  // without the hyphen; an empty registered name is taken to be the name. The limits are in src/users/dto/.
+  studentNumber     String?            @map("student_number")
+  registeredName    String?            @map("registered_name")
+  affiliation       Affiliation?
   // The Google account's name at the last sign-in, from which onboarding suggests a name and a department.
   googleName        String             @default("") @map("google_name")
   onboardedAt       DateTime?          @map("onboarded_at")
@@ -69,10 +75,21 @@ model User {
   partyJoinRequests PartyJoinRequest[]
   partyInvitations  PartyInvitation[]
   timetableClasses  TimetableClass[]
+  tutorialProgress  TutorialProgress?
+  tutorialQuests    TutorialQuestProgress[]
   resolutionEvents  ResolutionEvent[]
   userAliases       UserAlias[]
 
   @@map("users")
+}
+
+// 소속: 학부, 대학원 or 교환학생.
+enum Affiliation {
+  undergraduate
+  graduate
+  exchange
+
+  @@map("affiliation")
 }
 
 // A Friend Request while acceptedAt is empty, and a friendship once it is accepted. One row for both, keyed by the two
@@ -804,6 +821,47 @@ enum Weekday {
   sunday
 
   @@map("weekday")
+}
+
+// A User's 새내기 튜토리얼 (README.md: Tutorial). Each time is set or cleared only by the rules of src/tutorial/, so the
+// state is read from which of them are set and never by comparing them.
+model TutorialProgress {
+  userId      String    @id @map("user_id") @db.Uuid
+  user        User      @relation(fields: [userId], references: [id])
+  // The tutorial is on: turned on by the User, or once for a User eligible by default.
+  enabledAt   DateTime? @map("enabled_at")
+  stoppedAt   DateTime? @map("stopped_at")
+  // Every quest of the content at that time was completed. Quests added to the content later leave it set.
+  finishedAt  DateTime? @map("finished_at")
+  // The User closed the 내 정보 row while the tutorial was off.
+  rowHiddenAt DateTime? @map("row_hidden_at")
+
+  @@map("tutorial_progress")
+}
+
+// A Tutorial Quest the User started, by its key in content/tutorial.yaml. A key no longer in the file is ignored.
+model TutorialQuestProgress {
+  userId      String              @map("user_id") @db.Uuid
+  user        User                @relation(fields: [userId], references: [id])
+  questKey    String              @map("quest_key")
+  startedAt   DateTime            @map("started_at")
+  completedAt DateTime?           @map("completed_at")
+  // Set with completedAt.
+  completedBy TutorialCompletion? @map("completed_by")
+
+  @@id([userId, questKey])
+  @@map("tutorial_quest_progress")
+}
+
+// How a Tutorial Quest was completed: by 완료했어요 on a button quest, or, on the 관정 quest, by a booking the phone
+// found, by 그냥 완료하기 after none was found, or by its skip.
+enum TutorialCompletion {
+  button
+  checked
+  forced
+  skipped
+
+  @@map("tutorial_completion")
 }
 
 // One answer of the Assistant's resolvers to a User's words, or one answer of the User to them (P07): the words
