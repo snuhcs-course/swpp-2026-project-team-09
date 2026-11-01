@@ -29,7 +29,7 @@ Two capabilities. Both rest on content and rules the server owns, and the model 
 
 Words:
 - a **space** is one entry of the catalogue: a reading-room sector, a group-study-room size on a floor, or a media room;
-- the **library session** is the booking site's `JSESSIONID` cookie, kept on the phone only;
+- the **library session** is the booking site's `JSESSIONID` cookie, kept on the phone only, in the web view's own cookie jar;
 - a **library card** is a card of a reply that the phone fills from the library;
 - a **booking party** is a Closed Quest (비공개 파티) made for a group-study-room booking;
 - a **room request** is the server's record of the consents for one group-study-room booking;
@@ -235,28 +235,36 @@ Words:
 ### The library session (device only)
 
 - **Native modules.**
-  - `react-native-webview` is needed for the login. It is not in `mobile/package.json`.
-  - `@react-native-cookies/cookies` is needed to read the session cookie, which is `HttpOnly` (`JSESSIONID` on `k-rsv.snu.ac.kr`, path `/NEW_SNU_BOOKING/`). A web view's `document.cookie` cannot read it.
+  - `react-native-webview` is the only module added. It is not in `mobile/package.json`. No cookie module is added, and SecureStore holds nothing of the session.
   - `expo-secure-store` and `expo-web-browser` are already there.
   - **This is a native change.** It raises `version` in `app.json`, which makes a new fingerprint, and needs a native Release by P03's flow (`infra/production/README.md` § The Production APK, and `app-version.json`). Installed 1.0.0 APKs get none of P6's library screens until they update. The tutorial (except the 관정 check) and the server tools need no native change, and the 1.0.0 JS bundle never receives library cards (see Cards).
-  - If the cookie module cannot be built, the fallback runs every library call inside a hidden web view (`injectJavaScript` with a same-origin `fetch`). There the cookie stays in the web view's own store, not in SecureStore. It departs from the decision, so it needs the owner's approval first.
+  - **One native Release with P03 ticket 05.** The change ships in the same Release as P03 ticket 05's planned 1.0.1 verification release: `version` goes from 1.0.0 to 1.0.1, the CI builds the APK from the tag, and the fingerprint's comment stripping from #128 may ride along. The Mac owner builds iOS.
+- **Where the session lives.** The session is the `HttpOnly` cookie `JSESSIONID` on `k-rsv.snu.ac.kr` (path `/NEW_SNU_BOOKING/`). It lives only in the web view's own cookie jar. App code never reads, copies or stores it: not in SecureStore, not in JS memory, not in a log.
+  - Both web views (the login and the hidden one) use the default, persistent web view store (not `incognito`), so they share that jar.
+  - The app keeps only a "logged in" flag (`kwanjeong.loggedIn` in AsyncStorage). It holds nothing from the site, is set after a login and is cleared when the session ends or on logout.
 - **Login.**
-  1. A full-screen web view loads `https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main`, which sends the User to the school's login.
-  2. When the URL is back on `k-rsv.snu.ac.kr` at `/pc/(main|booking|mybooking)`, the app reads `JSESSIONID` through the cookie module, stores it in SecureStore (`kwanjeong.session`) with the web view's user agent, clears the web view's cookies and closes.
-  3. No script is injected into the login pages, so the app never reads the password. The login has a 5-minute limit, after which the view closes with "로그인하지 못했어요".
-- **Calls.** Every library request is a `fetch` from the phone with the headers below, made by one client module (`mobile/src/library/`):
-  - `POST https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/json/<name>`, form-encoded;
-  - `Cookie: JSESSIONID=…`, `X-Requested-With: XMLHttpRequest`, `OS_KIND: WEB`, `Origin: https://k-rsv.snu.ac.kr`, `Referer: …/pc/booking/roomForm`, and the saved user agent.
-  - HTTP 999, a redirect or a reply that is not JSON means the session ended. The client clears SecureStore and the card shows "관정도서관 로그인이 끝났어요. 다시 로그인해 주세요." with 로그인. After the login, the action the User pressed is retried once.
-- **Endpoints the phone calls.**
-  - Reads: `getSectorList`, `getRoomList`, `getSeatBookingList`, `getSeatInfoFromList` (GR_MIN, GR_MAX), `getUserCheck`, `getMyBookingList`.
-  - The room form page, `GET /pc/booking/roomForm`. From it the phone reads the applicant's own name and 학번 (`tmpUserNames` and `tmpSchoolNos`) and the prefilled phone number and email (`.phoneNum` and `.eMail`), which `setRoomBooking` requires. These stay on the phone.
-  - Writes: `setRoomBooking`, and `setCancelBooking` for a cancel (STATUS 1 or 2) and for a return (STATUS 3).
-  - `setSeatReturn` is not used, since no site button uses it.
-  - Each write is made only from a card's confirm button.
-- **Seat-map images** load from `https://k-rsv.snu.ac.kr:444/MAP/WEB/area_<sectorNo>.png?version=20261022` with no cookie. The size per sector is in the catalogue.
-- **Logout.** A 내 정보 row "관정도서관 로그인" shows 로그아웃 while there is a session. Logout deletes the SecureStore entry and the cookies.
-- **Never sent to our servers:** the session, the user agent's pairing with it, any library reply, the applicant's or companions' library data, phone, email, BSEQNO. The app's error reporting and logs drop library request and response bodies.
+  1. A full-screen, visible web view loads `https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main`, which sends the User to the school's login.
+  2. When the URL is back on `k-rsv.snu.ac.kr` at `/pc/(main|booking|mybooking)`, the login is done. The `JSESSIONID` stays in the web view's cookie jar, the app sets the flag, and the view closes.
+  3. No script is injected into the login pages, so the app never reads the password. The login has a 5-minute limit, after which the view closes with "로그인하지 못했어요". Cancelling returns "no session" to the caller.
+- **Calls (the hidden web view).** Every library call, reads and writes, runs inside one hidden web view, made by one client module (`mobile/src/library/`):
+  - The hidden view has no size, is kept mounted at the app's root while the flag is set, and loads `https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main`, so its scripts run on the library's origin. The client waits for that page before the first call.
+  - For each call the app injects (`injectJavaScript`) one small fixed script, a constant in `mobile/src/library/`. Only its argument varies, a value made with `JSON.stringify`; no script text is built from the User's words or a reply.
+  - The script makes the form POST with `fetch('/NEW_SNU_BOOKING/json/<name>')`: form-encoded, `credentials: 'same-origin'`, `redirect: 'manual'`, the headers `X-Requested-With: XMLHttpRequest` and `OS_KIND: WEB`, and `referrer` set to `…/pc/booking/roomForm`. The browser adds the cookie, `Origin` and the web view's own user agent.
+  - It posts back through `window.ReactNativeWebView.postMessage` only the parsed JSON or an error kind, never the raw text, headers or cookie.
+- **The message protocol.**
+  - App → view: `{ id, endpoint, body }`. `id` is a fresh request id. `endpoint` is a name on the allow-list. `body` is a flat object of form fields.
+  - View → app: `{ id, ok: true, result }` with the parsed JSON (for the room form, only the four values below), or `{ id, ok: false, error }` with `error` one of `sessionEnded`, `network` or `notAllowed`.
+  - The app matches `id` to its pending call. It ignores a message with an unknown `id` or from a page not on `k-rsv.snu.ac.kr`.
+  - Timeouts: 20 seconds for the hidden view's page load and 15 seconds per call. A timeout counts as `network`. A write that times out is never retried by itself; the card reloads 내 예약 to show what happened.
+- **The allow-list.** The script and the client each hold the same list and refuse anything else with `notAllowed`:
+  - reads: `getSectorList`, `getRoomList`, `getSeatBookingList`, `getSeatInfoFromList` (GR_MIN, GR_MAX), `getUserCheck`, `getMyBookingList`;
+  - the room form page, `GET /pc/booking/roomForm`, which the script parses in the page and from which it posts back only the applicant's own name and 학번 (`tmpUserNames` and `tmpSchoolNos`) and the prefilled phone number and email (`.phoneNum` and `.eMail`), which `setRoomBooking` requires. These stay on the phone;
+  - writes: `setRoomBooking`, and `setCancelBooking` for a cancel (STATUS 1 or 2) and for a return (STATUS 3). The client accepts a write only from a card's confirmed action, the card's confirm button.
+  - `setSeatReturn` is not on the list, since no site button uses it.
+- **Session ended.** HTTP 999, a redirect, or a reply that is not JSON gives `sessionEnded`, and so does the hidden view's page landing anywhere off `k-rsv.snu.ac.kr`/`/pc/`. The client clears the flag and the card shows "관정도서관 로그인이 끝났어요. 다시 로그인해 주세요." with 로그인, which opens the login again. After the login, the action the User pressed is retried once.
+- **Seat-map images** load from `https://k-rsv.snu.ac.kr:444/MAP/WEB/area_<sectorNo>.png?version=20261022` with no cookie, as plain images outside the web view. The size per sector is in the catalogue.
+- **Logout.** A 내 정보 row "관정도서관 로그인" shows 로그아웃 while the flag is set. Logout clears the web view's cookies and data: the hidden view loads the site's logout URL, then its cache and data are cleared with react-native-webview's `clearCache(true)`, and the flag is cleared. A read after logout gives `sessionEnded`.
+- **Never sent to our servers:** the session, any library reply, the applicant's or companions' library data, phone, email, BSEQNO. The app's error reporting and logs drop library request and response bodies.
 
 ### The space catalogue
 
@@ -446,11 +454,14 @@ The security layers. Each box is a trust boundary, and each arrow is labelled wi
 flowchart LR
   subgraph Phone["Phone: the SNU Now app"]
     WV["Web view login<br/>(the User types the password<br/>into the library's own page)"]
-    SS[("SecureStore<br/>library session cookie")]
+    SS[("Web view cookie jar<br/>(HttpOnly, never read by app code)")]
     LC["Library client<br/>(reads + writes)"]
+    HWV["Hidden web view<br/>(same origin, fixed script)"]
     CARDS["Library cards<br/>seat map · book · cancel · return<br/>(writes only on a tap)"]
     WV -- "session cookie" --> SS
-    SS -- "session cookie" --> LC
+    SS -- "session cookie" --> HWV
+    LC -- "id · endpoint (allow-list) · form fields" --> HWV
+    HWV -- "id · parsed JSON or error kind" --> LC
     CARDS -- "confirmed action" --> LC
   end
 
@@ -467,14 +478,14 @@ flowchart LR
 
   LIB[("k-rsv.snu.ac.kr<br/>관정 booking site")]
 
-  LC <-- "session cookie + requests<br/>(phone ↔ library only)" --> LIB
+  HWV <-- "session cookie + requests<br/>(phone ↔ library only)" --> LIB
   CARDS -- "chat text" --> API
   API -- "library card: space · date · time ·<br/>duration · useDesc (no session, no 학번)" --> CARDS
   API <-- "User's words · catalogue entries ·<br/>checked tool inputs/results" --> M
   COMP -- "names + 학번 of consenting<br/>companions" --> LC
 ```
 
-- **The session cookie** is only on the phone: the web view, SecureStore and the library client. No arrow carries it to our server or the model.
+- **The session cookie** is only on the phone, in the web view's own cookie jar. App code, the library client included, never reads it: the hidden web view sends it to the library and gives back only parsed JSON or an error kind. No arrow carries it to our server or the model.
 - **Writes** (book, cancel, return) are sent by the phone, only from a card the User tapped. The server and the model have no path to the library at all.
 - **학번 and registered names** go from our database only to the booker's phone, after each companion consents. They never reach the model, the logs, traces or the eval.
 
@@ -538,7 +549,7 @@ flowchart LR
 
 ### Documentation
 
-- **ADR 0012:** a third party's session stays on the phone. It covers the web-view login, SecureStore, the app calling the library itself, the server holding none of it, and why a server-side proxy was rejected (the User's school credentials and session would sit on our server).
+- **ADR 0012:** a third party's session stays on the phone. It covers the web-view login, the session kept only in the web view's own cookie jar and never read by app code, every library call made through a hidden same-origin web view, the app calling the library itself, the server holding none of it, and why a server-side proxy was rejected (the User's school credentials and session would sit on our server).
 - **GLOSSARY** gains Tutorial, Tutorial Quest, Student Number (학번), Affiliation (소속), Library Space, Library Card and Booking Party.
 - The P6 app README section lists the library client's endpoints and the fake library.
 
@@ -558,7 +569,7 @@ flowchart LR
 - **Assistant over HTTP with the model scripted** (prior art: the `assistant-*` integration tests and `test/scripted-model.ts`):
   - each tool's result for given inputs: the result kinds, `several`, the refusals with their reasons, the card's key and fields, `findLibraryFreeSlots` against a seeded Timetable, `getTutorial`'s content and status, and a library card refused for a request without `clientCapabilities`;
   - the model's input never holds a 학번, a registered name or a session: a scripted run over a world that has them checks every prompt the scripted model received.
-- **App, against its mocks and the fake library** (prior art: `chat-restaurant-card`, `chat-proposal-card` and `profile-edit` integration tests). The fake library is a `fetch` stand-in that serves the redacted recorded responses (copied from the crawl into `mobile/__tests__/support/kwanjeong/`) and records every request. Tests:
+- **App, against its mocks and the fake library** (prior art: `chat-restaurant-card`, `chat-proposal-card` and `profile-edit` integration tests). The library client is an interface over a transport. The hidden-web-view transport is one implementation; the tests use a fake transport backed by the fake library, which serves the redacted recorded responses (copied from the crawl into `mobile/__tests__/support/kwanjeong/`) and records every request. The injected script gets a unit test of its own, run with a stubbed `fetch` and `postMessage`: the headers, the form encoding, the allow-list and the error kinds. Tests:
   - the pager, ◀ ▶, 퀘스트 시작, several started, the quest list group, the sheet, button completion, the next-quest pager, all done, 그만하기 and 진행하기;
   - the 관정 check: found (STATUS 2–5), not found (only 6 and 7), failed, skip, and no session opening the login;
   - the seat map: free seats placed at their scaled POSX and POSY, a tap giving a book card, and the large view;
@@ -568,7 +579,7 @@ flowchart LR
   - the useDesc picker and the 서약서 checkbox gating 예약하기;
   - the done message with the return text;
   - the consent dialog and the dissolve notice.
-- **The web-view login** is checked by hand on a real device against the real site, for one login, one seat booking and its return, recorded with screenshots. It is not automated.
+- **The web-view login and the hidden web view** are checked by hand on one real phone against the real site: one login, one seat booking and its return, and logout, recorded with screenshots. They are not automated.
 - **Eval with the real model**, outside CI: the P6 suite and the regression, as above.
 
 ## Out of Scope
@@ -596,7 +607,8 @@ flowchart LR
   - 파워플랜트 is Place 68 (not 제2파워플랜트, 330).
   - The exact S-CARD page URL on student.snu.ac.kr must be copied from the site.
   - `clientCapabilities` gates library cards for the 1.0.0 bundle.
-  - The cookie module is the way to read `JSESSIONID`.
+  - The session lives only in the web view's own cookie jar, and every library call runs in a hidden same-origin web view. App code never reads `JSESSIONID`; no cookie module is added.
+  - The site's logout URL must be copied from the site; logout also clears the web view's cache and data.
   - The 학번 format.
   - The new GLOSSARY terms and ADR 0012.
 - **Open questions from the site** (`references/kwanjeong-site.md`): what `getUserCheck` answers for an ineligible companion; whether the server enforces GR_MIN and the duration limits (the app checks both regardless); whether a room booking's duration comes from bookTime alone; what XFULL means; why G209, G210 and G414 are missing; the media rooms' Saturday hours (the app takes getRoomList's OPENTIME and CLOSETIME for the date, so "0000" means closed). Whether 대학원 열람실 refuses undergraduates is untested. P6 offers it to graduates only, and a refusal says the booking failed.
@@ -607,7 +619,7 @@ flowchart LR
   1. **Profile: 학번, 학적상 이름, 소속.** Server fields, the edit screen and the privacy text. JS only.
   2. **Tutorial server.** `tutorial.yaml` with the five quests, the progress tables, the endpoints, eligibility and the CI checks.
   3. **Tutorial app.** The start button, pager, quest-list group, sheets, button completion, the next and done popups, and the 내 정보 row. JS only, over the mocks and then ticket 2.
-  4. **Library session (native).** `react-native-webview` and `@react-native-cookies/cookies`, the login, SecureStore, the library client and the fake library with the copied fixtures, and logout in 내 정보. Raise `version`, make the native Release (P03's flow), and check one booking by hand.
+  4. **Library session (native).** `react-native-webview` only, the login, the hidden web view with its fixed script and message protocol, the library client's interface, the fake transport and the fake library with the copied fixtures, and logout in 내 정보. Raise `version` to 1.0.1, make the native Release together with P03 ticket 05's verification release (P03's flow), and check one booking by hand.
   5. **Tutorial 관정 check.** On ticket 4: found, not found, failed, skip, and 예약 부탁.
   6. **P6 eval set (C0).** The world, 58 cases, `rules.md`, the blind draft, the review, the second labeller, `suite.yaml` with the frozen thresholds, the superseded P19 case, R0 and the P19 baseline runs. It lands before ticket 7 changes the chat.
   7. **Assistant library and tutorial tools.** The catalogue module, the six library tools and `getTutorial`, `LIBRARY_RULES` and `TUTORIAL_RULES`, the removed prompt line, the `library` card kind and DTO, `clientCapabilities`, the `FreeTimePort`, scripted-model tests, then R1 and the regression.
@@ -623,6 +635,6 @@ flowchart LR
 | 3 | 09 Group-room requests (on 01, 07, 08) | after 07 and 08 | no |
 | 4 | 10 Docs (on 04, 09) | last | no |
 
-  - 04 is the only native change: it raises `version` and needs a native Release. That Release can be combined with P03 ticket 05's 1.0.1 verification release.
+  - 04 is the only native change: it raises `version` and needs a native Release. It ships in **one** native Release together with P03 ticket 05's planned 1.0.1 verification release: `version` 1.0.0 → 1.0.1, the CI builds the APK from the tag, and the fingerprint comment stripping from #128 may ride along. The tag is set together with P03 ticket 05's check; the Mac owner still builds iOS.
   - 07's chat changes land only after 06's C0 tag, R0 and the P19 baseline. 07 can be built in parallel and rebased.
   - 03 builds against the tutorial API with mocks and switches to the real API when 02 lands. 08 builds against mocks of 07's card DTO.
