@@ -3,12 +3,14 @@
  *
  * 2026-10-26  Fable 5.1  prompted by fyoon46
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GlobalAliases } from '../assistant/aliases/global-aliases.js';
 import { PersonalAliases } from '../assistant/aliases/personal-aliases.js';
+import { RejectedAliases } from '../assistant/aliases/rejected-aliases.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { type Settings } from '../common/settings.js';
 import { toPlaceDto } from './dto/place.dto.js';
@@ -33,7 +35,11 @@ export class PlaceMatcher implements OnModuleInit {
       enabled: this.settings.get('ASSISTANT_GLOBAL_ALIASES', { infer: true }),
       holdbackPercent: this.settings.get('ASSISTANT_ALIAS_HOLDBACK_PERCENT', { infer: true }),
     });
-    this.index = new PlaceIndex(places, [new PersonalAliases(this.prisma), global, new CuratedGroups(places)]);
+    this.index = new PlaceIndex(
+      places,
+      [new PersonalAliases(this.prisma), global, new CuratedGroups(places)],
+      new RejectedAliases(this.prisma),
+    );
   }
 
   match(words: string, userId: string): Promise<PlaceMatch> {

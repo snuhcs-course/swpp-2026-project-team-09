@@ -1829,7 +1829,9 @@ its model through OpenRouter with the Vercel AI SDK
     Friend's label being `친구` and a Place no longer in the catalog `장소`; `DELETE /assistant/aliases/:id` answers
     204, or 404 `ALIAS_NOT_FOUND` for another User's; `POST /assistant/aliases/reject` with
     `{ "kind": "place" | "friend", "words", "targetId" }` (아니에요) writes a `rejected` row, deletes the User's alias
-    and counts the words again, and answers 204. `ASSISTANT_GLOBAL_ALIASES=false` switches everyone's aliases off at
+    and counts the words again, and answers 204. From then on no alias answers that User those words with that Place,
+    everyone's included, until they choose it for the words again (`src/assistant/aliases/rejected-aliases.ts`), while
+    the alias stands for the others. `ASSISTANT_GLOBAL_ALIASES=false` switches everyone's aliases off at
     once, and `ASSISTANT_ALIAS_HOLDBACK_PERCENT` (10) keeps that share of Users, by the first four bytes of the
     SHA-256 of their id modulo 100 (`src/common/holdback.ts`), from receiving them while their choices still count.
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
