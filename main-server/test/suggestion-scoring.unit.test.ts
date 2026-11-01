@@ -93,15 +93,22 @@ describe('acceptanceOf and scoreOf', () => {
 
 describe('draw', () => {
   it('shows the top with 0.9, and writes the propensity it had of all draws', () => {
-    expect(draw(3, sequence(0.5))).toEqual({ index: 0, propensity: 0.9 + 0.1 / 3 });
-    expect(draw(3, sequence(0.1))).toEqual({ index: 0, propensity: 0.9 + 0.1 / 3 });
-    expect(draw(1, sequence(0.05, 0.5))).toEqual({ index: 0, propensity: 1 });
+    expect(draw(0, 3, sequence(0.5))).toEqual({ index: 0, propensity: 0.9 + 0.1 / 3 });
+    expect(draw(0, 3, sequence(0.1))).toEqual({ index: 0, propensity: 0.9 + 0.1 / 3 });
+    expect(draw(0, 1, sequence(0.05, 0.5))).toEqual({ index: 0, propensity: 1 });
+    expect(draw(1, 3, sequence(0.5))).toEqual({ index: 1, propensity: 0.9 + 0.1 / 3 });
   });
 
-  it('draws uniformly among all of them with 0.1, the top included', () => {
-    expect(draw(3, sequence(0.05, 0.7))).toEqual({ index: 2, propensity: 0.1 / 3 });
-    expect(draw(3, sequence(0.09, 0.4))).toEqual({ index: 1, propensity: 0.1 / 3 });
-    expect(draw(3, sequence(0, 0.1))).toEqual({ index: 0, propensity: 0.9 + 0.1 / 3 });
+  it('draws uniformly among every eligible template with 0.1, the top and those under their threshold included', () => {
+    expect(draw(0, 3, sequence(0.05, 0.7))).toEqual({ index: 2, propensity: 0.1 / 3 });
+    expect(draw(0, 3, sequence(0.09, 0.4))).toEqual({ index: 1, propensity: 0.1 / 3 });
+    expect(draw(0, 3, sequence(0, 0.1))).toEqual({ index: 0, propensity: 0.9 + 0.1 / 3 });
+    expect(draw(null, 3, sequence(0.05, 0.7))).toEqual({ index: 2, propensity: 0.1 / 3 });
+  });
+
+  it('shows nothing with no template, or none above its threshold outside the draw', () => {
+    expect(draw(null, 0, sequence(0.05, 0.7))).toBeNull();
+    expect(draw(null, 3, sequence(0.5))).toBeNull();
   });
 });
 

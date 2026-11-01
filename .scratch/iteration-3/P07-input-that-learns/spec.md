@@ -153,7 +153,7 @@ Every Proposal passes the same checks `proposeQuest` applies (`makeQuestSchema`,
 
 **Score.** `score = weight × acceptance × (1 + 0.5 × min(repeats, 4)) × fatigue`, where `acceptance = (accepted + 1) / (shown + 2)` for that template in the current time-of-day bucket (05–11, 11–14, 14–18, 18–05) over all Users in the last 30 days; `repeats` is the User's own count behind `repeat_last` (0 for the others); `fatigue` is 0 during a cooldown and 1 otherwise. A suggestion shows when its score is at least 0.25, or 0.35 for a template that names a Friend. A tap on a suggestion never counts toward `repeats`.
 
-**Exposure.** With probability 0.9 the top score among the eligible shows; with 0.1 one of the eligible above the threshold, uniformly. The impression records `propensity`, the probability the shown one had (0.9 + 0.1/n for the top, 0.1/n for another), so that acceptance can be weighted by inverse propensity later.
+**Exposure.** With probability 0.9 the best score above its threshold shows, when there is one; with 0.1 one of every eligible template, uniformly, those under their threshold included, so that a template a few cold impressions sank under its threshold keeps getting impressions and its acceptance can recover. Nothing is drawn during a cooldown or behind the gate. The impression records `propensity`, the probability the shown one had (0.9 + 0.1/n for the one on top, 0.1/n for another, n the eligible), so that acceptance can be weighted by inverse propensity later.
 
 **Fatigue.** After a dismissal, no suggestion for 2 hours; after the second that day, 6 hours; after the third, none that day.
 

@@ -1945,9 +1945,11 @@ with the template's ids as if a resolver had returned them, so one the chat woul
 the template's weight × its acceptance `(accepted + 1) / (shown + 2)` over all Users' impressions of the last 30 days in
 the bucket of the time of day (05–11, 11–14, 14–18, 18–05) × `1 + 0.5 × min(repeats, 4)` for `repeat_last`. A
 suggestion shows from 0.25, 0.35 for one that names a Friend, and none shows for 2 hours after a dismissal, for 6 after
-the second of a day in Korea, and for the rest of the day after the third. The top score shows 9 times in 10, else one
-of those over their threshold drawn uniformly (`SUGGESTION_RANDOM` binds the random source), and the probability the
-shown one had is written as its propensity. `ASSISTANT_SUGGESTION_HOLDBACK_PERCENT` (10) of accounts, chosen by the
+the second of a day in Korea, and for the rest of the day after the third. The best score over its threshold shows 9
+times in 10, else one of every eligible template drawn uniformly, those under their threshold included, so that a
+template a few cold impressions sank keeps getting impressions and its acceptance can recover (`SUGGESTION_RANDOM`
+binds the random source; nothing is drawn during a cooldown or behind the gate), and the probability the shown one had
+is written as its propensity. `ASSISTANT_SUGGESTION_HOLDBACK_PERCENT` (10) of accounts, chosen by the
 SHA-256 of the User's id, read acceptance as 0.5 and no repeats. Before the templates are scored, the User's own
 acceptance of the suggestions shown to them lately, their newest ten of the last week whose outcome is settled,
 smoothed the same way, is read as their receptiveness: under 0.15, five in a row ignored or dismissed, nothing is shown

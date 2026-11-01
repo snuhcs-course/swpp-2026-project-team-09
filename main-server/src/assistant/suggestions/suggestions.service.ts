@@ -105,11 +105,14 @@ export class SuggestionsService {
     // says so; a held-back account is never gated, so that what the gate costs in accepts can be read.
     const receptiveness = acceptanceOf(recent);
     const gated = !receptive(receptiveness, holdback);
-    // During a cooldown every score is 0, so nothing reaches its threshold and the row says what was held back.
-    const scored = this.scoredOf(eligible, impressions, fatigueAt(now, history.dismissedAt), holdback);
-    const above = gated ? [] : scored.filter(({ candidate, score }) => score >= thresholdOf(candidate.template));
-    const drawn = above.length === 0 ? null : draw(above.length, () => this.random.next());
-    const shown = drawn === null ? null : above[drawn.index].candidate;
+    // During a cooldown every score is 0, so nothing reaches its threshold, nothing is drawn, and the row says what was
+    // held back; the gate holds the draw back too.
+    const fatigue = fatigueAt(now, history.dismissedAt);
+    const scored = this.scoredOf(eligible, impressions, fatigue, holdback);
+    const open = !gated && fatigue > 0;
+    const top = open ? scored.findIndex(({ candidate, score }) => score >= thresholdOf(candidate.template)) : -1;
+    const drawn = open ? draw(top === -1 ? null : top, scored.length, () => this.random.next()) : null;
+    const shown = drawn === null ? null : (scored[drawn.index]?.candidate ?? null);
     const { id } = await this.prisma.suggestionImpression.create({
       data: {
         userId,

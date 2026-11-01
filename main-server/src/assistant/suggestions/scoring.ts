@@ -25,7 +25,7 @@ import {
 import { koreaAt, koreaMidnight } from './korea-day.js';
 
 // score = weight × acceptance × (1 + 0.5 × min(repeats, 4)) × fatigue, which shows when it reaches the template's
-// threshold, and the draw among those that do.
+// threshold, and the draw: the best of those nine times in ten, else one of every eligible template.
 
 export type Bucket = 'morning' | 'midday' | 'afternoon' | 'evening';
 
@@ -77,12 +77,25 @@ export function receptive(receptiveness: number, holdback: boolean): boolean {
   return holdback || receptiveness >= RECEPTIVENESS_THRESHOLD;
 }
 
-// Which of `count` templates above their threshold, the best first, shows, and the probability it had: the top with
-// 0.9, else one drawn uniformly, so that the top has 0.9 + 0.1 / n and each other 0.1 / n.
-export function draw(count: number, random: () => number): { index: number; propensity: number } {
-  const explore = random() < EXPLORE;
-  const index = explore ? Math.min(Math.floor(random() * count), count - 1) : 0;
-  return { index, propensity: index === 0 ? 1 - EXPLORE + EXPLORE / count : EXPLORE / count };
+// Which of the `eligible` templates, the best score first, shows, and the probability it had: `top`, the best above
+// its threshold, with 0.9 when there is one, else one of all of them drawn uniformly, so that the top has
+// 0.9 + 0.1 / n and each other 0.1 / n. Null when nothing shows: no template, or none above its threshold outside the
+// draw.
+export function draw(top: number | null, eligible: number, random: () => number): Drawn | null {
+  if (eligible === 0) {
+    return null;
+  }
+  const index = random() < EXPLORE ? Math.min(Math.floor(random() * eligible), eligible - 1) : top;
+  if (index === null) {
+    return null;
+  }
+  return { index, propensity: (index === top ? 1 - EXPLORE : 0) + EXPLORE / eligible };
+}
+
+export interface Drawn {
+  // Into the eligible templates, the best score first.
+  index: number;
+  propensity: number;
 }
 
 const HOUR_MS = 60 * 60 * 1000;
