@@ -16,7 +16,6 @@ import { type GoldItem, itemsOf, loadGold } from '../eval/replay/gold.ts';
 import { learningCurve } from '../eval/replay/learning-curve.ts';
 import { replayGold } from '../eval/replay/replay.ts';
 import { substringMatch } from '../eval/replay/stages.ts';
-import { suggestionCurves } from '../eval/replay/suggestions.ts';
 import { type Prisma, type PrismaClient } from '../src/generated/prisma/client.js';
 import { type PlaceDto } from '../src/places/dto/place.dto.js';
 import { connect, type SeededDatabase, seededDatabase } from './containers.js';
@@ -24,8 +23,8 @@ import { startApp } from './start-app.js';
 
 // The replay (P07 ticket 05) on a seeded database of its own, whose resolution_events and impressions are this
 // file's alone: stage A against PlacesService.search, the gold file against the seed, stage C and the learning curve
-// learning only from the rows before their time, the suggestions read by the days asked, and a knowledge update, the
-// Place the words mean changing on a day, followed by everyone's alias (research note 10 §5).
+// learning only from the rows before their time, and a knowledge update, the Place the words mean changing on a day,
+// followed by everyone's alias (research note 10 §5). The suggestion curves have a file of their own.
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
@@ -174,63 +173,6 @@ describe('The learning curve', () => {
       [0, 1],
       [0, 1],
     ]);
-  });
-});
-
-// The User's lunch suggestions: at `shownAt` one accepted, one ignored, one silent then asked for in the chat two
-// minutes on (a missed need) and one silent; one 30 days ago and one a minute ago, outside the days asked.
-async function storeOpenings(userId: string, shownAt: Date): Promise<void> {
-  const base = {
-    userId,
-    template: 'lunch_with_free_friend',
-    eligible: ['lunch_with_free_friend'],
-    bucket: 'midday',
-    propensity: 0.9,
-    holdback: false,
-    receptiveness: 0.5,
-    gated: false,
-  };
-  const silent = { ...base, template: null, propensity: null, outcome: 'silent' as const, shownAt };
-  await prisma.suggestionImpression.createMany({
-    data: [
-      { ...base, shownAt, outcome: 'accepted', outcomeAt: new Date(shownAt.getTime() + 60_000) },
-      { ...base, shownAt },
-      { ...base, shownAt: new Date(NOW - 30 * DAY_MS) },
-      { ...base, shownAt: new Date(NOW - 60_000) },
-      { ...silent, typedTemplate: 'lunch_with_free_friend', typedAt: new Date(shownAt.getTime() + 120_000) },
-      silent,
-    ],
-  });
-}
-
-describe('The suggestion curves', () => {
-  it('read the impressions shown on the days asked whose outcome is settled', async () => {
-    const [userId = ''] = await accounts(1);
-    await storeOpenings(userId, new Date(NOW - 5 * DAY_MS));
-
-    const curves = await suggestionCurves(
-      prisma,
-      { from: new Date(NOW - 7 * DAY_MS), until: new Date(NOW + DAY_MS), finalFrom: null },
-      new Date(NOW),
-    );
-
-    expect(curves.weeks.reduce((total, { shown }) => total + shown, 0)).toBe(2);
-    expect(curves.weighted).toEqual([
-      { slice: 'all', template: 'lunch_with_free_friend', holdback: false, shown: 2, acceptance: 0.5 },
-    ]);
-    expect(curves.openings).toMatchObject([
-      { slice: 'all', holdback: false, openings: 4, silent: 2, gated: 0, silentThenTyped: 1, accepted: { k: 1, n: 4 } },
-    ]);
-    expect(curves.needs).toHaveLength(1);
-    expect(curves.needs[0]).toMatchObject({
-      template: 'lunch_with_free_friend',
-      shown: 2,
-      accepted: { k: 1, n: 2 },
-      falseAlarm: { k: 1, n: 2 },
-      eligibleNotShown: 2,
-      missedNeed: { k: 1, n: 2 },
-      recall: { k: 1, n: 2 },
-    });
   });
 });
 
