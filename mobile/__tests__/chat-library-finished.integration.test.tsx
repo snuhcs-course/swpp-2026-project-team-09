@@ -7,7 +7,7 @@
 import { libraryCard } from '@/api/mock/data/library';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { screen } from './support/app';
+import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import {
@@ -108,5 +108,40 @@ describe('a finished cancel or return card when the chat opens anew', () => {
     expect(shown.getByText('반납했어요. 이용해 주셔서 고마워요!')).toBeVisible();
     expect(shown.queryByRole('button', { name: '반납하기' })).toBeNull();
     expect(library.writes()).toHaveLength(1);
+  });
+});
+
+describe('a card whose write is on its way when the chat opens anew', () => {
+  it('shows the booking in progress with no 예약하기, then the result once the library answers', async () => {
+    const chat = await askForCards({ server, library }, [SEAT_CARD]);
+    library.holdWrites();
+    await pressIn(inCard(SEAT_TEST_ID), '예약하기');
+
+    await reopenChat(chat.user);
+
+    expect(inCard(SEAT_TEST_ID).queryByRole('button', { name: '예약하기' })).toBeNull();
+    expect(inCard(SEAT_TEST_ID).getByText('예약하는 중이에요')).toBeVisible();
+    expect(library.writes()).toEqual([]);
+
+    library.release();
+    await pass(0);
+
+    expect(inCard(SEAT_TEST_ID).getByText('예약했어요')).toBeVisible();
+    expect(screen.getByText('7193번 예약되었어요!')).toBeVisible();
+    expect(library.writes()).toHaveLength(1);
+  });
+
+  it('offers 예약하기 again when the held write fails after the sheet opened anew', async () => {
+    const chat = await askForCards({ server, library }, [SEAT_CARD]);
+    library.holdWrites();
+    library.refuseBookings('예약 가능 시간이 아닙니다.');
+    await pressIn(inCard(SEAT_TEST_ID), '예약하기');
+    await reopenChat(chat.user);
+
+    library.release();
+    await pass(0);
+
+    expect(inCard(SEAT_TEST_ID).getByRole('button', { name: '예약하기' })).toBeVisible();
+    expect(screen.queryByTestId('library-done')).toBeNull();
   });
 });

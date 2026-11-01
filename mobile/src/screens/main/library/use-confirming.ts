@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { library } from '@/library/library';
 import type { LibraryBooking } from '@/library/replies';
-import { libraryMessage, useWrite, type Write } from './use-library-call';
+import { libraryMessage, type PendingMark, useWrite, type Write } from './use-library-call';
 
 // The words and the confirm of a cancel or a return, which a cancel or a return card and a row of 내 예약 share.
 
@@ -36,7 +36,8 @@ export function useConfirming(
   {
     reloadAfter = false,
     onEnd = (): void => undefined,
-  }: { reloadAfter?: boolean; onEnd?: (outcome: Ended) => void } = {},
+    mark = null,
+  }: { reloadAfter?: boolean; onEnd?: (outcome: Ended) => void; mark?: PendingMark | null } = {},
 ): { outcome: Outcome; setOutcome: (outcome: Ended) => void; write: Write<LibraryBooking> } {
   const [outcome, setShown] = useState<Outcome>('idle');
   const setOutcome = (next: Ended): void => {
@@ -65,6 +66,7 @@ export function useConfirming(
         reload();
       }
     },
+    mark,
   );
   return { outcome, setOutcome, write };
 }

@@ -108,6 +108,7 @@ export interface Write<Args> {
 export function useWrite<Args>(
   send: (args: Args, press: ConfirmedPress) => Promise<CardFailure | null>,
   onFailed: (failure: LibraryFailure) => void = () => null,
+  mark: PendingMark | null = null,
 ): Write<Args> {
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<CardFailure | null>(null);
@@ -116,10 +117,16 @@ export function useWrite<Args>(
   const attempt = async (args: Args, press: ConfirmedPress): Promise<void> => {
     setFailure(null);
     setBusy(true);
+    mark?.start();
     try {
-      setFailure(await send(args, press));
+      const failed = await send(args, press);
+      setFailure(failed);
+      if (failed !== null) {
+        mark?.clear();
+      }
     } catch (error) {
       const kind = failureOf(error);
+      mark?.clear();
       setFailure({ failure: kind });
       onFailed(kind);
     } finally {
@@ -141,7 +148,7 @@ export function useWrite<Args>(
       );
     }
   };
-  return { busy, failure, run, logIn };
+  return { busy: busy || (mark?.pending ?? false), failure, run, logIn };
 }
 
 // The booking number of a booking made, shown on the phone only.
@@ -156,6 +163,30 @@ export interface LibraryCardActions {
   addOwn: (bubble: OwnBubble) => void;
   outcomeOf: (card: string) => CardOutcome | null;
   finish: (card: string, outcome: CardOutcome) => void;
+  unfinish: (card: string) => void;
+}
+
+// How a card's write is marked with the chat while it is on its way.
+export interface PendingMark {
+  // A write of this card is on its way, pressed in a sheet that may have closed since.
+  pending: boolean;
+  start: () => void;
+  clear: () => void;
+}
+
+export const PENDING: CardOutcome = { kind: 'pending', words: '처리하는 중이에요' };
+
+// The chat's mark of a card at `place`: set on the confirm press, replaced by the result, cleared on a failure.
+export function pendingMark(actions: LibraryCardActions, place: string): PendingMark {
+  return {
+    pending: actions.outcomeOf(place)?.kind === 'pending',
+    start: () => {
+      actions.finish(place, PENDING);
+    },
+    clear: () => {
+      actions.unfinish(place);
+    },
+  };
 }
 
 // A card's place in the chat: its bubble and its key, since the same card may be shown twice.

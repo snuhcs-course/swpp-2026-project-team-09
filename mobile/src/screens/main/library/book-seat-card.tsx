@@ -28,6 +28,7 @@ import {
   libraryMessage,
   useLibraryLoad,
   useLogInReload,
+  pendingMark,
   useWrite,
   type Write,
 } from './use-library-call';
@@ -222,7 +223,11 @@ export function BookSeatCard(props: BookSeatCardProps): ReactElement {
   };
   const { loaded, reload } = useLibraryLoad(() => seatsFor(space, slot), `${slot.start} ${String(slot.minutes)}`);
   const booking: Booking = { card, space, slot, actions, close: setClosed, choose: setNamed, reload };
-  const write = useWrite<LibrarySeat>((seat, press) => sendBooking(booking, seat, press));
+  const write = useWrite<LibrarySeat>(
+    (seat, press) => sendBooking(booking, seat, press),
+    undefined,
+    pendingMark(actions, place),
+  );
   const logIn = useLogInReload(reload);
   const seats = loaded.state === 'ready' ? loaded.value : [];
   const seat = chooseSeat(seats, named);

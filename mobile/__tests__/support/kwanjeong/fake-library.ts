@@ -84,6 +84,34 @@ export class FakeLibrary {
   private readonly cancelled = new Set<number>();
   private cancelFailWith: string | null = null;
 
+  private held: (() => void)[] | null = null;
+
+  // From now on a write is answered only on `release`, as a slow library would.
+  holdWrites(): void {
+    this.held = [];
+  }
+
+  release(): void {
+    const waiting = this.held ?? [];
+    this.held = null;
+    for (const answer of waiting) {
+      answer();
+    }
+  }
+
+  // The answer of a call: at once, or for a held write, once released.
+  reply(endpoint: LibraryEndpoint, body: Body): Promise<TransportReply> {
+    const waiting = this.held;
+    if (waiting === null || (endpoint !== 'setRoomBooking' && endpoint !== 'setCancelBooking')) {
+      return Promise.resolve(this.answer(endpoint, body));
+    }
+    return new Promise((resolve) => {
+      waiting.push(() => {
+        resolve(this.answer(endpoint, body));
+      });
+    });
+  }
+
   // A booking of the User's, which getMyBookingList lists with the recorded ones.
   addBooking(booking: LibraryBooking): void {
     this.added.push(booking);
@@ -196,7 +224,7 @@ export class FakeLibrary {
 export function fakeTransport(library: FakeLibrary = new FakeLibrary()): LibraryTransport & { library: FakeLibrary } {
   return {
     library,
-    call: (endpoint, body) => Promise.resolve(library.answer(endpoint, body)),
+    call: (endpoint, body) => library.reply(endpoint, body),
     logout: () => {
       library.logouts.push(Date.now());
       return Promise.resolve(true);

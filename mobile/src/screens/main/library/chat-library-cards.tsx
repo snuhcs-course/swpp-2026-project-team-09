@@ -40,7 +40,7 @@ function One({ card, own, bubbleId, actions }: OneProps): ReactElement | null {
   const { space: shown } = data;
   const place = cardPlace(bubbleId, data.key);
   const outcome = actions.outcomeOf(place);
-  if (outcome !== null) {
+  if (outcome !== null && outcome.kind !== 'pending') {
     return <Finished card={card} words={outcome.words} />;
   }
   switch (data.action) {

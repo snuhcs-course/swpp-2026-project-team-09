@@ -23,7 +23,7 @@ import type { LibraryBooking } from '@/library/replies';
 import { CardBox, FailureNote, Pill, Pills, Said } from './library-parts';
 import type { CardOutcome } from '@/features/assistant/use-chat';
 import { type Act, ACT_WORDS, type Ended, useConfirming } from './use-confirming';
-import { type LibraryCardActions, useLibraryLoad, useLogInReload, type Write } from './use-library-call';
+import { type LibraryCardActions, pendingMark, useLibraryLoad, useLogInReload, type Write } from './use-library-call';
 
 // The cards that act on the User's own bookings: a cancel or a return card finds the booking its target names, and
 // 내 예약 lists the bookings of the period with 취소 or 반납 on those that allow it. Each sends setCancelBooking only on
@@ -128,6 +128,7 @@ function Found({ act, found, confirming }: FoundProps): ReactElement {
           write={write}
         />
       ) : null}
+      {write.busy ? <Said>처리하는 중이에요</Said> : null}
       {outcome === 'stopped' ? <Said>그만뒀어요</Said> : null}
     </>
   );
@@ -158,6 +159,7 @@ export function CancelReturnCard({
     onEnd: (ended) => {
       actions.finish(place, endOf(act, ended));
     },
+    mark: pendingMark(actions, place),
   });
   const logIn = useLogInReload(reload);
   const found = loaded.state === 'ready' ? matchingBookings(loaded.value, card) : [];

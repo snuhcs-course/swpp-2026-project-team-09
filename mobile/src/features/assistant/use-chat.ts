@@ -48,7 +48,9 @@ export interface ChatBubble {
 // How a library card ended: what it says in place of its buttons. It is kept with the chat, so that a card that
 // booked, cancelled, returned or was dismissed never offers its button again when the sheet opens anew.
 export interface CardOutcome {
-  kind: 'booked' | 'declined' | 'cancelled' | 'returned' | 'stopped';
+  // `pending` from the confirm press until the library answers, so that a sheet opened anew meanwhile offers no
+  // button; the card clears it when the write fails.
+  kind: 'pending' | 'booked' | 'declined' | 'cancelled' | 'returned' | 'stopped';
   words: string;
 }
 
@@ -73,6 +75,8 @@ export interface Chat {
   // How each library card of the conversation ended, by the card's place: its bubble and its key.
   outcomes: ReadonlyMap<string, CardOutcome>;
   finish: (card: string, outcome: CardOutcome) => void;
+  // Forgets a card's mark: a write that was pending failed, and the card offers its button again.
+  unfinish: (card: string) => void;
 }
 
 export const CHAT_FAILED = '지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요';
@@ -159,15 +163,22 @@ function useAddOwn(add: Bubbles['add']): Chat['addOwn'] {
 }
 
 // How the library cards ended, kept with the conversation.
-function useOutcomes(): Pick<Chat, 'outcomes' | 'finish'> & { forget: () => void } {
+function useOutcomes(): Pick<Chat, 'outcomes' | 'finish' | 'unfinish'> & { forget: () => void } {
   const [outcomes, setOutcomes] = useState<ReadonlyMap<string, CardOutcome>>(new Map());
   const finish = useCallback((card: string, outcome: CardOutcome): void => {
     setOutcomes((last) => new Map(last).set(card, outcome));
   }, []);
+  const unfinish = useCallback((card: string): void => {
+    setOutcomes((last) => {
+      const next = new Map(last);
+      next.delete(card);
+      return next;
+    });
+  }, []);
   const forget = useCallback((): void => {
     setOutcomes(new Map());
   }, []);
-  return { outcomes, finish, forget };
+  return { outcomes, finish, unfinish, forget };
 }
 
 // The conversation with the Assistant, kept in memory by whoever holds the hook; the server keeps none of it. Each
@@ -206,7 +217,7 @@ export function useChat(): Chat {
     ask();
   }, [ask, said, show]);
 
-  const { outcomes, finish, forget } = useOutcomes();
+  const { outcomes, finish, unfinish, forget } = useOutcomes();
 
   const reset = useCallback((): void => {
     conversation.current += 1;
@@ -217,5 +228,5 @@ export function useChat(): Chat {
 
   const addOwn = useAddOwn(add);
 
-  return { bubbles, waiting, send, retry, reset, addOwn, outcomes, finish };
+  return { bubbles, waiting, send, retry, reset, addOwn, outcomes, finish, unfinish };
 }

@@ -27,6 +27,7 @@ import {
   libraryMessage,
   useLibraryLoad,
   useLogInReload,
+  pendingMark,
   useWrite,
   type Write,
 } from './use-library-call';
@@ -193,13 +194,17 @@ function LiveRoomCard(props: BookRoomCardProps): ReactElement {
   };
   const { loaded, reload } = useLibraryLoad(() => roomTimesFor(space, slot.date), slot.date);
   const logIn = useLogInReload(reload);
-  const write = useWrite<RoomWrite>(async (chosenRoom, press) => {
-    const failed = await sendBooking(props, slot, chosenRoom, press);
-    if (failed === null) {
-      setClosed('booked');
-    }
-    return failed;
-  });
+  const write = useWrite<RoomWrite>(
+    async (chosenRoom, press) => {
+      const failed = await sendBooking(props, slot, chosenRoom, press);
+      if (failed === null) {
+        setClosed('booked');
+      }
+      return failed;
+    },
+    undefined,
+    pendingMark(props.actions, props.place),
+  );
   const all = loaded.state === 'ready' ? loaded.value : [];
   const rooms = freeRooms(all, space.seatNos, slot);
   const room = rooms.find(({ SEATNO }) => SEATNO === chosen) ?? rooms[0] ?? null;

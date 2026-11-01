@@ -138,16 +138,16 @@ export function ChatSheet(props: ChatSheetProps): ReactElement {
   useBackToClose(inFront, onClose);
   const eventCards = useEventCards(onOpenEvent);
   const questCards = useQuestCards(onOpenPost);
-  const { bubbles, waiting, send, retry, reset, addOwn, outcomes, finish } = chat;
+  const { bubbles, waiting, send, retry, reset, addOwn, outcomes, finish, unfinish } = chat;
   const cardActions: CardActions = useMemo(
     () => ({
       events: eventCards.actions,
       quests: questCards.actions,
       proposals,
       openPartyForm: onOpenPartyForm,
-      library: { addOwn, outcomeOf: (card: string) => outcomes.get(card) ?? null, finish },
+      library: { addOwn, outcomeOf: (card: string) => outcomes.get(card) ?? null, finish, unfinish },
     }),
-    [eventCards.actions, questCards.actions, proposals, onOpenPartyForm, addOwn, outcomes, finish],
+    [eventCards.actions, questCards.actions, proposals, onOpenPartyForm, addOwn, outcomes, finish, unfinish],
   );
   // From the sheet's bottom to the AI input's top, and the room above it.
   const under = inputTop + OVER_INPUT;
