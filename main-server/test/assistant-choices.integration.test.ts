@@ -97,6 +97,18 @@ function refusedFields(): string[] {
   return Object.keys(result?.fields ?? {});
 }
 
+describe('a run that wrote no text', () => {
+  it('says the fixed sentence over the candidates', async () => {
+    model.script({ tool: 'resolvePlace', input: { words: '학관' } }, { text: '' });
+
+    const response = await send(ask('학관에서 보자'));
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ text: FIXED_SENTENCE });
+    expect(choicesOf(response.body).length).toBeGreaterThan(1);
+  });
+});
+
 describe('the choices of a reply', () => {
   it('lists the candidates of a several answer, in its order, by name, with the words trimmed', async () => {
     model.script({ tool: 'resolvePlace', input: { words: ' 학관 ' } }, { text: '어느 학관이요?' });
@@ -130,16 +142,6 @@ describe('the choices of a reply', () => {
       { kind: 'globalEvent', id: dayShow.id, label: dayShow.title, words: '2097 봄 축제' },
       { kind: 'globalEvent', id: nightShow.id, label: nightShow.title, words: '2097 봄 축제' },
     ]);
-  });
-
-  it('says the fixed sentence over the candidates when no step wrote text', async () => {
-    model.script({ tool: 'resolvePlace', input: { words: '학관' } }, { text: '' });
-
-    const response = await send(ask('학관에서 보자'));
-
-    expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ text: FIXED_SENTENCE });
-    expect(choicesOf(response.body).length).toBeGreaterThan(1);
   });
 
   it('lists none for answers of one or none', async () => {
