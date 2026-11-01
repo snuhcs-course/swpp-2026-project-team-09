@@ -183,12 +183,12 @@
         words:
           - 풋살
 - case: large-t1-03
-  until: 10
+  until: search stage 1
   calls:
     - tool: searchRecruitingQuests
       input:
-        after: 2026-11-05T12:00
-        before: 2026-11-05T13:59
+        from: 2026-11-05
+        to: 2026-11-05
         words:
           - 마라탕
 - case: large-t1-04
@@ -511,8 +511,8 @@
         after: 2026-11-06T15:00
         before: 2026-11-06T17:00
         words:
-          - 판화
           - 미술전
+          - 판화
           - 회화전
           - 조각전
 - case: large-o-04

@@ -175,9 +175,9 @@ const O: Question[] = [
   parties(
     'large-o-03',
     'O',
-    '금요일 15시부터 17시까지 판화전 보러 가는 파티 있어?',
+    '금요일 15시부터 17시까지 미술전 보러 가는 파티 있어?',
     within(DAYS.금, '15:00', '17:00'),
-    { activities: ['art'], words: ['판화', '미술전', '회화전', '조각전'] },
+    { activities: ['art'], words: ['미술전', '판화', '회화전', '조각전'] },
     { holds: ['t-under-way-1', 't-under-way-2'] },
   ),
   parties(

@@ -45,7 +45,6 @@ questDescriptions:
 activities:
   badminton:
     name: 배드민턴
-    umbrella: 운동
     board: hobby
     hours: any
     weight: 5
@@ -54,7 +53,6 @@ activities:
         [배드민턴 치실 분, 민턴 한 판 해요, 배드민턴 복식 구해요, 초보 민턴 모임, 저녁 민턴 칠 사람, 배드민턴 같이 쳐요]
   futsal:
     name: 풋살
-    umbrella: 운동
     board: hobby
     hours: evening
     weight: 5
@@ -62,7 +60,6 @@ activities:
       titles: [풋살 하실 분, 풋살 한 게임 해요, 풋살 인원 구해요, 풋살 같이 뛰어요, 풋살 용병 구합니다]
   basketball:
     name: 농구
-    umbrella: 운동
     board: hobby
     hours: any
     weight: 5
@@ -70,7 +67,6 @@ activities:
       titles: [농구 하실 분, 농구 3대3 해요, 농구 한 판 해요, 같이 농구 해요, 농구 반코트 구해요]
   tennis:
     name: 테니스
-    umbrella: 운동
     board: hobby
     hours: day
     weight: 4
@@ -78,7 +74,6 @@ activities:
       titles: [테니스 치실 분, 테니스 복식 구해요, 테니스 랠리 하실 분, 같이 테니스 쳐요]
   bowling:
     name: 볼링
-    umbrella: 운동
     board: hobby
     hours: evening
     weight: 5
@@ -86,7 +81,6 @@ activities:
       titles: [볼링 치러 가요, 볼링 네 명 모아요, 볼링 한 게임 해요, 볼링 같이 치실 분, 볼링장 같이 가요]
   running:
     name: 러닝
-    umbrella: 운동
     board: hobby
     hours: morning
     weight: 4
@@ -94,7 +88,6 @@ activities:
       titles: [러닝 같이 해요, 아침 러닝 모임, 캠퍼스 한 바퀴 달려요, 같이 달리실 분, 조깅 같이 해요]
   hiking:
     name: 등산
-    umbrella: 운동
     board: hobby
     hours: morning
     weight: 3
@@ -129,8 +122,8 @@ activities:
     hours: evening
     weight: 4
     quest:
-      titles: [치킨 뜯으실 분, 치킨 먹으러 가요, 치맥 하실 분, 치킨 같이 드실 분]
-      typos: [치킨 뜯으실붕, 치멕 하실 분]
+      titles: [치킨 뜯으실 분, 치킨 먹으러 가요, 치킨 시켜 드실 분, 치킨 같이 드실 분]
+      typos: [치킨 뜯으실붕, 치긴 시켜 드실 분]
   donkatsu:
     name: 돈까스
     board: meal
@@ -173,7 +166,6 @@ activities:
       typos: [보드개임 하실 분, 보드게임 카페 갈붕]
   coding:
     name: 코딩 스터디
-    umbrella: 스터디
     board: career
     hours: day
     weight: 4
@@ -181,7 +173,6 @@ activities:
       titles: [코딩 테스트 스터디, 알고리즘 스터디원 구해요, 코테 스터디 같이 해요, 코딩 스터디 모집해요]
   toeic:
     name: 토익 스터디
-    umbrella: 스터디
     board: career
     hours: day
     weight: 3
@@ -189,7 +180,6 @@ activities:
       titles: [토익 스터디 구해요, 토익 스피킹 스터디, 토익 같이 공부해요, 토익 모의고사 같이 풀어요]
   interview:
     name: 면접 스터디
-    umbrella: 스터디
     board: career
     hours: day
     weight: 3
@@ -197,7 +187,6 @@ activities:
       titles: [면접 스터디 구해요, 모의 면접 같이 해요, 공대 면접 스터디, 취업 면접 준비 모임]
   concert:
     name: 콘서트
-    umbrella: 공연
     board: show
     hours: evening
     weight: 4
@@ -210,7 +199,6 @@ activities:
       descriptions: [학생 밴드의 저녁 무대입니다., 동아리 연주자들이 함께하는 무대입니다.]
   recital:
     name: 독주회
-    umbrella: 공연
     board: show
     hours: evening
     weight: 2
@@ -223,7 +211,6 @@ activities:
       descriptions: [졸업을 앞둔 학생의 독주 무대입니다., 한 시간 남짓 이어지는 독주 무대입니다.]
   musical:
     name: 뮤지컬
-    umbrella: 공연
     board: show
     hours: evening
     weight: 3
@@ -236,7 +223,6 @@ activities:
       descriptions: [뮤지컬 동아리의 가을 무대입니다., 직접 쓴 극본으로 올리는 무대입니다.]
   busking:
     name: 버스킹
-    umbrella: 공연
     board: show
     hours: evening
     weight: 2
@@ -249,7 +235,6 @@ activities:
       descriptions: [학생 밴드 세 팀이 나옵니다., 지나가다 들르셔도 좋습니다.]
   musicfestival:
     name: 음악제
-    umbrella: 공연
     board: show
     hours: evening
     weight: 2
@@ -262,7 +247,6 @@ activities:
       descriptions: [여러 팀이 이어서 무대에 오릅니다., 해마다 열리는 교내 무대입니다.]
   photo:
     name: 사진전
-    umbrella: 전시
     board: show
     hours: day
     weight: 3
@@ -276,7 +260,6 @@ activities:
       days: [2, 6]
   art:
     name: 미술전
-    umbrella: 전시
     board: show
     hours: day
     weight: 3

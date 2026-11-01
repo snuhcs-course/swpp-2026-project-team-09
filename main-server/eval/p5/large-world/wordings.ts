@@ -17,7 +17,6 @@ const titlesSchema = { titles: z.array(z.string()).min(1), typos: z.array(z.stri
 
 const activitySchema = z.strictObject({
   name: z.string(),
-  umbrella: z.string().optional(),
   board: z.enum(['meal', 'career', 'hobby', 'show']),
   hours: hoursSchema,
   weight: z.int().min(0),

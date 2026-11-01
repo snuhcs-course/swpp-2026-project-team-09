@@ -17,7 +17,6 @@ import {
   type Question,
   SHOWS,
   SPORTS,
-  within,
   WEEK,
 } from './question-builders.ts';
 
@@ -134,7 +133,7 @@ const T1: Question[] = [
     'large-t1-03',
     'T1',
     '목요일에 마라탕 먹는 파티 있어?',
-    within(DAYS.목, '12:00', '13:59'),
+    days(DAYS.목),
     { activities: ['malatang'], words: ['마라탕'] },
     { holds: ['t-typo-malatang'] },
   ),

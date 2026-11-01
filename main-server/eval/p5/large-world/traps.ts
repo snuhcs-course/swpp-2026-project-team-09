@@ -4,7 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { type LargeGlobalEvent, type LargeQuest } from './world-data.ts';
+import { type LargeGlobalEvent, type LargeQuest, questSchema } from './world-data.ts';
 
 // The traps of the large world, by hand, on top of what is generated (P05 ticket 02b): look-alike words, 대면 against
 // 비대면, times at a window's edge, what the server must drop, and Quests on another Board. Generated Quests have no 탁구
@@ -19,7 +19,7 @@ export const quest = (
   more: Partial<LargeQuest> = {},
 ): LargeQuest => {
   const end = new Date(Date.parse(`${starts}Z`) + 2 * 60 * 60 * 1000).toISOString().slice(0, 16);
-  return {
+  return questSchema.parse({
     key,
     title,
     description: '',
@@ -35,8 +35,7 @@ export const quest = (
     place: { label: '체육관 탁구장' },
     trap,
     ...more,
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the schema checks each of them
-  } as LargeQuest;
+  });
 };
 
 const tableTennis = (key: string, starts: string, trap: string, more?: Partial<LargeQuest>): LargeQuest =>

@@ -8,8 +8,8 @@ import { metresBetween, type Position } from '../../../src/common/geometry.ts';
 import { type LargeGlobalEvent, type LargeQuest, type LargeWorldData } from './world-data.ts';
 
 // What each question of the large world expects (P05 ticket 02b), computed from the attributes by the rules of
-// eval/p5/rules.md, never by the app's code, so that a change to the search cannot change the answers. Only the generator
-// calls this, once per version; the answers are then stored with the cases, and a run only reads them.
+// eval/p5/rules.md, never by the app's search, so that a change to it cannot change the answers. Only the generator calls
+// this, once per version; the answers are then stored with the cases, and a run only reads them.
 
 // Times are in Korea as YYYY-MM-DDTHH:MM. A window holds both of its ends (rules.md, section 2).
 export interface Window {

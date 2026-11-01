@@ -568,12 +568,13 @@ diagnostic:
 
 # The large world (ticket 02b): evaluation D at scale, committed before ticket 10 starts and before any run of it. A run
 # of that world reads these tags and thresholds instead of those above, so E3 and E4 are reported per world. The values
-# are the metrics document's, but for E9, which the P05 owner added. The hashes pin its data file and its cases: any change to them is a new version, whose
-# scores are never put beside these. Its answers are computed from the attributes (eval/p5/README.md).
+# are the metrics document's, but for E9, which the P05 owner added. The hashes pin its data file and its cases: any
+# change to them is a new version, whose scores are never put beside these. Its answers are computed from the attributes
+# (eval/p5/README.md).
 largeWorld:
   version: large-world-v1
-  worldSha256: ca3572fef49d5197a540d8d1ee1de331812b7d48372a294c5e5ddfe7fa13a6d0
-  casesSha256: 013283db4585a90231227c7b6faae78a8912c0bba25aeea662a8707224b2a860
+  worldSha256: 462b9539b1a2afa9249ea40d1e18adf3f824b6daec0b36b53f6a0af91a91708c
+  casesSha256: a2d7d75100fca88ee883516327c4911e19ecc3be46448b448d03b21a0b8b153e
   tags:
     V:
       - { case: large-v-01, seed: q0076 }
@@ -698,7 +699,11 @@ largeWorld:
       - { case: large-t1-02, seed: q0322 }
       - { case: large-t1-02, seed: q0689 }
       - { case: large-t1-02, seed: t-typo-futsal }
+      - { case: large-t1-03, seed: q0165 }
+      - { case: large-t1-03, seed: q0396 }
       - { case: large-t1-03, seed: q0475 }
+      - { case: large-t1-03, seed: q0586 }
+      - { case: large-t1-03, seed: q0900 }
       - { case: large-t1-03, seed: t-typo-malatang }
       - { case: large-t1-04, seed: q0162 }
       - { case: large-t1-04, seed: q0230 }

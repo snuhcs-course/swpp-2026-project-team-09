@@ -680,9 +680,13 @@
     cards:
       - kind: quest
         seeds:
+          - q0165
+          - q0396
           - q0475
+          - q0586
+          - q0900
           - t-typo-malatang
-        max: 2
+        max: 6
       - kind: globalEvent
         seeds: []
         max: 0
@@ -1656,7 +1660,7 @@
   world: large-world-v1
   repeat: 3
   turns:
-    - user: 금요일 15시부터 17시까지 판화전 보러 가는 파티 있어?
+    - user: 금요일 15시부터 17시까지 미술전 보러 가는 파티 있어?
   expect:
     actions:
       - TOOL
