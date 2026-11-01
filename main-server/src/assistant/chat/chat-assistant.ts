@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { FriendsService } from '../../friends/friends.service.js';
@@ -12,6 +13,9 @@ import { PlacesService } from '../../places/places.service.js';
 import { RecruitingService } from '../../quests/recruiting.service.js';
 import { ShuttleService } from '../../shuttle/shuttle.service.js';
 import { type Feature } from '../feature.js';
+import { FREE_TIME_RULES } from '../free-time/free-time-rules.js';
+import { type FreeTimeServices, freeTimeTools } from '../free-time/free-time-tools.js';
+import { withTravelBoxes } from '../free-time/travel-boxes.js';
 import { koreaNow } from '../korea-time.js';
 import { DELIMITER } from '../others-text.js';
 import { getMenus } from '../tools/get-menus.js';
@@ -34,9 +38,14 @@ export interface ChatAssistantServices {
   recruiting: RecruitingService;
   friends: FriendsService;
   places: PlacesService;
+  freeTime: FreeTimeServices;
 }
 
 function instructions(now: Date): string {
+  return `${chatRules(now)}\n\n${FREE_TIME_RULES}`;
+}
+
+function chatRules(now: Date): string {
   return `You are SNU Now AI, the assistant in SNU Now, an app for campus life at Seoul National University.
 
 Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such as 오늘, 내일, 이번 주 and 점심 against it.
@@ -68,9 +77,12 @@ export function chatAssistant({
   recruiting,
   friends,
   places,
+  freeTime,
 }: ChatAssistantServices): Feature {
+  const { getMyDay, findFreeTimeEvents } = freeTimeTools(freeTime);
   return {
     instructions,
+    cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
     tools: {
       getMenus: getMenus(menus),
       getShuttle: getShuttle(shuttle),
@@ -83,6 +95,8 @@ export function chatAssistant({
       resolvePlace: resolvePlace(places),
       resolveGlobalEvent: resolveGlobalEvent(globalEvents),
       proposeQuest: proposeQuest({ friends, places, globalEvents }),
+      getMyDay,
+      findFreeTimeEvents,
     },
   };
 }
