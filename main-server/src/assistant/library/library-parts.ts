@@ -7,7 +7,6 @@
 import { z } from 'zod';
 import { FriendsService } from '../../friends/friends.service.js';
 import { QuestsService } from '../../quests/quests.service.js';
-import { affiliationOf } from '../../tutorial/affiliation.js';
 import { UsersService } from '../../users/users.service.js';
 import { CARDS_MAX, noneFound, type Presented, type ToolContext } from '../feature.js';
 import { koreaDate } from '../korea-time.js';
@@ -108,7 +107,7 @@ export async function affiliationFor(
   spaces: readonly (LibrarySpace | undefined)[],
 ): Promise<string | null> {
   const needed = spaces.some((space) => (space?.forAffiliation ?? null) !== null);
-  return needed ? affiliationOf(await users.findById(userId)) : null;
+  return needed ? (await users.findById(userId)).affiliation : null;
 }
 
 // The space of a found id, or what to answer instead: that booking is off, or the space's status with its reason.

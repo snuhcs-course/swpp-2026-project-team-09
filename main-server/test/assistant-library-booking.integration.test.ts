@@ -7,6 +7,7 @@
 import { inject } from 'vitest';
 import { type TestUser } from './friends.js';
 import { find, libraryCards, LibraryStage } from './library.js';
+import { patchProfile } from './profile.js';
 
 // proposeLibraryBooking at the Assistant's endpoint, with the scripted model in the model's place: the refusals with
 // their reasons, and the book card filled from the catalogue and the checked request. The library is never called.
@@ -166,5 +167,20 @@ describe('A booking the catalogue refuses', () => {
         },
       ],
     });
+  });
+});
+
+describe('대학원 열람실', () => {
+  it('is booked by a User whose 소속 in 내 정보 is 대학원', async () => {
+    const graduate = await stage.user('관정대학원생');
+    await patchProfile(stage.app, graduate.accessToken, { affiliation: 'graduate' }).expect(200);
+    const response = await stage.send(graduate, [
+      find(['8F-grad-reading-room']),
+      { tool: 'proposeLibraryBooking', input: { ...seatBooking, spaceId: '8F-grad-reading-room', seat: 'S001' } },
+      { text: '…' },
+    ]);
+
+    expect(stage.model.toolResults()[0]).toMatchObject({ spaces: [{ status: 'implemented' }] });
+    expect(libraryCards(response.body)).toMatchObject([{ key: 'book:8F-grad-reading-room:2026-11-04:1700:60:s=S001' }]);
   });
 });

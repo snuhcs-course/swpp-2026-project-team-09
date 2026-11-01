@@ -10,7 +10,6 @@ import { PrismaService } from '../common/prisma.service.js';
 import { TutorialCompletion, type User } from '../generated/prisma/client.js';
 import { notFound } from '../quests/refusals.js';
 import { UsersService } from '../users/users.service.js';
-import { affiliationOf } from './affiliation.js';
 import { TutorialDto } from './dto/tutorial.dto.js';
 import { type TutorialContent, type TutorialQuest } from './tutorial-content.js';
 import { eligibleByDefault, questStatus, tutorialState } from './tutorial-state.js';
@@ -19,7 +18,7 @@ export const TUTORIAL_CONTENT = 'TUTORIAL_CONTENT';
 
 // By the User's admission year and 소속 now, whether or not the tutorial was turned on by it.
 function isEligibleByDefault(user: User, at: Date): boolean {
-  return eligibleByDefault({ admissionYear: user.admissionYear, affiliation: affiliationOf(user) }, at);
+  return eligibleByDefault({ admissionYear: user.admissionYear, affiliation: user.affiliation }, at);
 }
 
 // The completions each kind of quest accepts. The phone does the 관정 check, so the server records how and does not

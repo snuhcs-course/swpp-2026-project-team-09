@@ -5,16 +5,15 @@
  ******************************************************************************/
 
 import { inject } from 'vitest';
-import { type PrismaClient } from '../src/generated/prisma/client.js';
 import { captureLogs } from './assistant.js';
 import { befriend, type TestUser } from './friends.js';
 import { LibraryStage } from './library.js';
+import { patchProfile } from './profile.js';
 import { type Step } from './scripted-model.js';
 import { addClass } from './timetable.js';
 
 // The model never sees a 학번, a registered name or a 소속: a scripted run over Users who have them calls every library
-// and tutorial tool, and no prompt the model received, no reply and no log line holds them. The columns come with P06
-// ticket 01; until they exist, the run still checks that nothing of the kind appears.
+// and tutorial tool, and no prompt the model received, no reply and no log line holds them.
 
 const stage = new LibraryStage();
 let asker: TestUser;
@@ -27,28 +26,14 @@ const SECRETS = {
   friendRegistered: '학적상이름나',
 };
 
-// Sets the profile's 학번, registered name and 소속 where the database has them, and answers whether it did.
+// Gives the User a 학번, a registered name and a 소속 as 내 정보 does.
 async function giveIdentity(
-  prisma: PrismaClient,
   user: TestUser,
   studentNumber: string,
   registeredName: string,
   affiliation: string,
-): Promise<boolean> {
-  const columns = await prisma.$queryRaw<{ column_name: string }[]>`
-    SELECT column_name FROM information_schema.columns
-    WHERE table_name = 'users' AND column_name IN ('student_number', 'registered_name', 'affiliation')`;
-  if (columns.length < 3) {
-    return false;
-  }
-  await prisma.$executeRawUnsafe(
-    `UPDATE users SET student_number = $1, registered_name = $2, affiliation = $3::affiliation WHERE id = $4::uuid`,
-    studentNumber,
-    registeredName,
-    affiliation,
-    user.id,
-  );
-  return true;
+): Promise<void> {
+  await patchProfile(stage.app, user.accessToken, { studentNumber, registeredName, affiliation }).expect(200);
 }
 
 beforeAll(async () => {
@@ -56,8 +41,8 @@ beforeAll(async () => {
   asker = await stage.user('비밀관정');
   friend = await stage.user('비밀친구');
   await befriend(stage.app, asker, friend);
-  await giveIdentity(stage.prisma, asker, SECRETS.askerNumber, SECRETS.askerRegistered, 'graduate');
-  await giveIdentity(stage.prisma, friend, SECRETS.friendNumber, SECRETS.friendRegistered, 'undergraduate');
+  await giveIdentity(asker, SECRETS.askerNumber, SECRETS.askerRegistered, 'graduate');
+  await giveIdentity(friend, SECRETS.friendNumber, SECRETS.friendRegistered, 'undergraduate');
   await addClass(stage.app, asker.accessToken, {
     courseName: '비밀수업',
     times: [{ weekday: 'wednesday', startTime: '12:00', endTime: '13:00', placeId: null, room: '비밀 강의실' }],
