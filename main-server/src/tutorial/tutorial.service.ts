@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable } from '@nestjs/common';
@@ -169,7 +170,7 @@ export class TutorialService {
       state: tutorialState(progress, rows, this.keys),
       rowHidden: progress !== null && progress.rowHiddenAt !== null,
       eligibleByDefault: isEligibleByDefault(user, new Date()),
-      quests: this.content.quests.map((quest) => ({
+      quests: this.content.quests.map(({ facts: _facts, ...quest }) => ({
         ...quest,
         status: questStatus(rows.find(({ questKey }) => questKey === quest.key)),
       })),

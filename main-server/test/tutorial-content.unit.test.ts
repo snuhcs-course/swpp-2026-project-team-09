@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fileURLToPath } from 'node:url';
@@ -65,7 +66,7 @@ describe("The tutorial's places and links", () => {
     expect(urls.map(({ host }) => host)).toEqual([
       'my.snu.ac.kr',
       'student.snu.ac.kr',
-      'health4u.snu.ac.kr',
+      ...Array.from({ length: 5 }, () => 'health4u.snu.ac.kr'),
       'www.snumoa.org',
       'culture.snu.ac.kr',
     ]);
