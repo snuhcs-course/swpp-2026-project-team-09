@@ -15,8 +15,9 @@ const BASE = `https://${LIBRARY_HOST}/NEW_SNU_BOOKING`;
 // scripts run on its origin.
 export const LIBRARY_MAIN_URL = `${BASE}/pc/main`;
 
-// The site's logout. To be confirmed against the site's own 로그아웃 link before the native Release.
-export const LIBRARY_LOGOUT_URL = `${BASE}/logout`;
+// The site's logout, the target of its own 로그아웃 link (seen on /pc/booking/floorList when the site was mapped). It ends
+// the school's single sign-on session too.
+export const LIBRARY_LOGOUT_URL = `${BASE}/SSOService.do?pname=spLogout`;
 
 // The calls that only read.
 export const LIBRARY_READS = [
