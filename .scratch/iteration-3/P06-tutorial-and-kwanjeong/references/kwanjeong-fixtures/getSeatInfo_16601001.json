@@ -1,0 +1,17 @@
+{
+  "successYN": "Y",
+  "seatInfo": {
+    "SEATNO": "16601001",
+    "NAME": "Creative Media Studio",
+    "COMMENT": "",
+    "DEVICE_COMMENT": "최소 1명 이상, 최대 10명 예약|대형 첨단 촬영 스튜디오. RGB 및 스팟 조명, 카메라 3대, 모니터링 TV, 프롬프터, 대형 크로마키(녹색), 호리존트(촬영에 최적화된 배경), 오디오 믹서, 스위처, 마이크 등 이용 가능",
+    "SEAT_IMAGE": "/MAP/POP/pop_16601001.png",
+    "MONITOR_YN": "Y",
+    "LAN_YN": "Y",
+    "STAND_YN": "",
+    "POWER_YN": "Y"
+  },
+  "params": {
+    "seatNo": "16601001"
+  }
+}
