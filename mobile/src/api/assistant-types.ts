@@ -3,16 +3,19 @@
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
+import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
 import type { Board, GlobalEvent, JoinPolicy } from './types';
 
 // --- The Assistant (POST /assistant/messages) ---
 
-// A card the Assistant showed, by what it is and its id. The server is sent only these, never the card's data.
+// A card the Assistant showed, by what it is and its id, which for a Restaurant is its key. The server is sent only
+// these, never the card's data.
 export interface CardReference {
-  kind: 'quest' | 'globalEvent';
+  kind: 'quest' | 'globalEvent' | 'restaurant';
   id: string;
 }
 
@@ -68,19 +71,54 @@ export const MAP_LAYERS = ['dining', 'shuttle'] as const;
 
 export type MapLayer = (typeof MAP_LAYERS)[number];
 
+// The 이동 시간 box of a card of a 공강 파티 answer: the way there, then the way to the next item, or the time to leave
+// by ("HH:MM") with whether the end is unknown. Each is there only when it applies.
+export interface TravelBox {
+  travel?: { mode: 'walk' | 'shuttle'; minutes: number };
+  next?: { minutes: number; isClass: boolean };
+  leaveBy?: string;
+  endUnknown?: boolean;
+}
+
 // A card of a reply, in the shape of the list the app draws it from: a Global Event as the 행사 tab lists it, and a
 // recruiting Quest as the Boards list it.
-export interface GlobalEventCard {
+export interface GlobalEventCard extends TravelBox {
   kind: 'globalEvent';
   globalEvent: GlobalEvent;
 }
 
-export interface QuestCard {
+export interface QuestCard extends TravelBox {
   kind: 'quest';
   quest: RecruitingQuest;
 }
 
-export type ChatCard = GlobalEventCard | QuestCard;
+// One person's Travel Time to a Restaurant: `name` is 나 for the User, and an unknown one has no mode and no minutes
+// ("—"). `longest` marks the most minutes of the card.
+export interface RestaurantTravel {
+  name: string;
+  mode: 'walk' | 'shuttle' | null;
+  minutes: number | null;
+  longest: boolean;
+}
+
+// A Restaurant of a 공강에 밥 answer: its Place's number, the day and the meal, how long there is to eat, its lines that
+// are not notes, each person's Travel Time, and the 파티 its 파티 만들기 fills the form with.
+export interface RestaurantCard {
+  kind: 'restaurant';
+  restaurant: {
+    key: string;
+    name: string;
+    placeNumber: string | null;
+    date: string;
+    meal: 'lunch' | 'dinner';
+    eatingMinutes: number;
+    lines: MenuLine[];
+    people: RestaurantTravel[];
+    proposal: QuestProposal;
+  };
+}
+
+export type ChatCard = GlobalEventCard | QuestCard | RestaurantCard;
 
 // The characters a Proposal counts for, as the main server counts them (proposalLength): its title, its description,
 // and the names of its Place, its event and its Friends.
@@ -97,6 +135,9 @@ export function lengthOf(message: ChatMessage): number {
 
 // What a later request sends of a card: what it is and its id, never its data.
 export function referenceOf(card: ChatCard): CardReference {
+  if (card.kind === 'restaurant') {
+    return { kind: card.kind, id: card.restaurant.key };
+  }
   return { kind: card.kind, id: card.kind === 'quest' ? card.quest.id : card.globalEvent.id };
 }
 

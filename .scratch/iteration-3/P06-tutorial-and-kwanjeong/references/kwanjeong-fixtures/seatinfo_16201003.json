@@ -1,0 +1,17 @@
+{
+  "successYN": "Y",
+  "seatInfo": {
+    "SEATNO": "16201003",
+    "NAME": "STUDIO C",
+    "COMMENT": "",
+    "DEVICE_COMMENT": "1인 실시간 방송, 유선문의 02-880-1159|HD 캠코더, 오디오믹서, LED 조명, 마이크|크로마키, 통합방송S/W(Live stream)|Adobe 편집 S/W",
+    "SEAT_IMAGE": "/MAP/POP/pop_16201003.png",
+    "MONITOR_YN": "Y",
+    "LAN_YN": "Y",
+    "STAND_YN": "",
+    "POWER_YN": "Y"
+  },
+  "params": {
+    "seatNo": "16201003"
+  }
+}

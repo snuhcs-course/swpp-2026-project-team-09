@@ -505,7 +505,8 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
      coop_menus dormitory_menus veterinary_menus snu_events shuttle_stops shuttle_vehicles
    ```
 
-   It logs for each Source whether its Collection succeeded, and exits with status 1 when one failed.
+   It logs for each Source whether its Collection succeeded, and exits with status 1 when one failed. `extra_snu` is left
+   out on purpose until it may run ([Turning on extra.snu's Collections](#turning-on-extrasnus-collections)).
 
 10. **The Production APK** ([The Production APK](#the-production-apk)).
 
@@ -550,6 +551,102 @@ takes up a changed setting or secret value when it is next deployed.
 The servers are separate services, so different servers may run different commits. A change that spans servers is
 released in an order that keeps the old and new versions working together, for example the main server's new route
 before the match server that calls it. Or it goes out as one `all` Release.
+
+### Stopping automatic publication
+
+The step after a Collection publishes what it read as long as `AUTOMATIC_PUBLICATION` is `on`, its value in
+`k8s/parts/shared/kustomization.yaml`. To stop it at once, without a build or a Release, change the value in the
+ConfigMap the main server reads and restart it:
+
+```bash
+settings=$(kubectl --namespace snunow get deployment main-server --output json |
+  jq -r '.spec.template.spec.containers[0].env[] | select(.name == "AUTOMATIC_PUBLICATION") | .valueFrom.configMapKeyRef.name')
+kubectl --namespace snunow patch configmap "$settings" --type merge --patch '{"data":{"AUTOMATIC_PUBLICATION":"off"}}'
+kubectl --namespace snunow rollout restart deployment/main-server
+kubectl --namespace snunow rollout status deployment/main-server
+```
+
+Do not use `kubectl set env` here: it leaves a literal value beside the manifest's `valueFrom`, which the next Release's
+server-side apply cannot merge.
+
+Every session from then on stays a Draft for an Administrator, and what was published stays published. The next Release
+brings the committed value back, so also set `AUTOMATIC_PUBLICATION=off` in that file and merge it. Sessions stored
+meanwhile are not published when it is turned on again.
+
+### Turning on Judgements
+
+`AUTOMATIC_JUDGEMENT` is `off` in `k8s/parts/shared/kustomization.yaml`: no model is called, no post leaves the server, and
+the rules go on publishing. Turn it on only when all of these hold (ticket 09):
+
+- masked posts may still be sent to the model provider, as Jaehyun0320 and TaeHyun79 agreed on 2026-11-01;
+- evaluation A's floors are met, on the commit being released, and recorded;
+- the OpenRouter key's credit limit allows for it, since Judgements spend the Assistant's credit, and its account allows
+  only providers that do not train on prompts.
+
+Set the value to `on` in that file, merge it and release. The server refuses to start with `on` and no
+`OPENROUTER_API_KEY` or `ASSISTANT_MODEL`, so a Release with that mistake does not replace the running pods. To turn it
+off again at once, use the ConfigMap patch above with `AUTOMATIC_JUDGEMENT`, and also change the file. Drafts stored while
+it was off are not judged when it is turned on.
+
+To stop what Judgements publish while they keep being stored, turn off `AUTOMATIC_PUBLICATION` instead. Check failures on
+`GET /admin/global-events/unsettled-posts`: during a model outage each new post uses its two tries over two Collections
+and then waits for an Administrator.
+
+### Turning on the same-event title rule
+
+`SAME_EVENT_TITLE_RULE` is `off` in `k8s/parts/shared/kustomization.yaml`: the link rule attaches, but two posts of an equal
+title and start are both published. The rule drops what is bracketed, so `[물리천문학부] 콜로키움` and `[화학부] 콜로키움` at
+one start would attach and the second would leave the app with no flag. Turn it on when evaluation B (ticket 09) has
+measured it on the commit being released, by setting the value to `on` in that file, merging it and releasing. It looks
+only at posts that go through the step afterwards. To turn it off at once, use the ConfigMap patch above with this name,
+and also change the file.
+
+### Turning on the same-event AI choice
+
+`SAME_EVENT_AI_CHOICE` is `off` in `k8s/parts/shared/kustomization.yaml`: no model is called for the same-event step and no
+post leaves the server for it, and a session the rules do not attach is published as before. Turn it on only when both
+hold: evaluation B (ticket 09) has shown D1 at its floor of 0 on the commit being released, and the posts may be sent to the
+model provider. A person decides this, by setting the value to `on` in that file, merging it and releasing. With `on`, the
+server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`. It looks only at posts that go through the
+step afterwards. To turn it off at once, use the ConfigMap patch above with this name, and also change the file.
+
+The queue, attaching, publishing from it and detaching work with the setting off too: `/queue` on the admin site. With it
+on, a model outage sends the sessions that have candidates there, each once, publishing none of them.
+
+### Turning on extra.snu's Collections
+
+The worker's image carries a browser for extra.snu, and its pod may use up to 1 GiB for it, but the schedule starts
+nothing while `EXTRA_SNU_COLLECTION` is `off`, its value in `k8s/parts/shared/kustomization.yaml`. Keep it off until the
+same-event rules (`.scratch/iteration-3/P05-join-or-recruit/issues/08a-same-event-rules.md`) are deployed and
+`SAME_EVENT_TITLE_RULE` is on. Before that, an event posted on both SNU Now and extra.snu would show twice unless one post
+links the other, and Users could gather for it in two places. Do not run `node dist/collect extra_snu` by hand before then
+either: the command does not look at the setting.
+
+Deploy the main server before the worker in the Release that brings them: the worker's message then carries `links`, and
+a main server of an earlier Release refuses a message with a field it does not know.
+
+Once they are deployed and the title rule is on, `EXTRA_SNU_COLLECTION` may be turned on. A person decides when. Check the Dockerfile's browser and the 1 GiB limit by running one Collection by hand, and watch
+its memory from a second terminal while it runs. The browser closes when the Collection ends, so a reading after it says
+nothing, and the numbers lag by the metrics interval:
+
+```bash
+kubectl --namespace snunow exec deployment/worker-server -- node dist/collect extra_snu
+# In a second terminal, during the Collection:
+watch kubectl --namespace snunow top pod --selector app=worker-server
+```
+
+Then set `EXTRA_SNU_COLLECTION=on` in `k8s/parts/shared/kustomization.yaml`, merge it and release the worker. To stop it
+again at once, without a build or a Release, change the value in the ConfigMap the worker reads and restart it:
+
+```bash
+settings=$(kubectl --namespace snunow get deployment worker-server --output json |
+  jq -r '.spec.template.spec.containers[0].env[] | select(.name == "EXTRA_SNU_COLLECTION") | .valueFrom.configMapKeyRef.name')
+kubectl --namespace snunow patch configmap "$settings" --type merge --patch '{"data":{"EXTRA_SNU_COLLECTION":"off"}}'
+kubectl --namespace snunow rollout restart deployment/worker-server
+kubectl --namespace snunow rollout status deployment/worker-server
+```
+
+The next Release brings the committed value back, so also set it in that file and merge it. What was collected stays.
 
 ### Following a Release
 

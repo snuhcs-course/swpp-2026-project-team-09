@@ -2,14 +2,17 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { execFileSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { startVitest } from 'vitest/node';
-import { loadCases, repetitionsOf, selectCases, sentTurnsOf } from './cases.ts';
+import { repetitionsOf, selectCases, sentTurnsOf } from './cases.ts';
 import { costOf, pricesOf, tokensPerTurn } from './cost.ts';
 import { dotEnv, parseFlags, RUN_ENV, type RunOptions } from './options.ts';
+import { casesToRun } from './p4/holdout.ts';
 
 // `pnpm eval [flags]`: reads the flags against the branch's settings, shows what the run will cost and asks first,
 // then starts the benchmark's Vitest project (eval/vitest.config.ts) with the options in EVAL_RUN. See README.md,
@@ -51,7 +54,7 @@ async function main(): Promise<number> {
   }
   const { options: flags, yes } = parseFlags(process.argv.slice(2), env);
   const options: RunOptions = { ...flags, prices: await pricesOf(flags.model), commit: commit() };
-  const cases = selectCases(loadCases(), options.categories, options.caseIds);
+  const cases = selectCases(casesToRun(options), options.categories, options.caseIds);
   const turns = cases.reduce(
     (total, evalCase) => total + sentTurnsOf(evalCase) * repetitionsOf(evalCase, options.repeat),
     0,

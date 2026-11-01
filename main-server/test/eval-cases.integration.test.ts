@@ -2,19 +2,22 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject, type ProvidedContext } from 'vitest';
-import { type EvalCase, loadCases } from '../eval/cases.ts';
+import { casesIn, type EvalCase, loadCases } from '../eval/cases.ts';
 import { type Expect } from '../eval/expect.ts';
+import { FIXED_SET } from '../eval/fixed-set.ts';
 import { namesOf } from '../eval/normalise.ts';
 import { scoreTurn } from '../eval/score.ts';
-import { type Seeded, seedWorld, type World } from '../eval/world.ts';
+import { seedWorld, type World } from '../eval/world.ts';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { NOW } from '../eval/runner.ts';
 import { ask, postAssistantMessages } from './assistant.js';
+import { unseeded } from './eval-refs.ts';
 import { call, turn as traceOf } from './eval-traces.ts';
 import { type SeededDatabase, seededDatabase } from './containers.js';
 import { refuseMatchServer } from './match-server.js';
@@ -22,80 +25,9 @@ import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
 
-// The benchmark's cases (P19 ticket 03), without a model: every case file loads and fits the case schema, the set is
-// the spec's, and every seed name a case gives is something of that kind in the world, seeded into a database of its
-// own so that it reaches no other test.
-
-// The spec's categories and their counts ("Cases").
-const CATEGORIES: Record<string, number> = {
-  menus: 5,
-  shuttle: 3,
-  'global-events': 5,
-  'finding-parties': 5,
-  'making-parties': 7,
-  'missing-or-ambiguous-target': 8,
-  'ambiguous-intent': 4,
-  'no-data': 4,
-  'out-of-scope': 4,
-  'small-talk': 3,
-  'follow-ups': 6,
-  live: 3,
-  compound: 5,
-};
-
-// A seed name a case gives, and the kind of thing it must be.
-interface SeedRef {
-  kind: Seeded['kind'];
-  name: string;
-}
-
-// The seed names of a Proposal, expected or written in an Assistant's turn: its Place, Global Event and invitees.
-function refsOfProposal(
-  proposal: { place?: string | null; globalEvent?: string | null; invitees?: string[] } | null | undefined,
-): SeedRef[] {
-  const { place, globalEvent, invitees } = proposal ?? {};
-  return [
-    ...(typeof place === 'string' ? [{ kind: 'place' as const, name: place }] : []),
-    ...(typeof globalEvent === 'string' ? [{ kind: 'globalEvent' as const, name: globalEvent }] : []),
-    ...(invitees ?? []).map((name) => ({ kind: 'friend' as const, name })),
-  ];
-}
-
-// The seed names of an `expect`: its cards, its Proposal and the id fields of its arguments.
-function refsOfExpect(expected: Expect): SeedRef[] {
-  const refs: SeedRef[] = [
-    ...(expected.cards ?? []).flatMap(({ kind, seeds }) => seeds.map((name) => ({ kind, name }))),
-    ...refsOfProposal(expected.proposal),
-  ];
-  for (const [tool, written] of Object.entries(expected.args)) {
-    for (const args of Array.isArray(written) ? written : [written]) {
-      if (typeof args.globalEvent === 'string') {
-        refs.push({ kind: 'globalEvent', name: args.globalEvent });
-      }
-      if (tool === 'proposeQuest' && typeof args.place === 'string') {
-        refs.push({ kind: 'place', name: args.place });
-      }
-      if (tool === 'proposeQuest' && Array.isArray(args.invitees)) {
-        refs.push(...args.invitees.map((name) => ({ kind: 'friend' as const, name: String(name) })));
-      }
-    }
-  }
-  return refs;
-}
-
-// Every seed name of a case: those of its expectations and of the Assistant's turns it writes out.
-function refsOf(evalCase: EvalCase): SeedRef[] {
-  return [
-    ...(evalCase.expect === undefined ? [] : refsOfExpect(evalCase.expect)),
-    ...evalCase.turns.flatMap((turn): SeedRef[] => {
-      if ('user' in turn) {
-        return turn.expect === undefined ? [] : refsOfExpect(turn.expect);
-      }
-      const { cards, proposal } = turn.assistant;
-      return [...cards.map((card) => ({ kind: card.kind, name: card.seed })), ...refsOfProposal(proposal)];
-    }),
-  ];
-}
+// The benchmark's cases of the small world (P19 ticket 03), without a model: every case file loads and fits the case
+// schema, the fixed set is all there, and every seed name a case gives is something of that kind in the world, seeded
+// into a database of its own so that it reaches no other test.
 
 // The expectations a case scores: its own, and a live case's turns'.
 function expectsOf(evalCase: EvalCase): Expect[] {
@@ -105,13 +37,16 @@ function expectsOf(evalCase: EvalCase): Expect[] {
   ];
 }
 
-const cases = loadCases();
+const everyCase = loadCases();
+const cases = casesIn(everyCase, 'small');
+const fixedIds = new Set(Object.values(FIXED_SET).flat());
+const fixed = cases.filter(({ id }) => fixedIds.has(id));
 
 // 학관 as a word of its own, not the end of 공학관 or 약학관.
 const ABBREVIATION = /(?<![가-힣])학관/u;
 
 function inCategory(category: string): EvalCase[] {
-  return cases.filter((evalCase) => evalCase.category === category);
+  return fixed.filter((evalCase) => evalCase.category === category);
 }
 
 // The accepted actions of every expectation in a category.
@@ -120,13 +55,15 @@ function actionsIn(category: string): string[][] {
 }
 
 describe('The case files', () => {
-  it("hold the spec's 62 cases, in its 13 categories and counts", () => {
-    const counts = Object.fromEntries(Object.keys(CATEGORIES).map((category) => [category, 0]));
-    for (const { category } of cases) {
-      counts[category] = (counts[category] ?? 0) + 1;
+  it('hold the fixed set of 62 cases, each once, in its category', () => {
+    for (const [category, ids] of Object.entries(FIXED_SET)) {
+      for (const id of ids) {
+        expect(everyCase.filter((evalCase) => evalCase.id === id).map((evalCase) => evalCase.category)).toEqual([
+          category,
+        ]);
+      }
     }
-    expect(counts).toEqual(CATEGORIES);
-    expect(cases).toHaveLength(62);
+    expect(fixed).toHaveLength(62);
   });
 
   it('give every case an expectation for the turn it scores', () => {
@@ -138,9 +75,9 @@ describe('The case files', () => {
   });
 
   it('run 3 cases live, every other follow-up from a fixed history, and about 5 cases three times', () => {
-    expect(cases.filter(({ live }) => live).map(({ category }) => category)).toEqual(['live', 'live', 'live']);
+    expect(fixed.filter(({ live }) => live).map(({ category }) => category)).toEqual(['live', 'live', 'live']);
     expect(inCategory('follow-ups').every(({ live, turns }) => !live && turns.length > 1)).toBe(true);
-    expect(cases.filter(({ repeat }) => repeat === 3)).toHaveLength(5);
+    expect(fixed.filter(({ repeat }) => repeat === 3)).toHaveLength(5);
   });
 
   it('expect TOOL+ASK only of the ambiguous-intent cases, REFUSE of the out-of-scope ones and CHAT of small talk', () => {
@@ -239,15 +176,6 @@ const WORLD_FACTS: [string, object, string[], string[]][] = [
   ],
 ];
 
-// The seed names the cases give that the world lacks, or has as something of another kind.
-function unseeded(world: World): string[] {
-  return cases.flatMap((evalCase) =>
-    refsOf(evalCase)
-      .filter(({ kind, name }) => world.seeds[name]?.kind !== kind)
-      .map(({ kind, name }) => `${evalCase.id}: ${kind} ${name}`),
-  );
-}
-
 describe('The world the cases refer to', () => {
   const model = new ScriptedModel();
   let database: SeededDatabase<ProvidedContext['settings']>;
@@ -268,7 +196,7 @@ describe('The world the cases refer to', () => {
   });
 
   it('holds every seed name a case gives, as the kind of thing the case takes it for', () => {
-    expect(unseeded(world)).toEqual([]);
+    expect(unseeded(cases, world)).toEqual([]);
   });
 
   // What a tool answers in the world, as the scripted model calls it.

@@ -1,0 +1,811 @@
+- case: large-v-01
+  until: 10
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-04T22:30
+- case: large-v-02
+  until: 10
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-02T20:00
+- case: large-v-03
+  until: 10
+  calls:
+    - tool: searchGlobalEvents
+      input:
+        after: 2026-11-07T21:00
+- case: large-v-04
+  until: 10
+  calls:
+    - tool: searchGlobalEvents
+      input:
+        after: 2026-11-05T21:00
+- case: large-v-05
+  until: 10
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-06T17:00
+        before: 2026-11-06T21:59
+        words:
+          - 볼링
+- case: large-v-06
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-05
+        to: 2026-11-05
+        words:
+          - 라면
+- case: large-v-07
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-06T17:00
+        before: 2026-11-06T21:59
+        words:
+          - 보드게임
+          - 보겜
+- case: large-v-08
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-03T17:00
+        before: 2026-11-03T21:59
+        words:
+          - 고기
+          - 삼겹살
+          - 목살
+- case: large-l-01
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-03
+        to: 2026-11-03
+        words:
+          - 볼링
+- case: large-l-02
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-07
+        to: 2026-11-07
+        words:
+          - 테니스
+- case: large-l-03
+  until: null
+  calls:
+    - tool: searchGlobalEvents
+      input:
+        from: 2026-11-02
+        to: 2026-11-08
+        words:
+          - 설명회
+- case: large-l-04
+  until: null
+  calls:
+    - tool: searchGlobalEvents
+      input:
+        from: 2026-11-06
+        to: 2026-11-06
+        words:
+          - 비대면
+          - 특강
+- case: large-l-05
+  until: null
+  calls:
+    - tool: searchGlobalEvents
+      input:
+        from: 2026-11-06
+        to: 2026-11-06
+        words:
+          - 대면
+          - 특강
+- case: large-p-01
+  until: null
+  calls:
+    - tool: searchGlobalEvents
+      input:
+        from: 2026-11-04
+        to: 2026-11-04
+        words:
+          - 콘서트
+          - 독주회
+          - 뮤지컬
+          - 버스킹
+          - 음악제
+- case: large-p-02
+  until: 10
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-08T07:00
+        before: 2026-11-08T10:59
+        words:
+          - 운동
+          - 러닝
+          - 등산
+          - 배드민턴
+          - 농구
+- case: large-p-03
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-03
+        to: 2026-11-03
+        words:
+          - 민턴
+- case: large-p-04
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-06
+        to: 2026-11-06
+        words:
+          - 조깅
+          - 러닝
+          - 달리
+- case: large-p-05
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-05
+        to: 2026-11-05
+        words:
+          - 배민
+          - 배달
+- case: large-t1-01
+  until: 11
+  calls:
+    - tool: searchGlobalEvents
+      input:
+        from: 2026-11-06
+        to: 2026-11-06
+        words:
+          - 콘서트
+- case: large-t1-02
+  until: search stage 1
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-07T17:00
+        before: 2026-11-07T21:59
+        words:
+          - 풋살
+- case: large-t1-03
+  until: search stage 1
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-05
+        to: 2026-11-05
+        words:
+          - 마라탕
+- case: large-t1-04
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-08T17:00
+        before: 2026-11-08T21:59
+        words:
+          - 뮤지컬
+- case: large-t1-05
+  until: 11
+  calls:
+    - tool: searchGlobalEvents
+      input:
+        from: 2026-11-06
+        to: 2026-11-06
+        words:
+          - 박람회
+- case: large-t2-01
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-03
+        to: 2026-11-03
+        words:
+          - 배드민턴
+          - 민턴
+- case: large-t2-02
+  until: null
+  calls:
+    - tool: searchGlobalEvents
+      input:
+        from: 2026-11-05
+        to: 2026-11-05
+        words:
+          - 콘서트
+- case: large-t2-03
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-05T17:00
+        before: 2026-11-05T21:59
+        words:
+          - 볼링
+- case: large-t2-04
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-08
+        to: 2026-11-08
+        words:
+          - 마라탕
+- case: large-t2-05
+  until: null
+  calls:
+    - tool: searchGlobalEvents
+      input:
+        from: 2026-11-04
+        to: 2026-11-04
+        words:
+          - 박람회
+- case: large-h-01
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-05T17:00
+        before: 2026-11-05T21:59
+        words: &a1
+          - 탁구
+- case: large-h-02
+  until: 10
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-06T22:00
+        words: *a1
+- case: large-h-03
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-07T15:00
+        before: 2026-11-07T18:00
+        words: *a1
+- case: large-h-04
+  until: 10
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-08T18:30
+        before: 2026-11-08T19:30
+        words: *a1
+- case: large-h-05
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-04T07:00
+        before: 2026-11-04T10:59
+        words: *a1
+- case: large-h-06
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-03T11:00
+        before: 2026-11-03T15:59
+        words: *a1
+- case: large-h-07
+  until: null
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-02
+        to: 2026-11-02
+        words: *a1
+- case: large-s-01
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-04T17:00
+        before: 2026-11-04T21:59
+        words: &a2
+          - 스쿼시
+        minPlacesLeft: 2
+- case: large-s-02
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-04T17:00
+        before: 2026-11-04T21:59
+        words: *a2
+- case: large-s-03
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        globalEventId: te-shared
+        words: &a3
+          - 콘서트
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-07T18:30
+        before: 2026-11-07T20:20
+        words: *a3
+- case: large-s-04
+  until: 10
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-05
+        to: 2026-11-05
+        words:
+          - 학식
+          - 학생식당
+        minPlacesLeft: 3
+- case: large-s-05
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-02
+        to: 2026-11-08
+        words:
+          - 풋살
+        minPlacesLeft: 3
+- case: large-n-01
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-02
+        to: 2026-11-08
+        words:
+          - 농구
+        capacity: 4
+- case: large-n-02
+  until: 10
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-02
+        to: 2026-11-08
+        words:
+          - 학식
+          - 학생식당
+        capacity: 2
+- case: large-n-03
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-02
+        to: 2026-11-08
+        words:
+          - 볼링
+        capacity: 6
+- case: large-n-04
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-02
+        to: 2026-11-08
+        words:
+          - 풋살
+        capacity: 8
+- case: large-n-05
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-02
+        to: 2026-11-08
+        words:
+          - 테니스
+        capacity: 4
+- case: large-r-01
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-02
+        to: 2026-11-08
+        words:
+          - 스터디
+          - 코딩
+          - 토익
+          - 면접
+          - 알고리즘
+        placeId: 제1공학관
+        radius: 300
+- case: large-r-02
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-02
+        to: 2026-11-08
+        words:
+          - 학식
+          - 학생식당
+        placeId: 학생회관
+        radius: 300
+- case: large-r-03
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-03
+        to: 2026-11-03
+        words:
+          - 운동
+          - 러닝
+          - 등산
+          - 배드민턴
+          - 농구
+        placeId: 체육관
+        radius: 300
+- case: large-r-04
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-07
+        to: 2026-11-07
+        words:
+          - 콘서트
+          - 독주회
+          - 뮤지컬
+          - 버스킹
+          - 음악제
+        placeId: 문화관
+        radius: 300
+- case: large-r-05
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-02
+        to: 2026-11-08
+        words:
+          - 토익
+        placeId: 중앙도서관 본관
+        radius: 300
+- case: large-o-01
+  until: 10
+  calls:
+    - tool: searchGlobalEvents
+      input:
+        after: 2026-11-04T14:30
+        before: 2026-11-04T15:30
+        words:
+          - 사진전
+          - 미술전
+          - 판화
+          - 회화전
+          - 조각전
+- case: large-o-02
+  until: 10
+  calls:
+    - tool: searchGlobalEvents
+      input:
+        after: 2026-11-02T17:00
+        words:
+          - 판화
+- case: large-o-03
+  until: 10
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-06T15:00
+        before: 2026-11-06T17:00
+        words:
+          - 미술전
+          - 판화
+          - 회화전
+          - 조각전
+- case: large-o-04
+  until: null
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        globalEventId: te-named
+        words: &a4
+          - 사진전
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-04T10:00
+        before: 2026-11-04T18:20
+        words: *a4
+- case: large-o-05
+  until: null
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-02
+        to: 2026-11-02
+        words:
+          - 미술전
+          - 판화
+          - 회화전
+          - 조각전
+- case: large-b-01
+  until: 10
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-08T07:00
+        before: 2026-11-08T10:59
+        words:
+          - 등산
+          - 산행
+          - 관악산
+- case: large-b-02
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-06T17:00
+        before: 2026-11-06T21:59
+        words:
+          - 농구
+- case: large-b-03
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-07T11:00
+        before: 2026-11-07T15:59
+        words:
+          - 사진전
+- case: large-b-04
+  until: 10
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-08T11:00
+        before: 2026-11-08T15:59
+        words:
+          - 코딩
+          - 코테
+          - 알고리즘
+- case: large-b-05
+  until: 10
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-03T11:00
+        before: 2026-11-03T15:59
+        words:
+          - 학식
+          - 학생식당
+- case: large-e-01
+  until: null
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-02
+        to: 2026-11-08
+        words:
+          - 스키
+- case: large-e-02
+  until: null
+  calls:
+    - tool: searchGlobalEvents
+      input:
+        from: 2026-11-02
+        to: 2026-11-08
+        words:
+          - 요가
+- case: large-e-03
+  until: null
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-02
+        to: 2026-11-08
+        words: &a5
+          - 수영
+    - tool: searchGlobalEvents
+      input:
+        from: 2026-11-02
+        to: 2026-11-08
+        words: *a5
+- case: large-e-04
+  until: null
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-03T02:30
+        before: 2026-11-03T03:30
+        words:
+          - 볼링
+- case: large-e-05
+  until: null
+  calls:
+    - tool: searchGlobalEvents
+      input:
+        from: 2026-11-02
+        to: 2026-11-08
+        words:
+          - 탁구
+- case: large-e-06
+  until: null
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-12-25
+        to: 2026-12-25
+        words:
+          - 볼링
+- case: large-c-01
+  until: search stage 1
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-07T17:00
+        before: 2026-11-07T21:59
+        words: &a6
+          - 게임
+          - 롤
+          - 발로란트
+          - 배그
+          - 피시방
+- case: large-c-02
+  until: search stage 1
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-05T17:00
+        before: 2026-11-05T21:59
+        words: *a6
+- case: large-c-03
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-04
+        to: 2026-11-04
+        words:
+          - 롤
+          - 리그 오브 레전드
+          - 칼바람
+          - 증바람
+          - 내전
+- case: large-c-04
+  until: search stage 1
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-04T17:00
+        before: 2026-11-04T21:59
+        words: *a6
+- case: large-c-05
+  until: search stage 1
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-06
+        to: 2026-11-06
+        words:
+          - 디저트
+          - 카페
+          - 커피
+          - 케이크
+          - 쿠키
+- case: large-c-06
+  until: search stage 1
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-07
+        to: 2026-11-07
+        words:
+          - 디저트
+          - 빙수
+          - 마카롱
+          - 케이크
+          - 와플
+- case: large-c-07
+  until: search stage 1
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-06
+        to: 2026-11-06
+        words:
+          - 술
+          - 맥주
+          - 치맥
+          - 막걸리
+          - 소주
+- case: large-c-08
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-03T17:00
+        before: 2026-11-03T21:59
+        words:
+          - 분식
+          - 떡볶이
+          - 엽떡
+          - 순대
+          - 튀김
+- case: large-c-09
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-08
+        to: 2026-11-08
+        words:
+          - 노래방
+          - 코노
+          - 코인노래방
+- case: large-c-10
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-05
+        to: 2026-11-05
+        words:
+          - 클라이밍
+          - 클밍
+          - 볼더링
+- case: large-c-11
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-07
+        to: 2026-11-07
+        words:
+          - 만들기
+          - 공방
+          - 원데이클래스
+          - 뜨개
+          - 클래스
+- case: large-c-12
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        after: 2026-11-02T17:00
+        before: 2026-11-02T21:59
+        words:
+          - 독서
+          - 책
+          - 북클럽
+- case: large-c-13
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-08
+        to: 2026-11-08
+        words:
+          - 사진
+          - 네컷
+          - 포토
+- case: large-c-14
+  until: 11
+  calls:
+    - tool: searchRecruitingQuests
+      input:
+        from: 2026-11-08
+        to: 2026-11-08
+        words:
+          - 방탈출

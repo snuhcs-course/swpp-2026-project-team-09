@@ -5,10 +5,11 @@
  * 2026-10-03  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { type CollectedEvent } from '../src/event/dto/events-collected.dto.js';
-import { parseEventPage } from '../src/event/event-page.parser.js';
+import { type EventPost, parseEventPage } from '../src/event/event-page.parser.js';
 import { blockPage, savedPage } from './pages.js';
 
 function post(postNumber: number): string {
@@ -16,7 +17,7 @@ function post(postNumber: number): string {
 }
 
 // The saved page of a post, with `edit` applied, read as the page of that post.
-function parsed(postNumber: number, edit = (page: string): string => page): CollectedEvent {
+function parsed(postNumber: number, edit = (page: string): string => page): EventPost {
   return parseEventPage(edit(post(postNumber)), postNumber);
 }
 
@@ -55,7 +56,7 @@ describe('A post with a time and a place', () => {
 // 176525's place line, and the same place written another way.
 const PLACE_LINE = '- 장소: 뉴미디어통신공동연구소 이충웅홀(132동 103호)';
 
-function withPlaceLine(line: string): CollectedEvent {
+function withPlaceLine(line: string): EventPost {
   return parsed(176525, (page) => page.replace(PLACE_LINE, line));
 }
 
@@ -124,7 +125,7 @@ describe('The time line of a post', () => {
 });
 
 // 176516, whose time line reads "2026년 10월 7일(수요일) 오후 2시", with another time of day.
-function startAt(time: string): CollectedEvent {
+function startAt(time: string): EventPost {
   return parsed(176516, (page) => page.replace('오후 2시</span>', `${time}</span>`));
 }
 
@@ -281,5 +282,32 @@ describe('A page that is not the post asked for', () => {
 
   it("is not read when it is the firewall's block page", () => {
     expect(() => parseEventPage(blockPage, 176525)).toThrow('The page has no post');
+  });
+});
+
+describe("A post's links", () => {
+  it("gives where the body's links lead, each once, whatever their words, and no mail address", () => {
+    const { links } = parsed(176525, (page) =>
+      page.replace(
+        '<div class="content">',
+        `<div class="content">
+          <a href="https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002382">신청하기</a>
+          <a href="https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002382">여기</a>
+          <a href="/snunow/events?md=v&amp;bbsidx=178226">이전 글</a>`,
+      ),
+    );
+
+    expect(links).toEqual(
+      expect.arrayContaining([
+        'https://extra.snu.ac.kr/ptfol/pgm/view.do?dataSeq=PGM012002382',
+        'https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178226',
+      ]),
+    );
+    expect(links.filter((link) => link.includes('PGM012002382'))).toHaveLength(1);
+    expect(links.filter((link) => link.startsWith('mailto:'))).toEqual([]);
+  });
+
+  it('gives no link of the page around the body', () => {
+    expect(parsed(176549).links).toEqual([]);
   });
 });

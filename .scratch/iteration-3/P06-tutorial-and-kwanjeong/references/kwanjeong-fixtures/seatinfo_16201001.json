@@ -1,0 +1,17 @@
+{
+  "successYN": "Y",
+  "seatInfo": {
+    "SEATNO": "16201001",
+    "NAME": "STUDIO A",
+    "COMMENT": "",
+    "DEVICE_COMMENT": "27㎡(WIDE), 영상/사진 촬영, 화상회의/발표|모니터링 TV, 크로마키(파,녹), 배경지(노,흰)|HD 캠코더, LED 조명, 오디오믹서, 마이크|통합방송S/W(Live stream)",
+    "SEAT_IMAGE": "/MAP/POP/pop_16201001.png",
+    "MONITOR_YN": "Y",
+    "LAN_YN": "Y",
+    "STAND_YN": "",
+    "POWER_YN": "Y"
+  },
+  "params": {
+    "seatNo": "16201001"
+  }
+}

@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -20,6 +21,8 @@ interface EventItemProps {
   onMatching: () => void;
   // Where the card is drawn outside the 행사 tab, as in the chat: a press on it opens the tab at this event.
   onPress?: () => void;
+  // What its owner adds under the time and the place.
+  children?: ReactNode;
 }
 
 function Line({ icon, label, words }: { icon: IconName; label: string; words: string }): ReactElement {
@@ -76,7 +79,7 @@ function Card({ id, focused, onLayout, onPress, children }: CardProps): ReactEle
 
 // An event's card on the 행사 tab, the `Events` frame's.
 export function EventItem(props: EventItemProps): ReactElement {
-  const { event, focused, onLayout, onRecruit, onMatch, onMatching, onPress } = props;
+  const { event, focused, onLayout, onRecruit, onMatch, onMatching, onPress, children } = props;
   const { sourceUrl } = event;
   return (
     <Card focused={focused} id={event.id} onLayout={onLayout} onPress={onPress}>
@@ -98,6 +101,7 @@ export function EventItem(props: EventItemProps): ReactElement {
         <Line icon="clock" label="시간" words={event.time} />
         {event.place === null ? null : <Line icon="pin" label="장소" words={event.place} />}
       </View>
+      {children}
       <View style={styles.actions}>
         {sourceUrl === null ? null : (
           <Button

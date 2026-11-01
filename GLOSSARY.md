@@ -48,8 +48,18 @@ An Event published to every User, such as a departmental notice or an organizer'
 _Avoid_: Official event, public event
 
 **Draft**:
-A Global Event that was collected or entered but is not yet visible to Users. An Administrator publishes it.
+A Global Event that was collected or entered but is not yet visible to Users. An Administrator publishes it, or it is published on its own once its time and place are read from its post or confirmed by a Judgement.
 _Avoid_: Pending event, unverified event
+
+**Publication Route**:
+How a Global Event came to be published: by an Administrator, by the rules that read its post, or by a Judgement. Only Administrators see it.
+
+**Judgement**:
+The AI's reading of a Draft: for each session, its time and place, and the lines of the post they were read from. One call reads the Draft's whole Source Post, so a post has one Judgement, tried at most twice. A Judgement publishes the sessions that pass the server's checks and leaves the rest a Draft. It may read a session as running over a period, such as an exhibition open for several days.
+_Avoid_: AI verification, AI publishing
+
+**Unsettled post**:
+A Source Post the publication step failed on or has not finished with, or whose Judgement could not be made while a Draft of it waits. Administrators see them on the Collection status page, since a Collection is recorded as a success whatever the step does.
 
 **Private Event**:
 An Event a User registers for their own use, visible only on that User's map.
@@ -87,6 +97,10 @@ The screens call an Open or Approval Quest a "공개 파티" and a Closed Quest 
 Where an Open or Approval Quest is listed for recruiting, one of four kinds: 식사, 진로, 취미 and 공연. A Closed Quest is on none.
 _Avoid_: Category
 
+**Full**:
+Said of a Quest whose Holders already number its capacity. Nobody more can enter it until a Holder leaves.
+_Avoid_: Closed (Closed is a Join Policy), 마감 (an application deadline)
+
 **Class Quest**:
 A Quest for attending one of the User's own classes on a given day, derived from the User's timetable.
 
@@ -97,6 +111,20 @@ _Avoid_: Appointment
 **Matching**:
 Finding companions for Users who want them for the same Global Event, by grouping them into a new Shared Quest or by placing one into an Open Quest for that event. They open a Party themselves when the time comes.
 _Avoid_: Auto-join
+
+### The User's day
+
+**Timetable**:
+The Classes of a User, kept from semester to semester until the User resets it.
+_Avoid_: Schedule
+
+**Class**:
+A course of a User's Timetable, with the times it meets each week and, for each time, a Place if one is known.
+_Avoid_: Lecture
+
+**Free Time**:
+A stretch of a User's day not taken by a Class or by a timed Sub Quest of a Quest they hold. The screens call it "공강".
+_Avoid_: Spare time
 
 ### Parties
 
@@ -148,6 +176,26 @@ _Avoid_: Draft (a Draft is an unpublished Global Event), suggestion
 **Source**:
 A page or feed outside the project that the worker server collects, such as the Co-op menu page or the shuttle operator's vehicle positions.
 _Avoid_: Site, provider
+
+**Source Post**:
+One post on a Source that Global Events were read from, such as an SNU Now notice or an extra.snu program, stored once by its Source and its key on that Source. It is read as one or more numbered sessions, each linked to one Global Event. A Global Event can have several, when more than one Source posted the same event: a new post's sessions are attached to the event that exists instead of becoming a second one. A post's session (회차, `SourcePostSession`) is not a **Session**, the app signed in on one phone.
+_Avoid_: Original, article, duplicate
+
+**Same-event queue**:
+The sessions of Source Posts that wait for an Administrator, since neither the rules nor the AI could say whether they are an event that exists. Each stays a Draft with its candidates, which Users do not see, until an Administrator attaches it to one, publishes it as its own or discards its Draft. Detaching is the way back from a session attached by mistake: it becomes its own Draft again, and the event keeps its Quests.
+_Avoid_: Review list, pending posts
+
+**Restaurant**:
+A dining place whose daily menu a Source publishes.
+_Avoid_: Cafeteria
+
+**Travel Time**:
+The time from one Place to another, on foot or by the circular shuttle.
+_Avoid_: ETA, distance
+
+**Shuttle Stop**:
+One of the operator's stops on the route of the circular shuttle.
+_Avoid_: Bus stop
 
 **Collection**:
 One run of the worker server reading a Source and handing what it read to the main server. A Source records its last successful Collection and its last failure.

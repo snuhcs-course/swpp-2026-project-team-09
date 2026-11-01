@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { allCategories, averagesOf, passedById, type RunScore, settingsOf, totalFailures } from './run-score.ts';
@@ -123,8 +125,17 @@ function casesChanged(a: RunScore, b: RunScore, nameA: string, nameB: string): s
   ];
 }
 
-// Two scored runs side by side, with their differences, in Markdown.
+// Two scored runs side by side, with their differences, in Markdown. Runs of two worlds are refused: their scores are
+// not of the same thing, and a large world's name holds its version (P05 ticket 02b). So are runs of the P4 holdout,
+// which this would list case by case, and only its rates are read (P04 ticket 06).
 export function compare(a: RunScore, b: RunScore): string {
+  if (a.saved.options.holdout === true || b.saved.options.holdout === true) {
+    throw new Error('A run of the holdout is not compared: only the rates of its scorecard are read.');
+  }
+  const [worldA, worldB] = [a.saved.options.world, b.saved.options.world];
+  if (typeof worldA === 'string' && typeof worldB === 'string' && worldA !== worldB) {
+    throw new Error(`The runs are of two worlds, ${worldA} and ${worldB}, and are not compared.`);
+  }
   const nameA = a.saved.name;
   const nameB = b.saved.name === nameA ? `${nameA} (2)` : b.saved.name;
   return `${[

@@ -4,6 +4,7 @@
  * 2026-10-03  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { PlaceDto } from '../places/dto/place.dto.js';
@@ -77,7 +78,7 @@ function baseNumber(number: string): string {
   return number.split('-')[0];
 }
 
-function isElsewhere(text: string): boolean {
+export function isElsewhere(text: string): boolean {
   return ELSEWHERE.test(text) || [...text.matchAll(STREET)].some(([, street]) => street !== '관악');
 }
 

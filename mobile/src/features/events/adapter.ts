@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { MatchingRequest } from '@/api/matching-types';
@@ -10,14 +11,28 @@ import type { GlobalEvent, Quest } from '@/api/types';
 import type { RecruitingQuest } from '@/api/party-types';
 import { shownSubQuest } from '@/features/quests/adapter';
 import { agoWords } from '@/features/quests/room-adapter';
-import { koreaClock, koreaDay, koreaDaysAfter, koreaWeekday } from '@/korea-time';
+import { koreaCalendar, koreaClock, koreaDay, koreaDaysAfter, koreaWeekday } from '@/korea-time';
 
 // What the 행사 tab, its sheets and the AI 매칭 신청 list show of the Global Events.
 
 export type EventFilter = 'all' | 'today' | 'week' | 'recruiting';
 
-// "오늘 18:00–20:00"
-export function eventTime(event: Pick<GlobalEvent, 'startsAt' | 'endsAt'>, now: Date): string {
+// The longest one sitting lasts, as the main server's Judgement holds it: 22:00 to 02:00 is one night, not a period.
+const LONGEST_SITTING_MS = 24 * 60 * 60 * 1000;
+
+type EventTimes = Pick<GlobalEvent, 'startsAt' | 'endsAt'>;
+
+// Whether the event runs over a period, which its start and end alone tell, whoever made it.
+export function isOverPeriod({ startsAt, endsAt }: EventTimes): boolean {
+  return endsAt !== null && new Date(endsAt).getTime() - new Date(startsAt).getTime() > LONGEST_SITTING_MS;
+}
+
+// "오늘 18:00–20:00", or "11월 30일까지" for an event over a period.
+export function eventTime(event: EventTimes, now: Date): string {
+  if (event.endsAt !== null && isOverPeriod(event)) {
+    const { month, date } = koreaCalendar(new Date(event.endsAt));
+    return `${month}월 ${date}일까지`;
+  }
   const hours =
     event.endsAt === null ? koreaClock(event.startsAt) : `${koreaClock(event.startsAt)}–${koreaClock(event.endsAt)}`;
   return `${koreaDay(event.startsAt, now)} ${hours}`;
