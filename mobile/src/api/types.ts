@@ -8,6 +8,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 // The answers of the main server, as the app reads them; `src/api/server/answers.ts` checks them. A shape marked "the
@@ -67,7 +68,15 @@ export interface Profile {
   hashtags: string[];
   // "7KX2M9QD": what another User sends a Friend Request to.
   friendId: string;
+  // For a group study room's booking only, and in no other User's view. The 학번 as its nine digits, and the 학적상
+  // 이름, which is taken to be the name while it is null.
+  studentNumber: string | null;
+  registeredName: string | null;
+  affiliation: Affiliation | null;
 }
+
+// 소속: 학부, 대학원 or 교환학생.
+export type Affiliation = 'undergraduate' | 'graduate' | 'exchange';
 
 export interface Lobby {
   profile: Profile;
@@ -75,8 +84,14 @@ export interface Lobby {
   masterSwitch: boolean;
 }
 
-// The fields of the profile that change; a field left out stays. `null` empties the admission year.
-export type ProfileChange = Partial<Pick<Profile, 'name' | 'department' | 'admissionYear' | 'hashtags'>>;
+// The fields of the profile that change; a field left out stays. `null` empties the admission year and the 소속, and an
+// empty text the 학번 and the 학적상 이름. The 학번 may hold the hyphen, as the User typed it.
+export type ProfileChange = Partial<
+  Pick<
+    Profile,
+    'name' | 'department' | 'admissionYear' | 'hashtags' | 'studentNumber' | 'registeredName' | 'affiliation'
+  >
+>;
 
 // --- Friends and their positions ---
 

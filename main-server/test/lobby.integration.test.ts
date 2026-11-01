@@ -4,6 +4,7 @@
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -12,7 +13,7 @@ import request from 'supertest';
 import { inject } from 'vitest';
 import { A_FRIEND_ID } from './friends.js';
 import { googleSubject } from './google.js';
-import { patchProfile } from './profile.js';
+import { NO_LIBRARY_DETAILS, patchProfile } from './profile.js';
 import { signIn, signInBeforeOnboarding, withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
 
@@ -40,7 +41,14 @@ describe('The lobby', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
-      profile: { name: '김철수', department: '경영학과', admissionYear: null, hashtags: ['AI'], friendId: A_FRIEND_ID },
+      profile: {
+        name: '김철수',
+        department: '경영학과',
+        admissionYear: null,
+        hashtags: ['AI'],
+        friendId: A_FRIEND_ID,
+        ...NO_LIBRARY_DETAILS,
+      },
       masterSwitch: false,
     });
   });
