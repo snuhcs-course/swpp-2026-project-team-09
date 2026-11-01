@@ -1074,6 +1074,8 @@ Behind a hook are three layers:
 | `askAssistant`                                                       | The Assistant's reply to the conversation                    | `POST /assistant/messages`                                              |
 | `listAliases`, `deleteAlias`                                         | The words the User taught the Assistant; nothing             | `GET /assistant/aliases`, `DELETE /assistant/aliases/:id`               |
 | `rejectAlias`                                                        | Nothing                                                      | `POST /assistant/aliases/reject`                                        |
+| `getTutorial`, `enableTutorial`, `stopTutorial`, `hideTutorialRow`   | The 새내기 튜토리얼 with the User's progress, after each     | The mock until P06-02: `GET /tutorial`, `POST /tutorial/enable`, …      |
+| `startTutorialQuest`, `completeTutorialQuest`                        | The 새내기 튜토리얼 with the User's progress                 | The mock until P06-02: `POST /tutorial/quests/:key/start`, `/complete`  |
 
 The mock keeps the User's taught words in memory too (`src/api/mock/aliases.ts`): 중도 for 중앙도서관, which the mock
 Assistant reads "중도에서 내일 점심 모집해줘" through until it is deleted or rejected, and 민준 for 김민준.
