@@ -1,0 +1,17 @@
+{
+  "successYN": "Y",
+  "seatInfo": {
+    "SEATNO": "14103024",
+    "NAME": "G429",
+    "COMMENT": "",
+    "DEVICE_COMMENT": "무선랜/전원 제공|6인실 최소 4명이상 예약",
+    "SEAT_IMAGE": "/MAP/POP/pop_14103024.png",
+    "MONITOR_YN": "",
+    "LAN_YN": "Y",
+    "STAND_YN": "",
+    "POWER_YN": "Y"
+  },
+  "params": {
+    "seatNo": "14103024"
+  }
+}
