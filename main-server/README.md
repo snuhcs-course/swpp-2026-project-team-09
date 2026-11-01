@@ -151,11 +151,17 @@ on an undergraduate's account only.
 A User reads and edits their own profile. The routes name no User, so they never reach another User's profile.
 
 - `GET /users/me/profile` answers
-  `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...], "friendId": "7KX2M9QD" }`. Like every User
-  route but two, it needs the User to have finished onboarding. `friendId` is the User's [Friend ID](#friends).
+  `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...], "friendId": "7KX2M9QD", "studentNumber": ..., "registeredName": ..., "affiliation": ... }`.
+  Like every User route but two, it needs the User to have finished onboarding. `friendId` is the User's
+  [Friend ID](#friends).
 - `PATCH /users/me/profile` with some of these fields changes only those and answers with the whole profile. `null`
-  empties `admissionYear`, and `[]` empties `hashtags`. The name and the department cannot be emptied. The Friend ID
-  cannot be changed: a `friendId` sent is ignored.
+  empties `admissionYear`, `studentNumber`, `registeredName` and `affiliation`, and `[]` empties `hashtags`. The name
+  and the department cannot be emptied. The Friend ID cannot be changed: a `friendId` sent is ignored.
+- `studentNumber` (학번), `registeredName` (학적상 이름, the name the library knows) and `affiliation` (소속) are for
+  a group study room's booking at 관정도서관. They start empty, and onboarding does not take them. The 학번 and the
+  registered name are in this reply and the Lobby's only: no Friend list, Friend search, Quest, Party or invitation
+  carries them, and the profile's routes do not log them. Where the registered name is needed and it is empty, the
+  name is used (`registeredNameOf` in `src/users/dto/profile.dto.ts`); the stored value stays empty.
 - A value outside these limits gets 400 with a message that starts with the field, and nothing changes. Spaces around
   text are dropped first. The limits are set in `src/users/dto/update-profile.dto.ts`, and onboarding follows the same
   ones.
@@ -164,6 +170,10 @@ A User reads and edits their own profile. The routes name no User, so they never
   - `admissionYear`: a whole number from 1946, when SNU was founded, to this year in Korea.
   - `hashtags`: at most 20. Each is kept without the `#` in front, in the case sent, and then has 1 to 30 characters
     without whitespace. None may appear twice, whatever the case.
+  - `studentNumber`: four digits and five more, with a hyphen between them or not, such as `2026-12345`. It is kept as
+    the nine digits, `202612345`. An empty one empties it.
+  - `registeredName`: at most 30 characters. An empty one empties it.
+  - `affiliation`: `undergraduate` (학부), `graduate` (대학원) or `exchange` (교환학생).
 
 ## Friends
 
