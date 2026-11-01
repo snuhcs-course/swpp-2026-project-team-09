@@ -3,6 +3,7 @@
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -176,30 +177,36 @@ describe('The learning curve', () => {
   });
 });
 
+// The User's lunch suggestions: at `shownAt` one accepted, one ignored, one silent then asked for in the chat two
+// minutes on (a missed need) and one silent; one 30 days ago and one a minute ago, outside the days asked.
+async function storeOpenings(userId: string, shownAt: Date): Promise<void> {
+  const base = {
+    userId,
+    template: 'lunch_with_free_friend',
+    eligible: ['lunch_with_free_friend'],
+    bucket: 'midday',
+    propensity: 0.9,
+    holdback: false,
+    receptiveness: 0.5,
+    gated: false,
+  };
+  const silent = { ...base, template: null, propensity: null, outcome: 'silent' as const, shownAt };
+  await prisma.suggestionImpression.createMany({
+    data: [
+      { ...base, shownAt, outcome: 'accepted', outcomeAt: new Date(shownAt.getTime() + 60_000) },
+      { ...base, shownAt },
+      { ...base, shownAt: new Date(NOW - 30 * DAY_MS) },
+      { ...base, shownAt: new Date(NOW - 60_000) },
+      { ...silent, typedTemplate: 'lunch_with_free_friend', typedAt: new Date(shownAt.getTime() + 120_000) },
+      silent,
+    ],
+  });
+}
+
 describe('The suggestion curves', () => {
   it('read the impressions shown on the days asked whose outcome is settled', async () => {
     const [userId = ''] = await accounts(1);
-    const shownAt = new Date(NOW - 5 * DAY_MS);
-    const base = {
-      userId,
-      template: 'lunch_with_free_friend',
-      eligible: ['lunch_with_free_friend'],
-      bucket: 'midday',
-      propensity: 0.9,
-      holdback: false,
-    };
-    const silent = { ...base, template: null, propensity: null, outcome: 'silent' as const, shownAt };
-    await prisma.suggestionImpression.createMany({
-      data: [
-        { ...base, shownAt, outcome: 'accepted', outcomeAt: new Date(shownAt.getTime() + 60_000) },
-        { ...base, shownAt },
-        { ...base, shownAt: new Date(NOW - 30 * DAY_MS) },
-        { ...base, shownAt: new Date(NOW - 60_000) },
-        // Nothing shown, and the User asked the chat for the lunch two minutes on: a missed need.
-        { ...silent, typedTemplate: 'lunch_with_free_friend', typedAt: new Date(shownAt.getTime() + 120_000) },
-        silent,
-      ],
-    });
+    await storeOpenings(userId, new Date(NOW - 5 * DAY_MS));
 
     const curves = await suggestionCurves(
       prisma,
@@ -211,7 +218,9 @@ describe('The suggestion curves', () => {
     expect(curves.weighted).toEqual([
       { slice: 'all', template: 'lunch_with_free_friend', holdback: false, shown: 2, acceptance: 0.5 },
     ]);
-    expect(curves.openings).toEqual([{ slice: 'all', openings: 4, silent: 2, silentThenTyped: 1 }]);
+    expect(curves.openings).toMatchObject([
+      { slice: 'all', holdback: false, openings: 4, silent: 2, gated: 0, silentThenTyped: 1, accepted: { k: 1, n: 4 } },
+    ]);
     expect(curves.needs).toHaveLength(1);
     expect(curves.needs[0]).toMatchObject({
       template: 'lunch_with_free_friend',

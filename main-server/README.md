@@ -2165,8 +2165,10 @@ never answer, are reported apart, and each point says which slice it is in, `tun
 
 `pnpm eval:suggestions --from <day> --to <day> [--final-from <day>]` reads the `suggestion_impressions` of the chats
 opened from the first moment of `--from` to the end of `--to`, less those of the last 10 minutes, whose outcome may
-still come. First the openings per slice: how many, how many showed nothing (`silent`), and how many of those the User
-followed within 10 minutes by asking the chat for what an eligible template would have proposed (`typed_template`).
+still come. First the openings per slice and arm: how many, the accepted over them (what the gate on the User's own
+acceptance is judged by, since it holds back learning-arm accounts only), how many showed nothing (`silent`), how many
+of those the gate made (`gated`), and how many of the silent ones the User followed within 10 minutes by asking the
+chat for what an eligible template would have proposed (`typed_template`).
 Then, over the shown rows, per slice, ISO week in Korea, template and arm (the row's `holdback`): how many were shown,
 acceptance (`accepted` or `confirmed`), confirmed within 10 minutes (`confirmed` with `outcome_at` at most 10 minutes
 after `shown_at`), dismissal, and ignored (no outcome within 10 minutes). Then the missed needs and false alarms per

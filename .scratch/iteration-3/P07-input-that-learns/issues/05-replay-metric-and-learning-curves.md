@@ -122,3 +122,7 @@ A settled outcome posted again answered 409 `SUGGESTION_OUTCOME_SETTLED`, anothe
 
 - Agent time: about 70 minutes (estimate), one Fable 5.1 session: the live run of the five pieces, the notes on tickets 01 to 04, and the reply-text fix on its own branch.
 - Tokens (estimate): about 37.8M input, of which about 36.9M cache reads and 0.9M cache writes, and about 420k output. With cache reads excluded, about 1.3M.
+
+### Changed (2026-11-01), with ticket 04's gate
+
+`pnpm eval:suggestions` reports the openings per slice and arm, with the accepted over every opening and the silent openings the gate made (`gated`), so that the gate of ticket 04, which holds back learning-arm accounts only, is judged by accepts per opening arm against arm and not by the acceptance per shown it raises by shrinking the denominator. `suggestion-metrics.ts` (`Openings`, `openingsOf`), `suggestions.ts`, and the two tests that read the openings.
