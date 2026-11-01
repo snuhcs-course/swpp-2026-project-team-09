@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { PlaceDto } from '../places/dto/place.dto.js';
@@ -32,7 +33,7 @@ import { type PostSourceSettings } from './post-sources.js';
 const HOURS_24_MS = 24 * 60 * 60 * 1000;
 
 // What marks a line as a period to apply in, not the event's own time.
-const APPLICATION =
+export const APPLICATION =
   /신청|접수|모집|등록|지원\s*기간|마감|응모|제출|원서|예약|appl(?:y|ication)|regist(?:er|ration)|deadline/iu;
 
 // A line this short holds a label for the next one, as "신청 기간" above its dates does.

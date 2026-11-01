@@ -1,0 +1,667 @@
+{
+  "record": {
+    "run": "r0a",
+    "command": "pnpm eval:collection --run r0a --part held-out --no-model",
+    "commit": "464ea9c5ad97208f0b6216d674a37d675b0d6e95",
+    "c0Tag": "eval-freeze-iter3-collection",
+    "isDescendantOfC0": true,
+    "setHash": "af9f5ed56cb5854d09b9e8e0a59247dcac97c64d6303d6c2385a617e8ec95bf3",
+    "thresholdsBlob": "ee1b5bc95cf83a0cbdee44f246aae875a811c8ff",
+    "startedAt": "2026-11-01T16:38:31.043Z",
+    "endedAt": "2026-11-01T16:38:32.019Z",
+    "part": "held-out",
+    "modelAsked": "anthropic/claude-haiku-5.5",
+    "canonicalSlug": "anthropic/claude-haiku-5.5-20261007",
+    "modelsAnswered": [],
+    "limits": {
+      "timeoutMs": 60000,
+      "maxOutputTokens": 4000
+    },
+    "switches": {
+      "AUTOMATIC_JUDGEMENT": false,
+      "SAME_EVENT_TITLE_RULE": false,
+      "SAME_EVENT_AI_CHOICE": false
+    },
+    "buildingNumberIsGwanak": {
+      "snu_events": true,
+      "extra_snu": true
+    },
+    "checks": [
+      "announcesEvent",
+      "linesInPost",
+      "dateAgrees",
+      "weekdayAgrees",
+      "timeAgrees",
+      "notApplicationPeriod",
+      "startBeforeEnd",
+      "hasTimeOfDay",
+      "length",
+      "placeInLines",
+      "placeMatches",
+      "newSession"
+    ],
+    "from": null,
+    "usage": {
+      "calls": 0,
+      "tokens": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0
+      },
+      "costUsd": 0
+    },
+    "budgetUsd": 1,
+    "pricesSource": "openrouter"
+  },
+  "score": {
+    "a": {
+      "c1": {
+        "k": 0,
+        "n": 64
+      },
+      "c2": {
+        "k": 0,
+        "n": 0
+      },
+      "c3": {
+        "published": 0,
+        "allGiven": 0
+      },
+      "c4": {
+        "schema": null,
+        "failedCalls": 0,
+        "start": {
+          "precision": {
+            "k": 0,
+            "n": 0
+          },
+          "recall": {
+            "k": 0,
+            "n": 84
+          },
+          "madeUp": {
+            "k": 0,
+            "n": 0
+          }
+        },
+        "end": {
+          "precision": {
+            "k": 0,
+            "n": 0
+          },
+          "recall": {
+            "k": 0,
+            "n": 76
+          },
+          "madeUp": {
+            "k": 0,
+            "n": 0
+          }
+        },
+        "place": {
+          "precision": {
+            "k": 0,
+            "n": 0
+          },
+          "recall": {
+            "k": 0,
+            "n": 64
+          },
+          "madeUp": {
+            "k": 0,
+            "n": 0
+          }
+        },
+        "announcesEvent": {
+          "precision": {
+            "k": 0,
+            "n": 0
+          },
+          "recall": {
+            "k": 0,
+            "n": 49
+          }
+        }
+      },
+      "c5": 0,
+      "c6": {
+        "k": 0,
+        "n": 85
+      },
+      "c7": 0,
+      "rows": [
+        {
+          "id": "a-001",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-004",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-005",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-005",
+          "session": 2,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-005",
+          "session": 3,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-005",
+          "session": 4,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-006",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-007",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-007",
+          "session": 2,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-012",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-015",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-015",
+          "session": 2,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-016",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-017",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-029",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-029",
+          "session": 2,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-029",
+          "session": 3,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-030",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-035",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-035",
+          "session": 2,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-035",
+          "session": 3,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-035",
+          "session": 4,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-036",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-037",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-044",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-045",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-047",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-049",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-053",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-054",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-054",
+          "session": 2,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-055",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-056",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-056",
+          "session": 2,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-056",
+          "session": 3,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-056",
+          "session": 4,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-057",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-058",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-058",
+          "session": 2,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-058",
+          "session": 3,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-058",
+          "session": 4,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-058",
+          "session": 5,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-058",
+          "session": 6,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-060",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-062",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-062",
+          "session": 2,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-063",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-063",
+          "session": 2,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-063",
+          "session": 3,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-063",
+          "session": 4,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-063",
+          "session": 5,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-063",
+          "session": 6,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-064",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-065",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-065",
+          "session": 2,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-070",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-071",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-072",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-072",
+          "session": 3,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-073",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-074",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-075",
+          "session": 1,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-075",
+          "session": 2,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        },
+        {
+          "id": "a-075",
+          "session": 3,
+          "failed": "미발행: 답 없음",
+          "cause": "추출"
+        }
+      ]
+    }
+  },
+  "verdicts": [
+    {
+      "id": "c1.floor",
+      "metric": "C1",
+      "kind": "floor",
+      "threshold": ">= 0.25",
+      "measured": "0/64",
+      "result": "FAIL"
+    },
+    {
+      "id": "c1.target",
+      "metric": "C1",
+      "kind": "target",
+      "threshold": ">= 0.6",
+      "measured": "0/64",
+      "result": "FAIL"
+    },
+    {
+      "id": "c2.floor",
+      "metric": "C2",
+      "kind": "floor",
+      "threshold": "<= 0.0333",
+      "measured": "0/0",
+      "result": "n/a"
+    },
+    {
+      "id": "c2.target",
+      "metric": "C2",
+      "kind": "target",
+      "threshold": "= 0",
+      "measured": "0/0",
+      "result": "n/a"
+    },
+    {
+      "id": "c3.floor",
+      "metric": "C3",
+      "kind": "floor",
+      "threshold": "= 0",
+      "measured": "0",
+      "result": "PASS"
+    },
+    {
+      "id": "c3.target",
+      "metric": "C3",
+      "kind": "target",
+      "threshold": "= 0",
+      "measured": "0",
+      "result": "PASS"
+    },
+    {
+      "id": "c4.schema.floor",
+      "metric": "C4",
+      "kind": "floor",
+      "threshold": "= 1",
+      "measured": "n/a",
+      "result": "n/a"
+    },
+    {
+      "id": "c4.start-precision.floor",
+      "metric": "C4",
+      "kind": "floor",
+      "threshold": ">= 0.9",
+      "measured": "0/0",
+      "result": "n/a"
+    },
+    {
+      "id": "c4.start-precision.target",
+      "metric": "C4",
+      "kind": "target",
+      "threshold": ">= 0.95",
+      "measured": "0/0",
+      "result": "n/a"
+    },
+    {
+      "id": "c4.start-recall.target",
+      "metric": "C4",
+      "kind": "target",
+      "threshold": ">= 0.8",
+      "measured": "0/84",
+      "result": "FAIL"
+    },
+    {
+      "id": "c5.floor",
+      "metric": "C5",
+      "kind": "floor",
+      "threshold": "= 0",
+      "measured": "0",
+      "result": "PASS"
+    },
+    {
+      "id": "c5.target",
+      "metric": "C5",
+      "kind": "target",
+      "threshold": "= 0",
+      "measured": "0",
+      "result": "PASS"
+    },
+    {
+      "id": "c6.floor",
+      "metric": "C6",
+      "kind": "floor",
+      "threshold": ">= 0.8",
+      "measured": "0/85",
+      "result": "FAIL"
+    },
+    {
+      "id": "c6.target",
+      "metric": "C6",
+      "kind": "target",
+      "threshold": ">= 0.95",
+      "measured": "0/85",
+      "result": "FAIL"
+    },
+    {
+      "id": "c7.floor",
+      "metric": "C7",
+      "kind": "floor",
+      "threshold": "= 0",
+      "measured": "0",
+      "result": "PASS"
+    },
+    {
+      "id": "c7.target",
+      "metric": "C7",
+      "kind": "target",
+      "threshold": "= 0",
+      "measured": "0",
+      "result": "PASS"
+    }
+  ],
+  "stopped": null,
+  "calls": {
+    "judgements": {},
+    "choices": {}
+  },
+  "usage": {
+    "calls": 0,
+    "tokens": {
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "cacheReadTokens": 0,
+      "cacheWriteTokens": 0
+    },
+    "costUsd": 0
+  },
+  "modelIds": []
+}
