@@ -46,12 +46,17 @@ export interface ShownBooking {
   when: string;
 }
 
+// A seat's label reads as a seat ("7193번"), and a room's as its name ("G420").
+function seatLabel(label: string): string {
+  return /^\d+$/u.test(label) ? `${label}번` : label;
+}
+
 export function shownBooking(booking: LibraryBooking): ShownBooking {
   const { USESTART: start, USEEXPIRE: expire } = booking;
   const month = Number(start.slice(5, 7));
   const date = Number(start.slice(8, 10));
   return {
-    title: `${booking.ROOM_NAME} · ${booking.SEAT_VNAME}번`,
+    title: `${booking.ROOM_NAME} · ${seatLabel(booking.SEAT_VNAME)}`,
     when: `${month}월 ${date}일 ${start.slice(11, 16)}–${expire.slice(11, 16)} · 예약·이용 기록`,
   };
 }

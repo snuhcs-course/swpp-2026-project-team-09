@@ -95,6 +95,16 @@ describe("the booking's row", () => {
       when: '10월 3일 09:00–11:30 · 예약·이용 기록',
     });
   });
+
+  it("gives a room's name without 번", () => {
+    const room = {
+      ...booking(2, 2, '2026-10-04 14:00:00', '2026-10-04 16:00:00'),
+      ROOM_NAME: '4층 그룹스터디룸',
+      SEAT_VNAME: 'G420',
+    };
+
+    expect(shownBooking(room).title).toBe('4층 그룹스터디룸 · G420');
+  });
 });
 
 function loggedIn(): Promise<LoginOutcome> {
