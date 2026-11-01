@@ -18,6 +18,10 @@
     - user: 모레 오후 2시부터 2시간 2층 6인실 잡아줘. 민수, 지은, 하람, 유진이랑 과제할 거야
   expect:
     actions: [TOOL]
+    tools:
+      required: [resolveFriend, proposeLibraryBooking]
+      allowed: [findLibrarySpace]
+      only: true
     cards:
       - kind: library
         action: book
@@ -48,7 +52,7 @@
   expect:
     actions: [REFUSE]
     tools:
-      required: [proposeLibraryBooking]
+      required: [resolveFriend, proposeLibraryBooking]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -65,7 +69,7 @@
   expect:
     actions: [REFUSE]
     tools:
-      required: [proposeLibraryBooking]
+      required: [resolveFriend, proposeLibraryBooking]
       only: true
     cards:
       - { kind: library, max: 0 }
@@ -122,6 +126,9 @@
         - 초대했어요
         - 초대했
         - '2026-000'
+    tools:
+      required: [proposeLibraryBooking]
+      only: true
 
 # Nine people for a 10인실: the 8-people party limit, whatever the room.
 - id: p6-group-rooms-nine-people
@@ -133,7 +140,7 @@
   expect:
     actions: [REFUSE]
     tools:
-      required: [proposeLibraryBooking]
+      required: [resolveFriend, proposeLibraryBooking]
       only: true
     cards:
       - { kind: library, max: 0 }

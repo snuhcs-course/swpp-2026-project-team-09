@@ -134,6 +134,10 @@
     - user: 모레 3시부터 2시간 2층 6인실 잡아줘. 민수, 지은, 하람이랑 팀플하려고
   expect:
     actions: [TOOL]
+    tools:
+      required: [resolveFriend, proposeLibraryBooking]
+      allowed: [findLibrarySpace]
+      only: true
     cards:
       - kind: library
         action: book
@@ -162,6 +166,10 @@
     - user: 내일 저녁 7시부터 1시간 반 4층 6인실 예약해줘. 동아리 회의라 민수, 지은, 유진이랑 같이 써
   expect:
     actions: [TOOL]
+    tools:
+      required: [resolveFriend, proposeLibraryBooking]
+      allowed: [findLibrarySpace]
+      only: true
     cards:
       - kind: library
         action: book
@@ -190,6 +198,10 @@
     - user: 내일 오후 1시부터 2시간 2층 6인실, 민수랑 지은이랑 하람이랑
   expect:
     actions: [TOOL]
+    tools:
+      required: [resolveFriend, proposeLibraryBooking]
+      allowed: [findLibrarySpace]
+      only: true
     cards:
       - kind: library
         action: book

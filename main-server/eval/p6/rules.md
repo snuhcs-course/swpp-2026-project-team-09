@@ -162,10 +162,11 @@ The Assistant never sees a 학번, a registered name (학적상 이름), a phone
 Each case has one label with one action; none accepts two answers.
 
 - **book card**, **seats card**, **cancel / return / myBookings card**: TOOL, with an `expect.cards` entry of kind `library` giving the action, the space (catalogue id) and the conditions (date YYYY-MM-DD, start HH:MM, minutes, seat, equipment, useDesc, companions by seed name, quest by seed name, target). `useDesc: null` means the card must leave it unset. Times are checked in the card's values, never in the text. A book card's text holds 예약하기.
+- **Named Friends** in a booking, a room request card or a condition refusal: `resolveFriend`, then `proposeLibraryBooking`, both required; a card may also call `findLibrarySpace`, and nothing else (`only: true`). A held Quest is read from the conversation's card, and its booking requires `proposeLibraryBooking` alone, with the `questId`. The scorer checks which tools were called, not their order.
 - **room request card**: as a book card, with the companions or the Quest, and the text holding 동의 and none of 예약했어요, 예약되었어요, 초대했어요.
 - **ask**: ASK, with every candidate (or what is missing, such as 몇 시) in `text.mentions`, no library card (`{ kind: library, max: 0 }`), and no tool (`tools.forbidden: '*'`), or only the one tool section 11 allows (`tools.allowed` or `required` with `only: true`).
 - **space refusal** (refuse-unsupported, -not-online, -not-eligible): REFUSE, with the reason in `text.mentions` (미구현, 현장, 대학원생), no library card and no tool (`tools.forbidden: '*'`).
-- **condition refusal** (refuse-out-of-window, and the headcount refusals of section 9): REFUSE, with the reason in `text.mentions` (당일, 3일, 6시간, 1명, 8인실, 8명 and the like), no library card, and `proposeLibraryBooking` required with no other tool (`tools.required: [proposeLibraryBooking]`, `only: true`). The scorer reads a refused `proposeLibraryBooking` with nothing shown as a REFUSE.
+- **condition refusal** (refuse-out-of-window, and the headcount refusals of section 9): REFUSE, with the reason in `text.mentions` (당일, 3일, 6시간, 1명, 8인실, 8명 and the like), no library card, and `proposeLibraryBooking` required with no other tool (`tools.required: [proposeLibraryBooking]`, `only: true`). When the request names Friends, `resolveFriend` comes first, since `proposeLibraryBooking` takes their ids: `tools.required: [resolveFriend, proposeLibraryBooking]`, `only: true`. The scorer reads a refused `proposeLibraryBooking` with nothing shown as a REFUSE.
 - **information answer**: TOOL, `getTutorial` required, the other sources of section 14 allowed and nothing else (`only: true`), with the facts in `text.mentions` and what must not be said in `text.absent`.
 - **chat**: CHAT, no tool, no library card.
 - A book, cancel or return card in a reply whose label is not that action counts against M4, the hard gate.
@@ -191,5 +192,6 @@ What the spec and the catalogue left open, as the PM ruled on the blind draft, n
 15. One answer per case (section 16).
 16. Refusals split by who decides: a space refusal calls no tool; a condition refusal goes through `proposeLibraryBooking` and nothing else (sections 2, 16).
 17. "내 공강에 7층 열람실" is an ASK for the space, with no tool (section 12).
+18. Named Friends go through `resolveFriend` before `proposeLibraryBooking`, in a card or a condition refusal (section 16).
 
 Also settled from the draft, unchanged: a bare hour from 1 to 6 is the afternoon (section 1); purposes outside section 8's mapping (라이브 방송, 발표 준비, 체험) leave the useDesc out; a booking lies inside the hours from start to end (section 5); a named room of a media space is passed as `equipment`.

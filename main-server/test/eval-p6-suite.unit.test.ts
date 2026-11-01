@@ -18,17 +18,17 @@ import { tutorialState } from '../src/tutorial/tutorial-state.js';
 
 const P6 = new URL('../eval/p6/', import.meta.url);
 
-// The refusals by a booking's conditions, which go through proposeLibraryBooking (labels-notes.md, ruling 16).
-const CONDITION_REFUSALS = [
-  'p6-refusals-seat-tomorrow',
-  'p6-refusals-room-in-four-days',
-  'p6-refusals-late-and-long',
-  'p6-group-rooms-below-min',
-  'p6-group-rooms-above-max',
-  'p6-group-rooms-nine-people',
-  'p6-group-rooms-g201',
-];
-
+// The refusals by a booking's conditions, which go through proposeLibraryBooking, after resolveFriend when the request
+// names Friends (labels-notes.md, rulings 16 and 18).
+const CONDITION_REFUSALS: Record<string, string[]> = {
+  'p6-refusals-seat-tomorrow': ['proposeLibraryBooking'],
+  'p6-refusals-late-and-long': ['proposeLibraryBooking'],
+  'p6-group-rooms-g201': ['proposeLibraryBooking'],
+  'p6-refusals-room-in-four-days': ['resolveFriend', 'proposeLibraryBooking'],
+  'p6-group-rooms-below-min': ['resolveFriend', 'proposeLibraryBooking'],
+  'p6-group-rooms-above-max': ['resolveFriend', 'proposeLibraryBooking'],
+  'p6-group-rooms-nine-people': ['resolveFriend', 'proposeLibraryBooking'],
+};
 const cases = casesIn(loadCases(), 'p6');
 const ids = new Set(cases.map(({ id }) => id));
 const data = p6WorldData();
@@ -48,6 +48,38 @@ function suiteFiles(): { name: string; text: string }[] {
   const top = readdirSync(P6).filter((name) => /\.(?:ya?ml|md|json)$/u.test(name));
   const inCases = readdirSync(new URL('cases/', P6)).map((name) => `cases/${name}`);
   return [...top, ...inCases].map((name) => ({ name, text: readFileSync(new URL(name, P6), 'utf8') }));
+}
+
+// The cases that book or require proposeLibraryBooking, and those whose tools do not match how the question names its
+// people: Friends by name need resolveFriend first, a held Quest from the conversation needs none.
+function bookingPaths(): { books: typeof cases; wrong: string[] } {
+  // A Friend is named by their given name, as the questions write them: 민수 for 이민수, 하루 for 하루.
+  const given = Object.values(data.friends).map(({ name }) => (name.length > 2 ? name.slice(1) : name));
+  const quest = data.lunchQuest.title;
+  const books = cases.filter(
+    ({ expect: wanted }) =>
+      wanted?.tools.required.includes('proposeLibraryBooking') === true ||
+      (wanted?.cards ?? []).some(({ action, max }) => action === 'book' && max !== 0),
+  );
+  const wrong = books.flatMap(({ id, turns, expect: wanted }) => {
+    const asked = turns.flatMap((turn) => ('user' in turn ? [turn.user] : [])).join(' ');
+    const shown = turns.some((turn) => 'assistant' in turn && turn.assistant.cards.some(({ seed }) => seed === quest));
+    const required = JSON.stringify(wanted?.tools.required ?? []);
+    if (given.some((name) => asked.includes(name))) {
+      return required === JSON.stringify(['resolveFriend', 'proposeLibraryBooking']) && wanted?.tools.only === true
+        ? []
+        : [`${id}: Friends named`];
+    }
+    if (shown) {
+      const card = wanted?.cards?.find(({ action }) => action === 'book');
+      return required === JSON.stringify(['proposeLibraryBooking']) && card?.conditions?.quest === quest
+        ? []
+        : [`${id}: held Quest`];
+    }
+    return wanted?.tools.required.includes('resolveFriend') === true ? [`${id}: no Friend named`] : [];
+  });
+
+  return { books, wrong };
 }
 
 describe('The P6 cases', () => {
@@ -100,7 +132,7 @@ describe('The tools and words of the P6 labels', () => {
   it('let a space refusal, a CHAT and an ASK call no tool, and a condition refusal only proposeLibraryBooking', () => {
     const onlyWith: Record<string, string[]> = {
       'p6-group-rooms-same-name': ['resolveFriend'],
-      ...Object.fromEntries(CONDITION_REFUSALS.map((id) => [id, ['proposeLibraryBooking']])),
+      ...CONDITION_REFUSALS,
     };
     const loose = cases.flatMap(({ id, expect: wanted }) => {
       if (wanted === undefined || !['REFUSE', 'ASK', 'CHAT'].includes(wanted.actions[0] ?? '')) {
@@ -117,6 +149,16 @@ describe('The tools and words of the P6 labels', () => {
     });
 
     expect(loose).toEqual([]);
+  });
+});
+
+describe('The bookings of the P6 labels', () => {
+  // proposeLibraryBooking takes Friends' ids or a Quest's, never names (labels-notes.md, ruling 18).
+  it('book with named Friends through resolveFriend, and with a held Quest from the conversation', () => {
+    const { books, wrong } = bookingPaths();
+
+    expect(books.length).toBeGreaterThanOrEqual(20);
+    expect(wrong).toEqual([]);
   });
 
   // A facility's hours are a fact of the text, as the tutorial's other facts are (labels-notes.md, ruling 10).

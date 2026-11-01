@@ -133,7 +133,7 @@
   expect:
     actions: [REFUSE]
     tools:
-      required: [proposeLibraryBooking]
+      required: [resolveFriend, proposeLibraryBooking]
       only: true
     cards:
       - { kind: library, max: 0 }
