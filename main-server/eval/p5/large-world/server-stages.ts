@@ -166,8 +166,8 @@ export function answeredAt(stage: Stage, { tool, input }: IntendedCall, world: L
   return quests.slice(0, MOST_AT[stage]).map(({ key }) => key);
 }
 
-// What a case's server recall waits for: nothing, a ticket, or search stage 1, the misspelt posts that no word brings
-// among the 30 candidates of a crowded window (P05 spec, "Further Notes").
+// What a case's server recall waits for: nothing, a ticket, or search stage 1, the posts that no word brings among the
+// 30 candidates of a crowded window: misspelt ones (P05 spec, "Further Notes") and ones known only by context.
 export type Until = null | 10 | 11 | 'search stage 1';
 
 export function untilOf(calls: readonly IntendedCall[], expected: readonly string[], world: LargeWorldData): Until {

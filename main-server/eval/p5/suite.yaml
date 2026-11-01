@@ -1000,7 +1000,7 @@ largeWorld:
       declared: 2026-11-01
     - id: large.e9.target
       metric: E9
-      measure: 'Micro recall of subset C, which the metrics document does not hold. The P05 owner declared it, 2026-11-01'
+      measure: 'Micro recall of subset C. The P05 owner declared it, 2026-11-01'
       kind: target
       comparator: '>='
       value: 0.8

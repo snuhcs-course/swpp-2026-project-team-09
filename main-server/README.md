@@ -2130,6 +2130,14 @@ set, keeping no result (metrics document, 4.1). `test/eval-p5-cases.integration.
 A scorecard of the suite adds each metric with its pass or fail, and each subset's cards summed over the repetitions
 beside the mean over its cases (`eval/p5/report.ts`).
 
+`pnpm eval --world large-world-v1` runs the 80 cases of `eval/p5/large-world-v1/` in a generated world of 1,000 Quests
+and 307 Global Events, seeded only into the run's fresh database. A run reads the version's data files, and
+`eval/p5/large-world/generate-cli.ts` writes a new version and refuses one that exists. `eval/p5/suite.yaml` holds its
+thresholds and subsets and pins the hashes of its world and cases, which `test/eval-large-world.unit.test.ts` checks.
+`test/eval-large-world.integration.test.ts` calls the search tools with each case's intended inputs and no model, and
+checks the server's recall against what `intended.yaml` expects today. `pnpm eval:compare` refuses two runs of different
+worlds. The record is in `eval/p5/README.md`.
+
 #### Scoring
 
 `pnpm eval` writes the scorecard beside the raw JSON, as `<run>.md`. Scoring never calls the model:

@@ -30,7 +30,7 @@ The owner (`Jaehyun0320`) checked a sample of 89 model-drafted wordings on 2026-
 
 Decisions by the owner, beyond this ticket:
 
-- Subset C (14 cases) holds posts known only by context, such as `증바람 5인 너만 오면 고` under 게임. It is measured apart as E9, target 0.80 and no floor, so that E1 and E3 keep the metrics document's meaning. The metrics document, which is not committed, still needs a line for it.
+- Subset C (14 cases) holds posts known only by context, such as `증바람 5인 너만 오면 고` under 게임. It is measured apart as E9, target 0.80 and no floor, so that E1 and E3 keep the metrics document's meaning. The metrics document has it in evaluation D.
 - 커피 counts as 디저트.
 - No case expects more than 20 cards, so what a reply cannot show is not measured.
 
@@ -42,5 +42,5 @@ Nothing wrong was found in ticket 02's world, cases or answers.
 
 Agent work so far; R0 will add to it.
 
-- Agent time: about 1 hour 50 minutes (estimate), one session with two review subagents.
-- Tokens, subagents included: input 322, with 27,399,058 cache reads and 1,149,082 cache writes shown apart; output 332,044. Counted before this commit.
+- Agent time: about 2 hours 5 minutes (estimate), one session with two review subagents.
+- Tokens, subagents included: input 366, with 30,494,461 cache reads and 1,240,920 cache writes shown apart; output 353,147. Counted before this commit.
