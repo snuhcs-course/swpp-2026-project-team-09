@@ -1,0 +1,17 @@
+{
+  "successYN": "Y",
+  "seatInfo": {
+    "SEATNO": "14101001",
+    "NAME": "G402",
+    "COMMENT": "의학과 동문 정규철님이 기증해주신 그룹스터디룸입니다.",
+    "DEVICE_COMMENT": "모니터/무선랜/전원 제공|10인실 최소 7명이상 예약",
+    "SEAT_IMAGE": "/MAP/POP/pop_14101001.png",
+    "MONITOR_YN": "Y",
+    "LAN_YN": "Y",
+    "STAND_YN": "",
+    "POWER_YN": "Y"
+  },
+  "params": {
+    "seatNo": "14101001"
+  }
+}

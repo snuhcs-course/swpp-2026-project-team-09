@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-02  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { z } from 'zod';
+import { FIXED_SENTENCE } from '../src/assistant/adapter.js';
 import { GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { ask, postAssistantMessages } from './assistant.js';
@@ -128,6 +130,16 @@ describe('the choices of a reply', () => {
       { kind: 'globalEvent', id: dayShow.id, label: dayShow.title, words: '2097 봄 축제' },
       { kind: 'globalEvent', id: nightShow.id, label: nightShow.title, words: '2097 봄 축제' },
     ]);
+  });
+
+  it('says the fixed sentence over the candidates when no step wrote text', async () => {
+    model.script({ tool: 'resolvePlace', input: { words: '학관' } }, { text: '' });
+
+    const response = await send(ask('학관에서 보자'));
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ text: FIXED_SENTENCE });
+    expect(choicesOf(response.body).length).toBeGreaterThan(1);
   });
 
   it('lists none for answers of one or none', async () => {

@@ -9,6 +9,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -37,9 +38,47 @@ import { mockWalkingRoute } from './walking-route';
 // The Master Switch, which the main server keeps on the User. The mock keeps it in memory: off at each start.
 let masterSwitchOn = false;
 
+// The 학번, the 학적상 이름 and the 소속, which Onboarding does not ask. The mock keeps them in memory, as the switch.
+type LibraryDetails = Pick<Profile, 'studentNumber' | 'registeredName' | 'affiliation'>;
+const NO_LIBRARY_DETAILS: LibraryDetails = { studentNumber: null, registeredName: null, affiliation: null };
+let libraryDetails = NO_LIBRARY_DETAILS;
+
 // For the tests: a new start of the app.
 export function forgetMockSwitch(): void {
   masterSwitchOn = false;
+  libraryDetails = NO_LIBRARY_DETAILS;
+}
+
+// As the main server: a 학번 such as 2026-12345, with the hyphen or not, is kept as its nine digits, and an empty
+// text as none. Another is refused with the message that names the field.
+function studentNumberOf(sent: string | null): string | null {
+  const studentNumber = sent?.trim() ?? '';
+  if (studentNumber === '') {
+    return null;
+  }
+  if (!/^\d{4}-?\d{5}$/u.test(studentNumber)) {
+    throw new ApiError(400, null, {
+      statusCode: 400,
+      error: 'Bad Request',
+      message: ['studentNumber: Invalid string: must be a 학번 such as 2026-12345'],
+    });
+  }
+  return studentNumber.replace('-', '');
+}
+
+// An empty registered name is none, as an empty 학번 is.
+function registeredNameOf(sent: string | null): string | null {
+  const registeredName = sent?.trim() ?? '';
+  return registeredName === '' ? null : registeredName;
+}
+
+// The details after a change, from those kept: a field left out stays.
+function changedDetails({ studentNumber, registeredName, affiliation }: Partial<LibraryDetails>): LibraryDetails {
+  return {
+    studentNumber: studentNumber === undefined ? libraryDetails.studentNumber : studentNumberOf(studentNumber),
+    registeredName: registeredName === undefined ? libraryDetails.registeredName : registeredNameOf(registeredName),
+    affiliation: affiliation === undefined ? libraryDetails.affiliation : affiliation,
+  };
 }
 
 async function onboardingAnswers(): Promise<OnboardingAnswers> {
@@ -51,7 +90,7 @@ async function onboardingAnswers(): Promise<OnboardingAnswers> {
 }
 
 function profileOf({ name, department, admissionYear, hashtags }: OnboardingAnswers): Profile {
-  return { name, department, admissionYear, hashtags, friendId: MY_FRIEND_ID };
+  return { name, department, admissionYear, hashtags, friendId: MY_FRIEND_ID, ...libraryDetails };
 }
 
 // Answers every operation from inside the app, in the main server's shapes, with what the `Main` frame shows. The
@@ -64,11 +103,15 @@ export const mockClient: ApiClient = {
   },
   enterLobby: () =>
     answer('enterLobby', async () => ({ profile: profileOf(await onboardingAnswers()), masterSwitch: masterSwitchOn })),
-  // The profile is the Onboarding's answers on the phone, so the next Lobby holds the change.
+  // The profile is the Onboarding's answers on the phone, so the next Lobby holds the change, and the library's
+  // details in memory.
   updateProfile: (change) =>
     answer('updateProfile', async () => {
-      const answers = { ...(await onboardingAnswers()), ...change };
+      const { studentNumber, registeredName, affiliation, ...onboarding } = change;
+      const details = changedDetails({ studentNumber, registeredName, affiliation });
+      const answers = { ...(await onboardingAnswers()), ...onboarding };
       await keep({ answers });
+      libraryDetails = details;
       return profileOf(answers);
     }),
   getProfile: () => answer('getProfile', async () => profileOf(await onboardingAnswers())),

@@ -19,6 +19,7 @@ import { casesToRun } from './p4/holdout.ts';
 import { seedP4World } from './p4/world.ts';
 import { seedLargeWorld } from './p5/large-world/world.ts';
 import { seedP5World } from './p5/world.ts';
+import { RawResponses } from './raw-responses.ts';
 import { type EvalApp, runCase, RunLog, startEvalApp } from './runner.ts';
 import { scoreTurn } from './score.ts';
 import { saveScorecard } from './scorecard.ts';
@@ -48,10 +49,12 @@ beforeAll(async () => {
   if (key === '') {
     throw new Error('Set OPENROUTER_API_KEY in main-server/.env');
   }
+  const rawResponses = new RawResponses();
   started.evalApp = await startEvalApp(
     { ...inject('settings'), OPENROUTER_API_KEY: key },
-    openRouterModel(key, options.model),
+    openRouterModel(key, options.model, rawResponses.fetch),
     options,
+    rawResponses,
   );
   started.world = await SEEDERS[options.world](started.evalApp.app, inject('settings').DATABASE_URL);
   if (options.world === 'p4') {

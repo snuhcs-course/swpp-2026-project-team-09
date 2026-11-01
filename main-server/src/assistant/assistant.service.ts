@@ -10,6 +10,8 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -49,7 +51,7 @@ import { AliasesService } from './aliases/aliases.service.js';
 import { chatAssistant } from './chat/chat-assistant.js';
 import { checkedChoice, type ChoiceServices } from './chosen.js';
 import { type AssistantReplyDto, type SentMessage } from './dto/assistant-messages.dto.js';
-import { type Asker, type ChatMessage, type Feature } from './feature.js';
+import { type Asker, type ChatMessage, type Feature, type FeatureReply } from './feature.js';
 import { UserDayService } from './free-time/user-day.service.js';
 import { koreaDate } from './korea-time.js';
 import { ResolutionEventsService } from './resolution-events.service.js';
@@ -146,6 +148,9 @@ export class AssistantService {
         resolutions,
         this.observer,
       );
+      if (reply.noTextFinishReason !== null) {
+        this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
+      }
       const { text, mapButtons, cards, proposal, choices, resolvedBy } = reply;
       if (proposal !== null) {
         // A Proposal asked for in the chat may be one a grey suggestion would have made (suggestions.service.ts).
@@ -195,6 +200,13 @@ export class AssistantService {
     await this.redis.expire(key, COUNT_LIFETIME_SECONDS);
     return sent;
   }
+}
+
+// That a reply had no text of the model's: how many things it showed, never what they were.
+function fixedSentenceLog({ cards, mapButtons, choices, proposal }: FeatureReply, finishReason: string): string {
+  const things = `${cards.length} cards, ${mapButtons.length} map buttons, ${choices.length} choices`;
+  const shown = `${things}, ${proposal === null ? 'no' : 'a'} Proposal`;
+  return `The Assistant answered with its fixed sentence: no step had text (finish reason ${finishReason}, ${shown})`;
 }
 
 function unavailable(): ServiceUnavailableException {

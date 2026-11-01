@@ -4,6 +4,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -31,6 +32,7 @@ import {
 import { addTokens, costOf, NO_TOKENS, type Tokens } from './cost.ts';
 import { type RunOptions, runName } from './options.ts';
 import { FixtureTravel } from './p4/travel-fixture.ts';
+import { type RawResponses } from './raw-responses.ts';
 import { Recorder } from './recorder.ts';
 import { runObserverModule } from './run-observer.module.ts';
 import { failureOf, type ReplyTrace, type TurnTrace, usageOf } from './trace.ts';
@@ -58,13 +60,14 @@ export interface EvalApp {
 }
 
 // Starts the app with `model` behind the recorder, the run's limits as its settings and the clock fixed at its world's.
-// `settings` are the e2e settings with the model's key and id.
+// `settings` are the e2e settings with the model's key and id, and `rawResponses` what the model's fetch fills, if any.
 export async function startEvalApp(
   settings: Partial<Record<keyof Settings, string>>,
   model: Model,
   options: RunOptions,
+  rawResponses?: RawResponses,
 ): Promise<EvalApp> {
-  const recorder = new Recorder({ temperature: options.temperature, topP: options.topP });
+  const recorder = new Recorder({ temperature: options.temperature, topP: options.topP }, rawResponses);
   const travel = new FixtureTravel();
   const app = await startApp(
     {

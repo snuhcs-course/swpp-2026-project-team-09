@@ -4,9 +4,10 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, Logger } from '@nestjs/common';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { z } from 'zod';
@@ -36,4 +37,24 @@ export function ask(text: string): SentMessage[] {
 export function besideNextLine(body: unknown): object {
   const { nextLine: _ignored, ...rest } = z.object({ nextLine: z.unknown() }).loose().parse(body);
   return rest;
+}
+
+// Everything written to the server's log, to the console and to the process's output, from now on.
+export function captureLogs(): () => string {
+  const spies = [
+    ...(['log', 'warn', 'error', 'debug', 'verbose', 'fatal'] as const).map((level) =>
+      vi.spyOn(Logger.prototype, level),
+    ),
+    ...(['log', 'warn', 'error', 'info', 'debug'] as const).map((level) => vi.spyOn(console, level)),
+    vi.spyOn(process.stdout, 'write'),
+    vi.spyOn(process.stderr, 'write'),
+  ];
+  return () =>
+    spies
+      .flatMap((spy) => {
+        const values: unknown[] = spy.mock.calls.flat();
+        return values;
+      })
+      .map((value) => (value instanceof Error ? `${value.message} ${value.stack}` : JSON.stringify(value)))
+      .join('\n');
 }
