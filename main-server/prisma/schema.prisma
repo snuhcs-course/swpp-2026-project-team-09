@@ -821,6 +821,10 @@ model SuggestionImpression {
   propensity    Float?
   // Whether the account is held back to the base weights.
   holdback      Boolean
+  // The User's own acceptance of the suggestions shown to them in the last week, smoothed, read before the templates
+  // are scored, and whether it alone held everything back; a held-back account is never gated.
+  receptiveness Float
+  gated         Boolean
   // When the chat opened and the suggestion was decided, shown or not.
   shownAt       DateTime          @map("shown_at")
   // The migration checks that template is null exactly for a silent outcome, that outcomeAt is set once the outcome is
@@ -841,7 +845,8 @@ model SuggestionImpression {
 
 // An impression still shown 10 minutes after it was shown was ignored, which is read when it is analysed, not stored.
 enum SuggestionOutcome {
-  // Nothing was shown: no template was eligible, none reached its threshold, or a cooldown held them back.
+  // Nothing was shown: no template was eligible, none reached its threshold, a cooldown held them back, or the User's
+  // receptiveness did.
   silent
   shown
   // Tapped.

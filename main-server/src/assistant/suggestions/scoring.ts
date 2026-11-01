@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -15,6 +16,7 @@ import {
   NAMES_A_FRIEND,
   PRIOR_ACCEPTED,
   PRIOR_SHOWN,
+  RECEPTIVENESS_THRESHOLD,
   REPEAT_STEP,
   REPEATS_MAX,
   type Template,
@@ -67,6 +69,12 @@ export function scoreOf({ template, impressions, repeats, fatigue, holdback }: S
 
 export function thresholdOf(template: Template): number {
   return NAMES_A_FRIEND.has(template) ? FRIEND_THRESHOLD : THRESHOLD;
+}
+
+// Whether the User is shown anything at all: a held-back account always, another when its own acceptance of the
+// suggestions shown to it lately, smoothed by acceptanceOf, reaches the threshold (Pre-Filtering, ASEW 2025).
+export function receptive(receptiveness: number, holdback: boolean): boolean {
+  return holdback || receptiveness >= RECEPTIVENESS_THRESHOLD;
 }
 
 // Which of `count` templates above their threshold, the best first, shows, and the probability it had: the top with

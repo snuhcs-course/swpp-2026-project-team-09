@@ -3,6 +3,7 @@
  *
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { koreaTime } from '../../src/assistant/korea-time.js';
@@ -54,6 +55,7 @@ export async function suggestionCurves(
       eligible: true,
       propensity: true,
       holdback: true,
+      gated: true,
       shownAt: true,
       outcome: true,
       outcomeAt: true,
@@ -83,11 +85,14 @@ function slicesLine(curves: SuggestionCurves): string {
 
 function openingsTable(curves: SuggestionCurves): string {
   return table(
-    ['Slice', 'Openings', 'Silent', 'Silent, then a covered request typed'],
+    ['Slice', 'Arm', 'Openings', 'Accepted per opening', 'Silent', 'Gated', 'Silent, then a covered request typed'],
     curves.openings.map((opening) => [
       opening.slice,
+      arm(opening.holdback),
       String(opening.openings),
+      shown(opening.accepted),
       String(opening.silent),
+      String(opening.gated),
       String(opening.silentThenTyped),
     ]),
   );
@@ -161,6 +166,9 @@ export function suggestionsMarkdown(curves: SuggestionCurves): string {
       'value, 95% Wilson interval, k/n.',
     '',
     '## Openings',
+    '',
+    "Per arm, since the gate on the User's own acceptance (ticket 04) holds back learning-arm accounts only: accepted " +
+      'per opening is what it is judged by, gated the silent openings it made.',
     '',
     openingsTable(curves),
     '',

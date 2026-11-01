@@ -125,6 +125,7 @@ function impression(
     eligible: ['lunch_with_free_friend'],
     propensity: 0.9,
     holdback: false,
+    gated: false,
     shownAt: SHOWN,
     outcome,
     outcomeAt,
@@ -145,8 +146,13 @@ const impressions = [
     eligible: ['route_to_next_class'],
     shownAt: new Date('2026-11-02T03:00:00Z'),
   }),
-  // Nothing shown: the lunch was eligible, and the User then asked the chat for it.
-  impression('silent', null, { template: null, propensity: null, typedTemplate: 'lunch_with_free_friend' }),
+  // Nothing shown, the gate holding the eligible lunch back, and the User then asked the chat for it.
+  impression('silent', null, {
+    template: null,
+    propensity: null,
+    gated: true,
+    typedTemplate: 'lunch_with_free_friend',
+  }),
   impression('silent', null, { template: null, propensity: null, eligible: [] }),
 ];
 
@@ -196,7 +202,10 @@ describe("The suggestions' needs and slices", () => {
       recall: { k: 3, n: 4 },
       typedWhatWasShown: 0,
     });
-    expect(openingsOf(impressions)).toEqual([{ slice: 'all', openings: 9, silent: 2, silentThenTyped: 1 }]);
+    expect(openingsOf(impressions)).toMatchObject([
+      { slice: 'all', holdback: true, openings: 1, silent: 0, gated: 0, silentThenTyped: 0, accepted: { k: 0, n: 1 } },
+      { slice: 'all', holdback: false, openings: 8, silent: 2, gated: 1, silentThenTyped: 1, accepted: { k: 4, n: 8 } },
+    ]);
   });
 
   it('split the rows at --final-from into the tuning and the final slice', () => {
@@ -210,9 +219,12 @@ describe("The suggestions' needs and slices", () => {
       ['tuning', 'lunch_with_free_friend'],
       ['tuning', 'lunch_with_free_friend'],
     ]);
-    expect(openingsOf(impressions, finalFrom).map(({ slice, openings }) => [slice, openings])).toEqual([
-      ['final', 1],
-      ['tuning', 8],
+    expect(
+      openingsOf(impressions, finalFrom).map(({ slice, holdback, openings }) => [slice, holdback, openings]),
+    ).toEqual([
+      ['final', false, 1],
+      ['tuning', true, 1],
+      ['tuning', false, 7],
     ]);
   });
 });
