@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type GoldPost, type GoldSession } from '../eval/collection/gold.ts';
@@ -96,9 +97,12 @@ describe('what is wrong in a published session', () => {
     expect(endIsWrong(output({ end: new Date('2026-11-02T16:00:00+09:00') }), gold())).toBe(true);
   });
 
-  it('reads the last minute of a period as its day', () => {
+  it('reads the last minute of a period as its day, but not a time of day away from a period', () => {
     const answer = gold({ end: '2026-11-30' });
-    expect(endIsWrong(output({ end: new Date('2026-11-30T23:59:00+09:00') }), answer)).toBe(false);
+    const end = new Date('2026-11-30T23:59:00+09:00');
+    expect(endIsWrong(output({ end, overPeriod: true }), answer)).toBe(false);
+    expect(endIsWrong(output({ end }), answer)).toBe(true);
+    expect(endIsWrong(output({ end: new Date('2026-11-30T00:00:00+09:00') }), answer)).toBe(false);
   });
 });
 

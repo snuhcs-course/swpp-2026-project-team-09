@@ -28,10 +28,8 @@ export const collectionOptionsSchema = z.strictObject({
   timeoutMs: z.int().positive(),
   maxOutputTokens: z.int().positive(),
   // Set by the command line.
-  allowDirty: z.boolean(),
   command: z.string(),
   commit: z.string(),
-  isDirty: z.boolean(),
   c0Tag: z.string(),
   isDescendantOfC0: z.boolean(),
   setHash: z.string(),
@@ -42,7 +40,7 @@ export const collectionOptionsSchema = z.strictObject({
 
 export type CollectionOptions = z.infer<typeof collectionOptionsSchema>;
 
-export type CollectionFlags = Pick<CollectionOptions, 'run' | 'part' | 'from' | 'noModel' | 'budgetUsd' | 'allowDirty'>;
+export type CollectionFlags = Pick<CollectionOptions, 'run' | 'part' | 'from' | 'noModel' | 'budgetUsd'>;
 
 const flagsSchema = z.object({
   run: z.enum(RUN_NAMES),
@@ -50,7 +48,6 @@ const flagsSchema = z.object({
   from: z.string().min(1).nullable().default(null),
   noModel: z.boolean().default(false),
   budget: z.coerce.number().positive().default(1),
-  allowDirty: z.boolean().default(false),
 });
 
 // Which runs must read a saved run's answers: evaluation B's, for the reading.
@@ -65,7 +62,6 @@ export function parseCollectionFlags(args: string[]): CollectionFlags {
       from: { type: 'string' },
       'no-model': { type: 'boolean' },
       budget: { type: 'string' },
-      'allow-dirty': { type: 'boolean' },
     },
     strict: true,
   });
@@ -75,7 +71,6 @@ export function parseCollectionFlags(args: string[]): CollectionFlags {
     from: values.from,
     noModel: values['no-model'],
     budget: values.budget,
-    allowDirty: values['allow-dirty'],
   });
   if (NEEDS_SAVED.has(flags.run) && flags.from === null) {
     throw new Error(`--run ${flags.run} reads a saved Judgement: give --from <run.json>`);
@@ -86,7 +81,6 @@ export function parseCollectionFlags(args: string[]): CollectionFlags {
     from: flags.from,
     noModel: flags.noModel,
     budgetUsd: flags.budget,
-    allowDirty: flags.allowDirty,
   };
 }
 

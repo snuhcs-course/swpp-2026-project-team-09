@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { APPLICATION } from '../../src/global-events/judgement-checks.js';
@@ -85,15 +86,19 @@ export function startIsRight({ start, overPeriod }: OutputSession, gold: GoldSes
   return sameDay(start, gold.start) && (overPeriod || isDayAlone(start));
 }
 
-// An end the post does not give is made up. One left out of what the post gives only lowers C4's recall.
-export function endIsWrong({ end }: OutputSession, gold: GoldSession | undefined): boolean {
+// An end the post does not give is made up. One left out of what the post gives only lowers C4's recall. A label of a day
+// alone is compared by day for a period, and away from one a time of day is wrong.
+export function endIsWrong({ end, overPeriod }: OutputSession, gold: GoldSession | undefined): boolean {
   if (end === null) {
     return false;
   }
   if (gold === undefined || gold.end === 'none') {
     return true;
   }
-  return hasClock(gold.end) ? !sameMoment(end, gold.end) : !sameDay(end, gold.end);
+  if (hasClock(gold.end)) {
+    return !sameMoment(end, gold.end);
+  }
+  return !sameDay(end, gold.end) || !(overPeriod || isDayAlone(end));
 }
 
 export function isPublishedWrong(output: OutputSession, gold: GoldSession | undefined): boolean {

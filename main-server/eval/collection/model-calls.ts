@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -144,7 +145,7 @@ export class ModelCalls {
   }
 }
 
-// How many calls failed, by why: a schema's refusal is a malformed answer, and anything else that it never came.
+// Whether a failure is a malformed answer, a schema's refusal, rather than an answer that never came.
 export function isMalformedAnswer(failure: string): boolean {
   return /NoObjectGenerated|TypeValidation|JSONParse|NoOutputGenerated/u.test(failure);
 }

@@ -40,7 +40,7 @@ function recordOf(options: CollectionOptions, outcome: RunOutcome, startedAt: st
   return {
     run: options.run,
     command: options.command,
-    commit: `${options.commit}${options.isDirty ? '-dirty' : ''}`,
+    commit: options.commit,
     c0Tag: options.c0Tag,
     isDescendantOfC0: options.isDescendantOfC0,
     setHash: options.setHash,
@@ -86,7 +86,7 @@ it('runs', async () => {
   });
   const record = recordOf(options, outcome, startedAt);
   mkdirSync(RESULTS, { recursive: true });
-  const name = `collection-${options.part}-${options.run}-${options.commit.slice(0, 8)}${options.isDirty ? '-dirty' : ''}`;
+  const name = `collection-${options.part}-${options.run}-${options.commit.slice(0, 8)}`;
   writeFileSync(new URL(`${name}.json`, RESULTS), `${JSON.stringify({ record, ...outcome }, null, 2)}\n`);
   writeFileSync(new URL(`${name}.md`, RESULTS), reportOf(record, outcome));
   console.log(`Saved in eval/results/${name}.json and .md, at USD ${outcome.usage.costUsd.toFixed(4)}`);

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { execFileSync } from 'node:child_process';
@@ -57,8 +58,7 @@ async function canonicalSlugOf(model: string): Promise<string | null> {
 async function main(): Promise<number> {
   const flags = parseCollectionFlags(process.argv.slice(2));
   const env = dotEnv();
-  const isDirty = git('status', '--porcelain', '--untracked-files=all') !== '';
-  if (isDirty && !flags.allowDirty) {
+  if (git('status', '--porcelain', '--untracked-files=all') !== '') {
     console.error('The tree has changes, tracked or not: a run is on a clean commit (metrics document, 4.3).');
     return 1;
   }
@@ -74,7 +74,6 @@ async function main(): Promise<number> {
     maxOutputTokens: DEFAULT_MAX_OUTPUT_TOKENS,
     command: `pnpm eval:collection ${process.argv.slice(2).join(' ')}`,
     commit: git('rev-parse', 'HEAD'),
-    isDirty,
     c0Tag: C0_TAG,
     isDescendantOfC0: isAncestor(C0_TAG),
     setHash: setHash(),
@@ -82,7 +81,7 @@ async function main(): Promise<number> {
     canonicalSlug: await canonicalSlugOf(model),
     prices: await pricesOf(model),
   };
-  console.log(`Run ${options.run} over the ${options.part} part, at ${options.commit}${isDirty ? ' (dirty)' : ''}`);
+  console.log(`Run ${options.run} over the ${options.part} part, at ${options.commit}`);
   process.env[COLLECTION_RUN_ENV] = JSON.stringify(options);
   const vitest = await startVitest('test', [], {
     config: 'eval/collection/vitest.config.ts',
