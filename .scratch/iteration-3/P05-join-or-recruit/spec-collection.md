@@ -110,7 +110,7 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
   - the start comes before the end;
   - unless it is read as running over a period, the start has a time of day: a day alone is stored at 00:00 and would show as 00:00 on its card;
   - a session lasts at most 24 hours, unless it is read as running over a period, in which case it must end on another day than it starts, and one quoted line must hold both days. An end that is a day alone is stored at 23:59 of that day (ticket 07, decided 2026-11-01);
-  - the place matches exactly one Place. Where the Source's setting says so, a building number alone ("301동 117호") is taken as Gwanak, and on extra.snu so is a place that writes only a Place's name ("중앙도서관 관정관 3층 양두석홀"; ticket 09); a place naming another campus is not matched.
+  - the place matches exactly one Place. Where the Source's setting says so, a building number alone ("301동 117호") is taken as Gwanak; a place naming another campus is not matched.
 - Each passing session becomes its own Global Event; failing sessions make no new Draft. A post stored as one Draft keeps it for them. A post the worker sent with a Draft per session keeps those it did not publish, since each holds a time and place the worker read (ticket 05, decided 2026-11-01).
 - The Judgement is stored with the Draft or event: the values, the lines, each check and whether it passed, the model id and the time.
 - Running a Judgement is one service step over one Draft, so that a later script can run it over the stored Drafts. Running it over the Drafts stored before this work is not part of this spec.

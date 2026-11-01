@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { mayCallModel, parseCollectionFlags } from '../eval/collection/run-options.ts';
@@ -12,7 +13,7 @@ describe('the flags of a run', () => {
     expect(parseCollectionFlags(['--run', 'r0a', '--part', 'held-out']).part).toBe('held-out');
   });
 
-  it.each(['place-name', 'r0b', 'title-rule', 'ai-choice'])('wants a saved run for %s', (run) => {
+  it.each(['r0b', 'title-rule', 'ai-choice'])('wants a saved run for %s', (run) => {
     expect(() => parseCollectionFlags(['--run', run])).toThrow(/--from/u);
   });
 

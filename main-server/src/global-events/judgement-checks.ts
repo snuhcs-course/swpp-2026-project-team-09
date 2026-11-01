@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { PlaceDto } from '../places/dto/place.dto.js';
@@ -193,23 +194,19 @@ function placeInLines({ place, lines }: AnsweredSession): boolean {
   return written !== '' && quotedPieces(lines.place).some((piece) => piece.includes(written));
 }
 
-// The one Place the session's place names. A building number alone, or a Place's name alone, says nothing of which campus,
-// which the Source's settings answer; a place that names another campus is still refused by namedPlace.
+// The one Place the session's place names. A building number alone says nothing of which campus, which the Source's
+// setting answers; a place that names another campus is still refused by namedPlace.
 export function matchedPlace(
   place: string | null,
-  { buildingNumberIsGwanak, placeNameIsGwanak }: PostSourceSettings,
+  { buildingNumberIsGwanak }: PostSourceSettings,
   places: PlaceDto[],
 ): PlaceDto | null {
   if (place === null) {
     return null;
   }
   const written = normalised(place);
-  const onGwanak = `서울대학교 ${written}`;
-  const asWritten = namedPlace(
-    buildingNumberIsGwanak && BUILDING_NUMBER_ALONE.test(written) ? onGwanak : written,
-    places,
-  );
-  return asWritten ?? (placeNameIsGwanak ? namedPlace(onGwanak, places) : null);
+  const onGwanak = buildingNumberIsGwanak && BUILDING_NUMBER_ALONE.test(written);
+  return namedPlace(onGwanak ? `서울대학교 ${written}` : written, places);
 }
 
 function checksOf(

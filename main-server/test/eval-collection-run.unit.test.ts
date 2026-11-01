@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { MockLanguageModelV4 } from 'ai/test';
@@ -52,7 +53,7 @@ function collected(key: string, written: string, place: string | null, read: boo
 const PARSED: Record<string, object> = {
   1: collected('1', '서울대학교 301동', null, false, '특강'),
   2: collected('2', '서울대학교 301동', '서울대학교 301동', true, '특강'),
-  PGM1: collected('PGM1', '제1공학관 117호', null, false, '다른 이름의 특강'),
+  PGM1: collected('PGM1', '서울대학교 제1공학관 117호', null, false, '다른 이름의 특강'),
 };
 
 const parsers = {
@@ -108,7 +109,6 @@ function input(run: RunName, changes: Partial<RunInput> = {}): RunInput {
   return {
     run,
     part: 'development',
-    placeNameIsGwanak: false,
     golds: GOLDS,
     pairs: PAIRS,
     saved: SAVED,
@@ -140,7 +140,6 @@ const RECORD = {
   modelsAnswered: [],
   limits: { timeoutMs: 1, maxOutputTokens: 1 },
   switches: {},
-  placeNameIsGwanak: false,
   buildingNumberIsGwanak: { snu_events: true },
   checks: ['announcesEvent'],
   from: null,
@@ -159,7 +158,10 @@ describe('a run of evaluation A', () => {
 
   it('publishes what a Judgement passes, masks the post, and judges the posts of B too', async () => {
     const model = new ScriptedModel();
-    model.script({ text: judgementAnswer('서울대학교 301동') }, { text: judgementAnswer('제1공학관 117호') });
+    model.script(
+      { text: judgementAnswer('서울대학교 301동') },
+      { text: judgementAnswer('서울대학교 제1공학관 117호') },
+    );
     const outcome = await runCollection(input('judgement', { model: model.model }));
     expect(outcome.usage.calls).toBe(2);
     expect(outcome.score).toMatchObject({ a: { c1: { k: 1, n: 1 }, c2: { k: 0, n: 1 } } });
@@ -196,26 +198,29 @@ describe('a run of evaluation A', () => {
   });
 });
 
-describe('the Place setting', () => {
+describe('saved answers', () => {
   const SAVED_ANSWERS = {
-    judgements: {
-      'snu-1': {
-        answer: judgementAnswerSchema.parse(JSON.parse(judgementAnswer('서울대학교 301동'))),
-        failure: null,
-        modelId: 'm',
-      },
-    },
+    judgements: Object.fromEntries(
+      ['snu-1', 'extra-PGM1'].map((post) => [
+        post,
+        {
+          answer: judgementAnswerSchema.parse(JSON.parse(judgementAnswer('서울대학교 301동'))),
+          failure: null,
+          modelId: 'm',
+        },
+      ]),
+    ),
     choices: {},
   };
 
-  it('reads the same answers again with no model', async () => {
-    const outcome = await runCollection(input('place-name', { calls: SAVED_ANSWERS }));
+  it('are read again with no model', async () => {
+    const outcome = await runCollection(input('judgement', { calls: SAVED_ANSWERS }));
     expect(outcome.usage.calls).toBe(0);
     expect(outcome.score).toMatchObject({ a: { c1: { k: 1, n: 1 } } });
   });
 
   it('refuses a run with no answer to read and no model', async () => {
-    await expect(runCollection(input('place-name'))).rejects.toThrow(/no saved run gives/u);
+    await expect(runCollection(input('r0b'))).rejects.toThrow(/no saved run gives/u);
   });
 
   it('never asks for a Judgement in the AI run, even with a model', async () => {
@@ -232,7 +237,7 @@ describe('a run of evaluation B', () => {
   const READING = {
     judgements: {
       'extra-PGM1': {
-        answer: judgementAnswerSchema.parse(JSON.parse(judgementAnswer('제1공학관 117호'))),
+        answer: judgementAnswerSchema.parse(JSON.parse(judgementAnswer('서울대학교 제1공학관 117호'))),
         failure: null,
         modelId: 'm',
       },
@@ -240,11 +245,10 @@ describe('a run of evaluation B', () => {
     choices: {},
   };
 
-  it('reads the saved reading, leaving the place setting as the flag says', async () => {
-    const off = await runCollection(input('title-rule', { calls: READING }));
-    expect(off.score).toMatchObject({ b: { d3: { k: 0, n: 1 } } });
-    const on = await runCollection(input('title-rule', { calls: READING, placeNameIsGwanak: true }));
-    expect(on.score).toMatchObject({ b: { d3: { k: 1, n: 1 } } });
+  it('reads the saved reading', async () => {
+    const outcome = await runCollection(input('title-rule', { calls: READING }));
+    expect(outcome.usage.calls).toBe(0);
+    expect(outcome.score).toMatchObject({ b: { d3: { k: 1, n: 1 } } });
   });
 
   it('asks the AI in its own run, and saves the answer for a later one', async () => {
@@ -252,12 +256,10 @@ describe('a run of evaluation B', () => {
     model.script({
       text: JSON.stringify({ sessions: [{ session: 1, answer: 'same', candidate: 1, reason: '같음' }] }),
     });
-    const outcome = await runCollection(
-      input('ai-choice', { model: model.model, calls: READING, placeNameIsGwanak: true }),
-    );
+    const outcome = await runCollection(input('ai-choice', { model: model.model, calls: READING }));
     expect(outcome.usage.calls).toBe(1);
     expect(outcome.score).toMatchObject({ b: { d6: { k: 1, n: 1 }, d1: 0 } });
-    const again = await runCollection(input('ai-choice', { calls: outcome.calls, placeNameIsGwanak: true }));
+    const again = await runCollection(input('ai-choice', { calls: outcome.calls }));
     expect(again.usage.calls).toBe(0);
     expect(again.score).toMatchObject({ b: { d6: { k: 1, n: 1 } } });
   });

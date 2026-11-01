@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type Model } from '../../src/assistant/adapter.js';
@@ -21,10 +22,9 @@ import { type Verdict, verdictsOf } from './verdicts.ts';
 // before it (metrics document, 4.4), which is what its name says.
 
 export const RUNS = {
-  // Evaluation A: the rules alone, then a Judgement, then one more check of the same answers with the Place setting on.
-  r0a: { evaluation: 'a', judges: false, place: false },
-  judgement: { evaluation: 'a', judges: true, place: false },
-  'place-name': { evaluation: 'a', judges: true, place: true },
+  // Evaluation A: the rules alone, then a Judgement.
+  r0a: { evaluation: 'a', judges: false },
+  judgement: { evaluation: 'a', judges: true },
   // Evaluation B, over one reading: equal starts with title similarity, 08a's rules, then the AI's choice of 08b.
   r0b: { evaluation: 'b', judges: true, mode: 'naive' },
   'title-rule': { evaluation: 'b', judges: true, mode: 'rules' },
@@ -36,7 +36,6 @@ export type RunName = keyof typeof RUNS;
 export const RUN_SWITCHES: Record<RunName, Record<string, boolean | string>> = {
   r0a: { AUTOMATIC_JUDGEMENT: false, SAME_EVENT_TITLE_RULE: false, SAME_EVENT_AI_CHOICE: false },
   judgement: { AUTOMATIC_JUDGEMENT: true, SAME_EVENT_TITLE_RULE: false, SAME_EVENT_AI_CHOICE: false },
-  'place-name': { AUTOMATIC_JUDGEMENT: true, SAME_EVENT_TITLE_RULE: false, SAME_EVENT_AI_CHOICE: false },
   r0b: { 'equal starts with title similarity': true, SAME_EVENT_TITLE_RULE: false, SAME_EVENT_AI_CHOICE: false },
   'title-rule': { SAME_EVENT_TITLE_RULE: true, SAME_EVENT_AI_CHOICE: false },
   'ai-choice': { SAME_EVENT_TITLE_RULE: true, SAME_EVENT_AI_CHOICE: true },
@@ -45,9 +44,6 @@ export const RUN_SWITCHES: Record<RunName, Record<string, boolean | string>> = {
 export interface RunInput {
   run: RunName;
   part: Part;
-  // Whether the Place setting holds for evaluation B's reading, as evaluation A's run decided. Evaluation A's runs say it
-  // by their name.
-  placeNameIsGwanak: boolean;
   golds: GoldPost[];
   pairs: GoldPair[];
   saved: Map<string, SavedPost>;
@@ -97,15 +93,11 @@ function readAll(input: RunInput, posts: string[]): ReadPost[] {
 // The post's Judgement when it has sessions the rules left, one call each.
 async function readings(input: RunInput, posts: ReadPost[], calls: ModelCalls): Promise<Map<string, PostReading>> {
   const spec = RUNS[input.run];
-  const settings = {
-    places: input.places,
-    placeNameIsGwanak: 'place' in spec ? spec.place : input.placeNameIsGwanak,
-  };
   const read = new Map<string, PostReading>();
   for (const post of posts) {
     // oxlint-disable-next-line no-await-in-loop -- one call at a time, so that the budget is checked between them
     const judgement = spec.judges && isJudged(post) ? await calls.judgement(post) : null;
-    read.set(post.post, readingOf(post, judgement, settings));
+    read.set(post.post, readingOf(post, judgement, input.places));
   }
   return read;
 }

@@ -51,3 +51,18 @@ Decided by Jaehyun0320 before the work, where the documents have no value.
 | No place given | 3 |
 
 That is not almost none, so the setting is built: `placeNameIsGwanak`, on for extra.snu, for the Judgement's `matchedPlace` only. The 28 hold a risk the run must show: `금나래문화체육센터 2층 체육관`, off campus, links to `71 체육관`, for 2 sessions. They also hold a building number with more words after it, such as `906동 4층 세미나실` and `920동 다인홀`.
+
+### The Place setting is removed (2026-11-02)
+
+Its run replayed the Judgement's saved answers with `placeNameIsGwanak` on, at `fed4a2e0`, with no model. C1 went from 27/64 to 32/64, and C2 from 0/27 to 2/34, past its floor of 1/30. C3 stayed 0. So by this ticket's rule the setting is removed, with the spec's sentence, the run and its flag. That run can be repeated only at `fed4a2e0`.
+
+Neither wrong session has a wrong place: places were 42/42 right. The setting let through two sessions whose times differ from the answers, which `placeMatches` had been stopping:
+
+| Session | Model, quoting the post's session line | Answer |
+|---|---|---|
+| a-015 (2) | ends 2026-12-08 22:00 | ends 2026-12-08 21:00 |
+| a-053 (1) | starts 2026-11-03 17:00 | starts 2026-11-03 19:00 |
+
+The set and its answers are not changed. Whether an answer is wrong here is for a person to check.
+
+With the setting off, a Judgement's reading is the same as at `fed4a2e0`, so R0 of A and the Judgement's run stand, and evaluation B's three runs read with it off.

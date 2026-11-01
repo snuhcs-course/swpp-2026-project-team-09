@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -14,7 +15,7 @@ import { goldPairs, goldPosts, labelledPlaces, savedPage, savedPosts } from './g
 import { storedChoicesSchema, storedJudgementSchema } from './model-calls.ts';
 import { workerParsers } from './read-post.ts';
 import { reportOf, type RunRecord } from './report.ts';
-import { RUN_SWITCHES, RUNS, runCollection, type RunOutcome } from './run.ts';
+import { RUN_SWITCHES, runCollection, type RunOutcome } from './run.ts';
 import { COLLECTION_RUN_ENV, collectionOptionsSchema, type CollectionOptions, mayCallModel } from './run-options.ts';
 
 // The one run `pnpm eval:collection` starts. It saves its answers beside its record in eval/results/, whatever scores
@@ -35,11 +36,6 @@ function savedCalls({ from }: CollectionOptions): z.infer<typeof savedRunSchema>
     : savedRunSchema.parse(JSON.parse(readFileSync(from, 'utf8'))).calls;
 }
 
-function usesPlaceSetting(options: CollectionOptions): boolean {
-  const spec = RUNS[options.run];
-  return 'place' in spec ? spec.place : options.placeNameIsGwanak;
-}
-
 function recordOf(options: CollectionOptions, outcome: RunOutcome, startedAt: string): RunRecord {
   return {
     run: options.run,
@@ -57,7 +53,6 @@ function recordOf(options: CollectionOptions, outcome: RunOutcome, startedAt: st
     modelsAnswered: outcome.modelIds,
     limits: { timeoutMs: options.timeoutMs, maxOutputTokens: options.maxOutputTokens },
     switches: RUN_SWITCHES[options.run],
-    placeNameIsGwanak: usesPlaceSetting(options),
     buildingNumberIsGwanak: {
       snu_events: POST_SOURCES.snu_events.buildingNumberIsGwanak,
       extra_snu: POST_SOURCES.extra_snu.buildingNumberIsGwanak,
@@ -77,7 +72,6 @@ it('runs', async () => {
   const outcome = await runCollection({
     run: options.run,
     part: options.part,
-    placeNameIsGwanak: options.placeNameIsGwanak,
     golds: goldPosts(options.part),
     pairs: goldPairs(options.part),
     saved: savedPosts(),

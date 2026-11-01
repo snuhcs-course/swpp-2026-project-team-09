@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type JudgedSession } from '../../src/global-events/judgement-answer.js';
 import { checkedSessions, placedSessions } from '../../src/global-events/judgement-checks.js';
 import { maskedPost } from '../../src/global-events/judgement-post.js';
 import { periodEndAt, readJudgedTime } from '../../src/global-events/judgement-time.js';
-import { POST_SOURCES, type PostSourceSettings } from '../../src/global-events/post-sources.js';
+import { POST_SOURCES } from '../../src/global-events/post-sources.js';
 import { type PlaceDto } from '../../src/places/dto/place.dto.js';
 import { type StoredJudgement } from './model-calls.ts';
 import { type ReadPost, type ReadSession } from './read-post.ts';
@@ -35,17 +36,6 @@ export interface PostReading {
   post: ReadPost;
   judgement: StoredJudgement | null;
   outputs: OutputSession[];
-}
-
-export interface ReadingSettings {
-  places: PlaceDto[];
-  // Whether a place named only by a Place's name is taken as Gwanak where the Source says so.
-  placeNameIsGwanak: boolean;
-}
-
-export function sourceSettings({ source }: ReadPost, { placeNameIsGwanak }: ReadingSettings): PostSourceSettings {
-  const settings: PostSourceSettings = POST_SOURCES[source];
-  return { ...settings, placeNameIsGwanak: placeNameIsGwanak && settings.placeNameIsGwanak };
 }
 
 export function isJudged({ sessions }: ReadPost): boolean {
@@ -97,14 +87,14 @@ function isNew({ checks }: JudgedSession): boolean {
   return checks.some(({ name, passed }) => name === 'newSession' && passed);
 }
 
-function ofJudgement(judgement: StoredJudgement, post: ReadPost, settings: ReadingSettings): OutputSession[] {
+function ofJudgement(judgement: StoredJudgement, post: ReadPost, places: PlaceDto[]): OutputSession[] {
   if (judgement.answer === null) {
     return [];
   }
   const sessions = checkedSessions(judgement.answer, {
     post: maskedPost({ title: post.title, text: post.description }),
-    source: sourceSettings(post, settings),
-    places: settings.places,
+    source: POST_SOURCES[post.source],
+    places,
     now: post.now,
     readStarts: post.sessions.flatMap(({ readByRules, startsAt }) =>
       readByRules && startsAt !== null ? [startsAt] : [],
@@ -131,13 +121,13 @@ function ofJudgement(judgement: StoredJudgement, post: ReadPost, settings: Readi
     });
 }
 
-export function readingOf(post: ReadPost, judgement: StoredJudgement | null, settings: ReadingSettings): PostReading {
+export function readingOf(post: ReadPost, judgement: StoredJudgement | null, places: PlaceDto[]): PostReading {
   return {
     post,
     judgement,
     outputs: [
       ...post.sessions.filter(({ readByRules }) => readByRules).map((session) => ofRules(session)),
-      ...(judgement === null ? [] : ofJudgement(judgement, post, settings)),
+      ...(judgement === null ? [] : ofJudgement(judgement, post, places)),
     ],
   };
 }
