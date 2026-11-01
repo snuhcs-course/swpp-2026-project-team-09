@@ -311,7 +311,7 @@ tags:
     - { case: search-e-04, seed: null }
     - { case: search-e-05, seed: null }
     - { case: search-e-06, seed: null }
-  # The cases of the large world, added by ticket 02b.
+  # The cases of the large world are under `largeWorld`, below: the small world holds none.
   V: []
 
 thresholds:
@@ -583,3 +583,449 @@ thresholds:
 diagnostic:
   J5: 'Cases that passed all 3 runs ÷ cases'
   E6: 'Runs whose cards are exactly the answer ÷ runs'
+
+# The large world (ticket 02b): evaluation D at scale, committed before ticket 10 starts and before any run of it. A run
+# of that world reads these tags and thresholds instead of those above, so E3 and E4 are reported per world. The values
+# are the metrics document's, but for E9, which the P05 owner added. The hashes pin its data file and its cases: any
+# change to them is a new version, whose scores are never put beside these. Its answers are computed from the attributes
+# (eval/p5/README.md).
+largeWorld:
+  version: large-world-v1
+  worldSha256: 462b9539b1a2afa9249ea40d1e18adf3f824b6daec0b36b53f6a0af91a91708c
+  casesSha256: c7cb030213f20c82d23510dc050893c66738d5b31daee4d4895428719aa4ee9f
+  tags:
+    V:
+      - { case: large-v-01, seed: q0076 }
+      - { case: large-v-01, seed: q0110 }
+      - { case: large-v-01, seed: q0207 }
+      - { case: large-v-01, seed: q0333 }
+      - { case: large-v-01, seed: q0619 }
+      - { case: large-v-01, seed: q0676 }
+      - { case: large-v-01, seed: q0687 }
+      - { case: large-v-01, seed: q0706 }
+      - { case: large-v-01, seed: q0760 }
+      - { case: large-v-01, seed: q0762 }
+      - { case: large-v-01, seed: q0782 }
+      - { case: large-v-01, seed: t-under-way-1 }
+      - { case: large-v-01, seed: t-under-way-2 }
+      - { case: large-v-02, seed: q0032 }
+      - { case: large-v-02, seed: q0124 }
+      - { case: large-v-02, seed: q0134 }
+      - { case: large-v-02, seed: q0178 }
+      - { case: large-v-02, seed: q0261 }
+      - { case: large-v-02, seed: q0270 }
+      - { case: large-v-02, seed: q0288 }
+      - { case: large-v-02, seed: q0365 }
+      - { case: large-v-02, seed: q0370 }
+      - { case: large-v-02, seed: q0371 }
+      - { case: large-v-02, seed: q0486 }
+      - { case: large-v-02, seed: q0508 }
+      - { case: large-v-02, seed: q0606 }
+      - { case: large-v-02, seed: q0768 }
+      - { case: large-v-02, seed: q0773 }
+      - { case: large-v-02, seed: q0812 }
+      - { case: large-v-02, seed: q0878 }
+      - { case: large-v-02, seed: t-under-way-1 }
+      - { case: large-v-02, seed: t-under-way-2 }
+      - { case: large-v-03, seed: e0031 }
+      - { case: large-v-03, seed: e0044 }
+      - { case: large-v-03, seed: e0046 }
+      - { case: large-v-03, seed: e0067 }
+      - { case: large-v-03, seed: e0166 }
+      - { case: large-v-03, seed: e0167 }
+      - { case: large-v-03, seed: e0180 }
+      - { case: large-v-03, seed: e0189 }
+      - { case: large-v-03, seed: e0250 }
+      - { case: large-v-03, seed: e0287 }
+      - { case: large-v-03, seed: te-under-way }
+      - { case: large-v-04, seed: e0044 }
+      - { case: large-v-04, seed: e0111 }
+      - { case: large-v-04, seed: e0140 }
+      - { case: large-v-04, seed: e0188 }
+      - { case: large-v-04, seed: e0197 }
+      - { case: large-v-04, seed: e0252 }
+      - { case: large-v-04, seed: e0292 }
+      - { case: large-v-04, seed: te-under-way }
+      - { case: large-v-05, seed: q0519 }
+      - { case: large-v-06, seed: q0775 }
+      - { case: large-v-07, seed: q0187 }
+      - { case: large-v-07, seed: q0443 }
+      - { case: large-v-07, seed: q0513 }
+      - { case: large-v-08, seed: q0177 }
+      - { case: large-v-08, seed: q0324 }
+      - { case: large-v-08, seed: q0654 }
+    L:
+      - { case: large-l-01, seed: q0007 }
+      - { case: large-l-01, seed: q0205 }
+      - { case: large-l-01, seed: q0372 }
+      - { case: large-l-01, seed: q0432 }
+      - { case: large-l-01, seed: q0536 }
+      - { case: large-l-01, seed: q0841 }
+      - { case: large-l-02, seed: q0728 }
+      - { case: large-l-02, seed: q0746 }
+      - { case: large-l-02, seed: q0777 }
+      - { case: large-l-02, seed: q0881 }
+      - { case: large-l-03, seed: e0069 }
+      - { case: large-l-03, seed: e0078 }
+      - { case: large-l-03, seed: e0103 }
+      - { case: large-l-03, seed: e0107 }
+      - { case: large-l-03, seed: e0117 }
+      - { case: large-l-03, seed: e0124 }
+      - { case: large-l-03, seed: e0133 }
+      - { case: large-l-03, seed: e0134 }
+      - { case: large-l-03, seed: e0153 }
+      - { case: large-l-03, seed: e0158 }
+      - { case: large-l-03, seed: e0172 }
+      - { case: large-l-03, seed: e0175 }
+      - { case: large-l-03, seed: e0213 }
+      - { case: large-l-03, seed: e0216 }
+      - { case: large-l-03, seed: e0230 }
+      - { case: large-l-03, seed: e0262 }
+      - { case: large-l-03, seed: e0268 }
+      - { case: large-l-04, seed: te-online-1 }
+      - { case: large-l-04, seed: te-online-2 }
+      - { case: large-l-05, seed: te-face-1 }
+      - { case: large-l-05, seed: te-face-2 }
+    P:
+      - { case: large-p-01, seed: e0021 }
+      - { case: large-p-01, seed: e0028 }
+      - { case: large-p-01, seed: e0057 }
+      - { case: large-p-01, seed: e0101 }
+      - { case: large-p-01, seed: e0121 }
+      - { case: large-p-01, seed: e0139 }
+      - { case: large-p-01, seed: e0246 }
+      - { case: large-p-01, seed: e0273 }
+      - { case: large-p-01, seed: e0283 }
+      - { case: large-p-01, seed: e0289 }
+      - { case: large-p-02, seed: q0236 }
+      - { case: large-p-02, seed: q0405 }
+      - { case: large-p-02, seed: q0487 }
+      - { case: large-p-02, seed: q0693 }
+      - { case: large-p-02, seed: t-board-hiking }
+      - { case: large-p-03, seed: q0179 }
+      - { case: large-p-03, seed: q0188 }
+      - { case: large-p-03, seed: q0265 }
+      - { case: large-p-03, seed: q0663 }
+      - { case: large-p-04, seed: q0514 }
+      - { case: large-p-05, seed: q0063 }
+      - { case: large-p-05, seed: q0215 }
+      - { case: large-p-05, seed: t-baemin-1 }
+      - { case: large-p-05, seed: t-baemin-2 }
+    T1:
+      - { case: large-t1-01, seed: e0222 }
+      - { case: large-t1-01, seed: te-typo-concert }
+      - { case: large-t1-02, seed: q0322 }
+      - { case: large-t1-02, seed: q0689 }
+      - { case: large-t1-02, seed: t-typo-futsal }
+      - { case: large-t1-03, seed: q0165 }
+      - { case: large-t1-03, seed: q0396 }
+      - { case: large-t1-03, seed: q0475 }
+      - { case: large-t1-03, seed: q0586 }
+      - { case: large-t1-03, seed: q0900 }
+      - { case: large-t1-03, seed: t-typo-malatang }
+      - { case: large-t1-04, seed: q0162 }
+      - { case: large-t1-04, seed: q0230 }
+      - { case: large-t1-04, seed: q0462 }
+      - { case: large-t1-04, seed: q0649 }
+      - { case: large-t1-04, seed: t-typo-musical }
+      - { case: large-t1-05, seed: e0099 }
+      - { case: large-t1-05, seed: e0199 }
+      - { case: large-t1-05, seed: te-typo-fair }
+    T2:
+      - { case: large-t2-01, seed: q0179 }
+      - { case: large-t2-01, seed: q0188 }
+      - { case: large-t2-01, seed: q0265 }
+      - { case: large-t2-01, seed: q0663 }
+      - { case: large-t2-02, seed: e0063 }
+      - { case: large-t2-02, seed: e0128 }
+      - { case: large-t2-02, seed: e0164 }
+      - { case: large-t2-03, seed: q0022 }
+      - { case: large-t2-03, seed: q0098 }
+      - { case: large-t2-04, seed: q0031 }
+      - { case: large-t2-04, seed: q0114 }
+      - { case: large-t2-04, seed: q0122 }
+      - { case: large-t2-04, seed: q0267 }
+      - { case: large-t2-04, seed: q0278 }
+      - { case: large-t2-04, seed: q0391 }
+      - { case: large-t2-04, seed: q0563 }
+      - { case: large-t2-04, seed: q0604 }
+      - { case: large-t2-05, seed: e0022 }
+      - { case: large-t2-05, seed: e0211 }
+    H:
+      - { case: large-h-01, seed: t-evening-start }
+      - { case: large-h-01, seed: t-evening-middle }
+      - { case: large-h-01, seed: t-evening-last }
+      - { case: large-h-02, seed: t-after-start }
+      - { case: large-h-02, seed: t-after-last }
+      - { case: large-h-03, seed: t-both-start }
+      - { case: large-h-03, seed: t-both-end }
+      - { case: large-h-04, seed: t-named-first }
+      - { case: large-h-04, seed: t-named-at }
+      - { case: large-h-04, seed: t-named-last }
+      - { case: large-h-05, seed: t-morning-start }
+      - { case: large-h-05, seed: t-morning-last }
+      - { case: large-h-06, seed: t-noon-start }
+      - { case: large-h-06, seed: t-noon-last }
+      - { case: large-h-07, seed: t-today-ahead }
+    S:
+      - { case: large-s-01, seed: t-two-left }
+      - { case: large-s-02, seed: t-one-left }
+      - { case: large-s-02, seed: t-two-left }
+      - { case: large-s-03, seed: q0399 }
+      - { case: large-s-04, seed: q0376 }
+      - { case: large-s-05, seed: q0016 }
+      - { case: large-s-05, seed: q0304 }
+      - { case: large-s-05, seed: q0410 }
+      - { case: large-s-05, seed: q0523 }
+      - { case: large-s-05, seed: q0537 }
+      - { case: large-s-05, seed: q0582 }
+      - { case: large-s-05, seed: q0623 }
+      - { case: large-s-05, seed: q0815 }
+      - { case: large-s-05, seed: q0835 }
+    N:
+      - { case: large-n-01, seed: q0103 }
+      - { case: large-n-01, seed: q0151 }
+      - { case: large-n-01, seed: q0198 }
+      - { case: large-n-01, seed: q0283 }
+      - { case: large-n-01, seed: q0291 }
+      - { case: large-n-01, seed: q0358 }
+      - { case: large-n-01, seed: q0365 }
+      - { case: large-n-01, seed: q0403 }
+      - { case: large-n-01, seed: q0450 }
+      - { case: large-n-01, seed: q0535 }
+      - { case: large-n-01, seed: q0592 }
+      - { case: large-n-01, seed: q0706 }
+      - { case: large-n-01, seed: q0731 }
+      - { case: large-n-01, seed: q0782 }
+      - { case: large-n-01, seed: q0897 }
+      - { case: large-n-01, seed: q0899 }
+      - { case: large-n-01, seed: t-board-basketball }
+      - { case: large-n-02, seed: q0302 }
+      - { case: large-n-02, seed: q0774 }
+      - { case: large-n-03, seed: q0022 }
+      - { case: large-n-03, seed: q0091 }
+      - { case: large-n-03, seed: q0192 }
+      - { case: large-n-03, seed: q0346 }
+      - { case: large-n-03, seed: q0432 }
+      - { case: large-n-03, seed: q0826 }
+      - { case: large-n-03, seed: q0841 }
+      - { case: large-n-04, seed: q0815 }
+      - { case: large-n-05, seed: q0051 }
+      - { case: large-n-05, seed: q0236 }
+      - { case: large-n-05, seed: q0728 }
+      - { case: large-n-05, seed: q0746 }
+      - { case: large-n-05, seed: q0777 }
+      - { case: large-n-05, seed: q0842 }
+    R:
+      - { case: large-r-01, seed: q0086 }
+      - { case: large-r-01, seed: q0139 }
+      - { case: large-r-01, seed: q0191 }
+      - { case: large-r-01, seed: q0317 }
+      - { case: large-r-01, seed: q0344 }
+      - { case: large-r-01, seed: q0368 }
+      - { case: large-r-01, seed: q0447 }
+      - { case: large-r-01, seed: q0573 }
+      - { case: large-r-01, seed: q0581 }
+      - { case: large-r-01, seed: q0607 }
+      - { case: large-r-01, seed: q0710 }
+      - { case: large-r-01, seed: q0903 }
+      - { case: large-r-02, seed: q0107 }
+      - { case: large-r-02, seed: q0249 }
+      - { case: large-r-02, seed: q0438 }
+      - { case: large-r-02, seed: q0464 }
+      - { case: large-r-02, seed: q0696 }
+      - { case: large-r-03, seed: q0498 }
+      - { case: large-r-03, seed: q0637 }
+      - { case: large-r-03, seed: q0758 }
+      - { case: large-r-03, seed: q0852 }
+      - { case: large-r-04, seed: q0271 }
+      - { case: large-r-04, seed: q0279 }
+      - { case: large-r-04, seed: q0400 }
+      - { case: large-r-04, seed: q0448 }
+      - { case: large-r-04, seed: q0512 }
+      - { case: large-r-04, seed: q0749 }
+      - { case: large-r-04, seed: q0828 }
+      - { case: large-r-05, seed: q0129 }
+      - { case: large-r-05, seed: q0174 }
+      - { case: large-r-05, seed: q0439 }
+      - { case: large-r-05, seed: q0584 }
+    O:
+      - { case: large-o-01, seed: e0155 }
+      - { case: large-o-01, seed: e0197 }
+      - { case: large-o-01, seed: e0252 }
+      - { case: large-o-01, seed: e0267 }
+      - { case: large-o-01, seed: te-named }
+      - { case: large-o-01, seed: te-under-way }
+      - { case: large-o-02, seed: te-under-way }
+      - { case: large-o-03, seed: q0076 }
+      - { case: large-o-03, seed: q0796 }
+      - { case: large-o-03, seed: t-under-way-1 }
+      - { case: large-o-03, seed: t-under-way-2 }
+      - { case: large-o-04, seed: t-named-1 }
+      - { case: large-o-04, seed: t-named-2 }
+      - { case: large-o-05, seed: t-under-way-1 }
+      - { case: large-o-05, seed: t-under-way-2 }
+    B:
+      - { case: large-b-01, seed: t-board-hiking }
+      - { case: large-b-02, seed: q0151 }
+      - { case: large-b-02, seed: q0553 }
+      - { case: large-b-02, seed: q0605 }
+      - { case: large-b-02, seed: q0902 }
+      - { case: large-b-02, seed: t-board-basketball }
+      - { case: large-b-03, seed: q0077 }
+      - { case: large-b-03, seed: q0301 }
+      - { case: large-b-03, seed: q0786 }
+      - { case: large-b-03, seed: t-board-photo }
+      - { case: large-b-04, seed: q0273 }
+      - { case: large-b-04, seed: t-board-study }
+      - { case: large-b-05, seed: q0089 }
+      - { case: large-b-05, seed: q0234 }
+      - { case: large-b-05, seed: q0268 }
+      - { case: large-b-05, seed: t-board-meal }
+    E:
+      - { case: large-e-01, seed: null }
+      - { case: large-e-02, seed: null }
+      - { case: large-e-03, seed: null }
+      - { case: large-e-04, seed: null }
+      - { case: large-e-05, seed: null }
+      - { case: large-e-06, seed: null }
+    C:
+      - { case: large-c-01, seed: q0210 }
+      - { case: large-c-01, seed: q0491 }
+      - { case: large-c-01, seed: q0874 }
+      - { case: large-c-01, seed: c-lol-sat-1 }
+      - { case: large-c-01, seed: c-lol-sat-2 }
+      - { case: large-c-01, seed: c-lol-sat-3 }
+      - { case: large-c-01, seed: c-valorant }
+      - { case: large-c-01, seed: c-pcroom }
+      - { case: large-c-02, seed: c-overwatch }
+      - { case: large-c-02, seed: c-pubg }
+      - { case: large-c-02, seed: c-maple }
+      - { case: large-c-02, seed: c-mariokart }
+      - { case: large-c-02, seed: c-tft }
+      - { case: large-c-03, seed: c-lol-wed-1 }
+      - { case: large-c-03, seed: c-lol-wed-2 }
+      - { case: large-c-03, seed: c-lol-wed-3 }
+      - { case: large-c-04, seed: q0621 }
+      - { case: large-c-04, seed: q0645 }
+      - { case: large-c-04, seed: q0685 }
+      - { case: large-c-04, seed: c-lol-wed-1 }
+      - { case: large-c-04, seed: c-lol-wed-2 }
+      - { case: large-c-04, seed: c-lol-wed-3 }
+      - { case: large-c-05, seed: c-dujjonku }
+      - { case: large-c-05, seed: c-eggtart }
+      - { case: large-c-05, seed: c-buttertteok }
+      - { case: large-c-05, seed: c-croffle }
+      - { case: large-c-05, seed: c-coffee }
+      - { case: large-c-05, seed: c-iced }
+      - { case: large-c-06, seed: c-yoajung }
+      - { case: large-c-06, seed: c-bingsu }
+      - { case: large-c-06, seed: c-macaron }
+      - { case: large-c-06, seed: c-rollcake-sat }
+      - { case: large-c-06, seed: c-maple-syrup-sat }
+      - { case: large-c-07, seed: c-chimaek }
+      - { case: large-c-07, seed: c-pimaek }
+      - { case: large-c-07, seed: c-makgeolli }
+      - { case: large-c-08, seed: c-yeopddeok }
+      - { case: large-c-08, seed: c-tteoktwisun }
+      - { case: large-c-09, seed: c-cono }
+      - { case: large-c-09, seed: c-coin-karaoke }
+      - { case: large-c-10, seed: c-climbing }
+      - { case: large-c-10, seed: c-bouldering }
+      - { case: large-c-11, seed: c-knitting }
+      - { case: large-c-11, seed: c-perfume }
+      - { case: large-c-12, seed: c-book }
+      - { case: large-c-13, seed: c-photobooth }
+      - { case: large-c-14, seed: c-escape-room }
+  thresholds:
+    - id: large.e1.floor
+      metric: E1
+      measure: "Micro precision over the subsets' cards: rightly shown ÷ shown, over the repetitions"
+      kind: floor
+      comparator: '>='
+      value: 0.7
+      declared: 2026-11-01
+    - id: large.e1.target
+      metric: E1
+      measure: "Micro precision over the subsets' cards: rightly shown ÷ shown, over the repetitions"
+      kind: target
+      comparator: '>='
+      value: 0.9
+      declared: 2026-11-01
+    - id: large.e2.floor
+      metric: E2
+      measure: 'Micro recall of subset L'
+      kind: floor
+      comparator: '>='
+      value: 0.7
+      declared: 2026-11-01
+    - id: large.e2.target
+      metric: E2
+      measure: 'Micro recall of subset L'
+      kind: target
+      comparator: '>='
+      value: 0.9
+      declared: 2026-11-01
+    - id: large.e3.target
+      metric: E3
+      measure: 'Micro recall of subsets P and T1 together, in this world'
+      kind: target
+      comparator: '>='
+      value: 0.8
+      declared: 2026-11-01
+    - id: large.e4.target
+      metric: E4
+      measure: 'Micro recall of subset V'
+      kind: target
+      comparator: '>='
+      value: 0.8
+      declared: 2026-11-01
+    - id: large.e5.floor
+      metric: E5
+      measure: 'Runs with no card and a line saying none ÷ runs, on subset E'
+      kind: floor
+      comparator: '>='
+      value: 0.6666666666666666
+      declared: 2026-11-01
+    - id: large.e5.target
+      metric: E5
+      measure: 'Runs with no card and a line saying none ÷ runs, on subset E'
+      kind: target
+      comparator: '='
+      value: 1
+      declared: 2026-11-01
+    - id: large.e7.floor
+      metric: E7
+      measure: 'Micro recall of subsets T2, H, S, N, R, O and B together, by the model. The floor also asks a server recall of 1.0 in CI, which the test of server recall measures once tickets 10 and 11 are in'
+      kind: floor
+      comparator: '>='
+      value: 0.7
+      declared: 2026-11-01
+    - id: large.e7.target
+      metric: E7
+      measure: 'Micro recall of subsets T2, H, S, N, R, O and B together, by the model. The floor also asks a server recall of 1.0 in CI, which the test of server recall measures once tickets 10 and 11 are in'
+      kind: target
+      comparator: '>='
+      value: 0.9
+      declared: 2026-11-01
+    - id: large.e8.floor
+      metric: E8
+      measure: 'Runs stopped by 8 steps or 30 s ÷ runs'
+      kind: floor
+      comparator: '<='
+      value: 0.05
+      declared: 2026-11-01
+    - id: large.e8.target
+      metric: E8
+      measure: 'Runs stopped by 8 steps or 30 s ÷ runs'
+      kind: target
+      comparator: '<='
+      value: 0.02
+      declared: 2026-11-01
+    - id: large.e9.target
+      metric: E9
+      measure: 'Micro recall of subset C. The P05 owner declared it, 2026-11-01'
+      kind: target
+      comparator: '>='
+      value: 0.8
+      declared: 2026-11-01

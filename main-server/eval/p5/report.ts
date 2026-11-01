@@ -36,6 +36,10 @@ export const suiteSchema = z.looseObject({
   tags: z.record(z.string(), z.array(tagSchema)),
   j10StatesDay: z.array(z.string()).default([]),
   thresholds: z.array(thresholdSchema),
+  // The large world's own, read by a run of that world (ticket 02b).
+  largeWorld: z
+    .looseObject({ tags: z.record(z.string(), z.array(tagSchema)), thresholds: z.array(thresholdSchema) })
+    .optional(),
 });
 
 export type Suite = z.output<typeof suiteSchema>;
@@ -43,6 +47,15 @@ type Threshold = Suite['thresholds'][number];
 
 export function p5Suite(): Suite {
   return suiteSchema.parse(parse(readFileSync(new URL('suite.yaml', import.meta.url), 'utf8')));
+}
+
+// The suite as a run of the large world reads it: its own tags and thresholds. So E3 and E4 are reported per world.
+export function largeWorldSuite(suite: Suite = p5Suite()): Suite {
+  if (suite.largeWorld === undefined) {
+    throw new Error('The suite holds no large world');
+  }
+  const { tags, thresholds } = suite.largeWorld;
+  return { ...suite, tags, thresholds };
 }
 
 export interface Measured {
@@ -82,7 +95,7 @@ export interface P5Report {
   stable: Measured;
 }
 
-const CARD_SUBSETS = ['L', 'P', 'T1', 'T2', 'H', 'S', 'N', 'R', 'O', 'B', 'V', 'E'] as const;
+const CARD_SUBSETS = ['L', 'P', 'T1', 'T2', 'H', 'S', 'N', 'R', 'O', 'B', 'V', 'E', 'C'] as const;
 const E3_SUBSETS = ['P', 'T1'];
 const E7_SUBSETS = ['T2', 'H', 'S', 'N', 'R', 'O', 'B'];
 
@@ -262,7 +275,8 @@ function searchMeasures(
 ): Record<string, () => Measured> {
   return {
     E1: () => {
-      const { right, shown } = sumCards(subsets);
+      // Subset C has a line of its own, E9, so that E1 means what the metrics document says.
+      const { right, shown } = sumCards(subsets.filter(({ subset }) => subset !== 'C'));
       return { k: right, n: shown };
     },
     E2: () => recallOf(subsets, ['L']),
@@ -270,6 +284,7 @@ function searchMeasures(
     E4: () => recallOf(subsets, ['V']),
     E5: () => counted(runsTagged('E'), ({ passed }) => passed),
     E7: () => recallOf(subsets, E7_SUBSETS),
+    E9: () => recallOf(subsets, ['C']),
     E8: () =>
       counted(every, ({ run }) => run.turns.some(({ failure }) => failure === 'STEP_LIMIT' || failure === 'TIMEOUT')),
   };

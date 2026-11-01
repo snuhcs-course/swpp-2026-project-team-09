@@ -4,6 +4,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { fileURLToPath } from 'node:url';
@@ -14,6 +15,7 @@ import { dotEnv, runOptionsFromEnv } from './options.ts';
 import { expectSchema } from './expect.ts';
 import { type Names, namesOf } from './normalise.ts';
 import { seedP4World } from './p4/world.ts';
+import { seedLargeWorld } from './p5/large-world/world.ts';
 import { seedP5World } from './p5/world.ts';
 import { type EvalApp, runCase, RunLog, startEvalApp } from './runner.ts';
 import { scoreTurn } from './score.ts';
@@ -25,7 +27,12 @@ import { seedWorld, type World } from './world.ts';
 // case at its first failed turn. The run is saved when it ends, stopped by the budget or not, with its scorecard
 // beside it.
 
-const SEEDERS: Record<WorldName, typeof seedWorld> = { small: seedWorld, p4: seedP4World, p5: seedP5World };
+const SEEDERS: Record<WorldName, typeof seedWorld> = {
+  small: seedWorld,
+  p4: seedP4World,
+  p5: seedP5World,
+  'large-world-v1': seedLargeWorld,
+};
 
 const options = runOptionsFromEnv();
 const cases = selectCases(casesIn(loadCases(), options.world), options.categories, options.caseIds);
