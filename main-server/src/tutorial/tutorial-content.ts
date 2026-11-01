@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { readFile } from 'node:fs/promises';
@@ -46,6 +47,9 @@ const questSchema = z.strictObject({
   completionMessage: text,
   places: z.array(placeSchema),
   links: z.array(z.strictObject({ label: text, url: z.url({ protocol: /^https?$/u }) })),
+  // What the Assistant answers from beyond the sheet's text, each with where it was read and when. GET /tutorial does
+  // not serve them.
+  facts: z.array(z.strictObject({ text, source: z.url({ protocol: /^https?$/u }), checked: z.iso.date() })).default([]),
 });
 
 const contentSchema = z
