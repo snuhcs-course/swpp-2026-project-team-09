@@ -32,7 +32,7 @@
         words:
           - 볼링
 - case: large-v-06
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -41,7 +41,7 @@
         words:
           - 라면
 - case: large-v-07
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -51,7 +51,7 @@
           - 보드게임
           - 보겜
 - case: large-v-08
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -62,7 +62,7 @@
           - 삼겹살
           - 목살
 - case: large-l-01
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -71,7 +71,7 @@
         words:
           - 볼링
 - case: large-l-02
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -135,7 +135,7 @@
           - 배드민턴
           - 농구
 - case: large-p-03
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -144,7 +144,7 @@
         words:
           - 민턴
 - case: large-p-04
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -155,7 +155,7 @@
           - 러닝
           - 달리
 - case: large-p-05
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -165,7 +165,7 @@
           - 배민
           - 배달
 - case: large-t1-01
-  until: 11
+  until: null
   calls:
     - tool: searchGlobalEvents
       input:
@@ -192,7 +192,7 @@
         words:
           - 마라탕
 - case: large-t1-04
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -201,7 +201,7 @@
         words:
           - 뮤지컬
 - case: large-t1-05
-  until: 11
+  until: null
   calls:
     - tool: searchGlobalEvents
       input:
@@ -210,7 +210,7 @@
         words:
           - 박람회
 - case: large-t2-01
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -229,7 +229,7 @@
         words:
           - 콘서트
 - case: large-t2-03
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -238,7 +238,7 @@
         words:
           - 볼링
 - case: large-t2-04
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -256,7 +256,7 @@
         words:
           - 박람회
 - case: large-h-01
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -272,7 +272,7 @@
         after: 2026-11-06T22:00
         words: *a1
 - case: large-h-03
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -288,7 +288,7 @@
         before: 2026-11-08T19:30
         words: *a1
 - case: large-h-05
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -296,7 +296,7 @@
         before: 2026-11-04T10:59
         words: *a1
 - case: large-h-06
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -312,7 +312,7 @@
         to: 2026-11-02
         words: *a1
 - case: large-s-01
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -322,7 +322,7 @@
           - 스쿼시
         minPlacesLeft: 2
 - case: large-s-02
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -330,7 +330,7 @@
         before: 2026-11-04T21:59
         words: *a2
 - case: large-s-03
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -354,7 +354,7 @@
           - 학생식당
         minPlacesLeft: 3
 - case: large-s-05
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -364,7 +364,7 @@
           - 풋살
         minPlacesLeft: 3
 - case: large-n-01
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -385,7 +385,7 @@
           - 학생식당
         capacity: 2
 - case: large-n-03
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -395,7 +395,7 @@
           - 볼링
         capacity: 6
 - case: large-n-04
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -405,7 +405,7 @@
           - 풋살
         capacity: 8
 - case: large-n-05
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -415,7 +415,7 @@
           - 테니스
         capacity: 4
 - case: large-r-01
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -430,7 +430,7 @@
         placeId: 제1공학관
         radius: 300
 - case: large-r-02
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -442,7 +442,7 @@
         placeId: 학생회관
         radius: 300
 - case: large-r-03
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -457,7 +457,7 @@
         placeId: 체육관
         radius: 300
 - case: large-r-04
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -472,7 +472,7 @@
         placeId: 문화관
         radius: 300
 - case: large-r-05
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -552,7 +552,7 @@
           - 산행
           - 관악산
 - case: large-b-02
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -561,7 +561,7 @@
         words:
           - 농구
 - case: large-b-03
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -671,7 +671,7 @@
         before: 2026-11-05T21:59
         words: *a6
 - case: large-c-03
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -731,7 +731,7 @@
           - 막걸리
           - 소주
 - case: large-c-08
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -744,7 +744,7 @@
           - 순대
           - 튀김
 - case: large-c-09
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -755,7 +755,7 @@
           - 코노
           - 코인노래방
 - case: large-c-10
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -766,7 +766,7 @@
           - 클밍
           - 볼더링
 - case: large-c-11
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -779,7 +779,7 @@
           - 뜨개
           - 클래스
 - case: large-c-12
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -790,7 +790,7 @@
           - 책
           - 북클럽
 - case: large-c-13
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
@@ -801,7 +801,7 @@
           - 네컷
           - 포토
 - case: large-c-14
-  until: 11
+  until: null
   calls:
     - tool: searchRecruitingQuests
       input:
