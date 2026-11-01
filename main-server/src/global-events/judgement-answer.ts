@@ -47,7 +47,8 @@ export const JUDGEMENT_CHECKS = [
 
 export type JudgementCheck = (typeof JUDGEMENT_CHECKS)[number];
 
-// A session of a stored Judgement. `globalEventId` is the event it was published as, and empty until then.
+// A session of a stored Judgement. `globalEventId` is the event it was published as or attached to, or its Draft while it
+// waits for an Administrator, and empty until then.
 const judgedSessionSchema = answeredSessionSchema.extend({
   placeId: z.string().nullable(),
   checks: z.array(z.strictObject({ name: z.enum(JUDGEMENT_CHECKS), passed: z.boolean() })),

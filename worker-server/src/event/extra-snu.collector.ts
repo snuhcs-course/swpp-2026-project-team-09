@@ -59,6 +59,7 @@ function unreadableProgramme({ key, title }: ListedProgramme): CollectedPost {
     address: programmeAddress(key),
     title: maskEmails(title),
     description: '',
+    links: [],
     sessions: [{ number: 1, start: null, end: null, readFrom: null, place: null }],
   };
 }

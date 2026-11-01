@@ -109,7 +109,7 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
   - the quoted line is not an application or registration period;
   - the start comes before the end;
   - unless it is read as running over a period, the start has a time of day: a day alone is stored at 00:00 and would show as 00:00 on its card;
-  - a session lasts at most 24 hours, unless it is read as running over a period, in which case the quoted line must hold both its first and last day;
+  - a session lasts at most 24 hours, unless it is read as running over a period, in which case it must end on another day than it starts, and one quoted line must hold both days. An end that is a day alone is stored at 23:59 of that day (ticket 07, decided 2026-11-01);
   - the place matches exactly one Place. Where the Source's setting says so, a building number alone ("301동 117호") is taken as Gwanak; a place naming another campus is not matched.
 - Each passing session becomes its own Global Event; failing sessions make no new Draft. A post stored as one Draft keeps it for them. A post the worker sent with a Draft per session keeps those it did not publish, since each holds a time and place the worker read (ticket 05, decided 2026-11-01).
 - The Judgement is stored with the Draft or event: the values, the lines, each check and whether it passed, the model id and the time.
@@ -119,10 +119,10 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
 ### The same event posted twice (main server)
 
 - A new Source Post's sessions are only ever attached to existing Global Events. Two existing events are never merged.
-- The link rule comes first, as above. When a session it attached gives another time than its event, the event is not changed; it is flagged for an Administrator.
+- The link rule comes first, as above. When a session it attached gives another time than its event, the event is not changed; it is flagged for an Administrator. A linked event that is a Draft no one read a time for takes nothing, and the post goes on through the step.
 - For the sessions left, with their times known, the candidates are the Global Events of any Source whose start is within one day.
 - The refusing rules come next. A candidate is refused when both have a time of day on the same day and the times differ, when one is a 1차 and the other a 2차 session, when one is 대면 and the other 비대면, or when the roles differ. Candidates on the day before or after are kept for the AI.
-- Then the attaching rule: equal normalised titles and equal starts attach.
+- Then the attaching rule: equal normalised titles and equal starts attach. A setting, `SAME_EVENT_TITLE_RULE`, `off` by default and in Production, turns this rule on once evaluation B has measured it, since a wrong attachment hides an event from Users. `EXTRA_SNU_COLLECTION` waits for it.
 - For the candidates left, the AI chooses one of them or none, or answers unsure.
 - When the AI is unsure, when a session matches several candidates, or when the call fails, the session stays a Draft and enters the Administrator's queue with its candidates. It is not shown to Users, so nothing is lost by waiting.
 - An Administrator can attach a queued session to a candidate, publish it as its own event, or detach an attached session, which becomes its own Draft again. The Quests of the event stay with it.
@@ -136,7 +136,7 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
 
 ### App
 
-- An event that runs over several days reads "M월 D일까지" in the place of its day and hours. Nothing else in the app changes, and no DTO gains a field.
+- An event that runs over several days reads "M월 D일까지" in the place of its day and hours: one whose end is more than 24 hours after its start, the Judgement's own limit of a sitting, whoever made it (ticket 07, decided 2026-11-01). Nothing else in the app changes, and no DTO gains a field.
 
 ### Metrics (first ticket)
 
@@ -150,7 +150,7 @@ Words: a **Source Post** is one post on a Source that a Global Event was read fr
 - **Worker parser on saved pages** (prior art: the event page parser and event collector tests and their saved pages): sessions, the SSO skip, the list range, the two-second pacing through the fetching interface.
 - **Admin site components** (prior art: the event page integration test): the column and filter, the Judgement panel, the queue and the detach action.
 - **Offline evaluation with the real model**, outside CI: the Judgement step and the same-event step over the committed sets, scored as evaluations A and B define.
-- The app's "M월 D일까지" is checked on a phone; the app has no test setup.
+- The app's "M월 D일까지" is a unit test of its one function (`eventTime`) and is checked on a phone.
 
 ## Out of Scope
 

@@ -44,6 +44,8 @@ export interface CollectedPost {
   title: string;
   // The body as text, one line of the page per line; empty when the page was not the post.
   description: string;
+  // Where the links of the body lead, whatever their words say.
+  links: string[];
   sessions: CollectedSession[];
 }
 

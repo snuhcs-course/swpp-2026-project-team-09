@@ -95,6 +95,12 @@ export const settingsSchema = z
       .enum(['on', 'off'])
       .default('off')
       .transform((value) => value === 'on'),
+    // Whether that step attaches a session to an event by an equal title and start. "off" publishes both, since a wrong
+    // attachment hides an event from Users, until evaluation B has measured it (infra/production/README.md).
+    SAME_EVENT_TITLE_RULE: z
+      .enum(['on', 'off'])
+      .default('off')
+      .transform((value) => value === 'on'),
     JUDGEMENT_TIMEOUT_MS: count(60_000),
     JUDGEMENT_MAX_OUTPUT_TOKENS: count(4000),
   })
