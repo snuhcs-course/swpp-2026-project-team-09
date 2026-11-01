@@ -20,8 +20,8 @@
 - [x] Evaluations A and B are not drafted this way: their answers are read from real posts by people, since a drafting model would share the Judgement's mistakes.
 - [x] The eval harness's own tests pass in CI with the new suite.
 - [x] The commit is tagged as C0 and recorded.
-- [ ] R0 runs on the C0 commit with no chat change of P05 in it, on a clean working tree, three times per case, with the exact command recorded. P19's cases run three times on the same commit as the regression baseline.
-- [ ] The record names the commit, the date and time, the model slug, the repetitions, the limits and the cost, as section 4.3 lists. Scores go into the improvement log table as R0 with each threshold's pass or fail, and a failure analysis table is written for the failed cases.
+- [x] R0 runs on the C0 commit with no chat change of P05 in it, on a clean working tree, three times per case, with the exact command recorded. P19's cases run three times on the same commit as the regression baseline.
+- [x] The record names the commit, the date and time, the model slug, the repetitions, the limits and the cost, as section 4.3 lists. Scores go into the improvement log table as R0 with each threshold's pass or fail, and a failure analysis table is written for the failed cases.
 
 ## Comments
 
@@ -47,9 +47,18 @@ Known gap: `join-08` expects a Proposal, as the spec says, but a User holding a 
 
 `eval-freeze-iter3-chat` on `28c0ce1`, the merge commit of #140. The record is `main-server/eval/p5/README.md`. R0 is left, once its cost and command are approved.
 
+### R0 done (2026-11-01)
+
+R0 ran on `28c0ce1`, a clean tree: the P05 suite three times per case and P19 three times over, for about USD 1.20 of the eval model. The record is `main-server/eval/p5/r0.md`, with the improvement log and the failure analysis; the results are in `main-server/eval/results/`.
+
+Not in any P05 ticket at the time, now ticket 10a: when the model writes its answer beside a tool call and ends the next step with no words, the server reads only the last step and answers 503. It took 31 of the 300 P05 runs and 10 of the 216 P19 runs. The record says so, and R0 keeps those runs. The owner decided on 2026-11-01 to fix it before ticket 10.
+
+The large world's R0 belongs to ticket 02b.
+
 ### Agent usage (2026-11-01)
 
-Agent work so far; R0 will add to it.
+The ticket's agent work, done.
 
-- Agent time: about 1 hour 50 minutes (estimate), one session with two review subagents and five drafting CLI calls.
-- Tokens, subagents and drafting included: input 470, with 43,616,665 cache reads and 1,340,027 cache writes shown apart; output 408,138. Counted before this commit.
+- Agent time: about 2 hours 40 minutes (estimate), one session with two review subagents and five drafting CLI calls. It includes about 40 minutes of R0 running; waiting for people is left out.
+- Tokens, subagents and drafting included, without the eval model's own: input 510, with 49,685,669 cache reads and 1,408,887 cache writes shown apart; output 441,805. Counted before this commit.
+- The eval model, `anthropic/claude-haiku-5.5`: input 10,484,718, output 298,398, no cache.

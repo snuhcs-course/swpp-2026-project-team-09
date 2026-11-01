@@ -698,12 +698,15 @@ server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
   line that runs across days ends, the place is in its lines and names exactly one Place on a line that names nowhere
   else, and it is not a session the rules or the same answer already gave. A place that is a
   building number alone is taken as Gwanak where the Source's setting says so. A session read as running over a period
-  does not pass until ticket 07.
+  needs no time of day and may last longer than 24 hours, but it must end on two different days, with one quoted line
+  holding both of them. The lines' ranges may be written with `~`, `부터` or a hyphen.
 - **What it publishes:** each passing session becomes its own Global Event with the route `judgement`, at version 1,
   taking the post's Draft with its start, or else a free one, or else a new event linked as another own session of the
   post. Failing sessions make no Draft: a post stored as one Draft keeps it for them, and a post the worker sent with a
   Draft per session keeps those it did not publish, so that no time the worker read is lost. A post called no event stays
-  as it is, with the outcome `no_event`.
+  as it is, with the outcome `no_event`. A session over a period whose end is a day alone, or the 00:00 extra.snu writes
+  where it has no time, is stored as ending at 23:59 of that day in Korea, so that it stays listed through its last day
+  and its card names that day.
 - **What it leaves alone:** a post with any session an Administrator changed is not judged, and a change while the model
   reads it publishes nothing of that Judgement. A post the link rule decided is not judged. With
   `AUTOMATIC_PUBLICATION=off` the Judgement and what it attaches are stored and nothing is published.
@@ -1830,7 +1833,8 @@ prediction, each with equal weight, against 3.5 minutes. The threshold holds whe
 
 `TRAVEL_PROVIDER` (`src/travel/travel.ts`) says how long the way from one Place to another takes at a departure time,
 in seconds, on foot or by the circular shuttle. Show its seconds as whole minutes, rounded up, with `shownMinutes`. Both
-of its files are read once when the server starts. A fixture can be bound to the provider in place of them.
+of its files are read once when the server starts. A fixture can be bound to the provider in place of them. It also
+answers `walkingSeconds`, the way on foot alone, by which a leave-by time's out-travel departs.
 
 - **On foot**, it looks the pair up in `seed/walking-table.json` (Seed data, ADR 0010).
 - **By shuttle**, only the anticlockwise route 41946: a walk to a boarding stop, the average wait, the ride to a stop
@@ -1960,7 +1964,10 @@ its model through OpenRouter with the Vercel AI SDK
   `{ "title", "description", "joinPolicy": "open" | "approval" | "closed", "board", "capacity", "startsAt",`
   `"place", "globalEvent", "invitees" }` with `startsAt` in Korea time, `board` null for a Closed Quest, `place` as
   `{ "id", "name" }` or null, `globalEvent` whole as `GET /global-events` serves it or null, and `invitees`, the Friends
-  to invite, as `[{ "id", "name" }]`, never where they are (`src/assistant/proposal.ts`). The app sends a card back only
+  to invite, as `[{ "id", "name" }]`, never where they are (`src/assistant/proposal.ts`). A candidate of
+  `findFreeTimeEvents` has its 이동 시간 fields beside the `quest` or the `globalEvent`, each only when it applies:
+  `travel` (`{ "mode": "walk" | "shuttle", "minutes" }`), then either `next` (`{ "minutes", "isClass" }`) or `leaveBy`
+  (`"HH:MM"`) with `endUnknown`. Older apps ignore them. The app sends a card back only
   as its reference, `{ "kind", "id" }`, the last Proposal with its values and its `globalEvent` as `{ "id", "title" }`,
   and never the map buttons. Nothing of a conversation is stored: the app keeps it.
 
@@ -1992,8 +1999,9 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 
 - **The model port** (`MODEL_PORT` in `adapter.ts`): the one place that talks to the model. The server binds it to
   OpenRouter (`openRouterModel`); the tests bind the scripted fake below.
-- **Tools** (`tools/`): each is a zod schema of its input and a plain function calling this server's services, made
-  with `defineTool` (`feature.ts`). It is given the signed-in User's id and the time of the request. A tool answers only
+- **Tools** (`tools/`, and `free-time/` for the 공강 tools): each is a zod schema of its input and a plain function
+  calling this server's services, made with `defineTool` (`feature.ts`). It is given the signed-in User's id and the
+  time of the request. A tool answers only
   what matches what the model passed, or `{ "result": "none", "reason": "…" }` (`noneFound`), so that the model says
   there is none instead of answering from elsewhere.
   - `getMenus(date, meal?, restaurant?)` answers the menus of that day only, each restaurant with `collectedAt` in
@@ -2033,6 +2041,24 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     the User for, or `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when
     it is called twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
     the change.
+  - **The 공강 tools** (`free-time/`, ADR 0009) work on a day from today to a week ahead, and on the items of a User's
+    day: each Class meeting on that weekday and each timed Sub Quest of a Quest they hold (`UserDayService`, for any
+    User). Rooms, Places, coordinates and the reason anyone is busy are never returned.
+    - `getMyDay(date)` answers the User's items, each with its id (a Class meeting's is its ClassTime's), name, start
+      and end. A Sub Quest with no end, or longer than 3 hours, ends 30 minutes after its start.
+    - `findFreeTimeEvents(date, from, to, board?, departurePlace?, departureTime?, leaveBy?)` takes `from` and `to` as an item id, a
+      clock time, `now` or `end`. It answers the gaps found, with the items around them, the `total` and every candidate
+      that fits, soonest first with no cap: recruiting Quests the User can still enter and published Global Events that
+      start inside a gap, at a place that maps to a Place (`PlaceLookup.placeIdOf`), reached 1 minute early and left in
+      time for the next item, at their end or, after a stay of at least 30 minutes, at a leave-by time. What is left out is neither returned nor explained. Or it answers
+      `{ "result": "needs", "needs": { "side": "before" | "after", "item" } }` for an item of the User's without a Place,
+      and takes the answer as `departurePlace`, which must come from `resolvePlace` in the same message, or `leaveBy`.
+      From off campus, `departureTime` says when the User enters the campus at that Place, and they leave from there
+      at that time. These answer only sides without a Place, and nothing of them is stored. A clock time as `to` also limits a
+      candidate's end. The numbers are in `src/travel/judgement-constants.ts`.
+    - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
+      puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
+      in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.
   - A **presenter** puts something real into the reply rather than the model describing it.
     `showOnMap(dining | shuttle)` adds that map button; any other layer goes back to the model as an error.
     `showGlobalEvents(ids)` adds those events as cards, in the order given, and `showQuests(ids)` those Quests. Cards
@@ -2047,10 +2073,13 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     `othersText` breaks a tag of the delimiters inside the text, so that it cannot close them.
 - **Feature definitions**: an entry point with its own system prompt and its own tools (`Feature` in `feature.ts`). The
   chat Assistant is `chat/chat-assistant.ts`. Its system prompt carries the date, the weekday and the time in Korea of
-  each request. A later AI feature gets a definition of its own that reuses tools, never more tools on this one, so
-  that one feature cannot reach another's data.
+  each request. A capability of the chat joins it as tools and a prompt fragment (ADR 0009, `FREE_TIME_RULES`). An AI
+  feature with an entry point of its own gets a definition of its own that reuses tools, so that it cannot reach
+  another's data.
 - **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
-  call, tool call and answer within the limits per message. `causeOf` names why a run failed for the log.
+  call, tool call and answer within the limits per message, asking OpenRouter for providers that do not collect data
+  (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). `causeOf` names why a
+  run failed for the log.
 
 ### Testing with the scripted model
 
@@ -2101,7 +2130,7 @@ pnpm eval --model anthropic/claude-haiku-5.5 --temperature 0 --max-steps 30 --ti
 | `--repeat <n>`                                         | the cases marked `repeat` run their own count (3)                                 |
 | `--category`, `--case`                                 | every case; both take several values, comma-separated or again                    |
 | `--budget <USD>`                                       | 5                                                                                 |
-| `--world <small \| p4 \| p5>`                          | `small`, P19's world and the cases that name it                                   |
+| `--world <small \| p4 \| p5 \| large-world-v1>`        | `small`, P19's world and the cases that name it                                   |
 | `--yes`                                                | asks before it starts                                                             |
 
 `eval/cli.ts` reads the flags, prints the estimated cost from the number of turns, the tokens a turn took in the last
@@ -2150,7 +2179,8 @@ by id in `eval/fixed-set.ts`: other cases can join `eval/cases/`, and the test c
 `pnpm eval --world p4` runs the 40 cases of `eval/p4/cases/` (공강 파티 15, 공강에 밥 15, 공통 10) in a world of their
 own, `eval/p4/world.yaml`, with the clock at 2026-11-02 (월) 11:30 unless a case gives its own `now`. A case's `asker`
 sends it as another User of the world, such as one with no Timetable. `eval/p4/rules.md` states the judgement in prose,
-`eval/p4/travel-fixture.json` freezes every ordered pair of the world's Places, and `eval/p4/suite.yaml` commits the
+`eval/p4/travel-fixture.json` freezes every ordered pair of the world's Places, bound to `TRAVEL_PROVIDER` so that the
+real table and shuttle file never reach a run, and `eval/p4/suite.yaml` commits the
 thresholds and who drafted and reviewed the labels. Every case has `repeat: 3`, so a scorecard's pass rates are the mean
 of the 3 runs. `test/eval-p4-cases.integration.test.ts` checks the set, the fixture and every seed name.
 
@@ -2163,6 +2193,14 @@ drafted and reviewed the labels. Do not run it with the real model before C0, an
 set, keeping no result (metrics document, 4.1). `test/eval-p5-cases.integration.test.ts` checks the set and the world.
 A scorecard of the suite adds each metric with its pass or fail, and each subset's cards summed over the repetitions
 beside the mean over its cases (`eval/p5/report.ts`).
+
+`pnpm eval --world large-world-v1` runs the 80 cases of `eval/p5/large-world-v1/` in a generated world of 1,000 Quests
+and 307 Global Events, seeded only into the run's fresh database. A run reads the version's data files, and
+`eval/p5/large-world/generate-cli.ts` writes a new version and refuses one that exists. `eval/p5/suite.yaml` holds its
+thresholds and subsets and pins the hashes of its world and cases, which `test/eval-large-world.unit.test.ts` checks.
+`test/eval-large-world.integration.test.ts` calls the search tools with each case's intended inputs and no model, and
+checks the server's recall against what `intended.yaml` expects today. `pnpm eval:compare` refuses two runs of different
+worlds. The record is in `eval/p5/README.md`.
 
 #### Scoring
 

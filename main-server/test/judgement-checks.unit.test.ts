@@ -174,18 +174,6 @@ describe('checkedSessions: what a post says beyond the session', () => {
 });
 
 describe('checkedSessions: the length and time of day of a session', () => {
-  it('holds a session over a period back until ticket 07, whatever its lines', () => {
-    expect(failing(checked(session({ overPeriod: true })))).toEqual(['length']);
-  });
-
-  it('does not ask a time of day of a session over a period', () => {
-    const lines = { start: [TIME_LINE], end: [TIME_LINE], place: [PLACE_LINE] };
-
-    expect(
-      failing(checked(session({ start: '2026-11-05', end: '2026-11-05T16:00', overPeriod: true, lines }))),
-    ).toEqual(['length']);
-  });
-
   it('refuses an end given as a day alone', () => {
     expect(failing(checkedOn('2026. 11. 5.(목) 14:00 ~ 2026. 11. 6.(금)', { end: '2026-11-06' }))).toEqual([
       'hasTimeOfDay',

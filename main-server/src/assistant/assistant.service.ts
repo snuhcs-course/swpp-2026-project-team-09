@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import {
@@ -22,10 +23,12 @@ import { type Settings } from '../common/settings.js';
 import { FriendsService } from '../friends/friends.service.js';
 import { MenusService } from '../menus/menus.service.js';
 import { GlobalEventsService } from '../global-events/global-events.service.js';
+import { PlaceLookup } from '../places/place-lookup.js';
 import { PlacesService } from '../places/places.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { RecruitingService } from '../quests/recruiting.service.js';
 import { ShuttleService } from '../shuttle/shuttle.service.js';
+import { TRAVEL_PROVIDER, type TravelProvider } from '../travel/travel.js';
 import {
   causeOf,
   type Model,
@@ -38,6 +41,7 @@ import {
 import { chatAssistant } from './chat/chat-assistant.js';
 import { type AssistantReplyDto } from './dto/assistant-messages.dto.js';
 import { type ChatMessage, type Feature } from './feature.js';
+import { UserDayService } from './free-time/user-day.service.js';
 import { koreaDate } from './korea-time.js';
 
 // The latest messages the model is given. Earlier ones are dropped, so that a long conversation does not make every
@@ -66,10 +70,21 @@ export class AssistantService {
     recruiting: RecruitingService,
     friends: FriendsService,
     places: PlacesService,
+    placeLookup: PlaceLookup,
+    days: UserDayService,
+    @Inject(TRAVEL_PROVIDER) travel: TravelProvider,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
-    this.chat = chatAssistant({ menus, shuttle, globalEvents, recruiting, friends, places });
+    this.chat = chatAssistant({
+      menus,
+      shuttle,
+      globalEvents,
+      recruiting,
+      friends,
+      places,
+      freeTime: { days, recruiting, globalEvents, places: placeLookup, travel },
+    });
     this.keyConfigured = settings.get('OPENROUTER_API_KEY', { infer: true }) !== '';
     this.dailyMessages = settings.get('ASSISTANT_DAILY_MESSAGES', { infer: true });
     this.limits = {

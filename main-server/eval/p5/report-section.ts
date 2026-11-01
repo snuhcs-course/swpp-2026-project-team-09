@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type Measured, type P5Report, type Verdict } from './report.ts';
@@ -18,17 +19,21 @@ function verdictText({ kind, comparator, value, passed }: Verdict): string {
 export function p5Section(
   { metrics, subsets, stable }: P5Report,
   table: (header: string[], rows: string[][]) => string,
+  title = 'The P05 suite',
 ): string[] {
   return [
-    '## The P05 suite',
-    'k/n counts runs. G1 comes from `pnpm eval:compare` over the P19 baseline. A subset of five cases moves by 20% with one case, and a smaller improvement is a direction only.',
+    `## ${title}`,
+    'k/n counts runs. G1 is read from three P19 runs against the three of R0. A subset of five cases moves by 20% with one case, and a smaller improvement is a direction only.',
     table(
       ['Metric', 'Measured', 'Thresholds'],
-      metrics.map(({ metric, k, n, verdicts }) => [
-        metric,
-        ratio({ k, n }),
-        verdicts.map((verdict) => verdictText(verdict)).join('; '),
-      ]),
+      // A world without a metric's cases or thresholds, as the large world is of evaluation C, leaves it out.
+      metrics
+        .filter(({ n, verdicts }) => n > 0 || verdicts.length > 0)
+        .map(({ metric, k, n, verdicts }) => [
+          metric,
+          ratio({ k, n }),
+          verdicts.map((verdict) => verdictText(verdict)).join('; '),
+        ]),
     ),
     table(
       ['Subset', 'Cases', 'Micro precision', 'Micro recall', 'Mean precision', 'Mean recall', 'Exact set (E6)'],
