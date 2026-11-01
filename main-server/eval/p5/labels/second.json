@@ -1,0 +1,399 @@
+{
+  "join-06": {
+    "answer": {
+      "action": "join",
+      "cards": [],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-08": {
+    "answer": {
+      "action": "join",
+      "cards": [
+        {
+          "kind": "quest",
+          "seed": "음악제 같이 가요"
+        },
+        {
+          "kind": "quest",
+          "seed": "음악제 앞자리 모임"
+        }
+      ],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-12": {
+    "answer": {
+      "action": "join",
+      "cards": [
+        {
+          "kind": "quest",
+          "seed": "아침 러닝"
+        }
+      ],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-19": {
+    "answer": {
+      "action": "show",
+      "cards": [
+        {
+          "kind": "quest",
+          "seed": "버스킹 구경 갈 분"
+        },
+        {
+          "kind": "globalEvent",
+          "seed": "잔디광장 버스킹"
+        }
+      ],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-20": {
+    "answer": {
+      "action": "propose",
+      "cards": [],
+      "proposal": {
+        "board": "meal",
+        "capacity": 4,
+        "globalEvent": null,
+        "joinPolicy": "open",
+        "place": null,
+        "startsAt": "2026-11-03 19:00"
+      }
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-24": {
+    "answer": {
+      "action": "join",
+      "cards": [
+        {
+          "kind": "quest",
+          "seed": "마라땅 드실 분"
+        },
+        {
+          "kind": "globalEvent",
+          "seed": "잔디광장 버스킹"
+        },
+        {
+          "kind": "globalEvent",
+          "seed": "가을 음악제"
+        },
+        {
+          "kind": "quest",
+          "seed": "버스킹 구경 갈 분"
+        },
+        {
+          "kind": "quest",
+          "seed": "음악제 같이 가요"
+        },
+        {
+          "kind": "quest",
+          "seed": "음악제 앞자리 모임"
+        },
+        {
+          "kind": "quest",
+          "seed": "금요일 저녁 파스타"
+        },
+        {
+          "kind": "globalEvent",
+          "seed": "관현악단 공연의 밤"
+        },
+        {
+          "kind": "quest",
+          "seed": "공연의 밤 같이 봐요"
+        }
+      ],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-27": {
+    "answer": {
+      "action": "ask",
+      "cards": [],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-29": {
+    "answer": {
+      "action": "propose",
+      "cards": [],
+      "proposal": {
+        "board": "hobby",
+        "capacity": 2,
+        "globalEvent": null,
+        "joinPolicy": "open",
+        "place": null,
+        "startsAt": "2026-11-07 15:00"
+      }
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "join-31": {
+    "answer": {
+      "action": "join",
+      "cards": [
+        {
+          "kind": "quest",
+          "seed": "목요일 점심 도서관"
+        },
+        {
+          "kind": "quest",
+          "seed": "목요일 점심 학생회관"
+        },
+        {
+          "kind": "quest",
+          "seed": "목요일 점심 문화관"
+        },
+        {
+          "kind": "quest",
+          "seed": "목요일 점심 예술복합"
+        }
+      ],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-b-02": {
+    "answer": {
+      "action": "show",
+      "cards": [
+        {
+          "kind": "quest",
+          "seed": "뮤지컬 보러 갈 분"
+        },
+        {
+          "kind": "quest",
+          "seed": "연극 보고 저녁 먹어요"
+        }
+      ],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-e-01": {
+    "answer": {
+      "action": "none",
+      "cards": [],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-h-01": {
+    "answer": {
+      "action": "show",
+      "cards": [
+        {
+          "kind": "quest",
+          "seed": "치킨 뜯으실 분"
+        },
+        {
+          "kind": "quest",
+          "seed": "오늘 저녁 공부 모임"
+        },
+        {
+          "kind": "quest",
+          "seed": "족발 야식 모임"
+        }
+      ],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-l-02": {
+    "answer": {
+      "action": "show",
+      "cards": [
+        {
+          "kind": "globalEvent",
+          "seed": "채용 박람회"
+        },
+        {
+          "kind": "quest",
+          "seed": "박람회 같이 돌아요"
+        },
+        {
+          "kind": "globalEvent",
+          "seed": "동아리 박람회"
+        }
+      ],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-n-05": {
+    "answer": {
+      "action": "show",
+      "cards": [
+        {
+          "kind": "quest",
+          "seed": "마라탕 넷이서"
+        }
+      ],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-o-03": {
+    "answer": {
+      "action": "show",
+      "cards": [
+        {
+          "kind": "globalEvent",
+          "seed": "가을 사진전"
+        },
+        {
+          "kind": "globalEvent",
+          "seed": "채용 박람회"
+        }
+      ],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-p-04": {
+    "answer": {
+      "action": "show",
+      "cards": [
+        {
+          "kind": "globalEvent",
+          "seed": "가을 사진전"
+        },
+        {
+          "kind": "quest",
+          "seed": "사진전 같이 봐요"
+        },
+        {
+          "kind": "quest",
+          "seed": "사진전 주말 관람"
+        },
+        {
+          "kind": "globalEvent",
+          "seed": "판화 특별전"
+        },
+        {
+          "kind": "quest",
+          "seed": "판화전 같이 봐요"
+        },
+        {
+          "kind": "globalEvent",
+          "seed": "공룡 화석 전시"
+        },
+        {
+          "kind": "quest",
+          "seed": "공룡 전시 보러 가요"
+        },
+        {
+          "kind": "quest",
+          "seed": "전시 보러 가요"
+        }
+      ],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-r-01": {
+    "answer": {
+      "action": "show",
+      "cards": [
+        {
+          "kind": "quest",
+          "seed": "공대 면접 스터디"
+        },
+        {
+          "kind": "quest",
+          "seed": "전공 스터디 그룹"
+        },
+        {
+          "kind": "quest",
+          "seed": "코딩 테스트 스터디"
+        },
+        {
+          "kind": "quest",
+          "seed": "카페 스터디"
+        },
+        {
+          "kind": "quest",
+          "seed": "벤치에서 스터디"
+        }
+      ],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-s-05": {
+    "answer": {
+      "action": "show",
+      "cards": [
+        {
+          "kind": "quest",
+          "seed": "정기 공연 같이 가요"
+        }
+      ],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-t1-02": {
+    "answer": {
+      "action": "show",
+      "cards": [
+        {
+          "kind": "globalEvent",
+          "seed": "재즈 콘서드"
+        },
+        {
+          "kind": "quest",
+          "seed": "재즈 콘서드 갈 사람"
+        }
+      ],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  },
+  "search-t2-02": {
+    "answer": {
+      "action": "show",
+      "cards": [
+        {
+          "kind": "globalEvent",
+          "seed": "양자컴퓨터 특강"
+        },
+        {
+          "kind": "globalEvent",
+          "seed": "스타트업 창업 특강"
+        }
+      ],
+      "proposal": null
+    },
+    "note": "",
+    "savedOn": "2026-10-31"
+  }
+}

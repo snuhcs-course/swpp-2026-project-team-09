@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: each setting missing, malformed and on either side of its bound (P09 spec, (a)). The valid settings and
@@ -31,6 +32,7 @@ describe('settingsSchema', () => {
       PORT: 3002,
       MAIN_SERVER_URL: 'http://localhost:3000',
       WORKER_TOKEN: valid.WORKER_TOKEN,
+      EXTRA_SNU_COLLECTION: false,
     });
   });
 });
@@ -72,5 +74,19 @@ describe('settingsSchema: WORKER_TOKEN', () => {
 
   it('of 32 characters → accepted', () => {
     expect(refused({ ...valid, WORKER_TOKEN: 'a'.repeat(32) })).toEqual([]);
+  });
+});
+
+describe('settingsSchema: EXTRA_SNU_COLLECTION', () => {
+  it('unset → off', () => {
+    expect(settingsSchema.parse({ ...valid, EXTRA_SNU_COLLECTION: undefined }).EXTRA_SNU_COLLECTION).toBe(false);
+  });
+
+  it('on → on', () => {
+    expect(settingsSchema.parse({ ...valid, EXTRA_SNU_COLLECTION: 'on' }).EXTRA_SNU_COLLECTION).toBe(true);
+  });
+
+  it('anything else → refused, naming EXTRA_SNU_COLLECTION', () => {
+    expect(refused({ ...valid, EXTRA_SNU_COLLECTION: 'true' })).toEqual(['EXTRA_SNU_COLLECTION']);
   });
 });

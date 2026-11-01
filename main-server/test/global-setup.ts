@@ -10,6 +10,9 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -24,6 +27,16 @@ declare module 'vitest' {
     settings: SettingValues;
   }
 }
+
+// The Assistant's defaults. A test of a limit starts an app with a smaller one.
+const ASSISTANT_DEFAULTS = {
+  ASSISTANT_DAILY_MESSAGES: '50',
+  ASSISTANT_MAX_STEPS: '8',
+  ASSISTANT_TIMEOUT_MS: '30000',
+  ASSISTANT_MAX_OUTPUT_TOKENS: '1000',
+  ASSISTANT_GLOBAL_ALIASES: 'true',
+  ASSISTANT_ALIAS_HOLDBACK_PERCENT: '10',
+};
 
 // Starts PostgreSQL and Redis once for every test file, brings the empty main database up to the current schema and
 // loads the seed into it.
@@ -56,13 +69,13 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     // Not a key: the tests give startApp a ScriptedModel from test/scripted-model.ts in the model's place.
     OPENROUTER_API_KEY: 'test-openrouter-api-key',
     ASSISTANT_MODEL: 'test/model',
-    // The defaults. A test of a limit starts an app with a smaller one.
-    ASSISTANT_DAILY_MESSAGES: '50',
-    ASSISTANT_MAX_STEPS: '8',
-    ASSISTANT_TIMEOUT_MS: '30000',
-    ASSISTANT_MAX_OUTPUT_TOKENS: '1000',
-    ASSISTANT_GLOBAL_ALIASES: 'true',
-    ASSISTANT_ALIAS_HOLDBACK_PERCENT: '10',
+    ...ASSISTANT_DEFAULTS,
+    AUTOMATIC_PUBLICATION: 'on',
+    AUTOMATIC_JUDGEMENT: 'off',
+    SAME_EVENT_TITLE_RULE: 'off',
+    SAME_EVENT_AI_CHOICE: 'off',
+    JUDGEMENT_TIMEOUT_MS: '60000',
+    JUDGEMENT_MAX_OUTPUT_TOKENS: '4000',
   };
   migrate(settings.DATABASE_URL);
   await seed(settings.DATABASE_URL);

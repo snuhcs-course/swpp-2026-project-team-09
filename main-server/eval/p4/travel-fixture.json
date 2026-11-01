@@ -1,0 +1,1541 @@
+{
+  "note": "Frozen for the P4 eval set: the seconds and the mode of every ordered pair of the Places of eval/p4/world.yaml, whatever the time of day. Made by hand from straight lines and a guessed climb, not from the walking table or the shuttle file, whose changes do not reach the labels.",
+  "rows": [
+    {
+      "from": "제1공학관",
+      "to": "제1공학관",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "제1공학관",
+      "to": "제2공학관",
+      "seconds": 218,
+      "mode": "walk"
+    },
+    {
+      "from": "제1공학관",
+      "to": "글로벌공학교육센터",
+      "seconds": 658,
+      "mode": "walk"
+    },
+    {
+      "from": "제1공학관",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 577,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제1공학관",
+      "to": "제3학생식당",
+      "seconds": 628,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제1공학관",
+      "to": "학생회관",
+      "seconds": 806,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제1공학관",
+      "to": "중앙도서관 본관",
+      "seconds": 795,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제1공학관",
+      "to": "자하연식당",
+      "seconds": 928,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제1공학관",
+      "to": "문화관",
+      "seconds": 977,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제1공학관",
+      "to": "예술복합연구동",
+      "seconds": 1001,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제1공학관",
+      "to": "사회과학관",
+      "seconds": 1136,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제1공학관",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 1131,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제1공학관",
+      "to": "동원생활관",
+      "seconds": 1262,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제1공학관",
+      "to": "체육관",
+      "seconds": 1472,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제1공학관",
+      "to": "미술관",
+      "seconds": 1385,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제1공학관",
+      "to": "서울대 정문",
+      "seconds": 1382,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제2공학관",
+      "to": "제1공학관",
+      "seconds": 185,
+      "mode": "walk"
+    },
+    {
+      "from": "제2공학관",
+      "to": "제2공학관",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "제2공학관",
+      "to": "글로벌공학교육센터",
+      "seconds": 826,
+      "mode": "walk"
+    },
+    {
+      "from": "제2공학관",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 692,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제2공학관",
+      "to": "제3학생식당",
+      "seconds": 720,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제2공학관",
+      "to": "학생회관",
+      "seconds": 913,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제2공학관",
+      "to": "중앙도서관 본관",
+      "seconds": 909,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제2공학관",
+      "to": "자하연식당",
+      "seconds": 1035,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제2공학관",
+      "to": "문화관",
+      "seconds": 1092,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제2공학관",
+      "to": "예술복합연구동",
+      "seconds": 1106,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제2공학관",
+      "to": "사회과학관",
+      "seconds": 1240,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제2공학관",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 1234,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제2공학관",
+      "to": "동원생활관",
+      "seconds": 1367,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제2공학관",
+      "to": "체육관",
+      "seconds": 1570,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제2공학관",
+      "to": "미술관",
+      "seconds": 1499,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제2공학관",
+      "to": "서울대 정문",
+      "seconds": 1495,
+      "mode": "shuttle"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "제1공학관",
+      "seconds": 760,
+      "mode": "walk"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "제2공학관",
+      "seconds": 959,
+      "mode": "walk"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "글로벌공학교육센터",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 266,
+      "mode": "walk"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "제3학생식당",
+      "seconds": 315,
+      "mode": "walk"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "학생회관",
+      "seconds": 582,
+      "mode": "walk"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "중앙도서관 본관",
+      "seconds": 615,
+      "mode": "walk"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "자하연식당",
+      "seconds": 558,
+      "mode": "shuttle"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "문화관",
+      "seconds": 587,
+      "mode": "shuttle"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "예술복합연구동",
+      "seconds": 640,
+      "mode": "shuttle"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "사회과학관",
+      "seconds": 747,
+      "mode": "shuttle"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 739,
+      "mode": "shuttle"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "동원생활관",
+      "seconds": 873,
+      "mode": "shuttle"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "체육관",
+      "seconds": 1082,
+      "mode": "shuttle"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "미술관",
+      "seconds": 996,
+      "mode": "shuttle"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "서울대 정문",
+      "seconds": 983,
+      "mode": "shuttle"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "제1공학관",
+      "seconds": 668,
+      "mode": "shuttle"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "제2공학관",
+      "seconds": 796,
+      "mode": "shuttle"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "글로벌공학교육센터",
+      "seconds": 305,
+      "mode": "walk"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "제3학생식당",
+      "seconds": 325,
+      "mode": "walk"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "학생회관",
+      "seconds": 367,
+      "mode": "walk"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "중앙도서관 본관",
+      "seconds": 377,
+      "mode": "walk"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "자하연식당",
+      "seconds": 586,
+      "mode": "walk"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "문화관",
+      "seconds": 654,
+      "mode": "walk"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "예술복합연구동",
+      "seconds": 717,
+      "mode": "walk"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "사회과학관",
+      "seconds": 904,
+      "mode": "walk"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 892,
+      "mode": "walk"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "동원생활관",
+      "seconds": 1105,
+      "mode": "walk"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "체육관",
+      "seconds": 1454,
+      "mode": "walk"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "미술관",
+      "seconds": 1310,
+      "mode": "walk"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "서울대 정문",
+      "seconds": 1321,
+      "mode": "walk"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "제1공학관",
+      "seconds": 716,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "제2공학관",
+      "seconds": 840,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "글로벌공학교육센터",
+      "seconds": 373,
+      "mode": "walk"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 331,
+      "mode": "walk"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "제3학생식당",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "학생회관",
+      "seconds": 440,
+      "mode": "walk"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "중앙도서관 본관",
+      "seconds": 529,
+      "mode": "walk"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "자하연식당",
+      "seconds": 739,
+      "mode": "walk"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "문화관",
+      "seconds": 731,
+      "mode": "walk"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "예술복합연구동",
+      "seconds": 877,
+      "mode": "walk"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "사회과학관",
+      "seconds": 972,
+      "mode": "walk"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 981,
+      "mode": "walk"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "동원생활관",
+      "seconds": 1178,
+      "mode": "walk"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "체육관",
+      "seconds": 1529,
+      "mode": "walk"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "미술관",
+      "seconds": 1337,
+      "mode": "walk"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "서울대 정문",
+      "seconds": 1297,
+      "mode": "walk"
+    },
+    {
+      "from": "학생회관",
+      "to": "제1공학관",
+      "seconds": 924,
+      "mode": "shuttle"
+    },
+    {
+      "from": "학생회관",
+      "to": "제2공학관",
+      "seconds": 1065,
+      "mode": "shuttle"
+    },
+    {
+      "from": "학생회관",
+      "to": "글로벌공학교육센터",
+      "seconds": 711,
+      "mode": "walk"
+    },
+    {
+      "from": "학생회관",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 447,
+      "mode": "walk"
+    },
+    {
+      "from": "학생회관",
+      "to": "제3학생식당",
+      "seconds": 493,
+      "mode": "walk"
+    },
+    {
+      "from": "학생회관",
+      "to": "학생회관",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "학생회관",
+      "to": "중앙도서관 본관",
+      "seconds": 163,
+      "mode": "walk"
+    },
+    {
+      "from": "학생회관",
+      "to": "자하연식당",
+      "seconds": 306,
+      "mode": "walk"
+    },
+    {
+      "from": "학생회관",
+      "to": "문화관",
+      "seconds": 314,
+      "mode": "walk"
+    },
+    {
+      "from": "학생회관",
+      "to": "예술복합연구동",
+      "seconds": 434,
+      "mode": "walk"
+    },
+    {
+      "from": "학생회관",
+      "to": "사회과학관",
+      "seconds": 570,
+      "mode": "walk"
+    },
+    {
+      "from": "학생회관",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 565,
+      "mode": "walk"
+    },
+    {
+      "from": "학생회관",
+      "to": "동원생활관",
+      "seconds": 780,
+      "mode": "walk"
+    },
+    {
+      "from": "학생회관",
+      "to": "체육관",
+      "seconds": 1113,
+      "mode": "walk"
+    },
+    {
+      "from": "학생회관",
+      "to": "미술관",
+      "seconds": 948,
+      "mode": "walk"
+    },
+    {
+      "from": "학생회관",
+      "to": "서울대 정문",
+      "seconds": 950,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "제1공학관",
+      "seconds": 930,
+      "mode": "shuttle"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "제2공학관",
+      "seconds": 1072,
+      "mode": "shuttle"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "글로벌공학교육센터",
+      "seconds": 734,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 456,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "제3학생식당",
+      "seconds": 612,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "학생회관",
+      "seconds": 172,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "중앙도서관 본관",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "자하연식당",
+      "seconds": 223,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "문화관",
+      "seconds": 318,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "예술복합연구동",
+      "seconds": 358,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "사회과학관",
+      "seconds": 555,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 537,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "동원생활관",
+      "seconds": 754,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "체육관",
+      "seconds": 1086,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "미술관",
+      "seconds": 979,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "서울대 정문",
+      "seconds": 989,
+      "mode": "walk"
+    },
+    {
+      "from": "자하연식당",
+      "to": "제1공학관",
+      "seconds": 1075,
+      "mode": "shuttle"
+    },
+    {
+      "from": "자하연식당",
+      "to": "제2공학관",
+      "seconds": 1204,
+      "mode": "shuttle"
+    },
+    {
+      "from": "자하연식당",
+      "to": "글로벌공학교육센터",
+      "seconds": 651,
+      "mode": "shuttle"
+    },
+    {
+      "from": "자하연식당",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 690,
+      "mode": "walk"
+    },
+    {
+      "from": "자하연식당",
+      "to": "제3학생식당",
+      "seconds": 816,
+      "mode": "walk"
+    },
+    {
+      "from": "자하연식당",
+      "to": "학생회관",
+      "seconds": 338,
+      "mode": "walk"
+    },
+    {
+      "from": "자하연식당",
+      "to": "중앙도서관 본관",
+      "seconds": 248,
+      "mode": "walk"
+    },
+    {
+      "from": "자하연식당",
+      "to": "자하연식당",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "자하연식당",
+      "to": "문화관",
+      "seconds": 176,
+      "mode": "walk"
+    },
+    {
+      "from": "자하연식당",
+      "to": "예술복합연구동",
+      "seconds": 163,
+      "mode": "walk"
+    },
+    {
+      "from": "자하연식당",
+      "to": "사회과학관",
+      "seconds": 382,
+      "mode": "walk"
+    },
+    {
+      "from": "자하연식당",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 350,
+      "mode": "walk"
+    },
+    {
+      "from": "자하연식당",
+      "to": "동원생활관",
+      "seconds": 547,
+      "mode": "walk"
+    },
+    {
+      "from": "자하연식당",
+      "to": "체육관",
+      "seconds": 885,
+      "mode": "walk"
+    },
+    {
+      "from": "자하연식당",
+      "to": "미술관",
+      "seconds": 796,
+      "mode": "walk"
+    },
+    {
+      "from": "자하연식당",
+      "to": "서울대 정문",
+      "seconds": 823,
+      "mode": "walk"
+    },
+    {
+      "from": "문화관",
+      "to": "제1공학관",
+      "seconds": 1142,
+      "mode": "shuttle"
+    },
+    {
+      "from": "문화관",
+      "to": "제2공학관",
+      "seconds": 1277,
+      "mode": "shuttle"
+    },
+    {
+      "from": "문화관",
+      "to": "글로벌공학교육센터",
+      "seconds": 689,
+      "mode": "shuttle"
+    },
+    {
+      "from": "문화관",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 778,
+      "mode": "walk"
+    },
+    {
+      "from": "문화관",
+      "to": "제3학생식당",
+      "seconds": 832,
+      "mode": "walk"
+    },
+    {
+      "from": "문화관",
+      "to": "학생회관",
+      "seconds": 357,
+      "mode": "walk"
+    },
+    {
+      "from": "문화관",
+      "to": "중앙도서관 본관",
+      "seconds": 344,
+      "mode": "walk"
+    },
+    {
+      "from": "문화관",
+      "to": "자하연식당",
+      "seconds": 196,
+      "mode": "walk"
+    },
+    {
+      "from": "문화관",
+      "to": "문화관",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "문화관",
+      "to": "예술복합연구동",
+      "seconds": 254,
+      "mode": "walk"
+    },
+    {
+      "from": "문화관",
+      "to": "사회과학관",
+      "seconds": 255,
+      "mode": "walk"
+    },
+    {
+      "from": "문화관",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 258,
+      "mode": "walk"
+    },
+    {
+      "from": "문화관",
+      "to": "동원생활관",
+      "seconds": 464,
+      "mode": "walk"
+    },
+    {
+      "from": "문화관",
+      "to": "체육관",
+      "seconds": 818,
+      "mode": "walk"
+    },
+    {
+      "from": "문화관",
+      "to": "미술관",
+      "seconds": 673,
+      "mode": "walk"
+    },
+    {
+      "from": "문화관",
+      "to": "서울대 정문",
+      "seconds": 681,
+      "mode": "walk"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "제1공학관",
+      "seconds": 1147,
+      "mode": "shuttle"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "제2공학관",
+      "seconds": 1287,
+      "mode": "shuttle"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "글로벌공학교육센터",
+      "seconds": 733,
+      "mode": "shuttle"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 830,
+      "mode": "walk"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "제3학생식당",
+      "seconds": 956,
+      "mode": "walk"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "학생회관",
+      "seconds": 481,
+      "mode": "walk"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "중앙도서관 본관",
+      "seconds": 386,
+      "mode": "walk"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "자하연식당",
+      "seconds": 156,
+      "mode": "walk"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "문화관",
+      "seconds": 238,
+      "mode": "walk"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "예술복합연구동",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "사회과학관",
+      "seconds": 314,
+      "mode": "walk"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 255,
+      "mode": "walk"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "동원생활관",
+      "seconds": 436,
+      "mode": "walk"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "체육관",
+      "seconds": 759,
+      "mode": "walk"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "미술관",
+      "seconds": 716,
+      "mode": "walk"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "서울대 정문",
+      "seconds": 765,
+      "mode": "walk"
+    },
+    {
+      "from": "사회과학관",
+      "to": "제1공학관",
+      "seconds": 1307,
+      "mode": "shuttle"
+    },
+    {
+      "from": "사회과학관",
+      "to": "제2공학관",
+      "seconds": 1445,
+      "mode": "shuttle"
+    },
+    {
+      "from": "사회과학관",
+      "to": "글로벌공학교육센터",
+      "seconds": 856,
+      "mode": "shuttle"
+    },
+    {
+      "from": "사회과학관",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 1050,
+      "mode": "walk"
+    },
+    {
+      "from": "사회과학관",
+      "to": "제3학생식당",
+      "seconds": 1082,
+      "mode": "walk"
+    },
+    {
+      "from": "사회과학관",
+      "to": "학생회관",
+      "seconds": 626,
+      "mode": "walk"
+    },
+    {
+      "from": "사회과학관",
+      "to": "중앙도서관 본관",
+      "seconds": 612,
+      "mode": "walk"
+    },
+    {
+      "from": "사회과학관",
+      "to": "자하연식당",
+      "seconds": 415,
+      "mode": "walk"
+    },
+    {
+      "from": "사회과학관",
+      "to": "문화관",
+      "seconds": 279,
+      "mode": "walk"
+    },
+    {
+      "from": "사회과학관",
+      "to": "예술복합연구동",
+      "seconds": 360,
+      "mode": "walk"
+    },
+    {
+      "from": "사회과학관",
+      "to": "사회과학관",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "사회과학관",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 92,
+      "mode": "walk"
+    },
+    {
+      "from": "사회과학관",
+      "to": "동원생활관",
+      "seconds": 217,
+      "mode": "walk"
+    },
+    {
+      "from": "사회과학관",
+      "to": "체육관",
+      "seconds": 573,
+      "mode": "walk"
+    },
+    {
+      "from": "사회과학관",
+      "to": "미술관",
+      "seconds": 416,
+      "mode": "walk"
+    },
+    {
+      "from": "사회과학관",
+      "to": "서울대 정문",
+      "seconds": 461,
+      "mode": "walk"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "제1공학관",
+      "seconds": 1291,
+      "mode": "shuttle"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "제2공학관",
+      "seconds": 1427,
+      "mode": "shuttle"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "글로벌공학교육센터",
+      "seconds": 853,
+      "mode": "shuttle"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 1021,
+      "mode": "walk"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "제3학생식당",
+      "seconds": 1103,
+      "mode": "walk"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "학생회관",
+      "seconds": 616,
+      "mode": "walk"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "중앙도서관 본관",
+      "seconds": 587,
+      "mode": "walk"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "자하연식당",
+      "seconds": 371,
+      "mode": "walk"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "문화관",
+      "seconds": 282,
+      "mode": "walk"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "예술복합연구동",
+      "seconds": 286,
+      "mode": "walk"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "사회과학관",
+      "seconds": 84,
+      "mode": "walk"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "동원생활관",
+      "seconds": 217,
+      "mode": "walk"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "체육관",
+      "seconds": 562,
+      "mode": "walk"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "미술관",
+      "seconds": 457,
+      "mode": "walk"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "서울대 정문",
+      "seconds": 506,
+      "mode": "walk"
+    },
+    {
+      "from": "동원생활관",
+      "to": "제1공학관",
+      "seconds": 1437,
+      "mode": "shuttle"
+    },
+    {
+      "from": "동원생활관",
+      "to": "제2공학관",
+      "seconds": 1566,
+      "mode": "shuttle"
+    },
+    {
+      "from": "동원생활관",
+      "to": "글로벌공학교육센터",
+      "seconds": 995,
+      "mode": "shuttle"
+    },
+    {
+      "from": "동원생활관",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 1266,
+      "mode": "walk"
+    },
+    {
+      "from": "동원생활관",
+      "to": "제3학생식당",
+      "seconds": 1319,
+      "mode": "walk"
+    },
+    {
+      "from": "동원생활관",
+      "to": "학생회관",
+      "seconds": 856,
+      "mode": "walk"
+    },
+    {
+      "from": "동원생활관",
+      "to": "중앙도서관 본관",
+      "seconds": 813,
+      "mode": "walk"
+    },
+    {
+      "from": "동원생활관",
+      "to": "자하연식당",
+      "seconds": 587,
+      "mode": "walk"
+    },
+    {
+      "from": "동원생활관",
+      "to": "문화관",
+      "seconds": 496,
+      "mode": "walk"
+    },
+    {
+      "from": "동원생활관",
+      "to": "예술복합연구동",
+      "seconds": 488,
+      "mode": "walk"
+    },
+    {
+      "from": "동원생활관",
+      "to": "사회과학관",
+      "seconds": 241,
+      "mode": "walk"
+    },
+    {
+      "from": "동원생활관",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 236,
+      "mode": "walk"
+    },
+    {
+      "from": "동원생활관",
+      "to": "동원생활관",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "동원생활관",
+      "to": "체육관",
+      "seconds": 357,
+      "mode": "walk"
+    },
+    {
+      "from": "동원생활관",
+      "to": "미술관",
+      "seconds": 295,
+      "mode": "walk"
+    },
+    {
+      "from": "동원생활관",
+      "to": "서울대 정문",
+      "seconds": 392,
+      "mode": "walk"
+    },
+    {
+      "from": "체육관",
+      "to": "제1공학관",
+      "seconds": 1650,
+      "mode": "shuttle"
+    },
+    {
+      "from": "체육관",
+      "to": "제2공학관",
+      "seconds": 1791,
+      "mode": "shuttle"
+    },
+    {
+      "from": "체육관",
+      "to": "글로벌공학교육센터",
+      "seconds": 1216,
+      "mode": "shuttle"
+    },
+    {
+      "from": "체육관",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 1613,
+      "mode": "walk"
+    },
+    {
+      "from": "체육관",
+      "to": "제3학생식당",
+      "seconds": 1680,
+      "mode": "walk"
+    },
+    {
+      "from": "체육관",
+      "to": "학생회관",
+      "seconds": 1203,
+      "mode": "walk"
+    },
+    {
+      "from": "체육관",
+      "to": "중앙도서관 본관",
+      "seconds": 1163,
+      "mode": "walk"
+    },
+    {
+      "from": "체육관",
+      "to": "자하연식당",
+      "seconds": 931,
+      "mode": "walk"
+    },
+    {
+      "from": "체육관",
+      "to": "문화관",
+      "seconds": 862,
+      "mode": "walk"
+    },
+    {
+      "from": "체육관",
+      "to": "예술복합연구동",
+      "seconds": 815,
+      "mode": "walk"
+    },
+    {
+      "from": "체육관",
+      "to": "사회과학관",
+      "seconds": 590,
+      "mode": "walk"
+    },
+    {
+      "from": "체육관",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 601,
+      "mode": "walk"
+    },
+    {
+      "from": "체육관",
+      "to": "동원생활관",
+      "seconds": 369,
+      "mode": "walk"
+    },
+    {
+      "from": "체육관",
+      "to": "체육관",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "체육관",
+      "to": "미술관",
+      "seconds": 319,
+      "mode": "walk"
+    },
+    {
+      "from": "체육관",
+      "to": "서울대 정문",
+      "seconds": 461,
+      "mode": "walk"
+    },
+    {
+      "from": "미술관",
+      "to": "제1공학관",
+      "seconds": 1581,
+      "mode": "shuttle"
+    },
+    {
+      "from": "미술관",
+      "to": "제2공학관",
+      "seconds": 1711,
+      "mode": "shuttle"
+    },
+    {
+      "from": "미술관",
+      "to": "글로벌공학교육센터",
+      "seconds": 1134,
+      "mode": "shuttle"
+    },
+    {
+      "from": "미술관",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 1496,
+      "mode": "walk"
+    },
+    {
+      "from": "미술관",
+      "to": "제3학생식당",
+      "seconds": 1495,
+      "mode": "walk"
+    },
+    {
+      "from": "미술관",
+      "to": "학생회관",
+      "seconds": 1072,
+      "mode": "walk"
+    },
+    {
+      "from": "미술관",
+      "to": "중앙도서관 본관",
+      "seconds": 1076,
+      "mode": "walk"
+    },
+    {
+      "from": "미술관",
+      "to": "자하연식당",
+      "seconds": 868,
+      "mode": "walk"
+    },
+    {
+      "from": "미술관",
+      "to": "문화관",
+      "seconds": 736,
+      "mode": "walk"
+    },
+    {
+      "from": "미술관",
+      "to": "예술복합연구동",
+      "seconds": 794,
+      "mode": "walk"
+    },
+    {
+      "from": "미술관",
+      "to": "사회과학관",
+      "seconds": 456,
+      "mode": "walk"
+    },
+    {
+      "from": "미술관",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 505,
+      "mode": "walk"
+    },
+    {
+      "from": "미술관",
+      "to": "동원생활관",
+      "seconds": 320,
+      "mode": "walk"
+    },
+    {
+      "from": "미술관",
+      "to": "체육관",
+      "seconds": 335,
+      "mode": "walk"
+    },
+    {
+      "from": "미술관",
+      "to": "미술관",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "미술관",
+      "to": "서울대 정문",
+      "seconds": 135,
+      "mode": "walk"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "제1공학관",
+      "seconds": 1594,
+      "mode": "shuttle"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "제2공학관",
+      "seconds": 1720,
+      "mode": "shuttle"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "글로벌공학교육센터",
+      "seconds": 1129,
+      "mode": "shuttle"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 1515,
+      "mode": "walk"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "제3학생식당",
+      "seconds": 1474,
+      "mode": "walk"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "학생회관",
+      "seconds": 1069,
+      "mode": "walk"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "중앙도서관 본관",
+      "seconds": 1107,
+      "mode": "walk"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "자하연식당",
+      "seconds": 920,
+      "mode": "walk"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "문화관",
+      "seconds": 764,
+      "mode": "walk"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "예술복합연구동",
+      "seconds": 858,
+      "mode": "walk"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "사회과학관",
+      "seconds": 521,
+      "mode": "walk"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 578,
+      "mode": "walk"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "동원생활관",
+      "seconds": 445,
+      "mode": "walk"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "체육관",
+      "seconds": 494,
+      "mode": "walk"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "미술관",
+      "seconds": 153,
+      "mode": "walk"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "서울대 정문",
+      "seconds": 0,
+      "mode": "walk"
+    }
+  ]
+}

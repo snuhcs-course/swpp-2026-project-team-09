@@ -4,6 +4,7 @@
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -51,13 +52,21 @@ export const routeFileSchema = z.object({
   }),
 });
 
-// Updates each stop in place by its key, whatever else a correction changes, so that it keeps its identifier. A stop
-// that has left the seed is removed: nothing that lasts points at a stop.
-export async function loadShuttle(prisma: PrismaClient, directory: string): Promise<number> {
+interface SeedStop {
+  seedKey: number;
+  name: string;
+  loopOrder: number;
+  latitude: number;
+  longitude: number;
+  drawingLeft: number;
+  drawingTop: number;
+}
+
+// The operator's stops in loop order, at the coordinates of the campus map's stops they are paired with.
+export async function readSeedStops(directory: string): Promise<SeedStop[]> {
   const campusMap = await readSeedFile(directory, 'campus-map-shuttle-stops.json', campusMapFileSchema);
-  const { stops, serviceHours } = await readSeedFile(directory, 'shuttle-stops.json', stopsFileSchema);
-  const { geometry } = await readSeedFile(directory, 'shuttle-route.geojson', routeFileSchema);
-  const entries = stops.map(({ key, name, left, top, campusMapStop }, loopOrder) => {
+  const { stops } = await readSeedFile(directory, 'shuttle-stops.json', stopsFileSchema);
+  return stops.map(({ key, name, left, top, campusMapStop }, loopOrder) => {
     const paired = campusMap.suttle_route_path_list.find((stop) => stop.bus_station_name === campusMapStop);
     if (paired === undefined) {
       throw new Error(`${name} is paired with ${campusMapStop}, which the campus map does not list`);
@@ -72,6 +81,14 @@ export async function loadShuttle(prisma: PrismaClient, directory: string): Prom
       drawingTop: top,
     };
   });
+}
+
+// Updates each stop in place by its key, whatever else a correction changes, so that it keeps its identifier. A stop
+// that has left the seed is removed: nothing that lasts points at a stop.
+export async function loadShuttle(prisma: PrismaClient, directory: string): Promise<number> {
+  const { serviceHours } = await readSeedFile(directory, 'shuttle-stops.json', stopsFileSchema);
+  const { geometry } = await readSeedFile(directory, 'shuttle-route.geojson', routeFileSchema);
+  const entries = await readSeedStops(directory);
   const line = geometry.coordinates.map(([longitude, latitude]) => ({ latitude, longitude }));
   await prisma.$transaction([
     prisma.shuttleStop.deleteMany({ where: { seedKey: { notIn: entries.map((entry) => entry.seedKey) } } }),

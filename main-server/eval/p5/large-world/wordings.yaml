@@ -1,0 +1,373 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+################################################################################
+
+# How posts name each activity in the large world (P05 ticket 02b). A model drafted this list, so a person checks a
+# sample of it: the sample and its result are in ../large-world-v1/wordings-check.json. Each title means its activity
+# and no other, so that a Quest's activity is what a person would read from its title. No title uses a word that may
+# cover several activities (전시, 공연, 운동), since the rules count such a word as all of them (rules.md, section 8).
+#
+# - hours: when its Quests start. day 09-20, evening 17-23, morning 06-10, late 21-24, any 07-23.
+# - weight: how many of the generated Quests it takes, against the others.
+# - quest: the titles of Quests, with the misspelt ones apart. event: the titles of Global Events, {host} being a name
+#   of `hosts`. An activity without `event` has no Global Event.
+# - typos: only where no case of E7's subsets depends on it: a post no word finds is cut from a window of more than 30
+#   candidates (P05 spec, "Further Notes"), and those subsets ask a server recall of 1.0. traps.ts adds single misspelt
+#   posts of the others.
+
+hosts:
+  [
+    음악대학,
+    미술대학,
+    공과대학,
+    인문대학,
+    사회과학대학,
+    자연과학대학,
+    경영대학,
+    총학생회,
+    중앙동아리연합,
+    기숙사 자치회,
+  ]
+
+# What a Quest's description says, whatever its activity: it never names the activity.
+questDescriptions:
+  [
+    '',
+    실력 상관없어요.,
+    편하게 오세요.,
+    처음 오시는 분도 환영해요.,
+    자세한 건 들어오시면 알려 드릴게요.,
+    늦지 않게 와 주세요.,
+  ]
+
+activities:
+  badminton:
+    name: 배드민턴
+    board: hobby
+    hours: any
+    weight: 5
+    quest:
+      titles:
+        [배드민턴 치실 분, 민턴 한 판 해요, 배드민턴 복식 구해요, 초보 민턴 모임, 저녁 민턴 칠 사람, 배드민턴 같이 쳐요]
+  futsal:
+    name: 풋살
+    board: hobby
+    hours: evening
+    weight: 5
+    quest:
+      titles: [풋살 하실 분, 풋살 한 게임 해요, 풋살 인원 구해요, 풋살 같이 뛰어요, 풋살 용병 구합니다]
+  basketball:
+    name: 농구
+    board: hobby
+    hours: any
+    weight: 5
+    quest:
+      titles: [농구 하실 분, 농구 3대3 해요, 농구 한 판 해요, 같이 농구 해요, 농구 반코트 구해요]
+  tennis:
+    name: 테니스
+    board: hobby
+    hours: day
+    weight: 4
+    quest:
+      titles: [테니스 치실 분, 테니스 복식 구해요, 테니스 랠리 하실 분, 같이 테니스 쳐요]
+  bowling:
+    name: 볼링
+    board: hobby
+    hours: evening
+    weight: 5
+    quest:
+      titles: [볼링 치러 가요, 볼링 네 명 모아요, 볼링 한 게임 해요, 볼링 같이 치실 분, 볼링장 같이 가요]
+  running:
+    name: 러닝
+    board: hobby
+    hours: morning
+    weight: 4
+    quest:
+      titles: [러닝 같이 해요, 아침 러닝 모임, 캠퍼스 한 바퀴 달려요, 같이 달리실 분, 조깅 같이 해요]
+  hiking:
+    name: 등산
+    board: hobby
+    hours: morning
+    weight: 3
+    quest:
+      titles: [관악산 등산 가요, 등산 같이 가실 분, 관악산 같이 올라요, 산행 같이 가요]
+  meat:
+    name: 고기
+    board: meal
+    hours: evening
+    weight: 5
+    quest:
+      titles: [삼겹살 드실 분, 고기 구워 먹어요, 삼겹살 같이 먹어요, 고깃집 같이 가요, 목살 구우러 가요]
+      typos: [삼겹쌀 드실 분, 고기 구어 먹어요]
+  malatang:
+    name: 마라탕
+    board: meal
+    hours: day
+    weight: 5
+    quest:
+      titles: [마라탕 드실 분, 마라탕 먹으러 가요, 마라탕 같이 드실 분, 마라탕 번개]
+      typos: [마라땅 드실 분, 마라탄 먹으러 가요]
+  cafeteria:
+    name: 학식
+    board: meal
+    hours: day
+    weight: 6
+    quest:
+      titles: [학식 같이 먹어요, 학식 같이 드실 분, 학식 메이트 구해요, 학생식당 같이 가요]
+  chicken:
+    name: 치킨
+    board: meal
+    hours: evening
+    weight: 4
+    quest:
+      titles: [치킨 뜯으실 분, 치킨 먹으러 가요, 치킨 시켜 드실 분, 치킨 같이 드실 분]
+      typos: [치킨 뜯으실붕, 치긴 시켜 드실 분]
+  donkatsu:
+    name: 돈까스
+    board: meal
+    hours: day
+    weight: 3
+    quest:
+      titles: [돈까스 드실 분, 돈까스 먹으러 가요, 돈가스 같이 드실 분]
+      typos: [돈까쓰 드실 분, 돈카스 먹으러 가요]
+  pasta:
+    name: 파스타
+    board: meal
+    hours: day
+    weight: 3
+    quest:
+      titles: [파스타 드실 분, 파스타 먹으러 가요, 파스타집 같이 가요]
+      typos: [파스다 드실 분, 파스타 먹으러 가오]
+  ramen:
+    name: 라면
+    board: meal
+    hours: late
+    weight: 2
+    quest:
+      titles: [심야 라면 모임, 야식 라면 드실 분, 밤에 라면 끓여 먹어요]
+      typos: [심야 라멘 모임, 야식 라먄 드실 분]
+  delivery:
+    name: 배달 음식
+    board: meal
+    hours: any
+    weight: 3
+    quest:
+      titles: [배민 같이 시켜요, 배달 같이 시켜요, 배달비 나눠요, 배민 공동 주문 하실 분]
+      typos: [베민 같이 시켜요, 배달 같이 시켜오]
+  boardgame:
+    name: 보드게임
+    board: hobby
+    hours: evening
+    weight: 4
+    quest:
+      titles: [보드게임 하실 분, 보드게임 카페 갈 분, 보드게임 밤샘 모임, 보겜 같이 해요]
+      typos: [보드개임 하실 분, 보드게임 카페 갈붕]
+  coding:
+    name: 코딩 스터디
+    board: career
+    hours: day
+    weight: 4
+    quest:
+      titles: [코딩 테스트 스터디, 알고리즘 스터디원 구해요, 코테 스터디 같이 해요, 코딩 스터디 모집해요]
+  toeic:
+    name: 토익 스터디
+    board: career
+    hours: day
+    weight: 3
+    quest:
+      titles: [토익 스터디 구해요, 토익 스피킹 스터디, 토익 같이 공부해요, 토익 모의고사 같이 풀어요]
+  interview:
+    name: 면접 스터디
+    board: career
+    hours: day
+    weight: 3
+    quest:
+      titles: [면접 스터디 구해요, 모의 면접 같이 해요, 공대 면접 스터디, 취업 면접 준비 모임]
+  concert:
+    name: 콘서트
+    board: show
+    hours: evening
+    weight: 4
+    quest:
+      titles: [콘서트 같이 가실 분, 콘서트 보러 가요, 재즈 콘서트 같이 가요, 콘서트 표 있어요 같이 가요]
+      typos: [콘서드 같이 가실 분, 재즈 콘서드 갈 사람]
+    event:
+      titles: ['{host} 콘서트', '{host} 재즈 콘서트', '{host} 어쿠스틱 콘서트', '{host} 가을 콘서트']
+      typos: ['{host} 콘서드', '{host} 재즈 콘서드']
+      descriptions: [학생 밴드의 저녁 무대입니다., 동아리 연주자들이 함께하는 무대입니다.]
+  recital:
+    name: 독주회
+    board: show
+    hours: evening
+    weight: 2
+    quest:
+      titles: [독주회 같이 가요, 피아노 독주회 같이 가실 분, 바이올린 독주회 보러 가요]
+      typos: [독주외 같이 가요, 피아노 독주회 같이 가실붕]
+    event:
+      titles: ['{host} 피아노 독주회', '{host} 바이올린 독주회', '{host} 첼로 독주회', '{host} 플루트 독주회']
+      typos: ['{host} 피아노 독주외']
+      descriptions: [졸업을 앞둔 학생의 독주 무대입니다., 한 시간 남짓 이어지는 독주 무대입니다.]
+  musical:
+    name: 뮤지컬
+    board: show
+    hours: evening
+    weight: 3
+    quest:
+      titles: [뮤지컬 보러 갈 분, 뮤지컬 같이 봐요, 창작 뮤지컬 같이 가실 분]
+      typos: [뮤지걸 보러 가실 분, 뮤지컬 같이 봐오]
+    event:
+      titles: ['{host} 뮤지컬 〈봄날〉', '{host} 창작 뮤지컬', '{host} 뮤지컬 갈라']
+      typos: ['{host} 창작 뮤지걸']
+      descriptions: [뮤지컬 동아리의 가을 무대입니다., 직접 쓴 극본으로 올리는 무대입니다.]
+  busking:
+    name: 버스킹
+    board: show
+    hours: evening
+    weight: 2
+    quest:
+      titles: [버스킹 구경 갈 분, 버스킹 같이 봐요, 잔디광장 버스킹 보러 가요]
+      typos: [버스킴 구경 갈 분, 버스킹 구경 갈붕]
+    event:
+      titles: ['{host} 잔디광장 버스킹', '{host} 버스킹', '{host} 저녁 버스킹']
+      typos: ['{host} 버스킴']
+      descriptions: [학생 밴드 세 팀이 나옵니다., 지나가다 들르셔도 좋습니다.]
+  musicfestival:
+    name: 음악제
+    board: show
+    hours: evening
+    weight: 2
+    quest:
+      titles: [음악제 같이 가요, 가을 음악제 보러 가실 분, 음악제 같이 가실 분]
+      typos: [음악재 같이 가요, 가을 음악제 보러 가실붕]
+    event:
+      titles: ['{host} 가을 음악제', '{host} 음악제', '{host} 실내악 음악제']
+      typos: ['{host} 음악재']
+      descriptions: [여러 팀이 이어서 무대에 오릅니다., 해마다 열리는 교내 무대입니다.]
+  photo:
+    name: 사진전
+    board: show
+    hours: day
+    weight: 3
+    quest:
+      titles: [사진전 같이 봐요, 사진전 보러 가실 분, 사진전 주말 관람해요]
+      typos: [사진젼 같이 봐요, 사진전 보러 가실붕]
+    event:
+      titles: ['{host} 사진전', '{host} 가을 사진전', '{host} 흑백 사진전']
+      typos: ['{host} 사진젼']
+      descriptions: [학생들이 찍은 캠퍼스 풍경입니다., 작품 마흔 점을 걸어 둡니다.]
+      days: [2, 6]
+  art:
+    name: 미술전
+    board: show
+    hours: day
+    weight: 3
+    quest:
+      titles: [판화전 같이 봐요, 미술전 보러 가실 분, 회화전 같이 가요, 조각전 같이 봐요]
+      typos: [판화젼 같이 봐요, 미술전 보러 가실붕]
+    event:
+      titles: ['{host} 판화 특별전', '{host} 회화전', '{host} 미술전', '{host} 조각전']
+      typos: ['{host} 판화젼']
+      descriptions: [학생 작가들의 신작을 모았습니다., 작품 설명은 전시실에 있습니다.]
+      days: [2, 6]
+  lecture:
+    name: 특강
+    board: career
+    hours: day
+    weight: 3
+    quest:
+      titles: [특강 같이 들어요, 창업 특강 같이 가실 분, 초청 강연 같이 들어요]
+    event:
+      titles: ['{host} 창업 특강', '{host} 양자컴퓨터 특강', '{host} 초청 강연', '{host} 진로 특강']
+      descriptions: [졸업생 연사를 초청했습니다., 끝나고 질문 시간이 있습니다.]
+  infosession:
+    name: 설명회
+    board: career
+    hours: day
+    weight: 2
+    quest:
+      titles: [취업 설명회 같이 가요, 전공 설명회 같이 가실 분, 설명회 같이 들어요]
+    event:
+      titles: ['{host} 취업 설명회', '{host} 채용 설명회', '{host} 전공 설명회']
+      descriptions: [자료집을 나누어 드립니다., 참석자에게 상담 기회를 드립니다.]
+  fair:
+    name: 박람회
+    board: career
+    hours: day
+    weight: 2
+    quest:
+      titles: [박람회 같이 돌아요, 채용 박람회 같이 가요, 동아리 박람회 구경 가요]
+    event:
+      titles: ['{host} 채용 박람회', '{host} 동아리 박람회', '{host} 진로 박람회']
+      descriptions: [부스 서른 곳이 열립니다., 둘러보는 데 한 시간쯤 걸립니다.]
+  # The traps' activities have no generated Quests: traps.ts places every one of them.
+  tabletennis:
+    name: 탁구
+    board: hobby
+    hours: any
+    weight: 0
+    quest:
+      titles: [탁구 치실 분, 탁구 한 판 해요, 탁구 같이 쳐요]
+  squash:
+    name: 스쿼시
+    board: hobby
+    hours: any
+    weight: 0
+    quest:
+      titles: [스쿼시 치실 분, 스쿼시 한 게임 해요, 스쿼시 같이 쳐요]
+
+# Where the Quests and the Global Events are, by the shared seed's name and number.
+places:
+  제1공학관: '301'
+  제2공학관: '302'
+  정밀기계연구소실험연구동: '312'
+  차세대자동차신기술연구소: '314'
+  학생회관: '63'
+  중앙도서관 본관: '62'
+  문화관: '73'
+  예술복합연구동: '74'
+  체육관: '71'
+  미술관: '151'
+
+# A Quest's point on the map, with what it is called.
+points:
+  - { label: 공대 앞 벤치, latitude: 37.45095, longitude: 126.95223 }
+  - { label: 자하연 앞, latitude: 37.46035, longitude: 126.95185 }
+  - { label: 잔디광장, latitude: 37.45965, longitude: 126.95285 }
+
+# A Quest's place in words only, on no map.
+placeWords: [서울대입구역, 녹두거리, 샤로수길, 낙성대역 근처, 동아리방, 기숙사 앞, 정문 앞 카페]
+
+# Who leads and joins the Quests. None is a Friend of the asker.
+people:
+  - { name: 강민재, department: 경영학과 }
+  - { name: 윤지아, department: 체육교육과 }
+  - { name: 임도현, department: 건축학과 }
+  - { name: 배수아, department: 음악학과 }
+  - { name: 송현우, department: 물리천문학부 }
+  - { name: 조유나, department: 국어국문학과 }
+  - { name: 문태오, department: 기계공학부 }
+  - { name: 신예린, department: 미술학과 }
+  - { name: 권시우, department: 사회학과 }
+  - { name: 홍채원, department: 생명과학부 }
+  - { name: 오지호, department: 경제학부 }
+  - { name: 남하린, department: 화학부 }
+  - { name: 백승민, department: 전기정보공학부 }
+  - { name: 정소율, department: 영어영문학과 }
+  - { name: 유건우, department: 수리과학부 }
+  - { name: 차예은, department: 심리학과 }
+  - { name: 하준서, department: 산업공학과 }
+  - { name: 장나연, department: 식품영양학과 }
+  - { name: 서도윤, department: 재료공학부 }
+  - { name: 안수빈, department: 정치외교학부 }
+  - { name: 고태민, department: 조선해양공학과 }
+  - { name: 양서아, department: 언론정보학과 }
+  - { name: 황준영, department: 역사학부 }
+  - { name: 전지우, department: 교육학과 }
+  - { name: 류현서, department: 간호학과 }
+  - { name: 노민규, department: 농경제사회학부 }
+  - { name: 심다인, department: 의류학과 }
+  - { name: 곽재원, department: 지구환경과학부 }
+  - { name: 탁은서, department: 철학과 }
+  - { name: 변우진, department: 항공우주공학과 }
