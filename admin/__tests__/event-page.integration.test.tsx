@@ -3,11 +3,13 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react';
 
 import { browser } from './support/browser';
+import { fakeMainServer } from './support/fake-main-server';
 import { openEvent } from './support/pages';
 import { COLLECTED, opened, signedInWithPlaces, type } from './support/events';
 
@@ -41,6 +43,7 @@ describe('the event’s page', () => {
     await openEvent(crypto.randomUUID());
 
     expect(browser.notFound).toBe(true);
+    expect(fakeMainServer.requests.filter((each) => each.endsWith('/sessions'))).toEqual([]);
   });
 });
 
