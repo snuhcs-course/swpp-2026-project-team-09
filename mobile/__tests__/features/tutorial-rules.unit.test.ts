@@ -2,18 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Tutorial, TutorialQuest, TutorialQuestStatus, TutorialState } from '@/api/tutorial-types';
-import {
-  eligibleByDefault,
-  firstNotStarted,
-  nextAfter,
-  questsInList,
-  rowOf,
-  showsStartButton,
-  stepOf,
-} from '@/features/tutorial/rules';
+import { firstNotStarted, nextAfter, questsInList, rowOf, showsStartButton, stepOf } from '@/features/tutorial/rules';
 
 // What the 새내기 튜토리얼 shows where, by the main server's state and the quests' statuses.
 
@@ -34,27 +27,13 @@ function quest(key: string, status: TutorialQuestStatus): TutorialQuest {
 }
 
 function tutorialOf(state: TutorialState, ...statuses: TutorialQuestStatus[]): Tutorial {
-  return { state, quests: statuses.map((status, index) => quest(`q${index + 1}`, status)) };
+  return {
+    state,
+    rowHidden: false,
+    eligibleByDefault: false,
+    quests: statuses.map((status, index) => quest(`q${index + 1}`, status)),
+  };
 }
-
-const IN_2026 = new Date('2026-10-01T04:37:00Z');
-
-describe('eligible by default', () => {
-  it.each([
-    [2026, null, true],
-    [2027, null, true],
-    [2025, null, false],
-    [null, null, false],
-    [2022, 'exchange', true],
-    [2022, 'undergraduate', false],
-  ])('admitted in %p, 소속 %p: %p', (admissionYear, affiliation, eligible) => {
-    expect(eligibleByDefault({ admissionYear, affiliation }, IN_2026)).toBe(eligible);
-  });
-
-  it('counts the year in Korea: 1 January in Korea is still 31 December in UTC', () => {
-    expect(eligibleByDefault({ admissionYear: 2027 }, new Date('2026-12-31T16:00:00Z'))).toBe(true);
-  });
-});
 
 describe('the start button', () => {
   it.each<[string, Tutorial | undefined, boolean]>([
@@ -120,7 +99,7 @@ describe('the pager', () => {
 
 describe('the 내 정보 row', () => {
   it('offers 진행하기 and the ✕ while off', () => {
-    expect(rowOf(tutorialOf('off', 'notStarted'), false)).toEqual({
+    expect(rowOf(tutorialOf('off', 'notStarted'))).toEqual({
       line: '학교생활이 처음이라면\n퀘스트로 하나씩 익혀 보세요',
       enable: true,
       stopLabel: null,
@@ -129,13 +108,13 @@ describe('the 내 정보 row', () => {
   });
 
   it('is gone once its ✕ was pressed while off', () => {
-    expect(rowOf({ ...tutorialOf('off', 'notStarted'), rowHidden: true }, false)).toBeNull();
+    expect(rowOf({ ...tutorialOf('off', 'notStarted'), rowHidden: true })).toBeNull();
   });
 });
 
 describe('the 내 정보 row while on', () => {
   it('points to the map without a button for a User eligible by default', () => {
-    expect(rowOf(tutorialOf('available', 'notStarted'), true)).toEqual({
+    expect(rowOf({ ...tutorialOf('available', 'notStarted'), eligibleByDefault: true })).toEqual({
       line: '지도 화면 아래 버튼으로 시작할 수 있어요',
       enable: false,
       stopLabel: null,
@@ -144,7 +123,7 @@ describe('the 내 정보 row while on', () => {
   });
 
   it('offers 끄기 for a User who turned it on', () => {
-    expect(rowOf(tutorialOf('available', 'notStarted'), false)).toMatchObject({
+    expect(rowOf(tutorialOf('available', 'notStarted'))).toMatchObject({
       line: '켜 두었어요 · 지도 화면 아래 버튼으로 시작해요',
       stopLabel: '끄기',
       enable: false,
@@ -152,7 +131,9 @@ describe('the 내 정보 row while on', () => {
   });
 
   it('counts the completed quests and offers 그만하기 while active', () => {
-    expect(rowOf(tutorialOf('active', 'completed', 'started', 'notStarted'), true)).toMatchObject({
+    expect(
+      rowOf({ ...tutorialOf('active', 'completed', 'started', 'notStarted'), eligibleByDefault: true }),
+    ).toMatchObject({
       line: '진행 중 · 완료 1/3 · 지도의 퀘스트 목록에서 이어서 해요',
       stopLabel: '그만하기',
     });
@@ -161,7 +142,7 @@ describe('the 내 정보 row while on', () => {
 
 describe('the 내 정보 row once stopped or finished', () => {
   it('offers 진행하기 once stopped', () => {
-    expect(rowOf(tutorialOf('stopped', 'started'), true)).toMatchObject({
+    expect(rowOf({ ...tutorialOf('stopped', 'started'), eligibleByDefault: true })).toMatchObject({
       line: '그만두었어요 · 다시 하려면 진행하기를 눌러요',
       enable: true,
       stopLabel: null,
@@ -169,7 +150,7 @@ describe('the 내 정보 row once stopped or finished', () => {
   });
 
   it('says all is done once finished', () => {
-    expect(rowOf(tutorialOf('finished', 'completed', 'completed'), true)).toEqual({
+    expect(rowOf({ ...tutorialOf('finished', 'completed', 'completed'), eligibleByDefault: true })).toEqual({
       line: '모두 완료했어요',
       enable: false,
       stopLabel: null,
@@ -178,7 +159,7 @@ describe('the 내 정보 row once stopped or finished', () => {
   });
 
   it('offers the quests added after the end with 진행하기', () => {
-    expect(rowOf(tutorialOf('finished', 'completed', 'notStarted'), true)).toMatchObject({
+    expect(rowOf({ ...tutorialOf('finished', 'completed', 'notStarted'), eligibleByDefault: true })).toMatchObject({
       line: '모두 완료했어요 · 새 퀘스트가 있어요',
       enable: true,
     });

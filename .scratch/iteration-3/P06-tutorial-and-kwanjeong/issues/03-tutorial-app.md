@@ -8,9 +8,9 @@ Blocked by: None (can start immediately)
 
 A freshman sees "새내기 튜토리얼 시작하기" at the bottom of the main screen. It opens the pager "새내기 튜토리얼 n/N" with ◀ ▶, where they start the quests that interest them. Started quests sit on top of the quest list under "새내기 튜토리얼". A quest's sheet shows its text, places ("지도에서 보기") and links, and 완료했어요 completes a button quest with its fixed message, then the pager moves on to the next quest not started, or says "튜토리얼을 모두 마쳤어요" after the last. "튜토리얼 그만하기" ends it, and the 내 정보 row turns it on again with progress kept. See the spec's App section and the wireframe frames it names (MainTutorialStart, MainTutorialList, MainTutorialSheet, MainTutorialOk, MainTutorialNext, ProfileTutorial).
 
-This ticket builds against the tutorial API contract in the spec (the `GET /tutorial` body and the five POSTs) with mocks. Ticket 02 now serves `rowHidden` (the ✕ of the 내 정보 row) and `eligibleByDefault` (the rule, read now, for the row's two `available` subtitles) in every reply, so the app reads both instead of keeping them optional or copying the rule. When ticket 02 lands, it switches from the mocks to the real API; whichever of 02 and 03 merges second makes that switch and checks it on the dev server.
+This ticket builds against the tutorial API contract in the spec (the `GET /tutorial` body and the five POSTs). Ticket 02 serves `rowHidden` (the ✕ of the 내 정보 row) and `eligibleByDefault` (the rule, read now, for the row's two `available` subtitles) in every reply, so the app reads both instead of keeping them optional or copying the rule. Ticket 02 merged first, so this ticket makes the switch from the mocks to the real API; checking it on the dev server is still to do.
 
-The 관정 quest's check is ticket 05. Here the 관정 sheet shows its text, places and links with 나중에, 어시스턴트에게 예약 부탁하기 and the skip "이미 예약 및 이용해본 적이 있어요" (complete `skipped`, then the completionMessage), all JS only. 완료했어요 and the check states come with ticket 05, which needs the native library session. So the tutorial can be finished on a build without it.
+The 관정 quest's check is ticket 05. Here the 관정 sheet shows its text, places and links with 나중에, 어시스턴트에게 예약 부탁하기 (hidden until ticket 07, see below) and the skip "이미 예약 및 이용해본 적이 있어요" (complete `skipped`, then the completionMessage), all JS only. 완료했어요 and the check states come with ticket 05, which needs the native library session. So the tutorial can be finished on a build without it.
 
 ## Acceptance criteria
 
@@ -19,7 +19,7 @@ The 관정 quest's check is ticket 05. Here the 관정 sheet shows its text, pla
 - [x] 퀘스트 시작 calls start, and the quest appears on top of the quest list in the group "새내기 튜토리얼" with "새내기 튜토리얼 · n/N", the title and "완료 조건 · {condition}". Several can be started.
 - [x] The sheet shows the dots, the title, the body's paragraphs, the 완료 조건 box, one "지도에서 보기" per place (focuses the main map on the Place or the point) and each link (opened with `expo-web-browser`), with 나중에 and 완료했어요 for button quests.
 - [x] Completing a button quest shows its completionMessage in the sheet's Assistant bubble, then 퀘스트 완료 calls complete and opens "퀘스트 완료! 다음 퀘스트 · n/N", or after the last quest "새내기 튜토리얼 완료 / 튜토리얼을 모두 마쳤어요 / 이제 SNU Now를 자유롭게 써 보세요. / 닫기".
-- [x] The 관정 sheet has 나중에, 어시스턴트에게 예약 부탁하기 (closes the sheet, opens the chat and sends "관정도서관 7층 열람실에 한 자리 예약해줘") and the skip, as described above.
+- [x] The 관정 sheet has 나중에, 어시스턴트에게 예약 부탁하기 (closes the sheet, opens the chat and sends "관정도서관 7층 열람실에 한 자리 예약해줘") and the skip, as described above. 예약 부탁 stays hidden until ticket 07 lets the Assistant book study spaces.
 - [x] The 내 정보 row shows each state's subtitle and buttons exactly as the spec lists them (진행하기 + ✕ for `off`, 끄기, 그만하기, 진행하기, "모두 완료했어요").
 - [x] The app keeps no copy of the tutorial's text; all of it comes from `GET /tutorial`.
 - [x] Tests, named by ADR 0007, integration against the mocks: the pager and ◀ ▶; 퀘스트 시작; several started; the quest-list group; the sheet with places and links; button completion; the next-quest pager; all done; 그만하기 and 진행하기; the 관정 skip and 예약 부탁; the 내 정보 row in each state. State-to-visibility logic gets unit tests.
@@ -33,6 +33,9 @@ The 관정 quest's check is ticket 05. Here the 관정 sheet shows its text, pla
 - The start button stays hidden while the shuttle notice is shown (it would cover the map's credit there), besides a card and the chat. The app has no 발자국 replay yet. When the start button shows, the map's credit and the friend list's window end above it.
 - The pager stays open after 퀘스트 시작 (the chip turns 진행 중 and the button 내용 보기), so several quests can be started in one go. After a completion it goes to the next quest not started, else to a started one, else "튜토리얼을 모두 마쳤어요".
 - 내 정보's "available, eligible by default" reads the admission year now; 소속 교환학생 counts once ticket 01's `affiliation` is in the profile.
+- After the review (2026-11-02), with ticket 02 (#161) merged: `TUTORIAL_SERVED` is true, and the client checks the reply against `TutorialDto` (`main-server/src/tutorial/dto/tutorial.dto.ts`), with `rowHidden` and `eligibleByDefault` required. The app's copy of the eligibility rule is gone from `features/tutorial/rules.ts`; the row reads `eligibleByDefault`. The mock keeps a stand-in of the rule (`mockEligibleByDefault` in `mobile/src/api/mock/tutorial.ts`), for the mock build and the tests only.
+- 어시스턴트에게 예약 부탁하기 is behind `TUTORIAL_SHEET_FLAGS.askAssistantToBook` in `mobile/src/screens/main/tutorial/tutorial-sheet.tsx`, false until ticket 07 lands; ticket 07 sets it to true. Until then the Assistant refuses study spaces (`chat-assistant.ts`'s study-spaces line).
+- A profile save invalidates `TUTORIAL_KEY` (`mobile/src/screens/me/profile-edit-screen.tsx`), so a changed 학번 or 소속 reads `eligibleByDefault` again while the main screen and 내 정보 stay mounted. Ticket 01 (#162) must keep it.
 
 ### Agent usage (2026-11-01)
 

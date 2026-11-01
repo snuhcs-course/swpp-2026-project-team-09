@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { LatLng } from './types';
 
 // The 새내기 튜토리얼 as the main server serves it (`GET /tutorial`, P06 spec "Endpoints"): the content of
-// `main-server/content/tutorial.yaml` with the User's progress. The app keeps no copy of the text: every word a
-// screen shows of a quest comes from here. Provisional: the main server's routes are ticket P06-02's.
+// `main-server/content/tutorial.yaml` with the User's progress, as `TutorialDto` of `main-server/src/tutorial/dto`.
+// The app keeps no copy of the text: every word a screen shows of a quest comes from here.
 
 // Derived by the main server, the first that holds: `finished`, `stopped`, `off`, `active`, `available`.
 export type TutorialState = 'off' | 'available' | 'active' | 'stopped' | 'finished';
@@ -49,9 +50,10 @@ export interface TutorialQuest {
 
 export interface Tutorial {
   state: TutorialState;
+  // The ✕ of the 내 정보 row was pressed while the tutorial was `off`; turning the tutorial on clears it.
+  rowHidden: boolean;
+  // The main server's rule, read now: admitted this year in Korea or later, or 소속 교환학생. The app has no copy of it.
+  eligibleByDefault: boolean;
   // In `order`.
   quests: TutorialQuest[];
-  // The ✕ of the 내 정보 row was pressed while the tutorial was `off` (`rowHiddenAt`). The app's own: the spec's
-  // body has no field for it yet, and an answer without it shows the row.
-  rowHidden?: boolean;
 }

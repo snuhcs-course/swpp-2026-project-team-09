@@ -2,19 +2,30 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import type { Tutorial, TutorialCompletedBy, TutorialState } from '@/api/tutorial-types';
 import { now } from '@/clock';
-import { eligibleByDefault } from '@/features/tutorial/rules';
+import { koreaYear } from '@/korea-time';
 import { readKept } from '@/storage/kept';
 import { answer } from './answer';
 import { TUTORIAL_CONTENT } from './data/tutorial';
 
 // The tutorial's routes as the main server answers them (P06 spec "Progress: server-side" and "Endpoints"), with the
-// User's progress kept in memory while the app runs. Each call answers with the new `GET /tutorial` body.
+// User's progress kept in memory while the app runs. Each call answers with the new `GET /tutorial` body. For the
+// mock build and the tests only: the server build reads `main-server/src/tutorial`.
+
+// The mock's stand-in for the main server's rule (`eligibleByDefault` in `main-server/src/tutorial/tutorial-state.ts`),
+// over the onboarding answers kept on the phone: admitted this year in Korea or later. The answers hold no 소속, so
+// the mock has no exchange student. No screen reads it; they read the answer's `eligibleByDefault`.
+async function mockEligibleByDefault(): Promise<boolean> {
+  const { answers } = await readKept();
+  const admissionYear = answers?.admissionYear ?? null;
+  return admissionYear !== null && admissionYear >= koreaYear(now());
+}
 
 interface Progress {
   enabled: boolean;
@@ -50,10 +61,11 @@ function stateOf(): TutorialState {
   return TUTORIAL_CONTENT.some(({ key }) => progress.quests.has(key)) ? 'active' : 'available';
 }
 
-function body(): Tutorial {
+async function body(): Promise<Tutorial> {
   return {
     state: stateOf(),
     rowHidden: progress.rowHidden,
+    eligibleByDefault: await mockEligibleByDefault(),
     quests: TUTORIAL_CONTENT.map((quest) => {
       const kept = progress.quests.get(quest.key);
       return { ...quest, status: kept === undefined ? 'notStarted' : kept === null ? 'started' : 'completed' };
@@ -63,11 +75,8 @@ function body(): Tutorial {
 
 // The first read stores "eligible by default" for a User admitted this year or an exchange student, once.
 async function read(): Promise<Tutorial> {
-  if (!progress.enabled && !progress.stopped) {
-    const { answers } = await readKept();
-    if (answers !== null && eligibleByDefault(answers, now())) {
-      progress.enabled = true;
-    }
+  if (!progress.enabled && !progress.stopped && (await mockEligibleByDefault())) {
+    progress.enabled = true;
   }
   return body();
 }
@@ -85,7 +94,7 @@ function isCompleted(key: string): boolean {
   return by !== undefined && by !== null;
 }
 
-function complete(key: string, by: TutorialCompletedBy): Tutorial {
+function complete(key: string, by: TutorialCompletedBy): Promise<Tutorial> {
   const quest = questOf(key);
   if ((quest.completion.kind === 'button') !== (by === 'button')) {
     throw new ApiError(400, 'TUTORIAL_COMPLETION_MISMATCH');

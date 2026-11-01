@@ -2,23 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Tutorial, TutorialQuest } from '@/api/tutorial-types';
-import { koreaYear } from '@/korea-time';
 
-// What the 새내기 튜토리얼 shows where, from the main server's state (P06 spec "The state, derived" and "App").
-
-// Eligible by default, by the main server's rule read now: admitted this year in Korea or later, or 소속 교환학생.
-// `affiliation` is ticket P06-01's; a profile without it is not an exchange student.
-export function eligibleByDefault(
-  profile: { admissionYear: number | null; affiliation?: string | null },
-  now: Date,
-): boolean {
-  return (
-    profile.affiliation === 'exchange' || (profile.admissionYear !== null && profile.admissionYear >= koreaYear(now))
-  );
-}
+// What the 새내기 튜토리얼 shows where, from the main server's state (P06 spec "The state, derived" and "App"). Who is
+// eligible by default is the server's rule alone: the app reads its answer's `eligibleByDefault`.
 
 // The start button at the bottom of the main screen: while the tutorial is `available`, and while it is `active`
 // with a quest not started. What hides it over the map (a card, the chat) is the screen's.
@@ -92,15 +82,15 @@ function finishedRow(tutorial: Tutorial): TutorialRowView {
     : { ...NO_BUTTONS, line: '모두 완료했어요' };
 }
 
-export function rowOf(tutorial: Tutorial, eligible: boolean): TutorialRowView | null {
+export function rowOf(tutorial: Tutorial): TutorialRowView | null {
   const { state } = tutorial;
   if (state === 'off') {
-    return tutorial.rowHidden === true
+    return tutorial.rowHidden
       ? null
       : { line: '학교생활이 처음이라면\n퀘스트로 하나씩 익혀 보세요', enable: true, stopLabel: null, hide: true };
   }
   if (state === 'available') {
-    return eligible
+    return tutorial.eligibleByDefault
       ? { ...NO_BUTTONS, line: '지도 화면 아래 버튼으로 시작할 수 있어요' }
       : { ...NO_BUTTONS, line: '켜 두었어요 · 지도 화면 아래 버튼으로 시작해요', stopLabel: '끄기' };
   }

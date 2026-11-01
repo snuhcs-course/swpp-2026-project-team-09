@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -9,12 +10,12 @@ import type { Tutorial, TutorialPlace, TutorialQuest } from '@/api/tutorial-type
 import { field, hasTexts, isNumber, isText, listOf } from './answers';
 import { call } from './http';
 
-// The 새내기 튜토리얼's routes on the main server (P06 spec "Endpoints"), each answering the `GET /tutorial` body.
+// The 새내기 튜토리얼's routes on the main server (`main-server/src/tutorial`, P06 spec "Endpoints"), each answering
+// the `GET /tutorial` body (`TutorialDto`).
 //
-// The switch: the main server serves these routes once ticket P06-02 is merged. Until then the server build answers
-// the tutorial from the mock (`../mock/tutorial.ts`) and `TUTORIAL_SERVED` is false. Whichever of P06-02 and P06-03
-// merges second sets it to true, which `serverClient` reads, and checks the tutorial on the development server.
-export const TUTORIAL_SERVED = false;
+// The switch, read by `serverClient`: the main server serves these routes since ticket P06-02, so the server build
+// reads them. False answers the server build's tutorial from the mock (`../mock/tutorial.ts`).
+export const TUTORIAL_SERVED = true;
 
 const STATES = new Set(['off', 'available', 'active', 'stopped', 'finished']);
 const STATUSES = new Set(['notStarted', 'started', 'completed']);
@@ -25,6 +26,10 @@ function isOneOf(value: unknown, names: ReadonlySet<string>): boolean {
 
 function isOptional(value: unknown, isValue: (each: unknown) => boolean): boolean {
   return value === undefined || isValue(value);
+}
+
+function isFlag(value: unknown): value is boolean {
+  return typeof value === 'boolean';
 }
 
 function isPlace(value: unknown): value is TutorialPlace {
@@ -61,8 +66,9 @@ function isQuest(value: unknown): value is TutorialQuest {
 export function isTutorial(value: unknown): value is Tutorial {
   return (
     isOneOf(field(value, 'state'), STATES) &&
-    listOf(isQuest)(field(value, 'quests')) &&
-    isOptional(field(value, 'rowHidden'), (each: unknown): each is boolean => typeof each === 'boolean')
+    isFlag(field(value, 'rowHidden')) &&
+    isFlag(field(value, 'eligibleByDefault')) &&
+    listOf(isQuest)(field(value, 'quests'))
   );
 }
 

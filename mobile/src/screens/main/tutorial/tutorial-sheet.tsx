@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -17,6 +18,11 @@ import type { SheetView, TutorialFlow } from './use-tutorial-flow';
 
 // What 어시스턴트에게 예약 부탁하기 sends, the frames' words.
 export const KWANJEONG_ASK = '관정도서관 7층 열람실에 한 자리 예약해줘';
+
+// The switch of 어시스턴트에게 예약 부탁하기: off until ticket P06-07 lands, since the Assistant refuses study spaces
+// until then (the chat prompt's study-spaces line). Ticket 07 sets `askAssistantToBook` to true. An object, so that a
+// test can turn it on.
+export const TUTORIAL_SHEET_FLAGS = { askAssistantToBook: false };
 
 interface TutorialSheetProps {
   flow: TutorialFlow;
@@ -125,7 +131,8 @@ interface ButtonsProps {
 }
 
 // The sheet's buttons: 나중에 and 완료했어요 for a button quest; for the 관정 quest 나중에, 어시스턴트에게 예약 부탁하기
-// and its skip, until its check (ticket P06-05) adds 완료했어요; 퀘스트 완료 under the message.
+// (while its switch is on) and its skip, until its check (ticket P06-05) adds 완료했어요; 퀘스트 완료 under the
+// message.
 function Buttons({ quest, shown, flow, onAskAssistant }: ButtonsProps): ReactElement {
   const { working } = flow.actions;
   if (shown.mode === 'message') {
@@ -157,15 +164,17 @@ function Buttons({ quest, shown, flow, onAskAssistant }: ButtonsProps): ReactEle
   return (
     <View style={styles.buttons}>
       <View style={styles.pair}>{later}</View>
-      <Button
-        full
-        onPress={() => {
-          onAskAssistant(KWANJEONG_ASK);
-        }}
-        variant="secondary"
-      >
-        어시스턴트에게 예약 부탁하기
-      </Button>
+      {TUTORIAL_SHEET_FLAGS.askAssistantToBook ? (
+        <Button
+          full
+          onPress={() => {
+            onAskAssistant(KWANJEONG_ASK);
+          }}
+          variant="secondary"
+        >
+          어시스턴트에게 예약 부탁하기
+        </Button>
+      ) : null}
       <Button centred disabled={working} onPress={flow.skip} variant="ghost">
         {quest.completion.skipLabel}
       </Button>

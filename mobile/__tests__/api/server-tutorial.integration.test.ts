@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -14,8 +15,8 @@ import { TUTORIAL_SERVED, tutorialClient } from '@/api/server/tutorial-client';
 import type { Tutorial, TutorialQuest } from '@/api/tutorial-types';
 import { googleAvailable } from '@/auth/google';
 
-// The 새내기 튜토리얼's routes (P06 spec "Endpoints") through the main server's client, ready for the switch from
-// the mock once ticket P06-02 serves them, and the mock that answers until then.
+// The 새내기 튜토리얼's routes (P06 spec "Endpoints") through the main server's client, which the server build reads
+// since ticket P06-02 serves them (`main-server/src/tutorial`), and the mock of the mock build.
 
 jest.mock('@/auth/google', () => ({
   googleAvailable: jest.fn<boolean, []>(),
@@ -32,7 +33,7 @@ function bodyOf(): Tutorial {
   for (const [index, quest] of TUTORIAL_CONTENT.entries()) {
     quests.push({ ...quest, status: index === 0 ? 'started' : 'notStarted' });
   }
-  return { state: 'active', quests };
+  return { state: 'active', rowHidden: false, eligibleByDefault: true, quests };
 }
 
 const BODY = bodyOf();
@@ -85,18 +86,24 @@ describe("the main server's tutorial routes", () => {
 });
 
 describe("the main server's tutorial answers", () => {
-  it('takes the row hidden and a Place with its words', async () => {
+  it('takes the row hidden, the rule read by the server and a Place with its words', async () => {
     const server = await askMainServer({ signedIn: true });
-    server.on('GET /tutorial', { status: 200, body: { ...BODY, state: 'off', rowHidden: true } });
+    server.on('GET /tutorial', {
+      status: 200,
+      body: { ...BODY, state: 'off', rowHidden: true, eligibleByDefault: false },
+    });
 
     const tutorial = await tutorialClient.getTutorial();
 
     expect(tutorial.rowHidden).toBe(true);
+    expect(tutorial.eligibleByDefault).toBe(false);
     expect(tutorial.quests[0]?.places[1]).toEqual({ place: '4', label: '우리은행 (4동)' });
   });
 
   it.each([
     ['an unknown state', { ...BODY, state: 'paused' }],
+    ['no rowHidden', { ...BODY, rowHidden: undefined }],
+    ['no eligibleByDefault', { ...BODY, eligibleByDefault: undefined }],
     ['a quest without its body', { ...BODY, quests: [{ ...BODY.quests[0], body: undefined }] }],
     ['an unknown status', { ...BODY, quests: [{ ...BODY.quests[0], status: 'done' }] }],
     ['a place without a point or a number', { ...BODY, quests: [{ ...BODY.quests[0], places: [{ floor: 2 }] }] }],
@@ -115,11 +122,19 @@ describe("the main server's tutorial answers", () => {
   });
 });
 
-describe('until the main server serves the tutorial', () => {
-  it('the server build answers it from the mock, and asks no route', async () => {
-    expect(TUTORIAL_SERVED).toBe(false);
+describe('the server build', () => {
+  it('reads the tutorial from the main server', async () => {
+    expect(TUTORIAL_SERVED).toBe(true);
     const server = await askMainServer({ signedIn: true });
+    server.on('GET /tutorial', { status: 200, body: BODY });
 
+    await expect(apiClient.getTutorial()).resolves.toEqual(BODY);
+    expect(server.received('GET /tutorial')).toHaveLength(1);
+  });
+});
+
+describe('the mock build', () => {
+  it('answers the content in order, with the row shown and no rule met before the onboarding', async () => {
     const tutorial = await answered(apiClient.getTutorial());
 
     expect(tutorial.quests.map(({ key }) => key)).toEqual([
@@ -129,7 +144,7 @@ describe('until the main server serves the tutorial', () => {
       'health-clinic',
       'art-museum',
     ]);
-    expect(server.received().filter(({ path }) => path.startsWith('/tutorial'))).toEqual([]);
+    expect(tutorial).toMatchObject({ state: 'off', rowHidden: false, eligibleByDefault: false });
   });
 
   it("the mock refuses a completion that does not fit the quest's kind, and an unknown key", async () => {

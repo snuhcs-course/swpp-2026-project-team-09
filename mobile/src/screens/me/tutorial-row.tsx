@@ -2,14 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { Profile } from '@/api/types';
-import { now } from '@/clock';
 import { Button, color, font, Icon, radius, size, space, text, tutorialTone } from '@/design-system';
-import { eligibleByDefault, rowOf, type TutorialRowView } from '@/features/tutorial/rules';
+import { rowOf, type TutorialRowView } from '@/features/tutorial/rules';
 import { useTutorial, useTutorialActions } from '@/features/tutorial/use-tutorial';
 
 const ROUND = 36;
@@ -66,12 +65,12 @@ function RowButtons({ row }: { row: TutorialRowView }): ReactElement {
 
 // The 새내기 튜토리얼 row of 내 정보 (ProfileTutorial): its line by the tutorial's state, with 진행하기, 끄기 or
 // 그만하기, and the ✕ that hides the row while the tutorial is off. 진행하기 keeps the progress.
-export function TutorialRow({ profile }: { profile: Profile }): ReactElement | null {
+export function TutorialRow(): ReactElement | null {
   const tutorial = useTutorial();
   if (tutorial === undefined) {
     return null;
   }
-  const row = rowOf(tutorial, eligibleByDefault(profile, now()));
+  const row = rowOf(tutorial);
   if (row === null) {
     return null;
   }

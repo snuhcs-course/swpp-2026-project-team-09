@@ -24,3 +24,7 @@ This is the base other tickets read: the tutorial's eligibility reads `affiliati
   - integration (server): saving, clearing and reading the fields; the 400; the absence checks above;
   - integration (app): the edit screen saves the three fields and shows the error, against its mocks (prior art: the `profile-edit` integration test).
 - [ ] No native file changes (CLAUDE.md § The app's native files); the app-fingerprint CI job reports no native change.
+
+## Comments
+
+- From ticket 03 (2026-11-02): the profile save in `mobile/src/screens/me/profile-edit-screen.tsx` (`useSave`) now invalidates `TUTORIAL_KEY` after a save, so a changed 소속 or 학번 refreshes the tutorial's `eligibleByDefault`. #162 must keep that invalidation when it reworks the save; the `profile-edit` integration test checks it.

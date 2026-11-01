@@ -5,6 +5,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-27  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -245,7 +246,7 @@ export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactE
     <TabScreen actions={<Bell />} title="내 정보">
       <ScrollView contentContainerStyle={styles.body} ref={scroll}>
         {profile === undefined ? null : <ProfileCard profile={profile} />}
-        {profile === undefined ? null : <TutorialRow profile={profile} />}
+        {profile === undefined ? null : <TutorialRow />}
         <WeekCard />
         <SharingCard
           onLayout={(event) => {
