@@ -45,7 +45,7 @@ export class FakeSameEvent {
         return;
       }
     }
-    throw new MainServerError(409, { code: 'SESSION_NOT_DETACHABLE' });
+    throw new MainServerError(409, { code: 'POST_SESSION_NOT_DETACHABLE' });
   }
 
   publish(sessionId: string, version: number): void {
@@ -66,7 +66,7 @@ export class FakeSameEvent {
   private session(sessionId: string): QueuedSession {
     const session = this.queued.find((each) => each.sessionId === sessionId);
     if (session === undefined) {
-      throw new MainServerError(409, { code: 'SESSION_NOT_QUEUED' });
+      throw new MainServerError(409, { code: 'POST_SESSION_NOT_QUEUED' });
     }
     return session;
   }

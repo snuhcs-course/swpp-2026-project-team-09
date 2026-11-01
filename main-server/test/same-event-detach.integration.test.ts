@@ -92,7 +92,7 @@ describe('Detaching, then what comes after', () => {
 
     const { body } = await world.admin('post', `/sessions/${sessionId}/detach`).expect(409);
 
-    expect(body).toMatchObject({ code: 'SESSION_NOT_DETACHABLE' });
+    expect(body).toMatchObject({ code: 'POST_SESSION_NOT_DETACHABLE' });
   });
 
   it('stays as it is through the next Collection and a run over its Draft, asking no model', async () => {
