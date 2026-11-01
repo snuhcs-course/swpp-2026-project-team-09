@@ -165,6 +165,18 @@ function foundChosen(messages: readonly ChatMessage[]): FoundIds {
   return found;
 }
 
+function contextOf(asker: Asker, messages: readonly ChatMessage[], resolutions: ResolutionLog): ToolContext {
+  return {
+    ...asker,
+    found: foundChosen(messages),
+    shown: lastShown(messages),
+    presented: { mapButtons: [], cards: [], proposal: null, choices: [] },
+    resolutions,
+    judged: new Map(),
+    restaurants: new Map(),
+  };
+}
+
 // Runs the feature on the conversation, the User's new message last, and answers with the text of the model's steps and
 // what the presenters put beside it. It throws NoAnswerError when the steps ran out on tools or the run has nothing to
 // say or show, and the SDK's errors when the model fails or the time runs out. The resolvers record their answers in
@@ -178,15 +190,7 @@ export async function runFeature(
   resolutions: ResolutionLog,
   observer?: RunObserver,
 ): Promise<FeatureReply> {
-  const context: ToolContext = {
-    ...asker,
-    found: foundChosen(messages),
-    shown: lastShown(messages),
-    presented: { mapButtons: [], cards: [], proposal: null, choices: [] },
-    resolutions,
-    judged: new Map(),
-    restaurants: new Map(),
-  };
+  const context = contextOf(asker, messages, resolutions);
   const { steps, finishReason } = await generateText({
     model,
     instructions: feature.instructions(asker.now),
