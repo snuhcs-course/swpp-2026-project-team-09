@@ -26,3 +26,21 @@ Not here: grey text while typing, which needs a trial on both phones first, and 
 - [ ] README and GLOSSARY paragraphs; `pnpm lint`, `pnpm typecheck` and the touched tests pass in both packages.
 
 ## Comments
+
+### Built (2026-11-01)
+
+- Server: `next-line.ts` holds the three templates on plain data, and `next-lines.service.ts` scores, draws and writes the row. The reads shared with the chat opening moved to `impression-reads.ts`. `AssistantService.reply` asks for the line last, so that a failure there costs only the line.
+- App: `nextLine` on the reply and the bubble, `Chat.nextLine` while the last bubble holds one and no answer is on its way, 채우기 in `AiInput`, `tookNextLine` for the outcome. `send` compares the text with the line, so that a changed line goes as an ordinary message.
+- Benchmark: a User's turn takes `chosen`, and `eval/cases/next-lines.yaml` holds one case per sentence, outside `FIXED_SET`, so that no earlier score moves.
+
+Decisions where the spec left room:
+
+- **채우기 and no tap on the grey text.** A tap on the field must still bring the keyboard up, and a phone has no Tab key.
+- **The chat opening keeps its row.** Moving it into the input would take away × and the reason line, and the cooldowns read ×. It is the next thing to look at, once the input's look has been seen on a phone.
+- **No row for a reply with nothing eligible**, unlike the chat opening, whose silent rows count missed needs. No need is measured here, and a row per message would say nothing.
+- **Only three templates.** A Quest card has its own join button, a shuttle answer leaves nothing obvious, and a Restaurant card has its own 파티 만들기. A line almost nobody takes is worse than none.
+- **The lines are not personal yet.** A template's acceptance is everyone's in the bucket, as at the chat opening. What the User taught reaches the lines only when typing is added, where the same words can complete a prefix.
+
+Tests: `next-line.unit`, `next-lines.integration`, `eval-replay-curves.unit` on the server; `chat-next-line.integration` and `answers-next-line.unit` in the app.
+
+**On the real model.** `pnpm eval --yes --budget 1 --category next-lines`, Haiku 5.5, one run: 5 of 5 sentences did what they say, USD 0.015. Five runs of one are not a rate; they show that the sentences work.

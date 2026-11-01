@@ -20,7 +20,7 @@ import type { MapLayer, QuestProposal } from '@/api/assistant-types';
 import { questsQuery } from '@/api/queries';
 import { Button, color, font, Icon, space } from '@/design-system';
 import { type Chat, useChat } from '@/features/assistant/use-chat';
-import type { Suggestion } from '@/features/assistant/use-suggestion';
+import { type Suggestion, tookNextLine } from '@/features/assistant/use-suggestion';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import type { PostView } from '@/features/party/posts';
 import { EventSheets, useEventSheets } from '../events/event-sheets';
@@ -32,6 +32,7 @@ import type { CardActions, ProposalActions } from './chat-cards';
 import { ChatEmpty } from './chat-empty';
 import type { EventCardActions } from './chat-event-cards';
 import type { QuestCardActions } from './chat-quest-cards';
+import type { AiInputFill } from './ai-input';
 import { type ChatFrom, SuggestionRow, useSuggestedSheet } from './chat-suggestion';
 import { openProposalForm, useProposalMaking } from './use-proposal-making';
 
@@ -245,8 +246,10 @@ export interface ChatSheetControl {
   chat: Chat;
   shown: boolean;
   open: () => void;
-  // The AI input's placeholder: the suggestion's text while one is held.
+  // The AI input's placeholder: the suggestion's text while one is held, else the next line while the sheet is open.
   placeholder: string | undefined;
+  // What 채우기 in the AI input puts there, while the sheet is open on an answer that left a next line.
+  fill: AiInputFill | null;
   // The sheet while it is open, under an AI input whose top stands that high above the sheet's bottom.
   sheet: (inputTop: number) => ReactElement | null;
 }
@@ -262,11 +265,21 @@ export function useChatSheet(inFront: boolean, turnOn: (layer: MapLayer) => void
   const { suggestion, open, close, closeMade } = useSuggestedSheet(chat, from, setShown);
   const { showLayer, openEvent, openQuestPost, openPartyForm } = useLeaving(close, turnOn);
   const proposals = useProposalMaking(close, closeMade);
+  const nextLine = shown ? chat.nextLine : null;
   return {
     chat,
     shown,
     open,
-    placeholder: suggestion.held?.text,
+    placeholder: suggestion.held?.text ?? nextLine?.text,
+    fill:
+      nextLine === null
+        ? null
+        : {
+            text: nextLine.text,
+            onTake: () => {
+              tookNextLine(nextLine.id);
+            },
+          },
     sheet: (inputTop) =>
       shown ? (
         <ChatSheet

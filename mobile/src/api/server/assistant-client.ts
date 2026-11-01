@@ -6,6 +6,7 @@
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -15,6 +16,7 @@ import {
   MAP_LAYERS,
   type MapLayer,
   type QuestProposal,
+  type NextLine,
   type ResolvedBy,
   type RestaurantCard,
   type RestaurantTravel,
@@ -119,30 +121,42 @@ function isChoice(value: unknown): value is Choice {
   return CHOICE_KINDS.has(field(value, 'kind')) && hasTexts(value, ['id', 'label', 'words']);
 }
 
-// A reply of a main server from before the candidates has no `choices`, and one from before aliases no `resolvedBy`.
-export type AssistantAnswer = Omit<AssistantReply, 'choices' | 'resolvedBy'> & {
+function isNextLine(value: unknown): value is NextLine {
+  const chosen = field(value, 'chosen');
+  return (
+    hasTexts(value, ['id', 'text']) &&
+    (isNothing(chosen) || (CHOICE_KINDS.has(field(chosen, 'kind')) && hasTexts(chosen, ['id', 'words'])))
+  );
+}
+
+// A reply of a main server from before the candidates has no `choices`, one from before aliases no `resolvedBy`, and
+// one from before next lines no `nextLine`.
+export type AssistantAnswer = Omit<AssistantReply, 'choices' | 'resolvedBy' | 'nextLine'> & {
   choices?: Choice[];
   resolvedBy?: ResolvedBy[];
+  nextLine?: NextLine | null;
 };
 
 export function isAssistantAnswer(value: unknown): value is AssistantAnswer {
   const proposal = field(value, 'proposal');
   const choices = field(value, 'choices');
   const resolvedBy = field(value, 'resolvedBy');
+  const nextLine = field(value, 'nextLine');
   return (
     hasTexts(value, ['text']) &&
     listOf(isMapLayer)(field(value, 'mapButtons')) &&
     listOf(isChatCard)(field(value, 'cards')) &&
     (isNothing(proposal) || isQuestProposal(proposal)) &&
     (choices === undefined || listOf(isChoice)(choices)) &&
-    (resolvedBy === undefined || listOf(isResolvedBy)(resolvedBy))
+    (resolvedBy === undefined || listOf(isResolvedBy)(resolvedBy)) &&
+    (nextLine === undefined || isNothing(nextLine) || isNextLine(nextLine))
   );
 }
 
 export const assistantClient: Pick<ApiClient, 'askAssistant'> = {
   askAssistant: async (messages) => {
     const answer = await call('POST', '/assistant/messages', isAssistantAnswer, { body: { messages } });
-    const { choices = [], resolvedBy = [], ...reply } = answer;
-    return { ...reply, choices, resolvedBy };
+    const { choices = [], resolvedBy = [], nextLine = null, ...reply } = answer;
+    return { ...reply, choices, resolvedBy, nextLine };
   },
 };

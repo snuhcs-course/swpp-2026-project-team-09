@@ -6,10 +6,11 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
-import { type LayoutChangeEvent, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { type LayoutChangeEvent, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { USER_MESSAGE_MAX } from '@/api/assistant-types';
 import { color, Icon, radius, shadow, space, text } from '@/design-system';
 import { AI_INPUT } from './layout';
@@ -28,6 +29,13 @@ interface AiInputProps {
   onHeight: (height: number) => void;
   // The grey text of the empty field.
   placeholder?: string;
+  // The next line that 채우기 puts in the empty field, when an answer left one.
+  fill?: AiInputFill | null;
+}
+
+export interface AiInputFill {
+  text: string;
+  onTake: () => void;
 }
 
 // The field's height for one line, and the most it grows to before it scrolls.
@@ -56,6 +64,27 @@ function useBarHeight(onHeight: (height: number) => void): [number, (event: Layo
   return [height, laidOut];
 }
 
+const EMPTY_FIELD = '무엇이든 부탁해 보세요';
+
+// Puts the next line in the empty field, where the User can change it and send it. A tap on the field itself must still
+// bring the keyboard up, so that taking the line has its own button: a phone has no Tab key.
+function FillButton({ fill, onFill }: { fill: AiInputFill; onFill: (text: string) => void }): ReactElement {
+  return (
+    <Pressable
+      accessibilityLabel="제안 채우기"
+      accessibilityRole="button"
+      hitSlop={space[1]}
+      onPress={() => {
+        onFill(fill.text);
+        fill.onTake();
+      }}
+      style={styles.fill}
+    >
+      <Text style={styles.fillWords}>채우기</Text>
+    </Pressable>
+  );
+}
+
 // The AI input of the `Main` frame: the white bar with the placeholder and the send button. Focusing it opens the
 // chat, and it stays at the bottom as the chat's input. It grows with its text up to 120, takes at most the characters
 // the Assistant takes in a message, Enter starts a new line, and only the send button sends, in the key colour while
@@ -63,7 +92,7 @@ function useBarHeight(onHeight: (height: number) => void): [number, (event: Layo
 // The field grows by itself, between its least and its most height: nothing sets its height from its content, which
 // would lay it out again and could swing it between two heights.
 export function AiInput(props: AiInputProps): ReactElement {
-  const { chatOpen, onOpen, waiting, onSend, lift, onHeight, placeholder = '무엇이든 부탁해 보세요' } = props;
+  const { chatOpen, onOpen, waiting, onSend, lift, onHeight, placeholder = EMPTY_FIELD, fill } = props;
   const [message, setMessage] = useState('');
   const [height, laidOut] = useBarHeight(onHeight);
   const canSend = message.trim() !== '' && !waiting;
@@ -95,6 +124,7 @@ export function AiInput(props: AiInputProps): ReactElement {
         submitBehavior="newline"
         value={message}
       />
+      {fill && message === '' ? <FillButton fill={fill} onFill={setMessage} /> : null}
       <Pressable
         accessibilityLabel="보내기"
         accessibilityRole="button"
@@ -138,6 +168,15 @@ const styles = StyleSheet.create({
     color: color.ink,
     textAlignVertical: 'top',
   },
+  fill: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: AI_FIELD,
+    paddingHorizontal: space[3],
+    borderRadius: radius.full,
+    backgroundColor: color.surfaceSunken,
+  },
+  fillWords: { ...text.caption, color: color.ink },
   send: {
     alignItems: 'center',
     justifyContent: 'center',

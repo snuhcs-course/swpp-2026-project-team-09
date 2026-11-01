@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
  * 2026-10-28  Fable 5.1  prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -16,6 +17,7 @@ import {
   lengthOf,
   type MapLayer,
   MESSAGES_TOTAL_MAX,
+  type NextLine,
   type QuestProposal,
   referenceOf,
   type ResolvedBy,
@@ -47,6 +49,8 @@ export interface ChatBubble {
   chosen: Chosen | null;
   // The words an Assistant's answer read through an alias, each shown with 아니에요 until the User presses it.
   resolvedBy: readonly ResolvedBy[];
+  // What an Assistant's answer leaves to ask next, while it is the last bubble.
+  nextLine: NextLine | null;
   failure: ChatFailure | null;
 }
 
@@ -54,6 +58,9 @@ export interface Chat {
   bubbles: readonly ChatBubble[];
   // While the Assistant works on the User's last message: the "···" bubble, and nothing more is sent.
   waiting: boolean;
+  // What the last answer leaves to ask next, or null.
+  nextLine: NextLine | null;
+  // Sends the User's message: the next line's candidate goes with it when it is that line, unchanged.
   send: (text: string) => void;
   // A chip pressed: sends its label as the User's message, with the candidate it chose.
   choose: (choice: Choice) => void;
@@ -108,8 +115,19 @@ type NewBubble = Omit<ChatBubble, 'id'>;
 async function answerTo(messages: ChatMessage[]): Promise<NewBubble> {
   try {
     const reply = await apiClient.askAssistant(messages);
-    const { text, cards, mapButtons, proposal, choices, resolvedBy } = reply;
-    return { role: 'assistant', text, cards, mapButtons, proposal, choices, chosen: null, resolvedBy, failure: null };
+    const { text, cards, mapButtons, proposal, choices, resolvedBy, nextLine } = reply;
+    return {
+      role: 'assistant',
+      text,
+      cards,
+      mapButtons,
+      proposal,
+      choices,
+      chosen: null,
+      resolvedBy,
+      nextLine,
+      failure: null,
+    };
   } catch (error) {
     const failure = error instanceof ApiError && error.status === 429 ? 'usedUp' : 'unavailable';
     const text = FAILURE_TEXT[failure];
@@ -122,6 +140,7 @@ async function answerTo(messages: ChatMessage[]): Promise<NewBubble> {
       choices: [],
       chosen: null,
       resolvedBy: [],
+      nextLine: null,
       failure,
     };
   }
@@ -137,6 +156,7 @@ function userBubble(text: string, chosen: Chosen | null): NewBubble {
     choices: [],
     chosen,
     resolvedBy: [],
+    nextLine: null,
     failure: null,
   };
 }
@@ -240,6 +260,7 @@ function proposedBubble(text: string, proposal: QuestProposal): NewBubble {
     choices: [],
     chosen: null,
     resolvedBy: [],
+    nextLine: null,
     failure: null,
   };
 }
@@ -253,10 +274,11 @@ export function useChat(): Chat {
 
   const send = useCallback(
     (text: string): void => {
-      add(userBubble(text, null));
+      const line = said.current.at(-1)?.nextLine ?? null;
+      add(userBubble(text, line?.text === text ? line.chosen : null));
       ask();
     },
-    [add, ask],
+    [add, ask, said],
   );
 
   const choose = useCallback(
@@ -274,5 +296,7 @@ export function useChat(): Chat {
 
   const rejectAlias = useRejectAlias({ said, show });
 
-  return { bubbles: held.bubbles, waiting, send, choose, retry, rejectAlias, reset, propose };
+  const nextLine = waiting ? null : (held.bubbles.at(-1)?.nextLine ?? null);
+
+  return { bubbles: held.bubbles, waiting, nextLine, send, choose, retry, rejectAlias, reset, propose };
 }

@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AssistantReply, ChatMessage, Choice, ProposalPlace, QuestProposal } from '@/api/assistant-types';
@@ -118,8 +119,11 @@ function menusReply(): string {
   return ['오늘 메뉴예요.', ...lines].join('\n');
 }
 
+export const MOCK_NEXT_LINE_ID = 'mock-next-line';
+export const MOCK_NEXT_LINE = '오늘 점심 같이 먹을 사람 모집해줘';
+
 function replyOf(text: string, more: Partial<AssistantReply> = {}): AssistantReply {
-  return { text, mapButtons: [], cards: [], proposal: null, choices: [], resolvedBy: [], ...more };
+  return { text, mapButtons: [], cards: [], proposal: null, choices: [], resolvedBy: [], nextLine: null, ...more };
 }
 
 // The answers that name a Place: the answer to the question which 학관, 중도 read through the User's alias, and the
@@ -164,7 +168,8 @@ export function mockAssistantReply(messages: readonly ChatMessage[]): AssistantR
     return replyOf('다가오는 행사예요.', { cards });
   }
   if (MENU_WORDS.some((word) => last.includes(word))) {
-    return replyOf(menusReply(), { mapButtons: ['dining'] });
+    const nextLine = { id: MOCK_NEXT_LINE_ID, text: MOCK_NEXT_LINE, chosen: null };
+    return replyOf(menusReply(), { mapButtons: ['dining'], nextLine });
   }
   return replyOf('데모에서는 오늘 메뉴와 셔틀, 행사, 파티만 답할 수 있어요. "오늘 점심 뭐 나와?"처럼 물어봐 주세요.');
 }
