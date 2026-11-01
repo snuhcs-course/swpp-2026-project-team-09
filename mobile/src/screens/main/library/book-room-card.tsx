@@ -16,9 +16,12 @@ import { freeRooms, nearestStarts } from '@/library/cards/rooms';
 import { nextStart, whenWords } from '@/library/cards/times';
 import { library } from '@/library/library';
 import type { LibraryRoomTimes } from '@/library/replies';
+import { keepRoomBooking } from '@/library/room-bookings';
+import { type RoomRequest, roomRequests } from '@/api/room-requests';
 import { BOOK_FAILED, CLOSED, type Closed, NOT_BOOKED } from './book-seat-card';
 import { CardBox, FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
 import { Choices, Pledge } from './room-parts';
+import { checkedCompanions, PartyStatus, usePartyRequest } from './room-party';
 import { roomTimesFor } from './room-times';
 import {
   bseqnoOf,
@@ -34,8 +37,8 @@ import {
 
 // The book card of a room: a group study room or a media room. It reads the sector's rooms that day and offers those
 // free for the whole slot, the first chosen, or else the nearest free starts. It asks the 사용 용도 when the card has
-// none, and a media room's 서약서 must be agreed to; 예약하기 waits for both. The booking is the applicant's alone:
-// companions are ticket 09's room request.
+// none, and a media room's 서약서 must be agreed to; 예약하기 waits for both. With companions it waits for their consent
+// too, through the room request (`./room-party.tsx`).
 
 export const NO_FREE_ROOM = '그 시간에 빈 방이 없어요';
 
@@ -47,12 +50,11 @@ interface BookRoomCardProps {
   actions: LibraryCardActions;
 }
 
-// Until the room request with friends (ticket 09), a card with companions or a party says so and books nothing.
-export const WITH_FRIENDS_LATER = '친구와 함께하는 예약은 곧 지원돼요';
-
 interface RoomWrite {
   room: LibraryRoomTimes;
   useDesc: string;
+  // The room request every companion consented to, for a card with companions.
+  request: RoomRequest | null;
 }
 
 function slotOf(card: LibraryCardData): Slot {
@@ -60,21 +62,34 @@ function slotOf(card: LibraryCardData): Slot {
 }
 
 // 예약하기: the room form's own values (the applicant, and the phone number and email the site prefilled, which stay on
-// the phone), then the booking, then the done message.
+// the phone), the companions as the library knows them, then the booking, then the done message. A room request is told
+// only whether the booking was made; its BSEQNO stays on the phone, for the cancel.
 async function sendBooking(
   { card, space, actions }: BookRoomCardProps,
   slot: Slot,
-  { room, useDesc }: RoomWrite,
+  { room, useDesc, request }: RoomWrite,
   press: ConfirmedPress,
 ): Promise<CardFailure | null> {
+  const companions = request === null ? { members: [] } : await checkedCompanions(request, space.roomNo);
+  if ('rejected' in companions) {
+    return { failure: null, message: companions.rejected };
+  }
   const form = await library.roomForm();
-  const result = await library.book(roomBookingOf(space, slot, room, useDesc, form), press);
+  const result = await library.book(roomBookingOf(space, slot, room, useDesc, form, companions.members), press);
   const info = result.bookingResultInfo;
   if (info === undefined) {
+    if (request !== null) {
+      await roomRequests.result(request.id, { ok: false });
+    }
     const message = libraryMessage(result);
     return { failure: null, message: message === '' ? BOOK_FAILED : `${BOOK_FAILED}: ${message}` };
   }
-  const done = doneOf(space, { slot, label: room.NAME, bseqno: bseqnoOf(info), notes: card.notes }, now());
+  const bseqno = bseqnoOf(info);
+  if (request !== null) {
+    await keepRoomBooking(Number(bseqno), request.id);
+    await roomRequests.result(request.id, { ok: true });
+  }
+  const done = doneOf(space, { slot, label: room.NAME, bseqno, notes: card.notes }, now());
   actions.addOwn({ text: done.title, done });
   return null;
 }
@@ -90,10 +105,12 @@ interface FormProps extends BookRoomCardProps {
 
 // The room's choices, 예약하기 once both the 사용 용도 and the 서약서 are given, and 취소.
 function RoomChoices(props: FormProps): ReactElement {
-  const { card, room, rooms, choose, write, close, actions } = props;
+  const { card, room, rooms, choose, write, close, actions, place } = props;
   const [useDesc, setUseDesc] = useState<string | null>(card.useDesc);
   const [agreed, setAgreed] = useState(false);
-  const ready = useDesc !== null && (card.pledge === null || agreed);
+  const withParty = card.companions.length > 0 || card.questId !== null;
+  const party = usePartyRequest(card, place, useDesc);
+  const ready = useDesc !== null && (card.pledge === null || agreed) && (!withParty || party.ready);
   const nameOf = (seatNo: string): string => rooms.find(({ SEATNO }) => SEATNO === seatNo)?.NAME ?? seatNo;
   return (
     <>
@@ -118,11 +135,12 @@ function RoomChoices(props: FormProps): ReactElement {
           words={card.pledge}
         />
       )}
+      {withParty ? <PartyStatus party={party} /> : null}
       <RoomButtons
         onBook={
           ready
             ? () => {
-                write.run({ room, useDesc });
+                write.run({ room, useDesc, request: withParty ? party.request : null });
               }
             : null
         }
@@ -228,19 +246,6 @@ function LiveRoomCard(props: BookRoomCardProps): ReactElement {
   );
 }
 
-// A room card for friends: the room and the time, and that the booking with friends is not here yet. It reads nothing.
-function WithFriends({ card, space }: BookRoomCardProps): ReactElement {
-  const { date, start, minutes } = slotOf(card);
-  return (
-    <CardBox testID={`library-book-${card.key}`}>
-      <SpaceRow icon="users" meta={whenWords(date, start, minutes, now())} title={spaceWords(space)} />
-      <Said>{WITH_FRIENDS_LATER}</Said>
-      <Notes notes={card.notes} />
-    </CardBox>
-  );
-}
-
 export function BookRoomCard(props: BookRoomCardProps): ReactElement {
-  const { companions, questId } = props.card;
-  return companions.length > 0 || questId !== null ? <WithFriends {...props} /> : <LiveRoomCard {...props} />;
+  return <LiveRoomCard {...props} />;
 }

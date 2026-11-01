@@ -255,25 +255,6 @@ describe('the chat request', () => {
   });
 });
 
-describe('a room card with friends, until the room request lands', () => {
-  it('says the booking with friends is coming, offers no 예약하기 and reads nothing', async () => {
-    const withFriends = card({
-      ...ROOM_CARD.library,
-      key: 'book:4F-group-6:2026-11-02:1700:60:e=with-monitor',
-      companions: [{ friendId: 'f1', name: '김민준' }],
-    });
-    const party = card({ ...ROOM_CARD.library, key: 'book:4F-group-6:2026-11-02:1800:60', questId: 'q1' });
-    await askForCards({ server, library }, [withFriends, party], { words: '민준이랑 스터디룸' });
-
-    for (const each of [withFriends, party]) {
-      const shown = inCard(`library-book-${each.library.key}`);
-      expect(shown.getByText('친구와 함께하는 예약은 곧 지원돼요')).toBeVisible();
-      expect(shown.queryByRole('button', { name: '예약하기' })).toBeNull();
-    }
-    expect(library.requests).toEqual([]);
-  });
-});
-
 describe('the seats card after closing time', () => {
   it('offers no 자리 예약하기 and no seat to tap at 23:10', async () => {
     jest.useRealTimers();

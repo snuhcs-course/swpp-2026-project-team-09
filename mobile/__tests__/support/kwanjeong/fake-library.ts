@@ -83,6 +83,8 @@ export class FakeLibrary {
   private readonly added: LibraryBooking[] = [];
   private readonly cancelled = new Set<number>();
   private cancelFailWith: string | null = null;
+  // The 학번 getUserCheck does not recognise.
+  private readonly unknownUsers = new Set<string>();
 
   private held: (() => void)[] | null = null;
 
@@ -115,6 +117,11 @@ export class FakeLibrary {
   // A booking of the User's, which getMyBookingList lists with the recorded ones.
   addBooking(booking: LibraryBooking): void {
     this.added.push(booking);
+  }
+
+  // getUserCheck answers this 학번 with the site's msg and no useCheckInfo.
+  refuseUser(schoolNo: string): void {
+    this.unknownUsers.add(schoolNo);
   }
 
   refuseCancels(message: string): void {
@@ -165,7 +172,9 @@ export class FakeLibrary {
       case 'getSeatInfoFromList':
         return (seatInfoFromList as Record<string, unknown>)[body.sectorNo];
       case 'getUserCheck':
-        return { successYN: 'Y', useCheckInfo: { NAME: body.pUserName, SCHOOLNO: body.pSchoolNo } };
+        return this.unknownUsers.has(body.pSchoolNo ?? '')
+          ? { successYN: 'N', msg: '이용자 정보가 없습니다.' }
+          : { successYN: 'Y', useCheckInfo: { NAME: body.pUserName, SCHOOLNO: body.pSchoolNo } };
       case 'getMyBookingList':
         return this.bookings(body);
       case 'roomForm':

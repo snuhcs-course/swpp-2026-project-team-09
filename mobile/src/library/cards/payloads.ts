@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
-import type { RoomBooking, SeatBooking } from '../client';
+import type { RoomBooking, RoomMember, SeatBooking } from '../client';
 import type { LibraryRoomForm, LibraryRoomTimes, LibrarySeat } from '../replies';
 import { siteBookTime, siteDate } from './times';
 
@@ -35,13 +35,15 @@ function first(list: string): string {
   return list.split(',')[0]?.trim() ?? '';
 }
 
-// A room for the applicant alone, with the phone number and email the site prefilled. Companions are ticket 09's.
+// A room for the applicant, with the phone number and email the site prefilled, and the companions after the applicant
+// as the library's getUserCheck answered them.
 export function roomBookingOf(
   space: LibrarySpace,
   slot: Slot,
   room: LibraryRoomTimes,
   useDesc: string,
   form: LibraryRoomForm,
+  companions: readonly RoomMember[] = [],
 ): RoomBooking {
   return {
     kind: 'room',
@@ -53,6 +55,6 @@ export function roomBookingOf(
     useDesc,
     phoneNum: form.phoneNum,
     eMail: form.eMail,
-    members: [{ name: first(form.tmpUserNames), schoolNo: first(form.tmpSchoolNos) }],
+    members: [{ name: first(form.tmpUserNames), schoolNo: first(form.tmpSchoolNos) }, ...companions],
   };
 }
