@@ -1873,7 +1873,9 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     User and the invitees fit the capacity. It takes an id only when a resolver returned it in this message or it is
     in the last Proposal sent back, and checks it again every time: the Place exists, the event is published, each
     invitee is a Friend. With a Global Event and no time it starts at the event's start; a time before is a meeting
-    before the event, as the form's `모이기`, and one after its start is refused. It answers
+    before the event, as the form's `모이기`, and one after its start is refused. A Join Policy or a capacity the model
+    leaves out is filled as the form starts: 비공개 for the invited Friends and the User when Friends are invited, else
+    공개 for 4, so that a request that named what matters is proposed at once and the card takes the correction. It answers
     `{ "result": "refused", "fields": { "board": "…" } }` with what is missing or wrong by field, which the model asks
     the User for, or `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when
     it is called twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and

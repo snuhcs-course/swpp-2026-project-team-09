@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Fable 5.1  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -167,7 +168,15 @@ describe('proposeQuest, refusing a time or a length', () => {
 
     await send(ask('같이 걸을 사람'));
 
-    expect(refusedFields().toSorted()).toEqual(['board', 'capacity', 'description', 'joinPolicy', 'startsAt']);
+    expect(refusedFields().toSorted()).toEqual(['board', 'description', 'startsAt']);
+  });
+
+  it('fills the Join Policy and the capacity the model left out as the form starts: 공개 for 4', async () => {
+    scriptProposal(lunch({ joinPolicy: undefined, capacity: undefined }));
+
+    const response = await send(ask('내일 점심에 학식 같이 먹을 사람 모집해줘, 식사 게시판에'));
+
+    expect(response.body).toMatchObject({ proposal: LUNCH });
   });
 
   it('refuses a title over the length the main server allows', async () => {
