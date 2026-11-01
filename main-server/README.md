@@ -418,7 +418,7 @@ export class AdminEventsController {
 ## Global Events
 
 A Global Event is an Event published to every User. The worker server collects them from the university's events list
-and posts them to `/global-events/collected` (see
+and programme site, extra.snu, and posts them to `/global-events/collected` (see
 [Requests from the worker server](#requests-from-the-worker-server)). Users read the published ones, and Administrators
 read every one, and create and change them, through the routes below.
 
@@ -438,8 +438,24 @@ A Global Event, model `GlobalEvent` in `prisma/schema.prisma`, holds:
     next Collection does not bring its post back.
 - `version`, which starts at 1 and which every change by an Administrator raises by one, so that a change made from an
   older version is refused (see below).
-- For a collected event, `postNumber`, the post's `bbsidx`, which identifies the post, and `sourceUrl`, the post's
-  address. An event an Administrator creates has neither.
+- `publicationRoute`, how it came to be published: `administrator`, `rule` or `judgement`. It is empty while a Draft and
+  on an event discarded as a Draft. An Administrator's publishing or editing sets `administrator`, since they have
+  looked at it; cancelling leaves it as it is.
+- `needsAdministrator`, a flag that an Administrator must look at it.
+- For a collected event, its links to its Source Posts (below). An event an Administrator creates has none.
+
+A **Source Post**, model `SourcePost`, is one post on a Source, stored once: its `source`, its `key` on that Source
+(SNU Now's `bbsidx`, extra.snu's `dataSeq`) and its `address`; (`source`, `key`) is unique. It is read as one or more
+numbered sessions, model `SourcePostSession`, each linked to one Global Event with its `number`, how it was attached
+(`attachedBy`: `own` for the event made from it, `rule`, `ai` or `administrator`) and the `reason`; (Source Post,
+`number`) is unique, and a Global Event can have links from several posts. What differs by Source, whether a building
+number alone is taken as Gwanak and the pattern by which a body's link names a post, is a setting of that Source in
+`src/global-events/post-sources.ts`, so that the steps reading a post do not ask which Source it came from.
+
+`publicationRoute`, `needsAdministrator` and the links are for Administrators, and no DTO the app receives carries them.
+The app's `sourceUrl` is the address of the event's own post. The columns `post_number` and `source_url` of
+`global_events` were moved to Source Posts by the migration `add_source_posts`; nothing reads or writes them, and a
+later migration drops them, once no pod of an older server can run.
 
 An event has ended when its end has passed or, when it has no end, once the day of its start has passed in Asia/Seoul:
 an event without an end that starts today is listed until midnight. The same rule decides both lists of published
@@ -488,8 +504,11 @@ needs beside them through a controller of their own feature. Each route needs an
     "longitude": 126.95407,
     "state": "draft",
     "version": 1,
-    "postNumber": 176525,
+    "source": "snu_events",
+    "postKey": "176525",
     "sourceUrl": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
+    "publicationRoute": null,
+    "needsAdministrator": false,
     "missing": ["startsAt"]
   }
   ```
@@ -498,20 +517,23 @@ needs beside them through a controller of their own feature. Each route needs an
   not be read fully shows it. It is `[]` for an event in any other state. An empty `missing` does not make a Draft
   right: its start may be the header's date (see below).
 - `GET /admin/global-events/:id` answers one event in any state, as an entry of the lists with its `description`, the
-  text to check against the post at `sourceUrl`. An unknown id gets 404 `GLOBAL_EVENT_NOT_FOUND`, and an id that is
+  text to check against the post at `sourceUrl`, and `judgement`, its post's Judgement or `null` (see
+  [the step](#requests-from-the-worker-server)). An unknown id gets 404 `GLOBAL_EVENT_NOT_FOUND`, and an id that is
   not a UUID 400.
 - `GET /admin/places` answers every Place in the order and form of `GET /places` (see [Places](#places)), so that the
   admin site offers the list without a User's token. `src/places/admin-places.controller.ts` serves it.
 - `GET /admin/collection-statuses` answers one entry for every Source, in the order of the `Source` enum:
-  `{ "source": "snu_events", "lastSucceededAt": "…", "lastFailedAt": null, "lastFailureReason": null }`. All three are
-  `null` for a Source never collected (see [Requests from the worker server](#requests-from-the-worker-server)).
+  `{ "source": "snu_events", "lastSucceededAt": "…", "lastFailedAt": null, "lastFailureReason": null,
+"lastSkippedPosts": null }`. The times and the reason are `null` for a Source never collected (see
+  [Requests from the worker server](#requests-from-the-worker-server)). `lastSkippedPosts` is how many posts the Source's
+  last Collection skipped, needing a sign-in or never reaching their page, `null` for a Source that does not send the number.
   `src/collection/admin-collection.controller.ts` serves it.
 
 An Administrator creates and changes them through the same controller. Each answers the event as
 `GET /admin/global-events/:id` does:
 
 - `POST /admin/global-events` with `{ "title", "description", "startsAt", "endsAt", "place", "latitude", "longitude" }`
-  creates a Draft by hand, such as from an organizer's submission, and answers 201 with it: version 1, `postNumber` and
+  creates a Draft by hand, such as from an organizer's submission, and answers 201 with it: version 1, `source`, `postKey` and
   `sourceUrl` `null`. `title` and `description` are required, and a field left out is `null`. It requires an
   `Idempotency-Key` (see [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)).
 - `PATCH /admin/global-events/:id` with `{ "version", ... }` and any of the same fields edits a Draft or a published
@@ -550,12 +572,15 @@ work.
 
 The refusals each have a `code`, and are checked in the order of the table:
 
-| Refusal                                                                         | Status | `code`                    | Also in the body |
-| ------------------------------------------------------------------------------- | ------ | ------------------------- | ---------------- |
-| An unknown id                                                                   | 404    | `GLOBAL_EVENT_NOT_FOUND`  |                  |
-| A change the state does not allow, or an edit of a cancelled or discarded event | 409    | `GLOBAL_EVENT_STATE`      | `state`          |
-| A `version` that is not the stored one                                          | 409    | `GLOBAL_EVENT_CHANGED`    | `version`        |
-| Publishing without a start or a position, or an edit that would remove one      | 409    | `GLOBAL_EVENT_INCOMPLETE` | `missing`        |
+| Refusal                                                                                   | Status     | `code`                                              | Also in the body |
+| ----------------------------------------------------------------------------------------- | ---------- | --------------------------------------------------- | ---------------- |
+| An unknown id                                                                             | 404        | `GLOBAL_EVENT_NOT_FOUND`                            |                  |
+| Attaching or publishing a queued session no longer queued, or detaching a session unknown | 409 or 404 | `POST_SESSION_NOT_QUEUED`, `POST_SESSION_NOT_FOUND` | —                |
+| A change the state does not allow, or an edit of a cancelled or discarded event           | 409        | `GLOBAL_EVENT_STATE`                                | `state`          |
+| A `version` that is not the stored one                                                    | 409        | `GLOBAL_EVENT_CHANGED`                              | `version`        |
+| Publishing without a start or a position, or an edit that would remove one                | 409        | `GLOBAL_EVENT_INCOMPLETE`                           | `missing`        |
+| Attaching a queued session to an event that is no longer its candidate                    | 409        | `CANDIDATE_GONE`                                    | —                |
+| Detaching a session of its own, or one that kept nothing of its Draft                     | 409        | `POST_SESSION_NOT_DETACHABLE`                       | —                |
 
 An id that is not a UUID gets 400, as does a body that breaks the rules above, before any of these.
 
@@ -571,10 +596,10 @@ The worker sends each post of the events list as one event, all those of a Colle
   "source": "snu_events",
   "collectedAt": "2026-10-02T06:00:00+09:00",
   "failureReason": null,
-  "events": [
+  "posts": [
     {
-      "postNumber": 176525,
-      "sourceUrl": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
+      "key": "176525",
+      "address": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
       "title": "[연합전공 지능형통신] 2027학년도 1학기 선발 및 설명회 안내",
       "description": "안녕하세요.\n…\n- 일시: 2026. 10. 13.(화) 17:00\n- 장소: 뉴미디어통신공동연구소 이충웅홀(132동 103호)\n…",
       "start": "2026-10-13T17:00:00+09:00",
@@ -592,23 +617,172 @@ The worker sends each post of the events list as one event, all those of a Colle
   through the whole list. A Collection that stopped hands over the posts it read all the same, and the main server stores them and
   records the reason as the Collection's failure in the same transaction, so that `lastSucceededAt` stays the time of
   the last Collection that went through the whole list.
+- `skippedPosts`, which extra.snu's Collection sends and SNU Now's does not, counts the posts it skipped, needing a
+  sign-in or never reaching their page. They are not stored, and it is not a failure: `CollectionService.recordSkippedPosts()` keeps the number in
+  the same transaction as `lastSkippedPosts`.
+- A session's `title`, which is optional, names its Global Event in place of the post's title, when a post of several
+  sessions could not tell them apart otherwise.
 - `start` and `end` are each a time with its offset, or a day when no time of day was read. `readFrom` says where they
-  were read: `body` for the body's time line, `header` for the header's date. All three are `null` when no day was
-  read.
+  were read: `body` for the post's own statement of the event's time, its body's time line or extra.snu's session field,
+  `header` for the header's date. All three are `null` when no day was read. A time may come with `readFrom` `null`, when
+  the worker keeps it for a person and not for the rules, as extra.snu's sessions of over 24 hours are.
 - `place` is the body's place line as the post writes it, or `null`.
 - A post whose page the worker could not read as the post comes with its title from the list, an empty `description`
-  and no time or place, so it is stored as a Draft. An Administrator reads it at its `sourceUrl`.
+  and no time or place, so it is stored as a Draft. An Administrator reads it at its address.
 
-The rules read one start and one end per post, so a post that describes several sessions, such as a lecture series, is
-one event, which an Administrator splits.
+The events list's rules read one start and one end per post, so a post of that list that describes several sessions, such
+as a lecture series, is one session and one event, which an Administrator splits. A message can carry several sessions
+of a post, and each becomes its own event.
+
+A Collection's message is stored and answered at once, since the worker waits only five seconds: every session is stored
+as a Draft, and nothing is published inside the request. The step after the answer, `PublicationStepService`, then goes
+through each Source Post of that Source not yet through it, `stepFinishedAt` empty: the link rule, then the rules' reading
+and a Judgement's, then the comparison with the events that exist (below), then publication of the sessions neither
+attached nor held, the rules' with the route `rule`. Their version stays 1, since it counts an Administrator's changes. An event an
+Administrator edited or discarded before the step ran is left as it is. A worker that gave up while its message was
+stored does not stop the step. When the step fails on a post, or the server restarts before it ran, the post stays as it
+is, and the next Collection of its Source takes it up; a Collection whose list holds nothing new still sends its
+message, so at the latest at that Source's next scheduled Collection.
+
+With the setting `AUTOMATIC_PUBLICATION=off` (default `on`) the step publishes nothing: it still stores Judgements and
+attachments, every other session stays a Draft for an Administrator, and turning it on again does not publish those. [infra/production/README.md](../infra/production/README.md)
+says how to turn it off in Production.
+
+**The same event posted twice** (`same-event.ts`). A new post's sessions are only ever attached to events that exist, and
+two existing events are never merged. The step reads only a post's title, text and links, and what differs by Source is
+its address pattern in `post-sources.ts`. Comparing and publishing a post hold one transaction-scoped lock, so that of two
+posts of one event on two pods the second sees the first.
+
+- **The link rule** comes first and asks no model. The worker sends where the links of a post's body lead as `links`, since
+  words can hide an address; the rule reads those and the body's text. When they name one stored post (not the post
+  itself) with as many sessions, the sessions are attached in the order of their numbers, whatever their times, with the
+  reason `link`. A session whose time the post states, more than a header's date, and that differs from its event's leaves the event as it is and
+  sets its `needsAdministrator`, without raising its version. Several posts, or another number of sessions, leave the
+  post's sessions Drafts with `heldFor` `link_not_one_to_one`: they are neither judged nor published. A linked event that
+  is a Draft no one read a time for, neither an Administrator nor the rules, takes nothing: it may never be published, so
+  the post goes on through the step and may publish itself. Should that Draft be published later, the event can show
+  twice unless the title rule catches it. A flag on a Draft moves with it when it is attached in its turn. Only a new post that
+  links a stored one is looked at, so a post stored first and linked by nothing later comes to the title rule alone.
+- **The candidates**, once a session's time is known, are the events of any Source starting within one day, other than the
+  post's own, in any state, so that a cancelled or discarded event does not come back through another post. A Draft is a
+  candidate only if an Administrator made it, or the rules read it and its post has been through the step: the start of
+  any other may be only an application period, and attaching to it could hide the post for good. A session whose
+  Judgement could not be made is compared at its retry, and stays a Draft until then.
+- **The refusing rules** read the titles as written (only with their width folded), never the body, which often speaks of the other kind. They refuse two
+  times of day on one day, and titles that say different rounds (`1차`, `2회차`), modes (대면 against 비대면) or roles (헬퍼, 디자이너, 멘토, 멘티, 튜터, 튜티, 스태프: what a participant does, not who it is for). A
+  title saying nothing of it is not refused. Candidates on the day before or after are kept.
+- **The attaching rule** runs only with `SAME_EVENT_TITLE_RULE=on` (default `off`, also in Production): a wrong attachment
+  hides an event from Users, flagged by nothing, so it stays off until evaluation B has measured it. With it off the
+  candidates are not looked at and both posts are published. Equal normalised titles (NFKC, lower case, without what is in `[]`, `()`, `【】` or `<>`, spaces or
+  punctuation) and equal starts attach, with the reason `equal_title_and_start`. Several such events leave the session a
+  Draft with `heldFor` `several_matches`.
+- **What attaching does:** the session's link moves to the event, with `attachedBy` `rule`. Its own Draft is removed and what
+  it held, the only copy of the post's title and text, stays in the session's `ownDraft`, for detaching (ticket 08b). The
+  event's `sourceUrl`, its version and its route stay, since those read its own session. Attaching tells no app to refetch.
+  A session's `globalEventId` in a Judgement is the event it was published as or attached to, or its Draft while held.
+
+- **The AI's choice** runs only with `SAME_EVENT_AI_CHOICE=on` (default `off`, also in Production; with `on` the server
+  refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`). `off` calls no model, sends nothing out and asks
+  nothing of the candidates, so a session the rules do not attach is published as before. For the sessions of a post
+  with candidates the refusing rules left, whether the rules read them or a Judgement passed them, it makes one call,
+  outside any transaction and lock, with no retry. No model is called for a session with no candidate, one the rules
+  decided, or a post the link rule decided. An answer is stored in `same_event_answers`, one row per session named by
+  its start, made before the call: of two servers one calls, and a session is never asked about twice.
+- **What leaves the server for it:** the Source's name, the post's title and text, each session's start and place,
+  and each candidate's title, start, place and text, masked as for a Judgement. Candidates are numbers, never ids; one that a refusing rule refused is not sent.
+- **An answer is applied under the step's lock**, once checked. `same` attaches with `attachedBy` `ai` and the AI's sentence as the `reason`. Another time flags the event and changes nothing else, nor its version. `different` lets the session go on to publication. Attaching still happens with `AUTOMATIC_PUBLICATION=off`; nothing is published and no app is told.
+- **The queue** is a session's `heldFor`, a value saying why it waits, so that an evaluation can count them (`holdOf` in
+  `same-event-choice.ts`): `link_not_one_to_one`, `several_matches` (several title matches, or two sessions chose one
+  event), `ai_unsure`, `ai_failed` (a failed call, a timeout, a malformed answer, a candidate not offered, or a server
+  that stopped during the call), `candidates_changed` (the chosen event is no longer a candidate, or one the AI was not
+  asked about has appeared, as when another server published it meanwhile). It stays a Draft, is neither judged nor
+  published, and its post finishes the step. A post another server is asking about is left to it.
+- **What an Administrator does** (`admin/global-events`, each under the step's lock, so that of two one acts and the
+  other gets 409): `GET queue` lists the sessions with their candidates, worked out when asked, so a removed event goes,
+  a cancelled one says so and a later one appears, and those of the posts the body links are among them. `POST
+queue/:sessionId/attach` (`attachedBy` `administrator`, reason empty, no flag) takes only a candidate; `POST
+queue/:sessionId/publish` publishes the Draft by an Administrator's route, or answers `GLOBAL_EVENT_INCOMPLETE` for
+  what it still needs, and it stays queued while they fill it in on its page. Both take the Draft's version. Publishing
+  or discarding a queued Draft on its own page takes it out too. Only publishing tells the apps to refetch.
+- **Detaching** (`POST sessions/:sessionId/detach`, listed by `GET :id/sessions`) makes a session with an `ownDraft` its
+  own Draft again, with a new id, with `readByRules` off and `reason` and `ownDraft` empty. The event, its Quests and
+  its flag stay. The Draft has version 2, an Administrator's change, so that neither the next Collection nor `overDraft`
+  judges or attaches the post again. `POST :id/acknowledge` takes an event's flag off, also without a new version.
+
+**A Judgement** ([ADR 0008](../docs/adr/0008-judgements-publish-only-what-the-server-checks.md)) reads what the rules
+left. With `AUTOMATIC_JUDGEMENT=on` (default `off`, also in Production) the step calls the model once for each post with a
+session the rules did not read, one post at a time, after the posts that need no model. `off` calls no model, sends no post
+out and leaves the rules' publication alone; Drafts stored meanwhile are not judged when it is turned on. With `on`, the
+server refuses to start without `OPENROUTER_API_KEY` and `ASSISTANT_MODEL`.
+
+- **What leaves the server:** the post's title and text and the Source's name, with e-mail addresses and phone numbers
+  starting with 0 masked (`judgement-post.ts`), and today's date, by which the model chooses the year of a date written
+  without one. The checks compare the quoted lines with the masked text.
+- **What the model answers:** whether the post announces an event, and per session the start, end, place, whether it runs
+  over a period, and the lines each came from (`judgement-answer.ts`). The call is limited by `JUDGEMENT_TIMEOUT_MS` (60,000)
+  and `JUDGEMENT_MAX_OUTPUT_TOKENS` (4,000), is not sent again, and runs outside any transaction, after the Collection's
+  answer. It uses the Assistant's model and OpenRouter key, so it spends the same credit. `judgement-model.ts` calls the
+  model library itself, because the Assistant's adapter runs a User's tools and stays as the chat's evaluations measured it.
+- **What the server checks** (`judgement-checks.ts`), each on its own: the post is called an event, each quoted line is in
+  the post, the date, weekday and time agree with the lines, the whole line and a short label above it are not an
+  application period, the start is before the end, it has a time of day, it lasts at most 24 hours and ends where a time
+  line that runs across days ends, the place is in its lines and names exactly one Place on a line that names nowhere
+  else, and it is not a session the rules or the same answer already gave. A place that is a
+  building number alone is taken as Gwanak where the Source's setting says so. A session read as running over a period
+  needs no time of day and may last longer than 24 hours, but it must end on two different days, with one quoted line
+  holding both of them. The lines' ranges may be written with `~`, `부터` or a hyphen.
+- **What it publishes:** each passing session becomes its own Global Event with the route `judgement`, at version 1,
+  taking the post's Draft with its start, or else a free one, or else a new event linked as another own session of the
+  post. Failing sessions make no Draft: a post stored as one Draft keeps it for them, and a post the worker sent with a
+  Draft per session keeps those it did not publish, so that no time the worker read is lost. A post called no event stays
+  as it is, with the outcome `no_event`. A session over a period whose end is a day alone, or the 00:00 extra.snu writes
+  where it has no time, is stored as ending at 23:59 of that day in Korea, so that it stays listed through its last day
+  and its card names that day.
+- **What it leaves alone:** a post with any session an Administrator changed is not judged, and a change while the model
+  reads it publishes nothing of that Judgement. A post the link rule decided is not judged. With
+  `AUTOMATIC_PUBLICATION=off` the Judgement and what it attaches are stored and nothing is published.
+- **Failing closed and tries:** an error, a timeout or a malformed answer publishes nothing. A post has at most two tries,
+  counted when claimed in `judgements.attempts`, so a server that dies during a call has used its try, and of two servers
+  one calls. A claim older than twice the time limit was left by such a server. `source_posts.step_finished_at` has no
+  limit: the step comes back to an unfinished post at each Collection of its Source, and asks the model only while a try
+  is left. It finishes a post once its Judgement has an answer or no try left. A stored answer whose publication failed is
+  published by the next Collection without another call.
+- **One step over one Draft:** `JudgementsService.judgeDraft(globalEventId)` judges and stores whatever
+  `AUTOMATIC_JUDGEMENT` says, for the evaluation, and `PublicationStepService.overDraft(globalEventId)` also publishes what
+  passed, for a later script. Both judge the Draft's whole post, since its Drafts share one text, and keep to its tries.
+
+Administrators read a post's Judgement in `judgement` of `GET /admin/global-events/:id`. `GET
+/admin/global-events/unsettled-posts` gives the posts the step failed on or has not finished with, and those whose
+Judgement could not be made while a Draft waits, since a Collection is recorded as a success whatever the step does. No
+DTO the app receives carries any of it. An entry of that list:
+
+```json
+{
+  "source": "snu_events",
+  "key": "178226",
+  "address": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=178226",
+  "stepFinished": false,
+  "stepFailure": null,
+  "stepFailedAt": null,
+  "judgementFailure": "APICallError: HTTP 402, the OpenRouter credit is used up",
+  "judgementAttempts": 1,
+  "drafts": [{ "id": "…", "title": "…" }]
+}
+```
+
+The `judgement` of an event's page holds `outcome` (`judged`, `no_event` for a post called no event, `failed` for one that
+could not be made, `null` while a try runs), `failure`, `attempts`, `announcesEvent`, `modelId`, `judgedAt` and `sessions`,
+each with `start`, `end`, `place`, `overPeriod`, `lines`, `placeId`, `checks` (each `name` and `passed`), `passed` and
+`globalEventId`, the event it was published as.
 
 A collected event is published, with no person involved, when the rules read both its time and its place:
 
-- its start comes from the body's time line (`readFrom` is `body`) and has a time of day. A start read from the header's
-  date does not count, because that date is often the application period;
+- its start comes from the post's own statement of the event's time, its body's time line or extra.snu's session field
+  (`readFrom` is `body`), and has a time of day. A start read from the header's date does not count, because that date is
+  often the application period;
 - its place names exactly one Place of the [list](#places). Its position is that Place's coordinates.
 
-Any other collected event is stored as a Draft with whatever was read: an event online or off campus, one whose place
+Any other collected event stays a Draft with whatever was read: an event online or off campus, one whose place
 names no Place or several, and a post that is not an event, which mostly writes no such time and place. A rule that
 is not sure makes a Draft.
 
@@ -646,20 +820,20 @@ account for makes a Draft:
   `시흥`, `평창`, `수원`, `의과대학`, `간호대학`, `서울대학교병원`, `부설` and the like), at the stations named after it, at
   another university, at an address in another district or region, or in a flat. The list is Gwanak's.
 
-No Collection changes a stored event, whatever its state. A post is stored once, by its post number, and a later
+No Collection changes a stored event, whatever its state. A post is stored once, by its Source and key, and a later
 message carrying it again leaves it exactly as it is. So an Administrator's edits stay, and a discarded post does not
-come back. The worker asks which posts are stored before it reads any (`/global-events/stored-posts`), so it does not read a
+come back: a discarded event keeps its Source Post. The worker asks which posts are stored before it reads any (`/global-events/stored-posts`), so it does not read a
 stored post again: an edit or a deletion at the Source after that is not seen.
 
-A Collection that stores at least one event as published sends `global-events-changed` to every connected app once
-the events are stored, and the app fetches the published events again (see [Signals](#signals)). It carries nothing. A
-Collection that stores only Drafts, or no new post, sends none. `GlobalEventsService.signalChanged()` sends it, also
+The step sends `global-events-changed` to every connected app once when it published at least one event, and the app
+fetches the published events again (see [Signals](#signals)). It carries nothing. A step that publishes nothing sends
+none. `GlobalEventsService.signalChanged()` sends it, also
 after an Administrator's change (see above).
 
-What the rules read from a post, and how, is in the worker server's README. In a test, `collectedEvent()`,
-`eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, as
-`test/global-events.integration.test.ts` does; it reads what a Collection stored, by post number, with a database
-connection of its own. `test/global-event-lists.ts` reads the lists above, and `test/global-event-changes.ts` calls the
+What the rules read from a post, and how, is in the worker server's README. In a test, `collectedPost()`,
+`eventsMessage()` and `postNumbersFrom()` in `test/global-events.ts` build what the worker sends, and `stepOver()` waits
+for the step after the answer, as `test/global-events.integration.test.ts` does; it reads what a Collection stored, by
+post, with a database connection of its own. `ownSession()` links an event a test stores to a post. `test/global-event-lists.ts` reads the lists above, and `test/global-event-changes.ts` calls the
 Administrator's changes. The test files share one database, so `publishedAmong()` and `listedAmong()` keep only the
 events a test names, in the list's order. `signalsWhile()` in `test/signals.ts` gives the `global-events-changed`
 signals sent while a test acts, between two signals of the test's own. Other files publish, edit and cancel events
@@ -1375,6 +1549,7 @@ for today and the six days after, and posts them to `/menus/collected` (see
   [
     {
       "name": "두레미담",
+      "placeId": "9a1f0c3e-6d0b-5a0a-8f3e-2f6a7c1b4d21",
       "collectedAt": "2026-09-30T20:00:00.000Z",
       "meals": [
         {
@@ -1391,6 +1566,9 @@ for today and the six days after, and posts them to `/menus/collected` (see
   ]
   ```
 
+- `placeId` is the restaurant's Place, from `seed/restaurant-places.json`, or `null` for a restaurant the seed does not
+  hold. Each restaurant's key is its name here. `RestaurantPlaces` (`src/menus/restaurant-places.ts`) reads the seed once
+  when the server starts.
 - A meal is the lines of its cell on the page, in the page's order
   ([ADR 0001](../docs/adr/0001-menus-kept-as-lines.md)). `meals` holds the meals that have lines, in the order
   breakfast, lunch, dinner, and a restaurant the page lists with empty cells is served with `meals: []`. `collectedAt`
@@ -1661,6 +1839,46 @@ The worker's two routes, which follow [Requests from the worker server](#request
   where `collectedAt` is when the operator's answer arrived and `x`, `y` the position on the drawing. A `carId` listed
   twice is refused.
 
+### Shuttle times from the Dev log
+
+Real waits and rides come from a few days of vehicle positions logged on the Dev Server
+([The shuttle log](../infra/deploy/README.md#the-shuttle-log)). Production keeps no history of them. A folder holds
+each logged day as `YYYY-MM-DD.csv` with its set log `YYYY-MM-DD.sets.csv`, both plain or both gzipped; the committed
+days are in `eval/shuttle-days/`.
+
+```sh
+pnpm shuttle:derive eval/shuttle-days   # writes seed/shuttle-timing.json from the days in the folder
+pnpm shuttle:score eval/shuttle-days    # the shuttle metric, each day held out in turn
+```
+
+Neither calls anything. Both clean the days with one implementation of the rules R1 to R12 of the P04 spec
+(`scripts/shuttle/`) and print every item left out, with its rule and reason. A value that breaks R1, such as a time
+without an offset, stops the command. Stops are named by `loop_order`, their place in the stop seed.
+
+`seed/shuttle-timing.json` has the shape in `src/shuttle/shuttle-timing.ts`, in seconds: per stop and band the average
+wait, Σh² / (2Σh) over the observed headways h, and per pair of stops and band the median ride. What the file lacks,
+the fallback in that module covers. The 75% of R11 decides only what the score counts.
+
+The score holds each day out and compares it with the times derived from the others. A stop-band or pair-band those
+days lack is predicted with the fallback. The ride compares every held-out ride with the median, by MAE and the share
+within ±1 minute, against along-loop distance at 4.15 m/s. The wait compares each scored stop-band of 08–19 with the
+prediction, each with equal weight, against 3.5 minutes. The threshold holds when both MAEs are below their baselines.
+
+## Travel Time
+
+`TRAVEL_PROVIDER` (`src/travel/travel.ts`) says how long the way from one Place to another takes at a departure time,
+in seconds, on foot or by the circular shuttle. Show its seconds as whole minutes, rounded up, with `shownMinutes`. Both
+of its files are read once when the server starts. A fixture can be bound to the provider in place of them. It also
+answers `walkingSeconds`, the way on foot alone, by which a leave-by time's out-travel departs.
+
+- **On foot**, it looks the pair up in `seed/walking-table.json` (Seed data, ADR 0010).
+- **By shuttle**, only the anticlockwise route 41946: a walk to a boarding stop, the average wait, the ride to a stop
+  ahead on the loop and a walk from that stop, by the best pair of stops. The wait and the ride use the band of the time
+  the User reaches the stop. It is offered only when the User reaches the stop on a weekday between 08:00 and 21:00 in
+  Korea, and chosen when it is at least 3 minutes faster than walking.
+- **The shuttle's values** come from `seed/shuttle-timing.json` when it exists. Any stop-band or pair-band it lacks, or
+  all of them until it exists, take the fallback in `src/shuttle/shuttle-timing.ts`.
+
 ## Timetable
 
 A User's timetable is the User's classes, and nothing else is stored for it. A User keeps one timetable from semester
@@ -1781,14 +1999,21 @@ its model through OpenRouter with the Vercel AI SDK
   `{ "title", "description", "joinPolicy": "open" | "approval" | "closed", "board", "capacity", "startsAt",`
   `"place", "globalEvent", "invitees" }` with `startsAt` in Korea time, `board` null for a Closed Quest, `place` as
   `{ "id", "name" }` or null, `globalEvent` whole as `GET /global-events` serves it or null, and `invitees`, the Friends
-  to invite, as `[{ "id", "name" }]`, never where they are (`src/assistant/proposal.ts`). The app sends a card back only
+  to invite, as `[{ "id", "name" }]`, never where they are (`src/assistant/proposal.ts`). A candidate of
+  `findFreeTimeEvents` has its 이동 시간 fields beside the `quest` or the `globalEvent`, each only when it applies:
+  `travel` (`{ "mode": "walk" | "shuttle", "minutes" }`), then either `next` (`{ "minutes", "isClass" }`) or `leaveBy`
+  (`"HH:MM"`) with `endUnknown`. Older apps ignore them. A `restaurant` card (`{ "kind": "restaurant", "restaurant": { … } }`)
+  holds `key`, `name`, `placeNumber`, `date`, `meal`, `eatingMinutes`, `lines` (those that are not notes, as `GET /menus`
+  serves them), `people` (`[{ "name", "mode", "minutes", "longest" }]`, with `나` for the User and `mode` and `minutes`
+  null when the way is unknown) and its `proposal`, the meal Quest the server filled in for the card's 파티 만들기. An APK
+  from before P4 refuses a reply with such a card as its ordinary failure. The app sends a card back only
   as its reference, `{ "kind", "id" }`, the last Proposal with its values and its `globalEvent` as `{ "id", "title" }`,
   and never the map buttons. No conversation is stored, only the words the resolvers were given and the ids they
   answered (`resolution_events`, below): the app keeps the conversation.
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
-    (`quest` or `globalEvent`, by id; `cards` may be left out) and the Proposal it made (`proposal`, which may be left
+    (`quest` or `globalEvent` by id, `restaurant` by its key; `cards` may be left out) and the Proposal it made (`proposal`, which may be left
     out, on one message at most). The model gets only the latest 20 messages, and of an Assistant's message its text,
     a line naming its cards and a line with its Proposal's values, never an earlier message's tool results.
   - **Choices and the chosen candidate** (P07). `choices` lists the candidates of every `several` answer of the run's
@@ -1857,8 +2082,9 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 
 - **The model port** (`MODEL_PORT` in `adapter.ts`): the one place that talks to the model. The server binds it to
   OpenRouter (`openRouterModel`); the tests bind the scripted fake below.
-- **Tools** (`tools/`): each is a zod schema of its input and a plain function calling this server's services, made
-  with `defineTool` (`feature.ts`). It is given the signed-in User's id and the time of the request. A tool answers only
+- **Tools** (`tools/`, and `free-time/` for the 공강 tools): each is a zod schema of its input and a plain function
+  calling this server's services, made with `defineTool` (`feature.ts`). It is given the signed-in User's id and the
+  time of the request. A tool answers only
   what matches what the model passed, or `{ "result": "none", "reason": "…" }` (`noneFound`), so that the model says
   there is none instead of answering from elsewhere.
   - `getMenus(date, meal?, restaurant?)` answers the menus of that day only, each restaurant with `collectedAt` in
@@ -1910,13 +2136,46 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     are bounded by `makeQuestSchema` (50 and 200 characters) before the card is drawn and by `questProposalSchema`
     when the Proposal is sent back, `startsAt` must parse as a date and time, `capacity` is 1 to 8, and every name on
     the card comes from the catalog, never from the model. The tap on 만들기 is the last line, not the defence.
+  - **The 공강 tools** (`free-time/`, ADR 0009) work on a day from today to a week ahead, and on the items of a User's
+    day: each Class meeting on that weekday and each timed Sub Quest of a Quest they hold (`UserDayService`, for any
+    User). Rooms, Places, coordinates and the reason anyone is busy are never returned.
+    - `getMyDay(date)` answers the User's items, each with its id (a Class meeting's is its ClassTime's), name, start
+      and end. A Sub Quest with no end, or longer than 3 hours, ends 30 minutes after its start.
+    - `findFreeTimeEvents(date, from, to, board?, departurePlace?, departureTime?, leaveBy?)` takes `from` and `to` as an item id, a
+      clock time, `now` or `end`. It answers the gaps found, with the items around them, the `total` and every candidate
+      that fits, soonest first with no cap: recruiting Quests the User can still enter and published Global Events that
+      start inside a gap, at a place that maps to a Place (`PlaceLookup.placeIdOf`), reached 1 minute early and left in
+      time for the next item, at their end or, after a stay of at least 30 minutes, at a leave-by time. What is left out is neither returned nor explained. Or it answers
+      `{ "result": "needs", "needs": { "side": "before" | "after", "item" } }` for an item of the User's without a Place,
+      and takes the answer as `departurePlace`, which must come from `resolvePlace` in the same message, or `leaveBy`.
+      From off campus, `departureTime` says when the User enters the campus at that Place, and they leave from there
+      at that time. These answer only sides without a Place, and nothing of them is stored. A clock time as `to` also limits a
+      candidate's end. The numbers are in `src/travel/judgement-constants.ts`.
+    - `findFreeFriends(date, meal | window, friendIds?)` answers the User's Free Time in the window (`freeTime`) and the
+      accepted Friends free with them, whatever their Location Sharing switch: those who share at least 15 unbroken
+      minutes of it, each with id, name, department and the `overlap`, and no others. With `friendIds` it adds what they
+      all share with the User (`shared`).
+    - `findMealRestaurants(date, meal, friendIds, window?, departurePlace?, departureTime?, leaveBy?)` answers the time shared, the
+      oldest `collectedAt` of the day and the Restaurants that fit, in order (`free-time/meal-fit.ts`): each with its key,
+      name, Place, its lines that are not notes, `start`, `eatingMinutes` and each person's way. A Restaurant is one with
+      a Place that is open for the meal (`src/menus/open-rule.ts`, ADR 0011). It fits when, after the last of them
+      arrives and the start rounds up to 5 minutes, at least 15 minutes are left before the first must leave and before
+      the window ends, in the earliest shared interval where that holds. Nothing to show answers
+      `{ "result": "none", "why": "no-menu" | "no-shared-time" }`, which never says who is busy, or `found` with no
+      Restaurants. It can answer `needs` as `findFreeTimeEvents` does. A Friend's item without a Place only leaves out
+      that side's travel.
+    - `showRestaurants(keys)` adds the cards the server built for those keys, in the order of `findMealRestaurants`.
+    - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
+      puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
+      in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.
   - A **presenter** puts something real into the reply rather than the model describing it.
     `showOnMap(dining | shuttle)` adds that map button; any other layer goes back to the model as an error.
     `showGlobalEvents(ids)` adds those events as cards, in the order given, and `showQuests(ids)` those Quests. Cards
     of both kinds lie in one list in the order shown, at most 20 in a reply.
   - **The presenters' guard** (`found-ids.ts`): a presenter accepts only ids that a lookup or a resolver returned in
-    this message. Its kinds are the cards' (`quest`, `globalEvent`) and the resolvers' `friend` and `place`, which
-    are never cards. Each run has its own `FoundIds` in the tools' context, which the lookups add to. Any other id, one
+    this message. Its kinds are the cards' (`quest`, `globalEvent`, `restaurant`) and the resolvers' `friend` and
+    `place`, which are never cards. `findFreeFriends` adds its Friends, and `findMealRestaurants` its Restaurants and
+    their Places. Each run has its own `FoundIds` in the tools' context, which the lookups add to. Any other id, one
     from an earlier message too, goes back to the model as an error, and nothing of that call is shown.
   - **Text by others** (`others-text.ts`): text written by other people or collected from a Source, such as a Global
     Event's title, description and place, or a Quest's (`quest.title`, …), reaches the model as
@@ -1924,10 +2183,13 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     `othersText` breaks a tag of the delimiters inside the text, so that it cannot close them.
 - **Feature definitions**: an entry point with its own system prompt and its own tools (`Feature` in `feature.ts`). The
   chat Assistant is `chat/chat-assistant.ts`. Its system prompt carries the date, the weekday and the time in Korea of
-  each request. A later AI feature gets a definition of its own that reuses tools, never more tools on this one, so
-  that one feature cannot reach another's data.
+  each request. A capability of the chat joins it as tools and a prompt fragment (ADR 0009, `FREE_TIME_RULES`). An AI
+  feature with an entry point of its own gets a definition of its own that reuses tools, so that it cannot reach
+  another's data.
 - **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
-  call, tool call and answer within the limits per message. `causeOf` names why a run failed for the log.
+  call, tool call and answer within the limits per message, asking OpenRouter for providers that do not collect data
+  (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). `causeOf` names why a
+  run failed for the log.
 
 **Grey suggestions** (`src/assistant/suggestions/`) are decided by this server without the model, when the chat opens.
 `GET /assistant/suggestion?screen=main|events|party&openCard=globalEvent:<id>` answers
@@ -2021,6 +2283,7 @@ pnpm eval --model anthropic/claude-haiku-5.5 --temperature 0 --max-steps 30 --ti
 | `--repeat <n>`                                         | the cases marked `repeat` run their own count (3)                                 |
 | `--category`, `--case`                                 | every case; both take several values, comma-separated or again                    |
 | `--budget <USD>`                                       | 5                                                                                 |
+| `--world <small \| p4 \| p5 \| large-world-v1>`        | `small`, P19's world and the cases that name it                                   |
 | `--yes`                                                | asks before it starts                                                             |
 
 `eval/cli.ts` reads the flags, prints the estimated cost from the number of turns, the tokens a turn took in the last
@@ -2038,10 +2301,15 @@ production runs as before. A turn's trace ends with the reply (its text and leng
 the failure: STEP_LIMIT, TIMEOUT or ERROR.
 
 A case is a single turn, a fixed history (the earlier turns written out, the Assistant's with cards and a Proposal by
-seed name; only the last turn is sent) or live (`live: true`: each User's message sent with the real replies before
+seed name; all of them are sent in one request, and only the last turn is scored) or live (`live: true`: each User's message sent with the real replies before
 it). A run is saved as `eval/results/<date>-<commit>-<model>-<settings>.json`, every turn's trace with it. `results/`
 is ignored by git; commit a run worth keeping with `git add -f`. `test/eval-runner.integration.test.ts` and
 `test/eval-options.integration.test.ts` test the runner with the scripted model in `pnpm test`.
+
+The collection evaluations (A and B of P05) have their own fixed sets, saved posts, labels and thresholds in
+`eval/collection/`, with their record in `eval/collection/README.md`. `pnpm eval:collection:status` shows the blanks left
+in the label files and how far the two labellers agree; `test/eval-collection-set.unit.test.ts` checks the sets in
+`pnpm test`. Their runner comes with ticket 09.
 
 #### The world and the cases
 
@@ -2051,10 +2319,41 @@ compound). They name the world by seed name: what the world holds is in `eval/wo
 Friends, the Places of the shared seed, the Global Events, the recruiting Quests, the menus and the shuttle's vehicles), and
 `eval/world.ts` seeds it with the test helpers into the run's fresh database. The shuttle's vehicles are stored anew
 before each case, since the server forgets them after a minute. The world and the cases change together:
-`test/eval-cases.integration.test.ts` checks in `pnpm test` that every case fits the schema, that the set has the spec's
-categories and counts, that every seed name a case gives is in the world as that kind of thing, and that the tools
+`test/eval-cases.integration.test.ts` checks in `pnpm test` that every case fits the schema, that the fixed set is included
+once, that every seed name a case gives is in the world as that kind of thing, and that the tools
 answer in the world what the cases expect (for example that 민수 names two Friends and that 2026-10-23 has no menus).
 It seeds the world into a database of its own, as `test/eval-runner.integration.test.ts` does.
+
+A case names the world it runs in, `small` unless it says otherwise, and a run is of one world. P19's fixed set is pinned
+by id in `eval/fixed-set.ts`: other cases can join `eval/cases/`, and the test checks that the set is included, once.
+
+#### The P4 suite
+
+`pnpm eval --world p4` runs the 40 cases of `eval/p4/cases/` (공강 파티 15, 공강에 밥 15, 공통 10) in a world of their
+own, `eval/p4/world.yaml`, with the clock at 2026-11-02 (월) 11:30 unless a case gives its own `now`. A case's `asker`
+sends it as another User of the world, such as one with no Timetable. `eval/p4/rules.md` states the judgement in prose,
+`eval/p4/travel-fixture.json` freezes every ordered pair of the world's Places, bound to `TRAVEL_PROVIDER` so that the
+real table and shuttle file never reach a run, and `eval/p4/suite.yaml` commits the
+thresholds and who drafted and reviewed the labels. Every case has `repeat: 3`, so a scorecard's pass rates are the mean
+of the 3 runs. `test/eval-p4-cases.integration.test.ts` checks the set, the fixture and every seed name.
+
+#### The P05 suite
+
+`pnpm eval --world p5` runs the cases of `eval/p5/cases/`, joining or recruiting and finding, in a world of their own,
+`eval/p5/world.yaml`, with the clock at 2026-11-02 (월) 14:05. `eval/p5/rules.md` states the judgement in prose, and
+`eval/p5/suite.yaml` commits the thresholds of evaluations C and D, each case's subset, the superseded P19 cases and who
+drafted and reviewed the labels. Do not run it with the real model before C0, and rehearse only with words outside the
+set, keeping no result (metrics document, 4.1). `test/eval-p5-cases.integration.test.ts` checks the set and the world.
+A scorecard of the suite adds each metric with its pass or fail, and each subset's cards summed over the repetitions
+beside the mean over its cases (`eval/p5/report.ts`).
+
+`pnpm eval --world large-world-v1` runs the 80 cases of `eval/p5/large-world-v1/` in a generated world of 1,000 Quests
+and 307 Global Events, seeded only into the run's fresh database. A run reads the version's data files, and
+`eval/p5/large-world/generate-cli.ts` writes a new version and refuses one that exists. `eval/p5/suite.yaml` holds its
+thresholds and subsets and pins the hashes of its world and cases, which `test/eval-large-world.unit.test.ts` checks.
+`test/eval-large-world.integration.test.ts` calls the search tools with each case's intended inputs and no model, and
+checks the server's recall against what `intended.yaml` expects today. `pnpm eval:compare` refuses two runs of different
+worlds. The record is in `eval/p5/README.md`.
 
 #### Scoring
 
@@ -2067,8 +2366,9 @@ pnpm eval:compare eval/results/<a>.json eval/results/<b>.json   # two runs side 
 
 A case's `expect` (`eval/expect.ts`) holds the accepted `actions` (TOOL, ASK, PROPOSE, REFUSE, CHAT, TOOL+ASK,
 PROPOSE+ASK), `tools` (`required`, `allowed`, `forbidden`, `"*"` for none), `args` of required tools (a list for one
-call each), and the outcome: `proposal` fields, `cards` (`kind`, `seeds`, `min`, `max`), `mapButtons` and
-`text.mentions` (each a word, or a list of which any one counts, spaces ignored). `knownFailure` goes on the case or
+call each), and the outcome: `proposal` fields, `cards` (`kind`, `seeds`, `min`, `max`), `mapButtons`, `text.mentions`
+(each a word, or a list of which any one counts, spaces ignored) and `text.absent` (words the reply must not hold). A
+case of the 공강 tools can also give `results`, what each tool must answer, which only the judgement suite reads. `knownFailure` goes on the case or
 in its `expect`. Values that name the world are seed names; the run file keeps the world's seeds to read ids by.
 
 The scorer (`eval/score.ts`) reads each scored turn's action from its trace and reply:
@@ -2122,9 +2422,17 @@ into the database.
 | `campus-map-shuttle-stops.json`  | The campus map's 15 stops of its loop, route 61, as it serves them                                      | The campus map, `map.snu.ac.kr`                      |
 | `shuttle-stops.json`             | The operator's 14 stops in loop order, their places on the drawing and the pairs, and the service hours | The operator's route page; the pairs written by hand |
 | `shuttle-route.geojson`          | The shuttle's line, traced along OpenStreetMap's roads                                                  | OpenStreetMap, through Overpass                      |
+| `openstreetmap-paths.json`       | The pinned extract of ways with a `highway` tag, as of its `timestamp`, read only by the builder        | OpenStreetMap, through Overpass                      |
+| `srtm-elevation.json`            | SRTM 30 m heights over the campus, read only by the builder                                             | NASA SRTM, through OpenTopoData                      |
+| `walking-table.json`             | Seconds on foot for every pair of Places and of Places and stops, with each one's elevation             | `pnpm walking:build`, from the seed files above      |
+| `restaurant-places.json`         | The number of each Restaurant's Place, by its name as `GET /menus` gives it, read by the server         | Written by hand                                      |
 
 Each exported file keeps, at its top, where it came from and the day of the export.
 
+- **The walking table**: `pnpm walking:build` writes `walking-table.json`. Run it when the Places, the stops or the
+  extract change. `pnpm walking:build --sensitivity` writes nothing: it moves every pin 10 m and 20 m in random
+  directions, 10 runs each, and prints the mean change and the Places that move most. `openstreetmap-paths.json` and
+  `srtm-elevation.json` were exported once and have no name in `pnpm seed:export`, so that the table stays reproducible.
 - **Exporting**: `pnpm seed:export <name>…` repeats the export of the files it names and overwrites them; run without
   a name, it lists the names. An export over the network is one request, sent with a User-Agent that names the
   project, as OpenStreetMap asks. When Overpass answers 504 it is busy: wait some minutes before trying again.
@@ -2155,6 +2463,9 @@ Each exported file keeps, at its top, where it came from and the day of the expo
     stored. The line replaces the route's line. The service hours
     are the file's `serviceHours` when the route is first loaded, so that a new database has them without waiting for
     a Collection; after that they are the ones the route page's Collection last stored.
+- **When the Co-op renames or moves a restaurant**, correct its row in `restaurant-places.json`, with the name exactly as
+  the worker sends it and the number as the Places have it. A restaurant the file does not hold has no Place: no pin, no
+  "N동" and no place in 공강에 밥. It stays in the menu panel.
 - **Correcting a Place**: change it in its file, such as a name in `inst_kor_nm`, and load again. The next export
   overwrites the correction.
 - **Giving a Place its outlines by hand**: add an entry to `place-outlines.json`.
@@ -2176,8 +2487,9 @@ Each exported file keeps, at its top, where it came from and the day of the expo
 - **Coordinates** come from the campus map, OpenStreetMap and the national map only, never from Kakao, Naver or Google
   maps, whose terms forbid storing their data.
 - **Licences**: OpenStreetMap's data is under the ODbL and the national map's layer under 공공누리 type 1. Both ask
-  that the source is shown: the files carry their notices, and the app shows both attributions (P15). The campus map
-  publishes no terms. `.scratch/research/external-sources.md` §6 and `.scratch/research/public-building-outlines.md`
+  that the source is shown: the files carry their notices, and the app shows both attributions (P15). So does
+  `walking-table.json`, which is derived from OpenStreetMap. SRTM is in the public domain. The campus map publishes no
+  terms. `.scratch/research/external-sources.md` §6 and `.scratch/research/public-building-outlines.md`
   §8 have the terms.
 - **In a test**: the global setup loads the seed into the test database, so every test file has the Places and the
   shuttle's stops and line. A test that changes the seed loads it into a database of its own, made by
@@ -2281,6 +2593,7 @@ src/
 ├── load-seed.ts                     loads every seed file; the command and the tests call it
 ├── demo-seed.ts                     the command that writes the demo data, `pnpm demo:seed`
 ├── demo-walk.ts                     the command that walks the demo Users, `pnpm demo:walk`
+├── build-walking-table.ts           the command that writes the walking table, `pnpm walking:build`
 ├── demo/                            the demo profile's data, its seed and the walker's paths (not a module)
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
@@ -2323,6 +2636,7 @@ src/
 ├── matching/                        a feature: requests for Matching, checked and passed on to the match server, and
 │                                    the Shared Quests of its matches
 ├── menus/                           a feature: the menus the worker collects, stored and served by day
+├── travel/                          Travel Time: the walking table's builder, and the provider that looks it up
 ├── walking-route/                   a feature: a walking route between two points, asked of Kakao on each request
 ├── places/                          a feature: the Places of the seed, listed and searched, and the Place at a
 │                                    position
@@ -2332,7 +2646,8 @@ src/
 └── assistant/                       a feature: the Assistant, its model port, tools, feature definitions and the
                                      adapter that runs them
 scripts/                             commands run by hand, such as `pnpm keys:generate` and `pnpm seed:export`
-eval/                                the benchmark of the Assistant, `pnpm eval`: its runner, recorder, world and cases
+eval/                                the benchmark of the Assistant, `pnpm eval`: its runner, recorder, world and cases;
+                                     also the shuttle metric's logged days
 test/                                tests named by level; the integration tests run against PostgreSQL and Redis in
                                      containers
 ```
@@ -2493,17 +2808,16 @@ so a message is stored once. Every route for the worker follows these rules.
 
 - **Route and shape**: a message is a `POST` in the feature's controller, marked `@WorkerOnly()` from
   `src/common/worker-only.decorator.ts` and `@HttpCode(HttpStatus.NO_CONTENT)`. Its path says what happened:
-  `/menus/collected` for what a Collection of a menu Source read, `/global-events/collected` for the events list's, and
+  `/menus/collected` for what a Collection of a menu Source read, `/global-events/collected` for a Source of posts', and
   `/collections/failed`. The body is a JSON object. It names its `source`, a value of `Source` in
   `prisma/schema.prisma`, and the time of the Collection in ISO 8601 with an offset (`collectedAt`, `failedAt`). A day
   is `YYYY-MM-DD`, a calendar day in Asia/Seoul. A field without a value is `null`, not left out.
 - **Questions**: a Collection that needs to know what the main server holds asks it, since the worker keeps nothing. A
   question is a `POST` too, marked `@WorkerOnly()` and `@HttpCode(HttpStatus.OK)`, since what it asks about is a list.
   Its path names what it asks for, its body carries only what it asks about, and it answers 200 with what it asks for
-  and stores nothing: the events list is one Source and a post number identifies a post, so
-  `/global-events/stored-posts` carries no `source` and no time. `/global-events/stored-posts` with
-  `{ "postNumbers": [176558, 176525] }` asks which of these posts are stored, and `{ "postNumbers": [176558] }` answers
-  that 176558 is, in whatever state. The worker asks with `MainServer.ask()`.
+  and stores nothing: a post is identified by its Source and key, so `/global-events/stored-posts` carries no time.
+  `/global-events/stored-posts` with `{ "source": "snu_events", "keys": ["176558", "176525"] }` asks which of these posts
+  are stored, and `{ "keys": ["176558"] }` answers that 176558 is, whatever became of its event. The worker asks with `MainServer.ask()`.
 - **Who may call it**: the worker alone. The request carries `Authorization: Bearer <WORKER_TOKEN>`, the secret that
   the two servers' settings share, and `WorkerGuard` in `src/auth/worker.guard.ts` answers 401 to any other request,
   a User's and an Administrator's access token included. The token is no signed token: the worker is no User.

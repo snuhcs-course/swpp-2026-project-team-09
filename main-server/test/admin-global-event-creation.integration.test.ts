@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -52,8 +54,12 @@ describe('A Global Event created by an Administrator', () => {
       ...place132,
       state: 'draft',
       version: 1,
-      postNumber: null,
+      source: null,
+      postKey: null,
       sourceUrl: null,
+      publicationRoute: null,
+      needsAdministrator: false,
+      judgement: null,
       missing: [],
     });
     expect((await getAdminGlobalEvent(app, accessToken, created.id)).body).toEqual(created);

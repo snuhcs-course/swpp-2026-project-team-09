@@ -86,7 +86,7 @@ about Friends and parties. Iteration 2 answered it, and its work was merged into
   on the phone; up to 10 timetable versions on the phone; a week grid from 09 to 22 on 내 정보; today's classes appear
   as Quests on the map.
 - **Global Events and the admin site**: events collected four times a day from the university's events list and
-  published when their time and place are read; on the admin site, Administrators review Drafts, correct and publish
+  published shortly after each Collection when their time and place are read; on the admin site, Administrators review Drafts, correct and publish
   them, create and cancel events, see the Places on a map, see each Source's Collection status, and make or end
   friendships between Users for demo accounts.
 - **Dining and shuttle**: a dining layer with today's menus of the Co-op's restaurants, the dormitory and the
@@ -161,7 +161,7 @@ What the demo cannot show, and what is known not to work yet:
 - **Collected events wait for an Administrator** unless the rules read both their time and their place: a start
   with a time of day from the post's body, and a place that names exactly one Place. Every other collected event is a
   Draft until an Administrator publishes it on the admin site. A post is read once, so a later edit at the source is
-  not seen, and a post that describes several sessions is one event.
+  not seen, and a post of the events list that describes several sessions is one event.
 - **Users outside the Campus Boundary are hidden** from everyone, by design: a demo must be run on campus. The app's
   development settings can replace the phone's position with a walk on campus ([mobile/README.md](mobile/README.md),
   "Development settings").
@@ -347,6 +347,11 @@ file's.
 | `ASSISTANT_MAX_STEPS`              | Optional: the model calls per message; 8 unless set.                                                |
 | `ASSISTANT_TIMEOUT_MS`             | Optional: the milliseconds over all of a message's model calls; 30000 unless set.                   |
 | `ASSISTANT_MAX_OUTPUT_TOKENS`      | Optional: the tokens the model may write in each call; 1000 unless set.                             |
+| `AUTOMATIC_JUDGEMENT`              | Optional: `on` lets the step after a Collection ask the model about Drafts; `off` unless set.       |
+| `SAME_EVENT_TITLE_RULE`            | Optional: `on` lets that step attach a session by an equal title and start; `off` unless set.       |
+| `SAME_EVENT_AI_CHOICE`             | Optional: `on` lets that step ask the model about the candidates the rules leave; `off` unless set. |
+| `JUDGEMENT_TIMEOUT_MS`             | Optional: the milliseconds of a Judgement's model call; 60000 unless set.                           |
+| `JUDGEMENT_MAX_OUTPUT_TOKENS`      | Optional: the tokens the model may write in a Judgement; 4000 unless set.                           |
 
 ### socket-server
 
@@ -359,11 +364,12 @@ file's.
 
 ### worker-server
 
-| Setting           | What it is                                                        |
-| ----------------- | ----------------------------------------------------------------- |
-| `PORT`            | The port the HTTP server listens on.                              |
-| `MAIN_SERVER_URL` | Where the main server is reached, to hand over what is collected. |
-| `WORKER_TOKEN`    | The same line as in `main-server/.env`.                           |
+| Setting                | What it is                                                                                |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| `PORT`                 | The port the HTTP server listens on.                                                      |
+| `MAIN_SERVER_URL`      | Where the main server is reached, to hand over what is collected.                         |
+| `WORKER_TOKEN`         | The same line as in `main-server/.env`.                                                   |
+| `EXTRA_SNU_COLLECTION` | `on` lets the schedule start extra.snu's Collections. `off` by default and in Production. |
 
 ### match-server
 
@@ -543,6 +549,13 @@ needs a build of the app or a development server.
   [Iteration 1 release](https://github.com/snuhcs-course/swpp-2026-project-team-09/releases/tag/iteration-1), for the
   servers on your own computer. It is Iteration 1's app, with the Meetup and without the Iteration 2 features.
 
+The Production app updates itself. A Release that changes only JavaScript publishes the app's bundle to EAS Update,
+and an installed app downloads it when it starts and runs it from its next start, with no new APK. A change to the
+native part, such as a native dependency, a config plugin or `app.json`, needs a native Release instead: `version` is
+raised, a new APK and iOS build are made, and `app-version.json` is replaced, so that older builds show
+업데이트가 필요합니다 at their start. [infra/production/README.md](infra/production/README.md), "The Production APK" and
+"The Production iOS build", has the steps.
+
 The Iteration 1 APK reaches the main server at `http://localhost:3000` and the socket server at
 `http://localhost:3001`, on the phone itself. With the servers running on your computer
 ([Running the servers](#running-the-servers), with the [demo data](#demo-data)), Android's Platform-Tools for `adb`, and
@@ -686,7 +699,8 @@ tell how the work went, with the prompts in each iteration's Prompt Log.
 
 | Source                                                                                                                | Used for                                                                   | Terms                                           |
 | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------- |
-| © OpenStreetMap contributors, through Overpass                                                                        | The Campus Boundary, the shuttle's line, two Places and some outlines      | [ODbL](https://www.openstreetmap.org/copyright) |
+| © OpenStreetMap contributors, through Overpass                                                                        | The Campus Boundary, the shuttle's line, two Places, outlines, 도보 시간   | [ODbL](https://www.openstreetmap.org/copyright) |
+| NASA SRTM 30 m, through OpenTopoData                                                                                  | The elevation of the Places and shuttle stops for 도보 시간                | Public domain                                   |
 | 국토지리정보원, 연속수치지형도 건물 (2026), from VWorld                                                               | The outlines of the campus's buildings and the Places the campus map lacks | 공공누리 제1유형 (source must be shown)         |
 | SNU campus map, `map.snu.ac.kr`                                                                                       | The Places and the shuttle stops' coordinates                              | No terms published                              |
 | Kakao                                                                                                                 | The map in the app and the admin site, and walking routes; nothing stored  | Kakao's terms and operating policy              |

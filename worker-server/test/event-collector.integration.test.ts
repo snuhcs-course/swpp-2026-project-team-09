@@ -5,6 +5,7 @@
  * 2026-10-03  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { SchedulerRegistry } from '@nestjs/schedule';
@@ -35,7 +36,7 @@ function mainServerStoring(
   stored = [...firstPage, ...secondPage].filter((post) => post !== 176558 && post !== 176525),
 ): MainServerStub {
   const mainServer = new MainServerStub();
-  mainServer.answers.set('/global-events/stored-posts', { postNumbers: stored });
+  mainServer.answers.set('/global-events/stored-posts', { keys: stored.map(String) });
   return mainServer;
 }
 
@@ -69,7 +70,7 @@ describe('A Collection of the events list', () => {
     expect(sources.requests.slice(0, 3).map(({ url }) => url)).toEqual([`${LIST}1`, `${LIST}2`, `${LIST}3`]);
     expect(mainServer.messages[0]).toEqual({
       path: '/global-events/stored-posts',
-      data: { postNumbers: [...firstPage, ...secondPage] },
+      data: { source: 'snu_events', keys: [...firstPage, ...secondPage].map(String) },
     });
   });
 
@@ -82,12 +83,21 @@ describe('A Collection of the events list', () => {
       {
         collectedAt: '2026-10-01T21:00:00.000Z',
         failureReason: null,
-        events: [
-          { postNumber: 176558, start: '2026-10-26', end: '2026-11-27', readFrom: 'body' },
+        posts: [
           {
-            postNumber: 176525,
-            start: '2026-10-13T17:00:00+09:00',
-            place: '뉴미디어통신공동연구소 이충웅홀(132동 103호)',
+            key: '176558',
+            address: `${POST}176558`,
+            sessions: [{ number: 1, start: '2026-10-26', end: '2026-11-27', readFrom: 'body' }],
+          },
+          {
+            key: '176525',
+            sessions: [
+              {
+                number: 1,
+                start: '2026-10-13T17:00:00+09:00',
+                place: '뉴미디어통신공동연구소 이충웅홀(132동 103호)',
+              },
+            ],
           },
         ],
       },
@@ -99,7 +109,7 @@ describe('A Collection of the events list', () => {
 
     expect(sources.requests).toHaveLength(3);
     expect(mainServer.from('snu_events', '/global-events/collected')).toEqual([
-      { source: 'snu_events', collectedAt: '2026-10-01T21:00:00.000Z', failureReason: null, events: [] },
+      { source: 'snu_events', collectedAt: '2026-10-01T21:00:00.000Z', failureReason: null, posts: [] },
     ]);
   });
 });
@@ -116,7 +126,7 @@ describe('A Collection of the events list that is blocked on a post', () => {
         source: 'snu_events',
         collectedAt: '2026-10-01T21:00:00.000Z',
         failureReason: `The university's firewall blocked ${POST}176558`,
-        events: [],
+        posts: [],
       },
     ]);
     expect(mainServer.from('snu_events', '/collections/failed')).toEqual([]);
@@ -132,7 +142,7 @@ describe('A Collection of the events list that is blocked on a post', () => {
       '/global-events/collected',
     ]);
     expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
-      { failureReason: `The university's firewall blocked ${POST}176525`, events: [{ postNumber: 176558 }] },
+      { failureReason: `The university's firewall blocked ${POST}176525`, posts: [{ key: '176558' }] },
     ]);
   });
 });
@@ -145,18 +155,15 @@ describe('A post whose page is not a post', () => {
     expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
       {
         failureReason: null,
-        events: [
+        posts: [
           {
-            postNumber: 176558,
-            sourceUrl: `${POST}176558`,
+            key: '176558',
+            address: `${POST}176558`,
             title: '[스포츠진흥원]2026학년도 서울대학교 종합체육대회 개최 안내',
             description: '',
-            start: null,
-            end: null,
-            readFrom: null,
-            place: null,
+            sessions: [{ number: 1, start: null, end: null, readFrom: null, place: null }],
           },
-          { postNumber: 176525, readFrom: 'body' },
+          { key: '176525', sessions: [{ readFrom: 'body' }] },
         ],
       },
     ]);
@@ -166,7 +173,7 @@ describe('A post whose page is not a post', () => {
     const { mainServer } = await collect({ ...pages, [`${POST}176525`]: notAPost });
 
     expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
-      { failureReason: null, events: [{ postNumber: 176558 }, { postNumber: 176525, description: '' }] },
+      { failureReason: null, posts: [{ key: '176558' }, { key: '176525', description: '' }] },
     ]);
   });
 
@@ -174,7 +181,7 @@ describe('A post whose page is not a post', () => {
     const { mainServer } = await collect({ ...pages, [`${POST}176558`]: notAPost, [`${POST}176525`]: blockPage });
 
     expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
-      { failureReason: `The university's firewall blocked ${POST}176525`, events: [] },
+      { failureReason: `The university's firewall blocked ${POST}176525`, posts: [] },
     ]);
   });
 });
@@ -184,7 +191,7 @@ describe('Posts whose pages are not posts, in a Collection that reads no post', 
     const { mainServer } = await collect({ ...pages, [`${POST}176558`]: notAPost, [`${POST}176525`]: notAPost });
 
     expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
-      { failureReason: 'No post could be read: The page has no post', events: [] },
+      { failureReason: 'No post could be read: The page has no post', posts: [] },
     ]);
   });
 });
@@ -199,7 +206,7 @@ describe('Three posts in a row whose pages are not posts', () => {
     );
 
     expect(mainServer.from('snu_events', '/global-events/collected')).toMatchObject([
-      { failureReason: '3 posts in a row could not be read: The page has no post', events: [{ postNumber: 176558 }] },
+      { failureReason: '3 posts in a row could not be read: The page has no post', posts: [{ key: '176558' }] },
     ]);
     expect(mainServer.from('snu_events', '/collections/failed')).toEqual([]);
   });
@@ -233,12 +240,12 @@ describe('A Collection of the events list that fails before reading a post', () 
 
   it('reports a question the main server does not answer, and reads no post', async () => {
     const mainServer = new MainServerStub();
-    mainServer.refusals.set('/global-events/stored-posts', 'postNumbers.0: Invalid input');
+    mainServer.refusals.set('/global-events/stored-posts', 'keys.0: Invalid input');
 
     const { sources } = await collect(pages, mainServer);
 
     expect(mainServer.from('snu_events', '/collections/failed')).toMatchObject([
-      { reason: 'The main server did not take /global-events/stored-posts: postNumbers.0: Invalid input' },
+      { reason: 'The main server did not take /global-events/stored-posts: keys.0: Invalid input' },
     ]);
     expect(sources.requests).toHaveLength(3);
   });

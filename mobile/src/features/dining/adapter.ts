@@ -2,13 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { Meal, MenuLine, RestaurantMenus } from '@/api/menu-types';
 import type { Place } from '@/api/types';
 import { type CardView, cardId } from '@/features/map/adapter';
 import { koreaCalendar, koreaClock, koreaDateKey, koreaMinutes, koreaNextDay, WEEKDAYS } from '@/korea-time';
-import { RESTAURANT_PLACES } from './restaurant-places';
 
 export const MEALS: readonly Meal[] = ['breakfast', 'lunch', 'dinner'];
 
@@ -65,12 +65,12 @@ function diningCard(place: Place, restaurants: readonly RestaurantMenus[]): Card
   };
 }
 
-// One pin for each Place of the table that has a restaurant with menus today, in the order of the menus. Restaurants
-// that share a Place share its pin.
+// One pin for each Place the server gives a restaurant with menus today, in the order of the menus. Restaurants that
+// share a Place share its pin.
 export function toDiningCards(menus: readonly RestaurantMenus[], places: readonly Place[]): CardView[] {
   const byPlace = new Map<Place, RestaurantMenus[]>();
   for (const restaurant of menus.filter((menu) => hasLines(menu))) {
-    const place = places.find(({ number }) => number !== null && number === RESTAURANT_PLACES[restaurant.name]);
+    const place = places.find(({ id }) => id === restaurant.placeId);
     if (place !== undefined) {
       byPlace.set(place, [...(byPlace.get(place) ?? []), restaurant]);
     }
@@ -83,7 +83,7 @@ export type MenuLineView =
   { type: 'priced'; name: string; price: string } | { type: 'heading' | 'note' | 'plain'; text: string };
 
 // "6,000원"
-function won(price: number): string {
+export function won(price: number): string {
   return `${String(price).replaceAll(/\B(?=(?:\d{3})+$)/gu, ',')}원`;
 }
 
@@ -96,7 +96,7 @@ function lineView({ text, kind, name, price }: MenuLine): MenuLineView {
 
 export interface RestaurantView {
   name: string;
-  // "63동", where the table places it.
+  // "63동", where the server places it at a Place with a number.
   place: string | null;
   meals: Readonly<Record<Meal, MenuLineView[]>>;
 }
@@ -116,15 +116,15 @@ function collectedLine(menus: readonly RestaurantMenus[]): string {
   return `${month}월 ${date}일 ${koreaClock(oldest)}에 가져온 메뉴예요`;
 }
 
-export function toMenuDay(menus: readonly RestaurantMenus[]): MenuDayView {
+export function toMenuDay(menus: readonly RestaurantMenus[], places: readonly Place[]): MenuDayView {
   return {
     restaurants: menus.map((restaurant) => {
-      const number = RESTAURANT_PLACES[restaurant.name];
+      const number = places.find(({ id }) => id === restaurant.placeId)?.number ?? null;
       const linesOf = (wanted: Meal): MenuLineView[] =>
         (restaurant.meals.find(({ meal }) => meal === wanted)?.lines ?? []).map((line) => lineView(line));
       return {
         name: restaurant.name,
-        place: number === undefined ? null : `${number}동`,
+        place: number === null ? null : `${number}동`,
         meals: { breakfast: linesOf('breakfast'), lunch: linesOf('lunch'), dinner: linesOf('dinner') },
       };
     }),

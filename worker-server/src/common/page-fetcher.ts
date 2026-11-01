@@ -4,6 +4,7 @@
  * 2026-10-01  Opus 5.5   prompted by TaeHyun79
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-03  Opus 5.5   prompted by fyoon46
+ * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable, Scope } from '@nestjs/common';
@@ -12,7 +13,8 @@ import { Inject, Injectable, Scope } from '@nestjs/common';
 export const FETCH = 'FETCH';
 
 // Names the project to whoever serves a Source.
-const USER_AGENT = 'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)';
+export const USER_AGENT =
+  'SNUNow/1.0 (SNU SWPP 2026 team 9; +https://github.com/snuhcs-course/swpp-2026-project-team-09)';
 
 // A page not served by then is given up, so that it does not hold up the pages asked for after it.
 const PAGE_TIMEOUT = 5000;

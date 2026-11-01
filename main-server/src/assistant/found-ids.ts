@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // The guard of the presenters and of proposeQuest: a card shows, and a Proposal takes, only what a lookup or a
@@ -9,13 +10,15 @@
 // one the model made up, never reaches the screen. The lookups and resolvers record the ids they return; the
 // presenters refuse any other.
 
-// What an id names: a card's Quest or Global Event, or a Friend or a Place a resolver returned, which are never cards.
-export type FoundKind = 'quest' | 'globalEvent' | 'friend' | 'place';
+// What an id names: a card's Quest, Global Event or Restaurant (by its key), or a Friend or a Place a resolver returned,
+// which are never cards.
+export type FoundKind = 'quest' | 'globalEvent' | 'restaurant' | 'friend' | 'place';
 
 export class FoundIds {
   private readonly found: Record<FoundKind, Set<string>> = {
     quest: new Set(),
     globalEvent: new Set(),
+    restaurant: new Set(),
     friend: new Set(),
     place: new Set(),
   };
