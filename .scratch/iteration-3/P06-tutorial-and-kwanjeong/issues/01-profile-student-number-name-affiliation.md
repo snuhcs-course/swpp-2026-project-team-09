@@ -39,3 +39,7 @@ This is the base other tickets read: the tutorial's eligibility reads `affiliati
 
 - Agent time: about 1 hour 30 minutes (estimate), one session, no subagents.
 - Tokens: not measured in the session. Estimated at about 4.5M input, mostly cache reads (about 4.3M) with about 200k cache writes, and about 60k output.
+
+### From ticket 03 (2026-11-02)
+
+- The profile save in `mobile/src/screens/me/profile-edit-screen.tsx` (`useSave`) invalidates `TUTORIAL_KEY` after a save, so a changed 소속 or 학번 refreshes the tutorial's `eligibleByDefault`. The `profile-edit` integration test checks it.

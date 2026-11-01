@@ -36,30 +36,25 @@ import {
   WITH_OWN_POST,
   WITH_OWN_POST_AND_JUDGEMENT,
 } from './dto/global-event.dto.js';
+import { type RankedSearch, rankedSearchIds } from './ranked-search.js';
 
 // An event has ended once its end has passed or, without an end, once the day of its start has passed in Asia/Seoul.
 function notEnded(now: Date): Prisma.GlobalEventWhereInput {
   return { OR: [{ endsAt: { gt: now } }, { endsAt: null, startsAt: { gte: startOfSeoulDay(now) } }] };
 }
 
-// What the Assistant's searchGlobalEvents and resolveGlobalEvent ask for: the events that fall in the period
-// [from, to), whose place holds `place`, whose title holds `title` and whose title or description holds any of
-// `words`, ignoring case. An event falls in the period when its span overlaps it: one without an end lasts until the
-// end of its start's day, and one without a start falls in no period. Without a period, any event that has not ended.
+// What resolveGlobalEvent and the free-time candidates ask for: the events that fall in the period [from, to) and whose
+// title holds `title`, ignoring case. An event falls in the period when its span overlaps it: one without an end lasts
+// until the end of its start's day, and one without a start falls in no period. Without a period, any event that has
+// not ended.
 export interface PublishedSearch {
   period?: { from: Date; to: Date };
-  place?: string;
   title?: string;
-  words?: readonly string[];
   // The most events answered; left out, all of them.
   take?: number;
 }
 
-function holding(text: string): Prisma.StringFilter {
-  return { contains: text, mode: 'insensitive' };
-}
-
-function searched({ period, place, title, words }: PublishedSearch): Prisma.GlobalEventWhereInput[] {
+function searched({ period, title }: PublishedSearch): Prisma.GlobalEventWhereInput[] {
   return [
     ...(period === undefined
       ? []
@@ -69,11 +64,7 @@ function searched({ period, place, title, words }: PublishedSearch): Prisma.Glob
             OR: [{ endsAt: { gt: period.from } }, { endsAt: null, startsAt: { gte: startOfSeoulDay(period.from) } }],
           },
         ]),
-    ...(place === undefined ? [] : [{ place: holding(place) }]),
-    ...(title === undefined ? [] : [{ title: holding(title) }]),
-    ...(words === undefined || words.length === 0
-      ? []
-      : [{ OR: words.flatMap((word) => [{ title: holding(word) }, { description: holding(word) }]) }]),
+    ...(title === undefined ? [] : [{ title: { contains: title, mode: 'insensitive' as const } }]),
   ];
 }
 
@@ -138,6 +129,11 @@ export class GlobalEventsService {
       include: WITH_OWN_POST,
     });
     return events.map((event) => toPublishedGlobalEventDto(event));
+  }
+
+  // The published events of searchGlobalEvents that have not ended at `now`, as the User's list serves them.
+  async searchRanked(search: RankedSearch, now: Date): Promise<PublishedGlobalEventDto[]> {
+    return this.publishedAmong(await rankedSearchIds(this.prisma, search, now));
   }
 
   // The events among `ids` that are published, as the User's list serves them, in the order of `ids`.

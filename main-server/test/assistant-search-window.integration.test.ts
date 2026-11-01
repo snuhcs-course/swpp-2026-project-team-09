@@ -126,7 +126,7 @@ describe('searchRecruitingQuests, in a window of times', () => {
   });
 
   it('gives the evening of a day whose morning alone is more than the list holds', async () => {
-    await Promise.all(Array.from({ length: 21 }, () => questAt('2093-04-05T09:00:00')));
+    await Promise.all(Array.from({ length: 31 }, () => questAt('2093-04-05T09:00:00')));
     const evening = await questAt('2093-04-05T18:00:00');
 
     expect(await questsFound({ after: '2093-04-05T17:00' })).toEqual([evening]);
@@ -201,7 +201,7 @@ describe('searchRecruitingQuests, for a Quest with no start', () => {
 describe('searchRecruitingQuests, for a Quest with no start, at the cut', () => {
   it('takes no place in the list once its end has passed', async () => {
     const own = { board: 'career', capacity: 6 };
-    await Promise.all(Array.from({ length: 20 }, () => questAt('2093-06-25T18:00:00', own)));
+    await Promise.all(Array.from({ length: 30 }, () => questAt('2093-06-25T18:00:00', own)));
     const endsAt = korea('2093-06-25T12:00:00').toISOString();
     await questAt('2093-06-25T18:00:00', { ...own, title: '가나다', subQuest: { title: '모임', endsAt } });
     await questAt('2093-06-25T18:00:00', { ...own, title: '언제든', subQuest: { title: '모임' } });
@@ -297,7 +297,7 @@ describe('searchGlobalEvents, in a window of times', () => {
   });
 
   it('gives the evening of a day whose morning alone is more than the list holds', async () => {
-    await Promise.all(Array.from({ length: 21 }, () => eventAt('2093-12-05T09:00:00')));
+    await Promise.all(Array.from({ length: 31 }, () => eventAt('2093-12-05T09:00:00')));
     const evening = await eventAt('2093-12-05T18:00:00');
 
     expect(await eventsFound({ after: '2093-12-05T17:00' })).toEqual([evening.id]);
