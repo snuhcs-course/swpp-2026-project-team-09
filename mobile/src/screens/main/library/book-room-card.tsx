@@ -16,7 +16,8 @@ import { freeRooms, nearestStarts } from '@/library/cards/rooms';
 import { nextStart, whenWords } from '@/library/cards/times';
 import { library } from '@/library/library';
 import type { LibraryRoomTimes } from '@/library/replies';
-import { keepRoomBooking } from '@/library/room-bookings';
+import { keepRoomBooking, reportRoomBooked } from '@/library/room-bookings';
+import { roomCancelCardOf } from '@/library/cards/made';
 import { type RoomRequest, roomRequests } from '@/api/room-requests';
 import { BOOK_FAILED, CLOSED, type Closed, NOT_BOOKED } from './book-seat-card';
 import { CardBox, FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
@@ -79,19 +80,32 @@ async function sendBooking(
   const info = result.bookingResultInfo;
   if (info === undefined) {
     if (request !== null) {
-      await roomRequests.result(request.id, { ok: false });
+      // The request stays ready; a report that does not get through changes nothing.
+      await roomRequests.result(request.id, { ok: false }).catch(() => null);
     }
     const message = libraryMessage(result);
     return { failure: null, message: message === '' ? BOOK_FAILED : `${BOOK_FAILED}: ${message}` };
   }
+  // The room is booked from here on, whatever the report comes to: the card never offers 예약하기 again.
   const bseqno = bseqnoOf(info);
-  if (request !== null) {
-    await keepRoomBooking(Number(bseqno), request.id);
-    await roomRequests.result(request.id, { ok: true });
-  }
   const done = doneOf(space, { slot, label: room.NAME, bseqno, notes: card.notes }, now());
   actions.addOwn({ text: done.title, done });
+  if (request !== null) {
+    await keepRoomBooking(Number(bseqno), request.id).catch(() => null);
+    const reported = await reportRoomBooked(request.id).catch(() => 'queued' as const);
+    if (reported === 'ended') {
+      actions.addOwn({
+        text: partyChangedWords(room.NAME),
+        cards: [{ kind: 'library', library: roomCancelCardOf(space, slot) }],
+      });
+    }
+  }
   return null;
+}
+
+// The request ended while the room was being booked, a companion having left, say: the room is booked all the same.
+export function partyChangedWords(room: string): string {
+  return `${room}은 예약됐지만 그사이 파티 구성원이 바뀌었어요. 이 예약이 필요 없으면 아래에서 취소해 주세요.`;
 }
 
 interface FormProps extends BookRoomCardProps {
