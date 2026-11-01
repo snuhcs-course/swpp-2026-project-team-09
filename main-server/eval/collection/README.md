@@ -105,4 +105,4 @@
 - 태그: `eval-freeze-iter3-collection`
 - 커밋: `e53fe85b1d3d61b40be0b394f7c44f8625532d38` (#136의 머지 커밋)
 
-채팅 쪽 평가 C·D는 #140이 머지된 뒤 자기 C0를 따로 둡니다.
+채팅 쪽 평가 C·D의 C0는 `eval-freeze-iter3-chat`입니다(`main-server/eval/p5/README.md`).
